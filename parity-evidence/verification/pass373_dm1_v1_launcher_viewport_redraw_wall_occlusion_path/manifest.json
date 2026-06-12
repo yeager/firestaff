@@ -1,5 +1,5 @@
 {
-  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branch": "main",
   "checks": [
     {
       "file": "DUNVIEW.C",
@@ -172,13 +172,13 @@
         "cmd": [
           "cmake",
           "-S",
-          "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+          "/Users/bosse/.openclaw/workspace-main",
           "-B",
           "/Users/bosse/.openclaw/data/firestaff-builds/pass373-verify",
           "-G",
           "Ninja"
         ],
-        "outputTail": "-- The C compiler identification is AppleClang 17.0.0.17000603\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /opt/homebrew/bin/pkg-config (found version \"2.5.1\")\n-- Found SDL3\n-- Configuring done (2.3s)\n-- Generating done (0.9s)\n-- Build files have been written to: /Users/bosse/.openclaw/data/firestaff-builds/pass373-verify\n",
+        "outputTail": "-- The C compiler identification is AppleClang 17.0.0.17000603\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /opt/homebrew/bin/pkg-config (found version \"2.5.1\")\n-- Found SDL3\n-- Configuring done (0.7s)\n-- Generating done (0.4s)\n-- Build files have been written to: /Users/bosse/.openclaw/data/firestaff-builds/pass373-verify\n",
         "returncode": 0
       }
     },
@@ -195,7 +195,7 @@
           "--parallel",
           "1"
         ],
-        "outputTail": "ork/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/include/theron_v1_champions.h:215:61: note: passing argument to parameter 'party' here\n  215 | Theron_V1_Champion *theron_v1_party_leader(Theron_V1_Party *party);\n      |                                                             ^\n/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/theron/theron_v1_viewport.c:580:63: warning: passing 'const Theron_V1_Party *' to parameter of type 'Theron_V1_Party *' discards qualifiers [-Wincompatible-pointer-types-discards-qualifiers]\n  580 |     const Theron_V1_Champion *theron = theron_v1_party_leader(&world->party);\n      |                                                               ^~~~~~~~~~~~~\n/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/include/theron_v1_champions.h:215:61: note: passing argument to parameter 'party' here\n  215 | Theron_V1_Champion *theron_v1_party_leader(Theron_V1_Party *party);\n      |                                                             ^\n/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/theron/theron_v1_viewport.c:677:17: warning: enumeration value 'THERON_CLASS_COUNT' not handled in switch [-Wswitch]\n  677 |         switch (champion->primary_class) {\n      |                 ^~~~~~~~~~~~~~~~~~~~~~~\n/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/theron/theron_v1_viewport.c:677:17: note: add missing switch cases\n  677 |         switch (champion->primary_class) {\n      |                 ^\n  678 |             case THERON_CLASS_FIGHTER: class_col = 8;  break; /* red */\n  679 |             case THERON_CLASS_NINJA:   class_col = 9;  break; /* orange */\n  680 |             case THERON_CLASS_PRIEST:  class_col = 15; break; /* white */\n  681 |             case THERON_CLASS_WIZARD:  class_col = 14; break; /* blue */\n  682 |         }\n/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/theron/theron_v1_viewport.c:747:71: warning: passing 'const Theron_V1_Party *' to parameter of type 'Theron_V1_Party *' discards qualifiers [-Wincompatible-pointer-types-discards-qualifiers]\n  747 |             const Theron_V1_Champion *c = theron_v1_party_getChampion(&world->party, i);\n      |                                                                       ^~~~~~~~~~~~~\n/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/include/theron_v1_champions.h:212:66: note: passing argument to parameter 'party' here\n  212 | Theron_V1_Champion *theron_v1_party_getChampion(Theron_V1_Party *party, int slot);\n      |                                                                  ^\n/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/theron/theron_v1_viewport.c:509:20: warning: unused function 'theron_dungeon_name' [-Wunused-function]\n  509 | static const char *theron_dungeon_name(int dungeon_id) {\n      |                    ^~~~~~~~~~~~~~~~~~~\n5 warnings generated.\n[699/704] Building C object CMakeFiles/firestaff_theron.dir/src/theron/theron_v1_world.c.o\n/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/theron/theron_v1_world.c:57:33: warning: unused variable 'g_blank_companion' [-Wunused-const-variable]\n   57 | static const Theron_V1_Champion g_blank_companion = {\n      |                                 ^~~~~~~~~~~~~~~~~\n/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/theron/theron_v1_world.c:104:15: warning: unused function '_tqw_champion_block_size' [-Wunused-function]\n  104 | static size_t _tqw_champion_block_size(void) {\n      |               ^~~~~~~~~~~~~~~~~~~~~~~~\n/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/theron/theron_v1_world.c:445:3: warning: unused variable 'g_queued' [-Wunused-variable]\n  445 | } g_queued = {0};\n      |   ^~~~~~~~\n3 warnings generated.\n[700/704] Linking C static library libfirestaff_m11.a\n[701/704] Linking C static library libfirestaff_theron.a\n[702/704] Building C object CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o\n[703/704] Linking C executable firestaff\nld: warning: ignoring duplicate libraries: 'libfirestaff_m10.a', 'libfirestaff_m11.a', 'libfirestaff_m12.a', 'libfirestaff_theron.a', 'libfirestaff_v2.a'\n",
+        "outputTail": " case THERON_CLASS_FIGHTER: class_col = 8;  break; /* red */\n  289 |             case THERON_CLASS_NINJA:   class_col = 9;  break; /* orange */\n  290 |             case THERON_CLASS_PRIEST:  class_col = 15; break; /* white */\n  291 |             case THERON_CLASS_WIZARD:  class_col = 14; break; /* blue */\n  292 |         }\n/Users/bosse/.openclaw/workspace-main/src/theron/theron_v1_ui_chrome.c:55:20: warning: unused function 'dungeon_name' [-Wunused-function]\n   55 | static const char *dungeon_name(int dungeon_id) {\n      |                    ^~~~~~~~~~~~\n2 warnings generated.\n[700/706] Building C object CMakeFiles/firestaff_theron.dir/src/theron/theron_v1_viewport.c.o\n/Users/bosse/.openclaw/workspace-main/src/theron/theron_v1_viewport.c:366:63: warning: passing 'const Theron_V1_Party *' to parameter of type 'Theron_V1_Party *' discards qualifiers [-Wincompatible-pointer-types-discards-qualifiers]\n  366 |     const Theron_V1_Champion *theron = theron_v1_party_leader(&world->party);\n      |                                                               ^~~~~~~~~~~~~\n/Users/bosse/.openclaw/workspace-main/include/theron_v1_champions.h:215:61: note: passing argument to parameter 'party' here\n  215 | Theron_V1_Champion *theron_v1_party_leader(Theron_V1_Party *party);\n      |                                                             ^\n/Users/bosse/.openclaw/workspace-main/src/theron/theron_v1_viewport.c:580:63: warning: passing 'const Theron_V1_Party *' to parameter of type 'Theron_V1_Party *' discards qualifiers [-Wincompatible-pointer-types-discards-qualifiers]\n  580 |     const Theron_V1_Champion *theron = theron_v1_party_leader(&world->party);\n      |                                                               ^~~~~~~~~~~~~\n/Users/bosse/.openclaw/workspace-main/include/theron_v1_champions.h:215:61: note: passing argument to parameter 'party' here\n  215 | Theron_V1_Champion *theron_v1_party_leader(Theron_V1_Party *party);\n      |                                                             ^\n/Users/bosse/.openclaw/workspace-main/src/theron/theron_v1_viewport.c:677:17: warning: enumeration value 'THERON_CLASS_COUNT' not handled in switch [-Wswitch]\n  677 |         switch (champion->primary_class) {\n      |                 ^~~~~~~~~~~~~~~~~~~~~~~\n/Users/bosse/.openclaw/workspace-main/src/theron/theron_v1_viewport.c:677:17: note: add missing switch cases\n  677 |         switch (champion->primary_class) {\n      |                 ^\n  678 |             case THERON_CLASS_FIGHTER: class_col = 8;  break; /* red */\n  679 |             case THERON_CLASS_NINJA:   class_col = 9;  break; /* orange */\n  680 |             case THERON_CLASS_PRIEST:  class_col = 15; break; /* white */\n  681 |             case THERON_CLASS_WIZARD:  class_col = 14; break; /* blue */\n  682 |         }\n/Users/bosse/.openclaw/workspace-main/src/theron/theron_v1_viewport.c:747:71: warning: passing 'const Theron_V1_Party *' to parameter of type 'Theron_V1_Party *' discards qualifiers [-Wincompatible-pointer-types-discards-qualifiers]\n  747 |             const Theron_V1_Champion *c = theron_v1_party_getChampion(&world->party, i);\n      |                                                                       ^~~~~~~~~~~~~\n/Users/bosse/.openclaw/workspace-main/include/theron_v1_champions.h:212:66: note: passing argument to parameter 'party' here\n  212 | Theron_V1_Champion *theron_v1_party_getChampion(Theron_V1_Party *party, int slot);\n      |                                                                  ^\n/Users/bosse/.openclaw/workspace-main/src/theron/theron_v1_viewport.c:509:20: warning: unused function 'theron_dungeon_name' [-Wunused-function]\n  509 | static const char *theron_dungeon_name(int dungeon_id) {\n      |                    ^~~~~~~~~~~~~~~~~~~\n5 warnings generated.\n[701/706] Building C object CMakeFiles/firestaff_theron.dir/src/theron/theron_v1_world.c.o\n/Users/bosse/.openclaw/workspace-main/src/theron/theron_v1_world.c:57:33: warning: unused variable 'g_blank_companion' [-Wunused-const-variable]\n   57 | static const Theron_V1_Champion g_blank_companion = {\n      |                                 ^~~~~~~~~~~~~~~~~\n/Users/bosse/.openclaw/workspace-main/src/theron/theron_v1_world.c:104:15: warning: unused function '_tqw_champion_block_size' [-Wunused-function]\n  104 | static size_t _tqw_champion_block_size(void) {\n      |               ^~~~~~~~~~~~~~~~~~~~~~~~\n/Users/bosse/.openclaw/workspace-main/src/theron/theron_v1_world.c:445:3: warning: unused variable 'g_queued' [-Wunused-variable]\n  445 | } g_queued = {0};\n      |   ^~~~~~~~\n3 warnings generated.\n[702/706] Linking C static library libfirestaff_m11.a\n[703/706] Linking C static library libfirestaff_theron.a\n[704/706] Building C object CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o\n[705/706] Linking C executable firestaff\nld: warning: ignoring duplicate libraries: 'libfirestaff_m10.a', 'libfirestaff_m11.a', 'libfirestaff_m12.a', 'libfirestaff_theron.a', 'libfirestaff_v2.a'\n",
         "returncode": 0
       }
     },
@@ -228,7 +228,7 @@
       "kind": "live_runtime_redraw_state",
       "observed": {
         "active": 1,
-        "gameTick": 23,
+        "gameTick": 22,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -262,7 +262,7 @@
     }
   ],
   "dm1Data": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "cd7bd37ef6aafca978c34501de715afd7dd8b3bf",
+  "head": "dc1ad7524bf964bcb5cf0f90080eb579772bf8c0",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -281,7 +281,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/main_loop_m11.c"
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/main_loop_m11.c"
     },
     {
       "claim": "runtime probe records the same live movement pipeline result used by the redraw route",
@@ -293,7 +293,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/main_loop_m11.c"
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/main_loop_m11.c"
     },
     {
       "claim": "input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport",
@@ -307,7 +307,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c"
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c"
     },
     {
       "claim": "normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback",
@@ -324,10 +324,10 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c"
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c"
     }
   ],
-  "repo": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.v1",
   "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
   "script": "enter,down,down,down,down,down,down,enter,right",
@@ -444,5 +444,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
-  "timestampUtc": "2026-06-12T19:27:44.006647+00:00"
+  "timestampUtc": "2026-06-12T19:48:19.679096+00:00"
 }
