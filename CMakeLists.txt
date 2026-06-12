@@ -1364,6 +1364,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_chest_empty_hand_mouth_close_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 open-chest eye object-description runtime gate.
+# Opens an action-hand chest with a hidden ninth tail, clicks C546 with a
+# weapon in the leader hand through the real pointer route, and verifies the
+# source F0342/F0334 close/rewrite plus C020/C029 object-description render.
+add_executable(firestaff_dm1_v1_chest_eye_object_description_runtime_probe
+    probes/m11/firestaff_dm1_v1_chest_eye_object_description_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_chest_eye_object_description_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_chest_eye_object_description_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion panel status-recompute runtime integration probe.
 # Locks the contract-only dm1_v1_champion_panel_status_recompute slice's
 # food/water/poison panel visible-delta spec against the M11 draw stack
