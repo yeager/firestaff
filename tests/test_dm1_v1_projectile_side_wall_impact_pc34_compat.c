@@ -111,7 +111,9 @@ static const SideWallCase kSideWallCases[4] = {
 
 typedef struct {
     const char* label;
+    int sourceSquareType;
     int destSquareType;
+    int destFakeWallIsImaginaryOrOpen;
     int destDoorState;
     int destHasFluxcage;
     int destHasOtherProjectile;
@@ -124,7 +126,9 @@ typedef struct {
 static const SideCellBlockerCase kSideCellBlockers[] = {
     {
         "side_lane_wall",
+        PROJECTILE_ELEMENT_CORRIDOR,
         PROJECTILE_ELEMENT_WALL,
+        0,
         PROJECTILE_DOOR_STATE_NONE,
         0,
         0,
@@ -134,8 +138,36 @@ static const SideCellBlockerCase kSideCellBlockers[] = {
         0
     },
     {
+        "side_lane_closed_fakewall",
+        PROJECTILE_ELEMENT_CORRIDOR,
+        PROJECTILE_ELEMENT_FAKEWALL,
+        0,
+        PROJECTILE_DOOR_STATE_NONE,
+        0,
+        0,
+        0,
+        PROJECTILE_BLOCKER_WALL,
+        PROJECTILE_RESULT_HIT_WALL,
+        0
+    },
+    {
+        "side_lane_stairs_from_stairs",
+        PROJECTILE_ELEMENT_STAIRS,
+        PROJECTILE_ELEMENT_STAIRS,
+        0,
+        PROJECTILE_DOOR_STATE_NONE,
+        0,
+        0,
+        0,
+        PROJECTILE_BLOCKER_STAIRS,
+        PROJECTILE_RESULT_HIT_WALL,
+        0
+    },
+    {
         "side_lane_closed_door",
+        PROJECTILE_ELEMENT_CORRIDOR,
         PROJECTILE_ELEMENT_DOOR,
+        0,
         PROJECTILE_DOOR_STATE_CLOSED_FULL,
         0,
         0,
@@ -147,6 +179,8 @@ static const SideCellBlockerCase kSideCellBlockers[] = {
     {
         "side_lane_fluxcage",
         PROJECTILE_ELEMENT_CORRIDOR,
+        PROJECTILE_ELEMENT_CORRIDOR,
+        0,
         PROJECTILE_DOOR_STATE_NONE,
         1,
         0,
@@ -158,6 +192,8 @@ static const SideCellBlockerCase kSideCellBlockers[] = {
     {
         "side_lane_other_projectile",
         PROJECTILE_ELEMENT_CORRIDOR,
+        PROJECTILE_ELEMENT_CORRIDOR,
+        0,
         PROJECTILE_DOOR_STATE_NONE,
         0,
         1,
@@ -169,6 +205,8 @@ static const SideCellBlockerCase kSideCellBlockers[] = {
     {
         "side_lane_boundary",
         PROJECTILE_ELEMENT_CORRIDOR,
+        PROJECTILE_ELEMENT_CORRIDOR,
+        0,
         PROJECTILE_DOOR_STATE_NONE,
         0,
         0,
@@ -326,11 +364,12 @@ static void make_side_cell_blocker_digest(
     d->sourceMapIndex          = 0;
     d->sourceMapX              = m->sourceMapX;
     d->sourceMapY              = m->sourceMapY;
-    d->sourceSquareType        = PROJECTILE_ELEMENT_CORRIDOR;
+    d->sourceSquareType        = c->sourceSquareType;
     d->destMapIndex            = 0;
     d->destMapX                = m->blockerMapX;
     d->destMapY                = m->blockerMapY;
     d->destSquareType          = c->destSquareType;
+    d->destFakeWallIsImaginaryOrOpen = c->destFakeWallIsImaginaryOrOpen;
     d->destDoorState           = c->destDoorState;
     d->destHasFluxcage         = c->destHasFluxcage;
     d->destHasOtherProjectile  = c->destHasOtherProjectile;
