@@ -71,7 +71,9 @@
  * route.  It also repeats that C080/C040 interaction after an accepted
  * lateral movement into the north-facing Hall mirror, proving a strafe-produced
  * mirror pose can enter and clear the same real-asset panel without leaving
- * stale portrait or panel pixels.  It also
+ * stale portrait or panel pixels.  It also clicks the original movement-arrow
+ * boxes while C040 is live, proving the M568 panel dispatch ignores off-panel
+ * movement hits and keeps the mirror portrait/panel stack stable.  It also
  * drives the source C006/C004 lateral command pair against the south-facing
  * Hall mirror, covering the blocked movement redraw branch that the
  * forward/back and turn routes do not touch.  It also
@@ -780,6 +782,133 @@ static int check_strafe_moved_mirror_candidate_cancel(M11_GameViewState* game,
     return ok;
 }
 
+static int check_panel_live_movement_arrow_guard(M11_GameViewState* game,
+                                                 const M11_AssetSlot* portraits,
+                                                 const M11_AssetSlot* rrPanel,
+                                                 unsigned char* outFb) {
+    M11_GameInputResult result;
+    PanelMatch panelMatch;
+    InputWalkStep checkStep;
+    int ok = 1;
+
+    /* ReDMCSB COMMAND.C F0359 lines 1985-1990 dispatches M568/C040 clicks
+     * only through the resurrect/reincarnate/cancel panel boxes.  Movement
+     * arrows outside C160/C161/C162 must therefore be ignored while the
+     * panel owns input, preserving the live Hall mirror pose and C040 over
+     * the DUNVIEW.C:3913-3928 / 8522-8533 D1C portrait blit. */
+    start_independent_input_route(game, 1, 4, DIR_SOUTH);
+    memset(&checkStep, 0, sizeof(checkStep));
+    checkStep.mapX = 1;
+    checkStep.mapY = 4;
+    checkStep.dir = DIR_SOUTH;
+    checkStep.expectedOrdinal = 3;
+    checkStep.inputBeforeCheck = -1;
+    checkStep.allowNoPortraitDominance = 0;
+    checkStep.label = "hall_panel_arrow_guard_start_ordinal_3";
+    if (!check_input_walk_step(game, portraits, -2, &checkStep, outFb)) {
+        ok = 0;
+    }
+
+    result = M11_GameView_HandlePointerButton(game,
+                                              PROBE_FRONT_PORTRAIT_CLICK_X,
+                                              PROBE_FRONT_PORTRAIT_CLICK_Y,
+                                              M11_DM1_MOUSE_MASK_LEFT);
+    if (result != M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr,
+                "FAIL hall_panel_arrow_guard_portrait_click result=%d want=%d\n",
+                result, M11_GAME_INPUT_REDRAW);
+        ok = 0;
+    }
+    if (game->candidateMirrorPanelActive != 1 ||
+        game->inventoryPanelActive != 1 ||
+        game->candidateMirrorOrdinal != 3 ||
+        game->candidateMirrorPartyIndex != 0 ||
+        game->world.party.championCount != 1) {
+        fprintf(stderr,
+                "FAIL hall_panel_arrow_guard_open state panel=%d inventory=%d ordinal=%d partyIndex=%d champions=%d\n",
+                game->candidateMirrorPanelActive,
+                game->inventoryPanelActive,
+                game->candidateMirrorOrdinal,
+                game->candidateMirrorPartyIndex,
+                game->world.party.championCount);
+        ok = 0;
+    }
+
+    result = M11_GameView_HandlePointer(game, 304, 135, 1);
+    if (result != M11_GAME_INPUT_IGNORED) {
+        fprintf(stderr,
+                "FAIL hall_panel_arrow_guard_right_arrow result=%d want=%d\n",
+                result, M11_GAME_INPUT_IGNORED);
+        ok = 0;
+    }
+    result = M11_GameView_HandlePointer(game, 276, 135, 1);
+    if (result != M11_GAME_INPUT_IGNORED) {
+        fprintf(stderr,
+                "FAIL hall_panel_arrow_guard_forward_arrow result=%d want=%d\n",
+                result, M11_GAME_INPUT_IGNORED);
+        ok = 0;
+    }
+    if (game->world.party.mapX != 1 ||
+        game->world.party.mapY != 4 ||
+        game->world.party.direction != DIR_SOUTH ||
+        game->candidateMirrorPanelActive != 1 ||
+        game->inventoryPanelActive != 1 ||
+        game->candidateMirrorOrdinal != 3 ||
+        game->candidateMirrorPartyIndex != 0 ||
+        game->world.party.championCount != 1 ||
+        M11_GameView_GetFrontMirrorOrdinal(game) != 3) {
+        fprintf(stderr,
+                "FAIL hall_panel_arrow_guard_state pose=(%d,%d,%d) panel=%d inventory=%d ordinal=%d partyIndex=%d champions=%d front=%d\n",
+                game->world.party.mapX,
+                game->world.party.mapY,
+                game->world.party.direction,
+                game->candidateMirrorPanelActive,
+                game->inventoryPanelActive,
+                game->candidateMirrorOrdinal,
+                game->candidateMirrorPartyIndex,
+                game->world.party.championCount,
+                M11_GameView_GetFrontMirrorOrdinal(game));
+        ok = 0;
+    }
+    memset(outFb, 0, sizeof(*outFb) * (size_t)(PROBE_FB_W * PROBE_FB_H));
+    M11_GameView_Draw(game, outFb, PROBE_FB_W, PROBE_FB_H);
+    panelMatch = match_panel(rrPanel, outFb, 6);
+    if (panelMatch.assetOpaque <= 0 ||
+        panelMatch.assetDrawn * 100 < 90 * panelMatch.assetOpaque) {
+        fprintf(stderr,
+                "FAIL hall_panel_arrow_guard C040 missing drawn=%d/%d\n",
+                panelMatch.assetDrawn, panelMatch.assetOpaque);
+        ok = 0;
+    }
+
+    result = M11_GameView_HandlePointerButton(game,
+                                              PROBE_CANCEL_CLICK_X,
+                                              PROBE_CANCEL_CLICK_Y,
+                                              M11_DM1_MOUSE_MASK_LEFT);
+    if (result != M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr,
+                "FAIL hall_panel_arrow_guard_cancel result=%d want=%d\n",
+                result, M11_GAME_INPUT_REDRAW);
+        ok = 0;
+    }
+    memset(&checkStep, 0, sizeof(checkStep));
+    checkStep.mapX = 1;
+    checkStep.mapY = 4;
+    checkStep.dir = DIR_SOUTH;
+    checkStep.expectedOrdinal = 3;
+    checkStep.inputBeforeCheck = -1;
+    checkStep.allowNoPortraitDominance = 0;
+    checkStep.label = "hall_panel_arrow_guard_after_cancel_ordinal_3";
+    if (!check_input_walk_step(game, portraits, -2, &checkStep, outFb)) {
+        ok = 0;
+    }
+
+    printf("hall_panel_live_movement_arrow_guard C040=%d/%d front=%d\n",
+           panelMatch.assetDrawn, panelMatch.assetOpaque,
+           M11_GameView_GetFrontMirrorOrdinal(game));
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -1099,6 +1228,10 @@ int main(int argc, char** argv) {
     }
 
     if (!check_strafe_moved_mirror_candidate_cancel(&game, portraits, rrPanel, currFb)) {
+        ok = 0;
+    }
+
+    if (!check_panel_live_movement_arrow_guard(&game, portraits, rrPanel, currFb)) {
         ok = 0;
     }
 
