@@ -75,6 +75,8 @@ class FrameQuality:
     blackout: bool
     capture_backend: str = "unknown"
     capture_source: str = ""
+    capture_source_sha256: str = ""
+    normalized_rgb_sha256: str = ""
     host_active_app: str = ""
     dosbox_window_bounds: str = ""
 
@@ -620,6 +622,8 @@ def dry_run(plan: list[PlanStep],
             failures.append("dosbox rawshot backend: metadata source mismatch")
         if rawshot_meta.get("capture_source_size") != str(320 * 200):
             failures.append("dosbox rawshot backend: source size metadata missing")
+        if rawshot_meta.get("capture_source_sha256") != _sha256_file(rawshot_source):
+            failures.append("dosbox rawshot backend: source sha256 metadata mismatch")
         rewrite_capture_dir = tmp_root / "rawshot-rewrite-capture-root" / "dosbox-capture"
         rewrite_capture_dir.mkdir(parents=True)
         rewrite_source = rewrite_capture_dir / "rewritten.raw"
@@ -642,6 +646,19 @@ def dry_run(plan: list[PlanStep],
             failures.append("dosbox rawshot backend: rewritten .raw fixture decoded as blackout")
         if rewrite_meta.get("capture_source") != str(rewrite_source):
             failures.append("dosbox rawshot backend: rewritten source metadata mismatch")
+        if rewrite_meta.get("capture_source_sha256") != _sha256_file(rewrite_source):
+            failures.append("dosbox rawshot backend: rewritten source sha256 metadata mismatch")
+        rewrite_quality = _frame_quality(
+            rewrite_img,
+            "rawshot_rewrite_fixture",
+            "dungeon_gameplay",
+            rewrite_meta,
+        )
+        if rewrite_quality.capture_source_sha256 != _sha256_file(rewrite_source):
+            failures.append("frame quality: rawshot source sha256 was not propagated")
+        if rewrite_quality.normalized_rgb_sha256 != hashlib.sha256(
+                rewrite_img.convert("RGB").resize((320, 200)).tobytes()).hexdigest():
+            failures.append("frame quality: normalized RGB sha256 mismatch")
     return matched, total, failures
 
 
@@ -897,6 +914,7 @@ def _load_latest_dosbox_capture(
         "capture_source": str(latest),
         "capture_source_mtime_ns": str(latest_sig[0]),
         "capture_source_size": str(latest_sig[1]),
+        "capture_source_sha256": _sha256_file(latest),
         "host_active_app": _frontmost_process_name(),
         "dosbox_window_bounds": _bounds_text(_dosbox_window_bounds()),
     }
@@ -1090,6 +1108,8 @@ def _frame_quality(
         blackout=full < BLACKOUT_NONBLACK_THRESH,
         capture_backend=meta.get("capture_backend", "fixture"),
         capture_source=meta.get("capture_source", ""),
+        capture_source_sha256=meta.get("capture_source_sha256", ""),
+        normalized_rgb_sha256=hashlib.sha256(arr.tobytes()).hexdigest(),
         host_active_app=meta.get("host_active_app", ""),
         dosbox_window_bounds=meta.get("dosbox_window_bounds", ""),
     )
@@ -1331,6 +1351,8 @@ def _last_quality_from_log(capture_root: Path) -> FrameQuality | None:
             blackout=bool(data.get("blackout", False)),
             capture_backend=str(data.get("capture_backend", "unknown")),
             capture_source=str(data.get("capture_source", "")),
+            capture_source_sha256=str(data.get("capture_source_sha256", "")),
+            normalized_rgb_sha256=str(data.get("normalized_rgb_sha256", "")),
             host_active_app=str(data.get("host_active_app", "")),
             dosbox_window_bounds=str(data.get("dosbox_window_bounds", "")),
         )
