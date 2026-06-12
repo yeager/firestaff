@@ -109,6 +109,7 @@ RUNTIME_DATA_REQUIRED_FILES = ("GRAPHICS.DAT", "DUNGEON.DAT")
 LIVE_INPUT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.live_inputs.v1"
 LIVE_ABORT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.abort.v1"
 FOCUS_MISMATCH_FRAME_LIMIT = 4
+DOSBOX_INTERNAL_CAPTURE_GLOBS = ("*.png", "*.bmp", "*.raw")
 
 
 class QuietRunTimeout:
@@ -540,6 +541,29 @@ def dry_run(plan: list[PlanStep],
             failures.append("auto capture backend: fallback backend metadata mismatch")
         if "auto-visible-after-peekaboo-blackout" not in fallback_meta.get("capture_source", ""):
             failures.append("auto capture backend: fallback provenance missing")
+        rawshot_root = tmp_root / "rawshot-capture-root"
+        rawshot_capture_dir = rawshot_root / "dosbox-capture"
+        rawshot_capture_dir.mkdir(parents=True)
+        existing_rawshot = rawshot_capture_dir / "old.raw"
+        existing_rawshot.write_bytes(b"\x01" * (320 * 200))
+        time.sleep(0.01)
+        rawshot_source = rawshot_capture_dir / "new.raw"
+        rawshot_source.write_bytes(
+            b"\x00" * (320 * 33) +
+            b"\x44" * (320 * 136) +
+            b"\x00" * (320 * 31)
+        )
+        rawshot_target = rawshot_root / "state-samples" / "rawshot_fixture.png"
+        rawshot_img, rawshot_meta = _load_latest_dosbox_capture(
+            rawshot_target,
+            {existing_rawshot},
+        )
+        if _is_capture_blackout(rawshot_img):
+            failures.append("dosbox rawshot backend: latest .raw fixture decoded as blackout")
+        if rawshot_meta.get("capture_backend") != "dosbox-rawshot":
+            failures.append("dosbox rawshot backend: metadata backend mismatch")
+        if rawshot_meta.get("capture_source") != str(rawshot_source):
+            failures.append("dosbox rawshot backend: metadata source mismatch")
     return matched, total, failures
 
 
@@ -688,6 +712,117 @@ def _capture_with_peekaboo(raw: Path) -> tuple[dict[str, str], bool]:
     }, proc.returncode == 0 and raw.is_file()
 
 
+def _dosbox_capture_dir(raw: Path) -> Path:
+    return raw.parent.parent / "dosbox-capture"
+
+
+def _known_dosbox_capture_files(capture_dir: Path) -> set[Path]:
+    known: set[Path] = set()
+    if not capture_dir.is_dir():
+        return known
+    for pattern in DOSBOX_INTERNAL_CAPTURE_GLOBS:
+        known.update(capture_dir.glob(pattern))
+    return known
+
+
+def _trigger_dosbox_internal_screenshot() -> None:
+    """Ask DOSBox to write its own capture artifact.
+
+    DOSBox Staging maps screenshots to Ctrl+F5 by default.  This path
+    bypasses macOS host-window capture entirely, which is the current
+    black-frame blocker.  The generated conf pins
+    ``default_image_capture_formats=raw``; the loader below also accepts
+    PNG/BMP so operators can test with either rawshot or rendshot mapper
+    bindings without changing the route state machine.
+    """
+    _activate_dosbox()
+    script = r'''
+tell application "System Events"
+  key code 96 using {control down}
+end tell
+'''
+    proc = _run_quiet(["osascript", "-e", script], timeout=5.0)
+    if proc.returncode != 0:
+        raise RuntimeError(
+            "failed to trigger DOSBox screenshot via Ctrl+F5: "
+            f"{proc.stderr.strip() or proc.stdout.strip()}"
+        )
+
+
+def _decode_dosbox_raw_capture(source: Path):
+    """Decode the raw 320x200 screenshot form written by DOSBox.
+
+    The state detector only needs non-black density, so 64,000-byte raw
+    VGA index dumps can be converted directly to an 8-bit grayscale
+    image.  If a 768-byte RGB palette follows the index plane, use it.
+    """
+    if not _DETECTOR_OK:
+        raise RuntimeError("Pillow and numpy are required for --live")
+    from PIL import Image
+
+    data = source.read_bytes()
+    pixels = 320 * 200
+    if len(data) == pixels:
+        return Image.frombytes("L", (320, 200), data).convert("RGB")
+    if len(data) >= pixels + 768:
+        pal = data[pixels:pixels + 768]
+        img = Image.frombytes("P", (320, 200), data[:pixels])
+        img.putpalette(list(pal))
+        return img.convert("RGB")
+    raise RuntimeError(
+        f"unsupported DOSBox rawshot size for {source}: "
+        f"{len(data)} bytes, expected 64000 or 64768+"
+    )
+
+
+def _load_dosbox_capture_image(source: Path):
+    if source.suffix.lower() == ".raw":
+        return _decode_dosbox_raw_capture(source)
+    if not _DETECTOR_OK:
+        raise RuntimeError("Pillow and numpy are required for --live")
+    from PIL import Image
+
+    return Image.open(source).convert("RGB")
+
+
+def _load_latest_dosbox_capture(raw: Path, known: set[Path]) -> tuple[object, dict[str, str]]:
+    capture_dir = _dosbox_capture_dir(raw)
+    candidates = [
+        item
+        for pattern in DOSBOX_INTERNAL_CAPTURE_GLOBS
+        for item in capture_dir.glob(pattern)
+        if item not in known and item.is_file()
+    ]
+    if not candidates:
+        raise RuntimeError(f"DOSBox rawshot did not create a capture in {capture_dir}")
+    latest = max(candidates, key=lambda p: (p.stat().st_mtime_ns, p.name))
+    img = _load_dosbox_capture_image(latest)
+    raw.parent.mkdir(parents=True, exist_ok=True)
+    img.save(raw)
+    return img, {
+        "capture_backend": "dosbox-rawshot",
+        "capture_source": str(latest),
+        "host_active_app": _frontmost_process_name(),
+        "dosbox_window_bounds": _bounds_text(_dosbox_window_bounds()),
+    }
+
+
+def _capture_with_dosbox_rawshot(raw: Path) -> tuple[object, dict[str, str]]:
+    capture_dir = _dosbox_capture_dir(raw)
+    capture_dir.mkdir(parents=True, exist_ok=True)
+    known = _known_dosbox_capture_files(capture_dir)
+    _trigger_dosbox_internal_screenshot()
+    deadline = time.time() + 5.0
+    last_error = ""
+    while time.time() < deadline:
+        try:
+            return _load_latest_dosbox_capture(raw, known)
+        except RuntimeError as exc:
+            last_error = str(exc)
+            time.sleep(0.1)
+    raise RuntimeError(last_error or f"DOSBox rawshot did not create a capture in {capture_dir}")
+
+
 def _capture_raw_frame(raw: Path, capture_backend: str) -> dict[str, str]:
     if capture_backend == "peekaboo":
         meta, ok = _capture_with_peekaboo(raw)
@@ -698,6 +833,9 @@ def _capture_raw_frame(raw: Path, capture_backend: str) -> dict[str, str]:
         meta, ok = _capture_with_screencapture(raw)
         if not ok:
             raise RuntimeError(f"screencapture failed to capture {raw}")
+        return meta
+    if capture_backend == "dosbox-rawshot":
+        _img, meta = _capture_with_dosbox_rawshot(raw)
         return meta
     if capture_backend != "auto":
         raise ValueError(f"unsupported capture backend: {capture_backend}")
@@ -737,6 +875,14 @@ def _normalize_capture_image(raw: Path):
     from PIL import Image
 
     img = Image.open(raw).convert("RGB")
+    return _normalize_loaded_capture_image(img)
+
+
+def _normalize_loaded_capture_image(img):
+    if not _DETECTOR_OK:
+        raise RuntimeError("Pillow and numpy are required for --live")
+    from PIL import Image
+
     resample = getattr(getattr(Image, "Resampling", Image), "NEAREST")
     return _crop_to_4x3(img).resize((320, 200), resample)
 
@@ -753,8 +899,12 @@ def _screenshot_frame(capture_root: Path, label: str, capture_backend: str):
     capture_root.mkdir(parents=True, exist_ok=True)
     raw = capture_root / "state-samples" / f"{label}.png"
     raw.parent.mkdir(parents=True, exist_ok=True)
-    meta = _capture_raw_frame(raw, capture_backend)
-    img = _normalize_capture_image(raw)
+    if capture_backend == "dosbox-rawshot":
+        img, meta = _capture_with_dosbox_rawshot(raw)
+        img = _normalize_loaded_capture_image(img)
+    else:
+        meta = _capture_raw_frame(raw, capture_backend)
+        img = _normalize_capture_image(raw)
     if capture_backend == "auto" and _is_capture_blackout(img):
         alternate_backend = (
             "screencapture"
@@ -1269,10 +1419,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--blackout-frame-limit", type=int, default=6,
                         help="abort after N consecutive all-black host captures "
                              "(default 6; set 0 to disable)")
-    parser.add_argument("--capture-backend", choices=("auto", "peekaboo", "screencapture"),
+    parser.add_argument("--capture-backend",
+                        choices=("auto", "peekaboo", "screencapture", "dosbox-rawshot"),
                         default="auto",
                         help="host screenshot backend for --live (default auto: "
-                             "Peekaboo when available, else screencapture)")
+                             "Peekaboo when available, else screencapture; "
+                             "dosbox-rawshot uses DOSBox's internal Ctrl+F5 capture)")
     args = parser.parse_args(argv)
 
     plan = DEFAULT_PLAN

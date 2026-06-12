@@ -769,7 +769,7 @@ self-test.
 | `unclassified` on all frames | DOSBox not rendering at 320×200; wrong machine type | Ensure `machine=svga_s3` in config |
 | `champion_create` never detected | Selector timed out before champion create | Increase selector wait in run() |
 | `dungeon_gameplay` timeout | DOSBox entrance failed; enter not processed | Check that DOSBox has keyboard focus; add extra ENTER |
-| Black viewport region | DOSBox not focused (screencapture got wrong window) | Add `osascript -e 'tell app "DOSBox Staging" to activate'` |
+| Black viewport region | DOSBox not focused or host capture API returned the wrong/blank window | First try `--capture-backend dosbox-rawshot` so DOSBox writes its own Ctrl+F5 capture into `dosbox-capture/`; otherwise add `osascript -e 'tell app "DOSBox Staging" to activate'` and retry `auto` |
 | Duplicate crop SHA256 | Game state identical — no input was processed | Verify key was sent (check `cliclick` output) |
 
 ---
