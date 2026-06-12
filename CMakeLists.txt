@@ -4649,6 +4649,20 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat
     )
 
+    add_executable(test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat
+        tests/dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat.c
+        src/dm1/dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat
+        COMMAND test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat
+    )
+
     add_executable(test_dm1_v1_inventory_consumables_pc34_compat
         tests/test_dm1_v1_inventory_consumables_pc34_compat.c
         src/dm1/dm1_v1_sound_pc34_compat.c
@@ -6219,6 +6233,20 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_mirror_candidate_resurrect_reselect_with_inventory_pickup_pc34_compat
         COMMAND test_dm1_v1_mirror_candidate_resurrect_reselect_with_inventory_pickup_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat
+        tests/dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat
+        PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat
     )
 
     add_executable(firestaff_dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat_test
@@ -8379,7 +8407,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         src/dm1/dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat.c
     )
     add_executable(test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat
-        tests/test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat.c
+        tests/dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat.c
         src/dm1/dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat.c
     )
     add_executable(test_dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat
