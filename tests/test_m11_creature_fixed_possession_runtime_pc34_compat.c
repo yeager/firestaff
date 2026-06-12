@@ -412,6 +412,84 @@ static void test_dead_trolin_inserts_fixed_drop_into_existing_object_chain(void)
               "dead trolin group slot is returned to source unused pool");
 }
 
+static void test_dead_mummy_preserves_carried_tail_and_floor_chain(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char mapTiles[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[8];
+    struct DungeonArmour_Compat armours[8];
+    struct DungeonJunk_Compat junks[12];
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[1];
+    unsigned char weaponRaw[8][4];
+    unsigned char armourRaw[8][4];
+    unsigned char junkRaw[12][4];
+    unsigned char groupRaw[1][16];
+    unsigned short groupThing = (unsigned short)(THING_TYPE_GROUP << 10);
+    unsigned short existingFloorJunk =
+        (unsigned short)((THING_TYPE_JUNK << 10) | 0);
+    unsigned short carriedHead =
+        (unsigned short)((THING_TYPE_JUNK << 10) | 1);
+    unsigned short carriedTail =
+        (unsigned short)((THING_TYPE_JUNK << 10) | 2);
+
+    seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
+                    weapons, armours, junks, squareFirstThings,
+                    weaponRaw, armourRaw, junkRaw);
+    memset(groups, 0, sizeof(groups));
+    memset(groupRaw, 0, sizeof(groupRaw));
+
+    junks[0].next = THING_ENDOFLIST;
+    junks[0].type = 25;
+    store_raw_next(junkRaw[0], THING_ENDOFLIST);
+    junkRaw[0][2] = 25;
+    junks[1].next = carriedTail;
+    junks[1].type = 33;
+    store_raw_next(junkRaw[1], carriedTail);
+    junkRaw[1][2] = 33;
+    junks[2].next = THING_ENDOFLIST;
+    junks[2].type = 34;
+    store_raw_next(junkRaw[2], THING_ENDOFLIST);
+    junkRaw[2][2] = 34;
+
+    groups[0].next = existingFloorJunk;
+    groups[0].slot = carriedHead;
+    groups[0].creatureType = 10; /* Mummy: no fixed-possession table. */
+    groups[0].cells = 0;
+    groups[0].count = 0;
+    groups[0].health[0] = 0;
+    store_raw_next(groupRaw[0], existingFloorJunk);
+    things.groups = groups;
+    things.groupCount = 1;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.rawThingData[THING_TYPE_GROUP] = &groupRaw[0][0];
+    things.squareFirstThings[0] = groupThing;
+
+    /* ReDMCSB GROUP.C:F0188:724-731 walks the dead group's Slot chain and
+     * inserts each carried object through F0267 before GROUP.C:F0189 removes
+     * the dead group from the square. This pins the object-chain handoff when
+     * there is no F0186 fixed-possession generation to hide a lost tail. */
+    ASSERT_EQ(M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
+                  &state, groupThing, 0, 0, 0),
+              1, "dead mummy runtime death/drop path accepted");
+
+    ASSERT_EQ(things.squareFirstThings[0], carriedTail,
+              "second carried object is first after source-order prepends");
+    ASSERT_EQ(raw_next_for_thing(&things, carriedTail), carriedHead,
+              "second carried object links to original carried head");
+    ASSERT_EQ(raw_next_for_thing(&things, carriedHead), existingFloorJunk,
+              "carried head links to pre-existing floor object after group unlink");
+    ASSERT_EQ(raw_next_for_thing(&things, existingFloorJunk), THING_ENDOFLIST,
+              "pre-existing floor object remains chain tail");
+    ASSERT_EQ(groups[0].slot, THING_NONE,
+              "dead mummy carried slot chain is consumed");
+    ASSERT_EQ(groups[0].next, THING_NONE,
+              "dead mummy group slot is returned to source unused pool");
+}
+
 int main(void) {
     printf("M11 creature fixed possession runtime source-lock gate\n");
     printf("Source: ReDMCSB GROUP.C F0186/F0188, DUNGEON.C F0166, MOVESENS.C F0267\n\n");
@@ -421,6 +499,7 @@ int main(void) {
     test_fixed_drops_do_not_append_when_pool_exhausted();
     test_dead_group_runtime_materializes_and_removes_group();
     test_dead_trolin_inserts_fixed_drop_into_existing_object_chain();
+    test_dead_mummy_preserves_carried_tail_and_floor_chain();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
