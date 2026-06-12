@@ -22,6 +22,21 @@ DOSBOX="${DOSBOX:-/Applications/DOSBox Staging.app/Contents/MacOS/dosbox}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM1_ORIGINAL_ROUTE_EVENTS:-}"
+EXPECTED_SHOTS="${DM1_ORIGINAL_EXPECTED_SHOTS:-6}"
+case "${EXPECTED_SHOTS}" in
+    single|single-row|single-transcript-row|pass625|pass626) EXPECTED_SHOTS_COUNT=1 ;;
+    ''|*[!0-9]*)
+        echo "ERROR: DM1_ORIGINAL_EXPECTED_SHOTS must be a positive integer or single-transcript-row" >&2
+        exit 2
+        ;;
+    *)
+        EXPECTED_SHOTS_COUNT="${EXPECTED_SHOTS}"
+        if [[ "${EXPECTED_SHOTS_COUNT}" -le 0 ]]; then
+            echo "ERROR: DM1_ORIGINAL_EXPECTED_SHOTS must be positive" >&2
+            exit 2
+        fi
+        ;;
+esac
 SKIP_STARTUP_SELECTOR="${DM1_ROUTE_SKIP_STARTUP_SELECTOR:-0}"
 ORIGINAL_PROGRAM="${DM1_ORIGINAL_PROGRAM:-DM VGA}"
 CONF="${OUT_DIR}/dosbox-original-viewports.conf"
@@ -83,6 +98,11 @@ Optional environment:
                     override autoexec launch command; recommended for bypassing
                     the original selector and entering VGA/no-sound/keyboard mode
                     directly. 'DM VGA' remains the default for legacy runs.
+  DM1_ORIGINAL_EXPECTED_SHOTS=6
+                    required raw screenshot count. Legacy overlay routes use 6.
+                    Use 1, or 'single-transcript-row', for the pass625/pass626
+                    C002 turn-redraw transcript row so black-frame/rawshot
+                    health can be checked before transcript writing.
   click:<x>,<y>    posts one serialized left-click in original 320x200 game
                     coordinates. Use waits around clicks; ReDMCSB BUG0_73 shows
                     mixed mouse/keyboard commands can be lost when packed tightly.
@@ -186,9 +206,13 @@ validate_route_shape() {
     if [[ -z "${ROUTE_EVENTS}" ]]; then
         return 0
     fi
-    python3 - "${ROUTE_EVENTS}" <<'PY'
+    python3 - "${ROUTE_EVENTS}" "${EXPECTED_SHOTS}" <<'PY'
 import re, sys
 route = sys.argv[1].split()
+expected_raw = sys.argv[2].strip().lower()
+expected = 1 if expected_raw in {"single", "single-row", "single-transcript-row", "pass625", "pass626"} else int(expected_raw)
+if expected <= 0:
+    raise SystemExit("ERROR: DM1_ORIGINAL_EXPECTED_SHOTS must be positive")
 allowed = set("shot capture screenshot enter return esc escape space up down left right one two three four five six zero".split())
 allowed |= set("abcdefghijklmnopqrstuvwxyz") | set("0123456789") | {f"kp{i}" for i in range(10)} | {f"f{i}" for i in range(1, 5)} | {"kpenter"}
 diagnostic_only = {"title", "pre_enter_menu", "after_enter_click", "forward_1", "forward_2", "left_turn_probe"}
@@ -223,12 +247,18 @@ for token in route:
         continue
     if low not in allowed:
         raise SystemExit(f"ERROR: unknown route token: {token}")
-if shots != 6:
-    raise SystemExit(f"ERROR: DM1_ORIGINAL_ROUTE_EVENTS must contain exactly 6 shot or shot:<label> tokens, found {shots}")
+if shots != expected:
+    raise SystemExit(f"ERROR: DM1_ORIGINAL_ROUTE_EVENTS must contain exactly {expected} shot or shot:<label> tokens, found {shots}")
 print(f"[pass-70] route shape OK: {len(route)} tokens, {shots} shots, {labeled_shots} labeled")
 if labeled_shots:
     pretty = ", ".join(f"{idx + 1:02d}:{label or '(unlabeled)'}" for idx, label in enumerate(labels))
     print(f"[pass-70] shot label plan: {pretty}")
+if expected == 1:
+    if not labels or labels[0] != "02_turn_right_west_1_3":
+        raise SystemExit("ERROR: single transcript-row capture must use shot:02_turn_right_west_1_3")
+    if not any(token.lower() in {"right", "kp6"} for token in route):
+        raise SystemExit("ERROR: single transcript-row capture must include right or kp6 before the shot")
+    print("[pass-70] single transcript-row route locked to pass625/pass626 C002 turn-redraw target")
 diagnostic_hits = [label for label in labels if label in diagnostic_only]
 if diagnostic_hits:
     print("[pass-70] diagnostic-only labels present: " + ", ".join(diagnostic_hits))
@@ -609,13 +639,17 @@ normalize_existing() {
     mkdir -p "${CROP_DIR}"
     rm -f "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" "${CROP_MANIFEST}" "${SHOT_LABEL_MANIFEST}"
 
-    python3 - "${OUT_DIR}" "${RAW_MANIFEST}" <<'PY'
+    python3 - "${OUT_DIR}" "${RAW_MANIFEST}" "${EXPECTED_SHOTS}" <<'PY'
 from __future__ import annotations
 from pathlib import Path
 from datetime import datetime, timezone
 import hashlib, struct, sys
 out = Path(sys.argv[1])
 manifest = Path(sys.argv[2])
+expected_raw = sys.argv[3].strip().lower()
+expected = 1 if expected_raw in {"single", "single-row", "single-transcript-row", "pass625", "pass626"} else int(expected_raw)
+if expected <= 0:
+    raise SystemExit("ERROR: DM1_ORIGINAL_EXPECTED_SHOTS must be positive")
 paths = sorted(out.glob("image*.png"))
 if not paths:
     # DOSBox 0.74 names screenshots after the running program/screen instead of
@@ -625,7 +659,7 @@ if not paths:
         [p for p in out.glob("*.png") if p.parent == out and not p.name.startswith("image")],
         key=lambda p: (p.stat().st_mtime_ns, p.name),
     )
-    if len(candidates) == 6:
+    if len(candidates) == expected:
         normalized = []
         for idx, src in enumerate(candidates, 1):
             dst = out / f"image{idx:04d}-raw.png"
@@ -634,8 +668,8 @@ if not paths:
         paths = normalized
 if not paths:
     raise SystemExit(f"ERROR: no DOSBox raw screenshots found under {out}/image*.png")
-if len(paths) != 6:
-    raise SystemExit(f"ERROR: expected exactly 6 DOSBox raw screenshots under {out}/image*.png, found {len(paths)}")
+if len(paths) != expected:
+    raise SystemExit(f"ERROR: expected exactly {expected} DOSBox raw screenshots under {out}/image*.png, found {len(paths)}")
 with manifest.open("w") as f:
     f.write("index\tpath\tmtime_epoch_ns\tmtime_iso\tsha256\tsize_bytes\twidth\theight\n")
     for i, path in enumerate(paths):
@@ -662,7 +696,7 @@ with manifest.open("w") as f:
         f.write(f"{i:02d}\t{path}\t{st.st_mtime_ns}\t{iso}\t{hashlib.sha256(data).hexdigest()}\t{st.st_size}\t{w}\t{h}\n")
 PY
 
-    python3 - "${OUT_DIR}" "${RAW_HEALTH_MANIFEST}" "${image_tool}" <<'PY'
+    python3 - "${OUT_DIR}" "${RAW_HEALTH_MANIFEST}" "${image_tool}" "${EXPECTED_SHOTS}" <<'PY'
 from __future__ import annotations
 from pathlib import Path
 import hashlib
@@ -673,6 +707,10 @@ import sys
 out = Path(sys.argv[1])
 manifest = Path(sys.argv[2])
 image_tool = sys.argv[3]
+expected_raw = sys.argv[4].strip().lower()
+expected = 1 if expected_raw in {"single", "single-row", "single-transcript-row", "pass625", "pass626"} else int(expected_raw)
+if expected <= 0:
+    raise SystemExit("ERROR: DM1_ORIGINAL_EXPECTED_SHOTS must be positive")
 
 def ppm_pixels(data: bytes, path: Path) -> tuple[tuple[int, int], list[tuple[int, int, int]]]:
     tokens: list[bytes] = []
@@ -737,11 +775,12 @@ for idx, path in enumerate(paths, 1):
 payload = {
     "schema": "dm1_original_raw_frame_health.v1",
     "attemptDir": str(out),
+    "expectedCaptureCount": expected,
     "captureCount": len(rows),
     "honesty": "Rawshot health gate only. Passing this gate does not claim route semantics or pixel parity.",
     "captures": rows,
     "problems": problems,
-    "pass": len(rows) == 6 and not problems,
+    "pass": len(rows) == expected and not problems,
 }
 manifest.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 if not payload["pass"]:
@@ -777,8 +816,8 @@ PY
             route_shot_labels+=("$route_label")
         done < "${route_labels_tmp}"
         rm -f "${route_labels_tmp}"
-        if [[ ${#route_shot_labels[@]} -ne 6 ]]; then
-            echo "ERROR: expected exactly 6 route shot labels, found ${#route_shot_labels[@]}" >&2
+        if [[ ${#route_shot_labels[@]} -ne ${EXPECTED_SHOTS_COUNT} ]]; then
+            echo "ERROR: expected exactly ${EXPECTED_SHOTS_COUNT} route shot labels, found ${#route_shot_labels[@]}" >&2
             exit 8
         fi
     fi
@@ -830,7 +869,7 @@ PY
         i=$((i + 1))
     done < <(find "${OUT_DIR}" -maxdepth 1 -type f -name 'image*.png' | sort)
 
-    python3 - "${CROP_DIR}" "${CROP_MANIFEST}" <<'PY'
+    python3 - "${CROP_DIR}" "${CROP_MANIFEST}" "${EXPECTED_SHOTS}" <<'PY'
 from __future__ import annotations
 from pathlib import Path
 import hashlib, sys
@@ -857,9 +896,13 @@ def ppm_dims(data: bytes, path: Path) -> tuple[int, int]:
 
 crop_dir = Path(sys.argv[1])
 manifest = Path(sys.argv[2])
+expected_raw = sys.argv[3].strip().lower()
+expected = 1 if expected_raw in {"single", "single-row", "single-transcript-row", "pass625", "pass626"} else int(expected_raw)
+if expected <= 0:
+    raise SystemExit("ERROR: DM1_ORIGINAL_EXPECTED_SHOTS must be positive")
 paths = sorted(crop_dir.glob("*.ppm"))
-if len(paths) != 6:
-    raise SystemExit(f"ERROR: expected exactly 6 normalized viewport PPM crops, found {len(paths)} in {crop_dir}")
+if len(paths) != expected:
+    raise SystemExit(f"ERROR: expected exactly {expected} normalized viewport PPM crops, found {len(paths)} in {crop_dir}")
 with manifest.open("w") as f:
     f.write("kind\tfilename\twidth\theight\tbytes\tsha256\n")
     for path in paths:

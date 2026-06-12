@@ -16,6 +16,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Current Priority Queue
 
+- 🔧 DM1 V1 original same-viewport capture live run: the DOSBox viewport reference script now supports the pass625/pass626 one-row route via `DM1_ORIGINAL_EXPECTED_SHOTS=single-transcript-row` and rejects black/blank rawshots before crop/transcript scaffolding. Remaining work is a real DOSBox run that reaches `dungeon_gameplay`, captures `shot:02_turn_right_west_1_3`, and feeds the resulting manifest/transcript into the pass608/pass625 gates without claiming parity until those artifacts exist.
 - 🔧 2026-06-12 10:10 worker note: DM1 V1 pit/fall regression coverage now has a focused real-orchestrator gate for one open-pit party transition, one 20 HP fall-damage consequence, and one lower-map landing sensor emission. Remaining DM1 V1 refills should avoid duplicating this narrow pit/fall party-state gate and continue targeting distinct runtime/chest/mirror/viewport evidence.
 - 🔧 v2.7.9 release follow-up: patch release is published; have the v2.7.8 reporter retest the FTL/SWSH swoosh plus Entrance button clicks on the same Retina display.
 - 🔧 Queue/refill priority order: DM1 V1 → Theron V1 → CSB V1 → DM1 V2 → CSB V2 → DM2 V1 → Theron V2 → Nexus V1 → Nexus V2. Worker refill focus should stay on `priority` unless intentionally pausing higher-priority lanes.
