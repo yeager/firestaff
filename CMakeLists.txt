@@ -140,6 +140,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d1l2_d1r2_f0108_floor_cei
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/csb/csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d3c_center_field_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_d3c_center_field_pc34_compat.c
@@ -468,6 +472,10 @@ list(APPEND M10_SOURCES
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat.c
+)
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat.c
 )
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_pending_hand_queue_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
@@ -2697,6 +2705,22 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_pc34_compat
         COMMAND test_csb_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_pc34_compat
+    )
+
+    add_executable(test_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat
+        tests/test_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat.c
+        src/csb/csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat.c
+    )
+    target_link_libraries(test_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat
+        COMMAND test_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat
     )
 
     # pass=== parity-csb-v1-viewport-d1l-d1r-wall ===pass
@@ -6400,6 +6424,22 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_mirror_candidate_scroll_pickup_pc34_compat
         COMMAND test_m11_mirror_candidate_scroll_pickup_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat
     )
 
     add_executable(test_dm1_v1_mirror_candidate_pending_hand_queue_pc34_compat
