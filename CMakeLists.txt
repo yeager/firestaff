@@ -8844,6 +8844,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_d1c_f0111_door_pc34_compat.c
         src/dm1/dm1_v1_viewport_d1c_f0111_door_pc34_compat.c
     )
+    add_executable(test_dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat
+        tests/test_dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat.c
+    )
     add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat
         tests/test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat.c
         src/dm1/dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat.c
