@@ -763,7 +763,7 @@ int F0811_PROJECTILE_Advance_Compat(
     struct ProjectileInstance_Compat* outNewState,
     struct ProjectileTickResult_Compat* outResult)
 {
-    int crossesCell;
+    int crossesCell = 0;
     int newCell;
     int blocker = PROJECTILE_BLOCKER_OPEN;
     int dispatch = -1;
@@ -855,6 +855,12 @@ MOTION_STEP:
      *     the direction or (direction+1)&3. Mirror of PROJEXPL.C:714-719. */
     crossesCell = ((in->direction == in->cell)
                    || (((in->direction + 1) & 3) == in->cell));
+    /* ReDMCSB PROJEXPL.C:F0219 lines 717-725 can resolve a wall impact
+     * immediately after this cross-square gate, before the destination
+     * square is committed. Publish the gate result even for those early
+     * impact returns so probes can distinguish side-wall travel from an
+     * intra-square cell flip. */
+    outResult->crossedCell = crossesCell ? 1 : 0;
 
     /* (6) New cell via parity rule. PROJEXPL.C:721-725. */
     if ((in->direction & 1) == (in->cell & 1)) {
@@ -937,7 +943,6 @@ MOTION_STEP:
             && digest->destTeleporterNewDirection <= 3) {
             outNewState->direction = digest->destTeleporterNewDirection;
         }
-        outResult->crossedCell = 1;
     } else {
         /* Intra-cell flip, did we land on a door inside the square? */
         if (projectile_open_door_spell_impacts_door(in, digest)) {
