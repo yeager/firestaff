@@ -34,6 +34,8 @@ int main(void) {
     group.health[1] = 12;
     group.health[2] = 36;
     group.health[3] = 28;
+    group.behavior = 6;  /* C6_BEHAVIOR_ATTACK in ReDMCSB GROUP.C. */
+    group.direction = 2;
     result.damageApplied = 12;
 
     CHECK(F0738_COMBAT_ApplyDamageToGroup_Compat(&result, &group, 1, &outcome) == 1,
@@ -44,6 +46,9 @@ int main(void) {
      * directions down after a killed middle creature, masks cells with
      * 0x003F, then decrements Count. DungeonGroup_Compat only owns health
      * and packed cells; ACTIVE_GROUP directions remain outside this helper.
+     * GROUP.C F0199 lines 1238-1281 is the separate unblocked-distance path
+     * used by visibility/smell logic, so this split gate also proves no
+     * behavior or base-direction AI state is widened by F0738.
      */
     CHECK(outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES,
           "lethal hit should report KILLED_SOME_CREATURES");
@@ -53,6 +58,8 @@ int main(void) {
     CHECK(group.health[2] == 28, "slot 3 health should compact into slot 2");
     CHECK(group.cells == (unsigned char)((0 << 0) | (2 << 2) | (3 << 4)),
           "packed cells should compact to live cells 0,2,3");
+    CHECK(group.behavior == 6, "split compaction should not change group behavior");
+    CHECK(group.direction == 2, "split compaction should not change base group direction");
 
     if (fail_count == 0) {
         printf("PASS: DM1 V1 creature group split gate\n");
