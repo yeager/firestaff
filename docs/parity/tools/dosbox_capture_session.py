@@ -108,6 +108,7 @@ BLACKOUT_NONBLACK_THRESH = 0.005
 RUNTIME_DATA_REQUIRED_FILES = ("GRAPHICS.DAT", "DUNGEON.DAT")
 LIVE_INPUT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.live_inputs.v1"
 LIVE_ABORT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.abort.v1"
+FOCUS_MISMATCH_FRAME_LIMIT = 4
 
 
 class QuietRunTimeout:
@@ -309,6 +310,47 @@ def dry_run(plan: list[PlanStep],
         failures.append("blackout guard: did not abort a non-title target after repeated black frames")
     if not _should_abort_for_blackout(blackouts, "title_screen", 6):
         failures.append("blackout guard: did not abort repeated all-black title captures")
+    focus_mismatches = [
+        FrameQuality(
+            label=f"focus_mismatch_{i:04d}",
+            state="unknown",
+            width=320,
+            height=200,
+            full_nonblack=0.5,
+            viewport_nonblack=0.5,
+            rightcol_nonblack=0.5,
+            champion_nonblack=0.5,
+            blackout=False,
+            capture_backend="fixture",
+            capture_source="fixture:screen",
+            host_active_app="Terminal",
+            dosbox_window_bounds="",
+        )
+        for i in range(FOCUS_MISMATCH_FRAME_LIMIT)
+    ]
+    if not _should_abort_for_focus_mismatch(
+            focus_mismatches, FOCUS_MISMATCH_FRAME_LIMIT):
+        failures.append("focus guard: did not abort repeated non-DOSBox frontmost samples")
+    focused_samples = list(focus_mismatches[:-1]) + [
+        FrameQuality(
+            label="focus_recovered",
+            state="unknown",
+            width=320,
+            height=200,
+            full_nonblack=0.5,
+            viewport_nonblack=0.5,
+            rightcol_nonblack=0.5,
+            champion_nonblack=0.5,
+            blackout=False,
+            capture_backend="fixture",
+            capture_source="fixture:screen",
+            host_active_app="DOSBox Staging",
+            dosbox_window_bounds="1,2,1024,768",
+        )
+    ]
+    if _should_abort_for_focus_mismatch(
+            focused_samples, FOCUS_MISMATCH_FRAME_LIMIT):
+        failures.append("focus guard: aborted after DOSBox focus recovered")
     with tempfile.TemporaryDirectory(prefix="dm1-live-runtime-") as tmp:
         tmp_root = Path(tmp)
         good = tmp_root / "DungeonMasterPC34"
@@ -431,6 +473,28 @@ def dry_run(plan: list[PlanStep],
                 failures.append("live abort receipt: last frame quality missing blackout")
             if "quality_log" not in abort_receipt or "state_samples_dir" not in abort_receipt:
                 failures.append("live abort receipt: diagnostic paths missing")
+        focus_abort_path = _write_live_abort_receipt(
+            capture_root=capture_root,
+            step=PlanStep(
+                "focus_probe",
+                "title_screen",
+                timeout_s=5.0,
+                stable_frames=3,
+            ),
+            last_state="capture_focus_mismatch",
+            reason="capture_focus_mismatch",
+            quality=focus_mismatches[-1],
+        )
+        try:
+            focus_abort_receipt = json.loads(focus_abort_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            failures.append(f"focus abort receipt: could not parse JSON: {exc}")
+        else:
+            if focus_abort_receipt.get("reason") != "capture_focus_mismatch":
+                failures.append("focus abort receipt: reason mismatch")
+            focus_quality = focus_abort_receipt.get("last_frame_quality", {})
+            if focus_quality.get("host_active_app") != "Terminal":
+                failures.append("focus abort receipt: active-app diagnostic missing")
         from PIL import Image, ImageDraw
         black = Image.new("RGB", (320, 200), (0, 0, 0))
         visible = Image.new("RGB", (320, 200), (0, 0, 0))
@@ -787,6 +851,36 @@ def _should_abort_for_blackout(
     return all(item.blackout for item in window)
 
 
+def _is_dosbox_process_name(name: str) -> bool:
+    folded = name.casefold()
+    return any(candidate.casefold() in folded for candidate in DOSBOX_PROCESS_NAMES)
+
+
+def _is_focus_mismatch(quality: FrameQuality) -> bool:
+    active = quality.host_active_app.strip()
+    if not active:
+        return False
+    return not _is_dosbox_process_name(active)
+
+
+def _should_abort_for_focus_mismatch(
+        recent: list[FrameQuality],
+        focus_frame_limit: int) -> bool:
+    """Abort when host focus diagnostics prove keypresses target another app.
+
+    Empty ``host_active_app`` means the OS focus probe was unavailable, so it
+    remains diagnostic only.  A known non-DOSBox frontmost app across multiple
+    samples is actionable: the live route's ``cliclick`` key dispatch cannot
+    deterministically advance the DM1 state machine in that condition.
+    """
+    if focus_frame_limit <= 0:
+        return False
+    if len(recent) < focus_frame_limit:
+        return False
+    window = recent[-focus_frame_limit:]
+    return all(_is_focus_mismatch(item) for item in window)
+
+
 def _press_key(key: str) -> None:
     time.sleep(0.25)
     mapped = KEY_MAP.get(key)
@@ -834,6 +928,15 @@ def _wait_for_state(capture_root: Path, target: str, timeout_s: float,
                 file=sys.stderr,
             )
             return False, "capture_blackout"
+        if _should_abort_for_focus_mismatch(
+                recent_quality, FOCUS_MISMATCH_FRAME_LIMIT):
+            print(
+                "FAIL capture focus: repeated host samples show a non-DOSBox "
+                f"frontmost app while waiting for target={target}; see "
+                f"{capture_root / 'state-samples' / 'quality.jsonl'}",
+                file=sys.stderr,
+            )
+            return False, "capture_focus_mismatch"
         if state == target:
             stable += 1
             if stable >= stable_frames:

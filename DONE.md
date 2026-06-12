@@ -4,6 +4,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## Latest Local Work
 
+- ✅ 2026-06-12 — hardened the DM1 V1 original DOSBox live-capture session runner with a focus-mismatch abort gate: repeated host samples that prove a non-DOSBox frontmost app now stop the route as `capture_focus_mismatch` and preserve the active-app diagnostic in `dosbox_capture.live_abort.json`. The existing `dm1_v1_original_capture_session_dry_run` path covers both mismatch abort and recovered DOSBox focus without claiming original pixel parity.
 - ✅ 2026-06-12 — added `dm1_v1_champion_panel_shield_border_pixel`, a focused real-asset DM1 V1 runtime gate proving the C037/C038/C039 party/spell/fire shield-border graphics render on live C151 status boxes through the M11 V1 draw stack, with later name/bar/hand-slot child overdraw excluded from the pixel comparison and no original DOS parity claim.
 
 ## Latest Watchdog Integration
