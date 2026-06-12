@@ -553,6 +553,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_c045_close_after_
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_reshuffle_panel_live_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_reshuffle_panel_live_pc34_compat.c
@@ -7342,6 +7346,20 @@ if(BUILD_TESTING)
     add_test(
         NAME test_dm1_v1_mirror_candidate_rotation_during_resurrect_confirmation_pc34_compat
         COMMAND test_dm1_v1_mirror_candidate_rotation_during_resurrect_confirmation_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat
+        PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat
     )
 
     add_executable(test_dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat
