@@ -125,10 +125,17 @@ static void test_single_monster_cloud_tick_boundary(void)
              "poison cloud uses normal attack channel");
     CHECK_EQ(tick.outActionGroup.allowedWounds, 0,
              "monster cloud damage carries no wound mask");
+    CHECK_EQ(tick.outActionGroup.targetMapIndex, 0, "group damage map");
     CHECK_EQ(tick.outActionGroup.targetMapX, 10, "group damage x");
     CHECK_EQ(tick.outActionGroup.targetMapY, 11, "group damage y");
     CHECK_EQ(tick.outActionGroup.targetCell, 0,
              "centered cloud targets centered group cell");
+    CHECK_EQ(tick.outActionGroup.attackerSlotOrCreatureIndex, 2,
+             "group damage preserves champion owner index");
+    CHECK_EQ(tick.outActionGroup.defenderSlotOrCreatureIndex, 10,
+             "group damage preserves monster type");
+    CHECK_EQ(tick.outActionGroup.scheduleDelayTicks, 0,
+             "group damage resolves on boundary tick");
     CHECK_EQ(tick.outActionGroup.rawAttackValue, 3,
              "attack 96 gives poison cloud base 3 without rng");
     CHECK_EQ(tick.despawn, 0, "cloud remains live");
