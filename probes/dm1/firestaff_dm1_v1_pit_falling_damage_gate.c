@@ -13,8 +13,8 @@
  *
  * This probe exercises the real F0888 party input path for one cardinal move:
  * origin corridor -> open pit -> lower-map landing sensor.  The assertion
- * surface is intentionally small: one transition, one party snapshot, one
- * damage/sensor consequence.
+ * surface is intentionally small: one transition, one two-champion party
+ * snapshot, one damage/sensor consequence.
  */
 
 #include <stdint.h>
@@ -150,12 +150,16 @@ int main(void)
     world.party.mapX = 0;
     world.party.mapY = 1;
     world.party.direction = DIR_EAST;
-    world.party.championCount = 1;
+    world.party.championCount = 2;
     world.party.activeChampionIndex = 0;
     world.party.champions[0].present = 1;
     world.party.champions[0].hp.current = 100;
     world.party.champions[0].hp.maximum = 100;
     world.party.champions[0].direction = DIR_EAST;
+    world.party.champions[1].present = 1;
+    world.party.champions[1].hp.current = 45;
+    world.party.champions[1].hp.maximum = 45;
+    world.party.champions[1].direction = DIR_EAST;
 
     input.command = CMD_MOVE_EAST;
     record("PIT_APPLY_INPUT",
@@ -168,9 +172,10 @@ int main(void)
                world.party.mapY == 1 &&
                world.party.direction == DIR_EAST,
            "party lands on lower map at the same local coordinate/facing");
-    record("PIT_FALL_DAMAGE_20",
-           world.party.champions[0].hp.current == 80,
-           "one open-pit transition applies exactly 20 champion HP damage");
+    record("PIT_FALL_DAMAGE_ALL_LIVING",
+           world.party.champions[0].hp.current == 80 &&
+               world.party.champions[1].hp.current == 25,
+           "one open-pit transition applies exactly 20 HP damage to every living champion");
 
     fellIndex = find_emission(&result, EMIT_PARTY_FELL);
     record("PIT_FELL_EMISSION",
