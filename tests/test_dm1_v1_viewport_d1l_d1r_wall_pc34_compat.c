@@ -197,6 +197,7 @@ static void test_pixels_c10_and_no_write_edges(void)
     memset(viewport, 0xee, sizeof(viewport));
     source[0 * DM1_V1_D1L_D1R_WALL_SOURCE_WIDTH_PC34 + 192] = 0x31;
     source[0 * DM1_V1_D1L_D1R_WALL_SOURCE_WIDTH_PC34 + 193] = 10;
+    source[0 * DM1_V1_D1L_D1R_WALL_SOURCE_WIDTH_PC34 + 253] = 10;
     source[0 * DM1_V1_D1L_D1R_WALL_SOURCE_WIDTH_PC34 + 254] = 0x62;
     source[0 * DM1_V1_D1L_D1R_WALL_SOURCE_WIDTH_PC34 + 255] = 0x7d;
     source[110 * DM1_V1_D1L_D1R_WALL_SOURCE_WIDTH_PC34 + 192] = 0x55;
@@ -246,6 +247,22 @@ static void test_pixels_c10_and_no_write_edges(void)
                "DUNVIEW.C:3185-3204 mirror");
     expect_int("pixel.d1r.next.value", pixel.pixel_after, 0x62,
                "deterministic mirrored neighbor pixel");
+
+    d1r.viewport_x = 162;
+    expect_int("pixel.d1r.c10.apply",
+               M11_GameView_D1LD1RWallApplyPixelPc34(
+                   &d1r, source, sizeof(source), viewport, sizeof(viewport), &pixel) ? 1 : 0,
+               1, "DUNVIEW.C:3185-3204 F0105 mirrored C10 skip");
+    expect_int("pixel.d1r.c10.source_x", pixel.source_x, 253,
+               "DUNVIEW.C:3185-3204 mirrored D1R source walk");
+    expect_int("pixel.d1r.c10.scratch_x", pixel.scratch_x, 194,
+               "DUNVIEW.C:3199 temporary flipped copy");
+    expect_int("pixel.d1r.c10.skip", pixel.transparent_skip ? 1 : 0, 1,
+               "DUNVIEW.C:3201 C10_COLOR_FLESH skip");
+    expect_int("pixel.d1r.c10.no_write", pixel.writes_pixel ? 1 : 0, 0,
+               "DUNVIEW.C:3201 transparent pixel preserves destination");
+    expect_int("pixel.d1r.c10.preserved", pixel.pixel_after, 0xee,
+               "DUNVIEW.C:3185-3204 F0105 C10 transparency");
 
     d1r.row = 119;
     d1r.viewport_x = 223;
