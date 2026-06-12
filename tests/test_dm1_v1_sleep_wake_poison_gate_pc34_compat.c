@@ -101,10 +101,66 @@ static void test_creature_melee_wakes_resting_champion(void)
           "creature melee applies non-zero damage");
 }
 
+static void test_creature_melee_f0230_late_reduction_fixture(void)
+{
+    struct CombatantCreatureSnapshot_Compat attacker;
+    struct CombatantChampionSnapshot_Compat defender;
+    struct RngState_Compat rng;
+    struct CombatResult_Compat result;
+    int i;
+
+    /*
+     * ReDMCSB PROJEXPL.C F0230 lines 1390-1404: after the staged creature
+     * attack roll, the PC34 path applies a final 50% random reduction before
+     * CHAMPION.C F0321 handles defense/vitality/pending damage.  Seed 4 takes
+     * that branch, so rngCallCount and final seed lock the extra random term.
+     */
+    memset(&attacker, 0, sizeof(attacker));
+    attacker.creatureType = 14;
+    attacker.attack = 24;
+    attacker.defense = 18;
+    attacker.dexterity = 30;
+    attacker.baseHealth = 90;
+    attacker.attackType = COMBAT_ATTACK_BLUNT;
+    attacker.woundProbabilities = 0x8421;
+    attacker.doubledMapDifficulty = 2;
+    attacker.healthBefore = 90;
+
+    memset(&defender, 0, sizeof(defender));
+    defender.championIndex = 0;
+    defender.currentHealth = 50;
+    defender.dexterity = 40;
+    defender.statisticVitality = 45;
+    defender.statisticAntifire = 30;
+    defender.statisticAntimagic = 30;
+    for (i = 0; i < 6; ++i) {
+        defender.woundDefense[i] = 5;
+    }
+
+    CHECK(F0730_COMBAT_RngInit_Compat(&rng, 4u) == 1,
+          "rng initialises for F0230 late-reduction fixture");
+    CHECK(F0736_COMBAT_ResolveCreatureMelee_Compat(
+              &attacker, &defender, &rng, &result) == 1,
+          "F0230 late-reduction fixture resolves");
+    CHECK(result.outcome == COMBAT_OUTCOME_HIT_DAMAGE,
+          "F0230 fixture lands damage");
+    CHECK(result.damageApplied == 18,
+          "F0230 fixture applies exact post-reduction damage");
+    CHECK(result.rawAttackRoll == 25,
+          "F0230 fixture keeps exact dodge random term");
+    CHECK(result.woundMaskAdded == COMBAT_WOUND_FEET,
+          "F0230 fixture selects exact wound mask");
+    CHECK(result.rngCallCount == 11,
+          "F0230 fixture consumes late reduction random term");
+    CHECK(rng.seed == 0x1b452d2bu,
+          "F0230 fixture leaves exact rng seed");
+}
+
 int main(void)
 {
     test_poison_cloud_wakes_resting_champion();
     test_creature_melee_wakes_resting_champion();
+    test_creature_melee_f0230_late_reduction_fixture();
 
     printf("%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

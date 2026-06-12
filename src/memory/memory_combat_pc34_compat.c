@@ -436,6 +436,7 @@ int F0736_COMBAT_ResolveCreatureMelee_Compat(
     int r2;
     int add1;
     int add2;
+    int reduceGate;
 
     if (out == 0) {
         return 0;
@@ -518,6 +519,16 @@ int F0736_COMBAT_ResolveCreatureMelee_Compat(
         atk >>= 2;
         atk += F0732_COMBAT_RngRandom_Compat(rng, 4) + 1;
         out->rngCallCount++;
+
+        /* ReDMCSB: PROJEXPL.C F0230_GROUP_GetChampionDamage lines 1401-1402
+         * applies one last 50% random reduction before F0321 resolves armor,
+         * wound defense, vitality, and pending damage. */
+        reduceGate = F0732_COMBAT_RngRandom_Compat(rng, 2);
+        out->rngCallCount++;
+        if (reduceGate != 0) {
+            atk -= F0732_COMBAT_RngRandom_Compat(rng, (atk >> 1) + 1) - 1;
+            out->rngCallCount++;
+        }
 
         /* Statistic adjustment by attack type. */
         atk = combat_apply_defender_statistic_adjustment(
