@@ -4671,11 +4671,12 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_teleporter_survival_open_g0426_pc34_compat
     )
 
-    # pass706 DM1 V1 C538 occupied-slot stack swap gate:
-    # ReDMCSB CHEST.C F0333/F0334 and CHAMPION.C F0300/F0297/F0301/F0302.
+    # DM1 V1 C540 occupied-slot leader-hand -> non-leader-hand swap gate:
+    # ReDMCSB F0359/F0380 queued clicks, F0302 hand/chest swaps; no F0334 close.
     add_executable(test_dm1_v1_chest_occupied_slot_swap_pc34_compat
+        include/firestaff/dm1/v1/chest/occupied_slot_swap_pc34_compat.h
         tests/test_dm1_v1_chest_occupied_slot_swap_pc34_compat.c
-        src/dm1/dm1_v1_chest_occupied_slot_swap_pc34_compat.c
+        src/dm1/dm1_v1_chest_occupied_slot_swap_leader_non_leader_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_chest_occupied_slot_swap_pc34_compat PRIVATE firestaff_m10)
     target_include_directories(test_dm1_v1_chest_occupied_slot_swap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -4683,7 +4684,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v1_chest_occupied_slot_swap_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
-        NAME dm1_v1_chest_occupied_slot_swap_pc34_compat
+        NAME pass_dm1_v1_chest_occupied_slot_swap_pc34_compat
         COMMAND test_dm1_v1_chest_occupied_slot_swap_pc34_compat
     )
 
