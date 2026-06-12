@@ -1704,7 +1704,7 @@
       "timestampUtc": "2026-05-08T14:13:47.996322+00:00"
     },
     "pass434_crop_readiness": {
-      "branch": "main",
+      "branch": "pass784-dm1-v1-runtime-c040-eye-live-candidate",
       "crop_artifacts": {
         "files": [
           {
@@ -1837,7 +1837,7 @@
         "rows_all_224x136": true
       },
       "exists": true,
-      "head": "dc1ad7524bf964bcb5cf0f90080eb579772bf8c0",
+      "head": "85cec7abe76795300c7539096a77045c58eb105a",
       "not_claimed": [
         "DOSBox/live original runtime capture",
         "semantic original route promotion",
@@ -1908,7 +1908,7 @@
       ],
       "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
       "status": "FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-      "timestamp_utc": "2026-06-12T19:47:27.750433+00:00",
+      "timestamp_utc": "2026-06-12T21:41:49.856547+00:00",
       "tooling": {
         "capture_script_crop_lock": {
           "has_imagemagick_crop": true,
@@ -2380,5 +2380,5 @@
     }
   ],
   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-  "timestampUtc": "2026-06-12T19:47:27.802494+00:00"
+  "timestampUtc": "2026-06-12T21:41:49.908714+00:00"
 }
