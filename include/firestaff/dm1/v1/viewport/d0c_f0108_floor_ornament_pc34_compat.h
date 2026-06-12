@@ -122,8 +122,57 @@ typedef struct {
     uint32_t deterministic_hash;
 } DM1_V1_D0CF0108FloorOrnamentSelfTestResultPc34;
 
+typedef struct {
+    const char *name;
+    int source_locked_contract_only;
+    int no_original_dos_parity_claim;
+    int square_element_pit;
+    int pit_open_mask;
+    int pit_invisible_mask;
+    int pit_visible_aspect_slot_pc34;
+    int floor_ornament_aspect_slot_pc34;
+    int sensor_floor_ornament_ordinal;
+    int is_kappetaal_pit_boundary_variant;
+    int is_regular_floor_ornament_variant;
+    int f0108_floor_ornament_calls;
+    int f0108_floor_ornament_zone;
+    int g0206_floor_ornament_coordinate_route;
+    int g0207_door_ornament_route;
+    int g0208_door_button_route;
+    int d0c_view_square;
+    int d0c_cell_order;
+    int floor_pit_graphic_open_pc34;
+    int floor_pit_graphic_invisible_pc34;
+    int floor_pit_zone_pc34;
+    int ceiling_pit_graphic_pc34;
+    int ceiling_pit_zone_pc34;
+    int viewport_width;
+    int viewport_height;
+    int screen_width;
+    int screen_height;
+    int open_pit_dst_x;
+    int open_pit_dst_y;
+    int open_pit_dst_w;
+    int open_pit_dst_h;
+    int invisible_pit_dst_x;
+    int invisible_pit_dst_y;
+    int invisible_pit_dst_w;
+    int invisible_pit_dst_h;
+    int geometry_inside_viewport;
+    int graphics_dat_asset_route;
+    const char *redmcsb_f0108_anchor;
+    const char *redmcsb_f0172_anchor;
+    const char *redmcsb_f0127_anchor;
+    const char *redmcsb_defs_anchor;
+    const char *redmcsb_coordinate_anchor;
+    const char *firestaff_graphics_dat_anchor;
+} DM1_V1_D0CF0108FloorOrnamentKappetaalVariantPc34;
+
 const DM1_V1_D0CF0108FloorOrnamentSpecPc34 *
 dm1_v1_viewport_d0c_f0108_floor_ornament_spec_pc34_compat(void);
+
+const DM1_V1_D0CF0108FloorOrnamentKappetaalVariantPc34 *
+dm1_v1_viewport_d0c_f0108_floor_ornament_kappetaal_variant_pc34_compat(void);
 
 bool dm1_v1_viewport_d0c_f0108_floor_ornament_initial_state_pc34_compat(
     DM1_V1_D0CF0108FloorOrnamentStatePc34 *out);
