@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.9  (2026-06-12)",
+    "  - DM1 V1 launch: fixed Retina/HiDPI window pixel-size events so entrance door buttons keep using SDL's logical mouse coordinate space on MacBook displays",
+    "  - DM1 V1 FTL/SWSH: restored the ReDMCSB palette cadence by batching adjacent Setcolor commands and applying DBF wait counts as N+1 VBlanks",
+    "  - Regression gates: added high-DPI resize mapping coverage and tightened the SWSH source-animation timing invariant",
+    "",
     "V2.7.8  (2026-06-12)",
     "  - DM1 V1 viewport: added source-lock coverage for D1L2/D1R2, D3L2/D3R2, D2L2/D2R2, D0L2/D0R2, and D0C floor, ceiling, ornament, door-front, and thing-pass paths",
     "  - DM1 V1 inventory and mirror-candidate runtime: hardened chest occupied-slot swaps, scroll pickup/drop, C040 panel-live handoff, reshuffle, cancel, and candidate-close routes",
@@ -135,5 +140,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.8";
+    return "2.7.9";
 }

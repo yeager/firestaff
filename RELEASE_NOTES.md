@@ -1,3 +1,21 @@
+# Firestaff v2.7.9
+
+Patch release for two DM1 launch regressions found in v2.7.8 on MacBook Pro.
+
+## Fixes
+
+- Fixed Entrance door buttons on Retina/HiDPI macOS displays by keeping SDL3 pixel-size events separate from logical mouse coordinates.
+- Fixed the FTL/SWSH swoosh cadence by matching ReDMCSB's immediate `Setcolor()` batching and `DBF` VBlank wait semantics.
+
+## Verification
+
+- Local high-DPI presentation/mouse mapping regression passed.
+- Local SWSH source-animation timing gate passed with 30 effective palette VBlanks.
+- Local Entrance button click runtime probe passed 17/17.
+- Local Phase A probe passed 23/23.
+
+---
+
 # Firestaff v2.7.8
 
 Patch release focused on DM1 V1 viewport, inventory, mirror-candidate, and CSB V1 source-lock/runtime hardening after v2.7.7.
