@@ -1427,6 +1427,18 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_status_box_asset_slice_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 champion panel HP/stamina/mana bar-graph runtime pixel gate.
+# Extends Firestaff-side party HUD/status-box evidence by proving the
+# 4x25 C195..C206 bar interiors are actively repainted with exact
+# F0287-style blank-top/colored-bottom pixel counts for live champions,
+# and are not overdrawn on a C008 dead status box.
+add_executable(firestaff_dm1_v1_champion_panel_bar_graph_pixel_slice_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_bar_graph_pixel_slice_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_bar_graph_pixel_slice_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_bar_graph_pixel_slice_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 champion panel shield-border runtime pixel gate.
 # Isolates C037/C038/C039 party/spell/fire shield borders on live
 # status boxes and exact-matches the unobscured 67x29 GRAPHICS.DAT
@@ -7311,6 +7323,14 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_champion_panel_leader_rotation_pixel_slice_probe "$ENV{HOME}/.firestaff/data"
     )
     set_tests_properties(dm1_v1_champion_panel_leader_rotation_pixel_slice PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_champion_panel_bar_graph_pixel_slice
+        COMMAND firestaff_dm1_v1_champion_panel_bar_graph_pixel_slice_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_panel_bar_graph_pixel_slice PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
