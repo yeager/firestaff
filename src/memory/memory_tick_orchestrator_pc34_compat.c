@@ -2843,6 +2843,11 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                          world->party.mapIndex, world->party.mapX,
                          world->party.mapY, postMove.teleporterCount);
                 }
+                if (postMove.teleporterAudibleCount > 0) {
+                    emit(result, EMIT_SOUND_REQUEST, DM1_SND_BUZZ,
+                         world->party.mapX, world->party.mapY,
+                         world->party.mapIndex);
+                }
                 world->disabledMovementTicks = redmcsb_party_move_cooldown_ticks_compat(&world->party);
                 world->projectileDisabledMovementTicks = 0;
                 emit(result, EMIT_PARTY_MOVED,

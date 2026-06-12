@@ -350,18 +350,36 @@ int main(void)
                 &dungeon, &things, &teleporterParty, 0, &postMove), 1);
         ok &= expect_int("party-scoped teleporter transitioned", postMove.transitioned, 1);
         ok &= expect_int("party-scoped teleporter count", postMove.teleporterCount, 1);
+        ok &= expect_int("party-scoped audible teleporter count",
+            postMove.teleporterAudibleCount, 1);
         ok &= expect_int("party-scoped teleporter target map", postMove.finalMapIndex, 1);
         ok &= expect_int("party-scoped teleporter target x", postMove.finalMapX, 3);
         ok &= expect_int("party-scoped teleporter target y", postMove.finalMapY, 2);
         ok &= expect_int("relative teleporter rotation east plus one is south",
             postMove.finalDirection, DIR_SOUTH);
 
+        teleporters[0].audible = 0;
+        ok &= expect_int("silent party teleporter resolves",
+            F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+                &dungeon, &things, &teleporterParty, 0, &postMove), 1);
+        ok &= expect_int("silent party teleporter transitioned", postMove.transitioned, 1);
+        ok &= expect_int("silent party teleporter has no audible count",
+            postMove.teleporterAudibleCount, 0);
+        ok &= expect_int("silent party teleporter target map", postMove.finalMapIndex, 1);
+        ok &= expect_int("silent party teleporter target x", postMove.finalMapX, 3);
+        ok &= expect_int("silent party teleporter target y", postMove.finalMapY, 2);
+        ok &= expect_int("silent party teleporter keeps relative rotation",
+            postMove.finalDirection, DIR_SOUTH);
+
+        teleporters[0].audible = 1;
         teleporters[0].scope = 0x01;
         ok &= expect_int("creature-only teleporter scope still resolves call",
             F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
                 &dungeon, &things, &teleporterParty, 0, &postMove), 1);
         ok &= expect_int("creature-only teleporter does not transition party",
             postMove.transitioned, 0);
+        ok &= expect_int("creature-only teleporter has no audible count",
+            postMove.teleporterAudibleCount, 0);
         ok &= expect_int("creature-only teleporter leaves map", postMove.finalMapIndex, 0);
         ok &= expect_int("creature-only teleporter leaves x", postMove.finalMapX, 1);
         ok &= expect_int("creature-only teleporter leaves y", postMove.finalMapY, 1);
