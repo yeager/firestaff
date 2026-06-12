@@ -4260,6 +4260,19 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_chest_close_stack_merge_pc34_compat_test
     )
 
+    add_executable(firestaff_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat_test
+        tests/test_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat_test PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    target_include_directories(firestaff_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat_test PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat
+        COMMAND firestaff_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat_test
+    )
+
     add_executable(firestaff_dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat_test
         tests/test_dm1_v1_inventory_chest_pickup_encumbrance_pc34_compat.c
     )
