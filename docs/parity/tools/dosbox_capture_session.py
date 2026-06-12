@@ -81,6 +81,20 @@ class FrameQuality:
     dosbox_window_bounds: str = ""
 
 
+@dataclass
+class KeyDispatch:
+    step: str
+    key: str
+    mapped: str
+    host_active_app_before: str
+    host_active_app_after: str
+    dosbox_window_bounds_before: str
+    dosbox_window_bounds_after: str
+    timestamp_s: float
+    ok: bool
+    error: str = ""
+
+
 # The capture route plan.  This mirrors the runbook §3 state machine
 # but uses the calibrated band 0.135 thresholds from the post-fix
 # classifier.  Stable-frames requirement follows the runbook default.
@@ -446,6 +460,23 @@ def dry_run(plan: list[PlanStep],
             champion_nonblack=0.0,
             blackout=True,
         )
+        key_dispatch = KeyDispatch(
+            step="entrance_menu",
+            key="Return",
+            mapped="return",
+            host_active_app_before="Terminal",
+            host_active_app_after="DOSBox Staging",
+            dosbox_window_bounds_before="",
+            dosbox_window_bounds_after="1,2,1024,768",
+            timestamp_s=123.0,
+            ok=True,
+        )
+        _write_key_dispatch_log(capture_root, key_dispatch)
+        parsed_key_dispatch = _last_key_dispatch_from_log(capture_root)
+        if parsed_key_dispatch is None:
+            failures.append("key dispatch log: parser did not return the last row")
+        elif parsed_key_dispatch.key != "Return" or parsed_key_dispatch.mapped != "return":
+            failures.append("key dispatch log: last-row key metadata mismatch")
         abort_path = _write_live_abort_receipt(
             capture_root=capture_root,
             step=PlanStep(
@@ -477,6 +508,11 @@ def dry_run(plan: list[PlanStep],
                 failures.append("live abort receipt: last frame quality missing blackout")
             if "quality_log" not in abort_receipt or "state_samples_dir" not in abort_receipt:
                 failures.append("live abort receipt: diagnostic paths missing")
+            if "key_dispatch_log" not in abort_receipt:
+                failures.append("live abort receipt: key dispatch log path missing")
+            last_key = abort_receipt.get("last_key_dispatch") or {}
+            if last_key.get("step") != "entrance_menu" or last_key.get("key") != "Return":
+                failures.append("live abort receipt: last key dispatch metadata missing")
         focus_abort_path = _write_live_abort_receipt(
             capture_root=capture_root,
             step=PlanStep(
@@ -1176,6 +1212,72 @@ def _press_key(key: str) -> None:
         raise ValueError(f"unsupported live key: {key}")
 
 
+def _key_dispatch_log_path(capture_root: Path) -> Path:
+    return capture_root / "state-samples" / "key_dispatch.jsonl"
+
+
+def _write_key_dispatch_log(capture_root: Path, dispatch: KeyDispatch) -> None:
+    log_path = _key_dispatch_log_path(capture_root)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(asdict(dispatch), sort_keys=True))
+        fh.write("\n")
+
+
+def _last_key_dispatch_from_log(capture_root: Path) -> KeyDispatch | None:
+    log_path = _key_dispatch_log_path(capture_root)
+    try:
+        lines = [line.strip() for line in log_path.read_text(encoding="utf-8").splitlines()
+                 if line.strip()]
+    except OSError:
+        return None
+    if not lines:
+        return None
+    try:
+        data = json.loads(lines[-1])
+        return KeyDispatch(
+            step=str(data.get("step", "")),
+            key=str(data.get("key", "")),
+            mapped=str(data.get("mapped", "")),
+            host_active_app_before=str(data.get("host_active_app_before", "")),
+            host_active_app_after=str(data.get("host_active_app_after", "")),
+            dosbox_window_bounds_before=str(data.get("dosbox_window_bounds_before", "")),
+            dosbox_window_bounds_after=str(data.get("dosbox_window_bounds_after", "")),
+            timestamp_s=float(data.get("timestamp_s", 0.0)),
+            ok=bool(data.get("ok", False)),
+            error=str(data.get("error", "")),
+        )
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def _dispatch_key_for_live_step(capture_root: Path, step_name: str, key: str) -> None:
+    mapped = KEY_MAP.get(key, key if len(key) == 1 else "")
+    before_app = _frontmost_process_name()
+    before_bounds = _bounds_text(_dosbox_window_bounds())
+    dispatch = KeyDispatch(
+        step=step_name,
+        key=key,
+        mapped=mapped,
+        host_active_app_before=before_app,
+        host_active_app_after="",
+        dosbox_window_bounds_before=before_bounds,
+        dosbox_window_bounds_after="",
+        timestamp_s=time.time(),
+        ok=False,
+    )
+    try:
+        _press_key(key)
+        dispatch.ok = True
+    except Exception as exc:
+        dispatch.error = f"{type(exc).__name__}: {exc}"
+        raise
+    finally:
+        dispatch.host_active_app_after = _frontmost_process_name()
+        dispatch.dosbox_window_bounds_after = _bounds_text(_dosbox_window_bounds())
+        _write_key_dispatch_log(capture_root, dispatch)
+
+
 def _wait_for_state(capture_root: Path, target: str, timeout_s: float,
                     screenshot_int: float, stable_frames: int,
                     blackout_frame_limit: int,
@@ -1376,6 +1478,7 @@ def _write_live_abort_receipt(
     capture_root.mkdir(parents=True, exist_ok=True)
     if quality is None:
         quality = _last_quality_from_log(capture_root)
+    key_dispatch = _last_key_dispatch_from_log(capture_root)
     receipt = {
         "schema": LIVE_ABORT_RECEIPT_SCHEMA,
         "step": step.name,
@@ -1388,6 +1491,8 @@ def _write_live_abort_receipt(
         "capture_root": str(capture_root),
         "state_samples_dir": str(capture_root / "state-samples"),
         "quality_log": str(capture_root / "state-samples" / "quality.jsonl"),
+        "key_dispatch_log": str(_key_dispatch_log_path(capture_root)),
+        "last_key_dispatch": asdict(key_dispatch) if key_dispatch is not None else None,
         "last_frame_quality": asdict(quality) if quality is not None else None,
     }
     out = capture_root / "dosbox_capture.live_abort.json"
@@ -1471,7 +1576,7 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
         for step in plan:
             for key in step.keys:
                 print(f"send={key}", file=sys.stderr)
-                _press_key(key)
+                _dispatch_key_for_live_step(capture_root, step.name, key)
             ok, last = _wait_for_state(
                 capture_root,
                 step.expected_state,
