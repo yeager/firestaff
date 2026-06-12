@@ -9,7 +9,7 @@
  *   - Timeline bridge (F0739)
  *   - Serialisation round-trips (F0740–F0747)
  *
- * 35 invariants, ≥30 required for PASS.
+ * Focused invariants for PASS.
  */
 
 #include <stdio.h>
@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
     fprintf(report, "- F0736: F0314_CHAMPION_WakeUp side effect deferred to caller.\n");
     fprintf(report, "- combat_apply_defender_statistic_adjustment: fire/magic/psychic defence paths stubbed (phase 14).\n");
     fprintf(report, "- F0735: luck-state (F0308_CHAMPION_IsLucky) collapsed to 0.\n");
-    fprintf(report, "- F0738: cell/direction packing reshuffle on kill deferred to phase 14.\n\n");
+    fprintf(report, "- F0738: ACTIVE_GROUP direction/aspect reshuffle remains caller-owned; group health/cell compaction is covered here.\n\n");
 
     snprintf(path_buf, sizeof(path_buf), "%s/combat_invariants.md", outputDir);
     invariants = fopen(path_buf, "w");
@@ -511,6 +511,28 @@ int main(int argc, char* argv[]) {
         F0738_COMBAT_ApplyDamageToGroup_Compat(&result, &group, 0, &outcome);
         CHECK(outcome == COMBAT_OUTCOME_KILLED_NO_CREATURES && group.health[0] == 3,
               "F0738 with damage<hp leaves slot alive, KILLED_NO_CREATURES");
+    }
+    {
+        struct DungeonGroup_Compat group;
+        struct CombatResult_Compat result;
+        int outcome = -1;
+        memset(&group, 0, sizeof(group));
+        group.count = 3; /* four creatures */
+        group.cells = (unsigned char)((0 << 0) | (1 << 2) | (2 << 4) | (3 << 6));
+        group.health[0] = 44;
+        group.health[1] = 12;
+        group.health[2] = 36;
+        group.health[3] = 28;
+        memset(&result, 0, sizeof(result));
+        result.damageApplied = 12;
+        F0738_COMBAT_ApplyDamageToGroup_Compat(&result, &group, 1, &outcome);
+        CHECK(outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES &&
+              group.count == 2 &&
+              group.health[0] == 44 &&
+              group.health[1] == 36 &&
+              group.health[2] == 28 &&
+              group.cells == (unsigned char)((0 << 0) | (2 << 2) | (3 << 4)),
+              "F0738 compacts health and packed cells after killed middle creature (GROUP.C F0190)");
     }
     {
         struct CombatAction_Compat action;
