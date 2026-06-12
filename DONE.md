@@ -2,6 +2,10 @@
 
 This file tracks completed capabilities by game. It is not a changelog; see git history and release notes for chronology.
 
+## Latest Local Work
+
+- ✅ 2026-06-12 — added `dm1_v1_champion_panel_shield_border_pixel`, a focused real-asset DM1 V1 runtime gate proving the C037/C038/C039 party/spell/fire shield-border graphics render on live C151 status boxes through the M11 V1 draw stack, with later name/bar/hand-slot child overdraw excluded from the pixel comparison and no original DOS parity claim.
+
 ## Latest Watchdog Integration
 
 - ✅ 2026-06-12 — pass745 added `dm1_v1_projectile_wall_impact_sound_gate`, a focused DM1 V1 CTest proving one exact Open Door projectile wall-impact path through `F0811_PROJECTILE_Advance_Compat`: corridor `(5,5)` cell 0 north into a C00 wall at `(5,4)` resolves as `PROJECTILE_RESULT_HIT_WALL`, despawns before committing to the wall square, emits `DM1_SND_WOODEN_THUD`, creates no explosion, emits no combat/door event, and schedules no next projectile move. Source anchors are ReDMCSB `PROJEXPL.C:F0219` lines 717-725 and `PROJEXPL.C:F0217` lines 459, 560-600, and 607-608.
