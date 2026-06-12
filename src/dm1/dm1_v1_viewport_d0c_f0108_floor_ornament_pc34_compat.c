@@ -20,7 +20,21 @@ enum {
     DM1_F0115_THING_ORDER = 3,
     DM1_D0C_CELL_ORDER_BACKLEFT_BACKRIGHT = 0x0021,
     DM1_WALL_KEEP_OUT_ZONE_LEFT = 705,
-    DM1_WALL_KEEP_OUT_ZONE_RIGHT = 706
+    DM1_WALL_KEEP_OUT_ZONE_RIGHT = 706,
+    DM1_C02_ELEMENT_PIT = 2,
+    DM1_MASK_PIT_INVISIBLE = 0x04,
+    DM1_MASK_PIT_OPEN = 0x08,
+    DM1_M554_PIT_OR_TELEPORTER_VISIBLE_PC34 = 3,
+    DM1_M558_FLOOR_ORNAMENT_ORDINAL_PC34 = 5,
+    DM1_GFX_FLOOR_PIT_D0C_PC34 = 57,
+    DM1_GFX_FLOOR_PIT_INVISIBLE_D0C_PC34 = 63,
+    DM1_ZONE_FLOORPIT_D0C_PC34 = 862,
+    DM1_GFX_CEILING_PIT_D0C_PC34 = 69,
+    DM1_ZONE_CEILING_PIT_D0C_PC34 = 871,
+    DM1_VIEWPORT_WIDTH_PC34 = 224,
+    DM1_VIEWPORT_HEIGHT_PC34 = 136,
+    DM1_SCREEN_WIDTH_PC34 = 320,
+    DM1_SCREEN_HEIGHT_PC34 = 200
 };
 
 static const char s_source_evidence[] =
@@ -65,6 +79,53 @@ static const DM1_V1_D0CF0108FloorOrnamentSpecPc34 s_spec = {
     "DEFS.H:2088/2596-2611/2668-2677/2698-2702/4045-4046"
 };
 
+static const DM1_V1_D0CF0108FloorOrnamentKappetaalVariantPc34
+s_kappetaal_variant = {
+    "D0C open-pit kappetaal front-edge variant kept out of F0108",
+    1,
+    1,
+    DM1_C02_ELEMENT_PIT,
+    DM1_MASK_PIT_OPEN,
+    DM1_MASK_PIT_INVISIBLE,
+    DM1_M554_PIT_OR_TELEPORTER_VISIBLE_PC34,
+    DM1_M558_FLOOR_ORNAMENT_ORDINAL_PC34,
+    4,
+    1,
+    0,
+    0,
+    -1,
+    0,
+    0,
+    0,
+    DM1_D0C_VIEW_SQUARE,
+    DM1_D0C_CELL_ORDER_BACKLEFT_BACKRIGHT,
+    DM1_GFX_FLOOR_PIT_D0C_PC34,
+    DM1_GFX_FLOOR_PIT_INVISIBLE_D0C_PC34,
+    DM1_ZONE_FLOORPIT_D0C_PC34,
+    DM1_GFX_CEILING_PIT_D0C_PC34,
+    DM1_ZONE_CEILING_PIT_D0C_PC34,
+    DM1_VIEWPORT_WIDTH_PC34,
+    DM1_VIEWPORT_HEIGHT_PC34,
+    DM1_SCREEN_WIDTH_PC34,
+    DM1_SCREEN_HEIGHT_PC34,
+    27,
+    127,
+    170,
+    9,
+    25,
+    127,
+    174,
+    9,
+    1,
+    1,
+    "DUNVIEW.C F0108:3940-4011",
+    "DUNGEON.C F0172:2628-2678",
+    "DUNVIEW.C F0127:8274-8296",
+    "DEFS.H:1009/1026-1027/2554-2558/2596-2601/4208-4218",
+    "DUNVIEW.C G0206/G0207/G0208:1167-1216",
+    "src/engine/m11_game_view.c:12829-12830"
+};
+
 static uint32_t fnv1a_u32_pc34_compat(uint32_t hash, uint32_t value)
 {
     unsigned int i;
@@ -86,6 +147,12 @@ const DM1_V1_D0CF0108FloorOrnamentSpecPc34 *
 dm1_v1_viewport_d0c_f0108_floor_ornament_spec_pc34_compat(void)
 {
     return &s_spec;
+}
+
+const DM1_V1_D0CF0108FloorOrnamentKappetaalVariantPc34 *
+dm1_v1_viewport_d0c_f0108_floor_ornament_kappetaal_variant_pc34_compat(void)
+{
+    return &s_kappetaal_variant;
 }
 
 bool dm1_v1_viewport_d0c_f0108_floor_ornament_initial_state_pc34_compat(
