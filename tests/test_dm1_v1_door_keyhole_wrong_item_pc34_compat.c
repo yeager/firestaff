@@ -60,6 +60,9 @@ static void seed_door_view(M11_GameViewState* state,
     state->world.party.champions[0].present = 1;
     state->world.party.champions[0].inventory[0] = THING_NONE;
     state->world.party.champions[0].inventory[1] = THING_NONE;
+    state->world.party.champions[1].present = 1;
+    state->world.party.champions[1].inventory[0] = THING_NONE;
+    state->world.party.champions[1].inventory[1] = THING_NONE;
 
     map->width = 3;
     map->height = 3;
@@ -86,6 +89,9 @@ static void seed_door_view(M11_GameViewState* state,
     doors[0].next = THING_ENDOFLIST;
     doors[0].button = 1;
     doors[0].ornamentOrdinal = 1;
+    squares[2 * 3 + 2] = square_type(DUNGEON_ELEMENT_DOOR,
+                                     0x10 | 4);
+    squareFirstThings[2 * 3 + 2] = 0; /* Same source-style door thing for leader/facing churn. */
     things->loaded = 1;
     things->squareFirstThings = squareFirstThings;
     things->squareFirstThingCount = 9;
@@ -116,6 +122,14 @@ int main(void)
     int baselineMessageCount;
     int baselineProjectileCount;
     int baselineTimelineCount;
+    int secondBaselineMessageCount;
+    int secondBaselineProjectileCount;
+    int secondBaselineTimelineCount;
+    unsigned int secondBaselineWorldHash;
+    char secondBaselineAction[sizeof(state.lastAction)];
+    char secondBaselineOutcome[sizeof(state.lastOutcome)];
+    char secondBaselineInspectTitle[sizeof(state.inspectTitle)];
+    char secondBaselineInspectDetail[sizeof(state.inspectDetail)];
     int coordinateSpace = 0;
     int zoneId = 0;
     int command = 0;
@@ -194,6 +208,57 @@ int main(void)
     ok &= expect_int("wrong-item click preserves prior message text",
                      strcmp(M11_GameView_GetMessageLogEntry(&state, 0),
                             "SENTINEL MESSAGE") == 0, 1);
+
+    state.world.party.championCount = 2;
+    state.world.party.activeChampionIndex = 1;
+    state.world.party.direction = DIR_EAST;
+    secondBaselineWorldHash = state.lastWorldHash;
+    snprintf(secondBaselineAction, sizeof(secondBaselineAction), "%s",
+             state.lastAction);
+    snprintf(secondBaselineOutcome, sizeof(secondBaselineOutcome), "%s",
+             state.lastOutcome);
+    snprintf(secondBaselineInspectTitle, sizeof(secondBaselineInspectTitle),
+             "%s", state.inspectTitle);
+    snprintf(secondBaselineInspectDetail, sizeof(secondBaselineInspectDetail),
+             "%s", state.inspectDetail);
+    secondBaselineMessageCount = M11_GameView_GetMessageLogCount(&state);
+    secondBaselineProjectileCount = state.world.projectiles.count;
+    secondBaselineTimelineCount = state.world.timeline.count;
+
+    /* Same ReDMCSB F0377 branch after changing the active champion and
+     * facing direction: the wrong item still belongs to G4055 leader hand,
+     * not to the newly selected champion, and the D1C keyhole/button box
+     * must remain a no-op instead of throwing the object. */
+    ok &= expect_int("wrong-item click after leader/facing change is ignored",
+                     M11_GameView_HandlePointerButton(&state, clickX, clickY,
+                                                     M11_DM1_MOUSE_MASK_LEFT),
+                     M11_GAME_INPUT_IGNORED);
+    ok &= expect_int("active champion survives wrong-item click",
+                     state.world.party.activeChampionIndex, 1);
+    ok &= expect_int("facing direction survives wrong-item click",
+                     state.world.party.direction, DIR_EAST);
+    ok &= expect_int("leader hand survives after leader/facing change",
+                     M11_GameView_GetV1LeaderHandThing(&state), wrongThing);
+    ok &= expect_int("east-facing door remains closed after wrong-item click",
+                     squares[2 * 3 + 2],
+                     square_type(DUNGEON_ELEMENT_DOOR, 0x10 | 4));
+    ok &= expect_int("leader/facing wrong-item click does not refresh world hash",
+                     (int)state.lastWorldHash, (int)secondBaselineWorldHash);
+    ok &= expect_int("leader/facing wrong-item click does not append a message",
+                     M11_GameView_GetMessageLogCount(&state),
+                     secondBaselineMessageCount);
+    ok &= expect_int("leader/facing wrong-item click does not spawn projectile",
+                     state.world.projectiles.count,
+                     secondBaselineProjectileCount);
+    ok &= expect_int("leader/facing wrong-item click does not schedule door event",
+                     state.world.timeline.count,
+                     secondBaselineTimelineCount);
+    ok &= expect_int("leader/facing wrong-item click keeps status",
+                     strcmp(state.lastAction, secondBaselineAction) == 0 &&
+                     strcmp(state.lastOutcome, secondBaselineOutcome) == 0, 1);
+    ok &= expect_int("leader/facing wrong-item click keeps inspect text",
+                     strcmp(state.inspectTitle, secondBaselineInspectTitle) == 0 &&
+                     strcmp(state.inspectDetail, secondBaselineInspectDetail) == 0, 1);
 
     if (!ok) return 1;
     printf("ok: DM1 V1 door keyhole wrong-item click is ignored without consume, open, or message\n");
