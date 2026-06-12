@@ -86,11 +86,34 @@ int main(void) {
     ok &= expect_int("not facing fountain item unchanged", item.itemType, DM1_V1_ICON_POTION_EMPTY_FLASK);
 
     m11_fw_init(&foodWater, 1);
+    foodWater.champions[0].food = 777;
     foodWater.champions[0].water = 11;
     foodWater.champions[0].thirsty = 1;
     ok &= DM1V1_Fountain_ApplyDrinkPc34Compat(&foodWater, 0, 1, &result);
     ok &= expect_int("drink apply water", foodWater.champions[0].water, DM1_V1_FOUNTAIN_WATER_MAX);
+    ok &= expect_int("drink preserves food", foodWater.champions[0].food, 777);
     ok &= expect_int("drink apply clears thirsty", foodWater.champions[0].thirsty, 0);
+    ok &= expect_int("drink apply action", result.action, DM1_V1_FOUNTAIN_ACTION_DRINK);
+    ok &= expect_int("drink apply sound", result.playSoundOrdinal, DM1_V1_FOUNTAIN_SWALLOW_SOUND);
+
+    foodWater.champions[0].food = 333;
+    foodWater.champions[0].water = 2300;
+    foodWater.champions[0].thirsty = 1;
+    ok &= DM1V1_Fountain_ApplyDrinkPc34Compat(&foodWater, 0, 1, &result);
+    ok &= expect_int("drink forces overfull water to source max",
+                     foodWater.champions[0].water,
+                     DM1_V1_FOUNTAIN_WATER_MAX);
+    ok &= expect_int("drink overfull preserves food", foodWater.champions[0].food, 333);
+    ok &= expect_int("drink overfull clears thirsty", foodWater.champions[0].thirsty, 0);
+
+    foodWater.champions[0].food = 444;
+    foodWater.champions[0].water = 123;
+    foodWater.champions[0].thirsty = 1;
+    ok &= DM1V1_Fountain_ApplyDrinkPc34Compat(&foodWater, 0, 0, &result);
+    ok &= expect_int("non-fountain drink no water mutation", foodWater.champions[0].water, 123);
+    ok &= expect_int("non-fountain drink preserves food", foodWater.champions[0].food, 444);
+    ok &= expect_int("non-fountain drink keeps thirsty", foodWater.champions[0].thirsty, 1);
+    ok &= expect_int("non-fountain drink no action", result.action, DM1_V1_FOUNTAIN_ACTION_NONE);
 
     printf("fountainInteractionInvariantOk=%d\n", ok ? 1 : 0);
     return ok ? 0 : 1;
