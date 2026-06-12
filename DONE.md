@@ -4,6 +4,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## Latest Local Work
 
+- ✅ 2026-06-12 — hardened the DM1 V1 original capture events-row builder with header-level image geometry checks: raw DOSBox frames must be 320x200 and viewport crops must be 224x136 before a 41-column transcript TSV row is emitted. The self-test now covers a stale full-frame crop negative path, and the end-to-end handoff gate still flips the pass608 blocker only for a promotable transcript.
 - ✅ 2026-06-12 — hardened `dm1_v1_projectile_wall_impact_sound_gate` so the same ReDMCSB `PROJEXPL.C:F0217` non-explosion wall-impact sound path now proves both sides of the selector: Open Door/generic non-weapon impacts emit `DM1_SND_WOODEN_THUD`, while a weapon-backed kinetic arrow impact emits `DM1_SND_METALLIC_THUD` and still despawns without explosion, combat, or next projectile move.
 - ✅ 2026-06-12 — extended `dm1_v1_projectile_side_wall_impact_runtime_regression` so DM1 V1 thrown-item side-cell impact coverage now includes closed fakewall and stairs-from-stairs wall-equivalent blockers, and verifies the thrown item reports/retains the source square instead of materializing in the blocked side cell.
 - ✅ 2026-06-12 — added `m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat`, a focused DM1 V1 M11 runtime gate proving the empty-leader-hand C546 eye route closes an already-open action-hand chest through `CHEST.C F0334`, rewrites only visible C537..C544 contents, drops the hidden ninth tail, and then leaves the champion stats panel active.

@@ -51,6 +51,10 @@ The helper refuses to emit a row when:
     silently ship);
   * the recorded 224x136 crop is missing or its on-disk SHA256
     does not match the recorded ``crop_sha256``;
+  * the raw capture is not actually 320x200, or the crop is not
+    actually 224x136 (the transcript writer records raw-frame
+    geometry, but the live handoff also needs to reject a stale
+    full-frame crop before a row is emitted);
   * the preflight receipt's pin checks are not all PASS (the
     upstream contract is violated);
   * the route is non-baseline (has at least one input token)
@@ -85,6 +89,7 @@ import dataclasses
 import hashlib
 import json
 import os
+import struct
 import sys
 import tempfile
 from pathlib import Path
@@ -265,6 +270,58 @@ def _queue_source_for_input_token(input_token: str) -> str:
     if "MENU_INPUT" in input_token or "MENU_KEY" in input_token:
         return "F0361_COMMAND_ProcessKeyPress"
     return "F0359_COMMAND_ProcessClick_CPSC"
+
+
+def _read_image_dimensions(path: Path) -> tuple[int, int]:
+    """Read PNG/PPM dimensions without depending on Pillow.
+
+    The live runbook uses PNG screenshots and PPM-style viewport
+    crops, while the hermetic self-test intentionally writes PPM
+    bytes to ``.png`` paths.  Probe the file signature instead of
+    the extension so the guard matches the actual capture bytes.
+    """
+    with path.open("rb") as fh:
+        prefix = fh.read(32)
+        if prefix.startswith(b"\x89PNG\r\n\x1a\n"):
+            if len(prefix) < 24:
+                raise ValueError(f"{path}: PNG header is truncated")
+            width, height = struct.unpack(">II", prefix[16:24])
+            return int(width), int(height)
+        if prefix.startswith(b"P6") or prefix.startswith(b"P3"):
+            fh.seek(0)
+            tokens: list[bytes] = []
+            current = bytearray()
+            in_comment = False
+            while len(tokens) < 4:
+                b = fh.read(1)
+                if not b:
+                    break
+                c = b[0]
+                if in_comment:
+                    if c in (10, 13):
+                        in_comment = False
+                    continue
+                if c == 35:  # '#'
+                    if current:
+                        tokens.append(bytes(current))
+                        current.clear()
+                    in_comment = True
+                    continue
+                if c in (9, 10, 11, 12, 13, 32):
+                    if current:
+                        tokens.append(bytes(current))
+                        current.clear()
+                    continue
+                current.append(c)
+            if current and len(tokens) < 4:
+                tokens.append(bytes(current))
+            if len(tokens) < 4 or tokens[0] not in (b"P6", b"P3"):
+                raise ValueError(f"{path}: PPM header is malformed")
+            try:
+                return int(tokens[1]), int(tokens[2])
+            except ValueError as exc:
+                raise ValueError(f"{path}: PPM width/height are malformed") from exc
+    raise ValueError(f"{path}: unsupported capture image format")
 
 
 # ---------------------------------------------------------------------------
@@ -597,6 +654,34 @@ def build_rows(
     matched += 1  # raw + crop exist
     total += 1
     matched += 1  # raw + crop exist (same check)
+
+    total += 2
+    try:
+        raw_dims = _read_image_dimensions(raw_path)
+    except ValueError as exc:
+        failures.append(f"raw capture geometry: {exc}")
+        raw_dims = (-1, -1)
+    if raw_dims != (320, 200):
+        failures.append(
+            f"raw capture geometry: {raw_path} is {raw_dims[0]}x{raw_dims[1]}, "
+            "expected 320x200"
+        )
+    else:
+        matched += 1
+    try:
+        crop_dims = _read_image_dimensions(crop_path)
+    except ValueError as exc:
+        failures.append(f"cropped capture geometry: {exc}")
+        crop_dims = (-1, -1)
+    if crop_dims != (224, 136):
+        failures.append(
+            f"cropped capture geometry: {crop_path} is "
+            f"{crop_dims[0]}x{crop_dims[1]}, expected 224x136"
+        )
+    else:
+        matched += 1
+    if failures:
+        return BuildResult(rows=[], failures=failures, matched=matched, total=total)
 
     command_ids: list[int] = list(route.get("commandIds") or [])
     input_tokens: list[str] = list(route.get("inputTokens") or [])
@@ -1108,7 +1193,30 @@ def _self_test(tmp_dir: Optional[Path]) -> int:
     else:
         matched += 1
 
-    # --- Check 9: end-to-end — pipe the row builder's output
+    # --- Check 9: crop geometry is validated before a row is
+    # emitted.  A stale full-frame crop has a self-consistent
+    # SHA256, so the row builder must inspect the actual image
+    # dimensions instead of trusting the filename or hash alone.
+    total += 1
+    bad_crop_path = captures / "02_ingame_turn_right_fullframe_as_crop.png"
+    _write_minimal_ppm(bad_crop_path, 320, 200, (70, 70, 70))
+    res = build_rows(
+        label="02_turn_right_west_1_3",
+        raw_path=raw_path,
+        crop_path=bad_crop_path,
+        run_id="selftest_run_001",
+        preflight_receipt_path=receipt_path,
+        pass623_fixture_path=pass623_path,
+    )
+    if not any("expected 224x136" in f for f in res.failures) or res.rows:
+        failures.append(
+            f"bad_crop_geometry: expected a 224x136 geometry failure "
+            f"with no rows, got failures={res.failures} rows={len(res.rows)}"
+        )
+    else:
+        matched += 1
+
+    # --- Check 10: end-to-end — pipe the row builder's output
     # through the real transcript writer and assert the emitted
     # transcript is ``promotable=True`` (every row passes).
     total += 1
@@ -1156,7 +1264,7 @@ def _self_test(tmp_dir: Optional[Path]) -> int:
         else:
             matched += 1
 
-    # --- Check 10: end-to-end — pipe a multi-command row
+    # --- Check 11: end-to-end — pipe a multi-command row
     # through the writer and assert every row is promotable.
     total += 1
     res = build_rows(
@@ -1201,7 +1309,7 @@ def _self_test(tmp_dir: Optional[Path]) -> int:
         else:
             matched += 1
 
-    # --- Check 11: dispatch handler matches the command id
+    # --- Check 12: dispatch handler matches the command id
     # (TURN vs MOVE).  This is the F0365/F0366 source-chain
     # binding the writer enforces — the row builder picks
     # the right handler based on the command id.
@@ -1226,7 +1334,7 @@ def _self_test(tmp_dir: Optional[Path]) -> int:
     else:
         matched += 1
 
-    # --- Check 12: source-function names are pinned to the
+    # --- Check 13: source-function names are pinned to the
     # writer's constants (regression guard: a future operator
     # who edits the writer's constants cannot silently break
     # the row builder).
