@@ -56,6 +56,94 @@ static DM1_V1_D1CDispatchOutputPc34 probe(DM1_V1_D1CDispatchInputPc34 input,
     return output;
 }
 
+enum {
+    D1C_SENTINEL_VIEWPORT_W = 224,
+    D1C_SENTINEL_VIEWPORT_H = 136,
+    D1C_SENTINEL_STAIRS_UP_X = 112,
+    D1C_SENTINEL_STAIRS_UP_Y = 101,
+    D1C_SENTINEL_STAIRS_DOWN_X = 112,
+    D1C_SENTINEL_STAIRS_DOWN_Y = 114,
+    D1C_SENTINEL_FLOOR_PIT_X = 112,
+    D1C_SENTINEL_FLOOR_PIT_Y = 105,
+    D1C_SENTINEL_FIELD_X = 112,
+    D1C_SENTINEL_FIELD_Y = 68,
+    D1C_SENTINEL_STAIRS_UP_PIXEL = 0x51,
+    D1C_SENTINEL_STAIRS_DOWN_PIXEL = 0x52,
+    D1C_SENTINEL_FLOOR_PIT_PIXEL = 0x53,
+    D1C_SENTINEL_FIELD_PIXEL = 0x54
+};
+
+static unsigned char *pixel_at(unsigned char *frame, int x, int y)
+{
+    return &frame[(y * D1C_SENTINEL_VIEWPORT_W) + x];
+}
+
+static unsigned char pixel_get(const unsigned char *frame, int x, int y)
+{
+    return frame[(y * D1C_SENTINEL_VIEWPORT_W) + x];
+}
+
+static void mark_d1c_feature_zone_pixel(unsigned char *frame,
+                                        const DM1_V1_D1CDispatchOutputPc34 *out)
+{
+    /*
+     * Test-only pixel sentinel for the MEDIA720 D1C route zones selected in
+     * ReDMCSB DUNVIEW.C:7753-7781, 7912-7921, 7939-7957 and named in
+     * DEFS.H:4148 C809, 4161 C822, 4206 C859, 4052 C712.
+     */
+    switch (out->zone_index) {
+    case DM1_V1_D1C_DISPATCH_PC34_ZONE_STAIRS_UP_D1C:
+        *pixel_at(frame, D1C_SENTINEL_STAIRS_UP_X, D1C_SENTINEL_STAIRS_UP_Y) =
+            D1C_SENTINEL_STAIRS_UP_PIXEL;
+        break;
+    case DM1_V1_D1C_DISPATCH_PC34_ZONE_STAIRS_DOWN_D1C:
+        *pixel_at(frame, D1C_SENTINEL_STAIRS_DOWN_X, D1C_SENTINEL_STAIRS_DOWN_Y) =
+            D1C_SENTINEL_STAIRS_DOWN_PIXEL;
+        break;
+    case DM1_V1_D1C_DISPATCH_PC34_ZONE_FLOOR_PIT_D1C:
+        *pixel_at(frame, D1C_SENTINEL_FLOOR_PIT_X, D1C_SENTINEL_FLOOR_PIT_Y) =
+            D1C_SENTINEL_FLOOR_PIT_PIXEL;
+        break;
+    case DM1_V1_D1C_DISPATCH_PC34_ZONE_FIELD_D1C:
+        *pixel_at(frame, D1C_SENTINEL_FIELD_X, D1C_SENTINEL_FIELD_Y) =
+            D1C_SENTINEL_FIELD_PIXEL;
+        break;
+    default:
+        break;
+    }
+}
+
+static void expect_d1c_feature_pixels(const char *id,
+                                      const unsigned char *frame,
+                                      int stairs_up,
+                                      int stairs_down,
+                                      int floor_pit,
+                                      int field)
+{
+    char label[96];
+
+    snprintf(label, sizeof(label), "%s.stairs_up_pixel", id);
+    expect_int(label,
+               pixel_get(frame, D1C_SENTINEL_STAIRS_UP_X, D1C_SENTINEL_STAIRS_UP_Y),
+               stairs_up,
+               "DUNVIEW.C:7753-7763 C809 sentinel");
+    snprintf(label, sizeof(label), "%s.stairs_down_pixel", id);
+    expect_int(label,
+               pixel_get(frame, D1C_SENTINEL_STAIRS_DOWN_X, D1C_SENTINEL_STAIRS_DOWN_Y),
+               stairs_down,
+               "DUNVIEW.C:7764-7781 C822 sentinel");
+    snprintf(label, sizeof(label), "%s.floor_pit_pixel", id);
+    expect_int(label,
+               pixel_get(frame, D1C_SENTINEL_FLOOR_PIT_X, D1C_SENTINEL_FLOOR_PIT_Y),
+               floor_pit,
+               "DUNVIEW.C:7912-7921 C859 sentinel");
+    snprintf(label, sizeof(label), "%s.field_pixel", id);
+    expect_int(label,
+               pixel_get(frame, D1C_SENTINEL_FIELD_X, D1C_SENTINEL_FIELD_Y),
+               field,
+               "DUNVIEW.C:7939-7957 C712 sentinel");
+}
+
 static void test_stairs_up_front_media720_route(void)
 {
     const DM1_V1_D1CDispatchInputPc34 input = {
@@ -194,6 +282,48 @@ static void test_open_floor_and_teleporter_tail(void)
                 "DUNVIEW.C:7937 precedes field guard");
 }
 
+static void test_d1c_feature_zone_pixel_sentinel_gate(void)
+{
+    const DM1_V1_D1CDispatchInputPc34 stairs_up = {
+        DM1_V1_D1C_DISPATCH_PC34_ELEMENT_STAIRS_FRONT, true, 0, 0, 0, false
+    };
+    const DM1_V1_D1CDispatchInputPc34 stairs_down = {
+        DM1_V1_D1C_DISPATCH_PC34_ELEMENT_STAIRS_FRONT, false, 0, 0, 0, false
+    };
+    const DM1_V1_D1CDispatchInputPc34 floor_pit = {
+        DM1_V1_D1C_DISPATCH_PC34_ELEMENT_FLOOR_PIT, false, 0, 0, 0, false
+    };
+    const DM1_V1_D1CDispatchInputPc34 teleporter = {
+        DM1_V1_D1C_DISPATCH_PC34_ELEMENT_TELEPORTER, false, 0, 0, 0, false
+    };
+    unsigned char frame[D1C_SENTINEL_VIEWPORT_W * D1C_SENTINEL_VIEWPORT_H];
+    DM1_V1_D1CDispatchOutputPc34 out;
+
+    memset(frame, 0, sizeof(frame));
+    out = probe(stairs_up, "pixel_stairs_up.probe");
+    mark_d1c_feature_zone_pixel(frame, &out);
+    expect_d1c_feature_pixels("pixel_stairs_up", frame,
+                              D1C_SENTINEL_STAIRS_UP_PIXEL, 0, 0, 0);
+
+    memset(frame, 0, sizeof(frame));
+    out = probe(stairs_down, "pixel_stairs_down.probe");
+    mark_d1c_feature_zone_pixel(frame, &out);
+    expect_d1c_feature_pixels("pixel_stairs_down", frame,
+                              0, D1C_SENTINEL_STAIRS_DOWN_PIXEL, 0, 0);
+
+    memset(frame, 0, sizeof(frame));
+    out = probe(floor_pit, "pixel_floor_pit.probe");
+    mark_d1c_feature_zone_pixel(frame, &out);
+    expect_d1c_feature_pixels("pixel_floor_pit", frame,
+                              0, 0, D1C_SENTINEL_FLOOR_PIT_PIXEL, 0);
+
+    memset(frame, 0, sizeof(frame));
+    out = probe(teleporter, "pixel_teleporter.probe");
+    mark_d1c_feature_zone_pixel(frame, &out);
+    expect_d1c_feature_pixels("pixel_teleporter", frame,
+                              0, 0, 0, D1C_SENTINEL_FIELD_PIXEL);
+}
+
 static void test_evidence_block(void)
 {
     const DM1_V1_D1CDispatchEvidencePc34 *e =
@@ -244,6 +374,7 @@ int main(void)
     test_wall_alcove_dispatch_only();
     test_wall_no_alcove_does_not_run_thing_pass();
     test_open_floor_and_teleporter_tail();
+    test_d1c_feature_zone_pixel_sentinel_gate();
     test_evidence_block();
 
     if (g_failures) {
