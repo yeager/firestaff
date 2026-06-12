@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.10  (2026-06-12)",
+    "  - DM1 V1 viewport: expanded source-lock and pixel coverage across additional front, side, door, wall-ornament, floor, ceiling, pit, teleporter, and thing-pass paths",
+    "  - DM1 V1 runtime: hardened chest, mirror-candidate, champion-panel, projectile, creature, poison-cloud, fake-wall, teleporter, keyhole, pit, fountain, skill, food/water, and Vi altar edge cases",
+    "  - DM1 original-capture workflow: tightened DOSBox rawshot fallback, freshness checks, transcript rows, and 320x200/viewport crop validation for source comparison",
+    "  - Regression coverage: broadened no-game-data and real-data gates while keeping release packaging on the green GitHub Actions verify matrix",
+    "",
     "V2.7.9  (2026-06-12)",
     "  - DM1 V1 launch: fixed Retina/HiDPI window pixel-size events so entrance door buttons keep using SDL's logical mouse coordinate space on MacBook displays",
     "  - DM1 V1 FTL/SWSH: restored the ReDMCSB palette cadence by batching adjacent Setcolor commands and applying DBF wait counts as N+1 VBlanks",
@@ -140,5 +146,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.9";
+    return "2.7.10";
 }

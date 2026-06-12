@@ -1,3 +1,21 @@
+# Firestaff v2.7.10
+
+Patch release focused on the large DM1 V1 hardening batch after v2.7.9.
+
+## What's New
+
+- Expanded DM1 V1 source-lock and pixel coverage across additional viewport front, side, door, wall-ornament, floor, ceiling, pit, teleporter, and thing-pass paths.
+- Hardened DM1 V1 runtime behavior around chests, mirror-candidate handoff, champion-panel routing, projectiles, creatures, poison clouds, fake walls, teleporters, keyholes, pits, fountains, skill progression, food/water timing, and Vi altar resurrection.
+- Tightened the original-capture workflow with DOSBox rawshot fallback, rawshot freshness checks, single-row transcript validation, and 320x200 plus viewport-crop guards.
+- Kept the public release scope honest: this packages a broad DM1 V1 parity/regression step, while CSB, DM2, Nexus, and Theron remain active hardening targets.
+
+## Verification
+
+- GitHub Actions verify workflow passed on `main` before release prep.
+- Release workflow builds and packages macOS arm64/x86_64, Windows x86_64, Linux x86_64, and Linux arm64 artifacts.
+
+---
+
 # Firestaff v2.7.9
 
 Patch release for two DM1 launch regressions found in v2.7.8 on MacBook Pro.
