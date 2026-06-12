@@ -240,6 +240,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d0l_d0r_f0108_floor_ceili
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat.c
@@ -428,6 +432,10 @@ list(APPEND M10_SOURCES
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_full_chain_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_full_chain_pc34_compat.c
+)
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_reselect_after_deposit_with_party_rotate_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_mirror_candidate_reselect_after_deposit_with_party_rotate_pc34_compat.c
 )
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
@@ -6816,6 +6824,22 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_mirror_candidate_full_chain_pc34_compat
     )
 
+    add_executable(test_dm1_v1_mirror_candidate_reselect_after_deposit_with_party_rotate_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_reselect_after_deposit_with_party_rotate_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_reselect_after_deposit_with_party_rotate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_candidate_reselect_after_deposit_with_party_rotate_pc34_compat
+        PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_mirror_candidate_reselect_after_deposit_with_party_rotate_pc34_compat
+        PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_reselect_after_deposit_with_party_rotate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_reselect_after_deposit_with_party_rotate_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_reselect_after_deposit_with_party_rotate_pc34_compat
+    )
+
     add_executable(firestaff_dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat_test
         tests/test_dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat.c
         src/dm1/dm1_v1_mirror_candidate_thought_project_traversal_pc34_compat.c
@@ -8481,6 +8505,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat.c
         src/dm1/dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat.c
     )
+    add_executable(test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat
+        tests/test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat.c
+    )
     add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat
         tests/test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat.c
         src/dm1/dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat.c
@@ -8757,6 +8785,12 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     target_include_directories(test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    target_include_directories(test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
     target_link_libraries(test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat
         PRIVATE firestaff_m10
     )
@@ -8990,6 +9024,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(test_dm1_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -9162,6 +9197,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat
         COMMAND test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat
+        COMMAND test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat
     )
     add_test(
         NAME dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat
