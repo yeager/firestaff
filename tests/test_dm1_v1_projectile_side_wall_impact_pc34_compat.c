@@ -51,7 +51,8 @@
  *     coordinates.
  *   - Side-lane blockers resolve before the parity-rotated cell is
  *     committed; this test pins that impact-return boundary for all
- *     four cardinal directions without broadening projectile motion.
+ *     four cardinal directions, including map-boundary blockers,
+ *     without broadening projectile motion.
  *
  * Non-overlap:
  *   - test_dm1_v1_projectile_explosion_render covers the
@@ -114,6 +115,7 @@ typedef struct {
     int destDoorState;
     int destHasFluxcage;
     int destHasOtherProjectile;
+    int destIsMapBoundary;
     int expectedBlocker;
     int expectedResultKind;
     int expectedDoorDestructionEvent;
@@ -126,6 +128,7 @@ static const SideCellBlockerCase kSideCellBlockers[] = {
         PROJECTILE_DOOR_STATE_NONE,
         0,
         0,
+        0,
         PROJECTILE_BLOCKER_WALL,
         PROJECTILE_RESULT_HIT_WALL,
         0
@@ -134,6 +137,7 @@ static const SideCellBlockerCase kSideCellBlockers[] = {
         "side_lane_closed_door",
         PROJECTILE_ELEMENT_DOOR,
         PROJECTILE_DOOR_STATE_CLOSED_FULL,
+        0,
         0,
         0,
         PROJECTILE_BLOCKER_CLOSED_DOOR,
@@ -146,6 +150,7 @@ static const SideCellBlockerCase kSideCellBlockers[] = {
         PROJECTILE_DOOR_STATE_NONE,
         1,
         0,
+        0,
         PROJECTILE_BLOCKER_FLUXCAGE,
         PROJECTILE_RESULT_HIT_FLUXCAGE,
         0
@@ -156,8 +161,20 @@ static const SideCellBlockerCase kSideCellBlockers[] = {
         PROJECTILE_DOOR_STATE_NONE,
         0,
         1,
+        0,
         PROJECTILE_BLOCKER_OTHER_PROJECTILE,
         PROJECTILE_RESULT_HIT_OTHER_PROJECTILE,
+        0
+    },
+    {
+        "side_lane_boundary",
+        PROJECTILE_ELEMENT_CORRIDOR,
+        PROJECTILE_DOOR_STATE_NONE,
+        0,
+        0,
+        1,
+        PROJECTILE_BLOCKER_BOUNDARY,
+        PROJECTILE_RESULT_HIT_WALL,
         0
     }
 };
@@ -317,6 +334,7 @@ static void make_side_cell_blocker_digest(
     d->destDoorState           = c->destDoorState;
     d->destHasFluxcage         = c->destHasFluxcage;
     d->destHasOtherProjectile  = c->destHasOtherProjectile;
+    d->destIsMapBoundary       = c->destIsMapBoundary;
     d->destTeleporterNewDirection = -1;
     d->destCreatureType        = -1;
 }
