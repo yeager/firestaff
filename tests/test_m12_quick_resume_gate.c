@@ -35,6 +35,7 @@ static void force_dm1_available(M12_StartupMenuState* state) {
     state->assetStatus.versions[0][0].label = "PC 3.4";
     state->assetStatus.versions[0][0].shortLabel = "PC34";
     state->assetStatus.versions[0][0].matched = 1;
+    state->assetStatus.dm1Available = 1;
     state->gameOptions[0].versionIndex = 0;
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;

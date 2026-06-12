@@ -874,11 +874,11 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
     if (!logoPayload) goto cleanup;
     SWSH_Compat_ExpandLogoToBitmap(logoPayload, screenFb);
 
-    /* ReDMCSB SWSH.C:10-38 starts Dosound(), applies Setcolor()
-     * commands immediately, and only advances visible time in the Vsync
-     * wait path.  The 68k DBF loop waits D7 + 1 VBlanks, so batch adjacent
-     * palette writes into the next presented wait frame instead of turning
-     * every Setcolor into its own modern frame. */
+    /* ReDMCSB SWSH.C F2255:2975-3039 / DRAWVIEW.C G8162-G8171:
+     * the PC/F20E path applies each Swoosh palette row before waiting
+     * for its source delay. Present each palette mutation immediately
+     * so the logo does not collapse several source colors into one
+     * modern frame. */
     memset(swshPalette, 0, sizeof(swshPalette));
     {
       unsigned int sourceStep;
@@ -891,9 +891,11 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
           if (M11_Render_PumpEvents()) break;
           if (!SWSH_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
           if (step.kind == SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR) {
-              SWSH_Compat_ConvertAtariRgbWordToRgb8(step.colorValue,
-                                                    swshPalette[step.colorIndex & 0x0FU]);
-              paletteDirty = 1;
+              SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(step.colorValue,
+                                                       swshPalette[step.colorIndex & 0x0FU]);
+              m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+              M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+              paletteDirty = 0;
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS) {
               unsigned int vblank;
               if (paletteDirty) {
@@ -2217,8 +2219,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const M11_PhaseA_Options* o;
     runtimeOptions = opts ? *opts : defaults;
     m11_apply_persisted_window_size(&runtimeOptions);
-    /* Enable accessibility manifest if env var is set or always-on for now */
-    if (getenv("FS_ACCESSIBILITY") || 1) {
+    /* Enable the disk-backed automation manifest only on request. It writes
+     * ~/.firestaff/accessibility.json atomically from M11_GameView_Draw();
+     * leaving it always-on made normal gameplay do per-frame filesystem I/O. */
+    if (getenv("FS_ACCESSIBILITY")) {
         fs_ax_set_enabled(1);
     }
     o = &runtimeOptions;

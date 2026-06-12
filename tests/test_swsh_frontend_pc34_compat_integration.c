@@ -43,13 +43,13 @@ static int test_swsh_embedded_mz_payload_detection(void) {
 
 static int test_swsh_palette_word_conversion(void) {
     unsigned char rgb[3] = {0, 0, 0};
-    SWSH_Compat_ConvertAtariRgbWordToRgb8(0x0777u, rgb);
+    SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(0x0777u, rgb);
     if (rgb[0] != 255u || rgb[1] != 255u || rgb[2] != 255u) return 0;
-    SWSH_Compat_ConvertAtariRgbWordToRgb8(0x0555u, rgb);
-    if (rgb[0] != 182u || rgb[1] != 182u || rgb[2] != 182u) return 0;
-    SWSH_Compat_ConvertAtariRgbWordToRgb8(0x0222u, rgb);
-    if (rgb[0] != 73u || rgb[1] != 73u || rgb[2] != 73u) return 0;
-    SWSH_Compat_ConvertAtariRgbWordToRgb8(0x0770u, rgb);
+    SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(0x0555u, rgb);
+    if (rgb[0] != 190u || rgb[1] != 190u || rgb[2] != 190u) return 0;
+    SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(0x0222u, rgb);
+    if (rgb[0] != 125u || rgb[1] != 125u || rgb[2] != 125u) return 0;
+    SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(0x0770u, rgb);
     return rgb[0] == 255u && rgb[1] == 255u && rgb[2] == 0u;
 }
 

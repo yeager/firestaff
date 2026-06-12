@@ -221,7 +221,7 @@ int V1_TitleFrontend_GetStepPalette(V1_TitleFrontendSourceEventKind kind,
 
     if (!outSpecialPalette) return 0;
     /* ReDMCSB TITLE.C F0437 PC/F20 source-lock (DRAWVIEW.C F20E):
-     *   - PRESENTS uses C12_PRESENTS (only 0x0F = white; rest black).
+     *   - PRESENTS uses C12_PRESENTS (0x0F = white over the normal palette).
      *     TITLE.C:319-324 blits "PRESENTS" and F1012_PALETTE_SetCurtain
      *     fades C0_BLACK_PALETTE → C1_NORMAL_PALETTE in between, with
      *     F0694_SetMultipleColorsInPalette(C12_PRESENTS) setting 0x0F

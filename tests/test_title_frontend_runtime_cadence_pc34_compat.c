@@ -58,6 +58,10 @@ int main(void) {
     expect_u("runtime final guard delay from source post/final vblanks",
              V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing),
              3u * (unsigned int)V1_TICK_MS);
+    /* ReDMCSB TITLE.C F0437 uses F0022_MAIN_Delay(20) after the PRESENTS
+     * strip and a three-vblank final guard, 60u ms in the original PC delay
+     * units; Firestaff maps the same source vblank counts onto V1_TICK_MS at
+     * runtime to match the engine tick cadence. */
     expect_u("runtime fallback frame delay stays deliberate, not zero-speed",
              V1_TitleFrontend_GetRuntimeFrameDelayMs(&zero),
              50u);

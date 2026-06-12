@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.11  (2026-06-12)",
+    "  - DM1 V1 Hall of Champions: fixed mirror-candidate survival and party movement timing so champions no longer drain or die while walking the Hall",
+    "  - DM1 V1 mirrors: restored candidate slot ownership during confirm/cancel and preserved mirror runtime state across quick-resume sidecars",
+    "  - DM1 V1 intro: corrected the FTL/SWSH PC palette rows and presented each source palette mutation immediately so the swoosh no longer races or uses Atari colors",
+    "  - DM1 V1 title/runtime: restored the PC TITLE palette base and made the accessibility manifest opt-in to avoid per-frame disk writes during normal play",
+    "",
     "V2.7.10  (2026-06-12)",
     "  - DM1 V1 viewport: expanded source-lock and pixel coverage across additional front, side, door, wall-ornament, floor, ceiling, pit, teleporter, and thing-pass paths",
     "  - DM1 V1 runtime: hardened chest, mirror-candidate, champion-panel, projectile, creature, poison-cloud, fake-wall, teleporter, keyhole, pit, fountain, skill, food/water, and Vi altar edge cases",
@@ -146,5 +152,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.10";
+    return "2.7.11";
 }
