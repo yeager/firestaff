@@ -1450,6 +1450,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_panel_damage_flash_decay_pixel_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 action-cell acting champion status-hand slot-box runtime gate.
+# Clicks C089..C092 through the real M11 pointer route and proves the
+# selected champion's status-panel action hand flips to the GRAPHICS.DAT C035
+# slot-box perimeter, then returns to C033 when the cell is clicked again.
+add_executable(firestaff_dm1_v1_champion_panel_action_cell_slotbox_runtime_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_action_cell_slotbox_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_panel_action_cell_slotbox_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_action_cell_slotbox_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 Hall of Champions candidate resurrect/reincarnate panel pixel gate.
 add_executable(firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe
     probes/m11/firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.c)
@@ -7252,6 +7263,14 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_champion_panel_zero_party_repaint_runtime_probe "$ENV{HOME}/.firestaff/data"
     )
     set_tests_properties(dm1_v1_champion_panel_zero_party_repaint_runtime PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_champion_panel_action_cell_slotbox_runtime
+        COMMAND firestaff_dm1_v1_champion_panel_action_cell_slotbox_runtime_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_panel_action_cell_slotbox_runtime PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
