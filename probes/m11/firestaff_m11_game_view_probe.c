@@ -10110,9 +10110,9 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1ChampionIconZoneId(4) == 0 &&
                              M11_GameView_GetV1ChampionIconZone(0, &icon0X, &icon0Y, &icon0W, &icon0H) &&
                              M11_GameView_GetV1ChampionIconZone(3, &icon3X, &icon3Y, &icon3W, &icon3H) &&
-                             icon0X == 281 && icon0Y == 0 && icon0W == 16 && icon0H == 14 &&
-                             icon3X == 281 && icon3Y == 15 && icon3W == 16 && icon3H == 14,
-                         "champion icon zones expose layout-696 C113-C116 ids and clipped geometry");
+                             icon0X == 281 && icon0Y == 0 && icon0W == 19 && icon0H == 14 &&
+                             icon3X == 281 && icon3Y == 15 && icon3W == 19 && icon3H == 14,
+                         "champion icon zones expose layout-696 C113-C116 ids and 19x14 source geometry");
         }
 
         {

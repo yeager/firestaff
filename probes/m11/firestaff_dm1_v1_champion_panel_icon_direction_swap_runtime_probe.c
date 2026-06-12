@@ -50,10 +50,7 @@ enum {
     PROBE_ICON_CELL_W = 19,
     PROBE_ICON_CELL_H = 14,
     PROBE_ICON_CELLS_PER_STRIP = 4,
-    /* The M11 icon zone (C113..C116) is clipped to 16x14, but the
-     * C028 source cell is 19x14.  We compare the on-screen 16x14
-     * zone against the leading 16 columns of the source cell. */
-    PROBE_ICON_ZONE_W = 16,
+    PROBE_ICON_ZONE_W = 19,
     PROBE_ICON_ZONE_H = 14,
     PROBE_ICON_TRANSPARENT_INDEX = 12 /* C12 darkest gray */
 };
@@ -203,12 +200,7 @@ static int check_icon_cell_pixels(const M11_GameViewState* game,
     return ok;
 }
 
-/* Capture a 19x14 pixel hash of the on-screen icon zone so the
- * caller can compare two icons for "different content" or "same
- * content".  Uses the count of opaque (non-bar-color, non-C0)
- * pixels to cheaply detect visual difference.  Two distinct
- * directions should produce different icon content; two
- * indistinguishable cells should not. */
+/* Count visible non-backdrop pixels in the on-screen icon zone. */
 static int icon_zone_non_bar_pixels(const unsigned char* fb,
                                     int x, int y, int w, int h,
                                     int barColor) {
@@ -226,6 +218,19 @@ static int icon_zone_non_bar_pixels(const unsigned char* fb,
     return count;
 }
 
+static unsigned long icon_zone_hash(const unsigned char* fb,
+                                    int x, int y, int w, int h) {
+    int xx, yy;
+    unsigned long hash = 2166136261u;
+    for (yy = 0; yy < h; ++yy) {
+        for (xx = 0; xx < w; ++xx) {
+            hash ^= (unsigned long)px_index(fb, PROBE_FB_W, x + xx, y + yy);
+            hash *= 16777619u;
+        }
+    }
+    return hash;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -236,7 +241,8 @@ int main(int argc, char** argv) {
     int cellsPartyE[4] = { 3, 0, 1, 2 };
     int nonBarCountsPartyN[4];
     int nonBarCountsPartyE[4];
-    int zones[4][4];
+    unsigned long iconHashesPartyN[4];
+    unsigned long iconHashesPartyE[4];
     int barColors[4];
     int ok = 1;
 
@@ -272,26 +278,24 @@ int main(int argc, char** argv) {
             ok &= expect_true("party-N slot zone reachable", 0);
             continue;
         }
-        zones[slot][0] = x;
-        zones[slot][1] = y;
-        zones[slot][2] = w;
-        zones[slot][3] = h;
         nonBarCountsPartyN[slot] =
             icon_zone_non_bar_pixels(fb, x, y, w, h, barColor);
+        iconHashesPartyN[slot] = icon_zone_hash(fb, x, y, w, h);
         snprintf(label, sizeof(label), "party-N slot%d non-bar pixels", slot);
         ok &= expect_true(label, nonBarCountsPartyN[slot] > 20);
         ok &= check_icon_cell_pixels(&game, fb, slot, cellsPartyN[slot]);
     }
 
     /* Verify all four party-N icon zones produced visible on-screen
-     * content (distinct non-bar pixel counts prove each slot drew
-     * a different cell from the 4-cell C028 strip). */
+     * content.  The exact C028 cell checks above prove the source-cell
+     * selection; this hash guard catches accidental identical composites
+     * without relying on a lossy non-bar pixel count. */
     {
         int distinct = 1;
         int a, b;
         for (a = 0; a < PROBE_CHAMPION_COUNT; ++a) {
             for (b = a + 1; b < PROBE_CHAMPION_COUNT; ++b) {
-                if (nonBarCountsPartyN[a] == nonBarCountsPartyN[b]) {
+                if (iconHashesPartyN[a] == iconHashesPartyN[b]) {
                     distinct = 0;
                 }
             }
@@ -312,6 +316,7 @@ int main(int argc, char** argv) {
         }
         nonBarCountsPartyE[slot] =
             icon_zone_non_bar_pixels(fb, x, y, w, h, barColors[slot]);
+        iconHashesPartyE[slot] = icon_zone_hash(fb, x, y, w, h);
         snprintf(label, sizeof(label), "party-E slot%d non-bar pixels", slot);
         ok &= expect_true(label, nonBarCountsPartyE[slot] > 20);
         ok &= check_icon_cell_pixels(&game, fb, slot, cellsPartyE[slot]);
@@ -324,7 +329,7 @@ int main(int argc, char** argv) {
         int changed = 0;
         int s;
         for (s = 0; s < PROBE_CHAMPION_COUNT; ++s) {
-            if (nonBarCountsPartyN[s] != nonBarCountsPartyE[s]) {
+            if (iconHashesPartyN[s] != iconHashesPartyE[s]) {
                 ++changed;
             }
         }

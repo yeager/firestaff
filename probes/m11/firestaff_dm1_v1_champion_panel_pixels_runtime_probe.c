@@ -11,6 +11,8 @@
  *   ReDMCSB CHAMDRAW.C F0292 draws the C151..C154 status boxes;
  *   ReDMCSB CHAMDRAW.C F0287 draws bottom-anchored HP/stamina/mana bars;
  *   ReDMCSB CHAMDRAW.C F0291 draws C033/C034/C035 hand slot boxes;
+ *   ReDMCSB CHAMDRAW.C F0622 lines 41-58 prepares the C113..C116
+ *   19x14 champion icon composite from the C028 icon strip.
  *   ReDMCSB COORD.C/layout-696 anchors C113..C116 champion icon zones.
  *   ReDMCSB COORD.C/layout-696 keeps C151..C154 on a 69px stride with
  *   67x29 status boxes, leaving two black pixels between adjacent boxes.
@@ -453,7 +455,7 @@ static int check_champion_icon_pixels(const M11_GameViewState* game,
     ok &= expect_true(label, iconIndex >= 0);
     snprintf(label, sizeof(label), "slot%d champion icon zone", slot);
     ok &= expect_true(label, M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
-                              w == 16 && h == 14);
+                              w == 19 && h == 14);
     gfxId = M11_GameView_GetV1ChampionIconGraphicId();
     asset = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
                                  (unsigned int)gfxId);
@@ -468,10 +470,12 @@ static int check_champion_icon_pixels(const M11_GameViewState* game,
 
     iconStripCellW = (int)asset->width / 4;
 
-    /* ReDMCSB: CHAMDRAW.C F0288 blends C028_GRAPHIC_CHAMPION_ICONS over a
-     * 19x14 icon cell strip with C12 dark-gray transparency.
-     * Reproduce that composite rule against the first 16 columns actually
-     * blitted by m11_draw_v1_champion_icons. */
+    /* ReDMCSB: CHAMDRAW.C F0622 lines 41-58 fills a 19x14 temporary
+     * bitmap with the champion base color, then blends the C028
+     * GRAPHIC_CHAMPION_ICONS strip over it with C12 dark-gray
+     * transparency.  Reproduce that composite rule across the full
+     * C113..C116 cell so the right-edge columns cannot retain stale
+     * pixels from a prior HUD frame. */
     for (yy = 0; yy < h; ++yy) {
         int srcX0 = iconIndex * iconStripCellW;
         for (xx = 0; xx < w; ++xx) {
@@ -493,6 +497,11 @@ static int check_champion_icon_pixels(const M11_GameViewState* game,
     }
     snprintf(label, sizeof(label), "slot%d champion icon opaque pixel match", slot);
     ok &= expect_true(label, expected > 0 && matched * 100 >= expected * 95);
+    snprintf(label, sizeof(label), "slot%d champion icon no stale pixels", slot);
+    ok &= expect_int(label,
+                     count_raw_pixel(fb, PROBE_FB_W, x, y, w, h,
+                                     (unsigned char)PROBE_STALE_PIXEL),
+                     0);
     if (transparentPixels > 0) {
         snprintf(label, sizeof(label), "slot%d champion icon transparent fill match", slot);
         ok &= expect_true(label,
