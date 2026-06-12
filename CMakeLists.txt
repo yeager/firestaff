@@ -3129,6 +3129,10 @@ if(BUILD_TESTING)
         NAME csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat
         COMMAND test_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat
     )
+    add_test(
+        NAME pass_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_source_lock
+        COMMAND test_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat
+    )
 
     # pass=== parity-csb-v1-viewport-d1l-d1r-wall ===pass
     add_executable(test_csb_v1_viewport_d1l_d1r_wall_pc34_compat

@@ -1,4 +1,4 @@
-#include "csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat.h"
+#include "firestaff/csb/v1/viewport/d1c_f0108_floor_ceiling_ornament_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -15,6 +15,18 @@ enum {
     CSB_D1C_FLOOR_ZONE_BASE = 1500,
     CSB_D1C_FLOOR_ZONE_STRIDE = 11,
     CSB_D1C_FOOTPRINT_INDEX = 15,
+    CSB_D1C_CUSTOM_BACKGROUNDS_SLOT = 11,
+    CSB_D1C_VIEWPORT_WIDTH = 224,
+    CSB_D1C_VIEWPORT_HEIGHT = 136,
+    CSB_D1C_FRAMEBUFFER_WIDTH = 320,
+    CSB_D1C_FRAMEBUFFER_HEIGHT = 200,
+    CSB_D1C_WALL_D3L_RIGHT = 2,
+    CSB_D1C_WALL_D3R_LEFT = 3,
+    CSB_D1C_WALL_D3L_FRONT = 4,
+    CSB_D1C_WALL_D3C_FRONT = 5,
+    CSB_D1C_WALL_D3R_FRONT = 6,
+    CSB_D1C_WALL_ZONE_D3L = 705,
+    CSB_D1C_WALL_ZONE_D3R = 706,
     CSB_D1C_CONTEXT_COUNT = 4
 };
 
@@ -23,21 +35,27 @@ static const char s_source_evidence[] =
     "no_game_data_load=1. CSB V1 D1C F0108 source lock: ReDMCSB "
     "DUNVIEW.C F0108:3940-4011 handles floor ornament ordinal gate, "
     "MASK 0x8000 footprint recursion, C10 blit transparency, and PC34 "
-    "C1500 + CoordinateSet * 11 + ViewFloor zone math; F0104:3113-3156 "
-    "and F0105:3185-3247 anchor native/flipped C10 blits; "
-    "F0107:3502-3938 anchors wall-ornament keepout; "
-    "F0115:4547-4581,4923,5180-5188,5211-5214,5668-5671 anchors "
-    "thing-pass cell ordering and row guards; F0127/F0128:8318-8486,"
-    "8536-8541 anchors depth-1 center dispatch; DUNGEON.C "
+    "C1500 + CoordinateSet * 11 + ViewFloor zone math and the 320x200 "
+    "framebuffer / 224x136 viewport contract; F0104:3113-3156 and "
+    "F0105:3185-3247 anchor native/flipped C10 blits; F0107:3502-3938 "
+    "is the disjoint wall-ornament branch; F0124:7873-7957 anchors the "
+    "D1C body and the F0108 vs F0107 dispatch split; F0115:4547-4581,"
+    "4923,5180-5188,5211-5214,5458-5570,5668-5671 anchors thing-pass "
+    "cell ordering, D1C creature-cache neighborhood, and row guards; "
+    "F0128:8491-8499 anchors the preceding D3L/D3R/D3C ordering and "
+    "F0128:8524-8542 anchors D1L/D1R/D1C before D0L/D0R/D0C; DUNGEON.C "
     "F0163:1769-1838, F0164:1840-1905, F0172:2466-2523 anchor "
     "no caller thing-list mutation and square-aspect source. DEFS.H:2088 "
-    "C10_COLOR_FLESH, 2596-2611 view squares, 2662/2668-2677 cell orders, "
-    "4045-4046 C705/C706, 4139-4153 cell-order zone band, and 4223 "
-    "C1500_ZONE_FLOOR_ORNAMENT. CSB-lineage Viewport.cpp:1192-1209,"
-    "1865-1879,1903-1915,1930-1944 anchors D1C center composition; "
-    "Viewport.cpp:6507-6548 anchors CustomBackgrounds ApplyDecoration after "
-    "floor/ceiling and before door-front with a mask; Viewport.cpp:"
-    "6924-6927 anchors first CSB-only backdrop pass.";
+    "C10_COLOR_FLESH, 2596-2611 view squares, 2668-2677 cell orders, "
+    "2698-2702 M575..M579 view walls, 4045-4046 C705/C706, and 4223 "
+    "C1500_ZONE_FLOOR_ORNAMENT. Current CSB V1 exposes the D1C "
+    "CustomBackgrounds slot as CSB_V1_CUSTOM_BACKGROUND_VIEW_D1C ordinal 11. "
+    "CSB-lineage Viewport.cpp:1192-1209,1865-1879,1903-1915,1930-1944 "
+    "anchors D1C center composition; Viewport.cpp:6507-6548 anchors "
+    "CustomBackgrounds ApplyDecoration after floor/ceiling and before "
+    "door-front with a mask; Viewport.cpp:6924-6927 anchors first "
+    "CSB-only backdrop pass. Non-overlap: not F0115-only, not F0107-only, "
+    "not the sibling CustomBackgrounds room-slot/mask gate, and not DM1.";
 
 static const CSB_V1_D1CF0108SpecPc34 s_specs[] = {
     {
@@ -55,7 +73,11 @@ static const CSB_V1_D1CF0108SpecPc34 s_specs[] = {
         0x3421u,
         0u,
         1,
+        CSB_D1C_CUSTOM_BACKGROUNDS_SLOT,
         1,
+        1,
+        0,
+        7926,
         1,
         0,
         "ReDMCSB DUNVIEW.C F0124:7922-7937; F0108:3940-4011",
@@ -76,7 +98,11 @@ static const CSB_V1_D1CF0108SpecPc34 s_specs[] = {
         0x3421u,
         0u,
         1,
+        CSB_D1C_CUSTOM_BACKGROUNDS_SLOT,
         1,
+        1,
+        0,
+        7926,
         1,
         0,
         "ReDMCSB DUNVIEW.C F0124:7912-7937; F0108:3940-4011 BUG0_64",
@@ -97,9 +123,13 @@ static const CSB_V1_D1CF0108SpecPc34 s_specs[] = {
         0x3421u,
         0u,
         1,
+        CSB_D1C_CUSTOM_BACKGROUNDS_SLOT,
         1,
         1,
         0,
+        7926,
+        1,
+        1,
         "ReDMCSB DUNVIEW.C F0124:7922-7956; F0108:3940-4011",
         "CSB-lineage Viewport.cpp:1192-1209,6507-6548,6924-6927"
     },
@@ -118,9 +148,13 @@ static const CSB_V1_D1CF0108SpecPc34 s_specs[] = {
         0x0218u,
         0x0349u,
         2,
+        CSB_D1C_CUSTOM_BACKGROUNDS_SLOT,
         1,
         1,
         1,
+        7874,
+        0,
+        0,
         "ReDMCSB DUNVIEW.C F0124:7873-7911; F0108:3940-4011",
         "CSB-lineage Viewport.cpp:1865-1879,1903-1915,1930-1944,6507-6548"
     }
@@ -362,12 +396,30 @@ static int check_spec(const CSB_V1_D1CF0108SpecPc34 *spec,
                      result);
     ok &= check_int("spec.thing_passes", spec->thing_passes, thing_passes,
                     "ReDMCSB DUNVIEW.C F0115 thing-pass cell ordering", result);
+    ok &= check_int("spec.custom_bg_slot", spec->custom_backgrounds_slot,
+                    CSB_D1C_CUSTOM_BACKGROUNDS_SLOT,
+                    "include/csb_v1_viewport_pc34_compat.h CSB_V1_CUSTOM_BACKGROUND_VIEW_D1C",
+                    result);
     ok &= check_int("spec.custom_bg_after_floor_ceiling",
                     spec->custom_backgrounds_apply_after_floor_ceiling, 1,
                     "CSB-lineage Viewport.cpp:6507-6548", result);
     ok &= check_int("spec.custom_bg_mask_floor_band",
                     spec->custom_background_mask_covers_floor_band, 1,
                     "CSB-lineage Viewport.cpp:6537-6542 mask merge", result);
+    ok &= check_int("spec.f0108_call_line", spec->f0108_call_line,
+                    context == CSB_V1_D1C_F0108_CONTEXT_DOOR_SIDE_PC34 ? 7874 : 7926,
+                    "ReDMCSB DUNVIEW.C F0124:7873-7937", result);
+    ok &= check_int("spec.f0112_before_f0115", spec->f0112_before_f0115,
+                    context == CSB_V1_D1C_F0108_CONTEXT_DOOR_SIDE_PC34 ? 0 : 1,
+                    "ReDMCSB DUNVIEW.C F0124:7928-7937", result);
+    ok &= check_int("spec.f0113_after_f0115", spec->f0113_after_f0115,
+                    context == CSB_V1_D1C_F0108_CONTEXT_TELEPORTER_PC34 ? 1 : 0,
+                    "ReDMCSB DUNVIEW.C F0124:7937-7956", result);
+    ok &= check_int("spec.door_front_after_custom_bg",
+                    spec->door_front_after_custom_backgrounds,
+                    context == CSB_V1_D1C_F0108_CONTEXT_DOOR_SIDE_PC34 ? 1 : 0,
+                    "CSB-lineage Viewport.cpp:6507-6548 before door-front",
+                    result);
     ok &= check_contains("spec.redmcsb_anchor", spec->redmcsb_anchor,
                          "F0108", "mandatory F0108 anchor", result);
     ok &= check_contains("spec.lineage_anchor", spec->lineage_anchor,
@@ -414,6 +466,51 @@ static int check_spec(const CSB_V1_D1CF0108SpecPc34 *spec,
     return ok;
 }
 
+static int check_trace_variant(const CSB_V1_D1CF0108SpecPc34 *spec,
+                               unsigned int floor_ornament_ordinal,
+                               int expected_floor_call,
+                               int expected_footprint,
+                               const char *label,
+                               CSB_V1_D1CF0108SelfTestResultPc34 *result)
+{
+    int ok = 1;
+    CSB_V1_D1CF0108SelfTestResultPc34 trace;
+    CSB_V1_D1CF0108SelfTestResultPc34 repeat;
+
+    ok &= check_int(label,
+                    csb_v1_viewport_d1c_f0108_trace_context_pc34(
+                        spec, floor_ornament_ordinal, 0x1d1c0108u, &trace),
+                    0, "DUNVIEW.C F0108:3959-4011 ordinal branch", result);
+    ok &= check_int("variant.floor_call", trace.floor_ornament_calls,
+                    expected_floor_call, "DUNVIEW.C F0108:3959 ordinal guard",
+                    result);
+    ok &= check_int("variant.footprint_recursion", trace.footprint_recursions,
+                    expected_footprint, "DUNVIEW.C F0108:3960-4008 MASK0x8000",
+                    result);
+    ok &= check_int("variant.c10_transparent", trace.c10_transparent_blits, 1,
+                    "DEFS.H C10_COLOR_FLESH / DUNVIEW.C F0108:3989-4004",
+                    result);
+    ok &= check_int("variant.custom_bg", trace.custom_bg_masks, 1,
+                    "CSB-lineage Viewport.cpp:6507-6548", result);
+    ok &= check_int("variant.d1c_floor", trace.d1c_floor,
+                    CSB_D1C_FLOOR_BAND_ZONE,
+                    "D1C mask covers floor band 1505", result);
+    ok &= check_int("variant.thing_passes", trace.thing_passes,
+                    spec->thing_passes, "DUNVIEW.C F0124:7875/7937", result);
+    ok &= check_int("variant.ceiling",
+                    trace.ceiling_copies,
+                    spec->context == CSB_V1_D1C_F0108_CONTEXT_DOOR_SIDE_PC34 ? 0 : 1,
+                    "DUNVIEW.C F0124:7928-7935", result);
+    ok &= check_int("variant.repeat",
+                    csb_v1_viewport_d1c_f0108_trace_context_pc34(
+                        spec, floor_ornament_ordinal, 0x1d1c0108u, &repeat),
+                    0, "deterministic variant replay", result);
+    ok &= check_uint("variant.repeat.hash", repeat.deterministic_hash,
+                     trace.deterministic_hash, "FNV-1a deterministic replay",
+                     result);
+    return ok;
+}
+
 int run_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_self_test(void)
 {
     int ok = 1;
@@ -452,6 +549,40 @@ int run_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_self_test(void)
     ok &= check_int("zone.coord2_m595",
                     csb_v1_viewport_d1c_f0108_zone_for_coordinate_set_pc34(2, 9),
                     1531, "ReDMCSB DUNVIEW.C F0108:3998", &result);
+    ok &= check_int("viewport.width",
+                    CSB_V1_D1C_F0108_VIEWPORT_WIDTH_PC34,
+                    CSB_D1C_VIEWPORT_WIDTH,
+                    "ReDMCSB C112 byte width -> 224 pixels", &result);
+    ok &= check_int("viewport.height",
+                    CSB_V1_D1C_F0108_VIEWPORT_HEIGHT_PC34,
+                    CSB_D1C_VIEWPORT_HEIGHT,
+                    "ReDMCSB C136_HEIGHT_VIEWPORT", &result);
+    ok &= check_int("framebuffer.width",
+                    CSB_V1_D1C_F0108_FRAMEBUFFER_WIDTH_PC34,
+                    CSB_D1C_FRAMEBUFFER_WIDTH,
+                    "PC34 full framebuffer width", &result);
+    ok &= check_int("framebuffer.height",
+                    CSB_V1_D1C_F0108_FRAMEBUFFER_HEIGHT_PC34,
+                    CSB_D1C_FRAMEBUFFER_HEIGHT,
+                    "PC34 full framebuffer height", &result);
+    ok &= check_int("custom_backgrounds.d1c_slot",
+                    CSB_V1_D1C_F0108_CUSTOM_BACKGROUNDS_SLOT_PC34,
+                    CSB_D1C_CUSTOM_BACKGROUNDS_SLOT,
+                    "CSB_V1_CUSTOM_BACKGROUND_VIEW_D1C ordinal", &result);
+    ok &= check_int("defs.wall_m575", CSB_D1C_WALL_D3L_RIGHT, 2,
+                    "DEFS.H:2698 M575_VIEW_WALL_D3L_RIGHT", &result);
+    ok &= check_int("defs.wall_m576", CSB_D1C_WALL_D3R_LEFT, 3,
+                    "DEFS.H:2699 M576_VIEW_WALL_D3R_LEFT", &result);
+    ok &= check_int("defs.wall_m577", CSB_D1C_WALL_D3L_FRONT, 4,
+                    "DEFS.H:2700 M577_VIEW_WALL_D3L_FRONT", &result);
+    ok &= check_int("defs.wall_m578", CSB_D1C_WALL_D3C_FRONT, 5,
+                    "DEFS.H:2701 M578_VIEW_WALL_D3C_FRONT", &result);
+    ok &= check_int("defs.wall_m579", CSB_D1C_WALL_D3R_FRONT, 6,
+                    "DEFS.H:2702 M579_VIEW_WALL_D3R_FRONT", &result);
+    ok &= check_int("defs.zone_c705", CSB_D1C_WALL_ZONE_D3L, 705,
+                    "DEFS.H:4045 C705_ZONE_WALL_D3L", &result);
+    ok &= check_int("defs.zone_c706", CSB_D1C_WALL_ZONE_D3R, 706,
+                    "DEFS.H:4046 C706_ZONE_WALL_D3R", &result);
     ok &= check_int("blend.c10_keeps_destination",
                     csb_v1_viewport_d1c_f0108_blend_c10_pc34(0x7a, 10),
                     0x7a, "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH", &result);
@@ -466,11 +597,25 @@ int run_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_self_test(void)
     ok &= check_contains("evidence.f0105", s_source_evidence,
                          "F0105:3185-3247", "mandatory F0105 anchor", &result);
     ok &= check_contains("evidence.f0107", s_source_evidence,
-                         "F0107:3502-3938", "mandatory F0107 anchor", &result);
+                         "F0107:3502-3938", "mandatory F0107 non-overlap", &result);
+    ok &= check_contains("evidence.not_f0107_only", s_source_evidence,
+                         "not F0107-only", "F0107 branch keepout", &result);
     ok &= check_contains("evidence.f0115", s_source_evidence,
                          "F0115:4547-4581", "mandatory F0115 anchor", &result);
     ok &= check_contains("evidence.f0128", s_source_evidence,
-                         "F0127/F0128:8318-8486", "mandatory D1C dispatch anchor",
+                         "F0128:8524-8542", "mandatory D1C dispatch anchor",
+                         &result);
+    ok &= check_contains("evidence.f0124", s_source_evidence,
+                         "F0124:7873-7957", "mandatory D1C body anchor",
+                         &result);
+    ok &= check_contains("evidence.f0112_before_f0115", s_source_evidence,
+                         "F0124:7873-7957", "F0112/F0115 ordering anchor",
+                         &result);
+    ok &= check_contains("evidence.custom_bg_slot", s_source_evidence,
+                         "ordinal 11", "CSB D1C CustomBackgrounds slot",
+                         &result);
+    ok &= check_contains("evidence.not_dm1", s_source_evidence,
+                         "not DM1", "CSB-specific D1C keepout",
                          &result);
     ok &= check_contains("evidence.dungeon", s_source_evidence,
                          "DUNGEON.C F0163:1769-1838",
@@ -495,6 +640,33 @@ int run_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_self_test(void)
                          CSB_V1_D1C_F0108_CONTEXT_DOOR_SIDE_PC34),
                      CSB_V1_D1C_F0108_CONTEXT_DOOR_SIDE_PC34, 17, 0x0218u,
                      0x0349u, 2, &result);
+
+    {
+        static const unsigned int ordinals[] = {
+            0u, 3u, CSB_V1_D1C_F0108_FOOTPRINT_MASK_PC34,
+            CSB_V1_D1C_F0108_FOOTPRINT_MASK_PC34 | 3u
+        };
+        size_t spec_index;
+        for (spec_index = 0;
+             spec_index < csb_v1_viewport_d1c_f0108_context_count_pc34();
+             ++spec_index) {
+            size_t ordinal_index;
+            const CSB_V1_D1CF0108SpecPc34 *spec =
+                csb_v1_viewport_d1c_f0108_spec_at_pc34(spec_index);
+            for (ordinal_index = 0;
+                 ordinal_index < sizeof(ordinals) / sizeof(ordinals[0]);
+                 ++ordinal_index) {
+                const unsigned int ordinal = ordinals[ordinal_index];
+                ok &= check_trace_variant(
+                    spec,
+                    ordinal,
+                    ordinal != 0u,
+                    (ordinal & CSB_V1_D1C_F0108_FOOTPRINT_MASK_PC34) != 0u,
+                    "variant.trace",
+                    &result);
+            }
+        }
+    }
 
     ok &= check_int("aggregate.floor_ornament_calls_eq_contexts",
                     result.floor_ornament_calls, result.contexts,
