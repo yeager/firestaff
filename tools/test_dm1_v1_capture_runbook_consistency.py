@@ -56,6 +56,8 @@ DOSBox live attempt can use it.
 """
 from __future__ import annotations
 
+import json
+import os
 import re
 import struct
 import subprocess
@@ -73,6 +75,9 @@ DETECTOR = TOOLS_DIR / "dosbox_state_detector.py"
 MANIFEST_WRITER = TOOLS_DIR / "dosbox_capture_manifest_writer.py"
 TRANSCRIPT_WRITER = TOOLS_DIR / "dosbox_capture_transcript_writer.py"
 EVENTS_ROW_BUILDER = TOOLS_DIR / "dosbox_capture_events_row_builder.py"
+ORIGINAL_VIEWPORT_CAPTURE = (
+    REPO_ROOT / "scripts" / "dosbox_dm1_original_viewport_reference_capture.sh"
+)
 
 STATUS = "PASS632_DM1_V1_CAPTURE_ROUTE_RUNBOOK_CONSISTENCY"
 
@@ -100,6 +105,34 @@ def write_png(path: Path, width: int, height: int, rgb: tuple[int, int, int]) ->
         + png_chunk(b"IEND", b"")
     )
     path.write_bytes(data)
+
+
+def write_checker_png(path: Path, width: int, height: int) -> None:
+    rows = []
+    for y in range(height):
+        row = bytearray(b"\x00")
+        for x in range(width):
+            if (x // 16 + y // 16) % 2:
+                row.extend((32, 96, 160))
+            else:
+                row.extend((176, 64, 48))
+        rows.append(bytes(row))
+    payload = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    data = (
+        b"\x89PNG\r\n\x1a\n"
+        + png_chunk(b"IHDR", payload)
+        + png_chunk(b"IDAT", zlib.compress(b"".join(rows)))
+        + png_chunk(b"IEND", b"")
+    )
+    path.write_bytes(data)
+
+
+def json_load(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def os_environ() -> dict[str, str]:
+    return dict(os.environ)
 
 
 # ---------------------------------------------------------------------------
@@ -663,6 +696,105 @@ def check_events_row_builder_selftest_passes() -> list[str]:
     return failures
 
 
+def check_original_viewport_capture_single_row_mode() -> list[str]:
+    """The live DOSBox rawshot runner used to hard-code six screenshots
+    everywhere.  That was fine for the old overlay lane, but the current
+    pass625/pass626 handoff is intentionally one transcript row:
+    ``02_turn_right_west_1_3`` after a C002 turn-right.  This hermetic
+    probe verifies that the script accepts that one-row route, normalizes
+    exactly one synthetic 320x200 rawshot, writes the route label + health
+    manifests, produces the pass513 scaffold row, and still rejects a
+    black-frame rawshot before it can become transcript input.
+    """
+    failures: list[str] = []
+    route = "wait:10 right wait:10 shot:02_turn_right_west_1_3"
+
+    with tempfile.TemporaryDirectory(prefix="dm1-original-single-row-") as tmp:
+        out = Path(tmp) / "good"
+        out.mkdir()
+        write_checker_png(out / "image0001.png", 320, 200)
+        env = {
+            **dict(),
+            "OUT_DIR": str(out),
+            "DM1_ORIGINAL_EXPECTED_SHOTS": "single-transcript-row",
+            "DM1_ORIGINAL_ROUTE_EVENTS": route,
+        }
+        proc = subprocess.run(
+            [str(ORIGINAL_VIEWPORT_CAPTURE), "--normalize-only"],
+            cwd=REPO_ROOT,
+            env={**os_environ(), **env},
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if proc.returncode != 0:
+            failures.append(
+                "single-row normalize-only failed: "
+                f"{proc.stderr.strip() or proc.stdout.strip()}"
+            )
+        else:
+            health = json_load(out / "raw_frame_health.json")
+            if health.get("expectedCaptureCount") != 1 or health.get("captureCount") != 1:
+                failures.append("single-row raw_frame_health count is not 1/1")
+            labels = (out / "original_viewport_shot_labels.tsv").read_text(encoding="utf-8")
+            if "02_turn_right_west_1_3" not in labels:
+                failures.append("single-row shot label manifest lost the pass625 route label")
+            crops = sorted((out / "viewport_224x136").glob("*.ppm"))
+            if len(crops) != 1 or "02_turn_right_west_1_3" not in crops[0].name:
+                failures.append("single-row normalization did not produce the labeled crop")
+            scaffold = json_load(out / "pass513_i34e_route_key_transcript_scaffold.json")
+            rows = scaffold.get("rows", [])
+            if len(rows) != 1 or rows[0].get("f0380Command") != "C002_COMMAND_TURN_RIGHT":
+                failures.append("single-row pass513 scaffold did not bind C002 turn-right")
+
+        preflight = subprocess.run(
+            [str(ORIGINAL_VIEWPORT_CAPTURE), "--preflight-route"],
+            cwd=REPO_ROOT,
+            env={
+                **os_environ(),
+                "OUT_DIR": str(out),
+                "DM1_ORIGINAL_EXPECTED_SHOTS": "single-transcript-row",
+                "DM1_ORIGINAL_ROUTE_EVENTS": route,
+            },
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        expected_preflight_ok = preflight.returncode == 0 or (
+            preflight.returncode == 6
+            and "single transcript-row route locked" in (preflight.stdout + preflight.stderr)
+            and "no supported route injector" in (preflight.stdout + preflight.stderr)
+        )
+        if not expected_preflight_ok:
+            failures.append(
+                "single-row preflight did not validate the pass625 route before "
+                f"injector checks: {preflight.stderr.strip() or preflight.stdout.strip()}"
+            )
+
+        bad = Path(tmp) / "black"
+        bad.mkdir()
+        write_png(bad / "image0001.png", 320, 200, (0, 0, 0))
+        bad_proc = subprocess.run(
+            [str(ORIGINAL_VIEWPORT_CAPTURE), "--normalize-only"],
+            cwd=REPO_ROOT,
+            env={
+                **os_environ(),
+                "OUT_DIR": str(bad),
+                "DM1_ORIGINAL_EXPECTED_SHOTS": "single-transcript-row",
+                "DM1_ORIGINAL_ROUTE_EVENTS": route,
+            },
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if bad_proc.returncode == 0:
+            failures.append("single-row normalize-only accepted a black rawshot")
+        elif "black/blank rawshot candidate" not in (bad_proc.stderr + bad_proc.stdout):
+            failures.append("black rawshot rejection did not report the black/blank blocker")
+
+    return failures
+
+
 # ---------------------------------------------------------------------------
 # Driver.
 # ---------------------------------------------------------------------------
@@ -706,6 +838,7 @@ def main() -> int:
         ("manifest_writer_selftest",     check_manifest_writer_selftest_passes, []),
         ("transcript_writer_selftest",   check_transcript_writer_selftest_passes, []),
         ("events_row_builder_selftest",  check_events_row_builder_selftest_passes, []),
+        ("original_viewport_capture_single_row_mode", check_original_viewport_capture_single_row_mode, []),
     ]
     for name, fn, args in tool_checks:
         total += 1
