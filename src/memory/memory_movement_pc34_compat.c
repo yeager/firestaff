@@ -818,6 +818,12 @@ int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
             } else if (tp.rotation != 0) {
                 cursor.direction = (cursor.direction + (int)(tp.rotation & 3)) & 3;
             }
+            /* ReDMCSB MOVESENS.C F0267 lines 491, 496-498: the
+             * teleporter's Audible flag is latched at the hop and only then
+             * requests M560_SOUND_BUZZ at the party's teleported target. */
+            if (tp.audible) {
+                outResolution->teleporterAudibleCount += 1;
+            }
             outResolution->transitioned = 1;
             outResolution->chainCount += 1;
             outResolution->teleporterCount += 1;
