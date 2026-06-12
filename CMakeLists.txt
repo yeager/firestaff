@@ -8756,6 +8756,29 @@ if(NOT TARGET test_dm1_v1_champion_needs_pc34_compat_integration)
     )
 endif()
 
+# ── DM1 V1 Sleep/Wakeup/Clock gate ──────────────────────────────────
+# Source-locked to CHAMPION.C F0331 (ReDMCSB):
+#   - F0830_LIFECYCLE_ComputeTimeCriteria_Compat (time-criteria bit pattern
+#     that gates F0331 mana-regen and HP-healing per-tick).
+#   - F0846_LIFECYCLE_ApplyStatDrift_Compat (rest-modulated statistic
+#     recovery cadence: 256 ticks active, 64 ticks resting).
+# This is the F0331 *clock* slice that the rest/wake/poison/poison-cloud
+# gates do not pin.
+if(NOT TARGET test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat)
+    add_executable(test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat
+        tests/test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat.c
+        src/memory/memory_champion_lifecycle_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_sleep_wakeup_clock_gate_source_lock
+        COMMAND test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat
+    )
+endif()
+
 # ── DM1 V1 Event Timer source-lock gate ──────────────────────────────
 if(NOT TARGET test_dm1_v1_event_timer_pc34_compat)
     add_executable(test_dm1_v1_event_timer_pc34_compat
