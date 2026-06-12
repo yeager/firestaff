@@ -166,6 +166,16 @@ int  M11_Render_ComputePresentationRect(int windowW,
                                         int* outY,
                                         int* outW,
                                         int* outH);
+int  M11_Render_ResolveSdl3ResizeEvent(int eventW,
+                                        int eventH,
+                                        int liveWindowW,
+                                        int liveWindowH,
+                                        int liveRenderW,
+                                        int liveRenderH,
+                                        int* outWindowW,
+                                        int* outWindowH,
+                                        int* outRenderW,
+                                        int* outRenderH);
 int  M11_Render_ToggleFullscreen(void);
 int  M11_Render_GetPresentRect(int* outX, int* outY, int* outW, int* outH);
 int  M11_Render_MapPointToFramebuffer(int windowX,

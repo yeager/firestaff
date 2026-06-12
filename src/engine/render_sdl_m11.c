@@ -369,6 +369,45 @@ int M11_Render_ComputePresentationRect(int windowW,
     return M11_RENDER_OK;
 }
 
+int M11_Render_ResolveSdl3ResizeEvent(int eventW,
+                                      int eventH,
+                                      int liveWindowW,
+                                      int liveWindowH,
+                                      int liveRenderW,
+                                      int liveRenderH,
+                                      int* outWindowW,
+                                      int* outWindowH,
+                                      int* outRenderW,
+                                      int* outRenderH) {
+    int eventMatchesLiveWindow;
+    int eventMatchesLiveRender;
+    if (eventW <= 0 || eventH <= 0 ||
+        !outWindowW || !outWindowH || !outRenderW || !outRenderH) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+
+    eventMatchesLiveWindow =
+        liveWindowW > 0 && liveWindowH > 0 &&
+        eventW == liveWindowW && eventH == liveWindowH;
+    eventMatchesLiveRender =
+        liveWindowW > 0 && liveWindowH > 0 &&
+        liveRenderW > 0 && liveRenderH > 0 &&
+        eventW == liveRenderW && eventH == liveRenderH;
+
+    if (eventMatchesLiveWindow || eventMatchesLiveRender) {
+        *outWindowW = liveWindowW;
+        *outWindowH = liveWindowH;
+        *outRenderW = liveRenderW > 0 ? liveRenderW : liveWindowW;
+        *outRenderH = liveRenderH > 0 ? liveRenderH : liveWindowH;
+    } else {
+        *outWindowW = eventW;
+        *outWindowH = eventH;
+        *outRenderW = eventW;
+        *outRenderH = eventH;
+    }
+    return M11_RENDER_OK;
+}
+
 static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH) {
     int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;
     int contentH = g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT;
@@ -1551,10 +1590,12 @@ int M11_Render_PumpEvents(void) {
             if (ev.key.key == SDLK_ESCAPE) {
                 g_state.quitRequested = 1;
             }
-        } else if (ev.type == SDL_EVENT_WINDOW_RESIZED) {
-            /* SDL3: use LOGICAL window size, not pixel size.
-             * The renderer and mouse events both use logical coords.
-             * ev.window.data1/data2 are the new logical width/height. */
+        } else if (ev.type == SDL_EVENT_WINDOW_RESIZED ||
+                   ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+            /* SDL3: WINDOW_RESIZED reports logical size and
+             * WINDOW_PIXEL_SIZE_CHANGED reports drawable pixels on high-DPI
+             * displays.  HandleResize resolves them back to logical mouse
+             * space plus pixel render-output space. */
             M11_Render_HandleResize(ev.window.data1, ev.window.data2);
         }
 #else
@@ -1591,33 +1632,36 @@ int M11_Render_HandleResize(int newWidth, int newHeight) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     /* SDL3 HiDPI fix: query authoritative sizes from SDL when the SDL
      * window has actually changed.  Headless probes and direct callers can
-     * exercise this resize path without an SDL window event, so keep the
-     * caller-provided logical size when SDL still reports the old size:
+     * exercise this resize path without an SDL window event, so only trust
+     * live SDL sizes when the event matches either SDL's logical window size
+     * or SDL's pixel render-output size:
      * - windowW/H = logical (for mouse coordinate mapping)
      * - renderW/H = pixels (for SDL_RenderTexture destRect) */
     {
         int ww = 0, wh = 0;
-        int sdlWindowMatchedResize = 0;
+        int rw = 0, rh = 0;
+        int resolvedWindowW = 0;
+        int resolvedWindowH = 0;
+        int resolvedRenderW = 0;
+        int resolvedRenderH = 0;
         SDL_GetWindowSize(g_state.window, &ww, &wh);
-        if (ww == newWidth && wh == newHeight) {
-            g_state.windowW = ww;
-            g_state.windowH = wh;
-            sdlWindowMatchedResize = 1;
-        } else {
-            g_state.windowW = newWidth;
-            g_state.windowH = newHeight;
+        SDL_GetRenderOutputSize(g_state.renderer, &rw, &rh);
+        if (M11_Render_ResolveSdl3ResizeEvent(newWidth,
+                                              newHeight,
+                                              ww,
+                                              wh,
+                                              rw,
+                                              rh,
+                                              &resolvedWindowW,
+                                              &resolvedWindowH,
+                                              &resolvedRenderW,
+                                              &resolvedRenderH) != M11_RENDER_OK) {
+            return M11_RENDER_ERR_INVALID_ARG;
         }
-        {
-            int rw = 0, rh = 0;
-            SDL_GetRenderOutputSize(g_state.renderer, &rw, &rh);
-            if (sdlWindowMatchedResize && rw > 0 && rh > 0) {
-                g_state.renderW = rw;
-                g_state.renderH = rh;
-            } else {
-                g_state.renderW = g_state.windowW;
-                g_state.renderH = g_state.windowH;
-            }
-        }
+        g_state.windowW = resolvedWindowW;
+        g_state.windowH = resolvedWindowH;
+        g_state.renderW = resolvedRenderW;
+        g_state.renderH = resolvedRenderH;
     }
 #else
     g_state.windowW = newWidth;

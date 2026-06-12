@@ -110,7 +110,10 @@ int SWSH_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
                 step.sourceLine = g_swsh_palette_commands[paletteOrdinal].sourceLine;
                 if (word < 8u) {
                         step.kind = SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS;
-                        step.vblankCount = word;
+                        /* ReDMCSB SWSH.C:33-37 uses 68k DBF after each
+                         * Vsync call, so a wait word of N performs N + 1
+                         * vertical blanks before returning. */
+                        step.vblankCount = word + 1u;
                 } else {
                         step.kind = SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR;
                         step.colorIndex = (word >> 12) & 0x0fu;

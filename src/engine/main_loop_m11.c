@@ -874,27 +874,46 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
     if (!logoPayload) goto cleanup;
     SWSH_Compat_ExpandLogoToBitmap(logoPayload, screenFb);
 
-    /* V0901006_PaletteCommands from ReDMCSB SWSH.C: word < 0x0008 = wait-count, else color-set. */
+    /* ReDMCSB SWSH.C:10-38 starts Dosound(), applies Setcolor()
+     * commands immediately, and only advances visible time in the Vsync
+     * wait path.  The 68k DBF loop waits D7 + 1 VBlanks, so batch adjacent
+     * palette writes into the next presented wait frame instead of turning
+     * every Setcolor into its own modern frame. */
     memset(swshPalette, 0, sizeof(swshPalette));
-    { static const uint16_t cmds[] = {
-        0x1777u,0x0001u,0x2777u,0x0001u,0x3777u,0x0002u,0x4777u,0x0002u,
-        0x5777u,0x0003u,0x6777u,0x0003u,0x7777u,0x0003u,0x8777u,0x9777u,
-        0xA555u,0xF777u,0x0003u,0x8000u,0xB777u,0xC555u,0xD222u,0x0003u,0xF770u,0xE770u
-    }; size_t n = sizeof(cmds)/sizeof(cmds[0]);
+    {
+      unsigned int sourceStep;
+      int paletteDirty = 0;
       SDL_Delay(20);
       m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
       M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
-      for (size_t i = 0; i < n; ++i) {
+      for (sourceStep = 1U; sourceStep <= SWSH_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
+          SWSH_CompatSourceAnimationStep step;
           if (M11_Render_PumpEvents()) break;
-          uint16_t w = cmds[i];
-          if (w < 0x0008u) { for (uint16_t v=0;v<w;++v) SDL_Delay(20); }
-          else {
-              unsigned int colorIndex = ((unsigned int)w >> 12) & 0x0Fu;
-              SWSH_Compat_ConvertAtariRgbWordToRgb8((unsigned int)w & 0x0777u, swshPalette[colorIndex]);
+          if (!SWSH_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
+          if (step.kind == SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR) {
+              SWSH_Compat_ConvertAtariRgbWordToRgb8(step.colorValue,
+                                                    swshPalette[step.colorIndex & 0x0FU]);
+              paletteDirty = 1;
+          } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS) {
+              unsigned int vblank;
+              if (paletteDirty) {
+                  m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+                  M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+                  paletteDirty = 0;
+              }
+              for (vblank = 0U; vblank < step.vblankCount; ++vblank) SDL_Delay(20);
+          } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM) {
+              if (paletteDirty) {
+                  m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+                  M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+                  paletteDirty = 0;
+              }
+          }
+      }
+      if (paletteDirty) {
               m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
               M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
-              SDL_Delay(20);
-          } }
+      }
       SDL_Delay(120); }
 cleanup:
     if (logoImg) free(logoImg); if (screenFb) free(screenFb); if (screenRgba) free(screenRgba); if (f) fclose(f);

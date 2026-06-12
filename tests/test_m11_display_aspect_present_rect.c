@@ -192,6 +192,63 @@ static void check_macbook_retina_drawable_rect_regression(void) {
     CHECK(fbY == 100);
 }
 
+static void check_sdl3_pixel_size_event_keeps_logical_mouse_space(void) {
+    int windowW = -1;
+    int windowH = -1;
+    int renderW = -1;
+    int renderH = -1;
+    int fbX = -1;
+    int fbY = -1;
+
+    /* SDL3 sends mouse clicks in logical window coordinates, while
+     * SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED reports the high-DPI drawable.
+     * ReDMCSB entrance hit-tests must see the logical 1512x982 space;
+     * otherwise a real MacBook click is mapped against 3024x1964 and can
+     * miss every source door button. */
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(3024,
+                                            1964,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            &windowW,
+                                            &windowH,
+                                            &renderW,
+                                            &renderH) == M11_RENDER_OK);
+    CHECK(windowW == 1512);
+    CHECK(windowH == 982);
+    CHECK(renderW == 3024);
+    CHECK(renderH == 1964);
+    CHECK(M11_Render_MapPointToFramebuffer(756,
+                                           491,
+                                           windowW,
+                                           windowH,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 160);
+    CHECK(fbY == 100);
+
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(1280,
+                                            800,
+                                            960,
+                                            540,
+                                            1920,
+                                            1080,
+                                            &windowW,
+                                            &windowH,
+                                            &renderW,
+                                            &renderH) == M11_RENDER_OK);
+    CHECK(windowW == 1280);
+    CHECK(windowH == 800);
+    CHECK(renderW == 1280);
+    CHECK(renderH == 800);
+}
+
 int main(void) {
     check_rect(1920, 1080, M11_SCALE_STRETCH, 0, M11_DISPLAY_ASPECT_16_9,
                0, 0, 1920, 1080);
@@ -210,6 +267,7 @@ int main(void) {
     check_scaled_dm1_command(264, 126, 3, 70);
     check_scaled_letterbox_rejection();
     check_macbook_retina_drawable_rect_regression();
+    check_sdl3_pixel_size_event_keeps_logical_mouse_space();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

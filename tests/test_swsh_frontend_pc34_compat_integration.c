@@ -109,7 +109,7 @@ static int test_swsh_source_animation_schedule(void) {
            timing.soundWaitCommandCount,
            timing.soundWaitVblankCount);
     if (colorSetCount != timing.paletteColorSetCount || waitCommandCount != timing.paletteWaitCommandCount || waitVblankCount != timing.paletteWaitVblankCount) ok = 0;
-    if (timing.paletteCommandCount != 26u || timing.soundRegisterWriteCount != 17u || timing.soundWaitCommandCount != 10u || timing.soundWaitVblankCount != 20u) ok = 0;
+    if (timing.paletteCommandCount != 26u || timing.paletteWaitVblankCount != 30u || timing.soundRegisterWriteCount != 17u || timing.soundWaitCommandCount != 10u || timing.soundWaitVblankCount != 20u) ok = 0;
     printf("swshSourceAnimationScheduleInvariantOk=%d\n", ok);
     return ok;
 }
