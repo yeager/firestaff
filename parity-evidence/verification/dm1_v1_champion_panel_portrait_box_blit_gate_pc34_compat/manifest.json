@@ -1,0 +1,465 @@
+{
+  "claim": "DM1 V1 champion-panel portrait box blit dispatch gate is source-locked to ReDMCSB CHAMDRAW.C F0292:757-1110 + TIMELINE.C F0254:1614-1637 + CHAMDRAW.C F0293:1117-1143.",
+  "status": "passed",
+  "statusToken": "DM1_V1_CHAMPION_PANEL_PORTRAIT_BOX_BLIT_GATE_PC34_COMPAT_LOCKED",
+  "schema": "firestaff.parity.dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.v1",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "timestampUtc": "2026-06-12T13:33:24.213828+00:00",
+  "anchorNotes": [
+    "F0254:1635 sets only MASK0x0080_NAME_TITLE on the Attributes field before calling F0292 (the inventory champion's F0292 call would re-enter F0292 and trigger the F0292 dispatch tree; the test pins the F0254 non-inventory Attributes mask separately from the F0292 non-inventory fallback mask)."
+  ],
+  "firestaffChecks": [
+    {
+      "id": "champdraw_f0292_short_circuit",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "source": "CHAMDRAW.C:757-760",
+      "claim": "F0292 short-circuits when none of the nine redraw-mask bits is set.",
+      "hits": [
+        {
+          "line": 757,
+          "needle": "if (!M007_GET(L0862_ui_ChampionAttributes, MASK0x0080_NAME_TITLE | MASK0x0100_STATISTICS | MASK0x0200_LOAD | MASK0x0400_ICON | MASK0x0800_PANEL | MASK0x1000_STATUS_BOX | MASK0x2000_WOUNDS | MASK0x4000_VIEWPORT | MASK0x8000_ACTION_HAND))"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "champdraw_f0292_f0355_pre_route",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "source": "CHAMDRAW.C:767-770",
+      "claim": "F0292 pre-routes the inventory champion through F0355 when G0297 is set.",
+      "hits": [
+        {
+          "line": 767,
+          "needle": "if (L0863_B_IsInventoryChampion && G0297_B_DrawFloorAndCeilingRequested) {"
+        },
+        {
+          "line": 768,
+          "needle": "F0355_INVENTORY_Toggle_CPSE(C05_CHAMPION_SPECIAL_INVENTORY);"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "champdraw_f0292_status_box_branch",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "source": "CHAMDRAW.C:771-789",
+      "claim": "F0292 enters the status-box branch only when MASK0x1000_STATUS_BOX is set.",
+      "hits": [
+        {
+          "line": 771,
+          "needle": "if (M007_GET(L0862_ui_ChampionAttributes, MASK0x1000_STATUS_BOX)) {"
+        },
+        {
+          "line": 789,
+          "needle": "F0732_FillScreenArea(L2260_ai_XYZ, C12_COLOR_DARKEST_GRAY);"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "champdraw_f0292_f0354_call",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "source": "CHAMDRAW.C:810-812",
+      "claim": "F0292 calls F0354 only when the champion is the inventory champion.",
+      "hits": [
+        {
+          "line": 811,
+          "needle": "F0354_INVENTORY_DrawStatusBoxPortrait(P0615_ui_ChampionIndex);"
+        },
+        {
+          "line": 812,
+          "needle": "M008_SET(L0862_ui_ChampionAttributes, MASK0x0100_STATISTICS);"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "champdraw_f0292_non_inventory_fallback",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "source": "CHAMDRAW.C:813-814",
+      "claim": "F0292 takes the non-inventory fallback mask when the champion is not the inventory champion.",
+      "hits": [
+        {
+          "line": 814,
+          "needle": "M008_SET(L0862_ui_ChampionAttributes, MASK0x0080_NAME_TITLE | MASK0x0100_STATISTICS | MASK0x2000_WOUNDS | MASK0x8000_ACTION_HAND);"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "champdraw_f0292_clear_at_exit",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "source": "CHAMDRAW.C:1110-1110",
+      "claim": "F0292 clears all nine redraw-mask bits at the T0292042 label.",
+      "hits": [
+        {
+          "line": 1110,
+          "needle": "M009_CLEAR(L0865_ps_Champion->Attributes, MASK0x0080_NAME_TITLE | MASK0x0100_STATISTICS | MASK0x0200_LOAD | MASK0x0400_ICON | MASK0x0800_PANEL | MASK0x1000_STATUS_BOX | MASK0x2000_WOUNDS | MASK0x4000_VIEWPORT | MASK0x8000_ACTION_HAND);"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "champdraw_f0293_dispatch_loop",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "source": "CHAMDRAW.C:1117-1143",
+      "claim": "F0293 OR-s the per-call P2062_ui_ argument into every active champion's Attributes and dispatches F0292 in champion-index order.",
+      "hits": [
+        {
+          "line": 1134,
+          "needle": "for (L0873_ui_ChampionIndex = C00_CHAMPION_FIRST; L0873_ui_ChampionIndex < G0305_ui_PartyChampionCount; L0873_ui_ChampionIndex++) {"
+        },
+        {
+          "line": 1136,
+          "needle": "M516_CHAMPIONS[L0873_ui_ChampionIndex].Attributes |= P2062_ui_;"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "timeline_f0254_secondary_dispatch",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TIMELINE.C",
+      "source": "TIMELINE.C:1614-1637",
+      "claim": "F0254 routes the inventory champion through F0354 and the non-inventory champion through F0292 with NAME_TITLE only.",
+      "hits": [
+        {
+          "line": 1630,
+          "needle": "F0354_INVENTORY_DrawStatusBoxPortrait(P0531_ui_ChampionIndex);"
+        },
+        {
+          "line": 1633,
+          "needle": "M008_SET(L0663_ps_Champion->Attributes, MASK0x0080_NAME_TITLE);"
+        },
+        {
+          "line": 1634,
+          "needle": "F0292_CHAMPION_DrawState(P0531_ui_ChampionIndex);"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "defs_status_box_zones",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "source": "DEFS.H:3783-3793",
+      "claim": "DEFS.H:3783-3793 anchors C151..C154 status-box zones and C175 first champion status-box portrait zone.",
+      "hits": [
+        {
+          "line": 3783,
+          "needle": "C151_ZONE_CHAMPION_0_STATUS_BOX_NAME_HANDS"
+        },
+        {
+          "line": 3784,
+          "needle": "C152_ZONE_CHAMPION_1_STATUS_BOX_NAME_HANDS"
+        },
+        {
+          "line": 3793,
+          "needle": "C175_ZONE_FIRST_CHAMPION_STATUS_BOX"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "defs_portrait_zone",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "source": "DEFS.H:3793-3793",
+      "claim": "DEFS.H:3793 anchors C175_ZONE_FIRST_CHAMPION_STATUS_BOX used by F0354.",
+      "hits": [
+        {
+          "line": 3793,
+          "needle": "#define C175_ZONE_FIRST_CHAMPION_STATUS_BOX"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "firestaff_header_contract",
+      "file": "include/dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.h",
+      "source": null,
+      "claim": null,
+      "hits": [
+        {
+          "line": 5,
+          "needle": "DM1 V1 champion-panel portrait box blit dispatch gate"
+        },
+        {
+          "line": 11,
+          "needle": "CHAMDRAW.C F0292:757-760"
+        },
+        {
+          "line": 15,
+          "needle": "CHAMDRAW.C F0292:767-770"
+        },
+        {
+          "line": 18,
+          "needle": "CHAMDRAW.C F0292:771"
+        },
+        {
+          "line": 22,
+          "needle": "CHAMDRAW.C F0292:784"
+        },
+        {
+          "line": 25,
+          "needle": "CHAMDRAW.C F0292:810-812"
+        },
+        {
+          "line": 33,
+          "needle": "CHAMDRAW.C F0292:813-814"
+        },
+        {
+          "line": 36,
+          "needle": "CHAMDRAW.C F0292:1110"
+        },
+        {
+          "line": 41,
+          "needle": "TIMELINE.C F0254:1614-1637"
+        },
+        {
+          "line": 49,
+          "needle": "CHAMDRAW.C F0293:1117-1143"
+        },
+        {
+          "line": 110,
+          "needle": "DEFS.H:3783-3793"
+        },
+        {
+          "line": 116,
+          "needle": "DEFS.H:3793"
+        },
+        {
+          "line": 78,
+          "needle": "DM1_V1_CPBBG_MASK_STATUS_BOX_PC34"
+        },
+        {
+          "line": 84,
+          "needle": "DM1_V1_CPBBG_POST_F0354_MASK_PC34"
+        },
+        {
+          "line": 87,
+          "needle": "DM1_V1_CPBBG_NON_INVENTORY_MASK_PC34"
+        },
+        {
+          "line": 94,
+          "needle": "DM1_V1_CPBBG_F0254_NON_INVENTORY_MASK_PC34"
+        },
+        {
+          "line": 98,
+          "needle": "DM1_V1_CPBBG_CLEAR_MASK_PC34"
+        },
+        {
+          "line": 129,
+          "needle": "DM1_V1_CPBBG_PATH_F0354_PORTRAIT_BLIT_PC34"
+        },
+        {
+          "line": 127,
+          "needle": "DM1_V1_CPBBG_PATH_DEAD_STATUS_BOX_PC34"
+        },
+        {
+          "line": 128,
+          "needle": "DM1_V1_CPBBG_PATH_NON_INVENTORY_REDRAW_PC34"
+        },
+        {
+          "line": 120,
+          "needle": "DM1_V1_CPBBG_DISPATCH_F0292_PC34"
+        },
+        {
+          "line": 121,
+          "needle": "DM1_V1_CPBBG_DISPATCH_F0254_PC34"
+        },
+        {
+          "line": 122,
+          "needle": "DM1_V1_CPBBG_DISPATCH_F0293_PC34"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "firestaff_module_source_lock",
+      "file": "src/dm1/dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.c",
+      "source": null,
+      "claim": null,
+      "hits": [
+        {
+          "line": 5,
+          "needle": "CHAMDRAW.C F0292:757-760"
+        },
+        {
+          "line": 6,
+          "needle": "CHAMDRAW.C F0292:767-770"
+        },
+        {
+          "line": 7,
+          "needle": "CHAMDRAW.C F0292:771"
+        },
+        {
+          "line": 8,
+          "needle": "CHAMDRAW.C F0292:784"
+        },
+        {
+          "line": 9,
+          "needle": "CHAMDRAW.C F0292:810-812"
+        },
+        {
+          "line": 10,
+          "needle": "CHAMDRAW.C F0292:813-814"
+        },
+        {
+          "line": 11,
+          "needle": "CHAMDRAW.C F0292:1110"
+        },
+        {
+          "line": 102,
+          "needle": "TIMELINE.C F0254:1614-1637"
+        },
+        {
+          "line": 13,
+          "needle": "CHAMDRAW.C F0293:1117-1143"
+        },
+        {
+          "line": 80,
+          "needle": "DEFS.H:3783-3793"
+        },
+        {
+          "line": 81,
+          "needle": "DEFS.H:3793"
+        },
+        {
+          "line": 85,
+          "needle": "no real-asset bitmap parity claim"
+        },
+        {
+          "line": 208,
+          "needle": "DM1_V1_CPBBG_F0254_NON_INVENTORY_MASK_PC34"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "firestaff_test_dispatch_tree",
+      "file": "tests/test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.c",
+      "source": null,
+      "claim": null,
+      "hits": [
+        {
+          "line": 54,
+          "needle": "test_inventory_champion_portrait_blit_default"
+        },
+        {
+          "line": 96,
+          "needle": "test_f0292_redraw_mask_short_circuit"
+        },
+        {
+          "line": 130,
+          "needle": "test_f0292_non_status_box_mask_skips_f0354"
+        },
+        {
+          "line": 167,
+          "needle": "test_f0292_dead_champion_skips_f0354"
+        },
+        {
+          "line": 200,
+          "needle": "test_f0292_non_inventory_champion_fallback"
+        },
+        {
+          "line": 237,
+          "needle": "test_f0292_f0355_inventory_pre_route"
+        },
+        {
+          "line": 264,
+          "needle": "test_f0292_full_mask_still_lands_on_f0354"
+        },
+        {
+          "line": 296,
+          "needle": "test_f0292_zone_bases_per_champion"
+        },
+        {
+          "line": 334,
+          "needle": "test_f0254_inventory_routes_through_f0354"
+        },
+        {
+          "line": 361,
+          "needle": "test_f0254_dead_champion_short_circuit"
+        },
+        {
+          "line": 383,
+          "needle": "test_f0254_non_inventory_routes_through_f0292"
+        },
+        {
+          "line": 410,
+          "needle": "test_f0293_champion_index_dispatch_order"
+        },
+        {
+          "line": 441,
+          "needle": "test_invalid_champion_index"
+        },
+        {
+          "line": 482,
+          "needle": "test_redraw_mask_table"
+        },
+        {
+          "line": 516,
+          "needle": "test_source_evidence"
+        },
+        {
+          "line": 574,
+          "needle": "Assertions: %d"
+        },
+        {
+          "line": 580,
+          "needle": "failures=0"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "id": "cmake_registration",
+      "file": "CMakeLists.txt",
+      "source": null,
+      "claim": null,
+      "hits": [
+        {
+          "line": 6191,
+          "needle": "test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat"
+        },
+        {
+          "line": 6192,
+          "needle": "tests/test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.c"
+        },
+        {
+          "line": 578,
+          "needle": "src/dm1/dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.c"
+        },
+        {
+          "line": 576,
+          "needle": "dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat"
+        }
+      ],
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "verificationRuns": [
+    {
+      "command": [
+        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612141325600047000_dm1_v1_refill_champion_panel_portrait_box_blit_gate/build-local/test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat"
+      ],
+      "returncode": 0,
+      "passed": true,
+      "assertions": 103,
+      "failures": 0,
+      "outputTail": "PASS mask.post_f0354 == 256 (CHAMDRAW.C F0292:812 STATISTICS only after F0354)\nPASS mask.non_inventory == 41344 (CHAMDRAW.C F0292:813-814 NAME_TITLE|STATISTICS|WOUNDS|ACTION_HAND)\nPASS mask.f0254_non_inventory == 128 (TIMELINE.C F0254:1635 NAME_TITLE only on Attributes mask)\nPASS evidence.f0292_short_circuit contains \"CHAMDRAW.C F0292:757-760\" (redraw-mask short-circuit)\nPASS evidence.f0292_f0355_pre_route contains \"CHAMDRAW.C F0292:767-770\" (F0355 pre-route)\nPASS evidence.f0292_status_box_branch contains \"CHAMDRAW.C F0292:771\" (MASK0x1000_STATUS_BOX branch)\nPASS evidence.f0292_dead_branch contains \"CHAMDRAW.C F0292:784\" (dead champion branch)\nPASS evidence.f0292_f0354_call contains \"CHAMDRAW.C F0292:810-812\" (F0354 call site + post-call mask)\nPASS evidence.f0292_non_inventory_fallback contains \"CHAMDRAW.C F0292:813-814\" (non-inventory redraw-mask fallback)\nPASS evidence.f0292_clear_at_exit contains \"CHAMDRAW.C F0292:1110\" (nine-bit clear at exit)\nPASS evidence.f0254_secondary_dispatch contains \"TIMELINE.C F0254:1614-1637\" (HideDamageReceived secondary F0354 dispatch)\nPASS evidence.f0293_dispatch_loop contains \"CHAMDRAW.C F0293:1117-1143\" (DrawAllChampionStates champion-index loop)\nPASS evidence.defs_status_box_zones contains \"DEFS.H:3783-3793\" (C151 status-box zone stride)\nPASS evidence.defs_portrait_zone contains \"DEFS.H:3793\" (C175_ZONE_FIRST_CHAMPION_STATUS_BOX)\nPASS evidence.no_real_asset_claim contains \"no real-asset bitmap parity claim\" (contract-only no-claim marker)\nPASS test_dm1_v1_champion_panel_portrait_box_blit_gate failures=0 assertions=103\nAssertions: 103\nFailures: 0"
+    }
+  ]
+}

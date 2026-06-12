@@ -585,6 +585,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_champion_panel_portrait_state_redr
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_champion_panel_portrait_state_redraw_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_champion_panel_hud_recompute_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_champion_panel_hud_recompute_pc34_compat.c
@@ -6243,6 +6247,37 @@ if(BUILD_TESTING)
         NAME dm1_v1_champion_panel_portrait_state_redraw_pc34_compat
         COMMAND test_dm1_v1_champion_panel_portrait_state_redraw_pc34_compat
     )
+    add_executable(test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat
+        tests/test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat
+    )
+    if(Python3_Interpreter_FOUND)
+        add_custom_target(verify_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat
+            COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}
+                ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.py
+                --write-manifest
+            DEPENDS test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+        add_test(
+            NAME dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat_verifier
+            COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}
+                ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.py
+        )
+    endif()
     add_executable(firestaff_dm1_v1_champion_panel_hud_recompute_pc34_compat_test
         tests/test_dm1_v1_champion_panel_hud_recompute_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_hud_recompute_pc34_compat.c
