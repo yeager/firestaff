@@ -25,6 +25,8 @@
  *   CHEST.C:30-32 returns before the pressing-eye branch when the
  *     requested chest is already G0426_T_OpenChest, so an eye click on
  *     the same normally-open chest must not suppress the C145 icon.
+ *     The reverse path is also source-locked: a normal open request for
+ *     the same eye-opened chest must not retroactively draw C145.
  *   CHEST.C:58-75 and F0334:112-133 compact non-empty visible slots
  *     back to the dungeon linked list on close.
  *   DATA.C:1063-1079 keeps C520..C536 backpack slots as
@@ -58,6 +60,8 @@
  *      C145 action-hand icon because F0333 returns before P0694 handling.
  *   11. Eye-clicking a leader-hand scroll routes through the C071 runtime
  *      mouse path to the scroll panel, not the object-description panel.
+ *   12. Same-chest normal reopen after an eye-opened action-hand chest
+ *      keeps C144 because F0333 returns before the C09 action-icon draw.
  */
 
 #include "m11_game_view.h"
@@ -748,6 +752,48 @@ static void test_inventory_open_chest_same_eye_reopen_keeps_open_icon(void) {
               "same-eye reopen keeps C145 because F0333 returned before P0694");
 }
 
+/* Detail 6c: same-chest normal reopen does not retroactively draw C145 after
+ * the action-hand chest was first opened by the eye path.  ReDMCSB CHEST.C
+ * F0333 lines 30-32 return before both the P0694_B_PressingEye test and the
+ * lines 43-46 action-hand C09/C145 draw, so the original C144 icon remains
+ * until another draw path explicitly remaps it. */
+static void test_inventory_eye_open_same_normal_reopen_keeps_closed_icon(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonContainer_Compat containers[1];
+    unsigned short chestThing =
+        (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    int eyeX = 12 + 8;
+    int eyeY = 33 + 13 + 8;
+
+    seed_panel_view(&state, &things, weapons, containers);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        chestThing;
+
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
+                  &state, CHAMPION_SLOT_ACTION_HAND), 144,
+              "action-hand chest starts as C144 before eye-open");
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, chestThing), 1,
+              "leader hand can hold the action-hand chest for the eye route");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, eyeX, eyeY, 1),
+              M11_GAME_INPUT_REDRAW,
+              "eye route opens the action-hand chest through F0352/F0342");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "eye route keeps G0426 on the action-hand chest");
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
+                  &state, CHAMPION_SLOT_ACTION_HAND), 144,
+              "eye-opened action-hand chest keeps C144");
+
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
+              "normal same-chest open returns through F0333 same-open guard");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "normal same-chest open keeps G0426 on the same chest");
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
+                  &state, CHAMPION_SLOT_ACTION_HAND), 144,
+              "normal same-chest reopen after eye-open still keeps C144");
+}
+
 /* Detail 7: replacing an open action-hand chest with a different container
  * should close the old chest and keep the open state bound to the newly
  * placed chest. ReDMCSB CHEST.C F0333 lines 35-38 close the previous
@@ -944,7 +990,7 @@ int main(void) {
            "PANEL.C:1250-1254 weapon eye metadata flags, "
            "CHEST.C:35-38 replace-open chest close-before-open ordering, "
            "CHEST.C:43-46 + CHAMDRAW.C:621-630 C144->C145 open remap, "
-           "CHEST.C:30-32 same-open return before pressing-eye branch, "
+           "CHEST.C:30-32 same-open return before pressing-eye branch and C09 draw, "
            "CHAMPION.C:698-699 and 662-710 slotbox swap with open-action-hand chest, "
            "CHEST.C:112-133 close-time compact\n");
 
@@ -956,6 +1002,7 @@ int main(void) {
     test_inventory_open_chest_action_hand_icon_swap();
     test_inventory_replace_open_action_hand_chest_from_slot_click();
     test_inventory_open_chest_same_eye_reopen_keeps_open_icon();
+    test_inventory_eye_open_same_normal_reopen_keeps_closed_icon();
     test_inventory_backpack_slot_accepts_non_container_swap();
     test_inventory_keyhole_click_wrong_item_keeps_state();
 
