@@ -1,11 +1,12 @@
+/* ReDMCSB CSB-lineage Viewport.cpp first-backdrop contract-only source lock. */
 #include "csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat.h"
 
 #include <string.h>
 
 static const char s_f0128_viewport_anchor[] =
-    "ReDMCSB DUNVIEW.C F0128:8318-8542 viewport order; CSB "
+    "ReDMCSB DUNVIEW.C F0128:8318-8486 viewport order; CSB "
     "CustomBackgrounds first backdrop is the first CSB-only backdrop pass "
-    "after the F0098 base floor/ceiling copy and before near cell drawing.";
+    "before the following CSB-lineage room draw composition.";
 
 static const char s_f0098_base_anchor[] =
     "ReDMCSB DUNVIEW.C F0098:2962-3002 copies base ceiling/floor pixels "
@@ -22,22 +23,23 @@ static const char s_defs_c10_anchor[] =
     "C10 transparency for later cell blits.";
 
 static const char s_defs_view_square_anchor[] =
-    "ReDMCSB DEFS.H:2595-2611 I34E viewport square constants; "
+    "ReDMCSB DEFS.H:2596-2614 I34E/P31J viewport square constants; "
     "C14_VIEW_SQUARE_D3L2 and C15_VIEW_SQUARE_D3R2 are distinct from "
     "the first backdrop room ordinal.";
 
 static const char s_csb_lineage_first_dispatch_anchor[] =
-    "ReDMCSB CSB-lineage Viewport.cpp:6503-6551 CustomBackgrounds; 6840 "
-    "room 0 dispatch is first, 6841 room 2 is the fallback/second backdrop.";
+    "CSB-lineage Viewport.cpp:6924-6927 first-backdrop dispatch; room 0 "
+    "is applied before room 2 and before the following F3L1 room draw.";
 
 static const char s_csb_lineage_required_anchors[] =
     "ReDMCSB CSB-lineage Viewport.cpp:1853-1862,1881-1888,1895,1899,"
     "1922,1926 door-facing draw-code anchors; 2614-2620 draw-order/decor "
-    "test; 6503-6551 CustomBackgrounds; 6840-6841 first/second dispatch.";
+    "test; 6451-6505 ApplyBackground; 6574-6622 CustomBackgrounds; "
+    "6599-6619 pSkinDef bitmap application; 6924-6927 first/second dispatch.";
 
 static const char s_csb_lineage_default_skin_anchor[] =
     "ReDMCSB CSB-lineage Viewport.cpp:322 NUMCELL=16; CSB.h:141-154 "
-    "SKIN_CACHE defaultSkins/GetDefaultSkin; Viewport.cpp:6521-6524 "
+    "SKIN_CACHE defaultSkins/GetDefaultSkin; Viewport.cpp:6591-6597 "
     "default skin is the fallback when the cell skin is zero.";
 
 static const char s_non_overlap_note[] =
@@ -46,11 +48,12 @@ static const char s_non_overlap_note[] =
     "2 uses rel fwd=3 side=-1 and keep-out ordinal 2.";
 
 static const char s_source_evidence[] =
-    "contract_only=1; ReDMCSB DUNVIEW.C F0128:8318-8542 viewport order; "
+    "contract_only=1; ReDMCSB DUNVIEW.C F0128:8318-8486 viewport order; "
     "F0098:2962-3002 base pixels first; F0128:8337-8339 backdrop keep-out; "
-    "DEFS.H:2088 C10_COLOR_FLESH; DEFS.H:2595-2611 view-square constants; "
-    "CSB-lineage Viewport.cpp:322 NUMCELL=16, 6503-6551 CustomBackgrounds, "
-    "6521-6524 default skin fallback, 6840 room 0 before 6841 room 2; "
+    "DEFS.H:2088 C10_COLOR_FLESH; DEFS.H:2596-2614 view-square constants; "
+    "CSB-lineage Viewport.cpp:322 NUMCELL=16, 6451-6505 ApplyBackground, "
+    "6574-6622 CustomBackgrounds, 6591-6597 default skin fallback, "
+    "6599-6619 pSkinDef bitmap application, 6924-6927 room 0 before room 2; "
     "required anchors Viewport.cpp:1853-1862,1881-1888,1895,1899,1922,1926,"
     "2614-2620; no F0107/F0108/F0111/F0115 route.";
 
@@ -115,9 +118,9 @@ static const CSB_V1_CustomBackgroundsFirstBackdropStep s_order[] = {
 const CSB_V1_CustomBackgroundsFirstBackdropContract *
 csb_v1_viewport_custom_backgrounds_first_backdrop_contract_pc34(void)
 {
-    /* ReDMCSB: DUNVIEW.C F0128 lines 8318-8542 supplies the shared
-     * viewport ordering anchor. CSB-lineage Viewport.cpp lines 6840-6841
-     * dispatch CustomBackgrounds room 0 before room 2; lines 6503-6551
+    /* ReDMCSB: DUNVIEW.C F0128 lines 8318-8486 supplies the shared
+     * viewport ordering anchor. CSB-lineage Viewport.cpp lines 6924-6927
+     * dispatch CustomBackgrounds room 0 before room 2; lines 6574-6622
      * define skin/default/masked backdrop application. */
     return &s_contract;
 }
@@ -130,7 +133,7 @@ size_t csb_v1_viewport_custom_backgrounds_first_backdrop_order_pc34(
 
     /* ReDMCSB: DUNVIEW.C F0098 lines 2962-3002 writes base pixels first,
      * while F0128 lines 8337-8339 keeps that backdrop pass separate from
-     * CSB-only CustomBackgrounds. CSB-lineage Viewport.cpp lines 6840-6841
+     * CSB-only CustomBackgrounds. CSB-lineage Viewport.cpp lines 6924-6927
      * fixes first room 0 before second room 2. */
     if (out_steps && out_capacity > 0) {
         const size_t copy_count = out_capacity < count ? out_capacity : count;
@@ -143,9 +146,9 @@ size_t csb_v1_viewport_custom_backgrounds_first_backdrop_order_pc34(
 const char *
 csb_v1_viewport_custom_backgrounds_first_backdrop_source_evidence_pc34(void)
 {
-    /* ReDMCSB: DUNVIEW.C F0128 lines 8318-8542 and F0098 lines 2962-3002
+    /* ReDMCSB: DUNVIEW.C F0128 lines 8318-8486 and F0098 lines 2962-3002
      * anchor the baseline; DEFS.H line 2088 anchors C10 preservation;
-     * CSB-lineage Viewport.cpp lines 6503-6551 and 6840-6841 anchor the
+     * CSB-lineage Viewport.cpp lines 6574-6622 and 6924-6927 anchor the
      * first-backdrop dispatch. */
     return s_source_evidence;
 }

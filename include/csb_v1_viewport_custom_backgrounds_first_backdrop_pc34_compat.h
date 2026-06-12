@@ -1,6 +1,11 @@
 #ifndef FIRESTAFF_CSB_V1_VIEWPORT_CUSTOM_BACKGROUNDS_FIRST_BACKDROP_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_VIEWPORT_CUSTOM_BACKGROUNDS_FIRST_BACKDROP_PC34_COMPAT_H
 
+/* CSB V1 CustomBackgrounds first-backdrop contract-only API.
+ * Anchors: ReDMCSB DUNVIEW.C F0128:8318-8486, F0098:2962-3002,
+ * DEFS.H:2088 and 2596-2614; CSB-lineage Viewport.cpp:6451-6505,
+ * 6574-6622, 6599-6619, and first dispatch at 6924-6927. */
+
 #include <stddef.h>
 
 typedef enum {
