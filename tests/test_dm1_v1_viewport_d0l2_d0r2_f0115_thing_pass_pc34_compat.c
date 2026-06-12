@@ -289,6 +289,37 @@ static void test_explosion_and_field_metadata(void)
                "ReDMCSB DUNVIEW.C:377 G2035[1]");
     expect_int("d0r2.field_aspect", d0r2 ? d0r2->field_aspect_index : -1, 15,
                "ReDMCSB DUNVIEW.C:377 G2035[2]");
+    expect_int("d0l2.fluxcage.zone.metadata", d0l2 ? d0l2->fluxcage_field_zone : -1,
+               716, "ReDMCSB DUNVIEW.C:6199-6219 C702 + G2035[1]");
+    expect_int("d0r2.fluxcage.zone.metadata", d0r2 ? d0r2->fluxcage_field_zone : -1,
+               717, "ReDMCSB DUNVIEW.C:6199-6219 C702 + G2035[2]");
+    expect_int("d0l2.fluxcage.after_explosions",
+               d0l2 ? d0l2->fluxcage_field_after_explosions : 0,
+               1, "ReDMCSB DUNVIEW.C:6199-6219 after explosion loop");
+    expect_int("d0r2.fluxcage.after_explosions",
+               d0r2 ? d0r2->fluxcage_field_after_explosions : 0,
+               1, "ReDMCSB DUNVIEW.C:6199-6219 after explosion loop");
+    expect_int("d0l2.fluxcage.door_pass1_guard",
+               d0l2 ? d0l2->fluxcage_suppressed_on_door_pass1 : 0,
+               1, "ReDMCSB DUNVIEW.C:6199-6203 door pass 1 guard");
+    expect_int("d0r2.fluxcage.endgame_guard",
+               d0r2 ? d0r2->fluxcage_suppressed_during_endgame : 0,
+               1, "ReDMCSB DUNVIEW.C:6199-6203 endgame guard");
+    expect_int("d0l2.fluxcage.zone",
+               dm1_v1_viewport_d0l2_d0r2_f0115_fluxcage_field_zone_pc34(d0l2, 0, 0),
+               716, "ReDMCSB DUNVIEW.C:6219 C702 + fieldAspect 14");
+    expect_int("d0r2.fluxcage.zone",
+               dm1_v1_viewport_d0l2_d0r2_f0115_fluxcage_field_zone_pc34(d0r2, 0, 0),
+               717, "ReDMCSB DUNVIEW.C:6219 C702 + fieldAspect 15");
+    expect_int("d0l2.fluxcage.door_pass1.suppressed",
+               dm1_v1_viewport_d0l2_d0r2_f0115_fluxcage_field_zone_pc34(d0l2, 1, 0),
+               -1, "ReDMCSB DUNVIEW.C:6199-6203 L0175 pass 1 guard");
+    expect_int("d0r2.fluxcage.endgame.suppressed",
+               dm1_v1_viewport_d0l2_d0r2_f0115_fluxcage_field_zone_pc34(d0r2, 0, 1),
+               -1, "ReDMCSB DUNVIEW.C:6199-6203 endgame guard");
+    expect_int("null.fluxcage",
+               dm1_v1_viewport_d0l2_d0r2_f0115_fluxcage_field_zone_pc34(NULL, 0, 0),
+               -1, "invalid input guard");
     expect_int("d0l2.wall_zone", d0l2 ? d0l2->wall_zone : -1, 716,
                "ReDMCSB DUNVIEW.C:8059 C716_ZONE_WALL_D0L");
     expect_int("d0r2.wall_zone", d0r2 ? d0r2->wall_zone : -1, 717,
@@ -416,6 +447,12 @@ static void test_source_evidence_mentions_required_anchors(void)
                     "DUNVIEW.C creature zone");
     expect_contains("evidence.explosion_zone", e, "6107/6122",
                     "DUNVIEW.C explosion zones");
+    expect_contains("evidence.fluxcage_defer", e, "6006-6015",
+                    "DUNVIEW.C fluxcage defer anchor");
+    expect_contains("evidence.fluxcage_field", e, "6199-6219",
+                    "DUNVIEW.C fluxcage field anchor");
+    expect_contains("evidence.fluxcage_zone", e, "C702 + G2035",
+                    "DUNVIEW.C fluxcage field-zone mapping");
     expect_contains("evidence.defs", e, "DEFS.H:2642-2660",
                     "DEFS.H cell order anchors");
     expect_contains("evidence.defs_c10", e, "DEFS.H:2088 C10_COLOR_FLESH",
@@ -433,7 +470,7 @@ static void test_source_evidence_mentions_required_anchors(void)
     expect_contains("d0r2.anchor", d0r2 ? d0r2->redmcsb_dispatch_anchor : NULL,
                     "8113/8115/8159", "fixture source anchor");
     expect_contains("d0l2.f0115.anchor", d0l2 ? d0l2->redmcsb_f0115_anchor : NULL,
-                    "5295", "fixture F0115 anchor");
+                    "6199-6219", "fixture F0115 anchor");
     expect_contains("d0r2.f0115.anchor", d0r2 ? d0r2->redmcsb_f0115_anchor : NULL,
                     "5668-5671", "fixture F0115 anchor");
     expect_contains("d0l2.dungeon.anchor", d0l2 ? d0l2->redmcsb_dungeon_anchor : NULL,
