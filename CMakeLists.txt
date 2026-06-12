@@ -4206,6 +4206,20 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_scroll_wheel_leader_stack_rotation_pc34_compat
     )
 
+    add_executable(test_dm1_v1_chest_scroll_wheel_pickup_non_leader_runtime_pc34_compat
+        tests/test_dm1_v1_chest_scroll_wheel_pickup_non_leader_runtime_pc34_compat.c
+        src/dm1/dm1_v1_chest_scroll_wheel_pickup_non_leader_runtime_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_chest_scroll_wheel_pickup_non_leader_runtime_pc34_compat PRIVATE include)
+    target_link_libraries(test_dm1_v1_chest_scroll_wheel_pickup_non_leader_runtime_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_scroll_wheel_pickup_non_leader_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_scroll_wheel_pickup_non_leader_runtime_pc34_compat
+        COMMAND test_dm1_v1_chest_scroll_wheel_pickup_non_leader_runtime_pc34_compat
+    )
+
     add_executable(test_dm1_v1_chest_scroll_wheel_pull_from_chest_pc34_compat
         tests/test_dm1_v1_chest_scroll_wheel_pull_from_chest_pc34_compat.c
         src/dm1/dm1_v1_chest_scroll_wheel_pull_from_chest_pc34_compat.c
@@ -5824,6 +5838,22 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_mirror_candidate_resurrect_rearm_pc34_compat
         COMMAND test_dm1_v1_mirror_candidate_resurrect_rearm_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat
+        firestaff_m10)
+    target_include_directories(test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat
+        PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat
     )
 
     add_executable(firestaff_dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat_test
@@ -7810,6 +7840,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_d3l_d3r_wall_pc34_compat.c
         src/dm1/dm1_v1_viewport_d3l_d3r_wall_pc34_compat.c
     )
+    add_executable(test_dm1_v1_viewport_d3l_d3r_sidewall_pair_pc34_compat
+        tests/test_dm1_v1_viewport_d3l_d3r_sidewall_pair_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d3l_d3r_sidewall_pair_pc34_compat.c
+    )
     add_executable(firestaff_dm1_v1_viewport_d3l2_d3r2_wall_pc34_compat_test
         tests/test_dm1_v1_viewport_d3l2_d3r2_wall_pc34_compat.c
         src/dm1/dm1_v1_viewport_d3l2_d3r2_wall_pc34_compat.c
@@ -8020,6 +8054,12 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     target_include_directories(firestaff_dm1_v1_viewport_d3l_d3r_wall_pc34_compat_test PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_dm1_v1_viewport_d3l_d3r_sidewall_pair_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    target_include_directories(test_dm1_v1_viewport_d3l_d3r_sidewall_pair_pc34_compat
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
     target_link_libraries(firestaff_dm1_v1_viewport_d3l2_d3r2_wall_pc34_compat_test
         PRIVATE firestaff_m10
     )
@@ -8226,6 +8266,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(firestaff_dm1_v1_viewport_d3c_center_field_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d3c_door_ornament_thieves_eye_mask_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_d3l_d3r_wall_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_viewport_d3l_d3r_sidewall_pair_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_d3l2_d3r2_wall_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_f0099_row_local_flip_pc34_compat_test PRIVATE -Wall -Wextra -O2)
@@ -8359,6 +8400,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_d3l_d3r_wall_pc34_compat
         COMMAND firestaff_dm1_v1_viewport_d3l_d3r_wall_pc34_compat_test
+    )
+    add_test(
+        NAME dm1_v1_viewport_d3l_d3r_sidewall_pair_pc34_compat
+        COMMAND test_dm1_v1_viewport_d3l_d3r_sidewall_pair_pc34_compat
     )
     add_test(
         NAME dm1_v1_viewport_d3l2_d3r2_wall_pc34_compat
