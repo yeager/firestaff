@@ -413,6 +413,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_double_open_close
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_double_open_close_guard_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_champion_panel_damage_indicator_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_champion_panel_damage_indicator_pc34_compat.c
@@ -5938,6 +5942,22 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_mirror_candidate_resurrect_double_candidate_race_pc34_compat
         COMMAND test_dm1_v1_mirror_candidate_resurrect_double_candidate_race_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat
+        firestaff_m10)
+    target_include_directories(test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat
+        PRIVATE include src)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat
     )
 
     add_executable(firestaff_dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat_test
