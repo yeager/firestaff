@@ -2412,20 +2412,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_custom_background_mask_pc34_compat
     )
 
-    add_executable(firestaff_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat_test
+    add_library(csb_v1_viewport_custom_backgrounds_first_backdrop_contract_pc34_compat INTERFACE)
+    add_executable(test_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat
         tests/test_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat.c
         src/csb/csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat.c
     )
-    target_include_directories(firestaff_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat_test PRIVATE
+    target_include_directories(test_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(firestaff_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat_test PRIVATE firestaff_m10)
+    target_link_libraries(test_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat
+        PRIVATE csb_v1_viewport_custom_backgrounds_first_backdrop_contract_pc34_compat
+    )
     if(NOT MSVC)
-        target_compile_options(firestaff_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat_test PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
         NAME csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat
-        COMMAND firestaff_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat_test
+        COMMAND test_csb_v1_viewport_custom_backgrounds_first_backdrop_pc34_compat
     )
 
     add_executable(test_csb_v1_viewport_custom_backgrounds_second_backdrop_pc34_compat
