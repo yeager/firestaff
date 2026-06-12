@@ -9255,6 +9255,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_d0l_d0r_wall_source_lock_pc34_compat.c
         src/dm1/dm1_v1_viewport_d0l_d0r_wall_pc34_compat.c
     )
+    add_executable(test_dm1_v1_door_bash_feedback_source_lock_pc34_compat
+        tests/test_dm1_v1_door_bash_feedback_source_lock_pc34_compat.c
+        src/dm1/dm1_v1_door_bash_feedback_pc34_compat.c
+    )
     add_executable(firestaff_dm1_v1_viewport_d1l_d1r_wall_pc34_compat_test
         tests/test_dm1_v1_viewport_d1l_d1r_wall_pc34_compat.c
         src/dm1/dm1_v1_viewport_d1l_d1r_wall_pc34_compat.c
@@ -9573,6 +9577,12 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         PRIVATE firestaff_m10
     )
     target_include_directories(test_dm1_v1_d0l_d0r_wall_source_lock_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_door_bash_feedback_source_lock_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    target_include_directories(test_dm1_v1_door_bash_feedback_source_lock_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(firestaff_dm1_v1_viewport_d1l_d1r_wall_pc34_compat_test
@@ -9998,6 +10008,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(test_dm1_v1_viewport_floor_ceiling_items_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_d0l_d0r_wall_source_lock_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_door_bash_feedback_source_lock_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_viewport_d1l_d1r_wall_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d2l_d2r_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -10136,6 +10147,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_d0l_d0r_wall_source_lock_pc34_compat
         COMMAND test_dm1_v1_d0l_d0r_wall_source_lock_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_door_bash_feedback_source_lock_pc34_compat
+        COMMAND test_dm1_v1_door_bash_feedback_source_lock_pc34_compat
     )
     add_test(
         NAME dm1_v1_viewport_d1l_d1r_wall_pc34_compat
