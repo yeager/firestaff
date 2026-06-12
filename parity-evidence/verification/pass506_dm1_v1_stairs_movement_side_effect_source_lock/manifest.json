@@ -1,11 +1,11 @@
 {
-  "branch": "main",
+  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
   "firestaffGuards": {
     "commandCore": "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
     "commandCoreResult": "include/dm1_v1_movement_command_core_pc34_compat.h",
     "pipelineTest": "tests/test_dm1_v1_movement_pipeline_pc34_compat.c",
     "runtimeExecutable": "build/test_dm1_v1_movement_pipeline_pc34_compat",
-    "runtimeOutputLastLine": "351 passed, 0 failed"
+    "runtimeOutputLastLine": "400 passed, 0 failed"
   },
   "notClaimed": [
     "viewport/capture parity",

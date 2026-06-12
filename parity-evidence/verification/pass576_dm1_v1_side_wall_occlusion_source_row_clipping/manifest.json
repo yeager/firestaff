@@ -102,7 +102,7 @@
       "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611124843986984000_dm1_v1_viewport_source_lock_fail_batch/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "48bf4e64057abbd8d40b823325af15e53166b74b69e0dd16a6a8b684ee5b864a",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -151,7 +151,7 @@
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611124843986984000_dm1_v1_viewport_source_lock_fail_batch/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "48bf4e64057abbd8d40b823325af15e53166b74b69e0dd16a6a8b684ee5b864a",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -236,8 +236,8 @@
       "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
       "lines": "276-330",
       "missing": [],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611124843986984000_dm1_v1_viewport_source_lock_fail_batch/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "6527fb51780336386ffd70dfe8a4b2c6dadbcda3ee72f96e333d4d3e377e5d86",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "27617d46f59abe18b356cff8db9a3723aee0174855239f12903dc24ec2046c0b",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -281,8 +281,8 @@
       "id": "firestaff_clip_row_runtime_assertions_are_registered",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611124843986984000_dm1_v1_viewport_source_lock_fail_batch/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "6527fb51780336386ffd70dfe8a4b2c6dadbcda3ee72f96e333d4d3e377e5d86",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "27617d46f59abe18b356cff8db9a3723aee0174855239f12903dc24ec2046c0b",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }

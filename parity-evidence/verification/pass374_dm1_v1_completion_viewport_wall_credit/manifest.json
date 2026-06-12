@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
   "checks": [
     {
       "file": "DUNVIEW.C",
@@ -104,14 +104,14 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "b58be235632dad5c813b8b0d903fb8ada9e0f6b8",
+  "head": "cd7bd37ef6aafca978c34501de715afd7dd8b3bf",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
     "DOS keyboard-buffer true-stop proof"
   ],
   "pass373Manifest": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
   "schema": "pass374_dm1_v1_completion_viewport_wall_credit.v1",
   "sourceLocks": [
     {
@@ -223,5 +223,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-06-02T12:03:27.183127+00:00"
+  "timestampUtc": "2026-06-12T19:27:44.215318+00:00"
 }
