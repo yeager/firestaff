@@ -4,7 +4,7 @@
       "cmd": [
         "cmake",
         "--build",
-        "/Users/bosse/.openclaw/workspace-main/build",
+        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/build",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -25,7 +25,7 @@
         "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
-        "[ 90%] Built target firestaff_m10",
+        "[ 95%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
@@ -79,7 +79,7 @@
       "expectedStatus": null,
       "id": "pass423_input_command_movement_pipeline_source_lock",
       "outputTail": [
-        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
+        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
       ],
       "passed": true,
       "returncode": 0,
@@ -130,7 +130,7 @@
       "outputTail": [
         "PASS pass406_dm1_v1_movement_legality_completion_gate",
         "- ReDMCSB: CLIKMENU.C:180-351; MOVESENS.C:316-999; DUNGEON.C:1371-1421, 1423-1479",
-        "- Firestaff: memory_movement_pc34_compat.c:408-493, 709-835",
+        "- Firestaff: memory_movement_pc34_compat.c:408-493, 709-841",
         "- report: parity-evidence/pass406_dm1_v1_movement_legality_completion_gate.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_movement_legality_completion_gate/manifest.json"
       ],
@@ -149,7 +149,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:6505-6677; main_loop_m11.c:2305-2317; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
+        "- Firestaff: m11_game_view.c:7021-7200; main_loop_m11.c:2433-2445; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -248,8 +248,8 @@
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:12942",
-        "- Firestaff source viewport draw order: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:22784",
+        "- Firestaff field rows/zones: /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c:13626",
+        "- Firestaff source viewport draw order: /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c:23670",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -276,8 +276,8 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:16077",
-        "- Firestaff palette apply: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:11360",
+        "- Firestaff palette compute: /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c:16761",
+        "- Firestaff palette apply: /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c:11989",
         "- ReDMCSB F0337: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
         "- ReDMCSB DRAWVIEW palette install: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
@@ -296,17 +296,17 @@
       "id": "pass434_original_viewport_crop_readiness_gate",
       "outputTail": [
         "{",
-        "  \"status\": \"PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS\",",
+        "  \"status\": \"FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS\",",
         "  \"manifest\": \"parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json\",",
         "  \"report\": \"parity-evidence/pass434_dm1_v1_original_viewport_crop_readiness_gate.md\"",
         "}"
       ],
-      "passed": true,
-      "returncode": 0,
-      "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS"
+      "passed": false,
+      "returncode": 1,
+      "status": "FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS"
     }
   ],
-  "decision": "Current movement/viewport source-lock gates are green, pass434 crop readiness is green, and pass435 confirms the remaining blocker is original semantic route readiness; no original pixel/route parity is claimed.",
+  "decision": "One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.",
   "expectedBlockerGates": [
     {
       "cmd": [
@@ -320,6 +320,7 @@
         "{",
         "  \"status\": \"BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY\",",
         "  \"blockers\": [",
+        "    \"pass434 crop/source readiness is not green\",",
         "    \"pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence\"",
         "  ],",
         "  \"manifest\": \"parity-evidence/verification/pass435_dm1_v1_semantic_original_route_readiness_gate/manifest.json\",",
@@ -332,7 +333,7 @@
     }
   ],
   "gate": "dm1_v1_viewport_movement_completion_matrix",
-  "passed": true,
+  "passed": false,
   "schema": "firestaff.dm1_v1_viewport_movement_completion_matrix.v2",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceRows": [
@@ -409,5 +410,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-02T12:03:26.587179+00:00"
+  "timestampUtc": "2026-06-12T19:26:40.019280+00:00"
 }

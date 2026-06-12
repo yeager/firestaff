@@ -1,70 +1,46 @@
 {
   "firestaffChecks": [
     {
-      "hits": [
-        {
-          "line": 418,
-          "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
-        },
-        {
-          "line": 418,
-          "needle": "DM1_PC34_ZONE_WALL_D2L2"
-        },
-        {
-          "line": 418,
-          "needle": "DUNVIEW.C:6849-6858"
-        },
-        {
-          "line": 418,
-          "needle": "DUNVIEW.C:6848-6862 wall case returns"
-        },
-        {
-          "line": 419,
-          "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
-        },
-        {
-          "line": 419,
-          "needle": "DM1_PC34_ZONE_WALL_D2R2"
-        },
-        {
-          "line": 419,
-          "needle": "DUNVIEW.C:6880-6889"
-        },
-        {
-          "line": 419,
-          "needle": "DUNVIEW.C:6882-6893 wall case returns"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-d2-far-side-wall-metadata",
       "lines": "418-420",
-      "missing": [],
+      "missing": [
+        "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2",
+        "DM1_PC34_ZONE_WALL_D2L2",
+        "DUNVIEW.C:6849-6858",
+        "DUNVIEW.C:6848-6862 wall case returns",
+        "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2",
+        "DM1_PC34_ZONE_WALL_D2R2",
+        "DUNVIEW.C:6880-6889",
+        "DUNVIEW.C:6882-6893 wall case returns"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "hits": [
         {
-          "line": 289,
+          "line": 290,
           "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
         },
         {
-          "line": 289,
+          "line": 290,
           "needle": "DM1_PC34_ZONE_WALL_D2L2"
         },
         {
-          "line": 289,
+          "line": 290,
           "needle": "\"6862\""
         },
         {
-          "line": 290,
+          "line": 291,
           "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
         },
         {
-          "line": 290,
+          "line": 291,
           "needle": "DM1_PC34_ZONE_WALL_D2R2"
         },
         {
-          "line": 290,
+          "line": 291,
           "needle": "\"6893\""
         }
       ],
@@ -75,17 +51,14 @@
       "status": "PASS"
     },
     {
-      "hits": [
-        {
-          "line": 2128,
-          "needle": "DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-source-evidence-string",
       "lines": "2125-2130",
-      "missing": [],
+      "missing": [
+        "DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     }
   ],
   "nonClaims": [
@@ -198,26 +171,26 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass562_dm1_v1_d2_far_side_wall_source_lock.v1",
-  "status": "passed",
-  "statusToken": "PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCKED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCK",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "outputTail": "PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
       "returncode": 0
     },
     {
       "command": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
-        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py",
+        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "PASS pass562 check-only",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL pass562 check-only: firestaff-d2-far-side-wall-metadata,firestaff-source-evidence-string",
+      "passed": false,
+      "returncode": 1
     }
   ]
 }

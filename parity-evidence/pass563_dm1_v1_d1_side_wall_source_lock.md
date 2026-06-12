@@ -59,13 +59,8 @@ Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1
 
 ## Verification
 
-- /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611124843986984000_dm1_v1_viewport_source_lock_fail_batch/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS drift.pass570.d2c_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
-PASS drift.pass570.d2c_zone_left present in include/dm1_v1_viewport_3d_pc34_compat.h
-PASS drift.pass570.d2c_zone_right present in include/dm1_v1_viewport_3d_pc34_compat.h
-PASS drift.pass570.d2c_zone_top present in include/dm1_v1_viewport_3d_pc34_compat.h
-PASS drift.pass570.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -74,10 +69,15 @@ PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c
+PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
+PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
+PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611124843986984000_dm1_v1_viewport_source_lock_fail_batch/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=0
 ~~~
 PASS pass563 check-only
 ~~~

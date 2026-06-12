@@ -1,74 +1,48 @@
 {
   "firestaffChecks": [
     {
-      "hits": [
-        {
-          "line": 236,
-          "needle": "DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439"
-        },
-        {
-          "line": 236,
-          "needle": "DUNVIEW.C:6579 floor ornament under mirrored rear pass"
-        },
-        {
-          "line": 236,
-          "needle": "DUNVIEW.C:6592-6593 optional button before door panel"
-        },
-        {
-          "line": 238,
-          "needle": "DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349"
-        },
-        {
-          "line": 238,
-          "needle": "DUNVIEW.C:6988 floor ornament under rear pass"
-        },
-        {
-          "line": 239,
-          "needle": "DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439"
-        },
-        {
-          "line": 239,
-          "needle": "DUNVIEW.C:7181 floor ornament under mirrored rear pass"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-mirrored-door-front-metadata",
       "lines": "236-240",
-      "missing": [],
+      "missing": [
+        "DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439",
+        "DUNVIEW.C:6579 floor ornament under mirrored rear pass",
+        "DUNVIEW.C:6592-6593 optional button before door panel",
+        "DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349",
+        "DUNVIEW.C:6988 floor ornament under rear pass",
+        "DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439",
+        "DUNVIEW.C:7181 floor ornament under mirrored rear pass"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "hits": [
         {
-          "line": 725,
+          "line": 757,
           "needle": "{ DM1_VIEW_SQUARE_D3R, \"6579\", \"6580\", \"6582\", \"6592\", \"6598\", \"6601\", 0x0128, 0x0439, {2, 1}, {3, 4} },"
         },
         {
-          "line": 727,
+          "line": 759,
           "needle": "{ DM1_VIEW_SQUARE_D2L, \"6988\", \"6989\", \"6991\", NULL,   \"7000\", \"7003\", 0x0218, 0x0349, {1, 2}, {4, 3} },"
         },
         {
-          "line": 728,
+          "line": 760,
           "needle": "{ DM1_VIEW_SQUARE_D2R, \"7181\", \"7182\", \"7184\", NULL,   \"7193\", \"7196\", 0x0128, 0x0439, {2, 1}, {3, 4} },"
         },
         {
-          "line": 735,
+          "line": 767,
           "needle": "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);"
-        },
-        {
-          "line": 754,
-          "needle": "rear.cells[0] == expected[i].rear_cells[0]"
-        },
-        {
-          "line": 758,
-          "needle": "front.cells[0] == expected[i].front_cells[0]"
         }
       ],
       "id": "firestaff-mirrored-door-front-runtime-test",
       "lines": "707-770",
-      "missing": [],
+      "missing": [
+        "rear.cells[0] == expected[i].rear_cells[0]",
+        "front.cells[0] == expected[i].front_cells[0]"
+      ],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     }
   ],
   "nonClaims": [
@@ -199,26 +173,26 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass560_dm1_v1_mirrored_door_front_source_lock.v1",
-  "status": "passed",
-  "statusToken": "PASS560_DM1_V1_MIRRORED_DOOR_FRONT_SOURCE_LOCKED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS560_DM1_V1_MIRRORED_DOOR_FRONT_SOURCE_LOCK",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "outputTail": "PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
       "returncode": 0
     },
     {
       "command": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
-        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py",
+        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "PASS pass560 check-only",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL pass560 check-only: firestaff-mirrored-door-front-metadata,firestaff-mirrored-door-front-runtime-test",
+      "passed": false,
+      "returncode": 1
     }
   ]
 }

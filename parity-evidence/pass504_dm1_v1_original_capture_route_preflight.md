@@ -1,6 +1,6 @@
 # Pass504 - DM1 V1 original capture route preflight
 
-Status: `PASS504_ORIGINAL_CAPTURE_ROUTE_PREFLIGHT_READY`
+Status: `FAIL_PASS504_ORIGINAL_CAPTURE_ROUTE_PREFLIGHT`
 
 This gate checks the exact N2 prerequisites for the next original DM1 V1 movement/viewport/wall capture attempt. It does not run DOSBox and does not promote stale captures.
 
@@ -48,3 +48,6 @@ This gate checks the exact N2 prerequisites for the next original DM1 V1 movemen
 - `python3 tools/verify_pass504_dm1_v1_original_capture_route_preflight.py`
 
 Manifest: `parity-evidence/verification/pass504_dm1_v1_original_capture_route_preflight/manifest.json`
+
+## Problems
+- capture_script_contract

@@ -16,7 +16,7 @@
   "pass503SourceLocks": {
     "file": "parity-evidence/verification/pass503_dm1_v1_viewport_wall_draw_order_evidence/manifest.json",
     "requiredSourceIdsPresent": true,
-    "sha256": "3f81675b964f513bfca9973b0d03ab50e904474491943482e78b11e8a0ecc99b",
+    "sha256": "78b94a1b3b406ecea23972a4d0a6dc044f581a7d77c52c87a68c3a9a73b99126",
     "sourceCheckCount": 7,
     "status": "PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
   },
@@ -37,7 +37,7 @@
       ],
       "returncode": 0,
       "stderrTail": "",
-      "stdoutTail": "PASS dm1_v1_viewport_wall_render_plan_gate wrote /Users/bosse/.openclaw/workspace-main/parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json\n"
+      "stdoutTail": "PASS dm1_v1_viewport_wall_render_plan_gate wrote /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json\n"
     }
   ],
   "promotionBlocker": "Do not claim pixel parity until one exact original DM1 V1 viewport frame and matching Firestaff frame are captured for the same map/x/y/direction/wall-door state and tied to the F0128-to-F0097 present boundary.",

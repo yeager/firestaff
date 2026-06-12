@@ -9,152 +9,152 @@
     {
       "hits": [
         {
-          "line": 11945,
+          "line": 12200,
           "needle": "ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set"
         },
         {
-          "line": 11953,
+          "line": 12208,
           "needle": "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)"
         },
         {
-          "line": 11955,
+          "line": 12210,
           "needle": "return (state->world.party.mapX +"
         },
         {
-          "line": 11956,
+          "line": 12211,
           "needle": "state->world.party.mapY +"
         },
         {
-          "line": 11957,
+          "line": 12212,
           "needle": "state->world.party.direction) & 1;"
         }
       ],
       "id": "firestaff_party_tuple_flip_predicate",
       "lines": null,
       "missing": [],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611133701959803000_dm1_v1_pass466_499_503_line_ref_refresh_followup/src/engine/m11_game_view.c",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "9a54e8ac36ac9d5d78969c43cdf628d3e872f99d1431b038850c0206ccf2754b",
+      "sha256": "25c5e55d16148db5e14b96d6e75b51119555ec43a16c008cc30b639863294c99",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 11951,
+          "line": 12206,
           "needle": "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,"
         },
         {
-          "line": 12002,
+          "line": 12257,
           "needle": "static int m11_is_dm1_wallset_materialized_graphic(unsigned int graphicIndex)"
         },
         {
-          "line": 12017,
+          "line": 12272,
           "needle": "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;"
         },
         {
-          "line": 12020,
+          "line": 12275,
           "needle": "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +"
         },
         {
-          "line": 12021,
+          "line": 12276,
           "needle": "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
         }
       ],
       "id": "firestaff_wallset_variant_binding_before_draw",
       "lines": null,
       "missing": [],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611133701959803000_dm1_v1_pass466_499_503_line_ref_refresh_followup/src/engine/m11_game_view.c",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "9a54e8ac36ac9d5d78969c43cdf628d3e872f99d1431b038850c0206ccf2754b",
+      "sha256": "25c5e55d16148db5e14b96d6e75b51119555ec43a16c008cc30b639863294c99",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 12577,
+          "line": 12832,
           "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
         },
         {
-          "line": 12582,
+          "line": 12837,
           "needle": "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))"
         },
         {
-          "line": 12583,
+          "line": 12838,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 12589,
+          "line": 12844,
           "needle": "the native center-wall graphic flipped horizontally."
         },
         {
-          "line": 12590,
+          "line": 12845,
           "needle": "(void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,"
         },
         {
-          "line": 12594,
+          "line": 12849,
           "needle": "} else {"
         },
         {
-          "line": 12595,
+          "line": 12850,
           "needle": "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
         }
       ],
       "id": "firestaff_center_wall_flip_path",
       "lines": null,
       "missing": [],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611133701959803000_dm1_v1_pass466_499_503_line_ref_refresh_followup/src/engine/m11_game_view.c",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "9a54e8ac36ac9d5d78969c43cdf628d3e872f99d1431b038850c0206ccf2754b",
+      "sha256": "25c5e55d16148db5e14b96d6e75b51119555ec43a16c008cc30b639863294c99",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 13442,
+          "line": 13697,
           "needle": "static void m11_draw_dm1_side_walls(const M11_GameViewState* state,"
         },
         {
-          "line": 13502,
+          "line": 13757,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 13504,
+          "line": 13759,
           "needle": "left zones use the right-side graphic flipped horizontally"
         },
         {
-          "line": 13507,
+          "line": 13762,
           "needle": "size_t partner = i ^ 1;"
         },
         {
-          "line": 13508,
+          "line": 13763,
           "needle": "M11_DM1WallFrontBlit swapped = kSideBlits[i];"
         },
         {
-          "line": 13509,
+          "line": 13764,
           "needle": "swapped.graphicIndex = kSideBlits[partner].graphicIndex;"
         },
         {
-          "line": 13510,
+          "line": 13765,
           "needle": "(void)m11_draw_dm1_wall_blit_flipped(state,"
         },
         {
-          "line": 13516,
+          "line": 13771,
           "needle": "} else {"
         },
         {
-          "line": 13517,
+          "line": 13772,
           "needle": "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
         }
       ],
       "id": "firestaff_side_wall_lr_swap_path",
       "lines": null,
       "missing": [],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260611133701959803000_dm1_v1_pass466_499_503_line_ref_refresh_followup/src/engine/m11_game_view.c",
+      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "9a54e8ac36ac9d5d78969c43cdf628d3e872f99d1431b038850c0206ccf2754b",
+      "sha256": "25c5e55d16148db5e14b96d6e75b51119555ec43a16c008cc30b639863294c99",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     }
@@ -162,7 +162,7 @@
   "gates": [
     {
       "command": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass509_dm1_v1_wallset_startup_binding.py"
       ],
       "outputTail": "- C07_WALL_D2R -> C100_GRAPHIC_WALLSET_0_D2R index=100 neg=-12 STARTUP2.C:632/989\n- C08_WALL_D2L -> C101_GRAPHIC_WALLSET_0_D2L index=101 neg=-11 STARTUP2.C:633/990\n- C09_WALL_D2C -> C102_GRAPHIC_WALLSET_0_D2C index=102 neg=-10 STARTUP2.C:634/991\n- C10_WALL_D3R2 -> C103_GRAPHIC_WALLSET_0_D3R2 index=103 neg=-4 STARTUP2.C:625/982\n- C11_WALL_D3L2 -> M663_GRAPHIC_WALLSET_0_D3L2 index=104 neg=-3 STARTUP2.C:626/983\n- C12_WALL_D3R -> C105_GRAPHIC_WALLSET_0_D3R index=105 neg=-7 STARTUP2.C:627/984\n- C13_WALL_D3L -> C106_GRAPHIC_WALLSET_0_D3L index=106 neg=-6 STARTUP2.C:628/985\n- C14_WALL_D3C -> C107_GRAPHIC_WALLSET_0_D3C index=107 neg=-5 STARTUP2.C:629/986",
@@ -171,7 +171,7 @@
     },
     {
       "command": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py"
       ],
       "outputTail": "PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS\n- wrote parity-evidence/pass508_dm1_v1_viewport_wall_runtime_readiness.md\n- wrote parity-evidence/verification/pass508_dm1_v1_viewport_wall_runtime_readiness/manifest.json",

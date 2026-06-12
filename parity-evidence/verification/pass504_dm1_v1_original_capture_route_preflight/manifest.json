@@ -1,5 +1,5 @@
 {
-  "blocker": null,
+  "blocker": "N2 original capture route prerequisites are incomplete; fix requiredOk failures before another runtime capture attempt.",
   "canonicalDm1Audit": [
     {
       "exists": true,
@@ -50,8 +50,10 @@
   "captureScriptAudit": {
     "executable": true,
     "exists": true,
-    "missingTokens": [],
-    "ok": true,
+    "missingTokens": [
+      "exactly 6 shot or shot:<label> tokens"
+    ],
+    "ok": false,
     "path": "scripts/dosbox_dm1_original_viewport_reference_capture.sh",
     "requiredTokens": [
       "DM1_ORIGINAL_ROUTE_EVENTS",
@@ -111,12 +113,14 @@
     "no game logic behavior is changed or asserted beyond ReDMCSB source locks",
     "CSBWin is not used as evidence for this DM1 PC34 gate"
   ],
-  "ok": true,
-  "problems": [],
+  "ok": false,
+  "problems": [
+    "capture_script_contract"
+  ],
   "requiredOk": {
     "canonical_dm1_data": true,
     "capture_route_preflight": true,
-    "capture_script_contract": true,
+    "capture_script_contract": false,
     "greatstone_secondary_available": true,
     "n2_runtime_commands": true,
     "redmcsb_source_locks": true
@@ -319,5 +323,5 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS504_ORIGINAL_CAPTURE_ROUTE_PREFLIGHT_READY"
+  "status": "FAIL_PASS504_ORIGINAL_CAPTURE_ROUTE_PREFLIGHT"
 }
