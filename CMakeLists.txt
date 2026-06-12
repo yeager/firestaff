@@ -8796,6 +8796,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         tests/test_dm1_v1_viewport_d2l2_d2r2_f0111_door_front_pair_pc34_compat.c
         src/dm1/dm1_v1_viewport_d2l2_d2r2_f0111_door_front_pair_pc34_compat.c
     )
+    add_executable(test_dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat
+        tests/test_dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat.c
+    )
     add_executable(test_dm1_v1_viewport_d2l2_d2r2_f0108_wall_composition_pc34_compat
         tests/test_dm1_v1_viewport_d2l2_d2r2_f0108_wall_composition_pc34_compat.c
         src/dm1/dm1_v1_viewport_d2l2_d2r2_f0108_wall_composition_pc34_compat.c
@@ -9080,6 +9084,12 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         PRIVATE firestaff_m10
     )
     target_include_directories(test_dm1_v1_viewport_d2l2_d2r2_f0111_door_front_pair_pc34_compat
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    target_include_directories(test_dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm1_v1_viewport_d2l2_d2r2_f0108_wall_composition_pc34_compat
@@ -9380,6 +9390,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(firestaff_dm1_v1_viewport_d3l_d3r_wall_pc34_compat_test PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d3l_d3r_sidewall_pair_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d2l2_d2r2_f0111_door_front_pair_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d2l2_d2r2_f0108_wall_composition_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d1l2_d1r2_f0108_wall_composition_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -9536,6 +9547,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_viewport_d2l2_d2r2_f0111_door_front_pair_pc34_compat
         COMMAND test_dm1_v1_viewport_d2l2_d2r2_f0111_door_front_pair_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat
+        COMMAND test_dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat
     )
     add_test(
         NAME dm1_v1_viewport_d2l2_d2r2_f0108_wall_composition_pc34_compat
