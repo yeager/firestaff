@@ -8,6 +8,9 @@ static const DM1_V1_ChampionPanelMouthEyeReleaseEvidencePc34Compat s_evidence = 
     "PANEL.C F0350_INVENTORY_DrawStopPressingMouth:1953-1963",
     "PANEL.C F0352_INVENTORY_ProcessCommand71_ClickOnEye:2111-2160",
     "PANEL.C F0353_INVENTORY_DrawStopPressingEye:2162-2193",
+    "CHAMPION.C F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox:677-711",
+    "CHEST.C F0333:30-38 and F0334:79-132",
+    "COMMAND.C F0359/F0380:1982-1990,2129-2140,2315-2319",
     "DEFS.H:1953-1956 C202/C203/C205 icon ordinals",
     "DEFS.H:3914-3915 C545/C546 mouth/eye zones",
     "DEFS.H:2564,6956 and PANEL.C:1817,1960,2159,2181 viewport redraw mode",
@@ -24,7 +27,11 @@ static const char s_source_evidence[] =
     "C203 in C546, dispatches to F0351 or F0342, then calls F0097(0). "
     "PANEL.C F0353:2174-2192 draws C202 in C546, redraws F0347 and F0097(0), "
     "clears four skill-upgraded flags when the hand is empty or redraws the "
-    "leader hand object name, then shows the pointer. DEFS.H anchors "
+    "leader hand object name, then shows the pointer. CHAMPION.C F0302:677-711 "
+    "owns live slot/leader-hand swaps separately from mouth/eye panel routes; "
+    "CHEST.C F0333:30-38 and F0334:79-132 own open-chest preservation/close; "
+    "COMMAND.C F0359/F0380:1982-1990,2129-2140,2315-2319 routes queued "
+    "commands without treating a pending hand item as G4055. DEFS.H anchors "
     "C202/C203/C205, C545/C546, and C0_VIEWPORT_NOT_DUNGEON_VIEW; without "
     "claiming real-asset parity.";
 
@@ -51,6 +58,8 @@ void DM1_V1_ChampionPanelMouthEyeRelease_DefaultInputPc34Compat(
     input->leader_empty_handed = true;
     input->left_button_down = true;
     input->inventory_champion_ordinal = DM1_V1_CPMER_INVENTORY_ORDINAL_FIRST_PC34;
+    input->leader_hand_thing_before = -1;
+    input->pending_hand_thing_before = -1;
 }
 
 static void append_op(DM1_V1_ChampionPanelMouthEyeReleaseResultPc34Compat *result,
@@ -239,6 +248,15 @@ int DM1_V1_ChampionPanelMouthEyeRelease_BuildPc34Compat(
         return 0;
     }
 
+    out_result->leader_hand_thing_before = input->leader_hand_thing_before;
+    out_result->leader_hand_thing_after = input->leader_hand_thing_before;
+    out_result->pending_hand_queue_count_before =
+        input->pending_hand_queue_count;
+    out_result->pending_hand_queue_count_after =
+        input->pending_hand_queue_count;
+    out_result->pending_hand_thing_before = input->pending_hand_thing_before;
+    out_result->pending_hand_thing_after = input->pending_hand_thing_before;
+
     out_result->valid = true;
     switch (input->action) {
     case DM1_V1_CPMER_ACTION_MOUTH_PRESS_PC34:
@@ -258,6 +276,25 @@ int DM1_V1_ChampionPanelMouthEyeRelease_BuildPc34Compat(
         out_result->valid = false;
         return 0;
     }
+
+    /*
+     * ReDMCSB PANEL.C F0349/F0352 route only the live G4055 leader hand.
+     * COMMAND.C F0380 pending-click replay and CHAMPION.C F0302 slot swaps
+     * remain separate, so pending hand items must not be consumed or used as
+     * stale object-panel content by mouth/eye redraws.
+     */
+    out_result->leader_hand_consumed =
+        out_result->leader_hand_thing_before != out_result->leader_hand_thing_after;
+    out_result->pending_hand_consumed =
+        out_result->pending_hand_queue_count_before !=
+            out_result->pending_hand_queue_count_after ||
+        out_result->pending_hand_thing_before != out_result->pending_hand_thing_after;
+    out_result->pending_queue_preserved = !out_result->pending_hand_consumed;
+    out_result->stale_panel_after =
+        input->pending_hand_queue_count > 0 &&
+        input->leader_empty_handed &&
+        out_result->panel_route ==
+            DM1_V1_CPMER_PANEL_ROUTE_OBJECT_DESCRIPTION_PC34;
 
     return 1;
 }

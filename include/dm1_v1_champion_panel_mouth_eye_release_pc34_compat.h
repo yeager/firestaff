@@ -66,6 +66,9 @@ typedef struct DM1_V1_ChampionPanelMouthEyeReleaseEvidencePc34Compat {
     const char *mouth_release_anchor;
     const char *eye_press_anchor;
     const char *eye_release_anchor;
+    const char *slotbox_anchor;
+    const char *chest_anchor;
+    const char *command_queue_anchor;
     const char *icon_anchor;
     const char *zone_anchor;
     const char *viewport_anchor;
@@ -79,6 +82,9 @@ typedef struct DM1_V1_ChampionPanelMouthEyeReleaseInputPc34Compat {
     bool left_button_down;
     bool panel_already_food_water_poisoned;
     bool leader_hand_has_object;
+    int leader_hand_thing_before;
+    int pending_hand_queue_count;
+    int pending_hand_thing_before;
     int inventory_champion_ordinal;
 } DM1_V1_ChampionPanelMouthEyeReleaseInputPc34Compat;
 
@@ -100,6 +106,16 @@ typedef struct DM1_V1_ChampionPanelMouthEyeReleaseResultPc34Compat {
     int viewport_draw_count;
     int delay_ticks;
     int skill_recently_upgraded_clear_count;
+    int leader_hand_thing_before;
+    int leader_hand_thing_after;
+    int pending_hand_queue_count_before;
+    int pending_hand_queue_count_after;
+    int pending_hand_thing_before;
+    int pending_hand_thing_after;
+    bool leader_hand_consumed;
+    bool pending_hand_consumed;
+    bool pending_queue_preserved;
+    bool stale_panel_after;
     bool object_name_cleared;
     bool object_name_drawn;
     bool object_panel_inspect;
