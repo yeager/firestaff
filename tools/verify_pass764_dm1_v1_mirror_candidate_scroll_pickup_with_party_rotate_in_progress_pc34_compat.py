@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -234,7 +235,7 @@ def main() -> int:
     runs: list[dict[str, object]] = []
     if args.run:
         runs.append(run(["cmake", "--build", "build", "--target", TARGET, "--parallel"]))
-        runs.append(run([str(ROOT / "build" / TARGET)]))
+        runs.append(run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / TARGET)]))
         runs.append(
             run(
                 [

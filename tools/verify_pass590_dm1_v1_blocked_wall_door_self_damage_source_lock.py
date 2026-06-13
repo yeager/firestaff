@@ -99,10 +99,11 @@ def git(*args: str) -> str:
 
 
 def find_exe(name: str) -> Path:
-    candidates = []
-    build_dir = os.environ.get("BUILD_DIR")
-    if build_dir:
-        candidates.append(Path(build_dir) / name)
+    candidates: list[Path] = []
+    for var in ("FIRESTAFF_BUILD_DIR", "BUILD_DIR"):
+        env_dir = os.environ.get(var)
+        if env_dir:
+            candidates.append(Path(env_dir) / name)
     candidates.extend([ROOT / "build-pass590" / name, ROOT / "build" / name])
     candidates.extend(sorted(ROOT.glob(f"build*/{name}")))
     for candidate in candidates:

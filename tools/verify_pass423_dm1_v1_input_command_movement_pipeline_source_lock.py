@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import subprocess
 
@@ -19,7 +20,7 @@ OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-BUILD = ROOT / "build"
+BUILD = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build")))
 
 SOURCE_RANGES = [
     {"id": "raw_pc34_keyboard_read", "file": "IO2.C", "lines": "27-61", "claim": "PC-34 reads IODRV keyboard input and normalizes shifted extended arrows to command-table codes K/L/M/P.", "needles": ["IODRV_00_GetKeyboardInput", "MEDIA707_I34E_I34M", "switch (L2944_ui_ - 0x1248)", "L2944_ui_ = 'L'", "L2944_ui_ = 'P'", "L2944_ui_ = 'K'", "L2944_ui_ = 'M'", "return L2944_ui_"]},

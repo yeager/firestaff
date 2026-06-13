@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -234,7 +235,7 @@ def main() -> int:
 
     failures, manifest = collect_failures()
     if args.run_test:
-        result = run([str(ROOT / "build/test_dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat")])
+        result = run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat")])
         manifest["runtime_test"] = result
         if not result["passed"]:
             failures.append("runtime test failed")

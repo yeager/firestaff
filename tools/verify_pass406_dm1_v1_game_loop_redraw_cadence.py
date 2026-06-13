@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -195,8 +196,9 @@ def main() -> int:
         "outResult->provenance.viewportPresentEvidence =",
     ], "Firestaff movement pipeline state-before-redraw provenance order")
 
-    turning_stdout = run([str(ROOT / "build/test_m11_v1_turning_presentation_pc34_compat")])
-    pipeline_stdout = run([str(ROOT / "build/test_dm1_v1_movement_pipeline_pc34_compat")])
+    build_dir = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build")))
+    turning_stdout = run([str(build_dir / "test_m11_v1_turning_presentation_pc34_compat")])
+    pipeline_stdout = run([str(build_dir / "test_dm1_v1_movement_pipeline_pc34_compat")])
     diffcheck_stdout = run(["git", "diff", "--check"])
 
     status = "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED"

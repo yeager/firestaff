@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -182,7 +183,7 @@ def main() -> int:
         if missing:
             raise AssertionError(f"{label}: missing {missing!r}")
 
-    test_out = run([str(ROOT / "build/test_dm1_v1_movement_pipeline_pc34_compat")])
+    test_out = run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_movement_pipeline_pc34_compat")])
     status = "PASS506_DM1_V1_STAIRS_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN"
 
     manifest = {

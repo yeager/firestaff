@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -93,10 +94,13 @@ def git(*args: str) -> str:
 
 
 def find_test_exe() -> Path:
-    candidates = [
+    candidates: list[Path] = []
+    if "FIRESTAFF_BUILD_DIR" in os.environ:
+        candidates.append(Path(os.environ["FIRESTAFF_BUILD_DIR"]) / "test_dm1_v1_movement_command_core_pc34_compat")
+    candidates.extend([
         ROOT / "build-pass544" / "test_dm1_v1_movement_command_core_pc34_compat",
         ROOT / "build" / "test_dm1_v1_movement_command_core_pc34_compat",
-    ]
+    ])
     candidates.extend(sorted(ROOT.glob("build*/test_dm1_v1_movement_command_core_pc34_compat")))
     for candidate in candidates:
         if candidate.exists():
@@ -240,7 +244,7 @@ def main() -> int:
             "queueDiscardSpan": f"dm1_v1_input_command_queue_pc34_compat.c:{span(qdiscard_start, qdiscard, fire_qdiscard)}",
             "movementCore": f"dm1_v1_movement_command_core_pc34_compat.c:{core_start}-{core_end}",
             "blockedCollisionSpan": f"dm1_v1_movement_command_core_pc34_compat.c:{span(core_start, core, fire_core_blocked)}",
-            "runtimeExecutable": str(test_exe.relative_to(ROOT)),
+            "runtimeExecutable": str(test_exe.relative_to(ROOT)) if str(test_exe).startswith(str(ROOT)) else str(test_exe),
             "runtimeOutputLastLine": test_out.splitlines()[-1],
         },
         "whyNotPass542Duplicate": "pass542 locks pre-dequeue cooldown/projectile gating where the movement command remains queued; pass544 locks the adjacent post-dequeue blocked collision path where ordinary queued/pending input is discarded, reserved release/stop survives, one blocked VBlank is requested, and successful-step cooldown is not assigned.",
