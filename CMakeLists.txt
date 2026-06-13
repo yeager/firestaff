@@ -7056,6 +7056,16 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_spell_area_overlay_pc34_compat
     )
 
+    add_executable(test_dm1_v1_champion_panel_pc34_compat
+        tests/test_dm1_v1_champion_panel_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_champion_panel_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
+    )
+
     add_executable(test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat
         tests/test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat.c
@@ -7072,6 +7082,29 @@ if(BUILD_TESTING)
         NAME dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat
         COMMAND test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat
     )
+
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock
+        COMMAND test_dm1_v1_champion_panel_pc34_compat
+    )
+    if(Python3_Interpreter_FOUND)
+        add_custom_target(verify_pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock
+            COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}
+                ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock.py
+            DEPENDS test_dm1_v1_champion_panel_pc34_compat
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+        add_test(
+            NAME pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock_verifier
+            COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}
+                ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock.py
+        )
+    endif()
 
     add_executable(test_dm1_v1_champion_panel_wound_handling_pc34_compat
         tests/test_dm1_v1_champion_panel_wound_handling_pc34_compat.c
