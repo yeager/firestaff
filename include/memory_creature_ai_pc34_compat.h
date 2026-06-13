@@ -84,9 +84,14 @@
 #define CREATURE_TYPE_TROLIN                   16
 #define CREATURE_TYPE_GIANT_WASP               17
 #define CREATURE_TYPE_ANIMATED_ARMOUR          18
+#define CREATURE_TYPE_MATERIALIZER             19
 #define CREATURE_TYPE_WATER_ELEMENTAL          20
 #define CREATURE_TYPE_OITU                     21
+#define CREATURE_TYPE_DEMON                    22
+#define CREATURE_TYPE_LORD_CHAOS               23
 #define CREATURE_TYPE_RED_DRAGON               24
+#define CREATURE_TYPE_LORD_ORDER               25
+#define CREATURE_TYPE_GREY_LORD                26
 
 /* ==========================================================
  *  AI state enum (stable — serialised forever)
@@ -223,7 +228,9 @@ struct CreatureTickResult_Compat {
     int newAttackCooldown;
     int newFearCounter;
     int rngCallCount;
-    int reserved0;
+    int emittedDoubleMove;        /* 0 or 1 — archenemy F0204 second-square move.
+                                   * Replaces former reserved0. Layout is still
+                                   * 16 int32 = 64 bytes (BUG-115b). */
     int reserved1;
     int reserved2;
 
@@ -361,6 +368,19 @@ int F0800_CREATURE_EmitCombatAction_Compat(
 int F0801_CREATURE_EmitMovement_Compat(
     const struct CreatureAIState_Compat* s,
     const struct CreatureTickInput_Compat* in,
+    int direction,
+    struct CreatureTickResult_Compat* outResult);
+
+/* F0801b: F0204 archenemy double-move second-square helper.
+ * Source: GROUP.C F0204 lines 1576-1589 + F0202 lines 1457-1554.
+ * Computes the second-square target one step further than the
+ * first-square target supplied by the caller. The final
+ * outResult has the second square as its target and
+ * outMovementReserved set to 1 as a "this is a double-move"
+ * marker. */
+int F0801b_CREATURE_EmitArchenemySecondSquare_Compat(
+    int firstSquareX,
+    int firstSquareY,
     int direction,
     struct CreatureTickResult_Compat* outResult);
 

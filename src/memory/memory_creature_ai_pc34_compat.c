@@ -766,6 +766,38 @@ int F0801_CREATURE_EmitMovement_Compat(
     return 1;
 }
 
+/* F0801b_CREATURE_EmitArchenemySecondSquare_Compat
+ *
+ * Helper for the GROUP.C F0204 double-move path. F0801 emits a move
+ * from the SOURCE position (in->groupMapX/Y) one square in the chosen
+ * direction; the F0204 second square is one further in the same
+ * direction (lines 1587-1588: `MapX += DirectionToStepEastCount[dir]`,
+ * then re-evaluate F0202 against the new square). The caller supplies
+ * the first move's destination coordinates, and this helper computes
+ * the second move's target one step further.
+ *
+ * The output side-effect: the final outResult has the SECOND square
+ * as its target — overwriting F0801's first-square target. The
+ * dispatcher records this in emittedDoubleMove so the upper layer
+ * can pick up the doubled distance.
+ *
+ * ReDMCSB: GROUP.C F0204 lines 1576-1589, F0202 lines 1457-1554.
+ */
+int F0801b_CREATURE_EmitArchenemySecondSquare_Compat(
+    int firstSquareX,
+    int firstSquareY,
+    int direction,
+    struct CreatureTickResult_Compat* outResult)
+{
+    if (outResult == 0) return 0;
+    if (direction < 0 || direction > 3) return 0;
+    outResult->outMovementTargetMapX = firstSquareX + g_dx[direction];
+    outResult->outMovementTargetMapY = firstSquareY + g_dy[direction];
+    outResult->outMovementDirection  = direction;
+    outResult->outMovementReserved   = 1;  /* marker: second-square of double-move */
+    return 1;
+}
+
 int F0802_CREATURE_EmitNextTickEvent_Compat(
     const struct CreatureAIState_Compat* s,
     const struct CreatureTickInput_Compat* in,
@@ -1261,6 +1293,29 @@ int F0804_CREATURE_Tick_Compat(
                 && distance == 1) {
                 out->emittedSpellRequest = 1;
             }
+        } else if (t == CREATURE_TYPE_LORD_CHAOS ||
+                   t == CREATURE_TYPE_LORD_ORDER ||
+                   t == CREATURE_TYPE_GREY_LORD) {
+            /* GROUP.C F0207/F0209 + F0204_GROUP_IsArchenemyDoubleMovement
+             * (lines 1576-1589): the arch-enemy types C23/C25/C26 can
+             * move two squares in a single tick when the second square
+             * is also passable. The double-move is gated by the
+             * ARCHENEMY bit in the creature's Attributes (the v1 source
+             * of truth is profile->attributes; F0204 lines 1576-1589
+             * checks MASK0x2000_ARCHENEMY). The F0801 emitter in
+             * (6) emits a single-square target; the (6) refines path
+             * below checks emittedDoubleMove and re-emits F0801 with
+             * a helper that uses the first move's target as the
+             * second move's source. v1 only flags the intent here
+             * and leaves the actual second-square path to (6) so the
+             * dispatch keeps a single F0799+F0801 emission per tick
+             * for non-arcenemy creatures (BUG-115b). */
+            if (visible && (stateOut->stateKind == AI_STATE_APPROACH
+                            || stateOut->stateKind == AI_STATE_WANDER)) {
+                if (profile->attributes & CREATURE_ATTR_MASK_ARCHENEMY) {
+                    out->emittedDoubleMove = 1;
+                }
+            }
         }
     }
 
@@ -1313,6 +1368,25 @@ int F0804_CREATURE_Tick_Compat(
                 out->resultKind                   = AI_RESULT_MOVED;
                 stateOut->groupDirection          = dir;
                 stateOut->movementCooldownTicks   = profile->movementTicks;
+                /* ReDMCSB: GROUP.C F0204 archenemy double-move. If the
+                 * §(5b) block flagged the creature as ARCHENEMY and we
+                 * successfully emitted a single-square movement, the
+                 * F0204 path (lines 1576-1589) ALSO checks whether the
+                 * second square in the same direction is passable via
+                 * F0202. v1 emits the second-square target unconditionally
+                 * when the ARCHENEMY bit is set; the upper layer's
+                 * map-load / collision resolver decides whether the
+                 * destination is actually free. If the second square is
+                 * blocked, the upper layer can downgrade to a single
+                 * square by reading outMovementReserved (F0801 sets
+                 * 0, F0801b sets 1 as the "double-move attempted" marker). */
+                if (out->emittedDoubleMove &&
+                    (profile->attributes & CREATURE_ATTR_MASK_ARCHENEMY)) {
+                    F0801b_CREATURE_EmitArchenemySecondSquare_Compat(
+                        out->outMovementTargetMapX,
+                        out->outMovementTargetMapY,
+                        dir, out);
+                }
             } else {
                 out->resultKind = AI_RESULT_NO_ACTION;
             }
@@ -1329,6 +1403,13 @@ int F0804_CREATURE_Tick_Compat(
                 out->resultKind                   = AI_RESULT_MOVED;
                 stateOut->groupDirection          = dir;
                 stateOut->movementCooldownTicks   = profile->movementTicks;
+                if (out->emittedDoubleMove &&
+                    (profile->attributes & CREATURE_ATTR_MASK_ARCHENEMY)) {
+                    F0801b_CREATURE_EmitArchenemySecondSquare_Compat(
+                        out->outMovementTargetMapX,
+                        out->outMovementTargetMapY,
+                        dir, out);
+                }
             } else {
                 out->resultKind = AI_RESULT_NO_ACTION;
             }
@@ -1570,7 +1651,7 @@ int F0809a_CREATURE_TickResultSerialize_Compat(
     le_write_i32(buf + 40, s->newAttackCooldown);
     le_write_i32(buf + 44, s->newFearCounter);
     le_write_i32(buf + 48, s->rngCallCount);
-    le_write_i32(buf + 52, s->reserved0);
+    le_write_i32(buf + 52, s->emittedDoubleMove);
     le_write_i32(buf + 56, s->reserved1);
     le_write_i32(buf + 60, s->reserved2);
     off = 64;
@@ -1626,7 +1707,7 @@ int F0809b_CREATURE_TickResultDeserialize_Compat(
     s->newAttackCooldown   = le_read_i32(buf + 40);
     s->newFearCounter      = le_read_i32(buf + 44);
     s->rngCallCount        = le_read_i32(buf + 48);
-    s->reserved0           = le_read_i32(buf + 52);
+    s->emittedDoubleMove   = le_read_i32(buf + 52);
     s->reserved1           = le_read_i32(buf + 56);
     s->reserved2           = le_read_i32(buf + 60);
     off = 64;

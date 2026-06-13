@@ -120,8 +120,8 @@ static void test_single_monster_cloud_tick_boundary(void)
              "group damage preserves monster type");
     CHECK_EQ(tick.outActionGroup.scheduleDelayTicks, 0,
              "group damage resolves on boundary tick");
-    CHECK_EQ(tick.outActionGroup.rawAttackValue, 3,
-             "attack 96 gives poison cloud base 3 without rng");
+    CHECK_EQ(tick.outActionGroup.rawAttackValue, 4,
+             "attack 96 → base 3 → F0192 resistance-adjusted for C10 (r=5): 3*8/6 = 4");
     CHECK_EQ(tick.despawn, 0, "cloud remains live");
     CHECK_EQ(next.attack, 93, "cloud attack decays by 3");
     CHECK_EQ(next.currentFrame, 1, "cloud frame increments once");

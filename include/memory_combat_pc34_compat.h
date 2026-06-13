@@ -56,6 +56,11 @@
 #define COMBAT_OUTCOME_KILLED_SOME_CREATURES   4  /* mirror C1_OUTCOME_KILLED_SOME_CREATURES_IN_GROUP */
 #define COMBAT_OUTCOME_KILLED_ALL_CREATURES    5  /* mirror C2_OUTCOME_KILLED_ALL_CREATURES_IN_GROUP */
 #define COMBAT_OUTCOME_CHAMPION_DOWN           6
+#define COMBAT_OUTCOME_NO_ACTION               7  /* BUG-119: attack was
+                                                    * blocked by state, not
+                                                    * a failed roll (e.g.
+                                                    * C040 candidate panel
+                                                    * invulnerability) */
 
 /* -------- Combat action kinds -------- */
 
@@ -164,6 +169,9 @@ struct CombatantCreatureSnapshot_Compat {
     int doubledMapDifficulty;
     int creatureIndex;
     int healthBefore;
+    int isCandidateInvulnerable; /* BUG-119: 1 when C040 panel is open
+                                 * for this creature; champion attacks
+                                 * should bounce to outcome NO_ACTION */
 };
 
 /*
@@ -285,6 +293,34 @@ int F0738_COMBAT_ApplyDamageToGroup_Compat(
     struct DungeonGroup_Compat* group,
     int creatureIndex,
     int* outOutcome);
+
+/* ==========================================================
+ * Group D' — Per-creature poison resistance (F0192).
+ *
+ *   F0192_GROUP_GetPoisonResistance_Compat:
+ *     Returns the DUNGEON.C G0243 upper-nibble poison resistance for
+ *     a creature type (0..14), or -1 if the type is out of range.
+ *     15 means immune (caller must treat 15 as zero damage).
+ *
+ *   F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat:
+ *     Source-locked port of GROUP.C F0192 (lines 991-1008). Looks up
+ *     the per-creature-type resistance and applies the
+ *     ((poisonAttack + random(4)) << 3) / (resistance + 1) formula,
+ *     with the special case that resistance == 15 yields zero.
+ *     OutAdjusted is set to 0 for immune or no-poison cases.
+ *
+ * Source: Toolchains/Common/Source/GROUP.C:991-1008
+ *         Toolchains/Common/Source/DEFS.H:1664 (M061_POISON_RESISTANCE)
+ *         Toolchains/Common/Source/DUNGEON.C:439-470 (G0243 table)
+ * ========================================================== */
+
+int F0192_GROUP_GetPoisonResistance_Compat(int creatureType);
+
+int F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
+    int creatureType,
+    int poisonAttack,
+    struct RngState_Compat* rng,
+    int* outAdjusted);
 
 /* ==========================================================
  * Group E — Timeline bridge (F0739).
