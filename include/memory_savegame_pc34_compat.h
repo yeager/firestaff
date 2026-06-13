@@ -87,6 +87,95 @@
 #define DUNGEON_MUTATION_KIND_THING_LINK   5
 #define DUNGEON_MUTATION_KIND_FIELD_GENERIC 6
 
+/* -------- Dungeon-mutation field-mask bits (BUG-112) --------
+ *
+ * The field-mask is a 32-bit bitfield that identifies which sub-field
+ * of the targeted record actually changed. ReDMCSB LOADSAVE.C F0433
+ * (SaveGame) and F0435 (LoadGame) write/read the global L1348_s_GlobalData
+ * and per-champion M516_CHAMPIONS[] structures as opaque byte blocks
+ * (F0007_MAIN_CopyBytes / F0008_MAIN_ClearBytes). They do NOT carry a
+ * per-field bitmask — there is no "field mask" in the original PC 3.4
+ * save format. The DungeonMutation field-mask is a Firestaff-specific
+ * abstraction (Phase 15) so that the replay engine can decide which
+ * sub-bytes of the dungeon/party state changed, without dragging a
+ * full byte-blob diff through the save file.
+ *
+ * Bit assignments (per DungeonMutation_Compat.kind):
+ *
+ *   DUNGEON_MUTATION_KIND_GROUP_HP (DungeonGroup_Compat.health[4]):
+ *     bit 0 = health slot 0 (cell 0) — primary creature
+ *     bit 1 = health slot 1 (cell 1) — second creature
+ *     bit 2 = health slot 2 (cell 2) — third creature
+ *     bit 3 = health slot 3 (cell 3) — fourth creature
+ *     bit 4 = creatureType byte (when the creature type itself swapped)
+ *     bit 5 = count/cells byte (when occupancy changed)
+ *     bits 6-7 = reserved
+ *     bits 8-15 = before/after difference (signed delta, signed 8)
+ *     bits 16-31 = reserved (must be zero on write; ignored on read)
+ *
+ *   DUNGEON_MUTATION_KIND_SQUARE_BYTE (one square byte in
+ *   G0276_puc_DungeonRawMapData):
+ *     bit 0 = low byte changed
+ *     bit 1 = high byte changed (wall ornament / fake-wall)
+ *     bits 2-31 = reserved
+ *
+ *   DUNGEON_MUTATION_KIND_DOOR_STATE (G0284_apuc_ThingData[DOOR]):
+ *     bit 0 = orientation (vertical/horizontal) bit changed
+ *     bit 1 = open state (1=open, 0=closed) bit changed
+ *     bit 2 = partly-open state (CHANGES_T9_DOOR_OPENING) bit changed
+ *     bit 3 = locked / secret bits changed
+ *     bits 4-31 = reserved
+ *
+ *   DUNGEON_MUTATION_KIND_SENSOR_TOG (sensor trigger byte):
+ *     bit 0 = low byte (1=toggled, 0=untouched)
+ *     bit 1 = high byte (1=toggled, 0=untouched)
+ *     bits 2-31 = reserved
+ *
+ *   DUNGEON_MUTATION_KIND_THING_LINK (G0284_apuc_ThingData[thingType]):
+ *     bit 0 = "next" THING pointer changed
+ *     bit 1 = per-type secondary pointer (slot / textStringThingIndex)
+ *     bit 2 = per-type attribute byte (chargeCount / power / etc.)
+ *     bits 3-31 = reserved
+ *
+ *   DUNGEON_MUTATION_KIND_FIELD_GENERIC (catch-all for any other
+ *   dungeon byte that does not match the above kinds):
+ *     bit 0 = low byte changed
+ *     bit 1 = high byte changed
+ *     bits 2-31 = reserved (caller-defined; must round-trip)
+ *
+ * Validation rules (enforced in F0782b_SAVEGAME_DeserializeDungeonDelta_Compat):
+ *   - For DUNGEON_MUTATION_KIND_INVALID: fieldMask must be zero.
+ *   - For DUNGEON_MUTATION_KIND_GROUP_HP: only bits 0..7 are valid.
+ *   - For all other kinds: only bits 0..3 are valid.
+ *   - Reserved bits (above the per-kind cap) MUST be zero on serialize
+ *     and are clamped to zero on deserialize (defensive round-trip).
+ */
+#define DUNGEON_MUTATION_FIELD_GROUP_HP_SLOT0      0x0001u
+#define DUNGEON_MUTATION_FIELD_GROUP_HP_SLOT1      0x0002u
+#define DUNGEON_MUTATION_FIELD_GROUP_HP_SLOT2      0x0004u
+#define DUNGEON_MUTATION_FIELD_GROUP_HP_SLOT3      0x0008u
+#define DUNGEON_MUTATION_FIELD_GROUP_HP_TYPE       0x0010u
+#define DUNGEON_MUTATION_FIELD_GROUP_HP_COUNT      0x0020u
+#define DUNGEON_MUTATION_FIELD_GROUP_HP_VALID_MASK 0x00FFu
+#define DUNGEON_MUTATION_FIELD_SQUARE_LOW          0x0001u
+#define DUNGEON_MUTATION_FIELD_SQUARE_HIGH         0x0002u
+#define DUNGEON_MUTATION_FIELD_SQUARE_VALID_MASK   0x000Fu
+#define DUNGEON_MUTATION_FIELD_DOOR_ORIENTATION    0x0001u
+#define DUNGEON_MUTATION_FIELD_DOOR_OPEN           0x0002u
+#define DUNGEON_MUTATION_FIELD_DOOR_PARTLY         0x0004u
+#define DUNGEON_MUTATION_FIELD_DOOR_LOCKED         0x0008u
+#define DUNGEON_MUTATION_FIELD_DOOR_VALID_MASK     0x000Fu
+#define DUNGEON_MUTATION_FIELD_SENSOR_LOW          0x0001u
+#define DUNGEON_MUTATION_FIELD_SENSOR_HIGH         0x0002u
+#define DUNGEON_MUTATION_FIELD_SENSOR_VALID_MASK   0x000Fu
+#define DUNGEON_MUTATION_FIELD_THING_NEXT          0x0001u
+#define DUNGEON_MUTATION_FIELD_THING_SECONDARY     0x0002u
+#define DUNGEON_MUTATION_FIELD_THING_ATTR          0x0004u
+#define DUNGEON_MUTATION_FIELD_THING_VALID_MASK    0x000Fu
+#define DUNGEON_MUTATION_FIELD_GENERIC_LOW         0x0001u
+#define DUNGEON_MUTATION_FIELD_GENERIC_HIGH        0x0002u
+#define DUNGEON_MUTATION_FIELD_GENERIC_VALID_MASK  0x000Fu
+
 /* -------- Error codes (plan §3.0) -------- */
 
 enum SaveGameError_Compat {

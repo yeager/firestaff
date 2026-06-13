@@ -12393,18 +12393,18 @@ static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* sta
      * Otherwise scale to fit the wall panel rect so the wall is never
      * invisible.  Dimension mismatches can occur when the wall set graphic
      * is packed differently or a fallback asset is used. */
-    if ((int)slot->width == blit->width && (int)slot->height == blit->height) {
+    if (slot->width != blit->width || slot->height != blit->height) {
+        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                                   M11_VIEWPORT_X + blit->dstX,
+                                   M11_VIEWPORT_Y + blit->dstY,
+                                   blit->width, blit->height,
+                                   transparentColor);
+    } else {
         M11_AssetLoader_BlitRegion(slot,
                                    0, 0, blit->width, blit->height,
                                    framebuffer, fbW, fbH,
                                    M11_VIEWPORT_X + blit->dstX,
                                    M11_VIEWPORT_Y + blit->dstY,
-                                   transparentColor);
-    } else {
-        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                                   M11_VIEWPORT_X + blit->dstX,
-                                   M11_VIEWPORT_Y + blit->dstY,
-                                   blit->width, blit->height,
                                    transparentColor);
     }
     return 1;

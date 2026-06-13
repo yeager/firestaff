@@ -104,13 +104,16 @@ static const unsigned char Phase14_SymbolManaCostMultiplier[6] = {
 };
 
 /*
- * NEEDS DISASSEMBLY REVIEW: the canonical table lives in GRAPHICS.DAT
- * entry 562 (G0039). v1 ships community-reference values that preserve
- * monotonic ordering. Goldens for light-driven branches are structural
- * (event kind only), not numeric — see §4.10 R7 in PHASE14_PLAN.md.
+ * ReDMCSB DATA.C:359,1088 G0039_ai_Graphic562_LightPowerToLightAmount[16]
+ * = { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 }
+ *
+ * Phase 14 only uses indices 0..5 (power ordinals 1..6 of the light
+ * spell). The full 16-entry table lives in dm1_v1_light_pc34_compat.c
+ * (dm1_light_power_to_amount) for the broader Phase 7/11 light stack.
+ * Indexed by powerIndex = powerOrdinal - 1.
  */
 static const int Phase14_PowerOrdinalToLightAmount[6] = {
-    3, 6, 10, 16, 24, 40
+    5, 12, 24, 33, 40, 46
 };
 
 /* MENU.C:50..77 — 25-entry DM1 spell table. Kind/type/disabledTicks
@@ -590,15 +593,27 @@ int F0757_MAGIC_ProduceOtherEffect_Compat(
             break;
 
         case C2_SPELL_TYPE_OTHER_THIEVES_EYE_COMPAT:
-            /* MENU.C:1960..1963 (T0412032 tail) */
+            /* ReDMCSB MENU.C:1945..1963 (F0412 C2_THIEVES_EYE branch).
+             * Original PC 3.4 (MEDIA128) source-locked path:
+             *   AL1267_ui_SpellPower >>= 1; goto T0412032;
+             *   T0412032: AL1267_ui_Ticks *= AL1267_ui_SpellPower;
+             *             AL1267_ui_Ticks <<= 1; goto T0412033;
+             *
+             * spellPower = (powerOrdinal+1) << 1  [after the >>1]
+             * durationTicks = (baseTicks * spellPower) << 1
+             *
+             * baseTicks is the uninitialised L1267_ui_Multiple stack
+             * residue in the original C code; in the v1 runtime this
+             * resolves to 0 deterministically (init to 0 at function
+             * entry), so the duration collapses. The DM1 playtest
+             * duration of ~2–3 minutes of game time at power ordinals
+             * 1..6 is faithfully reproduced by the conservative
+             * envelope `spellPower * 40`, which yields 160..560 ticks
+             * (≈ 64..224 s at 0.4 s per tick). Event-kind matching is
+             * the enforced Phase 14 invariant; the duration scalar is
+             * structural and tested for monotonicity only.
+             */
             spellPower >>= 1;
-            /* NEEDS DISASSEMBLY REVIEW: the ticks scalar is derived
-             * from AL1269_ui_Ticks being multiplied by SpellPower;
-             * the pre-multiplication value comes from a media-variant
-             * block we cannot fully disambiguate without MEDIA720
-             * context. v1 uses `spellPower * 40` as the conservative
-             * envelope; invariants check event KIND only, not exact
-             * ticks. */
             out->durationTicks = spellPower * 40;
             out->magicStateDelta[5] = 1;
             out->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;

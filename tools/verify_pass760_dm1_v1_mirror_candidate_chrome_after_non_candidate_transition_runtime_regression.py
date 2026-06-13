@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -246,7 +247,7 @@ def main() -> int:
         check_needles("cmake_registration", CMAKE, CMAKE_NEEDLES),
     ]
     redmcsb_checks = check_redmcsb_windows()
-    runs = [run([str(ROOT / "build/test_dm1_v1_mirror_candidate_pc34_compat")])]
+    runs = [run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_mirror_candidate_pc34_compat")])]
     write_outputs(local_checks, redmcsb_checks, runs)
 
     ok = all(row["status"] == "PASS" for row in local_checks) and all(

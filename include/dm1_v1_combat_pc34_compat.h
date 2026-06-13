@@ -217,6 +217,15 @@ int dm1_champion_dexterity(const DM1_ChampionCombat* ch);
 int dm1_stamina_adjusted(const DM1_ChampionCombat* ch, int value);
 int dm1_stat_adjusted_attack(const DM1_ChampionCombat* ch, int statValue, int attack);
 
+/* F0308_CHAMPION_IsLucky (CHAMPION.C:1120-1155) — luck roll for creature
+ * melee. Returns 1 when the champion gets lucky (creature misses),
+ * decrements current luck by 2. Returns 0 when the champion is unlucky
+ * (creature hits), increments current luck by 2. Bounded by ReDMCSB
+ * F0026_MAIN_GetBoundedValue to the [luckMinimum, luckMaximum] window.
+ * The early-out path mirrors MEDIA029 PC 3.4 behaviour (cursed-items
+ * exploit: large unsigned Luck when worn 4+ cursed items, BUG0_38). */
+int dm1_champion_is_lucky(DM1_ChampionCombat* ch, int percentage, int luckMaximum);
+
 /* ── Ranged SHOOT action source-lock helper ───────────────────────── */
 typedef struct {
     int actionPerformed;
