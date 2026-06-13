@@ -74,18 +74,20 @@ static int le_read_i32(const unsigned char* p) {
  *
  *  v1 fills the FULL tier (implementationTier = 1) with the type-specific
  *  decision logic in F0804 §(5b). The current FULL list, in creature-id
- *  order: C00 Giant Scorpion, C02 Giggler, C03 Wizard Eye, C06 Screamer,
- *  C07 Rockpile, C08 Ghost, C09 Stone Golem, C10 Mummy, C11 Black Flame,
- *  C12 Skeleton, C14 Vexirk, C15 Magenta Worm, C17 Giant Wasp, C18
- *  Animated Armour, C20 Water Elemental, C21 Oitu, C24 Red Dragon.
- *  Every other entry is a stub with plausible movementTicks / attackTicks
- *  so the reschedule cadence still looks alive.
+ *  order: C00 Giant Scorpion, C01 Swamp Slime, C02 Giggler, C03 Wizard
+ *  Eye, C04 Pain Rat, C05 Ruster, C06 Screamer, C07 Rockpile, C08
+ *  Ghost, C09 Stone Golem, C10 Mummy, C11 Black Flame, C12 Skeleton,
+ *  C13 Couatl, C14 Vexirk, C15 Magenta Worm, C16 Trolin, C17 Giant
+ *  Wasp, C18 Animated Armour, C20 Water Elemental, C21 Oitu, C24 Red
+ *  Dragon. Every other entry is a stub with plausible movementTicks /
+ *  attackTicks so the reschedule cadence still looks alive.
  *
  *  Numeric values for the FULL tier rows are taken directly from
  *  ReDMCSB WIP20210206 DUNGEON.C G0243_as_Graphic559_CreatureInfo
  *  (DEFS.H:5611). See PHASE16_PLAN.md §4.11 for the original hand-entered
  *  values; this batch (BUG-104) re-binds the C03 / C17 / C21 rows to
- *  match DUNGEON.C, plus promotes C07 / C08 / C11 / C20 (this pass).
+ *  match DUNGEON.C, plus promotes C07 / C08 / C11 / C20 (prior pass)
+ *  and C01 / C04 / C05 / C13 / C16 (this pass).
  *  Any large re-bind after disassembly confirmation will add an inline
  *  NEEDS DISASSEMBLY REVIEW marker in the affected row.
  * ========================================================================= */
@@ -105,8 +107,20 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     /* C00 Giant Scorpion  (FULL — BUG-104) — GROUP.C F0207: poison-on-sting
      * melee creature, sight 3, ½-square. poisonAttack=5 stored for F0800. */
     {  0, 3, 0, 24, 10,  40, 30,  80, 40,  5, COMBAT_ATTACK_NORMAL, 0x0222, 0x0000, 40, CREATURE_IMPL_TIER_FULL, 0 },
-    /* C01 Swamp Slime     (stub) */
-    {  1, 2, 0, 28,  9,  20, 15,  45, 20,  8, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 30, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C01 Swamp Slime     (FULL — BUG-104) — GROUP.C F0207 C01 path:
+     * ranged SLIME explosion (C0xFF81_THING_EXPLOSION_SLIME on the
+     * C01 path of F0207) with melee contact poison (poisonAttack=15
+     * per DUNGEON.C G0243[1]). ReDMCSB DUNGEON.C G0243[1]: Movement
+     * 15, Attack 32, Defense 20, HP 110, Attack 80, Poison 15, DEX 20.
+     * AttackType=3 (BLUNT per DEFS.H:1677 — "Slime Devil"). Range
+     * 0x3132: sight 2, smell 1, attack range 3. The slime can both
+     * detonate its payload at range and the contact-attack path
+     * applies poison. v1 keeps the standard melee path; the F0804
+     * §(5b) block marks emittedSpellRequest=1 when the slime is in
+     * ATTACK at distance > 1 to drive the slime-explosion projectile
+     * via F0823. The poison-on-contact delivery is the M10 F0321 path
+     * (BUG-113) reading profile->poisonAttack. */
+    {  1, 2, 1, 15, 32,  80, 20, 110, 20, 15, COMBAT_ATTACK_BLUNT,   0xFC41, CREATURE_ATTR_MASK_SIDE_ATTACK, 30, CREATURE_IMPL_TIER_FULL, 0 },
     /* C02 Giggler         (FULL — BUG-104) — GROUP.C F0193: melee reach
      * party → steal from champion slots then always flee. */
     {  2, 4, 0, 12,  8,  15, 20,  25, 55,  0, COMBAT_ATTACK_NORMAL, 0x0222, 0x0000, 20, CREATURE_IMPL_TIER_FULL, 0 },
@@ -119,10 +133,30 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * In v1 the "vision share" channel is marked via emittedSpellRequest
      * and a dedicated per-tick block in F0804 §(5b). */
     {  3, 10, 2, 10, 21,  58, 30,  40, 80,  0, COMBAT_ATTACK_MAGIC,  0x0113, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_SIDE_ATTACK | 0x0010 | 0x0400, 25, CREATURE_IMPL_TIER_FULL, 0 },
-    /* C04 Pain Rat         (stub) */
-    {  4, 3, 3, 14,  7,  35, 25,  60, 45,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 40, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C05 Ruster           (stub) */
-    {  5, 3, 2, 20,  9,  40, 30,  75, 40,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 30, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C04 Pain Rat         (FULL — BUG-104) — GROUP.C F0207 C04:
+     * swarm creature, low HP, very fast melee. DUNGEON.C G0243[4]
+     * (MEDIA720 PC 3.4): MovementTicks=9, AttackTicks=8, Defense=45,
+     * BaseHealth=101, Attack=90, PoisonAttack=0, Dexterity=65. The
+     * Atari ST twin "Hellhound" has HP=8 — the community-remembered
+     * "dies in one hit" feel comes from that variant. PC 3.4 keeps
+     * the high-HP fast-melee "Pain Rat" profile. Range 0x1554:
+     * sight 4, smell 5, attack range 1. Attributes 0x0701:
+     * SIDE_ATTACK=1, LEVITATION=1, KEEP_THROWN_SHARP_WEAPONS=1.
+     * AttackType=4 (SHARP per DEFS.H:1678 — "Pain Rat / Hellhound").
+     * The fixed possession table is G0250_aui_Graphic559_FixedPosses
+     * sionsCreature04PainRat_Hellhound. v1 keeps the standard melee
+     * path. */
+    {  4, 4, 5,  9,  8,  90, 45, 101, 65,  0, COMBAT_ATTACK_SHARP,   0xFE93, CREATURE_ATTR_MASK_SIDE_ATTACK | CREATURE_ATTR_MASK_LEVITATION | 0x0400, 40, CREATURE_IMPL_TIER_FULL, 0 },
+    /* C05 Ruster           (FULL — BUG-104) — GROUP.C F0207 C05:
+     * fast, weak melee. ReDMCSB DUNGEON.C G0243[5]: MovementTicks=20,
+     * AttackTicks=18, Defense=100, BaseHealth=60, Attack=30, Poison=0,
+     * DEX=30. Range 0x1232: sight 2, smell 2, attack range 1.
+     * Attributes 0x0581: SIDE_ATTACK=1, PREFER_BACK_ROW=1. AttackType=3
+     * (BLUNT per DEFS.H:1677 — "Ruster"). v1 keeps the standard
+     * melee path; the F0804 §(5b) block trims aggression to match
+     * the Ruster's weak-but-fast profile so the Ruster tends to
+     * wander more than attack. */
+    {  5, 2, 2, 20, 18,  30,100,  60, 30,  0, COMBAT_ATTACK_BLUNT,   0xFFD6, CREATURE_ATTR_MASK_SIDE_ATTACK | CREATURE_ATTR_MASK_PREFER_BACK_ROW, 25, CREATURE_IMPL_TIER_FULL, 0 },
     /* C06 Screamer         (FULL — BUG-104) — GROUP.C F0209 C5_BEHAVIOR_FLEE
      * branch: cowardly group-fleer; panics when party is in sight. */
     {  6, 2, 0, 32, 11,  10, 20,  40, 20,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 10, CREATURE_IMPL_TIER_FULL, 0 },
@@ -153,8 +187,21 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     { 11, 4, 0, 14,  9,  45, 25,  60, 40,  0, COMBAT_ATTACK_FIRE,   0x0000, CREATURE_ATTR_MASK_NON_MATERIAL, 40, CREATURE_IMPL_TIER_FULL, 0 },
     /* C12 Skeleton         (FULL — plan §4.11) */
     { 12, 3, 4, 11,  6,  40, 40,  90, 45,  0, COMBAT_ATTACK_SHARP,  0x0222, 0x0000, 50, CREATURE_IMPL_TIER_FULL, 0 },
-    /* C13 Couatl           (stub) */
-    { 13, 3, 0, 10, 12,  50, 35,  95, 55, 20, COMBAT_ATTACK_NORMAL, 0x0000, CREATURE_ATTR_MASK_LEVITATION, 55, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C13 Couatl           (FULL — BUG-104) — GROUP.C F0207 C13:
+     * flying sharp melee that sometimes drops a reward. DUNGEON.C
+     * G0243[13] (MEDIA720 PC 3.4): MovementTicks=5, AttackTicks=10,
+     * Defense=42, BaseHealth=39, Attack=90, PoisonAttack=100,
+     * Dexterity=88. Range 0x1343: sight 3, smell 4, attack range 1.
+     * Attributes 0x14A2: SIZE=2 (full), SIDE_ATTACK=1,
+     * PREFER_BACK_ROW=1, LEVITATION=1. AttackType=4 (SHARP per
+     * DEFS.H:1678 — "Couatl"). The high poisonAttack=100 makes the
+     * Couatl a one-shot kill for any non-immune champion; the F0804
+     * §(5b) block marks emittedSpellRequest=1 when the Couatl
+     * attacks to drive the F0823 reward-projectile channel. The
+     * "FLIP_NON_ATTACK" half the time animation (F0205 line 267) is
+     * also handled by the SIDE_ATTACK + flip rotation logic in
+     * dm1_v1_creature_ai_behavior. */
+    { 13, 3, 4,  5, 10,  90, 42,  39, 88,100, COMBAT_ATTACK_SHARP,   0xFA30, CREATURE_ATTR_MASK_SIDE_ATTACK | CREATURE_ATTR_MASK_PREFER_BACK_ROW | CREATURE_ATTR_MASK_LEVITATION, 55, CREATURE_IMPL_TIER_FULL, 0 },
     /* C14 Vexirk           (FULL — BUG-104) — GROUP.C F0207 ranged
      * spell-caster; full state machine + F0800 magic-typed action,
      * F0823 covers the richer projectile selection. */
@@ -162,8 +209,25 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     /* C15 Magenta Worm     (FULL — BUG-104) — GROUP.C F0207: poison-on-bite
      * with 30-point venom, high HP melee creature, slow movement. */
     { 15, 3, 0, 24, 14,  55, 40, 140, 30, 30, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 50, CREATURE_IMPL_TIER_FULL, 0 },
-    /* C16 Trolin / Anti-Mage (stub) */
-    { 16, 3, 0, 18, 10,  45, 40,  95, 40,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 45, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C16 Trolin / Anti-Mage (FULL — BUG-104) — GROUP.C F0207 C16:
+     * spell-caster anti-mage. DUNGEON.C G0243[16] (MEDIA720): MOV=13,
+     * AttackTicks=8, Defense=28, BaseHealth=20, Attack=25, Poison=0,
+     * DEX=41. Range 0x1343: sight 3, smell 4, attack range 1.
+     * Attributes 0x0680: SIZE=0 (quarter), PREFER_BACK_ROW=1. The
+     * 0x0080 unassigned bit in attributes is preserved as-is; the
+     * bit is unreferenced in DM1 and CSB. AttackType=3 (BLUNT per
+     * DEFS.H:1677 — "Trolin / Ant Man"). Fixed possession table
+     * G0247_aui_Graphic559_FixedPossessionsCreature16Trolin_Antman
+     * is handled by F0824. v1 contract keeps the standard melee
+     * path; the F0804 §(5b) block marks emittedSpellRequest=1 when
+     * the Trolin is adjacent+ATTACK to drive the F0823 anti-mage
+     * spell palette (LIGHTNING_BOLT, etc.). The "teleports away
+     * when threatened" intuition is a community / DM1-fan-tradition
+     * shortcut; ReDMCSB F0209 only reserves warp behavior for the
+     * arch-enemy types (Lord Chaos / Order / Grey Lord). v1 keeps
+     * the spell-cast bias and the F0823 channel and skips the
+     * literal teleport (NEEDS DISASSEMBLY REVIEW marker applies). */
+    { 16, 3, 4, 13,  8,  25, 28,  20, 41,  0, COMBAT_ATTACK_BLUNT,   0xFC30, CREATURE_ATTR_MASK_PREFER_BACK_ROW | 0x0080, 45, CREATURE_IMPL_TIER_FULL, 0 },
     /* C17 Giant Wasp       (FULL — BUG-104) — GROUP.C F0207 C17:
      * flying fast sharp melee with poison sting.
      * ReDMCSB DUNGEON.C G0243[17]: Sight 2, smell 4, attack_range 1.
@@ -1105,6 +1169,100 @@ int F0804_CREATURE_Tick_Compat(
              * waits. The state machine still transitions through
              * WANDER for tick scheduling, but movementTicks=255
              * ensures F0801 never emits a movement. */
+        } else if (t == CREATURE_TYPE_SWAMP_SLIME) {
+            /* GROUP.C F0207 C01 Swamp Slime: ranged SLIME explosion
+             * (C0xFF81_THING_EXPLOSION_SLIME on the C01 path of
+             * F0207) plus melee contact poison. DUNGEON.C G0243[1]
+             * attackRange=3 means the slime can detonate its
+             * payload at range 1..3. v1 marks emittedSpellRequest=1
+             * whenever the slime is in ATTACK and the party is in
+             * sight at distance > 1; F0823 (case
+             * DM1_CREATURE_TYPE_SWAMP_SLIME) routes the resulting
+             * spell channel to the SLIME explosion projectile. The
+             * poison-on-contact delivery is the M10 F0321 path
+             * (BUG-113) reading profile->poisonAttack. v1 leaves
+             * the adjacent case on the standard melee path so the
+             * F0800 emitter still picks a target champion slot for
+             * the contact hit. */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK
+                && distance > 1) {
+                out->emittedSpellRequest = 1;
+            }
+        } else if (t == CREATURE_TYPE_PAIN_RAT) {
+            /* GROUP.C F0207 C04 Pain Rat: swarm creature, low HP
+             * (canonical PC 3.4 HP=101 from DUNGEON.C G0243[4]
+             * MEDIA720 row; Atari ST twin "Hellhound" has HP=8),
+             * very fast melee (MovementTicks=9, AttackTicks=8).
+             * Range 0x1554: sight 4, smell 5, attack range 1.
+             * SIDE_ATTACK=1, LEVITATION=1, KEEP_THROWN_SHARP_WEAPONS=1
+             * in attributes 0x0701. v1 contract: bias strongly
+             * toward melee engagement — the Pain Rat is a relentless
+             * attacker. The fear counter stays at 0 because the
+             * Pain Rat's DEX=65 keeps it in the attack path. v1
+             * keeps the standard melee path; F0823 covers the
+             * sharp-typed attack slot for the contact hit. The
+             * "dies in one hit" intuition is community / Atari-ST
+             * tradition; the PC 3.4 HP=101 is the canonical DATA
+             * row. */
+            stateOut->aggressionScore = (stateOut->aggressionScore * 5) / 4;
+            if (stateOut->aggressionScore > 100)
+                stateOut->aggressionScore = 100;
+        } else if (t == CREATURE_TYPE_RUSTER) {
+            /* GROUP.C F0207 C05 Ruster: fast, weak melee. DUNGEON.C
+             * G0243[5] gives Defense=100 (high), HP=60, Attack=30,
+             * DEX=30 — the Ruster is glass-cannon with high dodge.
+             * Attributes 0x0581: SIDE_ATTACK=1, PREFER_BACK_ROW=1.
+             * v1 contract: trim aggression because the Ruster is
+             * low-attack and PREFER_BACK_ROW means it tries to stay
+             * out of melee range. The state machine still drives
+             * melee when the party is in range, but the bias block
+             * caps the aggressionScore so the Ruster can drop back
+             * to WANDER / IDLE quickly when the party disappears. */
+            stateOut->aggressionScore = (stateOut->aggressionScore * 3) / 4;
+        } else if (t == CREATURE_TYPE_COUATL) {
+            /* GROUP.C F0207 C13 Couatl: flying sharp melee, sometimes
+             * gives a reward. DUNGEON.C G0243[13] gives DEX=88 and
+             * POISON=100 — a one-shot kill for any non-immune
+             * champion. AttackType=SHARP. v1 contract:
+             *  - When the Couatl is in ATTACK and the party is in
+             *    sight, mark emittedSpellRequest=1 so the F0823
+             *    reward-projectile channel can dispatch the post-
+             *    death item drop. The actual death path is handled
+             *    by F0824 (F0186 fixed possession) — v1 just marks
+             *    the request channel.
+             *  - LEVITATION=1 lets the Couatl fly over pits; the
+             *    pathfinder F0798 already honours the bit.
+             *  - The "FLIP_NON_ATTACK" half-the-time animation
+             *    (F0205 line 267) is a render-side concern, not an
+             *    AI bias, so the §(5b) block leaves it to the
+             *    sprite-updater. */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK) {
+                out->emittedSpellRequest = 1;
+            }
+        } else if (t == CREATURE_TYPE_TROLIN) {
+            /* GROUP.C F0207 C16 Trolin / Ant-Man: anti-mage spell-
+             * caster. DUNGEON.C G0243[16] gives AttackType=BLUNT
+             * (DEFS.H:1677) and AttackRange=1, so the Trolin is
+             * formally a melee creature in the source. The
+             * "spell-caster anti-mage" intuition is community
+             * tradition. v1 contract:
+             *  - When the Trolin is in ATTACK and the party is
+             *    adjacent, mark emittedSpellRequest=1 so the F0823
+             *    anti-mage spell palette (LIGHTNING_BOLT etc.) can
+             *    dispatch the anti-magic payload. The actual spell
+             *    delivery is the M10 F0823 projectile path; v1
+             *    just marks the request channel.
+             *  - The "teleports away when threatened" intuition is
+             *    a community shortcut — ReDMCSB F0209 only reserves
+             *    warp behavior for the arch-enemy types (Lord
+             *    Chaos / Order / Grey Lord). v1 does NOT emit a
+             *    warp intent for the Trolin; the F0823 anti-mage
+             *    payload and the standard melee path are the v1
+             *    approximation (NEEDS DISASSEMBLY REVIEW). */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK
+                && distance == 1) {
+                out->emittedSpellRequest = 1;
+            }
         }
     }
 

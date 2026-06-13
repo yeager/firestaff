@@ -142,15 +142,27 @@ static void build_scenario(
 }
 
 static int is_full_tier(int t) {
-    return (t == CREATURE_TYPE_GIANT_SCORPION) ||
-           (t == CREATURE_TYPE_GIGGLER)        ||
-           (t == CREATURE_TYPE_SCREAMER)       ||
-           (t == CREATURE_TYPE_STONE_GOLEM)    ||
-           (t == CREATURE_TYPE_MUMMY)          ||
-           (t == CREATURE_TYPE_SKELETON)       ||
-           (t == CREATURE_TYPE_VEXIRK)         ||
-           (t == CREATURE_TYPE_MAGENTA_WORM)   ||
-           (t == CREATURE_TYPE_ANIMATED_ARMOUR)||
+    return (t == CREATURE_TYPE_GIANT_SCORPION)  ||
+           (t == CREATURE_TYPE_SWAMP_SLIME)     ||
+           (t == CREATURE_TYPE_GIGGLER)         ||
+           (t == CREATURE_TYPE_WIZARD_EYE)      ||
+           (t == CREATURE_TYPE_PAIN_RAT)        ||
+           (t == CREATURE_TYPE_RUSTER)          ||
+           (t == CREATURE_TYPE_SCREAMER)        ||
+           (t == CREATURE_TYPE_ROCKPILE)        ||
+           (t == CREATURE_TYPE_GHOST)           ||
+           (t == CREATURE_TYPE_STONE_GOLEM)     ||
+           (t == CREATURE_TYPE_MUMMY)           ||
+           (t == CREATURE_TYPE_BLACK_FLAME)     ||
+           (t == CREATURE_TYPE_SKELETON)        ||
+           (t == CREATURE_TYPE_COUATL)          ||
+           (t == CREATURE_TYPE_VEXIRK)          ||
+           (t == CREATURE_TYPE_MAGENTA_WORM)    ||
+           (t == CREATURE_TYPE_TROLIN)          ||
+           (t == CREATURE_TYPE_GIANT_WASP)      ||
+           (t == CREATURE_TYPE_ANIMATED_ARMOUR) ||
+           (t == CREATURE_TYPE_WATER_ELEMENTAL) ||
+           (t == CREATURE_TYPE_OITU)            ||
            (t == CREATURE_TYPE_RED_DRAGON);
 }
 
@@ -180,11 +192,16 @@ int main(int argc, char* argv[]) {
     fprintf(report, "- Pathfinding cascade (F0798/F0799)\n");
     fprintf(report, "- Action emission (F0800/F0801/F0802/F0803)\n");
     fprintf(report, "- Serialisation + round-trip (F0805..F0809)\n");
-    fprintf(report, "- 10 full creature types: Stone Golem (C09), Mummy (C10), Skeleton (C12),\n");
-    fprintf(report, "    plus BUG-104 promotions Giant Scorpion (C00), Giggler (C02),\n");
+    fprintf(report, "- 22 full creature types: Stone Golem (C09), Mummy (C10), Skeleton (C12),\n");
+    fprintf(report, "    plus BUG-104 batch 1 (7): Giant Scorpion (C00), Giggler (C02),\n");
     fprintf(report, "    Screamer (C06), Vexirk (C14), Magenta Worm (C15), Animated\n");
-    fprintf(report, "    Armour (C18), Red Dragon (C24)\n");
-    fprintf(report, "- 17 stub creature types: reschedule only, no action\n");
+    fprintf(report, "    Armour (C18), Red Dragon (C24);\n");
+    fprintf(report, "    batch 2 (4): Wizard Eye (C03), Giant Wasp (C17), Oitu (C21),\n");
+    fprintf(report, "    plus Rockpile (C07), Ghost (C08), Black Flame (C11),\n");
+    fprintf(report, "    Water Elemental (C20);\n");
+    fprintf(report, "    batch 3 (5): Swamp Slime (C01), Pain Rat (C04), Ruster (C05),\n");
+    fprintf(report, "    Couatl (C13), Trolin (C16)\n");
+    fprintf(report, "- 5 stub creature types: reschedule only, no action (C19, C22, C23, C25, C26 arch-enemy / spell-caster set)\n");
     fprintf(report, "- Infinite-loop guard (delay >= 1 on every emission)\n");
     fprintf(report, "- Real DUNGEON.DAT integration spot-check\n\n");
     fprintf(report, "## Known NEEDS DISASSEMBLY REVIEW (still open)\n\n");
@@ -770,7 +787,7 @@ int main(int argc, char* argv[]) {
     }
 
     /* ================================================================
-     *  Block H — 17 stub creature types meta-sweep (invariant 32)
+     *  Block H — 5 stub creature types meta-sweep (invariant 32)
      * ================================================================ */
     {
         int allStubOk = 1;
@@ -803,8 +820,8 @@ int main(int argc, char* argv[]) {
             }
             count++;
         }
-        CHECK(allStubOk && count == CREATURE_TYPE_COUNT - 10,
-              "Stub-tier meta: 17 non-full creatureTypes all return NO_ACTION + valid next-tick");
+        CHECK(allStubOk && count == CREATURE_TYPE_COUNT - 22,
+              "Stub-tier meta: 5 non-full creatureTypes all return NO_ACTION + valid next-tick");
     }
 
     /* ================================================================
