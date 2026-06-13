@@ -9460,6 +9460,43 @@ if(NOT TARGET test_dm1_v1_sleep_wake_poison_gate_pc34_compat)
     )
 endif()
 
+# PJE-05 (audit, v2.7.x) — F0220 BUG0_16 projectile list overfill regression.
+# ReDMCSB PROJEXPL.C:F0220_EXPLOSION_ProcessEvents50To51 can overfill the
+# per-dungeon projectile list. Firestaff hard-caps at PROJECTILE_LIST_CAPACITY
+# and emits a one-shot stderr warning via F0810_PROJECTILE_Create_Compat.
+if(NOT TARGET test_dm1_v1_projectile_list_overflow_pc34_compat)
+    add_executable(test_dm1_v1_projectile_list_overflow_pc34_compat
+        tests/test_dm1_v1_projectile_list_overflow_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_list_overflow_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_list_overflow_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_list_overflow_pje_05
+        COMMAND test_dm1_v1_projectile_list_overflow_pc34_compat
+    )
+endif()
+
+# DUN-05 (audit, v2.7.x) — F0163 BUG0_08 SFT overfill regression.
+# ReDMCSB DUNGEON.C:F0163_DUNGEON_LinkThingToList can overfill the
+# SquareFirstThings buffer. Firestaff refuses to overfill silently;
+# F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat makes the divergence
+# observable via a one-shot stderr warning.
+if(NOT TARGET test_dm1_v1_sft_overflow_bug0_08_pc34_compat)
+    add_executable(test_dm1_v1_sft_overflow_bug0_08_pc34_compat
+        tests/test_dm1_v1_sft_overflow_bug0_08_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_sft_overflow_bug0_08_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_sft_overflow_bug0_08_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_sft_overflow_bug0_08_dun_05
+        COMMAND test_dm1_v1_sft_overflow_bug0_08_pc34_compat
+    )
+endif()
+
 # ── Install rules ────────────────────────────────────────────────────
 install(TARGETS firestaff RUNTIME DESTINATION bin)
 
