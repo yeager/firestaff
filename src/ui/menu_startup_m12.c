@@ -3,7 +3,7 @@
 #include "firestaff_po_loader.h"
 #include "firestaff_startup.h"
 
-#define FIRESTAFF_VERSION_STRING "v2.7.12"
+#define FIRESTAFF_VERSION_STRING "v2.7.13"
 #include "firestaff_bestiary.h"
 #include "firestaff_spell_ref.h"
 #include "firestaff_item_encyclopedia.h"

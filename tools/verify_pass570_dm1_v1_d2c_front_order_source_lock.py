@@ -9,7 +9,7 @@ RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolch
 MANIFEST = ROOT / "parity-evidence/verification/pass570_dm1_v1_d2c_front_order_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass570_dm1_v1_d2c_front_order_source_lock.md"
 STATUS = "PASS570_DM1_V1_D2C_FRONT_ORDER_SOURCE_LOCKED"
-TEST_BINARY = ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_viewport_3d_pc34_compat"
 
 SRC = [
     ("f0128-d2c-position", "DUNVIEW.C", "8510-8522", [

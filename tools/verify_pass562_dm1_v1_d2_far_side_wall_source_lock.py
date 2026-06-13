@@ -6,7 +6,7 @@ RED=Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchai
 MANIFEST=ROOT/"parity-evidence/verification/pass562_dm1_v1_d2_far_side_wall_source_lock/manifest.json"
 REPORT=ROOT/"parity-evidence/pass562_dm1_v1_d2_far_side_wall_source_lock.md"
 STATUS="PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCKED"
-TEST_BINARY=ROOT/"build"/"test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY=Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT/"build")))/"test_dm1_v1_viewport_3d_pc34_compat"
 SRC=[
 ("defs-pc34-d2-far-side-zones","DEFS.H","4042-4049",["#define C707_ZONE_WALL_D2L2","#define C708_ZONE_WALL_D2R2"]),
 ("d2l2-wall-and-field-branch","DUNVIEW.C","6836-6865",["STATICFUNCTION void F0678_DrawD2L2(","case C00_ELEMENT_WALL:","F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C05_WALL_D2R2], C707_ZONE_WALL_D2L2);","F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C06_WALL_D2L2]","C707_ZONE_WALL_D2L2);","return;","case C05_ELEMENT_TELEPORTER:","C09_VIEW_SQUARE_D2L2]], C707_ZONE_WALL_D2L2);"]),

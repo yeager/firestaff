@@ -1,3 +1,26 @@
+# Firestaff v2.7.13
+
+DM1 V1 combat fidelity and bug audit release — systematic audit of the DM1 V1 runtime against the ReDMCSB decompilation with targeted fixes for the highest-impact issues.
+
+## Fixes
+
+- **Armor defense overhaul:** Replaced the simplified skill-level armor approximation with a proper ReDMCSB F0321 wound defense calculation that iterates equipped armor slots, applies per-slot defense values with G0050 wound defense factors, and scales attack by (130 − avgDefense) / 64.
+- **Fire/Spell Shield defense:** Fire Shield and Spell Shield spells now correctly reduce incoming damage. Fire attacks subtract FireShieldDefense before armor scaling. Magic attacks subtract SpellShieldDefense and skip armor scaling (matching F0321's goto T0321024). Psychic attacks skip armor scaling entirely.
+- **Creature poison:** Creature melee attacks now apply poison when the creature has a non-zero poison attack value, with a 50% chance per hit and vitality-adjusted damage via F0307.
+- **Test infrastructure:** Added FIRESTAFF_BUILD_DIR environment variable support to 17 Python verification scripts for out-of-tree builds.
+
+## Bug Audit
+
+A comprehensive bug audit document is now available at `docs/DM1_V1_BUG_AUDIT.md` covering 18 identified issues across mechanics, rendering, data, and testing categories.
+
+## Verification
+
+- Full CMake build passed with zero errors.
+- Phase A probe passed 23/23 invariants.
+- `git diff --check` clean.
+
+---
+
 # Firestaff v2.7.12
 
 Patch release focused on the post-v2.7.11 DM1 V1 hardening batch.

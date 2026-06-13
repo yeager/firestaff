@@ -5071,23 +5071,115 @@ static void m11_creature_attack_party(
         }
         if (attack <= 0) attack = 1;
 
-        /* Simplified F0321 armor reduction.
-         * Full F0321 checks each worn item's defense value per wound slot.
-         * Here we use a simple approximation: higher-level champions
-         * take slightly less damage.  TODO: iterate inventory for
-         * real armor defense values. */
+        /* ReDMCSB F0321 damage reduction.
+         * Source: CHAMPION.C F0321:1838-1920.
+         * F0321 branches on attackType:
+         *  - C0_NORMAL: skips the entire F0321 body
+         *  - C5_MAGIC: F0307 vs antimagic, subtract SpellShieldDefense,
+         *              then goto T0321024 (skip armor scale)
+         *  - C6_PSYCHIC: wisdom factor, goto T0321024 (skip armor scale)
+         *  - C1_FIRE: F0307 vs antifire, subtract FireShieldDefense,
+         *             then fall through to armor scale
+         *  - C3/C4/C7: fall through to armor scale
+         */
         damage = attack;
         {
-            int armorApprox = (int)champ->skillLevels[7] + /* parry */
-                              (int)champ->skillLevels[3];  /* fighter */
-            damage -= armorApprox / 2;
+            int creatureAttackType = profile->attackType;
+
+            if (creatureAttackType != COMBAT_ATTACK_NORMAL) {
+                /* ReDMCSB F0321: per-attack-type shield defense.
+                 * Source: CHAMPION.C F0321:1877-1892 */
+                switch (creatureAttackType) {
+                case COMBAT_ATTACK_FIRE:
+                    /* F0307 vs antifire + subtract FireShieldDefense */
+                    damage -= state->world.magic.fireShieldDefense;
+                    break;
+                case COMBAT_ATTACK_MAGIC:
+                    /* F0307 vs antimagic + subtract SpellShieldDefense,
+                     * then skip armor scale (goto T0321024) */
+                    damage -= state->world.magic.spellShieldDefense;
+                    if (damage < 1) damage = 1;
+                    goto apply_damage;
+                case COMBAT_ATTACK_PSYCHIC:
+                    /* Wisdom factor, skip armor scale */
+                    if (damage < 1) damage = 1;
+                    goto apply_damage;
+                default:
+                    /* C3/C4/C7: fall through to armor scale */
+                    break;
+                }
+                if (damage <= 0) {
+                    damage = 0;
+                    goto apply_damage;
+                }
+
+                /* ReDMCSB F0321: armor defense scale.
+                 * Iterate wound slots, sum F0313 defense per slot,
+                 * average, then scale by (130 - avgDefense) / 64. */
+                {
+                    int defenseSum = 0;
+                    int woundCount = 0;
+                    int avgDefense;
+                    static const int wdf[6] = { 0x15, 0x10, 0x1A, 0x1A, 0x12, 0x12 };
+                    static const int woundSlots[6] = {
+                        CHAMPION_SLOT_HAND_LEFT,
+                        CHAMPION_SLOT_HAND_RIGHT,
+                        CHAMPION_SLOT_HEAD,
+                        CHAMPION_SLOT_TORSO,
+                        CHAMPION_SLOT_LEGS,
+                        CHAMPION_SLOT_FEET
+                    };
+                    int wi;
+                    for (wi = 0; wi < 6; wi++) {
+                        unsigned short thing = champ->inventory[woundSlots[wi]];
+                        int slotDef = 0;
+                        if (thing != THING_NONE && thing != THING_ENDOFLIST &&
+                            THING_GET_TYPE(thing) == THING_TYPE_ARMOUR) {
+                            int aIdx = THING_GET_INDEX(thing);
+                            if (state->world.things && state->world.things->armours &&
+                                aIdx >= 0 && aIdx < state->world.things->armourCount) {
+                                slotDef = 8 + (int)state->world.things->armours[aIdx].type;
+                            }
+                        }
+                        slotDef += (int)(champ->attributes[CHAMPION_ATTR_VITALITY] >> 3);
+                        defenseSum += (slotDef * wdf[wi]) >> 5;
+                        woundCount++;
+                    }
+                    avgDefense = (woundCount > 0) ? defenseSum / woundCount : 0;
+                    if (avgDefense > 130) avgDefense = 130;
+                    damage = (damage * (130 - avgDefense)) >> 6;
+                }
+            }
             if (damage < 1) damage = 1;
         }
+        apply_damage:
 
         if ((int)champ->hp.current > damage) {
             champ->hp.current -= (unsigned short)damage;
         } else {
             champ->hp.current = 0;
+        }
+
+        /* ReDMCSB: creature poison attack.
+         * Source: PROJEXPL.C F0230:1395-1404, CHAMPION.C F0322.
+         * If creature has poisonAttack > 0 and 50% chance,
+         * apply poison adjusted by defender's vitality via F0307.
+         * F0307: factor = 170 - vitality. If < 16: attack >> 3.
+         *        Else: (attack * factor) >> 7. */
+        if (profile->poisonAttack > 0 &&
+            ((state->world.gameTick + (unsigned)i) % 2) != 0) {
+            int poisonRaw = profile->poisonAttack;
+            int vit = (int)champ->attributes[CHAMPION_ATTR_VITALITY];
+            int factor = 170 - vit;
+            int adjPoison;
+            if (factor < 16) {
+                adjPoison = poisonRaw >> 3;
+            } else {
+                adjPoison = ((long)poisonRaw * (long)factor) >> 7;
+            }
+            if (adjPoison > 0) {
+                champ->poisonDose += (unsigned short)adjPoison;
+            }
         }
 
         m11_format_champion_name(champ->name, champName, sizeof(champName));
