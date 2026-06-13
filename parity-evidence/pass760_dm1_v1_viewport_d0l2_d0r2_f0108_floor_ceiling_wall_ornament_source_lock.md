@@ -25,7 +25,7 @@ Status: `PASS`
 
 ## Verification
 
-- C test: `/Users/bosse/.openclaw/workspace-main-20260612142622-d0l2-d0r2-f0108-wall-floor-ornament/build/test_dm1_v1_viewport_3d_pc34_compat`
+- C test: `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat`
 - pass760 assertions: 100 pass / 0 fail
 - Local checks: 14/14
 - Source checks: 15/16
