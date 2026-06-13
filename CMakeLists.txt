@@ -7852,6 +7852,25 @@ if(BUILD_TESTING)
         NAME dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_pc34_compat
         COMMAND test_dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_pc34_compat
     )
+    add_executable(test_dm1_v1_mirror_candidate_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME pass760_dm1_v1_mirror_candidate_chrome_after_non_candidate_transition
+        COMMAND test_dm1_v1_mirror_candidate_pc34_compat
+    )
+    if(Python3_EXECUTABLE)
+        add_custom_target(verify_pass760_dm1_v1_mirror_candidate_chrome_after_non_candidate_transition_runtime_regression
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass760_dm1_v1_mirror_candidate_chrome_after_non_candidate_transition_runtime_regression.py
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            DEPENDS test_dm1_v1_mirror_candidate_pc34_compat
+            VERBATIM
+        )
+    endif()
 
     add_executable(test_dm1_v1_mirror_candidate_reshuffle_panel_live_pc34_compat
         tests/test_dm1_v1_mirror_candidate_reshuffle_panel_live_pc34_compat.c
