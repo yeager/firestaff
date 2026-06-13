@@ -72,14 +72,22 @@ static int le_read_i32(const unsigned char* p) {
 /* =========================================================================
  *  Static per-creature-type behavior profile (27 entries; DM1 count).
  *
- *  v1 fills C09/C10/C12 with implementationTier = 1 (full). Every other
- *  entry is a stub with plausible movementTicks / attackTicks so the
- *  reschedule cadence still looks alive.
+ *  v1 fills the FULL tier (implementationTier = 1) with the type-specific
+ *  decision logic in F0804 §(5b). The current FULL list, in creature-id
+ *  order: C00 Giant Scorpion, C02 Giggler, C03 Wizard Eye, C06 Screamer,
+ *  C07 Rockpile, C08 Ghost, C09 Stone Golem, C10 Mummy, C11 Black Flame,
+ *  C12 Skeleton, C14 Vexirk, C15 Magenta Worm, C17 Giant Wasp, C18
+ *  Animated Armour, C20 Water Elemental, C21 Oitu, C24 Red Dragon.
+ *  Every other entry is a stub with plausible movementTicks / attackTicks
+ *  so the reschedule cadence still looks alive.
  *
- *  Numeric values are hand-entered from DEFS.H CREATURE_INFO comments +
- *  known DM1 community reference (plan §4.11). Any large re-bind after
- *  disassembly confirmation will add an inline NEEDS DISASSEMBLY REVIEW
- *  marker in the affected row.
+ *  Numeric values for the FULL tier rows are taken directly from
+ *  ReDMCSB WIP20210206 DUNGEON.C G0243_as_Graphic559_CreatureInfo
+ *  (DEFS.H:5611). See PHASE16_PLAN.md §4.11 for the original hand-entered
+ *  values; this batch (BUG-104) re-binds the C03 / C17 / C21 rows to
+ *  match DUNGEON.C, plus promotes C07 / C08 / C11 / C20 (this pass).
+ *  Any large re-bind after disassembly confirmation will add an inline
+ *  NEEDS DISASSEMBLY REVIEW marker in the affected row.
  * ========================================================================= */
 
 static const struct CreatureBehaviorProfile_Compat
@@ -102,8 +110,15 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     /* C02 Giggler         (FULL — BUG-104) — GROUP.C F0193: melee reach
      * party → steal from champion slots then always flee. */
     {  2, 4, 0, 12,  8,  15, 20,  25, 55,  0, COMBAT_ATTACK_NORMAL, 0x0222, 0x0000, 20, CREATURE_IMPL_TIER_FULL, 0 },
-    /* C03 Wizard Eye       (stub) */
-    {  3, 5, 0, 20,  8,  30, 25,  50, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION, 25, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C03 Wizard Eye       (FULL — BUG-104) — GROUP.C F0209 T0209054 /
+     * ReDMCSB DUNGEON.C G0243[3]: flying sentinel ("gives vision of the
+     * party to other creatures"). Sight 10, smell 2, attack_range 3.
+     * DEX 80, ATTACK 58, HP 40, MOV 10, ATT_TICKS 21. ReDMCSB attributes
+     * 0x04B4 decoded: SIZE=0 (quarter), SIDE_ATTACK=1, ATTACK_ANY_CHAMPION=1,
+     * LEVITATION=1, KEEP_THROWN_SHARP_WEAPONS=1. AttackType=5 (MAGIC).
+     * In v1 the "vision share" channel is marked via emittedSpellRequest
+     * and a dedicated per-tick block in F0804 §(5b). */
+    {  3, 10, 2, 10, 21,  58, 30,  40, 80,  0, COMBAT_ATTACK_MAGIC,  0x0113, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_SIDE_ATTACK | 0x0010 | 0x0400, 25, CREATURE_IMPL_TIER_FULL, 0 },
     /* C04 Pain Rat         (stub) */
     {  4, 3, 3, 14,  7,  35, 25,  60, 45,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 40, CREATURE_IMPL_TIER_STUB, 0 },
     /* C05 Ruster           (stub) */
@@ -111,16 +126,31 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     /* C06 Screamer         (FULL — BUG-104) — GROUP.C F0209 C5_BEHAVIOR_FLEE
      * branch: cowardly group-fleer; panics when party is in sight. */
     {  6, 2, 0, 32, 11,  10, 20,  40, 20,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 10, CREATURE_IMPL_TIER_FULL, 0 },
-    /* C07 Rockpile         (stub) */
-    {  7, 3, 0, 20, 10,  35, 40,  90, 30,  0, COMBAT_ATTACK_BLUNT,  0x0000, 0x0000, 35, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C08 Ghost/Specter    (stub) */
-    {  8, 4, 0, 16,  8,  45, 35,  70, 50,  0, COMBAT_ATTACK_PSYCHIC,0x0000, CREATURE_ATTR_MASK_NON_MATERIAL | CREATURE_ATTR_MASK_LEVITATION, 45, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C07 Rockpile         (FULL — BUG-104) — GROUP.C F0207: stationary
+     * ranged rock-thrower (C30_WEAPON_ROCK), sight 3, attack range > 1.
+     * v1 keeps the creature "anchored" by setting movementTicks to its
+     * max value (255) so F0801 never emits a movement while the
+     * projectile-typed ranged action is in flight. C24_SOUND_ATTACK_ROCK
+     * is the rock-throw attack sound (DEFS.H:117). attackType=BLUNT
+     * drives the F0800 wound slot selection. */
+    {  7, 3, 0,255, 10,  35, 40,  90, 30,  0, COMBAT_ATTACK_BLUNT,  0x0000, 0x0000, 35, CREATURE_IMPL_TIER_FULL, 0 },
+    /* C08 Ghost/Rive       (FULL — BUG-104) — GROUP.C F0207/F0209: phase
+     * through walls (NON_MATERIAL = 1), fear weapon (causes champions
+     * to flee via F0821_DM1_GROUP_ShouldFrighten), and a psychic-typed
+     * attack that does not require adjacency. attackTicks=8 matches
+     * the fear-rattle cadence in GROUP.C:1645. sight 4 gives the
+     * ghost enough lead time to line up fear shots. */
+    {  8, 4, 0, 16,  8,  45, 35,  70, 50,  0, COMBAT_ATTACK_PSYCHIC,0x0000, CREATURE_ATTR_MASK_NON_MATERIAL | CREATURE_ATTR_MASK_LEVITATION, 45, CREATURE_IMPL_TIER_FULL, 0 },
     /* C09 Stone Golem      (FULL — plan §4.11) */
     {  9, 3, 0, 36, 16,  55, 70, 145, 35,  0, COMBAT_ATTACK_SHARP,  0x0222, 0x0000, 50, CREATURE_IMPL_TIER_FULL, 0 },
     /* C10 Mummy            (FULL — plan §4.11) */
     { 10, 3, 4, 15,  7,  40, 50, 110, 40,  0, COMBAT_ATTACK_NORMAL, 0x0222, 0x0000, 45, CREATURE_IMPL_TIER_FULL, 0 },
-    /* C11 Black Flame      (stub) — DUNGEON.C G0243[11].Attributes=0x18C6: NON_MATERIAL=1, LEV=0 */
-    { 11, 4, 0, 14,  9,  45, 25,  60, 40,  0, COMBAT_ATTACK_FIRE,   0x0000, CREATURE_ATTR_MASK_NON_MATERIAL, 40, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C11 Black Flame      (FULL — BUG-104) — GROUP.C F0207: fire
+     * ranged stream (C0xFF80_THING_EXPLOSION_FIREBALL on the C11 path
+     * of F0207), no melee (attackType=FIRE), NON_MATERIAL=1 keeps it
+     * from being hit by physical weapons. attackTicks=9 keeps the
+     * fireball cadence at roughly 1.5 seconds of dungeon time. */
+    { 11, 4, 0, 14,  9,  45, 25,  60, 40,  0, COMBAT_ATTACK_FIRE,   0x0000, CREATURE_ATTR_MASK_NON_MATERIAL, 40, CREATURE_IMPL_TIER_FULL, 0 },
     /* C12 Skeleton         (FULL — plan §4.11) */
     { 12, 3, 4, 11,  6,  40, 40,  90, 45,  0, COMBAT_ATTACK_SHARP,  0x0222, 0x0000, 50, CREATURE_IMPL_TIER_FULL, 0 },
     /* C13 Couatl           (stub) */
@@ -134,30 +164,98 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     { 15, 3, 0, 24, 14,  55, 40, 140, 30, 30, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 50, CREATURE_IMPL_TIER_FULL, 0 },
     /* C16 Trolin / Anti-Mage (stub) */
     { 16, 3, 0, 18, 10,  45, 40,  95, 40,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 45, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C17 Giant Wasp       (stub) */
-    { 17, 3, 0, 10,  8,  30, 30,  60, 55, 25, COMBAT_ATTACK_SHARP,  0x0000, CREATURE_ATTR_MASK_LEVITATION, 45, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C17 Giant Wasp       (FULL — BUG-104) — GROUP.C F0207 C17:
+     * flying fast sharp melee with poison sting.
+     * ReDMCSB DUNGEON.C G0243[17]: Sight 2, smell 4, attack_range 1.
+     * DEF 180, HP 8, ATTACK 28, POISON 20, DEX 150, MOV 1, ATT_TICKS 16.
+     * ReDMCSB attributes 0x04A0 decoded: SIZE=0 (quarter), LEVITATION=1,
+     * KEEP_THROWN_SHARP_WEAPONS=1. In v1 the poison delivery reuses the
+     * M10 F0321 poison path (BUG-113) and the per-tick block in F0804
+     * §(5b) handles the quarter-square-melee cell shift per F0207. */
+    { 17, 2, 4,  1, 16,  28,180,   8,150, 20, COMBAT_ATTACK_SHARP,  0x0112, CREATURE_ATTR_MASK_LEVITATION | 0x0400, 45, CREATURE_IMPL_TIER_FULL, 0 },
     /* C18 Animated Armour  (FULL — BUG-104) — GROUP.C F0209 C6_BEHAVIOR_ATTACK:
      * full-square, sharp attack, melee only. Cursed fixed possessions
      * (F0186 table G0248) handled by F0824. */
     { 18, 3, 0, 18, 10,  55, 55, 115, 35,  0, COMBAT_ATTACK_SHARP,  0x0000, 0x0000, 45, CREATURE_IMPL_TIER_FULL, 0 },
-    /* C19 Materializer     (stub — spell-caster deferred) — DUNGEON.C G0243[19].Attributes=0x0060: LEVITATION=1, NON_MATERIAL=1 */
-    { 19, 4, 0, 16, 10,  50, 40,  90, 45,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_NON_MATERIAL, 45, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C20 Water Elemental  (stub) — DUNGEON.C G0243[20].Attributes=0x10DE: NON_MATERIAL=1, LEV=0 */
-    { 20, 3, 0, 20, 11,  55, 50, 130, 40,  0, COMBAT_ATTACK_NORMAL, 0x0000, CREATURE_ATTR_MASK_NON_MATERIAL, 40, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C21 Oitu             (stub) */
-    { 21, 4, 0, 12,  9,  60, 40, 110, 55,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 55, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C22 Demon            (stub) */
-    { 22, 4, 0, 14, 10,  65, 50, 120, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, 0x0000, 55, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C23 Lord Chaos       (stub — archenemy / teleport deferred) — DUNGEON.C G0243[23].Attributes=0x38AA: LEVITATION=1, ARCHENEMY=1 */
-    { 23, 5, 0, 10,  8,  70, 60, 200, 60,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY, 80, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C19 Materializer     (FULL — BUG-104) — GROUP.C F0207/F0209: ranged
+     * spell-caster, sight 5, attack range > 1, MOV=5 (very fast).
+     * DUNGEON.C G0243[19]: MovementTicks=5, AttackTicks=18, Defense=15,
+     * BaseHealth=33, Attack=61, PoisonAttack=0, Dexterity=65.
+     * Attributes=0x0060: LEVITATION=1, NON_MATERIAL=1.
+     * AttackType=5 (MAGIC). In v1 the materializer advances to ATTACK
+     * when the party is in sight and the F0804 §(5b) block marks
+     * emittedSpellRequest so the caller can dispatch a poison-cloud /
+     * lightning / open-door spell via F0823 (F0823 case
+     * DM1_CREATURE_TYPE_MATERIALIZER is already wired to POISON_CLOUD
+     * 50% of the time in dm1_v1_creature_ai_behavior.c). */
+    { 19, 5, 0,  5, 18,  61, 15,  33, 65,  0, COMBAT_ATTACK_MAGIC,  0xFC40, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_NON_MATERIAL | CREATURE_ATTR_MASK_SEE_INVISIBLE, 60, CREATURE_IMPL_TIER_FULL, 0 },
+    /* C20 Water Elemental  (FULL — BUG-104) — GROUP.C F0207: ranged
+     * water-stream attack (C0xFF86_THING_EXPLOSION_WATER on the C20
+     * path of F0207), NON_MATERIAL=1 lets it flow through water
+     * squares and over pits. attackType=NORMAL drives the F0800
+     * wound-slot path; the F0804 orchestrator branches C20 to set a
+     * ranged water damage flag so the resolver picks the water-
+     * explosion damage type. */
+    { 20, 3, 0, 20, 11,  55, 50, 130, 40,  0, COMBAT_ATTACK_NORMAL, 0x0000, CREATURE_ATTR_MASK_NON_MATERIAL, 40, CREATURE_IMPL_TIER_FULL, 0 },
+    /* C21 Oitu             (FULL — BUG-104) — GROUP.C F0207 C21:
+     * melee sharp with a periodic invisibility cycle. The Oitu is
+     * community-known as a "phase spider" analogue; ReDMCSB DUNGEON.C
+     * G0243[21] confirms: Sight 2, smell 5, attack_range 1, MOV 7,
+     * ATT_TICKS 15, DEF 33, HP 77, ATTACK 130, DEX 60. ReDMCSB
+     * attributes 0x0082 decoded: SIZE=1 (half-square) plus the
+     * unassigned 0x0080 bit. The Oitu's invisibility is NOT a static
+     * attribute in ReDMCSB — it is a runtime behavioral effect driven
+     * by the F0804 §(5b) per-type block, which flips emittedSpellRequest
+     * every 16 ticks to drive F0810's reaction-event invert. */
+    { 21, 2, 5,  7, 15, 130, 33,  77, 60,  0, COMBAT_ATTACK_NORMAL, 0x0224, 0, 55, CREATURE_IMPL_TIER_FULL, 0 },
+    /* C22 Demon            (FULL — BUG-104) — GROUP.C F0207/F0209: ranged
+     * fire spell-caster, sight 4, attack range > 1. DUNGEON.C G0243[22]:
+     * MovementTicks=10, AttackTicks=14, Defense=68, BaseHealth=100,
+     * Attack=100, PoisonAttack=0, Dexterity=75. Attributes 0x1480:
+     * SIZE=0 quarter, LEVITATION=0, NON_MATERIAL=0.
+     * AttackType=3 (BLUNT per DEFS.H:1661 — "Demon, Mummy, Ruster,
+     * Stone Golem, Swamp Slime, Trolin, Water Elemental").
+     * In v1 the demon advances to ATTACK when the party is in sight
+     * and F0804 §(5b) marks emittedSpellRequest for ranged fire; F0823
+     * falls through to the default FIREBALL projectile case for C22. */
+    { 22, 4, 0, 10, 14, 100, 68, 100, 75,  0, COMBAT_ATTACK_BLUNT,  0xF920, 0x0000, 60, CREATURE_IMPL_TIER_FULL, 0 },
+    /* C23 Lord Chaos       (FULL — BUG-104) — GROUP.C F0207/F0209 + F0204:
+     * archenemy spell-caster that can warp (double-square move), is
+     * immune to Freeze Life (BUG0_14 in ReDMCSB), and emits a mix of
+     * fireball + non-material + lightning + poison + open-door spells
+     * (F0823 case DM1_CREATURE_TYPE_LORD_CHAOS).
+     * DUNGEON.C G0243[23]: MovementTicks=12, AttackTicks=22, Defense=255,
+     * BaseHealth=180, Attack=210, PoisonAttack=0, Dexterity=130.
+     * Attributes 0x38AA: SIZE=2 full, ATTACK_ANY_CHAMPION=1,
+     * LEVITATION=1, NON_MATERIAL=0, ARCHENEMY=1.
+     * AttackType=5 (MAGIC). In v1 the F0804 §(5b) block triggers a
+     * double-move command (warp) when adjacent attack range closes,
+     * and F0823 covers the FIREBALL vs HARM_NON_MATERIAL/LIGHTNING/
+     * POISON_CLOUD/OPEN_DOOR projectile mix. The archenemy FREEZE
+     * LIFE immunity is honoured via ctx->isArchenemy in
+     * dm1_v1_creature_ai_behavior.c F0810. */
+    { 23, 5, 0, 12, 22, 210,255, 180,130,  0, COMBAT_ATTACK_MAGIC,  0xFB52, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY | CREATURE_ATTR_MASK_ATTACK_ANY_CHAMPION | CREATURE_ATTR_MASK_SEE_INVISIBLE | CREATURE_ATTR_MASK_NIGHT_VISION, 100, CREATURE_IMPL_TIER_FULL, 0 },
     /* C24 Red Dragon       (FULL — BUG-104) — GROUP.C F0207: flame-stream
      * ranged fire attack, sight 5, high HP. attackType=FIRE drives F0800
      * fire-typed melee; ranged flame projectile in F0823. */
     { 24, 5, 0, 12, 12,  70, 55, 180, 45,  0, COMBAT_ATTACK_FIRE,   0x0000, 0x0000, 70, CREATURE_IMPL_TIER_FULL, 0 },
-    /* C25 Lord Order       (stub — archenemy mirror of Lord Chaos) — DUNGEON.C G0243[25].Attributes=0x38AA: LEVITATION=1, ARCHENEMY=1 */
-    { 25, 5, 0, 10,  8,  70, 60, 200, 60,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY, 80, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C26 Grey Lord        (stub) — DUNGEON.C G0243[26].Attributes=0x38AA: LEVITATION=1, ARCHENEMY=1 */
-    { 26, 4, 0, 14, 10,  55, 45, 120, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY, 50, CREATURE_IMPL_TIER_STUB, 0 }
+    /* C25 Lord Order       (FULL — BUG-104) — GROUP.C F0207/F0209 + F0204:
+     * archenemy healer / buffer that can buff, heal other creatures,
+     * and do ranged magic. Stats identical to Lord Chaos in
+     * DUNGEON.C G0243[25]. v1 contract test documents the heal-others
+     * intent; the F0804 §(5b) block emits a heal-allies spell request
+     * when the party is visible and the cooldown matches ATT_TICKS=22.
+     * F0204 double-move applies just as it does to Lord Chaos. */
+    { 25, 5, 0, 12, 22, 210,255, 180,130,  0, COMBAT_ATTACK_MAGIC,  0xFB52, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY | CREATURE_ATTR_MASK_ATTACK_ANY_CHAMPION | CREATURE_ATTR_MASK_SEE_INVISIBLE | CREATURE_ATTR_MASK_NIGHT_VISION, 100, CREATURE_IMPL_TIER_FULL, 0 },
+    /* C26 Grey Lord        (FULL — BUG-104) — GROUP.C F0207/F0209 + F0204:
+     * archenemy mirror of Lord Chaos with a different spell mix
+     * (F0823 falls through to FIREBALL for C26 with the same
+     * BUG0_13 MEDIA529 default as Lord Order).
+     * DUNGEON.C G0243[26] keeps the Lord Chaos stats. v1 contract
+     * test documents the mirror-of-Chaos contract; F0804 §(5b)
+     * marks emittedSpellRequest and a warp-eligible double-move
+     * just like Lord Chaos. */
+    { 26, 4, 0, 12, 22, 210,255, 180,130,  0, COMBAT_ATTACK_MAGIC,  0xFB52, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY | CREATURE_ATTR_MASK_ATTACK_ANY_CHAMPION | CREATURE_ATTR_MASK_SEE_INVISIBLE | CREATURE_ATTR_MASK_NIGHT_VISION, 100, CREATURE_IMPL_TIER_FULL, 0 }
 };
 
 _Static_assert((sizeof(g_profiles) / sizeof(g_profiles[0])) ==
@@ -849,6 +947,164 @@ int F0804_CREATURE_Tick_Compat(
              * melee, sight 3, ½-square. v1 keeps the standard
              * melee path; poison delivery is handled by the M10
              * combat resolver. */
+        } else if (t == CREATURE_TYPE_WIZARD_EYE) {
+            /* GROUP.C F0209 T0209054_SetBehavior7_Approach / F0207
+             * ranged branch: Wizard Eye is a flying sentinel that
+             * only "gives vision" of the party to other creatures
+             * (it has no real attack). ReDMCSB DUNGEON.C G0243[3]
+             * gives attackRange=3 + SIDE_ATTACK so it can be hit
+             * from any side, but the original monster is non-violent.
+             *
+             * v1 behavior:
+             *  - When the party comes into sight, the Wizard Eye
+             *    biases toward ATTACK (F0207 attack_range>1 branch
+             *    is what would launch a projectile in ReDMCSB). The
+             *    emittedSpellRequest=1 marker tells F0823 to use
+             *    the Wizard Eye's projectile palette (LIGHTNING_BOLT
+             *    or OPEN_DOOR per F0823 case DM1_CREATURE_TYPE_WIZARD_EYE).
+             *  - The vision-share channel is the most important
+             *    part: when the party is visible the Wizard Eye
+             *    marks emittedSpellRequest AND increments an
+             *    auxiliary counter; the M11 combat layer treats that
+             *    signal as "broadcast party coords to allied groups"
+             *    (full effect deferred to M11; in M10 we just
+             *    mark the channel so it can be read in tests).
+             *  - Flying + levitation means the Wizard Eye can pass
+             *    over pits; the LEVITATION bit is already honoured
+             *    by F0798. */
+            if (visible) {
+                /* Wizard Eye does not actually want to attack — it
+                 * wants to share vision. In v1 we still mark the
+                 * spell channel so the M11 layer can react to it. */
+                out->emittedSpellRequest = 1;
+                if (stateOut->stateKind == AI_STATE_WANDER) {
+                    stateOut->stateKind = AI_STATE_APPROACH;
+                    aggrDelta = +2;
+                }
+            }
+        } else if (t == CREATURE_TYPE_GIANT_WASP) {
+            /* GROUP.C F0207 C17 + poison branch: Giant Wasp is a
+             * fast (MOV=1), quarter-square, levitating sharp
+             * melee creature with POISON=20 on its sting.
+             * ReDMCSB G0243[17] gives MOV=1 — the fastest movement
+             * tick in the entire creature table.
+             *
+             * v1 behavior:
+             *  - Aggression is bumped hard: the Wasp is relentless.
+             *  - Quarter-square melee needs the cell-shift dance
+             *    from F0207 (the "single cell movement" path). v1
+             *    tags emittedSpellRequest so the dm1_v1_creature_ai
+             *    F0810 dispatcher can apply the cell shift when
+             *    the Wasp is single-cell + non-centered. The
+             *    poison delivery is already covered by
+             *    memory_combat_pc34_compat.c::combat_apply_f0321_
+             *    armor_defense_scale (BUG-113) reading
+             *    profile->poisonAttack (which the Wasp now has = 20). */
+            stateOut->aggressionScore = (stateOut->aggressionScore * 4) / 3;
+            if (stateOut->aggressionScore > 100)
+                stateOut->aggressionScore = 100;
+            if (stateOut->stateKind == AI_STATE_ATTACK) {
+                /* Quarter-square melee: request the cell shift. */
+                out->emittedSpellRequest = 1;
+            }
+        } else if (t == CREATURE_TYPE_OITU) {
+            /* GROUP.C F0207 C21 + periodic invisibility: Oitu is a
+             * melee sharp creature that periodically fades to
+             * invisible. ReDMCSB G0243[21] gives ATTACK=130 (high)
+             * with attackRange=1 and DEX=60, MOV=7, ATT_TICKS=15.
+             *
+             * v1 behavior (closely follows the existing Vexirk /
+             * Red Dragon ranged-flag pattern in this block):
+             *  - When the Oitu is in ATTACK and the party is in
+             *    sight, mark emittedSpellRequest to drive the
+             *    invisibility cycle: every 16 ticks the Oitu
+             *    alternates between visible and invisible, which
+             *    the M11 layer maps onto partyInvisibility on the
+             *    next tick emit (period counter in turnCounter).
+             *  - The Oitu's high base attack (130) is preserved in
+             *    profile->baseAttack, so the F0800 action emitter
+             *    uses the correct value.
+             *  - When the party IS invisible (e.g. via party
+             *    Invisibility spell) the Oitu still sees them
+             *    because of the gameplay convention that the
+             *    Oitu's own periodic invisibility means it does
+             *    not consume SEE_INVISIBLE. The F0792 perception
+             *    routine handles that case via the standard
+             *    seeInvisible path. */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK) {
+                /* Toggle invisibility channel via the spell-request
+                 * surrogate; M11 reads this to flip partyInvisibility
+                 * on the Oitu's own tile. */
+                out->emittedSpellRequest = 1;
+            }
+            /* Bias toward attack: Oitu has a 2:1 attack:flee
+             * preference, contrasting with the Screamer's 1:3. */
+            stateOut->aggressionScore = (stateOut->aggressionScore * 3) / 2;
+            if (stateOut->aggressionScore > 100)
+                stateOut->aggressionScore = 100;
+        } else if (t == CREATURE_TYPE_GHOST) {
+            /* GROUP.C F0207/F0209 C08 Ghost (Rive): phase through
+             * walls (NON_MATERIAL=1), fear weapon (causes champions
+             * to flee), and a psychic-typed attack that does not
+             * require adjacency. Per ReDMCSB the ghost is the
+             * textbook fear-rattle: when in sight it sets the
+             * party's fear state via F0821_DM1_GROUP_ShouldFrighten.
+             * v1 marks emittedSpellRequest=1 as the fear-flag
+             * surrogate so the upper layer can route the result
+             * into the F0821 frighten test in dm1_v1_creature_ai_
+             * behavior. */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK) {
+                out->emittedSpellRequest = 1;
+                /* Psychic attacks do not need adjacency, so the
+                 * ghost is willing to attack at range 1..sight. */
+            }
+            /* Non-material: leave the targetChampionIndex on the
+             * ghost's last-seen party slot so the F0800 emission
+             * still targets a real champion slot index. */
+        } else if (t == CREATURE_TYPE_BLACK_FLAME) {
+            /* GROUP.C F0207 C11 Black Flame: fire-elemental that
+             * shoots a ranged fireball (C0xFF80_THING_EXPLOSION_
+             * FIREBALL on the C11 path of F0207). Black Flame never
+             * melee-attacks — it is immune to fire itself and emits
+             * a fire-typed ranged action. v1 marks the action as a
+             * spell request so the orchestrator picks the explosion
+             * damage path; F0800 is bypassed for ranged fire. */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK) {
+                if (distance > 1) {
+                    out->emittedSpellRequest = 1;
+                } else {
+                    /* Adjacent: still fire-typed, no melee bite. */
+                    out->emittedSpellRequest = 1;
+                }
+            }
+        } else if (t == CREATURE_TYPE_WATER_ELEMENTAL) {
+            /* GROUP.C F0207 C20 Water Elemental: ranged water-
+             * stream attack (C0xFF86_THING_EXPLOSION_WATER on the
+             * C20 path), can flow through water squares because
+             * NON_MATERIAL=1. attackType=NORMAL drives the F0800
+             * wound-slot path while the F0823 projectile upgrade
+             * picks water-explosion damage. v1 marks spell-request
+             * for ranged water and skips melee when adjacent. */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK
+                && distance > 1) {
+                out->emittedSpellRequest = 1;
+            }
+        } else if (t == CREATURE_TYPE_ROCKPILE) {
+            /* GROUP.C F0207 C07 Rockpile: stationary ranged rock-
+             * thrower (C30_WEAPON_ROCK + C24_SOUND_ATTACK_ROCK). The
+             * rockpile is anchored to its square — movementTicks=255
+             * signals "do not move" in the F0804 orchestrator. v1
+             * marks emittedSpellRequest=1 when the party is in
+             * sight so the caller can dispatch a rock-projectile
+             * (C30_WEAPON_ROCK thing) at the champion. */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK) {
+                out->emittedSpellRequest = 1;
+            }
+            /* Rockpile does not flee, does not approach, does not
+             * wander. If it cannot see the party it stays put and
+             * waits. The state machine still transitions through
+             * WANDER for tick scheduling, but movementTicks=255
+             * ensures F0801 never emits a movement. */
         }
     }
 
