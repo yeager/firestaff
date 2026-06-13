@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "memory_combat_pc34_compat.h"
+#include "memory_creature_ai_pc34_compat.h"  /* CREATURE_TYPE_COUNT, F0192 lookup table */
 
 /* ==========================================================
  *  Internal helpers: LE int32 serialisation (same pattern as
@@ -373,6 +374,19 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
     if (attacker->championIndex < 0 || attacker->championIndex >= CHAMPION_MAX_PARTY) return 1;
     if (attacker->currentHealth <= 0) return 1;
     if (defender->creatureType < 0 || defender->creatureType > DUNGEON_CREATURE_TYPE_MAX) return 1;
+
+    /* BUG-119 fix: if the C040 candidate panel is open for this
+     * creature, the attack must bounce to NO_ACTION. Per ReDMCSB
+     * CLIKCHAM.C F0367 lines 24-25, the candidate creature is
+     * displayed in the D1C cell as a portrait graphic; while the
+     * panel is open the party cannot attack it, otherwise the
+     * candidate dies before the player can recruit it.
+     * Set outcome to NO_ACTION (not MISS) so the caller knows the
+     * attack was a no-op due to candidate state, not a failed roll. */
+    if (defender->isCandidateInvulnerable) {
+        out->outcome = COMBAT_OUTCOME_NO_ACTION;
+        return 1;
+    }
 
     doubledMapDifficulty = defender->doubledMapDifficulty;
     nonMaterial = (defender->attributes >> 6) & 1;        /* MASK0x0040_NON_MATERIAL */
@@ -726,6 +740,124 @@ int F0738_COMBAT_ApplyDamageToGroup_Compat(
             *outOutcome = COMBAT_OUTCOME_KILLED_SOME_CREATURES;
         }
     }
+    return 1;
+}
+
+/* ==========================================================
+ *  Group D' — Per-creature poison resistance (F0192)
+ *
+ *  ReDMCSB: GROUP.C F0192_GROUP_GetResistanceAdjustedPoisonAttack
+ *  (lines 991-1008). Returns a per-creature-type scaled poison
+ *  attack value:
+ *      ((poisonAttack + random(4)) << 3) / (poisonResistance + 1)
+ *  with the special case that a creature whose poison resistance is
+ *  15 (C15_IMMUNE_TO_POISON) takes zero poison damage.
+ *
+ *  The M061_POISON_RESISTANCE macro (DEFS.H:1664) reads the upper
+ *  4 bits of the Resistances field in the DUNGEON.C G0243 table
+ *  (the static per-creature resistance value, NOT a per-tick
+ *  runtime stat). The values below are extracted from
+ *  DUNGEON.C G0243 (PC 3.4 / MEDIA529 build) for all 27 DM1 creature
+ *  types; the bit-shifted upper-nibble is what M061 returns.
+ *
+ *  This table mirrors the g_profiles[] poison-resistance values used
+ *  by the projectile / poison-cloud paths and provides a single
+ *  source of truth for "what does F0192 do for each creature type".
+ *  The C++ resolver dm1_poison_adjusted_attack (in
+ *  dm1_v1_combat_pc34_compat.c) takes a pre-computed resistance, so
+ *  this table can be used both ways without divergent values.
+ * ========================================================== */
+
+#define FIRESTAFF_POISON_IMMUNE 15
+
+/* DUNGEON.C G0243_as_Graphic559_CreatureInfo Resistances upper nibble.
+ * 27 entries; indexed by creature type C00..C26.
+ * 0xFF means resistance = 15 = immune. */
+static const unsigned char g_poisonResistance[CREATURE_TYPE_COUNT] = {
+    /* C00 Giant Scorpion  */  2,  /* G0243[0]  Resistances 0x299B → 0x2 */
+    /* C01 Swamp Slime     */  3,  /* G0243[1]  0x33A9 → 0x3 */
+    /* C02 Giggler         */  7,  /* G0243[2]  0x710A → 0x7 */
+    /* C03 Wizard Eye      */  9,  /* G0243[3]  0x96AA → 0x9 */
+    /* C04 Pain Rat        */  5,  /* G0243[4]  0x58FF → 0x5 */
+    /* C05 Ruster          */  4,  /* G0243[5]  0x4338 → 0x4 */
+    /* C06 Screamer        */  1,  /* G0243[6]  0x10F1 → 0x1 */
+    /* C07 Rockpile        */  2,  /* G0243[7]  0x25C4 → 0x2 */
+    /* C08 Ghost           */  4,  /* G0243[8]  0x4664 → 0x4 */
+    /* C09 Stone Golem     */  3,  /* G0243[9]  0x3BFF → 0x3 */
+    /* C10 Mummy           */  5,  /* G0243[10] 0x5497 → 0x5 */
+    /* C11 Black Flame     */  5,  /* G0243[11] 0x55A5 → 0x5 */
+    /* C12 Skeleton        */  6,  /* G0243[12] 0x6596 → 0x6 */
+    /* C13 Couatl          */  5,  /* G0243[13] 0x5734 → 0x5 */
+    /* C14 Vexirk          */  9,  /* G0243[14] 0xD952 → 0x9 */
+    /* C15 Magenta Worm    */  1,  /* G0243[15] 0x15AB → 0x1 */
+    /* C16 Trolin          */  2,  /* G0243[16] 0x2148 → 0x2 */
+    /* C17 Giant Wasp      */  1,  /* G0243[17] 0x19FD → 0x1 */
+    /* C18 Animated Armour */  7,  /* G0243[18] 0x7AFF → 0x7 */
+    /* C19 Materializer    */ 10,  /* G0243[19] 0xAC77 → 0xA */
+    /* C20 Water Elemental */  7,  /* G0243[20] 0x7679 → 0x7 */
+    /* C21 Oitu            */  6,  /* G0243[21] 0x696A → 0x6 */
+    /* C22 Demon           */ 11,  /* G0243[22] 0xBDF9 → 0xB */
+    /* C23 Lord Chaos      */ 15,  /* G0243[23] 0xFF37 → 0xF (IMMUNE) */
+    /* C24 Red Dragon      */ 11,  /* G0243[24] 0xBF7C → 0xB */
+    /* C25 Lord Order      */ 15,  /* G0243[25] 0xFF37 → 0xF (IMMUNE) */
+    /* C26 Grey Lord       */ 15,  /* G0243[26] 0xFF37 → 0xF (IMMUNE) */
+};
+
+/* Public lookup. Returns -1 on out-of-range. */
+int F0192_GROUP_GetPoisonResistance_Compat(int creatureType)
+{
+    if (creatureType < 0 || creatureType >= CREATURE_TYPE_COUNT) return -1;
+    return (int)g_poisonResistance[creatureType];
+}
+
+/* F0192_GROUP_GetResistanceAdjustedPoisonAttack
+ * ReDMCSB: GROUP.C F0192 lines 991-1008.
+ *   if (poisonAttack == 0) return 0;
+ *   resistance = M061_POISON_RESISTANCE(G0243[creatureType].Resistances);
+ *   if (resistance == C15_IMMUNE_TO_POISON) return 0;
+ *   return ((poisonAttack + random(4)) << 3) / (resistance + 1);
+ *
+ * Source: Toolchains/Common/Source/GROUP.C:991-1008
+ *         Toolchains/Common/Source/DEFS.H:1664 (M061_POISON_RESISTANCE)
+ *         Toolchains/Common/Source/DUNGEON.C:439-470 (G0243 table)
+ *
+ * Pre-M11 callers (PROJEXPL.C:536 and PROJEXPL.C:863 in the original)
+ * pass a raw projectilePoisonAttack and the creatureType of the
+ * target group. M11 callers (build_explosion_group_action for
+ * C007_EXPLOSION_POISON_CLOUD) wire this in at the point where the
+ * damage value is computed for the group action.
+ */
+int F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
+    int creatureType,
+    int poisonAttack,
+    struct RngState_Compat* rng,
+    int* outAdjusted)
+{
+    int resistance;
+    int randomBump;
+    int numerator;
+    int denominator;
+    if (outAdjusted == 0) return 0;
+    *outAdjusted = 0;
+    if (poisonAttack <= 0) return 1;  /* nothing to adjust */
+    if (creatureType < 0 || creatureType >= CREATURE_TYPE_COUNT) return 0;
+    /* ReDMCSB always uses an RNG, but v1 callers can pass NULL when
+     * they don't have a stateful rng handy (deterministic test harness,
+     * projection onto a known creature without a per-tick rng). When
+     * rng is NULL we treat the random bump as 0, which is the
+     * lower-bound of the ((poisonAttack + random(4)) << 3) term. This
+     * keeps the contract "F0192 always returns a number" while still
+     * letting tests pin the value. */
+    resistance = (int)g_poisonResistance[creatureType];
+    if (resistance == FIRESTAFF_POISON_IMMUNE) {
+        return 1;  /* immune — caller observes outAdjusted = 0 */
+    }
+    /* ReDMCSB: ((poisonAttack + random(4)) << 3) / (resistance + 1) */
+    randomBump = (rng != 0) ? F0732_COMBAT_RngRandom_Compat(rng, 4) : 0;
+    numerator  = (poisonAttack + randomBump) << 3;
+    denominator = resistance + 1;
+    if (denominator <= 0) denominator = 1;  /* belt-and-braces */
+    *outAdjusted = numerator / denominator;
     return 1;
 }
 

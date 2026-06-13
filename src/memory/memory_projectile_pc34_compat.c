@@ -1381,10 +1381,24 @@ int F0822_EXPLOSION_Advance_Compat(
             outResult->outActionParty.allowedWounds = 0;
             outResult->emittedCombatActionPartyCount = 1;
         } else if (digest->destHasCreatureGroup) {
-            build_explosion_group_action(in, digest, attackApplied,
-                                         COMBAT_ATTACK_NORMAL,
-                                         &outResult->outActionGroup);
-            outResult->emittedCombatActionGroupCount = 1;
+            /* ReDMCSB PROJEXPL.C:F0821 lines 858-864: when a poison
+             * cloud lands on a creature group, the incoming attack
+             * value is first scaled by GROUP.C:F0192's per-creature-
+             * type resistance. If the resistance-adjusted value is
+             * zero (immune or no scaling), the group branch is
+             * skipped entirely. The champion branch above is NOT
+             * affected by F0192 — champion vitality is handled by
+             * F0321 instead (PROJEXPL.C:1406-1407). */
+            int resistanceAdjusted = 0;
+            F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
+                digest->destCreatureType, attackApplied, rng,
+                &resistanceAdjusted);
+            if (resistanceAdjusted > 0) {
+                build_explosion_group_action(in, digest, resistanceAdjusted,
+                                             COMBAT_ATTACK_NORMAL,
+                                             &outResult->outActionGroup);
+                outResult->emittedCombatActionGroupCount = 1;
+            }
         }
         if (in->attack >= 6) {
             outNewState->attack = in->attack - 3;
