@@ -1,4 +1,4 @@
-#include "csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat.h"
+#include "firestaff/csb/v1/viewport/d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -36,20 +36,22 @@ static const char s_source_evidence[] =
     "flipped C10 blit; DUNVIEW.C F0107:3502-3938 wall ornament keepout; "
     "DUNVIEW.C F0115:4547-4581,F0115:4923,F0115:5180-5188,"
     "F0115:5211-5214,F0115:5668-5671 thing-pass ordering and row guard; "
-    "DUNVIEW.C F0122:7391-7557 D1L with F0108:7525, ceiling C867:7533, "
-    "F0115:7536; DUNVIEW.C F0123:7559-7725 D1R with F0108:7693, "
-    "ceiling C869:7701, F0115:7704; DUNVIEW.C F0128:8318-8542 dispatch "
-    "D1L/D1R at 8524-8529 before D1C at 8533; DUNGEON.C "
+    "DUNVIEW.C F0122/F0123 side-pair calls D1L then D1R at F0128:8524-8529 "
+    "with F0108:7525 and F0108:7693, F0112 ceiling C867/C869 at "
+    "7533/7701, and F0115:7536/F0115:7704; DUNVIEW.C F0124:7873-7957 "
+    "D1C center exclusion; "
+    "DUNVIEW.C F0127/F0128:8318-8486 and 8536-8541 compose dispatch, "
+    "including D1L/D1R before D1C and D0L/D0R after D1C; DUNGEON.C "
     "F0163:1769-1838 and F0164:1840-1905 mutation keepouts; DUNGEON.C "
     "F0172:2466-2523 square-aspect source; DEFS.H:2088 C10_COLOR_FLESH; "
-    "DEFS.H:2596-2601 M607/M608; DEFS.H:2664/2666 D1 side cell orders; "
-    "DEFS.H:2696-2710 M585/M586; DEFS.H:4045-4046 C705/C706; "
-    "DEFS.H:4053-4054 C713/C714; DEFS.H:4214-4216 C867/C869; "
+    "DEFS.H:2596-2611 M607/M608 and sibling view-square keepouts; "
+    "DEFS.H:2662 and 2668-2677 cell-order constants; DEFS.H:4045-4046 "
+    "C705/C706 wall keepout; DEFS.H:4139-4153 stairs-front zone keepout; "
     "DEFS.H:4223 C1500_ZONE_FLOOR_ORNAMENT. CSB-lineage Viewport.cpp:"
-    "1167-1189 open F1L1/F1R1 tables, Viewport.cpp:1892-1925 door-facing "
-    "side contrast, Viewport.cpp:6507-6548 ApplyDecoration mask, and "
-    "Viewport.cpp:7048-7087 D1L/D1R dispatch with CustomBackgrounds slots "
-    "10/11.";
+    "1192-1209 near-side open row, Viewport.cpp:1865-1879/1903-1915/"
+    "1930-1944 door-facing side/front contrast, Viewport.cpp:6507-6548 "
+    "ApplyDecoration mask, and Viewport.cpp:6924-6927 CustomBackgrounds "
+    "pre-decoration ordering.";
 
 static const CSB_V1_D1LD1RF0108SpecPc34 s_specs[] = {
     {
@@ -81,11 +83,11 @@ static const CSB_V1_D1LD1RF0108SpecPc34 s_specs[] = {
         CSB_D1L_WALL_ORNAMENT_VIEW,
         1,
         1,
-        "DUNVIEW.C F0122:7391-7557 / F0128:8524-8525",
+        "DUNVIEW.C F0122 side call / F0128:8524-8525; F0124:7873-7957 excluded",
         "DUNVIEW.C F0108:3940-4011 / F0122:7525",
         "DUNVIEW.C F0115:4547-4581,4923,5180-5188,5211-5214,5668-5671",
-        "DEFS.H:2088/2596-2601/2664/2696-2710/4045-4054/4214/4223",
-        "CSB-lineage Viewport.cpp:1167-1172,6507-6548,7048-7065"
+        "DEFS.H:2088/2596-2611/2662/2668-2677/4045-4046/4139-4153/4223",
+        "CSB-lineage Viewport.cpp:1192-1209,6507-6548,6924-6927"
     },
     {
         CSB_V1_D1L_D1R_F0108_SIDE_D1R_PC34,
@@ -116,11 +118,11 @@ static const CSB_V1_D1LD1RF0108SpecPc34 s_specs[] = {
         CSB_D1R_WALL_ORNAMENT_VIEW,
         1,
         1,
-        "DUNVIEW.C F0123:7559-7725 / F0128:8528-8529",
+        "DUNVIEW.C F0123 side call / F0128:8528-8529; F0124:7873-7957 excluded",
         "DUNVIEW.C F0108:3940-4011 / F0123:7693",
         "DUNVIEW.C F0115:4547-4581,4923,5180-5188,5211-5214,5668-5671",
-        "DEFS.H:2088/2596-2601/2666/2696-2710/4045-4054/4216/4223",
-        "CSB-lineage Viewport.cpp:1183-1189,6507-6548,7068-7087"
+        "DEFS.H:2088/2596-2611/2662/2668-2677/4045-4046/4139-4153/4223",
+        "CSB-lineage Viewport.cpp:1192-1209,6507-6548,6924-6927"
     }
 };
 
@@ -456,28 +458,32 @@ int run_csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_self_test(void)
     self_check_contains(&c, s_source_evidence, "F0115:5180-5188");
     self_check_contains(&c, s_source_evidence, "F0115:5211-5214");
     self_check_contains(&c, s_source_evidence, "F0115:5668-5671");
-    self_check_contains(&c, s_source_evidence, "F0122:7391-7557");
+    self_check_contains(&c, s_source_evidence, "DUNVIEW.C F0122/F0123");
     self_check_contains(&c, s_source_evidence, "F0108:7525");
     self_check_contains(&c, s_source_evidence, "F0115:7536");
-    self_check_contains(&c, s_source_evidence, "F0123:7559-7725");
+    self_check_contains(&c, s_source_evidence, "F0124:7873-7957");
     self_check_contains(&c, s_source_evidence, "F0108:7693");
     self_check_contains(&c, s_source_evidence, "F0115:7704");
-    self_check_contains(&c, s_source_evidence, "F0128:8318-8542");
+    self_check_contains(&c, s_source_evidence, "F0127/F0128:8318-8486");
+    self_check_contains(&c, s_source_evidence, "8536-8541");
     self_check_contains(&c, s_source_evidence, "8524-8529");
     self_check_contains(&c, s_source_evidence, "DUNGEON.C F0163:1769-1838");
     self_check_contains(&c, s_source_evidence, "F0164:1840-1905");
     self_check_contains(&c, s_source_evidence, "F0172:2466-2523");
     self_check_contains(&c, s_source_evidence, "DEFS.H:2088");
-    self_check_contains(&c, s_source_evidence, "DEFS.H:2596-2601");
-    self_check_contains(&c, s_source_evidence, "DEFS.H:2664/2666");
+    self_check_contains(&c, s_source_evidence, "DEFS.H:2596-2611");
+    self_check_contains(&c, s_source_evidence, "DEFS.H:2662");
+    self_check_contains(&c, s_source_evidence, "2668-2677");
     self_check_contains(&c, s_source_evidence, "DEFS.H:4045-4046 C705/C706");
-    self_check_contains(&c, s_source_evidence, "DEFS.H:4053-4054 C713/C714");
-    self_check_contains(&c, s_source_evidence, "DEFS.H:4214-4216 C867/C869");
+    self_check_contains(&c, s_source_evidence, "DEFS.H:4139-4153");
     self_check_contains(&c, s_source_evidence, "DEFS.H:4223");
-    self_check_contains(&c, s_source_evidence, "Viewport.cpp:1167-1189");
+    self_check_contains(&c, s_source_evidence, "Viewport.cpp:1192-1209");
+    self_check_contains(&c, s_source_evidence, "Viewport.cpp:1865-1879");
+    self_check_contains(&c, s_source_evidence, "1903-1915");
+    self_check_contains(&c, s_source_evidence, "1930-1944");
     self_check_contains(&c, s_source_evidence, "Viewport.cpp:6507-6548");
-    self_check_contains(&c, s_source_evidence, "7048-7087");
-    self_check_contains(&c, s_source_evidence, "CustomBackgrounds slots 10/11");
+    self_check_contains(&c, s_source_evidence, "Viewport.cpp:6924-6927");
+    self_check_contains(&c, s_source_evidence, "CustomBackgrounds");
 
     self_check_eq(&c, CSB_V1_D1L_D1R_F0108_C10_COLOR_FLESH_PC34, 10);
     self_check_eq(&c, CSB_V1_D1L_D1R_F0108_C705_ZONE_WALL_D3L_PC34, 705);
@@ -675,6 +681,20 @@ int run_csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_self_test(void)
         ++s_last_self_test.mutation_rejections;
 
         state.mutate_thing_list = false;
+        state.mutation_guard_before ^= 0x11u;
+        self_check(&c, !csb_v1_viewport_d1l_d1r_f0108_compose_pc34(&state, &result));
+        self_check_eq(&c, result.rejected_non_contract_state, 1);
+        self_check_eq(&c, result.mutation_rejections, 1);
+        ++s_last_self_test.mutation_rejections;
+
+        state.mutation_guard_before = CSB_MUTATION_GUARD_BEFORE;
+        state.mutation_guard_after ^= 0x22u;
+        self_check(&c, !csb_v1_viewport_d1l_d1r_f0108_compose_pc34(&state, &result));
+        self_check_eq(&c, result.rejected_non_contract_state, 1);
+        self_check_eq(&c, result.mutation_rejections, 1);
+        ++s_last_self_test.mutation_rejections;
+
+        state.mutation_guard_after = CSB_MUTATION_GUARD_AFTER;
         state.attempts_f0107_wall_ornament = true;
         self_check(&c, !csb_v1_viewport_d1l_d1r_f0108_compose_pc34(&state, &result));
         self_check_eq(&c, result.rejected_non_contract_state, 1);

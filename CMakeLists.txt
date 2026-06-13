@@ -144,6 +144,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d1l2_d1r2_f0108_floor_cei
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_d1l2_d1r2_f0108_floor_ceiling_ornament_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/csb/csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat.c
+)
 list(FILTER M10_SOURCES EXCLUDE REGEX "csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat\\.c$")
 list(APPEND M10_SOURCES
     src/csb/csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat.c
@@ -3142,6 +3146,10 @@ if(BUILD_TESTING)
     endif()
     add_test(
         NAME csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat
+        COMMAND test_csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat
+    )
+    add_test(
+        NAME pass_csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament
         COMMAND test_csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat
     )
 
