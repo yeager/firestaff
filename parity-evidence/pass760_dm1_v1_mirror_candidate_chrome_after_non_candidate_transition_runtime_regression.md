@@ -34,7 +34,7 @@
 
 ## Verification
 
-- `/Users/bosse/.openclaw/workspace-main-20260612142622-mirror-candidate-chrome-non-candidate-transition/build/test_dm1_v1_mirror_candidate_pc34_compat`: rc=0
+- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_pc34_compat`: rc=0
 
 ## TODO
 

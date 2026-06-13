@@ -177,23 +177,23 @@
       "file": "CMakeLists.txt",
       "hits": [
         {
-          "line": 6321,
+          "line": 7059,
           "needle": "test_dm1_v1_champion_panel_pc34_compat"
         },
         {
-          "line": 6322,
+          "line": 7060,
           "needle": "tests/test_dm1_v1_champion_panel_pc34_compat.c"
         },
         {
-          "line": 6323,
+          "line": 7061,
           "needle": "src/dm1/dm1_v1_champion_panel_pc34_compat.c"
         },
         {
-          "line": 6334,
+          "line": 7090,
           "needle": "pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock"
         },
         {
-          "line": 6338,
+          "line": 7094,
           "needle": "verify_pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock"
         }
       ],
@@ -635,12 +635,12 @@
   "schema": "firestaff.parity.pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock.v1",
   "status": "passed",
   "statusToken": "PASS760_DM1_V1_CHAMPION_PANEL_STATUS_HAND_ROTATION_SOURCE_LOCKED",
-  "timestampUtc": "2026-06-12T12:33:47.351295+00:00",
+  "timestampUtc": "2026-06-13T11:45:22.364510+00:00",
   "verificationRuns": [
     {
       "assertions": 851,
       "command": [
-        "/Users/bosse/.openclaw/workspace-main-20260612142624-champion-panel-status-hand-rotation/build/test_dm1_v1_champion_panel_pc34_compat"
+        "build/test_dm1_v1_champion_panel_pc34_compat"
       ],
       "failures": 0,
       "outputTail": "Assertions: 851\nFailures: 0\nPASS pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock assertions=851",
