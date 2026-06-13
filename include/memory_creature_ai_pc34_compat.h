@@ -66,13 +66,20 @@
 #define CREATURE_TYPE_COUNT                    27
 #define CREATURE_TYPE_GIANT_SCORPION            0
 #define CREATURE_TYPE_GIGGLER                   2
+#define CREATURE_TYPE_WIZARD_EYE                3
 #define CREATURE_TYPE_SCREAMER                  6
+#define CREATURE_TYPE_ROCKPILE                  7
+#define CREATURE_TYPE_GHOST                     8
 #define CREATURE_TYPE_STONE_GOLEM               9
 #define CREATURE_TYPE_MUMMY                    10
+#define CREATURE_TYPE_BLACK_FLAME              11
 #define CREATURE_TYPE_SKELETON                 12
 #define CREATURE_TYPE_VEXIRK                   14
 #define CREATURE_TYPE_MAGENTA_WORM             15
+#define CREATURE_TYPE_GIANT_WASP               17
 #define CREATURE_TYPE_ANIMATED_ARMOUR          18
+#define CREATURE_TYPE_WATER_ELEMENTAL          20
+#define CREATURE_TYPE_OITU                     21
 #define CREATURE_TYPE_RED_DRAGON               24
 
 /* ==========================================================
@@ -106,10 +113,14 @@
  * ========================================================== */
 
 #define CREATURE_ATTR_MASK_SIDE_ATTACK     0x0004
+#define CREATURE_ATTR_MASK_PREFER_BACK_ROW 0x0008
+#define CREATURE_ATTR_MASK_ATTACK_ANY_CHAMPION 0x0010
 #define CREATURE_ATTR_MASK_LEVITATION      0x0020
 #define CREATURE_ATTR_MASK_NON_MATERIAL    0x0040
 #define CREATURE_ATTR_MASK_SEE_INVISIBLE   0x0800
+#define CREATURE_ATTR_MASK_NIGHT_VISION    0x1000
 #define CREATURE_ATTR_MASK_ARCHENEMY       0x2000
+#define CREATURE_ATTR_MASK_DROP_FIXED      0x0200
 
 /* ==========================================================
  *  Implementation tier values
