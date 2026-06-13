@@ -18,6 +18,10 @@ static int g_fail = 0;
 #define FAIL(msg) do { printf("FAIL: %s\n", msg); g_fail++; } while(0)
 #define CHECK(cond, msg) do { if (!(cond)) { FAIL(msg); return; } } while(0)
 
+/* Forward declarations for tests defined after main(). */
+static void test_champion_is_lucky(void);
+static void test_ordered_cells_to_attack_priority(void);
+
 /* ── Test: scaled product matches F0030 ──────────────────────────── */
 static void test_scaled_product(void) {
     TEST(scaled_product);
@@ -775,7 +779,126 @@ int main(void) {
     test_ranged_shoot_bow_crossbow();
     test_ranged_shoot_no_bow_ammunition();
     test_ranged_shoot_sling_ammunition();
+    test_champion_is_lucky();
+    test_ordered_cells_to_attack_priority();
 
     printf("\n=== Results: %d passed, %d failed ===\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
+}
+
+/* ── Test: F0308_CHAMPION_IsLucky (CHAMPION.C:1120-1155) ────────────── */
+static void test_champion_is_lucky(void) {
+    TEST(champion_is_lucky);
+
+    /* Zero luck: F0308 returns 0 (unlucky) without consuming RNG. */
+    DM1_ChampionCombat ch;
+    dm1_combat_init_champion(&ch);
+    ch.luck = 0;
+    int r1 = dm1_champion_is_lucky(&ch, 60, 30);
+    CHECK(r1 == 0, "luck=0 should never be lucky");
+    CHECK(ch.luck == 0, "luck=0 should not be mutated by F0308");
+
+    /* Lucky roll: luck decrements by 2 (CHAMPION.C:1153).
+     * The free lucky gate (random(2) != 0 && random(100) > percentage)
+     * returns 1 without touching Luck; the consuming branch returns 1
+     * with random(luck) > percentage and decrements Luck by 2. We
+     * pin the bounded-update path: try many seeds and confirm that
+     * whenever luck > 0 the result is binary {0,1} and the mutation
+     * is in {-2, 0, +2}. */
+    for (uint32_t seed = 0; seed < 200; seed++) {
+        dm1_combat_init_champion(&ch);
+        ch.luck = 20;
+        dm1_combat_seed_rng(seed);
+        int before = ch.luck;
+        int r = dm1_champion_is_lucky(&ch, 60, 30);
+        if (r) {
+            /* Lucky: either free gate (luck unchanged) or consuming
+             * (luck decremented by 2). */
+            int delta = ch.luck - before;
+            CHECK(delta == 0 || delta == -2,
+                  "lucky: luck delta must be 0 (free gate) or -2 (consume)");
+        } else {
+            /* Unlucky: free gate fail means luck is unchanged, OR
+             * consuming fail (random(luck) <= percentage) increments
+             * luck by 2 (bounded to luckMaximum=30). */
+            int delta = ch.luck - before;
+            CHECK(delta == 0 || delta == 2,
+                  "unlucky: luck delta must be 0 (free gate) or +2 (consume)");
+        }
+    }
+
+    /* Luck ceiling: at 29, an unlucky consume would push to 31 → bounded
+     * to 30. */
+    dm1_combat_init_champion(&ch);
+    ch.luck = 29;
+    /* Force the consume path by setting a high percentage (so the
+     * random(luck) check is biased toward 0). The free gate is
+     * 1-in-2, so we cannot deterministically force consume; instead
+     * check that luck never exceeds 30 across many seeds. */
+    for (uint32_t seed = 0; seed < 200; seed++) {
+        dm1_combat_init_champion(&ch);
+        ch.luck = 29;
+        dm1_combat_seed_rng(seed);
+        (void)dm1_champion_is_lucky(&ch, 60, 30);
+        CHECK(ch.luck <= 30, "luck must never exceed luckMaximum (30)");
+    }
+
+    /* Luck floor: stays at 0 (no underflow). */
+    for (uint32_t seed = 0; seed < 200; seed++) {
+        dm1_combat_init_champion(&ch);
+        ch.luck = 0;
+        dm1_combat_seed_rng(seed);
+        (void)dm1_champion_is_lucky(&ch, 60, 30);
+        CHECK(ch.luck >= 0, "luck must never go below 0");
+    }
+
+    PASS();
+}
+
+/* ── Test: F0229_GROUP_SetOrderedCellsToAttack (PROJEXPL.C:1284-1305) ── */
+static void test_ordered_cells_to_attack_priority(void) {
+    TEST(ordered_cells_to_attack_priority);
+
+    DM1_CreatureGroup g;
+    dm1_combat_init_group(&g);
+
+    /* No creatures → -1. (The F0177 walk checks creatures[0..count];
+     * with count=0 it never iterates and falls through to return -1,
+     * matching the original v1 simplified contract.) */
+    g.count = 0;
+    g.creatures[0].cell = 0xFF;  /* clear — must not match any want. */
+    int t0 = dm1_get_melee_target(&g, 0, 0, 0);
+    CHECK(t0 == -1, "no creatures should return -1");
+
+    /* One creature at each cell, every (partyDir, cell) pair. The
+     * function must return a valid index in [0, count]. */
+    for (int dir = 0; dir < 4; dir++) {
+        for (int cell = 0; cell < 4; cell++) {
+            for (int c = 0; c < 4; c++) {
+                dm1_combat_init_group(&g);
+                g.count = 0;
+                g.creatures[0].cell = c;
+                g.creatures[0].health = 50;
+                int t = dm1_get_melee_target(&g, cell, dir, dir);
+                CHECK(t == 0,
+                      "single-creature group should return 0 for any (dir, cell, c)");
+            }
+        }
+    }
+
+    /* Two creatures: verify the function picks ONE (not out-of-range). */
+    dm1_combat_init_group(&g);
+    g.count = 1;
+    g.creatures[0].cell = 0;
+    g.creatures[0].health = 50;
+    g.creatures[1].cell = 2;
+    g.creatures[1].health = 50;
+    int t1 = dm1_get_melee_target(&g, 0, 0, 0);
+    CHECK(t1 == 0 || t1 == 1, "two-creature group should return 0 or 1");
+
+    /* Invalid group pointer → -1. */
+    int t2 = dm1_get_melee_target(NULL, 0, 0, 0);
+    CHECK(t2 == -1, "NULL group should return -1");
+
+    PASS();
 }

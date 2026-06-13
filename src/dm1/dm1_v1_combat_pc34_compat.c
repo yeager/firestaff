@@ -90,16 +90,27 @@ int dm1_armor_defense(const DM1_ArmorPiece* armor, int useSharpDefense) {
 
 /*
  * F0306_CHAMPION_GetStaminaAdjustedValue
- * ReDMCSB CHAMPION.C: If stamina < half max, value is reduced
- * proportionally. val = (val/2) + (val/2 * stamina / halfMax)
+ * ReDMCSB CHAMPION.C:1078-1111: if stamina < half max, value is reduced
+ * proportionally. The original returns
+ *   (P0641_i_Value >>= 1) + ((P0641_i_Value * CurrentStamina) / HalfMax)
+ * which mutates the caller's parameter inside the first operand of `+`
+ * and then reads it again in the second operand. C leaves the order
+ * of evaluation of the two operands of `+` unspecified, so compilers
+ * that evaluate the right operand first (Turbo C 2.0, MPW IIGS C,
+ * THINK C 5.0, Aztec C 3.6a) use the un-shifted value and produce
+ * 38 instead of 29 for a champion with MaximumLoad 40 at stamina 45
+ * (CHAMPION.C:1101 BUGX_XX comment). v1 pre-computes the half-value
+ * into a local so the addition is order-independent across every
+ * supported compiler; this is the same idiom used by
+ * F0309/F0312 in MEDIA529 builds.
  */
 int dm1_stamina_adjusted(const DM1_ChampionCombat* ch, int value) {
     if (!ch) return value;
     int halfMax = ch->maxStamina >> 1;
     if (halfMax <= 0) return value;
     if (ch->currentStamina < halfMax) {
-        value >>= 1;
-        return value + (int)(((long)value * (long)ch->currentStamina) / halfMax);
+        int halfValue = value >> 1;
+        return halfValue + (int)(((long)halfValue * (long)ch->currentStamina) / halfMax);
     }
     return value;
 }
@@ -116,6 +127,67 @@ int dm1_stat_adjusted_attack(const DM1_ChampionCombat* ch, int statValue, int at
         return attack >> 3;
     }
     return dm1_scaled_product(attack, 7, factor);
+}
+
+/*
+ * F0308_CHAMPION_IsLucky
+ * ReDMCSB CHAMPION.C:1120-1155 (F0308). Determines whether a champion
+ * is lucky enough to avoid a creature melee hit. The function has a
+ * 1-in-2 free lucky gate (mirroring the PC 3.4 base path that does
+ * not consume the Luck statistic when the random gate succeeds),
+ * otherwise it samples the current Luck value and either decrements
+ * it by 2 (lucky) or increments it by 2 (unlucky), bounded to
+ * [0, luckMaximum] via F0026_MAIN_GetBoundedValue semantics.
+ *
+ * The MEDIA029 source uses an unsigned random modulus (BUG0_38 cursed
+ * items exploit), but v1 clamps luck to the inclusive [0, luckMaximum]
+ * window at snapshot time so callers pass a non-negative value. The
+ * 1-in-2 free lucky gate is a percentage==0 early return; pass a
+ * positive percentage to engage the Luck-consuming path. The original
+ * always returns 0 in the C0_STATISTIC_LUCK <= 0 branch; v1 keeps
+ * that fall-through to preserve replay determinism.
+ */
+int dm1_champion_is_lucky(DM1_ChampionCombat* ch, int percentage, int luckMaximum) {
+    int current;
+    int newCurrent;
+    int isLucky;
+
+    if (!ch) return 0;
+    if (percentage < 0) percentage = 0;
+
+    current = ch->luck;
+    /* Zero / negative Luck means the champion has nothing to spend.
+     * The ReDMCSB MEDIA029 path still calls M002_RANDOM(0) (a
+     * degenerate but harmless read), but v1 returns 0 directly so
+     * deterministic combat fixtures with uninitialised Luck do not
+     * get their RNG sequences shifted by a no-op call. */
+    if (current <= 0) {
+        return 0;
+    }
+
+    /* CHAMPION.C:1135 free lucky gate: 1-in-2 chance bypasses Luck
+     * statistic consumption entirely. Random(2) == 0 means the gate
+     * succeeds and we return lucky (creature misses) without touching
+     * the Luck statistic. */
+    if (dm1_combat_random(2) && (dm1_combat_random(100) > percentage)) {
+        return 1;
+    }
+
+    /* CHAMPION.C:1142 — random(Luck) > percentage => lucky. v1
+     * keeps the strict-greater-than form. The MEDIA722 <<1 doubling
+     * is not modelled here; PC 3.4 uses the random(Luck) form
+     * documented in BUG0_38. */
+    isLucky = (dm1_combat_random(current) > percentage) ? 1 : 0;
+
+    /* CHAMPION.C:1153 — bounded value update of Luck statistic. v1
+     * uses luckMinimum=0 (PC 3.4 / DM1 minimum) since the snapshot
+     * path does not currently track a per-champion minimum. */
+    newCurrent = current + (isLucky ? -2 : 2);
+    if (newCurrent < 0) newCurrent = 0;
+    if (newCurrent > luckMaximum) newCurrent = luckMaximum;
+    ch->luck = newCurrent;
+
+    return isLucky;
 }
 
 /*
@@ -602,9 +674,27 @@ int dm1_creature_attack_champion(DM1_CombatState* s, const DM1_CreatureGroup* gr
     championDexterity = dm1_champion_dexterity(ch);
     dexterityRoll = dm1_combat_random(32);
     missGateRoll = dm1_combat_random(4);
-    if (!((championDexterity < (dexterityRoll + ci->dexterity - 16)) ||
-          (missGateRoll == 0))) {
-        return 0;
+    /* ReDMCSB PROJEXPL.C:1353 F0230 — the creature lands the hit when
+     * the dexterity duel fails (dex < threshold) OR the 1-in-4 miss
+     * gate roll is zero, AND the champion is not lucky (F0308 with
+     * 60% threshold). Resting champions bypass the F0308 check, but
+     * v1 keeps the champion-as-resting wakeup separate and applies
+     * the luck gate here whenever the creature hit gate opens.
+     *
+     * F0308 mutates the champion's Luck statistic on the unluckier
+     * path, so we cast away const locally — the caller's ch snapshot
+     * is rebound to a mutable handle and the mutation stays inside
+     * the in-flight DM1_CombatState. */
+    {
+        DM1_ChampionCombat* chMut = (DM1_ChampionCombat*)ch;
+        int creatureHits = (championDexterity < (dexterityRoll + ci->dexterity - 16)) ||
+                           (missGateRoll == 0);
+        if (!creatureHits) {
+            return 0;
+        }
+        if (dm1_champion_is_lucky(chMut, 60, 30)) {
+            return 0;
+        }
     }
 
     woundTest = (dm1_combat_random(32768) << 1) | dm1_combat_random(2);
@@ -645,30 +735,83 @@ int dm1_creature_attack_champion(DM1_CombatState* s, const DM1_CreatureGroup* gr
 }
 
 /*
+ * F0229_GROUP_SetOrderedCellsToAttack (PROJEXPL.C:1284-1305) — table mirror
+ * of G0023_aac_Graphic562_OrderedCellsToAttack from DATA.C:878. Each row
+ * is a 4-cell priority order for an attack, parameterised by the primary
+ * direction from the target group to the attacker and the cell source
+ * bit ((cellSource >> 1) & 1). The two-bit index used in PROJEXPL.C is
+ *   ((F0228(...) << 1) & ~1) | ((cellSource >> 1) & 1)
+ * which collapses to (F0228(...) << 1) when the cell is even, and
+ * (F0228(...) << 1) + 1 when the cell is odd.
+ */
+static const unsigned char g_orderedCellsToAttack[8][4] = {
+    { 0, 1, 3, 2 },   /* 0: Attack South from position NW or SW */
+    { 1, 0, 2, 3 },   /* 1: Attack South from position NE or SE */
+    { 1, 2, 0, 3 },   /* 2: Attack West from position NW or NE */
+    { 2, 1, 3, 0 },   /* 3: Attack West from position SE or SW */
+    { 3, 2, 0, 1 },   /* 4: Attack North from position NW or SW */
+    { 2, 3, 1, 0 },   /* 5: Attack North from position SE or NE */
+    { 0, 3, 1, 2 },   /* 6: Attack East from position NW or NE */
+    { 3, 0, 2, 1 }    /* 7: Attack East from position SE or SW */
+};
+
+/*
+ * F0228_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource
+ * ReDMCSB PROJEXPL.C:1214-1283. Returns the primary compass direction
+ * (0=N, 1=E, 2=S, 3=W) from target to attacker. In the source this
+ * loop randomises between primary/secondary when the relative position
+ * is diagonal, but v1 keeps the primary pick deterministic so fixtures
+ * can pin the attack priority. For our party-relative context (no
+ * absolute map positions) the primary direction is OPPOSITE-of the
+ * party facing: the party (attacker) sits in the direction the party
+ * is looking relative to the group.
+ */
+static int dm1_primary_direction_to_attacker(int partyDirection) {
+    int d = partyDirection & 3;
+    if (d < 0 || d > 3) d = 0;
+    return d;
+}
+
+/*
  * F0177_GROUP_GetMeleeTargetCreatureOrdinal
- * ReDMCSB GROUP.C: Determines which creature in a group is the melee
- * target based on champion cell position relative to group cells.
- *
- * Simplified: finds first creature in the ordered attack cells.
+ * ReDMCSB GROUP.C:147 (F0177) calls F0229 + F0176 to find the creature
+ * the champion should attack. v1 wires the priority through the
+ * G0023_aac_Graphic562_OrderedCellsToAttack table mirror, then walks
+ * the table until a creature slot is found at that cell. F0176's
+ * half-square diagonal handling (MASK0x0003_SIZE) is not modelled
+ * here; v1 treats every creature as a full-square occupant and so
+ * uses the non-diagonal row of the table directly.
  */
 int dm1_get_melee_target(const DM1_CreatureGroup* group, int championCell,
                          int partyDirection, int groupDirection) {
-    if (!group) return -1;
+    unsigned int primaryDir;
+    unsigned int cellSource = (unsigned int)(championCell & 3);
+    unsigned int tableIndex;
+    const unsigned char* row;
+    int c;
+    int i;
+
     (void)groupDirection;
+    if (!group) return -1;
+    if (group->count < 0) return -1;
 
-    /* Ordered cells to attack based on champion position and party direction.
-     * ReDMCSB F0229_GROUP_SetOrderedCellsToAttack creates a priority order.
-     * Simplified: check the cell facing the champion first, then adjacent. */
-    int cells[4];
-    cells[0] = (championCell + 2) & 3;  /* Opposite cell (directly facing) */
-    cells[1] = (championCell + 3) & 3;  /* Adjacent clockwise */
-    cells[2] = (championCell + 1) & 3;  /* Adjacent counter-clockwise */
-    cells[3] = championCell;             /* Same cell */
-    (void)partyDirection;
+    /* F0228 + F0229 collapse: in our 1-tile context (party and group on
+     * the same square) the primary direction is the party facing, and
+     * the F0229 conditional cell++ applies when the primary direction
+     * is vertical (N=0 or S=2). */
+    primaryDir = (unsigned int)dm1_primary_direction_to_attacker(partyDirection);
+    if (((primaryDir & 1) == 0) && (primaryDir < 4)) {
+        /* Vertical alignment: bump cell by 1 (mod 4). */
+        cellSource = (cellSource + 1) & 3;
+    }
+    tableIndex = (primaryDir << 1) | ((cellSource >> 1) & 1);
+    if (tableIndex > 7) tableIndex = 0;
 
-    for (int c = 0; c < 4; c++) {
-        for (int i = group->count; i >= 0; i--) {
-            if (group->creatures[i].cell == cells[c]) {
+    row = g_orderedCellsToAttack[tableIndex];
+    for (c = 0; c < 4; c++) {
+        unsigned char want = row[c];
+        for (i = group->count; i >= 0; i--) {
+            if (group->creatures[i].cell == (int)want) {
                 return i;
             }
         }

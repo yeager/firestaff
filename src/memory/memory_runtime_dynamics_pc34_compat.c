@@ -49,24 +49,27 @@ static int read_i32_le(const unsigned char* p) {
 }
 
 /* ==========================================================
- *  PowerOrdinalToLightAmount — Phase 14 placeholder, consumed
- *  verbatim for indices 0..6.
+ *  PowerOrdinalToLightAmount — exact slice of the canonical
+ *  ReDMCSB G0039_ai_Graphic562_LightPowerToLightAmount[16] table.
  *
- *  NEEDS DISASSEMBLY REVIEW: real table is
- *  G0039_ai_Graphic562_LightPowerToLightAmount[16] loaded from
- *  GRAPHICS.DAT entry 562. Only indices 0..6 are used by
- *  DM-era spells (power ordinal range). The full 16-entry table
- *  is deferred to post-M10 when the GRAPHICS.DAT loader lands.
+ *  ReDMCSB DATA.C:359,1088 — the full table is
+ *    { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 }
+ *  consumed by TIMELINE.C:1754 (light decay delta) and
+ *  PANEL.C:412 (torch / panel composition). Only indices 0..6
+ *  are exercised by the DM1 V1 runtime dynamics path (light
+ *  power ordinal range 0..6), so we mirror the first 7 entries
+ *  verbatim. The full 16-entry table is also present in
+ *  dm1_v1_light_pc34_compat.c::dm1_light_power_to_amount.
  * ========================================================== */
 
 static const int s_PowerOrdinalToLightAmount[RUNTIME_LIGHT_POWER_MAX + 1] = {
-    0,   /* index 0: no light / boundary */
-    3,   /* index 1 */
-    6,   /* index 2 */
-    10,  /* index 3 */
-    16,  /* index 4 */
-    24,  /* index 5 */
-    40   /* index 6 */
+    0,   /* index 0: no light / boundary (G0039[0])  */
+    5,   /* index 1 (G0039[1])  */
+    12,  /* index 2 (G0039[2])  */
+    24,  /* index 3 (G0039[3])  */
+    33,  /* index 4 (G0039[4])  */
+    40,  /* index 5 (G0039[5])  */
+    46   /* index 6 (G0039[6])  */
 };
 
 /* ==========================================================
