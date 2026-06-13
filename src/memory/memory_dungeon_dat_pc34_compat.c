@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "dungeon_decompressor_ftl.h"
@@ -425,6 +426,62 @@ void F0502_DUNGEON_FreeTileData_Compat(
                 state->tiles = NULL;
         }
         state->tilesLoaded = 0;
+}
+
+/* BUG0_08 defensive sanity check (DUN-05 audit, v2.7.x).
+ *
+ * ReDMCSB DUNGEON.C:F0163_DUNGEON_LinkThingToList can overfill the
+ * G0283_pT_SquareFirstThings buffer when the dungeon contains more
+ * thing-bearing squares than the count of free slots allocated at
+ * load time. Original PC 3.4 / CSB Atari ST binaries never hit this
+ * in shipped dungeons (676..690 free slots are sufficient), but a
+ * hand-crafted or modded dungeon can.
+ *
+ * Firestaff refuses to overfill silently (defensive). This helper
+ * makes the divergence observable: if the number of squares flagged
+ * with DUNGEON_SQUARE_MASK_THING_LIST exceeds the loaded
+ * squareFirstThingCount, a one-shot warning is logged to stderr.
+ * Returns the overfill count (0 = consistent with the file layout).
+ */
+int F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat(
+        const struct DungeonDatState_Compat* state,
+        const struct DungeonThings_Compat* things)
+{
+        int mapIndex;
+        int thingListSquares = 0;
+        static int s_warned = 0;
+
+        if (state == NULL || things == NULL) return 0;
+        if (!state->tilesLoaded || state->tiles == NULL) return 0;
+        if (state->header.mapCount <= 0) return 0;
+
+        for (mapIndex = 0; mapIndex < (int)state->header.mapCount; ++mapIndex) {
+                const struct DungeonMapTiles_Compat* t = &state->tiles[mapIndex];
+                int i;
+                if (t->squareData == NULL) continue;
+                for (i = 0; i < t->squareCount; ++i) {
+                        if (t->squareData[i] & DUNGEON_SQUARE_MASK_THING_LIST) {
+                                ++thingListSquares;
+                        }
+                }
+        }
+
+        if (thingListSquares > things->squareFirstThingCount) {
+                int overfill = thingListSquares - things->squareFirstThingCount;
+                if (!s_warned) {
+                        s_warned = 1;
+                        fprintf(stderr,
+                                "BUG0_08: dungeon has %d thing-bearing squares but "
+                                "SquareFirstThings buffer holds %d (overfill=%d). "
+                                "Firestaff silently drops the overflow per DUN-05; "
+                                "the original ReDMCSB F0163 would corrupt memory.\n",
+                                thingListSquares,
+                                things->squareFirstThingCount,
+                                overfill);
+                }
+                return overfill;
+        }
+        return 0;
 }
 
 /* ---- Thing data loading (Phase 7) ---- */

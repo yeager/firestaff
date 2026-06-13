@@ -14,6 +14,11 @@ DM1 V1 combat fidelity and bug audit release — systematic audit of the DM1 V1 
 - **Savegame field mask:** Bit layout now matches LOADSAVE.C for all champion fields.
 - **Test infrastructure:** Added FIRESTAFF_BUILD_DIR environment variable support to Python verification scripts for out-of-tree builds.
 - **Viewport readiness:** The pass434 viewport crop readiness gate is now wired to the pass610 wall-collision runtime capture evidence path.
+- **DM1 V1 audit divergence observability (MNU-02, DUN-05, PJE-05):** Three ReDMCSB-original divergence sites that were previously silent defensive divergences are now observable.
+  - **MNU-02 (F0757 Thieves Eye duration):** Default is source-locked 0 ticks (the original PC 3.4 broken-by-uninitialised-stack-residue behaviour). Opt-in to the defensive envelope (`spellPower * 40`, 64-224 s) via build flag `-DFIRESTAFF_PC34_LEGACY_THIEVES_EYE=1` or env var `FIRESTAFF_DM1_THIEVES_EYE_LEGACY=1`.
+  - **DUN-05 (F0163 BUG0_08 SFT overfill):** A new `F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat` helper runs at dungeon load. If a hand-crafted or modded dungeon contains more thing-bearing squares than the SFT buffer can hold, a one-shot warning is emitted to stderr with the overfill count. Defensive behaviour is preserved.
+  - **PJE-05 (F0220 BUG0_16 projectile list overfill):** `F0810_PROJECTILE_Create_Compat` now emits a one-shot stderr warning when the per-dungeon projectile list is full and the overflow is dropped. Cap behaviour unchanged.
+  - See `docs/dm1-v1-functional-divergence-report.md` for full audit context.
 
 ## Bug Audit
 

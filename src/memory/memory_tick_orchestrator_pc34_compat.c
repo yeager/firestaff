@@ -888,6 +888,13 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
     { const char* lp = dungeon->decompressedPath[0] ? dungeon->decompressedPath : dungeonPath; if (!F0502_DUNGEON_LoadTileData_Compat(lp, dungeon)) goto fail;
     if (!F0504_DUNGEON_LoadThingData_Compat(lp, dungeon, things)) goto fail; }
 
+    /* DUN-05 (audit, v2.7.x): surface BUG0_08 overfill divergence
+     * by emitting a one-shot warning if the dungeon has more
+     * thing-bearing squares than the SFT buffer can hold. Defensive
+     * behaviour is preserved; the warning makes the divergence
+     * observable. Ref: ReDMCSB DUNGEON.C:F0163_DUNGEON_LinkThingToList. */
+    (void)F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat(dungeon, things);
+
     /* Set up the world to own these. */
     memset(outWorld, 0, sizeof(*outWorld));
     outWorld->dungeon = dungeon;

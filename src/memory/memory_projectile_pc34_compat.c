@@ -14,8 +14,10 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "memory_projectile_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"  /* F0192 resistance adjustment */
 
 /* ==========================================================
  *  Platform + size asserts (MEDIA016 contract).
@@ -244,8 +246,29 @@ int F0810_PROJECTILE_Create_Compat(
     if (in->direction < 0 || in->direction > 3) return 0;
     if (in->cell < 0 || in->cell > 3) return 0;
 
-    /* BUG0_16 v1 hard cap (plan §1 scope note). */
-    if (list->count >= PROJECTILE_LIST_CAPACITY) return 0;
+    /* BUG0_16 v1 hard cap (plan §1 scope note).
+     *
+     * ReDMCSB PROJEXPL.C:F0220_EXPLOSION_ProcessEvents50To51 can
+     * overfill the per-dungeon projectile list (676 in DM Atari ST
+     * 1.0a, 690 in CSB). Original crashes; Firestaff hard-caps at
+     * PROJECTILE_LIST_CAPACITY (PJE-05 audit, v2.7.x).
+     *
+     * The cap rejection is logged once per process so the divergence
+     * is observable in long-running sessions.
+     */
+    if (list->count >= PROJECTILE_LIST_CAPACITY) {
+        static int s_warned = 0;
+        if (!s_warned) {
+            s_warned = 1;
+            fprintf(stderr,
+                    "BUG0_16: projectile list full (count=%d, cap=%d). "
+                    "Firestaff silently drops the overflow per PJE-05; "
+                    "the original ReDMCSB F0220 would overflow its "
+                    "per-dungeon list.\n",
+                    list->count, PROJECTILE_LIST_CAPACITY);
+        }
+        return 0;
+    }
 
     /* Empty iff the occupied-sentinel bit in reserved3 is clear. */
     slot = -1;
