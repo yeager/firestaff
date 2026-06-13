@@ -187,11 +187,11 @@
     }
   ],
   "status": "PASS760_DM1_V1_MIRROR_CANDIDATE_CHROME_AFTER_NON_CANDIDATE_TRANSITION_LOCKED",
-  "timestampUtc": "2026-06-12T12:35:36.159465+00:00",
+  "timestampUtc": "2026-06-13T11:45:22.121614+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main-20260612142622-mirror-candidate-chrome-non-candidate-transition/build/test_dm1_v1_mirror_candidate_pc34_compat"
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_pc34_compat"
       ],
       "outputTail": "PASS pass760_dm1_v1_mirror_candidate_chrome_after_non_candidate_transition_runtime_regression assertions=269 failures=0",
       "passed": true,

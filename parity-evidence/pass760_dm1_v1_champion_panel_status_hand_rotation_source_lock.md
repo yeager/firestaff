@@ -27,7 +27,7 @@ DM1 V1 champion-panel status-hand C033/C034/C035 box rotation is source-locked a
 - PASS CMakeLists.txt
 
 ## Verification
-- /Users/bosse/.openclaw/workspace-main-20260612142624-champion-panel-status-hand-rotation/build/test_dm1_v1_champion_panel_pc34_compat: rc=0; assertions=851; failures=0
+- build/test_dm1_v1_champion_panel_pc34_compat: rc=0; assertions=851; failures=0
 ~~~
 Assertions: 851
 Failures: 0
