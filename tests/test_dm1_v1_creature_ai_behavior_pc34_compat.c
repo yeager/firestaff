@@ -772,6 +772,149 @@ static void test_fixed_possessions_dragon_steak_table(void) {
               "fixed_drop_dragon: tenth source entry can survive RNG");
 }
 
+/* --- BUG-104 batch 3: ranged/stealth/spell-caster STUB->FULL promotion
+ *     of C03 Wizard Eye, C17 Giant Wasp, C21 Oitu.
+ *
+ *     Source-locked contract tests for the F0804 §(5b) per-type behavior
+ *     branches and the canonical DUNGEON.C G0243 numeric values. */
+
+/* --- Test 28: C03 Wizard Eye profile + per-type dispatch contract --- */
+static void test_wizard_eye_promoted_to_full(void) {
+    const struct CreatureBehaviorProfile_Compat* p;
+
+    p = CREATURE_GetProfile_Compat(CREATURE_TYPE_WIZARD_EYE);
+    if (!p) {
+        g_fail++;
+        fprintf(stderr, "FAIL: %s\n", "wizard_eye_promoted: profile non-null");
+        return;
+    }
+    g_pass++;
+    /* Source: DUNGEON.C G0243[3] Sight=10, smell=2, attack_range=3. */
+    EXPECT_EQ(p->sightRange, 10,
+              "wizard_eye_sight: DUNGEON.C G0243[3] sight=10");
+    EXPECT_EQ(p->smellRange, 2,
+              "wizard_eye_smell: DUNGEON.C G0243[3] smell=2");
+    EXPECT_EQ(p->movementTicks, 10,
+              "wizard_eye_movement: DUNGEON.C G0243[3] MOV=10");
+    EXPECT_EQ(p->attackTicks, 21,
+              "wizard_eye_attack_ticks: DUNGEON.C G0243[3] ATT_TICKS=21");
+    EXPECT_EQ(p->baseAttack, 58,
+              "wizard_eye_attack: DUNGEON.C G0243[3] ATTACK=58");
+    EXPECT_EQ(p->baseHealth, 40,
+              "wizard_eye_hp: DUNGEON.C G0243[3] HP=40");
+    EXPECT_EQ(p->dexterity, 80,
+              "wizard_eye_dex: DUNGEON.C G0243[3] DEX=80");
+    EXPECT_EQ(p->baseDefense, 30,
+              "wizard_eye_def: DUNGEON.C G0243[3] DEF=30");
+    EXPECT_EQ(p->attackType, COMBAT_ATTACK_MAGIC,
+              "wizard_eye_attackType: G0243[3] AttackType=5 (MAGIC)");
+    /* Source: 0x04B4 decoded LEVITATION=0x0020, SIDE_ATTACK=0x0004. */
+    EXPECT_EQ(p->attributes & CREATURE_ATTR_MASK_LEVITATION,
+              CREATURE_ATTR_MASK_LEVITATION,
+              "wizard_eye_levitation: 0x04B4 LEVITATION bit");
+    EXPECT_EQ(p->attributes & CREATURE_ATTR_MASK_SIDE_ATTACK,
+              CREATURE_ATTR_MASK_SIDE_ATTACK,
+              "wizard_eye_side_attack: 0x04B4 SIDE_ATTACK bit");
+    EXPECT_EQ(p->implementationTier, CREATURE_IMPL_TIER_FULL,
+              "wizard_eye_tier: STUB->FULL (BUG-104 batch 3)");
+}
+
+/* --- Test 29: C17 Giant Wasp profile + per-type dispatch contract --- */
+static void test_giant_wasp_promoted_to_full(void) {
+    const struct CreatureBehaviorProfile_Compat* p;
+
+    p = CREATURE_GetProfile_Compat(CREATURE_TYPE_GIANT_WASP);
+    if (!p) {
+        g_fail++;
+        fprintf(stderr, "FAIL: %s\n", "giant_wasp_promoted: profile non-null");
+        return;
+    }
+    g_pass++;
+    /* Source: DUNGEON.C G0243[17] Sight=2, smell=4, attack_range=1. */
+    EXPECT_EQ(p->sightRange, 2,
+              "giant_wasp_sight: DUNGEON.C G0243[17] sight=2");
+    EXPECT_EQ(p->smellRange, 4,
+              "giant_wasp_smell: DUNGEON.C G0243[17] smell=4");
+    EXPECT_EQ(p->movementTicks, 1,
+              "giant_wasp_movement: DUNGEON.C G0243[17] MOV=1 (fastest)");
+    EXPECT_EQ(p->attackTicks, 16,
+              "giant_wasp_attack_ticks: DUNGEON.C G0243[17] ATT_TICKS=16");
+    EXPECT_EQ(p->baseAttack, 28,
+              "giant_wasp_attack: DUNGEON.C G0243[17] ATTACK=28");
+    EXPECT_EQ(p->baseHealth, 8,
+              "giant_wasp_hp: DUNGEON.C G0243[17] HP=8");
+    EXPECT_EQ(p->dexterity, 150,
+              "giant_wasp_dex: DUNGEON.C G0243[17] DEX=150 (highest)");
+    EXPECT_EQ(p->baseDefense, 180,
+              "giant_wasp_def: DUNGEON.C G0243[17] DEF=180 (highest)");
+    EXPECT_EQ(p->poisonAttack, 20,
+              "giant_wasp_poison: DUNGEON.C G0243[17] POISON=20 (sting)");
+    EXPECT_EQ(p->attackType, COMBAT_ATTACK_SHARP,
+              "giant_wasp_attackType: G0243[17] AttackType=4 (SHARP)");
+    /* Source: 0x04A0 decoded LEVITATION=0x0020. */
+    EXPECT_EQ(p->attributes & CREATURE_ATTR_MASK_LEVITATION,
+              CREATURE_ATTR_MASK_LEVITATION,
+              "giant_wasp_levitation: 0x04A0 LEVITATION bit");
+    EXPECT_EQ(p->implementationTier, CREATURE_IMPL_TIER_FULL,
+              "giant_wasp_tier: STUB->FULL (BUG-104 batch 3)");
+}
+
+/* --- Test 30: C21 Oitu profile + per-type dispatch contract --- */
+static void test_oitu_promoted_to_full(void) {
+    const struct CreatureBehaviorProfile_Compat* p;
+
+    p = CREATURE_GetProfile_Compat(CREATURE_TYPE_OITU);
+    if (!p) {
+        g_fail++;
+        fprintf(stderr, "FAIL: %s\n", "oitu_promoted: profile non-null");
+        return;
+    }
+    g_pass++;
+    /* Source: DUNGEON.C G0243[21] Sight=2, smell=5, attack_range=1. */
+    EXPECT_EQ(p->sightRange, 2,
+              "oitu_sight: DUNGEON.C G0243[21] sight=2");
+    EXPECT_EQ(p->smellRange, 5,
+              "oitu_smell: DUNGEON.C G0243[21] smell=5");
+    EXPECT_EQ(p->movementTicks, 7,
+              "oitu_movement: DUNGEON.C G0243[21] MOV=7");
+    EXPECT_EQ(p->attackTicks, 15,
+              "oitu_attack_ticks: DUNGEON.C G0243[21] ATT_TICKS=15");
+    EXPECT_EQ(p->baseAttack, 130,
+              "oitu_attack: DUNGEON.C G0243[21] ATTACK=130 (very high)");
+    EXPECT_EQ(p->baseHealth, 77,
+              "oitu_hp: DUNGEON.C G0243[21] HP=77");
+    EXPECT_EQ(p->dexterity, 60,
+              "oitu_dex: DUNGEON.C G0243[21] DEX=60");
+    EXPECT_EQ(p->baseDefense, 33,
+              "oitu_def: DUNGEON.C G0243[21] DEF=33");
+    EXPECT_EQ(p->attackType, COMBAT_ATTACK_NORMAL,
+              "oitu_attackType: G0243[21] AttackType=3 (NORMAL)");
+    EXPECT_EQ(p->implementationTier, CREATURE_IMPL_TIER_FULL,
+              "oitu_tier: STUB->FULL (BUG-104 batch 3)");
+}
+
+/* --- Test 31: §(5b) per-type dispatch coverage for the three new types --- */
+static void test_batch3_per_type_dispatch_coverage(void) {
+    int fullTypes[] = {
+        CREATURE_TYPE_WIZARD_EYE,
+        CREATURE_TYPE_GIANT_WASP,
+        CREATURE_TYPE_OITU
+    };
+    int i;
+    for (i = 0; i < 3; ++i) {
+        const struct CreatureBehaviorProfile_Compat* p =
+            CREATURE_GetProfile_Compat(fullTypes[i]);
+        if (!p) {
+            g_fail++;
+            fprintf(stderr, "FAIL: %s\n", "batch3_coverage: profile non-null");
+            continue;
+        }
+        g_pass++;
+        EXPECT_EQ(p->implementationTier, CREATURE_IMPL_TIER_FULL,
+                  "batch3_coverage: tier=FULL (BUG-104 batch 3)");
+    }
+}
+
 int main(void) {
     printf("DM1 V1 Creature AI Behavior CTest Gate\n");
     printf("Source: ReDMCSB GROUP.C, MOVESENS.C, DEFS.H\n\n");
@@ -802,6 +945,10 @@ int main(void) {
     test_fixed_possessions_animated_armour_are_cursed();
     test_fixed_possessions_rockpile_random_flags();
     test_fixed_possessions_dragon_steak_table();
+    test_wizard_eye_promoted_to_full();
+    test_giant_wasp_promoted_to_full();
+    test_oitu_promoted_to_full();
+    test_batch3_per_type_dispatch_coverage();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
