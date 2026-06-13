@@ -1,3 +1,22 @@
+# Firestaff v2.7.12
+
+Patch release focused on the post-v2.7.11 DM1 V1 hardening batch.
+
+## Fixes
+
+- Added the original-DOS in-dungeon movement capture route using VGA mode, no sound, keyboard simulation of digital joystick, and source-locked Keypad-5 movement after dungeon entry.
+- Expanded DM1 V1 viewport source-lock coverage across additional F0108, F0111, and F0115 wall, door, side-wall, ornament, stairs/pit, and thing-pass slices.
+- Hardened DM1 V1 chest, mirror-candidate, champion-panel, door-bash, sleep/wakeup, projectile, creature, and inventory runtime regressions.
+- Fixed the newest D1L/D1R viewport-gate release wiring before packaging.
+
+## Verification
+
+- GitHub Actions verify workflow passed on `main` at `ed244b866` before release prep.
+- Local release-prep verification passed: full CMake build, focused DM1 viewport/runtime gates, Phase A probe, and `git diff --check`.
+- Release workflow builds and packages macOS arm64/x86_64, Windows x86_64, Linux x86_64, and Linux arm64 artifacts.
+
+---
+
 # Firestaff v2.7.11
 
 Patch release for DM1 V1 regressions reported after v2.7.10.

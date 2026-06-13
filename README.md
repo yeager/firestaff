@@ -82,17 +82,17 @@ coordinate space.
 
 ## Latest Release
 
-**Current version:** `2.7.5`
+**Current version:** `2.7.12`
 
-The latest release fixes DM1 launch regressions reported in v2.7.4 on macOS:
+The latest release packages the post-v2.7.11 DM1 hardening batch:
 
-- Restored the initial FTL/SWSH animation in nested data-directory layouts.
-- Restored the source-locked TITLE animation palette steps.
-- Fixed Entrance door button clicks after live macOS window-size changes.
-- Corrected wall inscription source-font rendering and slowed the title cadence
-  to the V1 tick path.
-- Cleaned stale Firestaff queue failures and made the CSB DSA probe mkdir path
-  portable for CI.
+- Added original-DOS in-dungeon movement capture proof using VGA mode and
+  source-locked keyboard-simulation movement.
+- Expanded DM1 V1 viewport source-lock coverage across additional wall, door,
+  side-wall, ornament, stairs/pit, and thing-pass slices.
+- Hardened chest, mirror-candidate, champion-panel, door-bash, sleep/wakeup,
+  projectile, creature, and inventory regressions.
+- Fixed release wiring for the newest D1L/D1R viewport gates before packaging.
 
 See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for the release history.
 
