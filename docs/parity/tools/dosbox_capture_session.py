@@ -182,7 +182,27 @@ ENTRANCE_ENTER_CLICK_FRAC = (696.0 / 799.0, 160.0 / 599.0)
 # framebuffer-fractional target to an absolute on-screen click.
 MACOS_WINDOW_TITLEBAR_H = 28
 
-DOSBOX_PROCESS_NAMES = ("DOSBox", "DOSBox Staging", "dosbox", "dosbox-staging")
+# Pseudo-key for the first in-dungeon movement proof.  ReDMCSB PC COMMAND.C
+# lines 396-405 maps the movement arrow panel through screen-relative zones;
+# line 398 maps C003_COMMAND_MOVE_FORWARD to C070_ZONE_MOVE_FORWARD.  The PC
+# coordinate box is x=263..289, y=125..145, so this uses the center of that
+# source zone in the normalized 320x200 framebuffer.  The live movement
+# receipt records this source fact and proves the before/after viewport hash
+# changed; the proprietary frames themselves stay in the operator-local
+# capture root.
+DUNGEON_MOVE_FORWARD_CLICK_KEY = "dungeon_move_forward_click"
+DUNGEON_MOVE_FORWARD_CLICK_SCREEN_COORD = (276, 135)
+DUNGEON_MOVE_FORWARD_CLICK_FRAC = (
+    DUNGEON_MOVE_FORWARD_CLICK_SCREEN_COORD[0] / 320.0,
+    DUNGEON_MOVE_FORWARD_CLICK_SCREEN_COORD[1] / 200.0,
+)
+DUNGEON_MOVE_FORWARD_SOURCE = (
+    "ReDMCSB COMMAND.C:396-405 / line 398: "
+    "C003_COMMAND_MOVE_FORWARD -> C070_ZONE_MOVE_FORWARD, "
+    "screen-relative x=263..289 y=125..145"
+)
+
+DOSBOX_PROCESS_NAMES = ("dosbox", "dosbox-staging", "DOSBox Staging", "DOSBox")
 DOSBOX_BIN_CANDIDATES = ("dosbox-staging", "dosbox")
 MACOS_DOSBOX_STAGING_APP_BIN = Path("/Applications/DOSBox Staging.app/Contents/MacOS/dosbox")
 # macOS application-bundle names that ``open -a NAME`` can activate to raise
@@ -194,12 +214,13 @@ MACOS_DOSBOX_STAGING_APP_BIN = Path("/Applications/DOSBox Staging.app/Contents/M
 # wrong app and DOSBox never sees Ctrl+F5 or the route keys.  ``open -a`` does
 # reliably activate the running instance without spawning a duplicate, which is
 # the focus half of the original-capture blocker.
-MACOS_DOSBOX_OPEN_APP_NAMES = ("DOSBox Staging", "DOSBox")
+MACOS_DOSBOX_OPEN_APP_NAMES = ("DOSBox Staging",)
 BLACKOUT_NONBLACK_THRESH = 0.005
 RUNTIME_DATA_REQUIRED_FILES = ("GRAPHICS.DAT", "DUNGEON.DAT")
 LIVE_INPUT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.live_inputs.v1"
 LIVE_ABORT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.abort.v1"
 LIVE_FOCUS_RECOVERY_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.focus_recovery.v1"
+LIVE_MOVEMENT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.in_dungeon_movement.v1"
 FOCUS_MISMATCH_FRAME_LIMIT = 4
 RAWSHOT_FOCUS_RECOVERY_REASONS = (
     "rawshot_focus_recovered",
@@ -759,6 +780,64 @@ def dry_run(plan: list[PlanStep],
             pins = receipt.get("live_conf_pins", {})
             if pins.get("machine") != "svga_s3" or pins.get("memsize") != "16":
                 failures.append("live input receipt: conf pin metadata mismatch")
+        movement_point = _framebuffer_click_point(
+            (100, 200, 1024, 768 + MACOS_WINDOW_TITLEBAR_H),
+            DUNGEON_MOVE_FORWARD_CLICK_FRAC,
+        )
+        if movement_point is None:
+            failures.append("dungeon movement click: framebuffer point did not resolve")
+        movement_before = FrameQuality(
+            label="capture_01_ingame_start",
+            state="dungeon_gameplay",
+            width=320,
+            height=200,
+            full_nonblack=0.5,
+            viewport_nonblack=0.9,
+            rightcol_nonblack=0.1,
+            champion_nonblack=0.6,
+            blackout=False,
+            capture_backend="fixture",
+            normalized_rgb_sha256="a" * 64,
+        )
+        movement_after = FrameQuality(
+            label="capture_02_ingame_step_forward_0001",
+            state="dungeon_gameplay",
+            width=320,
+            height=200,
+            full_nonblack=0.6,
+            viewport_nonblack=0.92,
+            rightcol_nonblack=0.1,
+            champion_nonblack=0.6,
+            blackout=False,
+            capture_backend="fixture",
+            normalized_rgb_sha256="b" * 64,
+        )
+        movement_receipt_path = _write_live_movement_receipt(
+            capture_root,
+            before_quality=movement_before,
+            after_quality=movement_after,
+            before_viewport_sha256="c" * 64,
+            after_viewport_sha256="d" * 64,
+            before_path=capture_root / "original" / "01_ingame_start.png",
+            after_path=capture_root / "original" / "02_ingame_step_forward.png",
+            movement_changed=True,
+        )
+        try:
+            movement_receipt = json.loads(
+                movement_receipt_path.read_text(encoding="utf-8")
+            )
+        except Exception as exc:
+            failures.append(f"movement receipt: could not parse JSON: {exc}")
+        else:
+            if movement_receipt.get("schema") != LIVE_MOVEMENT_RECEIPT_SCHEMA:
+                failures.append("movement receipt: schema mismatch")
+            if movement_receipt.get("action_key") != DUNGEON_MOVE_FORWARD_CLICK_KEY:
+                failures.append("movement receipt: action key mismatch")
+            if not movement_receipt.get("viewport_rgb_changed"):
+                failures.append("movement receipt: viewport change flag missing")
+            coord = movement_receipt.get("screen_coord_320x200", {})
+            if coord.get("x") != 276 or coord.get("y") != 135:
+                failures.append("movement receipt: source-zone coordinate mismatch")
         abort_quality = FrameQuality(
             label="entrance_menu_0006",
             state="title_screen",
@@ -1499,6 +1578,12 @@ def _frame_quality(
     )
 
 
+def _viewport_rgb_sha256(img) -> str:
+    normalized = img.convert("RGB").resize((320, 200))
+    viewport = normalized.crop((0, 33, 224, 169))
+    return hashlib.sha256(viewport.tobytes()).hexdigest()
+
+
 def _write_quality_log(capture_root: Path, quality: FrameQuality) -> None:
     log_path = capture_root / "state-samples" / "quality.jsonl"
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1676,16 +1761,17 @@ def _attempt_focus_recovery(
     return reason, rawshot_quality, rawshot_meta
 
 
-def _entrance_enter_click_point(
-        bounds: tuple[int, int, int, int] | None) -> tuple[int, int] | None:
-    """Map the ENTER target to an absolute on-screen click point.
+def _framebuffer_click_point(
+        bounds: tuple[int, int, int, int] | None,
+        frac: tuple[float, float]) -> tuple[int, int] | None:
+    """Map a normalized framebuffer target to an absolute screen point.
 
     ``bounds`` is the DOSBox window (x, y, w, h) in screen points.  The
     content area starts below the macOS title bar; the DM framebuffer is
-    letterboxed 4:3 inside that content rectangle, and ENTER sits at
-    ``ENTRANCE_ENTER_CLICK_FRAC`` of the framebuffer.  Returns ``None``
-    when the window bounds are unavailable so the caller can fail loudly
-    instead of clicking a guessed coordinate.
+    letterboxed 4:3 inside that content rectangle.  ``frac`` is x/y inside
+    the normalized framebuffer.  Returns ``None`` when the window bounds are
+    unavailable so the caller can fail loudly instead of clicking a guessed
+    coordinate.
     """
     if bounds is None:
         return None
@@ -1703,10 +1789,16 @@ def _entrance_enter_click_point(
         disp_h = w / target
     off_x = (w - disp_w) / 2.0
     off_y = (content_h - disp_h) / 2.0
-    fx, fy = ENTRANCE_ENTER_CLICK_FRAC
+    fx, fy = frac
     sx = x + off_x + fx * disp_w
     sy = y + MACOS_WINDOW_TITLEBAR_H + off_y + fy * disp_h
     return int(round(sx)), int(round(sy))
+
+
+def _entrance_enter_click_point(
+        bounds: tuple[int, int, int, int] | None) -> tuple[int, int] | None:
+    """Map the ENTER target to an absolute on-screen click point."""
+    return _framebuffer_click_point(bounds, ENTRANCE_ENTER_CLICK_FRAC)
 
 
 def _press_entrance_enter_click() -> None:
@@ -1729,6 +1821,25 @@ def _press_entrance_enter_click() -> None:
     time.sleep(0.3)
     subprocess.run(["cliclick", f"c:{px},{py}"], check=True)
     time.sleep(0.4)
+    subprocess.run(["cliclick", f"c:{px},{py}"], check=True)
+
+
+def _press_dungeon_move_forward_click() -> None:
+    """Click the original PC C070 forward-arrow movement zone once."""
+    if shutil.which("cliclick") is None:
+        raise RuntimeError("cliclick is required for the dungeon forward click")
+    _activate_dosbox()
+    point = _framebuffer_click_point(
+        _dosbox_window_bounds(),
+        DUNGEON_MOVE_FORWARD_CLICK_FRAC,
+    )
+    if point is None:
+        raise RuntimeError(
+            "cannot resolve DOSBox window bounds for the dungeon forward click"
+        )
+    px, py = point
+    subprocess.run(["cliclick", f"m:{px},{py}"], check=True)
+    time.sleep(0.2)
     subprocess.run(["cliclick", f"c:{px},{py}"], check=True)
 
 
@@ -1767,6 +1878,9 @@ def _press_key(key: str) -> None:
     time.sleep(0.25)
     if key == ENTRANCE_ENTER_CLICK_KEY:
         _press_entrance_enter_click()
+        return
+    if key == DUNGEON_MOVE_FORWARD_CLICK_KEY:
+        _press_dungeon_move_forward_click()
         return
     # Re-raise the DOSBox window before every keystroke.  Without this the
     # key event is delivered to whatever app happens to be frontmost
@@ -1833,7 +1947,11 @@ def _last_key_dispatch_from_log(capture_root: Path) -> KeyDispatch | None:
 
 
 def _dispatch_key_for_live_step(capture_root: Path, step_name: str, key: str) -> None:
-    mapped = KEY_MAP.get(key, key if len(key) == 1 else "")
+    pseudo_map = {
+        ENTRANCE_ENTER_CLICK_KEY: "mouse:left:entrance_enter",
+        DUNGEON_MOVE_FORWARD_CLICK_KEY: "mouse:left:c070_move_forward",
+    }
+    mapped = KEY_MAP.get(key, pseudo_map.get(key, key if len(key) == 1 else ""))
     before_app = _frontmost_process_name()
     before_bounds = _bounds_text(_dosbox_window_bounds())
     dispatch = KeyDispatch(
@@ -1962,6 +2080,7 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
             "output=opengl",
             "windowresolution=1024x768",
             "viewport_resolution=1024x768",
+            f"mapperfile={capture_root / 'dosbox_capture.mapper.map'}",
             "",
             "[dosbox]",
             "machine=svga_s3",
@@ -1969,6 +2088,7 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
             "",
             "[render]",
             "frameskip=0",
+            "aspect=auto",
             # No CRT shader: the dosbox-rawshot backend drives DOSBox's own
             # rendered screenshot (Alt+F5) because macOS swallows the default
             # raw-screenshot Ctrl+F5 binding.  glshader=none keeps the
@@ -1988,6 +2108,16 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
             # actually delivers), and the loader accepts raw/PNG/BMP so a
             # future operator who rebinds the raw key still works unchanged.
             "default_image_capture_formats=rendered raw",
+            "",
+            "[mouse]",
+            # The entrance click is proven with DOSBox Staging's default
+            # onclick capture path.  Keep it explicit so the live receipt
+            # records the mouse mode instead of inheriting a global default.
+            "mouse_capture=onclick",
+            "mouse_sensitivity=100",
+            "mouse_raw_input=true",
+            "dos_mouse_driver=true",
+            "dos_mouse_immediate=true",
             "",
             "[autoexec]",
             f"MOUNT C {runtime_dir}",
@@ -2041,13 +2171,21 @@ def _write_live_input_receipt(
             "output": "opengl",
             "windowresolution": "1024x768",
             "viewport_resolution": "1024x768",
+            "mapperfile": str(capture_root / "dosbox_capture.mapper.map"),
             "machine": "svga_s3",
             "memsize": "16",
             "frameskip": "0",
+            "aspect": "auto",
+            "scaler": "n/a (DOSBox Staging OpenGL/glshader path)",
             "glshader": "none",
             "core": "dynamic",
             "cycles": "max",
             "default_image_capture_formats": "rendered raw",
+            "mouse_capture": "onclick",
+            "mouse_sensitivity": "100",
+            "mouse_raw_input": "true",
+            "dos_mouse_driver": "true",
+            "dos_mouse_immediate": "true",
         },
     }
     out = capture_root / "dosbox_capture.live_inputs.json"
@@ -2234,6 +2372,96 @@ def _write_live_abort_receipt(
     return out
 
 
+def _write_live_movement_receipt(
+        capture_root: Path,
+        before_quality: FrameQuality,
+        after_quality: FrameQuality,
+        before_viewport_sha256: str,
+        after_viewport_sha256: str,
+        before_path: Path,
+        after_path: Path,
+        movement_changed: bool) -> Path:
+    """Write the local hash/density proof for the in-dungeon movement click."""
+    capture_root.mkdir(parents=True, exist_ok=True)
+    key_dispatch = _last_key_dispatch_from_log(capture_root)
+    receipt = {
+        "schema": LIVE_MOVEMENT_RECEIPT_SCHEMA,
+        "capture_root": str(capture_root),
+        "action_key": DUNGEON_MOVE_FORWARD_CLICK_KEY,
+        "input_method": "absolute_mouse_click_with_mouse_capture_onclick",
+        "source_anchor": DUNGEON_MOVE_FORWARD_SOURCE,
+        "screen_coord_320x200": {
+            "x": DUNGEON_MOVE_FORWARD_CLICK_SCREEN_COORD[0],
+            "y": DUNGEON_MOVE_FORWARD_CLICK_SCREEN_COORD[1],
+        },
+        "framebuffer_fraction": {
+            "x": DUNGEON_MOVE_FORWARD_CLICK_FRAC[0],
+            "y": DUNGEON_MOVE_FORWARD_CLICK_FRAC[1],
+        },
+        "before_frame": str(before_path),
+        "after_frame": str(after_path),
+        "before_quality": asdict(before_quality),
+        "after_quality": asdict(after_quality),
+        "before_viewport_rgb_sha256": before_viewport_sha256,
+        "after_viewport_rgb_sha256": after_viewport_sha256,
+        "normalized_rgb_changed": (
+            before_quality.normalized_rgb_sha256
+            != after_quality.normalized_rgb_sha256
+        ),
+        "viewport_rgb_changed": movement_changed,
+        "last_key_dispatch": asdict(key_dispatch) if key_dispatch is not None else None,
+        "non_claims": [
+            "This is original-DOS movement-capture evidence, not a pixel-parity promotion.",
+            "The proprietary game frames remain in the operator-local capture root.",
+        ],
+    }
+    out = capture_root / "dosbox_capture.in_dungeon_movement.json"
+    out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+                   encoding="utf-8")
+    return out
+
+
+def _capture_after_movement_until_distinct(
+        capture_root: Path,
+        before_viewport_sha256: str,
+        capture_backend: str,
+        timeout_s: float,
+        screenshot_int: float) -> tuple[object, dict[str, str], FrameQuality, str, bool]:
+    """Capture after a movement click until the viewport hash changes."""
+    deadline = time.time() + timeout_s
+    sample = 0
+    last_img = None
+    last_meta: dict[str, str] = {}
+    last_quality: FrameQuality | None = None
+    last_viewport_sha256 = before_viewport_sha256
+    while time.time() < deadline:
+        sample += 1
+        label = f"capture_02_ingame_step_forward_{sample:04d}"
+        img, capture_meta = _screenshot_frame(capture_root, label, capture_backend)
+        state = classify(img)
+        quality = _frame_quality(img, label, state, capture_meta)
+        _write_quality_log(capture_root, quality)
+        viewport_sha256 = _viewport_rgb_sha256(img)
+        print(
+            f"movement sample={sample} state={state} "
+            f"viewport_sha_changed={int(viewport_sha256 != before_viewport_sha256)} "
+            f"viewport_nonblack={quality.viewport_nonblack:.4f} "
+            f"rightcol_nonblack={quality.rightcol_nonblack:.4f} "
+            f"backend={quality.capture_backend}",
+            file=sys.stderr,
+        )
+        last_img = img
+        last_meta = capture_meta
+        last_quality = quality
+        last_viewport_sha256 = viewport_sha256
+        if state == "dungeon_gameplay" and viewport_sha256 != before_viewport_sha256:
+            return img, capture_meta, quality, viewport_sha256, True
+        time.sleep(screenshot_int)
+    if last_img is None or last_quality is None:
+        raise RuntimeError("movement capture loop produced no samples")
+    return last_img, last_meta, last_quality, last_viewport_sha256, False
+
+
 def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
     """Drive a real DOSBox Staging DM1 session and capture normalized frames."""
     if not _DETECTOR_OK:
@@ -2364,16 +2592,56 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
             "capture_01_ingame_start",
             args.capture_backend,
         )
-        start.save(original_dir / "01_ingame_start.png")
-        _press_key("Key-Up")
-        time.sleep(1.0)
-        step, _meta = _screenshot_frame(
-            capture_root,
-            "capture_02_ingame_step_forward",
-            args.capture_backend,
+        start_path = original_dir / "01_ingame_start.png"
+        start.save(start_path)
+        start_quality = _frame_quality(
+            start,
+            "capture_01_ingame_start",
+            classify(start),
+            _meta,
         )
-        step.save(original_dir / "02_ingame_step_forward.png")
-        print(f"PASS live captures written: {original_dir}")
+        _write_quality_log(capture_root, start_quality)
+        start_viewport_sha256 = _viewport_rgb_sha256(start)
+
+        print(f"send={DUNGEON_MOVE_FORWARD_CLICK_KEY}", file=sys.stderr)
+        _dispatch_key_for_live_step(
+            capture_root,
+            "in_dungeon_move_forward",
+            DUNGEON_MOVE_FORWARD_CLICK_KEY,
+        )
+        step, _step_meta, step_quality, step_viewport_sha256, moved = (
+            _capture_after_movement_until_distinct(
+                capture_root,
+                start_viewport_sha256,
+                args.capture_backend,
+                timeout_s=8.0,
+                screenshot_int=args.screenshot_int,
+            )
+        )
+        step_path = original_dir / "02_ingame_step_forward.png"
+        step.save(step_path)
+        movement_receipt = _write_live_movement_receipt(
+            capture_root,
+            before_quality=start_quality,
+            after_quality=step_quality,
+            before_viewport_sha256=start_viewport_sha256,
+            after_viewport_sha256=step_viewport_sha256,
+            before_path=start_path,
+            after_path=step_path,
+            movement_changed=moved,
+        )
+        if not moved:
+            print(
+                "FAIL in-dungeon movement: C070 forward-arrow mouse click did "
+                "not change the viewport hash; see "
+                f"{movement_receipt}",
+                file=sys.stderr,
+            )
+            return 1
+        print(
+            f"PASS live captures written: {original_dir} "
+            f"movement_receipt={movement_receipt}"
+        )
         return 0
     finally:
         proc.terminate()
