@@ -5,6 +5,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ## Maintenance Cadence
 
 - 🔧 Update `TODO.md` and `DONE.md` at least twice per day while Firestaff work is active.
+- 🔧 2026-06-13 08:05 watchdog pass: local main fast-forwarded from `d0b112eb2` to `8fb28ed4` (origin/main) integrating `test_dm1_v1_chest_scroll_wheel_closed_panel_noop_pc34_compat`. Local HEAD now in sync with origin/main. The four 04:44 worker lanes (csb-parity d1l2/d1r2 f0108 wall composition, coding chest non-leader hand mutator combo, coding mirror c160 resurrect close, parity d0l/d0r f0108 wall composition) all stalled with no commits and no active subagent sessions after 3.5h. The seven 03:54 Codex coding workers are still active in this session store (3-12 min old) and continue to produce; current active coding worker count (7) is well over the 2 coding cap. No refill this pass; the next refill should wait for the live workers to drain and re-enforce the 2+2 cap.
 - 🔧 Keep `TODO.md` limited to things that still need fixing, building, verification, or release follow-up.
 - 🔧 Keep `DONE.md` limited to finished, verified work.
 
