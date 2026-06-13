@@ -1,4 +1,4 @@
-#include "csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat.h"
+#include "firestaff/csb/v1/viewport/d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat.h"
 
 #include <stdio.h>
 
