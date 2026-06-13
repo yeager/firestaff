@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -139,7 +140,7 @@ def main() -> int:
         require(test, needle, f"runtime movement-core case {needle}")
 
     source_lock_stdout = run([sys.executable, str(ROOT / "tools/verify_v1_movement_legality_source_lock.py")])
-    movement_core_stdout = run([str(ROOT / "build/test_dm1_v1_movement_core_pc34_compat")])
+    movement_core_stdout = run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_movement_core_pc34_compat")])
 
     status = "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN"
     manifest = {

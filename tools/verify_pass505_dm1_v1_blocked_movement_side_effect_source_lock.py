@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -154,7 +155,7 @@ def main() -> int:
     ]:
         require(test, needle, f"runtime blocked-movement assertion {needle}")
 
-    runtime_stdout = run([str(ROOT / "build/test_dm1_v1_movement_command_core_pc34_compat")])
+    runtime_stdout = run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_movement_command_core_pc34_compat")])
 
     status = "PASS505_DM1_V1_BLOCKED_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN"
     manifest = {

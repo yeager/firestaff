@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -43,9 +44,10 @@ def source_block(file_name: str, start: int, end: int) -> str:
 
 
 def run_probe(exe_name: str) -> str:
-    exe = ROOT / "build" / exe_name
+    build_dir = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build")))
+    exe = build_dir / exe_name
     if not exe.exists():
-        subprocess.run(["cmake", "--build", str(ROOT / "build"), "--target", exe_name, "-j2"], cwd=ROOT, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        subprocess.run(["cmake", "--build", str(build_dir), "--target", exe_name, "-j2"], cwd=ROOT, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     return subprocess.run([str(exe)], cwd=ROOT, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).stdout
 
 
@@ -128,7 +130,7 @@ def main() -> int:
         ], "firestaff_m11_touch_live_dispatch_gate_probe.c")
         require("pass350_dm1_v1_touch_live_dispatch_gate" in cmake, "pass350 CTest missing")
 
-        if (ROOT / "build").exists():
+        if Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))).exists():
             pointer_output = run_probe("test_touch_pointer_input_pc34_compat_integration")
             live_output = run_probe("firestaff_m11_touch_live_dispatch_gate_probe")
             require("touchPointerInputInvariantOk=1" in pointer_output, "pointer probe invariant failed")

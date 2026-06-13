@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -34,10 +35,11 @@ def require(condition: bool, message: str) -> None:
 
 
 def run_probe() -> str:
-    exe = ROOT / "build/firestaff_m11_touch_live_dispatch_gate_probe"
+    build_dir = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build")))
+    exe = build_dir / "firestaff_m11_touch_live_dispatch_gate_probe"
     if not exe.exists():
         subprocess.run(
-            ["cmake", "--build", str(ROOT / "build"), "--target", "firestaff_m11_touch_live_dispatch_gate_probe", "-j2"],
+            ["cmake", "--build", str(build_dir), "--target", "firestaff_m11_touch_live_dispatch_gate_probe", "-j2"],
             cwd=ROOT,
             check=True,
             stdout=subprocess.PIPE,

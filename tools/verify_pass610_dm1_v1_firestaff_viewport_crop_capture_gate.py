@@ -112,9 +112,10 @@ def audit_source() -> list[dict[str, object]]:
 def find_probe() -> Path:
     name = "firestaff_m11_wall_collision_capture_probe"
     candidates: list[Path] = []
-    build_dir = os.environ.get("BUILD_DIR")
-    if build_dir:
-        candidates.append(Path(build_dir) / name)
+    for var in ("FIRESTAFF_BUILD_DIR", "BUILD_DIR"):
+        env_dir = os.environ.get(var)
+        if env_dir:
+            candidates.append(Path(env_dir) / name)
     candidates.extend([
         Path.cwd() / name,
         ROOT / "build" / name,

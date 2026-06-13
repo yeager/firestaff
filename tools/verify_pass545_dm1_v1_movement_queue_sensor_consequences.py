@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 from datetime import datetime, timezone
@@ -92,10 +93,13 @@ def git(*args: str) -> str:
 
 
 def find_test_exe() -> Path:
-    candidates = [
+    candidates: list[Path] = []
+    if "FIRESTAFF_BUILD_DIR" in os.environ:
+        candidates.append(Path(os.environ["FIRESTAFF_BUILD_DIR"]) / "test_dm1_v1_movement_command_core_pc34_compat")
+    candidates.extend([
         ROOT / "build-pass545" / "test_dm1_v1_movement_command_core_pc34_compat",
         ROOT / "build" / "test_dm1_v1_movement_command_core_pc34_compat",
-    ]
+    ])
     candidates.extend(sorted(ROOT.glob("build*/test_dm1_v1_movement_command_core_pc34_compat")))
     for candidate in candidates:
         if candidate.exists():
@@ -225,7 +229,7 @@ def main() -> int:
             "queueProcessOne": f"dm1_v1_input_command_queue_pc34_compat.c:{qproc_start}-{qproc_end}",
             "queueDiscard": f"dm1_v1_input_command_queue_pc34_compat.c:{qdiscard_start}-{qdiscard_end}",
             "movementCore": f"dm1_v1_movement_command_core_pc34_compat.c:{core_start}-{core_end}",
-            "runtimeExecutable": str(test_exe.relative_to(ROOT)),
+            "runtimeExecutable": str(test_exe.relative_to(ROOT)) if str(test_exe).startswith(str(ROOT)) else str(test_exe),
             "runtimeOutputLastLine": test_out.splitlines()[-1],
         },
         "closedGap": "successful movement dequeues one command, retains later queued input, runs destination sensor consequences, then applies cooldown; blocked movement dequeues the attempted move, discards nonreserved queued input, runs no movement sensor consequences, and does not assign successful-step cooldown.",

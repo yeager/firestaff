@@ -2,6 +2,7 @@
 """Verify pass764 DM1 V1 second-leader champion-panel source lock."""
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -11,7 +12,7 @@ RED = (
     Path.home()
     / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 )
-TEST = ROOT / "build/test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat"
+TEST = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat"
 
 
 def read(path: Path) -> str:
