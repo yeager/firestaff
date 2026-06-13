@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.12  (2026-06-13)",
+    "  - DM1 V1 original capture: added a DOSBox in-dungeon movement route using VGA mode and source-locked keyboard-simulation movement",
+    "  - DM1 V1 viewport: expanded source-lock coverage across additional F0108, F0111, and F0115 wall, door, side-wall, ornament, stairs/pit, and thing-pass slices",
+    "  - DM1 V1 runtime: hardened chest, mirror-candidate, champion-panel, door-bash, sleep/wakeup, projectile, creature, and inventory regressions",
+    "  - Release wiring: fixed the newest D1L/D1R viewport-gate packaging path before tagging",
+    "",
     "V2.7.11  (2026-06-12)",
     "  - DM1 V1 Hall of Champions: fixed mirror-candidate survival and party movement timing so champions no longer drain or die while walking the Hall",
     "  - DM1 V1 mirrors: restored candidate slot ownership during confirm/cancel and preserved mirror runtime state across quick-resume sidecars",
@@ -152,5 +158,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.11";
+    return "2.7.12";
 }
