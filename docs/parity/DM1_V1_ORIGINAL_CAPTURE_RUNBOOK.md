@@ -358,8 +358,10 @@ EXIT
             img.save(self.state_dir / captures[0][0])
             print(f"  Captured: {self.state_dir / captures[0][0]}")
 
-            # One step forward
-            self.press("Key-Up")
+            # One step forward.  The current executable runner selects
+            # "Keyboard Simulation of Digital Joystick" and uses keypad 5,
+            # matching ReDMCSB COMMAND.C:275-281 for C003_MOVE_FORWARD.
+            self.press("Keypad-5")
             time.sleep(1)
             img = self.screenshot()
             img.save(self.state_dir / captures[1][0])
@@ -861,7 +863,7 @@ attempt.
 | `champion_create` never detected | Selector timed out before champion create | Increase selector wait in run() |
 | `dungeon_gameplay` timeout | DOSBox entrance failed; enter not processed | Check that DOSBox has keyboard focus; add extra ENTER |
 | Black viewport region | DOSBox not focused or host capture API returned the wrong/blank window | First try `--capture-backend dosbox-rawshot` so DOSBox writes its own Ctrl+F5 capture into `dosbox-capture/`; otherwise add `osascript -e 'tell app "DOSBox Staging" to activate'` and retry `auto` |
-| Duplicate crop SHA256 | Game state identical — no input was processed | Verify key was sent (check `cliclick` output) |
+| Duplicate crop SHA256 | Game state identical — no input was processed, or the route selected Mouse control mode and then tried keyboard movement | Verify the route selected control option `4` (`Keyboard Simulation of Digital Joystick`) and sent `Keypad-5`; keep the C070 mouse click as diagnostic only |
 | Repeated non-DOSBox frontmost samples across `FOCUS_MISMATCH_FRAME_LIMIT` (4) | macOS window focus drifted off DOSBox; host peekaboo/screencapture backends now show the wrong window | The live route auto-attempts a rawshot-fallback recovery probe (DOSBox's own Ctrl+F5 capture, which is independent of macOS window focus) and writes `dosbox_capture.focus_recovery.json` with the `rawshot_focus_recovered` / `rawshot_focus_unrecoverable` reason.  If the recovery is `rawshot_focus_unrecoverable`, re-focus DOSBox Staging (`osascript -e 'tell app "DOSBox Staging" to activate'`) and retry `--capture-backend dosbox-rawshot` directly. |
 
 ---
@@ -870,14 +872,17 @@ attempt.
 
 The selector in DM1 PC 3.4 works like this:
 
-1. **Title animation** — `Enter` skips to selector
-2. **GRAPHICS screen** — currently selected value underlined; `Up/Down` changes; `Enter` confirms and advances
-3. **SOUND screen** — same UX
-4. **START** — `Enter` from SOUND screen launches the game
+1. **GRAPHICS screen** — type `1` + Return for VGA.
+2. **SOUND screen** — type `1` + Return for No Sound.
+3. **CONTROL screen** — type `4` + Return for Keyboard Simulation of Digital Joystick.
+4. **Entrance wall** — Return activates ENTER because the wall selector cursor starts there.
+5. **Dungeon movement** — `Keypad-5` maps to C003 move-forward through the original PC movement keyboard table.
 
-The selector does NOT respond to raw `0` key presses. You must navigate with arrow keys and confirm with Enter. The Python state machine above uses `downarrow→Enter→0→Enter` etc., but if the first option is already selected, `Enter` alone advances.
-
-**Adjust the run() method** based on how your DOSBox shows the options. If the selector highlights option `1` first, use `DownArrow` to move to option `0` before Enter.
+The live runner still sends the C070 forward-arrow mouse click as a diagnostic
+probe, but it does not promote that path: under the macOS/DOSBox route tested
+on 2026-06-13 the C070 host click was delivered and logged but did not change
+the original viewport. The promoted original-DOS movement row is the
+keyboard-simulation path.
 
 ---
 
