@@ -817,6 +817,10 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_panel_redraw_afte
 list(APPEND M10_SOURCES
     src/dm1/dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat.c
 )
+list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat\\.c$")
+list(APPEND M10_SOURCES
+    src/dm1/dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat.c
+)
 
 add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c)
 target_include_directories(firestaff_m10 PUBLIC
@@ -7344,6 +7348,22 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat
         COMMAND test_dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat
+        PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat
+        PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat
     )
 
     add_executable(test_dm1_v1_mirror_candidate_resurrect_full_c30_chain_pc34_compat
