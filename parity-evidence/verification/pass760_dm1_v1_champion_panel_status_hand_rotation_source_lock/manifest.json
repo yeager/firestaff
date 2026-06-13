@@ -635,12 +635,12 @@
   "schema": "firestaff.parity.pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock.v1",
   "status": "passed",
   "statusToken": "PASS760_DM1_V1_CHAMPION_PANEL_STATUS_HAND_ROTATION_SOURCE_LOCKED",
-  "timestampUtc": "2026-06-13T11:45:22.364510+00:00",
+  "timestampUtc": "2026-06-13T11:48:55.584366+00:00",
   "verificationRuns": [
     {
       "assertions": 851,
       "command": [
-        "build/test_dm1_v1_champion_panel_pc34_compat"
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_pc34_compat"
       ],
       "failures": 0,
       "outputTail": "Assertions: 851\nFailures: 0\nPASS pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock assertions=851",
