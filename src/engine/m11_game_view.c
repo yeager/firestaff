@@ -12232,19 +12232,21 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 graphicIndex);
     if (!slot || !slot->loaded || !slot->pixels ||
-        slot->width != blit->width || slot->height != blit->height) {
+        slot->width == 0 || slot->height == 0) {
         return 0;
     }
     for (y = 0; y < blit->height; ++y) {
         int x;
         int fbY = M11_VIEWPORT_Y + blit->dstY + y;
+        int sy = (slot->height == blit->height) ? y : (y * (int)slot->height / blit->height);
         if (fbY < 0 || fbY >= fbH) continue;
         for (x = 0; x < blit->width; ++x) {
             int fbX = M11_VIEWPORT_X + blit->dstX + x;
-            int sx = blit->width - 1 - x;
+            int sx_flipped = blit->width - 1 - x;
+            int sx = (slot->width == blit->width) ? sx_flipped : (sx_flipped * (int)slot->width / blit->width);
             unsigned char pixel;
             if (fbX < 0 || fbX >= fbW) continue;
-            pixel = slot->pixels[y * (int)slot->width + sx];
+            pixel = slot->pixels[sy * (int)slot->width + sx];
             if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
                 continue;
             }
@@ -12292,15 +12294,27 @@ static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* sta
                                                        (unsigned int)blit->graphicIndex);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 graphicIndex);
-    if (!slot || slot->width != blit->width || slot->height != blit->height) {
+    if (!slot || slot->width == 0 || slot->height == 0) {
         return 0;
     }
-    M11_AssetLoader_BlitRegion(slot,
-                               0, 0, blit->width, blit->height,
-                               framebuffer, fbW, fbH,
-                               M11_VIEWPORT_X + blit->dstX,
-                               M11_VIEWPORT_Y + blit->dstY,
-                               transparentColor);
+    /* If the loaded asset matches the expected dimensions, blit directly.
+     * Otherwise scale to fit the wall panel rect so the wall is never
+     * invisible.  Dimension mismatches can occur when the wall set graphic
+     * is packed differently or a fallback asset is used. */
+    if ((int)slot->width == blit->width && (int)slot->height == blit->height) {
+        M11_AssetLoader_BlitRegion(slot,
+                                   0, 0, blit->width, blit->height,
+                                   framebuffer, fbW, fbH,
+                                   M11_VIEWPORT_X + blit->dstX,
+                                   M11_VIEWPORT_Y + blit->dstY,
+                                   transparentColor);
+    } else {
+        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                                   M11_VIEWPORT_X + blit->dstX,
+                                   M11_VIEWPORT_Y + blit->dstY,
+                                   blit->width, blit->height,
+                                   transparentColor);
+    }
     return 1;
 }
 
