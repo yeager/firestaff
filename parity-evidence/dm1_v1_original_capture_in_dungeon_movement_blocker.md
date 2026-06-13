@@ -1,13 +1,13 @@
-# DM1 V1 original DOS capture — in-dungeon movement blocker
+# DM1 V1 original DOS capture — in-dungeon movement unblocked
 
-Status: BLOCKED_DM1_V1_ORIGINAL_IN_DUNGEON_MOVEMENT_MOUSE_CLICK_NO_VIEWPORT_CHANGE
+Status: DM1_V1_ORIGINAL_IN_DUNGEON_MOVEMENT_CAPTURE_UNBLOCKED
 
 This note continues the capture lane after
 `dm1_v1_original_capture_dungeon_entry_reached.md`. It does not redo the
-already-proven `dungeon_gameplay` entry route. The new live harness reaches
-the dungeon, then attempts an original DM PC movement-panel forward click and
-writes a local movement receipt. The click is dispatched, but the viewport
-hash remains unchanged across the post-click samples.
+already-proven `dungeon_gameplay` entry route. The live harness now reaches
+the dungeon, preserves the C070 mouse probe as a diagnostic, then uses the
+source-locked keyboard-simulation movement path to produce a changed
+original-DOS viewport.
 
 No proprietary game frames are committed here. Frames and JSON receipts remain
 under the operator-local capture root.
@@ -17,15 +17,15 @@ under the operator-local capture root.
 - DOSBox Staging 0.82.2 (5e2ba), macOS host
 - Capture backend: `dosbox-rawshot` (DOSBox internal rendered screenshot)
 - Live capture root:
-  `~/firestaff-captures/dm1-v1-in-dungeon-movement-live-20260613-123000/`
+  `~/firestaff-captures/dm1-v1-fix-keypad5-20260613-123226/`
 - Job-local conf:
-  `~/firestaff-captures/dm1-v1-in-dungeon-movement-live-20260613-123000/dosbox_capture.live.conf`
+  `~/firestaff-captures/dm1-v1-fix-keypad5-20260613-123226/dosbox_capture.live.conf`
 - Conf sha256:
-  `c0ea76986b1214a11c48c5f7354abe102ffee5f47741c509c95ed70af3df6084`
+  `4b4f380cfcd07e80ccf2d9358c93d16c40df0fa2efff4805a85c3e9da74a60e0`
 - Movement receipt sha256:
-  `2e4c0384cc048d5d90a6a09407160fae6e727709161bea6a2b036bca32da524c`
+  `09e6131a6359a94dd8044ff8fcd28ccf5efb0c7f7f68d6595dfd569f79db0fa4`
 
-## Conf facts
+## Conf and route facts
 
 Single `-conf` file, no layered confs:
 
@@ -41,54 +41,59 @@ Single `-conf` file, no layered confs:
   `dos_mouse_immediate=true`
 - `[autoexec]` mounts the DM1 PC 3.4 runtime dir as `C:`, then runs `DM.EXE`
 
-Video mode selector option `1` remains documented and used as VGA.
+Video mode selector option `1` remains VGA. Sound option `1` remains No Sound.
+The control selector now uses option `4`, Keyboard Simulation of Digital
+Joystick, because selector option `1` Mouse reaches `dungeon_gameplay` but
+ignores the post-entry keyboard movement table.
 
 ## Movement attempt
 
-Source target:
+Source targets:
 
-- ReDMCSB `COMMAND.C:396-405`, line 398 maps
+- Mouse probe: ReDMCSB `COMMAND.C:396-405`, line 398 maps
   `C003_COMMAND_MOVE_FORWARD` to `C070_ZONE_MOVE_FORWARD`.
 - PC screen-relative C070 box: `x=263..289`, `y=125..145`.
 - Harness click target: center `(276, 135)` in the normalized 320x200
   framebuffer, fraction `(0.8625, 0.675)`.
+- Keyboard fallback: ReDMCSB `COMMAND.C:275-281` binds
+  `C003_COMMAND_MOVE_FORWARD` to numeric keypad 5 and Up Arrow in the PC
+  movement keyboard table. The live route sends macOS key code `87`
+  (`Keypad-5`) after the C070 diagnostic click remains unchanged.
 
 Live result:
 
-- `enter_dungeon` still reaches `dungeon_gameplay`.
-- `dungeon_move_forward_click` dispatch is logged as
-  `mouse:left:c070_move_forward`, `ok=true`.
-- Before and after states both classify as `dungeon_gameplay`.
-- Before viewport sha256:
+- `enter_dungeon` reaches `dungeon_gameplay`.
+- The C070 `dungeon_move_forward_click` diagnostic dispatch is logged as
+  `mouse:left:c070_move_forward`, `ok=true`, but does not change the viewport.
+- The `Keypad-5` fallback dispatch is logged as `mapped=keypad-5`, `ok=true`,
+  and does change the original-DOS viewport.
+- Before state: `dungeon_gameplay`, viewport sha256:
   `d19a2c8e1fe69e399acf24fb0ce196d8080576b6249238bac7df7d8df3e5e345`
-- After viewport sha256:
-  `d19a2c8e1fe69e399acf24fb0ce196d8080576b6249238bac7df7d8df3e5e345`
-- Before and after normalized full-frame sha256:
+- After state: `dungeon_gameplay`, viewport sha256:
+  `d37c77ee27bec57ba2dcef0e3f998a52dd781b6120080678b58997277d6f2e60`
+- Before normalized full-frame sha256:
   `3a5ab1a8edd2e5a84eb91fa94907bb87dc9a8213db5e2bcaf1c4b2a18187e345`
-- Post-click samples: 7; all remained byte-identical at the normalized
-  full-frame and viewport-hash level.
+- After normalized full-frame sha256:
+  `6a6d48a7ce98efc754728fb01298766752204c959e5d70a110803399ec8bd09e`
+- The first post-`Keypad-5` rawshot sample changed the viewport hash and was
+  saved locally as `original/02_ingame_step_forward.png`.
 
-## Narrowed blocker
+## Resolution
 
-The original-DOS route can now prove all of the following in one executable
-live run:
+The earlier blocker was not the dungeon-entry classifier or the capture
+backend. It was the input-mode combination: selector option `1` Mouse plus a
+post-entry movement action left both the C070 host mouse click and the keyboard
+movement key with no viewport mutation. Selecting option `4` Keyboard
+Simulation of Digital Joystick before dungeon entry, then activating ENTER via
+Return and moving via `Keypad-5`, gives a reproducible source-locked original
+movement row.
 
-- job-local conf is used and recorded;
-- mode `1` is VGA;
-- the route reaches `dungeon_gameplay`;
-- the in-dungeon C070 forward-arrow mouse click target is source-locked and
-  logged;
-- the failure is specifically that the click does not mutate the original
-  viewport under the current DOSBox/macOS mouse-delivery path.
-
-The next useful work is to isolate the DOSBox guest mouse delivery after
-`dungeon_gameplay` without changing the already-proven entrance route. The
-failed `mouse_capture=seamless` experiment was also informative: it prevented
-the entrance click from reaching `dungeon_gameplay`, so it is not a drop-in
-fix for this route.
+The C070 mouse path is still kept as a diagnostic and remains non-promoted.
+The unblocked path for the original capture lane is the keyboard-simulation
+movement route.
 
 ## Non-claims
 
-- This is not a movement success row.
 - This is not original-vs-Firestaff pixel parity.
+- This does not claim C070 mouse delivery is fixed.
 - No proprietary frame data is committed.

@@ -137,14 +137,15 @@ class KeyDispatch:
 #   * Each selector page (graphics, then sound, then input/control) is
 #     advanced by typing a DIGIT and pressing Return.  A bare Return is
 #     rejected with "Invalid selection."; the digit must be submitted
-#     with Return.  "1" picks the first (already-starred) option on each
-#     page, i.e. VGA → No Sound → Mouse.
+#     with Return.  The route picks VGA → No Sound → Keyboard Simulation
+#     of Digital Joystick.  The latter is deliberate: the earlier Mouse
+#     selection reaches ``dungeon_gameplay`` and accepts the entrance
+#     click, but it leaves post-entry C003 keyboard movement ignored.
 #   * After the three selector pages the "Dungeon Master" title art and
-#     then the ENTER/RESUME/QUIT entrance wall appear.  ENTER is a MOUSE
-#     target on the right-hand stone wall, not a key; the live route
-#     clicks it (_dispatch_key_for_live_step handles the
-#     ``entrance_enter_click`` pseudo-key).  After the click the dungeon
-#     corridor viewport renders and classifies as ``dungeon_gameplay``
+#     then the ENTER/RESUME/QUIT entrance wall appear.  With Keyboard
+#     Simulation of Digital Joystick selected, the wall's selector cursor
+#     starts on ENTER and Return activates it.  After that keypress the
+#     dungeon corridor viewport renders and classifies as ``dungeon_gameplay``
 #     (v≈0.93, r≈0.12 < 0.135), which is the capture target.
 # The single click that crosses into the dungeon is the historically
 # hard part of this route; everything up to and including it is now a
@@ -152,9 +153,9 @@ class KeyDispatch:
 DEFAULT_PLAN: list[PlanStep] = [
     PlanStep("graphics_select",  "entrance_menu",    keys=["1", "Return"], settle_only=True, settle_s=3.0),
     PlanStep("sound_select",     "entrance_menu",    keys=["1", "Return"], settle_only=True, settle_s=3.0),
-    PlanStep("input_select",     "entrance_menu",    keys=["1", "Return"], settle_only=True, settle_s=4.0),
+    PlanStep("input_select",     "entrance_menu",    keys=["4", "Return"], settle_only=True, settle_s=4.0),
     PlanStep("entrance_wall",    "entrance_menu",    settle_only=True, settle_s=4.0),
-    PlanStep("enter_dungeon",    "dungeon_gameplay", keys=["entrance_enter_click"], timeout_s=60.0),
+    PlanStep("enter_dungeon",    "dungeon_gameplay", keys=["Return"], timeout_s=60.0),
     PlanStep("dungeon_gameplay", "dungeon_gameplay", timeout_s=120.0),
 ]
 
@@ -164,6 +165,7 @@ KEY_MAP = {
     "Key-Down": "arrow-down",
     "Key-Left": "arrow-left",
     "Key-Right": "arrow-right",
+    "Keypad-5": "keypad-5",
 }
 
 # Pseudo-key for the one mouse click that crosses the DM entrance wall into
@@ -200,6 +202,12 @@ DUNGEON_MOVE_FORWARD_SOURCE = (
     "ReDMCSB COMMAND.C:396-405 / line 398: "
     "C003_COMMAND_MOVE_FORWARD -> C070_ZONE_MOVE_FORWARD, "
     "screen-relative x=263..289 y=125..145"
+)
+DUNGEON_MOVE_FORWARD_KEYBOARD_KEY = "Keypad-5"
+DUNGEON_MOVE_FORWARD_KEYBOARD_SOURCE = (
+    "ReDMCSB COMMAND.C:275-281: "
+    "C003_COMMAND_MOVE_FORWARD is also bound to numeric keypad 5 and "
+    "Up Arrow (<CSI>A / <CSI>T) in the PC movement keyboard table"
 )
 
 DOSBOX_PROCESS_NAMES = ("dosbox", "dosbox-staging", "DOSBox Staging", "DOSBox")
@@ -821,6 +829,21 @@ def dry_run(plan: list[PlanStep],
             before_path=capture_root / "original" / "01_ingame_start.png",
             after_path=capture_root / "original" / "02_ingame_step_forward.png",
             movement_changed=True,
+            action_key=DUNGEON_MOVE_FORWARD_KEYBOARD_KEY,
+            input_method="keyboard_keypad_5_after_c070_mouse_probe",
+            source_anchor=DUNGEON_MOVE_FORWARD_KEYBOARD_SOURCE,
+            action_attempts=[
+                {
+                    "action_key": DUNGEON_MOVE_FORWARD_CLICK_KEY,
+                    "input_method": "absolute_mouse_click_with_mouse_capture_onclick",
+                    "viewport_rgb_changed": False,
+                },
+                {
+                    "action_key": DUNGEON_MOVE_FORWARD_KEYBOARD_KEY,
+                    "input_method": "keyboard_key_code_keypad_5",
+                    "viewport_rgb_changed": True,
+                },
+            ],
         )
         try:
             movement_receipt = json.loads(
@@ -831,10 +854,13 @@ def dry_run(plan: list[PlanStep],
         else:
             if movement_receipt.get("schema") != LIVE_MOVEMENT_RECEIPT_SCHEMA:
                 failures.append("movement receipt: schema mismatch")
-            if movement_receipt.get("action_key") != DUNGEON_MOVE_FORWARD_CLICK_KEY:
+            if movement_receipt.get("action_key") != DUNGEON_MOVE_FORWARD_KEYBOARD_KEY:
                 failures.append("movement receipt: action key mismatch")
             if not movement_receipt.get("viewport_rgb_changed"):
                 failures.append("movement receipt: viewport change flag missing")
+            attempts = movement_receipt.get("action_attempts", [])
+            if len(attempts) != 2:
+                failures.append("movement receipt: action attempts missing")
             coord = movement_receipt.get("screen_coord_320x200", {})
             if coord.get("x") != 276 or coord.get("y") != 135:
                 failures.append("movement receipt: source-zone coordinate mismatch")
@@ -1855,6 +1881,7 @@ OSASCRIPT_KEY_CODES = {
     "Key-Down": 125,
     "Key-Left": 123,
     "Key-Right": 124,
+    "Keypad-5": 87,
     "0": 29, "1": 18, "2": 19, "3": 20, "4": 21,
     "5": 23, "6": 22, "7": 26, "8": 28, "9": 25,
 }
@@ -2380,16 +2407,20 @@ def _write_live_movement_receipt(
         after_viewport_sha256: str,
         before_path: Path,
         after_path: Path,
-        movement_changed: bool) -> Path:
-    """Write the local hash/density proof for the in-dungeon movement click."""
+        movement_changed: bool,
+        action_key: str,
+        input_method: str,
+        source_anchor: str,
+        action_attempts: list[dict[str, object]]) -> Path:
+    """Write the local hash/density proof for the in-dungeon movement action."""
     capture_root.mkdir(parents=True, exist_ok=True)
     key_dispatch = _last_key_dispatch_from_log(capture_root)
     receipt = {
         "schema": LIVE_MOVEMENT_RECEIPT_SCHEMA,
         "capture_root": str(capture_root),
-        "action_key": DUNGEON_MOVE_FORWARD_CLICK_KEY,
-        "input_method": "absolute_mouse_click_with_mouse_capture_onclick",
-        "source_anchor": DUNGEON_MOVE_FORWARD_SOURCE,
+        "action_key": action_key,
+        "input_method": input_method,
+        "source_anchor": source_anchor,
         "screen_coord_320x200": {
             "x": DUNGEON_MOVE_FORWARD_CLICK_SCREEN_COORD[0],
             "y": DUNGEON_MOVE_FORWARD_CLICK_SCREEN_COORD[1],
@@ -2398,6 +2429,9 @@ def _write_live_movement_receipt(
             "x": DUNGEON_MOVE_FORWARD_CLICK_FRAC[0],
             "y": DUNGEON_MOVE_FORWARD_CLICK_FRAC[1],
         },
+        "keyboard_key": DUNGEON_MOVE_FORWARD_KEYBOARD_KEY,
+        "keyboard_source_anchor": DUNGEON_MOVE_FORWARD_KEYBOARD_SOURCE,
+        "action_attempts": action_attempts,
         "before_frame": str(before_path),
         "after_frame": str(after_path),
         "before_quality": asdict(before_quality),
@@ -2412,6 +2446,7 @@ def _write_live_movement_receipt(
         "last_key_dispatch": asdict(key_dispatch) if key_dispatch is not None else None,
         "non_claims": [
             "This is original-DOS movement-capture evidence, not a pixel-parity promotion.",
+            "The C070 mouse probe is preserved separately from the keyboard fallback result.",
             "The proprietary game frames remain in the operator-local capture root.",
         ],
     }
@@ -2603,10 +2638,12 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
         _write_quality_log(capture_root, start_quality)
         start_viewport_sha256 = _viewport_rgb_sha256(start)
 
+        action_attempts: list[dict[str, object]] = []
+
         print(f"send={DUNGEON_MOVE_FORWARD_CLICK_KEY}", file=sys.stderr)
         _dispatch_key_for_live_step(
             capture_root,
-            "in_dungeon_move_forward",
+            "in_dungeon_move_forward_mouse_probe",
             DUNGEON_MOVE_FORWARD_CLICK_KEY,
         )
         step, _step_meta, step_quality, step_viewport_sha256, moved = (
@@ -2614,10 +2651,50 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
                 capture_root,
                 start_viewport_sha256,
                 args.capture_backend,
-                timeout_s=8.0,
+                timeout_s=4.0,
                 screenshot_int=args.screenshot_int,
             )
         )
+        action_attempts.append({
+            "action_key": DUNGEON_MOVE_FORWARD_CLICK_KEY,
+            "input_method": "absolute_mouse_click_with_mouse_capture_onclick",
+            "source_anchor": DUNGEON_MOVE_FORWARD_SOURCE,
+            "after_viewport_rgb_sha256": step_viewport_sha256,
+            "viewport_rgb_changed": moved,
+        })
+        final_action_key = DUNGEON_MOVE_FORWARD_CLICK_KEY
+        final_input_method = "absolute_mouse_click_with_mouse_capture_onclick"
+        final_source_anchor = DUNGEON_MOVE_FORWARD_SOURCE
+        if not moved:
+            print(
+                "C070 mouse probe did not change viewport; "
+                f"send={DUNGEON_MOVE_FORWARD_KEYBOARD_KEY}",
+                file=sys.stderr,
+            )
+            _dispatch_key_for_live_step(
+                capture_root,
+                "in_dungeon_move_forward_keyboard_fallback",
+                DUNGEON_MOVE_FORWARD_KEYBOARD_KEY,
+            )
+            step, _step_meta, step_quality, step_viewport_sha256, moved = (
+                _capture_after_movement_until_distinct(
+                    capture_root,
+                    start_viewport_sha256,
+                    args.capture_backend,
+                    timeout_s=8.0,
+                    screenshot_int=args.screenshot_int,
+                )
+            )
+            action_attempts.append({
+                "action_key": DUNGEON_MOVE_FORWARD_KEYBOARD_KEY,
+                "input_method": "keyboard_key_code_keypad_5",
+                "source_anchor": DUNGEON_MOVE_FORWARD_KEYBOARD_SOURCE,
+                "after_viewport_rgb_sha256": step_viewport_sha256,
+                "viewport_rgb_changed": moved,
+            })
+            final_action_key = DUNGEON_MOVE_FORWARD_KEYBOARD_KEY
+            final_input_method = "keyboard_keypad_5_after_c070_mouse_probe"
+            final_source_anchor = DUNGEON_MOVE_FORWARD_KEYBOARD_SOURCE
         step_path = original_dir / "02_ingame_step_forward.png"
         step.save(step_path)
         movement_receipt = _write_live_movement_receipt(
@@ -2629,11 +2706,16 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
             before_path=start_path,
             after_path=step_path,
             movement_changed=moved,
+            action_key=final_action_key,
+            input_method=final_input_method,
+            source_anchor=final_source_anchor,
+            action_attempts=action_attempts,
         )
         if not moved:
             print(
-                "FAIL in-dungeon movement: C070 forward-arrow mouse click did "
-                "not change the viewport hash; see "
+                "FAIL in-dungeon movement: neither the C070 forward-arrow "
+                "mouse probe nor the source-locked Keypad-5 fallback changed "
+                "the viewport hash; see "
                 f"{movement_receipt}",
                 file=sys.stderr,
             )
