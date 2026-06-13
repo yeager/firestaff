@@ -163,7 +163,12 @@ static int is_full_tier(int t) {
            (t == CREATURE_TYPE_ANIMATED_ARMOUR) ||
            (t == CREATURE_TYPE_WATER_ELEMENTAL) ||
            (t == CREATURE_TYPE_OITU)            ||
-           (t == CREATURE_TYPE_RED_DRAGON);
+           (t == CREATURE_TYPE_RED_DRAGON)      ||
+           (t == CREATURE_TYPE_MATERIALIZER)    ||
+           (t == CREATURE_TYPE_DEMON)           ||
+           (t == CREATURE_TYPE_LORD_CHAOS)      ||
+           (t == CREATURE_TYPE_LORD_ORDER)      ||
+           (t == CREATURE_TYPE_GREY_LORD);
 }
 
 int main(int argc, char* argv[]) {
@@ -192,7 +197,7 @@ int main(int argc, char* argv[]) {
     fprintf(report, "- Pathfinding cascade (F0798/F0799)\n");
     fprintf(report, "- Action emission (F0800/F0801/F0802/F0803)\n");
     fprintf(report, "- Serialisation + round-trip (F0805..F0809)\n");
-    fprintf(report, "- 22 full creature types: Stone Golem (C09), Mummy (C10), Skeleton (C12),\n");
+    fprintf(report, "- 27 full creature types: Stone Golem (C09), Mummy (C10), Skeleton (C12),\n");
     fprintf(report, "    plus BUG-104 batch 1 (7): Giant Scorpion (C00), Giggler (C02),\n");
     fprintf(report, "    Screamer (C06), Vexirk (C14), Magenta Worm (C15), Animated\n");
     fprintf(report, "    Armour (C18), Red Dragon (C24);\n");
@@ -200,8 +205,10 @@ int main(int argc, char* argv[]) {
     fprintf(report, "    plus Rockpile (C07), Ghost (C08), Black Flame (C11),\n");
     fprintf(report, "    Water Elemental (C20);\n");
     fprintf(report, "    batch 3 (5): Swamp Slime (C01), Pain Rat (C04), Ruster (C05),\n");
-    fprintf(report, "    Couatl (C13), Trolin (C16)\n");
-    fprintf(report, "- 5 stub creature types: reschedule only, no action (C19, C22, C23, C25, C26 arch-enemy / spell-caster set)\n");
+    fprintf(report, "    Couatl (C13), Trolin (C16);\n");
+    fprintf(report, "    arch-enemy batch (5): Materializer (C19), Demon (C22), Lord\n");
+    fprintf(report, "    Chaos (C23), Lord Order (C25), Grey Lord (C26)\n");
+    fprintf(report, "- 0 stub creature types: all 27 DM1 creatures now FULL tier\n");
     fprintf(report, "- Infinite-loop guard (delay >= 1 on every emission)\n");
     fprintf(report, "- Real DUNGEON.DAT integration spot-check\n\n");
     fprintf(report, "## Known NEEDS DISASSEMBLY REVIEW (still open)\n\n");
