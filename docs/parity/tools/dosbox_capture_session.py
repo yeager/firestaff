@@ -112,14 +112,36 @@ class KeyDispatch:
 # The capture route plan.  This mirrors the runbook §3 state machine
 # but uses the calibrated band 0.135 thresholds from the post-fix
 # classifier.  Stable-frames requirement follows the runbook default.
+#
+# Verified 2026-06-13 against a real DOSBox Staging 0.82.2 DM1 PC 3.4 boot
+# (rendered Alt+F5 internal capture, see _trigger_dosbox_internal_screenshot):
+#   * DM.EXE boots straight into the SELECTOR's *graphics* text menu
+#     ("1.[*]VGA 2.[*]EGA 3.[ ]Tandy Q.[*]Quit") with no black title
+#     screen first.  That selector frame classifies as ``entrance_menu``
+#     (v≈0.38 high text density, r≈0.21), NOT ``title_screen``.  The old
+#     plan's leading ``title_screen`` step is why every live run stalled
+#     at step 1: it waited 60 s for a black screen that never comes.
+#   * Each selector page (graphics, then sound, then input/control) is
+#     advanced by typing a DIGIT and pressing Return.  A bare Return is
+#     rejected with "Invalid selection."; the digit must be submitted
+#     with Return.  "1" picks the first (already-starred) option on each
+#     page, i.e. VGA → No Sound → Mouse.
+#   * After the three selector pages the "Dungeon Master" title art and
+#     then the ENTER/RESUME/QUIT entrance wall appear.  ENTER is a MOUSE
+#     target on the right-hand stone wall, not a key; the live route
+#     clicks it (_dispatch_key_for_live_step handles the
+#     ``entrance_enter_click`` pseudo-key).  After the click the dungeon
+#     corridor viewport renders and classifies as ``dungeon_gameplay``
+#     (v≈0.93, r≈0.12 < 0.135), which is the capture target.
+# The single click that crosses into the dungeon is the historically
+# hard part of this route; everything up to and including it is now a
+# deterministic, capture-verified sequence.
 DEFAULT_PLAN: list[PlanStep] = [
-    PlanStep("title_screen",     "title_screen",     timeout_s=60.0),
-    PlanStep("entrance_menu",    "entrance_menu",    keys=["Return", "Return"], timeout_s=30.0),
-    PlanStep("graphics_select",  "entrance_menu",    keys=["0", "Return"],       timeout_s=15.0),
-    PlanStep("sound_select",     "entrance_menu",    keys=["0", "Return"],       timeout_s=15.0),
-    PlanStep("start_game",       "entrance_menu",    keys=["Return"],            timeout_s=15.0),
-    PlanStep("champion_create",  "champion_create",  timeout_s=60.0),
-    PlanStep("accept_champions", "champion_create",  keys=["Return"] * 4,        timeout_s=30.0),
+    PlanStep("graphics_select",  "entrance_menu",    keys=["1", "Return"],       timeout_s=60.0),
+    PlanStep("sound_select",     "entrance_menu",    keys=["1", "Return"],       timeout_s=30.0),
+    PlanStep("input_select",     "entrance_menu",    keys=["1", "Return"],       timeout_s=30.0),
+    PlanStep("entrance_wall",    "entrance_menu",    timeout_s=60.0),
+    PlanStep("enter_dungeon",    "dungeon_gameplay", keys=["entrance_enter_click"], timeout_s=60.0),
     PlanStep("dungeon_gameplay", "dungeon_gameplay", timeout_s=120.0),
 ]
 
@@ -131,9 +153,35 @@ KEY_MAP = {
     "Key-Right": "arrow-right",
 }
 
+# Pseudo-key for the one mouse click that crosses the DM entrance wall into
+# the dungeon.  This is not a keyboard key: the live route maps it to a
+# cliclick on the ENTER target on the right-hand stone wall.  Kept as a
+# named pseudo-key so the plan, key-dispatch log, and self-tests can refer
+# to it without special-casing raw coordinates.
+ENTRANCE_ENTER_CLICK_KEY = "entrance_enter_click"
+# Fractional position of the ENTER button inside the DOSBox *content* area
+# (below the macOS title bar), measured from a real DM1 PC 3.4 entrance-wall
+# capture (rendered framebuffer 799x599, ENTER center ~ (696, 160)).  Using
+# fractions of the content rectangle keeps the click correct across window
+# sizes and Retina scale factors.
+ENTRANCE_ENTER_CLICK_FRAC = (696.0 / 799.0, 160.0 / 599.0)
+# Height of the macOS window title bar (points) to skip when mapping a
+# framebuffer-fractional target to an absolute on-screen click.
+MACOS_WINDOW_TITLEBAR_H = 28
+
 DOSBOX_PROCESS_NAMES = ("DOSBox", "DOSBox Staging", "dosbox", "dosbox-staging")
 DOSBOX_BIN_CANDIDATES = ("dosbox-staging", "dosbox")
 MACOS_DOSBOX_STAGING_APP_BIN = Path("/Applications/DOSBox Staging.app/Contents/MacOS/dosbox")
+# macOS application-bundle names that ``open -a NAME`` can activate to raise
+# an already-running DOSBox window.  Empirically (DOSBox Staging 0.82.2 on
+# macOS 15), launching the inner ``Contents/MacOS/dosbox`` binary directly via
+# subprocess.Popen leaves the window behind Terminal: AppleScript
+# ``set frontmost to true`` alone does NOT raise it (the frontmost process
+# stays "Terminal"), so every cliclick/osascript keystroke is delivered to the
+# wrong app and DOSBox never sees Ctrl+F5 or the route keys.  ``open -a`` does
+# reliably activate the running instance without spawning a duplicate, which is
+# the focus half of the original-capture blocker.
+MACOS_DOSBOX_OPEN_APP_NAMES = ("DOSBox Staging", "DOSBox")
 BLACKOUT_NONBLACK_THRESH = 0.005
 RUNTIME_DATA_REQUIRED_FILES = ("GRAPHICS.DAT", "DUNGEON.DAT")
 LIVE_INPUT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.live_inputs.v1"
@@ -959,8 +1007,35 @@ def _run_quiet(argv: list[str], timeout: float = 10.0) -> subprocess.CompletedPr
         return QuietRunTimeout()  # type: ignore[return-value]
 
 
+def _open_activate_dosbox() -> bool:
+    """Raise an already-running DOSBox window via ``open -a`` (macOS).
+
+    ``open -a NAME`` activates the running application instance and brings
+    its window to the front.  When the app is already running it does NOT
+    spawn a duplicate process (verified against DOSBox Staging 0.82.2), so
+    this is safe to call repeatedly inside the live route.  This is the
+    reliable focus path that plain AppleScript ``set frontmost`` failed to
+    achieve when DOSBox was launched as a bare ``Contents/MacOS/dosbox``
+    subprocess.  Returns True if any ``open -a`` invocation succeeded.
+    """
+    if shutil.which("open") is None:
+        return False
+    for app_name in MACOS_DOSBOX_OPEN_APP_NAMES:
+        proc = _run_quiet(["open", "-a", app_name], timeout=5.0)
+        if getattr(proc, "returncode", 1) == 0:
+            return True
+    return False
+
+
 def _activate_dosbox() -> None:
-    """Best-effort focus for macOS DOSBox Staging windows."""
+    """Best-effort focus for macOS DOSBox Staging windows.
+
+    Tries ``open -a`` first (the only method observed to actually raise the
+    DOSBox window above Terminal when DOSBox was started as a bare
+    subprocess), then falls back to the AppleScript frontmost/AXRaise path
+    so non-bundle DOSBox builds and headless self-tests still work.
+    """
+    _open_activate_dosbox()
     names = ", ".join(f'"{name}"' for name in DOSBOX_PROCESS_NAMES)
     script = r'''
 tell application "System Events"
@@ -1121,23 +1196,34 @@ def _known_dosbox_capture_files(capture_dir: Path) -> dict[Path, DosboxCaptureSi
 def _trigger_dosbox_internal_screenshot() -> None:
     """Ask DOSBox to write its own capture artifact.
 
-    DOSBox Staging maps screenshots to Ctrl+F5 by default.  This path
-    bypasses macOS host-window capture entirely, which is the current
-    black-frame blocker.  The generated conf pins
-    ``default_image_capture_formats=raw``; the loader below also accepts
-    PNG/BMP so operators can test with either rawshot or rendshot mapper
-    bindings without changing the route state machine.
+    This path bypasses macOS host-window capture entirely (no title bar,
+    no notification banners), which is the clean-framebuffer half of the
+    original-capture story.  The loader below accepts raw/PNG/BMP so the
+    route state machine does not care which format DOSBox wrote.
+
+    Keystroke choice (DOSBox Staging 0.82.2 on macOS 15, empirically
+    verified): DOSBox's *default* screenshot binding is Ctrl+F5 (raw),
+    but macOS swallows Ctrl+F5 as a system keyboard-navigation shortcut
+    ("move focus to window toolbar"), so it never reaches DOSBox and no
+    capture is written.  Alt+F5 (the *rendered* screenshot) is NOT
+    intercepted by macOS and reliably reaches DOSBox, producing a clean
+    chrome-free framebuffer image in ``capture_dir``.  Cmd+F5 is also
+    swallowed.  We therefore drive the rendered screenshot via Alt+F5
+    (key code 96 + option) on macOS.  Pair this with
+    ``glshader=none``/``default_image_capture_formats=rendered`` in the
+    live conf so the rendered capture has square pixels and no CRT
+    shader overlay.
     """
     _activate_dosbox()
     script = r'''
 tell application "System Events"
-  key code 96 using {control down}
+  key code 96 using {option down}
 end tell
 '''
     proc = _run_quiet(["osascript", "-e", script], timeout=5.0)
     if proc.returncode != 0:
         raise RuntimeError(
-            "failed to trigger DOSBox screenshot via Ctrl+F5: "
+            "failed to trigger DOSBox rendered screenshot via Alt+F5: "
             f"{proc.stderr.strip() or proc.stdout.strip()}"
         )
 
@@ -1577,8 +1663,75 @@ def _attempt_focus_recovery(
     return reason, rawshot_quality, rawshot_meta
 
 
+def _entrance_enter_click_point(
+        bounds: tuple[int, int, int, int] | None) -> tuple[int, int] | None:
+    """Map the ENTER target to an absolute on-screen click point.
+
+    ``bounds`` is the DOSBox window (x, y, w, h) in screen points.  The
+    content area starts below the macOS title bar; the DM framebuffer is
+    letterboxed 4:3 inside that content rectangle, and ENTER sits at
+    ``ENTRANCE_ENTER_CLICK_FRAC`` of the framebuffer.  Returns ``None``
+    when the window bounds are unavailable so the caller can fail loudly
+    instead of clicking a guessed coordinate.
+    """
+    if bounds is None:
+        return None
+    x, y, w, h = bounds
+    content_h = h - MACOS_WINDOW_TITLEBAR_H
+    if w <= 0 or content_h <= 0:
+        return None
+    target = 4.0 / 3.0
+    ratio = w / content_h
+    if ratio > target:
+        disp_w = content_h * target
+        disp_h = float(content_h)
+    else:
+        disp_w = float(w)
+        disp_h = w / target
+    off_x = (w - disp_w) / 2.0
+    off_y = (content_h - disp_h) / 2.0
+    fx, fy = ENTRANCE_ENTER_CLICK_FRAC
+    sx = x + off_x + fx * disp_w
+    sy = y + MACOS_WINDOW_TITLEBAR_H + off_y + fy * disp_h
+    return int(round(sx)), int(round(sy))
+
+
+def _press_entrance_enter_click() -> None:
+    """Click the DM entrance ENTER target to cross into the dungeon.
+
+    DOSBox captures the mouse on the first click in the window, so this
+    issues a move + two clicks: the first click is consumed by mouse
+    capture, the second actually presses ENTER.  Requires cliclick.
+    """
+    if shutil.which("cliclick") is None:
+        raise RuntimeError("cliclick is required for the entrance ENTER click")
+    _activate_dosbox()
+    point = _entrance_enter_click_point(_dosbox_window_bounds())
+    if point is None:
+        raise RuntimeError(
+            "cannot resolve DOSBox window bounds for the entrance ENTER click"
+        )
+    px, py = point
+    subprocess.run(["cliclick", f"m:{px},{py}"], check=True)
+    time.sleep(0.3)
+    subprocess.run(["cliclick", f"c:{px},{py}"], check=True)
+    time.sleep(0.4)
+    subprocess.run(["cliclick", f"c:{px},{py}"], check=True)
+
+
 def _press_key(key: str) -> None:
     time.sleep(0.25)
+    if key == ENTRANCE_ENTER_CLICK_KEY:
+        _press_entrance_enter_click()
+        return
+    # Re-raise the DOSBox window before every keystroke.  Without this the
+    # cliclick key event is delivered to whatever app happens to be
+    # frontmost (observed: keystrokes silently dropped, frames byte-stable,
+    # ``host_active_app`` momentarily empty), so the SELECTOR pages never
+    # advanced even though the screenshot path later re-activated DOSBox.
+    # ``_activate_dosbox`` is the proven ``open -a`` focus path and is cheap
+    # to repeat (it does not spawn duplicate DOSBox instances).
+    _activate_dosbox()
     mapped = KEY_MAP.get(key)
     if mapped is not None:
         subprocess.run(["cliclick", f"kp:{mapped}"], check=True)
@@ -1764,6 +1917,13 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
             "",
             "[render]",
             "frameskip=0",
+            # No CRT shader: the dosbox-rawshot backend drives DOSBox's own
+            # rendered screenshot (Alt+F5) because macOS swallows the default
+            # raw-screenshot Ctrl+F5 binding.  glshader=none keeps the
+            # rendered capture a clean square-pixel framebuffer with no
+            # scanline/curvature overlay, so the density classifier reads it
+            # the same way it reads a raw VGA dump.
+            "glshader=none",
             "",
             "[cpu]",
             "core=dynamic",
@@ -1771,7 +1931,11 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
             "",
             "[capture]",
             f"capture_dir={capture_root / 'dosbox-capture'}",
-            "default_image_capture_formats=raw",
+            # Request both rendered and raw: the live route triggers the
+            # rendered screenshot (Alt+F5, the only screenshot key macOS
+            # actually delivers), and the loader accepts raw/PNG/BMP so a
+            # future operator who rebinds the raw key still works unchanged.
+            "default_image_capture_formats=rendered raw",
             "",
             "[autoexec]",
             f"MOUNT C {runtime_dir}",
@@ -1828,9 +1992,10 @@ def _write_live_input_receipt(
             "machine": "svga_s3",
             "memsize": "16",
             "frameskip": "0",
+            "glshader": "none",
             "core": "dynamic",
             "cycles": "max",
-            "default_image_capture_formats": "raw",
+            "default_image_capture_formats": "rendered raw",
         },
     }
     out = capture_root / "dosbox_capture.live_inputs.json"

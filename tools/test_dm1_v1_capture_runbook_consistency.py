@@ -605,6 +605,53 @@ def check_preflight_renders_dm_exe() -> list[str]:
     return failures
 
 
+def _default_plan_length(capture_session: Path) -> int | None:
+    """Return the number of steps in the live DEFAULT_PLAN.
+
+    Loaded by importing the capture-session module so the gate's expected
+    dry-run pass count tracks the real plan without hard-coding a number.
+    Falls back to None when the import or attribute lookup fails so the
+    caller can flag the problem instead of silently passing.
+    """
+    import importlib.util
+
+    mod_name = "_dosbox_capture_session_plan_probe"
+    # The capture-session module imports its sibling ``dosbox_state_detector``
+    # by bare name, so make sure its directory is importable, then register
+    # the module in sys.modules before exec_module: the module uses
+    # ``from __future__ import annotations`` + @dataclass, and dataclass field
+    # resolution looks the module up in sys.modules by __module__ name.
+    tools_dir = str(capture_session.parent)
+    added_path = False
+    try:
+        if tools_dir not in sys.path:
+            sys.path.insert(0, tools_dir)
+            added_path = True
+        spec = importlib.util.spec_from_file_location(
+            mod_name, str(capture_session)
+        )
+        if spec is None or spec.loader is None:
+            return None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[mod_name] = module
+        try:
+            spec.loader.exec_module(module)
+            plan = getattr(module, "DEFAULT_PLAN", None)
+            if plan is None:
+                return None
+            return len(plan)
+        finally:
+            sys.modules.pop(mod_name, None)
+    except Exception:
+        return None
+    finally:
+        if added_path:
+            try:
+                sys.path.remove(tools_dir)
+            except ValueError:
+                pass
+
+
 def check_capture_session_focus_recovery_dry_run() -> list[str]:
     """The on-disk ``dosbox_capture_session.py`` dry-run must keep
     covering the rawshot-fallback focus-recovery gate so a future
@@ -639,15 +686,27 @@ def check_capture_session_focus_recovery_dry_run() -> list[str]:
             f"{proc.stderr.strip() or proc.stdout.strip()}"
         )
         return failures
-    # The dry-run output should still match the post-fix state machine
-    # (8/8) and the focus-recovery self-test cases must not regress to
-    # the legacy 8-passing-only count.
-    if "8/8" not in proc.stdout:
+    # The dry-run output should report an all-pass count (N/N) where N is
+    # the live DEFAULT_PLAN length.  We derive N from the script itself
+    # instead of hard-coding it, so a deliberate plan-length change (e.g.
+    # the 2026-06-13 retune from the never-arriving title_screen step to
+    # the verified graphics/sound/input/entrance route) updates the gate
+    # automatically while a real classifier/plan regression that drops a
+    # transition still fails (the matched count would be < N).
+    plan_len = _default_plan_length(capture_session)
+    if plan_len is None:
         failures.append(
-            f"{capture_session.relative_to(REPO_ROOT)} --dry-run did not "
-            "report the 8/8 state-machine pass count; the classifier or "
-            "plan likely regressed"
+            f"{capture_session.relative_to(REPO_ROOT)}: could not determine "
+            "DEFAULT_PLAN length to validate the dry-run pass count"
         )
+    else:
+        expected = f"{plan_len}/{plan_len}"
+        if expected not in proc.stdout:
+            failures.append(
+                f"{capture_session.relative_to(REPO_ROOT)} --dry-run did not "
+                f"report the {expected} state-machine pass count; the "
+                "classifier or plan likely regressed"
+            )
     if "PASS" not in proc.stdout:
         failures.append(
             f"{capture_session.relative_to(REPO_ROOT)} --dry-run did not "
