@@ -9265,6 +9265,40 @@ if(BUILD_TESTING)
         NAME dm1_v1_spell_rune_backspace_source_lock
         COMMAND test_dm1_v1_spell_rune_backspace_pc34_compat
     )
+
+    # MNU-02 (audit, v2.7.x) — F0757 Thieves Eye duration source-lock.
+    # ReDMCSB MENU.C:1945-1963 ships a broken duration (0 ticks,
+    # uninitialised stack residue); Firestaff default is the
+    # source-locked 0-tick with an opt-in legacy envelope for
+    # playtest.
+    add_executable(test_dm1_v1_magic_thieves_eye_duration_pc34_compat
+        tests/test_dm1_v1_magic_thieves_eye_duration_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_magic_thieves_eye_duration_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_magic_thieves_eye_duration_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_magic_thieves_eye_duration_source_lock
+        COMMAND test_dm1_v1_magic_thieves_eye_duration_pc34_compat
+    )
+
+    # LSV-01 (audit, v2.7.x) — ReDMCSB DM 3.4 PC native save
+    # exporter (F0795) + importer (F0796). Bridges the Firestaff
+    # composite save blob to the original PC 3.4 CPSC obfuscated
+    # format used by ReDMCSB F0433 / F0435.
+    add_executable(test_dm1_v1_savegame_pc34_native_export_pc34_compat
+        tests/test_dm1_v1_savegame_pc34_native_export_pc34_compat.c
+        src/memory/memory_savegame_pc34_native_export_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_savegame_pc34_native_export_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_savegame_pc34_native_export_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_savegame_pc34_native_export_source_lock
+        COMMAND test_dm1_v1_savegame_pc34_native_export_pc34_compat
+    )
     endif()
 
     # Launcher/entrance handoff wait policy: ReDMCSB waits for fresh input.

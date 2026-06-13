@@ -266,6 +266,39 @@ Added creature melee poison application:
 Added `FIRESTAFF_BUILD_DIR` env var support to 17 Python verification scripts
 for out-of-tree builds. Fixes pass552, pass580, and 15 viewport 3D tests.
 
+### BUG-119 FIXED — Champions die in Hall of Champions
+**Reported by user testing v2.7.13.** When the C040 mirror candidate panel is
+open, the party can attack and kill the candidate creature before recruiting
+it. The candidate is rendered as a portrait graphic in the D1C cell, but the
+F0735_COMBAT_ResolveChampionMelee_Compat path had no invulnerability check.
+
+**Fix:** added `isCandidateInvulnerable` flag to `CombatantCreatureSnapshot_Compat`
+and a guard in F0735 that bounces to `COMBAT_OUTCOME_NO_ACTION` when the
+flag is set. ReDMCSB CLIKCHAM.C F0367 lines 24-25: the candidate panel owns
+the front cell while selection is pending. New regression test:
+`tests/test_dm1_v1_hall_of_champions_pc34_compat.c`.
+
+### BUG-120 FIXED — Slow after selection in Hall of Champions
+**Reported by user testing v2.7.13.** After picking a champion in the C040
+panel, the game ran noticeably slower. The C040 panel was re-rendering the
+wall-ornament graphic every frame via `m11_draw_dm1_front_mirror_route`
+even though the panel chrome was already showing.
+
+**Fix:** in `m11_draw_dm1_front_mirror_route` (m11_game_view.c:13479), added
+an early-return when `state->candidateMirrorPanelActive` is set. The wall-
+ornament blit is skipped while the panel owns the front cell; only the
+candidate portrait is drawn. This also fixes BUG-121 (the peach placeholder
+box is hidden during selection).
+
+### BUG-121 FIXED — Graphical artifacts in Hall of Champions
+**Reported by user testing v2.7.13.** The C040 candidate panel showed an
+orange/peach placeholder box (wall-ornament graphic) floating in the D1C
+front cell next to the candidate portrait.
+
+**Fix:** same as BUG-120 — the `candidateMirrorPanelActive` early-return
+in `m11_draw_dm1_front_mirror_route` skips the ornament blit while the
+panel is open, leaving only the candidate portrait graphic visible.
+
 ## Notes
 
 - BUG-103 (Luck), BUG-104 (Creature AI stubs), BUG-105 (Attack ordering), BUG-106 (Flee), BUG-109 (Stat gain cycles), BUG-110 (Magic map), BUG-111 (Sub-cell hit mask), BUG-112 (Savegame fields), BUG-118 (Viewport crop) are significant but require substantial implementation work beyond a single fix pass. They are documented for future work.

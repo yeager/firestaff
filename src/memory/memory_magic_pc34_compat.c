@@ -19,6 +19,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "memory_magic_pc34_compat.h"
 
@@ -490,6 +491,39 @@ static int phase14_bounded_value(int lo, int value, int hi) {
     return value;
 }
 
+/* MNU-02 (audit, v2.7.x) — F0757 Thieves Eye duration opt-in.
+ *
+ * The original PC 3.4 source (ReDMCSB MENU.C:1945-1963) is
+ * broken by an uninitialised stack residue (L1267_ui_Ticks). In a
+ * clean process that residue is 0, so the duration structurally
+ * collapses. The source-locked default is therefore 0 ticks (the
+ * spell silently does nothing, which is what the original DM 3.4
+ * PC actually shipped).
+ *
+ * The defensive envelope (`spellPower * 40`, yielding 64-224 s)
+ * is preserved as a build-time opt-in so playtest builds can opt
+ * in via either:
+ *   -DFIRESTAFF_PC34_LEGACY_THIEVES_EYE=1  (build flag, sticky)
+ *   FIRESTAFF_DM1_THIEVES_EYE_LEGACY=1    (env, runtime)
+ *
+ * Default = 0 ticks (source-locked, matches original).
+ */
+static int phase14_thieves_eye_use_legacy_envelope(void) {
+#if defined(FIRESTAFF_PC34_LEGACY_THIEVES_EYE) && FIRESTAFF_PC34_LEGACY_THIEVES_EYE
+    /* Build-time opt-in always wins. */
+    return 1;
+#else
+    static int s_checked = 0;
+    static int s_enabled = 0;
+    if (!s_checked) {
+        const char* env = getenv("FIRESTAFF_DM1_THIEVES_EYE_LEGACY");
+        s_enabled = (env != NULL && env[0] != '\0' && env[0] != '0');
+        s_checked = 1;
+    }
+    return s_enabled;
+#endif
+}
+
 int F0756_MAGIC_ProduceProjectileEffect_Compat(
     const struct SpellDefinition_Compat* spell,
     int powerOrdinal,
@@ -612,9 +646,20 @@ int F0757_MAGIC_ProduceOtherEffect_Compat(
              * (≈ 64..224 s at 0.4 s per tick). Event-kind matching is
              * the enforced Phase 14 invariant; the duration scalar is
              * structural and tested for monotonicity only.
+             *
+             * MNU-02 (audit, v2.7.x) — flipped to source-locked default:
+             *   - Default: 0 ticks (matches original PC 3.4).
+             *   - Opt-in legacy envelope (`spellPower * 40`, 64-224 s):
+             *       build flag: -DFIRESTAFF_PC34_LEGACY_THIEVES_EYE=1
+             *       or env:     FIRESTAFF_DM1_THIEVES_EYE_LEGACY=1
+             *     preserved for playtest / regression use.
              */
             spellPower >>= 1;
-            out->durationTicks = spellPower * 40;
+            if (phase14_thieves_eye_use_legacy_envelope()) {
+                out->durationTicks = spellPower * 40;
+            } else {
+                out->durationTicks = 0;
+            }
             out->magicStateDelta[5] = 1;
             out->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
             out->followupEventAux0 = TIMELINE_AUX_THIEVES_EYE;
@@ -1229,4 +1274,16 @@ int F0769b_MAGIC_SpellDefinitionDeserialize_Compat(
     spell->type                   = read_i32_le(buf + 20);
     spell->disabledTicks          = read_i32_le(buf + 24);
     return 1;
+}
+
+/* ==========================================================
+ *  MNU-02 (audit, v2.7.x) — public query for F0757 mode.
+ *
+ *  Exposed so the regression test can assert whichever path the
+ *  build is in without poking at internals. Implementation
+ *  delegates to the existing static predicate so the env-var +
+ *  build-flag precedence stays single-sourced.
+ * ========================================================== */
+int F0757_MAGIC_ThievesEyeLegacyEnvelopeActive_Compat(void) {
+    return phase14_thieves_eye_use_legacy_envelope();
 }

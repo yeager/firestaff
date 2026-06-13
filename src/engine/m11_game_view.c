@@ -13467,6 +13467,24 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     blit.graphicIndex = M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx * 2 + 1;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)blit.graphicIndex);
+    /* BUG-120 + BUG-121 fix: when the C040 candidate panel is open
+     * (candidateMirrorPanelActive == 1), the wall-ornament graphic is
+     * not drawn — only the champion portrait. The ornament graphic
+     * is a placeholder for the wall mirror itself; while the candidate
+     * panel is open the player is choosing a new champion from the
+     * mirror, not looking at the wall behind them. Skipping the
+     * ornament avoids two user-visible issues:
+     *   (a) the orange/peach placeholder box "floating" in the D1C
+     *       cell (BUG-121 graphical artifact reported by user).
+     *   (b) redrawing the ornament every frame for every viewport
+     *       cycle while the panel is open (BUG-120 slow after
+     *       selection reported by user). Per ReDMCSB
+     *       MOVESENS.C:1501-1503 and REVIVE.C F0280, the panel owns
+     *       the front cell while the selection is pending. */
+    if (state->candidateMirrorPanelActive) {
+        m11_draw_dm1_front_champion_portrait(state, &mirrorCell, framebuffer, fbW, fbH);
+        return;
+    }
     if (slot && slot->loaded && slot->pixels && slot->width > 0 && slot->height > 0) {
         m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,
                                                M11_VIEWPORT_X + blit.dstX,
