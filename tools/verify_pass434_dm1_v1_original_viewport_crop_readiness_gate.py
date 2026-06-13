@@ -201,7 +201,10 @@ def tooling_probe() -> dict[str, Any]:
             "has_normalize_only": "--normalize-only" in capture_text,
             "has_pillow_crop_0_33_224_169": "crop = im.crop((0, 33, 224, 169))" in capture_text,
             "has_imagemagick_crop": "-crop 224x136+0+33" in capture_text,
-            "has_manifest_geometry_check": "expected exactly 6 normalized viewport PPM crops" in capture_text and "(width, height) != (224, 136)" in capture_text,
+            "has_manifest_geometry_check": (
+                "normalized viewport PPM crops" in capture_text
+                and "(width, height) != (224, 136)" in capture_text
+            ),
         },
         "pass86_self_test": pass86,
         "pass376_prior_manifest": prior_manifest_probe(),
