@@ -7305,6 +7305,20 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat
     )
 
+    add_executable(test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat
+        PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME pass790plus_dm1_v1_auto_mirror_candidate_party_shuffle_close_order_gate
+        COMMAND test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat
+    )
+
     add_executable(firestaff_dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat_test
         tests/test_dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat.c
         src/dm1/dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat.c
