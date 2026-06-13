@@ -94,20 +94,23 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      *   attackType, woundProbabilities, attributes,
      *   aggressionBias, implementationTier, reserved0
      */
-    /* C00 Giant Scorpion  (stub) */
-    {  0, 3, 0, 24, 10,  40, 30,  80, 40,  5, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 40, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C00 Giant Scorpion  (FULL — BUG-104) — GROUP.C F0207: poison-on-sting
+     * melee creature, sight 3, ½-square. poisonAttack=5 stored for F0800. */
+    {  0, 3, 0, 24, 10,  40, 30,  80, 40,  5, COMBAT_ATTACK_NORMAL, 0x0222, 0x0000, 40, CREATURE_IMPL_TIER_FULL, 0 },
     /* C01 Swamp Slime     (stub) */
     {  1, 2, 0, 28,  9,  20, 15,  45, 20,  8, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 30, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C02 Giggler         (stub) */
-    {  2, 4, 0, 12,  8,  15, 20,  25, 55,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 20, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C02 Giggler         (FULL — BUG-104) — GROUP.C F0193: melee reach
+     * party → steal from champion slots then always flee. */
+    {  2, 4, 0, 12,  8,  15, 20,  25, 55,  0, COMBAT_ATTACK_NORMAL, 0x0222, 0x0000, 20, CREATURE_IMPL_TIER_FULL, 0 },
     /* C03 Wizard Eye       (stub) */
     {  3, 5, 0, 20,  8,  30, 25,  50, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION, 25, CREATURE_IMPL_TIER_STUB, 0 },
     /* C04 Pain Rat         (stub) */
     {  4, 3, 3, 14,  7,  35, 25,  60, 45,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 40, CREATURE_IMPL_TIER_STUB, 0 },
     /* C05 Ruster           (stub) */
     {  5, 3, 2, 20,  9,  40, 30,  75, 40,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 30, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C06 Screamer         (stub) */
-    {  6, 2, 0, 32, 11,  10, 20,  40, 20,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 10, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C06 Screamer         (FULL — BUG-104) — GROUP.C F0209 C5_BEHAVIOR_FLEE
+     * branch: cowardly group-fleer; panics when party is in sight. */
+    {  6, 2, 0, 32, 11,  10, 20,  40, 20,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 10, CREATURE_IMPL_TIER_FULL, 0 },
     /* C07 Rockpile         (stub) */
     {  7, 3, 0, 20, 10,  35, 40,  90, 30,  0, COMBAT_ATTACK_BLUNT,  0x0000, 0x0000, 35, CREATURE_IMPL_TIER_STUB, 0 },
     /* C08 Ghost/Specter    (stub) */
@@ -122,16 +125,21 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     { 12, 3, 4, 11,  6,  40, 40,  90, 45,  0, COMBAT_ATTACK_SHARP,  0x0222, 0x0000, 50, CREATURE_IMPL_TIER_FULL, 0 },
     /* C13 Couatl           (stub) */
     { 13, 3, 0, 10, 12,  50, 35,  95, 55, 20, COMBAT_ATTACK_NORMAL, 0x0000, CREATURE_ATTR_MASK_LEVITATION, 55, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C14 Vexirk           (stub — spell-caster deferred to v2) — DUNGEON.C G0243[14].Attributes=0x05B8: LEVITATION=1 */
-    { 14, 4, 0, 14,  7,  30, 25,  70, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION, 40, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C15 Magenta Worm     (stub) */
-    { 15, 3, 0, 24, 14,  55, 40, 140, 30, 30, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 50, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C14 Vexirk           (FULL — BUG-104) — GROUP.C F0207 ranged
+     * spell-caster; full state machine + F0800 magic-typed action,
+     * F0823 covers the richer projectile selection. */
+    { 14, 4, 0, 14,  7,  30, 25,  70, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION, 40, CREATURE_IMPL_TIER_FULL, 0 },
+    /* C15 Magenta Worm     (FULL — BUG-104) — GROUP.C F0207: poison-on-bite
+     * with 30-point venom, high HP melee creature, slow movement. */
+    { 15, 3, 0, 24, 14,  55, 40, 140, 30, 30, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 50, CREATURE_IMPL_TIER_FULL, 0 },
     /* C16 Trolin / Anti-Mage (stub) */
     { 16, 3, 0, 18, 10,  45, 40,  95, 40,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x0000, 45, CREATURE_IMPL_TIER_STUB, 0 },
     /* C17 Giant Wasp       (stub) */
     { 17, 3, 0, 10,  8,  30, 30,  60, 55, 25, COMBAT_ATTACK_SHARP,  0x0000, CREATURE_ATTR_MASK_LEVITATION, 45, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C18 Animated Armour  (stub) */
-    { 18, 3, 0, 18, 10,  55, 55, 115, 35,  0, COMBAT_ATTACK_SHARP,  0x0000, 0x0000, 45, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C18 Animated Armour  (FULL — BUG-104) — GROUP.C F0209 C6_BEHAVIOR_ATTACK:
+     * full-square, sharp attack, melee only. Cursed fixed possessions
+     * (F0186 table G0248) handled by F0824. */
+    { 18, 3, 0, 18, 10,  55, 55, 115, 35,  0, COMBAT_ATTACK_SHARP,  0x0000, 0x0000, 45, CREATURE_IMPL_TIER_FULL, 0 },
     /* C19 Materializer     (stub — spell-caster deferred) — DUNGEON.C G0243[19].Attributes=0x0060: LEVITATION=1, NON_MATERIAL=1 */
     { 19, 4, 0, 16, 10,  50, 40,  90, 45,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_NON_MATERIAL, 45, CREATURE_IMPL_TIER_STUB, 0 },
     /* C20 Water Elemental  (stub) — DUNGEON.C G0243[20].Attributes=0x10DE: NON_MATERIAL=1, LEV=0 */
@@ -142,8 +150,10 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     { 22, 4, 0, 14, 10,  65, 50, 120, 50,  0, COMBAT_ATTACK_MAGIC,  0x0000, 0x0000, 55, CREATURE_IMPL_TIER_STUB, 0 },
     /* C23 Lord Chaos       (stub — archenemy / teleport deferred) — DUNGEON.C G0243[23].Attributes=0x38AA: LEVITATION=1, ARCHENEMY=1 */
     { 23, 5, 0, 10,  8,  70, 60, 200, 60,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY, 80, CREATURE_IMPL_TIER_STUB, 0 },
-    /* C24 Red Dragon       (stub — AoE flame deferred) */
-    { 24, 5, 0, 12, 12,  70, 55, 180, 45,  0, COMBAT_ATTACK_FIRE,   0x0000, 0x0000, 70, CREATURE_IMPL_TIER_STUB, 0 },
+    /* C24 Red Dragon       (FULL — BUG-104) — GROUP.C F0207: flame-stream
+     * ranged fire attack, sight 5, high HP. attackType=FIRE drives F0800
+     * fire-typed melee; ranged flame projectile in F0823. */
+    { 24, 5, 0, 12, 12,  70, 55, 180, 45,  0, COMBAT_ATTACK_FIRE,   0x0000, 0x0000, 70, CREATURE_IMPL_TIER_FULL, 0 },
     /* C25 Lord Order       (stub — archenemy mirror of Lord Chaos) — DUNGEON.C G0243[25].Attributes=0x38AA: LEVITATION=1, ARCHENEMY=1 */
     { 25, 5, 0, 10,  8,  70, 60, 200, 60,  0, COMBAT_ATTACK_MAGIC,  0x0000, CREATURE_ATTR_MASK_LEVITATION | CREATURE_ATTR_MASK_ARCHENEMY, 80, CREATURE_IMPL_TIER_STUB, 0 },
     /* C26 Grey Lord        (stub) — DUNGEON.C G0243[26].Attributes=0x38AA: LEVITATION=1, ARCHENEMY=1 */
@@ -771,6 +781,75 @@ int F0804_CREATURE_Tick_Compat(
         if (newAggr <   0) newAggr =   0;
         if (newAggr > 100) newAggr = 100;
         stateOut->aggressionScore = newAggr;
+    }
+
+    /* (5b) per-creature-type behavior bias (BUG-104).
+     *
+     * The base state machine (F0793) is type-independent; this block
+     * applies the small per-type special cases that distinguish the
+     * creatures promoted from STUB to FULL. Each branch cites its
+     * ReDMCSB GROUP.C origin so the source-lock is preserved. */
+    {
+        int t = in->creatureType;
+        if (t == CREATURE_TYPE_SCREAMER) {
+            /* GROUP.C F0209 C5_BEHAVIOR_FLEE branch: Screamers are
+             * cowardly — once they see the party they tend to flee
+             * immediately rather than fight. Drop aggression and
+             * bias the state to FLEE when the party is in sight. */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK) {
+                stateOut->stateKind = AI_STATE_FLEE;
+                if (stateOut->fearCounter < 8) stateOut->fearCounter = 8;
+            }
+            stateOut->aggressionScore = (stateOut->aggressionScore * 2) / 3;
+        } else if (t == CREATURE_TYPE_GIGGLER) {
+            /* GROUP.C F0193 GIGGLER_ResolveStealAttempt: when the
+             * Giggler reaches melee range it attempts to steal from
+             * a champion's slot then always flees. The full F0822
+             * resolver lives in dm1_v1_creature_ai_behavior; the v1
+             * path marks emittedSpellRequest=1 (stolen-flag surrogate)
+             * and pushes the next-state to FLEE. */
+            if (stateOut->stateKind == AI_STATE_ATTACK && visible
+                && distance == 1) {
+                out->emittedSpellRequest = 1;
+                stateOut->stateKind = AI_STATE_FLEE;
+                if (stateOut->fearCounter < 4) stateOut->fearCounter = 4;
+            }
+        } else if (t == CREATURE_TYPE_VEXIRK) {
+            /* GROUP.C F0207: Vexirk is a ranged spell-caster with
+             * attackRange > 1. v1 keeps the existing F0800 attack
+             * emission but also flags emittedSpellRequest so the
+             * caller can upgrade the action to a fireball when
+             * the party is visible at range. */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK
+                && distance > 1) {
+                out->emittedSpellRequest = 1;
+            }
+        } else if (t == CREATURE_TYPE_RED_DRAGON) {
+            /* GROUP.C F0207/F0209 C24 Red Dragon: ranged fire-stream
+             * attack. v1 emits a melee fire action when adjacent and
+             * marks emittedSpellRequest=1 when the party is visible
+             * at range, mirroring the Vexirk pattern. */
+            if (visible && stateOut->stateKind == AI_STATE_ATTACK
+                && distance > 1) {
+                out->emittedSpellRequest = 1;
+            }
+        } else if (t == CREATURE_TYPE_ANIMATED_ARMOUR) {
+            /* GROUP.C F0205/F0206 C18 Animated Armour: full-square
+             * creature that always attacks the champion in front of
+             * it. v1 keeps the standard APPROACH/ATTACK path; the
+             * F0817_DM1_GROUP_SetGroupDirection_Compat path in
+             * dm1_v1_creature_ai_behavior handles the formation. */
+        } else if (t == CREATURE_TYPE_MAGENTA_WORM) {
+            /* GROUP.C F0207: Magenta Worm is a slow, high-HP melee
+             * creature with poison-on-bite. v1 keeps the standard
+             * melee path; poison delivery is handled by
+             * combat_apply_f0321_armor_defense_scale in M10. */
+        } else if (t == CREATURE_TYPE_GIANT_SCORPION) {
+            /* GROUP.C F0207 C0 Giant Scorpion: poison-on-sting
+             * melee, sight 3, ½-square. v1 keeps the standard
+             * melee path; poison delivery is handled by the M10
+             * combat resolver. */
+        }
     }
 
     /* (6) per-state dispatch. */

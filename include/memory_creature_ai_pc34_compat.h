@@ -64,9 +64,16 @@
  * ========================================================== */
 
 #define CREATURE_TYPE_COUNT                    27
+#define CREATURE_TYPE_GIANT_SCORPION            0
+#define CREATURE_TYPE_GIGGLER                   2
+#define CREATURE_TYPE_SCREAMER                  6
 #define CREATURE_TYPE_STONE_GOLEM               9
 #define CREATURE_TYPE_MUMMY                    10
 #define CREATURE_TYPE_SKELETON                 12
+#define CREATURE_TYPE_VEXIRK                   14
+#define CREATURE_TYPE_MAGENTA_WORM             15
+#define CREATURE_TYPE_ANIMATED_ARMOUR          18
+#define CREATURE_TYPE_RED_DRAGON               24
 
 /* ==========================================================
  *  AI state enum (stable — serialised forever)
