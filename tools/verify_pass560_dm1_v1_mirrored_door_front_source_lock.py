@@ -9,7 +9,7 @@ RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolch
 MANIFEST = ROOT / "parity-evidence/verification/pass560_dm1_v1_mirrored_door_front_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass560_dm1_v1_mirrored_door_front_source_lock.md"
 STATUS = "PASS560_DM1_V1_MIRRORED_DOOR_FRONT_SOURCE_LOCKED"
-TEST_BINARY = ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_viewport_3d_pc34_compat"
 
 SRC = [
     ("d3r-mirrored-door-front-split", "DUNVIEW.C", "6578-6602", [

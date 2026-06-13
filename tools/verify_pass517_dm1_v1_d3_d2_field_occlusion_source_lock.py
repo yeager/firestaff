@@ -102,7 +102,7 @@ def main() -> int:
     for rel, needle in LOCAL_NEEDLES:
         text = (ROOT / rel).read_text(encoding="utf-8", errors="replace")
         local_rows.append({"file": rel, "needle": needle, "status": "PASS" if needle in text else "FAIL"})
-    runtime = run([str(ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat")])
+    runtime = run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_viewport_3d_pc34_compat")])
     ok = all(r["status"] == "PASS" for r in red_rows + local_rows) and runtime["passed"]
     manifest = {
         "schema": "pass517_dm1_v1_d3_d2_field_occlusion_source_lock.v1",

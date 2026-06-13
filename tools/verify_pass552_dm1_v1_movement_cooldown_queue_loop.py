@@ -96,10 +96,15 @@ def git(*args: str) -> str:
 
 
 def find_test_exe() -> Path:
+    import os
     candidates = [
         ROOT / "build-pass552" / "test_dm1_v1_movement_timing_pc34_compat",
         ROOT / "build" / "test_dm1_v1_movement_timing_pc34_compat",
     ]
+    # Support FIRESTAFF_BUILD_DIR env var for out-of-tree builds
+    env_build = os.environ.get("FIRESTAFF_BUILD_DIR")
+    if env_build:
+        candidates.insert(0, Path(env_build) / "test_dm1_v1_movement_timing_pc34_compat")
     candidates.extend(sorted(ROOT.glob("build*/test_dm1_v1_movement_timing_pc34_compat")))
     for candidate in candidates:
         if candidate.exists():

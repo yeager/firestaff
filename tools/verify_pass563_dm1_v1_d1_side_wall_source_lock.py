@@ -6,7 +6,7 @@ RED=Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchai
 MANIFEST=ROOT/"parity-evidence/verification/pass563_dm1_v1_d1_side_wall_source_lock/manifest.json"
 REPORT=ROOT/"parity-evidence/pass563_dm1_v1_d1_side_wall_source_lock.md"
 STATUS="PASS563_DM1_V1_D1_SIDE_WALL_SOURCE_LOCKED"
-TEST_BINARY=ROOT/"build"/"test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY=Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT/"build")))/"test_dm1_v1_viewport_3d_pc34_compat"
 SRC=[
 ("defs-pc34-d1-side-wall-zones","DEFS.H","4052-4054",["#define C713_ZONE_WALL_D1L","#define C714_ZONE_WALL_D1R"]),
 ("f0128-d1-row-left-right-before-center","DUNVIEW.C","8518-8533",["F0121_DUNGEONVIEW_DrawSquareD2C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);","F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, -1, &L0224_i_MapX, &L0225_i_MapY);","F0122_DUNGEONVIEW_DrawSquareD1L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);","F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 1, &L0224_i_MapX, &L0225_i_MapY);","F0123_DUNGEONVIEW_DrawSquareD1R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);","F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 0, &L0224_i_MapX, &L0225_i_MapY);","F0124_DUNGEONVIEW_DrawSquareD1C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"]),

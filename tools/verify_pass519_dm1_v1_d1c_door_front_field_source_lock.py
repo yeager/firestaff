@@ -96,7 +96,7 @@ def main(check=False):
     if check:
         print("PASS pass519 check-only" if not failed else "FAIL pass519 check-only: " + ",".join(failed))
         return 0 if not failed else 1
-    runtime = run([str(ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat")])
+    runtime = run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_viewport_3d_pc34_compat")])
     check_run = run([sys.executable, str(Path(__file__).resolve()), "--check-only"])
     ok = not failed and runtime["passed"] and check_run["passed"]
     manifest = {"schema": "pass519_dm1_v1_d1c_door_front_field_source_lock.v1", "status": "passed" if ok else "failed", "statusToken": STATUS if ok else "FAILED_PASS519_DM1_V1_D1C_DOOR_FRONT_FIELD_SOURCE_LOCK", "redmcsbRoot": str(RED), "redmcsbChecks": red, "firestaffChecks": loc, "verificationRuns": [runtime, check_run], "nonClaims": ["No input or movement queue edits.", "No renderer runtime behavior change.", "No original DOS pixel parity claim.", "No DANNESBURK use."]}

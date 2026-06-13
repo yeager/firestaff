@@ -82,7 +82,7 @@ coordinate space.
 
 ## Latest Release
 
-**Current version:** `2.7.12`
+**Current version:** `2.7.13`
 
 The latest release packages the post-v2.7.11 DM1 hardening batch:
 
