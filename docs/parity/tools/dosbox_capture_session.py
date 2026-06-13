@@ -74,6 +74,19 @@ class PlanStep:
     keys: list[str] = field(default_factory=list)
     timeout_s: float = 60.0
     stable_frames: int = 3
+    # When True the live route does NOT gate this step on the 4-state
+    # density classifier; it sends the step's keys, dwells ``settle_s``
+    # for a deterministic capture, and proceeds.  This is for DM.EXE's
+    # SELECTOR text menus (graphics/sound/input), which are not dungeon
+    # framebuffers: their text density lands inconsistently across the
+    # entrance_menu/title_screen buckets (graphics page ≈ entrance_menu,
+    # sound page ≈ title_screen), so classifier gating there produced
+    # false stalls even though the digit+Return navigation was working.
+    # The dry-run still validates settle_only steps against their
+    # ``expected_state`` fixture, so the state machine stays regression
+    # tested without requiring a live classifier match mid-SELECTOR.
+    settle_only: bool = False
+    settle_s: float = 2.5
 
 
 @dataclass
@@ -137,10 +150,10 @@ class KeyDispatch:
 # hard part of this route; everything up to and including it is now a
 # deterministic, capture-verified sequence.
 DEFAULT_PLAN: list[PlanStep] = [
-    PlanStep("graphics_select",  "entrance_menu",    keys=["1", "Return"],       timeout_s=60.0),
-    PlanStep("sound_select",     "entrance_menu",    keys=["1", "Return"],       timeout_s=30.0),
-    PlanStep("input_select",     "entrance_menu",    keys=["1", "Return"],       timeout_s=30.0),
-    PlanStep("entrance_wall",    "entrance_menu",    timeout_s=60.0),
+    PlanStep("graphics_select",  "entrance_menu",    keys=["1", "Return"], settle_only=True, settle_s=3.0),
+    PlanStep("sound_select",     "entrance_menu",    keys=["1", "Return"], settle_only=True, settle_s=3.0),
+    PlanStep("input_select",     "entrance_menu",    keys=["1", "Return"], settle_only=True, settle_s=4.0),
+    PlanStep("entrance_wall",    "entrance_menu",    settle_only=True, settle_s=4.0),
     PlanStep("enter_dungeon",    "dungeon_gameplay", keys=["entrance_enter_click"], timeout_s=60.0),
     PlanStep("dungeon_gameplay", "dungeon_gameplay", timeout_s=120.0),
 ]
@@ -1719,26 +1732,65 @@ def _press_entrance_enter_click() -> None:
     subprocess.run(["cliclick", f"c:{px},{py}"], check=True)
 
 
+# macOS virtual key codes for the route keys.  Delivered via AppleScript
+# ``key code N`` (System Events), which is the ONLY keystroke path observed
+# to actually reach a focused DOSBox Staging window on macOS 15.  cliclick's
+# ``kp:return``/``t:1`` events were silently dropped by DOSBox even with the
+# window frontmost (the SELECTOR echoed the typed digit but never consumed
+# the Return), which is why every live SELECTOR page used to stall.
+OSASCRIPT_KEY_CODES = {
+    "Return": 36,
+    "Key-Up": 126,
+    "Key-Down": 125,
+    "Key-Left": 123,
+    "Key-Right": 124,
+    "0": 29, "1": 18, "2": 19, "3": 20, "4": 21,
+    "5": 23, "6": 22, "7": 26, "8": 28, "9": 25,
+}
+
+
+def _osascript_key_code(code: int, modifiers: tuple[str, ...] = ()) -> None:
+    if modifiers:
+        mod = " using {" + ", ".join(f"{m} down" for m in modifiers) + "}"
+    else:
+        mod = ""
+    script = f'tell application "System Events" to key code {code}{mod}'
+    proc = _run_quiet(["osascript", "-e", script], timeout=5.0)
+    if getattr(proc, "returncode", 1) != 0:
+        raise RuntimeError(
+            f"osascript key code {code} failed: "
+            f"{proc.stderr.strip() or proc.stdout.strip()}"
+        )
+
+
 def _press_key(key: str) -> None:
     time.sleep(0.25)
     if key == ENTRANCE_ENTER_CLICK_KEY:
         _press_entrance_enter_click()
         return
     # Re-raise the DOSBox window before every keystroke.  Without this the
-    # cliclick key event is delivered to whatever app happens to be
-    # frontmost (observed: keystrokes silently dropped, frames byte-stable,
+    # key event is delivered to whatever app happens to be frontmost
+    # (observed: keystrokes silently dropped, frames byte-stable,
     # ``host_active_app`` momentarily empty), so the SELECTOR pages never
     # advanced even though the screenshot path later re-activated DOSBox.
     # ``_activate_dosbox`` is the proven ``open -a`` focus path and is cheap
     # to repeat (it does not spawn duplicate DOSBox instances).
     _activate_dosbox()
-    mapped = KEY_MAP.get(key)
-    if mapped is not None:
-        subprocess.run(["cliclick", f"kp:{mapped}"], check=True)
-    elif len(key) == 1:
-        subprocess.run(["cliclick", f"t:{key}"], check=True)
-    else:
-        raise ValueError(f"unsupported live key: {key}")
+    code = OSASCRIPT_KEY_CODES.get(key)
+    if code is not None:
+        _osascript_key_code(code)
+        return
+    # Fallback for any single character not in the explicit key-code map.
+    if len(key) == 1:
+        proc = _run_quiet(
+            ["osascript", "-e",
+             f'tell application "System Events" to keystroke "{key}"'],
+            timeout=5.0,
+        )
+        if getattr(proc, "returncode", 1) != 0:
+            raise RuntimeError(f"osascript keystroke {key!r} failed")
+        return
+    raise ValueError(f"unsupported live key: {key}")
 
 
 def _key_dispatch_log_path(capture_root: Path) -> Path:
@@ -2258,6 +2310,32 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
             for key in step.keys:
                 print(f"send={key}", file=sys.stderr)
                 _dispatch_key_for_live_step(capture_root, step.name, key)
+            if step.settle_only:
+                # DM.EXE SELECTOR text menus: do not gate on the dungeon
+                # density classifier.  Dwell for a deterministic capture
+                # and take one labelled screenshot so the state-samples
+                # log still has evidence for this step, then proceed.
+                time.sleep(step.settle_s)
+                try:
+                    img, capture_meta = _screenshot_frame(
+                        capture_root, f"{step.name}_settle", args.capture_backend,
+                    )
+                    quality = _frame_quality(
+                        img, f"{step.name}_settle", classify(img), capture_meta,
+                    )
+                    _write_quality_log(capture_root, quality)
+                    print(
+                        f"settle step={step.name} state={quality.state} "
+                        f"full_nonblack={quality.full_nonblack:.4f} "
+                        f"backend={quality.capture_backend}",
+                        file=sys.stderr,
+                    )
+                except Exception as exc:  # pragma: no cover - host-only
+                    print(
+                        f"settle step={step.name} screenshot skipped: {exc}",
+                        file=sys.stderr,
+                    )
+                continue
             ok, last = _wait_for_state(
                 capture_root,
                 step.expected_state,
@@ -2346,7 +2424,7 @@ def main(argv: list[str] | None = None) -> int:
                         default="auto",
                         help="host screenshot backend for --live (default auto: "
                              "Peekaboo when available, else screencapture; "
-                             "dosbox-rawshot uses DOSBox's internal Ctrl+F5 capture)")
+                             "dosbox-rawshot uses DOSBox's internal rendered screenshot via Alt+F5)")
     args = parser.parse_args(argv)
 
     plan = DEFAULT_PLAN
