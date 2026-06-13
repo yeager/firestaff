@@ -84,15 +84,21 @@ coordinate space.
 
 **Current version:** `2.7.13`
 
-The latest release packages the post-v2.7.11 DM1 hardening batch:
+The latest release is a DM1 V1 combat fidelity and bug audit release,
+documented in `docs/DM1_V1_BUG_AUDIT.md`:
 
-- Added original-DOS in-dungeon movement capture proof using VGA mode and
-  source-locked keyboard-simulation movement.
-- Expanded DM1 V1 viewport source-lock coverage across additional wall, door,
-  side-wall, ornament, stairs/pit, and thing-pass slices.
-- Hardened chest, mirror-candidate, champion-panel, door-bash, sleep/wakeup,
-  projectile, creature, and inventory regressions.
-- Fixed release wiring for the newest D1L/D1R viewport gates before packaging.
+- Armor defense now uses the F0321 wound defense calculation with per-slot
+  iteration and (130 − avgDefense) / 64 attack scaling.
+- Fire Shield, Spell Shield, and Psychic damage types now apply per
+  CHAMPION.C F0321. Creature melee poison uses F0307 vitality adjustment.
+- 7 creature types promoted from STUB to FULL: Giant Scorpion, Giggler,
+  Screamer, Vexirk, Magenta Worm, Animated Armour, Red Dragon. 10 of 27
+  creature types now FULL.
+- Luck and stamina adjustments, creature attack ordering, flee behavior,
+  projectile sub-cell hit mask, Thieves Eye, light table, stat gain cycle,
+  magic map per-champion state, runtime dynamics table, and savegame
+  field mask semantics all source-locked to ReDMCSB.
+- Test infrastructure: FIRESTAFF_BUILD_DIR env var for out-of-tree builds.
 
 See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for the release history.
 

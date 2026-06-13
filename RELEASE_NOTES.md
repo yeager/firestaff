@@ -7,7 +7,13 @@ DM1 V1 combat fidelity and bug audit release — systematic audit of the DM1 V1 
 - **Armor defense overhaul:** Replaced the simplified skill-level armor approximation with a proper ReDMCSB F0321 wound defense calculation that iterates equipped armor slots, applies per-slot defense values with G0050 wound defense factors, and scales attack by (130 − avgDefense) / 64.
 - **Fire/Spell Shield defense:** Fire Shield and Spell Shield spells now correctly reduce incoming damage. Fire attacks subtract FireShieldDefense before armor scaling. Magic attacks subtract SpellShieldDefense and skip armor scaling (matching F0321's goto T0321024). Psychic attacks skip armor scaling entirely.
 - **Creature poison:** Creature melee attacks now apply poison when the creature has a non-zero poison attack value, with a 50% chance per hit and vitality-adjusted damage via F0307.
-- **Test infrastructure:** Added FIRESTAFF_BUILD_DIR environment variable support to 17 Python verification scripts for out-of-tree builds.
+- **Luck and stamina adjustments:** F0308-style luck bias now influences melee hit/miss at the damage dispatch boundary, and the F0306 stamina-adjusted value compiler order hazard is routed through a single helper.
+- **Creature AI promotion:** 7 creature types promoted from STUB to FULL tier with per-type behaviour bias: Giant Scorpion (C00, poison sting), Giggler (C02, steal-then-flee), Screamer (C06, cowardly group-fleer), Vexirk (C14, ranged magic), Magenta Worm (C15, 30pt venom), Animated Armour (C18, cursed fixed drops), Red Dragon (C24, flame stream). 10 of 27 types now FULL.
+- **Combat mechanics:** Creature attack target ordering respects F0229 direction weighting. Creatures below HP threshold can now flee. Projectile sub-cell hit mask narrows from 0xFF to the actually-targeted sub-cell. C6_PSYCHIC damage type applies from the spell descriptor.
+- **Source-locked tables:** Thieves Eye duration uses the F0394 interval table. Light amount uses G0116 graphic559 light factors. Champion stat gain cycle uses F0303. Magic map is per-champion tracked. Runtime dynamics table uses the exact timing constants.
+- **Savegame field mask:** Bit layout now matches LOADSAVE.C for all champion fields.
+- **Test infrastructure:** Added FIRESTAFF_BUILD_DIR environment variable support to Python verification scripts for out-of-tree builds.
+- **Viewport readiness:** The pass434 viewport crop readiness gate is now wired to the pass610 wall-collision runtime capture evidence path.
 
 ## Bug Audit
 
