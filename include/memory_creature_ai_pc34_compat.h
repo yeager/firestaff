@@ -21,11 +21,12 @@
  * Function numbering: F0790 – F0809 (Phase 16 slot).
  *
  * v1 scope highlights (plan §1):
- *   - 3 creature types fully implemented: C09 Stone Golem, C10 Mummy,
- *     C12 Skeleton. The remaining 24 types return cleanly from stubs
- *     that still emit a valid CREATURE_TICK reschedule.
- *   - Spell-casting creatures (Vexirk, Lord Chaos, Materializer) stay
- *     in the stub path; SpellCastRequest emission is always zero in v1.
+ *   - 27 creature types fully implemented (BUG-104 final): all DM1
+ *     creature types now FULL tier with per-type behavior in F0804 §(5b).
+ *   - Spell-casting creatures (Vexirk, Lord Chaos, Materializer) use
+ *     the FULL tier with emittedSpellRequest as a v1 surrogate for the
+ *     M11 vision-share/invisibility/projection channels; full effect
+ *     dispatch into M11 is deferred to a future pass.
  *   - One-step pathfinding only (primary / secondary / opposite / RNG
  *     fallback). No A*.
  *   - Perception delegates LoS to a caller-provided pre-baked flag.

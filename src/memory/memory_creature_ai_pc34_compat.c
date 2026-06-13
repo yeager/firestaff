@@ -10,16 +10,13 @@
  *     NOT linked against Phase 13's duplicates).
  *   - ADDITIVE: no edits to Phase 9..15 source.
  *
- * Fully-implemented creatures (v1):
- *   - C09 Stone Golem  (slow sight-only melee)
- *   - C10 Mummy        (smell + melee, classic undead)
- *   - C12 Skeleton     (fast melee, sharp attack)
- *
- * All 24 other creature types go through the stub path:
- *   profile.implementationTier == 0 -> F0804 returns AI_RESULT_NO_ACTION
- *   and emits a valid CREATURE_TICK reschedule only. No movement, no
- *   attack, no spell, no self-damage decision. Safe for full-verify
- *   (meta-invariant 32 enforces this).
+ * Fully-implemented creatures (v1, BUG-104 final):
+ *   - 27 creature types now FULL tier: C00–C18, C19, C20, C21, C22, C23,
+ *     C24, C25, C26. All include the per-type behavior branches in
+ *     F0804 §(5b) (poison, drag, swarm, fly, ranged, teleport,
+ *     archenemy double-move, etc.). The CREATURE_IMPL_TIER_STUB
+ *     short-circuit at the top of F0804 remains in place as a safety
+ *     net but is no longer the only path for any creature type.
  *
  * NEEDS DISASSEMBLY REVIEW markers are tagged inline where Fontanel
  * mechanics are intentionally simplified / deferred.
@@ -78,16 +75,17 @@ static int le_read_i32(const unsigned char* p) {
  *  Eye, C04 Pain Rat, C05 Ruster, C06 Screamer, C07 Rockpile, C08
  *  Ghost, C09 Stone Golem, C10 Mummy, C11 Black Flame, C12 Skeleton,
  *  C13 Couatl, C14 Vexirk, C15 Magenta Worm, C16 Trolin, C17 Giant
- *  Wasp, C18 Animated Armour, C20 Water Elemental, C21 Oitu, C24 Red
- *  Dragon. Every other entry is a stub with plausible movementTicks /
- *  attackTicks so the reschedule cadence still looks alive.
+ *  Wasp, C18 Animated Armour, C19 Materializer, C20 Water Elemental,
+ *  C21 Oitu, C22 Demon, C23 Lord Chaos, C24 Red Dragon, C25 Lord Order,
+ *  C26 Grey Lord. All 27 creature types are now FULL tier.
  *
  *  Numeric values for the FULL tier rows are taken directly from
  *  ReDMCSB WIP20210206 DUNGEON.C G0243_as_Graphic559_CreatureInfo
  *  (DEFS.H:5611). See PHASE16_PLAN.md §4.11 for the original hand-entered
  *  values; this batch (BUG-104) re-binds the C03 / C17 / C21 rows to
- *  match DUNGEON.C, plus promotes C07 / C08 / C11 / C20 (prior pass)
- *  and C01 / C04 / C05 / C13 / C16 (this pass).
+ *  match DUNGEON.C, plus promotes C07 / C08 / C11 / C20 (prior pass),
+ *  C01 / C04 / C05 / C13 / C16 (warriors/casters + flying pass), and
+ *  C19 / C22 / C23 / C25 / C26 (arch-enemy pass).
  *  Any large re-bind after disassembly confirmation will add an inline
  *  NEEDS DISASSEMBLY REVIEW marker in the affected row.
  * ========================================================================= */
