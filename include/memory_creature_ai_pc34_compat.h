@@ -65,8 +65,11 @@
 
 #define CREATURE_TYPE_COUNT                    27
 #define CREATURE_TYPE_GIANT_SCORPION            0
+#define CREATURE_TYPE_SWAMP_SLIME               1
 #define CREATURE_TYPE_GIGGLER                   2
 #define CREATURE_TYPE_WIZARD_EYE                3
+#define CREATURE_TYPE_PAIN_RAT                  4
+#define CREATURE_TYPE_RUSTER                    5
 #define CREATURE_TYPE_SCREAMER                  6
 #define CREATURE_TYPE_ROCKPILE                  7
 #define CREATURE_TYPE_GHOST                     8
@@ -74,8 +77,10 @@
 #define CREATURE_TYPE_MUMMY                    10
 #define CREATURE_TYPE_BLACK_FLAME              11
 #define CREATURE_TYPE_SKELETON                 12
+#define CREATURE_TYPE_COUATL                   13
 #define CREATURE_TYPE_VEXIRK                   14
 #define CREATURE_TYPE_MAGENTA_WORM             15
+#define CREATURE_TYPE_TROLIN                   16
 #define CREATURE_TYPE_GIANT_WASP               17
 #define CREATURE_TYPE_ANIMATED_ARMOUR          18
 #define CREATURE_TYPE_WATER_ELEMENTAL          20
