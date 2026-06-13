@@ -7658,6 +7658,20 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_mirror_candidate_c040_eye_live_candidate_pc34_compat
     )
 
+    add_executable(test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat
+        PRIVATE include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat
+    )
+
     add_executable(test_dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_pc34_compat
         tests/test_dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_pc34_compat.c
         src/dm1/dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_pc34_compat.c
