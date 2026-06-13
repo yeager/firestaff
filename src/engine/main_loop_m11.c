@@ -903,7 +903,17 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
                   M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
                   paletteDirty = 0;
               }
-              for (vblank = 0U; vblank < step.vblankCount; ++vblank) SDL_Delay(20);
+              /* ReDMCSB SWSH.C:33-37: each Vsync wait is one 50 Hz vertical
+               * blank (~20 ms).  Use wall-clock timing so high-refresh displays
+               * (e.g. MacBook Pro 120 Hz ProMotion) do not race through the
+               * palette animation faster than the original Atari ST rate. */
+              for (vblank = 0U; vblank < step.vblankCount; ++vblank) {
+                  Uint64 t0 = SDL_GetTicks();
+                  SDL_Delay(16);  /* yield most of the 20 ms frame */
+                  while ((SDL_GetTicks() - t0) < 20) {
+                      SDL_Delay(1);
+                  }
+              }
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM) {
               if (paletteDirty) {
                   m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
