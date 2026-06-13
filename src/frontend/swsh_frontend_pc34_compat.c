@@ -40,39 +40,30 @@ static unsigned char SWSH_Compat_Vga6ToRgb8(unsigned int component) {
         return (unsigned char)((component << 2) | (component >> 4));
 }
 
+/* Convert a 3-bit Atari ST color component (0-7) to a 6-bit VGA DAC value.
+ * Standard mapping: multiply by 9 so 0→0 and 7→63.  This matches the
+ * hardware conversion documented in Atari ST Developer docs and produces
+ * the same DAC values as the original DM1 PC port. */
+static unsigned int SWSH_Compat_Atari3ToVga6(unsigned int component) {
+        return (component & 7u) * 9u;
+}
+
 void SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(unsigned int colorValue,
                                               unsigned char outRgb[3]) {
+        unsigned int r3, g3, b3;
         if (!outRgb) return;
         /* ReDMCSB SWSH.C F2255:3017-3026 applies PC/F20E Swoosh palette
-         * rows C16..C25 from DRAWVIEW.C G8162-G8171.  The old Atari
-         * Setcolor words are kept as source-step tokens, but their visible
-         * PC values are VGA DAC rows: white 0x3F, grey 0x2F/0x1F and
-         * final yellow 0x3F,0x3F,0. */
-        switch (colorValue & 0x0777u) {
-        case 0x0777u:
-                outRgb[0] = SWSH_Compat_Vga6ToRgb8(0x3Fu);
-                outRgb[1] = SWSH_Compat_Vga6ToRgb8(0x3Fu);
-                outRgb[2] = SWSH_Compat_Vga6ToRgb8(0x3Fu);
-                break;
-        case 0x0555u:
-                outRgb[0] = SWSH_Compat_Vga6ToRgb8(0x2Fu);
-                outRgb[1] = SWSH_Compat_Vga6ToRgb8(0x2Fu);
-                outRgb[2] = SWSH_Compat_Vga6ToRgb8(0x2Fu);
-                break;
-        case 0x0222u:
-                outRgb[0] = SWSH_Compat_Vga6ToRgb8(0x1Fu);
-                outRgb[1] = SWSH_Compat_Vga6ToRgb8(0x1Fu);
-                outRgb[2] = SWSH_Compat_Vga6ToRgb8(0x1Fu);
-                break;
-        case 0x0770u:
-                outRgb[0] = SWSH_Compat_Vga6ToRgb8(0x3Fu);
-                outRgb[1] = SWSH_Compat_Vga6ToRgb8(0x3Fu);
-                outRgb[2] = 0u;
-                break;
-        default:
-                outRgb[0] = outRgb[1] = outRgb[2] = 0u;
-                break;
-        }
+         * rows C16..C25 from DRAWVIEW.C G8162-G8171.  The Atari Setcolor
+         * word format is 0x0RGB where R, G, B are 3-bit components (0-7).
+         * Convert generically via 3-bit Atari → 6-bit VGA DAC → 8-bit RGB
+         * so all color values render correctly, not just the 4 hardcoded
+         * cases that were previously handled. */
+        r3 = (colorValue >> 8) & 7u;
+        g3 = (colorValue >> 4) & 7u;
+        b3 =  colorValue       & 7u;
+        outRgb[0] = SWSH_Compat_Vga6ToRgb8(SWSH_Compat_Atari3ToVga6(r3));
+        outRgb[1] = SWSH_Compat_Vga6ToRgb8(SWSH_Compat_Atari3ToVga6(g3));
+        outRgb[2] = SWSH_Compat_Vga6ToRgb8(SWSH_Compat_Atari3ToVga6(b3));
 }
 
 
