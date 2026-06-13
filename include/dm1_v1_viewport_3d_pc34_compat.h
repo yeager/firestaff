@@ -389,6 +389,58 @@ typedef struct {
     const char *wall_return_source_lines;
 } DM1_ViewportFloorFieldOrderSpec;
 
+/* Pass760 D0L2/D0R2 combined source-lock composition.  This records the
+ * synthetic pair identity separately from the existing D0L/D0R F0108,
+ * D0C F0108, and D1L2/D1R2 wall-composition gates while binding the wall,
+ * floor, ceiling, floor-ornament, and wall-ornament anchors together.
+ *
+ * ReDMCSB source anchors:
+ *   DUNVIEW.C F0108_DUNGEONVIEW_DrawFloorOrnament:3940-4011
+ *   DUNVIEW.C F0107:3502-3938
+ *   DUNVIEW.C F0098:2962-3002
+ *   DUNVIEW.C F0115:4547-4581,5180-5188,5211-5214,5668-5671
+ *   DUNVIEW.C:6432-6600 M575_VIEW_WALL_D3L_RIGHT
+ *   DEFS.H:2088,2596-2611,2668-2677,2698-2702,4045-4046
+ *   DRAWVIEW.C F0097:1-50 plus DUNVIEW.C F0104:3113-3156 and
+ *   F0105:3185-3247 C10 blit dispatch. */
+typedef struct {
+    DM1_ViewSquareIndex square;
+    DM1_ViewSquareIndex paired_wall_square;
+    DM1_WallSetIndex native_wall;
+    DM1_WallSetIndex parity_wall;
+    uint16_t pc34_wall_zone;
+    uint16_t companion_d3_wall_zone;
+    int rel_depth;
+    int rel_lateral;
+    int view_square_ordinal;
+    int view_floor_ordinal;
+    int view_wall_side_ordinal;
+    int view_wall_front_ordinal;
+    uint16_t open_cell_order;
+    uint16_t wall_return_cell_order;
+    uint16_t floor_ornament_keepout_mask;
+    uint16_t floor_ornament_zone_base;
+    uint16_t floor_ornament_zone_stride;
+    bool wall_composition_locked;
+    bool floor_ceiling_base_locked;
+    bool floor_ornament_locked;
+    bool ceiling_locked;
+    bool wall_ornament_locked;
+    bool wall_returns_before_f0115;
+    bool open_path_floor_before_f0115;
+    bool c10_transparent_blit;
+    bool non_duplicate_pass729_d0l_d0r;
+    bool non_duplicate_pass733_d0c;
+    bool non_duplicate_pass717_d1l2_d1r2_wall;
+    const char *redmcsb_wall_source_lines;
+    const char *redmcsb_f0108_source_lines;
+    const char *redmcsb_f0107_source_lines;
+    const char *redmcsb_f0098_source_lines;
+    const char *redmcsb_f0115_source_lines;
+    const char *redmcsb_defs_source_lines;
+    const char *redmcsb_drawview_source_lines;
+} DM1_ViewportD0L2D0R2F0108CompositionSpec;
+
 typedef struct {
     DM1_ViewSquareIndex square;
     int8_t rel_depth;
@@ -463,6 +515,8 @@ typedef struct {
 #define DM1_VIEW_SQUARE_D3R2 ((DM1_ViewSquareIndex)-102)
 #define DM1_VIEW_SQUARE_D2L2 ((DM1_ViewSquareIndex)-103)
 #define DM1_VIEW_SQUARE_D2R2 ((DM1_ViewSquareIndex)-104)
+#define DM1_VIEW_SQUARE_D0L2 ((DM1_ViewSquareIndex)-105)
+#define DM1_VIEW_SQUARE_D0R2 ((DM1_ViewSquareIndex)-106)
 
 /* PC34/I34E viewport zone ids from ReDMCSB DEFS.H:4040-4057. */
 #define DM1_PC34_ZONE_VIEWPORT_CEILING_AREA 700
@@ -879,6 +933,11 @@ const DM1_ViewportThievesEyeDoorFrameOcclusionSpec *dm1_viewport_3d_get_thieves_
 size_t dm1_viewport_3d_floor_field_order_spec_count(void);
 const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec(size_t index);
 const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_ViewSquareIndex square);
+size_t dm1_viewport_3d_d0l2_d0r2_f0108_composition_spec_count(void);
+const DM1_ViewportD0L2D0R2F0108CompositionSpec *
+dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec(size_t index);
+const DM1_ViewportD0L2D0R2F0108CompositionSpec *
+dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec_for_square(DM1_ViewSquareIndex square);
 
 /* Source-locked post-command redraw contract: a completed command mutates the
  * party/world state first, GAMELOOP.C redraws F0128 from G0308/G0306/G0307,

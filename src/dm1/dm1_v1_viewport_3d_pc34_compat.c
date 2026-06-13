@@ -456,6 +456,52 @@ static const DM1_ViewportFloorFieldOrderSpec s_floor_field_order_specs[] = {
       "DUNVIEW.C:8185-8240 door-side case breaks before common F0115; no wall case in D0C" },
 };
 
+/* Pass760: D0L2/D0R2 pair composition source lock.
+ * ReDMCSB anchors: DUNVIEW.C F0108_DUNGEONVIEW_DrawFloorOrnament:3940-4011
+ * (floor-ornament ordinal and MASK0x8000_FOOTPRINTS keepout);
+ * DUNVIEW.C F0107:3502-3938 (wall-ornament ordinal/coordinate set);
+ * DUNVIEW.C F0098:2962-3002 (floor/ceiling base);
+ * DUNVIEW.C F0115:4547-4581,5180-5188,5211-5214,5668-5671
+ * (thing-pass cell ordering); DUNVIEW.C:6432-6600
+ * M575_VIEW_WALL_D3L_RIGHT; DEFS.H:2088,2596-2611,2668-2677,
+ * 2698-2702,4045-4046; DRAWVIEW.C F0097:1-50 wall-side dispatch
+ * plus DUNVIEW.C F0104:3113-3156 and F0105:3185-3247 C10 blits. */
+static const DM1_ViewportD0L2D0R2F0108CompositionSpec
+s_d0l2_d0r2_f0108_composition_specs[] = {
+    {
+        DM1_VIEW_SQUARE_D0L2, DM1_VIEW_SQUARE_D0L,
+        DM1_WALL_D0L, DM1_WALL_D0R,
+        DM1_PC34_ZONE_WALL_D0L, DM1_PC34_ZONE_WALL_D3L,
+        0, -2, 1, 8, 2, 4,
+        0x0002, 0x0000, 0x8000u, 1500, 11,
+        true, true, true, true, true, true, true, true,
+        true, true, true,
+        "DUNVIEW.C:6432-6480 wall ornament/order path; DUNVIEW.C:8016-8038 D0L wall return",
+        "DUNVIEW.C:3940-4011 F0108 floor ornament MASK0x8000 keepout",
+        "DUNVIEW.C:3502-3938 F0107 wall ornament ordinal/coordinateSet",
+        "DUNVIEW.C:2962-3002 F0098 floor+ceiling base",
+        "DUNVIEW.C:4547-4581,5180-5188,5211-5214,5668-5671 F0115 thing-pass ordering",
+        "DEFS.H:2088 C10; DEFS.H:2596-2611 view-square ordinals; DEFS.H:2668-2677/2698-2702 cell/view-wall ordinals; DEFS.H:4045-4046 C705/C706",
+        "DRAWVIEW.C F0097:1-50 wall-side dispatch; DUNVIEW.C F0104:3113-3156; DUNVIEW.C F0105:3185-3247"
+    },
+    {
+        DM1_VIEW_SQUARE_D0R2, DM1_VIEW_SQUARE_D0R,
+        DM1_WALL_D0R, DM1_WALL_D0L,
+        DM1_PC34_ZONE_WALL_D0R, DM1_PC34_ZONE_WALL_D3R,
+        0, 2, 2, 10, 3, 6,
+        0x0001, 0x0000, 0x8000u, 1500, 11,
+        true, true, true, true, true, true, true, true,
+        true, true, true,
+        "DUNVIEW.C:6545-6600 wall ornament/order path; DUNVIEW.C:8126-8144 D0R wall return",
+        "DUNVIEW.C:3940-4011 F0108 floor ornament MASK0x8000 keepout",
+        "DUNVIEW.C:3502-3938 F0107 wall ornament ordinal/coordinateSet",
+        "DUNVIEW.C:2962-3002 F0098 floor+ceiling base",
+        "DUNVIEW.C:4547-4581,5180-5188,5211-5214,5668-5671 F0115 thing-pass ordering",
+        "DEFS.H:2088 C10; DEFS.H:2596-2611 view-square ordinals; DEFS.H:2668-2677/2698-2702 cell/view-wall ordinals; DEFS.H:4045-4046 C705/C706",
+        "DRAWVIEW.C F0097:1-50 wall-side dispatch; DUNVIEW.C F0104:3113-3156; DUNVIEW.C F0105:3185-3247"
+    },
+};
+
 static const DM1_ViewportWallDrawSpec s_wall_draw_specs[] = {
     { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, true,  false, DM1_PC34_ZONE_WALL_D3L2, true,  false, "F0676_DrawD3L2",                  "DUNVIEW.C:6254-6260", "DUNVIEW.C:6263-6264 wall ornament then return" },
     { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, true,  false, DM1_PC34_ZONE_WALL_D3R2, true,  false, "F0677_DrawD3R2",                  "DUNVIEW.C:6321-6327", "DUNVIEW.C:6330-6331 wall ornament then return" },
@@ -1715,6 +1761,30 @@ const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spe
 {
     for (size_t i = 0; i < dm1_viewport_3d_floor_field_order_spec_count(); ++i) {
         if (s_floor_field_order_specs[i].square == square) return &s_floor_field_order_specs[i];
+    }
+    return NULL;
+}
+
+size_t dm1_viewport_3d_d0l2_d0r2_f0108_composition_spec_count(void)
+{
+    return sizeof(s_d0l2_d0r2_f0108_composition_specs) /
+           sizeof(s_d0l2_d0r2_f0108_composition_specs[0]);
+}
+
+const DM1_ViewportD0L2D0R2F0108CompositionSpec *
+dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_d0l2_d0r2_f0108_composition_spec_count()) return NULL;
+    return &s_d0l2_d0r2_f0108_composition_specs[index];
+}
+
+const DM1_ViewportD0L2D0R2F0108CompositionSpec *
+dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec_for_square(DM1_ViewSquareIndex square)
+{
+    for (size_t i = 0; i < dm1_viewport_3d_d0l2_d0r2_f0108_composition_spec_count(); ++i) {
+        if (s_d0l2_d0r2_f0108_composition_specs[i].square == square) {
+            return &s_d0l2_d0r2_f0108_composition_specs[i];
+        }
     }
     return NULL;
 }

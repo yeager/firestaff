@@ -11633,6 +11633,23 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     set_tests_properties(pass628_dm1_v1_wall_frame_bitmap_global_gate PROPERTIES TIMEOUT 75)
 endif()
 
+# -- DM1 V1 D0L2/D0R2 F0108 wall/floor/ceiling/ornament source lock --
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_custom_target(
+        verify_pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament_source_lock
+        COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}
+                ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament_source_lock.py
+        DEPENDS test_dm1_v1_viewport_3d_pc34_compat
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+    add_test(
+        NAME pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament_source_lock
+        COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}
+                ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament_source_lock.py
+    )
+    set_tests_properties(pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament_source_lock PROPERTIES TIMEOUT 75)
+endif()
+
 # -- DM1 V1 D0/D1 visible-square draw-order source lock --
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
