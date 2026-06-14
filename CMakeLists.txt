@@ -1538,6 +1538,36 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_neophyte_mode PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 projectile speed normalization (Combat GAP 1, CHANGE7_20).
+# Source-locked per PROJEXPL.C CHANGE7_20_IMPROVEMENT.  Single
+# flag toggled by csb_v1_save_load on save load.  F0825 consults
+# the flag and uses delay=1 on every map when CSB mode is on.
+add_library(firestaff_csb_v1_projectile_speed
+    src/csb/csb_v1_projectile_speed_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_projectile_speed PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_projectile_speed PRIVATE -Wall -Wextra -O2)
+endif()
+
+# CSB V1 projectile speed normalization regression gate.
+add_executable(test_csb_v1_projectile_speed_pc34_compat
+    tests/test_csb_v1_projectile_speed_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_projectile_speed_pc34_compat PRIVATE
+    firestaff_csb_v1_projectile_speed firestaff_m10 firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_projectile_speed_pc34_compat PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v1_projectile_speed_pc34_compat
+    COMMAND test_csb_v1_projectile_speed_pc34_compat
+)
+set_tests_properties(csb_v1_projectile_speed_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
 # DM1 V1 Hall of Champions wall-mirror zone verification gate.
 # Pixel-proves the D1C champion mirror on the (1,3) and (1,4) wall
 # routes is rendered at the source-locked destination box

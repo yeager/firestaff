@@ -18,6 +18,7 @@
 
 #include "memory_projectile_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"  /* F0192 resistance adjustment */
+#include "csb_v1_projectile_speed_pc34_compat.h"  /* CHANGE7_20 gate */
 
 /* ==========================================================
  *  Platform + size asserts (MEDIA016 contract).
@@ -748,8 +749,16 @@ int F0825_PROJECTILE_ScheduleNextMove_Compat(
     int delay;
     if (in == NULL || outEvent == NULL) return 0;
     /* PROJEXPL.C CHANGE7_20_IMPROVEMENT branch: +1 on party map, +3
-     * elsewhere. Hard clamp to >=1 (loop-guard). */
-    delay = onPartyMap ? 1 : 3;
+     * elsewhere. CSB V1 closes this gap (full speed on ALL maps).
+     * The CSB gate is opt-in via the projectile-speed-normalization
+     * flag (csb_v1_projectile_speed_normalization_get).  When the
+     * flag is on, delay is 1 regardless of onPartyMap.  Hard
+     * clamp to >=1 (loop-guard) in both branches. */
+    if (csb_v1_projectile_speed_normalization_get()) {
+        delay = 1;
+    } else {
+        delay = onPartyMap ? 1 : 3;
+    }
     if (delay < 1) delay = 1;
 
     memset(outEvent, 0, sizeof(*outEvent));
