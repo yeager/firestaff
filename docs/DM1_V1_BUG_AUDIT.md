@@ -117,7 +117,23 @@ The full table is also exposed via the public symbol
 `include/dm1_v1_light_pc34_compat.h`).
 
 
-### BUG-109 — Champion Stat Gain Cycle Approximated
+### BUG-109 FIXED — Champion Stat Gain Cycle Source-Locked
+
+F0331 is implemented in
+`src/dm1/dm1_v1_champion_needs_pc34_compat.c` (the
+post-M10 v1 split of CHAMPION.C).  The per-tick stat
+recovery loop follows ReDMCSB CHAMPION.C F0331:2487-2497
+(MEDIA240 branch = DM1 Atari ST 1.2+):
+  - BoundedValue(1, (MaxStamina >> 8) - 1, 6) cycle count
+  - gain = (MaxHealth >> 7) + 1 per cycle
+  - (current_stamina < max_stamina) consumes the gain
+  - time_criteria = ((GT & 0x80) + ((GT & 0x100) >> 2) +
+    ((GT & 0x40) << 2)) >> 2
+  - Mana regen gated by wisdom + (wiz_skill + priest_skill)
+  - StaminaGainCycleCount starts at 4 (AL9995)
+  - Party-resting flag doubles all gains
+  - Negative food/water drain when below 0 is preserved
+
 - **Severity:** Minor
 - **Category:** Mechanics
 - **Description:** `memory_champion_lifecycle_pc34_compat.c:149` marks the F0331 stat gain expansion via repeated cycles as "NEEDS DISASSEMBLY REVIEW".
@@ -212,15 +228,19 @@ FIRESTAFF_DATA tests to assert against.
 - **Impact:** False test failures mask real issues; CI may pass because it builds in-tree.
 - **Fix Complexity:** Low — add the external build path to the search candidates, or respect a `FIRESTAFF_BUILD_DIR` environment variable.
 
-### BUG-118 — Viewport Occlusion Gate Chain Root Failure
-- **Severity:** Minor
-- **Category:** Rendering
-- **Description:** `pass434_dm1_v1_original_viewport_crop_readiness_gate` is the root failure for a chain of 5+ viewport tests. Its failure message is `FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`, suggesting the viewport crop computation is not yet ready.
-- **ReDMCSB Reference:** DUNVIEW.C F0128 viewport crop/clip
-- **Expected:** Viewport rendering with correct crop boundaries matching original.
-- **Actual:** Viewport crop readiness gate fails, cascading to dependent tests.
-- **Impact:** Several viewport rendering features cannot be verified.
-- **Fix Complexity:** Medium — requires implementing the viewport crop boundaries correctly.
+### BUG-118 OPEN-OMFATTANDE — Viewport Occlusion Gate Chain Root Failure
+
+`pass434_dm1_v1_original_viewport_crop_readiness_gate` is
+the root failure for a chain of 5+ viewport tests.  This
+needs the F0128_DUNGEONVIEW_Draw_CPSF source-locked port
+from DUNVIEW.C (ceiling/floor/wall bitmap alternation
+between G0076_B_UseFlippedWallAndFootprintsBitmaps).  v1
+keeps the existing M11 viewport path and tracks the
+gate failure as a known cascade.  A future milestone
+will implement the full F0128 path with cropped
+ceiling/floor surfaces and the G0076 flip alternation.
+For now, the gap is documented and the test root
+failure is acknowledged.
 
 ---
 
