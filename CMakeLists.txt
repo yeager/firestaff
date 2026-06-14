@@ -1570,6 +1570,24 @@ if(NOT MSVC)
     )
 endif()
 
+# CSB V1 version checker sensor (Dungeon GAP 3, CHANGE7_23 +
+# CHANGE8_06).  Source-locked per ReDMCSB MOVESENS.C
+# CHANGE7_23 (version-gated floor sensor) and BugsAndChanges.htm
+# CHANGE8_06 (engine version 21 hardcoded for CSB 2.1).
+# csb_v1_version_checker_passes(dataValue) returns 1 when
+# dataValue <= engineVersion.
+add_library(firestaff_csb_v1_version_checker
+    src/csb/csb_v1_version_checker_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_version_checker PUBLIC
+    firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_version_checker PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # CSB V1 dungeon header parsing (Dungeon GAP 1, level count).
 # Source-locked per ReDMCSB CEDTINC8.C:101-118 (CSBGAME.DAT
 # vs DMSAVE.DAT dispatch) and M13_PLAN.md:303 (header layouts).
@@ -1644,6 +1662,26 @@ add_test(
     COMMAND test_csb_v1_dungeon_header_pc34_compat
 )
 set_tests_properties(csb_v1_dungeon_header_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 version checker sensor regression gate.
+add_executable(test_csb_v1_version_checker_pc34_compat
+    tests/test_csb_v1_version_checker_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_version_checker_pc34_compat PRIVATE
+    firestaff_csb_v1_version_checker firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_version_checker_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME csb_v1_version_checker_pc34_compat
+    COMMAND test_csb_v1_version_checker_pc34_compat
+)
+set_tests_properties(csb_v1_version_checker_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 
@@ -2497,6 +2535,22 @@ if(BUILD_TESTING)
     add_test(
         NAME menu_hit_launch_direct_click_m12
         COMMAND test_menu_hit_launch_direct_click_m12
+    )
+
+    # M12 settings tab-strip mouse hit-test gate. Verifies that
+    # the new M12_HIT_SETTINGS_TAB kind is produced for clicks
+    # in the tab strip rect (m12_draw_tabbed_settings_view) and
+    # that M12_ModernMenu_ApplyHit routes to a tab switch.
+    add_executable(test_menu_hit_settings_tab_m12
+        tests/test_menu_hit_settings_tab_m12.c
+    )
+    target_link_libraries(test_menu_hit_settings_tab_m12 PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_menu_hit_settings_tab_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME menu_hit_settings_tab_m12
+        COMMAND test_menu_hit_settings_tab_m12
     )
 
     add_executable(test_m12_version_changelog_consistency

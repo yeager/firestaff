@@ -32,6 +32,17 @@
 #define M12_HIT_GAMEOPT_PANEL_H_V1  780
 #define M12_HIT_GAMEOPT_PANEL_H_V2  780
 #define M12_HIT_ROW_INDENT     36
+
+/* --- Settings view: tab strip (CONTROLS / AUDIO / ACCESSIBILITY) ---
+ * These coords mirror m12_draw_tabbed_settings_view in
+ * menu_startup_m12.c.  The strip sits above the panel (which
+ * starts at M12_HIT_PANEL_Y=260) and is 22 px tall, starting
+ * at y=52 with a margin offset of fw/30.  Tab width is the
+ * available width divided by M12_SETTINGS_TAB_COUNT (3). */
+#define M12_HIT_SETTINGS_TAB_MARGIN (M12_HIT_CANVAS_W / 30)
+#define M12_HIT_SETTINGS_TAB_Y      52
+#define M12_HIT_SETTINGS_TAB_H      22
+#define M12_HIT_SETTINGS_TAB_W      ((M12_HIT_CANVAS_W - 2 * M12_HIT_SETTINGS_TAB_MARGIN) / M12_SETTINGS_TAB_COUNT)
 #define M12_HIT_ROW_HEIGHT     50
 
 /* Settings rows visible in the modern settings panel. */
@@ -194,6 +205,22 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             break;
         }
         case M12_MENU_VIEW_SETTINGS:
+            /* Tab strip click: switch tabs by index.  The strip
+             * sits at y=52, h=22, with three equally-sized tabs
+             * across the available width.  Clicking a tab moves
+             * settingsTabIndex to that tab. */
+            for (i = 0; i < M12_SETTINGS_TAB_COUNT; ++i) {
+                if (rect_contains(
+                        M12_HIT_SETTINGS_TAB_MARGIN + i * M12_HIT_SETTINGS_TAB_W,
+                        M12_HIT_SETTINGS_TAB_Y,
+                        M12_HIT_SETTINGS_TAB_W - 2,
+                        M12_HIT_SETTINGS_TAB_H,
+                        x, y)) {
+                    hit.kind = M12_HIT_SETTINGS_TAB;
+                    hit.index = i;
+                    return hit;
+                }
+            }
             for (i = 0; i < M12_HIT_SETTINGS_VISIBLE_ROW_COUNT; ++i) {
                 if (m12_hit_settings_row_rect(i, &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {
@@ -332,19 +359,28 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                 M12_StartupMenu_HandleInput(state, mv);
                 if (state->settingsSelectedIndex == before) break;
             }
-            return 1;
-        case M12_HIT_SETTINGS_CYCLE:
-            while (state->settingsSelectedIndex != hit.index) {
-                int before = state->settingsSelectedIndex;
-                M12_MenuInput mv = (hit.index > state->settingsSelectedIndex)
-                                       ? M12_MENU_INPUT_DOWN
-                                       : M12_MENU_INPUT_UP;
-                M12_StartupMenu_HandleInput(state, mv);
-                if (state->settingsSelectedIndex == before) break;
-            }
+            /* Cycle the value of the selected row (not the tab
+             * strip — that's M12_HIT_SETTINGS_TAB).  v2.7.15
+             * split tab cycling (LEFT/RIGHT) from value cycling
+             * (VALUE_LEFT/VALUE_RIGHT) so the cycle button
+             * doesn't accidentally switch tabs. */
             M12_StartupMenu_HandleInput(state,
-                                        hit.delta >= 0 ? M12_MENU_INPUT_RIGHT
-                                                       : M12_MENU_INPUT_LEFT);
+                                        hit.delta >= 0
+                                            ? M12_MENU_INPUT_VALUE_RIGHT
+                                            : M12_MENU_INPUT_VALUE_LEFT);
+            return 1;
+        case M12_HIT_SETTINGS_TAB:
+            /* Click on a settings tab strip: switch tabs by index.
+             * Mirrors the keyboard LEFT/RIGHT path.  Bounded by
+             * M12_SETTINGS_TAB_COUNT. */
+            while (state->settingsTabIndex != hit.index) {
+                int before = state->settingsTabIndex;
+                M12_MenuInput mv = (hit.index > state->settingsTabIndex)
+                                       ? M12_MENU_INPUT_RIGHT
+                                       : M12_MENU_INPUT_LEFT;
+                M12_StartupMenu_HandleInput(state, mv);
+                if (state->settingsTabIndex == before) break;
+            }
             return 1;
         case M12_HIT_GAMEOPT_ROW:
             while (state->gameOptSelectedRow != hit.index) {

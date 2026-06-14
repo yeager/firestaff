@@ -25,6 +25,13 @@ typedef enum {
     M12_MENU_INPUT_BACK,
     M12_MENU_INPUT_ACTION,
     M12_MENU_INPUT_CYCLE_CHAMPION,
+    /* v2.7.15: cycle the current setting's value (the +/- button
+     * on a row in M12_MENU_VIEW_SETTINGS).  Distinct from
+     * M12_MENU_INPUT_LEFT/RIGHT which cycle the settings tab
+     * strip.  Routed by M12_ModernMenu_ApplyHit when the user
+     * clicks the cycle button on a row. */
+    M12_MENU_INPUT_VALUE_LEFT,
+    M12_MENU_INPUT_VALUE_RIGHT,
     M12_MENU_INPUT_REST_TOGGLE,
     M12_MENU_INPUT_USE_STAIRS,
     M12_MENU_INPUT_PICKUP_ITEM,
@@ -297,6 +304,19 @@ typedef enum {
     M12_SETTINGS_TAB2_ACCESSIBILITY,
     M12_SETTINGS_TAB2_COUNT
 } M12_SettingsTab2;
+
+/* ── Settings tabs (m12_draw_tabbed_settings_view) ───────────────────
+ * These tabs power the legacy / redrawn settings view.  Mapped
+ * 1:1 to the layout in menu_startup_m12.c.  The hit-test in
+ * menu_hit_m12.c uses this enum to size the tab-strip rect. */
+typedef enum {
+    M12_SETTINGS_TAB_GAME = 0,
+    M12_SETTINGS_TAB_GRAPHICS,
+    M12_SETTINGS_TAB_CONTROLS,
+    M12_SETTINGS_TAB_AUDIO,
+    M12_SETTINGS_TAB_ACCESSIBILITY,
+    M12_SETTINGS_TAB_COUNT
+} M12_SettingsTab;
 
 typedef struct M12_StartupMenuState {
     M12_MenuEntry entries[7];
