@@ -6,6 +6,7 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
+#include "csb_v1_neophyte_mode_pc34_compat.h"
 #include "src/theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
@@ -21881,9 +21882,29 @@ static const char* m11_dm1_v1_skill_level_name_pc34(unsigned int level) {
         "b MASTER", "c MASTER", "d MASTER", "e MASTER", "ARCHMASTER"
     };
 
+    /* ReDMCSB PANEL.C:26 + CEDT006.C:141: NEOPHYTE is index 0 in the
+     * rank-name table.  The previous implementation returned NULL for
+     * level <= 1, which made both NEOPHYTE and NOVICE display as
+     * empty.  CSB additionally allows skillLevel == 0 only when
+     * neophyte mode is enabled (Character.cpp:665, neophyteSkills ||
+     * D4W > 0); in DM1 the lowest valid level is 1 = NOVICE.
+     *
+     * The mapping is:
+     *   level 0  -> NEOPHYTE (CSB-only; displayed only when
+     *               neophyte mode is enabled)
+     *   level 1  -> NOVICE
+     *   level 2..16 -> APPRENTICE..ARCHMASTER
+     */
     if (level > 16U) level = 16U;
-    if (level <= 1U) return NULL;
-    return names[level - 2U];
+    if (level == 0U) {
+        if (csb_v1_neophyte_display_for_level(level)) {
+            return names[0]; /* NEOPHYTE (CSB only) */
+        }
+        return names[1];   /* DM1: level 0 displays as NOVICE */
+    }
+    if (level == 1U) return names[1]; /* NOVICE */
+    if (level >= 2U) return names[level - 2U];
+    return names[1];
 }
 
 static void m11_format_v1_champion_stats_panel_pc34(

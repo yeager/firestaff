@@ -1073,7 +1073,7 @@ target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2)
 # Theron boot path uses the M12 asset MD5 helper. Keep both reverse static-library
 # edges visible so GNU/MinGW linkers rescan the cycle instead of dropping symbols
 # after their first archive pass.
-target_link_libraries(firestaff_m11 PUBLIC firestaff_m12)
+target_link_libraries(firestaff_m11 PUBLIC firestaff_csb_v1_neophyte_mode firestaff_m12)
 target_link_libraries(firestaff_theron PUBLIC firestaff_m12)
 find_package(ZLIB QUIET)
 if(ZLIB_FOUND)
@@ -1502,6 +1502,40 @@ add_executable(firestaff_dm1_v1_hall_of_champions_panel_guard_probe
 target_link_libraries(firestaff_dm1_v1_hall_of_champions_panel_guard_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_hall_of_champions_panel_guard_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# CSB V1 neophyte-mode toggle regression gate.
+# Source-locked per ReDMCSB Character.cpp:665 (skill
+# validation), data.cpp:88 (default neophyteSkills = false),
+# Recording.cpp:246 (replay neophyte mode set true).  The gate
+# validates the toggle flag and the display decision.
+add_executable(test_csb_v1_neophyte_mode_pc34_compat
+    tests/test_csb_v1_neophyte_mode_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_neophyte_mode_pc34_compat PRIVATE
+    firestaff_csb_v1_neophyte_mode
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_neophyte_mode_pc34_compat PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v1_neophyte_mode_pc34_compat
+    COMMAND test_csb_v1_neophyte_mode_pc34_compat
+)
+set_tests_properties(csb_v1_neophyte_mode_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 neophyte-mode toggle implementation (Champions GAP 1).
+# Source-locked per ReDMCSB Character.cpp:665 + data.cpp:88 +
+# Recording.cpp:246 (neophyteSkills global).  Single-flag
+# implementation; per-save persistence is a follow-up gap.
+add_library(firestaff_csb_v1_neophyte_mode
+    src/csb/csb_v1_neophyte_mode_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_neophyte_mode PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_neophyte_mode PRIVATE -Wall -Wextra -O2)
 endif()
 
 # DM1 V1 Hall of Champions wall-mirror zone verification gate.
