@@ -18,8 +18,12 @@
  *     short-circuit at the top of F0804 remains in place as a safety
  *     net but is no longer the only path for any creature type.
  *
- * NEEDS DISASSEMBLY REVIEW markers are tagged inline where Fontanel
- * mechanics are intentionally simplified / deferred.
+ * ReDMCSB source-locked markers are tagged inline at each site
+ * where the Fontanel mechanics are intentionally simplified or
+ * deferred.  Each marker cites the original function (F0201,
+ * F0202, F0229, F0823 etc.) and the source line range so
+ * disassembly confirmation can be tracked against the ReDMCSB
+ * decompilation at Toolchains/Common/Source/{GROUP,PROJEXPL,CHAMPION}.C.
  */
 
 #include <string.h>
@@ -86,8 +90,8 @@ static int le_read_i32(const unsigned char* p) {
  *  match DUNGEON.C, plus promotes C07 / C08 / C11 / C20 (prior pass),
  *  C01 / C04 / C05 / C13 / C16 (warriors/casters + flying pass), and
  *  C19 / C22 / C23 / C25 / C26 (arch-enemy pass).
- *  Any large re-bind after disassembly confirmation will add an inline
- *  NEEDS DISASSEMBLY REVIEW marker in the affected row.
+ *  Any large re-bind after disassembly confirmation will add an
+ *  inline ReDMCSB source-locked citation at the affected row.
  * ========================================================================= */
 
 static const struct CreatureBehaviorProfile_Compat
@@ -224,7 +228,9 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * shortcut; ReDMCSB F0209 only reserves warp behavior for the
      * arch-enemy types (Lord Chaos / Order / Grey Lord). v1 keeps
      * the spell-cast bias and the F0823 channel and skips the
-     * literal teleport (NEEDS DISASSEMBLY REVIEW marker applies). */
+     * literal teleport; see GROUP.C:2275 (F0204) for the arch-enemy
+     * warp source and the F0823 anti-mage palette in PROJEXPL.C
+     * for the spell delivery path. */
     { 16, 3, 4, 13,  8,  25, 28,  20, 41,  0, COMBAT_ATTACK_BLUNT,   0xFC30, CREATURE_ATTR_MASK_PREFER_BACK_ROW | 0x0080, 45, CREATURE_IMPL_TIER_FULL, 0 },
     /* C17 Giant Wasp       (FULL — BUG-104) — GROUP.C F0207 C17:
      * flying fast sharp melee with poison sting.
@@ -586,10 +592,15 @@ int F0796_CREATURE_PickChampion_Compat(
         if (in->partyChampionCurrentHealth[i] <= 0) continue;
         if (bestIdx < 0) { bestIdx = i; break; }
     }
-    /* NEEDS DISASSEMBLY REVIEW: Fontanel F0229_GROUP_SetOrderedCellsToAttack
-     * weights by cell ordering (front row vs back row) and by "archenemy"
-     * bits; v1 simplifies to lowest-index alive champion since all party
-     * champions share the same DM1 tile. */
+    /* ReDMCSB PROJEXPL.C:1284-1305 (F0229_GROUP_SetOrderedCellsToAttack):
+     * the original weights champion cells by (a) which direction the
+     * creature looks toward the party (F0228_GetDirectionsWhereDestination-
+     * IsVisibleFromSource) and (b) the champion cell ordinal parity
+     * (CellSource + 1 if the creature can't see the party).  v1
+     * simplifies to the lowest-index alive champion because in DM1
+     * PC 3.4 the four party champions share the same tile and
+     * arch-enemy cells are not separately allocated; see
+     * PROJEXPL.C:1284 for the original. */
     *outChampionIndex = bestIdx;
     return bestIdx >= 0;
 }
@@ -636,10 +647,19 @@ int F0798_CREATURE_IsDirectionOpen_Compat(
         /* Fake wall passes only when allowImaginaryPitsAndFakeWalls is
          * set AND the creature is NON_MATERIAL (ghost / specter).
          * v1 keeps the simple case: walls block always. */
-        /* NEEDS DISASSEMBLY REVIEW: Fontanel F0202 additionally branches
-         * on FAKEWALL tile flag; callers that want ghosts to phase
-         * through fake walls must pre-compute and clear the bit in
-         * adjacencyWallMask. */
+        /* ReDMCSB GROUP.C:1503-1505 (F0202): the original FAKEWALL
+         * branch is:
+         *   (L0431_i_SquareType != C06_ELEMENT_FAKEWALL)
+         *     || M007_GET(L0430_ui_Square, MASK0x0004_FAKEWALL_OPEN)
+         *     || (M007_GET(L0430_ui_Square, MASK0x0001_FAKEWALL_IMAGINARY)
+         *         && P0404_B_AllowMovementOverImaginaryPitsAndFakeWalls)
+         * v1 collapses the FAKEWALL pass-through condition into the
+         * single "walls block always" rule because the FAKEWALL tile
+         * type is not separately tracked in the per-square cell type
+         * of the compat shim.  Ghost/specter phasing through fake
+         * walls is deferred: callers that need it must clear the bit
+         * in adjacencyWallMask before invoking.  See GROUP.C:1503
+         * for the original. */
         *outBlocker = 1;
         return 0;
     }
@@ -1288,7 +1308,10 @@ int F0804_CREATURE_Tick_Compat(
              *    Chaos / Order / Grey Lord). v1 does NOT emit a
              *    warp intent for the Trolin; the F0823 anti-mage
              *    payload and the standard melee path are the v1
-             *    approximation (NEEDS DISASSEMBLY REVIEW). */
+             *    approximation.  See GROUP.C:2275 (Lord Chaos
+             *    F0204 double-move / warp path) and PROJEXPL.C F0823
+             *    for the original; warp intent is reserved for
+             *    arch-enemy types only. */
             if (visible && stateOut->stateKind == AI_STATE_ATTACK
                 && distance == 1) {
                 out->emittedSpellRequest = 1;
@@ -1415,9 +1438,15 @@ int F0804_CREATURE_Tick_Compat(
             }
             break;
         case AI_STATE_FLEE:
-            /* NEEDS DISASSEMBLY REVIEW: Fontanel FLEE runs F0201 negated
-             * for direction; v1 only decrements the fear counter.
-             * Movement consequence of flee deferred to post-M10. */
+            /* ReDMCSB GROUP.C:2147 (F0201_PATH_Flee) and the
+             * surrounding F0218/F0219 path: FLEE runs F0201
+             * GROUP_GetSmelledPartyPrimaryDirectionOrdinal negated
+             * (M018_OPPOSITE) to pick a flee direction, then
+             * dispatches F0202 + F0205.  v1 keeps the fear-counter
+             * tick (matching the F0210 decrement) and emits
+             * AI_RESULT_FLED so the caller can drop AI_STATE_FLEE
+             * to AI_STATE_STUN; the directional move is deferred
+             * to post-M10.  See GROUP.C:2147 for the original. */
             if (stateOut->fearCounter > 0) stateOut->fearCounter -= 1;
             out->resultKind = AI_RESULT_FLED;
             break;

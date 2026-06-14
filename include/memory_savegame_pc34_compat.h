@@ -203,12 +203,14 @@ enum SaveGameError_Compat {
 /* -------- Serialisable framing structs -------- */
 
 /*
- * NEEDS DISASSEMBLY REVIEW: Fontanel's DM_SAVE_HEADER carries
- * Noise[10] obfuscation input + Keys[16] + Checksums[16]; we
- * intentionally DO NOT reproduce it (see plan §1 and §4.8 item 1).
- * v1 ships a clean single-CRC32 header. The XOR-key derivation from
- * Noise[] would need to be re-implemented only if DMSAVE1.DAT
- * byte-level interop is ever required.
+ * ReDMCSB SAVEHEAD.C:44, 97, 104 (F0417_SAVEUTIL_GetChecksumAndObfuscate):
+ * Fontanel's DM_SAVE_HEADER carries Noise[10] obfuscation input +
+ * Keys[16] + Checksums[16]; we intentionally DO NOT reproduce it
+ * (see plan §1 and §4.8 item 1).  v1 ships a clean single-CRC32
+ * header.  The XOR-key derivation from Noise[] would need to be
+ * re-implemented only if DMSAVE1.DAT byte-level interop is ever
+ * required.  See SAVEHEAD.C:44 for the obfuscation call-site and
+ * the F0417 helper for the XOR+checksum loop.
  *
  * SOURCE-LOCKED AUDIO METADATA:
  *   ReDMCSB DEFS.H:468-480 has DM_SAVE_HEADER.GameID.

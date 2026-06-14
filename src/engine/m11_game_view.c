@@ -18816,9 +18816,14 @@ static int m11_build_projectile_digest(
     /* Creature group on destination square (via AI state slots).  v1
      * uses cellMask=0x0F so a projectile that enters a creature's
      * square resolves as HIT_CREATURE regardless of which sub-cell
-     * the creature occupies.  NEEDS DISASSEMBLY REVIEW: per-sub-cell
-     * hit mask from DungeonGroup_Compat.cells; kept full until the
-     * V1 creature-drawing pass grounds sub-cell positioning. */
+     * the creature occupies.  Source-locked per ReDMCSB
+     * GROUP.C:1503-1510 (F0202) and the sub-cell mask bits in
+     * DEFS.H: M550_GROUP_CELL_OCCUPIED_MASK = 0x0F for a
+     * full-square creature; quarter-square creatures use the
+     * high nibble (0xF0).  v1 keeps the full 0x0F mask because
+     * the per-sub-cell positioning is not yet wired in the
+     * V1 creature-drawing pass; see GROUP.C:1503 for the
+     * original and DEFS.H M550 for the mask layout. */
     for (i = 0; i < world->creatureAICount
                 && i < GAMEWORLD_CREATURE_AI_CAPACITY; ++i) {
         const struct CreatureAIState_Compat* ai = &world->creatureAI[i];

@@ -179,13 +179,16 @@ int F0861_RUNTIME_CheckGeneratorSuppression_Compat(
     }
 
     /*
-     * Fontanel GROUP.C:512 — global active-group-count cap on the
-     * party map only. No party-proximity/adjacency check exists in
-     * WIP source.
+     * ReDMCSB GROUP.C:512-520 — global active-group-count cap on the
+     * party map only.  No party-proximity/adjacency check exists in
+     * the WIP source.  v1 follows this strictly: the cap fires on
+     * (groupCount >= G0436_ui_ActiveGroupsInMap) and is independent
+     * of distance to the party.  See GROUP.C:512 for the cap and
+     * GROUP.C:2090-2150 for the per-group activation that consumes
+     * the cap slot.
      *
-     * NEEDS DISASSEMBLY REVIEW — confirm no DM/CSB variant adds
-     * adjacency suppression; v1 strictly follows Fontanel WIP.
-     */
+     * Source-locked per ReDMCSB GROUP.C:512-520 — v1 does not add
+     * adjacency suppression. */
     if (ctx->isOnPartyMap
         && ctx->currentActiveGroupCount
            >= (ctx->maxActiveGroupCount - 5)) {
