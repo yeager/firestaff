@@ -936,6 +936,14 @@ int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
 int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
                                              const char* name);
 int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state);
+/* D1C wall-mirror zone (DUNVIEW.C G0205 graphic 558 set index 12,
+ * coordSet-indexed).  Returns the wall ornament destination box
+ * in viewport coordinates.  Used by
+ * firestaff_dm1_v1_hall_of_champions_wall_mirror_zones_probe
+ * to verify the wall box is at the source-locked position. */
+int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
+                                       int* outX, int* outY,
+                                       int* outW, int* outH);
 int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state);
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate);
