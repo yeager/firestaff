@@ -15,6 +15,7 @@
 #include "m11_v2_vertical_slice_assets.h"
 #include "render_sdl_m11.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -2666,6 +2667,16 @@ static int m11_endgame_source_skill_level(const M11_GameViewState* state, int ch
 static const struct ChampionState_Compat* m11_get_active_champion(const M11_GameViewState* state);
 static int m11_cycle_active_champion(M11_GameViewState* state);
 static int m11_set_active_champion(M11_GameViewState* state, int championIndex);
+
+/* Update lastWorldHash after a click that mutated the world.
+ * The click paths (inventory pickup, slot place, chest open, etc.)
+ * modify world state but do not run a full tick; the tick is what
+ * normally refreshes state->lastWorldHash.  Callers that
+ * assert world-hash determinism (test_m11_inventory_full_panel)
+ * rely on this hook.  F0891_ORCH_WorldHash_Compat returns 0 if the
+ * world is uninitialised, which is the sentinel we want to detect
+ * via the assert helper. */
+static void m11_refresh_world_hash_after_click(M11_GameViewState* state);
 
 static int m11_point_in_rect(int x, int y, int rx, int ry, int rw, int rh) {
     return x >= rx && y >= ry && x < (rx + rw) && y < (ry + rh);
@@ -8183,11 +8194,22 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                                                int x,
                                                int y,
                                                int primaryButton) {
-    return M11_GameView_HandlePointerButton(
+    M11_GameInputResult r = M11_GameView_HandlePointerButton(
         state,
         x,
         y,
         primaryButton ? M11_DM1_MOUSE_MASK_LEFT : 0);
+    /* When a click returned REDRAW and may have mutated world state
+     * (inventory pickup, slot place, chest open, eye, mouth, action
+     * row, action cell, etc.), refresh the world hash so that
+     * determinism assertions (test_m11_inventory_full_panel) can
+     * verify the world snapshot.  REDRAW-only clicks that didn't
+     * mutate the world still trigger a hash refresh — F0891 is
+     * idempotent and cheap. */
+    if (r == M11_GAME_INPUT_REDRAW && state) {
+        m11_refresh_world_hash_after_click(state);
+    }
+    return r;
 }
 
 M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
@@ -8594,7 +8616,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
 
+    /* Final fallback: if we got here without returning yet, this
+     * is a click that didn't match any of the per-zone routes
+     * above.  We still don't mutate the world, so we don't refresh
+     * the hash. */
     return M11_GAME_INPUT_IGNORED;
+}
+
+/* Update lastWorldHash after a click that mutated the world.
+ * The click paths (inventory pickup, slot place, chest open, etc.)
+ * modify world state but do not run a full tick; the tick is what
+ * normally refreshes state->lastWorldHash.  Callers that
+ * assert world-hash determinism (test_m11_inventory_full_panel)
+ * rely on this hook.  F0891_ORCH_WorldHash_Compat returns 0 if the
+ * world is uninitialised, which is the sentinel we want to detect
+ * via the assert helper. */
+static void m11_refresh_world_hash_after_click(M11_GameViewState* state) {
+    if (state == 0) return;
+    F0891_ORCH_WorldHash_Compat(&state->world, &state->lastWorldHash);
 }
 
 static void m11_draw_party_arrow(unsigned char* framebuffer,
