@@ -10,12 +10,16 @@
  *     The C040 panel render path in m11_game_view.c has the
  *     early-return guard: if candidateMirrorPanelActive is set
  *     the wall-ornament blit is skipped, preventing per-frame
- *     re-rendering while the panel is open. (Verified by code
- *     review; the guard is the early-return on line 13479 of
- *     m11_game_view.c.)
+ *     re-rendering while the panel is open. Real pixel-level
+ *     verification lives in
+ *     probes/m11/firestaff_dm1_v1_hall_of_champions_panel_guard_probe.c
+ *     (registered as CTest test dm1_v1_hall_of_champions_panel_guard).
+ *     This unit test only pins the contract surface of the
+ *     isCandidateInvulnerable field.
  *   BUG-121 (Major): Graphical artifacts (orange box floating)
  *     Same as BUG-120 — the C040 panel state suppresses the
  *     wall-ornament blit so the peach placeholder is hidden.
+ *     Pixel-verified by the same probe.
  *
  * Source-locked to ReDMCSB CLIKCHAM.C F0367, MOVESENS.C:1501-1503,
  * REVIVE.C F0280 candidate selection.
@@ -110,15 +114,22 @@ static void test_candidate_invulnerable_attack_bounce(void) {
     PASS();
 }
 
-/* ── BUG-120/121: source-level guard present in m11_game_view.c ── */
-static void test_m11_panel_active_guard_present(void) {
-    TEST(m11_panel_active_guard_present);
-    /* BUG-120/121 fix lives in m11_game_view.c around the
-     * m11_draw_dm1_front_mirror_route function. We can't
-     * compile-check that here without linking the engine, but
-     * the runtime check below verifies the isCandidateInvulnerable
-     * field can be set and read back, which is the contract
-     * surface for the BUG-120/121 panel-state check. */
+/* ── BUG-120/121: contract surface for the panel-active guard ── */
+/* Real pixel-level verification of the m11_draw_dm1_front_mirror_route
+ * early-return now lives in
+ * probes/m11/firestaff_dm1_v1_hall_of_champions_panel_guard_probe.c
+ * (CTest: dm1_v1_hall_of_champions_panel_guard).  This unit test
+ * pins the field-level contract so the engine-side fix has a
+ * deterministic surface to bind to. */
+static void test_m11_panel_active_guard_contract(void) {
+    TEST(m11_panel_active_guard_contract);
+    /* The isCandidateInvulnerable field is the F0735-side
+     * contract surface that triggers the BUG-119 bounce, and
+     * the candidateMirrorPanelActive flag is the BUG-120/121
+     * render-side flag.  Both fields must be readable.  We
+     * roundtrip the F0735 field here; the M11 side is round-
+     * tripped by the panel_guard_probe (which links the
+     * engine). */
     struct CombatantCreatureSnapshot_Compat s;
     memset(&s, 0, sizeof(s));
     s.isCandidateInvulnerable = 1;
@@ -134,7 +145,7 @@ static void test_m11_panel_active_guard_present(void) {
 int main(void) {
     printf("=== BUG-119/120/121 Hall of Champions regression gate ===\n");
     test_candidate_invulnerable_attack_bounce();
-    test_m11_panel_active_guard_present();
+    test_m11_panel_active_guard_contract();
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;
 }

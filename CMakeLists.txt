@@ -1479,6 +1479,31 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_mirror_zorder_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 endgame Hall of Champions 4-mirror zone verification gate.
+# Verifies that the source layout-696 C412..C415 mirror zones,
+# C416..C419 portrait zones, name origins, and skill origins are all
+# drawn at the right place for every party champion slot
+# (ENDGAME.C:327-394 champion summary render).
+add_executable(firestaff_dm1_v1_hall_of_champions_mirror_zones_probe
+    probes/m11/firestaff_dm1_v1_hall_of_champions_mirror_zones_probe.c)
+target_link_libraries(firestaff_dm1_v1_hall_of_champions_mirror_zones_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_hall_of_champions_mirror_zones_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# DM1 V1 Hall of Champions BUG-120/121 panel-guard runtime gate.
+# Pixel-proves that m11_draw_dm1_front_mirror_route suppresses the
+# D1C wall-ornament blit when candidateMirrorPanelActive is set,
+# while still drawing the champion portrait (no regression).
+# Replaces the field-roundtrip stub that previously lived in
+# tests/test_dm1_v1_hall_of_champions_pc34_compat.c.
+add_executable(firestaff_dm1_v1_hall_of_champions_panel_guard_probe
+    probes/m11/firestaff_dm1_v1_hall_of_champions_panel_guard_probe.c)
+target_link_libraries(firestaff_dm1_v1_hall_of_champions_panel_guard_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_hall_of_champions_panel_guard_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 Hall champion mirror D1C Z-order re-blt pixel gate.
 # Extends the static-pose zorder probe with a sequential 4-direction turn at
 # the (1,4) D1C route that pixel-proves the previous ordinal's pixels are
@@ -7370,6 +7395,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_mirror_pc34_compat
     )
 
+    add_executable(test_dm1_v1_hall_of_champions_pc34_compat
+        tests/test_dm1_v1_hall_of_champions_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_hall_of_champions_pc34_compat PRIVATE firestaff_m11 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_hall_of_champions_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hall_of_champions_pc34_compat
+        COMMAND test_dm1_v1_hall_of_champions_pc34_compat
+    )
+
     add_executable(test_dm1_v1_champion_mirror_click_closed_pc34_compat
         tests/test_dm1_v1_champion_mirror_click_closed_pc34_compat.c
         src/dm1/dm1_v1_champion_mirror_click_closed_pc34_compat.c
@@ -8687,6 +8724,22 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe "$ENV{HOME}/.firestaff/data"
     )
     set_tests_properties(dm1_v1_champion_mirror_walkpath_runtime PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_hall_of_champions_mirror_zones
+        COMMAND firestaff_dm1_v1_hall_of_champions_mirror_zones_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_hall_of_champions_mirror_zones PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_hall_of_champions_panel_guard
+        COMMAND firestaff_dm1_v1_hall_of_champions_panel_guard_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_hall_of_champions_panel_guard PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
     )
 
