@@ -1168,6 +1168,15 @@ int M11_GameView_GetV1ActionPassZone(int* outX,
 int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void);
 int M11_GameView_GetV1ChampionPortraitGraphicId(void);
 int M11_GameView_GetV1ChampionIconGraphicId(void);
+
+/* M11_DM1 V1 sub-cell hit mask (BUG-111).  Source-locked per
+ * ReDMCSB DEFS.H M550 (DUNGEON.C:1085).  Full-square creatures
+ * use 0x0F (all 4 sub-cells); quarter-square / giant / 2x2
+ * creatures use 0xF0 (high nibble).  v1 always uses 0x0F
+ * because per-sub-cell positioning is deferred to post-M10. */
+#define M11_DM1_CELL_OCCUPIED_MASK 0x0Fu
+#define M11_DM1_CELL_OCCUPIED_QUARTER 0xF0u
+
 int M11_GameView_GetV1ChampionIconZoneId(int championSlot);
 int M11_GameView_GetV1ChampionIconZone(int championSlot,
                                         int* outX,
