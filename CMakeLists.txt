@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.7.18 LANGUAGES C)
+project(Firestaff VERSION 2.7.19 LANGUAGES C)
 
 include_directories(include src)
 
@@ -1869,6 +1869,39 @@ add_test(
     COMMAND test_csb_v1_graphics_extras_pc34_compat
 )
 set_tests_properties(csb_v1_graphics_extras_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# Firestaff self-update checker regression gate.
+# SDL3-based, no libcurl dependency.  Tests the semver
+# compare helper (the network path is gated by SDL which
+# is not always initialised in unit tests).
+add_library(firestaff_update_check
+    src/shared/firestaff_update_check_pc34_compat.c
+)
+target_link_libraries(firestaff_update_check PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_update_check PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+add_executable(test_firestaff_update_check_pc34_compat
+    tests/test_firestaff_update_check_pc34_compat.c
+)
+target_link_libraries(test_firestaff_update_check_pc34_compat PRIVATE
+    firestaff_update_check firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_firestaff_update_check_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME firestaff_update_check_pc34_compat
+    COMMAND test_firestaff_update_check_pc34_compat
+)
+set_tests_properties(firestaff_update_check_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 
