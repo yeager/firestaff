@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
@@ -174,7 +176,7 @@ def main(check_only: bool = False) -> int:
     if check_only:
         print("PASS pass516 check-only" if not failed else "FAIL pass516 check-only: " + ",".join(failed))
         return 0 if not failed else 1
-    runtime = run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_viewport_3d_pc34_compat")])
+    runtime = run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat")])
     check = run([sys.executable, str(Path(__file__).resolve()), "--check-only"])
     refs = local_refs()
     ok = not failed and runtime["passed"] and check["passed"] and all(row["exists"] for row in refs)

@@ -7,6 +7,9 @@ import os
 import subprocess
 from pathlib import Path
 from typing import Any
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = Path.home() / ".openclaw/data"
@@ -15,7 +18,7 @@ STATUS = "PASS650_DM1_V1_VIEWPORT_D2L_D2R_F0098_FALLBACK_SOURCE_LOCKED"
 FAILED_STATUS = "FAILED_PASS650_DM1_V1_VIEWPORT_D2L_D2R_F0098_FALLBACK_SOURCE_LOCK"
 MANIFEST = ROOT / "parity-evidence/verification/pass650_dm1_v1_viewport_d2l_d2r_f0098_fallback_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass650_dm1_v1_viewport_d2l_d2r_f0098_fallback_source_lock.md"
-TEST_BINARY = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat"
+TEST_BINARY = resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat"
 
 
 def first_existing(env_name: str, candidates: list[Path]) -> Path:

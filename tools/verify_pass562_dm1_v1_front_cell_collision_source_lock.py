@@ -3,6 +3,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json, re, subprocess, sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT=Path(__file__).resolve().parents[1]
 PASS="pass562_dm1_v1_front_cell_collision_source_lock"
 RED=Path.home()/".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"

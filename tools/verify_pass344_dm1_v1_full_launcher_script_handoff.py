@@ -15,6 +15,8 @@ import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "parity-evidence" / "verification" / "pass344_dm1_v1_full_launcher_script_handoff"

@@ -2,6 +2,8 @@
 """Source-lock the runtime TITLE cadence binding used at launcher handoff."""
 from pathlib import Path
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C").expanduser()

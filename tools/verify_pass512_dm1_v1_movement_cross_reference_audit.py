@@ -8,6 +8,9 @@ import os
 import subprocess
 from pathlib import Path
 from typing import Any
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass512_dm1_v1_movement_cross_reference_audit"

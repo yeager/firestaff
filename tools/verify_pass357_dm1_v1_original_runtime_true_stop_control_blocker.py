@@ -13,6 +13,9 @@ import json
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 PASS = "pass357_dm1_v1_original_runtime_true_stop_control_blocker"
 ROOT = Path(__file__).resolve().parents[1]

@@ -8,6 +8,8 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass764_dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat"

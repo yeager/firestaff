@@ -8,6 +8,9 @@ indirect call candidate. Runtime promotion still requires an explicit post-F0128
 from __future__ import annotations
 import json, shutil, struct, subprocess, tempfile
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT=Path(__file__).resolve().parents[1]
 SRC=Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 FIRES_MAP=Path.home()/'.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP'

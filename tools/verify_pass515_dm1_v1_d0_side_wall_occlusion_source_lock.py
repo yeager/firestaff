@@ -2,6 +2,9 @@
 from __future__ import annotations
 import hashlib, os, json, subprocess, sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
@@ -101,7 +104,7 @@ def write(man):
 def main(check=False):
     red=audit(SOURCE_CHECKS); fire=audit(FIRESTAFF_CHECKS); failed=[r for r in red+fire if r["status"]!="PASS"]
     if check: print("PASS check-only" if not failed else "FAIL check-only"); return 0 if not failed else 1
-    runtime=run_gate([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT/"build")))/"test_dm1_v1_viewport_3d_pc34_compat")]); local_refs=refs()
+    runtime=run_gate([str(resolve_build_dir(ROOT, ROOT / "build")/"test_dm1_v1_viewport_3d_pc34_compat")]); local_refs=refs()
     ok=not failed and runtime["passed"] and all(r["exists"] for r in local_refs)
     man={"schema":"pass515_dm1_v1_d0_side_wall_occlusion_source_lock.v1","status":"passed" if ok else "failed","statusToken":STATUS if ok else "FAILED_PASS515_DM1_V1_D0_SIDE_WALL_OCCLUSION_SOURCE_LOCK","redmcsbRoot":str(RED),"claim":"D0L/D0R side wall cases draw before D0C and return before side-lane open content/field paths.","redmcsbPrimaryChecks":red,"firestaffChecks":fire,"localReferences":local_refs,"verificationRuns":[runtime,{"command":[sys.executable,str(Path(__file__).resolve()),"--check-only"],"returncode":0 if not failed else 1,"passed":not failed,"outputTail":"PASS check-only" if not failed else "FAIL check-only"}],"nonClaims":["No runtime metadata was changed.","No D0C foreground behavior is promoted.","No DANNESBURK or external references were used."]}
     write(man)

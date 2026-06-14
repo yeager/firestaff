@@ -9,6 +9,8 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 PASS = "pass760_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_wall_ornament_source_lock"
 ROOT = Path(__file__).resolve().parents[1]

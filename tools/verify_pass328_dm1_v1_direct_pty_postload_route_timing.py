@@ -2,6 +2,8 @@
 import json
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "parity-evidence" / "pass328_dm1_v1_direct_pty_postload_route_timing.md"

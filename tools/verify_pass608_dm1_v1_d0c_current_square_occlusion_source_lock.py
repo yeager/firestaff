@@ -5,6 +5,9 @@ import json
 import os
 import subprocess
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = Path.home() / ".openclaw/data"
@@ -24,7 +27,7 @@ RED = first_existing("FIRESTAFF_REDMCSB_SOURCE", [
     EXTERNAL_DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
     Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ])
-TEST_BINARY = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY = resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat"
 MANIFEST = ROOT / "parity-evidence/verification/pass608_dm1_v1_d0c_current_square_occlusion_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass608_dm1_v1_d0c_current_square_occlusion_source_lock.md"
 STATUS = "PASS608_DM1_V1_D0C_CURRENT_SQUARE_OCCLUSION_SOURCE_LOCKED"

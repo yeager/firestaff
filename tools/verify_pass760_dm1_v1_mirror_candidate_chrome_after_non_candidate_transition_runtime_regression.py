@@ -8,6 +8,8 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass760_dm1_v1_mirror_candidate_chrome_after_non_candidate_transition_runtime_regression"
@@ -247,7 +249,7 @@ def main() -> int:
         check_needles("cmake_registration", CMAKE, CMAKE_NEEDLES),
     ]
     redmcsb_checks = check_redmcsb_windows()
-    runs = [run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_mirror_candidate_pc34_compat")])]
+    runs = [run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_mirror_candidate_pc34_compat")])]
     write_outputs(local_checks, redmcsb_checks, runs)
 
     ok = all(row["status"] == "PASS" for row in local_checks) and all(

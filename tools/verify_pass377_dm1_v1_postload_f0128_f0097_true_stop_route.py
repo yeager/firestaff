@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 import json, sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT=Path(__file__).resolve().parents[1]
 PASS="pass377_dm1_v1_postload_f0128_f0097_true_stop_route"
 MAN=ROOT/"parity-evidence/verification"/PASS/"manifest.json"

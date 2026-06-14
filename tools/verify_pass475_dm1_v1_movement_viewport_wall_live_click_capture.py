@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 import pexpect
 import verify_pass385_dm1_v1_corrected_loader_delta_semantic_route as p385
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT=Path(__file__).resolve().parents[1]
 PASS="pass475_dm1_v1_movement_viewport_wall_live_click_capture"
