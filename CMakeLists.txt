@@ -1588,6 +1588,31 @@ if(NOT MSVC)
     )
 endif()
 
+# DM1 V1 F0306 stamina-adjusted value (BUG-115).  Source-locked
+# per ReDMCSB CHAMPION.C F0306:1078-1103 + the BUGX_XX
+# comment.  The two compiler-order variants (first-operand
+# vs second-operand) are exposed via
+# csb_v1_stamina_compiler_order_set(1) for tests.  Default
+# = second-operand (PC 3.4 Turbo C++ 1.01).  This is m10
+# code so the library is link-compatible with firestaff_m10
+# (no extern dispatch needed; the helper is called directly).
+add_library(firestaff_dm1_v1_f0306_stamina
+    src/memory/memory_champion_stamina_adjusted_pc34_compat.c
+)
+target_link_libraries(firestaff_dm1_v1_f0306_stamina PUBLIC
+    firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_f0306_stamina PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_version_checker PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # CSB V1 dungeon header parsing (Dungeon GAP 1, level count).
 # Source-locked per ReDMCSB CEDTINC8.C:101-118 (CSBGAME.DAT
 # vs DMSAVE.DAT dispatch) and M13_PLAN.md:303 (header layouts).
@@ -1682,6 +1707,29 @@ add_test(
     COMMAND test_csb_v1_version_checker_pc34_compat
 )
 set_tests_properties(csb_v1_version_checker_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# DM1 V1 F0306 stamina compiler-order regression gate (BUG-115).
+# Verifies both first-operand (Atari ST / FM-Towns) and
+# second-operand (PC 3.4 Turbo C++ 1.01) formulations of
+# the BUGX_XX expression.
+add_executable(test_dm1_v1_f0306_stamina_pc34_compat
+    tests/test_dm1_v1_f0306_stamina_pc34_compat.c
+)
+target_link_libraries(test_dm1_v1_f0306_stamina_pc34_compat PRIVATE
+    firestaff_dm1_v1_f0306_stamina firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_dm1_v1_f0306_stamina_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME dm1_v1_f0306_stamina_pc34_compat
+    COMMAND test_dm1_v1_f0306_stamina_pc34_compat
+)
+set_tests_properties(dm1_v1_f0306_stamina_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 
