@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.7.14 LANGUAGES C)
+project(Firestaff VERSION 2.7.16 LANGUAGES C)
 
 include_directories(include src)
 
@@ -1570,6 +1570,38 @@ if(NOT MSVC)
     )
 endif()
 
+# CSB V1 ZOKATHRA spell power variant (Mechanics GAP 3).
+# Source-locked per M13_PLAN.md:337,346, DEFS.H:1774
+# (C7_SPELL_TYPE_OTHER_ZOKATHRA = 7), MENU.C:2014-2023, and
+# Magic.cpp.  DM1 has ZOKATHRA as a no-op (defensive envelope
+# 0/0); CSB 2.1 gives 50 kinetic energy + 4-tick burn.
+# csb_v1_zokathra_spell_power() returns the source-locked
+# variant-aware value.
+add_library(firestaff_csb_v1_zokathra
+    src/csb/csb_v1_zokathra_spell_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_zokathra PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_zokathra PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+# CSB V1 Grey Lord combat behavior (Combat GAP 2).  Source-locked
+# per ReDMCSB DEFS.H:1679 (Grey Lord = C5_ATTACK_MAGIC), Attack.cpp:2423
+# (monster type assignment), and the BUG0_69 fix that widens
+# IsLordChaosHere() to include Grey Lord proximity checks.
+# csb_v1_grey_lord_aware defaults to 1 (CSB default).
+add_library(firestaff_csb_v1_grey_lord_combat
+    src/csb/csb_v1_grey_lord_combat_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_grey_lord_combat PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_grey_lord_combat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # CSB V1 version checker sensor (Dungeon GAP 3, CHANGE7_23 +
 # CHANGE8_06).  Source-locked per ReDMCSB MOVESENS.C
 # CHANGE7_23 (version-gated floor sensor) and BugsAndChanges.htm
@@ -1730,6 +1762,46 @@ add_test(
     COMMAND test_dm1_v1_f0306_stamina_pc34_compat
 )
 set_tests_properties(dm1_v1_f0306_stamina_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 ZOKATHRA spell power regression gate (Mechanics GAP 3).
+add_executable(test_csb_v1_zokathra_spell_pc34_compat
+    tests/test_csb_v1_zokathra_spell_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_zokathra_spell_pc34_compat PRIVATE
+    firestaff_csb_v1_zokathra firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_zokathra_spell_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME csb_v1_zokathra_spell_pc34_compat
+    COMMAND test_csb_v1_zokathra_spell_pc34_compat
+)
+set_tests_properties(csb_v1_zokathra_spell_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 Grey Lord combat regression gate (Combat GAP 2).
+add_executable(test_csb_v1_grey_lord_combat_pc34_compat
+    tests/test_csb_v1_grey_lord_combat_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_grey_lord_combat_pc34_compat PRIVATE
+    firestaff_csb_v1_grey_lord_combat firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_grey_lord_combat_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME csb_v1_grey_lord_combat_pc34_compat
+    COMMAND test_csb_v1_grey_lord_combat_pc34_compat
+)
+set_tests_properties(csb_v1_grey_lord_combat_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 

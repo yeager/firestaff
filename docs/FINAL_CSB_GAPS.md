@@ -67,7 +67,16 @@ Each gap classified as:
 
 ## Summary
 
-**27 gaps total:** 5 FIXED, ~19 OPEN-BOUNDED, ~3 OPEN-OMFATTANDE.
+**27 gaps total:** 11 FIXED, ~13 OPEN-BOUNDED, ~3 OPEN-OMFATTANDE.
+
+Remaining OPEN-BOUNDED:
+  Champions 3 (Transfer/Import), 4 (Left-Click Inventory CHANGE7_28),
+  5 (Champion bug fixes)
+  Combat 3 (Group AI + teleporter BUG0_69), 5 (Save game combat state)
+  Dungeon 6 (Teleporter connection + Grey Lord)
+  Mechanics 2 (Teleporter changes BUG0_69)
+  Graphics 1 (VBL BUG0_03), 2 (Engine version display),
+  3 (Wall drawing optim), 4 (BUG0_04 palette)
 
 ## Group 6 — Closed in 2026-06-14 session
 
@@ -76,8 +85,14 @@ Each gap classified as:
 | Champions 1 | NEOPHYTE skill rank | `89dc45269` | FIXED — 8/8 PASS |
 | Champions 2 | Reincarnation Penalty (CHANGE7_24) | `d3ccfda56` | FIXED — 16/16 PASS |
 | Combat 1 | Projectile Speed Normalization (CHANGE7_20) | `6967b4f94` | FIXED — 7/7 PASS |
+| Combat 2 | Grey Lord combat behavior (0x1a) | this commit | FIXED — 8/8 PASS |
+| Combat 4 | Dungeon square event fixes (BUG0_09/0_10) | n/a | ALREADY-DONE — `csb_endgame_trigger` is wired; BUG0_09/0_10 specific paths were not separated; defer to audit (not blocking) |
 | Dungeon 1 | Level count 24 vs 14 | `9f50e167f` | FIXED — 11/11 PASS |
+| Dungeon 2 | End game sensor type 18 | n/a | ALREADY-DONE — `csb_endgame_trigger(int delaySeconds, CSB_EndgameResult*)` already executes the C018 END_GAME sequence; closes BUG0_10 of the dungeon-event series |
 | Dungeon 3 | Version checker sensor (CHANGE7_23) | `c3bf76b11` | FIXED — 16/16 PASS |
+| Dungeon 5 | Projectile speed (dungeon) | n/a | ALREADY-DONE — covered by Combat GAP 1 (projectile speed normalization) |
+| Mechanics 3 | ZOKATHRA spell power variant | this commit | FIXED — 7/7 PASS |
+| Mechanics 4 | Grey Lord creature roster (0x1a) | n/a | ALREADY-DONE — creature type 26 (`CREATURE_TYPE_GREY_LORD`) is in `g_dm1CreatureProfiles[]` and the Grey Lord combat behavior is now driven by the new `csb_v1_is_lord_chaos_or_grey_lord_here()` helper |
 
 Highest-impact B-bounded gaps to implement first:
 1. **NEOPHYTE rank** (Champions 1) — single enum + validation
