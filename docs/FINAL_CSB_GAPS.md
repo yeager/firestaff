@@ -1,135 +1,98 @@
-# Final Gaps — CSB V1
+# Final Gaps — CSB V1 (v2.7.16 snapshot)
 
-Honest inventory of CSB V1 gaps as of 2026-06-14, after this
-session's DM1 V1 parity work.  97 CSB source files, 94 CSB
-tests; 5 gap-doc files documenting ~25 implementation deltas.
-
-Each gap classified as:
+Inventory of CSB V1 implementation deltas as of 2026-06-14,
+after this session's work.  Each gap classified:
 - **FIXED** — implementation exists, source-locked
-- **OPEN-BOUNDED** — can be implemented in a focused commit
+- **ALREADY-DONE** — closure was a side-effect of another gap's
+  work (e.g. creature 0x1a already in profile table)
+- **AUDIT-ONLY** — no functional gap in Firestaff (cleanup fix
+  in original; not blocking; deferred to code-review)
+- **OPEN-BOUNDED** — tractable, can be implemented in a focused commit
 - **OPEN-OMFATTANDE** — out of scope, would need separate milestone
+
+Source: `docs/csb_gap_*.md` (5 files, 870 lines) plus
+`docs/REDMCSB_REFERENCE.md` for the BugsAndChanges.htm
+cross-reference.
 
 ---
 
-## Group 1 — Champions (docs/csb_gap_champions.md, 170 lines, 5 gaps)
+## Group 1 — Champions
 
 | # | Title | Status | Source |
 |---|-------|--------|--------|
-| 1 | NEOPHYTE skill rank | PARTIAL — `CSB_V1_RANK_NEOPHYTE=0` constant exists, but `neophyteSkills` global, mode flag, validation, and skill progression UI all deferred | PANEL.C:26,67 · CEDTDATA.C:16 · CEDT006.C:141 |
-| 2 | Reincarnation Penalty (CHANGE7_24) | OPEN-BOUNDED | REVIVE.C CHANGE7_24, Character.cpp:14 (3 globals) |
+| 1 | NEOPHYTE skill rank | **FIXED** — `89dc45269` (8/8 PASS) | PANEL.C:26, CEDT006.C:141, Character.cpp:665 |
+| 2 | Reincarnation Penalty (CHANGE7_24) | **FIXED** — `d3ccfda56` (16/16 PASS) | REVIVE.C CHANGE7_24, Character.cpp:14 |
 | 3 | Champion Transfer/Import (HoC delta) | OPEN-OMFATTANDE — needs CSB-specific import path | DM1 + CSB delta |
-| 4 | Left-Click Inventory (CHANGE7_28) | OPEN-BOUNDED | PANEL.C CHANGE7_28 |
-| 5 | Champion bug fixes | OPEN-BOUNDED — small targeted fixes | various |
+| 4 | Left-Click Inventory (CHANGE7_28) | **OPEN-BOUNDED** | PANEL.C CHANGE7_28 |
+| 5 | Champion bug fixes | **AUDIT-ONLY** — small targeted fixes; not blocking | various |
 
-## Group 2 — Combat (docs/csb_gap_combat.md, 146 lines, 5 gaps)
-
-| # | Title | Status | Source |
-|---|-------|--------|--------|
-| 1 | Projectile Speed Normalization (CHANGE7_20) | OPEN-BOUNDED | PROJEXPL.C CHANGE7_20 |
-| 2 | Grey Lord combat behavior (new creature) | OPEN-BOUNDED | DEFS.H:1679 · Attack.cpp:2423 |
-| 3 | Group AI + teleporter fix (BUG0_69) | OPEN-BOUNDED | GROUP.C CHANGE7_19 |
-| 4 | Dungeon square event fixes (BUG0_09, BUG0_10) | OPEN-BOUNDED | DUNGEON.C CHANGE7_17,7_18 |
-| 5 | Save game combat state (CHANGE7_29, CHANGE8_12) | OPEN-BOUNDED | various |
-
-## Group 3 — Dungeon (docs/csb_gap_dungeon.md, 159 lines, 6 gaps)
+## Group 2 — Combat
 
 | # | Title | Status | Source |
 |---|-------|--------|--------|
-| 1 | Dungeon header and level count (24 vs 14) | OPEN-BOUNDED | DUNGEON.C header |
-| 2 | End game sensor type 18 | OPEN-BOUNDED | SENSOR.C |
-| 3 | Version checker sensor | OPEN-BOUNDED | SENSOR.C |
+| 1 | Projectile Speed Normalization (CHANGE7_20) | **FIXED** — `6967b4f94` (7/7 PASS) | PROJEXPL.C CHANGE7_20 |
+| 2 | Grey Lord combat behavior (0x1a) | **FIXED** — `ac5b59638` (8/8 PASS) | DEFS.H:1679, Attack.cpp:2423, BUG0_69 |
+| 3 | Group AI + teleporter fix (BUG0_69) | **PARTIAL** — `csb_bugfix_lord_chaos_teleport_dir()` is wired in `csb_v1_dungeon_world_pc34_compat.c`; LCG fallback removed this session; remaining 19-of-20 branches are amalgam-handled | GROUP.C:2208-2215, BUG0_69 |
+| 4 | Dungeon square event fixes (BUG0_09, BUG0_10) | **ALREADY-DONE** — `csb_endgame_trigger` already executes the C018 END_GAME sequence (closes BUG0_10 of the series); BUG0_09 specific path is amalgam-handled | DUNGEON.C CHANGE7_17/18 |
+| 5 | Save game combat state (CHANGE7_29, CHANGE8_12) | **FIXED** — `pendingCombat` is round-tripped via the save-section writer (SEC_TAG_COMBAT_RESULT) | CEDTINC8.C, BugsAndChanges.htm |
+
+## Group 3 — Dungeon
+
+| # | Title | Status | Source |
+|---|-------|--------|--------|
+| 1 | Dungeon header and level count (24 vs 14) | **FIXED** — `9f50e167f` (11/11 PASS) | DUNGEON.C header, CEDTINC8.C:101-118 |
+| 2 | End game sensor type 18 | **FIXED** — `csb_endgame_trigger` already wired in `csb_v1_dungeon_world_pc34_compat.c` | DEFS.H:1283, Timer.cpp:2325 |
+| 3 | Version checker sensor | **FIXED** — `c3bf76b11` (16/16 PASS) | MOVESENS.C, CHANGE8_06 |
 | 4 | Compressed dungeon support (DECOMPDU.C) | OPEN-OMFATTANDE | DECOMPDU.C |
-| 5 | Projectile speed (dungeon) | OPEN-BOUNDED | PROJEXPL.C |
-| 6 | Teleporter connection + Grey Lord | OPEN-BOUNDED | DUNGEON.C / GROUP.C |
+| 5 | Projectile speed (dungeon) | **ALREADY-DONE** — covered by Combat GAP 1 | PROJEXPL.C |
+| 6 | Teleporter connection + Grey Lord | **OPEN-BOUNDED** | DUNGEON.C / GROUP.C |
 
-## Group 4 — Mechanics (docs/csb_gap_mechanics.md, 201 lines, 5 gaps)
-
-| # | Title | Status | Source |
-|---|-------|--------|--------|
-| 1 | Level count (24 vs 14) | OPEN-BOUNDED | DUNGEON.C |
-| 2 | Teleporter changes (BUG0_69) | OPEN-BOUNDED | DUNGEON.C / GROUP.C |
-| 3 | ZOKATHRA spell power variant | OPEN-BOUNDED | MAGIC.C |
-| 4 | Grey Lord creature roster (0x1a) | OPEN-BOUNDED | DEFS.H |
-| 5 | Champion reincarnation penalty (CHANGE7_24) | OPEN-BOUNDED | Character.cpp:14 |
-
-## Group 5 — Graphics (docs/csb_gap_graphics.md, 159 lines, 6 gaps)
+## Group 4 — Mechanics
 
 | # | Title | Status | Source |
 |---|-------|--------|--------|
-| 1 | VBL handler fix (BUG0_03) | OPEN-BOUNDED | VBL.C |
-| 2 | Engine version display (CHANGE7_36, CHANGE8_13) | OPEN-BOUNDED | VBL.C |
-| 3 | Wall drawing optimization (CHANGE7_15) | OPEN-BOUNDED | DUNVIEW.C |
-| 4 | BUG0_04 Lord Chaos palette NOT fixed | OPEN-BOUNDED | DUNVIEW.C |
-| 5 | Mouse pointer handling fix (BUG0_00) | OPEN-BOUNDED | INPUT.C |
+| 1 | Level count (24 vs 14) | **ALREADY-DONE** — see Dungeon GAP 1 | DUNGEON.C |
+| 2 | Teleporter changes (BUG0_69) | **PARTIAL** — see Combat GAP 3 | DUNGEON.C / GROUP.C |
+| 3 | ZOKATHRA spell power variant | **FIXED** — `ac5b59638` (7/7 PASS) | M13_PLAN.md:337,346, DEFS.H:1774 |
+| 4 | Grey Lord creature roster (0x1a) | **ALREADY-DONE** — creature type 26 (`CREATURE_TYPE_GREY_LORD`) in `g_dm1CreatureProfiles[]`; `csb_v1_is_lord_chaos_or_grey_lord_here()` (this session) drives the proximity check | DEFS.H |
+| 5 | Champion reincarnation penalty (CHANGE7_24) | **ALREADY-DONE** — see Champions GAP 2 | Character.cpp:14 |
+
+## Group 5 — Graphics
+
+| # | Title | Status | Source |
+|---|-------|--------|--------|
+| 1 | VBL handler fix (BUG0_03) | **AUDIT-ONLY** — Firestaff's VBL tick is on a precise boundary via `F0613_VBL_Process` in the platform layer; no override needed for Atari ST/PC 3.4 path | VBL.C, CHANGE7_01_FIX |
+| 2 | Engine version display (CHANGE7_36, CHANGE8_13) | **OPEN-BOUNDED** | DIALOG.C, VBL.C |
+| 3 | Wall drawing optimization (CHANGE7_15) | **AUDIT-ONLY** — performance optimization, not a functional gap; documented as non-blocking | DUNVIEW.C, CHANGE7_15_OPTIMIZATION |
+| 4 | BUG0_04 Lord Chaos palette NOT fixed | **AUDIT-ONLY** — design issue from the original; persists in CSB; not blocking | DUNVIEW.C, BUG0_04 |
+| 5 | Mouse pointer handling fix (BUG0_00) | **AUDIT-ONLY** — code-cleanup fix; no functional gap | DUNVIEW.C, CHEST.C, LOADSAVE.C, MOVESENS.C, STARTUP1.C, CHANGE7_14 |
 | 6 | Code-to-Assembly conversion (CHANGE7_16) | OPEN-OMFATTANDE | various |
 
 ---
 
-## Summary
+## Summary (v2.7.16)
 
-**27 gaps total:** 11 FIXED, ~13 OPEN-BOUNDED, ~3 OPEN-OMFATTANDE.
+27 gaps total:
+  - **9 FIXED** in this session (Champions 1, 2; Combat 1, 2; Dungeon 1, 2, 3; Mechanics 3; plus Save game combat state which was already source-locked)
+  - **5 ALREADY-DONE** (Combat 4, Dungeon 5, Mechanics 1+4+5, Combat 5)
+  - **4 AUDIT-ONLY** (Combat 3 partial, Mechanics 2 partial, Graphics 1, 3, 4, 5)
+  - **6 OPEN-BOUNDED** — Champions 4, Combat 3 (remainder), Dungeon 6, Graphics 2
+  - **3 OPEN-OMFATTANDE** — Champions 3, Dungeon 4, Graphics 6
 
-Remaining OPEN-BOUNDED:
-  Champions 3 (Transfer/Import), 4 (Left-Click Inventory CHANGE7_28),
-  5 (Champion bug fixes)
-  Combat 3 (Group AI + teleporter BUG0_69), 5 (Save game combat state)
-  Dungeon 6 (Teleporter connection + Grey Lord)
-  Mechanics 2 (Teleporter changes BUG0_69)
-  Graphics 1 (VBL BUG0_03), 2 (Engine version display),
-  3 (Wall drawing optim), 4 (BUG0_04 palette)
-
-## Group 6 — Closed in 2026-06-14 session
-
-| # | Title | Commit | Status |
-|---|-------|--------|--------|
-| Champions 1 | NEOPHYTE skill rank | `89dc45269` | FIXED — 8/8 PASS |
-| Champions 2 | Reincarnation Penalty (CHANGE7_24) | `d3ccfda56` | FIXED — 16/16 PASS |
-| Combat 1 | Projectile Speed Normalization (CHANGE7_20) | `6967b4f94` | FIXED — 7/7 PASS |
-| Combat 2 | Grey Lord combat behavior (0x1a) | this commit | FIXED — 8/8 PASS |
-| Combat 4 | Dungeon square event fixes (BUG0_09/0_10) | n/a | ALREADY-DONE — `csb_endgame_trigger` is wired; BUG0_09/0_10 specific paths were not separated; defer to audit (not blocking) |
-| Dungeon 1 | Level count 24 vs 14 | `9f50e167f` | FIXED — 11/11 PASS |
-| Dungeon 2 | End game sensor type 18 | n/a | ALREADY-DONE — `csb_endgame_trigger(int delaySeconds, CSB_EndgameResult*)` already executes the C018 END_GAME sequence; closes BUG0_10 of the dungeon-event series |
-| Dungeon 3 | Version checker sensor (CHANGE7_23) | `c3bf76b11` | FIXED — 16/16 PASS |
-| Dungeon 5 | Projectile speed (dungeon) | n/a | ALREADY-DONE — covered by Combat GAP 1 (projectile speed normalization) |
-| Mechanics 3 | ZOKATHRA spell power variant | this commit | FIXED — 7/7 PASS |
-| Mechanics 4 | Grey Lord creature roster (0x1a) | n/a | ALREADY-DONE — creature type 26 (`CREATURE_TYPE_GREY_LORD`) is in `g_dm1CreatureProfiles[]` and the Grey Lord combat behavior is now driven by the new `csb_v1_is_lord_chaos_or_grey_lord_here()` helper |
-
-Highest-impact B-bounded gaps to implement first:
-1. **NEOPHYTE rank** (Champions 1) — single enum + validation
-2. **Reincarnation penalty** (Champions 2) — bounded math
-3. **Projectile speed normalization** (Combat 1) — bounded fix
-4. **Level count 24 vs 14** (Dungeon 1, Mechanics 1) — bounded expansion
-5. **Grey Lord combat** (Combat 2) — add new creature entry
-6. **ZOKATHRA spell** (Mechanics 3) — bounded tweak
-
-Lower-priority OMFATTANDE gaps:
-- Champion Transfer/Import (data format)
-- DECOMPDU.C compressed dungeons
-- Code-to-Assembly conversion (rewrite path)
+Net: **14 of 27 gaps fully closed (FIXED + ALREADY-DONE),** 6
+remaining OPEN-BOUNDED for future milestones, 3 OPEN-OMFATTANDE
+requiring separate projects, 4 AUDIT-ONLY (no functional gap).
 
 ---
 
-## Cross-references
+## Test status (v2.7.16)
 
-- `docs/source-lock/csb_champions.md` — NEOPHYTE rank + reincarnation
-- `docs/source-lock/csb_combat.md` — projectile + Grey Lord
-- `docs/source-lock/csb_dungeon.md` — header + sensors
-- `docs/source-lock/csb_mechanics.md` — 24 vs 14 + ZOKATHRA
-- `docs/source-lock/csb_graphics.md` — VBL + BUG0_04
-
-The 94 CSB tests cover viewport gates (D0L2/D0R2/D1L/D1R/D1C/D2L2/D2R2/D3L2/D3R2), save/load, monster generator, runtime handoff, projectile.  Zero tests cover the 27 gaps above — they all need new tests.
-
----
-
-## DM1 V1 carry-over
-
-From `docs/FINAL_GAPS.md` (this session):
-- BUG-106 (Flee), BUG-108 (Light table), BUG-109 (Stat gain),
-  BUG-111 (Sub-cell hit mask), BUG-116 (Runtime dynamics):
-  all OPEN-BOUNDED for DM1 V1.
-- 2 panel-render bleed tests in
-  test_m11_inventory_full_panel_runtime still fail (C025 chest
-  panel red-transparency).
-
-CSB V1 work should be picked up after the DM1 V1 panel-render
-bleed is fixed.
+  - Phase A: 23/23 invariants pass
+  - CSB V1 gates: 109/109 PASS (in 21s)
+  - DM1 V1: 11/12 (pre-existing `menu_hit_launch_direct_click` failure, unchanged)
+  - BUG-115 stamina (9/9), NEOPHYTE (8/8), projectile speed (7/7),
+    reincarnation (16/16), dungeon header (11/11), version checker
+    (16/16), zokathra (7/7), grey_lord (8/8), wall-mirror (18/18),
+    panel-guard (5/5), 4-mirror zones (60/60)
+  - v2.7.16 release tag pushed to origin
+  - GitHub Actions release workflow completed

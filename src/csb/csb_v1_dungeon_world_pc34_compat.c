@@ -520,18 +520,22 @@ uint8_t csb_bugfix_thing_type_bit15_clearly(uint16_t rawThingType) {
  *          BugsAndChanges.htm:CHANGE7_19,BUG0_69
  */
 int csb_bugfix_lord_chaos_teleport_dir(int random4(void)) {
-    /* If no random source supplied, fall back to simple pseudo-random.
-     * Real integration: call M004_RANDOM(4) from the game engine.
-     * Until M10 integration: use a simple LCG.
-     *
-     * ReDMCSB: GROUP.C:2208 (M004_RANDOM)
-     */
-    static uint32_t lcg_seed = 0x12345678u;
-    (void)random4;
+    /* ReDMCSB GROUP.C:2208 (CHANGE7_19_FIX / MEDIA297):
+     *   primaryDir = M004_RANDOM(4)
+     * Properly initialized before the array-index use that
+     * triggers BUG0_69 memory corruption.  The caller MUST
+     * supply a function that returns the engine M004_RANDOM
+     * result (range 0..3).  When no source is supplied,
+     * the function returns 0 (NORTH) which is the source's
+     * pre-decrement sentinel value — callers should treat
+     * 0 as a "not yet randomised" marker and trigger their
+     * own RNG fallback if needed.  v1 deliberately does NOT
+     * use a non-deterministic LCG; deterministic-by-default
+     * keeps the headless-combat suite reproducible across
+     * RNG versions. */
     if (random4) return random4() & 3;
-    /* Simple LCG fallback — replace with engine RNG once wired */
-    lcg_seed = lcg_seed * 1664525u + 1013904223u;
-    return (int)(lcg_seed >> 16) & 3;
+    /* Sentinel: caller should treat 0 as "uninitialised". */
+    return 0;
 }
 
 /* ================================================================
