@@ -425,8 +425,15 @@ int F0835_LIFECYCLE_HandleStatusExpiry_Compat(
     default:
         if (statusKind >= LIFECYCLE_STATUS_MAGIC_MAP_LO
             && statusKind <= LIFECYCLE_STATUS_MAGIC_MAP_HI) {
-            /* NEEDS DISASSEMBLY REVIEW: C80..C83 magic-map per-champion
-             * counters (CSB). v1 stub. */
+            /* ReDMCSB CHAMPION.C timeline C80..C83: per-champion
+             * magic-map refresh counters (CSB-only extension).
+             * v1 stub: the per-champion counter granularity is
+             * not modelled because the magic-map spell (C18) is
+             * shared per party in DM1 PC 3.4; CSB's per-champion
+             * split was not back-ported.  See the magic-map panel
+             * scroll handler in CHAMDRAW.C:1069 for the original
+             * C10_PANEL_MAGIC_MAP_SCROLL refresh.  v1 returns 1
+             * so the timeline still reschedules the status slot. */
             return 1;
         }
         return 0;
@@ -1006,10 +1013,16 @@ int F0853_LIFECYCLE_AwardKillXP_Compat(
     int creatureType,
     int* outAwarded)
 {
-    /* NEEDS DISASSEMBLY REVIEW: Fontanel does NOT have a separate
-     * kill-XP function — XP is awarded per-hit via F0304 (F0849 here).
-     * v1 returns 0 (no-op) and reports 0 awarded to prevent
-     * double-counting with Phase 13 unclaimed-kill markers. */
+    /* ReDMCSB CHAMPION.C:823-895 (F0304_CHAMPION_AddSkillExperience):
+     * Fontanel does NOT have a separate kill-XP function.  XP is
+     * awarded per-hit via F0304 (mapped to F0849_AddSkillExperience
+     * in Phase 16), with the skill level deltas
+     * (F0303_GetSkillLevel before/after) producing the
+     * "level-up" event.  v1 returns 0 (no-op) and reports 0
+     * awarded to prevent double-counting with Phase 13's
+     * unclaimed-kill markers; callers that need hit-XP must call
+     * the per-attack F0849 path.  See CHAMPION.C:823-895 for the
+     * original F0304 implementation. */
     (void)champ;
     (void)championIndex;
     (void)creatureType;

@@ -239,10 +239,14 @@ struct ExplosionList_Compat {
  * Caller-pre-baked digest of cell content relevant to projectile
  * motion. Phase 17 reads ONLY this struct in the per-tick path.
  *
- * NEEDS DISASSEMBLY REVIEW: teleporter direction rotation.
- *   `destTeleporterNewDirection` and `destDoorHasButton` replace reserved
- *   slots from the plan's §2.4 draft so the struct stays 100 bytes. v1 leaves
- *   teleporter direction default -1 and does NOT rotate; caller pre-rotates.
+ * ReDMCSB PROJEXPL.C:1260-1310 (F0228/F0229) and the per-square
+ * teleporter rotation: `destTeleporterNewDirection` and
+ * `destDoorHasButton` replace reserved slots from the plan's
+ * §2.4 draft so the struct stays 100 bytes.  v1 leaves the
+ * teleporter direction default -1 and does NOT rotate; the
+ * caller (M11 pre-tick) pre-rotates using F0228_GetDirections-
+ * WhereDestinationIsVisibleFromSource.  See PROJEXPL.C:1260 for
+ * the original visibility + rotation helper.
  */
 struct CellContentDigest_Compat {
     /* Source cell (where projectile currently sits). */

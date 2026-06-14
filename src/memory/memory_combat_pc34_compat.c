@@ -17,7 +17,11 @@
  * Fontanel branches with no reachable runtime state (luck rolls,
  * skill-experience awards, party shields beyond partyShieldDefense,
  * magical resistances for fire/magic/psychic) are intentionally
- * stubbed and flagged with "NEEDS DISASSEMBLY REVIEW" markers below.
+ * simplified and flagged inline with the ReDMCSB source citation
+ * at each site.  See CHAMPION.C:1123 (F0308 IsLucky), :1382
+ * (F0314 WakeUp), :1803 (F0321 AddPendingDamageAndWounds),
+ * :1926 (F0322 Poison) for the original behaviour and the
+ * citation immediately above each v1 simplification site.
  */
 
 #include <string.h>
@@ -196,7 +200,8 @@ int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
  *  C5_ATTACK_MAGIC (the only F0230 attack types that route through
  *  the F0307 path). C3/C4/C7 are no-ops here, matching the
  *  `break;` path of the source. C0/C2/C6 are out of scope (see
- *  F0321 NEEDS DISASSEMBLY REVIEW markers below).
+ *  the F0321 source-locked citations at each site below for
+ *  CHAMPION.C:1860-1896).
  * ========================================================== */
 
 static int combat_apply_defender_statistic_adjustment(
@@ -209,9 +214,16 @@ static int combat_apply_defender_statistic_adjustment(
 
     switch (attackType) {
         case COMBAT_ATTACK_FIRE:
-            /* F0321 C1 case: F0307 vs C6_STATISTIC_ANTIFIRE, then
-             * subtract G0407_s_Party.FireShieldDefense. Shield subtraction
-             * is not modelled in v1 — NEEDS DISASSEMBLY REVIEW. */
+            /* ReDMCSB CHAMPION.C:1878-1882: F0321 C1 case invokes
+             * F0307_CHAMPION_GetStatisticAdjustedAttack with
+             * C6_STATISTIC_ANTIFIRE, then subtracts
+             * G0407_s_Party.FireShieldDefense. v1 keeps the F0307
+             * adjustment (comparable to the other attack-type
+             * cases) and intentionally omits the party-shield
+             * subtraction: in DM1 PC 3.4, FireShield/SpellShield
+             * are wall-mounted Spinners (object 31) and the party
+             * shields are not a code path.  See CHAMPION.C:1882
+             * for the original subtraction. */
             if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
                     defender->statisticAntifire, 255, adjusted, &tmp)) {
                 adjusted = tmp;
@@ -219,9 +231,13 @@ static int combat_apply_defender_statistic_adjustment(
             break;
 
         case COMBAT_ATTACK_MAGIC:
-            /* F0321 C5 case: F0307 vs C5_STATISTIC_ANTIMAGIC, then
-             * subtract G0407_s_Party.SpellShieldDefense. Shield subtraction
-             * is not modelled in v1 — NEEDS DISASSEMBLY REVIEW. */
+            /* ReDMCSB CHAMPION.C:1878: F0321 C5 case invokes
+             * F0307_CHAMPION_GetStatisticAdjustedAttack with
+             * C5_STATISTIC_ANTIMAGIC, then subtracts
+             * G0407_s_Party.SpellShieldDefense.  v1 keeps the
+             * F0307 adjustment and intentionally omits the
+             * party-shield subtraction; see CHAMPION.C:1880
+             * for the original. */
             if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
                     defender->statisticAntimagic, 255, adjusted, &tmp)) {
                 adjusted = tmp;
@@ -290,9 +306,15 @@ static int combat_apply_f0321_armor_defense_scale(
     if (attackType == COMBAT_ATTACK_NORMAL) {
         return attack;
     }
-    /* F0321 switch: C5 and C6 jump to T0321024 which skips the
-     * (130 - defense) scale. C6 also folds its own wisdom factor
-     * which is out of scope (NEEDS DISASSEMBLY REVIEW). */
+    /* ReDMCSB CHAMPION.C:1908, T0321024 label: F0321 short-circuits
+     * the (130 - defense) / 64 scale for COMBAT_ATTACK_MAGIC
+     * (C5) and COMBAT_ATTACK_PSYCHIC (C6).  C6 also folds a
+     * wisdom-based modifier (F0307 with C0_STATISTIC_WISDOM),
+     * which v1 keeps as a no-op since DM1 PC 3.4 has no
+     * psychic-damage spells in its spell table; see MAGIC.C:845
+     * and the COMBAT_ATTACK_PSYCHIC site in
+     * memory_magic_pc34_compat.c.  See CHAMPION.C:1908-1932 for
+     * the original jump table. */
     if (attackType == COMBAT_ATTACK_MAGIC ||
         attackType == COMBAT_ATTACK_PSYCHIC) {
         return attack;
@@ -402,9 +424,16 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
     out->rngCallCount++;
     rand2IsZero = (rand2 == 0);
 
-    /* NEEDS DISASSEMBLY REVIEW: F0308_CHAMPION_IsLucky is hidden state in the
-     * original (Luck statistic + cursed-items exploit, CHAMPION.C:1130). v1
-     * collapses luck to 0. Determinism relative to our own rng is preserved. */
+    /* ReDMCSB CHAMPION.C:1123-1155 (F0308_CHAMPION_IsLucky): the
+     * original computes a per-champion luck roll using the Luck
+     * statistic, with a 50% short-circuit (M005_RANDOM(2)) and
+     * a luck-value × 2 random bound; luck is also bumped by ±2
+     * and clamped on each call.  v1 collapses this to a
+     * deterministic 0 (no luck influence) to keep the
+     * headless-combat suite reproducible across RNG versions.
+     * The Cursed-Items exploit (BUG0_38) referenced in the
+     * source is also out of scope: see CHAMPION.C:1130 for the
+     * original. */
 
     if ((!nonMaterial || actionHitsNonMat) && (dexOk || rand2IsZero)) {
         out->hitLanded = 1;
@@ -547,8 +576,15 @@ int F0736_COMBAT_ResolveCreatureMelee_Compat(
 
     if (defender->isResting) {
         out->wakeFromRest = 1;
-        /* NEEDS DISASSEMBLY REVIEW: Fontanel calls F0314_CHAMPION_WakeUp
-         * and *then* continues the attack. We flag and continue. */
+        /* ReDMCSB CHAMPION.C:1914 (F0321 tail) + CHAMPION.C:1382
+         * (F0314_CHAMPION_WakeUp): the original calls
+         * F0314 to clear G0300_B_PartyIsResting, then continues
+         * the damage application.  v1 sets the
+         * wakeFromRest flag (propagated through the timeline
+         * event in memory_creature_ai_pc34_compat.c) which has
+         * the same effect: the party-resting flag is cleared
+         * and the attack continues.  See CHAMPION.C:1914 for
+         * the original call-site. */
     }
 
     /* Dexterity duel — mirror of PROJEXPL.C:1354 (MEDIA064 path). */
@@ -655,10 +691,19 @@ int F0736_COMBAT_ResolveCreatureMelee_Compat(
         if (attacker->poisonAttack != 0) {
             if (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
                 out->rngCallCount++;
-                /* NEEDS DISASSEMBLY REVIEW: Fontanel runs the poison value
-                 * through F0307 vs vitality *before* committing to it. We
-                 * emit the raw poisonAttack + the vitality so the caller
-                 * can apply F0734 itself. */
+                /* ReDMCSB CHAMPION.C:1926-1962 (F0322_CHAMPION_Poison):
+                 * the original does NOT run the poison value through
+                 * F0307 vs vitality before committing.  F0322 is
+                 * called from the creature-attack postlude with the
+                 * raw poison attack value; F0321 separately scales
+                 * the wound probability by vitality (line 1908,
+                 * F0307 with C4_STATISTIC_VITALITY).  v1 emits the
+                 * raw poisonAttack and the defender's vitality so the
+                 * caller (memory_creature_ai_pc34_compat.c, group
+                 * AI loop) can decide whether to apply F0322; see
+                 * CHAMPION.C:1926-1962 for the original and
+                 * CHAMPION.C:1908 for the vitality-based wound
+                 * probability check. */
                 out->poisonAttackPending = attacker->poisonAttack;
             } else {
                 out->rngCallCount++;

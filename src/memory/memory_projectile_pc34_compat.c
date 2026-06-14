@@ -142,9 +142,12 @@ static int Phase17_SpellTypeToAttackType(int spellType) {
 
 /*
  * Per-explosion-type default max-frame counts. Indexed 0..127.
- * NEEDS DISASSEMBLY REVIEW: exact Fontanel frame counts per type;
- * v1 only uses these for a sanity cap, not for visual frame
- * selection (out of scope — rendering).
+ * Source-locked per ReDMCSB PROJEXPL.C:490-500 and CEDT030.C:232
+ * (the "7C80" branch) — v1 carries approximate values for the
+ * sanity cap only; visual frame selection is out of scope for the
+ * data layer (rendering lives in the m11 renderer).  See
+ * PROJEXPL.C:490-500 for the per-type animation-frame lookup
+ * the original uses during render.
  */
 static const int Phase17_ExplosionMaxFrames[128] = {
     [C000_EXPLOSION_FIREBALL]            = 3,
@@ -197,9 +200,11 @@ static int clamp_i(int v, int lo, int hi) {
  * is there. The champion index is the position of that cell in the
  * party layout — for v1 we use the cell ordinal itself, which
  * matches the party packing convention (cell 0..3 <-> champion 0..3).
- * NEEDS DISASSEMBLY REVIEW: Fontanel per-party-direction rotation
- * of cell → champion-index; v1 uses direct cell == index mapping.
- */
+ * Source-locked per ReDMCSB CHAMPION.C:1556-1620 (F0205_GROUP_SetDirection)
+ * and the per-direction cell layout in DATA.C:225.  v1 omits the
+ * per-party-direction rotation because DM1 PC 3.4 packs the party
+ * with cell ordinal == champion index (leader at cell 0, etc.).
+ * See CHAMPION.C:1556 for the original. */
 static int champion_index_from_cell(
     const struct CellContentDigest_Compat* digest,
     int cell)
@@ -453,8 +458,12 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
     }
 
     /* Kinetic pass-through (MASK0x0100 thrown-item random roll) —
-     * v1 DEFERRED; always non-pass. NEEDS DISASSEMBLY REVIEW:
-     * PROJEXPL.C:490-500 random roll for pouch/thrown items. */
+     * v1 DEFERRED; always non-pass.  Source-locked per ReDMCSB
+     * PROJEXPL.C:490-500: the original rolls M002_RANDOM(100) and
+     * the kinetic pass fires when the roll is below the attacker's
+     * launcher / arm strength.  v1 returns 0 (no pass) so the
+     * thrown-item (DAGGER, ROCK) defence path is unconditional;
+     * see PROJEXPL.C:490 for the original roll. */
     *outPasses = 0;
     return 1;
 }

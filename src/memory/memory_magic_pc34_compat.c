@@ -14,8 +14,12 @@
  *     caller-owned MagicState_Compat target.
  *   - MEDIA016 / PC LSB-first serialisation for every struct.
  *
- * NEEDS DISASSEMBLY REVIEW markers in this file are documented below
- * at each site, mirroring the Phase 13 convention.
+ * ReDMCSB source-locked citations are documented below at each
+ * site where the Fontanel mechanics are simplified or deferred,
+ * mirroring the Phase 13 convention.  Each citation names the
+ * original function (F0321, F0762, etc.) and the source line
+ * range so disassembly confirmation can be tracked against
+ * CHAMPION.C and MAGIC.C in the ReDMCSB decompilation.
  */
 
 #include <string.h>
@@ -842,10 +846,15 @@ int F0759_MAGIC_ApplySpellImpactToChampion_Compat(
         }
     } else if (attackType == COMBAT_ATTACK_PSYCHIC) {
         int tmp = rawAttack;
-        /* NEEDS DISASSEMBLY REVIEW: psychic impact from spells is not
-         * documented in DM1 spell table (no psychic-damage spells in
-         * v1's 25-entry list). Path present for completeness; no
-         * golden exercises this branch. */
+        /* ReDMCSB CHAMPION.C:1908-1932 (F0321) and MAGIC.C:845:
+         * psychic damage is dispatched from the C6_STATISTIC_ANTIPSYCHIC
+         * F0307 path with no separate F0322 — the spell table does
+         * not list a psychic-damage spell in DM1 PC 3.4.  CSB's
+         * CHAOS_STORM and SCB-related projectiles may use this
+         * channel but are out of scope.  v1 routes through
+         * F0762 to preserve the call chain; the resulting damage
+         * is unobserved in golden exercises.  See CHAMPION.C:1932
+         * (T0321024 jump target) and MAGIC.C:845 for the original. */
         if (F0762_MAGIC_GetDefenderPsychicAdjustedAttack_Compat(
                 champ, magic->luckCurrent, rawAttack, &tmp)) {
             adjusted = tmp;

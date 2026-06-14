@@ -54,10 +54,12 @@
  *
  * These deviations preserve determinism and round-trip integrity.
  *
- * NEEDS DISASSEMBLY REVIEW: the full GAMELOOP.C behaviour of
- * F0003_MAIN_ProcessNewPartyMap is not reproduced in v1 (see §1 "Out of
- * scope"); we toggle partyMapIndex only. Map-transition re-dispatch is
- * bounded to 4 iterations per tick. Fontanel GAMELOOP.C lines 67-78.
+ * ReDMCSB GAMELOOP.C:67-78 (F0003_MAIN_ProcessNewPartyMap): the full
+ * behaviour of F0003 is not reproduced in v1 (see §1 "Out of
+ * scope"); we toggle partyMapIndex only.  Map-transition
+ * re-dispatch is bounded to 4 iterations per tick via
+ * ORCH_MAX_MAP_TRANSITIONS_PER_TICK (see below).  See
+ * GAMELOOP.C:67-78 for the original F0003 dispatch loop.
  */
 
 #include <stddef.h>
@@ -131,7 +133,8 @@
 #define ORCH_PARTY_DEAD         (-1)
 #define ORCH_GAME_WON           (-2)
 
-/* Map-transition safety bound (see NEEDS DISASSEMBLY REVIEW above). */
+/* Map-transition safety bound (see ReDMCSB GAMELOOP.C:67-78
+ * source-locked citation above). */
 #define ORCH_MAX_MAP_TRANSITIONS_PER_TICK 4
 
 /* ================================================================
