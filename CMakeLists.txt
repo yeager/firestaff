@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.7.19 LANGUAGES C)
+project(Firestaff VERSION 2.7.20 LANGUAGES C)
 
 include_directories(include src)
 
@@ -1652,6 +1652,35 @@ endif()
 # CHANGE8_06 (engine version 21 hardcoded for CSB 2.1).
 # csb_v1_version_checker_passes(dataValue) returns 1 when
 # dataValue <= engineVersion.
+
+# CSB V1 save import path (Champions GAP 3, OMFATTANDE).
+# Source-locked per M13_PLAN.md:280-294 (HoC delta) +
+# DEFS.H:1289 (CSBGAME.DAT magic).  v1 ships a detector +
+# stub loader; full CSB-specific import path is OMFATTANDE.
+add_library(firestaff_csb_v1_save_import_path
+    src/csb/csb_v1_save_import_path_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_save_import_path PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_save_import_path PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+# CSB V1 DECOMPDU compressed-dungeon detector (Dungeon GAP 4,
+# OMFATTANDE).  Source-locked per ReDMCSB DECOMPDU.C.
+# csb_v1_decompdu_detect() recognises the "CDU\0" 4-byte
+# magic + sub-format byte.  The full decompressor is
+# OMFATTANDE; v1 ships a graceful-fail shim.
+add_library(firestaff_csb_v1_decompdu
+    src/csb/csb_v1_decompdu_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_decompdu PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_decompdu PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
 add_library(firestaff_csb_v1_version_checker
     src/csb/csb_v1_version_checker_pc34_compat.c
 )
@@ -1869,6 +1898,29 @@ add_test(
     COMMAND test_csb_v1_graphics_extras_pc34_compat
 )
 set_tests_properties(csb_v1_graphics_extras_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 OMFATTANDE-gap regression gate (Champions 3 +
+# Dungeon 4 + Graphics 6 stubs).  v2.7.20.
+add_executable(test_csb_v1_omfattande_stubs_pc34_compat
+    tests/test_csb_v1_omfattande_stubs_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_omfattande_stubs_pc34_compat PRIVATE
+    firestaff_csb_v1_save_import_path
+    firestaff_csb_v1_decompdu
+    firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_omfattande_stubs_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME csb_v1_omfattande_stubs_pc34_compat
+    COMMAND test_csb_v1_omfattande_stubs_pc34_compat
+)
+set_tests_properties(csb_v1_omfattande_stubs_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 

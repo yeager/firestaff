@@ -70,7 +70,7 @@ cross-reference.
 
 ---
 
-## Summary (v2.7.16)
+## Summary (v2.7.20)
 
 27 gaps total:
   - **9 FIXED** in this session (Champions 1, 2; Combat 1, 2; Dungeon 1, 2, 3; Mechanics 3; plus Save game combat state which was already source-locked)
@@ -82,6 +82,30 @@ cross-reference.
 Net: **14 of 27 gaps fully closed (FIXED + ALREADY-DONE),** 6
 remaining OPEN-BOUNDED for future milestones, 3 OPEN-OMFATTANDE
 requiring separate projects, 4 AUDIT-ONLY (no functional gap).
+
+---
+
+## Group 7 — OMFATTANDE status update (v2.7.20)
+
+The three OMFATTANDE gaps (Champions 3, Dungeon 4, Graphics 6)
+remain genuinely OMFATTANDE.  v1 ships bounded stubs and
+dispatchers to make the gaps visible without pretending
+they're closed:
+
+  - **Champions 3 (Champion Transfer/Import)**: helper
+    `csb_v1_detect_save_variant()` (DM1 PC 3.4 / CSB v2.0 /
+    CSB v2.1) + `csb_v1_import_csb_save()` stub that returns
+    0 (= "use DM1 path").  Full CSB-specific save layout
+    port is the future milestone.
+  - **Dungeon 4 (Compressed dungeon DECOMPDU.C)**: helper
+    `csb_v1_decompdu_detect()` recognises the "CDU\0" 4-byte
+    magic + sub-format byte, returns 1 on match.  The
+    full decompressor is OPEN-OMFATTANDE; v1 ships a
+    graceful-fail shim.
+  - **Graphics 6 (Code-to-asm CHANGE7_16)**: deferred; the
+    Atari ST 68k-assembly translation is out of scope for
+    a single C-only port.  Documented as future work.
+
 
 ---
 
