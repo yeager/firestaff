@@ -427,13 +427,28 @@ int F0835_LIFECYCLE_HandleStatusExpiry_Compat(
             && statusKind <= LIFECYCLE_STATUS_MAGIC_MAP_HI) {
             /* ReDMCSB CHAMPION.C timeline C80..C83: per-champion
              * magic-map refresh counters (CSB-only extension).
-             * v1 stub: the per-champion counter granularity is
-             * not modelled because the magic-map spell (C18) is
-             * shared per party in DM1 PC 3.4; CSB's per-champion
-             * split was not back-ported.  See the magic-map panel
-             * scroll handler in CHAMDRAW.C:1069 for the original
-             * C10_PANEL_MAGIC_MAP_SCROLL refresh.  v1 returns 1
-             * so the timeline still reschedules the status slot. */
+             * aux1 carries the per-champion cell index (0..3)
+             * set at cast time by the C18 magic-map spell.  When
+             * the timer fires, we decrement the counter and
+             * re-emit a refresh event so the map panel keeps
+             * drawing the latest scouted layout.  In DM1 PC 3.4
+             * the spell is per-party (C18 spell effect); CSB's
+             * per-champion split is back-ported here for parity. */
+            {
+                int cell = (int)expired->aux1;
+                if (cell >= 0 && cell < CHAMPION_MAX_PARTY &&
+                    state->champions[cell].magicMapRefresh[cell] > 0) {
+                    state->champions[cell].magicMapRefresh[cell]--;
+                }
+            }
+            /* Reschedule the next refresh tick so the panel
+             * keeps getting the latest scouted map. */
+            if (outRescheduled) {
+                outRescheduled->kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+                outRescheduled->aux0 = (uint8_t)statusKind;
+                outRescheduled->aux1 = expired->aux1;
+                outRescheduled->aux2 = (uint8_t)championIndex;
+            }
             return 1;
         }
         return 0;

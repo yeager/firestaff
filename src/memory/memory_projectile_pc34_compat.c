@@ -41,8 +41,8 @@ _Static_assert(sizeof(struct ProjectileTickResult_Compat)
 _Static_assert(sizeof(struct ExplosionTickResult_Compat)
                == EXPLOSION_TICK_RESULT_SERIALIZED_SIZE,
                "ExplosionTickResult_Compat size must be 184 bytes");
-_Static_assert(PROJECTILE_LIST_SERIALIZED_SIZE == 5768,
-               "ProjectileList serialized size must be 5768 bytes");
+_Static_assert(PROJECTILE_LIST_SERIALIZED_SIZE == 6008,
+               "ProjectileList serialized size must be 6008 bytes (60 * 100 + 8)");
 _Static_assert(EXPLOSION_LIST_SERIALIZED_SIZE == 2056,
                "ExplosionList serialized size must be 2056 bytes");
 
@@ -427,7 +427,6 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
     struct RngState_Compat* rng,
     int* outPasses)
 {
-    (void)rng;
     if (in == NULL || digest == NULL || outPasses == NULL) return 0;
 
     *outPasses = 0;
@@ -457,13 +456,24 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
         return 1;
     }
 
-    /* Kinetic pass-through (MASK0x0100 thrown-item random roll) —
-     * v1 DEFERRED; always non-pass.  Source-locked per ReDMCSB
-     * PROJEXPL.C:490-500: the original rolls M002_RANDOM(100) and
-     * the kinetic pass fires when the roll is below the attacker's
-     * launcher / arm strength.  v1 returns 0 (no pass) so the
-     * thrown-item (DAGGER, ROCK) defence path is unconditional;
-     * see PROJEXPL.C:490 for the original roll. */
+    /* Kinetic pass-through (PROJEXPL.C:490-500): the original
+     * rolls M002_RANDOM(100) and the kinetic pass fires when the
+     * roll is below the attacker's launcher / arm strength.  v1
+     * implements the source-locked roll using the launcher's
+     * launcherStrength field on the projectile instance; when the
+     * field is 0 the original always rolled against a 0 threshold
+     * and the pass never fires, so we keep the same default.
+     * For DAGGER / ROCK (thrown items) the launcher strength is
+     * set by the F0810 call site. */
+    if (in->projectileCategory == PROJECTILE_CATEGORY_KINETIC
+        && in->launcherStrength > 0
+        && digest->destDoorState != PROJECTILE_DOOR_STATE_DESTROYED) {
+        unsigned int roll = F0732_COMBAT_RngRandom_Compat(rng, 100);
+        if (roll < (unsigned int)in->launcherStrength) {
+            *outPasses = 1;
+            return 1;
+        }
+    }
     *outPasses = 0;
     return 1;
 }

@@ -204,6 +204,72 @@ int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
  *  CHAMPION.C:1860-1896).
  * ========================================================== */
 
+/* ── F0308_CHAMPION_IsLucky ───────────────────────────────────
+ * ReDMCSB CHAMPION.C:1123-1155.  Returns 1 when the champion is
+ * "lucky" for this attack.  The original has a 50% short-circuit
+ * (M005_RANDOM(2)) that bypasses the luck check entirely; on the
+ * non-short-circuit path the luck statistic is doubled and rolled
+ * against the per-attack percentage, then luck itself is bumped
+ * by ±2 and clamped to [min, max].  The negative-luck path is the
+ * BUG0_38 cursed-items exploit (CHAMPION.C:1130) — if luck <= 0
+ * the "lucky" outcome is forced to 0.  Re-implemented here so the
+ * v1 combat path can wire it in.  RNG state flows through the
+ * caller-owned F0732 (Phase 13) so the test suite stays
+ * reproducible.
+ *
+ * Returns:
+ *   1 = champion is lucky
+ *   0 = champion is not lucky
+ * The luck statistic is updated in-place on the snapshot. */
+static int combat_champion_is_lucky(
+    struct CombatantChampionSnapshot_Compat* champ,
+    struct RngState_Compat* rng,
+    int percentage)
+{
+    unsigned int randShort;
+    unsigned int randPct;
+    int isLucky;
+    int luckCur;
+    int luckMin;
+    int luckMax;
+    int luckNew;
+
+    if (champ == 0 || rng == 0) {
+        return 0;
+    }
+    /* 50% short-circuit (CHAMPION.C:1138). */
+    randShort = F0732_COMBAT_RngRandom_Compat(rng, 2);
+    if (randShort != 0) {
+        randPct = F0732_COMBAT_RngRandom_Compat(rng, 100);
+        if (randPct > (unsigned int)percentage) {
+            isLucky = 1;
+        } else {
+            isLucky = 0;
+        }
+    } else {
+        luckCur = champ->statisticLuck;
+        luckMin = champ->statisticLuckMin;
+        luckMax = champ->statisticLuckMax;
+        if (luckCur <= 0) {
+            /* BUG0_38 cursed-items exploit: negative luck forces
+             * the non-lucky outcome. */
+            isLucky = 0;
+        } else {
+            unsigned int r = F0732_COMBAT_RngRandom_Compat(rng, luckCur << 1);
+            isLucky = (r > (unsigned int)percentage) ? 1 : 0;
+        }
+        /* CHAMPION.C:1138: ±2 with F0026_MAIN_GetBoundedValue clamp. */
+        luckNew = isLucky
+                      ? luckCur - 2
+                      : luckCur + 2;
+        if (luckMax > 0 && luckNew > luckMax) luckNew = luckMax;
+        if (luckMin < 0 && luckNew < luckMin) luckNew = luckMin;
+        if (luckNew < 0) luckNew = 0;        /* CHAMPION.C:1138 unsigned clamp */
+        champ->statisticLuck = luckNew;
+    }
+    return isLucky;
+}
+
 static int combat_apply_defender_statistic_adjustment(
     int attackType,
     const struct CombatantChampionSnapshot_Compat* defender,
@@ -424,16 +490,20 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
     out->rngCallCount++;
     rand2IsZero = (rand2 == 0);
 
-    /* ReDMCSB CHAMPION.C:1123-1155 (F0308_CHAMPION_IsLucky): the
-     * original computes a per-champion luck roll using the Luck
-     * statistic, with a 50% short-circuit (M005_RANDOM(2)) and
-     * a luck-value × 2 random bound; luck is also bumped by ±2
-     * and clamped on each call.  v1 collapses this to a
-     * deterministic 0 (no luck influence) to keep the
-     * headless-combat suite reproducible across RNG versions.
-     * The Cursed-Items exploit (BUG0_38) referenced in the
-     * source is also out of scope: see CHAMPION.C:1130 for the
-     * original. */
+    /* F0308_CHAMPION_IsLucky (CHAMPION.C:1123-1155): on a successful
+     * dex duel, the champion gets a luck roll that can turn a
+     * miss into a hit.  The percentage parameter is 0 here
+     * (we are checking "lucky = always wins the roll").  RNG
+     * state flows through the shared rng so the headless
+     * combat suite stays reproducible. */
+    if (!dexOk && !rand2IsZero) {
+        int lucky = combat_champion_is_lucky(attacker, rng, 0);
+        out->rngCallCount += 2; /* combat_champion_is_lucky: short-circuit + pct (or luck×2) */
+        if (lucky) {
+            out->hitLanded = 1;
+            out->luckyHit = 1;
+        }
+    }
 
     if ((!nonMaterial || actionHitsNonMat) && (dexOk || rand2IsZero)) {
         out->hitLanded = 1;

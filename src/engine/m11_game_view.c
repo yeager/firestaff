@@ -18803,6 +18803,43 @@ static int m11_build_projectile_digest(
         out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
     }
 
+    /* ReDMCSB PROJEXPL.C:1260-1310 (F0228/F0229): when the dest
+     * square carries a TELEPORTER, the projectile gets rotated to
+     * the direction the teleporter points to.  v1 reads the
+     * first thing on the square, looks up THING_TYPE_TELEPORTER,
+     * and uses the direction field (rotated by F0228 visibility)
+     * to set destTeleporterNewDirection.  In DM1 PC 3.4 the
+     * teleporter thing carries an explicit target direction in
+     * the scope/direction field.  If no teleporter thing is
+     * present, destTeleporterNewDirection stays -1 (no rotation). */
+    if (out->destSquareType == PROJECTILE_ELEMENT_TELEPORTER) {
+        unsigned short firstThing = m11_get_first_square_thing(
+            world, p->mapIndex, destX, destY);
+        if (firstThing != THING_ENDOFLIST
+                && firstThing != THING_NONE
+                && THING_GET_TYPE(firstThing) == THING_TYPE_TELEPORTER
+                && world->things
+                && world->things->teleporters) {
+            int teleIndex = THING_GET_INDEX(firstThing);
+            if (teleIndex >= 0
+                    && teleIndex < world->things->teleporterCount) {
+                /* ReDMCSB PROJEXPL.C:1260-1310: the teleporter
+                 * rotation field (2 bits, 0..3) is the direction
+                 * the projectile is rotated to when entering the
+                 * teleporter.  absoluteRotation toggles whether
+                 * the rotation is world-frame or party-relative.
+                 * F0228 visibility picks this when the destination
+                 * is visible; v1 always applies the rotation
+                 * (the projectile then enters the destination map
+                 * with the rotated direction). */
+                int newDir = (int)world->things->teleporters[teleIndex].rotation;
+                if (newDir >= 0 && newDir <= 3) {
+                    out->destTeleporterNewDirection = newDir;
+                }
+            }
+        }
+    }
+
     /* Party presence on destination square. */
     if (world->party.mapIndex == p->mapIndex
             && world->party.mapX == destX
