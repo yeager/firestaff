@@ -144,6 +144,7 @@ struct CombatantChampionSnapshot_Compat {
     int statisticVitality;
     int statisticAntifire;
     int statisticAntimagic;
+    int statisticWisdom;        /* CHAMPION.C:1908 C6 psychic F0307 factor */
     int statisticLuck;          /* CHAMPION.C:1123 F0308 — current luck */
     int statisticLuckMax;       /* CHAMPION.C:1138 luck cap */
     int statisticLuckMin;       /* CHAMPION.C:1138 luck floor (cursed items can push negative) */
