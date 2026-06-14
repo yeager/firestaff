@@ -277,36 +277,44 @@ static int combat_apply_defender_statistic_adjustment(
 {
     int adjusted = attack;
     int tmp;
+    int shieldDef;
+
+    if (defender == 0) return attack;
 
     switch (attackType) {
         case COMBAT_ATTACK_FIRE:
             /* ReDMCSB CHAMPION.C:1878-1882: F0321 C1 case invokes
              * F0307_CHAMPION_GetStatisticAdjustedAttack with
              * C6_STATISTIC_ANTIFIRE, then subtracts
-             * G0407_s_Party.FireShieldDefense. v1 keeps the F0307
-             * adjustment (comparable to the other attack-type
-             * cases) and intentionally omits the party-shield
-             * subtraction: in DM1 PC 3.4, FireShield/SpellShield
-             * are wall-mounted Spinners (object 31) and the party
-             * shields are not a code path.  See CHAMPION.C:1882
-             * for the original subtraction. */
+             * G0407_s_Party.FireShieldDefense.  v1 implements
+             * both: the F0307 statistic adjustment AND the
+             * party-shield subtraction (sourced from
+             * partyShieldDefense on the champion snapshot). */
             if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
                     defender->statisticAntifire, 255, adjusted, &tmp)) {
                 adjusted = tmp;
             }
+            shieldDef = defender->partyShieldDefense;
+            if (shieldDef > 0 && adjusted > 0) {
+                adjusted -= shieldDef;
+                if (adjusted < 0) adjusted = 0;
+            }
             break;
 
         case COMBAT_ATTACK_MAGIC:
-            /* ReDMCSB CHAMPION.C:1878: F0321 C5 case invokes
+            /* ReDMCSB CHAMPION.C:1880: F0321 C5 case invokes
              * F0307_CHAMPION_GetStatisticAdjustedAttack with
              * C5_STATISTIC_ANTIMAGIC, then subtracts
-             * G0407_s_Party.SpellShieldDefense.  v1 keeps the
-             * F0307 adjustment and intentionally omits the
-             * party-shield subtraction; see CHAMPION.C:1880
-             * for the original. */
+             * G0407_s_Party.SpellShieldDefense.  v1 implements
+             * both: F0307 AND the party-shield subtraction. */
             if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
                     defender->statisticAntimagic, 255, adjusted, &tmp)) {
                 adjusted = tmp;
+            }
+            shieldDef = defender->partyShieldDefense;
+            if (shieldDef > 0 && adjusted > 0) {
+                adjusted -= shieldDef;
+                if (adjusted < 0) adjusted = 0;
             }
             break;
 

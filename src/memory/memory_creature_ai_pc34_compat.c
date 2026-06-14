@@ -1352,12 +1352,22 @@ int F0804_CREATURE_Tick_Compat(
              *    a community shortcut — ReDMCSB F0209 only reserves
              *    warp behavior for the arch-enemy types (Lord
              *    Chaos / Order / Grey Lord). v1 does NOT emit a
-             *    warp intent for the Trolin; the F0823 anti-mage
-             *    payload and the standard melee path are the v1
-             *    approximation.  See GROUP.C:2275 (Lord Chaos
-             *    F0204 double-move / warp path) and PROJEXPL.C F0823
-             *    for the original; warp intent is reserved for
-             *    arch-enemy types only. */
+             *    warp intent for the Trolin.
+             *
+             *  Implementation: F0823_DM1_GROUP_ResolveProjectileAttack
+             *  (dm1_v1_creature_ai_behavior_pc34_compat.c:228) handles
+             *  the Trolin via the switch's default branch
+             *  (DM1_PROJECTILE_THING_FIREBALL), but the Trolin has
+             *  attackRange=1 (DUNGEON.C G0243[16]) so the early
+             *  attackRange<=1 return at line 250 fires and the
+             *  F0823 dispatch is a no-op for melee creatures.  The
+             *  emittedSpellRequest=1 above therefore has no
+             *  projectile follow-up in v1; the F0823 channel is
+             *  wired but inert for the Trolin.  The "anti-mage spell
+             *  palette" community myth is not in the source; see
+             *  GROUP.C:2275 (Lord Chaos F0204 double-move / warp
+             *  path) and PROJEXPL.C F0823 for the original, and
+             *  F0823's default FIREBALL branch for the Trolin.
             if (visible && stateOut->stateKind == AI_STATE_ATTACK
                 && distance == 1) {
                 out->emittedSpellRequest = 1;
