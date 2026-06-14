@@ -1,4 +1,5 @@
 #include "memory_champion_state_pc34_compat.h"
+#include "csb_v1_reincarnation_penalty_pc34_compat.h"
 #include <string.h>
 
 /*
@@ -317,6 +318,13 @@ int F0610_PARTY_AddChampionFromMirrorTextString_Compat(
     party->champions[slot].present = 1;
     party->champions[slot].portraitIndex = textStringIndex;
     party->champions[slot].direction = (unsigned char)party->direction;
+    /* CSB V1 CHANGE7_24: when the reincarnation-mode toggle is set,
+     * apply the reincarnation penalty (HP/MP/STA halved, other
+     * stats -attributePenalty, Luck exempt).  F0280 materializes
+     * the full candidate state, then the penalty is applied in
+     * place.  See csb_v1_reincarnation_penalty_apply for the
+     * source-locked formula. */
+    csb_v1_reincarnation_penalty_apply(&party->champions[slot]);
     party->championCount = F0638_PARTY_CountOccupiedChampionSlots_Compat(party);
     if (party->activeChampionIndex < 0) {
         party->activeChampionIndex = slot;

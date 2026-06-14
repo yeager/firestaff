@@ -884,6 +884,7 @@ if(NOT MSVC)
     # -include stddef.h provides NULL for files that skip standard includes.
     target_compile_options(firestaff_m10 PRIVATE -std=c99 -O2 -include stddef.h)
 endif()
+target_link_libraries(firestaff_m10 PUBLIC firestaff_csb_v1_reincarnation_penalty)
 
 
 
@@ -1550,6 +1551,25 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_projectile_speed PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 reincarnation penalty (Champions GAP 2, CHANGE7_24).
+# Source-locked per CSB:REVIVE.C CHANGE7_24 + Character.cpp:14
+# (reincarnateAttributePenalty=2, reincarnateStatPenalty=8,
+# randomPoints=3).  F0610_PARTY_AddChampionFromMirrorTextString
+# calls csb_v1_reincarnation_penalty_apply() on the materialized
+# candidate when the reincarnation-mode flag is on.  HP/MP/STA
+# halved, other stats -attributePenalty, Luck exempt.
+add_library(firestaff_csb_v1_reincarnation_penalty
+    src/csb/csb_v1_reincarnation_penalty_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_reincarnation_penalty PUBLIC
+    firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_reincarnation_penalty PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # CSB V1 projectile speed normalization regression gate.
 add_executable(test_csb_v1_projectile_speed_pc34_compat
     tests/test_csb_v1_projectile_speed_pc34_compat.c
@@ -1565,6 +1585,26 @@ add_test(
     COMMAND test_csb_v1_projectile_speed_pc34_compat
 )
 set_tests_properties(csb_v1_projectile_speed_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 reincarnation penalty regression gate.
+add_executable(test_csb_v1_reincarnation_penalty_pc34_compat
+    tests/test_csb_v1_reincarnation_penalty_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_reincarnation_penalty_pc34_compat PRIVATE
+    firestaff_csb_v1_reincarnation_penalty firestaff_m10 firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_reincarnation_penalty_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME csb_v1_reincarnation_penalty_pc34_compat
+    COMMAND test_csb_v1_reincarnation_penalty_pc34_compat
+)
+set_tests_properties(csb_v1_reincarnation_penalty_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 
