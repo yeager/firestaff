@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.7.20 LANGUAGES C)
+project(Firestaff VERSION 2.7.21 LANGUAGES C)
 
 include_directories(include src)
 
@@ -959,6 +959,7 @@ set(M11_SOURCES
     src/engine/swsh_intro_pathfinder_m11.c
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
+    src/engine/m11_dm1_v1_f0128_viewport_pc34_compat.c
     src/engine/m11_qol_runtime.c
     src/dm1/dm1_v1_minimap_pc34_compat.c
     src/dm1/dm1_v1_automap_pc34_compat.c
@@ -1833,6 +1834,25 @@ endif()
 add_test(
     NAME dm1_v1_f0306_stamina_pc34_compat
     COMMAND test_dm1_v1_f0306_stamina_pc34_compat
+)
+
+# DM1 V1 BUG-118 — F0128 viewport-crop readiness regression gate.
+# Validates that the bounded F0128 helper composes the
+# viewport-crop ready state after a party-tuple change.
+add_executable(test_dm1_v1_f0128_viewport_pc34_compat
+    tests/test_dm1_v1_f0128_viewport_pc34_compat.c
+)
+target_link_libraries(test_dm1_v1_f0128_viewport_pc34_compat PRIVATE
+    firestaff_m11 firestaff_m10 firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_dm1_v1_f0128_viewport_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME dm1_v1_f0128_viewport_pc34_compat
+    COMMAND test_dm1_v1_f0128_viewport_pc34_compat
 )
 set_tests_properties(dm1_v1_f0306_stamina_pc34_compat PROPERTIES
     TIMEOUT 30
