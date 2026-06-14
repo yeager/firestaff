@@ -1,4 +1,62 @@
-# Firestaff v2.7.13
+# Firestaff v2.7.14
+
+DM1 V1 source-lock and CSB V1 bounded-gap release — closes 6 DM1 V1 v1-simplifications documented in v2.7.13, fixes 2 pre-existing test regressions, and adds 3 CSB V1 implementations (NEOPHYTE rank, projectile speed normalization, reincarnation penalty).
+
+## DM1 V1 parity work
+
+- **F0308 CHAMPION_IsLucky** (CHAMPION.C:1123-1155): the 50% short-circuit, luck×2 roll, ±2 bounded update, and BUG0_38 negative-luck path are now implemented. Wired into the dex-duel via a new `luckyHit` field on CombatResult_Compat.
+- **F0202 FAKEWALL non-material pass** (GROUP.C:1503-1505): added `adjacencyFakeWallMask` + `adjacencyFakeWallOpenMask` to CreatureTickInput_Compat. F0798 now correctly opens the door for FAKEWALL with the OPEN or IMAGINARY+allow bits.
+- **F0229 cell ordering** (PROJEXPL.C:1284-1305): the per-primaryDir cell permutation table `kCellOrder[4][4]` is now consulted; the F0228 visibility parity flip (CellSource + 1 when LoS is blocked) is honoured.
+- **C80..C83 magic-map per-champion counters** (CHAMDRAW.C:1069): added `magicMapRefresh[4]` to ChampionLifecycleState_Compat. The C80..C83 timeline handler decrements the counter and reschedules the next refresh.
+- **Teleporter direction rotation** (PROJEXPL.C:1260-1310): the digest's `destTeleporterNewDirection` is now populated from the destination square's first THING_TYPE_TELEPORTER rotation when entering a teleporter.
+- **Kinetic pass-through** (PROJEXPL.C:490-500): `launcherStrength` added to ProjectileInstance_Compat; F0816 now rolls `M002_RANDOM(100) < launcherStrength` for KINETIC projectiles.
+- **F0321 fire/spell shield subtraction** (CHAMPION.C:1880-1882): F0321 C1 and C5 cases subtract `defender->partyShieldDefense` after the F0307 statistic adjustment. Bounded to 0.
+- **F0321 C6 wisdom factor** (CHAMPION.C:1908-1932): the F0762 psychic adjustment now correctly sources `champ->statisticWisdom` (was passing `magic->luckCurrent`).
+- **F0822 poison cloud group damage** (PROJEXPL.C:858-866): removed the F0192 over-scaling; the call site now passes `attackApplied` straight through to F0191 (which does the resistance adjustment internally).
+- **Trolin F0823 anti-mage palette**: added the `DM1_CREATURE_TYPE_TROLIN` case to F0823 — 50% FIREBALL, else LIGHTNING_BOLT / HARM_NON_MATERIAL / OPEN_DOOR 3-way split. Note: Trolin's AttackRange=1 (DUNGEON.C G0243[16]) makes F0823 a no-op for melee — the anti-mage palette is wired but inert.
+- **DM_SAVE_HEADER Noise[]/Keys[]/Checksums[]** (SAVEHEAD.C:44,97,104): added `noise[10]`, `sectionKeys[16]`, `sectionChecksums[16]` to SaveGameHeader_Compat. F0417_SAVEUTIL_Port_Hint_Compat derives 16 per-section XOR keys via FNV-1a fold; F0417_SAVEUTIL_GetChecksumAndObfuscate_Compat runs a minimal XOR pass. Full CPSC checksum derivation deferred to post-M10.
+
+## DM1 V1 documentation
+
+- **29 NEEDS DISASSEMBLY REVIEW markers** replaced with precise ReDMCSB source citations (CHAMPION.C, GROUP.C, PROJEXPL.C, MOVESENS.C, etc.). Each marker now points to the exact function name, file, and line range so disassembly confirmation can be tracked against the ReDMCSB decompilation.
+
+## Test infrastructure
+
+- **Hall of Champions 4-mirror zones** (60/60 PASS): pixel-proves that all 4 endgame champion mirrors are drawn at the source-locked C412..C415 destinations with correct portrait cutouts, name origins, and 48px row pitch.
+- **Hall of Champions wall-mirror zones** (18/18 PASS): pixel-proves the D1C champion mirror on the (1,3) and (1,4) wall routes — wall ornament box at (96, 36, 32, 28), portrait cutout at (96, 35, 32, 29), 100% / 97% pixel match, no bleed.
+- **Hall of Champions panel-guard probe** (5/5 PASS): real pixel-probe for the BUG-120/121 panel-active guard via D1C zone diff (2961 bytes when panel is on, portrait still 1024 pixels).
+- **M12 extras view smoke probe + visual capture** (11/11 PASS): Bestiary, Item Encyclopedia, and Screenshot Gallery render non-trivial framebuffers.
+- **F0827/F0828 launcherStrength** fix: serialiser now writes the new field at the right slot (25 fields total, 100 bytes — was 24 fields / 96 bytes, causing the world-hash to fail). Brought test_m11_inventory_full_panel from 21 sub-failures down to 2 (panel-render bleeds, pre-existing and not related to this fix).
+- **M11_GameView_HandlePointer** now refreshes `lastWorldHash` on every REDRAW-returning click so the inventory test's deterministic world-hash assertions see the post-click snapshot.
+
+## CSB V1 bounded-gap implementations
+
+- **Champions GAP 1 — NEOPHYTE rank** (PANEL.C:26, CEDT006.C:141, Character.cpp:665): added `csb_v1_neophyte_skills_mode_get/set` and `csb_v1_neophyte_display_for_level` helpers. m11_dm1_v1_skill_level_name_pc34 now returns "NEOPHYTE" for level 0 in CSB mode (was returning NULL for level <= 1, making both NEOPHYTE and NOVICE display as empty). 8/8 PASS.
+- **Combat GAP 1 — Projectile Speed Normalization** (PROJEXPL.C CHANGE7_20): added `csb_v1_projectile_speed_normalization_get/set` flag. F0825 uses delay=1 on every map when CSB mode is on (was delay=1 on party map, 3 on other maps in DM1). 7/7 PASS.
+- **Champions GAP 2 — Reincarnation Penalty** (CSB:REVIVE.C CHANGE7_24, Character.cpp:14): added `csb_v1_reincarnation_mode_get/set` plus 3 globals (attributePenalty=2, statPenalty=8, randomPoints=3). F0610_PARTY_AddChampionFromMirrorTextString applies the penalty in place when the mode is on — HP/STA/MANA halved, each non-Luck stat reduced by attributePenalty, clamped to 0. 16/16 PASS.
+
+## Verification
+
+- Full CMake build: 0 errors
+- Phase A probe: 23/23 invariants
+- CSB V1 gates: 31/31 PASS (8 neophyte + 7 projectile-speed + 16 reincarnation)
+- DM1 V1 wall-mirror zones: 18/18 PASS
+- DM1 V1 endgame 4-mirror zones: 60/60 PASS
+- DM1 V1 panel-guard: 5/5 PASS
+- test_dm1_v1_combat_pc34_compat_integration: 31/31 PASS
+- test_dm1_v1_projectile_explosion_render_pc34_compat: PASS
+- Pre-existing failure unchanged: `m11_inventory_full_panel_runtime_source_lock` has 2 panel-render bleed failures in C025 open-chest transparency (root cause: C025 red-transparency path; documented in docs/FINAL_GAPS.md Group 4).
+
+## Known gaps
+
+- DM1 V1: 2 panel-render bleed sub-tests in test_m11_inventory_full_panel_runtime (CHEST.C F0333 red-transparency path; not closed in this release).
+- DM1 V1: BUG-106 (creature flee F0201 negated direction), BUG-108 (light amount table G0039 16-entry), BUG-109 (champion stat gain F0303 cycle), BUG-111 (sub-cell hit mask), BUG-116 (runtime dynamics adjacency). Documented in docs/FINAL_GAPS.md Group 3.
+- CSB V1: 24 of 27 implementation gaps remain (see docs/FINAL_CSB_GAPS.md). 3 bounded gaps closed in this release (NEOPHYTE, projectile speed, reincarnation).
+- DM2 / CSB / Nexus / Theron: separate milestones, not parity targets for this release.
+
+---
+
+## v2.7.13 (previous release, kept for reference)
 
 DM1 V1 combat fidelity and bug audit release — systematic audit of the DM1 V1 runtime against the ReDMCSB decompilation with targeted fixes for the highest-impact issues.
 
