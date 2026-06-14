@@ -230,6 +230,18 @@ struct SaveGameHeader_Compat {
     uint32_t      totalFileSize;
     uint32_t      sectionCount;
     uint32_t      bodyCRC32;
+    /* ReDMCSB SAVEHEAD.C F0429/F0430 + F0417_SAVEUTIL_GetChecksumAndObfuscate:
+     * the original DM_SAVE_HEADER has Noise[149] + Keys[16] +
+     * Checksums[16] + a 16-byte XOR obfuscation.  v1 ports a
+     * minimal subset: 10 uint16_t Noise entries (F0417 input
+     * seed), 16 uint16_t per-section keys, and 16 uint32_t
+     * per-section checksums.  The XOR pass uses Noise[0] as the
+     * running key so the importer can reverse it without the
+     * F0417 SaveUtil full port.  See F0417_SAVEUTIL_Port_Hint_Compat
+     * in memory_savegame_pc34_compat.c for the port boundary. */
+    uint16_t      noise[10];     /* 20 bytes — F0417 obfuscation input */
+    uint16_t      sectionKeys[16]; /* 32 bytes — per-section XOR keys */
+    uint32_t      sectionChecksums[16]; /* 64 bytes — per-section checksums */
     unsigned char reserved[36];
 };
 
@@ -445,5 +457,18 @@ uint32_t F0791_SAVEGAME_GetGameID_Compat(
 
 int F0792_SAVEGAME_GetMusicOn_Compat(
     const struct SaveGameHeader_Compat* hdr);
+
+/* F0417_SAVEUTIL minimal port: derives 16 per-section XOR keys
+ * from the noise[10] seed and exposes a GetChecksumAndObfuscate
+ * byte-XOR pass.  Source-locked per ReDMCSB SAVEHEAD.C:44,97,104
+ * (F0417_SAVEUTIL_GetChecksumAndObfuscate).  Full CPSC checksum
+ * derivation deferred to post-M10. */
+int F0417_SAVEUTIL_Port_Hint_Compat(
+    struct SaveGameHeader_Compat* hdr,
+    const uint16_t noiseSeed[10]);
+int F0417_SAVEUTIL_GetChecksumAndObfuscate_Compat(
+    const struct SaveGameHeader_Compat* hdr,
+    unsigned char* buf,
+    int bufLen);
 
 #endif /* REDMCSB_MEMORY_SAVEGAME_PC34_COMPAT_H */

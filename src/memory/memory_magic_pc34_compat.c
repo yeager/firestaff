@@ -848,15 +848,19 @@ int F0759_MAGIC_ApplySpellImpactToChampion_Compat(
         int tmp = rawAttack;
         /* ReDMCSB CHAMPION.C:1908-1932 (F0321) and MAGIC.C:845:
          * psychic damage is dispatched from the C6_STATISTIC_ANTIPSYCHIC
-         * F0307 path with no separate F0322 — the spell table does
-         * not list a psychic-damage spell in DM1 PC 3.4.  CSB's
-         * CHAOS_STORM and SCB-related projectiles may use this
-         * channel but are out of scope.  v1 routes through
-         * F0762 to preserve the call chain; the resulting damage
-         * is unobserved in golden exercises.  See CHAMPION.C:1932
-         * (T0321024 jump target) and MAGIC.C:845 for the original. */
+         * ReDMCSB CHAMPION.C:1908-1932 (F0321 C6): the psychic
+         * path applies F0307 with C0_STATISTIC_WISDOM
+         * (CHAMPION.C:1853: wisdomFactor = 115 - wisdom) before
+         * the T0321024 jump target skips the (130 - defense) / 64
+         * scale.  v1 routes through F0762 which implements the
+         * (115 - wisdom) / 64 scaled product.  The call site
+         * sources wisdom from the defender's statisticWisdom on
+         * the champion snapshot (F0321 / F0307) — NOT magic-
+         * state luck.  See CHAMPION.C:1908-1932 for the original
+         * and CHAMPION.C:1853-1875 for the F0307 scaled product
+         * with wisdom. */
         if (F0762_MAGIC_GetDefenderPsychicAdjustedAttack_Compat(
-                champ, magic->luckCurrent, rawAttack, &tmp)) {
+                champ, champ->statisticWisdom, rawAttack, &tmp)) {
             adjusted = tmp;
         }
     }
