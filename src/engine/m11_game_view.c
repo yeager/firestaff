@@ -7459,6 +7459,26 @@ int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state) {
     return m11_front_cell_mirror_ordinal(state);
 }
 
+int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
+                                       int* outX, int* outY,
+                                       int* outW, int* outH) {
+    /* DUNVIEW.C G0205 G0205_aaauc_Graphic558_WallOrnamentCoordinateSets
+     * index 12 is the D1C champion-mirror route (DUNVIEW.C:3913-3928).
+     * v1 hard-codes coordSet 0 (the default D1C) since the
+     * coord-set for the ornament is determined by the
+     * m11_dm1_wall_ornament_coord_set_index helper and
+     * firestaff_known_ornament_set_indices.  We default to 0 here
+     * to match what the m11_draw_dm1_front_mirror_route caller
+     * uses for the (1,3) and (1,4) Hall-of-Champions routes. */
+    static const int kD1CDest[4] = { 96, 36, 32, 28 };
+    if (!state) return 0;
+    if (outX) *outX = kD1CDest[0];
+    if (outY) *outY = kD1CDest[1];
+    if (outW) *outW = kD1CDest[2];
+    if (outH) *outH = kD1CDest[3];
+    return 1;
+}
+
 static int m11_disable_front_mirror_route(M11_GameViewState* state,
                                           int mirrorOrdinal) {
     int mapX;

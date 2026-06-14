@@ -1504,6 +1504,43 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_hall_of_champions_panel_guard_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 Hall of Champions wall-mirror zone verification gate.
+# Pixel-proves the D1C champion mirror on the (1,3) and (1,4) wall
+# routes is rendered at the source-locked destination box
+# (96, 35..63) with the right portrait ordinal.  The existing
+# firestaff_dm1_v1_champion_mirror_visibility_runtime_probe covers
+# the portrait cutout; this gate adds the wall ornament box
+# verification and the no-bleed check.
+add_executable(firestaff_dm1_v1_hall_of_champions_wall_mirror_zones_probe
+    probes/m11/firestaff_dm1_v1_hall_of_champions_wall_mirror_zones_probe.c)
+target_link_libraries(firestaff_dm1_v1_hall_of_champions_wall_mirror_zones_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_hall_of_champions_wall_mirror_zones_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# M12 launcher extras views smoke (v2.7.14).
+# Exercises the BESTIARY / ITEM ENCYCLOPEDIA / SCREENSHOT GALLERY
+# views that were promoted from stub to real implementation and
+# verifies each one renders a non-trivial framebuffer through
+# the public M12_StartupMenu_DrawFramebuffer API.
+add_executable(firestaff_m12_extras_views_smoke_probe
+    probes/m12/firestaff_m12_extras_views_smoke_probe.c)
+target_link_libraries(firestaff_m12_extras_views_smoke_probe PRIVATE firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_m12_extras_views_smoke_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# M12 launcher extras views visual capture (v2.7.14).
+# Renders the 3 new views to PPM files for human review of the
+# stub-to-real transition.  Not a CTest test (visual artifacts
+# are not assertions); built on demand for reviewer convenience.
+add_executable(firestaff_m12_extras_views_visual_capture
+    probes/m12/firestaff_m12_extras_views_visual_capture.c)
+target_link_libraries(firestaff_m12_extras_views_visual_capture PRIVATE firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_m12_extras_views_visual_capture PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V1 Hall champion mirror D1C Z-order re-blt pixel gate.
 # Extends the static-pose zorder probe with a sequential 4-direction turn at
 # the (1,4) D1C route that pixel-proves the previous ordinal's pixels are
@@ -8741,6 +8778,19 @@ if(BUILD_TESTING)
     )
     set_tests_properties(dm1_v1_hall_of_champions_panel_guard PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_hall_of_champions_wall_mirror_zones
+        COMMAND firestaff_dm1_v1_hall_of_champions_wall_mirror_zones_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_hall_of_champions_wall_mirror_zones PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME m12_extras_views_smoke
+        COMMAND firestaff_m12_extras_views_smoke_probe
     )
 
     add_test(
