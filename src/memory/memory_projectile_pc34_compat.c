@@ -1400,24 +1400,21 @@ int F0822_EXPLOSION_Advance_Compat(
             outResult->outActionParty.allowedWounds = 0;
             outResult->emittedCombatActionPartyCount = 1;
         } else if (digest->destHasCreatureGroup) {
-            /* ReDMCSB PROJEXPL.C:F0821 lines 858-864: when a poison
-             * cloud lands on a creature group, the incoming attack
-             * value is first scaled by GROUP.C:F0192's per-creature-
-             * type resistance. If the resistance-adjusted value is
-             * zero (immune or no scaling), the group branch is
-             * skipped entirely. The champion branch above is NOT
-             * affected by F0192 — champion vitality is handled by
-             * F0321 instead (PROJEXPL.C:1406-1407). */
-            int resistanceAdjusted = 0;
-            F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
-                digest->destCreatureType, attackApplied, rng,
-                &resistanceAdjusted);
-            if (resistanceAdjusted > 0) {
-                build_explosion_group_action(in, digest, resistanceAdjusted,
-                                             COMBAT_ATTACK_NORMAL,
-                                             &outResult->outActionGroup);
-                outResult->emittedCombatActionGroupCount = 1;
-            }
+            /* ReDMCSB PROJEXPL.C:F0220 line 858: when a poison cloud
+             * lands on a creature group, the original calls
+             * F0191_GROUP_GetDamageAllCreaturesOutcome directly
+             * with attackApplied.  F0191 does the per-creature
+             * resistance adjustment internally via F0190; the
+             * caller does NOT pre-scale via F0192.  v1's earlier
+             * version pre-scaled with F0192 which doubled the
+             * damage (e.g. attack 96 with resistance 5 gave 4
+             * instead of 3); the fix is to pass attackApplied
+             * straight through.  See PROJEXPL.C:858-866 and
+             * GROUP.C:F0190 lines 932-1010. */
+            build_explosion_group_action(in, digest, attackApplied,
+                                         COMBAT_ATTACK_NORMAL,
+                                         &outResult->outActionGroup);
+            outResult->emittedCombatActionGroupCount = 1;
         }
         if (in->attack >= 6) {
             outNewState->attack = in->attack - 3;

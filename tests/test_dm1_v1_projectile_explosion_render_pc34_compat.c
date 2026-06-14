@@ -662,7 +662,7 @@ static void test_poison_cloud_single_monster_overlap_tick_boundary(void) {
     ASSERT_EQ(result.outActionGroup.targetMapX, 10, "monster overlap group target x");
     ASSERT_EQ(result.outActionGroup.targetMapY, 11, "monster overlap group target y");
     ASSERT_EQ(result.outActionGroup.defenderSlotOrCreatureIndex, 10, "monster overlap preserves creature type");
-    ASSERT_EQ(result.outActionGroup.rawAttackValue, 3, "poison cloud attack>>5 without rng on group");
+    ASSERT_EQ(result.outActionGroup.rawAttackValue, 3, "poison cloud attack 96 >> 5 = 3, F0191 does resistance internally");
     ASSERT_EQ(result.resultKind, EXPLOSION_RESULT_ADVANCED_FRAME, "monster overlap cloud continues");
     ASSERT_EQ(result.despawn, 0, "monster overlap cloud remains live");
     ASSERT_EQ(next.attack, 93, "monster overlap cloud decays by 3 at boundary");
