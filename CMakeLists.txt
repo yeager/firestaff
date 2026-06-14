@@ -1570,6 +1570,25 @@ if(NOT MSVC)
     )
 endif()
 
+# CSB V1 dungeon header parsing (Dungeon GAP 1, level count).
+# Source-locked per ReDMCSB CEDTINC8.C:101-118 (CSBGAME.DAT
+# vs DMSAVE.DAT dispatch) and M13_PLAN.md:303 (header layouts).
+# DM1 PC 3.4: 14 levels; CSB: 24 levels.  v1 was 16; bumped
+# CSB_MAX_LEVELS to 24 to match the source.  The dungeon
+# loader uses csb_v1_dungeon_header_num_level(variant) to size
+# its level table dynamically.
+add_library(firestaff_csb_v1_dungeon_header
+    src/csb/csb_v1_dungeon_header_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_dungeon_header PUBLIC
+    firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_dungeon_header PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # CSB V1 projectile speed normalization regression gate.
 add_executable(test_csb_v1_projectile_speed_pc34_compat
     tests/test_csb_v1_projectile_speed_pc34_compat.c
@@ -1605,6 +1624,26 @@ add_test(
     COMMAND test_csb_v1_reincarnation_penalty_pc34_compat
 )
 set_tests_properties(csb_v1_reincarnation_penalty_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 dungeon header parsing regression gate.
+add_executable(test_csb_v1_dungeon_header_pc34_compat
+    tests/test_csb_v1_dungeon_header_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_dungeon_header_pc34_compat PRIVATE
+    firestaff_csb_v1_dungeon_header firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_dungeon_header_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME csb_v1_dungeon_header_pc34_compat
+    COMMAND test_csb_v1_dungeon_header_pc34_compat
+)
+set_tests_properties(csb_v1_dungeon_header_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 
