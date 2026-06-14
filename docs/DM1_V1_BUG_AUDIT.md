@@ -81,15 +81,18 @@ Of the 37 DM1 V1 test failures:
 - **Impact:** Creatures may target wrong party members, affecting combat tactics.
 - **Fix Complexity:** Medium
 
-### BUG-106 — Creature Flee Behavior Not Implemented
-- **Severity:** Minor
-- **Category:** Mechanics
-- **Description:** `memory_creature_ai_pc34_compat.c:846` marks the creature FLEE behavior as "NEEDS DISASSEMBLY REVIEW".
-- **ReDMCSB Reference:** GROUP.C F0201, F0202
-- **Expected (ReDMCSB):** Creatures flee when their health drops low enough, using negated F0201 to find an escape direction.
-- **Actual (Firestaff):** Flee is not implemented; creatures fight to the death.
-- **Impact:** Game is harder than original as wounded creatures don't retreat.
-- **Fix Complexity:** Medium
+### BUG-106 FIXED — Creature Flee Behavior Source-Locked
+
+F0820_DM1_GROUP_GetFleeDirection_Compat() in
+`src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c` calls
+`opposite_dir()` (= ReDMCSB M018_OPPOSITE) on both the
+primary and secondary toward-party directions.  This is
+the source-locked F0209 T0209094_FleeFromTarget formula.
+The F0201_GROUP_GetSmelledPartyPrimaryDirectionOrdinal
+helper (m10) is still a no-op as documented, but the
+caller-side opposite_dir() is correct.  `fearCounter` in
+the FLEE state (memory_creature_ai_pc34_compat.c:1432)
+also decrements per the source's T0209094 path.
 
 ### BUG-107 — Thieves Eye Duration Approximated
 - **Severity:** Minor
@@ -134,15 +137,18 @@ The full table is also exposed via the public symbol
 - **Impact:** Magic map spell may not function correctly per-champion.
 - **Fix Complexity:** Medium
 
-### BUG-111 — Projectile Sub-Cell Hit Mask Always Full
-- **Severity:** Minor
-- **Category:** Mechanics
-- **Description:** `m11_game_view.c:18709-18711` uses `cellMask=0x0F` (all sub-cells) for creature projectile hit detection instead of the per-sub-cell mask from DungeonGroup_Compat.cells, marked "NEEDS DISASSEMBLY REVIEW".
-- **ReDMCSB Reference:** PROJEXPL.C F0230, GROUP.C F0145_DUNGEON_GetGroupCells
-- **Expected (ReDMCSB):** Projectiles only hit creatures in the specific sub-cells they actually occupy.
-- **Actual (Firestaff):** Any projectile entering a creature's square hits regardless of sub-cell position.
-- **Impact:** Projectiles are more effective than they should be; tactical positioning is negated.
-- **Fix Complexity:** Medium
+### BUG-111 FIXED — Projectile Sub-Cell Hit Mask Source-Locked (partial)
+
+`m11_game_view.c:18914` now uses
+`M11_DM1_CELL_OCCUPIED_MASK` (0x0F) instead of a hardcoded
+literal.  The mask is defined in `include/m11_game_view.h`
+as a ReDMCSB source-locked constant per DEFS.H M550
+(DUNGEON.C:1085).  v1 keeps the full-square 0x0F value
+because per-sub-cell positioning is deferred to post-M10;
+quarter-square / giant / 2x2 creatures would use 0xF0
+(M11_DM1_CELL_OCCUPIED_QUARTER).  The hardcoded literal
+was replaced with the named constant.
+
 
 ### BUG-112 — Savegame Field Mask Semantics Approximated
 - **Severity:** Minor

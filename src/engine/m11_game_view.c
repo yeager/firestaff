@@ -18907,7 +18907,7 @@ static int m11_build_projectile_digest(
         out->destHasChampion       = 1;
         out->destPartyDirection    = world->party.direction & 3;
         /* Party occupies all 4 sub-cells for F0811's cell-mask gate. */
-        out->destChampionCellMask  = 0x0F;
+        out->destChampionCellMask  = M11_DM1_CELL_OCCUPIED_MASK;
     }
 
     /* Creature group on destination square (via AI state slots).  v1
