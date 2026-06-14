@@ -21,8 +21,10 @@ static const char* const g_dm1CardCandidates[] = {
     NULL
 };
 static const char* const g_theronCardCandidates[] = {
-    "cards/nexus.png",
-    "cards/dungeon-master-nexus.png",
+    "cards/theron.png",
+    "cards/therons-quest.png",
+    "cards/theron.jpg",
+    "cards/theron.webp",
     NULL
 };
 
