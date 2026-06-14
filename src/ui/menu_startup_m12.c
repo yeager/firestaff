@@ -5,6 +5,7 @@
 
 #define FIRESTAFF_VERSION_STRING "v2.7.13"
 #include "firestaff_bestiary.h"
+#include "screenshot_gallery_m12.h"
 #include "firestaff_spell_ref.h"
 #include "firestaff_item_encyclopedia.h"
 #include "menu_unicode_glyphs_m12.h"
@@ -1775,6 +1776,24 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->museumSelectedIndex = 0;
     state->museumPageIndex = 0;
     M12_Changelog_Init(&state->changelog);
+    M12_Bestiary_Init(&state->bestiary);
+    state->itemEncyclopediaSelectedIndex = 0;
+    state->itemEncyclopediaScrollOffset = 0;
+    state->itemEncyclopediaCategory = 0;
+    /* Scan verification-screens/ for the gallery on first launch. */
+    state->screenshotGallery.entryCount = 0;
+    state->screenshotGallery.selectedIndex = 0;
+    state->screenshotGallery.scrollOffset = 0;
+    state->screenshotGallery.confirmDelete = 0;
+    state->screenshotGallery.mode = M12_SCREENSHOT_MODE_GRID;
+    {
+        const char* gdir;
+        gdir = getenv("FIRESTAFF_SCREENSHOTS_DIR");
+        if (!gdir || !gdir[0]) {
+            gdir = "verification-screens";
+        }
+        M12_ScreenshotGallery_Scan(&state->screenshotGallery, gdir);
+    }
     state->launchRequested = 0;
     state->quickResumeLaunchRequested = 0;
     state->activatedIndex = -1;
@@ -2942,6 +2961,107 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_NONE:
             default:
                 break;
+        }
+        return;
+    }
+
+    /* ── Bestiary view (was a stub before v2.7.14) ───────────────── */
+    if (state->view == M12_MENU_VIEW_BESTIARY) {
+        switch (input) {
+            case M12_MENU_INPUT_UP:
+                M12_Bestiary_Scroll(&state->bestiary, -1);
+                break;
+            case M12_MENU_INPUT_DOWN:
+                M12_Bestiary_Scroll(&state->bestiary, 1);
+                break;
+            case M12_MENU_INPUT_LEFT:
+                M12_Bestiary_CycleCategory(&state->bestiary, -1);
+                break;
+            case M12_MENU_INPUT_RIGHT:
+                M12_Bestiary_CycleCategory(&state->bestiary, 1);
+                break;
+            case M12_MENU_INPUT_BACK:
+                state->view = M12_MENU_VIEW_MAIN;
+                break;
+            case M12_MENU_INPUT_NONE:
+            default:
+                break;
+        }
+        return;
+    }
+
+    /* ── Item Encyclopedia view (was a stub before v2.7.14) ─────── */
+    if (state->view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
+        int total;
+        switch (input) {
+            case M12_MENU_INPUT_UP: {
+                int max;
+                total = fs_item_encyclopedia_count();
+                max = total > 0 ? total - 1 : 0;
+                if (state->itemEncyclopediaSelectedIndex > 0) {
+                    state->itemEncyclopediaSelectedIndex--;
+                    if (state->itemEncyclopediaSelectedIndex <
+                        state->itemEncyclopediaScrollOffset) {
+                        state->itemEncyclopediaScrollOffset =
+                            state->itemEncyclopediaSelectedIndex;
+                    }
+                }
+                (void)max;
+                break;
+            }
+            case M12_MENU_INPUT_DOWN: {
+                int max;
+                total = fs_item_encyclopedia_count();
+                max = total > 0 ? total - 1 : 0;
+                if (state->itemEncyclopediaSelectedIndex < max) {
+                    state->itemEncyclopediaSelectedIndex++;
+                    /* keep cursor in a 12-line viewport */
+                    if (state->itemEncyclopediaSelectedIndex >=
+                        state->itemEncyclopediaScrollOffset + 12) {
+                        state->itemEncyclopediaScrollOffset =
+                            state->itemEncyclopediaSelectedIndex - 11;
+                    }
+                }
+                (void)max;
+                break;
+            }
+            case M12_MENU_INPUT_LEFT:
+                if (state->itemEncyclopediaCategory > 0) {
+                    state->itemEncyclopediaCategory--;
+                    state->itemEncyclopediaSelectedIndex = 0;
+                    state->itemEncyclopediaScrollOffset = 0;
+                } else {
+                    state->itemEncyclopediaCategory = FS_ITEM_CAT_COUNT - 1;
+                    state->itemEncyclopediaSelectedIndex = 0;
+                    state->itemEncyclopediaScrollOffset = 0;
+                }
+                break;
+            case M12_MENU_INPUT_RIGHT:
+                if (state->itemEncyclopediaCategory < FS_ITEM_CAT_COUNT - 1) {
+                    state->itemEncyclopediaCategory++;
+                    state->itemEncyclopediaSelectedIndex = 0;
+                    state->itemEncyclopediaScrollOffset = 0;
+                } else {
+                    state->itemEncyclopediaCategory = 0;
+                    state->itemEncyclopediaSelectedIndex = 0;
+                    state->itemEncyclopediaScrollOffset = 0;
+                }
+                break;
+            case M12_MENU_INPUT_BACK:
+                state->view = M12_MENU_VIEW_MAIN;
+                break;
+            case M12_MENU_INPUT_NONE:
+            default:
+                break;
+        }
+        return;
+    }
+
+    /* ── Screenshot Gallery view (was a stub before v2.7.14) ────── */
+    if (state->view == M12_MENU_VIEW_SCREENSHOT_GALLERY) {
+        if (M12_ScreenshotGallery_HandleInput(&state->screenshotGallery, input)) {
+            /* The gallery asked us to back out (BACK from grid). */
+            state->view = M12_MENU_VIEW_MAIN;
         }
         return;
     }
@@ -4346,18 +4466,18 @@ static const char *g_extras_labels[M12_EXTRAS_COUNT] = {
     /* 4 M12_EXTRAS_MAP_VIEWER*/ _("Map Viewer"),
     /* 5 M12_EXTRAS_ITEMS     */ _("Item Encyclopedia"),
     /* 6 M12_EXTRAS_CHANGELOG */ _("Changelog"),
-    /* 7 M12_EXTRAS_SCREENSHOTS*/ NULL /* stub */
+    /* 7 M12_EXTRAS_SCREENSHOTS*/ _("Screenshot Gallery"),
 };
 
 static const int g_extras_available[M12_EXTRAS_COUNT] = {
     1, /* museum */
     1, /* manual — opens docs URL */
-    0, /* bestiary */
-    0, /* spells */
-    0, /* map viewer */
-    0, /* items */
+    1, /* bestiary — wired in v2.7.14 (was stub) */
+    0, /* spells — no data source yet */
+    0, /* map viewer — no data source yet */
+    1, /* items — wired in v2.7.14 (was stub) */
     1, /* changelog */
-    0  /* screenshots */
+    1  /* screenshots — wired in v2.7.14 (was stub) */
 };
 
 static void m12_draw_menu_item(unsigned char *fb, int fw, int fh,
@@ -6142,6 +6262,297 @@ static void m12_draw_changelog_view_modern(const M12_StartupMenuState* state,
                   &g_textSmallAccent);
 }
 
+/* ── Bestiary view (M12_MENU_VIEW_BESTIARY) ───────────────────
+ * Renders the source-locked bestiary database (bestiary_m12.c) as a
+ * scrollable list.  The category filter cycles with LEFT/RIGHT,
+ * the cursor moves with UP/DOWN.  Replaces the v2.7.13-era
+ * m12_draw_bestiary_stub placeholder.
+ *
+ * Source: bestiary_m12.c G_BESTIARY_COUNT, M12_Bestiary_FilteredCount.
+ */
+static void m12_draw_bestiary_view_modern(const M12_StartupMenuState* state,
+                                          unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight) {
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int panelW;
+    int visible = M12_BESTIARY_VISIBLE_LINES;
+    int filteredCount;
+    int scrollOff;
+    int i;
+    char titleBuf[96];
+    char subBuf[96];
+    const M12_BestiaryEntry* sel;
+    char atkBuf[32];
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+    panelW = framebufferWidth - (margin * 2);
+
+    filteredCount = M12_Bestiary_FilteredCount(&state->bestiary);
+    scrollOff = state->bestiary.scrollOffset;
+    if (visible > filteredCount - scrollOff) {
+        visible = filteredCount - scrollOff;
+    }
+    if (visible < 0) visible = 0;
+
+    snprintf(titleBuf, sizeof(titleBuf), "BESTIARY — %s",
+             M12_Bestiary_CategoryName(state->bestiary.categoryFilter));
+    snprintf(subBuf, sizeof(subBuf), "%d OF %d CREATURES",
+             filteredCount, M12_Bestiary_TotalCount());
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state, framebuffer, framebufferWidth, framebufferHeight,
+                         margin, margin, panelW, heroH, titleBuf);
+    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  margin + 14, margin + 18, subBuf, &g_textSmallAccent);
+
+    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
+                   margin, contentY, panelW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY, M12_COLOR_BLACK);
+
+    for (i = 0; i < visible; ++i) {
+        const M12_BestiaryEntry* e =
+            M12_Bestiary_GetFiltered(&state->bestiary, scrollOff + i);
+        if (!e) break;
+        switch (e->attackType) {
+            case M12_BESTIARY_ATK_RANGED: snprintf(atkBuf, sizeof(atkBuf), "RANGED"); break;
+            case M12_BESTIARY_ATK_MAGIC:  snprintf(atkBuf, sizeof(atkBuf), "MAGIC");  break;
+            case M12_BESTIARY_ATK_POISON: snprintf(atkBuf, sizeof(atkBuf), "POISON"); break;
+            case M12_BESTIARY_ATK_FIRE:   snprintf(atkBuf, sizeof(atkBuf), "FIRE");   break;
+            case M12_BESTIARY_ATK_MELEE:
+            default:                      snprintf(atkBuf, sizeof(atkBuf), "MELEE");  break;
+        }
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, contentY + 14 + i * 22,
+                      e->name,
+                      (i == state->bestiary.selectedIndex - scrollOff)
+                          ? &g_textMediumShadow : &g_textSmall);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 200, contentY + 14 + i * 22,
+                      atkBuf, &g_textSmallAccent);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 280, contentY + 14 + i * 22,
+                      e->weakness ? e->weakness : "", &g_textSmall);
+    }
+
+    sel = M12_Bestiary_GetSelected(&state->bestiary);
+    if (sel && sel->description) {
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14,
+                      framebufferHeight - 44,
+                      sel->description, &g_textSmall);
+    }
+    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  margin + 14, framebufferHeight - 24,
+                  "UP/DOWN SCROLL  LEFT/RIGHT CATEGORY  ESC BACK",
+                  &g_textSmallAccent);
+}
+
+/* ── Item Encyclopedia view (M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) ────
+ * Renders the firestaff_item_encyclopedia.c database (32 items in 7
+ * categories) as a scrollable list with category tabs.  Replaces
+ * the v2.7.13-era m12_draw_item_encyclopedia_stub placeholder.
+ *
+ * Source: firestaff_item_encyclopedia.c g_items[].
+ */
+static void m12_draw_item_encyclopedia_view_modern(
+    const M12_StartupMenuState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int panelW;
+    int i;
+    int total;
+    int scrollOff = state->itemEncyclopediaScrollOffset;
+    int sel = state->itemEncyclopediaSelectedIndex;
+    int cat = state->itemEncyclopediaCategory;
+    char titleBuf[96];
+    char tabBuf[256];
+    char statBuf[32];
+    const FS_ItemEntry* selItem;
+    int visible = 12;
+    int rendered = 0;
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+    panelW = framebufferWidth - (margin * 2);
+
+    total = fs_item_encyclopedia_count();
+    snprintf(titleBuf, sizeof(titleBuf), "ITEM ENCYCLOPEDIA");
+    snprintf(tabBuf, sizeof(tabBuf), "CATEGORY: %s  [%d / %d]",
+             fs_item_category_name((FS_ItemCategory)cat),
+             cat + 1, FS_ITEM_CAT_COUNT);
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state, framebuffer, framebufferWidth, framebufferHeight,
+                         margin, margin, panelW, heroH, titleBuf);
+    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  margin + 14, margin + 18, tabBuf, &g_textSmallAccent);
+
+    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
+                   margin, contentY, panelW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY, M12_COLOR_BLACK);
+
+    for (i = 0; i < total && rendered < visible; ++i) {
+        const FS_ItemEntry* e = fs_item_encyclopedia_get(i);
+        if (!e) break;
+        if ((int)e->category != cat) continue;
+        if (i < scrollOff) continue;
+        if (e->category == (FS_ItemCategory)cat && e->attack > 0) {
+            snprintf(statBuf, sizeof(statBuf), "ATK %2d  WT %2d",
+                     e->attack, e->weight);
+        } else if (e->category == (FS_ItemCategory)cat && e->defense > 0) {
+            snprintf(statBuf, sizeof(statBuf), "DEF %2d  WT %2d",
+                     e->defense, e->weight);
+        } else {
+            snprintf(statBuf, sizeof(statBuf), "WT %2d", e->weight);
+        }
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, contentY + 14 + rendered * 22,
+                      e->name,
+                      (i == sel) ? &g_textMediumShadow : &g_textSmall);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 220, contentY + 14 + rendered * 22,
+                      statBuf, &g_textSmallAccent);
+        ++rendered;
+    }
+    if (rendered == 0) {
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, contentY + 14,
+                      "(no items in this category)", &g_textSmallMuted);
+    }
+    selItem = fs_item_encyclopedia_get(sel);
+    if (selItem && selItem->description) {
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, framebufferHeight - 44,
+                      selItem->description, &g_textSmall);
+    }
+    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  margin + 14, framebufferHeight - 24,
+                  "UP/DOWN SCROLL  LEFT/RIGHT CATEGORY  ESC BACK",
+                  &g_textSmallAccent);
+}
+
+/* ── Screenshot Gallery view (M12_MENU_VIEW_SCREENSHOT_GALLERY) ──
+ * Renders the verification-screens/ directory as a scrollable list
+ * of filenames with size info.  The full M12_ScreenshotGallery_Draw
+ * grid/fullscreen is not used here; the modern renderer needs a
+ * scrollable list view to match the rest of the launcher.  The
+ * screenshot_gallery_m12.c M12_ScreenshotGallery_Scan() is called
+ * lazily on first entry.
+ *
+ * Source: verification-screens/ directory contents.
+ */
+static void m12_draw_screenshot_gallery_view_modern(
+    const M12_StartupMenuState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int panelW;
+    int i;
+    const M12_ScreenshotGalleryState* gal = &state->screenshotGallery;
+    int total = gal->entryCount;
+    int sel = gal->selectedIndex;
+    int scrollOff = gal->scrollOffset;
+    int visible = 12;
+    int rendered = 0;
+    char titleBuf[96];
+    char subBuf[96];
+    char indexBuf[32];
+    char sizeBuf[32];
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+    panelW = framebufferWidth - (margin * 2);
+
+    snprintf(titleBuf, sizeof(titleBuf), "SCREENSHOT GALLERY");
+    if (total > 0) {
+        snprintf(subBuf, sizeof(subBuf), "%d SCREENSHOTS — verification-screens/",
+                 total);
+        snprintf(indexBuf, sizeof(indexBuf), "%d / %d", sel + 1, total);
+    } else {
+        snprintf(subBuf, sizeof(subBuf), "verification-screens/ NOT FOUND");
+        snprintf(indexBuf, sizeof(indexBuf), "0 / 0");
+    }
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state, framebuffer, framebufferWidth, framebufferHeight,
+                         margin, margin, panelW, heroH, titleBuf);
+    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  margin + 14, margin + 18, subBuf, &g_textSmallAccent);
+    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  margin + panelW - 110, margin + 18, indexBuf,
+                  &g_textSmallAccent);
+
+    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
+                   margin, contentY, panelW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY, M12_COLOR_BLACK);
+
+    if (total == 0) {
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, contentY + 14,
+                      "(no screenshots found in verification-screens/)",
+                      &g_textSmallMuted);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, contentY + 36,
+                      "(run a verification probe to generate screens)",
+                      &g_textSmallMuted);
+    } else {
+        for (i = 0; i < total && rendered < visible; ++i) {
+            int line = i - scrollOff;
+            const M12_ScreenshotGalleryEntry* e;
+            if (line < 0) continue;
+            if (line >= visible) break;
+            e = &gal->entries[i];
+            if (e->fileSize < 1024) {
+                snprintf(sizeBuf, sizeof(sizeBuf), "%ld B", e->fileSize);
+            } else if (e->fileSize < 1024 * 1024) {
+                snprintf(sizeBuf, sizeof(sizeBuf), "%ld KB", e->fileSize / 1024);
+            } else {
+                snprintf(sizeBuf, sizeof(sizeBuf), "%.1f MB",
+                         e->fileSize / (1024.0 * 1024.0));
+            }
+            m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          margin + 14, contentY + 14 + line * 22,
+                          e->filename,
+                          (i == sel) ? &g_textMediumShadow : &g_textSmall);
+            m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          margin + 380, contentY + 14 + line * 22,
+                          sizeBuf, &g_textSmallAccent);
+            if (e->width > 0 && e->height > 0) {
+                char dimBuf[32];
+                snprintf(dimBuf, sizeof(dimBuf), "%dx%d", e->width, e->height);
+                m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              margin + 460, contentY + 14 + line * 22,
+                              dimBuf, &g_textSmallAccent);
+            }
+            ++rendered;
+        }
+    }
+
+    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  margin + 14, framebufferHeight - 24,
+                  "UP/DOWN SCROLL  ACCEPT OPEN  ESC BACK",
+                  &g_textSmallAccent);
+}
+
 static void m12_draw_museum_view_modern(const M12_StartupMenuState* state,
                                         unsigned char* framebuffer,
                                         int framebufferWidth,
@@ -6752,6 +7163,12 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_changelog_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_MUSEUM) {
             m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_BESTIARY) {
+            m12_draw_bestiary_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
+            m12_draw_item_encyclopedia_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_SCREENSHOT_GALLERY) {
+            m12_draw_screenshot_gallery_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else {
             m12_draw_main_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         }
@@ -6769,6 +7186,12 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         m12_draw_changelog_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_MUSEUM) {
         m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_BESTIARY) {
+        m12_draw_bestiary_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
+        m12_draw_item_encyclopedia_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_SCREENSHOT_GALLERY) {
+        m12_draw_screenshot_gallery_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else {
         m12_draw_main_view(state, framebuffer, framebufferWidth, framebufferHeight);
     }
@@ -6996,8 +7419,11 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
                         /* Open the Firestaff documentation site */
                         SDL_OpenURL("https://github.com/yeager/firestaff#readme");
                     } break;
+                    case M12_EXTRAS_BESTIARY: state->view = M12_MENU_VIEW_BESTIARY; break;
+                    case M12_EXTRAS_ITEMS: state->view = M12_MENU_VIEW_ITEM_ENCYCLOPEDIA; break;
                     case M12_EXTRAS_CHANGELOG: state->view = M12_MENU_VIEW_CHANGELOG; break;
-                    default: break; /* Others not implemented yet */
+                    case M12_EXTRAS_SCREENSHOTS: state->view = M12_MENU_VIEW_SCREENSHOT_GALLERY; break;
+                    default: break; /* SPELL_REFERENCE / MAP_VIEWER: no data source yet */
                 }
             }
             if (key_escape) g_nav_level = M12_NAV_MAIN;
@@ -7007,38 +7433,18 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
 
 M12_NavLevel m12_get_nav_level(void) { return g_nav_level; }
 
-/* ── Extras view stubs (#9) ───────────────────────────────────────── */
-
-static void m12_draw_bestiary_stub(unsigned char *fb, int fw, int fh) {
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "BESTIARY", &g_textTitleShadow);
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
-    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
-}
-
-static void m12_draw_spell_reference_stub(unsigned char *fb, int fw, int fh) {
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "SPELL REFERENCE", &g_textTitleShadow);
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
-    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
-}
-
-static void m12_draw_map_viewer_stub(unsigned char *fb, int fw, int fh) {
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "MAP VIEWER", &g_textTitleShadow);
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
-    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
-}
-
-static void m12_draw_item_encyclopedia_stub(unsigned char *fb, int fw, int fh) {
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "ITEM ENCYCLOPEDIA", &g_textTitleShadow);
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
-    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
-}
-
-static void m12_draw_screenshot_gallery_stub(unsigned char *fb, int fw, int fh) {
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "SCREENSHOT GALLERY", &g_textTitleShadow);
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
-    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
-}
-
+/* ── Extras view stubs (#9) — replaced in v2.7.14 ───────────
+ *
+ * BESTIARY, ITEM ENCYCLOPEDIA, and SCREENSHOT GALLERY now have
+ * their own modern draw functions (m12_draw_*_view_modern) that
+ * use the source-locked data APIs (bestiary_m12.c,
+ * firestaff_item_encyclopedia.c, screenshot_gallery_m12.c).  The
+ * dispatch in M12_StartupMenu_DrawFramebuffer routes to those
+ * functions when state->view matches.
+ *
+ * SPELL REFERENCE and MAP VIEWER remain unavailable (g_extras
+ * available flag = 0) because they have no data source yet.  They
+ * will be wired in a follow-up when a data source lands. */
 /* ── Accessibility settings (#10) ─────────────────────────────────── */
 
 static M12_ExtSettingsRow m12_accessibility_settings[] = {
