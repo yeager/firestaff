@@ -3,13 +3,15 @@ from pathlib import Path
 import json
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 MANIFEST = ROOT / "parity-evidence/verification/pass565_dm1_v1_d1_side_door_front_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass565_dm1_v1_d1_side_door_front_source_lock.md"
 STATUS = "PASS565_DM1_V1_D1_SIDE_DOOR_FRONT_SOURCE_LOCKED"
-TEST_BINARY = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY = resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat"
 
 SRC = [
     ("d1l-door-front-split", "DUNVIEW.C", "7492-7536", [

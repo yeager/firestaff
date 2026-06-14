@@ -3,6 +3,8 @@
 from pathlib import Path
 import re
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 EVIDENCE = Path("parity-evidence/pass338b_dm1_v1_route_token_key_symbol_audit.md")
 REQUIRED = {

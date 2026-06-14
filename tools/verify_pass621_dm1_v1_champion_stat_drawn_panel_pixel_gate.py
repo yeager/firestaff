@@ -12,6 +12,9 @@ import hashlib
 import json
 from pathlib import Path
 from typing import Any
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 PASS = "pass621_dm1_v1_champion_stat_drawn_panel_pixel_gate"
 STATUS = "PASS_SOURCE_LOCKED_PIXEL_PARITY_BLOCKED_ON_ORIGINAL_REFERENCE"

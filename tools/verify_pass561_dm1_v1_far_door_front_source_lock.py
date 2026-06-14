@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import json, subprocess, sys
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 MANIFEST = ROOT / "parity-evidence/verification/pass561_dm1_v1_far_door_front_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass561_dm1_v1_far_door_front_source_lock.md"
 STATUS = "PASS561_DM1_V1_FAR_DOOR_FRONT_SOURCE_LOCKED"
-TEST_BINARY = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY = resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat"
 SRC = [
     ("d3l2-far-door-front-split", "DUNVIEW.C", "6269-6286", ["case C17_ELEMENT_DOOR_FRONT:", "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT", "C3700_ZONE_DOOR_D3L2", "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT", "goto T0676017;", "C14_VIEW_SQUARE_D3L2, L2483_i_Order"]),
     ("d3r2-mirrored-far-door-front-split", "DUNVIEW.C", "6336-6353", ["case C17_ELEMENT_DOOR_FRONT:", "C0x0128_CELL_ORDER_DOORPASS1_BACKRIGHT_BACKLEFT", "C3710_ZONE_DOOR_D3R2", "C0x0439_CELL_ORDER_DOORPASS2_FRONTRIGHT_FRONTLEFT", "goto T0677018;", "C15_VIEW_SQUARE_D3R2, L2485_i_Order"]),

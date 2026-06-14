@@ -9,6 +9,9 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 PASS = "pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock"
 STATUS = "PASS760_DM1_V1_CHAMPION_PANEL_STATUS_HAND_ROTATION_SOURCE_LOCKED"

@@ -15,6 +15,8 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = Path.home() / ".openclaw/data"

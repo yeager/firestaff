@@ -15,6 +15,8 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass406_dm1_v1_game_loop_redraw_cadence"
@@ -196,7 +198,7 @@ def main() -> int:
         "outResult->provenance.viewportPresentEvidence =",
     ], "Firestaff movement pipeline state-before-redraw provenance order")
 
-    build_dir = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build")))
+    build_dir = resolve_build_dir(ROOT, ROOT / "build")
     turning_stdout = run([str(build_dir / "test_m11_v1_turning_presentation_pc34_compat")])
     pipeline_stdout = run([str(build_dir / "test_dm1_v1_movement_pipeline_pc34_compat")])
     diffcheck_stdout = run(["git", "diff", "--check"])

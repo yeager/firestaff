@@ -8,6 +8,9 @@ import shutil
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 PASS = "pass348_dm1_v1_numlock_keypad_blocker_closure"
 ROOT = Path(__file__).resolve().parents[1]

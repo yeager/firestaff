@@ -9,6 +9,8 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = (
@@ -235,7 +237,7 @@ def main() -> int:
     runs: list[dict[str, object]] = []
     if args.run:
         runs.append(run(["cmake", "--build", "build", "--target", TARGET, "--parallel"]))
-        runs.append(run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / TARGET)]))
+        runs.append(run([str(resolve_build_dir(ROOT, ROOT / "build") / TARGET)]))
         runs.append(
             run(
                 [

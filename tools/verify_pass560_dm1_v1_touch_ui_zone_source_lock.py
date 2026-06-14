@@ -10,6 +10,8 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 
 REPO = Path(__file__).resolve().parents[1]

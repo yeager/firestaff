@@ -4,6 +4,9 @@ import argparse, json, shutil, subprocess, time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass514_dm1_v1_i34e_runtime_transcript_capture_path"

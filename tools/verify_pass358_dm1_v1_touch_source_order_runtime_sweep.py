@@ -7,6 +7,8 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
@@ -44,7 +46,7 @@ def source_block(file_name: str, start: int, end: int) -> str:
 
 
 def run_probe(exe_name: str) -> str:
-    build_dir = Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build")))
+    build_dir = resolve_build_dir(ROOT, ROOT / "build")
     exe = build_dir / exe_name
     if not exe.exists():
         subprocess.run(["cmake", "--build", str(build_dir), "--target", exe_name, "-j2"], cwd=ROOT, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -130,7 +132,7 @@ def main() -> int:
         ], "firestaff_m11_touch_live_dispatch_gate_probe.c")
         require("pass350_dm1_v1_touch_live_dispatch_gate" in cmake, "pass350 CTest missing")
 
-        if Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))).exists():
+        if resolve_build_dir(ROOT, ROOT / "build").exists():
             pointer_output = run_probe("test_touch_pointer_input_pc34_compat_integration")
             live_output = run_probe("firestaff_m11_touch_live_dispatch_gate_probe")
             require("touchPointerInputInvariantOk=1" in pointer_output, "pointer probe invariant failed")

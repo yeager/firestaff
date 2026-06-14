@@ -9,6 +9,8 @@ import re
 import subprocess
 import sys
 from datetime import datetime, timezone
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass544_dm1_v1_blocked_collision_queue_lifecycle"

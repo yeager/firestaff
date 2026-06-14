@@ -9,6 +9,8 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
@@ -256,7 +258,7 @@ def main() -> int:
         return 0
 
     runs = [
-        run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat")]),
+        run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat")]),
         run([sys.executable, str(Path(__file__).resolve()), "--check-only"]),
     ]
     write_outputs(checks, runs)

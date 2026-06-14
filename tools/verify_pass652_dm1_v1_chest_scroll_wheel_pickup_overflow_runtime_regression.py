@@ -10,6 +10,8 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass652_dm1_v1_chest_scroll_wheel_pickup_overflow_runtime_regression"
@@ -235,7 +237,7 @@ def main() -> int:
 
     failures, manifest = collect_failures()
     if args.run_test:
-        result = run([str(Path(os.environ.get("FIRESTAFF_BUILD_DIR", str(ROOT / "build"))) / "test_dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat")])
+        result = run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat")])
         manifest["runtime_test"] = result
         if not result["passed"]:
             failures.append("runtime test failed")

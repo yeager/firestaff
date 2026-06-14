@@ -14,6 +14,8 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS502_REPORT = ROOT / "parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md"
