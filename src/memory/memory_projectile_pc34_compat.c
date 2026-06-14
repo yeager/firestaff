@@ -1493,6 +1493,7 @@ int F0827_PROJECTILE_InstanceSerialize_Compat(
     write_le_int32(outBuf + o, in->poisonAttack);           o += 4;
     write_le_int32(outBuf + o, in->attackTypeCode);         o += 4;
     write_le_int32(outBuf + o, in->flags);                  o += 4;
+    write_le_int32(outBuf + o, in->launcherStrength);       o += 4;
     write_le_int32(outBuf + o, in->reserved0);              o += 4;
     write_le_int32(outBuf + o, in->reserved1);              o += 4;
     write_le_int32(outBuf + o, in->reserved2);              o += 4;
@@ -1529,6 +1530,7 @@ int F0827_PROJECTILE_InstanceDeserialize_Compat(
     out->poisonAttack          = read_le_int32(buf + o); o += 4;
     out->attackTypeCode        = read_le_int32(buf + o); o += 4;
     out->flags                 = read_le_int32(buf + o); o += 4;
+    out->launcherStrength      = read_le_int32(buf + o); o += 4;
     out->reserved0             = read_le_int32(buf + o); o += 4;
     out->reserved1             = read_le_int32(buf + o); o += 4;
     out->reserved2             = read_le_int32(buf + o); o += 4;
