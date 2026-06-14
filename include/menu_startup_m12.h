@@ -5,6 +5,7 @@
 #include "card_art_m12.h"
 #include "creature_art_m12.h"
 #include "bestiary_m12.h"
+#include "screenshot_gallery_m12.h"
 #include "config_m12.h"
 #include "changelog_m12.h"
 
@@ -329,6 +330,14 @@ typedef struct M12_StartupMenuState {
     M12_CreatureArtState creatureArt;
     M12_ChangelogState changelog;
     M12_BestiaryState bestiary;
+    /* Item Encyclopedia / Screenshot Gallery scroll state.
+     * Both are simple scrollable lists with cursor + window. */
+    int itemEncyclopediaSelectedIndex;
+    int itemEncyclopediaScrollOffset;
+    int itemEncyclopediaCategory;
+    /* Screenshot Gallery: we own the full M12_ScreenshotGalleryState
+     * so we can call M12_ScreenshotGallery_Scan / Draw directly. */
+    M12_ScreenshotGalleryState screenshotGallery;
     /* Monotonically-increasing animation tick consumed by the modern
      * renderer. Incremented by the runtime once per present. Safe to
      * leave at zero in headless probes (no visible change). */
