@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.7.17 LANGUAGES C)
+project(Firestaff VERSION 2.7.18 LANGUAGES C)
 
 include_directories(include src)
 
@@ -1602,6 +1602,50 @@ if(NOT MSVC)
     )
 endif()
 
+# CSB V1 engine version display (Graphics GAP 2, CHANGE7_36 +
+# CHANGE8_13).  Source-locked per ReDMCSB DIALOG.C:2014-2023
+# (engine version printed in top right corner of dialog
+# boxes).  CSB engine version 2.1, DM1 engine version 2.0.
+add_library(firestaff_csb_v1_engine_version_display
+    src/csb/csb_v1_engine_version_display_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_engine_version_display PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_engine_version_display PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+# CSB V1 left-click inventory access (Champions GAP 4,
+# CHANGE7_28).  Source-locked per ReDMCSB DEFS.H:327-330
+# (C125..C128 commands) + COMMAND.C CHANGE7_28 + DEFS.H:226
+# (C33_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION).  Maps
+# champion-icon click zones (C113..C116) to inventory-open
+# commands (C125..C128) on left-click in CSB mode.
+add_library(firestaff_csb_v1_left_click_inventory
+    src/csb/csb_v1_left_click_inventory_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_left_click_inventory PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_left_click_inventory PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+# CSB V1 teleporter access + Grey Lord connection (Dungeon
+# GAP 6).  Source-locked per ReDMCSB DUNGEON.C:1085 +
+# GROUP.C:2090-2150 + BUG0_69 fix.  CSB widens
+# teleporter access; v1 defaults to DM1 baseline.
+add_library(firestaff_csb_v1_teleporter_access
+    src/csb/csb_v1_teleporter_access_pc34_compat.c
+)
+target_link_libraries(firestaff_csb_v1_teleporter_access PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_teleporter_access PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # CSB V1 version checker sensor (Dungeon GAP 3, CHANGE7_23 +
 # CHANGE8_06).  Source-locked per ReDMCSB MOVESENS.C
 # CHANGE7_23 (version-gated floor sensor) and BugsAndChanges.htm
@@ -1802,6 +1846,29 @@ add_test(
     COMMAND test_csb_v1_grey_lord_combat_pc34_compat
 )
 set_tests_properties(csb_v1_grey_lord_combat_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 graphics-extras regression gate (GAP 2 + GAP 4 + GAP 6).
+add_executable(test_csb_v1_graphics_extras_pc34_compat
+    tests/test_csb_v1_graphics_extras_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_graphics_extras_pc34_compat PRIVATE
+    firestaff_csb_v1_engine_version_display
+    firestaff_csb_v1_left_click_inventory
+    firestaff_csb_v1_teleporter_access
+    firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_graphics_extras_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME csb_v1_graphics_extras_pc34_compat
+    COMMAND test_csb_v1_graphics_extras_pc34_compat
+)
+set_tests_properties(csb_v1_graphics_extras_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 
