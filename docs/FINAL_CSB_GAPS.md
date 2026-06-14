@@ -67,7 +67,17 @@ Each gap classified as:
 
 ## Summary
 
-**27 gaps total:** 0 FIXED, ~24 OPEN-BOUNDED, ~3 OPEN-OMFATTANDE.
+**27 gaps total:** 5 FIXED, ~19 OPEN-BOUNDED, ~3 OPEN-OMFATTANDE.
+
+## Group 6 — Closed in 2026-06-14 session
+
+| # | Title | Commit | Status |
+|---|-------|--------|--------|
+| Champions 1 | NEOPHYTE skill rank | `89dc45269` | FIXED — 8/8 PASS |
+| Champions 2 | Reincarnation Penalty (CHANGE7_24) | `d3ccfda56` | FIXED — 16/16 PASS |
+| Combat 1 | Projectile Speed Normalization (CHANGE7_20) | `6967b4f94` | FIXED — 7/7 PASS |
+| Dungeon 1 | Level count 24 vs 14 | `9f50e167f` | FIXED — 11/11 PASS |
+| Dungeon 3 | Version checker sensor (CHANGE7_23) | `c3bf76b11` | FIXED — 16/16 PASS |
 
 Highest-impact B-bounded gaps to implement first:
 1. **NEOPHYTE rank** (Champions 1) — single enum + validation
