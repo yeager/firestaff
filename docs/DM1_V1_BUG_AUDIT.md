@@ -101,15 +101,18 @@ Of the 37 DM1 V1 test failures:
 - **Impact:** Thieves Eye may last longer or shorter than intended.
 - **Fix Complexity:** Low — needs the correct multiplier from the PC 3.4 media variant.
 
-### BUG-108 — Light Amount Table Approximated
-- **Severity:** Minor
-- **Category:** Mechanics
-- **Description:** `memory_magic_pc34_compat.c:107-114` uses community-reference values for the light amount table instead of the canonical GRAPHICS.DAT entry 562 values, marked "NEEDS DISASSEMBLY REVIEW".
-- **ReDMCSB Reference:** G0039 in GRAPHICS.DAT entry 562
-- **Expected (ReDMCSB):** Light amounts from the actual GRAPHICS.DAT lookup table.
-- **Actual (Firestaff):** Hardcoded `{3, 6, 10, 16, 24, 40}`.
-- **Impact:** Torch and light spell brightness may differ from original.
-- **Fix Complexity:** Low — extract correct values from GRAPHICS.DAT.
+### BUG-108 FIXED — Light Amount Table Source-Locked
+
+The full 16-entry `dm1_light_power_to_amount[16] = { 0, 5, 12,
+24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 }` table is
+now source-locked in `src/dm1/dm1_v1_light_pc34_compat.c`
+(ReDMCSB DATA.C:359/1088).  The `Phase14_PowerOrdinalToLight
+Amount[6]` subset in `memory_magic_pc34_compat.c` consumes
+the canonical table (indices 1..6) and matches exactly.
+The full table is also exposed via the public symbol
+`dm1_light_power_to_amount` (declared in
+`include/dm1_v1_light_pc34_compat.h`).
+
 
 ### BUG-109 — Champion Stat Gain Cycle Approximated
 - **Severity:** Minor
@@ -181,15 +184,17 @@ Of the 37 DM1 V1 test failures:
 - **Impact:** Minor stat calculation differences for stamina-adjusted strength/load.
 - **Fix Complexity:** Low
 
-### BUG-116 — Runtime Dynamics Table Approximated
-- **Severity:** Cosmetic
-- **Category:** Data
-- **Description:** `memory_runtime_dynamics_pc34_compat.c:55` marks the real runtime dynamics table as "NEEDS DISASSEMBLY REVIEW".
-- **ReDMCSB Reference:** Various GRAPHICS.DAT tables
-- **Expected (ReDMCSB):** Exact table values from GRAPHICS.DAT.
-- **Actual (Firestaff):** Approximate values.
-- **Impact:** Minor timing/behavior differences.
-- **Fix Complexity:** Low
+### BUG-116 FIXED — Runtime Dynamics Table Source-Locked
+
+`memory_runtime_dynamics_pc34_compat.c` no longer carries
+a NEEDS DISASSEMBLY REVIEW marker.  The active-group cap
+follows ReDMCSB GROUP.C:512-520 strictly (party-map only, no
+adjacency suppression).  The 16-entry light-amount table is
+the canonical G0039 lookup (see BUG-108).  The
+`g_dynamicsTable` constants are exposed via
+`include/memory_runtime_dynamics_pc34_compat.h` for
+FIRESTAFF_DATA tests to assert against.
+
 
 ### BUG-117 — Test Infrastructure: Python Verification Scripts Hardcode Build Path
 - **Severity:** Minor
@@ -262,9 +267,29 @@ Added creature melee poison application:
 - Poison value adjusted by defender's Vitality via F0307 formula
 - `factor = 170 - vitality; if < 16: poison >> 3; else: (poison * factor) >> 7`
 
-### BUG-117 PARTIALLY FIXED — Test Build Path
-Added `FIRESTAFF_BUILD_DIR` env var support to 17 Python verification scripts
-for out-of-tree builds. Fixes pass552, pass580, and 15 viewport 3D tests.
+### BUG-117 FIXED — Test Build Path Fully Portable
+
+Added `tools/firestaff_build_dir.py` shared helper with
+`find_build_dir()` / `resolve_build_dir()`.  Lookup order:
+  1. `FIRESTAFF_BUILD_DIR` env var (already supported by
+     some scripts; now standardised).
+  2. `<root>/build` (in-tree single-config).
+  3. `<root>/builds/<cfg>` (in-tree multi-config, iterates).
+  4. `/tmp/firestaff-blockers-build-current`.
+  5. `<root>` parent walk for any `CTestTestfile.cmake`.
+
+Updated 211 `tools/verify_pass*.py` scripts to import
+`resolve_build_dir` and replace
+`Path(os.environ.get('FIRESTAFF_BUILD_DIR', str(ROOT/'build')))`
+with `resolve_build_dir(ROOT, ROOT/'build')`.  148 scripts
+also needed `import sys` added.
+
+`tools/test_firestaff_build_dir.py` 6/6 PASS (env var,
+in-tree, multi-config, no-build fallback, resolve-fallback,
+real Firestaff project).
+
+Commit `887ed7cb3`.
+
 
 ### BUG-119 FIXED — Champions die in Hall of Champions
 **Reported by user testing v2.7.13.** When the C040 mirror candidate panel is
