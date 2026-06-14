@@ -172,5 +172,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.14";
+    return "2.7.16";
 }
