@@ -42,7 +42,7 @@
  *  Serialised sizes (MEDIA016 / LSB-first, 4-byte int32 fields).
  * ========================================================== */
 
-#define PROJECTILE_INSTANCE_SERIALIZED_SIZE        96  /* 24 int32 */
+#define PROJECTILE_INSTANCE_SERIALIZED_SIZE        100  /* 25 int32 (added launcherStrength in v2.7.14) */
 #define EXPLOSION_INSTANCE_SERIALIZED_SIZE         64  /* 16 int32 */
 #define CELL_CONTENT_DIGEST_SERIALIZED_SIZE       100  /* 25 int32 */
 #define PROJECTILE_TICK_RESULT_SERIALIZED_SIZE    232  /* see §2.5 */
@@ -198,6 +198,7 @@ struct ProjectileInstance_Compat {
     int poisonAttack;
     int attackTypeCode;           /* COMBAT_ATTACK_* */
     int flags;                    /* PROJECTILE_FLAG_* */
+    int launcherStrength;         /* PROJEXPL.C:490-500 kinetic pass threshold (0..100) */
     int reserved0;
     int reserved1;
     int reserved2;

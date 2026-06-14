@@ -144,6 +144,9 @@ struct CombatantChampionSnapshot_Compat {
     int statisticVitality;
     int statisticAntifire;
     int statisticAntimagic;
+    int statisticLuck;          /* CHAMPION.C:1123 F0308 — current luck */
+    int statisticLuckMax;       /* CHAMPION.C:1138 luck cap */
+    int statisticLuckMin;       /* CHAMPION.C:1138 luck floor (cursed items can push negative) */
     int actionHandIcon;
     int wounds;
     int woundDefense[6];
@@ -219,6 +222,7 @@ struct CombatResult_Compat {
     int defenseRoll;
     int hitLanded;
     int wasCritical;
+    int luckyHit;                /* F0308 — set when luck turned a miss into a hit */
     int woundMaskAdded;
     int poisonAttackPending;
     int targetKilled;

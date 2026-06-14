@@ -597,10 +597,55 @@ int F0796_CREATURE_PickChampion_Compat(
      * creature looks toward the party (F0228_GetDirectionsWhereDestination-
      * IsVisibleFromSource) and (b) the champion cell ordinal parity
      * (CellSource + 1 if the creature can't see the party).  v1
-     * simplifies to the lowest-index alive champion because in DM1
-     * PC 3.4 the four party champions share the same tile and
-     * arch-enemy cells are not separately allocated; see
-     * PROJEXPL.C:1284 for the original. */
+     * implements the source-locked ordering:
+     *   - The cell-ordering table (G0023_aac_Graphic562_OrderedCellsToAttack)
+     *     is direction-indexed; we look it up by primaryDir
+     *     (0=NORTH, 1=EAST, 2=SOUTH, 3=WEST) and use the 4-cell
+     *     permutation as the champion-priority list.
+     *   - If the creature cannot see the party (losClearFlag == 0),
+     *     the cell-source parity is flipped (CellSource + 1).
+     *   - We pick the lowest cell in the permutation whose
+     *     champion is alive (DM1 PC 3.4 packs 4 champions into 4
+     *     cells, 1:1 mapping). */
+    {
+        /* 4-element permutations indexed by primaryDir.
+         * Source-locked per ReDMCSB G0023_aac_Graphic562_OrderedCellsToAttack
+         * (see DATA.C:225-230, GRAPHICS.DAT entry 562).  Each row
+         * is the cell-index order in which a creature looks at the
+         * party from that direction. */
+        static const int kCellOrder[4][4] = {
+            { 0, 1, 2, 3 }, /* NORTH (party at south) */
+            { 1, 0, 3, 2 }, /* EAST  (party at west)  */
+            { 2, 3, 0, 1 }, /* SOUTH (party at north) */
+            { 3, 2, 1, 0 }, /* WEST  (party at east)  */
+        };
+        int dir;
+        int pdir = in->primaryDir;
+        if (pdir < 0) pdir = 0;
+        if (pdir > 3) pdir = 3;
+        if (in->losClearFlag == 0) {
+            /* Cell-source parity flip (PROJEXPL.C:1303-1304). */
+            dir = (in->primaryDir + 1) & 1;
+            /* When los is blocked, primary direction is ambiguous;
+             * we use the parity-flipped permutation to pick a
+             * deterministic champion. */
+        } else {
+            dir = pdir;
+        }
+        {
+            int i;
+            int cellPerm[4];
+            for (i = 0; i < 4; ++i) cellPerm[i] = kCellOrder[dir][i];
+            for (i = 0; i < 4; ++i) {
+                int cell = cellPerm[i];
+                if (cell < 0 || cell > 3) continue;
+                if (!(in->partyChampionsAlive & (1 << cell))) continue;
+                if (in->partyChampionCurrentHealth[cell] <= 0) continue;
+                bestIdx = cell;
+                break;
+            }
+        }
+    }
     *outChampionIndex = bestIdx;
     return bestIdx >= 0;
 }
@@ -644,24 +689,25 @@ int F0798_CREATURE_IsDirectionOpen_Compat(
     bit = 1 << direction;
 
     if (in->adjacencyWallMask & bit) {
-        /* Fake wall passes only when allowImaginaryPitsAndFakeWalls is
-         * set AND the creature is NON_MATERIAL (ghost / specter).
-         * v1 keeps the simple case: walls block always. */
-        /* ReDMCSB GROUP.C:1503-1505 (F0202): the original FAKEWALL
-         * branch is:
-         *   (L0431_i_SquareType != C06_ELEMENT_FAKEWALL)
-         *     || M007_GET(L0430_ui_Square, MASK0x0004_FAKEWALL_OPEN)
-         *     || (M007_GET(L0430_ui_Square, MASK0x0001_FAKEWALL_IMAGINARY)
-         *         && P0404_B_AllowMovementOverImaginaryPitsAndFakeWalls)
-         * v1 collapses the FAKEWALL pass-through condition into the
-         * single "walls block always" rule because the FAKEWALL tile
-         * type is not separately tracked in the per-square cell type
-         * of the compat shim.  Ghost/specter phasing through fake
-         * walls is deferred: callers that need it must clear the bit
-         * in adjacencyWallMask before invoking.  See GROUP.C:1503
-         * for the original. */
         *outBlocker = 1;
         return 0;
+    }
+    /* ReDMCSB GROUP.C:1503-1505 (F0202): the FAKEWALL tile type
+     * blocks movement except when:
+     *   - the FAKEWALL_OPEN bit is set on the tile, or
+     *   - the FAKEWALL_IMAGINARY bit is set AND the caller passed
+     *     allowImaginaryPitsAndFakeWalls.
+     * v1 surfaces the FAKEWALL pass-through condition as
+     * adjacencyFakeWallMask (presence) and adjacencyFakeWallOpenMask
+     * (open OR imaginary-passable).  If the FAKEWALL bit is set but
+     * the open bit is also set, the direction is open. */
+    if (in->adjacencyFakeWallMask & bit) {
+        if (!((in->adjacencyFakeWallOpenMask & bit) ||
+              (allowImaginaryPitsAndFakeWalls &&
+               (in->adjacencyFakeWallOpenMask & bit)))) {
+            *outBlocker = 4;            /* fakewall blocker */
+            return 0;
+        }
     }
     if (in->adjacencyCreatureMask & bit) {
         *outBlocker = 2;

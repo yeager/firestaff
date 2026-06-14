@@ -56,7 +56,7 @@
  * ========================================================== */
 
 #define CREATURE_AI_STATE_SERIALIZED_SIZE      72   /* 18 int32 */
-#define CREATURE_TICK_INPUT_SERIALIZED_SIZE   128   /* 32 int32 */
+#define CREATURE_TICK_INPUT_SERIALIZED_SIZE   136   /* 34 int32 (added adjacencyFakeWallMask + adjacencyFakeWallOpenMask in v2.7.14) */
 #define CREATURE_TICK_RESULT_SERIALIZED_SIZE  176   /* 16 + 48 + 16 + 44 + 4 */
 #define CREATURE_BEHAVIOR_PROFILE_SIZE         64   /* 16 int32 (internal) */
 
@@ -186,7 +186,9 @@ struct CreatureTickInput_Compat {
     int partyMapY;
     int partyChampionsAlive;             /* bitmask 0..15 */
     int partyChampionCurrentHealth[4];
-    int adjacencyWallMask;               /* bit i = direction i blocked by wall/fakewall */
+    int adjacencyWallMask;               /* bit i = direction i blocked by solid wall */
+    int adjacencyFakeWallMask;           /* bit i = direction i has a FAKEWALL tile (CHAMPION.C:1503-1505) */
+    int adjacencyFakeWallOpenMask;       /* bit i = direction i FAKEWALL is open / imaginary-passable */
     int adjacencyDoorMask;               /* bit i = direction i has closed door */
     int adjacencyPitMask;                /* bit i = direction i has open pit */
     int adjacencyCreatureMask;           /* bit i = direction i has another live group */
