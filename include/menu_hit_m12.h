@@ -34,6 +34,8 @@ typedef enum {
     M12_HIT_SETTINGS_ROW,
     /* Settings view: row cycle button (left/right arrow area, delta +1 or -1) */
     M12_HIT_SETTINGS_CYCLE,
+    /* Settings view: tab strip click 0..M12_SETTINGS_TAB_COUNT-1 (CONTROLS/AUDIO/ACCESSIBILITY) */
+    M12_HIT_SETTINGS_TAB,
     /* Game-options view: row 0..M12_GAME_OPT_ROW_COUNT (last = launch row) */
     M12_HIT_GAMEOPT_ROW,
     /* Game-options view: row cycle (delta +1 or -1) */

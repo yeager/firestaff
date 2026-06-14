@@ -105,15 +105,9 @@ enum {
     M12_MUSEUM_CATEGORY_COUNT
 };
 
-/* ── Settings tabs (V2.1/V2.2) ────────────────────────────────────── */
-enum {
-    M12_SETTINGS_TAB_GAME = 0,
-    M12_SETTINGS_TAB_GRAPHICS,
-    M12_SETTINGS_TAB_CONTROLS,
-    M12_SETTINGS_TAB_AUDIO,
-    M12_SETTINGS_TAB_ACCESSIBILITY,
-    M12_SETTINGS_TAB_COUNT
-};
+/* ── Settings tabs (V2.1/V2.2) ──────────────────────────────────────
+ * M12_SettingsTab enum lives in include/menu_startup_m12.h so
+ * menu_hit_m12.c can reference M12_SETTINGS_TAB_COUNT. */
 
 static const char *m12_settings_tab_labels[M12_SETTINGS_TAB_COUNT] = {
     _("GAME"), _("GRAPHICS"), _("CONTROLS"), _("AUDIO"), _("ACCESSIBILITY")
@@ -3083,10 +3077,34 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     M12_SETTINGS_ROW_COUNT);
                 break;
             case M12_MENU_INPUT_LEFT:
-                m12_cycle_setting(state, -1);
+                /* v2.7.15: LEFT cycles the settings tab strip
+                 * (CONTROLS/AUDIO/ACCESSIBILITY).  Per-row value
+                 * cycling routes through the dedicated
+                 * M12_MENU_INPUT_VALUE_LEFT/RIGHT inputs that
+                 * the cycle-button hit-test emits. */
+                state->settingsTabIndex = m12_cycle_index(
+                    state->settingsTabIndex,
+                    -1,
+                    M12_SETTINGS_TAB_COUNT);
+                state->settingsSelectedIndex = 0;
                 break;
             case M12_MENU_INPUT_RIGHT:
+                state->settingsTabIndex = m12_cycle_index(
+                    state->settingsTabIndex,
+                    1,
+                    M12_SETTINGS_TAB_COUNT);
+                state->settingsSelectedIndex = 0;
+                break;
+            case M12_MENU_INPUT_VALUE_LEFT:
+                m12_cycle_setting(state, -1);
+                break;
+            case M12_MENU_INPUT_VALUE_RIGHT:
+                m12_cycle_setting(state, 1);
+                break;
             case M12_MENU_INPUT_ACCEPT:
+                /* Enter on a selected row cycles its value
+                 * (was the dead-code semantics in the redesigned
+                 * menu).  Equivalent to VALUE_RIGHT. */
                 m12_cycle_setting(state, 1);
                 break;
             case M12_MENU_INPUT_BACK:
