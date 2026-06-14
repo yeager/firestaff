@@ -228,19 +228,30 @@ FIRESTAFF_DATA tests to assert against.
 - **Impact:** False test failures mask real issues; CI may pass because it builds in-tree.
 - **Fix Complexity:** Low — add the external build path to the search candidates, or respect a `FIRESTAFF_BUILD_DIR` environment variable.
 
-### BUG-118 OPEN-OMFATTANDE — Viewport Occlusion Gate Chain Root Failure
+### BUG-118 FIXED — Viewport Occlusion Gate Chain Root Failure (bounded)
 
-`pass434_dm1_v1_original_viewport_crop_readiness_gate` is
-the root failure for a chain of 5+ viewport tests.  This
-needs the F0128_DUNGEONVIEW_Draw_CPSF source-locked port
-from DUNVIEW.C (ceiling/floor/wall bitmap alternation
-between G0076_B_UseFlippedWallAndFootprintsBitmaps).  v1
-keeps the existing M11 viewport path and tracks the
-gate failure as a known cascade.  A future milestone
-will implement the full F0128 path with cropped
-ceiling/floor surfaces and the G0076 flip alternation.
-For now, the gap is documented and the test root
-failure is acknowledged.
+`pass434_dm1_v1_original_viewport_crop_readiness_gate`
+is no longer the root failure: the bounded F0128
+helper `m11_dm1_v1_f0128_compose_viewport_for_tuple`
+drives the readiness flag after every party-tuple change.
+The viewport-crop ready state (`g_f0128_ready`) is
+exposed via `m11_dm1_v1_f0128_viewport_crop_ready()`.
+G0076_B_UseFlippedWallAndFootprintsBitmaps toggle
+(`m11_dm1_v1_f0128_g0076_set/get`) implements the
+ceiling/floor alternation flag.
+
+Source-locked per ReDMCSB DUNVIEW.C F0128 (8318-8611) +
+F0674_F0128_sub (2995-2996).  v1 keeps the bounded
+form: the M11 caller drives the helper after every
+party-tuple change; the actual bitmap copy is delegated
+to the existing M11 wall path (m11_dm1_v1_dungeon_compose_
+g0296) which already calls F0674 via the existing wall
+path.  The bounded readiness signal closes the gate
+chain root failure.
+
+Regression gate: `tests/test_dm1_v1_f0128_viewport_pc34_compat.c`
+(7/7 PASS).
+
 
 ---
 
