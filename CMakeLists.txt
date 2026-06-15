@@ -1030,6 +1030,23 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v2_lighting
     )
 
+    add_executable(test_dm2_v2_smooth_movement
+        tests/test_dm2_v2_smooth_movement.c
+        src/dm2/dm2_v2_smooth_movement.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_dm2_v2_smooth_movement PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v2_smooth_movement PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v2_smooth_movement PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v2_smooth_movement
+        COMMAND test_dm2_v2_smooth_movement
+    )
+
     add_executable(test_dm2_v2_touch_controller_affordance
         tests/test_dm2_v2_touch_controller_affordance.c
         src/dm2/dm2_v2_touch_controller_affordance.c
@@ -1587,6 +1604,21 @@ if(BUILD_TESTING)
         src/csb/csb_v2_minimap.c
         src/csb/csb_v2_chaos_enhanced.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    add_executable(test_csb_v2_smooth_movement
+        tests/test_csb_v2_smooth_movement.c
+        src/csb/csb_v2_smooth_movement.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_csb_v2_smooth_movement PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v2_smooth_movement PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v2_smooth_movement
+        COMMAND test_csb_v2_smooth_movement
     )
     add_executable(test_dm1_v2_source_route_state_hash_pc34
         tests/test_dm1_v2_source_route_state_hash_pc34.c
