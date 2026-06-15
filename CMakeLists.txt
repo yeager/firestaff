@@ -7276,6 +7276,29 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_group_move_removal_pc34_compat
     )
 
+# DUN-01 (Group 8) — DM1 V1 F0150_DUNGEON_UpdateMapCoordinates
+# step-delta invariants.  Source-locked to ReDMCSB DUNGEON.C:1318-1338
+# via the amalgam G0233_ai_Graphic559_DirectionToStepEastCount and
+# G0234_ai_Graphic559_DirectionToStepNorthCount tables.  Pins the
+# F0701_MOVEMENT_GetStepDelta_Compat compat-layer helper against
+# the F0150 source-locked values so the two parallel implementations
+# cannot drift.
+add_executable(test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat
+    tests/test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat.c
+)
+target_link_libraries(test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat PRIVATE
+    firestaff_m10
+)
+if(NOT MSVC)
+    target_compile_options(test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat
+    COMMAND test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat
+)
+
     add_executable(test_dm1_v1_creature_render_pc34_compat_integration
         tests/test_dm1_v1_creature_render_pc34_compat_integration.c
         src/dm1/dm1_v1_creature_render_pc34_compat.c
