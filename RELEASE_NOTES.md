@@ -1,3 +1,19 @@
+
+# Firestaff v2.7.24
+
+DM1 V1 i18n / l10n expansion release — fixes the silent truncation of DM1 strings on load, adds a multi-domain PO loader so dm1, csb, and startup-menu catalogs can co-exist, and ships 17 new DM1 translation catalogs ready for translator fill-in.
+
+## DM1 i18n / l10n
+
+- **firestaff_po_loader FS_PO_MAX_STRINGS 128 → 1024**: DM1 ships 548 `msgid` strings in `po/dm1.pot`. The previous 128-entry limit silently dropped 420 of them. Now all 547 non-empty entries in `po/dm1.sv.po` load, verified with `"NORTH"` → `"NORD"`, `"STAIRS"` → `"TRAPPA"`, `"NO FOCUS"` → `"INGET FOKUS"`.
+- **Multi-domain PO loader**: each domain (`dm1`, `csb`, `dm2`, `startup-menu`, `firestaff`, `nexus`) now loads into its own slot (`FS_PO_DOMAIN_COUNT=8`) so callers can co-load `dm1+csb+startup-menu` catalogs without one overwriting the other. New API: `fs_po_gettext_in_domain(domain, msgid)`, `fs_po_set_active_domain(name)`, `fs_po_get_loaded_count_in_domain(name)`. Path → domain auto-derivation (`po/dm1.sv.po` → `dm1`).
+- **17 new `po/dm1.<lang>.po` catalogs** (de, fr, es, it, pt, nl, pl, cs, ru, ja, ko, zh, da, no, fi, hu, tr) generated via `msginit -i po/dm1.pot -l <lang> --no-translator`. All carry the full 548-msgid template with empty `msgstr` so the runtime falls back to the English source string. Translators can now fill `msgstr` incrementally.
+- **`m11_game_view.c` language picker** now tries a 19-language candidate list (`po/dm1.<lang>.po`) and picks the first that exists, instead of hard-coding `sv` then `en`. This means DM1 strings now translate on the fly in FR/DE/JA/ZH (and 13 other locales with empty translations) the moment a translator publishes a `dm1.<lang>.po` with non-empty `msgstr` entries.
+- **Regression test** `test_firestaff_po_loader_multi_domain_pc34_compat` verifies cross-domain isolation, active-domain switching, pass-through on missing keys, and the legacy `fs_po_load_for_language` API. 7/7 CHECKs pass.
+
+## Test fixes
+
+- **`test_dm1_v2_launch_smoke_pc34`** and **`test_csb_v2_resolution_selector_gate_m12`**: the V2.1/V2.2 "auto-bump" from 320×200 to 640×400 was intentionally removed (it broke `INV_M12_18` by pre-empting the row cycle). Both tests now expect the 320×200 user-chosen value to stay as-is, matching the current design.
 # Firestaff v2.7.14
 
 DM1 V1 source-lock and CSB V1 bounded-gap release — closes 6 DM1 V1 v1-simplifications documented in v2.7.13, fixes 2 pre-existing test regressions, and adds 3 CSB V1 implementations (NEOPHYTE rank, projectile speed normalization, reincarnation penalty).

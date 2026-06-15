@@ -9,6 +9,13 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.24  (2026-06-15)",
+    "  - DM1 i18n: firestaff_po_loader bumped to FS_PO_MAX_STRINGS=1024 (was 128; DM1 ships 548 msgid so 420 strings were silently dropped on load).  Now loads all DM1 strings (sv.po went from 128 to 547 entries loaded, verified NORTH->NORD, STAIRS->TRAPPA, NO FOCUS->INGET FOKUS)",
+    "  - DM1 i18n: multi-domain PO loader.  Each domain (dm1, csb, dm2, startup-menu, firestaff, nexus) now loads into its own slot so callers can co-load dm1+csb+startup-menu without overwriting each other.  New API: fs_po_gettext_in_domain(domain, msgid), fs_po_set_active_domain(name), fs_po_get_loaded_count_in_domain(name)",
+    "  - DM1 i18n: 17 new dm1.<lang>.po files (de, fr, es, it, pt, nl, pl, cs, ru, ja, ko, zh, da, no, fi, hu, tr) generated via msginit from dm1.pot (548 msgid each, empty msgstr so runtime falls back to English source string). Translators can fill msgstr incrementally",
+    "  - DM1 i18n: m11_game_view.c now loads the dm1 catalog via a 19-language candidate list (po/dm1.<lang>.po) and picks the first one that exists. Previously only sv then en",
+    "  - DM1 i18n: regression test test_firestaff_po_loader_multi_domain_pc34_compat verifies cross-domain isolation (dm1 lookup does not return csb strings), active-domain switching, and pass-through on missing keys (7/7 PASS)",
+
     "V2.7.23  (2026-06-15)",
     "  - DM1 V1 M12 extras subtitle (Group 7): the subtitle drawn in BESTIARY / ITEM ENCYCLOPEDIA / SCREENSHOT GALLERY hero areas is now redrawn on top of m12_apply_graphics_overlay (which BLACK-fills the mode 1 frame at y=34-680). Subtitle text is now visible in all three views (verified via firestaff_m12_extras_views_visual_capture: 95/91/181 white px in subtitle area)",
     "  - DM1 V1 bugfix: F0192 poison cloud resistance-adjusted attack re-applied (ReDMCSB PROJEXPL.C:863 / F0192_GROUP_GetResistanceAdjustedPoisonAttack). Fixes dm1_v1_projectile_explosion_render regression that was rounding attack values down through the wrong axis",
@@ -17,7 +24,7 @@ static const char* const g_changelogLines[] = {
     "  - CSB V1 Dungeon GAP 4 (Compressed dungeon, DECOMPDU.C F0455): source-faithful port of the bit-packed dungeon decompressor (MEDIA481 portable C path) using the 4-most-common / 16-less-common / literal prefix-code scheme, with matching encoder for round-trip and a bounded grid wrapper (up to 24 levels of 64x64). Includes CSB_DECOMPDU_ERR_* enum and bounds checks the 68k original lacked. Test csb_v1_decompdu_pc34_compat (32/32 PASS)",
     "  - CSB V1 Graphics GAP 6 (CHANGE7_16): documents why a faithful 68k-asm port is impossible/moot in C and ships C-only __attribute__((hot)) perf shims for the three inner loops (blit-fast-path, sensor-dispatch, end-of-frame tick). Test csb_v1_graphics_change7_16_pc34_compat (22/22 PASS)",
     "  - CSB V1 Champions GAP 3 (HoC delta, Champion Transfer/Import): real CSB v2.0/v2.1 save importer that maps the CSB roster record into CSB_V1_PartyState / CSB_V1_Champion, applies the CHANGE7_24 reincarnation stat-cap on import, and stamps the party (ImportSource=3) so re-edits don't re-import. Test csb_v1_save_import_path_pc34_compat (35/35 PASS)",
-    "  - Docs: FINAL_GAPS.md v2.7.23 snapshot (DM1, all 21 BUG items + Group 7 verified FIXED in HEAD 9f32b8a1) and FINAL_CSB_GAPS.md v2.7.23 snapshot (CSB, 21/27 gaps closed: 13 FIXED, 5 ALREADY-DONE, 0 OPEN-BOUNDED, 3 OPEN-OMFATTANDE all closed this release)",
+    "  - Docs: FINAL_GAPS.md v2.7.24 snapshot (DM1, all 21 BUG items + Group 7 verified FIXED in HEAD 9f32b8a1) and FINAL_CSB_GAPS.md v2.7.24 snapshot (CSB, 21/27 gaps closed: 13 FIXED, 5 ALREADY-DONE, 0 OPEN-BOUNDED, 3 OPEN-OMFATTANDE all closed this release)",
     "  - CSB suite: 114/114 PASS. Phase A: 23/23 invariants PASS",
     "",
     "V2.7.22  (2026-06-14)",
@@ -191,5 +198,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.23";
+    return "2.7.24";
 }
