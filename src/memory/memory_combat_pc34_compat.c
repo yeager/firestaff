@@ -71,9 +71,17 @@ static int group_set_packed_creature_value(
  *  Static lookup tables (mirrors of Fontanel CHAMPION.C globals).
  * ========================================================== */
 
-/* Mirror of G0050_auc_Graphic562_WoundDefenseFactor. */
+/* Mirror of G0050_auc_Graphic562_WoundDefenseFactor.
+ *
+ * Source-locked to ReDMCSB DATA.C:427 (Atari ST) and DATA.C:1103
+ * (Atari ST 2.0): { 5, 5, 4, 6, 3, 1 }.
+ *
+ * The previous Firestaff values { 0x15, 0x10, 0x1A, 0x1A, 0x12, 0x12 }
+ * did NOT match ReDMCSB.  Corrected to the source-locked values
+ * per TAB-06 (DM1 V1 functional-divergence-report.md).
+ */
 static const unsigned char WoundDefenseFactor[6] = {
-    0x15, 0x10, 0x1A, 0x1A, 0x12, 0x12
+    0x05, 0x05, 0x04, 0x06, 0x03, 0x01
 };
 
 /* Mirror of G0024_auc_Graphic562_WoundProbabilityIndexToWoundMask. */

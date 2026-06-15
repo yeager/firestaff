@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.7.24 LANGUAGES C)
+project(Firestaff VERSION 2.7.25 LANGUAGES C)
 
 include_directories(include src)
 
@@ -7298,6 +7298,29 @@ add_test(
     NAME dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat
     COMMAND test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat
 )
+
+# TAB-06 (Group 8) — DM1 V1 G0050_auc_Graphic562_WoundDefenseFactor
+# source-lock pin.  The previous Firestaff values
+# { 0x15, 0x10, 0x1A, 0x1A, 0x12, 0x12 } did NOT match ReDMCSB
+# DATA.C:427/1103 { 5, 5, 4, 6, 3, 1 }.  Corrected to the source-locked
+# values and pinned by a regression test.
+if(NOT TARGET test_dm1_v1_tab06_wound_defense_factor_source_lock_pc34_compat)
+    add_executable(test_dm1_v1_tab06_wound_defense_factor_source_lock_pc34_compat
+        tests/test_dm1_v1_tab06_wound_defense_factor_source_lock_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_tab06_wound_defense_factor_source_lock_pc34_compat PRIVATE
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_tab06_wound_defense_factor_source_lock_pc34_compat PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_tab06_wound_defense_factor_source_lock_pc34_compat
+        COMMAND test_dm1_v1_tab06_wound_defense_factor_source_lock_pc34_compat
+    )
+endif()
 
     add_executable(test_dm1_v1_creature_render_pc34_compat_integration
         tests/test_dm1_v1_creature_render_pc34_compat_integration.c
