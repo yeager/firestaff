@@ -9,6 +9,14 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.23  (2026-06-15)",
+    "  - DM1 V1 Group 7: M12 extras subtitle (BESTIARY / ITEM ENCYCLOPEDIA / SCREENSHOT GALLERY) is no longer painted over by the modern theme overlay frame; subtitle text now renders after the overlay (commit b8dfee6e)",
+    "  - CSB V1 Champions GAP 4: added a dedicated left-click inventory regression test locking the source-locked left-click-to-open-inventory route (commit 8f7f10c8)",
+    "  - M12 launch resolution: V2.1 Upscaled / V2.2 Modern now floor the launch resolution to 640x400 in the launch intent (not in the shared mode-constraint helper), so the resolution row can still cycle the full 320x200 -> 640x400 -> 1280x960 -> ... range while guaranteeing a >=640x400 launch (fixes dm1_v2_launch_smoke_pc34 and csb_v2_resolution_selector_gate_m12)",
+    "  - Nexus V1 DGN actors: malformed external actor coordinates/facing are now clamped/normalized into slot 0 instead of being rejected (the clamp code was previously dead behind an early reject guard); the actor-type ref and fixed active-pool boundary remain hard rejects (fixes nexus_v1_dgn_actor_slot_bounds)",
+    "  - Nexus V2 lighting: added the missing test_nexus_v2_lighting smoke test executable so the registered nexus_v2_lighting ctest builds and runs (init/add/remove/tick/apply + NULL safety)",
+    "  - Docs: FINAL_GAPS.md and FINAL_CSB_GAPS.md v2.7.23 snapshots",
+    "",
     "V2.7.22  (2026-06-14)",
     "  - DM1 V1 Hall of Champions: anchored m11_front_cell_mirror_ordinal to the C127 sensor (ReDMCSB DUNGEON.C:2573, MOVESENS.C:1501-1503, REVIVE.C F0280) on the front square so corridor poses no longer expose a clickable front portrait, restoring the source-locked D1C champion-portrait route",
     "  - DM1 V1 FTL/SWSH: replaced the linear Atari-3-bit to VGA-DAC palette ramp with the ReDMCSB SWSH.C:281-307 source-curve (0, 36, 125, 146, 164, 190, 219, 255) so the FTL swoosh and the DM TITLE step-palette mutations match the F20E PC colors instead of a generic 9-multiplied Atari ramp",
@@ -180,5 +188,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.22";
+    return "2.7.23";
 }
