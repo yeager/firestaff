@@ -334,6 +334,24 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Nexus V2 Phase 5 — Smooth Movement and Viewport Interpolation Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: lifecycle, walk N/S/E/W, turn 8 directions, stairs with
+# vertical offset, deterministic tick-start/mid-tick/tick-end coverage,
+# tick-driven auto-detection of position/angle deltas, null-safety,
+# shortest-path turn (wrap-around), source evidence.
+add_executable(firestaff_nexus_v2_smooth_movement_probe
+    probes/firestaff_nexus_v2_smooth_movement_probe.c
+    src/nexus/nexus_v2_smooth_movement.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_nexus_v2_smooth_movement_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_nexus_v2_smooth_movement_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2 Phase 0 — V1 Compatibility Lock Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: defaults(), v2_active(), domain classification, V1-locked domains,
@@ -4120,6 +4138,25 @@ if(BUILD_TESTING)
     add_test(
         NAME nexus_v2_hud_overlay
         COMMAND test_nexus_v2_hud_overlay
+    )
+
+    # ── Nexus V2 Phase 5 Smooth Movement smoke test ──────────────
+    # Source-lock: src/nexus/nexus_v2_smooth_movement.c
+    # Phase 5: Smooth movement and viewport interpolation
+    add_executable(test_nexus_v2_smooth_movement
+        tests/test_nexus_v2_smooth_movement.c
+        src/nexus/nexus_v2_smooth_movement.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_nexus_v2_smooth_movement PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_smooth_movement PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v2_smooth_movement
+        COMMAND test_nexus_v2_smooth_movement
     )
 
     # ── Nexus V2 Phase 4 Lighting smoke test ──────────────────────
