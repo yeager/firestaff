@@ -4492,6 +4492,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_boot.c
     )
     target_link_libraries(test_theron_v1_availability PRIVATE firestaff_v2)
+    # Local asset_status_m12.c references asset_find_by_md5 etc, which live
+    # in firestaff_m12; the lib is needed to close the local-symbol link gap.
+    if(TARGET firestaff_m12)
+        target_link_libraries(test_theron_v1_availability PRIVATE firestaff_m12)
+    endif()
     target_include_directories(test_theron_v1_availability PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
@@ -4886,16 +4891,27 @@ if(BUILD_TESTING AND THERON_SOURCES)
 endif()
 
 # ── Theron V1 Phase 5 — Launcher Scan Reuse Test ──────────────────
+# Builds asset_status_m12.c with FIRESTAFF_ASSET_STATUS_TESTING=1 to expose
+# the M12_AssetStatus_Test* helpers; the test exe uses the local object so
+# the prebuilt firestaff_m12 lib (which has the same symbols gated out)
+# is not pulled in.
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_launcher_scan_reuse
         tests/theron_v1_launcher_scan_reuse_test.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
     )
     target_link_libraries(test_theron_v1_launcher_scan_reuse PRIVATE
         firestaff_theron
+        firestaff_v2
     )
     target_include_directories(test_theron_v1_launcher_scan_reuse PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    # M12 testing-only API (M12_AssetStatusScanMetrics + Test* helpers).
+    target_compile_definitions(test_theron_v1_launcher_scan_reuse PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_theron_v1_launcher_scan_reuse PRIVATE -Wall -Wextra -O2)
     endif()
@@ -4918,6 +4934,10 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
     if(NOT MSVC)
         target_compile_options(firestaff_theron_v1_track02_bank_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    # Track 02 probe needs M12 md5 helper.
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_track02_bank_probe PRIVATE firestaff_m12)
     endif()
     add_test(
         NAME theron_v1_track02_bank
