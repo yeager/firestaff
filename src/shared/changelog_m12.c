@@ -9,6 +9,17 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.23  (2026-06-15)",
+    "  - DM1 V1 M12 extras subtitle (Group 7): the subtitle drawn in BESTIARY / ITEM ENCYCLOPEDIA / SCREENSHOT GALLERY hero areas is now redrawn on top of m12_apply_graphics_overlay (which BLACK-fills the mode 1 frame at y=34-680). Subtitle text is now visible in all three views (verified via firestaff_m12_extras_views_visual_capture: 95/91/181 white px in subtitle area)",
+    "  - DM1 V1 bugfix: F0192 poison cloud resistance-adjusted attack re-applied (ReDMCSB PROJEXPL.C:863 / F0192_GROUP_GetResistanceAdjustedPoisonAttack). Fixes dm1_v1_projectile_explosion_render regression that was rounding attack values down through the wrong axis",
+    "  - DM1 V1 hygiene: untracked 1691 build artifacts in builds/n2-build/ that had been committed before the .gitignore 'builds/' entry was added; build still works locally (artifacts remain on disk for incremental builds)",
+    "  - CSB V1 Champions GAP 4 (Left-Click Inventory, CHANGE7_28): dedicated regression test csb_v1_champions_left_click_inventory_pc34_compat (10/10 PASS) covering default-disabled, CSB-mode C125..C128 mapping, out-of-range slots, and toggling",
+    "  - CSB V1 Dungeon GAP 4 (Compressed dungeon, DECOMPDU.C F0455): source-faithful port of the bit-packed dungeon decompressor (MEDIA481 portable C path) using the 4-most-common / 16-less-common / literal prefix-code scheme, with matching encoder for round-trip and a bounded grid wrapper (up to 24 levels of 64x64). Includes CSB_DECOMPDU_ERR_* enum and bounds checks the 68k original lacked. Test csb_v1_decompdu_pc34_compat (32/32 PASS)",
+    "  - CSB V1 Graphics GAP 6 (CHANGE7_16): documents why a faithful 68k-asm port is impossible/moot in C and ships C-only __attribute__((hot)) perf shims for the three inner loops (blit-fast-path, sensor-dispatch, end-of-frame tick). Test csb_v1_graphics_change7_16_pc34_compat (22/22 PASS)",
+    "  - CSB V1 Champions GAP 3 (HoC delta, Champion Transfer/Import): real CSB v2.0/v2.1 save importer that maps the CSB roster record into CSB_V1_PartyState / CSB_V1_Champion, applies the CHANGE7_24 reincarnation stat-cap on import, and stamps the party (ImportSource=3) so re-edits don't re-import. Test csb_v1_save_import_path_pc34_compat (35/35 PASS)",
+    "  - Docs: FINAL_GAPS.md v2.7.23 snapshot (DM1, all 21 BUG items + Group 7 verified FIXED in HEAD 9f32b8a1) and FINAL_CSB_GAPS.md v2.7.23 snapshot (CSB, 21/27 gaps closed: 13 FIXED, 5 ALREADY-DONE, 0 OPEN-BOUNDED, 3 OPEN-OMFATTANDE all closed this release)",
+    "  - CSB suite: 114/114 PASS. Phase A: 23/23 invariants PASS",
+    "",
     "V2.7.22  (2026-06-14)",
     "  - DM1 V1 Hall of Champions: anchored m11_front_cell_mirror_ordinal to the C127 sensor (ReDMCSB DUNGEON.C:2573, MOVESENS.C:1501-1503, REVIVE.C F0280) on the front square so corridor poses no longer expose a clickable front portrait, restoring the source-locked D1C champion-portrait route",
     "  - DM1 V1 FTL/SWSH: replaced the linear Atari-3-bit to VGA-DAC palette ramp with the ReDMCSB SWSH.C:281-307 source-curve (0, 36, 125, 146, 164, 190, 219, 255) so the FTL swoosh and the DM TITLE step-palette mutations match the F20E PC colors instead of a generic 9-multiplied Atari ramp",
@@ -180,5 +191,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.22";
+    return "2.7.23";
 }
