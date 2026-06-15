@@ -7514,6 +7514,24 @@ if(NOT TARGET test_dm1_v1_lif01_f0830_time_criteria_source_lock_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_chm05_f0832_hunger_thirst_loop_guard_pc34_compat)
+    add_executable(test_dm1_v1_chm05_f0832_hunger_thirst_loop_guard_pc34_compat
+        tests/test_dm1_v1_chm05_f0832_hunger_thirst_loop_guard_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chm05_f0832_hunger_thirst_loop_guard_pc34_compat PRIVATE
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chm05_f0832_hunger_thirst_loop_guard_pc34_compat PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_chm05_f0832_hunger_thirst_loop_guard_pc34_compat
+        COMMAND test_dm1_v1_chm05_f0832_hunger_thirst_loop_guard_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_rev03_f0863_rebirth_health_source_lock_pc34_compat)
     add_executable(test_dm1_v1_rev03_f0863_rebirth_health_source_lock_pc34_compat
         tests/test_dm1_v1_rev03_f0863_rebirth_health_source_lock_pc34_compat.c
