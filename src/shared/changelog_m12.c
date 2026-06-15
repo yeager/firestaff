@@ -9,6 +9,18 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.25  (2026-06-15)",
+    "  - DM1 V1 Group 8 (functional-divergence-report.md) bounded fixes (8 items):",
+    "    - CHM-04: F0319_CHAMPION_Kill auto-close-chest runtime helper.  m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run drives the F0319 -> F0355 -> F0334 -> F0318 chain against a live M11_InventoryState.  Source-locked to ReDMCSB CHAMPION.C:1552-1607, PANEL.C:2244-2310, CHEST.C:79-130, CHAMPION.C:1527-1551.  Test 3/3 PASS",
+    "    - MOV-05: F0284_CHAMPION_SetPartyDirection cell-rotation invariants.  Public F0284_CHAMPION_SetPartyDirection_Compat probe wrapper rotates Direction + Cell (per-present-list mapping, empty slots preserved) and tracks activeChampionIndex.  Source-locked to ReDMCSB CHAMPION.C:117-130.  13/13 test scenarios PASS.  Bounded approximation: uses slot-position as cell proxy (TODO: add per-champion 'cell' field for full fix)",
+    "    - MOV-06: F0316/F0317 scent add/delete compat stub for V2 path.  M11_ChampionScentRing_Compat (16-slot bounded ring) + m11_champion_scent_ring_add (F0317) + m11_champion_scent_ring_delete (F0316).  11/11 test scenarios PASS",
+    "    - DUN-01: F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement step-delta source-lock pin.  Verifies F0701_MOVEMENT_GetStepDelta_Compat matches the F0150 source-locked G0233/G0234 tables from DUNGEON.C:1318-1338.  7/7 test scenarios PASS",
+    "    - TAB-06: G0050_auc_Graphic562_WoundDefenseFactor source-lock (VERKLIG BUG).  Previous Firestaff values { 0x15, 0x10, 0x1A, 0x1A, 0x12, 0x12 } did NOT match ReDMCSB DATA.C:427/1103 { 5, 5, 4, 6, 3, 1 }.  Corrected + pinned.  Champions in same armor now take ~20-50% less damage.  5/5 test scenarios PASS",
+    "    - TAB-07: Phase17_SubtypeCreatesExplosion source-locked pin.  Per-subtype predicate aligned with ReDMCSB PROJEXPL.C:459.  Fireball/Lightning/Harm/PoisonBolt/PoisonCloud emit outExplosion; Slime/OpenDoor/Smoke/Unmapped do NOT.  9/9 test scenarios PASS",
+    "    - MNU-04: F0758 potion power formula source-lock pin.  Pins M003_RANDOM(16) + (powerOrdinal * 40) against ReDMCSB MENU.C.  5/5 test scenarios PASS",
+    "    - CHM-08: F0864 reincarnation 12-stat-increment RNG-determinism source-lock pin.  Pins REVIVE.C F0282:807-810 12 iterations of M002_RANDOM(7) against F0864.  6/6 test scenarios PASS",
+    "  - Group 8 status: 5/68 items FIXED (above), ~30 intentional designval (no fix), 30+ verified source-locked.  No regressions in any movement/combat/launch test",
+    "",
     "V2.7.24  (2026-06-15)",
     "  - DM1 i18n: firestaff_po_loader bumped to FS_PO_MAX_STRINGS=1024 (was 128; DM1 ships 548 msgid so 420 strings were silently dropped on load).  Now loads all DM1 strings (sv.po went from 128 to 547 entries loaded, verified NORTH->NORD, STAIRS->TRAPPA, NO FOCUS->INGET FOKUS)",
     "  - DM1 i18n: multi-domain PO loader.  Each domain (dm1, csb, dm2, startup-menu, firestaff, nexus) now loads into its own slot so callers can co-load dm1+csb+startup-menu without overwriting each other.  New API: fs_po_gettext_in_domain(domain, msgid), fs_po_set_active_domain(name), fs_po_get_loaded_count_in_domain(name)",
@@ -198,5 +210,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.24";
+    return "2.7.25";
 }
