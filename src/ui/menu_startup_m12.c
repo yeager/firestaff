@@ -3,7 +3,7 @@
 #include "firestaff_po_loader.h"
 #include "firestaff_startup.h"
 
-#define FIRESTAFF_VERSION_STRING "v2.7.22"
+#define FIRESTAFF_VERSION_STRING "v2.7.23"
 #include "firestaff_bestiary.h"
 #include "screenshot_gallery_m12.h"
 #include "firestaff_spell_ref.h"
@@ -7418,6 +7418,20 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     }
     /* Enforce constraints on the returned options */
     m12_enforce_mode_constraints(&intent.options, pmode);
+    /* Launch-intent floor for resolution-choice modes (V2.1/V2.2):
+     * the actual upscaled/modern render path requires at least
+     * 640x400, so a stored 320x200 must be promoted to 640x400 at
+     * launch time.  This floor lives only here in the launch intent,
+     * NOT in m12_enforce_mode_constraints, because that helper also
+     * runs on the ACCEPT/cycle path and an early auto-bump there
+     * would pre-empt the full resolution cycle (INV_M12_18:
+     * 320x200 -> 640x400 -> 1280x960 -> ...).  Keeping the floor
+     * launch-only lets the menu cycle the entire range while still
+     * guaranteeing a >=640x400 launch resolution. */
+    if (M12_PresentationMode_AllowsResolutionChoice(pmode) &&
+        intent.options.resolution < M12_RES_640x400) {
+        intent.options.resolution = M12_RES_640x400;
+    }
     M12_Resolution_Dimensions(intent.options.resolution,
                               &intent.resolutionWidth,
                               &intent.resolutionHeight);
