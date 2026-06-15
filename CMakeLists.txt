@@ -10716,6 +10716,29 @@ if(NOT TARGET test_m11_champion_scent_pc34_compat)
     )
 endif()
 
+# MOV-05 (Group 8) — DM1 V1 F0284_CHAMPION_SetPartyDirection
+# full cell-rotation invariants.  The static helper inside
+# memory_tick_orchestrator_pc34_compat.c only rotates Direction;
+# this test pins a public wrapper (defined in
+# memory_mov05_f0284_cell_rotation_pc34_compat.c) that rotates
+# both Direction AND Cell (per-present-list mapping) and updates
+# activeChampionIndex.  Source-locked to ReDMCSB CHAMPION.C:117-130.
+if(NOT TARGET test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat)
+    add_executable(test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat
+        tests/test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat.c
+        src/memory/memory_mov05_f0284_cell_rotation_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mov05_f0284_cell_rotation_pc34_compat
+        COMMAND test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat)
     add_executable(test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat
         tests/test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat.c
