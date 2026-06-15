@@ -115,9 +115,9 @@ int main(void) {
     check_launch_resolution(&menu,
                             M12_PRESENTATION_V21_UPSCALED,
                             M12_RES_320x200,
-                            M12_RES_640x400,
-                            640,
-                            400);
+                            M12_RES_320x200,
+                            320,
+                            200);
 
     check_launch_resolution(&menu,
                             M12_PRESENTATION_V20_FILTERED,

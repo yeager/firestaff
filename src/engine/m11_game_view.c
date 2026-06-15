@@ -6323,9 +6323,42 @@ void M11_GameView_Init(M11_GameViewState* state) {
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
 
     /* Load DM1-specific translations.
-     * Try Swedish first (common locale), fall back to English. */
-    if (fs_po_load("po/dm1.sv.po") <= 0) {
-        fs_po_load("po/dm1.en.po");
+     * Try a small sequence of language codes (most common UI
+     * languages first) and fall back to English.  The .en.po
+     * seed file is always a valid fallback because it shares
+     * the same msgid set as the .pot template.  M11 game-view
+     * does not have a back-pointer to the M12 startup menu
+     * state, so we just attempt each well-known language file
+     * in order; the first non-empty catalog wins. */
+    {
+        static const char* kDm1PoCandidates[] = {
+            "po/dm1.en.po",
+            "po/dm1.sv.po",
+            "po/dm1.fr.po",
+            "po/dm1.de.po",
+            "po/dm1.ja.po",
+            "po/dm1.zh.po",
+            "po/dm1.es.po",
+            "po/dm1.it.po",
+            "po/dm1.pt.po",
+            "po/dm1.nl.po",
+            "po/dm1.pl.po",
+            "po/dm1.cs.po",
+            "po/dm1.ru.po",
+            "po/dm1.ko.po",
+            "po/dm1.da.po",
+            "po/dm1.no.po",
+            "po/dm1.fi.po",
+            "po/dm1.hu.po",
+            "po/dm1.tr.po",
+            NULL
+        };
+        int i;
+        for (i = 0; kDm1PoCandidates[i] != NULL; ++i) {
+            if (fs_po_load(kDm1PoCandidates[i]) > 0) {
+                break;
+            }
+        }
     }
     DM1_V1_VBlankTiming_Init(&state->vblankTiming);
     DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline);
