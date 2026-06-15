@@ -48,6 +48,13 @@ int main(void) {
     struct PartyState_Compat party;
     struct StairsTransitionResult_Compat r;
 
+    /* Defensive: initialize to silence MSVC -Wmaybe-uninitialized
+     * when running under -Wall -Wextra -O2 (CI flags).  Even
+     * though F0705 checks for NULL/zero bounds, MSVC analyzes
+     * the deref paths and flags uninitialized locals. */
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&party, 0, sizeof(party));
+
     /* T1: NULL outResult. */
     CHECK(F0705_MOVEMENT_ResolveStairsTransition_Compat(&dungeon, &party, NULL) == 0,
           "T1: NULL outResult returns 0");
