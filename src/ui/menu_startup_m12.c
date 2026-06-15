@@ -615,6 +615,25 @@ static const M12_TextStyle g_textTitleShadow = {4, 1, M12_COLOR_YELLOW, 2, 2, M1
 static int g_m12_active_font_scale = 1;
 static int g_m12_active_high_contrast = 0;
 
+/* Group 7: M12 extras views (bestiary / item encyclopedia / screenshot
+ * gallery) draw a small subtitle in the hero area.  The hero is then
+ * overpainted by m12_apply_graphics_overlay mode 1 (LCYAN border +
+ * BLACK fill frame at y=34-680), so the subtitle needs to be re-drawn
+ * AFTER the overlay.  The view_modern functions store the subtitle
+ * text in these static buffers; M12_StartupMenu_Draw calls
+ * m12_draw_extras_subtitle_overlay after m12_apply_graphics_overlay
+ * to redraw it on top.  Buffer size matches the largest subBuf/tabBuf
+ * declared in the per-view draw functions (256 bytes for tabBuf). */
+static char g_m12_extras_subtitle_buf[256];
+static int  g_m12_extras_subtitle_active = 0;
+static int  g_m12_extras_subtitle_x_offset = 14;
+static int  g_m12_extras_subtitle_y_offset = 14;
+static const M12_TextStyle* g_m12_extras_subtitle_style = &g_textSmallShadow;
+
+/* Optional right-aligned subtitle text (e.g. screenshot gallery index) */
+static char g_m12_extras_subtitle_right_buf[32];
+static int  g_m12_extras_subtitle_right_active = 0;
+
 static int m12_effective_text_scale(int baseScale) {
     int scale = baseScale;
     if (scale <= 0) {
@@ -3216,6 +3235,7 @@ static void m12_put_pixel(unsigned char* framebuffer,
     if (x < 0 || y < 0 || x >= framebufferWidth || y >= framebufferHeight) {
         return;
     }
+
     framebuffer[(y * framebufferWidth) + x] = m12_presented_color(color);
 }
 
@@ -3229,6 +3249,7 @@ static void m12_fill_rect(unsigned char* framebuffer,
                           unsigned char color) {
     int yy;
     int xx;
+
     for (yy = 0; yy < h; ++yy) {
         for (xx = 0; xx < w; ++xx) {
             m12_put_pixel(framebuffer,
@@ -3476,6 +3497,7 @@ static void m12_draw_text_raw(unsigned char* framebuffer,
     if (!text || scale <= 0) {
         return;
     }
+
     p = text;
     while (*p != '\0') {
         int row;
@@ -5291,6 +5313,50 @@ static void m12_apply_graphics_overlay(const M12_StartupMenuState* state,
     }
 }
 
+/* Group 7: m12_draw_extras_subtitle_overlay
+ *
+ * The extras views (bestiary, item encyclopedia, screenshot gallery) draw
+ * a small subtitle text into the hero area of the frame.  m12_apply_
+ * graphics_overlay mode 1 paints a BLACK-filled border frame at
+ * y=34-680 (overwrite with BLACK), so the subtitle text must be
+ * re-drawn on top of the overlay or it stays invisible.  The view
+ * functions store the subtitle text into g_m12_extras_subtitle_buf
+ * (and optionally a right-aligned variant in
+ * g_m12_extras_subtitle_right_buf) before returning.  M12_StartupMenu_Draw
+ * calls this function AFTER m12_apply_graphics_overlay so the subtitle
+ * appears on top of the overlay border.  Position is the same as the
+ * view function (margin + 14, margin + 14) for the left text, and
+ * margin + panelW - 110, margin + 14 for the right text — both sit
+ * between stripes at y=40/60/70 (overlayMode 2) or above the inner
+ * panel border in mode 1.
+ *
+ * Style defaults to g_textSmallShadow (WHITE with 1px BLACK shadow)
+ * which is readable on any background. */
+static void m12_draw_extras_subtitle_overlay(const M12_StartupMenuState* state,
+                                              unsigned char* framebuffer,
+                                              int framebufferWidth,
+                                              int framebufferHeight) {
+    (void)state;
+    if (!g_m12_extras_subtitle_active) {
+        return;
+    }
+    {
+        int margin = framebufferWidth / 30;
+        int panelW = framebufferWidth - (margin * 2);
+        int x = margin + g_m12_extras_subtitle_x_offset;
+        int y = margin + g_m12_extras_subtitle_y_offset;
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      x, y, g_m12_extras_subtitle_buf, g_m12_extras_subtitle_style);
+        if (g_m12_extras_subtitle_right_active) {
+            int rightX = margin + panelW - 110;
+            m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          rightX, y, g_m12_extras_subtitle_right_buf, g_m12_extras_subtitle_style);
+        }
+    }
+    g_m12_extras_subtitle_active = 0;
+    g_m12_extras_subtitle_right_active = 0;
+}
+
 static int m12_use_modern_layout(int framebufferWidth,
                                  int framebufferHeight) {
     return framebufferWidth >= M12_MODERN_MIN_WIDTH &&
@@ -6303,6 +6369,7 @@ static void m12_draw_bestiary_view_modern(const M12_StartupMenuState* state,
                                           int framebufferWidth,
                                           int framebufferHeight) {
     int margin = framebufferWidth / 30;
+
     int heroH = framebufferHeight / 4;
     int contentY;
     int panelW;
@@ -6332,11 +6399,18 @@ static void m12_draw_bestiary_view_modern(const M12_StartupMenuState* state,
     snprintf(subBuf, sizeof(subBuf), "%d OF %d CREATURES",
              filteredCount, M12_Bestiary_TotalCount());
 
+
     m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
     m12_draw_modern_hero(state, framebuffer, framebufferWidth, framebufferHeight,
                          margin, margin, panelW, heroH, titleBuf);
-    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  margin + 14, margin + 18, subBuf, &g_textSmallAccent);
+    /* Group 7: subtitle is drawn AFTER m12_apply_graphics_overlay
+     * (which BLACK-fills the overlay frame) so it stays visible. */
+    snprintf(g_m12_extras_subtitle_buf, sizeof(g_m12_extras_subtitle_buf), "%s", subBuf);
+    g_m12_extras_subtitle_active = 1;
+    g_m12_extras_subtitle_x_offset = 14;
+    g_m12_extras_subtitle_y_offset = 14;
+    g_m12_extras_subtitle_style = &g_textSmallShadow;
+    g_m12_extras_subtitle_right_active = 0;
 
     m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
                    margin, contentY, panelW,
@@ -6395,6 +6469,7 @@ static void m12_draw_item_encyclopedia_view_modern(
     int framebufferHeight)
 {
     int margin = framebufferWidth / 30;
+
     int heroH = framebufferHeight / 4;
     int contentY;
     int panelW;
@@ -6424,8 +6499,14 @@ static void m12_draw_item_encyclopedia_view_modern(
     m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
     m12_draw_modern_hero(state, framebuffer, framebufferWidth, framebufferHeight,
                          margin, margin, panelW, heroH, titleBuf);
-    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  margin + 14, margin + 18, tabBuf, &g_textSmallAccent);
+    /* Group 7: subtitle drawn after overlay so it survives the
+     * m12_apply_graphics_overlay mode 1 BLACK-filled frame. */
+    snprintf(g_m12_extras_subtitle_buf, sizeof(g_m12_extras_subtitle_buf), "%s", tabBuf);
+    g_m12_extras_subtitle_active = 1;
+    g_m12_extras_subtitle_x_offset = 14;
+    g_m12_extras_subtitle_y_offset = 14;
+    g_m12_extras_subtitle_style = &g_textSmallShadow;
+    g_m12_extras_subtitle_right_active = 0;
 
     m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
                    margin, contentY, panelW,
@@ -6489,6 +6570,7 @@ static void m12_draw_screenshot_gallery_view_modern(
     int framebufferHeight)
 {
     int margin = framebufferWidth / 30;
+
     int heroH = framebufferHeight / 4;
     int contentY;
     int panelW;
@@ -6522,11 +6604,15 @@ static void m12_draw_screenshot_gallery_view_modern(
     m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
     m12_draw_modern_hero(state, framebuffer, framebufferWidth, framebufferHeight,
                          margin, margin, panelW, heroH, titleBuf);
-    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  margin + 14, margin + 18, subBuf, &g_textSmallAccent);
-    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  margin + panelW - 110, margin + 18, indexBuf,
-                  &g_textSmallAccent);
+    /* Group 7: subtitles drawn after overlay (which BLACK-fills the
+     * mode 1 frame at y=34-680) so they stay visible. */
+    snprintf(g_m12_extras_subtitle_buf, sizeof(g_m12_extras_subtitle_buf), "%s", subBuf);
+    g_m12_extras_subtitle_active = 1;
+    g_m12_extras_subtitle_x_offset = 14;
+    g_m12_extras_subtitle_y_offset = 14;
+    g_m12_extras_subtitle_style = &g_textSmallShadow;
+    snprintf(g_m12_extras_subtitle_right_buf, sizeof(g_m12_extras_subtitle_right_buf), "%s", indexBuf);
+    g_m12_extras_subtitle_right_active = 1;
 
     m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
                    margin, contentY, panelW,
@@ -7154,6 +7240,7 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
     if (!state || !framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
+
     g_m12_active_font_scale = state->settings.fontScale;
     if (g_m12_active_font_scale < 1) {
         g_m12_active_font_scale = 1;
@@ -7201,6 +7288,9 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_main_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         }
         m12_apply_graphics_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
+        /* Group 7: re-draw the extras subtitle on top of the overlay
+         * so the BLACK-filled mode 1 frame does not hide it. */
+        m12_draw_extras_subtitle_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
         return;
     }
     m12_draw_background(state, framebuffer, framebufferWidth, framebufferHeight);
