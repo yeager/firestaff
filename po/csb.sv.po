@@ -1,15 +1,14 @@
-# Firestaff — csb domain, English catalog.
-# Explicit English translations for Chaos Strikes Back.
+# Firestaff — csb domain, Swedish catalog.
+# Svensk översättning för Chaos Strikes Back runtime-strängar.
 #
 # Domain: csb
 #
-# CSB-specific keys: engine version, reincarnation panel,
-# resurrection panel, chaos cooldown, grey lord encounter,
-# hint oracle, champion pool, save import variants, neophyte
-# mode, launcher entry text.
-#
-# Source-locked to ReDMCSB DIALOG.C, CSBWin/Chaos.cpp,
-# CHANGE7_28, CHANGE7_36, CHANGE8_13.
+# Baserad på po/dm1.sv.po (Slice 2) + CSB-specifika nycklar
+# från csb.pot.  CSB delar många gränssnittstermer med DM1
+# (FOOD/WATER, HUD-meters, inventory labels) men har unika
+# strängar för: engine version 2.1 (CHANGE7_36/8_13),
+# chaos cooldown (CHANGE7_28), reincarnation/resurrection,
+# grey lord encounter, hint oracle, neophyte mode.
 #
 msgid ""
 msgstr ""
@@ -18,73 +17,74 @@ msgstr ""
 "POT-Creation-Date: 2026-04-22 05:00+0200\n"
 "PO-Revision-Date: 2026-06-15 17:00+0200\n"
 "Last-Translator: Firestaff Contributors\n"
-"Language-Team: English\n"
-"Language: en\n"
+"Language-Team: Swedish\n"
+"Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 # Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
 msgid "csb.engine.version"
 msgstr "v2.1"
 
-# Reincarnation panel (CSB-specific feature)
+# Reincarnation panel
 msgid "csb.reincarnate.title"
-msgstr "REINCARNATE"
+msgstr "ÅTERFÖDAS"
 
 msgid "csb.reincarnate.chaos"
-msgstr "A NEW CHAMPION ENTERS THE WORLD"
+msgstr "EN NY HJÄLTE STIGER IN I VÄRLDEN"
 
 msgid "csb.reincarnate.choose"
-msgstr "CHOOSE A NAME FOR THE NEW CHAMPION"
+msgstr "VÄLJ ETT NAMN FÖR DEN NYA HJÄLTEN"
 
 msgid "csb.reincarnate.stat-roll"
-msgstr "ROLLING 12 NEW STATISTICS"
+msgstr "SLÅ 12 NYA STATISTIKVÄRDEN"
 
 # Resurrection panel
 msgid "csb.resurrect.title"
-msgstr "RESURRECT"
+msgstr "ÅTERUPPVÄCKA"
 
 msgid "csb.resurrect.altar"
-msgstr "VI ALTAR OF DENDAR"
+msgstr "VI ALTARE I DENDAR"
 
 msgid "csb.resurrect.choose"
-msgstr "CHOOSE A CHAMPION TO RAISE"
+msgstr "VÄLJ EN HJÄLTE ATT ÅTERUPPVÄCKA"
 
 # Chaos magic cooldown (CHANGE7_28)
 msgid "csb.chaos.cooldown"
-msgstr "CHAOS COOLDOWN"
+msgstr "KAOS-NEDKYLNING"
 
 msgid "csb.chaos.energy"
-msgstr "CHAOS ENERGY"
+msgstr "KAOS-ENERGI"
 
 msgid "csb.chaos.recharge"
-msgstr "RECHARGING CHAOS RESERVES"
+msgstr "LADDAR KAOS-RESERVER"
 
 # Grey Lord encounter
 msgid "csb.greylord.intro"
-msgstr "A FIGURE STEPS FROM THE SHADOWS"
+msgstr "EN FIGUR TRÄDER FRAM UR SKUGGORNA"
 
 msgid "csb.greylord.choose"
-msgstr "THE GREY LORD OFFERS A BARGAIN"
+msgstr "DEN GRÅ HERREN ERBJUDER EN ÖVERENSKOMMELSE"
 
 # Hint Oracle
 msgid "csb.oracle.title"
-msgstr "THE HINT ORACLE"
+msgstr "TIPSPORREN"
 
 msgid "csb.oracle.prompt"
-msgstr "WOULD YOU LIKE A HINT?"
+msgstr "VILL DU HA EN VINK?"
 
 # Champion pool (CSB has 4 max in active party vs 16 candidates)
 msgid "csb.party.max"
-msgstr "MAXIMUM PARTY SIZE 4"
+msgstr "MAX GRUPPSTORLEK 4"
 
 msgid "csb.party.slot"
-msgstr "PARTY SLOT"
+msgstr "GRUPPPLATS"
 
 # Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
 msgid "csb.save.import"
-msgstr "IMPORT CSB SAVEGAME"
+msgstr "IMPORTERA CSB-SPARNING"
 
 msgid "csb.save.csb-st-v20"
 msgstr "ATARI ST CSB 2.0"
@@ -100,10 +100,10 @@ msgstr "CSB PC 3.4"
 
 # Neophyte mode (CSB-only training option)
 msgid "csb.neophyte.title"
-msgstr "NEOPHYTE MODE"
+msgstr "NYBÖRJARLÄGE"
 
 msgid "csb.neophyte.desc"
-msgstr "TRAINING DIFFICULTY"
+msgstr "TRÄNINGSSVÅRIGHETSGRAD"
 
 # Engine version (CHANGE7_36, CHANGE8_13)
 msgid "csb.engine.dm1"
@@ -117,19 +117,19 @@ msgid "csb.launcher.title"
 msgstr "CHAOS STRIKES BACK"
 
 msgid "csb.launcher.subtitle"
-msgstr "THE CHAMPIONS RETURN"
+msgstr "HJÄLTARNA ÅTERVÄNDER"
 
 msgid "csb.launcher.lore-shape"
-msgstr "LORE SHAPE"
+msgstr "BERÄTTELSEFORM"
 
 msgid "csb.launcher.lore-line-1"
-msgstr "CHAOS STILL CASTS A LONG SHADOW"
+msgstr "KAOS KASTAR FORTFARANDE EN LÅNG SKUGGA"
 
 msgid "csb.launcher.lore-line-2"
-msgstr "THE PLAYER HUNTS CORBUM MATERIAL"
+msgstr "SPELAREN JAGAR CORBUM-MATERIAL"
 
 msgid "csb.launcher.lore-line-3"
-msgstr "RETURNING CHAMPIONS FACE A HARDER MAZE"
+msgstr "ÅTERVÄNDANDE HJÄLTAR MÖTER EN HÅRDARE LABYRINT"
 
 msgid "csb.launcher.lore-line-4"
-msgstr "THE WORLD FEELS OLDER AND LESS SAFE"
+msgstr "VÄRLDEN KÄNNS ÄLDRE OCH MINDRE SÄKER"
