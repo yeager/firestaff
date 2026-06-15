@@ -180,16 +180,46 @@ stays readable on any theme.
 
 ## Group 8 — Functional divergence report findings
 
-`docs/dm1-v1-functional-divergence-report.md` lists 68 findings
-across 13 modules (581 lines). Severity-classified:
-- Major: ~5 (most are FIXED or open design decisions)
-- Minor: ~50 (mostly "two parallel implementations" or
-  "F0377/F0378 not called from new compat path")
-- Cosmetic: ~13
+`docs/dm1-v1-functional-divergence-report.md` (dated 2026-06-13)
+lists 68 findings across 13 modules. **That report predates the
+v2.7.13–v2.7.22 source-lock work and is now substantially stale**:
+several of its "Top 10" Major findings have since been implemented.
+The table below reconciles each Major finding against current
+source (HEAD `9378d573` + `release-v2.7.23`), so the report should
+be read with these cross-references rather than at face value.
 
-These are documented in the report itself and tracked against
-the F0377/F0378/F0380 amalgam path which still passes all
-PC 3.4-emulation tests.
+### Group 8 Major-finding reconciliation (v2.7.23)
+
+| Report finding | Report claim (2026-06-13) | Current source state | Classification |
+|----------------|---------------------------|----------------------|----------------|
+| **GRP-02** (F0192 creature poison resistance) | "not implemented; raw poison applied" | `F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat` exists in `memory_combat_pc34_compat.c:953` (and used by `memory_projectile_pc34_compat.c`). | **FIXED** (v2.7.13, BUG-113) |
+| **GRP-03** (Lord Chaos/Order double-move, F0202/3/4) | "archenemy double-move not implemented" | C23 Lord Chaos / C25 Lord Order promoted to FULL tier with F0204 warp/double-square move in `memory_creature_ai_pc34_compat.c:290-311`. | **FIXED** (BUG-104) |
+| **CHM-02 / BUG-103** (F0308 luck) | "luck treated as 0; NEEDS DISASSEMBLY REVIEW" | `F0308_CHAMPION_IsLucky` implemented in `memory_combat_pc34_compat.c:207+` (50% short-circuit, luck×2 roll, ±2 bounded update, BUG0_38 negative path). | **FIXED** (Group 1) |
+| **CHM-06 / BUG0_72** (F0310 `>` vs `>=` clamp) | "not preserved" | BUG0_72 `>` semantics preserved verbatim in `dm1_v1_combat_pc34_compat.c:919-923` and `memory_champion_lifecycle_pc34_compat.c:471`. | **FIXED / preserved** |
+| **CHM-01 / BUG0_41** (Megamax compiler bug) | "intentionally fixed → balance differs" | Deliberate correctness fix (antifire/antimagic participate). Documented in BUG_AUDIT v2.7.13. | **DOCUMENTED** (intentional v1 deviation) |
+| **MNU-02 / BUG-107** (F0757 Thieves Eye duration) | "`spellPower*40`, lasts longer than original" | Confirmed intentional: `memory_magic_pc34_compat.c:663` uses the source-locked envelope rather than the original's uninitialised-stack value. | **DOCUMENTED** (intentional) |
+| **DUN-05 / BUG0_08** (thing overfill) | "silently dropped, not crashed" | Deliberate defensive guard with explicit diagnostic at `memory_dungeon_dat_pc34_compat.c:431`; surfaced via `memory_tick_orchestrator_pc34_compat.c:891`. | **DOCUMENTED** (intentional defensive) |
+| **PJE-05 / BUG0_16** (projectile list overfill) | "silently dropped, not crashed" | Deliberate v1 hard cap with diagnostic at `memory_projectile_pc34_compat.c:255-270`. | **DOCUMENTED** (intentional defensive) |
+| **LSV-01/02/03 / SAV-01** (save/load not original-compatible) | "native format, not PC 3.4 interop" | By design: Firestaff uses its own atomic native save format (`dm1_v1_save_load.c`). Original-save interop is an OPEN-OMFATTANDE milestone, not a parity gap. | **OPEN-OMFATTANDE** (separate milestone) |
+| **REV-01** (F0281 CHAMPION_Rename UI) | "resurrection rename prompt silently missing" | Still not ported to the new M11 path (amalgam-only). Player-facing but low-frequency; bounded UI work for a future pass. | **OPEN-BOUNDED** (deferred) |
+| **MOV-05** (F0284 rotates Direction but not Cell) | "inventory panel may mis-render when turning with a candidate present" | `set_party_direction_redmcsb_compat` rotates per-champion Direction; the compat `ChampionState` has no Cell field (party Cell is modelled at party level). Touches the just-stabilized v2.7.22 mirror/candidate machinery — **not a safe bounded fix on a 99%-parity target.** | **OPEN-BOUNDED** (deferred; risk-gated) |
+
+The ~50 **Minor** findings are overwhelmingly "two parallel
+implementations exist" (amalgam vs compat layer) or "F-function
+is amalgam-only / intentional refactor split". These are
+maintenance/architecture observations, not behavioral parity
+gaps: the amalgam path still passes all PC 3.4-emulation tests
+and the compat layer is source-locked per-function. The ~13
+**Cosmetic** findings (BUG0_26/66/71/78 preservation, defensive
+loop guards, etc.) are deliberate-by-design and require no
+action.
+
+**Net for v2.7.23:** no new Group 8 code fixes were landed —
+the genuinely-open items (REV-01, MOV-05) are either risk-gated
+against the freshly-stabilized mirror/candidate code or are
+bounded UI work better scoped to a dedicated pass. The stale
+report has been reconciled here so future sessions do not
+re-investigate already-FIXED findings.
 
 ---
 
@@ -198,8 +228,14 @@ PC 3.4-emulation tests.
 **~99% parity** as of 2026-06-15 / HEAD `b8dfee6e`. The
 remaining work is:
 
-1. **Group 8 functional divergence findings (~68)** — most
-   are "Minor" design clarifications, not blocking parity.
+1. **Group 8 functional divergence findings (~68)** — the
+   2026-06-13 report is now substantially stale; its Major
+   "Top 10" items are mostly FIXED (GRP-02, GRP-03, CHM-02,
+   CHM-06) or deliberate-by-design (CHM-01, MNU-02, DUN-05,
+   PJE-05, LSV-01). Only REV-01 (resurrection rename UI) and
+   MOV-05 (champion Cell rotation) remain genuinely open, and
+   both are deferred/risk-gated. See the Group 8
+   reconciliation table above. None block parity.
 
 2. **DM2 / CSB / Nexus / Theron** — separate milestones, not
    considered gaps for DM1 V1 parity. CSB at 110/110 ctest
