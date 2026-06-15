@@ -1409,21 +1409,33 @@ int F0822_EXPLOSION_Advance_Compat(
             outResult->outActionParty.allowedWounds = 0;
             outResult->emittedCombatActionPartyCount = 1;
         } else if (digest->destHasCreatureGroup) {
-            /* ReDMCSB PROJEXPL.C:F0220 line 858: when a poison cloud
-             * lands on a creature group, the original calls
-             * F0191_GROUP_GetDamageAllCreaturesOutcome directly
-             * with attackApplied.  F0191 does the per-creature
-             * resistance adjustment internally via F0190; the
-             * caller does NOT pre-scale via F0192.  v1's earlier
-             * version pre-scaled with F0192 which doubled the
-             * damage (e.g. attack 96 with resistance 5 gave 4
-             * instead of 3); the fix is to pass attackApplied
-             * straight through.  See PROJEXPL.C:858-866 and
-             * GROUP.C:F0190 lines 932-1010. */
-            build_explosion_group_action(in, digest, attackApplied,
-                                         COMBAT_ATTACK_NORMAL,
-                                         &outResult->outActionGroup);
-            outResult->emittedCombatActionGroupCount = 1;
+            /* ReDMCSB PROJEXPL.C:F0220 lines 858-865: when a poison
+             * cloud lands on a creature group, the original first
+             * calls F0192_GROUP_GetResistanceAdjustedPoisonAttack to
+             * scale the attack by the creature type's poison
+             * resistance ((poison + random(4)) << 3) / (resistance + 1)
+             * — DEFS.H:1664 M061_POISON_RESISTANCE, GROUP.C:F0192
+             * lines 991-1008), then calls
+             * F0191_GROUP_GetDamageAllCreaturesOutcome with the
+             * resistance-adjusted value.  F0191 does the per-creature
+             * damage application (GROUP.C:F0190 lines 932-1010); it
+             * does NOT re-apply resistance.  Pass the F0192-adjusted
+             * attack to build_explosion_group_action so rawAttackValue
+             * is the resistance-adjusted value (e.g. attack=96 with
+             * Mummy resistance=5 gives rawAttackValue=4, not 3).  v1
+             * had this wrong in f60e82f11 by removing F0192 entirely;
+             * the ReDMCSB source clearly reassigns L0530_i_Attack from
+             * the F0192 result. */
+            int resistanceAdjusted = 0;
+            F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
+                digest->destCreatureType, attackApplied, rng,
+                &resistanceAdjusted);
+            if (resistanceAdjusted > 0) {
+                build_explosion_group_action(in, digest, resistanceAdjusted,
+                                             COMBAT_ATTACK_NORMAL,
+                                             &outResult->outActionGroup);
+                outResult->emittedCombatActionGroupCount = 1;
+            }
         }
         if (in->attack >= 6) {
             outNewState->attack = in->attack - 3;

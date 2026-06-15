@@ -1,5 +1,5 @@
 {
-  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branch": "main",
   "firestaffGuards": {
     "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
     "F0702_MOVEMENT_TryMove_Compat": "memory_movement_pc34_compat.c:408-493",
@@ -24,5 +24,5 @@
   "status": "PASS549_DM1_V1_PASSABLE_DOOR_MOVEMENT_TIMING_LOCKED",
   "timestampUtc": "2026-05-16T06:42:40.077395+00:00",
   "whyNotPass547Duplicate": "pass547 locks blocked closed-door/fake-wall/group convergence. Pass549 locks the opposite door-state branch: one-fourth and destroyed doors are accepted movement, keep queued follow-up input, process destination sensors, set movement cooldown, clear projectile cooldown, and request viewport redraw.",
-  "worktree": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate"
+  "worktree": "/Users/bosse/.openclaw/workspace-main"
 }

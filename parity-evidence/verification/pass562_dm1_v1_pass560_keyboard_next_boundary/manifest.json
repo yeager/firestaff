@@ -1,6 +1,6 @@
 {
   "blocker": null,
-  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branch": "main",
   "canonicalDm1": {
     "files": {
       "DUNGEON.DAT": {
@@ -67,7 +67,7 @@
     },
     "status": "BLOCKED_PASS560_RUNTIME_C254_IO_DRIVER_VECTOR_NOT_CAPTURED"
   },
-  "repo": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass562_dm1_v1_pass560_keyboard_next_boundary.v1",
   "sourceAudit": [
     {

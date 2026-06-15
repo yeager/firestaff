@@ -1,5 +1,5 @@
 {
-  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branch": "main",
   "closedGap": "blocked wall/door/closed-real-fakewall self-damage request fields and ordering are source-locked without touching viewport/occlusion rendering",
   "firestaffAudit": {
     "focusedCTest": "dm1_v1_movement_command_core_pc34_compat",
@@ -16,7 +16,7 @@
       ]
     }
   },
-  "head": "cd7bd37ef6aafca978c34501de715afd7dd8b3bf",
+  "head": "7ceffacb8b6862944dd6fcca4640d32806adadb6",
   "notClaimed": [
     "new original DOS runtime trace",
     "actual random wound materialization parity beyond the recorded request",
@@ -64,8 +64,8 @@
     }
   },
   "status": "PASS590_DM1_V1_BLOCKED_WALL_DOOR_SELF_DAMAGE_SOURCE_LOCKED",
-  "testExecutable": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/build/test_dm1_v1_movement_command_core_pc34_compat",
+  "testExecutable": "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_movement_command_core_pc34_compat",
   "testOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1",
-  "timestampUtc": "2026-06-12T19:28:15.088432+00:00",
-  "worktree": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate"
+  "timestampUtc": "2026-06-14T20:30:31.963722+00:00",
+  "worktree": "/Users/bosse/.openclaw/workspace-main"
 }

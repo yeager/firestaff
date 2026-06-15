@@ -1,21 +1,21 @@
 {
-  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branch": "main",
   "decision": "pass514/pass556/pass557 evidence chain incomplete",
   "externalEvidence": {
     "pass550": {
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/parity-evidence/verification/pass558_external_evidence/pass550_pass514_manifest.json",
+      "path": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass558_external_evidence/pass550_pass514_manifest.json",
       "present": false
     },
     "pass556": {
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/parity-evidence/verification/pass558_external_evidence/pass556_manifest.json",
+      "path": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass558_external_evidence/pass556_manifest.json",
       "present": false
     },
     "pass557": {
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/parity-evidence/verification/pass558_external_evidence/pass557_manifest.json",
+      "path": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass558_external_evidence/pass557_manifest.json",
       "present": false
     }
   },
-  "head": "cd7bd37ef6aafca978c34501de715afd7dd8b3bf",
+  "head": "7ceffacb8b6862944dd6fcca4640d32806adadb6",
   "nextBoundary": "DOSBox window/event queue -> guest keyboard IRQ/int09 -> IBMIO buffer -> IO2 presence/read",
   "nonClaims": [
     "no new original runtime capture",
@@ -40,7 +40,7 @@
     "pass557RulesOutHostRouteGeneration": false,
     "sourceAuditOk": true
   },
-  "repo": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass558_dm1_v1_pass514_io_blocker_classifier.v1",
   "sourceAudit": [
     {
@@ -151,5 +151,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE",
-  "timestampUtc": "2026-06-12T19:28:09.745944+00:00"
+  "timestampUtc": "2026-06-14T20:30:30.743744+00:00"
 }

@@ -117,7 +117,26 @@ def png_chunk(kind: bytes, payload: bytes) -> bytes:
 
 
 def write_png(path: Path, width: int, height: int, rgb: tuple[int, int, int]) -> None:
-    raw = b"".join(b"\x00" + bytes(rgb) * width for _ in range(height))
+    """Write a 320x200 RGB PNG with a colour gradient.
+
+    Pass 295f04ab6 hardened scripts/dosbox_dm1_original_viewport_reference_capture.sh
+    to reject rawshot candidates that have uniqueColors<=1 (the black/blank
+    guard).  The original fixture wrote solid single-colour PNGs, so the
+    guard now rejects them.  Add a vertical gradient from the supplied
+    base rgb to a darker variant of the same hue so each PNG has dozens
+    of unique colours while still encoding the route-event colour
+    family the fixture was designed around. """
+    base_r, base_g, base_b = rgb
+    rows = []
+    for y in range(height):
+        # Subtle per-row brightness ramp so the gradient is visible but
+        # all rows remain in the same family.
+        ramp = int(255 * (1.0 - (y / max(1, height - 1)) * 0.5))
+        rr = min(255, max(0, (base_r * ramp) // 255))
+        gg = min(255, max(0, (base_g * ramp) // 255))
+        bb = min(255, max(0, (base_b * ramp) // 255))
+        rows.append(b"\x00" + bytes((rr, gg, bb)) * width)
+    raw = b"".join(rows)
     payload = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
     data = b"\x89PNG\r\n\x1a\n" + png_chunk(b"IHDR", payload) + png_chunk(b"IDAT", zlib.compress(raw)) + png_chunk(b"IEND", b"")
     path.write_bytes(data)

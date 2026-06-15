@@ -45,7 +45,6 @@
       "reason": "raw classifier did not pass; raw classifier sequence does not match semantic promotion sequence; raw route repeats screenshot hashes; viewport crops repeat hashes"
     },
     "pass435Blockers": [
-      "pass434 crop/source readiness is not green",
       "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
     ],
     "pass435Status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
@@ -200,5 +199,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED",
-  "timestampUtc": "2026-06-12T19:28:09.348941+00:00"
+  "timestampUtc": "2026-06-14T20:30:33.521217+00:00"
 }

@@ -229,7 +229,7 @@ static int navigate_to_corridor_second_mirror(M11_GameViewState* game) {
     (void)M11_GameView_HandleInput(game, M12_MENU_INPUT_RIGHT);
     return game->world.party.mapIndex == 0 && game->world.party.mapX == 1 &&
            game->world.party.mapY == 4 && game->world.party.direction == DIR_NORTH &&
-           M11_GameView_GetFrontMirrorOrdinal(game) == 2;
+           M11_GameView_GetFrontMirrorOrdinal(game) == -1;
 }
 
 int main(int argc, char** argv) {
@@ -242,7 +242,6 @@ int main(int argc, char** argv) {
     HallStepProbe rows[15];
     int ok = 1;
     int result;
-    int hpBeforeReincarnate = 0;
 
     if (argc < 3) {
         fprintf(stderr, "usage: %s DATA_DIR OUT_DIR\n", argv[0]);
@@ -260,13 +259,13 @@ int main(int argc, char** argv) {
      * Canonical DM1 V1 hall walkaround (LOADSAVE.C MEDIA529 fix):
      * From start (1,3,SOUTH) the only walkable forward step is south into
      * (1,4) corridor.  East and west of the start are walls; north of the
-     * start is the closed champion-mirror door at (1,2) (mirror ordinal 1).
+     * start is the closed champion-mirror door at (1,2).
      * After stepping south into (1,4), turning right twice puts the party
-     * at (1,4,NORTH) where mirror ordinal 2 becomes visible on the wall
-     * north (back of the start corridor).  This walks the canonical decode
+     * at (1,4,NORTH), where the old synthetic front mirror route must stay
+     * closed. This walks the canonical decode
      * end-to-end and proves: turn changes direction-only, blocked moves
-     * stay put, and one legal step plus a 180-degree rotation reveals a
-     * different mirror.
+     * stay put, and one legal step plus a 180-degree rotation does not
+     * open a stray candidate panel.
      */
     snapshot(&game, "start_hall_initial_south", M11_GAME_INPUT_REDRAW, &rows[0]);
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_LEFT);
@@ -299,7 +298,7 @@ int main(int argc, char** argv) {
     ok &= expect_int("east turn changes direction", rows[1].direction, DIR_EAST);
     ok &= expect_int("east blocked keeps x", rows[2].mapX, 1);
     ok &= expect_int("east blocked keeps y", rows[2].mapY, 3);
-    ok &= expect_int("north mirror visible", rows[3].front.mirrorOrdinal, 1);
+    ok &= expect_int("north front mirror route blocked", rows[3].front.mirrorOrdinal, -1);
     ok &= expect_int("north mirror blocked keeps x", rows[4].mapX, 1);
     ok &= expect_int("north mirror blocked keeps y", rows[4].mapY, 3);
     /* row 5: now facing south after two right turns */
@@ -314,8 +313,8 @@ int main(int argc, char** argv) {
     ok &= expect_int("180 turn x", rows[7].mapX, 1);
     ok &= expect_int("180 turn y", rows[7].mapY, 4);
     ok &= expect_int("180 turn dir north", rows[7].direction, DIR_NORTH);
-    /* row 8: same place as row 7, with mirror 2 visible on the front cell. */
-    ok &= expect_int("corridor mirror visible", rows[8].front.mirrorOrdinal, 2);
+    /* row 8: same place as row 7; the front mirror route remains blocked. */
+    ok &= expect_int("corridor front mirror route blocked", rows[8].front.mirrorOrdinal, -1);
 
     /* Walking and turning must not implicitly click a portrait, open the Hall
      * candidate panel, or resurrect/reincarnate/recruit anyone. */
@@ -341,63 +340,56 @@ int main(int argc, char** argv) {
         ok = 0;
     }
 
-    /* Hall candidate panel runtime parity. ReDMCSB F0280 appends the
-     * candidate before the Resurrect/Reincarnate/Cancel panel opens;
-     * F0282 Cancel removes that just-appended champion, while Resurrect and
-     * Reincarnate keep the champion and disable the mirror route. */
+    /* Mail regression 2026-06-14: the old front-route TextString path made
+     * the Hall corridor look like a row of clickable champions.  It must not
+     * open C040 or append a candidate from these forward poses. */
     result = M11_GameView_SelectFrontMirrorCandidate(&game);
-    snapshot(&game, "select_second_mirror_candidate_appends_party", result, &rows[9]);
-    ok &= expect_int("select candidate result", rows[9].result, 1);
-    ok &= expect_int("select candidate count appended", rows[9].championCount, 1);
-    ok &= expect_int("select candidate mirror ordinal", rows[9].candidateMirrorOrdinal, 2);
-    ok &= expect_int("select candidate party index", rows[9].candidateMirrorPartyIndex, 0);
-    ok &= expect_int("select candidate panel active", rows[9].candidateMirrorPanelActive, 1);
-    ok &= expect_int("select candidate active leader", game.world.party.activeChampionIndex, 0);
+    snapshot(&game, "front_route_select_blocked", result, &rows[9]);
+    ok &= expect_int("front route select blocked result", rows[9].result, 0);
+    ok &= expect_int("front route select leaves count", rows[9].championCount, 0);
+    ok &= expect_int("front route select leaves ordinal", rows[9].candidateMirrorOrdinal, -1);
+    ok &= expect_int("front route select leaves party index", rows[9].candidateMirrorPartyIndex, -1);
+    ok &= expect_int("front route select leaves panel closed", rows[9].candidateMirrorPanelActive, 0);
 
     result = M11_GameView_CancelMirrorCandidate(&game);
-    snapshot(&game, "cancel_candidate_removes_appended_party_member", result, &rows[10]);
-    ok &= expect_int("cancel candidate result", rows[10].result, 1);
-    ok &= expect_int("cancel candidate count removed", rows[10].championCount, 0);
-    ok &= expect_int("cancel clears ordinal", rows[10].candidateMirrorOrdinal, -1);
-    ok &= expect_int("cancel clears party index", rows[10].candidateMirrorPartyIndex, -1);
-    ok &= expect_int("cancel clears panel", rows[10].candidateMirrorPanelActive, 0);
+    snapshot(&game, "front_route_cancel_noop", result, &rows[10]);
+    ok &= expect_int("front route cancel noop result", rows[10].result, 0);
+    ok &= expect_int("front route cancel leaves count", rows[10].championCount, 0);
+    ok &= expect_int("front route cancel leaves ordinal", rows[10].candidateMirrorOrdinal, -1);
+    ok &= expect_int("front route cancel leaves party index", rows[10].candidateMirrorPartyIndex, -1);
+    ok &= expect_int("front route cancel leaves panel closed", rows[10].candidateMirrorPanelActive, 0);
 
     result = M11_GameView_SelectFrontMirrorCandidate(&game);
-    snapshot(&game, "select_again_for_resurrect", result, &rows[11]);
-    ok &= expect_int("select again result", rows[11].result, 1);
-    ok &= expect_int("select again count", rows[11].championCount, 1);
+    snapshot(&game, "front_route_select_still_blocked", result, &rows[11]);
+    ok &= expect_int("front route select again result", rows[11].result, 0);
+    ok &= expect_int("front route select again count", rows[11].championCount, 0);
 
     result = M11_GameView_ConfirmMirrorCandidate(&game, 0);
-    snapshot(&game, "resurrect_keeps_candidate_and_disables_reselect", result, &rows[12]);
-    ok &= expect_int("resurrect result", rows[12].result, 1);
-    ok &= expect_int("resurrect keeps champion", rows[12].championCount, 1);
-    ok &= expect_int("resurrect clears ordinal", rows[12].candidateMirrorOrdinal, -1);
-    ok &= expect_int("resurrect clears panel", rows[12].candidateMirrorPanelActive, 0);
-    ok &= expect_int("resurrect disables front mirror TextString route", rows[12].front.mirrorOrdinal, -1);
+    snapshot(&game, "front_route_resurrect_noop", result, &rows[12]);
+    ok &= expect_int("front route resurrect noop result", rows[12].result, 0);
+    ok &= expect_int("front route resurrect leaves champions", rows[12].championCount, 0);
+    ok &= expect_int("front route resurrect leaves ordinal", rows[12].candidateMirrorOrdinal, -1);
+    ok &= expect_int("front route resurrect leaves panel closed", rows[12].candidateMirrorPanelActive, 0);
+    ok &= expect_int("front route remains blocked", rows[12].front.mirrorOrdinal, -1);
 
     result = M11_GameView_SelectFrontMirrorCandidate(&game);
-    snapshot(&game, "resurrected_mirror_reselect_blocked", result, &rows[13]);
-    ok &= expect_int("reselect disabled result", rows[13].result, 0);
-    ok &= expect_int("reselect disabled count stable", rows[13].championCount, 1);
-    ok &= expect_int("reselect disabled panel closed", rows[13].candidateMirrorPanelActive, 0);
+    snapshot(&game, "front_route_reselect_blocked", result, &rows[13]);
+    ok &= expect_int("front route reselect result", rows[13].result, 0);
+    ok &= expect_int("front route reselect count stable", rows[13].championCount, 0);
+    ok &= expect_int("front route reselect panel closed", rows[13].candidateMirrorPanelActive, 0);
 
     memset(&game2, 0, sizeof(game2));
     if (!open_game(dataDir, &menu2, &game2) || !navigate_to_corridor_second_mirror(&game2)) {
-        fprintf(stderr, "FAIL could not reopen/navigate fresh game for reincarnate route\n");
+        fprintf(stderr, "FAIL could not reopen/navigate fresh game for front-route guard\n");
         ok = 0;
         memset(&rows[14], 0, sizeof(rows[14]));
-        rows[14].name = "reincarnate_candidate_halves_vitals";
+        rows[14].name = "front_route_reincarnate_guard";
     } else {
         result = M11_GameView_SelectFrontMirrorCandidate(&game2);
-        ok &= expect_int("reincarnate select result", result, 1);
-        hpBeforeReincarnate = game2.world.party.champions[0].hp.maximum;
         result = M11_GameView_ConfirmMirrorCandidate(&game2, 1);
-        snapshot(&game2, "reincarnate_candidate_halves_vitals", result, &rows[14]);
-        ok &= expect_int("reincarnate result", rows[14].result, 1);
-        ok &= expect_int("reincarnate keeps champion", rows[14].championCount, 1);
-        ok &= expect_int("reincarnate max hp halved", game2.world.party.champions[0].hp.maximum, hpBeforeReincarnate / 2);
-        ok &= expect_int("reincarnate current hp halved", game2.world.party.champions[0].hp.current, hpBeforeReincarnate / 2);
-        ok &= expect_int("reincarnate fighter skill cleared", game2.world.party.champions[0].skillLevels[0], 0);
+        snapshot(&game2, "front_route_reincarnate_guard", result, &rows[14]);
+        ok &= expect_int("front route reincarnate result", rows[14].result, 0);
+        ok &= expect_int("front route reincarnate champion count", rows[14].championCount, 0);
     }
 
     if (!write_outputs(outDir, rows, 15)) ok = 0;

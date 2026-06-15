@@ -351,6 +351,7 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                                                        : M12_MENU_INPUT_LEFT);
             return 1;
         case M12_HIT_SETTINGS_ROW:
+        case M12_HIT_SETTINGS_CYCLE:
             while (state->settingsSelectedIndex != hit.index) {
                 int before = state->settingsSelectedIndex;
                 M12_MenuInput mv = (hit.index > state->settingsSelectedIndex)
@@ -363,7 +364,10 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
              * strip — that's M12_HIT_SETTINGS_TAB).  v2.7.15
              * split tab cycling (LEFT/RIGHT) from value cycling
              * (VALUE_LEFT/VALUE_RIGHT) so the cycle button
-             * doesn't accidentally switch tabs. */
+             * doesn't accidentally switch tabs.  M12_HIT_SETTINGS_CYCLE
+             * is the hit-test variant for DATA_DIR / EXPORT / IMPORT
+             * rows that have no left-half value-cycling area (their
+             * whole row is the cycle button) — same code path. */
             M12_StartupMenu_HandleInput(state,
                                         hit.delta >= 0
                                             ? M12_MENU_INPUT_VALUE_RIGHT

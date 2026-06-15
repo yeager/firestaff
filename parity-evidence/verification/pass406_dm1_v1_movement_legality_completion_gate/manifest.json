@@ -1,5 +1,5 @@
 {
-  "branch": "pass784-dm1-v1-runtime-c040-eye-live-candidate",
+  "branch": "main",
   "checks": [
     "tools/verify_v1_movement_legality_source_lock.py",
     "build/test_dm1_v1_movement_core_pc34_compat"
@@ -9,7 +9,7 @@
     "F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat": "memory_movement_pc34_compat.c:709-841",
     "runtimeExecutable": "build/test_dm1_v1_movement_core_pc34_compat"
   },
-  "head": "85cec7abe76795300c7539096a77045c58eb105a",
+  "head": "7ceffacb8b6862944dd6fcca4640d32806adadb6",
   "notClaimed": [
     "representative original DOS movement overlay parity",
     "complete movement side-effect parity",
@@ -25,5 +25,5 @@
   },
   "sourceLockOutputFirstLine": "DM1 V1 movement legality source-lock gate passed",
   "status": "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN",
-  "timestampUtc": "2026-06-12T21:41:49.013046+00:00"
+  "timestampUtc": "2026-06-14T20:30:31.374355+00:00"
 }

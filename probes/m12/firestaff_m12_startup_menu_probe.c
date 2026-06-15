@@ -510,13 +510,19 @@ int main(void) {
                  state.view == M12_MENU_VIEW_SETTINGS,
                  "settings row opens settings screen");
 
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    /* v2.7.15 split: LEFT/RIGHT cycles the settings tab strip
+     * (CONTROLS/AUDIO/ACCESSIBILITY), UP/DOWN moves the row cursor,
+     * and VALUE_LEFT/VALUE_RIGHT/ACCEPT cycle the value of the
+     * selected row.  Cycle the four settings values via VALUE_RIGHT
+     * so the language/graphics/renderer/window values each advance
+     * by one. */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     probe_record(&tally,
                  "INV_M12_10",
                  state.settings.languageIndex == 1 &&

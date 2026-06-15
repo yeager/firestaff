@@ -10,21 +10,21 @@
     {
       "file": "tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py",
       "id": "pass500_source_gate",
-      "line": 230,
+      "line": 233,
       "needle": "pass500-dm1-v1-viewport-walls-blocker-cleanup-source-lock",
       "ok": true
     },
     {
       "file": "tools/verify_pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.py",
       "id": "pass499_runtime_predicate",
-      "line": 162,
+      "line": 165,
       "needle": "same viewport",
       "ok": true
     },
     {
       "file": "tools/verify_pass496_dm1_v1_wall_occlusion_spec_matrix.py",
       "id": "wall_spec_matrix",
-      "line": 15,
+      "line": 17,
       "needle": "SOURCE_CHECKS",
       "ok": true
     },

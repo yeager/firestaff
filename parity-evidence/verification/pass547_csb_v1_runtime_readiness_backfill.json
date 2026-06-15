@@ -105,8 +105,11 @@
         "M12_AssetStatus_GetVersionCount(\"dm1\")",
         "_canonical/dm1/TITLE"
       ],
-      "missing": [],
-      "ok": true
+      "missing": [
+        "M12_AssetStatus_GetVersionCount(\"dm1\")",
+        "_canonical/dm1/TITLE"
+      ],
+      "ok": false
     },
     {
       "id": "firestaff_m11_runtime_open_runs_original_dm1_handoff",
@@ -189,6 +192,7 @@
   ],
   "failures": [
     "firestaff_m12_launch_guard_still_blocks_csb missing ['Only DM1 is launch-supported', 'strcmp(gameId, \"dm1\") == 0'] path_exists=True",
+    "firestaff_m11_original_handoff_is_dm1_title_first missing ['M12_AssetStatus_GetVersionCount(\"dm1\")', '_canonical/dm1/TITLE'] path_exists=True",
     "firestaff_m11_runtime_open_runs_original_dm1_handoff missing ['m11_open_requested_launch', 'm11_play_redmcsb_title_intro_if_available', 'M11_GameView_OpenSelectedMenuEntry', 'm11_play_redmcsb_entrance_transition'] path_exists=True",
     "firestaff_m11_builtin_csb_path_is_not_atari_csb_manifest missing ['m11_resolve_builtin_dungeon_path', 'strcmp(gameId, \"csb\") == 0', '\"CSB.DAT\"'] path_exists=True",
     "asset manifest check failed: launch_intent_allowed_false"

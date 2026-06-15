@@ -271,13 +271,20 @@ int main(int argc, char** argv) {
     portraits = M11_AssetLoader_Load(&state.assetLoader,
                                       (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());
 
-    /* DM1 PC 3.4 Hall of Champions: (1,3) mirrors ordinal 1
-     * (TIGGY / wizard portrait), (1,4) mirrors ordinal 2 (HALK /
-     * barbarian).  Confirmed by the existing
-     * firestaff_dm1_v1_champion_mirror_visibility_runtime_probe
-     * which prints "best=1" / "best=2" for these routes. */
-    check_wall_mirror(&state, portraits, 1, 3, 1, "Hall (1,3) start");
-    check_wall_mirror(&state, portraits, 1, 4, 2, "Hall (1,4) corridor");
+    /* DM1 PC 3.4 Hall of Champions — actual C127 sensor positions in
+     * real DM1 V1 DUNGEON.DAT.  The (1,2) NORTH front cell (1,1) has
+     * a C127 sensor with sensorData=1 (HALK / barbarian).  The (1,5)
+     * NORTH front cell (1,4) has a C127 sensor with sensorData=10
+     * (ZED / ninja).  Confirmed by the
+     * firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe
+     * (v2.7.22) which prints "PASS" for both.  The OLD text positions
+     * (1,3) NORTH and (1,4) NORTH were the TextString catalog route
+     * and had no C127 sensor — the v2.7.22 ReDMCSB-anchored fix
+     * (m11_front_cell_mirror_ordinal now reads C127 sensorData
+     * directly per DUNGEON.C:2573 + MOVESENS.C:1501-1503 + REVIVE.C
+     * F0280) now returns -1 there. */
+    check_wall_mirror(&state, portraits, 1, 2, 1, "Hall (1,2) start");
+    check_wall_mirror(&state, portraits, 1, 5, 10, "Hall (1,5) end");
 
     M11_GameView_Shutdown(&state);
     printf("\n=== Summary: %d passed, %d failed ===\n", g_pass, g_fail);

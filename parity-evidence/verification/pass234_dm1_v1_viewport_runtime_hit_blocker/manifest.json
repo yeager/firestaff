@@ -21,7 +21,7 @@
           "find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f"
         ],
         "returncode": 0,
-        "stderr_tail": "find: ./.git/worktrees/20260609024117737472000_dm1_v1_chest_runtime_detail: No such file or directory\n",
+        "stderr_tail": "",
         "stdout_tail": ""
       }
     },
@@ -35,7 +35,7 @@
       "wine": null
     }
   },
-  "repo": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass234_dm1_v1_viewport_runtime_hit_blocker.v1",
   "source_audit": [
     {

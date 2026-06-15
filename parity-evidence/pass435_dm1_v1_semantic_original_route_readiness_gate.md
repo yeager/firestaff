@@ -32,7 +32,7 @@ Original viewport crop tooling is ready, but semantic original-route promotion r
 
 ## Artifact semantics
 
-- pass434 readiness: `FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`
+- pass434 readiness: `PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`
 - raw classifier sequence ok: `False`; classes: `['dungeon_gameplay', 'wall_closeup', 'dungeon_gameplay', 'dungeon_gameplay', 'wall_closeup', 'dungeon_gameplay']`
 - raw duplicate hashes: `{'48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397': 4, 'fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde': 2}`
 - crop manifest rows_all_224x136: `True`
@@ -78,7 +78,6 @@ Promotion requires:
 
 ## Blockers
 
-- pass434 crop/source readiness is not green
 - pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence
 
 ## Promotion rule

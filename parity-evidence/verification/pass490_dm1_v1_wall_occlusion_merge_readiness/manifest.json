@@ -75,37 +75,37 @@
     },
     {
       "id": "firestaff-nearest-center-blocker",
-      "file": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c",
+      "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "m11_dm1_nearest_blocking_center_depth_index",
-      "line": 12781,
+      "line": 12949,
       "ok": true
     },
     {
       "id": "firestaff-front-wall-depth-collapse",
-      "file": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c",
+      "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "m11_draw_dm1_front_walls",
-      "line": 12812,
+      "line": 12980,
       "ok": true
     },
     {
       "id": "firestaff-side-lane-clear",
-      "file": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c",
+      "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "m11_dm1_side_lane_clear_before_depth",
-      "line": 12859,
+      "line": 13027,
       "ok": true
     },
     {
       "id": "firestaff-side-content-center-blocker",
-      "file": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c",
+      "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
-      "line": 15954,
+      "line": 16137,
       "ok": true
     },
     {
       "id": "firestaff-side-door-occlusion",
-      "file": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/engine/m11_game_view.c",
+      "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "m11_draw_dm1_side_doors",
-      "line": 14133,
+      "line": 14316,
       "ok": true
     },
     {

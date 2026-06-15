@@ -7517,25 +7517,19 @@ static int m11_disable_front_mirror_route(M11_GameViewState* state,
         int thingIndex = THING_GET_INDEX(thing);
         unsigned short next = m11_raw_next_thing(state->world.things, thing);
         if (thingType == THING_TYPE_SENSOR && state->world.things->sensors &&
-            thingIndex >= 0 && thingIndex < state->world.things->sensorCount) {
-            /* ReDMCSB REVIVE.C F0282 disables the first C03 sensor thing
-             * after a confirmed resurrect/reincarnate action.  The mirror
-             * TextString is still Firestaff's local catalog route, so keep
-             * scanning and unlink the matching text entry below too. */
+            thingIndex >= 0 && thingIndex < state->world.things->sensorCount &&
+            state->world.things->sensors[thingIndex].sensorType == 127 &&
+            (int)state->world.things->sensors[thingIndex].sensorData == mirrorOrdinal) {
+            /* ReDMCSB REVIVE.C F0282 disables the matching C127 mirror
+             * sensor (champion-portrait type) on the front square after
+             * a confirmed resurrect/reincarnate action. */
             state->world.things->sensors[thingIndex].sensorType = 0;
-        } else if (thingType == THING_TYPE_TEXTSTRING && thingIndex >= 0 &&
-            thingIndex < state->world.things->textStringCount &&
-            F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                &state->mirrorCatalog, thingIndex) == mirrorOrdinal) {
-            return m11_unlink_thing_from_square(&state->world,
-                                                state->world.party.mapIndex,
-                                                mapX,
-                                                mapY,
-                                                thing);
+            thing = next;
+            continue;
         }
         thing = next;
     }
-    return 0;
+    return 1;
 }
 
 static int m11_front_mirror_record_already_in_party(const M11_GameViewState* state,
@@ -11178,24 +11172,32 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
 
     if (!state || !state->active || !state->mirrorCatalogAvailable ||
         !m11_get_front_cell(state, &frontCell) || !frontCell.valid ||
-        !state->world.things || !state->world.things->textStrings) {
+        !state->world.things || !state->world.things->sensors) {
         return -1;
     }
 
+    /* ReDMCSB DUNGEON.C:2573 / MOVESENS.C:1501-1503 / REVIVE.C F0280:
+     * a C127 sensor on the front square carries the champion-portrait
+     * ordinal in its sensorData.  DUNGEON.C:2608-2612 stores that
+     * ordinal in G0289 and F0280 materializes the candidate from it.
+     * The TextString is the candidate's stats anchor on the corridor
+     * floor (DUNGEON.C:2570-2584) and is not required to be present on
+     * the front wall square. */
     thing = frontCell.firstThing;
     while (thing != THING_ENDOFLIST && thing != THING_NONE) {
         int thingType = THING_GET_TYPE(thing);
         int thingIndex = THING_GET_INDEX(thing);
-        if (thingType == THING_TYPE_TEXTSTRING && thingIndex >= 0 &&
-            thingIndex < state->world.things->textStringCount) {
-            /* ReDMCSB MOVESENS.C:1501-1503 passes the C127 sensor data to
-             * REVIVE.C F0280; Firestaff keeps the source TextString catalog as
-             * the identity lookup once the front wall square has been chosen. */
-            int mirrorOrdinal = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                &state->mirrorCatalog, thingIndex);
-            if (mirrorOrdinal >= 0) {
-                return mirrorOrdinal;
+        if (thingType == THING_TYPE_SENSOR &&
+            thingIndex >= 0 && thingIndex < state->world.things->sensorCount &&
+            state->world.things->sensors[thingIndex].sensorType == 127) {
+            int sensorData = (int)state->world.things->sensors[thingIndex].sensorData;
+            /* sensorData is a 0-based portrait ordinal within the C026
+             * graphic (24 portraits, 8 cols x 3 rows).  Clamp to a
+             * valid catalog range. */
+            if (sensorData >= 0 && sensorData < state->mirrorCatalog.count) {
+                return sensorData;
             }
+            return -1;
         }
         thing = m11_raw_next_thing(state->world.things, thing);
     }
@@ -13492,14 +13494,11 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         return;
     }
     mirrorCell = *frontCell;
-    portraitOrdinal = mirrorCell.championPortraitOrdinal;
-    if (portraitOrdinal < 0) {
-        portraitOrdinal = m11_front_cell_mirror_ordinal(state);
-        mirrorCell.championPortraitOrdinal = portraitOrdinal;
-    }
+    portraitOrdinal = m11_front_cell_mirror_ordinal(state);
     if (portraitOrdinal < 0) {
         return;
     }
+    mirrorCell.championPortraitOrdinal = portraitOrdinal;
     /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
      * G0289 and DUNVIEW.C:3913-3928 blits the fixed D1C portrait-on-wall
      * rectangle from that state.  The Firestaff loader can expose some Hall

@@ -17,9 +17,9 @@
     "G2153_i_QueuedCommandsCount": "2C23:3E78"
   },
   "blocker": "missing prerequisite: dosbox-debug, Xvfb, xdotool",
-  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branch": "main",
   "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "head": "cd7bd37ef6aafca978c34501de715afd7dd8b3bf",
+  "head": "7ceffacb8b6862944dd6fcca4640d32806adadb6",
   "nonClaims": [
     "no movement behavior changed",
     "no pass513 scaffold promoted",
@@ -96,7 +96,7 @@
     "routeInputAfterArmingSucceeded": true,
     "sourceAuditOk": true
   },
-  "repo": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "requiredUnifiedFields": [
     "F0361 queue slot/count",
     "F0380 pop/count",
@@ -225,5 +225,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE",
-  "timestampUtc": "2026-06-12T19:28:09.627513+00:00"
+  "timestampUtc": "2026-06-14T20:30:32.527411+00:00"
 }

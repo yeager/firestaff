@@ -6,8 +6,8 @@ The capture normalizer now uses each `shot:<label>` token as the normalized crop
 
 ## Fixture
 - labels: `start_south, turn_right_west, forward_west_blocked, turn_left_east, forward_south_corridor, post_redraw_after_vblank`
-- filenames match labels: `False`
-- crop manifest matches labels: `False`
+- filenames match labels: `True`
+- crop manifest matches labels: `True`
 - legacy drift rows: `0`
 
 ## Source references audited

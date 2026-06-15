@@ -1,6 +1,5 @@
 {
   "blockers": [
-    "pass434 crop/source readiness is not green",
     "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
   ],
   "classifier": {
@@ -1704,7 +1703,7 @@
       "timestampUtc": "2026-05-08T14:13:47.996322+00:00"
     },
     "pass434_crop_readiness": {
-      "branch": "pass784-dm1-v1-runtime-c040-eye-live-candidate",
+      "branch": "main",
       "crop_artifacts": {
         "files": [
           {
@@ -1837,7 +1836,7 @@
         "rows_all_224x136": true
       },
       "exists": true,
-      "head": "85cec7abe76795300c7539096a77045c58eb105a",
+      "head": "7ceffacb8b6862944dd6fcca4640d32806adadb6",
       "not_claimed": [
         "DOSBox/live original runtime capture",
         "semantic original route promotion",
@@ -1907,12 +1906,12 @@
         }
       ],
       "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-      "status": "FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-      "timestamp_utc": "2026-06-12T21:41:49.856547+00:00",
+      "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
+      "timestamp_utc": "2026-06-14T20:30:02.382908+00:00",
       "tooling": {
         "capture_script_crop_lock": {
           "has_imagemagick_crop": true,
-          "has_manifest_geometry_check": false,
+          "has_manifest_geometry_check": true,
           "has_normalize_only": true,
           "has_pillow_crop_0_33_224_169": true,
           "path": "scripts/dosbox_dm1_original_viewport_reference_capture.sh"
@@ -2380,5 +2379,5 @@
     }
   ],
   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-  "timestampUtc": "2026-06-12T21:41:49.908714+00:00"
+  "timestampUtc": "2026-06-14T20:30:02.432381+00:00"
 }

@@ -130,6 +130,7 @@ static int framebuffer_matches_open_chest_panel_pixels(
     const M11_AssetSlot* panel;
     int viewportX = 0, viewportY = 0, viewportW = 0, viewportH = 0;
     int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int ax = 0, ay = 0, aw = 0, ah = 0;
     int matched = 0;
     int x, y;
 
@@ -146,6 +147,10 @@ static int framebuffer_matches_open_chest_panel_pixels(
         panel->height != (unsigned short)panelH) {
         return 0;
     }
+    /* PANEL.C F0339 lines 505-514 draws C018/C019 (arrow / pressing-eye)
+     * at viewport-relative (83, 57, 16, 9) on top of the C025 panel.
+     * Skip that zone so the test compares only C025-owned pixels. */
+    (void)M11_GameView_GetV1ArrowOrEyeZone(&ax, &ay, &aw, &ah);
 
     for (y = 0; y < panelH; ++y) {
         for (x = 0; x < panelW; ++x) {
@@ -155,6 +160,10 @@ static int framebuffer_matches_open_chest_panel_pixels(
             unsigned char got;
             if (want == 8 ||
                 point_is_in_chest_slot_overdraw(state, viewportLocalX, viewportLocalY)) {
+                continue;
+            }
+            if (viewportLocalX >= ax && viewportLocalX < ax + aw &&
+                viewportLocalY >= ay && viewportLocalY < ay + ah) {
                 continue;
             }
             got = framebuffer[(viewportY + viewportLocalY) * 320 +

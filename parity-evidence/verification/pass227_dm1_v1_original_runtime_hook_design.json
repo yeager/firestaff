@@ -257,7 +257,7 @@
     "schema": "dm1_v1_original_runtime_trace.minimal.v1"
   },
   "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass227_dm1_v1_original_runtime_hook_design.v1",
   "source_seams": [
     {

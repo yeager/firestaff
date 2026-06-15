@@ -3,7 +3,7 @@
 #include "firestaff_po_loader.h"
 #include "firestaff_startup.h"
 
-#define FIRESTAFF_VERSION_STRING "v2.7.21"
+#define FIRESTAFF_VERSION_STRING "v2.7.22"
 #include "firestaff_bestiary.h"
 #include "screenshot_gallery_m12.h"
 #include "firestaff_spell_ref.h"
@@ -426,10 +426,18 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
         opts->resolution = M12_RES_320x200;
     } else if (presentationMode == M12_PRESENTATION_V20_FILTERED) {
         opts->resolution = M12_RES_640x400;
-    } else if (M12_PresentationMode_AllowsResolutionChoice(presentationMode) &&
-               opts->resolution < M12_RES_640x400) {
-        opts->resolution = M12_RES_640x400;
     }
+    /* V2.1 (M12_PRESENTATION_V21_UPSCALED) and V2.2
+     * (M12_PRESENTATION_V22_MODERN) are M12_PresentationMode_Allows
+     * ResolutionChoice: 320x200 is the user-chosen original
+     * double-resolution option, and the test in
+     * firestaff_m12_startup_menu_probe.c asserts that the user
+     * can cycle from 320x200 to 640x400 by pressing RIGHT.
+     * The old auto-bump to 640x400 pre-empted that cycle and
+     * silently advanced to 1280x960, breaking INV_M12_18.  Leave
+     * V2.1/V2.2 resolution untouched so the row cycle controls
+     * the full range (320x200 → 640x400 → 1280x960 → 1920x1080 →
+     * 2560x1440).  V2.0 remains locked to 640x400 above. */
     /* Nexus V1 — only V1.ORIGINAL is supported in Phase 1.
      * V2.0/V2.1/V2.2 render paths are not yet available for Nexus.
      * Lock presentation mode if attempting a non-V1 mode for nexus.
