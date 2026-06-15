@@ -213,6 +213,89 @@ DM2_V2_HudOverlay *dm2_v2_runtime_get_hud(void);
  *         SKULLWIN/SKWIN/c_gui_vp.cpp (DM2 UI chrome layout) */
 void dm2_v2_runtime_hud_render(uint8_t *fb, int stride, int h_res);
 
+/* ── Phase 5: V1 Runtime Profile Binding (binding seam) ─────────── */
+
+/*
+ * DM2 V2 runtime binding seam — observe V1 party state, trigger smooth
+ * animations on deltas.  Mirrors the CSB V2 pattern (csb_v2_runtime.h)
+ * and is the V2-side counterpart of the existing V1 callback mechanism
+ * (dm2_v1_runtime_set_move_callback).  When a profile is bound, the
+ * runtime observes the profile at every v1_tick and starts the
+ * appropriate smooth animation (walk / turn / stairs) when the V1
+ * party state changes.
+ *
+ * Two binding shapes coexist:
+ *   1. Callback binding (V1 -> V2 hooks)
+ *      dm2_v1_runtime_set_move_callback(dm2_v2_runtime_move_cb)
+ *      This is the existing Phase 5 wiring — fires from inside
+ *      dm2_v1_runtime_move() on each accepted move/turn.
+ *   2. Profile binding (Phase 5 binding seam)
+ *      dm2_v2_runtime_bind_to_v1(profile)
+ *      This adds a v1_tick observer that detects party state deltas
+ *      and triggers smooth animations.  Both bindings can coexist;
+ *      the profile binding registers its own callbacks so the V1
+ *      -> V2 move/turn hooks route through the profile's anchor.
+ *
+ * Source: SKULL.ASM T520  — party/movement tick
+ *         SKULL.ASM T048  — input dispatch / tick update
+ *         ReDMCSB GAMELOOP.C:47-50 — V1 tick cadence (55ms)
+ *         ReDMCSB DUNGEON.C:1371-1421 — map coordinate resolution
+ */
+
+/* DM2_V1_RuntimeProfile — V1 party state pointer used by V2 binding.
+ *
+ * The runtime binding reads these fields at every v1_tick to detect
+ * deltas.  V2 code NEVER writes to the profile — V1 game state
+ * (party_x, party_y, party_dir, current_level) is mutated only by
+ * V1 logic (dm2_v1_runtime_move, etc.).  The runtime is read-only
+ * with respect to the profile.
+ *
+ * Use a thin wrapper struct (vs raw DM2_V1_GameState*) so callers
+ * can either supply a DM2_V1_GameState* (cast to DM2_V1_RuntimeProfile*)
+ * or a synthetic test struct for headless integration tests.
+ */
+typedef struct {
+    int party_x;        /* dungeon / outdoor x, V1-snapped (integer tile) */
+    int party_y;        /* dungeon / outdoor y, V1-snapped (integer tile) */
+    int party_dir;      /* 0=N 1=E 2=S 3=W (compass) */
+    int current_level;  /* floor / height level (stairs signal) */
+} DM2_V1_RuntimeProfile;
+
+/* dm2_v2_runtime_bind_to_v1 — bind DM2 V2 smooth movement to a V1
+ * runtime profile.  After binding, dm2_v2_runtime_v1_tick() will track
+ * the profile's party_x/y/dir/current_level and trigger smooth
+ * walk/turn/stairs animations automatically when the V1 state changes
+ * (delta > 0 on the tile, direction, or level axis).
+ *
+ * profile: V1 runtime profile (must outlive the binding).
+ *          Pass NULL to unbind.
+ *
+ * Idempotent: calling twice rebinds to the new profile.
+ *
+ * When a profile is bound, the runtime installs its own move/turn/
+ * stairs callbacks via dm2_v1_runtime_set_move_callback etc.  This
+ * supersedes any previously installed callback — V1 hooks route
+ * through the profile's anchor instead of firing directly.
+ *
+ * Source: SKULL.ASM T520 — party/movement tick
+ *         ReDMCSB GAMELOOP.C:47-50 — V1 tick cadence
+ *
+ * Phase 5 binding seam: V1 state writes are observed (read-only) at
+ * each v1_tick; smooth animation starts are pure presentation. */
+void dm2_v2_runtime_bind_to_v1(DM2_V1_RuntimeProfile *profile);
+
+/* dm2_v2_runtime_is_bound — returns 1 if a profile is currently bound,
+ * 0 otherwise.  The bound flag is set by bind_to_v1(non-NULL) and
+ * cleared by bind_to_v1(NULL). */
+int dm2_v2_runtime_is_bound(void);
+
+/* dm2_v2_runtime_force_sync — re-anchor the binding's "from" state to
+ * the profile's current party state without triggering any animation.
+ * Useful after loading a saved game (party state jumped; we don't want
+ * a phantom walk animation to play).  Also cancels any in-flight
+ * smooth animation that was triggered before the sync. */
+void dm2_v2_runtime_force_sync(void);
+
 /* ── Source evidence ─────────────────────────────────────────────── */
 const char *dm2_v2_runtime_source_evidence(void);
 

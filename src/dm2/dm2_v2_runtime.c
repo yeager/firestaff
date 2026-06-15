@@ -86,6 +86,37 @@ static int s_last_party_x = 0;
 static int s_last_party_y = 0;
 static int s_last_party_dir = 0;
 
+/* ── Phase 5: V1 Runtime Profile Binding (binding seam) ─────────── */
+
+/* Profile pointer — observed (read-only) at every v1_tick.
+ * When non-NULL, the binding seam is active: the runtime detects
+ * party_x/y/dir/current_level deltas between consecutive ticks and
+ * triggers smooth walk/turn/stairs animations.  Mirrors the CSB V2
+ * binding shape (csb_v2_runtime.c).  V2 code NEVER writes to the
+ * profile — V1 game state is mutated only by V1 logic. */
+static DM2_V1_RuntimeProfile *s_v1_profile = NULL;
+
+/* s_v1_profile_anchor — last-observed V1 state for the bound profile.
+ * Used to detect deltas across v1_tick boundaries.  Initialised to
+ * the profile's party state at bind time, and reset by
+ * dm2_v2_runtime_force_sync(). */
+static int s_v1_anchor_x = 0;
+static int s_v1_anchor_y = 0;
+static int s_v1_anchor_dir = 0;
+static int s_v1_anchor_level = 0;
+
+/* Profile-bound move/turn/stairs callbacks (private, see below).
+ * When a profile is bound, the runtime installs these as the V1
+ * move/turn/stairs hooks via dm2_v1_runtime_set_move_callback etc.
+ * The hooks read the bound profile to compute "from" / "to" using
+ * the profile's anchor (rather than per-call from/to args). */
+static void dm2_v2_runtime_profile_move_cb(int from_x, int from_y,
+                                            int to_x, int to_y);
+static void dm2_v2_runtime_profile_turn_cb(int from_dir, int to_dir);
+static void dm2_v2_runtime_profile_stairs_cb(int from_x, int from_y,
+                                              int to_x, int to_y,
+                                              float vert_offset);
+
 /* Flag: has the party moved since the last V1 tick?
  * Used to detect fresh moves that need smooth animation triggers. */
 static int s_needs_smooth_trigger = 0;  /* unused — kept for future extension */
@@ -139,6 +170,15 @@ void dm2_v2_runtime_init(int scale) {
     s_smooth_y = 0.0f;
     s_smooth_vert = 0.0f;
     s_smooth_angle = 0.0f;
+
+    /* Reset Phase 5 binding state.  Unbind any prior profile
+     * so init() is a clean slate.  Default callbacks are re-registered
+     * below. */
+    s_v1_profile = NULL;
+    s_v1_anchor_x = 0;
+    s_v1_anchor_y = 0;
+    s_v1_anchor_dir = 0;
+    s_v1_anchor_level = 0;
 
     /* Register smooth movement callbacks with the V1 runtime.
      * When the party moves or turns, dm2_v1_runtime_move() will call
@@ -222,6 +262,66 @@ void dm2_v2_runtime_v1_tick(uint32_t now_ms) {
     /* Phase 4: advance lightning bloom fade.
      * Source: dm2_v2_lighting.c dm2_v2_lighting_tick_bloom */
     dm2_v2_lighting_tick_bloom(&s_lighting, 0.055f);
+
+    /* Phase 5 binding seam: if a V1 profile is bound, observe the
+     * current party state and trigger smooth animations on deltas.
+     *
+     * The "from" position is the previously-observed V1-snapped
+     * position; the "to" position is the new V1-snapped position.
+     * Both are passed as float coordinates; V1's integer grid
+     * becomes the animation endpoint, and the renderer interpolates
+     * visually between them.
+     *
+     * Source: SKULL.ASM T520 — party/movement tick
+     *         SKULL.ASM T048 — input dispatch / tick update
+     *         ReDMCSB GAMELOOP.C:47-50 — V1 tick cadence (55ms)
+     *         ReDMCSB DUNGEON.C:1371-1421 — map coordinate resolution
+     *
+     * Priority (matches CSB V2 binding):
+     *   - current_level delta  -> stairs  (SKULL.ASM T520 stairs)
+     *   - x/y delta only       -> walk    (SKULL.ASM T520 movement)
+     *   - dir delta only       -> turn    (SKULL.ASM T520 turn)
+     *   - no change            -> no trigger
+     */
+    if (s_v1_profile) {
+        const int cur_x = s_v1_profile->party_x;
+        const int cur_y = s_v1_profile->party_y;
+        const int cur_dir = s_v1_profile->party_dir;
+        const int cur_level = s_v1_profile->current_level;
+
+        /* Vertical (level) delta: stairs takes priority over walk
+         * (SKULL.ASM T520 stairs handling happens before walk on
+         * the same tick).  vert_offset is the change in floor level
+         * (signed; positive = up, negative = down). */
+        if (cur_level != s_v1_anchor_level) {
+            const float fx = (float)s_v1_anchor_x;
+            const float fy = (float)s_v1_anchor_y;
+            const float tx = (float)cur_x;
+            const float ty = (float)cur_y;
+            const float vert_offset = (float)(cur_level - s_v1_anchor_level);
+            dm2_v2_viewport_smooth_stairs(&s_vp, fx, fy, tx, ty, vert_offset);
+        }
+        /* Walk: x/y change without level change. */
+        else if (cur_x != s_v1_anchor_x || cur_y != s_v1_anchor_y) {
+            const float fx = (float)s_v1_anchor_x;
+            const float fy = (float)s_v1_anchor_y;
+            const float tx = (float)cur_x;
+            const float ty = (float)cur_y;
+            dm2_v2_viewport_smooth_walk(&s_vp, fx, fy, tx, ty);
+        }
+        /* Turn: direction change only, no x/y move. */
+        else if (cur_dir != s_v1_anchor_dir) {
+            const float fa = dm2_dir_to_angle(s_v1_anchor_dir);
+            const float ta = dm2_dir_to_angle(cur_dir);
+            dm2_v2_viewport_smooth_turn(&s_vp, fa, ta);
+        }
+
+        /* Cache the new V1-snapped state for the next tick. */
+        s_v1_anchor_x = cur_x;
+        s_v1_anchor_y = cur_y;
+        s_v1_anchor_dir = cur_dir;
+        s_v1_anchor_level = cur_level;
+    }
 }
 
 /* ── Smooth Movement Triggers ─────────────────────────────────────── */
@@ -579,6 +679,143 @@ void dm2_v2_runtime_hud_render(uint8_t *fb, int stride, int h_res) {
     dm2_v2_hud_render(&s_hud, fb, stride, h_res);
 }
 
+/* ── Phase 5: V1 Runtime Profile Binding (binding seam) ─────────── */
+
+/*
+ * dm2_v2_runtime_profile_move_cb — V1 move hook installed by bind_to_v1.
+ * Routes V1 move events through the bound profile's anchor so the
+ * "from" position matches the previously-observed V1-snapped state.
+ *
+ * Source: SKULL.ASM T520 — party/movement tick
+ */
+static void dm2_v2_runtime_profile_move_cb(int from_x, int from_y,
+                                            int to_x, int to_y) {
+    (void)from_x;  /* use anchor, not caller from */
+    (void)from_y;
+    if (!s_v1_profile) return;
+    s_last_party_x = s_v1_profile->party_x;
+    s_last_party_y = s_v1_profile->party_y;
+    dm2_v2_viewport_smooth_walk(&s_vp,
+                                (float)s_v1_anchor_x,
+                                (float)s_v1_anchor_y,
+                                (float)to_x,
+                                (float)to_y);
+}
+
+/*
+ * dm2_v2_runtime_profile_turn_cb — V1 turn hook installed by bind_to_v1.
+ * Uses the bound profile's anchor as "from" facing.
+ *
+ * Source: SKULL.ASM T520 — party/movement tick
+ */
+static void dm2_v2_runtime_profile_turn_cb(int from_dir, int to_dir) {
+    (void)from_dir;  /* use anchor, not caller from */
+    if (!s_v1_profile) return;
+    s_last_party_dir = s_v1_profile->party_dir;
+    dm2_v2_viewport_smooth_turn(&s_vp,
+                                dm2_dir_to_angle(s_v1_anchor_dir),
+                                dm2_dir_to_angle(to_dir));
+}
+
+/*
+ * dm2_v2_runtime_profile_stairs_cb — V1 stairs hook installed by bind_to_v1.
+ * Uses the bound profile's anchor as "from" position.
+ *
+ * Source: SKULL.ASM T520 — party/movement tick (stairs)
+ */
+static void dm2_v2_runtime_profile_stairs_cb(int from_x, int from_y,
+                                              int to_x, int to_y,
+                                              float vert_offset) {
+    (void)from_x;
+    (void)from_y;
+    (void)vert_offset;  /* use anchor-derived level delta */
+    if (!s_v1_profile) return;
+    s_last_party_x = s_v1_profile->party_x;
+    s_last_party_y = s_v1_profile->party_y;
+    const float derived_vert = (float)(s_v1_profile->current_level -
+                                        s_v1_anchor_level);
+    dm2_v2_viewport_smooth_stairs(&s_vp,
+                                  (float)s_v1_anchor_x,
+                                  (float)s_v1_anchor_y,
+                                  (float)to_x,
+                                  (float)to_y,
+                                  derived_vert);
+}
+
+/*
+ * dm2_v2_runtime_bind_to_v1 — bind DM2 V2 smooth movement to a V1
+ * runtime profile.  After binding, dm2_v2_runtime_v1_tick() will
+ * observe the profile at every V1 tick and trigger smooth walk/
+ * turn/stairs animations on deltas.
+ *
+ * profile: V1 runtime profile (must outlive the binding).
+ *          Pass NULL to unbind.
+ *
+ * Idempotent: calling twice rebinds to the new profile (re-anchored
+ * to the new profile current party state).  Pass NULL to unbind.
+ *
+ * When a profile is bound, the runtime installs its own move/turn/
+ * stairs callbacks via dm2_v1_runtime_set_move_callback etc.  This
+ * supersedes the default callbacks registered in
+ * dm2_v2_runtime_init() — V1 -> V2 hooks route through the
+ * profile anchor.
+ *
+ * Source: SKULL.ASM T520 — party/movement tick
+ *         ReDMCSB GAMELOOP.C:47-50 — V1 tick cadence
+ *
+ * Phase 5 binding seam: V1 state writes are observed (read-only) at
+ * each v1_tick; smooth animation starts are pure presentation.
+ */
+void dm2_v2_runtime_bind_to_v1(DM2_V1_RuntimeProfile *profile) {
+    s_v1_profile = profile;
+
+    if (profile) {
+        /* Anchor "from" to current V1 state.  No animation starts
+         * (binding is silent).  Subsequent v1_tick() calls will
+         * detect deltas vs this anchor and trigger animations. */
+        s_v1_anchor_x = profile->party_x;
+        s_v1_anchor_y = profile->party_y;
+        s_v1_anchor_dir = profile->party_dir;
+        s_v1_anchor_level = profile->current_level;
+
+        /* Install profile-aware callbacks.  These supersede the
+         * default callbacks registered in dm2_v2_runtime_init(). */
+        dm2_v1_runtime_set_move_callback(dm2_v2_runtime_profile_move_cb);
+        dm2_v1_runtime_set_turn_callback(dm2_v2_runtime_profile_turn_cb);
+        dm2_v1_runtime_set_stairs_callback(dm2_v2_runtime_profile_stairs_cb);
+    } else {
+        /* Unbind: clear anchor and restore default callbacks. */
+        s_v1_anchor_x = 0;
+        s_v1_anchor_y = 0;
+        s_v1_anchor_dir = 0;
+        s_v1_anchor_level = 0;
+        dm2_v1_runtime_set_move_callback(dm2_v2_runtime_move_cb);
+        dm2_v1_runtime_set_turn_callback(dm2_v2_runtime_turn_cb);
+        /* Stairs callback is left as-is (no default in
+         * dm2_v2_runtime_init); tests can bind it manually if needed. */
+    }
+}
+
+int dm2_v2_runtime_is_bound(void) {
+    return s_v1_profile != NULL;
+}
+
+void dm2_v2_runtime_force_sync(void) {
+    if (!s_v1_profile) return;
+    /* Re-anchor "from" to the profile current state.  This is the
+     * "saved-game load" path: party state jumped; we don want a
+     * phantom walk animation to play. */
+    s_v1_anchor_x = s_v1_profile->party_x;
+    s_v1_anchor_y = s_v1_profile->party_y;
+    s_v1_anchor_dir = s_v1_profile->party_dir;
+    s_v1_anchor_level = s_v1_profile->current_level;
+
+    /* Cancel any in-flight smooth animation that was triggered before
+     * the sync.  Re-init the smooth state so the renderer doesn
+     * interpolate from a stale "from" position. */
+    dm2_v2_smooth_init(&s_vp.smooth);
+}
+
 /* ── Source evidence ─────────────────────────────────────────────── */
 
 const char *dm2_v2_runtime_source_evidence(void) {
@@ -599,6 +836,26 @@ const char *dm2_v2_runtime_source_evidence(void) {
         "Turn: ease-out quad, shortest path, 1 V1 tick\n"
         "Stairs: ease-in-out cubic + vertical offset, 1 V1 tick\n"
         "V1 invariant: game state ONLY advances on V1 ticks\n"
+        "\n"
+        "DM2 V2 Phase 5: V1 Runtime Profile Binding (binding seam)\n"
+        "Source: SKULL.ASM T520 — party/movement tick\n"
+        "Source: SKULL.ASM T048 — input dispatch / tick update\n"
+        "Source: ReDMCSB GAMELOOP.C:47-50 — V1 tick cadence (55ms)\n"
+        "Source: ReDMCSB DUNGEON.C:1371-1421 — map coordinate resolution\n"
+        "Reference: csb_v2_runtime.c (CSB V2 binding seam — same shape)\n"
+        "  csb_v2_runtime_bind_to_v1 / csb_v2_runtime_is_bound / csb_v2_runtime_force_sync\n"
+        "Phase 5 binding seam:\n"
+        "  dm2_v2_runtime_bind_to_v1(profile) — observe V1 party state\n"
+        "  dm2_v2_runtime_v1_tick()           — detect deltas, trigger smooth anim\n"
+        "  dm2_v2_runtime_force_sync()        — re-anchor (saved-game load)\n"
+        "Trigger priority (mirrors CSB V2):\n"
+        "  - current_level delta  -> stairs  (vert_offset = level delta)\n"
+        "  - x/y delta only       -> walk    (SKULL.ASM T520 movement)\n"
+        "  - dir delta only       -> turn    (SKULL.ASM T520 turn)\n"
+        "  - no change            -> no trigger\n"
+        "V1 state writes (profile->party_x/y/dir/current_level) are NEVER\n"
+        "mutated by V2 code.  Cooldowns, collision, sensors, redraw cadence\n"
+        "are unchanged.\n"
         "\n"
         "DM2 V2 Phase 4: Enhanced Lighting and Outdoor Effects\n"
         "Source: SKULL.ASM PROCESS_TIMER_0C — per-champion torch timers\n"
