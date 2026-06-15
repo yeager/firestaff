@@ -192,11 +192,14 @@ set(M11_SOURCES
     src/dm1/dm1_v1_engine_pc34_compat.c
     src/engine/firestaff_touch.c
     src/engine/firestaff_input.c
+    src/engine/swsh_intro_pathfinder_m11.c
+    src/engine/m11_game_text_latin_extended_glyphs.c
+    src/engine/m11_game_input_mapping.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 firestaff_theron SDL3::SDL3 m)
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
     # src/engine/m11_game_view.c is a large legacy file — relax truncation/unused warnings.
@@ -309,6 +312,7 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_dungeon_loader.c
+    src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_phase3_hud_overlay_probe
     PRIVATE firestaff_dm2_v2 firestaff_m10 m)
@@ -325,6 +329,7 @@ add_executable(firestaff_dm2_v2_smooth_movement_probe
     probes/firestaff_dm2_v2_smooth_movement_probe.c
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_dungeon_loader.c
+    src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_include_directories(firestaff_dm2_v2_smooth_movement_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -898,6 +903,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_save_load
         tests/test_dm2_v1_save_load.c
         src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_dungeon_loader.c
@@ -1087,6 +1093,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v2_phase_gate.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_weather.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_include_directories(test_dm2_v2_smooth_runtime_binding PRIVATE
@@ -1713,6 +1720,7 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm1v2/dm1_v2_phase_gate_pc34.c
     )
     add_executable(test_dm1_v2_launch_smoke_pc34
         tests/test_dm1_v2_launch_smoke_pc34.c
@@ -3407,6 +3415,7 @@ if(NOT TARGET test_dm1_v1_room_transition_pc34_compat)
     add_executable(test_dm1_v1_room_transition_pc34_compat
         tests/test_dm1_v1_room_transition_pc34_compat.c
         src/dm1/dm1_v1_room_transition_pc34_compat.c
+        src/dm1/dm1_v1_viewport_click_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_room_transition_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -4599,43 +4608,214 @@ if(BUILD_TESTING AND THERON_SOURCES)
 endif()
 
 # ── Theron V1 Phase 4 — Rendering Pipeline Probes ───────────────────
-# NOTE: Viewport and tile renderer probes deferred — source files pending commit
 if(BUILD_TESTING AND THERON_SOURCES)
-    # add_executable(firestaff_theron_v1_viewport_renderer_probe
-    #     probes/theron/firestaff_theron_v1_viewport_renderer_probe.c
-    # )
-    # target_link_libraries(firestaff_theron_v1_viewport_renderer_probe PRIVATE
-    #     firestaff_theron
-    # )
-    # target_include_directories(firestaff_theron_v1_viewport_renderer_probe PRIVATE
-    #     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    #     ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
-    # )
-    # if(NOT MSVC)
-    #     target_compile_options(firestaff_theron_v1_viewport_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
-    # endif()
-    # add_test(
-    #     NAME theron_v1_viewport_renderer
-    #     COMMAND firestaff_theron_v1_viewport_renderer_probe
-    # )
+    add_executable(firestaff_theron_v1_viewport_renderer_probe
+        probes/theron/firestaff_theron_v1_viewport_renderer_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_viewport_renderer_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_viewport_renderer_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_viewport_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
+    endif()
+    add_test(
+        NAME theron_v1_viewport_renderer
+        COMMAND firestaff_theron_v1_viewport_renderer_probe
+    )
 
-    # add_executable(firestaff_theron_v1_tile_renderer_probe
-    #     probes/theron/firestaff_theron_v1_tile_renderer_probe.c
-    # )
-    # target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE
-    #     firestaff_theron
-    # )
-    # target_include_directories(firestaff_theron_v1_tile_renderer_probe PRIVATE
-    #     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    #     ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
-    # )
-    # if(NOT MSVC)
-    #     target_compile_options(firestaff_theron_v1_tile_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
-    # endif()
-    # add_test(
-    #     NAME theron_v1_tile_renderer
-    #     COMMAND firestaff_theron_v1_tile_renderer_probe
-    # )
+    add_executable(firestaff_theron_v1_tile_renderer_probe
+        probes/theron/firestaff_theron_v1_tile_renderer_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_tile_renderer_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_tile_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
+    endif()
+    add_test(
+        NAME theron_v1_tile_renderer
+        COMMAND firestaff_theron_v1_tile_renderer_probe
+    )
+endif()
+
+# ── Theron V1 Phase 4 — Rendering Pipeline Test ───────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_rendering
+        tests/test_theron_rendering.c
+    )
+    target_link_libraries(test_theron_rendering PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_rendering PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_rendering PRIVATE -Wall -Wextra -O2 -fcommon)
+    endif()
+    add_test(
+        NAME theron_v1_rendering
+        COMMAND test_theron_rendering
+    )
+endif()
+
+# ── Theron V1 Phase 7 — Save Header Rejection Test ─────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_save_header_rejection
+        tests/test_theron_v1_save_header_rejection.c
+    )
+    target_link_libraries(test_theron_v1_save_header_rejection PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_save_header_rejection PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_save_header_rejection PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_save_header_rejection
+        COMMAND test_theron_v1_save_header_rejection
+    )
+endif()
+
+# ── Theron V1 Phase 5 — Shop Price Table Test ──────────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_shop_price_table
+        tests/test_theron_v1_shop_price_table.c
+    )
+    target_link_libraries(test_theron_v1_shop_price_table PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_shop_price_table PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_shop_price_table PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_shop_price_table
+        COMMAND test_theron_v1_shop_price_table
+    )
+endif()
+
+# ── Theron V1 Phase 5 — World Serialize Purchase State Test ───────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_world_serialize_purchase_state
+        tests/test_theron_v1_world_serialize_purchase_state.c
+    )
+    target_link_libraries(test_theron_v1_world_serialize_purchase_state PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_world_serialize_purchase_state PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_world_serialize_purchase_state PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_world_serialize_purchase_state
+        COMMAND test_theron_v1_world_serialize_purchase_state
+    )
+endif()
+
+# ── Theron V1 Phase 5 — Direct Launch Test ────────────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_direct_launch
+        tests/theron_v1_direct_launch_test.c
+    )
+    target_link_libraries(test_theron_v1_direct_launch PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_direct_launch PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_direct_launch PRIVATE -Wall -Wextra -O2)
+    endif()
+    # Direct-launch test exercises the boot path that needs M12 md5 helpers.
+    if(TARGET firestaff_m12)
+        target_link_libraries(test_theron_v1_direct_launch PRIVATE firestaff_m12)
+    endif()
+    add_test(
+        NAME theron_v1_direct_launch
+        COMMAND test_theron_v1_direct_launch
+    )
+endif()
+
+# ── Theron V1 Phase 5 — M11 Direct Launch Test ─────────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_m11_direct_launch
+        tests/theron_v1_m11_direct_launch_test.c
+    )
+    target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_m11_direct_launch PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_m11_direct_launch PRIVATE -Wall -Wextra -O2)
+    endif()
+    # M11 handoff test exercises M11_GameView_* and M12 md5 helpers.
+    if(TARGET firestaff_m12)
+        target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m12)
+    endif()
+    if(TARGET firestaff_m11)
+        target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m11)
+    endif()
+    add_test(
+        NAME theron_v1_m11_direct_launch
+        COMMAND test_theron_v1_m11_direct_launch
+    )
+endif()
+
+# ── Theron V1 Phase 5 — Launcher Scan Reuse Test ──────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_launcher_scan_reuse
+        tests/theron_v1_launcher_scan_reuse_test.c
+    )
+    target_link_libraries(test_theron_v1_launcher_scan_reuse PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_launcher_scan_reuse PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_launcher_scan_reuse PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_launcher_scan_reuse
+        COMMAND test_theron_v1_launcher_scan_reuse
+    )
+endif()
+
+# ── Theron V1 Phase 7 — Track 02 Bank Probe ───────────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(firestaff_theron_v1_track02_bank_probe
+        probes/theron/firestaff_theron_v1_track02_bank_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_bank_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_track02_bank_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_bank_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_bank
+        COMMAND firestaff_theron_v1_track02_bank_probe
+    )
 endif()
 
 # ── Sprite extraction tool for V2 graphics pipeline ─────────────────
