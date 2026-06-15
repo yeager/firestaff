@@ -48,6 +48,10 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ CSB V1 viewport Phase 3 gate: D3L2/D3R2 and D2L2/D2R2 draw-order, coordinate, frame, and PC34 zone contracts are source-locked against F0676-F0679/F0128.
 - ✅ CSB V1 back-wall ornament routing gate: D3L2/D3R2 wall cases source-lock their F0107 ordinal slots and view-wall indices, while D2L2/D2R2 prove the no-F0107 return path.
 
+### CSB V2.0 / V2.1 / V2.2
+
+- ✅ Phase 5 smooth-movement runtime bridge: `csb_v2_smooth_movement.c` provides visual walk (ease-out cubic), turn (ease-out quad), and stairs (ease-in-out cubic + vertical camera offset) interpolations over 1 V1 tick (55ms). Global state is driven via a `V2_AnimClock*` to `csb_v2_smooth_update_from_clock`. Headless probe `firestaff_csb_v2_smooth_movement_probe` covers lifecycle, walk N/S/E/W, turn 8 directions, stairs with vertical offset, and deterministic input coverage; ctest target `test_csb_v2_smooth_movement` passes 50/50.
+
 ## Dungeon Master II: Skullkeep (DM2)
 
 ### DM2 V1
@@ -60,7 +64,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### DM2 V2.0 / V2.1 / V2.2
 
-- ✅ Phase 5 smooth-movement scaffold: DM2 V2 has visual walk, turn, and stair interpolation state, viewport query hooks, and source-evidence strings while preserving V1 tick ownership of game-state movement.
+- ✅ Phase 5 smooth-movement runtime bridge: `dm2_v2_smooth_movement.c` provides struct-based `DM2_V2_SmoothState` with walk (ease-out cubic), turn (ease-out quad, shortest-path normalised), and stairs (ease-in-out cubic + vertical camera offset) interpolations over 1 V1 tick (55ms). Probe `firestaff_dm2_v2_smooth_movement_probe` covers lifecycle, walk N/S/E/W, turn 8 directions, stairs, deterministic input coverage, and pixel gate. Ctest target `test_dm2_v2_smooth_movement` passes 79/79.
 
 ## Dungeon Master Nexus
 
