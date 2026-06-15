@@ -676,6 +676,11 @@ int F0705_MOVEMENT_ResolveStairsTransition_Compat(
     outResult->newDirection = party->direction;
 
     if (party->mapIndex < 0 || party->mapIndex >= (int)dungeon->header.mapCount) return 0;
+    /* Defensive: maps may be NULL when only the header is loaded
+     * (e.g. F0500 header-only path) but mapCount is set.  Without
+     * this check, &dungeon->maps[party->mapIndex] is NULL+offset
+     * and the subsequent map->width deref segfaults. */
+    if (!dungeon->maps) return 0;
     map = &dungeon->maps[party->mapIndex];
     if (party->mapX < 0 || party->mapX >= map->width ||
         party->mapY < 0 || party->mapY >= map->height) return 0;
