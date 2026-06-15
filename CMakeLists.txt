@@ -1539,6 +1539,23 @@ set_tests_properties(csb_v1_neophyte_mode_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 
+add_executable(test_csb_v1_champions_left_click_inventory_pc34_compat
+    tests/test_csb_v1_champions_left_click_inventory_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_champions_left_click_inventory_pc34_compat PRIVATE
+    firestaff_csb_v1_left_click_inventory
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_champions_left_click_inventory_pc34_compat PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v1_champions_left_click_inventory_pc34_compat
+    COMMAND test_csb_v1_champions_left_click_inventory_pc34_compat
+)
+set_tests_properties(csb_v1_champions_left_click_inventory_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
 # CSB V1 neophyte-mode toggle implementation (Champions GAP 1).
 # Source-locked per ReDMCSB Character.cpp:665 + data.cpp:88 +
 # Recording.cpp:246 (neophyteSkills global).  Single-flag
