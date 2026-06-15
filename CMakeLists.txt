@@ -40,6 +40,24 @@ else()
     endif()
 endif()
 
+# ── SDL3_ttf discovery (for i18n TTF font rendering) ────────────
+find_package(SDL3_ttf QUIET CONFIG)
+if(NOT SDL3_ttf_FOUND)
+    pkg_check_modules(SDL3_TTF QUIET IMPORTED_TARGET sdl3-ttf)
+    if(SDL3_TTF_FOUND)
+        if(NOT TARGET SDL3::SDL3_ttf)
+            add_library(SDL3_ttf ALIAS PkgConfig::SDL3_TTF)
+        endif()
+    endif()
+endif()
+if(SDL3_ttf_FOUND OR TARGET SDL3::SDL3_ttf OR TARGET PkgConfig::SDL3_TTF)
+    message(STATUS "Found SDL3_ttf (i18n TTF font rendering enabled)")
+    set(FIRESTAFF_HAVE_SDL3_TTF 1)
+else()
+    message(STATUS "SDL3_ttf not found (i18n TTF font rendering disabled, bitmap fallback)")
+    set(FIRESTAFF_HAVE_SDL3_TTF 0)
+endif()
+
 # ── Python discovery for source-shape/evidence gates ───────────────
 find_package(Python3 COMPONENTS Interpreter QUIET)
 
@@ -961,6 +979,7 @@ set(M11_SOURCES
     src/engine/m11_game_view.c
     src/engine/m11_game_text_latin_extended_glyphs.c
     src/engine/m11_game_text_utf8_decoder_pc34_compat.c
+    src/engine/m11_game_text_ttf_renderer_pc34_compat.c
     src/engine/m11_dm1_v1_f0128_viewport_pc34_compat.c
     src/engine/m11_qol_runtime.c
     src/dm1/dm1_v1_minimap_pc34_compat.c
@@ -1066,6 +1085,7 @@ set(M12_SOURCES
     src/shared/gamepad_config_m12.c
     src/engine/cloud_sync_m12.c
     src/ui/touch_layout_m12.c
+    src/shared/firestaff_font_cache_pc34_compat.c
     src/shared/presentation_preview_m12.c
     src/shared/screenshot_gallery_m12.c
 )
@@ -7386,10 +7406,6 @@ if(NOT TARGET test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat)
     )
 endif()
 
-# M11 game-text UTF-8 + Latin Extended — fixes the 244/548 (44%)
-# of sv.po msgstrs that contain accented characters (Ö Ä Å ä å)
-# and would otherwise render as SPACE.  Also covers de/fr/es/it/
-# pt/nl/pl/cs/ru/etc. accented Latin Extended-A letters.
 if(NOT TARGET test_dm1_v1_lif01_f0831_stamina_amount_source_lock_pc34_compat)
     add_executable(test_dm1_v1_lif01_f0831_stamina_amount_source_lock_pc34_compat
         tests/test_dm1_v1_lif01_f0831_stamina_amount_source_lock_pc34_compat.c
@@ -7550,6 +7566,28 @@ if(NOT TARGET test_m11_game_text_utf8_latin_extended_pc34_compat)
     add_test(
         NAME m11_game_text_utf8_latin_extended_pc34_compat
         COMMAND test_m11_game_text_utf8_latin_extended_pc34_compat
+    )
+endif()
+
+# Firestaff TTF font cache - multi-language font selection.
+# Used by the m11_ttf_renderer to fall back to SDL3_ttf for
+# languages that aren't covered by the bitmap-glyph table
+# (Cyrillic, CJK, etc.).  See include/firestaff_font_cache_pc34_compat.h.
+if(NOT TARGET test_firestaff_font_cache_pc34_compat)
+    add_executable(test_firestaff_font_cache_pc34_compat
+        tests/test_firestaff_font_cache_pc34_compat.c
+    )
+    target_link_libraries(test_firestaff_font_cache_pc34_compat PRIVATE
+        firestaff_m12
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_font_cache_pc34_compat PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME firestaff_font_cache_pc34_compat
+        COMMAND test_firestaff_font_cache_pc34_compat
     )
 endif()
 
