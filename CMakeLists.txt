@@ -1620,6 +1620,37 @@ if(BUILD_TESTING)
         NAME csb_v2_smooth_movement
         COMMAND test_csb_v2_smooth_movement
     )
+    # CSB V2 Phase 5 — Smooth Movement Runtime Binding Test
+    # Verifies the binding seam: csb_v2_runtime_bind_to_v1(profile)
+    # observes V1 party state and triggers smooth walk/turn/stairs
+    # animations on V1 deltas.  Headless, no game assets required.
+    add_executable(test_csb_v2_smooth_runtime_binding
+        tests/test_csb_v2_smooth_runtime_binding.c
+        src/csb/csb_v2_runtime.c
+        src/csb/csb_v2_smooth_movement.c
+        src/csb/csb_v2_viewport_renderer.c
+        src/csb/csb_v2_chaos_enhanced.c
+        src/csb/csb_v2_lighting_dynamic.c
+        src/csb/csb_v2_phase_gate_pc34.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/csb/csb_v1_dungeon_world_pc34_compat.c
+        src/csb/csb_v1_monster_pc34_compat.c
+        src/csb/csb_v1_save_load_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_csb_v2_smooth_runtime_binding PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v2_smooth_runtime_binding PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v2_smooth_runtime_binding PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v2_smooth_runtime_binding
+        COMMAND test_csb_v2_smooth_runtime_binding
+    )
     add_executable(test_dm1_v2_source_route_state_hash_pc34
         tests/test_dm1_v2_source_route_state_hash_pc34.c
         src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
