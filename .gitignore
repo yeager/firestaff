@@ -80,6 +80,7 @@ split_redmcsb_*.py
 firestaff_headless
 firestaff
 firestaff-*-quicksave.sav
+firestaff-*-quicksave.sav.*
 exports_driver_probe_*
 test_*_pc34_compat
 test_vga_palette
