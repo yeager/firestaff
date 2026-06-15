@@ -87,7 +87,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Phase 2 - Enhanced asset pipeline.
 - ❌ Phase 3 - Enhanced UI overlays.
 - ❌ Phase 4 - Enhanced lighting and Saturn presentation effects.
-- ❌ Phase 5 - Smooth movement and viewport interpolation.
+- 🔧 Phase 5 - Smooth movement and viewport interpolation: smooth-movement runtime bridge (`nexus_v2_smooth_movement.c`) with walk/turn/stairs interpolations, tick-driven auto-detection of position/angle deltas, shortest-path turn normalization, and probe coverage (`firestaff_nexus_v2_smooth_movement_probe` 64/64 + `test_nexus_v2_smooth_movement` 27/27); remaining work is runtime binding into the V1 game loop, broader deterministic input coverage, and pixel/presentation gates.
 - ❌ Phase 6 - Touch/controller ergonomics.
 - ❌ Phase 7 - V2 verification suite.
 
