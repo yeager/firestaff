@@ -14,6 +14,7 @@
 #include "firestaff_accessibility.h"
 #include "fs_portable_compat.h"
 #include "m11_v2_vertical_slice_assets.h"
+#include "m11_game_text_utf8_decoder_pc34_compat.h"
 #include "render_sdl_m11.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -756,6 +757,34 @@ static const M11_Glyph* m11_find_glyph(char ch) {
     return &g_font[0];
 }
 
+/* UTF-8 + Latin Extended glyph lookup.  The M11 5x7 font is
+ * byte-oriented (1 char = 1 glyph), so to render the 244
+ * accented characters in sv.po (Ö Ä Å ä å) — and the
+ * ~25 accented Latin Extended-A letters needed by the other
+ * 17 supported languages — we expose a UTF-8-aware variant.
+ *
+ * The output is rendered as if it were a M11_Glyph: the rows
+ * are written into outRows[7] and the M11_Glyph struct is
+ * returned with ch = the original char (so the calling
+ * m11_draw_glyph doesn't have to change).  If the codepoint
+ * is not in the table, *outIsLatinExt is 0 and rows are the
+ * SPACE fallback.  *outBytesConsumed is 1 (ASCII), 2 (Latin
+ * Extended), 3 (BMP), or 4 (astral); the caller advances the
+ * input pointer by that many bytes. */
+static M11_Glyph m11_find_glyph_utf8_with_rows(
+    const char* p, int* outBytesConsumed, int* outIsLatinExt)
+{
+    M11_Glyph result;
+    unsigned char rows[7];
+    int k;
+    for (k = 0; k < 7; ++k) rows[k] = 0;
+    int rc = m11_find_glyph_utf8(p, outBytesConsumed, rows, outIsLatinExt);
+    (void)rc;
+    for (k = 0; k < 7; ++k) result.rows[k] = rows[k];
+    result.ch = p[0]; /* first byte; M11_Glyph uses 1-byte ch */
+    return result;
+}
+
 static void m11_draw_glyph(unsigned char* framebuffer,
                            int framebufferWidth,
                            int framebufferHeight,
@@ -821,14 +850,60 @@ static void m11_draw_text(unsigned char* framebuffer,
             framebufferWidth, framebufferHeight, x, y, text, style);
         return;
     }
-    for (i = 0; text[i] != '\0'; ++i) {
-        m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
-                       cursor, y, text[i], s, 1);
-        m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
-                       cursor, y, text[i], s, 0);
-        int effective_scale = g_m11_font_scale_override > 0
-                              ? g_m11_font_scale_override : s->scale;
-        cursor += (5 * effective_scale) + s->tracking;
+    for (i = 0; text[i] != '\0'; /* i advances per UTF-8 codepoint */) {
+        int consumed = 1;
+        int isLatinExt = 0;
+        M11_Glyph g = m11_find_glyph_utf8_with_rows(&text[i], &consumed, &isLatinExt);
+        char ch_for_draw = g.ch;
+        if (isLatinExt) {
+            /* Direct draw using g.rows; the ch field is irrelevant
+             * for the Latin Extended path because m11_draw_glyph
+             * uses g.rows directly when ch is non-ASCII.  We call
+             * the existing renderer to keep the shadow / scale /
+             * tracking logic identical. */
+            ch_for_draw = (char)0x80; /* sentinel: ASCII lookup
+                                          will return space, but
+                                          we want to render g.rows
+                                          instead.  We do that by
+                                          directly iterating. */
+        }
+        /* Render the decoded glyph.  When the byte is a
+         * non-ASCII UTF-8 lead byte, m11_find_glyph returns the
+         * space glyph; we must instead use g.rows directly. */
+        if (isLatinExt || (unsigned char)ch_for_draw >= 0x80) {
+            int effective_scale = (g_m11_font_scale_override > 0
+                                   ? g_m11_font_scale_override : s->scale);
+            int row, col, yy, xx;
+            for (row = 0; row < 7; ++row) {
+                for (col = 0; col < 5; ++col) {
+                    if ((g.rows[row] & (1 << (4 - col))) == 0) continue;
+                    for (yy = 0; yy < effective_scale; ++yy) {
+                        for (xx = 0; xx < effective_scale; ++xx) {
+                            int shadowX = s->shadowDx * effective_scale;
+                            int shadowY = s->shadowDy * effective_scale;
+                            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                                          cursor + col * effective_scale + xx + shadowX,
+                                          y + row * effective_scale + yy + shadowY,
+                                          s->shadowColor);
+                            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                                          cursor + col * effective_scale + xx,
+                                          y + row * effective_scale + yy,
+                                          s->color);
+                        }
+                    }
+                }
+            }
+            cursor += (5 * effective_scale) + s->tracking;
+        } else {
+            m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
+                           cursor, y, ch_for_draw, s, 1);
+            m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
+                           cursor, y, ch_for_draw, s, 0);
+            int effective_scale = g_m11_font_scale_override > 0
+                                  ? g_m11_font_scale_override : s->scale;
+            cursor += (5 * effective_scale) + s->tracking;
+        }
+        i += (size_t)consumed;
     }
 }
 
