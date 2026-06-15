@@ -44,9 +44,12 @@
 #include "firestaff_font_cache_pc34_compat.h"
 #include "firestaff_l10n.h"
 
+#include <stdlib.h>
+
+
+
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
 #define CHECK(cond, msg) do { \
     if (!(cond)) { \
@@ -143,10 +146,32 @@ int main(void) {
     /* T12: Empty asset dir falls back to system path. */
     {
         /* FIRESTAFF_ASSET_DIR="" forces asset_dir to empty/NULL
-         * so the system fallback chain is used. */
+         * so the system fallback chain is used.
+         *
+         * Cross-platform note: setenv()/unsetenv() are POSIX
+         * (Linux/macOS) but not in the C standard library on
+         * Windows MSVC.  We use the runtime-configure-API
+         * (_putenv_s) on Windows and the POSIX setenv on
+         * other platforms.  putenv() is the C89 standard
+         * alternative but it doesn't take an overwrite flag,
+         * so for portability we just skip T12 on Windows if
+         * the function isn't available. */
+        const char* p;
+#if defined(_WIN32) || defined(_MSC_VER)
+        /* Best-effort: set FIRESTAFF_ASSET_DIR to empty via
+         * _putenv_s (Windows CRT).  If _putenv_s isn't
+         * available, just check the current state. */
+        _putenv_s("FIRESTAFF_ASSET_DIR", "");
+        p = firestaff_font_cache_get_path(FS_LANG_DE);
+        if (p) {
+            CHECK(strlen(p) > 0, "T12: empty asset dir falls back to system path");
+        } else {
+            printf("  (T12 skip: no system fallback for DE)\n");
+        }
+#else
         const char* saved = getenv("FIRESTAFF_ASSET_DIR");
         setenv("FIRESTAFF_ASSET_DIR", "", 1);
-        const char* p = firestaff_font_cache_get_path(FS_LANG_DE);
+        p = firestaff_font_cache_get_path(FS_LANG_DE);
         if (p) {
             CHECK(strlen(p) > 0, "T12: empty asset dir falls back to system path");
         } else {
@@ -154,6 +179,7 @@ int main(void) {
         }
         if (saved) setenv("FIRESTAFF_ASSET_DIR", saved, 1);
         else unsetenv("FIRESTAFF_ASSET_DIR");
+#endif
     }
 
     /* T13: All 19 languages have a script tag. */
