@@ -352,6 +352,30 @@ if(NOT MSVC)
     target_compile_options(firestaff_nexus_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Nexus V2 Phase 6 — Touch/Controller Affordance Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: API surface (16 affordances, NONE marker, name round-trip),
+# movement command mapping (NEXUS_CMD_FORWARD..STRAFE_RIGHT), input kind
+# classification (touch vs controller), V2 presentation route (accepted=1
+# when v2PresentationEnabled=1), V1 parity guard (rejected when disabled),
+# NONE affordance handling, route idempotency, Saturn-specific behavior
+# (right stick turn only, left stick strafe), cross-game shape consistency
+# with DM1/DM2/CSB sibling affordances, source evidence, route kind
+# constants (V1_SOURCE=0, V2_PRESENTATION=1).
+# Source: nexus_v2_touch_controller_affordance.c,
+#         nexus_v1_movement.h:NEXUS_CMD_*, ReDMCSB CLIKMENU/COMMAND/GAMELOOP.
+add_executable(firestaff_nexus_v2_touch_controller_affordance_probe
+    probes/firestaff_nexus_v2_touch_controller_affordance_probe.c
+    src/nexus/nexus_v2_touch_controller_affordance.c
+    src/nexus/nexus_v1_movement.c)
+target_include_directories(firestaff_nexus_v2_touch_controller_affordance_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_nexus_v2_touch_controller_affordance_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v2_touch_controller_affordance_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2 Phase 0 — V1 Compatibility Lock Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: defaults(), v2_active(), domain classification, V1-locked domains,

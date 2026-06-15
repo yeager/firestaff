@@ -83,6 +83,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 ### Nexus V2
 
 - ✅ Phase 5 smooth-movement runtime bridge: `nexus_v2_smooth_movement` exposes walk/turn/stairs visual state with ease-out cubic / ease-out quad / ease-in-out cubic interpolations, `nexus_v2_smooth_tick` auto-starts walk/turn animations on position/angle deltas with a `has_prev` baseline guard, and shortest-path turn normalization matches DM2/CSB V2 conventions. `test_nexus_v2_smooth_movement` ctest target passes 27/27; headless probe `firestaff_nexus_v2_smooth_movement_probe` passes 64/64 (lifecycle, walk N/S/E/W, turn 7 directions, stairs with vertical offset, auto-detect, wrap-around shortest path, null safety).
+- ✅ Phase 6 touch/controller affordances: V2-only touch swipe, edge-strafe, D-pad, and dual analog stick affordances for the Saturn gamepad are mapped to `NEXUS_CMD_FORWARD/BACKWARD/TURN_LEFT/TURN_RIGHT/STRAFE_LEFT/RIGHT` (1-6) through `nexus_v2_touch_controller_affordance.c` with V1 mouse/touch/click parity preserved (rejected when `v2PresentationEnabled=0`). Source-locked against ReDMCSB CLIKMENU.C:142-174/180-390 (F0365 turn / F0366 move), COMMAND.C:2045-2155 (F0380 queue dispatch), GAMELOOP.C:164-219 (V1 input wait loop), REALTIME.ASM T048, and the Saturn SDK joystick mapping / NEXUS.BIN input surface. Ctest target `test_nexus_v2_touch_controller_affordance` covers movement command mapping, input kind classification, V2 acceptance, V1 parity guard, name strings, source evidence, NONE affordance, and route kind constants. Headless probe `firestaff_nexus_v2_touch_controller_affordance_probe` passes 294/294 (API surface, mapping, classification, V2 route, V1 guard, NONE, idempotency, Saturn-specific right-stick turn-only, cross-game shape consistency with DM1/DM2/CSB sibling affordances, source evidence, route kind constants).
 
 ## Theron's Quest
 
@@ -107,6 +108,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 - ✅ Launcher and entrance click-zone scaffolding.
 - ✅ DM1 touch/click routes for movement, turning, status/champion selection, and item interaction.
+- ✅ Nexus V2 touch/controller affordance layer: 16 affordances (4 touch swipes, 2 edge-strafe, 4 D-pad, 4 left stick, 2 right stick) mapped to `NEXUS_CMD_*` (1-6) with V1 parity guard.
 
 ### Accessibility
 

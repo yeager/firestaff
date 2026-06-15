@@ -88,7 +88,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Phase 3 - Enhanced UI overlays.
 - ❌ Phase 4 - Enhanced lighting and Saturn presentation effects.
 - 🔧 Phase 5 - Smooth movement and viewport interpolation: smooth-movement runtime bridge (`nexus_v2_smooth_movement.c`) with walk/turn/stairs interpolations, tick-driven auto-detection of position/angle deltas, shortest-path turn normalization, and probe coverage (`firestaff_nexus_v2_smooth_movement_probe` 64/64 + `test_nexus_v2_smooth_movement` 27/27); remaining work is runtime binding into the V1 game loop, broader deterministic input coverage, and pixel/presentation gates.
-- ❌ Phase 6 - Touch/controller ergonomics.
+- ✅ Phase 6 - Touch/controller ergonomics: V2-only touch swipe, edge-strafe, D-pad, and dual analog stick affordances for the Saturn gamepad mapped to `NEXUS_CMD_FORWARD/BACKWARD/TURN_LEFT/TURN_RIGHT/STRAFE_LEFT/RIGHT` (1-6), with V1 mouse/touch/click parity preserved (affordances rejected when `v2PresentationEnabled=0`). Ctest target `test_nexus_v2_touch_controller_affordance` covers mapping/classification/routing/name/source-evidence invariants; headless probe `firestaff_nexus_v2_touch_controller_affordance_probe` passes 294/294 (API surface, movement command mapping, input kind classification, V2 presentation route, V1 parity guard, NONE handling, idempotency, Saturn-specific right-stick-turn-only, cross-game shape consistency with DM1/DM2/CSB sibling affordances, source evidence, route kind constants).
 - ❌ Phase 7 - V2 verification suite.
 
 ## Theron's Quest
