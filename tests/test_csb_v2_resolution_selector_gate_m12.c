@@ -88,14 +88,16 @@ int main(void) {
     CHECK(M12_Resolution_Dimensions(M12_RES_3840x2160, &width, &height));
     CHECK(width == 3840);
     CHECK(height == 2160);
+    CHECK(M12_PresentationMode_AllowsResolutionChoice(M12_PRESENTATION_V20_FILTERED));
     CHECK(M12_PresentationMode_AllowsResolutionChoice(M12_PRESENTATION_V21_UPSCALED));
     CHECK(M12_PresentationMode_AllowsResolutionChoice(M12_PRESENTATION_V22_MODERN));
+    /* V2.0/V2.1/V2.2 all share the 640x400..3840x2160 selector */
+    CHECK(!M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION,
+                                           M12_PRESENTATION_V20_FILTERED));
     CHECK(!M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION,
                                            M12_PRESENTATION_V21_UPSCALED));
     CHECK(!M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION,
                                            M12_PRESENTATION_V22_MODERN));
-    CHECK(M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION,
-                                          M12_PRESENTATION_V20_FILTERED));
 
     check_launch_resolution(&menu,
                             M12_PRESENTATION_V21_UPSCALED,
@@ -122,17 +124,17 @@ int main(void) {
     check_launch_resolution(&menu,
                             M12_PRESENTATION_V20_FILTERED,
                             M12_RES_3840x2160,
-                            M12_RES_640x400,
-                            640,
-                            400);
+                            M12_RES_3840x2160,
+                            3840,
+                            2160);
     M12_StartupMenu_SaveConfig(&menu);
     M12_StartupMenu_InitWithDataDir(&reloaded, "/tmp/firestaff-test-no-assets", NULL);
     force_csb_available(&reloaded);
     intent = M12_StartupMenu_GetLaunchIntent(&reloaded);
     CHECK(intent.valid == 1);
-    CHECK(intent.options.resolution == M12_RES_640x400);
-    CHECK(intent.resolutionWidth == 640);
-    CHECK(intent.resolutionHeight == 400);
+    CHECK(intent.options.resolution == M12_RES_3840x2160);
+    CHECK(intent.resolutionWidth == 3840);
+    CHECK(intent.resolutionHeight == 2160);
 
     set_csb_mode(&menu, M12_PRESENTATION_V22_MODERN, M12_RES_3840x2160);
     M12_StartupMenu_SaveConfig(&menu);
