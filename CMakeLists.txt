@@ -7390,6 +7390,24 @@ endif()
 # of sv.po msgstrs that contain accented characters (Ö Ä Å ä å)
 # and would otherwise render as SPACE.  Also covers de/fr/es/it/
 # pt/nl/pl/cs/ru/etc. accented Latin Extended-A letters.
+if(NOT TARGET test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat)
+    add_executable(test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat
+        tests/test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat PRIVATE
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat
+        COMMAND test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_lif01_f0830_time_criteria_source_lock_pc34_compat)
     add_executable(test_dm1_v1_lif01_f0830_time_criteria_source_lock_pc34_compat
         tests/test_dm1_v1_lif01_f0830_time_criteria_source_lock_pc34_compat.c
