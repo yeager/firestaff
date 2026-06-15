@@ -1409,23 +1409,24 @@ int F0822_EXPLOSION_Advance_Compat(
             outResult->outActionParty.allowedWounds = 0;
             outResult->emittedCombatActionPartyCount = 1;
         } else if (digest->destHasCreatureGroup) {
-            /* ReDMCSB PROJEXPL.C:F0220 lines 858-865: when a poison
-             * cloud lands on a creature group, the original first
-             * calls F0192_GROUP_GetResistanceAdjustedPoisonAttack to
-             * scale the attack by the creature type's poison
-             * resistance ((poison + random(4)) << 3) / (resistance + 1)
-             * — DEFS.H:1664 M061_POISON_RESISTANCE, GROUP.C:F0192
-             * lines 991-1008), then calls
+            /* ReDMCSB PROJEXPL.C:F0220 line 863: when a poison cloud
+             * lands on a creature group, the original reassigns
+             * L0530_i_Attack = F0192_GROUP_GetResistanceAdjustedPoison-
+             * Attack(creatureType, L0530_i_Attack) and then calls
              * F0191_GROUP_GetDamageAllCreaturesOutcome with the
-             * resistance-adjusted value.  F0191 does the per-creature
-             * damage application (GROUP.C:F0190 lines 932-1010); it
+             * F0192-adjusted value.  F0191 does the per-creature
+             * damage application (GROUP.C:F0190 lines 932-1010) and
              * does NOT re-apply resistance.  Pass the F0192-adjusted
              * attack to build_explosion_group_action so rawAttackValue
              * is the resistance-adjusted value (e.g. attack=96 with
-             * Mummy resistance=5 gives rawAttackValue=4, not 3).  v1
-             * had this wrong in f60e82f11 by removing F0192 entirely;
-             * the ReDMCSB source clearly reassigns L0530_i_Attack from
-             * the F0192 result. */
+             * Mummy resistance=5 gives rawAttackValue=4, not 3).
+             * f60e82f11 incorrectly removed this F0192 pre-scale; the
+             * ReDMCSB source line clearly reassigns L0530_i_Attack
+             * from the F0192 result.  Restored for v2.7.22 and
+             * locked in source comments + test_dm1_v1_monster_poison_
+             * cloud_overlap_tick_pc34_compat.  The pre-F0192-removal
+             * test_dm1_v1_projectile_explosion_render_pc34_compat
+             * expectations are stale and are updated to match. */
             int resistanceAdjusted = 0;
             F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
                 digest->destCreatureType, attackApplied, rng,

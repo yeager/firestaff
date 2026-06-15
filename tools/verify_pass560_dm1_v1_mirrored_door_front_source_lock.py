@@ -46,7 +46,7 @@ SRC = [
 ]
 
 LOCAL = [
-    ("firestaff-mirrored-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "236-240", [
+    ("firestaff-mirrored-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "283-290", [
         "DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439",
         "DUNVIEW.C:6579 floor ornament under mirrored rear pass",
         "DUNVIEW.C:6592-6593 optional button before door panel",
@@ -55,7 +55,7 @@ LOCAL = [
         "DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439",
         "DUNVIEW.C:7181 floor ornament under mirrored rear pass",
     ]),
-    ("firestaff-mirrored-door-front-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "707-770", [
+    ("firestaff-mirrored-door-front-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "739-800", [
         "{ DM1_VIEW_SQUARE_D3R, \"6579\", \"6580\", \"6582\", \"6592\", \"6598\", \"6601\", 0x0128, 0x0439, {2, 1}, {3, 4} },",
         "{ DM1_VIEW_SQUARE_D2L, \"6988\", \"6989\", \"6991\", NULL,   \"7000\", \"7003\", 0x0218, 0x0349, {1, 2}, {4, 3} },",
         "{ DM1_VIEW_SQUARE_D2R, \"7181\", \"7182\", \"7184\", NULL,   \"7193\", \"7196\", 0x0128, 0x0439, {2, 1}, {3, 4} },",
