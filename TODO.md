@@ -48,7 +48,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Phase 2 - Enhanced asset pipeline.
 - 🔧 Phase 3 - Enhanced UI overlays: scaffolded (HUD compass/depth/gold/champion bars/action strip/chaos indicator, csb_v2_hud_overlay_pc34.h/.c, build+probe pass).
 - ❌ Phase 4 - Enhanced lighting and magic effects.
-- 🔧 Phase 5 - Smooth movement and viewport interpolation: `csb_v2_smooth_movement.c` provides walk/turn/stairs interpolations with global state; `firestaff_csb_v2_smooth_movement_probe` 374 lines (lifecycle, walk N/S/E/W, turn 8 directions, stairs with vertical offset, deterministic input coverage) and `test_csb_v2_smooth_movement` ctest target 50/50 pass; remaining work is runtime binding into the V1 game loop and pixel/presentation gates.
+- 🔧 Phase 5 - Smooth movement and viewport interpolation: `csb_v2_smooth_movement.c` (50/50) + `csb_v2_runtime.c` binding seam (12 test groups, 43/43) on top of F0365/F0366/F0364; remaining work is wiring `csb_v2_runtime_bind_to_v1(profile)` into the actual CSB V1 game-loop entry point, CSB M11 game view bridge, and pixel/presentation gates.
 - ❌ Phase 6 - Touch/controller ergonomics.
 - ❌ Phase 7 - V2 verification suite.
 
@@ -69,7 +69,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ❌ Phase 2 - Enhanced asset pipeline.
 - ❌ Phase 3 - Enhanced UI overlays.
 - ❌ Phase 4 - Enhanced lighting and outdoor effects.
-- 🔧 Phase 5 - Smooth movement and viewport interpolation: struct-based `dm2_v2_smooth_movement.c` with walk/turn/stairs + shortest-path turn + vertical camera offset; `firestaff_dm2_v2_smooth_movement_probe` 470 lines and `test_dm2_v2_smooth_movement` ctest target 79/79 pass; remaining work is runtime binding into the V1 game loop and pixel/presentation gates.
+- 🔧 Phase 5 - Smooth movement and viewport interpolation: struct-based `dm2_v2_smooth_movement.c` (79/79) + `dm2_v2_runtime.c` binding seam (12 test groups, 43/43) on top of SKULL.ASM T520/T048/T560/T600; remaining work is wiring `dm2_v2_runtime_bind_to_v1(profile)` into the actual DM2 V1 game-loop entry point, DM2 M11 game view bridge (dungeon T560 + outdoor T600), and pixel/presentation gates.
 - ❌ Phase 6 - Touch/controller ergonomics.
 - ❌ Phase 7 - V2 verification suite.
 
