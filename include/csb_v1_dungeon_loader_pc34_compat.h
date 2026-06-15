@@ -14,12 +14,14 @@
  * Secondary: ReDMCSB DUNGEON.C F0148-F0170 (shared format)
  *
  * Dungeon file layout (CSB PC 3.4):
- *   bytes 0-1:  number of levels (LE uint16)
- *   bytes 2-3:  number of thing types (LE uint16, always 16)
- *   per level (6 bytes): width(u8), height(u8), offset(uint32 LE)
- *   then per-level square data at each offset (column-major 2-byte squares)
- *   then thing data section
- *   then DSA script section (CSB-specific)
+ *   Disk data is often FTL-compressed (signature bytes 81 04). After
+ *   decompression and byte swapping, it uses the same 44-byte DUNGEON_HEADER
+ *   and 16-byte MAP descriptors as DM1, followed by byte-sized square data.
+ *
+ * The small synthetic unit fixtures keep an older Firestaff-only shape:
+ *   levels(LE16), thing-type-count(LE16), per-level width/height/offset,
+ *   and 16-bit synthetic square records. The loader supports those fixtures
+ *   separately so real CSB assets use the source format.
  */
 
 #define CSB_V1_MAX_LEVELS 12
@@ -32,6 +34,10 @@ typedef struct {
     int level_offsets[CSB_V1_MAX_LEVELS];
     int level_widths[CSB_V1_MAX_LEVELS];
     int level_heights[CSB_V1_MAX_LEVELS];
+    int square_bytes;
+    int raw_map_data_base;
+    int square_first_thing_base;
+    int square_first_thing_count;
     uint8_t *raw_data;
     int raw_size;
     /* DSA scripts */
@@ -72,10 +78,13 @@ int csb_v1_dungeon_load_from_file(CSB_V1_DungeonData *out, const char *path);
  */
 int csb_v1_dungeon_get_square_type(const CSB_V1_DungeonData *d, int level, int x, int y);
 
-/* Return the first thing index stored in the square record.
+/* Return the square's first thing.
  * Returns -1 if d is NULL, raw_data is NULL, or coordinates out of bounds.
+ * Real CSB-format maps return the full THING handle from the imported
+ * square-first-thing table. Legacy synthetic fixtures return the older
+ * Firestaff-only 10-bit index stored in the 16-bit test square record.
  *
- * ReDMCSB: DUNGEON.C F0151 lines 1423-1475 (bits 5-14 of square record)
+ * ReDMCSB: DUNGEON.C F0160 lines 1699-1728, F0161 lines 1730-1746.
  */
 int csb_v1_dungeon_get_first_thing(const CSB_V1_DungeonData *d, int level, int x, int y);
 
@@ -174,4 +183,3 @@ void csb_v1_dungeon_free(CSB_V1_DungeonData *d);
 const char *csb_v1_dungeon_source_evidence(void);
 
 #endif
-

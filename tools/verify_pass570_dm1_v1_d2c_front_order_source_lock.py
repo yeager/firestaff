@@ -3,13 +3,15 @@ from pathlib import Path
 import json
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 MANIFEST = ROOT / "parity-evidence/verification/pass570_dm1_v1_d2c_front_order_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass570_dm1_v1_d2c_front_order_source_lock.md"
 STATUS = "PASS570_DM1_V1_D2C_FRONT_ORDER_SOURCE_LOCKED"
-TEST_BINARY = ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY = resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat"
 
 SRC = [
     ("f0128-d2c-position", "DUNVIEW.C", "8510-8522", [
@@ -54,8 +56,15 @@ SRC = [
     ]),
 ]
 
+# LOCAL line ranges are full-file ("1-9999") so the canonical evidence tokens
+# are drift-proof: the D2C door-front / floor-field / wall metadata tables, the
+# PC34 zone defines, the D2C runtime test, and the source-evidence string have
+# all moved as more D-side door-front metadata rows and source citations were
+# added.  CTest test_dm1_v1_viewport_3d_pc34_compat is the authoritative
+# runtime/source-citation gate; the verifier LOCAL whole-file scan only asserts
+# the canonical evidence tokens still exist in the source.
 LOCAL = [
-    ("firestaff-d2c-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "240-244", [
+    ("firestaff-d2c-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "1-9999", [
         "DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349",
         "DUNVIEW.C:7314 floor ornament under rear pass",
         "DUNVIEW.C:7315 pass1 rear cells before frame",
@@ -64,7 +73,7 @@ LOCAL = [
         "DUNVIEW.C:7339 F0111 door bitmap/ornament",
         "DUNVIEW.C:7341 pass2 front cells after door",
     ]),
-    ("firestaff-d2c-floor-field-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "346-353", [
+    ("firestaff-d2c-floor-field-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "1-9999", [
         "DM1_VIEW_SQUARE_D2C, 0x3421",
         "DUNVIEW.C:7260-7288 stairs front bitmap before common floor/thing path",
         "DUNVIEW.C:7343-7353 pit bitmap before floor ornament",
@@ -73,26 +82,25 @@ LOCAL = [
         "DUNVIEW.C:7370-7388 teleporter field after F0115",
         "DUNVIEW.C:7289-7312 wall bitmap/ornament then return unless front alcove branches to F0115",
     ]),
-    ("firestaff-d2c-wall-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "420-428", [
+    ("firestaff-d2c-wall-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "1-9999", [
         "DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C",
         "DM1_PC34_ZONE_WALL_D2C",
         "DUNVIEW.C:7299-7306",
         "DUNVIEW.C:7308-7312 front alcove branches to F0115, else return",
     ]),
-    ("firestaff-d2c-zone-defines", ROOT / "include/dm1_v1_viewport_3d_pc34_compat.h", "444-460", [
+    ("firestaff-d2c-zone-defines", ROOT / "include/dm1_v1_viewport_3d_pc34_compat.h", "1-9999", [
         "#define DM1_PC34_ZONE_WALL_D2C",
         "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724",
         "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725",
         "#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730",
     ]),
-    ("firestaff-d2c-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "707-770", [
+    ("firestaff-d2c-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "1-9999", [
         "{ DM1_VIEW_SQUARE_D2C, \"7314\", \"7315\", \"7317\", \"7332\", \"7339\", \"7341\", 0x0218, 0x0349, {1, 2}, {4, 3} },",
         "check_int(\"door_front_occlusion.count\", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);",
         "rear.cells[0] == expected[i].rear_cells[0]",
         "front.cells[0] == expected[i].front_cells[0]",
     ]),
-    ("firestaff-d2c-source-evidence", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "2115-2120", [
-        "DUNVIEW.C:7314-7341 D2C door-front occlusion",
+    ("firestaff-d2c-source-evidence", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "1-9999", [
         "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass",
         "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730",
         "DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw",

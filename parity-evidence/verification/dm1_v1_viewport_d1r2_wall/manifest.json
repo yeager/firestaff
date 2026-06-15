@@ -1,0 +1,39 @@
+{
+  "gate": "dm1_v1_viewport_d1r2_wall_pc34_compat",
+  "ok": true,
+  "type": "contract-only synthetic source-lock",
+  "redmcsbAnchors": [
+    "DUNVIEW.C:7559-7725 F0123_DUNGEONVIEW_DrawSquareD1R",
+    "DUNVIEW.C:7604-7628 D1R wall case, F0107, return",
+    "DUNVIEW.C:3048-3058 F0100 C10 clipped blit",
+    "DUNVIEW.C:3113-3129 F0104 native C10 wall blit",
+    "DUNVIEW.C:3185-3204 F0105 flipped scratch C10 wall blit",
+    "DUNVIEW.C:8007-8038 F0125 wall-case return pattern",
+    "DUNVIEW.C:8117-8144 F0126 wall-case return pattern",
+    "DUNVIEW.C:8524-8529 F0128 D1L then D1R dispatch",
+    "DEFS.H:2088,2601,3425-3426,4052-4054 constants",
+    "DUNVIEW.C:591 G0163 D1R frame row",
+    "DUNVIEW.C:3159-3304 F0765/F0792 PC34 opaque/center non-claim anchors"
+  ],
+  "claims": [
+    "D1R2 wall mirror gate complements existing D1L2 wall gate",
+    "synthetic 8x4 C10 skip, opaque write, right-edge clipping, and bottom clipping",
+    "parity path flips the opposite native D1L wall bitmap through the F0105 scratch path",
+    "F0107 ordinal-return path is source-locked",
+    "F0128 D1L-before-D1R dispatch is source-locked",
+    "wall case excludes F0111 and F0115 markers"
+  ],
+  "nonClaims": [
+    "no real-asset bitmap parity claim",
+    "no renderer pixel parity promotion",
+    "no runtime capture promotion",
+    "no gameplay behavior change"
+  ],
+  "changedPaths": [
+    "include/dm1_v1_viewport_d1r2_wall_pc34_compat.h",
+    "src/dm1/dm1_v1_viewport_d1r2_wall_pc34_compat.c",
+    "tests/test_dm1_v1_viewport_d1r2_wall_pc34_compat.c",
+    "parity-evidence/verification/dm1_v1_viewport_d1r2_wall/manifest.json",
+    "CMakeLists.txt"
+  ]
+}

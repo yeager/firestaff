@@ -383,6 +383,21 @@ const char *csb_v1_runtime_save_path(int slot)
 
 static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
 {
+    int dispatched;
+
+    /* Source: ReDMCSB GAMELOOP.C F0002 lines 69-124 calls
+     * F0261_TIMELINE_Process_CPSEF() before incrementing
+     * G0313_ul_GameTime.  TIMELINE.C F0240 lines 702-708 expires the
+     * first heap event when event_time <= G0313_ul_GameTime. */
+    profile->timeline_queue.gameTick = profile->game_time;
+    memset(&profile->last_timeline_dispatch, 0,
+           sizeof(profile->last_timeline_dispatch));
+    dispatched = dm1v1_event_process_tick(&profile->timeline_queue,
+                                          &profile->last_timeline_dispatch);
+    if (dispatched > 0) {
+        profile->timeline_dispatch_count += (uint32_t)dispatched;
+    }
+
     profile->game_time++;
     profile->tick_count++;
     profile->game_ticks += CSB_V1_TICK_MS_NOMINAL;
@@ -396,6 +411,17 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
         profile->chaos_magic.chaos_level = (uint8_t)((beat < 10U) ? 0U : 1U);
         profile->chaos_magic.spell_grid_version++;
     }
+}
+
+static int csb_v1_runtime_input_command_target_dir(int current_dir, int command)
+{
+    if (command == DM1_V1_COMMAND_TURN_RIGHT) {
+        return (current_dir + 1) & 3;
+    }
+    if (command == DM1_V1_COMMAND_TURN_LEFT) {
+        return (current_dir + 3) & 3;
+    }
+    return -1;
 }
 
 /* ── Runtime profile API ────────────────────────────────────────────── */
@@ -412,6 +438,10 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     profile->level_count   = 1;
     profile->world_count   = 1;
     profile->champion_count = 3;
+    profile->leader_index = -1;
+    profile->magic_caster_index = -1;
+    profile->party_state_valid = 0;
+    csb_v1_character_init_default(&profile->party_state);
 
     profile->party_x = CSB_V1_START_PARTY_X;
     profile->party_y = CSB_V1_START_PARTY_Y;
@@ -427,9 +457,287 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     profile->game_time     = 0;
     profile->total_play_ms = 0;
     profile->tick_count    = 0;
+    dm1v1_event_queue_init(&profile->timeline_queue, profile->game_time);
+    memset(&profile->last_timeline_dispatch, 0,
+           sizeof(profile->last_timeline_dispatch));
+    profile->timeline_dispatch_count = 0;
+    DM1_V1_InputCommandQueue_InitPc34Compat(&profile->input_command_queue);
+    memset(&profile->last_input_dispatch, 0,
+           sizeof(profile->last_input_dispatch));
+    profile->input_dispatch_count = 0;
 
     profile->data_dir = data_dir;
     profile->save_dir = csb_v1_runtime_save_dir();
+}
+
+int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
+                                      const struct DM1_Event_V1 *event)
+{
+    if (!profile || !event) return -1;
+    profile->timeline_queue.gameTick = profile->game_time;
+    return dm1v1_event_add(&profile->timeline_queue, event);
+}
+
+int csb_v1_runtime_get_last_timeline_dispatch(
+    const CSB_V1_RuntimeProfile *profile,
+    struct DM1_TickDispatchResult_V1 *out_result)
+{
+    if (!profile || !out_result) return -1;
+    *out_result = profile->last_timeline_dispatch;
+    return out_result->count;
+}
+
+int csb_v1_runtime_enqueue_input_command(CSB_V1_RuntimeProfile *profile,
+                                         int command,
+                                         int x,
+                                         int y)
+{
+    if (!profile) return 0;
+    return DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
+        &profile->input_command_queue, command, x, y);
+}
+
+int csb_v1_runtime_process_one_input_command(
+    CSB_V1_RuntimeProfile *profile,
+    int disabled_movement_ticks,
+    int projectile_disabled_movement_ticks,
+    int last_projectile_disabled_movement_direction)
+{
+    int target_dir;
+
+    if (!profile) return -1;
+    memset(&profile->last_input_dispatch, 0,
+           sizeof(profile->last_input_dispatch));
+
+    /* Source-lock: ReDMCSB COMMAND.C F0380 lines 2075-2127 locks the
+     * command queue, applies the movement-disabled gate, dequeues one
+     * command, and lines 2150-2156 dispatch turns to CLIKMENU.C F0365 or
+     * steps to F0366.  This CSB runtime boundary currently wires only the
+     * F0365 turn route into live CSB state; step commands are reported as
+     * dequeued/recognized but intentionally not applied here. */
+    profile->last_input_dispatch = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(
+        &profile->input_command_queue,
+        profile->party_dir,
+        disabled_movement_ticks,
+        projectile_disabled_movement_ticks,
+        last_projectile_disabled_movement_direction);
+
+    if (!profile->last_input_dispatch.dequeued) {
+        return 0;
+    }
+
+    profile->input_dispatch_count++;
+    target_dir = csb_v1_runtime_input_command_target_dir(
+        profile->party_dir, profile->last_input_dispatch.command);
+    if (target_dir >= 0) {
+        /* Source-lock: ReDMCSB CLIKMENU.C F0365 lines 156-173 turns
+         * C001/C002 into (party_dir + 3/+1) & 3 and calls CHAMPION.C F0284
+         * lines 117-130 to rotate every champion Cell/Direction before
+         * committing G0308_i_PartyDirection. */
+        if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
+            return -1;
+        }
+    }
+    return 1;
+}
+
+int csb_v1_runtime_get_last_input_dispatch(
+    const CSB_V1_RuntimeProfile *profile,
+    struct Dm1V1InputQueueProcessResultPc34Compat *out_result)
+{
+    if (!profile || !out_result) return -1;
+    *out_result = profile->last_input_dispatch;
+    return out_result->dequeued;
+}
+
+static int csb_v1_runtime_first_living_champion(const CSB_V1_PartyState *party)
+{
+    int i;
+    if (!party) return -1;
+    for (i = 0; i < party->ChampionCount && i < CSB_V1_MAX_CHAMPIONS; i++) {
+        if (!csb_v1_champion_is_dead(&party->Champions[i]) &&
+            party->Champions[i].CurrentHealth > 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
+                                   const CSB_V1_PartyState *party)
+{
+    int leader;
+    if (!profile || !party) return -1;
+    if (party->ChampionCount < 0 ||
+        party->ChampionCount > CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+
+    profile->party_state = *party;
+    profile->party_state_valid = 1;
+    profile->champion_count = party->ChampionCount;
+    profile->party_dir = party->PartyDirection & 3;
+    profile->magic_caster_index = party->MagicCasterIndex;
+
+    leader = party->LeaderIndex;
+    if (leader < 0 || leader >= party->ChampionCount ||
+        csb_v1_champion_is_dead(&party->Champions[leader]) ||
+        party->Champions[leader].CurrentHealth <= 0) {
+        leader = csb_v1_runtime_first_living_champion(party);
+    }
+    profile->leader_index = leader;
+    profile->party_state.LeaderIndex = leader;
+    return 0;
+}
+
+int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
+                                   CSB_V1_PartyState *out_party)
+{
+    if (!profile || !out_party || !profile->party_state_valid) return -1;
+    *out_party = profile->party_state;
+    return out_party->ChampionCount;
+}
+
+int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
+                              int champion_index)
+{
+    CSB_V1_Champion *champion;
+    if (!profile || !profile->party_state_valid) return -1;
+    if (champion_index == profile->leader_index) return 0;
+    if (champion_index < 0) {
+        profile->leader_index = -1;
+        profile->party_state.LeaderIndex = -1;
+        return 0;
+    }
+    if (champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+
+    champion = &profile->party_state.Champions[champion_index];
+    /* Mirrors the source-locked F0368 guard and selection side effect:
+     * ignore dead/empty champions, then write G0411_i_LeaderIndex and align
+     * the selected champion direction to G0308_i_PartyDirection.
+     * Source: ReDMCSB CLIKCHAM.C F0368_COMMAND_SetLeader lines 51-68. */
+    if (csb_v1_champion_is_dead(champion) || champion->CurrentHealth <= 0) {
+        return -1;
+    }
+    profile->leader_index = champion_index;
+    profile->party_state.LeaderIndex = champion_index;
+    champion->Direction = (uint8_t)(profile->party_dir & 3);
+    return 0;
+}
+
+int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
+                                 int target_dir)
+{
+    /* Source: ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines
+     * 117-130.  The PC 3.4 C version (MEDIA182) computes
+     *   delta = (P0600_i_Direction - G0308_i_PartyDirection); if delta<0
+     *   then delta += 4;
+     * then loops over G0305_ui_PartyChampionCount champions, applying
+     *   Champion.Cell      = (Champion.Cell + delta) & 3;
+     *   Champion.Direction = (Champion.Direction + delta) & 3;
+     * and finally writes G0308_i_PartyDirection = P0600_i_Direction.
+     * The M021_NORMALIZE() macro is just (x & 3). */
+    int delta;
+    int current_dir;
+    int i;
+
+    if (!profile) return -1;
+    if (!profile->party_state_valid) return -1;
+    if (target_dir < 0 || target_dir > 3) return -1;
+
+    current_dir = profile->party_dir & 3;
+    if (target_dir == current_dir) {
+        /* Source-locked F0284 early return.  No champion state is
+         * touched and the caller still gets 0. */
+        return 0;
+    }
+
+    delta = target_dir - current_dir;
+    if (delta < 0) delta += 4;
+
+    for (i = 0; i < profile->party_state.ChampionCount &&
+                i < CSB_V1_MAX_CHAMPIONS; i++) {
+        uint8_t *cell = &profile->party_state.Champions[i].Cell;
+        uint8_t *dir = &profile->party_state.Champions[i].Direction;
+        *cell = (uint8_t)(((int)*cell + delta) & 3);
+        *dir  = (uint8_t)(((int)*dir  + delta) & 3);
+    }
+
+    profile->party_dir = (uint8_t)target_dir;
+    profile->party_state.PartyDirection = (uint8_t)target_dir;
+    return 0;
+}
+
+int csb_v1_runtime_process_input_queue(
+    CSB_V1_RuntimeProfile *profile,
+    struct Dm1V1InputCommandQueuePc34Compat *queue,
+    int disabled_movement_ticks,
+    int projectile_disabled_movement_ticks,
+    int last_projectile_disabled_movement_direction,
+    CSB_V1_InputCommandRuntimeResult *out_result)
+{
+    CSB_V1_InputCommandRuntimeResult local_result;
+    int target_dir;
+
+    if (!profile || !queue) return -1;
+    memset(&local_result, 0, sizeof(local_result));
+
+    local_result.old_party_x = profile->party_x;
+    local_result.old_party_y = profile->party_y;
+    local_result.old_party_dir = profile->party_dir & 3;
+    local_result.new_party_x = profile->party_x;
+    local_result.new_party_y = profile->party_y;
+    local_result.new_party_dir = profile->party_dir & 3;
+
+    /* Source: ReDMCSB COMMAND.C F0380 lines 2045-2156 owns the command
+     * queue dequeue/gate/dispatch boundary.  The shared V1 queue helper
+     * preserves that C001/C002 vs C003-C006 split before this CSB runtime
+     * adapter applies only the state transition that has a CSB profile
+     * boundary today. */
+    local_result.queue_result =
+        DM1_V1_InputCommandQueue_ProcessOnePc34Compat(
+            queue,
+            profile->party_dir,
+            disabled_movement_ticks,
+            projectile_disabled_movement_ticks,
+            last_projectile_disabled_movement_direction);
+
+    if (!local_result.queue_result.dequeued) {
+        if (out_result) *out_result = local_result;
+        return 0;
+    }
+
+    switch (local_result.queue_result.command) {
+    case DM1_V1_COMMAND_TURN_LEFT:
+        target_dir = (profile->party_dir + 3) & 3;
+        if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
+            local_result.unsupported_runtime_command = 1;
+        }
+        break;
+    case DM1_V1_COMMAND_TURN_RIGHT:
+        target_dir = (profile->party_dir + 1) & 3;
+        if (csb_v1_runtime_rotate_party(profile, target_dir) != 0) {
+            local_result.unsupported_runtime_command = 1;
+        }
+        break;
+    default:
+        local_result.unsupported_runtime_command = 1;
+        break;
+    }
+
+    local_result.new_party_x = profile->party_x;
+    local_result.new_party_y = profile->party_y;
+    local_result.new_party_dir = profile->party_dir & 3;
+    local_result.runtime_state_changed =
+        (local_result.old_party_x != local_result.new_party_x) ||
+        (local_result.old_party_y != local_result.new_party_y) ||
+        (local_result.old_party_dir != local_result.new_party_dir);
+
+    if (out_result) *out_result = local_result;
+    return 1;
 }
 
 void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile) {
@@ -532,39 +840,41 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
 
 void csb_v1_runtime_tick(CSB_V1_RuntimeProfile *profile, uint32_t dt_ms)
 {
-    uint32_t ticks;
     if (!profile || profile->paused) return;
     if (profile->game_over || profile->victory) return;
 
     profile->total_play_ms += dt_ms;
 
-    ticks = dt_ms / CSB_V1_TICK_MS_NOMINAL;
-    for (; ticks > 0; ticks--) {
+    /* The original runtime gates event expiry against G0313_ul_GameTime,
+     * not against a single frame delta.  Accumulate wall time first, then
+     * fire every due 55ms quantum so common frame slices such as 16+16+23ms
+     * still produce one V1 tick.
+     * Source: ReDMCSB TIMELINE.C F0235 lines 702-708
+     * Source: ReDMCSB COMMAND.C F0380 lines 2383-2429
+     * (C147/C148 toggle G0301_B_GameTimeTicking). */
+    while (csb_v1_runtime_tick_due(profile, 0U)) {
         csb_v1_fire_tick(profile);
     }
 }
 
 int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile)
 {
-    uint32_t expected;
     if (!profile || profile->paused) return 0;
     if (profile->game_over || profile->victory) return 0;
 
-    expected = (uint32_t)(profile->total_play_ms / CSB_V1_TICK_MS_NOMINAL);
-    if (profile->tick_count < expected) {
-        csb_v1_fire_tick(profile);
-        return 1;
-    }
-    return 0;
+    profile->total_play_ms += CSB_V1_TICK_MS_NOMINAL;
+    csb_v1_fire_tick(profile);
+    return 1;
 }
 
 int csb_v1_runtime_tick_due(const CSB_V1_RuntimeProfile *profile, uint32_t now_ms)
 {
-    uint32_t game_ticks_now;
-    (void)now_ms;
+    uint64_t wall_ms;
+    uint64_t game_ticks_now;
     if (!profile) return 0;
 
-    game_ticks_now = (uint32_t)(profile->total_play_ms / CSB_V1_TICK_MS_NOMINAL);
+    wall_ms = (now_ms != 0U) ? (uint64_t)now_ms : profile->total_play_ms;
+    game_ticks_now = wall_ms / CSB_V1_TICK_MS_NOMINAL;
     return (profile->tick_count < game_ticks_now) ? 1 : 0;
 }
 

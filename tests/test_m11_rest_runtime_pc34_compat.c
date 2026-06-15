@@ -6,7 +6,8 @@
  *     G0300_B_PartyIsResting and switches to party-resting input tables.
  *   COMMAND.C F0380 lines 2361-2363 and CHAMPION.C F0314 lines
  *     1382-1410: C146_COMMAND_WAKE_UP clears G0300_B_PartyIsResting and
- *     restores normal interface input.
+ *     restores normal interface input. The wake command exits through
+ *     T0380042 without advancing a resting recovery tick.
  *   PROJEXPL.C F0230 lines 1346-1373: creature damage wakes the party
  *     before applying the resting-hit path.
  */
@@ -106,11 +107,74 @@ static void test_creature_attack_wakes_resting_party(void) {
               "creature attack applies damage");
 }
 
+static void seed_rest_recovery_boundary_state(M11_GameViewState* state) {
+    memset(state, 0, sizeof(*state));
+    M11_GameView_Init(state);
+    state->active = 1;
+    state->resting = 1;
+    state->world.gameTick = 3;
+    state->world.party.championCount = 1;
+    state->world.party.champions[0].present = 1;
+    state->world.party.champions[0].hp.current = 9;
+    state->world.party.champions[0].hp.maximum = 12;
+    state->world.party.champions[0].stamina.current = 19;
+    state->world.party.champions[0].stamina.maximum = 20;
+    state->world.party.champions[0].mana.current = 4;
+    state->world.party.champions[0].mana.maximum = 5;
+}
+
+static void test_wake_input_does_not_spend_recovery_tick(void) {
+    M11_GameViewState state;
+    M11_GameInputResult result;
+
+    seed_rest_recovery_boundary_state(&state);
+
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_REST_TOGGLE);
+
+    /*
+     * ReDMCSB COMMAND.C F0380:2361-2363 dispatches C146_COMMAND_WAKE_UP
+     * straight to CHAMPION.C F0314, which clears G0300_B_PartyIsResting
+     * at lines 1393-1396.  It does not enter GAMELOOP.C's next time
+     * advance, so Firestaff must not award the tick-4 rest recovery when
+     * the player wakes exactly at that boundary.
+     */
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW, "wake input redraws");
+    ASSERT_EQ(state.resting, 0, "wake input clears resting flag");
+    ASSERT_EQ(state.world.gameTick, 3, "wake input does not advance game tick");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 9,
+              "wake input does not recover hp");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 19,
+              "wake input does not recover stamina");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 4,
+              "wake input does not recover mana");
+}
+
+static void test_resting_idle_tick_recovers_at_boundary(void) {
+    M11_GameViewState state;
+    M11_GameInputResult result;
+
+    seed_rest_recovery_boundary_state(&state);
+
+    result = M11_GameView_AdvanceIdleTick(&state);
+
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW, "resting idle tick redraws");
+    ASSERT_EQ(state.resting, 1, "resting idle tick keeps rest state");
+    ASSERT_EQ(state.world.gameTick, 4, "resting idle tick advances to boundary");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 10,
+              "resting idle tick recovers hp at boundary");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 20,
+              "resting idle tick recovers capped stamina at boundary");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 5,
+              "resting idle tick recovers capped mana at boundary");
+}
+
 int main(void) {
     printf("=== M11 Rest Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: COMMAND.C F0380 rest/wake, CHAMPION.C F0314 wake, PROJEXPL.C F0230 attack wake\n\n");
 
     test_creature_attack_wakes_resting_party();
+    test_wake_input_does_not_spend_recovery_tick();
+    test_resting_idle_tick_recovers_at_boundary();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

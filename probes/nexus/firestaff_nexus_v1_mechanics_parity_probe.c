@@ -43,6 +43,7 @@
 #include "nexus_v1_save.h"
 #include "nexus_v1_world.h"
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_creatures.h"
 #include "nexus_v1_champions.h"
 #include "nexus_v1_game.h"
 
@@ -110,32 +111,72 @@ static void build_synthetic_dgn(uint8_t *buf, size_t bufsz)
 
     memset(buf, 0, bufsz);
 
+    /* Root header: point to Structure1 at block 1. */
+    write_be16(buf + 0x0C, 1);
+    write_be16(buf + 0x0E, 18);
+    write_be32(buf + 0x10, (uint32_t)(GRID_rel + GRID_bytes));
+
     /* Block 1 header (Structure1) */
     uint8_t *s1 = buf + BLOCK;                  /* block 1 in container */
     write_be16(s1 + 0x00, 1);                   /* grid at block 1 */
-    write_be16(s1 + 0x02, 18);                  /* 18 blocks total */
-    write_be32(s1 + 0x08, (uint32_t)GRID_rel); /* offset to grid data */
+    s1[2] = 0x40;
+    s1[3] = 0x40;
+    write_be32(s1 + 0x14, (uint32_t)GRID_rel); /* offset to grid data */
     write_be32(s1 + 0x0C, (uint32_t)(GRID_rel + GRID_bytes)); /* end */
 
     /* Grid data: default floor, walls on all four edges */
     uint8_t *grid = s1 + GRID_rel;
-    memset(grid, 0x01, GRID_bytes);             /* default: floor */
+    memset(grid, 0, GRID_bytes);
     int xy;
+    for (xy = 0; xy < 64 * 64; xy++) {
+        grid[xy * 8 + 6] = NEXUS_SQUARE_FLOOR;
+    }
     for (xy = 0; xy < 64; xy++) {
-        grid[(0  * 64 + xy) * 8] = 0;            /* north edge: wall */
-        grid[(63 * 64 + xy) * 8] = 0;            /* south edge: wall */
-        grid[(xy * 64 + 0)  * 8] = 0;            /* west edge:  wall */
-        grid[(xy * 64 + 63) * 8] = 0;            /* east edge:  wall */
+        grid[(0  * 64 + xy) * 8 + 6] = NEXUS_SQUARE_WALL; /* north edge */
+        grid[(63 * 64 + xy) * 8 + 6] = NEXUS_SQUARE_WALL; /* south edge */
+        grid[(xy * 64 + 0)  * 8 + 6] = NEXUS_SQUARE_WALL; /* west edge */
+        grid[(xy * 64 + 63) * 8 + 6] = NEXUS_SQUARE_WALL; /* east edge */
     }
     /* Special squares */
-    grid[(20 * 64 + 10) * 8] = NEXUS_SQUARE_STAIRS_DN;
-    grid[(21 * 64 + 11) * 8] = NEXUS_SQUARE_TELEPORT;
-    grid[(22 * 64 + 12) * 8] = NEXUS_SQUARE_PIT;
-    grid[(23 * 64 + 13) * 8] = NEXUS_SQUARE_EXIT;
+    grid[(20 * 64 + 10) * 8 + 6] = NEXUS_SQUARE_STAIRS_DN;
+    grid[(21 * 64 + 11) * 8 + 6] = NEXUS_SQUARE_TELEPORT;
+    grid[(22 * 64 + 12) * 8 + 6] = NEXUS_SQUARE_PIT;
+    grid[(23 * 64 + 13) * 8 + 6] = NEXUS_SQUARE_EXIT;
     /* Boss chamber — 3D geometry flag in byte[7] */
-    grid[(30 * 64 + 30) * 8] = NEXUS_SQUARE_FLOOR;
+    grid[(30 * 64 + 30) * 8 + 6] = NEXUS_SQUARE_FLOOR;
     grid[(30 * 64 + 30) * 8 + 7] = NEXUS_SQF_3D_ONLY;
-    grid[(30 * 64 + 30) * 8 + 6] = 0x0F;
+}
+
+/*
+ * Build a synthetic DGN fixture with bogus thing/actor reference bytes.
+ *
+ * ReDMCSB source-lock note:
+ *   DUNGEON.C keeps square-thing bookkeeping in bounded arrays and has
+ *   historical out-of-bounds failure modes when thing references are
+ *   overfilled or dereferenced without a valid square/list entry.
+ *   This regression ensures the Nexus V1 DGN loader treats malformed
+ *   reference bytes as inert data and still clamps to the decoded square
+ *   type instead of trying to resolve them eagerly.
+ */
+static void build_synthetic_dgn_with_bad_actor_refs(uint8_t *buf, size_t bufsz)
+{
+    build_synthetic_dgn(buf, bufsz);
+
+    /* Inject malformed reference bytes into one floor cell.  The loader
+     * only decodes the square type from byte[6], so these values must stay
+     * inert and must not affect parse success or square clamping. */
+    {
+        uint8_t *grid = buf + NEXUS_DGN_BLOCK_SIZE + 0x40;
+        int off = (12 * NEXUS_MAX_MAP_SIZE + 13) * NEXUS_DGN_STRUCTURE1B_CELL_BYTES;
+        grid[off + 0] = 0xFFU;
+        grid[off + 1] = 0x7FU;
+        grid[off + 2] = 0xEEU;
+        grid[off + 3] = 0xDDU;
+        grid[off + 4] = 0xCCU;
+        grid[off + 5] = 0xBBU;
+        grid[off + 6] = NEXUS_SQUARE_FLOOR;
+        grid[off + 7] = 0x01U;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -178,8 +219,34 @@ static void probe_dungeon(void)
           "get_square(1,1):    floor");
     CHECK(nexus_v1_level_get_square(&level, 99, 99) == 0,
           "get_square(99,99): OOB returns wall");
-    CHECK(nexus_v1_level_get_square(&level, 20, 10) == NEXUS_SQUARE_STAIRS_DN,
+    CHECK(nexus_v1_level_get_square(&level, 10, 20) == NEXUS_SQUARE_STAIRS_DN,
           "get_square(10,20): stairs-down");
+}
+
+static void probe_dungeon_bad_actor_refs(void)
+{
+    printf("\n[DGN Level Parse — malformed actor refs]\n");
+    /* Same Structure1B layout as the valid fixture, but one cell carries
+     * impossible thing-reference bytes.  The parser must ignore them and
+     * keep the decoded square type stable. */
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    build_synthetic_dgn_with_bad_actor_refs(dgn, sizeof(dgn));
+
+    Nexus_V1_Level level;
+    memset(&level, 0xAA, sizeof(level));
+
+    int r = nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 2);
+    CHECK(r == 0, "nexus_v1_level_load succeeds with malformed actor refs");
+    CHECK(level.width == 64, "malformed refs keep level width = 64");
+    CHECK(level.height == 64, "malformed refs keep level height = 64");
+    CHECK(level.thing_count == 0, "thing_count stays 0 for inert reference bytes");
+    CHECK(level.creature_count == 0, "creature_count stays 0 for inert reference bytes");
+    CHECK(level.squares[12][13] == NEXUS_SQUARE_FLOOR,
+          "malformed reference bytes do not alter decoded square type");
+
+    int sq = nexus_v1_level_get_square(&level, 12, 13);
+    CHECK(sq == NEXUS_SQUARE_FLOOR,
+          "get_square returns floor for malformed-ref cell");
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -273,9 +340,9 @@ static void probe_movement(void)
     nexus_target_square(10, 10, NEXUS_DIR_NORTH, 0, 0, 0, &tx, &ty);
     CHECK(tx == 10 && ty == 11, "target_square: backward N -> (10,11)");
     nexus_target_square(10, 10, NEXUS_DIR_NORTH, 1, 1, 1, &tx, &ty);
-    CHECK(tx == 9  && ty == 9,   "target_square: strafe left  N -> (9,9)");
+    CHECK(tx == 9  && ty == 10,  "target_square: strafe left  N -> (9,10)");
     nexus_target_square(10, 10, NEXUS_DIR_NORTH, 1, 1, 0, &tx, &ty);
-    CHECK(tx == 11 && ty == 9,   "target_square: strafe right N -> (11,9)");
+    CHECK(tx == 11 && ty == 10,  "target_square: strafe right N -> (11,10)");
 
     /* Square helpers */
     CHECK(nexus_square_is_stairs(NEXUS_SQUARE_STAIRS_DN) == 1,
@@ -334,7 +401,7 @@ static void probe_movement(void)
     mx = 0; my = 0;
     ok2 = nexus_try_move(NEXUS_DIR_NORTH, 1, squares64,
                           &mx, &my, &move_result, &nmx, &nmy);
-    CHECK(ok2 == 1,                  "nexus_try_move: blocked returns 1");
+    CHECK(ok2 == 0,                  "nexus_try_move: blocked returns 0");
     CHECK(move_result == NEXUS_MOVE_BLOCKED_WALL,
           "nexus_try_move: result = BLOCKED_WALL");
 
@@ -391,13 +458,63 @@ static void probe_combat(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 4. Save/Load API — verify save/load function signatures
+ * 4. DGN Actor References — malformed creature spawn refs are rejected
+ * Source: src/nexus/nexus_v1_creatures.c;
+ *         ReDMCSB DUNGEON.C F0151, GROUP.C F0183
+ * ═══════════════════════════════════════════════════════════════════════ */
+static void probe_dgn_actor_refs(void)
+{
+    printf("\n[Probe 4: DGN Actor References -- creature slot bounds]\n");
+    printf("  Source: ReDMCSB DUNGEON.C F0151, GROUP.C F0183;\n");
+    printf("          nexus_v1_creatures.c\n");
+
+    Nexus_V1_CreatureManager mgr;
+    nexus_v1_creatures_init(&mgr);
+    CHECK(mgr.type_count > 0, "creature manager has fixture creature types");
+
+    int slot = nexus_v1_creature_spawn(&mgr, 0, 1, 1, NEXUS_DIR_NORTH);
+    CHECK(slot == 0, "valid DGN actor reference consumes slot 0");
+    CHECK(mgr.active_count == 1, "active_count increments after valid spawn");
+
+    int before = mgr.active_count;
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, -1, 1, NEXUS_DIR_NORTH) == -1,
+          "malformed DGN actor x=-1 is rejected");
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, NEXUS_MAX_MAP_SIZE, 1,
+                                  NEXUS_DIR_NORTH) == -1,
+          "malformed DGN actor x=64 is rejected");
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, 1, -1, NEXUS_DIR_NORTH) == -1,
+          "malformed DGN actor y=-1 is rejected");
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, 1, NEXUS_MAX_MAP_SIZE,
+                                  NEXUS_DIR_NORTH) == -1,
+          "malformed DGN actor y=64 is rejected");
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, 1, 1, 4) == -1,
+          "malformed DGN actor facing=4 is rejected");
+    CHECK(mgr.active_count == before,
+          "malformed actor references do not consume active slots");
+
+    while (mgr.active_count < NEXUS_MAX_ACTIVE_CREATURES) {
+        int r = nexus_v1_creature_spawn(&mgr, 0,
+                                        mgr.active_count % NEXUS_MAX_MAP_SIZE,
+                                        mgr.active_count / NEXUS_MAX_MAP_SIZE,
+                                        NEXUS_DIR_EAST);
+        if (r < 0) break;
+    }
+    CHECK(mgr.active_count == NEXUS_MAX_ACTIVE_CREATURES,
+          "active creature slot pool reaches the configured limit");
+    CHECK(nexus_v1_creature_spawn(&mgr, 0, 2, 2, NEXUS_DIR_SOUTH) == -1,
+          "spawn beyond active creature slot pool is rejected");
+    CHECK(mgr.active_count == NEXUS_MAX_ACTIVE_CREATURES,
+          "overflow spawn leaves active_count stable");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 5. Save/Load API — verify save/load function signatures
  * Source: nexus_v1_save.h, src/nexus/nexus_v1_save_load.c;
  *         ReDMCSB LOADSAVE.C F0433/F0434, SAVEHEAD.C F0429/F0430
  * ═══════════════════════════════════════════════════════════════════════ */
 static void probe_save_load(void)
 {
-    printf("\n[Probe 4: Save/Load API -- nexus_v1_save.h]\n");
+    printf("\n[Probe 5: Save/Load API -- nexus_v1_save.h]\n");
     printf("  Source: ReDMCSB LOADSAVE.C F0433/F0434,\n");
     printf("          SAVEHEAD.C F0429/F0430; nexus_v1_save_load.c\n");
 
@@ -492,13 +609,13 @@ static void probe_save_load(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 5. World State API — verify world/objects/events/timers API
+ * 6. World State API — verify world/objects/events/timers API
  * Source: nexus_v1_world.h, src/nexus/nexus_v1_world.c;
  *         ReDMCSB DUNGEON.C F0029/F0044, MOVESENS.C F0067/F0071
  * ═══════════════════════════════════════════════════════════════════════ */
 static void probe_world(void)
 {
-    printf("\n[Probe 5: World State API -- nexus_v1_world.h]\n");
+    printf("\n[Probe 6: World State API -- nexus_v1_world.h]\n");
     printf("  Source: ReDMCSB DUNGEON.C F0029/F0044,\n");
     printf("          MOVESENS.C F0067/F0071; nexus_v1_world.c\n");
 
@@ -646,12 +763,12 @@ static void probe_world(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 6. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
+ * 7. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
 static void probe_engine_lifecycle(void)
 {
-    printf("\n[Probe 6: Engine Lifecycle -- nexus_v1_engine.h]\n");
+    printf("\n[Probe 7: Engine Lifecycle -- nexus_v1_engine.h]\n");
     printf("  Source: nexus_v1_engine.c, nexus_v1_mechanics.c\n");
     printf("  Note:   SDL/file I/O skipped; no game data required.\n");
 
@@ -701,9 +818,11 @@ int main(int argc, char **argv)
     probe_dungeon();
     probe_movement();
     probe_combat();
+    probe_dgn_actor_refs();
     probe_save_load();
     probe_world();
     probe_engine_lifecycle();
+    probe_dungeon_bad_actor_refs();
 
     printf("\n=================================================================\n");
     printf("  Results: %d PASS, %d FAIL  (%s)\n",

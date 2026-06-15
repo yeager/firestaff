@@ -12,6 +12,9 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 PASS = "pass306_dm1_wall_pixel_region_graphics_bridge"
 PASS300_JSON = Path("parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json")

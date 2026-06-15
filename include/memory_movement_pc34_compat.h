@@ -50,6 +50,7 @@ struct PostMoveResolution_Compat {
     int chainCount;
     int pitCount;
     int teleporterCount;
+    int teleporterAudibleCount;
     int finalMapX;
     int finalMapY;
     int finalDirection;

@@ -8,7 +8,7 @@
  *
  * SUPPRESS is a bit-plane RLE codec used throughout the DM2 save file:
  *   mask low nibble = 0 → field skipped
- *   mask low nibble = 1..7 → store that many LSBs of data[i]
+ *   mask low nibble = 1..8 → store that many LSBs of data[i]
  * Encoded data is packed LSB-first into output bytes.
  */
 
@@ -26,7 +26,7 @@ int dm2_suppress_encode(const uint8_t *data, const uint8_t *mask,
 {
     if (!data || !mask || !out) return -1;
     size_t acc_bits = 0;
-    uint8_t acc_byte = 0;
+    uint32_t acc_byte = 0;
     size_t out_pos = 0;
     size_t i;
 
@@ -34,8 +34,9 @@ int dm2_suppress_encode(const uint8_t *data, const uint8_t *mask,
         uint8_t mn = mask[i] & 0x0F;
         if (mn == 0) continue;
 
-        uint8_t nbits = mn & 0x07;
+        uint8_t nbits = mn;
         if (nbits == 0) continue;
+        if (nbits > 8) return -1;
 
         uint8_t val = data[i] & ((1u << nbits) - 1u);
         acc_byte |= (val << acc_bits);
@@ -43,7 +44,7 @@ int dm2_suppress_encode(const uint8_t *data, const uint8_t *mask,
 
         while (acc_bits >= 8) {
             if (out_pos >= out_capacity) return -1;
-            out[out_pos++] = acc_byte & 0xFF;
+            out[out_pos++] = (uint8_t)(acc_byte & 0xFFu);
             if (acc_bits >= 8) {
                 acc_byte >>= 8;
                 acc_bits -= 8;
@@ -78,8 +79,9 @@ int dm2_suppress_decode(const uint8_t *in, size_t in_capacity,
         uint8_t mn = mask[i] & 0x0F;
         if (mn == 0) continue;
 
-        uint8_t nbits = mn & 0x07;
+        uint8_t nbits = mn;
         if (nbits == 0) continue;
+        if (nbits > 8) return -1;
 
         /* Re-fill accumulator byte if needed */
         while (acc_avail < nbits) {
@@ -98,9 +100,9 @@ int dm2_suppress_decode(const uint8_t *in, size_t in_capacity,
 
 int dm2_suppress_self_verification(void)
 {
-    /* Known vector: alternating bits, 4-bit mask per byte */
-    uint8_t data[8] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
-    uint8_t mask[8] = { 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18 };
+    /* Known vector: SUPPRESS stores 1..7 low bits per masked byte. */
+    uint8_t data[8] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x7E };
+    uint8_t mask[8] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x07 };
     uint8_t enc[64];
     uint8_t dec[8];
 
@@ -120,6 +122,41 @@ int dm2_suppress_self_verification(void)
 
 #define DM2_SLOT_MAGIC_1  0xBEEF
 #define DM2_SLOT_MAGIC_2  0xDEAD
+
+static bool dm2_sl_header_valid(const uint8_t hdr[42])
+{
+    uint16_t m1 = (uint16_t)hdr[38] | ((uint16_t)hdr[39] << 8);
+    uint16_t m2 = (uint16_t)hdr[40] | ((uint16_t)hdr[41] << 8);
+    return m1 == DM2_SLOT_MAGIC_1 && m2 == DM2_SLOT_MAGIC_2;
+}
+
+static FILE *dm2_sl_open_valid_payload(const char *path, int *status)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f) {
+        if (status) *status = -2;
+        return NULL;
+    }
+
+    uint8_t hdr[42];
+    if (fread(hdr, 42, 1, f) != 1) {
+        fclose(f);
+        if (status) *status = -4;
+        return NULL;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 lines 2665-2671 validates the save header
+     * before reading payload parts. DM2's 42-byte slot header uses the
+     * 0xBEEF/0xDEAD pair as the equivalent slot-valid gate. */
+    if (!dm2_sl_header_valid(hdr)) {
+        fclose(f);
+        if (status) *status = -5;
+        return NULL;
+    }
+
+    if (status) *status = 0;
+    return f;
+}
 
 void dm2_sl_init(DM2_SL_State *state, const char *save_base)
 {
@@ -188,10 +225,7 @@ bool dm2_sl_scan_slots(DM2_SL_State *state)
         }
         fclose(f);
 
-        uint16_t m1 = (uint16_t)hdr[38] | ((uint16_t)hdr[39] << 8);
-        uint16_t m2 = (uint16_t)hdr[40] | ((uint16_t)hdr[41] << 8);
-
-        if (m1 == DM2_SLOT_MAGIC_1 && m2 == DM2_SLOT_MAGIC_2) {
+        if (dm2_sl_header_valid(hdr)) {
             state->slots[i].occupied = true;
             /* Copy slot name (null-terminated, max 33 chars) */
             size_t j;
@@ -261,15 +295,16 @@ int dm2_sl_load(const char *save_base, uint8_t slot,
     snprintf(path, sizeof(path), "%s/SKSave%02u.dat", save_base, (unsigned)slot);
     snprintf(bak,  sizeof(bak),  "%s/SKSave.bak",   save_base);
 
-    FILE *f = fopen(path, "rb");
+    int status = 0;
+    FILE *f = dm2_sl_open_valid_payload(path, &status);
     if (!f) {
-        /* Try backup */
-        f = fopen(bak, "rb");
-        if (!f) return -2;
+        /* Try backup when the primary slot is missing, truncated, or corrupt.
+         * ReDMCSB LOADSAVE.C F0435 lines 2560-2583 tries the backup save after
+         * primary-open failure; Firestaff extends the same safety net to
+         * invalid DM2 slot headers so runtime load never accepts stale data. */
+        f = dm2_sl_open_valid_payload(bak, &status);
+        if (!f) return status ? status : -2;
     }
-
-    uint8_t hdr[42];
-    if (fread(hdr, 42, 1, f) != 1) { fclose(f); return -4; }
 
     size_t got = fread(data, 1, max_size, f);
     fclose(f);
@@ -344,7 +379,8 @@ int dm2_v1_save_detect_game_version(const uint8_t *header42)
     uint16_t m1 = (uint16_t)header42[38] | ((uint16_t)header42[39] << 8);
     uint16_t m2 = (uint16_t)header42[40] | ((uint16_t)header42[41] << 8);
     if (m1 == DM2_SLOT_MAGIC_1 && m2 == DM2_SLOT_MAGIC_2) return DM2V1_VERSION_DM2;
-    if (m1 == 0x444D && m2 == 0x3156) return DM2V1_VERSION_DM1;
+    if ((m1 == 0x444D || m1 == 0x4D44) &&
+        (m2 == 0 || m2 == 0x3156 || m2 == 0x5631)) return DM2V1_VERSION_DM1;
     return DM2V1_VERSION_UNKNOWN;
 }
 
@@ -362,7 +398,7 @@ const char *dm2_v1_save_source_evidence(void)
 /* ════════════════════════════════════════════════════════════════
  * Champion SUPPRESS mask table
  * Source: docs/dm2_party_state.md — _4976_3992 write-mask pattern;
- * 261 bytes of per-field mask values (0x00=skip, 0x71=7-bit store).
+ * 261 bytes of per-field mask values (0x00=skip, 0x07=7-bit store).
  * This mask marks every field that can hold non-zero data in a live
  * champion so SUPPRESS compression achieves source-authentic packing.
  * ════════════════════════════════════════════════════════════════ */
@@ -373,52 +409,52 @@ void dm2_suppress_champion_mask(uint8_t mask[261])
     memset(mask, 0, 261);
 
     /* Name block — 8 + 16 = 24 bytes, store 7 bits per byte */
-    memset(&mask[0],  0x71, 8);   /* first_name */
-    memset(&mask[8],  0x71, 16);  /* last_name */
+    memset(&mask[0],  0x07, 8);   /* first_name */
+    memset(&mask[8],  0x07, 16);  /* last_name */
 
     /* Position — 2 + 1 bytes */
-    mask[24] = 0x71; mask[25] = 0x71;  /* absolute_direction (u16) */
-    mask[26] = 0x71;                     /* squad_position */
+    mask[24] = 0x07; mask[25] = 0x07;  /* absolute_direction (u16) */
+    mask[26] = 0x07;                   /* squad_position */
 
     /* HP cur/max — 2+2 + 2+2 */
-    mask[27] = 0x71; mask[28] = 0x71;   /* cur_hp */
-    mask[29] = 0x71; mask[30] = 0x71;   /* max_hp */
+    mask[27] = 0x07; mask[28] = 0x07;   /* cur_hp */
+    mask[29] = 0x07; mask[30] = 0x07;   /* max_hp */
     /* stamina + mana (2 bytes each, store both LE bytes) */
-    mask[31] = 0x71; mask[32] = 0x71;  /* stamina */
-    mask[33] = 0x71; mask[34] = 0x71;  /* mana */
+    mask[31] = 0x07; mask[32] = 0x07;  /* stamina */
+    mask[33] = 0x07; mask[34] = 0x07;  /* mana */
 
     /* Poison/runes — 1 byte each */
-    mask[35] = 0x71; mask[36] = 0x71;  /* poison_value, runes_count */
+    mask[35] = 0x07; mask[36] = 0x07;  /* poison_value, runes_count */
     /* spelled_runes[4] */
-    mask[37] = 0x71; mask[38] = 0x71; mask[39] = 0x71; mask[40] = 0x71;
+    mask[37] = 0x07; mask[38] = 0x07; mask[39] = 0x07; mask[40] = 0x07;
 
     /* attributes[7][2]: cur/max pairs — 14 uint16_t = 28 bytes starting at 41 */
     for (int a = 0; a < 7; a++) {
-        mask[41 + a*4] = 0x71; mask[42 + a*4] = 0x71; /* cur (LE) */
-        mask[43 + a*4] = 0x71; mask[44 + a*4] = 0x71; /* max (LE) */
+        mask[41 + a*4] = 0x07; mask[42 + a*4] = 0x07; /* cur (LE) */
+        mask[43 + a*4] = 0x07; mask[44 + a*4] = 0x07; /* max (LE) */
     }
 
     /* food / water — int16_t LE */
-    mask[69] = 0x71; mask[70] = 0x71; mask[71] = 0x71; mask[72] = 0x71;
+    mask[69] = 0x07; mask[70] = 0x07; mask[71] = 0x07; mask[72] = 0x07;
 
     /* combat hand state: hand_command[2] × uint32_t, hand_cooldown[2] × u16,
      * hand_defense_class[2] × u8 — 9 fields starting at 73 */
-    mask[73] = 0x71; mask[74] = 0x71; mask[75] = 0x71; mask[76] = 0x71; /* hand_command[0] u32*/
-    mask[77] = 0x71; mask[78] = 0x71; mask[79] = 0x71; mask[80] = 0x71; /* hand_command[1] u32*/
-    mask[81] = 0x71; mask[82] = 0x71; /* hand_cooldown[0] u16 */
-    mask[83] = 0x71; mask[84] = 0x71; /* hand_cooldown[1] u16 */
-    mask[85] = 0x71; mask[86] = 0x71; /* hand_defense_class[0]+[1] */
+    mask[73] = 0x07; mask[74] = 0x07; mask[75] = 0x07; mask[76] = 0x07; /* hand_command[0] u32*/
+    mask[77] = 0x07; mask[78] = 0x07; mask[79] = 0x07; mask[80] = 0x07; /* hand_command[1] u32*/
+    mask[81] = 0x07; mask[82] = 0x07; /* hand_cooldown[0] u16 */
+    mask[83] = 0x07; mask[84] = 0x07; /* hand_cooldown[1] u16 */
+    mask[85] = 0x07; mask[86] = 0x07; /* hand_defense_class[0]+[1] */
 
     /* timer_index, damage_suffered, hero_flag, body_flag — 4 bytes */
-    mask[87] = 0x71; mask[88] = 0x71; mask[89] = 0x71; mask[90] = 0x71;
+    mask[87] = 0x07; mask[88] = 0x07; mask[89] = 0x07; mask[90] = 0x07;
 
     /* inventory[30] × uint32_t: bytes 91-210 (120 bytes), store full 32 bits */
     for (int i = 0; i < 30; i++) {
         size_t base = 91 + i * 4;
-        mask[base + 0] = 0x71;
-        mask[base + 1] = 0x71;
-        mask[base + 2] = 0x71;
-        mask[base + 3] = 0x71;
+        mask[base + 0] = 0x07;
+        mask[base + 1] = 0x07;
+        mask[base + 2] = 0x07;
+        mask[base + 3] = 0x07;
     }
 }
 
@@ -521,33 +557,33 @@ static void dm2_suppress_gamestate_mask(uint8_t mask[DM2_GAME_STATE_BLOCK_SIZE])
     memset(mask, 0, DM2_GAME_STATE_BLOCK_SIZE);
 
     /* dwGameTick (4 bytes) */
-    mask[0] = 0x71; mask[1] = 0x71; mask[2] = 0x71; mask[3] = 0x71;
+    mask[0] = 0x07; mask[1] = 0x07; mask[2] = 0x07; mask[3] = 0x07;
     /* dwRandomSeed (4 bytes) */
-    mask[4] = 0x71; mask[5] = 0x71; mask[6] = 0x71; mask[7] = 0x71;
+    mask[4] = 0x07; mask[5] = 0x07; mask[6] = 0x07; mask[7] = 0x07;
     /* wChampionsCount (2 bytes) */
-    mask[8] = 0x71; mask[9] = 0x71;
+    mask[8] = 0x07; mask[9] = 0x07;
     /* wPlayerPosX (2 bytes) */
-    mask[10] = 0x71; mask[11] = 0x71;
+    mask[10] = 0x07; mask[11] = 0x07;
     /* wPlayerPosY (2 bytes) */
-    mask[12] = 0x71; mask[13] = 0x71;
+    mask[12] = 0x07; mask[13] = 0x07;
     /* wPlayerDir (2 bytes) */
-    mask[14] = 0x71; mask[15] = 0x71;
+    mask[14] = 0x07; mask[15] = 0x07;
     /* wPlayerMap (2 bytes) */
-    mask[16] = 0x71; mask[17] = 0x71;
+    mask[16] = 0x07; mask[17] = 0x07;
     /* wChampionLeader (2 bytes) */
-    mask[18] = 0x71; mask[19] = 0x71;
+    mask[18] = 0x07; mask[19] = 0x07;
     /* wTimersCount (2 bytes) */
-    mask[20] = 0x71; mask[21] = 0x71;
+    mask[20] = 0x07; mask[21] = 0x07;
     /* rain_state[8] */
-    memset(&mask[22], 0x71, 8);
+    memset(&mask[22], 0x07, 8);
     /* _dw22 (4 bytes) */
-    mask[30] = 0x71; mask[31] = 0x71; mask[32] = 0x71; mask[33] = 0x71;
+    mask[30] = 0x07; mask[31] = 0x07; mask[32] = 0x07; mask[33] = 0x07;
     /* _dw26 (4 bytes) */
-    mask[34] = 0x71; mask[35] = 0x71; mask[36] = 0x71; mask[37] = 0x71;
+    mask[34] = 0x07; mask[35] = 0x07; mask[36] = 0x07; mask[37] = 0x07;
     /* _w30 (2 bytes) */
-    mask[38] = 0x71; mask[39] = 0x71;
+    mask[38] = 0x07; mask[39] = 0x07;
     /* _w34 (2 bytes) */
-    mask[40] = 0x71; mask[41] = 0x71;
+    mask[40] = 0x07; mask[41] = 0x07;
     /* rest of 56 bytes - reserved/padding, store all zeros via mask 0 */
     /* bytes 42-55: padding, mask stays 0 */
 }
@@ -586,21 +622,21 @@ int dm2_suppress_decode_gamestate(const uint8_t *in, size_t in_sz,
 static void dm2_suppress_global_flags_mask(uint8_t mask[DM2_GLOBAL_FLAGS_SIZE])
 {
     if (!mask) return;
-    memset(mask, 0x71, DM2_GLOBAL_FLAGS_SIZE);
+    memset(mask, 0x07, DM2_GLOBAL_FLAGS_SIZE);
 }
 
 /* SUPPRESS mask for global bytes (64 bytes) — all bytes stored */
 static void dm2_suppress_global_bytes_mask(uint8_t mask[DM2_GLOBAL_BYTES_SIZE])
 {
     if (!mask) return;
-    memset(mask, 0x71, DM2_GLOBAL_BYTES_SIZE);
+    memset(mask, 0x07, DM2_GLOBAL_BYTES_SIZE);
 }
 
 /* SUPPRESS mask for global words (64 words = 128 bytes) — all words stored */
 static void dm2_suppress_global_words_mask(uint8_t mask[DM2_GLOBAL_WORDS_SIZE * 2])
 {
     if (!mask) return;
-    memset(mask, 0x71, DM2_GLOBAL_WORDS_SIZE * 2);
+    memset(mask, 0x07, DM2_GLOBAL_WORDS_SIZE * 2);
 }
 
 int dm2_suppress_encode_global_flags(const uint8_t flags[DM2_GLOBAL_FLAGS_SIZE],
@@ -673,7 +709,7 @@ int dm2_suppress_decode_global_words(const uint8_t *in, size_t in_sz,
 static void dm2_suppress_spell_effects_mask(uint8_t mask[DM2_GLOBAL_SPELL_EFFECTS_SIZE])
 {
     if (!mask) return;
-    memset(mask, 0x71, DM2_GLOBAL_SPELL_EFFECTS_SIZE);
+    memset(mask, 0x07, DM2_GLOBAL_SPELL_EFFECTS_SIZE);
 }
 
 int dm2_suppress_encode_spell_effects(const uint8_t effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE],
@@ -711,15 +747,15 @@ static void dm2_suppress_timer_mask(uint8_t mask[DM2_TIMER_ENTRY_SIZE])
     if (!mask) return;
     memset(mask, 0, DM2_TIMER_ENTRY_SIZE);
     /* timer_id (2 bytes) */
-    mask[0] = 0x71; mask[1] = 0x71;
+    mask[0] = 0x07; mask[1] = 0x07;
     /* current_tick (2 bytes) */
-    mask[2] = 0x71; mask[3] = 0x71;
+    mask[2] = 0x07; mask[3] = 0x07;
     /* interval_ticks (2 bytes) */
-    mask[4] = 0x71; mask[5] = 0x71;
+    mask[4] = 0x07; mask[5] = 0x07;
     /* flags (2 bytes) */
-    mask[6] = 0x71; mask[7] = 0x71;
+    mask[6] = 0x07; mask[7] = 0x07;
     /* user_data (2 bytes) */
-    mask[8] = 0x71; mask[9] = 0x71;
+    mask[8] = 0x07; mask[9] = 0x07;
 }
 
 int dm2_suppress_encode_timer(const DM2_TimerEntry *t,

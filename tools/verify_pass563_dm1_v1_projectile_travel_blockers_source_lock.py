@@ -3,12 +3,15 @@
 
 This gate is deliberately narrow: it binds ReDMCSB projectile flight to
 Firestaff's F0811/F0814/F0816 travel blocker regression cases for walls,
-closed real fake walls, stairs-to-stairs, closed doors, and pass-through doors.
+closed real fake walls, stairs-to-stairs, closed doors, pass-through doors,
+and thrown-item side-cell blockers.
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
@@ -16,6 +19,7 @@ PROJ = RED_ROOT / "PROJEXPL.C"
 DUNGEON = RED_ROOT / "DUNGEON.C"
 LOCAL_C = ROOT / "src/memory/memory_projectile_pc34_compat.c"
 LOCAL_TEST = ROOT / "tests/test_dm1_v1_projectile_explosion_render_pc34_compat.c"
+LOCAL_SIDE_TEST = ROOT / "tests/test_dm1_v1_projectile_side_wall_impact_pc34_compat.c"
 
 
 def block(path: Path, start: int, end: int) -> str:
@@ -51,6 +55,18 @@ def main() -> int:
             "M034_SQUARE_TYPE(F0151_DUNGEON_GetSquare",
             "C04_ELEMENT_DOOR",
             "F0217_PROJECTILE_HasImpactOccured(C04_ELEMENT_DOOR",
+        ])
+    require("PROJEXPL.C:717-725 side-lane crossing blocker",
+        block(PROJ, 717, 725),
+        [
+            "M017_NEXT(L0517_ui_ProjectileDirection)",
+            "L0525_i_SourceMapX = L0523_i_DestinationMapX",
+            "F0151_DUNGEON_GetSquare",
+            "C00_ELEMENT_WALL",
+            "C06_ELEMENT_FAKEWALL",
+            "C03_ELEMENT_STAIRS",
+            "F0217_PROJECTILE_HasImpactOccured",
+            "return",
         ])
     require("PROJEXPL.C:471-505 door pass-through/impact classifier",
         block(PROJ, 471, 505),
@@ -103,13 +119,31 @@ def main() -> int:
             "allowed magical projectile flies through",
             "open-door projectile still hits pass-through door",
         ])
+    side_test = LOCAL_SIDE_TEST.read_text(encoding="utf-8")
+    require("test_dm1_v1_projectile_side_wall_impact_pc34_compat.c side-cell blockers",
+        side_test,
+        [
+            "test_f0811_thrown_item_side_cell_blockers",
+            "test_f0810_f0811_f0813_created_thrown_item_side_cell_blockers",
+            "M017_NEXT(direction)",
+            "side_lane_wall",
+            "side_lane_closed_door",
+            "side_lane_fluxcage",
+            "F0219 side-cell impact does not materialize the thrown item in the blocked cell",
+            "F0217 impact return stops projectile rescheduling",
+            "F0813 projectile list releases impacted thrown item",
+            "PROJECTILE_RESULT_HIT_WALL",
+            "PROJECTILE_RESULT_HIT_DOOR",
+            "PROJECTILE_RESULT_HIT_FLUXCAGE",
+        ])
 
     print("PASS pass563_dm1_v1_projectile_travel_blockers_source_lock")
     print("- PROJEXPL.C:689-727 projectile current-cell impact, energy gate, wall/fakewall/stairs travel blocker")
+    print("- PROJEXPL.C:717-725 side-lane M017_NEXT crossing impact return")
     print("- PROJEXPL.C:735-745 intra-square closed-door impact")
     print("- PROJEXPL.C:471-505 door state/pass-through classifier")
     print("- DUNGEON.C:560-565 door info pass-through attribute")
-    print("- Firestaff: F0811/F0814/F0816 plus projectile travel blocker regression cases")
+    print("- Firestaff: F0811/F0814/F0816 plus projectile travel and side-cell blocker regression cases")
     return 0
 
 

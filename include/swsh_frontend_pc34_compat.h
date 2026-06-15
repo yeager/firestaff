@@ -33,6 +33,10 @@ typedef struct SWSH_CompatSourceTiming {
 } SWSH_CompatSourceTiming;
 
 void SWSH_Compat_ExpandLogoToBitmap(const unsigned char* graphic, unsigned char* bitmap);
+const unsigned char* SWSH_Compat_FindLogoImagePayload(const unsigned char* data,
+                                                       unsigned int dataBytes);
+void SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(unsigned int colorValue,
+                                              unsigned char outRgb[3]);
 unsigned int SWSH_Compat_GetSourceAnimationStepCount(void);
 int SWSH_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
                                        SWSH_CompatSourceAnimationStep* outStep);
@@ -42,7 +46,7 @@ const char* SWSH_Compat_GetSourceAnimationEvidence(void);
 #define SWSH_COMPAT_SOURCE_PALETTE_COMMAND_COUNT 26u
 #define SWSH_COMPAT_SOURCE_PALETTE_COLOR_SET_COUNT 17u
 #define SWSH_COMPAT_SOURCE_PALETTE_WAIT_COMMAND_COUNT 9u
-#define SWSH_COMPAT_SOURCE_PALETTE_WAIT_VBLANK_COUNT 21u
+#define SWSH_COMPAT_SOURCE_PALETTE_WAIT_VBLANK_COUNT 30u
 #define SWSH_COMPAT_SOURCE_SOUND_REGISTER_WRITE_COUNT 17u
 #define SWSH_COMPAT_SOURCE_SOUND_WAIT_COMMAND_COUNT 10u
 #define SWSH_COMPAT_SOURCE_SOUND_WAIT_VBLANK_COUNT 20u

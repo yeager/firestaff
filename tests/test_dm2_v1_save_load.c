@@ -11,6 +11,8 @@
  *   8. SUPPRESS codec self-test
  *   9. Champion record SUPPRESS mask (261 bytes, low nibbles only)
  *  10. DB handle identity (make + resolve round-trip)
+ *  11. Invalid slot-header rejection + backup recovery
+ *  12. Stale session metadata mismatch (fixture guard)
  *
  * Source refs:
  *   docs/dm2_save_format.md — SUPPRESS codec, slot header layout
@@ -19,6 +21,7 @@
  */
 
 #include "dm2_v1_save_load.h"
+#include "dm2_v1_new_game.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,6 +42,40 @@
 #endif
 
 extern int dm2_suppress_self_verification(void);
+
+static void cleanup_slot_dir(const char *dir)
+{
+    for (uint8_t s = 0; s < 10; s++) {
+        char p[256];
+        snprintf(p, sizeof(p), "%s/SKSave%02u.dat", dir, (unsigned)s);
+        (void)remove(p);
+    }
+    {
+        char p[256];
+        snprintf(p, sizeof(p), "%s/SKSave.bak", dir);
+        (void)remove(p);
+    }
+    FS_RMDIR(dir);
+}
+
+static int write_bad_slot_file(const char *dir, uint8_t slot)
+{
+    char path[256];
+    uint8_t hdr[42];
+    uint8_t payload[8] = { 'B', 'A', 'D', 'S', 'L', 'O', 'T', 0 };
+    snprintf(path, sizeof(path), "%s/SKSave%02u.dat", dir, (unsigned)slot);
+    memset(hdr, 0, sizeof(hdr));
+    hdr[38] = 0x44; hdr[39] = 0x4D; /* DM1-ish marker, not DM2 BEEF/DEAD. */
+    FILE *f = fopen(path, "wb");
+    if (!f) return -1;
+    if (fwrite(hdr, sizeof(hdr), 1, f) != 1 ||
+        fwrite(payload, 1, sizeof(payload), f) != sizeof(payload)) {
+        fclose(f);
+        return -1;
+    }
+    fclose(f);
+    return 0;
+}
 
 /* ── Test 1: SUPPRESS all-1s mask round-trip ──────────────────── */
 
@@ -354,6 +391,114 @@ static int test_db_handle_roundtrip(void)
     return 1;
 }
 
+/* ── Test 11: Invalid header rejection + backup recovery ───────── */
+
+static int test_invalid_slot_header_rejected(void)
+{
+    printf("  Invalid slot header rejection + backup recovery...\n");
+    char tmpdir[256];
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_bad_header_%d", FS_GETPID());
+    FS_MKDIR(tmpdir);
+
+    if (write_bad_slot_file(tmpdir, 2) != 0) {
+        printf("    FAIL: could not write bad slot\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+
+    DM2_SL_State st;
+    dm2_sl_init(&st, tmpdir);
+    dm2_sl_scan_slots(&st);
+    if (dm2_sl_slot_occupied(&st, 2)) {
+        printf("    FAIL: scan accepted bad slot header\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+
+    uint8_t out[32];
+    size_t out_sz = 123;
+    int r = dm2_sl_load(tmpdir, 2, out, sizeof(out), &out_sz);
+    if (r == 0) {
+        printf("    FAIL: direct load accepted bad slot header\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+
+    uint8_t good[16];
+    memset(good, 0x6C, sizeof(good));
+    {
+        char p_dat[256], p_bak[256];
+        snprintf(p_dat, sizeof(p_dat), "%s/SKSave%02u.dat", tmpdir, 2);
+        snprintf(p_bak, sizeof(p_bak), "%s/SKSave.bak", tmpdir);
+        (void)remove(p_dat);
+        r = dm2_sl_save(tmpdir, 2, "BackupGood", good, sizeof(good));
+        if (r != 0 || rename(p_dat, p_bak) != 0) {
+            printf("    FAIL: could not prepare backup slot\n");
+            cleanup_slot_dir(tmpdir);
+            return 0;
+        }
+    }
+    if (write_bad_slot_file(tmpdir, 2) != 0) {
+        printf("    FAIL: could not rewrite bad primary slot\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+
+    memset(out, 0, sizeof(out));
+    out_sz = 0;
+    r = dm2_sl_load(tmpdir, 2, out, sizeof(out), &out_sz);
+    if (r != 0 || out_sz != sizeof(good) || memcmp(out, good, sizeof(good)) != 0) {
+        printf("    FAIL: corrupt primary did not recover from valid backup (r=%d size=%zu)\n",
+               r, out_sz);
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+
+    cleanup_slot_dir(tmpdir);
+    printf("    PASS: bad primary rejected; valid backup recovered\n");
+    return 1;
+}
+
+/* ── Test 12: Stale fixture metadata rejection ─────────────────── */
+
+static int test_stale_fixture_metadata_guard(void)
+{
+    printf("  Stale fixture metadata guard...\n");
+    DM2_V1_SessionState session;
+    DM2_V1_SessionState out;
+    uint8_t buf[DM2_SESSION_MAX_SIZE];
+    uint8_t stale[DM2_SESSION_MAX_SIZE];
+    int sz;
+    int r;
+
+    dm2_v1_session_new(&session);
+    sz = dm2_v1_session_serialize(&session, buf, sizeof(buf));
+    if (sz <= 0) {
+        printf("    FAIL: serialize base fixture failed\n");
+        return 0;
+    }
+
+    memcpy(stale, buf, (size_t)sz);
+    stale[28] = (uint8_t)(DM2_SESSION_VERSION + 1U);
+    r = dm2_v1_session_deserialize(&out, stale, (size_t)sz);
+    if (r == 0) {
+        printf("    FAIL: deserialize accepted stale session version 0x%02X\n",
+               stale[28]);
+        return 0;
+    }
+
+    memcpy(stale, buf, (size_t)sz);
+    stale[28] = 0;
+    r = dm2_v1_session_deserialize(&out, stale, (size_t)sz);
+    if (r == 0) {
+        printf("    FAIL: deserialize accepted zero session version\n");
+        return 0;
+    }
+
+    printf("    PASS: stale/mismatched session metadata is rejected\n");
+    return 1;
+}
+
 /* ════════════════════════════════════════════════════════════════ */
 
 int main(void)
@@ -377,6 +522,8 @@ int main(void)
     RUN(8,  test_suppress_self_test);
     RUN(9,  test_champion_mask);
     RUN(10, test_db_handle_roundtrip);
+    RUN(11, test_invalid_slot_header_rejected);
+    RUN(12, test_stale_fixture_metadata_guard);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);

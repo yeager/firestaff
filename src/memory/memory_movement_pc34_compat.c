@@ -676,6 +676,11 @@ int F0705_MOVEMENT_ResolveStairsTransition_Compat(
     outResult->newDirection = party->direction;
 
     if (party->mapIndex < 0 || party->mapIndex >= (int)dungeon->header.mapCount) return 0;
+    /* Defensive: maps may be NULL when only the header is loaded
+     * (e.g. F0500 header-only path) but mapCount is set.  Without
+     * this check, &dungeon->maps[party->mapIndex] is NULL+offset
+     * and the subsequent map->width deref segfaults. */
+    if (!dungeon->maps) return 0;
     map = &dungeon->maps[party->mapIndex];
     if (party->mapX < 0 || party->mapX >= map->width ||
         party->mapY < 0 || party->mapY >= map->height) return 0;
@@ -817,6 +822,12 @@ int F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
                 cursor.direction = (int)(tp.rotation & 3);
             } else if (tp.rotation != 0) {
                 cursor.direction = (cursor.direction + (int)(tp.rotation & 3)) & 3;
+            }
+            /* ReDMCSB MOVESENS.C F0267 lines 491, 496-498: the
+             * teleporter's Audible flag is latched at the hop and only then
+             * requests M560_SOUND_BUZZ at the party's teleported target. */
+            if (tp.audible) {
+                outResolution->teleporterAudibleCount += 1;
             }
             outResolution->transitioned = 1;
             outResolution->chainCount += 1;

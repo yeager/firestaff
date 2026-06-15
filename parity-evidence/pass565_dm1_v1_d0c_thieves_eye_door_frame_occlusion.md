@@ -26,45 +26,45 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
 
 ## Firestaff Evidence
 
-- PASS firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:254-265)
-  - line 258: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
-  - line 259: DUNVIEW.C:8185-8188
-  - line 260: DUNVIEW.C:8199-8201
-  - line 261: DUNVIEW.C:8206-8210
-  - line 262: DUNVIEW.C:8215-8216
-  - line 263: DUNVIEW.C:8240,8294
+- PASS firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
+  - line 305: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
+  - line 306: DUNVIEW.C:8185-8188
+  - line 307: DUNVIEW.C:8199-8201
+  - line 308: DUNVIEW.C:8206-8210
+  - line 309: DUNVIEW.C:8215-8216
+  - line 310: DUNVIEW.C:8240,8294
 
-- PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:825-850)
-  - line 828: test_d0c_thieves_eye_door_frame_occlusion_order
-  - line 831: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
-  - line 838: spec->door_frame_zone, 728
-  - line 839: spec->hole_zone, 736
-  - line 843: 8215-8216
-  - line 844: 8294
+- PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
+  - line 860: test_d0c_thieves_eye_door_frame_occlusion_order
+  - line 863: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
+  - line 870: spec->door_frame_zone, 728
+  - line 871: spec->hole_zone, 736
+  - line 875: 8215-8216
+  - line 876: 8294
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2120-2128)
-  - line 2125: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
-  - line 2125: copy front frame, composite hole, blit temporary frame before common F0115
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
+  - line 2338: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
+  - line 2338: copy front frame, composite hole, blit temporary frame before common F0115
 
 ## Verification
 
 - /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.d0c_thieves_eye_frame_occlusion == 1
-PASS source_evidence.side_occlusion == 1
-PASS source_evidence.defs_zones == 1
-PASS source_evidence.wall_source_clip_gate == 1
-PASS source_evidence.wall_empty_blit_gate == 1
-PASS source_evidence.occlusion == 1
-PASS source_evidence.command_dispatch == 1
-PASS source_evidence.next_redraw == 1
-PASS source_evidence.present_wait == 1
-PASS source_evidence.same_viewport_mouse == 1
-PASS source_evidence.same_viewport_turn == 1
-PASS source_evidence.same_viewport_move == 1
-PASS source_evidence.same_viewport_draw == 1
-PASS source_evidence.same_viewport_present == 1
-PASS source_evidence.same_viewport_assets == 1
+PASS drift.pass570.d2c_zone_top present in include/dm1_v1_viewport_3d_pc34_compat.h
+PASS drift.pass570.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c
+PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
+PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
+PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 

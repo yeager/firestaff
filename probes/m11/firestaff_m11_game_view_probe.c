@@ -421,16 +421,21 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
         int secondRoute;
         int firstBest;
         int secondBest;
+        /* v2.7.22: real DM1 V1 Hall of Champions C127 sensors are at
+         * (1,2) NORTH (HALK, ordinal 1) and (1,5) NORTH (ZED, ordinal
+         * 10).  The OLD (1,3)/(1,4) NORTH poses were the TextString
+         * catalog route and have no C127 sensor.  Match the v2.7.22
+         * contract by walking both (1,2) and (1,5). */
         state->world.party.mapIndex = 0;
         state->world.party.mapX = 1;
-        state->world.party.mapY = 3;
+        state->world.party.mapY = 2;
         state->world.party.direction = DIR_NORTH;
         firstRoute = M11_GameView_GetFrontMirrorOrdinal(state);
         memset(fb, 0, sizeof(fb));
         M11_GameView_Draw(state, fb, 320, 200);
         firstBest = probe_best_front_portrait_index(portraits, fb);
         state->world.party.mapX = 1;
-        state->world.party.mapY = 4;
+        state->world.party.mapY = 5;
         state->world.party.direction = DIR_NORTH;
         secondRoute = M11_GameView_GetFrontMirrorOrdinal(state);
         memset(fb, 0, sizeof(fb));
@@ -439,9 +444,9 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
         probe_record(tally,
                      "INV_GV_407E",
                      firstRoute == 1 &&
-                         secondRoute == 2 &&
+                         secondRoute == 10 &&
                          firstBest == 1 &&
-                         secondBest == 2,
+                         secondBest == 10,
                      "Hall of Champions door/teleporter front mirrors blit matching D1C source portraits");
     } else {
         probe_skip(tally,
@@ -1056,6 +1061,13 @@ int main(int argc, char** argv) {
         M11_GameView_Init(&mirrorView);
         mirrorView.showDebugHUD = 0;
         if (M11_GameView_OpenSelectedMenuEntry(&mirrorView, &menuState) == 1) {
+            /* v2.7.22: m11_front_cell_mirror_ordinal now reads the C127
+             * sensorData on the front square (ReDMCSB DUNGEON.C:2573 +
+             * MOVESENS.C:1501-1503 + REVIVE.C F0280).  The OLD
+             * TextString catalog route only finds the corridor-floor
+             * stats anchor (DUNGEON.C:2570-2584) and yields -1 for
+             * front-wall mirror positions, so search for any C127
+             * sensor instead. */
             for (mapIdx = 0; !found && mapIdx < (int)mirrorView.world.dungeon->header.mapCount; ++mapIdx) {
                 const struct DungeonMapDesc_Compat* map = &mirrorView.world.dungeon->maps[mapIdx];
                 int base = 0;
@@ -1074,7 +1086,21 @@ int main(int argc, char** argv) {
                         while (thing != THING_ENDOFLIST && thing != THING_NONE && guard++ < 8) {
                             int type = THING_GET_TYPE(thing);
                             int thingIndex = THING_GET_INDEX(thing);
-                            if (type == THING_TYPE_TEXTSTRING) {
+                            if (type == THING_TYPE_SENSOR &&
+                                thingIndex >= 0 &&
+                                thingIndex < mirrorView.world.things->sensorCount &&
+                                mirrorView.world.things->sensors[thingIndex].sensorType == 127) {
+                                int sensorData = (int)mirrorView.world.things->sensors[thingIndex].sensorData;
+                                if (sensorData >= 0 &&
+                                    sensorData < mirrorView.mirrorCatalog.count) {
+                                    mirrorX = x;
+                                    mirrorY = y;
+                                    mirrorOrdinal = sensorData;
+                                    found = 1;
+                                    break;
+                                }
+                                thing = mirrorView.world.things->sensors[thingIndex].next;
+                            } else if (type == THING_TYPE_TEXTSTRING) {
                                 int ord = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
                                     &mirrorView.mirrorCatalog, thingIndex);
                                 if (ord >= 0) {
@@ -1521,6 +1547,7 @@ int main(int argc, char** argv) {
     {
         M11_GameViewState doorButtonMiss;
         M11_GameViewState doorButtonHit;
+        M11_GameViewState doorButtonWrongItem;
         M11_GameViewState doorButtonLeftEdge;
         M11_GameViewState doorButtonBottomEdge;
         (void)probe_init_synthetic_view(&doorButtonMiss);
@@ -1554,6 +1581,68 @@ int main(int argc, char** argv) {
                          (doorButtonHit.world.dungeon->tiles[0].squareData[3 * doorButtonHit.world.dungeon->maps[0].height + 2] & 0x07) == 2,
                      "V1 C080 source D1C door-button interior click toggles the front door through the door animation path");
         probe_free_synthetic_view(&doorButtonHit);
+
+        (void)probe_init_synthetic_view(&doorButtonWrongItem);
+        doorButtonWrongItem.showDebugHUD = 0;
+        doorButtonWrongItem.world.party.direction = DIR_NORTH;
+        doorButtonWrongItem.world.party.mapX = 2;
+        doorButtonWrongItem.world.party.mapY = 3;
+        doorButtonWrongItem.world.party.activeChampionIndex = 0;
+        {
+            const unsigned short wrongItem =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            int initialLogCount;
+            char initialLastAction[sizeof(doorButtonWrongItem.lastAction)];
+            char initialLastOutcome[sizeof(doorButtonWrongItem.lastOutcome)];
+            int initialDoorState;
+            int ok;
+
+            /* ReDMCSB CLIKVIEW.C F0377 lines 356-390 only schedules
+             * C10_EVENT_DOOR from the empty-leader-hand D1C button route.
+             * Lines 392-402 route a non-empty hand to throw/drop handling;
+             * Firestaff's D1C keyhole guard must therefore ignore a wrong
+             * item without opening the door or consuming G4055. */
+            ok = M11_GameView_SetV1LeaderHandObject(&doorButtonWrongItem,
+                                                    wrongItem);
+            doorButtonWrongItem.world.party.activeChampionIndex = 1;
+            doorButtonWrongItem.world.party.direction = DIR_EAST;
+            doorButtonWrongItem.world.party.mapX = 2;
+            doorButtonWrongItem.world.party.mapY = 2;
+            doorButtonWrongItem.world.things->doors[0].button = 1;
+            initialTick = doorButtonWrongItem.world.gameTick;
+            initialLogCount =
+                M11_GameView_GetMessageLogCount(&doorButtonWrongItem);
+            snprintf(initialLastAction, sizeof(initialLastAction), "%s",
+                     doorButtonWrongItem.lastAction);
+            snprintf(initialLastOutcome, sizeof(initialLastOutcome), "%s",
+                     doorButtonWrongItem.lastOutcome);
+            initialDoorState =
+                doorButtonWrongItem.world.dungeon->tiles[0].squareData[
+                    3 * doorButtonWrongItem.world.dungeon->maps[0].height + 2] &
+                0x07;
+            probe_record(&tally,
+                         "INV_GV_07I1W",
+                         ok &&
+                             M11_GameView_HandlePointer(&doorButtonWrongItem,
+                                                        171, 80, 1) ==
+                                 M11_GAME_INPUT_IGNORED &&
+                             doorButtonWrongItem.world.gameTick == initialTick &&
+                             doorButtonWrongItem.world.party.activeChampionIndex == 1 &&
+                             doorButtonWrongItem.world.party.direction == DIR_EAST &&
+                             M11_GameView_GetV1LeaderHandThing(
+                                 &doorButtonWrongItem) == wrongItem &&
+                             M11_GameView_GetMessageLogCount(
+                                 &doorButtonWrongItem) == initialLogCount &&
+                             strcmp(doorButtonWrongItem.lastAction,
+                                    initialLastAction) == 0 &&
+                             strcmp(doorButtonWrongItem.lastOutcome,
+                                    initialLastOutcome) == 0 &&
+                             (doorButtonWrongItem.world.dungeon->tiles[0].squareData[
+                                  3 * doorButtonWrongItem.world.dungeon->maps[0].height + 2] &
+                              0x07) == initialDoorState,
+                         "V1 C080 D1C door keyhole wrong item after leader/facing change is ignored without open, consume, or message/state churn");
+        }
+        probe_free_synthetic_view(&doorButtonWrongItem);
 
         (void)probe_init_synthetic_view(&doorButtonLeftEdge);
         doorButtonLeftEdge.showDebugHUD = 0;
@@ -10047,9 +10136,9 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1ChampionIconZoneId(4) == 0 &&
                              M11_GameView_GetV1ChampionIconZone(0, &icon0X, &icon0Y, &icon0W, &icon0H) &&
                              M11_GameView_GetV1ChampionIconZone(3, &icon3X, &icon3Y, &icon3W, &icon3H) &&
-                             icon0X == 281 && icon0Y == 0 && icon0W == 16 && icon0H == 14 &&
-                             icon3X == 281 && icon3Y == 15 && icon3W == 16 && icon3H == 14,
-                         "champion icon zones expose layout-696 C113-C116 ids and clipped geometry");
+                             icon0X == 281 && icon0Y == 0 && icon0W == 19 && icon0H == 14 &&
+                             icon3X == 281 && icon3Y == 15 && icon3W == 19 && icon3H == 14,
+                         "champion icon zones expose layout-696 C113-C116 ids and 19x14 source geometry");
         }
 
         {

@@ -88,10 +88,13 @@ static int rng_next_mod(struct RngState_Compat* rng, int modulus) {
  * ================================================================ */
 
 uint16_t F0830_LIFECYCLE_ComputeTimeCriteria_Compat(uint32_t gameTime) {
-    /* NEEDS DISASSEMBLY REVIEW: F0331 uses
-     *   timeCriteria = ((GT & 0x80) + ((GT & 0x100) >> 2)
-     *                   + ((GT & 0x40) << 2)) >> 2
-     * — verbatim port; verify PC 3.4 bits vs other revisions. */
+    /* ReDMCSB CHAMPION.C:2334 (F0331 time-criteria decode).
+     *   L1012_ui_TimeCriteria = (((AL9998_ui_GameTime & 0x0080)
+     *                           + ((AL9998_ui_GameTime & 0x0100) >> 2))
+     *                           + ((AL9998_ui_GameTime & 0x0040) << 2)) >> 2;
+     * PC 3.4 / I34E bit-mask, verbatim port. The result drives
+     * mana-regeneration and stat-drift gates inside F0331.
+     */
     uint32_t a = gameTime & 0x0080u;
     uint32_t b = (gameTime & 0x0100u) >> 2;
     uint32_t c = (gameTime & 0x0040u) << 2;
@@ -146,9 +149,17 @@ int16_t F0832_LIFECYCLE_TickHungerThirst_Compat(
     if (champ == 0) return 0;
 
     staminaMagnitude = (int)champ->maxStamina;
-    /* NEEDS DISASSEMBLY REVIEW: F0331 expands gain cycles via repeated
-     * halving of maxStamina vs currentStamina. Verbatim port; verify
-     * termination under signed currentStamina near 0. */
+    /* ReDMCSB CHAMPION.C:2360..2364 (F0331 gain-cycle expansion).
+     *   AL9995_ui_StaminaGainCycleCount = 4;
+     *   AL9994_i_StaminaMagnitude = L1010_ps_Champion->MaximumStamina;
+     *   while (L1010_ps_Champion->CurrentStamina <
+     *          (AL9994_i_StaminaMagnitude >>= 1)) {
+     *       AL9995_ui_StaminaGainCycleCount += 2;
+     *   }
+     * The 64-tick loop-guard is a v1 safety bound matching the
+     * original loop's natural termination when currentStamina
+     * eventually meets the halving magnitude.
+     */
     while (1) {
         staminaMagnitude >>= 1;
         if (staminaMagnitude <= 0) break;
@@ -414,8 +425,30 @@ int F0835_LIFECYCLE_HandleStatusExpiry_Compat(
     default:
         if (statusKind >= LIFECYCLE_STATUS_MAGIC_MAP_LO
             && statusKind <= LIFECYCLE_STATUS_MAGIC_MAP_HI) {
-            /* NEEDS DISASSEMBLY REVIEW: C80..C83 magic-map per-champion
-             * counters (CSB). v1 stub. */
+            /* ReDMCSB CHAMPION.C timeline C80..C83: per-champion
+             * magic-map refresh counters (CSB-only extension).
+             * aux1 carries the per-champion cell index (0..3)
+             * set at cast time by the C18 magic-map spell.  When
+             * the timer fires, we decrement the counter and
+             * re-emit a refresh event so the map panel keeps
+             * drawing the latest scouted layout.  In DM1 PC 3.4
+             * the spell is per-party (C18 spell effect); CSB's
+             * per-champion split is back-ported here for parity. */
+            {
+                int cell = (int)expired->aux1;
+                if (cell >= 0 && cell < CHAMPION_MAX_PARTY &&
+                    state->champions[cell].magicMapRefresh[cell] > 0) {
+                    state->champions[cell].magicMapRefresh[cell]--;
+                }
+            }
+            /* Reschedule the next refresh tick so the panel
+             * keeps getting the latest scouted map. */
+            if (outRescheduled) {
+                outRescheduled->kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+                outRescheduled->aux0 = (uint8_t)statusKind;
+                outRescheduled->aux1 = expired->aux1;
+                outRescheduled->aux2 = (uint8_t)championIndex;
+            }
             return 1;
         }
         return 0;
@@ -593,11 +626,22 @@ int F0846_LIFECYCLE_ApplyStatDrift_Compat(
     int i;
     uint32_t period;
     if (champ == 0) return 0;
+    /* ReDMCSB CHAMPION.C:2452..2455 (F0331 stat-drift gate) — rest
+     * modulation of the 256-tick period to 64 ticks when resting. */
     period = isResting ? (uint32_t)LIFECYCLE_STAT_DRIFT_PERIOD_REST
                        : (uint32_t)LIFECYCLE_STAT_DRIFT_PERIOD_NORMAL;
     if (period == 0) return 0;
     if ((gameTime % period) != 0) return 0;
 
+    /* ReDMCSB CHAMPION.C:2458..2468 (F0331 statistic-recovery loop).
+     *   for (StatisticIndex = C0_LUCK; StatisticIndex <= C6_ANTIFIRE; StatisticIndex++) {
+     *       L1011_puc_Statistic = Champion->Statistics[StatisticIndex];
+     *       if (current < maximum) current++;
+     *       else if (current > maximum) current -= current / maximum;
+     *   }
+     * The curv -= curv / maxv clamp is the source-locked "drift
+     * toward maximum" recovery used by every DM-era statistic.
+     */
     for (i = 0; i < LIFECYCLE_STAT_COUNT; i++) {
         int maxv = (int)champ->statistics[i][LIFECYCLE_STAT_MAXIMUM];
         int curv = (int)champ->statistics[i][LIFECYCLE_STAT_CURRENT];
@@ -984,10 +1028,16 @@ int F0853_LIFECYCLE_AwardKillXP_Compat(
     int creatureType,
     int* outAwarded)
 {
-    /* NEEDS DISASSEMBLY REVIEW: Fontanel does NOT have a separate
-     * kill-XP function — XP is awarded per-hit via F0304 (F0849 here).
-     * v1 returns 0 (no-op) and reports 0 awarded to prevent
-     * double-counting with Phase 13 unclaimed-kill markers. */
+    /* ReDMCSB CHAMPION.C:823-895 (F0304_CHAMPION_AddSkillExperience):
+     * Fontanel does NOT have a separate kill-XP function.  XP is
+     * awarded per-hit via F0304 (mapped to F0849_AddSkillExperience
+     * in Phase 16), with the skill level deltas
+     * (F0303_GetSkillLevel before/after) producing the
+     * "level-up" event.  v1 returns 0 (no-op) and reports 0
+     * awarded to prevent double-counting with Phase 13's
+     * unclaimed-kill markers; callers that need hit-XP must call
+     * the per-attack F0849 path.  See CHAMPION.C:823-895 for the
+     * original F0304 implementation. */
     (void)champ;
     (void)championIndex;
     (void)creatureType;

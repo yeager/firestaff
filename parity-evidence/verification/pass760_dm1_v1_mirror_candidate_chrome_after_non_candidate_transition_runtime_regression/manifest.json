@@ -1,0 +1,201 @@
+{
+  "anchorDriftTodo": [
+    "Keep the requested DEFS.H:2088 anchor unchanged; in this local ReDMCSB tree that exact line is C10_COLOR_FLESH while the named C30/G0425/G0426/G0423/G0305/M070/M516/C040 symbols live on other DEFS.H lines."
+  ],
+  "anchors": [
+    "CHAMDRAW.C F0291/F0296:551-552,1249-1252",
+    "CHAMPION.C F0284:93-131",
+    "CHAMPION.C F0297:243-268",
+    "CHAMPION.C F0298:270-298",
+    "CHAMPION.C F0300:511-515",
+    "CHAMPION.C F0301:606-614",
+    "CHAMPION.C F0302:662-714",
+    "COMMAND.C F0359:1985-1990",
+    "REVIVE.C F0280:124-132",
+    "REVIVE.C F0282:744-806",
+    "CHEST.C F0333:30-67",
+    "CHEST.C F0334:113-132",
+    "PANEL.C F0344:1895-1944",
+    "PANEL.C F0345:1946-1999",
+    "OBJECT.C F0033:147-212",
+    "BLITMASK.C F0133:30-33",
+    "DEFS.H:2088 C30/G0425/G0426/G0423/G0305/M070/M516/C040"
+  ],
+  "nonOverlap": [
+    "pass674 scroll-pickup-leader-rotation-inventory-click is not used",
+    "pass686 keyboard-browse-occupied-slot is not used",
+    "pass710/pass711 live-panel C045/C038 routes are not used",
+    "pass736 close-while-resurrect-pending pickup is not used"
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "id": "CHAMDRAW.C:551",
+      "line": 551,
+      "lineText": "        if (P0614_ui_SlotIndex >= C30_SLOT_CHEST_1) {",
+      "needle": "G0425_aT_ChestSlots",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "id": "CHAMDRAW.C:1249",
+      "line": 1249,
+      "lineText": "                        L0886_pT_Thing = G0425_aT_ChestSlots;",
+      "needle": "G0425_aT_ChestSlots",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:93",
+      "line": 93,
+      "lineText": "void F0284_CHAMPION_SetPartyDirection(",
+      "needle": "F0284_CHAMPION_SetPartyDirection",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:243",
+      "line": 243,
+      "lineText": "void F0297_CHAMPION_PutObjectInLeaderHand(",
+      "needle": "F0297_CHAMPION_PutObjectInLeaderHand",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:270",
+      "line": 270,
+      "lineText": "THING F0298_CHAMPION_GetObjectRemovedFromLeaderHand(",
+      "needle": "F0298_CHAMPION_GetObjectRemovedFromLeaderHand",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:511",
+      "line": 511,
+      "lineText": "        L0896_ps_Champion = &M516_CHAMPIONS[P0628_ui_ChampionIndex];",
+      "needle": "M516_CHAMPIONS",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:606",
+      "line": 606,
+      "lineText": "        if (P0631_T_Thing == C0xFFFF_THING_NONE)",
+      "needle": "P0631_T_Thing",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:662",
+      "line": 662,
+      "lineText": "void F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox(",
+      "needle": "F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "id": "COMMAND.C:1985",
+      "line": 1985,
+      "lineText": "                case M568_PANEL_RESURRECT_REINCARNATE:",
+      "needle": "M568_PANEL_RESURRECT_REINCARNATE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "id": "REVIVE.C:124",
+      "line": 124,
+      "lineText": "        if (!G0415_ui_LeaderEmptyHanded)",
+      "needle": "G0415_ui_LeaderEmptyHanded",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "id": "REVIVE.C:744",
+      "line": 744,
+      "lineText": "        L0826_ps_Champion = &M516_CHAMPIONS[L0822_ui_ChampionIndex = G0305_ui_PartyChampionCount - 1];",
+      "needle": "G0305_ui_PartyChampionCount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHEST.C",
+      "id": "CHEST.C:30",
+      "line": 30,
+      "lineText": "#ifdef MEDIA278_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J /* CHANGE7_27_FIX Avoids opening a chest that is already open. In previous versions, this can occur when an object that has a modifier on a champion statistic (as applied by F0299_CHAMPION_ApplyObjectModifiersToStatistics) is placed in an appropriate slot or removed from that slot (for example placing Crown Of Nerra on the head or a Moonstone around the neck). This causes a refresh of the chest contents on screen where objects in the chest are reorganized so that there is no empty slot between them */",
+      "needle": "G0426_T_OpenChest",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHEST.C",
+      "id": "CHEST.C:113",
+      "line": 113,
+      "lineText": "        if (G0426_T_OpenChest == C0xFFFF_THING_NONE)",
+      "needle": "G0426_T_OpenChest",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "id": "OBJECT.C:147",
+      "line": 147,
+      "lineText": "int16_t F0033_OBJECT_GetIconIndex(",
+      "needle": "F0033_OBJECT_GetIconIndex",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/BLITMASK.C",
+      "id": "BLITMASK.C:30",
+      "line": 30,
+      "lineText": "/* This function creates a bitmap in P0210_puc_Bitmap_Temporary with the dimensions of P0211_pi_Box and filled with units from P0207_puc_Bitmap_Source starting from P0213_ui_FirstUnitIndex to P0212_i_LastUnitIndex",
+      "needle": "This function creates a bitmap",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "id": "DEFS.H:2088",
+      "line": 2088,
+      "lineText": "#define C10_COLOR_FLESH           10",
+      "needle": "C10_COLOR_FLESH",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass760_dm1_v1_mirror_candidate_chrome_after_non_candidate_transition_runtime_regression.v1",
+  "scope": "C040 mirror-candidate close, non-candidate inventory/chest/slot transition, and reopened C040 chrome freshness with no stale C040 owner/generation pixels.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_mirror_candidate_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_mirror_candidate_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_mirror_candidate_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS760_DM1_V1_MIRROR_CANDIDATE_CHROME_AFTER_NON_CANDIDATE_TRANSITION_LOCKED",
+  "timestampUtc": "2026-06-13T11:45:22.121614+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_pc34_compat"
+      ],
+      "outputTail": "PASS pass760_dm1_v1_mirror_candidate_chrome_after_non_candidate_transition_runtime_regression assertions=269 failures=0",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

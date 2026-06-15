@@ -119,6 +119,11 @@ typedef enum {
         /* Deterministic V2 config persistence is presentation-only
          * and requires explicit v2ConfigPersistenceEnabled. */
 
+    CSB_V2_PHASE_DOMAIN_HUD = 13,
+        /* V2 HUD overlay: compass, depth, gold, champion bars, action strip,
+         * chaos indicator. Presentation-only; activates only when both
+         * LAUNCH and PROFILE are enabled. */
+
     CSB_V2_PHASE_DOMAIN_COUNT
 } CSB_V2_PhaseDomain;
 

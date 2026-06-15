@@ -56,6 +56,12 @@
 #define DM1_CHAMPION_NONE                    -1   /* CM1_CHAMPION_NONE */
 #define DM1_EXPLOSION_REBIRTH_STEP1       0xFFE4  /* C0xFFE4 */
 #define DM1_EXPLOSION_REBIRTH_STEP2       0xFFE5  /* C0xFFE5 */
+#define DM1_EFFECT_TOGGLE                     2   /* C02_EFFECT_TOGGLE */
+#define DM1_EXPLOSION_TYPE_REBIRTH_STEP1    100   /* C100_EXPLOSION_REBIRTH_STEP1 */
+#define DM1_EXPLOSION_TYPE_REBIRTH_STEP2    101   /* C101_EXPLOSION_REBIRTH_STEP2 */
+#define DM1_CHAMPION_ATTR_ICON           0x0400   /* MASK0x0400_ICON */
+#define DM1_CHAMPION_ATTR_STATUS_BOX     0x1000   /* MASK0x1000_STATUS_BOX */
+#define DM1_CHAMPION_ATTR_ACTION_HAND    0x8000   /* MASK0x8000_ACTION_HAND */
 
 /* Bones item structure (mirrors JUNK in DEFS.H):
  * Type=C05_JUNK_BONES, DoNotDiscard=1, ChargeCount=championIndex (0..3) */
@@ -244,6 +250,50 @@ MirrorSensorDisableResult_Compat F0867a_RESURRECTION_DisableFirstMirrorSensor_Co
 CandidatePanelResult_Compat F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
     CandidatePanelState_Compat state,
     int16_t command);
+
+/* -------- Vi Altar full-cycle gate (F0374 -> TIMELINE.C -> F0283) ---- */
+
+typedef struct {
+    uint16_t championIndex;       /* Candidate champion carried by bones/event priority */
+    uint16_t oldChampionCell;     /* L0832_ps_Champion->Cell before F0283 */
+    uint16_t occupiedCellMask;    /* Live champion cells before rebirth; bit 0..3 */
+    uint16_t partyDirection;      /* G0308_i_PartyDirection */
+    int16_t maximumHealth;        /* L0832_ps_Champion->MaximumHealth before F0283 */
+    int droppingIntoAlcove;       /* F0374 L1146_B_DroppingIntoAnAlcove */
+    int facingViAltar;            /* F0374 G0287_B_FacingViAltar */
+    int objectIconIndex;          /* F0033_OBJECT_GetIconIndex(L1142_T_Thing) */
+    uint8_t bonesChargeCount;     /* JUNK->ChargeCount */
+    uint16_t bonesCell;           /* Event C.A.Cell and TIMELINE cell match */
+} ViAltarFullCycleInput_Compat;
+
+typedef struct {
+    int eventCreated;
+    uint16_t eventType;
+    uint16_t eventPriority;
+    uint16_t eventEffect;
+    uint16_t step2ExplosionThing;
+    uint16_t step2ExplosionType;
+    uint16_t step2DelayTicks;
+    int step1BonesMatched;
+    int step1BonesUnlinked;
+    int revived;
+    uint16_t championIndex;
+    uint16_t finalCell;
+    int16_t finalMaximumHealth;
+    int16_t finalCurrentHealth;
+    uint16_t finalDirection;
+    uint16_t dirtyAttributes;
+} ViAltarFullCycleResult_Compat;
+
+/* F0868: Source-locked narrow full-cycle Vi altar transition.
+ * Source: CLIKVIEW.C:173-186 creates C13_EVENT_VI_ALTAR_REBIRTH with
+ * Effect=C02 and Priority=JUNK.ChargeCount; TIMELINE.C:1665-1698 runs
+ * step 2 -> step 1 -> step 0, removing matching bones before calling F0283;
+ * REVIVE.C:F0283:915-937 relocates from an occupied cell, applies the health
+ * penalty, copies party direction, marks action-hand/status/icon attributes,
+ * and redraws the champion state. */
+ViAltarFullCycleResult_Compat F0868_RESURRECTION_RunViAltarFullCycle_Compat(
+    const ViAltarFullCycleInput_Compat* in);
 
 /* -------- Evidence / invariant (project convention) ------------------ */
 

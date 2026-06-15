@@ -79,8 +79,9 @@ int dm2_sl_save(const char *save_base, uint8_t slot,
                  const char *name,
                  const uint8_t *data, size_t data_size);
 
-/* Load from slot N: tries SKSave%02u.dat first, falls back to SKSave.bak.
- * Returns 0 on success; sets *out_size to bytes read. */
+/* Load from slot N: tries SKSave%02u.dat first, falls back to SKSave.bak
+ * when the primary file is missing, truncated, or fails the DM2 slot-header
+ * magic check. Returns 0 on success; sets *out_size to bytes read. */
 int dm2_sl_load(const char *save_base, uint8_t slot,
                  uint8_t *data, size_t max_size, size_t *out_size);
 

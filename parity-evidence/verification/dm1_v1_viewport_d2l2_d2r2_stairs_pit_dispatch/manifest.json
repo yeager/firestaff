@@ -1,0 +1,28 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-07T22:00:00Z",
+  "status": "PASS_DM1_V1_VIEWPORT_D2L2_D2R2_STAIRS_PIT_DISPATCH_SOURCE_LOCK",
+  "repo": "https://github.com/yeager/firestaff.git",
+  "branch": "main",
+  "head": "58ff4c890",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "anchors": [
+    "DUNVIEW.C F0119:6900-7049",
+    "DUNVIEW.C F0120_DUNGEONVIEW_DrawSquareD2R_CPSF:7051-7220",
+    "DUNVIEW.C F0104:3113-3156",
+    "DUNVIEW.C F0105:3185-3247 (requested 3158-3188 reaches the verified F0105 header at 3185-3188)",
+    "DUNVIEW.C F0115:4547-4581 and projectile row guard 5668-5671",
+    "DUNVIEW.C F0128:8503-8517",
+    "DUNGEON.C F0163:1769-1838, F0164:1840-1905+, F0172:2466-2523",
+    "DEFS.H:2088/2443-2452/2582-2583/2596-2604/2662/4144-4162/4202-4207"
+  ],
+  "assertions": 446,
+  "notes": [
+    "Gate: tests/test_dm1_v1_viewport_d2l2_d2r2_stairs_pit_dispatch_pc34_compat.c",
+    "Target: DM1 V1 F0119/F0120 D2L/D2R second-perspective stairs-front and floor-pit bitmap dispatch.",
+    "F0119 D2L routes C19 stairs-up/down through F0104 with G0079[C02]/C805 and G0079[C09]/C818, and C02 pit through M756/M762 with C855.",
+    "F0120 D2R_CPSF mirrors the same native bitmap choices through F0105 flipped with C807/C820/C857.",
+    "F0119/F0120 follow bitmap dispatch with F0108/F0112/F0115 for non-return branches; F0128 draws D2L2/D2R2 wall-side squares before the D2L/D2R follow-up writes.",
+    "Synthetic contract only: no real-asset bitmap parity, no live DOSBox coupling, no main-loop changes, no game-data load."
+  ]
+}

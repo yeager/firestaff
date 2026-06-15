@@ -11,7 +11,9 @@
  */
 
 #include "title_frontend_v1.h"
+#include "dm1_v2_anim_timing.h"
 #include "firestaff_graphics_dat_reader.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <string.h>
 
@@ -199,22 +201,86 @@ V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     timing.sourceAnimationStepCount = V1_TitleFrontend_GetSourceAnimationStepCount();
     timing.sourceFile = "ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C";
     timing.sourceFunction = "F0437_STARTEND_DrawTitle";
-    timing.evidenceNote = "PC/F20 TITLE.C path: presents strip, 18 reverse-order zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then Master/Strikes Back blit/fade, then final BUG0_71 M526_WaitVerticalBlank() before transition.";
+    timing.evidenceNote = "PC/F20 TITLE.C path: presents strip, 18 reverse-order zoom blits each preceded by M526_WaitVerticalBlank(), then two M526_WaitVerticalBlank() calls, then Master/Strikes Back blit/fade, then final BUG0_71 M526_WaitVerticalBlank() before transition. Firestaff uses the canonical V1 55 ms tick for these runtime waits so TITLE does not replay at display-refresh speed.";
     return timing;
 }
 
 unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourceTiming* timing) {
     if (timing && timing->vblankBeforeEachZoomStep) {
-        return 20u;
+        /* ReDMCSB: TITLE.C F0437 lines 385-409 wait on M526_WaitVerticalBlank();
+         * GAMELOOP.C lines 47-50 locks input cadence to VBlank counts. Firestaff
+         * uses the same canonical V1 tick as the rest of the runtime. */
+        return (unsigned int)V1_TICK_MS;
     }
     return 50u;
+}
+
+int V1_TitleFrontend_GetStepPalette(V1_TitleFrontendSourceEventKind kind,
+                                    int* outSpecialPalette) {
+    int palette;
+
+    if (!outSpecialPalette) return 0;
+    /* ReDMCSB TITLE.C F0437 PC/F20 source-lock (DRAWVIEW.C F20E):
+     *   - PRESENTS uses C12_PRESENTS (0x0F = white over the normal palette).
+     *     TITLE.C:319-324 blits "PRESENTS" and F1012_PALETTE_SetCurtain
+     *     fades C0_BLACK_PALETTE → C1_NORMAL_PALETTE in between, with
+     *     F0694_SetMultipleColorsInPalette(C12_PRESENTS) setting 0x0F
+     *     to white first.
+     *   - ZOOM_BLIT and MASTER_STRIKES_BACK_BLIT use the merged
+     *     C13_DUNGEON + C14_MASTER table (DRAWVIEW.C G8160 + G8161):
+     *     TITLE.C:340-402 fades back to black, then loads C13_DUNGEON
+     *     and C14_MASTER for the DUNGEON MASTER zoom and STRIKES BACK
+     *     reveal.  In RGB8 that is VGA_PALETTE_PC34_SPECIAL_TITLE.
+     *   - POST_ZOOM_VBLANK and FINAL_GUARD_VBLANK steps are wait-only;
+     *     the runtime does not blit on them, but if a future caller
+     *     does, the DUNGEON+MASTER palette is the safe default because
+     *     it is the palette the screen is in immediately after the
+     *     last blit.
+     *   - MENU_ELIGIBLE means the title has handed off; the caller no
+     *     longer touches the title palette.
+     */
+    switch (kind) {
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS:
+            palette = VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS;
+            break;
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT:
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT:
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_POST_ZOOM_VBLANK:
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK:
+            palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
+            break;
+        case V1_TITLE_FRONTEND_SOURCE_EVENT_MENU_ELIGIBLE:
+        default:
+            palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
+            break;
+    }
+    *outSpecialPalette = palette;
+    return 1;
+}
+
+int V1_TitleFrontend_GetFallbackFramePalette(unsigned int paletteOrdinal,
+                                             int* outSpecialPalette) {
+    V1_TitleFrontendSourceEventKind kind;
+
+    if (!outSpecialPalette) return 0;
+    /* ReDMCSB TITLE.C F0437 is authoritative for the palette phases even
+     * when Firestaff falls back to the decoded PC 3.4 TITLE frame bank:
+     * TITLE.C:312-324 applies C12_PRESENTS only for the PRESENTS blit,
+     * then TITLE.C:362-367 switches to C13_DUNGEON + C14_MASTER before
+     * the zoom and STRIKES BACK reveal.  The fallback TITLE bank's first
+     * PL run is the PRESENTS frame; later runs are the title zoom bank.
+     */
+    kind = (paletteOrdinal == 1u)
+               ? V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS
+               : V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT;
+    return V1_TitleFrontend_GetStepPalette(kind, outSpecialPalette);
 }
 
 unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontendSourceTiming* timing) {
     if (!timing) {
         return 0u;
     }
-    return (timing->postZoomVblankCount + timing->finalFadeGuardVblankCount) * 20u;
+    return (timing->postZoomVblankCount + timing->finalFadeGuardVblankCount) * (unsigned int)V1_TICK_MS;
 }
 
 int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
@@ -261,4 +327,3 @@ int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
  *   TITLE.C:123 F0509_AMIGA_F (platform-specific, not implemented for PC-34)
  *   TITLE.C:116 F2163_S
  * ══════════════════════════════════════════════════════════════════════ */
-

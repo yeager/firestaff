@@ -32,6 +32,10 @@ extern "C" {
  */
 #define DM2_QUEST_FLAG_COUNT  256
 #define DM2_MAX_QUEST_LOG     32
+#define DM2_WORLD_STATE_MAX_LEVELS 30
+#define DM2_WORLD_STATE_MAP_EDGE   32
+#define DM2_WORLD_STATE_EXPLORED_BYTES \
+    ((DM2_WORLD_STATE_MAP_EDGE * DM2_WORLD_STATE_MAP_EDGE) / 8)
 
 typedef enum {
     DM2_QUEST_PHASE_PROLOGUE  = 0,
@@ -128,6 +132,8 @@ typedef struct {
     int                  current_level;
     int                  outdoor_level_count;
     DM2_WeatherState     weather_by_level[30];
+    uint8_t              explored_by_level[DM2_WORLD_STATE_MAX_LEVELS]
+                                             [DM2_WORLD_STATE_EXPLORED_BYTES];
 
     /* Timers */
     int                  timer_count;
@@ -166,6 +172,8 @@ void dm2_v1_world_state_free(DM2_WorldState *state);
 int dm2_v1_world_state_get_quest_flag(const DM2_WorldState *state, int flag_index);
 void dm2_v1_world_state_set_quest_flag(DM2_WorldState *state, int flag_index, int value);
 int dm2_v1_world_state_get_champion_hp(const DM2_WorldState *state, int champ_index);
+int dm2_v1_world_state_get_explored(const DM2_WorldState *state, int level, int x, int y);
+void dm2_v1_world_state_set_explored(DM2_WorldState *state, int level, int x, int y, int value);
 const char *dm2_v1_world_state_source_evidence(void);
 
 #ifdef __cplusplus

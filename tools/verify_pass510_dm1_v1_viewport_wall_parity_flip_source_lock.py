@@ -7,6 +7,8 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
@@ -88,8 +90,9 @@ FIRE_CHECKS = [
     {
         "id": "firestaff_party_tuple_flip_predicate",
         "path": ROOT / "src/engine/m11_game_view.c",
-        "lines": "9072-9078",
+        "scope": "whole-file-local-evidence",
         "needles": [
+            "ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set",
             "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)",
             "return (state->world.party.mapX +",
             "state->world.party.mapY +",
@@ -99,9 +102,10 @@ FIRE_CHECKS = [
     {
         "id": "firestaff_wallset_variant_binding_before_draw",
         "path": ROOT / "src/engine/m11_game_view.c",
-        "lines": "9127-9144",
+        "scope": "whole-file-local-evidence",
         "needles": [
             "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,",
+            "static int m11_is_dm1_wallset_materialized_graphic(unsigned int graphicIndex)",
             "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;",
             "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +",
             "wallSet * M11_GFX_DM1_WALLSET_COUNT +",
@@ -110,11 +114,12 @@ FIRE_CHECKS = [
     {
         "id": "firestaff_center_wall_flip_path",
         "path": ROOT / "src/engine/m11_game_view.c",
-        "lines": "9688-9706",
+        "scope": "whole-file-local-evidence",
         "needles": [
             "flipWalls = m11_dm1_use_flipped_walls(state);",
             "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))",
             "if (flipWalls) {",
+            "the native center-wall graphic flipped horizontally.",
             "(void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,",
             "} else {",
             "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,",
@@ -123,9 +128,11 @@ FIRE_CHECKS = [
     {
         "id": "firestaff_side_wall_lr_swap_path",
         "path": ROOT / "src/engine/m11_game_view.c",
-        "lines": "10254-10296",
+        "scope": "whole-file-local-evidence",
         "needles": [
-            "flipWalls = m11_dm1_use_flipped_walls(state);",
+            "static void m11_draw_dm1_side_walls(const M11_GameViewState* state,",
+            "if (flipWalls) {",
+            "left zones use the right-side graphic flipped horizontally",
             "size_t partner = i ^ 1;",
             "M11_DM1WallFrontBlit swapped = kSideBlits[i];",
             "swapped.graphicIndex = kSideBlits[partner].graphicIndex;",
@@ -187,6 +194,7 @@ def audit_source(checks: list[dict[str, object]]) -> list[dict[str, object]]:
             "path": str(path),
             "sourceFile": path.name,
             "lines": check.get("lines"),
+            "scope": check.get("scope", check.get("lines", "whole-file")),
             "status": "PASS" if not missing else "FAIL",
             "sha256": sha(path),
             "hits": hits,
@@ -238,7 +246,7 @@ def write_report(manifest: dict[str, object]) -> None:
     lines += ["", "## Firestaff anchors"]
     for row in manifest["firestaffAudit"]:
         first = row["hits"][0]["line"] if row["hits"] else "missing"
-        lines.append(f"- {row['sourceFile']}:{first} {row['id']} status={row['status']}")
+        lines.append(f"- {row['sourceFile']}:{first} {row['id']} scope={row['scope']} status={row['status']}")
     lines += ["", "## Local references"]
     for row in manifest["secondaryReferences"]:
         lines.append(f"- {row['id']} {row['path']} exists={row['exists']} sha256={row['sha256']}")

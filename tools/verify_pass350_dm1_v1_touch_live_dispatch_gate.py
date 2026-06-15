@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "parity-evidence/verification/pass350_dm1_v1_touch_live_dispatch_gate/manifest.json"
@@ -34,10 +37,11 @@ def require(condition: bool, message: str) -> None:
 
 
 def run_probe() -> str:
-    exe = ROOT / "build/firestaff_m11_touch_live_dispatch_gate_probe"
+    build_dir = resolve_build_dir(ROOT, ROOT / "build")
+    exe = build_dir / "firestaff_m11_touch_live_dispatch_gate_probe"
     if not exe.exists():
         subprocess.run(
-            ["cmake", "--build", str(ROOT / "build"), "--target", "firestaff_m11_touch_live_dispatch_gate_probe", "-j2"],
+            ["cmake", "--build", str(build_dir), "--target", "firestaff_m11_touch_live_dispatch_gate_probe", "-j2"],
             cwd=ROOT,
             check=True,
             stdout=subprocess.PIPE,

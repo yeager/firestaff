@@ -389,6 +389,58 @@ typedef struct {
     const char *wall_return_source_lines;
 } DM1_ViewportFloorFieldOrderSpec;
 
+/* Pass760 D0L2/D0R2 combined source-lock composition.  This records the
+ * synthetic pair identity separately from the existing D0L/D0R F0108,
+ * D0C F0108, and D1L2/D1R2 wall-composition gates while binding the wall,
+ * floor, ceiling, floor-ornament, and wall-ornament anchors together.
+ *
+ * ReDMCSB source anchors:
+ *   DUNVIEW.C F0108_DUNGEONVIEW_DrawFloorOrnament:3940-4011
+ *   DUNVIEW.C F0107:3502-3938
+ *   DUNVIEW.C F0098:2962-3002
+ *   DUNVIEW.C F0115:4547-4581,5180-5188,5211-5214,5668-5671
+ *   DUNVIEW.C:6432-6600 M575_VIEW_WALL_D3L_RIGHT
+ *   DEFS.H:2088,2596-2611,2668-2677,2698-2702,4045-4046
+ *   DRAWVIEW.C F0097:1-50 plus DUNVIEW.C F0104:3113-3156 and
+ *   F0105:3185-3247 C10 blit dispatch. */
+typedef struct {
+    DM1_ViewSquareIndex square;
+    DM1_ViewSquareIndex paired_wall_square;
+    DM1_WallSetIndex native_wall;
+    DM1_WallSetIndex parity_wall;
+    uint16_t pc34_wall_zone;
+    uint16_t companion_d3_wall_zone;
+    int rel_depth;
+    int rel_lateral;
+    int view_square_ordinal;
+    int view_floor_ordinal;
+    int view_wall_side_ordinal;
+    int view_wall_front_ordinal;
+    uint16_t open_cell_order;
+    uint16_t wall_return_cell_order;
+    uint16_t floor_ornament_keepout_mask;
+    uint16_t floor_ornament_zone_base;
+    uint16_t floor_ornament_zone_stride;
+    bool wall_composition_locked;
+    bool floor_ceiling_base_locked;
+    bool floor_ornament_locked;
+    bool ceiling_locked;
+    bool wall_ornament_locked;
+    bool wall_returns_before_f0115;
+    bool open_path_floor_before_f0115;
+    bool c10_transparent_blit;
+    bool non_duplicate_pass729_d0l_d0r;
+    bool non_duplicate_pass733_d0c;
+    bool non_duplicate_pass717_d1l2_d1r2_wall;
+    const char *redmcsb_wall_source_lines;
+    const char *redmcsb_f0108_source_lines;
+    const char *redmcsb_f0107_source_lines;
+    const char *redmcsb_f0098_source_lines;
+    const char *redmcsb_f0115_source_lines;
+    const char *redmcsb_defs_source_lines;
+    const char *redmcsb_drawview_source_lines;
+} DM1_ViewportD0L2D0R2F0108CompositionSpec;
+
 typedef struct {
     DM1_ViewSquareIndex square;
     int8_t rel_depth;
@@ -421,6 +473,20 @@ typedef struct {
     const char *source_lines;
 } DM1_ViewportResolvedDrawStep;
 
+/* Source-locked no-write coverage for a read-only view square.  The allowed
+ * list records the other F0128 view-square callbacks that remain eligible to
+ * draw while the target cell's own F0115/object handoff is locked out.
+ * Source: DUNVIEW.C:6361-6495 F0116_DUNGEONVIEW_DrawSquareD3L;
+ * DUNVIEW.C:8488-8499 F0128 D3 dispatch; DUNGEON.C:1371-1421 F0150. */
+typedef struct {
+    DM1_ViewSquareIndex target_square;
+    const DM1_ViewSquareIndex *allowed_touch_squares;
+    size_t allowed_touch_square_count;
+    const char *redmcsb_function;
+    const char *source_lines;
+    const char *source_evidence;
+} DM1_ViewportNoWriteSpec;
+
 /* Source-locked PC34/I34E wall bitmap selection for a wall square.
  *
  * ReDMCSB PC34 selects the opposite left/right bitmap and requests
@@ -449,6 +515,8 @@ typedef struct {
 #define DM1_VIEW_SQUARE_D3R2 ((DM1_ViewSquareIndex)-102)
 #define DM1_VIEW_SQUARE_D2L2 ((DM1_ViewSquareIndex)-103)
 #define DM1_VIEW_SQUARE_D2R2 ((DM1_ViewSquareIndex)-104)
+#define DM1_VIEW_SQUARE_D0L2 ((DM1_ViewSquareIndex)-105)
+#define DM1_VIEW_SQUARE_D0R2 ((DM1_ViewSquareIndex)-106)
 
 /* PC34/I34E viewport zone ids from ReDMCSB DEFS.H:4040-4057. */
 #define DM1_PC34_ZONE_VIEWPORT_CEILING_AREA 700
@@ -503,6 +571,21 @@ typedef struct {
     uint8_t blit_x;     /* Source X offset passed to F0132/F0684 */
     uint8_t blit_y;     /* Source Y offset passed to F0132/F0684 */
 } DM1_WallFrame;
+
+typedef enum {
+    DM1_VIEW_DOOR_BUTTON_D3R = 0, /* C0_VIEW_DOOR_BUTTON_D3R */
+    DM1_VIEW_DOOR_BUTTON_D3C = 1, /* C1_VIEW_DOOR_BUTTON_D3C */
+    DM1_VIEW_DOOR_BUTTON_D2C = 2, /* C2_VIEW_DOOR_BUTTON_D2C */
+    DM1_VIEW_DOOR_BUTTON_D1C = 3, /* C3_VIEW_DOOR_BUTTON_D1C */
+    DM1_VIEW_DOOR_BUTTON_COUNT = 4
+} DM1_ViewDoorButtonIndex;
+
+typedef struct {
+    DM1_WallFrame frame;       /* G0208-style coordinate set plus src offset */
+    const uint8_t *pixels;     /* Native or pre-scaled derived bitmap span */
+    int16_t source_width;      /* Chunky source row stride in pixels */
+    int16_t source_height;     /* Source bitmap height in pixels */
+} DM1_DoorButtonBitmapSpan;
 
 /* Resolved source/destination rectangle for wall blits.  ReDMCSB passes the
  * frame/zone as the destination clip and frame[C6]/frame[C7] (or the bitmap
@@ -691,6 +774,30 @@ void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
                                              const DM1_WallFrame *frame);
 
 /*
+ * Draw a DM1 V1 door button bitmap span into a chunky destination buffer.
+ * door_button_ordinal follows ReDMCSB M000_INDEX_TO_ORDINAL semantics:
+ * 0 means no button; 1 selects C0_DOOR_BUTTON.
+ *
+ * Source: DUNVIEW.C F0110_DUNGEONVIEW_DrawDoorButton lines 4159-4207.
+ */
+int dm1_v1_viewport_draw_door_button_pc34(uint8_t *dst,
+                                          int dst_width,
+                                          int dst_height,
+                                          int dst_stride,
+                                          int door_button_ordinal,
+                                          DM1_ViewDoorButtonIndex view_index,
+                                          const DM1_DoorButtonBitmapSpan *spans,
+                                          size_t span_count);
+
+/*
+ * Return the source-locked C0_DOOR_BUTTON coordinate set for D3R/D3C/D2C/D1C.
+ * Source: DUNVIEW.C G0208_aaauc_Graphic558_DoorButtonCoordinateSets lines
+ * 1210-1216 and F0110 line 4163.
+ */
+const DM1_WallFrame *dm1_v1_viewport_get_door_button_frame_pc34(int door_button_ordinal,
+                                                                 DM1_ViewDoorButtonIndex view_index);
+
+/*
  * Execute one full frame of 3D viewport wall rendering.
  * This is the main entry point — calls all DrawSquare functions in
  * depth-order: D3L→D3R→D3C → D2L→D2R→D2C → D1L→D1R→D1C → D0L→D0R→D0C.
@@ -759,6 +866,7 @@ int dm1_viewport_3d_resolve_draw_order_step(size_t index,
                                             int origin_x,
                                             int origin_y,
                                             DM1_ViewportResolvedDrawStep *out_step);
+const DM1_ViewportNoWriteSpec *dm1_viewport_3d_get_d3l1_no_write_spec(void);
 size_t dm1_viewport_3d_wall_draw_spec_count(void);
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec(size_t index);
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM1_ViewSquareIndex square);
@@ -825,6 +933,11 @@ const DM1_ViewportThievesEyeDoorFrameOcclusionSpec *dm1_viewport_3d_get_thieves_
 size_t dm1_viewport_3d_floor_field_order_spec_count(void);
 const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec(size_t index);
 const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_ViewSquareIndex square);
+size_t dm1_viewport_3d_d0l2_d0r2_f0108_composition_spec_count(void);
+const DM1_ViewportD0L2D0R2F0108CompositionSpec *
+dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec(size_t index);
+const DM1_ViewportD0L2D0R2F0108CompositionSpec *
+dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec_for_square(DM1_ViewSquareIndex square);
 
 /* Source-locked post-command redraw contract: a completed command mutates the
  * party/world state first, GAMELOOP.C redraws F0128 from G0308/G0306/G0307,

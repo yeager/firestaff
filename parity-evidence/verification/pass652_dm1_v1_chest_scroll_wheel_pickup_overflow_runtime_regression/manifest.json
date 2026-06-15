@@ -1,0 +1,83 @@
+{
+  "failures": [],
+  "files": {
+    "cmake": "CMakeLists.txt",
+    "header": "src/dm1/dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat.h",
+    "module": "src/dm1/dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat.c",
+    "test": "tests/test_dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat.c"
+  },
+  "local_needles": [
+    "CHEST.C F0333:30-67",
+    "CHEST.C F0334:113-132",
+    "CHAMPION.C F0297:243-268",
+    "CHAMPION.C F0298:270-298",
+    "CHAMPION.C F0302:662-710",
+    "PANEL.C F0344:1895-1944 + F0345:1946-1999",
+    "COMMAND.C F0359:1985-1990",
+    "MOUSE.C F0077:97-126 + F0078:128-168",
+    "OBJECT.C F0033:147-212",
+    "BLITMASK.C F0133:30-33",
+    "DEFS.H:2088",
+    "ROUTE_C544_REPLACEMENT",
+    "not ROUTE_TO_FIRST_FREE",
+    "close-rewrite skips C0xFFFF_THING_NONE"
+  ],
+  "pass": "pass652_dm1_v1_chest_scroll_wheel_pickup_overflow_runtime_regression",
+  "redmcsb_needles": {
+    "BLITMASK.C": [
+      "void F0133_VIDEO_BlitBoxFilledWithMaskedBitmap"
+    ],
+    "CHAMPION.C": [
+      "void F0297_CHAMPION_PutObjectInLeaderHand",
+      "THING F0298_CHAMPION_GetObjectRemovedFromLeaderHand",
+      "void F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox",
+      "L0905_T_LeaderHandObject = G4055_s_LeaderHandObject.Thing",
+      "L0906_T_SlotThing = G0425_aT_ChestSlots[L0904_ui_SlotIndex - C30_SLOT_CHEST_1]",
+      "F0301_CHAMPION_AddObjectInSlot"
+    ],
+    "CHEST.C": [
+      "G0425_aT_ChestSlots[L1017_i_ChestSlotIndex++] = L1018_T_Thing",
+      "G0425_aT_ChestSlots[L1017_i_ChestSlotIndex++] = C0xFFFF_THING_NONE",
+      "if ((L1023_T_Thing = G0425_aT_ChestSlots[L1025_i_ChestSlotIndex]) != C0xFFFF_THING_NONE)",
+      "F0163_DUNGEON_LinkThingToList"
+    ],
+    "COMMAND.C": [
+      "void F0359_COMMAND_ProcessClick_CPSC",
+      "case M568_PANEL_RESURRECT_REINCARNATE",
+      "F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox",
+      "C065_COMMAND_CLICK_ON_SLOT_BOX_45_CHEST_8"
+    ],
+    "DEFS.H": [
+      "#define C30_SLOT_CHEST_1          30",
+      "#define C537_ZONE_SLOT_BOX_38_CHEST_1",
+      "#define C544_ZONE_SLOT_BOX_45_CHEST_8",
+      "extern void F0077_MOUSE_EnableScreenUpdate_CPSE",
+      "extern void F0078_MOUSE_DisableScreenUpdate"
+    ],
+    "OBJECT.C": [
+      "int16_t F0033_OBJECT_GetIconIndex",
+      "return L0005_i_IconIndex"
+    ],
+    "PANEL.C": [
+      "STATICFUNCTION void F0344_INVENTORY_DrawPanel_FoodOrWaterBar",
+      "void F0345_INVENTORY_DrawPanel_FoodWaterPoisoned",
+      "F0077_MOUSE_EnableScreenUpdate_CPSE",
+      "F0078_MOUSE_DisableScreenUpdate"
+    ]
+  },
+  "route_notes": [
+    "Leader hand starts occupied and C544 starts occupied.",
+    "F0302 replacement route puts the old C544 item in the leader hand.",
+    "The old leader item is redirected into C544, not the first free slot.",
+    "F0334 close rewrite skips NONE gaps and preserves the redirected item."
+  ],
+  "sha256": {
+    "cmake": "9fba7f880feca5f6f80b372620ff0b842afc192a4b3c5632203aff631216327c",
+    "header": "dd117357d8c48253a01bce1a5625a1f031e1b4245ae21d1944d636c0ac60a48f",
+    "module": "89396fdc6793ff0b2135d96c203051e01b653194841e47d1d2ee65605fe6df0e",
+    "test": "f0ab01a22e011bd63b6de6bbc4df5361fcd16530ed1ded5a508e230560a7df49"
+  },
+  "source_locked_route": "ROUTE_C544_REPLACEMENT",
+  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS"
+}

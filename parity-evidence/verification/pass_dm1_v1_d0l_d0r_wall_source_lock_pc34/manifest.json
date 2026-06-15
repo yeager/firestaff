@@ -1,0 +1,20 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-07T20:12:19Z",
+  "status": "PASS_DM1_V1_D0L_D0R_WALL_SOURCE_LOCK",
+  "repo": "https://github.com/yeager/firestaff.git",
+  "branch": "main",
+  "head": "e7b28ba15f4b6baf39e7b56881c7ef21502e7fd4",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "dataHashLock": [],
+  "notes": [
+    "Gate: tests/test_dm1_v1_d0l_d0r_wall_source_lock_pc34_compat.c",
+    "Target: DM1 V1 D0L/D0R first-row wall pixel composition, deterministic synthetic row, no game data required.",
+    "DRAWVIEW.C:709-722 and 821-857 F0097_DUNGEONVIEW_DrawViewport preserve deterministic viewport/palette handoff around the composed row.",
+    "VIEWPORT.C:15-63 F0564/F0565/F0566 bind the 224x136 viewport bitplane, palette switch, and full-viewport blit invariants.",
+    "DUNVIEW.C:8534-8541 F0128 dispatches D0L before D0R, then D0C.",
+    "DUNVIEW.C:8007-8038 F0125 routes the D0L WALL case to C716 and returns before F0115/F0111/F0108.",
+    "DUNVIEW.C:8117-8144 F0126 routes the D0R WALL case to C717 with parity/native wall blits and returns before F0115/F0111/F0108.",
+    "DEFS.H:2597-2598 and 4056-4057 bind M610/M611 to C716/C717 for the PC34 D0 side wall row."
+  ]
+}

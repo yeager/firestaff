@@ -49,6 +49,8 @@
 #include "csb_v1_utility_import_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
+#include "memory_champion_state_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 
 /* ── Test helpers ─────────────────────────────────────────────────── */
 
@@ -384,8 +386,37 @@ int main(int argc, char **argv)
         }
     }
 
-    /* ── Test 8: Utility flow error handling ────────────────────── */
-    rep("\n## Test 8: Utility flow error handling\n\n");
+    /* ── Test 8: Imported carried-object state guard ─────────────── */
+    rep("\n## Test 8: Imported carried-object state guard\n\n");
+    inv("=== IMPORTED SLOT GUARD ===", 1);
+
+    {
+        CSB_V1_PartyState party_bad;
+        CSB_V1_ImportResult res_bad;
+
+        build_synth_dm1_save(dm1_buf, SYNTH_DM1_BUF_SIZE, SYNTH_CHAMP_COUNT, 120);
+        put_le16(dm1_buf + 24 + 0 * 116 + 40 + CHAMPION_SLOT_ACTION_HAND * 2,
+                 (int16_t)THING_ENDOFLIST);
+
+        memset(&party_bad, 0, sizeof(party_bad));
+        memset(&res_bad, 0, sizeof(res_bad));
+
+        int bad = csb_v1_import_from_dm1_save_buffer(&party_bad, dm1_buf,
+                                                     SYNTH_DM1_BUF_SIZE,
+                                                     &res_bad);
+        CHECK_EQ(bad, -1, "import rejects THING_ENDOFLIST in action hand", "d");
+        CHECK_EQ(res_bad.error_code, CSB_V1_IMPORT_ERR_SLOT_STATE,
+                 "import result flags slot-state guard", "d");
+        CHECK_EQ(res_bad.byte_offset, 24 + 40 + CHAMPION_SLOT_ACTION_HAND * 2,
+                 "import result byte_offset points at bad slot word", "d");
+        CHECK_EQ(res_bad.state, CSB_V1_IMPORT_STATE_ERROR,
+                 "import result enters ERROR state", "d");
+        CHECK_EQ(party_bad.ChampionCount, 0,
+                 "guarded import leaves party empty", "d");
+    }
+
+    /* ── Test 9: Utility flow error handling ────────────────────── */
+    rep("\n## Test 9: Utility flow error handling\n\n");
     inv("=== UTILITY FLOW ERROR ===", 1);
 
     {
@@ -405,8 +436,8 @@ int main(int argc, char **argv)
               "flow either succeeds or sets meaningful error");
     }
 
-    /* ── Test 9: Source evidence strings ─────────────────────────── */
-    rep("\n## Test 9: Source evidence strings\n\n");
+    /* ── Test 10: Source evidence strings ────────────────────────── */
+    rep("\n## Test 10: Source evidence strings\n\n");
     inv("=== SOURCE EVIDENCE ===", 1);
 
     {

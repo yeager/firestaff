@@ -1,0 +1,44 @@
+{
+  "id": "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass",
+  "scope": "CSB V1 D3L2/D3R2 F0115 thing-pass source-lock gate",
+  "contract_only": true,
+  "game": "CSB",
+  "not_dm1": true,
+  "real_asset_bitmap_parity_claimed": false,
+  "game_data_load_required": false,
+  "source_anchors": [
+    "ReDMCSB DUNVIEW.C:6226-6291 F0676_DrawD3L2",
+    "ReDMCSB DUNVIEW.C:6293-6358 F0677_DrawD3R2",
+    "ReDMCSB DUNVIEW.C:6361-6480 F0116_DUNGEONVIEW_DrawSquareD3L",
+    "ReDMCSB DUNVIEW.C:6500-6622 F0117_DUNGEONVIEW_DrawSquareD3R",
+    "ReDMCSB DUNVIEW.C:4547-4581 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+    "ReDMCSB DUNVIEW.C:5668-5671 F0115 projectile row guard",
+    "ReDMCSB DUNVIEW.C:8478-8508 F0128 D3L2/D3R2 dispatch",
+    "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH",
+    "ReDMCSB DEFS.H:4042 C702_ZONE_WALL_D3L2",
+    "ReDMCSB DEFS.H:4043 C703_ZONE_WALL_D3R2",
+    "ReDMCSB DEFS.H:2610 C14_VIEW_SQUARE_D3L2",
+    "ReDMCSB DEFS.H:2611 C15_VIEW_SQUARE_D3R2",
+    "ReDMCSB COORD.C parent records",
+    "CSB Viewport.cpp D3L2/D3R2 thing-pass path",
+    "CSB Viewport.cpp:1903-1906 room-object overlay binding"
+  ],
+  "spec_table": {
+    "view_squares": ["D3L2", "D3R2"],
+    "routes": ["projectile", "creature", "item", "explosion"],
+    "entry_count": 8
+  },
+  "synthetic_pixel_contract": {
+    "width": 8,
+    "height": 4,
+    "transparent_color": "C10_COLOR_FLESH",
+    "horizontal_flip": true,
+    "vertical_flip": true,
+    "derived_bitmap": "CM1_DERIVED_BITMAP_NONE",
+    "door_panel_excluded": "F0111"
+  },
+  "verification": {
+    "ctest": "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat",
+    "minimum_assertions": 120
+  }
+}

@@ -34,7 +34,10 @@ extern "C" {
  *  Core dungeon world types
  * ================================================================ */
 
-#define CSB_MAX_LEVELS 16
+#define CSB_MAX_LEVELS 24  /* CSB DUNGEON.DAT NumLevel() = 24
+                              * (CHAMPION.C, CEDTINC8.C:101-118);
+                              * DM1 PC 3.4 is 14.  v1 was 16; bumped
+                              * to 24 to match the CSB source. */
 #define CSB_MAX_WIDTH  64
 #define CSB_MAX_HEIGHT 64
 
@@ -232,6 +235,11 @@ uint16_t csb_dungeon_get_group(
     uint16_t (*fn_get_first)(int mapX, int mapY),
     uint16_t (*fn_get_next)(uint16_t thing),
     int mapX, int mapY);
+
+uint16_t csb_dungeon_get_first_thing_default(int mapX, int mapY);
+uint16_t csb_dungeon_get_next_thing_default(uint16_t thing);
+uint16_t csb_dungeon_thing_data_u16_default(uint16_t thing, int offset);
+void     csb_move_thing_default(uint16_t thing, void* ctxOpaque);
 
 /* ================================================================
  *  Door helpers -- DUNGEON.C:561-565 (pass563 compat)

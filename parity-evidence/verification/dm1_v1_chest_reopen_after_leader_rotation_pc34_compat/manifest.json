@@ -1,0 +1,21 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-07T21:24:38Z",
+  "status": "PASS_DM1_V1_CHEST_REOPEN_AFTER_LEADER_ROTATION_RUNTIME_REGRESSION",
+  "repo": "https://github.com/yeager/firestaff",
+  "branch": "main",
+  "head": "aaed19e118c4ca17e3a54b3d40b23e536c7e6777",
+  "redmcsbRoot": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+  "anchors": [
+    "CHEST.C F0333:31-67",
+    "CHEST.C F0334:113-132",
+    "CHAMPION.C F0297:243-298",
+    "CHAMPION.C F0298",
+    "CHAMPION.C F0300/F0301/F0302",
+    "DUNGEON.C F0163:1796-1837",
+    "COMMAND.C F0359 M568/C040",
+    "DEFS.H:2088/C30/G0425/G0426/G0423/G0305"
+  ],
+  "assertions": 277,
+  "notes": "Contract-only DM1 V1 runtime regression gate for close chest A, rotate leader, open/close/reopen chest B ordering and leader-hand preservation across rotation."
+}

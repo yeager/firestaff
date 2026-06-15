@@ -25,6 +25,8 @@
  * Provenance (Phase 0 — PASSED, docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md):
  *   JP MD5: b7afb338ad31be1025b53f9aff12d73a (Track 02 BIN, cdromance.org)
  *   US MD5: f23601102138f87c33025877767ebf76 (Track 02 BIN, cdromance.org)
+ *   JP Rev 1 ISO MD5: 397039af02d50d15c70b74088eb8a1cb (Track 02 ISO)
+ *   US ISO MD5:       3d8b78571dcd0e6eb8eb4b01eeb7fbba (Track 02 ISO)
  *   g_theronVersions[] version slots (pce-jp, pce-en) are wired in
  *   asset_status_m12.c with Track 02 MD5s.
  *
@@ -163,6 +165,48 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
  * Used by menu to check availability without triggering hash lock.
  * Returns: 1 if assets found, 0 if not. */
 int theron_v1_boot_probe_available(const char *data_dir);
+
+/* theron_v1_boot_load_verified_path — direct launch via a known
+ * hash-verified Track 02 path.  Avoids the full data_dir fallback
+ * search when an upstream catalog (M12 asset status scanner,
+ * quick-resume, or explicit --data-dir <file>) has already confirmed
+ * the path against a known MD5.
+ *
+ * Inputs:
+ *   profile       - output, populated like theron_v1_boot_scan_assets
+ *                   but skipping fallback search
+ *   track02_path  - exact path to a Track 02 BIN/ISO file
+ *   expected_md5  - 32-char hex MD5 the caller already matched
+ *                   (one of the four locked-in TQ Track 02 MD5s)
+ *
+ * Sets profile->assets_verified = 1 without re-hashing the file, and
+ * copies expected_md5 into profile->graphics_md5 / dungeon_md5.
+ *
+ * Filename heuristic (same as scan) sets platform / version_id.
+ *
+ * Returns 0 on success, -1 on any input or stat failure.
+ *
+ * Source: THQUEST.ASM T400 (Track 02 data-track loading) — when
+ * the runtime already knows the verified blob, it must not re-walk
+ * the data root and stat every candidate.
+ */
+int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
+                                       const char *track02_path,
+                                       const char *expected_md5);
+
+/* theron_v1_boot_rescan_call_count — number of stat() / fopen() probes
+ * performed across the most recent scan-style call (probe / scan /
+ * load_verified_path).  Useful for asserting in tests that a direct
+ * launch path did not re-walk the data root.
+ *
+ * Returns the accumulated stat probe count for the boot module.
+ * Thread-unsafe: simple process-local counter. */
+unsigned long theron_v1_boot_rescan_call_count(void);
+
+/* Reset the rescan call counter.  Tests call this before exercising a
+ * path, then read the counter back to assert no extra root walk
+ * happened. */
+void theron_v1_boot_rescan_call_count_reset(void);
 
 /* Set the save root directory.
  * If save_dir is NULL, uses default: <data_dir>/../saves/theron/ */

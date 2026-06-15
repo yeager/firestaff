@@ -509,6 +509,148 @@ static void test_floor_party_on_stairs_runtime_gate(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test F0718: Runtime floor C001 gate -- party does not retrigger
+ *  a pressure pad already held down by object weight.
+ *  Source: MOVESENS.C F0276 lines 1624-1648 and case C001 at 1664-1667.
+ * ---------------------------------------------------------------- */
+static void test_floor_pressure_plate_runtime_party_object_weight_gate(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    unsigned char squares[4];
+    unsigned short squareFirstThings[4];
+    struct DungeonSensor_Compat sensors[1];
+    struct DungeonWeapon_Compat weapons[1];
+    struct SensorEffectList_Compat effects;
+    int i;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    memset(weapons, 0, sizeof(weapons));
+    for (i = 0; i < 4; ++i) {
+        squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    map.width = 2;
+    map.height = 2;
+    tiles.squareData = squares;
+    tiles.squareCount = 4;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+
+    squares[2] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0, 0);
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT;
+    sensors[0].targetMapX = 1;
+    sensors[0].targetMapY = 1;
+    sensors[0].targetCell = 0;
+    sensors[0].next = THING_ENDOFLIST;
+    weapons[0].next = THING_ENDOFLIST;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 4;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.loaded = 1;
+
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.count == 1, "Runtime C001: party triggers empty pressure pad");
+    CHECK(effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
+          "Runtime C001: empty pressure pad emits remote toggle");
+    CHECK(effects.effects[0].sensorType == DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT,
+          "Runtime C001: empty pressure pad carries sensor type");
+
+    sensors[0].next = make_thing(THING_TYPE_WEAPON, 0, 0);
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.count == 0, "Runtime C001: object weight suppresses party retrigger");
+}
+
+/* ----------------------------------------------------------------
+ *  Test F0718/F0724: Runtime floor C003 party plate targets a door
+ *  event.
+ *  Source: MOVESENS.C F0268 lines 1000-1035 queues timed target
+ *  events; DATA.C G0059 lines 470-477 maps target square type
+ *  C04_ELEMENT_DOOR to C10_EVENT_DOOR.
+ * ---------------------------------------------------------------- */
+static void test_floor_party_plate_runtime_door_event_gate(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    unsigned char squares[4];
+    unsigned short squareFirstThings[4];
+    struct DungeonSensor_Compat sensors[1];
+    struct SensorEffectList_Compat effects;
+    struct SensorTriggerResult_Compat dispatch;
+    int i;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    for (i = 0; i < 4; ++i) {
+        squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    map.width = 2;
+    map.height = 2;
+    tiles.squareData = squares;
+    tiles.squareCount = 4;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+
+    squares[2] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
+    squares[3] = (unsigned char)(DUNGEON_ELEMENT_DOOR << 5);
+    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0, 0);
+    sensors[0] = make_sensor(DM1_SENSOR_FLOOR_PARTY, 0, DM1_EFFECT_TOGGLE,
+                             0, 0, 1, 4, 0, 1, 1, 0);
+    sensors[0].next = THING_ENDOFLIST;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 4;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    things.loaded = 1;
+
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.count == 1, "Runtime C003: party plate emits one remote effect");
+    CHECK(effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
+          "Runtime C003: party plate emits remote toggle");
+    CHECK(effects.effects[0].destMapX == 1 && effects.effects[0].destMapY == 1,
+          "Runtime C003: party plate targets door square (1,1)");
+
+    memset(&dispatch, 0, sizeof(dispatch));
+    F0724_SENSOR_ResolveEffectDispatch_Compat(&sensors[0], DM1_EFFECT_TOGGLE,
+        DM1_SQUARE_DOOR, 1, 0, &dispatch);
+    CHECK(dispatch.targetSquareType == DM1_SQUARE_DOOR,
+          "Runtime C003 door gate: dispatch records target square type door");
+    CHECK(dispatch.targetEventType == DM1_EVENT_DOOR,
+          "Runtime C003 door gate: pressure plate target resolves to EVENT_DOOR");
+    CHECK(dispatch.effectKind == SENSOR_EFFECT_TOGGLE_TARGET,
+          "Runtime C003 door gate: pressure plate consequence is toggle target");
+    CHECK(dispatch.targetCell == 0,
+          "Runtime C003 door gate: non-wall door target uses northwest cell");
+    CHECK(dispatch.delayTicks == 4,
+          "Runtime C003 door gate: door event delay comes from sensor value");
+}
+
+/* ----------------------------------------------------------------
  *  Test F0723: Wall sensor — simple click
  *  Source: F0275 case C001 (WALL_ORNAMENT_CLICK)
  * ---------------------------------------------------------------- */
@@ -607,6 +749,33 @@ static void test_wall_click_specific_object_removed(void) {
     F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
     CHECK(result.triggered == 0, "Wall C004: wrong object does not trigger");
     CHECK(result.leaderHandObjectRemoved == 0, "Wall C004: wrong object is not consumed");
+}
+
+/* ----------------------------------------------------------------
+ *  Test F0723: Wall sensor — door keyhole wrong object no-op
+ *  Source: MOVESENS.C F0275 cases C003/C004 and lines 1527-1531
+ * ---------------------------------------------------------------- */
+static void test_wall_keyhole_wrong_object_noop(void) {
+    struct DungeonSensor_Compat sensor;
+    struct WallSensorContext_Compat ctx;
+    struct SensorTriggerResult_Compat result;
+
+    /* Keyhole-style wall ornament that only accepts object type 8. */
+    sensor = make_sensor(DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED,
+                         8, DM1_EFFECT_SET, 0, 0, 0, 0, 0, 5, 6, 0);
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.leaderHandObjectType = 9; /* Wrong object */
+    ctx.leaderEmptyHanded = 0;
+    ctx.leaderIndex = 0;
+    ctx.sensorCountInCell = 0;
+
+    memset(&result, 0xA5, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Door keyhole: wrong object does not trigger");
+    CHECK(result.leaderHandObjectRemoved == 0, "Door keyhole: wrong object is not consumed");
+    CHECK(result.leaderHandObjectReceived == 0, "Door keyhole: wrong object is not swapped");
+    CHECK(result.resolvedEffect == 0, "Door keyhole: wrong object leaves no resolved effect");
 }
 
 /* ----------------------------------------------------------------
@@ -1348,9 +1517,12 @@ int main(void) {
     test_floor_party_possession();
     test_floor_party_on_stairs();
     test_floor_party_on_stairs_runtime_gate();
+    test_floor_pressure_plate_runtime_party_object_weight_gate();
+    test_floor_party_plate_runtime_door_event_gate();
     test_wall_ornament_click();
     test_wall_click_specific_object();
     test_wall_click_specific_object_removed();
+    test_wall_keyhole_wrong_object_noop();
     test_wall_single_object_storage_rotate();
     test_wall_object_exchanger();
     test_wall_champion_portrait();

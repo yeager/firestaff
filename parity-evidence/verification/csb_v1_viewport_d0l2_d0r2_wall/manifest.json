@@ -1,0 +1,23 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-08T02:15:00Z",
+  "status": "PASS_CSB_V1_D0L2_D0R2_WALL_SOURCE_LOCK",
+  "repo": "https://github.com/yeager/firestaff.git",
+  "branch": "firestaff-csb-parity/1780883998_csb_v1_d0l2_d0r2_wall",
+  "head": "0f780be0d72ac8292ec196ca96df9d524b8285cc",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "dataHashLock": [],
+  "notes": [
+    "Gate: tests/test_csb_v1_viewport_d0l2_d0r2_wall_pc34_compat.c",
+    "Target: CSB V1 D0L2/D0R2 wall-row dispatch contract only; synthetic C10 wall pixels, no real-asset bitmap parity and no CSB game-data load.",
+    "DUNVIEW.C:7960-8062 F0125 routes the D0L WALL case through C716 and returns before the F0115 thing pass.",
+    "DUNVIEW.C:8064-8162 F0126 routes the D0R WALL case through C717 and returns before the F0115 thing pass.",
+    "DUNVIEW.C:3113-3156 F0104 and 3185-3247 F0105 bind native/flipped wall variants with C10_COLOR_FLESH transparency from DEFS.H:2088.",
+    "DUNVIEW.C:4547-4581 F0115 is kept out of the WALL path; DUNGEON.C:1769-1838 F0163 and 1840-1905 F0164 anchor the thing-list mutation routines that the wall route must not call.",
+    "DUNGEON.C:2466-2523 F0172 anchors square-aspect reads before F0125/F0126 wall dispatch.",
+    "DUNVIEW.C:8478-8508 anchors the farther D3L2/D3R2 and D2L2/D2R2 wall-row order; DUNVIEW.C:8534-8542 dispatches D0L then D0R and follows with F0127 D0C.",
+    "DUNVIEW.C:6361-6480 F0116 and DUNVIEW.C:8294 F0127 are anchor-only references and are not duplicated by this D0L2/D0R2 wall gate.",
+    "DEFS.H:4040-4057 binds the D*-L/D*-R wall-zone family including C716/C717.",
+    "CSB-lineage Viewport.cpp:1192-1209 anchors F0L1/F0R1 room-object overlay binding; Viewport.cpp:1903-1915 anchors the distinct door-facing overlay binding."
+  ]
+}

@@ -85,27 +85,26 @@ uint16_t csb_dungeon_get_group(
  * and current level (set by csb_v1_dungeon_set_current_level) to
  * service F0161_DUNGEON_GetSquareFirstThing calls from the world model.
  *
- * Returns the raw thing index from the square record, or ENDOF if no
- * dungeon is loaded or the square has no things.
+ * Returns the square's first THING handle, or ENDOF if no dungeon is loaded
+ * or the square has no things.
  *
- * NOTE: This returns a raw THING index (0-1023), not a full THING
- * handle.  The full handle encoding is (type << 10) | index; the caller
- * must read thing data to determine the type.  Until M10 thing-data
- * integration, this stub returns ENDOF.  For GROUP detection use
- * csb_dungeon_get_group() with the real F0159/F0156 accessors.
+ * Real CSB-format dungeons return the imported full THING handle from
+ * the square-first-thing table. Legacy 16-bit synthetic fixtures still
+ * encode only an untyped index in the square word, so this default runtime
+ * accessor leaves those fixtures at ENDOF.
  *
- * ReDMCSB: DUNGEON.C F0161_DUNGEON_GetSquareFirstThing (lines 1730-1760)
+ * ReDMCSB: DUNGEON.C F0160_DUNGEON_GetSquareFirstThingIndex lines 1699-1728,
+ *          F0161_DUNGEON_GetSquareFirstThing lines 1730-1746.
  */
 uint16_t csb_dungeon_get_first_thing_default(int mapX, int mapY) {
     const CSB_V1_DungeonData *d = csb_v1_dungeon_get_current();
+    int thing;
     if (!d || !d->raw_data) return CSB_THING_ENDOFLIST;
 
-    /* Use level 0 as default when called without explicit level context.
-     * The real M10 integration would use the party's current map level.
-     * Until that wiring is in place, this stub returns ENDOF to avoid
-     * returning untyped thing indices that could be misinterpreted. */
-    (void)mapX; (void)mapY;
-    return CSB_THING_ENDOFLIST; /* M10 thing-data integration pending */
+    if (d->square_bytes != 1) return CSB_THING_ENDOFLIST;
+    thing = csb_v1_dungeon_get_first_thing(
+        d, csb_v1_dungeon_get_current_level(), mapX, mapY);
+    return (thing >= 0) ? (uint16_t)thing : CSB_THING_ENDOFLIST;
 }
 
 /*
@@ -521,18 +520,22 @@ uint8_t csb_bugfix_thing_type_bit15_clearly(uint16_t rawThingType) {
  *          BugsAndChanges.htm:CHANGE7_19,BUG0_69
  */
 int csb_bugfix_lord_chaos_teleport_dir(int random4(void)) {
-    /* If no random source supplied, fall back to simple pseudo-random.
-     * Real integration: call M004_RANDOM(4) from the game engine.
-     * Until M10 integration: use a simple LCG.
-     *
-     * ReDMCSB: GROUP.C:2208 (M004_RANDOM)
-     */
-    static uint32_t lcg_seed = 0x12345678u;
-    (void)random4;
+    /* ReDMCSB GROUP.C:2208 (CHANGE7_19_FIX / MEDIA297):
+     *   primaryDir = M004_RANDOM(4)
+     * Properly initialized before the array-index use that
+     * triggers BUG0_69 memory corruption.  The caller MUST
+     * supply a function that returns the engine M004_RANDOM
+     * result (range 0..3).  When no source is supplied,
+     * the function returns 0 (NORTH) which is the source's
+     * pre-decrement sentinel value — callers should treat
+     * 0 as a "not yet randomised" marker and trigger their
+     * own RNG fallback if needed.  v1 deliberately does NOT
+     * use a non-deterministic LCG; deterministic-by-default
+     * keeps the headless-combat suite reproducible across
+     * RNG versions. */
     if (random4) return random4() & 3;
-    /* Simple LCG fallback — replace with engine RNG once wired */
-    lcg_seed = lcg_seed * 1664525u + 1013904223u;
-    return (int)(lcg_seed >> 16) & 3;
+    /* Sentinel: caller should treat 0 as "uninitialised". */
+    return 0;
 }
 
 /* ================================================================

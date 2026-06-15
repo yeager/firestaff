@@ -114,6 +114,15 @@ long M11_Render_ClearFramebuffer(unsigned char colorIndex);
    copy to the window, and flip. Returns M11_RENDER_OK on success or
    an error code. Safe to call with an all-zero framebuffer. */
 int  M11_Render_Present(void);
+int  M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
+                                      int logicalWidth,
+                                      int logicalHeight,
+                                      int scale);
+int  M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
+                                           int logicalWidth,
+                                           int logicalHeight,
+                                           int targetWidth,
+                                           int targetHeight);
 int  M11_Render_PresentIndexed(const unsigned char* framebuffer,
                                int logicalWidth,
                                int logicalHeight);
@@ -140,6 +149,7 @@ int  M11_Render_PumpEvents(void);
 int  M11_Render_HandleResize(int newWidth, int newHeight);
 int  M11_Render_GetWindowWidth(void);
 int  M11_Render_GetWindowHeight(void);
+int  M11_Render_SetWindowSize(int width, int height);
 int  M11_Render_SetScaleMode(int scaleMode);
 int  M11_Render_GetScaleMode(void);
 int  M11_Render_CycleScaleMode(void);
@@ -156,8 +166,29 @@ int  M11_Render_ComputePresentationRect(int windowW,
                                         int* outY,
                                         int* outW,
                                         int* outH);
+int  M11_Render_ResolveSdl3ResizeEvent(int eventW,
+                                        int eventH,
+                                        int liveWindowW,
+                                        int liveWindowH,
+                                        int liveRenderW,
+                                        int liveRenderH,
+                                        int* outWindowW,
+                                        int* outWindowH,
+                                        int* outRenderW,
+                                        int* outRenderH);
 int  M11_Render_ToggleFullscreen(void);
 int  M11_Render_GetPresentRect(int* outX, int* outY, int* outW, int* outH);
+int  M11_Render_MapPointToFramebuffer(int windowX,
+                                      int windowY,
+                                      int windowW,
+                                      int windowH,
+                                      int contentW,
+                                      int contentH,
+                                      int scaleMode,
+                                      int integerScaling,
+                                      int displayAspectMode,
+                                      int* outFbX,
+                                      int* outFbY);
 int  M11_Render_MapWindowToFramebuffer(int windowX,
                                        int windowY,
                                        int* outFbX,

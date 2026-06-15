@@ -4,10 +4,13 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-TEST_BINARY = ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY = resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat"
 STATUS = "PASS577_DM1_V1_D0_D1_VISIBLE_SQUARE_DRAW_ORDER_SOURCE_LOCKED"
 
 
@@ -132,8 +135,16 @@ REDMCSB_CHECKS = [
     ]),
 ]
 
+# LOCAL_CHECKS line ranges are full-file ("1-9999") so the canonical evidence
+# tokens are drift-proof: the test_d0_d1_visible_square_draw_order_gate CTest
+# and the F0128 D0/D1 visible-square metadata table (and the related projectile
+# / door-front / thieves-eye metadata tables it cross-references) have moved as
+# more D-side metadata rows were added.  CTest test_dm1_v1_viewport_3d_pc34_compat
+# is the authoritative runtime/source-citation gate; the verifier LOCAL whole-
+# file scan only asserts the canonical evidence tokens still exist in the
+# source.
 LOCAL_CHECKS = [
-    ("firestaff_combined_c_test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", 1024, 1195, [
+    ("firestaff_combined_c_test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", 1, 9999, [
         "static void test_d0_d1_visible_square_draw_order_gate(void)",
         "DM1_VIEW_SQUARE_D1L, 1, -1",
         "DM1_VIEW_SQUARE_D1R, 1,  1",
@@ -146,7 +157,7 @@ LOCAL_CHECKS = [
         "dm1_viewport_3d_get_projectile_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1C)",
         "test_d0_d1_visible_square_draw_order_gate();",
     ]),
-    ("firestaff_metadata_tables", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", 150, 265, [
+    ("firestaff_metadata_tables", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", 1, 9999, [
         "DM1_VIEW_SQUARE_D1L, 1, -1",
         "DM1_VIEW_SQUARE_D1R, 1,  1",
         "DM1_VIEW_SQUARE_D1C, 1,  0",

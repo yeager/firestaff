@@ -16,6 +16,9 @@ from datetime import datetime, timezone
 import json
 import re
 import subprocess
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass404_dm1_v1_side_contents_center_blocker_occlusion_gate"
@@ -141,7 +144,13 @@ def main() -> int:
         "break;",
         "m11_draw_item_sprite",
     ], "side contents center-blocker occlusion")
-    ok.append(f"side contents gate before item/creature/projectile draws: m11_game_view.c:{line_no(text, start)}")
+    ok.append(
+        "side contents gate before item/creature/projectile draws: "
+        "tokens=m11_draw_dm1_side_contents/"
+        "m11_dm1_nearest_blocking_center_depth_index/"
+        "blockingCenterDepth>=depth/m11_draw_item_sprite "
+        f"(current m11_game_view.c:{line_no(text, start)})"
+    )
 
     start, body = find_function(text, "m11_draw_dm1_deferred_explosion_pass")
     require_order(body, [
@@ -149,7 +158,13 @@ def main() -> int:
         "if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth)",
         "m11_draw_dm1_deferred_side_explosion",
     ], "side explosion center-blocker occlusion")
-    ok.append(f"side explosion gate before deferred side explosion draw: m11_game_view.c:{line_no(text, start)}")
+    ok.append(
+        "side explosion gate before deferred side explosion draw: "
+        "tokens=m11_draw_dm1_deferred_explosion_pass/"
+        "m11_dm1_nearest_blocking_center_depth_index/"
+        "blockingCenterDepth>=depth/m11_draw_dm1_deferred_side_explosion "
+        f"(current m11_game_view.c:{line_no(text, start)})"
+    )
 
     status = "PASS404_DM1_V1_SIDE_CONTENTS_CENTER_BLOCKER_OCCLUSION_PROVEN"
     manifest = {
@@ -163,6 +178,7 @@ def main() -> int:
             "CSBWinCorroboration": csbwin_anchor,
         },
         "firestaffGuards": ok,
+        "driftProofLocalGuard": "Firestaff local checks are token/order guards over current function bodies; current line numbers are diagnostic only.",
         "closedBlocker": "side contents / side explosions no longer repaint same-depth-or-farther cells past the nearest non-open center wall/door",
         "notClaimed": ["original pixel parity", "new original DOS runtime capture", "full creature/ornament coordinate parity"],
     }

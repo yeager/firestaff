@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass559_dm1_v1_gated_movement_pending_click_queue_replay"
@@ -79,10 +83,13 @@ def git(*args: str) -> str:
 
 
 def find_test_exe() -> Path:
-    candidates = [
+    candidates: list[Path] = []
+    if "FIRESTAFF_BUILD_DIR" in os.environ:
+        candidates.append(Path(os.environ["FIRESTAFF_BUILD_DIR"]) / "test_dm1_v1_command_movement_sensor_timing_pc34_compat")
+    candidates.extend([
         ROOT / "build-pass559" / "test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         ROOT / "build" / "test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-    ]
+    ])
     candidates.extend(sorted(ROOT.glob("build*/test_dm1_v1_command_movement_sensor_timing_pc34_compat")))
     for candidate in candidates:
         if candidate.exists():
@@ -164,7 +171,7 @@ def main() -> int:
             "DM1_V1_InputCommandQueue_ProcessOnePc34Compat": f"dm1_v1_input_command_queue_pc34_compat.c:{qproc_start}-{qproc_end}",
             "gatedMovementReturnsAfterPendingReplay": f"dm1_v1_input_command_queue_pc34_compat.c:{span(qproc_start, qproc, fire_gate_replay)}",
             "runtimeRegression": "test_dm1_v1_command_movement_sensor_timing_pc34_compat.c:pass559 labels",
-            "runtimeExecutable": str(test_exe.relative_to(ROOT)),
+            "runtimeExecutable": str(test_exe.relative_to(ROOT)) if str(test_exe).startswith(str(ROOT)) else str(test_exe),
             "runtimeOutputLastLine": test_out.splitlines()[-1],
         },
         "notClaimed": [
@@ -190,7 +197,7 @@ def main() -> int:
     lines += ["", "## Firestaff guards", ""]
     for label, citation in manifest["firestaffGuards"].items():
         lines.append(f"- {citation} - {label}")
-    lines += ["", "## Gates", "", f"- {test_exe.relative_to(ROOT)} - reported dm1V1CommandMovementSensorTimingIntegrationOk=1", "", "## Not claimed", ""]
+    lines += ["", "## Gates", "", f"- {test_exe.relative_to(ROOT) if str(test_exe).startswith(str(ROOT)) else test_exe} - reported dm1V1CommandMovementSensorTimingIntegrationOk=1", "", "## Not claimed", ""]
     lines += [f"- {item}" for item in manifest["notClaimed"]]
     REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"{STATUS} manifest={MANIFEST}")

@@ -66,8 +66,10 @@ static void build_fixture(struct DungeonDatState_Compat* dungeon,
     dungeon->header.mapCount = 2;
     dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(2, sizeof(struct DungeonMapDesc_Compat));
     dungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(2, sizeof(struct DungeonMapTiles_Compat));
+    dungeon->maps[0].level = 0;
     dungeon->maps[0].width = MAP_W;
     dungeon->maps[0].height = MAP_H;
+    dungeon->maps[1].level = 1;
     dungeon->maps[1].width = MAP_W;
     dungeon->maps[1].height = MAP_H;
     dungeon->tiles[0].squareData = squareData;
@@ -88,7 +90,7 @@ static void build_fixture(struct DungeonDatState_Compat* dungeon,
     squareData[3 * MAP_H + 0] = sqb(DUNGEON_ELEMENT_DOOR, 0);     /* open */
     /* row-1 */
     squareData[0 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_STAIRS, 0);   /* down */
-    squareData[1 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_STAIRS, 1);   /* up */
+    squareData[1 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_STAIRS, 4);   /* up: ReDMCSB DEFS.H MASK0x0004_STAIRS_UP */
     squareData[2 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_FAKEWALL, 4);     /* open fake wall */
     squareData[3 * MAP_H + 1] = sqb(DUNGEON_ELEMENT_PIT, 0);
     /* row-2 */
@@ -205,8 +207,8 @@ int main(void) {
     record("P30_F0705_DOWN",
            rc == 1 && stairs.transitioned == 1 && stairs.stairUp == 0 &&
                stairs.toMapIndex == 1 && stairs.newMapX == 0 &&
-               stairs.newMapY == 1 && stairs.newDirection == 2,
-           "down-stairs resolves to next map with preserved direction");
+               stairs.newMapY == 1 && stairs.newDirection == 3,
+           "down-stairs resolves to next map with F0155 exit direction");
 
     /* Standing on up-stairs (1,1) mapIndex=1 → toMapIndex=0. */
     memset(&party, 0, sizeof(party));

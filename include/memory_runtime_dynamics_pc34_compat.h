@@ -95,11 +95,12 @@
 /* ==========================================================
  *  PowerOrdinalToLightAmount sentinel bounds.
  *
- *  Fontanel stores 16 entries in GRAPHICS.DAT entry 562
- *  (G0039_ai_Graphic562_LightPowerToLightAmount). v1 mirrors
- *  Phase 14's placeholder for indices 1..6 and adds index 0 = 0.
- *  The full 16-entry table is deferred to post-M10 when the
- *  GRAPHICS.DAT loader lands. NEEDS DISASSEMBLY REVIEW.
+ *  ReDMCSB DATA.C:225 + GRAPHICS.DAT entry 562
+ *  (G0039_ai_Graphic562_LightPowerToLightAmount) store 16 light
+ *  power→amount entries.  v1 mirrors Phase 14's placeholder for
+ *  indices 1..6 and adds index 0 = 0.  The full 16-entry table
+ *  is deferred to post-M10 when the GRAPHICS.DAT loader lands;
+ *  see DATA.C:225 for the original 16-entry layout.
  * ========================================================== */
 
 #define RUNTIME_LIGHT_POWER_MAX   6

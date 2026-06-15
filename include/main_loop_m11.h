@@ -44,6 +44,15 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts);
 int  M11_PhaseA_Run(const M11_PhaseA_Options* opts);
 void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState);
 
+/* Map a point from the active presented game surface back to the source
+   320x200 DM1 framebuffer. V2.1/V2.2 pass their selected presentation
+   resolution here before source-locked mouse zone dispatch. */
+int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,
+                                                     int presentationWidth,
+                                                     int presentationHeight,
+                                                     int* x,
+                                                     int* y);
+
 /* Source-locked entrance wait policy: interactive builds must not auto-enter
    after launcher handoff; only headless/autotest runs may use a timeout. */
 int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,

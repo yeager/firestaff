@@ -84,8 +84,10 @@ typedef struct V1_TitleFrontendSourceTiming {
  * ReDMCSB TITLE.C source-lock: the PC/ST path waits one vertical blank before
  * each of 18 zoom blits, waits two more vertical blanks after the zoom loop,
  * and waits one final vertical blank after the Master/Strikes Back fade
- * (BUG0_71). This helper still maps over the decoded 53-frame TITLE.DAT bank;
- * use V1_TitleFrontend_GetSourceTimingEvidence() when callers need the locked
+ * (BUG0_71). Runtime wait helpers map those waits onto Firestaff's canonical
+ * V1 55 ms tick so TITLE does not replay at display-refresh speed. This helper
+ * still maps over the decoded 53-frame TITLE.DAT bank; use
+ * V1_TitleFrontend_GetSourceTimingEvidence() when callers need the locked
  * original control-flow cadence evidence.
  */
 V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned int requestedStepOrdinal);
@@ -132,6 +134,37 @@ int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,
                                          V1_TitleFrontendRenderResult* outResult,
                                          char* errMsg,
                                          size_t errMsgBytes);
+
+/*
+ * Map a TITLE source animation step kind to the source-locked
+ * VGA_PALETTE_PC34_SPECIAL_* palette index that the original F20E PC 3.4
+ * TITLE.C F0437 routine applies at that step.  Returns:
+ *   - VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS for the PRESENTS blit
+ *     (TITLE.C:319-324, palette C12_PRESENTS — white on black).
+ *   - VGA_PALETTE_PC34_SPECIAL_TITLE for ZOOM_BLIT and
+ *     MASTER_STRIKES_BACK_BLIT steps (TITLE.C:340-402, palette
+ *     C13_DUNGEON + C14_MASTER — warm browns/golds with red on 0x0F).
+ *   - VGA_PALETTE_PC34_SPECIAL_TITLE for all other steps so that any
+ *     present blit the runtime adds later still gets the DUNGEON+MASTER
+ *     palette.  The PRESENTS phase must never borrow the DUNGEON+MASTER
+ *     palette — that is the v2.7.4 release regression this helper was
+ *     added to guard.  This helper is the single source of truth for
+ *     the title-step → palette mapping; main_loop_m11.c and any other
+ *     caller must use it instead of hard-coding a palette index.
+ */
+int V1_TitleFrontend_GetStepPalette(V1_TitleFrontendSourceEventKind kind,
+                                    int* outSpecialPalette);
+
+/*
+ * Map a decoded TITLE/TITLE.DAT fallback frame palette ordinal onto the
+ * same ReDMCSB TITLE.C palette phases as the GRAPHICS.DAT C001 path.
+ * The PC 3.4 TITLE bank uses paletteOrdinal=1 for the PRESENTS frame
+ * and later ordinals for the DUNGEON/MASTER zoom frames.  Keep this
+ * fallback behind the same source-backed helper as the normal path so
+ * callers do not hard-code special palette constants.
+ */
+int V1_TitleFrontend_GetFallbackFramePalette(unsigned int paletteOrdinal,
+                                             int* outSpecialPalette);
 
 #ifdef __cplusplus
 }

@@ -46,6 +46,10 @@
 #include <stdint.h>
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_character_pc34_compat.h"
+#include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_input_command_queue_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -219,6 +223,10 @@ typedef struct {
     int                     party_z;         /* floor / height level */
     int                     party_dir;       /* 0=North, 1=East, 2=South, 3=West */
     int                     champion_count;  /* champions in party */
+    int                     leader_index;    /* G0411_i_LeaderIndex, -1 = none */
+    int                     magic_caster_index;
+    int                     party_state_valid;
+    CSB_V1_PartyState       party_state;
 
     /* ── State machine ─────────────────────────── */
     int                     state;   /* CSB_STATE_* enum */
@@ -226,11 +234,25 @@ typedef struct {
     int                     victory;
     int                     game_over;
 
+    /* ── Map indices (boot/profile handoff) ───── */
+    /* entrance_map_index is C255_MAP_INDEX_ENTRANCE (255) for CSB.
+     * start_map_index is 0 for new-game map selection.
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1940-1944 */
+    uint32_t                entrance_map_index;
+    uint32_t                start_map_index;
+
     /* ── Timing ────────────────────────────────── */
     uint64_t                game_ticks;      /* ms accumulator */
     uint32_t                game_time;       /* V1 game_time */
     uint64_t                total_play_ms;   /* wall-clock ms */
     uint32_t                tick_count;       /* how many V1 ticks elapsed */
+    struct DM1_EventQueue_V1 timeline_queue;  /* ReDMCSB TIMELINE.C heap */
+    struct DM1_TickDispatchResult_V1 last_timeline_dispatch;
+    uint32_t                timeline_dispatch_count;
+    struct Dm1V1InputCommandQueuePc34Compat input_command_queue;
+    struct Dm1V1InputQueueProcessResultPc34Compat last_input_dispatch;
+    uint32_t                input_dispatch_count;
 
     /* ── Chaos Magic ────────────────────────────── */
     CSB_V1_ChaosMagicState  chaos_magic;
@@ -249,6 +271,18 @@ typedef struct {
     CSB_V1_DungeonData *dungeon_handle;
 } CSB_V1_RuntimeProfile;
 
+typedef struct {
+    struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
+    int old_party_x;
+    int old_party_y;
+    int old_party_dir;
+    int new_party_x;
+    int new_party_y;
+    int new_party_dir;
+    int runtime_state_changed;
+    int unsupported_runtime_command;
+} CSB_V1_InputCommandRuntimeResult;
+
 /* ── Runtime profile API ─────────────────────────────────────────────── */
 
 /* Initialize a fresh runtime profile with CSB defaults.
@@ -262,6 +296,67 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir);
  * After this call, dungeon-layer accessors return ENDOF until
  * csb_v1_runtime_boot() is called again with a valid dungeon. */
 void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile);
+
+/* Copy the imported/loaded CSB party into the runtime profile.
+ * This is intentionally a snapshot: UI/utility flow owns the source state,
+ * while the runtime owns the state after verified CSB boot handoff.
+ * Source: ReDMCSB LOADSAVE.C F0435 lines 1940-1944 initializes the party
+ * map globals during new-game load; CLIKCHAM.C F0368 lines 38-73 mutates
+ * G0411_i_LeaderIndex after champion-status-box selection. */
+int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
+                                   const CSB_V1_PartyState *party);
+int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
+                                   CSB_V1_PartyState *out_party);
+int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
+                              int champion_index);
+
+/* Rotate the party to a new direction.
+ * Mirrors ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130:
+ * for every champion in the imported party, applies (target_dir - party_dir)
+ * to that champion's Cell and Direction (both modulo 4), then commits the
+ * new party_dir.  When target_dir == party_dir the call is a deterministic
+ * no-op (returns 0, no champion state is touched) and matches the F0284
+ * "if (P0600_i_Direction == G0308_i_PartyDirection) return;" guard.
+ *
+ * The Cell field encodes the champion's normalized view position
+ * (0=front-left, 1=front, 2=right, 3=back) and the Direction field encodes
+ * the per-champion facing direction. Both fields are part of the
+ * source-locked CHAMPION.C invariant and rotate together so that the
+ * relative geometry between party_dir and each champion is preserved
+ * across a party turn.
+ *
+ * This is intentionally a runtime boundary that is independent of full
+ * CSB playability: it operates only on the imported party snapshot stored
+ * by csb_v1_runtime_set_party_state() and does not depend on dungeon
+ * geometry, hand objects, or any F0292 redraw stack.  It is the
+ * narrow runtime equivalent of the F0284 assembly loop, exposed for the
+ * boot-handoff regression.
+ *
+ * Returns 0 on success, -1 if profile is NULL, no party is loaded, or
+ * target_dir is outside [0,3].
+ * Source: ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130. */
+int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
+                                 int target_dir);
+
+/* Consume one queued V1 input command and apply the narrow CSB V1 runtime
+ * boundary that is currently source-locked: C001/C002 turn commands dispatch
+ * through the shared V1 queue and mutate the CSB party direction via
+ * csb_v1_runtime_rotate_party().  Movement, inventory, action, and panel
+ * commands are deliberately reported as unsupported_runtime_command until
+ * their CSB runtime state boundaries are source-locked separately.
+ *
+ * Returns 1 when a queue item was dequeued, 0 when the queue was empty or a
+ * movement-disabled gate kept the command queued, and -1 on invalid input.
+ * Source: ReDMCSB COMMAND.C F0380 lines 2045-2156 dispatches C001/C002 to
+ * F0365_COMMAND_ProcessTypes1To2_TurnParty; CHAMPION.C F0284 lines 117-130
+ * applies the party-direction delta to every champion Cell/Direction. */
+int csb_v1_runtime_process_input_queue(
+    CSB_V1_RuntimeProfile *profile,
+    struct Dm1V1InputCommandQueuePc34Compat *queue,
+    int disabled_movement_ticks,
+    int projectile_disabled_movement_ticks,
+    int last_projectile_disabled_movement_direction,
+    CSB_V1_InputCommandRuntimeResult *out_result);
 
 /* Boot the CSB dungeon and initialize Chaos Magic.
  * Finds DUNGEON.DAT by hash (csb_v1_runtime_find_dungeon), loads the
@@ -281,16 +376,64 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
                           const char *version_hint);
 
 /* Advance the runtime clock by dt_ms milliseconds.
- * Quantizes into 55ms V1 ticks; fires one tick per quantum.
- * Advances chaos_magic state each tick. */
+ * Accumulates sub-55ms frame deltas and fires one V1 tick for each full
+ * quantum reached by total_play_ms. Advances chaos_magic state each tick. */
 void csb_v1_runtime_tick(CSB_V1_RuntimeProfile *profile, uint32_t dt_ms);
 
 /* Advance exactly one V1 tick (55ms nominal).
- * Deterministic stepping function.  Returns 1 if a tick fired, 0 if paused. */
+ * Deterministic stepping function.  Returns 1 if a tick fired, 0 if paused,
+ * game-over, victorious, or profile is NULL. */
 int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile);
 
-/* Check if a V1 tick is due at wall-clock time now_ms. */
+/* Check if a V1 tick is due at accumulated wall-clock time now_ms.
+ * Pass 0 to use profile->total_play_ms. */
 int csb_v1_runtime_tick_due(const CSB_V1_RuntimeProfile *profile, uint32_t now_ms);
+
+/* Queue one source-locked timeline event for the CSB V1 runtime.
+ * The underlying event heap is the shared V1 ReDMCSB TIMELINE.C model used
+ * by DM1/CSB.  csb_v1_runtime_tick_v1() processes expired events at the
+ * pre-increment game_time boundary, matching GAMELOOP.C F0002 lines 69-124:
+ * F0261_TIMELINE_Process_CPSEF() runs before G0313_ul_GameTime++.
+ * Returns the event slot index or -1 on invalid input/full queue.
+ * Source: ReDMCSB TIMELINE.C F0238/F0240/F0261 lines 565-690,
+ * 702-708, 1833-1850; GAMELOOP.C F0002 lines 69-124. */
+int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
+                                      const struct DM1_Event_V1 *event);
+
+/* Copy the dispatch records produced by the most recent fired V1 tick.
+ * Returns the number of records copied or -1 on invalid input. */
+int csb_v1_runtime_get_last_timeline_dispatch(
+    const CSB_V1_RuntimeProfile *profile,
+    struct DM1_TickDispatchResult_V1 *out_result);
+
+/* Queue one source command into the CSB runtime's V1 input command queue.
+ * CSB shares the DM1/CSB ReDMCSB command queue ids and queue mechanics.
+ * This entrypoint intentionally does not claim broad movement/playability;
+ * csb_v1_runtime_process_one_input_command() currently applies the
+ * source-locked turn boundary and reports unsupported step commands as
+ * dequeued but not applied.
+ * Source: ReDMCSB COMMAND.C F0380 lines 2075-2127 and 2150-2156. */
+int csb_v1_runtime_enqueue_input_command(CSB_V1_RuntimeProfile *profile,
+                                         int command,
+                                         int x,
+                                         int y);
+
+/* Process one queued CSB V1 input command.
+ * TURN_LEFT/TURN_RIGHT dispatch through csb_v1_runtime_rotate_party(),
+ * matching CLIKMENU.C F0365 lines 156-173 and CHAMPION.C F0284 lines
+ * 117-130.  MOVE_* commands are deliberately not applied here yet; this
+ * gate proves the command boundary reaches runtime state without claiming
+ * full CSB movement/runtime playability.
+ * Returns 1 when a command was processed/dequeued, 0 when the queue was
+ * empty or movement cooldown blocked dequeue, and -1 on invalid input. */
+int csb_v1_runtime_process_one_input_command(CSB_V1_RuntimeProfile *profile,
+                                             int disabled_movement_ticks,
+                                             int projectile_disabled_movement_ticks,
+                                             int last_projectile_disabled_movement_direction);
+
+int csb_v1_runtime_get_last_input_dispatch(
+    const CSB_V1_RuntimeProfile *profile,
+    struct Dm1V1InputQueueProcessResultPc34Compat *out_result);
 
 /* ── Variant diagnostics ─────────────────────────────────────────────── */
 const char *csb_v1_runtime_variant_name(CSB_V1_VariantId id);

@@ -27,6 +27,9 @@
  *   MOVESENS.C:438-443 is where accepted party movement first mutates
  *   G0306/G0307, so wall/door/fakewall/group blockers must leave party
  *   coordinates unchanged and skip pit/teleporter/sensor side effects.
+ * - MOVESENS.C:493-518 F0267 requires an open party-scoped teleporter,
+ *   switches to TargetMapIndex/TargetMapX/TargetMapY, then applies absolute
+ *   or relative party rotation.
  * - DUNGEON.C:1371-1391 F0150 applies direction-relative forward/right deltas.
  */
 
@@ -90,6 +93,15 @@ static void setup_dungeon(struct DungeonDatState_Compat* dungeon,
     }
 }
 
+static void fill_corridor_map(unsigned char* squares, int width, int height)
+{
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
+            set_square(squares, height, x, y, square_type(DUNGEON_ELEMENT_CORRIDOR, 0));
+        }
+    }
+}
+
 static int command_to_move_action(int command)
 {
     return command - DM1_V1_COMMAND_MOVE_FORWARD;
@@ -145,7 +157,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_movement_core_pc34_compat\n");
-    printf("sourceEvidence=COMMAND.C:2045-2156; CLIKMENU.C:180-347,224-233,278-288,291-318,317-328; DUNGEON.C:1371-1391; MOVESENS.C:272-310,438-443; PROJEXPL.C:459\n");
+    printf("sourceEvidence=COMMAND.C:2045-2156; CLIKMENU.C:180-347,224-233,278-288,291-318,317-328; DUNGEON.C:1371-1391; MOVESENS.C:272-310,438-443,493-518; PROJEXPL.C:459\n");
 
     setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
     memset(&things, 0, sizeof(things));
@@ -272,6 +284,116 @@ int main(void)
     ok &= expect_blocked_move_kept_party_state("structural blocker skips move-result chain", &party, &moveResult);
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_CORRIDOR, 0));
     squareFirstThings[0] = THING_ENDOFLIST;
+
+    /* MOVESENS.C:F0267:493-518 party teleporter chain:
+     * an open teleporter must have MASK0x0002_SCOPE_PARTY, then the party
+     * position is changed to the target tuple and relative rotation is added
+     * to the incoming party direction.  A creature-only teleporter on the
+     * same square is a precise negative control for the scope gate. */
+    {
+        struct DungeonMapDesc_Compat teleporterMaps[2];
+        struct DungeonMapTiles_Compat teleporterTiles[2];
+        unsigned char teleporterMap0[9];
+        unsigned char teleporterMap1[16];
+        unsigned short teleporterFirstThings[25];
+        struct DungeonTeleporter_Compat teleporters[1];
+        struct PartyState_Compat teleporterParty;
+        struct PostMoveResolution_Compat postMove;
+
+        memset(&dungeon, 0, sizeof(dungeon));
+        memset(teleporterMaps, 0, sizeof(teleporterMaps));
+        memset(teleporterTiles, 0, sizeof(teleporterTiles));
+        memset(teleporterFirstThings, 0xFF, sizeof(teleporterFirstThings));
+        memset(&things, 0, sizeof(things));
+        memset(teleporters, 0, sizeof(teleporters));
+        fill_corridor_map(teleporterMap0, 3, 3);
+        fill_corridor_map(teleporterMap1, 4, 4);
+        set_square(teleporterMap0, 3, 1, 1,
+            square_type(DUNGEON_ELEMENT_TELEPORTER,
+                DUNGEON_SQUARE_MASK_THING_LIST | 0x08));
+        teleporterMaps[0].width = 3;
+        teleporterMaps[0].height = 3;
+        teleporterMaps[1].width = 4;
+        teleporterMaps[1].height = 4;
+        teleporterTiles[0].squareData = teleporterMap0;
+        teleporterTiles[0].squareCount = 9;
+        teleporterTiles[1].squareData = teleporterMap1;
+        teleporterTiles[1].squareCount = 16;
+        dungeon.header.mapCount = 2;
+        dungeon.maps = teleporterMaps;
+        dungeon.tiles = teleporterTiles;
+        dungeon.loaded = 1;
+        dungeon.tilesLoaded = 1;
+        teleporterFirstThings[1 * 3 + 1] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
+        things.loaded = 1;
+        things.squareFirstThings = teleporterFirstThings;
+        things.squareFirstThingCount = 25;
+        things.teleporters = teleporters;
+        things.teleporterCount = 1;
+        teleporters[0].next = THING_ENDOFLIST;
+        teleporters[0].targetMapIndex = 1;
+        teleporters[0].targetMapX = 3;
+        teleporters[0].targetMapY = 2;
+        teleporters[0].rotation = 1;
+        teleporters[0].absoluteRotation = 0;
+        teleporters[0].scope = 0x02;
+        teleporters[0].audible = 1;
+        memset(&teleporterParty, 0, sizeof(teleporterParty));
+        teleporterParty.mapIndex = 0;
+        teleporterParty.mapX = 1;
+        teleporterParty.mapY = 1;
+        teleporterParty.direction = DIR_EAST;
+        teleporterParty.championCount = 1;
+
+        ok &= expect_int("party-scoped teleporter resolves",
+            F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+                &dungeon, &things, &teleporterParty, 0, &postMove), 1);
+        ok &= expect_int("party-scoped teleporter transitioned", postMove.transitioned, 1);
+        ok &= expect_int("party-scoped teleporter count", postMove.teleporterCount, 1);
+        ok &= expect_int("party-scoped audible teleporter count",
+            postMove.teleporterAudibleCount, 1);
+        ok &= expect_int("party-scoped teleporter target map", postMove.finalMapIndex, 1);
+        ok &= expect_int("party-scoped teleporter target x", postMove.finalMapX, 3);
+        ok &= expect_int("party-scoped teleporter target y", postMove.finalMapY, 2);
+        ok &= expect_int("relative teleporter rotation east plus one is south",
+            postMove.finalDirection, DIR_SOUTH);
+
+        teleporters[0].audible = 0;
+        ok &= expect_int("silent party teleporter resolves",
+            F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+                &dungeon, &things, &teleporterParty, 0, &postMove), 1);
+        ok &= expect_int("silent party teleporter transitioned", postMove.transitioned, 1);
+        ok &= expect_int("silent party teleporter has no audible count",
+            postMove.teleporterAudibleCount, 0);
+        ok &= expect_int("silent party teleporter target map", postMove.finalMapIndex, 1);
+        ok &= expect_int("silent party teleporter target x", postMove.finalMapX, 3);
+        ok &= expect_int("silent party teleporter target y", postMove.finalMapY, 2);
+        ok &= expect_int("silent party teleporter keeps relative rotation",
+            postMove.finalDirection, DIR_SOUTH);
+
+        teleporters[0].audible = 1;
+        teleporters[0].scope = 0x01;
+        ok &= expect_int("creature-only teleporter scope still resolves call",
+            F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+                &dungeon, &things, &teleporterParty, 0, &postMove), 1);
+        ok &= expect_int("creature-only teleporter does not transition party",
+            postMove.transitioned, 0);
+        ok &= expect_int("creature-only teleporter has no audible count",
+            postMove.teleporterAudibleCount, 0);
+        ok &= expect_int("creature-only teleporter leaves map", postMove.finalMapIndex, 0);
+        ok &= expect_int("creature-only teleporter leaves x", postMove.finalMapX, 1);
+        ok &= expect_int("creature-only teleporter leaves y", postMove.finalMapY, 1);
+        ok &= expect_int("creature-only teleporter leaves direction",
+            postMove.finalDirection, DIR_EAST);
+
+        setup_dungeon(&dungeon, &map, &tiles, squares, 5, 5);
+        memset(&things, 0, sizeof(things));
+        things.loaded = 1;
+        things.squareFirstThings = squareFirstThings;
+        things.squareFirstThingCount = 1;
+        things.groups = groups;
+        things.groupCount = 1;
+    }
 
     /* MOVESENS.C:272-310 / F0266 intermediary projectile-impact cell maps.
      * Exact source comment case: adjacent east move with a champion in cell 2

@@ -24,6 +24,16 @@ static int file_contains(const char* path, const char* needle) {
     return found;
 }
 
+static int write_text_file(const char* path, const char* text) {
+    FILE* fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fputs(text, fp) == EOF) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static void set_test_home(void) {
 #if defined(_WIN32)
     (void)_putenv("APPDATA=.firestaff-v2-settings-test");
@@ -96,6 +106,7 @@ int main(void) {
     CHECK(file_contains(path, "dm1_v2_aspect_mode = 1"));
     CHECK(file_contains(path, "dm1_v2_smooth_turn_pan_enabled = 1"));
     CHECK(file_contains(path, "display_aspect_mode = 0"));
+    CHECK(file_contains(path, "layout_migration_version = 1"));
 
     CHECK(M12_Config_Load(&loaded, NULL) == 1);
     dm1_v2_settings_from_m12_config(&roundtrip, &loaded);
@@ -107,6 +118,31 @@ int main(void) {
     CHECK(roundtrip.smoothTurnPanEnabled == 1);
     CHECK(loaded.displayAspectMode == 0);
     CHECK(strcmp(dm1_v2_settings_aspect_id(roundtrip.aspectMode), "16:9-widescreen") == 0);
+
+    CHECK(write_text_file(path,
+                          "# legacy Firestaff startup menu config\n"
+                          "scale_mode_index = 1\n"
+                          "display_aspect_mode = 1\n"
+                          "integer_scaling = 1\n"));
+    CHECK(M12_Config_Load(&loaded, NULL) == 1);
+    CHECK(loaded.scaleModeIndex == 4);
+    CHECK(loaded.displayAspectMode == 2);
+    CHECK(loaded.integerScaling == 0);
+    CHECK(loaded.layoutMigrationVersion == 1);
+    CHECK(file_contains(path, "scale_mode_index = 4"));
+    CHECK(file_contains(path, "display_aspect_mode = 2"));
+    CHECK(file_contains(path, "integer_scaling = 0"));
+    CHECK(file_contains(path, "layout_migration_version = 1"));
+
+    loaded.scaleModeIndex = 1;
+    loaded.displayAspectMode = 1;
+    loaded.integerScaling = 1;
+    loaded.layoutMigrationVersion = 1;
+    CHECK(M12_Config_Save(&loaded) == 1);
+    CHECK(M12_Config_Load(&loaded, NULL) == 1);
+    CHECK(loaded.scaleModeIndex == 1);
+    CHECK(loaded.displayAspectMode == 1);
+    CHECK(loaded.integerScaling == 1);
 
     cfg.dm1V2ScalePercent = 999;
     cfg.dm1V2SmoothingEnabled = -1;

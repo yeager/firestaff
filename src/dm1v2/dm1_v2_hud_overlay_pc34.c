@@ -14,16 +14,16 @@
 
 static M11_V2_HudOverlay g_v2_hud_state;
 
-static void v2_hud_plot_pixel(uint8_t* fb, int w, int x, int y, uint8_t val) {
-    if (x >= 0 && x < w && y >= 0) {
+static void v2_hud_plot_pixel(uint8_t* fb, int w, int h, int x, int y, uint8_t val) {
+    if (x >= 0 && x < w && y >= 0 && y < h) {
         fb[y * w + x] = val;
     }
 }
 
-static void v2_hud_draw_rect(uint8_t* fb, int w, int x, int y, int rw, int rh, uint8_t val) {
+static void v2_hud_draw_rect(uint8_t* fb, int w, int h, int x, int y, int rw, int rh, uint8_t val) {
     for (int dy = 0; dy < rh; dy++) {
         for (int dx = 0; dx < rw; dx++) {
-            v2_hud_plot_pixel(fb, w, x + dx, y + dy, val);
+            v2_hud_plot_pixel(fb, w, h, x + dx, y + dy, val);
         }
     }
 }
@@ -47,35 +47,35 @@ static const uint8_t g_v2_digits[12][5] = {
     /* 11=dot   */ {0x00, 0x00, 0x00, 0x00, 0x08},
 };
 
-static void v2_hud_draw_digit(uint8_t* fb, int w, int x, int y, int digit, uint8_t val) {
+static void v2_hud_draw_digit(uint8_t* fb, int w, int h, int x, int y, int digit, uint8_t val) {
     digit = digit % 10;
     for (int row = 0; row < 5; row++) {
         uint8_t bits = g_v2_digits[digit][row];
         for (int col = 0; col < 5; col++) {
             if (bits & (1 << col)) {
-                v2_hud_plot_pixel(fb, w, x + col, y + row, val);
+                v2_hud_plot_pixel(fb, w, h, x + col, y + row, val);
             }
         }
     }
 }
 
-static void v2_hud_draw_text(uint8_t* fb, int w, int x, int y, const char* str, uint8_t val) {
+static void v2_hud_draw_text(uint8_t* fb, int w, int h, int x, int y, const char* str, uint8_t val) {
     while (*str) {
         if (*str >= '0' && *str <= '9') {
-            v2_hud_draw_digit(fb, w, x, y, *str - '0', val);
+            v2_hud_draw_digit(fb, w, h, x, y, *str - '0', val);
             x += 6;
         } else if (*str == '-') {
             /* Draw a 5-pixel horizontal dash (center row, 5 cols) */
             for (int dc = 0; dc < 5; dc++) {
-                v2_hud_plot_pixel(fb, w, x + dc, y + 2, val);
+                v2_hud_plot_pixel(fb, w, h, x + dc, y + 2, val);
             }
             x += 6;
         } else if (*str == '.') {
-            v2_hud_plot_pixel(fb, w, x + 2, y + 4, val);
+            v2_hud_plot_pixel(fb, w, h, x + 2, y + 4, val);
             x += 6;
         } else {
             /* Fallback: small centered dot for unhandleable characters */
-            v2_hud_plot_pixel(fb, w, x + 2, y + 2, val);
+            v2_hud_plot_pixel(fb, w, h, x + 2, y + 2, val);
             x += 6;
         }
         str++;
@@ -121,11 +121,11 @@ void v2_hud_render(uint8_t* fb, int w, int h) {
 
     int cx = 8;
     int cy = 8;
-    v2_hud_draw_rect(fb, w, cx, cy, 16, 16, base_val);
-    v2_hud_plot_pixel(fb, w, cx + 7, cy + 7, high_val);
-    v2_hud_plot_pixel(fb, w, cx + 8, cy + 7, high_val);
-    v2_hud_plot_pixel(fb, w, cx + 7, cy + 8, high_val);
-    v2_hud_plot_pixel(fb, w, cx + 8, cy + 8, high_val);
+    v2_hud_draw_rect(fb, w, h, cx, cy, 16, 16, base_val);
+    v2_hud_plot_pixel(fb, w, h, cx + 7, cy + 7, high_val);
+    v2_hud_plot_pixel(fb, w, h, cx + 8, cy + 7, high_val);
+    v2_hud_plot_pixel(fb, w, h, cx + 7, cy + 8, high_val);
+    v2_hud_plot_pixel(fb, w, h, cx + 8, cy + 8, high_val);
 
     /* Source-lock seam: ReDMCSB direction is a 0..3 logical value.  Keep the
      * V2 compass deterministic on that cardinal state instead of depending on
@@ -139,20 +139,20 @@ void v2_hud_render(uint8_t* fb, int w, int h) {
     case 3: nx = cx + 16; break;
     default: break;
     }
-    v2_hud_plot_pixel(fb, w, nx, ny, 255);
+    v2_hud_plot_pixel(fb, w, h, nx, ny, 255);
 
     char depth_buf[32];
     snprintf(depth_buf, sizeof(depth_buf), "%d/%d", g_v2_hud_state.depth.current_level, g_v2_hud_state.depth.max_level);
-    v2_hud_draw_text(fb, w, w - 60, 8, depth_buf, high_val);
+    v2_hud_draw_text(fb, w, h, w - 60, 8, depth_buf, high_val);
 
     if (g_v2_hud_state.stats_bar_visible) {
         int bar_x = 8;
         int bar_y = h - 16;
         int bar_w = w - 16;
         int bar_h = 8;
-        v2_hud_draw_rect(fb, w, bar_x, bar_y, bar_w, bar_h, base_val);
+        v2_hud_draw_rect(fb, w, h, bar_x, bar_y, bar_w, bar_h, base_val);
         int fill = (int)((float)bar_w * 0.75f);
-        v2_hud_draw_rect(fb, w, bar_x, bar_y, fill, bar_h, high_val);
+        v2_hud_draw_rect(fb, w, h, bar_x, bar_y, fill, bar_h, high_val);
     }
 }
 
@@ -194,21 +194,23 @@ const char *v21_hud_panel_source_evidence(void) {
 static V2_Anim g_health_pulse;
 
 /* v22_hud_pulse_v1_tick — advance animation by one V1 tick (55 ms).
- * Call from the per-tick gate; updates g_health_pulse.elapsed_ms in place
- * so callers that own the animation state can drive it externally.
+ * Call from the per-tick gate; advances g_health_pulse.elapsed_ms and
+ * recalculates current so callers can read v22_hud_health_pulse_alpha().
+ * Does NOT call v2_anim_update twice — v2_anim_update already advanced
+ * elapsed_ms inside v22_hud_pulse_v1_tick's stack copy; only re-read the
+ * result after the update to keep the static state consistent.
  * ReDMCSB: TIMELINE.C F0260 champion status-box refresh cadence. */
 void v22_hud_pulse_v1_tick(void) {
+    /* Copy state to stack so v2_anim_update writes to local a, not g_health_pulse */
     V2_Anim a = g_health_pulse;
     v2_anim_update(&a, (float)V1_TICK_MS);
-    if (!v2_anim_is_done(&a)) {
-        g_health_pulse.elapsed_ms += (float)V1_TICK_MS;
-        g_health_pulse.current = v2_ease(g_health_pulse.easing,
-            g_health_pulse.elapsed_ms / g_health_pulse.duration_ms) *
-            (g_health_pulse.to - g_health_pulse.from) + g_health_pulse.from;
-    } else if (g_health_pulse.loops != 0) {
-        g_health_pulse.elapsed_ms = 0.0f;
-        if (g_health_pulse.loops > 0) g_health_pulse.loops--;
-    }
+    /* Write the updated state back to the static */
+    g_health_pulse = a;
+    /* Manual loop reset for ping-pong: when v2_anim_update detects the
+     * duration is exceeded and loops != 0, it swaps from/to but the static's
+     * elapsed already has dt_ms added (inside v2_anim_update).  For ping-pong
+     * the loop restart is handled entirely inside v2_anim_update; the static
+     * is already in the correct swapped-state after the write-back above. */
 }
 
 /* pass601a: movement complete signal.
@@ -485,4 +487,3 @@ void v22_hud_render_champion_panel(uint8_t* fb, int w, int h,
         v22_render_slot(fb, w, h, sx, sy, names[i], hp, stam, mana, base_val, high_val);
     }
 }
-

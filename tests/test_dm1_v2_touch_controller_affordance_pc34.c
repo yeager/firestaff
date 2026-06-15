@@ -59,6 +59,13 @@ static const AffordanceCase kCases[] = {
      DM1_V2_MOVEMENT_COMMAND_MOVE_LEFT, 6, 6, "controller_left_bumper"},
     {DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_BUMPER, DM1_V2_AFFORDANCE_INPUT_CONTROLLER,
      DM1_V2_MOVEMENT_COMMAND_MOVE_RIGHT, 4, 5, "controller_right_bumper"},
+    /* Phase 6: right stick up/down extend right stick from turn-only to full
+     * forward/backward parity with left stick.  Source-locked: same C003/C005
+     * commands as LEFT_STICK_UP/DOWN. */
+    {DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_UP, DM1_V2_AFFORDANCE_INPUT_CONTROLLER,
+     DM1_V2_MOVEMENT_COMMAND_MOVE_FORWARD, 3, 1, "controller_right_stick_up"},
+    {DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_DOWN, DM1_V2_AFFORDANCE_INPUT_CONTROLLER,
+     DM1_V2_MOVEMENT_COMMAND_MOVE_BACKWARD, 5, 2, "controller_right_stick_down"},
 };
 
 static const AffordanceCase kPinchCases[] = {
@@ -66,6 +73,19 @@ static const AffordanceCase kPinchCases[] = {
      DM1_V2_MOVEMENT_COMMAND_NONE, 0, 0, "touch_pinch_zoom_in"},
     {DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_OUT, DM1_V2_AFFORDANCE_INPUT_TOUCH,
      DM1_V2_MOVEMENT_COMMAND_NONE, 0, 0, "touch_pinch_zoom_out"},
+};
+
+/* Phase 6: V2-only gestures that synthesize from SDL3 multi-touch events.
+ * These have no V1 path and no movement command; they are accepted only when
+ * V2 presentation is enabled and route through the V2 presentation lane.
+ * Source-lock: ReDMCSB GAMELOOP.C:164-219 has no double-tap or held-touch
+ * state; SDL3 SDL_FINGERMULTIGESTURE (double-tap) and SDL_FINGERMOTION
+ * dwell detection (long-press) are V2-only synthesis paths. */
+static const AffordanceCase kV2GestureCases[] = {
+    {DM1_V2_AFFORDANCE_TOUCH_DOUBLE_TAP, DM1_V2_AFFORDANCE_INPUT_TOUCH,
+     DM1_V2_MOVEMENT_COMMAND_NONE, 0, 0, "touch_double_tap"},
+    {DM1_V2_AFFORDANCE_TOUCH_LONG_PRESS, DM1_V2_AFFORDANCE_INPUT_TOUCH,
+     DM1_V2_MOVEMENT_COMMAND_NONE, 0, 0, "touch_long_press"},
 };
 
 static void test_v2_affordances_map_to_source_locked_routes(void) {
@@ -216,6 +236,44 @@ static void test_route_probe_does_not_mutate_runtime_state(void) {
     CHECK(dm1_v2_get_y(&runtime.player) == 0);
 }
 
+static void test_v2_gesture_only_affordances_no_command_and_v1_rejected(void) {
+    size_t i;
+
+    /* Phase 6: V2-only gesture affordances (double-tap, long-press) are
+     * accepted when V2 presentation is enabled but carry no movement command.
+     * They must be rejected when V1 presentation is active (V1 has no path
+     * for these synthesized multi-touch gestures). */
+    for (i = 0; i < sizeof(kV2GestureCases) / sizeof(kV2GestureCases[0]); ++i) {
+        DM1_V2_TouchControllerAffordanceRoute route =
+            dm1_v2_touch_controller_affordance_route(1, kV2GestureCases[i].affordance);
+        CHECK(route.accepted == 1);
+        CHECK(route.v2Only == 1);
+        CHECK(route.inputKind == kV2GestureCases[i].inputKind);
+        CHECK(route.affordance == kV2GestureCases[i].affordance);
+        CHECK(route.movementCommand == DM1_V2_MOVEMENT_COMMAND_NONE);
+        CHECK(route.route.routeKind == DM1_V2_MOVEMENT_ROUTE_V2_PRESENTATION);
+        CHECK(route.route.v2PresentationEnabled == 1);
+        CHECK(route.route.sourceCommand == 0);
+        CHECK(route.route.runtimeCommand == 0);
+        CHECK(dm1_v2_touch_controller_affordance_movement_command(kV2GestureCases[i].affordance) ==
+              DM1_V2_MOVEMENT_COMMAND_NONE);
+        CHECK(dm1_v2_touch_controller_affordance_input_kind(kV2GestureCases[i].affordance) ==
+              DM1_V2_AFFORDANCE_INPUT_TOUCH);
+        CHECK(strcmp(dm1_v2_touch_controller_affordance_name(kV2GestureCases[i].affordance),
+                     kV2GestureCases[i].name) == 0);
+    }
+
+    /* V1 off rejects these V2-only gestures */
+    for (i = 0; i < sizeof(kV2GestureCases) / sizeof(kV2GestureCases[0]); ++i) {
+        DM1_V2_TouchControllerAffordanceRoute route =
+            dm1_v2_touch_controller_affordance_route(0, kV2GestureCases[i].affordance);
+        CHECK(route.accepted == 0);
+        CHECK(route.v2Only == 1);
+        CHECK(route.route.routeKind == DM1_V2_MOVEMENT_ROUTE_V1_SOURCE);
+        CHECK(route.route.v2PresentationEnabled == 0);
+    }
+}
+
 static void test_source_evidence_string_names_referenced_routes(void) {
     const char* evidence = dm1_v2_touch_controller_affordance_source_lock_evidence();
     CHECK(strstr(evidence, "DEFS.H:197-211,238-243") != NULL);
@@ -225,6 +283,12 @@ static void test_source_evidence_string_names_referenced_routes(void) {
     CHECK(strstr(evidence, "DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_IN/OUT") != NULL);
     CHECK(strstr(evidence, "v2_minimap_zoom") != NULL);
     CHECK(strstr(evidence, "SDL_FINGER") != NULL);
+    /* Phase 6 new evidence */
+    CHECK(strstr(evidence, "CONTROLLER_RIGHT_STICK_UP/DOWN") != NULL);
+    CHECK(strstr(evidence, "TOUCH_DOUBLE_TAP") != NULL);
+    CHECK(strstr(evidence, "TOUCH_LONG_PRESS") != NULL);
+    CHECK(strstr(evidence, "SDL_FINGERMULTIGESTURE") != NULL);
+    CHECK(strstr(evidence, "SDL_FINGERMOTION") != NULL);
 }
 
 int main(void) {
@@ -232,6 +296,7 @@ int main(void) {
     test_v2_affordance_runtime_bridge_uses_existing_command_routes();
     test_v1_off_rejects_v2_only_affordances();
     test_pinch_zoom_is_v2_only_without_movement_command();
+    test_v2_gesture_only_affordances_no_command_and_v1_rejected();
     test_invalid_affordance_is_not_a_command();
     test_route_probe_does_not_mutate_runtime_state();
     test_source_evidence_string_names_referenced_routes();

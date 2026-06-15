@@ -86,6 +86,17 @@ static const DM1_WallFrame s_wall_frames[12] = {
     /* D0R */ { 192, 223,  0, 135,  16, 136,   0, 0 },
 };
 
+/* ReDMCSB DUNVIEW.C:1210-1216 G0208_aaauc_Graphic558_DoorButtonCoordinateSets
+ * stores the one DM1 C0_DOOR_BUTTON coordinate set in view-index order:
+ * C0 D3R, C1 D3C, C2 D2C, C3 D1C.  F0110 lines 4163 and 4204-4207 select
+ * one row, use source X/Y 0/0, and blit with C10 transparency. */
+static const DM1_WallFrame s_door_button_frames[DM1_VIEW_DOOR_BUTTON_COUNT] = {
+    /* D3R */ { 199, 204, 41, 44, 8, 4, 0, 0 },
+    /* D3C */ { 136, 141, 41, 44, 8, 4, 0, 0 },
+    /* D2C */ { 144, 155, 42, 47, 8, 6, 0, 0 },
+    /* D1C */ { 160, 175, 44, 52, 8, 9, 0, 0 },
+};
+
 /* View square → wall frame table index mapping.
  * Placed before csb_v1_vp_get_wall_frame to avoid forward-reference errors. */
 static int view_square_to_frame_index(DM1_ViewSquareIndex sq)
@@ -176,6 +187,42 @@ static const DM1_ViewportFarObjectPassSpec s_far_object_pass_specs[] = {
     { DM1_VIEW_SQUARE_D4L, 4, -1, 0x0001, 17, true, "DUNVIEW.C:8466-8469; DEFS.H:2613 M598_VIEW_SQUARE_D4L" },
     { DM1_VIEW_SQUARE_D4R, 4,  1, 0x0001, 18, true, "DUNVIEW.C:8470-8473; DEFS.H:2614 M599_VIEW_SQUARE_D4R" },
     { DM1_VIEW_SQUARE_D4C, 4,  0, 0x0001, 16, true, "DUNVIEW.C:8474-8477; DEFS.H:2612 M597_VIEW_SQUARE_D4C" },
+};
+
+/* ReDMCSB DUNVIEW.C F0128 lines 8488-8499 dispatch D3L, D3R, then D3C
+ * after resolving their map cells through DUNGEON.C F0150 lines 1371-1421.
+ * F0116 lines 6406-6437 prove D3L wall/alcove handling returns before the
+ * ordinary F0115 object handoff unless the front ornament is an alcove, so a
+ * read-only D3L1 target excludes D3L itself while preserving the rest of the
+ * F0128 draw list. */
+static const DM1_ViewSquareIndex s_d3l1_no_write_allowed_squares[] = {
+    DM1_VIEW_SQUARE_D4L,
+    DM1_VIEW_SQUARE_D4R,
+    DM1_VIEW_SQUARE_D4C,
+    DM1_VIEW_SQUARE_D3L2,
+    DM1_VIEW_SQUARE_D3R2,
+    DM1_VIEW_SQUARE_D3R,
+    DM1_VIEW_SQUARE_D3C,
+    DM1_VIEW_SQUARE_D2L2,
+    DM1_VIEW_SQUARE_D2R2,
+    DM1_VIEW_SQUARE_D2L,
+    DM1_VIEW_SQUARE_D2R,
+    DM1_VIEW_SQUARE_D2C,
+    DM1_VIEW_SQUARE_D1L,
+    DM1_VIEW_SQUARE_D1R,
+    DM1_VIEW_SQUARE_D1C,
+    DM1_VIEW_SQUARE_D0L,
+    DM1_VIEW_SQUARE_D0R,
+    DM1_VIEW_SQUARE_D0C,
+};
+
+static const DM1_ViewportNoWriteSpec s_d3l1_no_write_spec = {
+    DM1_VIEW_SQUARE_D3L,
+    s_d3l1_no_write_allowed_squares,
+    sizeof(s_d3l1_no_write_allowed_squares) / sizeof(s_d3l1_no_write_allowed_squares[0]),
+    "F0116_DUNGEONVIEW_DrawSquareD3L",
+    "DUNVIEW.C:6361-6495 F0116; DUNVIEW.C:8488-8499 F0128 D3 dispatch; DUNGEON.C:1371-1421 F0150",
+    "DUNVIEW.C:6406-6437 wall case returns before F0115 unless front alcove; DUNVIEW.C:6475-6480 open-cell F0108/F0115 path"
 };
 
 
@@ -409,6 +456,52 @@ static const DM1_ViewportFloorFieldOrderSpec s_floor_field_order_specs[] = {
       "DUNVIEW.C:8185-8240 door-side case breaks before common F0115; no wall case in D0C" },
 };
 
+/* Pass760: D0L2/D0R2 pair composition source lock.
+ * ReDMCSB anchors: DUNVIEW.C F0108_DUNGEONVIEW_DrawFloorOrnament:3940-4011
+ * (floor-ornament ordinal and MASK0x8000_FOOTPRINTS keepout);
+ * DUNVIEW.C F0107:3502-3938 (wall-ornament ordinal/coordinate set);
+ * DUNVIEW.C F0098:2962-3002 (floor/ceiling base);
+ * DUNVIEW.C F0115:4547-4581,5180-5188,5211-5214,5668-5671
+ * (thing-pass cell ordering); DUNVIEW.C:6432-6600
+ * M575_VIEW_WALL_D3L_RIGHT; DEFS.H:2088,2596-2611,2668-2677,
+ * 2698-2702,4045-4046; DRAWVIEW.C F0097:1-50 wall-side dispatch
+ * plus DUNVIEW.C F0104:3113-3156 and F0105:3185-3247 C10 blits. */
+static const DM1_ViewportD0L2D0R2F0108CompositionSpec
+s_d0l2_d0r2_f0108_composition_specs[] = {
+    {
+        DM1_VIEW_SQUARE_D0L2, DM1_VIEW_SQUARE_D0L,
+        DM1_WALL_D0L, DM1_WALL_D0R,
+        DM1_PC34_ZONE_WALL_D0L, DM1_PC34_ZONE_WALL_D3L,
+        0, -2, 1, 8, 2, 4,
+        0x0002, 0x0000, 0x8000u, 1500, 11,
+        true, true, true, true, true, true, true, true,
+        true, true, true,
+        "DUNVIEW.C:6432-6480 wall ornament/order path; DUNVIEW.C:8016-8038 D0L wall return",
+        "DUNVIEW.C:3940-4011 F0108 floor ornament MASK0x8000 keepout",
+        "DUNVIEW.C:3502-3938 F0107 wall ornament ordinal/coordinateSet",
+        "DUNVIEW.C:2962-3002 F0098 floor+ceiling base",
+        "DUNVIEW.C:4547-4581,5180-5188,5211-5214,5668-5671 F0115 thing-pass ordering",
+        "DEFS.H:2088 C10; DEFS.H:2596-2611 view-square ordinals; DEFS.H:2668-2677/2698-2702 cell/view-wall ordinals; DEFS.H:4045-4046 C705/C706",
+        "DRAWVIEW.C F0097:1-50 wall-side dispatch; DUNVIEW.C F0104:3113-3156; DUNVIEW.C F0105:3185-3247"
+    },
+    {
+        DM1_VIEW_SQUARE_D0R2, DM1_VIEW_SQUARE_D0R,
+        DM1_WALL_D0R, DM1_WALL_D0L,
+        DM1_PC34_ZONE_WALL_D0R, DM1_PC34_ZONE_WALL_D3R,
+        0, 2, 2, 10, 3, 6,
+        0x0001, 0x0000, 0x8000u, 1500, 11,
+        true, true, true, true, true, true, true, true,
+        true, true, true,
+        "DUNVIEW.C:6545-6600 wall ornament/order path; DUNVIEW.C:8126-8144 D0R wall return",
+        "DUNVIEW.C:3940-4011 F0108 floor ornament MASK0x8000 keepout",
+        "DUNVIEW.C:3502-3938 F0107 wall ornament ordinal/coordinateSet",
+        "DUNVIEW.C:2962-3002 F0098 floor+ceiling base",
+        "DUNVIEW.C:4547-4581,5180-5188,5211-5214,5668-5671 F0115 thing-pass ordering",
+        "DEFS.H:2088 C10; DEFS.H:2596-2611 view-square ordinals; DEFS.H:2668-2677/2698-2702 cell/view-wall ordinals; DEFS.H:4045-4046 C705/C706",
+        "DRAWVIEW.C F0097:1-50 wall-side dispatch; DUNVIEW.C F0104:3113-3156; DUNVIEW.C F0105:3185-3247"
+    },
+};
+
 static const DM1_ViewportWallDrawSpec s_wall_draw_specs[] = {
     { DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, true,  false, DM1_PC34_ZONE_WALL_D3L2, true,  false, "F0676_DrawD3L2",                  "DUNVIEW.C:6254-6260", "DUNVIEW.C:6263-6264 wall ornament then return" },
     { DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, true,  false, DM1_PC34_ZONE_WALL_D3R2, true,  false, "F0677_DrawD3R2",                  "DUNVIEW.C:6321-6327", "DUNVIEW.C:6330-6331 wall ornament then return" },
@@ -426,6 +519,21 @@ static const DM1_ViewportWallDrawSpec s_wall_draw_specs[] = {
     { DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L,  true,  false, "F0125_DUNGEONVIEW_DrawSquareD0L", "DUNVIEW.C:8016-8033", "DUNVIEW.C:8036-8038 wall case returns" },
     { DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8126-8139", "DUNVIEW.C:8142-8144 wall case returns" },
 };
+
+static const uint8_t *dm1_viewport_3d_selected_wall_bitmap(const DM1_Viewport3DState *state,
+                                                           const uint8_t *bm_base,
+                                                           DM1_WallSetIndex selected_wall)
+{
+    if (!state || !bm_base || selected_wall < 0 || selected_wall >= DM1_WALL_SET_COUNT) return NULL;
+
+    /* ReDMCSB PC34/I34E selects the G2107_WallSet[] entry first, then
+     * F0105 flips that selected native bitmap horizontally when parity is
+     * active.  Do not index G3048/G3071 here after selecting the opposite
+     * wall, or side lanes such as F0676 D3L2 can double-swap back to the
+     * original wall.  Source: DUNVIEW.C:6254-6260,6321-6327,6849-6889;
+     * F0128 restores G3071 only after the whole draw in lines 8577-8579. */
+    return bm_base + (int)state->wall_set_native[selected_wall] * DM1_VIEWPORT_BYTE_WIDTH;
+}
 
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_init
@@ -677,16 +785,103 @@ void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
                                              const DM1_WallFrame *frame)
 {
     if (!frame || frame->byte_width == 0 || !frame_bitmap) return;
-    if (!state->temp_bitmap) return;
+    if (!state) return;
 
     int bw = frame->byte_width;
     int bh = frame->height;
+    size_t needed = (size_t)bw * (size_t)bh;
+    uint8_t *scratch = NULL;
+    bool scratch_owned = false;
+
+    /* ReDMCSB F0128 allocates G0074_puc_Bitmap_Temporary before the draw walk,
+     * and F0105/F0103 use that scratch bitmap for horizontal flips.  Some
+     * Firestaff probes and bridge calls exercise the helper directly, so use
+     * a short-lived fallback scratch buffer instead of silently dropping the
+     * parity-flipped wall when state->temp_bitmap has not been wired yet.
+     * Source: DUNVIEW.C:8318-8335,3096-3108,3185-3204. */
+    if (state->temp_bitmap && state->temp_bitmap_size >= (int)needed) {
+        scratch = state->temp_bitmap;
+    } else {
+        scratch = (uint8_t *)malloc(needed);
+        scratch_owned = true;
+    }
+    if (!scratch) return;
 
     /* Copy and flip into temp buffer */
-    dm1_viewport_3d_copy_and_flip_h(frame_bitmap, state->temp_bitmap, bw, bh);
+    dm1_viewport_3d_copy_and_flip_h(frame_bitmap, scratch, bw, bh);
 
     /* Draw with transparency */
-    dm1_viewport_3d_draw_wall(state, state->temp_bitmap, frame);
+    dm1_viewport_3d_draw_wall(state, scratch, frame);
+    if (scratch_owned) {
+        free(scratch);
+    }
+}
+
+int dm1_v1_viewport_draw_door_button_pc34(uint8_t *dst,
+                                          int dst_width,
+                                          int dst_height,
+                                          int dst_stride,
+                                          int door_button_ordinal,
+                                          DM1_ViewDoorButtonIndex view_index,
+                                          const DM1_DoorButtonBitmapSpan *spans,
+                                          size_t span_count)
+{
+    if (!dst || dst_width <= 0 || dst_height <= 0 || dst_stride < dst_width) return 0;
+    if (door_button_ordinal <= 0) return 0;
+    if (view_index < 0 || view_index >= DM1_VIEW_DOOR_BUTTON_COUNT) return 0;
+
+    /* ReDMCSB F0110 lines 4159-4163 converts the ordinal to a zero-based
+     * door-button index, then selects G0208[coordinateSet][viewIndex]. */
+    size_t span_index = (size_t)(door_button_ordinal - 1) *
+                        (size_t)DM1_VIEW_DOOR_BUTTON_COUNT +
+                        (size_t)view_index;
+    if (!spans || span_index >= span_count) return 0;
+
+    const DM1_DoorButtonBitmapSpan *span = &spans[span_index];
+    const DM1_WallFrame *frame = &span->frame;
+    if (!span->pixels || span->source_width <= 0 || span->source_height <= 0) return 0;
+
+    int src_x = frame->blit_x;
+    int src_y = frame->blit_y;
+    int dst_x = frame->left_x;
+    int dst_y = frame->top_y;
+    int width = (int)frame->right_x - (int)frame->left_x + 1;
+    int height = (int)frame->bottom_y - (int)frame->top_y + 1;
+    if (width <= 0 || height <= 0) return 0;
+
+    if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
+    if (dst_y < 0) { src_y -= dst_y; height += dst_y; dst_y = 0; }
+    if (src_x < 0) { dst_x -= src_x; width += src_x; src_x = 0; }
+    if (src_y < 0) { dst_y -= src_y; height += src_y; src_y = 0; }
+    if (dst_x + width > dst_width) width = dst_width - dst_x;
+    if (dst_y + height > dst_height) height = dst_height - dst_y;
+    if (src_x + width > span->source_width) width = span->source_width - src_x;
+    if (src_y + height > span->source_height) height = span->source_height - src_y;
+    if (width <= 0 || height <= 0) return 0;
+
+    int written = 0;
+    for (int y = 0; y < height; ++y) {
+        const uint8_t *src_row = span->pixels + (src_y + y) * span->source_width + src_x;
+        uint8_t *dst_row = dst + (dst_y + y) * dst_stride + dst_x;
+        for (int x = 0; x < width; ++x) {
+            uint8_t pixel = src_row[x];
+            /* ReDMCSB F0110 lines 4204-4207 delegates to F0132 with
+             * C10_COLOR_FLESH, so source pixel 10 is transparent. */
+            if (pixel != COLOR_TRANSPARENT) {
+                dst_row[x] = pixel;
+                ++written;
+            }
+        }
+    }
+    return written;
+}
+
+const DM1_WallFrame *dm1_v1_viewport_get_door_button_frame_pc34(int door_button_ordinal,
+                                                                 DM1_ViewDoorButtonIndex view_index)
+{
+    if (door_button_ordinal != 1) return NULL;
+    if (view_index < 0 || view_index >= DM1_VIEW_DOOR_BUTTON_COUNT) return NULL;
+    return &s_door_button_frames[view_index];
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -1066,21 +1261,16 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
          */
         const uint8_t *wall_bmp = NULL;
         if (step->square == DM1_VIEW_SQUARE_D0L || step->square == DM1_VIEW_SQUARE_D0R) {
-            /* D0L/D0R: use wall_set_flipped (parity) or wall_set_native (native).
-             * ReDMCSB DUNVIEW.C:8016-8033 (D0L), 8126-8139 (D0R).
-             * wall_idx from select_wall_bitmap() already encodes D0L/D0R indices. */
-            int16_t ws_idx = state->parity_flip
-                ? state->wall_set_flipped[wall_idx]
-                : state->wall_set_native[wall_idx];
-            wall_bmp = bm_base + (int)ws_idx * BMP_STRIDE;
+            /* D0L/D0R: wall_idx from select_wall_bitmap() already encodes
+             * the native or opposite G2107 entry.  F0105 handles the
+             * horizontal flip, so the selected native bitmap is used here.
+             * ReDMCSB DUNVIEW.C:8016-8033 (D0L), 8126-8139 (D0R). */
+            wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
         } else {
-            /* D3L2/D3R2/D2L2/D2R2: use G2107-derived bitmap offset.
-             * The G2107 wall set indices (-3, -4, -8, -9 etc.) directly
-             * index into the bm_base bitmap array. */
-            int16_t ws_idx = state->parity_flip
-                ? state->wall_set_flipped[wall_idx]
-                : state->wall_set_native[wall_idx];
-            wall_bmp = bm_base + (int)ws_idx * BMP_STRIDE;
+            /* D3L2/D3R2/D2L2/D2R2: use the selected G2107-derived bitmap
+             * offset.  Parity has already swapped the selected WallSetIndex;
+             * F0105 handles any horizontal flip. */
+            wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
         }
 
         const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(step->square);
@@ -1303,6 +1493,11 @@ int dm1_viewport_3d_resolve_draw_order_step(size_t index,
     return dm1_viewport_3d_resolve_relative_map_xy(
         direction, step->rel_depth, step->rel_lateral, origin_x, origin_y,
         &out_step->map_x, &out_step->map_y);
+}
+
+const DM1_ViewportNoWriteSpec *dm1_viewport_3d_get_d3l1_no_write_spec(void)
+{
+    return &s_d3l1_no_write_spec;
 }
 
 
@@ -1570,6 +1765,30 @@ const DM1_ViewportFloorFieldOrderSpec *dm1_viewport_3d_get_floor_field_order_spe
     return NULL;
 }
 
+size_t dm1_viewport_3d_d0l2_d0r2_f0108_composition_spec_count(void)
+{
+    return sizeof(s_d0l2_d0r2_f0108_composition_specs) /
+           sizeof(s_d0l2_d0r2_f0108_composition_specs[0]);
+}
+
+const DM1_ViewportD0L2D0R2F0108CompositionSpec *
+dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec(size_t index)
+{
+    if (index >= dm1_viewport_3d_d0l2_d0r2_f0108_composition_spec_count()) return NULL;
+    return &s_d0l2_d0r2_f0108_composition_specs[index];
+}
+
+const DM1_ViewportD0L2D0R2F0108CompositionSpec *
+dm1_viewport_3d_get_d0l2_d0r2_f0108_composition_spec_for_square(DM1_ViewSquareIndex square)
+{
+    for (size_t i = 0; i < dm1_viewport_3d_d0l2_d0r2_f0108_composition_spec_count(); ++i) {
+        if (s_d0l2_d0r2_f0108_composition_specs[i].square == square) {
+            return &s_d0l2_d0r2_f0108_composition_specs[i];
+        }
+    }
+    return NULL;
+}
+
 const DM1_ViewportPostCommandRedrawSpec *dm1_viewport_3d_post_command_redraw_spec(void)
 {
     return &s_post_command_redraw;
@@ -1823,10 +2042,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
     if (raw_element == 0) { /* C00_ELEMENT_WALL */
         bool flip_h = state->parity_flip;
         DM1_WallSetIndex wall_idx = flip_h ? parity_wall : native_wall;
-        int16_t ws_idx = flip_h
-            ? state->wall_set_flipped[wall_idx]
-            : state->wall_set_native[wall_idx];
-        const uint8_t *wall_bmp = bm_base + (int)ws_idx * DM1_VIEWPORT_BYTE_WIDTH;
+        const uint8_t *wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
 
         if (flip_h) {
             dm1_viewport_3d_draw_door_frame_flipped(state, wall_bmp, fr);
@@ -2031,10 +2247,7 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
     if (raw_element == 0) { /* C00_ELEMENT_WALL */
         bool flip_h = state->parity_flip;
         DM1_WallSetIndex wall_idx = flip_h ? parity_wall : native_wall;
-        int16_t ws_idx = flip_h
-            ? state->wall_set_flipped[wall_idx]
-            : state->wall_set_native[wall_idx];
-        const uint8_t *wall_bmp = bm_base + (int)ws_idx * DM1_VIEWPORT_BYTE_WIDTH;
+        const uint8_t *wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
 
         if (flip_h) {
             dm1_viewport_3d_draw_door_frame_flipped(state, wall_bmp, fr);
@@ -2126,6 +2339,7 @@ const char *dm1_viewport_3d_source_evidence(void)
         "  DUNVIEW.C:6438-6480,6574-6621,D2/D1/D0 side-door/stairs-side F0115 cell-order occlusion\n"
         "  DUNVIEW.C:6254-6327 F0676/F0677 PC34 parity side-wall selection; wall case returns / front alcove occlusion boundaries\n"
         "  DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns\n"
+        "  DUNVIEW.C:6361-6495 F0116_DUNGEONVIEW_DrawSquareD3L D3L1 no-write target evidence; DUNVIEW.C:8488-8499 F0128 keeps adjacent D3 draw paths active\n"
         "  DUNVIEW.C:6361 F0116_DUNGEONVIEW_DrawSquareD3L\n"
         "  DUNVIEW.C:6500 F0117_DUNGEONVIEW_DrawSquareD3R\n"
         "  DUNVIEW.C:6642 F0118_DUNGEONVIEW_DrawSquareD3C_CPSF\n"
@@ -2180,4 +2394,3 @@ const char *dm1_viewport_3d_source_evidence(void)
  *   DRAWVIEW.C:641 F8157_VIDRV_
  *   DRAWVIEW.C:684 F8232_VIDRV_
  * ══════════════════════════════════════════════════════════════════════ */
-

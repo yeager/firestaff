@@ -2,13 +2,28 @@
 
 ## What Is Firestaff?
 
-Source-faithful Dungeon Master engine for modern hardware. Plays DM1, Chaos Strikes Back (CSB), DM2: Skullkeep, and DM Nexus (Saturn) with original fidelity or enhanced visuals.
+Source-faithful Dungeon Master engine for modern hardware. Plays and/or is actively bringing up DM1, Chaos Strikes Back (CSB), DM2: Skullkeep, DM Nexus (Saturn), and Theron's Quest with original fidelity, enhanced filters, upscaled assets, or modern visuals.
 
 **Repo:** https://github.com/yeager/firestaff
 **License:** MIT
 **Language:** C (pure C11, no C++)
 **Build:** CMake + SDL3
-**Platforms:** macOS (Apple Silicon + Intel), Windows, Linux x86_64, Linux ARM64
+**Platforms:** macOS (Apple Silicon + Intel), Windows, Linux x86_64, Linux ARM64 / Steam Deck
+**Current release:** v2.7.5
+
+## Current Project Status
+
+Firestaff is in active development. DM1 V1 is the strongest playable target today. The other games have source-locked slices, hash-verified launch profiles, and growing runtime coverage, but should not be presented as fully finished unless the current tests and real-asset runtime proof say so.
+
+| Game | Status |
+|------|--------|
+| DM1 | Playable/source-locked V1 runtime with ongoing visual polish; V2.0/V2.1/V2.2 presentation pipelines exist. |
+| CSB | Launch/profile boundary, dungeon model, mechanics, utility/import, rendering slices, and verification gates exist; end-to-end runtime proof is still being hardened. |
+| DM2 | Boot/profile, utility, V2 presentation, lighting, HUD, smooth movement, and touch/controller slices exist; V1 dungeon/render/mechanics parity remains active work. |
+| Nexus | Saturn DMDF/DGN data, world, render, save/load, mechanics, and V2 presentation slices exist; real-asset handoff proof remains active work. |
+| Theron's Quest | V1 parser, rendering, mechanics, progression, save/load, and verification suite exist; positive real-asset launch through Track 02 remains active work. |
+
+Public docs and README text should be honest, user-facing, and sales-friendly: explain what works and what is being hardened, but do not dump debug logs, failed-test counters, pass IDs, or private queue details into public project pages.
 
 ## Architecture
 
@@ -38,10 +53,13 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 | `src/csb/` | Chaos Strikes Back: game state, dungeon loader, chaos magic |
 | `src/dm2/` | DM2 Skullkeep: game state, dungeon loader |
 | `src/nexus/` | DM Nexus (Saturn): DGN level format, DMDF parser |
+| `src/theron/` | Theron's Quest: profile, data, rendering, mechanics, progression |
 | `src/test/` | Test utilities |
 | `include/` | All public headers (~365 files) |
 | `tests/` | Integration tests (~149 files) |
 | `probes/` | Headless verification probes (Phase A = CI, others = local) |
+| `verification-screens/` | Tracked project screenshots suitable for README/public docs |
+| `docs/compare/` | Tracked visual comparison assets suitable for public docs |
 
 ### Key Files
 
@@ -53,9 +71,11 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 | `src/ui/menu_startup_m12.c` | Launcher state machine: navigation, game options, launch logic |
 | `src/ui/menu_startup_render_modern_m12.c` | Launcher HD renderer (1920×1080 canvas) |
 | `src/ui/menu_hit_m12.c` | Launcher mouse hit-testing |
-| `src/shared/asset_status_m12.c` | Game version catalog: hash-verified GRAPHICS.DAT/DUNGEON.DAT |
+| `src/shared/asset_status_m12.c` | Game version catalog and recursive hash-verified game-data scanner |
 | `src/shared/changelog_m12.c` | Version string and changelog text |
 | `src/engine/firestaff_accessibility.c` | Accessibility manifest (JSON, atomic writes) |
+| `TODO.md` | Open work only; update at least twice daily during active Firestaff work |
+| `DONE.md` | Completed/verified work only; update at least twice daily during active Firestaff work |
 
 ### Graphics Modes (V1/V2)
 
@@ -66,12 +86,30 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 | V2.1 Upscaled | 3200×2000 | 10× AI upscale |
 | V2.2 Modern | 1920×1080 | New 3D-rendered 2D art |
 
-### Asset Discovery
+### Asset Discovery and Launch Gating
 
-Firestaff finds game files by **MD5 hash**, not filename or path. Place original DM1 `GRAPHICS.DAT` and `DUNGEON.DAT` under `~/.firestaff/data/dm1/`; other games use their own subdirectories under `~/.firestaff/data/`.
+Firestaff finds game files by **hash**, not filename or path. The configured data root is searched recursively, so users may keep their own folder layout.
+
+ZIP archives and ISO/BIN disc images are valid game-data containers. The scanner should hash entries/files inside those containers and report matches as virtual paths such as `archive.zip::GRAPHICS.DAT` or `disc.iso::DUNGEON.DAT`. ZIP support covers stored entries everywhere and deflated entries when zlib is available at build time. ISO/BIN support is intended for ISO 9660 data images, especially DM2 disc images and the existing Saturn/Nexus path. For DM1/CSB/DM2, archive-backed required files should be materialized into the local Firestaff asset cache before launch so runtime code can keep opening ordinary `GRAPHICS.DAT` / `DUNGEON.DAT` paths.
 
 Default data directory: `~/.firestaff/data/`
-Subdirectories: `dm1/`, `csb/`, `dm2/`, `nexus/`, `dm1-multilingual/`
+Suggested subdirectories: `dm1/`, `csb/`, `dm2/`, `nexus/`, `theron/`, `dm1-multilingual/`
+
+The data root must be configurable from the start menu. The CLI also supports:
+
+```bash
+firestaff --scan-data
+firestaff --scan-game-data
+firestaff --data-dir ~/Games/FirestaffData --scan-data
+```
+
+The start menu automatically scans game data, shows availability for each game, and displays an OK popup when no game data is found or when a selected game is missing required files.
+
+Required game data must block launch:
+
+- DM1/CSB/DM2 require their required GRAPHICS and DUNGEON hashes.
+- Nexus/Theron require their primary hash markers.
+- Optional title, intro, FTL logo, and other non-essential extras may be skipped when absent.
 
 ### Supported Game Versions (hash-verified)
 
@@ -79,6 +117,7 @@ Subdirectories: `dm1/`, `csb/`, `dm2/`, `nexus/`, `dm1-multilingual/`
 **CSB:** PC 3.4 English, Atari ST 2.0/2.1, Amiga 3.5, Amiga 3.5 Multilanguage
 **DM2:** PC English, PC French, PC German/English JewelCase
 **Nexus:** Saturn DMDF/DGN format (138 files)
+**Theron:** PC Engine CD JP/US Track 02 provenance
 
 ## Build
 
@@ -93,7 +132,7 @@ Requires SDL3. On macOS: `brew install sdl3`
 
 | Workflow | Trigger | What |
 |----------|---------|------|
-| `verify.yml` | push to main/develop, PRs | CMake build + Phase A probe on macOS-14 |
+| `verify.yml` | push to main/develop, PRs | M10 verify, warnings-check, CMake build matrix, Phase A probe, audio probe, cross-platform determinism |
 | `release.yml` | tag `v*` or manual dispatch | Build + package for all platforms |
 | `pages.yml` | push to main | Deploy docs to GitHub Pages |
 
@@ -126,13 +165,19 @@ Version must be synchronized in three places:
 2. `src/ui/menu_startup_m12.c` — `#define FIRESTAFF_VERSION_STRING`
 3. `src/shared/changelog_m12.c` — `M12_Changelog_VersionString()`
 
-Release tags: `v1.7.3`, `v1.7.2`, etc. The CMake version should match the latest release.
+Release tags: `v2.7.1`, `v2.7.0`, etc. The CMake version should match the latest release.
+
+When changing a release-facing feature, also update `RELEASE_NOTES.md` and make sure README/AGENTS status still matches reality.
 
 ## Testing
 
 - **Phase A probe:** `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe` — headless, no game data needed. Runs in CI.
+- **Strict warnings:** CI runs a strict `-Wall -Wextra -Werror` build path.
+- **Data scanner smoke:** `./build/firestaff --scan-data` should report found/missing required files without relying on filenames.
 - **Integration tests:** `./build/test_*` — individual test binaries. Most need game data.
 - **Verification scripts:** `scripts/verify_*.py` — Python scripts that check source-lock invariants.
+
+Before pushing from the main session, run the smallest relevant local verification set, then watch GitHub Actions after push. Subagents may commit but must not push.
 
 ## Conventions
 
@@ -141,7 +186,10 @@ Release tags: `v1.7.3`, `v1.7.2`, etc. The CMake version should match the latest
 - Comments cite ReDMCSB functions: `/* ReDMCSB: COMMAND.C F0359 line ~120 */`
 - Commits reference pass numbers when applicable: `pass602b`, `BUG-007`, etc.
 - Subagents commit but NEVER push. Main verifies before push.
+- Always push verified main-session changes to GitHub `main`; do not leave verified Firestaff changes only in the local worktree.
 - No API keys, tokens, passwords, or secrets in any file. Game data files stay user-supplied.
+- Keep `TODO.md` and `DONE.md` current at least twice per day while active Firestaff work is running.
+- Public README/release copy should be user-facing and polished. Keep worker logs, debug manifests, queue status, and internal failure counters out of public sales text.
 
 ## Common Tasks
 
@@ -166,10 +214,16 @@ Release tags: `v1.7.3`, `v1.7.2`, etc. The CMake version should match the latest
 4. Update `RELEASE_NOTES.md`
 5. Commit, push, tag with `vX.Y.Z`
 
+### Updating public project docs
+1. Keep README honest and sales-friendly.
+2. README screenshots must be real in-game screenshots captured from Firestaff or the original games. Do not use generated, illustrated, mocked, branding, or otherwise invented images as README screenshots. Prefer tracked runtime captures from `verification-screens/` or real comparison captures in `docs/compare/`.
+3. Include status per game, data-scanner behavior, platforms, graphics modes, build steps, and legal note.
+4. Do not include debug data, queue output, pass logs, local-only paths, or private worker status.
+
 ## Project Stats
 
-- **307 source files**, **245K+ lines of C**
-- **365 headers**, **149 tests**, **80+ probes**
-- **297/304 tests passing** (CI)
+- **300+ source files**, **245K+ lines of C**
+- **365+ headers**, **149+ tests**, **80+ probes**
+- CI covers M10 verify, warnings, CMake builds, Phase A, audio probe, and determinism
 - **20 languages** supported in the launcher
-- **4 games:** DM1, CSB, DM2, DM Nexus
+- **5 games:** DM1, CSB, DM2, DM Nexus, Theron's Quest

@@ -60,6 +60,23 @@ static int read_i32_le(const unsigned char* p) {
     return (int)read_u32_le(p);
 }
 
+/* BUG-112 (v2.7.13): per-mutation-kind field-mask valid-bit range.
+ * Returns the bitmask of bits that are meaningful for the given
+ * kind. Used by both F0782 (serialize) and F0782b (deserialize) to
+ * clamp stray reserved bits and to reject malformed entries. */
+static unsigned int dungeon_mutation_field_mask_valid(int kind) {
+    switch (kind) {
+        case DUNGEON_MUTATION_KIND_INVALID:      return 0u;
+        case DUNGEON_MUTATION_KIND_SQUARE_BYTE:  return DUNGEON_MUTATION_FIELD_SQUARE_VALID_MASK;
+        case DUNGEON_MUTATION_KIND_DOOR_STATE:   return DUNGEON_MUTATION_FIELD_DOOR_VALID_MASK;
+        case DUNGEON_MUTATION_KIND_SENSOR_TOG:   return DUNGEON_MUTATION_FIELD_SENSOR_VALID_MASK;
+        case DUNGEON_MUTATION_KIND_GROUP_HP:     return DUNGEON_MUTATION_FIELD_GROUP_HP_VALID_MASK;
+        case DUNGEON_MUTATION_KIND_THING_LINK:   return DUNGEON_MUTATION_FIELD_THING_VALID_MASK;
+        case DUNGEON_MUTATION_KIND_FIELD_GENERIC: return DUNGEON_MUTATION_FIELD_GENERIC_VALID_MASK;
+        default:                                 return 0u; /* unknown kind: mask everything off */
+    }
+}
+
 void F0790_SAVEGAME_SetAudioMetadata_Compat(
     struct SaveGameHeader_Compat* hdr,
     uint32_t gameID,
@@ -396,11 +413,19 @@ int F0781_SAVEGAME_DeserializeMagic_Compat(
  * DungeonMutationList: 4-byte count LE + 1024 fixed 48-byte slots.
  * Unused slots zero-filled. Each slot is 12 int32 LE.
  *
- * NEEDS DISASSEMBLY REVIEW: the field-mask semantics (which
- * DungeonGroup_Compat.health[] byte a DUNGEON_MUTATION_KIND_GROUP_HP
- * entry refers to) are intentionally opaque in v1 — Phase 15 only
- * serialises the bytes; the replay engine in a future phase will
- * decide how to apply them. See plan §4.8 item 1.
+ * BUG-112 (v2.7.13 fix): the field-mask bit layout is now defined per
+ * mutation kind in include/memory_savegame_pc34_compat.h
+ * (DUNGEON_MUTATION_FIELD_*). The mask identifies which sub-field of
+ * the targeted record actually changed, so a replay engine can apply
+ * the delta without dragging a full byte-blob diff through the save.
+ *
+ * ReDMCSB anchor: LOADSAVE.C F0433 (SaveGame, lines 1502-1707) and
+ * F0435 (LoadGame, lines 2192-2660). The original PC 3.4 code does
+ * NOT carry a per-field bitmask — F0433 writes L1348_s_GlobalData and
+ * M516_CHAMPIONS[] as opaque byte blocks via F0007_MAIN_CopyBytes
+ * (lines 1560-1564). The DungeonMutation field-mask is a Firestaff
+ * abstraction layered on top of the same byte stream, so a phase-15
+ * save still round-trips through the same SAVE_HEADER framing.
  */
 int F0782_SAVEGAME_SerializeDungeonDelta_Compat(
     const struct DungeonMutationList_Compat* list,
@@ -420,6 +445,10 @@ int F0782_SAVEGAME_SerializeDungeonDelta_Compat(
         unsigned char* slot = buf + 4 + (i * DUNGEON_MUTATION_SERIALIZED_SIZE);
         if (i < list->count) {
             const struct DungeonMutation_Compat* m = &list->entries[i];
+            /* BUG-112: clamp fieldMask to the per-kind valid range so
+             * reserved bits never leak into the save file. */
+            unsigned int validMask = dungeon_mutation_field_mask_valid(m->kind);
+            unsigned int clamped = ((unsigned int)m->fieldMask) & validMask;
             write_i32_le(slot +  0, m->kind);
             write_i32_le(slot +  4, m->mapIndex);
             write_i32_le(slot +  8, m->x);
@@ -429,7 +458,7 @@ int F0782_SAVEGAME_SerializeDungeonDelta_Compat(
             write_i32_le(slot + 24, m->thingIndex);
             write_u32_le(slot + 28, m->beforeValue);
             write_u32_le(slot + 32, m->afterValue);
-            write_i32_le(slot + 36, m->fieldMask);
+            write_i32_le(slot + 36, (int)clamped);
             write_i32_le(slot + 40, m->reserved);
             write_i32_le(slot + 44, m->reserved1);
         }
@@ -466,7 +495,11 @@ int F0782b_SAVEGAME_DeserializeDungeonDelta_Compat(
         m->thingIndex  = read_i32_le(slot + 24);
         m->beforeValue = read_u32_le(slot + 28);
         m->afterValue  = read_u32_le(slot + 32);
-        m->fieldMask   = read_i32_le(slot + 36);
+        /* BUG-112: clamp fieldMask to the per-kind valid range so a
+         * older / non-conformant save with stray reserved bits still
+         * round-trips into a sane in-memory representation. */
+        m->fieldMask   = (int)(((unsigned int)read_i32_le(slot + 36)) &
+                               dungeon_mutation_field_mask_valid(m->kind));
         m->reserved    = read_i32_le(slot + 40);
         m->reserved1   = read_i32_le(slot + 44);
     }
@@ -903,4 +936,77 @@ const char* F0789_SAVEGAME_ErrorToString_Compat(int code) {
     case SAVEGAME_ERROR_INTERNAL:           return "internal error";
     default:                                 return "unknown";
     }
+}
+
+/* ================================================================
+ *  F0417 SaveUtil port (minimal subset) — SAVEHEAD.C:44,97,104
+ * ================================================================
+ *
+ * The original ReDMCSB F0417_SAVEUTIL_GetChecksumAndObfuscate
+ * carries Noise[10] + Keys[16] + Checksums[16] + a 16-byte XOR
+ * pass derived from the running Noise accumulator.  v1 ports a
+ * minimal subset:
+ *
+ *   - 10 uint16_t Noise entries (deterministic from the
+ *     exporter's RNG state).
+ *   - 16 uint16_t per-section XOR keys derived from
+ *     crc32(noise[0..9]).
+ *   - 16 uint32_t per-section checksums (caller-supplied
+ *     pre-obfuscation; the obfuscation does not modify them
+ *     because the obfuscation is in the post-checksum space).
+ *   - XOR pass: byte[i] ^= noise[0] ^ (noise[i % 10] << (i % 7))
+ *
+ * The full F0417 port with CPSC checksum derivation and the
+ * group-of-16 word XOR is deferred — the minimal port is enough
+ * to byte-validate the obfuscation cycle (importer echoes the
+ * same Noise[] back to deobfuscate).
+ */
+int F0417_SAVEUTIL_Port_Hint_Compat(
+    struct SaveGameHeader_Compat* hdr,
+    const uint16_t noiseSeed[10])
+{
+    int i;
+    uint32_t derivedKey;
+    if (!hdr) return 0;
+    if (noiseSeed) {
+        for (i = 0; i < 10; ++i) {
+            hdr->noise[i] = noiseSeed[i];
+        }
+    }
+    /* F0417: noise[0..9] -> 16 section keys via simple FNV-style
+     * fold.  The full port would derive each from a different
+     * byte of the CPSC hash; v1 keeps the derivation simple so
+     * the importer can reverse-engineer it. */
+    derivedKey = 0x811C9DC5u;  /* FNV-1a basis */
+    for (i = 0; i < 10; ++i) {
+        derivedKey ^= (uint32_t)hdr->noise[i];
+        derivedKey *= 0x01000193u; /* FNV prime */
+    }
+    for (i = 0; i < 16; ++i) {
+        hdr->sectionKeys[i] = (uint16_t)(derivedKey ^ (uint32_t)i * 0x9E37u);
+    }
+    /* sectionChecksums[0..15] is caller-supplied: the F0417
+     * original does not compute them; it XORs a 16-byte block
+     * of the data into the per-section key accumulator.  v1
+     * exposes the field so the caller can fill it. */
+    return 1;
+}
+
+int F0417_SAVEUTIL_GetChecksumAndObfuscate_Compat(
+    const struct SaveGameHeader_Compat* hdr,
+    unsigned char* buf,
+    int bufLen)
+{
+    int i;
+    uint16_t runningKey;
+    if (!hdr || !buf || bufLen <= 0) return 0;
+    /* F0417 XOR pass: noise[0] ^ (noise[i % 10] << (i % 7)).  The
+     * original uses a more complex accumulator; v1 uses a simple
+     * byte-index rolling key so the importer can reverse it. */
+    runningKey = hdr->noise[0];
+    for (i = 0; i < bufLen; ++i) {
+        uint16_t k = (uint16_t)(runningKey ^ ((uint16_t)hdr->noise[i % 10] << (i % 7)));
+        buf[i] = (unsigned char)(buf[i] ^ (unsigned char)(k & 0xFF));
+    }
+    return 1;
 }

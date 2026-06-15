@@ -179,6 +179,26 @@ int main(int argc, char** argv) {
            rc == M11_RENDER_OK,
            "Present with fully-populated framebuffer succeeded");
 
+    /* ---------- INV_A09B: 2x indexed presentation path ------------- */
+    rc = M11_Render_PresentScaledIndexed(fb, M11_FB_WIDTH, M11_FB_HEIGHT, 2);
+    int scaledPresentOk = (rc == M11_RENDER_OK);
+    (void)M11_Render_Present();
+    record(&t, "INV_A09B",
+           scaledPresentOk,
+           "2x indexed presentation renders the 320x200 framebuffer as 640x400");
+
+    /* ---------- INV_A09C: arbitrary V2.1/V2.2 target --------------- */
+    rc = M11_Render_PresentIndexedToResolution(fb,
+                                               M11_FB_WIDTH,
+                                               M11_FB_HEIGHT,
+                                               3840,
+                                               2160);
+    int fourKPresentOk = (rc == M11_RENDER_OK);
+    (void)M11_Render_Present();
+    record(&t, "INV_A09C",
+           fourKPresentOk,
+           "arbitrary indexed presentation target reaches 3840x2160");
+
     /* ---------- INV_A10: resize plumbing updates dimensions ---------- */
     int resizeRc = M11_Render_HandleResize(1280, 800);
     record(&t, "INV_A10",

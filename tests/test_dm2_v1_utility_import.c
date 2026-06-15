@@ -73,7 +73,11 @@ static void cleanup_temp_dir(void)
         snprintf(path, sizeof(path), "%s/SKSave%02d.dat", g_save_dir, i);
         (void)remove(path);
     }
-    (void)remove("/tmp/firestaff-dm2-phase6-save.bak");
+    {
+        char path[256];
+        snprintf(path, sizeof(path), "%s/SKSave.bak", g_save_dir);
+        (void)remove(path);
+    }
 }
 
 /* ── Test 1: Portrait → class mapping ── */
@@ -221,6 +225,46 @@ static void test_session_validate(void)
     CHECK(!dm2_v1_session_validate(NULL), "NULL session is invalid");
 }
 
+/* ── Test 4b: Champion inventory write/read order — stable slot layout ── */
+static void test_champion_inventory_order_roundtrip(void)
+{
+    printf("  Champion inventory write/read ordering...\n");
+    FILE *f = tmpfile();
+    if (!f) {
+        CHECK(0, "tmpfile() is available");
+        return;
+    }
+
+    uint32_t in[DM2_CHAMPION_INVENTORY_SLOTS];
+    uint32_t out[DM2_CHAMPION_INVENTORY_SLOTS];
+    for (int i = 0; i < DM2_CHAMPION_INVENTORY_SLOTS; i++) {
+        in[i] = ((uint32_t)(0x10u + i) << 16) | (uint32_t)(i + 1);
+    }
+    /* keep one empty slot to ensure zero slot positions are preserved */
+    in[7] = 0;
+
+    CHECK(dm2_champion_inventory_write(in, f) == 0,
+          "inventory write returns success");
+
+    rewind(f);
+    memset(out, 0, sizeof(out));
+    CHECK(dm2_champion_inventory_read(out, f) == 0,
+          "inventory read returns success");
+
+    for (int i = 0; i < DM2_CHAMPION_INVENTORY_SLOTS; i++) {
+        char msg[80];
+        snprintf(msg, sizeof(msg), "inventory slot %d order preserved", i);
+        CHECK(out[i] == in[i], msg);
+    }
+
+    CHECK(dm2_champion_inventory_write(NULL, f) == -1,
+          "inventory write rejects NULL inventory");
+    CHECK(dm2_champion_inventory_read(NULL, f) == -1,
+          "inventory read rejects NULL destination");
+
+    fclose(f);
+}
+
 /* ── Test 5: Serialize → deserialize round-trip ── */
 static void test_serialize_roundtrip(void)
 {
@@ -284,6 +328,14 @@ static void test_slot_roundtrip(void)
 
     /* Modify session for this test */
     dm2_v1_session_new(&orig);
+    /* ReDMCSB LOADSAVE.C:1941-1947 and 2731-2742 restore the party map,
+     * coordinates, and direction from save state; keep the DM2 session
+     * transition fields round-tripping so map continuity does not drift. */
+    orig.party_level = 2;
+    orig.outdoor_mode = 1;
+    orig.party_x = 23;
+    orig.party_y = 11;
+    orig.party_dir = 3;
     orig.gold = 500;
     orig.time_of_day_minutes = 900; /* 3 PM */
     orig.rain_intensity = 50;
@@ -301,6 +353,13 @@ static void test_slot_roundtrip(void)
     CHECK(r == 0, "load_slot returns 0 (success)");
 
     /* Verify loaded values */
+    CHECK(loaded.party_level == 2,
+          "party_level preserved through slot round-trip");
+    CHECK(loaded.outdoor_mode == 1,
+          "outdoor_mode preserved through slot round-trip");
+    CHECK(loaded.party_x == 23, "party_x preserved through slot round-trip");
+    CHECK(loaded.party_y == 11, "party_y preserved through slot round-trip");
+    CHECK(loaded.party_dir == 3, "party_dir preserved through slot round-trip");
     CHECK(loaded.gold == 500, "gold preserved through slot round-trip");
     CHECK(loaded.time_of_day_minutes == 900,
           "time_of_day preserved through slot round-trip");
@@ -416,6 +475,10 @@ int main(void)
     /* ── Session validation ── */
     printf("\n--- Session validation ---\n");
     test_session_validate();
+
+    /* ── Champion inventory slot order ── */
+    printf("\n--- Champion inventory ordering ---\n");
+    test_champion_inventory_order_roundtrip();
 
     /* ── Serialize round-trip ── */
     printf("\n--- Serialize→deserialize round-trip ---\n");

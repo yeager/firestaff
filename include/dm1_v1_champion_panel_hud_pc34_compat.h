@@ -47,7 +47,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* F0658 blit — defined in firestaff_pc34_core_amalgam.c, included in m10 via GLOB_RECURSE * /
+/* F0658 blit — defined in firestaff_pc34_core_amalgam.c, included in m10 via GLOB_RECURSE */
 extern void F0658_BlitBitmapIndexToZoneIndexWithTransparency(int16_t bitmapIndex, int16_t zoneIndex, int16_t transparentColor);
 
 /* ── Champion color table — G0046_auc_Graphic562_ChampionColor[4] ── */
@@ -182,12 +182,80 @@ typedef struct DM1_ChampionPanel_StatusBoxModel {
     int stopAfterDead;
 } DM1_ChampionPanel_StatusBoxModel;
 
+typedef struct DM1_ChampionPanel_IconBitmapModel {
+    int width;
+    int height;
+    int fillColor;
+    int graphicId;
+    int sourceX;
+    int sourceY;
+    int transparentColor;
+    int applyInvisibilityPalette;
+} DM1_ChampionPanel_IconBitmapModel;
+
+typedef struct DM1_ChampionPanel_BarFillModel {
+    int zoneId;
+    int x;
+    int y;
+    int width;
+    int height;
+    int blankColor;
+    int fillColor;
+    int blankX;
+    int blankY;
+    int blankWidth;
+    int blankHeight;
+    int fillX;
+    int fillY;
+    int fillWidth;
+    int fillHeight;
+    int emitsBlank;
+    int emitsFill;
+} DM1_ChampionPanel_BarFillModel;
+
+/* ── Status hand slot box pixel model — CHAMDRAW.C F0291 ──
+ *
+ * 18x18 hand-slot box anchored at the parent status box at the
+ * source-locked offsets C211..C218:
+ *   ready hand  = champIdx * 69 + 4
+ *   action hand = champIdx * 69 + 24
+ *   y = 10
+ * The model collapses the F0291 wound/acting/normal logic plus
+ * the F0292 action-hand redraw so the per-slot graphic id, hand
+ * index, and champion index are all retrievable in one model.
+ */
+typedef struct DM1_ChampionPanel_StatusHandSlotBoxModel {
+    int championIndex;
+    int handIndex;
+    int isActionHand;
+    int isActingChampion;
+    int x;
+    int y;
+    int width;
+    int height;
+    int graphicId;
+} DM1_ChampionPanel_StatusHandSlotBoxModel;
+
 int DM1_ChampionPanel_BuildStatusBoxModel(
     int championIndex, int leaderIndex, int isInventoryChampion,
     int currentHealth, DM1_ChampionPanel_StatusBoxModel *outModel);
 
+int DM1_ChampionPanel_BuildIconBitmapModel(
+    int championIndex, int championDirection, int partyDirection,
+    int invisibilityCount, DM1_ChampionPanel_IconBitmapModel *outModel);
+
 /* ── Source-locked bar height — CHAMDRAW.C F0287 ── */
 int DM1_ChampionPanel_BarGraphHeight(int current, int maximum, int isMana);
+
+/* ── PC34 bar fill rectangles — CHAMDRAW.C F0287 lines 307-342 ── */
+int DM1_ChampionPanel_BuildPc34BarFillModel(
+    int championIndex, int statIndex, int current, int maximum,
+    DM1_ChampionPanel_BarFillModel *outModel);
+
+/* ── Status hand slot box pixel model — CHAMDRAW.C F0291 ── */
+int DM1_ChampionPanel_BuildStatusHandSlotBoxModel(
+    int championIndex, int handIndex, int isActingChampion,
+    DM1_ChampionPanel_StatusHandSlotBoxModel *outModel);
 
 /* ── Slot box graphic — CHAMDRAW.C F0291 ── */
 int DM1_ChampionPanel_SlotBoxGraphic(int slotIndex, uint16_t wounds,
@@ -268,7 +336,29 @@ int DM1_ChampionPanel_NameColor(int champIdx, int leaderIdx);
 /* ── Dead status box predicate ── */
 int DM1_ChampionPanel_IsDeadStatusBox(int currentHealth);
 
-/* Food/Water/Poison label rendering — PANEL.C:1598-1606 */
+/* Food/Water/Poison label blits — PANEL.C:1598-1606 F0345 */
+#define DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT 3
+
+typedef struct DM1_ChampionPanel_F0658BlitStepSpec {
+    int bitmapId;
+    int zoneId;
+    int transparentColor;
+    int sourceLine;
+    int requiresPoisoned;
+} DM1_ChampionPanel_F0658BlitStepSpec;
+
+typedef struct DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec {
+    int blitCount;
+    int sourceStartLine;
+    int sourceEndLine;
+    int conditionalLine;
+    const char *sourceEvidence;
+    DM1_ChampionPanel_F0658BlitStepSpec blits[DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT];
+} DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec;
+
+const DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *
+DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked(void);
+const char *DM1_ChampionPanel_F0658PoisonedBlitSourceEvidence(void);
 void DM1_ChampionPanel_DrawFoodWaterPoisonLabels(int poisoned);
 
 /* ── Self-test: returns number of failures ── */

@@ -193,6 +193,11 @@ struct ChampionLifecycleState_Compat {
     uint16_t maxHealth;           /*   2 */
     uint16_t maxStamina;          /*   2 */
     uint16_t maxMana;             /*   2 */
+    /* C80..C83 magic-map per-champion refresh counters (CSB).
+     * 4 bytes (one per champion) lets CSB track per-champion
+     * map refresh independently.  DM1 PC 3.4 keeps this 0
+     * (shared per-party refresh). */
+    uint8_t  magicMapRefresh[4];  /*   4 */
 };
 
 struct LifecycleState_Compat {

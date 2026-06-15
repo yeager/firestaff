@@ -1,0 +1,48 @@
+{
+  "pass": "pass_dm1_v1_chest_mid_close_hand_swap",
+  "status": "PASS",
+  "timestamp": "2026-06-07T20:49:00Z",
+  "contractOnly": true,
+  "sourceEvidence": [
+    {
+      "file": "CHEST.C",
+      "function": "F0333_INVENTORY_OpenAndDrawChest",
+      "lines": "43,53-67",
+      "claim": "Open chest selects G0426 and materializes the first eight linked objects into G0425."
+    },
+    {
+      "file": "CHEST.C",
+      "function": "F0334_INVENTORY_CloseChest",
+      "lines": "113-132",
+      "claim": "Close clears G0426, resets the container list, then reads current G0425 slots in ascending order and relinks only visited non-empty entries."
+    },
+    {
+      "file": "CHAMPION.C",
+      "function": "F0297_CHAMPION_PutObjectInLeaderHand / F0298_CHAMPION_GetObjectRemovedFromLeaderHand",
+      "lines": "243-298",
+      "claim": "Leader-hand put/remove preserves object identity while updating hand state and load."
+    },
+    {
+      "file": "CHAMPION.C",
+      "function": "F0300_CHAMPION_GetObjectRemovedFromSlot / F0301_CHAMPION_AddObjectInSlot / F0302_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+      "lines": "511-515,606-614,688-710",
+      "claim": "Chest slot swaps read and mutate current G0425 through remove/remove/put/put ordering."
+    },
+    {
+      "file": "OBJECT.C",
+      "function": "F0033_OBJECT_GetIconIndex",
+      "lines": "147-212",
+      "claim": "Icon identity is source-referenced only; the gate uses itemType sentinels and does not claim pixel parity."
+    },
+    {
+      "file": "BLITMASK.C",
+      "function": "F0133_VIDEO_BlitBoxFilledWithMaskedBitmap",
+      "lines": "30-33",
+      "claim": "Masked bitmap presentation is out of scope for this contract-only runtime gate."
+    }
+  ],
+  "assertionCount": 127,
+  "testBinary": "test_dm1_v1_chest_mid_close_hand_swap_pc34_compat",
+  "ctestName": "dm1_v1_chest_mid_close_hand_swap_pc34_compat",
+  "notes": "Non-duplicative against existing close-rewire coverage: this gate mutates a G0425 future slot after F0334 has already begun processing the close loop."
+}

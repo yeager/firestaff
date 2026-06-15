@@ -30,6 +30,7 @@
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
+#include "swsh_intro_pathfinder_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,6 +131,68 @@ static int m11_present_launcher(unsigned char* launcherFramebuffer,
     return M11_Render_PresentIndexed(launcherFramebuffer,
                                      M11_LAUNCHER_FB_WIDTH,
                                      M11_LAUNCHER_FB_HEIGHT);
+}
+
+static int m11_game_indexed_presentation_scale(const M11_GameViewState* gameView) {
+    return (gameView &&
+            gameView->presentationMode == M12_PRESENTATION_V20_FILTERED) ? 2 : 1;
+}
+
+static int m11_game_presentation_target(const M11_GameViewState* gameView,
+                                        int* outW,
+                                        int* outH) {
+    int targetW = M11_FB_WIDTH;
+    int targetH = M11_FB_HEIGHT;
+    if (gameView && gameView->presentationMode == M12_PRESENTATION_V20_FILTERED) {
+        targetW = M11_FB_WIDTH * 2;
+        targetH = M11_FB_HEIGHT * 2;
+    } else if (gameView &&
+               M12_PresentationMode_AllowsResolutionChoice(gameView->presentationMode) &&
+               gameView->presentationWidth > 0 &&
+               gameView->presentationHeight > 0) {
+        targetW = gameView->presentationWidth;
+        targetH = gameView->presentationHeight;
+    }
+    if (outW) {
+        *outW = targetW;
+    }
+    if (outH) {
+        *outH = targetH;
+    }
+    return targetW != M11_FB_WIDTH || targetH != M11_FB_HEIGHT;
+}
+
+static void m11_map_presented_game_point_to_source(const M11_GameViewState* gameView,
+                                                   int* x,
+                                                   int* y) {
+    if (!gameView) {
+        return;
+    }
+    (void)M11_MapPresentedGamePointToSourceForPresentation(gameView->presentationMode,
+                                                           gameView->presentationWidth,
+                                                           gameView->presentationHeight,
+                                                           x,
+                                                           y);
+}
+
+static int m11_present_game_frame(const M11_GameViewState* gameView) {
+    int scale = m11_game_indexed_presentation_scale(gameView);
+    int targetW = M11_FB_WIDTH;
+    int targetH = M11_FB_HEIGHT;
+    if (scale > 1) {
+        return M11_Render_PresentScaledIndexed(M11_Render_GetFramebuffer(),
+                                               M11_FB_WIDTH,
+                                               M11_FB_HEIGHT,
+                                               scale);
+    }
+    if (m11_game_presentation_target(gameView, &targetW, &targetH)) {
+        return M11_Render_PresentIndexedToResolution(M11_Render_GetFramebuffer(),
+                                                     M11_FB_WIDTH,
+                                                     M11_FB_HEIGHT,
+                                                     targetW,
+                                                     targetH);
+    }
+    return M11_Render_Present();
 }
 
 void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
@@ -617,10 +680,11 @@ static int m11_play_redmcsb_entrance_transition(M11_GameViewState* gameView, int
                 continue;
             }
         }
-        if (step.delayTicks >= 20U) {
-            SDL_Delay(330);
-        } else {
-            SDL_Delay(step.vblankLoopCount ? 16 : 33);
+        {
+            unsigned int delayMs = ENTRANCE_Compat_GetRuntimeDelayMs(&step);
+            if (delayMs > 0U) {
+                SDL_Delay(delayMs);
+            }
         }
         if (M11_Render_PumpEvents()) break;
     }
@@ -773,60 +837,98 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
     }
 }
 
-
-
-/* Find the FTL logo (SWOOSH binary) from canonical DM1 PC 3.4 original data.
- * ReDMCSB SWSH.C T0901006: logo is a raw IMG1 bitmap expanded to Physbase. */
-static int m11_find_ftl_swoosh_logo_path(const char* dataDir, char* outPath, size_t outPathBytes) {
-    static const char* homeSuffixes[] = {
-        ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/SWOOSH",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH"
-    };
-    if (!outPath || outPathBytes == 0U) return 0;
-    outPath[0] = '\0';
-    { const char* e = getenv("FIRESTAFF_SWOOSH"); if (e && e[0] != '\0') { snprintf(outPath, outPathBytes, "%s", e); return 1; } }
-    { const char* home = getenv("HOME"); if (home && home[0] != '\0') {
-        for (size_t i = 0U; i < sizeof(homeSuffixes)/sizeof(homeSuffixes[0]); ++i) {
-            char cand[FSP_PATH_MAX]; snprintf(cand, sizeof(cand), "%s/%s", home, homeSuffixes[i]); FILE* tf = fopen(cand,"rb"); if (tf){fclose(tf); snprintf(outPath,outPathBytes,"%s",cand); return 1;} } } }
-    if (dataDir && dataDir[0] != '\0') {
-        char cand[FSP_PATH_MAX]; static const char* suf[] = {"SWOOSH","SWOOSH.DAT"};
-        for (size_t i = 0U; i < sizeof(suf)/sizeof(suf[0]); ++i) { snprintf(cand,sizeof(cand),"%s/%s",dataDir,suf[i]); FILE* tf=fopen(cand,"rb"); if(tf){fclose(tf); snprintf(outPath,outPathBytes,"%s",cand); return 1;} } }
-    return 0;
-}
-
 /* Play the FTL swoosh palette animation. ReDMCSB SWSH.C: static logo on black palette,
  * then V0901006_PaletteCommands lights colors sequentially via Setcolor()/Vsync.
  * ESC/Enter/click skips. Skipped when --game was used (direct launch skips full intro). */
-static void m11_play_ftl_swoosh_if_available(const char* dataDir, int skipSwoosh) {
+static void m11_swsh_indexed_to_rgba(const unsigned char* indexed,
+                                     unsigned char* rgba,
+                                     const unsigned char palette[16][3]) {
+    unsigned int i;
+    if (!indexed || !rgba || !palette) return;
+    for (i = 0U; i < (unsigned int)M11_FB_BYTES; ++i) {
+        unsigned char idx = indexed[i] & 0x0Fu;
+        rgba[i * 4U + 0U] = palette[idx][0];
+        rgba[i * 4U + 1U] = palette[idx][1];
+        rgba[i * 4U + 2U] = palette[idx][2];
+        rgba[i * 4U + 3U] = 0xFFu;
+    }
+}
+
+static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuState,
+                                              const char* dataDir,
+                                              int skipSwoosh) {
     char logoPath[FSP_PATH_MAX];
-    unsigned char* logoImg = NULL; unsigned char* screenFb = NULL; FILE* f = NULL; long fsize = 0;
+    unsigned char* logoImg = NULL; unsigned char* screenFb = NULL; unsigned char* screenRgba = NULL; FILE* f = NULL; long fsize = 0;
+    const unsigned char* logoPayload = NULL;
+    unsigned char swshPalette[16][3];
     if (skipSwoosh) return;
-    if (!m11_find_ftl_swoosh_logo_path(dataDir, logoPath, sizeof(logoPath))) return;
+    if (!M11_SWSH_Intro_FindLogoPath(menuState, dataDir, logoPath, sizeof(logoPath))) return;
     f = fopen(logoPath, "rb"); if (!f) return;
     fseek(f, 0, SEEK_END); fsize = ftell(f); fseek(f, 0, SEEK_SET);
     logoImg = (unsigned char*)malloc((size_t)fsize);
     screenFb = (unsigned char*)calloc(1, (size_t)M11_FB_BYTES);
-    if (!logoImg || !screenFb) goto cleanup;
+    screenRgba = (unsigned char*)malloc((size_t)M11_FB_BYTES * 4U);
+    if (!logoImg || !screenFb || !screenRgba) goto cleanup;
     if (fread(logoImg, 1, (size_t)fsize, f) != (size_t)fsize) goto cleanup;
-    SWSH_Compat_ExpandLogoToBitmap(logoImg, screenFb);
+    logoPayload = SWSH_Compat_FindLogoImagePayload(logoImg, (unsigned int)fsize);
+    if (!logoPayload) goto cleanup;
+    SWSH_Compat_ExpandLogoToBitmap(logoPayload, screenFb);
 
-    /* V0901006_PaletteCommands from ReDMCSB SWSH.C: word < 0x0008 = wait-count, else color-set. */
-    { static const uint16_t cmds[] = {
-        0x1777u,0x0001u,0x2777u,0x0001u,0x3777u,0x0002u,0x4777u,0x0002u,
-        0x5777u,0x0003u,0x6777u,0x0003u,0x7777u,0x0003u,0x8777u,0x9777u,
-        0xA555u,0xF777u,0x0003u,0x8000u,0xB777u,0xC555u,0xD222u,0x0003u,0xF770u,0xE770u
-    }; size_t n = sizeof(cmds)/sizeof(cmds[0]);
+    /* ReDMCSB SWSH.C F2255:2975-3039 / DRAWVIEW.C G8162-G8171:
+     * the PC/F20E path applies each Swoosh palette row before waiting
+     * for its source delay. Present each palette mutation immediately
+     * so the logo does not collapse several source colors into one
+     * modern frame. */
+    memset(swshPalette, 0, sizeof(swshPalette));
+    {
+      unsigned int sourceStep;
+      int paletteDirty = 0;
       SDL_Delay(20);
-      M11_Render_PresentIndexedWithSpecialPalette(screenFb, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_TITLE);
-      for (size_t i = 0; i < n; ++i) {
+      m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+      M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+      for (sourceStep = 1U; sourceStep <= SWSH_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
+          SWSH_CompatSourceAnimationStep step;
           if (M11_Render_PumpEvents()) break;
-          uint16_t w = cmds[i];
-          if (w < 0x0008u) { for (uint16_t v=0;v<w;++v) SDL_Delay(16); }
-          else { M11_Render_PresentIndexedWithSpecialPalette(screenFb, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_TITLE); SDL_Delay(16); } }
+          if (!SWSH_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
+          if (step.kind == SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR) {
+              SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(step.colorValue,
+                                                       swshPalette[step.colorIndex & 0x0FU]);
+              m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+              M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+              paletteDirty = 0;
+          } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS) {
+              unsigned int vblank;
+              if (paletteDirty) {
+                  m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+                  M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+                  paletteDirty = 0;
+              }
+              /* ReDMCSB SWSH.C:33-37: each Vsync wait is one 50 Hz vertical
+               * blank (~20 ms).  Use wall-clock timing so high-refresh displays
+               * (e.g. MacBook Pro 120 Hz ProMotion) do not race through the
+               * palette animation faster than the original Atari ST rate. */
+              for (vblank = 0U; vblank < step.vblankCount; ++vblank) {
+                  Uint64 t0 = SDL_GetTicks();
+                  SDL_Delay(16);  /* yield most of the 20 ms frame */
+                  while ((SDL_GetTicks() - t0) < 20) {
+                      SDL_Delay(1);
+                  }
+              }
+          } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM) {
+              if (paletteDirty) {
+                  m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+                  M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+                  paletteDirty = 0;
+              }
+          }
+      }
+      if (paletteDirty) {
+              m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+              M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
+      }
       SDL_Delay(120); }
 cleanup:
-    if (logoImg) free(logoImg); if (screenFb) free(screenFb); if (f) fclose(f);
+    if (logoImg) free(logoImg); if (screenFb) free(screenFb); if (screenRgba) free(screenRgba); if (f) fclose(f);
 }
 
 static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* gameView,
@@ -877,6 +979,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
      */
     for (sourceStep = 1U; sourceStep <= V1_TitleFrontend_GetSourceAnimationStepCount(); ++sourceStep) {
         V1_TitleFrontendSourceAnimationStep step;
+        int stepPalette;
         if (!V1_TitleFrontend_GetSourceAnimationStep(sourceStep, &step)) {
             break;
         }
@@ -920,10 +1023,19 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
             continue;
         }
 
+        /* ReDMCSB TITLE.C F0437 PC/F20: PRESENTS uses C12_PRESENTS
+         * (VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS), ZOOM and STRIKES
+         * BACK use the merged C13_DUNGEON + C14_MASTER palette
+         * (VGA_PALETTE_PC34_SPECIAL_TITLE).  The helper
+         * V1_TitleFrontend_GetStepPalette is the single source of
+         * truth for that mapping; v2.7.4 always used
+         * VGA_PALETTE_PC34_SPECIAL_TITLE for every step and painted
+         * the "PRESENTS" word red instead of plain white. */
+        (void)V1_TitleFrontend_GetStepPalette(step.kind, &stepPalette);
         if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
-                                                        VGA_PALETTE_PC34_SPECIAL_TITLE) != M11_RENDER_OK) {
+                                                        stepPalette) != M11_RENDER_OK) {
             break;
         }
         if (outPlayedAnyFrame) {
@@ -934,6 +1046,11 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
             break;
         }
     }
+    /* ReDMCSB TITLE.C:395-409 leaves two post-zoom VBlanks plus the final
+     * BUG0_71 guard before STARTUP1.C advances into the entrance.  The
+     * TITLE.DAT fallback below already observes this; keep the GRAPHICS.DAT
+     * C001 runtime path on the same source cadence. */
+    SDL_Delay(V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing));
     if (titleAudioInitialized) {
         M11_Audio_Shutdown(&titleAudio);
     }
@@ -994,13 +1111,16 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
      * fallback rather than skipping straight to the entrance. */
     for (step = 1U; step <= V1_TITLE_DAT_FRAME_MAX; ++step) {
         V1_TitleFrontendSequenceDecision d = V1_TitleFrontend_DecideSequenceStep(step);
+        V1_TitleFrontendRenderResult renderResult;
+        int stepPalette;
         memset(packedStorage, 0, 4U + 32000U);
         memset(indexedScreen, 0, (size_t)M11_FB_BYTES);
+        memset(&renderResult, 0, sizeof(renderResult));
         err[0] = '\0';
         if (!V1_TitleFrontend_RenderFrameToScreen(titlePath,
                                                   d.renderFrameOrdinal,
                                                   packedScreen,
-                                                  NULL,
+                                                  &renderResult,
                                                   err,
                                                   sizeof(err))) {
             fprintf(stderr,
@@ -1011,10 +1131,18 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
             break;
         }
         m11_unpack_title_4bpp_to_indexed(packedScreen, indexedScreen);
+        /* TITLE.DAT is the bank-of-frames fallback used when the
+         * GRAPHICS.DAT C001 graphic is not available.  Keep its palette
+         * choice behind the same ReDMCSB TITLE.C source-lock helper as
+         * the normal GRAPHICS.DAT path; the runtime must not hard-code a
+         * different interpretation of the C12_PRESENTS -> C13_DUNGEON +
+         * C14_MASTER switch. */
+        (void)V1_TitleFrontend_GetFallbackFramePalette(renderResult.paletteOrdinal,
+                                                       &stepPalette);
         if (M11_Render_PresentIndexedWithSpecialPalette(indexedScreen,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
-                                                        VGA_PALETTE_PC34_SPECIAL_TITLE) != M11_RENDER_OK) {
+                                                        stepPalette) != M11_RENDER_OK) {
             fprintf(stderr,
                     "Firestaff V1 original TITLE intro stopped: renderer failed to present frame %u\n",
                     d.renderFrameOrdinal);
@@ -1065,9 +1193,12 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             menuState, menuState->activatedIndex);
         if (launchEntry && launchEntry->gameId &&
             strcmp(launchEntry->gameId, "dm1") == 0) {
-            /* ReDMCSB: FTL swoosh (SWSH.C) before TITLE per original boot order. */
+            /* ReDMCSB: FTL swoosh (SWSH.C) before TITLE per original boot order.
+             * Pass the menu state so the FTL/SWSH finder can locate SWOOSH next
+             * to the matched GRAPHICS.DAT, the user-supplied data dir, or the
+             * canonical $HOME OpenClaw original-games anchors. */
             M11_Render_RaiseWindow();
-            m11_play_ftl_swoosh_if_available(dataDir, 0);
+            m11_play_ftl_swoosh_if_available(menuState, dataDir, 0);
         }
         /* CSB has its own title/entrance sequence.  ReDMCSB ENTRANCE.C
          * F0806 builds the CSB entrance micro-dungeon with C28_ENTRANCE_CSB
@@ -1096,12 +1227,11 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             m11_play_redmcsb_title_intro_if_available(menuState, gameView, &titleIntroPlayed);
         }
         /* ReDMCSB: the entrance screen always plays for DM1 regardless
-         * of presentation mode.  F0441_STARTEND_ProcessEntrance is the
-         * mandatory gate between title and gameplay.  Previously this
-         * was gated on V1_ORIGINAL mode only, causing the entrance to
-         * be skipped when the user selected V2 Enhanced 2D or other
-         * modes — dropping them straight into the dungeon. */
-        {
+         * of presentation mode. F0441_STARTEND_ProcessEntrance is the
+         * mandatory gate between title and gameplay. Other games keep
+         * their own handoff paths; Theron's Quest starts directly from
+         * its Track 02 runtime image. */
+        if (strcmp(gameView->sourceId, "dm1") == 0) {
             int entranceResult = m11_play_redmcsb_entrance_transition(gameView, 1200);
             if (entranceResult == M11_ENTRANCE_COMMAND_QUIT) {
                 gameView->active = 0;
@@ -1170,6 +1300,10 @@ static int m11_prepare_direct_launch(M12_StartupMenuState* menuState,
             entry->kind == M12_MENU_ENTRY_GAME &&
             entry->gameId &&
             strcmp(entry->gameId, gameId) == 0) {
+            if (!entry->available ||
+                !M12_AssetStatus_GameAvailable(&menuState->assetStatus, gameId)) {
+                return 0;
+            }
             menuState->selectedIndex = i;
             menuState->activatedIndex = i;
             menuState->launchRequested = 1;
@@ -1539,6 +1673,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                   (int)ev.button.y,
                                                   &mappedX,
                                                   &mappedY)) {
+                m11_map_presented_game_point_to_source(gameView, &mappedX, &mappedY);
                 *gameViewResult = M11_GameView_HandlePointerButton(
                     gameView,
                     mappedX,
@@ -1838,6 +1973,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                   ev.button.y,
                                                   &mappedX,
                                                   &mappedY)) {
+                m11_map_presented_game_point_to_source(gameView, &mappedX, &mappedY);
                 *gameViewResult = M11_GameView_HandlePointerButton(
                     gameView,
                     mappedX,
@@ -2093,8 +2229,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const M11_PhaseA_Options* o;
     runtimeOptions = opts ? *opts : defaults;
     m11_apply_persisted_window_size(&runtimeOptions);
-    /* Enable accessibility manifest if env var is set or always-on for now */
-    if (getenv("FS_ACCESSIBILITY") || 1) {
+    /* Enable the disk-backed automation manifest only on request. It writes
+     * ~/.firestaff/accessibility.json atomically from M11_GameView_Draw();
+     * leaving it always-on made normal gameplay do per-frame filesystem I/O. */
+    if (getenv("FS_ACCESSIBILITY")) {
         fs_ax_set_enabled(1);
     }
     o = &runtimeOptions;
@@ -2190,7 +2328,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     /* Always present at least once so the window actually has content. */
     if (o->directLaunch) {
         if (!m11_prepare_direct_launch(&menuState, o->gameId)) {
-            fprintf(stderr, "firestaff: unknown game id for --game: %s\n",
+            fprintf(stderr, "firestaff: game unavailable for --game: %s\n",
                     o->gameId ? o->gameId : "(null)");
             runRc = 2;
             goto cleanup;
@@ -2366,7 +2504,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             DM1_CombatLog_Render(&gameView,
                                  M11_Render_GetFramebuffer(),
                                  M11_FB_WIDTH, M11_FB_HEIGHT);
-            M11_Render_Present();
+            m11_present_game_frame(&gameView);
         } else {
             /* Redraw the launcher every tick so animations (pulse,
              * hover) remain alive even without input. */

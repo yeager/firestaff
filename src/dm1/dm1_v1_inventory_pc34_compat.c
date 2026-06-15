@@ -50,6 +50,7 @@ void m11_inventory_init(M11_InventoryState* s, int championCount) {
     if (!s) return;
     memset(s, 0, sizeof(M11_InventoryState));
     s->championCount = championCount;
+    s->panelContent = DM1_PC34_PANEL_INVENTORY;
 }
 
 int m11_inventory_set_item(M11_InventoryState* s, int champ, int slot, int itemType, int weight, int charges) {
@@ -328,10 +329,15 @@ int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int p
     }
 
     if (leaderHandObject.itemType != 0 &&
-        ((leaderHandObject.allowedSlots & slotMask) == 0)) {
+        !m11_inventory_can_equip(&leaderHandObject, pc34Slot)) {
         return 0;
     }
 
+    /* ReDMCSB CHAMPION.C F0302 lines 688-710: remember leader hand and
+     * selected slot, remove the occupied slot into leader hand, then add the
+     * previous leader-hand object back to the same slot.  For C30+ chest slots
+     * F0300 lines 511-515 and F0301 lines 606-610 route through
+     * G0425_aT_ChestSlots rather than champion Slots[]. */
     if (slotObject.itemType != 0) {
         inv->mouseItem = slotObject;
     } else {
@@ -344,6 +350,36 @@ int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int p
     }
     m11_inventory_recalc_load(s, champ);
     return 1;
+}
+
+const char *dm1_inventory_chest_stale_click_source_evidence_pc34(void)
+{
+    return
+        "CHEST.C:31-43 F0333 ignores same chest, closes a different open chest, then writes G0426_T_OpenChest\n"
+        "CHEST.C:113-121 F0334 rejects close when no G0426 chest is open, clears G0426_T_OpenChest, and erases G0425 slots\n"
+        "CHAMPION.C:689-690 F0302 routes C30+ slot boxes through the current G0425_aT_ChestSlots entry only\n"
+        "CHAMPION.C:694-710 F0302 rejects empty hand/empty slot, then performs the leader-hand/chest-slot swap";
+}
+
+int m11_inventory_click_open_chest_slot_for_thing(M11_InventoryState* s, int champ,
+                                                  int expectedOpenChestThing,
+                                                  int chestSlotIndex) {
+    if (!s || champ < 0 || champ >= s->championCount ||
+        expectedOpenChestThing == 0 || chestSlotIndex < 0 ||
+        chestSlotIndex >= DM1_PC34_CHEST_SLOT_COUNT) {
+        return 0;
+    }
+
+    /* ReDMCSB CHEST.C F0333 lines 31-43 and F0334 lines 113-121 make
+     * G0426_T_OpenChest the authority for the currently routed chest panel.
+     * Reject stale C537..C544 clicks from a dismissed or replaced chest before
+     * they can operate on the current G0425_aT_ChestSlots view. */
+    if (s->champions[champ].openChestThing != expectedOpenChestThing) {
+        return 0;
+    }
+
+    return m11_inventory_click_pc34_source_slot(
+        s, champ, DM1_PC34_SLOT_CHEST_1 + chestSlotIndex);
 }
 
 int m11_inventory_resolve_status_hand_slot_box(int slotBoxIndex,
@@ -401,6 +437,10 @@ int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThin
         return 0;
     }
     M11_ChampionInventory* inv = &s->champions[champ];
+    /* ReDMCSB: CHEST.C F0333 line 28 sets G0424_i_PanelContent to
+     * M569_PANEL_CHEST before the F0333 lines 31-32 same-open return.  For
+     * PC 3.4, DEFS.H lines 3005-3008 define M569_PANEL_CHEST as 6. */
+    s->panelContent = DM1_PC34_PANEL_CHEST;
     if (inv->openChestThing == openChestThing) {
         return 1;
     }
@@ -415,6 +455,85 @@ int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThin
     }
     m11_inventory_recalc_load(s, champ);
     return 1;
+}
+
+int m11_inventory_get_panel_content_pc34(const M11_InventoryState* s) {
+    if (!s) {
+        return DM1_PC34_PANEL_INVENTORY;
+    }
+    return s->panelContent;
+}
+
+int m11_inventory_apply_panel_route_after_close_pc34(M11_InventoryState* s,
+                                                   int champ)
+{
+    if (!s || champ < 0 || champ >= s->championCount) {
+        return 0;
+    }
+
+    /* ReDMCSB PANEL.C F0347 lines 1651-1691 redraws the inventory action-hand
+     * route when close/click flows leave the chest panel: container action hands
+     * keep CHEST panel content, otherwise status panel content returns to
+     * food/water/poison fallback. */
+    const M11_Item* actionHand =
+        &s->champions[champ].slots[DM1_SLOT_HAND_LEFT];
+    if (!actionHand->itemType ||
+        (actionHand->allowedSlots & DM1_PC34_ALLOWED_CONTAINER) == 0) {
+        s->panelContent = DM1_PC34_PANEL_FOOD_WATER_POISONED;
+        return 1;
+    }
+
+    s->panelContent = DM1_PC34_PANEL_CHEST;
+    return 1;
+}
+
+int m11_inventory_set_panel_content_pc34(M11_InventoryState* s,
+                                         int panelContent) {
+    if (!s) {
+        return 0;
+    }
+    s->panelContent = panelContent;
+    return 1;
+}
+
+int m11_inventory_open_chest_replacing_current(M11_InventoryState* s, int champ,
+                                               int openChestThing,
+                                               const M11_Item* linkedItems,
+                                               int linkedItemCount,
+                                               M11_Item* previousItemsOut,
+                                               int maxPreviousItemsOut) {
+    if (!s || champ < 0 || champ >= s->championCount || openChestThing == 0 ||
+        linkedItemCount < 0 || (linkedItemCount > 0 && !linkedItems) ||
+        maxPreviousItemsOut < 0 || (maxPreviousItemsOut > 0 && !previousItemsOut)) {
+        return -1;
+    }
+
+    M11_ChampionInventory* inv = &s->champions[champ];
+    /* ReDMCSB CHEST.C F0333 line 28 writes M569_PANEL_CHEST before the
+     * same-open guard at lines 31-32 and before the different-chest close at
+     * lines 35-38. */
+    s->panelContent = DM1_PC34_PANEL_CHEST;
+    if (inv->openChestThing == openChestThing) {
+        return 0;
+    }
+
+    int previousCount = 0;
+    /* ReDMCSB CHEST.C F0333 lines 34-39 closes a different G0426_T_OpenChest
+     * through F0334 before F0333 lines 53-76 copies the requested container's
+     * first eight links into G0425_aT_ChestSlots. */
+    if (inv->openChestThing != 0) {
+        previousCount = m11_inventory_close_chest(s, champ, previousItemsOut,
+                                                  maxPreviousItemsOut);
+        if (previousCount < 0) {
+            return -1;
+        }
+    }
+
+    if (!m11_inventory_open_chest(s, champ, openChestThing, linkedItems,
+                                  linkedItemCount)) {
+        return -1;
+    }
+    return previousCount;
 }
 
 int m11_inventory_close_chest(M11_InventoryState* s, int champ,
@@ -485,23 +604,48 @@ int m11_inventory_get_item_in_chest_slot(const M11_InventoryState* s, int champ,
  * ══════════════════════════════════════════════════════════════════════ */
 
 /* dm1_v1_inventory_pc34_compat.c:m11_inventory_can_equip:1
- * Returns 1 if item->allowedSlots overlaps the slot mask for pc34Slot,
- * or 0 if the item has no allowed-slots restriction (allowedSlots==0).
+ * Returns 1 if item->allowedSlots overlaps the slot mask for pc34Slot.
  * dm1_v1_inventory_pc34_compat.c:m11_inventory_pc34_slot_mask:217
  * dm1_v1_inventory_pc34_compat.c:m11_inventory_click_pc34_source_slot:327 */
 int m11_inventory_can_equip(const M11_Item* item, int pc34Slot) {
     if (!item || pc34Slot < 0 || pc34Slot >= DM1_PC34_SLOT_COUNT) {
         return 0;
     }
-    /* An item with no allowed-slots restriction goes anywhere. */
-    if (item->allowedSlots == 0) {
-        return 1;
-    }
     const int slotMask = m11_inventory_pc34_slot_mask(pc34Slot);
     if (slotMask == 0) {
         return 0;
     }
+    /* ReDMCSB CHAMPION.C F0302 lines 694-699 rejects the leader-hand object
+     * when AllowedSlots & DATA.C G0038_ai_Graphic562_SlotMasks[slot] is zero;
+     * there is no special unrestricted case for an AllowedSlots value of 0. */
     return (item->allowedSlots & slotMask) != 0 ? 1 : 0;
+}
+
+int m11_inventory_pc34_applies_rabbits_foot_luck_modifier(const M11_Item* item,
+                                                          int pc34Slot) {
+    if (!item || item->itemType != DM1_PC34_ICON_JUNK_RABBITS_FOOT ||
+        pc34Slot < 0 || pc34Slot >= DM1_PC34_SLOT_COUNT) {
+        return 0;
+    }
+    /* ReDMCSB CHAMPION.C F0299 lines 343-346 gates C137 Rabbit's Foot luck
+     * through P0624_ui_SlotIndex < C30_SLOT_CHEST_1; DEFS.H line 810 makes
+     * C30 the first chest slot, so C30..C37 never apply the luck modifier. */
+    return pc34Slot < DM1_PC34_SLOT_CHEST_1 ? 1 : 0;
+}
+
+int m11_inventory_pc34_get_rabbits_foot_luck_bonus(const M11_InventoryState* s,
+                                                   int champ) {
+    if (!s || champ < 0 || champ >= s->championCount) {
+        return 0;
+    }
+    int bonus = 0;
+    for (int pc34Slot = 0; pc34Slot < DM1_PC34_INVENTORY_SLOT_COUNT; pc34Slot++) {
+        const M11_Item* item = m11_inventory_pc34_const_slot(s, champ, pc34Slot);
+        if (m11_inventory_pc34_applies_rabbits_foot_luck_modifier(item, pc34Slot)) {
+            bonus += DM1_PC34_RABBITS_FOOT_LUCK_BONUS;
+        }
+    }
+    return bonus;
 }
 
 /* dm1_v1_inventory_pc34_compat.c:m11_inventory_equip:1
@@ -596,6 +740,7 @@ int m11_inventory_unequip(M11_InventoryState* s, int champ, int pc34Slot) {
  * CHEST.C:53-76       F0333 copies first 8 linked container things into G0425
  * CHEST.C:112-133     F0334 closes by compacting non-empty G0425 slots back to links
  * DEFS.H:778-817      C00..C37 inventory/backpack/chest slot namespace
+ * DEFS.H:1937         C137_ICON_JUNK_RABBITS_FOOT
  * DATA.C:1049-1087    30 inventory slot masks + 8 chest container masks
  * ══════════════════════════════════════════════════════════════════════ */
 
@@ -607,14 +752,17 @@ const char *dm1_inventory_pass601_inventory_source_evidence(void)
         "CHAMPION.C:301-487 F0299_ApplyObjectModifiersToStatistics\n"
         "CHAMPION.C:489-560 F0300_GetObjectRemovedFromSlot\n"
         "CHAMPION.C:587-660 F0301_AddObjectInSlot\n"
+        "CHAMPION.C:343-346 F0299 Rabbit's Foot luck ignores C30+ chest slots\n"
         "CHAMPION.C:694-699 F0302 empty-slot no-op and AllowedSlots/SlotMasks rejection\n"
         "CHAMPION.C:701-710 F0302 leader-hand/slot swap order\n"
         "CHAMPION.C:677-687 F0302 status hand slot routing gates\n"
         "DATA.C:1049-1087 G0038_ai_Graphic562_SlotMasks\n"
         "DEFS.H:778-817 C00..C37 inventory/backpack/chest slot index namespace\n"
+        "DEFS.H:1937 C137_ICON_JUNK_RABBITS_FOOT\n"
         "DEFS.H:1874-1878 C08 slot-box split and M070_HAND_SLOT_INDEX\n"
         "DEFS.H:1698-1710 object allowed-slot masks\n"
         "CHEST.C:30-46 F0333 open chest guard/open icon\n"
+        "CHEST.C:34-39 F0333 closes different open chest before replacement\n"
         "CHEST.C:53-76 F0333 first-8 chest slot copy\n"
         "CHEST.C:112-133 F0334 non-empty slot compact close\n"
         "CLIKCHAM.C:31-32 status box hand click dispatch\n"

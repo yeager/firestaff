@@ -91,6 +91,7 @@ else:
         "0, 80, 320, 57",
         "VGA_PALETTE_PC34_SPECIAL_TITLE",
         "M11_Audio_PlayTitleMusic(&titleAudio)",
+        "V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing)",
     ]:
         if needle not in body:
             errors.append(f"GRAPHICS.DAT C001 TITLE intro missing source runtime step: {needle}")

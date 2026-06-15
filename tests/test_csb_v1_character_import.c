@@ -141,6 +141,56 @@ static void test_import_one_living_champion(void)
     CHECK(c->Slots[29] == 0xFFFFu, "empty slot 29 is 0xFFFF");
 }
 
+static void test_import_clears_carried_objects(void)
+{
+    uint8_t buf[1024];
+    CSB_V1_PartyState party;
+    CSB_V1_Champion *c;
+    size_t rec_off = CSB_V1_DM1_HDR_CHAMPION_START;
+    size_t equip_off = rec_off + CSB_V1_DM1_CHAMP_OFF_EQUIP;
+    int i;
+
+    memset(buf, 0, sizeof(buf));
+    buf[CSB_V1_DM1_HDR_CHAMP_COUNT] = 1;
+
+    memcpy((char *)buf + rec_off + CSB_V1_DM1_CHAMP_OFF_NAME, "GEAR   ", 8);
+    buf[rec_off + CSB_V1_DM1_CHAMP_OFF_HEALTH] = 80;
+    buf[rec_off + CSB_V1_DM1_CHAMP_OFF_MAX_HEALTH] = 100;
+    buf[rec_off + CSB_V1_DM1_CHAMP_OFF_STAMINA] = 60;
+    buf[rec_off + CSB_V1_DM1_CHAMP_OFF_MAX_STAMINA] = 100;
+    buf[rec_off + CSB_V1_DM1_CHAMP_OFF_MANA] = 30;
+    buf[rec_off + CSB_V1_DM1_CHAMP_OFF_MAX_MANA] = 50;
+    buf[rec_off + CSB_V1_DM1_CHAMP_OFF_STR] = 55;
+    buf[rec_off + CSB_V1_DM1_CHAMP_OFF_DEX] = 66;
+    buf[rec_off + CSB_V1_DM1_CHAMP_OFF_WIS] = 77;
+    buf[rec_off + CSB_V1_DM1_CHAMP_OFF_VIT] = 88;
+
+    for (i = 0; i < CSB_V1_SLOT_COUNT; i++) {
+        uint16_t thing = (uint16_t)(0x1000u + (uint16_t)i);
+        buf[equip_off + (size_t)i * 2] = (uint8_t)(thing & 0xFFu);
+        buf[equip_off + (size_t)i * 2 + 1] = (uint8_t)(thing >> 8);
+    }
+
+    csb_v1_character_init_default(&party);
+    CHECK_EQ(csb_v1_character_import_dm1_buffer(&party, buf, (int)sizeof(buf)),
+             1, "carried-object boundary import returns 1", "d");
+
+    c = &party.Champions[0];
+    CHECK(c->Slots[CSB_V1_SLOT_READY_HAND] == 0xFFFFu,
+          "import clears ready-hand carried object");
+    CHECK(c->Slots[CSB_V1_SLOT_ACTION_HAND] == 0xFFFFu,
+          "import clears action-hand carried object");
+    CHECK(c->Slots[CSB_V1_SLOT_BELT_4] == 0xFFFFu,
+          "import clears belt carried object");
+    CHECK(c->Slots[CSB_V1_SLOT_PACK_12] == 0xFFFFu,
+          "import clears backpack carried object");
+    CHECK(c->Slots[CSB_V1_SLOT_CHEST_1] == 0xFFFFu,
+          "import clears chest slot carried object");
+    CHECK(c->Slots[CSB_V1_SLOT_COUNT - 1] == 0xFFFFu,
+          "import clears final carried-object slot");
+    CHECK_EQ(c->Load, 0, "import resets carried-object load", "d");
+}
+
 static void test_import_dead_champion(void)
 {
     uint8_t buf[1024];
@@ -372,6 +422,8 @@ int main(void)
     test_party_defaults();
     printf("\n");
     test_import_one_living_champion();
+    printf("\n");
+    test_import_clears_carried_objects();
     printf("\n");
     test_import_dead_champion();
     printf("\n");

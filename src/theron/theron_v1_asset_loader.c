@@ -24,21 +24,6 @@
 #define TR_MAGIC_THS4  0x34535448UL  /* "THS4" little-endian */
 #define TR_MAGIC_THQ   0x31515448UL  /* "THQ1" — HuCard ROM marker */
 
-/* ── Known good hashes (MD5, for Track 02 / HuCard ROM) ──────────── */
-/*
- * These are Phase 0 hashes.  Full SHA256 verification of THERO.DAT
- * comes in Phase 2 when the canonical asset catalog is locked.
- * Source: cdromance.org (2026-05-27)
- */
-static const struct {
-    const char *hash;
-    int         region;  /* 0=JP, 1=US */
-} g_track02_hashes[] = {
-    { "b7afb338ad31be1025b53f9aff12d73a", 0 },  /* JP Track 02 */
-    { "f23601102138f87c33025877767ebf76", 1 },  /* US Track 02 */
-    { NULL, 0 }
-};
-
 /* ── Hash verification (Phase 2) ───────────────────────────────── */
 /* Full SHA256/MD5 verification comes in Phase 2 when THERO.DAT
  * canonical hashes are locked in the asset catalog.
@@ -338,8 +323,17 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
     /* Scan for Track 03/04 magic signatures */
     TrAssetResult r = find_tracks_in_buffer(bundle, data, (size_t)file_size);
     if (r < 0) {
-        free(data);
-        return r;
+        /* Real Track 02 images are still valid Theron runtime containers even
+         * when supplemental THG3/THS4 markers are not present in the raw data.
+         * Keep the verified HuCard/data-track bytes and let the renderer use
+         * deterministic fallback tiles until the exact embedded bank offsets
+         * are source-locked. Source: THQUEST.ASM T400/T410 boundary. */
+        bundle->hucard_rom = data;
+        bundle->hucard_rom_size = (size_t)file_size;
+        bundle->region = 1;
+        printf("[TQR] No Track 03/04 markers in %s; keeping raw Track 02 data "
+               "with deterministic fallback assets\n", file_path);
+        return TR_ASSET_OK;
     }
 
     /* Parse Track 03 if found */

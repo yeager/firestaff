@@ -1021,6 +1021,57 @@ static void test_post_move_environment_side_effects(void)
     EXPECT_INT("post_pit_hp_applied", party.champions[0].hp.current, 80);
     EXPECT_INT("post_pit_any_movement", result.anyMovementOccurred, 1);
 
+    /* ReDMCSB MOVESENS.C F0267 lines 538-606 resolves the open pit
+     * before MOVESENS.C F0276 lines 799-818 publishes party leave/enter
+     * sensors.  The pit square is an intermediate transition square: the
+     * fall damage, final map tuple, and lower-map destination sensor are the
+     * small consequence bundle this gate locks down. */
+    {
+        struct DungeonThings_Compat things;
+        unsigned short firstThings[2];
+        struct DungeonSensor_Compat sensors[2];
+
+        setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+        set_sq(level0, 5, 2, 1,
+            sq(DUNGEON_ELEMENT_PIT, DUNGEON_SQUARE_MASK_THING_LIST | 0x08));
+        set_sq(level1, 5, 2, 1,
+            sq(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST));
+        memset(&things, 0, sizeof(things));
+        memset(sensors, 0, sizeof(sensors));
+        firstThings[0] = thing_ref(THING_TYPE_SENSOR, 0);
+        firstThings[1] = thing_ref(THING_TYPE_SENSOR, 1);
+        sensors[0].next = THING_ENDOFLIST;
+        sensors[0].sensorType = 13;
+        sensors[0].sensorData = 31;
+        sensors[1].next = THING_ENDOFLIST;
+        sensors[1].sensorType = 13;
+        sensors[1].sensorData = 62;
+        things.loaded = 1;
+        things.squareFirstThings = firstThings;
+        things.squareFirstThingCount = 2;
+        things.sensors = sensors;
+        things.sensorCount = 2;
+
+        setup_party(&party, 2, 2, DIR_NORTH, 1);
+        DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+        DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+        DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+            &pipeline, &dungeon, &things, &party, NULL, &result);
+
+        EXPECT_INT("post_pit_sensor_gate_step_applied", result.core.stepApplied, 1);
+        EXPECT_INT("post_pit_sensor_gate_pit_count", result.postMove.pitCount, 1);
+        EXPECT_INT("post_pit_sensor_gate_map", party.mapIndex, 1);
+        EXPECT_INT("post_pit_sensor_gate_x", party.mapX, 2);
+        EXPECT_INT("post_pit_sensor_gate_y", party.mapY, 1);
+        EXPECT_INT("post_pit_sensor_gate_damage", result.postMove.championFallDamage[0], 20);
+        EXPECT_INT("post_pit_sensor_gate_hp", party.champions[0].hp.current, 80);
+        EXPECT_INT("post_pit_sensor_gate_enter_count", result.core.enterEffects.count, 1);
+        EXPECT_INT("post_pit_sensor_gate_landing_text",
+            result.core.enterEffects.effects[0].textIndex, 62);
+        EXPECT_INT("post_pit_sensor_gate_not_intermediate",
+            result.core.enterEffects.effects[0].textIndex == 31, 0);
+    }
+
     setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
     set_sq(level0, 5, 2, 1, sq(DUNGEON_ELEMENT_PIT, 0x08));
     setup_party(&party, 2, 2, DIR_NORTH, 1);
@@ -1189,6 +1240,65 @@ static void test_post_move_environment_side_effects(void)
             result.core.enterEffects.effects[0].textIndex, 77);
         EXPECT_INT("post_normal_empty_party_group_x", party.mapX, 2);
         EXPECT_INT("post_normal_empty_party_group_y", party.mapY, 1);
+    }
+}
+
+
+/* ---- Test: F0267 pit fall preserves party inventory/hand state ---- */
+static void test_pit_fall_preserves_inventory_hand_state(void)
+{
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char level0[5 * 5];
+    unsigned char level1[5 * 5];
+    struct PartyState_Compat party;
+    struct Dm1V1MovementPipelinePc34Compat pipeline;
+    struct Dm1V1MovementPipelineResultPc34Compat result;
+    unsigned short beforeInventory[CHAMPION_SLOT_COUNT];
+    int beforeActiveChampion;
+    unsigned short beforeReadyHand;
+    unsigned short beforeActionHand;
+    int i;
+
+    /* ReDMCSB MOVESENS.C F0267 lines 438-606 updates only the party
+     * coordinates/map and fall damage while chaining through an open pit.
+     * G0423 inventory state is a draw gate for falling view refresh, and
+     * CHAMPION.C F0297/F0298 lines 243-298 own leader-hand mutation; a pit
+     * fall must not clear or reshuffle champion inventory/hand slots. */
+    setup_two_level_stairs_dungeon(&dungeon, maps, tiles, level0, level1);
+    set_sq(level0, 5, 2, 1, sq(DUNGEON_ELEMENT_PIT, 0x08));
+    setup_party(&party, 2, 2, DIR_NORTH, 1);
+    party.activeChampionIndex = 0;
+    party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = 0x1400u;
+    party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] = 0x1801u;
+    party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_1] = 0x1c02u;
+    party.champions[0].inventory[CHAMPION_SLOT_POUCH_1] = 0x2003u;
+    memcpy(beforeInventory, party.champions[0].inventory, sizeof(beforeInventory));
+    beforeActiveChampion = party.activeChampionIndex;
+    beforeReadyHand = party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT];
+    beforeActionHand = party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT];
+
+    DM1_V1_MovementPipeline_InitPc34Compat(&pipeline);
+    DM1_V1_MovementPipeline_EnqueueInputPc34Compat(&pipeline, key_event(0xAB35));
+    DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
+        &pipeline, &dungeon, NULL, &party, NULL, &result);
+
+    EXPECT_INT("pit_state_gate_step_applied", result.core.stepApplied, 1);
+    EXPECT_INT("pit_state_gate_pit_count", result.postMove.pitCount, 1);
+    EXPECT_INT("pit_state_gate_position_map", party.mapIndex, 1);
+    EXPECT_INT("pit_state_gate_position_x", party.mapX, 2);
+    EXPECT_INT("pit_state_gate_position_y", party.mapY, 1);
+    EXPECT_INT("pit_state_gate_hp_changed", party.champions[0].hp.current, 80);
+    EXPECT_INT("pit_state_gate_active_champion_preserved",
+        party.activeChampionIndex, beforeActiveChampion);
+    EXPECT_INT("pit_state_gate_ready_hand_preserved",
+        party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT], beforeReadyHand);
+    EXPECT_INT("pit_state_gate_action_hand_preserved",
+        party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT], beforeActionHand);
+    for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
+        EXPECT_INT("pit_state_gate_inventory_slot_preserved",
+            party.champions[0].inventory[i], beforeInventory[i]);
     }
 }
 
@@ -1483,6 +1593,7 @@ int main(void)
     test_stairs_step_consequence();
     test_command_movement_viewport_wall_order_source_lock();
     test_post_move_environment_side_effects();
+    test_pit_fall_preserves_inventory_hand_state();
     test_direct_command_wrapper_forward_step();
     test_original_keyboard_buffer_forward_route_to_first_redraw();
     test_mouse_movement();

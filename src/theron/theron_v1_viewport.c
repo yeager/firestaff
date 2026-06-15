@@ -374,7 +374,9 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
     int party_x = 0, party_y = 0;
     int party_dir = 0;
 
-    /* Try to get party position from world state */
+    /* Try to get the mutable runtime party position first; fall back to the
+     * level header start pose for tests or partially initialized worlds.
+     * Source: THQUEST.ASM T520 party placement/start position. */
     {
         int did = world->current_dungeon;
         int lvl = world->current_level;
@@ -382,9 +384,16 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
             lvl >= 0 && lvl < THERON_MAX_LEVELS_PER_DUNGEON &&
             world->level_loaded[did - 1][lvl]) {
             const Theron_V1_Level *lv = &world->levels[did - 1][lvl];
-            party_x = lv->start_x;
-            party_y = lv->start_y;
-            party_dir = lv->start_dir & 3;
+            if (world->party.leader_x >= 0 && world->party.leader_x < lv->width &&
+                world->party.leader_y >= 0 && world->party.leader_y < lv->height) {
+                party_x = world->party.leader_x;
+                party_y = world->party.leader_y;
+                party_dir = world->party.leader_dir & 3;
+            } else {
+                party_x = lv->start_x;
+                party_y = lv->start_y;
+                party_dir = lv->start_dir & 3;
+            }
         }
     }
 

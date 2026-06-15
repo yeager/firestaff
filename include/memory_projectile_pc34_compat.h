@@ -42,7 +42,7 @@
  *  Serialised sizes (MEDIA016 / LSB-first, 4-byte int32 fields).
  * ========================================================== */
 
-#define PROJECTILE_INSTANCE_SERIALIZED_SIZE        96  /* 24 int32 */
+#define PROJECTILE_INSTANCE_SERIALIZED_SIZE        100  /* 25 int32 (added launcherStrength in v2.7.14) */
 #define EXPLOSION_INSTANCE_SERIALIZED_SIZE         64  /* 16 int32 */
 #define CELL_CONTENT_DIGEST_SERIALIZED_SIZE       100  /* 25 int32 */
 #define PROJECTILE_TICK_RESULT_SERIALIZED_SIZE    232  /* see §2.5 */
@@ -198,6 +198,7 @@ struct ProjectileInstance_Compat {
     int poisonAttack;
     int attackTypeCode;           /* COMBAT_ATTACK_* */
     int flags;                    /* PROJECTILE_FLAG_* */
+    int launcherStrength;         /* PROJEXPL.C:490-500 kinetic pass threshold (0..100) */
     int reserved0;
     int reserved1;
     int reserved2;
@@ -239,10 +240,14 @@ struct ExplosionList_Compat {
  * Caller-pre-baked digest of cell content relevant to projectile
  * motion. Phase 17 reads ONLY this struct in the per-tick path.
  *
- * NEEDS DISASSEMBLY REVIEW: teleporter direction rotation.
- *   `destTeleporterNewDirection` and `destDoorHasButton` replace reserved
- *   slots from the plan's §2.4 draft so the struct stays 100 bytes. v1 leaves
- *   teleporter direction default -1 and does NOT rotate; caller pre-rotates.
+ * ReDMCSB PROJEXPL.C:1260-1310 (F0228/F0229) and the per-square
+ * teleporter rotation: `destTeleporterNewDirection` and
+ * `destDoorHasButton` replace reserved slots from the plan's
+ * §2.4 draft so the struct stays 100 bytes.  v1 leaves the
+ * teleporter direction default -1 and does NOT rotate; the
+ * caller (M11 pre-tick) pre-rotates using F0228_GetDirections-
+ * WhereDestinationIsVisibleFromSource.  See PROJEXPL.C:1260 for
+ * the original visibility + rotation helper.
  */
 struct CellContentDigest_Compat {
     /* Source cell (where projectile currently sits). */

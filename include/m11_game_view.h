@@ -31,7 +31,8 @@ typedef enum {
     M11_GAME_SOURCE_BUILTIN_CATALOG = 0,
     M11_GAME_SOURCE_CUSTOM_DUNGEON,
     M11_GAME_SOURCE_DIRECT_DUNGEON,
-    M11_GAME_SOURCE_NEXUS_DGN
+    M11_GAME_SOURCE_NEXUS_DGN,
+    M11_GAME_SOURCE_THERON_TRACK02
 } M11_GameSourceKind;
 
 typedef struct {
@@ -40,9 +41,14 @@ typedef struct {
     const char* dataDir;
     const char* sourceId;
     const char* dungeonPath;
+    const char* verifiedAssetPath; /* Optional: hash-verified single-file launch path. */
+    const char* verifiedAssetMd5;  /* Optional: expected MD5 for verifiedAssetPath. */
     const char* savePath; /* Optional quick-resume save to restore after dungeon init. */
     int languageIndex;
     int rendererBackend;
+    int presentationMode;
+    int presentationWidth;
+    int presentationHeight;
     int fontScale;        /* Accessibility: font size scale (1..3), 0 = use default */
     M11_GameSourceKind sourceKind;
 } M11_GameLaunchSpec;
@@ -86,6 +92,9 @@ typedef struct {
     char title[64];
     char sourceId[32];
     M11_GameSourceKind sourceKind;
+    int presentationMode;
+    int presentationWidth;
+    int presentationHeight;
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     char lastAction[32];
     char lastOutcome[64];
@@ -127,6 +136,7 @@ typedef struct {
     int candidateMirrorOrdinal;
     int candidateMirrorPartyIndex;
     int candidateMirrorPanelActive;
+    uint32_t lastPartyMovementTick;
     M11_MessageLog messageLog;
     int resting;
     int partyDead;
@@ -266,8 +276,11 @@ typedef struct {
      * G0426_T_OpenChest at the V1 presentation bridge: THING_NONE means
      * no chest panel is currently open; otherwise the value is the
      * container thing whose action-hand icon must render as C145 while
-     * the inventory panel is open. */
+     * the inventory panel is open.  v1OpenChestOpenedByEye preserves the
+     * CHEST.C F0333 lines 43-46 P0694_B_PressingEye branch: the eye route
+     * opens the C025 chest panel without drawing C145 into C09. */
     unsigned short v1OpenChestThing;
+    int v1OpenChestOpenedByEye;
 
     /* Acting-champion ordinal.  Mirrors DM1
      * G0506_ui_ActingChampionOrdinal exactly: 0 = no champion is
@@ -352,6 +365,19 @@ typedef struct {
         int party_x, party_y, party_dir;
         int tick_count;
     } nexusState;
+
+    /* Theron's Quest V1 runtime — active when sourceKind ==
+     * M11_GAME_SOURCE_THERON_TRACK02. Opaque here so the public M11 state
+     * does not expose Theron-private implementation headers. */
+    void *theronBootProfile;  /* Theron_V1_BootProfile* */
+    void *theronWorld;        /* Theron_V1_World* */
+    void *theronViewport;     /* Theron_V1_Viewport* */
+    void *theronAssets;       /* TrAssetBundle* */
+    struct {
+        int level_loaded;
+        int party_x, party_y, party_dir;
+        int tick_count;
+    } theronState;
 
     /* Accessibility: in-game font size scale (1..3).
      * Set from M12 launcher's fontScale setting via M11_GameLaunchSpec.fontScale.
@@ -910,6 +936,14 @@ int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
 int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
                                              const char* name);
 int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state);
+/* D1C wall-mirror zone (DUNVIEW.C G0205 graphic 558 set index 12,
+ * coordSet-indexed).  Returns the wall ornament destination box
+ * in viewport coordinates.  Used by
+ * firestaff_dm1_v1_hall_of_champions_wall_mirror_zones_probe
+ * to verify the wall box is at the source-locked position. */
+int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
+                                       int* outX, int* outY,
+                                       int* outW, int* outH);
 int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state);
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate);
@@ -1134,6 +1168,15 @@ int M11_GameView_GetV1ActionPassZone(int* outX,
 int M11_GameView_GetV1SpellAreaBackgroundGraphicId(void);
 int M11_GameView_GetV1ChampionPortraitGraphicId(void);
 int M11_GameView_GetV1ChampionIconGraphicId(void);
+
+/* M11_DM1 V1 sub-cell hit mask (BUG-111).  Source-locked per
+ * ReDMCSB DEFS.H M550 (DUNGEON.C:1085).  Full-square creatures
+ * use 0x0F (all 4 sub-cells); quarter-square / giant / 2x2
+ * creatures use 0xF0 (high nibble).  v1 always uses 0x0F
+ * because per-sub-cell positioning is deferred to post-M10. */
+#define M11_DM1_CELL_OCCUPIED_MASK 0x0Fu
+#define M11_DM1_CELL_OCCUPIED_QUARTER 0xF0u
+
 int M11_GameView_GetV1ChampionIconZoneId(int championSlot);
 int M11_GameView_GetV1ChampionIconZone(int championSlot,
                                         int* outX,
@@ -1167,6 +1210,12 @@ int M11_GameView_GetV1ObjectDescriptionIconZone(int* outX,
                                                  int* outY,
                                                  int* outW,
                                                  int* outH);
+int M11_GameView_GetV1ArrowOrEyeZoneId(void);
+int M11_GameView_GetV1ArrowOrEyeZone(int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH);
+int M11_GameView_GetV1ArrowOrEyeGraphicId(int pressingEye);
 int M11_GameView_GetV1ObjectDescriptionNameZoneId(void);
 int M11_GameView_GetV1ObjectDescriptionNameZoneForText(int textPixelWidth,
                                                         int textPixelHeight,

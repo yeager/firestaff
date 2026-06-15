@@ -10,7 +10,7 @@
  *   - Pathfinding cascade (F0798/F0799): primary/secondary/opposite/fallback/blocked
  *   - Attack emission (F0800) + cooldown honouring
  *   - Next-tick emission (F0802) + infinite-loop clamp (delay >= 1)
- *   - Stub-path meta-sweep over the 24 non-fully-implemented creature types
+ *   - Stub-path meta-sweep over the 17 non-fully-implemented creature types
  *   - Boundary + purity + CRC32 invariants
  *   - 100-iteration RNG loop-guard sweep (R7 mitigation)
  *   - Real DUNGEON.DAT integration: one real creature group
@@ -142,9 +142,33 @@ static void build_scenario(
 }
 
 static int is_full_tier(int t) {
-    return (t == CREATURE_TYPE_STONE_GOLEM) ||
-           (t == CREATURE_TYPE_MUMMY)       ||
-           (t == CREATURE_TYPE_SKELETON);
+    return (t == CREATURE_TYPE_GIANT_SCORPION)  ||
+           (t == CREATURE_TYPE_SWAMP_SLIME)     ||
+           (t == CREATURE_TYPE_GIGGLER)         ||
+           (t == CREATURE_TYPE_WIZARD_EYE)      ||
+           (t == CREATURE_TYPE_PAIN_RAT)        ||
+           (t == CREATURE_TYPE_RUSTER)          ||
+           (t == CREATURE_TYPE_SCREAMER)        ||
+           (t == CREATURE_TYPE_ROCKPILE)        ||
+           (t == CREATURE_TYPE_GHOST)           ||
+           (t == CREATURE_TYPE_STONE_GOLEM)     ||
+           (t == CREATURE_TYPE_MUMMY)           ||
+           (t == CREATURE_TYPE_BLACK_FLAME)     ||
+           (t == CREATURE_TYPE_SKELETON)        ||
+           (t == CREATURE_TYPE_COUATL)          ||
+           (t == CREATURE_TYPE_VEXIRK)          ||
+           (t == CREATURE_TYPE_MAGENTA_WORM)    ||
+           (t == CREATURE_TYPE_TROLIN)          ||
+           (t == CREATURE_TYPE_GIANT_WASP)      ||
+           (t == CREATURE_TYPE_ANIMATED_ARMOUR) ||
+           (t == CREATURE_TYPE_WATER_ELEMENTAL) ||
+           (t == CREATURE_TYPE_OITU)            ||
+           (t == CREATURE_TYPE_RED_DRAGON)      ||
+           (t == CREATURE_TYPE_MATERIALIZER)    ||
+           (t == CREATURE_TYPE_DEMON)           ||
+           (t == CREATURE_TYPE_LORD_CHAOS)      ||
+           (t == CREATURE_TYPE_LORD_ORDER)      ||
+           (t == CREATURE_TYPE_GREY_LORD);
 }
 
 int main(int argc, char* argv[]) {
@@ -173,8 +197,18 @@ int main(int argc, char* argv[]) {
     fprintf(report, "- Pathfinding cascade (F0798/F0799)\n");
     fprintf(report, "- Action emission (F0800/F0801/F0802/F0803)\n");
     fprintf(report, "- Serialisation + round-trip (F0805..F0809)\n");
-    fprintf(report, "- Three full creature types: Stone Golem (C09), Mummy (C10), Skeleton (C12)\n");
-    fprintf(report, "- 24 stub creature types: reschedule only, no action\n");
+    fprintf(report, "- 27 full creature types: Stone Golem (C09), Mummy (C10), Skeleton (C12),\n");
+    fprintf(report, "    plus BUG-104 batch 1 (7): Giant Scorpion (C00), Giggler (C02),\n");
+    fprintf(report, "    Screamer (C06), Vexirk (C14), Magenta Worm (C15), Animated\n");
+    fprintf(report, "    Armour (C18), Red Dragon (C24);\n");
+    fprintf(report, "    batch 2 (4): Wizard Eye (C03), Giant Wasp (C17), Oitu (C21),\n");
+    fprintf(report, "    plus Rockpile (C07), Ghost (C08), Black Flame (C11),\n");
+    fprintf(report, "    Water Elemental (C20);\n");
+    fprintf(report, "    batch 3 (5): Swamp Slime (C01), Pain Rat (C04), Ruster (C05),\n");
+    fprintf(report, "    Couatl (C13), Trolin (C16);\n");
+    fprintf(report, "    arch-enemy batch (5): Materializer (C19), Demon (C22), Lord\n");
+    fprintf(report, "    Chaos (C23), Lord Order (C25), Grey Lord (C26)\n");
+    fprintf(report, "- 0 stub creature types: all 27 DM1 creatures now FULL tier\n");
     fprintf(report, "- Infinite-loop guard (delay >= 1 on every emission)\n");
     fprintf(report, "- Real DUNGEON.DAT integration spot-check\n\n");
     fprintf(report, "## Known NEEDS DISASSEMBLY REVIEW (still open)\n\n");
@@ -666,7 +700,101 @@ int main(int argc, char* argv[]) {
     }
 
     /* ================================================================
-     *  Block H — 24 stub creature types meta-sweep (invariant 32)
+     *  Block G' — BUG-104 promoted creature type coverage
+     *
+     *  After the BUG-104 fix, 7 additional creature types are FULL:
+     *    C00 Giant Scorpion, C02 Giggler, C06 Screamer, C14 Vexirk,
+     *    C15 Magenta Worm, C18 Animated Armour, C24 Red Dragon.
+     *
+     *  The 5 melee types (Scorpion, Worm, Armour, Dragon at melee range,
+     *  Vexirk at melee range) must produce a valid CombatAction when
+     *  adjacent + ATTACK + cooldown=0, with profile attackType / baseAttack.
+     *
+     *  Screamer and Giggler have per-type bias (5b) that pushes them to
+     *  FLEE on the same trigger, so they get separate tests below.
+     * ================================================================ */
+    {
+        const int meleeTypes[5] = {
+            CREATURE_TYPE_GIANT_SCORPION,
+            CREATURE_TYPE_VEXIRK,
+            CREATURE_TYPE_MAGENTA_WORM,
+            CREATURE_TYPE_ANIMATED_ARMOUR,
+            CREATURE_TYPE_RED_DRAGON
+        };
+        const char* meleeNames[5] = {
+            "Giant Scorpion",
+            "Vexirk",
+            "Magenta Worm",
+            "Animated Armour",
+            "Red Dragon"
+        };
+        int i;
+        for (i = 0; i < 5; i++) {
+            struct CreatureAIState_Compat sIn, sOut;
+            struct CreatureTickInput_Compat in;
+            struct RngState_Compat rng;
+            struct CreatureTickResult_Compat out;
+            const struct CreatureBehaviorProfile_Compat* prof =
+                CREATURE_GetProfile_Compat(meleeTypes[i]);
+            char buf[256];
+            zero_state(&sIn); sIn.stateKind = AI_STATE_ATTACK;
+            build_scenario(&in, meleeTypes[i], 5, 5, 0, 1, 1);
+            F0730_COMBAT_RngInit_Compat(&rng, 1 + i);
+            F0804_CREATURE_Tick_Compat(&sIn, &in, &rng, &sOut, &out);
+            snprintf(buf, sizeof(buf),
+                     "BUG-104 %s (C%02d) adjacent+ATTACK -> CombatAction kind=CREATURE_MELEE rawAttack=%d attackType=%d",
+                     meleeNames[i], meleeTypes[i],
+                     prof->baseAttack, prof->attackType);
+            CHECK(out.emittedCombatAction == 1 &&
+                  out.outAction.kind == COMBAT_ACTION_CREATURE_MELEE &&
+                  out.outAction.rawAttackValue == prof->baseAttack &&
+                  out.outAction.attackTypeCode == prof->attackType &&
+                  sOut.stateKind == AI_STATE_ATTACK,
+                  buf);
+        }
+    }
+    {
+        /* Screamer bias: visible + ATTACK -> FLEE (cowardly GROUP.C F0209) */
+        struct CreatureAIState_Compat sIn, sOut;
+        struct CreatureTickInput_Compat in;
+        struct RngState_Compat rng;
+        struct CreatureTickResult_Compat out;
+        zero_state(&sIn); sIn.stateKind = AI_STATE_ATTACK;
+        build_scenario(&in, CREATURE_TYPE_SCREAMER, 5, 5, 0, 1, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 0xC0DE);
+        F0804_CREATURE_Tick_Compat(&sIn, &in, &rng, &sOut, &out);
+        CHECK(sOut.stateKind == AI_STATE_FLEE,
+              "BUG-104 Screamer cowardice: visible + ATTACK -> state transitions to FLEE");
+    }
+    {
+        /* Giggler steal-then-flee: adjacent + ATTACK -> FLEE + spell-request marker */
+        struct CreatureAIState_Compat sIn, sOut;
+        struct CreatureTickInput_Compat in;
+        struct RngState_Compat rng;
+        struct CreatureTickResult_Compat out;
+        zero_state(&sIn); sIn.stateKind = AI_STATE_ATTACK;
+        build_scenario(&in, CREATURE_TYPE_GIGGLER, 5, 5, 0, 1, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 0xBEEF);
+        F0804_CREATURE_Tick_Compat(&sIn, &in, &rng, &sOut, &out);
+        CHECK(out.emittedSpellRequest == 1 && sOut.stateKind == AI_STATE_FLEE,
+              "BUG-104 Giggler steal/flee: adjacent + ATTACK -> emittedSpellRequest=1 + state FLEE");
+    }
+    {
+        /* Vexirk ranged: visible + ATTACK at distance>1 -> spell-request marker */
+        struct CreatureAIState_Compat sIn, sOut;
+        struct CreatureTickInput_Compat in;
+        struct RngState_Compat rng;
+        struct CreatureTickResult_Compat out;
+        zero_state(&sIn); sIn.stateKind = AI_STATE_ATTACK;
+        build_scenario(&in, CREATURE_TYPE_VEXIRK, 5, 5, 0, 3, 1);
+        F0730_COMBAT_RngInit_Compat(&rng, 0xFADE);
+        F0804_CREATURE_Tick_Compat(&sIn, &in, &rng, &sOut, &out);
+        CHECK(out.emittedSpellRequest == 1,
+              "BUG-104 Vexirk ranged: visible + ATTACK + distance>1 -> emittedSpellRequest=1");
+    }
+
+    /* ================================================================
+     *  Block H — 5 stub creature types meta-sweep (invariant 32)
      * ================================================================ */
     {
         int allStubOk = 1;
@@ -699,8 +827,8 @@ int main(int argc, char* argv[]) {
             }
             count++;
         }
-        CHECK(allStubOk && count == CREATURE_TYPE_COUNT - 3,
-              "Stub-tier meta: 24 non-full creatureTypes all return NO_ACTION + valid next-tick");
+        CHECK(allStubOk && count == CREATURE_TYPE_COUNT - 22,
+              "Stub-tier meta: 5 non-full creatureTypes all return NO_ACTION + valid next-tick");
     }
 
     /* ================================================================

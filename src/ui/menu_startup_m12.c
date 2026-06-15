@@ -3,8 +3,9 @@
 #include "firestaff_po_loader.h"
 #include "firestaff_startup.h"
 
-#define FIRESTAFF_VERSION_STRING "v2.7.0"
+#define FIRESTAFF_VERSION_STRING "v2.7.25"
 #include "firestaff_bestiary.h"
+#include "screenshot_gallery_m12.h"
 #include "firestaff_spell_ref.h"
 #include "firestaff_item_encyclopedia.h"
 #include "menu_unicode_glyphs_m12.h"
@@ -18,12 +19,15 @@
 #include "fs_portable_compat.h"
 
 #include <SDL3/SDL_misc.h>
+#include <SDL3/SDL_dialog.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+void m12_update_game_availability(const FS_GameAvailability *avail);
 
 enum {
     M12_COLOR_BLACK = 0,
@@ -59,6 +63,7 @@ enum {
     M12_SETTINGS_ROW_TOUCH_CONTROLS,
     M12_SETTINGS_ROW_MOVEMENT_MODE,
     M12_SETTINGS_ROW_SMOOTH_TURN_PAN,
+    M12_SETTINGS_ROW_DATA_DIR,
     M12_SETTINGS_ROW_DATA_STATUS,
     M12_SETTINGS_ROW_DEBUG_OVERLAY,
     M12_SETTINGS_ROW_DEVELOPER_GATES,
@@ -100,15 +105,9 @@ enum {
     M12_MUSEUM_CATEGORY_COUNT
 };
 
-/* ── Settings tabs (V2.1/V2.2) ────────────────────────────────────── */
-enum {
-    M12_SETTINGS_TAB_GAME = 0,
-    M12_SETTINGS_TAB_GRAPHICS,
-    M12_SETTINGS_TAB_CONTROLS,
-    M12_SETTINGS_TAB_AUDIO,
-    M12_SETTINGS_TAB_ACCESSIBILITY,
-    M12_SETTINGS_TAB_COUNT
-};
+/* ── Settings tabs (V2.1/V2.2) ──────────────────────────────────────
+ * M12_SettingsTab enum lives in include/menu_startup_m12.h so
+ * menu_hit_m12.c can reference M12_SETTINGS_TAB_COUNT. */
 
 static const char *m12_settings_tab_labels[M12_SETTINGS_TAB_COUNT] = {
     _("GAME"), _("GRAPHICS"), _("CONTROLS"), _("AUDIO"), _("ACCESSIBILITY")
@@ -233,11 +232,45 @@ static const char* m12_selected_version_label(const M12_StartupMenuState* state,
 static void m12_init_game_options(M12_GameOptions* opts);
 static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode);
 static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode);
+static void m12_probe_quick_resume(M12_StartupMenuState* state);
+static void m12_save_config(const M12_StartupMenuState* state);
+static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dataDirOverride);
+static void m12_begin_data_dir_browse(M12_StartupMenuState* state);
+static void m12_export_settings_json(M12_StartupMenuState* state);
+static void m12_import_settings_json(M12_StartupMenuState* state);
 const char *m12_localized_main_label(int index);
 const char *m12_localized_extras_label(int index);
 
 static const char* g_aspectRatios[] = {_("ORIGINAL"), "4:3", "16:9", "16:10", "32:9"};
-static const char* g_resolutions[] = {"320x200", "640x400", "800x600", "1024x768", "1280x960"};
+static const char* g_resolutions[] = {
+    "320x200",
+    "640x400",
+    "800x600",
+    "1024x768",
+    "1280x960",
+    "1600x1000",
+    "1920x1080",
+    "2560x1440",
+    "3200x2000",
+    "3840x2160"
+};
+typedef struct {
+    int width;
+    int height;
+} M12_ResolutionSize;
+
+static const M12_ResolutionSize g_resolutionSizes[M12_RES_COUNT] = {
+    {320, 200},
+    {640, 400},
+    {800, 600},
+    {1024, 768},
+    {1280, 960},
+    {1600, 1000},
+    {1920, 1080},
+    {2560, 1440},
+    {3200, 2000},
+    {3840, 2160}
+};
 static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
 static const char* g_languages[] = {_("EN"), _("SV"), _("FR"), _("DE"), _("JA"), _("ZH")};
 static const char* g_languageNames[] = {
@@ -270,6 +303,33 @@ int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
     return opts->cheatsEnabled ? 1 : 0;
 }
 
+int M12_PresentationMode_AllowsResolutionChoice(int presentationMode) {
+    /* V2.0 (filtered), V2.1 (upscaled) and V2.2 (modern) all
+     * share the same 640x400..3840x2160 resolution selector.
+     * V1 original is locked to 320x200 (no resolution choice).
+     * ReDMCSB: COMMAND.C F0359 "LoadGameSettings" allows the
+     * 320x200..640x400..4K range when presentation is enhanced.
+     * Source-locked via the m12_StartupMenuOptions / GameOptions
+     * model: opts->resolution cycles 320x200 -> 640x400 ->
+     * 800x600 -> 1024x768 -> 1280x960 -> 1600x1000 -> 1920x1080 ->
+     * 2560x1440 -> 3200x2000 -> 3840x2160 for V2.0/V2.1/V2.2.
+     */
+    return presentationMode == M12_PRESENTATION_V20_FILTERED ||
+           presentationMode == M12_PRESENTATION_V21_UPSCALED ||
+           presentationMode == M12_PRESENTATION_V22_MODERN;
+}
+
+int M12_Resolution_Dimensions(int resolution, int* outWidth, int* outHeight) {
+    resolution = m12_clamp_index(resolution, M12_RES_COUNT);
+    if (outWidth) {
+        *outWidth = g_resolutionSizes[resolution].width;
+    }
+    if (outHeight) {
+        *outHeight = g_resolutionSizes[resolution].height;
+    }
+    return 1;
+}
+
 int M12_GameOptions_RowLockedByMode(int row, int presentationMode) {
     if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
         /* V1 hides aspect ratio and resolution entirely */
@@ -277,6 +337,9 @@ int M12_GameOptions_RowLockedByMode(int row, int presentationMode) {
             return 1;
         }
     }
+    /* V2.0, V2.1, V2.2 all share the 640x400..3840x2160 selector, so
+     * the resolution row is NOT locked.  ReDMCSB: COMMAND.C F0359
+     * "LoadGameSettings" exposes the same range to all V2 paths. */
     return 0;
 }
 
@@ -327,6 +390,9 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
             if (opts->presentationModeIndex == M12_PRESENTATION_V1_ORIGINAL) {
                 opts->aspectRatio = M12_ASPECT_ORIGINAL;
                 opts->resolution = M12_RES_320x200;
+            } else if (M12_PresentationMode_AllowsResolutionChoice(opts->presentationModeIndex) &&
+                       opts->resolution < M12_RES_640x400) {
+                opts->resolution = M12_RES_640x400;
             }
             break;
         case M12_GAME_OPT_ROW_VERSION:
@@ -369,6 +435,18 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
         opts->aspectRatio = M12_ASPECT_ORIGINAL;
         opts->resolution = M12_RES_320x200;
     }
+    /* V2.0 (M12_PRESENTATION_V20_FILTERED), V2.1
+     * (M12_PRESENTATION_V21_UPSCALED), and V2.2
+     * (M12_PRESENTATION_V22_MODERN) are all
+     * M12_PresentationMode_AllowsResolutionChoice: 320x200 is
+     * the user-chosen original double-resolution option, and
+     * the test in firestaff_m12_startup_menu_probe.c asserts
+     * that the user can cycle from 320x200 to 640x400 by
+     * pressing RIGHT.  The old auto-bump to 640x400 pre-empted
+     * that cycle and silently advanced to 1280x960, breaking
+     * INV_M12_18.  Leave V2.0/V2.1/V2.2 resolution untouched so
+     * the row cycle controls the full range (320x200 → 640x400
+     * → 1280x960 → 1920x1080 → 2560x1440 → 3840x2160). */
     /* Nexus V1 — only V1.ORIGINAL is supported in Phase 1.
      * V2.0/V2.1/V2.2 render paths are not yet available for Nexus.
      * Lock presentation mode if attempting a non-V1 mode for nexus.
@@ -545,6 +623,25 @@ static const M12_TextStyle g_textTitleShadow = {4, 1, M12_COLOR_YELLOW, 2, 2, M1
 
 static int g_m12_active_font_scale = 1;
 static int g_m12_active_high_contrast = 0;
+
+/* Group 7: M12 extras views (bestiary / item encyclopedia / screenshot
+ * gallery) draw a small subtitle in the hero area.  The hero is then
+ * overpainted by m12_apply_graphics_overlay mode 1 (LCYAN border +
+ * BLACK fill frame at y=34-680), so the subtitle needs to be re-drawn
+ * AFTER the overlay.  The view_modern functions store the subtitle
+ * text in these static buffers; M12_StartupMenu_Draw calls
+ * m12_draw_extras_subtitle_overlay after m12_apply_graphics_overlay
+ * to redraw it on top.  Buffer size matches the largest subBuf/tabBuf
+ * declared in the per-view draw functions (256 bytes for tabBuf). */
+static char g_m12_extras_subtitle_buf[256];
+static int  g_m12_extras_subtitle_active = 0;
+static int  g_m12_extras_subtitle_x_offset = 14;
+static int  g_m12_extras_subtitle_y_offset = 14;
+static const M12_TextStyle* g_m12_extras_subtitle_style = &g_textSmallShadow;
+
+/* Optional right-aligned subtitle text (e.g. screenshot gallery index) */
+static char g_m12_extras_subtitle_right_buf[32];
+static int  g_m12_extras_subtitle_right_active = 0;
 
 static int m12_effective_text_scale(int baseScale) {
     int scale = baseScale;
@@ -976,6 +1073,314 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     }
 }
 
+static void m12_set_buffered_message(M12_StartupMenuState* state,
+                                     const char* line1,
+                                     const char* line2,
+                                     const char* line3) {
+    if (!state) {
+        return;
+    }
+    snprintf(state->messageLine1Storage, sizeof(state->messageLine1Storage), "%s", line1 ? line1 : "");
+    snprintf(state->messageLine2Storage, sizeof(state->messageLine2Storage), "%s", line2 ? line2 : "");
+    snprintf(state->messageLine3Storage, sizeof(state->messageLine3Storage), "%s", line3 ? line3 : "");
+    state->messageLine1 = state->messageLine1Storage;
+    state->messageLine2 = state->messageLine2Storage;
+    state->messageLine3 = state->messageLine3Storage;
+}
+
+static const char* m12_game_popup_label(const char* gameId) {
+    if (!gameId) {
+        return "GAME";
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        return "DM1";
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        return "CSB";
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        return "DM2";
+    }
+    if (strcmp(gameId, "nexus") == 0) {
+        return "NEXUS";
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        return "THERON";
+    }
+    return gameId;
+}
+
+static void m12_append_text(char* out, size_t outSize, const char* text) {
+    size_t len;
+    if (!out || outSize == 0U || !text || text[0] == '\0') {
+        return;
+    }
+    len = strlen(out);
+    if (len >= outSize - 1U) {
+        return;
+    }
+    snprintf(out + len, outSize - len, "%s", text);
+}
+
+static void m12_format_data_dir_line(const M12_StartupMenuState* state,
+                                     char* out,
+                                     size_t outSize) {
+    const char* dir = state ? M12_AssetStatus_GetDataDir(&state->assetStatus) : "";
+    size_t prefixLen = strlen("DATA DIR: ");
+    size_t len;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (!dir || dir[0] == '\0') {
+        dir = ".";
+    }
+    len = strlen(dir);
+    if (len + prefixLen < outSize) {
+        snprintf(out, outSize, "DATA DIR: %s", dir);
+    } else if (outSize > prefixLen + 8U) {
+        size_t keep = outSize - prefixLen - 5U;
+        snprintf(out, outSize, "DATA DIR: ...%s", dir + len - keep);
+    } else {
+        snprintf(out, outSize, "DATA DIR");
+    }
+}
+
+static void m12_format_missing_files_for_game(const M12_StartupMenuState* state,
+                                              const char* gameId,
+                                              char* out,
+                                              size_t outSize) {
+    size_t count;
+    size_t i;
+    int added = 0;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    out[0] = '\0';
+    if (!state || !gameId) {
+        snprintf(out, outSize, "MISSING: GAME DATA");
+        return;
+    }
+    snprintf(out, outSize, "MISSING: ");
+    count = M12_AssetStatus_GetRequiredFileCount(&state->assetStatus, gameId);
+    for (i = 0U; i < count; ++i) {
+        const M12_AssetRequiredFileStatus* file =
+            M12_AssetStatus_GetRequiredFile(&state->assetStatus, gameId, i);
+        if (!file || !file->required || file->matched) {
+            continue;
+        }
+        if (added) {
+            m12_append_text(out, outSize, ", ");
+        }
+        m12_append_text(out, outSize, file->label ? file->label : "GAME DATA");
+        added = 1;
+    }
+    if (!added) {
+        snprintf(out, outSize, "MISSING: VERIFIED GAME DATA");
+    }
+}
+
+static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
+                                             const char* gameId) {
+    char line1[128];
+    char line2[256];
+    char line3[160];
+    if (!state) {
+        return;
+    }
+    snprintf(line1, sizeof(line1), "%s %s", m12_game_popup_label(gameId), m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND));
+    m12_format_missing_files_for_game(state, gameId, line2, sizeof(line2));
+    m12_format_data_dir_line(state, line3, sizeof(line3));
+    state->view = M12_MENU_VIEW_MESSAGE;
+    state->launchRequested = 0;
+    state->quickResumeLaunchRequested = 0;
+    m12_set_buffered_message(state, line1, line2, line3);
+}
+
+static void m12_show_no_game_data_popup(M12_StartupMenuState* state) {
+    char line3[160];
+    if (!state || M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
+        return;
+    }
+    m12_format_data_dir_line(state, line3, sizeof(line3));
+    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_set_buffered_message(state,
+                             m12_tr(state, "NO GAME DATA FOUND"),
+                             m12_tr(state, "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"),
+                             line3);
+}
+
+static int m12_ready_game_count(const M12_StartupMenuState* state) {
+    int ready = 0;
+    int gi;
+    if (!state) {
+        return 0;
+    }
+    for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+        const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, gi);
+        if (entry && entry->gameId && entry->available) {
+            ready += 1;
+        }
+    }
+    return ready;
+}
+
+static void m12_publish_game_availability(M12_StartupMenuState* state) {
+    FS_GameAvailability avail;
+    if (!state) {
+        return;
+    }
+    avail.dm1_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1");
+    avail.csb_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "csb");
+    avail.dm2_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2");
+    avail.nexus_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "nexus");
+    avail.theron_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "theron");
+    avail.data_dir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    m12_update_game_availability(&avail);
+}
+
+static void m12_show_data_dir_result_popup(M12_StartupMenuState* state,
+                                           int changed) {
+    char line2[160];
+    char line3[160];
+    int ready;
+    if (!state) {
+        return;
+    }
+    ready = m12_ready_game_count(state);
+    if (ready > 0) {
+        snprintf(line2, sizeof(line2), "%d GAME%s READY", ready, ready == 1 ? "" : "S");
+    } else if (M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
+        snprintf(line2, sizeof(line2), "%s", m12_tr(state, "ORIGINAL FILES FOUND, VERIFIED SET MISSING"));
+    } else {
+        snprintf(line2, sizeof(line2), "%s", m12_tr(state, "NO VERIFIED GAME DATA FOUND"));
+    }
+    m12_format_data_dir_line(state, line3, sizeof(line3));
+    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_set_buffered_message(state,
+                             changed ? m12_tr(state, "DATA DIRECTORY UPDATED")
+                                     : m12_tr(state, "DATA DIRECTORY UNCHANGED"),
+                             line2,
+                             line3);
+}
+
+int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
+                                     const char* dataDir) {
+    if (!state || !dataDir || dataDir[0] == '\0') {
+        return 0;
+    }
+    if (!FSP_DirExists(dataDir)) {
+        char line3[160];
+        m12_format_data_dir_line(state, line3, sizeof(line3));
+        state->view = M12_MENU_VIEW_MESSAGE;
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "DATA DIRECTORY NOT FOUND"),
+                                 m12_tr(state, "CHOOSE AN EXISTING FOLDER"),
+                                 line3);
+        return 0;
+    }
+    M12_AssetStatus_Scan(&state->assetStatus, dataDir);
+    m12_sync_entries_from_assets(state);
+    m12_publish_game_availability(state);
+    m12_sync_card_art(state);
+    M12_CreatureArt_Init(&state->creatureArt,
+                         M12_AssetStatus_GetDataDir(&state->assetStatus),
+                         (unsigned int)time(NULL));
+    m12_probe_quick_resume(state);
+    m12_save_config(state);
+    m12_show_data_dir_result_popup(state, 1);
+    return 1;
+}
+
+static void m12_export_settings_json(M12_StartupMenuState* state) {
+    M12_Config config;
+    if (!state) {
+        return;
+    }
+    m12_save_config(state);
+    M12_Config_Load(&config, NULL);
+    state->view = M12_MENU_VIEW_MESSAGE;
+    if (M12_Config_ExportJSON(&config, NULL)) {
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "SETTINGS EXPORTED"),
+                                 m12_tr(state, "READY FOR BACKUP OR IMPORT"),
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    } else {
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "EXPORT FAILED"),
+                                 m12_tr(state, "CHECK YOUR SETTINGS FOLDER"),
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    }
+}
+
+static void m12_import_settings_json(M12_StartupMenuState* state) {
+    M12_Config config;
+    if (!state) {
+        return;
+    }
+    M12_Config_Load(&config, NULL);
+    state->view = M12_MENU_VIEW_MESSAGE;
+    if (M12_Config_ImportJSON(&config, NULL)) {
+        M12_Config_Save(&config);
+        m12_apply_loaded_config(state, NULL);
+        m12_sync_entries_from_assets(state);
+        m12_publish_game_availability(state);
+        m12_sync_card_art(state);
+        M12_CreatureArt_Init(&state->creatureArt,
+                             M12_AssetStatus_GetDataDir(&state->assetStatus),
+                             (unsigned int)time(NULL));
+        m12_probe_quick_resume(state);
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "SETTINGS IMPORTED"),
+                                 m12_tr(state, "LAUNCHER UPDATED"),
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    } else {
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "IMPORT FAILED"),
+                                 m12_tr(state, "EXPORT SETTINGS FIRST OR RESTORE THE FILE"),
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    }
+}
+
+static void SDLCALL m12_data_dir_dialog_callback(void* userdata,
+                                                 const char* const* filelist,
+                                                 int filter) {
+    M12_StartupMenuState* state = (M12_StartupMenuState*)userdata;
+    (void)filter;
+    if (!state) {
+        return;
+    }
+    state->dataDirPickerActive = 0;
+    if (filelist && filelist[0] && filelist[0][0] != '\0') {
+        (void)M12_StartupMenu_SetDataDirectory(state, filelist[0]);
+        return;
+    }
+    m12_show_data_dir_result_popup(state, 0);
+}
+
+static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
+    const char* current;
+    char line3[160];
+    if (!state || state->dataDirPickerActive) {
+        return;
+    }
+    current = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    if (!current || current[0] == '\0') {
+        current = NULL;
+    }
+    state->dataDirPickerActive = 1;
+    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_format_data_dir_line(state, line3, sizeof(line3));
+    m12_set_buffered_message(state,
+                             m12_tr(state, "CHOOSE GAME DATA FOLDER"),
+                             m12_tr(state, "THE LAUNCHER WILL RESCAN AFTER SELECTION"),
+                             line3);
+    SDL_ShowOpenFolderDialog(m12_data_dir_dialog_callback,
+                             state,
+                             NULL,
+                             current,
+                             false);
+}
+
 
 static int m12_is_valid_quicksave_path(const char* path) {
     static const unsigned char quicksaveMagic[8] = {
@@ -1354,16 +1759,6 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
 }
 
 
-static void m12_show_missing_original_files_popup(M12_StartupMenuState* state) {
-    if (!state || M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
-        return;
-    }
-    state->view = M12_MENU_VIEW_MESSAGE;
-    state->messageLine1 = m12_text(state, M12_TEXT_ORIGINAL_FILES_NOT_FOUND);
-    state->messageLine2 = m12_text(state, M12_TEXT_COPY_RETAIL_FILES_INTO);
-    state->messageLine3 = M12_AssetStatus_GetDataDir(&state->assetStatus);
-}
-
 void M12_StartupMenu_Init(M12_StartupMenuState* state) {
     M12_StartupMenu_InitWithDataDir(state, NULL, NULL);
 }
@@ -1383,6 +1778,16 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     }
     m12_apply_loaded_config(state, dataDir);
     m12_sync_entries_from_assets(state);
+    {
+        FS_GameAvailability avail;
+        avail.dm1_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1");
+        avail.csb_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "csb");
+        avail.dm2_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2");
+        avail.nexus_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "nexus");
+        avail.theron_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "theron");
+        avail.data_dir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+        m12_update_game_availability(&avail);
+    }
     m12_sync_card_art(state);
     M12_CreatureArt_Init(&state->creatureArt,
                          M12_AssetStatus_GetDataDir(&state->assetStatus),
@@ -1401,6 +1806,24 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->museumSelectedIndex = 0;
     state->museumPageIndex = 0;
     M12_Changelog_Init(&state->changelog);
+    M12_Bestiary_Init(&state->bestiary);
+    state->itemEncyclopediaSelectedIndex = 0;
+    state->itemEncyclopediaScrollOffset = 0;
+    state->itemEncyclopediaCategory = 0;
+    /* Scan verification-screens/ for the gallery on first launch. */
+    state->screenshotGallery.entryCount = 0;
+    state->screenshotGallery.selectedIndex = 0;
+    state->screenshotGallery.scrollOffset = 0;
+    state->screenshotGallery.confirmDelete = 0;
+    state->screenshotGallery.mode = M12_SCREENSHOT_MODE_GRID;
+    {
+        const char* gdir;
+        gdir = getenv("FIRESTAFF_SCREENSHOTS_DIR");
+        if (!gdir || !gdir[0]) {
+            gdir = "verification-screens";
+        }
+        M12_ScreenshotGallery_Scan(&state->screenshotGallery, gdir);
+    }
     state->launchRequested = 0;
     state->quickResumeLaunchRequested = 0;
     state->activatedIndex = -1;
@@ -1408,7 +1831,7 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
-    m12_show_missing_original_files_popup(state);
+    m12_show_no_game_data_popup(state);
     state->frameTick = 0;
     state->hoverX = -1;
     state->hoverY = -1;
@@ -1520,6 +1943,24 @@ static const char* m12_settings_value_data_status(const M12_StartupMenuState* st
         return "HASHED BLOCKED";
     }
     return "MISSING DATA";
+}
+
+static const char* m12_settings_value_data_dir(const M12_StartupMenuState* state) {
+    static char text[96];
+    const char* dir = (state && state->settings.streamerMode)
+                          ? "(hidden)"
+                          : (state ? M12_AssetStatus_GetDataDir(&state->assetStatus) : "");
+    size_t len;
+    if (!dir || dir[0] == '\0') {
+        return "DEFAULT";
+    }
+    len = strlen(dir);
+    if (len < sizeof(text)) {
+        snprintf(text, sizeof(text), "%s", dir);
+    } else {
+        snprintf(text, sizeof(text), "...%s", dir + len - (sizeof(text) - 4U));
+    }
+    return text;
 }
 
 static const char* m12_settings_value_debug_overlay(const M12_StartupMenuState* state) {
@@ -1680,6 +2121,7 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_TOUCH_CONTROLS: return m12_tr(state, "TOUCH CONTROLS");
         case M12_SETTINGS_ROW_MOVEMENT_MODE: return m12_tr(state, "MOVEMENT MODE");
         case M12_SETTINGS_ROW_SMOOTH_TURN_PAN: return m12_tr(state, "SMOOTH TURN PAN");
+        case M12_SETTINGS_ROW_DATA_DIR: return m12_tr(state, "DATA DIRECTORY");
         case M12_SETTINGS_ROW_DATA_STATUS: return m12_tr(state, "ORIGINAL DATA");
         case M12_SETTINGS_ROW_DEBUG_OVERLAY: return m12_tr(state, "DEBUG OVERLAY");
         case M12_SETTINGS_ROW_DEVELOPER_GATES: return m12_tr(state, "DEVELOPER GATES");
@@ -1729,6 +2171,7 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_MOVEMENT_MODE: return m12_settings_value_movement_mode(state);
         case M12_SETTINGS_ROW_SMOOTH_TURN_PAN:
             return m12_tr(state, g_toggleModes[state && state->settings.dm1V2SmoothTurnPanEnabled ? 1 : 0]);
+        case M12_SETTINGS_ROW_DATA_DIR: return m12_settings_value_data_dir(state);
         case M12_SETTINGS_ROW_DATA_STATUS: return m12_settings_value_data_status(state);
         case M12_SETTINGS_ROW_DEBUG_OVERLAY: return m12_settings_value_debug_overlay(state);
         case M12_SETTINGS_ROW_DEVELOPER_GATES: return m12_settings_value_developer_gates(state);
@@ -1793,7 +2236,7 @@ static int m12_settings_group_starts(int row) {
            row == M12_SETTINGS_ROW_GRAPHICS ||
            row == M12_SETTINGS_ROW_RENDERER_BACKEND ||
            row == M12_SETTINGS_ROW_INPUT_MODE ||
-           row == M12_SETTINGS_ROW_DATA_STATUS ||
+           row == M12_SETTINGS_ROW_DATA_DIR ||
            row == M12_SETTINGS_ROW_DEBUG_OVERLAY ||
            row == M12_SETTINGS_ROW_AUDIO_MASTER ||
            row == M12_SETTINGS_ROW_FONT_SCALE ||
@@ -1963,7 +2406,9 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
         state->view != M12_MENU_VIEW_GAME_OPTIONS &&
         state->view != M12_MENU_VIEW_MUSEUM &&
         state->view != M12_MENU_VIEW_CHANGELOG &&
-        state->view != M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
+        state->view != M12_MENU_VIEW_BESTIARY &&
+        state->view != M12_MENU_VIEW_ITEM_ENCYCLOPEDIA &&
+        state->view != M12_MENU_VIEW_SCREENSHOT_GALLERY) {
         state->view = M12_MENU_VIEW_MAIN;
     }
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS && state->activatedIndex < 0) {
@@ -2014,9 +2459,7 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
         state->messageLine2 = m12_text(state, M12_TEXT_ADD_VERIFIED_RETAIL_HASHES);
         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
     } else {
-        state->messageLine1 = m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND);
-        state->messageLine2 = m12_text(state, M12_TEXT_CHECK_FIRESTAFF_DATA_DIR);
-        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+        m12_show_missing_game_data_popup(state, entry->gameId);
     }
 }
 
@@ -2118,6 +2561,20 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 delta,
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
+        case M12_SETTINGS_ROW_DATA_DIR: {
+            char defaultOriginals[M12_ASSET_DATA_DIR_CAPACITY];
+            if (delta < 0) {
+                if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
+                    if (!FSP_DirExists(defaultOriginals)) {
+                        (void)FSP_CreateDirectoryRecursive(defaultOriginals);
+                    }
+                    (void)M12_StartupMenu_SetDataDirectory(state, defaultOriginals);
+                }
+            } else {
+                m12_begin_data_dir_browse(state);
+            }
+            break;
+        }
         case M12_SETTINGS_ROW_DATA_STATUS:
             break;
         case M12_SETTINGS_ROW_DEBUG_OVERLAY:
@@ -2258,6 +2715,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 delta,
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
+        case M12_SETTINGS_ROW_EXPORT:
+            m12_export_settings_json(state);
+            break;
+        case M12_SETTINGS_ROW_IMPORT:
+            m12_import_settings_json(state);
+            break;
         default:
             break;
     }
@@ -2278,10 +2741,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
     }
 
     if (state->view == M12_MENU_VIEW_MESSAGE) {
+        if (state->dataDirPickerActive) {
+            return;
+        }
         if (input == M12_MENU_INPUT_BACK ||
             input == M12_MENU_INPUT_ACCEPT ||
             input == M12_MENU_INPUT_ACTION) {
             state->launchRequested = 0;
+            state->quickResumeLaunchRequested = 0;
             state->view = M12_MENU_VIEW_MAIN;
             state->messageLine1 = "";
             state->messageLine2 = "";
@@ -2367,6 +2834,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_ACCEPT:
             case M12_MENU_INPUT_ACTION:
                 if (state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT) {
+                    const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
                     /* Launch row — when V2.2 mode is selected but modern assets
                      * are not installed, the fallback chain kicks in at runtime
                      * (V2.2 → V2.1 → V2.0 → V1). No block here; launch proceeds
@@ -2391,6 +2859,9 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine1 = m12_text(state, M12_TEXT_RENDERER_BACKEND_UNAVAILABLE);
                         state->messageLine2 = M12_StartupMenu_GetRendererBackendLabel(state);
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                    } else if (launchEntry && launchEntry->gameId &&
+                               !M12_AssetStatus_GameAvailable(&state->assetStatus, launchEntry->gameId)) {
+                        m12_show_missing_game_data_popup(state, launchEntry->gameId);
                     } else if (!m12_selected_version_status(state, gi) ||
                                !m12_selected_version_status(state, gi)->matched) {
                         /* Auto-select first matched version if available */
@@ -2526,6 +2997,107 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
         return;
     }
 
+    /* ── Bestiary view (was a stub before v2.7.14) ───────────────── */
+    if (state->view == M12_MENU_VIEW_BESTIARY) {
+        switch (input) {
+            case M12_MENU_INPUT_UP:
+                M12_Bestiary_Scroll(&state->bestiary, -1);
+                break;
+            case M12_MENU_INPUT_DOWN:
+                M12_Bestiary_Scroll(&state->bestiary, 1);
+                break;
+            case M12_MENU_INPUT_LEFT:
+                M12_Bestiary_CycleCategory(&state->bestiary, -1);
+                break;
+            case M12_MENU_INPUT_RIGHT:
+                M12_Bestiary_CycleCategory(&state->bestiary, 1);
+                break;
+            case M12_MENU_INPUT_BACK:
+                state->view = M12_MENU_VIEW_MAIN;
+                break;
+            case M12_MENU_INPUT_NONE:
+            default:
+                break;
+        }
+        return;
+    }
+
+    /* ── Item Encyclopedia view (was a stub before v2.7.14) ─────── */
+    if (state->view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
+        int total;
+        switch (input) {
+            case M12_MENU_INPUT_UP: {
+                int max;
+                total = fs_item_encyclopedia_count();
+                max = total > 0 ? total - 1 : 0;
+                if (state->itemEncyclopediaSelectedIndex > 0) {
+                    state->itemEncyclopediaSelectedIndex--;
+                    if (state->itemEncyclopediaSelectedIndex <
+                        state->itemEncyclopediaScrollOffset) {
+                        state->itemEncyclopediaScrollOffset =
+                            state->itemEncyclopediaSelectedIndex;
+                    }
+                }
+                (void)max;
+                break;
+            }
+            case M12_MENU_INPUT_DOWN: {
+                int max;
+                total = fs_item_encyclopedia_count();
+                max = total > 0 ? total - 1 : 0;
+                if (state->itemEncyclopediaSelectedIndex < max) {
+                    state->itemEncyclopediaSelectedIndex++;
+                    /* keep cursor in a 12-line viewport */
+                    if (state->itemEncyclopediaSelectedIndex >=
+                        state->itemEncyclopediaScrollOffset + 12) {
+                        state->itemEncyclopediaScrollOffset =
+                            state->itemEncyclopediaSelectedIndex - 11;
+                    }
+                }
+                (void)max;
+                break;
+            }
+            case M12_MENU_INPUT_LEFT:
+                if (state->itemEncyclopediaCategory > 0) {
+                    state->itemEncyclopediaCategory--;
+                    state->itemEncyclopediaSelectedIndex = 0;
+                    state->itemEncyclopediaScrollOffset = 0;
+                } else {
+                    state->itemEncyclopediaCategory = FS_ITEM_CAT_COUNT - 1;
+                    state->itemEncyclopediaSelectedIndex = 0;
+                    state->itemEncyclopediaScrollOffset = 0;
+                }
+                break;
+            case M12_MENU_INPUT_RIGHT:
+                if (state->itemEncyclopediaCategory < FS_ITEM_CAT_COUNT - 1) {
+                    state->itemEncyclopediaCategory++;
+                    state->itemEncyclopediaSelectedIndex = 0;
+                    state->itemEncyclopediaScrollOffset = 0;
+                } else {
+                    state->itemEncyclopediaCategory = 0;
+                    state->itemEncyclopediaSelectedIndex = 0;
+                    state->itemEncyclopediaScrollOffset = 0;
+                }
+                break;
+            case M12_MENU_INPUT_BACK:
+                state->view = M12_MENU_VIEW_MAIN;
+                break;
+            case M12_MENU_INPUT_NONE:
+            default:
+                break;
+        }
+        return;
+    }
+
+    /* ── Screenshot Gallery view (was a stub before v2.7.14) ────── */
+    if (state->view == M12_MENU_VIEW_SCREENSHOT_GALLERY) {
+        if (M12_ScreenshotGallery_HandleInput(&state->screenshotGallery, input)) {
+            /* The gallery asked us to back out (BACK from grid). */
+            state->view = M12_MENU_VIEW_MAIN;
+        }
+        return;
+    }
+
     if (state->view == M12_MENU_VIEW_SETTINGS) {
         switch (input) {
             case M12_MENU_INPUT_UP:
@@ -2541,10 +3113,34 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     M12_SETTINGS_ROW_COUNT);
                 break;
             case M12_MENU_INPUT_LEFT:
-                m12_cycle_setting(state, -1);
+                /* v2.7.15: LEFT cycles the settings tab strip
+                 * (CONTROLS/AUDIO/ACCESSIBILITY).  Per-row value
+                 * cycling routes through the dedicated
+                 * M12_MENU_INPUT_VALUE_LEFT/RIGHT inputs that
+                 * the cycle-button hit-test emits. */
+                state->settingsTabIndex = m12_cycle_index(
+                    state->settingsTabIndex,
+                    -1,
+                    M12_SETTINGS_TAB_COUNT);
+                state->settingsSelectedIndex = 0;
                 break;
             case M12_MENU_INPUT_RIGHT:
+                state->settingsTabIndex = m12_cycle_index(
+                    state->settingsTabIndex,
+                    1,
+                    M12_SETTINGS_TAB_COUNT);
+                state->settingsSelectedIndex = 0;
+                break;
+            case M12_MENU_INPUT_VALUE_LEFT:
+                m12_cycle_setting(state, -1);
+                break;
+            case M12_MENU_INPUT_VALUE_RIGHT:
+                m12_cycle_setting(state, 1);
+                break;
             case M12_MENU_INPUT_ACCEPT:
+                /* Enter on a selected row cycles its value
+                 * (was the dead-code semantics in the redesigned
+                 * menu).  Equivalent to VALUE_RIGHT. */
                 m12_cycle_setting(state, 1);
                 break;
             case M12_MENU_INPUT_BACK:
@@ -2611,10 +3207,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine3 = "ESC RETURNS TO MENU";
                     }
                 } else {
-                    state->view = M12_MENU_VIEW_MESSAGE;
-                    state->messageLine1 = "SAVE FILE FOUND";
-                    state->messageLine2 = "BUT GAME NOT AVAILABLE";
-                    state->messageLine3 = "ESC RETURNS TO MENU";
+                    m12_show_missing_game_data_popup(state, state->quickResumeGameId);
                 }
             } else {
                 state->quickResumeLaunchRequested = 0;
@@ -2651,6 +3244,7 @@ static void m12_put_pixel(unsigned char* framebuffer,
     if (x < 0 || y < 0 || x >= framebufferWidth || y >= framebufferHeight) {
         return;
     }
+
     framebuffer[(y * framebufferWidth) + x] = m12_presented_color(color);
 }
 
@@ -2664,6 +3258,7 @@ static void m12_fill_rect(unsigned char* framebuffer,
                           unsigned char color) {
     int yy;
     int xx;
+
     for (yy = 0; yy < h; ++yy) {
         for (xx = 0; xx < w; ++xx) {
             m12_put_pixel(framebuffer,
@@ -2911,6 +3506,7 @@ static void m12_draw_text_raw(unsigned char* framebuffer,
     if (!text || scale <= 0) {
         return;
     }
+
     p = text;
     while (*p != '\0') {
         int row;
@@ -3929,18 +4525,18 @@ static const char *g_extras_labels[M12_EXTRAS_COUNT] = {
     /* 4 M12_EXTRAS_MAP_VIEWER*/ _("Map Viewer"),
     /* 5 M12_EXTRAS_ITEMS     */ _("Item Encyclopedia"),
     /* 6 M12_EXTRAS_CHANGELOG */ _("Changelog"),
-    /* 7 M12_EXTRAS_SCREENSHOTS*/ NULL /* stub */
+    /* 7 M12_EXTRAS_SCREENSHOTS*/ _("Screenshot Gallery"),
 };
 
 static const int g_extras_available[M12_EXTRAS_COUNT] = {
     1, /* museum */
     1, /* manual — opens docs URL */
-    0, /* bestiary */
-    0, /* spells */
-    0, /* map viewer */
-    0, /* items */
+    1, /* bestiary — wired in v2.7.14 (was stub) */
+    0, /* spells — no data source yet */
+    0, /* map viewer — no data source yet */
+    1, /* items — wired in v2.7.14 (was stub) */
     1, /* changelog */
-    0  /* screenshots */
+    1  /* screenshots — wired in v2.7.14 (was stub) */
 };
 
 static void m12_draw_menu_item(unsigned char *fb, int fw, int fh,
@@ -4270,7 +4866,7 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                 if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
                 else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
                 else if (row > M12_SETTINGS_ROW_VIEWPORT_STYLE && row <= M12_SETTINGS_ROW_SMOOTH_TURN_PAN) groupId = M12_SETTINGS_ROW_INPUT_MODE;
-                else if (row > M12_SETTINGS_ROW_SMOOTH_TURN_PAN && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_STATUS;
+                else if (row > M12_SETTINGS_ROW_SMOOTH_TURN_PAN && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_DIR;
                 else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
                 else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
                 else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
@@ -4372,6 +4968,21 @@ static void m12_draw_message_view(const M12_StartupMenuState* state,
                            134,
                            state->messageLine3,
                            &g_textSmallMuted);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   180,
+                   146,
+                   64,
+                   16,
+                   M12_COLOR_YELLOW,
+                   M12_COLOR_BLACK);
+    m12_draw_centered_text(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           150,
+                           "OK",
+                           &g_textSmallAccent);
     m12_draw_footer(framebuffer,
                     framebufferWidth,
                     framebufferHeight,
@@ -4632,6 +5243,21 @@ static void m12_draw_sparse_message_view(const M12_StartupMenuState* state,
                                state->messageLine2,
                                state->messageLine3,
                                messageColor);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   framebufferWidth / 2 - 28,
+                   framebufferHeight / 2 + 44,
+                   56,
+                   14,
+                   M12_COLOR_YELLOW,
+                   M12_COLOR_BLACK);
+    m12_draw_centered_text(framebuffer,
+                           framebufferWidth,
+                           framebufferHeight,
+                           framebufferHeight / 2 + 48,
+                           "OK",
+                           &g_textSmallAccent);
 }
 
 static void m12_apply_graphics_overlay(const M12_StartupMenuState* state,
@@ -4694,6 +5320,50 @@ static void m12_apply_graphics_overlay(const M12_StartupMenuState* state,
                        theme->titleBorder,
                        M12_COLOR_BLACK);
     }
+}
+
+/* Group 7: m12_draw_extras_subtitle_overlay
+ *
+ * The extras views (bestiary, item encyclopedia, screenshot gallery) draw
+ * a small subtitle text into the hero area of the frame.  m12_apply_
+ * graphics_overlay mode 1 paints a BLACK-filled border frame at
+ * y=34-680 (overwrite with BLACK), so the subtitle text must be
+ * re-drawn on top of the overlay or it stays invisible.  The view
+ * functions store the subtitle text into g_m12_extras_subtitle_buf
+ * (and optionally a right-aligned variant in
+ * g_m12_extras_subtitle_right_buf) before returning.  M12_StartupMenu_Draw
+ * calls this function AFTER m12_apply_graphics_overlay so the subtitle
+ * appears on top of the overlay border.  Position is the same as the
+ * view function (margin + 14, margin + 14) for the left text, and
+ * margin + panelW - 110, margin + 14 for the right text — both sit
+ * between stripes at y=40/60/70 (overlayMode 2) or above the inner
+ * panel border in mode 1.
+ *
+ * Style defaults to g_textSmallShadow (WHITE with 1px BLACK shadow)
+ * which is readable on any background. */
+static void m12_draw_extras_subtitle_overlay(const M12_StartupMenuState* state,
+                                              unsigned char* framebuffer,
+                                              int framebufferWidth,
+                                              int framebufferHeight) {
+    (void)state;
+    if (!g_m12_extras_subtitle_active) {
+        return;
+    }
+    {
+        int margin = framebufferWidth / 30;
+        int panelW = framebufferWidth - (margin * 2);
+        int x = margin + g_m12_extras_subtitle_x_offset;
+        int y = margin + g_m12_extras_subtitle_y_offset;
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      x, y, g_m12_extras_subtitle_buf, g_m12_extras_subtitle_style);
+        if (g_m12_extras_subtitle_right_active) {
+            int rightX = margin + panelW - 110;
+            m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          rightX, y, g_m12_extras_subtitle_right_buf, g_m12_extras_subtitle_style);
+        }
+    }
+    g_m12_extras_subtitle_active = 0;
+    g_m12_extras_subtitle_right_active = 0;
 }
 
 static int m12_use_modern_layout(int framebufferWidth,
@@ -5541,7 +6211,7 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
             if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
             else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
             else if (row > M12_SETTINGS_ROW_VIEWPORT_STYLE && row <= M12_SETTINGS_ROW_SMOOTH_TURN_PAN) groupId = M12_SETTINGS_ROW_INPUT_MODE;
-            else if (row > M12_SETTINGS_ROW_SMOOTH_TURN_PAN && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_STATUS;
+            else if (row > M12_SETTINGS_ROW_SMOOTH_TURN_PAN && row <= M12_SETTINGS_ROW_DATA_STATUS) groupId = M12_SETTINGS_ROW_DATA_DIR;
             else if (row > M12_SETTINGS_ROW_DATA_STATUS && row <= M12_SETTINGS_ROW_DEVELOPER_GATES) groupId = M12_SETTINGS_ROW_DEBUG_OVERLAY;
             else if (row > M12_SETTINGS_ROW_DEVELOPER_GATES && row <= M12_SETTINGS_ROW_AUDIO_MUTED) groupId = M12_SETTINGS_ROW_AUDIO_MASTER;
             else if (row > M12_SETTINGS_ROW_AUDIO_MUTED && row <= M12_SETTINGS_ROW_AUTO_PAUSE) groupId = M12_SETTINGS_ROW_FONT_SCALE;
@@ -5692,6 +6362,317 @@ static void m12_draw_changelog_view_modern(const M12_StartupMenuState* state,
                   margin + 14,
                   framebufferHeight - 24,
                   "UP/DOWN SCROLL  LEFT/RIGHT PAGE  ESC BACK",
+                  &g_textSmallAccent);
+}
+
+/* ── Bestiary view (M12_MENU_VIEW_BESTIARY) ───────────────────
+ * Renders the source-locked bestiary database (bestiary_m12.c) as a
+ * scrollable list.  The category filter cycles with LEFT/RIGHT,
+ * the cursor moves with UP/DOWN.  Replaces the v2.7.13-era
+ * m12_draw_bestiary_stub placeholder.
+ *
+ * Source: bestiary_m12.c G_BESTIARY_COUNT, M12_Bestiary_FilteredCount.
+ */
+static void m12_draw_bestiary_view_modern(const M12_StartupMenuState* state,
+                                          unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight) {
+    int margin = framebufferWidth / 30;
+
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int panelW;
+    int visible = M12_BESTIARY_VISIBLE_LINES;
+    int filteredCount;
+    int scrollOff;
+    int i;
+    char titleBuf[96];
+    char subBuf[96];
+    const M12_BestiaryEntry* sel;
+    char atkBuf[32];
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+    panelW = framebufferWidth - (margin * 2);
+
+    filteredCount = M12_Bestiary_FilteredCount(&state->bestiary);
+    scrollOff = state->bestiary.scrollOffset;
+    if (visible > filteredCount - scrollOff) {
+        visible = filteredCount - scrollOff;
+    }
+    if (visible < 0) visible = 0;
+
+    snprintf(titleBuf, sizeof(titleBuf), "BESTIARY — %s",
+             M12_Bestiary_CategoryName(state->bestiary.categoryFilter));
+    snprintf(subBuf, sizeof(subBuf), "%d OF %d CREATURES",
+             filteredCount, M12_Bestiary_TotalCount());
+
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state, framebuffer, framebufferWidth, framebufferHeight,
+                         margin, margin, panelW, heroH, titleBuf);
+    /* Group 7: subtitle is drawn AFTER m12_apply_graphics_overlay
+     * (which BLACK-fills the overlay frame) so it stays visible. */
+    snprintf(g_m12_extras_subtitle_buf, sizeof(g_m12_extras_subtitle_buf), "%s", subBuf);
+    g_m12_extras_subtitle_active = 1;
+    g_m12_extras_subtitle_x_offset = 14;
+    g_m12_extras_subtitle_y_offset = 14;
+    g_m12_extras_subtitle_style = &g_textSmallShadow;
+    g_m12_extras_subtitle_right_active = 0;
+
+    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
+                   margin, contentY, panelW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY, M12_COLOR_BLACK);
+
+    for (i = 0; i < visible; ++i) {
+        const M12_BestiaryEntry* e =
+            M12_Bestiary_GetFiltered(&state->bestiary, scrollOff + i);
+        if (!e) break;
+        switch (e->attackType) {
+            case M12_BESTIARY_ATK_RANGED: snprintf(atkBuf, sizeof(atkBuf), "RANGED"); break;
+            case M12_BESTIARY_ATK_MAGIC:  snprintf(atkBuf, sizeof(atkBuf), "MAGIC");  break;
+            case M12_BESTIARY_ATK_POISON: snprintf(atkBuf, sizeof(atkBuf), "POISON"); break;
+            case M12_BESTIARY_ATK_FIRE:   snprintf(atkBuf, sizeof(atkBuf), "FIRE");   break;
+            case M12_BESTIARY_ATK_MELEE:
+            default:                      snprintf(atkBuf, sizeof(atkBuf), "MELEE");  break;
+        }
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, contentY + 14 + i * 22,
+                      e->name,
+                      (i == state->bestiary.selectedIndex - scrollOff)
+                          ? &g_textMediumShadow : &g_textSmall);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 200, contentY + 14 + i * 22,
+                      atkBuf, &g_textSmallAccent);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 280, contentY + 14 + i * 22,
+                      e->weakness ? e->weakness : "", &g_textSmall);
+    }
+
+    sel = M12_Bestiary_GetSelected(&state->bestiary);
+    if (sel && sel->description) {
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14,
+                      framebufferHeight - 44,
+                      sel->description, &g_textSmall);
+    }
+    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  margin + 14, framebufferHeight - 24,
+                  "UP/DOWN SCROLL  LEFT/RIGHT CATEGORY  ESC BACK",
+                  &g_textSmallAccent);
+}
+
+/* ── Item Encyclopedia view (M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) ────
+ * Renders the firestaff_item_encyclopedia.c database (32 items in 7
+ * categories) as a scrollable list with category tabs.  Replaces
+ * the v2.7.13-era m12_draw_item_encyclopedia_stub placeholder.
+ *
+ * Source: firestaff_item_encyclopedia.c g_items[].
+ */
+static void m12_draw_item_encyclopedia_view_modern(
+    const M12_StartupMenuState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    int margin = framebufferWidth / 30;
+
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int panelW;
+    int i;
+    int total;
+    int scrollOff = state->itemEncyclopediaScrollOffset;
+    int sel = state->itemEncyclopediaSelectedIndex;
+    int cat = state->itemEncyclopediaCategory;
+    char titleBuf[96];
+    char tabBuf[256];
+    char statBuf[32];
+    const FS_ItemEntry* selItem;
+    int visible = 12;
+    int rendered = 0;
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+    panelW = framebufferWidth - (margin * 2);
+
+    total = fs_item_encyclopedia_count();
+    snprintf(titleBuf, sizeof(titleBuf), "ITEM ENCYCLOPEDIA");
+    snprintf(tabBuf, sizeof(tabBuf), "CATEGORY: %s  [%d / %d]",
+             fs_item_category_name((FS_ItemCategory)cat),
+             cat + 1, FS_ITEM_CAT_COUNT);
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state, framebuffer, framebufferWidth, framebufferHeight,
+                         margin, margin, panelW, heroH, titleBuf);
+    /* Group 7: subtitle drawn after overlay so it survives the
+     * m12_apply_graphics_overlay mode 1 BLACK-filled frame. */
+    snprintf(g_m12_extras_subtitle_buf, sizeof(g_m12_extras_subtitle_buf), "%s", tabBuf);
+    g_m12_extras_subtitle_active = 1;
+    g_m12_extras_subtitle_x_offset = 14;
+    g_m12_extras_subtitle_y_offset = 14;
+    g_m12_extras_subtitle_style = &g_textSmallShadow;
+    g_m12_extras_subtitle_right_active = 0;
+
+    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
+                   margin, contentY, panelW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY, M12_COLOR_BLACK);
+
+    for (i = 0; i < total && rendered < visible; ++i) {
+        const FS_ItemEntry* e = fs_item_encyclopedia_get(i);
+        if (!e) break;
+        if ((int)e->category != cat) continue;
+        if (i < scrollOff) continue;
+        if (e->category == (FS_ItemCategory)cat && e->attack > 0) {
+            snprintf(statBuf, sizeof(statBuf), "ATK %2d  WT %2d",
+                     e->attack, e->weight);
+        } else if (e->category == (FS_ItemCategory)cat && e->defense > 0) {
+            snprintf(statBuf, sizeof(statBuf), "DEF %2d  WT %2d",
+                     e->defense, e->weight);
+        } else {
+            snprintf(statBuf, sizeof(statBuf), "WT %2d", e->weight);
+        }
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, contentY + 14 + rendered * 22,
+                      e->name,
+                      (i == sel) ? &g_textMediumShadow : &g_textSmall);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 220, contentY + 14 + rendered * 22,
+                      statBuf, &g_textSmallAccent);
+        ++rendered;
+    }
+    if (rendered == 0) {
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, contentY + 14,
+                      "(no items in this category)", &g_textSmallMuted);
+    }
+    selItem = fs_item_encyclopedia_get(sel);
+    if (selItem && selItem->description) {
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, framebufferHeight - 44,
+                      selItem->description, &g_textSmall);
+    }
+    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  margin + 14, framebufferHeight - 24,
+                  "UP/DOWN SCROLL  LEFT/RIGHT CATEGORY  ESC BACK",
+                  &g_textSmallAccent);
+}
+
+/* ── Screenshot Gallery view (M12_MENU_VIEW_SCREENSHOT_GALLERY) ──
+ * Renders the verification-screens/ directory as a scrollable list
+ * of filenames with size info.  The full M12_ScreenshotGallery_Draw
+ * grid/fullscreen is not used here; the modern renderer needs a
+ * scrollable list view to match the rest of the launcher.  The
+ * screenshot_gallery_m12.c M12_ScreenshotGallery_Scan() is called
+ * lazily on first entry.
+ *
+ * Source: verification-screens/ directory contents.
+ */
+static void m12_draw_screenshot_gallery_view_modern(
+    const M12_StartupMenuState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    int margin = framebufferWidth / 30;
+
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int panelW;
+    int i;
+    const M12_ScreenshotGalleryState* gal = &state->screenshotGallery;
+    int total = gal->entryCount;
+    int sel = gal->selectedIndex;
+    int scrollOff = gal->scrollOffset;
+    int visible = 12;
+    int rendered = 0;
+    char titleBuf[96];
+    char subBuf[96];
+    char indexBuf[32];
+    char sizeBuf[32];
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+    panelW = framebufferWidth - (margin * 2);
+
+    snprintf(titleBuf, sizeof(titleBuf), "SCREENSHOT GALLERY");
+    if (total > 0) {
+        snprintf(subBuf, sizeof(subBuf), "%d SCREENSHOTS — verification-screens/",
+                 total);
+        snprintf(indexBuf, sizeof(indexBuf), "%d / %d", sel + 1, total);
+    } else {
+        snprintf(subBuf, sizeof(subBuf), "verification-screens/ NOT FOUND");
+        snprintf(indexBuf, sizeof(indexBuf), "0 / 0");
+    }
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state, framebuffer, framebufferWidth, framebufferHeight,
+                         margin, margin, panelW, heroH, titleBuf);
+    /* Group 7: subtitles drawn after overlay (which BLACK-fills the
+     * mode 1 frame at y=34-680) so they stay visible. */
+    snprintf(g_m12_extras_subtitle_buf, sizeof(g_m12_extras_subtitle_buf), "%s", subBuf);
+    g_m12_extras_subtitle_active = 1;
+    g_m12_extras_subtitle_x_offset = 14;
+    g_m12_extras_subtitle_y_offset = 14;
+    g_m12_extras_subtitle_style = &g_textSmallShadow;
+    snprintf(g_m12_extras_subtitle_right_buf, sizeof(g_m12_extras_subtitle_right_buf), "%s", indexBuf);
+    g_m12_extras_subtitle_right_active = 1;
+
+    m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
+                   margin, contentY, panelW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY, M12_COLOR_BLACK);
+
+    if (total == 0) {
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, contentY + 14,
+                      "(no screenshots found in verification-screens/)",
+                      &g_textSmallMuted);
+        m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      margin + 14, contentY + 36,
+                      "(run a verification probe to generate screens)",
+                      &g_textSmallMuted);
+    } else {
+        for (i = 0; i < total && rendered < visible; ++i) {
+            int line = i - scrollOff;
+            const M12_ScreenshotGalleryEntry* e;
+            if (line < 0) continue;
+            if (line >= visible) break;
+            e = &gal->entries[i];
+            if (e->fileSize < 1024) {
+                snprintf(sizeBuf, sizeof(sizeBuf), "%ld B", e->fileSize);
+            } else if (e->fileSize < 1024 * 1024) {
+                snprintf(sizeBuf, sizeof(sizeBuf), "%ld KB", e->fileSize / 1024);
+            } else {
+                snprintf(sizeBuf, sizeof(sizeBuf), "%.1f MB",
+                         e->fileSize / (1024.0 * 1024.0));
+            }
+            m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          margin + 14, contentY + 14 + line * 22,
+                          e->filename,
+                          (i == sel) ? &g_textMediumShadow : &g_textSmall);
+            m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          margin + 380, contentY + 14 + line * 22,
+                          sizeBuf, &g_textSmallAccent);
+            if (e->width > 0 && e->height > 0) {
+                char dimBuf[32];
+                snprintf(dimBuf, sizeof(dimBuf), "%dx%d", e->width, e->height);
+                m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              margin + 460, contentY + 14 + line * 22,
+                              dimBuf, &g_textSmallAccent);
+            }
+            ++rendered;
+        }
+    }
+
+    m12_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  margin + 14, framebufferHeight - 24,
+                  "UP/DOWN SCROLL  ACCEPT OPEN  ESC BACK",
                   &g_textSmallAccent);
 }
 
@@ -6120,7 +7101,10 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                       framebufferHeight,
                       panelX + 10,
                       rowY + 28,
-                      m12_tr(state, "LOCKED BY V1 ORIGINAL MODE"),
+                      m12_tr(state,
+                             pmode == M12_PRESENTATION_V20_FILTERED
+                                 ? "LOCKED BY V2.0 FILTERED MODE"
+                                 : "LOCKED BY V1 ORIGINAL MODE"),
                       &g_textSmallMuted);
     }
     rowY += resLocked ? 42 : 36;
@@ -6138,8 +7122,11 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                        launchBorder,
                        launchFill);
         {
-            const char* launchLabel = (pmode == M12_PRESENTATION_V22_MODERN ||
-                                       !M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex))
+            const char* launchLabel = (entry && entry->gameId &&
+                                       !M12_AssetStatus_GameAvailable(&state->assetStatus, entry->gameId))
+                                          ? m12_tr(state, "> DATA FILES NOT FOUND")
+                                          : (pmode == M12_PRESENTATION_V22_MODERN ||
+                                             !M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex))
                                           ? m12_tr(state, "> DATA FILES NOT FOUND")
                                           : m12_tr(state, "> LAUNCH");
             m12_draw_text(framebuffer,
@@ -6233,6 +7220,22 @@ static void m12_draw_message_view_modern(const M12_StartupMenuState* state,
                   contentY + 74,
                   state->messageLine3,
                   &g_textSmallMuted);
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   boxX + 160,
+                   contentY + 104,
+                   86,
+                   24,
+                   M12_COLOR_YELLOW,
+                   M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  boxX + 190,
+                  contentY + 111,
+                  "OK",
+                  &g_textSmallAccent);
     m12_draw_footer(framebuffer,
                     framebufferWidth,
                     framebufferHeight,
@@ -6246,6 +7249,7 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
     if (!state || !framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
+
     g_m12_active_font_scale = state->settings.fontScale;
     if (g_m12_active_font_scale < 1) {
         g_m12_active_font_scale = 1;
@@ -6283,10 +7287,19 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_changelog_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_MUSEUM) {
             m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_BESTIARY) {
+            m12_draw_bestiary_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
+            m12_draw_item_encyclopedia_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_SCREENSHOT_GALLERY) {
+            m12_draw_screenshot_gallery_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else {
             m12_draw_main_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         }
         m12_apply_graphics_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
+        /* Group 7: re-draw the extras subtitle on top of the overlay
+         * so the BLACK-filled mode 1 frame does not hide it. */
+        m12_draw_extras_subtitle_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
         return;
     }
     m12_draw_background(state, framebuffer, framebufferWidth, framebufferHeight);
@@ -6300,6 +7313,12 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         m12_draw_changelog_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_MUSEUM) {
         m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_BESTIARY) {
+        m12_draw_bestiary_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
+        m12_draw_item_encyclopedia_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_SCREENSHOT_GALLERY) {
+        m12_draw_screenshot_gallery_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else {
         m12_draw_main_view(state, framebuffer, framebufferWidth, framebufferHeight);
     }
@@ -6360,6 +7379,7 @@ const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuS
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state) {
     M12_LaunchIntent intent;
     const M12_AssetVersionStatus* version;
+    int selectedVersionIndex;
     int gi;
     int pmode;
     memset(&intent, 0, sizeof(intent));
@@ -6374,12 +7394,29 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     }
     gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
     version = m12_selected_version_status(state, gi);
+    selectedVersionIndex = state->gameOptions[gi].versionIndex;
     intent.gameId = state->entries[state->activatedIndex].gameId;
+    if ((!version || !version->matched) &&
+        intent.gameId &&
+        M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)) {
+        size_t vc = M12_AssetStatus_GetVersionCount(intent.gameId);
+        size_t vi;
+        for (vi = 0; vi < vc; ++vi) {
+            const M12_AssetVersionStatus* vs = M12_AssetStatus_GetVersion(
+                &state->assetStatus, intent.gameId, vi);
+            if (vs && vs->matched) {
+                version = vs;
+                selectedVersionIndex = (int)vi;
+                break;
+            }
+        }
+    }
     intent.versionId = version ? version->versionId : NULL;
     intent.presentationMode = pmode;
     intent.rendererBackend = M12_StartupMenu_GetRendererBackend(state);
     intent.rendererBackendAvailable = M12_StartupMenu_RendererBackendAvailable(intent.rendererBackend);
     intent.options = state->gameOptions[gi];
+    intent.options.versionIndex = selectedVersionIndex;
     if (state->quickResumeAvailable &&
         state->quickResumeLaunchRequested &&
         state->quickResumeSavePath[0] != '\0' &&
@@ -6390,9 +7427,13 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     }
     /* Enforce constraints on the returned options */
     m12_enforce_mode_constraints(&intent.options, pmode);
+    M12_Resolution_Dimensions(intent.options.resolution,
+                              &intent.resolutionWidth,
+                              &intent.resolutionHeight);
     intent.valid = m12_game_supported(intent.gameId) &&
                    intent.rendererBackendAvailable &&
                    state->entries[state->activatedIndex].available &&
+                   M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId) &&
                    version && version->matched ? 1 : 0;
     /* Nexus Phase 1 gate: only V1.ORIGINAL is supported.
      * Block V2.0/V2.1/V2.2 for nexus until those render paths are implemented.
@@ -6505,8 +7546,11 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
                         /* Open the Firestaff documentation site */
                         SDL_OpenURL("https://github.com/yeager/firestaff#readme");
                     } break;
+                    case M12_EXTRAS_BESTIARY: state->view = M12_MENU_VIEW_BESTIARY; break;
+                    case M12_EXTRAS_ITEMS: state->view = M12_MENU_VIEW_ITEM_ENCYCLOPEDIA; break;
                     case M12_EXTRAS_CHANGELOG: state->view = M12_MENU_VIEW_CHANGELOG; break;
-                    default: break; /* Others not implemented yet */
+                    case M12_EXTRAS_SCREENSHOTS: state->view = M12_MENU_VIEW_SCREENSHOT_GALLERY; break;
+                    default: break; /* SPELL_REFERENCE / MAP_VIEWER: no data source yet */
                 }
             }
             if (key_escape) g_nav_level = M12_NAV_MAIN;
@@ -6516,38 +7560,18 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
 
 M12_NavLevel m12_get_nav_level(void) { return g_nav_level; }
 
-/* ── Extras view stubs (#9) ───────────────────────────────────────── */
-
-static void m12_draw_bestiary_stub(unsigned char *fb, int fw, int fh) {
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "BESTIARY", &g_textTitleShadow);
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
-    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
-}
-
-static void m12_draw_spell_reference_stub(unsigned char *fb, int fw, int fh) {
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "SPELL REFERENCE", &g_textTitleShadow);
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
-    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
-}
-
-static void m12_draw_map_viewer_stub(unsigned char *fb, int fw, int fh) {
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "MAP VIEWER", &g_textTitleShadow);
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
-    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
-}
-
-static void m12_draw_item_encyclopedia_stub(unsigned char *fb, int fw, int fh) {
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "ITEM ENCYCLOPEDIA", &g_textTitleShadow);
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
-    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
-}
-
-static void m12_draw_screenshot_gallery_stub(unsigned char *fb, int fw, int fh) {
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 10, "SCREENSHOT GALLERY", &g_textTitleShadow);
-    m12_draw_text(fb, fw, fh, fw/20, fw/20 + 50, "Coming in a future update.", &g_textSmallMuted);
-    m12_draw_text(fb, fw, fh, fw/20, fh - 24, "Escape Back", &g_textSmallMuted);
-}
-
+/* ── Extras view stubs (#9) — replaced in v2.7.14 ───────────
+ *
+ * BESTIARY, ITEM ENCYCLOPEDIA, and SCREENSHOT GALLERY now have
+ * their own modern draw functions (m12_draw_*_view_modern) that
+ * use the source-locked data APIs (bestiary_m12.c,
+ * firestaff_item_encyclopedia.c, screenshot_gallery_m12.c).  The
+ * dispatch in M12_StartupMenu_DrawFramebuffer routes to those
+ * functions when state->view matches.
+ *
+ * SPELL REFERENCE and MAP VIEWER remain unavailable (g_extras
+ * available flag = 0) because they have no data source yet.  They
+ * will be wired in a follow-up when a data source lands. */
 /* ── Accessibility settings (#10) ─────────────────────────────────── */
 
 static M12_ExtSettingsRow m12_accessibility_settings[] = {

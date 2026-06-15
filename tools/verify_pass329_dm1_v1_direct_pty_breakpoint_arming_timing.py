@@ -2,6 +2,9 @@
 from __future__ import annotations
 import json, sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 PASS = 'pass329_dm1_v1_direct_pty_breakpoint_arming_timing'
 MANIFEST = ROOT / 'parity-evidence/verification' / PASS / 'manifest.json'

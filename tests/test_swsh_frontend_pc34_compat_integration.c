@@ -32,6 +32,27 @@ static int test_swsh_logo_expand_padded(void) {
     return dst[0] == 0x22 && dst[1] == 0x20 && dst[2] == 0x22 && dst[3] == 0x20;
 }
 
+static int test_swsh_embedded_mz_payload_detection(void) {
+    unsigned char rawImg[8] = {0x40, 0x01, 0xC8, 0x00, 0x12, 0x34, 0x56, 0x11};
+    unsigned char mzImg[16] = {'M', 'Z', 0x90, 0x00, 0x00, 0x00, 0x40, 0x01,
+                               0xC8, 0x00, 0x12, 0x34, 0x56, 0x11, 0x00, 0x00};
+    return SWSH_Compat_FindLogoImagePayload(rawImg, sizeof(rawImg)) == rawImg &&
+           SWSH_Compat_FindLogoImagePayload(mzImg, sizeof(mzImg)) == mzImg + 6 &&
+           SWSH_Compat_FindLogoImagePayload(mzImg, 5u) == NULL;
+}
+
+static int test_swsh_palette_word_conversion(void) {
+    unsigned char rgb[3] = {0, 0, 0};
+    SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(0x0777u, rgb);
+    if (rgb[0] != 255u || rgb[1] != 255u || rgb[2] != 255u) return 0;
+    SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(0x0555u, rgb);
+    if (rgb[0] != 190u || rgb[1] != 190u || rgb[2] != 190u) return 0;
+    SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(0x0222u, rgb);
+    if (rgb[0] != 125u || rgb[1] != 125u || rgb[2] != 125u) return 0;
+    SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(0x0770u, rgb);
+    return rgb[0] == 255u && rgb[1] == 255u && rgb[2] == 0u;
+}
+
 static int test_swsh_source_animation_schedule(void) {
     unsigned int i;
     unsigned int colorSetCount = 0u;
@@ -88,7 +109,7 @@ static int test_swsh_source_animation_schedule(void) {
            timing.soundWaitCommandCount,
            timing.soundWaitVblankCount);
     if (colorSetCount != timing.paletteColorSetCount || waitCommandCount != timing.paletteWaitCommandCount || waitVblankCount != timing.paletteWaitVblankCount) ok = 0;
-    if (timing.paletteCommandCount != 26u || timing.soundRegisterWriteCount != 17u || timing.soundWaitCommandCount != 10u || timing.soundWaitVblankCount != 20u) ok = 0;
+    if (timing.paletteCommandCount != 26u || timing.paletteWaitVblankCount != 30u || timing.soundRegisterWriteCount != 17u || timing.soundWaitCommandCount != 10u || timing.soundWaitVblankCount != 20u) ok = 0;
     printf("swshSourceAnimationScheduleInvariantOk=%d\n", ok);
     return ok;
 }
@@ -100,6 +121,14 @@ int main(void) {
     }
     if (!test_swsh_logo_expand_padded()) {
         fprintf(stderr, "test_swsh_logo_expand_padded failed\n");
+        return 1;
+    }
+    if (!test_swsh_embedded_mz_payload_detection()) {
+        fprintf(stderr, "test_swsh_embedded_mz_payload_detection failed\n");
+        return 1;
+    }
+    if (!test_swsh_palette_word_conversion()) {
+        fprintf(stderr, "test_swsh_palette_word_conversion failed\n");
         return 1;
     }
     if (!test_swsh_source_animation_schedule()) {

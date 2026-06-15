@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "dm1_v1_sound_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
 
 /*
@@ -341,7 +342,9 @@ int F0717_DOOR_ResolveClosingObstruction_Compat(
         outResult->rescheduleDelayTicks = 2;
         outResult->damageAmount = 5;
         outResult->woundMask = DOOR_OBSTRUCTION_WOUND_HEAD;
-        outResult->soundId = 1; /* party damaged sound stand-in */
+        /* ReDMCSB TIMELINE.C:F0241 line 762: request party
+         * damage sound via SOUND.C:M562_SOUND_PARTY_DAMAGED. */
+        outResult->soundId = DM1_SND_PARTY_DAMAGED;
         return 1;
     }
 
@@ -356,7 +359,9 @@ int F0717_DOOR_ResolveClosingObstruction_Compat(
             outResult->rescheduleDelayTicks = 1;
             outResult->damageAmount = 5;
             outResult->woundMask = 0;
-            outResult->soundId = 4; /* wooden thud / attack sound stand-in */
+            /* ReDMCSB TIMELINE.C:F0241 line 782: request wooden-thud
+             * attack audio via SOUND.C:M562_SOUND_WOODEN_THUD_ATTACK. */
+            outResult->soundId = DM1_SND_WOODEN_THUD;
             return 1;
         }
     }

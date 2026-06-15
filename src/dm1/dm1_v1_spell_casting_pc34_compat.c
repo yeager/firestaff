@@ -304,6 +304,38 @@ void dm1_spell_applyCastClickSymbolFeedback(DM1_SpellCastingState* s,
     s->input[champIdx].symbolStep = 0;
 }
 
+static DM1_SpellPotionObject* find_empty_flask_in_hand(
+    DM1_SpellPotionInventory* inventory,
+    int* outSlotIndex)
+{
+    int slotOrder[DM1_SPELL_HAND_SLOT_COUNT] = {
+        DM1_SPELL_SLOT_ACTION_HAND,
+        DM1_SPELL_SLOT_READY_HAND
+    };
+
+    if (outSlotIndex) *outSlotIndex = -1;
+    if (!inventory) return NULL;
+
+    /* ReDMCSB MENU.C F0411:1745-1749 scans action hand before ready hand
+     * and accepts only objects whose icon is C195 empty flask. */
+    for (int orderIndex = 0; orderIndex < DM1_SPELL_HAND_SLOT_COUNT; ++orderIndex) {
+        int slotIndex = slotOrder[orderIndex];
+        uint16_t thing = inventory->slots[slotIndex];
+        if (thing == DM1_SPELL_THING_NONE_PC34) continue;
+
+        for (int potionIndex = 0; potionIndex < inventory->potionCount; ++potionIndex) {
+            DM1_SpellPotionObject* potion = &inventory->potions[potionIndex];
+            if (potion->thing == thing &&
+                potion->iconIndex == DM1_SPELL_ICON_EMPTY_FLASK_PC34) {
+                if (outSlotIndex) *outSlotIndex = slotIndex;
+                return potion;
+            }
+        }
+    }
+
+    return NULL;
+}
+
 /*
  * dm1_spell_cast — Source: MENU.C F0412_MENUS_GetChampionSpellCastResult
  *
@@ -397,6 +429,94 @@ int dm1_spell_cast(DM1_SpellCastingState* s, int champIdx,
     if (outSpell) *outSpell = spell;
     inp->symbols[0] = '\0';
     inp->symbolStep = 0;
+
+    return DM1_SPELL_CAST_SUCCESS;
+}
+
+int dm1_spell_castPotionWithInventory(DM1_SpellCastingState* s,
+                                      int champIdx,
+                                      DM1_ChampionSpellStats* stats,
+                                      uint16_t rng16,
+                                      DM1_SpellPotionInventory* inventory,
+                                      DM1_SpellPotionCastResult* outResult)
+{
+    const DM1_Spell* spell = NULL;
+    int powerOrdinal = 0;
+    int failure = -1;
+    int castResult;
+    int slotIndex = -1;
+    DM1_SpellPotionObject* flask;
+
+    if (outResult) {
+        memset(outResult, 0, sizeof(*outResult));
+        outResult->castResult = DM1_SPELL_CAST_FAILURE;
+        outResult->failureType = -1;
+        outResult->spellIndex = -1;
+        outResult->powerOrdinal = -1;
+        outResult->flaskSlotIndex = -1;
+        outResult->flaskThing = DM1_SPELL_THING_NONE_PC34;
+        outResult->potionTypeBefore = -1;
+        outResult->potionTypeAfter = -1;
+        outResult->potionPowerBefore = -1;
+        outResult->potionPowerAfter = -1;
+        outResult->loadBefore = inventory ? inventory->load : 0;
+        outResult->loadAfter = inventory ? inventory->load : 0;
+    }
+
+    if (!s || !stats || !inventory) return DM1_SPELL_CAST_FAILURE;
+
+    castResult = dm1_spell_cast(s, champIdx, stats, rng16, &spell,
+                                &powerOrdinal, &failure);
+    if (outResult) {
+        outResult->castResult = castResult;
+        outResult->failureType = failure;
+        outResult->powerOrdinal = powerOrdinal;
+        outResult->spellIndex = spell ? (int)(spell - dm1_spells) : -1;
+        outResult->loadBefore = inventory->load;
+        outResult->loadAfter = inventory->load;
+        outResult->symbolsCleared =
+            (champIdx >= 0 && champIdx < 4 && s->input[champIdx].symbols[0] == '\0') ? 1 : 0;
+    }
+
+    if (castResult != DM1_SPELL_CAST_FAILURE_NEEDS_FLASK ||
+        !spell || DM1_SPELL_KIND(spell) != DM1_SPELL_KIND_POTION) {
+        return castResult;
+    }
+
+    flask = find_empty_flask_in_hand(inventory, &slotIndex);
+    if (!flask) {
+        return DM1_SPELL_CAST_FAILURE_NEEDS_FLASK;
+    }
+
+    if (outResult) {
+        outResult->flaskSlotIndex = slotIndex;
+        outResult->flaskThing = flask->thing;
+        outResult->potionTypeBefore = flask->type;
+        outResult->potionPowerBefore = flask->power;
+        outResult->loadBefore = inventory->load;
+    }
+
+    /* ReDMCSB MENU.C F0412:1851-1854 captures empty-flask weight, writes
+     * M068_SPELL_TYPE, assigns M003_RANDOM(16) + powerOrdinal * 40, then
+     * adjusts champion load by the new object weight delta. */
+    {
+        int emptyWeight = flask->weight;
+        flask->type = DM1_SPELL_TYPE(spell);
+        flask->power = (int)(rng16 & 0x000Fu) + (powerOrdinal * 40);
+        inventory->load += flask->weight - emptyWeight;
+    }
+
+    dm1_spell_applyCastClickSymbolFeedback(s, champIdx, DM1_SPELL_CAST_SUCCESS);
+
+    if (outResult) {
+        outResult->castResult = DM1_SPELL_CAST_SUCCESS;
+        outResult->failureType = -1;
+        outResult->potionTypeAfter = flask->type;
+        outResult->potionPowerAfter = flask->power;
+        outResult->loadAfter = inventory->load;
+        outResult->symbolsCleared =
+            (champIdx >= 0 && champIdx < 4 && s->input[champIdx].symbols[0] == '\0') ? 1 : 0;
+    }
 
     return DM1_SPELL_CAST_SUCCESS;
 }

@@ -37,38 +37,38 @@ Claim: D3R, D2L, and D2R front-door branches use ReDMCSB's two-pass door-front o
 
 ## Firestaff Evidence
 
-- PASS firestaff-mirrored-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:236-240)
-  - line 236: DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439
-  - line 236: DUNVIEW.C:6579 floor ornament under mirrored rear pass
-  - line 236: DUNVIEW.C:6592-6593 optional button before door panel
-  - line 238: DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349
-  - line 238: DUNVIEW.C:6988 floor ornament under rear pass
-  - line 239: DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439
-  - line 239: DUNVIEW.C:7181 floor ornament under mirrored rear pass
+- PASS firestaff-mirrored-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:283-290)
+  - line 283: DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439
+  - line 283: DUNVIEW.C:6579 floor ornament under mirrored rear pass
+  - line 283: DUNVIEW.C:6592-6593 optional button before door panel
+  - line 285: DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349
+  - line 285: DUNVIEW.C:6988 floor ornament under rear pass
+  - line 286: DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439
+  - line 286: DUNVIEW.C:7181 floor ornament under mirrored rear pass
 
-- PASS firestaff-mirrored-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:707-770)
-  - line 725: { DM1_VIEW_SQUARE_D3R, "6579", "6580", "6582", "6592", "6598", "6601", 0x0128, 0x0439, {2, 1}, {3, 4} },
-  - line 727: { DM1_VIEW_SQUARE_D2L, "6988", "6989", "6991", NULL,   "7000", "7003", 0x0218, 0x0349, {1, 2}, {4, 3} },
-  - line 728: { DM1_VIEW_SQUARE_D2R, "7181", "7182", "7184", NULL,   "7193", "7196", 0x0128, 0x0439, {2, 1}, {3, 4} },
-  - line 735: check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);
-  - line 754: rear.cells[0] == expected[i].rear_cells[0]
-  - line 758: front.cells[0] == expected[i].front_cells[0]
+- PASS firestaff-mirrored-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:739-800)
+  - line 757: { DM1_VIEW_SQUARE_D3R, "6579", "6580", "6582", "6592", "6598", "6601", 0x0128, 0x0439, {2, 1}, {3, 4} },
+  - line 759: { DM1_VIEW_SQUARE_D2L, "6988", "6989", "6991", NULL,   "7000", "7003", 0x0218, 0x0349, {1, 2}, {4, 3} },
+  - line 760: { DM1_VIEW_SQUARE_D2R, "7181", "7182", "7184", NULL,   "7193", "7196", 0x0128, 0x0439, {2, 1}, {3, 4} },
+  - line 767: check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);
+  - line 786: rear.cells[0] == expected[i].rear_cells[0]
+  - line 790: front.cells[0] == expected[i].front_cells[0]
 
 ## Verification
 
 - /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.wall_empty_blit_gate == 1
-PASS source_evidence.occlusion == 1
-PASS source_evidence.command_dispatch == 1
-PASS source_evidence.next_redraw == 1
-PASS source_evidence.present_wait == 1
-PASS source_evidence.same_viewport_mouse == 1
-PASS source_evidence.same_viewport_turn == 1
-PASS source_evidence.same_viewport_move == 1
-PASS source_evidence.same_viewport_draw == 1
-PASS source_evidence.same_viewport_present == 1
-PASS source_evidence.same_viewport_assets == 1
+PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c
+PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
+PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
+PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 

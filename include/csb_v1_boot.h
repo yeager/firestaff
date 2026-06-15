@@ -46,6 +46,8 @@ typedef struct {
     uint32_t default_party_x;
     uint32_t default_party_y;
     uint32_t default_party_dir;
+    int imported_party_ready;
+    CSB_V1_PartyState imported_party;
 
     CSB_V1_RuntimeProfile runtime;
 } CSB_V1_BootProfile;
@@ -54,6 +56,8 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile);
 int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir);
 int csb_v1_boot_probe_available(const char *data_dir);
 void csb_v1_boot_set_save_root(CSB_V1_BootProfile *profile, const char *save_dir);
+int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
+                                   const CSB_V1_PartyState *party);
 int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile);
 void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile);
 size_t csb_v1_boot_diagnostic_report(const CSB_V1_BootProfile *profile,

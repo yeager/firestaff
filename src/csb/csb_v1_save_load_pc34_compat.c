@@ -466,8 +466,11 @@ int csb_v1_load_game(const char *path,
     size_t hdr_read, data_read;
     CSB_V1_SaveHeader tmp_hdr;
     int result;
+    int read_error = 0;
 
-    if (!path || !state || max_size <= 0) return -1;
+    if (!path || max_size < 0) return -1;
+    if (!state && max_size != 0) return -1;
+    if (state && max_size == 0) return -1;
 
     f = fopen(path, "rb");
     if (!f) return CSB_V1_LOAD_ERR_NOT_FOUND;
@@ -486,11 +489,19 @@ int csb_v1_load_game(const char *path,
         return CSB_V1_LOAD_ERR_DAMAGED;
     }
 
-    /* Read game state */
-    data_read = fread(buf, 1, (size_t)max_size, f);
+    /* Header-only compatibility checks intentionally stop here. ReDMCSB
+     * LOADSAVE.C F0435 lines ~2665-2724 reads F0429's save header before
+     * pulling GLOBAL_DATA and later runtime sections. */
+    if (max_size > 0) {
+        data_read = fread(buf, 1, (size_t)max_size, f);
+        read_error = ferror(f);
+    } else {
+        data_read = 0;
+    }
+
     fclose(f);
 
-    if ((int)data_read != max_size && ferror(f)) {
+    if ((int)data_read != max_size && read_error) {
         return CSB_V1_LOAD_ERR_UNREADABLE;
     }
 

@@ -144,6 +144,31 @@ int F0502_DUNGEON_LoadTileData_Compat(
 void F0502_DUNGEON_FreeTileData_Compat(
     struct DungeonDatState_Compat* state);
 
+/* Forward decl so the DUN-05 prototype below is well-formed.
+ * The full struct lives further down in this header. */
+struct DungeonThings_Compat;
+
+/*
+ * BUG0_08 defensive sanity check (DUN-05 audit, v2.7.x).
+ *
+ * Counts squares flagged with DUNGEON_SQUARE_MASK_THING_LIST across
+ * all loaded maps and compares the total to things->squareFirstThingCount.
+ *
+ * Original ReDMCSB DUNGEON.C:F0163_DUNGEON_LinkThingToList would
+ * silently overflow the G0283_pT_SquareFirstThings buffer if the
+ * dungeon contains more thing-bearing squares than free slots. The
+ * original (PC 3.4 Atari ST) never triggers this in shipped dungeons
+ * but a hand-crafted dungeon can.
+ *
+ * Firestaff refuses to overfill - this helper makes the divergence
+ * observable by emitting a one-shot warning to stderr. Call after
+ * F0502 and F0504 succeed. Returns the number of overfill squares
+ * that the original would have corrupted (0 if consistent).
+ */
+int F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat(
+    const struct DungeonDatState_Compat* state,
+    const struct DungeonThings_Compat* things);
+
 /*
  * Get element type name string for a square element type (0-6).
  */

@@ -13,6 +13,9 @@ from pathlib import Path
 from typing import Any
 import pexpect
 import verify_pass385_dm1_v1_corrected_loader_delta_semantic_route as p385
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT=Path(__file__).resolve().parents[1]
 PASS="pass474_dm1_v1_live_mouse_down_up_c080_probe"

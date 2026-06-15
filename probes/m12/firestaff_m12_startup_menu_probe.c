@@ -283,10 +283,10 @@ int main(void) {
                  "INV_M12_00_ORIGINALS_POPUP",
                  state.view == M12_MENU_VIEW_MESSAGE &&
                      state.launchRequested == 0 &&
-                     state.messageLine1 && strcmp(state.messageLine1, "ORIGINAL FILES NOT FOUND") == 0 &&
-                     state.messageLine2 && strcmp(state.messageLine2, "COPY YOUR RETAIL GAME FILES INTO:") == 0 &&
-                     state.messageLine3 && strcmp(state.messageLine3, dataDir) == 0,
-                 "empty originals directory opens a startup popup that tells the user where to copy retail files");
+                     state.messageLine1 && strcmp(state.messageLine1, "NO GAME DATA FOUND") == 0 &&
+                     state.messageLine2 && strcmp(state.messageLine2, "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY") == 0 &&
+                     state.messageLine3 && strstr(state.messageLine3, dataDir) != NULL,
+                 "empty originals directory opens an OK startup popup that shows the scanned data directory");
 
     make_file_with_text(graphicsPath, "ok");
     make_file_with_text(dungeonPath, "ok");
@@ -361,7 +361,7 @@ int main(void) {
                      M12_AssetStatus_GameKnownHashCount("csb") == 4U &&
                      M12_AssetStatus_GameKnownHashCount("dm2") == 3U &&
                      M12_AssetStatus_GameKnownHashCount("nexus") == 2U &&
-                     M12_AssetStatus_GameKnownHashCount("theron") == 2U,
+                     M12_AssetStatus_GameKnownHashCount("theron") == 4U,
                  "asset scan exposes the bounded per-game version matrix and leaves unmatched versions unavailable");
 
     force_dm1_version_ready(&state, 0U);
@@ -452,9 +452,10 @@ int main(void) {
                  "INV_M12_08",
                  state.view == M12_MENU_VIEW_MESSAGE &&
                      state.launchRequested == 0 &&
-                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0 &&
-                     strcmp(state.messageLine2, "CHECK FIRESTAFF DATA DIR") == 0,
-                 "enter on unmatched CSB shows data-missing messaging without requesting launch");
+                     strcmp(state.messageLine1, "CSB GAME DATA NOT FOUND") == 0 &&
+                     strstr(state.messageLine2, "GRAPHICS.DAT") != NULL &&
+                     strstr(state.messageLine2, "DUNGEON.DAT") != NULL,
+                 "enter on unmatched CSB shows which required game data files are missing");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
@@ -509,13 +510,19 @@ int main(void) {
                  state.view == M12_MENU_VIEW_SETTINGS,
                  "settings row opens settings screen");
 
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    /* v2.7.15 split: LEFT/RIGHT cycles the settings tab strip
+     * (CONTROLS/AUDIO/ACCESSIBILITY), UP/DOWN moves the row cursor,
+     * and VALUE_LEFT/VALUE_RIGHT/ACCEPT cycle the value of the
+     * selected row.  Cycle the four settings values via VALUE_RIGHT
+     * so the language/graphics/renderer/window values each advance
+     * by one. */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     probe_record(&tally,
                  "INV_M12_10",
                  state.settings.languageIndex == 1 &&
@@ -675,9 +682,10 @@ int main(void) {
     probe_record(&tally,
                  "INV_M12_11C",
                  state.view == M12_MENU_VIEW_MESSAGE &&
-                     strcmp(state.messageLine1, "GAME DATA NOT FOUND") == 0 &&
-                     strcmp(state.messageLine2, "CHECK FIRESTAFF DATA DIR") == 0,
-                 "missing runtime catalog falls back safely while hash-verified games stay non-launching without matched data");
+                     strcmp(state.messageLine1, "CSB GAME DATA NOT FOUND") == 0 &&
+                     strstr(state.messageLine2, "GRAPHICS.DAT") != NULL &&
+                     strstr(state.messageLine2, "DUNGEON.DAT") != NULL,
+                 "missing runtime catalog falls back safely while missing game-data details stay visible");
 
     remove_if_present(configPath);
     portable_setenv("LANG", "C", 1);
@@ -844,15 +852,42 @@ int main(void) {
                      M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V1_ORIGINAL) == 1 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V1_ORIGINAL) == 1 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_PATCH, M12_PRESENTATION_V1_ORIGINAL) == 0 &&
+                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V20_FILTERED) == 0 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V21_UPSCALED) == 0 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V21_UPSCALED) == 0,
-                     "RowLockedByMode reports correct constraints per mode");
+                     "RowLockedByMode reports correct constraints per mode (V2.0/V2.1/V2.2 all share the 640x400..3840x2160 selector)");
+
+        /* V2.0 mode: shares the 640x400..3840x2160 selector with V2.1/V2.2.
+         * Cycle resolution from 320x200 (idx 0) through 640x400, 800x600,
+         * 1024x768, 1280x960, 1600x1000, 1920x1080, 2560x1440, 3200x2000,
+         * 3840x2160 (idx 9) by pressing RIGHT 9 times. */
+        M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
+        force_dm1_version_ready(&modeState, 0U);
+        modeState.settings.graphicsIndex = M12_PRESENTATION_V20_FILTERED;
+        modeState.selectedIndex = 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_RESOLUTION;
+        {
+            int i;
+            for (i = 0; i < 9; ++i) {
+                M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_RIGHT);
+            }
+        }
+        intent = M12_StartupMenu_GetLaunchIntent(&modeState);
+        probe_record(&tally,
+                     "INV_M12_17B",
+                     modeState.gameOptions[0].resolution == M12_RES_3840x2160 &&
+                         intent.valid == 1 &&
+                         intent.presentationMode == M12_PRESENTATION_V20_FILTERED &&
+                         intent.options.resolution == M12_RES_3840x2160,
+                     "V2.0 mode shares the 640x400..3840x2160 resolution selector with V2.1/V2.2 (no longer locked to 640x400)");
 
         /* V2 mode: aspect and resolution cycle freely */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V21_UPSCALED;
+        modeState.gameOptions[0].resolution = M12_RES_320x200;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_ASPECT;
@@ -988,9 +1023,10 @@ int main(void) {
                      "INV_M12_28",
                      modeState.launchRequested == 0 &&
                          modeState.view == M12_MENU_VIEW_MESSAGE &&
-                         strcmp(modeState.messageLine1, "GAME DATA NOT FOUND") == 0 &&
-                         strcmp(modeState.messageLine2, "CHECK FIRESTAFF DATA DIR") == 0,
-                     "CSB stays non-launching without matched data and reports the data-dir gate");
+                         strcmp(modeState.messageLine1, "CSB GAME DATA NOT FOUND") == 0 &&
+                         strstr(modeState.messageLine2, "GRAPHICS.DAT") != NULL &&
+                         strstr(modeState.messageLine2, "DUNGEON.DAT") != NULL,
+                     "CSB stays non-launching without matched data and reports the missing required files");
 
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_csb_version_ready(&modeState, 0U);

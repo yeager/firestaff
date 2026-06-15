@@ -159,7 +159,13 @@ const char *v21_runtime_source_evidence(void) {
  * (linked in game binary, absent in shell tests) */
 __attribute__((weak)) void v2_light_tick(float dt) { (void)dt; }
 __attribute__((weak)) void v22_light_rebuild_map(void) {}
-__attribute__((weak)) int v22_smooth_tick(float*,float*,float*) { return 0; }
+__attribute__((weak)) void v22_light_tick(float dt) { (void)dt; }
+__attribute__((weak)) int v22_smooth_tick(float* x, float* y, float* angle) {
+    (void)x;
+    (void)y;
+    (void)angle;
+    return 0;
+}
 __attribute__((weak)) void v22_shake_tick(float dt,float*dx,float*dy) { (void)dt;if(dx)*dx=0;if(dy)*dy=0; }
 __attribute__((weak)) void v2_particle_tick(float dt) { (void)dt; }
 __attribute__((weak)) void v22_damage_tick(float dt) { (void)dt; }
@@ -219,4 +225,3 @@ int v22_runtime_enhanced_is_active(void) {
 const char *v22_runtime_version_string(void) {
     return "DM1 V2.2 Enhanced";
 }
-

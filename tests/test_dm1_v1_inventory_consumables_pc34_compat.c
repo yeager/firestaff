@@ -13,6 +13,16 @@ static int expect_int(const char* label, int got, int want)
     return 1;
 }
 
+static int expect_contains(const char* label, const char* text, const char* needle)
+{
+    if (!text || !needle || !strstr(text, needle)) {
+        printf("FAIL %s missing '%s'\n", label, needle ? needle : "(null)");
+        return 0;
+    }
+    printf("ok %s contains '%s'\n", label, needle);
+    return 1;
+}
+
 static DM1ConsumableChampionPc34 base_champion(void)
 {
     DM1ConsumableChampionPc34 c;
@@ -45,6 +55,15 @@ int main(void)
 
     printf("probe=dm1_v1_inventory_consumables_pc34_compat\n");
     printf("sourceEvidence=%s\n", dm1_inventory_consumables_source_evidence_pc34());
+    ok &= expect_contains("source evidence F0349 mouth gate",
+                          dm1_inventory_consumables_source_evidence_pc34(),
+                          "PANEL.C:1824-1844");
+    ok &= expect_contains("source evidence water flask conversion",
+                          dm1_inventory_consumables_source_evidence_pc34(),
+                          "PANEL.C:1850-1917");
+    ok &= expect_contains("source evidence food table",
+                          dm1_inventory_consumables_source_evidence_pc34(),
+                          "DUNGEON.C:428-436");
 
     ok &= expect_int("apple amount", dm1_inventory_food_amount_from_icon_pc34(168), 500);
     ok &= expect_int("dragon steak amount", dm1_inventory_food_amount_from_icon_pc34(175), 1400);
@@ -91,6 +110,16 @@ int main(void)
                      dm1_inventory_consumables_mouth_animation_pc34(&r, mouthFrames,
                                                                     DM1_CONSUMABLE_MOUTH_ANIMATION_FRAME_COUNT_PC34),
                      0);
+
+    c = base_champion();
+    c.water = 1801;
+    ok &= expect_int("waterskin capped drink",
+                     dm1_inventory_consume_water_junk_pc34(&c, 9, 1, &r), 1);
+    ok &= expect_int("waterskin drink caps at 2048", c.water, 2048);
+    ok &= expect_int("waterskin last charge spent", r.chargeCountAfter, 0);
+    ok &= expect_int("waterskin result kind", r.kind, DM1_CONSUMABLE_RESULT_WATER_JUNK);
+    ok &= expect_contains("waterskin result source evidence", r.evidence,
+                          "PANEL.C:1824-1844");
 
     c = base_champion();
     ok &= expect_int("empty waterskin no consume", dm1_inventory_consume_water_junk_pc34(&c, 9, 0, &r), 0);
@@ -169,8 +198,14 @@ int main(void)
     ok &= expect_int("unknown potion power preserved", r.potionPowerAfter, 80);
 
     c = base_champion();
-    ok &= expect_int("water flask potion", dm1_inventory_consume_potion_pc34(&c, 15, 80, 0, 0, &r), 1);
-    ok &= expect_int("water flask amount capped", c.water, 2048);
+    c.water = 400;
+    ok &= expect_int("water flask potion", dm1_inventory_consume_potion_pc34(&c, 15, 123, 0, 0, &r), 1);
+    ok &= expect_int("water flask adds 1600", c.water, 2000);
+    ok &= expect_int("water flask result kind", r.kind, DM1_CONSUMABLE_RESULT_POTION);
+    ok &= expect_int("water flask becomes empty flask", r.potionTypeAfter, 20);
+    ok &= expect_int("water flask power preserved", r.potionPowerAfter, 123);
+    ok &= expect_contains("water flask result source evidence", r.evidence,
+                          "PANEL.C:1850-1917");
     DM1_Sound_Init(&soundSystem);
     DM1_Sound_SetPartyPosition(&soundSystem, 7, 8, 0, 0);
     ok &= expect_int("potion swallow sound routed",

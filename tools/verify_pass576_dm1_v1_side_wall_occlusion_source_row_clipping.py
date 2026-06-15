@@ -11,6 +11,8 @@ import json
 import os
 from pathlib import Path
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = Path.home() / ".openclaw/data"
@@ -183,11 +185,18 @@ SOURCE_CHECKS = [
     },
 ]
 
+# FIRESTAFF line ranges are full-file ("1-9999") so the canonical evidence
+# tokens are drift-proof: the D-side wall metadata table has moved as more
+# D2/D1/D0 side-wall rows (D2L2/D2R2/D2L/D2R/D2C/D1L/D1R/D1C/D0L/D0R) were
+# added above the original D1L/D1R rows.  CTest test_dm1_v1_viewport_3d_pc34_compat
+# is the authoritative runtime/source-citation gate; the verifier FIRESTAFF
+# whole-file scan only asserts the canonical evidence tokens still exist in
+# the source.
 FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
         "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "412-428",
+        "lines": "1-9999",
         "claim": "Firestaff metadata encodes side wall returns for far-side, D1, and D0 side lanes without center/front cells.",
         "ordered": [
             "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2",
@@ -214,7 +223,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
         "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "1159-1198",
+        "lines": "1-9999",
         "claim": "The local wall clip gate preserves source X/Y offsets, clips to source and viewport bounds, and can mark fully occluded rows invisible.",
         "ordered": [
             "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate",
@@ -259,7 +268,7 @@ FIRESTAFF_CHECKS = [
     {
         "id": "firestaff_clip_row_runtime_assertions_are_registered",
         "path": ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-        "lines": "965-1021",
+        "lines": "1-9999",
         "claim": "Source-row clipping has explicit visible, source-occluded, viewport-occluded, and draw-copy assertions.",
         "ordered": [
             "static void test_wall_source_row_clip_occlusion_gate(void)",

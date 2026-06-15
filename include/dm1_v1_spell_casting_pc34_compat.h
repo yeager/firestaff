@@ -99,6 +99,14 @@ extern "C" {
 #define DM1_FAILURE_NEEDS_FLASK_IN_HAND   10
 #define DM1_FAILURE_NEEDS_MAGIC_MAP_IN_HAND 11
 
+/* ── Potion-flask source-lock constants ─────────────────────────── */
+#define DM1_SPELL_SLOT_READY_HAND       0
+#define DM1_SPELL_SLOT_ACTION_HAND      1
+#define DM1_SPELL_HAND_SLOT_COUNT       2
+#define DM1_SPELL_THING_NONE_PC34       0xFFFFu
+#define DM1_SPELL_ICON_EMPTY_FLASK_PC34 195
+#define DM1_SPELL_POTION_EMPTY_FLASK_PC34 20
+
 typedef struct {
     int failureType;
     int messageColor;
@@ -172,6 +180,37 @@ typedef struct {
     uint8_t skillLevels[20]; /* Indexed by DM1_SKILL_* constants */
 } DM1_ChampionSpellStats;
 
+typedef struct {
+    uint16_t thing;
+    int iconIndex;
+    int type;
+    int power;
+    int weight;
+} DM1_SpellPotionObject;
+
+typedef struct {
+    uint16_t slots[DM1_SPELL_HAND_SLOT_COUNT];
+    int load;
+    DM1_SpellPotionObject potions[4];
+    int potionCount;
+} DM1_SpellPotionInventory;
+
+typedef struct {
+    int castResult;
+    int failureType;
+    int spellIndex;
+    int powerOrdinal;
+    int flaskSlotIndex;
+    uint16_t flaskThing;
+    int potionTypeBefore;
+    int potionTypeAfter;
+    int potionPowerBefore;
+    int potionPowerAfter;
+    int loadBefore;
+    int loadAfter;
+    int symbolsCleared;
+} DM1_SpellPotionCastResult;
+
 /* ── Symbol encoding helpers ───────────────────────────────────── */
 
 /** Encode a symbol step + index into the stored character (SYMBOL.C:36). */
@@ -239,6 +278,17 @@ int dm1_spell_cast(DM1_SpellCastingState* s, int champIdx,
                    DM1_ChampionSpellStats* stats, uint16_t rng16,
                    const DM1_Spell** outSpell, int* outPowerOrdinal,
                    int* outFailure);
+
+/**
+ * Attempt a potion spell and apply the F0411/F0412 empty-flask mutation when
+ * an empty flask is in either hand.
+ */
+int dm1_spell_castPotionWithInventory(DM1_SpellCastingState* s,
+                                      int champIdx,
+                                      DM1_ChampionSpellStats* stats,
+                                      uint16_t rng16,
+                                      DM1_SpellPotionInventory* inventory,
+                                      DM1_SpellPotionCastResult* outResult);
 
 /**
  * Return source-locked failure message/redraw metadata (SPELFAIL.C F0410
