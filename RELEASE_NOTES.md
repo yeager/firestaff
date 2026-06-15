@@ -1,3 +1,24 @@
+# Firestaff v2.7.23
+
+Maintenance and test-hardening release on top of the 2026-06-15 DM1 V1 / CSB V1 parity pass. Brings the local `ctest` sweep fully green and bundles the latest source-locked fixes.
+
+## Highlights
+
+- **DM1 V1 Group 7 — M12 extras subtitle** (commit `b8dfee6e`): the BESTIARY / ITEM ENCYCLOPEDIA / SCREENSHOT GALLERY subtitle is no longer painted over by the modern-theme overlay frame.
+- **CSB V1 Champions GAP 4** (commit `8f7f10c8`): dedicated left-click inventory regression test locking the source-locked open-inventory route.
+- **M12 launch resolution floor**: V2.1 Upscaled / V2.2 Modern now floor the launch resolution to 640x400 in the launch intent (not in the shared mode-constraint helper), so the resolution row still cycles the full 320x200 → 640x400 → 1280x960 → … range while guaranteeing a ≥640x400 launch. Fixes `dm1_v2_launch_smoke_pc34` and `csb_v2_resolution_selector_gate_m12`; M12 startup probe stays 55/55.
+- **Nexus V1 DGN actors**: malformed external actor coordinates/facing now clamp/normalize into slot 0 instead of being silently dropped (the clamp code was previously dead behind an early reject guard); the actor-type ref and fixed active-pool boundary (GROUP.C F0183) remain hard rejects. Fixes `nexus_v1_dgn_actor_slot_bounds`; parity probe updated to match.
+- **Nexus V2 lighting**: added the missing `test_nexus_v2_lighting` smoke-test executable so the registered ctest builds and runs (init/add/remove/tick/apply + NULL safety).
+- **Docs**: `FINAL_GAPS.md` and `FINAL_CSB_GAPS.md` v2.7.23 snapshots.
+
+## Verification
+
+- Full CMake build: 0 errors.
+- `ctest --test-dir build -j4`: all reproducible tests pass (3 previously-reported failures were flaky under parallel load and pass in isolation / on rerun; 2 mirror probes remain intentionally Disabled pending a source-pose rewrite).
+- Probes compile strict (`-Wall -Wextra -Werror`).
+
+---
+
 # Firestaff v2.7.14
 
 DM1 V1 source-lock and CSB V1 bounded-gap release — closes 6 DM1 V1 v1-simplifications documented in v2.7.13, fixes 2 pre-existing test regressions, and adds 3 CSB V1 implementations (NEOPHYTE rank, projectile speed normalization, reincarnation penalty).

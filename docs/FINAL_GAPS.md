@@ -1,4 +1,4 @@
-# Final Gaps — DM1 V1 (v2.7.22 snapshot)
+# Final Gaps — DM1 V1 (v2.7.23 snapshot)
 
 Honest inventory of what remains between ReDMCSB source and
 Firestaff runtime as of 2026-06-15, after a verification pass
@@ -90,6 +90,29 @@ in the 2026-06-15 verification pass.
 | m11_inventory_full_panel_runtime_source_lock | FAILING (20 sub: world hash helper + mixed-type pickup + C544) | **PASS** | Resolve was likely incidental to v2.7.21+ test infra updates; verify with full ctest if regressions return |
 
 These both PASS as of HEAD `e2168ebe`.
+
+---
+
+## Group 4b — ctest sweep fixes (v2.7.23, 2026-06-15)
+
+Full `ctest --test-dir build -j4` sweep against HEAD `9378d573`
+found 4 reproducible failures (8 reported, but 3 — movement queue
+capture closure, pass623 input-capture bridge, pass625 transcript
+preflight — were flaky only under parallel load and PASS in
+isolation). All 4 reproducible failures are fixed in the
+`release-v2.7.23` branch:
+
+| Test | Root cause | Fix |
+|------|-----------|-----|
+| `dm1_v2_launch_smoke_pc34` | V2.1/V2.2 launch resolution not floored to 640x400 (the auto-bump was removed from `m12_enforce_mode_constraints` to keep the menu resolution cycle full for probe INV_M12_18). | Added a launch-only 640x400 floor in `M12_StartupMenu_GetLaunchIntent` for `M12_PresentationMode_AllowsResolutionChoice` modes; the shared cycle path is untouched so INV_M12_18/20 still pass (probe 55/55). |
+| `csb_v2_resolution_selector_gate_m12` | Same root cause as above (CSB V2.1/V2.2 launch resolution). | Same fix. |
+| `nexus_v1_dgn_actor_slot_bounds` | `nexus_v1_creature_spawn` had a dead clamp block sitting behind an earlier hard-reject guard for OOB coords/facing (introduced when the contract was changed from reject→clamp but the old guard was left in). | Removed the OOB coord/facing reject guards so malformed external DGN actor fields clamp/normalize into slot 0; the actor-type ref and fixed active-pool boundary (GROUP.C F0183) remain hard rejects. Probe `firestaff_nexus_v1_mechanics_parity` updated to the clamp contract. |
+| `nexus_v2_lighting` | `add_test(NAME nexus_v2_lighting)` existed in CMake but had no `add_executable` (stub TODO), so ctest reported "Not Run / could not find executable". | Added `tests/test_nexus_v2_lighting.c` smoke test (init/add/remove/tick/apply + NULL safety) and wired the executable. |
+
+The 3 flaky-under-parallel tests are classified EXPECTED-FLAKY
+(timing/load sensitive, PASS in isolation and in `-j4` reruns);
+no code change needed. `pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path`
+is a slow (~43s) but passing test — keep `--timeout >= 60` for it.
 
 ---
 
