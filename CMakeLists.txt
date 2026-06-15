@@ -959,6 +959,8 @@ set(M11_SOURCES
     src/engine/swsh_intro_pathfinder_m11.c
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
+    src/engine/m11_game_text_latin_extended_glyphs.c
+    src/engine/m11_game_text_utf8_decoder_pc34_compat.c
     src/engine/m11_dm1_v1_f0128_viewport_pc34_compat.c
     src/engine/m11_qol_runtime.c
     src/dm1/dm1_v1_minimap_pc34_compat.c
@@ -7381,6 +7383,29 @@ if(NOT TARGET test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat)
     add_test(
         NAME dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat
         COMMAND test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat
+    )
+endif()
+
+# M11 game-text UTF-8 + Latin Extended — fixes the 244/548 (44%)
+# of sv.po msgstrs that contain accented characters (Ö Ä Å ä å)
+# and would otherwise render as SPACE.  Also covers de/fr/es/it/
+# pt/nl/pl/cs/ru/etc. accented Latin Extended-A letters.
+if(NOT TARGET test_m11_game_text_utf8_latin_extended_pc34_compat)
+    add_executable(test_m11_game_text_utf8_latin_extended_pc34_compat
+        tests/test_m11_game_text_utf8_latin_extended_pc34_compat.c
+        src/engine/m11_game_text_utf8_decoder_pc34_compat.c
+        src/engine/m11_game_text_latin_extended_glyphs.c
+    )
+    target_include_directories(test_m11_game_text_utf8_latin_extended_pc34_compat
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    if(NOT MSVC)
+        target_compile_options(test_m11_game_text_utf8_latin_extended_pc34_compat PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME m11_game_text_utf8_latin_extended_pc34_compat
+        COMMAND test_m11_game_text_utf8_latin_extended_pc34_compat
     )
 endif()
 
