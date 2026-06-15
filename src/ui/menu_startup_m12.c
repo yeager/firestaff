@@ -304,7 +304,18 @@ int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
 }
 
 int M12_PresentationMode_AllowsResolutionChoice(int presentationMode) {
-    return presentationMode == M12_PRESENTATION_V21_UPSCALED ||
+    /* V2.0 (filtered), V2.1 (upscaled) and V2.2 (modern) all
+     * share the same 640x400..3840x2160 resolution selector.
+     * V1 original is locked to 320x200 (no resolution choice).
+     * ReDMCSB: COMMAND.C F0359 "LoadGameSettings" allows the
+     * 320x200..640x400..4K range when presentation is enhanced.
+     * Source-locked via the m12_StartupMenuOptions / GameOptions
+     * model: opts->resolution cycles 320x200 -> 640x400 ->
+     * 800x600 -> 1024x768 -> 1280x960 -> 1600x1000 -> 1920x1080 ->
+     * 2560x1440 -> 3200x2000 -> 3840x2160 for V2.0/V2.1/V2.2.
+     */
+    return presentationMode == M12_PRESENTATION_V20_FILTERED ||
+           presentationMode == M12_PRESENTATION_V21_UPSCALED ||
            presentationMode == M12_PRESENTATION_V22_MODERN;
 }
 
@@ -326,10 +337,9 @@ int M12_GameOptions_RowLockedByMode(int row, int presentationMode) {
             return 1;
         }
     }
-    if (presentationMode == M12_PRESENTATION_V20_FILTERED &&
-        row == M12_GAME_OPT_ROW_RESOLUTION) {
-        return 1;
-    }
+    /* V2.0, V2.1, V2.2 all share the 640x400..3840x2160 selector, so
+     * the resolution row is NOT locked.  ReDMCSB: COMMAND.C F0359
+     * "LoadGameSettings" exposes the same range to all V2 paths. */
     return 0;
 }
 
@@ -424,20 +434,19 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
     if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
         opts->aspectRatio = M12_ASPECT_ORIGINAL;
         opts->resolution = M12_RES_320x200;
-    } else if (presentationMode == M12_PRESENTATION_V20_FILTERED) {
-        opts->resolution = M12_RES_640x400;
     }
-    /* V2.1 (M12_PRESENTATION_V21_UPSCALED) and V2.2
-     * (M12_PRESENTATION_V22_MODERN) are M12_PresentationMode_Allows
-     * ResolutionChoice: 320x200 is the user-chosen original
-     * double-resolution option, and the test in
-     * firestaff_m12_startup_menu_probe.c asserts that the user
-     * can cycle from 320x200 to 640x400 by pressing RIGHT.
-     * The old auto-bump to 640x400 pre-empted that cycle and
-     * silently advanced to 1280x960, breaking INV_M12_18.  Leave
-     * V2.1/V2.2 resolution untouched so the row cycle controls
-     * the full range (320x200 → 640x400 → 1280x960 → 1920x1080 →
-     * 2560x1440).  V2.0 remains locked to 640x400 above. */
+    /* V2.0 (M12_PRESENTATION_V20_FILTERED), V2.1
+     * (M12_PRESENTATION_V21_UPSCALED), and V2.2
+     * (M12_PRESENTATION_V22_MODERN) are all
+     * M12_PresentationMode_AllowsResolutionChoice: 320x200 is
+     * the user-chosen original double-resolution option, and
+     * the test in firestaff_m12_startup_menu_probe.c asserts
+     * that the user can cycle from 320x200 to 640x400 by
+     * pressing RIGHT.  The old auto-bump to 640x400 pre-empted
+     * that cycle and silently advanced to 1280x960, breaking
+     * INV_M12_18.  Leave V2.0/V2.1/V2.2 resolution untouched so
+     * the row cycle controls the full range (320x200 → 640x400
+     * → 1280x960 → 1920x1080 → 2560x1440 → 3840x2160). */
     /* Nexus V1 — only V1.ORIGINAL is supported in Phase 1.
      * V2.0/V2.1/V2.2 render paths are not yet available for Nexus.
      * Lock presentation mode if attempting a non-V1 mode for nexus.

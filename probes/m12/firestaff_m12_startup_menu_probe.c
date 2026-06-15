@@ -852,27 +852,35 @@ int main(void) {
                      M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V1_ORIGINAL) == 1 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V1_ORIGINAL) == 1 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_PATCH, M12_PRESENTATION_V1_ORIGINAL) == 0 &&
-                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V20_FILTERED) == 1 &&
+                         M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V20_FILTERED) == 0 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT, M12_PRESENTATION_V21_UPSCALED) == 0 &&
                          M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION, M12_PRESENTATION_V21_UPSCALED) == 0,
-                     "RowLockedByMode reports correct constraints per mode");
+                     "RowLockedByMode reports correct constraints per mode (V2.0/V2.1/V2.2 all share the 640x400..3840x2160 selector)");
 
-        /* V2.0 mode: fixed 640x400 presentation */
+        /* V2.0 mode: shares the 640x400..3840x2160 selector with V2.1/V2.2.
+         * Cycle resolution from 320x200 (idx 0) through 640x400, 800x600,
+         * 1024x768, 1280x960, 1600x1000, 1920x1080, 2560x1440, 3200x2000,
+         * 3840x2160 (idx 9) by pressing RIGHT 9 times. */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
         modeState.settings.graphicsIndex = M12_PRESENTATION_V20_FILTERED;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_RESOLUTION;
-        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_RIGHT);
+        {
+            int i;
+            for (i = 0; i < 9; ++i) {
+                M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_RIGHT);
+            }
+        }
         intent = M12_StartupMenu_GetLaunchIntent(&modeState);
         probe_record(&tally,
                      "INV_M12_17B",
-                     modeState.gameOptions[0].resolution == M12_RES_640x400 &&
+                     modeState.gameOptions[0].resolution == M12_RES_3840x2160 &&
                          intent.valid == 1 &&
                          intent.presentationMode == M12_PRESENTATION_V20_FILTERED &&
-                         intent.options.resolution == M12_RES_640x400,
-                     "V2.0 mode locks launch resolution to 640x400");
+                         intent.options.resolution == M12_RES_3840x2160,
+                     "V2.0 mode shares the 640x400..3840x2160 resolution selector with V2.1/V2.2 (no longer locked to 640x400)");
 
         /* V2 mode: aspect and resolution cycle freely */
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);

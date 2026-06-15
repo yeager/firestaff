@@ -6,8 +6,8 @@ Firestaff brings the classic FTL dungeon crawlers to macOS, Windows,
 Linux and Steam Deck era machines while keeping the original game logic
 anchored to the best available source references. It runs original game
 data you already own, validates it by hash, and lets you choose between
-pixel-perfect presentation, 640x400 filtered V2.0 output, and selectable
-V2.1/V2.2 presentation resolutions from 640x400 up to 3840x2160.
+pixel-perfect V1 presentation and selectable V2.0/V2.1/V2.2 presentation
+resolutions from 640x400 up to 3840x2160.
 
 [![Release](https://img.shields.io/github/v/release/yeager/firestaff)](https://github.com/yeager/firestaff/releases/latest)
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
@@ -63,15 +63,15 @@ coordinate space.
 | Game / version | Current status |
 |---|---|
 | DM1 V1 Original | Playable and source-locked against the PC 3.4 lineage. v2.7.25 added 18 Group 8 bounded fixes: 2 real source-locked bug fixes (TAB-06 G0050 wound-defense, DUN-06 F0705 stairs NULL-deref), 16 source-lock pins covering F0284 cell rotation, F0150 step-delta, F0316/F0317 scent, F0192 poison resistance, BUG0_78 door-wound preserve, BUG0_16 projectile cap, F0822/F0824 explosion advance/despawn, F0830/F0831 lifecycle, F0501 party-location, F0758 potion power, and F0864 reincarnation RNG. 28 hand-drawn Latin Extended-A glyphs in M11 game-text fix 244/548 (44%) of `sv.po` msgstrs that previously rendered as SPACE. CSB launch verified end-to-end via `--scan-data` and `--game csb`. |
-| DM1 V2.0 / V2.1 / V2.2 | V2.0 filtered presentation is fixed at 640x400. V2.1/V2.2 expose per-game selectable presentation resolution from 640x400 through 3840x2160, with V1 command ownership preserved. Side-by-side V1/V2 seed and region manifests are in place; full enhanced screenshot/pixel gates and broader presentation polish remain active. |
+| DM1 V2.0 / V2.1 / V2.2 | V2.0/V2.1/V2.2 all share a per-game selectable presentation resolution from 640x400 through 3840x2160, with V1 command ownership preserved. V2.0 is no longer locked to 640x400 — it uses the same resolution selector as V2.1/V2.2. Side-by-side V1/V2 seed and region manifests are in place; full enhanced screenshot/pixel gates and broader presentation polish remain active. |
 | CSB V1 Original | Hash-verified launch/profile boundary, real DUNGEON.DAT load, dungeon handle handoff, object-chain access, imported champion stats/load behavior, party rotation, tick accumulation, timeline dispatch, wall text, and deterministic boot-to-viewport render slices are verified. End-to-end CSB playability, title/import UI composition, broader command queue binding, and full viewport integration are still being hardened. |
-| CSB V2.0 / V2.1 / V2.2 | V2.0 filtered presentation uses the shared 640x400 target, and V2.1/V2.2 share the selectable 640x400-to-4K presentation-resolution setting where exposed. V1 compatibility and launch/profile separation exist. HUD overlay and smooth-movement scaffolds are covered by probes, but enhanced assets, lighting, controller ergonomics, and full side-by-side screenshot verification remain open. |
+| CSB V2.0 / V2.1 / V2.2 | V2.0/V2.1/V2.2 share the same selectable 640x400..3840x2160 presentation resolution (V2.0 no longer locked to 640x400). V1 compatibility and launch/profile separation exist. HUD overlay and smooth-movement scaffolds are covered by probes, but enhanced assets, lighting, controller ergonomics, and full side-by-side screenshot verification remain open. |
 | DM2 V1 Original | Boot/profile, utility/import, world-state, save/load, weather, projectile-door, asset-loader, dungeon-loader, object-model, and map-state probes exist. Broader dungeon, rendering, mechanics, creature/combat, shops/NPCs, and real-runtime compatibility remain active work. |
-| DM2 V2.0 / V2.1 / V2.2 | V2.0 filtered presentation uses the shared 640x400 target, and V2.1/V2.2 share the selectable 640x400-to-4K presentation-resolution setting where exposed. Enhanced asset, HUD, lighting/outdoor effects, smooth movement, touch/controller, and verification scaffolds are implemented. V2 remains presentation work on top of the still-active V1 parity effort. |
+| DM2 V2.0 / V2.1 / V2.2 | V2.0/V2.1/V2.2 share the same selectable 640x400..3840x2160 presentation resolution. Enhanced asset, HUD, lighting/outdoor effects, smooth movement, touch/controller, and verification scaffolds are implemented. V2 remains presentation work on top of the still-active V1 parity effort. |
 | Nexus V1 Original | Saturn DMDF/DGN parsing, world/runtime state, rendering slices, save/load, actor bounds, mechanics scaffolding, and verification paths exist. Launcher/game-loop handoff with real Saturn asset-path proof and broader runtime coverage remain active. |
-| Nexus V2.0 / V2.1 / V2.2 | V2.0 filtered presentation uses the shared 640x400 target where the enhanced path is exposed, and V2.1/V2.2 share the selectable 640x400-to-4K presentation-resolution setting once launchable. Asset, UI, lighting, and touch/controller slices exist, but V2 compatibility lock, launch/profile separation, smooth movement, and full verification remain behind the V1 handoff proof. |
+| Nexus V2.0 / V2.1 / V2.2 | V2.0/V2.1/V2.2 share the same selectable 640x400..3840x2160 presentation resolution once launchable. Asset, UI, lighting, and touch/controller slices exist, but V2 compatibility lock, launch/profile separation, smooth movement, and full verification remain behind the V1 handoff proof. |
 | Theron's Quest V1 Original | JP/US Track 02 provenance is hash-verified. Parser, world/progression state, viewport/UI, initial mechanics, save/load, shop-table guards, direct hash-verified boot-profile loading, and a narrow US bank-boundary signal are verified. Exact Track 02 dungeon-bank offsets, full dungeon loader parity, runtime playability path, and README-eligible real screenshots remain active work. |
-| Theron's Quest V2.0 / V2.1 / V2.2 | Not started beyond keeping the V1 compatibility boundary honest. When a V2.0 path is exposed, it should use the same 640x400 filtered target as the other games. V2 work waits on stronger V1 Track 02 parity and runtime proof. |
+| Theron's Quest V2.0 / V2.1 / V2.2 | Not started beyond keeping the V1 compatibility boundary honest. When a V2.0 path is exposed, it should use the same selectable 640x400..3840x2160 resolution as the other games (V2.0/V2.1/V2.2 share one selector). V2 work waits on stronger V1 Track 02 parity and runtime proof. |
 
 ## What Firestaff Gives You
 
@@ -237,7 +237,7 @@ firestaff --duration 5000 --fps
 | Mode | Resolution target | Purpose |
 |---|---|---|
 | V1 Original | 320x200 | Pixel-faithful original rendering |
-| V2.0 Filtered | 640x400 | 2x presentation of the original framebuffer with CRT scanlines, palette correction and sharpening |
+| V2.0 Filtered | 640x400..3840x2160 (user-selectable, same selector as V2.1/V2.2) | 2x presentation of the original framebuffer with CRT scanlines, palette correction and sharpening |
 | V2.1 Upscaled | Selectable 640x400 to 3840x2160 | Cleaner modern output while preserving the DM look |
 | V2.2 Modern | Selectable 640x400 to 3840x2160 | New modern art and UI experiments |
 
