@@ -2,6 +2,9 @@
 from pathlib import Path
 import json
 import subprocess
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C").expanduser()
@@ -79,7 +82,7 @@ def main():
         text = (ROOT / rel).read_text(errors="replace")
         local_rows.append({"file": rel, "needle": needle, "status": "PASS" if needle in text else "FAIL"})
 
-    test = subprocess.run([str(ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat")], cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    test = subprocess.run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat")], cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     ok = all(row["status"] == "PASS" for row in red_rows + local_rows) and test.returncode == 0
     manifest = {
         "schema": "pass583_dm1_v1_d0_side_field_occlusion_source_lock.v1",
@@ -88,7 +91,7 @@ def main():
         "redmcsbChecks": red_rows,
         "firestaffChecks": local_rows,
         "verificationRuns": [{
-            "command": [str(ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat")],
+            "command": [str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat")],
             "returncode": test.returncode,
             "passed": test.returncode == 0,
             "outputTail": "\n".join(test.stdout.splitlines()[-10:]),

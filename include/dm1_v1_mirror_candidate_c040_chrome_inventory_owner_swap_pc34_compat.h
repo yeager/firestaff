@@ -1,0 +1,12 @@
+#ifndef DM1_V1_MIRROR_CANDIDATE_C040_CHROME_INVENTORY_OWNER_SWAP_PC34_COMPAT_H
+#define DM1_V1_MIRROR_CANDIDATE_C040_CHROME_INVENTORY_OWNER_SWAP_PC34_COMPAT_H
+#define DM1_V1_C040_OWNER_SWAP_STATUS_COUNT_PC34_COMPAT 3
+enum { DM1_V1_C040_OWNER_SWAP_STEP_C040_PANEL_LIVE_PC34_COMPAT = 1, DM1_V1_C040_OWNER_SWAP_STEP_INVENTORY_OWNER_SWAP_PC34_COMPAT = 2, DM1_V1_C040_OWNER_SWAP_STEP_VERIFY_C040_CHROME_PC34_COMPAT = 3, DM1_V1_C040_OWNER_SWAP_STEP_C040_CLOSE_PC34_COMPAT = 4, DM1_V1_C040_OWNER_SWAP_C037_PC34_COMPAT = 37, DM1_V1_C040_OWNER_SWAP_C040_PC34_COMPAT = 40, DM1_V1_C040_OWNER_SWAP_M516_PC34_COMPAT = 516 };
+typedef struct Dm1V1C040OwnerSwapEvidencePc34Compat { const char *chamdraw; const char *revive; const char *command; const char *chest; const char *champion; const char *panel; const char *defs; const char *scope; } Dm1V1C040OwnerSwapEvidencePc34Compat;
+typedef struct Dm1V1C040OwnerSwapStatePc34Compat { int contractOnly, step, leader, newLeader, inventoryOwner, panelLive, panelGraphic, c30Owner, portraitOwner, portraitVisible, closeOwner; unsigned int candidate, hashLive, hashSwap, hashClose; int statusOwner[3], statusCommand[3], statusIcon[3], statusText[3]; int f0291, f0296, f0280, f0282, f0359, f0333, f0334, f0284, f0297, f0298, f0300, f0301, f0302, f0344, f0345, f0352; } Dm1V1C040OwnerSwapStatePc34Compat;
+typedef struct Dm1V1C040OwnerSwapResultPc34Compat { int accepted, stepLive, stepSwap, stepVerify, stepClose, leaderBefore, leaderAfter, leaderClosed, ownerBefore, ownerAfter, closeOwner, panelLiveBefore, panelLiveAfter, panelLiveClosed, panelGraphicClosed, c30Owner, portraitOwner, portraitVisibleAfter, portraitVisibleClosed, preservedCandidate, retargetedChrome, chestDisjoint, noPortraitClickLane, closedNewLeader, backgroundRedraw, guardsOk; unsigned int hash, candidateBefore, candidateAfter, candidateClosed; int statusOwner[3], statusCommand[3], statusIcon[3], statusText[3]; } Dm1V1C040OwnerSwapResultPc34Compat;
+void dm1_v1_mirror_candidate_c040_chrome_inventory_owner_swap_init_pc34_compat(Dm1V1C040OwnerSwapStatePc34Compat *state);
+int dm1_v1_mirror_candidate_c040_chrome_inventory_owner_swap_run_pc34_compat(Dm1V1C040OwnerSwapStatePc34Compat *state, Dm1V1C040OwnerSwapResultPc34Compat *result);
+const Dm1V1C040OwnerSwapEvidencePc34Compat *dm1_v1_mirror_candidate_c040_chrome_inventory_owner_swap_evidence_pc34_compat(void);
+const char *dm1_v1_mirror_candidate_c040_chrome_inventory_owner_swap_source_evidence_pc34_compat(void);
+#endif

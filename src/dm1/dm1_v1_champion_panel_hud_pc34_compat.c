@@ -46,6 +46,121 @@ int DM1_ChampionPanel_BarGraphHeight(int current, int maximum, int isMana)
         return (int)(scaled >> 10);
 }
 
+int DM1_ChampionPanel_BuildPc34BarFillModel(
+    int championIndex, int statIndex, int current, int maximum,
+    DM1_ChampionPanel_BarFillModel *outModel)
+{
+    int filledHeight;
+
+    if (!outModel ||
+        championIndex < 0 || championIndex >= DM1_CHAMPION_COUNT ||
+        statIndex < 0 || statIndex >= DM1_BAR_GRAPH_COUNT ||
+        maximum <= 0) {
+        return 0;
+    }
+
+    memset(outModel, 0, sizeof(*outModel));
+    DM1_ChampionPanel_BarGraphScreenXY(championIndex, statIndex,
+                                       &outModel->x, &outModel->y);
+
+    /*
+     * ReDMCSB: CHAMDRAW.C F0287 lines 307-342, PC34 branch:
+     * L2252_i_BoxIndex starts at C195_ZONE_FIRST_BAR_GRAPH + champion and
+     * advances by +4 per HP/stamina/mana bar. F0638_GetZone fetches the
+     * full 4x25 bar; partial bars shrink the C12 blank area by
+     * max(1, height * current / maximum), then move the colored area below
+     * that blank band before filling it with G0046 champion color.
+     */
+    outModel->zoneId = 195 + championIndex + (statIndex * 4);
+    outModel->width = DM1_BAR_GRAPH_WIDTH;
+    outModel->height = DM1_BAR_GRAPH_MAX_HEIGHT;
+    outModel->blankColor = DM1_COLOR_DARKEST_GRAY;
+    outModel->fillColor = DM1_ChampionColor[championIndex];
+    outModel->blankX = outModel->x;
+    outModel->blankY = outModel->y;
+    outModel->blankWidth = outModel->width;
+    outModel->fillX = outModel->x;
+    outModel->fillWidth = outModel->width;
+
+    if (current < maximum) {
+        outModel->blankHeight = outModel->height;
+        if (current != 0) {
+            filledHeight = (int)(((long)outModel->height * (long)current) /
+                                 (long)maximum);
+            if (filledHeight < 1) {
+                filledHeight = 1;
+            }
+            outModel->blankHeight -= filledHeight;
+        }
+        outModel->emitsBlank = outModel->blankHeight > 0;
+    } else {
+        outModel->blankHeight = 0;
+        outModel->emitsBlank = 0;
+    }
+
+    if (current != 0) {
+        outModel->fillY = outModel->y + outModel->blankHeight;
+        outModel->fillHeight = outModel->height - outModel->blankHeight;
+        outModel->emitsFill = outModel->fillHeight > 0;
+    } else {
+        outModel->fillY = outModel->y + outModel->height;
+        outModel->fillHeight = 0;
+        outModel->emitsFill = 0;
+    }
+
+    return 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Status hand slot box pixel model — CHAMDRAW.C F0291_CHAMPION_DrawSlot
+ *
+ * ReDMCSB: F0291 lines 632-646 / 648-651 only render an 18x18 slot-box
+ * graphic when slotIndex is 0..5. For status hand slots (0 = ready
+ * hand, 1 = action hand), the slot box origin is the parent status box
+ * at the source-locked offsets:
+ *   ready hand  = (champIdx * 69 + 4, 10)
+ *   action hand = (champIdx * 69 + 24, 10)
+ * ReDMCSB: F0291 lines 648-651 choose the acting-hand override only
+ * when (slotIndex == C01_SLOT_ACTION_HAND) and isActingChampion. The
+ * wound bitmask (1 << slotIndex) is consulted only after that override
+ * is rejected, so a wounded action hand is still drawn with C034 when
+ * the champion is not acting.
+ * ReDMCSB: DEFS.H:2186-2188 C033/C034/C035 graphic IDs.
+ * ReDMCSB: layout-696 C211..C218 zone anchors for the 8 hand slots.
+ * ══════════════════════════════════════════════════════════════════════ */
+int DM1_ChampionPanel_BuildStatusHandSlotBoxModel(
+    int championIndex, int handIndex, int isActingChampion,
+    DM1_ChampionPanel_StatusHandSlotBoxModel *outModel)
+{
+    int x, y;
+
+    if (!outModel ||
+        championIndex < 0 || championIndex >= DM1_CHAMPION_COUNT ||
+        handIndex < 0 || handIndex > 1) {
+        return 0;
+    }
+
+    DM1_ChampionPanel_StatusHandSlotXY(championIndex, handIndex, &x, &y);
+    memset(outModel, 0, sizeof(*outModel));
+    outModel->championIndex = championIndex;
+    outModel->handIndex = handIndex;
+    outModel->isActionHand = (handIndex == DM1_SLOT_ACTION_HAND) ? 1 : 0;
+    outModel->isActingChampion = isActingChampion ? 1 : 0;
+    outModel->x = x;
+    outModel->y = y;
+    outModel->width = DM1_SLOT_BOX_SIZE;
+    outModel->height = DM1_SLOT_BOX_SIZE;
+    /*
+     * F0291 lines 632-646 only renders body slots 0..5; ready hand
+     * (slot 0) and action hand (slot 1) both use the F0291 graph
+     * routine, so the box graphic flows through the same wounded/
+     * acting/normal cascade.
+     */
+    outModel->graphicId = DM1_ChampionPanel_SlotBoxGraphic(
+        handIndex, 0u, isActingChampion ? 1 : 0);
+    return 1;
+}
+
 int DM1_ChampionPanel_BuildStatusBoxModel(
     int championIndex, int leaderIndex, int isInventoryChampion,
     int currentHealth, DM1_ChampionPanel_StatusBoxModel *outModel)
@@ -90,6 +205,41 @@ int DM1_ChampionPanel_BuildStatusBoxModel(
     outModel->nameBackgroundColor = DM1_COLOR_DARK_GRAY;
     outModel->drawActionIcon = 1;
     outModel->stopAfterDead = 1;
+    return 1;
+}
+
+int DM1_ChampionPanel_BuildIconBitmapModel(
+    int championIndex, int championDirection, int partyDirection,
+    int invisibilityCount, DM1_ChampionPanel_IconBitmapModel *outModel)
+{
+    int iconIndex;
+
+    if (!outModel ||
+        championIndex < 0 || championIndex >= DM1_CHAMPION_COUNT ||
+        championDirection < 0 || championDirection > 3 ||
+        partyDirection < 0 || partyDirection > 3) {
+        return 0;
+    }
+
+    memset(outModel, 0, sizeof(*outModel));
+    iconIndex = (championDirection + 4 - partyDirection) & 0x0003;
+
+    /*
+     * ReDMCSB: CHAMDRAW.C F0622 line ~41 stores the 19x14 champion icon
+     * bitmap dimensions. Lines ~59-65 fill with C01 while party invisibility
+     * is active, blit C028 from M026(Direction,PartyDirection) * 19 using C12
+     * as transparent color, and then apply the invisibility palette changes.
+     */
+    outModel->width = DM1_CHAMPION_ICON_WIDTH;
+    outModel->height = DM1_CHAMPION_ICON_HEIGHT;
+    outModel->fillColor = invisibilityCount > 0
+        ? DM1_COLOR_DARK_GRAY
+        : DM1_ChampionColor[championIndex];
+    outModel->graphicId = DM1_GFX_CHAMPION_ICONS;
+    outModel->sourceX = iconIndex * DM1_CHAMPION_ICON_WIDTH;
+    outModel->sourceY = 0;
+    outModel->transparentColor = DM1_COLOR_DARKEST_GRAY;
+    outModel->applyInvisibilityPalette = invisibilityCount > 0;
     return 1;
 }
 
@@ -481,27 +631,52 @@ int DM1_ChampionPanel_IsDeadStatusBox(int currentHealth)
 }
 
 /* ══════════════════════════════════════════════════════════════════════
- * Food/Water/Poison label rendering — PANEL.C:1598-1606
+ * Food/Water/Poison label F0658 blit plan.
  *
- *   F0658_BlitBitmapIndexToZoneIndexWithTransparency(
- *       C030_GRAPHIC_FOOD_LABEL,    C500_ZONE_FOOD,    C12_COLOR_DARKEST_GRAY);
- *   F0658_BlitBitmapIndexToZoneIndexWithTransparency(
- *       C031_GRAPHIC_WATER_LABEL,  C501_ZONE_WATER,   C12_COLOR_DARKEST_GRAY);
- *   F0658_BlitBitmapIndexToZoneIndexWithTransparency(
- *       C032_GRAPHIC_POISONED_LABEL, C502_ZONE_POISONED, C12_COLOR_DARKEST_GRAY);
- *
- * PANEL.C:1594-1606 only renders the poison label (C032) when the
- * champion has an active PoisonEventCount > 0. The food and water
- * labels are unconditional on the F0292 Food-Water-Poison panel.
+ * ReDMCSB: PANEL.C:1563-1606 F0345_INVENTORY_DrawPanel_FoodWaterPoisoned
+ * emits unconditional C030/C500/C12 and C031/C501/C12 blits at
+ * PANEL.C:1598-1599, then gates C032/C502/C12 behind
+ * PoisonEventCount at PANEL.C:1601-1606. CHAMDRAW.C:1060-1063 F0292
+ * calls F0345 when the inventory champion presses the mouth panel.
+ * ReDMCSB: BASE.C:1341-1361 F0658 resolves bitmap/zone coordinates via
+ * F0630/F0635 before blitting to G0296 with the supplied transparency.
  * ══════════════════════════════════════════════════════════════════════ */
-/* DM1_ChampionPanel_DrawFoodWaterPoisonLabels — stubbed for m10/m11 linking
- * PANEL.C:1598-1606 F0658 blit sequence (not yet available in m10):
- *   F0658(C030, C500, C12), F0658(C031, C501, C12), if(poisoned) F0658(C032, C502, C12)
- * F0658 = F0630_InitBitmapStruct2 + F0635_GetZoneTopLeft + F0132_VIDEO_Blit on G0296
- * Requires base_frontend_pc34.c in M10_SOURCES — TBD. */
+static const char k_dm1ChampionPanelF0658PoisonedBlitEvidence[] =
+    "ReDMCSB PANEL.C:1563-1606 F0345_INVENTORY_DrawPanel_FoodWaterPoisoned; "
+    "PANEL.C:1598-1606 F0658(C030,C500,C12), F0658(C031,C501,C12), "
+    "if(PoisonEventCount) F0658(C032,C502,C12); "
+    "CHAMDRAW.C:1060-1063 F0292 mouth-panel call; "
+    "BASE.C:1341-1361 F0658_BlitBitmapIndexToZoneIndexWithTransparency; "
+    "DEFS.H:2090 C12, 2190-2192 C030/C031/C032, 3869-3871 C500/C501/C502";
+
+static const DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec
+    k_dm1ChampionPanelF0658PoisonedBlitSpec = {
+        DM1_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT,
+        1598,
+        1606,
+        1601,
+        k_dm1ChampionPanelF0658PoisonedBlitEvidence,
+        {
+            { DM1_GFX_FOOD_LABEL, DM1_ZONE_FOOD, DM1_COLOR_DARKEST_GRAY, 1598, 0 },
+            { DM1_GFX_WATER_LABEL, DM1_ZONE_WATER, DM1_COLOR_DARKEST_GRAY, 1599, 0 },
+            { DM1_GFX_POISONED_LABEL, DM1_ZONE_POISONED, DM1_COLOR_DARKEST_GRAY, 1606, 1 },
+        }
+    };
+
+const DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *
+DM1_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked(void)
+{
+    return &k_dm1ChampionPanelF0658PoisonedBlitSpec;
+}
+
+const char *DM1_ChampionPanel_F0658PoisonedBlitSourceEvidence(void)
+{
+    return k_dm1ChampionPanelF0658PoisonedBlitEvidence;
+}
+
 void DM1_ChampionPanel_DrawFoodWaterPoisonLabels(int poisoned)
 {
-    (void)poisoned; /* placeholder — function is a no-op until F0658 wiring is resolved */
+    (void)poisoned;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -685,4 +860,3 @@ int DM1_ChampionPanel_SelfTest(void)
  *   PANEL.C:802 F0805_C
  *   PANEL.C:841 F0817_S
  * ══════════════════════════════════════════════════════════════════════ */
-

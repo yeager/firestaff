@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass406_dm1_v1_movement_legality_completion_gate"
@@ -139,7 +142,7 @@ def main() -> int:
         require(test, needle, f"runtime movement-core case {needle}")
 
     source_lock_stdout = run([sys.executable, str(ROOT / "tools/verify_v1_movement_legality_source_lock.py")])
-    movement_core_stdout = run([str(ROOT / "build/test_dm1_v1_movement_core_pc34_compat")])
+    movement_core_stdout = run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_movement_core_pc34_compat")])
 
     status = "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN"
     manifest = {

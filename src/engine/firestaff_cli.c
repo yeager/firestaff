@@ -2,12 +2,13 @@
 #include "firestaff_cli.h"
 #include "firestaff_l10n.h"
 #include "firestaff_save.h"
+#include "menu_startup_m12.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 void fs_cli_print_version(void) {
-    printf("Firestaff v1.4.0 — Dungeon Master Collection\n");
+    printf("Firestaff %s — Dungeon Master Collection\n", FIRESTAFF_VERSION_STRING);
 }
 
 void fs_cli_print_help(const char *prog) {

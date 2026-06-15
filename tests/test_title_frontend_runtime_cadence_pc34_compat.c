@@ -1,4 +1,5 @@
 #include "title_frontend_v1.h"
+#include "dm1_v2_anim_timing.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -53,10 +54,14 @@ int main(void) {
     expect_u("source animation step count", timing.sourceAnimationStepCount, 23u);
     expect_u("runtime frame delay from source vblank cadence",
              V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing),
-             20u);
+             (unsigned int)V1_TICK_MS);
     expect_u("runtime final guard delay from source post/final vblanks",
              V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing),
-             60u);
+             3u * (unsigned int)V1_TICK_MS);
+    /* ReDMCSB TITLE.C F0437 uses F0022_MAIN_Delay(20) after the PRESENTS
+     * strip and a three-vblank final guard, 60u ms in the original PC delay
+     * units; Firestaff maps the same source vblank counts onto V1_TICK_MS at
+     * runtime to match the engine tick cadence. */
     expect_u("runtime fallback frame delay stays deliberate, not zero-speed",
              V1_TitleFrontend_GetRuntimeFrameDelayMs(&zero),
              50u);
@@ -69,8 +74,10 @@ int main(void) {
      *   lines 385-387 present them in reverse order with one VBlank each,
      *   lines 395-402 wait two VBlanks and blit Master/Strikes Back,
      *   line 409 adds the BUG0_71 final guard before handoff.
-     * Lock representative geometry so the runtime evidence cannot degrade into
-     * a count-only cadence probe.
+     * Firestaff maps those VBlanks onto the same 55 ms V1 tick used by the game
+     * clock; 20 ms made the TITLE zoom visibly race on modern displays. Lock
+     * representative geometry so the runtime evidence cannot degrade into a
+     * count-only cadence probe.
      */
     expect_step(1u, V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS, 0u, 0u, 0u, 90u, 320u, 16u);
     expect_step(2u, V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT, 1u, 17u, 136u, 74u, 48u, 12u);

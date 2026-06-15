@@ -1297,6 +1297,47 @@ static void draw_setting_row(M12_ModernCanvas* c, int x, int y, int w,
     draw_text(c, x + w - 20 - vw, y + 14, value, &V);
 }
 
+static void format_settings_path_value(const M12_StartupMenuState* state,
+                                       char* out,
+                                       size_t outSize) {
+    const char* dir = M12_StartupMenu_GetVisibleDataDir(state);
+    size_t len;
+    enum { KEEP = 44 };
+    if (!out || outSize == 0U) {
+        return;
+    }
+    if (!dir || dir[0] == '\0') {
+        snprintf(out, outSize, "%s", "BROWSE...");
+        return;
+    }
+    len = strlen(dir);
+    if (len <= KEEP || state->settings.streamerMode) {
+        snprintf(out, outSize, "%s", dir);
+    } else {
+        snprintf(out, outSize, "...%s", dir + len - KEEP);
+    }
+}
+
+static const char* settings_data_status_label(const M12_StartupMenuState* state) {
+    int ready = 0;
+    if (!state) {
+        return "UNKNOWN";
+    }
+    for (int i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
+        const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, i);
+        if (entry && entry->available) {
+            ready += 1;
+        }
+    }
+    if (ready > 0) {
+        return "HASHED READY";
+    }
+    if (M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
+        return "CHECK FILES";
+    }
+    return "MISSING DATA";
+}
+
 static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
@@ -1307,13 +1348,14 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int panelX = 96;
     int panelY = 260;
     int panelW = c->w - 2 * panelX;
-    int panelH = 400;
+    int panelH = 540;
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
     static const char* langs[] = {"ENGLISH", "SVENSKA", "FRANCAIS", "DEUTSCH", "日本語", "简体中文"};
     static const char* grf[]   = {"ORIGINAL", "ORIGINAL + FILTERS", "ORIGINAL 10X UPSCALE", "MODERN GRAPHICS"};
     static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
+    char dataDir[96];
     int li = state->settings.languageIndex;
     int gi = state->settings.graphicsIndex;
     int wi = state->settings.windowModeIndex;
@@ -1323,6 +1365,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     if (gi > 3) gi = 3;
     if (wi < 0) wi = 0;
     if (wi > 2) wi = 2;
+    format_settings_path_value(state, dataDir, sizeof(dataDir));
 
     int rowX = panelX + 36;
     int rowW = panelW - 72;
@@ -1332,7 +1375,15 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     draw_setting_row(c, rowX, rowY + 70, rowW, "GRAPHICS MODE", grf[gi],
                      state->settingsSelectedIndex == 1);
     draw_setting_row(c, rowX, rowY + 140, rowW, "WINDOW MODE",   win[wi],
-                     state->settingsSelectedIndex == 2);
+                     state->settingsSelectedIndex == 3);
+    draw_setting_row(c, rowX, rowY + 210, rowW, "DATA DIRECTORY", dataDir,
+                     state->settingsSelectedIndex == 15);
+    draw_setting_row(c, rowX, rowY + 280, rowW, "ORIGINAL DATA", settings_data_status_label(state),
+                     state->settingsSelectedIndex == 16);
+    draw_setting_row(c, rowX, rowY + 350, rowW, "EXPORT SETTINGS", "SAVE...",
+                     state->settingsSelectedIndex == 41);
+    draw_setting_row(c, rowX, rowY + 420, rowW, "IMPORT SETTINGS", "LOAD...",
+                     state->settingsSelectedIndex == 42);
 }
 
 typedef struct {
@@ -1715,6 +1766,16 @@ static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* s
     ModernTextStyle sm = text_style_make(2, COLOR_TEXT_DIM(), 1);
     int w3 = text_width_px(line3, &sm);
     draw_text(c, panelX + (panelW - w3) / 2, panelY + 220, line3, &sm);
+    {
+        int okW = 108;
+        int okH = 36;
+        int okX = panelX + (panelW - okW) / 2;
+        int okY = panelY + panelH - 64;
+        stroke_rounded_rect(c, okX, okY, okW, okH, 6, COLOR_ACCENT());
+        ModernTextStyle ok = text_style_make(2, COLOR_ACCENT(), 1);
+        int okTextW = text_width_px("OK", &ok);
+        draw_text(c, okX + (okW - okTextW) / 2, okY + 10, "OK", &ok);
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1760,6 +1821,14 @@ static void draw_sparse_center_box_modern(M12_ModernCanvas* c,
     if (line1 && line1[0]) draw_text_centered(c, c->w / 2, y + 18, line1, &l1);
     if (line2 && line2[0]) draw_text_centered(c, c->w / 2, y + 42, line2, &l2);
     if (line3 && line3[0]) draw_text_centered(c, c->w / 2, y + 66, line3, &l3);
+    if (line1 && line1[0]) {
+        int okW = 64;
+        int okH = 22;
+        int okX = c->w / 2 - okW / 2;
+        int okY = y + boxH - 34;
+        stroke_rounded_rect(c, okX, okY, okW, okH, 3, rgb(230, 210, 120));
+        draw_text_centered(c, c->w / 2, okY + 5, "OK", &l1);
+    }
 }
 
 static void draw_sparse_main_view_modern(M12_ModernCanvas* c, const M12_StartupMenuState* state) {

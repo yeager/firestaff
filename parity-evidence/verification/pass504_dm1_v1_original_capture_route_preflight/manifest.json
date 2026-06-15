@@ -61,6 +61,8 @@
       "rclick:<x>,<y>",
       "shot:<label>",
       "xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+      "--preflight-route",
+      "selected route injector",
       "exactly 6 shot or shot:<label> tokens",
       "NEW_FILE_TIMEOUT_MS"
     ]
@@ -113,6 +115,7 @@
   "problems": [],
   "requiredOk": {
     "canonical_dm1_data": true,
+    "capture_route_preflight": true,
     "capture_script_contract": true,
     "greatstone_secondary_available": true,
     "n2_runtime_commands": true,
@@ -155,6 +158,14 @@
     "recommendedProgram": "DM -vv -sn -pk",
     "recommendedWrapper": "DOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
     "shotCount": 6
+  },
+  "routePreflightAudit": {
+    "command": "DM1_ORIGINAL_ROUTE_EVENTS=<movement wall route> scripts/dosbox_dm1_original_viewport_reference_capture.sh --preflight-route",
+    "ok": true,
+    "requiresRuntimeLaunch": false,
+    "returncode": 0,
+    "route": "wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp6 wait:1200 shot:turn_right_west kp8 wait:1200 shot:forward_west_blocked kp4 wait:1200 shot:turn_left_east kp8 wait:1200 shot:forward_south_corridor wait:600 shot:post_redraw_after_vblank",
+    "stdoutTail": "[pass-70] wrote <temp>/capture/dosbox-original-viewports.conf\n[pass-70] wrote <temp>/capture/original_viewport_route_keys.swift\n[pass-70] wrote <temp>/capture/original_viewport_route_keys_xdotool.sh\n[pass-70] route shape OK: 22 tokens, 6 shots, 6 labeled\n[pass-70] shot label plan: 01:start_south, 02:turn_right_west, 03:forward_west_blocked, 04:turn_left_east, 05:forward_south_corridor, 06:post_redraw_after_vblank\n[pass-70] selected route injector: swift\n[pass-70] route preflight OK"
   },
   "schema": "firestaff.parity.pass504_dm1_v1_original_capture_route_preflight.v1",
   "secondaryReferenceAudit": {

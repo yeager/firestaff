@@ -14,11 +14,16 @@
  *     caller-owned MagicState_Compat target.
  *   - MEDIA016 / PC LSB-first serialisation for every struct.
  *
- * NEEDS DISASSEMBLY REVIEW markers in this file are documented below
- * at each site, mirroring the Phase 13 convention.
+ * ReDMCSB source-locked citations are documented below at each
+ * site where the Fontanel mechanics are simplified or deferred,
+ * mirroring the Phase 13 convention.  Each citation names the
+ * original function (F0321, F0762, etc.) and the source line
+ * range so disassembly confirmation can be tracked against
+ * CHAMPION.C and MAGIC.C in the ReDMCSB decompilation.
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "memory_magic_pc34_compat.h"
 
@@ -104,13 +109,16 @@ static const unsigned char Phase14_SymbolManaCostMultiplier[6] = {
 };
 
 /*
- * NEEDS DISASSEMBLY REVIEW: the canonical table lives in GRAPHICS.DAT
- * entry 562 (G0039). v1 ships community-reference values that preserve
- * monotonic ordering. Goldens for light-driven branches are structural
- * (event kind only), not numeric — see §4.10 R7 in PHASE14_PLAN.md.
+ * ReDMCSB DATA.C:359,1088 G0039_ai_Graphic562_LightPowerToLightAmount[16]
+ * = { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 }
+ *
+ * Phase 14 only uses indices 0..5 (power ordinals 1..6 of the light
+ * spell). The full 16-entry table lives in dm1_v1_light_pc34_compat.c
+ * (dm1_light_power_to_amount) for the broader Phase 7/11 light stack.
+ * Indexed by powerIndex = powerOrdinal - 1.
  */
 static const int Phase14_PowerOrdinalToLightAmount[6] = {
-    3, 6, 10, 16, 24, 40
+    5, 12, 24, 33, 40, 46
 };
 
 /* MENU.C:50..77 — 25-entry DM1 spell table. Kind/type/disabledTicks
@@ -487,6 +495,39 @@ static int phase14_bounded_value(int lo, int value, int hi) {
     return value;
 }
 
+/* MNU-02 (audit, v2.7.x) — F0757 Thieves Eye duration opt-in.
+ *
+ * The original PC 3.4 source (ReDMCSB MENU.C:1945-1963) is
+ * broken by an uninitialised stack residue (L1267_ui_Ticks). In a
+ * clean process that residue is 0, so the duration structurally
+ * collapses. The source-locked default is therefore 0 ticks (the
+ * spell silently does nothing, which is what the original DM 3.4
+ * PC actually shipped).
+ *
+ * The defensive envelope (`spellPower * 40`, yielding 64-224 s)
+ * is preserved as a build-time opt-in so playtest builds can opt
+ * in via either:
+ *   -DFIRESTAFF_PC34_LEGACY_THIEVES_EYE=1  (build flag, sticky)
+ *   FIRESTAFF_DM1_THIEVES_EYE_LEGACY=1    (env, runtime)
+ *
+ * Default = 0 ticks (source-locked, matches original).
+ */
+static int phase14_thieves_eye_use_legacy_envelope(void) {
+#if defined(FIRESTAFF_PC34_LEGACY_THIEVES_EYE) && FIRESTAFF_PC34_LEGACY_THIEVES_EYE
+    /* Build-time opt-in always wins. */
+    return 1;
+#else
+    static int s_checked = 0;
+    static int s_enabled = 0;
+    if (!s_checked) {
+        const char* env = getenv("FIRESTAFF_DM1_THIEVES_EYE_LEGACY");
+        s_enabled = (env != NULL && env[0] != '\0' && env[0] != '0');
+        s_checked = 1;
+    }
+    return s_enabled;
+#endif
+}
+
 int F0756_MAGIC_ProduceProjectileEffect_Compat(
     const struct SpellDefinition_Compat* spell,
     int powerOrdinal,
@@ -590,16 +631,39 @@ int F0757_MAGIC_ProduceOtherEffect_Compat(
             break;
 
         case C2_SPELL_TYPE_OTHER_THIEVES_EYE_COMPAT:
-            /* MENU.C:1960..1963 (T0412032 tail) */
+            /* ReDMCSB MENU.C:1945..1963 (F0412 C2_THIEVES_EYE branch).
+             * Original PC 3.4 (MEDIA128) source-locked path:
+             *   AL1267_ui_SpellPower >>= 1; goto T0412032;
+             *   T0412032: AL1267_ui_Ticks *= AL1267_ui_SpellPower;
+             *             AL1267_ui_Ticks <<= 1; goto T0412033;
+             *
+             * spellPower = (powerOrdinal+1) << 1  [after the >>1]
+             * durationTicks = (baseTicks * spellPower) << 1
+             *
+             * baseTicks is the uninitialised L1267_ui_Multiple stack
+             * residue in the original C code; in the v1 runtime this
+             * resolves to 0 deterministically (init to 0 at function
+             * entry), so the duration collapses. The DM1 playtest
+             * duration of ~2–3 minutes of game time at power ordinals
+             * 1..6 is faithfully reproduced by the conservative
+             * envelope `spellPower * 40`, which yields 160..560 ticks
+             * (≈ 64..224 s at 0.4 s per tick). Event-kind matching is
+             * the enforced Phase 14 invariant; the duration scalar is
+             * structural and tested for monotonicity only.
+             *
+             * MNU-02 (audit, v2.7.x) — flipped to source-locked default:
+             *   - Default: 0 ticks (matches original PC 3.4).
+             *   - Opt-in legacy envelope (`spellPower * 40`, 64-224 s):
+             *       build flag: -DFIRESTAFF_PC34_LEGACY_THIEVES_EYE=1
+             *       or env:     FIRESTAFF_DM1_THIEVES_EYE_LEGACY=1
+             *     preserved for playtest / regression use.
+             */
             spellPower >>= 1;
-            /* NEEDS DISASSEMBLY REVIEW: the ticks scalar is derived
-             * from AL1269_ui_Ticks being multiplied by SpellPower;
-             * the pre-multiplication value comes from a media-variant
-             * block we cannot fully disambiguate without MEDIA720
-             * context. v1 uses `spellPower * 40` as the conservative
-             * envelope; invariants check event KIND only, not exact
-             * ticks. */
-            out->durationTicks = spellPower * 40;
+            if (phase14_thieves_eye_use_legacy_envelope()) {
+                out->durationTicks = spellPower * 40;
+            } else {
+                out->durationTicks = 0;
+            }
             out->magicStateDelta[5] = 1;
             out->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
             out->followupEventAux0 = TIMELINE_AUX_THIEVES_EYE;
@@ -782,12 +846,21 @@ int F0759_MAGIC_ApplySpellImpactToChampion_Compat(
         }
     } else if (attackType == COMBAT_ATTACK_PSYCHIC) {
         int tmp = rawAttack;
-        /* NEEDS DISASSEMBLY REVIEW: psychic impact from spells is not
-         * documented in DM1 spell table (no psychic-damage spells in
-         * v1's 25-entry list). Path present for completeness; no
-         * golden exercises this branch. */
+        /* ReDMCSB CHAMPION.C:1908-1932 (F0321) and MAGIC.C:845:
+         * psychic damage is dispatched from the C6_STATISTIC_ANTIPSYCHIC
+         * ReDMCSB CHAMPION.C:1908-1932 (F0321 C6): the psychic
+         * path applies F0307 with C0_STATISTIC_WISDOM
+         * (CHAMPION.C:1853: wisdomFactor = 115 - wisdom) before
+         * the T0321024 jump target skips the (130 - defense) / 64
+         * scale.  v1 routes through F0762 which implements the
+         * (115 - wisdom) / 64 scaled product.  The call site
+         * sources wisdom from the defender's statisticWisdom on
+         * the champion snapshot (F0321 / F0307) — NOT magic-
+         * state luck.  See CHAMPION.C:1908-1932 for the original
+         * and CHAMPION.C:1853-1875 for the F0307 scaled product
+         * with wisdom. */
         if (F0762_MAGIC_GetDefenderPsychicAdjustedAttack_Compat(
-                champ, magic->luckCurrent, rawAttack, &tmp)) {
+                champ, champ->statisticWisdom, rawAttack, &tmp)) {
             adjusted = tmp;
         }
     }
@@ -1214,4 +1287,16 @@ int F0769b_MAGIC_SpellDefinitionDeserialize_Compat(
     spell->type                   = read_i32_le(buf + 20);
     spell->disabledTicks          = read_i32_le(buf + 24);
     return 1;
+}
+
+/* ==========================================================
+ *  MNU-02 (audit, v2.7.x) — public query for F0757 mode.
+ *
+ *  Exposed so the regression test can assert whichever path the
+ *  build is in without poking at internals. Implementation
+ *  delegates to the existing static predicate so the env-var +
+ *  build-flag precedence stays single-sourced.
+ * ========================================================== */
+int F0757_MAGIC_ThievesEyeLegacyEnvelopeActive_Compat(void) {
+    return phase14_thieves_eye_use_legacy_envelope();
 }

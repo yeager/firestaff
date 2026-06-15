@@ -14,6 +14,9 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass590_dm1_v1_blocked_wall_door_self_damage_source_lock"
@@ -99,10 +102,11 @@ def git(*args: str) -> str:
 
 
 def find_exe(name: str) -> Path:
-    candidates = []
-    build_dir = os.environ.get("BUILD_DIR")
-    if build_dir:
-        candidates.append(Path(build_dir) / name)
+    candidates: list[Path] = []
+    for var in ("FIRESTAFF_BUILD_DIR", "BUILD_DIR"):
+        env_dir = os.environ.get(var)
+        if env_dir:
+            candidates.append(Path(env_dir) / name)
     candidates.extend([ROOT / "build-pass590" / name, ROOT / "build" / name])
     candidates.extend(sorted(ROOT.glob(f"build*/{name}")))
     for candidate in candidates:

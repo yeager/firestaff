@@ -195,6 +195,117 @@ void csb_v1_champion_recompute_load(CSB_V1_Champion *c)
     c->Load = (uint16_t)csb_v1_champion_get_load(c);
 }
 
+/* F0306_CHAMPION_GetStaminaAdjustedValue mirror.
+ * ReDMCSB CHAMPION.C F0306 lines 1078-1106:
+ *   if (CurrentStamina < (MaximumStamina / 2)) return halved + scaled
+ *   else return value unchanged
+ * Halving first matches the deterministic source-form we can test in C11.
+ * The ReDMCSB BUGX_XX note documents that some original compilers could
+ * evaluate the expression differently; this helper preserves the
+ * line-level decompilation formula instead of reproducing a compiler
+ * evaluation-order accident.
+ *   adjusted = (value >> 1) +
+ *              (int16_t)(((long)(value >> 1) * (long)CurrentStamina) /
+ *                        (long)(MaximumStamina >> 1));
+ * When MaximumStamina >> 1 is zero, the original comparison is false
+ * for normal non-negative stamina and the value is returned unchanged;
+ * this keeps uninitialized champion slots aligned with the source
+ * branch instead of adding a modern clamp.
+ * Source: ReDMCSB CHAMPION.C F0306 lines 1078-1106. */
+static int16_t csb_v1_champion_stamina_adjusted_value(
+    const CSB_V1_Champion *c, int16_t value)
+{
+    int16_t cs;
+    int16_t half_max;
+    if (!c) return 0;
+    cs = c->CurrentStamina;
+    half_max = (int16_t)(c->MaximumStamina >> 1);
+    if (half_max > 0 && cs < half_max) {
+        int16_t half_val = (int16_t)(value >> 1);
+        int32_t scaled = ((int32_t)half_val * (int32_t)cs) / (int32_t)half_max;
+        return (int16_t)(half_val + (int16_t)scaled);
+    }
+    return value;
+}
+
+/* F0309_CHAMPION_GetMaximumLoad mirror.
+ * ReDMCSB CHAMPION.C F0309 lines 1157-1178:
+ *   base = (STR_CURRENT << 3) + 100
+ *   base = F0306_CHAMPION_GetStaminaAdjustedValue(c, base)
+ *   base += 9; base -= base % 10
+ * CSB V1's CSB_V1_Champion struct does not yet model Wounds or the
+ * feet-slot Elven Boots icon override, so this is the F0309 baseline
+ * for "no wound, no boots" — exactly the contract exercised by the
+ * runtime load-attrs follow-up test.
+ * Source: ReDMCSB CHAMPION.C F0309 lines 1157-1178. */
+unsigned int csb_v1_champion_get_maximum_load(const CSB_V1_Champion *c)
+{
+    int32_t base;
+    if (!c) return 0;
+    base = ((int32_t)c->Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] << 3)
+           + 100;
+    base = csb_v1_champion_stamina_adjusted_value(c, (int16_t)base);
+    if (base < 0) base = 0;
+    base += 9;
+    base -= base % 10;
+    return (unsigned int)base;
+}
+
+/* F0310_CHAMPION_GetMovementTicks mirror.
+ * ReDMCSB CHAMPION.C F0310 lines 1180-1214:
+ *   if (MaxLoad > Load)   [BUG0_72: comparison is > not >=]
+ *     ticks = 2;
+ *     if (Load * 8 > MaxLoad * 5) ticks++;
+ *   else
+ *     ticks = 4 + ((Load - MaxLoad) * 4) / MaxLoad;
+ *   [+wound_ticks (1 or 2 depending on branch) when feet wounded]
+ *   [-1 if wearing Boot of Speed in C05]
+ * The result is consumed by the dungeon tick scheduler (F0235_TIMELINE_ProcessTick)
+ * to decide how long the party waits between footstep tiles. CSB V1
+ * does not yet model the Wounds/feet-slot fields, so this returns the
+ * F0310 baseline (no wound, no boot).  NULL champion returns 2 (the
+ * MaxLoad > Load default when MaxLoad=0 is unreachable; we mirror the
+ * BUG0_72 branch entry for any non-overloaded champion).
+ * Source: ReDMCSB CHAMPION.C F0310 lines 1180-1214. */
+unsigned int csb_v1_champion_get_movement_ticks(const CSB_V1_Champion *c)
+{
+    unsigned int max_load;
+    unsigned int load;
+    if (!c) return 2u;
+    max_load = csb_v1_champion_get_maximum_load(c);
+    load = c->Load;
+    if (max_load == 0u) {
+        /* Defensive floor: a zero-maximum champion cannot be lighter
+         * than its capacity, so the BUG0_72 "overloaded" branch wins
+         * and we return the 4-tick floor. */
+        return 4u;
+    }
+    if (max_load > load) {
+        unsigned int ticks = 2u;
+        if (((unsigned long long)load << 3) >
+            ((unsigned long long)max_load * 5u)) {
+            ticks++;
+        }
+        return ticks;
+    }
+    /* BUG0_72 else-branch: Load >= MaxLoad (the comparison is > not >=,
+     * so the equal-load case falls here and gets 4 ticks). */
+    {
+        unsigned int over = (load - max_load) << 2;
+        return 4u + (over / max_load);
+    }
+}
+
+/* Load > MaxLoad is the champion panel red-load condition. BUG0_72 is
+ * separate: F0310's equal-load case is not red, but still enters the
+ * slow movement branch because that comparison also uses >.
+ * Source: ReDMCSB CHAMDRAW.C line 959 and CHAMPION.C F0310 line 1198. */
+int csb_v1_champion_is_overloaded(const CSB_V1_Champion *c)
+{
+    if (!c) return 0;
+    return (c->Load > csb_v1_champion_get_maximum_load(c)) ? 1 : 0;
+}
+
 /* ── Death and revival ───────────────────────────────────────────────── */
 int csb_v1_champion_is_dead(const CSB_V1_Champion *c)
 {
@@ -435,10 +546,14 @@ static int parse_dm1_champion_record(const uint8_t *rec,
     /* Skills: 16 bytes from DM1 record */
     memcpy(c->Skills, rec + DM1_CHAMP_OFF_SKILLS, 16);
 
-    /* Equipment slots: 30 × 2-byte THING values */
+    /* ReDMCSB CEDTINCI.C F7090_MakeNewAdventure line ~176 calls
+     * F7020_RemoveObjectModifiersFromStatistics for each champion slot, then
+     * clears C00..C29 to C0xFFFF_THING_NONE and resets load for CSB import. */
     for (i = 0; i < CSB_V1_SLOT_COUNT; i++) {
-        c->Slots[i] = read_le16(rec + DM1_CHAMP_OFF_EQUIP + i * 2);
+        (void)read_le16(rec + DM1_CHAMP_OFF_EQUIP + i * 2);
+        c->Slots[i] = 0xFFFFu;
     }
+    c->Load = 0;
 
     /* Set dead flag if health is 0 */
     if (c->CurrentHealth <= 0) {

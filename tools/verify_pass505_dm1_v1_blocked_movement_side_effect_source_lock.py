@@ -11,10 +11,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass505_dm1_v1_blocked_movement_side_effect_source_lock"
@@ -154,7 +157,7 @@ def main() -> int:
     ]:
         require(test, needle, f"runtime blocked-movement assertion {needle}")
 
-    runtime_stdout = run([str(ROOT / "build/test_dm1_v1_movement_command_core_pc34_compat")])
+    runtime_stdout = run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_movement_command_core_pc34_compat")])
 
     status = "PASS505_DM1_V1_BLOCKED_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN"
     manifest = {

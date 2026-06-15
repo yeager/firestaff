@@ -46,10 +46,10 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
 
 ## Firestaff Evidence
 
-- PASS firestaff_existing_d0_side_wall_specs_cite_return_lines (dm1_v1_viewport_3d_pc34_compat.c:424-430)
+- PASS firestaff_existing_d0_side_wall_specs_cite_return_lines (dm1_v1_viewport_3d_pc34_compat.c:519-520)
   - Existing runtime metadata records direct D0 side-wall return evidence.
 
-- PASS firestaff_existing_d0_side_occlusion_orders_are_single_back_cells (dm1_v1_viewport_3d_pc34_compat.c:251-256)
+- PASS firestaff_existing_d0_side_occlusion_orders_are_single_back_cells (dm1_v1_viewport_3d_pc34_compat.c:300-301)
   - Open D0 side lanes use one back cell each; wall is a separate return path.
 
 - PASS firestaff_viewport_test_covers_d0_side_wall_specs (test_dm1_v1_viewport_3d_pc34_compat.c:294-305)
@@ -61,17 +61,17 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
   - returncode: 0
   - output tail:
 ~~~
-PASS source_evidence.wall_empty_blit_gate == 1
-PASS source_evidence.occlusion == 1
-PASS source_evidence.command_dispatch == 1
-PASS source_evidence.next_redraw == 1
-PASS source_evidence.present_wait == 1
-PASS source_evidence.same_viewport_mouse == 1
-PASS source_evidence.same_viewport_turn == 1
-PASS source_evidence.same_viewport_move == 1
-PASS source_evidence.same_viewport_draw == 1
-PASS source_evidence.same_viewport_present == 1
-PASS source_evidence.same_viewport_assets == 1
+PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c
+PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
+PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
+PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 

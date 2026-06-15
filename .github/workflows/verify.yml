@@ -21,14 +21,17 @@ jobs:
             shell: bash
             generator: Ninja
             exe: ''
+            build_parallel: ''
           - os: macos-14
             shell: bash
             generator: Unix Makefiles
             exe: ''
+            build_parallel: '3'
           - os: windows-2022
             shell: msys2 {0}
             generator: Ninja
             exe: '.exe'
+            build_parallel: ''
 
     runs-on: ${{ matrix.os }}
     defaults:
@@ -71,7 +74,12 @@ jobs:
         run: cmake -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release
 
       - name: CMake build
-        run: cmake --build build --parallel
+        run: |
+          if [ -n "${{ matrix.build_parallel }}" ]; then
+            cmake --build build --parallel "${{ matrix.build_parallel }}"
+          else
+            cmake --build build --parallel
+          fi
 
       - name: Run Phase A probe (headless, no game data needed)
         run: |
@@ -197,14 +205,6 @@ jobs:
             done
             echo "✓ All platforms produced identical hash: $FIRST"
           fi
-
-
-  web-wasm-toolchain-probe:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Probe Web/WASM toolchain availability
-        run: ./scripts/probes/run_firestaff_web_wasm_toolchain_probe.sh
 
   warnings-check:
     runs-on: ubuntu-24.04

@@ -1,3 +1,4 @@
+#include <stddef.h>
 
 #ifndef NEXUS_V1_CHAMPIONS_H
 #define NEXUS_V1_CHAMPIONS_H

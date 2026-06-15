@@ -21,47 +21,26 @@
 #include <string.h>
 #include <stdio.h>
 
-/* ── SUPPRESS compression helpers ──────────────────────────────── */
-/*
- * SUPPRESS is a bit-plane RLE compression used in DM2 saves.
- * Key idea: per-field masks control which bytes are written.
- * Non-zero nibbles from data+mask are packed LSB-first.
- * Source: docs/dm2_save_format.md — SUPPRESS_WRITER/READER
- */
+#define DM2_WORLD_STATE_STUB_SIZE 64u
+#define DM2_WORLD_STATE_EXPLORE_MAGIC "FS2E"
+#define DM2_WORLD_STATE_EXPLORE_HEADER_SIZE 12u
+#define DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE \
+    (DM2_WORLD_STATE_MAX_LEVELS * DM2_WORLD_STATE_EXPLORED_BYTES)
 
-#define SUPPRESS_MAX_FIELD_MASK  0xFFFF
-
-/*
- * suppress_read_bits — read N bits from a byte stream (LSB first).
- * Source: docs/dm2_save_format.md
- */
-static uint32_t suppress_read_bits(const uint8_t **buf, int *bit_offset, int count) {
-    uint32_t val = 0;
-    for (int i = 0; i < count; i++) {
-        int byte_idx = (*bit_offset) >> 3;
-        int bit_idx   = (*bit_offset) & 7;
-        if (byte_idx >= 4) { /* sentinel check — simplified */
-            (*bit_offset)++;
-            continue;
-        }
-        val |= ((*buf)[byte_idx] >> bit_idx) & 1;
-        if (i < count - 1) val <<= 1;
-        (*bit_offset)++;
-    }
-    return val;
+static void write_u32_le(uint8_t *p, uint32_t v)
+{
+    p[0] = (uint8_t)(v & 0xFFu);
+    p[1] = (uint8_t)((v >> 8) & 0xFFu);
+    p[2] = (uint8_t)((v >> 16) & 0xFFu);
+    p[3] = (uint8_t)((v >> 24) & 0xFFu);
 }
 
-/*
- * suppress_decode_nibble — decode one nibble using a 4-bit mask.
- * Source: docs/dm2_save_format.md
- */
-static uint8_t suppress_decode_nibble(uint8_t data, uint8_t mask) {
-    if (mask == 0) return 0;
-    int nibble_idx = 0;
-    for (int b = 0; b < 4; b++) {
-        if (mask & (1 << b)) nibble_idx++;
-    }
-    return data & ((1 << nibble_idx) - 1);
+static uint32_t read_u32_le(const uint8_t *p)
+{
+    return (uint32_t)p[0]
+         | ((uint32_t)p[1] << 8)
+         | ((uint32_t)p[2] << 16)
+         | ((uint32_t)p[3] << 24);
 }
 
 /* ── World-state construction from dungeon ─────────────────────── */
@@ -81,7 +60,6 @@ DM2_WorldState *dm2_v1_world_state_new_from_dungeon(const uint8_t *dungeon_data,
                                                      size_t size) {
     DM2_WorldState *state;
     dm2_dungeon_world_t *world;
-    const dm2_dungeon_header_t *hdr;
     uint16_t party_loc;
     int px, py, pdir;
 
@@ -96,7 +74,6 @@ DM2_WorldState *dm2_v1_world_state_new_from_dungeon(const uint8_t *dungeon_data,
         return NULL;
     }
 
-    hdr = (const dm2_dungeon_header_t *)dungeon_data;
     party_loc = (uint16_t)dungeon_data[16] | ((uint16_t)dungeon_data[17] << 8);
 
     dm2_unpack_party_start(party_loc, &px, &py, &pdir);
@@ -156,15 +133,33 @@ DM2_WorldState *dm2_v1_world_state_new_from_dungeon(const uint8_t *dungeon_data,
  */
 uint8_t *dm2_v1_world_state_serialize(const DM2_WorldState *state, size_t *out_size) {
     /* Placeholder: full SUPPRESS encoding is a separate implementation.
-     * For Phase 2, return a minimal valid buffer with header only.
-     * Phase 3+ will implement full SUPPRESS encoding. */
-    uint8_t *buf = malloc(64);
+     * For Phase 2, return a minimal valid buffer with a Firestaff-private
+     * explored-map extension. The extension stays outside the original DM2
+     * SUPPRESS claim until the full save writer lands. */
+    const size_t total_size = DM2_WORLD_STATE_STUB_SIZE
+                            + DM2_WORLD_STATE_EXPLORE_HEADER_SIZE
+                            + DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE;
+    uint8_t *buf;
+
+    if (!state) { if (out_size) *out_size = 0; return NULL; }
+
+    buf = malloc(total_size);
     if (!buf) { if (out_size) *out_size = 0; return NULL; }
-    memset(buf, 0, 64);
+    memset(buf, 0, total_size);
     /* Write save slot magic markers (BEET/DEAD) */
     buf[38] = 0xBE; buf[39] = 0xEF;
     buf[40] = 0xDE; buf[41] = 0xAD;
-    if (out_size) *out_size = 64;
+    memcpy(buf + DM2_WORLD_STATE_STUB_SIZE, DM2_WORLD_STATE_EXPLORE_MAGIC, 4);
+    buf[DM2_WORLD_STATE_STUB_SIZE + 4] = 1; /* extension version */
+    buf[DM2_WORLD_STATE_STUB_SIZE + 5] = DM2_WORLD_STATE_MAX_LEVELS;
+    buf[DM2_WORLD_STATE_STUB_SIZE + 6] = DM2_WORLD_STATE_MAP_EDGE;
+    buf[DM2_WORLD_STATE_STUB_SIZE + 7] = DM2_WORLD_STATE_MAP_EDGE;
+    write_u32_le(buf + DM2_WORLD_STATE_STUB_SIZE + 8,
+                 (uint32_t)DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE);
+    memcpy(buf + DM2_WORLD_STATE_STUB_SIZE + DM2_WORLD_STATE_EXPLORE_HEADER_SIZE,
+           state->explored_by_level,
+           DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE);
+    if (out_size) *out_size = total_size;
     return buf;
 }
 
@@ -198,6 +193,23 @@ DM2_WorldState *dm2_v1_world_state_load_from_mem(const uint8_t *data, size_t siz
     state->game_tick = 0;
     state->timer_count = 0;
     state->quest_count = 0;
+
+    if (size >= DM2_WORLD_STATE_STUB_SIZE + DM2_WORLD_STATE_EXPLORE_HEADER_SIZE &&
+        memcmp(data + DM2_WORLD_STATE_STUB_SIZE, DM2_WORLD_STATE_EXPLORE_MAGIC, 4) == 0) {
+        const uint8_t *ext = data + DM2_WORLD_STATE_STUB_SIZE;
+        uint32_t payload_size = read_u32_le(ext + 8);
+        size_t payload_offset = DM2_WORLD_STATE_STUB_SIZE + DM2_WORLD_STATE_EXPLORE_HEADER_SIZE;
+        if (ext[4] == 1 &&
+            ext[5] == DM2_WORLD_STATE_MAX_LEVELS &&
+            ext[6] == DM2_WORLD_STATE_MAP_EDGE &&
+            ext[7] == DM2_WORLD_STATE_MAP_EDGE &&
+            payload_size == DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE &&
+            size >= payload_offset + DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE) {
+            memcpy(state->explored_by_level,
+                   data + payload_offset,
+                   DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE);
+        }
+    }
 
     return state;
 }
@@ -243,6 +255,37 @@ void dm2_v1_world_state_set_quest_flag(DM2_WorldState *state,
 int dm2_v1_world_state_get_champion_hp(const DM2_WorldState *state, int champ_index) {
     if (!state || champ_index < 0 || champ_index >= state->party.champion_count) return -1;
     return (int)state->party.champions[champ_index].hp;
+}
+
+int dm2_v1_world_state_get_explored(const DM2_WorldState *state, int level, int x, int y) {
+    int bit_index;
+    if (!state ||
+        level < 0 || level >= DM2_WORLD_STATE_MAX_LEVELS ||
+        x < 0 || x >= DM2_WORLD_STATE_MAP_EDGE ||
+        y < 0 || y >= DM2_WORLD_STATE_MAP_EDGE) {
+        return 0;
+    }
+    bit_index = y * DM2_WORLD_STATE_MAP_EDGE + x;
+    return (state->explored_by_level[level][bit_index >> 3] & (uint8_t)(1u << (bit_index & 7))) != 0;
+}
+
+void dm2_v1_world_state_set_explored(DM2_WorldState *state,
+                                      int level, int x, int y, int value) {
+    int bit_index;
+    uint8_t mask;
+    if (!state ||
+        level < 0 || level >= DM2_WORLD_STATE_MAX_LEVELS ||
+        x < 0 || x >= DM2_WORLD_STATE_MAP_EDGE ||
+        y < 0 || y >= DM2_WORLD_STATE_MAP_EDGE) {
+        return;
+    }
+    bit_index = y * DM2_WORLD_STATE_MAP_EDGE + x;
+    mask = (uint8_t)(1u << (bit_index & 7));
+    if (value) {
+        state->explored_by_level[level][bit_index >> 3] |= mask;
+    } else {
+        state->explored_by_level[level][bit_index >> 3] &= (uint8_t)~mask;
+    }
 }
 
 void dm2_v1_world_state_free(DM2_WorldState *state) {

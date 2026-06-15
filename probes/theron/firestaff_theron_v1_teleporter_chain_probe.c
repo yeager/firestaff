@@ -169,6 +169,85 @@ int main(void)
 
     printf("\n");
 
+    /* ── Test 4: Teleporter cycle fallback -> return to source square ── */
+    {
+        Theron_V1_World world;
+        memset(&world, 0, sizeof(world));
+        world.current_level = 0;
+
+        Theron_V1_Level *lvl = &world.levels[0][0];
+        lvl->width = lvl->height = 8;
+        memset(lvl->squares, THERON_SQUARE_FLOOR, sizeof(lvl->squares));
+        lvl->squares[3][3] = THERON_SQUARE_TELEPORTER;
+
+        /* 2-cycle teleporter chain: (3,3)->(4,3)->(3,3) */
+        world.object_count = 2;
+        world.objects[0].id        = 101;
+        world.objects[0].type      = THERON_OBJTYPE_TELEPORTER;
+        world.objects[0].x         = 3;
+        world.objects[0].y         = 3;
+        world.objects[0].level     = 0;
+        world.objects[0].linked_id = 102;
+
+        world.objects[1].id        = 102;
+        world.objects[1].type      = THERON_OBJTYPE_TELEPORTER;
+        world.objects[1].x         = 4;
+        world.objects[1].y         = 3;
+        world.objects[1].level     = 0;
+        world.objects[1].linked_id = 101;
+
+        world.party.leader_x    = 3;
+        world.party.leader_y    = 3;
+        world.party.leader_dir  = THERON_DIR_EAST;
+        world.party.active_slot = 1;
+        world.party.champion_count = 2;
+        world.party.champions[1].alive = 1;
+        world.party.champions[1].health = 41;
+        world.party.champions[1].wounds = THERON_WOUND_HEAD;
+        world.party.levitating = 0;
+
+        /* ensure previous state does not leak into return state */
+        world.transition_type = THERON_TRANSITION_EXIT;
+        world.transition_pending = 0;
+        world.transition_target_level = 2;
+        world.transition_spawn_x = 99;
+        world.transition_spawn_y = 99;
+
+        printf("[test:cycle-return-path]\n");
+        int r = theron_v1_teleporter_resolve(&world, 3, 3);
+        printf("resolve returned=%d transition_pending=%d type=%d party dir=%d health=%d wounds=%d\n",
+               r,
+               world.transition_pending,
+               world.transition_type,
+               world.party.leader_dir,
+               world.party.champions[1].health,
+               world.party.champions[1].wounds);
+
+        /*
+         * A cycle has no terminal non-teleporter destination, so the
+         * resolver must fall back to the clicked teleporter square and keep
+         * party identity state intact.
+         */
+        check_int("cycle returns resolved", r, 0);
+        check_int("transition pending", world.transition_pending, 1);
+        check_int("transition type TELEPORTER", world.transition_type,
+                 THERON_TRANSITION_TELEPORTER);
+        check_int("return path spawn x", world.transition_spawn_x, 3);
+        check_int("return path spawn y", world.transition_spawn_y, 3);
+        check_int("return path party x", world.party.leader_x, 3);
+        check_int("return path party y", world.party.leader_y, 3);
+        check_int("return path keeps leader dir", world.party.leader_dir,
+                 THERON_DIR_EAST);
+        check_int("return path keeps active slot", world.party.active_slot, 1);
+        check_int("return path keeps active champion hp", world.party.champions[1].health, 41);
+        check_int("return path keeps active champion wounds", world.party.champions[1].wounds,
+                 THERON_WOUND_HEAD);
+        check_int("return path keeps levitate flag", world.party.levitating, 0);
+        check_int("return path keeps current level", world.transition_target_level, 0);
+    }
+
+    printf("\n");
+
     /* ── Test 3: Single teleporter → non-teleporter ── */
     {
         Theron_V1_World world;

@@ -515,6 +515,65 @@ static void test_projectile_travel_blockers(void) {
     ASSERT_EQ(result.despawn, 0, "destroyed door keeps open-door projectile flying");
 }
 
+static void assert_side_cell_blocker_keeps_source(
+    const char* label,
+    int destSquareType,
+    int doorState,
+    int hasOtherProjectile,
+    int expectedResultKind)
+{
+    char check[128];
+    struct ProjectileInstance_Compat p;
+    struct ProjectileInstance_Compat next;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat result;
+
+    p = make_travel_projectile(PROJECTILE_CATEGORY_KINETIC,
+                               PROJECTILE_SUBTYPE_KINETIC_ARROW);
+    p.cell = 1;
+    p.direction = 0;
+
+    d = make_travel_digest(destSquareType);
+    d.destDoorState = doorState;
+    d.destHasOtherProjectile = hasOtherProjectile;
+
+    /* ReDMCSB source-lock:
+     *   PROJEXPL.C F0219 lines 714-725 tests whether the current cell
+     *     crosses into the next square, then checks wall/stair impacts
+     *     before applying the M015_THING_WITH_NEW_CELL update.
+     *   PROJEXPL.C F0219 lines 743-749 applies the door impact check
+     *     on intra-square handling before relinking the projectile. */
+    snprintf(check, sizeof(check), "%s advance ok", label);
+    ASSERT_EQ(F0811_PROJECTILE_Advance_Compat(&p, &d, 200, NULL, &next, &result),
+              1, check);
+    snprintf(check, sizeof(check), "%s result kind", label);
+    ASSERT_EQ(result.resultKind, expectedResultKind, check);
+    snprintf(check, sizeof(check), "%s despawns", label);
+    ASSERT_EQ(result.despawn, 1, check);
+    snprintf(check, sizeof(check), "%s next state stays source cell", label);
+    ASSERT_EQ(next.cell, 1, check);
+    snprintf(check, sizeof(check), "%s result stays source cell", label);
+    ASSERT_EQ(result.newCell, 1, check);
+    snprintf(check, sizeof(check), "%s result source x", label);
+    ASSERT_EQ(result.newMapX, p.mapX, check);
+    snprintf(check, sizeof(check), "%s result source y", label);
+    ASSERT_EQ(result.newMapY, p.mapY, check);
+}
+
+static void test_projectile_side_cell_blockers(void) {
+    printf("  projectile side-cell blockers...\n");
+
+    assert_side_cell_blocker_keeps_source(
+        "side wall", PROJECTILE_ELEMENT_WALL, PROJECTILE_DOOR_STATE_NONE, 0,
+        PROJECTILE_RESULT_HIT_WALL);
+    assert_side_cell_blocker_keeps_source(
+        "side closed door", PROJECTILE_ELEMENT_DOOR, PROJECTILE_DOOR_STATE_CLOSED_HALF, 0,
+        PROJECTILE_RESULT_HIT_DOOR);
+    assert_side_cell_blocker_keeps_source(
+        "side projectile blocker", PROJECTILE_ELEMENT_CORRIDOR, PROJECTILE_DOOR_STATE_NONE, 1,
+        PROJECTILE_RESULT_HIT_OTHER_PROJECTILE);
+}
+
 
 static void test_poison_cloud_party_damage_over_time(void) {
     struct ExplosionInstance_Compat explosion;
@@ -553,6 +612,79 @@ static void test_poison_cloud_party_damage_over_time(void) {
     ASSERT_EQ(next.attack, 61, "poison cloud attack decays by 3");
     ASSERT_EQ(result.outNextTick.kind, TIMELINE_EVENT_EXPLOSION_ADVANCE, "poison cloud schedules next tick");
     ASSERT_EQ((int)result.outNextTick.fireAtTick, 251, "poison cloud next tick +1");
+}
+
+
+static void test_poison_cloud_single_monster_overlap_tick_boundary(void) {
+    struct ExplosionInstance_Compat explosion;
+    struct ExplosionInstance_Compat next;
+    struct CellContentDigest_Compat digest;
+    struct ExplosionTickResult_Compat result;
+    struct TimelineQueue_Compat queue;
+    struct TimelineEvent_Compat queued;
+    struct TimelineEvent_Compat popped;
+
+    printf("  poison cloud single monster overlap tick boundary...\n");
+
+    memset(&explosion, 0, sizeof(explosion));
+    explosion.slotIndex = 7;
+    explosion.explosionType = C007_EXPLOSION_POISON_CLOUD;
+    explosion.mapIndex = 0;
+    explosion.mapX = 10;
+    explosion.mapY = 11;
+    explosion.cell = EXPLOSION_CELL_CENTERED;
+    explosion.centered = 1;
+    explosion.attack = 96;
+    explosion.currentFrame = 4;
+    explosion.maxFrames = 30;
+    explosion.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    explosion.ownerIndex = 2;
+
+    memset(&digest, 0, sizeof(digest));
+    digest.destMapIndex = 0;
+    digest.destMapX = 10;
+    digest.destMapY = 11;
+    digest.destHasCreatureGroup = 1;
+    digest.destCreatureType = 10;
+    digest.destCreatureCellMask = 0x04;
+
+    /* ReDMCSB source-lock:
+     *   PROJEXPL.C F0220 lines 857-866: poison cloud damages the group
+     *     only when the explosion is not on the party square, then decays
+     *     Attack by 3 and schedules Map_Time+1.
+     *   GROUP.C F0191/F0192 lines 932-1010: the group handoff is a single
+     *     all-creatures damage call after poison-resistance adjustment. */
+    ASSERT_EQ(F0822_EXPLOSION_Advance_Compat(&explosion, &digest, 777, NULL, &next, &result),
+              1, "poison cloud single monster tick ok");
+    ASSERT_EQ(result.emittedCombatActionPartyCount, 0, "monster overlap emits no party action");
+    ASSERT_EQ(result.emittedCombatActionGroupCount, 1, "monster overlap emits one group action");
+    ASSERT_EQ(result.outActionGroup.kind, COMBAT_ACTION_APPLY_DAMAGE_GROUP, "monster overlap group damage kind");
+    ASSERT_EQ(result.outActionGroup.targetMapX, 10, "monster overlap group target x");
+    ASSERT_EQ(result.outActionGroup.targetMapY, 11, "monster overlap group target y");
+    ASSERT_EQ(result.outActionGroup.defenderSlotOrCreatureIndex, 10, "monster overlap preserves creature type");
+    ASSERT_EQ(result.outActionGroup.rawAttackValue, 4, "poison cloud attack 96 >> 5 = 3, F0192 resistance-adjusted for C10 (r=5): 3*8/6 = 4");
+    ASSERT_EQ(result.resultKind, EXPLOSION_RESULT_ADVANCED_FRAME, "monster overlap cloud continues");
+    ASSERT_EQ(result.despawn, 0, "monster overlap cloud remains live");
+    ASSERT_EQ(next.attack, 93, "monster overlap cloud decays by 3 at boundary");
+    ASSERT_EQ(result.outNextTick.kind, TIMELINE_EVENT_EXPLOSION_ADVANCE, "monster overlap schedules next cloud tick");
+    ASSERT_EQ((int)result.outNextTick.fireAtTick, 778, "monster overlap schedules tick+1");
+    ASSERT_EQ(result.outNextTick.mapX, 10, "monster overlap next tick x");
+    ASSERT_EQ(result.outNextTick.mapY, 11, "monster overlap next tick y");
+    ASSERT_EQ(result.outNextTick.aux0, 7, "monster overlap next tick slot");
+    ASSERT_EQ(result.newCurrentFrame, 5, "monster overlap advances exactly one frame");
+
+    ASSERT_EQ(F0720_TIMELINE_Init_Compat(&queue, 777), 1, "monster overlap timeline init ok");
+    ASSERT_EQ(F0721_TIMELINE_Schedule_Compat(&queue, &result.outNextTick),
+              1, "monster overlap schedules follow-up into queue");
+    ASSERT_EQ(F0722_TIMELINE_Peek_Compat(&queue, &queued),
+              1, "monster overlap queued follow-up is visible");
+    ASSERT_EQ(queued.fireAtTick <= 777u, 0, "monster overlap follow-up is not due on same tick");
+    ASSERT_EQ(F0724_TIMELINE_Tick_Compat(&queue, 1), 1, "monster overlap advances queue one tick");
+    ASSERT_EQ(queued.fireAtTick <= queue.nowTick, 1, "monster overlap follow-up is due at tick+1");
+    ASSERT_EQ(F0723_TIMELINE_Pop_Compat(&queue, &popped), 1, "monster overlap pops one follow-up");
+    ASSERT_EQ(popped.kind, TIMELINE_EVENT_EXPLOSION_ADVANCE, "monster overlap popped explosion event kind");
+    ASSERT_EQ(popped.fireAtTick, 778u, "monster overlap popped tick boundary");
+    ASSERT_EQ(queue.count, 0, "monster overlap queue contains no duplicate follow-up");
 }
 
 
@@ -622,7 +754,9 @@ int main(void) {
     test_aspect_data_cross_check();
     test_spell_graphic_indices();
     test_projectile_travel_blockers();
+    test_projectile_side_cell_blockers();
     test_poison_cloud_party_damage_over_time();
+    test_poison_cloud_single_monster_overlap_tick_boundary();
     test_harm_non_material_materializer_attack_only();
 
     if (g_failures == 0) {

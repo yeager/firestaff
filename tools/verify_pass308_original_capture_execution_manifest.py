@@ -4,6 +4,9 @@ from __future__ import annotations
 import argparse, csv, json
 from pathlib import Path
 from typing import Any
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 PASS = "pass308_original_capture_execution_manifest"
 ROOT = Path(__file__).resolve().parents[1]
 BATCHES = {"A": ["start_south", "turn_right_west", "move_forward_west"], "B": ["start_south", "turn_left_east"], "C": ["start_south", "blocked_forward_south_wall"]}

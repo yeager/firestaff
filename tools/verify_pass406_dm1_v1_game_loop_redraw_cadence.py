@@ -10,10 +10,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass406_dm1_v1_game_loop_redraw_cadence"
@@ -195,8 +198,9 @@ def main() -> int:
         "outResult->provenance.viewportPresentEvidence =",
     ], "Firestaff movement pipeline state-before-redraw provenance order")
 
-    turning_stdout = run([str(ROOT / "build/test_m11_v1_turning_presentation_pc34_compat")])
-    pipeline_stdout = run([str(ROOT / "build/test_dm1_v1_movement_pipeline_pc34_compat")])
+    build_dir = resolve_build_dir(ROOT, ROOT / "build")
+    turning_stdout = run([str(build_dir / "test_m11_v1_turning_presentation_pc34_compat")])
+    pipeline_stdout = run([str(build_dir / "test_dm1_v1_movement_pipeline_pc34_compat")])
     diffcheck_stdout = run(["git", "diff", "--check"])
 
     status = "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED"
@@ -213,10 +217,14 @@ def main() -> int:
             "DRAWVIEW.F0097": f"DRAWVIEW.C:{draw_start}-{draw_end}",
         },
         "firestaffGuards": {
-            "m11_apply_dm1_v1_pipeline_tick": f"m11_game_view.c:{m11_start}-{m11_end}",
-            "main_loop_input_redraw_block": f"main_loop_m11.c:{loop_start}-{loop_end}",
-            "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat": f"dm1_v1_movement_pipeline_pc34_compat.c:{pipe_start}-{pipe_end}",
+            "m11_apply_dm1_v1_pipeline_tick": "tokens=EnqueueCommand/DecrementCooldowns/ProcessOneTick/world.gameTick++/viewportDirty-return "
+                f"(current m11_game_view.c:{m11_start}-{m11_end})",
+            "main_loop_input_redraw_block": "tokens=redrawWasAfterViewportDirty/lastDm1V1MovementPipelineResult.viewportDirty/M11_GameView_Draw/inputRedrawAfterViewportDirtyCount "
+                f"(current main_loop_m11.c:{loop_start}-{loop_end})",
+            "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat": "tokens=MovementCommandCore/PostMoveEnvironment/ApplySuccessfulStep/viewportDirty/viewportPresentEvidence "
+                f"(current dm1_v1_movement_pipeline_pc34_compat.c:{pipe_start}-{pipe_end})",
         },
+        "driftProofLocalGuard": "Firestaff local checks are token/order guards over current function bodies; current line numbers are diagnostic only.",
         "checks": [
             "build/test_m11_v1_turning_presentation_pc34_compat",
             "build/test_dm1_v1_movement_pipeline_pc34_compat",
@@ -246,9 +254,10 @@ def main() -> int:
         f"- `DRAWVIEW.C:{draw_start}-{draw_end}` / `F0097_DUNGEONVIEW_DrawViewport` — sets `G0324_B_DrawViewportRequested` and waits for vblank.",
         "",
         "## Firestaff executable guard",
-        f"- `m11_game_view.c:{m11_start}-{m11_end}` / `m11_apply_dm1_v1_pipeline_tick` — enqueues the route command, ages old cooldowns before processing, processes one pipeline tick, publishes game tick/hash, and returns redraw/dequeue state.",
-        f"- `dm1_v1_movement_pipeline_pc34_compat.c:{pipe_start}-{pipe_end}` / `DM1_V1_MovementPipeline_ProcessOneTickPc34Compat` — applies command/movement/post-move/timing before publishing `viewportDirty` provenance.",
-        f"- `main_loop_m11.c:{loop_start}-{loop_end}` — records whether input redraw followed a viewport-dirty pipeline result before calling `M11_GameView_Draw`.",
+        f"- `m11_apply_dm1_v1_pipeline_tick` tokens `EnqueueCommand` / `DecrementCooldowns` / `ProcessOneTick` / `world.gameTick++` / `viewportDirty-return` stay in order (current `m11_game_view.c:{m11_start}-{m11_end}`).",
+        f"- `DM1_V1_MovementPipeline_ProcessOneTickPc34Compat` tokens `MovementCommandCore` / `PostMoveEnvironment` / `ApplySuccessfulStep` / `viewportDirty` / `viewportPresentEvidence` stay in order (current `dm1_v1_movement_pipeline_pc34_compat.c:{pipe_start}-{pipe_end}`).",
+        f"- Main-loop input redraw tokens `redrawWasAfterViewportDirty` / `lastDm1V1MovementPipelineResult.viewportDirty` / `M11_GameView_Draw` / `inputRedrawAfterViewportDirtyCount` stay in order (current `main_loop_m11.c:{loop_start}-{loop_end}`).",
+        "- Firestaff line numbers above are diagnostics only; the verifier and CTest guard token presence/order so local line drift does not weaken or fail the source-lock claim.",
         "",
         "## Gates run",
         "- `build/test_m11_v1_turning_presentation_pc34_compat`",

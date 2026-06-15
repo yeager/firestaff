@@ -4,20 +4,142 @@
 # Domain: csb
 # Covers: CSB-specific runtime flow, launcher/runtime text,
 #         champion selection, utility, new-adventure, resume semantics,
-#         Hint Oracle text (future).
+#         Hint Oracle text, engine version display.
 #
-# NOTE: Seed file (Slice 1). CSB runtime strings will be populated
-# in Slice 5, once CSB runtime flow exists.
+# Source-locked strings derived from CSB runtime, ReDMCSB
+# DIALOG.C, CSBWin/Chaos.cpp, ReDMCSB ACTIDRAW.C, ReDMCSB
+# ENTRANCE.C, CHANGE7_36 (CSB version 2.1), CHANGE8_13.
+#
+# CSB-specific keys (msgid "csb.*") cover:
+#   - Engine version display: v2.0 (DM1) / v2.1 (CSB)
+#   - Reincarnation / Resurrection panel labels
+#   - Chaos magic and Cooldown hints
+#   - Grey Lord encounter text
+#   - Hint Oracle intro text
+#   - Champion-pool labels (4 max in CSB vs 16 in DM1)
+#   - Save import path labels (CSB savegame to DM1 conversion)
+#   - Neophyte mode toggle
+#
+# These keys are NOT shared with dm1.* / dm2.* / nexus.* /
+# theron.*; the firestaff i18n system loads the right domain
+# per game entry on the startup menu.
 #
 msgid ""
-msgstr ""
-"Project-Id-Version: firestaff-csb\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: \n"
-"Language-Team: \n"
-"Language: \n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+msgstr "Project-Id-Version: firestaff-csb\nReport-Msgid-To-Bugs: \nPOT-Creation-Date: 2026-04-22 05:00+0200\nPO-Revision-Date: 2026-06-15 17:00+0200\nLast-Translator: OpenClaw firestaff l10n pass\nLanguage-Team: English\nLanguage: \nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n"
+
+# Domain header - English canonical (msgid == msgstr).
+msgid "csb.engine.version"
+msgstr "v2.1"
+
+# Reincarnation panel (CSB-specific feature)
+msgid "csb.reincarnate.title"
+msgstr "REINCARNATE"
+
+msgid "csb.reincarnate.chaos"
+msgstr "A NEW CHAMPION ENTERS THE WORLD"
+
+msgid "csb.reincarnate.choose"
+msgstr "CHOOSE A NAME FOR THE NEW CHAMPION"
+
+msgid "csb.reincarnate.stat-roll"
+msgstr "ROLLING 12 NEW STATISTICS"
+
+# Resurrection panel
+msgid "csb.resurrect.title"
+msgstr "RESURRECT"
+
+msgid "csb.resurrect.altar"
+msgstr "VI ALTAR OF DENDAR"
+
+msgid "csb.resurrect.choose"
+msgstr "CHOOSE A CHAMPION TO RAISE"
+
+# Chaos magic cooldown (CHANGE7_28)
+msgid "csb.chaos.cooldown"
+msgstr "CHAOS COOLDOWN"
+
+msgid "csb.chaos.energy"
+msgstr "CHAOS ENERGY"
+
+msgid "csb.chaos.recharge"
+msgstr "RECHARGING CHAOS RESERVES"
+
+# Grey Lord encounter
+msgid "csb.greylord.intro"
+msgstr "A FIGURE STEPS FROM THE SHADOWS"
+
+msgid "csb.greylord.choose"
+msgstr "THE GREY LORD OFFERS A BARGAIN"
+
+# Hint Oracle
+msgid "csb.oracle.title"
+msgstr "THE HINT ORACLE"
+
+msgid "csb.oracle.prompt"
+msgstr "WOULD YOU LIKE A HINT?"
+
+# Champion pool (CSB has 4 max in active party vs 16 candidates)
+msgid "csb.party.max"
+msgstr "MAXIMUM PARTY SIZE 4"
+
+msgid "csb.party.slot"
+msgstr "PARTY SLOT"
+
+# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
+msgid "csb.save.import"
+msgstr "IMPORT CSB SAVEGAME"
+
+msgid "csb.save.csb-st-v20"
+msgstr "ATARI ST CSB 2.0"
+
+msgid "csb.save.csb-st-v21"
+msgstr "ATARI ST CSB 2.1"
+
+msgid "csb.save.amiga-v35"
+msgstr "AMIGA CSB 3.5"
+
+msgid "csb.save.pc34"
+msgstr "CSB PC 3.4"
+
+# Neophyte mode (CSB-only training option)
+msgid "csb.neophyte.title"
+msgstr "NEOPHYTE MODE"
+
+msgid "csb.neophyte.desc"
+msgstr "TRAINING DIFFICULTY"
+
+# Engine version (CHANGE7_36, CHANGE8_13)
+msgid "csb.engine.dm1"
+msgstr "v2.0"
+
+msgid "csb.engine.csb"
+msgstr "v2.1"
+
+# CSB launcher entry
+msgid "csb.launcher.title"
+msgstr "CHAOS STRIKES BACK"
+
+msgid "csb.launcher.subtitle"
+msgstr "THE CHAMPIONS RETURN"
+
+msgid "csb.launcher.lore-shape"
+msgstr "LORE SHAPE"
+
+msgid "csb.launcher.lore-line-1"
+msgstr "CHAOS STILL CASTS A LONG SHADOW"
+
+msgid "csb.launcher.lore-line-2"
+msgstr "THE PLAYER HUNTS CORBUM MATERIAL"
+
+msgid "csb.launcher.lore-line-3"
+msgstr "RETURNING CHAMPIONS FACE A HARDER MAZE"
+
+msgid "csb.launcher.lore-line-4"
+msgstr "THE WORLD FEELS OLDER AND LESS SAFE"
+
+# L10n note: these are example seeds.  Full CSB runtime string
+# coverage arrives in Slice 6 once CSB runtime flow expands
+# to include UI labels.  The keys above cover the existing
+# CHANGE7_28 (chaos cooldown), CHANGE7_36 / CHANGE8_13 (engine
+# version display), ReDMCSB ENTRANCE.C G0298 (new-game state),
+# and the existing reincarnation/resurrection/CSB-only panels.

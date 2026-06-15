@@ -1,0 +1,331 @@
+{
+  "nonClaims": [
+    "No new original DOSBox capture.",
+    "No SDL input capture or framebuffer parity claim.",
+    "No behavior beyond this contract-only key-dispatch inventory-click race.",
+    "No changes to existing mirror-candidate modules."
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass653_dm1_v1_mirror_candidate_keyrot_combo_invclick_regression.v1",
+  "scope": "DM1 V1 mirror candidate pending, F0361 TURN_* key queue write, F0380 in-flight pending inventory click race, and byte-identical F0293 redraw against no-click rotation.",
+  "sourceChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "hits": [
+        {
+          "line": 1985,
+          "needle": "case M568_PANEL_RESURRECT_REINCARNATE:"
+        },
+        {
+          "line": 1988,
+          "needle": "F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0457_as_Graphic561_MouseInput_PanelResurrectReincarnateCancel"
+        },
+        {
+          "line": 1990,
+          "needle": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel(L1157_ui_Command);"
+        }
+      ],
+      "id": "command_f0359_m568_panel_dispatch",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "hits": [
+        {
+          "line": 1709,
+          "needle": "void F0361_COMMAND_ProcessKeyPress("
+        },
+        {
+          "line": 12,
+          "needle": "G0435_B_CommandQueueLocked = C1_TRUE;"
+        },
+        {
+          "line": 1765,
+          "needle": "G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1110_i_CommandQueueIndex].Command = L1111_i_Command;"
+        }
+      ],
+      "id": "command_f0361_keyboard_queue_write",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "hits": [
+        {
+          "line": 2045,
+          "needle": "void F0380_COMMAND_ProcessQueue_CPSC("
+        },
+        {
+          "line": 1373,
+          "needle": "G0435_B_CommandQueueLocked = C0_FALSE;"
+        },
+        {
+          "line": 1086,
+          "needle": "F0360_COMMAND_ProcessPendingClick();"
+        },
+        {
+          "line": 2150,
+          "needle": "if ((L1160_i_Command == C002_COMMAND_TURN_RIGHT) || (L1160_i_Command == C001_COMMAND_TURN_LEFT))"
+        },
+        {
+          "line": 2151,
+          "needle": "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);"
+        }
+      ],
+      "id": "command_f0380_queue_dispatch",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "hits": [
+        {
+          "line": 63,
+          "needle": "void F0280_CHAMPION_AddCandidateChampionToParty("
+        },
+        {
+          "line": 124,
+          "needle": "if (!G0415_ui_LeaderEmptyHanded)"
+        },
+        {
+          "line": 130,
+          "needle": "if (G0305_ui_PartyChampionCount >= 4)"
+        },
+        {
+          "line": 704,
+          "needle": "void F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel("
+        },
+        {
+          "line": 747,
+          "needle": "G0299_ui_CandidateChampionOrdinal = M000_INDEX_TO_ORDINAL(CM1_CHAMPION_NONE);"
+        }
+      ],
+      "id": "revive_candidate_pending_and_clear",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "hits": [
+        {
+          "line": 243,
+          "needle": "void F0297_CHAMPION_PutObjectInLeaderHand("
+        },
+        {
+          "line": 253,
+          "needle": "G0415_ui_LeaderEmptyHanded = C0_FALSE;"
+        },
+        {
+          "line": 662,
+          "needle": "void F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox("
+        },
+        {
+          "line": 677,
+          "needle": "if (P0633_ui_SlotBoxIndex < C08_SLOT_BOX_INVENTORY_FIRST_SLOT)"
+        },
+        {
+          "line": 706,
+          "needle": "F0297_CHAMPION_PutObjectInLeaderHand(L0906_T_SlotThing, C0_FALSE);"
+        }
+      ],
+      "id": "champion_slot_and_leader_hand",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "hits": [
+        {
+          "line": 498,
+          "needle": "void F0291_CHAMPION_DrawSlot("
+        },
+        {
+          "line": 624,
+          "needle": "if (L0852_B_IsInventoryChampion && (P0614_ui_SlotIndex == C01_SLOT_ACTION_HAND)"
+        },
+        {
+          "line": 703,
+          "needle": "void F0292_CHAMPION_DrawState("
+        },
+        {
+          "line": 1117,
+          "needle": "void F0293_CHAMPION_DrawAllChampionStates("
+        },
+        {
+          "line": 1138,
+          "needle": "F0292_CHAMPION_DrawState(L0873_ui_ChampionIndex);"
+        }
+      ],
+      "id": "chamdraw_redraw_tuple",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "hits": [
+        {
+          "line": 2088,
+          "needle": "#define C10_COLOR_FLESH"
+        },
+        {
+          "line": 810,
+          "needle": "#define C30_SLOT_CHEST_1"
+        },
+        {
+          "line": 1878,
+          "needle": "#define M070_HAND_SLOT_INDEX(slotboxindex)"
+        },
+        {
+          "line": 277,
+          "needle": "#define C040_COMMAND_CLICK_ON_SLOT_BOX_20_INVENTORY_QUIVER_LINE1_1"
+        },
+        {
+          "line": 5700,
+          "needle": "extern unsigned int16_t G0305_ui_PartyChampionCount;"
+        },
+        {
+          "line": 5876,
+          "needle": "extern int16_t G0423_i_InventoryChampionOrdinal;"
+        },
+        {
+          "line": 5878,
+          "needle": "extern THING G0425_aT_ChestSlots[8];"
+        },
+        {
+          "line": 5881,
+          "needle": "extern THING G0426_T_OpenChest;"
+        },
+        {
+          "line": 873,
+          "needle": "#define M516_CHAMPIONS"
+        }
+      ],
+      "id": "defs_required_chain",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat.c",
+      "hits": [
+        {
+          "line": 258,
+          "needle": "dm1_v1_mirror_candidate_keyrot_combo_invclick_run_pc34_compat"
+        },
+        {
+          "line": 90,
+          "needle": "simulate_f0361_key_queue_write"
+        },
+        {
+          "line": 139,
+          "needle": "process_f0380_turn_with_optional_race"
+        },
+        {
+          "line": 99,
+          "needle": "defer_pending_click_during_f0380"
+        },
+        {
+          "line": 245,
+          "needle": "redrawByteIdenticalToNoClick"
+        },
+        {
+          "line": 12,
+          "needle": "F0380_COMMAND_ProcessQueue_CPSC line ~2045-2156"
+        }
+      ],
+      "id": "module_runtime_helper",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat.h",
+      "hits": [
+        {
+          "line": 68,
+          "needle": "Dm1V1MirrorCandidateKeyrotComboInvclickResultPc34Compat"
+        },
+        {
+          "line": 79,
+          "needle": "clickDidNotClearCandidate"
+        },
+        {
+          "line": 81,
+          "needle": "rotationProcessedNormally"
+        },
+        {
+          "line": 82,
+          "needle": "redrawByteIdenticalToNoClick"
+        }
+      ],
+      "id": "header_public_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat.c",
+      "hits": [
+        {
+          "line": 103,
+          "needle": "candidate remains pending and inventory click does not clear it"
+        },
+        {
+          "line": 106,
+          "needle": "TURN_* key was written through the F0361 queue path"
+        },
+        {
+          "line": 127,
+          "needle": "F0293 redraw tuple is byte-identical to a no-click rotation"
+        },
+        {
+          "line": 189,
+          "needle": "panel cancel remains the modeled F0282 candidate-clear path"
+        }
+      ],
+      "id": "c_test_runtime_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "hits": [
+        {
+          "line": 5164,
+          "needle": "test_dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat"
+        },
+        {
+          "line": 361,
+          "needle": "src/dm1/dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat.c"
+        },
+        {
+          "line": 5176,
+          "needle": "NAME dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat"
+        }
+      ],
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS653_DM1_V1_MIRROR_CANDIDATE_KEYROT_COMBO_INVCLICK_REGRESSION_LOCKED",
+  "timestampUtc": "2026-06-08T07:20:22.626137+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat"
+      ],
+      "outputTail": "PASS dm1_v1_mirror_candidate_keyrot_combo_invclick_pc34_compat 32/32 assertions",
+      "passed": true,
+      "returncode": 0
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass653_dm1_v1_mirror_candidate_keyrot_combo_invclick_regression.py",
+        "--check-only"
+      ],
+      "outputTail": "PASS pass653 check-only",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

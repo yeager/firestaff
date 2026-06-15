@@ -3,14 +3,21 @@
 #include "nexus_v1_engine.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_viewport.h"
+#include "theron_v1_boot.h"
+#include "theron_v1_viewport.h"
+#include "theron_v1_world.h"
+#include "csb_v1_neophyte_mode_pc34_compat.h"
+#include "src/theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
 #include "config_m12.h"
 #include "firestaff_accessibility.h"
 #include "fs_portable_compat.h"
 #include "m11_v2_vertical_slice_assets.h"
+#include "m11_game_text_utf8_decoder_pc34_compat.h"
 #include "render_sdl_m11.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -27,6 +34,7 @@
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_inscription_font_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
 #include "firestaff_po_loader.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
@@ -40,6 +48,10 @@
 
 /* Forward declarations for functions defined later in this file. */
 int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir);
+static int M11_GameView_StartTheron(M11_GameViewState* state,
+                                    const char* dataDir,
+                                    const char* verifiedPath,
+                                    const char* verifiedMd5);
 
 /* Forward declaration: set by M11_GameView_Draw to give nested draw
  * helpers access to the current game state for asset-backed rendering. */
@@ -275,6 +287,10 @@ enum {
     M11_QUICKSAVE_HEADER_SIZE = 16
 };
 
+enum {
+    M11_QUICKSAVE_EXPLORED_BITS_COUNT = 32,
+};
+
 /* DM1 action-hand icon cell geometry (duplicated as forward decls
  * for M11_GameView_HandlePointer, which needs these before the
  * #defines that originally introduced them near the drawing code
@@ -303,6 +319,221 @@ enum {
 static const unsigned char g_m11_quicksave_magic[8] = {
     'F', 'S', 'M', '1', '1', 'Q', 'S', '1'
 };
+
+static const unsigned char g_m11_quicksave_v1_runtime_magic[8] = {
+    'F', 'S', 'M', '1', '1', 'R', 'T', '1'
+};
+
+static void m11_write_u32_le(unsigned char* dst, uint32_t value);
+static uint32_t m11_read_u32_le(const unsigned char* src);
+
+static int m11_build_quicksave_sidecar_path(const char *path,
+                                            char *out,
+                                            size_t out_size)
+{
+    int rc;
+
+    if (!path || !path[0] || !out || out_size == 0U) {
+        return 0;
+    }
+    rc = snprintf(out, out_size, "%s.explored", path);
+    return (rc > 0 && rc < (int)out_size) ? 1 : 0;
+}
+
+static int m11_write_quicksave_explored_bits(const M11_GameViewState *state,
+                                             const char *path)
+{
+    char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
+    FILE *file;
+
+    if (!state || !path || !path[0]) {
+        return 0;
+    }
+    if (!m11_build_quicksave_sidecar_path(path, sidecarPath, sizeof(sidecarPath))) {
+        return 0;
+    }
+
+    file = fopen(sidecarPath, "wb");
+    if (!file) {
+        return 0;
+    }
+    if (fwrite(state->exploredBits, 1U, sizeof(state->exploredBits), file) !=
+        sizeof(state->exploredBits)) {
+        (void)fclose(file);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        return 0;
+    }
+    return 1;
+}
+
+static int m11_load_quicksave_explored_bits(M11_GameViewState *state,
+                                            const char *path)
+{
+    char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
+    FILE *file;
+    uint32_t explored[M11_QUICKSAVE_EXPLORED_BITS_COUNT];
+    size_t readCount;
+
+    if (!state || !path || !path[0]) {
+        return 0;
+    }
+    if (!m11_build_quicksave_sidecar_path(path, sidecarPath, sizeof(sidecarPath))) {
+        return 0;
+    }
+
+    file = fopen(sidecarPath, "rb");
+    if (!file) {
+        return 0;
+    }
+    readCount = fread(explored, 1U, sizeof(explored), file);
+    if (readCount != sizeof(explored)) {
+        (void)fclose(file);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        return 0;
+    }
+
+    memcpy(state->exploredBits, explored, sizeof(explored));
+    return 1;
+}
+
+static int m11_build_quicksave_v1_runtime_path(const char *path,
+                                               char *out,
+                                               size_t out_size)
+{
+    int rc;
+
+    if (!path || !path[0] || !out || out_size == 0U) {
+        return 0;
+    }
+    rc = snprintf(out, out_size, "%s.v1runtime", path);
+    return (rc > 0 && rc < (int)out_size) ? 1 : 0;
+}
+
+static int m11_write_quicksave_v1_runtime(const M11_GameViewState *state,
+                                          const char *path)
+{
+    char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
+    unsigned char buf[48];
+    FILE *file;
+
+    if (!state || !path || !path[0]) {
+        return 0;
+    }
+    if (!m11_build_quicksave_v1_runtime_path(path, sidecarPath, sizeof(sidecarPath))) {
+        return 0;
+    }
+
+    /* ReDMCSB CHAMPION.C F0297/F0298 owns G4055_s_LeaderHandObject,
+     * CHEST.C F0333/F0334 owns G0426_T_OpenChest, and REVIVE.C
+     * F0280:124-132 + F0282:744-806 with COMMAND.C F0359:1985-1990
+     * own the live C040 resurrect/reincarnate candidate panel. These are
+     * transient V1 presentation/runtime fields outside GameWorld_Compat,
+     * so quick-resume persists them beside the source-locked world blob. */
+    memset(buf, 0, sizeof(buf));
+    memcpy(buf, g_m11_quicksave_v1_runtime_magic,
+           sizeof(g_m11_quicksave_v1_runtime_magic));
+    m11_write_u32_le(buf + 8, 3U);
+    m11_write_u32_le(buf + 12, (uint32_t)(state->leaderHandObjectPresent ? 1 : 0));
+    m11_write_u32_le(buf + 16, (uint32_t)state->leaderHandThing);
+    m11_write_u32_le(buf + 20, (uint32_t)state->v1OpenChestThing);
+    m11_write_u32_le(buf + 24, (uint32_t)(state->v1OpenChestOpenedByEye ? 1 : 0));
+    m11_write_u32_le(buf + 28, (uint32_t)(int32_t)state->candidateMirrorOrdinal);
+    m11_write_u32_le(buf + 32, (uint32_t)(int32_t)state->candidateMirrorPartyIndex);
+    m11_write_u32_le(buf + 36, (uint32_t)(state->candidateMirrorPanelActive ? 1 : 0));
+    m11_write_u32_le(buf + 40, (uint32_t)(state->inventoryPanelActive ? 1 : 0));
+    m11_write_u32_le(buf + 44, state->lastPartyMovementTick);
+
+    file = fopen(sidecarPath, "wb");
+    if (!file) {
+        return 0;
+    }
+    if (fwrite(buf, 1U, sizeof(buf), file) != sizeof(buf)) {
+        (void)fclose(file);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        return 0;
+    }
+    return 1;
+}
+
+static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
+                                         const char *path)
+{
+    char sidecarPath[M11_GAME_VIEW_PATH_CAPACITY + 16];
+    unsigned char buf[48];
+    FILE *file;
+    size_t readCount;
+    uint32_t version;
+
+    if (!state || !path || !path[0]) {
+        return 0;
+    }
+    if (!m11_build_quicksave_v1_runtime_path(path, sidecarPath, sizeof(sidecarPath))) {
+        return 0;
+    }
+
+    file = fopen(sidecarPath, "rb");
+    if (!file) {
+        return 0;
+    }
+    memset(buf, 0, sizeof(buf));
+    readCount = fread(buf, 1U, sizeof(buf), file);
+    if (readCount != 28U && readCount != 44U && readCount != sizeof(buf)) {
+        (void)fclose(file);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        return 0;
+    }
+    version = m11_read_u32_le(buf + 8);
+    if (memcmp(buf, g_m11_quicksave_v1_runtime_magic,
+               sizeof(g_m11_quicksave_v1_runtime_magic)) != 0 ||
+        (version != 1U && version != 2U && version != 3U) ||
+        (version == 2U && readCount < 44U) ||
+        (version == 3U && readCount < sizeof(buf))) {
+        return 0;
+    }
+
+    state->leaderHandObjectPresent = m11_read_u32_le(buf + 12) ? 1 : 0;
+    state->leaderHandThing = (unsigned short)m11_read_u32_le(buf + 16);
+    state->leaderHandIconIndex = -1;
+    state->v1OpenChestThing = (unsigned short)m11_read_u32_le(buf + 20);
+    state->v1OpenChestOpenedByEye = m11_read_u32_le(buf + 24) ? 1 : 0;
+    if (version >= 2U) {
+        state->candidateMirrorOrdinal = (int)(int32_t)m11_read_u32_le(buf + 28);
+        state->candidateMirrorPartyIndex = (int)(int32_t)m11_read_u32_le(buf + 32);
+        state->candidateMirrorPanelActive = m11_read_u32_le(buf + 36) ? 1 : 0;
+        state->inventoryPanelActive = m11_read_u32_le(buf + 40) ? 1 : 0;
+        if (state->candidateMirrorPanelActive) {
+            if (state->candidateMirrorPartyIndex < 0 ||
+                state->candidateMirrorPartyIndex >= state->world.party.championCount) {
+                state->candidateMirrorPanelActive = 0;
+                state->candidateMirrorOrdinal = -1;
+                state->candidateMirrorPartyIndex = -1;
+            } else {
+                state->inventoryPanelActive = 1;
+            }
+        }
+    } else {
+        state->candidateMirrorOrdinal = -1;
+        state->candidateMirrorPartyIndex = -1;
+        state->candidateMirrorPanelActive = 0;
+    }
+    if (version >= 3U) {
+        state->lastPartyMovementTick = m11_read_u32_le(buf + 44);
+    } else {
+        state->lastPartyMovementTick = state->world.gameTick;
+    }
+    if (state->lastPartyMovementTick > state->world.gameTick) {
+        state->lastPartyMovementTick = state->world.gameTick;
+    }
+    return 1;
+}
 
 typedef struct {
     char ch;
@@ -526,6 +757,34 @@ static const M11_Glyph* m11_find_glyph(char ch) {
     return &g_font[0];
 }
 
+/* UTF-8 + Latin Extended glyph lookup.  The M11 5x7 font is
+ * byte-oriented (1 char = 1 glyph), so to render the 244
+ * accented characters in sv.po (Ö Ä Å ä å) — and the
+ * ~25 accented Latin Extended-A letters needed by the other
+ * 17 supported languages — we expose a UTF-8-aware variant.
+ *
+ * The output is rendered as if it were a M11_Glyph: the rows
+ * are written into outRows[7] and the M11_Glyph struct is
+ * returned with ch = the original char (so the calling
+ * m11_draw_glyph doesn't have to change).  If the codepoint
+ * is not in the table, *outIsLatinExt is 0 and rows are the
+ * SPACE fallback.  *outBytesConsumed is 1 (ASCII), 2 (Latin
+ * Extended), 3 (BMP), or 4 (astral); the caller advances the
+ * input pointer by that many bytes. */
+static M11_Glyph m11_find_glyph_utf8_with_rows(
+    const char* p, int* outBytesConsumed, int* outIsLatinExt)
+{
+    M11_Glyph result;
+    unsigned char rows[7];
+    int k;
+    for (k = 0; k < 7; ++k) rows[k] = 0;
+    int rc = m11_find_glyph_utf8(p, outBytesConsumed, rows, outIsLatinExt);
+    (void)rc;
+    for (k = 0; k < 7; ++k) result.rows[k] = rows[k];
+    result.ch = p[0]; /* first byte; M11_Glyph uses 1-byte ch */
+    return result;
+}
+
 static void m11_draw_glyph(unsigned char* framebuffer,
                            int framebufferWidth,
                            int framebufferHeight,
@@ -591,14 +850,60 @@ static void m11_draw_text(unsigned char* framebuffer,
             framebufferWidth, framebufferHeight, x, y, text, style);
         return;
     }
-    for (i = 0; text[i] != '\0'; ++i) {
-        m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
-                       cursor, y, text[i], s, 1);
-        m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
-                       cursor, y, text[i], s, 0);
-        int effective_scale = g_m11_font_scale_override > 0
-                              ? g_m11_font_scale_override : s->scale;
-        cursor += (5 * effective_scale) + s->tracking;
+    for (i = 0; text[i] != '\0'; /* i advances per UTF-8 codepoint */) {
+        int consumed = 1;
+        int isLatinExt = 0;
+        M11_Glyph g = m11_find_glyph_utf8_with_rows(&text[i], &consumed, &isLatinExt);
+        char ch_for_draw = g.ch;
+        if (isLatinExt) {
+            /* Direct draw using g.rows; the ch field is irrelevant
+             * for the Latin Extended path because m11_draw_glyph
+             * uses g.rows directly when ch is non-ASCII.  We call
+             * the existing renderer to keep the shadow / scale /
+             * tracking logic identical. */
+            ch_for_draw = (char)0x80; /* sentinel: ASCII lookup
+                                          will return space, but
+                                          we want to render g.rows
+                                          instead.  We do that by
+                                          directly iterating. */
+        }
+        /* Render the decoded glyph.  When the byte is a
+         * non-ASCII UTF-8 lead byte, m11_find_glyph returns the
+         * space glyph; we must instead use g.rows directly. */
+        if (isLatinExt || (unsigned char)ch_for_draw >= 0x80) {
+            int effective_scale = (g_m11_font_scale_override > 0
+                                   ? g_m11_font_scale_override : s->scale);
+            int row, col, yy, xx;
+            for (row = 0; row < 7; ++row) {
+                for (col = 0; col < 5; ++col) {
+                    if ((g.rows[row] & (1 << (4 - col))) == 0) continue;
+                    for (yy = 0; yy < effective_scale; ++yy) {
+                        for (xx = 0; xx < effective_scale; ++xx) {
+                            int shadowX = s->shadowDx * effective_scale;
+                            int shadowY = s->shadowDy * effective_scale;
+                            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                                          cursor + col * effective_scale + xx + shadowX,
+                                          y + row * effective_scale + yy + shadowY,
+                                          s->shadowColor);
+                            m11_put_pixel(framebuffer, framebufferWidth, framebufferHeight,
+                                          cursor + col * effective_scale + xx,
+                                          y + row * effective_scale + yy,
+                                          s->color);
+                        }
+                    }
+                }
+            }
+            cursor += (5 * effective_scale) + s->tracking;
+        } else {
+            m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
+                           cursor, y, ch_for_draw, s, 1);
+            m11_draw_glyph(framebuffer, framebufferWidth, framebufferHeight,
+                           cursor, y, ch_for_draw, s, 0);
+            int effective_scale = g_m11_font_scale_override > 0
+                                  ? g_m11_font_scale_override : s->scale;
+            cursor += (5 * effective_scale) + s->tracking;
+        }
+        i += (size_t)consumed;
     }
 }
 
@@ -1007,6 +1312,10 @@ static const char* m11_source_name(M11_GameSourceKind sourceKind) {
             return "CUSTOM";
         case M11_GAME_SOURCE_DIRECT_DUNGEON:
             return "DIRECT";
+        case M11_GAME_SOURCE_NEXUS_DGN:
+            return "NEXUS";
+        case M11_GAME_SOURCE_THERON_TRACK02:
+            return "THERON";
         default:
             return "BUILTIN";
     }
@@ -2434,6 +2743,16 @@ static int m11_endgame_source_skill_level(const M11_GameViewState* state, int ch
 static const struct ChampionState_Compat* m11_get_active_champion(const M11_GameViewState* state);
 static int m11_cycle_active_champion(M11_GameViewState* state);
 static int m11_set_active_champion(M11_GameViewState* state, int championIndex);
+
+/* Update lastWorldHash after a click that mutated the world.
+ * The click paths (inventory pickup, slot place, chest open, etc.)
+ * modify world state but do not run a full tick; the tick is what
+ * normally refreshes state->lastWorldHash.  Callers that
+ * assert world-hash determinism (test_m11_inventory_full_panel)
+ * rely on this hook.  F0891_ORCH_WorldHash_Compat returns 0 if the
+ * world is uninitialised, which is the sentinel we want to detect
+ * via the assert helper. */
+static void m11_refresh_world_hash_after_click(M11_GameViewState* state);
 
 static int m11_point_in_rect(int x, int y, int rx, int ry, int rw, int rh) {
     return x >= rx && y >= ry && x < (rx + rw) && y < (ry + rh);
@@ -4106,6 +4425,12 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     /* Compute mana cost */
     F0753_MAGIC_ComputeManaCost_Compat(&state->spellBuffer, &manaCost);
     if ((int)champ->mana.current < manaCost) {
+        /* ReDMCSB MENU.C F0408 lines ~1633-1663 clears symbols only
+         * after F0412 returns a normal cast-click result.  Firestaff's
+         * V1 UI defers rune mana charging until this gate, so an
+         * insufficient-mana preflight must preserve the selected rune
+         * chain and caster state for retry/recant instead of routing
+         * through the normal cast-click clear path. */
         m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s — NOT ENOUGH MANA (%d/%d)",
                       (unsigned int)state->world.gameTick, champName,
                       (int)champ->mana.current, manaCost);
@@ -4113,7 +4438,6 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         snprintf(state->inspectTitle, sizeof(state->inspectTitle), "NEED MANA");
         snprintf(state->inspectDetail, sizeof(state->inspectDetail),
                  "COST %d, HAVE %d", manaCost, (int)champ->mana.current);
-        M11_GameView_ClearSpell(state);
         state->spellPanelOpen = 0;
         return 1;
     }
@@ -4232,6 +4556,15 @@ static void m11_apply_survival_drain(M11_GameViewState* state) {
         if (!champ->present || champ->hp.current == 0) {
             continue; /* absent or dead */
         }
+        /* ReDMCSB CHAMPION.C F0331:2333-2335 excludes
+         * G0299_ui_CandidateChampionOrdinal while the C040
+         * resurrect/reincarnate panel is open.  REVIVE.C F0280:272-284
+         * appends that candidate to the party before the player confirms;
+         * do not let the Hall of Champions dialog drain or kill it. */
+        if (state->candidateMirrorPanelActive &&
+            i == state->candidateMirrorPartyIndex) {
+            continue;
+        }
         /* Build needs snapshot */
         DM1_ChampionNeeds needs;
         DM1_NeedsTickContext ctx;
@@ -4258,9 +4591,9 @@ static void m11_apply_survival_drain(M11_GameViewState* state) {
         if (needs.wizard_skill_level < 0) needs.wizard_skill_level = 0;
 
         ctx.game_time = state->world.gameTick;
-        ctx.last_movement_time = state->world.gameTick > 100U
-            ? state->world.gameTick - 100U
-            : 0U;
+        ctx.last_movement_time = state->lastPartyMovementTick <= state->world.gameTick
+            ? state->lastPartyMovementTick
+            : state->world.gameTick;
         ctx.party_is_resting = state->resting ? 1 : 0;
 
         /* ReDMCSB CHAMPION.C F0331: food/water drain embedded in stamina cycle.
@@ -4825,23 +5158,115 @@ static void m11_creature_attack_party(
         }
         if (attack <= 0) attack = 1;
 
-        /* Simplified F0321 armor reduction.
-         * Full F0321 checks each worn item's defense value per wound slot.
-         * Here we use a simple approximation: higher-level champions
-         * take slightly less damage.  TODO: iterate inventory for
-         * real armor defense values. */
+        /* ReDMCSB F0321 damage reduction.
+         * Source: CHAMPION.C F0321:1838-1920.
+         * F0321 branches on attackType:
+         *  - C0_NORMAL: skips the entire F0321 body
+         *  - C5_MAGIC: F0307 vs antimagic, subtract SpellShieldDefense,
+         *              then goto T0321024 (skip armor scale)
+         *  - C6_PSYCHIC: wisdom factor, goto T0321024 (skip armor scale)
+         *  - C1_FIRE: F0307 vs antifire, subtract FireShieldDefense,
+         *             then fall through to armor scale
+         *  - C3/C4/C7: fall through to armor scale
+         */
         damage = attack;
         {
-            int armorApprox = (int)champ->skillLevels[7] + /* parry */
-                              (int)champ->skillLevels[3];  /* fighter */
-            damage -= armorApprox / 2;
+            int creatureAttackType = profile->attackType;
+
+            if (creatureAttackType != COMBAT_ATTACK_NORMAL) {
+                /* ReDMCSB F0321: per-attack-type shield defense.
+                 * Source: CHAMPION.C F0321:1877-1892 */
+                switch (creatureAttackType) {
+                case COMBAT_ATTACK_FIRE:
+                    /* F0307 vs antifire + subtract FireShieldDefense */
+                    damage -= state->world.magic.fireShieldDefense;
+                    break;
+                case COMBAT_ATTACK_MAGIC:
+                    /* F0307 vs antimagic + subtract SpellShieldDefense,
+                     * then skip armor scale (goto T0321024) */
+                    damage -= state->world.magic.spellShieldDefense;
+                    if (damage < 1) damage = 1;
+                    goto apply_damage;
+                case COMBAT_ATTACK_PSYCHIC:
+                    /* Wisdom factor, skip armor scale */
+                    if (damage < 1) damage = 1;
+                    goto apply_damage;
+                default:
+                    /* C3/C4/C7: fall through to armor scale */
+                    break;
+                }
+                if (damage <= 0) {
+                    damage = 0;
+                    goto apply_damage;
+                }
+
+                /* ReDMCSB F0321: armor defense scale.
+                 * Iterate wound slots, sum F0313 defense per slot,
+                 * average, then scale by (130 - avgDefense) / 64. */
+                {
+                    int defenseSum = 0;
+                    int woundCount = 0;
+                    int avgDefense;
+                    static const int wdf[6] = { 0x15, 0x10, 0x1A, 0x1A, 0x12, 0x12 };
+                    static const int woundSlots[6] = {
+                        CHAMPION_SLOT_HAND_LEFT,
+                        CHAMPION_SLOT_HAND_RIGHT,
+                        CHAMPION_SLOT_HEAD,
+                        CHAMPION_SLOT_TORSO,
+                        CHAMPION_SLOT_LEGS,
+                        CHAMPION_SLOT_FEET
+                    };
+                    int wi;
+                    for (wi = 0; wi < 6; wi++) {
+                        unsigned short thing = champ->inventory[woundSlots[wi]];
+                        int slotDef = 0;
+                        if (thing != THING_NONE && thing != THING_ENDOFLIST &&
+                            THING_GET_TYPE(thing) == THING_TYPE_ARMOUR) {
+                            int aIdx = THING_GET_INDEX(thing);
+                            if (state->world.things && state->world.things->armours &&
+                                aIdx >= 0 && aIdx < state->world.things->armourCount) {
+                                slotDef = 8 + (int)state->world.things->armours[aIdx].type;
+                            }
+                        }
+                        slotDef += (int)(champ->attributes[CHAMPION_ATTR_VITALITY] >> 3);
+                        defenseSum += (slotDef * wdf[wi]) >> 5;
+                        woundCount++;
+                    }
+                    avgDefense = (woundCount > 0) ? defenseSum / woundCount : 0;
+                    if (avgDefense > 130) avgDefense = 130;
+                    damage = (damage * (130 - avgDefense)) >> 6;
+                }
+            }
             if (damage < 1) damage = 1;
         }
+        apply_damage:
 
         if ((int)champ->hp.current > damage) {
             champ->hp.current -= (unsigned short)damage;
         } else {
             champ->hp.current = 0;
+        }
+
+        /* ReDMCSB: creature poison attack.
+         * Source: PROJEXPL.C F0230:1395-1404, CHAMPION.C F0322.
+         * If creature has poisonAttack > 0 and 50% chance,
+         * apply poison adjusted by defender's vitality via F0307.
+         * F0307: factor = 170 - vitality. If < 16: attack >> 3.
+         *        Else: (attack * factor) >> 7. */
+        if (profile->poisonAttack > 0 &&
+            ((state->world.gameTick + (unsigned)i) % 2) != 0) {
+            int poisonRaw = profile->poisonAttack;
+            int vit = (int)champ->attributes[CHAMPION_ATTR_VITALITY];
+            int factor = 170 - vit;
+            int adjPoison;
+            if (factor < 16) {
+                adjPoison = poisonRaw >> 3;
+            } else {
+                adjPoison = ((long)poisonRaw * (long)factor) >> 7;
+            }
+            if (adjPoison > 0) {
+                champ->poisonDose += (unsigned short)adjPoison;
+            }
         }
 
         m11_format_champion_name(champ->name, champName, sizeof(champName));
@@ -5973,9 +6398,42 @@ void M11_GameView_Init(M11_GameViewState* state) {
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
 
     /* Load DM1-specific translations.
-     * Try Swedish first (common locale), fall back to English. */
-    if (fs_po_load("po/dm1.sv.po") <= 0) {
-        fs_po_load("po/dm1.en.po");
+     * Try a small sequence of language codes (most common UI
+     * languages first) and fall back to English.  The .en.po
+     * seed file is always a valid fallback because it shares
+     * the same msgid set as the .pot template.  M11 game-view
+     * does not have a back-pointer to the M12 startup menu
+     * state, so we just attempt each well-known language file
+     * in order; the first non-empty catalog wins. */
+    {
+        static const char* kDm1PoCandidates[] = {
+            "po/dm1.en.po",
+            "po/dm1.sv.po",
+            "po/dm1.fr.po",
+            "po/dm1.de.po",
+            "po/dm1.ja.po",
+            "po/dm1.zh.po",
+            "po/dm1.es.po",
+            "po/dm1.it.po",
+            "po/dm1.pt.po",
+            "po/dm1.nl.po",
+            "po/dm1.pl.po",
+            "po/dm1.cs.po",
+            "po/dm1.ru.po",
+            "po/dm1.ko.po",
+            "po/dm1.da.po",
+            "po/dm1.no.po",
+            "po/dm1.fi.po",
+            "po/dm1.hu.po",
+            "po/dm1.tr.po",
+            NULL
+        };
+        int i;
+        for (i = 0; kDm1PoCandidates[i] != NULL; ++i) {
+            if (fs_po_load(kDm1PoCandidates[i]) > 0) {
+                break;
+            }
+        }
     }
     DM1_V1_VBlankTiming_Init(&state->vblankTiming);
     DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline);
@@ -5999,6 +6457,25 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    if (state->theronViewport) {
+        theron_vp_free((Theron_V1_Viewport*)state->theronViewport);
+        free(state->theronViewport);
+        state->theronViewport = NULL;
+    }
+    if (state->theronAssets) {
+        tr_asset_free((TrAssetBundle*)state->theronAssets);
+        free(state->theronAssets);
+        state->theronAssets = NULL;
+    }
+    if (state->theronWorld) {
+        free(state->theronWorld);
+        state->theronWorld = NULL;
+    }
+    if (state->theronBootProfile) {
+        theron_v1_boot_cleanup((Theron_V1_BootProfile*)state->theronBootProfile);
+        free(state->theronBootProfile);
+        state->theronBootProfile = NULL;
+    }
     if (state->assetsAvailable) {
         M11_AssetLoader_Shutdown(&state->assetLoader);
         state->assetsAvailable = 0;
@@ -6014,6 +6491,33 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     if (!state || !spec || !spec->title) {
         return 0;
+    }
+    state->presentationMode = spec->presentationMode;
+    state->presentationWidth = spec->presentationWidth;
+    state->presentationHeight = spec->presentationHeight;
+    if (M12_PresentationMode_AllowsResolutionChoice(spec->presentationMode) &&
+        spec->presentationWidth > 0 &&
+        spec->presentationHeight > 0) {
+        (void)M11_Render_SetWindowSize(spec->presentationWidth,
+                                       spec->presentationHeight);
+    }
+    /* ── Theron's Quest V1: Track 02 runtime handoff ─────────────── */
+    if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
+        const char *dd = spec->dataDir;
+        int ok;
+        if (!dd || !dd[0]) {
+            return 0;
+        }
+        ok = M11_GameView_StartTheron(state,
+                                      dd,
+                                      spec->verifiedAssetPath,
+                                      spec->verifiedAssetMd5);
+        if (ok) {
+            state->presentationMode = spec->presentationMode;
+            state->presentationWidth = spec->presentationWidth;
+            state->presentationHeight = spec->presentationHeight;
+        }
+        return ok;
     }
     /* ── Nexus V1: bypass DM1 dungeon loader entirely ───────────────
      * When gameId == "nexus" the M11 game-loop passes through
@@ -6041,7 +6545,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
         }
         if (!dd || !dd[0]) return 0;
-        return M11_GameView_StartNexus(state, dd);
+        {
+            int ok = M11_GameView_StartNexus(state, dd);
+            if (ok) {
+                state->presentationMode = spec->presentationMode;
+                state->presentationWidth = spec->presentationWidth;
+                state->presentationHeight = spec->presentationHeight;
+            }
+            return ok;
+        }
     }
     /* ── CSB V1: bypass DM1 dungeon loader, use CSB V1 runtime boot ──
      * When gameId == "csb", the M11 game-loop launches CSB via the
@@ -6056,6 +6568,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * launch handoff.  The FS game loop takes it from here. */
         state->active = 1;
         state->startedFromLauncher = 1;
+        state->presentationMode = spec->presentationMode;
+        state->presentationWidth = spec->presentationWidth;
+        state->presentationHeight = spec->presentationHeight;
         snprintf(state->title, sizeof(state->title), "%s",
                  spec->title ? spec->title : "CHAOS STRIKES BACK");
         snprintf(state->sourceId, sizeof(state->sourceId), "%s",
@@ -6083,6 +6598,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Shutdown(state);
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
+        state->presentationMode = spec->presentationMode;
+        state->presentationWidth = spec->presentationWidth;
+        state->presentationHeight = spec->presentationHeight;
     }
     fprintf(stderr, "LOADING DUNGEON: [%s]\n", dungeonPath);
     if (F0882_WORLD_InitFromDungeonDat_Compat(dungeonPath, 0xF1A5U, &state->world) != 1) {
@@ -6099,6 +6617,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = spec->sourceKind;
+    state->presentationMode = spec->presentationMode;
+    state->presentationWidth = spec->presentationWidth;
+    state->presentationHeight = spec->presentationHeight;
     state->fontScale = (spec->fontScale >= 1 && spec->fontScale <= 3) ? spec->fontScale : 0;
     snprintf(state->title, sizeof(state->title), "%s", spec->title);
     snprintf(state->sourceId, sizeof(state->sourceId), "%s",
@@ -6149,6 +6670,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     const M12_MenuEntry* entry;
     M11_GameLaunchSpec spec;
     int rendererBackend = M12_RENDERER_BACKEND_AUTO;
+    int gameOptionSlot = -1;
     if (!state || !menuState) {
         return 0;
     }
@@ -6168,13 +6690,40 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     }
     memset(&spec, 0, sizeof(spec));
     spec.rendererBackend = rendererBackend;
+    spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec.title = entry->title;
     spec.gameId = entry->gameId;
-    spec.dataDir = M12_AssetStatus_GetDataDir(&menuState->assetStatus);
     spec.sourceId = entry->gameId;
+    spec.dataDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
+                                                     entry->gameId);
+    if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
+        gameOptionSlot = 0;
+    } else if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
+        gameOptionSlot = 1;
+    } else if (entry->gameId && strcmp(entry->gameId, "dm2") == 0) {
+        gameOptionSlot = 2;
+    } else if (entry->gameId && strcmp(entry->gameId, "nexus") == 0) {
+        gameOptionSlot = 3;
+    } else if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
+        gameOptionSlot = 4;
+    }
+    if (gameOptionSlot >= 0 && gameOptionSlot < M12_CONFIG_GAME_COUNT) {
+        const M12_AssetVersionStatus* version =
+            M12_AssetStatus_GetVersion(&menuState->assetStatus,
+                                       entry->gameId,
+                                       (size_t)menuState->gameOptions[gameOptionSlot].versionIndex);
+        if (version && version->matchedPath[0] != '\0' &&
+            version->matchedMd5[0] != '\0') {
+            spec.verifiedAssetPath = version->matchedPath;
+            spec.verifiedAssetMd5 = version->matchedMd5;
+        }
+    }
     if (menuState->launchRequested) {
         M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
         spec.savePath = intent.savePath;
+        spec.presentationMode = intent.presentationMode;
+        spec.presentationWidth = intent.resolutionWidth;
+        spec.presentationHeight = intent.resolutionHeight;
         /* fontScale lives in M12_MenuSettingsState, not M12_GameOptions */
         spec.fontScale = menuState->settings.fontScale;
     } else {
@@ -6245,6 +6794,158 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     return 1;
 }
 
+static int m11_theron_load_initial_level(Theron_V1_World* world,
+                                         const TrAssetBundle* assets) {
+    uint8_t level_data[12 + 8 * 8];
+    int x;
+    int y;
+    Theron_MapLoadResult r;
+    (void)assets;
+    if (!world) {
+        return 0;
+    }
+
+    /* Small deterministic launch room used until the real Track 02 dungeon
+     * bank offsets are promoted into the parser. It still enters through
+     * theron_v1_level_load(), so runtime movement/rendering consume the same
+     * Theron world model as parsed maps. Source: THQUEST.ASM T400/T520/T560. */
+    memset(level_data, 0, sizeof(level_data));
+    level_data[1] = 8;  /* width, big-endian */
+    level_data[3] = 8;  /* height, big-endian */
+    level_data[6] = 0x01;
+    level_data[7] = 0x39; /* seed 313 */
+    for (y = 0; y < 8; ++y) {
+        for (x = 0; x < 8; ++x) {
+            level_data[12 + y * 8 + x] =
+                (x == 0 || y == 0 || x == 7 || y == 7)
+                    ? THERON_SQUARE_WALL
+                    : THERON_SQUARE_FLOOR;
+        }
+    }
+    level_data[12 + 1 * 8 + 3] = THERON_SQUARE_EXIT;
+
+    world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world->current_level = 0;
+    r = theron_v1_level_load(&world->levels[0][0],
+                             level_data,
+                             (int)sizeof(level_data),
+                             (int)world->current_dungeon,
+                             world->current_level);
+    if (r != THERON_MAP_OK) {
+        return 0;
+    }
+    world->levels[0][0].start_x = 3;
+    world->levels[0][0].start_y = 5;
+    world->levels[0][0].start_dir = 0; /* THQUEST.ASM T520: north */
+    world->level_loaded[0][0] = 1;
+    theron_v1_party_place(world,
+                          world->levels[0][0].start_x,
+                          world->levels[0][0].start_y,
+                          world->levels[0][0].start_dir);
+    return 1;
+}
+
+static int M11_GameView_StartTheron(M11_GameViewState* state,
+                                    const char* dataDir,
+                                    const char* verifiedPath,
+                                    const char* verifiedMd5) {
+    Theron_V1_BootProfile* profile = NULL;
+    Theron_V1_World* world = NULL;
+    Theron_V1_Viewport* viewport = NULL;
+    TrAssetBundle* assets = NULL;
+    int savedDebugHUD;
+    TrAssetResult assetResult;
+
+    if (!state || !dataDir || !dataDir[0]) {
+        return 0;
+    }
+
+    savedDebugHUD = state->showDebugHUD;
+    M11_GameView_Shutdown(state);
+    M11_GameView_Init(state);
+    state->showDebugHUD = savedDebugHUD;
+
+    profile = (Theron_V1_BootProfile*)calloc(1, sizeof(*profile));
+    world = (Theron_V1_World*)calloc(1, sizeof(*world));
+    viewport = (Theron_V1_Viewport*)calloc(1, sizeof(*viewport));
+    assets = (TrAssetBundle*)calloc(1, sizeof(*assets));
+    if (!profile || !world || !viewport || !assets) {
+        goto fail;
+    }
+
+    theron_v1_boot_profile_init(profile);
+    if (verifiedPath && verifiedPath[0] != '\0' &&
+        verifiedMd5 && verifiedMd5[0] != '\0') {
+        if (theron_v1_boot_load_verified_path(profile,
+                                              verifiedPath,
+                                              verifiedMd5) != 0) {
+            m11_set_status(state, "BOOT", "THERON TRACK 02 VERIFY FAILED");
+            goto fail;
+        }
+    } else if (theron_v1_boot_scan_assets(profile, dataDir) != 0 ||
+               !profile->assets_verified) {
+        m11_set_status(state, "BOOT", "THERON TRACK 02 MISSING");
+        goto fail;
+    }
+    theron_v1_boot_set_save_root(profile, NULL);
+
+    assetResult = tr_asset_load(profile->graphics_path, assets);
+    if (assetResult != TR_ASSET_OK) {
+        m11_set_status(state, "BOOT", "THERON ASSET LOAD FAILED");
+        goto fail;
+    }
+
+    theron_v1_world_init(world);
+    if (!m11_theron_load_initial_level(world, assets)) {
+        m11_set_status(state, "BOOT", "THERON LEVEL LOAD FAILED");
+        goto fail;
+    }
+    if (!theron_vp_init(viewport)) {
+        m11_set_status(state, "BOOT", "THERON VIEWPORT FAILED");
+        goto fail;
+    }
+
+    state->active = 1;
+    state->startedFromLauncher = 1;
+    state->sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+    snprintf(state->title, sizeof(state->title), "THERON'S QUEST");
+    snprintf(state->sourceId, sizeof(state->sourceId), "theron");
+    snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
+             profile->graphics_path);
+    state->theronBootProfile = profile;
+    state->theronWorld = world;
+    state->theronViewport = viewport;
+    state->theronAssets = assets;
+    state->theronState.level_loaded = 1;
+    state->theronState.party_x = world->party.leader_x;
+    state->theronState.party_y = world->party.leader_y;
+    state->theronState.party_dir = world->party.leader_dir;
+    state->theronState.tick_count = (int)world->world_tick;
+    m11_set_status(state, "BOOT", "THERON READY");
+    m11_set_inspect_readout(state, "READY",
+                            "THERON TRACK 02 VERIFIED; V1 RUNTIME READY");
+    m11_log_event(state, M11_COLOR_YELLOW, "T0: THERON LOADED");
+    return 1;
+
+fail:
+    if (viewport) {
+        theron_vp_free(viewport);
+        free(viewport);
+    }
+    if (assets) {
+        tr_asset_free(assets);
+        free(assets);
+    }
+    if (world) {
+        free(world);
+    }
+    if (profile) {
+        theron_v1_boot_cleanup(profile);
+        free(profile);
+    }
+    return 0;
+}
+
 int M11_GameView_QuickSave(M11_GameViewState* state) {
     /* Sensor state persistence: sensor effects that modify dungeon squares
      * (door open/close, pit toggle, teleporter toggle) are persisted through
@@ -6268,6 +6969,11 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         return 0;
     }
 
+    /* ReDMCSB LOADSAVE.C:2721-2731 restores the party position and facing.
+     * Firestaff keeps the explored-cell presentation state in a sidecar so
+     * quick-resume can restore reveal progress alongside the source-locked
+     * world blob. */
+    m11_mark_explored(state);
     blobSize = F0899_WORLD_SerializedSize_Compat(&state->world);
     if (blobSize <= 0) {
         m11_set_status(state, "SAVE", "SERIALISE SIZE FAILED");
@@ -6305,6 +7011,14 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     }
     free(blob);
 
+    if (!m11_write_quicksave_explored_bits(state, path)) {
+        m11_set_status(state, "SAVE", "EXPLORED STATE FAILED");
+        return 0;
+    }
+    if (!m11_write_quicksave_v1_runtime(state, path)) {
+        m11_set_status(state, "SAVE", "V1 RUNTIME STATE FAILED");
+        return 0;
+    }
     m11_set_status(state, "SAVE", "QUICKSAVE WRITTEN");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SAVE SLOT READY");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
@@ -6396,6 +7110,8 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     state->world = loadedWorld;
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_refresh_hash(state);
+    (void)m11_load_quicksave_explored_bits(state, path);
+    (void)m11_load_quicksave_v1_runtime(state, path);
     m11_mark_explored(state);
     /* G0319_ul_LoadGameTime / G2018_ul_LastSaveTime mirror
      * (ReDMCSB LOADSAVE.C:2724).  After a load, both anchors point at the
@@ -6453,6 +7169,18 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (state->gameWon || state->dialogOverlayActive ||
         state->mapOverlayActive || state->inventoryPanelActive) {
         return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
+        if (!world) {
+            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        theron_v1_world_tick(world);
+        state->theronState.party_x = world->party.leader_x;
+        state->theronState.party_y = world->party.leader_y;
+        state->theronState.party_dir = world->party.leader_dir;
+        state->theronState.tick_count = (int)world->world_tick;
+        return M11_GAME_INPUT_REDRAW;
     }
     /* Nexus V1: use the Nexus tick function instead of DM1's m11_apply_tick.
      * Nexus owns its own game state in state->nexusEngine (party position,
@@ -6552,6 +7280,13 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
 
     state->world.gameTick++;
+    if (state->lastDm1V1MovementPipelineResult.anyMovementOccurred) {
+        /* ReDMCSB MOVESENS.C:763-775 updates
+         * G0362_l_LastPartyMovementTime when the party actually changes
+         * square, and CHAMPION.C F0331 uses that timestamp for stamina
+         * recovery/drain thresholds. */
+        state->lastPartyMovementTick = state->world.gameTick;
+    }
     (void)F0891_ORCH_WorldHash_Compat(&state->world, &state->lastWorldHash);
 
     m11_apply_survival_drain(state);
@@ -6844,6 +7579,26 @@ int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state) {
     return m11_front_cell_mirror_ordinal(state);
 }
 
+int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
+                                       int* outX, int* outY,
+                                       int* outW, int* outH) {
+    /* DUNVIEW.C G0205 G0205_aaauc_Graphic558_WallOrnamentCoordinateSets
+     * index 12 is the D1C champion-mirror route (DUNVIEW.C:3913-3928).
+     * v1 hard-codes coordSet 0 (the default D1C) since the
+     * coord-set for the ornament is determined by the
+     * m11_dm1_wall_ornament_coord_set_index helper and
+     * firestaff_known_ornament_set_indices.  We default to 0 here
+     * to match what the m11_draw_dm1_front_mirror_route caller
+     * uses for the (1,3) and (1,4) Hall-of-Champions routes. */
+    static const int kD1CDest[4] = { 96, 36, 32, 28 };
+    if (!state) return 0;
+    if (outX) *outX = kD1CDest[0];
+    if (outY) *outY = kD1CDest[1];
+    if (outW) *outW = kD1CDest[2];
+    if (outH) *outH = kD1CDest[3];
+    return 1;
+}
+
 static int m11_disable_front_mirror_route(M11_GameViewState* state,
                                           int mirrorOrdinal) {
     int mapX;
@@ -6870,25 +7625,19 @@ static int m11_disable_front_mirror_route(M11_GameViewState* state,
         int thingIndex = THING_GET_INDEX(thing);
         unsigned short next = m11_raw_next_thing(state->world.things, thing);
         if (thingType == THING_TYPE_SENSOR && state->world.things->sensors &&
-            thingIndex >= 0 && thingIndex < state->world.things->sensorCount) {
-            /* ReDMCSB REVIVE.C F0282 disables the first C03 sensor thing
-             * after a confirmed resurrect/reincarnate action.  The mirror
-             * TextString is still Firestaff's local catalog route, so keep
-             * scanning and unlink the matching text entry below too. */
+            thingIndex >= 0 && thingIndex < state->world.things->sensorCount &&
+            state->world.things->sensors[thingIndex].sensorType == 127 &&
+            (int)state->world.things->sensors[thingIndex].sensorData == mirrorOrdinal) {
+            /* ReDMCSB REVIVE.C F0282 disables the matching C127 mirror
+             * sensor (champion-portrait type) on the front square after
+             * a confirmed resurrect/reincarnate action. */
             state->world.things->sensors[thingIndex].sensorType = 0;
-        } else if (thingType == THING_TYPE_TEXTSTRING && thingIndex >= 0 &&
-            thingIndex < state->world.things->textStringCount &&
-            F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                &state->mirrorCatalog, thingIndex) == mirrorOrdinal) {
-            return m11_unlink_thing_from_square(&state->world,
-                                                state->world.party.mapIndex,
-                                                mapX,
-                                                mapY,
-                                                thing);
+            thing = next;
+            continue;
         }
         thing = next;
     }
-    return 0;
+    return 1;
 }
 
 static int m11_front_mirror_record_already_in_party(const M11_GameViewState* state,
@@ -6982,6 +7731,11 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
     state->candidateMirrorPartyIndex = previousPartyCount;
     state->candidateMirrorPanelActive = 1;
     state->inventoryPanelActive = 1;
+    if (previousPartyCount == 0) {
+        /* ReDMCSB REVIVE.C:837-840 seeds G0362_l_LastPartyMovementTime
+         * when the first champion joins from a mirror. */
+        state->lastPartyMovementTick = state->world.gameTick;
+    }
     (void)M11_GameView_GetMirrorNameByOrdinal(state, mirrorOrdinal,
                                               mirrorName, sizeof(mirrorName));
     (void)M11_GameView_GetMirrorTitleByOrdinal(state, mirrorOrdinal,
@@ -7008,7 +7762,7 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         state->candidateMirrorOrdinal < 0) {
         return 0;
     }
-    championIndex = state->world.party.championCount > 0 ? state->world.party.championCount - 1 : 0;
+    championIndex = state->candidateMirrorPartyIndex;
     if (championIndex < 0 || championIndex >= state->world.party.championCount ||
         championIndex >= CHAMPION_MAX_PARTY ||
         !state->world.party.champions[championIndex].present) {
@@ -7039,7 +7793,7 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
     if (!state || !state->active || !state->candidateMirrorPanelActive) {
         return 0;
     }
-    championIndex = state->world.party.championCount > 0 ? state->world.party.championCount - 1 : 0;
+    championIndex = state->candidateMirrorPartyIndex;
     if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
         (void)F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,
                                                    championIndex);
@@ -7122,6 +7876,66 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
+        int moved = 0;
+        if (!world) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_BACK) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        if (input == M12_MENU_INPUT_LEFT) {
+            world->party.leader_dir = (world->party.leader_dir + 3) & 3;
+            moved = 1;
+            m11_set_status(state, "TURN", "LEFT");
+        } else if (input == M12_MENU_INPUT_RIGHT) {
+            world->party.leader_dir = (world->party.leader_dir + 1) & 3;
+            moved = 1;
+            m11_set_status(state, "TURN", "RIGHT");
+        } else if (input == M12_MENU_INPUT_UP) {
+            static const int dx[4] = {0, 1, 0, -1};
+            static const int dy[4] = {-1, 0, 1, 0};
+            int dir = world->party.leader_dir & 3;
+            int nx = world->party.leader_x + dx[dir];
+            int ny = world->party.leader_y + dy[dir];
+            uint8_t sq = theron_v1_world_get_square(world, nx, ny);
+            moved = THERON_SQUARE_IS_PASSABLE(sq);
+            if (moved) {
+                theron_v1_party_place(world, nx, ny, dir);
+            }
+            m11_set_status(state, "MOVE",
+                           moved ? "THERON ADVANCED" : "BLOCKED");
+        } else if (input == M12_MENU_INPUT_DOWN) {
+            static const int dx[4] = {0, 1, 0, -1};
+            static const int dy[4] = {-1, 0, 1, 0};
+            int dir = (world->party.leader_dir + 2) & 3;
+            int nx = world->party.leader_x + dx[dir];
+            int ny = world->party.leader_y + dy[dir];
+            uint8_t sq = theron_v1_world_get_square(world, nx, ny);
+            moved = THERON_SQUARE_IS_PASSABLE(sq);
+            if (moved) {
+                theron_v1_party_place(world, nx, ny, world->party.leader_dir);
+            }
+            m11_set_status(state, "MOVE",
+                           moved ? "THERON STEPPED BACK" : "BLOCKED");
+        } else if (input == M12_MENU_INPUT_ACCEPT ||
+                   input == M12_MENU_INPUT_ACTION) {
+            theron_v1_world_tick(world);
+            moved = 1;
+            m11_set_status(state, "WAIT", "THERON TICK");
+        }
+        if (!moved) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        state->theronState.party_x = world->party.leader_x;
+        state->theronState.party_y = world->party.leader_y;
+        state->theronState.party_dir = world->party.leader_dir;
+        state->theronState.tick_count = (int)world->world_tick;
+        return M11_GAME_INPUT_REDRAW;
     }
 
     /* Source-backed champion mirror panel: CLIKCHAM routes
@@ -7416,6 +8230,8 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state);
 static int m11_process_v1_eye_click(M11_GameViewState* state);
 static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
                                                    int sourceSlotBoxIndex);
+static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
+                                                     int slotBoxIndex);
 
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state) {
     if (!state) return;
@@ -7481,11 +8297,22 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                                                int x,
                                                int y,
                                                int primaryButton) {
-    return M11_GameView_HandlePointerButton(
+    M11_GameInputResult r = M11_GameView_HandlePointerButton(
         state,
         x,
         y,
         primaryButton ? M11_DM1_MOUSE_MASK_LEFT : 0);
+    /* When a click returned REDRAW and may have mutated world state
+     * (inventory pickup, slot place, chest open, eye, mouth, action
+     * row, action cell, etc.), refresh the world hash so that
+     * determinism assertions (test_m11_inventory_full_panel) can
+     * verify the world snapshot.  REDRAW-only clicks that didn't
+     * mutate the world still trigger a hash refresh — F0891 is
+     * idempotent and cheap. */
+    if (r == M11_GAME_INPUT_REDRAW && state) {
+        m11_refresh_world_hash_after_click(state);
+    }
+    return r;
 }
 
 M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
@@ -7628,6 +8455,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             &space,
             &zoneId);
         (void)space;
+        if (command >= 20 && command <= 27 &&
+            zoneId >= 211 && zoneId <= 218) {
+            if (m11_process_v1_status_hand_slot_box_click(state,
+                                                          command - 20)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (command >= 28 && command <= 65 && zoneId >= 507 && zoneId <= 544) {
             if (m11_process_v1_inventory_slot_box_click(state, command - 20)) {
                 return M11_GAME_INPUT_REDRAW;
@@ -7884,7 +8719,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
 
+    /* Final fallback: if we got here without returning yet, this
+     * is a click that didn't match any of the per-zone routes
+     * above.  We still don't mutate the world, so we don't refresh
+     * the hash. */
     return M11_GAME_INPUT_IGNORED;
+}
+
+/* Update lastWorldHash after a click that mutated the world.
+ * The click paths (inventory pickup, slot place, chest open, etc.)
+ * modify world state but do not run a full tick; the tick is what
+ * normally refreshes state->lastWorldHash.  Callers that
+ * assert world-hash determinism (test_m11_inventory_full_panel)
+ * rely on this hook.  F0891_ORCH_WorldHash_Compat returns 0 if the
+ * world is uninitialised, which is the sentinel we want to detect
+ * via the assert helper. */
+static void m11_refresh_world_hash_after_click(M11_GameViewState* state) {
+    if (state == 0) return;
+    F0891_ORCH_WorldHash_Compat(&state->world, &state->lastWorldHash);
 }
 
 static void m11_draw_party_arrow(unsigned char* framebuffer,
@@ -8022,6 +8874,8 @@ typedef struct M11_ViewportCell {
     int firstExplosionAttack;
     M11_SquareThingSummary summary;
 } M11_ViewportCell;
+
+static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell);
 
 static void m11_draw_creature_cue(unsigned char* framebuffer,
                                   int framebufferWidth,
@@ -9245,15 +10099,9 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
          * For each relForward step, shift by camX/camY scaled by relForward
          * so the view cone glides toward the target position. */
         if (camX != 0 || camY != 0) {
-            /* camFx/camFy = fractional step nudge per relForward unit.
-             * Use the larger of |camX| or |camY| to approximate the
-             * direction-magnitude of the camera offset as a step fraction. */
-            int camMag = (camX >= 0 ? camX : -camX) > (camY >= 0 ? camY : -camY)
-                             ? camX : camY;
+            /* camFx/camFy = fractional step nudge per relForward unit. */
             float camFx = (float)camX / (float)256.0f;
             float camFy = (float)camY / (float)256.0f;
-            /* Clamp to avoid reading outside the dungeon map */
-            (void)camFx; (void)camFy;
             /* Apply offset to the forward step (the dominant scroll axis).
              * relForward=-1 (D1, front cell): view cone shifts most.
              * relForward=-2 (D2): shifts less.
@@ -9792,7 +10640,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * floor sensors.  Stairs route through T0172046_Stairs without
      * assigning M558_FLOOR_ORNAMENT_ORDINAL; their 0x08 bit is
      * orientation, not random-ornament permission. */
-    if (cell.valid && M11_DM1_ViewportSquareHasFloorOrnamentPathPc34(cell.square)) {
+    if (cell.valid && m11_viewport_cell_is_wall_free(&cell)) {
         cell.floorOrnamentOrdinal = m11_compute_floor_ornament_ordinal(
             state, state->world.party.mapIndex, mapX, mapY, square);
     }
@@ -9811,10 +10659,32 @@ static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
 }
 
 static int m11_viewport_cell_is_wall_like(const M11_ViewportCell* cell) {
+    int effectiveElement;
     if (!cell || !cell->valid) {
         return 0;
     }
-    return M11_DM1_ViewportSquareIsWallLikePc34(cell->square);
+    effectiveElement = M11_DM1_ViewportEffectiveElementForSquarePc34(cell->square);
+    /* ReDMCSB DUNGEON.C F0172: closed fakewalls become
+     * DUNGEON_ELEMENT_WALL for viewport aspect, while open fakewalls become
+     * corridors.  Keep the explicit DUNGEON_ELEMENT_FAKEWALL mention here so
+     * the front-wall depth gate can prove the fakewall source boundary. */
+    return effectiveElement == DUNGEON_ELEMENT_WALL ||
+           (cell->elementType == DUNGEON_ELEMENT_FAKEWALL &&
+            effectiveElement == DUNGEON_ELEMENT_WALL);
+}
+
+static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell) {
+    int effectiveElement;
+    if (!cell || !cell->valid) {
+        return 0;
+    }
+    effectiveElement = M11_DM1_ViewportEffectiveElementForSquarePc34(cell->square);
+    /* ReDMCSB DUNGEON.C F0172 gives corridor, pit, and teleporter squares the
+     * floor-ornament/sensor path.  Stairs are excluded there because bit 0x08
+     * is orientation, not random-ornament permission. */
+    return effectiveElement == DUNGEON_ELEMENT_CORRIDOR ||
+           effectiveElement == DUNGEON_ELEMENT_PIT ||
+           effectiveElement == DUNGEON_ELEMENT_TELEPORTER;
 }
 
 static int m11_build_front_text_readout(const M11_GameViewState* state,
@@ -10041,6 +10911,14 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                         return M11_GAME_INPUT_IGNORED;
                     }
                     return M11_GAME_INPUT_REDRAW;
+                }
+            } else {
+                static const int kDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
+                /* ReDMCSB CLIKVIEW.C F0377 opens the D1C door only from
+                 * the empty-hand door-button route; a wrong item on the
+                 * keyhole/button box must not fall through into throw/drop. */
+                if (m11_point_in_source_box(localX, localY, kDoorButtonD1CBox)) {
+                    return M11_GAME_INPUT_IGNORED;
                 }
             }
         }
@@ -10402,24 +11280,32 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
 
     if (!state || !state->active || !state->mirrorCatalogAvailable ||
         !m11_get_front_cell(state, &frontCell) || !frontCell.valid ||
-        !state->world.things || !state->world.things->textStrings) {
+        !state->world.things || !state->world.things->sensors) {
         return -1;
     }
 
+    /* ReDMCSB DUNGEON.C:2573 / MOVESENS.C:1501-1503 / REVIVE.C F0280:
+     * a C127 sensor on the front square carries the champion-portrait
+     * ordinal in its sensorData.  DUNGEON.C:2608-2612 stores that
+     * ordinal in G0289 and F0280 materializes the candidate from it.
+     * The TextString is the candidate's stats anchor on the corridor
+     * floor (DUNGEON.C:2570-2584) and is not required to be present on
+     * the front wall square. */
     thing = frontCell.firstThing;
     while (thing != THING_ENDOFLIST && thing != THING_NONE) {
         int thingType = THING_GET_TYPE(thing);
         int thingIndex = THING_GET_INDEX(thing);
-        if (thingType == THING_TYPE_TEXTSTRING && thingIndex >= 0 &&
-            thingIndex < state->world.things->textStringCount) {
-            /* ReDMCSB MOVESENS.C:1501-1503 passes the C127 sensor data to
-             * REVIVE.C F0280; Firestaff keeps the source TextString catalog as
-             * the identity lookup once the front wall square has been chosen. */
-            int mirrorOrdinal = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                &state->mirrorCatalog, thingIndex);
-            if (mirrorOrdinal >= 0) {
-                return mirrorOrdinal;
+        if (thingType == THING_TYPE_SENSOR &&
+            thingIndex >= 0 && thingIndex < state->world.things->sensorCount &&
+            state->world.things->sensors[thingIndex].sensorType == 127) {
+            int sensorData = (int)state->world.things->sensors[thingIndex].sensorData;
+            /* sensorData is a 0-based portrait ordinal within the C026
+             * graphic (24 portraits, 8 cols x 3 rows).  Clamp to a
+             * valid catalog range. */
+            if (sensorData >= 0 && sensorData < state->mirrorCatalog.count) {
+                return sensorData;
             }
+            return -1;
         }
         thing = m11_raw_next_thing(state->world.things, thing);
     }
@@ -11280,6 +12166,11 @@ enum {
      * TextString lines are rendered in the scroll font. */
     M11_GFX_PANEL_OPEN_SCROLL = 23,
 
+    /* PANEL.C F0339 blits C018/C019 into C503 after F0342 has drawn the
+     * selected object/chest panel contents. */
+    M11_GFX_PANEL_ARROW_FOR_CHEST_CONTENT = 18,
+    M11_GFX_PANEL_EYE_FOR_OBJECT_DESCRIPTION = 19,
+
     /* Resurrect/Reincarnate/Cancel panel (graphic 40 in original DM1).
      * Drawn into C101_ZONE_PANEL when G0299 candidate is open. */
     M11_GFX_PANEL_RESURRECT_REINCARNATE = 40,
@@ -11603,19 +12494,21 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 graphicIndex);
     if (!slot || !slot->loaded || !slot->pixels ||
-        slot->width != blit->width || slot->height != blit->height) {
+        slot->width == 0 || slot->height == 0) {
         return 0;
     }
     for (y = 0; y < blit->height; ++y) {
         int x;
         int fbY = M11_VIEWPORT_Y + blit->dstY + y;
+        int sy = (slot->height == blit->height) ? y : (y * (int)slot->height / blit->height);
         if (fbY < 0 || fbY >= fbH) continue;
         for (x = 0; x < blit->width; ++x) {
             int fbX = M11_VIEWPORT_X + blit->dstX + x;
-            int sx = blit->width - 1 - x;
+            int sx_flipped = blit->width - 1 - x;
+            int sx = (slot->width == blit->width) ? sx_flipped : (sx_flipped * (int)slot->width / blit->width);
             unsigned char pixel;
             if (fbX < 0 || fbX >= fbW) continue;
-            pixel = slot->pixels[y * (int)slot->width + sx];
+            pixel = slot->pixels[sy * (int)slot->width + sx];
             if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
                 continue;
             }
@@ -11663,15 +12556,27 @@ static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* sta
                                                        (unsigned int)blit->graphicIndex);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 graphicIndex);
-    if (!slot || slot->width != blit->width || slot->height != blit->height) {
+    if (!slot || slot->width == 0 || slot->height == 0) {
         return 0;
     }
-    M11_AssetLoader_BlitRegion(slot,
-                               0, 0, blit->width, blit->height,
-                               framebuffer, fbW, fbH,
-                               M11_VIEWPORT_X + blit->dstX,
-                               M11_VIEWPORT_Y + blit->dstY,
-                               transparentColor);
+    /* If the loaded asset matches the expected dimensions, blit directly.
+     * Otherwise scale to fit the wall panel rect so the wall is never
+     * invisible.  Dimension mismatches can occur when the wall set graphic
+     * is packed differently or a fallback asset is used. */
+    if (slot->width != blit->width || slot->height != blit->height) {
+        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
+                                   M11_VIEWPORT_X + blit->dstX,
+                                   M11_VIEWPORT_Y + blit->dstY,
+                                   blit->width, blit->height,
+                                   transparentColor);
+    } else {
+        M11_AssetLoader_BlitRegion(slot,
+                                   0, 0, blit->width, blit->height,
+                                   framebuffer, fbW, fbH,
+                                   M11_VIEWPORT_X + blit->dstX,
+                                   M11_VIEWPORT_Y + blit->dstY,
+                                   transparentColor);
+    }
     return 1;
 }
 
@@ -12552,6 +13457,56 @@ static int m11_dm1_unreadable_inscription_box_height(int relForward,
     return (int)kUnreadableBoxHeight[row][lineCount - 1];
 }
 
+static int m11_draw_dm1_inscription_font_line(const M11_GameViewState* state,
+                                              unsigned char* framebuffer,
+                                              int fbW,
+                                              int fbH,
+                                              int x,
+                                              int y,
+                                              const char* text) {
+    const M11_AssetSlot* fontSlot;
+    int i;
+    int len;
+    if (!state || !framebuffer || !text || !*text) {
+        return 0;
+    }
+    if (!M11_AssetLoader_IsReady(&state->assetLoader)) {
+        return 0;
+    }
+    fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+    if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
+        fontSlot->width < DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
+        fontSlot->height < DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
+        return 0;
+    }
+    len = (int)strlen(text);
+    for (i = 0; i < len; ++i) {
+        int glyph = DM1_V1_InscriptionGlyphIndexFromAscii((unsigned char)text[i]);
+        if (glyph < 0 ||
+            (glyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH > fontSlot->width) {
+            return 0;
+        }
+    }
+    /* ReDMCSB DUNVIEW.C:3619-3638 uses M648_GRAPHIC_INSCRIPTION_FONT
+     * and blits one 8x8 source cell per decoded glyph with C10 transparent. */
+    for (i = 0; i < len; ++i) {
+        int glyph = DM1_V1_InscriptionGlyphIndexFromAscii((unsigned char)text[i]);
+        M11_AssetLoader_BlitRegion(fontSlot,
+                                   glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
+                                   0,
+                                   DM1_V1_INSCRIPTION_GLYPH_WIDTH,
+                                   DM1_V1_INSCRIPTION_GLYPH_HEIGHT,
+                                   framebuffer,
+                                   fbW,
+                                   fbH,
+                                   x + i * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
+                                   y,
+                                   DM1_V1_INSCRIPTION_TRANSPARENT_COLOR);
+    }
+    return 1;
+}
+
 static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* state,
                                                      const M11_ViewportCell* cell,
                                                      unsigned char* framebuffer,
@@ -12576,13 +13531,18 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
             *next = '\0';
         }
         if (*cursor) {
-            int textW = m11_measure_text_pixels(cursor, &inscriptionStyle);
-            int textX = M11_VIEWPORT_X + 112 - (textW / 2);
+            int charCount = (int)strlen(cursor);
+            int textX = M11_VIEWPORT_X + DM1_V1_InscriptionTextX(charCount);
             int textY = M11_VIEWPORT_Y + kLineBottomY[line] - 7;
-            m11_draw_text(framebuffer, fbW, fbH,
-                          textX, textY,
-                          cursor,
-                          &inscriptionStyle);
+            if (!m11_draw_dm1_inscription_font_line(state, framebuffer, fbW, fbH,
+                                                    textX, textY, cursor)) {
+                int textW = m11_measure_text_pixels(cursor, &inscriptionStyle);
+                textX = M11_VIEWPORT_X + 112 - (textW / 2);
+                m11_draw_text(framebuffer, fbW, fbH,
+                              textX, textY,
+                              cursor,
+                              &inscriptionStyle);
+            }
         }
         if (!next) break;
         *next = saved;
@@ -12642,14 +13602,11 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         return;
     }
     mirrorCell = *frontCell;
-    portraitOrdinal = mirrorCell.championPortraitOrdinal;
-    if (portraitOrdinal < 0) {
-        portraitOrdinal = m11_front_cell_mirror_ordinal(state);
-        mirrorCell.championPortraitOrdinal = portraitOrdinal;
-    }
+    portraitOrdinal = m11_front_cell_mirror_ordinal(state);
     if (portraitOrdinal < 0) {
         return;
     }
+    mirrorCell.championPortraitOrdinal = portraitOrdinal;
     /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
      * G0289 and DUNVIEW.C:3913-3928 blits the fixed D1C portrait-on-wall
      * rectangle from that state.  The Firestaff loader can expose some Hall
@@ -12677,6 +13634,24 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     blit.graphicIndex = M11_GFX_WALL_ORNAMENT_BASE + ornGlobalIdx * 2 + 1;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)blit.graphicIndex);
+    /* BUG-120 + BUG-121 fix: when the C040 candidate panel is open
+     * (candidateMirrorPanelActive == 1), the wall-ornament graphic is
+     * not drawn — only the champion portrait. The ornament graphic
+     * is a placeholder for the wall mirror itself; while the candidate
+     * panel is open the player is choosing a new champion from the
+     * mirror, not looking at the wall behind them. Skipping the
+     * ornament avoids two user-visible issues:
+     *   (a) the orange/peach placeholder box "floating" in the D1C
+     *       cell (BUG-121 graphical artifact reported by user).
+     *   (b) redrawing the ornament every frame for every viewport
+     *       cycle while the panel is open (BUG-120 slow after
+     *       selection reported by user). Per ReDMCSB
+     *       MOVESENS.C:1501-1503 and REVIVE.C F0280, the panel owns
+     *       the front cell while the selection is pending. */
+    if (state->candidateMirrorPanelActive) {
+        m11_draw_dm1_front_champion_portrait(state, &mirrorCell, framebuffer, fbW, fbH);
+        return;
+    }
     if (slot && slot->loaded && slot->pixels && slot->width > 0 && slot->height > 0) {
         m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,
                                                M11_VIEWPORT_X + blit.dstX,
@@ -16944,6 +17919,8 @@ static unsigned int m11_allowed_slots_for_thing(const struct DungeonThings_Compa
 
 static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex) {
     switch (sourceSlotBoxIndex) {
+        case 0:
+        case 1:  return 0xFFFFu;
         case 8:
         case 9:  return 0x0200u;
         case 10: return 0x0002u;
@@ -16959,13 +17936,84 @@ static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex
         case 20: return 0x0040u;
         default:
             if (sourceSlotBoxIndex >= 21 && sourceSlotBoxIndex <= 37) {
-                return 0x0400u;
+                /* ReDMCSB DATA.C lines 1063-1079: all C21..C37 backpack
+                 * slot boxes use MASK0xFFFF_ANY_SLOT, unlike C30..C37
+                 * chest slots at lines 1080-1087 which require container
+                 * compatibility. */
+                return 0xFFFFu;
             }
             if (sourceSlotBoxIndex >= 38 && sourceSlotBoxIndex <= 45) {
                 return 0x0400u;
             }
             return 0;
     }
+}
+
+static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
+                                                      int slotBoxIndex) {
+    int championIndex;
+    int championSlot;
+    struct ChampionState_Compat* champ;
+    unsigned short leaderThing;
+    unsigned short slotThing;
+
+    if (!state || !state->inventoryPanelActive ||
+        slotBoxIndex < 0 || slotBoxIndex >= 8) {
+        return 0;
+    }
+
+    /* ReDMCSB: CLIKCHAM.C F0367 line 32 dispatches C020..C027 to
+     * CHAMPION.C F0302 with slotBoxIndex 0..7.  F0302 lines 677-683
+     * rejects candidate flow, the currently open inventory champion,
+     * out-of-party/dead champions, then maps even/odd slot boxes through
+     * DEFS.H line 1878 M070_HAND_SLOT_INDEX. */
+    if (state->candidateMirrorOrdinal || state->candidateMirrorPanelActive) {
+        return 0;
+    }
+    championIndex = slotBoxIndex >> 1;
+    championSlot = (slotBoxIndex & 1) ? CHAMPION_SLOT_ACTION_HAND
+                                      : CHAMPION_SLOT_HAND_LEFT;
+    if (championIndex < 0 ||
+        championIndex >= state->world.party.championCount ||
+        championIndex >= CHAMPION_MAX_PARTY ||
+        championIndex == state->world.party.activeChampionIndex) {
+        return 0;
+    }
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current <= 0) {
+        return 0;
+    }
+
+    leaderThing = M11_GameView_GetV1LeaderHandThing(state);
+    slotThing = champ->inventory[championSlot];
+    if ((leaderThing == THING_NONE || leaderThing == THING_ENDOFLIST) &&
+        (slotThing == THING_NONE || slotThing == THING_ENDOFLIST)) {
+        return 0;
+    }
+    if (leaderThing != THING_NONE && leaderThing != THING_ENDOFLIST) {
+        unsigned int allowedSlots =
+            m11_allowed_slots_for_thing(state->world.things, leaderThing);
+        unsigned int slotMask =
+            m11_v1_inventory_source_slot_box_mask(slotBoxIndex & 1);
+        if ((allowedSlots & slotMask) == 0) {
+            return 0;
+        }
+        champ->inventory[championSlot] = leaderThing;
+        M11_GameView_ClearV1LeaderHandObject(state);
+        if (slotThing != THING_NONE && slotThing != THING_ENDOFLIST &&
+            !M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
+            champ->inventory[championSlot] = slotThing;
+            return 0;
+        }
+    } else {
+        champ->inventory[championSlot] = THING_NONE;
+        if (!M11_GameView_SetV1LeaderHandObject(state, slotThing)) {
+            champ->inventory[championSlot] = slotThing;
+            return 0;
+        }
+    }
+    m11_refresh_hash(state);
+    return 1;
 }
 
 static int m11_object_icon_index_for_thing(const M11_GameViewState* state,
@@ -17922,6 +18970,43 @@ static int m11_build_projectile_digest(
         out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
     }
 
+    /* ReDMCSB PROJEXPL.C:1260-1310 (F0228/F0229): when the dest
+     * square carries a TELEPORTER, the projectile gets rotated to
+     * the direction the teleporter points to.  v1 reads the
+     * first thing on the square, looks up THING_TYPE_TELEPORTER,
+     * and uses the direction field (rotated by F0228 visibility)
+     * to set destTeleporterNewDirection.  In DM1 PC 3.4 the
+     * teleporter thing carries an explicit target direction in
+     * the scope/direction field.  If no teleporter thing is
+     * present, destTeleporterNewDirection stays -1 (no rotation). */
+    if (out->destSquareType == PROJECTILE_ELEMENT_TELEPORTER) {
+        unsigned short firstThing = m11_get_first_square_thing(
+            world, p->mapIndex, destX, destY);
+        if (firstThing != THING_ENDOFLIST
+                && firstThing != THING_NONE
+                && THING_GET_TYPE(firstThing) == THING_TYPE_TELEPORTER
+                && world->things
+                && world->things->teleporters) {
+            int teleIndex = THING_GET_INDEX(firstThing);
+            if (teleIndex >= 0
+                    && teleIndex < world->things->teleporterCount) {
+                /* ReDMCSB PROJEXPL.C:1260-1310: the teleporter
+                 * rotation field (2 bits, 0..3) is the direction
+                 * the projectile is rotated to when entering the
+                 * teleporter.  absoluteRotation toggles whether
+                 * the rotation is world-frame or party-relative.
+                 * F0228 visibility picks this when the destination
+                 * is visible; v1 always applies the rotation
+                 * (the projectile then enters the destination map
+                 * with the rotated direction). */
+                int newDir = (int)world->things->teleporters[teleIndex].rotation;
+                if (newDir >= 0 && newDir <= 3) {
+                    out->destTeleporterNewDirection = newDir;
+                }
+            }
+        }
+    }
+
     /* Party presence on destination square. */
     if (world->party.mapIndex == p->mapIndex
             && world->party.mapX == destX
@@ -17929,15 +19014,20 @@ static int m11_build_projectile_digest(
         out->destHasChampion       = 1;
         out->destPartyDirection    = world->party.direction & 3;
         /* Party occupies all 4 sub-cells for F0811's cell-mask gate. */
-        out->destChampionCellMask  = 0x0F;
+        out->destChampionCellMask  = M11_DM1_CELL_OCCUPIED_MASK;
     }
 
     /* Creature group on destination square (via AI state slots).  v1
      * uses cellMask=0x0F so a projectile that enters a creature's
      * square resolves as HIT_CREATURE regardless of which sub-cell
-     * the creature occupies.  NEEDS DISASSEMBLY REVIEW: per-sub-cell
-     * hit mask from DungeonGroup_Compat.cells; kept full until the
-     * V1 creature-drawing pass grounds sub-cell positioning. */
+     * the creature occupies.  Source-locked per ReDMCSB
+     * GROUP.C:1503-1510 (F0202) and the sub-cell mask bits in
+     * DEFS.H: M550_GROUP_CELL_OCCUPIED_MASK = 0x0F for a
+     * full-square creature; quarter-square creatures use the
+     * high nibble (0xF0).  v1 keeps the full 0x0F mask because
+     * the per-sub-cell positioning is not yet wired in the
+     * V1 creature-drawing pass; see GROUP.C:1503 for the
+     * original and DEFS.H M550 for the mask layout. */
     for (i = 0; i < world->creatureAICount
                 && i < GAMEWORLD_CREATURE_AI_CAPACITY; ++i) {
         const struct CreatureAIState_Compat* ai = &world->creatureAI[i];
@@ -19695,11 +20785,13 @@ static int m11_v1_inventory_slot_icon_index_for_thing(const M11_GameViewState* s
         return -1;
     }
     iconIndex = m11_object_icon_index_for_thing(state, state->world.things, thing);
-    /* ReDMCSB CHEST.C:43-46 draws C145 into C09 when a chest is open;
-     * CHAMDRAW.C:621-630 performs the same closed-to-open remap when
-     * redrawing the inventory champion's action-hand slot. */
+    /* ReDMCSB CHEST.C:43-46 draws C145 into C09 for a normal chest open,
+     * but skips it when P0694_B_PressingEye is set. CHAMDRAW.C:621-630
+     * performs the same closed-to-open remap when redrawing the inventory
+     * champion's action-hand slot outside the pressing-eye branch. */
     if (championSlot == CHAMPION_SLOT_ACTION_HAND &&
         thing == M11_GameView_GetV1OpenChestThing(state) &&
+        !state->v1OpenChestOpenedByEye &&
         iconIndex == 144) {
         return 145;
     }
@@ -19742,10 +20834,23 @@ int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state) {
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     thing = state->world.party.champions[championIndex].inventory[CHAMPION_SLOT_ACTION_HAND];
     if (thing == THING_NONE || thing == THING_ENDOFLIST || THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) return 0;
+    /* ReDMCSB CHEST.C F0333 lines 30-32 returns before the
+     * P0694_B_PressingEye branch when G0426 already names this chest. */
+    if (state->v1OpenChestThing == thing) return 1;
+    /* ReDMCSB CHEST.C F0333 lines 35-38 closes a different already-open
+     * G0426 chest before opening the requested container.  This matters for
+     * the close-time F0334 visible-slot rewrite, including hidden-tail
+     * truncation beyond C537..C544. */
+    if (state->v1OpenChestThing != THING_NONE &&
+        state->v1OpenChestThing != THING_ENDOFLIST) {
+        M11_GameView_CloseV1OpenChest(state);
+    }
     state->v1OpenChestThing = thing;
+    state->v1OpenChestOpenedByEye = 0;
     state->v1FoodWaterPanelActive = 0;
     if (m11_v1_open_chest_container_index(state) < 0) {
         state->v1OpenChestThing = THING_NONE;
+        state->v1OpenChestOpenedByEye = 0;
         return 0;
     }
     return 1;
@@ -19758,10 +20863,22 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
         THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) {
         return 0;
     }
+    /* ReDMCSB CHEST.C F0333 lines 30-32 makes same-chest reopen a no-op
+     * before C09 open-icon suppression can observe P0694_B_PressingEye. */
+    if (state->v1OpenChestThing == thing) return 1;
+    /* ReDMCSB CHEST.C F0333 lines 35-38 closes a different already-open
+     * G0426 chest before PANEL.C F0342/F0352 opens the leader-hand
+     * container through the pressing-eye path. */
+    if (state->v1OpenChestThing != THING_NONE &&
+        state->v1OpenChestThing != THING_ENDOFLIST) {
+        M11_GameView_CloseV1OpenChest(state);
+    }
     state->v1OpenChestThing = thing;
+    state->v1OpenChestOpenedByEye = 1;
     state->v1FoodWaterPanelActive = 0;
     if (m11_v1_open_chest_container_index(state) < 0) {
         state->v1OpenChestThing = THING_NONE;
+        state->v1OpenChestOpenedByEye = 0;
         return 0;
     }
     return 1;
@@ -19769,7 +20886,18 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
 
 void M11_GameView_CloseV1OpenChest(M11_GameViewState* state) {
     if (!state) return;
+    if (m11_v1_open_chest_container_index(state) >= 0) {
+        unsigned short slots[8];
+        /* ReDMCSB CHEST.C F0334 lines 112-133 rebuilds the container
+         * from G0425_aT_ChestSlots only.  F0333 lines 58-75 populated
+         * that array with at most the eight visible C537..C544 slots, so
+         * close-time rewrite compacts the visible panel and drops any
+         * ninth-and-later tail from the source list. */
+        (void)m11_v1_read_open_chest_slots(state, slots);
+        (void)m11_v1_write_open_chest_slots(state, slots);
+    }
     state->v1OpenChestThing = THING_NONE;
+    state->v1OpenChestOpenedByEye = 0;
 }
 
 static void m11_refresh_v1_action_hand_chest_panel(M11_GameViewState* state,
@@ -19991,7 +21119,10 @@ int M11_GameView_GetV1ChampionIconZone(int championSlot,
     if (!M11_GameView_GetV1ChampionIconZoneId(championSlot)) return 0;
     if (outX) *outX = xs[championSlot];
     if (outY) *outY = ys[championSlot];
-    if (outW) *outW = 16;
+    /* ReDMCSB: CHAMDRAW.C F0622 lines 41-58 prepares a full
+     * G2080_C19_ChampionIconWidth x G2081_C14_ChampionIconHeight
+     * temporary bitmap before blitting it to C113..C116. */
+    if (outW) *outW = M11_CHAMPION_ICON_W;
     if (outH) *outH = 14;
     return 1;
 }
@@ -20097,6 +21228,29 @@ int M11_GameView_GetV1ObjectDescriptionIconZone(int* outX,
     if (outW) *outW = 16;
     if (outH) *outH = 16;
     return 1;
+}
+
+int M11_GameView_GetV1ArrowOrEyeZoneId(void) {
+    return 503;
+}
+
+int M11_GameView_GetV1ArrowOrEyeZone(int* outX,
+                                      int* outY,
+                                      int* outW,
+                                      int* outH) {
+    /* ReDMCSB DATA.C line 315 G0033_ai_Graphic562_Box_ArrowOrEye
+     * and PANEL.C F0339 lines 505-514 draw C018/C019 at x=83..98,
+     * y=57..65 in viewport-relative coordinates. */
+    if (outX) *outX = 83;
+    if (outY) *outY = 57;
+    if (outW) *outW = 16;
+    if (outH) *outH = 9;
+    return 1;
+}
+
+int M11_GameView_GetV1ArrowOrEyeGraphicId(int pressingEye) {
+    return pressingEye ? M11_GFX_PANEL_EYE_FOR_OBJECT_DESCRIPTION
+                       : M11_GFX_PANEL_ARROW_FOR_CHEST_CONTENT;
 }
 
 int M11_GameView_GetV1ObjectDescriptionNameZoneId(void) {
@@ -20367,6 +21521,28 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
         return M11_GameView_GetV1StatusBoxZone(route->zoneId - 151,
                                                outX, outY, outW, outH);
     }
+    if (route->zoneId >= 211 && route->zoneId <= 218) {
+        const int slotBox = route->zoneId - 211;
+        const int championSlot = slotBox >> 1;
+        const int handSlot = slotBox & 1;
+        if (!M11_GameView_GetV1StatusBoxZone(championSlot,
+                                             &relX, &relY, &relW, &relH)) {
+            return 0;
+        }
+        /* ReDMCSB COMMAND.C G0455 lines 489-496 maps C020..C027 to
+         * C211..C218; DATA.C lines 978-985 declares the status hand
+         * slot zones.  Layout-696 places each 16x16 hand hit box inside
+         * the parent champion status box at x=4 ready / x=24 action,
+         * y=10. */
+        (void)relW;
+        (void)relH;
+        if (outX) *outX = relX + (handSlot ? M11_V1_STATUS_ACTION_HAND_X
+                                           : M11_V1_STATUS_READY_HAND_X);
+        if (outY) *outY = relY + M11_V1_STATUS_HAND_Y;
+        if (outW) *outW = M11_V1_STATUS_HAND_ZONE_W;
+        if (outH) *outH = M11_V1_STATUS_HAND_ZONE_H;
+        return 1;
+    }
     if (route->zoneId >= 187 && route->zoneId <= 190) {
         slot = route->zoneId - 187;
         if (!M11_GameView_GetV1StatusBoxZone(slot, &relX, &relY, &relW, &relH)) {
@@ -20393,6 +21569,13 @@ static int m11_v1_mouse_route_zone_rect(const M11_V1MouseRoute* route,
     if (route->zoneId >= 537 && route->zoneId <= 544) {
         return M11_GameView_GetV1ChestSlotBoxZone(route->zoneId - 537,
                                                   outX, outY, outW, outH);
+    }
+    if (route->zoneId == 101) {
+        /* ReDMCSB COMMAND.C G0449 lines 419-451 keeps C081_CLICK_IN_PANEL
+         * as the broad C101 panel route after the inventory slot boxes.
+         * F0378 then re-dispatches M569_PANEL_CHEST clicks through G0456,
+         * so the route must remain lower priority than C537..C544. */
+        return M11_GameView_GetV1InventoryPanelZone(outX, outY, outW, outH);
     }
     if (route->zoneId == 545 || route->zoneId == 546) {
         /* ReDMCSB COMMAND.C G0449 routes inventory mouth/eye clicks through
@@ -20436,7 +21619,19 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
                                            int* outCoordinateSpace,
                                            int* outZoneId) {
     static const M11_V1MouseRoute interfaceRoutes[] = {
-        /* ReDMCSB COMMAND.C G0447_as_Graphic561_PrimaryMouseInput_Interface. */
+        /* ReDMCSB COMMAND.C G0447_as_Graphic561_PrimaryMouseInput_Interface
+         * plus the focused G0455 champion name/hand rows needed by the
+         * bounded status-panel resolver.  C020..C027 must precede the
+         * broader C012..C015 status-box routes so hand clicks keep their
+         * source command identity. */
+        { 20,  M11_DM1_MOUSE_SPACE_SCREEN, 211, M11_DM1_MOUSE_MASK_LEFT  },
+        { 21,  M11_DM1_MOUSE_SPACE_SCREEN, 212, M11_DM1_MOUSE_MASK_LEFT  },
+        { 22,  M11_DM1_MOUSE_SPACE_SCREEN, 213, M11_DM1_MOUSE_MASK_LEFT  },
+        { 23,  M11_DM1_MOUSE_SPACE_SCREEN, 214, M11_DM1_MOUSE_MASK_LEFT  },
+        { 24,  M11_DM1_MOUSE_SPACE_SCREEN, 215, M11_DM1_MOUSE_MASK_LEFT  },
+        { 25,  M11_DM1_MOUSE_SPACE_SCREEN, 216, M11_DM1_MOUSE_MASK_LEFT  },
+        { 26,  M11_DM1_MOUSE_SPACE_SCREEN, 217, M11_DM1_MOUSE_MASK_LEFT  },
+        { 27,  M11_DM1_MOUSE_SPACE_SCREEN, 218, M11_DM1_MOUSE_MASK_LEFT  },
         { 7,   M11_DM1_MOUSE_SPACE_SCREEN, 151, M11_DM1_MOUSE_MASK_RIGHT },
         { 8,   M11_DM1_MOUSE_SPACE_SCREEN, 152, M11_DM1_MOUSE_MASK_RIGHT },
         { 9,   M11_DM1_MOUSE_SPACE_SCREEN, 153, M11_DM1_MOUSE_MASK_RIGHT },
@@ -20468,7 +21663,17 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
         { 83, M11_DM1_MOUSE_SPACE_SCREEN, 2,  M11_DM1_MOUSE_MASK_RIGHT }
     };
     static const M11_V1MouseRoute inventoryRoutes[] = {
-        /* ReDMCSB COMMAND.C G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory. */
+        /* ReDMCSB COMMAND.C G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory,
+         * plus CLIKCHAM.C F0367 line 32 / CHAMPION.C F0302 lines 677-683
+         * status-hand C020..C027 dispatch while the inventory is open. */
+        { 20, M11_DM1_MOUSE_SPACE_SCREEN,   211, M11_DM1_MOUSE_MASK_LEFT },
+        { 21, M11_DM1_MOUSE_SPACE_SCREEN,   212, M11_DM1_MOUSE_MASK_LEFT },
+        { 22, M11_DM1_MOUSE_SPACE_SCREEN,   213, M11_DM1_MOUSE_MASK_LEFT },
+        { 23, M11_DM1_MOUSE_SPACE_SCREEN,   214, M11_DM1_MOUSE_MASK_LEFT },
+        { 24, M11_DM1_MOUSE_SPACE_SCREEN,   215, M11_DM1_MOUSE_MASK_LEFT },
+        { 25, M11_DM1_MOUSE_SPACE_SCREEN,   216, M11_DM1_MOUSE_MASK_LEFT },
+        { 26, M11_DM1_MOUSE_SPACE_SCREEN,   217, M11_DM1_MOUSE_MASK_LEFT },
+        { 27, M11_DM1_MOUSE_SPACE_SCREEN,   218, M11_DM1_MOUSE_MASK_LEFT },
         { 11, M11_DM1_MOUSE_SPACE_SCREEN,   2, M11_DM1_MOUSE_MASK_RIGHT },
         { 28, M11_DM1_MOUSE_SPACE_VIEWPORT, 507, M11_DM1_MOUSE_MASK_LEFT },
         { 29, M11_DM1_MOUSE_SPACE_VIEWPORT, 508, M11_DM1_MOUSE_MASK_LEFT },
@@ -20512,7 +21717,8 @@ int M11_GameView_GetV1MouseCommandForPoint(int mouseInputList,
         { 62, M11_DM1_MOUSE_SPACE_VIEWPORT, 541, M11_DM1_MOUSE_MASK_LEFT },
         { 63, M11_DM1_MOUSE_SPACE_VIEWPORT, 542, M11_DM1_MOUSE_MASK_LEFT },
         { 64, M11_DM1_MOUSE_SPACE_VIEWPORT, 543, M11_DM1_MOUSE_MASK_LEFT },
-        { 65, M11_DM1_MOUSE_SPACE_VIEWPORT, 544, M11_DM1_MOUSE_MASK_LEFT }
+        { 65, M11_DM1_MOUSE_SPACE_VIEWPORT, 544, M11_DM1_MOUSE_MASK_LEFT },
+        { 81, M11_DM1_MOUSE_SPACE_VIEWPORT, 101, M11_DM1_MOUSE_MASK_LEFT }
     };
     const M11_V1MouseRoute* routes = NULL;
     int count = 0;
@@ -20783,9 +21989,29 @@ static const char* m11_dm1_v1_skill_level_name_pc34(unsigned int level) {
         "b MASTER", "c MASTER", "d MASTER", "e MASTER", "ARCHMASTER"
     };
 
+    /* ReDMCSB PANEL.C:26 + CEDT006.C:141: NEOPHYTE is index 0 in the
+     * rank-name table.  The previous implementation returned NULL for
+     * level <= 1, which made both NEOPHYTE and NOVICE display as
+     * empty.  CSB additionally allows skillLevel == 0 only when
+     * neophyte mode is enabled (Character.cpp:665, neophyteSkills ||
+     * D4W > 0); in DM1 the lowest valid level is 1 = NOVICE.
+     *
+     * The mapping is:
+     *   level 0  -> NEOPHYTE (CSB-only; displayed only when
+     *               neophyte mode is enabled)
+     *   level 1  -> NOVICE
+     *   level 2..16 -> APPRENTICE..ARCHMASTER
+     */
     if (level > 16U) level = 16U;
-    if (level <= 1U) return NULL;
-    return names[level - 2U];
+    if (level == 0U) {
+        if (csb_v1_neophyte_display_for_level(level)) {
+            return names[0]; /* NEOPHYTE (CSB only) */
+        }
+        return names[1];   /* DM1: level 0 displays as NOVICE */
+    }
+    if (level == 1U) return names[1]; /* NOVICE */
+    if (level >= 2U) return names[level - 2U];
+    return names[1];
 }
 
 static void m11_format_v1_champion_stats_panel_pc34(
@@ -20971,6 +22197,10 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
 
     thing = M11_GameView_GetV1LeaderHandThing(state);
     if (thing == THING_NONE) {
+        /* ReDMCSB PANEL.C F0351 lines 2013-2015 closes G0426 through
+         * CHEST.C F0334 before switching the inventory panel to champion
+         * skills/statistics. */
+        M11_GameView_CloseV1OpenChest(state);
         state->v1ObjectDescriptionPanelActive = 0;
         state->v1ScrollPanelActive = 0;
         state->v1ScrollPanelThing = THING_NONE;
@@ -21016,6 +22246,7 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             /* ReDMCSB PANEL.C F0352 -> F0342 keeps scrolls on the inventory
              * panel route: F0342 clears object-description state and dispatches
              * C07 things directly to F0341 open-scroll rendering. */
+            M11_GameView_CloseV1OpenChest(state);
             state->v1ObjectDescriptionPanelActive = 0;
             state->v1ObjectDescriptionThing = THING_NONE;
             state->v1ObjectDescriptionIconIndex = -1;
@@ -21035,8 +22266,9 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             INVENTORY_OBJECT_EYE_PANEL_ROUTE_CONTAINER_CHEST_PC34_COMPAT) {
             /* ReDMCSB PANEL.C F0352 -> F0342 routes leader-hand containers to
              * F0333 instead of the object-description body.  CHEST.C F0333
-             * opens G0426_T_OpenChest and redraws the C025 chest panel even
-             * while P0707_B_PressingEye suppresses the action-hand open icon. */
+             * lines 30-32 return before the P0694_B_PressingEye branch when
+             * G0426 already names the same chest; different open chests still
+             * close through F0333 lines 35-38 inside the helper below. */
             state->v1ObjectDescriptionPanelActive = 0;
             state->v1ObjectDescriptionThing = THING_NONE;
             state->v1ObjectDescriptionIconIndex = -1;
@@ -21054,6 +22286,13 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             m11_set_status(state, "INSPECT", itemName);
             return 1;
         }
+
+        /* Non-container object-description routes replace any open chest
+         * panel.  Container routes above must go through the F0333-equivalent
+         * helper so CHEST.C lines 30-38 control same-open and close-before-open
+         * ordering before CHAMDRAW.C lines 621-630 evaluates the C144/C145
+         * action-hand icon state. */
+        M11_GameView_CloseV1OpenChest(state);
 
         if (itemType == THING_TYPE_POTION &&
             state->world.things && state->world.things->potions &&
@@ -24668,6 +25907,26 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                         iconIndex, M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy, 0);
                 }
             }
+            if (state->assetsAvailable) {
+                int ax = 0, ay = 0, aw = 0, ah = 0;
+                const M11_AssetSlot* arrowOrEye;
+                /* ReDMCSB PANEL.C F0342 calls F0339 after the object/chest
+                 * panel body; F0339 lines 505-514 selects C018 for normal
+                 * chest content and C019 when P0707_B_PressingEye is true. */
+                arrowOrEye = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    (unsigned int)M11_GameView_GetV1ArrowOrEyeGraphicId(
+                        state->v1OpenChestOpenedByEye));
+                if (arrowOrEye && arrowOrEye->loaded && arrowOrEye->pixels &&
+                    M11_GameView_GetV1ArrowOrEyeZone(&ax, &ay, &aw, &ah) &&
+                    arrowOrEye->width == (unsigned short)aw &&
+                    arrowOrEye->height == (unsigned short)ah) {
+                    M11_AssetLoader_Blit(arrowOrEye, framebuffer,
+                                         framebufferWidth, framebufferHeight,
+                                         M11_VIEWPORT_X + ax,
+                                         M11_VIEWPORT_Y + ay, 8);
+                }
+            }
         }
         if (m11_draw_v1_inventory_food_water_panel(
                 state, framebuffer, framebufferWidth, framebufferHeight)) {
@@ -25178,6 +26437,25 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         g_m11_font_scale_override = 0;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       18, 18, "NO GAME VIEW", &g_text_title);
+        return;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
+        Theron_V1_Viewport* viewport =
+            (Theron_V1_Viewport*)state->theronViewport;
+        TrAssetBundle* assets = (TrAssetBundle*)state->theronAssets;
+        if (world && viewport) {
+            theron_vp_render_dungeon(viewport, world);
+            theron_vp_render_ui(viewport, world, TQR_UI_ALL);
+            theron_vp_present(viewport,
+                              assets ? &assets->palette : NULL,
+                              framebuffer,
+                              framebufferWidth,
+                              framebufferHeight);
+        }
+        g_drawState = NULL;
+        g_activeOriginalFont = NULL;
+        g_m11_font_scale_override = 0;
         return;
     }
     {

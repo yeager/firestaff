@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import json, subprocess, sys
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
@@ -38,14 +41,14 @@ SRC = [
 ]
 
 LOCAL = [
-    ("firestaff-d1c-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "240-244", [
+    ("firestaff-d1c-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "290-290", [
         "DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349",
         "DUNVIEW.C:7874-7875 pass1 rear cells before frame",
         "DUNVIEW.C:7877-7902 top/side frame and button draw",
         "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament",
         "DUNVIEW.C:7910-7937 pass2 front cells after door",
     ]),
-    ("firestaff-d1c-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "707-770", [
+    ("firestaff-d1c-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "760-790", [
         "DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\"",
         "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, expected[i].rear_order);",
         "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, expected[i].front_order);",
@@ -96,7 +99,7 @@ def main(check=False):
     if check:
         print("PASS pass519 check-only" if not failed else "FAIL pass519 check-only: " + ",".join(failed))
         return 0 if not failed else 1
-    runtime = run([str(ROOT / "build" / "test_dm1_v1_viewport_3d_pc34_compat")])
+    runtime = run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat")])
     check_run = run([sys.executable, str(Path(__file__).resolve()), "--check-only"])
     ok = not failed and runtime["passed"] and check_run["passed"]
     manifest = {"schema": "pass519_dm1_v1_d1c_door_front_field_source_lock.v1", "status": "passed" if ok else "failed", "statusToken": STATUS if ok else "FAILED_PASS519_DM1_V1_D1C_DOOR_FRONT_FIELD_SOURCE_LOCK", "redmcsbRoot": str(RED), "redmcsbChecks": red, "firestaffChecks": loc, "verificationRuns": [runtime, check_run], "nonClaims": ["No input or movement queue edits.", "No renderer runtime behavior change.", "No original DOS pixel parity claim.", "No DANNESBURK use."]}

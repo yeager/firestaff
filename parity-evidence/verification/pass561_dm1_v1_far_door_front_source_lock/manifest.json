@@ -3,24 +3,24 @@
     {
       "hits": [
         {
-          "line": 233,
+          "line": 280,
           "needle": "DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349"
         },
         {
-          "line": 233,
+          "line": 280,
           "needle": "DUNVIEW.C:6270 floor ornament under far rear pass"
         },
         {
-          "line": 234,
+          "line": 281,
           "needle": "DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439"
         },
         {
-          "line": 234,
+          "line": 281,
           "needle": "DUNVIEW.C:6337 floor ornament under mirrored far rear pass"
         }
       ],
       "id": "firestaff-far-door-front-metadata",
-      "lines": "231-240",
+      "lines": "280-281",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -28,20 +28,20 @@
     {
       "hits": [
         {
-          "line": 722,
+          "line": 754,
           "needle": "DM1_VIEW_SQUARE_D3L2, \"6270\""
         },
         {
-          "line": 723,
+          "line": 755,
           "needle": "DM1_VIEW_SQUARE_D3R2, \"6337\""
         },
         {
-          "line": 735,
+          "line": 767,
           "needle": "door_front_occlusion_spec_count(), 11"
         }
       ],
       "id": "firestaff-far-door-front-runtime-test",
-      "lines": "707-770",
+      "lines": "750-770",
       "missing": [],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -49,16 +49,16 @@
     {
       "hits": [
         {
-          "line": 2112,
+          "line": 2325,
           "needle": "DUNVIEW.C:6270-6286 D3L2 far door-front occlusion"
         },
         {
-          "line": 2113,
+          "line": 2326,
           "needle": "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"
         }
       ],
       "id": "firestaff-source-evidence-string",
-      "lines": "2110-2118",
+      "lines": "2320-2330",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -147,7 +147,7 @@
       "command": [
         "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS source_evidence.defs_zones == 1\nPASS source_evidence.wall_source_clip_gate == 1\nPASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "outputTail": "PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
       "returncode": 0
     },

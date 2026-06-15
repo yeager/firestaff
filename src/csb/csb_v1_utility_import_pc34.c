@@ -17,6 +17,7 @@
 #include "csb_v1_utility_import_pc34_compat.h"
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -54,6 +55,27 @@
 static int16_t read_le16(const uint8_t *p)
 {
     return (int16_t)(p[0] | (p[1] << 8));
+}
+
+/* ReDMCSB CHAMPION.C F0300/F0301/F0302:511-515,606-614,688-710 move
+ * real THING values through the champion slot arrays.  THING_ENDOFLIST
+ * is a linked-list sentinel for dungeon/chest chains, not a valid
+ * carried object, so the DM1 import path rejects it before the slot is
+ * committed to CSB party state. */
+static int csb_v1_dm1_record_invalid_slot_byte_offset(const uint8_t *dm1_record)
+{
+    int i;
+
+    if (!dm1_record) return 0;
+
+    for (i = 0; i < 30; i++) {
+        uint16_t slot_value = (uint16_t)read_le16(dm1_record + DM1_REC_EQUIP + i * 2);
+        if (slot_value == THING_ENDOFLIST) {
+            return DM1_REC_EQUIP + i * 2;
+        }
+    }
+
+    return 0;
 }
 
 /* write_le16: reserved for future CSB→DM1 export path (Phase 6 covers import only). */
@@ -206,10 +228,15 @@ int csb_v1_dm1_record_to_csb_block(const uint8_t *dm1_record,
     csb_block->Water = 1500;
     csb_block->Load = 0;
 
-    /* Equipment slots: 30 × uint16_t from DM1 record */
+    /* ReDMCSB CEDTINCI.C F7090_MakeNewAdventure line ~176 clears champion
+     * slots C00..C29 to C0xFFFF_THING_NONE after removing possession
+     * modifiers, so CSB imports champion identity/progression but not carried
+     * DM1 objects into the new adventure. */
     for (i = 0; i < 30; i++) {
-        csb_block->Slots[i] = read_le16(dm1_record + DM1_REC_EQUIP + i * 2);
+        (void)read_le16(dm1_record + DM1_REC_EQUIP + i * 2);
+        csb_block->Slots[i] = 0xFFFFu;
     }
+    csb_block->Load = 0;
 
     /* Reserved padding bytes are already zero from memset */
     return 0;
@@ -372,9 +399,32 @@ int csb_v1_import_from_dm1_save_buffer(CSB_V1_PartyState *party,
                 continue; /* skip malformed record */
             }
 
-            /* State 5: Verify block checksum */
+            {
+                int bad_slot_offset = csb_v1_dm1_record_invalid_slot_byte_offset(
+                    dm1_buf + offset);
+                if (bad_slot_offset > 0) {
+                    if (result) {
+                        result->error_code = CSB_V1_IMPORT_ERR_SLOT_STATE;
+                        result->byte_offset = offset + bad_slot_offset;
+                        result->state = CSB_V1_IMPORT_STATE_ERROR;
+                    }
+                    return -1;
+                }
+            }
+
+            /* State 5: Verify block checksum.
+             * ReDMCSB SAVEGAME.C F0100-F0120 import state keeps validation
+             * before the store-party step; a bad converted champion must not
+             * be allowed to reach the CSB utility import preview/party state. */
             if (result) result->state = CSB_V1_IMPORT_STATE_VERIFY_CHECKSUM;
-            (void)csb_v1_champion_block_verify(&block);
+            if (csb_v1_champion_block_verify(&block) != 0) {
+                if (result) {
+                    result->error_code = CSB_V1_IMPORT_ERR_CHECKSUM;
+                    result->byte_offset = offset;
+                    result->state = CSB_V1_IMPORT_STATE_ERROR;
+                }
+                return -1;
+            }
 
             /* State 6: Store in party slot */
             if (result) result->state = CSB_V1_IMPORT_STATE_STORE_PARTY;

@@ -12,6 +12,53 @@ unsigned char*       bitmap FINAL_SEPARATOR
         IMG_Compat_ExpandToBitmapRequired(graphic, bitmap);
 }
 
+const unsigned char* SWSH_Compat_FindLogoImagePayload(const unsigned char* data,
+                                                       unsigned int dataBytes) {
+        unsigned int i;
+        if (!data || dataBytes < 4u) return 0;
+        if ((unsigned int)(data[0] | (data[1] << 8)) == 320u &&
+            (unsigned int)(data[2] | (data[3] << 8)) == 200u) {
+                return data;
+        }
+        /* ReDMCSB SWSH.C source-lock: the PC SWOOSH program expands the
+         * SWSHGDAT.C FTL logo bitmap before running START.PRG.  Canonical
+         * extracted DM1 PC files carry that bitmap inside an MZ executable,
+         * so locate the IMG header for the 320x200 logo before decoding. */
+        if (dataBytes >= 2u && data[0] == 'M' && data[1] == 'Z') {
+                for (i = 2u; i + 4u <= dataBytes; ++i) {
+                        if ((unsigned int)(data[i] | (data[i + 1u] << 8)) == 320u &&
+                            (unsigned int)(data[i + 2u] | (data[i + 3u] << 8)) == 200u) {
+                                return data + i;
+                        }
+                }
+        }
+        return 0;
+}
+
+static unsigned char SWSH_Compat_SwooshComponentToRgb8(unsigned int component) {
+        static const unsigned char sourceUsed[8] = {
+                0u, 36u, 125u, 146u, 164u, 190u, 219u, 255u
+        };
+        return sourceUsed[component & 7u];
+}
+
+void SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(unsigned int colorValue,
+                                              unsigned char outRgb[3]) {
+        unsigned int r3, g3, b3;
+        if (!outRgb) return;
+        /* ReDMCSB SWSH.C:281-307 only animates 777, 555, 222, 770, and 000.
+         * The F20E PC port displays those source words through the DM PC
+         * palette curve, not a linear Atari-3-bit to VGA-DAC ramp: 222 is
+         * the dark-grey swoosh step (125), 555 is light grey (190), and
+         * 777 is white. */
+        r3 = (colorValue >> 8) & 7u;
+        g3 = (colorValue >> 4) & 7u;
+        b3 =  colorValue       & 7u;
+        outRgb[0] = SWSH_Compat_SwooshComponentToRgb8(r3);
+        outRgb[1] = SWSH_Compat_SwooshComponentToRgb8(g3);
+        outRgb[2] = SWSH_Compat_SwooshComponentToRgb8(b3);
+}
+
 
 typedef struct SWSH_CompatPaletteCommand {
         unsigned short word;
@@ -70,7 +117,10 @@ int SWSH_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
                 step.sourceLine = g_swsh_palette_commands[paletteOrdinal].sourceLine;
                 if (word < 8u) {
                         step.kind = SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS;
-                        step.vblankCount = word;
+                        /* ReDMCSB SWSH.C:33-37 uses 68k DBF after each
+                         * Vsync call, so a wait word of N performs N + 1
+                         * vertical blanks before returning. */
+                        step.vblankCount = word + 1u;
                 } else {
                         step.kind = SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR;
                         step.colorIndex = (word >> 12) & 0x0fu;

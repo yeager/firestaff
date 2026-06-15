@@ -1,0 +1,21 @@
+{
+  "pass": "pass_dm1_v1_d3c_stairs_pit_dispatch_pc34",
+  "status": "PASS",
+  "timestamp": "2026-06-07T20:49:00Z",
+  "scope": "DM1 V1 D3C stairs/pit dispatch contract-only source-lock gate",
+  "sourceEvidence": [
+    "DUNVIEW.C:F0118_DUNGEONVIEW_DrawSquareD3C_CPSF:6666-6696 stairs-up/down dispatch through F0104",
+    "DUNVIEW.C:F0118_DUNGEONVIEW_DrawSquareD3C_CPSF:6748-6763 open-pit dispatch through F0104",
+    "DUNVIEW.C:F0118_DUNGEONVIEW_DrawSquareD3C_CPSF:6811-6816 open ordering tail anchor",
+    "DUNVIEW.C:F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap:3113-3156 C10-transparent blit helper",
+    "DUNVIEW.C:F0096_DUNGEONVIEW_LoadCurrentMapGraphics_CPSDF:2517-2518 wallset stairs graphic range load",
+    "DEFS.H:2442/2449 D3C stair bitmap slots",
+    "DEFS.H:4142/4155 D3C stair zones",
+    "DEFS.H:2334/4200 D3C open-pit graphic and zone",
+    "DEFS.H:2088 C10_COLOR_FLESH",
+    "DEFS.H:2607 M600_VIEW_SQUARE_D3C"
+  ],
+  "assertionCount": 124,
+  "contractOnly": true,
+  "realAssetPixelParityClaim": false
+}

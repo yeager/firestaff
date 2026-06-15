@@ -45,9 +45,10 @@ extern "C" {
 /* ── Phase domains ─────────────────────────────────────────────────────── */
 
 typedef enum {
-    DM2_V2_PHASE_DOMAIN_LAUNCH = 0,  /* V2 boot launch: minimal asset scan     */
-    DM2_V2_PHASE_DOMAIN_PROFILE = 1,  /* V2 profile: full DM2 asset load         */
-    DM2_V2_PHASE_DOMAIN_HUD     = 2   /* V2 HUD: HUD overlay render/presentation */
+    DM2_V2_PHASE_DOMAIN_LAUNCH      = 0,  /* V2 boot launch: minimal asset scan         */
+    DM2_V2_PHASE_DOMAIN_PROFILE     = 1,  /* V2 profile: full DM2 asset load           */
+    DM2_V2_PHASE_DOMAIN_HUD         = 2,  /* V2 HUD: HUD overlay render/presentation   */
+    DM2_V2_PHASE_DOMAIN_ASSET_PIPELINE = 3  /* Phase 2: enhanced graphics pipeline        */
 } DM2_V2_PhaseDomain;
 
 /* ── Gate configuration ─────────────────────────────────────────────────── */
@@ -72,6 +73,7 @@ void dm2_v2_phase_gate_defaults(DM2_V2_PhaseGateConfig *config);
 int  dm2_v2_phase_gate_is_launch_domain(DM2_V2_PhaseDomain domain);
 int  dm2_v2_phase_gate_is_profile_domain(DM2_V2_PhaseDomain domain);
 int  dm2_v2_phase_gate_is_hud_domain(DM2_V2_PhaseDomain domain);
+int  dm2_v2_phase_gate_is_asset_pipeline_domain(DM2_V2_PhaseDomain domain);
 DM2_V2_PhaseGateDecision dm2_v2_phase_gate_decide(
     const DM2_V2_PhaseGateConfig *config,
     DM2_V2_PhaseDomain domain);

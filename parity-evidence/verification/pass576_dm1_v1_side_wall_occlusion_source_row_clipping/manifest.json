@@ -27,83 +27,83 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 418,
+          "line": 511,
           "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
         },
         {
-          "line": 418,
+          "line": 511,
           "needle": "DM1_PC34_ZONE_WALL_D2L2"
         },
         {
-          "line": 418,
+          "line": 511,
           "needle": "DUNVIEW.C:6848-6862 wall case returns"
         },
         {
-          "line": 419,
+          "line": 512,
           "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
         },
         {
-          "line": 419,
+          "line": 512,
           "needle": "DM1_PC34_ZONE_WALL_D2R2"
         },
         {
-          "line": 419,
+          "line": 512,
           "needle": "DUNVIEW.C:6882-6893 wall case returns"
         },
         {
-          "line": 423,
+          "line": 516,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 423,
+          "line": 516,
           "needle": "DM1_PC34_ZONE_WALL_D1L"
         },
         {
-          "line": 423,
+          "line": 516,
           "needle": "DUNVIEW.C:7459-7460 side ornament then return"
         },
         {
-          "line": 424,
+          "line": 517,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 424,
+          "line": 517,
           "needle": "DM1_PC34_ZONE_WALL_D1R"
         },
         {
-          "line": 424,
+          "line": 517,
           "needle": "DUNVIEW.C:7627-7628 side ornament then return"
         },
         {
-          "line": 426,
+          "line": 519,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 426,
+          "line": 519,
           "needle": "DM1_PC34_ZONE_WALL_D0L"
         },
         {
-          "line": 426,
+          "line": 519,
           "needle": "DUNVIEW.C:8036-8038 wall case returns"
         },
         {
-          "line": 427,
+          "line": 520,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 427,
+          "line": 520,
           "needle": "DM1_PC34_ZONE_WALL_D0R"
         },
         {
-          "line": 427,
+          "line": 520,
           "needle": "DUNVIEW.C:8142-8144 wall case returns"
         }
       ],
       "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
-      "lines": "412-428",
+      "lines": "1-9999",
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e",
+      "sha256": "fafbb04de65feebd6f573e85d83425888aa32c7192477d19b152b69fe81abb5f",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -112,47 +112,47 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 1159,
+          "line": 1349,
           "needle": "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate"
         },
         {
-          "line": 1171,
+          "line": 1361,
           "needle": "int src_x = frame->blit_x;"
         },
         {
-          "line": 1172,
+          "line": 1362,
           "needle": "int src_y = frame->blit_y;"
         },
         {
-          "line": 1179,
+          "line": 1369,
           "needle": "if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }"
         },
         {
-          "line": 1186,
+          "line": 1376,
           "needle": "if (src_x + width > source_width) width = source_width - src_x;"
         },
         {
-          "line": 1189,
+          "line": 1379,
           "needle": "if (width <= 0 || height <= 0) return gate;"
         },
         {
-          "line": 1191,
+          "line": 1381,
           "needle": "gate.visible = true;"
         },
         {
-          "line": 1192,
+          "line": 1382,
           "needle": "gate.src_x = (int16_t)src_x;"
         },
         {
-          "line": 1193,
+          "line": 1383,
           "needle": "gate.src_y = (int16_t)src_y;"
         }
       ],
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
-      "lines": "1159-1198",
+      "lines": "1-9999",
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e",
+      "sha256": "fafbb04de65feebd6f573e85d83425888aa32c7192477d19b152b69fe81abb5f",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -161,75 +161,75 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 289,
+          "line": 290,
           "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
         },
         {
-          "line": 289,
+          "line": 290,
           "needle": "DM1_PC34_ZONE_WALL_D2L2"
         },
         {
-          "line": 289,
+          "line": 290,
           "needle": "\"6862\""
         },
         {
-          "line": 290,
+          "line": 291,
           "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
         },
         {
-          "line": 290,
+          "line": 291,
           "needle": "DM1_PC34_ZONE_WALL_D2R2"
         },
         {
-          "line": 290,
+          "line": 291,
           "needle": "\"6893\""
         },
         {
-          "line": 294,
+          "line": 295,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 294,
+          "line": 295,
           "needle": "DM1_PC34_ZONE_WALL_D1L"
         },
         {
-          "line": 294,
+          "line": 295,
           "needle": "\"7460\""
         },
         {
-          "line": 295,
+          "line": 296,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 295,
+          "line": 296,
           "needle": "DM1_PC34_ZONE_WALL_D1R"
         },
         {
-          "line": 295,
+          "line": 296,
           "needle": "\"7628\""
         },
         {
-          "line": 297,
+          "line": 298,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 297,
+          "line": 298,
           "needle": "DM1_PC34_ZONE_WALL_D0L"
         },
         {
-          "line": 297,
+          "line": 298,
           "needle": "\"8038\""
         },
         {
-          "line": 298,
+          "line": 299,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 298,
+          "line": 299,
           "needle": "DM1_PC34_ZONE_WALL_D0R"
         },
         {
-          "line": 298,
+          "line": 299,
           "needle": "\"8144\""
         }
       ],
@@ -237,7 +237,7 @@
       "lines": "276-330",
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "f1478c6d5f6d82672af69be26df259f7ca3a1d196e8dff6418c8aba6e188209b",
+      "sha256": "b0e84c1cfcbe82dd2ff1bc4d448993485df7cd13b3c0b1af5b3797dbded74b45",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -246,43 +246,43 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 965,
+          "line": 1179,
           "needle": "static void test_wall_source_row_clip_occlusion_gate(void)"
         },
         {
-          "line": 970,
+          "line": 1184,
           "needle": "wall_clip_gate.151713.src_x"
         },
         {
-          "line": 971,
+          "line": 1185,
           "needle": "wall_clip_gate.151713.src_y"
         },
         {
-          "line": 994,
+          "line": 1208,
           "needle": "wall_clip_gate.occluded_source_row"
         },
         {
-          "line": 998,
+          "line": 1212,
           "needle": "wall_clip_gate.occluded_viewport"
         },
         {
-          "line": 1001,
+          "line": 1215,
           "needle": "static void test_wall_draw_uses_clip_gate_source_offsets(void)"
         },
         {
-          "line": 1013,
+          "line": 1227,
           "needle": "wall_clip_draw.source_offset_next"
         },
         {
-          "line": 1020,
+          "line": 1234,
           "needle": "wall_clip_draw.opaque_copies_transparent_color"
         }
       ],
       "id": "firestaff_clip_row_runtime_assertions_are_registered",
-      "lines": "965-1021",
+      "lines": "1-9999",
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "f1478c6d5f6d82672af69be26df259f7ca3a1d196e8dff6418c8aba6e188209b",
+      "sha256": "b0e84c1cfcbe82dd2ff1bc4d448993485df7cd13b3c0b1af5b3797dbded74b45",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }

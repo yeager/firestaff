@@ -361,6 +361,12 @@ static int m11_load_wav_to_stream(M11_SoundBuffer* dst, const char* path) {
         free(bytes);
         return 0;
     }
+    if (dataBytes % blockAlign != 0u) {
+        /* Reject malformed pack files that end mid-frame instead of silently
+         * truncating the trailing partial sample pair/channel set. */
+        free(bytes);
+        return 0;
+    }
     frameCount = dataBytes / blockAlign;
     if (frameCount == 0u || frameCount > sampleRate * M11_AUDIO_SOUND_PACK_MAX_SECONDS) {
         free(bytes);
@@ -765,6 +771,10 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->originalSongLoopTargetPart = 0;
     state->titleMusicQueuedCount = 0;
     state->titleMusicEnabled = 0;
+    state->playedMarkerCount = 0;
+    state->queuedSampleCount = 0;
+    state->lastMarker = M11_AUDIO_MARKER_NONE;
+    state->lastSoundIndex = -1;
 }
 
 int M11_Audio_IsAvailable(const M11_AudioState* state) {

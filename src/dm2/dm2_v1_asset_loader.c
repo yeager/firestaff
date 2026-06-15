@@ -4,10 +4,10 @@
  * DM2 Phase 2: DM2-specific GRAPHICS.DAT loading.
  *
  * DM2 GRAPHICS.DAT format:
- *   - Header: [category_count:2_LE][reserved:2][index_offset_table:...].
- *   - Each category has: [index_count:2_LE][field_count:2_LE][data...]
- *   - Index offset table at start of file: uint32[category_count] offsets
- *   - Entry size varies: IMG3 (4-bit nibble), IMG9 (9-bit), raw bytes
+ *   - GDAT container with 240 category IDs addressed by category/index/field.
+ *   - DOS PC English starts with a container word (0x8005), not a raw
+ *     category-count word; the category limit comes from SkGlobal.h.
+ *   - Entry size varies: IMG3 (4-bit nibble), IMG9 (9-bit), raw bytes.
  *
  * GDAT2 field codes (SKWin.GDAT2.InternalCodes.txt):
  *   - 06 00 00: Animation (e.g. 0x0504 = 4-frame animation)
@@ -33,19 +33,25 @@
 #include <string.h>
 #include <stddef.h>
 
+#if defined(__GNUC__)
+#define DM2_MAYBE_UNUSED __attribute__((unused))
+#else
+#define DM2_MAYBE_UNUSED
+#endif
+
 /* ── Known-good DM2 hashes ─────────────────────────────────────────── */
-static const uint8_t DM2_PC_EN_GRAPHICS_MD5[16] = {
+static const uint8_t DM2_PC_EN_GRAPHICS_MD5[16] DM2_MAYBE_UNUSED = {
     0x25, 0x24, 0x7e, 0xde, 0x4d, 0xab, 0xb6, 0xa7,
-    0x1e, 0x5d, 0xab, 0xdf, 0xbcd, 0x59, 0x07, 0xd
+    0x1e, 0x5d, 0xab, 0xdf, 0xbc, 0xd5, 0x90, 0x7d
 };
 
 /* ── GDAT header structures ───────────────────────────────────────── */
 
 /*
- * GDAT header (DM2 format):
- *   uint16_t category_count  (240 for DM2)
- *   uint16_t reserved
- *   uint32_t category_offsets[category_count]  — absolute offsets into file
+ * GDAT header (DM2 PC format):
+ *   DM2 PC English/French/JewelCase are hash-gated elsewhere and expose
+ *   240 logical category IDs (SkGlobal.h GDAT_CATEGORY_LIMIT). The first
+ *   file word is a GDAT container marker, not the category count.
  *
  * Category entry:
  *   uint16_t entry_count
@@ -59,14 +65,17 @@ static const uint8_t DM2_PC_EN_GRAPHICS_MD5[16] = {
  *
  * Source: docs/dm2_graphics.md §4 — image compression formats
  */
-#define DM2_GDAT_HEADER_SIZE     4   /* category_count(2) + reserved(2) */
+#define DM2_GDAT_HEADER_SIZE     4
 #define DM2_GDAT_CATEGORY_OFFSET_TABLE_SIZE(category_count) ((category_count) * 4)
+#define DM2_PC_GRAPHICS_MIN_SIZE (8U * 1024U * 1024U)
+#define DM2_PC_GRAPHICS_MAX_SIZE (10U * 1024U * 1024U)
+#define DM2_PC_GDAT_CONTAINER_WORD 0x8005u
 
 /* ── LE read helpers ─────────────────────────────────────────────── */
 static uint16_t rd16le(const uint8_t *p) {
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
-static uint32_t rd32le(const uint8_t *p) {
+static DM2_MAYBE_UNUSED uint32_t rd32le(const uint8_t *p) {
     return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
            ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
 }
@@ -81,9 +90,9 @@ static uint32_t rd32le(const uint8_t *p) {
  *
  * Source: ReDMCSB DUNGEON.C — IMG3 decoder (F0687, F0688, F0689)
  */
-static uint8_t *dm2_img3_decode(const uint8_t *src, size_t src_size,
-                                  int *out_width, int *out_height,
-                                  int alloc_w, int alloc_h) {
+static DM2_MAYBE_UNUSED uint8_t *dm2_img3_decode(const uint8_t *src, size_t src_size,
+                                                  int *out_width, int *out_height,
+                                                  int alloc_w, int alloc_h) {
     /* IMG3 output is typically 64x64 or 128x128 for wall/floor tiles.
      * DM2 uses 64x64 as standard tile size for indoor levels.
      * Outdoor level tiles (sky/ground) are larger (256x128 or 640x200).
@@ -142,8 +151,21 @@ int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
 
     if (!data || size < DM2_GDAT_HEADER_SIZE + 4) return -1;
 
-    uint16_t cat_count = rd16le(data + 0);
-    if (cat_count > 240) return -1; /* sanity check */
+    uint16_t first_word = rd16le(data + 0);
+    int cat_count;
+
+    if (first_word > 0 && first_word <= DM2_GDAT_CATEGORY_LIMIT) {
+        cat_count = (int)first_word;
+    } else if (first_word == DM2_PC_GDAT_CONTAINER_WORD &&
+               size >= DM2_PC_GRAPHICS_MIN_SIZE &&
+               size <= DM2_PC_GRAPHICS_MAX_SIZE) {
+        /* Source: SkGlobal.h GDAT_CATEGORY_LIMIT and
+         * docs/dm2_platform_data.md PC GRAPHICS.DAT hashes/sizes. The real
+         * DOS GDAT container does not store 240 as the first word. */
+        cat_count = DM2_GDAT_CATEGORY_LIMIT;
+    } else {
+        return -1;
+    }
 
     loader->data = data;
     loader->data_size = size;
@@ -207,9 +229,13 @@ const char *dm2_v1_asset_gdat2_field_name(int field_code) {
 
 int dm2_v1_asset_loader_verify(const DM2_V1_AssetLoader *loader) {
     if (!loader || !loader->data) return 0;
-    /* DM2 PC English MD5: 25247ede4dabb6a71e5dabdfbcd5907d
-     * Simple check: file size should be ~8.6 MB for DM2 PC English */
-    if (loader->data_size >= 8*1024*1024 && loader->data_size <= 10*1024*1024) {
+    /* DM2 PC English MD5: 25247ede4dabb6a71e5dabdfbcd5907d.
+     * This loader is initialized from memory and does not own a filename, so
+     * the scanner performs exact hash gating before launch; here we enforce
+     * the real DOS GDAT marker plus the locked PC size window. */
+    if (loader->data_size >= DM2_PC_GRAPHICS_MIN_SIZE &&
+        loader->data_size <= DM2_PC_GRAPHICS_MAX_SIZE &&
+        rd16le(loader->data) == DM2_PC_GDAT_CONTAINER_WORD) {
         return 1; /* plausible DM2 GRAPHICS.DAT size */
     }
     return 0;

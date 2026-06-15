@@ -288,6 +288,42 @@ static void test_candidate_panel_path(void) {
     CHECK(r.valid == 0, "unknown panel command invalid");
 }
 
+static void test_candidate_append_clear_cycles(void) {
+    ChampionPortraitClickInput_Compat in;
+    CandidateChampionAddResult_Compat add;
+    CandidatePanelState_Compat st;
+    CandidatePanelResult_Compat clear;
+    int cycle;
+
+    printf("[candidate_append_clear_cycles]\n");
+
+    /* ReDMCSB REVIVE.C:272-276 / F0280 sets G0299 to
+     * previousPartyChampionCount + 1 and increments G0305.  REVIVE.C:744-783
+     * / F0282 cancel clears G0299 and decrements G0305 without taking the
+     * REVIVE.C:785-799 mirror-sensor disable path.  Repeating the route
+     * must therefore reuse the same appended party slot until a non-cancel
+     * command finalizes the candidate. */
+    in = base_portrait_click_input();
+    for (cycle = 0; cycle < 3; ++cycle) {
+        in.partyChampionCount = 0;
+        add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+        CHECK(add.triggersCandidateAdd == 1, "cycle F0280 route remains armed");
+        CHECK(add.candidateChampionIndex == 0, "cycle candidate index resets to slot 0");
+        CHECK(add.candidateChampionOrdinal == 1, "cycle G0299 ordinal resets to 1");
+        CHECK(add.nextPartyChampionCount == 1, "cycle G0305 increments to 1");
+
+        st.partyChampionCount = add.nextPartyChampionCount;
+        st.candidateChampionOrdinal = add.candidateChampionOrdinal;
+        clear = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
+            st, DM1_COMMAND_CANCEL);
+        CHECK(clear.valid == 1, "cycle cancel is valid while G0299 is live");
+        CHECK(clear.cancelled == 1, "cycle cancel flag set");
+        CHECK(clear.nextPartyChampionCount == 0, "cycle cancel decrements G0305");
+        CHECK(clear.nextCandidateChampionOrdinal == 0, "cycle cancel clears G0299");
+        CHECK(clear.disablesMirrorSensor == 0, "cycle cancel does not disable mirror sensor");
+    }
+}
+
 static void test_mirror_sensor_disable_order(void) {
     MirrorThing_Compat things[3];
     MirrorSensorDisableResult_Compat d;
@@ -324,6 +360,73 @@ static void test_mirror_sensor_disable_order(void) {
     CHECK(d.foundSensor == 0, "NULL thing list is safe no-op for probe helper");
 }
 
+static ViAltarFullCycleInput_Compat base_vi_altar_full_cycle_input(void) {
+    ViAltarFullCycleInput_Compat in;
+    in.championIndex = 2;
+    in.oldChampionCell = 1;
+    in.occupiedCellMask = 0x0Bu;
+    in.partyDirection = 3;
+    in.maximumHealth = 100;
+    in.droppingIntoAlcove = 1;
+    in.facingViAltar = 1;
+    in.objectIconIndex = DM1_ICON_CHAMPION_BONES;
+    in.bonesChargeCount = 2;
+    in.bonesCell = 3;
+    return in;
+}
+
+static void test_vi_altar_full_cycle_transition(void) {
+    ViAltarFullCycleInput_Compat in;
+    ViAltarFullCycleResult_Compat r;
+
+    printf("[vi_altar_full_cycle_transition]\n");
+
+    /* ReDMCSB source chain for this exact transition:
+     *   CLIKVIEW.C:F0374:173-186 writes C13_EVENT_VI_ALTAR_REBIRTH with
+     *     Effect=C02_EFFECT_TOGGLE and Priority=JUNK.ChargeCount.
+     *   TIMELINE.C:1665-1698 processes step 2 (C0xFFE4 rebirth explosion,
+     *     +5 ticks), step 1 (matching bones icon/ChargeCount unlinked), then
+     *     step 0 (F0283_CHAMPION_ViAltarRebirth(priority)).
+     *   REVIVE.C:F0283:915-937 relocates an occupied old cell to the first
+     *     free cell, applies max/current health, copies party direction, and
+     *     marks MASK0x8000_ACTION_HAND | MASK0x1000_STATUS_BOX | MASK0x0400_ICON. */
+    in = base_vi_altar_full_cycle_input();
+    r = F0868_RESURRECTION_RunViAltarFullCycle_Compat(&in);
+    CHECK(r.eventCreated == 1, "F0374 creates a Vi altar rebirth event for alcove+Vi+bones");
+    CHECK(r.eventType == DM1_EVENT_TYPE_VI_ALTAR_REBIRTH, "event type is C13_EVENT_VI_ALTAR_REBIRTH");
+    CHECK(r.eventPriority == 2, "event priority is bones ChargeCount champion candidate 2");
+    CHECK(r.eventEffect == DM1_EFFECT_TOGGLE, "initial rebirth event effect is step 2");
+    CHECK(r.step2ExplosionThing == DM1_EXPLOSION_REBIRTH_STEP1, "timeline step 2 creates C0xFFE4 rebirth explosion");
+    CHECK(r.step2ExplosionType == DM1_EXPLOSION_TYPE_REBIRTH_STEP1, "C0xFFE4 maps to C100 rebirth step 1 aspect");
+    CHECK(r.step2DelayTicks == 5, "step 2 delays the next event by 5 ticks");
+    CHECK(r.step1BonesMatched == 1, "step 1 finds matching bones by icon/cell/ChargeCount");
+    CHECK(r.step1BonesUnlinked == 1, "step 1 unlinks matching bones before revive");
+    CHECK(r.revived == 1, "step 0 reaches F0283 champion rebirth");
+    CHECK(r.championIndex == 2, "reborn champion index remains the candidate from bones");
+    CHECK(r.finalCell == 2, "old occupied cell 1 relocates to first free cell 2");
+    CHECK(r.finalMaximumHealth == 98, "maximum health 100 gets Vi altar penalty to 98");
+    CHECK(r.finalCurrentHealth == 49, "current health becomes half of penalized maximum");
+    CHECK(r.finalDirection == 3, "reborn champion direction copies party direction");
+    CHECK(r.dirtyAttributes ==
+              (DM1_CHAMPION_ATTR_ACTION_HAND |
+               DM1_CHAMPION_ATTR_STATUS_BOX |
+               DM1_CHAMPION_ATTR_ICON),
+          "rebirth marks action-hand/status/icon redraw attributes");
+
+    in = base_vi_altar_full_cycle_input();
+    in.bonesChargeCount = 1;
+    r = F0868_RESURRECTION_RunViAltarFullCycle_Compat(&in);
+    CHECK(r.eventCreated == 1, "mismatched bones still schedule the event from F0374");
+    CHECK(r.step1BonesMatched == 0, "step 1 rejects bones whose ChargeCount is not the candidate");
+    CHECK(r.step1BonesUnlinked == 0, "mismatched bones are not unlinked");
+    CHECK(r.revived == 0, "mismatched bones do not reach F0283 rebirth");
+
+    in = base_vi_altar_full_cycle_input();
+    in.facingViAltar = 0;
+    r = F0868_RESURRECTION_RunViAltarFullCycle_Compat(&in);
+    CHECK(r.eventCreated == 0, "non-Vi alcove drop does not create the rebirth event");
+}
+
 static void test_command_validation(void) {
     printf("[command_validation]\n");
 
@@ -351,7 +454,9 @@ int main(void) {
     test_reincarnation();
     test_champion_portrait_candidate_route();
     test_candidate_panel_path();
+    test_candidate_append_clear_cycles();
     test_mirror_sensor_disable_order();
+    test_vi_altar_full_cycle_transition();
     test_command_validation();
     test_invariant();
 

@@ -33,7 +33,7 @@ typedef struct {
     /* Movement state */
     int move_cooldown_ticks;
     /* Weather state (outdoor) */
-    int rain_intensity;       /* 0-100 */
+    DM2_V1_WeatherState weather;
     int time_of_day_minutes;  /* 0-1439 */
     /* Dungeon state */
     int dungeon_level;
@@ -55,7 +55,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.outdoor = 0;
     g_dm2_runtime.tick_count = 0;
     g_dm2_runtime.move_cooldown_ticks = 0;
-    g_dm2_runtime.rain_intensity = 0;
+    dm2_v1_weather_init(&g_dm2_runtime.weather);
     g_dm2_runtime.time_of_day_minutes = 720;  /* noon */
     g_dm2_runtime.dungeon_level = 0;
     g_dm2_runtime.view_dir = 0;  /* North */
@@ -95,10 +95,7 @@ void dm2_v1_runtime_tick(void) {
 
     /* Outdoor weather tick */
     if (rt->outdoor && rt->tick_count % 182 == 0) {  /* ~10 sec */
-        /* Rain intensity fluctuates in outdoor areas */
-        if (rt->rain_intensity > 0) {
-            rt->rain_intensity = (rt->rain_intensity + 1) % 100;
-        }
+        dm2_v1_weather_next_state(&rt->weather);
     }
 }
 
@@ -152,10 +149,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         }
 
         /* Weather overlay (rain) */
-        if (rt->rain_intensity > 20) {
+        if (rt->weather.weather_intensity > 20) {
             for (y = 0; y < view_h; y++) {
                 for (x = 0; x < view_w; x += 3) {
-                    if ((x + y + rt->tick_count) % 7 < rt->rain_intensity / 20) {
+                    if ((x + y + rt->tick_count) % 7 < rt->weather.weather_intensity / 20) {
                         framebuffer[y * fb_stride + x] = 15;  /* white streak */
                     }
                 }
@@ -373,6 +370,30 @@ int dm2_v1_runtime_get_party_dir(void) {
     return gs->party_dir;
 }
 
+int dm2_v1_runtime_get_weather(void) {
+    return g_dm2_runtime.weather.weather;
+}
+
+int dm2_v1_runtime_get_weather_intensity(void) {
+    return g_dm2_runtime.weather.weather_intensity;
+}
+
+uint32_t dm2_v1_runtime_get_weather_seed(void) {
+    return g_dm2_runtime.weather.weather_seed;
+}
+
+void dm2_v1_runtime_set_weather_seed(uint32_t seed) {
+    dm2_v1_weather_set_seed(&g_dm2_runtime.weather, seed);
+}
+
+/* dm2_v1_runtime_has_dungeon_data — returns 1 if dungeon state is available.
+ * Used by dm2_v2_runtime_render_frame to detect headless (no dungeon) mode.
+ * Source: Phase 5 runtime binding */
+int dm2_v1_runtime_has_dungeon_data(void) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    return (rt->boot && rt->boot->dm2_state) ? 1 : 0;
+}
+
 /* ── V2 Smooth Movement Callbacks ───────────────────────────────── */
 
 void dm2_v1_runtime_set_move_callback(DM2_V2_MoveCallback cb) {
@@ -396,5 +417,6 @@ const char *dm2_v1_runtime_source_evidence(void) {
         "Source: SKULL.ASM T520  — movement speed and party placement\n"
         "Source: SKULL.ASM T560  — dungeon tick and viewport rendering\n"
         "Source: SKULL.ASM T600  — outdoor tick and weather rendering\n"
+        "Weather transition seed: ReDMCSB BASE.C F0027/F0029 (LCG 0xBB40E62D, +11)\n"
         "Reference: CSB path in firestaff_game_loop.c (FS_GAME_CSB → csb_v1_viewport_render_frame)\n";
 }

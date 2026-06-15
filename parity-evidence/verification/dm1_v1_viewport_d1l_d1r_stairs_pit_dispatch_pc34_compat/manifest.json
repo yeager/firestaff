@@ -1,0 +1,26 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-07T21:25:45Z",
+  "status": "PASS_DM1_V1_VIEWPORT_D1L_D1R_STAIRS_PIT_DISPATCH_SOURCE_LOCK",
+  "repo": "https://github.com/yeager/firestaff.git",
+  "branch": "main",
+  "head": "aaed19e118c4ca17e3a54b3d40b23e536c7e6777",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "anchors": [
+    "DUNVIEW.C F0122:7391-7560 (verified actual D1L body 7391-7557; D1R starts at 7559)",
+    "DUNVIEW.C F0123:7559-7740 (verified actual D1R body 7559-7725; F0124 starts at 7727)",
+    "DUNVIEW.C F0104:3113-3156",
+    "DUNVIEW.C F0105:3158-3188",
+    "DEFS.H:2088/2445-2452/2596-2601/2659-2666/4042-4043/4147-4162/4205-4207/4250-4260",
+    "DUNGEON.C F0163/F0164/F0172"
+  ],
+  "assertions": 288,
+  "notes": [
+    "Gate: tests/test_dm1_v1_viewport_d1l_d1r_stairs_pit_dispatch_pc34_compat.c",
+    "Target: DM1 V1 D1L/D1R stairs-front and floor-pit bitmap dispatch, deterministic synthetic renderer, no game data required.",
+    "F0122 D1L routes C19 stairs-up/down through F0104 with G0079[C04]/C808 and G0079[C11]/C821, and C02 pit through M758/M764 with C858.",
+    "F0123 D1R mirrors the same native bitmap choices through F0105 flipped with C810/C823/C860.",
+    "DUNGEON.C F0172 preserves the direction/map coordinate handoff into square aspect; F0163/F0164 are listed as the thing-list map-coordinate lineage but this gate excludes F0115 thing-pass rendering.",
+    "Synthetic contract explicitly excludes F0111 door rendering and F0115 thing-pass rendering for these stairs/pit bitmap dispatch cases."
+  ]
+}

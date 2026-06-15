@@ -1,0 +1,220 @@
+{
+  "contract": {
+    "assetSet": {
+      "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "game": "Dungeon Master PC DOS English v3.4"
+    },
+    "creature": {
+      "coordinateSet": 0,
+      "firstNativeBitmapRelativeIndex": 51,
+      "frontNativeBitmapIndex": 635,
+      "graphicInfo": "0x0680",
+      "name": "Trolin",
+      "replacementColorSetIndices": "0x65",
+      "transparentColor": 4,
+      "type": 16
+    },
+    "nonClaims": [
+      "No original creature screenshot is supplied by this contract.",
+      "No original-vs-Firestaff pixel parity is promoted by this contract.",
+      "No game logic or rendering behavior is changed by this contract."
+    ],
+    "purpose": "Prepare the minimum original-DOS capture rows needed to compare DM1 V1 creature-chain viewport rendering without promoting parity before captures exist.",
+    "requiredRows": [
+      {
+        "captureClass": "dungeon_gameplay",
+        "expectedOriginalFrame": {
+          "raw": {
+            "height": 200,
+            "width": 320
+          },
+          "viewportCrop": {
+            "height": 136,
+            "width": 224,
+            "x": 0,
+            "y": 33
+          }
+        },
+        "label": "creature_chain_d2c_trolin_front",
+        "mapIndex": 0,
+        "routeKind": "original_dos_runtime_plus_firestaff_fixture",
+        "semanticChecks": [
+          "source asset hashes match assetSet",
+          "original and Firestaff rows share mapIndex/mapX/mapY/direction and creature cell tuple",
+          "creature type 16 resolves through G0219 and M618 to native front bitmap 635",
+          "D2 palette remap uses G0222",
+          "row contains rawSha256, cropSha256, firestaffViewportSha256, and capture timestamp"
+        ],
+        "viewSquare": "D2C"
+      },
+      {
+        "captureClass": "dungeon_gameplay",
+        "expectedOriginalFrame": {
+          "raw": {
+            "height": 200,
+            "width": 320
+          },
+          "viewportCrop": {
+            "height": 136,
+            "width": 224,
+            "x": 0,
+            "y": 33
+          }
+        },
+        "label": "creature_chain_d1c_trolin_front",
+        "mapIndex": 0,
+        "routeKind": "original_dos_runtime_plus_firestaff_fixture",
+        "semanticChecks": [
+          "source asset hashes match assetSet",
+          "original and Firestaff rows share mapIndex/mapX/mapY/direction and creature cell tuple",
+          "creature type 16 resolves through G0219 and M618 to native front bitmap 635",
+          "nearer creature row is ordered after farther creature row in the chain evidence",
+          "row contains rawSha256, cropSha256, firestaffViewportSha256, and capture timestamp"
+        ],
+        "viewSquare": "D1C"
+      }
+    ],
+    "schema": "firestaff.dm1_v1.creature_chain_original_capture_contract.v1",
+    "sourceAnchors": [
+      {
+        "claim": "thing-chain creature draw, pose, flip, depth palette, and viewport compositing route",
+        "file": "DUNVIEW.C",
+        "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "lines": "4547,5201-5586"
+      },
+      {
+        "claim": "PC/I34E creature aspect table; Trolin type 16 has firstNative=51, coordinate/transparent byte 0x04, and replacement sets 0x65",
+        "file": "DUNVIEW.C",
+        "lines": "1656-1685",
+        "symbol": "G0219_as_Graphic558_CreatureAspects"
+      },
+      {
+        "claim": "depth-specific creature palette remap tables required by the comparison rows",
+        "file": "DUNVIEW.C",
+        "lines": "1821-1822",
+        "symbols": [
+          "G0221_auc_Graphic558_PaletteChanges_Creature_D3",
+          "G0222_auc_Graphic558_PaletteChanges_Creature_D2"
+        ]
+      }
+    ],
+    "status": "BLOCKED_ON_REFERENCE"
+  },
+  "contractAudit": {
+    "ok": true,
+    "problems": [],
+    "requiredFields": [
+      "runId",
+      "routeLabel",
+      "originalAssetSet.sha256.GRAPHICS.DAT",
+      "originalAssetSet.sha256.DUNGEON.DAT",
+      "originalFrame.rawSha256",
+      "originalFrame.cropSha256",
+      "originalFrame.width",
+      "originalFrame.height",
+      "originalViewportCrop.x",
+      "originalViewportCrop.y",
+      "originalViewportCrop.width",
+      "originalViewportCrop.height",
+      "captureClass",
+      "party.mapIndex",
+      "party.mapX",
+      "party.mapY",
+      "party.direction",
+      "creature.type",
+      "creature.name",
+      "creature.viewSquare",
+      "creature.nativeBitmapIndex",
+      "firestaffFrame.viewportSha256"
+    ]
+  },
+  "contractPath": "docs/parity/DM1_V1_CREATURE_CHAIN_ORIGINAL_CAPTURE_CONTRACT.json",
+  "decision": "The creature-chain original comparison route is narrowed to two Trolin viewport rows, D2C then D1C, with canonical PC 3.4 asset hashes and 320x200/raw plus 224x136 viewport-crop requirements. The lane remains blocked on real original DOS screenshots.",
+  "documentAudit": {
+    "checks": [
+      {
+        "id": "gap_doc_names_missing_original",
+        "ok": true
+      },
+      {
+        "id": "gap_doc_requires_d2c",
+        "ok": true
+      },
+      {
+        "id": "gap_doc_requires_d1c",
+        "ok": true
+      },
+      {
+        "id": "runbook_scope_has_creature_chain",
+        "ok": true
+      },
+      {
+        "id": "contract_path_documented",
+        "ok": true
+      },
+      {
+        "id": "runbook_names_creature_chain_d2c_trolin_front",
+        "ok": true
+      },
+      {
+        "id": "runbook_names_creature_chain_d1c_trolin_front",
+        "ok": true
+      }
+    ],
+    "ok": true
+  },
+  "firestaffSourceLockAudit": {
+    "checks": [
+      {
+        "id": "render_has_trolin_aspect",
+        "ok": true
+      },
+      {
+        "id": "render_cites_f0115",
+        "ok": true
+      },
+      {
+        "id": "test_checks_creature_render_source_lock",
+        "ok": true
+      },
+      {
+        "id": "test_checks_trolin_name",
+        "ok": true
+      }
+    ],
+    "ok": true
+  },
+  "ok": true,
+  "problems": [],
+  "schema": "firestaff.parity.dm1_v1_creature_chain_original_capture_gate.v1",
+  "sourceAudit": [
+    {
+      "claim": "creature chain evidence must bind to the original F0115 pose/bitmap/palette/flip path",
+      "file": "DUNVIEW.C",
+      "id": "f0115_creature_chain_draw_route",
+      "lines": "4547-5586",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "Trolin type 16 aspect row resolves to firstNative 51, coordinate/transparent byte 0x04, and replacement sets 0x65",
+      "file": "DUNVIEW.C",
+      "id": "pc_i34e_creature_aspect_table",
+      "lines": "1656-1685",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "front native bitmap index for Trolin is 584 + 51 = 635",
+      "file": "DEFS.H",
+      "id": "pc_i34e_first_creature_graphic",
+      "lines": "2392-2392",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_DM1_V1_CREATURE_CHAIN_ORIGINAL_CAPTURE_GATE_LOCKED",
+  "timestampUtc": "2026-06-15T04:43:03.291822+00:00"
+}

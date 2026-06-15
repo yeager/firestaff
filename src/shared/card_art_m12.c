@@ -21,8 +21,10 @@ static const char* const g_dm1CardCandidates[] = {
     NULL
 };
 static const char* const g_theronCardCandidates[] = {
-    "cards/nexus.png",
-    "cards/dungeon-master-nexus.png",
+    "cards/theron.png",
+    "cards/therons-quest.png",
+    "cards/theron.jpg",
+    "cards/theron.webp",
     NULL
 };
 
@@ -58,7 +60,7 @@ static const M12_CardArtSpec g_cardSpecs[] = {
     {"csb", "ORIGINAL CSB CARD", g_csbCardCandidates},
     {"dm2", "ORIGINAL DM2 CARD", g_dm2CardCandidates},
     {"nexus", "GENERATED NEXUS CARD", g_nexusCardCandidates},
-    {"theron", "GENERATED NEXUS CARD", g_theronCardCandidates},
+    {"theron", "GENERATED THERON CARD", g_theronCardCandidates},
 };
 
 /* Safe string copy using snprintf - NULL-safe via ternary. */

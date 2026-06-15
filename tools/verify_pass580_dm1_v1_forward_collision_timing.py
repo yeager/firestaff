@@ -15,6 +15,8 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass580_dm1_v1_forward_collision_timing"
@@ -115,7 +117,12 @@ def git(*args: str) -> str:
 
 
 def find_exe(name: str) -> Path:
+    import os
     candidates = [ROOT / "build" / name]
+    # Support FIRESTAFF_BUILD_DIR env var for out-of-tree builds
+    env_build = os.environ.get("FIRESTAFF_BUILD_DIR")
+    if env_build:
+        candidates.insert(0, Path(env_build) / name)
     candidates.extend(sorted(ROOT.glob(f"build*/{name}")))
     for candidate in candidates:
         if candidate.exists():

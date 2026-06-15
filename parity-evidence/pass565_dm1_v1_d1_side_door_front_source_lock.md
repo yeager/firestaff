@@ -1,6 +1,6 @@
 # Pass565 DM1 V1 D1 side door-front source lock
 
-Status: failed
+Status: passed
 
 Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front order: one rear side cell is drawn before the top frame and door, then one front side cell is drawn after the door.
 
@@ -26,43 +26,43 @@ Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front 
 
 ## Firestaff Evidence
 
-- FAIL firestaff-d1-side-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:166-176)
-  - missing: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
-  - missing: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
+- PASS firestaff-d1-side-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
+  - line 288: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
+  - line 289: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
 
-- FAIL firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:687-755)
-  - line 730: DM1_VIEW_SQUARE_D1L
-  - line 731: DM1_VIEW_SQUARE_D1R
-  - line 735: door_front_occlusion.count
-  - missing: door_front_occlusion.d1l_side_door_front_spec
+- PASS firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
+  - line 45: DM1_VIEW_SQUARE_D1L
+  - line 46: DM1_VIEW_SQUARE_D1R
+  - line 767: door_front_occlusion.count
+  - line 805: door_front_occlusion.d1l_side_door_front_spec
 
-- FAIL firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1248-1265)
-  - missing: DUNVIEW.C:7493-7536
-  - missing: DUNVIEW.C:7661-7704
+- PASS firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
+  - line 2332: DUNVIEW.C:7493-7536
+  - line 2333: DUNVIEW.C:7661-7704
 
 ## Verification
 
 - /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.defs_zones == 1
-PASS source_evidence.wall_source_clip_gate == 1
-PASS source_evidence.wall_empty_blit_gate == 1
-PASS source_evidence.occlusion == 1
-PASS source_evidence.command_dispatch == 1
-PASS source_evidence.next_redraw == 1
-PASS source_evidence.present_wait == 1
-PASS source_evidence.same_viewport_mouse == 1
-PASS source_evidence.same_viewport_turn == 1
-PASS source_evidence.same_viewport_move == 1
-PASS source_evidence.same_viewport_draw == 1
-PASS source_evidence.same_viewport_present == 1
-PASS source_evidence.same_viewport_assets == 1
+PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c
+PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
+PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
+PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py --check-only: rc=0
 ~~~
-FAIL pass565 check-only: firestaff-d1-side-door-front-metadata,firestaff-d1-side-door-front-runtime-test,firestaff-d1-side-door-front-source-evidence
+PASS pass565 check-only
 ~~~
 
 ## Non-Claims

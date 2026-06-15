@@ -1,0 +1,32 @@
+{
+  "name": "dm1_v1_viewport_f0098_floor_ceiling_fallback_source_lock",
+  "game": "DM1",
+  "version": "PC34",
+  "type": "contract-only-source-lock",
+  "status": "pass",
+  "source_anchors": [
+    "DUNVIEW.C:F0098:2962-3002",
+    "DUNVIEW.C:F0128:8337-8338",
+    "DUNVIEW.C:F0128:8564-8571",
+    "DUNVIEW.C:F0125:8005/8033",
+    "DUNVIEW.C:F0126:8115/8139",
+    "DUNVIEW.C:F0104:3113-3151",
+    "DUNVIEW.C:F0792:3288-3301",
+    "DUNVIEW.C:F0108:3940-4008",
+    "DUNVIEW.C:F0128:8606-8615",
+    "DEFS.H:2076/2088/2588-2589/4056-4057"
+  ],
+  "locks": {
+    "function_level_f0098_entry_exit": true,
+    "c10_transparency_preservation": true,
+    "m610_m611_view_selection": true,
+    "c716_c717_fallback_zones": true,
+    "zero_ordinal_no_draw": true,
+    "f0128_viewport_enumeration_interaction": true,
+    "direction_specific": false,
+    "real_asset_required": false
+  },
+  "test_target": "test_dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat",
+  "ctest_regex": "dm1_v1_viewport_f0098_floor_ceiling_fallback",
+  "expected_result": "all assertions pass"
+}

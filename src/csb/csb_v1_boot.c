@@ -1,8 +1,10 @@
 #include "csb_v1_boot.h"
 
 #include "asset_find_by_hash.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ReDMCSB source-lock for this boot/profile boundary:
@@ -77,7 +79,22 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
     profile->default_party_x = CSB_V1_START_PARTY_X;
     profile->default_party_y = CSB_V1_START_PARTY_Y;
     profile->default_party_dir = CSB_V1_START_PARTY_DIR;
+    profile->imported_party_ready = 0;
+    csb_v1_character_init_default(&profile->imported_party);
     csb_v1_runtime_init(&profile->runtime, NULL);
+}
+
+int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
+                                   const CSB_V1_PartyState *party)
+{
+    if (!profile || !party) return -1;
+    if (party->ChampionCount <= 0 ||
+        party->ChampionCount > CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+    profile->imported_party = *party;
+    profile->imported_party_ready = 1;
+    return 0;
 }
 
 void csb_v1_boot_set_save_root(CSB_V1_BootProfile *profile, const char *save_dir)
@@ -106,6 +123,20 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     if (!profile) return -1;
     root = (data_dir && data_dir[0] != '\0') ? data_dir : ".";
     csb_v1_boot_copy(profile->asset_root, sizeof(profile->asset_root), root);
+    /* A reused launcher profile must not carry stale CSB paths across scans.
+     * ReDMCSB only enters the CSB load path after the current media probe has
+     * selected CSB and found a dungeon to load.
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1936-1944 */
+    profile->assets_verified = 0;
+    profile->graphics_verified = 0;
+    profile->dungeon_verified = 0;
+    profile->graphics_path[0] = '\0';
+    profile->dungeon_path[0] = '\0';
+    profile->graphics_md5[0] = '\0';
+    profile->dungeon_md5[0] = '\0';
+    profile->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
+    profile->variant_id = CSB_V1_VARIANT_UNKNOWN;
 
     profile->graphics_verified =
         asset_find_by_md5_list(root, g_csb_boot_graphics_hashes,
@@ -162,18 +193,83 @@ int csb_v1_boot_probe_available(const char *data_dir)
 int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
 {
     if (!profile || !profile->assets_verified) return -1;
+    /* The launcher may carry several game profiles at once.  Do not let an
+     * aggregate READY bit alone hand a non-CSB or partial profile to the CSB
+     * runtime: ReDMCSB enters the CSB dungeon only after the CSB entrance/media
+     * path has selected C28_ENTRANCE_CSB and the load path has a dungeon header
+     * to consume.
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1936-1944 */
+    if (strcmp(profile->game_id, CSB_V1_BOOT_GAME_ID) != 0 ||
+        !profile->graphics_verified ||
+        !profile->dungeon_verified ||
+        profile->graphics_path[0] == '\0' ||
+        profile->dungeon_path[0] == '\0') {
+        return -1;
+    }
+    /* Re-entering the CSB profile replaces the live dungeon context just as
+     * ReDMCSB's global dungeon/map state is replaced when a new game is
+     * loaded.  Clear the previous heap-owned runtime before csb_v1_runtime_init
+     * overwrites its handle fields.
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1936-1944
+     * Source: ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 */
+    csb_v1_runtime_cleanup(&profile->runtime);
     csb_v1_runtime_init(&profile->runtime, profile->asset_root);
     profile->runtime.variant_id = profile->variant_id;
     profile->runtime.difficulty = CSB_V1_DIFFICULTY_HARD;
+    profile->runtime.save_dir = profile->save_root;
     profile->runtime.dungeon_path = profile->dungeon_path;
     profile->runtime.graphics_path = profile->graphics_path;
     profile->runtime.dungeon_asset.path = profile->dungeon_path;
+    profile->runtime.dungeon_asset.kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
     profile->runtime.graphics_asset.path = profile->graphics_path;
     profile->runtime.graphics_asset.kind = profile->graphics_kind;
+    /* Copy entrance/start map indices from the boot profile so the runtime
+     * honours the source-locked new-game map selection.
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441 (C255_MAP_INDEX_ENTRANCE)
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1940-1944 (new-game map 0) */
+    profile->runtime.entrance_map_index = profile->entrance_map_index;
+    profile->runtime.start_map_index = profile->start_map_index;
     profile->runtime.state = CSB_STATE_TITLE;
     profile->runtime.chaos_magic.magic_initialized = 1;
     profile->runtime.chaos_magic.spell_grid_version = 0U;
     profile->runtime.chaos_magic.chaos_level = 0U;
+    if (profile->imported_party_ready) {
+        (void)csb_v1_runtime_set_party_state(&profile->runtime,
+                                             &profile->imported_party);
+    }
+    /* Load the verified DUNGEON.DAT into the runtime so that the
+     * dungeon-layer accessors (csb_v1_dungeon_get_current_level,
+     * csb_v1_dungeon_get_square_type, ...) become live immediately
+     * after launch — without a second hash search or a follow-up
+     * csb_v1_runtime_boot() call from the game-view.
+     *
+     * The dungeon is heap-allocated and owned by the runtime profile
+     * (dungeon_handle).  csb_v1_runtime_cleanup() / csb_v1_boot_cleanup()
+     * are responsible for releasing it.
+     *
+     * Failure is non-fatal: if the verified path cannot be opened
+     * (e.g. archive-backed path not yet materialized by M12), the
+     * runtime continues with dungeon_handle == NULL and the dungeon
+     * accessors return ENDOF — matching csb_v1_runtime_boot()'s
+     * pre-existing tolerant behaviour.
+     *
+     * Source: CSBWin/CSBCode.cpp:6800-6950 LoadDungeon
+     * Source: ReDMCSB DUNGEON.C F0237 dungeon load entry
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441 entrance micro-dungeon */
+    {
+        CSB_V1_DungeonData *dungeon = (CSB_V1_DungeonData *)calloc(1, sizeof(CSB_V1_DungeonData));
+        if (dungeon) {
+            if (csb_v1_dungeon_load_from_file(dungeon, profile->dungeon_path) == 0) {
+                profile->runtime.dungeon_handle = dungeon;
+                csb_v1_dungeon_set_current(dungeon);
+                csb_v1_dungeon_set_current_level(0);
+            } else {
+                free(dungeon);
+                profile->runtime.dungeon_handle = NULL;
+            }
+        }
+    }
     profile->state = CSB_V1_BOOT_STATE_RUNTIME_READY;
     return 0;
 }
@@ -181,6 +277,12 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
 void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile)
 {
     if (!profile) return;
+    /* The boot profile owns the runtime handoff dungeon.  Release it through
+     * the same runtime cleanup path used by csb_v1_runtime_boot() so the
+     * singleton dungeon/map accessors do not retain a stale CSB context after
+     * leaving the profile.
+     * Source: ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 */
+    csb_v1_runtime_cleanup(&profile->runtime);
     profile->state = CSB_V1_BOOT_STATE_PROFILE_READY;
     memset(&profile->runtime, 0, sizeof(profile->runtime));
 }

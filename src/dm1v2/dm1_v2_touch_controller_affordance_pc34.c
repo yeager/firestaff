@@ -33,21 +33,18 @@ static DM1_V2_TouchControllerAffordanceRoute dm1_v2_affordance_result(
     return result;
 }
 
-static int dm1_v2_affordance_is_pinch_zoom(DM1_V2_TouchControllerAffordance affordance) {
-    return affordance == DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_IN ||
-           affordance == DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_OUT;
-}
-
 DM1_V2_MovementCommand dm1_v2_touch_controller_affordance_movement_command(
     DM1_V2_TouchControllerAffordance affordance) {
     switch (affordance) {
         case DM1_V2_AFFORDANCE_TOUCH_SWIPE_UP:
         case DM1_V2_AFFORDANCE_CONTROLLER_DPAD_UP:
         case DM1_V2_AFFORDANCE_CONTROLLER_LEFT_STICK_UP:
+        case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_UP:
             return DM1_V2_MOVEMENT_COMMAND_MOVE_FORWARD;
         case DM1_V2_AFFORDANCE_TOUCH_SWIPE_DOWN:
         case DM1_V2_AFFORDANCE_CONTROLLER_DPAD_DOWN:
         case DM1_V2_AFFORDANCE_CONTROLLER_LEFT_STICK_DOWN:
+        case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_DOWN:
             return DM1_V2_MOVEMENT_COMMAND_MOVE_BACKWARD;
         case DM1_V2_AFFORDANCE_TOUCH_SWIPE_LEFT:
         case DM1_V2_AFFORDANCE_CONTROLLER_DPAD_LEFT:
@@ -73,6 +70,8 @@ DM1_V2_MovementCommand dm1_v2_touch_controller_affordance_movement_command(
          * only multi-touch vehicle and are V2-only. */
         case DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_IN:
         case DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_OUT:
+        case DM1_V2_AFFORDANCE_TOUCH_DOUBLE_TAP:
+        case DM1_V2_AFFORDANCE_TOUCH_LONG_PRESS:
         case DM1_V2_AFFORDANCE_NONE:
         default:
             return DM1_V2_MOVEMENT_COMMAND_NONE;
@@ -90,6 +89,8 @@ DM1_V2_TouchControllerInputKind dm1_v2_touch_controller_affordance_input_kind(
         case DM1_V2_AFFORDANCE_TOUCH_EDGE_STRAFE_RIGHT:
         case DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_IN:
         case DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_OUT:
+        case DM1_V2_AFFORDANCE_TOUCH_DOUBLE_TAP:
+        case DM1_V2_AFFORDANCE_TOUCH_LONG_PRESS:
             return DM1_V2_AFFORDANCE_INPUT_TOUCH;
         case DM1_V2_AFFORDANCE_CONTROLLER_DPAD_UP:
         case DM1_V2_AFFORDANCE_CONTROLLER_DPAD_DOWN:
@@ -101,6 +102,8 @@ DM1_V2_TouchControllerInputKind dm1_v2_touch_controller_affordance_input_kind(
         case DM1_V2_AFFORDANCE_CONTROLLER_LEFT_STICK_RIGHT:
         case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_LEFT:
         case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_RIGHT:
+        case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_UP:
+        case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_DOWN:
         case DM1_V2_AFFORDANCE_CONTROLLER_LEFT_BUMPER:
         case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_BUMPER:
             return DM1_V2_AFFORDANCE_INPUT_CONTROLLER;
@@ -116,7 +119,6 @@ DM1_V2_TouchControllerAffordanceRoute dm1_v2_touch_controller_affordance_route(
     DM1_V2_MovementCommand command =
         dm1_v2_touch_controller_affordance_movement_command(affordance);
     DM1_V2_MovementCommandRoute route;
-    int isPinchZoom = dm1_v2_affordance_is_pinch_zoom(affordance);
 
     if (!v2PresentationEnabled) {
         route = dm1_v2_movement_command_route_for_presentation(
@@ -126,10 +128,24 @@ DM1_V2_TouchControllerAffordanceRoute dm1_v2_touch_controller_affordance_route(
     }
 
     if (command == DM1_V2_MOVEMENT_COMMAND_NONE) {
+        /* V2-only gestures (pinch-zoom, double-tap, long-press) carry no movement
+         * command.  When V2 presentation is enabled, they are accepted and route
+         * through V2_PRESENTATION so the gesture can reach the HUD/minimap layer.
+         * v2PresentationEnabled must be 1 so that double-tap
+         * and long-press — which are not pinch-zoom — also route as V2_PRESENTATION.
+         *
+         * DM1_V2_AFFORDANCE_NONE is an invalid affordance and is always rejected
+         * (accepted=0), regardless of V2 presentation state. */
+        if (affordance == DM1_V2_AFFORDANCE_NONE) {
+            route = dm1_v2_movement_command_route_for_presentation(
+                0,
+                DM1_V2_MOVEMENT_COMMAND_NONE);
+            return dm1_v2_affordance_result(0, affordance, command, route);
+        }
         route = dm1_v2_movement_command_route_for_presentation(
-            isPinchZoom,
+            1,
             DM1_V2_MOVEMENT_COMMAND_NONE);
-        return dm1_v2_affordance_result(isPinchZoom, affordance, command, route);
+        return dm1_v2_affordance_result(1, affordance, command, route);
     }
 
     route = dm1_v2_movement_command_route_for_presentation(1, command);
@@ -157,13 +173,17 @@ const char* dm1_v2_touch_controller_affordance_name(
         case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_RIGHT: return "controller_right_stick_right";
         case DM1_V2_AFFORDANCE_CONTROLLER_LEFT_BUMPER: return "controller_left_bumper";
         case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_BUMPER: return "controller_right_bumper";
+        case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_UP: return "controller_right_stick_up";
+        case DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_DOWN: return "controller_right_stick_down";
         case DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_IN: return "touch_pinch_zoom_in";
         case DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_OUT: return "touch_pinch_zoom_out";
+        case DM1_V2_AFFORDANCE_TOUCH_DOUBLE_TAP: return "touch_double_tap";
+        case DM1_V2_AFFORDANCE_TOUCH_LONG_PRESS: return "touch_long_press";
         case DM1_V2_AFFORDANCE_NONE:
         default: return "none";
     }
 }
 
 const char* dm1_v2_touch_controller_affordance_source_lock_evidence(void) {
-    return "ReDMCSB DEFS.H:197-211,238-243 input records and C001..C006 movement commands; COMMAND.C:2045-2155 queue dispatch; CLIKMENU.C:142-174,180-390 movement/turn owners; GAMELOOP.C:164-219 V1 input wait loop. V2 pinch-to-zoom (DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_IN/OUT) maps to v2_minimap_zoom; multi-touch input via SDL3 SDL_FINGER events is V2-only and has no V1 path. All affordances accepted only when V2 presentation is enabled and route through dm1_v2_movement_command_route_for_presentation.";
+    return "ReDMCSB DEFS.H:197-211,238-243 input records and C001..C006 movement commands; COMMAND.C:2045-2155 queue dispatch; CLIKMENU.C:142-174,180-390 movement/turn owners; GAMELOOP.C:164-219 V1 input wait loop. V2 pinch-to-zoom (DM1_V2_AFFORDANCE_TOUCH_PINCH_ZOOM_IN/OUT) maps to v2_minimap_zoom; multi-touch input via SDL3 SDL_FINGER events is V2-only and has no V1 path. DM1_V2_AFFORDANCE_CONTROLLER_RIGHT_STICK_UP/DOWN extends right-stick from turn-only to full forward/backward parity with left stick. DM1_V2_AFFORDANCE_TOUCH_DOUBLE_TAP uses SDL3 SDL_FINGERMULTIGESTURE two-tap detection (no V1 path). DM1_V2_AFFORDANCE_TOUCH_LONG_PRESS uses SDL3 SDL_FINGERMOTION dwell detection (no V1 path). All affordances accepted only when V2 presentation is enabled and route through dm1_v2_movement_command_route_for_presentation.";
 }

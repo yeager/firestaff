@@ -21,11 +21,12 @@
  * Function numbering: F0790 – F0809 (Phase 16 slot).
  *
  * v1 scope highlights (plan §1):
- *   - 3 creature types fully implemented: C09 Stone Golem, C10 Mummy,
- *     C12 Skeleton. The remaining 24 types return cleanly from stubs
- *     that still emit a valid CREATURE_TICK reschedule.
- *   - Spell-casting creatures (Vexirk, Lord Chaos, Materializer) stay
- *     in the stub path; SpellCastRequest emission is always zero in v1.
+ *   - 27 creature types fully implemented (BUG-104 final): all DM1
+ *     creature types now FULL tier with per-type behavior in F0804 §(5b).
+ *   - Spell-casting creatures (Vexirk, Lord Chaos, Materializer) use
+ *     the FULL tier with emittedSpellRequest as a v1 surrogate for the
+ *     M11 vision-share/invisibility/projection channels; full effect
+ *     dispatch into M11 is deferred to a future pass.
  *   - One-step pathfinding only (primary / secondary / opposite / RNG
  *     fallback). No A*.
  *   - Perception delegates LoS to a caller-provided pre-baked flag.
@@ -55,7 +56,7 @@
  * ========================================================== */
 
 #define CREATURE_AI_STATE_SERIALIZED_SIZE      72   /* 18 int32 */
-#define CREATURE_TICK_INPUT_SERIALIZED_SIZE   128   /* 32 int32 */
+#define CREATURE_TICK_INPUT_SERIALIZED_SIZE   136   /* 34 int32 (added adjacencyFakeWallMask + adjacencyFakeWallOpenMask in v2.7.14) */
 #define CREATURE_TICK_RESULT_SERIALIZED_SIZE  176   /* 16 + 48 + 16 + 44 + 4 */
 #define CREATURE_BEHAVIOR_PROFILE_SIZE         64   /* 16 int32 (internal) */
 
@@ -64,9 +65,33 @@
  * ========================================================== */
 
 #define CREATURE_TYPE_COUNT                    27
+#define CREATURE_TYPE_GIANT_SCORPION            0
+#define CREATURE_TYPE_SWAMP_SLIME               1
+#define CREATURE_TYPE_GIGGLER                   2
+#define CREATURE_TYPE_WIZARD_EYE                3
+#define CREATURE_TYPE_PAIN_RAT                  4
+#define CREATURE_TYPE_RUSTER                    5
+#define CREATURE_TYPE_SCREAMER                  6
+#define CREATURE_TYPE_ROCKPILE                  7
+#define CREATURE_TYPE_GHOST                     8
 #define CREATURE_TYPE_STONE_GOLEM               9
 #define CREATURE_TYPE_MUMMY                    10
+#define CREATURE_TYPE_BLACK_FLAME              11
 #define CREATURE_TYPE_SKELETON                 12
+#define CREATURE_TYPE_COUATL                   13
+#define CREATURE_TYPE_VEXIRK                   14
+#define CREATURE_TYPE_MAGENTA_WORM             15
+#define CREATURE_TYPE_TROLIN                   16
+#define CREATURE_TYPE_GIANT_WASP               17
+#define CREATURE_TYPE_ANIMATED_ARMOUR          18
+#define CREATURE_TYPE_MATERIALIZER             19
+#define CREATURE_TYPE_WATER_ELEMENTAL          20
+#define CREATURE_TYPE_OITU                     21
+#define CREATURE_TYPE_DEMON                    22
+#define CREATURE_TYPE_LORD_CHAOS               23
+#define CREATURE_TYPE_RED_DRAGON               24
+#define CREATURE_TYPE_LORD_ORDER               25
+#define CREATURE_TYPE_GREY_LORD                26
 
 /* ==========================================================
  *  AI state enum (stable — serialised forever)
@@ -99,10 +124,14 @@
  * ========================================================== */
 
 #define CREATURE_ATTR_MASK_SIDE_ATTACK     0x0004
+#define CREATURE_ATTR_MASK_PREFER_BACK_ROW 0x0008
+#define CREATURE_ATTR_MASK_ATTACK_ANY_CHAMPION 0x0010
 #define CREATURE_ATTR_MASK_LEVITATION      0x0020
 #define CREATURE_ATTR_MASK_NON_MATERIAL    0x0040
 #define CREATURE_ATTR_MASK_SEE_INVISIBLE   0x0800
+#define CREATURE_ATTR_MASK_NIGHT_VISION    0x1000
 #define CREATURE_ATTR_MASK_ARCHENEMY       0x2000
+#define CREATURE_ATTR_MASK_DROP_FIXED      0x0200
 
 /* ==========================================================
  *  Implementation tier values
@@ -157,7 +186,9 @@ struct CreatureTickInput_Compat {
     int partyMapY;
     int partyChampionsAlive;             /* bitmask 0..15 */
     int partyChampionCurrentHealth[4];
-    int adjacencyWallMask;               /* bit i = direction i blocked by wall/fakewall */
+    int adjacencyWallMask;               /* bit i = direction i blocked by solid wall */
+    int adjacencyFakeWallMask;           /* bit i = direction i has a FAKEWALL tile (CHAMPION.C:1503-1505) */
+    int adjacencyFakeWallOpenMask;       /* bit i = direction i FAKEWALL is open / imaginary-passable */
     int adjacencyDoorMask;               /* bit i = direction i has closed door */
     int adjacencyPitMask;                /* bit i = direction i has open pit */
     int adjacencyCreatureMask;           /* bit i = direction i has another live group */
@@ -199,7 +230,9 @@ struct CreatureTickResult_Compat {
     int newAttackCooldown;
     int newFearCounter;
     int rngCallCount;
-    int reserved0;
+    int emittedDoubleMove;        /* 0 or 1 — archenemy F0204 second-square move.
+                                   * Replaces former reserved0. Layout is still
+                                   * 16 int32 = 64 bytes (BUG-115b). */
     int reserved1;
     int reserved2;
 
@@ -337,6 +370,19 @@ int F0800_CREATURE_EmitCombatAction_Compat(
 int F0801_CREATURE_EmitMovement_Compat(
     const struct CreatureAIState_Compat* s,
     const struct CreatureTickInput_Compat* in,
+    int direction,
+    struct CreatureTickResult_Compat* outResult);
+
+/* F0801b: F0204 archenemy double-move second-square helper.
+ * Source: GROUP.C F0204 lines 1576-1589 + F0202 lines 1457-1554.
+ * Computes the second-square target one step further than the
+ * first-square target supplied by the caller. The final
+ * outResult has the second square as its target and
+ * outMovementReserved set to 1 as a "this is a double-move"
+ * marker. */
+int F0801b_CREATURE_EmitArchenemySecondSquare_Compat(
+    int firstSquareX,
+    int firstSquareY,
     int direction,
     struct CreatureTickResult_Compat* outResult);
 

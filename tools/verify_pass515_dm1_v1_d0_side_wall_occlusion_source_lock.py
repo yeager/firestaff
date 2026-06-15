@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import hashlib, json, subprocess, sys
+import hashlib, os, json, subprocess, sys
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
@@ -36,10 +39,10 @@ SOURCE_CHECKS = [
     {"id":"redmcsb_d0_wall_zone_ids_are_side_specific","path":RED/"DEFS.H","lines":"4050-4060","claim":"PC34/I34E D0 side-wall zones are distinct from D0C.","ordered":["#define C716_ZONE_WALL_D0L                                      716","#define C717_ZONE_WALL_D0R                                      717"]},
 ]
 FIRESTAFF_CHECKS = [
-    {"id":"firestaff_existing_d0_side_wall_specs_cite_return_lines","path":ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","lines":"424-430","claim":"Existing runtime metadata records direct D0 side-wall return evidence.","ordered":[
+    {"id":"firestaff_existing_d0_side_wall_specs_cite_return_lines","path":ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","lines":"519-520","claim":"Existing runtime metadata records direct D0 side-wall return evidence.","ordered":[
         '{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L,  true,  false, "F0125_DUNGEONVIEW_DrawSquareD0L", "DUNVIEW.C:8016-8033", "DUNVIEW.C:8036-8038 wall case returns" },',
         '{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8126-8139", "DUNVIEW.C:8142-8144 wall case returns" },']},
-    {"id":"firestaff_existing_d0_side_occlusion_orders_are_single_back_cells","path":ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","lines":"251-256","claim":"Open D0 side lanes use one back cell each; wall is a separate return path.","ordered":[
+    {"id":"firestaff_existing_d0_side_occlusion_orders_are_single_back_cells","path":ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","lines":"300-301","claim":"Open D0 side lanes use one back cell each; wall is a separate return path.","ordered":[
         '{ DM1_VIEW_SQUARE_D0L, 0x0002, "F0125_DUNGEONVIEW_DrawSquareD0L", "DUNVIEW.C:8000-8005 door-side/teleporter branch", "DUNVIEW.C:8005 F0115 with C0x0002" },',
         '{ DM1_VIEW_SQUARE_D0R, 0x0001, "F0126_DUNGEONVIEW_DrawSquareD0R", "DUNVIEW.C:8110-8115 door-side/teleporter branch", "DUNVIEW.C:8115 F0115 with C0x0001" },']},
     {"id":"firestaff_viewport_test_covers_d0_side_wall_specs","path":ROOT/"tests/test_dm1_v1_viewport_3d_pc34_compat.c","lines":"294-305","claim":"Focused runtime test asserts D0 side return lines and zone/wall pairing.","ordered":[
@@ -101,7 +104,7 @@ def write(man):
 def main(check=False):
     red=audit(SOURCE_CHECKS); fire=audit(FIRESTAFF_CHECKS); failed=[r for r in red+fire if r["status"]!="PASS"]
     if check: print("PASS check-only" if not failed else "FAIL check-only"); return 0 if not failed else 1
-    runtime=run_gate([str(ROOT/"build"/"test_dm1_v1_viewport_3d_pc34_compat")]); local_refs=refs()
+    runtime=run_gate([str(resolve_build_dir(ROOT, ROOT / "build")/"test_dm1_v1_viewport_3d_pc34_compat")]); local_refs=refs()
     ok=not failed and runtime["passed"] and all(r["exists"] for r in local_refs)
     man={"schema":"pass515_dm1_v1_d0_side_wall_occlusion_source_lock.v1","status":"passed" if ok else "failed","statusToken":STATUS if ok else "FAILED_PASS515_DM1_V1_D0_SIDE_WALL_OCCLUSION_SOURCE_LOCK","redmcsbRoot":str(RED),"claim":"D0L/D0R side wall cases draw before D0C and return before side-lane open content/field paths.","redmcsbPrimaryChecks":red,"firestaffChecks":fire,"localReferences":local_refs,"verificationRuns":[runtime,{"command":[sys.executable,str(Path(__file__).resolve()),"--check-only"],"returncode":0 if not failed else 1,"passed":not failed,"outputTail":"PASS check-only" if not failed else "FAIL check-only"}],"nonClaims":["No runtime metadata was changed.","No D0C foreground behavior is promoted.","No DANNESBURK or external references were used."]}
     write(man)

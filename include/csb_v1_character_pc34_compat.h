@@ -241,6 +241,40 @@ void  csb_v1_champion_set_skill(CSB_V1_Champion *c, int skill_idx, int val);
 int   csb_v1_champion_get_load(CSB_V1_Champion *c);
 void  csb_v1_champion_recompute_load(CSB_V1_Champion *c);
 
+/* Compute the maximum load a champion can carry (F0309_CHAMPION_GetMaximumLoad).
+ * ReDMCSB CHAMPION.C F0309 lines 1157-1178:
+ *   base  = (STR_CURRENT << 3) + 100
+ *   base  = F0306_CHAMPION_GetStaminaAdjustedValue(champion, base)
+ *   base += 9; base -= base % 10   (round up to next multiple of 10)
+ * Elven Boots (C05 feet slot) and wound tier are not yet modeled in the
+ * CSB V1 champion struct, so this helper implements the STR + stamina
+ * sub-formula only and intentionally matches the F0309_MEDIA182 baseline
+ * (no boots, no wounds).  Returns 0 when champion is NULL.
+ * Source: ReDMCSB CHAMPION.C F0309_CHAMPION_GetMaximumLoad lines 1157-1178
+ *         and F0306_CHAMPION_GetStaminaAdjustedValue lines 1078-1106. */
+unsigned int csb_v1_champion_get_maximum_load(const CSB_V1_Champion *c);
+
+/* Compute the per-tick movement cost for a champion (F0310_CHAMPION_GetMovementTicks).
+ * ReDMCSB CHAMPION.C F0310 lines 1180-1214: the result is the wall-clock
+ * ticks-per-step the dungeon tick scheduler must consume for that champion.
+ *   if (MaxLoad > Load)          ticks = 2  (BUG0_72: >, not >=)
+ *     if (Load*8 > MaxLoad*5)    ticks = 3
+ *   else                         ticks = 4 + ((Load - MaxLoad) << 2) / MaxLoad
+ *   [+1 or +2 if feet wounded]
+ *   [-1 if wearing Boot of Speed in C05 feet slot]
+ * Wounds on the legs and the feet-slot boots are not yet modeled in
+ * CSB_V1_Champion, so this returns the F0310 baseline (no wound, no
+ * boot).  Returns 2 when champion is NULL (the light-load default).
+ * Source: ReDMCSB CHAMPION.C F0310_CHAMPION_GetMovementTicks lines 1180-1214. */
+unsigned int csb_v1_champion_get_movement_ticks(const CSB_V1_Champion *c);
+
+/* Test whether a champion's current Load exceeds the F0309 maximum
+ * (post-stamina-adjustment).  This is the champion panel red-load
+ * condition from CHAMDRAW.C; the equal-load BUG0_72 movement slowdown
+ * is handled by csb_v1_champion_get_movement_ticks().
+ * Source: ReDMCSB CHAMDRAW.C line 959 and CHAMPION.C F0310 line 1198. */
+int csb_v1_champion_is_overloaded(const CSB_V1_Champion *c);
+
 /* Utility disk verification (checks for CSB utility disk signature) */
 int  csb_v1_util_check_disk(const char *drive_path);
 int  csb_v1_util_require_disk(const char *drive_path,

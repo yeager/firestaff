@@ -101,6 +101,19 @@ enum {
     DM1_PC34_ALLOWED_ANY_SLOT = 0xFFFF
 };
 
+enum {
+    DM1_PC34_ICON_JUNK_RABBITS_FOOT = 137,
+    DM1_PC34_RABBITS_FOOT_LUCK_BONUS = 10
+};
+
+enum {
+    DM1_PC34_PANEL_INVENTORY = 0,
+    DM1_PC34_PANEL_FOOD_WATER_POISONED = 1,
+    DM1_PC34_PANEL_SCROLL = 5,
+    DM1_PC34_PANEL_CHEST = 6,
+    DM1_PC34_PANEL_RESURRECT_REINCARNATE = 7
+};
+
 typedef struct {
     int itemType;
     int weight;
@@ -125,6 +138,7 @@ typedef struct {
 typedef struct {
     M11_ChampionInventory champions[M11_MAX_CHAMPIONS];
     int championCount;
+    int panelContent;
 } M11_InventoryState;
 
 void m11_inventory_init(M11_InventoryState* s, int championCount);
@@ -151,6 +165,10 @@ int m11_inventory_get_item_in_pc34_source_slot(const M11_InventoryState* s, int 
                                                int pc34Slot, M11_Item* out);
 int m11_inventory_click_pc34_source_slot(M11_InventoryState* s, int champ, int pc34Slot);
 const char *dm1_inventory_pass601_inventory_source_evidence(void);
+const char *dm1_inventory_chest_stale_click_source_evidence_pc34(void);
+int m11_inventory_click_open_chest_slot_for_thing(M11_InventoryState* s, int champ,
+                                                  int expectedOpenChestThing,
+                                                  int chestSlotIndex);
 int m11_inventory_resolve_status_hand_slot_box(int slotBoxIndex,
                                                int partyChampionCount,
                                                int inventoryChampionOrdinal,
@@ -162,6 +180,19 @@ int m11_inventory_pc34_is_backpack_source_slot(int pc34Slot);
 int m11_inventory_pc34_is_chest_source_slot(int pc34Slot);
 int m11_inventory_open_chest(M11_InventoryState* s, int champ, int openChestThing,
                              const M11_Item* linkedItems, int linkedItemCount);
+int m11_inventory_open_chest_replacing_current(M11_InventoryState* s, int champ,
+                                               int openChestThing,
+                                               const M11_Item* linkedItems,
+                                               int linkedItemCount,
+                                               M11_Item* previousItemsOut,
+                                               int maxPreviousItemsOut);
+int m11_inventory_get_panel_content_pc34(const M11_InventoryState* s);
+int m11_inventory_set_panel_content_pc34(M11_InventoryState* s,
+                                         int panelContent);
+/* ReDMCSB: PANEL.C F0347 redraws FOOD/WATER/POISONED when no container
+ * remains in the action hand; keeps CHEST when the action hand is container. */
+int m11_inventory_apply_panel_route_after_close_pc34(M11_InventoryState* s,
+                                                    int champ);
 int m11_inventory_close_chest(M11_InventoryState* s, int champ,
                               M11_Item* linkedItemsOut, int maxItemsOut);
 int m11_inventory_get_open_chest_thing(const M11_InventoryState* s, int champ);
@@ -170,6 +201,10 @@ int m11_inventory_set_item_in_chest_slot(M11_InventoryState* s, int champ, int c
 int m11_inventory_get_item_in_chest_slot(const M11_InventoryState* s, int champ,
                                          int chestSlotIndex, M11_Item* out);
 int m11_inventory_can_equip(const M11_Item* item, int pc34Slot);
+int m11_inventory_pc34_applies_rabbits_foot_luck_modifier(const M11_Item* item,
+                                                          int pc34Slot);
+int m11_inventory_pc34_get_rabbits_foot_luck_bonus(const M11_InventoryState* s,
+                                                   int champ);
 int m11_inventory_equip(M11_InventoryState* s, int champ, int pc34Slot, const M11_Item* item);
 int m11_inventory_unequip(M11_InventoryState* s, int champ, int pc34Slot);
 

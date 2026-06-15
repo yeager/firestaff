@@ -40,7 +40,24 @@ void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
 int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir) {
     Nexus_Creature *c;
     if (!mgr || type_idx < 0 || type_idx >= mgr->type_count) return -1;
+    /* ReDMCSB: DUNGEON.C F0151 lines ~1423-1445 returns wall for
+     * out-of-map squares; GROUP.C F0183 lines ~414-424 refuses to assign an
+     * active-group slot after the active pool is exhausted. Nexus DGN actor
+     * records are external data, so malformed references must fail before
+     * consuming an active creature slot. */
+    if (x < 0 || x >= NEXUS_MAX_MAP_SIZE || y < 0 || y >= NEXUS_MAX_MAP_SIZE) return -1;
+    if (dir < 0 || dir > 3) return -1;
     if (mgr->active_count >= NEXUS_MAX_ACTIVE_CREATURES) return -1;
+    /* ReDMCSB: GROUP.C F0183 lines 389-432 caps active group slots before
+     * writing G0375_ps_ActiveGroups. Nexus DGN actor records can be malformed
+     * while fixture parsing is still being hardened, so preserve that fixed
+     * pool boundary and clamp spatial fields before AI indexes the 64x64 grid. */
+    if (x < 0) x = 0;
+    if (x >= NEXUS_MAX_MAP_SIZE) x = NEXUS_MAX_MAP_SIZE - 1;
+    if (y < 0) y = 0;
+    if (y >= NEXUS_MAX_MAP_SIZE) y = NEXUS_MAX_MAP_SIZE - 1;
+    dir %= 4;
+    if (dir < 0) dir += 4;
     c = &mgr->active[mgr->active_count];
     c->type_index = type_idx;
     c->health = mgr->types[type_idx].health;
@@ -55,6 +72,7 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
                               const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
                               int map_index) {
     int i;
+    (void)map_index;
     if (!mgr) return;
     for (i = 0; i < mgr->active_count; i++) {
         Nexus_Creature *c = &mgr->active[i];

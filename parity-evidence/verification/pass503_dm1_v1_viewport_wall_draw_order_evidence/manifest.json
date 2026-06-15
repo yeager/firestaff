@@ -37,35 +37,35 @@
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-draw-order-table",
-      "line": 148,
+      "line": 159,
       "needle": "static const DM1_ViewportDrawStep s_draw_order[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-wall-spec-table",
-      "line": 412,
+      "line": 505,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-thing-layer-table",
-      "line": 189,
+      "line": 236,
       "needle": "static const DM1_ViewportThingLayerSpec s_thing_layers[]",
       "ok": true
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "firestaff-door-front-occlusion-table",
-      "line": 232,
+      "line": 279,
       "needle": "static const DM1_ViewportDoorFrontOcclusionSpec s_door_front_occlusion_specs[]",
       "ok": true
     },
     {
       "file": "tools/verify_pass496_dm1_v1_wall_occlusion_spec_matrix.py",
       "id": "pass496-matrix-gate-present",
-      "line": 15,
+      "line": 17,
       "needle": "SOURCE_CHECKS = [",
       "ok": true
     },

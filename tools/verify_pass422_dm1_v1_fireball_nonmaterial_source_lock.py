@@ -11,6 +11,8 @@ flattened F0213 blocks; not authoritative for this lock.
 """
 from pathlib import Path
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 root = Path(__file__).resolve().parents[1]
 checks = [

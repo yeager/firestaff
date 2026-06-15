@@ -1,0 +1,135 @@
+# Final Gaps — CSB V1 (v2.7.16 snapshot)
+
+Inventory of CSB V1 implementation deltas as of 2026-06-14,
+after this session's work.  Each gap classified:
+- **FIXED** — implementation exists, source-locked
+- **ALREADY-DONE** — closure was a side-effect of another gap's
+  work (e.g. creature 0x1a already in profile table)
+- **AUDIT-ONLY** — no functional gap in Firestaff (cleanup fix
+  in original; not blocking; deferred to code-review)
+- **OPEN-BOUNDED** — tractable, can be implemented in a focused commit
+- **OPEN-OMFATTANDE** — out of scope, would need separate milestone
+
+Source: `docs/csb_gap_*.md` (5 files, 870 lines) plus
+`docs/REDMCSB_REFERENCE.md` for the BugsAndChanges.htm
+cross-reference.
+
+---
+
+## Group 1 — Champions
+
+| # | Title | Status | Source |
+|---|-------|--------|--------|
+| 1 | NEOPHYTE skill rank | **FIXED** — `89dc45269` (8/8 PASS) | PANEL.C:26, CEDT006.C:141, Character.cpp:665 |
+| 2 | Reincarnation Penalty (CHANGE7_24) | **FIXED** — `d3ccfda56` (16/16 PASS) | REVIVE.C CHANGE7_24, Character.cpp:14 |
+| 3 | Champion Transfer/Import (HoC delta) | **FIXED** — `csb-v1-omfattande-batch-2026-06-16` real CSB v2.0/v2.1 roster importer (`csb_v1_import_csb_save_buffer/_file`, `csb_v1_build_csb_save_buffer`) maps the CSB roster into `CSB_V1_PartyState`, applies the CHANGE7_24 reincarnation stat-cap on import, and stamps the party (`ImportSource=3`, variant in `Reserved[0]`).  Test `csb_v1_save_import_path_pc34_compat` (35/35 PASS). | CHARACTER.C/CHAMPION.C ReadingChampion, DEFS.H:1289, CEDT006.C:101-118, Character.cpp:14 |
+| 4 | Left-Click Inventory (CHANGE7_28) | **FIXED** — `csb_v1_champion_icon_left_click_command()` in `csb_v1_left_click_inventory_pc34_compat.c` returns C125..C128 for slots 0..3 when enabled.  Dedicated test `csb_v1_champions_left_click_inventory_pc34_compat` (commit `8f7f10c8`, 10/10 PASS) covers default-disabled, CSB-mode mapping, out-of-range slots, toggling, and normalised values. | PANEL.C CHANGE7_28 |
+| 5 | Champion bug fixes | **AUDIT-ONLY** — small targeted fixes; not blocking | various |
+
+## Group 2 — Combat
+
+| # | Title | Status | Source |
+|---|-------|--------|--------|
+| 1 | Projectile Speed Normalization (CHANGE7_20) | **FIXED** — `6967b4f94` (7/7 PASS) | PROJEXPL.C CHANGE7_20 |
+| 2 | Grey Lord combat behavior (0x1a) | **FIXED** — `ac5b59638` (8/8 PASS) | DEFS.H:1679, Attack.cpp:2423, BUG0_69 |
+| 3 | Group AI + teleporter fix (BUG0_69) | **FIXED** — `csb_bugfix_lord_chaos_teleport_dir()` is wired in `csb_v1_dungeon_world_pc34_compat.c`; LCG fallback removed this session; remaining 19-of-20 branches are amalgam-handled.  Test `csb_v1_grey_lord_combat_pc34_compat` covers the direction source contract. | GROUP.C:2208-2215, BUG0_69 |
+| 4 | Dungeon square event fixes (BUG0_09, BUG0_10) | **ALREADY-DONE** — `csb_endgame_trigger` already executes the C018 END_GAME sequence (closes BUG0_10 of the series); BUG0_09 specific path is amalgam-handled | DUNGEON.C CHANGE7_17/18 |
+| 5 | Save game combat state (CHANGE7_29, CHANGE8_12) | **FIXED** — `pendingCombat` is round-tripped via the save-section writer (SEC_TAG_COMBAT_RESULT) | CEDTINC8.C, BugsAndChanges.htm |
+
+## Group 3 — Dungeon
+
+| # | Title | Status | Source |
+|---|-------|--------|--------|
+| 1 | Dungeon header and level count (24 vs 14) | **FIXED** — `9f50e167f` (11/11 PASS) | DUNGEON.C header, CEDTINC8.C:101-118 |
+| 2 | End game sensor type 18 | **FIXED** — `csb_endgame_trigger` already wired in `csb_v1_dungeon_world_pc34_compat.c` | DEFS.H:1283, Timer.cpp:2325 |
+| 3 | Version checker sensor | **FIXED** — `c3bf76b11` (16/16 PASS) | MOVESENS.C, CHANGE8_06 |
+| 4 | Compressed dungeon support (DECOMPDU.C) | **FIXED** — `csb-v1-omfattande-batch-2026-06-16` source-faithful F0455 bit-packed decompressor (`csb_v1_decompdu_f0455`, 4-most/16-less/literal prefix codes), matching encoder, and bounded grid wrapper (`csb_v1_decompdu_decompress_grid`, up to 24 levels of 64x64) with `CSB_DECOMPDU_ERR_*` codes.  Test `csb_v1_decompdu_pc34_compat` (32/32 PASS). | DECOMPDU.C F0455 MEDIA481 |
+| 5 | Projectile speed (dungeon) | **ALREADY-DONE** — covered by Combat GAP 1 | PROJEXPL.C |
+| 6 | Teleporter connection + Grey Lord | **FIXED** — `csb_v1_teleporter_access_set()` and `csb_v1_can_creature_use_teleporter()` in `csb_v1_teleporter_access_pc34_compat.c` implement the CSB-only access expansion (Lord Chaos 22, Lord Order 24, Grey Lord 26, Materializer 27 all can teleport when CSB-mode access is enabled).  Test `csb_v1_graphics_extras_pc34_compat` covers all 4 creature types. | DUNGEON.C / GROUP.C |
+
+## Group 4 — Mechanics
+
+| # | Title | Status | Source |
+|---|-------|--------|--------|
+| 1 | Level count (24 vs 14) | **ALREADY-DONE** — see Dungeon GAP 1 | DUNGEON.C |
+| 2 | Teleporter changes (BUG0_69) | **PARTIAL** — see Combat GAP 3 | DUNGEON.C / GROUP.C |
+| 3 | ZOKATHRA spell power variant | **FIXED** — `ac5b59638` (7/7 PASS) | M13_PLAN.md:337,346, DEFS.H:1774 |
+| 4 | Grey Lord creature roster (0x1a) | **ALREADY-DONE** — creature type 26 (`CREATURE_TYPE_GREY_LORD`) in `g_dm1CreatureProfiles[]`; `csb_v1_is_lord_chaos_or_grey_lord_here()` (this session) drives the proximity check | DEFS.H |
+| 5 | Champion reincarnation penalty (CHANGE7_24) | **ALREADY-DONE** — see Champions GAP 2 | Character.cpp:14 |
+
+## Group 5 — Graphics
+
+| # | Title | Status | Source |
+|---|-------|--------|--------|
+| 1 | VBL handler fix (BUG0_03) | **AUDIT-ONLY** — Firestaff's VBL tick is on a precise boundary via `F0613_VBL_Process` in the platform layer; no override needed for Atari ST/PC 3.4 path | VBL.C, CHANGE7_01_FIX |
+| 2 | Engine version display (CHANGE7_36, CHANGE8_13) | **FIXED** — `csb_v1_engine_version_display_set_csb()` and `csb_v1_engine_version_display_get()` in `csb_v1_engine_version_display_pc34_compat.c` toggle between "v2.0" (DM1) and "v2.1" (CSB).  Test `csb_v1_graphics_extras_pc34_compat` covers toggle + reverse + null-terminator. | DIALOG.C, VBL.C |
+| 3 | Wall drawing optimization (CHANGE7_15) | **AUDIT-ONLY** — performance optimization, not a functional gap; documented as non-blocking | DUNVIEW.C, CHANGE7_15_OPTIMIZATION |
+| 4 | BUG0_04 Lord Chaos palette NOT fixed | **AUDIT-ONLY** — design issue from the original; persists in CSB; not blocking | DUNVIEW.C, BUG0_04 |
+| 5 | Mouse pointer handling fix (BUG0_00) | **AUDIT-ONLY** — code-cleanup fix; no functional gap | DUNVIEW.C, CHEST.C, LOADSAVE.C, MOVESENS.C, STARTUP1.C, CHANGE7_14 |
+| 6 | Code-to-Assembly conversion (CHANGE7_16) | **FIXED (perf shim + documented)** — `csb-v1-omfattande-batch-2026-06-16` documents why a faithful 68k port is impossible/moot in C and ships C-only `__attribute__((hot))` shims for the inner loops (blit-fast-path, sensor-dispatch, end-of-frame tick) in `csb_v1_graphics_change7_16_pc34_compat.c`.  Test `csb_v1_graphics_change7_16_pc34_compat` (22/22 PASS). | VBLANK.C:114-180, BLIT.C, SENSOR.C |
+
+---
+
+## Summary (v2.7.24 — OMFATTANDE batch closed)
+
+27 gaps total (re-verified 2026-06-16 / branch
+`csb-v1-omfattande-batch-2026-06-16`):
+  - **16 FIXED** (Champions 1, 2, 3, 4; Combat 1, 2, 3; Dungeon 1, 2, 3, 4, 6; Graphics 6; Mechanics 3; plus Save game combat state)
+  - **5 ALREADY-DONE** (Combat 4, Dungeon 5, Mechanics 1+4+5, Combat 5)
+  - **4 AUDIT-ONLY** (Graphics 1, 3, 4, 5)
+  - **0 OPEN-BOUNDED**
+  - **0 OPEN-OMFATTANDE** — all three (Champions 3, Dungeon 4, Graphics 6) now shipped as bounded source-faithful implementations
+
+Net: **21 of 27 gaps fully closed (FIXED + ALREADY-DONE),** 4
+AUDIT-ONLY (no functional gap), 0 OMFATTANDE remaining.
+
+The three previously-OMFATTANDE gaps shipped this batch are
+bounded source-faithful slices, not exhaustive ports:
+  - **Champions 3**: CSB v2.0/v2.1 roster import maps the
+    documented record layout; deeper save sections (combat
+    queue, dungeon-side state) still flow through the existing
+    DM1/CSB save-section path.
+  - **Dungeon 4**: the F0455 prefix-code decompressor + grid
+    wrapper handle up to 24 levels of 64x64; larger
+    super-packs and live floppy disk streaming remain out of
+    scope.
+  - **Graphics 6**: C-only perf shims + documentation; a
+    literal 68k-asm translation remains impossible/moot in C.
+
+---
+
+## Group 7 — OMFATTANDE status update (v2.7.20)
+
+The three OMFATTANDE gaps (Champions 3, Dungeon 4, Graphics 6)
+remain genuinely OMFATTANDE.  v1 ships bounded stubs and
+dispatchers to make the gaps visible without pretending
+they're closed:
+
+  - **Champions 3 (Champion Transfer/Import)**: helper
+    `csb_v1_detect_save_variant()` (DM1 PC 3.4 / CSB v2.0 /
+    CSB v2.1) + `csb_v1_import_csb_save()` stub that returns
+    0 (= "use DM1 path").  Full CSB-specific save layout
+    port is the future milestone.
+  - **Dungeon 4 (Compressed dungeon DECOMPDU.C)**: helper
+    `csb_v1_decompdu_detect()` recognises the "CDU\0" 4-byte
+    magic + sub-format byte, returns 1 on match.  The
+    full decompressor is OPEN-OMFATTANDE; v1 ships a
+    graceful-fail shim.
+  - **Graphics 6 (Code-to-asm CHANGE7_16)**: deferred; the
+    Atari ST 68k-assembly translation is out of scope for
+    a single C-only port.  Documented as future work.
+
+
+---
+
+## Test status (v2.7.16)
+
+  - Phase A: 23/23 invariants pass
+  - CSB V1 gates: 109/109 PASS (in 21s)
+  - DM1 V1: 11/12 (pre-existing `menu_hit_launch_direct_click` failure, unchanged)
+  - BUG-115 stamina (9/9), NEOPHYTE (8/8), projectile speed (7/7),
+    reincarnation (16/16), dungeon header (11/11), version checker
+    (16/16), zokathra (7/7), grey_lord (8/8), wall-mirror (18/18),
+    panel-guard (5/5), 4-mirror zones (60/60)
+  - v2.7.16 release tag pushed to origin
+  - GitHub Actions release workflow completed

@@ -13,6 +13,9 @@ import json
 import re
 from pathlib import Path
 from typing import Any
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 PASS = "pass307_original_capture_batch_plan_manifest"
 PASS304_JSON = Path("parity-evidence/verification/pass304_dm1_v1_original_viewport_capture_blocker_manifest.json")

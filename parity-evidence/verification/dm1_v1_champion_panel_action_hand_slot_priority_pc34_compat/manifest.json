@@ -1,0 +1,26 @@
+{
+  "schema": "dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat.v1",
+  "timestampUtc": "2026-06-07T21:25:42Z",
+  "status": "PASS_DM1_V1_CHAMPION_PANEL_ACTION_HAND_SLOT_PRIORITY_SOURCE_LOCK",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "branch": "main",
+  "head": "aaed19e118c4ca17e3a54b3d40b23e536c7e6777",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "anchors": [
+    "CHAMPION.C F0302:662-714",
+    "CHAMPION.C F0297:243-268",
+    "CHAMPION.C F0298",
+    "CHAMPION.C F0300",
+    "CHAMPION.C F0301",
+    "CHAMPION.C F0292",
+    "DEFS.H:2088/2596-2601/C08/C30/M070",
+    "MOUSE.C F0077/F0078",
+    "COMMAND.C F0359"
+  ],
+  "assertions": 106,
+  "notes": [
+    "Contract-only synthetic dispatcher; no real M11 graphics calls and no real-asset bitmap parity claim.",
+    "Covers status hand slot boxes 0..7, inventory/chest slot routing, candidate/dead/inventory champion guards, leader-hand AllowedSlots mask rejection, BUG0_39 swap helper priority, F0077/F0078 bracketing, and leader-versus-follower intermediate draw priority.",
+    "Verification command: ./build/test_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat"
+  ]
+}

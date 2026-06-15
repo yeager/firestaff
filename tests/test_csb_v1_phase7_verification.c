@@ -122,6 +122,78 @@ static void build_synthetic_dungeon_dat(uint8_t *buf, int buf_size,
     buf[off+12]=1; buf[off+13]=0; buf[off+14]=1; buf[off+15]=0; buf[off+16]=1; buf[off+17]=0;
 }
 
+static void put_le16(uint8_t *buf, int off, uint16_t value)
+{
+    buf[off + 0] = (uint8_t)(value & 0xffu);
+    buf[off + 1] = (uint8_t)(value >> 8);
+}
+
+static uint16_t pack3_codes(int a, int b, int c)
+{
+    return (uint16_t)(((a & 31) << 10) | ((b & 31) << 5) | (c & 31));
+}
+
+static int decode_inscription_oracle(const uint16_t *words, int word_count,
+                                     char *out, int out_size)
+{
+    int code_counter = 0;
+    int word_index = 0;
+    uint16_t packed = 0;
+    int out_len = 0;
+
+    if (!words || !out || out_size <= 0 || word_count <= 0) {
+        return -1;
+    }
+    out[0] = '\0';
+
+    for (;;) {
+        int code;
+
+        if (code_counter == 0) {
+            if (word_index >= word_count) {
+                return -1;
+            }
+            packed = words[word_index++];
+            code = (packed >> 10) & 31;
+        } else if (code_counter == 1) {
+            code = (packed >> 5) & 31;
+        } else {
+            code = packed & 31;
+        }
+        code_counter = (code_counter + 1) % 3;
+
+        if (code < 28) {
+            char ch;
+
+            if (code == 26) {
+                ch = ' ';
+            } else if (code == 27) {
+                ch = '.';
+            } else {
+                ch = (char)('A' + code);
+            }
+            if (out_len + 1 >= out_size) {
+                return -1;
+            }
+            out[out_len++] = ch;
+        } else if (code == 28) {
+            if (out_len + 1 >= out_size) {
+                return -1;
+            }
+            out[out_len++] = (char)0x80;
+        } else if (code <= 30) {
+            return -1;
+        } else {
+            if (out_len + 1 >= out_size) {
+                return -1;
+            }
+            out[out_len++] = (char)0x81;
+            out[out_len] = '\0';
+            return out_len;
+        }
+    }
+}
+
 static void test_dungeon_load_basic(void)
 {
     CSB_V1_DungeonData d;
@@ -150,6 +222,8 @@ static void test_dungeon_square_access(void)
     CHECK(csb_v1_dungeon_get_square_type(&d, 0, 1, 1) == 2, "(1,1) is FLOOR type 2");
     CHECK(csb_v1_dungeon_get_square_type(&d, 0, 3, 0) == -1, "(3,0) out of width returns -1");
     CHECK(csb_v1_dungeon_get_square_type(&d, 0, 0, 3) == -1, "(0,3) out of height returns -1");
+    CHECK(csb_v1_dungeon_get_square_type(&d, 0, -1, 1) == -1,
+          "(-1,1) out of width boundary returns -1");
     CHECK(csb_v1_dungeon_get_square_type(&d, 1, 0, 0) == -1, "level 1 out of range returns -1");
     int raw = csb_v1_dungeon_get_raw_square(&d, 0, 1, 1);
     CHECK((raw & 0x1F) == 2, "raw square type is FLOOR=2");
@@ -173,6 +247,55 @@ static void test_dungeon_first_thing(void)
     csb_v1_dungeon_free(&d);
 }
 
+static void test_dungeon_real_format_square_first_thing_chain(void)
+{
+    CSB_V1_DungeonData d;
+    uint8_t buf[96];
+    const int map_desc = 44;
+    const int column_counts = 60;
+    const int square_first_things = 66;
+    const int raw_map = 72;
+    const uint16_t raw_bit_a = (uint16_t)(0 | ((3 - 1) << 6) | ((3 - 1) << 11));
+
+    memset(buf, 0, sizeof(buf));
+    put_le16(buf, 0, 0);       /* text data word count */
+    buf[4] = 1;                /* map count */
+    put_le16(buf, 6, 0);       /* text string word count */
+    put_le16(buf, 10, 3);      /* square-first-thing table entries */
+    put_le16(buf, map_desc + 0, 0);
+    put_le16(buf, map_desc + 8, raw_bit_a);
+
+    put_le16(buf, column_counts + 0, 0);
+    put_le16(buf, column_counts + 2, 1);
+    put_le16(buf, column_counts + 4, 2);
+    put_le16(buf, square_first_things + 0, 0x1402u); /* textstring handle */
+    put_le16(buf, square_first_things + 2, 0x2807u); /* weapon handle */
+    put_le16(buf, square_first_things + 4, 0x3a09u); /* junk handle */
+
+    buf[raw_map + 1] = 0x31u; /* x=0,y=1: present + corridor */
+    buf[raw_map + 3] = 0x31u; /* x=1,y=0: present + corridor */
+    buf[raw_map + 8] = 0x31u; /* x=2,y=2: present + corridor */
+
+    int r = csb_v1_dungeon_load(&d, buf, (int)sizeof(buf));
+    CHECK(r == 0, "real-format dungeon with square-first-thing table loads");
+    CHECK(d.square_bytes == 1, "real-format square records are byte-sized");
+    CHECK(csb_v1_dungeon_get_first_thing(&d, 0, 0, 1) == 0x1402,
+          "real-format first thing at x0,y1 uses column cumulative index 0");
+    CHECK(csb_v1_dungeon_get_first_thing(&d, 0, 1, 0) == 0x2807,
+          "real-format first thing at x1,y0 uses next column cumulative index");
+    CHECK(csb_v1_dungeon_get_first_thing(&d, 0, 2, 2) == 0x3a09,
+          "real-format first thing at x2,y2 uses imported table handle");
+    CHECK(csb_v1_dungeon_get_first_thing(&d, 0, 2, 1) == -1,
+          "real-format empty cell returns no first thing");
+    csb_v1_dungeon_set_current(&d);
+    csb_v1_dungeon_set_current_level(0);
+    CHECK(csb_dungeon_get_first_thing_default(1, 0) == 0x2807,
+          "current-dungeon default accessor exposes imported square object handle");
+    CHECK(csb_dungeon_get_first_thing_default(2, 1) == CSB_THING_ENDOFLIST,
+          "current-dungeon default accessor returns ENDOFLIST for an empty cell");
+    csb_v1_dungeon_unload();
+}
+
 static void test_dungeon_decode_square(void)
 {
     CSB_V1_DungeonData d;
@@ -184,6 +307,44 @@ static void test_dungeon_decode_square(void)
     int ok = csb_v1_dungeon_decode_tile(&d, 0, 1, 1, &sq);
     CHECK(ok == 0, "decode_tile returns 0 for valid coordinate");
     CHECK(sq.type == 2, "decoded type is FLOOR (2)");
+    csb_v1_dungeon_free(&d);
+}
+
+static void test_wall_text_oracle_slice(void)
+{
+    CSB_V1_DungeonData d;
+    uint8_t buf[64];
+    uint16_t wall_text_words[3];
+    char decoded[16];
+    const uint16_t wall_square_raw = (uint16_t)((0x12u << 5) | 1u);
+    const char expected[] = { 'O', 'R', 'A', 'C', 'L', 'E', (char)0x81, '\0' };
+    int center_offset;
+
+    /* ReDMCSB: DUNGEON.C F0161 returns the square's first thing index, and
+     * F0168 emits inscription separators / terminator bytes while decoding the
+     * attached TEXTSTRING payload. This keeps one wall square and one wall-text
+     * payload in a bounded CSB V1 slice. */
+    build_synthetic_dungeon_dat(buf, sizeof(buf), 2);
+    center_offset = 10 + 8; /* 3x3 legacy square block, center square */
+    buf[center_offset + 0] = (uint8_t)(wall_square_raw & 0xffu);
+    buf[center_offset + 1] = (uint8_t)(wall_square_raw >> 8);
+
+    wall_text_words[0] = pack3_codes(14, 17, 0);
+    wall_text_words[1] = pack3_codes(2, 11, 4);
+    wall_text_words[2] = pack3_codes(31, 31, 31);
+
+    int r = csb_v1_dungeon_load(&d, buf, (int)sizeof(buf));
+    CHECK(r == 0, "wall text slice dungeon loads successfully");
+    CHECK(csb_v1_dungeon_get_square_type(&d, 0, 1, 1) == 1,
+          "center square remains a wall");
+    CHECK(csb_v1_dungeon_get_raw_square(&d, 0, 1, 1) == (int)wall_square_raw,
+          "center raw square keeps the attached text thing");
+    CHECK(csb_v1_dungeon_get_first_thing(&d, 0, 1, 1) == 0x12,
+          "wall square first thing index is preserved");
+    CHECK(decode_inscription_oracle(wall_text_words, 3, decoded, sizeof(decoded)) == 7,
+          "attached inscription payload decodes with oracle terminator");
+    CHECK(memcmp(decoded, expected, sizeof(expected)) == 0,
+          "decoded wall inscription yields ORACLE + terminator");
     csb_v1_dungeon_free(&d);
 }
 
@@ -711,10 +872,17 @@ static void test_gamestate_set_get_state(void)
 {
     CSB_GameState gs;
     csb_gs_init(&gs);
+    gs.currentLevel = 3;
+    gs.currentWorld = 2;
+
     /* Test all valid state transitions */
     csb_gs_set_state(&gs, CSB_STATE_GAME);
     CHECK(csb_gs_get_state(&gs) == CSB_STATE_GAME,
           "set_state GAME is retrievable");
+    CHECK(gs.currentLevel == 3,
+          "set_state GAME preserves currentLevel for runtime handoff");
+    CHECK(gs.currentWorld == 2,
+          "set_state GAME preserves currentWorld for runtime handoff");
     csb_gs_set_state(&gs, CSB_STATE_DUNGEON);
     CHECK(csb_gs_get_state(&gs) == CSB_STATE_DUNGEON,
           "set_state DUNGEON is retrievable");
@@ -728,6 +896,8 @@ static void test_gamestate_set_get_state(void)
     csb_gs_set_state(&gs, CSB_STATE_COUNT + 99);
     CHECK(csb_gs_get_state(&gs) == CSB_STATE_COUNT + 99,
           "set_state accepts out-of-range value (no validation)");
+    CHECK(gs.currentLevel == 3,
+          "set_state out-of-range value still preserves currentLevel");
 }
 
 static void test_gamestate_tick(void)
@@ -1025,7 +1195,9 @@ int main(void)
     test_dungeon_load_basic();
     test_dungeon_square_access();
     test_dungeon_first_thing();
+    test_dungeon_real_format_square_first_thing_chain();
     test_dungeon_decode_square();
+    test_wall_text_oracle_slice();
     test_dungeon_collision_wall();
     test_dungeon_viewcone_3x3();
     test_dungeon_load_errors();

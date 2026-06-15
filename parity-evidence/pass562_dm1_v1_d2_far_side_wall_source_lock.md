@@ -32,44 +32,44 @@ Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cas
 
 ## Firestaff Evidence
 
-- PASS firestaff-d2-far-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:418-420)
-  - line 418: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - line 418: DM1_PC34_ZONE_WALL_D2L2
-  - line 418: DUNVIEW.C:6849-6858
-  - line 418: DUNVIEW.C:6848-6862 wall case returns
-  - line 419: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - line 419: DM1_PC34_ZONE_WALL_D2R2
-  - line 419: DUNVIEW.C:6880-6889
-  - line 419: DUNVIEW.C:6882-6893 wall case returns
+- PASS firestaff-d2-far-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:511-512)
+  - line 511: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 511: DM1_PC34_ZONE_WALL_D2L2
+  - line 511: DUNVIEW.C:6849-6858
+  - line 511: DUNVIEW.C:6848-6862 wall case returns
+  - line 512: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 512: DM1_PC34_ZONE_WALL_D2R2
+  - line 512: DUNVIEW.C:6880-6889
+  - line 512: DUNVIEW.C:6882-6893 wall case returns
 
-- PASS firestaff-d2-far-side-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:288-291)
-  - line 289: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - line 289: DM1_PC34_ZONE_WALL_D2L2
-  - line 289: "6862"
-  - line 290: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - line 290: DM1_PC34_ZONE_WALL_D2R2
-  - line 290: "6893"
+- PASS firestaff-d2-far-side-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:288-300)
+  - line 290: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 290: DM1_PC34_ZONE_WALL_D2L2
+  - line 290: "6862"
+  - line 291: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 291: DM1_PC34_ZONE_WALL_D2R2
+  - line 291: "6893"
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2125-2130)
-  - line 2128: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2340-2345)
+  - line 2341: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
 
 ## Verification
 
 - /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.defs_zones == 1
-PASS source_evidence.wall_source_clip_gate == 1
-PASS source_evidence.wall_empty_blit_gate == 1
-PASS source_evidence.occlusion == 1
-PASS source_evidence.command_dispatch == 1
-PASS source_evidence.next_redraw == 1
-PASS source_evidence.present_wait == 1
-PASS source_evidence.same_viewport_mouse == 1
-PASS source_evidence.same_viewport_turn == 1
-PASS source_evidence.same_viewport_move == 1
-PASS source_evidence.same_viewport_draw == 1
-PASS source_evidence.same_viewport_present == 1
-PASS source_evidence.same_viewport_assets == 1
+PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c
+PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
+PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
+PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 

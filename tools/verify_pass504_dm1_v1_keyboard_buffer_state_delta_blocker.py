@@ -3,6 +3,9 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 OUT_DIR = ROOT / "parity-evidence/verification/pass504_dm1_v1_keyboard_buffer_state_delta_blocker"

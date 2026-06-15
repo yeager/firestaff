@@ -5,6 +5,7 @@
 #include "card_art_m12.h"
 #include "creature_art_m12.h"
 #include "bestiary_m12.h"
+#include "screenshot_gallery_m12.h"
 #include "config_m12.h"
 #include "changelog_m12.h"
 
@@ -24,6 +25,13 @@ typedef enum {
     M12_MENU_INPUT_BACK,
     M12_MENU_INPUT_ACTION,
     M12_MENU_INPUT_CYCLE_CHAMPION,
+    /* v2.7.15: cycle the current setting's value (the +/- button
+     * on a row in M12_MENU_VIEW_SETTINGS).  Distinct from
+     * M12_MENU_INPUT_LEFT/RIGHT which cycle the settings tab
+     * strip.  Routed by M12_ModernMenu_ApplyHit when the user
+     * clicks the cycle button on a row. */
+    M12_MENU_INPUT_VALUE_LEFT,
+    M12_MENU_INPUT_VALUE_RIGHT,
     M12_MENU_INPUT_REST_TOGGLE,
     M12_MENU_INPUT_USE_STAIRS,
     M12_MENU_INPUT_PICKUP_ITEM,
@@ -190,6 +198,11 @@ typedef enum {
     M12_RES_800x600,
     M12_RES_1024x768,
     M12_RES_1280x960,
+    M12_RES_1600x1000,
+    M12_RES_1920x1080,
+    M12_RES_2560x1440,
+    M12_RES_3200x2000,
+    M12_RES_3840x2160,
     M12_RES_COUNT
 } M12_Resolution;
 
@@ -233,6 +246,8 @@ typedef struct {
     int rendererBackend;
     int rendererBackendAvailable;
     M12_GameOptions options;
+    int resolutionWidth;
+    int resolutionHeight;
     int valid;
     const char* savePath;  /* Non-NULL when launching via quick resume */
 } M12_LaunchIntent;
@@ -290,6 +305,19 @@ typedef enum {
     M12_SETTINGS_TAB2_COUNT
 } M12_SettingsTab2;
 
+/* ── Settings tabs (m12_draw_tabbed_settings_view) ───────────────────
+ * These tabs power the legacy / redrawn settings view.  Mapped
+ * 1:1 to the layout in menu_startup_m12.c.  The hit-test in
+ * menu_hit_m12.c uses this enum to size the tab-strip rect. */
+typedef enum {
+    M12_SETTINGS_TAB_GAME = 0,
+    M12_SETTINGS_TAB_GRAPHICS,
+    M12_SETTINGS_TAB_CONTROLS,
+    M12_SETTINGS_TAB_AUDIO,
+    M12_SETTINGS_TAB_ACCESSIBILITY,
+    M12_SETTINGS_TAB_COUNT
+} M12_SettingsTab;
+
 typedef struct M12_StartupMenuState {
     M12_MenuEntry entries[7];
     M12_GameCardArt cardArt[7];
@@ -309,6 +337,9 @@ typedef struct M12_StartupMenuState {
     const char* messageLine1;
     const char* messageLine2;
     const char* messageLine3;
+    char messageLine1Storage[128];
+    char messageLine2Storage[256];
+    char messageLine3Storage[160];
     M12_MenuSettingsState settings;
     int languageExplicit;
     M12_AssetStatus assetStatus;
@@ -319,6 +350,14 @@ typedef struct M12_StartupMenuState {
     M12_CreatureArtState creatureArt;
     M12_ChangelogState changelog;
     M12_BestiaryState bestiary;
+    /* Item Encyclopedia / Screenshot Gallery scroll state.
+     * Both are simple scrollable lists with cursor + window. */
+    int itemEncyclopediaSelectedIndex;
+    int itemEncyclopediaScrollOffset;
+    int itemEncyclopediaCategory;
+    /* Screenshot Gallery: we own the full M12_ScreenshotGalleryState
+     * so we can call M12_ScreenshotGallery_Scan / Draw directly. */
+    M12_ScreenshotGalleryState screenshotGallery;
     /* Monotonically-increasing animation tick consumed by the modern
      * renderer. Incremented by the runtime once per present. Safe to
      * leave at zero in headless probes (no visible change). */
@@ -333,6 +372,7 @@ typedef struct M12_StartupMenuState {
     int quickResumeLaunchRequested;
     char quickResumeGameId[32];
     char quickResumeSavePath[256];
+    int dataDirPickerActive;
 } M12_StartupMenuState;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);
@@ -352,11 +392,15 @@ const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
 int M12_StartupMenu_GetRenderPaletteLevel(const M12_StartupMenuState* state);
 int M12_StartupMenu_GetPresentationMode(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetPresentationModeLabel(const M12_StartupMenuState* state);
+int M12_PresentationMode_AllowsResolutionChoice(int presentationMode);
+int M12_Resolution_Dimensions(int resolution, int* outWidth, int* outHeight);
 int M12_StartupMenu_GetRendererBackend(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRendererBackendLabel(const M12_StartupMenuState* state);
 const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuState* state);
 int M12_StartupMenu_RendererBackendAvailable(int rendererBackend);
 const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state);
+int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
+                                     const char* dataDir);
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);
 void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
 

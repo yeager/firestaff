@@ -27,6 +27,7 @@
 
 #include <stdint.h>
 #include "dm2_v1_boot.h"
+#include "dm2_v1_weather.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,6 +66,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
 int dm2_v1_runtime_get_party_x(void);
 int dm2_v1_runtime_get_party_y(void);
 int dm2_v1_runtime_get_party_dir(void);
+int dm2_v1_runtime_get_weather(void);
+int dm2_v1_runtime_get_weather_intensity(void);
+uint32_t dm2_v1_runtime_get_weather_seed(void);
+void dm2_v1_runtime_set_weather_seed(uint32_t seed);
+
+/* dm2_v1_runtime_has_dungeon_data — returns 1 if dungeon state is available.
+ * Used by dm2_v2_runtime_render_frame to detect headless mode.
+ * Source: Phase 5 runtime binding */
+int dm2_v1_runtime_has_dungeon_data(void);
 
 /* ── V2 Smooth Movement Callbacks ───────────────────────────────── */
 

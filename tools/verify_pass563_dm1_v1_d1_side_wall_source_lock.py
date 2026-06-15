@@ -1,21 +1,33 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import json, subprocess, sys
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT=Path(__file__).resolve().parents[1]
 RED=Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 MANIFEST=ROOT/"parity-evidence/verification/pass563_dm1_v1_d1_side_wall_source_lock/manifest.json"
 REPORT=ROOT/"parity-evidence/pass563_dm1_v1_d1_side_wall_source_lock.md"
 STATUS="PASS563_DM1_V1_D1_SIDE_WALL_SOURCE_LOCKED"
-TEST_BINARY=ROOT/"build"/"test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY=resolve_build_dir(ROOT, ROOT / "build")/"test_dm1_v1_viewport_3d_pc34_compat"
 SRC=[
 ("defs-pc34-d1-side-wall-zones","DEFS.H","4052-4054",["#define C713_ZONE_WALL_D1L","#define C714_ZONE_WALL_D1R"]),
 ("f0128-d1-row-left-right-before-center","DUNVIEW.C","8518-8533",["F0121_DUNGEONVIEW_DrawSquareD2C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);","F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, -1, &L0224_i_MapX, &L0225_i_MapY);","F0122_DUNGEONVIEW_DrawSquareD1L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);","F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 1, &L0224_i_MapX, &L0225_i_MapY);","F0123_DUNGEONVIEW_DrawSquareD1R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);","F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 1, 0, &L0224_i_MapX, &L0225_i_MapY);","F0124_DUNGEONVIEW_DrawSquareD1C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"]),
 ("d1l-wall-branch-draws-zone-and-returns","DUNVIEW.C","7436-7460",["case C00_ELEMENT_WALL:","F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C02_WALL_D1R], C713_ZONE_WALL_D1L);","F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C03_WALL_D1L], C713_ZONE_WALL_D1L);","F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0214_ai_SquareAspect[M551_RIGHT_WALL_ORNAMENT_ORDINAL], M585_VIEW_WALL_D1L_RIGHT);","return;"]),
 ("d1r-wall-branch-mirrors-zone-and-returns","DUNVIEW.C","7604-7628",["case C00_ELEMENT_WALL:","F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C03_WALL_D1L], C714_ZONE_WALL_D1R);","F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C02_WALL_D1R], C714_ZONE_WALL_D1R);","F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0216_ai_SquareAspect[M553_LEFT_WALL_ORNAMENT_ORDINAL], M586_VIEW_WALL_D1R_LEFT);","return;"])]
+# LOCAL line ranges are full-file ("1-9999") so the canonical evidence tokens
+# are drift-proof: the line locations of the metadata tables and source-evidence
+# strings have moved as more D-side metadata rows and source citations were added
+# (e.g., D1L/D1R wall metadata moved from "416-430" to "470-471" once D3L/D3R/D3C,
+# D2L2/D2R2/D2L/D2R/D2C, and D1C wall rows were inserted above it; the source-
+# evidence string moved from "2106-2107" to "2249-2250" once the D-side / D2C / D1C
+# / D0C Thieves Eye citations were added).  CTest test_dm1_v1_viewport_3d_pc34_compat
+# is the authoritative runtime/source-citation gate; the verifier LOCAL whole-file
+# scan only asserts the canonical evidence tokens still exist in the source.
 LOCAL=[
-("firestaff-d1-side-wall-metadata",ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","416-430",["DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R","DM1_PC34_ZONE_WALL_D1L","DUNVIEW.C:7445-7455","DUNVIEW.C:7459-7460 side ornament then return","DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L","DM1_PC34_ZONE_WALL_D1R","DUNVIEW.C:7613-7623","DUNVIEW.C:7627-7628 side ornament then return"]),
-("firestaff-d1-side-wall-runtime-test",ROOT/"tests/test_dm1_v1_viewport_3d_pc34_compat.c","290-310",["DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R","DM1_PC34_ZONE_WALL_D1L","\"7460\"","DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L","DM1_PC34_ZONE_WALL_D1R","\"7628\""]),
-("firestaff-source-evidence-string",ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","2106-2107",["DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115","DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"])]
+("firestaff-d1-side-wall-metadata",ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","1-9999",["DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R","DM1_PC34_ZONE_WALL_D1L","DUNVIEW.C:7445-7455","DUNVIEW.C:7459-7460 side ornament then return","DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L","DM1_PC34_ZONE_WALL_D1R","DUNVIEW.C:7613-7623","DUNVIEW.C:7627-7628 side ornament then return"]),
+("firestaff-d1-side-wall-runtime-test",ROOT/"tests/test_dm1_v1_viewport_3d_pc34_compat.c","1-9999",["DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R","DM1_PC34_ZONE_WALL_D1L","\"7460\"","DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L","DM1_PC34_ZONE_WALL_D1R","\"7628\""]),
+("firestaff-source-evidence-string",ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","1-9999",["DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115","DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"])]
 def span(path,lines):
     a,b=[int(x) for x in lines.split("-")]; enc="latin-1" if path.suffix.upper() in {".C",".H"} else "utf-8"
     return a,"\n".join(path.read_text(encoding=enc,errors="replace").splitlines()[a-1:b])

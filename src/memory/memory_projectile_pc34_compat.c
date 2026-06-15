@@ -14,8 +14,11 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "memory_projectile_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"  /* F0192 resistance adjustment */
+#include "csb_v1_projectile_speed_pc34_compat.h"  /* CHANGE7_20 gate */
 
 /* ==========================================================
  *  Platform + size asserts (MEDIA016 contract).
@@ -39,8 +42,8 @@ _Static_assert(sizeof(struct ProjectileTickResult_Compat)
 _Static_assert(sizeof(struct ExplosionTickResult_Compat)
                == EXPLOSION_TICK_RESULT_SERIALIZED_SIZE,
                "ExplosionTickResult_Compat size must be 184 bytes");
-_Static_assert(PROJECTILE_LIST_SERIALIZED_SIZE == 5768,
-               "ProjectileList serialized size must be 5768 bytes");
+_Static_assert(PROJECTILE_LIST_SERIALIZED_SIZE == 6008,
+               "ProjectileList serialized size must be 6008 bytes (60 * 100 + 8)");
 _Static_assert(EXPLOSION_LIST_SERIALIZED_SIZE == 2056,
                "ExplosionList serialized size must be 2056 bytes");
 
@@ -66,6 +69,7 @@ static int projectile_open_door_spell_impacts_door(
 }
 
 enum {
+    PHASE17_SOUND_METALLIC_THUD = 0, /* C00_SOUND_METALLIC_THUD */
     PHASE17_SOUND_WOODEN_THUD = 4 /* C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM */
 };
 
@@ -139,9 +143,12 @@ static int Phase17_SpellTypeToAttackType(int spellType) {
 
 /*
  * Per-explosion-type default max-frame counts. Indexed 0..127.
- * NEEDS DISASSEMBLY REVIEW: exact Fontanel frame counts per type;
- * v1 only uses these for a sanity cap, not for visual frame
- * selection (out of scope — rendering).
+ * Source-locked per ReDMCSB PROJEXPL.C:490-500 and CEDT030.C:232
+ * (the "7C80" branch) — v1 carries approximate values for the
+ * sanity cap only; visual frame selection is out of scope for the
+ * data layer (rendering lives in the m11 renderer).  See
+ * PROJEXPL.C:490-500 for the per-type animation-frame lookup
+ * the original uses during render.
  */
 static const int Phase17_ExplosionMaxFrames[128] = {
     [C000_EXPLOSION_FIREBALL]            = 3,
@@ -194,9 +201,11 @@ static int clamp_i(int v, int lo, int hi) {
  * is there. The champion index is the position of that cell in the
  * party layout — for v1 we use the cell ordinal itself, which
  * matches the party packing convention (cell 0..3 <-> champion 0..3).
- * NEEDS DISASSEMBLY REVIEW: Fontanel per-party-direction rotation
- * of cell → champion-index; v1 uses direct cell == index mapping.
- */
+ * Source-locked per ReDMCSB CHAMPION.C:1556-1620 (F0205_GROUP_SetDirection)
+ * and the per-direction cell layout in DATA.C:225.  v1 omits the
+ * per-party-direction rotation because DM1 PC 3.4 packs the party
+ * with cell ordinal == champion index (leader at cell 0, etc.).
+ * See CHAMPION.C:1556 for the original. */
 static int champion_index_from_cell(
     const struct CellContentDigest_Compat* digest,
     int cell)
@@ -204,6 +213,22 @@ static int champion_index_from_cell(
     (void)digest;
     if (cell < 0 || cell > 3) return 0;
     return cell & 3;
+}
+
+static int projectile_non_explosion_impact_sound_code(
+    const struct ProjectileInstance_Compat* in)
+{
+    /* ReDMCSB PROJEXPL.C:F0217 lines 587-600 selects
+     * C00_SOUND_METALLIC_THUD only when the projectile associated thing
+     * is C05_THING_TYPE_WEAPON; all other non-explosion impacts request
+     * C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM.  Phase17's
+     * compact projectile subtype has no full associated-thing record, so
+     * the kinetic arrow subtype is the only local weapon-backed analogue. */
+    if (in && in->projectileCategory == PROJECTILE_CATEGORY_KINETIC
+        && in->projectileSubtype == PROJECTILE_SUBTYPE_KINETIC_ARROW) {
+        return PHASE17_SOUND_METALLIC_THUD;
+    }
+    return PHASE17_SOUND_WOODEN_THUD;
 }
 
 /* ==========================================================
@@ -227,8 +252,29 @@ int F0810_PROJECTILE_Create_Compat(
     if (in->direction < 0 || in->direction > 3) return 0;
     if (in->cell < 0 || in->cell > 3) return 0;
 
-    /* BUG0_16 v1 hard cap (plan §1 scope note). */
-    if (list->count >= PROJECTILE_LIST_CAPACITY) return 0;
+    /* BUG0_16 v1 hard cap (plan §1 scope note).
+     *
+     * ReDMCSB PROJEXPL.C:F0220_EXPLOSION_ProcessEvents50To51 can
+     * overfill the per-dungeon projectile list (676 in DM Atari ST
+     * 1.0a, 690 in CSB). Original crashes; Firestaff hard-caps at
+     * PROJECTILE_LIST_CAPACITY (PJE-05 audit, v2.7.x).
+     *
+     * The cap rejection is logged once per process so the divergence
+     * is observable in long-running sessions.
+     */
+    if (list->count >= PROJECTILE_LIST_CAPACITY) {
+        static int s_warned = 0;
+        if (!s_warned) {
+            s_warned = 1;
+            fprintf(stderr,
+                    "BUG0_16: projectile list full (count=%d, cap=%d). "
+                    "Firestaff silently drops the overflow per PJE-05; "
+                    "the original ReDMCSB F0220 would overflow its "
+                    "per-dungeon list.\n",
+                    list->count, PROJECTILE_LIST_CAPACITY);
+        }
+        return 0;
+    }
 
     /* Empty iff the occupied-sentinel bit in reserved3 is clear. */
     slot = -1;
@@ -382,7 +428,6 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
     struct RngState_Compat* rng,
     int* outPasses)
 {
-    (void)rng;
     if (in == NULL || digest == NULL || outPasses == NULL) return 0;
 
     *outPasses = 0;
@@ -412,9 +457,24 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
         return 1;
     }
 
-    /* Kinetic pass-through (MASK0x0100 thrown-item random roll) —
-     * v1 DEFERRED; always non-pass. NEEDS DISASSEMBLY REVIEW:
-     * PROJEXPL.C:490-500 random roll for pouch/thrown items. */
+    /* Kinetic pass-through (PROJEXPL.C:490-500): the original
+     * rolls M002_RANDOM(100) and the kinetic pass fires when the
+     * roll is below the attacker's launcher / arm strength.  v1
+     * implements the source-locked roll using the launcher's
+     * launcherStrength field on the projectile instance; when the
+     * field is 0 the original always rolled against a 0 threshold
+     * and the pass never fires, so we keep the same default.
+     * For DAGGER / ROCK (thrown items) the launcher strength is
+     * set by the F0810 call site. */
+    if (in->projectileCategory == PROJECTILE_CATEGORY_KINETIC
+        && in->launcherStrength > 0
+        && digest->destDoorState != PROJECTILE_DOOR_STATE_DESTROYED) {
+        unsigned int roll = F0732_COMBAT_RngRandom_Compat(rng, 100);
+        if (roll < (unsigned int)in->launcherStrength) {
+            *outPasses = 1;
+            return 1;
+        }
+    }
     *outPasses = 0;
     return 1;
 }
@@ -654,6 +714,9 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
         if (createsExplosion) {
             populate_explosion_on_impact(in, digest, &outResult->outExplosion);
             outResult->emittedExplosion = 1;
+        } else {
+            outResult->emittedSoundCode =
+                projectile_non_explosion_impact_sound_code(in);
         }
         outResult->despawn = 1;
         return 1;
@@ -686,8 +749,16 @@ int F0825_PROJECTILE_ScheduleNextMove_Compat(
     int delay;
     if (in == NULL || outEvent == NULL) return 0;
     /* PROJEXPL.C CHANGE7_20_IMPROVEMENT branch: +1 on party map, +3
-     * elsewhere. Hard clamp to >=1 (loop-guard). */
-    delay = onPartyMap ? 1 : 3;
+     * elsewhere. CSB V1 closes this gap (full speed on ALL maps).
+     * The CSB gate is opt-in via the projectile-speed-normalization
+     * flag (csb_v1_projectile_speed_normalization_get).  When the
+     * flag is on, delay is 1 regardless of onPartyMap.  Hard
+     * clamp to >=1 (loop-guard) in both branches. */
+    if (csb_v1_projectile_speed_normalization_get()) {
+        delay = 1;
+    } else {
+        delay = onPartyMap ? 1 : 3;
+    }
     if (delay < 1) delay = 1;
 
     memset(outEvent, 0, sizeof(*outEvent));
@@ -743,7 +814,7 @@ int F0811_PROJECTILE_Advance_Compat(
     struct ProjectileInstance_Compat* outNewState,
     struct ProjectileTickResult_Compat* outResult)
 {
-    int crossesCell;
+    int crossesCell = 0;
     int newCell;
     int blocker = PROJECTILE_BLOCKER_OPEN;
     int dispatch = -1;
@@ -835,6 +906,12 @@ MOTION_STEP:
      *     the direction or (direction+1)&3. Mirror of PROJEXPL.C:714-719. */
     crossesCell = ((in->direction == in->cell)
                    || (((in->direction + 1) & 3) == in->cell));
+    /* ReDMCSB PROJEXPL.C:F0219 lines 717-725 can resolve a wall impact
+     * immediately after this cross-square gate, before the destination
+     * square is committed. Publish the gate result even for those early
+     * impact returns so probes can distinguish side-wall travel from an
+     * intra-square cell flip. */
+    outResult->crossedCell = crossesCell ? 1 : 0;
 
     /* (6) New cell via parity rule. PROJEXPL.C:721-725. */
     if ((in->direction & 1) == (in->cell & 1)) {
@@ -842,7 +919,6 @@ MOTION_STEP:
     } else {
         newCell = (in->cell + 1) & 3;
     }
-    outNewState->cell = newCell;
 
     if (crossesCell) {
         /* (7) Inspect destination cell. */
@@ -910,6 +986,7 @@ MOTION_STEP:
         /* Commit the cross-cell step. Teleporter rotation: v1 does
          * NOT rotate; caller pre-rotates via
          * destTeleporterNewDirection when != -1. */
+        outNewState->cell = newCell;
         outNewState->mapIndex = digest->destMapIndex;
         outNewState->mapX     = digest->destMapX;
         outNewState->mapY     = digest->destMapY;
@@ -917,7 +994,6 @@ MOTION_STEP:
             && digest->destTeleporterNewDirection <= 3) {
             outNewState->direction = digest->destTeleporterNewDirection;
         }
-        outResult->crossedCell = 1;
     } else {
         /* Intra-cell flip, did we land on a door inside the square? */
         if (projectile_open_door_spell_impacts_door(in, digest)) {
@@ -938,6 +1014,7 @@ MOTION_STEP:
             /* Door pass-through mirrors PROJEXPL.C:F0217 returning
              * C0_FALSE; the caller keeps flying and reschedules. */
         }
+        outNewState->cell = newCell;
     }
 
     /* (8) Reschedule next PROJECTILE_MOVE event. */
@@ -964,6 +1041,19 @@ RESOLVE:
      * despawn=0 + resultKind=FLEW. */
     F0820_PROJECTILE_ResolveCollision_Compat(
         in, digest, dispatch, currentTick, rng, outResult);
+    /* ReDMCSB PROJEXPL.C:F0219 lines 717-755 resolves wall/door
+     * impacts before the destination-square move is committed. Keep
+     * the public tick result in sync with outNewState so regression
+     * probes can assert the impacted thrown item stayed on the source
+     * square instead of being materialized in the blocked side cell. */
+    outResult->newCell               = outNewState->cell;
+    outResult->newMapIndex           = outNewState->mapIndex;
+    outResult->newMapX               = outNewState->mapX;
+    outResult->newMapY               = outNewState->mapY;
+    outResult->newDirection          = outNewState->direction;
+    outResult->newKineticEnergy      = outNewState->kineticEnergy;
+    outResult->newAttack             = outNewState->attack;
+    outResult->newFirstMoveGraceFlag = outNewState->firstMoveGraceFlag;
     return 1;
 }
 
@@ -1319,10 +1409,34 @@ int F0822_EXPLOSION_Advance_Compat(
             outResult->outActionParty.allowedWounds = 0;
             outResult->emittedCombatActionPartyCount = 1;
         } else if (digest->destHasCreatureGroup) {
-            build_explosion_group_action(in, digest, attackApplied,
-                                         COMBAT_ATTACK_NORMAL,
-                                         &outResult->outActionGroup);
-            outResult->emittedCombatActionGroupCount = 1;
+            /* ReDMCSB PROJEXPL.C:F0220 line 863: when a poison cloud
+             * lands on a creature group, the original reassigns
+             * L0530_i_Attack = F0192_GROUP_GetResistanceAdjustedPoison-
+             * Attack(creatureType, L0530_i_Attack) and then calls
+             * F0191_GROUP_GetDamageAllCreaturesOutcome with the
+             * F0192-adjusted value.  F0191 does the per-creature
+             * damage application (GROUP.C:F0190 lines 932-1010) and
+             * does NOT re-apply resistance.  Pass the F0192-adjusted
+             * attack to build_explosion_group_action so rawAttackValue
+             * is the resistance-adjusted value (e.g. attack=96 with
+             * Mummy resistance=5 gives rawAttackValue=4, not 3).
+             * f60e82f11 incorrectly removed this F0192 pre-scale; the
+             * ReDMCSB source line clearly reassigns L0530_i_Attack
+             * from the F0192 result.  Restored for v2.7.22 and
+             * locked in source comments + test_dm1_v1_monster_poison_
+             * cloud_overlap_tick_pc34_compat.  The pre-F0192-removal
+             * test_dm1_v1_projectile_explosion_render_pc34_compat
+             * expectations are stale and are updated to match. */
+            int resistanceAdjusted = 0;
+            F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
+                digest->destCreatureType, attackApplied, rng,
+                &resistanceAdjusted);
+            if (resistanceAdjusted > 0) {
+                build_explosion_group_action(in, digest, resistanceAdjusted,
+                                             COMBAT_ATTACK_NORMAL,
+                                             &outResult->outActionGroup);
+                outResult->emittedCombatActionGroupCount = 1;
+            }
         }
         if (in->attack >= 6) {
             outNewState->attack = in->attack - 3;
@@ -1401,6 +1515,7 @@ int F0827_PROJECTILE_InstanceSerialize_Compat(
     write_le_int32(outBuf + o, in->poisonAttack);           o += 4;
     write_le_int32(outBuf + o, in->attackTypeCode);         o += 4;
     write_le_int32(outBuf + o, in->flags);                  o += 4;
+    write_le_int32(outBuf + o, in->launcherStrength);       o += 4;
     write_le_int32(outBuf + o, in->reserved0);              o += 4;
     write_le_int32(outBuf + o, in->reserved1);              o += 4;
     write_le_int32(outBuf + o, in->reserved2);              o += 4;
@@ -1437,6 +1552,7 @@ int F0827_PROJECTILE_InstanceDeserialize_Compat(
     out->poisonAttack          = read_le_int32(buf + o); o += 4;
     out->attackTypeCode        = read_le_int32(buf + o); o += 4;
     out->flags                 = read_le_int32(buf + o); o += 4;
+    out->launcherStrength      = read_le_int32(buf + o); o += 4;
     out->reserved0             = read_le_int32(buf + o); o += 4;
     out->reserved1             = read_le_int32(buf + o); o += 4;
     out->reserved2             = read_le_int32(buf + o); o += 4;

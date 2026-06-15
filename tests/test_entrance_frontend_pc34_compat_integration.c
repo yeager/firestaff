@@ -57,7 +57,12 @@ int main(void) {
                i, kind_name(step.kind), step.delayTicks, step.vblankLoopCount,
                step.x, step.y, step.width, step.height,
                step.sourceLineEvidence ? step.sourceLineEvidence : "");
+        if (i == 5u && ENTRANCE_Compat_GetRuntimeDelayMs(&step) != 0u) ok = 0;
+        if (i == 6u && ENTRANCE_Compat_GetRuntimeDelayMs(&step) != 400u) ok = 0;
+        if (i == 7u && ENTRANCE_Compat_GetRuntimeDelayMs(&step) != 20u) ok = 0;
     }
+    printf("preOpenRuntimeDelayMs=400\n");
+    printf("doorStepRuntimeDelayMs=20\n");
     printf("entranceSourceAnimationScheduleInvariantOk=%d\n", ok);
     return ok ? 0 : 1;
 }

@@ -12,8 +12,11 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass504_dm1_v1_original_capture_route_preflight"
@@ -145,6 +148,8 @@ REQUIRED_SCRIPT_TOKENS = [
     "rclick:<x>,<y>",
     "shot:<label>",
     "xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+    "--preflight-route",
+    "selected route injector",
     "exactly 6 shot or shot:<label> tokens",
     "NEW_FILE_TIMEOUT_MS",
 ]
@@ -156,6 +161,12 @@ EXPECTED_CANONICAL_DM1_SHA256 = {
     "TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
     "DungeonMasterPC34/DM.EXE": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
 }
+PREFLIGHT_ROUTE = (
+    "wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 "
+    "shot:start_south kp6 wait:1200 shot:turn_right_west kp8 wait:1200 "
+    "shot:forward_west_blocked kp4 wait:1200 shot:turn_left_east kp8 wait:1200 "
+    "shot:forward_south_corridor wait:600 shot:post_redraw_after_vblank"
+)
 
 
 def norm(text: str) -> str:
@@ -253,6 +264,36 @@ def audit_script() -> dict[str, Any]:
     }
 
 
+def audit_route_preflight() -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="pass504-route-preflight-") as tmp:
+        env = os.environ.copy()
+        env.update({
+            "OUT_DIR": str(Path(tmp) / "capture"),
+            "DM1_ORIGINAL_ROUTE_EVENTS": PREFLIGHT_ROUTE,
+            "DM1_ROUTE_SKIP_STARTUP_SELECTOR": "1",
+        })
+        proc = subprocess.run(
+            [str(CAPTURE_SCRIPT), "--preflight-route"],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=30,
+            check=False,
+        )
+        stdout = proc.stdout
+        stdout_tail = "\n".join(stdout.splitlines()[-12:]).replace(str(Path(tmp)), "<temp>")
+        return {
+            "command": "DM1_ORIGINAL_ROUTE_EVENTS=<movement wall route> scripts/dosbox_dm1_original_viewport_reference_capture.sh --preflight-route",
+            "route": PREFLIGHT_ROUTE,
+            "returncode": proc.returncode,
+            "ok": proc.returncode == 0 and "route preflight OK" in stdout and "selected route injector:" in stdout,
+            "stdoutTail": stdout_tail,
+            "requiresRuntimeLaunch": False,
+        }
+
+
 def audit_secondary_refs() -> dict[str, Any]:
     return {
         "greatstoneAtlas": {"path": str(GREATSTONE), "exists": GREATSTONE.exists(), "role": "secondary DM1 atlas/hash context only"},
@@ -266,10 +307,12 @@ def main() -> int:
     commands = audit_commands()
     canon = audit_canonical()
     script = audit_script()
+    route_preflight = audit_route_preflight() if script["exists"] else {"ok": False, "returncode": None, "stdoutTail": "capture script missing"}
     secondary = audit_secondary_refs()
     required_ok = {
         "redmcsb_source_locks": all(row["ok"] for row in source),
         "capture_script_contract": script["ok"],
+        "capture_route_preflight": route_preflight["ok"],
         "n2_runtime_commands": all(row["ok"] for row in commands if not row.get("optionalButUseful")),
         "canonical_dm1_data": all(row["ok"] for row in canon),
         "greatstone_secondary_available": secondary["greatstoneAtlas"]["exists"],
@@ -305,6 +348,7 @@ def main() -> int:
         "canonicalDm1Audit": canon,
         "canonicalDm1Variant": CANONICAL_DM1_VARIANT,
         "captureScriptAudit": script,
+        "routePreflightAudit": route_preflight,
         "secondaryReferenceAudit": secondary,
         "requiredOk": required_ok,
         "routeContract": route_contract,
@@ -342,6 +386,11 @@ def main() -> int:
         f"- Wrapper: `{route_contract['recommendedWrapper']}`",
         "- Six `shot`/`shot:<label>` tokens are required by the capture script before normalization.",
         "- Click centers are source-locked from `COMMAND.C`, but labels become promotable only after F0380 -> F0365/F0366 -> F0128 -> F0097/VIDRV proof.",
+        "- `--preflight-route` validates route shape and host injector selection before any DOSBox runtime launch.",
+        "",
+        "## Route Preflight",
+        f"- command: `{route_preflight['command']}`",
+        f"- ok: `{route_preflight['ok']}` returncode=`{route_preflight['returncode']}`",
         "",
         "## Secondary References",
         f"- Greatstone atlas: `{secondary['greatstoneAtlas']['path']}` exists=`{secondary['greatstoneAtlas']['exists']}`",

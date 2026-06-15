@@ -36,6 +36,7 @@ int main(void) {
     /* Keep the probe deterministic and headless: event ordering/identity only,
      * not SDL device playback and not waveform/cadence parity. */
     setenv("FIRESTAFF_AUDIO_ENABLE_SDL", "0", 1);
+    setenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG", "1", 1);
     setenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3", "1", 1);
 
     probe_record(&tally,
@@ -83,7 +84,18 @@ int main(void) {
                  "creature movement source event maps to the creature SFX fallback lane");
 
     M11_Audio_Shutdown(&state);
+    probe_record(&tally,
+                 "P125_AUDIO_EVENT_ORDER_07",
+                 state.initialized == 0 &&
+                     state.backend == M11_AUDIO_BACKEND_NONE &&
+                     state.lastSoundIndex == -1 &&
+                     state.lastMarker == M11_AUDIO_MARKER_NONE &&
+                     state.queuedSampleCount == 0 &&
+                     state.playedMarkerCount == 0,
+                 "shutdown clears headless audio event breadcrumbs and counters");
+
     unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3");
+    unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG");
     unsetenv("FIRESTAFF_AUDIO_ENABLE_SDL");
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);

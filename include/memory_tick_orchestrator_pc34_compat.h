@@ -54,10 +54,12 @@
  *
  * These deviations preserve determinism and round-trip integrity.
  *
- * NEEDS DISASSEMBLY REVIEW: the full GAMELOOP.C behaviour of
- * F0003_MAIN_ProcessNewPartyMap is not reproduced in v1 (see §1 "Out of
- * scope"); we toggle partyMapIndex only. Map-transition re-dispatch is
- * bounded to 4 iterations per tick. Fontanel GAMELOOP.C lines 67-78.
+ * ReDMCSB GAMELOOP.C:67-78 (F0003_MAIN_ProcessNewPartyMap): the full
+ * behaviour of F0003 is not reproduced in v1 (see §1 "Out of
+ * scope"); we toggle partyMapIndex only.  Map-transition
+ * re-dispatch is bounded to 4 iterations per tick via
+ * ORCH_MAX_MAP_TRANSITIONS_PER_TICK (see below).  See
+ * GAMELOOP.C:67-78 for the original F0003 dispatch loop.
  */
 
 #include <stddef.h>
@@ -131,7 +133,8 @@
 #define ORCH_PARTY_DEAD         (-1)
 #define ORCH_GAME_WON           (-2)
 
-/* Map-transition safety bound (see NEEDS DISASSEMBLY REVIEW above). */
+/* Map-transition safety bound (see ReDMCSB GAMELOOP.C:67-78
+ * source-locked citation above). */
 #define ORCH_MAX_MAP_TRANSITIONS_PER_TICK 4
 
 /* ================================================================
@@ -255,6 +258,26 @@ int F0885_ORCH_RunNTicks_Compat(
     int tickCount,
     struct TickStreamRecord_Compat* outRecords,
     uint32_t* outFinalHash);
+
+/* F0284 public probe wrapper.
+ *
+ * Sets the party direction (0..3) and, in doing so, rotates every
+ * present champion's per-cell Direction and Cell ordinal by the
+ * delta (new - old) mod 4.  This is the public entry point for
+ * MOV-05 (DM1 V1 functional-divergence-report.md): the
+ *   `set party_direction_redmcsb_compat` static function in the
+ * .c file is now exposed here so unit tests can exercise the
+ * cell-rotation invariants without spinning up the full
+ * F0884_ORCH_AdvanceOneTick_Compat path (which has the side
+ * effect of scheduling the M010 / watchdog-tick events).
+ *
+ * Returns 1 if the direction actually changed, 0 if it was a
+ * no-op (newDirection == oldDirection).  Idempotent.
+ *
+ * Source: ReDMCSB CHAMPION.C:117-130, F0284_CHAMPION_SetPartyDirection. */
+int F0284_CHAMPION_SetPartyDirection_Compat(
+    struct GameWorld_Compat* world,
+    int newDirection);
 
 int F0886_ORCH_RunUntilCondition_Compat(
     struct GameWorld_Compat* world,

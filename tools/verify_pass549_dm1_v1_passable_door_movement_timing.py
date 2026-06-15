@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass549_dm1_v1_passable_door_movement_timing"
@@ -95,10 +99,13 @@ def git(*args: str) -> str:
 
 
 def find_test_exe() -> Path:
-    candidates = [
+    candidates: list[Path] = []
+    if "FIRESTAFF_BUILD_DIR" in os.environ:
+        candidates.append(Path(os.environ["FIRESTAFF_BUILD_DIR"]) / "test_dm1_v1_movement_command_core_pc34_compat")
+    candidates.extend([
         ROOT / "build-pass549" / "test_dm1_v1_movement_command_core_pc34_compat",
         ROOT / "build" / "test_dm1_v1_movement_command_core_pc34_compat",
-    ]
+    ])
     candidates.extend(sorted(ROOT.glob("build*/test_dm1_v1_movement_command_core_pc34_compat")))
     for candidate in candidates:
         if candidate.exists():
@@ -222,7 +229,7 @@ def main() -> int:
             "doorFallthroughToMoveOk": f"memory_movement_pc34_compat.c:{span(f0702_start, f0702, fire_move)}",
             "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": f"dm1_v1_movement_command_core_pc34_compat.c:{core_start}-{core_end}",
             "acceptedMovementToTiming": f"dm1_v1_movement_command_core_pc34_compat.c:{span(core_start, core, fire_core)}",
-            "runtimeExecutable": str(test_exe.relative_to(ROOT)),
+            "runtimeExecutable": str(test_exe.relative_to(ROOT)) if str(test_exe).startswith(str(ROOT)) else str(test_exe),
             "runtimeOutputLastLine": test_out.splitlines()[-1],
         },
         "whyNotPass547Duplicate": "pass547 locks blocked closed-door/fake-wall/group convergence. Pass549 locks the opposite door-state branch: one-fourth and destroyed doors are accepted movement, keep queued follow-up input, process destination sensors, set movement cooldown, clear projectile cooldown, and request viewport redraw.",

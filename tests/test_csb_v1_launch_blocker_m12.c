@@ -12,14 +12,35 @@ static void force_csb_available(M12_StartupMenuState* state) {
     state->entries[1].kind = M12_MENU_ENTRY_GAME;
     state->entries[1].sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG;
     state->entries[1].available = 1;
+    state->assetStatus.csbAvailable = 1;
     state->assetStatus.versions[1][0].gameId = "csb";
     state->assetStatus.versions[1][0].versionId = "atari-st-v20";
     state->assetStatus.versions[1][0].label = "Atari ST 2.0";
     state->assetStatus.versions[1][0].shortLabel = "ST 2.0";
     state->assetStatus.versions[1][0].matched = 1;
+    state->assetStatus.requiredFileCounts[1] = 2;
+    state->assetStatus.requiredFiles[1][0].gameId = "csb";
+    state->assetStatus.requiredFiles[1][0].roleId = "graphics";
+    state->assetStatus.requiredFiles[1][0].label = "GRAPHICS.DAT";
+    state->assetStatus.requiredFiles[1][0].required = 1;
+    state->assetStatus.requiredFiles[1][0].matched = 1;
+    state->assetStatus.requiredFiles[1][1].gameId = "csb";
+    state->assetStatus.requiredFiles[1][1].roleId = "dungeon";
+    state->assetStatus.requiredFiles[1][1].label = "DUNGEON.DAT";
+    state->assetStatus.requiredFiles[1][1].required = 1;
+    state->assetStatus.requiredFiles[1][1].matched = 1;
     state->gameOptions[1].versionIndex = 0;
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
+}
+
+static void force_csb_version_only_missing_required(M12_StartupMenuState* state) {
+    force_csb_available(state);
+    state->assetStatus.csbAvailable = 0;
+    state->assetStatus.requiredFiles[1][0].matched = 0;
+    state->assetStatus.requiredFiles[1][1].matched = 0;
+    state->settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
+    state->gameOptions[1].presentationModeIndex = M12_PRESENTATION_V21_UPSCALED;
 }
 
 static int expect(int cond, const char* msg) {
@@ -86,5 +107,31 @@ int main(void) {
 
     puts("ok: CSB V1 hash-matched launcher path renders options/ready views and exposes a launch intent");
     puts("sourceEvidence=ReDMCSB ENTRANCE.C F0806 launch state and LOADSAVE.C F0435 new-game load boundary");
+
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_version_only_missing_required(&state);
+
+    changed = M12_ModernMenu_HandlePointer(&state, csbCardCenterX, cardCenterY, 1, NULL);
+    if (!expect(changed == 1, "CSB version-only fixture should still open options for regression coverage")) return 1;
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS, "CSB version-only fixture enters game options")) return 1;
+    if (!expect(state.gameOptions[1].presentationModeIndex == M12_PRESENTATION_V21_UPSCALED,
+                "CSB version-only fixture keeps the V2.1 presentation selection")) return 1;
+
+    changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
+    if (!expect(changed == 1, "CSB V2.1 launch click should be handled")) return 1;
+    if (!expect(state.launchRequested == 0,
+                "CSB V2.1 version match must not bypass missing required-file gating")) return 1;
+    if (!expect(state.view == M12_MENU_VIEW_MESSAGE,
+                "CSB V2.1 missing required data shows a message instead of launching")) return 1;
+    if (!expect(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") &&
+                strstr(state.messageLine2, "DUNGEON.DAT"),
+                "CSB V2.1 missing-data popup names both required V1 runtime files")) return 1;
+
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 0,
+                "CSB V2.1 version-only launch intent is invalid without required files")) return 1;
+
+    puts("ok: CSB V2 presentation selection does not bypass CSB required-file launch gating");
+    puts("sourceEvidence=ReDMCSB ENTRANCE.C F0806 selects CSB media before LOADSAVE.C F0435 dungeon load");
     return 0;
 }

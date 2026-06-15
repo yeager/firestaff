@@ -1,7 +1,44 @@
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE 1
+#endif
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
 #include "menu_hit_m12.h"
 #include "menu_startup_m12.h"
+#include "config_m12.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+
+#if defined(_WIN32)
+#include <direct.h>
+#include <process.h>
+static int test_mkdir(const char* path) { return _mkdir(path) == 0; }
+static int test_setenv(const char* name, const char* value) { return _putenv_s(name, value) == 0; }
+static char* test_mkdtemp(char* templ) {
+    char* marker = strstr(templ, "XXXXXX");
+    int i;
+    if (!marker) return NULL;
+    for (i = 0; i < 1000; ++i) {
+        snprintf(marker, 7, "%06ld", ((long)_getpid() + i) % 1000000L);
+        if (_mkdir(templ) == 0) return templ;
+    }
+    return NULL;
+}
+#else
+#include <unistd.h>
+static int test_mkdir(const char* path) { return mkdir(path, 0777) == 0; }
+static int test_setenv(const char* name, const char* value) { return setenv(name, value, 1) == 0; }
+static char* test_mkdtemp(char* templ) { return mkdtemp(templ); }
+#endif
+
+static int test_file_exists(const char* path) {
+    struct stat st;
+    return path && stat(path, &st) == 0;
+}
 
 static void force_dm1_available(M12_StartupMenuState* state) {
     state->entries[0].title = "DUNGEON MASTER";
@@ -31,7 +68,11 @@ static int expect(int cond, const char* msg) {
 int main(void) {
     M12_StartupMenuState state;
     M12_MouseHit hit;
+    M12_Config config;
     int changed;
+    char homeTemplate[] = "/tmp/firestaff-m12-hit-home-XXXXXX";
+    char* homeDir = test_mkdtemp(homeTemplate);
+    char manualDir[512];
     const int gridLeft = 42 + 390 + 44;
     const int cardW = (1920 - gridLeft - 48 - 22 * 2) / 3;
     const int cardH = ((1080 - 130) - 40 - 22) / 2;
@@ -42,8 +83,26 @@ int main(void) {
     const int originalModeCenterX = 132 + 408;
     const int customModeCenterX = 132 + 817 + 22 + 408;
     const int modeChoiceCenterY = 190 + 34 + 78;
+    const int settingsDataDirCenterX = 960;
+    const int settingsDataDirCenterY = 260 + 36 + 3 * 70 + 25;
+    const int settingsExportCenterY = 260 + 36 + 5 * 70 + 25;
+    const int settingsImportCenterY = 260 + 36 + 6 * 70 + 25;
+
+    if (!homeDir || !test_setenv("HOME", homeDir) ||
+        !test_setenv("SDL_VIDEODRIVER", "dummy")) {
+        fprintf(stderr, "FAIL: temporary HOME setup failed\n");
+        return 1;
+    }
+    snprintf(manualDir, sizeof(manualDir), "%s/manual-data-root", homeDir);
+    if (!test_mkdir(manualDir)) {
+        fprintf(stderr, "FAIL: temporary manual data directory setup failed\n");
+        return 1;
+    }
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
     force_dm1_available(&state);
 
     changed = M12_ModernMenu_HandlePointer(&state, dm1CardCenterX, cardCenterY, 0, NULL);
@@ -72,6 +131,9 @@ int main(void) {
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE, "Launch direct click should show ready-to-launch message")) return 1;
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
     {
         const int settingsCenterX = gridLeft + 2 * (cardW + 22) + cardW / 2;
         const int settingsCenterY = 40 + cardH + 22 + cardH / 2;
@@ -81,6 +143,50 @@ int main(void) {
         if (!expect(changed == 1 && state.view == M12_MENU_VIEW_SETTINGS, "Firestaff click should open settings view")) return 1;
     }
 
-    puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1");
+    hit = M12_ModernMenu_HitTest(&state, settingsDataDirCenterX, settingsDataDirCenterY);
+    if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 15,
+                "visible Data Directory settings row should hit the browse action")) return 1;
+    hit = M12_ModernMenu_HitTest(&state, settingsDataDirCenterX, settingsExportCenterY);
+    if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 41,
+                "visible Export Settings row should hit the save action")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, settingsDataDirCenterX, settingsExportCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
+                "Export Settings click should show a public result message")) return 1;
+    if (!expect(test_file_exists(M12_Config_GetExportPath()) == 1,
+                "Export Settings click should create the default settings JSON file")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    state.view = M12_MENU_VIEW_SETTINGS;
+    hit = M12_ModernMenu_HitTest(&state, settingsDataDirCenterX, settingsImportCenterY);
+    if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 42,
+                "visible Import Settings row should hit the load action")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, settingsDataDirCenterX, settingsImportCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
+                "Import Settings click should show a public result message")) return 1;
+    if (!expect(strcmp(state.messageLine1, "SETTINGS IMPORTED") == 0,
+                "Import Settings click should load the default settings JSON file")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    state.view = M12_MENU_VIEW_SETTINGS;
+    if (!expect(M12_StartupMenu_SetDataDirectory(&state, manualDir) == 1,
+                "manual data directory setter should accept an existing arbitrary folder")) return 1;
+    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
+                "manual data directory setter should rescan the chosen folder")) return 1;
+    M12_Config_Load(&config, NULL);
+    if (!expect(strcmp(config.dataDir, manualDir) == 0,
+                "manual data directory setter should persist the chosen folder")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    state.view = M12_MENU_VIEW_SETTINGS;
+    remove(M12_Config_GetExportPath());
+    changed = M12_ModernMenu_HandlePointer(&state, settingsDataDirCenterX, settingsImportCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
+                "Import Settings missing-file click should show a public result message")) return 1;
+    if (!expect(strcmp(state.messageLine1, "IMPORT FAILED") == 0,
+                "Import Settings missing-file click should report import failure")) return 1;
+    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
+                "failed settings import should preserve the active data directory")) return 1;
+    M12_Config_Load(&config, NULL);
+    if (!expect(strcmp(config.dataDir, manualDir) == 0,
+                "failed settings import should preserve the persisted data directory")) return 1;
+
+    puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1; settings rows export/import JSON, missing import preserves data directory, and data directory accepts an arbitrary selected folder");
     return 0;
 }

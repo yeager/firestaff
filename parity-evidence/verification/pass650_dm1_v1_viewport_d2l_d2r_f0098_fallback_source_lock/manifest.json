@@ -1,0 +1,431 @@
+{
+  "claim": "DM1 V1 D2L/D2R non-wall F0098 floor/ceiling fallback order is source-locked against ReDMCSB.",
+  "firestaffChecks": [
+    {
+      "file": "src/dm1/dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat.h",
+      "hits": [
+        {
+          "line": 27,
+          "needle": "DM1_V1_D2L_D2R_F0098_OP_F0098_FLOOR_CEILING_PC34"
+        },
+        {
+          "line": 28,
+          "needle": "DM1_V1_D2L_D2R_F0098_OP_F0099_FLOOR_CEILING_FLIP_PC34"
+        },
+        {
+          "line": 33,
+          "needle": "DM1_V1_D2L_D2R_F0098_OP_F0115_THINGS_PC34"
+        },
+        {
+          "line": 36,
+          "needle": "DM1_V1_D2L_D2R_F0098_OP_F0097_PRESENT_PC34"
+        },
+        {
+          "line": 85,
+          "needle": "dm1_v1_viewport_d2l_d2r_f0098_fallback_spec_pc34"
+        },
+        {
+          "line": 89,
+          "needle": "dm1_v1_viewport_d2l_d2r_f0098_fallback_order_pc34"
+        },
+        {
+          "line": 94,
+          "needle": "dm1_v1_viewport_d2l_d2r_f0098_should_draw_pc34"
+        }
+      ],
+      "id": "firestaff_new_header_accessors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat.c",
+      "hits": [
+        {
+          "line": 23,
+          "needle": "PASS650_GRAPHICS_SHA256"
+        },
+        {
+          "line": 13,
+          "needle": "DM1_V1_D2L_D2R_F0098_CELL_ORDER_D2L_OPEN_PC34"
+        },
+        {
+          "line": 14,
+          "needle": "DM1_V1_D2L_D2R_F0098_CELL_ORDER_D2R_OPEN_PC34"
+        },
+        {
+          "line": 27,
+          "needle": "DUNVIEW.C F0098 line 2962"
+        },
+        {
+          "line": 29,
+          "needle": "DUNVIEW.C F0128 lines 8337-8338"
+        },
+        {
+          "line": 33,
+          "needle": "DUNVIEW.C F0119 lines 6900-7049"
+        },
+        {
+          "line": 33,
+          "needle": "F0120 lines 7051-7220"
+        },
+        {
+          "line": 37,
+          "needle": "DEFS.H lines 2582-2583"
+        },
+        {
+          "line": 28,
+          "needle": "G0297_B_DrawFloorAndCeilingRequested"
+        },
+        {
+          "line": 258,
+          "needle": "without the C00 wall_return/F0107 branch"
+        }
+      ],
+      "id": "firestaff_new_module_source_lock",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat.c",
+      "hits": [
+        {
+          "line": 119,
+          "needle": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+        },
+        {
+          "line": 127,
+          "needle": "test_order_for_non_wall_corridor_and_pit"
+        },
+        {
+          "line": 200,
+          "needle": "dm1_v1_viewport_d2l_d2r_f0098_should_draw_pc34(true)"
+        },
+        {
+          "line": 203,
+          "needle": "dm1_v1_viewport_d2l_d2r_f0098_should_draw_pc34(false)"
+        },
+        {
+          "line": 157,
+          "needle": "DUNVIEW.C:8337-8431 F0098 before F0099 flip work"
+        },
+        {
+          "line": 169,
+          "needle": "DUNVIEW.C:6968-6973 F0107 belongs to wall_return branch"
+        },
+        {
+          "line": 226,
+          "needle": "canonical DM1 PC34 GRAPHICS.DAT real-asset fixture"
+        }
+      ],
+      "id": "firestaff_new_test_order_and_asset",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "hits": [
+        {
+          "line": 10832,
+          "needle": "test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat"
+        },
+        {
+          "line": 221,
+          "needle": "dm1_v1_viewport_d2l_d2r_f0098_fallback"
+        },
+        {
+          "line": 12538,
+          "needle": "pass650_dm1_v1_viewport_d2l_d2r_f0098_fallback_source_lock"
+        }
+      ],
+      "id": "cmake_registered",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "Does not duplicate D2L/D2R wall table gates.",
+    "Does not duplicate D2L2/D2R2 wall source-lock gates.",
+    "Does not duplicate D0C F0098 row-ownership coverage.",
+    "Does not claim original DOS pixel parity or capture-backed closure.",
+    "Does not change renderer behavior."
+  ],
+  "problems": [],
+  "redmcsbChecks": [
+    {
+      "claim": "F0098 owns floor/ceiling refresh and clears the dirty flag.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 2962,
+          "needle": "void F0098_DUNGEONVIEW_DrawFloorAndCeiling"
+        },
+        {
+          "line": 2995,
+          "needle": "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);"
+        },
+        {
+          "line": 2996,
+          "needle": "F0674_F0128_sub(G2108_Floor, G0087_puc_Bitmap_ViewportFloorArea);"
+        },
+        {
+          "line": 3002,
+          "needle": "G0297_B_DrawFloorAndCeilingRequested = C0_FALSE;"
+        }
+      ],
+      "id": "f0098_definition_and_dirty_clear",
+      "missing": [],
+      "source": "DUNVIEW.C:2962-3002",
+      "status": "PASS"
+    },
+    {
+      "claim": "F0128 gates F0098 on the dirty flag, performs F0099 flip work, dispatches D2L/D2R, then presents with F0097.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 8337,
+          "needle": "if (G0297_B_DrawFloorAndCeilingRequested) {"
+        },
+        {
+          "line": 8338,
+          "needle": "F0098_DUNGEONVIEW_DrawFloorAndCeiling();"
+        },
+        {
+          "line": 8363,
+          "needle": "F0099_DUNGEONVIEW_CopyBitmapAndFlipHorizontal(G0084_puc_Bitmap_Floor"
+        },
+        {
+          "line": 8425,
+          "needle": "F0099_DUNGEONVIEW_CopyBitmapAndFlipHorizontal(G0085_puc_Bitmap_Ceiling"
+        },
+        {
+          "line": 8512,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 2, -1"
+        },
+        {
+          "line": 8513,
+          "needle": "F0119_DUNGEONVIEW_DrawSquareD2L"
+        },
+        {
+          "line": 8516,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 2, 1"
+        },
+        {
+          "line": 8517,
+          "needle": "F0120_DUNGEONVIEW_DrawSquareD2R_CPSF"
+        },
+        {
+          "line": 8606,
+          "needle": "F0097_DUNGEONVIEW_DrawViewport"
+        }
+      ],
+      "id": "f0128_f0098_f0099_d2l_d2r_f0097_order",
+      "missing": [],
+      "source": "DUNVIEW.C:8337-8610",
+      "status": "PASS"
+    },
+    {
+      "claim": "D2L non-wall branch reaches floor ornament, ceiling pit, F0115, and optional field without taking the C00 wall/F0107 return.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 6945,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 6968,
+          "needle": "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF"
+        },
+        {
+          "line": 6973,
+          "needle": "return;"
+        },
+        {
+          "line": 7005,
+          "needle": "case C02_ELEMENT_PIT:"
+        },
+        {
+          "line": 7015,
+          "needle": "case C05_ELEMENT_TELEPORTER:"
+        },
+        {
+          "line": 7016,
+          "needle": "case C01_ELEMENT_CORRIDOR:"
+        },
+        {
+          "line": 7018,
+          "needle": "L0207_i_Order = C0x3421_CELL_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT;"
+        },
+        {
+          "line": 7020,
+          "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament"
+        },
+        {
+          "line": 7023,
+          "needle": "F0112_DUNGEONVIEW_DrawCeilingPit"
+        },
+        {
+          "line": 7031,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
+        },
+        {
+          "line": 7040,
+          "needle": "F0113_DUNGEONVIEW_DrawField"
+        }
+      ],
+      "id": "f0119_d2l_non_wall_branch_not_wall_return",
+      "missing": [],
+      "source": "DUNVIEW.C:6900-7049",
+      "status": "PASS"
+    },
+    {
+      "claim": "D2R non-wall branch mirrors the D2L fallback order without the C00 wall/F0107 return path.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "hits": [
+        {
+          "line": 7096,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 7119,
+          "needle": "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF"
+        },
+        {
+          "line": 7166,
+          "needle": "return;"
+        },
+        {
+          "line": 7198,
+          "needle": "case C02_ELEMENT_PIT:"
+        },
+        {
+          "line": 7208,
+          "needle": "case C05_ELEMENT_TELEPORTER:"
+        },
+        {
+          "line": 7209,
+          "needle": "case C01_ELEMENT_CORRIDOR:"
+        },
+        {
+          "line": 7211,
+          "needle": "L0209_i_Order = C0x4312_CELL_ORDER_BACKRIGHT_BACKLEFT_FRONTRIGHT_FRONTLEFT;"
+        },
+        {
+          "line": 7213,
+          "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament"
+        },
+        {
+          "line": 7215,
+          "needle": "F0112_DUNGEONVIEW_DrawCeilingPit"
+        },
+        {
+          "line": 7224,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
+        }
+      ],
+      "id": "f0120_d2r_non_wall_branch_not_wall_return",
+      "missing": [],
+      "source": "DUNVIEW.C:7051-7224",
+      "status": "PASS"
+    },
+    {
+      "claim": "DEFS.H binds D2L/D2R view-square, floor-view, cell-order, and floor/ceiling/zone ids.",
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "hits": [
+        {
+          "line": 2582,
+          "needle": "#define M604_VIEW_SQUARE_D2L  4"
+        },
+        {
+          "line": 2583,
+          "needle": "#define M605_VIEW_SQUARE_D2R  5"
+        },
+        {
+          "line": 2671,
+          "needle": "#define C0x0342_CELL_ORDER_BACKRIGHT_FRONTLEFT_FRONTRIGHT"
+        },
+        {
+          "line": 2674,
+          "needle": "#define C0x0431_CELL_ORDER_BACKLEFT_FRONTRIGHT_FRONTLEFT"
+        },
+        {
+          "line": 2676,
+          "needle": "#define C0x3421_CELL_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT"
+        },
+        {
+          "line": 2677,
+          "needle": "#define C0x4312_CELL_ORDER_BACKRIGHT_BACKLEFT_FRONTRIGHT_FRONTLEFT"
+        },
+        {
+          "line": 2755,
+          "needle": "#define M591_VIEW_FLOOR_D2L  5"
+        },
+        {
+          "line": 2757,
+          "needle": "#define M593_VIEW_FLOOR_D2R  7"
+        },
+        {
+          "line": 4040,
+          "needle": "#define C700_ZONE_VIEWPORT_CEILING_AREA"
+        },
+        {
+          "line": 4041,
+          "needle": "#define C701_ZONE_VIEWPORT_FLOOR_AREA"
+        },
+        {
+          "line": 4050,
+          "needle": "#define C710_ZONE_WALL_D2L"
+        },
+        {
+          "line": 4051,
+          "needle": "#define C711_ZONE_WALL_D2R"
+        },
+        {
+          "line": 4144,
+          "needle": "#define C805_ZONE_STAIRS_UP_FRONT_D2L"
+        },
+        {
+          "line": 4146,
+          "needle": "#define C807_ZONE_STAIRS_UP_FRONT_D2R"
+        },
+        {
+          "line": 4202,
+          "needle": "#define C855_ZONE_FLOORPIT_D2L"
+        },
+        {
+          "line": 4204,
+          "needle": "#define C857_ZONE_FLOORPIT_D2R"
+        },
+        {
+          "line": 4211,
+          "needle": "#define C864_ZONE_CEILING_PIT_D2L"
+        },
+        {
+          "line": 4213,
+          "needle": "#define C866_ZONE_CEILING_PIT_D2R"
+        },
+        {
+          "line": 4223,
+          "needle": "#define C1500_ZONE_FLOOR_ORNAMENT"
+        }
+      ],
+      "id": "defs_d2l_d2r_zone_ids",
+      "missing": [],
+      "source": "DEFS.H:2582-4223",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass650_dm1_v1_viewport_d2l_d2r_f0098_fallback_source_lock.v1",
+  "status": "passed",
+  "statusToken": "PASS650_DM1_V1_VIEWPORT_D2L_D2R_F0098_FALLBACK_SOURCE_LOCKED",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat"
+      ],
+      "outputTail": "PASS precondition.dirty_true == 1 (DUNVIEW.C:8337 G0297 dirty flag)\nPASS precondition.dirty_false == 0 (DUNVIEW.C:8337 G0297 dirty flag)\nPASS evidence.f0098 contains \"F0098:2962-3002\" (DUNVIEW.C F0098 line 2962)\nPASS evidence.f0128_dirty contains \"F0128:8337-8338\" (DUNVIEW.C F0128 dirty flag guard)\nPASS evidence.f0128_order contains \"F0128:8512-8517\" (DUNVIEW.C F0128 D2L/D2R dispatch order)\nPASS evidence.f0097 contains \"F0128:8606-8610\" (DUNVIEW.C F0097 present)\nPASS evidence.f0119_nonwall contains \"F0119:6900-7049 D2L non-wall\" (DUNVIEW.C F0119 non-wall branch)\nPASS evidence.f0120_nonwall contains \"F0120:7051-7220 D2R\" (DUNVIEW.C F0120 non-wall branch)\nPASS evidence.no_f0107 contains \"without the C00 wall_return/F0107 branch\" (DUNVIEW.C F0119/F0120 wall branch excluded)\nPASS evidence.defs_zones contains \"DEFS.H:4040-4051\" (DEFS.H zone ids for D2L/D2R)\nPASS asset.graphics_dat_reachable == 1 (canonical DM1 PC34 GRAPHICS.DAT real-asset fixture)\nPASS dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat 47/47 assertions",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

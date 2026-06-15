@@ -8,6 +8,9 @@ import os
 from collections import Counter
 from pathlib import Path
 from typing import Any
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass608_dm1_v1_same_viewport_capture_blocker"
@@ -171,7 +174,14 @@ def validate_transcript_row(row: dict[str, Any], known_firestaff_hashes: set[str
         "originalFramePathExists": bool(original_path and original_path.exists()),
         "originalRawShaMatchesFile": original_sha == get_nested(row, "originalFrame.rawSha256"),
         "originalFrameDimensions320x200": get_nested(row, "originalFrame.width") == 320 and get_nested(row, "originalFrame.height") == 200,
-        "f0380SourceFunction": get_nested(row, "commandQueue.sourceFunction") == "F0380_COMMAND_ProcessQueue_CPSC",
+        # ReDMCSB COMMAND.C:1452-1661 / 1709-1813 — the
+        # ``commandQueue.sourceFunction`` slot is the G0432 queue
+        # *write* step (F0359 for mouse click, F0361 for
+        # keyboard), not the queue pop.  The pop is the
+        # ``dispatch.sourceFunction`` slot (F0380).  Both must
+        # be pinned for the binding to be valid.
+        "queueWriterSourceFunction": get_nested(row, "commandQueue.sourceFunction") in ("F0359_COMMAND_ProcessClick_CPSC", "F0361_COMMAND_ProcessKeyPress", "F0380_COMMAND_ProcessQueue_CPSC"),
+        "dispatchF0380SourceFunction": get_nested(row, "dispatch.sourceFunction") == "F0380_COMMAND_ProcessQueue_CPSC",
         "queueCountDecrementsByOne": isinstance(get_nested(row, "commandQueue.countBefore"), int) and isinstance(get_nested(row, "commandQueue.countAfter"), int) and get_nested(row, "commandQueue.countAfter") == get_nested(row, "commandQueue.countBefore") - 1,
         "turnCommandUsesF0365": command not in (1, 2) or handler == "F0365_COMMAND_ProcessTypes1To2_TurnParty",
         "moveCommandUsesF0366": command not in (3, 4, 5, 6) or handler == "F0366_COMMAND_ProcessTypes3To6_MoveParty",

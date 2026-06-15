@@ -60,32 +60,55 @@ static int write_u32_le(FILE* f, unsigned int v) {
     return fwrite(b, 1, sizeof(b), f) == sizeof(b);
 }
 
-static int write_test_wav(const char* path) {
+static int write_test_wav(const char* path,
+                          unsigned int channels,
+                          unsigned int frameCount,
+                          int appendPartialFrameByte) {
     FILE* f;
     unsigned int sampleRate = 11025u;
-    unsigned int sampleCount = 110u;
-    unsigned int i;
+    unsigned int dataBytes;
+    unsigned int frame;
+    unsigned int ch;
+    unsigned int extraByte;
     if (!path) return 0;
+    if (channels == 0u || frameCount == 0u) return 0;
     f = fopen(path, "wb");
     if (!f) return 0;
+    dataBytes = frameCount * channels + (appendPartialFrameByte ? 1u : 0u);
+    extraByte = appendPartialFrameByte ? 0x7Fu : 0u;
     if (fwrite("RIFF", 1, 4, f) != 4 ||
-        !write_u32_le(f, 36u + sampleCount) ||
+        !write_u32_le(f, 36u + dataBytes) ||
         fwrite("WAVEfmt ", 1, 8, f) != 8 ||
         !write_u32_le(f, 16u) ||
         !write_u16_le(f, 1u) ||
-        !write_u16_le(f, 1u) ||
+        !write_u16_le(f, channels) ||
         !write_u32_le(f, sampleRate) ||
-        !write_u32_le(f, sampleRate) ||
-        !write_u16_le(f, 1u) ||
+        !write_u32_le(f, sampleRate * channels) ||
+        !write_u16_le(f, channels) ||
         !write_u16_le(f, 8u) ||
         fwrite("data", 1, 4, f) != 4 ||
-        !write_u32_le(f, sampleCount)) {
+        !write_u32_le(f, dataBytes)) {
         fclose(f);
         return 0;
     }
-    for (i = 0; i < sampleCount; ++i) {
-        unsigned char sample = (unsigned char)(96u + (i % 64u));
-        if (fwrite(&sample, 1, 1, f) != 1) {
+    for (frame = 0; frame < frameCount; ++frame) {
+        for (ch = 0; ch < channels; ++ch) {
+            unsigned char sample;
+            if (channels == 1u) {
+                sample = (unsigned char)(64u + (frame * 19u));
+            } else {
+                sample = (unsigned char)(frame == 0u
+                                         ? (ch == 0u ? 0u : 255u)
+                                         : (ch == 0u ? 255u : 0u));
+            }
+            if (fwrite(&sample, 1, 1, f) != 1) {
+                fclose(f);
+                return 0;
+            }
+        }
+    }
+    if (appendPartialFrameByte) {
+        if (fwrite(&extraByte, 1, 1, f) != 1) {
             fclose(f);
             return 0;
         }
@@ -155,7 +178,8 @@ int main(int argc, char** argv) {
     int expectSdlSourceIndexQueue = 0;
     char packDirTemplate[] = "/tmp/firestaff-sound-pack-XXXXXX";
     char* packDir = mkdtemp(packDirTemplate);
-    char packPath[256];
+    char packPathValid[256];
+    char packPathMalformed[256];
     int packFixtureReady = 0;
 
     for (i = 1; i < argc; ++i) {
@@ -165,9 +189,13 @@ int main(int argc, char** argv) {
     }
 
     if (packDir) {
-        int n = snprintf(packPath, sizeof(packPath), "%s/13.wav", packDir);
-        if (n > 0 && (size_t)n < sizeof(packPath)) {
-            packFixtureReady = write_test_wav(packPath);
+        int n1 = snprintf(packPathValid, sizeof(packPathValid), "%s/13.wav", packDir);
+        int n2 = snprintf(packPathMalformed, sizeof(packPathMalformed), "%s/14.wav", packDir);
+        if (n1 > 0 && (size_t)n1 < sizeof(packPathValid) &&
+            n2 > 0 && (size_t)n2 < sizeof(packPathMalformed)) {
+            int validReady = write_test_wav(packPathValid, 2u, 2u, 0);
+            int malformedReady = write_test_wav(packPathMalformed, 2u, 2u, 1);
+            packFixtureReady = validReady && malformedReady;
         }
     }
     if (packFixtureReady) {
@@ -189,9 +217,10 @@ int main(int argc, char** argv) {
                  !packFixtureReady ||
                      (M11_Audio_SoundPackAvailable(&state) == 1 &&
                       state.soundPackLoadedCount == 1 &&
-                      state.originalSounds[13].sampleCount > 0 &&
+                      state.originalSounds[13].sampleCount == 4 &&
+                      state.originalSounds[14].sampleCount == 0 &&
                       state.originalSounds[2].sampleCount == 0),
-                 "optional sound-pack WAV overrides are source-index keyed");
+                 "optional sound-pack WAV overrides are source-index keyed and reject partial-frame WAV data");
 
     /* INV 02: Sound buffers are pre-generated */
     {
@@ -323,7 +352,8 @@ int main(int argc, char** argv) {
     if (packFixtureReady) {
         probe_unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3");
         probe_unsetenv("FIRESTAFF_SOUND_PACK_DIR");
-        unlink(packPath);
+        unlink(packPathValid);
+        unlink(packPathMalformed);
     }
     if (packDir) rmdir(packDir);
 

@@ -17,6 +17,8 @@
 
 #if defined(_WIN32)
 #include <windows.h>
+#include <direct.h>   /* for _mkdir */
+#include <sys/stat.h> /* for _stat */
 #else
 #include <unistd.h>
 #include <sys/stat.h>
@@ -110,7 +112,17 @@ static void m12_default_sync_dir(char* out, size_t outSize) {
 int M12_CloudSync_EnsureDir(const char* path) {
     if (!path || !path[0]) return 0;
 #if defined(_WIN32)
-    (void)SHCreateDirectoryExA(NULL, path, NULL);
+    /* mkdir -p: create each component using _mkdir */
+    char tmp[FSP_PATH_MAX];
+    snprintf(tmp, sizeof(tmp), "%s", path);
+    for (char* p = tmp; *p; ++p) {
+        if (*p == '/' && p != tmp) {
+            *p = '\0';
+            (void)_mkdir(tmp);
+            *p = '/';
+        }
+    }
+    (void)_mkdir(tmp);
     return 1;
 #else
     /* mkdir -p: create each component */

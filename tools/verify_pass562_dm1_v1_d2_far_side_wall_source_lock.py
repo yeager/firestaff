@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import json, subprocess, sys
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT=Path(__file__).resolve().parents[1]
 RED=Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 MANIFEST=ROOT/"parity-evidence/verification/pass562_dm1_v1_d2_far_side_wall_source_lock/manifest.json"
 REPORT=ROOT/"parity-evidence/pass562_dm1_v1_d2_far_side_wall_source_lock.md"
 STATUS="PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCKED"
-TEST_BINARY=ROOT/"build"/"test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY=resolve_build_dir(ROOT, ROOT / "build")/"test_dm1_v1_viewport_3d_pc34_compat"
 SRC=[
 ("defs-pc34-d2-far-side-zones","DEFS.H","4042-4049",["#define C707_ZONE_WALL_D2L2","#define C708_ZONE_WALL_D2R2"]),
 ("d2l2-wall-and-field-branch","DUNVIEW.C","6836-6865",["STATICFUNCTION void F0678_DrawD2L2(","case C00_ELEMENT_WALL:","F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C05_WALL_D2R2], C707_ZONE_WALL_D2L2);","F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C06_WALL_D2L2]","C707_ZONE_WALL_D2L2);","return;","case C05_ELEMENT_TELEPORTER:","C09_VIEW_SQUARE_D2L2]], C707_ZONE_WALL_D2L2);"]),
 ("d2r2-mirrored-wall-and-field-branch","DUNVIEW.C","6868-6895",["STATICFUNCTION void F0679_DrawD2R2(","case C00_ELEMENT_WALL:","F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C06_WALL_D2L2], C708_ZONE_WALL_D2R2);","F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C05_WALL_D2R2]","C708_ZONE_WALL_D2R2);","return;","case C05_ELEMENT_TELEPORTER:","C10_VIEW_SQUARE_D2R2]], C708_ZONE_WALL_D2R2);"])]
 LOCAL=[
-("firestaff-d2-far-side-wall-metadata",ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","418-420",["DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2","DM1_PC34_ZONE_WALL_D2L2","DUNVIEW.C:6849-6858","DUNVIEW.C:6848-6862 wall case returns","DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2","DM1_PC34_ZONE_WALL_D2R2","DUNVIEW.C:6880-6889","DUNVIEW.C:6882-6893 wall case returns"]),
-("firestaff-d2-far-side-runtime-test",ROOT/"tests/test_dm1_v1_viewport_3d_pc34_compat.c","288-291",["DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2","DM1_PC34_ZONE_WALL_D2L2","\"6862\"","DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2","DM1_PC34_ZONE_WALL_D2R2","\"6893\""]),
-("firestaff-source-evidence-string",ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","2125-2130",["DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns"])]
+("firestaff-d2-far-side-wall-metadata",ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","511-512",["DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2","DM1_PC34_ZONE_WALL_D2L2","DUNVIEW.C:6849-6858","DUNVIEW.C:6848-6862 wall case returns","DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2","DM1_PC34_ZONE_WALL_D2R2","DUNVIEW.C:6880-6889","DUNVIEW.C:6882-6893 wall case returns"]),
+("firestaff-d2-far-side-runtime-test",ROOT/"tests/test_dm1_v1_viewport_3d_pc34_compat.c","288-300",["DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2","DM1_PC34_ZONE_WALL_D2L2","\"6862\"","DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2","DM1_PC34_ZONE_WALL_D2R2","\"6893\""]),
+("firestaff-source-evidence-string",ROOT/"src/dm1/dm1_v1_viewport_3d_pc34_compat.c","2340-2345",["DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns"])]
 def span(path,lines):
     a,b=[int(x) for x in lines.split("-")]; enc="latin-1" if path.suffix.upper() in {".C",".H"} else "utf-8"
     return a,"\n".join(path.read_text(encoding=enc,errors="replace").splitlines()[a-1:b])

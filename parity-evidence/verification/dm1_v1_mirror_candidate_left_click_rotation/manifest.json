@@ -1,0 +1,30 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-08T02:00:00Z",
+  "status": "PASS_DM1_V1_MIRROR_CANDIDATE_LEFT_CLICK_ROTATION_CONTRACT",
+  "repo": "https://github.com/yeager/firestaff.git",
+  "branch": "firestaff-coding/1780883993_dm1_v1_mirror_candidate_left_click_rotation",
+  "head": "0f780be0d",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "anchors": [
+    "COMMAND.C F0359:1985-1990 C040 mirror dispatch",
+    "COMMAND.C F0282 click-to-C040 routing and COMMAND.C:508-511 panel left-click table",
+    "CHAMPION.C F0284:93-131 party direction rotation contrast",
+    "CHAMPION.C F0297:243-298 leader-hand put not entered",
+    "CHAMPION.C F0298:270-298 leader-hand remove not entered",
+    "CHAMPION.C F0300/F0301:511-515,606-614 C30 slot write/clear not entered",
+    "PANEL.C F0354:2208-2240 champion-switch portrait/redraw contract",
+    "DEFS.H:2088 C10_COLOR_FLESH",
+    "DEFS.H:M070 hand-slot/chest-inventory swap macro",
+    "DEFS.H:M516_CHAMPIONS visible roster / local rotation-mask contract",
+    "DEFS.H:G0425/G0426/G0423/G0305 globals",
+    "!G0299 guarded COMMAND.C status/spell/save routes"
+  ],
+  "assertions": 40,
+  "notes": [
+    "Gate: tests/test_dm1_v1_mirror_candidate_left_click_rotation_pc34_compat.c",
+    "Target: contract-only left-click to mirror-candidate rotation hand-off.",
+    "The test proves the left-click event reaches the mirror-candidate handler, advances the visible candidate by one, preserves leader-hand and slot contents, and does not enter the C159/name-row route.",
+    "Synthetic contract only: no real-asset framebuffer parity, no DOSBox transcript, no full UI hit-test claim, and no C159 click combo ownership."
+  ]
+}

@@ -304,6 +304,94 @@ CandidatePanelResult_Compat F0867_RESURRECTION_ProcessCandidatePanelCommand_Comp
     return out;
 }
 
+/* ================================================================
+ *  F0868: Vi altar full-cycle transition
+ *  Source chain:
+ *    CLIKVIEW.C F0374 lines 173-186 creates C13_EVENT_VI_ALTAR_REBIRTH
+ *      with Priority=JUNK.ChargeCount and Effect=C02_EFFECT_TOGGLE.
+ *    TIMELINE.C lines 1665-1698 consumes step 2 -> step 1 -> step 0:
+ *      step 2 creates C0xFFE4 rebirth explosion and delays 5 ticks;
+ *      step 1 unlinks matching champion bones by cell/icon/ChargeCount;
+ *      step 0 calls F0283_CHAMPION_ViAltarRebirth(priority).
+ *    REVIVE.C F0283 lines 915-937 moves the champion to the first free
+ *      cell when the old cell is occupied, applies the health penalty,
+ *      copies G0308_i_PartyDirection, marks action/status/icon redraw
+ *      attributes, and draws the champion state.
+ * ================================================================ */
+
+ViAltarFullCycleResult_Compat F0868_RESURRECTION_RunViAltarFullCycle_Compat(
+    const ViAltarFullCycleInput_Compat* in)
+{
+    ViAltarFullCycleResult_Compat out;
+    RebirthHealthResult_Compat health;
+    uint16_t cell;
+
+    out.eventCreated = 0;
+    out.eventType = 0;
+    out.eventPriority = 0;
+    out.eventEffect = 0;
+    out.step2ExplosionThing = 0;
+    out.step2ExplosionType = 0;
+    out.step2DelayTicks = 0;
+    out.step1BonesMatched = 0;
+    out.step1BonesUnlinked = 0;
+    out.revived = 0;
+    out.championIndex = in ? in->championIndex : 0;
+    out.finalCell = in ? in->oldChampionCell : 0;
+    out.finalMaximumHealth = in ? in->maximumHealth : 0;
+    out.finalCurrentHealth = 0;
+    out.finalDirection = in ? in->partyDirection : 0;
+    out.dirtyAttributes = 0;
+
+    if (!in) return out;
+    if (!F0861_RESURRECTION_ShouldTriggerViAltarRebirth_Compat(
+            in->droppingIntoAlcove, in->facingViAltar, in->objectIconIndex)) {
+        return out;
+    }
+
+    out.eventCreated = 1;
+    out.eventType = DM1_EVENT_TYPE_VI_ALTAR_REBIRTH;
+    out.eventPriority = F0862_RESURRECTION_GetChampionIndexFromBones_Compat(
+        in->bonesChargeCount);
+    out.eventEffect = DM1_EFFECT_TOGGLE;
+
+    out.step2ExplosionThing = DM1_EXPLOSION_REBIRTH_STEP1;
+    out.step2ExplosionType = DM1_EXPLOSION_TYPE_REBIRTH_STEP1;
+    out.step2DelayTicks = 5;
+
+    out.step1BonesMatched =
+        (in->objectIconIndex == DM1_ICON_CHAMPION_BONES) &&
+        (out.eventPriority == in->championIndex) &&
+        (in->bonesCell <= 3);
+    if (!out.step1BonesMatched) return out;
+
+    out.step1BonesUnlinked = 1;
+    out.revived = 1;
+    out.championIndex = out.eventPriority;
+
+    cell = in->oldChampionCell;
+    if (cell <= 3 && (in->occupiedCellMask & (uint16_t)(1u << cell))) {
+        uint16_t probe;
+        for (probe = 0; probe < 4; ++probe) {
+            if ((in->occupiedCellMask & (uint16_t)(1u << probe)) == 0) {
+                cell = probe;
+                break;
+            }
+        }
+    }
+    out.finalCell = cell;
+
+    health = F0863_RESURRECTION_ComputeRebirthHealth_Compat(in->maximumHealth);
+    out.finalMaximumHealth = health.newMaxHealth;
+    out.finalCurrentHealth = health.newCurrentHealth;
+    out.finalDirection = in->partyDirection;
+    out.dirtyAttributes =
+        DM1_CHAMPION_ATTR_ACTION_HAND |
+        DM1_CHAMPION_ATTR_STATUS_BOX |
+        DM1_CHAMPION_ATTR_ICON;
+    return out;
+}
+
 /* -------- Evidence / invariant -------------------------------------- */
 
 const char* dm1_v1_resurrection_GetEvidence(void) {
@@ -313,6 +401,8 @@ const char* dm1_v1_resurrection_GetEvidence(void) {
            "CHAMPION.C:F0319 bones creation (Type=C05, ChargeCount=champIdx). "
            "CLIKVIEW.C:F0374 alcove+ViAltar bones detection, "
            "C13_EVENT_VI_ALTAR_REBIRTH event creation. "
+           "TIMELINE.C:1665-1698 processes Vi altar step 2/1/0, removes "
+           "matching bones by cell/icon/ChargeCount, and calls REVIVE.C:F0283. "
            "REVIVE.C:794-799 BUG0_87 first C03 sensor on mirror square is disabled. "
            "DEFS.H: C05_JUNK_BONES, C147_ICON_JUNK_CHAMPION_BONES, "
            "C160/C161/C162 commands, MASK0x8000_CHAMPION_BONES.";
@@ -332,6 +422,12 @@ unsigned int dm1_v1_resurrection_GetInvariant(void) {
     ok = ok && (DM1_SENSOR_WALL_CHAMPION_PORTRAIT == 127);
     ok = ok && (DM1_THING_TYPE_TEXTSTRING == 2);
     ok = ok && (DM1_THING_TYPE_SENSOR == 3);
+    ok = ok && (DM1_EFFECT_TOGGLE == 2);
+    ok = ok && (DM1_EXPLOSION_TYPE_REBIRTH_STEP1 == 100);
+    ok = ok && (DM1_EXPLOSION_TYPE_REBIRTH_STEP2 == 101);
+    ok = ok && (DM1_CHAMPION_ATTR_ICON == 0x0400);
+    ok = ok && (DM1_CHAMPION_ATTR_STATUS_BOX == 0x1000);
+    ok = ok && (DM1_CHAMPION_ATTR_ACTION_HAND == 0x8000);
 
     /* Verify rebirth health: max=100 → max(25, 100-100/64-1) = max(25,98) = 98, current=49 */
     {
@@ -362,6 +458,37 @@ unsigned int dm1_v1_resurrection_GetInvariant(void) {
     ok = ok && (F0861_RESURRECTION_ShouldTriggerViAltarRebirth_Compat(0, 1, 147) == 0);
     ok = ok && (F0861_RESURRECTION_ShouldTriggerViAltarRebirth_Compat(1, 0, 147) == 0);
     ok = ok && (F0861_RESURRECTION_ShouldTriggerViAltarRebirth_Compat(1, 1, 100) == 0);
+
+    /* Verify one full Vi altar cycle: champion 2, old cell occupied, first free cell 2. */
+    {
+        ViAltarFullCycleInput_Compat in;
+        ViAltarFullCycleResult_Compat r;
+        in.championIndex = 2;
+        in.oldChampionCell = 1;
+        in.occupiedCellMask = 0x0Bu;
+        in.partyDirection = 3;
+        in.maximumHealth = 100;
+        in.droppingIntoAlcove = 1;
+        in.facingViAltar = 1;
+        in.objectIconIndex = DM1_ICON_CHAMPION_BONES;
+        in.bonesChargeCount = 2;
+        in.bonesCell = 3;
+        r = F0868_RESURRECTION_RunViAltarFullCycle_Compat(&in);
+        ok = ok && (r.eventCreated == 1);
+        ok = ok && (r.eventType == DM1_EVENT_TYPE_VI_ALTAR_REBIRTH);
+        ok = ok && (r.eventPriority == 2);
+        ok = ok && (r.eventEffect == DM1_EFFECT_TOGGLE);
+        ok = ok && (r.step2ExplosionThing == DM1_EXPLOSION_REBIRTH_STEP1);
+        ok = ok && (r.step2ExplosionType == DM1_EXPLOSION_TYPE_REBIRTH_STEP1);
+        ok = ok && (r.step2DelayTicks == 5);
+        ok = ok && (r.step1BonesUnlinked == 1);
+        ok = ok && (r.revived == 1);
+        ok = ok && (r.finalCell == 2);
+        ok = ok && (r.finalMaximumHealth == 98);
+        ok = ok && (r.finalCurrentHealth == 49);
+        ok = ok && (r.finalDirection == 3);
+        ok = ok && (r.dirtyAttributes == 0x9400u);
+    }
 
     /* Verify champion index from bones */
     ok = ok && (F0862_RESURRECTION_GetChampionIndexFromBones_Compat(0) == 0);
@@ -430,4 +557,3 @@ unsigned int dm1_v1_resurrection_GetInvariant(void) {
  *
  *   REVIVE.C:9 F0279_CHAMPION_G
  * ══════════════════════════════════════════════════════════════════════ */
-

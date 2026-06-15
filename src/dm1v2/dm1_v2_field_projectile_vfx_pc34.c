@@ -42,6 +42,8 @@ int dm1_v2_vfx_family_to_emitter_preset(DM1_V2_FieldProjectileEffectFamily famil
         case DM1_V2_EFFECT_FAMILY_LIGHTNING:      return MAGIC_SPARKLE;
         case DM1_V2_EFFECT_FAMILY_POISON:         return SPELL_POISON;
         case DM1_V2_EFFECT_FAMILY_FLUXCAGE_FIELD: return MAGIC_SPARKLE;
+        case DM1_V2_EFFECT_FAMILY_SLIME:         return SPELL_FIREBALL;  /* ReDMCSB DEFS.H:421 — slime burst */
+        case DM1_V2_EFFECT_FAMILY_SMOKE:          return TORCH_SMOKE;    /* ReDMCSB DEFS.H:421 — smoke puff */
         default:                                   return -1;
     }
 }

@@ -10,14 +10,21 @@ static uint16_t rb16(const uint8_t *p) { return ((uint16_t)p[0]<<8)|p[1]; }
 
 static int nexus_v1_decode_structure1b_cell(const uint8_t *cell) {
     uint16_t flags;
+    unsigned square_type;
     unsigned collision;
     if (!cell) {
         return 0;
     }
     flags = rb16(cell);
+    square_type = (unsigned)(cell[6] & 0x1FU);
     collision = ((unsigned)(cell[6] & 0x0F) << 8) | (unsigned)cell[7];
     if (collision == 0x0FFFU) {
         return 0; /* wall / cannot enter */
+    }
+    if (square_type == 0U || square_type == 1U ||
+        (square_type >= 2U && square_type <= 14U) ||
+        square_type == 21U || square_type == 22U) {
+        return (int)square_type;
     }
     if ((flags & 0x0001U) != 0) {
         return 8; /* door present */

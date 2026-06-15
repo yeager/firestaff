@@ -10,7 +10,7 @@ Status: `PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN`
 
 ## Firestaff executable guards
 - `memory_movement_pc34_compat.c:408-493` / `F0702_MOVEMENT_TryMove_Compat` keeps the pre-step legality split.
-- `memory_movement_pc34_compat.c:709-835` / `F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat` keeps pit consequences post-step.
+- `memory_movement_pc34_compat.c:709-841` / `F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat` keeps pit consequences post-step.
 - `build/test_dm1_v1_movement_core_pc34_compat` covers closed/open/destroyed door states, fake-wall open/imaginary bits, wall blocks, and pit passability.
 
 ## Verdict

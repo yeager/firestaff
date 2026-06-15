@@ -24,38 +24,38 @@ Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far doo
 
 ## Firestaff Evidence
 
-- PASS firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:231-240)
-  - line 233: DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349
-  - line 233: DUNVIEW.C:6270 floor ornament under far rear pass
-  - line 234: DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439
-  - line 234: DUNVIEW.C:6337 floor ornament under mirrored far rear pass
+- PASS firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:280-281)
+  - line 280: DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349
+  - line 280: DUNVIEW.C:6270 floor ornament under far rear pass
+  - line 281: DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439
+  - line 281: DUNVIEW.C:6337 floor ornament under mirrored far rear pass
 
-- PASS firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:707-770)
-  - line 722: DM1_VIEW_SQUARE_D3L2, "6270"
-  - line 723: DM1_VIEW_SQUARE_D3R2, "6337"
-  - line 735: door_front_occlusion_spec_count(), 11
+- PASS firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:750-770)
+  - line 754: DM1_VIEW_SQUARE_D3L2, "6270"
+  - line 755: DM1_VIEW_SQUARE_D3R2, "6337"
+  - line 767: door_front_occlusion_spec_count(), 11
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2110-2118)
-  - line 2112: DUNVIEW.C:6270-6286 D3L2 far door-front occlusion
-  - line 2113: DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2320-2330)
+  - line 2325: DUNVIEW.C:6270-6286 D3L2 far door-front occlusion
+  - line 2326: DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion
 
 ## Verification
 
 - /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
-PASS source_evidence.defs_zones == 1
-PASS source_evidence.wall_source_clip_gate == 1
-PASS source_evidence.wall_empty_blit_gate == 1
-PASS source_evidence.occlusion == 1
-PASS source_evidence.command_dispatch == 1
-PASS source_evidence.next_redraw == 1
-PASS source_evidence.present_wait == 1
-PASS source_evidence.same_viewport_mouse == 1
-PASS source_evidence.same_viewport_turn == 1
-PASS source_evidence.same_viewport_move == 1
-PASS source_evidence.same_viewport_draw == 1
-PASS source_evidence.same_viewport_present == 1
-PASS source_evidence.same_viewport_assets == 1
+PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
+PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c
+PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
+PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
+PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 

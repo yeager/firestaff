@@ -1,0 +1,132 @@
+/*
+ * theron_v1_m11_direct_launch_test.c -- M11 Theron direct-launch handoff.
+ *
+ * Verifies that M11 consumes the M12 catalog's already hash-verified
+ * Track 02 path/MD5 and reaches the native Theron viewport path without
+ * re-walking the data root through theron_v1_boot_scan_assets().
+ *
+ * Source-lock: THQUEST.ASM T400 (data-track loading).  ReDMCSB has no
+ * Theron code; Firestaff's source-faithful contract here is that the
+ * verified Track 02 blob is handed to runtime directly once located.
+ */
+
+#include "m11_game_view.h"
+#include "theron_v1_boot.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+
+#if defined(_WIN32)
+#include <direct.h>
+#define TEST_MKDIR(path) _mkdir(path)
+#define PATH_SEP "\\"
+#else
+#include <unistd.h>
+#define TEST_MKDIR(path) mkdir((path), 0700)
+#define PATH_SEP "/"
+#endif
+
+unsigned short G2157_;
+unsigned char* G2159_puc_Bitmap_Source;
+unsigned char* G2160_puc_Bitmap_Destination;
+
+static int g_failures = 0;
+
+static void expect_true(int condition, const char* message) {
+    if (!condition) {
+        fprintf(stderr, "FAIL: %s\n", message);
+        ++g_failures;
+    }
+}
+
+static int write_file(const char* path, const char* text) {
+    FILE* fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (text && text[0]) {
+        fwrite(text, 1, strlen(text), fp);
+    }
+    fclose(fp);
+    return 1;
+}
+
+static int make_temp_dir(char out[512]) {
+#if defined(_WIN32)
+    const char* tmp = getenv("TEMP");
+    snprintf(out, 512, "%s\\firestaff_theron_m11_%lu",
+             tmp ? tmp : ".", (unsigned long)rand());
+    return TEST_MKDIR(out) == 0;
+#else
+    snprintf(out, 512, "/tmp/firestaff_theron_m11_XXXXXX");
+    return mkdtemp(out) != NULL;
+#endif
+}
+
+int main(void) {
+    char temp_dir[512];
+    char theron_dir[512];
+    char track_path[512];
+    M11_GameLaunchSpec spec;
+    M11_GameViewState view;
+    Theron_V1_BootProfile* profile;
+    unsigned long rescans_before;
+    unsigned long rescans_after;
+
+    expect_true(make_temp_dir(temp_dir), "temporary root created");
+    snprintf(theron_dir, sizeof(theron_dir), "%s%stheron", temp_dir, PATH_SEP);
+    expect_true(TEST_MKDIR(theron_dir) == 0, "theron subdir created");
+    snprintf(track_path, sizeof(track_path),
+             "%s%s%s", theron_dir, PATH_SEP,
+             "Theron's Quest (US) (Track 02).bin");
+    expect_true(write_file(track_path, "fake-track02-without-bank-markers"),
+                "fake Track 02 file written");
+
+    memset(&spec, 0, sizeof(spec));
+    spec.title = "THERON'S QUEST";
+    spec.gameId = "theron";
+    spec.sourceId = "theron";
+    spec.dataDir = temp_dir;
+    spec.verifiedAssetPath = track_path;
+    spec.verifiedAssetMd5 = "f23601102138f87c33025877767ebf76";
+    spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
+    spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+    spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+
+    theron_v1_boot_rescan_call_count_reset();
+    rescans_before = theron_v1_boot_rescan_call_count();
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 Theron verified-path start succeeds");
+    rescans_after = theron_v1_boot_rescan_call_count();
+
+    expect_true(rescans_after == rescans_before,
+                "M11 verified-path start skips Theron scan probes");
+    expect_true(view.active == 1, "M11 view is active");
+    expect_true(view.sourceKind == M11_GAME_SOURCE_THERON_TRACK02,
+                "M11 source kind is Theron Track 02");
+    expect_true(strcmp(view.dungeonPath, track_path) == 0,
+                "M11 stores the verified Track 02 path");
+    expect_true(view.theronBootProfile != NULL,
+                "M11 stores a Theron boot profile");
+    expect_true(view.theronWorld != NULL && view.theronViewport != NULL,
+                "M11 builds Theron world and viewport");
+
+    profile = (Theron_V1_BootProfile*)view.theronBootProfile;
+    expect_true(profile->assets_verified == 1,
+                "boot profile remains assets_verified");
+    expect_true(strcmp(profile->graphics_md5, spec.verifiedAssetMd5) == 0,
+                "boot profile carries the verified MD5");
+    expect_true(strcmp(profile->graphics_path, track_path) == 0,
+                "boot profile carries the verified path");
+
+    M11_GameView_Shutdown(&view);
+
+    if (g_failures) {
+        fprintf(stderr, "Theron V1 M11 direct-launch checks FAILED (%d failures)\n",
+                g_failures);
+        return 1;
+    }
+    puts("Theron V1 M11 direct-launch checks passed");
+    return 0;
+}

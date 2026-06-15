@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_CSB_V1_UTILITY_FLOW_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_UTILITY_FLOW_PC34_COMPAT_H
 
+#include "csb_v1_character_pc34_compat.h"
+
 /*
  * CSB V1 Phase 6 — Utility Setup Flow
  *
@@ -98,6 +100,13 @@ const char *csb_v1_util_flow_last_error(CSB_V1_UtilFlowContext *ctx);
 /* ── Utility flow ready check ────────────────────────────────────────── */
 /* Returns 1 if the flow is ready to start a game (import done or save loaded). */
 int csb_v1_util_flow_is_ready(const CSB_V1_UtilFlowContext *ctx);
+
+/* Copy the active party state into out_party.
+ * Returns champion count (>=0) if party is available,
+ * -1 when flow context or output pointer is invalid.
+ */
+int csb_v1_util_flow_get_party(CSB_V1_UtilFlowContext *ctx,
+                               CSB_V1_PartyState *out_party);
 
 /* ── Source evidence ──────────────────────────────────────────────────── */
 const char *csb_v1_utility_flow_source_evidence(void);

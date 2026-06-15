@@ -32,6 +32,11 @@ This gate checks the exact N2 prerequisites for the next original DM1 V1 movemen
 - Wrapper: `DOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run`
 - Six `shot`/`shot:<label>` tokens are required by the capture script before normalization.
 - Click centers are source-locked from `COMMAND.C`, but labels become promotable only after F0380 -> F0365/F0366 -> F0128 -> F0097/VIDRV proof.
+- `--preflight-route` validates route shape and host injector selection before any DOSBox runtime launch.
+
+## Route Preflight
+- command: `DM1_ORIGINAL_ROUTE_EVENTS=<movement wall route> scripts/dosbox_dm1_original_viewport_reference_capture.sh --preflight-route`
+- ok: `True` returncode=`0`
 
 ## Secondary References
 - Greatstone atlas: `/Users/bosse/.openclaw/data/firestaff-greatstone-atlas` exists=`True`

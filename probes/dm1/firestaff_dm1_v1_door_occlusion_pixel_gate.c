@@ -124,6 +124,44 @@ static void verify_spec_pixels(const DM1_ViewportDoorFrontOcclusionSpec *spec, s
     check_contains(id, spec->front_pass_source_lines, "after");
 }
 
+static void verify_d1c_door_front_pixel_lane(void)
+{
+    const DM1_ViewportDoorFrontOcclusionSpec *spec =
+        dm1_viewport_3d_get_door_front_occlusion_spec_for_square(DM1_VIEW_SQUARE_D1C);
+    DM1_ViewportCellOrder rear;
+    DM1_ViewportCellOrder front;
+
+    /* ReDMCSB: DUNVIEW.C F0124_DUNGEONVIEW_DrawSquareD1C line range 7874-7937 */
+    check_int("d1c_door_pixel.nonnull", spec != NULL, 1);
+    if (!spec) {
+        return;
+    }
+
+    rear = dm1_viewport_3d_decode_cell_order(spec->rear_cell_order);
+    front = dm1_viewport_3d_decode_cell_order(spec->front_cell_order);
+
+    check_contains("d1c_door_pixel.floor", spec->floor_source_lines, "7874");
+    check_contains("d1c_door_pixel.rear", spec->rear_pass_source_lines, "7875");
+    check_contains("d1c_door_pixel.frame", spec->frame_source_lines, "7877");
+    check_contains("d1c_door_pixel.button", spec->button_source_lines, "7901");
+    check_contains("d1c_door_pixel.door", spec->door_source_lines, "7905");
+    check_contains("d1c_door_pixel.front", spec->front_pass_source_lines, "7937");
+
+    check_int("d1c_door_pixel.rear_door_pass", rear.door_pass, 1);
+    check_int("d1c_door_pixel.front_door_pass", front.door_pass, 2);
+    check_int("d1c_door_pixel.rear_cell_count", rear.cell_count, 2);
+    check_int("d1c_door_pixel.rear_cell0", (int)rear.cells[0], 1);
+    check_int("d1c_door_pixel.rear_cell1", (int)rear.cells[1], 2);
+    check_int("d1c_door_pixel.front_cell_count", front.cell_count, 2);
+    check_int("d1c_door_pixel.front_cell0", (int)front.cells[0], 4);
+    check_int("d1c_door_pixel.front_cell1", (int)front.cells[1], 3);
+
+    check_int("d1c_door_pixel.rear_cell_1", rear.cells[0] == 1 ? 1 : 0, 1);
+    check_int("d1c_door_pixel.rear_cell_2", rear.cells[1] == 2 ? 1 : 0, 1);
+    check_int("d1c_door_pixel.front_cell_4", front.cells[0] == 4 ? 1 : 0, 1);
+    check_int("d1c_door_pixel.front_cell_3", front.cells[1] == 3 ? 1 : 0, 1);
+}
+
 int main(void)
 {
     size_t count = dm1_viewport_3d_door_front_occlusion_spec_count();
@@ -140,6 +178,7 @@ int main(void)
     }
     check_int("door_pixel.out_of_range_null",
               dm1_viewport_3d_get_door_front_occlusion_spec(count) == NULL, 1);
+    verify_d1c_door_front_pixel_lane();
 
     if (failures) {
         printf("FAIL dm1_v1_door_occlusion_pixel_gate failures=%d\n", failures);

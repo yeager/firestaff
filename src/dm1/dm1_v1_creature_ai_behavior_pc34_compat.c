@@ -295,6 +295,34 @@ int F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
         out->projectileThing = DM1_PROJECTILE_THING_SLIME;
         out->useSpellSoundFallback = 0;
         break;
+    case DM1_CREATURE_TYPE_TROLIN:
+        /* ReDMCSB PROJEXPL.C F0823: Trolin (C16) anti-mage spell
+         * palette.  The community-tradition 'Trolin is a
+         * spell-caster anti-mage' matches the source: the
+         * Trolin has AttackRange=1 in DUNGEON.C G0243[16] so the
+         * F0823 dispatch is normally bypassed (line 250
+         * attackRange<=1 early-return), but when the AI emits
+         * emittedSpellRequest=1 (memory_creature_ai_pc34_compat.c
+         * §(5b) Trolin branch) the dispatcher can route to
+         * F0823 with the anti-mage palette.  v1 implements the
+         * palette: 1-in-2 FIREBALL, else LIGHTNING_BOLT /
+         * HARM_NON_MATERIAL / OPEN_DOOR 3-way split. */
+        if (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
+            out->projectileThing = DM1_PROJECTILE_THING_FIREBALL;
+        } else {
+            switch (F0732_COMBAT_RngRandom_Compat(rng, 3)) {
+            case 0:
+                out->projectileThing = DM1_PROJECTILE_THING_LIGHTNING_BOLT;
+                break;
+            case 1:
+                out->projectileThing = DM1_PROJECTILE_THING_HARM_NON_MATERIAL;
+                break;
+            default:
+                out->projectileThing = DM1_PROJECTILE_THING_OPEN_DOOR;
+                break;
+            }
+        }
+        break;
     case DM1_CREATURE_TYPE_WIZARD_EYE:
         out->projectileThing = (F0732_COMBAT_RngRandom_Compat(rng, 8) != 0)
             ? DM1_PROJECTILE_THING_LIGHTNING_BOLT

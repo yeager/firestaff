@@ -50,8 +50,21 @@ void dm2_v2_viewport_set_outdoor(DM2_V2_ViewportState *s, int outdoor) {
 /* ── V1 Tick — game state snaps (V1 invariant) ─────────────────────── */
 
 void dm2_v2_viewport_v1_tick(DM2_V2_ViewportState *s, uint32_t now_ms) {
+    uint32_t last_render_ms;
+    int preserve_render_clock;
+
     if (!s) return;
+    last_render_ms = s->clock.last_render_ms;
+    preserve_render_clock = dm2_v2_smooth_is_active(&s->smooth);
+
     v2_anim_clock_v1_tick(&s->clock, now_ms);
+    if (preserve_render_clock) {
+        /* Keep display-time delta continuous for in-flight V2 movement.
+         * ReDMCSB GAMELOOP.C:47-50 advances V1 state at tick cadence;
+         * the V2 layer must only interpolate presentation and must not
+         * lose elapsed render time when the V1 tick boundary arrives. */
+        s->clock.last_render_ms = last_render_ms;
+    }
 
     /* Outdoor parallax: scroll sky slowly */
     if (s->is_outdoor) {

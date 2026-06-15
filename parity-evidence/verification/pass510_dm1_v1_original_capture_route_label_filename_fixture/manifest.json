@@ -25,7 +25,7 @@
         "filename": "01_start_south_original_viewport_224x136.ppm",
         "height": "136",
         "kind": "original_viewport_224x136",
-        "sha256": "bca4a8490fcf54fbe4659d05215ec7c2cbe5959f1b43e75684857aa614ce7578",
+        "sha256": "e9dc2088cd7394cd915ef3ea21b81627377cbbfdfb28c9c50d36a613018083ee",
         "width": "224"
       },
       {
@@ -33,7 +33,7 @@
         "filename": "02_turn_right_west_original_viewport_224x136.ppm",
         "height": "136",
         "kind": "original_viewport_224x136",
-        "sha256": "8432feffde0dcad3787beb0abcb38bc60c5f9d552a15b7965e5c6509562ea3f8",
+        "sha256": "2fcb65882bd9b5de984580625a730458d48b0344c58caacceebf67bd6dd0da45",
         "width": "224"
       },
       {
@@ -41,7 +41,7 @@
         "filename": "03_forward_west_blocked_original_viewport_224x136.ppm",
         "height": "136",
         "kind": "original_viewport_224x136",
-        "sha256": "2826c6f4273d6448c29726cf2b9d21bb6a6fd12288a4144783182038da274023",
+        "sha256": "ad73af09b47e2f6f66312a9689d5d12e2a4b07d8aa8e650065a6ac8eb984a7be",
         "width": "224"
       },
       {
@@ -49,7 +49,7 @@
         "filename": "04_turn_left_east_original_viewport_224x136.ppm",
         "height": "136",
         "kind": "original_viewport_224x136",
-        "sha256": "120c9f18dc24ced69a40a8e1f8e03ead51a7f55c46e6892feb9ae3a7588b27f5",
+        "sha256": "c5ead669b51e066b680f2a26409005edf9104f5e07d2dbe1bfeed585ba1ce02e",
         "width": "224"
       },
       {
@@ -57,7 +57,7 @@
         "filename": "05_forward_south_corridor_original_viewport_224x136.ppm",
         "height": "136",
         "kind": "original_viewport_224x136",
-        "sha256": "a811b4c343107e7c4a3da707136815ec0f75f8c3710485679d962cf0260e0203",
+        "sha256": "280225d692431ab7a242a24db4e24f9292bdc888d2fd8094d8f1a22b374575de",
         "width": "224"
       },
       {
@@ -65,7 +65,7 @@
         "filename": "06_post_redraw_after_vblank_original_viewport_224x136.ppm",
         "height": "136",
         "kind": "original_viewport_224x136",
-        "sha256": "83670e512fda5da076a2b4040310e1da422ac724f18432301b07048d6b9b55a1",
+        "sha256": "2c5d7449af1d227c0822e57b38484af9a5009e2ef319ebe853167e8534532461",
         "width": "224"
       }
     ],
@@ -89,7 +89,7 @@
       "forward_south_corridor",
       "post_redraw_after_vblank"
     ],
-    "stdoutLineCount": 17
+    "stdoutLineCount": 19
   },
   "greatstonePc34Manifest": {
     "exists": true,

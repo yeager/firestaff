@@ -1,0 +1,33 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-08T00:57:45Z",
+  "status": "PASS_DM1_V1_VIEWPORT_D3L2_D3R2_STAIRS_PIT_DISPATCH_SOURCE_LOCK",
+  "repo": "https://github.com/yeager/firestaff.git",
+  "branch": "main",
+  "head": "8fae7116c",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "anchors": [
+    "DUNVIEW.C F0676_DrawD3L2:6226-6291",
+    "DUNVIEW.C F0677_DrawD3R2:6293-6358",
+    "DUNVIEW.C F0116_DUNGEONVIEW_DrawSquareD3L:6361-6480",
+    "DUNVIEW.C F0117_DUNGEONVIEW_DrawSquareD3R:6500-6622",
+    "DUNVIEW.C F0678_DrawD2L2:6837-6866",
+    "DUNVIEW.C F0104:3113-3156",
+    "DUNVIEW.C F0105:3185-3247 (requested 3158-3188 reaches the verified F0105 header at 3185-3188)",
+    "DUNVIEW.C F0115:4547-4581 and projectile row guard 5668-5671",
+    "DUNVIEW.C F0128:8478-8508 and F0127:8294",
+    "DUNGEON.C F0163:1769-1838, F0164:1840-1905+, F0172:2466-2523",
+    "DEFS.H:2088/2443/2450/2582-2583/2596-2611/2662/2676-2677/3674-3677/4139-4153/4197-4198"
+  ],
+  "assertions": 465,
+  "notes": [
+    "Gate: tests/test_dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat.c",
+    "Target: DM1 V1 F0676/F0677 D3L2/D3R2 third-perspective stairs-front and floor-pit bitmap dispatch.",
+    "F0676 D3L2 routes C19 stairs-up/down through F0104 with M714/C800 and M716/C813, and C02 open pit through C049/C850.",
+    "F0677 D3R2 mirrors the same native bitmap choices through F0105 flipped with M715/C801, M717/C814, and C049/C851.",
+    "Visible pits and teleporters continue to F0108/F0115 without an additional floor-pit bitmap.",
+    "F0116/F0117 anchor the neighboring D3L/D3R wall routes, F0678 anchors the later D2L2 reuse, and F0128 draws D3L2/D3R2 before D3L/D3R/D3C plus D2L2/D2R2 follow-up writes.",
+    "DEFS.H C02/C09 and M604/M605 are cited as related D-row slot/view lineage alongside the direct C14/C15 D3L2/D3R2 view IDs.",
+    "Synthetic contract only: no real-asset bitmap parity, no live DOSBox coupling, no main-loop changes, no game-data load."
+  ]
+}

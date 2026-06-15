@@ -4,51 +4,51 @@
       "claim": "Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.",
       "hits": [
         {
-          "line": 423,
+          "line": 516,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 423,
+          "line": 516,
           "needle": "DUNVIEW.C:7459-7460 side ornament then return"
         },
         {
-          "line": 424,
+          "line": 517,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 424,
+          "line": 517,
           "needle": "DUNVIEW.C:7627-7628 side ornament then return"
         },
         {
-          "line": 425,
+          "line": 518,
           "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
         },
         {
-          "line": 425,
+          "line": 518,
           "needle": "DUNVIEW.C:7842-7843 front alcove draws F0115"
         },
         {
-          "line": 426,
+          "line": 519,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 426,
+          "line": 519,
           "needle": "DUNVIEW.C:8036-8038 wall case returns"
         },
         {
-          "line": 427,
+          "line": 520,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 427,
+          "line": 520,
           "needle": "DUNVIEW.C:8142-8144 wall case returns"
         }
       ],
       "id": "local-d1-d0-wall-specs-present",
-      "lines": "419-430",
+      "lines": "514-520",
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e",
+      "sha256": "fafbb04de65feebd6f573e85d83425888aa32c7192477d19b152b69fe81abb5f",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -56,27 +56,27 @@
       "claim": "Open side branches keep their source cell-order contracts separate from wall-return blockers.",
       "hits": [
         {
-          "line": 162,
+          "line": 173,
           "needle": "DM1_VIEW_SQUARE_D1L, 1, -1"
         },
         {
-          "line": 163,
+          "line": 174,
           "needle": "DM1_VIEW_SQUARE_D1R, 1,  1"
         },
         {
-          "line": 165,
+          "line": 176,
           "needle": "DM1_VIEW_SQUARE_D0L, 0, -1"
         },
         {
-          "line": 166,
+          "line": 177,
           "needle": "DM1_VIEW_SQUARE_D0R, 0,  1"
         }
       ],
       "id": "local-side-occlusion-d1-d0-cell-orders-present",
-      "lines": "136-168",
+      "lines": "153-182",
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "bce9f6f79067861a3e2572b92d6a2fad1b830511e6b4d2d4abc236dddb92fe4e",
+      "sha256": "fafbb04de65feebd6f573e85d83425888aa32c7192477d19b152b69fe81abb5f",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -84,27 +84,27 @@
       "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.",
       "hits": [
         {
-          "line": 294,
+          "line": 295,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 295,
+          "line": 296,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 296,
+          "line": 297,
           "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
         },
         {
-          "line": 297,
+          "line": 298,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 298,
+          "line": 299,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 344,
+          "line": 345,
           "needle": "test_wall_item_occlusion_alcove_exception"
         }
       ],
@@ -112,7 +112,7 @@
       "lines": "230-390",
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "f1478c6d5f6d82672af69be26df259f7ca3a1d196e8dff6418c8aba6e188209b",
+      "sha256": "b0e84c1cfcbe82dd2ff1bc4d448993485df7cd13b3c0b1af5b3797dbded74b45",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }
@@ -338,7 +338,7 @@
       "command": [
         "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS source_evidence.wall_empty_blit_gate == 1\nPASS source_evidence.occlusion == 1\nPASS source_evidence.command_dispatch == 1\nPASS source_evidence.next_redraw == 1\nPASS source_evidence.present_wait == 1\nPASS source_evidence.same_viewport_mouse == 1\nPASS source_evidence.same_viewport_turn == 1\nPASS source_evidence.same_viewport_move == 1\nPASS source_evidence.same_viewport_draw == 1\nPASS source_evidence.same_viewport_present == 1\nPASS source_evidence.same_viewport_assets == 1\nPASS dm1_v1_viewport_3d_source_lock",
+      "outputTail": "PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
       "returncode": 0
     },

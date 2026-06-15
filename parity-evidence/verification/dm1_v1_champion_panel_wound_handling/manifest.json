@@ -1,0 +1,24 @@
+{
+  "schema": "firestaff.parity.verification.v1",
+  "timestampUtc": "2026-06-08T00:42:00Z",
+  "status": "PASS_DM1_V1_CHAMPION_PANEL_WOUND_HANDLING_SOURCE_LOCK",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "branch": "main",
+  "head": "754f0c22335da45fb92cc50f0704f0307d1c8523",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "anchors": [
+    "CHAMDRAW.C F0291:632-646 body slots C00..C05 and wound C034 branch; acting override at 648-651",
+    "CHAMDRAW.C F0296:1185-1262 changed-object-icon cadence; status hand loop 1226-1231",
+    "DEFS.H requested C033/C034/C035 2186-2188; local C033/C034/C035 at 2193-2195; C195 at 3799; M070 at 1878; C211..C218 at 3800-3807",
+    "CHAMPION.C F0297:243-298, F0298:270-298, F0302:662-714; F0292 body included from CHAMDRAW.C and wound cadence at CHAMDRAW.C:937-955",
+    "PANEL.C F0354:2195-2227 and F0355 champion-switch redraw cadence at 2316-2322 and 2421-2433"
+  ],
+  "assertions": 493,
+  "notes": [
+    "Contract-only synthetic selector for DM1 V1 status hand slot-box wound handling.",
+    "Public function: DM1_ChampionPanel_BuildWoundHandSlotBoxModel(championIndex, handIndex, woundLevel, isActingChampion, &model).",
+    "Rejects null model pointer, championIndex outside 0..3, handIndex outside 0..1, and woundLevel < 0.",
+    "Pins C034_GRAPHIC_SLOT_BOX_WOUNDED for wound-affected ready/action hands unless action-hand acting priority returns C035; no-wound non-acting hands return C033.",
+    "No real M11 graphics calls, no real-asset bitmap parity claim, and no runtime probe added."
+  ]
+}
