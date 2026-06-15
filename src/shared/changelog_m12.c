@@ -9,6 +9,14 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.7.22  (2026-06-14)",
+    "  - DM1 V1 Hall of Champions: anchored m11_front_cell_mirror_ordinal to the C127 sensor (ReDMCSB DUNGEON.C:2573, MOVESENS.C:1501-1503, REVIVE.C F0280) on the front square so corridor poses no longer expose a clickable front portrait, restoring the source-locked D1C champion-portrait route",
+    "  - DM1 V1 FTL/SWSH: replaced the linear Atari-3-bit to VGA-DAC palette ramp with the ReDMCSB SWSH.C:281-307 source-curve (0, 36, 125, 146, 164, 190, 219, 255) so the FTL swoosh and the DM TITLE step-palette mutations match the F20E PC colors instead of a generic 9-multiplied Atari ramp",
+    "  - DM1 V1 mirror route disable: m11_disable_front_mirror_route now disables only the C127 sensor whose sensorData matches the confirmed mirror ordinal (REVIVE.C F0282), preserving other front-cell sensors",
+    "  - DM1 V1 mirror regression: new firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe locks the actual DM1 V1 mirror positions (1,2)/(1,5) with their C127 sensorData ordinals plus a resurrect round-trip and 20-tick survival gate (proves the resurrected champion stays alive at full HP)",
+    "  - DM1 V1 mirror probes: panel_guard rewritten to (1,2) NORTH (real mirror) so the BUG-120/121 C040 panel-state guard is exercised; walkpath_runtime and champion_mirror_candidate_panel_runtime probes marked DISABLED in CTest until a full source-pose rewrite (they assumed corridor poses had mirror ordinals, which the C127 source contract disproves)",
+    "  - DM1 V1 resurrection flow: regression test added verifying the resurrect round-trip keeps the new champion alive (HP=90/90 for HALK) and disables the mirror route after ConfirmMirrorCandidate — addresses the 2026-06-14 mail report about resurrected champions dying in the Hall",
+    "",
     "V2.7.13  (2026-06-13)",
     "  - DM1 V1 combat fidelity audit: full systematic review of the DM1 V1 runtime against the ReDMCSB decompilation, documented in docs/DM1_V1_BUG_AUDIT.md",
     "  - Armor defense overhaul: replaced skill-level approximation with the F0321 wound defense calculation that iterates worn armor slots and scales attack by (130 - avgDefense) / 64",
@@ -172,5 +180,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.17";
+    return "2.7.22";
 }

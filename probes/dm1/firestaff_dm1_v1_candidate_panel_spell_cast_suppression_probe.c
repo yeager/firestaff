@@ -31,10 +31,18 @@ static int expect_int(const char* label, int got, int want) {
     return 1;
 }
 
-static void set_hall_corridor_north(M11_GameViewState* game) {
+static void set_hall_start_north(M11_GameViewState* game) {
+    /* Real DM1 V1 DUNGEON.DAT: (1,2) NORTH front=(1,1) has C127
+     * sensor idx=15 data=1 (HALK).  v2.7.22 anchored the front-cell
+     * mirror ordinal to the C127 sensorData (ReDMCSB DUNGEON.C:2573
+     * + MOVESENS.C:1501-1503 + REVIVE.C F0280).  The OLD corridor
+     * pose (1,4) NORTH had only a TextString and no C127 sensor —
+     * it returns -1 under the v2.7.22 contract.  The OLD ordinal
+     * 2 (HALK-by-old-assumption) is also stale: real (1,2) is
+     * ordinal 1, not 2.  Use (1,2) NORTH ordinal 1. */
     game->world.party.mapIndex = 0;
     game->world.party.mapX = 1;
-    game->world.party.mapY = 4;
+    game->world.party.mapY = 2;
     game->world.party.direction = DIR_NORTH;
     game->showDebugHUD = 0;
     game->candidateMirrorPanelActive = 0;
@@ -54,7 +62,7 @@ static int open_game(const char* dataDir,
 static int prepare_candidate_with_spell(M11_GameViewState* game,
                                         int expectedMirrorOrdinal) {
     int ok = 1;
-    set_hall_corridor_north(game);
+    set_hall_start_north(game);
     ok &= expect_int("front mirror ordinal",
                      M11_GameView_GetFrontMirrorOrdinal(game),
                      expectedMirrorOrdinal);
@@ -168,9 +176,13 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (prepare_candidate_with_spell(&game, 2)) {
-        ok &= check_spell_cast_input_ignored(&game, 2);
-        ok &= check_spell_clear_input_ignored(&game, 2);
+    /* v2.7.22: real DM1 V1 Hall of Champions C127 mirror positions
+     * are (1,2) NORTH ordinal=1 (HALK) and (1,5) NORTH ordinal=10
+     * (ZED).  Use (1,2) NORTH ordinal=1 for the candidate-panel
+     * suppression regression. */
+    if (prepare_candidate_with_spell(&game, 1)) {
+        ok &= check_spell_cast_input_ignored(&game, 1);
+        ok &= check_spell_clear_input_ignored(&game, 1);
     } else {
         ok = 0;
     }

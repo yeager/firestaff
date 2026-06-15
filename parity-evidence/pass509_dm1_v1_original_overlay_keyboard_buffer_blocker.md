@@ -17,7 +17,7 @@ Original DM1 V1 overlay/capture remains blocked at the keyboard-buffer and overl
 
 ## Current blocker state
 
-- pass435 status: BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY; blockers: ['pass434 crop/source readiness is not green', 'pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence']
+- pass435 status: BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY; blockers: ['pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence']
 - pass497 status: PASS497_ORIGINAL_CAPTURE_NEXT_BLOCKER_LOCKED
 - pass498 status: PASS498_ORIGINAL_CAPTURE_BLOCKER_NARROWED_TO_POST_COMMAND_STATE_DELTA
 - repeated gameplay frame still present: True

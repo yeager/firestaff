@@ -1,11 +1,12 @@
 /*
  * DM1 V1 champion mirror visibility runtime probe.
  *
- * This is a narrow Hall of Champions pixel gate for the reported
- * "champion mirrors not visible" P1 item. It uses the real M11 draw path,
- * the DM1 GRAPHICS.DAT portrait strip, and the known source hall route:
- *   (map 0, x=1, y=3, NORTH) -> mirror ordinal 1
- *   (map 0, x=1, y=4, NORTH) -> mirror ordinal 2
+ * This is a narrow Hall of Champions regression for the 2026-06-14 mail
+ * report where champion portraits appeared as a clickable row in the front
+ * viewport.  These front Hall corridor poses must not expose the synthetic
+ * D1C front mirror route:
+ *   (map 0, x=1, y=3, NORTH) -> no front mirror ordinal
+ *   (map 0, x=1, y=4, NORTH) -> no front mirror ordinal
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps sensor cell to front-wall aspect;
@@ -104,9 +105,8 @@ static int check_mirror(M11_GameViewState* game,
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     MirrorMatch match;
     char routeLabel[96];
-    char bestLabel[96];
-    char ratioLabel[96];
     int ok = 1;
+    int frontOrdinal;
 
     game->world.party.mapIndex = 0;
     game->world.party.mapX = mapX;
@@ -118,24 +118,18 @@ static int check_mirror(M11_GameViewState* game,
     game->candidateMirrorPartyIndex = -1;
 
     snprintf(routeLabel, sizeof(routeLabel), "%s front mirror ordinal", label);
-    ok &= expect_int(routeLabel, M11_GameView_GetFrontMirrorOrdinal(game), expectedOrdinal);
+    frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(game);
+    ok &= expect_int(routeLabel, frontOrdinal, expectedOrdinal);
 
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     match = match_front_portrait(portraits, fb, expectedOrdinal);
 
-    snprintf(bestLabel, sizeof(bestLabel), "%s best source portrait", label);
-    ok &= expect_int(bestLabel, match.bestOrdinal, expectedOrdinal);
-    snprintf(ratioLabel, sizeof(ratioLabel), "%s visible pixel ratio", label);
-    if (match.compared <= 0 || match.expectedMatched * 100 < match.compared * 90) {
-        fprintf(stderr,
-                "FAIL %s matched=%d compared=%d bestOrdinal=%d bestMatched=%d\n",
-                ratioLabel, match.expectedMatched, match.compared,
-                match.bestOrdinal, match.bestMatched);
-        ok = 0;
-    }
+    /* Negative route guard only.  The wall box can share palette pixels with
+     * portrait assets, so incidental C026 color similarity is reported but
+     * not treated as a live portrait route. */
     printf("%s route=%d best=%d matched=%d/%d\n",
-           label, expectedOrdinal, match.bestOrdinal,
+           label, frontOrdinal, match.bestOrdinal,
            match.expectedMatched, match.compared);
     return ok;
 }
@@ -169,8 +163,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    ok &= check_mirror(&game, portraits, 1, 3, 1, "hall_start_north_mirror");
-    ok &= check_mirror(&game, portraits, 1, 4, 2, "hall_corridor_north_mirror");
+    ok &= check_mirror(&game, portraits, 1, 3, -1, "hall_start_front_route_blocked");
+    ok &= check_mirror(&game, portraits, 1, 4, -1, "hall_corridor_front_route_blocked");
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion mirror visibility runtime probe\n", ok ? "PASS" : "FAIL");

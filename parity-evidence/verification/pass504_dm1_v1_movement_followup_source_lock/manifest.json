@@ -1,5 +1,5 @@
 {
-  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branch": "main",
   "currentMovementBlocker": {
     "blockerResolvedHere": "Required runtime executable was built in this worktree and pass406 re-ran clean.",
     "id": "pass406_dm1_v1_movement_legality_completion_gate",

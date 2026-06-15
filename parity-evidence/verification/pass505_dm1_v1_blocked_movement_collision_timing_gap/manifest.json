@@ -1,11 +1,11 @@
 {
-  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branch": "main",
   "closedGap": "blocked step/collision timing: a dequeued step can spend stamina and then be blocked, but blocked collision discards queued follow-up input, requests one vblank wait, keeps input wait armed, and returns before F0267 sensor/timestamp/cooldown/viewport side effects",
   "firestaffAudit": {
     "commandCore": "blocked wall/door/fakewall/group returns before successful timing/sensor/viewport path",
     "focusedCTest": "dm1_v1_command_movement_sensor_timing_pc34_compat"
   },
-  "head": "cd7bd37ef6aafca978c34501de715afd7dd8b3bf",
+  "head": "7ceffacb8b6862944dd6fcca4640d32806adadb6",
   "notClaimed": [
     "new original DOS runtime breakpoint hit",
     "pixel parity",

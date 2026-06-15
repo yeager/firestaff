@@ -1,6 +1,6 @@
 # Pass434 — DM1 V1 original viewport crop readiness gate
 
-Status: `FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`
+Status: `PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`
 
 This gate keeps the original viewport crop/source-lock prerequisites executable without claiming pixel parity or requiring a live DOSBox run.
 
@@ -19,7 +19,7 @@ This gate keeps the original viewport crop/source-lock prerequisites executable 
 
 - pass86 self-test return code: `0`
 - pass376 prior manifest status: `BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED`; ok=`True`
-- capture script crop locks: `{'path': 'scripts/dosbox_dm1_original_viewport_reference_capture.sh', 'has_normalize_only': True, 'has_pillow_crop_0_33_224_169': True, 'has_imagemagick_crop': True, 'has_manifest_geometry_check': False}`
+- capture script crop locks: `{'path': 'scripts/dosbox_dm1_original_viewport_reference_capture.sh', 'has_normalize_only': True, 'has_pillow_crop_0_33_224_169': True, 'has_imagemagick_crop': True, 'has_manifest_geometry_check': True}`
 - DOSBox available: `True`; xvfb-run available: `False`; required for this gate: `False`
 
 ## Blocker honesty

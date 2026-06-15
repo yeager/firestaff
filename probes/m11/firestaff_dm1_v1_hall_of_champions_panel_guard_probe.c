@@ -116,10 +116,14 @@ static void seed_d1c_wall_ornament(M11_GameViewState* view) {
 static void render_with_panel_state(M11_GameViewState* view,
                                     unsigned char* fb,
                                     int panelActive) {
-    /* Park at the (1,4) D1C front-mirror route (NORTH). */
+    /* Park at the (1,2) D1C front-mirror route (NORTH).  This is the
+     * real C127 sensor placement: at (1,2) facing NORTH, the front
+     * square (1,1) has a C127 sensor on cell=2 (north wall) with
+     * sensorData=1 (HALK, mirror ordinal 1).  See
+     * m11_front_cell_mirror_ordinal in m11_game_view.c. */
     view->world.party.mapIndex = 0;
     view->world.party.mapX = 1;
-    view->world.party.mapY = 4;
+    view->world.party.mapY = 2;
     view->world.party.direction = DIR_NORTH;
     view->showDebugHUD = 0;
     view->candidateMirrorPanelActive = 0;

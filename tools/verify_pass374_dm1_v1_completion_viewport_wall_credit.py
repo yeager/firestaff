@@ -9,7 +9,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from typing import Any
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]

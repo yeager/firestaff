@@ -24,10 +24,10 @@ Exact remaining blocker: No decompressed stock FIRES runtime image base, post-LZ
 A debugger hit can be promoted only when the trace includes PSP/load segment, post-LZEXE transfer or map/decompressed-image evidence, symbol segment:offset, and observed hit CS:IP/context for each seam. Static compressed offsets and the MZ loader entry are explicitly rejected.
 
 ## Artifacts
-- Manifest: `/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json`
-- Trace contract: `/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/trace_binding_contract.json`
-- Runtime trace template: `/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/runtime_trace_template.json`
-- Guarded runbook: `/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/guarded_runtime_binding_runbook.md`
+- Manifest: `/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json`
+- Trace contract: `/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/trace_binding_contract.json`
+- Runtime trace template: `/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/runtime_trace_template.json`
+- Guarded runbook: `/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/guarded_runtime_binding_runbook.md`
 
 ## Non-claims
 - does not claim a loaded/decompressed FIRES runtime image base

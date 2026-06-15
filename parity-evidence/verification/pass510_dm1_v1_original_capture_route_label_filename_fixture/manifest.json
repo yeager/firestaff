@@ -1,11 +1,74 @@
 {
   "decision": "capture-route filename drift is fixed: shot labels now name normalized crop artifacts, so pass304/pass435/pass487 can reason over required labels without hard-coded legacy filename mismatch",
   "fixture": {
-    "actualCropManifestFilenames": [],
-    "actualLabelManifestFilenames": [],
-    "allCropsMatchFilenames": false,
-    "allLabelsMatchFilenames": false,
-    "cropRows": [],
+    "actualCropManifestFilenames": [
+      "01_start_south_original_viewport_224x136.ppm",
+      "02_turn_right_west_original_viewport_224x136.ppm",
+      "03_forward_west_blocked_original_viewport_224x136.ppm",
+      "04_turn_left_east_original_viewport_224x136.ppm",
+      "05_forward_south_corridor_original_viewport_224x136.ppm",
+      "06_post_redraw_after_vblank_original_viewport_224x136.ppm"
+    ],
+    "actualLabelManifestFilenames": [
+      "01_start_south_original_viewport_224x136.ppm",
+      "02_turn_right_west_original_viewport_224x136.ppm",
+      "03_forward_west_blocked_original_viewport_224x136.ppm",
+      "04_turn_left_east_original_viewport_224x136.ppm",
+      "05_forward_south_corridor_original_viewport_224x136.ppm",
+      "06_post_redraw_after_vblank_original_viewport_224x136.ppm"
+    ],
+    "allCropsMatchFilenames": true,
+    "allLabelsMatchFilenames": true,
+    "cropRows": [
+      {
+        "bytes": "91407",
+        "filename": "01_start_south_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "e9dc2088cd7394cd915ef3ea21b81627377cbbfdfb28c9c50d36a613018083ee",
+        "width": "224"
+      },
+      {
+        "bytes": "91407",
+        "filename": "02_turn_right_west_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "2fcb65882bd9b5de984580625a730458d48b0344c58caacceebf67bd6dd0da45",
+        "width": "224"
+      },
+      {
+        "bytes": "91407",
+        "filename": "03_forward_west_blocked_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "ad73af09b47e2f6f66312a9689d5d12e2a4b07d8aa8e650065a6ac8eb984a7be",
+        "width": "224"
+      },
+      {
+        "bytes": "91407",
+        "filename": "04_turn_left_east_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "c5ead669b51e066b680f2a26409005edf9104f5e07d2dbe1bfeed585ba1ce02e",
+        "width": "224"
+      },
+      {
+        "bytes": "91407",
+        "filename": "05_forward_south_corridor_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "280225d692431ab7a242a24db4e24f9292bdc888d2fd8094d8f1a22b374575de",
+        "width": "224"
+      },
+      {
+        "bytes": "91407",
+        "filename": "06_post_redraw_after_vblank_original_viewport_224x136.ppm",
+        "height": "136",
+        "kind": "original_viewport_224x136",
+        "sha256": "2c5d7449af1d227c0822e57b38484af9a5009e2ef319ebe853167e8534532461",
+        "width": "224"
+      }
+    ],
     "expectedFilenames": [
       "01_start_south_original_viewport_224x136.ppm",
       "02_turn_right_west_original_viewport_224x136.ppm",
@@ -15,11 +78,18 @@
       "06_post_redraw_after_vblank_original_viewport_224x136.ppm"
     ],
     "legacyFilenameDrift": [],
-    "normalizerReportedSuccess": false,
-    "returncode": 9,
+    "normalizerReportedSuccess": true,
+    "returncode": 0,
     "routeEvents": "wait:7000 enter wait:1500 click:260,50 wait:1500 click:276,140 wait:3000 shot:start_south kp6 wait:1200 shot:turn_right_west kp8 wait:1200 shot:forward_west_blocked kp4 wait:1200 shot:turn_left_east kp8 wait:1200 shot:forward_south_corridor wait:600 shot:post_redraw_after_vblank",
-    "routeLabels": [],
-    "stdoutLineCount": 7
+    "routeLabels": [
+      "start_south",
+      "turn_right_west",
+      "forward_west_blocked",
+      "turn_left_east",
+      "forward_south_corridor",
+      "post_redraw_after_vblank"
+    ],
+    "stdoutLineCount": 19
   },
   "greatstonePc34Manifest": {
     "exists": true,
@@ -36,7 +106,7 @@
     "no proof of a fresh semantic six-state DOSBox route",
     "no tracked screenshot promotion"
   ],
-  "ok": false,
+  "ok": true,
   "originalAssets": [
     {
       "exists": true,
@@ -63,11 +133,7 @@
       "size": 12002
     }
   ],
-  "problems": [
-    "normalize-only fixture failed with 9",
-    "route labels did not become shot-label manifest filenames",
-    "route labels did not become crop manifest filenames"
-  ],
+  "problems": [],
   "scope": "normalization fixture for original capture route labels; no DOSBox launch and no pixel parity claim",
   "sourceRefs": [
     {

@@ -1,5 +1,5 @@
 {
-  "branchAtVerification": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branchAtVerification": "main",
   "canonicalAssetsSha256": {
     "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
     "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
@@ -12,7 +12,7 @@
       "line": 2368
     }
   ],
-  "gitHeadAtVerification": "cd7bd37ef6aafca978c34501de715afd7dd8b3bf",
+  "gitHeadAtVerification": "7ceffacb8b6862944dd6fcca4640d32806adadb6",
   "schema": "firestaff.parity.pass607.level_change_autosave_absence.v1",
   "scope": "DM1 V1 ordinary stairs/pit/teleporter level-change autosave absence",
   "sourceAudit": {
@@ -103,6 +103,6 @@
     }
   },
   "status": "PASS607_DM1_V1_LEVEL_CHANGE_AUTOSAVE_ABSENCE_SOURCE_LOCKED",
-  "timestampUtc": "2026-06-12T19:27:45.978733+00:00",
-  "worktree": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate"
+  "timestampUtc": "2026-06-14T20:30:30.582599+00:00",
+  "worktree": "/Users/bosse/.openclaw/workspace-main"
 }

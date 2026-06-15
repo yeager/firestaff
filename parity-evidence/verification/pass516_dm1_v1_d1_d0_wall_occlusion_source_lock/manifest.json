@@ -17,8 +17,8 @@
         "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L",
         "DUNVIEW.C:8142-8144 wall case returns"
       ],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "48bf4e64057abbd8d40b823325af15e53166b74b69e0dd16a6a8b684ee5b864a",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "fafbb04de65feebd6f573e85d83425888aa32c7192477d19b152b69fe81abb5f",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
     },
@@ -33,8 +33,8 @@
         "DM1_VIEW_SQUARE_D0L, 0, -1",
         "DM1_VIEW_SQUARE_D0R, 0,  1"
       ],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "48bf4e64057abbd8d40b823325af15e53166b74b69e0dd16a6a8b684ee5b864a",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "fafbb04de65feebd6f573e85d83425888aa32c7192477d19b152b69fe81abb5f",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
     },
@@ -69,8 +69,8 @@
       "id": "local-runtime-test-covers-d1-d0-wall-occlusion",
       "lines": "230-390",
       "missing": [],
-      "path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "27617d46f59abe18b356cff8db9a3723aee0174855239f12903dc24ec2046c0b",
+      "path": "/Users/bosse/.openclaw/workspace-main/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "b0e84c1cfcbe82dd2ff1bc4d448993485df7cd13b3c0b1af5b3797dbded74b45",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }
@@ -294,7 +294,7 @@
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -303,7 +303,7 @@
     {
       "command": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
-        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
+        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
         "--check-only"
       ],
       "outputTail": "FAIL pass516 check-only: local-d1-d0-wall-specs-present,local-side-occlusion-d1-d0-cell-orders-present",

@@ -421,16 +421,21 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
         int secondRoute;
         int firstBest;
         int secondBest;
+        /* v2.7.22: real DM1 V1 Hall of Champions C127 sensors are at
+         * (1,2) NORTH (HALK, ordinal 1) and (1,5) NORTH (ZED, ordinal
+         * 10).  The OLD (1,3)/(1,4) NORTH poses were the TextString
+         * catalog route and have no C127 sensor.  Match the v2.7.22
+         * contract by walking both (1,2) and (1,5). */
         state->world.party.mapIndex = 0;
         state->world.party.mapX = 1;
-        state->world.party.mapY = 3;
+        state->world.party.mapY = 2;
         state->world.party.direction = DIR_NORTH;
         firstRoute = M11_GameView_GetFrontMirrorOrdinal(state);
         memset(fb, 0, sizeof(fb));
         M11_GameView_Draw(state, fb, 320, 200);
         firstBest = probe_best_front_portrait_index(portraits, fb);
         state->world.party.mapX = 1;
-        state->world.party.mapY = 4;
+        state->world.party.mapY = 5;
         state->world.party.direction = DIR_NORTH;
         secondRoute = M11_GameView_GetFrontMirrorOrdinal(state);
         memset(fb, 0, sizeof(fb));
@@ -439,9 +444,9 @@ static void probe_record_hall_champion_mirror_portraits(ProbeTally* tally,
         probe_record(tally,
                      "INV_GV_407E",
                      firstRoute == 1 &&
-                         secondRoute == 2 &&
+                         secondRoute == 10 &&
                          firstBest == 1 &&
-                         secondBest == 2,
+                         secondBest == 10,
                      "Hall of Champions door/teleporter front mirrors blit matching D1C source portraits");
     } else {
         probe_skip(tally,
@@ -1056,6 +1061,13 @@ int main(int argc, char** argv) {
         M11_GameView_Init(&mirrorView);
         mirrorView.showDebugHUD = 0;
         if (M11_GameView_OpenSelectedMenuEntry(&mirrorView, &menuState) == 1) {
+            /* v2.7.22: m11_front_cell_mirror_ordinal now reads the C127
+             * sensorData on the front square (ReDMCSB DUNGEON.C:2573 +
+             * MOVESENS.C:1501-1503 + REVIVE.C F0280).  The OLD
+             * TextString catalog route only finds the corridor-floor
+             * stats anchor (DUNGEON.C:2570-2584) and yields -1 for
+             * front-wall mirror positions, so search for any C127
+             * sensor instead. */
             for (mapIdx = 0; !found && mapIdx < (int)mirrorView.world.dungeon->header.mapCount; ++mapIdx) {
                 const struct DungeonMapDesc_Compat* map = &mirrorView.world.dungeon->maps[mapIdx];
                 int base = 0;
@@ -1074,7 +1086,21 @@ int main(int argc, char** argv) {
                         while (thing != THING_ENDOFLIST && thing != THING_NONE && guard++ < 8) {
                             int type = THING_GET_TYPE(thing);
                             int thingIndex = THING_GET_INDEX(thing);
-                            if (type == THING_TYPE_TEXTSTRING) {
+                            if (type == THING_TYPE_SENSOR &&
+                                thingIndex >= 0 &&
+                                thingIndex < mirrorView.world.things->sensorCount &&
+                                mirrorView.world.things->sensors[thingIndex].sensorType == 127) {
+                                int sensorData = (int)mirrorView.world.things->sensors[thingIndex].sensorData;
+                                if (sensorData >= 0 &&
+                                    sensorData < mirrorView.mirrorCatalog.count) {
+                                    mirrorX = x;
+                                    mirrorY = y;
+                                    mirrorOrdinal = sensorData;
+                                    found = 1;
+                                    break;
+                                }
+                                thing = mirrorView.world.things->sensors[thingIndex].next;
+                            } else if (type == THING_TYPE_TEXTSTRING) {
                                 int ord = F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
                                     &mirrorView.mirrorCatalog, thingIndex);
                                 if (ord >= 0) {

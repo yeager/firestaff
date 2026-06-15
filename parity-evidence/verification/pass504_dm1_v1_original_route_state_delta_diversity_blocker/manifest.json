@@ -134,7 +134,6 @@
       ]
     },
     "pass435Blockers": [
-      "pass434 crop/source readiness is not green",
       "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
     ],
     "pass435Status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
@@ -143,7 +142,7 @@
   },
   "ok": true,
   "remainingBlocker": "Original route-state diversity is still blocked at the post-command state-delta proof boundary. The current pass376/pass435 artifacts are useful as quarantined regression inputs, but they do not prove that distinct raw/cropped states came after source-visible F0380 -> F0365/F0366 -> G0321 -> F0128/F0097 transitions.",
-  "repo": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "requiredNextEvidence": [
     "capture route begins from a verified post-entry gameplay state, not an entrance/setup echo",
     "each command label is backed by original F0380 queue pop/load/decrement evidence",

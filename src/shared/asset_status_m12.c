@@ -427,6 +427,29 @@ int m12_file_md5_hex(const char* path, char outHex[33]) {
     return 1;
 }
 
+/* Pass 446: filename-only asset identity claims are forbidden — every
+ * required asset (DUNGEON.DAT, GRAPHICS.DAT, Track 02 .bin, etc.) must
+ * be verified against its spec-supplied MD5 (DEFS.H, G1134, and the
+ * Firestaff graphics-hash registry).  ReDMCSB CEDTINCA.C
+ * F7059_ReadDungeonPartWithChecksum applies the same idea to the
+ * dungeon read path.  This helper exposes the canonical
+ *   m12_file_md5_hex(path, md5Hex);
+ *   strcmp(md5Hex, spec->md5) == 0
+ * gate so other call sites can compose it; asset_status_m12's primary
+ * scan path uses an MD5-keyed lookup (asset_find_by_md5) that
+ * delegates the same identity check, but this helper is the
+ * contract-protected reference form. */
+int m12_file_md5_matches_spec(const char* path, const char* specMd5) {
+    char md5Hex[33];
+    if (!path || !specMd5 || specMd5[0] == '\0') {
+        return 0;
+    }
+    if (!m12_file_md5_hex(path, md5Hex)) {
+        return 0;
+    }
+    return strcmp(md5Hex, specMd5) == 0;
+}
+
 static void m12_copy_string(char* out, size_t outSize, const char* value) {
     if (!out || outSize == 0U) {
         return;

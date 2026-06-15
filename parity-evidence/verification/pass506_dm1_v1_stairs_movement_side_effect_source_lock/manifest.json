@@ -1,5 +1,5 @@
 {
-  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branch": "main",
   "firestaffGuards": {
     "commandCore": "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
     "commandCoreResult": "include/dm1_v1_movement_command_core_pc34_compat.h",

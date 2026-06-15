@@ -1,7 +1,7 @@
 # DM1 V1 viewport/movement completion aggregate
 
-Status: `FAIL`
-Generated: `2026-06-12T21:41:49.919937+00:00`
+Status: `PASS`
+Generated: `2026-06-14T20:30:02.442503+00:00`
 
 ## ReDMCSB source audit
 - `PASS` `post_command_redraw_loop` — `GAMELOOP.C:55-90` `GAMELOOP main input/redraw loop`: main loop redraws viewport from the current party tuple before entering the input wait cycle
@@ -25,18 +25,13 @@ Generated: `2026-06-12T21:41:49.919937+00:00`
 - `PASS` `viewport_square_collision_source_lock` rc=`0`: visible viewport cells are map-backed and agree with movement collision square state
 - `PASS` `viewport_field_zone_aspect_clip_gate` rc=`0`: field/teleporter zone/aspect clipping behind nearer blockers
 - `PASS` `viewport_palette_source_lock_gate` rc=`0`: single ReDMCSB dungeon palette cadence; rejects invented depth palette dimming
-- `FAIL` `pass434_original_viewport_crop_readiness_gate` rc=`1` status `FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`: original viewport crop/source readiness is available
-  - {
-  -   "status": "FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-  -   "manifest": "parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json",
-  -   "report": "parity-evidence/pass434_dm1_v1_original_viewport_crop_readiness_gate.md"
-  - }
+- `PASS` `pass434_original_viewport_crop_readiness_gate` rc=`0` status `PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`: original viewport crop/source readiness is available
 
 ## Expected blockers
 - `CONFIRMED` `pass435_semantic_original_route_readiness_gate` expected `BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY` observed `BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY`: remaining original semantic route blocker: F0365/F0366 dispatch + six non-duplicate semantic route states not yet proven
+  - {
   -   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
   -   "blockers": [
-  -     "pass434 crop/source readiness is not green",
   -     "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
   -   ],
   -   "manifest": "parity-evidence/verification/pass435_dm1_v1_semantic_original_route_readiness_gate/manifest.json",
@@ -44,6 +39,6 @@ Generated: `2026-06-12T21:41:49.919937+00:00`
   - }
 
 ## Decision
-One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.
+Current movement/viewport source-lock gates are green, pass434 crop readiness is green, and pass435 confirms the remaining blocker is original semantic route readiness; no original pixel/route parity is claimed.
 
 Manifest: `parity-evidence/verification/dm1_v1_viewport_movement_completion_matrix/manifest.json`

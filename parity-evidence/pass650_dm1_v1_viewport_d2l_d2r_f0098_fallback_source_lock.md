@@ -18,7 +18,7 @@ Local gates:
 - PASS CMakeLists.txt
 
 Verification:
-- /Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate/build/test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat: rc=0
+- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat: rc=0
 
 Non-claims:
 - Does not duplicate D2L/D2R wall table gates.

@@ -177,23 +177,23 @@
       "file": "CMakeLists.txt",
       "hits": [
         {
-          "line": 7059,
+          "line": 7685,
           "needle": "test_dm1_v1_champion_panel_pc34_compat"
         },
         {
-          "line": 7060,
+          "line": 7686,
           "needle": "tests/test_dm1_v1_champion_panel_pc34_compat.c"
         },
         {
-          "line": 7061,
+          "line": 7687,
           "needle": "src/dm1/dm1_v1_champion_panel_pc34_compat.c"
         },
         {
-          "line": 7090,
+          "line": 7716,
           "needle": "pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock"
         },
         {
-          "line": 7094,
+          "line": 7720,
           "needle": "verify_pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock"
         }
       ],
@@ -635,7 +635,7 @@
   "schema": "firestaff.parity.pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock.v1",
   "status": "passed",
   "statusToken": "PASS760_DM1_V1_CHAMPION_PANEL_STATUS_HAND_ROTATION_SOURCE_LOCKED",
-  "timestampUtc": "2026-06-13T11:48:55.584366+00:00",
+  "timestampUtc": "2026-06-14T20:30:32.779575+00:00",
   "verificationRuns": [
     {
       "assertions": 851,

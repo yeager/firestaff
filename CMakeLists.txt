@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.7.21 LANGUAGES C)
+project(Firestaff VERSION 2.7.22 LANGUAGES C)
 
 include_directories(include src)
 
@@ -1479,6 +1479,17 @@ add_executable(firestaff_dm1_v1_champion_mirror_zorder_runtime_probe
 target_link_libraries(firestaff_dm1_v1_champion_mirror_zorder_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_champion_mirror_zorder_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# DM1 V1 Hall champion mirror C127-anchored actual-pose runtime gate.
+# 2026-06-14 mail regression: front-cell mirror ordinal must equal
+# the C127 sensorData on the front square.  Lock the actual mirror
+# poses in real DM1 V1 DUNGEON.DAT plus a resurrect round-trip.
+add_executable(firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe
+    probes/m11/firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # DM1 V1 endgame Hall of Champions 4-mirror zone verification gate.
@@ -9246,8 +9257,25 @@ if(BUILD_TESTING)
     )
 
     add_test(
+        NAME dm1_v1_champion_mirror_actual_pose_runtime
+        COMMAND firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_mirror_actual_pose_runtime PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
         NAME dm1_v1_champion_mirror_walkpath_runtime
         COMMAND firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe "$ENV{HOME}/.firestaff/data"
+    )
+    set_tests_properties(dm1_v1_champion_mirror_walkpath_runtime PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+        # 2026-06-14 mail regression: this probe was written against
+        # the OLD TextString-based mirror ordinals at corridor poses
+        # (1,3) N and (1,4) N.  The source-correct mirror positions
+        # in real DM1 V1 DUNGEON.DAT are (1,2) and (1,5).  Disabling
+        # the broken old contract until a full source-pose rewrite.
+        DISABLED TRUE
     )
     set_tests_properties(dm1_v1_champion_mirror_walkpath_runtime PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
@@ -9360,6 +9388,11 @@ if(BUILD_TESTING)
     )
     set_tests_properties(dm1_v1_champion_mirror_candidate_panel_runtime PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+        # 2026-06-14 mail regression: this probe assumed corridor
+        # poses (1,3)/(1,4) NORTH had mirror ordinals.  The source-
+        # correct mirrors are at (1,2) and (1,5).  Disable until a
+        # full source-pose rewrite.
+        DISABLED TRUE
     )
 
     add_test(

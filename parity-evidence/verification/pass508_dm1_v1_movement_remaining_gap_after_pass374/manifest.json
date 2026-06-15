@@ -3,7 +3,7 @@
     "pass373",
     "pass374"
   ],
-  "branch": "firestaff-coding/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "branch": "main",
   "currentEvidenceChecks": [
     {
       "id": "pass373-live-route-wall-redraw-green",
@@ -124,7 +124,7 @@
       "binary-level direct F0380 body proof"
     ]
   },
-  "repo": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612201100403368000_dm1_v1_refill_champion_panel_spell_area_overlay_gate",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass508_dm1_v1_movement_remaining_gap_after_pass374.v1",
   "status": "BLOCKED_PASS508_DM1_V1_MOVEMENT_REMAINING_ORIGINAL_OVERLAY_GAP_PROVED"
 }
