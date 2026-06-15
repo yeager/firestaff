@@ -1686,12 +1686,36 @@ endif()
 # Source-locked per M13_PLAN.md:280-294 (HoC delta) +
 # DEFS.H:1289 (CSBGAME.DAT magic).  v1 ships a detector +
 # stub loader; full CSB-specific import path is OMFATTANDE.
+# v2 (Champions GAP 3): real CSB v2.0/v2.1 roster importer.
+# Pulls in csb_v1_character_pc34_compat.c for the
+# CSB_V1_PartyState / CSB_V1_Champion data layer it maps into.
 add_library(firestaff_csb_v1_save_import_path
     src/csb/csb_v1_save_import_path_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
 )
+target_include_directories(firestaff_csb_v1_save_import_path PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(firestaff_csb_v1_save_import_path PUBLIC firestaff_m12)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_save_import_path PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+# CSB V1 Graphics GAP 6 (CHANGE7_16) C-only perf shim.
+# Source-locked per ReDMCSB VBLANK.C:114-180, BLIT.C, SENSOR.C.
+# The 68k-asm hot paths are OMFATTANDE (no portable C
+# equivalent); v2 ships documented C-only performance shims
+# (blit-fast-path, sensor-dispatch, end-of-frame tick) marked
+# __attribute__((hot)).
+add_library(firestaff_csb_v1_graphics_change7_16
+    src/csb/csb_v1_graphics_change7_16_pc34_compat.c
+)
+target_include_directories(firestaff_csb_v1_graphics_change7_16 PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_graphics_change7_16 PUBLIC firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_graphics_change7_16 PRIVATE
         -Wall -Wextra -O2
     )
 endif()
@@ -1969,6 +1993,70 @@ add_test(
     COMMAND test_csb_v1_omfattande_stubs_pc34_compat
 )
 set_tests_properties(csb_v1_omfattande_stubs_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 Dungeon GAP 4 — DECOMPDU F0455 decompressor gate.
+add_executable(test_csb_v1_decompdu_pc34_compat
+    tests/test_csb_v1_decompdu_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_decompdu_pc34_compat PRIVATE
+    firestaff_csb_v1_decompdu
+    firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_decompdu_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME csb_v1_decompdu_pc34_compat
+    COMMAND test_csb_v1_decompdu_pc34_compat
+)
+set_tests_properties(csb_v1_decompdu_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 Graphics GAP 6 — CHANGE7_16 perf-shim gate.
+add_executable(test_csb_v1_graphics_change7_16_pc34_compat
+    tests/test_csb_v1_graphics_change7_16_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_graphics_change7_16_pc34_compat PRIVATE
+    firestaff_csb_v1_graphics_change7_16
+    firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_graphics_change7_16_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME csb_v1_graphics_change7_16_pc34_compat
+    COMMAND test_csb_v1_graphics_change7_16_pc34_compat
+)
+set_tests_properties(csb_v1_graphics_change7_16_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
+# CSB V1 Champions GAP 3 — CSB v2.0/v2.1 save import gate.
+add_executable(test_csb_v1_save_import_path_pc34_compat
+    tests/test_csb_v1_save_import_path_pc34_compat.c
+)
+target_link_libraries(test_csb_v1_save_import_path_pc34_compat PRIVATE
+    firestaff_csb_v1_save_import_path
+    firestaff_m10
+    firestaff_m12
+)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_save_import_path_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME csb_v1_save_import_path_pc34_compat
+    COMMAND test_csb_v1_save_import_path_pc34_compat
+)
+set_tests_properties(csb_v1_save_import_path_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 
