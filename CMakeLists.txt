@@ -7365,6 +7365,25 @@ if(NOT TARGET test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat)
     )
 endif()
 
+# CHM-08 (Group 8) — DM1 V1 F0864 reincarnation RNG-determinism.
+# Pins the 12 random stat increments invariant against the
+# ReDMCSB REVIVE.C F0282:807-810 source.
+if(NOT TARGET test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat)
+    add_executable(test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat
+        tests/test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat.c
+        src/dm1/dm1_v1_resurrection_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat
+        COMMAND test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat
+    )
+endif()
+
     add_executable(test_dm1_v1_creature_render_pc34_compat_integration
         tests/test_dm1_v1_creature_render_pc34_compat_integration.c
         src/dm1/dm1_v1_creature_render_pc34_compat.c
