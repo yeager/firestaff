@@ -14,7 +14,7 @@
 #include "firestaff_update_check_pc34_compat.h"
 #include "changelog_m12.h"
 
-#include <SDL3/SDL.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -106,7 +106,7 @@ FirestaffUpdateResult firestaff_update_check_evaluate(
 }
 
 int firestaff_update_check_disabled(void) {
-    const char* no = SDL_getenv("FIRESTAFF_NO_UPDATE_CHECK");
+    const char* no = getenv("FIRESTAFF_NO_UPDATE_CHECK");
     if (!no) return 0;
     if (no[0] == '\0' || no[0] == '0') return 0;
     return 1;
