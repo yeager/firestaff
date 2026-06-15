@@ -7322,6 +7322,28 @@ if(NOT TARGET test_dm1_v1_tab06_wound_defense_factor_source_lock_pc34_compat)
     )
 endif()
 
+# TAB-07 (Group 8) — DM1 V1 Phase17_SubtypeCreatesExplosion pin.
+# Verifies PROJECTILE_FLAG_CREATES_EXPLOSION bit on the spawned
+# projectile matches the ReDMCSB PROJEXPL.C:459-aligned per-subtype
+# lookup table.
+if(NOT TARGET test_dm1_v1_tab07_subtype_creates_explosion_pc34_compat)
+    add_executable(test_dm1_v1_tab07_subtype_creates_explosion_pc34_compat
+        tests/test_dm1_v1_tab07_subtype_creates_explosion_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_tab07_subtype_creates_explosion_pc34_compat PRIVATE
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_tab07_subtype_creates_explosion_pc34_compat PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_tab07_subtype_creates_explosion_pc34_compat
+        COMMAND test_dm1_v1_tab07_subtype_creates_explosion_pc34_compat
+    )
+endif()
+
     add_executable(test_dm1_v1_creature_render_pc34_compat_integration
         tests/test_dm1_v1_creature_render_pc34_compat_integration.c
         src/dm1/dm1_v1_creature_render_pc34_compat.c
