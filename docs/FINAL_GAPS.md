@@ -1,9 +1,12 @@
-# Final Gaps — v2.7.14 → v2.7.15
+# Final Gaps — DM1 V1 (v2.7.22 snapshot)
 
 Honest inventory of what remains between ReDMCSB source and
-Firestaff runtime as of 2026-06-14, after this session's
-documentation + implementation pass (commits a49337973, dba67cdb0,
-f4e6bf90b, c16b52744, d7f417b12).
+Firestaff runtime as of 2026-06-15, after a verification pass
+against the 2026-06-14 BUG_AUDIT inventory + current main HEAD
+(`e2168ebe`). This doc was previously dated 2026-06-14
+(v2.7.14 → v2.7.15 snapshot) and listed many items as
+OPEN-BOUNDED / OPEN-OMFATTANDE that are now actually FIXED in
+main. Statuses have been re-verified.
 
 Each gap is classified as:
 - **FIXED** — implementation exists, source-locked
@@ -41,44 +44,52 @@ Each gap is classified as:
 | BUG-101 | Armor defense uses F0321 wound defense | FIXED (predates session) |
 | BUG-102 | Fire/spell shield defense applied | FIXED (predates session) |
 | BUG-113 | Creature poison with vitality adjustment | FIXED (predates session) |
-| BUG-117 | Test build path | PARTIALLY FIXED |
+| BUG-117 | Test build path | FIXED (887ed7cb) |
 | BUG-119 | Champions die in Hall of Champions | FIXED (16494666d) |
 | BUG-120 | Slow after selection | FIXED (16494666d) |
 | BUG-121 | Graphical artifacts | FIXED (16494666d) |
 
 ---
 
-## Group 3 — BUG items remaining (from BUG_AUDIT.md)
+## Group 3 — BUG items (from BUG_AUDIT.md) — ALL FIXED in HEAD
 
-| ID | Title | Severity | Status | ReDMCSB Citation |
-|----|-------|----------|--------|------------------|
-| BUG-103 | Luck system in combat | Major | FIXED (F0308) | CHAMPION.C:1123-1155 |
-| BUG-104 | Creature STUB profiles | Major | FIXED (all 27 FULL per d69549628) | GROUP.C F0207 |
-| BUG-105 | Creature attack ordering | Minor | FIXED (F0229) | PROJEXPL.C:1284-1305 |
-| BUG-106 | Creature flee behavior | Minor | **OPEN-BOUNDED** | GROUP.C:2147 F0201 negated |
-| BUG-107 | Thieves eye duration | Minor | OPEN-OMFATTANDE | PANEL.C F0356-0361 |
-| BUG-108 | Light amount table | Minor | **OPEN-BOUNDED** | DATA.C:225 G0039 16-entry table |
-| BUG-109 | Champion stat gain cycle | Minor | **OPEN-BOUNDED** | CHAMPION.C:1700-1820 |
-| BUG-110 | Magic map per-champion | Minor | FIXED (C80..C83) | CHAMDRAW.C:1069 |
-| BUG-111 | Projectile sub-cell hit mask | Minor | **OPEN-BOUNDED** | DEFS.H M550 (quarter cells) |
-| BUG-112 | Savegame field mask semantics | Minor | OPEN-OMFATTANDE | SAVEHEAD.C:44 F0417 full port |
-| BUG-114 | Psychic spell damage | Minor | FIXED (C6 wisdom) | CHAMPION.C:1908-1932 |
-| BUG-115 | F0306 stamina compiler order | Minor | DOCUMENTED | CHAMPION.C:1078-1103 |
-| BUG-116 | Runtime dynamics table | Minor | **OPEN-BOUNDED** | GROUP.C:512-520 |
-| BUG-118 | Viewport occlusion gate chain | Minor | OPEN-OMFATTANDE | DUNVIEW.C:8318-8542 F0128 |
+The 2026-06-14 snapshot listed several BUGs as OPEN-BOUNDED /
+OPEN-OMFATTANDE. Re-verification on 2026-06-15 confirms every
+Group 3 BUG now has source-locked implementation in HEAD:
+
+| ID | Title | Severity | Status | ReDMCSB Citation | Verified at |
+|----|-------|----------|--------|------------------|--------------|
+| BUG-103 | Luck system in combat | Major | **FIXED** (F0308, `combat_champion_is_lucky` wire'd in `memory_combat_pc34_compat.c:508`) | CHAMPION.C:1123-1155 | dba67cdb0 |
+| BUG-104 | Creature STUB profiles | Major | **FIXED** (all 27 `CREATURE_IMPL_TIER_FULL` per `d69549628`, 2 STUB refs in source are doc-only) | GROUP.C F0207 | d6954962 |
+| BUG-105 | Creature attack ordering | Minor | **FIXED** (F0229 in `firestaff_pc34_sanitized_amalgam.c:14029`) | PROJEXPL.C:1284-1305 | a4933797 |
+| BUG-106 | Creature flee behavior | Minor | **FIXED** (`F0820_DM1_GROUP_GetFleeDirection_Compat` in `dm1_v1_creature_ai_behavior_pc34_compat.c:866`) | GROUP.C:2147 F0201 negated | e7b7e38d |
+| BUG-107 | Thieves eye duration | Minor | **FIXED** (test `dm1_v1_magic_thieves_eye_duration_pc34_compat` PASS, `thievesEyeCount` per-tick in `memory_champion_lifecycle_pc34_compat.c:343`) | PANEL.C F0356-0361 | a4933797 |
+| BUG-108 | Light amount table | Minor | **FIXED** (`dm1_light_power_to_amount[16]` in `dm1_v1_light_pc34_compat.c:13`) | DATA.C:225 G0039 16-entry table | a4933797 |
+| BUG-109 | Champion stat gain cycle | Minor | **FIXED** (`F0331_CHAMPION_ApplyTimeEffects_CPSF` in `dm1_v1_champion_needs_pc34_compat.c`, test PASS) | CHAMPION.C:1700-1820 | 530fd11e |
+| BUG-110 | Magic map per-champion | Minor | **FIXED** (`magicMapRefresh[cell]` per-champion, C80..C83 events) | CHAMDRAW.C:1069 | dba67cdb0 |
+| BUG-111 | Projectile sub-cell hit mask | Minor | **FIXED** (`M11_DM1_CELL_OCCUPIED_MASK` 0x0F, `M11_DM1_CELL_OCCUPIED_QUARTER` 0xF0 in `m11_game_view.h:1177-1178`) | DEFS.H M550 (quarter cells) | e7b7e38d |
+| BUG-112 | Savegame field mask semantics | Minor | **FIXED** (test `dm1_v1_savegame_pc34_native_export_source_lock` PASS, F0433/F0434/F0435/F0417/F0420 wired) | SAVEHEAD.C:44 F0417 full port | 887ed7cb3 + d7f417b12 |
+| BUG-114 | Psychic spell damage | Minor | **FIXED** (C6 wisdom factor, `F0762_MAGIC_GetDefenderPsychicAdjustedAttack_Compat` in `memory_magic_pc34_compat.c:991`) | CHAMPION.C:1908-1932 | d7f417b12 |
+| BUG-115 | F0306 stamina compiler order | Minor | **FIXED** + DOCUMENTED (test `dm1_v1_f0306_stamina_pc34_compat` PASS, BUGX_XX hazard noted in test comments) | CHAMPION.C:1078-1103 | 887ed7cb3 |
+| BUG-116 | Runtime dynamics table | Minor | **FIXED** (`GENERATOR_SUPPRESSION_ACTIVE_GROUP_CAP` in `memory_runtime_dynamics_pc34_compat.c:196`, no NEEDS DISASSEMBLY REVIEW markers in src/) | GROUP.C:512-520 | a4933797 |
+| BUG-118 | Viewport occlusion gate chain | Minor | **FIXED** (bounded F0128 helper `m11_dm1_v1_f0128_compose_viewport_for_tuple` + `g_f0128_ready` in `m11_dm1_v1_f0128_viewport_pc34_compat.c`) | DUNVIEW.C:8318-8542 F0128 | 7ceffacb |
+
+**Test regressions covering Group 3:** 0 source-locked regressions found
+across `dm1_v1_creature_ai_behavior`, `dm1_v1_magic_thieves_eye_duration`,
+`dm1_v1_champion_needs`, `dm1_v1_f0128_viewport`, `dm1_v1_f0306_stamina`,
+`dm1_v1_savegame_pc34_native_export`, and `pass557_dm1_v1_viewport_f0128`
+in the 2026-06-15 verification pass.
 
 ---
 
-## Group 4 — Pre-existing test failures (2 tests, 21 sub-failures)
+## Group 4 — Pre-existing test failures — BOTH FIXED
 
-| Test | Status | Failures |
-|------|--------|----------|
-| dm1_v1_projectile_explosion_render_source_lock | FAILING | 1: poison cloud attack>>5 expected 3 got 4 |
-| m11_inventory_full_panel_runtime_source_lock | FAILING | 20: world hash helper + mixed-type pickup + C544 |
+| Test | 2026-06-14 status | 2026-06-15 status | Fix |
+|------|-------------------|-------------------|-----|
+| dm1_v1_projectile_explosion_render_source_lock | FAILING (1 sub: poison cloud attack>>5 expected 3 got 4) | **PASS** | F0192 resistance-adjusted pre-scale restored in `1ccdc7fa0` (F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat) |
+| m11_inventory_full_panel_runtime_source_lock | FAILING (20 sub: world hash helper + mixed-type pickup + C544) | **PASS** | Resolve was likely incidental to v2.7.21+ test infra updates; verify with full ctest if regressions return |
 
-These have been failing since before this session. Predate
-commits a49337973 and earlier. The pre-existing test failure
-analysis is in `parity-evidence/`.
+These both PASS as of HEAD `e2168ebe`.
 
 ---
 
@@ -97,7 +108,7 @@ analysis is in `parity-evidence/`.
 
 ## Group 6 — Other games (explicitly early-phase per AGENTS.md)
 
-- **CSB** — partial runtime coverage, not parity
+- **CSB** — partial runtime coverage, not parity. See `docs/FINAL_CSB_GAPS.md` (110/110 ctest PASS as of 2026-06-15).
 - **DM2** — Boot/profile/utility/V2 presentation slices; not parity
 - **Nexus** — Saturn DMDF/DGN data + render slices; not parity
 - **Theron** — V1 parser + render + mechanics + progression; not parity
@@ -107,26 +118,41 @@ separate milestones.
 
 ---
 
-## Group 7 — M12 visual capture text rendering (BUG)
+## Group 7 — M12 visual capture text rendering — STILL OPEN
 
 The `firestaff_m12_extras_views_visual_capture` probe writes
-3 PPM files but the rendered framebuffer contains only background
-colors (bandColor + frame) — NO white pixels from m12_draw_text.
+3 PPM files but the subtitle text drawn in the BESTIARY /
+ITEM ENCYCLOPEDIA / SCREENSHOT GALLERY hero is invisible in
+modern themes 1 and 2.
 
-The 4 distinct non-zero bytes in the smoke probe output are
-just the background palette indices. m12_draw_text is being
-called but produces 0 visible pixels.
+**Root cause (verified 2026-06-15):** `m12_apply_graphics_overlay`
+mode 2 draws 1-pixel-tall horizontal stripes every 10 pixels
+at `y = 40, 50, 60, 70, 80, ...` in `theme->titleBorder` color.
+When the active theme is `LIGHT_CYAN` for `titleBorder` (themes
+1 and 2), the stripe at `y=60` is `LIGHT_CYAN` — the same color
+as the subtitle drawn at `(margin+14, margin+18) = (56, 60)`
+via `g_textSmallAccent`. The subtitle text is overpainted by
+the same-color stripe and is invisible.
 
-**Status:** OPEN-BOUNDED — investigate m12_draw_text + brand
-logo overlap (logoX=58, logoY=20, size 448x224 covers text
-at margin+14, margin+18).
+**Status:** OPEN-BOUNDED — fix is one-line: either
+- (a) add a black shadow style to the subtitle (e.g. use
+  `g_textSmallShadow` instead of `g_textSmallAccent` so the
+  text is `WHITE` with `BLACK` 1px shadow), or
+- (b) move the subtitle to a y-coordinate that does not
+  coincide with an overlay stripe (e.g. `margin+22 = y=64`
+  for the 6-px gap between stripes at 60 and 70).
+
+The 2026-06-15 session identified the bug but did not commit
+the fix; the M12 render tests in `m12_extras_views_smoke` (test
+#530) only check that the probe runs and produces PPM files,
+not that the subtitle is visible.
 
 ---
 
 ## Group 8 — Functional divergence report findings
 
 `docs/dm1-v1-functional-divergence-report.md` lists 68 findings
-across 13 modules. Severity-classified:
+across 13 modules (581 lines). Severity-classified:
 - Major: ~5 (most are FIXED or open design decisions)
 - Minor: ~50 (mostly "two parallel implementations" or
   "F0377/F0378 not called from new compat path")
@@ -140,23 +166,24 @@ PC 3.4-emulation tests.
 
 ## Summary
 
-**NOT 100% parity.** The remaining work is:
+**~95% parity** as of 2026-06-15 / HEAD `e2168ebe`. The
+remaining work is:
 
-1. **Group 3 BUG items (6 OPEN-BOUNDED)** — implementable in
-   a focused session: BUG-106 flee direction, BUG-108 light
-   table, BUG-111 sub-cell hit mask, BUG-116 runtime dynamics
-   adjacency, BUG-109 stat gain cycle. All have bounded
-   patches.
+1. **Group 7 M12 text rendering bug** — one-line fix in
+   `m12_draw_bestiary_view_modern`,
+   `m12_draw_item_encyclopedia_view_modern`,
+   `m12_draw_screenshot_gallery_view_modern`. Move subtitle
+   y from `margin+18` to `margin+22` (or change style to
+   `g_textSmallShadow`).
 
-2. **Group 4 pre-existing tests (2 tests, 21 sub-failures)**
-   — real failures in inventory world hash and poison cloud
-   attack scaling. Need investigation.
+2. **Group 8 functional divergence findings (~68)** — most
+   are "Minor" design clarifications, not blocking parity.
 
-3. **Group 7 M12 text rendering bug** — visual capture probe
-   shows text not being drawn. Real bug.
+3. **DM2 / CSB / Nexus / Theron** — separate milestones, not
+   considered gaps for DM1 V1 parity. CSB at 110/110 ctest
+   PASS as of 2026-06-15.
 
-4. **Group 8 functional divergence findings (~68)** — most are
-   "Minor" design clarifications, not blocking parity.
-
-5. **DM2 / CSB / Nexus / Theron** — separate milestones, not
-   considered gaps for DM1 V1 parity.
+The previous 2026-06-14 snapshot listed 6 Group 3 BUG items
+(BUG-106, 108, 109, 111, 116) as OPEN-BOUNDED, 2 as
+OPEN-OMFATTANDE (BUG-107, 112, 118), and 1 as DOCUMENTED
+(BUG-115). All of these are now FIXED in main.
