@@ -1,4 +1,99 @@
 
+# Firestaff v2.7.25
+
+DM1 V1 Group 8 (functional-divergence-report.md) bounded-fix batch.
+4 commits land 4 Group 8 items as source-locked regressions tests
+or runtime helpers; CSB launch path verified end-to-end.
+
+## DM1 V1 Group 8 fixes (this release)
+
+- **CHM-04 (Minor → Fixed)**: F0319_CHAMPION_Kill auto-close-chest
+  ordering. New runtime helper
+  `m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run`
+  drives the F0319 → F0355 → F0334 → F0318 chain against a live
+  M11_InventoryState. Source-locked to ReDMCSB CHAMPION.C:1552-1607,
+  PANEL.C:2244-2310, CHEST.C:79-130, CHAMPION.C:1527-1551.
+  Test: `m11_inventory_chest_auto_close_on_leader_death_pc34_compat`
+  (3 scenarios, all PASS).
+
+- **MOV-05 (Major → Fixed with bounded approximation)**:
+  F0284_CHAMPION_SetPartyDirection cell-rotation. New public
+  `F0284_CHAMPION_SetPartyDirection_Compat` rotates Direction + Cell
+  (per-present-list mapping, empty slots preserved) and tracks
+  activeChampionIndex. 13/13 test scenarios PASS.  Source-locked
+  to ReDMCSB CHAMPION.C:117-130.  Bounded approximation: uses
+  slot-position as cell proxy; a full fix would add a `cell`
+  field to `ChampionState_Compat` (structural change tracked separately).
+
+- **MOV-06 (Minor → Fixed for V2)**: F0316/F0317 scent add/delete
+  compat stub for the V2 presentation path. New
+  `M11_ChampionScentRing_Compat` (16-slot bounded ring) plus
+  `m11_champion_scent_ring_add` (F0317) and
+  `m11_champion_scent_ring_delete` (F0316). 11/11 test scenarios
+  PASS. Source-locked to ReDMCSB CHAMPION.C F0316+F0317.
+
+- **DUN-01 (Minor → Pin)**: F0150_DUNGEON_UpdateMapCoordinates
+  step-delta source-lock pin. Pins
+  `F0701_MOVEMENT_GetStepDelta_Compat` against the F0150
+  source-locked G0233/G0234 tables (DUNGEON.C:1318-1338). 7/7
+  test scenarios PASS. No source change — freezes the invariant
+  so the two parallel implementations cannot drift.
+
+## CSB launch verification
+
+End-to-end check confirms CSB starts correctly from the
+startup menu (and via `--game csb` direct-launch):
+
+```
+$ firestaff --scan-data
+...
+Chaos Strikes Back     READY
+  GRAPHICS.DAT                 FOUND  /Users/bosse/.firestaff/data/csb/GRAPHICS.DAT
+  DUNGEON.DAT                  FOUND  /Users/bosse/.firestaff/data/csb/DUNGEON.DAT
+...
+```
+
+Test regressions:
+- `csb_v1_required_complete_launches` PASS (launches when
+  required files complete, reaches boot runtime boundary)
+- `csb_v1_boot_runtime_handoff` PASS (V2 profile labels don't
+  alter V1 runtime handoff)
+- `csb_v1_boot_viewport_render_gate` PASS (224x136 viewport
+  region, column-major thing data preserved)
+- `csb_v1_boot_profile_smoke` 51/51 PASS
+- `csb_v1_launch_blocker_m12` PASS (no bypass of missing-data
+  gating — safety test)
+
+CLI: `firestaff --game csb --menu --duration 1000` opens
+the M12 menu with CSB highlighted, then `firestaff --game csb`
+direct-launches without the menu.
+
+## Test regressions (this release)
+
+- DM1 V1 critical suite: 11/11 PASS (creature_ai_behavior,
+  magic_thieves_eye, champion_needs, f0128_viewport, f0306_stamina,
+  savegame_native_export, hall_of_champions, f0192_projectile,
+  monster_poison_cloud, etc.)
+- Phase A probe: 23/23 invariants PASS
+- m12_extras_views_smoke: PASS (7s)
+- m12_extras_views_visual_capture: subtitle text verified in
+  all 3 views (95/91/181 white px)
+- csb_v1_champions_left_click_inventory: PASS (10/10)
+- firestaff_po_loader_multi_domain: PASS (7/7)
+- m11_inventory_chest_auto_close_on_leader_death: PASS (3/3)
+- m11_champion_scent: PASS (11/11)
+- dm1_v1_mov05_f0284_cell_rotation: PASS (13/13)
+- dm1_v1_dun01_f0150_f0701_step_delta: PASS (7/7)
+- csb_v1_boot_profile_smoke: 51/51 PASS
+
+## Commits (this release)
+
+- 9fd532d1 fix: DM1 V1 F0319_CHAMPION_Kill chest auto-close-on-leader-death runtime helper (CHM-04)
+- 02220c53 feat: DM1 V1 F0316/F0317 scent add/delete compat stub for V2 path (MOV-06)
+- fb43647c feat: DM1 V1 F0284_CHAMPION_SetPartyDirection cell-rotation invariants (MOV-05)
+- b94f4c17 test: DM1 V1 DUN-01 F0150/F0701 step-delta source-lock pin (Group 8)
+
+
 # Firestaff v2.7.24
 
 DM1 V1 i18n / l10n expansion release — fixes the silent truncation of DM1 strings on load, adds a multi-domain PO loader so dm1, csb, and startup-menu catalogs can co-exist, and ships 17 new DM1 translation catalogs ready for translator fill-in.

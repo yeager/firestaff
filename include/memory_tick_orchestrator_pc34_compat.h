@@ -259,6 +259,26 @@ int F0885_ORCH_RunNTicks_Compat(
     struct TickStreamRecord_Compat* outRecords,
     uint32_t* outFinalHash);
 
+/* F0284 public probe wrapper.
+ *
+ * Sets the party direction (0..3) and, in doing so, rotates every
+ * present champion's per-cell Direction and Cell ordinal by the
+ * delta (new - old) mod 4.  This is the public entry point for
+ * MOV-05 (DM1 V1 functional-divergence-report.md): the
+ *   `set party_direction_redmcsb_compat` static function in the
+ * .c file is now exposed here so unit tests can exercise the
+ * cell-rotation invariants without spinning up the full
+ * F0884_ORCH_AdvanceOneTick_Compat path (which has the side
+ * effect of scheduling the M010 / watchdog-tick events).
+ *
+ * Returns 1 if the direction actually changed, 0 if it was a
+ * no-op (newDirection == oldDirection).  Idempotent.
+ *
+ * Source: ReDMCSB CHAMPION.C:117-130, F0284_CHAMPION_SetPartyDirection. */
+int F0284_CHAMPION_SetPartyDirection_Compat(
+    struct GameWorld_Compat* world,
+    int newDirection);
+
 int F0886_ORCH_RunUntilCondition_Compat(
     struct GameWorld_Compat* world,
     const struct TickInput_Compat* inputs,
