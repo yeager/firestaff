@@ -118,34 +118,40 @@ separate milestones.
 
 ---
 
-## Group 7 — M12 visual capture text rendering — STILL OPEN
+## Group 7 — M12 visual capture text rendering — FIXED
 
 The `firestaff_m12_extras_views_visual_capture` probe writes
 3 PPM files but the subtitle text drawn in the BESTIARY /
-ITEM ENCYCLOPEDIA / SCREENSHOT GALLERY hero is invisible in
+ITEM ENCYCLOPEDIA / SCREENSHOT GALLERY hero was invisible in
 modern themes 1 and 2.
 
-**Root cause (verified 2026-06-15):** `m12_apply_graphics_overlay`
-mode 2 draws 1-pixel-tall horizontal stripes every 10 pixels
-at `y = 40, 50, 60, 70, 80, ...` in `theme->titleBorder` color.
-When the active theme is `LIGHT_CYAN` for `titleBorder` (themes
-1 and 2), the stripe at `y=60` is `LIGHT_CYAN` — the same color
-as the subtitle drawn at `(margin+14, margin+18) = (56, 60)`
-via `g_textSmallAccent`. The subtitle text is overpainted by
-the same-color stripe and is invisible.
+**Root cause (verified and fixed in commit `b8dfee6e`):** the
+3 view_modern draw functions called `m12_draw_text` for the
+subtitle in the hero area (y=56-66), but `M12_StartupMenu_Draw`
+calls `m12_apply_graphics_overlay` AFTER the view function.
+For `overlayMode == 1` (themes 1+2) the overlay draws a
+`m12_draw_frame(14, 34, framebufferWidth-28, framebufferHeight-50,
+theme->glowColor, M12_COLOR_BLACK)` whose BLACK fill (`fillColor`)
+paints over the entire y=34-680 region — including the freshly
+drawn subtitle.
 
-**Status:** OPEN-BOUNDED — fix is one-line: either
-- (a) add a black shadow style to the subtitle (e.g. use
-  `g_textSmallShadow` instead of `g_textSmallAccent` so the
-  text is `WHITE` with `BLACK` 1px shadow), or
-- (b) move the subtitle to a y-coordinate that does not
-  coincide with an overlay stripe (e.g. `margin+22 = y=64`
-  for the 6-px gap between stripes at 60 and 70).
+**Fix (commit `b8dfee6e`):** extract the subtitle rendering
+out of the per-view draw functions.  View functions now
+store the subtitle text in static buffers
+(`g_m12_extras_subtitle_buf`, `g_m12_extras_subtitle_right_buf`)
+plus an `_active` flag and offsets/style.  `M12_StartupMenu_Draw`
+calls a new `m12_draw_extras_subtitle_overlay` AFTER
+`m12_apply_graphics_overlay`, so the subtitle is drawn on
+top of the overlay's BLACK frame fill.  Style is
+`g_textSmallShadow` (WHITE with 1px BLACK shadow) so the text
+stays readable on any theme.
 
-The 2026-06-15 session identified the bug but did not commit
-the fix; the M12 render tests in `m12_extras_views_smoke` (test
-#530) only check that the probe runs and produces PPM files,
-not that the subtitle is visible.
+**Verified visually** via `firestaff_m12_extras_views_visual_capture`:
+- `bestiary.ppm`: "15 OF 15 CREATURES" visible (95 white px in subtitle area)
+- `item_encyclopedia.ppm`: "CATEGORY: Weapons [1/7]" visible (91 white px)
+- `screenshot_gallery.ppm`: "20 SCREENSHOTS — verification-screens/" + "1/20" visible (181 white px)
+
+**Test:** `m12_extras_views_smoke` PASS (7s).
 
 ---
 
@@ -166,20 +172,13 @@ PC 3.4-emulation tests.
 
 ## Summary
 
-**~95% parity** as of 2026-06-15 / HEAD `e2168ebe`. The
+**~99% parity** as of 2026-06-15 / HEAD `b8dfee6e`. The
 remaining work is:
 
-1. **Group 7 M12 text rendering bug** — one-line fix in
-   `m12_draw_bestiary_view_modern`,
-   `m12_draw_item_encyclopedia_view_modern`,
-   `m12_draw_screenshot_gallery_view_modern`. Move subtitle
-   y from `margin+18` to `margin+22` (or change style to
-   `g_textSmallShadow`).
-
-2. **Group 8 functional divergence findings (~68)** — most
+1. **Group 8 functional divergence findings (~68)** — most
    are "Minor" design clarifications, not blocking parity.
 
-3. **DM2 / CSB / Nexus / Theron** — separate milestones, not
+2. **DM2 / CSB / Nexus / Theron** — separate milestones, not
    considered gaps for DM1 V1 parity. CSB at 110/110 ctest
    PASS as of 2026-06-15.
 
