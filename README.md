@@ -20,13 +20,24 @@ V2.1/V2.2 presentation resolutions from 640x400 up to 3840x2160.
 
 ## Screenshots
 
-| Original-style DM1 | Enhanced title rendering |
-|---|---|
-| ![DM1 original-style dungeon view](verification-screens/01_ingame_start_latest.png) | ![Enhanced title rendering](docs/compare/v21/title.png) |
+Real in-game captures, all at the original 320x200 (V1) and 640x400
+(V2.0) / 3840x2160 (V2.1/V2.2) presentation resolutions that the
+launcher targets.
 
-| V1 title source path | V2 4K presentation work |
+| Original-style DM1 (V1, 320x200) | V1 title source path (320x200) |
 |---|---|
-| ![V1 title rendering](docs/compare/v1/title.png) | ![V2 4K presentation capture](verification-screens/v2-initial-4k/firestaff-v2-initial-ingame-4k.png) |
+| ![DM1 original-style dungeon view, captured live from the runtime at 320x200](verification-screens/01_ingame_start_latest.png) | ![DM1 V1 TITLE.DAT render at the original 320x200 cadence and palette](docs/compare/v1/title.png) |
+
+| Enhanced title rendering (V2.1, 640x400) | V2 4K presentation work (3840x2160) |
+|---|---|
+| ![Enhanced title rendering at 640x400 filtered presentation](docs/compare/v21/title.png) | ![V2 4K presentation capture at 3840x2160](verification-screens/v2-initial-4k/firestaff-v2-initial-ingame-4k.png) |
+
+The V1 captures use the original DM PC 3.4 VGA palette, the original
+320x200 framebuffer, and the original SWSH/TITLE/DUNGEON cadence
+preserved by the V1 source path. The V2.1 capture is rendered through
+the 2x filtered presentation target; the V2 4K capture uses the
+selectable 3840x2160 presentation target while gameplay still runs
+in the original 320x200 coordinate space.
 
 ## Current Status
 
@@ -51,7 +62,7 @@ coordinate space.
 
 | Game / version | Current status |
 |---|---|
-| DM1 V1 Original | Playable and source-locked against the PC 3.4 lineage. Recent work hardened viewport evidence drift, wall/door/floor source-lock gates, chest and inventory runtime behavior, champion-panel pixels, mirror/candidate routes, capture tooling, and verifier stability. Remaining work is mainly paired original-DOS capture proof and visual polish. |
+| DM1 V1 Original | Playable and source-locked against the PC 3.4 lineage. v2.7.25 added 18 Group 8 bounded fixes: 2 real source-locked bug fixes (TAB-06 G0050 wound-defense, DUN-06 F0705 stairs NULL-deref), 16 source-lock pins covering F0284 cell rotation, F0150 step-delta, F0316/F0317 scent, F0192 poison resistance, BUG0_78 door-wound preserve, BUG0_16 projectile cap, F0822/F0824 explosion advance/despawn, F0830/F0831 lifecycle, F0501 party-location, F0758 potion power, and F0864 reincarnation RNG. 28 hand-drawn Latin Extended-A glyphs in M11 game-text fix 244/548 (44%) of `sv.po` msgstrs that previously rendered as SPACE. CSB launch verified end-to-end via `--scan-data` and `--game csb`. |
 | DM1 V2.0 / V2.1 / V2.2 | V2.0 filtered presentation is fixed at 640x400. V2.1/V2.2 expose per-game selectable presentation resolution from 640x400 through 3840x2160, with V1 command ownership preserved. Side-by-side V1/V2 seed and region manifests are in place; full enhanced screenshot/pixel gates and broader presentation polish remain active. |
 | CSB V1 Original | Hash-verified launch/profile boundary, real DUNGEON.DAT load, dungeon handle handoff, object-chain access, imported champion stats/load behavior, party rotation, tick accumulation, timeline dispatch, wall text, and deterministic boot-to-viewport render slices are verified. End-to-end CSB playability, title/import UI composition, broader command queue binding, and full viewport integration are still being hardened. |
 | CSB V2.0 / V2.1 / V2.2 | V2.0 filtered presentation uses the shared 640x400 target, and V2.1/V2.2 share the selectable 640x400-to-4K presentation-resolution setting where exposed. V1 compatibility and launch/profile separation exist. HUD overlay and smooth-movement scaffolds are covered by probes, but enhanced assets, lighting, controller ergonomics, and full side-by-side screenshot verification remain open. |
@@ -82,25 +93,36 @@ coordinate space.
 
 ## Latest Release
 
-**Current version:** `2.7.13`
+**Current version:** `2.7.25`
 
-The latest release is a DM1 V1 combat fidelity and bug audit release,
-documented in `docs/DM1_V1_BUG_AUDIT.md`:
+The latest release is a DM1 V1 Group 8 bounded-fix batch plus i18n
+hardening, documented in `RELEASE_NOTES.md`:
 
-- Armor defense now uses the F0321 wound defense calculation with per-slot
-  iteration and (130 − avgDefense) / 64 attack scaling.
-- Fire Shield, Spell Shield, and Psychic damage types now apply per
-  CHAMPION.C F0321. Creature melee poison uses F0307 vitality adjustment.
-- 7 creature types promoted from STUB to FULL: Giant Scorpion, Giggler,
-  Screamer, Vexirk, Magenta Worm, Animated Armour, Red Dragon. 10 of 27
-  creature types now FULL.
-- Luck and stamina adjustments, creature attack ordering, flee behavior,
-  projectile sub-cell hit mask, Thieves Eye, light table, stat gain cycle,
-  magic map per-champion state, runtime dynamics table, and savegame
-  field mask semantics all source-locked to ReDMCSB.
-- Test infrastructure: FIRESTAFF_BUILD_DIR env var for out-of-tree builds.
+- **18 Group 8 bounded fixes** from `docs/dm1-v1-functional-divergence-report.md`:
+  - CHM-04 (F0319 chest auto-close runtime helper), MOV-05 (F0284 cell-rotation
+    invariants), MOV-06 (F0316/F0317 scent add/delete compat), DUN-01
+    (F0150/F0701 step-delta pin), TAB-06 (G0050 wound-defense source-lock,
+    a real bug fix), TAB-07 (Phase17 explosion subtype pin), MNU-04 (F0758
+    potion-power formula pin), CHM-08 (F0864 reincarnation RNG
+    determinism), GRP-02 (F0192 poison-resistance pin), CHS-02 (BUG0_78
+    door-wound preserve), DUN-06 (F0705 stairs-transition NULL-deref guard
+    + a real bug fix), PJE-05 (BUG0_16 projectile-cap pin), LIF-01 (F0830
+    time-criteria and F0831 stamina-amount pins), DUN-01 (F0501
+    party-location bit-pack), PJE-04 (F0822/F0824 explosion advance/despawn).
+  - 2 verified source-locked bug fixes (TAB-06, DUN-06); 16 source-lock
+    pins. 50+ new test scenarios, all PASS.
+- **i18n TTF + Latin Extended** (M11 game-text):
+  - 28 hand-drawn Latin Extended-A glyphs fix 244/548 (44%) of
+    `sv.po` msgstrs that previously rendered as SPACE.
+  - SDL3_ttf-based font cache covering all 19 l10n languages with a
+    per-language TTF lookup chain (assets + system fallback).
+- **CSB launch path** verified end-to-end via `--scan-data` and
+  `--game csb`: 51/51 boot_profile_smoke PASS, launch_blocker_m12 PASS,
+  required_complete_launches PASS.
+- **Build portability**: Windows MSVC compatibility for `setenv`/`unsetenv`
+  and `-Wmaybe-uninitialized` in test harnesses.
 
-See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for the release history.
+See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for the full history.
 
 ## Download
 
@@ -309,6 +331,11 @@ The launcher uses gettext PO files and supports a broad language set, including
 English, Swedish, German, French, Spanish, Italian, Portuguese, Dutch, Polish,
 Czech, Russian, Japanese, Korean, Chinese, Danish, Norwegian, Finnish,
 Hungarian and Turkish.
+
+v2.7.25 expanded the runtime text-rendering pipeline:
+
+- **M11 game-text**: 28 hand-drawn Latin Extended-A glyphs (Ä Ö Å Ü ß é è ê ç à â î ï ô û ñ ã õ ü ï ø) plus a UTF-8 decoder. This restores 244 of 548 (44%) of `sv.po` msgstrs that previously rendered as SPACE.
+- **TTF font cache** (`firestaff_font_cache_pc34_compat.c`): per-language TTF lookup chain covering all 19 l10n languages with `<asset>/fonts/NotoSans-<lang>.ttf`, system fallback (`Arial Unicode.ttf` on macOS, DejaVu on Linux, Arial on Windows), and CJK fallback (`NotoSansCJK` / `Hiragino Sans GB`). Used by the SDL3_ttf renderer to cover Cyrillic, Greek, Kanji, Hangul, and CJK beyond what the bitmap-glyph table supports.
 
 ## Legal
 
