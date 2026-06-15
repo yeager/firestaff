@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG CMakeFiles/test_dm1_v1_viewport_status_bar_layout_pc34_compat.dir/src/test/test_dm1_v1_viewport_status_bar_layout_pc34_compat.c.o -o test_dm1_v1_viewport_status_bar_layout_pc34_compat 
