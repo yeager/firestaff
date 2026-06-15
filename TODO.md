@@ -95,11 +95,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### Theron V1
 
-- 🔧 Runtime handoff/playability proof: hash-verified Track 02 availability is wired through validator/startup/menu state; remaining work is positive real-asset launch through the Theron parser/rendering path.
-- ❌ Phase 4 - Rendering pipeline: implement Theron viewport/UI presentation and asset selection.
-- 🔧 Phase 5 - Mechanics parity hardening: initial movement, click route, door, pit, teleporter, altar, combat, drop, and sound behavior is implemented; remaining work is focused runtime/probe coverage.
-- ❌ Phase 7 - Save/import compatibility: implement and verify Theron save/load behavior and any transfer/import constraints.
-- ❌ Phase 8 - Verification suite: add deterministic launch, dungeon progression, mechanics, rendering, and save/load probes.
+- 🔧 Runtime handoff/playability proof: hash-verified Track 02 availability is wired through validator/startup/menu state and 14 Theron V1 probes/tests are green locally (`theron_v1_rendering`, `theron_v1_save_header_rejection`, `theron_v1_shop_price_table`, `theron_v1_world_serialize_purchase_state`, `theron_v1_direct_launch`, `theron_v1_m11_direct_launch`, `theron_v1_launcher_scan_reuse`, `theron_v1_track02_bank`, `theron_v1_viewport_renderer`, `theron_v1_tile_renderer`, `theron_v1_mechanics_hardening`, `theron_v1_teleporter_chain`, `theron_v1_dungeon_progression`, `theron_v1_save_load`); remaining work is positive real-asset launch with a JP/US Track 02 BIN/ISO pair.
+- 🔧 Phase 5 - Mechanics parity hardening: 50-assertion mechanics probe covers movement, click routes, doors, pits, teleporters, altar, combat, drops, and sounds; remaining work is real-asset gameplay traces and broader cross-route runtime evidence.
+- 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, and shop price-table regressions are green; remaining work is cross-slot import/export against real Track 02 saves.
+- 🔧 Phase 8 - Verification suite: launch, dungeon progression, mechanics, rendering, save/load, direct-launch, M11-handoff, launcher scan-reuse, and Track 02 bank probes/tests are all green locally (15/15); remaining work is a single end-to-end positive-launch evidence pass with a real asset.
 
 ### Theron V2.0 / V2.1 / V2.2
 
