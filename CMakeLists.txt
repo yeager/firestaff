@@ -7344,6 +7344,27 @@ if(NOT TARGET test_dm1_v1_tab07_subtype_creates_explosion_pc34_compat)
     )
 endif()
 
+# MNU-04 (Group 8) — DM1 V1 F0758 potion power formula source-lock.
+# Pins the F0758_MAGIC_ProducePotionEffect_Compat invariant:
+#   kineticEnergy = M003_RANDOM(16) + (powerOrdinal * 40).
+if(NOT TARGET test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat)
+    add_executable(test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat
+        tests/test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat PRIVATE
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat
+        COMMAND test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat
+    )
+endif()
+
     add_executable(test_dm1_v1_creature_render_pc34_compat_integration
         tests/test_dm1_v1_creature_render_pc34_compat_integration.c
         src/dm1/dm1_v1_creature_render_pc34_compat.c
