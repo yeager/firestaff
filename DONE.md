@@ -50,7 +50,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### CSB V2.0 / V2.1 / V2.2
 
-- ✅ Phase 5 smooth-movement runtime bridge: `csb_v2_smooth_movement.c` provides visual walk (ease-out cubic), turn (ease-out quad), and stairs (ease-in-out cubic + vertical camera offset) interpolations over 1 V1 tick (55ms). Global state is driven via a `V2_AnimClock*` to `csb_v2_smooth_update_from_clock`. Headless probe `firestaff_csb_v2_smooth_movement_probe` covers lifecycle, walk N/S/E/W, turn 8 directions, stairs with vertical offset, and deterministic input coverage; ctest target `test_csb_v2_smooth_movement` passes 50/50.
+- ✅ Phase 5 smooth-movement runtime bridge: `csb_v2_smooth_movement.c` provides visual walk (ease-out cubic), turn (ease-out quad), and stairs (ease-in-out cubic + vertical camera offset) interpolations over 1 V1 tick (55ms). Global state is driven via a `V2_AnimClock*` to `csb_v2_smooth_update_from_clock`. Headless probe `firestaff_csb_v2_smooth_movement_probe` covers lifecycle, walk N/S/E/W, turn 8 directions, stairs with vertical offset, and deterministic input coverage; ctest target `test_csb_v2_smooth_movement` passes 50/50. Plus binding seam: `csb_v2_runtime.c` (CSB_V1_RuntimeProfile, `bind_to_v1`/`is_bound`/`force_sync`/`v1_tick`/`render_frame`) auto-triggers walk/turn/stairs on V1 deltas (F0365/F0366/F0364). Integration test `test_csb_v2_smooth_runtime_binding` 12 groups/43 asserts pass; ctest 2/2 (CSB smooth + CSB runtime binding).
 
 ## Dungeon Master II: Skullkeep (DM2)
 
@@ -64,7 +64,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### DM2 V2.0 / V2.1 / V2.2
 
-- ✅ Phase 5 smooth-movement runtime bridge: `dm2_v2_smooth_movement.c` provides struct-based `DM2_V2_SmoothState` with walk (ease-out cubic), turn (ease-out quad, shortest-path normalised), and stairs (ease-in-out cubic + vertical camera offset) interpolations over 1 V1 tick (55ms). Probe `firestaff_dm2_v2_smooth_movement_probe` covers lifecycle, walk N/S/E/W, turn 8 directions, stairs, deterministic input coverage, and pixel gate. Ctest target `test_dm2_v2_smooth_movement` passes 79/79.
+- ✅ Phase 5 smooth-movement runtime bridge: `dm2_v2_smooth_movement.c` provides struct-based `DM2_V2_SmoothState` with walk (ease-out cubic), turn (ease-out quad, shortest-path normalised), and stairs (ease-in-out cubic + vertical camera offset) interpolations over 1 V1 tick (55ms). Probe `firestaff_dm2_v2_smooth_movement_probe` covers lifecycle, walk N/S/E/W, turn 8 directions, stairs, deterministic input coverage, and pixel gate. Ctest target `test_dm2_v2_smooth_movement` passes 79/79. Plus binding seam: `dm2_v2_runtime.c` (DM2_V1_RuntimeProfile, `bind_to_v1`/`is_bound`/`force_sync`/`v1_tick`/`render_frame`) on top of SKULL.ASM T520 (party/movement tick) + T048 (input dispatch) + T560 (dungeon viewport) + T600 (outdoor viewport). Stairs takes priority over walk when both change. Integration test `test_dm2_v2_smooth_runtime_binding` 12 groups/43 asserts pass; ctest 2/2 (DM2 smooth + DM2 runtime binding).
 
 ## Dungeon Master Nexus
 
