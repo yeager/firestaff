@@ -1047,6 +1047,36 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v2_smooth_movement
     )
 
+    # DM2 V2 Phase 5 — Smooth Movement Runtime Binding Test
+    # Verifies the binding seam: dm2_v2_runtime_bind_to_v1(profile)
+    # observes V1 party state and triggers smooth walk/turn/stairs
+    # animations on V1 deltas.  Headless, no game assets required.
+    # Mirrors the CSB V2 binding seam (test_csb_v2_smooth_runtime_binding).
+    add_executable(test_dm2_v2_smooth_runtime_binding
+        tests/test_dm2_v2_smooth_runtime_binding.c
+        src/dm2/dm2_v2_runtime.c
+        src/dm2/dm2_v2_viewport_renderer.c
+        src/dm2/dm2_v2_smooth_movement.c
+        src/dm2/dm2_v2_lighting.c
+        src/dm2/dm2_v2_outdoor_enhanced.c
+        src/dm2/dm2_v2_hud_overlay.c
+        src/dm2/dm2_v2_phase_gate.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_dm2_v2_smooth_runtime_binding PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v2_smooth_runtime_binding PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v2_smooth_runtime_binding PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v2_smooth_runtime_binding
+        COMMAND test_dm2_v2_smooth_runtime_binding
+    )
+
     add_executable(test_dm2_v2_touch_controller_affordance
         tests/test_dm2_v2_touch_controller_affordance.c
         src/dm2/dm2_v2_touch_controller_affordance.c
