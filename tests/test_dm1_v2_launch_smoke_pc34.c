@@ -175,9 +175,15 @@ int main(void) {
     menu.gameOptions[0].resolution = M12_RES_320x200;
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     CHECK(intent.valid == 1);
-    CHECK(intent.options.resolution == M12_RES_640x400);
-    CHECK(intent.resolutionWidth == 640);
-    CHECK(intent.resolutionHeight == 400);
+    /* V2.1/V2.2 (UPSCALED/MODERN) are M12_PresentationMode_Allows
+     * ResolutionChoice: the user-chosen 320x200 stays as-is so the
+     * row cycle can advance through 320x200 -> 640x400 -> 1280x960 ->
+     * 1920x1080 -> 2560x1440.  The old auto-bump to 640x400 was
+     * intentionally removed (broke INV_M12_18 — see
+     * m12_enforce_mode_constraints in menu_startup_m12.c). */
+    CHECK(intent.options.resolution == M12_RES_320x200);
+    CHECK(intent.resolutionWidth == 320);
+    CHECK(intent.resolutionHeight == 200);
 
     sourceRoute = dm1_v2_movement_command_route_for_presentation(0, DM1_V2_MOVEMENT_COMMAND_MOVE_FORWARD);
     CHECK(sourceRoute.routeKind == DM1_V2_MOVEMENT_ROUTE_V1_SOURCE);

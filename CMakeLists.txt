@@ -2060,6 +2060,29 @@ set_tests_properties(csb_v1_save_import_path_pc34_compat PROPERTIES
     TIMEOUT 30
 )
 
+# Firestaff PO loader multi-domain regression gate.
+# Verifies the multi-domain i18n loader (FS_PO_MAX_STRINGS=1024)
+# can hold all 548 DM1 strings, co-load dm1/csb/startup-menu
+# catalogs, and route lookups to the right domain.
+add_executable(test_firestaff_po_loader_multi_domain_pc34_compat
+    tests/test_firestaff_po_loader_multi_domain_pc34_compat.c
+    src/shared/firestaff_po_loader.c
+)
+target_include_directories(test_firestaff_po_loader_multi_domain_pc34_compat
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(NOT MSVC)
+    target_compile_options(test_firestaff_po_loader_multi_domain_pc34_compat PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME firestaff_po_loader_multi_domain_pc34_compat
+    COMMAND test_firestaff_po_loader_multi_domain_pc34_compat
+)
+set_tests_properties(firestaff_po_loader_multi_domain_pc34_compat PROPERTIES
+    TIMEOUT 30
+)
+
 # Firestaff self-update checker regression gate.
 # SDL3-based, no libcurl dependency.  Tests the semver
 # compare helper (the network path is gated by SDL which
