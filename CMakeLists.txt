@@ -10696,6 +10696,26 @@ if(NOT TARGET test_m11_inventory_chest_auto_close_on_leader_death_pc34_compat)
     )
 endif()
 
+# MOV-06 (Group 8) — DM1 V1 F0316/F0317 scent add/delete compat
+# stub for the V2 presentation path.  Source-locked to ReDMCSB
+# CHAMPION.C F0316 (delete) and F0317 (add strength).  The stub
+# exposes a bounded 16-slot ring that V2 presentation overlays
+# can read for the Thieves Eye visualisation without reaching
+# into the amalgam G0407_s_Party globals.
+if(NOT TARGET test_m11_champion_scent_pc34_compat)
+    add_executable(test_m11_champion_scent_pc34_compat
+        tests/test_m11_champion_scent_pc34_compat.c
+    )
+    target_link_libraries(test_m11_champion_scent_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_champion_scent_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_champion_scent_pc34_compat
+        COMMAND test_m11_champion_scent_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat)
     add_executable(test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat
         tests/test_m11_inventory_eye_closes_open_chest_runtime_pc34_compat.c
