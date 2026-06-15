@@ -1,6 +1,6 @@
 # Pass562 DM1 V1 D2 far-side wall source lock
 
-Status: failed
+Status: passed
 
 Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cases draw the paired native/parity wallset into C707/C708 and return, while teleporter cases draw only the matching field zone.
 
@@ -32,17 +32,17 @@ Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cas
 
 ## Firestaff Evidence
 
-- FAIL firestaff-d2-far-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:418-420)
-  - missing: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - missing: DM1_PC34_ZONE_WALL_D2L2
-  - missing: DUNVIEW.C:6849-6858
-  - missing: DUNVIEW.C:6848-6862 wall case returns
-  - missing: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - missing: DM1_PC34_ZONE_WALL_D2R2
-  - missing: DUNVIEW.C:6880-6889
-  - missing: DUNVIEW.C:6882-6893 wall case returns
+- PASS firestaff-d2-far-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:511-512)
+  - line 511: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 511: DM1_PC34_ZONE_WALL_D2L2
+  - line 511: DUNVIEW.C:6849-6858
+  - line 511: DUNVIEW.C:6848-6862 wall case returns
+  - line 512: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 512: DM1_PC34_ZONE_WALL_D2R2
+  - line 512: DUNVIEW.C:6880-6889
+  - line 512: DUNVIEW.C:6882-6893 wall case returns
 
-- PASS firestaff-d2-far-side-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:288-291)
+- PASS firestaff-d2-far-side-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:288-300)
   - line 290: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
   - line 290: DM1_PC34_ZONE_WALL_D2L2
   - line 290: "6862"
@@ -50,8 +50,8 @@ Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cas
   - line 291: DM1_PC34_ZONE_WALL_D2R2
   - line 291: "6893"
 
-- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2125-2130)
-  - missing: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2340-2345)
+  - line 2341: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
 
 ## Verification
 
@@ -73,7 +73,7 @@ PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py --check-only: rc=0
 ~~~
-FAIL pass562 check-only: firestaff-d2-far-side-wall-metadata,firestaff-source-evidence-string
+PASS pass562 check-only
 ~~~

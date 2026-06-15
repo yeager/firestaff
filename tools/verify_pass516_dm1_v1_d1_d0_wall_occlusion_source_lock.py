@@ -66,7 +66,7 @@ SOURCE_CHECKS = [
 ]
 
 LOCAL_CHECKS = [
-    {"id": "local-d1-d0-wall-specs-present", "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "lines": "419-430", "claim": "Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.", "ordered": [
+    {"id": "local-d1-d0-wall-specs-present", "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "lines": "514-520", "claim": "Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.", "ordered": [
         "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R",
         "DUNVIEW.C:7459-7460 side ornament then return",
         "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L",
@@ -78,7 +78,7 @@ LOCAL_CHECKS = [
         "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L",
         "DUNVIEW.C:8142-8144 wall case returns",
     ]},
-    {"id": "local-side-occlusion-d1-d0-cell-orders-present", "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "lines": "136-168", "claim": "Open side branches keep their source cell-order contracts separate from wall-return blockers.", "ordered": [
+    {"id": "local-side-occlusion-d1-d0-cell-orders-present", "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "lines": "153-182", "claim": "Open side branches keep their source cell-order contracts separate from wall-return blockers.", "ordered": [
         "DM1_VIEW_SQUARE_D1L, 1, -1",
         "DM1_VIEW_SQUARE_D1R, 1,  1",
         "DM1_VIEW_SQUARE_D0L, 0, -1",

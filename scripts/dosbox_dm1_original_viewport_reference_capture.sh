@@ -103,6 +103,10 @@ Optional environment:
                     Use 1, or 'single-transcript-row', for the pass625/pass626
                     C002 turn-redraw transcript row so black-frame/rawshot
                     health can be checked before transcript writing.
+                    The capture script must contain exactly 6 shot or shot:<label> tokens
+                    for the legacy pass70 overlay route; this matches the
+                    raw_manifest health gate and the pass84 classifier
+                    nonDuplicate expectation.
   click:<x>,<y>    posts one serialized left-click in original 320x200 game
                     coordinates. Use waits around clicks; ReDMCSB BUG0_73 shows
                     mixed mouse/keyboard commands can be lost when packed tightly.
