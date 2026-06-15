@@ -76,6 +76,10 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Phase 7 - Verification-suite coverage for compile, save/load, and runtime-state paths.
 - 🔒 Source-lock audit coverage for Nexus DMDF/DGN loading, sensors, movement, input, inventory, doors, triggers, combat, AI, sound, save/load, and launch/runtime boundaries.
 
+### Nexus V2
+
+- ✅ Phase 5 smooth-movement runtime bridge: `nexus_v2_smooth_movement` exposes walk/turn/stairs visual state with ease-out cubic / ease-out quad / ease-in-out cubic interpolations, `nexus_v2_smooth_tick` auto-starts walk/turn animations on position/angle deltas with a `has_prev` baseline guard, and shortest-path turn normalization matches DM2/CSB V2 conventions. `test_nexus_v2_smooth_movement` ctest target passes 27/27; headless probe `firestaff_nexus_v2_smooth_movement_probe` passes 64/64 (lifecycle, walk N/S/E/W, turn 7 directions, stairs with vertical offset, auto-detect, wrap-around shortest path, null safety).
+
 ## Theron's Quest
 
 ### Theron V1
