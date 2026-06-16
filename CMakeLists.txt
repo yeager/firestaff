@@ -424,6 +424,24 @@ if(NOT MSVC)
     target_compile_options(firestaff_nexus_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Nexus V2 Lighting Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: init defaults, light add/remove with NEXUS_MAX_LIGHTS=16,
+# tick advances torch_flicker_phase + recomputes flickering light intensity,
+# apply_lighting is in-place + deterministic for same inputs, null-arg safety,
+# source evidence references NEXUS.BIN/VDP1/VDP2/ReDMCSB LIGHT.C F0380 +
+# COMMAND.C F0209 + DUNGEON.C + DMDF.
+add_executable(firestaff_nexus_v2_lighting_probe
+    probes/firestaff_nexus_v2_lighting_probe.c
+    src/nexus/nexus_v2_lighting.c)
+target_include_directories(firestaff_nexus_v2_lighting_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_nexus_v2_lighting_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v2_lighting_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Nexus V2 Phase 6 — Touch/Controller Affordance Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: API surface (16 affordances, NONE marker, name round-trip),
@@ -623,6 +641,28 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_filter_config_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V2.0 per-frame filter chain probe. Headless: no game data.
+# Covers all 5 filter functions: CRT scanlines, palette build LUT,
+# dither cleanup, palette interpolate, sharpen. See include/csb_v2_filters.h.
+add_executable(firestaff_csb_v2_filter_chain_probe
+    probes/firestaff_csb_v2_filter_chain_probe.c
+    src/csb/csb_v2_filter_crt_scanlines_pc34.c
+    src/csb/csb_v2_filter_dither_cleanup_pc34.c
+    src/csb/csb_v2_filter_palette_correct_pc34.c
+    src/csb/csb_v2_filter_palette_interpolate_pc34.c
+    src/csb/csb_v2_filter_sharpen_rgba_pc34.c
+    src/csb/csb_v2_filter_config_pc34.c
+    src/csb/csb_v2_asset_pipeline_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_csb_v2_filter_chain_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_csb_v2_filter_chain_probe
+    PRIVATE firestaff_csb_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_filter_chain_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Theron V2 filter config probe. Headless: no game data.
 # See include/theron_v2_filter_config_pc34.h.
 add_executable(firestaff_theron_v2_filter_config_probe
@@ -680,6 +720,41 @@ target_link_libraries(firestaff_theron_v2_presentation_mode_probe
     PRIVATE firestaff_theron firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_theron_v2_presentation_mode_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# Theron V2 Phase 0 - V1 Compatibility Lock Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: domain classification (12 V1-source-locked + 4 V2-eligible),
+# V1-source-locked domains stay V1-locked regardless of V2 toggles,
+# V2-eligible domains blocked when V2 off, FILTER_CONFIG requires both
+# V2 and config-persistence toggles, source evidence references
+# THQUEST.ASM T* / theron_v1_*, null-arg safety, default V1-only.
+add_executable(firestaff_theron_v2_phase0_v1_compatibility_lock_probe
+    probes/firestaff_theron_v2_phase0_v1_compatibility_lock_probe.c
+    src/theron/theron_v2_phase_gate_pc34.c)
+target_include_directories(firestaff_theron_v2_phase0_v1_compatibility_lock_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_theron_v2_phase0_v1_compatibility_lock_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v2_phase0_v1_compatibility_lock_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# Theron V2 Phase 1 - Launch/Profile Separation Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: launch gate (BOOT_PROFILE always V1-locked),
+# profile gate (FILTER_CONFIG requires both toggles),
+# Theron V1 Track 02 asset hash separation (JP Rev 1 + US ISO MD5),
+# cross-game hash separation (Theron != DM1 != CSB), headless safety.
+add_executable(firestaff_theron_v2_phase1_launch_profile_separation_probe
+    probes/firestaff_theron_v2_phase1_launch_profile_separation_probe.c
+    src/theron/theron_v2_phase_gate_pc34.c)
+target_include_directories(firestaff_theron_v2_phase1_launch_profile_separation_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_theron_v2_phase1_launch_profile_separation_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # CSB V2 settings bridge probe. Headless: no game data.
@@ -2119,6 +2194,37 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_csb_v2_filter_config_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
+    add_executable(test_csb_v2_filter_crt_scanlines_pc34
+        tests/test_csb_v2_filter_crt_scanlines_pc34.c
+        src/csb/csb_v2_filter_crt_scanlines_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v2_filter_crt_scanlines_pc34 PRIVATE firestaff_csb_v2)
+    add_executable(test_csb_v2_filter_dither_cleanup_pc34
+        tests/test_csb_v2_filter_dither_cleanup_pc34.c
+        src/csb/csb_v2_filter_dither_cleanup_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v2_filter_dither_cleanup_pc34 PRIVATE firestaff_csb_v2)
+    add_executable(test_csb_v2_filter_palette_interpolate_pc34
+        tests/test_csb_v2_filter_palette_interpolate_pc34.c
+        src/csb/csb_v2_filter_palette_interpolate_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v2_filter_palette_interpolate_pc34 PRIVATE firestaff_csb_v2)
+    add_executable(test_csb_v2_filter_palette_build_lut_pc34
+        tests/test_csb_v2_filter_palette_build_lut_pc34.c
+        src/csb/csb_v2_filter_palette_correct_pc34.c
+        src/csb/csb_v2_asset_pipeline_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v2_filter_palette_build_lut_pc34 PRIVATE firestaff_csb_v2)
+    add_executable(test_csb_v2_filter_sharpen_rgba_pc34
+        tests/test_csb_v2_filter_sharpen_rgba_pc34.c
+        src/csb/csb_v2_filter_sharpen_rgba_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v2_filter_sharpen_rgba_pc34 PRIVATE firestaff_csb_v2)
     add_executable(test_theron_v2_filter_config_pc34
         tests/test_theron_v2_filter_config_pc34.c
         src/theron/theron_v2_filter_config_pc34.c
@@ -2126,6 +2232,40 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_theron_v2_filter_config_pc34 PRIVATE firestaff_m12 firestaff_theron)
+
+    # ── Theron V2 Phase 0/1 phase gate smoke test ─────────────────
+    # Source-lock: src/theron/theron_v2_phase_gate_pc34.c
+    # Phase 0: V1 compatibility lock (12 V1-locked + 4 V2-eligible domains)
+    # Phase 1: V2 launch/profile separation (FILTER_CONFIG gate, V1-only default)
+    add_executable(test_theron_v2_phase_gate_pc34
+        tests/test_theron_v2_phase_gate_pc34.c
+        src/theron/theron_v2_phase_gate_pc34.c
+    )
+    target_include_directories(test_theron_v2_phase_gate_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v2_phase_gate_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v2_phase_gate_pc34
+        COMMAND test_theron_v2_phase_gate_pc34
+    )
+
+    # ── Theron V2 Phase 0/1 probe ctest entries ──────────────────
+    if(TARGET firestaff_theron_v2_phase0_v1_compatibility_lock_probe)
+        add_test(
+            NAME theron_v2_phase0_v1_compatibility_lock
+            COMMAND firestaff_theron_v2_phase0_v1_compatibility_lock_probe
+        )
+    endif()
+    if(TARGET firestaff_theron_v2_phase1_launch_profile_separation_probe)
+        add_test(
+            NAME theron_v2_phase1_launch_profile_separation
+            COMMAND firestaff_theron_v2_phase1_launch_profile_separation_probe
+        )
+    endif()
+
     add_executable(test_dm1_v2_presentation_profile_pc34
         tests/test_dm1_v2_presentation_profile_pc34.c
         src/dm1v2/dm1_v2_presentation_profile_pc34.c
@@ -2274,6 +2414,11 @@ if(BUILD_TESTING)
         target_compile_options(test_csb_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_filter_config_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v2_filter_crt_scanlines_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v2_filter_dither_cleanup_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v2_filter_palette_interpolate_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v2_filter_palette_build_lut_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v2_filter_sharpen_rgba_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v2_filter_config_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_presentation_profile_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_presentation_mode_pc34 PRIVATE -Wall -Wextra -O2)
@@ -2436,6 +2581,26 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v2_filter_config_pc34
         COMMAND test_csb_v2_filter_config_pc34
+    )
+    add_test(
+        NAME csb_v2_filter_crt_scanlines_pc34
+        COMMAND test_csb_v2_filter_crt_scanlines_pc34
+    )
+    add_test(
+        NAME csb_v2_filter_dither_cleanup_pc34
+        COMMAND test_csb_v2_filter_dither_cleanup_pc34
+    )
+    add_test(
+        NAME csb_v2_filter_palette_interpolate_pc34
+        COMMAND test_csb_v2_filter_palette_interpolate_pc34
+    )
+    add_test(
+        NAME csb_v2_filter_palette_build_lut_pc34
+        COMMAND test_csb_v2_filter_palette_build_lut_pc34
+    )
+    add_test(
+        NAME csb_v2_filter_sharpen_rgba_pc34
+        COMMAND test_csb_v2_filter_sharpen_rgba_pc34
     )
     add_test(
         NAME theron_v2_filter_config_pc34
@@ -4818,14 +4983,31 @@ if(BUILD_TESTING)
     # ── Nexus V2 Phase 4 Lighting smoke test ──────────────────────
     # Source-lock: src/nexus/nexus_v2_lighting.c
     # Phase 4: Enhanced lighting and Saturn presentation effects
-    # ── Nexus V2 Phase 4: stubbed pending Phase 4 implementation ──
-    # Source-lock: src/nexus/nexus_v2_lighting.c, nexus_v2_atmosphere.c,
-    #                nexus_v2_particles.c, nexus_v2_upscaler.c
-    # TODO: implement integration tests for V2 Phase 4
+    # Verifies: init defaults, light add/remove with NEXUS_MAX_LIGHTS=16,
+    # tick advances torch_flicker_phase + recomputes flickering light intensity,
+    # apply_lighting is in-place + deterministic for same inputs, null-arg safety,
+    # source evidence references NEXUS.BIN/VDP1/VDP2/ReDMCSB LIGHT.C F0380 +
+    # COMMAND.C F0209 + DUNGEON.C + DMDF.
+    add_executable(test_nexus_v2_lighting
+        tests/test_nexus_v2_lighting_pc34.c
+        src/nexus/nexus_v2_lighting.c
+    )
+    target_include_directories(test_nexus_v2_lighting PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_lighting PRIVATE -Wall -Wextra -O2)
+    endif()
     add_test(
         NAME nexus_v2_lighting
         COMMAND test_nexus_v2_lighting
     )
+    if(TARGET firestaff_nexus_v2_lighting_probe)
+        add_test(
+            NAME nexus_v2_lighting_probe
+            COMMAND firestaff_nexus_v2_lighting_probe
+        )
+    endif()
 
     # ── Nexus V2 Phase 4 Atmosphere smoke test ────────────────────
     # Source-lock: src/nexus/nexus_v2_atmosphere.c
