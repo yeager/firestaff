@@ -90,6 +90,14 @@ void csb_v2_upscale_set_scale(int factor) {
     }
 }
 
+int csb_v2_upscale_get_scale(void) {
+    return csb_v2_upscale_global_config.scale_factor;
+}
+
+int csb_v2_upscale_get_bilinear(void) {
+    return csb_v2_upscale_global_config.use_bilinear ? 1 : 0;
+}
+
 /* EPX/Scale2x — edge-preserving 2x doubler. Same algorithm as
  * DM1's v2_upscale_epx; mirrored here so the CSB runtime owns
  * its own pipeline state and doesn't reach into DM1 globals. */

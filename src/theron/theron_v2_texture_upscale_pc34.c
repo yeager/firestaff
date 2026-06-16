@@ -86,6 +86,14 @@ void theron_v2_upscale_set_scale(int factor) {
     }
 }
 
+int theron_v2_upscale_get_scale(void) {
+    return theron_v2_upscale_global_config.scale_factor;
+}
+
+int theron_v2_upscale_get_bilinear(void) {
+    return theron_v2_upscale_global_config.use_bilinear ? 1 : 0;
+}
+
 void theron_v2_upscale_epx(const uint8_t *src, int sw, int sh,
     uint8_t *dst, int dw, int dh)
 {
