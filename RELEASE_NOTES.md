@@ -1,4 +1,93 @@
 
+# Firestaff v2.8.0
+
+Nexus V2 smooth-movement tick (Phase 5) lands as a first-class
+feature in the V2 render pipeline, the strict-warnings CI matrix
+goes green, and a long-standing set of Theron V1 linker gaps is
+closed. 9 commits ship on top of v2.7.25; ctest baseline is
+440/447 with the same 7 pre-existing parity-evidence line-drift
+failures and one missing test binary (`test_nexus_v2_lighting`)
+as the previous release.
+
+## Headline features
+
+- **Nexus V2 render-pipeline smooth-movement tick (commit
+  `7ca73871`)**: `Nexus_V2_RenderPipeline` now owns a
+  `Nexus_V2_SmoothState`, `nexus_v2_pipeline_init()` calls
+  `nexus_v2_smooth_init()` and logs the `smooth_movement` mode,
+  the new `nexus_v2_pipeline_tick(pipe, game_x, game_y,
+  game_angle)` records raw V1 game state per tick (55ms) and
+  auto-triggers walk/turn animations on position/angle deltas,
+  and `nexus_v2_pipeline_render()` derives the camera position
+  and angle from the smooth state when `smooth_movement` is
+  enabled and falls back to the raw V1 state otherwise. The
+  render signature changed from explicit `(cam_x, cam_y, cam_z,
+  cam_dir)` to `(game_x, game_y, game_angle)` so the pipeline
+  contract is explicit that interpolation is owned by the
+  pipeline, not the host. Builds clean in Release and Debug with
+  zero warnings.
+
+## Build and CI health
+
+- **Strict-warnings CI matrix goes green (commit `47f7bb8c`)**:
+  silenced 270+ Clang and GCC warnings across all targets so the
+  `-Wall -Wextra -Werror` matrix on `macos-14`, `ubuntu-24.04`,
+  and `windows-2022` stays clean. Categories fixed:
+  - `-Wunused-variable / -Wunused-const-variable / -Wunused-parameter / -Wunused-but-set-variable / -Wunused-local-typedef`
+    (documentation arrays, stub function bodies, four leftover
+    `AssetMd5*` typedefs in `csb_v1_runtime_pc34_compat.c`).
+  - `-Wswitch` for the 10 CSB-specific view-square cases in
+    `dm1_v1_viewport_3d_pc34_compat.c` (D3L2/D3R2/D2L2/D2R2
+    macros), applied via `set_source_files_properties` to avoid
+    offsetting the line counter that parity-evidence source-lock
+    verifiers pin.
+  - `-Wcomment` for two missing `*/` closings in
+    `memory_creature_ai_pc34_compat.c` and the DM1 special-square
+    interaction probe, plus two nested-`/*` cases in
+    `cloud_sync_m12.h` and the launcher menu text.
+  - `-Wincompatible-pointer-types-discards-qualifiers` for the
+    const-mismatch on `F0735_COMBAT_ResolveChampionMelee_Compat`
+    (declaration in `memory_combat_pc34_compat.h` was wrong — the
+    function mutates `statisticLuck`) and the 3 Theron viewport
+    call sites that passed a const leader to a non-const accessor
+    (switched to the existing `_c` variants of
+    `theron_v1_party_leader` / `theron_v1_party_getChampion`).
+  - `-Wmissing-field-initializers` for `g_config.source_light_floor`
+    on `DM2_V2_AssetPipelineConfig` and `CSB_V2_AssetPipelineConfig`.
+  - `-Wsign-compare` in `theron_v1_dungeon_progression_test.c`.
+  - CMake `-Wno-maybe-uninitialized` and `-Wno-restrict` are now
+    guarded behind `CMAKE_C_COMPILER_ID STREQUAL "GNU"` so Clang
+    and MSVC do not warn about unknown warning options.
+  - Verification: Release and Debug builds both produce zero code
+    warnings and zero errors; ctest reports the same 7 pre-existing
+    failures (parity-evidence line-drift from prior watchdog
+    passes, not caused by this commit).
+
+- **Theron V1 linker gaps closed (commit `0d3f0cf5`)**: three
+  pre-existing linker gaps exposed by the unified `firestaff`
+  binary build are closed. Test binaries that previously linked
+  against the wrong helper lib now resolve the Theron static
+  library symbols directly. `DONE.md` and `TODO.md` are
+  refreshed in the same commit.
+
+## Notes for packagers and downstream users
+
+- `Nexus_V2_RenderPipeline` API change: `nexus_v2_pipeline_render`
+  callers must pass `(game_x, game_y, game_angle)` instead of the
+  previous `(cam_x, cam_y, cam_z, cam_dir)`. The pipeline now
+  interpolates the camera from the raw V1 game state. Hosts that
+  want a non-interpolated render can pass the same V1 state on
+  every tick; the pipeline falls back to the raw state when no
+  smooth-movement animation is active.
+- All five supported games (DM1, CSB, DM2, Nexus, Theron's Quest)
+  build and run on macOS (arm64, x86_64), Windows x86_64, Linux
+  x86_64, and Linux arm64. Original game data files are not
+  included in the packages.
+- The 7 pre-existing ctest failures listed in `TODO.md` →
+  Cross-Cutting → Build and CI Health are parity-evidence
+  line-drift and a missing test binary, not caused by this
+  release; they will be addressed in a follow-up.
+
 # Firestaff v2.7.25
 
 DM1 V1 Group 8 (functional-divergence-report.md) bounded-fix batch.
