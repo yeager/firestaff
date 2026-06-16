@@ -424,6 +424,24 @@ if(NOT MSVC)
     target_compile_options(firestaff_nexus_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Nexus V2 HUD Overlay Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: init/reset defaults, set_direction/set_level/set_gold/
+# set_champion_bar/set_action_active stores state, hit_flash + toggle +
+# set_opacity semantics, render is deterministic for same state and
+# invisible HUD leaves buffer unchanged, null-arg safety, source evidence.
+add_executable(firestaff_nexus_v2_hud_overlay_probe
+    probes/firestaff_nexus_v2_hud_overlay_probe.c
+    src/nexus/nexus_v2_hud_overlay.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_nexus_v2_hud_overlay_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_nexus_v2_hud_overlay_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v2_hud_overlay_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Nexus V2 Lighting Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: init defaults, light add/remove with NEXUS_MAX_LIGHTS=16,
@@ -724,6 +742,30 @@ target_link_libraries(firestaff_m11_v22_shape_cache_probe
     PRIVATE firestaff_v2 firestaff_m10 firestaff_m11 m)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_v22_shape_cache_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# M11 V2.2 GPU render path: V22 modern-art overlay probe. Paints a
+# placeholder colored rectangle over each V22-active cell. See
+# include/m11_v22_render_overlay_pc34.h.
+add_executable(firestaff_m11_v22_render_overlay_probe
+    probes/firestaff_m11_v22_render_overlay_probe.c
+    src/dm1v2/m11_v22_render_overlay_pc34.c
+    src/dm1v2/m11_v22_shape_cache_pc34.c
+    src/dm1v2/dm1_v2_shape_runtime_pc34.c
+    src/dm1v2/dm1_v2_presentation_mode_pc34.c
+    src/dm1v2/dm1_v22_shapes.c
+    src/dm1v2/dm1_v2_modern_assets_pc34.c
+    src/dm1v2/dm1_v2_asset_pipeline_pc34.c
+    src/dm1v2/dm1_v2_texture_upscale_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_m11_v22_render_overlay_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_m11_v22_render_overlay_probe
+    PRIVATE firestaff_v2 firestaff_m10 firestaff_m11 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_v22_render_overlay_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # Theron V2 presentation-mode probe. Headless: no game data.
@@ -2382,6 +2424,19 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_m11_v22_shape_cache_pc34 PRIVATE firestaff_m12 firestaff_v2 firestaff_m11)
+    add_executable(test_m11_v22_render_overlay_pc34
+        tests/test_m11_v22_render_overlay_pc34.c
+        src/dm1v2/m11_v22_render_overlay_pc34.c
+        src/dm1v2/m11_v22_shape_cache_pc34.c
+        src/dm1v2/dm1_v2_shape_runtime_pc34.c
+        src/dm1v2/dm1_v2_presentation_mode_pc34.c
+        src/dm1v2/dm1_v22_shapes.c
+        src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_asset_pipeline_pc34.c
+        src/dm1v2/dm1_v2_texture_upscale_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_m11_v22_render_overlay_pc34 PRIVATE firestaff_m12 firestaff_v2 firestaff_m11)
     add_executable(test_dm1_v2_phase_gate_pc34
         tests/test_dm1_v2_phase_gate_pc34.c
         src/dm1v2/dm1_v2_phase_gate_pc34.c
@@ -2466,6 +2521,7 @@ if(BUILD_TESTING)
         target_compile_options(test_theron_v22_shapes_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_shape_runtime_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_v22_shape_cache_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_m11_v22_render_overlay_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase_gate_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
@@ -2682,6 +2738,10 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_v22_shape_cache_pc34
         COMMAND test_m11_v22_shape_cache_pc34
+    )
+    add_test(
+        NAME m11_v22_render_overlay_pc34
+        COMMAND test_m11_v22_render_overlay_pc34
     )
     add_test(
         NAME dm1_v2_phase_gate_pc34
