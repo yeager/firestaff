@@ -128,7 +128,7 @@ endif()
 
 # ── V2 static library (enhanced features) ──────────────────────────
 file(GLOB_RECURSE V2_SOURCES CONFIGURE_DEPENDS "src/dm1v2/*_pc34.c")
-add_library(firestaff_v2 STATIC ${V2_SOURCES} src/shared/vga_palette_pc34_compat.c)
+add_library(firestaff_v2 STATIC ${V2_SOURCES} src/shared/vga_palette_pc34_compat.c src/dm1v2/dm1_v22_shapes.c)
 target_include_directories(firestaff_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(firestaff_v2 PUBLIC firestaff_m10 m)
 if(NOT MSVC)
@@ -200,6 +200,9 @@ set(M11_SOURCES
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 firestaff_theron SDL3::SDL3 m)
+if(CSB_V2_SOURCES)
+    target_link_libraries(firestaff_m11 PUBLIC firestaff_csb_v2)
+endif()
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
     # src/engine/m11_game_view.c is a large legacy file — relax truncation/unused warnings.
@@ -441,7 +444,8 @@ add_executable(firestaff_dm1_v2_presentation_mode_probe
     src/dm1v2/dm1_v22_shapes.c
     src/dm1v2/dm1_v2_modern_assets_pc34.c
     src/dm1v2/dm1_v2_asset_pipeline_pc34.c
-    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
 target_include_directories(firestaff_dm1_v2_presentation_mode_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -463,7 +467,8 @@ add_executable(firestaff_csb_v2_presentation_mode_probe
     src/dm1v2/dm1_v22_shapes.c
     src/dm1v2/dm1_v2_modern_assets_pc34.c
     src/dm1v2/dm1_v2_asset_pipeline_pc34.c
-    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
 target_include_directories(firestaff_csb_v2_presentation_mode_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -471,7 +476,6 @@ target_link_libraries(firestaff_csb_v2_presentation_mode_probe
     PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_presentation_mode_probe PRIVATE -Wall -Wextra -O2)
-endif()
 endif()
 
 # Nexus V2 Phase 7 — V2 Verification Suite Hardening Probe
@@ -1855,6 +1859,7 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_modern_assets_pc34.c
         src/dm1v2/dm1_v2_asset_pipeline_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/shared/fs_portable_compat.c
     )
     target_link_libraries(test_csb_v2_presentation_mode_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
     add_executable(test_dm1_v2_phase_gate_pc34
