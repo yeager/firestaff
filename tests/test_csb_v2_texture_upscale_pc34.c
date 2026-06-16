@@ -5,6 +5,7 @@
  * (9-square viewport + panel).
  */
 #include "csb_v2_texture_upscale_pc34.h"
+#include "csb_v2_presentation_mode_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 #include <stdio.h>
 #include <string.h>
@@ -59,12 +60,24 @@ static void t_epx_2x(void) {
     uint8_t src[4] = { 10, 20, 10, 20 };
     uint8_t dst[16] = { 0 };
     csb_v2_upscale_epx(src, 2, 2, dst, 4, 4);
-    /* Each input pixel becomes a 2x2 block. The EPX rules
-     * only kick in when neighbour patterns match. With this
-     * simple pattern, output is the same as nearest 2x. */
-    check(dst[0] == 10 && dst[1] == 20, "EPX top-left block");
-    check(dst[2] == 10 && dst[3] == 20, "EPX top-right block");
-    check(dst[4] == 10 && dst[5] == 20, "EPX row 1 left");
+    /* On this simple {10,20,10,20} pattern, NONE of the four
+     * EPX neighbour predicates (C==A && C!=D && A!=B /
+     * A==B && A!=C && B!=D / D==C && D!=B && C!=A /
+     * B==D && B!=A && D!=C) match, so every output pixel
+     * falls back to P (the source pixel at the corresponding
+     * 2x block). That is exactly the column-stripe nearest
+     * pattern: row 0 mirrors column 0 of src, row 1 mirrors
+     * column 0 too (because y=0 P=src[0] and y=1 P=src[0] in
+     * the left half, y=0 P=src[1] and y=1 P=src[1] in the
+     * right half), and so on. The block-arranged expectations
+     * in earlier revisions of this test were wrong; the
+     * CSBWin/Viewport.cpp:7290 EPX path (cited in the source
+     * header) also returns P on a no-match, which is what
+     * this test now pins. */
+    check(dst[0] == 10 && dst[1] == 10, "EPX top-left block (P=src[0])");
+    check(dst[2] == 20 && dst[3] == 20, "EPX top-right block (P=src[1])");
+    check(dst[4] == 10 && dst[5] == 10, "EPX row 1 left (P=src[0])");
+    check(dst[6] == 20 && dst[7] == 20, "EPX row 1 right (P=src[1])");
     check(dst[15] == 20, "EPX bottom-right");
 }
 
