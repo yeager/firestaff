@@ -607,6 +607,38 @@ if(NOT MSVC)
     target_compile_options(firestaff_theron_v22_shapes_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V2 filter config probe. Headless: no game data.
+# See include/csb_v2_filter_config_pc34.h.
+add_executable(firestaff_csb_v2_filter_config_probe
+    probes/firestaff_csb_v2_filter_config_probe.c
+    src/csb/csb_v2_filter_config_pc34.c
+    src/csb/csb_v2_settings_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_csb_v2_filter_config_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_csb_v2_filter_config_probe
+    PRIVATE firestaff_csb_v2 firestaff_m12 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_filter_config_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# Theron V2 filter config probe. Headless: no game data.
+# See include/theron_v2_filter_config_pc34.h.
+add_executable(firestaff_theron_v2_filter_config_probe
+    probes/firestaff_theron_v2_filter_config_probe.c
+    src/theron/theron_v2_filter_config_pc34.c
+    src/theron/theron_v2_settings_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_theron_v2_filter_config_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v2_filter_config_probe
+    PRIVATE firestaff_theron firestaff_m12 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v2_filter_config_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V2.2 shape runtime dispatch probe. Headless: no game data.
 # See include/dm1_v2_shape_runtime_pc34.h.
 add_executable(firestaff_dm1_v2_shape_runtime_probe
@@ -2080,6 +2112,20 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_theron_v2_settings_pc34 PRIVATE firestaff_m12 firestaff_theron)
+    add_executable(test_csb_v2_filter_config_pc34
+        tests/test_csb_v2_filter_config_pc34.c
+        src/csb/csb_v2_filter_config_pc34.c
+        src/csb/csb_v2_settings_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v2_filter_config_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
+    add_executable(test_theron_v2_filter_config_pc34
+        tests/test_theron_v2_filter_config_pc34.c
+        src/theron/theron_v2_filter_config_pc34.c
+        src/theron/theron_v2_settings_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_theron_v2_filter_config_pc34 PRIVATE firestaff_m12 firestaff_theron)
     add_executable(test_dm1_v2_presentation_profile_pc34
         tests/test_dm1_v2_presentation_profile_pc34.c
         src/dm1v2/dm1_v2_presentation_profile_pc34.c
@@ -2227,6 +2273,8 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v2_filter_config_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v2_filter_config_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_presentation_profile_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_presentation_mode_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_presentation_mode_pc34 PRIVATE -Wall -Wextra -O2)
@@ -2384,6 +2432,14 @@ if(BUILD_TESTING)
     add_test(
         NAME theron_v2_settings_pc34
         COMMAND test_theron_v2_settings_pc34
+    )
+    add_test(
+        NAME csb_v2_filter_config_pc34
+        COMMAND test_csb_v2_filter_config_pc34
+    )
+    add_test(
+        NAME theron_v2_filter_config_pc34
+        COMMAND test_theron_v2_filter_config_pc34
     )
     add_test(
         NAME dm1_v2_presentation_profile_pc34
