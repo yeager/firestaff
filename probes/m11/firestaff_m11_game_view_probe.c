@@ -1208,8 +1208,11 @@ int main(int argc, char** argv) {
                      "INV_GV_407",
                      M11_GameView_ConfirmMirrorCandidate(&mirrorView, 0) == 1 &&
                          mirrorView.candidateMirrorPanelActive == 0 &&
-                         mirrorView.world.party.championCount == 1,
-                     "M11 mirror panel resurrect command recruits the selected champion");
+                         mirrorView.world.party.championCount == 1 &&
+                         mirrorView.world.party.champions[0].hp.current > 0 &&
+                         mirrorView.world.party.activeChampionIndex == 0 &&
+                         mirrorView.world.party.champions[0].wounds == 0,
+                     "M11 mirror panel resurrect command recruits the selected champion with HP>0, leader=resurrected, wounds=0 (BUG-DNY-DM1-2026-06-16)");
         M11_GameView_Shutdown(&mirrorView);
     }
     probe_record_hall_champion_mirror_portraits(&tally, &gameView);
