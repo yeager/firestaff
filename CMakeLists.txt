@@ -682,6 +682,26 @@ if(NOT MSVC)
     target_compile_options(firestaff_theron_v2_settings_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# M12 V2 settings wire-up probe. Verifies that the per-game V2
+# settings bridge (csb_v2_settings_apply_to_runtime,
+# theron_v2_settings_apply_to_runtime) correctly pushes the
+# saved scale + bilinear into the live V2 runtime. This is what
+# M11_GameView_OpenSelectedMenuEntry does right before
+# M11_GameView_Start.
+add_executable(firestaff_m12_v2_settings_wire_up_probe
+    probes/firestaff_m12_v2_settings_wire_up_probe.c
+    src/csb/csb_v2_settings_pc34.c
+    src/theron/theron_v2_settings_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_m12_v2_settings_wire_up_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_m12_v2_settings_wire_up_probe
+    PRIVATE firestaff_csb_v2 firestaff_theron firestaff_m12 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_m12_v2_settings_wire_up_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Nexus V2 Phase 7 — V2 Verification Suite Hardening Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: presentation-disabled state-hash gate, deterministic input scripts,

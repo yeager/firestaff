@@ -42,7 +42,9 @@
 #include "dm1_v2_shape_runtime_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
+#include "csb_v2_settings_pc34.h"
 #include "theron_v2_presentation_mode_pc34.h"
+#include "theron_v2_settings_pc34.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -6764,6 +6766,39 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     spec.sourceKind = (entry->sourceKind == M12_MENU_SOURCE_CUSTOM_DUNGEON)
                           ? M11_GAME_SOURCE_CUSTOM_DUNGEON
                           : M11_GAME_SOURCE_BUILTIN_CATALOG;
+
+    /* Per-game V2 settings bridge: push the saved CSB/Theron V2
+     * scale + bilinear into the live V2 runtime so the upscale
+     * pipeline follows the user's persisted preference. Done here
+     * (not in M11_GameView_Start) because the menu owns the
+     * settings lifecycle; the per-game launch functions do not
+     * have direct M12_Config access. DM1 V2 settings are already
+     * dispatched by M11_GameView_Start via M11_Render_Set* calls. */
+    if (entry->gameId) {
+        if (strcmp(entry->gameId, "csb") == 0) {
+            CSB_V2_Settings csbV2;
+            csb_v2_settings_defaults(&csbV2);
+            csbV2.scalePercent = menuState->settings.csbV2ScalePercent;
+            csbV2.bilinearEnabled = menuState->settings.csbV2BilinearEnabled ? 1 : 0;
+            csbV2.crtScanlinesEnabled = menuState->settings.csbV2CrtScanlinesEnabled ? 1 : 0;
+            csbV2.crtScanlineStrength = menuState->settings.csbV2CrtScanlineStrength;
+            csbV2.paletteCorrectionEnabled = menuState->settings.csbV2PaletteCorrectionEnabled ? 1 : 0;
+            csbV2.ditherCleanupEnabled = menuState->settings.csbV2DitherCleanupEnabled ? 1 : 0;
+            csb_v2_settings_sanitize(&csbV2);
+            csb_v2_settings_apply_to_runtime(&csbV2);
+        } else if (strcmp(entry->gameId, "theron") == 0) {
+            Theron_V2_Settings theronV2;
+            theron_v2_settings_defaults(&theronV2);
+            theronV2.scalePercent = menuState->settings.theronV2ScalePercent;
+            theronV2.bilinearEnabled = menuState->settings.theronV2BilinearEnabled ? 1 : 0;
+            theronV2.crtScanlinesEnabled = menuState->settings.theronV2CrtScanlinesEnabled ? 1 : 0;
+            theronV2.crtScanlineStrength = menuState->settings.theronV2CrtScanlineStrength;
+            theronV2.paletteCorrectionEnabled = menuState->settings.theronV2PaletteCorrectionEnabled ? 1 : 0;
+            theronV2.ditherCleanupEnabled = menuState->settings.theronV2DitherCleanupEnabled ? 1 : 0;
+            theron_v2_settings_sanitize(&theronV2);
+            theron_v2_settings_apply_to_runtime(&theronV2);
+        }
+    }
     return M11_GameView_Start(state, &spec);
 }
 

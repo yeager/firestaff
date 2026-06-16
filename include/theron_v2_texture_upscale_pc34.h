@@ -54,6 +54,13 @@ void theron_v2_upscale_bilinear(const uint8_t* src, int sw, int sh, uint8_t* dst
 void theron_v2_upscale_process_frame(const uint8_t* src, int sw, int sh, uint8_t* dst);
 void theron_v2_upscale_set_scale(int factor);
 
+/* Read the active scale factor (1, 2, 4). Used by tests/probes to
+ * verify the per-game V2 settings wire-up from M12 menu config. */
+int  theron_v2_upscale_get_scale(void);
+
+/* Read the active bilinear flag. */
+int  theron_v2_upscale_get_bilinear(void);
+
 /* EPX/Scale2x — edge-preserving 2x doubler. */
 void theron_v2_upscale_epx(const uint8_t* src, int sw, int sh,
     uint8_t* dst, int dw, int dh);
