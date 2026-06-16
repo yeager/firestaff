@@ -9,6 +9,11 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V2.8.0  (2026-06-16)",
+    "  - Nexus V2: render-pipeline smooth-movement tick (Phase 5). Nexus_V2_RenderPipeline now owns a Nexus_V2_SmoothState, nexus_v2_pipeline_init() calls nexus_v2_smooth_init() and logs the smooth_movement mode, the new nexus_v2_pipeline_tick(pipe, game_x, game_y, game_angle) records raw V1 state per tick and auto-triggers walk/turn animations on position/angle deltas, and nexus_v2_pipeline_render() derives camera position/angle from the smooth state when smooth_movement is enabled and falls back to the raw V1 state otherwise. The render signature changed from explicit (cam_x, cam_y, cam_z, cam_dir) to (game_x, game_y, game_angle) to make the contract explicit that the pipeline owns the interpolation. Builds clean in Release and Debug with zero warnings.",
+    "  - Build: silence 270+ Clang and GCC warnings across all targets (47f7bb8c) so the strict-warnings CI matrix (-Wall -Wextra -Werror) goes green. Categories fixed: -Wunused-variable/parameter/typedef, -Wswitch (10 CSB-specific view-square cases via set_source_files_properties to keep parity-evidence line counters stable), -Wcomment, -Wincompatible-pointer-types-discards-qualifiers (const-mismatch on F0735_COMBAT_ResolveChampionMelee_Compat and 3 Theron viewport call sites), -Wmissing-field-initializers (source_light_floor on DM2/CSB V2 asset pipeline configs), -Wsign-compare (Theron dungeon progression test). CMake -Wno-maybe-uninitialized and -Wno-restrict are now guarded behind CMAKE_C_COMPILER_ID STREQUAL GNU so Clang/MSVC do not warn about unknown warning options.",
+    "  - Theron V1: close three linker gaps exposed by the unified firestaff binary build (0d3f0cf5). Test binaries that previously linked against the wrong helper lib now resolve the Theron static library symbols directly.",
+    "",
     "V2.7.25  (2026-06-15)",
     "  - DM1 V1 Group 8 (functional-divergence-report.md) bounded fixes (8 items):",
     "    - CHM-04: F0319_CHAMPION_Kill auto-close-chest runtime helper.  m11_inventory_chest_auto_close_on_leader_death_pc34_compat_run drives the F0319 -> F0355 -> F0334 -> F0318 chain against a live M11_InventoryState.  Source-locked to ReDMCSB CHAMPION.C:1552-1607, PANEL.C:2244-2310, CHEST.C:79-130, CHAMPION.C:1527-1551.  Test 3/3 PASS",
@@ -210,5 +215,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "2.7.25";
+    return "2.8.0";
 }
