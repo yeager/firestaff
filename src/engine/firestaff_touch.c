@@ -157,7 +157,7 @@ void firestaff_touch_emit_swipe(int startX, int startY,
 
 /* Returns 1 if (x,y) is within FIRESTAFF_TOUCH_TAP_TOLERANCE_PX
  * of (ox,oy) in framebuffer space. */
-static int fs_touch_within_tap_tolerance(int x, int y, int ox, int oy) {
+static int __attribute__((unused)) fs_touch_within_tap_tolerance (int x, int y, int ox, int oy) {
     int dx = x - ox; if (dx < 0) dx = -dx;
     int dy = y - oy; if (dy < 0) dy = -dy;
     return dx <= FIRESTAFF_TOUCH_TAP_TOLERANCE_PX &&

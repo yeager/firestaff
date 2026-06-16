@@ -2096,8 +2096,8 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
          * For now, detect as: raw_element == 3 AND the upper bits indicate
          * stairs facing forward.  A more accurate implementation would call
          * F0172_SetSquareAspect to get the aspect array and check for
-         * M555_STAIRS_UP. */
-        int upper_bits = (element >> 5) & 0x7;
+         * M555_STAIRS_UP. (Currently the upper bits are not consumed here;
+         * detection is heuristic on raw_element+stairs_indices.) */
         /* If upper_bits == 3 (STAIRS), check if it's front-facing by
          * examining bit 10 of the original cell (not available here).
          * As a heuristic: if the stairs_indices are populated, assume it's

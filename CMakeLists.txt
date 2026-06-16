@@ -206,8 +206,27 @@ endif()
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
     # src/engine/m11_game_view.c is a large legacy file — relax truncation/unused warnings.
-    set_source_files_properties(src/engine/m11_game_view.c PROPERTIES
-        COMPILE_OPTIONS "-Wno-format-truncation;-Wno-unused-function;-Wno-maybe-uninitialized"
+    # -Wno-maybe-uninitialized is a GCC-only flag; skip on Clang/MSVC to avoid
+    # -Wunknown-warning-option noise.
+    if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        set_source_files_properties(src/engine/m11_game_view.c PROPERTIES
+            COMPILE_OPTIONS "-Wno-format-truncation;-Wno-unused-function;-Wno-maybe-uninitialized"
+        )
+    else()
+        set_source_files_properties(src/engine/m11_game_view.c PROPERTIES
+            COMPILE_OPTIONS "-Wno-format-truncation;-Wno-unused-function"
+        )
+    endif()
+    # src/dm1/dm1_v1_viewport_3d_pc34_compat.c intentionally switches on
+    # CSB-specific view squares (D3L2/D3R2/D2L2/D2R2 = -101..-104) that
+    # are macros, not enum members of DM1_ViewSquareIndex. Clang and GCC
+    # raise -Wswitch "case value not in enumerated type" for those
+    # branches, which would shift line numbers and break the dozens of
+    # parity-evidence source-lock verifiers that pin specific lines in
+    # this file. Silence -Wswitch per-source instead of adding a pragma
+    # that would offset the line counter.
+    set_source_files_properties(src/dm1/dm1_v1_viewport_3d_pc34_compat.c PROPERTIES
+        COMPILE_OPTIONS "-Wno-switch"
     )
 endif()
 
@@ -258,8 +277,15 @@ add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2)
 if(NOT MSVC)
-    target_compile_options(firestaff_m12 PRIVATE -Wall -Wextra -O2
-        -Wno-format-truncation -Wno-array-bounds -Wno-restrict -Wno-unused-variable)
+    # -Wno-restrict is a GCC-only flag; skip on Clang/MSVC to avoid
+    # -Wunknown-warning-option noise.
+    if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(firestaff_m12 PRIVATE -Wall -Wextra -O2
+            -Wno-format-truncation -Wno-array-bounds -Wno-restrict -Wno-unused-variable)
+    else()
+        target_compile_options(firestaff_m12 PRIVATE -Wall -Wextra -O2
+            -Wno-format-truncation -Wno-array-bounds -Wno-unused-variable)
+    endif()
 endif()
 
 # ── Main executable ──────────────────────────────────────────────────
@@ -3018,7 +3044,12 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_dm1_v1_spell_casting_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
-        target_compile_options(test_dm1_v1_spell_casting_pc34_compat PRIVATE -Wall -Wextra -O2)
+        # Re-enable assert() in Release builds: this test depends on
+        # assert() to drive its source-lock checks (memsnap/compare in
+        # assert macros). Without -UNDEBUG, the test always passes and
+        # the "before" snapshot variables trigger -Wunused-variable.
+        target_compile_options(test_dm1_v1_spell_casting_pc34_compat PRIVATE
+            -Wall -Wextra -O2 -UNDEBUG)
     endif()
     add_test(
         NAME dm1_v1_spell_casting_source_lock

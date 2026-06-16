@@ -211,6 +211,10 @@ int nexus_inventory_equip(Nexus_InventorySlot *inv, int slot,
     int item_id;
     int target_slot = -1;
     Nexus_InventorySlot old_item = { .item_id = -1, .quantity = 0 };
+    (void)ring1_slot;
+    (void)ring2_slot;
+    (void)legs_slot;
+    (void)amulet_slot;
 
     if (!inv || slot < 0) return -1;
 
@@ -276,6 +280,16 @@ int nexus_inventory_unequip(Nexus_InventorySlot *inv, int count,
                              int amulet_slot) {
     int i;
     Nexus_InventorySlot item;
+    (void)weapon_slot;
+    (void)shield_slot;
+    (void)ring1_slot;
+    (void)ring2_slot;
+    (void)head_slot;
+    (void)torso_slot;
+    (void)legs_slot;
+    (void)feet_slot;
+    (void)hands_slot;
+    (void)amulet_slot;
 
     if (!inv || equip_slot < 0) return -1;
 

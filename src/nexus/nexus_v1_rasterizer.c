@@ -25,10 +25,10 @@ static inline int mini(int a, int b)  { return a < b ? a : b; }
 static inline int maxi(int a, int b)  { return a > b ? a : b; }
 static inline int clampi(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
-static inline float fminf_local(float a, float b) { return a < b ? a : b; }
-static inline float fmaxf_local(float a, float b) { return a > b ? a : b; }
+static inline float __attribute__((unused)) fminf_local (float a, float b) { return a < b ? a : b; }
+static inline float __attribute__((unused)) fmaxf_local (float a, float b) { return a > b ? a : b; }
 
-static inline float fclamp(float v, float lo, float hi) {
+static inline float __attribute__((unused)) fclamp (float v, float lo, float hi) {
     return v < lo ? lo : (v > hi ? hi : v);
 }
 
@@ -241,13 +241,13 @@ static void wall_quad_verts(int wall_dir, float x, float z,
     Nexus_RasterVertex rv[4], uint8_t color,
     int texture_id)
 {
-    float wx0, wz0, wx1, wz1;
+    float wx0, wz0, wx1;
     /* g_cam_dir table gives world-facing normal direction.
      * g_cam_right gives right-vector for that facing.              */
     (void)wall_dir;
     /* North face (z = z, inner wall, faces -Z): bot-left at (x,z) */
     wx0 = x;   wz0 = z;
-    wx1 = x+1; wz1 = z+1;
+    wx1 = x+1;
     (void)texture_id;
     /* Floor-level Y=0, ceiling Y=1 */
     rv[0].position = (Vec3){wx0, 0.0f, wz0};
@@ -316,6 +316,11 @@ void nexus_draw_door(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     Nexus_RasterVertex dv[4];
     float wx0, wz0, wx1, wz1;
     int f = facing & 3;
+    (void)texture_id;  /* door state drives panel quad (tex_data unused) */
+    (void)tex_data;
+    (void)tex_w;
+    (void)tex_h;
+    (void)tex_palette;
     if (!fb || !cam) return;
 
     /* Source: DM1 DUNGEON.C F0107 (door panel states).

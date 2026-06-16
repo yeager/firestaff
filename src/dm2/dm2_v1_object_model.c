@@ -183,10 +183,11 @@ int dm2_v1_object_model_load(DM2_ObjectModel *model,
                              int dungeon_size,
                              int level) {
     dm2_dungeon_world_t *world;
-    int total_things = 0;
+    int total_things = 0;  /* aggregate count; rec_count is the canonical return value */
     DM2_ObjectRecord *recs;
     int rec_cap = 256;
     int rec_count = 0;
+    (void)total_things;
 
     if (!model || !dungeon_raw || dungeon_size <= 0) return -1;
     memset(model, 0, sizeof(*model));
@@ -219,7 +220,9 @@ int dm2_v1_object_model_load(DM2_ObjectModel *model,
          * Pool order: after all tile data, thing pools are sequential.
          * We compute offset by walking from decompressed data start. */
         const uint8_t *pool_ptr = NULL;
+        (void)pool_ptr;
         size_t pool_offset = 0;
+        (void)pool_offset;
 
         /* Simple approach: pools are stored as sequential arrays
          * in the decompressed data, after tile data, indexed by level.

@@ -296,6 +296,7 @@ void v2_champion_select_render_fb(uint8_t* fb, int w, int h) {
 
     int slot_w = V2_PANEL_SLOT_W;
     int slot_h = V2_PANEL_SLOT_H;
+    (void)slot_h;
     int sx = g_current_index * slot_w;
     int sy = V2_PANEL_Y;
 

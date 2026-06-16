@@ -12,7 +12,7 @@
  *         ReDMCSB MEMORY.C F0479_MEMORY_ReadGraphicsDatHeader */
 
 static uint16_t r16(const uint8_t *p) { return (uint16_t)p[0] | ((uint16_t)p[1] << 8); }
-static uint32_t r32(const uint8_t *p) { return (uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24); }
+static uint32_t __attribute__((unused)) r32 (const uint8_t *p) { return (uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24); }
 
 int fs_gfx_load(FS_GraphicsDat *gfx, const uint8_t *data, int size) {
     int i, off;

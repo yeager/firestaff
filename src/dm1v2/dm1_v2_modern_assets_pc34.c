@@ -95,7 +95,7 @@ static const char* const k_required_categories[] = {
 };
 
 /* Required fields per manifest entry */
-static const char* const k_required_fields[] = {
+static const char* const __attribute__((unused)) k_required_fields [] = {
     "id",
     "source_file",
     "width",
@@ -176,7 +176,7 @@ static int m11_v22_extract_int(const char* line, const char* key, int* out) {
 }
 
 /* Skip to the start of the next JSON object/array in the file */
-static void m11_v22_skip_to_next_object(FILE* fp) {
+static void __attribute__((unused)) m11_v22_skip_to_next_object (FILE* fp) {
     int depth = 0;
     char line[256];
     while (fgets(line, sizeof(line), fp)) {
@@ -261,11 +261,12 @@ int m11_v22_validate_manifest(const char* manifest_path) {
     FILE* fp;
     char line[256];
     int found_categories = 0;
-    int total_required = 0;
+    int total_required = 0;  /* aggregate count reserved for future reporting */
     int categories_with_entries = 0;
     int current_category = -1;
     int entries_in_current_category = 0;
     int entry_has_all_fields = 1;
+    (void)total_required;
     const size_t k_num_required_cats =
         sizeof(k_required_categories) / sizeof(k_required_categories[0]) - 1U;
 
@@ -384,6 +385,7 @@ int m11_v22_modern_assets_available(void) {
     int found_critical[3] = {0, 0, 0};
     char line[256];
     int current_cat = -1;
+    (void)current_cat;  /* set on category match; reserved for cross-line state */
 
     /* Each iteration reads one logical line (the entire manifest, since
      * it has no newlines). On the first read, the entire JSON content is

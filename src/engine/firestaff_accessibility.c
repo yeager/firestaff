@@ -137,6 +137,7 @@ void fs_ax_set_enabled(int enabled)
         int dlen = (int)strlen(home);
         int nlen = (int)strlen(HOME_DIR_NAME);
         int tlen = dlen + 1 + nlen;
+        (void)tlen;
 
         if (dlen + 1 + nlen < MAX_STRING_LEN) {
             snprintf(g_home_dir, sizeof(g_home_dir),

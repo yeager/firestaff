@@ -272,7 +272,7 @@ int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
  * ========================================================== */
 
 int F0735_COMBAT_ResolveChampionMelee_Compat(
-    const struct CombatantChampionSnapshot_Compat* attacker,
+    struct CombatantChampionSnapshot_Compat* attacker,
     const struct WeaponProfile_Compat* weapon,
     const struct CombatantCreatureSnapshot_Compat* defender,
     struct RngState_Compat* rng,

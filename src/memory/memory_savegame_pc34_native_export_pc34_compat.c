@@ -703,11 +703,10 @@ int F0796_SAVEGAME_ImportPC34_Compat(
     }
 
     /* Stash gameID into the Firestaff header reserved area so the
-     * rest of the engine can find it. */
-    if (outState->header.reserved != 0) {
-        write_u32_le(outState->header.reserved +
-                     SAVEGAME_HEADER_RESERVED_GAME_ID_OFFSET, gameID);
-    }
+     * rest of the engine can find it. The reserved[] array is always
+     * present in the header struct, so no null check is needed. */
+    write_u32_le(outState->header.reserved +
+                 SAVEGAME_HEADER_RESERVED_GAME_ID_OFFSET, gameID);
     /* Suppress unused-warnings for now. */
     (void)checksums;
     (void)platform;

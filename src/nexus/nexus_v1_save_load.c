@@ -346,6 +346,7 @@ static Nexus_SaveResult do_load(const char *path,
     /* Seek to end to validate file is large enough, then back to data start */
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);
+    (void)fsize;
     fseek(f, sizeof(hdr), SEEK_SET);
 
     /* Use sizes from the v2+ header to split champion/world data.

@@ -21,7 +21,7 @@
 
 #if defined(_WIN32)
 #include <process.h>
-static int portable_mkdir(const char* path) { return mkdir(path) == 0; }
+static int __attribute__((unused)) portable_mkdir (const char* path) { return mkdir(path) == 0; }
 static char* portable_mkdtemp(char* templ) {
     char* marker = strstr(templ, "XXXXXX");
     int i;
@@ -37,7 +37,7 @@ static int portable_setenv(const char* n, const char* v, int o) {
 }
 #else
 #include <unistd.h>
-static int portable_mkdir(const char* path) { return mkdir(path, 0777) == 0; }
+static int __attribute__((unused)) portable_mkdir (const char* path) { return mkdir(path, 0777) == 0; }
 static char* portable_mkdtemp(char* templ) { return mkdtemp(templ); }
 static int portable_setenv(const char* n, const char* v, int o) { return setenv(n, v, o); }
 #endif

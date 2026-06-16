@@ -41,7 +41,6 @@ int main(int argc, char **argv) {
         "was %d now %d", count_after_emit, ps.count);
 
     /* ── tick ────────────────────────────────────────────────── */
-    int count_before_tick = ps.count;
     nexus_v2_particles_tick(&ps, 0.016f);
     check("tick: no crash", 1, "");
     /* Particles may expire; count should not increase without emit */

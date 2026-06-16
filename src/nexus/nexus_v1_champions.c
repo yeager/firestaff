@@ -301,14 +301,11 @@ size_t nexus_v1_champion_pool_serialize_size(const Nexus_V1_ChampionPool *pool) 
 size_t nexus_v1_champion_pool_serialize(const Nexus_V1_ChampionPool *pool,
                                          void *buf, size_t bufsize) {
     uint8_t *p = (uint8_t *)buf;
-    uint8_t *end;
     int i, j;
 
     if (!pool || !buf) return 0;
     size_t needed = nexus_v1_champion_pool_serialize_size(pool);
     if (bufsize < needed) return 0;
-
-    end = (uint8_t *)buf + bufsize;
 
     /* Pool header */
     p = wr32(p, NEXUS_CHAMPION_POOL_SAVE_MAGIC);

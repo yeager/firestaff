@@ -1011,6 +1011,7 @@ static void test_f0192_per_creature_resistance(void) {
 
     /* NULL pointers rejected. */
     int adjNull = 0x7FFFFFFFu;
+    (void)adjNull;
     int rcNull = F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
         0, 50, &rng, 0);
     CHECK(rcNull == 0, "NULL outAdjusted must fail");

@@ -84,6 +84,7 @@ int nexus_mechanics_party_alive(const Nexus_MechanicsState *st, Nexus_V1_Engine 
      * engine pointer required — st does not carry engine state.
      * Source: DM1 CLIKMENU.C F0366 — party dead when all 4 champions dead. */
     int i;
+    (void)st;  /* engine carries the live champion state */
     if (!engine) return 0;
     if (engine->champions.party_count == 0) return 1; /* no party = not dead */
     for (i = 0; i < engine->champions.party_count; i++) {

@@ -11,7 +11,7 @@ void nexus_viewport_init(Nexus_Viewport *vp) {
 
 /* Render visible dungeon squares from party position */
 void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
-    int px, py, pdir, dx, dy, d;
+    int px, py, pdir, d;
     int dir_dx[4] = {0, 1, 0, -1};
     int dir_dy[4] = {-1, 0, 1, 0};
     int left_dx[4] = {-1, 0, 1, 0};

@@ -200,6 +200,7 @@ void dm2_v1_build_champion_record(DM2_ChampionRecord *record,
                                    uint8_t view_cell,
                                    uint8_t direction)
 {
+    (void)portrait_index;  /* portrait ordinal stored at render time (F0280) */
     if (!record) return;
 
     /* Zero out the record first */

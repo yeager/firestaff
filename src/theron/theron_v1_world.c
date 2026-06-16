@@ -54,7 +54,7 @@ static uint32_t rb32(const uint8_t *p) {
 /* ── Default companion template ────────────────────────────────────── */
 /* Minimal starting stats for companion slots 1-3.
  * Real stats set by player during character creation. */
-static const Theron_V1_Champion g_blank_companion = {
+static const Theron_V1_Champion __attribute__((unused)) g_blank_companion = {
     .name           = {0},
     .portrait_index = 0,
     .primary_class  = THERON_CLASS_FIGHTER,
@@ -101,7 +101,7 @@ static size_t _tqw_party_pack_size(void) {
            + sizeof(uint32_t);   /* gold field follows champions in save layout */
 }
 
-static size_t _tqw_champion_block_size(void) {
+static size_t __attribute__((unused)) _tqw_champion_block_size (void) {
     return sizeof(Theron_V1_Champion);
 }
 
@@ -437,7 +437,7 @@ void theron_v1_timers_clear_level(Theron_V1_World *world, int level) {
 
 /* Queue scratchpad — populated by check_transition (thread-safe access
  * via world->transition_* fields; single-threaded call pattern). */
-static struct {
+static __attribute__((unused)) struct {
     int pending;
     Theron_TransitionType type;
     int target_level;
