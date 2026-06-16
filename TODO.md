@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-06-16 V2 presentation-mode pass: dm1_v2_presentation_mode_pc34 + csb_v2_presentation_mode_pc34 modules wired to M11_GameView_Start (spec->presentationMode is now pushed into the per-game V2 runtime for gameId=dm1 and gameId=csb). v2_settings_apply_v20_defaults (V2.0 filtered), v2_settings_apply_v22_defaults (V2.2 modern) added alongside the existing v2_settings_apply_v21_defaults. dm1_v22_shapes.c now explicitly included in the firestaff_v2 lib so the V22 entry branch resolves m11_v22_shapes_init. New CTEST targets: test_dm1_v2_presentation_mode_pc34 (50/50), test_csb_v2_presentation_mode_pc34 (36/36). New headless CI probes: firestaff_dm1_v2_presentation_mode_probe (30/30), firestaff_csb_v2_presentation_mode_probe (27/27). 23/23 Phase A invariants still pass. The 166/166 green set confirms the M12_PRESENTATION_V1_ORIGINAL / V20_FILTERED / V21_UPSCALED / V22_MODERN enum now reaches the per-game V2 runtime; remaining work is the actual CSB V2.1 upscale + CSB V2.2 modern asset pack authoring (the selection API is ready, the per-mode V2 modules are still TODO for CSB), plus Phase 8 m11_v22_shape_for_cell() runtime use from the V22 active branch.
+
 ## Legend
 
 - ❌ Not started
@@ -29,7 +31,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Phase 5 - Smooth movement presentation hardening: runtime bridge/gates and optional Custom/V2 smooth turn-pan camera backend exist; remaining work is broader interpolation coverage and launcher UI polish while preserving V1 cooldowns, collision, sensors, creature timing, and redraw cadence.
 - 🔧 Phase 6 - Touch/controller ergonomics hardening: route gates exist; remaining work is broader V2-only gesture/controller affordances with V1 touch/click parity preserved.
 - 🔧 Phase 7 - V2 verification suite hardening: presentation-disabled state-hash gate exists; remaining work is full side-by-side V1/V2 deterministic input scripts plus screenshot/pixel gates for enhanced presentation.
-- ❌ Phase 8 - V2.2 modern asset pipeline: define and implement the generated/modern art path, asset provenance, fallback behavior, and visual verification.
+- 🔧 Phase 8 - V2.2 modern asset pipeline: presentation-mode selection API is now wired through M11_GameView_Start (dm1_v2_presentation_mode_set_m12 + csb_v2_presentation_mode_set_m12), m11_v22_shapes_init() is called on V22 entry, and v2_settings_apply_v22_defaults() / v2_settings_apply_v20_defaults() / v2_settings_apply_v21_defaults() exist per mode. Remaining work: actual modern art pack authoring + per-cell m11_v22_shape_for_cell() runtime usage from the V22 active branch + per-mode pixel/material verification gates.
+- ✅ V2 presentation-mode selection wiring: dm1_v2_presentation_mode_pc34 + csb_v2_presentation_mode_pc34 modules (include/dm1_v2_presentation_mode_pc34.h, include/csb_v2_presentation_mode_pc34.h, src/dm1v2/dm1_v2_presentation_mode_pc34.c, src/csb/csb_v2_presentation_mode_pc34.c) expose M12_PRESENTATION_* selection with V22→V21→V20→V1 fallback chain. M11_GameView_Start in src/engine/m11_game_view.c calls dm1_v2_presentation_mode_set_m12() / csb_v2_presentation_mode_set_m12() right after the spec is built. CTest + headless probe coverage: 50+36 unit + 30+27 probe assertions across both modules (test_dm1_v2_presentation_mode_pc34 / test_csb_v2_presentation_mode_pc34 / firestaff_dm1_v2_presentation_mode_probe / firestaff_csb_v2_presentation_mode_probe), all pass alongside the 23/23 Phase A invariants.
 
 ## Chaos Strikes Back (CSB)
 
@@ -45,8 +48,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - ✅ Phase 0 - V1 compatibility lock before V2 work.
 - ✅ Phase 1 - V2 launch/profile separation.
-- ❌ Phase 2 - Enhanced asset pipeline.
-- 🔧 Phase 3 - Enhanced UI overlays: scaffolded (HUD compass/depth/gold/champion bars/action strip/chaos indicator, csb_v2_hud_overlay_pc34.h/.c, build+probe pass).
+- 🔧 Phase 2 - Enhanced asset pipeline: presentation-mode selection API is wired (csb_v2_presentation_mode_set_m12, m12PresentationMode 0..3 → CSB_V2_PM_V1_FAITHFUL/V20_FILTERED/V21_UPSCALED/V22_MODERN). Remaining work: actual CSB modern asset pack (mirror of DM1's ~/.firestaff/assets/dm1/modern/ at ~/.firestaff/assets/csb/modern/) + CSB V2.1 upscale module (port of dm1_v2_texture_upscale) + CSB V2.2 modern shape module (port of dm1_v22_shapes for CSB's 9-square layout).
+- 🔧 Phase 3 - Enhanced UI overlays: scaffolded (HUD compass/depth/gold/champion bars/action strip/chaos indicator, csb_v2_hud_overlay_pc34.h/.c, build+probe pass). Mode selection gate added in this pass (csb_v2_presentation_mode_is_v22() / is_v21() / is_v20() / is_v1()) so the HUD overlay can branch on the active mode.
 - ❌ Phase 4 - Enhanced lighting and magic effects.
 - 🔧 Phase 5 - Smooth movement and viewport interpolation: `csb_v2_smooth_movement.c` (50/50) + `csb_v2_runtime.c` binding seam (12 test groups, 43/43) on top of F0365/F0366/F0364; remaining work is wiring `csb_v2_runtime_bind_to_v1(profile)` into the actual CSB V1 game-loop entry point, CSB M11 game view bridge, and pixel/presentation gates.
 - ❌ Phase 6 - Touch/controller ergonomics.
