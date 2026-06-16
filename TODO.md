@@ -128,6 +128,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 High-contrast presentation hardening: launcher output is remapped to a restricted high-contrast palette; remaining work is in-game overlay coverage.
 - 🔧 Configurable font sizing hardening: launcher `fontScale` affects M12 text rendering; remaining work is in-game overlays and UI-fit coverage.
 
+### Build and CI Health
+
+- 🔧 Linker "ignoring duplicate libraries" warnings: target-link-order artifact, not a code issue, but worth a one-line fix to silence the link-time noise.
+- 🔧 Pre-existing ctest parity-evidence failures (7 failures / 440 passes in Release at last count): `dm1_v2_launch_smoke_pc34`, `v1_status_refresh_order_redmcsb_gate`, `dm1_v1_viewport_3d_source_lock`, `pass623_dm1_v1_input_capture_readiness_bridge`, `pass625_dm1_v1_original_transcript_row_preflight`, `pass626_dm1_v1_original_transcript_turn_redraw_route` are parity-evidence line-drift from prior watchdog passes (line numbers pinned to older code that has since been re-anchored); `nexus_v2_lighting` has a CMake `add_test` entry pointing at `test_nexus_v2_lighting` with no underlying binary. Each failure needs a one-line read of the actual report under `parity-evidence/verification/<name>/manifest.json` to confirm whether the gate needs the line re-pinned, the test source fixed, or the entry removed.
+- 🔧 Watchdog parity-evidence manifests: parity-evidence files are refreshed by automated watchdog passes on every regression run. Manifests may report transient `FAIL` on gates whose line number has shifted (see the line-drift bullets above) or where a recent change has altered the test binary output; verify against the current source before treating any one FAIL as a real regression.
+- 🔧 Lefthook pre-commit hook: the repo's pre-commit pipeline expects `lefthook` on `$PATH`; the hook currently no-ops gracefully on dev machines without it, but CI runners should install it or wire the equivalent CMake-level check so commit messages and staged-file lint both run on every push.
+
 ## Known Bugs
 
 - 🐛 Viewport/collision reports without capture manifests must stay as bugs until paired original PC 3.4 evidence or a reproducible local probe exists.
