@@ -53,7 +53,7 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 
-add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c src/engine/m11_game_text_latin_extended_glyphs.c)
+add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c src/engine/m11_game_text_latin_extended_glyphs.c src/shared/image_backend_pc34_compat_globals.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(firestaff_m10 PUBLIC
     COMPILE_H
@@ -473,6 +473,7 @@ add_executable(firestaff_nexus_v2_verification_suite_probe
     src/nexus/nexus_v2_lighting.c
     src/nexus/nexus_v2_particles.c
     src/nexus/nexus_v2_atmosphere.c
+    src/nexus/nexus_v2_smooth_movement.c
     src/nexus/nexus_v2_config.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_include_directories(firestaff_nexus_v2_verification_suite_probe PRIVATE
