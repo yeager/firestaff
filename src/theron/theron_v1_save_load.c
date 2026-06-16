@@ -233,9 +233,27 @@ static size_t build_save_image(
     footer[2] = 0x5A; /* magic footer byte 1 */
     footer[3] = 0xA5; /* magic footer byte 2 */
 
-    /* Write checksum into header too (offset 6) */
+    /* Write checksum into header too (offset 6).
+     *
+     * The header checksum is computed over the first
+     * THERON_SAVE_HEADER_SIZE - THERON_SAVE_FOOTER_SIZE bytes
+     * (the part of the header that is *not* the checksum field
+     * itself), with the checksum field zeroed during the compute
+     * to avoid a circular definition.  The footer checksum above
+     * is the authoritative one (covers the whole file); the header
+     * checksum is a fast-path integrity check that the reader can
+     * use without reading the whole file. */
+    uint8_t saved_hdr_byte0 = out_image[THERON_SAVE_OFF_CHECKSUM + 0];
+    uint8_t saved_hdr_byte1 = out_image[THERON_SAVE_OFF_CHECKSUM + 1];
+    out_image[THERON_SAVE_OFF_CHECKSUM + 0] = 0;
+    out_image[THERON_SAVE_OFF_CHECKSUM + 1] = 0;
+    uint16_t header_checksum = compute_checksum16(
+        out_image,
+        THERON_SAVE_HEADER_SIZE - THERON_SAVE_FOOTER_SIZE);
+    out_image[THERON_SAVE_OFF_CHECKSUM + 0] = saved_hdr_byte0;
+    out_image[THERON_SAVE_OFF_CHECKSUM + 1] = saved_hdr_byte1;
     uint16_t *hdr_cs = (uint16_t *)(out_image + THERON_SAVE_OFF_CHECKSUM);
-    *hdr_cs = checksum;
+    *hdr_cs = header_checksum;
 
     /* Apply XOR obfuscation to entire image */
     uint8_t seed = (uint8_t)(THERON_SAVE_OBFUSCATE_SEED);
@@ -278,10 +296,26 @@ static int parse_save_image(
         return -2; /* unsupported version */
     }
 
-    /* Verify header checksum */
+    /* Verify header checksum.
+     *
+     * Note: the header checksum at offset THERON_SAVE_OFF_CHECKSUM is
+     * part of the bytes that compute_checksum16 reads, so we must
+     * zero it before computing (mirrors the footer-checksum pattern
+     * below) to avoid a circular definition. */
     uint16_t stored_cs = *(uint16_t *)(deobuf + THERON_SAVE_OFF_CHECKSUM);
+    deobuf[THERON_SAVE_OFF_CHECKSUM + 0] = 0;
+    deobuf[THERON_SAVE_OFF_CHECKSUM + 1] = 0;
     uint16_t computed_cs = compute_checksum16(deobuf, THERON_SAVE_HEADER_SIZE - THERON_SAVE_FOOTER_SIZE);
-    (void)stored_cs; (void)computed_cs; /* TODO: re-enable when stable */
+    if (stored_cs != computed_cs) {
+        /* Restore the stored checksum so the caller can inspect it
+         * via theron_v1_save_verify_slot if needed. */
+        *(uint16_t *)(deobuf + THERON_SAVE_OFF_CHECKSUM) = stored_cs;
+        free(deobuf);
+        return -1; /* corrupt header */
+    }
+    /* Restore the stored checksum so subsequent footer-checksum
+     * compute (which also zeroes it) sees the right bytes. */
+    *(uint16_t *)(deobuf + THERON_SAVE_OFF_CHECKSUM) = stored_cs;
 
     /* Verify footer checksum */
     uint16_t footer_cs = *(uint16_t *)(deobuf + image_size - THERON_SAVE_FOOTER_SIZE);
