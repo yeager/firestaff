@@ -2795,13 +2795,14 @@ int main(int argc, char** argv) {
         M11_GameViewState pickupView;
         int invBefore;
         int invAfter;
+        unsigned short weaponThing = 0;
         memset(&pickupView, 0, sizeof(pickupView));
         (void)probe_init_synthetic_view(&pickupView);
         /* Place a weapon on the current cell (2,3) */
         {
-            unsigned short weaponThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
             int base = 2 * pickupView.world.dungeon->maps[0].height + 3;
             unsigned short oldFirst = pickupView.world.things->squareFirstThings[base];
+            weaponThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
             probe_set_next(pickupView.world.things->rawThingData[THING_TYPE_WEAPON], oldFirst);
             pickupView.world.things->squareFirstThings[base] = weaponThing;
         }
@@ -2811,8 +2812,14 @@ int main(int argc, char** argv) {
                      M11_GameView_PickupItem(&pickupView) == 1 &&
                          strcmp(pickupView.lastAction, "PICKUP") == 0 &&
                          strcmp(pickupView.lastOutcome, "ITEM TAKEN") == 0 &&
-                         M11_GameView_CountChampionItems(&pickupView, 0) == invBefore + 1,
-                     "G picks up the first floor item into the active champion inventory");
+                         M11_GameView_CountChampionItems(&pickupView, 0) == invBefore + 1 &&
+                         /* BUG-DNY-DM1-2026-06-16: the first pickup must
+                          * land in the action hand (HAND_RIGHT) so the
+                          * prominent F0386 action-icon cell is filled
+                          * immediately.  HAND_LEFT (ready hand) is the
+                          * backup slot. */
+                         pickupView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] == weaponThing,
+                     "G picks up the first floor item into the action hand (HAND_RIGHT) so the F0386 action-icon cell is immediately visible (BUG-DNY-DM1-2026-06-16)");
 
         /* INV_GV_28: Item drop back to current cell */
         invAfter = M11_GameView_CountChampionItems(&pickupView, 0);
