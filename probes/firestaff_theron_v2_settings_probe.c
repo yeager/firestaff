@@ -6,6 +6,7 @@
 #include "theron_v2_settings_pc34.h"
 #include "config_m12.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if !defined(_WIN32)
@@ -78,7 +79,8 @@ static void p_apply_runtime(void) {
 
 static void p_evidence(void) {
     const char* ev = theron_v2_settings_source_evidence();
-    check(ev != NULL && strlen(ev) > 50, "ev non-trivial");
+    check(ev != NULL, "ev non-null");
+    check(strlen(ev) > 50, "ev non-trivial length");
     check(strstr(ev, "Theron") != NULL, "ev Theron");
     check(strstr(ev, "HuC") != NULL, "ev HuC");
 }

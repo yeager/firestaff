@@ -112,13 +112,20 @@ int main(void) {
     /* Apply to runtime */
     theron_v2_settings_apply_to_runtime(&settings);
     theron_v2_settings_apply_to_runtime(NULL);
-    CHECK(1, "apply_to_runtime null-safe");
+    CHECK(1);
 
     /* Source evidence */
     const char* ev = theron_v2_settings_source_evidence();
-    CHECK(ev != NULL && strlen(ev) > 50, "ev non-trivial");
-    CHECK(strstr(ev, "Theron") != NULL, "ev Theron");
-    CHECK(strstr(ev, "HuC") != NULL, "ev HuC");
+    CHECK(ev != NULL);  /* truthy: "ev non-null" */
+    CHECK(strlen(ev) > 50);  /* truthy: "ev non-trivial length" */
+    {
+        const char* p1 = strstr(ev, "Theron");
+        CHECK(p1 != NULL);  /* truthy: "ev Theron" */
+    }
+    {
+        const char* p2 = strstr(ev, "HuC");
+        CHECK(p2 != NULL);  /* truthy: "ev HuC" */
+    }
 
     printf("--- %d / %d passed ---\n", (failures == 0 ? 23 : 23 - failures), 23);
     return failures == 0 ? 0 : 1;
