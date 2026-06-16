@@ -275,6 +275,9 @@ set(M12_SOURCES
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2)
+# Enable test-only M12 helpers (TestResetScanMetrics, TestSetTheronSyntheticHash, ...)
+# so the launcher scan-reuse and other Theron direct-launch tests can use them.
+target_compile_definitions(firestaff_m12 PUBLIC FIRESTAFF_ASSET_STATUS_TESTING=1)
 if(NOT MSVC)
     # -Wno-restrict is a GCC-only flag; skip on Clang/MSVC to avoid
     # -Wunknown-warning-option noise.
@@ -5058,6 +5061,9 @@ if(BUILD_TESTING AND THERON_SOURCES)
     # M12 testing-only API (M12_AssetStatusScanMetrics + Test* helpers).
     target_compile_definitions(test_theron_v1_launcher_scan_reuse PRIVATE
         FIRESTAFF_ASSET_STATUS_TESTING=1)
+    if(TARGET firestaff_m12)
+        target_link_libraries(test_theron_v1_launcher_scan_reuse PRIVATE firestaff_m12)
+    endif()
     if(NOT MSVC)
         target_compile_options(test_theron_v1_launcher_scan_reuse PRIVATE -Wall -Wextra -O2)
     endif()
@@ -5078,6 +5084,9 @@ if(BUILD_TESTING AND THERON_SOURCES)
     target_include_directories(firestaff_theron_v1_track02_bank_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_track02_bank_probe PRIVATE firestaff_m12)
+    endif()
     if(NOT MSVC)
         target_compile_options(firestaff_theron_v1_track02_bank_probe PRIVATE -Wall -Wextra -O2)
     endif()

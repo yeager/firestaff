@@ -1,3 +1,4 @@
+#define FIRESTAFF_ASSET_STATUS_TESTING 1
 #include "asset_status_m12.h"
 
 #include <stdio.h>
