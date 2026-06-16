@@ -10838,7 +10838,8 @@ static const int g_objectPileBoxes[4][4] = {
 /* ReDMCSB CLIKVIEW.C C05 door button / wall ornament clickable zone. */
 static const int g_wallOrnamentBox[4] = { 96, 127, 35, 63 };
 
-static int m11_point_in_source_box(int px, int py, const int box[4]) {
+/* (declared in m11_game_view.h so tests can pin the F0376 contract) */
+int m11_point_in_source_box(int px, int py, const int box[4]) {
     return px >= box[0] && px <= box[1] && py >= box[2] && py <= box[3];
 }
 

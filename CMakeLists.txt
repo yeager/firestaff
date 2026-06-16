@@ -2376,6 +2376,30 @@ if(BUILD_TESTING)
         )
     endif()
 
+    # ── m11_point_in_source_box F0376 contract regression ──────────
+    # Source-lock: src/engine/m11_game_view.c:10833
+    # m11_point_in_source_box is the modern replacement for ReDMCSB
+    # CLIKVIEW.C:290 F0376_COMMAND_IsPointInBox. This test pins the
+    # closed-box inclusive contract (left<=x<=right, top<=y<=bottom)
+    # so a future refactor cannot accidentally change the boundary
+    # semantics that the door-button / wall-ornament / object-pile
+    # click pipeline depends on.
+    add_executable(test_m11_point_in_source_box_pc34
+        tests/test_m11_point_in_source_box_pc34_compat.c
+    )
+    target_include_directories(test_m11_point_in_source_box_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_m11_point_in_source_box_pc34
+        PRIVATE firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 firestaff_nexus firestaff_theron SDL3::SDL3 m)
+    if(NOT MSVC)
+        target_compile_options(test_m11_point_in_source_box_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_point_in_source_box_pc34
+        COMMAND test_m11_point_in_source_box_pc34
+    )
+
     add_executable(test_dm1_v2_presentation_profile_pc34
         tests/test_dm1_v2_presentation_profile_pc34.c
         src/dm1v2/dm1_v2_presentation_profile_pc34.c
