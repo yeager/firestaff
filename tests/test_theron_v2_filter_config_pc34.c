@@ -5,6 +5,7 @@
  */
 #include "theron_v2_filter_config_pc34.h"
 #include "theron_v2_settings_pc34.h"
+#include "theron_v2_texture_upscale_pc34.h"
 #include <stdio.h>
 #include <string.h>
 static int failures = 0;
