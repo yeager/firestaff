@@ -125,6 +125,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                                   int view_w, int view_h) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     int x, y;
+    (void)party_dir;  /* party state lives in g_dm2_runtime (rt->party_*) */
+    (void)party_x;
+    (void)party_y;
 
     if (!framebuffer) return -1;
 
@@ -267,6 +270,7 @@ int dm2_v1_runtime_move(int dir) {
 
     /* Detect turn-only (facing change, no movement) */
     int is_turn_only = (dir != old_dir);
+    (void)is_turn_only;  /* turn-only detection reserved for future smooth-move path */
 
     nx = gs->party_x + dx[dir & 3];
     ny = gs->party_y + dy[dir & 3];

@@ -124,7 +124,7 @@ static const char *const g_quest_item_names[THERON_DUNGEON_COUNT] = {
 };
 
 /* Dungeon short codes (for UI/diagnostics) */
-static const char *const g_dungeon_short[THERON_DUNGEON_COUNT] = {
+static const char *const __attribute__((unused)) g_dungeon_short [THERON_DUNGEON_COUNT] = {
     "HoR",  /* Hall of Records */
     "CoS",  /* Crypt of Shadows */
     "AoF",  /* Abyss of Flames */

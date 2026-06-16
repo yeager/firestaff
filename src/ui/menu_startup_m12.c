@@ -4543,6 +4543,7 @@ static void m12_draw_menu_item(unsigned char *fb, int fw, int fh,
     int x, int y, const char *label, const char *tag,
     int selected, int available, int index)
 {
+    (void)index;  /* caller index not needed for label/tag rendering */
     M12_TextStyle labelStyle = g_textSmall;
     M12_TextStyle tagStyle = g_textSmall;
     char prefix[4];
@@ -4572,7 +4573,7 @@ static void m12_draw_menu_item(unsigned char *fb, int fw, int fh,
     }
 }
 
-static void m12_draw_redesigned_main_menu(const M12_StartupMenuState *state,
+static void __attribute__((unused)) m12_draw_redesigned_main_menu (const M12_StartupMenuState *state,
     unsigned char *fb, int fw, int fh)
 {
     int margin = fw / 20;
@@ -4610,7 +4611,7 @@ static void m12_draw_redesigned_main_menu(const M12_StartupMenuState *state,
         m12_tr(state, "Up/Down Navigate  |  Enter Select"), &g_textSmallMuted);
 }
 
-static void m12_draw_game_select(const M12_StartupMenuState *state,
+static void __attribute__((unused)) m12_draw_game_select (const M12_StartupMenuState *state,
     unsigned char *fb, int fw, int fh)
 {
     int margin = fw / 20;
@@ -4633,7 +4634,7 @@ static void m12_draw_game_select(const M12_StartupMenuState *state,
         m12_tr(state, "Escape Back  |  Up/Down Navigate  |  Enter Select"), &g_textSmallMuted);
 }
 
-static void m12_draw_game_mode(const M12_StartupMenuState *state,
+static void __attribute__((unused)) m12_draw_game_mode (const M12_StartupMenuState *state,
     unsigned char *fb, int fw, int fh)
 {
     int margin = fw / 20;
@@ -4662,7 +4663,7 @@ static void m12_draw_game_mode(const M12_StartupMenuState *state,
         m12_tr(state, "Escape Back  |  Up/Down Navigate  |  Enter Start"), &g_textSmallMuted);
 }
 
-static void m12_draw_extras_menu(const M12_StartupMenuState *state,
+static void __attribute__((unused)) m12_draw_extras_menu (const M12_StartupMenuState *state,
     unsigned char *fb, int fw, int fh)
 {
     int margin = fw / 20;
@@ -4686,7 +4687,7 @@ static void m12_draw_extras_menu(const M12_StartupMenuState *state,
         m12_tr(state, "Escape Back  |  Up/Down Navigate  |  Enter Open"), &g_textSmallMuted);
 }
 
-static void m12_draw_tabbed_settings_view(const M12_StartupMenuState *state,
+static void __attribute__((unused)) m12_draw_tabbed_settings_view (const M12_StartupMenuState *state,
     unsigned char *framebuffer, int fw, int fh)
 {
     int tab = state->settingsTabIndex;
@@ -7493,6 +7494,9 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
                     case M12_MAIN_MENU_QUIT:
                         state->shouldExit = 1;
                         break;
+                    case M12_MAIN_MENU_COUNT:
+                    default:
+                        break;  /* sentinel / out-of-range — ignore */
                 }
             }
             break;

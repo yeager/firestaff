@@ -107,7 +107,7 @@ const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT] = {
 /* DM2 wall set index table — negative = derived offset from wall set base.
  * Source: DUNVIEW.C:140-144, G3011-G3015 (I34E section).
  * DM2 uses different set indices than DM1 (G3060 variant, lines 170-175). */
-static const int16_t s_dm2_wall_set[12] = {
+static const int16_t __attribute__((unused)) s_dm2_wall_set [12] = {
     /* D3C */ -7,   /* G3060_i_WallSet_Wall_D3C */
     /* D3L */ -8,   /* G3061_i_WallSet_Wall_D3L */
     /* D3R */ -9,   /* G3062_i_WallSet_Wall_D3R */
@@ -124,7 +124,7 @@ static const int16_t s_dm2_wall_set[12] = {
 
 /* DM2 flipped wall set — horizontally mirrored L↔R per depth group.
  * Source: DUNVIEW.C:159-168, G3049-G3059 (WallSetFlipped). */
-static const int16_t s_dm2_wall_set_flipped[12] = {
+static const int16_t __attribute__((unused)) s_dm2_wall_set_flipped [12] = {
     /* D3C */ -18,  /* G3049_i_WallSetFlipped_Wall_D3C */
     /* D3L */ -19,  /* G3050_i_WallSetFlipped_Wall_D3L */
     /* D3R */ -20,  /* G3051_i_WallSetFlipped_Wall_D3R */
@@ -142,7 +142,7 @@ static const int16_t s_dm2_wall_set_flipped[12] = {
 /* DM2 door frame indices.
  * Source: DUNVIEW.C:148-157, G2116-G2119, G2196.
  * Different from DM1: DM2 door frames are larger/more ornate. */
-static const int16_t s_dm2_door_frames[6] = {
+static const int16_t __attribute__((unused)) s_dm2_door_frames [6] = {
     /* Top row (D1R,D1L,D1LCR,D2R,D2L,D2LCR) */
     /* DM2 door frame indices differ from DM1 (G2116=front D0C, etc.) */
     -35,  /* G2116_DoorFrameFrontD0C (DM2: larger door frames) */
@@ -180,7 +180,7 @@ typedef enum {
     DM2_STEP_COUNT
 } DM2_RenderStep;
 
-static const int s_step_to_square[DM2_STEP_COUNT] = {
+static const int __attribute__((unused)) s_step_to_square [DM2_STEP_COUNT] = {
     DM2_SQ_D3L, DM2_SQ_D3R, DM2_SQ_D3C,
     DM2_SQ_D2L, DM2_SQ_D2R, DM2_SQ_D2C,
     DM2_SQ_D1L, DM2_SQ_D1R, DM2_SQ_D1C,
@@ -344,7 +344,7 @@ const DM2_WallFrame *dm2_v1_get_wall_frame(int view_square)
 
 /* ── Internal blit helper ─────────────────────────────────────────── */
 
-static void dm2_blit_bitmap(
+static void __attribute__((unused)) dm2_blit_bitmap (
     uint8_t *vp,
     int vp_stride,
     const uint8_t *bitmap,
@@ -395,7 +395,7 @@ static void dm2_blit_bitmap(
  *         DUNGEON.C:1371-1421 (map coordinate resolution)
  *         DM2 uses: 16-byte map descriptor with width/height override fields
  */
-static void dm2_populate_view_squares(
+static void __attribute__((unused)) dm2_populate_view_squares (
     DM2_V1_ViewportState *s,
     const dm2_dungeon_world_t *world)
 {

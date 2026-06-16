@@ -363,7 +363,7 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
     theron_vp_clear(vp, 0);
 
     /* Get party position and direction */
-    const Theron_V1_Champion *theron = theron_v1_party_leader(&world->party);
+    const Theron_V1_Champion *theron = theron_v1_party_leader_c(&world->party);
     if (!theron) return;
 
     /* Party direction from world state (world tracks dungeon position).
@@ -506,7 +506,7 @@ void theron_vp_draw_bar(TQR_PlanarFramebuffer *fb,
 }
 
 /* Get dungeon display name */
-static const char *theron_dungeon_name(int dungeon_id) {
+static __attribute__((unused)) const char *theron_dungeon_name(int dungeon_id) {
     static const char *names[THERON_DUNGEON_COUNT + 1] = {
         [1] = "Hall of Records",
         [2] = "Catacombs",
@@ -577,7 +577,7 @@ static void render_right_panel(TQR_PlanarFramebuffer *fb,
     }
 
     /* Theron stats */
-    const Theron_V1_Champion *theron = theron_v1_party_leader(&world->party);
+    const Theron_V1_Champion *theron = theron_v1_party_leader_c(&world->party);
     if (!theron) return;
 
     /* HP bar: x=165, y=24, w=80, h=6 */
@@ -679,6 +679,7 @@ void theron_vp_draw_champion_slot(TQR_PlanarFramebuffer *fb,
             case THERON_CLASS_NINJA:   class_col = 9;  break; /* orange */
             case THERON_CLASS_PRIEST:  class_col = 15; break; /* white */
             case THERON_CLASS_WIZARD:  class_col = 14; break; /* blue */
+            case THERON_CLASS_COUNT:   break;          /* sentinel — no slot */
         }
         for (int r = 0; r < 16 && icon_y + r < fb->h; r++) {
             uint8_t *row_ptr = fb->data + (icon_y + r) * fb->stride;
@@ -744,7 +745,7 @@ void theron_vp_render_ui(Theron_V1_Viewport *vp,
         slot_y = 184; /* absolute y in planar fb */
         for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
             int slot_x = i * TQR_CHAMP_SLOT_W;
-            const Theron_V1_Champion *c = theron_v1_party_getChampion(&world->party, i);
+            const Theron_V1_Champion *c = theron_v1_party_getChampion_c(&world->party, i);
             theron_vp_draw_champion_slot(&vp->fb, i, slot_x, slot_y, c);
         }
     }

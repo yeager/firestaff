@@ -174,21 +174,8 @@ static void csb_v1_init_save_dir(void)
  * outHex must be at least 33 bytes.
  * Uses the same MD5 backend as asset_find_by_hash.c.
  */
-static int csb_v1_file_md5_hex(const char *path, char *outHex, size_t hexSize)
+static int __attribute__((unused)) csb_v1_file_md5_hex (const char *path, char *outHex, size_t hexSize)
 {
-    typedef struct {
-        unsigned int state[4];
-        unsigned int count[2];
-        unsigned char buffer[64];
-    } AssetMd5Ctx;
-
-    typedef struct {
-        unsigned int a, b, c, d;
-    } AssetMD5State;
-
-    typedef void (*AssetMd5UpdateFn)(AssetMd5Ctx *, const unsigned char *, unsigned int);
-    typedef void (*AssetMd5FinalFn)(AssetMd5Ctx *, char *);
-
     /* Use asset_find_by_md5_list internally for file existence + MD5.
      * We only expose the hash computation through asset_status_m12.
      * For runtime use, the hash comes from M12_AssetStatus scan results.
@@ -254,6 +241,7 @@ int csb_v1_runtime_detect_variant(const char *gfx_path,
 {
     int i;
     (void)gfx_path;  /* gfx_path used only for diagnostics, md5_gfx is the key */
+    (void)dungeon_path;  /* same — md5_dungeon is the key */
 
     if (!md5_dungeon) return CSB_V1_VARIANT_UNKNOWN;
     if (strcmp(md5_dungeon, "6695d2acebce49f95db1d8f3a5c733de") != 0) {

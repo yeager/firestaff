@@ -51,7 +51,8 @@ static DM2_V2_AssetPipelineConfig g_config = {
     0,                             /* bilinear_enabled */
     0,                             /* palette_enhanced */
     0,                             /* scanlines_enabled */
-    0                              /* sharpen_enabled */
+    0,                             /* sharpen_enabled */
+    0                              /* source_light_floor — disabled by default */
 };
 
 /* ── Per-level light floor (ReDMCSB DATA.C:359-360) ───────────────── */
@@ -119,7 +120,7 @@ static const char* k_category_names[DM2_V2_SURFACE_COUNT] = {
     [DM2_V2_SURFACE_DUNGEON_CEILING]  = "dungeon-ceiling",
 };
 
-static const char* k_category_evidence[DM2_V2_SURFACE_COUNT] = {
+static const char* __attribute__((unused)) k_category_evidence [DM2_V2_SURFACE_COUNT] = {
     [DM2_V2_SURFACE_WALL_BACK]      = "DUNVIEW.C:575-586 G0163 wall frame table; DUNVIEW.C:6816-6831 D3L2/D3R2",
     [DM2_V2_SURFACE_WALL_NEAR]      = "DUNVIEW.C:148-157 G3060 variant wall sets; DUNVIEW.C:6361-6499 D2L2/D2R2/D2C",
     [DM2_V2_SURFACE_WALL_CENTER]    = "DUNVIEW.C:3048-3070 F0100 DrawWallSetBitmap; G3060_i_WallSet_Wall_D3C",

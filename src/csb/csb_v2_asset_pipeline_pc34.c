@@ -56,7 +56,8 @@ static CSB_V2_AssetPipelineConfig g_config = {
     0,                             /* bilinear_enabled */
     0,                             /* palette_enhanced */
     0,                             /* scanlines_enabled */
-    0                              /* sharpen_enabled */
+    0,                             /* sharpen_enabled */
+    0                              /* source_light_floor — disabled by default */
 };
 
 /* ── Per-level light floor (ReDMCSB DATA.C:359-360) ───────────────── */
@@ -105,7 +106,7 @@ static const char* k_category_names[CSB_V2_SURFACE_COUNT] = {
     [CSB_V2_SURFACE_CHAMPION_IMPORT]= "champion-import",
 };
 
-static const char* k_category_evidence[CSB_V2_SURFACE_COUNT] = {
+static const char* __attribute__((unused)) k_category_evidence [CSB_V2_SURFACE_COUNT] = {
     [CSB_V2_SURFACE_WALL_BACK]       = "DUNVIEW.C:6816-6831 D3L2/D3R2; F0107:3502-3939",
     [CSB_V2_SURFACE_WALL_NEAR]       = "DUNVIEW.C:6361-6499 D2L2/D2R2",
     [CSB_V2_SURFACE_WALL_CENTER]     = "DUNVIEW.C:6697-6720 D3C; G0700_puc_Bitmap_WallSet",

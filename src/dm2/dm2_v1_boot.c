@@ -162,7 +162,7 @@ static const char *const g_dm2_graphics_hashes[] = {
     NULL
 };
 
-static const char *const g_dm2_dungeon_hashes[] = {
+static const char *const __attribute__((unused)) g_dm2_dungeon_hashes [] = {
     "6caccd7875009e82fe2e28e7f6d6adc0",  /* PC English + all variants */
     NULL
 };
@@ -263,6 +263,7 @@ static int resolve_asset_path(const char *base_dir,
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                             const char *data_dir) {
     char path[512];
+    (void)path;
     const char *base = data_dir ? data_dir : ".";
 
     /* Resolve GRAPHICS.DAT or DM2GRAPHICS.DAT */

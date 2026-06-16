@@ -61,7 +61,7 @@ static CSB_V2_FieldVFX      g_fields[CSB_V2_VFX_MAX_FIELD];
 
 /* ---- Helpers ---- */
 
-static int palette_for_type(int vfx_type) {
+static int __attribute__((unused)) palette_for_type (int vfx_type) {
     switch (vfx_type) {
         case CSB_V2_VFX_FIRE:         return 0;
         case CSB_V2_VFX_SMOKE:        return 1;

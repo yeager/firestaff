@@ -13,7 +13,7 @@ static const char *const dm2_dungeon_hashes[] = {
 };
 
 /* Known DM2 GRAPHICS.DAT MD5 hashes (for fallback graphics search) */
-static const char *const dm2_graphics_hashes[] = {
+static const char *const __attribute__((unused)) dm2_graphics_hashes [] = {
     "25247ede4dabb6a71e5dabdfbcd5907d",  /* PC English */
     "b4d733576ea60c41737f79f212faf528",  /* PC French */
     "e52ab5e01715042b16a4dcff02052e5d",  /* PC German/English JewelCase */

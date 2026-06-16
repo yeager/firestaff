@@ -37,6 +37,7 @@ void nexus_script_vm_init(Nexus_ScriptVM *vm) {
 int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
                                 const uint8_t *data, int size) {
     int i;
+    (void)i;
 
     if (!vm || !vm->initialized) return -1;
     if (level_index < 0 || level_index > 15) return -1;

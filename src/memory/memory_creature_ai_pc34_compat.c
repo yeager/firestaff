@@ -1368,6 +1368,7 @@ int F0804_CREATURE_Tick_Compat(
              *  GROUP.C:2275 (Lord Chaos F0204 double-move / warp
              *  path) and PROJEXPL.C F0823 for the original, and
              *  F0823's default FIREBALL branch for the Trolin.
+             */
             if (visible && stateOut->stateKind == AI_STATE_ATTACK
                 && distance == 1) {
                 out->emittedSpellRequest = 1;
@@ -1382,11 +1383,11 @@ int F0804_CREATURE_Tick_Compat(
              * ARCHENEMY bit in the creature's Attributes (the v1 source
              * of truth is profile->attributes; F0204 lines 1576-1589
              * checks MASK0x2000_ARCHENEMY). The F0801 emitter in
-             * (6) emits a single-square target; the (6) refines path
+             * (six) emits a single-square target; the (six) refines path
              * below checks emittedDoubleMove and re-emits F0801 with
              * a helper that uses the first move's target as the
              * second move's source. v1 only flags the intent here
-             * and leaves the actual second-square path to (6) so the
+             * and leaves the actual second-square path to (six) so the
              * dispatch keeps a single F0799+F0801 emission per tick
              * for non-arcenemy creatures (BUG-115b). */
             if (visible && (stateOut->stateKind == AI_STATE_APPROACH

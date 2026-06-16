@@ -34,7 +34,7 @@ const int8_t g_theron_dir_dy[THERON_DIR_COUNT] = { -1, 0, +1,  0 };
 /* Party position is stored in world->party.leader_pos{x,y,dir}
  * (Phase 3 world struct may store these in world or party struct);
  * for Phase 5, Theron_V1_Party keeps x, y, dir. */
-static Theron_V1_Party *world_party(Theron_V1_World *world) {
+static __attribute__((unused)) Theron_V1_Party *world_party(Theron_V1_World *world) {
     return &world->party;
 }
 

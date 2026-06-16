@@ -48,7 +48,7 @@ static DM1_V2_AssetPipelineConfig g_config = {
 
 /* Per-level light amount floor, from ReDMCSB DATA.C:359-360.
  * Used to derive the presentation darkness percentage. */
-static const uint8_t k_source_palette_light_amount_floor[DM1_V2_PALETTE_LEVELS] = {
+static const uint8_t __attribute__((unused)) k_source_palette_light_amount_floor [DM1_V2_PALETTE_LEVELS] = {
     99, 75, 50, 25, 1, 0
 };
 
@@ -60,7 +60,7 @@ static DM1_V2_AssetMode g_asset_mode = DM1_V2_ASSET_MODE_UPSCALED;
 static char g_modern_asset_root[512] = {0};
 
 /* Per-category source anchor table */
-static const char* k_category_evidence[DM1_V2_SURFACE_COUNT] = {
+static const char* __attribute__((unused)) k_category_evidence [DM1_V2_SURFACE_COUNT] = {
     [DM1_V2_SURFACE_WALL_BACK]        = "DUNVIEW.C:6816-6831 D3L2/D3R2 back-wall draw; F0107:3502-3939 wall ornament routing",
     [DM1_V2_SURFACE_WALL_NEAR]        = "DUNVIEW.C:6361-6499 D2L2/D2R2 near-wall; F0678/F0679 parity bitmap selection",
     [DM1_V2_SURFACE_WALL_CENTER]      = "DUNVIEW.C:6716-6760 D3C center wall draw",

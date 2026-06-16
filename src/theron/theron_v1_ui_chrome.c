@@ -52,7 +52,7 @@ void tr_ui_draw_bar(TQR_PlanarFramebuffer *fb,
  * Dungeon name helper
  * ══════════════════════════════════════════════════════════════════════ */
 
-static const char *dungeon_name(int dungeon_id) {
+static __attribute__((unused)) const char *dungeon_name(int dungeon_id) {
     static const char *const names[THERON_DUNGEON_COUNT + 1] = {
         [1] = "Hall of Records",
         [2] = "Catacombs",
@@ -289,6 +289,7 @@ void tr_ui_draw_champion_slot(TQR_PlanarFramebuffer *fb,
             case THERON_CLASS_NINJA:   class_col = 9;  break; /* orange */
             case THERON_CLASS_PRIEST:  class_col = 15; break; /* white */
             case THERON_CLASS_WIZARD:  class_col = 14; break; /* blue */
+            case THERON_CLASS_COUNT:   break;          /* sentinel — no slot */
         }
         for (int r = 0; r < 16 && icon_y + r < fb->h; r++) {
             uint8_t *row_ptr = fb->data + (icon_y + r) * fb->stride;

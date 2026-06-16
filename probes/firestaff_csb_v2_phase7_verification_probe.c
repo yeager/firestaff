@@ -89,7 +89,7 @@ static uint64_t fnv1a_u32(uint64_t hash, uint32_t value) {
     return hash;
 }
 
-static uint64_t fnv1a_u64(uint64_t hash, uint64_t value) {
+static uint64_t __attribute__((unused)) fnv1a_u64 (uint64_t hash, uint64_t value) {
     hash = fnv1a_u32(hash, (uint32_t)(value & 0xFFFFFFFFULL));
     hash = fnv1a_u32(hash, (uint32_t)(value >> 32));
     return hash;
@@ -252,7 +252,7 @@ static uint64_t apply_v2(uint64_t hash, CsbGameplayState *s, int cmd) {
 }
 
 /* Apply V2 runtime-mapped (movement adapter remaps runtime→source) */
-static uint64_t apply_v2_runtime(uint64_t hash, CsbGameplayState *s, int cmd) {
+static uint64_t __attribute__((unused)) apply_v2_runtime (uint64_t hash, CsbGameplayState *s, int cmd) {
     int v2_rt = cmd;
     int src = v2_runtime_to_source(v2_rt);
     apply_v1_command(s, src);

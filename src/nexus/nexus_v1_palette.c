@@ -53,7 +53,7 @@ static inline uint32_t bgr555_to_rgba(uint16_t bgr555) {
  *   160-191 = creature extended / elemental
  *   192-223 = UI / menu / text
  *   224-255 = UI lighter / white / primaries / skin tones */
-static const uint16_t g_npal[256] = {
+static const uint16_t __attribute__((unused)) g_npal [256] = {
     /* 0: transparent */
     0x0000,
     /* 1-15: dark dungeon stone */

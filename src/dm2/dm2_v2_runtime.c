@@ -119,7 +119,7 @@ static void dm2_v2_runtime_profile_stairs_cb(int from_x, int from_y,
 
 /* Flag: has the party moved since the last V1 tick?
  * Used to detect fresh moves that need smooth animation triggers. */
-static int s_needs_smooth_trigger = 0;  /* unused — kept for future extension */
+static __attribute__((unused)) int s_needs_smooth_trigger = 0;  /* unused — kept for future extension */
 
 /* Cached smooth query values — updated each render frame */
 static float s_smooth_x = 0.0f;
@@ -449,12 +449,10 @@ int dm2_v2_runtime_render_frame(int party_dir,
      * that has been interpolated.  The V1 facing snaps at each tick,
      * while the smooth angle glides between snaps. */
     float smooth_offset_x = 0.0f;
-    float smooth_offset_y = 0.0f;
     float smooth_offset_vert = 0.0f;
 
     if (dm2_v2_smooth_is_active(&s_vp.smooth)) {
         smooth_offset_x = s_smooth_x - (float)party_x;
-        smooth_offset_y = s_smooth_y - (float)party_y;
         smooth_offset_vert = s_smooth_vert;
     }
 
@@ -490,7 +488,6 @@ int dm2_v2_runtime_render_frame(int party_dir,
          * DM2 viewport is 320 pixels wide, one dungeon tile wide.
          * A 0.1 tile offset ≈ 32 pixels of pan (10% of viewport). */
         int pan_x = (int)(smooth_offset_x * 320.0f);
-        int pan_y = (int)(smooth_offset_y * 200.0f);
         int pan_vert = (int)(smooth_offset_vert * 8.0f);  /* 8 pixels per vertical unit */
 
         /* Clamp pan to prevent over-reading the framebuffer */

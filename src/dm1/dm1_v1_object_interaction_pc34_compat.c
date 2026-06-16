@@ -117,6 +117,7 @@ int m11_obj_use(M11_ObjectState* s, int champIdx, int objIdx,
                 DM1ConsumableResultPc34* result)
 {
     (void)s;
+    (void)champIdx;
     if (!m11_obj_is_valid(s, objIdx)) return -1;
     M11_WorldObject* obj = &s->objects[objIdx];
 
@@ -174,9 +175,11 @@ int m11_obj_use(M11_ObjectState* s, int champIdx, int objIdx,
 }
 
 int m11_obj_throw(M11_ObjectState* s, int objIdx, int dir, int force) {
-    /* Source: CLIKVIEW.C / DUNGEON.C -- thrown objects are marked as in-flight 
-     * (x=-2) until they land or are consumed. ReDMCSB thrown object handling 
+    /* Source: CLIKVIEW.C / DUNGEON.C -- thrown objects are marked as in-flight
+     * (x=-2) until they land or are consumed. ReDMCSB thrown object handling
      * is in the click/viewport routing and THING projectile system. */
+    (void)dir;
+    (void)force;
     if (!s || !m11_obj_is_valid(s, objIdx)) return -1;
     M11_WorldObject* obj = &s->objects[objIdx];
     if (!obj->throwable) return 0;

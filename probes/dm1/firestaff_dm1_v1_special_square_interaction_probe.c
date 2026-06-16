@@ -71,7 +71,7 @@ static void check_int(const char* id, int got, int want)
     }
 }
 
-static void check_null(const char* id, const void* ptr, int should_be_null)
+static void __attribute__((unused)) check_null (const char* id, const void* ptr, int should_be_null)
 {
     ++probe_tests;
     int null = (ptr == NULL);
@@ -115,6 +115,7 @@ static void check_strstr(const char* id, const char* text, const char* needle)
 /* Door animation state walk (F0241 L0596 style: state += -1 opening, state += +1 closing)
  * ReDMCSB door states via existing DM1_DOOR_STATE_* constants from the compat header.
  * Source: DUNGEON.C:2601-2615, CLIKMENU.C:276-278
+ */
 
 /* F0715 result kinds */
 typedef enum {

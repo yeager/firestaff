@@ -49,7 +49,7 @@ static int test_dungeon_meta(void) {
     for (int id = 1; id <= THERON_DUNGEON_COUNT; id++) {
         const Theron_DungeonMeta *meta = theron_v1_dungeon_meta((Theron_DungeonID)id);
         ASSERT(meta != NULL, "meta is NULL");
-        ASSERT(meta->id == id, "id mismatch");
+        ASSERT(meta->id == (Theron_DungeonID)id, "id mismatch");
         ASSERT(meta->quest_item_count == 1, "quest_item_count not 1");
         ASSERT(meta->quest_item_bit == (1 << (id - 1)), "quest_item_bit wrong");
         ASSERT(meta->champion_reset == 1, "champion_reset not 1");

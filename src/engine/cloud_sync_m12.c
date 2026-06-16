@@ -71,7 +71,7 @@ static void m12_sync_get_manifest_path(char* out, size_t outSize) {
     snprintf(out, outSize, "%s/manifest.json", g_syncDir);
 }
 
-static void m12_sync_get_local_config_path(char* out, size_t outSize) {
+static void __attribute__((unused)) m12_sync_get_local_config_path (char* out, size_t outSize) {
     char configDir[FSP_PATH_MAX];
     if (FSP_GetUserConfigDir(configDir, sizeof(configDir))) {
         snprintf(out, outSize, "%s/startup-menu.toml", configDir);
@@ -80,7 +80,7 @@ static void m12_sync_get_local_config_path(char* out, size_t outSize) {
     }
 }
 
-static void m12_sync_get_local_export_path(char* out, size_t outSize) {
+static void __attribute__((unused)) m12_sync_get_local_export_path (char* out, size_t outSize) {
     snprintf(out, outSize, "%s/firestaff-settings-export.json", g_syncDir);
 }
 
@@ -383,7 +383,7 @@ static void m12_resolve_path(char* localOut, size_t localSize,
 }
 
 /* Scan the local filesystem and build a list of currently-tracked files. */
-static void m12_build_tracked_list(M12_TrackedList* list, const M12_SyncManifest* manifest, const char* localBase) {
+static void __attribute__((unused)) m12_build_tracked_list (M12_TrackedList* list, const M12_SyncManifest* manifest, const char* localBase) {
     list->count = 0;
     for (int i = 0; i < manifest->entryCount; ++i) {
         m12_tracked_add(list, manifest->entries[i].relativePath, localBase);

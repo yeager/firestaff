@@ -13,7 +13,7 @@
  *
  * Syncable items:
  *   • Launcher config: startup-menu.toml + firestaff-settings-export.json
- *   \- Per-game savegames: saves/{game}/*.sav
+ *   - Per-game savegames: saves/{game}/<name>.sav
  *
  * The sync root may be placed on a cloud-backed filesystem (Dropbox,
  * OneDrive, Google Drive, iCloud, rsync target, etc.) by pointing the
