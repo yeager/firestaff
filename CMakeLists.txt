@@ -4418,6 +4418,9 @@ if(BUILD_TESTING)
     if(NOT MSVC)
         target_compile_options(test_nexus_v2_smooth_movement PRIVATE -Wall -Wextra -O2)
     endif()
+    if(UNIX AND NOT APPLE)
+        target_link_libraries(test_nexus_v2_smooth_movement PRIVATE m)
+    endif()
     add_test(
         NAME nexus_v2_smooth_movement
         COMMAND test_nexus_v2_smooth_movement
