@@ -101,6 +101,22 @@ typedef struct {
     int dm1V2MotionBlurEnabled;          /* 0 = off, 1 = on */
     int dm1V2MotionBlurStrength;         /* 0-100, percent; default 30 */
 
+    /* CSB V2.1 upscale + V2.2 fallback (per-game settings). */
+    int csbV2ScalePercent;               /* 100-400, default 200 (2x EPX) */
+    int csbV2BilinearEnabled;            /* 0 = EPX, 1 = bilinear; default 0 */
+    int csbV2CrtScanlinesEnabled;        /* 0 = off, 1 = on; default 0 */
+    int csbV2CrtScanlineStrength;        /* 0-100, percent darken; default 35 */
+    int csbV2PaletteCorrectionEnabled;   /* 0 = off, 1 = on; default 0 */
+    int csbV2DitherCleanupEnabled;       /* 0 = off, 1 = on; default 0 */
+
+    /* Theron V2.1 upscale + V2.2 fallback (per-game settings). */
+    int theronV2ScalePercent;            /* 100-400, default 200 (2x EPX) */
+    int theronV2BilinearEnabled;         /* 0 = EPX, 1 = bilinear; default 0 */
+    int theronV2CrtScanlinesEnabled;     /* 0 = off, 1 = on; default 0 */
+    int theronV2CrtScanlineStrength;     /* 0-100, percent darken; default 35 */
+    int theronV2PaletteCorrectionEnabled; /* 0 = off, 1 = on; default 0 */
+    int theronV2DitherCleanupEnabled;    /* 0 = off, 1 = on; default 0 */
+
     /* Gameplay & QoL */
     int gameSpeedMultiplier;     /* 50/100/150/200; default 100 */
     int minimapEnabled;          /* 0=off, 1=on; default 0 */

@@ -282,6 +282,22 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->dm1V2PixelGridIntensity = 20;
     config->dm1V2MotionBlurEnabled = 0;
     config->dm1V2MotionBlurStrength = 30;
+
+    /* CSB V2.1/V2.2 defaults */
+    config->csbV2ScalePercent = 200;
+    config->csbV2BilinearEnabled = 0;
+    config->csbV2CrtScanlinesEnabled = 0;
+    config->csbV2CrtScanlineStrength = 35;
+    config->csbV2PaletteCorrectionEnabled = 0;
+    config->csbV2DitherCleanupEnabled = 0;
+
+    /* Theron V2.1/V2.2 defaults */
+    config->theronV2ScalePercent = 200;
+    config->theronV2BilinearEnabled = 0;
+    config->theronV2CrtScanlinesEnabled = 0;
+    config->theronV2CrtScanlineStrength = 35;
+    config->theronV2PaletteCorrectionEnabled = 0;
+    config->theronV2DitherCleanupEnabled = 0;
     config->gameSpeedMultiplier = 100;
     config->minimapEnabled = 0;
     config->minimapSize = 128;
@@ -659,6 +675,68 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->dm1V2MotionBlurStrength = val;
         return;
     }
+    /* CSB V2.1/V2.2 settings */
+    if (m12_string_equals(key, "csb_v2_scale_percent")) {
+        int val = m12_parse_int(value, config->csbV2ScalePercent);
+        if (val < 100) val = 100;
+        if (val > 400) val = 400;
+        config->csbV2ScalePercent = val;
+        return;
+    }
+    if (m12_string_equals(key, "csb_v2_bilinear_enabled")) {
+        config->csbV2BilinearEnabled = m12_parse_int(value, config->csbV2BilinearEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "csb_v2_crt_scanlines_enabled")) {
+        config->csbV2CrtScanlinesEnabled = m12_parse_int(value, config->csbV2CrtScanlinesEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "csb_v2_crt_scanline_strength")) {
+        int val = m12_parse_int(value, config->csbV2CrtScanlineStrength);
+        if (val < 0) val = 0;
+        if (val > 100) val = 100;
+        config->csbV2CrtScanlineStrength = val;
+        return;
+    }
+    if (m12_string_equals(key, "csb_v2_palette_correction_enabled")) {
+        config->csbV2PaletteCorrectionEnabled = m12_parse_int(value, config->csbV2PaletteCorrectionEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "csb_v2_dither_cleanup_enabled")) {
+        config->csbV2DitherCleanupEnabled = m12_parse_int(value, config->csbV2DitherCleanupEnabled) ? 1 : 0;
+        return;
+    }
+    /* Theron V2.1/V2.2 settings */
+    if (m12_string_equals(key, "theron_v2_scale_percent")) {
+        int val = m12_parse_int(value, config->theronV2ScalePercent);
+        if (val < 100) val = 100;
+        if (val > 400) val = 400;
+        config->theronV2ScalePercent = val;
+        return;
+    }
+    if (m12_string_equals(key, "theron_v2_bilinear_enabled")) {
+        config->theronV2BilinearEnabled = m12_parse_int(value, config->theronV2BilinearEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "theron_v2_crt_scanlines_enabled")) {
+        config->theronV2CrtScanlinesEnabled = m12_parse_int(value, config->theronV2CrtScanlinesEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "theron_v2_crt_scanline_strength")) {
+        int val = m12_parse_int(value, config->theronV2CrtScanlineStrength);
+        if (val < 0) val = 0;
+        if (val > 100) val = 100;
+        config->theronV2CrtScanlineStrength = val;
+        return;
+    }
+    if (m12_string_equals(key, "theron_v2_palette_correction_enabled")) {
+        config->theronV2PaletteCorrectionEnabled = m12_parse_int(value, config->theronV2PaletteCorrectionEnabled) ? 1 : 0;
+        return;
+    }
+    if (m12_string_equals(key, "theron_v2_dither_cleanup_enabled")) {
+        config->theronV2DitherCleanupEnabled = m12_parse_int(value, config->theronV2DitherCleanupEnabled) ? 1 : 0;
+        return;
+    }
     if (m12_string_equals(key, "soundtrack_mode")) {
         int val = m12_parse_int(value, config->soundtrackMode);
         if (val < 0) val = 0;
@@ -830,6 +908,18 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "dm1_v2_pixel_grid_intensity = %d\n", config->dm1V2PixelGridIntensity);
     fprintf(fp, "dm1_v2_motion_blur_enabled = %d\n", config->dm1V2MotionBlurEnabled ? 1 : 0);
     fprintf(fp, "dm1_v2_motion_blur_strength = %d\n", config->dm1V2MotionBlurStrength);
+    fprintf(fp, "csb_v2_scale_percent = %d\n", config->csbV2ScalePercent);
+    fprintf(fp, "csb_v2_bilinear_enabled = %d\n", config->csbV2BilinearEnabled ? 1 : 0);
+    fprintf(fp, "csb_v2_crt_scanlines_enabled = %d\n", config->csbV2CrtScanlinesEnabled ? 1 : 0);
+    fprintf(fp, "csb_v2_crt_scanline_strength = %d\n", config->csbV2CrtScanlineStrength);
+    fprintf(fp, "csb_v2_palette_correction_enabled = %d\n", config->csbV2PaletteCorrectionEnabled ? 1 : 0);
+    fprintf(fp, "csb_v2_dither_cleanup_enabled = %d\n", config->csbV2DitherCleanupEnabled ? 1 : 0);
+    fprintf(fp, "theron_v2_scale_percent = %d\n", config->theronV2ScalePercent);
+    fprintf(fp, "theron_v2_bilinear_enabled = %d\n", config->theronV2BilinearEnabled ? 1 : 0);
+    fprintf(fp, "theron_v2_crt_scanlines_enabled = %d\n", config->theronV2CrtScanlinesEnabled ? 1 : 0);
+    fprintf(fp, "theron_v2_crt_scanline_strength = %d\n", config->theronV2CrtScanlineStrength);
+    fprintf(fp, "theron_v2_palette_correction_enabled = %d\n", config->theronV2PaletteCorrectionEnabled ? 1 : 0);
+    fprintf(fp, "theron_v2_dither_cleanup_enabled = %d\n", config->theronV2DitherCleanupEnabled ? 1 : 0);
     fprintf(fp, "soundtrack_mode = %d\n", config->soundtrackMode);
     fputs("custom_music_path = ", fp);
     m12_escape_and_write(fp, config->customMusicPath);
@@ -1069,6 +1159,18 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
     fprintf(fp, "  \"dm1_v2_pixel_grid_intensity\": %d,\n", config->dm1V2PixelGridIntensity);
     fprintf(fp, "  \"dm1_v2_motion_blur_enabled\": %d,\n", config->dm1V2MotionBlurEnabled ? 1 : 0);
     fprintf(fp, "  \"dm1_v2_motion_blur_strength\": %d,\n", config->dm1V2MotionBlurStrength);
+    fprintf(fp, "  \"csb_v2_scale_percent\": %d,\n", config->csbV2ScalePercent);
+    fprintf(fp, "  \"csb_v2_bilinear_enabled\": %d,\n", config->csbV2BilinearEnabled ? 1 : 0);
+    fprintf(fp, "  \"csb_v2_crt_scanlines_enabled\": %d,\n", config->csbV2CrtScanlinesEnabled ? 1 : 0);
+    fprintf(fp, "  \"csb_v2_crt_scanline_strength\": %d,\n", config->csbV2CrtScanlineStrength);
+    fprintf(fp, "  \"csb_v2_palette_correction_enabled\": %d,\n", config->csbV2PaletteCorrectionEnabled ? 1 : 0);
+    fprintf(fp, "  \"csb_v2_dither_cleanup_enabled\": %d,\n", config->csbV2DitherCleanupEnabled ? 1 : 0);
+    fprintf(fp, "  \"theron_v2_scale_percent\": %d,\n", config->theronV2ScalePercent);
+    fprintf(fp, "  \"theron_v2_bilinear_enabled\": %d,\n", config->theronV2BilinearEnabled ? 1 : 0);
+    fprintf(fp, "  \"theron_v2_crt_scanlines_enabled\": %d,\n", config->theronV2CrtScanlinesEnabled ? 1 : 0);
+    fprintf(fp, "  \"theron_v2_crt_scanline_strength\": %d,\n", config->theronV2CrtScanlineStrength);
+    fprintf(fp, "  \"theron_v2_palette_correction_enabled\": %d,\n", config->theronV2PaletteCorrectionEnabled ? 1 : 0);
+    fprintf(fp, "  \"theron_v2_dither_cleanup_enabled\": %d,\n", config->theronV2DitherCleanupEnabled ? 1 : 0);
     fprintf(fp, "  \"game_speed_multiplier\": %d,\n", config->gameSpeedMultiplier);
     fprintf(fp, "  \"minimap_enabled\": %d,\n", config->minimapEnabled ? 1 : 0);
     fprintf(fp, "  \"minimap_size\": %d,\n", config->minimapSize);
@@ -1356,6 +1458,18 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         SET_INT("dm1_v2_pixel_grid_intensity", dm1V2PixelGridIntensity)
         SET_BOOL("dm1_v2_motion_blur_enabled", dm1V2MotionBlurEnabled)
         SET_INT("dm1_v2_motion_blur_strength", dm1V2MotionBlurStrength)
+        SET_INT("csb_v2_scale_percent", csbV2ScalePercent)
+        SET_BOOL("csb_v2_bilinear_enabled", csbV2BilinearEnabled)
+        SET_BOOL("csb_v2_crt_scanlines_enabled", csbV2CrtScanlinesEnabled)
+        SET_INT("csb_v2_crt_scanline_strength", csbV2CrtScanlineStrength)
+        SET_BOOL("csb_v2_palette_correction_enabled", csbV2PaletteCorrectionEnabled)
+        SET_BOOL("csb_v2_dither_cleanup_enabled", csbV2DitherCleanupEnabled)
+        SET_INT("theron_v2_scale_percent", theronV2ScalePercent)
+        SET_BOOL("theron_v2_bilinear_enabled", theronV2BilinearEnabled)
+        SET_BOOL("theron_v2_crt_scanlines_enabled", theronV2CrtScanlinesEnabled)
+        SET_INT("theron_v2_crt_scanline_strength", theronV2CrtScanlineStrength)
+        SET_BOOL("theron_v2_palette_correction_enabled", theronV2PaletteCorrectionEnabled)
+        SET_BOOL("theron_v2_dither_cleanup_enabled", theronV2DitherCleanupEnabled)
         SET_INT("game_speed_multiplier", gameSpeedMultiplier)
         SET_BOOL("minimap_enabled", minimapEnabled)
         SET_INT("minimap_size", minimapSize)

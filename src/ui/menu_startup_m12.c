@@ -1546,6 +1546,20 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.dm1V2PixelGridIntensity = state->settings.dm1V2PixelGridIntensity;
     config.dm1V2MotionBlurEnabled = state->settings.dm1V2MotionBlurEnabled;
     config.dm1V2MotionBlurStrength = state->settings.dm1V2MotionBlurStrength;
+    /* CSB V2.1/V2.2 settings */
+    config.csbV2ScalePercent = state->settings.csbV2ScalePercent;
+    config.csbV2BilinearEnabled = state->settings.csbV2BilinearEnabled ? 1 : 0;
+    config.csbV2CrtScanlinesEnabled = state->settings.csbV2CrtScanlinesEnabled ? 1 : 0;
+    config.csbV2CrtScanlineStrength = state->settings.csbV2CrtScanlineStrength;
+    config.csbV2PaletteCorrectionEnabled = state->settings.csbV2PaletteCorrectionEnabled ? 1 : 0;
+    config.csbV2DitherCleanupEnabled = state->settings.csbV2DitherCleanupEnabled ? 1 : 0;
+    /* Theron V2.1/V2.2 settings */
+    config.theronV2ScalePercent = state->settings.theronV2ScalePercent;
+    config.theronV2BilinearEnabled = state->settings.theronV2BilinearEnabled ? 1 : 0;
+    config.theronV2CrtScanlinesEnabled = state->settings.theronV2CrtScanlinesEnabled ? 1 : 0;
+    config.theronV2CrtScanlineStrength = state->settings.theronV2CrtScanlineStrength;
+    config.theronV2PaletteCorrectionEnabled = state->settings.theronV2PaletteCorrectionEnabled ? 1 : 0;
+    config.theronV2DitherCleanupEnabled = state->settings.theronV2DitherCleanupEnabled ? 1 : 0;
     snprintf(config.customMusicPath, sizeof(config.customMusicPath), "%s", state->settings.customMusicPath);
     snprintf(config.customDungeonPath, sizeof(config.customDungeonPath), "%s", state->settings.customDungeonPath);
     snprintf(config.screenshotPath, sizeof(config.screenshotPath), "%s", state->settings.screenshotPath);
@@ -1695,6 +1709,28 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     state->settings.dm1V2MotionBlurStrength = config.dm1V2MotionBlurStrength;
     if (state->settings.dm1V2MotionBlurStrength < 0) state->settings.dm1V2MotionBlurStrength = 0;
     if (state->settings.dm1V2MotionBlurStrength > 100) state->settings.dm1V2MotionBlurStrength = 30;
+    /* CSB V2.1/V2.2 settings */
+    state->settings.csbV2ScalePercent = config.csbV2ScalePercent;
+    if (state->settings.csbV2ScalePercent < 100) state->settings.csbV2ScalePercent = 100;
+    if (state->settings.csbV2ScalePercent > 400) state->settings.csbV2ScalePercent = 200;
+    state->settings.csbV2BilinearEnabled = config.csbV2BilinearEnabled ? 1 : 0;
+    state->settings.csbV2CrtScanlinesEnabled = config.csbV2CrtScanlinesEnabled ? 1 : 0;
+    state->settings.csbV2CrtScanlineStrength = config.csbV2CrtScanlineStrength;
+    if (state->settings.csbV2CrtScanlineStrength < 0) state->settings.csbV2CrtScanlineStrength = 0;
+    if (state->settings.csbV2CrtScanlineStrength > 100) state->settings.csbV2CrtScanlineStrength = 35;
+    state->settings.csbV2PaletteCorrectionEnabled = config.csbV2PaletteCorrectionEnabled ? 1 : 0;
+    state->settings.csbV2DitherCleanupEnabled = config.csbV2DitherCleanupEnabled ? 1 : 0;
+    /* Theron V2.1/V2.2 settings */
+    state->settings.theronV2ScalePercent = config.theronV2ScalePercent;
+    if (state->settings.theronV2ScalePercent < 100) state->settings.theronV2ScalePercent = 100;
+    if (state->settings.theronV2ScalePercent > 400) state->settings.theronV2ScalePercent = 200;
+    state->settings.theronV2BilinearEnabled = config.theronV2BilinearEnabled ? 1 : 0;
+    state->settings.theronV2CrtScanlinesEnabled = config.theronV2CrtScanlinesEnabled ? 1 : 0;
+    state->settings.theronV2CrtScanlineStrength = config.theronV2CrtScanlineStrength;
+    if (state->settings.theronV2CrtScanlineStrength < 0) state->settings.theronV2CrtScanlineStrength = 0;
+    if (state->settings.theronV2CrtScanlineStrength > 100) state->settings.theronV2CrtScanlineStrength = 35;
+    state->settings.theronV2PaletteCorrectionEnabled = config.theronV2PaletteCorrectionEnabled ? 1 : 0;
+    state->settings.theronV2DitherCleanupEnabled = config.theronV2DitherCleanupEnabled ? 1 : 0;
     snprintf(state->settings.customMusicPath, sizeof(state->settings.customMusicPath), "%s", config.customMusicPath);
     snprintf(state->settings.customDungeonPath, sizeof(state->settings.customDungeonPath), "%s", config.customDungeonPath);
     snprintf(state->settings.screenshotPath, sizeof(state->settings.screenshotPath), "%s", config.screenshotPath);
