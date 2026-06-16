@@ -442,6 +442,22 @@ if(NOT MSVC)
     target_compile_options(firestaff_nexus_v2_hud_overlay_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Nexus V2 Upscaler Probe (V2.1)
+# Headless: no game assets, no SDL rendering required.
+# Verifies: EPX palette lookup + deterministic output + 2x scaling + boundary
+# handling (1x1 src) + null-arg safety + bilinear smooth null-arg safety +
+# source evidence references DM1 V2.1 EPX / Scale2x / Saturn VDP1 / ReDMCSB GFX.C.
+add_executable(firestaff_nexus_v2_upscaler_probe
+    probes/firestaff_nexus_v2_upscaler_probe.c
+    src/nexus/nexus_v2_upscaler.c)
+target_include_directories(firestaff_nexus_v2_upscaler_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_nexus_v2_upscaler_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v2_upscaler_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Nexus V2 Lighting Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: init defaults, light add/remove with NEXUS_MAX_LIGHTS=16,
@@ -5025,6 +5041,12 @@ if(BUILD_TESTING)
         NAME nexus_v2_hud_overlay
         COMMAND test_nexus_v2_hud_overlay
     )
+    if(TARGET firestaff_nexus_v2_upscaler_probe)
+        add_test(
+            NAME nexus_v2_upscaler_probe
+            COMMAND firestaff_nexus_v2_upscaler_probe
+        )
+    endif()
 
     # ── Nexus V2 Phase 5 Smooth Movement smoke test ──────────────
     # Source-lock: src/nexus/nexus_v2_smooth_movement.c
