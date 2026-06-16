@@ -38,9 +38,13 @@ void dm1_v2_settings_apply_to_m12_config(M12_Config* config,
 const char* dm1_v2_settings_aspect_id(DM1_V2_AspectMode mode);
 
 void v2_settings_apply_v21_defaults(DM1_V2_Settings* settings);
+void v2_settings_apply_v22_defaults(DM1_V2_Settings* settings);
+void v2_settings_apply_v20_defaults(DM1_V2_Settings* settings);
 int v2_settings_save_to_file(const DM1_V2_Settings* settings, const char* path);
 int v2_settings_load_from_file(DM1_V2_Settings* settings, const char* path);
 const char* v21_settings_source_evidence(void);
+const char* v22_settings_source_evidence(void);
+const char* v20_settings_source_evidence(void);
 
 #ifdef __cplusplus
 }

@@ -145,6 +145,51 @@ const char *v21_settings_source_evidence(void) {
     return "V2.1 defaults: EPX 2x, original VGA palette, PC-34 audio\n";
 }
 
+/* V2.0 Filtered presentation defaults.
+ * Source: ReDMCSB DUNVIEW.C F0128 viewport blit 320x200 base;
+ * CSBWin/Graphics.cpp:3186 filter pair (palette correct + scanline pair). */
+void v2_settings_apply_v20_defaults(DM1_V2_Settings *s) {
+    if (!s) return;
+    dm1_v2_settings_apply_v21_presentation_defaults(s);
+    s->viewport_scale = 1;       /* no upscale, double-buffer at 640x400 */
+    s->use_epx = 0;              /* no EPX - straight filter chain */
+    s->use_bilinear = 0;
+    s->palette_enhanced = 1;     /* V2.0 turns on palette correction */
+    s->sound_enabled = 1;
+    s->music_enabled = 0;
+    s->fullscreen = 0;
+    s->vsync = 1;
+}
+
+const char *v20_settings_source_evidence(void) {
+    return
+        "V2.0 defaults: palette correction on, scanlines on, dither cleanup on,\n"
+        "no upscale, 640x400 double-buffer.\n"
+        "Source: ReDMCSB DUNVIEW.C F0128; CSBWin/Graphics.cpp:3186.\n";
+}
+
+/* V2.2 Modern asset pipeline defaults.
+ * Source: dm1_v22_shapes.c; dm1_v2_modern_assets_pc34.c fallback chain. */
+void v2_settings_apply_v22_defaults(DM1_V2_Settings *s) {
+    if (!s) return;
+    dm1_v2_settings_apply_v21_presentation_defaults(s);
+    s->viewport_scale = 2;       /* 640x400 base, 2x to 1280x800 native */
+    s->use_epx = 0;              /* modern shapes are 1920x1080 - no EPX */
+    s->use_bilinear = 1;         /* bilinear OK for V2.2 RGB artwork */
+    s->palette_enhanced = 1;     /* V2.2 ships per-material palettes */
+    s->sound_enabled = 1;
+    s->music_enabled = 0;
+    s->fullscreen = 0;
+    s->vsync = 1;
+}
+
+const char *v22_settings_source_evidence(void) {
+    return
+        "V2.2 defaults: modern asset pack enabled, EPX off, bilinear on,\n"
+        "per-material palette, 1920x1080 native, 2x from 640x400 base.\n"
+        "Source: dm1_v22_shapes.c; dm1_v2_modern_assets_pc34.c fallback chain V22->V21->V20->V1.\n";
+}
+
 
 /* ── Settings persistence — save/load to INI file ─────────────────── */
 
