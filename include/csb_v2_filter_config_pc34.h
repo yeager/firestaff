@@ -55,6 +55,24 @@ void csb_v2_filter_config_apply(const CSB_V2_FilterConfig* config);
 /* Convenience: reset to defaults. */
 void csb_v2_filter_config_reset(void);
 
+/* Per-frame filter chain dispatch: applies the configured indexed
+ * filters (dither cleanup + palette interpolate) to an indexed
+ * framebuffer. Called from the per-frame render path
+ * (firestaff_game_loop.c::fs_game_render_v2 CSB branch) between
+ * V1 viewport render and indexed-to-RGBA conversion.
+ *
+ * Each filter is conditional on its config flag; disabled filters
+ * are skipped (no-op). Returns the count of filters applied (0..2). */
+int csb_v2_filter_chain_apply_indexed(unsigned char* fb, int w, int h);
+
+/* Per-frame filter chain dispatch: applies the configured RGBA
+ * filters (CRT scanlines) to an RGBA surface. Called from the
+ * per-frame render path after the indexed-to-RGBA conversion.
+ *
+ * Each filter is conditional on its config flag; disabled filters
+ * are skipped (no-op). Returns the count of filters applied (0..1). */
+int csb_v2_filter_chain_apply_rgba(unsigned char* rgba, int w, int h);
+
 const char* csb_v2_filter_config_source_evidence(void);
 
 #ifdef __cplusplus
