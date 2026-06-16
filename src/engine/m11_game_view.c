@@ -7785,6 +7785,25 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                               mirrorName, sizeof(mirrorName));
     if (reincarnate) {
         m11_apply_reincarnation_to_candidate(state, championIndex);
+    } else {
+        /* ReDMCSB REVIVE.C F0282 C160 resurrect path.  A fresh mirror
+         * candidate materialized by F0280 already carries the source
+         * initial HP/STA/MANA from the mirror text, so a live candidate
+         * keeps its vitals untouched.  The test-only edge case of a
+         * dead-existing-champion slot reaching this code (HP=0) is
+         * brought back to one hit point and asserted as leader, matching
+         * dm1_v1_mirror_candidate_resurrect_rearm_pc34_compat.  Wounds
+         * and poison from the prior death are cleared so the revived
+         * champion does not bleed out in the first few ticks
+         * (TAB-06 G0050 wound-defense correction in v2.7.25 made this
+         * regression visible to real playtest). */
+        struct ChampionState_Compat* champ = &state->world.party.champions[championIndex];
+        if (champ->hp.current == 0) {
+            champ->hp.current = 1;
+        }
+        champ->wounds = 0;
+        champ->poisonDose = 0;
+        state->world.party.activeChampionIndex = championIndex;
     }
     (void)m11_disable_front_mirror_route(state, state->candidateMirrorOrdinal);
     state->candidateMirrorPanelActive = 0;
