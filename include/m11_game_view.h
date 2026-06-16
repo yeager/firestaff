@@ -1428,6 +1428,14 @@ int M11_GameView_ShouldHatchV1ActionIconCells(const M11_GameViewState* state);
 int M11_GameView_GetV1ActionIconCellBackdropColor(const M11_GameViewState* state,
                                                   int championSlot);
 
+/* ── Click hit-test (replaces ReDMCSB F0376_COMMAND_IsPointInBox) ────
+ * Returns 1 if (px,py) is inside the closed box {left,right,top,bottom}
+ * (inclusive), 0 otherwise.  Mirrors the contract of CLIKVIEW.C:290
+ * in ReDMCSB so the modern M11 door-button / wall-ornament /
+ * object-pile click pipeline stays source-equivalent.
+ */
+int m11_point_in_source_box(int px, int py, const int box[4]);
+
 #ifdef __cplusplus
 }
 #endif
