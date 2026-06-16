@@ -19,6 +19,9 @@ static int pm_modern_pack_detected(void) {
 }
 
 static void pm_recompute(DM1_V2_PresentationModeKind resolved) {
+    /* Capture setCount before zeroing so the new state carries the
+     * incremented value, not a fresh 0+1=1. */
+    uint32_t nextCount = g_pm_state.setCount + 1;
     memset(&g_pm_state, 0, sizeof(g_pm_state));
     g_pm_state.kind = resolved;
     g_pm_state.v2Active = (resolved != DM1_V2_PM_V1_FAITHFUL);
@@ -32,7 +35,7 @@ static void pm_recompute(DM1_V2_PresentationModeKind resolved) {
         case DM1_V2_PM_V21_UPSCALED: g_pm_state.upscaleScale = 2; break;
         case DM1_V2_PM_V22_MODERN:   g_pm_state.upscaleScale = 2; break;
     }
-    g_pm_state.setCount++;
+    g_pm_state.setCount = nextCount;
 }
 
 void dm1_v2_presentation_mode_set(DM1_V2_PresentationModeKind kind) {

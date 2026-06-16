@@ -18,6 +18,9 @@ static int csb_pm_modern_pack_detected(void) {
 }
 
 static void csb_pm_recompute(CSB_V2_PresentationModeKind resolved) {
+    /* Capture setCount before zeroing so the new state carries the
+     * incremented value, not a fresh 0+1=1. */
+    uint32_t nextCount = g_csb_pm_state.setCount + 1;
     memset(&g_csb_pm_state, 0, sizeof(g_csb_pm_state));
     g_csb_pm_state.kind = resolved;
     g_csb_pm_state.v2Active = (resolved != CSB_V2_PM_V1_FAITHFUL);
@@ -31,7 +34,7 @@ static void csb_pm_recompute(CSB_V2_PresentationModeKind resolved) {
         case CSB_V2_PM_V21_UPSCALED: g_csb_pm_state.upscaleScale = 2; break;
         case CSB_V2_PM_V22_MODERN:   g_csb_pm_state.upscaleScale = 2; break;
     }
-    g_csb_pm_state.setCount++;
+    g_csb_pm_state.setCount = nextCount;
 }
 
 void csb_v2_presentation_mode_set(CSB_V2_PresentationModeKind kind) {
