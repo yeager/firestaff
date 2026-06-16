@@ -40,6 +40,7 @@
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
 #include "dm1_v2_shape_runtime_pc34.h"
+#include "m11_v22_shape_cache_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v2_settings_pc34.h"
@@ -24105,6 +24106,23 @@ static void m11_apply_viewport_turn_pan(unsigned char* framebuffer,
     }
 }
 
+/* ── V2.2 GPU render path: per-frame V22 shape cache ─────────
+ *
+ * The V22 cache is implemented in m11_v22_shape_cache_pc34.c (its
+ * own module so tests don't need to pull in the full M11 game
+ * view). m11_draw_viewport populates it from the sampled cells
+ * after the sample loop, and the per-cell draw passes can
+ * consult m11_v22_shape_cache_get(depth, lateral) to read the
+ * V22 shape data.
+ *
+ * The actual swap of draw primitives (replacing the V1 GRAPHICS.DAT
+ * bitmap blit with a V22 modern art draw call) is a follow-up;
+ * this commit adds the data flow so the per-cell pass has the V22
+ * params available when the swap is implemented.
+ *
+ * Source-lock: ReDMCSB DUNVIEW.C:6697-6816 (composition draw order).
+ */
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -24146,6 +24164,29 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         for (side = 0; side < 3; ++side) {
             (void)m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side]);
         }
+    }
+    /* V2.2 GPU render path integration: populate the per-frame
+     * V22 shape cache from the sampled cells. When V22 is not the
+     * active mode, the cache marks all cells active=0 (V1 path) and
+     * the per-cell m11_draw_dm1_* draw passes fall through to their
+     * existing V1 selection. When V22 is active, the cache holds
+     * the resolved V22 shape data (params, wall, floor, material)
+     * for each of the 9 sampled cells, ready for the renderer to
+     * consult via m11_v22_shape_cache_get(depth, lateral).
+     *
+     * Source-lock: include/dm1_v2_shape_runtime_pc34.h + ReDMCSB
+     * DUNVIEW.C:6697-6816 (composition draw order). The D0 front
+     * cell is not in the 3x3 sample (it is below the viewport) so
+     * the V22 cache only has D1..D3 populated; D0 remains V1. */
+    {
+        unsigned char raw_squares[3][3];
+        int d, s;
+        for (d = 0; d < 3; ++d) {
+            for (s = 0; s < 3; ++s) {
+                raw_squares[d][s] = cells[d][s].square;
+            }
+        }
+        m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);
     }
     maxVisibleForward = m11_dm1_max_visible_forward_from_center(cells);
 
