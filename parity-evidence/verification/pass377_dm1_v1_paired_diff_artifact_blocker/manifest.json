@@ -173,7 +173,7 @@
       "scene": "ingame_inventory_panel"
     }
   ],
-  "head": "f32bcae2cc6ae6a1243a4bba867eefef46319546",
+  "head": "6ae6a4f40f81d03667c31c868156c52f671bbce1",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "paired diff masks/stats",
@@ -270,7 +270,7 @@
   "pairing_plan_path": "parity-evidence/overlays/pass377/pass377_pairing_plan.json",
   "pairing_plan_schema": "pass70_viewport_pair_compare.v1",
   "pairing_plan_stdout": "[pass-70] wrote plan: parity-evidence/overlays/pass377/pass377_pairing_plan.json\n01 ingame_start: firestaff=yes original=yes\n02 ingame_turn_right: firestaff=yes original=yes\n03 ingame_move_forward: firestaff=yes original=yes\n04 ingame_spell_panel: firestaff=yes original=yes\n05 ingame_after_cast: firestaff=yes original=yes\n06 ingame_inventory_panel: firestaff=yes original=yes\n",
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/Users/bosse/workspace-main/firestaff",
   "schema": "pass377_dm1_v1_paired_diff_artifact_blocker.v1",
   "source_audit": [
     {
@@ -336,5 +336,5 @@
   ],
   "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS377_PAIRED_DIFF_ARTIFACT_BLOCKER_AUDIT",
-  "timestamp_utc": "2026-06-15T04:43:00.796772+00:00"
+  "timestamp_utc": "2026-06-16T07:31:26.048015+00:00"
 }

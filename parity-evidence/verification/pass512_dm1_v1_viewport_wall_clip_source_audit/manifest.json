@@ -53,7 +53,7 @@
       ],
       "id": "local_clip_gate_contract",
       "lines": "1349-1401",
-      "sha256": "fafbb04de65feebd6f573e85d83425888aa32c7192477d19b152b69fe81abb5f"
+      "sha256": "60229605028c8a2f191733e0bf8e232d68dc70846bfa28c9ddb0a8bec6b06e13"
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
@@ -81,7 +81,7 @@
       ],
       "id": "local_transparent_wall_rows_use_clip_gate",
       "lines": "702-750",
-      "sha256": "fafbb04de65feebd6f573e85d83425888aa32c7192477d19b152b69fe81abb5f"
+      "sha256": "60229605028c8a2f191733e0bf8e232d68dc70846bfa28c9ddb0a8bec6b06e13"
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
@@ -105,7 +105,7 @@
       ],
       "id": "local_opaque_wall_rows_use_clip_gate",
       "lines": "736-790",
-      "sha256": "fafbb04de65feebd6f573e85d83425888aa32c7192477d19b152b69fe81abb5f"
+      "sha256": "60229605028c8a2f191733e0bf8e232d68dc70846bfa28c9ddb0a8bec6b06e13"
     },
     {
       "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",

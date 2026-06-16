@@ -118,7 +118,7 @@
     "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
     "ok": true
   },
-  "ctestTail": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start 274: dm1_v1_input_command_queue_pc34_compat\n1/4 Test #274: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start 277: dm1_v1_movement_command_core_pc34_compat\n2/4 Test #277: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start 363: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #363: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 641: dm1_v1_input_command_queue_source_lock\n4/4 Test #641: dm1_v1_input_command_queue_source_lock .....   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.05 sec",
+  "ctestTail": "Test project /Users/bosse/workspace-main/firestaff/build\n    Start  58: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #58: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  60: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #60: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start 131: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #131: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 272: dm1_v1_input_command_queue_source_lock\n4/4 Test #272: dm1_v1_input_command_queue_source_lock .....   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.05 sec",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -196,7 +196,7 @@
       "path": "tests/test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "f32bcae2cc6ae6a1243a4bba867eefef46319546",
+  "head": "6ae6a4f40f81d03667c31c868156c52f671bbce1",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
@@ -215,7 +215,7 @@
       "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED"
     }
   },
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/Users/bosse/workspace-main/firestaff",
   "residualScope": {
     "decision": "do not spend Firestaff M11 route work on original-DOS keyboard-buffer residual; treat it as an original-runtime transcript/debugger task",
     "firestaffRuntimeRoute": "closed: SDL/script keypad -> M12 input -> resolved C001..C006 command -> F0380/F0365/F0366 compat pipeline",
@@ -352,5 +352,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE",
-  "timestampUtc": "2026-06-15T04:43:00.830132+00:00"
+  "timestampUtc": "2026-06-16T07:31:25.764763+00:00"
 }
