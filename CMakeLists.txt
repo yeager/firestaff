@@ -4923,6 +4923,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
     if(TARGET firestaff_m10)
         target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m10)
     endif()
+    # m11_game_view.c references M12 symbols (M12_PresentationMode_*,
+    # M12_StartupMenu_*, M12_Config_*). Those are defined in
+    # firestaff_m12.a which is already linked above, but on GNU ld and
+    # MinGW the cross-archive reference from M11 into M12 is not
+    # resolved when M12 is scanned before M11. Re-link M12 after the
+    # M11 archive to close the cycle (macOS ld resolves the cycle
+    # implicitly).
+    if(TARGET firestaff_m12)
+        target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m12)
+    endif()
     add_test(
         NAME theron_v1_m11_direct_launch
         COMMAND test_theron_v1_m11_direct_launch
