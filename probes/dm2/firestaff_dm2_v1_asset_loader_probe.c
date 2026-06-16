@@ -8,8 +8,12 @@
  *   gcc -I include -I src/shared -I src/dm2 \
  *       probes/dm2/firestaff_dm2_v1_asset_loader_probe.c \
  *       src/dm2/dm2_v1_asset_loader.c \
- *       src/shared/firestaff_pc34_core_amalgam.c \
  *       -o build/dm2_v1_asset_loader_probe -lm
+ *
+ * (2026-06-16) The historical src/shared/firestaff_pc34_core_amalgam.c
+ * link entry is removed; that file is unbuilt legacy code (see
+ * docs/audits/REDMSB_FIRESTAFF_AUDIT_2026-06-16.md Bug 2).  The
+ * DM2 V1 asset-loader probe links against firestaff_m10 instead.
  *
  * Run:
  *   SDL_VIDEODRIVER=dummy ./build/dm2_v1_asset_loader_probe \
@@ -17,6 +21,7 @@
  */
 
 #include "dm2_v1_asset_loader.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

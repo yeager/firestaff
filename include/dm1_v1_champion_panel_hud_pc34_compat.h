@@ -47,7 +47,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* F0658 blit — defined in firestaff_pc34_core_amalgam.c, included in m10 via GLOB_RECURSE */
+/* F0658 blit — defined in src/shared/base_frontend_pc34.c and
+ * src/memory/memory_champion_state_pc34_compat.c, both in firestaff_m10
+ * via GLOB_RECURSE.  The historical note about the core amalgam
+ * file is stale: src/shared/firestaff_pc34_core_amalgam.c is
+ * unbuilt legacy code (see docs/audits/REDMSB_FIRESTAFF_AUDIT_2026-06-16.md
+ * Bug 2). */
 extern void F0658_BlitBitmapIndexToZoneIndexWithTransparency(int16_t bitmapIndex, int16_t zoneIndex, int16_t transparentColor);
 
 /* ── Champion color table — G0046_auc_Graphic562_ChampionColor[4] ── */

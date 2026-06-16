@@ -2914,7 +2914,13 @@ static int m11_party_slot_w(void) {
  *
  * Ref: V1_BLOCKERS.md §7; firestaff_pc34_core_amalgam.c
  * CHAMDRAW.C F0287; zones_h_reconstruction.json records 187..206;
- * parity-evidence/pass43_bar_graphs.md. */
+ * parity-evidence/pass43_bar_graphs.md.
+ *
+ * (2026-06-16) The firestaff_pc34_core_amalgam.c reference is
+ * historical; that file is unbuilt legacy code.  The F0287
+ * equivalent lives in src/dm1/dm1_v1_champion_stats_pc34_compat.c
+ * and the modern m11_v1_bar_graphs_enabled() helper above.
+ * See docs/audits/REDMSB_FIRESTAFF_AUDIT_2026-06-16.md Bug 2. */
 static int m11_v1_bar_graphs_enabled(void) {
     static int cached = -1;
     const char* env;
@@ -24913,7 +24919,11 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              *
              * Ref: firestaff_pc34_core_amalgam.c l.11229..11260 for
              * F0287; zones_h_reconstruction.json records 187..206;
-             * parity-evidence/pass43_bar_graphs.md. */
+             * parity-evidence/pass43_bar_graphs.md.
+             *
+             * (2026-06-16) The amalgam reference is historical;
+             * the file is unbuilt legacy code.  F0287 lives in
+             * src/dm1/dm1_v1_champion_stats_pc34_compat.c. */
             if (!isDead && m11_v1_bar_graphs_enabled()) {
                 int statIdx;
                 unsigned char champColor =
