@@ -9,6 +9,7 @@
 #include "theron_v2_settings_pc34.h"
 #include "config_m12.h"
 #include "theron_v2_texture_upscale_pc34.h"
+#include "theron_v2_filter_config_pc34.h"
 #include "theron_v22_shapes.h"
 #include "theron_v2_presentation_mode_pc34.h"
 
@@ -89,6 +90,14 @@ void theron_v2_settings_apply_to_runtime(const Theron_V2_Settings* settings) {
         uc.use_bilinear = copy.bilinearEnabled ? true : false;
         uc.sharpen = 0;
         theron_v2_upscale_init(&uc);
+    }
+    {
+        Theron_V2_FilterConfig fc;
+        fc.crtScanlinesEnabled = copy.crtScanlinesEnabled;
+        fc.crtScanlineStrength = copy.crtScanlineStrength;
+        fc.paletteCorrectionEnabled = copy.paletteCorrectionEnabled;
+        fc.ditherCleanupEnabled = copy.ditherCleanupEnabled;
+        theron_v2_filter_config_apply(&fc);
     }
 }
 

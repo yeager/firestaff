@@ -9,6 +9,7 @@
 #include "csb_v2_settings_pc34.h"
 #include "config_m12.h"
 #include "csb_v2_texture_upscale_pc34.h"
+#include "csb_v2_filter_config_pc34.h"
 #include "csb_v22_shapes.h"
 #include "csb_v2_presentation_mode_pc34.h"
 
@@ -93,6 +94,18 @@ void csb_v2_settings_apply_to_runtime(const CSB_V2_Settings* settings) {
         uc.use_bilinear = copy.bilinearEnabled ? true : false;
         uc.sharpen = 0;
         csb_v2_upscale_init(&uc);
+    }
+    /* Push the filter chain toggles into the V2 filter config. The
+     * per-frame render path reads these via csb_v2_filter_config_get()
+     * to decide whether to apply CRT scanlines, palette correction,
+     * dither cleanup, etc. */
+    {
+        CSB_V2_FilterConfig fc;
+        fc.crtScanlinesEnabled = copy.crtScanlinesEnabled;
+        fc.crtScanlineStrength = copy.crtScanlineStrength;
+        fc.paletteCorrectionEnabled = copy.paletteCorrectionEnabled;
+        fc.ditherCleanupEnabled = copy.ditherCleanupEnabled;
+        csb_v2_filter_config_apply(&fc);
     }
 }
 
