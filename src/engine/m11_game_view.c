@@ -39,6 +39,8 @@
 #include "firestaff_po_loader.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
+#include "dm1_v2_presentation_mode_pc34.h"
+#include "csb_v2_presentation_mode_pc34.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -6500,6 +6502,17 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         spec->presentationHeight > 0) {
         (void)M11_Render_SetWindowSize(spec->presentationWidth,
                                        spec->presentationHeight);
+    }
+    /* V2 presentation-mode selection: push the launcher
+     * M12_PRESENTATION_* enum into the per-game V2 presentation
+     * runtime. DM1 and CSB each own their own presentation-mode
+     * module; for V1 path, this is a no-op.
+     * Source-lock: ReDMCSB COMMAND.C F0359 LoadGameSettings -
+     * menu choice is the only path that may pick a V2 mode. */
+    if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
+        dm1_v2_presentation_mode_set_m12(spec->presentationMode);
+    } else if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
+        csb_v2_presentation_mode_set_m12(spec->presentationMode);
     }
     /* ── Theron's Quest V1: Track 02 runtime handoff ─────────────── */
     if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {

@@ -430,6 +430,50 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase7_verification_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V2 presentation-mode probe (V2.0 / V2.1 / V2.2 selection).
+# Headless: no game assets, no SDL rendering required.
+# See include/dm1_v2_presentation_mode_pc34.h.
+add_executable(firestaff_dm1_v2_presentation_mode_probe
+    probes/firestaff_dm1_v2_presentation_mode_probe.c
+    src/dm1v2/dm1_v2_presentation_mode_pc34.c
+    src/dm1v2/dm1_v2_settings_pc34.c
+    src/dm1v2/dm1_v2_texture_upscale_pc34.c
+    src/dm1v2/dm1_v22_shapes.c
+    src/dm1v2/dm1_v2_modern_assets_pc34.c
+    src/dm1v2/dm1_v2_asset_pipeline_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_dm1_v2_presentation_mode_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_dm1_v2_presentation_mode_probe
+    PRIVATE firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v2_presentation_mode_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# CSB V2 presentation-mode probe (V2.0 / V2.1 / V2.2 selection).
+# Headless: no game assets, no SDL rendering required.
+# See include/csb_v2_presentation_mode_pc34.h.
+add_executable(firestaff_csb_v2_presentation_mode_probe
+    probes/firestaff_csb_v2_presentation_mode_probe.c
+    src/csb/csb_v2_presentation_mode_pc34.c
+    src/dm1v2/dm1_v2_presentation_mode_pc34.c
+    src/dm1v2/dm1_v2_settings_pc34.c
+    src/dm1v2/dm1_v2_texture_upscale_pc34.c
+    src/dm1v2/dm1_v22_shapes.c
+    src/dm1v2/dm1_v2_modern_assets_pc34.c
+    src/dm1v2/dm1_v2_asset_pipeline_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_csb_v2_presentation_mode_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_csb_v2_presentation_mode_probe
+    PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_presentation_mode_probe PRIVATE -Wall -Wextra -O2)
+endif()
+endif()
+
 # Nexus V2 Phase 7 — V2 Verification Suite Hardening Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: presentation-disabled state-hash gate, deterministic input scripts,
@@ -1790,6 +1834,29 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_dm1_v2_presentation_profile_pc34 PRIVATE firestaff_m12)
+    add_executable(test_dm1_v2_presentation_mode_pc34
+        tests/test_dm1_v2_presentation_mode_pc34.c
+        src/dm1v2/dm1_v2_presentation_mode_pc34.c
+        src/dm1v2/dm1_v2_settings_pc34.c
+        src/dm1v2/dm1_v2_texture_upscale_pc34.c
+        src/dm1v2/dm1_v22_shapes.c
+        src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_asset_pipeline_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_dm1_v2_presentation_mode_pc34 PRIVATE firestaff_m12)
+    add_executable(test_csb_v2_presentation_mode_pc34
+        tests/test_csb_v2_presentation_mode_pc34.c
+        src/csb/csb_v2_presentation_mode_pc34.c
+        src/dm1v2/dm1_v2_presentation_mode_pc34.c
+        src/dm1v2/dm1_v2_settings_pc34.c
+        src/dm1v2/dm1_v2_texture_upscale_pc34.c
+        src/dm1v2/dm1_v22_shapes.c
+        src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_asset_pipeline_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v2_presentation_mode_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
     add_executable(test_dm1_v2_phase_gate_pc34
         tests/test_dm1_v2_phase_gate_pc34.c
         src/dm1v2/dm1_v2_phase_gate_pc34.c
@@ -1855,6 +1922,8 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_item_render_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_presentation_profile_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_presentation_mode_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v2_presentation_mode_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase_gate_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
@@ -1999,6 +2068,14 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_presentation_profile_pc34
         COMMAND test_dm1_v2_presentation_profile_pc34
+    )
+    add_test(
+        NAME dm1_v2_presentation_mode_pc34
+        COMMAND test_dm1_v2_presentation_mode_pc34
+    )
+    add_test(
+        NAME csb_v2_presentation_mode_pc34
+        COMMAND test_csb_v2_presentation_mode_pc34
     )
     add_test(
         NAME dm1_v2_phase_gate_pc34
