@@ -13762,6 +13762,23 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                                10,
                                                kOrnD2Palette,
                                                0);
+    } else {
+        /* BUG-DNY-DM1-2026-06-16: when the wall-ornament graphic does
+         * not load (e.g. user is on a Hall of Champions tile whose
+         * wallOrnamentOrdinal 43 maps to graphic 346 and that graphic
+         * is missing from the local GRAPHICS.DAT extract, or the
+         * default 43 index was never updated to point at an asset
+         * that exists in the runtime bundle), the D1C champion
+         * portrait at (96, 35) was drawn directly on top of the
+         * corridor background, making the portrait appear to
+         * 'float in the air' for every Hall tile the user walked
+         * through.  Fall back to a solid dark-gray wall rect at the
+         * same destination so the portrait always has a backdrop. */
+        m11_fill_rect(framebuffer, fbW, fbH,
+                      M11_VIEWPORT_X + blit.dstX,
+                      M11_VIEWPORT_Y + blit.dstY,
+                      blit.width, blit.height,
+                      (unsigned char)M11_COLOR_DARK_GRAY);
     }
     m11_draw_dm1_front_champion_portrait(state, &mirrorCell, framebuffer, fbW, fbH);
 }
