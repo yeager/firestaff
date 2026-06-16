@@ -702,6 +702,23 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_filter_config_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V2.0 per-frame filter chain dispatch probe. Verifies that the
+# csb_v2_filter_chain_apply_indexed and _rgba functions honor the
+# live filter config and the toggle flags.
+add_executable(firestaff_csb_v2_per_frame_filter_dispatch_probe
+    probes/firestaff_csb_v2_per_frame_filter_dispatch_probe.c
+    src/csb/csb_v2_filter_config_pc34.c
+    src/csb/csb_v2_settings_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_csb_v2_per_frame_filter_dispatch_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_csb_v2_per_frame_filter_dispatch_probe
+    PRIVATE firestaff_csb_v2 firestaff_m12 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_per_frame_filter_dispatch_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2.0 per-frame filter chain probe. Headless: no game data.
 # Covers all 5 filter functions: CRT scanlines, palette build LUT,
 # dither cleanup, palette interpolate, sharpen. See include/csb_v2_filters.h.
@@ -2304,6 +2321,13 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_csb_v2_filter_config_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
+    add_executable(test_csb_v2_filter_chain_pc34
+        tests/test_csb_v2_filter_chain_pc34.c
+        src/csb/csb_v2_filter_config_pc34.c
+        src/csb/csb_v2_settings_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v2_filter_chain_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
     add_executable(test_csb_v2_filter_crt_scanlines_pc34
         tests/test_csb_v2_filter_crt_scanlines_pc34.c
         src/csb/csb_v2_filter_crt_scanlines_pc34.c
@@ -2572,6 +2596,7 @@ if(BUILD_TESTING)
         target_compile_options(test_csb_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_filter_config_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v2_filter_chain_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_filter_crt_scanlines_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_filter_dither_cleanup_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_filter_palette_interpolate_pc34 PRIVATE -Wall -Wextra -O2)
@@ -2741,6 +2766,10 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v2_filter_config_pc34
         COMMAND test_csb_v2_filter_config_pc34
+    )
+    add_test(
+        NAME csb_v2_filter_chain_pc34
+        COMMAND test_csb_v2_filter_chain_pc34
     )
     add_test(
         NAME csb_v2_filter_crt_scanlines_pc34

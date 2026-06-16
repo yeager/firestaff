@@ -9,6 +9,7 @@
 #include "dm1_v1_combat_pc34_compat.h"
 #include "firestaff_input.h"
 #include "firestaff_sdl_bridge.h"
+#include "csb_v2_filter_config_pc34.h"
 #include "firestaff_save.h"
 #include "firestaff_graphics_dat_reader.h"
 #include "firestaff_wall_graphics.h"
@@ -595,11 +596,27 @@ void fs_game_render_v2(FS_GameState *state) {
     (void)sub_tick;
     /* 1-2: Render V1 viewport to indexed framebuffer */
     fs_game_render_viewport(state);
+    /* 2.5: CSB V2.0 indexed filter chain (dither + palette interp).
+     * Applied to the indexed framebuffer after the V1 render and
+     * before the indexed-to-RGBA conversion. Only runs for CSB V2.0
+     * (other games don't have a CSB V2 filter config). */
+    if (state->config.game == FS_GAME_CSB) {
+        (void)csb_v2_filter_chain_apply_indexed(g_framebuffer, FS_FB_W, FS_FB_H);
+    }
     /* 3: Convert to RGBA (V1=1x, V2.1=2x, V2.2=4x) */
     {
         int scale = (state->config.version == FS_VERSION_V1) ? 1 :
                     (state->config.version == FS_VERSION_V21) ? 2 : 4;
+        int w = FS_FB_W * scale;
+        int h = FS_FB_H * scale;
         fs_framebuffer_to_rgba(scale);
+        /* 3.5: CSB V2.0 RGBA filter chain (CRT scanlines).
+         * Applied to the RGBA surface after the indexed-to-RGBA
+         * conversion. The csb_v2_filter_chain_apply_rgba reads
+         * csb_v2_filter_config_get() to decide whether to apply. */
+        if (state->config.game == FS_GAME_CSB) {
+            (void)csb_v2_filter_chain_apply_rgba((uint8_t*)g_rgba_buffer, w, h);
+        }
     }
     /* 4-6: SDL present (via bridge) */
     /* fs_sdl_present_rgba(&g_sdl, g_rgba_buffer, w, h); */

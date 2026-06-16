@@ -6,6 +6,7 @@
  */
 
 #include "csb_v2_filter_config_pc34.h"
+#include "csb_v2_filters.h"
 
 static CSB_V2_FilterConfig g_csb_v2_filter_config;
 
@@ -46,6 +47,48 @@ void csb_v2_filter_config_apply(const CSB_V2_FilterConfig* config) {
 
 void csb_v2_filter_config_reset(void) {
     csb_v2_filter_config_defaults(&g_csb_v2_filter_config);
+}
+
+int csb_v2_filter_chain_apply_indexed(unsigned char* fb, int w, int h) {
+    const CSB_V2_FilterConfig* fc;
+    int applied = 0;
+    if (!fb || w <= 0 || h <= 0) return 0;
+    fc = csb_v2_filter_config_get();
+    if (!fc) return 0;
+    /* dither_cleanup: 3x3 mode filter on the indexed framebuffer.
+     * Requires w > 2 and h > 2 to be meaningful. */
+    if (fc->ditherCleanupEnabled) {
+        if (w > 2 && h > 2) {
+            (void)csb_v2_filter_dither_cleanup_indexed(fb, w, h);
+            applied++;
+        }
+    }
+    /* palette_interpolate: smooth per-pixel brightness gradient.
+     * Strength defaults to crtScanlineStrength if a non-zero
+     * value is available; otherwise 50% (mid-strength). */
+    if (fc->paletteCorrectionEnabled) {
+        if (w > 2 && h > 2) {
+            int strength = fc->crtScanlineStrength;
+            if (strength <= 0) strength = 50;
+            (void)csb_v2_filter_palette_interpolate_indexed(fb, w, h, strength);
+            applied++;
+        }
+    }
+    return applied;
+}
+
+int csb_v2_filter_chain_apply_rgba(unsigned char* rgba, int w, int h) {
+    const CSB_V2_FilterConfig* fc;
+    int applied = 0;
+    if (!rgba || w <= 2 || h <= 2) return 0;
+    fc = csb_v2_filter_config_get();
+    if (!fc) return 0;
+    /* crt_scanlines: even-row dimming on the RGBA surface. */
+    if (fc->crtScanlinesEnabled) {
+        (void)csb_v2_filter_crt_scanlines_rgba(rgba, w, h, fc->crtScanlineStrength);
+        applied++;
+    }
+    return applied;
 }
 
 const char* csb_v2_filter_config_source_evidence(void) {
