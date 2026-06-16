@@ -3976,12 +3976,20 @@ static int m11_find_empty_slot(const struct ChampionState_Compat* champ) {
     if (!champ || !champ->present) {
         return -1;
     }
-    /* Prefer hands first, then pouches, then backpack */
-    if (champ->inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE) {
-        return CHAMPION_SLOT_HAND_LEFT;
-    }
+    /* Prefer hands first, then pouches, then backpack.
+     * BUG-DNY-DM1-2026-06-16 user playtest: the first pickup used to
+     * land in HAND_LEFT (the ready hand), leaving the prominent
+     * HAND_RIGHT action-icon cell empty so the player thought the
+     * pickup silently failed.  Fill the action hand (HAND_RIGHT)
+     * first so the picked-up item is immediately visible in the
+     * action-area cell that F0386_MENUS_DrawActionIcon drives.
+     * The user can then move the item to the ready hand via the
+     * swap input if they want. */
     if (champ->inventory[CHAMPION_SLOT_HAND_RIGHT] == THING_NONE) {
         return CHAMPION_SLOT_HAND_RIGHT;
+    }
+    if (champ->inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE) {
+        return CHAMPION_SLOT_HAND_LEFT;
     }
     for (slot = CHAMPION_SLOT_POUCH_1; slot <= CHAMPION_SLOT_POUCH_2; ++slot) {
         if (champ->inventory[slot] == THING_NONE) {
