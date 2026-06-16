@@ -161,6 +161,23 @@ typedef struct {
     int dm1V2PixelGridIntensity;         /* 0-100, default 20 */
     int dm1V2MotionBlurEnabled;         /* 0/1, default 0 */
     int dm1V2MotionBlurStrength;         /* 0-100, default 30 */
+
+    /* CSB V2.1/V2.2 settings (per-game, persisted). */
+    int csbV2ScalePercent;               /* 100-400, default 200 (2x EPX) */
+    int csbV2BilinearEnabled;            /* 0/1, default 0 (EPX) */
+    int csbV2CrtScanlinesEnabled;        /* 0/1, default 0 */
+    int csbV2CrtScanlineStrength;        /* 0-100, default 35 */
+    int csbV2PaletteCorrectionEnabled;   /* 0/1, default 0 */
+    int csbV2DitherCleanupEnabled;       /* 0/1, default 0 */
+
+    /* Theron V2.1/V2.2 settings (per-game, persisted). */
+    int theronV2ScalePercent;            /* 100-400, default 200 (2x EPX) */
+    int theronV2BilinearEnabled;         /* 0/1, default 0 (EPX) */
+    int theronV2CrtScanlinesEnabled;     /* 0/1, default 0 */
+    int theronV2CrtScanlineStrength;     /* 0-100, default 35 */
+    int theronV2PaletteCorrectionEnabled; /* 0/1, default 0 */
+    int theronV2DitherCleanupEnabled;    /* 0/1, default 0 */
+
     char customMusicPath[M12_CONFIG_DATA_DIR_CAPACITY];
     char customDungeonPath[M12_CONFIG_DATA_DIR_CAPACITY];
     char screenshotPath[M12_CONFIG_DATA_DIR_CAPACITY];
