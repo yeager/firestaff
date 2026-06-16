@@ -198,6 +198,9 @@ Theron_V22_WallShape theron_v22_wall_shape_get(Theron_V22_WallVariant variant) {
 Theron_V22_FloorShape theron_v22_floor_shape_get(int theron_cell_type, int view_direction) {
     int base = theron_cell_type & 0x0F;
     int flags = theron_cell_type & 0xF0;
+    /* Theron encodes pit + flags differently from DM1/CSB: the pit is
+     * identified by base == THERON_SQUARE_PIT directly (no flag). */
+    if (base == THERON_SQUARE_PIT) return g_floor_shapes[THERON_FLOOR_SHAPE_PIT];
     if (flags & 0x40) return g_floor_shapes[THERON_FLOOR_SHAPE_PIT];
     if (flags & 0x10) {
         return g_floor_shapes[(flags & 0x01) ? THERON_FLOOR_SHAPE_STAIRS_DOWN

@@ -116,12 +116,16 @@ int main(void) {
      * global config). Verify it doesn't crash. */
     csb_v2_settings_apply_to_runtime(&settings);
     csb_v2_settings_apply_to_runtime(NULL);
-    CHECK(1, "apply_to_runtime null-safe");
+    CHECK(1);
 
     /* Source evidence */
     const char* ev = csb_v2_settings_source_evidence();
-    CHECK(ev != NULL && strlen(ev) > 50, "ev non-trivial");
-    CHECK(strstr(ev, "CSB") != NULL, "ev CSB");
+    CHECK(ev != NULL);  /* truthy: "ev non-null" */
+    CHECK(strlen(ev) > 50);  /* truthy: "ev non-trivial length" */
+    {
+        const char* p = strstr(ev, "CSB");
+        CHECK(p != NULL);  /* truthy: "ev CSB" */
+    }
 
     printf("--- %d / %d passed ---\n", (failures == 0 ? 23 : 23 - failures), 23);
     return failures == 0 ? 0 : 1;

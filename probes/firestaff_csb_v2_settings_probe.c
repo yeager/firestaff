@@ -6,6 +6,7 @@
 #include "csb_v2_settings_pc34.h"
 #include "config_m12.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if !defined(_WIN32)
