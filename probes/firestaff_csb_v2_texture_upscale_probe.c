@@ -29,10 +29,13 @@ static void p_bilinear(void) {
 }
 
 static void p_epx(void) {
-    uint8_t src[4] = { 10, 20, 10, 20 };
+    /* Horizontal-edge input: row0=10, row1=20. EPX preserves the
+     * edge cleanly: top half = 10, bottom half = 20. */
+    uint8_t src[4] = { 10, 10, 20, 20 };
     uint8_t dst[16] = { 0 };
     csb_v2_upscale_epx(src, 2, 2, dst, 4, 4);
-    check(dst[0] == 10 && dst[1] == 20, "epx 2x block");
+    check(dst[0] == 10 && dst[3] == 10, "epx top row = 10");
+    check(dst[12] == 20 && dst[15] == 20, "epx bottom row = 20");
 }
 
 static void p_palette(void) {
@@ -58,22 +61,31 @@ static void p_full_pipeline(void) {
     uint32_t rgba[64];
     uint32_t pal[4] = { 0, 0xFF, 0xFF00, 0xFF0000 };
     for (int i = 0; i < 16; i++) src[i] = (uint8_t)i;
+    /* Sentinel-init so the bare 'epx[0] != 0xCC' check works
+     * even if src[0] = 0. */
+    memset(epx, 0xCC, 64);
+    memset(rgba, 0xCC, 64 * sizeof(uint32_t));
     csb_v2_upscale_full_pipeline(src, 4, 4, pal, 4, epx, rgba, 2);
-    check(epx[0] != 0 && rgba[0] == 0, "full pipeline ran");
+    check(epx[0] != 0xCC, "full pipeline EPX wrote epx_buf");
+    check(rgba[0] == 0, "full pipeline rgba[0] = palette[0] = 0");
 }
 
 static void p_present_mode_v22_epx_runs(void) {
     uint8_t src[4] = { 0, 1, 2, 3 };
-    uint8_t epx[16] = { 0 };
+    uint8_t epx[16];
     uint32_t rgba[16];
     uint32_t pal[4] = { 0, 1, 2, 3 };
     csb_v2_upscale_set_scale(2);
     csb_v2_presentation_mode_reset();
     csb_v2_presentation_mode_set_modern_pack_available(1);
     csb_v2_presentation_mode_set(CSB_V2_PM_V22_MODERN);
+    /* Sentinel-init so a bare 'epx[0] != 0xCC' check works
+     * even if src[0] = 0 (EPX copies P=0 to epx[0] on a
+     * uniform 0 input). */
+    memset(epx, 0xCC, 16);
     csb_v2_upscale_9square_viewport(src, 2, 2, pal, 4, epx, rgba);
     check(csb_v2_presentation_mode_is_v22() == 1, "V22 active");
-    check(epx[0] != 0, "EPX ran under V22");
+    check(epx[0] != 0xCC, "EPX ran under V22 (sentinel check)");
     csb_v2_presentation_mode_reset();
 }
 
