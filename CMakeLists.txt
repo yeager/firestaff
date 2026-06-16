@@ -4918,6 +4918,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
     if(TARGET firestaff_m11)
         target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m11)
     endif()
+    # M10 is needed to resolve m11_game_view.c transitive refs (m11_game_text
+    # helpers in M10 reference m12 symbols through the launcher handoff path).
+    if(TARGET firestaff_m10)
+        target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m10)
+    endif()
     add_test(
         NAME theron_v1_m11_direct_launch
         COMMAND test_theron_v1_m11_direct_launch
