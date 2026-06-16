@@ -41,6 +41,7 @@
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
+#include "theron_v2_presentation_mode_pc34.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -6513,6 +6514,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         dm1_v2_presentation_mode_set_m12(spec->presentationMode);
     } else if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
         csb_v2_presentation_mode_set_m12(spec->presentationMode);
+    } else if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
+        theron_v2_presentation_mode_set_m12(spec->presentationMode);
     }
     /* ── Theron's Quest V1: Track 02 runtime handoff ─────────────── */
     if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
