@@ -5,6 +5,8 @@
  * Mirror of dm1_v2_presentation_mode_pc34.c + csb_v2_presentation_mode_pc34.c.
  */
 #include "theron_v2_presentation_mode_pc34.h"
+#include "theron_v2_texture_upscale_pc34.h"
+#include "theron_v22_shapes.h"
 #include <string.h>
 
 extern int m11_v22_modern_assets_available(void);
@@ -40,6 +42,13 @@ void theron_v2_presentation_mode_set(Theron_V2_PresentationModeKind kind) {
     Theron_V2_PresentationModeKind resolved = theron_v2_presentation_mode_resolve(
         kind, theron_pm_modern_pack_detected());
     theron_pm_recompute(resolved);
+    /* Side-effects: push the active scale into the Theron V2.1
+     * upscale pipeline and initialise the Theron V2.2 shape book on
+     * V22 entry. Mirror of dm1/cs1 V2 presentation mode. */
+    theron_v2_upscale_set_scale(g_theron_pm_state.upscaleScale);
+    if (g_theron_pm_state.v22ModernActive) {
+        theron_v22_shapes_init();
+    }
 }
 
 void theron_v2_presentation_mode_set_m12(int m12PresentationMode) {
@@ -61,6 +70,7 @@ void theron_v2_presentation_mode_reset(void) {
     g_theron_pm_pack_override_valid = 0;
     g_theron_pm_pack_override_value = 0;
     theron_pm_recompute(THERON_V2_PM_V1_FAITHFUL);
+    theron_v2_upscale_set_scale(1);
 }
 
 Theron_V2_PresentationModeKind theron_v2_presentation_mode_resolve(

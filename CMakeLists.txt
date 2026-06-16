@@ -106,7 +106,7 @@ if(NEXUS_SOURCES)
 endif()
 
 # ── Theron V1 static library ─────────────────────────────────────────
-file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/theron/theron_v2_*.c")
+file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/theron/theron_v2_*.c" "src/theron/theron_v22_*.c")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES})
     target_include_directories(firestaff_theron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -386,6 +386,42 @@ target_link_libraries(firestaff_nexus_v2_smooth_movement_probe
     PRIVATE firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_nexus_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# Nexus V2 Phase 0 — V1 Compatibility Lock Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: domain classification (11 V1-source-locked + 9 V2-eligible),
+# V1-source-locked domains stay V1-locked regardless of V2 toggles,
+# V2-eligible domains blocked when V2 off, CONFIG_PRESENTATION requires
+# both V2 and config-persistence toggles, source evidence references
+# NEXUS.C / NEXUS2.C / nexus_v1_*, null-arg safety, default V1-only.
+add_executable(firestaff_nexus_v2_phase0_v1_compatibility_lock_probe
+    probes/firestaff_nexus_v2_phase0_v1_compatibility_lock_probe.c
+    src/nexus/nexus_v2_phase_gate_pc34.c)
+target_include_directories(firestaff_nexus_v2_phase0_v1_compatibility_lock_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_nexus_v2_phase0_v1_compatibility_lock_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v2_phase0_v1_compatibility_lock_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# Nexus V2 Phase 1 — Launch/Profile Separation Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: launch gate (GAME_STATE_INIT always V1-locked),
+# profile gate (CONFIG_PRESENTATION requires both toggles),
+# Nexus V1 asset hash separation (0DMSTRT.BIN, DM.BIN, LEV00.DGN,
+# LEV15.DGN, ITEM.IBS, FACE.BIN, FILE_LISTING.txt),
+# cross-game hash separation (Nexus != DM1 != CSB), headless safety.
+add_executable(firestaff_nexus_v2_phase1_launch_profile_separation_probe
+    probes/firestaff_nexus_v2_phase1_launch_profile_separation_probe.c
+    src/nexus/nexus_v2_phase_gate_pc34.c)
+target_include_directories(firestaff_nexus_v2_phase1_launch_profile_separation_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_nexus_v2_phase1_launch_profile_separation_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # Nexus V2 Phase 6 — Touch/Controller Affordance Probe
@@ -4558,6 +4594,39 @@ if(BUILD_TESTING)
         NAME nexus_v2_smooth_movement
         COMMAND test_nexus_v2_smooth_movement
     )
+
+    # ── Nexus V2 Phase 0/1 phase gate smoke test ─────────────────
+    # Source-lock: src/nexus/nexus_v2_phase_gate_pc34.c
+    # Phase 0: V1 compatibility lock (11 V1-locked + 9 V2-eligible domains)
+    # Phase 1: V2 launch/profile separation (CONFIG gate, V1-only default)
+    add_executable(test_nexus_v2_phase_gate_pc34
+        tests/test_nexus_v2_phase_gate_pc34.c
+        src/nexus/nexus_v2_phase_gate_pc34.c
+    )
+    target_include_directories(test_nexus_v2_phase_gate_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_phase_gate_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v2_phase_gate_pc34
+        COMMAND test_nexus_v2_phase_gate_pc34
+    )
+
+    # ── Nexus V2 Phase 0/1 probe ctest entries ──────────────────
+    if(TARGET firestaff_nexus_v2_phase0_v1_compatibility_lock_probe)
+        add_test(
+            NAME nexus_v2_phase0_v1_compatibility_lock
+            COMMAND firestaff_nexus_v2_phase0_v1_compatibility_lock_probe
+        )
+    endif()
+    if(TARGET firestaff_nexus_v2_phase1_launch_profile_separation_probe)
+        add_test(
+            NAME nexus_v2_phase1_launch_profile_separation
+            COMMAND firestaff_nexus_v2_phase1_launch_profile_separation_probe
+        )
+    endif()
 
     # ── Nexus V2 Phase 4 Lighting smoke test ──────────────────────
     # Source-lock: src/nexus/nexus_v2_lighting.c
