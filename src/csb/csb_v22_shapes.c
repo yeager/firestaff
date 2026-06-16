@@ -205,8 +205,13 @@ CSB_V22_FloorShape csb_v22_floor_shape_get(int csb_cell_type, int view_direction
     int flags = csb_cell_type & 0xF0;
     if (flags & 0x40) return g_floor_shapes[CSB_FLOOR_SHAPE_PIT];
     if (flags & 0x10) {
-        return g_floor_shapes[(flags & 0x01) ? CSB_FLOOR_SHAPE_STAIRS_DOWN
-                                              : CSB_FLOOR_SHAPE_STAIRS_UP];
+        /* M034 stairs: bit 0x10 marks stairs; bit 0x01 of base picks
+         * direction (0 = up, 1 = down). The original code looked at
+         * `flags & 0x01` but `flags` was already masked to 0xF0 so
+         * that bit was always zero, making both 0x10 and 0x11
+         * resolve to STAIRS_UP. Use `base & 0x01` instead. */
+        return g_floor_shapes[(base & 0x01) ? CSB_FLOOR_SHAPE_STAIRS_DOWN
+                                            : CSB_FLOOR_SHAPE_STAIRS_UP];
     }
     switch (base) {
         case 5:  return g_floor_shapes[CSB_FLOOR_SHAPE_CRACKED];
