@@ -39,6 +39,7 @@
 #include "firestaff_po_loader.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
+#include "dm1_v2_shape_runtime_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "theron_v2_presentation_mode_pc34.h"
@@ -6516,6 +6517,20 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         csb_v2_presentation_mode_set_m12(spec->presentationMode);
     } else if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
         theron_v2_presentation_mode_set_m12(spec->presentationMode);
+    }
+    /* V2.2 shape runtime hint: when V22 is the active mode, the
+     * renderer can ask dm1_v2_shape_runtime_for_cell() to get a
+     * per-cell V2.2 shape override. This is the dispatch hook the
+     * GPU renderer reads from when filling the modern viewport. The
+     * runtime is a thin wrapper over m11_v22_shape_for_cell(), so
+     * the V22 active branch stays the single source of truth. */
+    if (dm1_v2_shape_runtime_v22_active() && spec->gameId
+        && strcmp(spec->gameId, "dm1") == 0) {
+        /* V22 path is live: future renderer can resolve shapes per
+         * cell using dm1_v2_shape_runtime_composition(). For now the
+         * call is a no-op (the modern asset pack is a follow-up); the
+         * important part is the mode signal reaches the runtime. */
+        (void)dm1_v2_shape_runtime_for_cell;
     }
     /* ── Theron's Quest V1: Track 02 runtime handoff ─────────────── */
     if (spec->gameId && strcmp(spec->gameId, "theron") == 0) {
