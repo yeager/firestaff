@@ -2836,6 +2836,42 @@ int main(int argc, char** argv) {
                          strcmp(pickupView.lastOutcome, "NOTHING TO PICK UP") == 0,
                      "pickup on empty floor reports nothing to pick up without crashing");
 
+        /* INV_GV_29A: Pickup drains all items from a multi-item cell
+         * (BUG-DNY-DM1-2026-06-16 user playtest reported that after
+         * picking up one item, subsequent pickups on the same cell
+         * silently fail; the unlink path or the item walk is dropping
+         * the chain head).  Place a weapon and a potion on the cell,
+         * confirm two consecutive pickups succeed and the cell chain
+         * ends with THING_ENDOFLIST. */
+        {
+            int multiBase = 2 * pickupView.world.dungeon->maps[0].height + 3;
+            unsigned short weaponThing =
+                (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+            unsigned short potionThing =
+                (unsigned short)((THING_TYPE_POTION << 10) | 0);
+            int clearMulti;
+            for (clearMulti = 0; clearMulti < CHAMPION_SLOT_COUNT; ++clearMulti) {
+                pickupView.world.party.champions[0].inventory[clearMulti] = THING_NONE;
+            }
+            /* Place potion first (head-of-chain after), then weapon in
+             * front of it.  The chain reads: cellHead -> weapon -> potion
+             * -> ENDOFLIST.  The pickup walker must traverse both. */
+            probe_set_next(pickupView.world.things->rawThingData[THING_TYPE_POTION],
+                           THING_ENDOFLIST);
+            probe_set_next(pickupView.world.things->rawThingData[THING_TYPE_WEAPON],
+                           potionThing);
+            pickupView.world.things->squareFirstThings[multiBase] = weaponThing;
+            probe_record(&tally,
+                         "INV_GV_29A",
+                         M11_GameView_PickupItem(&pickupView) == 1 &&
+                             M11_GameView_PickupItem(&pickupView) == 1 &&
+                             M11_GameView_PickupItem(&pickupView) == 0 &&
+                             pickupView.world.things->squareFirstThings[multiBase] == THING_ENDOFLIST &&
+                             M11_GameView_CountChampionItems(&pickupView, 0) == 2,
+                         "Pickup drains all items from a multi-item cell (BUG-DNY-DM1-2026-06-16)");
+            pickupView.world.things->squareFirstThings[multiBase] = THING_ENDOFLIST;
+        }
+
         /* INV_GV_30: Drop with empty inventory reports failure gracefully */
         {
             int clearSlot;
