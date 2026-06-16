@@ -142,7 +142,7 @@ static void check_v2_off_byte_stability(void)
     int all_correct = 1;
     nexus_v2_pipeline_init(&pipe, NEXUS_V2_OFF);
     fill_v1_fb(&fb, 0);
-    nexus_v2_pipeline_render(&pipe, &fb, 0.0f, 0.0f, 0.0f, 0, 0.0f);
+    nexus_v2_pipeline_render(&pipe, &fb, 0.0f, 0.0f, 0.0f, 0.0f);
     for (i = 0; i < NEXUS_FB_W * NEXUS_FB_H; ++i) {
         uint32_t expected = fb.palette[fb.color_buffer[i]];
         if (pipe.output_buffer[i] != expected) {
@@ -164,8 +164,8 @@ static void check_v2_off_deterministic(void)
     nexus_v2_pipeline_init(&pipe2, NEXUS_V2_OFF);
     fill_v1_fb(&fb1, 1);
     fill_v1_fb(&fb2, 1);
-    nexus_v2_pipeline_render(&pipe1, &fb1, 0.0f, 0.0f, 0.0f, 0, 0.0f);
-    nexus_v2_pipeline_render(&pipe2, &fb2, 0.0f, 0.0f, 0.0f, 0, 0.0f);
+    nexus_v2_pipeline_render(&pipe1, &fb1, 0.0f, 0.0f, 0.0f, 0.0f);
+    nexus_v2_pipeline_render(&pipe2, &fb2, 0.0f, 0.0f, 0.0f, 0.0f);
     same = 1;
     for (i = 0; i < NEXUS_FB_W * NEXUS_FB_H; ++i) {
         if (pipe1.output_buffer[i] != pipe2.output_buffer[i]) {
@@ -238,8 +238,8 @@ static void check_state_hash_gate(void)
     pipe2.config.bilinear_filter = 0;
     fill_v1_fb(&fb1, 2);
     fill_v1_fb(&fb2, 2);
-    nexus_v2_pipeline_render(&pipe1, &fb1, 0.0f, 0.0f, 0.0f, 0, 0.0f);
-    nexus_v2_pipeline_render(&pipe2, &fb2, 0.0f, 0.0f, 0.0f, 0, 0.0f);
+    nexus_v2_pipeline_render(&pipe1, &fb1, 0.0f, 0.0f, 0.0f, 0.0f);
+    nexus_v2_pipeline_render(&pipe2, &fb2, 0.0f, 0.0f, 0.0f, 0.0f);
     same = 1;
     for (i = 0; i < pipe1.output_w * pipe1.output_h; ++i) {
         if (pipe1.output_buffer[i] != pipe2.output_buffer[i]) {
@@ -264,7 +264,7 @@ static void check_state_hash_different_pattern(void)
     pipe.config.bilinear_filter = 0;
     fill_v1_fb(&fb1, 0);
     fill_v1_fb(&fb2, 3);
-    nexus_v2_pipeline_render(&pipe, &fb1, 0.0f, 0.0f, 0.0f, 0, 0.0f);
+    nexus_v2_pipeline_render(&pipe, &fb1, 0.0f, 0.0f, 0.0f, 0.0f);
     for (i = 0; i < pipe.output_w * pipe.output_h; ++i) {
         /* Pipeline mutates output_buffer in-place. After rendering
          * fb1 then fb2, the output should reflect fb2 (and
@@ -272,7 +272,7 @@ static void check_state_hash_different_pattern(void)
          * tested indirectly: we just verify the second render
          * doesn't crash and produces some output. */
     }
-    nexus_v2_pipeline_render(&pipe, &fb2, 0.0f, 0.0f, 0.0f, 0, 0.0f);
+    nexus_v2_pipeline_render(&pipe, &fb2, 0.0f, 0.0f, 0.0f, 0.0f);
     /* After both renders, the output should be the fb2 result. We
      * can't easily compare against an unrendered fb2 result, but
      * we can verify the output is non-zero (i.e., rendering
@@ -291,8 +291,8 @@ static void check_null_args(void)
 {
     /* All pipeline entry points must be safe on NULL. */
     nexus_v2_pipeline_init(0, NEXUS_V2_OFF);
-    nexus_v2_pipeline_render(0, 0, 0, 0, 0, 0, 0.0f);
-    nexus_v2_pipeline_render((Nexus_V2_RenderPipeline *)1, 0, 0, 0, 0, 0, 0.0f);
+    nexus_v2_pipeline_render(0, 0, 0.0f, 0.0f, 0.0f, 0.0f);
+    nexus_v2_pipeline_render((Nexus_V2_RenderPipeline *)1, 0, 0.0f, 0.0f, 0.0f, 0.0f);
     nexus_v2_pipeline_shutdown(0);
     check(1, "null: all pipeline entry points safe");
 }
