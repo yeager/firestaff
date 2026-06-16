@@ -131,8 +131,11 @@ static void t_9square_viewport(void) {
     uint32_t rgba[64];
     uint32_t palette[4] = { 0x00000000, 0x00FF0000, 0x0000FF00, 0x000000FF };
     fill_pattern(src, 16);
+    /* Sentinel-init: src[0] = 0 means EPX writes 0 to epx_buf[0],
+     * so a bare 'epx_buf[0] != 0' check would falsely fail. */
+    memset(epx_buf, 0xCC, 64);
     csb_v2_upscale_9square_viewport(src, 4, 4, palette, 4, epx_buf, rgba);
-    check(epx_buf[0] != 0 && rgba[0] == 0x00000000, "9square EPX 2x");
+    check(epx_buf[0] != 0xCC && rgba[0] == 0x00000000, "9square EPX 2x");
     csb_v2_upscale_set_scale(1);
     csb_v2_upscale_9square_viewport(src, 4, 4, palette, 4, epx_buf, rgba);
     /* At scale 1, just palette pass-through; rgba = indexed mapped. */
@@ -146,8 +149,11 @@ static void t_panel(void) {
     uint32_t rgba[128];
     uint32_t palette[4] = { 0x00000000, 0x00FF0000, 0x0000FF00, 0x000000FF };
     fill_pattern(src, 32);
+    /* Sentinel-init: src[0] = 0 means EPX writes 0 to epx_buf[0],
+     * so a bare 'epx_buf[0] != 0' check would falsely fail. */
+    memset(epx_buf, 0xCC, 128);
     csb_v2_upscale_panel(src, 8, 4, palette, 4, epx_buf, rgba);
-    check(epx_buf[0] != 0 && rgba[0] == 0x00000000, "panel EPX 2x");
+    check(epx_buf[0] != 0xCC && rgba[0] == 0x00000000, "panel EPX 2x");
 }
 
 static void t_evidence(void) {
@@ -171,9 +177,12 @@ static void t_present_mode_v22_triggers_epx(void) {
     csb_v2_presentation_mode_reset();
     csb_v2_presentation_mode_set_modern_pack_available(1);
     csb_v2_presentation_mode_set(CSB_V2_PM_V22_MODERN);
+    /* Sentinel-init: src[0] = 0 means EPX writes 0 to epx_buf[0],
+     * so use a non-zero sentinel to verify EPX actually ran. */
+    memset(epx_buf, 0xCC, 16);
     csb_v2_upscale_9square_viewport(src, 2, 2, palette, 4, epx_buf, rgba);
     check(csb_v2_presentation_mode_is_v22() == 1, "V22 active");
-    check(epx_buf[0] != 0, "EPX ran under V22");
+    check(epx_buf[0] != 0xCC, "EPX ran under V22");
     csb_v2_presentation_mode_reset();
 }
 
