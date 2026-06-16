@@ -257,7 +257,7 @@
     "schema": "dm1_v1_original_runtime_trace.minimal.v1"
   },
   "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/Users/bosse/workspace-main/firestaff",
   "schema": "pass227_dm1_v1_original_runtime_hook_design.v1",
   "source_seams": [
     {

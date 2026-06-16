@@ -7,7 +7,7 @@
     "decode IO_DRIVER slot 0 as F8090_ and slot 1 as F8091_",
     "same bounded run: M527 true, M528 movement key, F0361 enqueue/G2153 increment, F0380 pop/G2153 decrement/dispatch"
   ],
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/Users/bosse/workspace-main/firestaff",
   "runtimeBinding": {
     "ok": false,
     "provided": false,
