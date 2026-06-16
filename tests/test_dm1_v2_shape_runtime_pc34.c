@@ -4,6 +4,7 @@
  */
 #include "dm1_v2_shape_runtime_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
+#include "csb_v2_presentation_mode_pc34.h"
 #include <stdio.h>
 #include <string.h>
 static int g_failed = 0, g_total = 0;
