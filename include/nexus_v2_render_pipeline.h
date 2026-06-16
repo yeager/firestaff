@@ -7,6 +7,7 @@
 #include "nexus_v2_lighting.h"
 #include "nexus_v2_particles.h"
 #include "nexus_v2_atmosphere.h"
+#include "nexus_v2_smooth_movement.h"
 #include "nexus_v1_rasterizer.h"
 
 /* Nexus V2 render pipeline:
@@ -25,6 +26,7 @@
 
 typedef struct {
     Nexus_V2_Config config;
+    Nexus_V2_SmoothState smooth;  /* V2 smooth movement state */
     Nexus_V2_LightingState lighting;
     Nexus_V2_ParticleSystem particles;
     Nexus_V2_Atmosphere atmosphere;
@@ -35,8 +37,10 @@ typedef struct {
 int nexus_v2_pipeline_init(Nexus_V2_RenderPipeline *pipe, Nexus_V2_Mode mode);
 void nexus_v2_pipeline_render(Nexus_V2_RenderPipeline *pipe,
     const Nexus_Framebuffer *v1_fb,
-    float cam_x, float cam_y, float cam_z, int cam_dir,
+    float game_x, float game_y, float game_angle, /* raw game state */
     float dt);
+void nexus_v2_pipeline_tick(Nexus_V2_RenderPipeline *pipe,
+    float game_x, float game_y, float game_angle);
 void nexus_v2_pipeline_shutdown(Nexus_V2_RenderPipeline *pipe);
 
 #endif
