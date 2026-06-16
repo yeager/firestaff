@@ -4,6 +4,8 @@
  * Parallel to dm1_v2_presentation_mode_pc34.c.
  */
 #include "csb_v2_presentation_mode_pc34.h"
+#include "csb_v2_texture_upscale_pc34.h"
+#include "csb_v22_shapes.h"
 #include <string.h>
 
 extern int m11_v22_modern_assets_available(void);
@@ -41,6 +43,13 @@ void csb_v2_presentation_mode_set(CSB_V2_PresentationModeKind kind) {
     CSB_V2_PresentationModeKind resolved = csb_v2_presentation_mode_resolve(
         kind, csb_pm_modern_pack_detected());
     csb_pm_recompute(resolved);
+    /* Side-effects: push the active scale into the CSB V2.1 upscale
+     * pipeline and initialise the CSB V2.2 shape book on V22 entry.
+     * Mirror of dm1_v2_presentation_mode_set() in DM1 V2. */
+    csb_v2_upscale_set_scale(g_csb_pm_state.upscaleScale);
+    if (g_csb_pm_state.v22ModernActive) {
+        csb_v22_shapes_init();
+    }
 }
 
 void csb_v2_presentation_mode_set_m12(int m12PresentationMode) {
@@ -62,6 +71,7 @@ void csb_v2_presentation_mode_reset(void) {
     g_csb_pm_pack_override_valid = 0;
     g_csb_pm_pack_override_value = 0;
     csb_pm_recompute(CSB_V2_PM_V1_FAITHFUL);
+    csb_v2_upscale_set_scale(1);
 }
 
 CSB_V2_PresentationModeKind csb_v2_presentation_mode_resolve(

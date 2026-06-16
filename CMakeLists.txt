@@ -73,7 +73,7 @@ endif()
 
 
 # ── CSB V2 static library ──────────────────────────────────────────
-file(GLOB CSB_V2_SOURCES CONFIGURE_DEPENDS "src/csb/csb_v2_*.c")
+file(GLOB CSB_V2_SOURCES CONFIGURE_DEPENDS "src/csb/csb_v2_*.c" "src/csb/csb_v22_*.c")
 if(CSB_V2_SOURCES)
     add_library(firestaff_csb_v2 STATIC ${CSB_V2_SOURCES})
     target_include_directories(firestaff_csb_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
