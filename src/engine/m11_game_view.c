@@ -41,6 +41,7 @@
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
 #include "dm1_v2_shape_runtime_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
+#include "m11_v22_render_overlay_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v2_settings_pc34.h"
@@ -24432,6 +24433,16 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                         M11_VIEWPORT_W, M11_VIEWPORT_H,
                                         paletteIndex);
     }
+    /* V2.2 GPU render path: V22 modern-art overlay pass. Paints a
+     * placeholder over each V22-active cell. The actual modern
+     * asset art is a follow-up; this overlay is the data-flow
+     * end-to-end test of the V2.2 dispatch.
+     *
+     * m11_v22_render_overlay returns the count of cells painted
+     * (0 when V22 is inactive). The return value is currently
+     * ignored; a future render-loop metric could surface it. */
+    (void)m11_v22_render_overlay(framebuffer, framebufferWidth, framebufferHeight);
+
     m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,
                                 M11_VIEWPORT_X, M11_VIEWPORT_Y,
                                 M11_VIEWPORT_W, M11_VIEWPORT_H,
