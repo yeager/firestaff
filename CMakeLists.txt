@@ -458,6 +458,32 @@ if(NOT MSVC)
     target_compile_options(firestaff_nexus_v2_upscaler_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Nexus V2 Phase 7 — Verification Suite Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: V2 OFF init + byte-stability + determinism,
+# V2 UPSCALED init (640x400) + 2x scaling,
+# V2 ENHANCED init (1280x800) with all V2.2 features on,
+# state-hash gate (deterministic for same V1 input),
+# config->dim mapping for all 3 modes,
+# lifecycle (re-init after shutdown), null-arg safety.
+add_executable(firestaff_nexus_v2_verification_suite_probe
+    probes/firestaff_nexus_v2_verification_suite_probe.c
+    src/nexus/nexus_v2_render_pipeline.c
+    src/nexus/nexus_v2_upscaler.c
+    src/nexus/nexus_v2_lighting.c
+    src/nexus/nexus_v2_particles.c
+    src/nexus/nexus_v2_atmosphere.c
+    src/nexus/nexus_v2_config.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_nexus_v2_verification_suite_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_nexus_v2_verification_suite_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v2_verification_suite_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Nexus V2 Lighting Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: init defaults, light add/remove with NEXUS_MAX_LIGHTS=16,
@@ -5045,6 +5071,12 @@ if(BUILD_TESTING)
         add_test(
             NAME nexus_v2_upscaler_probe
             COMMAND firestaff_nexus_v2_upscaler_probe
+        )
+    endif()
+    if(TARGET firestaff_nexus_v2_verification_suite_probe)
+        add_test(
+            NAME nexus_v2_verification_suite_probe
+            COMMAND firestaff_nexus_v2_verification_suite_probe
         )
     endif()
 
