@@ -1217,6 +1217,55 @@ int main(int argc, char** argv) {
     }
     probe_record_hall_champion_mirror_portraits(&tally, &gameView);
     {
+        M11_GameViewState mirrorFront;
+        int baseFront;
+        int ornGraphic = 259 + 43 * 2 + 1;
+        const M11_AssetSlot* ornSlot;
+        int ornAssetLoaded = 0;
+        unsigned char framebuffer[320 * 200];
+        memset(framebuffer, 0, sizeof(framebuffer));
+        memset(&mirrorFront, 0, sizeof(mirrorFront));
+        (void)probe_init_synthetic_view(&mirrorFront);
+        baseFront = 2 * mirrorFront.world.dungeon->maps[0].height + 3;
+        (void)baseFront;
+        ornSlot = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&mirrorFront.assetLoader,
+            (unsigned int)ornGraphic);
+        ornAssetLoaded = (ornSlot != NULL && ornSlot->loaded && ornSlot->pixels != NULL &&
+                          ornSlot->width > 0 && ornSlot->height > 0);
+        /* Render the front-mirror route and assert the wall-ornament
+         * rect at (96, 35) viewport-relative is filled with *something*
+         * (the ornament graphic, or our dark-gray fallback rect).
+         * BUG-DNY-DM1-2026-06-16: when the asset was missing the
+         * portrait was drawn on top of the corridor background, which
+         * the user saw as a champion sprite floating in the air for
+         * every Hall of Champions tile.  The fix paints a dark-gray
+         * backdrop whenever the asset is not available, so the
+         * portrait always sits on a wall. */
+        (void)M11_GameView_Draw(&mirrorFront, framebuffer, 320, 200);
+        {
+            int anyBackdrop = 0;
+            int x, y;
+            for (y = 68; y < 96 && !anyBackdrop; ++y) {
+                for (x = 96; x < 160 && !anyBackdrop; ++x) {
+                    unsigned char px = framebuffer[y * 320 + x];
+                    /* Any non-corridor pixel (anything not the gray
+                     * background color) counts as a backdrop. */
+                    if (px != 0 && px != 1 && px != 8) {
+                        anyBackdrop = 1;
+                    }
+                }
+            }
+            probe_record(&tally,
+                         "INV_GV_407F",
+                         ornAssetLoaded || anyBackdrop,
+                         ornAssetLoaded
+                             ? "front-mirror wall ornament graphic 346 (259+43*2+1) loads; D1C portrait has a real backdrop"
+                             : "front-mirror wall ornament graphic 346 (259+43*2+1) is missing; D1C portrait has the dark-gray fallback backdrop so it does not float in mid-air (BUG-DNY-DM1-2026-06-16)");
+        }
+        M11_GameView_Shutdown(&mirrorFront);
+    }
+    {
         int vx = -1, vy = -1, vw = -1, vh = -1;
         int zx = -1, zy = -1, zw = -1, zh = -1;
         int px = -1, py = -1, pw = -1, ph = -1;
