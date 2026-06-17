@@ -153,6 +153,49 @@ static void test_keyboard_positive_control_dispatches_without_overlay(void)
               "keyboard positive control changes direction");
 }
 
+static void test_keyboard_positive_control_dispatches_strafe_without_overlay(void)
+{
+    /* v2.8.x: arrow Left/Right now mean strafe-left/strafe-right
+     * (matches the original DM1 PC 3.4 convention; see also the
+     * user's keyboard-mapping request).  TURN_LEFT / TURN_RIGHT
+     * come from Home / End / Q / E / KP_4 / KP_6, validated
+     * separately in test_keyboard_positive_control_dispatches_
+     * turn_without_overlay below.  This case proves that an arrow
+     * LEFT press drives the strafe pipeline (DM1_V1_COMMAND_MOVE_LEFT)
+     * without an overlay, and the party moves to the left neighbour
+     * square rather than rotating. */
+    M11_GameViewState state;
+    M11_GameInputResult result;
+
+    seed_active_view(&state);
+
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_LEFT);
+
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
+              "keyboard strafe redraws without overlay");
+    ASSERT_EQ(state.dm1V1MovementPipeline.commandQueue.count, 0,
+              "keyboard strafe queue drained");
+    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.queue.dequeued, 1,
+              "keyboard strafe dequeued");
+    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.queue.command,
+              DM1_V1_COMMAND_MOVE_LEFT, "keyboard strafe command dispatched");
+    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.turnApplied, 0,
+              "keyboard strafe does NOT turn the party");
+}
+
+static void test_keyboard_positive_control_dispatches_turn_without_overlay(void)
+{
+    /* v2.8.x: turn-left input token (Home / End / Q / E / KP_4 / KP_6
+     * all map to it; see src/engine/main_loop_m11.c) routes to
+     * DM1_V1_COMMAND_TURN_LEFT in the pipeline command switch. */
+    M11_GameViewState state;
+    M11_GameInputResult result;
+
+    seed_active_view(&state);
+
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_LEFT);
+}
+
 static void test_mouse_positive_control_dispatches_without_overlay(void)
 {
     M11_GameViewState state;

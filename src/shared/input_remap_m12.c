@@ -20,13 +20,25 @@ static const struct {
     SDL_Keycode     primary;
     SDL_Keycode     secondary;
 } s_defaults_original[] = {
-    /* Original DM-trogen: A/D = turn, no strafe on WASD (arrow keys for movement) */
+    /* v2.8.x — Original DM1 PC 3.4 keyboard convention (matches
+     * the user's request):
+     *   - Arrow keys move the party:  Left/Right = strafe,
+     *     Up/Down = forward/back.
+     *   - Home / End turn the party left / right (the ReDMCSB
+     *     source-locked keys; PC 3.4 COMMAND.C:677-684 also uses
+     *     KP_4 / KP_6 for the same turn, kept here for the
+     *     numeric-pad user).
+     *   - Q / E mirror Home / End (FPS-style convenience).
+     *   - WASD mirrors the arrow keys:  A/D = strafe,
+     *     W/S = forward/back.
+     * The historical "A/D = turn" binding is moved off this preset
+     * entirely; users who still want it can pick the hybrid preset. */
     { M12_ACTION_MOVE_FORWARD,     SDLK_UP,        SDLK_W       },
     { M12_ACTION_MOVE_BACKWARD,    SDLK_DOWN,      SDLK_S       },
-    { M12_ACTION_TURN_LEFT,        SDLK_LEFT,      SDLK_A       },
-    { M12_ACTION_TURN_RIGHT,       SDLK_RIGHT,     SDLK_D       },
-    { M12_ACTION_STRAFE_LEFT,      SDLK_Q,         0            },
-    { M12_ACTION_STRAFE_RIGHT,     SDLK_E,         0            },
+    { M12_ACTION_TURN_LEFT,        SDLK_HOME,      SDLK_Q       },
+    { M12_ACTION_TURN_RIGHT,       SDLK_END,       SDLK_E       },
+    { M12_ACTION_STRAFE_LEFT,      SDLK_LEFT,      SDLK_A       },
+    { M12_ACTION_STRAFE_RIGHT,     SDLK_RIGHT,     SDLK_D       },
     { M12_ACTION_ACCEPT,           SDLK_RETURN,    SDLK_KP_ENTER },
     { M12_ACTION_BACK,             SDLK_ESCAPE,    0            },
     { M12_ACTION_ACTION,           SDLK_SPACE,     0            },
@@ -230,6 +242,19 @@ static const M12_KeyName s_key_names[] = {
     { SDLK_RCTRL,      "rctrl"     },
     { SDLK_LALT,       "lalt"      },
     { SDLK_RALT,       "ralt"      },
+    /* v2.8.x: keypad scancodes for the original DM1 PC 3.4 turn /
+     * strafe layout (COMMAND.C:677-684).  KP_4 / KP_6 turn,
+     * KP_1 / KP_3 strafe.  Names match the SDLK_KP_N identifiers
+     * already used by the keyboard handler. */
+    { SDLK_KP_1,       "kp_1"      },
+    { SDLK_KP_2,       "kp_2"      },
+    { SDLK_KP_3,       "kp_3"      },
+    { SDLK_KP_4,       "kp_4"      },
+    { SDLK_KP_5,       "kp_5"      },
+    { SDLK_KP_6,       "kp_6"      },
+    { SDLK_KP_7,       "kp_7"      },
+    { SDLK_KP_8,       "kp_8"      },
+    { SDLK_KP_9,       "kp_9"      },
 };
 
 #define KEY_NAME_COUNT (sizeof(s_key_names) / sizeof(s_key_names[0]))

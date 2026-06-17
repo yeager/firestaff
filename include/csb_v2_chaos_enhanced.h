@@ -24,6 +24,11 @@ void csb_v2_chaos_init(void);
 void csb_v2_chaos_on_trigger(int script_id, int flag_index);
 void csb_v2_chaos_tick(float dt);
 int csb_v2_chaos_active_count(void);
+int csb_v2_chaos_particle_count(void);
+int csb_v2_chaos_fire_projectile(float sx, float sy,
+                                 float tx, float ty,
+                                 float speed,
+                                 int vfx_type);
 void csb_v2_chaos_render_overlay(float *outR,
                                  float *outG,
                                  float *outB,

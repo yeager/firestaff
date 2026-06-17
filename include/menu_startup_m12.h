@@ -21,6 +21,17 @@ typedef enum {
     M12_MENU_INPUT_RIGHT,
     M12_MENU_INPUT_STRAFE_LEFT,
     M12_MENU_INPUT_STRAFE_RIGHT,
+    /* v2.8.x: split turn-left/turn-right out of LEFT/RIGHT so the
+     * arrow keys can mean strafe (matching the original DM1 PC 3.4
+     * gameplay convention where arrow keys move the party forward /
+     * back and strafe left / right, while Home/End turn).  Q/E on
+     * the keyboard also map to TURN_LEFT/TURN_RIGHT.  Historically
+     * LEFT/RIGHT meant turn-left/turn-right; that mapping has been
+     * moved to TURN_LEFT/TURN_RIGHT.  Menu navigation in the M12
+     * launcher still uses M12_MENU_INPUT_LEFT/RIGHT (the +/- on a
+     * settings tab strip), unaffected by this split. */
+    M12_MENU_INPUT_TURN_LEFT,
+    M12_MENU_INPUT_TURN_RIGHT,
     M12_MENU_INPUT_ACCEPT,
     M12_MENU_INPUT_BACK,
     M12_MENU_INPUT_ACTION,

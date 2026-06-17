@@ -33,12 +33,21 @@ typedef struct {
 } ActionDef;
 
 static const ActionDef s_defs[] = {
+    /* v2.8.x: match the original DM1 PC 3.4 keyboard convention
+     * (also matches the user's keyboard-mapping request):
+     *   - Arrow Left/Right → strafe
+     *   - Home / End → turn left/right
+     *   - Q / E → turn left/right (FPS-style)
+     *   - WASD mirrors the arrow keys: A/D strafe, W/S forward/back
+     * KP_4 / KP_6 stay mapped to turn left/right because that's the
+     * PC 3.4 COMMAND.C:677-684 source-locked contract (validated by
+     * test_dm1_v1_input_command_queue_pc34_compat). */
     { M11_ACTION_MOVE_FORWARD,    "move_forward",    "MOVE FORWARD",    SDL_SCANCODE_UP,     SDL_SCANCODE_W       },
     { M11_ACTION_MOVE_BACKWARD,   "move_backward",   "MOVE BACK",       SDL_SCANCODE_DOWN,   SDL_SCANCODE_S       },
-    { M11_ACTION_TURN_LEFT,       "turn_left",       "TURN LEFT",       SDL_SCANCODE_LEFT,   SDL_SCANCODE_A       },
-    { M11_ACTION_TURN_RIGHT,      "turn_right",      "TURN RIGHT",      SDL_SCANCODE_RIGHT,  SDL_SCANCODE_D       },
-    { M11_ACTION_STRAFE_LEFT,     "strafe_left",     "STRAFE LEFT",     SDL_SCANCODE_Q,      SDL_SCANCODE_UNKNOWN },
-    { M11_ACTION_STRAFE_RIGHT,    "strafe_right",    "STRAFE RIGHT",    SDL_SCANCODE_E,      SDL_SCANCODE_UNKNOWN },
+    { M11_ACTION_TURN_LEFT,       "turn_left",       "TURN LEFT",       SDL_SCANCODE_HOME,   SDL_SCANCODE_Q       },
+    { M11_ACTION_TURN_RIGHT,      "turn_right",      "TURN RIGHT",      SDL_SCANCODE_END,    SDL_SCANCODE_E       },
+    { M11_ACTION_STRAFE_LEFT,     "strafe_left",     "STRAFE LEFT",     SDL_SCANCODE_LEFT,   SDL_SCANCODE_A       },
+    { M11_ACTION_STRAFE_RIGHT,    "strafe_right",    "STRAFE RIGHT",    SDL_SCANCODE_RIGHT,  SDL_SCANCODE_D       },
     { M11_ACTION_ATTACK,          "attack",          "ATTACK",          SDL_SCANCODE_SPACE,  SDL_SCANCODE_UNKNOWN },
     { M11_ACTION_SPELL,           "spell",           "CAST SPELL",      SDL_SCANCODE_C,      SDL_SCANCODE_UNKNOWN },
     { M11_ACTION_INVENTORY,       "inventory",       "INVENTORY",       SDL_SCANCODE_I,      SDL_SCANCODE_V       },
