@@ -381,6 +381,32 @@ add_test(
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
 
+# DM2 V2 Phase 6 — Touch/Controller Runtime Wire-up Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: phase-gated translation (V2 off → rejected, V2 on → accepted),
+# all 12 affordances (4 touch swipes + 2 edge-strafe + 4 D-pad) translate
+# to correct DM1_V1_COMMAND_* values, force_active_for_test bypass, observability
+# counter, V1 chrome untouched when V1 active, source evidence citation.
+add_executable(firestaff_dm2_v2_touch_runtime_probe
+    probes/firestaff_dm2_v2_touch_runtime_probe.c
+    src/dm2/dm2_v2_touch_runtime.c
+    src/dm2/dm2_v2_touch_controller_affordance.c
+    src/dm2/dm2_v2_phase_gate.c
+    src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_dungeon_loader.c
+    src/dm2/dm2_v1_weather.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_link_libraries(firestaff_dm2_v2_touch_runtime_probe
+    PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_touch_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm2_v2_touch_runtime_probe
+    COMMAND firestaff_dm2_v2_touch_runtime_probe
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+
 # DM2 V2 Phase 5 — Smooth Movement and Viewport Interpolation Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: smooth walk (N/S/E/W), smooth turn (N/S/E/W), smooth stairs,
@@ -1006,6 +1032,7 @@ add_executable(firestaff_csb_v1_utility_import_probe
     src/csb/csb_v1_utility_flow_pc34.c
     src/csb/csb_v1_character_pc34_compat.c
     src/csb/csb_v1_save_load_pc34_compat.c
+    src/shared/fs_portable_compat.c
 )
 target_include_directories(firestaff_csb_v1_utility_import_probe
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -1738,6 +1765,7 @@ if(BUILD_TESTING)
         tests/test_csb_v1_character_import.c
         src/csb/csb_v1_character_pc34_compat.c
         src/csb/csb_v1_save_load_pc34_compat.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_character_import PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -1783,6 +1811,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_viewport_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_phase7_verification PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -2332,6 +2361,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_monster_pc34_compat.c
         src/csb/csb_v1_save_load_pc34_compat.c
         src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_include_directories(test_csb_v2_smooth_runtime_binding PRIVATE
@@ -3078,6 +3108,7 @@ if(BUILD_TESTING)
     src/csb/csb_v1_monster_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
     src/csb/csb_v1_save_load_pc34_compat.c
+    src/shared/fs_portable_compat.c
     src/dm1/dm1_v1_champion_stats_pc34_compat.c
     src/dm1/dm1_v1_inventory_pc34_compat.c
     src/dm1/dm1_v1_spell_casting_pc34_compat.c

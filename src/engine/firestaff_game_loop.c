@@ -22,6 +22,7 @@
 #include "dm2_v2_runtime.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v2_hud_runtime.h"
+#include "dm2_v2_touch_runtime.h"
 #include "dm2_v2_phase_gate.h"
 #include <string.h>
 #include <stdio.h>
@@ -461,6 +462,15 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
         /* Phase 5: init DM2 V2 runtime (smooth movement + V2 viewport).
          * Scale 2 = V2.0 EPX mode.  Source: dm2_v2_runtime.c */
         dm2_v2_runtime_init(2);
+        /* Phase 3: init DM2 V2 HUD runtime (compass, depth, gold,
+         * champion bars, action strip).  Gated on phase gate.
+         * Source: dm2_v2_hud_runtime.c */
+        dm2_v2_hud_runtime_init();
+        /* Phase 6: init DM2 V2 touch/controller runtime.
+         * Translates V2 affordances (touch swipes, D-pad, sticks) to
+         * V1 command-queue entries.  Gated on phase gate.
+         * Source: dm2_v2_touch_runtime.c */
+        dm2_v2_touch_runtime_init();
         /* Store in state */
         state->dm2_boot = (void *)&s_dm2_boot;
         /* Print diagnostics */
