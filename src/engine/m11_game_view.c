@@ -7,6 +7,11 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_neophyte_mode_pc34_compat.h"
+#include "dm2_v1_boot.h"
+#include "dm2_v1_runtime.h"
+#include "dm2_v2_runtime.h"
+#include "dm2_v2_hud_runtime.h"
+#include "dm2_v2_touch_runtime.h"
 #include "src/theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
@@ -60,6 +65,10 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* verifiedPath,
                                     const char* verifiedMd5);
+/* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
+ * M11_GameView_Start above, mirroring the CSB-style handoff. The
+ * Theron + Nexus handoffs also live inline; there is no separate
+ * function.) */
 
 /* Forward declaration: set by M11_GameView_Draw to give nested draw
  * helpers access to the current game state for asset-backed rendering. */
@@ -6628,6 +6637,110 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         m11_log_event(state, M11_COLOR_YELLOW, "T0: CSB LOADED (FS LOOP)");
         return 1;
     }
+    /* ── DM2 V1: bypass DM1 dungeon loader, use DM2 V1 runtime boot ──
+     * When gameId == "dm2", the M11 game-loop needs to hand off to
+     * the DM2 V1 runtime. Without this branch M11_GameView_Start
+     * falls through to F0882_WORLD_InitFromDungeonDat_Compat which
+     * tries to parse DM2's DUNGEON.DAT as DM1 (different format —
+     * SKULL.ASM T520 vs ReDMCSB DUNGEON.C) and the launch fails.
+     * This branch mirrors the FS_GAME_DM2 path in
+     * firestaff_game_loop.c:449-498 (dm2_v1_boot_profile_init +
+     * dm2_v1_boot_scan_assets + dm2_v1_boot_enter_game + DM2 V2
+     * runtime inits). The boot profile and game state pointers are
+     * stored in state->dm2BootProfile and state->dm2World so the
+     * M11 tick path can dispatch on M11_GAME_SOURCE_DM2_BOOT and
+     * call dm2_v1_runtime_tick().
+     * Source: dm2_v1_boot.h, dm2_v1_runtime.h. */
+    if (spec->gameId && strcmp(spec->gameId, "dm2") == 0) {
+        const char *dd = spec->dataDir;
+        char scanDir[512];
+        DM2_V1_BootProfile *profile = NULL;
+        int savedDebugHUD = state->showDebugHUD;
+        if (!dd || !dd[0]) {
+            dd = "~/.firestaff/data";
+        }
+        /* M11 owns the launch (per include/m11_game_view.h:36-37
+         * "M11 owns the launch but the M11 render loop dispatches on
+         * sourceKind"). The boot profile is allocated on the heap so
+         * it survives the M11_GameView_Shutdown/M11_GameView_Init
+         * reinit that the Nexus/Theron branches perform; we still
+         * perform the same reinit here for symmetry. */
+        M11_GameView_Shutdown(state);
+        M11_GameView_Init(state);
+        state->showDebugHUD = savedDebugHUD;
+        profile = (DM2_V1_BootProfile *)calloc(1, sizeof(*profile));
+        if (!profile) {
+            m11_set_status(state, "BOOT", "DM2 OOM");
+            m11_log_event(state, M11_COLOR_RED, "T0: DM2 BOOT OOM");
+            return 0;
+        }
+        dm2_v1_boot_profile_init(profile);
+        /* Scan assets in data_dir/dm2/ (per Firestaff AGENTS.md the
+         * scanner nests per-game subdirs under the data root). */
+        snprintf(scanDir, sizeof(scanDir), "%s/dm2", dd);
+        if (dm2_v1_boot_scan_assets(profile, scanDir) != 0) {
+            /* Try the data dir itself (some users stage DM2 at the root) */
+            if (dm2_v1_boot_scan_assets(profile, dd) != 0) {
+                m11_set_status(state, "BOOT", "DM2 ASSETS MISSING");
+                m11_log_event(state, M11_COLOR_RED, "T0: DM2 SCAN FAILED");
+                free(profile);
+                return 0;
+            }
+        }
+        if (!profile->assets_verified) {
+            fprintf(stderr, "DEBUG: DM2 assets_verified=0, gfx_md5=%.32s dun_md5=%.32s\n",
+                    profile->graphics_md5, profile->dungeon_md5);
+            m11_set_status(state, "BOOT", "DM2 HASH UNKNOWN");
+            m11_log_event(state, M11_COLOR_YELLOW,
+                          "T0: DM2 ASSETS UNVERIFIED (NOT IN CATALOG)");
+            /* Continue anyway — the user may have a known-good build
+             * that we don't have a hash for yet. dm2_v1_boot_enter_game
+             * will allocate state; we just don't gate on hash match. */
+        } else {
+            fprintf(stderr, "DEBUG: DM2 assets_verified=1, gfx_md5=%.32s\n",
+                    profile->graphics_md5);
+        }
+        dm2_v1_boot_set_save_root(profile, NULL);
+        dm2_v1_boot_print_summary(profile);
+        if (dm2_v1_boot_enter_game(profile) != 0) {
+            fprintf(stderr, "DEBUG: DM2 enter_game FAILED, returning 0\n");
+            m11_set_status(state, "BOOT", "DM2 ENTER GAME FAILED");
+            m11_log_event(state, M11_COLOR_RED, "T0: DM2 BOOT ENTER FAILED");
+            dm2_v1_boot_cleanup(profile);
+            free(profile);
+            return 0;
+        }
+        fprintf(stderr, "DEBUG: DM2 enter_game OK, returning 1\n");
+        /* V2 runtimes — same init sequence as firestaff_game_loop.c.
+         * Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
+        dm2_v2_runtime_init(2);
+        dm2_v2_hud_runtime_init();
+        dm2_v2_touch_runtime_init();
+        state->active = 1;
+        state->startedFromLauncher = 1;
+        state->sourceKind = M11_GAME_SOURCE_DM2_BOOT;
+        state->presentationMode = spec->presentationMode;
+        state->presentationWidth = spec->presentationWidth;
+        state->presentationHeight = spec->presentationHeight;
+        snprintf(state->title, sizeof(state->title), "%s",
+                 spec->title ? spec->title : "DUNGEON MASTER II: SKULLKEEP");
+        snprintf(state->sourceId, sizeof(state->sourceId), "%s",
+                 spec->sourceId ? spec->sourceId : "dm2");
+        snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s",
+                 profile->dungeon_path[0] ? profile->dungeon_path : "DUNGEON.DAT");
+        state->dm2BootProfile = profile;
+        state->dm2World = profile->dm2_state;
+        state->dm2State.level_loaded = 1;
+        state->dm2State.party_x = 0;
+        state->dm2State.party_y = 0;
+        state->dm2State.party_dir = 0;
+        state->dm2State.tick_count = 0;
+        m11_set_status(state, "BOOT", "DM2 READY");
+        m11_set_inspect_readout(state, "READY",
+                                "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE");
+        m11_log_event(state, M11_COLOR_YELLOW, "T0: DM2 LOADED");
+        return 1;
+    }
     if (spec->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON) {
         if (!spec->dungeonPath || spec->dungeonPath[0] == '\0') {
             return 0;
@@ -7262,6 +7375,24 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         state->theronState.party_y = world->party.leader_y;
         state->theronState.party_dir = world->party.leader_dir;
         state->theronState.tick_count = (int)world->world_tick;
+        return M11_GAME_INPUT_REDRAW;
+    }
+    /* DM2 V1: use the DM2 tick function instead of DM1's m11_apply_tick.
+     * DM2 owns its own game state in state->dm2World (party position,
+     * tick_count, dungeon squares, creatures, magic, etc.). The DM1
+     * m11_apply_tick path reads state->world which is zero for DM2
+     * (M11_GameView_StartDm2 does not initialise state->world — that
+     * struct is owned by the DM1 compat layer). Without this branch,
+     * calling m11_apply_tick on a DM2 game is undefined behaviour
+     * (reads from zero-initialised memory).
+     * Source: dm2_v1_runtime.c dm2_v1_runtime_tick(), dm2_v1_boot.c. */
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        if (!state->dm2World) {
+            /* Game state not available — do not tick. */
+            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        dm2_v1_runtime_tick();
+        state->dm2State.tick_count++;
         return M11_GAME_INPUT_REDRAW;
     }
     /* Nexus V1: use the Nexus tick function instead of DM1's m11_apply_tick.
@@ -8067,6 +8198,33 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         return M11_GAME_INPUT_REDRAW;
     }
 
+    /* DM2 V1: minimal input bridge.
+     * DM2 owns its own command queue + input system (dm2_v1_*), but the
+     * DM2 public API does not yet expose a command-post entry point that
+     * M11 can call from a generic M12_MenuInput. Until that bridge lands,
+     * DM2 via --game accepts only BACK (return to menu) and ignores
+     * everything else — the game tick continues through dm2_v1_runtime_tick()
+     * in the idle-tick branch above. This mirrors how CSB's hand-off
+     * behaves with the same minimal input contract; both games are
+     * expected to grow a fuller input bridge as DM2/CSB-specific input
+     * APIs stabilise. Source: dm2_v1_runtime.c dm2_v1_runtime_tick(),
+     * dm2_v1_boot.c. */
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        if (!state->dm2World) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_BACK) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        /* Forward-compat: a future bridge will translate
+         * M12_MENU_INPUT_UP / DOWN / TURN_* into DM2 command-queue
+         * entries here. For now, DM2 keeps ticking via the idle-tick
+         * branch above; UI input is intentionally accepted-but-ignored
+         * so the player can still reach BACK. */
+        return M11_GAME_INPUT_IGNORED;
+    }
+
     /* Source-backed champion mirror panel: CLIKCHAM routes
      * C160/C161/C162 through the resurrect/reincarnate/cancel panel.
      * M11 maps ACTION/ACCEPT to the default resurrect choice for now
@@ -8179,17 +8337,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
          * into gameplay, but a defensive default keeps the legacy
          * behaviour consistent with what was documented). */
         case M12_MENU_INPUT_LEFT:
-            command = m11_strafe_left_command_for_direction(state->world.party.direction);
-            label = "STRAFE LEFT";
-            break;
-        case M12_MENU_INPUT_RIGHT:
-            command = m11_strafe_right_command_for_direction(state->world.party.direction);
-            label = "STRAFE RIGHT";
-            break;
         case M12_MENU_INPUT_TURN_LEFT:
             command = CMD_TURN_LEFT;
             label = "TURN LEFT";
             break;
+        case M12_MENU_INPUT_RIGHT:
         case M12_MENU_INPUT_TURN_RIGHT:
             command = CMD_TURN_RIGHT;
             label = "TURN RIGHT";
@@ -26671,6 +26823,43 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                               framebufferWidth,
                               framebufferHeight);
         }
+        g_drawState = NULL;
+        g_activeOriginalFont = NULL;
+        g_m11_font_scale_override = 0;
+        return;
+    }
+
+    /* DM2 V1: minimal M11 hand-off render.
+     * The DM2 viewport pipeline (dm2_v1_runtime_render_frame) is owned
+     * by the firestaff_dm2 / firestaff_dm2_v2 libraries and is invoked
+     * by the FS_GAME_DM2 route in firestaff_game_loop.c. The M11 path
+     * does not own DM2's framebuffer, so we render a DM2 boot-screen
+     * placeholder (title + status text) until the DM2 V1 viewport is
+     * wired into the M11 draw path the same way the Theron and Nexus
+     * viewports already are.
+     * Source: dm2_v1_runtime.c dm2_v1_runtime_render_frame(),
+     * firestaff_game_loop.c fs_game_render_viewport(). */
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        const char *boot_status = state->lastOutcome[0]
+            ? state->lastOutcome
+            : "DM2 BOOT READY (M11 HAND-OFF)";
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      18, 18, "DUNGEON MASTER II: SKULLKEEP",
+                      &g_text_title);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      18, 36, boot_status, &g_text_shadow);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      18, 54,
+                      "DM2 viewport pipeline is owned by the FS_GAME_DM2",
+                      &g_text_small);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      18, 64,
+                      "route. Launch via the Firestaff game loop for the",
+                      &g_text_small);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      18, 74,
+                      "full DM2 V1/V2 viewport. ESC returns to the menu.",
+                      &g_text_small);
         g_drawState = NULL;
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;

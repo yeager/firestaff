@@ -115,16 +115,32 @@
       "file": "src/engine/m11_game_view.c",
       "id": "m11_input_maps_to_dm1_v1_commands",
       "lines": "7295-7365",
-      "missing": [],
-      "ok": true
+      "missing": [
+        "case M12_MENU_INPUT_LEFT:",
+        "return DM1_V1_COMMAND_TURN_LEFT;",
+        "case M12_MENU_INPUT_RIGHT:",
+        "return DM1_V1_COMMAND_TURN_RIGHT;",
+        "case M12_MENU_INPUT_UP:",
+        "return DM1_V1_COMMAND_MOVE_FORWARD;",
+        "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(",
+        "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat("
+      ],
+      "ok": false
     },
     {
       "claim": "capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command",
       "file": "src/engine/m11_game_view.c",
       "id": "m11_records_movement_pipeline_capture_state",
       "lines": "7365-7510",
-      "missing": [],
-      "ok": true
+      "missing": [
+        "state->world.gameTick++;",
+        "state->lastDm1V1MovementPipelineResult.core.turnApplied",
+        "state->lastDm1V1MovementPipelineResult.anyMovementOccurred",
+        "state->lastDm1V1MovementPipelineResult.core.movementBlocked",
+        "return state->lastDm1V1MovementPipelineResult.viewportDirty ||",
+        "state->lastDm1V1MovementPipelineResult.core.queue.dequeued;"
+      ],
+      "ok": false
     },
     {
       "claim": "the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper",
@@ -178,8 +194,11 @@
     "no non-N2 source path is used",
     "no push or release action"
   ],
-  "ok": true,
-  "problems": [],
+  "ok": false,
+  "problems": [
+    "firestaff route audit failed: m11_input_maps_to_dm1_v1_commands",
+    "firestaff route audit failed: m11_records_movement_pipeline_capture_state"
+  ],
   "redmcsbSourceAudit": [
     {
       "claim": "movement-arrow input resolves to the same C001..C006 command ids used by the Firestaff script rows",
@@ -253,6 +272,6 @@
   ],
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
-  "timestampUtc": "2026-06-17T17:41:14.847172+00:00"
+  "status": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
+  "timestampUtc": "2026-06-17T17:50:56.458351+00:00"
 }
