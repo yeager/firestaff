@@ -434,6 +434,39 @@ add_test(
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
 
+# DM2 V2 Phase 5 — M11 V1 Game-Loop Wire-up Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: full V2 runtime chain from M11 V1 game-loop entry point
+# (Hud + touch + lighting all coexist, phase gate drives all in
+# lockstep, lighting tick advances over multiple V1 ticks, touch
+# translation produces correct DM1_V1_COMMAND_* entries).
+add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
+    probes/firestaff_dm2_v2_m11_game_loop_wireup_probe.c
+    src/dm2/dm2_v2_hud_runtime.c
+    src/dm2/dm2_v2_hud_overlay.c
+    src/dm2/dm2_v2_touch_runtime.c
+    src/dm2/dm2_v2_touch_controller_affordance.c
+    src/dm2/dm2_v2_lighting_runtime.c
+    src/dm2/dm2_v2_lighting.c
+    src/dm2/dm2_v2_outdoor_enhanced.c
+    src/dm2/dm2_v2_phase_gate.c
+    src/dm2/dm2_v2_interaction_feedback.c
+    src/dm2/dm2_v2_runtime.c
+    src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_dungeon_loader.c
+    src/dm2/dm2_v1_weather.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_link_libraries(firestaff_dm2_v2_m11_game_loop_wireup_probe
+    PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_m11_game_loop_wireup_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm2_v2_m11_game_loop_wireup_probe
+    COMMAND firestaff_dm2_v2_m11_game_loop_wireup_probe
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+
 # DM2 V2 Phase 7 — End-to-end Verification Suite Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies all 6 DM2 V2 phases share the same phase gate, coexist
