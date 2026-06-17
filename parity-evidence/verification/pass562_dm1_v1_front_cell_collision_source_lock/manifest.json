@@ -7,7 +7,7 @@
     "commandCoreBlockerSlice": "dm1_v1_movement_command_core_pc34_compat.c:266-355",
     "runtimeExecutable": "test_dm1_v1_movement_command_core_pc34_compat (source assertions; executable build verified separately when link gate is available)"
   },
-  "head": "2a4a39d0b5d3370e740531686927babf3acc1756",
+  "head": "66419370f58cc55e4f7e3a084df566669fce9345",
   "notClaimed": [
     "original DOS overlay pixel parity",
     "combat RNG/wound materialization",
@@ -24,5 +24,5 @@
   "schema": "pass562_dm1_v1_front_cell_collision_source_lock.v1",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS562_DM1_V1_FRONT_CELL_COLLISION_SOURCE_LOCKED",
-  "timestampUtc": "2026-06-17T15:53:48.068044+00:00"
+  "timestampUtc": "2026-06-17T17:41:08.892820+00:00"
 }
