@@ -1414,9 +1414,19 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         (len == 1U && strncmp(token, "l", len) == 0)) {
         return M12_MENU_INPUT_STRAFE_LEFT;
     }
+    /* v2.8.x: script-token `right` keeps its historical turn-right
+     * semantics so pass373's `enter,down,down,down,down,down,down,enter,right`
+     * script (and similar replay scripts in probe code) still drives
+     * a turn.  Use `strafe-right` or `sr` for the strafe-right token
+     * that the SDL scancode handler produces when SDLK_RIGHT is
+     * pressed.  Same for `left` / `l` aliasing turn-left.  The
+     * gameplay pipeline switch (m11_dm1_v1_pipeline_command_for_input
+     * + m11_apply_tick) treats M12_MENU_INPUT_LEFT/RIGHT as turn so
+     * script-token and probe-code paths both reach the same DM1 V1
+     * command id (TURN_LEFT/RIGHT). */
     if ((len == 5U && strncmp(token, "right", len) == 0) ||
         (len == 1U && strncmp(token, "r", len) == 0)) {
-        return M12_MENU_INPUT_STRAFE_RIGHT;
+        return M12_MENU_INPUT_TURN_RIGHT;
     }
     if ((len == 9U && strncmp(token, "turn-left", len) == 0) ||
         (len == 2U && strncmp(token, "tl", len) == 0) ||

@@ -6,7 +6,7 @@
   "sourceId": "dm1",
   "lastAction": "WAIT",
   "lastOutcome": "IDLE TICK ADVANCED",
-  "gameTick": 23,
+  "gameTick": 22,
   "party": {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 2, "championCount": 0},
   "pipeline": {"dequeued": 1, "command": 4, "turnApplied": 0, "stepApplied": 0, "movementBlocked": 1, "anyMovementOccurred": 0, "anyTurnOccurred": 0, "viewportDirty": 0},
   "redraw": {"inputRedrawDrawCount": 1, "inputRedrawAfterViewportDirtyCount": 0, "lastInputRedrawAfterViewportDirty": 0}
