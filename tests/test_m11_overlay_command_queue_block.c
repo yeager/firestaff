@@ -132,29 +132,6 @@ static void test_map_overlay_blocks_mouse_command(void)
 
 static void test_keyboard_positive_control_dispatches_without_overlay(void)
 {
-    M11_GameViewState state;
-    M11_GameInputResult result;
-
-    seed_active_view(&state);
-
-    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_LEFT);
-
-    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
-              "keyboard turn redraws without overlay");
-    ASSERT_EQ(state.dm1V1MovementPipeline.commandQueue.count, 0,
-              "keyboard command queue drained");
-    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.queue.dequeued, 1,
-              "keyboard command dequeued");
-    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.queue.command,
-              DM1_V1_COMMAND_TURN_LEFT, "keyboard command dispatched");
-    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.turnApplied, 1,
-              "keyboard turn applied");
-    ASSERT_EQ(state.world.party.direction != 0, 1,
-              "keyboard positive control changes direction");
-}
-
-static void test_keyboard_positive_control_dispatches_strafe_without_overlay(void)
-{
     /* v2.8.x: arrow Left/Right now mean strafe-left/strafe-right
      * (matches the original DM1 PC 3.4 convention; see also the
      * user's keyboard-mapping request).  TURN_LEFT / TURN_RIGHT
@@ -194,10 +171,30 @@ static void test_keyboard_positive_control_dispatches_turn_without_overlay(void)
     seed_active_view(&state);
 
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_LEFT);
+
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
+              "keyboard turn redraws without overlay");
+    ASSERT_EQ(state.dm1V1MovementPipeline.commandQueue.count, 0,
+              "keyboard turn queue drained");
+    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.queue.dequeued, 1,
+              "keyboard turn dequeued");
+    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.queue.command,
+              DM1_V1_COMMAND_TURN_LEFT, "keyboard turn command dispatched");
+    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.turnApplied, 1,
+              "keyboard turn applied");
+    ASSERT_EQ(state.world.party.direction != 0, 1,
+              "keyboard positive turn control changes direction");
 }
 
 static void test_mouse_positive_control_dispatches_without_overlay(void)
 {
+    /* v2.8.x: the menu arrow-click LEFT button (handled by
+     * m11_dispatch_arrow_command at ReDMCSB COMMAND.C G0448 command
+     * 1 / C068) now drives the strafe pipeline instead of the turn
+     * pipeline, matching the new keyboard convention where arrow
+     * keys mean strafe (the original DM1 PC 3.4 convention; see
+     * also the user's keyboard-mapping request).  The party moves
+     * to the left neighbour square rather than rotating. */
     M11_GameViewState state;
     M11_GameInputResult result;
 
@@ -206,17 +203,15 @@ static void test_mouse_positive_control_dispatches_without_overlay(void)
     result = M11_GameView_HandlePointer(&state, 20, 170, 1);
 
     ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
-              "mouse turn redraws without overlay");
+              "mouse strafe redraws without overlay");
     ASSERT_EQ(state.dm1V1MovementPipeline.commandQueue.count, 0,
               "mouse command queue drained");
     ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.queue.dequeued, 1,
               "mouse command dequeued");
     ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.queue.command,
-              DM1_V1_COMMAND_TURN_LEFT, "mouse command dispatched");
-    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.turnApplied, 1,
-              "mouse turn applied");
-    ASSERT_EQ(state.world.party.direction != 0, 1,
-              "mouse positive control changes direction");
+              DM1_V1_COMMAND_MOVE_LEFT, "mouse strafe command dispatched");
+    ASSERT_EQ(state.lastDm1V1MovementPipelineResult.core.turnApplied, 0,
+              "mouse strafe does NOT turn the party");
 }
 
 int main(void)
@@ -228,6 +223,7 @@ int main(void)
     test_inventory_overlay_blocks_keyboard_command();
     test_map_overlay_blocks_mouse_command();
     test_keyboard_positive_control_dispatches_without_overlay();
+    test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);

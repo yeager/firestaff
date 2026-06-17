@@ -329,6 +329,39 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Theron V1 mechanics + champions + combat probe.
+# Headless: no game data.  Fills a coverage gap (Theron V1 has 8 test
+# binaries but no dedicated headless probe for these gameplay-loop
+# modules).  Source-locked against THQUEST.ASM (Theron's Quest PC
+# Engine CD ROM) and ReDMCSB GROUP/COMMAND/CLIKMENU/GAMELOOP analogues.
+add_executable(firestaff_theron_v1_mechanics_champions_probe
+    probes/firestaff_theron_v1_mechanics_champions_probe.c
+    src/theron/theron_v1_mechanics.c
+    src/theron/theron_v1_champions.c
+    src/theron/theron_v1_compat.c
+    src/theron/theron_v1_world.c
+    src/theron/theron_v1_asset_loader.c
+    src/theron/theron_v1_palette.c
+    src/theron/theron_v1_track02.c
+    src/theron/theron_v1_save_load.c
+    src/theron/theron_v1_shop.c
+    src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_tile_renderer.c
+    src/theron/theron_v1_dungeon_progression.c)
+target_include_directories(firestaff_theron_v1_mechanics_champions_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v1_mechanics_champions_probe
+    PRIVATE firestaff_theron firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_mechanics_champions_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v1_mechanics_champions_probe
+    COMMAND firestaff_theron_v1_mechanics_champions_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
 # CSB V2 Phase 4/5/6 — Combined Runtime Wire-up Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies csb_v2_lighting_runtime + csb_v2_smooth_movement_runtime +
@@ -1022,6 +1055,10 @@ target_link_libraries(firestaff_theron_v22_shapes_probe
 if(NOT MSVC)
     target_compile_options(firestaff_theron_v22_shapes_probe PRIVATE -Wall -Wextra -O2)
 endif()
+
+# Theron V1 mechanics + champions + combat probe.
+# Headless: no game data.  Fills a coverage gap (Theron V1 has 8 test
+
 
 # CSB V2 filter config probe. Headless: no game data.
 # See include/csb_v2_filter_config_pc34.h.
@@ -2410,6 +2447,56 @@ if(BUILD_TESTING)
         NAME m11_v1_turning_presentation_pc34_compat
         COMMAND test_m11_v1_turning_presentation_pc34_compat
     )
+
+    # v2.8.x: keyboard overlay block contract for the new arrow
+    # key mapping (arrows strafe; Home/End/Q/E/KP_4/KP_6 turn).
+    # Validates that the dialog/inventory/map overlays still swallow
+    # movement + turn input, and that the new
+    # M12_MENU_INPUT_TURN_LEFT/RIGHT input tokens drive the DM1 V1
+    # pipeline command switch to DM1_V1_COMMAND_TURN_LEFT/RIGHT
+    # rather than the historical LEFT/RIGHT mapping.
+    add_executable(test_m11_overlay_command_queue_block
+        tests/test_m11_overlay_command_queue_block.c
+    )
+    # M11 objects referenced by the executable call back into M12
+    # menu/asset helpers; repeat M12 after M11 so static linkers
+    # resolve both directions (same pattern as
+    # firestaff_m11_chest_slot_zones_probe).
+    target_link_libraries(test_m11_overlay_command_queue_block PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_m11_overlay_command_queue_block PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_overlay_command_queue_block
+        COMMAND test_m11_overlay_command_queue_block
+    )
+
+    # v2.8.x: keyboard layout contract regression.  Pins the new
+    # arrow-key mapping (arrows strafe, Home/End/Q/E turn, WASD
+    # mirrors arrows) so the production code cannot silently drift
+    # back to the historical LEFT/RIGHT-equals-turn convention.
+    add_executable(test_input_remap_keyboard_layout_pc34_compat
+        tests/test_input_remap_keyboard_layout_pc34_compat.c
+    )
+    target_link_libraries(test_input_remap_keyboard_layout_pc34_compat PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_input_remap_keyboard_layout_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME input_remap_keyboard_layout_pc34_compat
+        COMMAND test_input_remap_keyboard_layout_pc34_compat
+    )
+
+    # v2.8.x: source-lock verifier for the keyboard layout contract.
+    # Pins the production code paths so a future refactor cannot
+    # regress the arrow-strafe / Home-End-turn mapping without
+    # breaking the verifier.
+    if(Python3_FOUND)
+        add_test(
+            NAME verify_input_remap_keyboard_layout
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_input_remap_keyboard_layout.py
+        )
+    endif()
 
     if(Python3_FOUND)
         add_test(
