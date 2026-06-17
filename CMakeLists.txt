@@ -202,6 +202,9 @@ target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaf
 if(CSB_V2_SOURCES)
     target_link_libraries(firestaff_m11 PUBLIC firestaff_csb_v2)
 endif()
+if(DM2_V2_SOURCES)
+    target_link_libraries(firestaff_m11 PUBLIC firestaff_dm2_v2)
+endif()
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
     # src/engine/m11_game_view.c is a large legacy file — relax truncation/unused warnings.
@@ -350,6 +353,33 @@ target_link_libraries(firestaff_dm2_v2_phase3_hud_overlay_probe
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_phase3_hud_overlay_probe PRIVATE -Wall -Wextra -O2)
 endif()
+
+# DM2 V2 Phase 3 — HUD Runtime Wire-up Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: phase-gate render (V2 off → no-op, V2 on → paints into fb),
+# setter storage (gold, direction, level, champion bar, action, hit-flash, opacity),
+# is_active state, force_active_for_test escape hatch, V1 framebuffer
+# invariant preserved, source evidence citation.
+add_executable(firestaff_dm2_v2_hud_runtime_probe
+    probes/firestaff_dm2_v2_hud_runtime_probe.c
+    src/dm2/dm2_v2_hud_runtime.c
+    src/dm2/dm2_v2_hud_overlay.c
+    src/dm2/dm2_v2_interaction_feedback.c
+    src/dm2/dm2_v2_phase_gate.c
+    src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_dungeon_loader.c
+    src/dm2/dm2_v1_weather.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_link_libraries(firestaff_dm2_v2_hud_runtime_probe
+    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_hud_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm2_v2_hud_runtime_probe
+    COMMAND firestaff_dm2_v2_hud_runtime_probe
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
 
 # DM2 V2 Phase 5 — Smooth Movement and Viewport Interpolation Probe
 # Headless: no game assets, no SDL rendering required.
@@ -1464,6 +1494,23 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_utility_import
     )
 
+    # ── DM2 V1 Phase 5: Combat resolver (creature/combat parity) ──
+    add_executable(test_dm2_v1_combat_pc34_compat
+        tests/test_dm2_v1_combat_pc34_compat.c
+        src/dm2/dm2_v1_combat.c
+    )
+    target_include_directories(test_dm2_v1_combat_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_combat_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_combat_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_combat_pc34_compat
+        COMMAND test_dm2_v1_combat_pc34_compat
+    )
+
     # ── DM2 V1 Phase 2 Probes: Dungeon/Object/World-State/Asset ──
 
     add_executable(probe_dm2_v1_dungeon_loader
@@ -1544,6 +1591,24 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_asset
         COMMAND probe_dm2_v1_asset_loader "$ENV{HOME}/.firestaff/data/dm2/GRAPHICS.DAT"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
+    # ── DM2 V1 Phase 5: Combat headless probe (creature/combat parity) ──
+    add_executable(firestaff_dm2_v1_combat_probe
+        probes/firestaff_dm2_v1_combat_probe.c
+        src/dm2/dm2_v1_combat.c
+    )
+    target_include_directories(firestaff_dm2_v1_combat_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_combat_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_combat_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_combat_probe
+        COMMAND firestaff_dm2_v1_combat_probe
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
@@ -1684,6 +1749,27 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_character_import
         COMMAND test_csb_v1_character_import
+    )
+
+    # Bug C regression: csb_v1_save_game must self-heal the save
+    # directory tree (and the parent of a custom save path) via
+    # ensure_save_dir so a wiped save tree does not return
+    # CSB_V1_SAVE_ERR_CANT_CREATE.
+    add_executable(test_csb_v1_save_ensure_dir_pc34_compat
+        tests/test_csb_v1_save_ensure_dir_pc34_compat.c
+        src/csb/csb_v1_save_load_pc34_compat.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_v1_save_ensure_dir_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_save_ensure_dir_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_save_ensure_dir_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_save_ensure_dir_pc34_compat
+        COMMAND test_csb_v1_save_ensure_dir_pc34_compat
     )
 
     add_executable(test_csb_v1_phase7_verification
@@ -2956,6 +3042,7 @@ if(BUILD_TESTING)
     src/dm1/dm1_v1_sound_pc34_compat.c
     src/dm1/dm1_v1_teleporter_pit_pc34_compat.c
     src/dm1/dm1_v1_light_pc34_compat.c
+    src/shared/fs_portable_compat.c
     )
     target_link_libraries(test_dm1_v1_movement_pipeline_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -4316,6 +4403,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     )
     target_link_libraries(test_dm1_v1_viewport_3d_pc34_compat PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_door_occlusion_pixel_gate PRIVATE firestaff_m10)
+    target_compile_definitions(test_dm1_v1_viewport_3d_pc34_compat PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_viewport_3d_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_door_occlusion_pixel_gate PRIVATE -Wall -Wextra -O2)
