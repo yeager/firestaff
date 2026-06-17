@@ -110,11 +110,15 @@ typedef struct {
 /* ── Spell casting result ────────────────────────────────────────────────
  * Source: SkWinCore.cpp:17521-17670 */
 
+/* ── Spell cast attempt result ─────────────────────────────────────
+ * Source: SkWinCore.cpp:17521-17670 */
 typedef struct {
     int success;
     int mana_used;
     int cooldown_ticks;
     int skill_decay;
+    int effective_difficulty; /* bp08 = difficulty + power */
+    int effective_chance;     /* bp0c = (wizard_ability + 15) - bp08 */
 } DM2_SpellCastResult;
 
 /* ── Public API ──────────────────────────────────────────────────────── */
@@ -125,5 +129,87 @@ int  dm2_v1_spell_type(int spell_index);
 int  dm2_v1_spell_resolves_object_effect(int spell_index, int effect_id);
 const char *dm2_v1_spell_name(int spell_index);
 const char *dm2_v1_spell_source_evidence(void);
+
+/* ── Phase 4 expansion: spell casting mechanics ────────────────────────
+ *
+ * Source: skproject/SKWIN/SkWinCore.cpp:17521-17670 (CAST_SPELL_PLAYER)
+ *
+ * Cast chance formula:
+ *   bp08 = spell->difficulty + spell->power
+ *   bp06 = champion->wizard_ability
+ *   bp0c = (bp06 + 15) - bp08
+ *   if bp0c <= 0: cast fails (skill decay penalty proportional to bp0c)
+ *   else: cast succeeds with mana_per_rune * rune_count deducted
+ *   cooldown: bp0e ticks after successful cast (default 0x08 = 8 ticks)
+ *
+ * DM2 differences from DM1:
+ *   - DM2 has 34 spells in fixed mode (DM1 has ~30)
+ *   - DM2 spells cost mana PER RUNE, not at cast time
+ *   - DM2 spells have a hand cooldown after successful cast
+ *   - DM2 spells apply skill decay on failed cast (DM1: skill decay on fail)
+ *
+ * ── Per-rune mana cost deduction (not at cast time)
+ * Source: skproject/SKWIN/SkWinCore.cpp:18159-18174 (ADD_RUNE_TO_TAIL)
+ *
+ * When a rune is added to the spell tail, the champion's mana is reduced
+ * by `mana_per_rune`. If mana < mana_per_rune, the rune cannot be added.
+ * On cast, mana has already been deducted — only the cooldown + skill
+ * decay happen at cast time. */
+
+/* ── Phase 4 expansion: spell casting mechanics ────────────────────────
+ *
+ * Source: skproject/SKWIN/SkWinCore.cpp:17521-17670 (CAST_SPELL_PLAYER)
+ *
+ * Cast chance formula:
+ *   bp08 = spell->difficulty + spell->power
+ *   bp06 = champion->wizard_ability
+ *   bp0c = (bp06 + 15) - bp08
+ *   if bp0c <= 0: cast fails (skill decay penalty proportional to bp0c)
+ *   else: cast succeeds with mana_per_rune * rune_count deducted
+ *   cooldown: bp0e ticks after successful cast (default 0x08 = 8 ticks)
+ *
+ * DM2 differences from DM1:
+ *   - DM2 has 34 spells in fixed mode (DM1 has ~30)
+ *   - DM2 spells cost mana PER RUNE, not at cast time
+ *   - DM2 spells have a hand cooldown after successful cast
+ *   - DM2 spells apply skill decay on failed cast (DM1: skill decay on fail)
+ *
+ * ── Per-rune mana cost deduction (not at cast time)
+ * Source: skproject/SKWIN/SkWinCore.cpp:18159-18174 (ADD_RUNE_TO_TAIL)
+ *
+ * When a rune is added to the spell tail, the champion's mana is reduced
+ * by `mana_per_rune`. If mana < mana_per_rune, the rune cannot be added.
+ * On cast, mana has already been deducted — only the cooldown + skill
+ * decay happen at cast time. */
+
+/* ── Validate a rune sequence matches a known spell ───────────────
+ * Returns 1 if the rune sequence matches the spell at spell_index.
+ * The first rune (POWER rune) is consumed at no mana cost; the rest
+ * cost mana_per_rune each.  Source: SkWinCore.cpp:17521-17670. */
+int dm2_v1_spell_validate_runes(int spell_index,
+    const uint8_t *rune_sequence, int rune_count);
+
+/* ── Compute total mana cost (excludes the POWER rune at index 0) ──
+ * Source: SkWinCore.cpp:18159-18174 (per-rune deduction) */
+int dm2_v1_spell_mana_cost(int spell_index);
+
+/* ── Compute cast chance for one champion ────────────────────────
+ * Returns bp0c = (wizard_ability + 15) - (difficulty + power).
+ * Positive value = cast succeeds; negative or zero = cast fails.
+ * Source: SkWinCore.cpp:17521-17670 (CAST_SPELL_PLAYER). */
+int dm2_v1_spell_compute_chance(int spell_index, int wizard_ability);
+
+/* ── Check if champion can cast a spell at all ─────────────────
+ * Returns 1 if the champion meets the required_skill threshold
+ * AND has enough mana for the spell (excluding POWER rune). */
+int dm2_v1_spell_can_cast(int spell_index,
+    int wizard_ability, int current_mana);
+
+/* ── Attempt to cast a spell ────────────────────────────────────
+ * Computes cast chance, deducts mana, applies cooldown on success,
+ * applies skill decay on failure.  Returns a DM2_SpellCastResult with
+ * all the per-cast metrics for the wire-up probe. */
+DM2_SpellCastResult dm2_v1_spell_cast_attempt(int spell_index,
+    int wizard_ability, int current_mana);
 
 #endif /* FIRESTAFF_DM2_V1_SPELL_H */
