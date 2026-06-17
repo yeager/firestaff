@@ -140,13 +140,19 @@ static void test_keyboard_positive_control_dispatches_without_overlay(void)
      * turn_without_overlay below.  This case proves that an arrow
      * LEFT press drives the strafe pipeline (DM1_V1_COMMAND_MOVE_LEFT)
      * without an overlay, and the party moves to the left neighbour
-     * square rather than rotating. */
+     * square rather than rotating.
+     *
+     * Note: the SDL scancode layer in src/engine/main_loop_m11.c
+     * translates SDLK_LEFT into M12_MENU_INPUT_STRAFE_LEFT, not
+     * M12_MENU_INPUT_LEFT. M12_MENU_INPUT_LEFT retains its historical
+     * turn-left semantics in the gameplay pipeline (so existing
+     * probe code stays working unchanged). */
     M11_GameViewState state;
     M11_GameInputResult result;
 
     seed_active_view(&state);
 
-    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_LEFT);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_STRAFE_LEFT);
 
     ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
               "keyboard strafe redraws without overlay");

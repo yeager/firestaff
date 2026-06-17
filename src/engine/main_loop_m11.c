@@ -1404,15 +1404,18 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         (len == 2U && strncmp(token, "sr", len) == 0)) {
         return M12_MENU_INPUT_STRAFE_RIGHT;
     }
-    /* v2.8.x: arrow keys now mean strafe-left/strafe-right during
-     * gameplay (matches the original DM1 PC 3.4 convention and the
-     * user's keyboard-mapping request).  The script-token `left` /
-     * `l` aliases follow suit so replay scripts drive strafe
-     * rather than turn.  Use `turn-left` / `tl` for the
-     * turn-left input that Home / Q / KP_4 produce. */
+    /* v2.8.x: script-token `left` keeps its historical turn-left
+     * semantics so existing probe and replay-script code (pass373's
+     * script, firestaff_m11_wall_collision_capture_probe,
+     * firestaff_m11_turn_viewport_orientation_probe, etc.) keeps
+     * working unchanged.  The user's keyboard-mapping request is
+     * honoured at the SDL scancode layer: SDLK_LEFT maps to
+     * STRAFE_LEFT (which feeds the gameplay pipeline through
+     * M12_MENU_INPUT_STRAFE_LEFT, not M12_MENU_INPUT_LEFT).  Use
+     * `strafe-left` or `sl` for the strafe-left replay token. */
     if ((len == 4U && strncmp(token, "left", len) == 0) ||
         (len == 1U && strncmp(token, "l", len) == 0)) {
-        return M12_MENU_INPUT_STRAFE_LEFT;
+        return M12_MENU_INPUT_TURN_LEFT;
     }
     /* v2.8.x: script-token `right` keeps its historical turn-right
      * semantics so pass373's `enter,down,down,down,down,down,down,enter,right`

@@ -1,6 +1,6 @@
 # Pass610 - DM1 V1 Firestaff viewport crop capture gate
 
-Status: FAIL_PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE
+Status: PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE_LOCKED
 
 This gate locks the Firestaff-side 224x136 viewport crop artifacts needed before any later same-viewport original/Firestaff comparison can be promoted.
 
@@ -10,17 +10,13 @@ Source evidence:
 - DRAWVIEW.C:842-857 ok=True - F0097 presents G0296 through C007_ZONE_VIEWPORT, so the crop is the compare boundary.
 
 Runtime crops:
+- 01_start_south_1_3 map=0 x=1 y=3 dir=2 crop=01_start_south_1_3_viewport_224x136.ppm sha256=8d879bc0765ad6f20756b84630da78fa94c02eebdf61c8cf817ce02ada4dd712
+- 02_turn_right_west_1_3 map=0 x=1 y=3 dir=3 crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
+- 03_blocked_west_wall_1_3 map=0 x=1 y=3 dir=3 crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
+- 04_forward_south_1_4 map=0 x=1 y=4 dir=2 crop=04_forward_south_1_4_viewport_224x136.ppm sha256=497e8745b44d1dbd423ae9174a4fd924678e2eac9b5ffe770a708099954d606a
 
 Non-claims:
 - no original PC34 frame was captured
 - no original-vs-Firestaff pixel parity is promoted
 - the crop hashes are Firestaff capture-readiness evidence only
 - no TODO.md update
-
-Problems:
-- DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data] gameId=[dm1]
-  TRY: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND
-LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]
-wrote /Users/bosse/.openclaw/workspace-main/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.json and /Users/bosse/.openclaw/workspace-main/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.md
-FAIL dm1_v1_wall_collision_runtime_capture rows=4 out=/Users/bosse/.openclaw/workspace-main/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate
-

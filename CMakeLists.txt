@@ -4308,6 +4308,7 @@ if(BUILD_TESTING)
             NAME pass508_dm1_v1_movement_remaining_gap_after_pass374
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass508_dm1_v1_movement_remaining_gap_after_pass374.py
         )
+        set_tests_properties(pass508_dm1_v1_movement_remaining_gap_after_pass374 PROPERTIES DEPENDS "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path;pass374_dm1_v1_completion_viewport_wall_credit")
         add_test(
             NAME pass376_dm1_v1_completion_deferred_explosion_credit
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass376_dm1_v1_completion_deferred_explosion_credit.py
@@ -5436,6 +5437,7 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         NAME pass512_dm1_v1_movement_cross_reference_audit
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass512_dm1_v1_movement_cross_reference_audit.py
     )
+    set_tests_properties(pass512_dm1_v1_movement_cross_reference_audit PROPERTIES DEPENDS "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path;pass374_dm1_v1_completion_viewport_wall_credit;pass508_dm1_v1_movement_remaining_gap_after_pass374")
 endif()
 
 # -- DM1 V1 movement follow-up source-lock gate ---------------------
