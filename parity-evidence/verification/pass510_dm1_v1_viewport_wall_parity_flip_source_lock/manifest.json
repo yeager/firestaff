@@ -9,23 +9,23 @@
     {
       "hits": [
         {
-          "line": 12564,
+          "line": 12611,
           "needle": "ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set"
         },
         {
-          "line": 12572,
+          "line": 12619,
           "needle": "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)"
         },
         {
-          "line": 12574,
+          "line": 12621,
           "needle": "return (state->world.party.mapX +"
         },
         {
-          "line": 12575,
+          "line": 12622,
           "needle": "state->world.party.mapY +"
         },
         {
-          "line": 12576,
+          "line": 12623,
           "needle": "state->world.party.direction) & 1;"
         }
       ],
@@ -34,30 +34,30 @@
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "30ded9e1c6cdb37d738900ec8d7f7566f762ea2a37475aaf70080b2b4d689f28",
+      "sha256": "0312eae14bb0e25be8e73d956d7574ce6dbc4aa1895f60d03b47fa5aa735824a",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 12570,
+          "line": 12617,
           "needle": "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,"
         },
         {
-          "line": 12623,
+          "line": 12670,
           "needle": "static int m11_is_dm1_wallset_materialized_graphic(unsigned int graphicIndex)"
         },
         {
-          "line": 12638,
+          "line": 12685,
           "needle": "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;"
         },
         {
-          "line": 12641,
+          "line": 12688,
           "needle": "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +"
         },
         {
-          "line": 12642,
+          "line": 12689,
           "needle": "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
         }
       ],
@@ -66,38 +66,38 @@
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "30ded9e1c6cdb37d738900ec8d7f7566f762ea2a37475aaf70080b2b4d689f28",
+      "sha256": "0312eae14bb0e25be8e73d956d7574ce6dbc4aa1895f60d03b47fa5aa735824a",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 13210,
+          "line": 13257,
           "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
         },
         {
-          "line": 13215,
+          "line": 13262,
           "needle": "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))"
         },
         {
-          "line": 13216,
+          "line": 13263,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 13222,
+          "line": 13269,
           "needle": "the native center-wall graphic flipped horizontally."
         },
         {
-          "line": 13223,
+          "line": 13270,
           "needle": "(void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,"
         },
         {
-          "line": 13227,
+          "line": 13274,
           "needle": "} else {"
         },
         {
-          "line": 13228,
+          "line": 13275,
           "needle": "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
         }
       ],
@@ -106,46 +106,46 @@
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "30ded9e1c6cdb37d738900ec8d7f7566f762ea2a37475aaf70080b2b4d689f28",
+      "sha256": "0312eae14bb0e25be8e73d956d7574ce6dbc4aa1895f60d03b47fa5aa735824a",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 14107,
+          "line": 14154,
           "needle": "static void m11_draw_dm1_side_walls(const M11_GameViewState* state,"
         },
         {
-          "line": 14167,
+          "line": 14214,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 14169,
+          "line": 14216,
           "needle": "left zones use the right-side graphic flipped horizontally"
         },
         {
-          "line": 14172,
+          "line": 14219,
           "needle": "size_t partner = i ^ 1;"
         },
         {
-          "line": 14173,
+          "line": 14220,
           "needle": "M11_DM1WallFrontBlit swapped = kSideBlits[i];"
         },
         {
-          "line": 14174,
+          "line": 14221,
           "needle": "swapped.graphicIndex = kSideBlits[partner].graphicIndex;"
         },
         {
-          "line": 14175,
+          "line": 14222,
           "needle": "(void)m11_draw_dm1_wall_blit_flipped(state,"
         },
         {
-          "line": 14181,
+          "line": 14228,
           "needle": "} else {"
         },
         {
-          "line": 14182,
+          "line": 14229,
           "needle": "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
         }
       ],
@@ -154,7 +154,7 @@
       "missing": [],
       "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "30ded9e1c6cdb37d738900ec8d7f7566f762ea2a37475aaf70080b2b4d689f28",
+      "sha256": "0312eae14bb0e25be8e73d956d7574ce6dbc4aa1895f60d03b47fa5aa735824a",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     }

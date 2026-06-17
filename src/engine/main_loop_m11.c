@@ -1404,13 +1404,29 @@ static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
         (len == 2U && strncmp(token, "sr", len) == 0)) {
         return M12_MENU_INPUT_STRAFE_RIGHT;
     }
+    /* v2.8.x: arrow keys now mean strafe-left/strafe-right during
+     * gameplay (matches the original DM1 PC 3.4 convention and the
+     * user's keyboard-mapping request).  The script-token `left` /
+     * `l` aliases follow suit so replay scripts drive strafe
+     * rather than turn.  Use `turn-left` / `tl` for the
+     * turn-left input that Home / Q / KP_4 produce. */
     if ((len == 4U && strncmp(token, "left", len) == 0) ||
         (len == 1U && strncmp(token, "l", len) == 0)) {
-        return M12_MENU_INPUT_LEFT;
+        return M12_MENU_INPUT_STRAFE_LEFT;
     }
     if ((len == 5U && strncmp(token, "right", len) == 0) ||
         (len == 1U && strncmp(token, "r", len) == 0)) {
-        return M12_MENU_INPUT_RIGHT;
+        return M12_MENU_INPUT_STRAFE_RIGHT;
+    }
+    if ((len == 9U && strncmp(token, "turn-left", len) == 0) ||
+        (len == 2U && strncmp(token, "tl", len) == 0) ||
+        (len == 4U && strncmp(token, "home", len) == 0)) {
+        return M12_MENU_INPUT_TURN_LEFT;
+    }
+    if ((len == 10U && strncmp(token, "turn-right", len) == 0) ||
+        (len == 2U && strncmp(token, "tr", len) == 0) ||
+        (len == 3U && strncmp(token, "end", len) == 0)) {
+        return M12_MENU_INPUT_TURN_RIGHT;
     }
     if ((len == 5U && strncmp(token, "enter", len) == 0) ||
         (len == 6U && strncmp(token, "return", len) == 0)) {
@@ -1723,22 +1739,38 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_STRAFE_LEFT;
                 case SDLK_KP_3:
                     return M12_MENU_INPUT_STRAFE_RIGHT;
+                /* v2.8.x: arrow Left/Right now mean strafe (matches
+                 * the original DM1 PC 3.4 convention; see also the
+                 * user's keyboard-mapping request).  Q/E + Home/End +
+                 * KP_4/KP_6 produce the turn-left/turn-right input
+                 * tokens.  KP_4/KP_6 stay turn-left/turn-right
+                 * because that's what COMMAND.C:677-684 maps them to
+                 * on the original PC 3.4 keyboard (source-locked by
+                 * test_dm1_v1_input_command_queue_pc34_compat). */
                 case SDLK_LEFT:
-                case SDLK_KP_4:
-                case SDLK_Q:
-                    return M12_MENU_INPUT_LEFT;
+                    return M12_MENU_INPUT_STRAFE_LEFT;
                 case SDLK_RIGHT:
+                    return M12_MENU_INPUT_STRAFE_RIGHT;
+                case SDLK_KP_4:
+                    return M12_MENU_INPUT_TURN_LEFT;
                 case SDLK_KP_6:
+                    return M12_MENU_INPUT_TURN_RIGHT;
+                case SDLK_Q:
+                    return M12_MENU_INPUT_TURN_LEFT;
                 case SDLK_E:
-                    return M12_MENU_INPUT_RIGHT;
+                    return M12_MENU_INPUT_TURN_RIGHT;
+                case SDLK_HOME:
+                    return M12_MENU_INPUT_TURN_LEFT;
+                case SDLK_END:
+                    return M12_MENU_INPUT_TURN_RIGHT;
                 case SDLK_A:
                     if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_LEFT;
+                        return M12_MENU_INPUT_STRAFE_LEFT;
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_D:
                     if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_RIGHT;
+                        return M12_MENU_INPUT_STRAFE_RIGHT;
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_W:
@@ -2023,22 +2055,38 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_STRAFE_LEFT;
                 case SDLK_KP_3:
                     return M12_MENU_INPUT_STRAFE_RIGHT;
+                /* v2.8.x: arrow Left/Right now mean strafe (matches
+                 * the original DM1 PC 3.4 convention; see also the
+                 * user's keyboard-mapping request).  Q/E + Home/End +
+                 * KP_4/KP_6 produce the turn-left/turn-right input
+                 * tokens.  KP_4/KP_6 stay turn-left/turn-right
+                 * because that's what COMMAND.C:677-684 maps them to
+                 * on the original PC 3.4 keyboard (source-locked by
+                 * test_dm1_v1_input_command_queue_pc34_compat). */
                 case SDLK_LEFT:
-                case SDLK_KP_4:
-                case SDLK_Q:
-                    return M12_MENU_INPUT_LEFT;
+                    return M12_MENU_INPUT_STRAFE_LEFT;
                 case SDLK_RIGHT:
+                    return M12_MENU_INPUT_STRAFE_RIGHT;
+                case SDLK_KP_4:
+                    return M12_MENU_INPUT_TURN_LEFT;
                 case SDLK_KP_6:
+                    return M12_MENU_INPUT_TURN_RIGHT;
+                case SDLK_Q:
+                    return M12_MENU_INPUT_TURN_LEFT;
                 case SDLK_E:
-                    return M12_MENU_INPUT_RIGHT;
+                    return M12_MENU_INPUT_TURN_RIGHT;
+                case SDLK_HOME:
+                    return M12_MENU_INPUT_TURN_LEFT;
+                case SDLK_END:
+                    return M12_MENU_INPUT_TURN_RIGHT;
                 case SDLK_A:
                     if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_LEFT;
+                        return M12_MENU_INPUT_STRAFE_LEFT;
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_D:
                     if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_RIGHT;
+                        return M12_MENU_INPUT_STRAFE_RIGHT;
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_W:

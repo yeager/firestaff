@@ -7295,9 +7295,21 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
 
 static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input) {
     switch (input) {
+        /* v2.8.x: arrow LEFT/RIGHT now mean strafe-left/strafe-right
+         * (the original DM1 PC 3.4 convention; see also the user's
+         * keyboard-mapping request).  TURN_LEFT/TURN_RIGHT come from
+         * Home / End / Q / E / KP_4 / KP_6.  The mouse-menu arrow
+         * click route in m11_dispatch_arrow_command still uses
+         * M12_MENU_INPUT_LEFT/RIGHT for menu cycling, so we keep
+         * those tokens in the runtime-pipeline switch as a defensive
+         * fallback. */
         case M12_MENU_INPUT_LEFT:
-            return DM1_V1_COMMAND_TURN_LEFT;
+            return DM1_V1_COMMAND_MOVE_LEFT;
         case M12_MENU_INPUT_RIGHT:
+            return DM1_V1_COMMAND_MOVE_RIGHT;
+        case M12_MENU_INPUT_TURN_LEFT:
+            return DM1_V1_COMMAND_TURN_LEFT;
+        case M12_MENU_INPUT_TURN_RIGHT:
             return DM1_V1_COMMAND_TURN_RIGHT;
         case M12_MENU_INPUT_UP:
             return DM1_V1_COMMAND_MOVE_FORWARD;
@@ -7989,14 +8001,32 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
-        if (input == M12_MENU_INPUT_LEFT) {
+        /* v2.8.x: arrow Left/Right now mean strafe (matches original
+         * DM1 PC 3.4 convention).  TURN_LEFT/RIGHT comes from Home /
+         * End / Q / E / KP_4 / KP_6.  Theron's track-02 world has no
+         * strafe route — there is no left/right perpendicular cell —
+         * so STRAFE_LEFT/RIGHT and the legacy LEFT/RIGHT tokens map
+         * to a no-op (defensive: ignore) while TURN_LEFT/RIGHT still
+         * rotates the party facing.  The previous build had LEFT and
+         * RIGHT silently turning the party in Theron; that path is
+         * preserved through TURN_LEFT/RIGHT and the keyboard handler
+         * routes arrow keys to STRAFE_LEFT/RIGHT, so Theron players
+         * who only pressed arrow keys will see strafe become a no-op
+         * (no harm) and turn is still reachable via Q/E/Home/End. */
+        if (input == M12_MENU_INPUT_TURN_LEFT) {
             world->party.leader_dir = (world->party.leader_dir + 3) & 3;
             moved = 1;
             m11_set_status(state, "TURN", "LEFT");
-        } else if (input == M12_MENU_INPUT_RIGHT) {
+        } else if (input == M12_MENU_INPUT_TURN_RIGHT) {
             world->party.leader_dir = (world->party.leader_dir + 1) & 3;
             moved = 1;
             m11_set_status(state, "TURN", "RIGHT");
+        } else if (input == M12_MENU_INPUT_LEFT ||
+                   input == M12_MENU_INPUT_RIGHT ||
+                   input == M12_MENU_INPUT_STRAFE_LEFT ||
+                   input == M12_MENU_INPUT_STRAFE_RIGHT) {
+            /* Theron has no strafe route: ignore. */
+            m11_set_status(state, "NO-OP", "THERON HAS NO STRAFE");
         } else if (input == M12_MENU_INPUT_UP) {
             static const int dx[4] = {0, 1, 0, -1};
             static const int dy[4] = {-1, 0, 1, 0};
@@ -8141,11 +8171,28 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             command = m11_backward_command_for_direction(state->world.party.direction);
             label = "BACKSTEP";
             break;
+        /* v2.8.x: arrow Left/Right now mean strafe (original DM1 PC
+         * 3.4 convention; see also the user's keyboard-mapping
+         * request).  TURN_LEFT/TURN_RIGHT come from Home / End / Q /
+         * E / KP_4 / KP_6.  Defensive fallback for any caller still
+         * passing M12_MENU_INPUT_LEFT/RIGHT into the gameplay path
+         * (the menu-click arrow route at m11_dispatch_arrow_command
+         * uses these tokens for menu cycling and should NOT route
+         * into gameplay, but a defensive default keeps the legacy
+         * behaviour consistent with what was documented). */
         case M12_MENU_INPUT_LEFT:
+            command = m11_strafe_left_command_for_direction(state->world.party.direction);
+            label = "STRAFE LEFT";
+            break;
+        case M12_MENU_INPUT_RIGHT:
+            command = m11_strafe_right_command_for_direction(state->world.party.direction);
+            label = "STRAFE RIGHT";
+            break;
+        case M12_MENU_INPUT_TURN_LEFT:
             command = CMD_TURN_LEFT;
             label = "TURN LEFT";
             break;
-        case M12_MENU_INPUT_RIGHT:
+        case M12_MENU_INPUT_TURN_RIGHT:
             command = CMD_TURN_RIGHT;
             label = "TURN RIGHT";
             break;

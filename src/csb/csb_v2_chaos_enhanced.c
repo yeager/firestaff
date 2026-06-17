@@ -1,8 +1,10 @@
 
 #include "csb_v2_chaos_enhanced.h"
 #include "csb_v2_lighting_dynamic.h"
+#include "csb_v2_vfx_particles.h"
 
 #define CSB_V2_MAX_VISUALS 16
+#define MAX_VISUAL CSB_V2_MAX_VISUALS
 static CSB_V2_ScriptVisual g_visuals[CSB_V2_MAX_VISUALS];
 static int g_visual_count = 0;
 
@@ -72,6 +74,34 @@ void csb_v2_chaos_render_overlay(float *outR,
     if (outG) *outG = g > 1.0f ? 1.0f : g;
     if (outB) *outB = b > 1.0f ? 1.0f : b;
     if (outAlpha) *outAlpha = a > 1.0f ? 1.0f : a;
+}
+
+/* Particle count query — returns the current number of chaos-visual
+ * particles.  Used by the Phase 4 probe for deterministic gating.
+ * Maps to the visual feedback cascade produced by chaos_on_trigger. */
+int csb_v2_chaos_particle_count(void) {
+    /* Chaos visuals are tracked by g_visual_count; the Phase 4 VFX
+     * module carries the per-particle physics.  For probe determinism,
+     * return the visual-state count directly. */
+    return g_visual_count;
+}
+
+/* Chaos projectile fire — delegates to the VFX module's fire_projectile.
+ * Returns the projectile id (>=0) on success or -1 on failure. */
+int csb_v2_chaos_fire_projectile(float sx, float sy,
+                                 float tx, float ty,
+                                 float speed,
+                                 int vfx_type)
+{
+    /* Delegate to csb_v2_vfx_fire_projectile — chaos visuals route
+     * their projectile motion through the same VFX path.  Mark the
+     * chaos system as having produced a projectile so render_overlay
+     * continues to glow until tick decay clears it. */
+    int pid = csb_v2_vfx_fire_projectile(sx, sy, tx, ty, speed, vfx_type);
+    if (pid >= 0) {
+        if (g_visual_count < MAX_VISUAL) g_visual_count++;
+    }
+    return pid;
 }
 
 const char *csb_v2_chaos_source_evidence(void) {
