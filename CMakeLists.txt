@@ -102,6 +102,7 @@ set(NEXUS_V2_RUNTIME_SOURCES
     src/nexus/nexus_v2_hud_runtime.c
     src/nexus/nexus_v2_lighting_runtime.c
     src/nexus/nexus_v2_smooth_movement_runtime.c
+    src/nexus/nexus_v2_touch_runtime.c
 )
 if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_V2_RUNTIME_SOURCES})
@@ -510,6 +511,32 @@ endif()
 add_test(
     NAME nexus_v2_smooth_movement_runtime_probe
     COMMAND firestaff_nexus_v2_smooth_movement_runtime_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+# Nexus V2 Phase 6 — Touch/Controller Runtime Wire-up Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: phase-gated translation (V2 off → rejected, V2 on →
+# accepted), all 6 movement affordances translate to correct
+# DM1_V1_COMMAND_* values, force_active_for_test bypass,
+# observability counter, V1 chrome untouched when V1 active,
+# source evidence citation.
+add_executable(firestaff_nexus_v2_touch_runtime_probe
+    probes/firestaff_nexus_v2_touch_runtime_probe.c
+    src/nexus/nexus_v2_touch_runtime.c
+    src/nexus/nexus_v2_touch_controller_affordance.c
+    src/nexus/nexus_v2_phase_gate_pc34.c
+    src/nexus/nexus_v1_engine.c
+    src/nexus/nexus_v1_creatures.c
+    src/nexus/nexus_v1_combat.c)
+target_link_libraries(firestaff_nexus_v2_touch_runtime_probe
+    PRIVATE firestaff_nexus firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v2_touch_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME nexus_v2_touch_runtime_probe
+    COMMAND firestaff_nexus_v2_touch_runtime_probe
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
