@@ -88,6 +88,7 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(firestaff_dm2 PUBLIC firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2 PRIVATE -Wall -Wextra -O2)
     endif()
@@ -206,6 +207,12 @@ set(M11_SOURCES
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 firestaff_theron SDL3::SDL3 m)
+if(DM2_SOURCES)
+    # 2026-06-17: DM2 V1 hand-off added in M11_GameView_Start (see
+    # M11_GameView_StartDm2 in m11_game_view.c). Links the DM2 V1 boot
+    # profile + runtime so --game dm2 reaches dm2_v1_boot_enter_game.
+    target_link_libraries(firestaff_m11 PUBLIC firestaff_dm2)
+endif()
 if(CSB_V2_SOURCES)
     target_link_libraries(firestaff_m11 PUBLIC firestaff_csb_v2)
 endif()
