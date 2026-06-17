@@ -10,7 +10,7 @@
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat",
     "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
   },
-  "head": "fea9e9200a35b1583f3b36df8d6ac43290aa72e2",
+  "head": "28f746397c0e35db5639c993fa3519409e30be9e",
   "notClaimed": [
     "new original DOS runtime capture",
     "viewport or wall pixel parity",
@@ -27,7 +27,7 @@
   },
   "schema": "firestaff.parity.pass544_dm1_v1_blocked_collision_queue_lifecycle.v1",
   "status": "PASS544_DM1_V1_BLOCKED_COLLISION_QUEUE_LIFECYCLE_LOCKED",
-  "timestampUtc": "2026-06-17T14:55:56.446947+00:00",
+  "timestampUtc": "2026-06-17T15:12:31.936757+00:00",
   "whyNotPass542Duplicate": "pass542 locks pre-dequeue cooldown/projectile gating where the movement command remains queued; pass544 locks the adjacent post-dequeue blocked collision path where ordinary queued/pending input is discarded, reserved release/stop survives, one blocked VBlank is requested, and successful-step cooldown is not assigned.",
   "worktree": "/Users/bosse/.openclaw/workspace-main"
 }
