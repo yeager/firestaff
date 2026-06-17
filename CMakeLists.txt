@@ -141,7 +141,11 @@ endif()
 
 # ── V2 static library (enhanced features) ──────────────────────────
 file(GLOB_RECURSE V2_SOURCES CONFIGURE_DEPENDS "src/dm1v2/*_pc34.c")
-add_library(firestaff_v2 STATIC ${V2_SOURCES} src/shared/vga_palette_pc34_compat.c src/dm1v2/dm1_v22_shapes.c)
+# firestaff_v2 includes fs_portable_compat.c because dm1_v2_modern_assets_pc34.c
+# references FSP_JoinPath/FSP_ParentDir; static library link order on Linux/Windows
+# is strict, so the symbol must be available in the same .a as the caller.
+# Pulling it in directly also future-proofs the public-link contract.
+add_library(firestaff_v2 STATIC ${V2_SOURCES} src/shared/vga_palette_pc34_compat.c src/dm1v2/dm1_v22_shapes.c src/shared/fs_portable_compat.c)
 target_include_directories(firestaff_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(firestaff_v2 PUBLIC firestaff_m10 m)
 if(NOT MSVC)
