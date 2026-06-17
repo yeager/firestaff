@@ -329,6 +329,32 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V2 Phase 4/5/6 — Combined Runtime Wire-up Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies csb_v2_lighting_runtime + csb_v2_smooth_movement_runtime +
+# csb_v2_touch_runtime all phase-gate correctly, V1 state preserved when
+# V2 disabled, force_active_for_test bypass, observability counters,
+# source evidence citations.
+add_executable(firestaff_csb_v2_runtime_wireup_probe
+    probes/firestaff_csb_v2_runtime_wireup_probe.c
+    src/csb/csb_v2_lighting_runtime.c
+    src/csb/csb_v2_lighting_dynamic.c
+    src/csb/csb_v2_smooth_movement_runtime.c
+    src/csb/csb_v2_smooth_movement.c
+    src/csb/csb_v2_touch_runtime.c
+    src/csb/csb_v2_touch_controller_affordance.c
+    src/csb/csb_v2_phase_gate_pc34.c)
+target_link_libraries(firestaff_csb_v2_runtime_wireup_probe
+    PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_runtime_wireup_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v2_runtime_wireup_probe
+    COMMAND firestaff_csb_v2_runtime_wireup_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
 # DM2 V2 Phase 1 — Launch/Profile Separation Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies DM2_V2_PHASE_DOMAIN_LAUNCH and DM2_V2_PHASE_DOMAIN_PROFILE compile gates,
@@ -832,6 +858,60 @@ target_link_libraries(firestaff_csb_v2_phase7_verification_probe
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase7_verification_probe PRIVATE -Wall -Wextra -O2)
 endif()
+
+# CSB V2 Phase 6 - Touch/Controller Runtime Wire-up Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: V1->V2 input bridge translates CSB V2 touch/controller
+# affordances (touch swipes, edge-strafe, D-pad, left/right sticks,
+# shoulder buttons) into V1 command-queue entries via the DM1 V2
+# movement command adapter (CSB shares DM1 movement engine verbatim),
+# phase gate guard (V2-only), force_active_for_test bypass,
+# observability counter increments only on accepted translations,
+# source evidence citation, coordinate pass-through, cross-sibling
+# symmetry with dm2_v2_touch_runtime / nexus_v2_touch_runtime.
+add_executable(firestaff_csb_v2_touch_runtime_probe
+    probes/firestaff_csb_v2_touch_runtime_probe.c
+    src/csb/csb_v2_touch_runtime.c
+    src/csb/csb_v2_touch_controller_affordance.c
+    src/csb/csb_v2_phase_gate_pc34.c)
+target_include_directories(firestaff_csb_v2_touch_runtime_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v2_touch_runtime_probe
+    PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_touch_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v2_touch_runtime_probe
+    COMMAND firestaff_csb_v2_touch_runtime_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+# CSB V2 Phase 4 - Enhanced Lighting and Magic Effects Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: per-zone brightness boost, color-temperature shift for
+# CSB's magic zones (neutral/poison/lord-chaos/anti-magic), magic
+# effect bloom, force_active_for_test bypass, observability counter,
+# source evidence citation. Source-locked against csb_v1_chaos_magic
+# + ReDMCSB LIGHT.C F0212 + ReDMCSB DUNVIEW.C F0128 + PANEL.C F0354.
+add_executable(firestaff_csb_v2_phase4_enhanced_lighting_probe
+    probes/firestaff_csb_v2_phase4_enhanced_lighting_probe.c
+    src/csb/csb_v2_vfx_particles.c
+    src/csb/csb_v2_lighting_dynamic.c
+    src/csb/csb_v2_chaos_enhanced.c
+    src/csb/csb_v2_phase_gate_pc34.c)
+target_include_directories(firestaff_csb_v2_phase4_enhanced_lighting_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v2_phase4_enhanced_lighting_probe
+    PRIVATE firestaff_csb_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_phase4_enhanced_lighting_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v2_phase4_enhanced_lighting_probe
+    COMMAND firestaff_csb_v2_phase4_enhanced_lighting_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
 
 # DM1 V2 presentation-mode probe (V2.0 / V2.1 / V2.2 selection).
 # Headless: no game assets, no SDL rendering required.
