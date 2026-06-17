@@ -5805,6 +5805,10 @@ if(BUILD_TESTING)
     target_include_directories(test_nexus_v2_lighting PRIVATE
         ${CMAKE_SOURCE_DIR}/include
     )
+    # nexus_v2_lighting uses sinf() for torch flicker phase math, so the
+    # test binary needs to link libm. On macOS sinf/cosf are in libSystem
+    # (auto-linked) so this is a no-op there; on Linux it's required.
+    target_link_libraries(test_nexus_v2_lighting PRIVATE m)
     if(NOT MSVC)
         target_compile_options(test_nexus_v2_lighting PRIVATE -Wall -Wextra -O2)
     endif()
