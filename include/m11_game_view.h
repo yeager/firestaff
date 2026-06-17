@@ -32,7 +32,14 @@ typedef enum {
     M11_GAME_SOURCE_CUSTOM_DUNGEON,
     M11_GAME_SOURCE_DIRECT_DUNGEON,
     M11_GAME_SOURCE_NEXUS_DGN,
-    M11_GAME_SOURCE_THERON_TRACK02
+    M11_GAME_SOURCE_THERON_TRACK02,
+    M11_GAME_SOURCE_DM2_BOOT /* DM2 V1 hand-off: M11 owns the launch but the
+                              * actual game state + tick + rendering go
+                              * through dm2_v1_boot_enter_game() and the
+                              * DM2 V1/V2 runtime libraries. The sourceKind
+                              * tag tells M11 to skip the DM1 dungeon loader
+                              * and the DM1 m11_apply_tick path for this
+                              * game (added 2026-06-17). */
 } M11_GameSourceKind;
 
 typedef struct {
@@ -378,6 +385,25 @@ typedef struct {
         int party_x, party_y, party_dir;
         int tick_count;
     } theronState;
+
+    /* DM2 (Skullkeep) V1 runtime — active when sourceKind ==
+     * M11_GAME_SOURCE_DM2_BOOT. Opaque here so the public M11 state
+     * does not expose DM2-private implementation headers. Populated by
+     * M11_GameView_StartDm2() after dm2_v1_boot_enter_game() succeeds
+     * (added 2026-06-17). dm2World carries the live DM2_V1_GameState
+     * pointer (or NULL when not initialised); dm2BootProfile is a
+     * back-reference for shutdown + future V2 runtime init. The M11
+     * render loop and tick paths dispatch on sourceKind and read
+     * dm2World when present. */
+    void *dm2World;           /* DM2_V1_GameState* — owned by
+                               * the static DM2_V1_BootProfile in
+                               * M11_GameView_StartDm2(). */
+    void *dm2BootProfile;     /* DM2_V1_BootProfile* */
+    struct {
+        int level_loaded;
+        int party_x, party_y, party_dir;
+        int tick_count;
+    } dm2State;
 
     /* Accessibility: in-game font size scale (1..3).
      * Set from M12 launcher's fontScale setting via M11_GameLaunchSpec.fontScale.
