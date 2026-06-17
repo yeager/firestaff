@@ -93,7 +93,7 @@ Source-locked against SKULL.ASM T520/T560/T600, ReDMCSB GAMELOOP.C:164-219, and 
 
 ### DM2 CLI launch
 
-- 🔧 `--game dm2` direct-launch not wired into M11 (surfaced by 2026-06-17 launch-verification sweep). `M11_GameView_OpenSelectedMenuEntry` in `src/engine/m11_game_view.c` builds a launch spec for all 5 games but `M11_GameView_Start` only has specialized branches for dm1/csb/nexus/theron — DM2 falls through to the DM1 dungeon loader and fails the launch. The DM2 runtime exists and is fully exercised by the menu browse path (`M12 menu → DM2 entry → launch`). The dedicated DM2 binary entry point lives in `src/engine/firestaff_cli.c` (the `FS_GAME_DM2` route via `fs_game_init`), but `firestaff_cli.c` is **not currently linked into the `firestaff` executable** — only `firestaff_main_m11.c` is. **Recommended fix:** add an `M11_GameView_StartDm2` branch in `m11_game_view.c` that calls `dm2_v1_boot_enter_game()` (mirroring the CSB hand-off pattern at line ~6608). Until then, DM2 is reachable only through the menu UI. Verification script: `/tmp/firestaff-launch-verify/verify_all_launches.sh` flags 10/49 combinations as `FAIL_NODATA` — all of them are the DM2 combinations; the other 39 (DM1/CSB/Nexus/Theron across every scale + resolution) pass.
+- ✅ `--game dm2` direct-launch wired (closed 2026-06-17 by adding M11_GameView_StartDm2 branch + fixing dm2_md5_body in src/dm2/dm2_v1_boot.c). verify_all_launches.sh now 59/59 PASS (was 49/49 + 10 FAIL_NODATA). See DONE.md for full fix details.
 
 ## Dungeon Master Nexus
 
