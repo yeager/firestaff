@@ -10,7 +10,7 @@
         "direction": 2,
         "label": "01_start_south_1_3",
         "map": 0,
-        "sha": "210fa5eedd9c37172c59dd451bffa7f942c5402358ae535d841d3a8614711371",
+        "sha": "8d879bc0765ad6f20756b84630da78fa94c02eebdf61c8cf817ce02ada4dd712",
         "x": 1,
         "y": 3
       },
@@ -254,5 +254,5 @@
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
-  "timestampUtc": "2026-06-17T05:39:19.589462+00:00"
+  "timestampUtc": "2026-06-17T13:12:04.121142+00:00"
 }
