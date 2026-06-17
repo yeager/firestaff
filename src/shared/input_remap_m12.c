@@ -67,13 +67,18 @@ static const struct {
     SDL_Keycode     primary;
     SDL_Keycode     secondary;
 } s_defaults_hybrid[] = {
-    /* Hybrid: A/D = strafe, Q/E = turn (FPS-style) */
+    /* v2.8.x — Hybrid preset: same arrow-strafe contract as the
+     * original preset (the user's request makes the two presets
+     * collapse to identical defaults for movement + turn; the only
+     * difference between them is now cosmetic, e.g. spell-cast and
+     * spell-clear keys).  WASD still mirrors the arrow keys;
+     * Q/E + Home/End are the turn keys; arrows strafe. */
     { M12_ACTION_MOVE_FORWARD,     SDLK_UP,        SDLK_W       },
     { M12_ACTION_MOVE_BACKWARD,    SDLK_DOWN,      SDLK_S       },
-    { M12_ACTION_TURN_LEFT,        SDLK_LEFT,      SDLK_Q       },
-    { M12_ACTION_TURN_RIGHT,       SDLK_RIGHT,     SDLK_E       },
-    { M12_ACTION_STRAFE_LEFT,      SDLK_A,         0            },
-    { M12_ACTION_STRAFE_RIGHT,     SDLK_D,         0            },
+    { M12_ACTION_TURN_LEFT,        SDLK_HOME,      SDLK_Q       },
+    { M12_ACTION_TURN_RIGHT,       SDLK_END,       SDLK_E       },
+    { M12_ACTION_STRAFE_LEFT,      SDLK_LEFT,      SDLK_A       },
+    { M12_ACTION_STRAFE_RIGHT,     SDLK_RIGHT,     SDLK_D       },
     { M12_ACTION_ACCEPT,           SDLK_RETURN,    SDLK_KP_ENTER },
     { M12_ACTION_BACK,             SDLK_ESCAPE,    0            },
     { M12_ACTION_ACTION,           SDLK_SPACE,     0            },
