@@ -31,7 +31,7 @@
   },
   "pass223_input": "parity-evidence/verification/pass223_dm1_v1_post_redraw_instrumentation_lock.json",
   "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/Users/bosse/workspace-main/firestaff",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "runtime_api_audit": {
     "classification": "blocked/missing-original-runtime-state-hook-api",
     "dosbox_version": {
@@ -40,7 +40,7 @@
         "-version"
       ],
       "output_head": [
-        "2026-06-16 10:57:24.800 | LANG: The 'sv' language resource file could not be loaded, using internal English messages",
+        "2026-06-17 07:32:50.127 | LANG: The 'sv' language resource file could not be loaded, using internal English messages",
         "dosbox-staging, version 0.82.2 ()",
         "",
         "Copyright (C) 2020-2024  The DOSBox Staging Team",

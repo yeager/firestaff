@@ -1,7 +1,7 @@
 {
   "blocker": "missing prerequisite(s): dosbox-debug, Xvfb, xdotool",
   "branch": "main",
-  "head": "c59c006a09e62ebd854839271243f104bd64fd4a",
+  "head": "00960860eb52e8abb3ee6c158e83eff62f147f60",
   "liveAttempt": null,
   "nonClaims": [
     "no original frame promoted as parity evidence",
@@ -33,7 +33,7 @@
     "records timeout/no-manifest as a concrete blocker instead of promotable pixels",
     "keeps movement/viewport/walls source anchors tied to ReDMCSB lines"
   ],
-  "repo": "/Users/bosse/workspace-main/firestaff",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass548_dm1_v1_original_overlay_capture_progress.v1",
   "sourceAudit": [
     {
@@ -142,5 +142,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS548_MISSING_N2_PREREQUISITE",
-  "timestampUtc": "2026-06-16T08:57:23.686687+00:00"
+  "timestampUtc": "2026-06-17T05:33:53.198462+00:00"
 }

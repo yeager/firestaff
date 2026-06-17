@@ -6,9 +6,9 @@
     "present": false
   },
   "inputs": {
-    "fires_exenew": "/Users/bosse/workspace-main/firestaff/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
-    "runtime_image": "/Users/bosse/workspace-main/firestaff/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
-    "symbol_map": "/Users/bosse/workspace-main/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "fires_exenew": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+    "runtime_image": "/Users/bosse/.openclaw/workspace-main/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "/Users/bosse/.openclaw/workspace-main/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "non_claims": [
     "does not commit FIRES.EXENEW",

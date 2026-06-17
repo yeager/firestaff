@@ -57,7 +57,7 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
 
 ## Verification
 
-- command: /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat
+- command: /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat
   - returncode: 0
   - output tail:
 ~~~
@@ -75,7 +75,7 @@ PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
+- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
   - returncode: 0
   - output tail:
 ~~~

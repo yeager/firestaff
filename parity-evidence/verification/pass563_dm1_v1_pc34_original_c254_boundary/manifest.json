@@ -1,7 +1,7 @@
 {
   "branch": "main",
   "decision": "Existing pass514/pass558/pass560/pass562 evidence chain is incomplete in this checkout.",
-  "head": "c59c006a09e62ebd854839271243f104bd64fd4a",
+  "head": "00960860eb52e8abb3ee6c158e83eff62f147f60",
   "nonClaims": [
     "no new original runtime capture",
     "no pixel parity promotion",
@@ -140,7 +140,7 @@
     "pass562SelectedC254SlotDecode": true,
     "sourceAuditOk": true
   },
-  "repo": "/Users/bosse/workspace-main/firestaff",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass563_dm1_v1_pc34_original_c254_boundary.v1",
   "sourceAudit": [
     {
@@ -278,5 +278,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS563_PC34_C254_CHAIN_INCOMPLETE",
-  "timestampUtc": "2026-06-16T08:57:24.751212+00:00"
+  "timestampUtc": "2026-06-17T05:33:52.958899+00:00"
 }

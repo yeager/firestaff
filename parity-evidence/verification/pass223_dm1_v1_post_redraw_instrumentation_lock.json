@@ -7,7 +7,7 @@
     "json_only": true
   },
   "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/Users/bosse/workspace-main/firestaff",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "required_chain": [
     "command_accepted_queue_dispatch",
     "turn_handler_applies_direction_and_releases_wait OR step_handler_resolves_destination_and_releases_wait",

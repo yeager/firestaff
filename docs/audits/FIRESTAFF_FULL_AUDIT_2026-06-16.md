@@ -263,3 +263,131 @@ documenting for future multi-game launchers.
 - **Visual rendering correctness** (requires capture; the
   Champion Z-order and inscription-blur bugs are tracked
   separately in TODO.md and `memory/2026-06-16.md`).
+
+---
+
+## 10. Re-audit — 2026-06-17 (post-4d228162 decision)
+
+Follow-up pass after the audit's #1 (M12 launch-res floor) was
+adopted via watchdog commit `44280458` + test updates in
+`fe8ae7d9`.  This section tracks the resolution of items #1-#6
+plus Bug C.
+
+### Item #1 — M12 launch-res floor (RESOLVED)
+
+`src/ui/menu_startup_m12.c` `M12_StartupMenu_GetLaunchIntent` now
+applies the launch-only 640x400 floor for resolution-choice
+modes (V2.0/V2.1/V2.2) with stored 320x200.  The floor lives
+in `GetLaunchIntent` only, NOT in `m12_enforce_mode_constraints`,
+so the row cycle in INV_M12_18 stays full
+(320x200 → 640x400 → 1280x960 → ...).  Source-locked comment in
+`menu_startup_m12.c:7467-7479`.
+
+Tests:
+- `test_dm1_v2_launch_smoke_pc34` — green (4 V20/V21 3840/320
+  resolution cases + V1 floor-not-applied case + reload-after-
+  save case)
+- `test_csb_v2_resolution_selector_gate_m12` — green (V20/V21
+  V22 resolution floor contract; previously not wired in
+  CMakeLists, now wired at line 1406)
+
+`firestaff_m12_startup_menu_probe` stays 55/55 (INV_M12_18
+cycle invariants untouched).
+
+### Item #2 — Stale source-audit gates (RESOLVED)
+
+`v1_status_refresh_order_redmcsb_gate` — `tools/verify_v1_status_
+refresh_order_redmcsb_gate.py` SOURCE_RANGES and `require_excerpt`
+hardcoded line range updated from 23251-23674 / 24500-24760 to
+the current `m11_draw_party_panel` body range
+24739-25165 (function moved due to watchdog-passet additions).
+Five marker strings ("V1 source status-box background", "before
+top-row", "V1 champion name/title status text", "Pass 43:
+champion HP/stamina/mana bar graphs", "V1 status-box hand slots")
+all confirmed present in the new range.
+
+`dm1_v1_viewport_3d_source_lock` — `test_dm1_v1_viewport_3d_pc34_
+compat` was missing the `FIRESTAFF_SOURCE_DIR` compile
+definition, so the drift-regression file-contains scan ran from
+`build/` (current working dir) and read non-existent
+`build/src/engine/m11_game_view.c`.  Added the
+`target_compile_definitions(test_dm1_v1_viewport_3d_pc34_compat
+PRIVATE FIRESTAFF_SOURCE_DIR=...)` at CMakeLists.txt:4406,
+mirroring the existing test_dm1_v2_item_render_pc34 pattern.
+43 drift tokens all resolve.
+
+### Item #3 — CSB V1 `ensure_save_dir` (RESOLVED, Bug C)
+
+`src/csb/csb_v1_save_load_pc34_compat.c:74-90` was a no-op stub
+that never created the save directory.  `csb_v1_save_game`
+opened the file directly; if the parent dir was missing it
+returned `CSB_V1_SAVE_ERR_CANT_CREATE` (-6).  Fix:
+
+- Replaced stub with `ensure_save_dir` that calls
+  `FSP_CreateDirectoryRecursive(default_save_dir())`
+  (cross-platform POSIX mkdir / Windows _mkdir via the
+  existing `fs_portable_compat.c` helper, EEXIST-tolerant).
+- `csb_v1_save_game` now also calls
+  `FSP_CreateDirectoryRecursive(FSP_ParentDir(path))` BEFORE the
+  fopen, so a custom save path in a fresh user directory also
+  self-heals.
+- Both calls are idempotent.
+
+Regression test `test_csb_v1_save_ensure_dir_pc34_compat`
+verifies:
+- Default save dir is created on first save (HOME-based, fresh
+  temp dir)
+- Wipe + second save still succeeds (every-save idempotency)
+- Custom save path with fresh parent dir also succeeds
+  (parent-of-path branch)
+
+Wired in CMakeLists.txt:1391-1417 (added alongside the existing
+`test_csb_v1_character_import` block).  All 15 CSB V1 tests
+green.
+
+### Items #4-#6 — pass623/625/626 status (ALREADY GREEN)
+
+Audit reported these as failing because they "fail until the
+project runs an original DOSBox capture session".  At the time
+of re-audit, the three tests pass (test IDs 418/419/420 in the
+current ctest numbering):
+
+```
+Test #418: pass623_dm1_v1_input_capture_readiness_bridge ... Passed
+Test #419: pass625_dm1_v1_original_transcript_row_preflight ... Passed
+Test #420: pass626_dm1_v1_original_transcript_turn_redraw_route ... Passed
+```
+
+These are *static source-lock + manifest-format gates* (Python
+verifiers in `tools/verify_pass{623,625,626}_*.py` checking
+ReDMCSB line-range needles and Firestaff M11 line-range
+needles), not pixel-parity checks.  Post-audit watchdog work
+added the source-locks and manifests that satisfy the gates
+without requiring a live DOSBox capture.  The deeper parity
+work (real DM1 PC 3.4 screenshots via `dosbox_capture_session.py
+--live`) is still a separate, medium-effort task tracked in
+`docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md`.  The
+infrastructure is verified healthy: preflight 16/16, dry-run
+6/6 state transitions, live-inputs validation
+(`/Applications/DOSBox Staging.app/.../dosbox`, runtime,
+conf all valid; receipts written to
+`~/firestaff-captures/dosbox_capture.live_inputs.json`).
+
+### Item #5 — Re-audit (this section)
+
+The pre-existing 4 failures observed in the parallel-j4 ctest
+sweep (pass373 / pass374 / pass508 / pass512) are
+**flaky-under-parallel** due to `shutil.rmtree` racing with
+parallel invocations on a shared build-dir; serially all four
+pass.  The watchdog's own 4d228162 commit message acknowledges
+this exact pattern: "3 others were flaky-under-parallel and
+pass in isolation".  These are not caused by the audit
+follow-up work and are not in scope of the audit's 6 items.
+
+### Net result
+
+All 6 audit items + Bug C resolved or already green.  ctest
+sweep of the 8 audit-related targets + the new Bug C regression
+test: 8/8 pass.  Broader `csb_v1|m12|launch_smoke` sweep:
+20/20 pass.  Pre-existing parallel-flaky tests (pass373/374/
+508/512) are not audit items and run clean serially.
