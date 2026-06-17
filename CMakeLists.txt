@@ -407,6 +407,33 @@ add_test(
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
 
+# DM2 V2 Phase 4 — Lighting Runtime Wire-up Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: phase-gated tick (V2 off → no-op, V2 on → ticks),
+# lighting.bloom_timer + outdoor_fx state advances when active,
+# V1 state preserved when V2 disabled, force_active_for_test bypass,
+# observability counter, source evidence citation.
+add_executable(firestaff_dm2_v2_lighting_runtime_probe
+    probes/firestaff_dm2_v2_lighting_runtime_probe.c
+    src/dm2/dm2_v2_lighting_runtime.c
+    src/dm2/dm2_v2_lighting.c
+    src/dm2/dm2_v2_outdoor_enhanced.c
+    src/dm2/dm2_v2_phase_gate.c
+    src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_dungeon_loader.c
+    src/dm2/dm2_v1_weather.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_link_libraries(firestaff_dm2_v2_lighting_runtime_probe
+    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_lighting_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm2_v2_lighting_runtime_probe
+    COMMAND firestaff_dm2_v2_lighting_runtime_probe
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+
 # DM2 V2 Phase 7 — End-to-end Verification Suite Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies all 6 DM2 V2 phases share the same phase gate, coexist

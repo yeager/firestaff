@@ -23,6 +23,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v2_touch_runtime.h"
+#include "dm2_v2_lighting_runtime.h"
 #include "dm2_v2_phase_gate.h"
 #include <string.h>
 #include <stdio.h>
@@ -205,6 +206,11 @@ static void fs_game_render_viewport(FS_GameState *state) {
              * on top of the V1 viewport.  No-op when V1 is active
              * (framebuffer preserved for V1 chrome). */
             dm2_v2_hud_runtime_render(g_framebuffer, FS_FB_W, FS_FB_H);
+            /* Phase 4: V2 lighting tick (gated on phase gate).
+             * Advances lighting.bloom_timer + outdoor FX state.
+             * Per V1 tick cadence (55ms).  No-op when V1 is active
+             * (lighting state preserved for V1 palette). */
+            dm2_v2_lighting_runtime_tick(0.055f /* V1 tick = 55ms */, 0);
         } else {
             /* DM2 boot not complete — render placeholder ceiling/floor */
             for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
@@ -471,6 +477,11 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
          * V1 command-queue entries.  Gated on phase gate.
          * Source: dm2_v2_touch_runtime.c */
         dm2_v2_touch_runtime_init();
+        /* Phase 4: init DM2 V2 lighting runtime.
+         * Per-frame tick of lighting.bloom_timer + outdoor FX state.
+         * Gated on phase gate (V1 chrome preserved when V1 active).
+         * Source: dm2_v2_lighting_runtime.c */
+        dm2_v2_lighting_runtime_init();
         /* Store in state */
         state->dm2_boot = (void *)&s_dm2_boot;
         /* Print diagnostics */
