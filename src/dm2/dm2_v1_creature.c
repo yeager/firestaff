@@ -248,6 +248,11 @@ int dm2_v1_creature_instance_ai(int instance_id) {
     return g_creature_pool[instance_id].ai_index;
 }
 
+const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id) {
+    if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) return NULL;
+    return &g_creature_pool[instance_id];
+}
+
 /* dm2_v1_creature_death_check — death → drop + spatial sound.
  * Source: SKULLWIN/c_creature.cpp, SKULLWIN/c_sound.cpp, SKWin.GDAT2.InternalCodes.txt */
 void dm2_v1_creature_death_check(int instance_id) {
@@ -257,8 +262,10 @@ void dm2_v1_creature_death_check(int instance_id) {
 
     c->alive = 0;
 
-    /* SOUND_CREATURE_DEATH = 0x11, positional at creature position */
-    (void)dm2_v1_sound_play_positional(0x11, c->world_x, c->world_y,
+    /* SOUND_CREATURE_DEATH (constant) positional at creature position.
+     * Source: SKULLWIN/c_sound.cpp death_sfx dispatch */
+    (void)dm2_v1_sound_play_positional(DM2_SOUND_CREATURE_DEATH,
+                                        c->world_x, c->world_y,
                                         c->world_x, c->world_y);
 
     /* Stub: Thorn Demon always drops sellable worm food.
