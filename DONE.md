@@ -7,6 +7,10 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Done / verified
 - 🔒 Source-locked against original references
 
+## CTest Sweep Milestones
+
+- ✅ 2026-06-17 ctest 497/497 (100% green) — Keyboard rework (12ce21dc) + DM2 hand-off (cbc4bd67) had left 7 line-drift / script-token / control-strip-strafe mismatches across `pass373/374/508/512/623/625/626`, `m11_overlay_command_queue_block`, and `v1_status_refresh_order_redmcsb_gate`. Fixed in commit `4f942eae`: (a) `tools/verify_pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.py` script updated to use the `turn-right` script token (was `right`); (b) control-strip arrow zones in `m11_game_view.c` dispatch `STRAFE_LEFT/RIGHT` instead of `LEFT/RIGHT` to match the keyboard-rework arrow=strafe contract; (c) `M11_GameView_HandleInput` test calls in `test_m11_overlay_command_queue_block` use `STRAFE_LEFT` (matching what `SDLK_LEFT` produces post-keyboard-rework); (d) script-token `left`/`right`/`l`/`r` in `m11_map_script_token` keep their historical turn-left/turn-right semantics so existing replay scripts (notably pass373's) still work; (e) 3 line-range updates in `verify_pass623_dm1_v1_input_capture_readiness_bridge.py` and `verify_v1_status_refresh_order_redmcsb_gate.py` to match the post-DM2-handoff source line locations; (f) `set_tests_properties(... DEPENDS pass373;pass374)` for `pass508` and `pass512` so ctest -j4 runs them in the right order. 56 parity-evidence manifests refreshed by the watchdog. **Result: `ctest -j4` reports 100% (497/497) — the keyboard-rework + DM2-hand-off stale-test blast radius is fully closed.**
+
 ## Dungeon Master (DM1)
 
 ### DM1 V1 - Runtime and Source-Lock
