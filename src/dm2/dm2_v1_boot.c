@@ -118,11 +118,20 @@ static void dm2_md5_update(DM2_Md5Ctx *ctx, const unsigned char *input, unsigned
         dm2_md5_body(ctx, ctx->buffer);
         for (unsigned int i = partLen; i + 63 < len; i += 64)
             dm2_md5_body(ctx, input + i);
+        /* Tail copy: the pre-existing code did memcpy(ctx->buffer + 0,
+         * input + 0, len - 0) which (a) re-hashed the head bytes AND
+         * (b) overflowed ctx->buffer (64 bytes) whenever len > 64 —
+         * i.e. always for DM2's GRAPHICS.DAT (~8.6 MB). That triggered
+         * __stack_chk_fail (SIGABRT) on any DM2 launch. Tail must
+         * skip past the partLen head + the 64-byte chunks walked by
+         * the for-loop. Source: md5 RFC 1321 reference update. */
         idx = 0;
+        unsigned int consumed = partLen + ((len - partLen) & ~0x3Fu);
+        memcpy(ctx->buffer + idx, input + consumed, len - consumed);
     } else {
-        idx = 0;
+        /* len < partLen: head-fill only, no tail beyond idx. */
+        memcpy(ctx->buffer + idx, input, len);
     }
-    memcpy(ctx->buffer + idx, input + 0, len - idx);
 }
 
 static void dm2_md5_final(DM2_Md5Ctx *ctx, char outHex[33]) {
