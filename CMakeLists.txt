@@ -1369,6 +1369,22 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_launch_blocker_m12
     )
 
+    # M12 launch-res floor contract for CSB: V2.0/V2.1/V2.2 with
+    # stored 320x200 must promote to 640x400 at launch time
+    # (firestaff_m12_startup_menu_probe INV_M12_18 keeps the full
+    # resolution cycle; the floor only lives in GetLaunchIntent).
+    add_executable(test_csb_v2_resolution_selector_gate_m12
+        tests/test_csb_v2_resolution_selector_gate_m12.c
+    )
+    target_link_libraries(test_csb_v2_resolution_selector_gate_m12 PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v2_resolution_selector_gate_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v2_resolution_selector_gate_m12
+        COMMAND test_csb_v2_resolution_selector_gate_m12
+    )
+
     add_executable(test_csb_v1_boot_profile_smoke
         tests/test_csb_v1_boot_profile_smoke.c
         src/csb/csb_v1_boot.c

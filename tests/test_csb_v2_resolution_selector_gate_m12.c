@@ -117,9 +117,9 @@ int main(void) {
     check_launch_resolution(&menu,
                             M12_PRESENTATION_V21_UPSCALED,
                             M12_RES_320x200,
-                            M12_RES_320x200,
-                            320,
-                            200);
+                            M12_RES_640x400,
+                            640,
+                            400);
 
     check_launch_resolution(&menu,
                             M12_PRESENTATION_V20_FILTERED,
@@ -135,6 +135,22 @@ int main(void) {
     CHECK(intent.options.resolution == M12_RES_3840x2160);
     CHECK(intent.resolutionWidth == 3840);
     CHECK(intent.resolutionHeight == 2160);
+
+    /* Floor contract: V20 with stored 320x200 promotes to 640x400 at launch. */
+    set_csb_mode(&menu, M12_PRESENTATION_V20_FILTERED, M12_RES_320x200);
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    CHECK(intent.valid == 1);
+    CHECK(intent.options.resolution == M12_RES_640x400);
+    CHECK(intent.resolutionWidth == 640);
+    CHECK(intent.resolutionHeight == 400);
+
+    /* V1 original is NOT subject to the floor (locked to 320x200). */
+    set_csb_mode(&menu, M12_PRESENTATION_V1_ORIGINAL, M12_RES_3840x2160);
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    CHECK(intent.valid == 1);
+    CHECK(intent.options.resolution == M12_RES_320x200);
+    CHECK(intent.resolutionWidth == 320);
+    CHECK(intent.resolutionHeight == 200);
 
     set_csb_mode(&menu, M12_PRESENTATION_V22_MODERN, M12_RES_3840x2160);
     M12_StartupMenu_SaveConfig(&menu);
