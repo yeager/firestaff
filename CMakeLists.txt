@@ -128,7 +128,12 @@ file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c")
 if(DM2_V2_SOURCES)
     add_library(firestaff_dm2_v2 STATIC ${DM2_V2_SOURCES})
     target_include_directories(firestaff_dm2_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_m10 m)
+    # firestaff_v2 provides dm1_v2_movement_command_route_for_presentation
+    # which dm2_v2_touch_controller_affordance.c references for the
+    # V2 affordance → DM1 movement command → V1 command queue path.
+    # Without this link, Linux/Windows release builds fail with
+    # undefined reference errors. Source: dm1v2/dm1_v2_movement_command_adapter_pc34.c.
+    target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_m10 firestaff_v2 m)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v2 PRIVATE -Wall -Wextra -O2)
     endif()

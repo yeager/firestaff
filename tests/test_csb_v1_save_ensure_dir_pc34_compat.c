@@ -19,6 +19,7 @@
  */
 
 #include "csb_v1_save_load_pc34_compat.h"
+#include "fs_portable_compat.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -85,9 +86,9 @@ int main(void) {
         printf("FAIL: mkdtemp\n");
         return 1;
     }
-    CHECK(setenv("HOME", tmpDir, 1) == 0, "setenv HOME to temp dir");
+    CHECK(FSP_SetEnv("HOME", tmpDir, 1) == 0, "setenv HOME to temp dir");
     /* On Windows the code prefers APPDATA; clear it so HOME wins. */
-    CHECK(setenv("APPDATA", "", 1) == 0, "clear APPDATA so HOME is used");
+    CHECK(FSP_SetEnv("APPDATA", "", 1) == 0, "clear APPDATA so HOME is used");
 
     /* Build the expected save path: <HOME>/.local/share/firestaff/
      * csb/saves/runeforge.sav.  (SAVE_DIR on POSIX is

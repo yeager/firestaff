@@ -115,6 +115,16 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize);
  */
 int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir);
 
+/*
+ * Portable setenv wrapper. On POSIX, this wraps setenv() with
+ * overwrite=1 semantics. On Windows MSVC, setenv() is not available
+ * (only _putenv_s/_putenv exist); we format the call as
+ * "NAME=VALUE" and use _putenv. Returns 0 on success, -1 on failure.
+ * Use this from tests and runtime code that needs to override env
+ * vars in a way that works on all platforms.
+ */
+int FSP_SetEnv(const char* name, const char* value, int overwrite);
+
 #ifdef __cplusplus
 }
 #endif
