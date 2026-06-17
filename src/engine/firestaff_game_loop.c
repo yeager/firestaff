@@ -21,6 +21,8 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v2_runtime.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v2_hud_runtime.h"
+#include "dm2_v2_phase_gate.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -197,6 +199,11 @@ static void fs_game_render_viewport(FS_GameState *state) {
                                                state->party_x, state->party_y,
                                                g_framebuffer, FS_FB_W,
                                                FS_VP_W, FS_VP_H);
+            /* Phase 3: V2 HUD overlay (gated on phase gate).
+             * Renders compass, depth, gold, champion bars, action strip
+             * on top of the V1 viewport.  No-op when V1 is active
+             * (framebuffer preserved for V1 chrome). */
+            dm2_v2_hud_runtime_render(g_framebuffer, FS_FB_W, FS_FB_H);
         } else {
             /* DM2 boot not complete — render placeholder ceiling/floor */
             for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
