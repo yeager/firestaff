@@ -612,6 +612,10 @@ void fs_game_tick_v1(FS_GameState *state, uint32_t now_ms) {
         /* Phase 5: advance V2 smooth animation clock on V1 boundary.
          * Source: dm2_v2_runtime.c */
         dm2_v2_runtime_v1_tick(now_ms);
+        /* Phase 4: advance lighting + outdoor FX state per V1 tick (55ms).
+         * Phase-gated: no-op when V1 is active.  Source:
+         * dm2_v2_lighting_runtime.c */
+        dm2_v2_lighting_runtime_tick(0.055f, 0);
     }
 
     state->frame_count++;
