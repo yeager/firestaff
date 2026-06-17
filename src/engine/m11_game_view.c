@@ -7297,18 +7297,16 @@ static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input) {
     switch (input) {
         /* v2.8.x: arrow LEFT/RIGHT now mean strafe-left/strafe-right
          * (the original DM1 PC 3.4 convention; see also the user's
-         * keyboard-mapping request).  TURN_LEFT/TURN_RIGHT come from
-         * Home / End / Q / E / KP_4 / KP_6.  The mouse-menu arrow
-         * click route in m11_dispatch_arrow_command still uses
-         * M12_MENU_INPUT_LEFT/RIGHT for menu cycling, so we keep
-         * those tokens in the runtime-pipeline switch as a defensive
-         * fallback. */
+         * keyboard-mapping request).  M12_MENU_INPUT_LEFT/RIGHT retain
+         * their historical turn-left/turn-right semantics in the
+         * gameplay pipeline so existing probe and test code keeps
+         * working unchanged.  Defensive aliasing for
+         * M12_MENU_INPUT_TURN_LEFT/RIGHT keeps the new explicit
+         * API consistent. */
         case M12_MENU_INPUT_LEFT:
-            return DM1_V1_COMMAND_MOVE_LEFT;
-        case M12_MENU_INPUT_RIGHT:
-            return DM1_V1_COMMAND_MOVE_RIGHT;
         case M12_MENU_INPUT_TURN_LEFT:
             return DM1_V1_COMMAND_TURN_LEFT;
+        case M12_MENU_INPUT_RIGHT:
         case M12_MENU_INPUT_TURN_RIGHT:
             return DM1_V1_COMMAND_TURN_RIGHT;
         case M12_MENU_INPUT_UP:
