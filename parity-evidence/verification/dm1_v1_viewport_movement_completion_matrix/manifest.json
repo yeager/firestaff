@@ -25,7 +25,7 @@
         "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
-        "[ 93%] Built target firestaff_m10",
+        "[ 96%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
@@ -409,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-17T14:06:28.150097+00:00"
+  "timestampUtc": "2026-06-17T14:55:52.270553+00:00"
 }
