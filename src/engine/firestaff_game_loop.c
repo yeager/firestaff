@@ -25,6 +25,7 @@
 #include "dm2_v2_touch_runtime.h"
 #include "dm2_v2_lighting_runtime.h"
 #include "dm2_v2_phase_gate.h"
+#include "nexus_v2_hud_runtime.h"
 #include <string.h>
 #include <stdio.h>
 
