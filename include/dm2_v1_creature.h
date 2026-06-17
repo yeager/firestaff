@@ -227,4 +227,9 @@ int dm2_v1_creature_instance_hp(int instance_id);
 /* dm2_v1_creature_instance_ai — read AI index of a creature instance */
 int dm2_v1_creature_instance_ai(int instance_id);
 
+/* dm2_v1_creature_get_instance — read-only access to a creature instance.
+ * Returns NULL if instance_id is out of range.  Used by projectile
+ * dispatch (Phase 5 wire-up) to read AI attack flags + position. */
+const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id);
+
 #endif /* FIRESTAFF_DM2_V1_CREATURE_H */
