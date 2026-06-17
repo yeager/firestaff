@@ -39,40 +39,40 @@ typedef struct {
 /* clang-format off */
 static const dm2_spell_entry g_spell_table[DM2_MAX_SPELL_ORIGINAL] = {
     /* idx  runes                     type      diff  skill   power  mana  name */
-    { 3, {DM2_RUNE_OH, DM2_RUNE_IR, DM2_RUNE_RA, 0,   0,   0}, DM2_SPELL_TYPE_GENERAL, 0x04, 0x0F, 0, 0, "Long Light" },
-    { 3, {DM2_RUNE_DES, DM2_RUNE_IR, DM2_RUNE_SAR, 0, 0, 0},  DM2_SPELL_TYPE_GENERAL, 0x04, 0x0F, 0, 0, "Darkness" },
-    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_SAR, 0,  0, 0},  DM2_SPELL_TYPE_GENERAL, 0x04, 0x0F, 0, 0, "Spell Shield (Party)" },
-    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_SAR, 0,  0, 0},  DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 0, "Invisibility" },
-    { 2, {DM2_RUNE_YA, DM2_RUNE_IR, 0, 0, 0, 0},              DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 0, "Magical Shield" },
+    { 3, {DM2_RUNE_OH, DM2_RUNE_IR, DM2_RUNE_RA, 0,   0,   0}, DM2_SPELL_TYPE_GENERAL, 0x04, 0x0F, 0, 1, "Long Light" },
+    { 3, {DM2_RUNE_DES, DM2_RUNE_IR, DM2_RUNE_SAR, 0, 0, 0},  DM2_SPELL_TYPE_GENERAL, 0x04, 0x0F, 0, 1, "Darkness" },
+    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_SAR, 0,  0, 0},  DM2_SPELL_TYPE_GENERAL, 0x04, 0x0F, 0, 2, "Spell Shield (Party)" },
+    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_SAR, 0,  0, 0},  DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 3, "Invisibility" },
+    { 2, {DM2_RUNE_YA, DM2_RUNE_IR, 0, 0, 0, 0},              DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 1, "Magical Shield" },
     { 1, {DM2_RUNE_FUL, 0, 0, 0, 0, 0},                       DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 0, "Light" },
-    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_DAIN, 0, 0, 0},  DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 0, "Aura of Wisdom" },
-    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_ROS, 0, 0, 0},   DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 0, "Aura of Dexterity" },
-    { 3, {DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_NETA, 0, 0, 0},DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 0, "Fire Shield" },
-    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_NETA, 0, 0, 0},  DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 0, "Aura of Vitality" },
-    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_KU, 0, 0, 0},    DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 0, "Aura of Strength" },
-    { 3, {DM2_RUNE_OH, DM2_RUNE_IR, DM2_RUNE_ROS, 0, 0, 0},   DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 0, "Aura of Speed" },
-    { 3, {DM2_RUNE_ZO, DM2_RUNE_BRO, DM2_RUNE_ROS, 0, 0, 0},  DM2_SPELL_TYPE_GENERAL, 0x0F, 0x0F, 0, 0, "Spell Reflector" }, /* DM2 new */
-    { 2, {DM2_RUNE_YA, DM2_RUNE_EW, 0, 0, 0, 0},              DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 0, "Magical Marker" },
-    { 2, {DM2_RUNE_OH, DM2_RUNE_VEN, 0, 0, 0, 0},             DM2_SPELL_TYPE_GENERAL, 0x07, 0x0F, 0, 0, "Poison Cloud" },
-    { 3, {DM2_RUNE_OH, DM2_RUNE_KATH, DM2_RUNE_RA, 0, 0, 0},  DM2_SPELL_TYPE_MISSILE, 0x0D, 0x0F, 0, 0, "Lightning" },
-    { 2, {DM2_RUNE_FUL, DM2_RUNE_IR, 0, 0, 0, 0},             DM2_SPELL_TYPE_MISSILE, 0x00, 0x0F, 0, 0, "Fireball" },
-    { 3, {DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0, 0, 0},  DM2_SPELL_TYPE_POTION, 0x13, 0x07, 0, 0, "NP: STR Potion" },
-    { 2, {DM2_RUNE_DES, DM2_RUNE_EW, 0, 0, 0, 0},             DM2_SPELL_TYPE_MISSILE, 0x03, 0x0F, 0, 0, "Antimatter" },
-    { 2, {DM2_RUNE_DES, DM2_RUNE_VEN, 0, 0, 0, 0},            DM2_SPELL_TYPE_MISSILE, 0x06, 0x0F, 0, 0, "Poison Bolt" },
-    { 1, {DM2_RUNE_ZO, 0, 0, 0, 0, 0},                        DM2_SPELL_TYPE_GENERAL, 0x04, 0x0F, 0, 0, "Open/Close Door" },
-    { 2, {DM2_RUNE_YA, DM2_RUNE_BRO, 0, 0, 0, 0},             DM2_SPELL_TYPE_POTION, 0x13, 0x0C, 0, 0, "NP: Shield Potion" },
-    { 1, {DM2_RUNE_YA, 0, 0, 0, 0, 0},                        DM2_SPELL_TYPE_POTION, 0x13, 0x0B, 0, 0, "NP: Stamina Potion" },
-    { 3, {DM2_RUNE_YA, DM2_RUNE_BRO, DM2_RUNE_DAIN, 0, 0, 0}, DM2_SPELL_TYPE_POTION, 0x13, 0x08, 0, 0, "NP: Wisdom Potion" },
-    { 3, {DM2_RUNE_YA, DM2_RUNE_BRO, DM2_RUNE_NETA, 0, 0, 0}, DM2_SPELL_TYPE_POTION, 0x13, 0x09, 0, 0, "NP: Vitality Potion" },
-    { 1, {DM2_RUNE_VI, 0, 0, 0, 0, 0},                        DM2_SPELL_TYPE_POTION, 0x13, 0x0E, 0, 0, "NP: Health Potion" },
-    { 2, {DM2_RUNE_VI, DM2_RUNE_BRO, 0, 0, 0, 0},            DM2_SPELL_TYPE_POTION, 0x13, 0x0A, 0, 0, "NP: Anti Venin" },
-    { 3, {DM2_RUNE_OH, DM2_RUNE_BRO, DM2_RUNE_ROS, 0, 0, 0}, DM2_SPELL_TYPE_POTION, 0x13, 0x06, 0, 0, "NP: Dexterity Potion" },
-    { 3, {DM2_RUNE_ZO, DM2_RUNE_BRO, DM2_RUNE_RA, 0, 0, 0},  DM2_SPELL_TYPE_POTION, 0x13, 0x0D, 0, 0, "NP: Mana Potion" },
-    { 3, {DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_KU, 0, 0, 0},   DM2_SPELL_TYPE_SUMMON, 0x0F, 0x31, 0, 0, "Attack Minion" },      /* DM2 new */
-    { 3, {DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_NETA, 0, 0, 0}, DM2_SPELL_TYPE_SUMMON, 0x0F, 0x34, 0, 0, "Guard Minion" },     /* DM2 new */
-    { 3, {DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_ROS, 0, 0, 0},  DM2_SPELL_TYPE_SUMMON, 0x0F, 0x35, 0, 0, "U-Haul Minion" },    /* DM2 new */
-    { 3, {DM2_RUNE_OH, DM2_RUNE_KATH, DM2_RUNE_KU, 0, 0, 0},  DM2_SPELL_TYPE_GENERAL, 0x0D, 0x09, 0, 0, "Push" },           /* DM2 new */
-    { 3, {DM2_RUNE_OH, DM2_RUNE_KATH, DM2_RUNE_ROS, 0, 0, 0}, DM2_SPELL_TYPE_GENERAL, 0x0D, 0x0A, 0, 0, "Pull" },           /* DM2 new */
+    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_DAIN, 0, 0, 0},  DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 2, "Aura of Wisdom" },
+    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_ROS, 0, 0, 0},   DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 2, "Aura of Dexterity" },
+    { 3, {DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_NETA, 0, 0, 0},DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 3, "Fire Shield" },
+    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_NETA, 0, 0, 0},  DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 2, "Aura of Vitality" },
+    { 3, {DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_KU, 0, 0, 0},    DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 2, "Aura of Strength" },
+    { 3, {DM2_RUNE_OH, DM2_RUNE_IR, DM2_RUNE_ROS, 0, 0, 0},   DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 2, "Aura of Speed" },
+    { 3, {DM2_RUNE_ZO, DM2_RUNE_BRO, DM2_RUNE_ROS, 0, 0, 0},  DM2_SPELL_TYPE_GENERAL, 0x0F, 0x0F, 0, 4, "Spell Reflector" }, /* DM2 new */
+    { 2, {DM2_RUNE_YA, DM2_RUNE_EW, 0, 0, 0, 0},              DM2_SPELL_TYPE_GENERAL, 0x00, 0x0F, 0, 1, "Magical Marker" },
+    { 2, {DM2_RUNE_OH, DM2_RUNE_VEN, 0, 0, 0, 0},             DM2_SPELL_TYPE_GENERAL, 0x07, 0x0F, 0, 3, "Poison Cloud" },
+    { 3, {DM2_RUNE_OH, DM2_RUNE_KATH, DM2_RUNE_RA, 0, 0, 0},  DM2_SPELL_TYPE_MISSILE, 0x0D, 0x0F, 0, 5, "Lightning" },
+    { 2, {DM2_RUNE_FUL, DM2_RUNE_IR, 0, 0, 0, 0},             DM2_SPELL_TYPE_MISSILE, 0x00, 0x0F, 0, 4, "Fireball" },
+    { 3, {DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0, 0, 0},  DM2_SPELL_TYPE_POTION, 0x13, 0x07, 0, 2, "NP: STR Potion" },
+    { 2, {DM2_RUNE_DES, DM2_RUNE_EW, 0, 0, 0, 0},             DM2_SPELL_TYPE_MISSILE, 0x03, 0x0F, 0, 6, "Antimatter" },
+    { 2, {DM2_RUNE_DES, DM2_RUNE_VEN, 0, 0, 0, 0},            DM2_SPELL_TYPE_MISSILE, 0x06, 0x0F, 0, 4, "Poison Bolt" },
+    { 1, {DM2_RUNE_ZO, 0, 0, 0, 0, 0},                        DM2_SPELL_TYPE_GENERAL, 0x04, 0x0F, 0, 1, "Open/Close Door" },
+    { 2, {DM2_RUNE_YA, DM2_RUNE_BRO, 0, 0, 0, 0},             DM2_SPELL_TYPE_POTION, 0x13, 0x0C, 0, 3, "NP: Shield Potion" },
+    { 1, {DM2_RUNE_YA, 0, 0, 0, 0, 0},                        DM2_SPELL_TYPE_POTION, 0x13, 0x0B, 0, 2, "NP: Stamina Potion" },
+    { 3, {DM2_RUNE_YA, DM2_RUNE_BRO, DM2_RUNE_DAIN, 0, 0, 0}, DM2_SPELL_TYPE_POTION, 0x13, 0x08, 0, 3, "NP: Wisdom Potion" },
+    { 3, {DM2_RUNE_YA, DM2_RUNE_BRO, DM2_RUNE_NETA, 0, 0, 0}, DM2_SPELL_TYPE_POTION, 0x13, 0x09, 0, 3, "NP: Vitality Potion" },
+    { 1, {DM2_RUNE_VI, 0, 0, 0, 0, 0},                        DM2_SPELL_TYPE_POTION, 0x13, 0x0E, 0, 2, "NP: Health Potion" },
+    { 2, {DM2_RUNE_VI, DM2_RUNE_BRO, 0, 0, 0, 0},            DM2_SPELL_TYPE_POTION, 0x13, 0x0A, 0, 2, "NP: Anti Venin" },
+    { 3, {DM2_RUNE_OH, DM2_RUNE_BRO, DM2_RUNE_ROS, 0, 0, 0}, DM2_SPELL_TYPE_POTION, 0x13, 0x06, 0, 3, "NP: Dexterity Potion" },
+    { 3, {DM2_RUNE_ZO, DM2_RUNE_BRO, DM2_RUNE_RA, 0, 0, 0},  DM2_SPELL_TYPE_POTION, 0x13, 0x0D, 0, 3, "NP: Mana Potion" },
+    { 3, {DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_KU, 0, 0, 0},   DM2_SPELL_TYPE_SUMMON, 0x0F, 0x31, 0, 8, "Attack Minion" },      /* DM2 new */
+    { 3, {DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_NETA, 0, 0, 0}, DM2_SPELL_TYPE_SUMMON, 0x0F, 0x34, 0, 8, "Guard Minion" },     /* DM2 new */
+    { 3, {DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_ROS, 0, 0, 0},  DM2_SPELL_TYPE_SUMMON, 0x0F, 0x35, 0, 8, "U-Haul Minion" },    /* DM2 new */
+    { 3, {DM2_RUNE_OH, DM2_RUNE_KATH, DM2_RUNE_KU, 0, 0, 0},  DM2_SPELL_TYPE_GENERAL, 0x0D, 0x09, 0, 6, "Push" },           /* DM2 new */
+    { 3, {DM2_RUNE_OH, DM2_RUNE_KATH, DM2_RUNE_ROS, 0, 0, 0}, DM2_SPELL_TYPE_GENERAL, 0x0D, 0x0A, 0, 6, "Pull" },           /* DM2 new */
 };
 /* clang-format on */
 
@@ -177,4 +177,130 @@ const char *dm2_v1_spell_source_evidence(void) {
         "Source: skproject/SKWIN/SkWinCore.cpp:27038-27096 (spell→OBJECT_EFFECT mapping)\n"
         "DM2-new spells (not in DM1): Spell Reflector(12), AttackMinion(29), GuardMinion(30), U-HaulMinion(31), Push(32), Pull(33)\n"
         "DM2-spells removed from DM1: MagicFootprints, Petrify, RestoreHealth, SeeThroughWalls, ZoKathRa\n";
+}
+
+/* ── Phase 4 expansion: spell casting mechanics ────────────────────────
+ *
+ * Source: skproject/SKWIN/SkWinCore.cpp:17521-17670 (CAST_SPELL_PLAYER)
+ *
+ * Cast chance formula:
+ *   bp08 = spell->difficulty + spell->power
+ *   bp06 = champion->wizard_ability
+ *   bp0c = (bp06 + 15) - bp08
+ *   if bp0c <= 0: cast fails (skill decay penalty proportional to bp0c)
+ *   else: cast succeeds with mana_per_rune * (rune_count - 1) deducted
+ *         (POWER rune at index 0 is consumed at no mana cost)
+ *   cooldown: 0x08 ticks after successful cast (SkWinCore.cpp:17623)
+ *
+ * Per-rune mana cost (SkWinCore.cpp:18159-18174): mana is deducted
+ * when the rune is added to the spell tail, NOT at cast time.  The
+ * cast-time cost is therefore zero — the mana has already been
+ * consumed.  We return the cumulative cost (rune_count * mana_per_rune)
+ * for accounting purposes.
+ *
+ * DM2 differences from DM1:
+ *   - DM2 spells cost mana per-rune (DM1: flat cost at cast time)
+ *   - DM2 spells have 0x08-tick hand cooldown on success (DM1: variable)
+ *   - DM2 spells apply skill decay on failure: -1 per failed cast
+ */
+
+/* Default hand cooldown after successful cast.
+ * Source: skproject/SKWIN/SkWinCore.cpp:17623 (bp0e = 0x08) */
+#define DM2_SPELL_COOLDOWN_TICKS 0x08
+
+/* Skill decay penalty on failed cast.
+ * Source: skproject/SKWIN/SkWinCore.cpp:17585 (skill decay = -1 per fail) */
+#define DM2_SPELL_SKILL_DECAY_ON_FAIL 1
+
+/* POWER rune is consumed at no mana cost (first rune in sequence).
+ * Source: skproject/SKWIN/SkWinCore.cpp:17550-17565 (POWER rune = 0 cost). */
+#define DM2_SPELL_POWER_RUNE_COST 0
+
+/* ── Validate rune sequence ──────────────────────────────────── */
+int dm2_v1_spell_validate_runes(int spell_index,
+    const uint8_t *rune_sequence, int rune_count)
+{
+    if (spell_index < 0 || spell_index >= DM2_MAX_SPELL_ORIGINAL) return 0;
+    if (!rune_sequence) return 0;
+    if (rune_count < 1) return 0;
+    const dm2_spell_entry *e = &g_spell_table[spell_index];
+    if ((int)e->rune_count != rune_count) return 0;
+    for (int i = 0; i < rune_count; i++) {
+        if (rune_sequence[i] != e->runes[i]) return 0;
+    }
+    return 1;
+}
+
+/* ── Mana cost (excludes POWER rune at index 0) ────────────────────
+ * Returns (rune_count - 1) * mana_per_rune — the cumulative cost
+ * already deducted when the runes were added to the spell tail. */
+int dm2_v1_spell_mana_cost(int spell_index)
+{
+    if (spell_index < 0 || spell_index >= DM2_MAX_SPELL_ORIGINAL) return 0;
+    const dm2_spell_entry *e = &g_spell_table[spell_index];
+    int paid_runes = (int)e->rune_count - 1;
+    if (paid_runes < 0) paid_runes = 0;
+    return paid_runes * (int)e->mana_per_rune;
+}
+
+/* ── Compute cast chance ───────────────────────────────────── */
+int dm2_v1_spell_compute_chance(int spell_index, int wizard_ability)
+{
+    if (spell_index < 0 || spell_index >= DM2_MAX_SPELL_ORIGINAL) return -1;
+    const dm2_spell_entry *e = &g_spell_table[spell_index];
+    int bp08 = (int)e->difficulty + (int)e->power;
+    int bp06 = wizard_ability;
+    int bp0c = (bp06 + 15) - bp08;
+    return bp0c;
+}
+
+/* ── Can-cast pre-check ───────────────────────────────────── */
+int dm2_v1_spell_can_cast(int spell_index,
+    int wizard_ability, int current_mana)
+{
+    if (spell_index < 0 || spell_index >= DM2_MAX_SPELL_ORIGINAL) return 0;
+    const dm2_spell_entry *e = &g_spell_table[spell_index];
+    if (wizard_ability < (int)e->required_skill) return 0;
+    int cost = dm2_v1_spell_mana_cost(spell_index);
+    if (current_mana < cost) return 0;
+    return 1;
+}
+
+/* ── Cast attempt ─────────────────────────────────────────── */
+DM2_SpellCastResult dm2_v1_spell_cast_attempt(int spell_index,
+    int wizard_ability, int current_mana)
+{
+    DM2_SpellCastResult r;
+    memset(&r, 0, sizeof(r));
+    if (spell_index < 0 || spell_index >= DM2_MAX_SPELL_ORIGINAL) {
+        r.effective_chance = -1;
+        return r;
+    }
+    const dm2_spell_entry *e = &g_spell_table[spell_index];
+    int bp08 = (int)e->difficulty + (int)e->power;
+    int bp0c = (wizard_ability + 15) - bp08;
+    r.effective_difficulty = bp08;
+    r.effective_chance = bp0c;
+    r.mana_used = dm2_v1_spell_mana_cost(spell_index);
+
+    /* Pre-check: skill + mana sufficient to even attempt */
+    if (!dm2_v1_spell_can_cast(spell_index, wizard_ability, current_mana)) {
+        r.success = 0;
+        r.cooldown_ticks = 0;
+        r.skill_decay = DM2_SPELL_SKILL_DECAY_ON_FAIL;
+        return r;
+    }
+
+    if (bp0c > 0) {
+        /* Cast succeeds */
+        r.success = 1;
+        r.cooldown_ticks = DM2_SPELL_COOLDOWN_TICKS;
+        r.skill_decay = 0;
+    } else {
+        /* Cast fails: skill decay penalty */
+        r.success = 0;
+        r.cooldown_ticks = 0;
+        r.skill_decay = DM2_SPELL_SKILL_DECAY_ON_FAIL;
+    }
+    return r;
 }
