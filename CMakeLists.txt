@@ -882,12 +882,18 @@ add_executable(firestaff_csb_v2_phase7_verification_probe
     src/csb/csb_v2_viewport_renderer.c
     src/csb/csb_v2_chaos_enhanced.c
     src/csb/csb_v2_phase_gate_pc34.c
+    src/csb/csb_v2_lighting_dynamic.c
+    src/csb/csb_v2_presentation_mode_pc34.c
+    src/csb/csb_v2_vfx_particles.c
+    src/csb/csb_v2_touch_runtime.c
+    src/csb/csb_v2_smooth_movement_runtime.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c
 )
 target_include_directories(firestaff_csb_v2_phase7_verification_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(firestaff_csb_v2_phase7_verification_probe
-    PRIVATE firestaff_csb_v2 firestaff_m10 m)
+    PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase7_verification_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -2724,6 +2730,7 @@ if(BUILD_TESTING)
         src/csb/csb_v2_viewport_renderer.c
         src/csb/csb_v2_smooth_movement.c
         src/csb/csb_v2_chaos_enhanced.c
+        src/csb/csb_v2_vfx_particles.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_csb_v2_phase7_verification
@@ -2733,6 +2740,7 @@ if(BUILD_TESTING)
         src/csb/csb_v2_smooth_movement.c
         src/csb/csb_v2_minimap.c
         src/csb/csb_v2_chaos_enhanced.c
+        src/csb/csb_v2_vfx_particles.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_csb_v2_smooth_movement
@@ -2760,6 +2768,7 @@ if(BUILD_TESTING)
         src/csb/csb_v2_smooth_movement.c
         src/csb/csb_v2_viewport_renderer.c
         src/csb/csb_v2_chaos_enhanced.c
+        src/csb/csb_v2_vfx_particles.c
         src/csb/csb_v2_lighting_dynamic.c
         src/csb/csb_v2_phase_gate_pc34.c
         src/csb/csb_v1_runtime_pc34_compat.c
