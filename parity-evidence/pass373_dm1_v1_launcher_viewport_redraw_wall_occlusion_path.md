@@ -38,8 +38,8 @@ The path is still blocked; inspect the manifest checks for the first failing sou
 - prior_wall_occlusion_gate ok=True
 - prior_wall_occlusion_gate ok=True
 - cmake_configure ok=True
-- cmake_build_firestaff ok=True
-- launcher_route_runtime_probe ok=True
+- cmake_build_firestaff ok=False
+- launcher_route_runtime_probe ok=False
 - live_runtime_redraw_state ok=False
 
 ## Scope guard
