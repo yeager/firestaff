@@ -139,14 +139,25 @@ int main(void) {
     menu.gameOptions[0].resolution = M12_RES_3840x2160;
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     CHECK(intent.valid == 1);
-    CHECK(intent.options.resolution == M12_RES_640x400);
-    CHECK(intent.resolutionWidth == 640);
-    CHECK(intent.resolutionHeight == 400);
+    /* V20 allows the user-chosen 3840x2160 (above the 640x400
+     * launch floor); the floor only promotes stored 320x200
+     * resolutions, never clamps higher resolutions down. */
+    CHECK(intent.options.resolution == M12_RES_3840x2160);
+    CHECK(intent.resolutionWidth == 3840);
+    CHECK(intent.resolutionHeight == 2160);
 
     M12_StartupMenu_SaveConfig(&menu);
     M12_StartupMenu_InitWithDataDir(&reloaded, "/tmp/firestaff-test-no-assets", NULL);
     force_dm1_available(&reloaded);
     intent = M12_StartupMenu_GetLaunchIntent(&reloaded);
+    CHECK(intent.valid == 1);
+    CHECK(intent.options.resolution == M12_RES_3840x2160);
+    CHECK(intent.resolutionWidth == 3840);
+    CHECK(intent.resolutionHeight == 2160);
+
+    /* V20 stored at 320x200: floor promotes to 640x400 (4d228162 contract). */
+    menu.gameOptions[0].resolution = M12_RES_320x200;
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
     CHECK(intent.valid == 1);
     CHECK(intent.options.resolution == M12_RES_640x400);
     CHECK(intent.resolutionWidth == 640);
