@@ -357,3 +357,29 @@ int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir) {
     fsp_copy(out, outSize, ".");
     return 1;
 }
+
+int FSP_SetEnv(const char* name, const char* value, int overwrite) {
+    if (!name || !value) return -1;
+#if defined(_WIN32)
+    if (!overwrite) {
+        /* Match POSIX setenv overwrite=0 semantics: only set if unset. */
+        size_t envSize;
+        getenv_s(&envSize, NULL, 0, name);
+        if (envSize > 0) return 0;
+    }
+    {
+        /* _putenv takes "NAME=VALUE" string. _putenv_s takes (name, value)
+         * separately. We use _putenv_s when available (UCRT). */
+#if defined(_putenv_s)
+        return (_putenv_s(name, value) == 0) ? 0 : -1;
+#else
+        char buf[2048];
+        int n = snprintf(buf, sizeof(buf), "%s=%s", name, value);
+        if (n <= 0 || (size_t)n >= sizeof(buf)) return -1;
+        return (_putenv(buf) == 0) ? 0 : -1;
+#endif
+    }
+#else
+    return setenv(name, value, overwrite);
+#endif
+}
