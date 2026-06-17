@@ -6688,29 +6688,22 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
         }
         if (!profile->assets_verified) {
-            fprintf(stderr, "DEBUG: DM2 assets_verified=0, gfx_md5=%.32s dun_md5=%.32s\n",
-                    profile->graphics_md5, profile->dungeon_md5);
             m11_set_status(state, "BOOT", "DM2 HASH UNKNOWN");
             m11_log_event(state, M11_COLOR_YELLOW,
                           "T0: DM2 ASSETS UNVERIFIED (NOT IN CATALOG)");
             /* Continue anyway — the user may have a known-good build
              * that we don't have a hash for yet. dm2_v1_boot_enter_game
              * will allocate state; we just don't gate on hash match. */
-        } else {
-            fprintf(stderr, "DEBUG: DM2 assets_verified=1, gfx_md5=%.32s\n",
-                    profile->graphics_md5);
         }
         dm2_v1_boot_set_save_root(profile, NULL);
         dm2_v1_boot_print_summary(profile);
         if (dm2_v1_boot_enter_game(profile) != 0) {
-            fprintf(stderr, "DEBUG: DM2 enter_game FAILED, returning 0\n");
             m11_set_status(state, "BOOT", "DM2 ENTER GAME FAILED");
             m11_log_event(state, M11_COLOR_RED, "T0: DM2 BOOT ENTER FAILED");
             dm2_v1_boot_cleanup(profile);
             free(profile);
             return 0;
         }
-        fprintf(stderr, "DEBUG: DM2 enter_game OK, returning 1\n");
         /* V2 runtimes — same init sequence as firestaff_game_loop.c.
          * Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
         dm2_v2_runtime_init(2);
@@ -8982,14 +8975,19 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                           M11_CONTROL_STRIP_Y,
                           M11_CONTROL_STRIP_W,
                           M11_CONTROL_STRIP_H)) {
+        /* v2.8.x: the on-screen arrow buttons mirror the keyboard
+         * convention: Left/Right = strafe, Up/Down = forward/back
+         * (matches the original DM1 PC 3.4 arrow-zone semantics
+         * the user requested).  Action button still routes to
+         * M12_MENU_INPUT_ACTION. */
         if (m11_point_in_rect(x, y, 18, 167, 15, 10)) {
-            return M11_GameView_HandleInput(state, M12_MENU_INPUT_LEFT);
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_STRAFE_LEFT);
         }
         if (m11_point_in_rect(x, y, 35, 167, 15, 10)) {
             return M11_GameView_HandleInput(state, M12_MENU_INPUT_UP);
         }
         if (m11_point_in_rect(x, y, 52, 167, 15, 10)) {
-            return M11_GameView_HandleInput(state, M12_MENU_INPUT_RIGHT);
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_STRAFE_RIGHT);
         }
         if (m11_point_in_rect(x, y, 69, 167, 15, 10)) {
             return M11_GameView_HandleInput(state, M12_MENU_INPUT_DOWN);
