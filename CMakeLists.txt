@@ -407,6 +407,41 @@ add_test(
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
 
+# DM2 V2 Phase 7 — End-to-end Verification Suite Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies all 6 DM2 V2 phases share the same phase gate, coexist
+# correctly, and never pollute V1 framebuffer when V2 disabled.
+# Coverage: Phase 0 (V1 lock), Phase 1 (launch/profile), Phase 2
+# (asset pipeline), Phase 3 (HUD), Phase 4 (lighting + outdoor),
+# Phase 5 (smooth movement), Phase 6 (touch), cross-phase
+# invariants (V1 fb preservation union).
+add_executable(firestaff_dm2_v2_verification_suite_probe
+    probes/firestaff_dm2_v2_verification_suite_probe.c
+    src/dm2/dm2_v2_hud_runtime.c
+    src/dm2/dm2_v2_hud_overlay.c
+    src/dm2/dm2_v2_touch_runtime.c
+    src/dm2/dm2_v2_touch_controller_affordance.c
+    src/dm2/dm2_v2_phase_gate.c
+    src/dm2/dm2_v2_lighting.c
+    src/dm2/dm2_v2_outdoor_enhanced.c
+    src/dm2/dm2_v2_smooth_movement.c
+    src/dm2/dm2_v2_runtime.c
+    src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_dungeon_loader.c
+    src/dm2/dm2_v1_weather.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/dm2/dm2_v2_interaction_feedback.c)
+target_link_libraries(firestaff_dm2_v2_verification_suite_probe
+    PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_verification_suite_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm2_v2_verification_suite_probe
+    COMMAND firestaff_dm2_v2_verification_suite_probe
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+
 # DM2 V2 Phase 5 — Smooth Movement and Viewport Interpolation Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: smooth walk (N/S/E/W), smooth turn (N/S/E/W), smooth stairs,
