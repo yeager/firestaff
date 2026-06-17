@@ -9,152 +9,152 @@
     {
       "hits": [
         {
-          "line": 12475,
+          "line": 12564,
           "needle": "ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set"
         },
         {
-          "line": 12483,
+          "line": 12572,
           "needle": "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)"
         },
         {
-          "line": 12485,
+          "line": 12574,
           "needle": "return (state->world.party.mapX +"
         },
         {
-          "line": 12486,
+          "line": 12575,
           "needle": "state->world.party.mapY +"
         },
         {
-          "line": 12487,
+          "line": 12576,
           "needle": "state->world.party.direction) & 1;"
         }
       ],
       "id": "firestaff_party_tuple_flip_predicate",
       "lines": null,
       "missing": [],
-      "path": "/Users/bosse/workspace-main/firestaff/src/engine/m11_game_view.c",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "5bb608a472745755ad267b979df3d578580431457d875e682ae0e60c29791c01",
+      "sha256": "30ded9e1c6cdb37d738900ec8d7f7566f762ea2a37475aaf70080b2b4d689f28",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 12481,
+          "line": 12570,
           "needle": "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,"
         },
         {
-          "line": 12534,
+          "line": 12623,
           "needle": "static int m11_is_dm1_wallset_materialized_graphic(unsigned int graphicIndex)"
         },
         {
-          "line": 12549,
+          "line": 12638,
           "needle": "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;"
         },
         {
-          "line": 12552,
+          "line": 12641,
           "needle": "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +"
         },
         {
-          "line": 12553,
+          "line": 12642,
           "needle": "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
         }
       ],
       "id": "firestaff_wallset_variant_binding_before_draw",
       "lines": null,
       "missing": [],
-      "path": "/Users/bosse/workspace-main/firestaff/src/engine/m11_game_view.c",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "5bb608a472745755ad267b979df3d578580431457d875e682ae0e60c29791c01",
+      "sha256": "30ded9e1c6cdb37d738900ec8d7f7566f762ea2a37475aaf70080b2b4d689f28",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 13121,
+          "line": 13210,
           "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
         },
         {
-          "line": 13126,
+          "line": 13215,
           "needle": "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))"
         },
         {
-          "line": 13127,
+          "line": 13216,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 13133,
+          "line": 13222,
           "needle": "the native center-wall graphic flipped horizontally."
         },
         {
-          "line": 13134,
+          "line": 13223,
           "needle": "(void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,"
         },
         {
-          "line": 13138,
+          "line": 13227,
           "needle": "} else {"
         },
         {
-          "line": 13139,
+          "line": 13228,
           "needle": "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
         }
       ],
       "id": "firestaff_center_wall_flip_path",
       "lines": null,
       "missing": [],
-      "path": "/Users/bosse/workspace-main/firestaff/src/engine/m11_game_view.c",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "5bb608a472745755ad267b979df3d578580431457d875e682ae0e60c29791c01",
+      "sha256": "30ded9e1c6cdb37d738900ec8d7f7566f762ea2a37475aaf70080b2b4d689f28",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 14001,
+          "line": 14107,
           "needle": "static void m11_draw_dm1_side_walls(const M11_GameViewState* state,"
         },
         {
-          "line": 14061,
+          "line": 14167,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 14063,
+          "line": 14169,
           "needle": "left zones use the right-side graphic flipped horizontally"
         },
         {
-          "line": 14066,
+          "line": 14172,
           "needle": "size_t partner = i ^ 1;"
         },
         {
-          "line": 14067,
+          "line": 14173,
           "needle": "M11_DM1WallFrontBlit swapped = kSideBlits[i];"
         },
         {
-          "line": 14068,
+          "line": 14174,
           "needle": "swapped.graphicIndex = kSideBlits[partner].graphicIndex;"
         },
         {
-          "line": 14069,
+          "line": 14175,
           "needle": "(void)m11_draw_dm1_wall_blit_flipped(state,"
         },
         {
-          "line": 14075,
+          "line": 14181,
           "needle": "} else {"
         },
         {
-          "line": 14076,
+          "line": 14182,
           "needle": "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
         }
       ],
       "id": "firestaff_side_wall_lr_swap_path",
       "lines": null,
       "missing": [],
-      "path": "/Users/bosse/workspace-main/firestaff/src/engine/m11_game_view.c",
+      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "5bb608a472745755ad267b979df3d578580431457d875e682ae0e60c29791c01",
+      "sha256": "30ded9e1c6cdb37d738900ec8d7f7566f762ea2a37475aaf70080b2b4d689f28",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     }

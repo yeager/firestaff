@@ -17,6 +17,7 @@
  */
 
 #include "csb_v1_save_load_pc34_compat.h"
+#include "fs_portable_compat.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -71,11 +72,22 @@ static const char *default_save_dir(void)
     return g_default_save_dir_cache;
 }
 
-/* ensure_save_dir: stub for save directory creation.
- * TODO: implement mkdir on all platforms. Called before save writes. */
-static void __attribute__((unused)) ensure_save_dir(void)
+/* ensure_save_dir: create the default CSB V1 save directory
+ * (and any missing parent directories) on disk before save
+ * writes.  Idempotent: a successful or pre-existing directory
+ * are both considered success.  Source-locked against
+ * ReDMCSB LOADSAVE.C F0433 (STARTEND_SaveGame) which assumes
+ * the save directory is writable; the original DM1/CSB
+ * installers and CSBWin both create the directory at first run.
+ * The Firestaff launcher also creates it, but a power user who
+ * wipes the tree would otherwise hit ENOENT/ENOTDIR here.
+ * Cross-platform via FSP_CreateDirectoryRecursive (POSIX mkdir
+ * with EEXIST-tolerant semantics; on Windows uses _mkdir). */
+static int ensure_save_dir(void)
 {
-    (void)default_save_dir();
+    const char *dir = default_save_dir();
+    if (!dir || !dir[0]) return -1;
+    return FSP_CreateDirectoryRecursive(dir);
 }
 
 /* ── Source evidence ──────────────────────────────────────────────────── */
@@ -414,6 +426,19 @@ int csb_v1_save_game(const char *path,
     const char *backup_path;
 
     if (!path || !state || state_size <= 0) return -1;
+
+    /* Ensure the parent directory of the save path exists.
+     * The default save directory is created by ensure_save_dir();
+     * a custom save path may live in a user-chosen directory that
+     * we also need to create.  Both cases are idempotent and
+     * tolerate pre-existing directories. */
+    {
+        char parent[1024];
+        if (FSP_ParentDir(parent, sizeof(parent), path)) {
+            FSP_CreateDirectoryRecursive(parent);
+        }
+    }
+    ensure_save_dir();
 
     /* Create backup of existing save */
     backup_path = csb_v1_save_get_backup_path(path);

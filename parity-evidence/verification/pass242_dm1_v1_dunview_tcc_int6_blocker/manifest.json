@@ -40,9 +40,9 @@
   },
   "inputs": {
     "mkii_bat": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/MKII.BAT",
-    "pass236_error_excerpt": "/Users/bosse/workspace-main/firestaff/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/mkii_log_error_excerpt.txt",
-    "pass236_manifest": "/Users/bosse/workspace-main/firestaff/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/manifest.json",
-    "pass236_stdout_tail": "/Users/bosse/workspace-main/firestaff/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/dosbox_build_stdout_tail.txt",
+    "pass236_error_excerpt": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/mkii_log_error_excerpt.txt",
+    "pass236_manifest": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/manifest.json",
+    "pass236_stdout_tail": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/dosbox_build_stdout_tail.txt",
     "toolchains_doc": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Documentation/Toolchains.htm"
   },
   "manual_followup_smoke": {
