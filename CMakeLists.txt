@@ -97,8 +97,12 @@ endif()
 
 # ── Nexus V1 static library ────────────────────────────────────────
 file(GLOB NEXUS_SOURCES CONFIGURE_DEPENDS "src/nexus/nexus_v1_*.c")
+# Explicit V2 runtime wire-up modules (must be in lib for M11 wire-up).
+set(NEXUS_V2_RUNTIME_SOURCES
+    src/nexus/nexus_v2_hud_runtime.c
+)
 if(NEXUS_SOURCES)
-    add_library(firestaff_nexus STATIC ${NEXUS_SOURCES})
+    add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_V2_RUNTIME_SOURCES})
     target_include_directories(firestaff_nexus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(firestaff_nexus PRIVATE -Wall -Wextra -O2)
@@ -431,6 +435,30 @@ endif()
 add_test(
     NAME dm2_v2_lighting_runtime_probe
     COMMAND firestaff_dm2_v2_lighting_runtime_probe
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+
+# Nexus V2 Phase 3 — HUD Runtime Wire-up Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies: phase-gated render (V2 off → no-op, V2 on → paints into fb),
+# setter storage, V1 framebuffer preserved when V1 active,
+# force_active_for_test bypass, source evidence citation.
+add_executable(firestaff_nexus_v2_hud_runtime_probe
+    probes/firestaff_nexus_v2_hud_runtime_probe.c
+    src/nexus/nexus_v2_hud_runtime.c
+    src/nexus/nexus_v2_hud_overlay.c
+    src/nexus/nexus_v2_phase_gate_pc34.c
+    src/nexus/nexus_v1_engine.c
+    src/nexus/nexus_v1_creatures.c
+    src/nexus/nexus_v1_combat.c)
+target_link_libraries(firestaff_nexus_v2_hud_runtime_probe
+    PRIVATE firestaff_nexus firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v2_hud_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME nexus_v2_hud_runtime_probe
+    COMMAND firestaff_nexus_v2_hud_runtime_probe
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
 
