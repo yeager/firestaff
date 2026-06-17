@@ -103,14 +103,14 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
         ],
         "outputTail": "status=PASS_DM1_V1_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE\nsourceAnchors=5\npass359ChainOk=1\nnormalViewportRedrawOrderOk=1\n",
@@ -119,14 +119,14 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"
         ],
         "outputTail": "PASS drawview-presents-after-dungeonview-buffer DRAWVIEW.C:709-900 F0097_DUNGEONVIEW_DrawViewport\n  Presentation is a final blit of G0296 after DUNVIEW has replayed walls/objects into the viewport buffer.\nPASS floor-ceiling-base-before-wall-replay DUNVIEW.C:2962-3003 F0098_DUNGEONVIEW_DrawFloorAndCeiling\n  The renderer starts from a clean floor/ceiling buffer before replaying visible wall zones and contents.\nPASS f0128-far-to-near-square-replay DUNVIEW.C:8318-8618 F0128_DUNGEONVIEW_Draw_CPSF\n  DUNVIEW replays cells from far D4 through D0 before presentation; PC34/I34E D3L2/R2 and D2L2/R2 lanes are explicitly kept in the audited order.\nPASS d3-side-wall-occludes-by-early-return DUNVIEW.C:6400-6835 F0116_DUNGEONVIEW_DrawSquareD3L / F0117_DUNGEONVIEW_DrawSquareD3R / F0118_DUNGEONVIEW_DrawSquareD3C_CPSF\n  A wall square draws its wall zone and normally returns before open-cell content; only alcove wall ornaments intentionally replay contained items.\nPASS f0115-ordered-cell-pass-not-depth-sort DUNVIEW.C:4547-4910 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF\n  Within each visible square, F0115 consumes encoded cell order nibbles and rescans the thing list per cell; primitive batching would lose this source order.\nPASS door-front-two-pass-near-side-replay DUNVIEW.C:6428-6816 F0116/F0117/F0118 door-front branches\n  Door-front squares draw rear-side contents, then the door/frame, then replay front-side contents; this is explicit near-side replay, not a flat depth batch.\n",
@@ -135,33 +135,33 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_occlusion_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_v1_viewport_occlusion_gate.py"
         ],
-        "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:13399\n- pits gate before sampling: m11_game_view.c:13497\n- floor ornaments gate before sampling: m11_game_view.c:13565\n- stairs gate before sampling: m11_game_view.c:14219\n- teleporter fields gate before sampling: m11_game_view.c:14289\n- side walls gate before sampling: m11_game_view.c:14360\n- side doors gate before sampling: m11_game_view.c:14796\n- side door ornaments gate before sampling: m11_game_view.c:14896\n- side destroyed-door masks gate before sampling: m11_game_view.c:14974\n- viewport call-site wiring: m11_game_view.c:24412\n",
+        "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:13341\n- pits gate before sampling: m11_game_view.c:13439\n- floor ornaments gate before sampling: m11_game_view.c:13507\n- stairs gate before sampling: m11_game_view.c:14161\n- teleporter fields gate before sampling: m11_game_view.c:14231\n- side walls gate before sampling: m11_game_view.c:14302\n- side doors gate before sampling: m11_game_view.c:14738\n- side door ornaments gate before sampling: m11_game_view.c:14838\n- side destroyed-door masks gate before sampling: m11_game_view.c:14916\n- viewport call-site wiring: m11_game_view.c:24354\n",
         "returncode": 0
       }
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
         ],
-        "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:13677, 13702\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:16605\n- Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:14360\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:14039\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:14796\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:14896\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:14974\n- Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:24412\n",
+        "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:13619, 13644\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:16547\n- Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:14302\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:13981\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:14738\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:14838\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:14916\n- Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:24354\n",
         "returncode": 0
       }
     },
@@ -178,7 +178,7 @@
           "-G",
           "Ninja"
         ],
-        "outputTail": "-- The C compiler identification is AppleClang 17.0.0.17000603\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /opt/homebrew/bin/pkg-config (found version \"2.5.1\")\n-- Found SDL3\n-- Configuring done (0.6s)\n-- Generating done (0.3s)\n-- Build files have been written to: /Users/bosse/.openclaw/data/firestaff-builds/pass373-verify\n",
+        "outputTail": "-- The C compiler identification is AppleClang 17.0.0.17000603\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /opt/homebrew/bin/pkg-config (found version \"2.5.1\")\n-- Found SDL3\n-- Configuring done (0.8s)\n-- Generating done (0.3s)\n-- Build files have been written to: /Users/bosse/.openclaw/data/firestaff-builds/pass373-verify\n",
         "returncode": 0
       }
     },
@@ -234,35 +234,35 @@
         "launchedEver": 1,
         "party": {
           "championCount": 0,
-          "direction": 2,
+          "direction": 3,
           "mapIndex": 0,
           "mapX": 1,
           "mapY": 3
         },
         "pipeline": {
           "anyMovementOccurred": 0,
-          "anyTurnOccurred": 0,
-          "command": 4,
+          "anyTurnOccurred": 1,
+          "command": 2,
           "dequeued": 1,
-          "movementBlocked": 1,
+          "movementBlocked": 0,
           "stepApplied": 0,
-          "turnApplied": 0,
-          "viewportDirty": 0
+          "turnApplied": 1,
+          "viewportDirty": 1
         },
         "redraw": {
-          "inputRedrawAfterViewportDirtyCount": 0,
+          "inputRedrawAfterViewportDirtyCount": 1,
           "inputRedrawDrawCount": 1,
-          "lastInputRedrawAfterViewportDirty": 0
+          "lastInputRedrawAfterViewportDirty": 1
         },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "dm1",
         "title": "DUNGEON MASTER"
       },
-      "ok": false
+      "ok": true
     }
   ],
   "dm1Data": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "cbc4bd6789669e352763335adda66a099a9bbd9f",
+  "head": "95657f838944a8653e37aeaaec3b8de3cdeb521b",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -443,6 +443,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH",
-  "timestampUtc": "2026-06-17T17:56:46.941276+00:00"
+  "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
+  "timestampUtc": "2026-06-17T18:23:18.204416+00:00"
 }

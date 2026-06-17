@@ -60,9 +60,9 @@
     {
       "kind": "pass373_prerequisite",
       "manifest": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
-      "ok": false,
+      "ok": true,
       "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
-      "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH"
+      "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED"
     },
     {
       "kind": "completion_matrix_credit",
@@ -83,7 +83,7 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_firestaff_completion_matrix.py"
         ],
         "outputTail": "firestaff completion matrix verifier OK\n",
@@ -95,7 +95,7 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/firestaff_completion_status.py"
         ],
         "outputTail": "DM1 V1 | completionPercent=58% | points=58/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=20% | points=20/100 | status=inventory_and_launch_blocker | primaryBlocker=Positive front-door render smoke and source-locked QuickPlay/load-route boundaries exist, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
@@ -104,7 +104,7 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "74843924d6717ac240e52eb036ee07e5eb56f70e",
+  "head": "95657f838944a8653e37aeaaec3b8de3cdeb521b",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
@@ -222,6 +222,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT",
-  "timestampUtc": "2026-06-17T17:46:11.671921+00:00"
+  "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED",
+  "timestampUtc": "2026-06-17T18:22:14.418521+00:00"
 }
