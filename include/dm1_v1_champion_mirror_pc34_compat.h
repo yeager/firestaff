@@ -1,6 +1,14 @@
 #ifndef DM1_V1_CHAMPION_MIRROR_PC34_COMPAT_H
 #define DM1_V1_CHAMPION_MIRROR_PC34_COMPAT_H
 
+/*
+ * pass796 - DM1 V1 champion mirror contract test
+ * (COMMAND.C:484-488 PC-98/PC C159..C162 champion-name rows;
+ * COMMAND.C:1437-1449 F0358 inclusive match; F0380:2158-2162
+ * status-box click dispatch). Source-locked against COMMAND.C
+ * F0358:1437-1449 + F0380:2158-2162 + DEFS.H C159..C162.
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif

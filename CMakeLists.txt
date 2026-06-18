@@ -6817,6 +6817,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass795_dm1_v1_champion_leader_pc34_compat.py
         )
         set_tests_properties(pass795_dm1_v1_champion_leader PROPERTIES DEPENDS dm1_v1_champion_leader_pc34_compat)
+        add_test(
+            NAME pass796_dm1_v1_champion_mirror
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass796_dm1_v1_champion_mirror_pc34_compat.py
+        )
+        set_tests_properties(pass796_dm1_v1_champion_mirror PROPERTIES DEPENDS dm1_v1_champion_mirror_pc34_compat)
     endif()
 endif()
 

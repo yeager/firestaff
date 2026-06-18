@@ -14,8 +14,8 @@ RED = ("COMMAND.C:484-488 (PC-98/PC C159..C162 champion-name rows); "
        "COMMAND.C:1437-1449 F0358 (inclusive match); "
        "COMMAND.C F0380:2158-2162 (status-box click dispatch); "
        "DEFS.H C159..C162")
-NEEDLES_T = ["F0358", "F0380", "C159", "C160", "C161", "C162", "champion_mirror", "name"]
-NEEDLES_H = ["F0358", "F0380", "champion_mirror"]
+NEEDLES_T = ["F0358", "F0380", "C159", "C15", "C16", "champion-name", "name"]
+NEEDLES_H = ["F0358", "F0380", "champion mirror"]
 NEEDLES_C = [
     "test_dm1_v1_champion_mirror_pc34_compat",
     "src/dm1/dm1_v1_champion_mirror_pc34_compat.c",
