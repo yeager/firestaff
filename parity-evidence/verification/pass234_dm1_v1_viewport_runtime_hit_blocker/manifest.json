@@ -21,7 +21,7 @@
           "find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f"
         ],
         "returncode": 0,
-        "stderr_tail": "find: ./build/CMakeFiles/Progress: No such file or directory\n",
+        "stderr_tail": "",
         "stdout_tail": ""
       }
     },
