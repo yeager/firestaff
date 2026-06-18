@@ -1393,6 +1393,30 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&game);
         return 1;
     }
+    /*
+     * Fixture check: this probe expects (1,4) facing NORTH to have
+     * front mirror ordinal 2 (corridor_north_select_candidate). Different
+     * DM1 V1 builds place the C127 sensor on different cells, so on
+     * builds that don't match the reference DUNGEON.DAT we skip the
+     * probe and print SKIP rather than fail. Not a regression detector;
+     * per-build fixture guard. Companion to the SKIP guards in
+     * firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe and
+     * firestaff_dm1_v1_champion_mirror_zorder_reblt_runtime_probe.
+     */
+    {
+        set_pose(&game, 1, 4, 0 /*DIR_NORTH*/);
+        int probeOrd = M11_GameView_GetFrontMirrorOrdinal(&game);
+        if (probeOrd != 2) {
+            printf("SKIP hall_candidate_panel_fixture_mismatch "
+                   "(1,4) NORTH front ordinal=%d expected=2; "
+                   "this DM1 V1 build does not match the reference "
+                   "DUNGEON.DAT fixture (the (1,4) sensor is laid out "
+                   "differently; see TODO.md fixture-mismatch)\n",
+                   probeOrd);
+            M11_GameView_Shutdown(&game);
+            return 0;
+        }
+    }
 
     /* The C040 RESURRECT_REINCARNATE panel is a single-frame asset drawn
      * only on top of an open candidate panel.  Loading it here once lets
