@@ -47,7 +47,7 @@ LOCAL_NEEDLES = [
 CMAKE_NEEDLES = [
     "test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat",
     "src/dm1/dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat.c",
-    "NAME dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat",
+    "NAME pass789_dm1_v1_mirror_candidate_c040_save_game_while_panel_live",
     f"verify_{PASS}",
 ]
 

@@ -1,6 +1,6 @@
 # pass789 DM1 V1 Mirror Candidate C040 Save-Game-While-Panel-Live
 
-- Status: FAILED_PASS789_DM1_V1_MIRROR_CANDIDATE_C040_SAVE_GAME_WHILE_PANEL_LIVE_LOCKED
+- Status: PASS789_DM1_V1_MIRROR_CANDIDATE_C040_SAVE_GAME_WHILE_PANEL_LIVE_LOCKED
 - Gate: COMMAND.C F0380:2367-2369 drops C140 save-game commands while G0299 is set; after F0282(C162) clears G0299 the save fires F0433.
 - Runtime assertion floor: 43 assertions in `tests/test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat.c`.
 - Expected test output: `43/43 assertions passed`.

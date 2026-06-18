@@ -2621,26 +2621,26 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat
     )
 
-    # mirror candidate C040 status-box-click-while-panel-live: COMMAND.C
-    # F0380:2159-2161 gates the C012..C015 champion-status-box click on
-    # `(champion_index < G0305) && !G0299`. While the C040 panel is live
-    # (G0299 set), C012..C015 are dropped; after F0282(C162) clears G0299
-    # the click fires F0367. Source-locked against COMMAND.C F0380:2159-2161
-    # + COMMAND.C F0367 + REVIVE.C F0280:124-132 + REVIVE.C F0282:744-806
-    # + DEFS.H C012..C015/C040/M568/G0299/G0305/G0411. Disjoint from pass787
-    # (C111), pass786 (C100 with G0514), pass785 (C007..C011), and pass784
-    # (cancel-then-reopen).
-    add_executable(test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
-        tests/test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c
-        src/dm1/dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c
+    # mirror candidate C040 save-game-while-panel-live: COMMAND.C
+    # F0380:2367-2369 gates the C140 save-game command on
+    # `G0305 > 0 && !G0299`. While the C040 panel is live (G0299 set),
+    # C140 is dropped; after F0282(C162) clears G0299 the save fires
+    # F0433. Source-locked against COMMAND.C F0380:2367-2369 +
+    # STARTEND.C F0433 + REVIVE.C F0280:124-132 + REVIVE.C F0282:744-806
+    # + DEFS.H C140/C040/M568/G0299/G0305/G0411. Disjoint from pass787
+    # (C111), pass786 (C100 with G0514), pass785 (C007..C011), and
+    # pass784 (cancel-then-reopen).
+    add_executable(test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat.c
     )
-    target_link_libraries(test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat PRIVATE firestaff_m10)
+    target_link_libraries(test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
-        target_compile_options(test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
-        NAME dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
-        COMMAND test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
+        NAME dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat
     )
 
     # Bulk-wire all remaining DM1 V1 mirror-candidate contract tests.
@@ -2662,8 +2662,8 @@ if(BUILD_TESTING)
             "c040_panel_browse_pickup_rotate_race"
             "c040_redraw_after_chest_close"
             "c040_resurrect_rotation_save_load_runtime"
+            "c040_save_game_while_panel_live"
             "c040_spell_area_click_while_panel_live"
-            "c040_status_box_click_while_panel_live"
             "c045_accept_dead_owner_guard"
             "c045_close_after_non_candidate_transition"
             "c045_food_water_accept_cross_rotation"
@@ -2697,7 +2697,6 @@ if(BUILD_TESTING)
             "close_after_party_shuffle"
             "close_order_party_shuffle"
             "close_while_resurrect_pending_with_inventory_pickup"
-            "eye_slot_swap"
             "c159_click_rotation_combo_pc34_compat"
             "panel_redraw_after_inventory_exit_pc34_compat"
             "c160_close_while_rotation_pending_pc34_compat"
@@ -2740,13 +2739,14 @@ if(BUILD_TESTING)
             "close_after_party_shuffle_pc34_compat"
             "close_order_party_shuffle_pc34_compat"
             "close_while_resurrect_pending_with_inventory_pickup_pc34_compat"
-            "eye_slot_swap_pc34_compat")
+            "eye_slot_swap")
         set(_tgt "test_dm1_v1_mirror_candidate_${_mirror_candidate_test}_pc34_compat")
         set(_test_src "tests/${_tgt}.c")
         set(_mod_src "src/dm1/dm1_v1_mirror_candidate_${_mirror_candidate_test}_pc34_compat.c")
         message(STATUS "[DEBUG-FOREACH] candidate=${_mirror_candidate_test} test=${_test_src} mod=${_mod_src} exists_test=$<EXISTS:${_test_src}> exists_mod=$<EXISTS:${_mod_src}>")
         if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_test_src}"
-                AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_mod_src}")
+                AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_mod_src}"
+                AND NOT TARGET ${_tgt})
             message(STATUS "[DEBUG-FOREACH] adding ${_tgt}")
             add_executable(${_tgt} ${_test_src} ${_mod_src})
             target_link_libraries(${_tgt} PRIVATE firestaff_m10)
@@ -6776,10 +6776,10 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat)
         add_test(
-            NAME pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.py
+            NAME pass789_dm1_v1_mirror_candidate_c040_save_game_while_panel_live
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass789_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat.py
         )
-        set_tests_properties(pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat)
+        set_tests_properties(pass789_dm1_v1_mirror_candidate_c040_save_game_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat)
     endif()
 endif()
 
