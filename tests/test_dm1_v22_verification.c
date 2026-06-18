@@ -162,7 +162,7 @@ static void test_modern_assets_available(void) {
 
     /* Case 2: dir exists but manifest does not → 0 */
     {
-        char* d = scratch_path("no_manifest");
+        char* d = scratch_path("no_manifest/data");
         if (d) {
             make_dir(d);
             m11_v22_set_manifest_path(d);
@@ -173,7 +173,7 @@ static void test_modern_assets_available(void) {
 
     /* Case 3: empty manifest {} → 0 */
     {
-        char* d = scratch_path("empty_manifest");
+        char* d = scratch_path("empty_manifest/data");
         if (d) {
             make_dir(d);
             char* mf = scratch_path("empty_manifest/manifest.json");
@@ -189,7 +189,7 @@ static void test_modern_assets_available(void) {
 
     /* Case 4: bad manifest (empty assets array) → 0 */
     {
-        char* d = scratch_path("missing_category");
+        char* d = scratch_path("missing_category/data");
         if (d) {
             make_dir(d);
             char* mf = scratch_path("missing_category/manifest.json");
@@ -208,14 +208,14 @@ static void test_modern_assets_available(void) {
 
     /* Case 5: valid manifest with all 5 required families → 1 */
     {
-        char* d = scratch_path("valid_manifest");
+        char* d = scratch_path("valid_manifest/data");
         if (d) {
             make_dir(d);
             /* m11_v22_set_manifest_path(d) computes the manifest path by
-             * stripping the last segment of d ("valid_manifest") to get the
-             * parent tmpdir, then appending "assets/dm1/modern/".
+             * walking up TWO levels from d ("valid_manifest/data") to get
+             * the parent tmpdir, then appending "assets/dm1/modern/".
              * So the manifest must be at <tmpdir>/assets/dm1/modern/
-             * (parallel to "valid_manifest/", not inside it).
+             * (sibling to "valid_manifest/", not inside it).
              * Create the sibling assets directory and put the manifest there. */
             char* sub = scratch_path("assets");
             if (sub) { make_dir(sub); free(sub); }

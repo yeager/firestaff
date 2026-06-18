@@ -199,44 +199,49 @@ static void __attribute__((unused)) m11_v22_skip_to_next_object (FILE* fp) {
 
 /* m11_v22_set_manifest_path — set the path to the modern asset manifest.
  * Called by M12_AssetStatus_Scan() after resolving the data directory.
- * The manifest path is derived as: <dataDir>/../assets/dm1/modern/
- * modern_asset_manifest.json */
+ * The manifest path is derived as: ~/.firestaff/assets/dm1/modern/
+ * modern_asset_manifest.json (per docs/v2_2_asset_manifest.md and
+ * docs/v2_2_asset_provenance_schema.md).
+ *
+ * dataDir is the game data directory path (e.g. ~/.firestaff/data/dm1).
+ * We walk up two levels to reach ~/.firestaff, then append
+ * assets/dm1/modern/modern_asset_manifest.json.
+ *
+ * CRITICAL: We must use FSP_ParentDir to strip the last path segment,
+ * NOT FSP_JoinPath with "..". The ".." join preserves the directory
+ * name in the path string (e.g. "dm1/../" doesn't simplify to just the
+ * parent), so using it would produce a manifest path that contains the
+ * dataDir name (e.g. ".../dm1/../assets/...") which never resolves to
+ * the actual file. FSP_ParentDir strips the last segment cleanly.
+ *
+ * Example: dataDir="/home/user/.firestaff/data/dm1"
+ *   ParentDir → "/home/user/.firestaff/data"
+ *   ParentDir → "/home/user/.firestaff"
+ *   assets/dm1/modern → correct modern assets directory.
+ *
+ * Source: FSP_ParentDir finds the last separator and truncates there. */
 void m11_v22_set_manifest_path(const char* dataDir) {
     if (!dataDir || dataDir[0] == '\0') {
         g_v22_manifest_path[0] = '\0';
         return;
     }
-    /* Build: <dataDir>/../assets/dm1/modern/modern_asset_manifest.json
-     * dataDir is the game data directory path (e.g. ~/.firestaff/data/dm1).
-     *
-     * CRITICAL: We must use FSP_ParentDir to strip the last path segment
-     * from dataDir, NOT FSP_JoinPath with "..". The ".." join preserves
-     * the directory name in the path string (e.g. "dm1/../" doesn't simplify
-     * to just the parent), so using it would produce a manifest path that
-     * contains the dataDir name (e.g. ".../dm1/../assets/...") which never
-     * resolves to the actual file. FSP_ParentDir strips the last segment
-     * cleanly and produces the correct parent path.
-     *
-     * Example: dataDir="/home/user/.firestaff/data/dm1"
-     *   ParentDir → "/home/user/.firestaff/data"
-     *   assets/dm1/modern → correct modern assets directory.
-     *
-     * Source: FSP_ParentDir finds the last separator and truncates there. */
-    char assetsDir[FSP_PATH_MAX];
+    /* Build: ~/.firestaff/assets/dm1/modern/modern_asset_manifest.json
+     * Walk up two levels from dataDir (e.g. data/dm1 -> data -> ~/.firestaff)
+     * then append assets/dm1/modern/. */
+    char parent1[FSP_PATH_MAX];
+    char parent2[FSP_PATH_MAX];
+    char assetsRoot[FSP_PATH_MAX];
     char modernDir[FSP_PATH_MAX];
-    if (!FSP_ParentDir(assetsDir, sizeof(assetsDir), dataDir)) {
-        /* Fallback: try treating dataDir as already being the parent */
-        FSP_JoinPath(assetsDir, sizeof(assetsDir), dataDir, "assets");
+    if (!FSP_ParentDir(parent1, sizeof(parent1), dataDir) ||
+        !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
+        /* Fallback: try treating dataDir as already being ~/.firestaff
+         * (single-component dataDir from a custom setup). */
+        FSP_JoinPath(assetsRoot, sizeof(assetsRoot), dataDir, "assets");
     } else {
-        FSP_JoinPath(assetsDir, sizeof(assetsDir), assetsDir, "assets");
-        FSP_JoinPath(assetsDir, sizeof(assetsDir), assetsDir, "dm1");
-        FSP_JoinPath(modernDir, sizeof(modernDir), assetsDir, "modern");
-        FSP_JoinPath(g_v22_manifest_path, sizeof(g_v22_manifest_path),
-                     modernDir, "modern_asset_manifest.json");
-        return;
+        FSP_JoinPath(assetsRoot, sizeof(assetsRoot), parent2, "assets");
     }
-    FSP_JoinPath(assetsDir, sizeof(assetsDir), assetsDir, "dm1");
-    FSP_JoinPath(modernDir, sizeof(modernDir), assetsDir, "modern");
+    FSP_JoinPath(modernDir, sizeof(modernDir), assetsRoot, "dm1");
+    FSP_JoinPath(modernDir, sizeof(modernDir), modernDir, "modern");
     FSP_JoinPath(g_v22_manifest_path, sizeof(g_v22_manifest_path),
                  modernDir, "modern_asset_manifest.json");
 }
