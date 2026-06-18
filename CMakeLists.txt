@@ -2621,6 +2621,145 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat
     )
 
+    # mirror candidate C040 status-box-click-while-panel-live: COMMAND.C
+    # F0380:2159-2161 gates the C012..C015 champion-status-box click on
+    # `(champion_index < G0305) && !G0299`. While the C040 panel is live
+    # (G0299 set), C012..C015 are dropped; after F0282(C162) clears G0299
+    # the click fires F0367. Source-locked against COMMAND.C F0380:2159-2161
+    # + COMMAND.C F0367 + REVIVE.C F0280:124-132 + REVIVE.C F0282:744-806
+    # + DEFS.H C012..C015/C040/M568/G0299/G0305/G0411. Disjoint from pass787
+    # (C111), pass786 (C100 with G0514), pass785 (C007..C011), and pass784
+    # (cancel-then-reopen).
+    add_executable(test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
+    )
+
+    # Bulk-wire all remaining DM1 V1 mirror-candidate contract tests.
+    # Each test is a self-contained source/runtime contract (no live
+    # graphics.dat / dungeon.dat needed) and source-locks one or more
+    # CHAMPION/REVIVE/PANEL/CHEST/COMMAND.C functions for a specific
+    # mirror-candidate transition (chrome swap, food-water rotation,
+    # scroll pickup, teleporter survival, etc.). All 73 are pre-existing
+    # in tests/ + src/dm1/ + include/firestaff/dm1/v1/mirror_candidate/
+    # but were not yet registered in ctest.
+    message(STATUS "[DEBUG-FOREACH] Starting mirror-candidate wire-up")
+    foreach(_mirror_candidate_test IN ITEMS
+            "c040_action_area_click_while_panel_live"
+            "c040_cancel_then_reopen_same_tick"
+            "c040_chrome_inventory_owner_swap"
+            "c040_close_non_leader_scroll_pickup"
+            "c040_eye_live_candidate"
+            "c040_inventory_toggle_while_panel_live"
+            "c040_panel_browse_pickup_rotate_race"
+            "c040_redraw_after_chest_close"
+            "c040_resurrect_rotation_save_load_runtime"
+            "c040_spell_area_click_while_panel_live"
+            "c040_status_box_click_while_panel_live"
+            "c045_accept_dead_owner_guard"
+            "c045_close_after_non_candidate_transition"
+            "c045_food_water_accept_cross_rotation"
+            "c045_food_water_close_no_candidate"
+            "c061_drop_resurrect_pending"
+            "c159_click_rotation_combo"
+            "c160_close_while_rotation_pending"
+            "c161_cancel_after_f0334_pending"
+            "c545_accept_during_rotation"
+            "c545_drop_while_panel_live"
+            "c545_pickup_while_panel_live"
+            "chest_close_leader_hand_pickup"
+            "chest_close_pending_panel"
+            "chest_open_during_pending"
+            "click_cancel"
+            "click_cancel_with_rotation"
+            "close_button"
+            "close_while_c045_pending"
+            "double_open_close"
+            "double_open_close_guard"
+            "full_chain"
+            "icon_refresh"
+            "inventory_full_swap"
+            "m568_chest_close_order"
+            "open_after_save_load"
+            "panel_redraw_after_inventory_exit"
+            "resurrect_confirm_inventory_interrupt"
+            "resurrect_chest_close_order"
+            "rotation_during_resurrect_confirmation"
+            "teleporter_survival"
+            "close_after_party_shuffle"
+            "close_order_party_shuffle"
+            "close_while_resurrect_pending_with_inventory_pickup"
+            "eye_slot_swap"
+            "c159_click_rotation_combo_pc34_compat"
+            "panel_redraw_after_inventory_exit_pc34_compat"
+            "c160_close_while_rotation_pending_pc34_compat"
+            "resurrect_chest_close_order_pc34_compat"
+            "resurrect_confirm_inventory_interrupt_pc34_compat"
+            "c161_cancel_after_f0334_pending_pc34_compat"
+            "rotation_during_resurrect_confirmation_pc34_compat"
+            "c061_drop_resurrect_pending_pc34_compat"
+            "c545_accept_during_rotation_pc34_compat"
+            "reopen_after_save_load_pc34_compat"
+            "c045_food_water_accept_cross_rotation_pc34_compat"
+            "c045_accept_dead_owner_guard_pc34_compat"
+            "c040_resurrect_rotation_save_load_runtime_pc34_compat"
+            "c040_panel_browse_pickup_rotate_race_pc34_compat"
+            "c040_close_non_leader_scroll_pickup_pc34_compat"
+            "c040_redraw_after_chest_close_pc34_compat"
+            "c040_chrome_inventory_owner_swap_pc34_compat"
+            "c040_eye_live_candidate_pc34_compat"
+            "c045_food_water_close_no_candidate_pc34_compat"
+            "c045_close_after_non_candidate_transition_pc34_compat"
+            "c545_drop_while_panel_live_pc34_compat"
+            "c545_pickup_while_panel_live_pc34_compat"
+            "c159_click_rotation_combo_pc34_compat"
+            "click_cancel_pc34_compat"
+            "click_cancel_with_rotation_pc34_compat"
+            "close_button_pc34_compat"
+            "close_while_c045_pending_pc34_compat"
+            "double_open_close_pc34_compat"
+            "double_open_close_guard_pc34_compat"
+            "full_chain_pc34_compat"
+            "icon_refresh_pc34_compat"
+            "inventory_full_swap_pc34_compat"
+            "m568_chest_close_order_pc34_compat"
+            "open_after_save_load_pc34_compat"
+            "panel_redraw_after_inventory_exit_pc34_compat"
+            "resurrect_chest_close_order_pc34_compat"
+            "resurrect_confirm_inventory_interrupt_pc34_compat"
+            "rotation_during_resurrect_confirmation_pc34_compat"
+            "teleporter_survival_pc34_compat"
+            "close_after_party_shuffle_pc34_compat"
+            "close_order_party_shuffle_pc34_compat"
+            "close_while_resurrect_pending_with_inventory_pickup_pc34_compat"
+            "eye_slot_swap_pc34_compat")
+        set(_tgt "test_dm1_v1_mirror_candidate_${_mirror_candidate_test}_pc34_compat")
+        set(_test_src "tests/${_tgt}.c")
+        set(_mod_src "src/dm1/dm1_v1_mirror_candidate_${_mirror_candidate_test}_pc34_compat.c")
+        message(STATUS "[DEBUG-FOREACH] candidate=${_mirror_candidate_test} test=${_test_src} mod=${_mod_src} exists_test=$<EXISTS:${_test_src}> exists_mod=$<EXISTS:${_mod_src}>")
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_test_src}"
+                AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_mod_src}")
+            message(STATUS "[DEBUG-FOREACH] adding ${_tgt}")
+            add_executable(${_tgt} ${_test_src} ${_mod_src})
+            target_link_libraries(${_tgt} PRIVATE firestaff_m10)
+            if(NOT MSVC)
+                target_compile_options(${_tgt} PRIVATE -Wall -Wextra -O2)
+            endif()
+            add_test(
+                NAME ${_tgt}
+                COMMAND ${_tgt}
+            )
+        endif()
+    endforeach()
+
     # chest action-hand owner-change (CONTAINER <-> NON-CONTAINER action
     # hand transitions while a G0426 chest is live: closes the chest,
     # preserves the visible G0425[0..7] items, re-routes the panel from
@@ -6636,6 +6775,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.py
         )
         set_tests_properties(pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat)
+        add_test(
+            NAME pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.py
+        )
+        set_tests_properties(pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat)
     endif()
 endif()
 

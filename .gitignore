@@ -78,7 +78,7 @@ split_redmcsb_*.py
 
 # Specific top-level binary outputs
 firestaff_headless
-firestaff
+/firestaff
 firestaff-*-quicksave.sav
 firestaff-*-quicksave.sav.*
 exports_driver_probe_*
