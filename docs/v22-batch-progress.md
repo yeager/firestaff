@@ -162,3 +162,42 @@ will still produce a fully-valid manifest.
    (warrior variant; the procedural helmet is a placeholder)
 4. More creature types — `creature_goblin_hero_01.png` (real goblin, not
    plant), `creature_skeleton_hero_01.png`, `creature_worm_hero_01.png`
+
+## Hero art batch 2 (2026-06-18)
+
+5 more `gpt-image-2` PBR hero variants generated + installed:
+
+| Hero asset | Reference sprite | Vision score |
+|------------|------------------|--------------|
+| `floor_shapes/floor_plain_hero_01.png` | sprite_0097 (perspective floor) | 5/5/4/5 |
+| `ui_chrome/panel_frame_hero_01.png` | sprite_0041 (round panel) | 5/4/5/5 |
+| `champion_portraits/champion_warrior_hero_01.png` | sprite_0378 (knight+cape) | 5/5/5/5 |
+| `creature_shapes/creature_goblin_hero_01.png` | (no DM1 goblin ref) | 5/4/5/5 |
+| `creature_shapes/creature_skeleton_hero_01.png` | (no DM1 skeleton ref) | 5/4/5/5 |
+
+**Total V2.2 hero art count: 8** (3 from batch 1 + 5 from batch 2).
+
+**Manifest upgraded to v1.2.0.** Validator-friendly format: each entry
+is a single line so `m11_v22_validate_manifest()` can find
+`id`/`source_file`/`width`/`height` in the same fgets() buffer.
+Previously the multi-line indented form had `entry_has_all_fields=0`
+because the validator reads just the opening `{` line of each entry.
+The procedural generator script `.openclaw/tmp/v22_asset_author.py`
+was patched to emit the same validator-friendly format on regeneration.
+
+**Smoke test 3/3 PASS** (`tools/v22_hero_smoke.c`): modern_assets_available=1,
+validate_manifest=1, get_installed=1.
+
+**Compare index** (`docs/v22-compare/compare_index.json`) gained a
+`hero_batch_2_pairs` array of 5 entries. Side-by-side comparisons
+saved to `docs/v22-compare/hero_b2_*.png`.
+
+**V2.2 ctest 4/4 still green** (asset_pipeline, shape_cache, render_overlay,
+verification).
+
+**Batch 3 candidates (next):**
+1. `wall_d3_inscription_hero_01.png` — wall with rune/inscription (DM1 has lots of rune graphics)
+2. `creature_worm_hero_01.png` — giant worm (DM1 classic)
+3. `creature_screamer_hero_01.png` — the screamer (DM1 boss-like)
+4. `floor_stairs_up_hero_01.png` + `floor_stairs_down_hero_01.png` (replacements)
+5. `champion_ninja_hero_01.png` + `champion_priest_hero_01.png` (full party set)
