@@ -1,0 +1,177 @@
+## item 0161 TXT3 bytes=111 score=1.00 spanish_terms=12
+PARA ABRIR LA|PUERTA DEL|CASTILLO DEBES|CONSEGUIE UNA PIEZA|DE LLAVE DE CADA|UNO DE LOS CUATRO|TROZOS DE LLAVE|
+
+## item 0164 TXT3 bytes=68 score=1.00 spanish_terms=4
+INVOCA ZO PARA|CERRAR PORTALES|QUE LOS|MINIONS MALVADOS|HAN ABIERTO|
+
+## item 0163 TXT3 bytes=83 score=1.00 spanish_terms=4
+POUR OUVRIR|LA PORTE DU|CHATEAU:|MORCEAU DE|CLE DE CHACUN|DES 4 CLANS|DE SKULLKEEP|
+
+## item 0155 TXT3 bytes=37 score=1.00 spanish_terms=4
+RESUCITA LA VIDA|DE UN CAMPEON|CAIDO|
+
+## item 1731 TXT3 bytes=13 score=1.00 spanish_terms=3
+LLAVE DE ORO|
+
+## item 0149 TXT3 bytes=64 score=1.00 spanish_terms=3
+INVOCA|ZO EW KU|PARA CREAR UN|MINION QUE|ATACARA|A TUS ENEMIGOS|
+
+## item 0143 TXT3 bytes=61 score=1.00 spanish_terms=3
+ANTES DE USAR|ACTIVAR CALDERA|ABRIR VALVULAS|SUBIR 2 NIVELES|
+
+## item 0069 TXT3 bytes=49 score=0.94 spanish_terms=3
+METTEZ LA DISQUETTE DE SAUVEGARDE DE JEU DANS {1}/|
+
+## item 0025 TXT3 bytes=34 score=1.00 spanish_terms=3
+ES UN DISCO DE GUARDADO DE JUEGO!|
+
+## item 0014 TXT3 bytes=28 score=1.00 spanish_terms=3
+ESTE NO ES EL DISCO MASTER!|
+
+## item 4906 TXT3 bytes=14 score=1.00 spanish_terms=2
+GEMA DE PODER|
+
+## item 3650 TXT3 bytes=19 score=1.00 spanish_terms=2
+GUERRERO CON HACHA|
+
+## item 1790 TXT3 bytes=14 score=1.00 spanish_terms=2
+FLEUR DE MANA|
+
+## item 1788 TXT3 bytes=13 score=1.00 spanish_terms=2
+FLOR DE MANA|
+
+## item 1757 TXT3 bytes=16 score=1.00 spanish_terms=2
+LLAVE DE HIERRO|
+
+## item 1660 TXT3 bytes=22 score=1.00 spanish_terms=2
+GEMME DE CHEF DE CLAN|
+
+## item 1655 TXT3 bytes=23 score=1.00 spanish_terms=2
+MORCEAU DE CLE DE CLAN|
+
+## item 1616 TXT3 bytes=16 score=1.00 spanish_terms=2
+LLAVE DE SANGRE|
+
+## item 0218 TXT3 bytes=39 score=0.90 spanish_terms=2
+{1}' VIENT DE GAGNER UN NIVEAU MAGICIEN.|
+
+## item 0216 TXT3 bytes=29 score=0.87 spanish_terms=2
+{1}' SUBISTE DE NIVEL DE MAGO.|
+
+## item 0215 TXT3 bytes=37 score=0.90 spanish_terms=2
+{1}' VIENT DE GAGNER UN NIVEAU PRETRE.|
+
+## item 0213 TXT3 bytes=34 score=0.89 spanish_terms=2
+{1}' SUBISTE DE NIVEL DE SACERDOTE.|
+
+## item 0212 TXT3 bytes=36 score=0.89 spanish_terms=2
+{1}' VIENT DE GAGNER UN NIVEAU NINJA.|
+
+## item 0210 TXT3 bytes=30 score=0.88 spanish_terms=2
+{1}' SUBISTE DE NIVEL DE NINJA.|
+
+## item 0209 TXT3 bytes=41 score=0.91 spanish_terms=2
+{1}' VIENT DE GAGNER UN NIVEAU COMBATTANT.|
+
+## item 0207 TXT3 bytes=33 score=0.89 spanish_terms=2
+{1}' SUBISTE DE NIVEL DE GUERRERO.|
+
+## item 0160 TXT3 bytes=50 score=1.00 spanish_terms=2
+BATON SERPENT||PLUS 1 FLEUR|DE MANA||PLUS 1 BATON|
+
+## item 0157 TXT3 bytes=36 score=1.00 spanish_terms=2
+REDONNER LA|VIE A UN|CHAMPION|DECHU|
+
+## item 0152 TXT3 bytes=48 score=1.00 spanish_terms=2
+INVOCA|ZO EW NETA|PARA CREAR UN|MINION|GUARDIAN|
+
+## item 0087 TXT3 bytes=58 score=0.77 spanish_terms=2
+METTEZ LA DISQUETTE {1}" DANS {1}#|ET LA DISQUETTE {1}; DANS {1}$|
+
+## item 0085 TXT3 bytes=46 score=0.72 spanish_terms=2
+INSERTA EL DISCO {1}" EN {1}#|Y EL DISCO {1}; EN {1}$|
+
+## item 0080 TXT3 bytes=37 score=0.90 spanish_terms=2
+INSERTA EL CD {1}" EN LA UNIDAD CD-ROM|
+
+## item 0047 TXT3 bytes=35 score=1.00 spanish_terms=2
+FORMATEAR EL DISCO DE TODOS MODOS?|
+
+## item 0043 TXT3 bytes=24 score=1.00 spanish_terms=2
+EL JUEGO ESTA CORRUPTO!|
+
+## item 0037 TXT3 bytes=43 score=1.00 spanish_terms=2
+NO SE PUEDE ENCONTRAR LA PARTIDA GUARDADA!|
+
+## item 0034 TXT3 bytes=32 score=1.00 spanish_terms=2
+NO SE PUEDE GUARDAR LA PARTIDA!|
+
+## item 0028 TXT3 bytes=32 score=1.00 spanish_terms=2
+NO SE PUEDE FORMATEAR EL DISCO!|
+
+## item 0027 TXT3 bytes=42 score=0.98 spanish_terms=2
+C'EST UNE DISQUETTE DE SAUVEGARDE DE JEU!|
+
+## item 0017 TXT3 bytes=35 score=0.89 spanish_terms=2
+NO SE PUEDE MODIFICAR {1}" EL DISCO!|
+
+## item 5485 TXT3 bytes=17 score=1.00 spanish_terms=1
+PUERTA DEL VACIO|
+
+## item 3958 TXT3 bytes=16 score=1.00 spanish_terms=1
+PUERTA FANTASMA|
+
+## item 1928 TXT3 bytes=8 score=0.73 spanish_terms=1
+{YA} LLAVE|
+
+## item 1918 TXT3 bytes=8 score=0.73 spanish_terms=1
+{VI} LLAVE|
+
+## item 1875 TXT3 bytes=13 score=1.00 spanish_terms=1
+LLAVE SOLIDA|
+
+## item 1870 TXT3 bytes=15 score=1.00 spanish_terms=1
+LLAVE CALAVERA|
+
+## item 1831 TXT3 bytes=8 score=0.73 spanish_terms=1
+{RA} LLAVE|
+
+## item 1817 TXT3 bytes=11 score=1.00 spanish_terms=1
+LLAVE ONYX|
+
+## item 1812 TXT3 bytes=8 score=0.73 spanish_terms=1
+{OH} LLAVE|
+
+## item 1807 TXT3 bytes=14 score=1.00 spanish_terms=1
+LLAVE MAESTRA|
+
+## item 1798 TXT3 bytes=11 score=1.00 spanish_terms=1
+LLAVE LUNA|
+
+## item 1771 TXT3 bytes=16 score=1.00 spanish_terms=1
+LLAVE RELAMPAGO|
+
+## item 1716 TXT3 bytes=8 score=0.75 spanish_terms=1
+{FUL} LLAVE|
+
+## item 1681 TXT3 bytes=11 score=1.00 spanish_terms=1
+LLAVE CRUZ|
+
+## item 1663 TXT3 bytes=8 score=0.73 spanish_terms=1
+{IR} LLAVE|
+
+## item 1653 TXT3 bytes=17 score=1.00 spanish_terms=1
+PIEZA LLAVE CLAN|
+
+## item 0957 TXT3 bytes=7 score=1.00 spanish_terms=1
+ESPADA|
+
+## item 0545 TXT3 bytes=12 score=1.00 spanish_terms=1
+ESPADA AZUL|
+
+## item 0332 TXT3 bytes=10 score=1.00 spanish_terms=1
+SACERDOTE|
+
+## item 0328 TXT3 bytes=9 score=1.00 spanish_terms=1
+GUERRERO|
+

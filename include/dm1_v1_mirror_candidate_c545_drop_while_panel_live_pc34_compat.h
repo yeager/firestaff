@@ -24,10 +24,15 @@
 #define DM1_V1_MIRROR_CANDIDATE_C545_DROP_WHILE_PANEL_LIVE_PC34_COMPAT_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define DM1_V1_MC_C545_DROP_CHEST_SLOTS_PC34 8
+#define DM1_V1_MC_C545_DROP_TRACE_COUNT_PC34 16
+#define DM1_V1_MC_C545_DROP_NONE_PC34 0xffffu
 
 typedef struct Dm1V1MirrorC545DropEvidencePc34Compat {
     int contractOnly;
@@ -37,27 +42,72 @@ typedef struct Dm1V1MirrorC545DropEvidencePc34Compat {
     const char *commandDispatchAnchor;
     const char *commandQueueAnchor;
     const char *candidateOpenAnchor;
-    const char *candidateClearAnchor;
-    const char *panelDrawAnchor;
-    const char *mouseBracketAnchor;
+    const char *candidateClickAnchor;
+    const char *panelAnchor;
+    const char *mouseAnchor;
     const char *blitmaskAnchor;
     const char *defsAnchor;
-    const char *nonOverlap;
+    const char *contractScope;
 } Dm1V1MirrorC545DropEvidencePc34Compat;
+
+typedef struct Dm1V1MirrorC545DropSpecPc34Compat {
+    int leaderIndex;
+    int partyChampionCount;
+    int leaderHandPutObject;
+    int floorObjectBeforeDrop;
+    int candidateOrdinal;
+    int panelContent;
+    int panelGraphic;
+    int chestSlotCount;
+    int chestSlotObjects[DM1_V1_MC_C545_DROP_CHEST_SLOTS_PC34];
+    int c040Action;
+    int c545Action;
+    int c162Action;
+    int rejects[8];
+    int trace[DM1_V1_MC_C545_DROP_TRACE_COUNT_PC34];
+    uint32_t beforeHash;
+    uint32_t afterDropHash;
+    uint32_t afterPanelCloseHash;
+    uint32_t hash;
+} Dm1V1MirrorC545DropSpecPc34Compat;
 
 typedef struct Dm1V1MirrorC545DropStatePc34Compat {
     int partyChampionCount;
-    int activeChampionIndex;
-    int chestSlots[8];
-    int leaderHandThing;
+    int leaderIndex;
+    int leaderHandObject;
+    int candidateOrdinal;
+    int panelContent;
+    int panelGraphic;
+    int c040Action;
+    int c045Action;
+    int c545Action;
+    int c162Action;
+    int chestSlotCount;
+    int chestSlots[DM1_V1_MC_C545_DROP_CHEST_SLOTS_PC34];
+    int floorObject;
+    int c040CandidateIndex;
+    int c040CandidateIndexAfterDrop;
+    int c040CandidateIndexAfterPanelClose;
+    int panelRedrawBefore;
+    int panelRedrawAfterDrop;
+    int panelRedrawAfterPanelClose;
+    int c545PanelPixelBefore;
+    int c545PanelPixelAfterDrop;
+    int c545PanelPixelAfterPanelClose;
+    int rejectsCaught;
+    int dropToFloorFired;
+    int resurrectClickFired;
+    int chestDisjoint;
+    int guardsOk;
     int previousCellThing;
     int openChestThing;
     int firstChestSlotThing;
-    int candidateOrdinal;
-    int c545Fired;
-    int c040FiredAfterC545;
+    int candidateOrdinal2;
+    int c545Fired2;
+    int c040FiredAfterC5452;
     int chestSlotsPreserved;
     int leaderHandReleasedAfterMutation;
+    uint32_t hash;
 } Dm1V1MirrorC545DropStatePc34Compat;
 
 const Dm1V1MirrorC545DropEvidencePc34Compat *
