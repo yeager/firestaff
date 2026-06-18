@@ -1544,7 +1544,7 @@ if(NOT MSVC)
 endif()
 
 # M12 Startup Menu probe
-if(EXISTS "probes/m12/firestaff_m12_startup_menu_probe.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_startup_menu_probe.c")
     add_executable(firestaff_m12_startup_menu_probe probes/m12/firestaff_m12_startup_menu_probe.c)
     target_link_libraries(firestaff_m12_startup_menu_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
@@ -1553,7 +1553,7 @@ if(EXISTS "probes/m12/firestaff_m12_startup_menu_probe.c")
 endif()
 
 # M12 config persistence probe
-if(EXISTS "probes/m12/firestaff_m12_config_persist_probe.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_config_persist_probe.c")
     add_executable(firestaff_m12_config_persist_probe probes/m12/firestaff_m12_config_persist_probe.c)
     target_link_libraries(firestaff_m12_config_persist_probe PRIVATE firestaff_m12 SDL3::SDL3)
     if(NOT MSVC)
@@ -1562,7 +1562,7 @@ if(EXISTS "probes/m12/firestaff_m12_config_persist_probe.c")
 endif()
 
 # M12 cloud sync probe
-if(EXISTS "probes/m12/firestaff_m12_cloud_sync_probe.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_cloud_sync_probe.c")
     add_executable(firestaff_m12_cloud_sync_probe probes/m12/firestaff_m12_cloud_sync_probe.c)
     target_link_libraries(firestaff_m12_cloud_sync_probe PRIVATE firestaff_m12 SDL3::SDL3)
     if(NOT MSVC)
@@ -1571,7 +1571,7 @@ if(EXISTS "probes/m12/firestaff_m12_cloud_sync_probe.c")
 endif()
 
 # M12 JSON export/import probe
-if(EXISTS "probes/m12/firestaff_m12_json_export_import_probe.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_json_export_import_probe.c")
     add_executable(firestaff_m12_json_export_import_probe probes/m12/firestaff_m12_json_export_import_probe.c)
     target_link_libraries(firestaff_m12_json_export_import_probe PRIVATE firestaff_m12 SDL3::SDL3)
     if(NOT MSVC)
@@ -1580,7 +1580,7 @@ if(EXISTS "probes/m12/firestaff_m12_json_export_import_probe.c")
 endif()
 
 # DM1 V1 wall inscription rendering probe
-if(EXISTS "probes/dm1/probe_dm1_v1_wall_inscription.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/probe_dm1_v1_wall_inscription.c")
     add_executable(probe_dm1_v1_wall_inscription probes/dm1/probe_dm1_v1_wall_inscription.c)
     target_link_libraries(probe_dm1_v1_wall_inscription PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -1589,7 +1589,7 @@ if(EXISTS "probes/dm1/probe_dm1_v1_wall_inscription.c")
 endif()
 
 # DM1 V1 viewport draw-order evidence probe
-if(EXISTS "probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c")
     add_executable(firestaff_dm1_v1_viewport_draw_order_probe probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c)
     if(NOT MSVC)
         target_compile_options(firestaff_dm1_v1_viewport_draw_order_probe PRIVATE -Wall -Wextra -O2)
@@ -1597,7 +1597,7 @@ if(EXISTS "probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c")
 endif()
 
 # DM1 V1 game-loop redraw/cadence evidence probe
-if(EXISTS "probes/dm1/firestaff_dm1_v1_game_loop_redraw_cadence_probe.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_game_loop_redraw_cadence_probe.c")
     add_executable(firestaff_dm1_v1_game_loop_redraw_cadence_probe probes/dm1/firestaff_dm1_v1_game_loop_redraw_cadence_probe.c)
     if(NOT MSVC)
         target_compile_options(firestaff_dm1_v1_game_loop_redraw_cadence_probe PRIVATE -Wall -Wextra -O2)
@@ -1605,7 +1605,7 @@ if(EXISTS "probes/dm1/firestaff_dm1_v1_game_loop_redraw_cadence_probe.c")
 endif()
 
 # DM1 V1 viewport palette/as-before cadence evidence probe
-if(EXISTS "probes/dm1/firestaff_dm1_v1_viewport_palette_as_before_probe.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_viewport_palette_as_before_probe.c")
     add_executable(firestaff_dm1_v1_viewport_palette_as_before_probe probes/dm1/firestaff_dm1_v1_viewport_palette_as_before_probe.c)
     if(NOT MSVC)
         target_compile_options(firestaff_dm1_v1_viewport_palette_as_before_probe PRIVATE -Wall -Wextra -O2)
