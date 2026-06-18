@@ -1,7 +1,7 @@
 {
   "branch": "main",
   "decision": "Existing pass514/pass558/pass560/pass562 evidence chain is incomplete in this checkout.",
-  "head": "79a7f921f37bc6ab581faf0a717254fa67f79413",
+  "head": "5f2a7b069c561771cb1a7964807a29da5a82843f",
   "nonClaims": [
     "no new original runtime capture",
     "no pixel parity promotion",
@@ -278,5 +278,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS563_PC34_C254_CHAIN_INCOMPLETE",
-  "timestampUtc": "2026-06-18T15:07:29.555165+00:00"
+  "timestampUtc": "2026-06-18T15:13:51.494114+00:00"
 }
