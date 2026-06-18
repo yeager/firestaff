@@ -96,5 +96,32 @@
       "dm1_sprite": "sprite_0376_96x111.png",
       "description": "skeletal warrior creature (hero PBR, no DM1 skeleton ref)"
     }
+  ],
+  "hero_batch_3_pairs": [
+    {
+      "v22": "wall_shapes/corridor_hero_01.png",
+      "dm1_sprite": "sprite_0097_160x111.png",
+      "description": "wide dungeon corridor (hero PBR, matches sprite_0097 corridor floor)"
+    },
+    {
+      "v22": "creature_shapes/creature_worm_hero_01.png",
+      "dm1_sprite": "sprite_0374_96x111.png",
+      "description": "giant worm creature (hero PBR, no DM1 worm ref \u2014 closest creature is the demon)"
+    },
+    {
+      "v22": "creature_shapes/chest_hero_01.png",
+      "dm1_sprite": "sprite_0041_96x95.png",
+      "description": "treasure chest (hero PBR, no DM1 chest ref \u2014 closest is sprite_0041 round panel/hatch)"
+    },
+    {
+      "v22": "wall_shapes/wall_inscription_hero_01.png",
+      "dm1_sprite": "sprite_0093_33x136.png",
+      "description": "carved rune wall (hero PBR, closest is sprite_0093 wall-edge)"
+    },
+    {
+      "v22": "door_shapes/door_hero_01.png",
+      "dm1_sprite": "sprite_0093_33x136.png",
+      "description": "heavy door (hero PBR, no DM1 door ref \u2014 closest is sprite_0093 wall-edge)"
+    }
   ]
 }
