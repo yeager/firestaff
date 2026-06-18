@@ -69,5 +69,32 @@
       "dm1_sprite": "sprite_0372_96x111.png",
       "description": "fiery horned demon (hero PBR)"
     }
+  ],
+  "hero_batch_2_pairs": [
+    {
+      "v22": "floor_shapes/floor_plain_hero_01.png",
+      "dm1_sprite": "sprite_0097_160x111.png",
+      "description": "perspective dungeon floor (hero PBR)"
+    },
+    {
+      "v22": "ui_chrome/panel_frame_hero_01.png",
+      "dm1_sprite": "sprite_0041_96x95.png",
+      "description": "ornate UI panel frame (hero PBR)"
+    },
+    {
+      "v22": "champion_portraits/champion_warrior_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "warrior champion portrait (hero PBR)"
+    },
+    {
+      "v22": "creature_shapes/creature_goblin_hero_01.png",
+      "dm1_sprite": "sprite_0372_96x111.png",
+      "description": "goblinoid creature (hero PBR, no DM1 goblin ref)"
+    },
+    {
+      "v22": "creature_shapes/creature_skeleton_hero_01.png",
+      "dm1_sprite": "sprite_0376_96x111.png",
+      "description": "skeletal warrior creature (hero PBR, no DM1 skeleton ref)"
+    }
   ]
 }
