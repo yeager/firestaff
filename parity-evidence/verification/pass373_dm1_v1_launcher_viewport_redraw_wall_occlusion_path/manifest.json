@@ -228,7 +228,7 @@
       "kind": "live_runtime_redraw_state",
       "observed": {
         "active": 1,
-        "gameTick": 18,
+        "gameTick": 21,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -262,7 +262,7 @@
     }
   ],
   "dm1Data": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "c491e1770747a727cb50f8f6966f9a54879b4c7c",
+  "head": "4754699e9b0c1a0ad80a4dc7973bb4e24ddc6814",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -444,5 +444,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
-  "timestampUtc": "2026-06-18T16:27:22.251645+00:00"
+  "timestampUtc": "2026-06-18T16:38:40.474185+00:00"
 }

@@ -2669,7 +2669,7 @@ if(BUILD_TESTING)
                 target_compile_options(${_tgt} PRIVATE -Wall -Wextra -O2)
             endif()
             add_test(
-                NAME ${_tgt}
+                NAME dm1_v1_mirror_candidate_${_mirror_candidate_test}_pc34_compat
                 COMMAND ${_tgt}
             )
         endif()
