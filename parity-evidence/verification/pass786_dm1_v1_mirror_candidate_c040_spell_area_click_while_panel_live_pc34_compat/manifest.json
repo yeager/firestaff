@@ -1,0 +1,99 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin COMMAND.C F0380:2303 and F0370:2482 line numbers when the local ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "COMMAND.C F0380:2303-2306",
+    "COMMAND.C F0370:2482-2520",
+    "REVIVE.C F0280:124-132",
+    "REVIVE.C F0282:744-806",
+    "DEFS.H C100, C040/M568, G0299, G0305, G0411, G0514"
+  ],
+  "nonOverlap": [
+    "Not pass785 (inventory-toggle-while-c040-live covers F0380:2181-2183 C007..C011; this gate covers F0380:2303-2306 C100 with the additional G0514 magic-caster gate).",
+    "Not pass784 cancel-then-reopen same-tick.",
+    "Not the C111 action-area gate (which is a separate F0380 line; not yet covered by any pass).",
+    "Not the chest cancel-reopen-pickup gate (M569 chest path)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "id": "COMMAND.C:2303",
+      "line": 2303,
+      "lineText": "                if ((!G0299_ui_CandidateChampionOrdinal) && (G0514_i_MagicCasterChampionIndex != CM1_CHAMPION_NONE)) {",
+      "needle": "!G0299_ui_CandidateChampionOrdinal",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "id": "COMMAND.C:2303",
+      "line": 2303,
+      "lineText": "                if ((!G0299_ui_CandidateChampionOrdinal) && (G0514_i_MagicCasterChampionIndex != CM1_CHAMPION_NONE)) {",
+      "needle": "G0514_i_MagicCasterChampionIndex",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "id": "REVIVE.C:124",
+      "line": 124,
+      "lineText": "        if (!G0415_ui_LeaderEmptyHanded)",
+      "needle": "G0415_ui_LeaderEmptyHanded",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "id": "REVIVE.C:744",
+      "line": 744,
+      "lineText": "        L0826_ps_Champion = &M516_CHAMPIONS[L0822_ui_ChampionIndex = G0305_ui_PartyChampionCount - 1];",
+      "needle": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+      "status": "DRIFT"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.v1",
+  "scope": "DM1 V1 mirror-candidate C040: while the candidate panel is live (G0299 set), COMMAND.C F0380:2303-2306 drops the C100 spell-area click. After F0282(C162) clears G0299 with a valid G0514 magic-caster, the click fires F0370. If G0514 is then cleared to CM1_CHAMPION_NONE the click is dropped again. Disjoint from pass785 (inventory-toggle) and pass784 (cancel-then-reopen same-tick).",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/mirror_candidate/c040_spell_area_click_while_panel_live_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS786_DM1_V1_MIRROR_CANDIDATE_C040_SPELL_AREA_CLICK_WHILE_PANEL_LIVE_LOCKED",
+  "timestampUtc": "2026-06-18T12:52:33.138583+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live: 48/48 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
