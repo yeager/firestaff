@@ -2511,6 +2511,26 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat
     )
 
+    # mirror candidate C040 inventory-toggle-while-panel-live: COMMAND.C
+    # F0380:2181-2183 gates the C007..C011 inventory-toggle commands on
+    # !G0299_ui_CandidateChampionOrdinal. While the C040 panel is live the
+    # five inventory commands are dropped; after F0282(C162) clears G0299
+    # the toggle becomes live again. Source-locked against COMMAND.C
+    # F0380:2181-2183 + PANEL.C F0355:2299-2318 + REVIVE.C F0280:124-132
+    # + REVIVE.C F0282:744-806 + DEFS.H C007..C011/C040/M568/G0299/G0305/G0411.
+    add_executable(test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat
+    )
+
     # chest action-hand owner-change (CONTAINER <-> NON-CONTAINER action
     # hand transitions while a G0426 chest is live: closes the chest,
     # preserves the visible G0425[0..7] items, re-routes the panel from
@@ -6511,6 +6531,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.py
         )
         set_tests_properties(pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat)
+        add_test(
+            NAME pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.py
+        )
+        set_tests_properties(pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat)
     endif()
 endif()
 

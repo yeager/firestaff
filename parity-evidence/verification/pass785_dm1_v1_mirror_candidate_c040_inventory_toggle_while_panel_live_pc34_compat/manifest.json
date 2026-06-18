@@ -1,0 +1,106 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin the COMMAND.C F0380:2181 line number when the local ReDMCSB tree updates; the gate line may shift in future checkouts."
+  ],
+  "anchors": [
+    "COMMAND.C F0380:2181-2183",
+    "PANEL.C F0355:2299-2318",
+    "REVIVE.C F0280:124-132",
+    "REVIVE.C F0282:744-806",
+    "DEFS.H C007..C011, C040/M568, G0299, G0305, G0411"
+  ],
+  "nonOverlap": [
+    "Not pass784 cancel-then-reopen same-tick (that gate covers F0282(C162) and a new-sensor F0280 in the same tick; this gate covers F0380:2181-2183 inventory-toggle rejection while the panel is live).",
+    "Not the C160/C161 accept path (those go through F0282 without clearing G0299 until accept; this gate only tests C162 cancel).",
+    "Not the chest cancel-reopen-pickup gate (M569 chest path)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "id": "COMMAND.C:2181",
+      "line": 2181,
+      "lineText": "                if ((((AL1159_i_ChampionIndex = L1160_i_Command - C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0) == C04_CHAMPION_CLOSE_INVENTORY) || (AL1159_i_ChampionIndex < G0305_ui_PartyChampionCount)) && !G0299_ui_CandidateChampionOrdinal) {",
+      "needle": "G0299_ui_CandidateChampionOrdinal",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "id": "COMMAND.C:2176",
+      "line": 2176,
+      "lineText": "                        F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox(L1160_i_Command - C020_COMMAND_CLICK_ON_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND);",
+      "needle": "F0355_INVENTORY_Toggle_CPSE",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:2299",
+      "line": 2299,
+      "lineText": "        AL1102_ui_InventoryChampionOrdinal = G0423_i_InventoryChampionOrdinal;",
+      "needle": "F0355_INVENTORY_Toggle_CPSE",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "id": "REVIVE.C:124",
+      "line": 124,
+      "lineText": "        if (!G0415_ui_LeaderEmptyHanded)",
+      "needle": "G0415_ui_LeaderEmptyHanded",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "id": "REVIVE.C:744",
+      "line": 744,
+      "lineText": "        L0826_ps_Champion = &M516_CHAMPIONS[L0822_ui_ChampionIndex = G0305_ui_PartyChampionCount - 1];",
+      "needle": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+      "status": "DRIFT"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.v1",
+  "scope": "DM1 V1 mirror-candidate C040: while the candidate panel is live (G0299 set), the C007..C011 inventory-toggle commands are gated by COMMAND.C F0380 and dropped without calling F0355. After F0282(C162) clears G0299 the toggle becomes live again. Disjoint from pass784 cancel-then-reopen same-tick and from the C160/C161 accept path.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/mirror_candidate/c040_inventory_toggle_while_panel_live_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS785_DM1_V1_MIRROR_CANDIDATE_C040_INVENTORY_TOGGLE_WHILE_PANEL_LIVE_LOCKED",
+  "timestampUtc": "2026-06-18T07:38:19.800172+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live: 44/44 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
