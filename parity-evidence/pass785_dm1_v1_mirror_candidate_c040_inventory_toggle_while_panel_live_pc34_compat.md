@@ -1,6 +1,6 @@
 # pass785 DM1 V1 Mirror Candidate C040 Inventory-Toggle-While-Panel-Live
 
-- Status: FAILED_PASS785_DM1_V1_MIRROR_CANDIDATE_C040_INVENTORY_TOGGLE_WHILE_PANEL_LIVE_LOCKED
+- Status: PASS785_DM1_V1_MIRROR_CANDIDATE_C040_INVENTORY_TOGGLE_WHILE_PANEL_LIVE_LOCKED
 - Gate: inventory-toggle commands C007..C011 dispatched while G0299 is set are dropped by COMMAND.C F0380:2181-2183; after F0282(C162) clears G0299 the toggle becomes live again.
 - Runtime assertion floor: 44 assertions in `tests/test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.c`.
 - Expected test output: `44/44 assertions passed`.

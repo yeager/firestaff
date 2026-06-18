@@ -87,16 +87,12 @@
     {
       "file": "CMakeLists.txt",
       "id": "cmake_registration",
-      "missing": [
-        "test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat",
-        "src/dm1/dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.c",
-        "NAME dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat"
-      ],
-      "status": "FAIL"
+      "missing": [],
+      "status": "PASS"
     }
   ],
-  "status": "FAILED_PASS785_DM1_V1_MIRROR_CANDIDATE_C040_INVENTORY_TOGGLE_WHILE_PANEL_LIVE_LOCKED",
-  "timestampUtc": "2026-06-18T16:27:22.397004+00:00",
+  "status": "PASS785_DM1_V1_MIRROR_CANDIDATE_C040_INVENTORY_TOGGLE_WHILE_PANEL_LIVE_LOCKED",
+  "timestampUtc": "2026-06-18T16:31:59.710169+00:00",
   "verificationRuns": [
     {
       "command": [
