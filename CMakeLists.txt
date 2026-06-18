@@ -6894,3 +6894,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_leader_pc34_co
         COMMAND test_dm1_v1_champion_leader_pc34_compat
     )
 endif()
+
+# pass796 — DM1 V1 champion mirror contract test
+# (COMMAND.C:484-488 PC-98/PC C159..C162 champion-name rows;
+# COMMAND.C:1437-1449 F0358 inclusive match; F0380:2158-2162
+# status-box click dispatch). Source-locked against COMMAND.C
+# F0358:1437-1449 + F0380:2158-2162 + DEFS.H C159..C162.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_mirror_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_mirror_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_mirror_pc34_compat
+        tests/test_dm1_v1_champion_mirror_pc34_compat.c
+        src/dm1/dm1_v1_champion_mirror_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_mirror_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_mirror_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_mirror_pc34_compat
+        COMMAND test_dm1_v1_champion_mirror_pc34_compat
+    )
+endif()
