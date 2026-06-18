@@ -1,6 +1,6 @@
 # pass784 DM1 V1 Mirror Candidate C040 Cancel-Then-Reopen Same Tick
 
-- Status: FAILED_PASS784_DM1_V1_MIRROR_CANDIDATE_C040_CANCEL_THEN_REOPEN_SAME_TICK_LOCKED
+- Status: PASS784_DM1_V1_MIRROR_CANDIDATE_C040_CANCEL_THEN_REOPEN_SAME_TICK_LOCKED
 - Gate: C162 cancel followed by a new-sensor F0280 reopen inside the same tick.
 - Runtime assertion floor: 52 assertions in `tests/test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c`.
 - Expected test output: `53/53 assertions passed`.

@@ -113,16 +113,12 @@
     {
       "file": "CMakeLists.txt",
       "id": "cmake_registration",
-      "missing": [
-        "test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat",
-        "src/dm1/dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c",
-        "NAME dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat"
-      ],
-      "status": "FAIL"
+      "missing": [],
+      "status": "PASS"
     }
   ],
-  "status": "FAILED_PASS784_DM1_V1_MIRROR_CANDIDATE_C040_CANCEL_THEN_REOPEN_SAME_TICK_LOCKED",
-  "timestampUtc": "2026-06-18T16:27:22.362797+00:00",
+  "status": "PASS784_DM1_V1_MIRROR_CANDIDATE_C040_CANCEL_THEN_REOPEN_SAME_TICK_LOCKED",
+  "timestampUtc": "2026-06-18T16:31:59.651901+00:00",
   "verificationRuns": [
     {
       "command": [

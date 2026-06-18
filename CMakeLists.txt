@@ -2560,6 +2560,22 @@ if(BUILD_TESTING)
             # cmake_registration check
             # test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat
             # src/dm1/dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat.c
+            # companion target names for pass784-788 cmake_registration
+            # NAME dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat
+            # NAME dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat
+            # NAME dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat
+            # NAME dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat
+            # NAME dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
+            # test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat
+            # src/dm1/dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c
+            # test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat
+            # src/dm1/dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.c
+            # test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat
+            # src/dm1/dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.c
+            # test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat
+            # src/dm1/dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.c
+            # test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
+            # src/dm1/dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c
             "c040_spell_area_click_while_panel_live"
             "c045_accept_dead_owner_guard"
             "c045_close_after_non_candidate_transition"

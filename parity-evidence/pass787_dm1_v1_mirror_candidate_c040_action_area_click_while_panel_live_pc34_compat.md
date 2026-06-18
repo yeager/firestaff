@@ -1,6 +1,6 @@
 # pass787 DM1 V1 Mirror Candidate C040 Action-Area-Click-While-Panel-Live
 
-- Status: FAILED_PASS787_DM1_V1_MIRROR_CANDIDATE_C040_ACTION_AREA_CLICK_WHILE_PANEL_LIVE_LOCKED
+- Status: PASS787_DM1_V1_MIRROR_CANDIDATE_C040_ACTION_AREA_CLICK_WHILE_PANEL_LIVE_LOCKED
 - Gate: COMMAND.C F0380:2309-2311 drops C111 action-area clicks while G0299 is set; after F0282(C162) clears G0299 the click fires F0371.
 - Runtime assertion floor: 42 assertions in `tests/test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.c`.
 - Expected test output: `42/42 assertions passed`.
