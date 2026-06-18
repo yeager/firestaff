@@ -2600,6 +2600,36 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_steal_from_slot_indices_pc34_compat
     )
 
+    # mirror candidate C040 status-box-click-while-panel-live:
+    # COMMAND.C F0380:2159-2161 gates the C012..C015 champion-status-box
+    # click on `(champion_index < G0305) && !G0299`. While the C040 panel
+    # is live (G0299 set), the status-box click is dropped and F0367 is
+    # not called; after F0282(C162) clears G0299 the click fires F0367.
+    # Source-locked against COMMAND.C F0380:2159-2161 + COMMAND.C F0367 +
+    # REVIVE.C F0280:124-132 + REVIVE.C F0282:744-806 + DEFS.H C012..C015
+    # / C040 / M568 / G0299 / G0305 / G0411. Disjoint from pass787 (C111),
+    # pass786 (C100 with G0514), pass785 (C007..C011), and pass784
+    # (cancel-then-reopen).
+    add_executable(test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat
+    )
+    if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+        add_test(
+            NAME pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.py
+        )
+        set_tests_properties(pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live PROPERTIES DEPENDS "dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat")
+    endif()
+
     # Bulk-wire all remaining DM1 V1 mirror-candidate contract tests.
     # Each test is a self-contained source/runtime contract (no live
     # graphics.dat / dungeon.dat needed) and source-locks one or more
@@ -6772,6 +6802,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass792_dm1_v1_steal_from_slot_indices_pc34_compat.py
         )
         set_tests_properties(pass792_dm1_v1_steal_from_slot_indices PROPERTIES DEPENDS dm1_v1_steal_from_slot_indices_pc34_compat)
+        add_test(
+            NAME pass793_dm1_v1_champion_panel_action_hand_slot_priority
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass793_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat.py
+        )
+        set_tests_properties(pass793_dm1_v1_champion_panel_action_hand_slot_priority PROPERTIES DEPENDS dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat)
     endif()
 endif()
 
@@ -6781,4 +6816,26 @@ target_include_directories(extract_all_sprites PRIVATE ${CMAKE_CURRENT_SOURCE_DI
 target_link_libraries(extract_all_sprites PRIVATE firestaff_m10)
 if(NOT MSVC)
     target_compile_options(extract_all_sprites PRIVATE -Wall -Wextra -O2)
+endif()
+
+# pass793 — DM1 V1 champion-panel action-hand slot-priority
+# (F0302 slot-box click dispatcher with slot/chest selection,
+# AllowedSlots rejection, helper order, BUG0_39 order preservation).
+# Source-locked against CHAMPION.C F0302:662-714 +
+# CHAMPION.C F0297:243-268 + F0298 + F0300 + F0301 + F0292 +
+# COMMAND.C F0359 (C020..C065 click commands).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat
+        tests/test_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat
+    )
 endif()

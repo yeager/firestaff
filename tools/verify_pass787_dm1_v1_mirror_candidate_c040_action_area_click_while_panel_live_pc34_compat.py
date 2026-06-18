@@ -124,12 +124,22 @@ def run(cmd: list[str]) -> dict[str, object]:
     }
 
 
-def resolve_build_dir() -> Path:
-    for candidate in (ROOT / "build", ROOT / "builds" / "n2-build",
-                      ROOT / "builds" / "nv1-build"):
-        if (candidate / "CMakeCache.txt").exists():
-            return candidate
-    return ROOT / "build"
+def resolve_build_dir(binary_name: str = "") -> Path:
+    candidates = [
+        ROOT / "build",
+        ROOT / "builds" / "nv1-build",
+        ROOT / "builds" / "n2-build",
+    ]
+    # Prefer the candidate that has both CMakeCache.txt and the binary
+    if binary_name:
+        for c in candidates:
+            if (c / "CMakeCache.txt").exists() and (c / binary_name).exists():
+                return c
+    # Fall back to the first candidate with CMakeCache.txt
+    for c in candidates:
+        if (c / "CMakeCache.txt").exists():
+            return c
+    return candidates[0]
 
 
 def write_outputs(
@@ -248,7 +258,7 @@ def main() -> int:
         check_needles("cmake_registration", CMAKE, CMAKE_NEEDLES),
     ]
     redmcsb_checks = check_redmcsb_windows()
-    build_dir = resolve_build_dir()
+    build_dir = resolve_build_dir("test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat")
     runs = [
         run([str(build_dir / "test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat")])
     ]
