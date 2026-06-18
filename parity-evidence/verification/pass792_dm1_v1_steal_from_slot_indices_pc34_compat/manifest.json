@@ -1,0 +1,121 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:31",
+    "DATA.C:244-251",
+    "GROUP.C:1032",
+    "GROUP.C:1041",
+    "GROUP.C:1045",
+    "GROUP.C:1075"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound gates).",
+    "Not the chest cancel-reopen-pickup gate (M569 chest path).",
+    "Not c161/c160/c159/c061/c030 mirror-candidate gates."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:31",
+      "line": 31,
+      "lineText": "unsigned char G0025_auc_Graphic562_StealFromSlotIndices[8]; /* BUG0_00 Useless code. Unreferenced in versions 1.x and 2.x where it is replaced by G0394_auc_StealFromSlotIndices in F0193_GROUP_StealFromChampion */",
+      "needle": "G0025_auc_Graphic562_StealFromSlotIndices",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:244",
+      "line": 244,
+      "lineText": "unsigned char G0025_auc_Graphic562_StealFromSlotIndices[8] = {",
+      "needle": "C10_SLOT_NECK",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:251",
+      "line": 251,
+      "lineText": "        C06_SLOT_POUCH_2,",
+      "needle": "C13_SLOT_BACKPACK_LINE1_1",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GROUP.C",
+      "id": "GROUP.C:1032",
+      "line": 1032,
+      "lineText": "        static unsigned char G0394_auc_StealFromSlotIndices[8]; /* Initialized with 0 bytes by C loader */",
+      "needle": "G0394_auc_StealFromSlotIndices",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GROUP.C",
+      "id": "GROUP.C:1041",
+      "line": 1041,
+      "lineText": "                if ((L0392_ui_StealFromSlotIndex = G0394_auc_StealFromSlotIndices[L0393_ui_Counter]) == C13_SLOT_BACKPACK_LINE1_1) {",
+      "needle": "G0394_auc_StealFromSlotIndices[L0393_ui_Counter]",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GROUP.C",
+      "id": "GROUP.C:1045",
+      "line": 1045,
+      "lineText": "#ifdef MEDIA599_X30J_P20JB",
+      "needle": "StealFromSlotIndex += M002_RANDOM(17)",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GROUP.C",
+      "id": "GROUP.C:1075",
+      "line": 1075,
+      "lineText": "        }",
+      "needle": "L0393_ui_Counter &= 0x0007",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass792_dm1_v1_steal_from_slot_indices_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init vars: G0025_auc_Graphic562_StealFromSlotIndices[8] is the 8-byte table of slot indices a creature tries to steal from. GROUP.C F0193 (StealFromChampion) uses it in post-1.3 Atari versions (pre-1.3 Atari uses G0394). Counter = RANDOM(8), lookup G0025[counter]; if the result is the backpack-base slot, +RANDOM(17) selects a random backpack line-1 slot. Counter loops with += 1 &= 0x0007 (mod 8). Disjoint from pass784-790 mirror-candidate C040 and wound gates.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/steal_from_slot_indices_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_steal_from_slot_indices_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS792_DM1_V1_STEAL_FROM_SLOT_INDICES_LOCKED",
+  "timestampUtc": "2026-06-18T17:31:35.098084+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_steal_from_slot_indices_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_steal_from_slot_indices: 96/96 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
