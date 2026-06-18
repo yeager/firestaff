@@ -1528,6 +1528,52 @@ add_test(
     COMMAND firestaff_dm1_v1_chest_action_hand_close_runtime_probe $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,${CMAKE_CURRENT_SOURCE_DIR}/builds/nv1-build>
 )
 
+# DM1 V1 champion-panel runtime pixel/pose evidence probes. 9 orphaned
+# probes + 1 pc34_compat test that the legacy pool referenced but were
+# never registered in cmake. Re-promote them to first-class ctest members
+# so a regression breaks the build instead of drifting.
+foreach(_pool_probe_src IN ITEMS
+        "probes/m11/firestaff_dm1_v1_champion_mirror_visibility_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_mirror_zorder_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_mirror_zorder_reblt_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.c"
+        "probes/dm1/firestaff_dm1_v1_candidate_panel_spell_cast_suppression_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_panel_action_cell_slotbox_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_panel_bar_graph_pixel_slice_probe.c")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_pool_probe_src}")
+        get_filename_component(_pool_probe_exe "${_pool_probe_src}" NAME_WE)
+        add_executable(${_pool_probe_exe} ${_pool_probe_src})
+        target_link_libraries(${_pool_probe_exe} PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(${_pool_probe_exe} PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME ${_pool_probe_exe}
+            COMMAND ${_pool_probe_exe} $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,${CMAKE_CURRENT_SOURCE_DIR}/builds/nv1-build>
+        )
+    endif()
+endforeach()
+
+# DM1 V1 champion-panel damage-flash-decay pc34_compat runtime test
+# (companion of the pool's 9 probes; same M11/M12 stack).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat
+        tests/test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_damage_flash_decay_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat
+    )
+endif()
+
 # M11 FS Portable probe (cross-platform filesystem helpers)
 add_executable(firestaff_m11_fs_portable_probe probes/m11/firestaff_m11_fs_portable_probe.c)
 target_link_libraries(firestaff_m11_fs_portable_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10)

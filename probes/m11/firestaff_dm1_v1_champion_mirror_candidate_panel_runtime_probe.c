@@ -1341,32 +1341,38 @@ static int check_append_clear_cycle_pixels(M11_GameViewState* game,
 
 int main(int argc, char** argv) {
     const char* dataDir;
-    M12_StartupMenuState menu;
-    M11_GameViewState game;
-    M12_StartupMenuState menu2;
-    M11_GameViewState game2;
-    M12_StartupMenuState menu3;
-    M11_GameViewState game3;
-    M12_StartupMenuState menu4;
-    M11_GameViewState game4;
-    M12_StartupMenuState menu5;
-    M11_GameViewState game5;
-    M12_StartupMenuState menu6;
-    M11_GameViewState game6;
-    M12_StartupMenuState menu7;
-    M11_GameViewState game7;
-    M12_StartupMenuState menu8;
-    M11_GameViewState game8;
-    M12_StartupMenuState menu9;
-    M11_GameViewState game9;
-    M12_StartupMenuState menu10;
-    M11_GameViewState game10;
-    M12_StartupMenuState menu11;
-    M11_GameViewState game11;
-    M12_StartupMenuState menu12;
-    M11_GameViewState game12;
-    M12_StartupMenuState menu13;
-    M11_GameViewState game13;
+    /*
+     * M11_GameViewState (~579KB) + M12_StartupMenuState (~186KB) declared
+     * 13 times = ~10MB total; default macOS thread stack is 8MB, so
+     * a plain stack allocation segfaults. Keep the working buffers as
+     * static BSS to avoid the stack frame blowing past the guard page.
+     */
+    static M12_StartupMenuState menu;
+    static M11_GameViewState game;
+    static M12_StartupMenuState menu2;
+    static M11_GameViewState game2;
+    static M12_StartupMenuState menu3;
+    static M11_GameViewState game3;
+    static M12_StartupMenuState menu4;
+    static M11_GameViewState game4;
+    static M12_StartupMenuState menu5;
+    static M11_GameViewState game5;
+    static M12_StartupMenuState menu6;
+    static M11_GameViewState game6;
+    static M12_StartupMenuState menu7;
+    static M11_GameViewState game7;
+    static M12_StartupMenuState menu8;
+    static M11_GameViewState game8;
+    static M12_StartupMenuState menu9;
+    static M11_GameViewState game9;
+    static M12_StartupMenuState menu10;
+    static M11_GameViewState game10;
+    static M12_StartupMenuState menu11;
+    static M11_GameViewState game11;
+    static M12_StartupMenuState menu12;
+    static M11_GameViewState game12;
+    static M12_StartupMenuState menu13;
+    static M11_GameViewState game13;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
