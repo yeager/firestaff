@@ -6807,6 +6807,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass793_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat.py
         )
         set_tests_properties(pass793_dm1_v1_champion_panel_action_hand_slot_priority PROPERTIES DEPENDS dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat)
+        add_test(
+            NAME pass794_dm1_v1_champion_panel_all_states
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass794_dm1_v1_champion_panel_all_states_pc34_compat.py
+        )
+        set_tests_properties(pass794_dm1_v1_champion_panel_all_states PROPERTIES DEPENDS dm1_v1_champion_panel_all_states_pc34_compat)
     endif()
 endif()
 
@@ -6837,5 +6842,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_action_h
     add_test(
         NAME dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat
         COMMAND test_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat
+    )
+endif()
+
+# pass794 — DM1 V1 champion-panel all-states redraw dispatcher
+# (CHAMDRAW.C F0293:1117-1143 all-champion redraw with dirty-mask OR,
+# F0292 call order, G2149_ clear after the loop on PC34).
+# Source-locked against CHAMDRAW.C F0293:1117-1143 + DEFS.H:724-732
+# (dirty flags 0x0080..0x8000) + DEFS.H:8090-8100 (C00..C03 champion
+# indices, G0305, G2149).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_all_states_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_all_states_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_all_states_pc34_compat
+        tests/test_dm1_v1_champion_panel_all_states_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_all_states_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_all_states_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_all_states_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_all_states_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_all_states_pc34_compat
     )
 endif()

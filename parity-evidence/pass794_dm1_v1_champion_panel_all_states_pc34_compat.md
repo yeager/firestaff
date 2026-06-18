@@ -1,0 +1,7 @@
+# pass794_dm1_v1_champion_panel_all_states_pc34_compat
+
+Source-locked: CHAMDRAW.C F0293:1117-1143 (all-champion redraw dispatcher with dirty-mask OR, F0292 call order, G2149_ clear after loop on PC34); DEFS.H:724-732 (dirty flags 0x0080..0x8000); DEFS.H:8090-8100 (C00..C03 champion indices, G0305, G2149)
+
+Result: PASS
+Tests: {'passes': 53, 'fails': 0}
+Failures: []
