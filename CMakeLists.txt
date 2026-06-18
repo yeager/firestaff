@@ -2536,6 +2536,26 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_c040_cancel_reopen_pickup_pc34_compat
     )
 
+    # DM1 V1 wound-probability-index-to-wound-mask: PROJEXPL.C:1386 reads
+    # G0024_auc_Graphic562_WoundProbabilityIndexToWoundMask[0..3] to map a
+    # 4-bit wound-probability index to a body-location mask. The init
+    # data per DATA.C:243 = { FEET=0x20, LEGS=0x10, TORSO=0x08, HEAD=0x04 }.
+    # The fallback branch (PROJEXPL.C:1389) uses MASK0x0001_WOUND_READY_HAND
+    # when the test mask bits 4,5,6 are all clear. Source-locked against
+    # DATA.C:243 + PROJEXPL.C:1378-1389 + DEFS.H:736-741.
+    add_executable(test_dm1_v1_wound_probability_index_to_mask_pc34_compat
+        tests/test_dm1_v1_wound_probability_index_to_mask_pc34_compat.c
+        src/dm1/dm1_v1_wound_probability_index_to_mask_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_wound_probability_index_to_mask_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_wound_probability_index_to_mask_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_wound_probability_index_to_mask_pc34_compat
+        COMMAND test_dm1_v1_wound_probability_index_to_mask_pc34_compat
+    )
+
     # Bulk-wire all remaining DM1 V1 mirror-candidate contract tests.
     # Each test is a self-contained source/runtime contract (no live
     # graphics.dat / dungeon.dat needed) and source-locks one or more
@@ -2586,9 +2606,7 @@ if(BUILD_TESTING)
             "c160_close_while_rotation_pending"
             "c161_cancel_after_f0334_pending"
             "c545_accept_during_rotation"
-            # "c545_drop_while_panel_live" -- see TODO.md; module + test
-            # are present but the .h is missing fields the test
-            # references, so the build fails. Tracked in TODO.md.
+            "c545_drop_while_panel_live"
             "c545_pickup_while_panel_live"
             "chest_close_leader_hand_pickup"
             "chest_close_pending_panel"
@@ -6695,6 +6713,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass789_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat.py
         )
         set_tests_properties(pass789_dm1_v1_mirror_candidate_c040_save_game_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat)
+        add_test(
+            NAME pass790_dm1_v1_wound_probability_index_to_mask
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass790_dm1_v1_wound_probability_index_to_mask_pc34_compat.py
+        )
+        set_tests_properties(pass790_dm1_v1_wound_probability_index_to_mask PROPERTIES DEPENDS dm1_v1_wound_probability_index_to_mask_pc34_compat)
     endif()
 endif()
 
