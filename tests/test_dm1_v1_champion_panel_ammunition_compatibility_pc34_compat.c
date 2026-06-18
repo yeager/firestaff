@@ -4,6 +4,15 @@
 #include <stdio.h>
 #include <string.h>
 
+/*
+ * pass791 — DM1 V1 champion-panel ammunition-compatibility
+ * (F0294 weapon<->ammo compatibility check for ranged weapons).
+ * Source-locked against CHAMPION.C F0294:1-81 + DEFS.H:1723-1729 +
+ * DEFS.H:7908-7914 + TIMELINE.C:1598 and 1603 + bow/sling ammo classes
+ * (crossbow, sling, bow, quarrel, bolt, arrow, stone) +
+ * ammo_type/ammo_class/ammo_compatibility gate.
+ */
+
 static int g_assertions = 0;
 static int g_failures = 0;
 
