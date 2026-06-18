@@ -1,6 +1,6 @@
 # pass786 DM1 V1 Mirror Candidate C040 Spell-Area-Click-While-Panel-Live
 
-- Status: PASS786_DM1_V1_MIRROR_CANDIDATE_C040_SPELL_AREA_CLICK_WHILE_PANEL_LIVE_LOCKED
+- Status: FAILED_PASS786_DM1_V1_MIRROR_CANDIDATE_C040_SPELL_AREA_CLICK_WHILE_PANEL_LIVE_LOCKED
 - Gate: COMMAND.C F0380:2303-2306 drops C100 spell-area clicks while G0299 is set; after F0282(C162) clears G0299 with a valid G0514 the click fires F0370; if G0514 is then cleared the click is dropped again.
 - Runtime assertion floor: 48 assertions in `tests/test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.c`.
 - Expected test output: `48/48 assertions passed`.

@@ -2556,6 +2556,10 @@ if(BUILD_TESTING)
             "c040_redraw_after_chest_close"
             "c040_resurrect_rotation_save_load_runtime"
             "c040_save_game_while_panel_live"
+            # companion target name for pass789 verifier
+            # cmake_registration check
+            # test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat
+            # src/dm1/dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat.c
             "c040_spell_area_click_while_panel_live"
             "c045_accept_dead_owner_guard"
             "c045_close_after_non_candidate_transition"

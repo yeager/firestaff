@@ -82,12 +82,16 @@
     {
       "file": "CMakeLists.txt",
       "id": "cmake_registration",
-      "missing": [],
-      "status": "PASS"
+      "missing": [
+        "test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat",
+        "src/dm1/dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.c",
+        "NAME dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat"
+      ],
+      "status": "FAIL"
     }
   ],
-  "status": "PASS787_DM1_V1_MIRROR_CANDIDATE_C040_ACTION_AREA_CLICK_WHILE_PANEL_LIVE_LOCKED",
-  "timestampUtc": "2026-06-18T16:21:57.922371+00:00",
+  "status": "FAILED_PASS787_DM1_V1_MIRROR_CANDIDATE_C040_ACTION_AREA_CLICK_WHILE_PANEL_LIVE_LOCKED",
+  "timestampUtc": "2026-06-18T16:27:22.461078+00:00",
   "verificationRuns": [
     {
       "command": [
