@@ -15,14 +15,16 @@
         "-j2"
       ],
       "outputTail": [
+        "[  0%] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c.o",
+        "[  0%] Linking C static library libfirestaff_m10.a",
         "[100%] Built target firestaff_m10",
         "[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[ 96%] Built target firestaff_m10",
+        "[ 96%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Linking C executable test_dm1_v1_movement_core_pc34_compat",
@@ -415,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-18T17:01:13.352955+00:00"
+  "timestampUtc": "2026-06-18T17:38:22.935134+00:00"
 }
