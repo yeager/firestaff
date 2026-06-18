@@ -1,0 +1,132 @@
+{
+  "anchorDriftTodo": [
+    "DEFS.H:C040 and SENSOR.C:F0212 anchors are best-effort line 0 needle checks; if the local ReDMCSB tree lacks exact anchors, treat the corresponding row as DRIFT and record a follow-up to re-pin the line numbers."
+  ],
+  "anchors": [
+    "REVIVE.C F0280:124-132",
+    "REVIVE.C F0282:744-806",
+    "PANEL.C F0355:2299-2318",
+    "COMMAND.C F0378:1956-1990",
+    "MOVESENS.C F0275:1502",
+    "DEFS.H C040/M568, C127, C162, G0299, G0305, G0415, G0424"
+  ],
+  "nonOverlap": [
+    "Not pass760 mirror-candidate chrome after non-candidate transition.",
+    "Not pass762 mirror-candidate rotate-in-progress open.",
+    "Not test_dm1_v1_chest_c040_cancel_reopen_pickup (M569 chest path, not M568 mirror).",
+    "Not C045 food/water mirror-candidate gates."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "id": "REVIVE.C:124",
+      "line": 124,
+      "lineText": "        if (!G0415_ui_LeaderEmptyHanded)",
+      "needle": "G0415_ui_LeaderEmptyHanded",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "id": "REVIVE.C:744",
+      "line": 744,
+      "lineText": "        L0826_ps_Champion = &M516_CHAMPIONS[L0822_ui_ChampionIndex = G0305_ui_PartyChampionCount - 1];",
+      "needle": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:2299",
+      "line": 2299,
+      "lineText": "        AL1102_ui_InventoryChampionOrdinal = G0423_i_InventoryChampionOrdinal;",
+      "needle": "F0355_INVENTORY_Toggle_CPSE",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "id": "COMMAND.C:1956",
+      "line": 1956,
+      "lineText": "STATICFUNCTION void F0378_COMMAND_ProcessType81_ClickInPanel(",
+      "needle": "STATICFUNCTION void F0378_COMMAND_ProcessType81_ClickInPanel(",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "id": "COMMAND.C:1990",
+      "line": 1990,
+      "lineText": "                                F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel(L1157_ui_Command);",
+      "needle": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "id": "MOVESENS.C:1502",
+      "line": 1502,
+      "lineText": "                                        F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);",
+      "needle": "F0280_CHAMPION_AddCandidateChampionToParty",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "id": "MOVESENS.C:1498",
+      "line": 1498,
+      "lineText": "                                        F0297_CHAMPION_PutObjectInLeaderHand(L0762_T_ThingOnSquare, C1_TRUE);",
+      "needle": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "id": "DEFS.H:0",
+      "line": 0,
+      "lineText": "",
+      "needle": "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+      "status": "DRIFT"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.v1",
+  "scope": "DM1 V1 mirror candidate: a single tick drives F0282(C162 cancel) then F0280 (new sensor) so the C040 panel goes 568 -> 0 -> 568 with a fresh candidate ordinal and a fresh party count mid-tick. Disjoint from the chest cancel-reopen-pickup gate (M569 chest path, not M568 mirror) and the C045 food/water gates.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/mirror_candidate/c040_cancel_then_reopen_same_tick_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS784_DM1_V1_MIRROR_CANDIDATE_C040_CANCEL_THEN_REOPEN_SAME_TICK_LOCKED",
+  "timestampUtc": "2026-06-18T07:28:41.577678+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick: 53/53 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

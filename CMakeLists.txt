@@ -2490,6 +2490,27 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_c040_cancel_reopen_pickup_pc34_compat
     )
 
+    # mirror candidate C040 cancel-then-reopen same tick: C162 cancel
+    # followed by a new-sensor F0280 reopen inside the same tick. Pinned
+    # by party count dipping from 2 to 1 (cancel) and back to 2 (reopen),
+    # candidate ordinal going 3 -> 0 -> 4, panel content going 568 -> 0
+    # -> 568, and the F0282 / F0280 / F0355 dispatch counters all firing
+    # exactly once. Source-locked against REVIVE.C F0280:124-132 +
+    # F0282:744-806 + PANEL.C F0355:2299-2318 + COMMAND.C F0378:1956-1990
+    # + SENSOR.C F0212 + DEFS.H C040/M568/C162/G0299/G0305/G0415/G0424.
+    add_executable(test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat
+    )
+
     # chest action-hand owner-change (CONTAINER <-> NON-CONTAINER action
     # hand transitions while a G0426 chest is live: closes the chest,
     # preserves the visible G0425[0..7] items, re-routes the panel from
@@ -6483,6 +6504,14 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_track02_bank
         COMMAND firestaff_theron_v1_track02_bank_probe
     )
+
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.py
+        )
+        set_tests_properties(pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat)
+    endif()
 endif()
 
 # ── Sprite extraction tool for V2 graphics pipeline ─────────────────
