@@ -8,7 +8,7 @@
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat",
     "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
   },
-  "head": "e74d122e9a8bcd892b5d91e1d9f5fb07b303d395",
+  "head": "224c95a0f747d5255537e3e92955ed54b6e3c4b0",
   "notClaimed": [
     "viewport wall drawing changes",
     "new DOS runtime capture",
@@ -28,5 +28,5 @@
     "sensorRotationDeferSpan": "MOVESENS.C:1785-1793"
   },
   "status": "PASS545_DM1_V1_MOVEMENT_QUEUE_SENSOR_CONSEQUENCES_LOCKED",
-  "timestampUtc": "2026-06-18T18:08:30.712560+00:00"
+  "timestampUtc": "2026-06-18T18:15:23.547806+00:00"
 }

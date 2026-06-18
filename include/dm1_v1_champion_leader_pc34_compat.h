@@ -1,6 +1,16 @@
 #ifndef DM1_V1_CHAMPION_LEADER_PC34_COMPAT_H
 #define DM1_V1_CHAMPION_LEADER_PC34_COMPAT_H
 
+/*
+ * pass795 - DM1 V1 champion leader state contract test
+ * (CLIKCHAM.C F0367 status-box dispatch + F0368 set-leader state
+ * transition with old-leader dirty marking, leader-hand weight
+ * remove/add, G0411 set/clear, candidate leader redraw).
+ * Source-locked against CLIKCHAM.C F0367:24-35 + F0368:51-72 +
+ * DEFS.H:8090-8100 (C00..C03 champion indices, G0411, G0455) +
+ * DEFS.H:1874-1878 (CM1_CHAMPION_NONE).
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
