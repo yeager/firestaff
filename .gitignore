@@ -180,6 +180,8 @@ __pycache__/
 !/parity-evidence/verification/pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat/**
 !/parity-evidence/verification/pass790_dm1_v1_wound_probability_index_to_mask_pc34_compat/
 !/parity-evidence/verification/pass790_dm1_v1_wound_probability_index_to_mask_pc34_compat/**
+!/parity-evidence/verification/pass792_dm1_v1_steal_from_slot_indices_pc34_compat/
+!/parity-evidence/verification/pass792_dm1_v1_steal_from_slot_indices_pc34_compat/**
 !/parity-evidence/verification/pass791_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat/
 !/parity-evidence/verification/pass791_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat/**
 !/parity-evidence/verification/pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat/

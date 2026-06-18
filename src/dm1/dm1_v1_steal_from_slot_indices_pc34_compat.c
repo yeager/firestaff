@@ -2,6 +2,25 @@
 
 #include <string.h>
 
+/*
+ * ReDMCSB source-lock map for this gate:
+ * - DATA.C:31 - declaration of G0025_auc_Graphic562_StealFromSlotIndices[8]
+ * - DATA.C:244-251 - init values starting at 244: { C10_SLOT_NECK,
+ *                 C11_SLOT_POUCH_1, C13_SLOT_BACKPACK_LINE1_1,
+ *                 C12_SLOT_QUIVER_LINE1_1, C10_SLOT_NECK,
+ *                 C13_SLOT_BACKPACK_LINE1_1, C06_SLOT_POUCH_2,
+ *                 C13_SLOT_BACKPACK_LINE1_1 }; last entry at line 251
+ *                 is C13_SLOT_BACKPACK_LINE1_1
+ * - GROUP.C:1032 - G0394 static (pre-1.3 Atari alternative)
+ * - GROUP.C:1041 - dispatch: G0025[counter] lookup
+ * - GROUP.C:1045 - backpack dispatch: += M002_RANDOM(17)
+ * - GROUP.C:1075 - counter loop: ++Counter &= 0x0007
+ * - DEFS.H:786, 790, 791, 792, 793 - the five slot constants
+ *
+ * Disjoint from pass784-790 (mirror-candidate C040 + wound) and
+ * pass791 (champion-panel ammunition-compatibility).
+ */
+
 enum {
     kSlotNeck              = 10,
     kSlotPouch1            = 11,

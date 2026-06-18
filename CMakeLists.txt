@@ -2578,6 +2578,28 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_wound_probability_index_to_mask_pc34_compat
     )
 
+    # DM1 V1 steal-from-slot-indices: GROUP.C F0193 (StealFromChampion)
+    # uses G0025_auc_Graphic562_StealFromSlotIndices[8] in post-1.3 Atari
+    # versions (or G0394 in pre-1.3 Atari; G0025 is the init source per
+    # DATA.C:244-251). Counter = RANDOM(8), lookup G0025[counter]; if the
+    # result == C13_SLOT_BACKPACK_LINE1_1 then += RANDOM(17) to select a
+    # random backpack slot. Counter loops with += 1 &= 0x0007. Source-
+    # locked against DATA.C:244-251 + GROUP.C:1039-1077 + DEFS.H:786/790-
+    # 793. Disjoint from pass784-790 + pass791 ammunition-compat
+    # (champion_panel namespace).
+    add_executable(test_dm1_v1_steal_from_slot_indices_pc34_compat
+        tests/test_dm1_v1_steal_from_slot_indices_pc34_compat.c
+        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_steal_from_slot_indices_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_steal_from_slot_indices_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_steal_from_slot_indices_pc34_compat
+        COMMAND test_dm1_v1_steal_from_slot_indices_pc34_compat
+    )
+
     # Bulk-wire all remaining DM1 V1 mirror-candidate contract tests.
     # Each test is a self-contained source/runtime contract (no live
     # graphics.dat / dungeon.dat needed) and source-locks one or more
@@ -6745,6 +6767,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass791_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat.py
         )
         set_tests_properties(pass791_dm1_v1_champion_panel_ammunition_compatibility PROPERTIES DEPENDS dm1_v1_champion_panel_ammunition_compatibility_pc34_compat)
+        add_test(
+            NAME pass792_dm1_v1_steal_from_slot_indices
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass792_dm1_v1_steal_from_slot_indices_pc34_compat.py
+        )
+        set_tests_properties(pass792_dm1_v1_steal_from_slot_indices PROPERTIES DEPENDS dm1_v1_steal_from_slot_indices_pc34_compat)
     endif()
 endif()
 
