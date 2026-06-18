@@ -1,37 +1,37 @@
 {
   "anchorDriftTodo": [
-    "Re-pin COMMAND.C F0380:2309 and F0371 line numbers when the local ReDMCSB tree updates."
+    "Re-pin COMMAND.C F0380:2159 and F0367 line numbers when the local ReDMCSB tree updates."
   ],
   "anchors": [
-    "COMMAND.C F0380:2309-2311",
-    "COMMAND.C F0371",
+    "COMMAND.C F0380:2159-2161",
+    "COMMAND.C F0367",
     "REVIVE.C F0280:124-132",
     "REVIVE.C F0282:744-806",
-    "DEFS.H C111, C040/M568, G0299, G0305, G0411"
+    "DEFS.H C012..C015, C040/M568, G0299, G0305, G0411"
   ],
   "nonOverlap": [
+    "Not pass787 (C111 action-area).",
     "Not pass786 (C100 spell-area with G0514 magic-caster gate).",
     "Not pass785 (C007..C011 inventory-toggle).",
     "Not pass784 (cancel-then-reopen same-tick).",
-    "Not the C012..C016 status-box gate (not yet covered by any pass).",
     "Not the C140 save gate (not yet covered by any pass).",
     "Not the chest cancel-reopen-pickup gate (M569 chest path)."
   ],
   "redmcsbLineWindowChecks": [
     {
       "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
-      "id": "COMMAND.C:2309",
-      "line": 2309,
-      "lineText": "                if (!G0299_ui_CandidateChampionOrdinal) {",
+      "id": "COMMAND.C:2159",
+      "line": 2159,
+      "lineText": "                if (((AL1159_i_ChampionIndex = L1160_i_Command - C012_COMMAND_CLICK_IN_CHAMPION_0_STATUS_BOX) < G0305_ui_PartyChampionCount) && !G0299_ui_CandidateChampionOrdinal) {",
       "needle": "!G0299_ui_CandidateChampionOrdinal",
       "status": "PASS"
     },
     {
       "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
-      "id": "COMMAND.C:2310",
-      "line": 2310,
-      "lineText": "                        F0371_COMMAND_ProcessType111To115_ClickInActionArea_CPSE(L1161_i_CommandX, L1162_i_CommandY);",
-      "needle": "F0371_COMMAND_ProcessType111To115_ClickInActionArea_CPSE",
+      "id": "COMMAND.C:2160",
+      "line": 2160,
+      "lineText": "                        F0367_COMMAND_ProcessTypes12To27_ClickInChampionStatusBox(AL1159_i_ChampionIndex, L1161_i_CommandX, L1162_i_CommandY);",
+      "needle": "F0367_COMMAND_ProcessTypes12To27_ClickInChampionStatusBox",
       "status": "PASS"
     },
     {
@@ -52,29 +52,29 @@
     }
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "schema": "firestaff.parity.pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.v1",
-  "scope": "DM1 V1 mirror-candidate C040: while the candidate panel is live (G0299 set), COMMAND.C F0380:2309-2311 drops the C111 action-area click. After F0282(C162) clears G0299 the click fires F0371. Disjoint from pass786 (C100 with G0514 magic-caster gate), pass785 (C007..C011 inventory-toggle), and pass784 (cancel-then-reopen same-tick).",
+  "schema": "firestaff.parity.pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.v1",
+  "scope": "DM1 V1 mirror-candidate C040: while the candidate panel is live (G0299 set), COMMAND.C F0380:2159-2161 drops the C012..C015 champion-status-box click. After F0282(C162) clears G0299 the click fires F0367. Disjoint from pass787 (C111), pass786 (C100 with G0514), pass785 (C007..C011), and pass784 (cancel-then-reopen same-tick).",
   "sourceChecks": [
     {
-      "file": "src/dm1/dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c",
       "id": "source_required_anchors",
       "missing": [],
       "status": "PASS"
     },
     {
-      "file": "src/dm1/dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c",
       "id": "source_runtime_contract",
       "missing": [],
       "status": "PASS"
     },
     {
-      "file": "include/firestaff/dm1/v1/mirror_candidate/c040_action_area_click_while_panel_live_pc34_compat.h",
+      "file": "include/firestaff/dm1/v1/mirror_candidate/c040_status_box_click_while_panel_live_pc34_compat.h",
       "id": "header_api_surface",
       "missing": [],
       "status": "PASS"
     },
     {
-      "file": "tests/test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.c",
+      "file": "tests/test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c",
       "id": "test_entry_and_assertions",
       "missing": [],
       "status": "PASS"
@@ -86,14 +86,14 @@
       "status": "PASS"
     }
   ],
-  "status": "PASS787_DM1_V1_MIRROR_CANDIDATE_C040_ACTION_AREA_CLICK_WHILE_PANEL_LIVE_LOCKED",
-  "timestampUtc": "2026-06-18T15:21:50.680107+00:00",
+  "status": "PASS788_DM1_V1_MIRROR_CANDIDATE_C040_STATUS_BOX_CLICK_WHILE_PANEL_LIVE_LOCKED",
+  "timestampUtc": "2026-06-18T15:21:50.174472+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat"
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat"
       ],
-      "outputTail": "dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live: 42/42 assertions passed",
+      "outputTail": "dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live: 46/46 assertions passed",
       "passed": true,
       "returncode": 0
     }
