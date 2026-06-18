@@ -14,6 +14,10 @@
  * - ReDMCSB DEFS.H:7908-7914 declares F0294.
  * - ReDMCSB TIMELINE.C:1598 and 1603 are the two PC34 callers.
  *
+ * Companion ammo_type gate (G0303 ammo type comparison; ammo_type,
+ * ammo_class, ammo_compatibility fields) and contract-only synthetic
+ * weapon class constants.
+ *
  * Contract only: this slice uses synthetic thing type and WEAPON_INFO Class
  * values. It does not load game data, render graphics, or model real
  * champions, inventories, savegames, or F0293/F0297/F0298 behavior.

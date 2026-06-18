@@ -1574,6 +1574,28 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_f
     )
 endif()
 
+# pass791 — DM1 V1 champion-panel ammunition-compatibility
+# (F0294 weapon<->ammo compatibility check for ranged weapons).
+# Source-locked against CHAMPION.C F0294:400-450 (G0303 ammo type
+# comparison) + DEFS.H G0303/G0304/G0307 (ammo type + count) +
+# ITEMS.DAT ammo definitions. Companion to the existing damage_flash_decay
+# gate; same M11/M12 stack.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_ammunition_compatibility_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat
+        tests/test_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_ammunition_compatibility_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_ammunition_compatibility_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat
+    )
+endif()
+
 # M11 FS Portable probe (cross-platform filesystem helpers)
 add_executable(firestaff_m11_fs_portable_probe probes/m11/firestaff_m11_fs_portable_probe.c)
 target_link_libraries(firestaff_m11_fs_portable_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10)
@@ -6718,6 +6740,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass790_dm1_v1_wound_probability_index_to_mask_pc34_compat.py
         )
         set_tests_properties(pass790_dm1_v1_wound_probability_index_to_mask PROPERTIES DEPENDS dm1_v1_wound_probability_index_to_mask_pc34_compat)
+        add_test(
+            NAME pass791_dm1_v1_champion_panel_ammunition_compatibility
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass791_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat.py
+        )
+        set_tests_properties(pass791_dm1_v1_champion_panel_ammunition_compatibility PROPERTIES DEPENDS dm1_v1_champion_panel_ammunition_compatibility_pc34_compat)
     endif()
 endif()
 
