@@ -1512,6 +1512,22 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_pass54_song_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 open-chest action-hand pickup close runtime pixel probe.
+# Opens a seeded action-hand chest, renders C145 in the C09 action-hand slot,
+# clicks that visible slot through the real pointer/COMMAND route, then proves
+# the chest panel closes and the container moves into the leader hand.
+# Source-locked against CHEST.C F0333 / F0334 + CHAMPION.C F0300 / F0302 +
+# COMMAND.C F0359:2174-2176.
+add_executable(firestaff_dm1_v1_chest_action_hand_close_runtime_probe probes/m11/firestaff_dm1_v1_chest_action_hand_close_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_chest_action_hand_close_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_chest_action_hand_close_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm1_v1_chest_action_hand_close_runtime_probe
+    COMMAND firestaff_dm1_v1_chest_action_hand_close_runtime_probe $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,${CMAKE_CURRENT_SOURCE_DIR}/builds/nv1-build>
+)
+
 # M11 FS Portable probe (cross-platform filesystem helpers)
 add_executable(firestaff_m11_fs_portable_probe probes/m11/firestaff_m11_fs_portable_probe.c)
 target_link_libraries(firestaff_m11_fs_portable_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10)
@@ -2472,6 +2488,90 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_c040_cancel_reopen_pickup_pc34_compat
         COMMAND test_dm1_v1_chest_c040_cancel_reopen_pickup_pc34_compat
+    )
+
+    # chest action-hand owner-change (CONTAINER <-> NON-CONTAINER action
+    # hand transitions while a G0426 chest is live: closes the chest,
+    # preserves the visible G0425[0..7] items, re-routes the panel from
+    # M569_PANEL_CHEST to M565_PANEL_FOOD_WATER_POISONED on
+    # CONTAINER -> NON-CONTAINER and forces a fresh F0333 reopen on
+    # NON-CONTAINER -> CONTAINER). Source-locked against CHEST.C F0333
+    # / F0334 + CHAMPION.C F0297-F0302 + PANEL.C F0347:1639-1691.
+    add_executable(test_dm1_v1_chest_action_hand_owner_change_pc34_compat
+        tests/test_dm1_v1_chest_action_hand_owner_change_pc34_compat.c
+        src/dm1/dm1_v1_chest_action_hand_owner_change_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_action_hand_owner_change_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_action_hand_owner_change_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_action_hand_owner_change_pc34_compat
+        COMMAND test_dm1_v1_chest_action_hand_owner_change_pc34_compat
+    )
+
+    # chest mid-close hand swap: mutation of a G0425 future slot after
+    # F0334 has already begun processing the close loop. Source-locked
+    # against CHEST.C F0334:113-132 + CHAMPION.C F0297-F0302.
+    add_executable(test_dm1_v1_chest_mid_close_hand_swap_pc34_compat
+        tests/test_dm1_v1_chest_mid_close_hand_swap_pc34_compat.c
+        src/dm1/dm1_v1_chest_mid_close_hand_swap_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_mid_close_hand_swap_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_mid_close_hand_swap_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_mid_close_hand_swap_pc34_compat
+        COMMAND test_dm1_v1_chest_mid_close_hand_swap_pc34_compat
+    )
+
+    # chest close-rewire runtime: rewire of M11 close handlers during
+    # the live panel-redraw cycle. Source-locked against PANEL.C F0347.
+    add_executable(test_dm1_v1_chest_close_rewire_runtime_pc34_compat
+        tests/test_dm1_v1_chest_close_rewire_runtime_pc34_compat.c
+        src/dm1/dm1_v1_chest_close_rewire_runtime_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_close_rewire_runtime_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_close_rewire_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_close_rewire_runtime_pc34_compat
+        COMMAND test_dm1_v1_chest_close_rewire_runtime_pc34_compat
+    )
+
+    # chest cross-champion hand swap: G0425 ownership flip while the
+    # chest is bound to one champion's action hand and the swap moves
+    # it to another champion's action hand. Source-locked against
+    # CHAMPION.C F0297-F0302.
+    add_executable(test_dm1_v1_chest_cross_champion_hand_swap_pc34_compat
+        tests/test_dm1_v1_chest_cross_champion_hand_swap_pc34_compat.c
+        src/dm1/dm1_v1_chest_cross_champion_hand_swap_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_cross_champion_hand_swap_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_cross_champion_hand_swap_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_cross_champion_hand_swap_pc34_compat
+        COMMAND test_dm1_v1_chest_cross_champion_hand_swap_pc34_compat
+    )
+
+    # chest cross-champion pickup race: two champions race for the same
+    # G0425 slot while the chest-owning champion rotates. Source-locked
+    # against CHEST.C F0333 / F0334 + CHAMPION.C F0297-F0302.
+    add_executable(test_dm1_v1_chest_cross_champion_pickup_race_pc34_compat
+        tests/test_dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c
+        src/dm1/dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_cross_champion_pickup_race_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_cross_champion_pickup_race_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_cross_champion_pickup_race_pc34_compat
+        COMMAND test_dm1_v1_chest_cross_champion_pickup_race_pc34_compat
     )
 
     add_executable(test_m11_v1_turning_presentation_pc34_compat
