@@ -1,8 +1,19 @@
 #include "dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat.h"
 
 #include <stdbool.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+/*
+ * pass793 - DM1 V1 champion-panel action-hand slot-priority
+ * (F0302 slot-box click dispatcher with slot/chest selection,
+ * AllowedSlots rejection, helper order, BUG0_39 order preservation).
+ * Source-locked against CHAMPION.C F0302:662-714 +
+ * CHAMPION.C F0297:243-268 + F0298 + F0300 + F0301 + F0292 +
+ * COMMAND.C F0359 (C020..C065 click commands).
+ */
 
 static int g_assertions = 0;
 static int g_failures = 0;

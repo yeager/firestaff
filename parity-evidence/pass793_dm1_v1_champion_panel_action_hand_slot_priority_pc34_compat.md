@@ -1,0 +1,7 @@
+# pass793_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat
+
+Source-locked: CHAMPION.C F0302:662-714 (slot-box click dispatcher with slot/chest selection, AllowedSlots rejection, helper order, BUG0_39 order preservation); CHAMPION.C F0297:243-268; F0298; F0300; F0301; F0292; COMMAND.C F0359 (C020..C065 click commands into F0302)
+
+Result: PASS
+Tests: {'passes': 1, 'fails': 0}
+Failures: []
