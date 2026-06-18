@@ -6,7 +6,7 @@
     "blockedDamageSeam": "dm1_v1_movement_command_core_pc34_compat.c:25-52",
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat"
   },
-  "head": "cdf0df85b9e9ba565680de7ca7c14be16aeb5a50",
+  "head": "a8e8fccc9b3eb7278922374ecebbfbcf86693963",
   "notClaimed": [
     "combat RNG/wound materialization parity for the pending damage request",
     "representative original DOS overlay capture parity",
@@ -20,5 +20,5 @@
     "blockedSideEffects": "CLIKMENU.C:237-322"
   },
   "status": "PASS505_DM1_V1_BLOCKED_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN",
-  "timestampUtc": "2026-06-18T07:45:12.938325+00:00"
+  "timestampUtc": "2026-06-18T10:12:55.903465+00:00"
 }

@@ -15,13 +15,9 @@
         "-j2"
       ],
       "outputTail": [
-        "-- Found SDL3",
-        "-- Configuring done (0.4s)",
-        "-- Generating done (0.8s)",
-        "-- Build files have been written to: /Users/bosse/.openclaw/workspace-main/build",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
-        "[ 96%] Built target firestaff_m10",
+        "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
@@ -413,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-18T07:45:06.515465+00:00"
+  "timestampUtc": "2026-06-18T10:12:46.182636+00:00"
 }
