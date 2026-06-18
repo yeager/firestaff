@@ -68,6 +68,28 @@ F0280:124-132 + REVIVE.C F0282:744-806 + DEFS.H C100/C040/M568
 - Parity-evidence: `parity-evidence/pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.md` + `verification/.../manifest.json`
 - Disjoint from pass784 (cancel-then-reopen-same-tick) and pass785 (inventory-toggle-while-c040-live)
 
+### pass784 + pass785 — DM1 V1 Mirror-Candidate C040 (companion passes)
+
+**pass784 (commit `1cd93d7f`)** — cancel-then-reopen same tick. Contract-only runtime evidence that `F0282(C162 cancel)` and `F0280 (new C127 sensor)` fire in the same tick with a fresh C040 panel on a fresh candidate ordinal. Source-locked against REVIVE.C F0280:124-132 + F0282:744-806 + PANEL.C F0355:2299-2318 + COMMAND.C F0378:1956-1990 + MOVESENS.C F0275:1502 + DEFS.H C040/M568/C127/C162/G0299/G0305/G0415/G0424. CTest 53/53 + Python verifier PASS.
+
+**pass785 (commit `cdf0df85`)** — inventory-toggle-while-panel-live. Contract-only runtime evidence that COMMAND.C F0380:2181-2183 gates the C007..C011 inventory-toggle commands on `!G0299_ui_CandidateChampionOrdinal`. While the C040 panel is live all 5 inventory commands are dropped; after `F0282(C162)` clears G0299 the toggle becomes live again. Source-locked against COMMAND.C F0380:2181-2183 + PANEL.C F0355:2299-2318 + REVIVE.C F0280:124-132 + F0282:744-806 + DEFS.H C007..C011/C040/M568/G0299/G0305/G0411. CTest 44/44 + Python verifier PASS.
+
+### V2.2 GPU render path — per-frame shape cache + modern-art overlay
+
+Two new modules wire the V22 data flow end-to-end from the V22 shape book to the V1 framebuffer:
+
+- **`m11_v22_shape_cache_pc34`** (include + src): data-flow seam between the V22 shape book and the M11 per-cell draw passes. `m11_v22_shape_cache_update(direction, raw_squares)` is called from `m11_draw_viewport` after the sample loop, populating a module-static 3x3 cache (D1..D3, L/C/R) via `dm1_v2_shape_runtime_for_cell`. `m11_v22_shape_cache_get(depth, lateral)` is the read API the per-cell draw passes consult to get the V22 shape for the cell they're about to draw. The cache is in its own module so tests can link it without pulling in the full M11 game view + image frontend chain. CTEST `test_m11_v22_shape_cache_pc34` 23/23. Probe `firestaff_m11_v22_shape_cache_probe` 17/17.
+
+- **`m11_v22_render_overlay_pc34`** (include + src): completes the V22 dispatch by painting a placeholder colored rectangle over each V22-active cell on the V1 framebuffer. The placeholder is a filled rectangle (palette index derived from the V22 shape's `color_tint` RGB average) with a 1-pixel border using the fixed `M11_V22_OVERLAY_PLACEHOLDER_INDEX` (0xFF). Called from `m11_draw_viewport` after the V1 palette-apply pass and before the turn-pan pass. The V1 m11_draw_dm1_* draw passes are NOT modified (the overlay is layered on top of the V1 pixels, not swapped in-place). CTEST `test_m11_v22_render_overlay_pc34` 13/13. Probe `firestaff_m11_v22_render_overlay_probe` 13/13.
+
+Source-locked against ReDMCSB DUNVIEW.C:6697-6816 (composition draw order) + DUNGEON.C:2238-2246 (square type decode) + DEFS.H:922 (M034_SQUARE_TYPE). The real V22 modern art (PBR textures, normal maps) lives in `~/.firestaff/assets/dm1/modern/` and is a follow-up; this commit delivers the end-to-end V22 data flow: M12 menu → V2 settings wire-up → m11_v22_shape_cache_update → m11_v22_render_overlay → V1 framebuffer pixels.
+
+### CSB V2.1 EPX test-bug resolved + DM1 V2.1 EPX audit done
+
+`test_csb_v2_texture_upscale_pc34`'s `t_epx_2x` (and downstream 9square/panel/V22 EPX checks) expected nearest-2x output from `csb_v2_upscale_epx()` but the actual EPX rule returns P when neighbour conditions are not met. Fixed in two ways: (1) `t_epx_2x` documents the P-fallback and expects the column-stripe nearest output; (2) `t_9square_viewport`, `t_panel`, and `t_present_mode_v22_triggers_epx` use a `memset(epx_buf, 0xCC, ...)` sentinel so the EPX-wrote-it check is `epx_buf[0] != 0xCC` (not `!= 0`, which was always false when src[0] = 0). Same approach applied to `firestaff_csb_v2_texture_upscale_probe` and the Theron V2.1 probe/test. Ctest `csb_v2_texture_upscale` 30/30, probe 13/13, Theron V2.1 25/25.
+
+**DM1 V2.1 EPX audit confirmed**: the DM1 equivalent (`dm1_v2_asset_epx_upscale` in `src/dm1v2/dm1_v2_asset_pipeline_pc34.c:205` and `v2_upscale_epx` in `src/dm1v2/dm1_v2_texture_upscale_pc34.c:96`) shares the EPX rule. The DM1 tests `test_epx_single_pixel` in `probes/verify_pass648_dm1_v2_asset_pipeline.c:55-148` and the corresponding `test_dm1_v22_asset_pipeline` asserts already correctly account for the P-fallback. `pass648_dm1_v2_asset_pipeline_probe` PASS, `test_dm1_v22_asset_pipeline` PASS, `test_dm1_v22_verification` PASS. No DM1 EPX test changes needed.
+
 ### Pre-existing test failures closed (per-build fixture guards)
 
 Three `firestaff_dm1_v1_champion_mirror_*` runtime probes assumed a
@@ -95,7 +117,18 @@ Affected probes:
 - `test_dm1_v22_modern_resolution_matrix_pc34`: PASS
 - `test_m11_v22_render_overlay_pc34`: 13/13
 - `test_m11_v22_shape_cache_pc34`: 23/23
+- `test_dm1_v22_verification`: PASS
+- `test_m11_v22_shape_cache_pc34`: 23/23
+- `test_m11_v22_render_overlay_pc34`: 13/13
 - `test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat`: 48/48
+- `test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat` (pass784): 53/53
+- `test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat` (pass785): 44/44
+- `test_csb_v2_texture_upscale_pc34`: 30/30 (EPX test-bug resolved)
+- `firestaff_m11_v22_shape_cache_probe`: 17/17
+- `firestaff_m11_v22_render_overlay_probe`: 13/13
+- `firestaff_m11_phase_a_probe`: 23/23
+- `firestaff_m11_audio_probe`: 10/10
+- ctest journey v2.8.1 → v2.9.0: 508/508 → 520/520 (pass785 + pass786 + 5 chest tests + 1 chest probe + 9 pool probes + 1 damage-flash test)
 
 ## CI / Status
 
