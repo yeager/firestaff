@@ -125,3 +125,40 @@ edit once the next batch of real `gpt-image-2` generations lands.
 - `test_m11_v22_shape_cache_pc34` ✅ 23/23
 - `firestaff_m11_v22_render_overlay_probe` ✅ 13/13
 - `m11_v22_modern_assets_available()` end-to-end smoke ✅ available() == 1
+
+## Hero art batch (2026-06-18)
+
+3 `gpt-image-2` PBR hero variants generated and installed alongside the
+procedural first cut, following `docs/v22-asset-style-prompt.md`:
+
+| Hero asset | Source file | Vision score |
+|------------|-------------|--------------|
+| Carved stone wall | `wall_shapes/wall_d3_carved_hero_01.png` | 5/4/5/5 |
+| Mossy grimy wall | `wall_shapes/wall_d3_mossy_hero_01.png` | 4/4/5/5 |
+| Fiery horned demon | `creature_shapes/creature_demon_hero_01.png` | 5/5/5/5 |
+
+All three are real upgrades over the procedural versions and pass the
+always-compare vision check.
+
+**Manifest bumped to v1.1.0** (top-level category keys + manifestVersion +
+packId) so `m11_v22_validate_manifest()` returns 1 as well as
+`m11_v22_modern_assets_available()`. Previously the manifest used a
+`{"categories": {...}}` wrapper which only passed the substring-detection
+`available()` check but not the strict validator.
+
+End-to-end smoke (tools/.openclaw/tmp/v22_hero_smoke.c) verifies all three:
+- modern_assets_available: 1
+- validate_manifest: 1 (top-level format)
+- get_installed: 1 (after M12 simulation)
+
+**Note:** The procedural generator script was also patched to emit the
+top-level manifest format, so regenerating the procedural pack from scratch
+will still produce a fully-valid manifest.
+
+**Next hero batch candidates:**
+1. `floor_plain_hero_01.png` — large hero stone floor with rune inscriptions
+2. `panel_frame_hero_01.png` — large hero inventory/equipment panel frame
+3. `champion_portrait_hero_01.png` — single dramatic champion portrait
+   (warrior variant; the procedural helmet is a placeholder)
+4. More creature types — `creature_goblin_hero_01.png` (real goblin, not
+   plant), `creature_skeleton_hero_01.png`, `creature_worm_hero_01.png`

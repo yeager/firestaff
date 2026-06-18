@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.8.1 LANGUAGES C)
+project(Firestaff VERSION 2.9.0 LANGUAGES C)
 
 include_directories(include src)
 
@@ -2575,6 +2575,28 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat
         COMMAND test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat
+    )
+
+    # mirror candidate C040 spell-area-click-while-panel-live: COMMAND.C
+    # F0380:2303-2306 gates the C100 spell-area click on
+    # `!G0299_ui_CandidateChampionOrdinal && G0514_i_MagicCasterChampionIndex
+    # != CM1_CHAMPION_NONE`. While the C040 panel is live (G0299 set), C100
+    # is dropped; after F0282(C162) clears G0299 with a valid G0514, the
+    # click fires F0370; if G0514 is then cleared to CM1_CHAMPION_NONE the
+    # click is dropped again. Source-locked against COMMAND.C
+    # F0380:2303-2306 + COMMAND.C F0370:2482-2520 + REVIVE.C F0280:124-132
+    # + REVIVE.C F0282:744-806 + DEFS.H C100/C040/M568/G0299/G0305/G0411/G0514.
+    add_executable(test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat
     )
 
     # chest action-hand owner-change (CONTAINER <-> NON-CONTAINER action
@@ -6582,6 +6604,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.py
         )
         set_tests_properties(pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat)
+        add_test(
+            NAME pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.py
+        )
+        set_tests_properties(pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat)
     endif()
 endif()
 
