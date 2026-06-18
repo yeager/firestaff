@@ -1,0 +1,54 @@
+[
+  {
+    "v22": "wall_shapes/wall_d3_carved_01.png",
+    "v22_size": [
+      1024,
+      1024
+    ],
+    "dm1_sprite": "sprite_0076_32x32.png",
+    "dm1_size": [
+      32,
+      32
+    ],
+    "description": "warm carved stone wall"
+  },
+  {
+    "v22": "wall_shapes/wall_d3_mossy_01.png",
+    "v22_size": [
+      1024,
+      1024
+    ],
+    "dm1_sprite": "sprite_0077_32x32.png",
+    "dm1_size": [
+      32,
+      32
+    ],
+    "description": "mossy / slimy wall variant"
+  },
+  {
+    "v22": "creature_shapes/creature_demon_01.png",
+    "v22_size": [
+      1024,
+      1536
+    ],
+    "dm1_sprite": "sprite_0372_96x111.png",
+    "dm1_size": [
+      96,
+      111
+    ],
+    "description": "fiery horned demon (matches DM1 sprite_0372)"
+  },
+  {
+    "v22": "champion_portraits/champion_warrior_01.png",
+    "v22_size": [
+      1024,
+      1024
+    ],
+    "dm1_sprite": "sprite_0074_60x111.png",
+    "dm1_size": [
+      60,
+      111
+    ],
+    "description": "champion portrait (warrior in V2.2; DM1 sprite is dungeon wall tile \u2014 placeholder)"
+  }
+]
