@@ -15,7 +15,7 @@
       "present": false
     }
   },
-  "head": "5f2a7b069c561771cb1a7964807a29da5a82843f",
+  "head": "c5fd1bac59477cd2204b7c50781225aae4963847",
   "nextBoundary": "DOSBox window/event queue -> guest keyboard IRQ/int09 -> IBMIO buffer -> IO2 presence/read",
   "nonClaims": [
     "no new original runtime capture",
@@ -151,5 +151,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE",
-  "timestampUtc": "2026-06-18T15:13:50.966345+00:00"
+  "timestampUtc": "2026-06-18T15:21:47.957460+00:00"
 }
