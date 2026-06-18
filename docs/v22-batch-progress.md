@@ -201,3 +201,38 @@ verification).
 3. `creature_screamer_hero_01.png` — the screamer (DM1 boss-like)
 4. `floor_stairs_up_hero_01.png` + `floor_stairs_down_hero_01.png` (replacements)
 5. `champion_ninja_hero_01.png` + `champion_priest_hero_01.png` (full party set)
+
+## Hero art batch 3 (2026-06-18)
+
+5 more `gpt-image-2` PBR hero variants generated + installed:
+
+| Hero asset | Reference sprite | Vision score |
+|------------|------------------|--------------|
+| `wall_shapes/corridor_hero_01.png` | sprite_0097 (corridor floor) | 19/20 |
+| `wall_shapes/wall_inscription_hero_01.png` | (closest: sprite_0093 wall-edge) | 19/20 |
+| `creature_shapes/chest_hero_01.png` | (closest: sprite_0041 round hatch) | 18/20 |
+| `creature_shapes/creature_worm_hero_01.png` | (no DM1 worm; closest: sprite_0374 demon) | 17/20 |
+| `door_shapes/door_hero_01.png` | (no DM1 door; closest: sprite_0093 wall-edge) | 19/20 |
+
+**Total V2.2 hero art count: 13** (3 batch 1 + 5 batch 2 + 5 batch 3).
+**Total V2.2 asset pack entries: 23** across 6 categories (wall/floor/creature/ui_chrome/champion_portrait/door_shapes).
+
+**Manifest upgraded to v1.3.0.** Adds new `door_shapes` category
+(previously missing from M12 scan). All entries still in
+validator-friendly single-line format.
+
+**Side-by-side comparisons:** `docs/v22-compare/hero_b3_*.png` (5
+entries) + `hero_batch_3_pairs` in `compare_index.json`.
+
+**Smoke test 3/3 PASS** (still using `tools/v22_hero_smoke.c`):
+modern_assets_available=1, validate_manifest=1, get_installed=1.
+
+**Batch 3 worm assessment (17/20):** The worm came out more
+pixel-art-styled than PBR-consistent. Acceptable as a "DM1-style"
+creature variant. The other 4 batch 3 pieces are PBR-consistent.
+
+**Batch 4 candidates (next):**
+1. Champion party set: `champion_ninja_hero_01.png` + `champion_priest_hero_01.png` (warrior already done)
+2. More floor variants: `floor_pit_hero_01.png`, `floor_cracked_hero_01.png`
+3. `wall_d3_carved_alt_hero_01.png` — different carving pattern
+4. More creatures: `creature_screamer_hero_01.png`, `creature_giant_rat_hero_01.png`, `creature_mummy_hero_01.png`
