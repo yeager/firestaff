@@ -6812,6 +6812,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass794_dm1_v1_champion_panel_all_states_pc34_compat.py
         )
         set_tests_properties(pass794_dm1_v1_champion_panel_all_states PROPERTIES DEPENDS dm1_v1_champion_panel_all_states_pc34_compat)
+        add_test(
+            NAME pass795_dm1_v1_champion_leader
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass795_dm1_v1_champion_leader_pc34_compat.py
+        )
+        set_tests_properties(pass795_dm1_v1_champion_leader PROPERTIES DEPENDS dm1_v1_champion_leader_pc34_compat)
     endif()
 endif()
 
@@ -6864,5 +6869,28 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_all_stat
     add_test(
         NAME dm1_v1_champion_panel_all_states_pc34_compat
         COMMAND test_dm1_v1_champion_panel_all_states_pc34_compat
+    )
+endif()
+
+# pass795 — DM1 V1 champion leader state contract test
+# (CLIKCHAM.C F0367 status-box dispatch + F0368 set-leader state
+# transition with old-leader dirty marking, leader-hand weight
+# remove/add, G0411 set/clear, candidate leader redraw).
+# Source-locked against CLIKCHAM.C F0367:24-35 + F0368:51-72 +
+# DEFS.H:8090-8100 (C00..C03 champion indices, G0411, G0455) +
+# DEFS.H:1874-1878 (CM1_CHAMPION_NONE).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_leader_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_leader_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_leader_pc34_compat
+        tests/test_dm1_v1_champion_leader_pc34_compat.c
+        src/dm1/dm1_v1_champion_leader_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_leader_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_leader_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_leader_pc34_compat
+        COMMAND test_dm1_v1_champion_leader_pc34_compat
     )
 endif()
