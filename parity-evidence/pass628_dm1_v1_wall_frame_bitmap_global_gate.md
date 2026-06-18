@@ -47,7 +47,7 @@ The DM1 V1 wall/door-frame bitmap base pointer is source-locked to the PC34 G210
 - PASS cmake-registration (CMakeLists.txt)
 
 ## Verification
-- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Users/bosse/.openclaw/workspace-main/builds/nv1-build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass570.d2c_zone_left present in include/dm1_v1_viewport_3d_pc34_compat.h
 PASS drift.pass570.d2c_zone_right present in include/dm1_v1_viewport_3d_pc34_compat.h
