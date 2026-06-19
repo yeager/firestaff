@@ -1,0 +1,113 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:42",
+    "DATA.C:318",
+    "DATA.C:1036",
+    "PANEL.C:1586/1590/1594"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-811 (Graphics.dat init-table gates batches 1+2+3+4)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:42",
+      "line": 42,
+      "lineText": "int16_t G0036_ai_Graphic562_Box_Water[4];",
+      "needle": "G0036_ai_Graphic562_Box_Water",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:318",
+      "line": 318,
+      "lineText": "int16_t G0036_ai_Graphic562_Box_Water[4] = { 112, 159, 83, 91 };",
+      "needle": "G0036_ai_Graphic562_Box_Water",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1036",
+      "line": 1036,
+      "lineText": "int16_t G0036_ai_Graphic562_Box_Water[4] = { 112, 159, 83, 91 };",
+      "needle": "G0036_ai_Graphic562_Box_Water",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1586",
+      "line": 1586,
+      "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C031_GRAPHIC_WATER_LABEL), G0036_ai_Graphic562_Box_Water, C024_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
+      "needle": "G0036_ai_Graphic562_Box_Water",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1590",
+      "line": 1590,
+      "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C031_GRAPHIC_WATER_LABEL), G0036_ai_Graphic562_Box_Water, C032_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
+      "needle": "G0036_ai_Graphic562_Box_Water",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1594",
+      "line": 1594,
+      "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C031_GRAPHIC_WATER_LABEL), G0036_ai_Graphic562_Box_Water, C024_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
+      "needle": "G0036_ai_Graphic562_Box_Water",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass812_dm1_v1_champion_panel_box_water_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0036_ai_Graphic562_Box_Water[4] = {112, 159, 83, 91}. The {X, Y, W, H} pixel-coordinate rectangle for the water status label blit (paired with food label G0035 which shares the same X). Read sites: PANEL.C:1586/1590/1594 F0344_INVENTORY_DrawPanel \u2014 blit C031_GRAPHIC_WATER_LABEL into G0036's box with byte widths C024/C032/C024 for English/German/French localizations.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_water_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_water_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/champion_panel_box_water_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_champion_panel_box_water_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS812_DM1_V1_CHAMPION_PANEL_BOX_WATER_LOCKED",
+  "timestampUtc": "2026-06-19T14:13:35.065775+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_box_water_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_champion_panel_box_water: 48/48 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

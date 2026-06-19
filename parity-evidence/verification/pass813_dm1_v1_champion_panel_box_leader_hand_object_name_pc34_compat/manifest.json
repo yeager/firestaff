@@ -1,0 +1,97 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:34",
+    "DATA.C:262",
+    "DATA.C:923",
+    "OBJECT.C:281"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-812 (Graphics.dat init-table gates batches 1+2+3+4)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:34",
+      "line": 34,
+      "lineText": "int16_t G0028_ai_Graphic562_Box_LeaderHandObjectName[4];",
+      "needle": "G0028_ai_Graphic562_Box_LeaderHandObjectName",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:262",
+      "line": 262,
+      "lineText": "int16_t G0028_ai_Graphic562_Box_LeaderHandObjectName[4] = { 233, 319, 33, 38 };",
+      "needle": "G0028_ai_Graphic562_Box_LeaderHandObjectName",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:923",
+      "line": 923,
+      "lineText": "int16_t G0028_ai_Graphic562_Box_LeaderHandObjectName[4] = { 233, 319, 33, 38 };",
+      "needle": "G0028_ai_Graphic562_Box_LeaderHandObjectName",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "id": "OBJECT.C:281",
+      "line": 281,
+      "lineText": "        M524_FillScreenBox(G0028_ai_Graphic562_Box_LeaderHandObjectName, C00_COLOR_BLACK);",
+      "needle": "G0028_ai_Graphic562_Box_LeaderHandObjectName",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass813_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0028_ai_Graphic562_Box_LeaderHandObjectName[4] = {233, 319, 33, 38}. The {X, Y, W, H} pixel-coordinate rectangle for the leader-hand object name black-fill backdrop. Read site: OBJECT.C:281 M524_FillScreenBox(G0028, C00_COLOR_BLACK) draws the black backdrop for the leader-hand object name text.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/champion_panel_box_leader_hand_object_name_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS813_DM1_V1_CHAMPION_PANEL_BOX_LEADER_HAND_OBJECT_NAME_LOCKED",
+  "timestampUtc": "2026-06-19T14:13:35.095770+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_champion_panel_box_leader_hand_object_name: 50/50 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
