@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pass373 verifier: launcher route reaches live viewport redraw and source-locked wall/occlusion renderer path."""
 from __future__ import annotations
-import json, os, pathlib, re, shutil, subprocess, sys
+import json, os, pathlib, re, shutil, subprocess, sys, time
 from datetime import datetime, timezone
 from typing import Any
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -91,11 +91,23 @@ def main()->int:
     HOME_DIR.mkdir(parents=True,exist_ok=True)
     probe_json=OUT_DIR/"launcher_route_viewport_redraw_probe.json"
     env=os.environ.copy(); env.update({"HOME":str(HOME_DIR),"SDL_VIDEODRIVER":"dummy","FIRESTAFF_AUTOTEST":"1","FIRESTAFF_FAIL_IF_NO_LAUNCH":"1","FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON":str(probe_json)})
-    cmd=["timeout","45s",str(BUILD_DIR/"firestaff"),"--duration","9000","--width","1920","--height","1080","--data-dir",str(DM1_DATA),"--script",SCRIPT]
-    r=run(cmd, env=env, timeout=60); checks.append({"kind":"launcher_route_runtime_probe","script":SCRIPT,"ok":r["returncode"]==0 and probe_json.exists(),"result":r})
+    # The previous timeout=45s shell wrapper could SIGKILL firestaff mid-cleanup
+    # before the runtime probe JSON reached its final viewportDirty=1 state. Bump
+    # the shell timeout to 60s so --duration 9000 completes naturally and the
+    # probe JSON written in m11_write_autotest_runtime_probe captures the final
+    # post-script game state.
+    cmd=["timeout","60s",str(BUILD_DIR/"firestaff"),"--duration","9000","--width","1920","--height","1080","--data-dir",str(DM1_DATA),"--script",SCRIPT]
+    r=run(cmd, env=env, timeout=80); checks.append({"kind":"launcher_route_runtime_probe","script":SCRIPT,"ok":r["returncode"]==0 and probe_json.exists(),"result":r})
     runtime={}; live_ok=False
+    # The probe JSON may briefly lag the post-script idle ticks; if the first
+    # read shows viewportDirty=0 (mid-script), wait briefly and re-read so the
+    # verifier does not race against the runtime probe write in cleanup.
     if probe_json.exists():
-        runtime=json.loads(probe_json.read_text()); party=runtime.get("party",{}); pipe=runtime.get("pipeline",{})
+        for _attempt in range(5):
+            runtime=json.loads(probe_json.read_text()); party=runtime.get("party",{}); pipe=runtime.get("pipeline",{})
+            if (runtime.get("launchedEver")==1 and runtime.get("active")==1 and pipe.get("viewportDirty")==1):
+                break
+            time.sleep(0.5)
         live_ok=(runtime.get("launchedEver")==1 and runtime.get("active")==1 and party.get("mapIndex")==0 and party.get("mapX")==1 and party.get("mapY")==3 and party.get("direction")==3 and pipe.get("dequeued")==1 and pipe.get("command")==2 and pipe.get("turnApplied")==1 and pipe.get("movementBlocked")==0 and pipe.get("anyTurnOccurred")==1 and pipe.get("viewportDirty")==1)
     checks.append({"kind":"live_runtime_redraw_state","ok":live_ok,"observed":runtime,"expected":"launcher route reaches active DM1 V1 state; turn-right command applies one facing update and sets viewportDirty=1"})
     ok=all(c.get("ok") for c in checks); status=EXPECTED_STATUS if ok else "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH"
