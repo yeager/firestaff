@@ -104,6 +104,7 @@ set(NEXUS_V2_RUNTIME_SOURCES
     src/nexus/nexus_v2_lighting_runtime.c
     src/nexus/nexus_v2_smooth_movement_runtime.c
     src/nexus/nexus_v2_touch_runtime.c
+    src/nexus/nexus_v22_modern_assets_pc34.c
 )
 if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_V2_RUNTIME_SOURCES})
@@ -124,7 +125,7 @@ if(THERON_SOURCES)
 endif()
 
 # ── DM2 V2 static library ──────────────────────────────────────────
-file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c")
+file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c" "src/dm2/dm2_v22_*.c")
 if(DM2_V2_SOURCES)
     add_library(firestaff_dm2_v2 STATIC ${DM2_V2_SOURCES})
     target_include_directories(firestaff_dm2_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -2136,6 +2137,23 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v2_hud_overlay
     )
 
+    add_executable(test_dm2_v22_modern_assets_pc34
+        tests/test_dm2_v22_modern_assets_pc34.c
+        src/dm2/dm2_v22_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_dm2_v22_modern_assets_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v22_modern_assets_pc34 PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m12 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v22_modern_assets_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v22_modern_assets_pc34
+        COMMAND test_dm2_v22_modern_assets_pc34
+    )
+
     add_executable(test_dm2_v2_lighting
         tests/test_dm2_v2_lighting.c
         src/dm2/dm2_v2_lighting.c
@@ -2712,6 +2730,27 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_ordered_cells_to_attack_pc34_compat
         COMMAND test_dm1_v1_ordered_cells_to_attack_pc34_compat
+    )
+
+    # DM1 V1 charge-count-to-torch-type: Graphics.dat item 562 init
+    # var G0029_auc_Graphic562_ChargeCountToTorchType[16] = {0, 1, 1,
+    # 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3}. Read site:
+    # OBJECT.C:178 F0486_OBJECT_DrawObjectIcon — for a lit torch
+    # weapon, IconIndex += G0029[ChargeCount]. Disjoint from
+    # pass784-790 + pass791-799 + pass798 + pass800 + pass801 + pass802
+    # + pass803. Source-locked against DATA.C:35 + DATA.C:263 +
+    # DATA.C:926 + OBJECT.C:178 + DEFS.H C004_ICON_WEAPON_TORCH_UNLIT.
+    add_executable(test_dm1_v1_charge_count_to_torch_type_pc34_compat
+        tests/test_dm1_v1_charge_count_to_torch_type_pc34_compat.c
+        src/dm1/dm1_v1_charge_count_to_torch_type_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_charge_count_to_torch_type_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_charge_count_to_torch_type_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_charge_count_to_torch_type_pc34_compat
+        COMMAND test_dm1_v1_charge_count_to_torch_type_pc34_compat
     )
 
     # mirror candidate C040 status-box-click-while-panel-live:
@@ -6341,6 +6380,22 @@ if(BUILD_TESTING)
         NAME nexus_v2_hud_overlay
         COMMAND test_nexus_v2_hud_overlay
     )
+    add_executable(test_nexus_v22_modern_assets_pc34
+        tests/test_nexus_v22_modern_assets_pc34.c
+        src/nexus/nexus_v22_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_nexus_v22_modern_assets_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v22_modern_assets_pc34 PRIVATE firestaff_nexus firestaff_v2 firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v22_modern_assets_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v22_modern_assets_pc34
+        COMMAND test_nexus_v22_modern_assets_pc34
+    )
     if(TARGET firestaff_nexus_v2_upscaler_probe)
         add_test(
             NAME nexus_v2_upscaler_probe
@@ -7109,6 +7164,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass803_dm1_v1_ordered_cells_to_attack_pc34_compat.py
         )
         set_tests_properties(pass803_dm1_v1_ordered_cells_to_attack PROPERTIES DEPENDS dm1_v1_ordered_cells_to_attack_pc34_compat)
+        add_test(
+            NAME pass804_dm1_v1_charge_count_to_torch_type
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass804_dm1_v1_charge_count_to_torch_type_pc34_compat.py
+        )
+        set_tests_properties(pass804_dm1_v1_charge_count_to_torch_type PROPERTIES DEPENDS dm1_v1_charge_count_to_torch_type_pc34_compat)
     endif()
 endif()
 
