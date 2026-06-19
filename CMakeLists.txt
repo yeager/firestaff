@@ -2799,6 +2799,73 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_box_poisoned_pc34_compat
     )
 
+    # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
+    # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
+    # identity palette-remap table used by VIDEO_BlitShrinkWith
+    # PaletteChanges when no palette remap is desired. PC 3.4 init =
+    # {0, 1, ..., 15} (true identity). Atari init = {0, 10, 20, ...,
+    # 150} (10-step ramp). Read sites: ACTIDRAW.C:160, BLTSHRNK.C:530,
+    # DUNVIEW.C:4518/5973, STARTUP2.C:822. Disjoint from pass784-790 +
+    # pass791-799 + pass798-806. Source-locked against DATA.C:23/136/
+    # 590 + ACTIDRAW.C:160 + BLTSHRNK.C:530 + DUNVIEW.C:4518/5973 +
+    # STARTUP2.C:822.
+    add_executable(test_dm1_v1_palette_changes_no_changes_pc34_compat
+        tests/test_dm1_v1_palette_changes_no_changes_pc34_compat.c
+        src/dm1/dm1_v1_palette_changes_no_changes_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_changes_no_changes_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_changes_no_changes_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_changes_no_changes_pc34_compat
+        COMMAND test_dm1_v1_palette_changes_no_changes_pc34_compat
+    )
+
+    # DM1 V1 champion-color: Graphics.dat item 562 init var
+    # G0046_auc_Graphic562_ChampionColor[4] = {7, 11, 8, 14} — the
+    # champion color assignment (leader=7, 1st follower=11, 2nd=8,
+    # 3rd=14). Used for champion-icon fill + champion-name text.
+    # Read sites: CHAMDRAW.C:48/51/60/300/342/1022 + CHAMPION.C:986/
+    # 1016/1052 + REVIVE.C:868/872/887. Disjoint from pass784-790 +
+    # pass791-799 + pass798-806 + pass807. Source-locked against
+    # DATA.C:84/423/1095 + CHAMDRAW.C:48-1022 + CHAMPION.C:986-1052 +
+    # REVIVE.C:868-887.
+    add_executable(test_dm1_v1_champion_color_pc34_compat
+        tests/test_dm1_v1_champion_color_pc34_compat.c
+        src/dm1/dm1_v1_champion_color_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_color_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_color_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_color_pc34_compat
+        COMMAND test_dm1_v1_champion_color_pc34_compat
+    )
+
+    # DM1 V1 slot-masks: Graphics.dat item 562 init var
+    # G0038_ai_Graphic562_SlotMasks[38] — the per-slot allowed-slots
+    # bitmask table used by CHAMPION.C F0296 (leader-hand placement)
+    # and REVIVE.C F0282 (resurrect placement). 8 status-hand + 30
+    # inventory + 8 chest slots. Read sites: CHAMPION.C:697 + REVIVE.C:
+    # 307/310/338. Source-locked against DATA.C:44 + DATA.C:320-358 +
+    # DATA.C:1049 + CHAMPION.C:697 + REVIVE.C:307/310/338 + DEFS.H
+    # MASK0x_*_SLOT constants. Disjoint from pass784-790 + pass791-799
+    # + pass798-808.
+    add_executable(test_dm1_v1_slot_masks_pc34_compat
+        tests/test_dm1_v1_slot_masks_pc34_compat.c
+        src/dm1/dm1_v1_slot_masks_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_slot_masks_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_slot_masks_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_slot_masks_pc34_compat
+        COMMAND test_dm1_v1_slot_masks_pc34_compat
+    )
+
     # mirror candidate C040 status-box-click-while-panel-live:
     # COMMAND.C F0380:2159-2161 gates the C012..C015 champion-status-box
     # click on `(champion_index < G0305) && !G0299`. While the C040 panel
@@ -3029,7 +3096,7 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat
     )
 
-    # pass809 — chest close object stack-merge: F0334 close path's
+    # pass810 — chest close object stack-merge: F0334 close path's
     # chain-merge invariants for a sparse G0425 close (6 visible items
     # in 8 slots) with a leader hand that holds a same-kind stackable
     # item. Source-locked against CHEST.C F0333:30-67 + F0334:113-132 +
@@ -7207,6 +7274,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat.py
         )
         set_tests_properties(pass804_dm1_v1_chest_close_with_full_leader_hand PROPERTIES DEPENDS dm1_v1_chest_close_with_full_leader_hand_pc34_compat)
+        add_test(
+            NAME pass810_dm1_v1_chest_close_stack_merge
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass810_dm1_v1_chest_close_stack_merge_pc34_compat.py
+        )
+        set_tests_properties(pass810_dm1_v1_chest_close_stack_merge PROPERTIES DEPENDS dm1_v1_chest_close_stack_merge_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py

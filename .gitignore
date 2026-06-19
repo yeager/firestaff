@@ -212,6 +212,12 @@ __pycache__/
 !/parity-evidence/verification/pass805_dm1_v1_champion_panel_box_food_pc34_compat/**
 !/parity-evidence/verification/pass806_dm1_v1_champion_panel_box_poisoned_pc34_compat/
 !/parity-evidence/verification/pass806_dm1_v1_champion_panel_box_poisoned_pc34_compat/**
+!/parity-evidence/verification/pass807_dm1_v1_palette_changes_no_changes_pc34_compat/
+!/parity-evidence/verification/pass807_dm1_v1_palette_changes_no_changes_pc34_compat/**
+!/parity-evidence/verification/pass808_dm1_v1_champion_color_pc34_compat/
+!/parity-evidence/verification/pass808_dm1_v1_champion_color_pc34_compat/**
+!/parity-evidence/verification/pass809_dm1_v1_slot_masks_pc34_compat/
+!/parity-evidence/verification/pass809_dm1_v1_slot_masks_pc34_compat/**
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/**
 !/parity-evidence/verification/pass799_dm1_v1_chest_open_stack_split_press_eye_pc34_compat/
@@ -220,6 +226,12 @@ __pycache__/
 !/parity-evidence/verification/pass803_dm1_v1_chest_auto_close_on_leader_death_pc34_compat/**
 !/parity-evidence/verification/pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat/
 !/parity-evidence/verification/pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat/**
+!/parity-evidence/verification/pass810_dm1_v1_chest_close_stack_merge_pc34_compat/
+!/parity-evidence/verification/pass810_dm1_v1_chest_close_stack_merge_pc34_compat/**
+!/parity-evidence/verification/pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat/
+!/parity-evidence/verification/pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat/**
+!/parity-evidence/verification/pass809_dm1_v1_chest_close_stack_merge_pc34_compat/
+!/parity-evidence/verification/pass809_dm1_v1_chest_close_stack_merge_pc34_compat/**
 !/parity-evidence/verification/pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat/
 !/parity-evidence/verification/pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat/**
 !/parity-evidence/verification/pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat/
