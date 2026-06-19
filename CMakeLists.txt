@@ -3029,6 +3029,25 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat
     )
 
+    # pass809 — chest close object stack-merge: F0334 close path's
+    # chain-merge invariants for a sparse G0425 close (6 visible items
+    # in 8 slots) with a leader hand that holds a same-kind stackable
+    # item. Source-locked against CHEST.C F0333:30-67 + F0334:113-132 +
+    # DUNGEON.C F0163:1769-1838 + DUNGEON.C F0159:1664-1681 +
+    # CHAMPION.C F0297-F0302.
+    add_executable(test_dm1_v1_chest_close_stack_merge_pc34_compat
+        tests/test_dm1_v1_chest_close_stack_merge_pc34_compat.c
+        src/dm1/dm1_v1_chest_close_stack_merge_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_close_stack_merge_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_close_stack_merge_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_close_stack_merge_pc34_compat
+        COMMAND test_dm1_v1_chest_close_stack_merge_pc34_compat
+    )
+
     # chest mid-close hand swap: mutation of a G0425 future slot after
     # F0334 has already begun processing the close loop. Source-locked
     # against CHEST.C F0334:113-132 + CHAMPION.C F0297-F0302.
