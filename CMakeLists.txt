@@ -7352,6 +7352,36 @@ if(BUILD_TESTING)
         COMMAND firestaff_v1_ftl_swoosh_ascii_probe
                 $ENV{HOME}/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH
     )
+
+    # -- DM1 V1 TITLE palette regression probe (pass842) --------------
+    # Headless regression guard for the TITLE.DAT fallback path that
+    # v2.9.0 uses when GRAPHICS.DAT C001 is not available. Walks all 53
+    # TITLE frames via the same V1_TitleFrontend_* helpers the runtime
+    # uses; asserts C12_PRESENTS uses VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS
+    # (v2.7.4 fix) and DUNGEON+MASTER uses VGA_PALETTE_PC34_SPECIAL_TITLE;
+    # prints a per-build SHA-256 over (step || frame || paletteOrdinal ||
+    # stepPalette || histogram || indexedFramebuffer) so regressions can
+    # be diff'd across OSes / renderer backends / Apple Silicon hw.
+    add_executable(firestaff_v1_dm_title_palette_regression_probe
+        probes/v1/firestaff_v1_dm_title_palette_regression_probe.c
+        src/frontend/title_frontend_v1.c
+        src/frontend/title_dat_loader_v1.c
+        src/shared/vga_palette_pc34_compat.c
+    )
+    target_compile_definitions(firestaff_v1_dm_title_palette_regression_probe PRIVATE
+        COMPILE_H
+        STATICFUNCTION=static
+        "SEPARATOR=,"
+        "FINAL_SEPARATOR=)"
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_v1_dm_title_palette_regression_probe PRIVATE -std=c99 -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm_title_palette_regression
+        COMMAND firestaff_v1_dm_title_palette_regression_probe
+                $ENV{HOME}/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE
+    )
 endif()
 
 
