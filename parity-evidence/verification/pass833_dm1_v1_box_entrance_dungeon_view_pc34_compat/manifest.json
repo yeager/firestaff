@@ -1,0 +1,123 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin DATA.C:131/551 + ENTRANCE.C:178/181/184/187 line numbers when the local ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "DATA.C:12",
+    "DATA.C:131",
+    "DATA.C:551",
+    "ENTRANCE.C:178/181/184/187"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-832 (Graphics.dat init-table gates batches 1+2+3+4+5+6+7+8+9+10+11)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:12",
+      "line": 12,
+      "lineText": "int16_t G0006_ai_Graphic562_Box_Entrance_DungeonView[4];",
+      "needle": "G0006_ai_Graphic562_Box_Entrance_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:131",
+      "line": 131,
+      "lineText": "int16_t G0012_ai_Graphic562_Box_Endgame_TheEnd[4] = { 120, 199, 95, 108 };",
+      "needle": "G0006_ai_Graphic562_Box_Entrance_DungeonView",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:551",
+      "line": 551,
+      "lineText": "#endif",
+      "needle": "G0006_ai_Graphic562_Box_Entrance_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "id": "ENTRANCE.C:178",
+      "line": 178,
+      "lineText": "                F0132_VIDEO_Blit(G0296_puc_Bitmap_Viewport, L1394_ppuc_Bitmap_EntranceDoorAnimationSteps[9], G0006_ai_Graphic562_Box_Entrance_DungeonView, 0, 0, C112_BYTE_WIDTH_VIEWPORT, C128_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY);",
+      "needle": "G0006_ai_Graphic562_Box_Entrance_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "id": "ENTRANCE.C:181",
+      "line": 181,
+      "lineText": "                F0132_VIDEO_Blit(G0296_puc_Bitmap_Viewport, L1394_ppuc_Bitmap_EntranceDoorAnimationSteps[9], G0006_ai_Graphic562_Box_Entrance_DungeonView, 0, 0, C112_BYTE_WIDTH_VIEWPORT, C128_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY, 136, 161);",
+      "needle": "G0006_ai_Graphic562_Box_Entrance_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "id": "ENTRANCE.C:184",
+      "line": 184,
+      "lineText": "                F0132_VIDEO_Blit(G0296_puc_Bitmap_Viewport, L1394_ppuc_Bitmap_EntranceDoorAnimationSteps[9], G0006_ai_Graphic562_Box_Entrance_DungeonView, 0, 0, 224, 256, CM1_COLOR_NO_TRANSPARENCY);",
+      "needle": "G0006_ai_Graphic562_Box_Entrance_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "id": "ENTRANCE.C:187",
+      "line": 187,
+      "lineText": "                F0132_VIDEO_Blit(G0296_puc_Bitmap_Viewport, L1394_ppuc_Bitmap_EntranceDoorAnimationSteps[9], G0006_ai_Graphic562_Box_Entrance_DungeonView, 0, 0, 224, 256, CM1_COLOR_NO_TRANSPARENCY, MASK0x0000_NO_FLIP);",
+      "needle": "G0006_ai_Graphic562_Box_Entrance_DungeonView",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass833_dm1_v1_box_entrance_dungeon_view_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0006_ai_Graphic562_Box_Entrance_DungeonView[4] = {0, 223, 3, 138}. The {X, Y, W, H} byte-coordinate sub-rectangle for the entrance dungeon-view backdrop blit during the door-opening animation. Read sites: ENTRANCE.C:178/181/184/187 F0132_VIDEO_Blit(entrance dungeon-view backdrop, G0006, 0, 0, byteWidth, byteWidth, CM1_COLOR_NO_TRANSPARENCY).",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_box_entrance_dungeon_view_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_box_entrance_dungeon_view_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/box_entrance_dungeon_view_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_box_entrance_dungeon_view_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS833_DM1_V1_BOX_ENTRANCE_DUNGEON_VIEW_LOCKED",
+  "timestampUtc": "2026-06-19T16:19:13.532994+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_box_entrance_dungeon_view_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_box_entrance_dungeon_view: 53/53 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
