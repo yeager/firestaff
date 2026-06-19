@@ -2889,6 +2889,50 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_palette_credits_pc34_compat
     )
 
+    # DM1 V1 champion-panel-box-panel: Graphics.dat item 562 init
+    # var G0032_ai_Graphic562_Box_Panel[4] = {80, 223, 52, 124}.
+    # The {X, Y, W, H} pixel-coordinate rectangle for the
+    # champion-panel backdrop blit. Read sites: PANEL.C:967/1140/
+    # 1582/1600/1611 + CHEST.C + REVIVE.C — blits C020/C023/C025/
+    # C027/C040 panel graphics into G0032's box with byte width
+    # C072_BYTE_WIDTH and various colors (RED, DARK_GREEN, CYAN,
+    # etc.). Disjoint from pass784-790 + pass791-799 + pass798-814.
+    # Source-locked against DATA.C:38 + DATA.C:314 + DATA.C:1031 +
+    # PANEL.C:967/1140/1582/1600/1611 + CHEST.C + REVIVE.C.
+    add_executable(test_dm1_v1_champion_panel_box_panel_pc34_compat
+        tests/test_dm1_v1_champion_panel_box_panel_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_box_panel_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_box_panel_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_box_panel_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_box_panel_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_box_panel_pc34_compat
+    )
+
+    # DM1 V1 champion-panel-box-object-description-circle: Graphics.dat
+    # item 562 init var G0034_ai_Graphic562_Box_ObjectDescriptionCircle
+    # [4] = {105, 136, 53, 79}. The {X, Y, W, H} pixel-coordinate
+    # rectangle for the object-description circle blit. Read site:
+    # PANEL.C:1141 F0344_INVENTORY_DrawPanel blits
+    # C029_GRAPHIC_OBJECT_DESCRIPTION_CIRCLE into G0034's box with
+    # byte width C016_BYTE_WIDTH and color C12_COLOR_DARKEST_GRAY.
+    # Disjoint from pass784-790 + pass791-799 + pass798-815.
+    add_executable(test_dm1_v1_champion_panel_box_object_description_circle_pc34_compat
+        tests/test_dm1_v1_champion_panel_box_object_description_circle_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_box_object_description_circle_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_box_object_description_circle_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_box_object_description_circle_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_box_object_description_circle_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_box_object_description_circle_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -3997,6 +4041,15 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_m11_v22_shape_cache_pc34 PRIVATE firestaff_m12 firestaff_v2 firestaff_m11)
+    add_executable(test_m11_v22_inplace_draw_pc34
+        tests/test_m11_v22_inplace_draw_pc34.c
+        src/dm1v2/m11_v22_inplace_draw_pc34.c
+        src/dm1v2/m11_v22_shape_cache_pc34.c
+        src/dm1v2/dm1_v22_shapes.c
+        src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_m11_v22_inplace_draw_pc34 PRIVATE firestaff_m12 firestaff_v2 firestaff_m11)
     add_executable(test_m11_v22_render_overlay_pc34
         tests/test_m11_v22_render_overlay_pc34.c
         src/dm1v2/m11_v22_render_overlay_pc34.c
@@ -4098,6 +4151,7 @@ if(BUILD_TESTING)
         target_compile_options(test_theron_v22_modern_assets_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_shape_runtime_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_v22_shape_cache_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_m11_v22_inplace_draw_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_v22_render_overlay_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase_gate_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE -Wall -Wextra -O2)
@@ -4331,6 +4385,10 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_v22_shape_cache_pc34
         COMMAND test_m11_v22_shape_cache_pc34
+    )
+    add_test(
+        NAME m11_v22_inplace_draw_pc34
+        COMMAND test_m11_v22_inplace_draw_pc34
     )
     add_test(
         NAME m11_v22_render_overlay_pc34
@@ -7461,6 +7519,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass814_dm1_v1_palette_credits_pc34_compat.py
         )
         set_tests_properties(pass814_dm1_v1_palette_credits PROPERTIES DEPENDS dm1_v1_palette_credits_pc34_compat)
+        add_test(
+            NAME pass815_dm1_v1_champion_panel_box_panel
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass815_dm1_v1_champion_panel_box_panel_pc34_compat.py
+        )
+        set_tests_properties(pass815_dm1_v1_champion_panel_box_panel PROPERTIES DEPENDS dm1_v1_champion_panel_box_panel_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
