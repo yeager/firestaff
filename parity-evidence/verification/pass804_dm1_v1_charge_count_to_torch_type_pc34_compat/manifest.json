@@ -1,0 +1,101 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:35",
+    "DATA.C:263",
+    "DATA.C:926",
+    "OBJECT.C:178"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + auto-chest + chest-open-stack-split).",
+    "Not pass798 (icon-graphic-first-icon-index).",
+    "Not pass800 (slot-boxes).",
+    "Not pass801 (light-power-to-light-amount).",
+    "Not pass802 (palette-index-to-light-amount).",
+    "Not pass803 (ordered-cells-to-attack)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:35",
+      "line": 35,
+      "lineText": "unsigned char G0029_auc_Graphic562_ChargeCountToTorchType[16];",
+      "needle": "G0029_auc_Graphic562_ChargeCountToTorchType",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:263",
+      "line": 263,
+      "lineText": "unsigned char G0029_auc_Graphic562_ChargeCountToTorchType[16] = { 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3 };",
+      "needle": "G0029_auc_Graphic562_ChargeCountToTorchType",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:926",
+      "line": 926,
+      "lineText": "unsigned char G0029_auc_Graphic562_ChargeCountToTorchType[16] = { 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3 };",
+      "needle": "G0029_auc_Graphic562_ChargeCountToTorchType",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "id": "OBJECT.C:178",
+      "line": 178,
+      "lineText": "                                                L0005_i_IconIndex += G0029_auc_Graphic562_ChargeCountToTorchType[((WEAPON*)L0006_ps_Junk)->ChargeCount];",
+      "needle": "G0029_auc_Graphic562_ChargeCountToTorchType",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass804_dm1_v1_charge_count_to_torch_type_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0029_auc_Graphic562_ChargeCountToTorchType[16] = {0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3}. Maps a torch's remaining charge count (0..15) to the torch-icon type (0..3) used to draw that torch on the inventory panel. Read site: OBJECT.C:178 F0486_OBJECT_DrawObjectIcon \u2014 for a lit torch weapon, IconIndex += G0029[ChargeCount].",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_charge_count_to_torch_type_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_charge_count_to_torch_type_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/charge_count_to_torch_type_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_charge_count_to_torch_type_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS804_DM1_V1_CHARGE_COUNT_TO_TORCH_TYPE_LOCKED",
+  "timestampUtc": "2026-06-19T10:09:19.287101+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_charge_count_to_torch_type_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_charge_count_to_torch_type: 144/144 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
