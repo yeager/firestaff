@@ -1,0 +1,106 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:85",
+    "DATA.C:424",
+    "DATA.C:1098",
+    "REVIVE.C:142",
+    "REVIVE.C:146"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-818 (Graphics.dat init-table gates batches 1+2+3+4+5+6)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:85",
+      "line": 85,
+      "lineText": "unsigned char G0047_auc_Graphic562_Box_ChampionPortrait[4];",
+      "needle": "G0047_auc_Graphic562_Box_ChampionPortrait",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:424",
+      "line": 424,
+      "lineText": "unsigned char G0047_auc_Graphic562_Box_ChampionPortrait[4] = { 0, 31, 0, 28 };",
+      "needle": "G0047_auc_Graphic562_Box_ChampionPortrait",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1098",
+      "line": 1098,
+      "lineText": "unsigned char G0047_auc_Graphic562_Box_ChampionPortrait[4] = { 0, 31, 0, 28 };",
+      "needle": "G0047_auc_Graphic562_Box_ChampionPortrait",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "id": "REVIVE.C:142",
+      "line": 142,
+      "lineText": "        G0578_B_UseByteBoxCoordinates = C1_TRUE, F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), L0797_ps_Champion->Portrait, G0047_auc_Graphic562_Box_ChampionPortrait, M027_PORTRAIT_X(P0596_ui_ChampionPortraitIndex), M028_PORTRAIT_Y(P0596_ui_ChampionPortraitIndex), C128_BYTE_WIDTH, C016_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY);",
+      "needle": "G0047_auc_Graphic562_Box_ChampionPortrait",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "id": "REVIVE.C:146",
+      "line": 146,
+      "lineText": "        G0578_B_UseByteBoxCoordinates = C1_TRUE, F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C026_GRAPHIC_CHAMPION_PORTRAITS), L1639_puc_Bitmap_Portrait_ChipMemory, G0047_auc_Graphic562_Box_ChampionPortrait, M027_PORTRAIT_X(P0596_ui_ChampionPortraitIndex), M028_PORTRAIT_Y(P0596_ui_ChampionPortraitIndex), 128, 16, CM1_COLOR_NO_TRANSPARENCY, 87, 29);",
+      "needle": "G0047_auc_Graphic562_Box_ChampionPortrait",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass819_dm1_v1_champion_portrait_box_champion_portrait_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0047_auc_Graphic562_Box_ChampionPortrait[4] = {0, 31, 0, 28}. The {X, Y, W, H} byte-coordinate sub-rectangle used by REVIVE.C F0132_VIDEO_Blit to extract a single champion portrait (31 bytes wide x 28 bytes tall) from the C026_GRAPHIC_CHAMPION_PORTRAITS source bitmap. Read sites: REVIVE.C:142/146 F0132_VIDEO_Blit.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_champion_portrait_box_champion_portrait_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_champion_portrait_box_champion_portrait_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/champion_portrait_box_champion_portrait_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_champion_portrait_box_champion_portrait_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS819_DM1_V1_BOX_CHAMPION_PORTRAIT_LOCKED",
+  "timestampUtc": "2026-06-19T15:23:07.030340+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_portrait_box_champion_portrait_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_champion_portrait_box_champion_portrait: 59/59 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
