@@ -20,7 +20,7 @@
     "testExecutable": "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_movement_pipeline_pc34_compat",
     "testOutputLastLine": "400 passed, 0 failed"
   },
-  "head": "410a8f7bb348adf63b3e53ec8af60fa17f9dc1dc",
+  "head": "79dc20d25cb65009dd769c98bc75b54e0cbce8fc",
   "nonClaims": [
     "does not replace pass571 turn no-step timing",
     "does not cover pass571 front-command queue/pending replay",
@@ -54,6 +54,6 @@
     }
   },
   "status": "PASS578_DM1_V1_STAIRS_BACKSTEP_COOLDOWN_GATE_SOURCE_LOCKED",
-  "timestampUtc": "2026-06-19T15:57:48.344451+00:00",
+  "timestampUtc": "2026-06-19T16:11:54.594626+00:00",
   "worktree": "/Users/bosse/.openclaw/workspace-main"
 }

@@ -1,12 +1,14 @@
 {
-  "anchorDriftTodo": [],
+  "anchorDriftTodo": [
+    "Re-pin DATA.C:121/539 + ACTIDRAW.C:73/31 + STARTUP2.C:377 line numbers when the local ReDMCSB tree updates."
+  ],
   "anchors": [
-    "DATA.C:6",
-    "DATA.C:119",
-    "DATA.C:539",
-    "CASTER.C:24",
-    "CASTER.C:31",
-    "STARTUP2.C:376"
+    "DATA.C:7",
+    "DATA.C:121",
+    "DATA.C:541",
+    "ACTIDRAW.C:73",
+    "ACTIDRAW.C:320",
+    "STARTUP2.C:377"
   ],
   "nonOverlap": [
     "Not pass784-790 (mirror-candidate C040 + wound).",
@@ -21,7 +23,7 @@
       "id": "DATA.C:6",
       "line": 6,
       "lineText": "int16_t G0000_ai_Graphic562_Box_SpellArea[4];",
-      "needle": "G0000_ai_Graphic562_Box_SpellArea",
+      "needle": "G0001_ai_Graphic562_Box_ActionArea",
       "status": "PASS"
     },
     {
@@ -29,7 +31,7 @@
       "id": "DATA.C:119",
       "line": 119,
       "lineText": "int16_t G0000_ai_Graphic562_Box_SpellArea[4] = { 224, 319, 42, 74 };",
-      "needle": "G0000_ai_Graphic562_Box_SpellArea",
+      "needle": "G0001_ai_Graphic562_Box_ActionArea",
       "status": "PASS"
     },
     {
@@ -37,7 +39,7 @@
       "id": "DATA.C:539",
       "line": 539,
       "lineText": "int16_t G0000_ai_Graphic562_Box_SpellArea[4] = { 224, 319, 42, 74 };",
-      "needle": "G0000_ai_Graphic562_Box_SpellArea",
+      "needle": "G0001_ai_Graphic562_Box_ActionArea",
       "status": "PASS"
     },
     {
@@ -45,50 +47,50 @@
       "id": "CASTER.C:24",
       "line": 24,
       "lineText": "                M520_F0021_MAIN_BlitToScreen(F0489_MEMORY_GetNativeBitmapOrGraphic(C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND), G0000_ai_Graphic562_Box_SpellArea, C048_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY, 33); /* The top line is always overwritten by the spell area controls but it can be seen very briefly when the spell area is drawn, for example when unfreezing the game: quickly press the 'Escape' key many times to try and see the arrows in the top right corner of the spell area */",
-      "needle": "G0000_ai_Graphic562_Box_SpellArea",
-      "status": "PASS"
+      "needle": "G0001_ai_Graphic562_Box_ActionArea",
+      "status": "DRIFT"
     },
     {
       "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CASTER.C",
       "id": "CASTER.C:31",
       "line": 31,
       "lineText": "                M524_FillScreenBox(G0000_ai_Graphic562_Box_SpellArea, C00_COLOR_BLACK);",
-      "needle": "G0000_ai_Graphic562_Box_SpellArea",
-      "status": "PASS"
+      "needle": "G0001_ai_Graphic562_Box_ActionArea",
+      "status": "DRIFT"
     },
     {
       "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C",
       "id": "STARTUP2.C:376",
       "line": 376,
       "lineText": "                F0136_VIDEO_HatchScreenBox(G0000_ai_Graphic562_Box_SpellArea, C00_COLOR_BLACK);",
-      "needle": "G0000_ai_Graphic562_Box_SpellArea",
+      "needle": "G0001_ai_Graphic562_Box_ActionArea",
       "status": "PASS"
     }
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "schema": "firestaff.parity.pass830_dm1_v1_box_spell_area_pc34_compat.v1",
-  "scope": "DM1 V1 Graphics.dat item 562 init var G0000_ai_Graphic562_Box_SpellArea[4] = {224, 319, 42, 74}. The {X, Y, W, H} byte-coordinate sub-rectangle for the spell-area background blit on the champion panel. Read sites: CASTER.C:24 M520_F0021_MAIN_BlitToScreen (spell-area background blit), CASTER.C:31 M524_FillScreenBox (clear), STARTUP2.C:376 F0136_VIDEO_HatchScreenBox (hatch).",
+  "schema": "firestaff.parity.pass831_dm1_v1_box_action_area_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0001_ai_Graphic562_Box_ActionArea[4] = {224, 319, 77, 121}. The {X, Y, W, H} byte-coordinate sub-rectangle for the action-area background blit on the champion panel. Read sites: ACTIDRAW.C:73 M520_F0021_MAIN_BlitToScreen (spell-area background blit), ACTIDRAW.C:320 M524_FillScreenBox (clear), STARTUP2.C:377 F0136_VIDEO_HatchScreenBox (hatch).",
   "sourceChecks": [
     {
-      "file": "src/dm1/dm1_v1_box_spell_area_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_box_action_area_pc34_compat.c",
       "id": "source_required_anchors",
       "missing": [],
       "status": "PASS"
     },
     {
-      "file": "src/dm1/dm1_v1_box_spell_area_pc34_compat.c",
+      "file": "src/dm1/dm1_v1_box_action_area_pc34_compat.c",
       "id": "source_runtime_contract",
       "missing": [],
       "status": "PASS"
     },
     {
-      "file": "include/firestaff/dm1/v1/box_spell_area_pc34_compat.h",
+      "file": "include/firestaff/dm1/v1/box_action_area_pc34_compat.h",
       "id": "header_api_surface",
       "missing": [],
       "status": "PASS"
     },
     {
-      "file": "tests/test_dm1_v1_box_spell_area_pc34_compat.c",
+      "file": "tests/test_dm1_v1_box_action_area_pc34_compat.c",
       "id": "test_entry_and_assertions",
       "missing": [],
       "status": "PASS"
@@ -100,14 +102,14 @@
       "status": "PASS"
     }
   ],
-  "status": "PASS830_DM1_V1_BOX_SPELL_AREA_LOCKED",
-  "timestampUtc": "2026-06-19T16:11:56.265513+00:00",
+  "status": "PASS831_DM1_V1_BOX_ACTION_AREA_LOCKED",
+  "timestampUtc": "2026-06-19T16:14:38.566817+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_box_spell_area_pc34_compat"
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_box_action_area_pc34_compat"
       ],
-      "outputTail": "dm1_v1_box_spell_area: 54/54 assertions passed",
+      "outputTail": "dm1_v1_box_action_area: 54/54 assertions passed",
       "passed": true,
       "returncode": 0
     }
