@@ -37,6 +37,7 @@
 
 #include "m11_v22_inplace_draw_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
+#include "m11_v22_render_overlay_pc34.h"   /* M11_V22_CellRect shared coord */
 #include "dm1_v2_asset_pipeline_pc34.h"
 #include "fs_portable_compat.h"
 
@@ -254,6 +255,108 @@ const uint32_t* m11_v22_inplace_get_cell_bitmap(int depth, int lateral,
 
 const char* m11_v22_inplace_get_cell_asset_id(int depth, int lateral) {
     return v22_inplace_get_cell_asset_id(depth, lateral);
+}
+
+/* ── In-place bitmap blit ──────────────────────────────────────── */
+
+/* DM1 4x3 cell rect coordinates (depth x lateral). Must match
+ * kV22CellRects in m11_v22_render_overlay_pc34.c (exposed as
+ * M11_V22_CellRect in m11_v22_render_overlay_pc34.h). */
+static const M11_V22_CellRect kV22CellRects[3][3] = {
+    /* depth 0 = D1 (closest) */ {
+        {  8, 103, 69, 30 },
+        { 78, 103, 61, 30 },
+        {139, 103, 69, 30 }
+    },
+    /* depth 1 = D2 (middle) */ {
+        {  8,  72, 69, 30 },
+        { 78,  72, 61, 30 },
+        {139,  72, 69, 30 }
+    },
+    /* depth 2 = D3 (back) */ {
+        {  8,  41, 69, 30 },
+        { 78,  41, 61, 30 },
+        {139,  41, 69, 30 }
+    }
+};
+
+/* Clamp helper */
+static int clampi(int v, int lo, int hi) {
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+
+/* Map an RGB color (0..255 per channel) to the nearest EGA/VGA
+ * 6-bit-cube palette index. Equivalent to the standard VGA 0x3F
+ * (bright=0, palette bits 5..0 = R*2, G*2, B*2 mapping). */
+static unsigned char rgb_to_ega_index(unsigned char r,
+                                      unsigned char g,
+                                      unsigned char b) {
+    /* Quantize each channel to 2 bits (0/85/170/255) and combine. */
+    int ri = (r * 3 + 127) / 255;
+    int gi = (g * 3 + 127) / 255;
+    int bi = (b * 3 + 127) / 255;
+    return (unsigned char)((ri << 4) | (gi << 2) | bi);
+}
+
+/* Nearest-neighbor blit of RGBA bitmap into framebuffer[y*fbW+x]
+ * sized src_w x src_h -> dst_w x dst_h. The RGBA pixels are mapped
+ * to a single byte via rgb_to_ega_index (good enough for indexed
+ * framebuffer V1 mode; full color-blend is a follow-up). */
+static void blit_bitmap_to_cell(const uint32_t* rgba, int src_w, int src_h,
+                                  unsigned char* framebuffer, int fbW, int fbH,
+                                  int dst_x, int dst_y, int dst_w, int dst_h) {
+    int x, y;
+    if (dst_w <= 0 || dst_h <= 0 || src_w <= 0 || src_h <= 0) return;
+    for (y = 0; y < dst_h; ++y) {
+        int sy = (y * src_h) / dst_h;
+        if (sy >= src_h) sy = src_h - 1;
+        int py = dst_y + y;
+        if (py < 0 || py >= fbH) continue;
+        for (x = 0; x < dst_w; ++x) {
+            int sx = (x * src_w) / dst_w;
+            if (sx >= src_w) sx = src_w - 1;
+            uint32_t px = rgba[sy * src_w + sx];
+            /* Extract RGB from RGBA. Alpha is ignored for now
+             * (opaque-only assumption; alpha-blend is a follow-up). */
+            unsigned char r = (unsigned char)((px >> 16) & 0xFFu);
+            unsigned char g = (unsigned char)((px >>  8) & 0xFFu);
+            unsigned char b = (unsigned char)((px      ) & 0xFFu);
+            unsigned char idx = rgb_to_ega_index(r, g, b);
+            int px_x = dst_x + x;
+            if (px_x < 0 || px_x >= fbW) continue;
+            framebuffer[py * fbW + px_x] = idx;
+        }
+    }
+}
+
+int m11_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH) {
+    int depth, lateral;
+    int cells_painted = 0;
+    if (!framebuffer || fbW <= 0 || fbH <= 0) return 0;
+    if (!m11_v22_inplace_draw_active()) return 0;
+    if (!m11_v22_shape_cache_populated()) return 0;
+    for (depth = 0; depth < 3; ++depth) {
+        for (lateral = -1; lateral <= 1; ++lateral) {
+            int w = 0, h = 0;
+            const uint32_t* rgba =
+                m11_v22_inplace_get_cell_bitmap(depth + 1, lateral, &w, &h);
+            if (!rgba || w <= 0 || h <= 0) continue;
+            const M11_V22_CellRect* rect = &kV22CellRects[depth][lateral + 1];
+            /* Clamp cell rect to framebuffer bounds */
+            int dx = clampi(rect->x, 0, fbW);
+            int dy = clampi(rect->y, 0, fbH);
+            int dw = clampi(rect->x + rect->w, 0, fbW) - dx;
+            int dh = clampi(rect->y + rect->h, 0, fbH) - dy;
+            if (dw <= 0 || dh <= 0) continue;
+            blit_bitmap_to_cell(rgba, w, h,
+                                 framebuffer, fbW, fbH,
+                                 dx, dy, dw, dh);
+            cells_painted++;
+        }
+    }
+    return cells_painted;
 }
 
 const char* m11_v22_inplace_draw_source_evidence(void) {

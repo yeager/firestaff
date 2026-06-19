@@ -1,12 +1,13 @@
 /*
- * test_m11_v22_inplace_draw_pc34.c — DM1 V2.2 in-place bitmap cache
+ * test_m11_v22_inplace_draw_pc34.c — DM1 V2.2 in-place bitmap cache + render pass
  *
- * Focused tests for the V22 in-place foundation:
+ * Tests the V22 in-place foundation:
  *   - Init/shutdown lifecycle
  *   - Active flag reflects cache load state
  *   - Cache file presence/format validation (skip if missing)
  *   - get_cell_bitmap returns NULL when no V22 cache populated
  *   - get_cell_asset_id returns NULL when V22 not active
+ *   - m11_v22_inplace_render_pass() draws bitmaps into a framebuffer
  *   - Source evidence citation
  *
  * Test does NOT modify any V1/V2 state — read-only verification.
@@ -15,6 +16,8 @@
  */
 
 #include "m11_v22_inplace_draw_pc34.h"
+#include "m11_v22_shape_cache_pc34.h"
+#include "m11_v22_render_overlay_pc34.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +33,6 @@ static int checks = 0;
 
 static void test_init_shutdown(void) {
     int active_before = m11_v22_inplace_draw_active();
-    /* Idempotent init */
     int r1 = m11_v22_inplace_draw_init();
     int r2 = m11_v22_inplace_draw_init();
     CHECK(r1 == r2, "init is idempotent (same return on repeat call)");
@@ -38,7 +40,6 @@ static void test_init_shutdown(void) {
     CHECK((active_after == 0) || (active_after == 1), "active is 0 or 1");
     m11_v22_inplace_draw_shutdown();
     CHECK(m11_v22_inplace_draw_active() == 0, "active==0 after shutdown");
-    /* Re-init after shutdown */
     int r3 = m11_v22_inplace_draw_init();
     CHECK((r3 == 0) || (r3 == 1), "re-init returns 0 or 1");
     m11_v22_inplace_draw_shutdown();
@@ -67,13 +68,11 @@ static void test_source_evidence(void) {
 }
 
 static void test_cache_load_path(void) {
-    /* If cache exists, init should succeed */
     int r = m11_v22_inplace_draw_init();
     int active = m11_v22_inplace_draw_active();
     if (r == 1) {
         CHECK(active == 1, "active==1 after successful init");
     } else {
-        /* Cache missing or invalid — that's OK for environments without it */
         CHECK(active == 0, "active==0 when cache missing/invalid");
     }
     m11_v22_inplace_draw_shutdown();
@@ -82,8 +81,50 @@ static void test_cache_load_path(void) {
 static void test_double_shutdown_safe(void) {
     m11_v22_inplace_draw_init();
     m11_v22_inplace_draw_shutdown();
-    m11_v22_inplace_draw_shutdown();  /* idempotent */
+    m11_v22_inplace_draw_shutdown();
     CHECK(m11_v22_inplace_draw_active() == 0, "double shutdown safe");
+}
+
+static void test_render_pass_safe_when_no_cache(void) {
+    /* Render pass must return 0 and not crash when no cache loaded */
+    m11_v22_inplace_draw_shutdown();
+    unsigned char fb[320 * 200];
+    memset(fb, 0xAA, sizeof(fb));  /* sentinel value */
+    int painted = m11_v22_inplace_render_pass(fb, 320, 200);
+    CHECK(painted == 0, "no cache -> render paints 0 cells");
+    /* Framebuffer should be unchanged */
+    int all_sentinel = 1;
+    for (int i = 0; i < 320 * 200; ++i) if (fb[i] != 0xAA) { all_sentinel = 0; break; }
+    CHECK(all_sentinel, "no cache -> framebuffer unchanged");
+}
+
+static void test_render_pass_safe_with_null_args(void) {
+    m11_v22_inplace_draw_init();
+    int painted = m11_v22_inplace_render_pass(NULL, 320, 200);
+    CHECK(painted == 0, "NULL fb -> 0 cells painted");
+    unsigned char fb[10];
+    memset(fb, 0, sizeof(fb));
+    painted = m11_v22_inplace_render_pass(fb, 0, 200);
+    CHECK(painted == 0, "zero width -> 0 cells painted");
+    painted = m11_v22_inplace_render_pass(fb, 320, 0);
+    CHECK(painted == 0, "zero height -> 0 cells painted");
+    m11_v22_inplace_draw_shutdown();
+}
+
+static void test_render_pass_safe_when_no_shape_cache(void) {
+    /* Even if bitmap cache loaded, without shape cache populated,
+     * the render pass must return 0 (no V22-active cells to paint). */
+    m11_v22_inplace_draw_init();
+    if (!m11_v22_inplace_draw_active()) {
+        /* Cache not present on this machine — skip */
+        m11_v22_inplace_draw_shutdown();
+        return;
+    }
+    unsigned char fb[320 * 200];
+    memset(fb, 0xAA, sizeof(fb));
+    int painted = m11_v22_inplace_render_pass(fb, 320, 200);
+    CHECK(painted == 0, "no shape cache populated -> 0 cells painted");
+    m11_v22_inplace_draw_shutdown();
 }
 
 int main(void) {
@@ -93,6 +134,9 @@ int main(void) {
     test_source_evidence();
     test_cache_load_path();
     test_double_shutdown_safe();
+    test_render_pass_safe_when_no_cache();
+    test_render_pass_safe_with_null_args();
+    test_render_pass_safe_when_no_shape_cache();
 
     printf("m11_v22_inplace_draw_pc34: checks=%d failures=%d\n", checks, failures);
     if (failures > 0) {

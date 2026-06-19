@@ -35,10 +35,6 @@
  *   R: x = 139..208 (w=69)
  *
  * 1-pixel gaps separate cells horizontally and vertically. */
-typedef struct {
-    int x, y, w, h;
-} M11_V22_CellRect;
-
 static const M11_V22_CellRect kV22CellRects[3][3] = {
     /* depth 0 = D1 (closest) */ {
         {  8, 103, 69, 30 },  /* D1L */
