@@ -1,0 +1,131 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin DATA.C:314/1031 + PANEL.C:967/1140/1582/1600/1611 line numbers when the local ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "DATA.C:38",
+    "DATA.C:314",
+    "DATA.C:1031",
+    "PANEL.C:967/1140/1582/1600/1611"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-814 (Graphics.dat init-table gates batches 1+2+3+4)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:38",
+      "line": 38,
+      "lineText": "int16_t G0032_ai_Graphic562_Box_Panel[4];",
+      "needle": "G0032_ai_Graphic562_Box_Panel",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:314",
+      "line": 314,
+      "lineText": "int16_t G0032_ai_Graphic562_Box_Panel[4] = { 80, 223, 52, 124 };",
+      "needle": "G0032_ai_Graphic562_Box_Panel",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1031",
+      "line": 1031,
+      "lineText": "int16_t G0032_ai_Graphic562_Box_Panel[4] = { 80, 223, 52, 124 };",
+      "needle": "G0032_ai_Graphic562_Box_Panel",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:967",
+      "line": 967,
+      "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C023_GRAPHIC_PANEL_OPEN_SCROLL), G0032_ai_Graphic562_Box_Panel, C072_BYTE_WIDTH, C08_COLOR_RED, 73);",
+      "needle": "G0032_ai_Graphic562_Box_Panel",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1140",
+      "line": 1140,
+      "lineText": "                        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C020_GRAPHIC_PANEL_EMPTY), G0032_ai_Graphic562_Box_Panel, C072_BYTE_WIDTH, C08_COLOR_RED, 73);",
+      "needle": "G0032_ai_Graphic562_Box_Panel",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1582",
+      "line": 1582,
+      "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C020_GRAPHIC_PANEL_EMPTY), G0032_ai_Graphic562_Box_Panel, C072_BYTE_WIDTH, C08_COLOR_RED, 73);",
+      "needle": "G0032_ai_Graphic562_Box_Panel",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1600",
+      "line": 1600,
+      "lineText": "#endif",
+      "needle": "G0032_ai_Graphic562_Box_Panel",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1611",
+      "line": 1611,
+      "lineText": "        F0344_INVENTORY_DrawPanel_FoodOrWaterBar(L1074_ps_Champion->Water, 92, C14_COLOR_BLUE);",
+      "needle": "G0032_ai_Graphic562_Box_Panel",
+      "status": "DRIFT"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass815_dm1_v1_champion_panel_box_panel_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0032_ai_Graphic562_Box_Panel[4] = {80, 223, 52, 124}. The {X, Y, W, H} pixel-coordinate rectangle for the champion-panel backdrop blit. Read sites: PANEL.C:967/1140/1582/1600/1611 + CHEST.C + REVIVE.C F0344_INVENTORY_DrawPanel blits the various panel graphics (C020/C023/C025/C027/C040) into G0032's box with byte width C072_BYTE_WIDTH and various colors (RED, DARK_GREEN, CYAN, etc.).",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_panel_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_panel_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/champion_panel_box_panel_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_champion_panel_box_panel_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS815_DM1_V1_CHAMPION_PANEL_BOX_PANEL_LOCKED",
+  "timestampUtc": "2026-06-19T15:51:03.977700+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_box_panel_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_champion_panel_box_panel: 52/52 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
