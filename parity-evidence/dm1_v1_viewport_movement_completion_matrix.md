@@ -1,7 +1,7 @@
 # DM1 V1 viewport/movement completion aggregate
 
-Status: `FAIL`
-Generated: `2026-06-19T16:55:57.946529+00:00`
+Status: `PASS`
+Generated: `2026-06-19T17:33:49.275386+00:00`
 
 ## ReDMCSB source audit
 - `PASS` `post_command_redraw_loop` — `GAMELOOP.C:55-90` `GAMELOOP main input/redraw loop`: main loop redraws viewport from the current party tuple before entering the input wait cycle
@@ -15,24 +15,8 @@ Generated: `2026-06-19T16:55:57.946529+00:00`
 - `PASS` `drawview_palette_and_present_cadence` — `DRAWVIEW.C:709-900` `F0097_DUNGEONVIEW_DrawViewport`: viewport present uses the single source dungeon palette index and vblank copy cadence rather than invented depth dimming
 
 ## Executable gates
-- `FAIL` `prepare_required_build` rc=`2`: configure/build movement targets required by chained gates
-  - /Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_box_title_presents_pc34_compat.c:111:21: error: use of undeclared identifier 'DM1_V1_BOX_TITLE_STRIKES_BACK_SOURCE_PC34_COMPAT_SIZE'
-  -   111 |     for (i = 0; i < DM1_V1_BOX_TITLE_STRIKES_BACK_SOURCE_PC34_COMPAT_SIZE; ++i) {
-  -       |                     ^
-  - 5 errors generated.
-  - gmake[3]: *** [CMakeFiles/firestaff_m10.dir/build.make:1409: CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_title_presents_pc34_compat.c.o] Error 1
-  - gmake[2]: *** [CMakeFiles/Makefile2:1264: CMakeFiles/firestaff_m10.dir/all] Error 2
-  - gmake[1]: *** [CMakeFiles/Makefile2:7075: CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/rule] Error 2
-  - gmake: *** [Makefile:2364: test_dm1_v1_input_command_queue_pc34_compat] Error 2
 - `PASS` `pass381_movement_viewport_walls_source_lock` rc=`0`: command queue -> movement/turn state -> viewport wall redraw and presentation source chain
-- `FAIL` `pass423_input_command_movement_pipeline_source_lock` rc=`1`: PC34 input, queue, F0380, F0365/F0366 and command-core regressions
-  -   111 |     for (i = 0; i < DM1_V1_BOX_TITLE_STRIKES_BACK_SOURCE_PC34_COMPAT_SIZE; ++i) {
-  -       |                     ^
-  - 5 errors generated.
-  - gmake[3]: *** [CMakeFiles/firestaff_m10.dir/build.make:1409: CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_title_presents_pc34_compat.c.o] Error 1
-  - gmake[2]: *** [CMakeFiles/Makefile2:1264: CMakeFiles/firestaff_m10.dir/all] Error 2
-  - gmake[1]: *** [CMakeFiles/Makefile2:7075: CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/rule] Error 2
-  - gmake: *** [Makefile:2364: test_dm1_v1_input_command_queue_pc34_compat] Error 2
+- `PASS` `pass423_input_command_movement_pipeline_source_lock` rc=`0` status `PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED`: PC34 input, queue, F0380, F0365/F0366 and command-core regressions
 - `PASS` `pass402_movement_cooldown_order` rc=`0` status `ok`: cooldown ageing before F0380 and no same-tick post-decrement
 - `PASS` `pass406_movement_legality_completion_gate` rc=`0`: party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain
 - `PASS` `pass406_game_loop_redraw_cadence` rc=`0` status `PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED`: game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering
@@ -55,6 +39,6 @@ Generated: `2026-06-19T16:55:57.946529+00:00`
   - }
 
 ## Decision
-One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.
+Current movement/viewport source-lock gates are green, pass434 crop readiness is green, and pass435 confirms the remaining blocker is original semantic route readiness; no original pixel/route parity is claimed.
 
 Manifest: `parity-evidence/verification/dm1_v1_viewport_movement_completion_matrix/manifest.json`
