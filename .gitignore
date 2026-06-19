@@ -208,6 +208,10 @@ __pycache__/
 !/parity-evidence/verification/pass803_dm1_v1_ordered_cells_to_attack_pc34_compat/**
 !/parity-evidence/verification/pass804_dm1_v1_charge_count_to_torch_type_pc34_compat/
 !/parity-evidence/verification/pass804_dm1_v1_charge_count_to_torch_type_pc34_compat/**
+!/parity-evidence/verification/pass805_dm1_v1_champion_panel_box_food_pc34_compat/
+!/parity-evidence/verification/pass805_dm1_v1_champion_panel_box_food_pc34_compat/**
+!/parity-evidence/verification/pass806_dm1_v1_champion_panel_box_poisoned_pc34_compat/
+!/parity-evidence/verification/pass806_dm1_v1_champion_panel_box_poisoned_pc34_compat/**
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/**
 !/parity-evidence/verification/pass799_dm1_v1_chest_open_stack_split_press_eye_pc34_compat/
