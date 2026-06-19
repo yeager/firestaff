@@ -289,3 +289,25 @@ theron_v22_shapes, m11_v22_shape_cache, m11_v22_render_overlay).
 4. `champion_sorcerer_hero_01.png` or `champion_bard_hero_01.png`
 5. More floor/wall variants: `floor_stairs_up_hero_01.png`,
    `wall_d3_altar_hero_01.png`
+
+## CSB hero art batch 1 (2026-06-19) — 6 PBR variants installed
+
+6 `gpt-image-2` PBR hero variants generated + installed for CSB V2.2 (parallel to DM1 batches 1-4). CSB-specific palette accents: CHAOS_PURPLE (chaos magic), IRON_GREY (prison), LORD_GOLD (Lord Order).
+
+| Hero asset | Reference sprite (closest DM1) | Vision score | Notes |
+|------------|--------------------------------|--------------|-------|
+| `champion_portraits/champion_ninja_csb_hero_01.png` | sprite_0378 knight+cape | 19/20 | Excellent subject match, dark PBR + chaos-purple accents |
+| `champion_portraits/champion_priest_csb_hero_01.png` | sprite_0378 | 18/20 | Strong priest/chaos caster, cross-pendant feels conventional vs CSB iconography |
+| `creature_shapes/creature_rat_csb_hero_01.png` | sprite_0371 small creature | 18/20 | Clear giant mutant rat with chaos-purple corruption veins |
+| `creature_shapes/creature_screamer_csb_hero_01.png` | sprite_0372 demon | 16/20 | Reads more bat-demon/gargoyle than CSB-specific screamer |
+| `floor_shapes/floor_corridor_csb_hero_01.png` | sprite_0097 corridor floor | 15/20 | Top-down floor plate composition, not corridor view |
+| `wall_shapes/wall_altar_csb_hero_01.png` | sprite_0093 wall-edge | 19/20 | Strong Lord Order altar wall tile, chaos-purple focal glow |
+
+**Total CSB V2.2 hero art count: 6** (all in this batch).
+**Total CSB V2.2 asset pack entries: 11** (5 procedural from v1.0.0 + 6 PBR from this batch).
+**Manifest v1.1.0** validates as complete (`csb_v22_validate_manifest()` returns 1).
+**End-to-end smoke**: `csb_v22_modern_assets_available()=1` against real CSB data dir.
+
+**Vision score summary**: 105/120 (17.5/20 average). 4 assets at 18-20, 2 at 15-16 (screamer + corridor). Both are acceptable as hero variants — screamer is generic bat-demon but with CSB purple palette; corridor is top-down floor plate with CSB runes. Regeneration candidates if needed: creature_screamer_csb_hero_01 (would need explicit "CSB jail screamer, not generic bat-demon"), floor_corridor_csb_hero_01 (would need "narrow corridor perspective not top-down plate").
+
+**Compare index**: `docs/v22-compare/compare_index.json` gains `csb_hero_batch_1_pairs` array of 6 entries.
