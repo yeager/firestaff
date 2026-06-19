@@ -4387,6 +4387,15 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_theron_v22_shapes_pc34 PRIVATE firestaff_m12 firestaff_theron)
+    add_executable(test_theron_v22_inplace_draw_pc34
+        tests/test_theron_v22_inplace_draw_pc34.c
+        src/theron/theron_v22_inplace_draw_pc34.c
+        src/theron/theron_v22_shape_cache_pc34.c
+        src/theron/theron_v22_shapes.c
+        src/theron/theron_v2_presentation_mode_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_theron_v22_inplace_draw_pc34 PRIVATE firestaff_m12 firestaff_theron)
     add_executable(test_theron_v22_modern_assets_pc34
         tests/test_theron_v22_modern_assets_pc34.c
         src/theron/theron_v22_modern_assets_pc34.c
@@ -4535,6 +4544,7 @@ if(BUILD_TESTING)
         target_compile_options(test_csb_v22_modern_assets_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v2_texture_upscale_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v22_shapes_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v22_inplace_draw_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v22_modern_assets_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_shape_runtime_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_v22_shape_cache_pc34 PRIVATE -Wall -Wextra -O2)
@@ -4760,6 +4770,10 @@ if(BUILD_TESTING)
     add_test(
         NAME theron_v22_shapes_pc34
         COMMAND test_theron_v22_shapes_pc34
+    )
+    add_test(
+        NAME theron_v22_inplace_draw_pc34
+        COMMAND test_theron_v22_inplace_draw_pc34
     )
     add_test(
         NAME theron_v22_modern_assets_pc34
