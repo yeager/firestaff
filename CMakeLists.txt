@@ -2845,6 +2845,50 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_box_water_pc34_compat
     )
 
+    # DM1 V1 champion-panel-box-leader-hand-object-name: Graphics.dat
+    # item 562 init var G0028_ai_Graphic562_Box_LeaderHandObjectName
+    # [4] = {233, 319, 33, 38}. The {X, Y, W, H} pixel-coordinate
+    # rectangle for the leader-hand object name black-fill. Read
+    # site: OBJECT.C:281 M524_FillScreenBox(G0028, C00_COLOR_BLACK)
+    # draws the black backdrop for the leader-hand object name text.
+    # Disjoint from pass784-790 + pass791-799 + pass798-812.
+    # Source-locked against DATA.C:34 + DATA.C:262 + DATA.C:923 +
+    # OBJECT.C:281.
+    add_executable(test_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat
+        tests/test_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat
+    )
+
+    # DM1 V1 palette-credits: Graphics.dat item 562 init var
+    # G0019_aui_Graphic562_Palette_Credits[16] = { 0x009, 0x0AA,
+    # 0xFF6, 0x840, 0xFF8, 0x000, 0x080, 0xA00, 0xC84, 0xFFA, 0xF84,
+    # 0xFC0, 0xFA0, 0x000, 0x620, 0xFFC } — the 16-color palette used
+    # for the Credits screen fade. Read sites: ENDGAME.C:680 +
+    # ENTRANCE.C:1061 F0436_STARTEND_FadeToPalette(G0019). Disjoint
+    # from pass784-790 + pass791-799 + pass798-813. Source-locked
+    # against DATA.C:25 + DATA.C:210 + DATA.C:789 + ENDGAME.C:680 +
+    # ENTRANCE.C:1061.
+    add_executable(test_dm1_v1_palette_credits_pc34_compat
+        tests/test_dm1_v1_palette_credits_pc34_compat.c
+        src/dm1/dm1_v1_palette_credits_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_credits_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_credits_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_credits_pc34_compat
+        COMMAND test_dm1_v1_palette_credits_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -7407,6 +7451,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass812_dm1_v1_champion_panel_box_water_pc34_compat.py
         )
         set_tests_properties(pass812_dm1_v1_champion_panel_box_water PROPERTIES DEPENDS dm1_v1_champion_panel_box_water_pc34_compat)
+        add_test(
+            NAME pass813_dm1_v1_champion_panel_box_leader_hand_object_name
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass813_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat.py
+        )
+        set_tests_properties(pass813_dm1_v1_champion_panel_box_leader_hand_object_name PROPERTIES DEPENDS dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat)
+        add_test(
+            NAME pass814_dm1_v1_palette_credits
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass814_dm1_v1_palette_credits_pc34_compat.py
+        )
+        set_tests_properties(pass814_dm1_v1_palette_credits PROPERTIES DEPENDS dm1_v1_palette_credits_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
