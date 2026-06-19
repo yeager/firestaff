@@ -1,0 +1,97 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:40",
+    "DATA.C:316",
+    "DATA.C:1033",
+    "PANEL.C:1141"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-815 (Graphics.dat init-table gates batches 1+2+3+4)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:40",
+      "line": 40,
+      "lineText": "int16_t G0034_ai_Graphic562_Box_ObjectDescriptionCircle[4];",
+      "needle": "G0034_ai_Graphic562_Box_ObjectDescriptionCircle",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:316",
+      "line": 316,
+      "lineText": "int16_t G0034_ai_Graphic562_Box_ObjectDescriptionCircle[4] = { 105, 136, 53, 79 };",
+      "needle": "G0034_ai_Graphic562_Box_ObjectDescriptionCircle",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1033",
+      "line": 1033,
+      "lineText": "int16_t G0034_ai_Graphic562_Box_ObjectDescriptionCircle[4] = { 105, 136, 53, 79 };",
+      "needle": "G0034_ai_Graphic562_Box_ObjectDescriptionCircle",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1141",
+      "line": 1141,
+      "lineText": "                        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C029_GRAPHIC_OBJECT_DESCRIPTION_CIRCLE), G0034_ai_Graphic562_Box_ObjectDescriptionCircle, C016_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 27);",
+      "needle": "G0034_ai_Graphic562_Box_ObjectDescriptionCircle",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass816_dm1_v1_champion_panel_box_object_description_circle_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0034_ai_Graphic562_Box_ObjectDescriptionCircle[4] = {105, 136, 53, 79}. The {X, Y, W, H} pixel-coordinate rectangle for the object-description circle blit onto the champion panel. Read site: PANEL.C:1141 F0344_INVENTORY_DrawPanel blits C029_GRAPHIC_OBJECT_DESCRIPTION_CIRCLE into G0034's box with byte width C016_BYTE_WIDTH and color C12_COLOR_DARKEST_GRAY.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_object_description_circle_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_object_description_circle_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/champion_panel_box_object_description_circle_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_champion_panel_box_object_description_circle_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS816_DM1_V1_CHAMPION_PANEL_BOX_OBJECT_DESCRIPTION_CIRCLE_LOCKED",
+  "timestampUtc": "2026-06-19T14:55:06.178004+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_box_object_description_circle_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_champion_panel_box_object_description_circle: 52/52 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
