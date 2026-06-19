@@ -1,0 +1,124 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin DATA.C:133/553 + ENTRANCE.C:149/189/191/194 line numbers when the local ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "DATA.C:13",
+    "DATA.C:133",
+    "DATA.C:553",
+    "ENTRANCE.C:149",
+    "ENTRANCE.C:189/191/194"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-837 (Graphics.dat init-table gates batches 1+2+3+4+5+6+7+8+9+10+11+12+13+14+15)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:13",
+      "line": 13,
+      "lineText": "int16_t G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft[4];",
+      "needle": "G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:133",
+      "line": 133,
+      "lineText": "int16_t G0014_ai_Graphic562_Box_Endgame_Restart_Inner[4] = { 105, 215, 147, 157 };",
+      "needle": "G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:553",
+      "line": 553,
+      "lineText": "int16_t G0009_ai_Graphic562_Box_Entrance_Doors[4] = { 0, 231, 0, 160 };",
+      "needle": "G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "id": "ENTRANCE.C:149",
+      "line": 149,
+      "lineText": "                M769_BOX_RIGHT(G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft) -= 4;",
+      "needle": "G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "id": "ENTRANCE.C:189",
+      "line": 189,
+      "lineText": "                if ((int16_t)M705_ZONE_RIGHT(G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft) >= 0) {",
+      "needle": "G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "id": "ENTRANCE.C:191",
+      "line": 191,
+      "lineText": "                        F0132_VIDEO_Blit(L1394_ppuc_Bitmap_EntranceDoorAnimationSteps[L1393_ui_AnimationStep & 0x0003], L1394_ppuc_Bitmap_EntranceDoorAnimationSteps[9], G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft, (L1393_ui_AnimationStep & 0x00FC) << 2, 0, C064_BYTE_WIDTH, C128_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY);",
+      "needle": "G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "id": "ENTRANCE.C:194",
+      "line": 194,
+      "lineText": "                        F0132_VIDEO_Blit(L1394_ppuc_Bitmap_EntranceDoorAnimationSteps[L1393_ui_AnimationStep & 0x0003], L1394_ppuc_Bitmap_EntranceDoorAnimationSteps[9], G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft, (L1393_ui_AnimationStep & 0x00FC) << 2, 0, C064_BYTE_WIDTH, C128_BYTE_WIDTH, CM1_COLOR_NO_TRANSPARENCY, 161, 161);",
+      "needle": "G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass838_dm1_v1_box_entrance_opening_door_left_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft[4] = {0, 100, 0, 160}. The {X, Y, W, H} byte-coordinate sub-rectangle for the entrance door-opening animation (left half). Read sites: ENTRANCE.C:149 (M769_BOX_RIGHT shrink each tick) + ENTRANCE.C:189/191/194 F0132_VIDEO_Blit (entrance door animation step into G0007's box).",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_box_entrance_opening_door_left_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_box_entrance_opening_door_left_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/box_entrance_opening_door_left_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_box_entrance_opening_door_left_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS838_DM1_V1_BOX_ENTRANCE_OPENING_DOOR_LEFT_LOCKED",
+  "timestampUtc": "2026-06-19T17:06:02.119555+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_box_entrance_opening_door_left_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_box_entrance_opening_door_left: 53/53 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

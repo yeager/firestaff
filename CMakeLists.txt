@@ -3217,6 +3217,27 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_box_title_presents_pc34_compat
     )
 
+    # DM1 V1 box-entrance-opening-door-left: Graphics.dat item 562
+    # init var G0007_ai_Graphic562_Box_Entrance_OpeningDoorLeft[4] =
+    # {0, 100, 0, 160}. The {X, Y, W, H} byte-coordinate sub-rectangle
+    # for the entrance door-opening animation (left half). Read sites:
+    # ENTRANCE.C:149 (M769_BOX_RIGHT shrink) + ENTRANCE.C:189/191/194
+    # (F0132_VIDEO_Blit). Disjoint from pass784-790 + pass791-799 +
+    # pass798-837. Source-locked against DATA.C:13/133/553 +
+    # ENTRANCE.C:149/189/191/194 + DEFS.H M769_BOX_RIGHT.
+    add_executable(test_dm1_v1_box_entrance_opening_door_left_pc34_compat
+        tests/test_dm1_v1_box_entrance_opening_door_left_pc34_compat.c
+        src/dm1/dm1_v1_box_entrance_opening_door_left_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_entrance_opening_door_left_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_entrance_opening_door_left_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_entrance_opening_door_left_pc34_compat
+        COMMAND test_dm1_v1_box_entrance_opening_door_left_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -7952,6 +7973,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass837_dm1_v1_box_title_presents_pc34_compat.py
         )
         set_tests_properties(pass837_dm1_v1_box_title_presents PROPERTIES DEPENDS dm1_v1_box_title_presents_pc34_compat)
+        add_test(
+            NAME pass838_dm1_v1_box_entrance_opening_door_left
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass838_dm1_v1_box_entrance_opening_door_left_pc34_compat.py
+        )
+        set_tests_properties(pass838_dm1_v1_box_entrance_opening_door_left PROPERTIES DEPENDS dm1_v1_box_entrance_opening_door_left_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
