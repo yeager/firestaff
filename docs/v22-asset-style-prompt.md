@@ -30,8 +30,9 @@
 - **Size:** 2048x1152 för hero/establishing, 1024x1024 för tiles, 1024x1536 för creatures/items
 - **Quality:** high
 - **Format:** png
-- **Background:** opaque för miljöer, transparent för creatures/items
+- **Background:** **opaque** (all assets — `gpt-image-2` does NOT support `background: transparent` and silently ignores it; verified via `sips -g hasAlpha` on 19 generated PNGs across batches 1–4)
 - **Count:** 1 (kör fler prompts parallellt för batch)
+- **aspectRatio:** ignored (warning shown in completion event; rely on `size` instead)
 
 ## Output Path
 
@@ -94,3 +95,22 @@ matcha V2.2-generering mot rätt original.
 - DM1 sprites: `.openclaw/tmp/dm1-sprites/` (543 PNG, manifest.json)
 - V2.2 output: `~/.openclaw/media/tool-image-generation/firestaff-v22-*.png`
 - Batch progress: `docs/v22-batch-progress.md`
+
+## Model Constraints — gpt-image-2 (2026-06-19)
+
+- **`background: transparent` is NOT supported.** HTTP 400 ("Transparent
+  background is not supported for this model"). Verified across batches 1–4:
+  all 19 generated PNGs have `hasAlpha=no` regardless of the `background`
+  parameter passed in `image_generate`.
+- **Fix:** use `background: opaque` (or omit — default is opaque). All V2.2
+  assets are designed for an opaque dark backdrop. When integrating V22
+  assets into the V1 draw pipeline, treat them as opaque sprites
+  (composite directly, no alpha-blend math needed).
+- **`aspectRatio` is silently ignored** — gpt-image-2 ignores `aspectRatio`
+  and uses `size` instead. Completion events include a warning:
+  "Ignored unsupported overrides for openai/gpt-image-2: aspectRatio=N:N".
+  Trust `size` for the actual output dimensions.
+- **Output filenames get a UUID suffix.** The `filename` parameter is a
+  basename hint, not an exact name. Output file is always
+  `firestaff-v22-<name>-<NN>---<UUID>.png`. Use the basename when copying
+  to `~/.firestaff/assets/<game>/modern/<category>/<id>.png`.
