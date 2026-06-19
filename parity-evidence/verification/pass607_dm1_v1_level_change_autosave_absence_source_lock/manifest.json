@@ -12,7 +12,7 @@
       "line": 2368
     }
   ],
-  "gitHeadAtVerification": "0a5911ce0e38a2e94646b5b2ba0eae8ece51fd8d",
+  "gitHeadAtVerification": "3150e5bd40b1c7df0e1e7e7d359259c67909a2ca",
   "schema": "firestaff.parity.pass607.level_change_autosave_absence.v1",
   "scope": "DM1 V1 ordinary stairs/pit/teleporter level-change autosave absence",
   "sourceAudit": {
@@ -103,6 +103,6 @@
     }
   },
   "status": "PASS607_DM1_V1_LEVEL_CHANGE_AUTOSAVE_ABSENCE_SOURCE_LOCKED",
-  "timestampUtc": "2026-06-19T09:54:01.788739+00:00",
+  "timestampUtc": "2026-06-19T10:00:53.271167+00:00",
   "worktree": "/Users/bosse/.openclaw/workspace-main"
 }
