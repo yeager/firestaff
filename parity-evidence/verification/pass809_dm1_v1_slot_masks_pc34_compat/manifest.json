@@ -111,14 +111,12 @@
     {
       "file": "CMakeLists.txt",
       "id": "cmake_registration",
-      "missing": [
-        "verify_pass809_dm1_v1_slot_masks_pc34_compat"
-      ],
-      "status": "FAIL"
+      "missing": [],
+      "status": "PASS"
     }
   ],
-  "status": "FAILED_PASS809_DM1_V1_SLOT_MASKS_LOCKED",
-  "timestampUtc": "2026-06-19T13:01:43.348580+00:00",
+  "status": "PASS809_DM1_V1_SLOT_MASKS_LOCKED",
+  "timestampUtc": "2026-06-19T15:57:49.862854+00:00",
   "verificationRuns": [
     {
       "command": [
