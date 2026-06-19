@@ -236,3 +236,56 @@ creature variant. The other 4 batch 3 pieces are PBR-consistent.
 2. More floor variants: `floor_pit_hero_01.png`, `floor_cracked_hero_01.png`
 3. `wall_d3_carved_alt_hero_01.png` — different carving pattern
 4. More creatures: `creature_screamer_hero_01.png`, `creature_giant_rat_hero_01.png`, `creature_mummy_hero_01.png`
+
+## Hero art batch 4 (2026-06-19) — 6 PBR variants installed
+
+6 more `gpt-image-2` PBR hero variants generated + installed (mummy +
+carved_alt deferred to batch 5 to keep batch 4 focused on the originally
+listed candidates).
+
+| Hero asset | Reference sprite | Vision score | Notes |
+|------------|------------------|--------------|-------|
+| `champion_portraits/champion_ninja_hero_01.png` | (no DM1 ninja; closest sprite_0378 knight+cape) | 20/20 | First batch-4 retry succeeded after the transparent-bg fix |
+| `champion_portraits/champion_priest_hero_01.png` | (no DM1 priest; closest sprite_0378 knight+cape) | 19/20 | Slight pedestal base, otherwise excellent |
+| `creature_shapes/creature_screamer_hero_01.png` | (no DM1 screamer; closest sprite_0372 demon) | 19/20 | Slight wing cropping at frame edges |
+| `creature_shapes/creature_giant_rat_hero_01.png` | (no DM1 rat; closest sprite_0371 small creature) | 20/20 | Strong grotesque rat, excellent PBR |
+| `floor_shapes/floor_cracked_hero_01.png` | sprite_0097 corridor floor base | 18/20 | Strong central torchlight hotspot may reveal seams when tiled — OK as hero variant, not as repeatable base |
+| `floor_shapes/floor_pit_hero_01.png` | sprite_0098 floor pit edge | 18/20 | Unique edge stones limit seamless tiling — works as a single special-tile accent, not as a repeating base |
+
+**Total V2.2 hero art count: 19** (3 batch 1 + 5 batch 2 + 5 batch 3 + 6 batch 4).
+**Total V2.2 asset pack entries: 29** across 6 categories (wall_shapes 6, floor_shapes 7, creature_shapes 8, ui_chrome 3, champion_portraits 4, door_shapes 1).
+
+**Manifest upgraded to v1.4.0.** All 6 new entries follow the
+validator-friendly single-line format used since v1.2. `m11_v22_validate_manifest()`
+returns 1, `m11_v22_modern_assets_available()` returns 1 for the real DM1 data dir.
+
+**Important model finding (2026-06-19):** `openai/gpt-image-2` does
+**NOT** support `background: transparent` (HTTP 400: "Transparent
+background is not supported for this model"). All 6 batch 4 portraits
+were initially generated with `background: transparent` per
+`docs/v22-asset-style-prompt.md` and failed identically. After
+retrying all 4 with `background: opaque` they succeeded on the first
+attempt. Verified via `sips -g hasAlpha` that **all 13 prior PBR
+variants (batches 1-3) also have `hasAlpha: no`** — the
+"transparent för creatures/items" guidance in the style prompt has
+been silently ignored by the model this entire time. Style prompt
+needs an update: opaque dark backdrop is the actual default. Floor
+tiles are unaffected (already opaque).
+
+**Side-by-side comparisons:** `docs/v22-compare/compare_index.json`
+gains `hero_batch_4_pairs` array of 6 entries. Side-by-side
+comparison images not auto-generated for this batch (was a manual
+image compose step in earlier batches; deferred until a fresh batch
+generates the comparison images).
+
+**Test verification:** `test_dm1_v22_verification` 7/7 sections pass
+after manifest bump. `ctest -R v22_` 4/4 green (csb_v22_shapes,
+theron_v22_shapes, m11_v22_shape_cache, m11_v22_render_overlay).
+
+**Batch 5 candidates (next):**
+1. `wall_d3_carved_alt_hero_01.png` — different carving pattern
+2. `creature_mummy_hero_01.png` (carried over from batch 4 list)
+3. `creature_ooze_hero_01.png` or `creature_snake_hero_01.png`
+4. `champion_sorcerer_hero_01.png` or `champion_bard_hero_01.png`
+5. More floor/wall variants: `floor_stairs_up_hero_01.png`,
+   `wall_d3_altar_hero_01.png`

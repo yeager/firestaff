@@ -123,5 +123,37 @@
       "dm1_sprite": "sprite_0093_33x136.png",
       "description": "heavy door (hero PBR, no DM1 door ref \u2014 closest is sprite_0093 wall-edge)"
     }
+  ],
+  "hero_batch_4_pairs": [
+    {
+      "v22": "champion_portraits/champion_ninja_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "ninja champion (hero PBR, no DM1 ninja ref \u2014 closest is sprite_0378 knight+cape, vision 20/20)"
+    },
+    {
+      "v22": "champion_portraits/champion_priest_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "priest champion with spellbook (hero PBR, no DM1 priest ref \u2014 closest is sprite_0378 knight+cape, vision 19/20)"
+    },
+    {
+      "v22": "creature_shapes/creature_screamer_hero_01.png",
+      "dm1_sprite": "sprite_0372_96x111.png",
+      "description": "flying screamer demon (hero PBR, no DM1 screamer ref \u2014 closest is sprite_0372 demon, vision 19/20, slight wing cropping)"
+    },
+    {
+      "v22": "creature_shapes/creature_giant_rat_hero_01.png",
+      "dm1_sprite": "sprite_0371_16x111.png",
+      "description": "giant rat creature (hero PBR, no DM1 rat ref \u2014 closest is sprite_0371 small creature, vision 20/20)"
+    },
+    {
+      "v22": "floor_shapes/floor_cracked_hero_01.png",
+      "dm1_sprite": "sprite_0097_160x111.png",
+      "description": "cracked stone floor (hero PBR, matches sprite_0097 corridor floor base, vision 18/20 \u2014 strong central hotspot may reveal seams when tiled)"
+    },
+    {
+      "v22": "floor_shapes/floor_pit_hero_01.png",
+      "dm1_sprite": "sprite_0098_8x52.png",
+      "description": "ominous floor pit (hero PBR, matches sprite_0098 floor pit edge, vision 18/20 \u2014 unique edge stones limit seamless tiling)"
+    }
   ]
 }
