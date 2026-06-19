@@ -335,3 +335,25 @@ theron_v22_shapes, m11_v22_shape_cache, m11_v22_render_overlay).
 **Compare index**: `docs/v22-compare/compare_index.json` gains `theron_hero_batch_1_pairs` array of 6 entries.
 
 **Note on regeneration**: The first `floor_forest_theron_hero_01` came out as dungeon stone (11/20 — model interpreted "ancient forest stone slabs" as masonry, not forest soil). Regenerated with an explicit forest-soil prompt (leaves, twigs, ferns, mushroom caps, exposed roots, dappled sunlight, NOT dungeon stone NOT carved masonry) → 18/20. Pattern for future floor tiles: explicit "OUTDOOR woodland forest floor only" + "NOT dungeon stone" works much better than subtle hints.
+
+## Nexus hero art batch 1 (2026-06-19) — 6 PBR variants installed
+
+6 `gpt-image-2` PBR hero variants generated + installed for Nexus V2.2 (parallel to DM1 batches 1-4). Saturn VDP1/VDP2-specific palette accents: NEXUS_CYAN (cyber-blue), NEXUS_VIOLET (hazard energy), NEXUS_STONE (sci-fi dungeon).
+
+| Hero asset | Reference sprite (closest DM1) | Vision score | Notes |
+|------------|--------------------------------|--------------|-------|
+| `champion_portraits/champion_ninja_nexus_hero_01.png` | sprite_0378 | 17/20 | Good stealth champion, slightly medieval-leaning |
+| `champion_portraits/champion_priest_nexus_hero_01.png` | sprite_0378 | 16/20 | Strong cleric vibe, leans medieval more than Saturn sci-fi |
+| `creature_shapes/creature_rat_nexus_hero_01.png` | sprite_0371 | 17/20 | Strong monster, violet corruption veins carry Nexus palette |
+| `creature_shapes/creature_screamer_nexus_hero_01.png` | sprite_0372 | 14/20 | Generic demon, less Saturn-specific than intended |
+| `floor_shapes/floor_corridor_nexus_hero_01.png` | sprite_0097 | 18/20 | Strong sci-fi dungeon floor (explicit "NOT dungeon stone" prompt worked) |
+| `wall_shapes/wall_altar_nexus_hero_01.png` | sprite_0093 | 15/20 | Strong sci-fi dungeon wall but lacks clear altar focal point |
+
+**Total Nexus V2.2 hero art count: 6** (all in this batch).
+**Total Nexus V2.2 asset pack entries: 11** (5 procedural from v1.0.0 + 6 PBR from this batch).
+**Manifest v1.1.0** validates as complete (`nexus_v22_validate_manifest()` returns 1).
+**End-to-end smoke**: `nexus_v22_modern_assets_available()=1` against real Nexus data dir.
+
+**Vision score summary**: 97/120 (16.2/20 average). Lower than Theron (18.3) and CSB (17.5) because gpt-image-2 leans toward "medieval dungeon" interpretation when prompted with "Saturn sci-fi dungeon" — Saturn/Nexus sci-fi specificity is hard to convey in a text prompt without heavy styling. Hero variants still acceptable: palette accents (cyan/violet) carry the Nexus vibe even when the underlying composition is medieval-leaning. Floor_corridor (18/20) was the strongest asset thanks to the explicit "Metallic futuristic dungeon floor only" prompt that successfully avoided dungeon-stone misinterpretation.
+
+**Compare index**: `docs/v22-compare/compare_index.json` gains `nexus_hero_batch_1_pairs` array of 6 entries.

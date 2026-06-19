@@ -219,5 +219,37 @@
       "dm1_sprite": "sprite_0093_33x136.png",
       "description": "Theron dungeon wall with sun-gold symbols and wood beams (hero PBR, no Theron wall ref, vision 20/20)"
     }
+  ],
+  "nexus_hero_batch_1_pairs": [
+    {
+      "v22": "champion_portraits/champion_ninja_nexus_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "Nexus ninja champion with nexus-cyan accents (hero PBR, no Nexus ninja ref \u2014 closest DM1 sprite_0378, vision 17/20)"
+    },
+    {
+      "v22": "champion_portraits/champion_priest_nexus_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "Nexus priest champion with nexus-cyan spellbook (hero PBR, no Nexus priest ref, vision 16/20)"
+    },
+    {
+      "v22": "creature_shapes/creature_rat_nexus_hero_01.png",
+      "dm1_sprite": "sprite_0371_16x111.png",
+      "description": "Nexus giant rat with nexus-violet corruption veins (hero PBR, no Nexus rat ref, vision 17/20)"
+    },
+    {
+      "v22": "creature_shapes/creature_screamer_nexus_hero_01.png",
+      "dm1_sprite": "sprite_0372_96x111.png",
+      "description": "Nexus flying screamer with nexus-violet energy aura (hero PBR, no Nexus screamer ref, vision 14/20 \u2014 generic demon)"
+    },
+    {
+      "v22": "floor_shapes/floor_corridor_nexus_hero_01.png",
+      "dm1_sprite": "sprite_0097_160x111.png",
+      "description": "Nexus sci-fi metal floor tile with nexus-violet energy lines (hero PBR, no Nexus floor ref, vision 18/20)"
+    },
+    {
+      "v22": "wall_shapes/wall_altar_nexus_hero_01.png",
+      "dm1_sprite": "sprite_0093_33x136.png",
+      "description": "Nexus sci-fi dungeon wall with nexus-cyan conduits (hero PBR, no Nexus altar/wall ref, vision 15/20 \u2014 wall panels not focal altar)"
+    }
   ]
 }
