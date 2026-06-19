@@ -90,7 +90,7 @@ def main() -> None:
 
     local_checks = {
         "touch_header_uses_queue": [
-            (touch_h, '#include "include/dm1_v1_input_command_queue_pc34_compat.h"'),
+            (touch_h, '#include "dm1_v1_input_command_queue_pc34_compat.h"'),
             (touch_h, "TOUCHPOINTER_Compat_EnqueueEventToInputCommandQueue"),
         ],
         "touch_translation_and_enqueue": [
