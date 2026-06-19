@@ -1,0 +1,149 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:45",
+    "DATA.C:359",
+    "DATA.C:1088",
+    "PANEL.C:412",
+    "CHAMPION.C:529/645",
+    "MENU.C:1608/1936/1941",
+    "TIMELINE.C:1754"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + auto-chest + chest-open-stack-split).",
+    "Not pass798 (icon-graphic-first-icon-index).",
+    "Not pass800 (slot-boxes)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:45",
+      "line": 45,
+      "lineText": "int16_t G0039_ai_Graphic562_LightPowerToLightAmount[16];",
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:359",
+      "line": 359,
+      "lineText": "int16_t G0039_ai_Graphic562_LightPowerToLightAmount[16] = { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 };",
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1088",
+      "line": 1088,
+      "lineText": "int16_t G0039_ai_Graphic562_LightPowerToLightAmount[16] = { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 };",
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:412",
+      "line": 412,
+      "lineText": "                                L1036_i_TotalLightAmount += (G0039_ai_Graphic562_LightPowerToLightAmount[*AL1040_pi_TorchLightPower] << L1037_ui_TorchLightAmountMultiplier) >> 6;",
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:529",
+      "line": 529,
+      "lineText": "                        G0407_s_Party.MagicalLightAmount -= G0039_ai_Graphic562_LightPowerToLightAmount[2];",
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:645",
+      "line": 645,
+      "lineText": "                                G0407_s_Party.MagicalLightAmount += G0039_ai_Graphic562_LightPowerToLightAmount[2];",
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MENU.C",
+      "id": "MENU.C:1608",
+      "line": 1608,
+      "lineText": "                        G0407_s_Party.MagicalLightAmount += G0039_ai_Graphic562_LightPowerToLightAmount[2];",
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MENU.C",
+      "id": "MENU.C:1936",
+      "line": 1936,
+      "lineText": "                                        G0407_s_Party.MagicalLightAmount += G0039_ai_Graphic562_LightPowerToLightAmount[AL1267_ui_LightPower];",
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MENU.C",
+      "id": "MENU.C:1941",
+      "line": 1941,
+      "lineText": "                                        G0407_s_Party.MagicalLightAmount -= G0039_ai_Graphic562_LightPowerToLightAmount[AL1267_ui_LightPower];",
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TIMELINE.C",
+      "id": "TIMELINE.C:1754",
+      "line": 1754,
+      "lineText": "        AL0674_i_LightAmount = G0039_ai_Graphic562_LightPowerToLightAmount[AL0674_i_LightPower] - G0039_ai_Graphic562_LightPowerToLightAmount[L0673_i_WeakerLightPower];",
+      "needle": "G0039_ai_Graphic562_LightPowerToLightAmount",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass801_dm1_v1_light_power_to_light_amount_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0039_ai_Graphic562_LightPowerToLightAmount[16] = {0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100}. Read sites: PANEL.C:412 (F0337_INVENTORY_SetDungeonViewPalette torch sum), CHAMPION.C:529/645 (Illumulet equip delta = G0039[2] = 12), MENU.C:1608 (Light spell +12), MENU.C:1936/1941 (MagicTorch / Darkness spell deltas), TIMELINE.C:1754 (light-event tick diff = G0039[Strong] - G0039[Weaker]).",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_light_power_to_light_amount_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_light_power_to_light_amount_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/light_power_to_light_amount_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_light_power_to_light_amount_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS801_DM1_V1_LIGHT_POWER_TO_LIGHT_AMOUNT_LOCKED",
+  "timestampUtc": "2026-06-19T07:54:37.810540+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_light_power_to_light_amount_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_light_power_to_light_amount: 126/126 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

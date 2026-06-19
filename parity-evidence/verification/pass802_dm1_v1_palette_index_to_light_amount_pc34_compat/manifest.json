@@ -1,0 +1,115 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:46",
+    "DATA.C:360",
+    "DATA.C:1089",
+    "PANEL.C:419-423"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + auto-chest + chest-open-stack-split).",
+    "Not pass798 (icon-graphic-first-icon-index).",
+    "Not pass800 (slot-boxes).",
+    "Not pass801 (light-power-to-light-amount)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:46",
+      "line": 46,
+      "lineText": "int16_t G0040_ai_Graphic562_PaletteIndexToLightAmount[6];",
+      "needle": "G0040_ai_Graphic562_PaletteIndexToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:360",
+      "line": 360,
+      "lineText": "int16_t G0040_ai_Graphic562_PaletteIndexToLightAmount[6] = { 99, 75, 50, 25, 1, 0 };",
+      "needle": "G0040_ai_Graphic562_PaletteIndexToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1089",
+      "line": 1089,
+      "lineText": "int16_t G0040_ai_Graphic562_PaletteIndexToLightAmount[6] = { 99, 75, 50, 25, 1, 0 };",
+      "needle": "G0040_ai_Graphic562_PaletteIndexToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:419",
+      "line": 419,
+      "lineText": "                AL1040_pi_LightAmount = G0040_ai_Graphic562_PaletteIndexToLightAmount;",
+      "needle": "G0040_ai_Graphic562_PaletteIndexToLightAmount",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:421",
+      "line": 421,
+      "lineText": "                        AL1039_ui_PaletteIndex = 0; /* Brightest color palette index */",
+      "needle": "while (*AL1040_pi_LightAmount++",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:423",
+      "line": 423,
+      "lineText": "                                AL1039_ui_PaletteIndex++;",
+      "needle": "AL1039_ui_PaletteIndex",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass802_dm1_v1_palette_index_to_light_amount_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0040_ai_Graphic562_PaletteIndexToLightAmount[6] = {99, 75, 50, 25, 1, 0}. Read site: PANEL.C:419-423 \u2014 F0337_INVENTORY_SetDungeonViewPalette walks the table top-down with `while (*p++ > TotalLightAmount) PaletteIndex++` and assigns G0304_i_DungeonViewPaletteIndex.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_palette_index_to_light_amount_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_palette_index_to_light_amount_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/palette_index_to_light_amount_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_palette_index_to_light_amount_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS802_DM1_V1_PALETTE_INDEX_TO_LIGHT_AMOUNT_LOCKED",
+  "timestampUtc": "2026-06-19T07:54:37.843470+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_palette_index_to_light_amount_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_palette_index_to_light_amount: 82/82 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

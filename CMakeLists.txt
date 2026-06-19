@@ -6976,6 +6976,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass801_dm1_v1_light_power_to_light_amount_pc34_compat.py
         )
         set_tests_properties(pass801_dm1_v1_light_power_to_light_amount PROPERTIES DEPENDS dm1_v1_light_power_to_light_amount_pc34_compat)
+        add_test(
+            NAME pass802_dm1_v1_palette_index_to_light_amount
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass802_dm1_v1_palette_index_to_light_amount_pc34_compat.py
+        )
+        set_tests_properties(pass802_dm1_v1_palette_index_to_light_amount PROPERTIES DEPENDS dm1_v1_palette_index_to_light_amount_pc34_compat)
     endif()
 endif()
 

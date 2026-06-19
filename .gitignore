@@ -200,6 +200,8 @@ __pycache__/
 !/parity-evidence/verification/pass800_dm1_v1_slot_boxes_pc34_compat/**
 !/parity-evidence/verification/pass801_dm1_v1_light_power_to_light_amount_pc34_compat/
 !/parity-evidence/verification/pass801_dm1_v1_light_power_to_light_amount_pc34_compat/**
+!/parity-evidence/verification/pass802_dm1_v1_palette_index_to_light_amount_pc34_compat/
+!/parity-evidence/verification/pass802_dm1_v1_palette_index_to_light_amount_pc34_compat/**
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/**
 !/parity-evidence/verification/pass799_dm1_v1_chest_open_stack_split_press_eye_pc34_compat/

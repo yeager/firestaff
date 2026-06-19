@@ -1,0 +1,123 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:36",
+    "DATA.C:264-309",
+    "OBJECT.C:435",
+    "OBJECT.C:521",
+    "CHAMDRAW.C:557",
+    "CHAMDRAW.C:562"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-796 (champion-panel/leader/mirror).",
+    "Not pass797 (icon-graphic-first-icon-index)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:36",
+      "line": 36,
+      "lineText": "SLOT_BOX G0030_as_Graphic562_SlotBoxes[46]; /* 8 for champion hands in status boxes, 30 for champion inventory, 8 for chest */",
+      "needle": "G0030_as_Graphic562_SlotBoxes",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:264",
+      "line": 264,
+      "lineText": "SLOT_BOX G0030_as_Graphic562_SlotBoxes[46] = { /* 8 for champion hands in status boxes, 30 for champion inventory, 8 for chest */",
+      "needle": "G0030_as_Graphic562_SlotBoxes",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:309",
+      "line": 309,
+      "lineText": "        { 179, 104, 0 }, /* Chest 7 */",
+      "needle": "Chest 8",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "id": "OBJECT.C:435",
+      "line": 435,
+      "lineText": "        L0017_ps_SlotBox = &G0030_as_Graphic562_SlotBoxes[P0047_ui_SlotBoxIndex];",
+      "needle": "G0030_as_Graphic562_SlotBoxes",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "id": "OBJECT.C:521",
+      "line": 521,
+      "lineText": "        return G0030_as_Graphic562_SlotBoxes[P0049_ui_SlotBoxIndex].IconIndex;",
+      "needle": "G0030_as_Graphic562_SlotBoxes[P0049_ui_SlotBoxIndex].IconIndex",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "id": "CHAMDRAW.C:557",
+      "line": 557,
+      "lineText": "        L0855_ps_SlotBox = &G0030_as_Graphic562_SlotBoxes[L0856_ui_SlotBoxIndex];",
+      "needle": "G0030_as_Graphic562_SlotBoxes",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "id": "CHAMDRAW.C:562",
+      "line": 562,
+      "lineText": "        F0619_GetSlotBoxBorderCoordinates(G0030_as_Graphic562_SlotBoxes[L0856_ui_SlotBoxIndex].ZoneIndex, L2255_ai_XYZ);",
+      "needle": "G0030_as_Graphic562_SlotBoxes",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass800_dm1_v1_slot_boxes_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0030_as_Graphic562_SlotBoxes[46] \u2014 the pixel-coordinate table for the 46 clickable slot boxes: 8 status-box hands (2 per champion * up to 4 champions), 30 inventory slots, and 8 chest slots. Each entry is a SLOT_BOX { X, Y, ZoneIndex=0, IconIndex }. Read sites: OBJECT.C:435 (F0486_OBJECT_DrawSlotBoxAtSlotIndex), OBJECT.C:521 (F0488_OBJECT_GetSlotBoxIconIndex), CHAMDRAW.C:557 (F0487 status-box drawing), CHAMDRAW.C:562 (F0619_GetSlotBoxBorderCoordinates(ZoneIndex)).",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_slot_boxes_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_slot_boxes_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/slot_boxes_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_slot_boxes_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS800_DM1_V1_SLOT_BOXES_LOCKED",
+  "timestampUtc": "2026-06-19T07:54:37.769091+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_slot_boxes_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_slot_boxes: 565/565 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

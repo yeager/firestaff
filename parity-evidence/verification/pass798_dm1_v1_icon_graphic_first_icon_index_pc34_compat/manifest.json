@@ -1,0 +1,129 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:32",
+    "DATA.C:253-260",
+    "OBJECT.C:312-319",
+    "OBJECT.C:455-467",
+    "OBJECT.C:521"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-796 (champion-panel/leader/mirror)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:32",
+      "line": 32,
+      "lineText": "int16_t G0026_ai_Graphic562_IconGraphicFirstIconIndex[7];",
+      "needle": "G0026_ai_Graphic562_IconGraphicFirstIconIndex",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:253",
+      "line": 253,
+      "lineText": "int16_t G0026_ai_Graphic562_IconGraphicFirstIconIndex[7] = {",
+      "needle": "G0026_ai_Graphic562_IconGraphicFirstIconIndex",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:260",
+      "line": 260,
+      "lineText": "        192 }; /* First icon index in graphic #48 */",
+      "needle": "192",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "id": "OBJECT.C:315",
+      "line": 315,
+      "lineText": "                if (G0026_ai_Graphic562_IconGraphicFirstIconIndex[L0011_ui_Counter] > P0042_ui_IconIndex)",
+      "needle": "G0026_ai_Graphic562_IconGraphicFirstIconIndex",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "id": "OBJECT.C:319",
+      "line": 319,
+      "lineText": "        P0042_ui_IconIndex -= G0026_ai_Graphic562_IconGraphicFirstIconIndex[L0011_ui_Counter];",
+      "needle": "G0026_ai_Graphic562_IconGraphicFirstIconIndex",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "id": "OBJECT.C:458",
+      "line": 458,
+      "lineText": "                if (G0026_ai_Graphic562_IconGraphicFirstIconIndex[L0015_ui_IconGraphicIndex] > P0048_IconIndex)",
+      "needle": "G0026_ai_Graphic562_IconGraphicFirstIconIndex",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "id": "OBJECT.C:467",
+      "line": 467,
+      "lineText": "        P0048_IconIndex -= G0026_ai_Graphic562_IconGraphicFirstIconIndex[L0015_ui_IconGraphicIndex];",
+      "needle": "G0026_ai_Graphic562_IconGraphicFirstIconIndex",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "id": "OBJECT.C:521",
+      "line": 521,
+      "lineText": "        return G0030_as_Graphic562_SlotBoxes[P0049_ui_SlotBoxIndex].IconIndex;",
+      "needle": "G0030_as_Graphic562_SlotBoxes[P0049_ui_SlotBoxIndex].IconIndex",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0026_ai_Graphic562_IconGraphicFirstIconIndex[7] = {0, 32, 64, 96, 128, 160, 192} \u2014 the 32-icon stride between graphics #42..#48. OBJECT.C F0489_MEMORY_GetNativeBitmapOrGraphicIcon walks G0026 in a 7-iteration loop (OBJECT.C:312-319 and OBJECT.C:455-467) to find the icon-graphic block + within-block offset for each icon index. Disjoint from pass784-792 + pass793-796.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_icon_graphic_first_icon_index_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_icon_graphic_first_icon_index_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/icon_graphic_first_icon_index_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_icon_graphic_first_icon_index_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS798_DM1_V1_ICON_GRAPHIC_FIRST_ICON_INDEX_LOCKED",
+  "timestampUtc": "2026-06-19T07:54:37.736550+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_icon_graphic_first_icon_index_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_icon_graphic_first_icon_index: 86/86 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
