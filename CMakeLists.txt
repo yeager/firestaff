@@ -7721,6 +7721,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass821_dm1_v1_palette_dungeon_view PROPERTIES DEPENDS dm1_v1_palette_dungeon_view_pc34_compat)
         add_test(
+            NAME pass830_dm1_v1_box_spell_area
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass830_dm1_v1_box_spell_area_pc34_compat.py
+        )
+        set_tests_properties(pass830_dm1_v1_box_spell_area PROPERTIES DEPENDS dm1_v1_box_spell_area_pc34_compat)
+        add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
         )
