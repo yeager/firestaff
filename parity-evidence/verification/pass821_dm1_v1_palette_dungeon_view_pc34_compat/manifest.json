@@ -1,0 +1,130 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:27",
+    "DATA.C:218",
+    "DATA.C:833",
+    "BASE.C:968",
+    "DRAWVIEW.C:744/776/880/1040"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-820 (Graphics.dat init-table gates batches 1+2+3+4+5+6+7+8)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:27",
+      "line": 27,
+      "lineText": "unsigned int16_t G0021_aaui_Graphic562_Palette_DungeonView[6][16];",
+      "needle": "G0021_aaui_Graphic562_Palette_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:218",
+      "line": 218,
+      "lineText": "unsigned int16_t G0021_aaui_Graphic562_Palette_DungeonView[6][16] = {",
+      "needle": "G0021_aaui_Graphic562_Palette_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:833",
+      "line": 833,
+      "lineText": "unsigned int16_t G0021_aaui_Graphic562_Palette_DungeonView[6][16] = {",
+      "needle": "G0021_aaui_Graphic562_Palette_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/BASE.C",
+      "id": "BASE.C:968",
+      "line": 968,
+      "lineText": "                lea     G0021_aaui_Graphic562_Palette_DungeonView(A4),A0        /* Address of an array of 6 color palettes for dungeon view, depending on light in the dungeon */",
+      "needle": "G0021_aaui_Graphic562_Palette_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "id": "DRAWVIEW.C:744",
+      "line": 744,
+      "lineText": "                F0007_MAIN_CopyBytes(G0021_aaui_Graphic562_Palette_DungeonView[G0304_i_DungeonViewPaletteIndex], G3949_pui_Palette_MiddleScreen, 32);",
+      "needle": "G0021_aaui_Graphic562_Palette_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "id": "DRAWVIEW.C:776",
+      "line": 776,
+      "lineText": "                G1010_pui_DungeonViewCurrentPalette = G0021_aaui_Graphic562_Palette_DungeonView[G0304_i_DungeonViewPaletteIndex];",
+      "needle": "G0021_aaui_Graphic562_Palette_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "id": "DRAWVIEW.C:880",
+      "line": 880,
+      "lineText": "                        L2418_pui_ = G0021_aaui_Graphic562_Palette_DungeonView[G3117_ = G0304_i_DungeonViewPaletteIndex];",
+      "needle": "G0021_aaui_Graphic562_Palette_DungeonView",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "id": "DRAWVIEW.C:1040",
+      "line": 1040,
+      "lineText": "                G3123_PaletteSourceForMiddleScreen = G0021_aaui_Graphic562_Palette_DungeonView[G0304_i_DungeonViewPaletteIndex];",
+      "needle": "G0021_aaui_Graphic562_Palette_DungeonView",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass821_dm1_v1_palette_dungeon_view_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0021_aaui_Graphic562_Palette_DungeonView[6][16]. The 6-row \u00d7 16-col dungeon-view palette table (12-bit RGB, 4 bits per channel). Row 0 = brightest, row 5 = darkest. Current row selected by G0304_i_DungeonViewPaletteIndex based on dungeon light amount. Read sites: BASE.C:968 (address-of) + DRAWVIEW.C:744/776/880/1040 F0007_MAIN_CopyBytes(G0021[Idx], ...) selects the current palette based on dungeon light.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_palette_dungeon_view_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_palette_dungeon_view_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/palette_dungeon_view_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_palette_dungeon_view_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS821_DM1_V1_PALETTE_DUNGEON_VIEW_LOCKED",
+  "timestampUtc": "2026-06-19T15:38:01.329492+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_palette_dungeon_view_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_palette_dungeon_view: 329/329 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

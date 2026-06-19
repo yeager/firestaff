@@ -3025,6 +3025,29 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_palette_entrance_pc34_compat
     )
 
+    # DM1 V1 palette-dungeon-view: Graphics.dat item 562 init var
+    # G0021_aaui_Graphic562_Palette_DungeonView[6][16] = the 6-row
+    # × 16-col dungeon-view palette table. Each row is a 16-color
+    # palette (12-bit RGB, 4 bits per channel). The current row is
+    # selected by G0304_i_DungeonViewPaletteIndex based on dungeon
+    # light amount (row 0 = brightest, row 5 = darkest).
+    # Read sites: BASE.C:968 + DRAWVIEW.C:744/776/880/1040.
+    # Disjoint from pass784-790 + pass791-799 + pass798-820.
+    # Source-locked against DATA.C:27 + DATA.C:218-224 + DATA.C:833 +
+    # BASE.C:968 + DRAWVIEW.C:744/776/880/1040.
+    add_executable(test_dm1_v1_palette_dungeon_view_pc34_compat
+        tests/test_dm1_v1_palette_dungeon_view_pc34_compat.c
+        src/dm1/dm1_v1_palette_dungeon_view_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_dungeon_view_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_dungeon_view_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_dungeon_view_pc34_compat
+        COMMAND test_dm1_v1_palette_dungeon_view_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -7641,6 +7664,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass820_dm1_v1_palette_entrance_pc34_compat.py
         )
         set_tests_properties(pass820_dm1_v1_palette_entrance PROPERTIES DEPENDS dm1_v1_palette_entrance_pc34_compat)
+        add_test(
+            NAME pass821_dm1_v1_palette_dungeon_view
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass821_dm1_v1_palette_dungeon_view_pc34_compat.py
+        )
+        set_tests_properties(pass821_dm1_v1_palette_dungeon_view PROPERTIES DEPENDS dm1_v1_palette_dungeon_view_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
