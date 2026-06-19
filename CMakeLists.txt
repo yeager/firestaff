@@ -3134,6 +3134,27 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_box_entrance_dungeon_view_pc34_compat
     )
 
+    # DM1 V1 indirect-stop-expiring-event: Graphics.dat item 562
+    # init var G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE.
+    # A single int16_t copy-protection state flag initialized to
+    # C00555_FALSE. Read sites: MOVESENS.C:744/746 (with BUG0_00
+    # useless compare) + TIMELINE.C:1922 (write site, set to
+    # C00136_TRUE). Disjoint from pass784-790 + pass791-799 +
+    # pass798-833. Source-locked against DATA.C:28/232/874 +
+    # MOVESENS.C:744/746 + TIMELINE.C:1922.
+    add_executable(test_dm1_v1_indirect_stop_expiring_event_pc34_compat
+        tests/test_dm1_v1_indirect_stop_expiring_event_pc34_compat.c
+        src/dm1/dm1_v1_indirect_stop_expiring_event_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_indirect_stop_expiring_event_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_indirect_stop_expiring_event_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_indirect_stop_expiring_event_pc34_compat
+        COMMAND test_dm1_v1_indirect_stop_expiring_event_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -7804,6 +7825,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass833_dm1_v1_box_entrance_dungeon_view_pc34_compat.py
         )
         set_tests_properties(pass833_dm1_v1_box_entrance_dungeon_view PROPERTIES DEPENDS dm1_v1_box_entrance_dungeon_view_pc34_compat)
+        add_test(
+            NAME pass834_dm1_v1_indirect_stop_expiring_event
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass834_dm1_v1_indirect_stop_expiring_event_pc34_compat.py
+        )
+        set_tests_properties(pass834_dm1_v1_indirect_stop_expiring_event PROPERTIES DEPENDS dm1_v1_indirect_stop_expiring_event_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py

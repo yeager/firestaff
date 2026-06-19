@@ -1,0 +1,114 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:28",
+    "DATA.C:232",
+    "DATA.C:874",
+    "MOVESENS.C:744/746",
+    "TIMELINE.C:1922"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-833 (Graphics.dat init-table gates batches 1+2+3+4+5+6+7+8+9+10+11+12)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:28",
+      "line": 28,
+      "lineText": "int16_t G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE; /* This variable is necessary even if NOCOPYPROTECTION is defined because a value is loaded for it from graphic #562 */",
+      "needle": "G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:232",
+      "line": 232,
+      "lineText": "int16_t G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE = C00555_FALSE;",
+      "needle": "G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:874",
+      "line": 874,
+      "lineText": "int16_t G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE = C00555_FALSE;",
+      "needle": "G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "id": "MOVESENS.C:744",
+      "line": 744,
+      "lineText": "                if (G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE != C00555_FALSE) {",
+      "needle": "G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "id": "MOVESENS.C:746",
+      "line": 746,
+      "lineText": "                        G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE == C00555_FALSE; /* BUG0_00 Useless code */",
+      "needle": "G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TIMELINE.C",
+      "id": "TIMELINE.C:1922",
+      "line": 1922,
+      "lineText": "                                                G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE = C00136_TRUE;",
+      "needle": "G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass834_dm1_v1_indirect_stop_expiring_event_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0022_i_Graphic562_IndirectStopExpiringEvent_CPSE. A single int16_t copy-protection state flag initialized to C00555_FALSE. Read sites: MOVESENS.C:744/746 (with BUG0_00 useless compare) + TIMELINE.C:1922 (write site, set to C00136_TRUE when stop-event ticks).",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_indirect_stop_expiring_event_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_indirect_stop_expiring_event_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/indirect_stop_expiring_event_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_indirect_stop_expiring_event_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS834_DM1_V1_INDIRECT_STOP_EXPIRING_EVENT_LOCKED",
+  "timestampUtc": "2026-06-19T16:25:46.209447+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_indirect_stop_expiring_event_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_indirect_stop_expiring_event: 13/13 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
