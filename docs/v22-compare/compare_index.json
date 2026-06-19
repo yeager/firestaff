@@ -155,5 +155,37 @@
       "dm1_sprite": "sprite_0098_8x52.png",
       "description": "ominous floor pit (hero PBR, matches sprite_0098 floor pit edge, vision 18/20 \u2014 unique edge stones limit seamless tiling)"
     }
+  ],
+  "csb_hero_batch_1_pairs": [
+    {
+      "v22": "champion_portraits/champion_ninja_csb_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "CSB ninja champion with chaos-purple accents (hero PBR, no CSB ninja ref \u2014 closest DM1 sprite_0378 knight+cape, vision 19/20)"
+    },
+    {
+      "v22": "champion_portraits/champion_priest_csb_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "CSB priest champion with chaos-purple spellbook (hero PBR, no CSB priest ref, vision 18/20)"
+    },
+    {
+      "v22": "creature_shapes/creature_rat_csb_hero_01.png",
+      "dm1_sprite": "sprite_0371_16x111.png",
+      "description": "CSB chaos-corrupted giant rat (hero PBR, no CSB rat ref \u2014 closest DM1 sprite_0371 small creature, vision 18/20)"
+    },
+    {
+      "v22": "creature_shapes/creature_screamer_csb_hero_01.png",
+      "dm1_sprite": "sprite_0372_96x111.png",
+      "description": "CSB screamer demon with chaos-purple aura (hero PBR, no CSB screamer ref, vision 16/20 \u2014 reads more bat-demon than CSB-specific screamer)"
+    },
+    {
+      "v22": "floor_shapes/floor_corridor_csb_hero_01.png",
+      "dm1_sprite": "sprite_0097_160x111.png",
+      "description": "CSB chaos-rune floor tile (hero PBR, matches DM1 sprite_0097 corridor floor base, vision 15/20 \u2014 composition is top-down plate not corridor view)"
+    },
+    {
+      "v22": "wall_shapes/wall_altar_csb_hero_01.png",
+      "dm1_sprite": "sprite_0093_33x136.png",
+      "description": "CSB Lord Order altar wall tile with chaos-purple runes (hero PBR, no CSB altar ref \u2014 closest DM1 sprite_0093 wall-edge, vision 19/20)"
+    }
   ]
 }
