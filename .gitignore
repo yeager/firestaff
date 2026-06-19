@@ -212,6 +212,8 @@ __pycache__/
 !/parity-evidence/verification/pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat/**
 !/parity-evidence/verification/pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat/
 !/parity-evidence/verification/pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat/**
+!/parity-evidence/verification/pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat/
+!/parity-evidence/verification/pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat/**
 
 # DOSBox/debugger scratch memory dumps
 /MEMDUMP.TXT

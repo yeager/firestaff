@@ -84,9 +84,6 @@ dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_spec_pc34(
     void);
 
 const char *
-DM1_V1_MirrorCandidateC040StatusBoxClickWhilePanelLiveSourceEvidencePc34(void);
-
-const char *
 dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_source_evidence_pc34(
     void);
 
