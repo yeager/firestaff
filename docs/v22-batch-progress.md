@@ -311,3 +311,27 @@ theron_v22_shapes, m11_v22_shape_cache, m11_v22_render_overlay).
 **Vision score summary**: 105/120 (17.5/20 average). 4 assets at 18-20, 2 at 15-16 (screamer + corridor). Both are acceptable as hero variants — screamer is generic bat-demon but with CSB purple palette; corridor is top-down floor plate with CSB runes. Regeneration candidates if needed: creature_screamer_csb_hero_01 (would need explicit "CSB jail screamer, not generic bat-demon"), floor_corridor_csb_hero_01 (would need "narrow corridor perspective not top-down plate").
 
 **Compare index**: `docs/v22-compare/compare_index.json` gains `csb_hero_batch_1_pairs` array of 6 entries.
+
+## Theron hero art batch 1 (2026-06-19) — 6 PBR variants installed
+
+6 `gpt-image-2` PBR hero variants generated + installed for Theron V2.2 (parallel to DM1 batches 1-4). PCE/THQUEST-specific palette accents: SUN_GOLD (hero), TREE_BARK (forest), HERO_GOLD.
+
+| Hero asset | Reference sprite (closest DM1) | Vision score | Notes |
+|------------|--------------------------------|--------------|-------|
+| `champion_portraits/champion_ninja_theron_hero_01.png` | sprite_0378 | 19/20 | Excellent subject match, sun-gold accents |
+| `champion_portraits/champion_priest_theron_hero_01.png` | sprite_0378 | 19/20 | Strong priest with sun-gold spellbook glow |
+| `creature_shapes/creature_rat_theron_hero_01.png` | sprite_0371 | 17/20 | Aggressive giant rat, bark-brown tones |
+| `creature_shapes/creature_screamer_theron_hero_01.png` | sprite_0372 | 17/20 | Strong demon boss monster, sun-gold backlight |
+| `floor_shapes/floor_forest_theron_hero_01.png` | (no Theron floor ref) | 18/20 | Regenerated after first pass (11/20) read as dungeon stone; v2 has roots, leaves, ferns, mushrooms |
+| `wall_shapes/wall_dungeon_theron_hero_01.png` | sprite_0093 | 20/20 | Excellent Theron dungeon wall with sun-gold symbols and wood beams |
+
+**Total Theron V2.2 hero art count: 6** (all in this batch).
+**Total Theron V2.2 asset pack entries: 11** (5 procedural from v1.0.0 + 6 PBR from this batch).
+**Manifest v1.1.0** validates as complete (`theron_v22_validate_manifest()` returns 1).
+**End-to-end smoke**: `theron_v22_modern_assets_available()=1` against real Theron data dir.
+
+**Vision score summary**: 110/120 (18.3/20 average) — best Theron batch yet thanks to the floor_forest regeneration (11 → 18). 4 assets at 19-20, 1 at 18, 1 at 17.
+
+**Compare index**: `docs/v22-compare/compare_index.json` gains `theron_hero_batch_1_pairs` array of 6 entries.
+
+**Note on regeneration**: The first `floor_forest_theron_hero_01` came out as dungeon stone (11/20 — model interpreted "ancient forest stone slabs" as masonry, not forest soil). Regenerated with an explicit forest-soil prompt (leaves, twigs, ferns, mushroom caps, exposed roots, dappled sunlight, NOT dungeon stone NOT carved masonry) → 18/20. Pattern for future floor tiles: explicit "OUTDOOR woodland forest floor only" + "NOT dungeon stone" works much better than subtle hints.

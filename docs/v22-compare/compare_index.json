@@ -187,5 +187,37 @@
       "dm1_sprite": "sprite_0093_33x136.png",
       "description": "CSB Lord Order altar wall tile with chaos-purple runes (hero PBR, no CSB altar ref \u2014 closest DM1 sprite_0093 wall-edge, vision 19/20)"
     }
+  ],
+  "theron_hero_batch_1_pairs": [
+    {
+      "v22": "champion_portraits/champion_ninja_theron_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "Theron ninja champion with sun-gold accents (hero PBR, no Theron ninja ref \u2014 closest DM1 sprite_0378 knight+cape, vision 19/20)"
+    },
+    {
+      "v22": "champion_portraits/champion_priest_theron_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "Theron priest champion with sun-gold spellbook (hero PBR, no Theron priest ref, vision 19/20)"
+    },
+    {
+      "v22": "creature_shapes/creature_rat_theron_hero_01.png",
+      "dm1_sprite": "sprite_0371_16x111.png",
+      "description": "Theron giant rat with tree-bark brown tones (hero PBR, no Theron rat ref, vision 17/20)"
+    },
+    {
+      "v22": "creature_shapes/creature_screamer_theron_hero_01.png",
+      "dm1_sprite": "sprite_0372_96x111.png",
+      "description": "Theron flying screamer with sun-gold backlight (hero PBR, no Theron screamer ref, vision 17/20)"
+    },
+    {
+      "v22": "floor_shapes/floor_forest_theron_hero_01.png",
+      "dm1_sprite": "sprite_0097_160x111.png",
+      "description": "Theron outdoor forest floor (regenerated v2: roots, leaves, ferns, mushroom caps; vision 18/20; original v1 came out as dungeon stone 11/20)"
+    },
+    {
+      "v22": "wall_shapes/wall_dungeon_theron_hero_01.png",
+      "dm1_sprite": "sprite_0093_33x136.png",
+      "description": "Theron dungeon wall with sun-gold symbols and wood beams (hero PBR, no Theron wall ref, vision 20/20)"
+    }
   ]
 }
