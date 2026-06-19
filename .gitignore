@@ -252,6 +252,8 @@ __pycache__/
 !/parity-evidence/verification/pass834_dm1_v1_indirect_stop_expiring_event_pc34_compat/**
 !/parity-evidence/verification/pass835_dm1_v1_box_title_strikes_back_destination_pc34_compat/
 !/parity-evidence/verification/pass835_dm1_v1_box_title_strikes_back_destination_pc34_compat/**
+!/parity-evidence/verification/pass836_dm1_v1_box_title_strikes_back_source_pc34_compat/
+!/parity-evidence/verification/pass836_dm1_v1_box_title_strikes_back_source_pc34_compat/**
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/**
 !/parity-evidence/verification/pass799_dm1_v1_chest_open_stack_split_press_eye_pc34_compat/
@@ -268,6 +270,8 @@ __pycache__/
 !/parity-evidence/verification/pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat/**
 !/parity-evidence/verification/pass822_dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat/
 !/parity-evidence/verification/pass822_dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat/**
+!/parity-evidence/verification/pass836_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat/
+!/parity-evidence/verification/pass836_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat/**
 !/parity-evidence/verification/pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat/
 !/parity-evidence/verification/pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat/**
 !/parity-evidence/verification/pass809_dm1_v1_chest_close_stack_merge_pc34_compat/

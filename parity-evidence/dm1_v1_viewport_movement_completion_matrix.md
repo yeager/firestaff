@@ -1,7 +1,7 @@
 # DM1 V1 viewport/movement completion aggregate
 
 Status: `FAIL`
-Generated: `2026-06-19T16:47:42.628403+00:00`
+Generated: `2026-06-19T16:55:57.946529+00:00`
 
 ## ReDMCSB source audit
 - `PASS` `post_command_redraw_loop` — `GAMELOOP.C:55-90` `GAMELOOP main input/redraw loop`: main loop redraws viewport from the current party tuple before entering the input wait cycle
@@ -16,22 +16,22 @@ Generated: `2026-06-19T16:47:42.628403+00:00`
 
 ## Executable gates
 - `FAIL` `prepare_required_build` rc=`2`: configure/build movement targets required by chained gates
-  - /Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_box_title_presents_pc34_compat.c:137:14: error: no member named 'hIs105' in 'struct DM1_V1_BoxTitleStrikesBackSourceResultPc34'
-  -   137 |         out->hIs105 &&
-  -       |         ~~~  ^
-  - 2 errors generated.
+  - /Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_box_title_presents_pc34_compat.c:111:21: error: use of undeclared identifier 'DM1_V1_BOX_TITLE_STRIKES_BACK_SOURCE_PC34_COMPAT_SIZE'
+  -   111 |     for (i = 0; i < DM1_V1_BOX_TITLE_STRIKES_BACK_SOURCE_PC34_COMPAT_SIZE; ++i) {
+  -       |                     ^
+  - 5 errors generated.
   - gmake[3]: *** [CMakeFiles/firestaff_m10.dir/build.make:1409: CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_title_presents_pc34_compat.c.o] Error 1
-  - gmake[2]: *** [CMakeFiles/Makefile2:1258: CMakeFiles/firestaff_m10.dir/all] Error 2
-  - gmake[1]: *** [CMakeFiles/Makefile2:7069: CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/rule] Error 2
+  - gmake[2]: *** [CMakeFiles/Makefile2:1264: CMakeFiles/firestaff_m10.dir/all] Error 2
+  - gmake[1]: *** [CMakeFiles/Makefile2:7075: CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/rule] Error 2
   - gmake: *** [Makefile:2364: test_dm1_v1_input_command_queue_pc34_compat] Error 2
 - `PASS` `pass381_movement_viewport_walls_source_lock` rc=`0`: command queue -> movement/turn state -> viewport wall redraw and presentation source chain
 - `FAIL` `pass423_input_command_movement_pipeline_source_lock` rc=`1`: PC34 input, queue, F0380, F0365/F0366 and command-core regressions
-  -   137 |         out->hIs105 &&
-  -       |         ~~~  ^
-  - 2 errors generated.
+  -   111 |     for (i = 0; i < DM1_V1_BOX_TITLE_STRIKES_BACK_SOURCE_PC34_COMPAT_SIZE; ++i) {
+  -       |                     ^
+  - 5 errors generated.
   - gmake[3]: *** [CMakeFiles/firestaff_m10.dir/build.make:1409: CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_title_presents_pc34_compat.c.o] Error 1
-  - gmake[2]: *** [CMakeFiles/Makefile2:1258: CMakeFiles/firestaff_m10.dir/all] Error 2
-  - gmake[1]: *** [CMakeFiles/Makefile2:7069: CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/rule] Error 2
+  - gmake[2]: *** [CMakeFiles/Makefile2:1264: CMakeFiles/firestaff_m10.dir/all] Error 2
+  - gmake[1]: *** [CMakeFiles/Makefile2:7075: CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/rule] Error 2
   - gmake: *** [Makefile:2364: test_dm1_v1_input_command_queue_pc34_compat] Error 2
 - `PASS` `pass402_movement_cooldown_order` rc=`0` status `ok`: cooldown ageing before F0380 and no same-tick post-decrement
 - `PASS` `pass406_movement_legality_completion_gate` rc=`0`: party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain
