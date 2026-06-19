@@ -14,7 +14,7 @@ Scope: movement/forflyttning evidence only. This pass consumes pass373/pass374 a
 
 ## Current completion evidence consumed
 
-- FAIL pass373-live-route-wall-redraw-green
+- PASS pass373-live-route-wall-redraw-green
 - FAIL pass374-completion-credit-green
 - PASS completion-matrix-current-after-pass374
 - PASS completion-notes-name-next-gap
