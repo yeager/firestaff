@@ -854,11 +854,49 @@ static void m11_swsh_indexed_to_rgba(const unsigned char* indexed,
     }
 }
 
+/* Unpack a 4-bit-per-pixel Atari ST low-res buffer (160 bytes per row,
+ * 32000 bytes total for 320x200) into a 1-byte-per-pixel indexed
+ * framebuffer (320 bytes per row, 64000 bytes total).
+ *
+ * ReDMCSB SWSHGDAT.C FTL logo is 4bpp-packed in the IMG1 source. The
+ * SWSH_Compat_ExpandLogoToBitmap decode path emits 4bpp-packed pixels
+ * (matching the original Atari ST Physbase layout). The FTL swoosh
+ * renderer treats `screenFb` as 1-byte-per-pixel, so the packed buffer
+ * must be unpacked before indexed->RGBA conversion. Without this,
+ * pixels 160..319 of every row stay zero (logo only renders in the
+ * left half) and even pixels 0..159 show alternating nibbles (visible
+ * vertical stripes). ReDMCSB TITLE.C PC/F20 port uses the same Atari
+ * ST logo layout; see m11_unpack_title_4bpp_to_indexed for the same
+ * pattern used by the DM title animation.
+ *
+ * Source-lock: Atari ST VDI / LINEA: F0080_vq_extend / F0086_vs_clip
+ * low-res Physbase layout is 4 planes of (width+1)/2 bytes per row.
+ */
+static void m11_swsh_unpack_4bpp_to_indexed(const unsigned char* packed,
+                                           unsigned char* indexed) {
+    unsigned int y;
+    unsigned int x;
+    if (!packed || !indexed) return;
+    for (y = 0U; y < (unsigned int)M11_FB_HEIGHT; ++y) {
+        const unsigned char* src = packed + y * 160U;
+        unsigned char* dst = indexed + y * (unsigned int)M11_FB_WIDTH;
+        for (x = 0U; x < (unsigned int)M11_FB_WIDTH; x += 2U) {
+            unsigned char b = src[x >> 1];
+            dst[x]         = (unsigned char)((b >> 4) & 0x0Fu);
+            dst[x + 1U]    = (unsigned char)(b & 0x0Fu);
+        }
+    }
+}
+
 static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuState,
                                               const char* dataDir,
                                               int skipSwoosh) {
     char logoPath[FSP_PATH_MAX];
-    unsigned char* logoImg = NULL; unsigned char* screenFb = NULL; unsigned char* screenRgba = NULL; FILE* f = NULL; long fsize = 0;
+    unsigned char* logoImg = NULL;
+    unsigned char* screenFbPacked = NULL;
+    unsigned char* screenFbIndexed = NULL;
+    unsigned char* screenRgba = NULL;
+    FILE* f = NULL; long fsize = 0;
     const unsigned char* logoPayload = NULL;
     unsigned char swshPalette[16][3];
     if (skipSwoosh) return;
@@ -866,13 +904,25 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
     f = fopen(logoPath, "rb"); if (!f) return;
     fseek(f, 0, SEEK_END); fsize = ftell(f); fseek(f, 0, SEEK_SET);
     logoImg = (unsigned char*)malloc((size_t)fsize);
-    screenFb = (unsigned char*)calloc(1, (size_t)M11_FB_BYTES);
-    screenRgba = (unsigned char*)malloc((size_t)M11_FB_BYTES * 4U);
-    if (!logoImg || !screenFb || !screenRgba) goto cleanup;
+    /* Atari ST low-res FTL logo: 4bpp packed, 160 bytes/row, 32000 bytes total.
+     * Use a dedicated packed buffer for the SWSH_Compat_ExpandLogoToBitmap
+     * output (was previously aliased onto screenFb which is 1bpp). */
+    screenFbPacked  = (unsigned char*)malloc((size_t)(M11_FB_WIDTH * M11_FB_HEIGHT) / 2U);
+    /* 1-byte-per-pixel indexed framebuffer that m11_swsh_indexed_to_rgba reads. */
+    screenFbIndexed = (unsigned char*)calloc(1, (size_t)M11_FB_BYTES);
+    screenRgba      = (unsigned char*)malloc((size_t)M11_FB_BYTES * 4U);
+    if (!logoImg || !screenFbPacked || !screenFbIndexed || !screenRgba) goto cleanup;
     if (fread(logoImg, 1, (size_t)fsize, f) != (size_t)fsize) goto cleanup;
     logoPayload = SWSH_Compat_FindLogoImagePayload(logoImg, (unsigned int)fsize);
     if (!logoPayload) goto cleanup;
-    SWSH_Compat_ExpandLogoToBitmap(logoPayload, screenFb);
+    SWSH_Compat_ExpandLogoToBitmap(logoPayload, screenFbPacked);
+    /* BUG-PASS841-FIX: pass841 — the FTL swoosh logo was rendered as a
+     * half-blank vertically-striped image because the runtime treated
+     * the 4bpp-packed Atari ST low-res output of SWSH_Compat_ExpandLogoToBitmap
+     * as a 1-byte-per-pixel indexed framebuffer. Unpack 4bpp->1bpp before
+     * any palette/RGBA conversion. Without this, pixels 160..319 of every
+     * row stay zero and even pixels 0..159 show alternating nibbles. */
+    m11_swsh_unpack_4bpp_to_indexed(screenFbPacked, screenFbIndexed);
 
     /* ReDMCSB SWSH.C F2255:2975-3039 / DRAWVIEW.C G8162-G8171:
      * the PC/F20E path applies each Swoosh palette row before waiting
@@ -882,9 +932,8 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
     memset(swshPalette, 0, sizeof(swshPalette));
     {
       unsigned int sourceStep;
-      int paletteDirty = 0;
       SDL_Delay(20);
-      m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+      m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
       M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
       for (sourceStep = 1U; sourceStep <= SWSH_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
           SWSH_CompatSourceAnimationStep step;
@@ -893,20 +942,17 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
           if (step.kind == SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR) {
               SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(step.colorValue,
                                                        swshPalette[step.colorIndex & 0x0FU]);
-              m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
+              m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
               M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
-              paletteDirty = 0;
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS) {
               unsigned int vblank;
-              if (paletteDirty) {
-                  m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
-                  M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
-                  paletteDirty = 0;
-              }
               /* ReDMCSB SWSH.C:33-37: each Vsync wait is one 50 Hz vertical
                * blank (~20 ms).  Use wall-clock timing so high-refresh displays
                * (e.g. MacBook Pro 120 Hz ProMotion) do not race through the
-               * palette animation faster than the original Atari ST rate. */
+               * palette animation faster than the original Atari ST rate.
+               * The previous dead-code `paletteDirty` flag was removed:
+               * the WAIT_VBLANKS branch never had a palette to "re-render"
+               * because every SET_PALETTE_COLOR step renders its own frame. */
               for (vblank = 0U; vblank < step.vblankCount; ++vblank) {
                   Uint64 t0 = SDL_GetTicks();
                   SDL_Delay(16);  /* yield most of the 20 ms frame */
@@ -915,20 +961,17 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
                   }
               }
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM) {
-              if (paletteDirty) {
-                  m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
-                  M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
-                  paletteDirty = 0;
-              }
+              /* No palette was queued between the previous SET_PALETTE_COLOR
+               * and now (the dead paletteDirty=1 path was never reachable). */
           }
-      }
-      if (paletteDirty) {
-              m11_swsh_indexed_to_rgba(screenFb, screenRgba, swshPalette);
-              M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
       }
       SDL_Delay(120); }
 cleanup:
-    if (logoImg) free(logoImg); if (screenFb) free(screenFb); if (screenRgba) free(screenRgba); if (f) fclose(f);
+    if (logoImg) free(logoImg);
+    if (screenFbPacked) free(screenFbPacked);
+    if (screenFbIndexed) free(screenFbIndexed);
+    if (screenRgba) free(screenRgba);
+    if (f) fclose(f);
 }
 
 static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* gameView,
