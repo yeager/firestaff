@@ -7948,6 +7948,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass836_dm1_v1_box_title_strikes_back_source PROPERTIES DEPENDS dm1_v1_box_title_strikes_back_source_pc34_compat)
         add_test(
+            NAME pass837_dm1_v1_box_title_presents
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass837_dm1_v1_box_title_presents_pc34_compat.py
+        )
+        set_tests_properties(pass837_dm1_v1_box_title_presents PROPERTIES DEPENDS dm1_v1_box_title_presents_pc34_compat)
+        add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
         )

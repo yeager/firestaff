@@ -1,0 +1,121 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:11",
+    "DATA.C:129",
+    "DATA.C:549",
+    "TITLE.C:126/129/321/324"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-835 (Graphics.dat init-table gates batches 1+2+3+4+5+6+7+8+9+10+11+12+13+14)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:10",
+      "line": 10,
+      "lineText": "int16_t G0004_ai_Graphic562_Box_Title_StrikesBack_Source[4];",
+      "needle": "G0005_ai_Graphic562_Box_Title_Presents",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:127",
+      "line": 127,
+      "lineText": "int16_t G0008_ai_Graphic562_Box_Entrance_OpeningDoorRight[4] = { 109, 231, 0, 160 };",
+      "needle": "G0005_ai_Graphic562_Box_Title_Presents",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:547",
+      "line": 547,
+      "lineText": "int16_t G0005_ai_Graphic562_Box_Title_Presents[4] = { 0, 319, 90, 105 };",
+      "needle": "G0005_ai_Graphic562_Box_Title_Presents",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C",
+      "id": "TITLE.C:126",
+      "line": 126,
+      "lineText": "        F0132_VIDEO_Blit(L1384_puc_Bitmap_Title, G0348_Bitmap_Screen, G0005_ai_Graphic562_Box_Title_Presents, 0, 137, C160_BYTE_WIDTH_SCREEN, C160_BYTE_WIDTH_SCREEN, CM1_COLOR_NO_TRANSPARENCY);",
+      "needle": "G0005_ai_Graphic562_Box_Title_Presents",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C",
+      "id": "TITLE.C:129",
+      "line": 129,
+      "lineText": "        F0132_VIDEO_Blit(L1384_puc_Bitmap_Title, G0348_Bitmap_Screen, G0005_ai_Graphic562_Box_Title_Presents, 0, 137, C160_BYTE_WIDTH_SCREEN, C160_BYTE_WIDTH_SCREEN, CM1_COLOR_NO_TRANSPARENCY, C200_HEIGHT_SCREEN, C200_HEIGHT_SCREEN);",
+      "needle": "G0005_ai_Graphic562_Box_Title_Presents",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C",
+      "id": "TITLE.C:321",
+      "line": 321,
+      "lineText": "        F0132_VIDEO_Blit(L1384_puc_Bitmap_Title, G0348_Bitmap_Screen, G0005_ai_Graphic562_Box_Title_Presents, 0, 137, 320, G2071_C320_ScreenPixelWidth, CM1_COLOR_NO_TRANSPARENCY, MASK0x0000_NO_FLIP);",
+      "needle": "G0005_ai_Graphic562_Box_Title_Presents",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C",
+      "id": "TITLE.C:324",
+      "line": 324,
+      "lineText": "        F0132_VIDEO_Blit(L1384_puc_Bitmap_Title, G0348_Bitmap_Screen, G0005_ai_Graphic562_Box_Title_Presents, 0, 137, 320, G2071_C320_ScreenPixelWidth, CM1_COLOR_NO_TRANSPARENCY);",
+      "needle": "G0005_ai_Graphic562_Box_Title_Presents",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass837_dm1_v1_box_title_presents_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0005_ai_Graphic562_Box_Title_Presents[4] = {0, 319, 90, 105}. The {X, Y, W, H} byte-coordinate sub-rectangle for the Title-Presents title screen source blit. Read sites: TITLE.C:126/129/321/324 F0132_VIDEO_Blit(Title Presents source, G0005, 0, 80, C160_BYTE_WIDTH_SCREEN, C160_BYTE_WIDTH_SCREEN, CM1_COLOR_NO_TRANSPARENCY).",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_box_title_presents_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_box_title_presents_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/box_title_presents_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_box_title_presents_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS837_DM1_V1_BOX_TITLE_PRESENTS_LOCKED",
+  "timestampUtc": "2026-06-19T17:01:10.363464+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_box_title_presents_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_box_title_presents: 53/53 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
