@@ -2692,6 +2692,28 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_palette_index_to_light_amount_pc34_compat
     )
 
+    # DM1 V1 ordered-cells-to-attack: Graphics.dat item 562 init
+    # var G0023_aac_Graphic562_OrderedCellsToAttack[8][4] — the
+    # creature-AI attack-direction priority table. Each of the 8
+    # rows maps to (attack-direction, attacker-position) and holds
+    # 4 directional offsets to try in order. PROJEXPL.C F0229_GROUP_
+    # SetOrderedCellsToAttack copies the row to the caller's 4-byte
+    # buffer. Disjoint from pass784-790 + pass791-799 + pass798 +
+    # pass800 + pass801 + pass802. Source-locked against DATA.C:29 +
+    # DATA.C:234-243 + PROJEXPL.C:1302 + DEFS.H:7644.
+    add_executable(test_dm1_v1_ordered_cells_to_attack_pc34_compat
+        tests/test_dm1_v1_ordered_cells_to_attack_pc34_compat.c
+        src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_ordered_cells_to_attack_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_ordered_cells_to_attack_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_ordered_cells_to_attack_pc34_compat
+        COMMAND test_dm1_v1_ordered_cells_to_attack_pc34_compat
+    )
+
     # mirror candidate C040 status-box-click-while-panel-live:
     # COMMAND.C F0380:2159-2161 gates the C012..C015 champion-status-box
     # click on `(champion_index < G0305) && !G0299`. While the C040 panel
@@ -2877,6 +2899,27 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_action_hand_owner_change_pc34_compat
         COMMAND test_dm1_v1_chest_action_hand_owner_change_pc34_compat
+    )
+
+    # pass803 — chest auto-close on leader death: F0319 (kill) clears
+    # CurrentHealth + G0333 (mouth) + G0331 (eye), dispatches F0355
+    # with C04_CHAMPION_CLOSE_INVENTORY which calls F0334 to clear
+    # G0426 + rewire G0425, then F0318 drops all C00..C29 slots.
+    # Source-locked against CHAMPION.C F0319:1552-1607 + F0318:1527-1551
+    # + PANEL.C F0355:2244-2310 + F0355:2268-2275 + F0355:2318-2322 +
+    # CHEST.C F0334:79-130 + F0333:30-67 + CHAMPION.C F0297/F0298:243-298
+    # + F0300/F0301:511-614 + COMMAND.C F0380:2045-2184 + DEFS.H.
+    add_executable(test_dm1_v1_chest_auto_close_on_leader_death_pc34_compat
+        tests/test_dm1_v1_chest_auto_close_on_leader_death_pc34_compat.c
+        src/dm1/dm1_v1_chest_auto_close_on_leader_death_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_auto_close_on_leader_death_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_auto_close_on_leader_death_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_auto_close_on_leader_death_pc34_compat
+        COMMAND test_dm1_v1_chest_auto_close_on_leader_death_pc34_compat
     )
 
     # chest mid-close hand swap: mutation of a G0425 future slot after
@@ -3563,6 +3606,12 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_csb_v22_shapes_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
+    add_executable(test_csb_v22_modern_assets_pc34
+        tests/test_csb_v22_modern_assets_pc34.c
+        src/csb/csb_v22_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v22_modern_assets_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
     add_executable(test_theron_v2_texture_upscale_pc34
         tests/test_theron_v2_texture_upscale_pc34.c
         src/theron/theron_v2_texture_upscale_pc34.c
@@ -3707,6 +3756,7 @@ if(BUILD_TESTING)
         target_compile_options(test_theron_v2_presentation_mode_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_texture_upscale_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v22_shapes_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v22_modern_assets_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v2_texture_upscale_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v22_shapes_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_shape_runtime_pc34 PRIVATE -Wall -Wextra -O2)
@@ -3916,6 +3966,10 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v22_shapes_pc34
         COMMAND test_csb_v22_shapes_pc34
+    )
+    add_test(
+        NAME csb_v22_modern_assets_pc34
+        COMMAND test_csb_v22_modern_assets_pc34
     )
     add_test(
         NAME theron_v2_texture_upscale_pc34
@@ -6987,6 +7041,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass799_dm1_v1_chest_open_stack_split_press_eye_pc34_compat.py
         )
         set_tests_properties(pass799_dm1_v1_chest_open_stack_split_press_eye PROPERTIES DEPENDS dm1_v1_chest_open_stack_split_press_eye_pc34_compat)
+        add_test(
+            NAME pass803_dm1_v1_chest_auto_close_on_leader_death
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass803_dm1_v1_chest_auto_close_on_leader_death_pc34_compat.py
+        )
+        set_tests_properties(pass803_dm1_v1_chest_auto_close_on_leader_death PROPERTIES DEPENDS dm1_v1_chest_auto_close_on_leader_death_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
