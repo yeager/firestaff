@@ -7525,6 +7525,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass815_dm1_v1_champion_panel_box_panel PROPERTIES DEPENDS dm1_v1_champion_panel_box_panel_pc34_compat)
         add_test(
+            NAME pass816_dm1_v1_champion_panel_box_object_description_circle
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass816_dm1_v1_champion_panel_box_object_description_circle_pc34_compat.py
+        )
+        set_tests_properties(pass816_dm1_v1_champion_panel_box_object_description_circle PROPERTIES DEPENDS dm1_v1_champion_panel_box_object_description_circle_pc34_compat)
+        add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
         )
