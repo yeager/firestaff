@@ -357,3 +357,27 @@ theron_v22_shapes, m11_v22_shape_cache, m11_v22_render_overlay).
 **Vision score summary**: 97/120 (16.2/20 average). Lower than Theron (18.3) and CSB (17.5) because gpt-image-2 leans toward "medieval dungeon" interpretation when prompted with "Saturn sci-fi dungeon" — Saturn/Nexus sci-fi specificity is hard to convey in a text prompt without heavy styling. Hero variants still acceptable: palette accents (cyan/violet) carry the Nexus vibe even when the underlying composition is medieval-leaning. Floor_corridor (18/20) was the strongest asset thanks to the explicit "Metallic futuristic dungeon floor only" prompt that successfully avoided dungeon-stone misinterpretation.
 
 **Compare index**: `docs/v22-compare/compare_index.json` gains `nexus_hero_batch_1_pairs` array of 6 entries.
+
+## DM2 hero art batch 1 (2026-06-19) — 6 PBR variants installed
+
+6 `gpt-image-2` PBR hero variants generated + installed for DM2 V2.2 (parallel to DM1 batches 1-4). SKULL.ASM-specific palette accents: FIRE_ORANGE (torch-glow), FIRE_DEEP (ember chaos), TEMPLE_STONE (altar masonry).
+
+| Hero asset | Reference sprite (closest DM1) | Vision score | Notes |
+|------------|--------------------------------|--------------|-------|
+| `champion_portraits/champion_ninja_dm2_hero_01.png` | sprite_0378 | 18/20 | Strong fire-orange rim light, dark assassin |
+| `champion_portraits/champion_priest_dm2_hero_01.png` | sprite_0378 | 19/20 | Excellent fire-priest vibe with skull iconography |
+| `creature_shapes/creature_rat_dm2_hero_01.png` | sprite_0371 | 17/20 | Lava-mutant giant rat with orange cracks |
+| `creature_shapes/creature_screamer_dm2_hero_01.png` | sprite_0372 | 14/20 | Generic bat/demon (same screamer-prompt pattern across all 4 games) |
+| `floor_shapes/floor_outdoor_dm2_hero_01.png` | sprite_0097 | 18/20 | Strong scorched-earth composition (explicit "OUTDOOR scorched wilderness" worked) |
+| `wall_shapes/wall_altar_dm2_hero_01.png` | sprite_0093 | 20/20 | Best A-batch asset across all 4 games — clear altar with fire brazier and skull motif |
+
+**Total DM2 V2.2 hero art count: 6** (all in this batch).
+**Total DM2 V2.2 asset pack entries: 11** (5 procedural from v1.0.0 + 6 PBR from this batch).
+**Manifest v1.1.0** validates as complete (`dm2_v22_validate_manifest()` returns 1).
+**End-to-end smoke**: `dm2_v22_modern_assets_available()=1` against real DM2 data dir.
+
+**Vision score summary**: 106/120 (17.7/20 average). Second-best per-game A-batch (Theron 18.3 leads). wall_altar at 20/20 is the highest single asset across all 4 games' A-batches. floor_outdoor at 18/20 thanks to the explicit "OUTDOOR scorched wilderness ground only, NOT dungeon stone" prompt — same pattern that worked for Theron forest floor regeneration (11→18) and Nexus floor_corridor (18).
+
+**Cross-game pattern**: screamer prompts consistently produce bat-demon-like creatures (CSB 16, Theron 17, Nexus 14, DM2 14). The "screamer" archetype from each game's monster roster is hard to convey via text alone — the model interprets "flying screeching demon with bat wings" as a generic bat-demon rather than a game-specific archetype. Acceptable as hero variant; per-game procedural `creature_<game>_*_01.png` carries the specific archetype via palette + composition. floor tile prompts benefit greatly from explicit "OUTDOOR X ground only, NOT dungeon stone" anti-stone phrasing.
+
+**Compare index**: `docs/v22-compare/compare_index.json` gains `dm2_hero_batch_1_pairs` array of 6 entries.

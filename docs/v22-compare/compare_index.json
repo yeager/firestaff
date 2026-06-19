@@ -251,5 +251,37 @@
       "dm1_sprite": "sprite_0093_33x136.png",
       "description": "Nexus sci-fi dungeon wall with nexus-cyan conduits (hero PBR, no Nexus altar/wall ref, vision 15/20 \u2014 wall panels not focal altar)"
     }
+  ],
+  "dm2_hero_batch_1_pairs": [
+    {
+      "v22": "champion_portraits/champion_ninja_dm2_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "DM2 ninja champion with fire-orange rim light (hero PBR, no DM2 ninja ref \u2014 closest DM1 sprite_0378, vision 18/20)"
+    },
+    {
+      "v22": "champion_portraits/champion_priest_dm2_hero_01.png",
+      "dm1_sprite": "sprite_0378_160x111.png",
+      "description": "DM2 fire-priest with skull iconography (hero PBR, no DM2 priest ref, vision 19/20)"
+    },
+    {
+      "v22": "creature_shapes/creature_rat_dm2_hero_01.png",
+      "dm1_sprite": "sprite_0371_16x111.png",
+      "description": "DM2 lava-mutant giant rat with fire-deep corruption (hero PBR, no DM2 rat ref, vision 17/20)"
+    },
+    {
+      "v22": "creature_shapes/creature_screamer_dm2_hero_01.png",
+      "dm1_sprite": "sprite_0372_96x111.png",
+      "description": "DM2 flying screamer with fire-orange ember aura (hero PBR, no DM2 screamer ref, vision 14/20 \u2014 generic bat-demon)"
+    },
+    {
+      "v22": "floor_shapes/floor_outdoor_dm2_hero_01.png",
+      "dm1_sprite": "sprite_0097_160x111.png",
+      "description": "DM2 scorched wilderness outdoor ground (hero PBR, no DM2 outdoor ref, vision 18/20)"
+    },
+    {
+      "v22": "wall_shapes/wall_altar_dm2_hero_01.png",
+      "dm1_sprite": "sprite_0093_33x136.png",
+      "description": "DM2 Skullkeep ritual altar wall with fire brazier (hero PBR, no DM2 altar ref, vision 20/20 \u2014 highest single asset across all 4 A-batches)"
+    }
   ]
 }
