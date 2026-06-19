@@ -11,7 +11,7 @@
     "successfulMovementTiming": "dm1_v1_movement_timing_pc34_compat.c:66-90",
     "successfulMovementTimingSpan": "dm1_v1_movement_timing_pc34_compat.c:76-86"
   },
-  "head": "cab289777b65a1d8fb48a0c8353f03e09db1bf10",
+  "head": "0a5911ce0e38a2e94646b5b2ba0eae8ece51fd8d",
   "notClaimed": [
     "new original DOSBox capture",
     "viewport/touch/rendering parity",
@@ -33,6 +33,6 @@
   "schema": "firestaff.parity.pass580_dm1_v1_forward_collision_timing.v1",
   "scope": "DM1 V1 movement pipeline only: queued forward command dispatch, cooldown gating, blocked-square behavior, stamina and non-stamina stamina side effects, and unchanged party position on blocked movement.",
   "status": "PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED",
-  "timestampUtc": "2026-06-18T18:23:16.473508+00:00",
+  "timestampUtc": "2026-06-19T09:54:08.533990+00:00",
   "worktree": "/Users/bosse/.openclaw/workspace-main"
 }

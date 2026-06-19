@@ -15,11 +15,16 @@
         "-j2"
       ],
       "outputTail": [
+        "[  0%] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c.o",
+        "[  0%] Linking C static library libfirestaff_m10.a",
         "[100%] Built target firestaff_m10",
+        "[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target firestaff_m10",
+        "[100%] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target firestaff_m10",
+        "[100%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Linking C executable test_dm1_v1_movement_core_pc34_compat",
@@ -412,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-18T18:23:13.751928+00:00"
+  "timestampUtc": "2026-06-19T09:52:58.234748+00:00"
 }
