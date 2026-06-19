@@ -1,0 +1,132 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:23",
+    "DATA.C:136",
+    "DATA.C:590",
+    "ACTIDRAW.C:160",
+    "BLTSHRNK.C:530",
+    "DUNVIEW.C:4518/5973",
+    "STARTUP2.C:822"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-806 (Graphics.dat init-table gates batches 1+2)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:23",
+      "line": 23,
+      "lineText": "unsigned char G0017_auc_Graphic562_PaletteChanges_NoChanges[16];",
+      "needle": "G0017_auc_Graphic562_PaletteChanges_NoChanges",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:136",
+      "line": 136,
+      "lineText": "unsigned char G0017_auc_Graphic562_PaletteChanges_NoChanges[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };",
+      "needle": "G0017_auc_Graphic562_PaletteChanges_NoChanges",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:590",
+      "line": 590,
+      "lineText": "unsigned char G0017_auc_Graphic562_PaletteChanges_NoChanges[16] = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150 };",
+      "needle": "G0017_auc_Graphic562_PaletteChanges_NoChanges",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ACTIDRAW.C",
+      "id": "ACTIDRAW.C:160",
+      "line": 160,
+      "lineText": "                                F0129_VIDEO_BlitShrinkWithPaletteChanges(AL1178_puc_Bitmap, L1177_puc_Bitmap = F0492_CACHE_GetDerivedBitmap(AL1174_ui_DerivedBitmapIndex), 96, 45, AL1176_i_PixelWidth, 37, G0017_auc_Graphic562_PaletteChanges_NoChanges);",
+      "needle": "G0017_auc_Graphic562_PaletteChanges_NoChanges",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/BLTSHRNK.C",
+      "id": "BLTSHRNK.C:530",
+      "line": 530,
+      "lineText": "        if (P0192_puc_PaletteChanges == G0017_auc_Graphic562_PaletteChanges_NoChanges) {",
+      "needle": "G0017_auc_Graphic562_PaletteChanges_NoChanges",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "id": "DUNVIEW.C:4518",
+      "line": 4518,
+      "lineText": "                        F0129_VIDEO_BlitShrinkWithPaletteChanges(L0125_puc_Bitmap_Native, L0123_puc_Bitmap = F0492_CACHE_GetDerivedBitmap(L0122_i_DerivedBitmapIndex), L0124_ps_ExplosionAspect->ByteWidth << 1, L0124_ps_ExplosionAspect->Height, L0120_i_ByteWidth << 1, L0121_i_Height, (P0137_ui_ExplosionAspectIndex == C3_EXPLOSION_ASPECT_SMOKE) ? G0212_auc_Graphic558_PaletteChanges_Smoke : G0017_auc_Graphic562_PaletteChanges_NoChanges);",
+      "needle": "G0017_auc_Graphic562_PaletteChanges_NoChanges",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "id": "DUNVIEW.C:5973",
+      "line": 5973,
+      "lineText": "                                                                F0129_VIDEO_BlitShrinkWithPaletteChanges(AL0128_puc_Bitmap, G0074_puc_Bitmap_Temporary, ((PROJECTIL_ASPECT*)L0129_ps_ObjectAspect)->ByteWidth << 1, ((PROJECTIL_ASPECT*)L0129_ps_ObjectAspect)->Height, L0136_i_ByteWidth << 1, L0137_i_Height, G0017_auc_Graphic562_PaletteChanges_NoChanges);",
+      "needle": "G0017_auc_Graphic562_PaletteChanges_NoChanges",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C",
+      "id": "STARTUP2.C:822",
+      "line": 822,
+      "lineText": "        G0075_apuc_PaletteChanges_Projectile[2] = G0075_apuc_PaletteChanges_Projectile[3] = G0017_auc_Graphic562_PaletteChanges_NoChanges;",
+      "needle": "G0017_auc_Graphic562_PaletteChanges_NoChanges",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass807_dm1_v1_palette_changes_no_changes_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0017_auc_Graphic562_PaletteChanges_NoChanges[16]. PC 3.4 init = {0, 1, 2, ..., 15} (identity permutation). Atari init = {0, 10, 20, ..., 150} (10-step ramp). The table is passed as the PaletteChanges argument to F0129_VIDEO_BlitShrinkWithPaletteChanges when a caller wants no palette remapping. Read sites: ACTIDRAW.C:160 (creature action icon), BLTSHRNK.C:530 (identity-path guard), DUNVIEW.C:4518/5973 (explosion/projectile aspect blit), STARTUP2.C:822 (G0075 init).",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_palette_changes_no_changes_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_palette_changes_no_changes_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/palette_changes_no_changes_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_palette_changes_no_changes_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS807_DM1_V1_PALETTE_CHANGES_NO_CHANGES_LOCKED",
+  "timestampUtc": "2026-06-19T11:56:31.190187+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_palette_changes_no_changes_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_palette_changes_no_changes: 98/98 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
