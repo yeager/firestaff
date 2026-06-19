@@ -6774,7 +6774,10 @@ set_tests_properties(dm1_v2_viewport_pixel_capture_fixture_gate PROPERTIES WILL_
 set_tests_properties(dm1_v2_entry_viewport_png_export_gate PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(csb_v1_m11_runtime_capture_boundary PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(pass547_csb_v1_runtime_readiness_backfill PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(pass395_touch_queue_integration_source_lock PROPERTIES WILL_FAIL TRUE)
+# pass395_touch_queue_integration_source_lock: WILL_FAIL removed (2026-06-19)
+# after fixing the verifier's include-path convention (the local touch
+# header uses `#include "dm1_v1_input_command_queue_pc34_compat.h"`
+# matching the project convention, not `#include "include/..."`).
 set_tests_properties(v1_inventory_panel_open_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(v1_inventory_toggle_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(v1_inventory_chest_actionhand_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
