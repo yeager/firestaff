@@ -5442,6 +5442,32 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# ── DM1 V1 viewport D2L2/D2R2 side-wall (F0678/F0679) source-lock gate ─
+if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat)
+    add_executable(test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat
+        tests/test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat PRIVATE firestaff_m10)
+    target_include_directories(test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_d2l2_d2r2_side_wall_source_lock
+        COMMAND test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat
+    )
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME pass792_dm1_v1_viewport_d2l2_d2r2_side_wall
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass792_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat.py
+        )
+        set_tests_properties(pass792_dm1_v1_viewport_d2l2_d2r2_side_wall PROPERTIES DEPENDS "dm1_v1_viewport_d2l2_d2r2_side_wall_source_lock")
+    endif()
+endif()
+
 # ── DM1 V1 input→command→movement pipeline source-lock gate ──────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
