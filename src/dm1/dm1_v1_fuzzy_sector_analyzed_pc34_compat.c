@@ -7,9 +7,12 @@
  * - DATA.C:39   - declaration of G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE
  * - DATA.C:179  - PC 3.4 init = C00255_FALSE (i.e. 0)
  * - DATA.C:579  - Atari ST init = C00255_FALSE
- * - CLIKMENU.C:366/491/559 - read site (gate copy-protection
+ * - CLIKMENU.C:366 - read site (gate copy-protection
+ * - CLIKMENU.C:491 - read site (gate copy-protection
+ * - CLIKMENU.C:559 - read site (gate copy-protection
  *                     fuzzy-sector re-reads)
- * - COPYPRO6.C:69/99 - write site (set C00136_TRUE after analysis)
+ * - COPYPRO6.C:69 - write site (set C00136_TRUE after analysis)
+ * - COPYPRO6.C:99 - write site (set C00136_TRUE after analysis)
  * - DEFS.H:     - C00255_FALSE, C00136_TRUE,
  *                F0277_CPSE_IsFuzzySectorValid_FuzzyBits
  *
