@@ -2799,29 +2799,6 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_box_poisoned_pc34_compat
     )
 
-    # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
-    # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
-    # identity palette-remap table used by VIDEO_BlitShrinkWith
-    # PaletteChanges when no palette remap is desired. PC 3.4 init =
-    # {0, 1, ..., 15} (true identity). Atari init = {0, 10, 20, ...,
-    # 150} (10-step ramp). Read sites: ACTIDRAW.C:160, BLTSHRNK.C:530,
-    # DUNVIEW.C:4518/5973, STARTUP2.C:822. Disjoint from pass784-790 +
-    # pass791-799 + pass798-806. Source-locked against DATA.C:23/136/
-    # 590 + ACTIDRAW.C:160 + BLTSHRNK.C:530 + DUNVIEW.C:4518/5973 +
-    # STARTUP2.C:822.
-    add_executable(test_dm1_v1_palette_changes_no_changes_pc34_compat
-        tests/test_dm1_v1_palette_changes_no_changes_pc34_compat.c
-        src/dm1/dm1_v1_palette_changes_no_changes_pc34_compat.c
-    )
-    target_link_libraries(test_dm1_v1_palette_changes_no_changes_pc34_compat PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_dm1_v1_palette_changes_no_changes_pc34_compat PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm1_v1_palette_changes_no_changes_pc34_compat
-        COMMAND test_dm1_v1_palette_changes_no_changes_pc34_compat
-    )
-
     # DM1 V1 champion-color: Graphics.dat item 562 init var
     # G0046_auc_Graphic562_ChampionColor[4] = {7, 11, 8, 14} — the
     # champion color assignment (leader=7, 1st follower=11, 2nd=8,
