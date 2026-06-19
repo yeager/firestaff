@@ -1,0 +1,7 @@
+# pass836_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat
+
+Source-locked: CHEST.C F0333:30-67 (F0333_INVENTORY_OpenAndDrawChest: materializes G0425 from the open G0426 chest); CHEST.C F0334:117-132 (F0334_INVENTORY_CloseChest: clears G0426, rewires non-empty G0425 into container Slot list); CHAMPION.C F0284:93-131 (keeps champion ownership independent from party direction updates); CHAMPION.C F0297:243-268 (leader-hand put); F0298:270-298 (leader-hand remove); F0300:511-515 (clears C30+ and champion slots); F0301:606-614 (writes C30+/champion slots); F0302:662-714 (snapshots leader hand and selected slot before remove/put exchange); PANEL.C F0344:1390-1406 (inactive food/water, eye, and resurrect-panel side routes); OBJECT.C F0033:147-212 (maps object identity to visible chest icons); BLITMASK.C F0133:30-33 (transparency blit dispatch used by reopen redraws); DEFS.H:2088 C10_COLOR_FLESH; 810-816 C30..C36; 1874-1878 C38; 2200 C040; 3001-3008 M568/M569; 3906-3913 C537..C544; 5694 G0299; 5876-5881 G0425/G0426
+
+Result: PASS
+Tests: {'passes': 0, 'fails': 0}
+Failures: []
