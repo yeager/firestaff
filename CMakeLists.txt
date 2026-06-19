@@ -2629,7 +2629,7 @@ if(BUILD_TESTING)
     # click hit-testing + status-box rendering. Read sites: OBJECT.C:435
     # (F0486_OBJECT_DrawSlotBoxAtSlotIndex), OBJECT.C:521 (F0488_OBJECT_
     # GetSlotBoxIconIndex), CHAMDRAW.C:557/562 (F0487 + F0619). Disjoint
-    # from pass784-790 + pass791-796 + pass797 (icon-graphic). Source-
+    # from pass784-790 + pass791-799 + pass798 (icon-graphic). Source-
     # locked against DATA.C:36 + DATA.C:264-309 + OBJECT.C:435/521 +
     # CHAMDRAW.C:557/562 + DEFS.H:257-297 (C020..C065 slot-box click
     # commands) + DEFS.H:1871-1875 (SLOT_BOX struct).
@@ -2644,6 +2644,52 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_slot_boxes_pc34_compat
         COMMAND test_dm1_v1_slot_boxes_pc34_compat
+    )
+
+    # DM1 V1 light-power-to-light-amount: Graphics.dat item 562 init
+    # var G0039_ai_Graphic562_LightPowerToLightAmount[16] = {0, 5, 12,
+    # 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100}. Read sites:
+    # PANEL.C:412 (F0337 dungeon-view palette torch sum), CHAMPION.C
+    # 529/645 (Illumulet equip delta = G0039[2]), MENU.C:1608/1936/
+    # 1941 (Light / MagicTorch / Darkness spells), TIMELINE.C:1754
+    # (light-event tick diff). Disjoint from pass784-790 + pass791-799
+    # + pass798 (icon-graphic) + pass800 (slot-boxes). Source-locked
+    # against DATA.C:45 + DATA.C:359 + DATA.C:1088 + PANEL.C:412 +
+    # CHAMPION.C:529/645 + MENU.C:1608/1936/1941 + TIMELINE.C:1754
+    # + DEFS.H C012/C013 (Illumulet icons).
+    add_executable(test_dm1_v1_light_power_to_light_amount_pc34_compat
+        tests/test_dm1_v1_light_power_to_light_amount_pc34_compat.c
+        src/dm1/dm1_v1_light_power_to_light_amount_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_light_power_to_light_amount_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_light_power_to_light_amount_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_light_power_to_light_amount_pc34_compat
+        COMMAND test_dm1_v1_light_power_to_light_amount_pc34_compat
+    )
+
+    # DM1 V1 palette-index-to-light-amount: Graphics.dat item 562 init
+    # var G0040_ai_Graphic562_PaletteIndexToLightAmount[6] = {99, 75,
+    # 50, 25, 1, 0}. PANEL.C F0337_INVENTORY_SetDungeonViewPalette
+    # walks the table top-down with `while (*p++ > TotalLightAmount)
+    # PaletteIndex++` and assigns G0304_i_DungeonViewPaletteIndex.
+    # Read site: PANEL.C:419-423. Disjoint from pass784-790 + pass791-
+    # 799 + pass798 (icon-graphic) + pass800 (slot-boxes) + pass801
+    # (light-power). Source-locked against DATA.C:46 + DATA.C:360 +
+    # DATA.C:1089 + PANEL.C:419-423.
+    add_executable(test_dm1_v1_palette_index_to_light_amount_pc34_compat
+        tests/test_dm1_v1_palette_index_to_light_amount_pc34_compat.c
+        src/dm1/dm1_v1_palette_index_to_light_amount_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_index_to_light_amount_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_index_to_light_amount_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_index_to_light_amount_pc34_compat
+        COMMAND test_dm1_v1_palette_index_to_light_amount_pc34_compat
     )
 
     # mirror candidate C040 status-box-click-while-panel-live:
@@ -2866,6 +2912,24 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat
         COMMAND test_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat
+    )
+
+    # pass799 — chest open-stack-split press-eye path: press-eye
+    # F0333 auto-close + C09 action-hand PICKUP of one stack member
+    # mid-close. Source-locked against CHEST.C F0333:32-42 + 44 +
+    # 53-67 + 70-74 + F0334:113-132 + CHAMPION.C F0297-F0302 +
+    # PANEL.C F0347:1639-1691.
+    add_executable(test_dm1_v1_chest_open_stack_split_press_eye_pc34_compat
+        tests/test_dm1_v1_chest_open_stack_split_press_eye_pc34_compat.c
+        src/dm1/dm1_v1_chest_open_stack_split_press_eye_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_open_stack_split_press_eye_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_open_stack_split_press_eye_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_open_stack_split_press_eye_pc34_compat
+        COMMAND test_dm1_v1_chest_open_stack_split_press_eye_pc34_compat
     )
 
     # chest close-rewire runtime: rewire of M11 close handlers during
@@ -6893,10 +6957,25 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate PROPERTIES DEPENDS dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat)
         add_test(
+            NAME pass799_dm1_v1_chest_open_stack_split_press_eye
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass799_dm1_v1_chest_open_stack_split_press_eye_pc34_compat.py
+        )
+        set_tests_properties(pass799_dm1_v1_chest_open_stack_split_press_eye PROPERTIES DEPENDS dm1_v1_chest_open_stack_split_press_eye_pc34_compat)
+        add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
         )
         set_tests_properties(pass798_dm1_v1_icon_graphic_first_icon_index PROPERTIES DEPENDS dm1_v1_icon_graphic_first_icon_index_pc34_compat)
+        add_test(
+            NAME pass800_dm1_v1_slot_boxes
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass800_dm1_v1_slot_boxes_pc34_compat.py
+        )
+        set_tests_properties(pass800_dm1_v1_slot_boxes PROPERTIES DEPENDS dm1_v1_slot_boxes_pc34_compat)
+        add_test(
+            NAME pass801_dm1_v1_light_power_to_light_amount
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass801_dm1_v1_light_power_to_light_amount_pc34_compat.py
+        )
+        set_tests_properties(pass801_dm1_v1_light_power_to_light_amount PROPERTIES DEPENDS dm1_v1_light_power_to_light_amount_pc34_compat)
     endif()
 endif()
 
