@@ -1,0 +1,47 @@
+{
+  "anchors": [
+    "DATA.C:37/175/595",
+    "PANEL.C:2379"
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass848_dm1_v1_viewport_floppy_zzz_cross_pc34_compat.v1",
+  "scope": "DM1 V1 viewport_floppy_zzz_cross contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_viewport_floppy_zzz_cross_pc34_compat.c",
+      "id": "source",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/viewport_floppy_zzz_cross_pc34_compat.h",
+      "id": "header",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_viewport_floppy_zzz_cross_pc34_compat.c",
+      "id": "test",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS848_DM1_V1_VIEWPORT_FLOPPY_ZZZ_CROSS_LOCKED",
+  "timestampUtc": "2026-06-19T18:23:16.651671+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_floppy_zzz_cross_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_viewport_floppy_zzz_cross: 53/53 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

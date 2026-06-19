@@ -3293,6 +3293,135 @@ if(BUILD_TESTING)
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_box_entrance_doors_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
+
+    # DM1 V1 entrance-closed-door-left: Graphics.dat item 562
+    # init var (4 ints) ENTRANCE.C:574:578. Source-locked against
+    # DATA.C:16/139/559.
+    add_executable(test_dm1_v1_entrance_closed_door_left_pc34_compat
+        tests/test_dm1_v1_entrance_closed_door_left_pc34_compat.c
+        src/dm1/dm1_v1_entrance_closed_door_left_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_entrance_closed_door_left_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_entrance_closed_door_left_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_entrance_closed_door_left_pc34_compat
+        COMMAND test_dm1_v1_entrance_closed_door_left_pc34_compat
+    )
+
+    # DM1 V1 entrance-closed-door-right: Graphics.dat item 562
+    # init var (4 ints) ENTRANCE.C:575:579. Source-locked against
+    # DATA.C:17/141/561.
+    add_executable(test_dm1_v1_entrance_closed_door_right_pc34_compat
+        tests/test_dm1_v1_entrance_closed_door_right_pc34_compat.c
+        src/dm1/dm1_v1_entrance_closed_door_right_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_entrance_closed_door_right_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_entrance_closed_door_right_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_entrance_closed_door_right_pc34_compat
+        COMMAND test_dm1_v1_entrance_closed_door_right_pc34_compat
+    )
+
+    # DM1 V1 endgame-the-end: Graphics.dat item 562
+    # init var (4 ints) ENDGAME.C:456. Source-locked against
+    # DATA.C:18/143/563.
+    add_executable(test_dm1_v1_endgame_the_end_pc34_compat
+        tests/test_dm1_v1_endgame_the_end_pc34_compat.c
+        src/dm1/dm1_v1_endgame_the_end_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_endgame_the_end_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_endgame_the_end_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_endgame_the_end_pc34_compat
+        COMMAND test_dm1_v1_endgame_the_end_pc34_compat
+    )
+
+    # DM1 V1 endgame-restart-outer: Graphics.dat item 562
+    # init var (4 ints) ENDGAME.C:488. Source-locked against
+    # DATA.C:19/145/565.
+    add_executable(test_dm1_v1_endgame_restart_outer_pc34_compat
+        tests/test_dm1_v1_endgame_restart_outer_pc34_compat.c
+        src/dm1/dm1_v1_endgame_restart_outer_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_endgame_restart_outer_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_endgame_restart_outer_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_endgame_restart_outer_pc34_compat
+        COMMAND test_dm1_v1_endgame_restart_outer_pc34_compat
+    )
+
+    # DM1 V1 endgame-restart-inner: Graphics.dat item 562
+    # init var (4 ints) ENDGAME.C:489. Source-locked against
+    # DATA.C:20/147/567.
+    add_executable(test_dm1_v1_endgame_restart_inner_pc34_compat
+        tests/test_dm1_v1_endgame_restart_inner_pc34_compat.c
+        src/dm1/dm1_v1_endgame_restart_inner_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_endgame_restart_inner_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_endgame_restart_inner_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_endgame_restart_inner_pc34_compat
+        COMMAND test_dm1_v1_endgame_restart_inner_pc34_compat
+    )
+
+    # DM1 V1 endgame-champion-mirror: Graphics.dat item 562
+    # init var (4 ints) ENDGAME.C:347/389/390. Source-locked against
+    # DATA.C:21/149/569.
+    add_executable(test_dm1_v1_endgame_champion_mirror_pc34_compat
+        tests/test_dm1_v1_endgame_champion_mirror_pc34_compat.c
+        src/dm1/dm1_v1_endgame_champion_mirror_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_endgame_champion_mirror_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_endgame_champion_mirror_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_endgame_champion_mirror_pc34_compat
+        COMMAND test_dm1_v1_endgame_champion_mirror_pc34_compat
+    )
+
+    # DM1 V1 endgame-champion-portrait: Graphics.dat item 562
+    # init var (4 ints) ENDGAME.C:353/357/391/392. Source-locked against
+    # DATA.C:22/151/571.
+    add_executable(test_dm1_v1_endgame_champion_portrait_pc34_compat
+        tests/test_dm1_v1_endgame_champion_portrait_pc34_compat.c
+        src/dm1/dm1_v1_endgame_champion_portrait_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_endgame_champion_portrait_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_endgame_champion_portrait_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_endgame_champion_portrait_pc34_compat
+        COMMAND test_dm1_v1_endgame_champion_portrait_pc34_compat
+    )
+
+    # DM1 V1 viewport-floppy-zzz-cross: Graphics.dat item 562
+    # init var (4 ints) PANEL.C:2379. Source-locked against
+    # DATA.C:37/175/595.
+    add_executable(test_dm1_v1_viewport_floppy_zzz_cross_pc34_compat
+        tests/test_dm1_v1_viewport_floppy_zzz_cross_pc34_compat.c
+        src/dm1/dm1_v1_viewport_floppy_zzz_cross_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_floppy_zzz_cross_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_floppy_zzz_cross_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_floppy_zzz_cross_pc34_compat
+        COMMAND test_dm1_v1_viewport_floppy_zzz_cross_pc34_compat
+    )
+
     add_test(
         NAME dm1_v1_box_entrance_doors_pc34_compat
         COMMAND test_dm1_v1_box_entrance_doors_pc34_compat
@@ -3709,6 +3838,30 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat
         COMMAND test_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat
+    )
+
+    # pass849 — chest drop to floor: a chest slot drop (F0300/F0301
+    # remove/put) when the open chest is live (G0426 set) and the
+    # leader hand is occupied must (a) put the dropped item on the
+    # floor at the leader's current Cell, (b) keep the open chest
+    # G0425 chain byte-stable, (c) preserve the leader's
+    # action-hand byte-stable, and (d) the next F0334 close must
+    # not see the dropped item as a chest slot.
+    # Source-locked against CHEST.C F0333:30-67 + F0334:113-132 +
+    # CHAMPION.C F0284:93-131 + F0297-F0302 + DUNGEON.C F0140 +
+    # F0159 + F0163 + OBJECT.C F0033:147-212 + DEFS.H C30..C37,
+    # C537..C545, G0423, G0425, G0426.
+    add_executable(test_dm1_v1_chest_drop_to_floor_pc34_compat
+        tests/test_dm1_v1_chest_drop_to_floor_pc34_compat.c
+        src/dm1/dm1_v1_chest_drop_to_floor_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_drop_to_floor_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_drop_to_floor_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_drop_to_floor_pc34_compat
+        COMMAND test_dm1_v1_chest_drop_to_floor_pc34_compat
     )
 
     # chest mid-close hand swap: mutation of a G0425 future slot after
@@ -8075,6 +8228,46 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass839_dm1_v1_box_entrance_opening_door_right_pc34_compat.py
         )
         set_tests_properties(pass839_dm1_v1_box_entrance_opening_door_right PROPERTIES DEPENDS dm1_v1_box_entrance_opening_door_right_pc34_compat)
+        add_test(
+            NAME pass841_dm1_v1_entrance_closed_door_left
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass841_dm1_v1_entrance_closed_door_left_pc34_compat.py
+        )
+        set_tests_properties(pass841_dm1_v1_entrance_closed_door_left PROPERTIES DEPENDS dm1_v1_entrance_closed_door_left_pc34_compat)
+        add_test(
+            NAME pass842_dm1_v1_entrance_closed_door_right
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass842_dm1_v1_entrance_closed_door_right_pc34_compat.py
+        )
+        set_tests_properties(pass842_dm1_v1_entrance_closed_door_right PROPERTIES DEPENDS dm1_v1_entrance_closed_door_right_pc34_compat)
+        add_test(
+            NAME pass843_dm1_v1_endgame_the_end
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass843_dm1_v1_endgame_the_end_pc34_compat.py
+        )
+        set_tests_properties(pass843_dm1_v1_endgame_the_end PROPERTIES DEPENDS dm1_v1_endgame_the_end_pc34_compat)
+        add_test(
+            NAME pass844_dm1_v1_endgame_restart_outer
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass844_dm1_v1_endgame_restart_outer_pc34_compat.py
+        )
+        set_tests_properties(pass844_dm1_v1_endgame_restart_outer PROPERTIES DEPENDS dm1_v1_endgame_restart_outer_pc34_compat)
+        add_test(
+            NAME pass845_dm1_v1_endgame_restart_inner
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass845_dm1_v1_endgame_restart_inner_pc34_compat.py
+        )
+        set_tests_properties(pass845_dm1_v1_endgame_restart_inner PROPERTIES DEPENDS dm1_v1_endgame_restart_inner_pc34_compat)
+        add_test(
+            NAME pass846_dm1_v1_endgame_champion_mirror
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass846_dm1_v1_endgame_champion_mirror_pc34_compat.py
+        )
+        set_tests_properties(pass846_dm1_v1_endgame_champion_mirror PROPERTIES DEPENDS dm1_v1_endgame_champion_mirror_pc34_compat)
+        add_test(
+            NAME pass847_dm1_v1_endgame_champion_portrait
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass847_dm1_v1_endgame_champion_portrait_pc34_compat.py
+        )
+        set_tests_properties(pass847_dm1_v1_endgame_champion_portrait PROPERTIES DEPENDS dm1_v1_endgame_champion_portrait_pc34_compat)
+        add_test(
+            NAME pass848_dm1_v1_viewport_floppy_zzz_cross
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass848_dm1_v1_viewport_floppy_zzz_cross_pc34_compat.py
+        )
+        set_tests_properties(pass848_dm1_v1_viewport_floppy_zzz_cross PROPERTIES DEPENDS dm1_v1_viewport_floppy_zzz_cross_pc34_compat)
         add_test(
             NAME pass840_dm1_v1_box_entrance_doors
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass840_dm1_v1_box_entrance_doors_pc34_compat.py

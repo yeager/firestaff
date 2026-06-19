@@ -103,14 +103,14 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
         ],
         "outputTail": "status=PASS_DM1_V1_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE\nsourceAnchors=5\npass359ChainOk=1\nnormalViewportRedrawOrderOk=1\n",
@@ -119,14 +119,14 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"
         ],
         "outputTail": "PASS drawview-presents-after-dungeonview-buffer DRAWVIEW.C:709-900 F0097_DUNGEONVIEW_DrawViewport\n  Presentation is a final blit of G0296 after DUNVIEW has replayed walls/objects into the viewport buffer.\nPASS floor-ceiling-base-before-wall-replay DUNVIEW.C:2962-3003 F0098_DUNGEONVIEW_DrawFloorAndCeiling\n  The renderer starts from a clean floor/ceiling buffer before replaying visible wall zones and contents.\nPASS f0128-far-to-near-square-replay DUNVIEW.C:8318-8618 F0128_DUNGEONVIEW_Draw_CPSF\n  DUNVIEW replays cells from far D4 through D0 before presentation; PC34/I34E D3L2/R2 and D2L2/R2 lanes are explicitly kept in the audited order.\nPASS d3-side-wall-occludes-by-early-return DUNVIEW.C:6400-6835 F0116_DUNGEONVIEW_DrawSquareD3L / F0117_DUNGEONVIEW_DrawSquareD3R / F0118_DUNGEONVIEW_DrawSquareD3C_CPSF\n  A wall square draws its wall zone and normally returns before open-cell content; only alcove wall ornaments intentionally replay contained items.\nPASS f0115-ordered-cell-pass-not-depth-sort DUNVIEW.C:4547-4910 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF\n  Within each visible square, F0115 consumes encoded cell order nibbles and rescans the thing list per cell; primitive batching would lose this source order.\nPASS door-front-two-pass-near-side-replay DUNVIEW.C:6428-6816 F0116/F0117/F0118 door-front branches\n  Door-front squares draw rear-side contents, then the door/frame, then replay front-side contents; this is explicit near-side replay, not a flat depth batch.\n",
@@ -135,14 +135,14 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_occlusion_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_v1_viewport_occlusion_gate.py"
         ],
         "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:13341\n- pits gate before sampling: m11_game_view.c:13439\n- floor ornaments gate before sampling: m11_game_view.c:13507\n- stairs gate before sampling: m11_game_view.c:14161\n- teleporter fields gate before sampling: m11_game_view.c:14231\n- side walls gate before sampling: m11_game_view.c:14302\n- side doors gate before sampling: m11_game_view.c:14738\n- side door ornaments gate before sampling: m11_game_view.c:14838\n- side destroyed-door masks gate before sampling: m11_game_view.c:14916\n- viewport call-site wiring: m11_game_view.c:24354\n",
@@ -151,14 +151,14 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
         ],
         "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:13619, 13644\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:16547\n- Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:14302\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:13981\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:14738\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:14838\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:14916\n- Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:24354\n",
@@ -195,7 +195,7 @@
           "--parallel",
           "1"
         ],
-        "outputTail": "eFiles/firestaff_m11.dir/src/dm1/dm1_v1_blit_fill_pc34_compat.c.o\n[871/925] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dialog_scroll_pc34_compat.c.o\n[872/925] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o\n[873/925] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o\n[874/925] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o\n[875/925] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o\n[876/925] Building C object CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o\n[877/925] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o\n[878/925] Building C object CMakeFiles/firestaff_m11.dir/src/engine/firestaff_touch.c.o\n[879/925] Building C object CMakeFiles/firestaff_m11.dir/src/engine/firestaff_input.c.o\n[880/925] Building C object CMakeFiles/firestaff_m11.dir/src/engine/swsh_intro_pathfinder_m11.c.o\n[881/925] Building C object CMakeFiles/firestaff_m11.dir/src/engine/m11_game_input_mapping.c.o\n[882/925] Linking C static library libfirestaff_m11.a\n[883/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/menu_startup_m12.c.o\n[884/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/menu_startup_render_modern_m12.c.o\n[885/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/menu_unicode_glyphs_m12.c.o\n[886/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/firestaff_l10n.c.o\n[887/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_bestiary.c.o\n[888/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_spell_ref.c.o\n[889/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_item_encyclopedia.c.o\n[890/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_map_viewer.c.o\n[891/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_screenshot_gallery.c.o\n[892/925] Building C object CMakeFiles/firestaff_m12.dir/src/engine/firestaff_dungeon_text.c.o\n[893/925] Building C object CMakeFiles/firestaff_m12.dir/src/engine/firestaff_graphics_dat_reader.c.o\n[894/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/menu_hit_m12.c.o\n[895/925] Building C object CMakeFiles/firestaff_m12.dir/src/engine/config_m12.c.o\n[896/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/asset_status_m12.c.o\n[897/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/asset_find_by_hash.c.o\n[898/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/card_art_m12.c.o\n[899/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/card_art_generated_m12.c.o\n[900/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_firestaff_rail_m12.c.o\n[901/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_logo_m12.c.o\n[902/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_logo_readme_m12.c.o\n[903/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/bestiary_m12.c.o\n[904/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/creature_art_m12.c.o\n[905/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/data_validator_m12.c.o\n[906/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/changelog_m12.c.o\n[907/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/theme_m12.c.o\n[908/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/animated_bg_m12.c.o\n[909/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/input_remap_m12.c.o\n[910/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/save_browser_m12.c.o\n[911/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/custom_dungeon_m12.c.o\n[912/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/item_encyclopedia_m12.c.o\n[913/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/campaign_m12.c.o\n[914/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/spell_reference_m12.c.o\n[915/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/map_viewer_m12.c.o\n[916/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/music_jukebox_m12.c.o\n[917/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/gamepad_config_m12.c.o\n[918/925] Building C object CMakeFiles/firestaff_m12.dir/src/engine/cloud_sync_m12.c.o\n[919/925] Building C object CMakeFiles/firestaff_m12.dir/src/ui/touch_layout_m12.c.o\n[920/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/presentation_preview_m12.c.o\n[921/925] Building C object CMakeFiles/firestaff_m12.dir/src/shared/screenshot_gallery_m12.c.o\n[922/925] Linking C static library libfirestaff_m12.a\n[923/925] Building C object CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o\n[924/925] Linking C executable firestaff\nld: warning: ignoring duplicate libraries: 'libfirestaff_m10.a', 'libfirestaff_m11.a', 'libfirestaff_m12.a', 'libfirestaff_v2.a'\n",
+        "outputTail": "eFiles/firestaff_m11.dir/src/dm1/dm1_v1_blit_fill_pc34_compat.c.o\n[879/933] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dialog_scroll_pc34_compat.c.o\n[880/933] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o\n[881/933] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o\n[882/933] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o\n[883/933] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o\n[884/933] Building C object CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o\n[885/933] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o\n[886/933] Building C object CMakeFiles/firestaff_m11.dir/src/engine/firestaff_touch.c.o\n[887/933] Building C object CMakeFiles/firestaff_m11.dir/src/engine/firestaff_input.c.o\n[888/933] Building C object CMakeFiles/firestaff_m11.dir/src/engine/swsh_intro_pathfinder_m11.c.o\n[889/933] Building C object CMakeFiles/firestaff_m11.dir/src/engine/m11_game_input_mapping.c.o\n[890/933] Linking C static library libfirestaff_m11.a\n[891/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/menu_startup_m12.c.o\n[892/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/menu_startup_render_modern_m12.c.o\n[893/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/menu_unicode_glyphs_m12.c.o\n[894/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/firestaff_l10n.c.o\n[895/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_bestiary.c.o\n[896/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_spell_ref.c.o\n[897/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_item_encyclopedia.c.o\n[898/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_map_viewer.c.o\n[899/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/firestaff_screenshot_gallery.c.o\n[900/933] Building C object CMakeFiles/firestaff_m12.dir/src/engine/firestaff_dungeon_text.c.o\n[901/933] Building C object CMakeFiles/firestaff_m12.dir/src/engine/firestaff_graphics_dat_reader.c.o\n[902/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/menu_hit_m12.c.o\n[903/933] Building C object CMakeFiles/firestaff_m12.dir/src/engine/config_m12.c.o\n[904/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/asset_status_m12.c.o\n[905/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/asset_find_by_hash.c.o\n[906/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/card_art_m12.c.o\n[907/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/card_art_generated_m12.c.o\n[908/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_firestaff_rail_m12.c.o\n[909/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_logo_m12.c.o\n[910/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/branding_logo_readme_m12.c.o\n[911/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/bestiary_m12.c.o\n[912/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/creature_art_m12.c.o\n[913/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/data_validator_m12.c.o\n[914/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/changelog_m12.c.o\n[915/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/theme_m12.c.o\n[916/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/animated_bg_m12.c.o\n[917/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/input_remap_m12.c.o\n[918/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/save_browser_m12.c.o\n[919/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/custom_dungeon_m12.c.o\n[920/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/item_encyclopedia_m12.c.o\n[921/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/campaign_m12.c.o\n[922/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/spell_reference_m12.c.o\n[923/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/map_viewer_m12.c.o\n[924/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/music_jukebox_m12.c.o\n[925/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/gamepad_config_m12.c.o\n[926/933] Building C object CMakeFiles/firestaff_m12.dir/src/engine/cloud_sync_m12.c.o\n[927/933] Building C object CMakeFiles/firestaff_m12.dir/src/ui/touch_layout_m12.c.o\n[928/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/presentation_preview_m12.c.o\n[929/933] Building C object CMakeFiles/firestaff_m12.dir/src/shared/screenshot_gallery_m12.c.o\n[930/933] Linking C static library libfirestaff_m12.a\n[931/933] Building C object CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o\n[932/933] Linking C executable firestaff\nld: warning: ignoring duplicate libraries: 'libfirestaff_m10.a', 'libfirestaff_m11.a', 'libfirestaff_m12.a', 'libfirestaff_v2.a'\n",
         "returncode": 0
       }
     },
@@ -262,7 +262,7 @@
     }
   ],
   "dm1Data": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "e9a43f65ac01c0f91a9d5178f133f09fe70adb46",
+  "head": "26cb1f0c8c155ca65d171d0bc404cfac62313236",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -444,5 +444,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
-  "timestampUtc": "2026-06-19T18:01:31.086145+00:00"
+  "timestampUtc": "2026-06-19T18:05:06.458326+00:00"
 }

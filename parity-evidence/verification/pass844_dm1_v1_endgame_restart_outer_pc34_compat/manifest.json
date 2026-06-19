@@ -1,0 +1,47 @@
+{
+  "anchors": [
+    "DATA.C:19/145/565",
+    "ENDGAME.C:488"
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass844_dm1_v1_endgame_restart_outer_pc34_compat.v1",
+  "scope": "DM1 V1 endgame_restart_outer contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_endgame_restart_outer_pc34_compat.c",
+      "id": "source",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/endgame_restart_outer_pc34_compat.h",
+      "id": "header",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_endgame_restart_outer_pc34_compat.c",
+      "id": "test",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS844_DM1_V1_ENDGAME_RESTART_OUTER_LOCKED",
+  "timestampUtc": "2026-06-19T18:23:16.527161+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_endgame_restart_outer_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_endgame_restart_outer: 53/53 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

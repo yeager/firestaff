@@ -1,0 +1,47 @@
+{
+  "anchors": [
+    "DATA.C:17/141/561",
+    "ENTRANCE.C:575/579"
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass842_dm1_v1_entrance_closed_door_right_pc34_compat.v1",
+  "scope": "DM1 V1 entrance_closed_door_right contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_entrance_closed_door_right_pc34_compat.c",
+      "id": "source",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/entrance_closed_door_right_pc34_compat.h",
+      "id": "header",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_entrance_closed_door_right_pc34_compat.c",
+      "id": "test",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS842_DM1_V1_ENTRANCE_CLOSED_DOOR_RIGHT_LOCKED",
+  "timestampUtc": "2026-06-19T18:23:16.464505+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_entrance_closed_door_right_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_entrance_closed_door_right: 53/53 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
