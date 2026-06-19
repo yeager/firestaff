@@ -6,8 +6,11 @@
     "DATA.C:39",
     "DATA.C:179",
     "DATA.C:579",
-    "CLIKMENU.C:366/491/559",
-    "COPYPRO6.C:69/99"
+    "CLIKMENU.C:366",
+    "CLIKMENU.C:491",
+    "CLIKMENU.C:559",
+    "COPYPRO6.C:69",
+    "COPYPRO6.C:99"
   ],
   "nonOverlap": [
     "Not pass784-790 (mirror-candidate C040 + wound).",
@@ -116,7 +119,7 @@
     }
   ],
   "status": "PASS849_DM1_V1_FUZZY_SECTOR_ANALYZED_LOCKED",
-  "timestampUtc": "2026-06-19T18:49:51.030274+00:00",
+  "timestampUtc": "2026-06-19T18:52:45.718227+00:00",
   "verificationRuns": [
     {
       "command": [
