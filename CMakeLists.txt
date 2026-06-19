@@ -3427,6 +3427,27 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_box_entrance_doors_pc34_compat
     )
 
+    # DM1 V1 fuzzy-sector-analyzed: Graphics.dat item 562 init
+    # var G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE (single
+    # int16_t). Copy-protection state flag initialized to
+    # C00255_FALSE. Read sites: CLIKMENU.C:366/491/559 +
+    # COPYPRO6.C:69/99. Disjoint from pass784-790 + pass791-799 +
+    # pass798-848. Source-locked against DATA.C:39/179/579 +
+    # CLIKMENU.C:366/491/559 + COPYPRO6.C:69/99 + DEFS.H C00255_
+    # FALSE / C00136_TRUE.
+    add_executable(test_dm1_v1_fuzzy_sector_analyzed_pc34_compat
+        tests/test_dm1_v1_fuzzy_sector_analyzed_pc34_compat.c
+        src/dm1/dm1_v1_fuzzy_sector_analyzed_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_fuzzy_sector_analyzed_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_fuzzy_sector_analyzed_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_fuzzy_sector_analyzed_pc34_compat
+        COMMAND test_dm1_v1_fuzzy_sector_analyzed_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -3862,6 +3883,29 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_drop_to_floor_pc34_compat
         COMMAND test_dm1_v1_chest_drop_to_floor_pc34_compat
+    )
+
+    # pass850 — chest empty reopen runtime: F0333 reopen of an empty
+    # chest (0 visible items in the container Slot list) must (a)
+    # open normally via F0333:30-32, (b) write C0xFFFF_THING_NONE
+    # to all 8 G0425 slots per F0333:67-76, (c) keep the open chest
+    # G0426 set to the chest thing, (d) F0334 close must clear G0426
+    # + reset Container->Slot to C0xFFFE_THING_ENDOFLIST, and (e) a
+    # subsequent F0333 reopen must reach the same no-items state.
+    # Source-locked against CHEST.C F0333:30-32 + F0333:36-46 +
+    # F0333:67-76 + F0334:113-117 + F0334:117-132 + CHAMPION.C
+    # F0297/F0298:243-298 + DEFS.H:434, 778-817.
+    add_executable(test_dm1_v1_chest_empty_reopen_runtime_pc34_compat
+        tests/test_dm1_v1_chest_empty_reopen_runtime_pc34_compat.c
+        src/dm1/dm1_v1_chest_empty_reopen_runtime_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_empty_reopen_runtime_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_empty_reopen_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_empty_reopen_runtime_pc34_compat
+        COMMAND test_dm1_v1_chest_empty_reopen_runtime_pc34_compat
     )
 
     # chest mid-close hand swap: mutation of a G0425 future slot after
@@ -7210,6 +7254,63 @@ if(BUILD_TESTING)
         NAME swsh_frontend_source_animation_schedule
         COMMAND test_swsh_frontend_pc34_compat_integration
     )
+
+    # -- DM1 V1 FTL swoosh palette regression probe (pass841) ----------
+    # Headless regression guard for the FTL swoosh intro animation. Loads
+    # SWOOSH from FIRESTAFF_SWOOSH or a canonical path passed via
+    # --swsh-swoosh; exercises the same SWSH_Compat_* functions as the
+    # runtime; verifies the 4 load-bearing palette mutations
+    # (color 1 white, color 10 light grey, color 13 dark grey, color 15
+    # yellow final); prints a per-build SHA-256 over the per-step
+    # (palette || rgba) digests so regressions can be diff'd across
+    # OSes/renderer backends without re-running on real hardware.
+    add_executable(firestaff_v1_ftl_swoosh_palette_regression_probe
+        probes/v1/firestaff_v1_ftl_swoosh_palette_regression_probe.c
+        src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/bitmap_call_pc34_compat.c
+        src/shared/image_expand_pc34_compat.c
+        src/shared/image_backend_pc34_compat.c
+    )
+    target_compile_definitions(firestaff_v1_ftl_swoosh_palette_regression_probe PRIVATE
+        COMPILE_H
+        STATICFUNCTION=static
+        "SEPARATOR=,"
+        "FINAL_SEPARATOR=)"
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_v1_ftl_swoosh_palette_regression_probe PRIVATE -std=c99 -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME ftl_swoosh_palette_regression
+        COMMAND firestaff_v1_ftl_swoosh_palette_regression_probe
+                ${CMAKE_SOURCE_DIR}/../ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH
+    )
+
+    # -- FTL swoosh ASCII visual sanity probe (pass841) ---------------
+    # Prints the unpacked logo as ASCII so a regression can be eyeballed
+    # without launching the SDL window. Used to confirm the IMG1 decode
+    # produces something logo-shaped, not just byte-pattern shaped.
+    add_executable(firestaff_v1_ftl_swoosh_ascii_probe
+        probes/v1/firestaff_v1_ftl_swoosh_ascii_probe.c
+        src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/bitmap_call_pc34_compat.c
+        src/shared/image_expand_pc34_compat.c
+        src/shared/image_backend_pc34_compat.c
+    )
+    target_compile_definitions(firestaff_v1_ftl_swoosh_ascii_probe PRIVATE
+        COMPILE_H
+        STATICFUNCTION=static
+        "SEPARATOR=,"
+        "FINAL_SEPARATOR=)"
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_v1_ftl_swoosh_ascii_probe PRIVATE -std=c99 -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME ftl_swoosh_ascii_sanity
+        COMMAND firestaff_v1_ftl_swoosh_ascii_probe
+                ${CMAKE_SOURCE_DIR}/../ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH
+    )
 endif()
 
 
@@ -8109,6 +8210,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass836_dm1_v1_chest_close_while_candidate_open_reopen_side_effects PROPERTIES DEPENDS dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat)
         add_test(
+            NAME pass849_dm1_v1_chest_drop_to_floor
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass849_dm1_v1_chest_drop_to_floor_pc34_compat.py
+        )
+        set_tests_properties(pass849_dm1_v1_chest_drop_to_floor PROPERTIES DEPENDS dm1_v1_chest_drop_to_floor_pc34_compat)
+        add_test(
+            NAME pass850_dm1_v1_chest_empty_reopen_runtime
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass850_dm1_v1_chest_empty_reopen_runtime_pc34_compat.py
+        )
+        set_tests_properties(pass850_dm1_v1_chest_empty_reopen_runtime PROPERTIES DEPENDS dm1_v1_chest_empty_reopen_runtime_pc34_compat)
+        add_test(
             NAME pass807_dm1_v1_palette_changes_no_changes
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass807_dm1_v1_palette_changes_no_changes_pc34_compat.py
         )
@@ -8268,6 +8379,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass848_dm1_v1_viewport_floppy_zzz_cross_pc34_compat.py
         )
         set_tests_properties(pass848_dm1_v1_viewport_floppy_zzz_cross PROPERTIES DEPENDS dm1_v1_viewport_floppy_zzz_cross_pc34_compat)
+        add_test(
+            NAME pass849_dm1_v1_fuzzy_sector_analyzed
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass849_dm1_v1_fuzzy_sector_analyzed_pc34_compat.py
+        )
+        set_tests_properties(pass849_dm1_v1_fuzzy_sector_analyzed PROPERTIES DEPENDS dm1_v1_fuzzy_sector_analyzed_pc34_compat)
         add_test(
             NAME pass840_dm1_v1_box_entrance_doors
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass840_dm1_v1_box_entrance_doors_pc34_compat.py
