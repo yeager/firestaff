@@ -3048,6 +3048,28 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_palette_dungeon_view_pc34_compat
     )
 
+    # DM1 V1 box-spell-area: Graphics.dat item 562 init var
+    # G0000_ai_Graphic562_Box_SpellArea[4] = {224, 319, 42, 74}.
+    # The {X, Y, W, H} byte-coordinate sub-rectangle for the
+    # spell-area background blit on the champion panel. Read
+    # sites: CASTER.C:24/31 + STARTUP2.C:376 (spell-area blit +
+    # clear + hatch). Disjoint from pass784-790 + pass791-799 +
+    # pass798-821. Source-locked against DATA.C:6/119/539 +
+    # CASTER.C:24/31 + STARTUP2.C:376 + DEFS.H C009 + C048 +
+    # C00_COLOR_BLACK.
+    add_executable(test_dm1_v1_box_spell_area_pc34_compat
+        tests/test_dm1_v1_box_spell_area_pc34_compat.c
+        src/dm1/dm1_v1_box_spell_area_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_spell_area_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_spell_area_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_spell_area_pc34_compat
+        COMMAND test_dm1_v1_box_spell_area_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -3409,6 +3431,30 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat
         COMMAND test_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat
+    )
+
+    # pass822 — chest close while candidate live on non-leader: the
+    # chest close gate (F0334) interleaves with a candidate panel
+    # click on a non-leader champion (C02 or C03). The contract pins:
+    # the candidate click (F0302 on a non-leader slot) must (a) not
+    # mutate G0425 mid-close, (b) keep the leader's mid-close
+    # state byte-stable, (c) the F0334 close completes regardless of
+    # the non-leader candidate state, and (d) the reopen via F0333
+    # preserves the closed-chain state.
+    # Source-locked against CHEST.C F0333:30-67 + F0334:113-132 +
+    # CHAMPION.C F0284:93-131 + F0297-F0302 + CLIKCHAM.C F0367/F0368 +
+    # PANEL.C F0344/F0345/F0352 + DEFS.H C00..C29, C037..C040, C537..C545.
+    add_executable(test_dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat
+        tests/test_dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat.c
+        src/dm1/dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat
+        COMMAND test_dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat
     )
 
     # chest mid-close hand swap: mutation of a G0425 future slot after
@@ -7599,6 +7645,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat.py
         )
         set_tests_properties(pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending PROPERTIES DEPENDS dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat)
+        add_test(
+            NAME pass822_dm1_v1_chest_close_while_candidate_live_non_leader
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass822_dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat.py
+        )
+        set_tests_properties(pass822_dm1_v1_chest_close_while_candidate_live_non_leader PROPERTIES DEPENDS dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat)
         add_test(
             NAME pass807_dm1_v1_palette_changes_no_changes
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass807_dm1_v1_palette_changes_no_changes_pc34_compat.py
