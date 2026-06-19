@@ -1,0 +1,89 @@
+/*
+ * m11_v22_inplace_draw_pc34.h
+ *
+ * DM1 V2.2 GPU render path: V22 modern-art IN-PLACE bitmap lookup.
+ *
+ * This is the foundation for switching the V22 render mode from
+ * "overlay" (placeholder colored rectangle on top of V1) to
+ * "in-place" (replace V1 sprite with V22 PBR PNG at the same cell).
+ *
+ * Architecture:
+ *   m11_v22_shape_cache_update -> per-cell V22 shape (params, variant)
+ *     -> m11_v22_inplace_get_cell_bitmap(depth, lateral, &w, &h)
+ *        -> variant -> asset_id in modern_asset_manifest.json
+ *        -> asset_id -> file path (via m11_v22_get_shape_path)
+ *        -> PNG decode to RGBA buffer (cached at init)
+ *        -> return RGBA* + width + height
+ *   m11_draw_dm1_* passes consult the bitmap and blit it instead of
+ *   the V1 sprite when V22 is active.
+ *
+ * When V22 is NOT active (modern assets not installed or
+ * presentation_mode != V22), every cell returns NULL and the
+ * V1 draw path is used unchanged. This is the migration safety
+ * path: in-place is opt-in.
+ *
+ * Source-lock: m11_v22_shape_cache_pc34.h (the cache),
+ * m11_v2_modern_assets_pc34.c (manifest lookup),
+ * m11_v22_render_overlay_pc34.c (sibling overlay path),
+ * include/dm1_v2_shape_runtime_pc34.h (shape variant enum),
+ * ReDMCSB DUNVIEW.C:6697-6816 (composition order).
+ *
+ * Module: src/dm1v2/m11_v22_inplace_draw_pc34.c
+ * Test:   tests/test_m11_v22_inplace_draw_pc34.c
+ */
+
+#ifndef FIRESTAFF_M11_V22_INPLACE_DRAW_PC34_H
+#define FIRESTAFF_M11_V22_INPLACE_DRAW_PC34_H
+
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Initialize the in-place bitmap cache. Loads every PNG referenced
+ * by ~/.firestaff/assets/dm1/modern/modern_asset_manifest.json into
+ * RGBA buffers keyed by (category, asset_id). Call once at startup
+ * after m11_v22_set_manifest_path() and m11_v22_validate_manifest().
+ *
+ * Returns 1 on success (at least one bitmap cached), 0 if no assets
+ * are available (V22 not installed — fallback to V1). */
+int m11_v22_inplace_draw_init(void);
+
+/* Free all cached RGBA buffers. Call once at shutdown. */
+void m11_v22_inplace_draw_shutdown(void);
+
+/* True when in-place has at least one cached bitmap. */
+int m11_v22_inplace_draw_active(void);
+
+/* Get the cached RGBA bitmap for a V22 cell. depth in {1,2,3},
+ * lateral in {-1,0,1}. Sets *out_w, *out_h to the bitmap dimensions.
+ * Returns NULL if the cell has no V22 shape, the shape has no
+ * mapped asset_id, or in-place has not been initialized.
+ *
+ * The returned pointer is owned by the in-place cache and remains
+ * valid until m11_v22_inplace_draw_shutdown(). */
+const uint32_t* m11_v22_inplace_get_cell_bitmap(int depth, int lateral,
+                                                 int* out_w, int* out_h);
+
+/* Lookup the asset_id (in modern_asset_manifest.json) that the
+ * current V22 cell at (depth, lateral) maps to. Returns NULL if
+ * the cell has no mapping. The returned string is owned by the
+ * static mapping table and remains valid for the program lifetime.
+ *
+ * This is the seam between the shape variant enum and the asset
+ * pack. The mapping is intentionally conservative in this first
+ * cut: walls all map to wall_d3_carved_01 (the most common carved
+ * stone), floors map by tile pattern, creatures map by silhouette
+ * tag. Per-cell refinement (e.g., mossy walls for slime zones) is
+ * a follow-up. */
+const char* m11_v22_inplace_get_cell_asset_id(int depth, int lateral);
+
+/* Source evidence for tests/probes. */
+const char* m11_v22_inplace_draw_source_evidence(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FIRESTAFF_M11_V22_INPLACE_DRAW_PC34_H */
