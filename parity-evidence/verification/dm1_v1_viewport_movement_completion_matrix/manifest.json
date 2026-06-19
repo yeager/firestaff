@@ -15,32 +15,75 @@
         "-j2"
       ],
       "outputTail": [
-        "[  0%] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_movement_arrows_pc34_compat.c.o",
-        "[  0%] Linking C static library libfirestaff_m10.a",
-        "[100%] Built target firestaff_m10",
-        "[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
-        "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
-        "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Linking C executable test_dm1_v1_movement_core_pc34_compat",
-        "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Linking C executable test_m11_v1_turning_presentation_pc34_compat",
-        "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
-        "[ 96%] Built target firestaff_m10",
-        "[ 96%] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat",
-        "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
+        "-- [DEBUG-FOREACH] candidate=close_after_party_shuffle_pc34_compat test=tests/test_dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c>",
+        "-- [DEBUG-FOREACH] candidate=close_order_party_shuffle_pc34_compat test=tests/test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c>",
+        "-- [DEBUG-FOREACH] candidate=close_while_resurrect_pending_with_inventory_pickup_pc34_compat test=tests/test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c>",
+        "-- [DEBUG-FOREACH] candidate=eye_slot_swap test=tests/test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c>",
+        "-- [DEBUG-FOREACH] adding test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat",
+        "-- Configuring done (0.2s)",
+        "-- Generating done (0.6s)",
+        "-- Build files have been written to: /Users/bosse/.openclaw/workspace-main/build",
+        "[  0%] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_title_presents_pc34_compat.c.o",
+        "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_box_title_presents_pc34_compat.c:109:10: error: no member named 'hIs105' in 'struct DM1_V1_BoxTitleStrikesBackSourceResultPc34'",
+        "  109 |     out->hIs105 = h_is_56;",
+        "      |     ~~~  ^",
+        "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_box_title_presents_pc34_compat.c:137:14: error: no member named 'hIs105' in 'struct DM1_V1_BoxTitleStrikesBackSourceResultPc34'",
+        "  137 |         out->hIs105 &&",
+        "      |         ~~~  ^",
+        "2 errors generated.",
+        "gmake[3]: *** [CMakeFiles/firestaff_m10.dir/build.make:1409: CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_title_presents_pc34_compat.c.o] Error 1",
+        "gmake[2]: *** [CMakeFiles/Makefile2:1258: CMakeFiles/firestaff_m10.dir/all] Error 2",
+        "gmake[1]: *** [CMakeFiles/Makefile2:7069: CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/rule] Error 2",
+        "gmake: *** [Makefile:2364: test_dm1_v1_input_command_queue_pc34_compat] Error 2"
       ],
-      "passed": true,
-      "returncode": 0
+      "passed": false,
+      "returncode": 2
     }
   ],
   "chainedGates": [
+    {
+      "cmd": [
+        "cmake",
+        "--build",
+        "/Users/bosse/.openclaw/workspace-main/build",
+        "--target",
+        "test_dm1_v1_input_command_queue_pc34_compat",
+        "test_dm1_v1_movement_command_core_pc34_compat",
+        "test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "test_dm1_v1_movement_core_pc34_compat",
+        "test_m11_v1_turning_presentation_pc34_compat",
+        "test_dm1_v1_movement_pipeline_pc34_compat",
+        "-j2"
+      ],
+      "covers": "configure/build movement targets required by chained gates",
+      "expectedStatus": null,
+      "id": "prepare_required_build",
+      "outputTail": [
+        "-- [DEBUG-FOREACH] candidate=close_after_party_shuffle_pc34_compat test=tests/test_dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c>",
+        "-- [DEBUG-FOREACH] candidate=close_order_party_shuffle_pc34_compat test=tests/test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c>",
+        "-- [DEBUG-FOREACH] candidate=close_while_resurrect_pending_with_inventory_pickup_pc34_compat test=tests/test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c>",
+        "-- [DEBUG-FOREACH] candidate=eye_slot_swap test=tests/test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c>",
+        "-- [DEBUG-FOREACH] adding test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat",
+        "-- Configuring done (0.2s)",
+        "-- Generating done (0.6s)",
+        "-- Build files have been written to: /Users/bosse/.openclaw/workspace-main/build",
+        "[  0%] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_title_presents_pc34_compat.c.o",
+        "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_box_title_presents_pc34_compat.c:109:10: error: no member named 'hIs105' in 'struct DM1_V1_BoxTitleStrikesBackSourceResultPc34'",
+        "  109 |     out->hIs105 = h_is_56;",
+        "      |     ~~~  ^",
+        "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_box_title_presents_pc34_compat.c:137:14: error: no member named 'hIs105' in 'struct DM1_V1_BoxTitleStrikesBackSourceResultPc34'",
+        "  137 |         out->hIs105 &&",
+        "      |         ~~~  ^",
+        "2 errors generated.",
+        "gmake[3]: *** [CMakeFiles/firestaff_m10.dir/build.make:1409: CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_title_presents_pc34_compat.c.o] Error 1",
+        "gmake[2]: *** [CMakeFiles/Makefile2:1258: CMakeFiles/firestaff_m10.dir/all] Error 2",
+        "gmake[1]: *** [CMakeFiles/Makefile2:7069: CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/rule] Error 2",
+        "gmake: *** [Makefile:2364: test_dm1_v1_input_command_queue_pc34_compat] Error 2"
+      ],
+      "passed": false,
+      "returncode": 2,
+      "status": null
+    },
     {
       "cmd": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
@@ -87,11 +130,30 @@
       "expectedStatus": null,
       "id": "pass423_input_command_movement_pipeline_source_lock",
       "outputTail": [
-        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
+        "                     ~~~~^^",
+        "  File \"/Users/bosse/.openclaw/workspace-main/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 128, in main",
+        "    tests = [run(cmd) for cmd in TEST_COMMANDS]",
+        "             ~~~^^^^^",
+        "  File \"/Users/bosse/.openclaw/workspace-main/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 115, in run",
+        "    raise AssertionError(f\"command failed {' '.join(cmd)}:\\n{proc.stdout[-4000:]}\")",
+        "AssertionError: command failed cmake --build /Users/bosse/.openclaw/workspace-main/build --target test_dm1_v1_input_command_queue_pc34_compat test_dm1_v1_movement_command_core_pc34_compat test_dm1_v1_command_movement_sensor_timing_pc34_compat -j2:",
+        "[  0%] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_title_presents_pc34_compat.c.o",
+        "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_box_title_presents_pc34_compat.c:109:10: error: no member named 'hIs105' in 'struct DM1_V1_BoxTitleStrikesBackSourceResultPc34'",
+        "  109 |     out->hIs105 = h_is_56;",
+        "      |     ~~~  ^",
+        "/Users/bosse/.openclaw/workspace-main/src/dm1/dm1_v1_box_title_presents_pc34_compat.c:137:14: error: no member named 'hIs105' in 'struct DM1_V1_BoxTitleStrikesBackSourceResultPc34'",
+        "  137 |         out->hIs105 &&",
+        "      |         ~~~  ^",
+        "2 errors generated.",
+        "gmake[3]: *** [CMakeFiles/firestaff_m10.dir/build.make:1409: CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_box_title_presents_pc34_compat.c.o] Error 1",
+        "gmake[2]: *** [CMakeFiles/Makefile2:1258: CMakeFiles/firestaff_m10.dir/all] Error 2",
+        "gmake[1]: *** [CMakeFiles/Makefile2:7069: CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/rule] Error 2",
+        "gmake: *** [Makefile:2364: test_dm1_v1_input_command_queue_pc34_compat] Error 2",
+        ""
       ],
-      "passed": true,
-      "returncode": 0,
-      "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED"
+      "passed": false,
+      "returncode": 1,
+      "status": null
     },
     {
       "cmd": [
@@ -314,7 +376,7 @@
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS"
     }
   ],
-  "decision": "Current movement/viewport source-lock gates are green, pass434 crop readiness is green, and pass435 confirms the remaining blocker is original semantic route readiness; no original pixel/route parity is claimed.",
+  "decision": "One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.",
   "expectedBlockerGates": [
     {
       "cmd": [
@@ -340,7 +402,7 @@
     }
   ],
   "gate": "dm1_v1_viewport_movement_completion_matrix",
-  "passed": true,
+  "passed": false,
   "schema": "firestaff.dm1_v1_viewport_movement_completion_matrix.v2",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceRows": [
@@ -417,5 +479,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-19T16:10:40.426267+00:00"
+  "timestampUtc": "2026-06-19T16:47:42.628403+00:00"
 }
