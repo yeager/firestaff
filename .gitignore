@@ -218,6 +218,10 @@ __pycache__/
 !/parity-evidence/verification/pass808_dm1_v1_champion_color_pc34_compat/**
 !/parity-evidence/verification/pass809_dm1_v1_slot_masks_pc34_compat/
 !/parity-evidence/verification/pass809_dm1_v1_slot_masks_pc34_compat/**
+!/parity-evidence/verification/pass811_dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat/
+!/parity-evidence/verification/pass811_dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat/**
+!/parity-evidence/verification/pass812_dm1_v1_champion_panel_box_water_pc34_compat/
+!/parity-evidence/verification/pass812_dm1_v1_champion_panel_box_water_pc34_compat/**
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/**
 !/parity-evidence/verification/pass799_dm1_v1_chest_open_stack_split_press_eye_pc34_compat/
@@ -230,6 +234,8 @@ __pycache__/
 !/parity-evidence/verification/pass810_dm1_v1_chest_close_stack_merge_pc34_compat/**
 !/parity-evidence/verification/pass811_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat/
 !/parity-evidence/verification/pass811_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat/**
+!/parity-evidence/verification/pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat/
+!/parity-evidence/verification/pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat/**
 !/parity-evidence/verification/pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat/
 !/parity-evidence/verification/pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat/**
 !/parity-evidence/verification/pass809_dm1_v1_chest_close_stack_merge_pc34_compat/

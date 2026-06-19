@@ -2799,6 +2799,52 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_box_poisoned_pc34_compat
     )
 
+    # DM1 V1 champion-panel-box-arrow-or-eye: Graphics.dat item 562
+    # init var G0033_ai_Graphic562_Box_ArrowOrEye[4] = {83, 98, 57,
+    # 65}. The {X, Y, W, H} pixel-coordinate rectangle for the chest-
+    # content arrow/eye indicator blit. Read site: PANEL.C:511 F0344_
+    # INVENTORY_DrawPanel blits C018_GRAPHIC_ARROW_FOR_CHEST_CONTENT
+    # (default) or C019_GRAPHIC_EYE_FOR_OBJECT_DESCRIPTION (pressing
+    # eye) into G0033's box with byte width C008_BYTE_WIDTH and color
+    # C08_COLOR_RED. Disjoint from pass784-790 + pass791-799 +
+    # pass798-809. Source-locked against DATA.C:39 + DATA.C:315 +
+    # DATA.C:1032 + PANEL.C:511.
+    add_executable(test_dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat
+        tests/test_dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat
+    )
+
+    # DM1 V1 champion-panel-box-water: Graphics.dat item 562 init
+    # var G0036_ai_Graphic562_Box_Water[4] = {112, 159, 83, 91}.
+    # The {X, Y, W, H} pixel-coordinate rectangle for the water
+    # status label blit (paired with food label G0035). Read sites:
+    # PANEL.C:1586/1590/1594 F0344_INVENTORY_DrawPanel — blit
+    # C031_GRAPHIC_WATER_LABEL into G0036's box with byte widths
+    # C024/C032/C024 for English/German/French localizations.
+    # Disjoint from pass784-790 + pass791-799 + pass798-811.
+    # Source-locked against DATA.C:42 + DATA.C:318 + DATA.C:1036 +
+    # PANEL.C:1586/1590/1594.
+    add_executable(test_dm1_v1_champion_panel_box_water_pc34_compat
+        tests/test_dm1_v1_champion_panel_box_water_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_box_water_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_box_water_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_box_water_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_box_water_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_box_water_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -3136,6 +3182,30 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat
         COMMAND test_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat
+    )
+
+    # pass812 — chest close while party rotate pickup pending: the
+    # chest close gate (F0334) interleaves with a party-rotate pickup
+    # that is mid-flight (click on C545/C040 while a G0425 slot is
+    # being processed). The contract pins: the pending pickup
+    # (F0302 click handler) must not mutate G0425 mid-close; the
+    # F0334 close completes with the pickup still queued (not
+    # dropped, not applied to the now-closed chest); the reopen via
+    # F0333 must not see the dropped pickup as a real chest slot.
+    # Source-locked against CHEST.C F0333:30-67 + F0334:113-132 +
+    # CHAMPION.C F0284:93-131 + F0297-F0302 + PANEL.C F0347:1639-1691
+    # + COMMAND.C F0359:1985-1990 + DEFS.H C30..C37, C537..C545.
+    add_executable(test_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat
+        tests/test_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat.c
+        src/dm1/dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat
+        COMMAND test_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat
     )
 
     # chest mid-close hand swap: mutation of a G0425 future slot after
@@ -7308,6 +7378,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass811_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader PROPERTIES DEPENDS dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat)
         add_test(
+            NAME pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat.py
+        )
+        set_tests_properties(pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending PROPERTIES DEPENDS dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat)
+        add_test(
             NAME pass807_dm1_v1_palette_changes_no_changes
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass807_dm1_v1_palette_changes_no_changes_pc34_compat.py
         )
@@ -7322,6 +7397,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass809_dm1_v1_slot_masks_pc34_compat.py
         )
         set_tests_properties(pass809_dm1_v1_slot_masks PROPERTIES DEPENDS dm1_v1_slot_masks_pc34_compat)
+        add_test(
+            NAME pass811_dm1_v1_champion_panel_box_arrow_or_eye
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass811_dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat.py
+        )
+        set_tests_properties(pass811_dm1_v1_champion_panel_box_arrow_or_eye PROPERTIES DEPENDS dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat)
+        add_test(
+            NAME pass812_dm1_v1_champion_panel_box_water
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass812_dm1_v1_champion_panel_box_water_pc34_compat.py
+        )
+        set_tests_properties(pass812_dm1_v1_champion_panel_box_water PROPERTIES DEPENDS dm1_v1_champion_panel_box_water_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
