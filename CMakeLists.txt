@@ -2799,6 +2799,27 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_box_poisoned_pc34_compat
     )
 
+    # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
+    # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
+    # identity palette-remap table used by VIDEO_BlitShrinkWith
+    # PaletteChanges when no palette remap is desired. PC 3.4 init =
+    # {0, 1, ..., 15} (true identity). Atari init = {0, 10, 20, ...,
+    # 150} (10-step ramp). Read sites: ACTIDRAW.C:160, BLTSHRNK.C:530,
+    # DUNVIEW.C:4518/5973, STARTUP2.C:822. Disjoint from pass784-790 +
+    # pass791-799 + pass798-806.
+    add_executable(test_dm1_v1_palette_changes_no_changes_pc34_compat
+        tests/test_dm1_v1_palette_changes_no_changes_pc34_compat.c
+        src/dm1/dm1_v1_palette_changes_no_changes_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_changes_no_changes_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_changes_no_changes_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_changes_no_changes_pc34_compat
+        COMMAND test_dm1_v1_palette_changes_no_changes_pc34_compat
+    )
+
     # DM1 V1 champion-color: Graphics.dat item 562 init var
     # G0046_auc_Graphic562_ChampionColor[4] = {7, 11, 8, 14} — the
     # champion color assignment (leader=7, 1st follower=11, 2nd=8,
@@ -3090,6 +3111,31 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_close_stack_merge_pc34_compat
         COMMAND test_dm1_v1_chest_close_stack_merge_pc34_compat
+    )
+
+    # pass811 — C545 non-leader hand back to mid-cast leader: a
+    # non-leader champion (C02) holds a C545 command in hand; the
+    # open chest (G0426) is live, the leader (C00) is mid-cast; the
+    # non-leader hand click on a G0425 slot must (a) reject the
+    # mid-cast leader read-write, (b) keep the leader's mid-cast
+    # progress byte-stable, (c) snapshot the leader hand via F0302
+    # before any remove/put, and (d) leave the open chest G0425
+    # chain in a consistent state. Source-locked against CHEST.C
+    # F0333:30-67 + F0334:113-132 + CHAMPION.C F0284:93-131 +
+    # F0297:243-298 + F0298:270-298 + F0300:511-515 + F0301:606-614
+    # + F0302:662-714 + PANEL.C F0344/F0345/F0352 + COMMAND.C
+    # F0359:1985-1990 + DEFS.H:2088, 5876-5881, 810-817, 3906-3914.
+    add_executable(test_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat
+        tests/test_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat.c
+        src/dm1/dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat
+        COMMAND test_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat
     )
 
     # chest mid-close hand swap: mutation of a G0425 future slot after
@@ -7256,6 +7302,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass810_dm1_v1_chest_close_stack_merge_pc34_compat.py
         )
         set_tests_properties(pass810_dm1_v1_chest_close_stack_merge PROPERTIES DEPENDS dm1_v1_chest_close_stack_merge_pc34_compat)
+        add_test(
+            NAME pass811_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass811_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat.py
+        )
+        set_tests_properties(pass811_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader PROPERTIES DEPENDS dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat)
+        add_test(
+            NAME pass807_dm1_v1_palette_changes_no_changes
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass807_dm1_v1_palette_changes_no_changes_pc34_compat.py
+        )
+        set_tests_properties(pass807_dm1_v1_palette_changes_no_changes PROPERTIES DEPENDS dm1_v1_palette_changes_no_changes_pc34_compat)
+        add_test(
+            NAME pass808_dm1_v1_champion_color
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass808_dm1_v1_champion_color_pc34_compat.py
+        )
+        set_tests_properties(pass808_dm1_v1_champion_color PROPERTIES DEPENDS dm1_v1_champion_color_pc34_compat)
+        add_test(
+            NAME pass809_dm1_v1_slot_masks
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass809_dm1_v1_slot_masks_pc34_compat.py
+        )
+        set_tests_properties(pass809_dm1_v1_slot_masks PROPERTIES DEPENDS dm1_v1_slot_masks_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
