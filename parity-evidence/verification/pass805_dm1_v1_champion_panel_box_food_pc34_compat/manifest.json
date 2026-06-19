@@ -1,0 +1,118 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:41",
+    "DATA.C:317",
+    "DATA.C:1035",
+    "PANEL.C:1585/1589/1593"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + auto-chest + chest-open-stack-split).",
+    "Not pass798 (icon-graphic-first-icon-index).",
+    "Not pass800 (slot-boxes).",
+    "Not pass801 (light-power-to-light-amount).",
+    "Not pass802 (palette-index-to-light-amount).",
+    "Not pass803 (ordered-cells-to-attack).",
+    "Not pass804 (charge-count-to-torch-type)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:41",
+      "line": 41,
+      "lineText": "int16_t G0035_ai_Graphic562_Box_Food[4];",
+      "needle": "G0035_ai_Graphic562_Box_Food",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:317",
+      "line": 317,
+      "lineText": "int16_t G0035_ai_Graphic562_Box_Food[4] = { 112, 159, 60, 68 };",
+      "needle": "G0035_ai_Graphic562_Box_Food",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1035",
+      "line": 1035,
+      "lineText": "int16_t G0035_ai_Graphic562_Box_Food[4] = { 112, 159, 60, 68 };",
+      "needle": "G0035_ai_Graphic562_Box_Food",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1585",
+      "line": 1585,
+      "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C030_GRAPHIC_FOOD_LABEL), G0035_ai_Graphic562_Box_Food, C024_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
+      "needle": "G0035_ai_Graphic562_Box_Food",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1589",
+      "line": 1589,
+      "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C030_GRAPHIC_FOOD_LABEL), G0035_ai_Graphic562_Box_Food, C032_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
+      "needle": "G0035_ai_Graphic562_Box_Food",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1593",
+      "line": 1593,
+      "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C030_GRAPHIC_FOOD_LABEL), G0035_ai_Graphic562_Box_Food, C048_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
+      "needle": "G0035_ai_Graphic562_Box_Food",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass805_dm1_v1_champion_panel_box_food_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0035_ai_Graphic562_Box_Food[4] = {112, 159, 60, 68}. The {X, Y, W, H} pixel-coordinate rectangle for the food status label blit onto the champion panel. Read sites: PANEL.C:1585/1589/1593 F0344_INVENTORY_DrawPanel \u2014 blit C030_GRAPHIC_FOOD_LABEL into G0035's box with byte widths C024/C032/C048 for English/German/French localizations.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_food_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_food_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/champion_panel_box_food_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_champion_panel_box_food_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS805_DM1_V1_CHAMPION_PANEL_BOX_FOOD_LOCKED",
+  "timestampUtc": "2026-06-19T10:39:39.891039+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_box_food_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_champion_panel_box_food: 52/52 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

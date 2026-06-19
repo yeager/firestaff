@@ -1,0 +1,103 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:43",
+    "DATA.C:319",
+    "DATA.C:1046",
+    "PANEL.C:1603"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + auto-chest + chest-open-stack-split).",
+    "Not pass798 (icon-graphic-first-icon-index).",
+    "Not pass800 (slot-boxes).",
+    "Not pass801 (light-power-to-light-amount).",
+    "Not pass802 (palette-index-to-light-amount).",
+    "Not pass803 (ordered-cells-to-attack).",
+    "Not pass804 (charge-count-to-torch-type).",
+    "Not pass805 (champion-panel-box-food)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:43",
+      "line": 43,
+      "lineText": "int16_t G0037_ai_Graphic562_Box_Poisoned[4];",
+      "needle": "G0037_ai_Graphic562_Box_Poisoned",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:319",
+      "line": 319,
+      "lineText": "int16_t G0037_ai_Graphic562_Box_Poisoned[4] = { 112, 207, 105, 119 };",
+      "needle": "G0037_ai_Graphic562_Box_Poisoned",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1046",
+      "line": 1046,
+      "lineText": "int16_t G0037_ai_Graphic562_Box_Poisoned[4] = { 112, 207, 105, 119 };",
+      "needle": "G0037_ai_Graphic562_Box_Poisoned",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "id": "PANEL.C:1603",
+      "line": 1603,
+      "lineText": "                M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C032_GRAPHIC_POISONED_LABEL), G0037_ai_Graphic562_Box_Poisoned, C048_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 15);",
+      "needle": "G0037_ai_Graphic562_Box_Poisoned",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass806_dm1_v1_champion_panel_box_poisoned_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0037_ai_Graphic562_Box_Poisoned[4] = {112, 207, 105, 119}. The {X, Y, W, H} pixel-coordinate rectangle for the POISONED status label blit onto the champion panel. Read site: PANEL.C:1603 F0344_INVENTORY_DrawPanel \u2014 when Champion->PoisonEventCount != 0, blit C032_GRAPHIC_POISONED_LABEL into G0037's box with byte width C048.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_poisoned_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_box_poisoned_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/champion_panel_box_poisoned_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_champion_panel_box_poisoned_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS806_DM1_V1_CHAMPION_PANEL_BOX_POISONED_LOCKED",
+  "timestampUtc": "2026-06-19T10:39:39.920042+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_box_poisoned_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_champion_panel_box_poisoned: 54/54 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

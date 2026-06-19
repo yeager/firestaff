@@ -2753,6 +2753,52 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_charge_count_to_torch_type_pc34_compat
     )
 
+    # DM1 V1 champion-panel-box-food: Graphics.dat item 562 init
+    # var G0035_ai_Graphic562_Box_Food[4] = {112, 159, 60, 68} —
+    # the {X, Y, W, H} pixel-coordinate rectangle for the food
+    # status label blit. Read sites: PANEL.C:1585/1589/1593
+    # F0344_INVENTORY_DrawPanel — blit C030_GRAPHIC_FOOD_LABEL into
+    # G0035's box with byte widths C024/C032/C048 for English/German/
+    # French localizations. Disjoint from pass784-790 + pass791-799
+    # + pass798 + pass800 + pass801 + pass802 + pass803 + pass804.
+    # Source-locked against DATA.C:41 + DATA.C:317 + DATA.C:1035/1039
+    # /1043 + PANEL.C:1585-1593.
+    add_executable(test_dm1_v1_champion_panel_box_food_pc34_compat
+        tests/test_dm1_v1_champion_panel_box_food_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_box_food_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_box_food_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_box_food_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_box_food_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_box_food_pc34_compat
+    )
+
+    # DM1 V1 champion-panel-box-poisoned: Graphics.dat item 562 init
+    # var G0037_ai_Graphic562_Box_Poisoned[4] = {112, 207, 105, 119}.
+    # The {X, Y, W, H} pixel-coordinate rectangle for the poisoned
+    # status label blit. Read site: PANEL.C:1603 F0344_INVENTORY_
+    # DrawPanel — when Champion->PoisonEventCount != 0, blit
+    # C032_GRAPHIC_POISONED_LABEL into G0037's box with byte width
+    # C048. Disjoint from pass784-790 + pass791-799 + pass798 +
+    # pass800 + pass801 + pass802 + pass803 + pass804 + pass805.
+    # Source-locked against DATA.C:43 + DATA.C:319 + DATA.C:1046 +
+    # PANEL.C:1603.
+    add_executable(test_dm1_v1_champion_panel_box_poisoned_pc34_compat
+        tests/test_dm1_v1_champion_panel_box_poisoned_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_box_poisoned_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_box_poisoned_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_box_poisoned_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_box_poisoned_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_box_poisoned_pc34_compat
+    )
+
     # mirror candidate C040 status-box-click-while-panel-live:
     # COMMAND.C F0380:2159-2161 gates the C012..C015 champion-status-box
     # click on `(champion_index < G0305) && !G0299`. While the C040 panel
@@ -7169,6 +7215,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass804_dm1_v1_charge_count_to_torch_type_pc34_compat.py
         )
         set_tests_properties(pass804_dm1_v1_charge_count_to_torch_type PROPERTIES DEPENDS dm1_v1_charge_count_to_torch_type_pc34_compat)
+        add_test(
+            NAME pass805_dm1_v1_champion_panel_box_food
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass805_dm1_v1_champion_panel_box_food_pc34_compat.py
+        )
+        set_tests_properties(pass805_dm1_v1_champion_panel_box_food PROPERTIES DEPENDS dm1_v1_champion_panel_box_food_pc34_compat)
+        add_test(
+            NAME pass806_dm1_v1_champion_panel_box_poisoned
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass806_dm1_v1_champion_panel_box_poisoned_pc34_compat.py
+        )
+        set_tests_properties(pass806_dm1_v1_champion_panel_box_poisoned PROPERTIES DEPENDS dm1_v1_champion_panel_box_poisoned_pc34_compat)
     endif()
 endif()
 
