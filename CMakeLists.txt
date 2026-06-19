@@ -2933,6 +2933,52 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_box_object_description_circle_pc34_compat
     )
 
+    # DM1 V1 champion-portrait-box-mouth: Graphics.dat item 562 init
+    # var G0048_ai_Graphic562_Box_Mouth[4] = {55, 72, 12, 29}.
+    # The {X, Y, W, H} pixel-coordinate rectangle for the
+    # champion-portrait mouth-overlay blit. Read site:
+    # CHAMDRAW.C:914 F0294_CHAMPION_DrawChampionPortraitMouth blits
+    # the mouth graphic into G0048's box with byte width
+    # C016_BYTE_WIDTH and color C12_COLOR_DARKEST_GRAY (depth 18).
+    # Disjoint from pass784-790 + pass791-799 + pass798-816.
+    # Source-locked against DATA.C:79 + DATA.C:423 + DATA.C:1095 +
+    # CHAMDRAW.C:914 + DEFS.H C016_BYTE_WIDTH + C12_COLOR_DARKEST_GRAY.
+    add_executable(test_dm1_v1_champion_portrait_box_mouth_pc34_compat
+        tests/test_dm1_v1_champion_portrait_box_mouth_pc34_compat.c
+        src/dm1/dm1_v1_champion_portrait_box_mouth_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_portrait_box_mouth_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_portrait_box_mouth_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_portrait_box_mouth_pc34_compat
+        COMMAND test_dm1_v1_champion_portrait_box_mouth_pc34_compat
+    )
+
+    # DM1 V1 champion-portrait-box-eye: Graphics.dat item 562 init
+    # var G0049_ai_Graphic562_Box_Eye[4] = {11, 28, 12, 29}.
+    # The {X, Y, W, H} pixel-coordinate rectangle for the
+    # champion-portrait eye-overlay blit. Read site:
+    # CHAMDRAW.C:928 F0294_CHAMPION_DrawChampionPortraitEye blits
+    # the eye graphic into G0049's box with byte width
+    # C016_BYTE_WIDTH and color C12_COLOR_DARKEST_GRAY (depth 18).
+    # Disjoint from pass784-790 + pass791-799 + pass798-817.
+    # Source-locked against DATA.C:87 + DATA.C:426 + DATA.C:1100 +
+    # CHAMDRAW.C:928 + DEFS.H C016_BYTE_WIDTH + C12_COLOR_DARKEST_GRAY.
+    add_executable(test_dm1_v1_champion_portrait_box_eye_pc34_compat
+        tests/test_dm1_v1_champion_portrait_box_eye_pc34_compat.c
+        src/dm1/dm1_v1_champion_portrait_box_eye_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_portrait_box_eye_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_portrait_box_eye_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_portrait_box_eye_pc34_compat
+        COMMAND test_dm1_v1_champion_portrait_box_eye_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -7529,6 +7575,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass816_dm1_v1_champion_panel_box_object_description_circle_pc34_compat.py
         )
         set_tests_properties(pass816_dm1_v1_champion_panel_box_object_description_circle PROPERTIES DEPENDS dm1_v1_champion_panel_box_object_description_circle_pc34_compat)
+        add_test(
+            NAME pass817_dm1_v1_champion_portrait_box_mouth
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass817_dm1_v1_champion_portrait_box_mouth_pc34_compat.py
+        )
+        set_tests_properties(pass817_dm1_v1_champion_portrait_box_mouth PROPERTIES DEPENDS dm1_v1_champion_portrait_box_mouth_pc34_compat)
+        add_test(
+            NAME pass818_dm1_v1_champion_portrait_box_eye
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass818_dm1_v1_champion_portrait_box_eye_pc34_compat.py
+        )
+        set_tests_properties(pass818_dm1_v1_champion_portrait_box_eye PROPERTIES DEPENDS dm1_v1_champion_portrait_box_eye_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
