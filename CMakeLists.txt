@@ -3176,6 +3176,47 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_box_title_strikes_back_destination_pc34_compat
     )
 
+    # DM1 V1 box-title-strikes-back-source: Graphics.dat item 562
+    # init var G0004_ai_Graphic562_Box_Title_StrikesBack_Source[4] =
+    # {0, 319, 0, 56}. The {X, Y, W, H} byte-coordinate sub-rectangle
+    # for the Strikes-Back title screen source blit. Read sites:
+    # TITLE.C:134/137/335/338 F0132_VIDEO_Blit (Strikes Back title
+    # source blit). Disjoint from pass784-790 + pass791-799 +
+    # pass798-835. Source-locked against DATA.C:10/127/547 +
+    # TITLE.C:134/137/335/338 + DEFS.H C160_BYTE_WIDTH_SCREEN.
+    add_executable(test_dm1_v1_box_title_strikes_back_source_pc34_compat
+        tests/test_dm1_v1_box_title_strikes_back_source_pc34_compat.c
+        src/dm1/dm1_v1_box_title_strikes_back_source_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_title_strikes_back_source_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_title_strikes_back_source_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_title_strikes_back_source_pc34_compat
+        COMMAND test_dm1_v1_box_title_strikes_back_source_pc34_compat
+    )
+
+    # DM1 V1 box-title-presents: Graphics.dat item 562 init var
+    # G0005_ai_Graphic562_Box_Title_Presents[4] = {0, 319, 90, 105}.
+    # The {X, Y, W, H} byte-coordinate sub-rectangle for the Title
+    # Presents blit (used in both DM1 title screen and Chaos Strikes
+    # Back). Read sites: TITLE.C:126/129/321/324 F0132_VIDEO_Blit.
+    # Disjoint from pass784-790 + pass791-799 + pass798-836.
+    # Source-locked against DATA.C:11/129/549 + TITLE.C:126/129/321/324.
+    add_executable(test_dm1_v1_box_title_presents_pc34_compat
+        tests/test_dm1_v1_box_title_presents_pc34_compat.c
+        src/dm1/dm1_v1_box_title_presents_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_title_presents_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_title_presents_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_title_presents_pc34_compat
+        COMMAND test_dm1_v1_box_title_presents_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -3561,6 +3602,32 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat
         COMMAND test_dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat
+    )
+
+    # pass836 — chest close while candidate open reopen side effects:
+    # the chest close gate (F0334) interleaves with a candidate panel
+    # click on a non-leader champion whose candidate has an open slot
+    # from a previous interaction. The contract pins: the candidate
+    # reopen side effects (F0302/F0368) must (a) not mutate G0425
+    # mid-close, (b) keep the closed-chain state byte-stable, (c) the
+    # F0334 close completes regardless of the candidate state, and
+    # (d) the reopen via F0333 preserves the closed-chain state and
+    # correctly re-materializes G0425.
+    # Source-locked against CHEST.C F0333:30-67 + F0334:117-132 +
+    # CHAMPION.C F0284:93-131 + F0297:243-298 + F0298:270-298 +
+    # F0300:511-515 + F0301:606-614 + F0302:662-714 + PANEL.C
+    # F0344:1390-1406 + DEFS.H C00..C29, C537..C545, G0423, G0425, G0426.
+    add_executable(test_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat
+        tests/test_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat.c
+        src/dm1/dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat
+        COMMAND test_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat
     )
 
     # chest mid-close hand swap: mutation of a G0425 future slot after
@@ -4247,6 +4314,15 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_csb_v22_shapes_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
+    add_executable(test_csb_v22_inplace_draw_pc34
+        tests/test_csb_v22_inplace_draw_pc34.c
+        src/csb/csb_v22_inplace_draw_pc34.c
+        src/csb/csb_v22_shape_cache_pc34.c
+        src/csb/csb_v22_shapes.c
+        src/csb/csb_v2_presentation_mode_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v22_inplace_draw_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
     add_executable(test_csb_v22_modern_assets_pc34
         tests/test_csb_v22_modern_assets_pc34.c
         src/csb/csb_v22_modern_assets_pc34.c
@@ -4412,6 +4488,7 @@ if(BUILD_TESTING)
         target_compile_options(test_theron_v2_presentation_mode_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_texture_upscale_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v22_shapes_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_csb_v22_inplace_draw_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v22_modern_assets_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v2_texture_upscale_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v22_shapes_pc34 PRIVATE -Wall -Wextra -O2)
@@ -4628,6 +4705,10 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v22_modern_assets_pc34
         COMMAND test_csb_v22_modern_assets_pc34
+    )
+    add_test(
+        NAME csb_v22_inplace_draw_pc34
+        COMMAND test_csb_v22_inplace_draw_pc34
     )
     add_test(
         NAME theron_v2_texture_upscale_pc34
@@ -7757,6 +7838,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass822_dm1_v1_chest_close_while_candidate_live_non_leader PROPERTIES DEPENDS dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat)
         add_test(
+            NAME pass836_dm1_v1_chest_close_while_candidate_open_reopen_side_effects
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass836_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat.py
+        )
+        set_tests_properties(pass836_dm1_v1_chest_close_while_candidate_open_reopen_side_effects PROPERTIES DEPENDS dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat)
+        add_test(
             NAME pass807_dm1_v1_palette_changes_no_changes
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass807_dm1_v1_palette_changes_no_changes_pc34_compat.py
         )
@@ -7856,6 +7942,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass835_dm1_v1_box_title_strikes_back_destination_pc34_compat.py
         )
         set_tests_properties(pass835_dm1_v1_box_title_strikes_back_destination PROPERTIES DEPENDS dm1_v1_box_title_strikes_back_destination_pc34_compat)
+        add_test(
+            NAME pass836_dm1_v1_box_title_strikes_back_source
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass836_dm1_v1_box_title_strikes_back_source_pc34_compat.py
+        )
+        set_tests_properties(pass836_dm1_v1_box_title_strikes_back_source PROPERTIES DEPENDS dm1_v1_box_title_strikes_back_source_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
