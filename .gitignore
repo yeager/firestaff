@@ -242,6 +242,12 @@ __pycache__/
 !/parity-evidence/verification/pass821_dm1_v1_palette_dungeon_view_pc34_compat/**
 !/parity-evidence/verification/pass830_dm1_v1_box_spell_area_pc34_compat/
 !/parity-evidence/verification/pass830_dm1_v1_box_spell_area_pc34_compat/**
+!/parity-evidence/verification/pass831_dm1_v1_box_action_area_pc34_compat/
+!/parity-evidence/verification/pass831_dm1_v1_box_action_area_pc34_compat/**
+!/parity-evidence/verification/pass832_dm1_v1_box_movement_arrows_pc34_compat/
+!/parity-evidence/verification/pass832_dm1_v1_box_movement_arrows_pc34_compat/**
+!/parity-evidence/verification/pass833_dm1_v1_box_entrance_dungeon_view_pc34_compat/
+!/parity-evidence/verification/pass833_dm1_v1_box_entrance_dungeon_view_pc34_compat/**
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/
 !/parity-evidence/verification/pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat/**
 !/parity-evidence/verification/pass799_dm1_v1_chest_open_stack_split_press_eye_pc34_compat/

@@ -3070,6 +3070,70 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_box_spell_area_pc34_compat
     )
 
+    # DM1 V1 box-action-area: Graphics.dat item 562 init var
+    # G0001_ai_Graphic562_Box_ActionArea[4] = {224, 319, 77, 121}.
+    # The {X, Y, W, H} byte-coordinate sub-rectangle for the
+    # action-area background blit on the champion panel. Read
+    # sites: ACTIDRAW.C:73/320 + STARTUP2.C:377 (action-area
+    # clear + hatch). Disjoint from pass784-790 + pass791-799 +
+    # pass798-821 + pass830. Source-locked against DATA.C:7/121/541 +
+    # ACTIDRAW.C:73/320 + STARTUP2.C:377 + DEFS.H C010.
+    add_executable(test_dm1_v1_box_action_area_pc34_compat
+        tests/test_dm1_v1_box_action_area_pc34_compat.c
+        src/dm1/dm1_v1_box_action_area_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_action_area_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_action_area_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_action_area_pc34_compat
+        COMMAND test_dm1_v1_box_action_area_pc34_compat
+    )
+
+    # DM1 V1 box-movement-arrows: Graphics.dat item 562 init
+    # var G0002_ai_Graphic562_Box_MovementArrows[4] = {224, 319,
+    # 124, 168}. The {X, Y, W, H} byte-coordinate sub-rectangle
+    # for the movement-arrows graphic blit on the champion panel.
+    # Read sites: MENUDRAW.C:13 (blit) + PANEL.C:2369 + STARTUP2.C:
+    # 369 (hatch). Disjoint from pass784-790 + pass791-799 +
+    # pass798-831. Source-locked against DATA.C:8/123/543 +
+    # MENUDRAW.C:13 + PANEL.C:2369 + STARTUP2.C:369.
+    add_executable(test_dm1_v1_box_movement_arrows_pc34_compat
+        tests/test_dm1_v1_box_movement_arrows_pc34_compat.c
+        src/dm1/dm1_v1_box_movement_arrows_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_movement_arrows_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_movement_arrows_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_movement_arrows_pc34_compat
+        COMMAND test_dm1_v1_box_movement_arrows_pc34_compat
+    )
+
+    # DM1 V1 box-entrance-dungeon-view: Graphics.dat item 562 init
+    # var G0006_ai_Graphic562_Box_Entrance_DungeonView[4] =
+    # {0, 223, 3, 138}. The {X, Y, W, H} byte-coordinate sub-
+    # rectangle for the entrance dungeon-view backdrop blit.
+    # Read sites: ENTRANCE.C:178/181/184/187 F0132_VIDEO_Blit
+    # (entrance dungeon-view backdrop blit during door-opening
+    # animation). Disjoint from pass784-790 + pass791-799 +
+    # pass798-832. Source-locked against DATA.C:12/131/551 +
+    # ENTRANCE.C:178/181/184/187 + DEFS.H C112/C128_BYTE_WIDTH.
+    add_executable(test_dm1_v1_box_entrance_dungeon_view_pc34_compat
+        tests/test_dm1_v1_box_entrance_dungeon_view_pc34_compat.c
+        src/dm1/dm1_v1_box_entrance_dungeon_view_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_entrance_dungeon_view_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_entrance_dungeon_view_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_entrance_dungeon_view_pc34_compat
+        COMMAND test_dm1_v1_box_entrance_dungeon_view_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -7725,6 +7789,21 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass830_dm1_v1_box_spell_area_pc34_compat.py
         )
         set_tests_properties(pass830_dm1_v1_box_spell_area PROPERTIES DEPENDS dm1_v1_box_spell_area_pc34_compat)
+        add_test(
+            NAME pass831_dm1_v1_box_action_area
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass831_dm1_v1_box_action_area_pc34_compat.py
+        )
+        set_tests_properties(pass831_dm1_v1_box_action_area PROPERTIES DEPENDS dm1_v1_box_action_area_pc34_compat)
+        add_test(
+            NAME pass832_dm1_v1_box_movement_arrows
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass832_dm1_v1_box_movement_arrows_pc34_compat.py
+        )
+        set_tests_properties(pass832_dm1_v1_box_movement_arrows PROPERTIES DEPENDS dm1_v1_box_movement_arrows_pc34_compat)
+        add_test(
+            NAME pass833_dm1_v1_box_entrance_dungeon_view
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass833_dm1_v1_box_entrance_dungeon_view_pc34_compat.py
+        )
+        set_tests_properties(pass833_dm1_v1_box_entrance_dungeon_view PROPERTIES DEPENDS dm1_v1_box_entrance_dungeon_view_pc34_compat)
         add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
