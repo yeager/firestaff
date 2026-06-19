@@ -15,15 +15,23 @@
         "-j2"
       ],
       "outputTail": [
+        "-- [DEBUG-FOREACH] candidate=eye_slot_swap test=tests/test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c>",
+        "-- [DEBUG-FOREACH] adding test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat",
+        "-- Configuring done (0.3s)",
+        "-- Generating done (0.9s)",
+        "-- Build files have been written to: /Users/bosse/.openclaw/workspace-main/build",
+        "Built target firestaff_m10",
+        "[  0%] Built target test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
+        "Built target test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
+        "[100%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[104%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[100%] Linking C executable test_dm1_v1_movement_core_pc34_compat",
+        "Built target test_dm1_v1_movement_core_pc34_compat",
         "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
-        "[100%] Built target firestaff_m10",
+        "[100%] Linking C executable test_m11_v1_turning_presentation_pc34_compat",
         "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
         "[ 96%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
@@ -409,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-19T18:52:27.572138+00:00"
+  "timestampUtc": "2026-06-19T18:54:13.486787+00:00"
 }

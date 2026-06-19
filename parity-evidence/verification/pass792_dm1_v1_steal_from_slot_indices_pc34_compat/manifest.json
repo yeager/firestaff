@@ -107,7 +107,7 @@
     }
   ],
   "status": "PASS792_DM1_V1_STEAL_FROM_SLOT_INDICES_LOCKED",
-  "timestampUtc": "2026-06-19T18:52:34.624386+00:00",
+  "timestampUtc": "2026-06-19T18:54:16.077423+00:00",
   "verificationRuns": [
     {
       "command": [
