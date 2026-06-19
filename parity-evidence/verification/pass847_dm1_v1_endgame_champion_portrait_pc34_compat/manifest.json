@@ -1,0 +1,47 @@
+{
+  "anchors": [
+    "DATA.C:22/151/571",
+    "ENDGAME.C:353/357/391/392"
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass847_dm1_v1_endgame_champion_portrait_pc34_compat.v1",
+  "scope": "DM1 V1 endgame_champion_portrait contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_endgame_champion_portrait_pc34_compat.c",
+      "id": "source",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/endgame_champion_portrait_pc34_compat.h",
+      "id": "header",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_endgame_champion_portrait_pc34_compat.c",
+      "id": "test",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS847_DM1_V1_ENDGAME_CHAMPION_PORTRAIT_LOCKED",
+  "timestampUtc": "2026-06-19T18:23:16.620727+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_endgame_champion_portrait_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_endgame_champion_portrait: 53/53 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
