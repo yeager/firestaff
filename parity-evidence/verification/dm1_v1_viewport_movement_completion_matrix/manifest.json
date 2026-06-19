@@ -15,14 +15,6 @@
         "-j2"
       ],
       "outputTail": [
-        "-- [DEBUG-FOREACH] candidate=close_after_party_shuffle_pc34_compat test=tests/test_dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_close_after_party_shuffle_pc34_compat_pc34_compat.c>",
-        "-- [DEBUG-FOREACH] candidate=close_order_party_shuffle_pc34_compat test=tests/test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_close_order_party_shuffle_pc34_compat_pc34_compat.c>",
-        "-- [DEBUG-FOREACH] candidate=close_while_resurrect_pending_with_inventory_pickup_pc34_compat test=tests/test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat_pc34_compat.c>",
-        "-- [DEBUG-FOREACH] candidate=eye_slot_swap test=tests/test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c mod=src/dm1/dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c exists_test=$<EXISTS:tests/test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c> exists_mod=$<EXISTS:src/dm1/dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c>",
-        "-- [DEBUG-FOREACH] adding test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat",
-        "-- Configuring done (0.2s)",
-        "-- Generating done (0.6s)",
-        "-- Build files have been written to: /Users/bosse/.openclaw/workspace-main/build",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
         "[100%] Built target firestaff_m10",
@@ -417,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-19T17:33:49.275386+00:00"
+  "timestampUtc": "2026-06-19T17:47:44.777754+00:00"
 }
