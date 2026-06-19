@@ -1,0 +1,10 @@
+{
+  "pass": "pass849_dm1_v1_chest_drop_to_floor_pc34_compat",
+  "status": "PASS",
+  "failures": [],
+  "redmcsb": "CHEST.C F0333:30-67 (F0333_INVENTORY_OpenAndDrawChest: materializes G0425 from the open G0426 chest); CHEST.C F0334:113-132 (F0334_INVENTORY_CloseChest: clears G0426, rewires non-empty G0425 into container Slot list); CHAMPION.C F0284:93-131 (keeps champion ownership independent from party direction updates); CHAMPION.C F0297:243-298 (leader-hand put); F0298:270-298 (leader-hand remove); F0300:511-515 (clears C30+ and champion slots); F0301:606-614 (writes C30+/champion slots); F0302:662-714 (snapshots leader hand and selected slot before remove/put exchange); DUNGEON.C F0140:1114-1120 (container base weight preservation); DUNGEON.C F0159:1664-1681 (DUNGEON_GetNextThing: returns the Next field verbatim); DUNGEON.C F0163:1769-1838 (DUNGEON_LinkThingToList list-append); OBJECT.C F0033:147-212 (maps object identity to visible chest icons); DEFS.H: C30..C37, C537..C545, G0423, G0425, G0426",
+  "tests": {
+    "passes": 56,
+    "fails": 0
+  }
+}
