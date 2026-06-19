@@ -1,0 +1,130 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin anchor line numbers when ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "DATA.C:39",
+    "DATA.C:179",
+    "DATA.C:579",
+    "CLIKMENU.C:366/491/559",
+    "COPYPRO6.C:69/99"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791+ (champion-panel/leader/mirror + chest).",
+    "Not pass798+ (Graphics.dat init-table gates)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:39",
+      "line": 39,
+      "lineText": "int16_t G0033_ai_Graphic562_Box_ArrowOrEye[4];",
+      "needle": "G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:179",
+      "line": 179,
+      "lineText": "        M767_GRAPHIC_FLOOR_PIT_INVISIBLE_D0C,",
+      "needle": "G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:579",
+      "line": 579,
+      "lineText": "#endif",
+      "needle": "G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "id": "CLIKMENU.C:366",
+      "line": 366,
+      "lineText": "                if ((G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE != C00136_TRUE) && !F0277_CPSE_IsFuzzySectorValid_FuzzyBits(M517_FuzzySectorReadingBuffer_CPSE)) {",
+      "needle": "G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "id": "CLIKMENU.C:491",
+      "line": 491,
+      "lineText": "                                if ((G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE != C00136_TRUE) && !F0277_CPSE_IsFuzzySectorValid_FuzzyBits(M517_FuzzySectorReadingBuffer_CPSE)) {",
+      "needle": "G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "id": "CLIKMENU.C:559",
+      "line": 559,
+      "lineText": "                                                        if ((G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE != C00136_TRUE) && !F0277_CPSE_IsFuzzySectorValid_FuzzyBits(M517_FuzzySectorReadingBuffer_CPSE)) {",
+      "needle": "G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COPYPRO6.C",
+      "id": "COPYPRO6.C:69",
+      "line": 69,
+      "lineText": "        G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE = C00136_TRUE;",
+      "needle": "G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COPYPRO6.C",
+      "id": "COPYPRO6.C:99",
+      "line": 99,
+      "lineText": "        G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE = C00136_TRUE;",
+      "needle": "G0031_i_Graphic562_FuzzySectorAnalyzed_CPSE",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass849_dm1_v1_fuzzy_sector_analyzed_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0031 (single int16_t) \u2014 copy-protection fuzzy-sector-analyzed flag.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_fuzzy_sector_analyzed_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_fuzzy_sector_analyzed_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/fuzzy_sector_analyzed_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_fuzzy_sector_analyzed_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS849_DM1_V1_FUZZY_SECTOR_ANALYZED_LOCKED",
+  "timestampUtc": "2026-06-19T18:49:51.030274+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_fuzzy_sector_analyzed_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_fuzzy_sector_analyzed: 13/13 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

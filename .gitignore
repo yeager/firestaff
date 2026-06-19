@@ -184,8 +184,6 @@ __pycache__/
 !/parity-evidence/verification/pass792_dm1_v1_steal_from_slot_indices_pc34_compat/**
 !/parity-evidence/verification/pass791_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat/
 !/parity-evidence/verification/pass791_dm1_v1_champion_panel_ammunition_compatibility_pc34_compat/**
-!/parity-evidence/verification/pass792_dm1_v1_steal_from_slot_indices_pc34_compat/
-!/parity-evidence/verification/pass792_dm1_v1_steal_from_slot_indices_pc34_compat/**
 !/parity-evidence/verification/pass793_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat/
 !/parity-evidence/verification/pass793_dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat/**
 !/parity-evidence/verification/pass792_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat/
@@ -254,40 +252,10 @@ __pycache__/
 !/parity-evidence/verification/pass847_dm1_v1_endgame_champion_portrait_pc34_compat/**
 !/parity-evidence/verification/pass848_dm1_v1_viewport_floppy_zzz_cross_pc34_compat/
 !/parity-evidence/verification/pass848_dm1_v1_viewport_floppy_zzz_cross_pc34_compat/**
+!/parity-evidence/verification/pass849_dm1_v1_fuzzy_sector_analyzed_pc34_compat/
+!/parity-evidence/verification/pass849_dm1_v1_fuzzy_sector_analyzed_pc34_compat/**
 
-!/parity-evidence/verification/pass841_dm1_v1_entrance_closed_door_left_pc34_compat/
-!/parity-evidence/verification/pass841_dm1_v1_entrance_closed_door_left_pc34_compat/**
-!/parity-evidence/verification/pass842_dm1_v1_entrance_closed_door_right_pc34_compat/
-!/parity-evidence/verification/pass842_dm1_v1_entrance_closed_door_right_pc34_compat/**
-!/parity-evidence/verification/pass843_dm1_v1_endgame_the_end_pc34_compat/
-!/parity-evidence/verification/pass843_dm1_v1_endgame_the_end_pc34_compat/**
-!/parity-evidence/verification/pass844_dm1_v1_endgame_restart_outer_pc34_compat/
-!/parity-evidence/verification/pass844_dm1_v1_endgame_restart_outer_pc34_compat/**
-!/parity-evidence/verification/pass845_dm1_v1_endgame_restart_inner_pc34_compat/
-!/parity-evidence/verification/pass845_dm1_v1_endgame_restart_inner_pc34_compat/**
-!/parity-evidence/verification/pass846_dm1_v1_endgame_champion_mirror_pc34_compat/
-!/parity-evidence/verification/pass846_dm1_v1_endgame_champion_mirror_pc34_compat/**
-!/parity-evidence/verification/pass847_dm1_v1_endgame_champion_portrait_pc34_compat/
-!/parity-evidence/verification/pass847_dm1_v1_endgame_champion_portrait_pc34_compat/**
-!/parity-evidence/verification/pass848_dm1_v1_viewport_floppy_zzz_cross_pc34_compat/
-!/parity-evidence/verification/pass848_dm1_v1_viewport_floppy_zzz_cross_pc34_compat/**
 
-!/parity-evidence/verification/pass841_dm1_v1_entrance_closed_door_left_pc34_compat/
-!/parity-evidence/verification/pass841_dm1_v1_entrance_closed_door_left_pc34_compat/**
-!/parity-evidence/verification/pass842_dm1_v1_entrance_closed_door_right_pc34_compat/
-!/parity-evidence/verification/pass842_dm1_v1_entrance_closed_door_right_pc34_compat/**
-!/parity-evidence/verification/pass843_dm1_v1_endgame_the_end_pc34_compat/
-!/parity-evidence/verification/pass843_dm1_v1_endgame_the_end_pc34_compat/**
-!/parity-evidence/verification/pass844_dm1_v1_endgame_restart_outer_pc34_compat/
-!/parity-evidence/verification/pass844_dm1_v1_endgame_restart_outer_pc34_compat/**
-!/parity-evidence/verification/pass845_dm1_v1_endgame_restart_inner_pc34_compat/
-!/parity-evidence/verification/pass845_dm1_v1_endgame_restart_inner_pc34_compat/**
-!/parity-evidence/verification/pass846_dm1_v1_endgame_champion_mirror_pc34_compat/
-!/parity-evidence/verification/pass846_dm1_v1_endgame_champion_mirror_pc34_compat/**
-!/parity-evidence/verification/pass847_dm1_v1_endgame_champion_portrait_pc34_compat/
-!/parity-evidence/verification/pass847_dm1_v1_endgame_champion_portrait_pc34_compat/**
-!/parity-evidence/verification/pass848_dm1_v1_viewport_floppy_zzz_cross_pc34_compat/
-!/parity-evidence/verification/pass848_dm1_v1_viewport_floppy_zzz_cross_pc34_compat/**
 
 !/parity-evidence/verification/pass821_dm1_v1_palette_dungeon_view_pc34_compat/
 !/parity-evidence/verification/pass821_dm1_v1_palette_dungeon_view_pc34_compat/**
@@ -333,8 +301,8 @@ __pycache__/
 !/parity-evidence/verification/pass836_dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat/**
 !/parity-evidence/verification/pass849_dm1_v1_chest_drop_to_floor_pc34_compat/
 !/parity-evidence/verification/pass849_dm1_v1_chest_drop_to_floor_pc34_compat/**
-!/parity-evidence/verification/pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat/
-!/parity-evidence/verification/pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat/**
+!/parity-evidence/verification/pass850_dm1_v1_chest_empty_reopen_runtime_pc34_compat/
+!/parity-evidence/verification/pass850_dm1_v1_chest_empty_reopen_runtime_pc34_compat/**
 !/parity-evidence/verification/pass809_dm1_v1_chest_close_stack_merge_pc34_compat/
 !/parity-evidence/verification/pass809_dm1_v1_chest_close_stack_merge_pc34_compat/**
 !/parity-evidence/verification/pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat/
