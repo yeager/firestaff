@@ -1,0 +1,99 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin DATA.C:423/1095 + CHAMDRAW.C:914 line numbers when the local ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "DATA.C:79",
+    "DATA.C:423",
+    "DATA.C:1095",
+    "CHAMDRAW.C:914"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791 (champion-panel ammo-compat).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not pass793-799 (champion-panel/leader/mirror + chest).",
+    "Not pass798-816 (Graphics.dat init-table gates batches 1+2+3+4+5)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:79",
+      "line": 79,
+      "lineText": "        0x00, 0x00, 0x00, 0x00, 0xE7, 0xFF, 0xE0, 0x00,",
+      "needle": "G0048_ai_Graphic562_Box_Mouth",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:423",
+      "line": 423,
+      "lineText": "unsigned char G0046_auc_Graphic562_ChampionColor[4] = { 7, 11, 8, 14 };",
+      "needle": "G0048_ai_Graphic562_Box_Mouth",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1095",
+      "line": 1095,
+      "lineText": "unsigned char G0046_auc_Graphic562_ChampionColor[4] = { 7, 11, 8, 14 };",
+      "needle": "G0048_ai_Graphic562_Box_Mouth",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "id": "CHAMDRAW.C:914",
+      "line": 914,
+      "lineText": "                        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(AL0870_i_NativeBitmapIndex), G0048_ai_Graphic562_Box_Mouth, C016_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 18);",
+      "needle": "G0048_ai_Graphic562_Box_Mouth",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass817_dm1_v1_champion_portrait_box_mouth_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var G0048_ai_Graphic562_Box_Mouth[4] = {55, 72, 12, 29}. The {X, Y, W, H} pixel-coordinate rectangle for the champion-portrait mouth-overlay blit. Read site: CHAMDRAW.C:914 F0294_CHAMPION_DrawChampionPortraitMouth blits the mouth graphic into G0048's box with byte width C016_BYTE_WIDTH and color C12_COLOR_DARKEST_GRAY.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_champion_portrait_box_mouth_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_champion_portrait_box_mouth_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/champion_portrait_box_mouth_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_champion_portrait_box_mouth_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS817_DM1_V1_CHAMPION_PORTRAIT_BOX_MOUTH_LOCKED",
+  "timestampUtc": "2026-06-19T14:59:51.972227+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_portrait_box_mouth_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_champion_portrait_box_mouth: 52/52 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
