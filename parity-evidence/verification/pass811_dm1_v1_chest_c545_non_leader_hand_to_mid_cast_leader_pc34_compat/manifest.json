@@ -1,0 +1,10 @@
+{
+  "pass": "pass811_dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat",
+  "status": "PASS",
+  "failures": [],
+  "redmcsb": "CHEST.C F0333:30-67 (F0333_INVENTORY_OpenAndDrawChest: materializes G0425 from the open G0426 chest); CHEST.C F0334:113-132 (F0334_INVENTORY_CloseChest: rewrites the open chest from non-empty G0425); CHAMPION.C F0284:93-131 (keeps champion ownership independent from party direction updates); CHAMPION.C F0297:243-298 (leader-hand put); F0298:270-298 (leader-hand remove); F0300:511-515 (clears C30+ and champion slots); F0301:606-614 (writes C30+/champion slots); F0302:662-714 (snapshots leader hand and selected slot before remove/put exchange); PANEL.C F0344/F0345/F0352 (inactive food/water, eye, and resurrect-panel side routes); COMMAND.C F0359:1985-1990 (inactive panel side routes); DEFS.H:2088, 5876-5881, 810-817, 3906-3914 (C30, G0425, G0426, G0423, G0305, M070/M516 context, C537..C545)",
+  "tests": {
+    "passes": 115,
+    "fails": 0
+  }
+}
