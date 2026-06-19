@@ -57,6 +57,17 @@ int m11_v22_render_overlay(unsigned char* framebuffer,
  * reads this to verify the overlay wrote the right color. */
 #define M11_V22_OVERLAY_PLACEHOLDER_INDEX 0xFF  /* V1 palette index 255 = bright */
 
+/* DM1 V2.2 4x3 cell rect coordinates (depth x lateral) used by both
+ * the overlay pass and the in-place pass. Exposed so the in-place
+ * module can paint bitmaps at the same coords the overlay uses,
+ * guaranteeing pixel-for-pixel Z-order equivalence. */
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+} M11_V22_CellRect;
+
 /* Source evidence for tests/probes. */
 const char* m11_v22_render_overlay_source_evidence(void);
 

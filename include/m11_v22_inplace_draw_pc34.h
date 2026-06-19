@@ -79,6 +79,21 @@ const uint32_t* m11_v22_inplace_get_cell_bitmap(int depth, int lateral,
  * a follow-up. */
 const char* m11_v22_inplace_get_cell_asset_id(int depth, int lateral);
 
+/* m11_v22_inplace_render_pass — paints the cached V22 bitmaps into
+ * the framebuffer at the DM1 4x3 cell rectangles (same coords as the
+ * overlay pass: D1/D2/D3 × L/C/R). For each V22-active cell with a
+ * cached bitmap, nearest-neighbor scales the bitmap into the cell
+ * rect and writes to framebuffer[y*fbW+x] (single-byte indexed mode).
+ *
+ * This is the V22 in-place equivalent of m11_v22_render_overlay:
+ * the caller (typically the M11 game view) invokes this AFTER V1
+ * rendering, so the V22 art replaces the V1 sprite at the same
+ * Z-order. The bitmap's color_tint-tinted average is mapped to the
+ * nearest EGA palette index for the indexed framebuffer.
+ *
+ * Returns the number of cells painted. */
+int m11_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH);
+
 /* Source evidence for tests/probes. */
 const char* m11_v22_inplace_draw_source_evidence(void);
 
