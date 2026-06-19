@@ -3448,6 +3448,47 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_fuzzy_sector_analyzed_pc34_compat
     )
 
+    # DM1 V1 palette-changes-mouse-pointer-icon: Graphics.dat item 562
+    # init var G0044_auc_Graphic562_PaletteChanges_MousePointerIcon
+    # [16]. The 16-entry palette-change map for the mouse-pointer
+    # icon. PC 3.4 init = {4,4,4,4,4,4,4,4,4,4,4,4,12,4,4,4}.
+    # Read sites: IO.C:164/2140/2167/2176/2443 (F0129_VIDEO_BlitShrink
+    # WithPaletteChanges). Disjoint from pass784-790 + pass791-799 +
+    # pass798-849. Source-locked against DATA.C:40/181/583 +
+    # IO.C:164/2140/2167/2176/2443.
+    add_executable(test_dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat
+        tests/test_dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat.c
+        src/dm1/dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat
+        COMMAND test_dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat
+    )
+
+    # DM1 V1 palette-changes-mouse-pointer-icon-shadow: Graphics.dat
+    # item 562 init var G0045_auc_Graphic562_PaletteChanges_MousePointer
+    # IconShadow[16]. The 16-entry palette-change map for the mouse-
+    # pointer icon shadow. PC 3.4 init = {0,0,0,0,0,0,0,0,0,0,0,0,12,
+    # 0,0,0}. Read sites: IO.C:165/1708/1711/2041. Disjoint from
+    # pass784-790 + pass791-799 + pass798-849. Source-locked against
+    # DATA.C:41/183/585 + IO.C:165/1708/1711/2041.
+    add_executable(test_dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat
+        tests/test_dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat.c
+        src/dm1/dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat
+        COMMAND test_dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat
+    )
+
     # DM1 V1 palette-changes-no-changes: Graphics.dat item 562 init
     # var G0017_auc_Graphic562_PaletteChanges_NoChanges[16] — the
     # identity palette-remap table used by VIDEO_BlitShrinkWith
@@ -7283,7 +7324,7 @@ if(BUILD_TESTING)
     add_test(
         NAME ftl_swoosh_palette_regression
         COMMAND firestaff_v1_ftl_swoosh_palette_regression_probe
-                ${CMAKE_SOURCE_DIR}/../ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH
+                $ENV{HOME}/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH
     )
 
     # -- FTL swoosh ASCII visual sanity probe (pass841) ---------------
@@ -7309,7 +7350,7 @@ if(BUILD_TESTING)
     add_test(
         NAME ftl_swoosh_ascii_sanity
         COMMAND firestaff_v1_ftl_swoosh_ascii_probe
-                ${CMAKE_SOURCE_DIR}/../ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH
+                $ENV{HOME}/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH
     )
 endif()
 
@@ -8384,6 +8425,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass849_dm1_v1_fuzzy_sector_analyzed_pc34_compat.py
         )
         set_tests_properties(pass849_dm1_v1_fuzzy_sector_analyzed PROPERTIES DEPENDS dm1_v1_fuzzy_sector_analyzed_pc34_compat)
+        add_test(
+            NAME pass850_dm1_v1_palette_changes_mouse_pointer_icon
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass850_dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat.py
+        )
+        set_tests_properties(pass850_dm1_v1_palette_changes_mouse_pointer_icon PROPERTIES DEPENDS dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat)
+        add_test(
+            NAME pass851_dm1_v1_palette_changes_mouse_pointer_icon_shadow
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass851_dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat.py
+        )
+        set_tests_properties(pass851_dm1_v1_palette_changes_mouse_pointer_icon_shadow PROPERTIES DEPENDS dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat)
         add_test(
             NAME pass840_dm1_v1_box_entrance_doors
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass840_dm1_v1_box_entrance_doors_pc34_compat.py
