@@ -2600,6 +2600,52 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_steal_from_slot_indices_pc34_compat
     )
 
+    # DM1 V1 icon-graphic-first-icon-index: Graphics.dat item 562 init
+    # var G0026_ai_Graphic562_IconGraphicFirstIconIndex[7] = {0, 32, 64,
+    # 96, 128, 160, 192}. OBJECT.C:312-319 + OBJECT.C:455-467 walk G0026
+    # in a 7-iteration loop to find the icon-graphic block + within-
+    # block offset for each icon index. Disjoint from pass784-792 +
+    # pass793-796 (mirror-candidate C040 + champion-panel/leader/
+    # mirror). This is a non-mirror-candidate contract for the OBJECT.C
+    # icon resolution path. Source-locked against DATA.C:32 +
+    # DATA.C:253-260 + OBJECT.C:312-319 + OBJECT.C:455-467 +
+    # OBJECT.C:521 + DEFS.H C042_GRAPHIC_OBJECT_ICONS_000_TO_031.
+    add_executable(test_dm1_v1_icon_graphic_first_icon_index_pc34_compat
+        tests/test_dm1_v1_icon_graphic_first_icon_index_pc34_compat.c
+        src/dm1/dm1_v1_icon_graphic_first_icon_index_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_icon_graphic_first_icon_index_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_icon_graphic_first_icon_index_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_icon_graphic_first_icon_index_pc34_compat
+        COMMAND test_dm1_v1_icon_graphic_first_icon_index_pc34_compat
+    )
+
+    # DM1 V1 slot-boxes: Graphics.dat item 562 init var
+    # G0030_as_Graphic562_SlotBoxes[46] (8 status-box hands, 30 inventory
+    # slots, 8 chest slots) — the pixel-coordinate table for slot-box
+    # click hit-testing + status-box rendering. Read sites: OBJECT.C:435
+    # (F0486_OBJECT_DrawSlotBoxAtSlotIndex), OBJECT.C:521 (F0488_OBJECT_
+    # GetSlotBoxIconIndex), CHAMDRAW.C:557/562 (F0487 + F0619). Disjoint
+    # from pass784-790 + pass791-796 + pass797 (icon-graphic). Source-
+    # locked against DATA.C:36 + DATA.C:264-309 + OBJECT.C:435/521 +
+    # CHAMDRAW.C:557/562 + DEFS.H:257-297 (C020..C065 slot-box click
+    # commands) + DEFS.H:1871-1875 (SLOT_BOX struct).
+    add_executable(test_dm1_v1_slot_boxes_pc34_compat
+        tests/test_dm1_v1_slot_boxes_pc34_compat.c
+        src/dm1/dm1_v1_slot_boxes_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_slot_boxes_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_slot_boxes_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_slot_boxes_pc34_compat
+        COMMAND test_dm1_v1_slot_boxes_pc34_compat
+    )
+
     # mirror candidate C040 status-box-click-while-panel-live:
     # COMMAND.C F0380:2159-2161 gates the C012..C015 champion-status-box
     # click on `(champion_index < G0305) && !G0299`. While the C040 panel
@@ -2801,6 +2847,25 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chest_mid_close_hand_swap_pc34_compat
         COMMAND test_dm1_v1_chest_mid_close_hand_swap_pc34_compat
+    )
+
+    # pass797 — auto chest action-hand swap during close gate:
+    # press-eye F0333 auto-close (P0694_B_PressingEye = TRUE) plus the
+    # C09 action hand (DM1_PC34_SLOT_ACTION_HAND) swap into a not-yet
+    # -visited G0425 slot. Source-locked against CHEST.C F0333:32-42 +
+    # 44 + 53-67 + 70-74 + F0334:113-132 + CHAMPION.C F0297-F0302 +
+    # PANEL.C F0347:1639-1691.
+    add_executable(test_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat
+        tests/test_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat.c
+        src/dm1/dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat
+        COMMAND test_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat
     )
 
     # chest close-rewire runtime: rewire of M11 close handlers during
@@ -6822,6 +6887,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass796_dm1_v1_champion_mirror_pc34_compat.py
         )
         set_tests_properties(pass796_dm1_v1_champion_mirror PROPERTIES DEPENDS dm1_v1_champion_mirror_pc34_compat)
+        add_test(
+            NAME pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat.py
+        )
+        set_tests_properties(pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate PROPERTIES DEPENDS dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat)
+        add_test(
+            NAME pass798_dm1_v1_icon_graphic_first_icon_index
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
+        )
+        set_tests_properties(pass798_dm1_v1_icon_graphic_first_icon_index PROPERTIES DEPENDS dm1_v1_icon_graphic_first_icon_index_pc34_compat)
     endif()
 endif()
 
