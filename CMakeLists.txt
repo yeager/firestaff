@@ -2154,6 +2154,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v22_modern_assets_pc34
     )
 
+    add_executable(test_dm2_v22_inplace_draw_pc34
+        tests/test_dm2_v22_inplace_draw_pc34.c
+        src/dm2/dm2_v22_inplace_draw_pc34.c
+        src/dm2/dm2_v22_shape_cache_pc34.c
+        src/dm2/dm2_v22_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_dm2_v22_inplace_draw_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v22_inplace_draw_pc34 PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v22_inplace_draw_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v22_inplace_draw_pc34
+        COMMAND test_dm2_v22_inplace_draw_pc34
+    )
     add_executable(test_dm2_v2_lighting
         tests/test_dm2_v2_lighting.c
         src/dm2/dm2_v2_lighting.c
@@ -7480,15 +7498,6 @@ endif()
 
 
 # ── Known failing tests (WILL_FAIL = expected failure) ──
-# pass373/374/508/512 are flaky race conditions between the runtime
-# probe write and the verifier read; they pass when run sequentially
-# with sufficient wall-clock between runs but occasionally fail under
-# parallel ctest -j. Marking WILL_FAIL so ctest doesn't treat the
-# parallel race as a regression.
-set_tests_properties(pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(pass374_dm1_v1_completion_viewport_wall_credit PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(pass508_dm1_v1_movement_remaining_gap_after_pass374 PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(pass512_dm1_v1_movement_cross_reference_audit PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(pass372_dm1_v1_movement_runtime_route PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(pass377_dm1_v1_paired_diff_artifact_blocker PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(pass462_dm1_v1_title_end_original_capture_parity PROPERTIES WILL_FAIL TRUE)

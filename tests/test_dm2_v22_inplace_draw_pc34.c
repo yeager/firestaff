@@ -1,0 +1,147 @@
+/*
+ * test_dm2_v22_inplace_draw_pc34.c — Nexus V2.2 in-place bitmap cache + render pass
+ *
+ * Tests the V22 in-place foundation:
+ *   - Init/shutdown lifecycle
+ *   - Active flag reflects cache load state
+ *   - Cache file presence/format validation (skip if missing)
+ *   - get_cell_bitmap returns NULL when no V22 cache populated
+ *   - get_cell_asset_id returns NULL when V22 not active
+ *   - dm2_v22_inplace_render_pass() draws bitmaps into a framebuffer
+ *   - Source evidence citation
+ *
+ * Test does NOT modify any V1/V2 state — read-only verification.
+ * Skips cache-dependent assertions when ~/.firestaff/assets/dm2/modern/
+ * v22_inplace_cache.bin is missing or invalid.
+ */
+
+#include "dm2_v22_inplace_draw_pc34.h"
+#include "dm2_v22_shape_cache_pc34.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static int failures = 0;
+static int checks = 0;
+
+#define CHECK(expr, msg) \
+    do { checks++; if (!(expr)) { \
+        fprintf(stderr, "FAIL %s:%d: %s — %s\n", __FILE__, __LINE__, #expr, (msg)); \
+        failures++; } } while (0)
+
+static void test_init_shutdown(void) {
+    int active_before = dm2_v22_inplace_draw_active();
+    int r1 = dm2_v22_inplace_draw_init();
+    int r2 = dm2_v22_inplace_draw_init();
+    CHECK(r1 == r2, "init is idempotent (same return on repeat call)");
+    int active_after = dm2_v22_inplace_draw_active();
+    CHECK((active_after == 0) || (active_after == 1), "active is 0 or 1");
+    dm2_v22_inplace_draw_shutdown();
+    CHECK(dm2_v22_inplace_draw_active() == 0, "active==0 after shutdown");
+    int r3 = dm2_v22_inplace_draw_init();
+    CHECK((r3 == 0) || (r3 == 1), "re-init returns 0 or 1");
+    dm2_v22_inplace_draw_shutdown();
+}
+
+static void test_get_cell_bitmap_no_cache(void) {
+    dm2_v22_inplace_draw_shutdown();
+    int w = -1, h = -1;
+    const uint32_t* p = dm2_v22_inplace_get_cell_bitmap(1, 0, &w, &h);
+    CHECK(p == NULL, "no cache -> bitmap NULL");
+    CHECK(w == 0 && h == 0, "no cache -> dims 0");
+}
+
+static void test_get_cell_asset_id_no_cache(void) {
+    dm2_v22_inplace_draw_shutdown();
+    const char* aid = dm2_v22_inplace_get_cell_asset_id(1, 0);
+    CHECK(aid == NULL, "no cache -> asset_id NULL");
+}
+
+static void test_source_evidence(void) {
+    const char* ev = dm2_v22_inplace_draw_source_evidence();
+    CHECK(ev != NULL, "evidence non-null");
+    CHECK(strlen(ev) > 0, "evidence non-empty");
+    CHECK(strstr(ev, "ReDMCSB") != NULL || strstr(ev, "dm2_v22") != NULL || strstr(ev, "SKULL") != NULL,
+          "evidence cites source");
+}
+
+static void test_cache_load_path(void) {
+    int r = dm2_v22_inplace_draw_init();
+    int active = dm2_v22_inplace_draw_active();
+    if (r == 1) {
+        CHECK(active == 1, "active==1 after successful init");
+    } else {
+        CHECK(active == 0, "active==0 when cache missing/invalid");
+    }
+    dm2_v22_inplace_draw_shutdown();
+}
+
+static void test_double_shutdown_safe(void) {
+    dm2_v22_inplace_draw_init();
+    dm2_v22_inplace_draw_shutdown();
+    dm2_v22_inplace_draw_shutdown();
+    CHECK(dm2_v22_inplace_draw_active() == 0, "double shutdown safe");
+}
+
+static void test_render_pass_safe_when_no_cache(void) {
+    /* Render pass must return 0 and not crash when no cache loaded */
+    dm2_v22_inplace_draw_shutdown();
+    unsigned char fb[320 * 200];
+    memset(fb, 0xAA, sizeof(fb));  /* sentinel value */
+    int painted = dm2_v22_inplace_render_pass(fb, 320, 200);
+    CHECK(painted == 0, "no cache -> render paints 0 cells");
+    /* Framebuffer should be unchanged */
+    int all_sentinel = 1;
+    for (int i = 0; i < 320 * 200; ++i) if (fb[i] != 0xAA) { all_sentinel = 0; break; }
+    CHECK(all_sentinel, "no cache -> framebuffer unchanged");
+}
+
+static void test_render_pass_safe_with_null_args(void) {
+    dm2_v22_inplace_draw_init();
+    int painted = dm2_v22_inplace_render_pass(NULL, 320, 200);
+    CHECK(painted == 0, "NULL fb -> 0 cells painted");
+    unsigned char fb[10];
+    memset(fb, 0, sizeof(fb));
+    painted = dm2_v22_inplace_render_pass(fb, 0, 200);
+    CHECK(painted == 0, "zero width -> 0 cells painted");
+    painted = dm2_v22_inplace_render_pass(fb, 320, 0);
+    CHECK(painted == 0, "zero height -> 0 cells painted");
+    dm2_v22_inplace_draw_shutdown();
+}
+
+static void test_render_pass_safe_when_no_shape_cache(void) {
+    /* Even if bitmap cache loaded, without shape cache populated,
+     * the render pass must return 0 (no V22-active cells to paint). */
+    dm2_v22_inplace_draw_init();
+    if (!dm2_v22_inplace_draw_active()) {
+        /* Cache not present on this machine — skip */
+        dm2_v22_inplace_draw_shutdown();
+        return;
+    }
+    unsigned char fb[320 * 200];
+    memset(fb, 0xAA, sizeof(fb));
+    int painted = dm2_v22_inplace_render_pass(fb, 320, 200);
+    CHECK(painted == 0, "no shape cache populated -> 0 cells painted");
+    dm2_v22_inplace_draw_shutdown();
+}
+
+int main(void) {
+    test_init_shutdown();
+    test_get_cell_bitmap_no_cache();
+    test_get_cell_asset_id_no_cache();
+    test_source_evidence();
+    test_cache_load_path();
+    test_double_shutdown_safe();
+    test_render_pass_safe_when_no_cache();
+    test_render_pass_safe_with_null_args();
+    test_render_pass_safe_when_no_shape_cache();
+
+    printf("dm2_v22_inplace_draw_pc34: checks=%d failures=%d\n", checks, failures);
+    if (failures > 0) {
+        printf("dm2_v22_inplace_draw_pc34: FAIL\n");
+        return 1;
+    }
+    printf("dm2_v22_inplace_draw_pc34: PASS\n");
+    return 0;
+}
