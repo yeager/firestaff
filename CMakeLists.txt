@@ -2922,6 +2922,28 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_auto_close_on_leader_death_pc34_compat
     )
 
+    # pass804 — chest close with full leader hand: the close path
+    # (F0334 INVENTORY_CloseChest) when the leader hand is already
+    # full must (a) close the open chest, (b) keep the leader hand
+    # byte-stable, (c) rewire the open chest's G0425 chain to the
+    # container Slot list, and (d) reject a C09 action-hand click
+    # that would put a non-empty destination into an incompatible
+    # chest slot via F0302.
+    # Source-locked against CHEST.C F0333:53-67 + F0334:79-130 +
+    # CHAMPION.C F0297-F0302 + DEFS.H C00..C29, C038, C040, C04.
+    add_executable(test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat
+        tests/test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat.c
+        src/dm1/dm1_v1_chest_close_with_full_leader_hand_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_close_with_full_leader_hand_pc34_compat
+        COMMAND test_dm1_v1_chest_close_with_full_leader_hand_pc34_compat
+    )
+
     # chest mid-close hand swap: mutation of a G0425 future slot after
     # F0334 has already begun processing the close loop. Source-locked
     # against CHEST.C F0334:113-132 + CHAMPION.C F0297-F0302.
@@ -3627,6 +3649,12 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_theron_v22_shapes_pc34 PRIVATE firestaff_m12 firestaff_theron)
+    add_executable(test_theron_v22_modern_assets_pc34
+        tests/test_theron_v22_modern_assets_pc34.c
+        src/theron/theron_v22_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_theron_v22_modern_assets_pc34 PRIVATE firestaff_m12 firestaff_theron)
     add_executable(test_theron_v2_smooth_movement_pc34
         tests/test_theron_v2_smooth_movement_pc34.c
         src/theron/theron_v2_smooth_movement.c
@@ -3759,6 +3787,7 @@ if(BUILD_TESTING)
         target_compile_options(test_csb_v22_modern_assets_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v2_texture_upscale_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v22_shapes_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v22_modern_assets_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_shape_runtime_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_v22_shape_cache_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_v22_render_overlay_pc34 PRIVATE -Wall -Wextra -O2)
@@ -3978,6 +4007,10 @@ if(BUILD_TESTING)
     add_test(
         NAME theron_v22_shapes_pc34
         COMMAND test_theron_v22_shapes_pc34
+    )
+    add_test(
+        NAME theron_v22_modern_assets_pc34
+        COMMAND test_theron_v22_modern_assets_pc34
     )
     add_test(
         NAME theron_v2_smooth_movement_pc34
@@ -7047,6 +7080,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass803_dm1_v1_chest_auto_close_on_leader_death PROPERTIES DEPENDS dm1_v1_chest_auto_close_on_leader_death_pc34_compat)
         add_test(
+            NAME pass804_dm1_v1_chest_close_with_full_leader_hand
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass804_dm1_v1_chest_close_with_full_leader_hand_pc34_compat.py
+        )
+        set_tests_properties(pass804_dm1_v1_chest_close_with_full_leader_hand PROPERTIES DEPENDS dm1_v1_chest_close_with_full_leader_hand_pc34_compat)
+        add_test(
             NAME pass798_dm1_v1_icon_graphic_first_icon_index
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass798_dm1_v1_icon_graphic_first_icon_index_pc34_compat.py
         )
@@ -7066,6 +7104,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass802_dm1_v1_palette_index_to_light_amount_pc34_compat.py
         )
         set_tests_properties(pass802_dm1_v1_palette_index_to_light_amount PROPERTIES DEPENDS dm1_v1_palette_index_to_light_amount_pc34_compat)
+        add_test(
+            NAME pass803_dm1_v1_ordered_cells_to_attack
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass803_dm1_v1_ordered_cells_to_attack_pc34_compat.py
+        )
+        set_tests_properties(pass803_dm1_v1_ordered_cells_to_attack PROPERTIES DEPENDS dm1_v1_ordered_cells_to_attack_pc34_compat)
     endif()
 endif()
 
