@@ -222,3 +222,29 @@ jobs:
           done
           if [ "$probes_found" = 0 ]; then echo "No probes matched — OK"; fi
           echo "Warnings check complete"
+
+  asset-hygiene:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Go (for lefthook installer)
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Install lefthook
+        run: go install github.com/evilmartians/lefthook@latest
+
+      - name: Run asset-validate hash harmonization
+        run: |
+          python3 tools/asset-validate/compare_md5_to_sha256.py
+
+      - name: Run po layout structural validation
+        run: |
+          bash po/validate_po_layout.sh
+
+      - name: Run lefthook ci (sanity)
+        run: |
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          lefthook run ci
