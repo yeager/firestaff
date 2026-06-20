@@ -1,7 +1,7 @@
 {
   "blocker": "missing prerequisite(s): dosbox-debug, Xvfb, xdotool",
   "branch": "main",
-  "head": "dea8f3fda78293cc6b55b8010dc69a1ddb417aa2",
+  "head": "ec801d648ee50894692b9893433a1300a5a2398e",
   "liveAttempt": null,
   "nonClaims": [
     "no original frame promoted as parity evidence",
@@ -142,5 +142,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS548_MISSING_N2_PREREQUISITE",
-  "timestampUtc": "2026-06-20T15:54:32.503696+00:00"
+  "timestampUtc": "2026-06-20T17:27:46.352578+00:00"
 }

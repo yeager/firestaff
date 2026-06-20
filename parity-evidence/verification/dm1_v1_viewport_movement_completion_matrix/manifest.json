@@ -23,7 +23,7 @@
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "[  0%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Linking C executable test_dm1_v1_movement_core_pc34_compat",
         "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
@@ -415,5 +415,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-20T15:53:34.711381+00:00"
+  "timestampUtc": "2026-06-20T17:26:50.888340+00:00"
 }

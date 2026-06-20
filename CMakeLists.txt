@@ -12238,3 +12238,43 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0208_pc34_compat.c"
         COMMAND test_dm1_v1_g0208_pc34_compat
     )
 endif()
+
+# pass1046 — DM1 V1 G0206_aaauc_Graphic558_FloorOrnamentCoordinateSets[3][9][6]:
+# 3 sets × 9 frames × 6 fields = 162 bytes (floor ornament coord).
+# Source-locked against DUNVIEW.C:484/1141.
+# Disjoint from pass784-1045.
+
+# pass1047 — DM1 V1 G0207_aaauc_Graphic558_DoorOrnamentCoordinateSets[4][3][6]:
+# 4 sets × 3 frames × 6 fields = 72 bytes (door ornament coord).
+# Source-locked against DUNVIEW.C:485/1175.
+# Disjoint from pass784-1045.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0206_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0206_pc34_compat.c")
+    add_executable(test_dm1_v1_g0206_pc34_compat
+        tests/test_dm1_v1_g0206_pc34_compat.c
+        src/dm1/dm1_v1_g0206_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0206_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0206_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0206_pc34_compat
+        COMMAND test_dm1_v1_g0206_pc34_compat
+    )
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0207_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0207_pc34_compat.c")
+    add_executable(test_dm1_v1_g0207_pc34_compat
+        tests/test_dm1_v1_g0207_pc34_compat.c
+        src/dm1/dm1_v1_g0207_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0207_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0207_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0207_pc34_compat
+        COMMAND test_dm1_v1_g0207_pc34_compat
+    )
+endif()
