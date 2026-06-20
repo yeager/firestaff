@@ -45,6 +45,39 @@ Tre ändringar löste de tre MISSING-raders:
 
 **Resultat: 5 av 6 paths READY, 1 kvar (CTRaw .raw-format)**
 
+### Tier 1 #5 strict — boot-probe per path
+
+Verifierar INTE bara `--scan-data` visar READY utan att hela
+launch-pipelinen bootar M11 mot path:en.
+
+```bash
+SDL_VIDEODRIVER=dummy timeout 8 ./build/firestaff \
+    --game <id> --data-dir <path> --duration 1500
+```
+
+| Path | scan-data | boot-probe | Orsak |
+|---|---|---|---|
+| DM1 canonical (`~/.firestaff/data/dm1`) | READY | ✅ LOADING DUNGEON | M11 hittar `dm1/DUNGEON.DAT` via subdir-fallback |
+| DM1 legacy-dos | READY | ❌ FAIL `DUNGEON.DAT MISS` | M11 söker direkt i path-roten, hittar inte `DungeonMasterPC34/DATA/DUNGEON.DAT` |
+| CSB canonical | READY | (ingen synlig error) | troligen långsam eller hänger i init |
+| CSB MeynafFR | READY | ❌ FAIL | M11 söker `csb-extras/.../GRAPHICS.DAT` direkt, hittar inte under `.../Meynaf/DungeonMaster/` |
+| Nexus canonical | READY | ❌ FAIL `direct launch failed` | kräver specifik init-path som inte matchar |
+| Nexus saturn-ja | READY | ❌ FAIL `direct launch failed` | samma som ovan — `.bin`-filer boot:as inte utan container-mount |
+| Theron JP | READY | ✅ **TQR level load: status=OK entrance=(1,1)** | TQR path-discovery hittar Track 02.bin direkt |
+| Theron USA | READY | ❌ FAIL | samma paths-strukturella issue som CSB Meynaf |
+
+**Endast 2 av 8 paths bootar fullständigt:** DM1 canonical +
+Theron JP. Övriga 6 paths har paths-strukturella problem som
+INTE är scanner-buggar — filerna FINNS på disk men M11:s
+runtime-path-resolver söker bara i specifika kända subdirs.
+
+**Tier 1 #5 strict → DELVIS VERIFIERAD.** Tier 1 #6 path-naming
+är fixad. Tier 1 #5 strict kräver mer arbete: antingen
+(a) utöka M11 path-discovery att rekursivt söka `GRAPHICS.DAT`/
+`DUNGEON.DAT` etc. (likt scanner), eller (b) etablera ett
+konventionellt staging-format i `extract-game-archives.sh`
+som matchar M11:s path-förväntningar.
+
 ## Vad detta betyder
 
 ### Fungerar (DM1 + CSB legacy path:er)
