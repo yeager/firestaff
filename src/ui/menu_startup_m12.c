@@ -59,7 +59,13 @@ enum {
     M12_SETTINGS_ROW_VSYNC,
     M12_SETTINGS_ROW_VIEWPORT_STYLE,
     M12_SETTINGS_ROW_INPUT_MODE,
-    M12_SETTINGS_ROW_WASD_MOVEMENT,
+    /* v2.9.x: M12_SETTINGS_ROW_WASD_MOVEMENT was removed.
+     * Per Daniel's request, WASD is now an unconditional alias
+     * for the arrow keys; the toggle has no meaning any more.
+     * The enum slot is kept reserved (M12_SETTINGS_ROW_RESERVED_WAS)
+     * below the active rows so any persisted config or external
+     * tooling that referenced the old ordinal is benign. */
+    M12_SETTINGS_ROW_RESERVED_WAS,
     M12_SETTINGS_ROW_TOUCH_CONTROLS,
     M12_SETTINGS_ROW_MOVEMENT_MODE,
     M12_SETTINGS_ROW_SMOOTH_TURN_PAN,
@@ -2170,7 +2176,7 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_VSYNC: return m12_tr(state, "VSYNC");
         case M12_SETTINGS_ROW_VIEWPORT_STYLE: return m12_tr(state, "VIEWPORT STYLE");
         case M12_SETTINGS_ROW_INPUT_MODE: return m12_tr(state, "INPUT MODE");
-        case M12_SETTINGS_ROW_WASD_MOVEMENT: return m12_tr(state, "WASD MOVEMENT");
+        case M12_SETTINGS_ROW_RESERVED_WAS: return m12_text(state, M12_TEXT_EYEBROW);
         case M12_SETTINGS_ROW_TOUCH_CONTROLS: return m12_tr(state, "TOUCH CONTROLS");
         case M12_SETTINGS_ROW_MOVEMENT_MODE: return m12_tr(state, "MOVEMENT MODE");
         case M12_SETTINGS_ROW_SMOOTH_TURN_PAN: return m12_tr(state, "SMOOTH TURN PAN");
@@ -2219,7 +2225,7 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_VSYNC: return m12_settings_value_vsync(state);
         case M12_SETTINGS_ROW_VIEWPORT_STYLE: return m12_settings_value_viewport_style(state);
         case M12_SETTINGS_ROW_INPUT_MODE: return m12_settings_value_input_mode(state);
-        case M12_SETTINGS_ROW_WASD_MOVEMENT: return m12_settings_value_wasd_movement(state);
+        case M12_SETTINGS_ROW_RESERVED_WAS: return m12_text(state, M12_TEXT_EYEBROW);
         case M12_SETTINGS_ROW_TOUCH_CONTROLS: return m12_settings_value_touch_controls(state);
         case M12_SETTINGS_ROW_MOVEMENT_MODE: return m12_settings_value_movement_mode(state);
         case M12_SETTINGS_ROW_SMOOTH_TURN_PAN:
@@ -2590,11 +2596,10 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 delta,
                 (int)(sizeof(g_inputModeLabels) / sizeof(g_inputModeLabels[0])));
             break;
-        case M12_SETTINGS_ROW_WASD_MOVEMENT:
-            state->settings.wasdMovementEnabled = m12_cycle_index(
-                state->settings.wasdMovementEnabled,
-                delta,
-                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+        case M12_SETTINGS_ROW_RESERVED_WAS:
+            /* v2.9.x: legacy slot kept for enum stability. WASD is
+             * unconditional now (see main_loop_m11.c), so the
+             * slot neither renders nor mutates any state. */
             break;
         case M12_SETTINGS_ROW_TOUCH_CONTROLS:
             state->settings.touchControlsIndex = m12_cycle_index(
@@ -4913,6 +4918,7 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
                       m12_text(state, M12_TEXT_PERSISTED_OPTIONS),
                       &g_textSmallAccent);
         for (row = firstRow; row < M12_SETTINGS_ROW_COUNT && row < firstRow + visibleRows; ++row) {
+            if (row == M12_SETTINGS_ROW_RESERVED_WAS) continue;
             int groupStart = m12_settings_group_starts(row);
             if (groupStart || row == firstRow) {
                 const char* group = m12_settings_group_label(state, row);
@@ -6261,6 +6267,7 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
             firstRow = 0;
         }
         for (row = firstRow; row < M12_SETTINGS_ROW_COUNT && row < firstRow + visibleRows; ++row) {
+            if (row == M12_SETTINGS_ROW_RESERVED_WAS) continue;
             int groupId = row;
             if (row > M12_SETTINGS_ROW_LANGUAGE && row <= M12_SETTINGS_ROW_GRAPHICS) groupId = M12_SETTINGS_ROW_GRAPHICS;
             else if (row > M12_SETTINGS_ROW_GRAPHICS && row <= M12_SETTINGS_ROW_VIEWPORT_STYLE) groupId = M12_SETTINGS_ROW_RENDERER_BACKEND;
