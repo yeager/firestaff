@@ -7465,6 +7465,30 @@ if(BUILD_TESTING)
     )
 endif()
 
+# ── Apple Silicon DM TITLE palette Metal-path probe ─────────────────
+# Companion to firestaff_v1_dm_title_palette_regression_probe above.
+# Exercises the SDL3 / Metal renderer path that pass842 explicitly does
+# not cover: M11_Render_PresentIndexedWithSpecialPalette + SDL_RenderReadPixels
+# readback for the C12_PRESENTS → C13_DUNGEON + C14_MASTER switch.
+# Skips with PASS on non-Apple-Silicon hosts (Intel macOS, Linux, Windows).
+# Companion probe to the existing dm_title_palette_regression pass842 test.
+if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_dm_title_palette_silicon_probe.c")
+    add_executable(firestaff_v1_dm_title_palette_silicon_probe
+        probes/v1/firestaff_v1_dm_title_palette_silicon_probe.c
+        src/shared/vga_palette_pc34_compat.c
+    )
+    target_link_libraries(firestaff_v1_dm_title_palette_silicon_probe PRIVATE
+        firestaff_m11 firestaff_m10 SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_v1_dm_title_palette_silicon_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm_title_palette_silicon
+        COMMAND firestaff_v1_dm_title_palette_silicon_probe
+    )
+endif()
+
 
 # ── DM1 V1 TITLE runtime cadence source-lock gate ───────────────────
 if(BUILD_TESTING)

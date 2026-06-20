@@ -1681,6 +1681,14 @@ int M11_Render_GetWindowHeight(void) {
     return g_state.windowH;
 }
 
+struct SDL_Window* M11_Render_GetWindow(void) {
+    return g_state.initialised ? g_state.window : NULL;
+}
+
+struct SDL_Renderer* M11_Render_GetRenderer(void) {
+    return g_state.initialised ? g_state.renderer : NULL;
+}
+
 int M11_Render_SetWindowSize(int width, int height) {
     if (!g_state.initialised) {
         return M11_RENDER_ERR_NOT_INIT;
