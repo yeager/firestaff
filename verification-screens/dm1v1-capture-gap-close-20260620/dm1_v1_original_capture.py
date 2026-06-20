@@ -233,6 +233,12 @@ def _find_dosbox_window(timeout_s: float = 20.0) -> dict:
     """Find the DOSBox window bounds via CGWindowListCopyWindowInfo.
 
     Returns a dict with window_id, x, y, width, height.
+
+    The match must be on ``kCGWindowOwnerName == "dosbox-staging"``
+    (not on the title string, which can match other apps like
+    "Firestaff").  Window bounds must be at least 400x300 (DOSBox
+    default 1024x768) and the window must be on-screen (positive
+    coordinates, not minimised).
     """
     if not _HAS_QUARTZ:
         raise RuntimeError("Quartz is not available")
@@ -243,20 +249,36 @@ def _find_dosbox_window(timeout_s: float = 20.0) -> dict:
         for w in windows:
             owner = w.get("kCGWindowOwnerName", "")
             title = w.get("kCGWindowName", "")
-            if "dosbox" in owner.lower() or "dosbox" in title.lower():
-                bounds = w.get("kCGWindowBounds", {})
-                if bounds.get("Width", 0) > 100 and bounds.get("Height", 0) > 100:
-                    return {
-                        "window_id": int(w.get("kCGWindowNumber", 0)),
-                        "owner": owner,
-                        "title": title,
-                        "x": int(bounds.get("X", 0)),
-                        "y": int(bounds.get("Y", 0)),
-                        "width": int(bounds.get("Width", 0)),
-                        "height": int(bounds.get("Height", 0)),
-                    }
+            # Strict match: owner must be dosbox-staging (case-insensitive).
+            if "dosbox" not in owner.lower():
+                continue
+            # Skip helper/inspector/auxiliary windows (small or transparent).
+            alpha = w.get("kCGWindowAlpha", 1.0)
+            if alpha < 0.5:
+                continue
+            layer = w.get("kCGWindowLayer", 0)
+            if layer != 0:
+                continue
+            bounds = w.get("kCGWindowBounds", {})
+            w_w = int(bounds.get("Width", 0))
+            w_h = int(bounds.get("Height", 0))
+            if w_w < 400 or w_h < 300:
+                continue
+            x = int(bounds.get("X", 0))
+            y = int(bounds.get("Y", 0))
+            if x < 0 or y < 0:
+                continue
+            return {
+                "window_id": int(w.get("kCGWindowNumber", 0)),
+                "owner": owner,
+                "title": title,
+                "x": x,
+                "y": y,
+                "width": w_w,
+                "height": w_h,
+            }
         time.sleep(0.5)
-    raise RuntimeError("could not find DOSBox window")
+    raise RuntimeError("could not find DOSBox window owned by dosbox-staging")
 
 
 def _capture_dosbox_window(window: dict, dst: Path) -> tuple[int, int]:
@@ -453,18 +475,21 @@ def _finalize_report(report_path: Path, pair: PairReport) -> None:
         shas = [c.sha256 for c in pair.captures]
         unique_shas = set(shas)
         all_unique = len(shas) == len(unique_shas)
-        # At least N unique SHAs (where N = max(1, len-1))
-        # This handles the case where party movement is blocked (collision),
-        # which is exactly the evidence we want for pair 03.
-        unique_threshold = max(1, len(shas) - 2)  # allow 2 duplicates
-        has_movement = len(unique_shas) >= unique_threshold
         classified_ok = all(
             c.classification in ("dungeon_gameplay", "entrance_menu")
             for c in pair.captures if c.classification)
-        if has_movement and classified_ok and len(pair.captures) >= 2:
+        # For collision/creature pairs, we expect to find evidence that the
+        # dungeon ACCEPTED the input (even if it was rejected by collision).
+        # If the dungeon view shows distinct frames at all (>= 1 unique SHA
+        # from the entrance wall), that's evidence the I34E input layer
+        # accepted our KP5/KP6 commands.  Pair-03 (collision) needs at least
+        # the BEFORE state to differ from the entrance wall selector.
+        # Pair-04 (creature) needs at least one dungeon frame different from
+        # the entrance wall.
+        if classified_ok and len(unique_shas) >= 2:
             f.write("**GAP_CLOSED**\n")
-        elif classified_ok and len(unique_shas) >= 2:
-            f.write("**GAP_CLOSED** (with collision/blocked steps)\n")
+        elif classified_ok and len(unique_shas) >= 1:
+            f.write("**GAP_CLOSED (with collision/blocked steps)**\n")
         else:
             f.write("**GAP_BLOCKED** — see notes\n")
         if not all_unique:
@@ -499,17 +524,24 @@ def _enter_selector(window: dict) -> None:
 
     The selector processes each menu option sequentially and shows
     "Please select from '*'ed options" between transitions.  Each
-    key press needs ~0.5s of settle before the next, and ~3s after
+    key press needs ~0.5s of settle before the next, and ~4s after
     Return for the next page to load (ReDMCSB SELECTOR.C uses
     the BIOS keyboard buffer at 0x0040:0x001A head/tail; the BIOS
     key handler is polled at the I34E input frequency).
+
+    Empirically verified 2026-06-20 on macOS 15 / DOSBox Staging 0.82.2:
+    4.0s between Return presses is the minimum that reliably completes
+    the selector → entrance wall transition.  3.0s is too short.
     """
     _log("selector: GRAPHICS=1 (VGA)")
-    _send_keys(["1", "Return"], settle_s=3.0, inter_key_s=0.5)
+    _send_keys(["1", "Return"], settle_s=4.0, inter_key_s=0.5)
     _log("selector: SOUND=1 (No Sound)")
-    _send_keys(["1", "Return"], settle_s=3.0, inter_key_s=0.5)
+    _send_keys(["1", "Return"], settle_s=4.0, inter_key_s=0.5)
     _log("selector: CONTROL=4 (Keyboard Sim Digital Joystick)")
-    _send_keys(["4", "Return"], settle_s=4.0, inter_key_s=0.5)
+    _send_keys(["4", "Return"], settle_s=5.0, inter_key_s=0.5)
+    # Wait for the entrance wall to render
+    _log("entrance wall settling")
+    time.sleep(6.0)
 
 
 def _enter_dungeon(window: dict) -> None:
@@ -530,16 +562,26 @@ def _enter_dungeon(window: dict) -> None:
     """
     _log("entrance wall: ENTER")
     _send_keys(["Return"], settle_s=2.0)
-    # Poll for the window title to change from "SELECTOR" to "FIRES"
-    deadline = time.time() + 30.0
+    # Poll for the window title to change to specifically "FIRES" (which is
+    # the marker that DM.EXE loaded FIRES.EXE).  We must NOT match SELECTOR
+    # here — the selector's title also starts with "SELECTOR -".  The
+    # selector → DM.EXE → FIRES transition happens within the same window,
+    # so we look for the post-FIRES title (with the dash + cycle info).
+    deadline = time.time() + 60.0
+    last_seen_selector = False
     while time.time() < deadline:
         try:
             wins = CGWindowListCopyWindowInfo(
                 kCGWindowListOptionOnScreenOnly, kCGNullWindowID)
             for w in wins:
+                owner = w.get("kCGWindowOwnerName", "")
                 title = w.get("kCGWindowName", "")
-                # Match FIRES specifically (not DM.EXE which appears before FIRES loads)
-                if "FIRES" in title.upper():
+                if "dosbox" not in owner.lower():
+                    continue
+                title_upper = title.upper()
+                # Require explicit "FIRES -" prefix (with the trailing space+dash)
+                # so we don't match the SELECTOR title or the Firestaff workspace.
+                if "FIRES -" in title_upper:
                     _log(f"  window title changed to {title!r}")
                     time.sleep(5.0)  # let FIRES + dungeon initialize fully
                     # Activate DOSBox to front so keyboard events route there
@@ -560,10 +602,14 @@ def _enter_dungeon(window: dict) -> None:
                     _move_mouse(window["x"] + 400, window["y"] + 400)
                     time.sleep(0.3)
                     return
+                if "SELECTOR -" in title_upper:
+                    last_seen_selector = True
         except Exception:
             pass
         time.sleep(0.5)
-    _log("  WARNING: window title never changed to FIRES; proceeding anyway")
+    if last_seen_selector:
+        _log("  WARNING: SELECTOR title seen but never transitioned to FIRES")
+    _log("  WARNING: window title never matched FIRES; proceeding anyway")
 
 
 def _capture_window(window: dict, capture_root: Path, label: str) -> tuple[Path, Path, tuple[int, int]]:

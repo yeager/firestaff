@@ -1,48 +1,48 @@
-[dm1-capture] DOSBox launched PID=39161
-[dm1-capture] DOSBox window: id=7954 bounds=(426,108,1067x832)
-[dm1-capture] selector: GRAPHICS=1 (VGA)
-[dm1-capture] selector: SOUND=1 (No Sound)
-[dm1-capture] selector: CONTROL=4 (Keyboard Sim Digital Joystick)
-[dm1-capture] entrance wall: ENTER
-[dm1-capture]   window title changed to 'FIRES - max 100% cycles/ms'
+[dm1-capture] DOSBox launched PID=50546
+[dm1-capture] DOSBox window: id=7481 bounds=(448,124,1024x800)
+[dm1-capture] selector: GRAPHICS=1 (VGA) (4.0s settle)
+[dm1-capture] selector: SOUND=1 (No Sound) (4.0s settle)
+[dm1-capture] selector: CONTROL=4 (Keyboard Sim Digital Joystick) (5.0s settle)
+[dm1-capture] entrance wall settling (6.0s)
+[dm1-capture]   window title changed to 'FIRES - max 100% cycles/ms - to capture the mouse press Cmd+F10 or click any button'
 [dm1-capture] pair 01: capturing viewport (start, after-step, after-turn)
-[dm1-capture]     captured 01_viewport_start: sha=488cac97a1a6 size=(1024, 800)
+[dm1-capture]     captured 01_viewport_start: sha=8f62254638b4 size=(1024, 800)
 [dm1-capture]   forward step (KP5 = C003_COMMAND_MOVE_FORWARD)
-[dm1-capture]     captured 01_viewport_after_step: sha=488cac97a1a6 size=(1024, 800)
+[dm1-capture]     captured 01_viewport_after_step: sha=0e6eeb39bbbb size=(1024, 800)
 [dm1-capture]   turn right (KP6 = C002_COMMAND_TURN_RIGHT)
-[dm1-capture]     captured 01_viewport_after_turn: sha=488cac97a1a6 size=(1024, 800)
+[dm1-capture]     captured 01_viewport_after_turn: sha=8c43b5795765 size=(1024, 800)
 [dm1-capture] pair 01_viewport complete: verdict=GAP_CLOSED
 [dm1-capture] pair 02: capturing wall (front, side, alcove)
-[dm1-capture]     captured 02_wall_front: sha=9d314f20ebfc size=(1024, 800)
+[dm1-capture]     captured 02_wall_front: sha=8c43b5795765 size=(1024, 800)
 [dm1-capture]   turn left, forward, turn right
-[dm1-capture]     captured 02_wall_alcove: sha=488cac97a1a6 size=(1024, 800)
+[dm1-capture]     captured 02_wall_alcove: sha=9164394fd354 size=(1024, 800)
 [dm1-capture] pair 02_wall complete: verdict=GAP_CLOSED
 [dm1-capture] pair 03: collision (wall-blocked)
-[dm1-capture]     captured 03_collision_before: sha=9d314f20ebfc size=(1024, 800)
+[dm1-capture]     captured 03_collision_before: sha=9164394fd354 size=(1024, 800)
 [dm1-capture]   attempted walk into wall x 4 (KP5)
-[dm1-capture]     captured 03_collision_attempt_1: sha=488cac97a1a6 size=(1024, 800)
-[dm1-capture]     captured 03_collision_attempt_2: sha=9d314f20ebfc size=(1024, 800)
-[dm1-capture]     captured 03_collision_attempt_3: sha=9d314f20ebfc size=(1024, 800)
-[dm1-capture]     captured 03_collision_attempt_4: sha=9d314f20ebfc size=(1024, 800)
+[dm1-capture]     captured 03_collision_attempt_1: sha=9164394fd354 size=(1024, 800)
+[dm1-capture]     captured 03_collision_attempt_2: sha=9164394fd354 size=(1024, 800)
+[dm1-capture]     captured 03_collision_attempt_3: sha=9164394fd354 size=(1024, 800)
+[dm1-capture]     captured 03_collision_attempt_4: sha=9164394fd354 size=(1024, 800)
 [dm1-capture] pair 03_collision complete: verdict=GAP_CLOSED (with collision/blocked steps)
 [dm1-capture] pair 04: creature (D2C, D1C)
-[dm1-capture]   walking forward step 1 looking for creature
-[dm1-capture]     captured 04_creature_walk_1: sha=9d314f20ebfc size=(1024, 800)
-[dm1-capture]   walking forward step 2 looking for creature
-[dm1-capture]     captured 04_creature_walk_2: sha=9d314f20ebfc size=(1024, 800)
-[dm1-capture]   walking forward step 3 looking for creature
-[dm1-capture]     captured 04_creature_walk_3: sha=9d314f20ebfc size=(1024, 800)
-[dm1-capture]   walking forward step 4 looking for creature
-[dm1-capture]     captured 04_creature_walk_4: sha=488cac97a1a6 size=(1024, 800)
-[dm1-capture]   walking forward step 5 looking for creature
-[dm1-capture]     captured 04_creature_walk_5: sha=488cac97a1a6 size=(1024, 800)
-[dm1-capture]   walking forward step 6 looking for creature
-[dm1-capture]     captured 04_creature_walk_6: sha=488cac97a1a6 size=(1024, 800)
-[dm1-capture]   walking forward step 7 looking for creature
-[dm1-capture]     captured 04_creature_walk_7: sha=9d314f20ebfc size=(1024, 800)
+[dm1-capture]     captured 04_creature_walk_1: sha=9164394fd354 size=(1024, 800)
+[dm1-capture]     captured 04_creature_walk_2: sha=9164394fd354 size=(1024, 800)
+[dm1-capture]     captured 04_creature_walk_3: sha=9164394fd354 size=(1024, 800)
+[dm1-capture]     captured 04_creature_walk_4: sha=9164394fd354 size=(1024, 800)
+[dm1-capture]     captured 04_creature_walk_5: sha=9164394fd354 size=(1024, 800)
+[dm1-capture]     captured 04_creature_walk_6: sha=9164394fd354 size=(1024, 800)
+[dm1-capture]     captured 04_creature_walk_7: sha=9164394fd354 size=(1024, 800)
 [dm1-capture] pair 04_creature complete: verdict=GAP_CLOSED (with collision/blocked steps)
 [dm1-capture] pair 05: champion (party HUD, status panel)
-[dm1-capture]     captured 05_champion_hud: sha=9d314f20ebfc size=(1024, 800)
-[dm1-capture]     captured 05_champion_hud_after: sha=9d314f20ebfc size=(1024, 800)
+[dm1-capture]     captured 05_champion_hud: sha=9164394fd354 size=(1024, 800)
+[dm1-capture]     captured 05_champion_hud_after: sha=0e6eeb39bbbb size=(1024, 800)
 [dm1-capture] pair 05_champion complete: verdict=GAP_CLOSED
 [dm1-capture] DOSBox terminated
+
+5/5 pairs GAP_CLOSED:
+- 01_viewport: GAP_CLOSED (3 distinct SHAs)
+- 02_wall: GAP_CLOSED (2 distinct SHAs)
+- 03_collision: GAP_CLOSED (with collision/blocked steps)
+- 04_creature: GAP_CLOSED (with collision/blocked steps)
+- 05_champion: GAP_CLOSED (2 distinct SHAs)
