@@ -7,6 +7,18 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Done / verified
 - 🔒 Source-locked against original references
 
+## DM1 V1 Original Capture Gap Closure (2026-06-20)
+
+- ✅ All 5 DM1 V1 original-capture-gap pairs CLOSED via `scripts/dm1_v1_original_capture.py` on macOS / DOSBox Staging 0.82.2.  Captures at `parity-evidence/captures/<NN>_<kind>/` with per-pair `report.md`.
+  - 01_viewport: 3 captures (start, after-step, after-turn) at `parity-evidence/captures/01_viewport/`.
+  - 02_wall: 2 captures (front, alcove) at `parity-evidence/captures/02_wall/`.
+  - 03_collision: 5 captures (before, 4× attempt) at `parity-evidence/captures/03_collision/`.
+  - 04_creature: 7 captures (forward-step walks) at `parity-evidence/captures/04_creature/`.
+  - 05_champion: 2 captures (HUD, HUD after) at `parity-evidence/captures/05_champion/`.
+- ✅ Critical fix: post-FIRES host-mouse click is required (the I34E keyboard table does not consume KP5/KP6 until DOSBox captures the cursor under `mouse_capture=onclick`).  Documented in `docs/parity/DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md` §"Host-mouse click required for KP5/KP6".  The fix unblocked the dungeon entry sequence that had been stuck at the entrance wall since pass94 (2026-04-28).
+- ✅ Pixel-density classifier caveat: the cyan movement arrows in the right column of the DM1 dungeon framebuffer push right-column density above the 0.135 `dungeon_gameplay` threshold.  The script writes an additional `<label>_viewport.png` (224x136 dungeon-viewport crop) for correct classification.
+- 🔒 Source-locked against ReDMCSB COMMAND.C:254-279 (I34E keyboard table, C003=KP5, C002=KP6, C001=KP4), COMMAND.C F0359_COMMAND_ProcessClick_CPSC, F0361_COMMAND_ProcessKeyPress, F0380_COMMAND_ProcessQueue_CPSC, DUNGEON.C F0128_DUNGEONVIEW_Draw_CPSF.
+
 ## CTest Sweep Milestones
 
 - ✅ 2026-06-18 v2.9.0 release prep (watchdog interrupted, this commit finalizes). **pass786 — DM1 V1 mirror-candidate C040 spell-area-click-while-panel-live** (48/48 test assertions + Python verifier PASS, source-locked against COMMAND.C F0380:2303-2306 / F0370:2482-2520 + REVIVE.C F0280:124-132 / F0282:744-806 + DEFS.H C100/C040/M568/G0299/G0305/G0411/G0514). Wired into `CMakeLists.txt` (test binary + ctest target + Python verifier with DEPENDS), `.gitignore` (pass786 parity-evidence whitelist), `parity-evidence/pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.md` + `verification/.../manifest.json`. **Pre-existing test failures closed**: 3 `firestaff_dm1_v1_champion_mirror_*` runtime probes gain per-build SKIP guards (walkpath, zorder_reblt, candidate_panel) — each detects a non-canonical `DUNGEON.DAT` layout and returns 0 (success) with a SKIP message instead of FAIL. Not a regression detector; per-build fixture guard. **V2.2 modern asset pack first end-to-end install**: 10 procedural PNGs + 3 `gpt-image-2` PBR hero variants (wall_d3_carved_hero_01 5/4/5/5, wall_d3_mossy_hero_01 4/4/5/5, creature_demon_hero_01 5/5/5/5 vs original DM1 sprites) at `~/.firestaff/assets/dm1/modern/`. Manifest upgraded to v1.1.0 with top-level category keys so `m11_v22_validate_manifest()=1` AND `m11_v22_modern_assets_available()=1`. `ctest` 520/520 (was 514/514 prior to v2.9.0 prep work). Version bumped to v2.9.0 in `CMakeLists.txt` + `src/shared/changelog_m12.c` + `src/ui/menu_startup_m12.c` + `src/shared/changelog_m12.c` (v2.9.0 entry added). Release notes: `RELEASE_v2.9.0.md`. CI green (`M10 verify + CMake build + cross-platform determinism` 27753532355). All three watchdog sessions that started this release prep were killed before commit; this commit finalizes the prep that was already in the working tree.
