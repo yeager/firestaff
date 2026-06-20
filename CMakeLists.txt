@@ -8719,6 +8719,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass869_dm1_v1_line_feed_character_string PROPERTIES DEPENDS dm1_v1_line_feed_character_string_pc34_compat)
         add_test(
+            NAME pass873_dm1_v1_palette_top_and_bottom_screen
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass873_dm1_v1_palette_top_and_bottom_screen_pc34_compat.py
+        )
+        set_tests_properties(pass873_dm1_v1_palette_top_and_bottom_screen PROPERTIES DEPENDS dm1_v1_palette_top_and_bottom_screen_pc34_compat)
+        add_test(
             NAME pass870_dm1_v1_palette_changes_cursor_mask
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass870_dm1_v1_palette_changes_cursor_mask_pc34_compat.py
         )
@@ -9308,3 +9313,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_palette_changes_cursor_
         COMMAND test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat
     )
 endif()
+
+# pass873 — DM1 V1 palette-top-and-bottom-screen (G0347): 16-entry
+# VGA palette for the top status bar + bottom message-line strip.
+# PC 3.4 init = {0x000, 0x666, 0x888, 0x620, 0x0CC, 0x840, 0x080,
+# 0x0C0, 0xF00, 0xFA0, 0xC86, 0xFF0, 0x444, 0xAAA, 0x00F, 0xFFF}.
+# Source-locked against DATA.C:216 + BASE.C:170/759 + DIALOG.C:866
+# + DRAWVIEW.C:790. Disjoint from pass784-872.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_palette_top_and_bottom_screen_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_palette_top_and_bottom_screen_pc34_compat.c")
+    add_executable(test_dm1_v1_palette_top_and_bottom_screen_pc34_compat
+        tests/test_dm1_v1_palette_top_and_bottom_screen_pc34_compat.c
+        src/dm1/dm1_v1_palette_top_and_bottom_screen_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_top_and_bottom_screen_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_top_and_bottom_screen_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_top_and_bottom_screen_pc34_compat
+        COMMAND test_dm1_v1_palette_top_and_bottom_screen_pc34_compat
+    )
+endif()
+
+

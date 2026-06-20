@@ -349,6 +349,8 @@ __pycache__/
 !/parity-evidence/verification/pass871_dm1_v1_palette_changes_pc34_compat/**
 !/parity-evidence/verification/pass872_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat/
 !/parity-evidence/verification/pass872_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat/**
+!/parity-evidence/verification/pass873_dm1_v1_palette_top_and_bottom_screen_pc34_compat/
+!/parity-evidence/verification/pass873_dm1_v1_palette_top_and_bottom_screen_pc34_compat/**
 !/parity-evidence/verification/pass809_dm1_v1_chest_close_stack_merge_pc34_compat/
 !/parity-evidence/verification/pass809_dm1_v1_chest_close_stack_merge_pc34_compat/**
 !/parity-evidence/verification/pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat/
