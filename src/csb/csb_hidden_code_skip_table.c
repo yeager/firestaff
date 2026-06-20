@@ -87,6 +87,69 @@ static const FirestaffHiddenCodeEntry kSkipTable[] = {
         .platform = FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA,
         .kind     = FIRESTAFF_HIDDEN_CODE_KIND_STRING_KEY,
         .note     = "Amiga CSB v2.x kid dungeon string keys; non-graphics"
+    },
+    /* CSB Atari ST 2.0/2.1: items 21, 538, 548 are executable
+       68k code that the FTL port disguised as IMG1/IMG2 images.
+       Item 21 is the fuzzy-bits disk-original check (GRAPH21.C
+       F0914_Graphic21 in ReDMCSB). Item 538 programs the FDC
+       to read sector 7 (GRAPH538.C F0915). Item 548 is the
+       CSB hidden-code launcher trampoline (GRAPH548.C
+       F0916_Graphic548). All three must be skipped during
+       V1 palette blit + V22 shape-cache population. The
+       "checksum" integrity check is unaffected (ReDMCSB
+       EXCLUDE_FROM_CHECKSUMS).
+       Source: dmweb Meynaf disassembly
+       http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-hidden-code/
+       Source: ReDMCSB GRAPH21.C / GRAPH538.C / GRAPH548.C */
+    {
+        .first_index = 21, .last_index = 21,
+        .game     = FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        .platform = FIRESTAFF_HIDDEN_CODE_PLATFORM_ATARI_ST,
+        .kind     = FIRESTAFF_HIDDEN_CODE_KIND_EXECUTABLE,
+        .note     = "CSB Atari ST 2.0/2.1 GRAPHICS.DAT item 21: fuzzy-bits 68k copy-protection routine (ReDMCSB GRAPH21.C F0914)"
+    },
+    {
+        .first_index = 538, .last_index = 538,
+        .game     = FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        .platform = FIRESTAFF_HIDDEN_CODE_PLATFORM_ATARI_ST,
+        .kind     = FIRESTAFF_HIDDEN_CODE_KIND_EXECUTABLE,
+        .note     = "CSB Atari ST 2.0/2.1 GRAPHICS.DAT item 538: FDC sector-7 read 68k routine (ReDMCSB GRAPH538.C F0915)"
+    },
+    {
+        .first_index = 548, .last_index = 548,
+        .game     = FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        .platform = FIRESTAFF_HIDDEN_CODE_PLATFORM_ATARI_ST,
+        .kind     = FIRESTAFF_HIDDEN_CODE_KIND_EXECUTABLE,
+        .note     = "CSB Atari ST 2.0/2.1 GRAPHICS.DAT item 548: hidden-code launcher trampoline (ReDMCSB GRAPH548.C F0916)"
+    },
+    /* CSB Amiga 3.5 / 3.5 Multilanguage: items 21, 676, 686 are
+       executable 68k code disguised as images. Items 21 and 676
+       implement the Amiga copy-protection fuzzy-bits check
+       (GRAPH21.C F0914 / GRAPH676.C F0915); item 686 is the
+       launcher trampoline. The same integrity-gate exemption
+       applies -- these items are not in the checksum.
+       Source: dmweb Meynaf disassembly (same URL as above)
+       Source: ReDMCSB AMIGINIT.C hidden-code launcher */
+    {
+        .first_index = 21, .last_index = 21,
+        .game     = FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        .platform = FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA,
+        .kind     = FIRESTAFF_HIDDEN_CODE_KIND_EXECUTABLE,
+        .note     = "CSB Amiga 3.5/3.5ML GRAPHICS.DAT item 21: fuzzy-bits 68k copy-protection routine"
+    },
+    {
+        .first_index = 676, .last_index = 676,
+        .game     = FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        .platform = FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA,
+        .kind     = FIRESTAFF_HIDDEN_CODE_KIND_EXECUTABLE,
+        .note     = "CSB Amiga 3.5/3.5ML GRAPHICS.DAT item 676: FDC sector-7 read 68k routine"
+    },
+    {
+        .first_index = 686, .last_index = 686,
+        .game     = FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        .platform = FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA,
+        .kind     = FIRESTAFF_HIDDEN_CODE_KIND_EXECUTABLE,
+        .note     = "CSB Amiga 3.5/3.5ML GRAPHICS.DAT item 686: hidden-code launcher trampoline"
     }
 };
 
