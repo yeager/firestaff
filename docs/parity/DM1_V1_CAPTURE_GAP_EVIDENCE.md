@@ -1,7 +1,7 @@
 # DM1 V1 Original Capture Gap Evidence
 
 **Lane:** DM1 V1 finish-quality - original DOS capture/parity evidence lane
-**Date:** 2026-05-28
+**Date:** 2026-05-28; updated 2026-06-20 with pass1052/pass1053
 **Branch:** `dm1v1-capture-gap-evidence-20260528`
 **Author:** subagent (MiniMax-M2.7)
 
@@ -39,16 +39,16 @@ is sufficient for `SOURCE_LOCKED` but NOT for `MATCHED` pixel/content parity.
 
 | Evidence Item | Status | Path | Issue |
 |---|---|---|---|
-| 6x original DOSBox crops (224x136) | IMPAIRED EXISTS (impaired) | `firestaff-release-v0.3.28/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/` | Frames 03-06 have duplicate SHA256 `701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c`; pass80 classifier reclassifies frames 03-04 as `entrance_menu` and 05-06 as `wall_closeup`, none as `dungeon_gameplay`. DOSBox input route failed to enter dungeon. |
+| 4x original DOSBox turn-cycle frames | PARTIAL OK | `verification-screens/pass1052-dm1-original-route-24h-turncycle/` | Clean original DM1 PC 3.4 capture: 2 `dungeon_gameplay` + 2 `wall_closeup`, 0 duplicate raw hashes, pass80 PASS. Still needs Firestaff pairing and pixel diff. |
+| 6x original DOSBox crops (224x136) | IMPAIRED EXISTS (impaired) | `firestaff-release-v0.3.28/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/` | Historical failed route. Frames 03-06 have duplicate SHA256 `701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c`; pass80 reclassifies frames 03-04 as `entrance_menu` and 05-06 as `wall_closeup`. |
 | 6x Firestaff V1 captures (VGA PPM) | OK EXISTS | `firestaff-v2-gap-manifest/verification-m11/lane3-inventory-followup-20260428-0914/` (selected files) | No paired original to compare against. |
 | Source-locked viewport probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c` | Documents draw-order contract from ReDMCSB; no paired capture. |
 | Door occlusion pixel gate | OK EXISTS | `probes/dm1/firestaff_dm1_v1_door_occlusion_pixel_gate.c` | Documents pixel-level occlusion contract; no paired capture. |
 | Viewport palette probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_viewport_palette_as_before_probe.c` | Palette-as-before for screenshot comparison; no paired capture. |
 
-**Gap:** The pass94 original captures exist but are unusable - the DOSBox input automation did
-not navigate into the dungeon. Frames 01-06 show: (01) unclassified, (02) entrance_menu,
-(03-04) entrance_menu duplicate, (05-06) wall_closeup. No `dungeon_gameplay` frame was captured.
-New capture session required with a working dungeon-entrance input sequence.
+**Gap:** Pass1052 supersedes the broken pass94 route for initial viewport evidence by
+capturing two clean `dungeon_gameplay` frames. It is still not `MATCHED` because no
+Firestaff-vs-original same-state pixel diff has been promoted yet.
 
 **Minimum needed for `MATCHED`:**
 - At least 3 clean original `dungeon_gameplay` frames: (a) start-state 3x3 dungeon viewport,
@@ -67,11 +67,11 @@ New capture session required with a working dungeon-entrance input sequence.
 | Walls occlusion blockers probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c` | Source-locked wall occlusion logic; no paired capture. |
 | Door occlusion pixel gate | OK EXISTS (see above) | `probes/dm1/firestaff_dm1_v1_door_occlusion_pixel_gate.c` | Source-locked pixel-level door occlusion; no paired capture. |
 | Side contents center-blocker probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_side_contents_center_blocker_probe.c` | Documents side-panel center-blocker behavior; no paired capture. |
-| Original wall screenshot | MISSING MISSING | - | No paired original wall screenshot exists. |
+| Original wall screenshot | PARTIAL OK | `verification-screens/pass1052-dm1-original-route-24h-turncycle/` | Pass1052 has 2 clean original `wall_closeup` frames. Still needs Firestaff pairing and wall-state diff. |
 
-**Gap:** All wall evidence is source-lock only. No original DM1 PC 3.4 screenshot of a
-wall (front-wall D3C, side-wall D3L/D3R, or alcove) exists in the parity evidence
-directory. Wall composition parity cannot be assessed without paired captures.
+**Gap:** Wall evidence is no longer original-capture-empty. Pass1052 provides two clean
+original wall frames, but wall composition parity still cannot be marked `MATCHED`
+until those frames are paired with identical Firestaff states and compared.
 
 **Minimum needed for `MATCHED`:**
 - 3 original screenshots: (a) front-wall view (D3C visible), (b) side-wall view
@@ -133,11 +133,14 @@ an original screenshot.
 | Champion panel HUD test | OK EXISTS | `tests/test_dm1_v1_champion_panel_hud_pc34_compat.c` | Source-locked geometry/constants; no paired capture. |
 | Champion stats test | OK EXISTS | `tests/test_dm1_v1_champion_stats_pc34_compat.c` | Source-locked bar graph logic; no paired capture. |
 | Lane3 champion HUD captures | IMPAIRED FIRESTAFF ONLY | `firestaff-v2-gap-manifest/verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm`, `party_hud_statusbox_gfx_vga.ppm` | Firestaff V1 output only; no paired original DM1 PC 3.4 champion panel screenshot. |
-| Original champion panel screenshot | MISSING MISSING | - | No paired original DM1 PC 3.4 champion panel screenshot exists. |
+| Original champion candidate/resurrect panel | PARTIAL OK | `verification-screens/pass1053-dm1-original-champion-candidate-panel/` | Pass1053 tracks pass455 original candidate panel (`click:111,82`) and post-C160 terminal/HUD transition (`click:130,115`). Not a full four-champion HUD pair. |
+| Original four-champion party HUD screenshot | MISSING MISSING | - | No paired original DM1 PC 3.4 four-champion party HUD screenshot exists. |
 
-**Gap:** The champion panel geometry, status-box stride, portrait positions, bar-graph
-layout are all source-locked and probe-verified. However, no paired original DM1 PC 3.4
-champion panel screenshot exists to verify pixel-level rendering correctness.
+**Gap:** The champion panel geometry, status-box stride, portrait positions, and
+bar-graph layout are all source-locked and probe-verified. Pass1053 now adds original
+PC 3.4 evidence for the candidate/resurrect panel transition, but no paired full
+four-champion party HUD or single-champion status panel screenshot exists yet to verify
+pixel-level rendering correctness.
 
 **Minimum needed for `MATCHED`:**
 - 2 original screenshots: (a) four-champion party HUD (portraits + status boxes + bar graphs),
@@ -152,16 +155,18 @@ champion panel screenshot exists to verify pixel-level rendering correctness.
 
 | Area | Source-Locked Probe | Firestaff Capture | Original Capture | Pairing | Blocking Issue |
 |------|--------------------|--------------------|-----------------|---------|---------------|
-| Viewport | OK | OK | IMPAIRED impaired (pass94) | MISSING | DOSBox route failed; frames are entrance_menu/wall_closeup |
-| Wall | OK | MISSING | MISSING | MISSING | No original wall screenshot exists |
+| Viewport | OK | OK | PARTIAL OK (pass1052) | MISSING | Clean original gameplay frames exist; Firestaff pairing/diff still missing |
+| Wall | OK | MISSING | PARTIAL OK (pass1052) | MISSING | Clean original wall frames exist; Firestaff pairing/diff still missing |
 | Collision | OK | MISSING | MISSING | MISSING | No original collision transcript exists |
 | Creature-chain | OK | IMPAIRED Firestaff-only | MISSING | MISSING | No original creature screenshot exists |
-| Champion-panel | OK | IMPAIRED Firestaff-only | MISSING | MISSING | No original champion panel screenshot exists |
+| Champion-panel | OK | IMPAIRED Firestaff-only | PARTIAL OK (pass1053 candidate/resurrect panel) | MISSING | Full four-champion HUD/status-panel pairing still missing |
 
 **Conclusion:** Existing Firestaff-side gates, source locks, and runtime routing are complete.
-Paired original PC 3.4 capture evidence is missing or impaired for all five areas.
-The pass94 capture session (2026-04-28) is the closest attempt but failed because the
-DOSBox input automation did not successfully navigate into the dungeon.
+Pass1052 and pass1053 reduce the original-reference gap: viewport, wall, and the
+candidate/resurrect champion panel now have clean original PC 3.4 frames. The remaining
+`MATCHED` blockers are Firestaff pairing/pixel-diff promotion for those frames, a
+collision transcript, a creature screenshot, and full four-champion/status-panel
+original captures.
 
 ---
 
@@ -206,12 +211,13 @@ Given the above gap inventory, the correct parity status labels for the five are
 
 | Area | Current Label | Honest Label | Reason |
 |------|-------------|--------------|--------|
-| Viewport | `MATCHED` (bounds) / `KNOWN_DIFF` (content) | `BLOCKED_ON_REFERENCE` (content) | Original captures impaired; content cannot be verified |
-| Wall | `KNOWN_DIFF` (narrowed) | `BLOCKED_ON_REFERENCE` | No original wall screenshot exists |
+| Viewport | `MATCHED` (bounds) / `KNOWN_DIFF` (content) | `PARTIAL_REFERENCE_CAPTURED` | Pass1052 original gameplay frames exist; no Firestaff pairing/diff yet |
+| Wall | `KNOWN_DIFF` (narrowed) | `PARTIAL_REFERENCE_CAPTURED` | Pass1052 original wall frames exist; no Firestaff pairing/diff yet |
 | Collision | (source-lock only) | `BLOCKED_ON_REFERENCE` | No original collision transcript exists |
 | Creature-chain | (source-lock only) | `BLOCKED_ON_REFERENCE` | No original creature screenshot exists |
-| Champion-panel | (source-lock only) | `BLOCKED_ON_REFERENCE` | No original champion panel screenshot exists |
+| Champion-panel | (source-lock only) | `PARTIAL_REFERENCE_CAPTURED` | Pass1053 candidate/resurrect panel exists; full party HUD/status-panel pair is still missing |
 
-**Recommendation:** Update PARITY_MATRIX_DM1_V1.md to label the content/pixel sub-rows
-for all five areas as `BLOCKED_ON_REFERENCE` until a clean paired capture session resolves
-the DOSBox routing issue documented in pass94.
+**Recommendation:** Keep the content/pixel sub-rows out of `MATCHED` until same-state
+Firestaff comparisons exist. Viewport, wall, and champion candidate/resurrect panel can
+now be labelled `PARTIAL_REFERENCE_CAPTURED`; collision and creature-chain remain
+`BLOCKED_ON_REFERENCE`.
