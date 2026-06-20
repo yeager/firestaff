@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import re
 import sys
 from dataclasses import dataclass
@@ -301,6 +302,61 @@ def cmd_list(registry: dict[Path, HashEntry]) -> int:
     return 0
 
 
+def cmd_summary(root: Path, registry: dict[Path, HashEntry]) -> int:
+    """Per-game summary table: which registry files are on disk under root
+    vs missing. Closes Tier 1 #2 in FIRESTAFF_GAP_LIST.md."""
+    from collections import defaultdict
+    by_game: dict[str, list[HashEntry]] = defaultdict(list)
+    for entry in registry.values():
+        by_game[entry.game].append(entry)
+
+    # Pre-compute set of all real-file paths under root for fast lookup.
+    real_paths: set[Path] = set()
+    if root.is_dir():
+        for p in root.rglob("*"):
+            try:
+                if p.is_file() and not p.is_symlink():
+                    real_paths.add(p.resolve())
+                elif p.is_symlink():
+                    tgt = p.resolve()
+                    if tgt.is_file():
+                        real_paths.add(tgt)
+            except OSError:
+                continue
+
+    def status_for(entry: HashEntry) -> str:
+        # entry.expected_path is e.g. dm1/GRAPHICS.DAT; look under root/dm1/...
+        candidate = root / entry.game / entry.filename
+        if candidate in real_paths:
+            return "FOUND"
+        # also handle dm1-multilingual / DUNGEON.DAT etc.
+        candidate2 = root / entry.expected_path
+        if candidate2 in real_paths:
+            return "FOUND"
+        # nested case (e.g. dm2-mac-en/Graphics.dat with capital G)
+        for real in real_paths:
+            if real.name == entry.filename and entry.game in str(real):
+                return "FOUND"
+        return "MISS"
+
+    print(f"data-root: {root}")
+    print(f"{'GAME':<24} {'TOTAL':>6}  {'FOUND':>6}  {'MISS':>6}")
+    print("-" * 60)
+    total_all = found_all = miss_all = 0
+    for game in sorted(by_game):
+        entries = sorted(by_game[game], key=lambda e: e.filename)
+        found = sum(1 for e in entries if status_for(e) == "FOUND")
+        miss = len(entries) - found
+        total_all += len(entries)
+        found_all += found
+        miss_all += miss
+        status_marker = "OK" if miss == 0 else f"INCOMPLETE ({miss} missing)"
+        print(f"{game:<24} {len(entries):>6}  {found:>6}  {miss:>6}  {status_marker}")
+    print("-" * 60)
+    print(f"{'TOTAL':<24} {total_all:>6}  {found_all:>6}  {miss_all:>6}")
+    return 0 if miss_all == 0 else 2
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
         description="Compare local game data files against Firestaff's verified-hash registry.",
@@ -311,6 +367,10 @@ def main(argv: list[str] | None = None) -> int:
                    help=f"Path to VERIFIED_HASHES.md (default: {DEFAULT_REGISTRY})")
     p.add_argument("--list", action="store_true",
                    help="List every game/file in the registry, then exit")
+    p.add_argument("--summary", action="store_true",
+                   help="Print per-game summary table (which registry files "
+                        "are on disk under PATH vs missing). PATH defaults to "
+                        "FIRESTAFF_DATA env var or ~/.firestaff/data.")
     p.add_argument("--quiet", action="store_true",
                    help="Only print failures (and missing files), not successes")
     p.add_argument("--no-color", action="store_true", help="(reserved)")
@@ -327,6 +387,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.list:
         return cmd_list(registry)
+
+    if args.summary:
+        summary_root = Path(args.path).expanduser() if args.path else \
+            Path(os.environ.get("FIRESTAFF_DATA",
+                                Path.home() / ".firestaff" / "data"))
+        return cmd_summary(summary_root, registry)
 
     if not args.path:
         p.error("path is required unless --list is given")
