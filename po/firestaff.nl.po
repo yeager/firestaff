@@ -5,64 +5,64 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "Toegankelijkheid"
 
 msgid "Audio"
-msgstr ""
+msgstr "Audio"
 
 msgid "Back"
 msgstr "Terug"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "Bestiarium"
 
 msgid "Changelog"
-msgstr ""
+msgstr "Wijzigingslog"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "Binnenkort"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "Doorgaan met opgeslagen"
 
 msgid "Controls"
-msgstr ""
+msgstr "Besturing"
 
 msgid "Display"
-msgstr ""
+msgstr "Scherm"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "EXTRA"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "Voorwerpenencyclopedie"
 
 msgid "Language"
 msgstr "Taal"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "Kaartkijker"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "Lore-museum"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "Nieuw spel (V1 Origineel)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "Nieuw spel (V2.1 Opgeschaald)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "Nieuw spel (V2.2 Verbeterd)"
 
 msgid "No data files"
-msgstr ""
+msgstr "Geen gegevensbestanden"
 
 msgid "Off"
-msgstr ""
+msgstr "Uit"
 
 msgid "On"
-msgstr ""
+msgstr "Aan"
 
 msgid "PLAY"
 msgstr "SPELEN"
@@ -71,23 +71,23 @@ msgid "QUIT"
 msgstr "AFSLUITEN"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "Schermafdrukgalerij"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "SPEL SELECTEREN"
 
 msgid "SETTINGS"
 msgstr "INSTELLINGEN"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "Spreukreferentie"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "Spelgegevens valideren"
 
 msgid "Version"
-msgstr ""
+msgstr "Versie"
 
 msgid "Video"
-msgstr ""
+msgstr "Video"
 

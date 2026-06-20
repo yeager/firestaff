@@ -5,64 +5,64 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "Accessibilità"
 
 msgid "Audio"
-msgstr ""
+msgstr "Audio"
 
 msgid "Back"
 msgstr "Indietro"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "Bestiario"
 
 msgid "Changelog"
-msgstr ""
+msgstr "Registro modifiche"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "Prossimamente"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "Continua partita"
 
 msgid "Controls"
-msgstr ""
+msgstr "Controlli"
 
 msgid "Display"
-msgstr ""
+msgstr "Schermo"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "EXTRAS"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "Enciclopedia oggetti"
 
 msgid "Language"
 msgstr "Lingua"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "Visualizzatore mappa"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "Museo del Lore"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "Nuova partita (V1 Originale)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "Nuova partita (V2.1 Migliorato)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "Nuova partita (V2.2 Avanzato)"
 
 msgid "No data files"
-msgstr ""
+msgstr "Nessun file dati"
 
 msgid "Off"
-msgstr ""
+msgstr "Off"
 
 msgid "On"
-msgstr ""
+msgstr "On"
 
 msgid "PLAY"
 msgstr "GIOCA"
@@ -71,23 +71,23 @@ msgid "QUIT"
 msgstr "ESCI"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "Galleria schermate"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "SELEZIONA GIOCO"
 
 msgid "SETTINGS"
 msgstr "IMPOSTAZIONI"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "Riferimento incantesimi"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "Convalida dati gioco"
 
 msgid "Version"
-msgstr ""
+msgstr "Versione"
 
 msgid "Video"
-msgstr ""
+msgstr "Video"
 

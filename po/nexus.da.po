@@ -8,89 +8,89 @@ msgid "Attack"
 msgstr "Angreb"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "Kast besværgelse"
 
 msgid "Track %d"
-msgstr ""
+msgstr "Niveau %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s døde"
 
 msgid "Continue"
-msgstr ""
+msgstr "Fortsæt"
 
 msgid "Defend"
-msgstr ""
+msgstr "Forsvar"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "Denne dør er låst"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "Du fandt Ilds Taven!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "Tillykke! Du har reddet riget!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "Din gruppe er omkommet"
 
 msgid "Hall of Champions"
-msgstr "Heltesal"
+msgstr "Heltenes Sal"
 
 msgid "Health"
 msgstr "Helbred"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "Inventar fuld"
 
 msgid "A key is required"
-msgstr ""
+msgstr "Nøgle påkrævet"
 
 msgid "Level %d"
-msgstr ""
+msgstr "Niveau %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s steg i niveau"
 
 msgid "Load Game"
-msgstr ""
+msgstr "Indlæs"
 
 msgid "Mana"
-msgstr ""
+msgstr "Mana"
 
 msgid "New Game"
-msgstr ""
+msgstr "Nyt spil"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "Ikke nok mana"
 
 msgid "Recruit"
 msgstr "Rekruttér"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "Genfød"
 
 msgid "Rest"
-msgstr ""
+msgstr "Hvil"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "Genopliv"
 
 msgid "Save Game"
-msgstr ""
+msgstr "Gem"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "Vælg helt"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "Besværgelse mislykkedes"
 
 msgid "Stamina"
-msgstr ""
+msgstr "Udholdenhed"
 
 msgid "Party is full"
-msgstr ""
+msgstr "Gruppe er fuld"
 
 msgid "Use Item"
-msgstr ""
+msgstr "Brug genstand"
 

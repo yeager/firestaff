@@ -5,89 +5,89 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "Erişilebilirlik"
 
 msgid "Audio"
-msgstr ""
+msgstr "Ses"
 
 msgid "Back"
 msgstr "Geri"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "Yaratık Kitabı"
 
 msgid "Changelog"
-msgstr ""
+msgstr "Değişiklikler"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "Çok yakında"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "Kayıtlı Oyuna Devam"
 
 msgid "Controls"
-msgstr ""
+msgstr "Kontroller"
 
 msgid "Display"
-msgstr ""
+msgstr "Ekran"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "EKSTRALAR"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "Eşya Ansiklopedisi"
 
 msgid "Language"
 msgstr "Dil"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "Harita Görüntüleyici"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "Lore Müzesi"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "Yeni Oyun (V1 Orijinal)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "Yeni Oyun (V2.1 Yükseltilmiş)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "Yeni Oyun (V2.2 Geliştirilmiş)"
 
 msgid "No data files"
-msgstr ""
+msgstr "Veri dosyası yok"
 
 msgid "Off"
-msgstr ""
+msgstr "Kapalı"
 
 msgid "On"
-msgstr ""
+msgstr "Açık"
 
 msgid "PLAY"
 msgstr "OYNA"
 
 msgid "QUIT"
-msgstr "ÇIKIŞ"
+msgstr "ÇIK"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "Ekran Görüntüsü Galerisi"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "OYUN SEÇ"
 
 msgid "SETTINGS"
 msgstr "AYARLAR"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "Büyü Referansı"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "Oyun verisini doğrula"
 
 msgid "Version"
-msgstr ""
+msgstr "Sürüm"
 
 msgid "Video"
-msgstr ""
+msgstr "Video"
 

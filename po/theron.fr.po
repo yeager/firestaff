@@ -1,0 +1,167 @@
+# firestaff-theron-en English catalog (auto-generated from theron.pot).
+# Source msgid = English source string; msgstr mirrors it.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-theron-en\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-20 06:50+0200\n"
+"PO-Revision-Date: 2026-06-20+00:00\n"
+"Last-Translator: Firestaff auto-pass\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+#. Direction / compass
+
+msgid "NORTH"
+msgstr "NORD"
+#. Direction / compass
+
+msgid "EAST"
+msgstr "EST"
+#. Direction / compass
+
+msgid "SOUTH"
+msgstr "SUD"
+#. Direction / compass
+
+msgid "WEST"
+msgstr "OUEST"
+#. Stairs
+
+msgid "STAIRS"
+msgstr "ESCALIER"
+#. Pit
+
+msgid "PIT"
+msgstr "GOUFFRE"
+#. Teleporter
+
+msgid "TELEPORTER"
+msgstr "TÉLÉPORTEUR"
+#. Door
+
+msgid "DOOR"
+msgstr "PORTE"
+#. Inventory / item action
+
+msgid "PICK UP"
+msgstr "RAMASSER"
+#. Inventory / item action
+
+msgid "DROP"
+msgstr "LÂCHER"
+#. Inventory / item action
+
+msgid "USE"
+msgstr "UTILISER"
+#. Combat action
+
+msgid "ATTACK"
+msgstr "ATTAQUER"
+#. Combat action
+
+msgid "DEFEND"
+msgstr "DÉFENDRE"
+#. Combat action
+
+msgid "CAST SPELL"
+msgstr "LANCER SORT"
+#. Status label
+
+msgid "NO FOCUS"
+msgstr "AUCUNE CIBLE"
+#. Status label
+
+msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
+msgstr "APPUYEZ SUR ENTRÉE SUR UNE VRAIE CIBLE AVANT"
+#. Generic
+
+msgid "UNKNOWN"
+msgstr "INCONNU"
+#. Generic
+
+msgid "NONE"
+msgstr "AUCUN"
+#. Save / load
+
+msgid "SAVE GAME"
+msgstr "SAUVEGARDER"
+#. Save / load
+
+msgid "LOAD GAME"
+msgstr "CHARGER"
+#. Shop
+
+msgid "SHOP"
+msgstr "BOUTIQUE"
+#. Shop
+
+msgid "NOT ENOUGH GOLD"
+msgstr "PAS ASSEZ D'OR"
+#. Shop
+
+msgid "PURCHASED %s FOR %d GOLD"
+msgstr "ACHETÉ %S POUR %D OR"
+#. Dungeon progression
+
+msgid "T%u: ASCENDED TO LEVEL %d"
+msgstr "T%U: MONTÉ AU NIVEAU %D"
+#. Dungeon progression
+
+msgid "T%u: DESCENDED TO LEVEL %d"
+msgstr "T%U: DESCENDU AU NIVEAU %D"
+#. Dungeon progression
+
+msgid "T%u: FELL INTO PIT"
+msgstr "T%U: TOMBÉ DANS LE GOUFFRE"
+#. Dungeon progression
+
+msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
+msgstr "T%U: TÉLÉPORTÉ À LA CARTE %D (%D,%D)"
+#. Teleporter chain
+
+msgid "T%u: TELEPORTER HAS NO THING DATA"
+msgstr "T%U: LE TÉLÉPORTEUR N'A PAS DE DONNÉES"
+#. Teleporter chain
+
+msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
+msgstr "T%U: CARTE CIBLE DU TÉLÉPORTEUR %D HORS PORTÉE"
+#. Teleporter chain
+
+msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr "T%U: %S MONTE DE NIVEAU! (%S %D -> %D)"
+#. Combat log
+
+msgid "T%u: %s CASTS %s"
+msgstr "T%U: %S LANCE %S"
+#. Combat log
+
+msgid "T%u: %s HITS %s FOR %d"
+msgstr "T%U: %S FRAPPE %S POUR %D"
+#. Combat log
+
+msgid "T%u: %s MISSES %s"
+msgstr "T%U: %S RATE %S"
+#. Altar
+
+msgid "OFFERING ACCEPTED"
+msgstr "OFFRANDE ACCEPTÉE"
+#. Inventory capacity
+
+msgid "INVENTORY FULL"
+msgstr "INVENTAIRE PLEIN"
+#. Sound / feedback
+
+msgid "OUT OF RANGE"
+msgstr "HORS PORTÉE"
+#. Generic message
+
+msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr "APPUYEZ SUR ENTRÉE OU CLIQUEZ SUR LA VUE"
+#. Status footer
+
+msgid "HP AND STAMINA RECOVER SLOWLY"
+msgstr "HP AND STAMINA RECOVER SLOWLY"

@@ -5,64 +5,64 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "Esteettömyys"
 
 msgid "Audio"
-msgstr ""
+msgstr "Ääni"
 
 msgid "Back"
 msgstr "Takaisin"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "Bestiario"
 
 msgid "Changelog"
-msgstr ""
+msgstr "Muutosloki"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "Tulossa pian"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "Jatka tallennettua"
 
 msgid "Controls"
-msgstr ""
+msgstr "Ohjaus"
 
 msgid "Display"
-msgstr ""
+msgstr "Näyttö"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "LISÄÄ"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "Esine-tietosanakirja"
 
 msgid "Language"
 msgstr "Kieli"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "Kartan katselin"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "Lore-museo"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "Uusi peli (V1 Alkuperäinen)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "Uusi peli (V2.1 Skaalattu)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "Uusi peli (V2.2 Parannettu)"
 
 msgid "No data files"
-msgstr ""
+msgstr "Ei datatiedostoja"
 
 msgid "Off"
-msgstr ""
+msgstr "Pois"
 
 msgid "On"
-msgstr ""
+msgstr "Päällä"
 
 msgid "PLAY"
 msgstr "PELAA"
@@ -71,23 +71,23 @@ msgid "QUIT"
 msgstr "LOPETA"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "Kuvakaappausgalleria"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "VALITSE PELI"
 
 msgid "SETTINGS"
 msgstr "ASETUKSET"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "Loitsuviittaus"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "Vahvista pelidata"
 
 msgid "Version"
-msgstr ""
+msgstr "Versio"
 
 msgid "Video"
-msgstr ""
+msgstr "Video"
 

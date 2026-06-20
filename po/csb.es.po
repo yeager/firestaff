@@ -1,0 +1,135 @@
+# Firestaff — csb domain, Swedish catalog.
+# Svensk översättning för Chaos Strikes Back runtime-strängar.
+#
+# Domain: csb
+#
+# Baserad på po/dm1.sv.po (Slice 2) + CSB-specifika nycklar
+# från csb.pot.  CSB delar många gränssnittstermer med DM1
+# (FOOD/WATER, HUD-meters, inventory labels) men har unika
+# strängar för: engine version 2.1 (CHANGE7_36/8_13),
+# chaos cooldown (CHANGE7_28), reincarnation/resurrection,
+# grey lord encounter, hint oracle, neophyte mode.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-csb\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-22 05:00+0200\n"
+"PO-Revision-Date: 2026-06-15 17:00+0200\n"
+"Last-Translator: Firestaff Contributors\n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
+msgid "csb.engine.version"
+msgstr "csb.engine.version"
+
+# Reincarnation panel
+msgid "csb.reincarnate.title"
+msgstr "csb.reincarnate.title"
+
+msgid "csb.reincarnate.chaos"
+msgstr "csb.reincarnate.chaos"
+
+msgid "csb.reincarnate.choose"
+msgstr "csb.reincarnate.choose"
+
+msgid "csb.reincarnate.stat-roll"
+msgstr "csb.reincarnate.stat-roll"
+
+# Resurrection panel
+msgid "csb.resurrect.title"
+msgstr "csb.resurrect.title"
+
+msgid "csb.resurrect.altar"
+msgstr "csb.resurrect.altar"
+
+msgid "csb.resurrect.choose"
+msgstr "csb.resurrect.choose"
+
+# Chaos magic cooldown (CHANGE7_28)
+msgid "csb.chaos.cooldown"
+msgstr "csb.chaos.cooldown"
+
+msgid "csb.chaos.energy"
+msgstr "csb.chaos.energy"
+
+msgid "csb.chaos.recharge"
+msgstr "csb.chaos.recharge"
+
+# Grey Lord encounter
+msgid "csb.greylord.intro"
+msgstr "csb.greylord.intro"
+
+msgid "csb.greylord.choose"
+msgstr "csb.greylord.choose"
+
+# Hint Oracle
+msgid "csb.oracle.title"
+msgstr "csb.oracle.title"
+
+msgid "csb.oracle.prompt"
+msgstr "csb.oracle.prompt"
+
+# Champion pool (CSB has 4 max in active party vs 16 candidates)
+msgid "csb.party.max"
+msgstr "csb.party.max"
+
+msgid "csb.party.slot"
+msgstr "csb.party.slot"
+
+# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
+msgid "csb.save.import"
+msgstr "csb.save.import"
+
+msgid "csb.save.csb-st-v20"
+msgstr "csb.save.csb-st-v20"
+
+msgid "csb.save.csb-st-v21"
+msgstr "csb.save.csb-st-v21"
+
+msgid "csb.save.amiga-v35"
+msgstr "csb.save.amiga-v35"
+
+msgid "csb.save.pc34"
+msgstr "csb.save.pc34"
+
+# Neophyte mode (CSB-only training option)
+msgid "csb.neophyte.title"
+msgstr "csb.neophyte.title"
+
+msgid "csb.neophyte.desc"
+msgstr "csb.neophyte.desc"
+
+# Engine version (CHANGE7_36, CHANGE8_13)
+msgid "csb.engine.dm1"
+msgstr "csb.engine.dm1"
+
+msgid "csb.engine.csb"
+msgstr "csb.engine.csb"
+
+# CSB launcher entry
+msgid "csb.launcher.title"
+msgstr "csb.launcher.title"
+
+msgid "csb.launcher.subtitle"
+msgstr "csb.launcher.subtitle"
+
+msgid "csb.launcher.lore-shape"
+msgstr "csb.launcher.lore-shape"
+
+msgid "csb.launcher.lore-line-1"
+msgstr "csb.launcher.lore-line-1"
+
+msgid "csb.launcher.lore-line-2"
+msgstr "csb.launcher.lore-line-2"
+
+msgid "csb.launcher.lore-line-3"
+msgstr "csb.launcher.lore-line-3"
+
+msgid "csb.launcher.lore-line-4"
+msgstr "csb.launcher.lore-line-4"

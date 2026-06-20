@@ -5,92 +5,92 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Attack"
-msgstr "Hyökkäys"
+msgstr "Hyökkää"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "Loihdi"
 
 msgid "Track %d"
-msgstr ""
+msgstr "Taso %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s kuoli"
 
 msgid "Continue"
-msgstr ""
+msgstr "Jatka"
 
 msgid "Defend"
-msgstr ""
+msgstr "Puolusta"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "Tämä ovi on lukittu"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "Löysit Tulikepin!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "Onnittelut! Pelastit valtakunnan!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "Ryhmäsi tuhoutui"
 
 msgid "Hall of Champions"
-msgstr "Sankarien sali"
+msgstr "Sankareiden sali"
 
 msgid "Health"
 msgstr "Terveys"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "Inventaario täysi"
 
 msgid "A key is required"
-msgstr ""
+msgstr "Avain vaaditaan"
 
 msgid "Level %d"
-msgstr ""
+msgstr "Taso %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s nousi tasolle"
 
 msgid "Load Game"
-msgstr ""
+msgstr "Lataa"
 
 msgid "Mana"
-msgstr ""
+msgstr "Mana"
 
 msgid "New Game"
-msgstr ""
+msgstr "Uusi peli"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "Ei tarpeeksi manaa"
 
 msgid "Recruit"
-msgstr "Värvää"
+msgstr "Palkkaa"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "Reinkarnaatio"
 
 msgid "Rest"
-msgstr ""
+msgstr "Lepo"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "Herätä"
 
 msgid "Save Game"
-msgstr ""
+msgstr "Tallenna"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "Valitse sankari"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "Loitsu epäonnistui"
 
 msgid "Stamina"
-msgstr ""
+msgstr "Kestävyys"
 
 msgid "Party is full"
-msgstr ""
+msgstr "Ryhmä täysi"
 
 msgid "Use Item"
-msgstr ""
+msgstr "Käytä esinettä"
 

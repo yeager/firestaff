@@ -26,110 +26,110 @@ msgstr ""
 
 # Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
 msgid "csb.engine.version"
-msgstr "v2.1"
+msgstr "csb.engine.version"
 
 # Reincarnation panel (CSB-specific feature)
 msgid "csb.reincarnate.title"
-msgstr "REINCARNATE"
+msgstr "csb.reincarnate.title"
 
 msgid "csb.reincarnate.chaos"
-msgstr "A NEW CHAMPION ENTERS THE WORLD"
+msgstr "csb.reincarnate.chaos"
 
 msgid "csb.reincarnate.choose"
-msgstr "CHOOSE A NAME FOR THE NEW CHAMPION"
+msgstr "csb.reincarnate.choose"
 
 msgid "csb.reincarnate.stat-roll"
-msgstr "ROLLING 12 NEW STATISTICS"
+msgstr "csb.reincarnate.stat-roll"
 
 # Resurrection panel
 msgid "csb.resurrect.title"
-msgstr "RESURRECT"
+msgstr "csb.resurrect.title"
 
 msgid "csb.resurrect.altar"
-msgstr "VI ALTAR OF DENDAR"
+msgstr "csb.resurrect.altar"
 
 msgid "csb.resurrect.choose"
-msgstr "CHOOSE A CHAMPION TO RAISE"
+msgstr "csb.resurrect.choose"
 
 # Chaos magic cooldown (CHANGE7_28)
 msgid "csb.chaos.cooldown"
-msgstr "CHAOS COOLDOWN"
+msgstr "csb.chaos.cooldown"
 
 msgid "csb.chaos.energy"
-msgstr "CHAOS ENERGY"
+msgstr "csb.chaos.energy"
 
 msgid "csb.chaos.recharge"
-msgstr "RECHARGING CHAOS RESERVES"
+msgstr "csb.chaos.recharge"
 
 # Grey Lord encounter
 msgid "csb.greylord.intro"
-msgstr "A FIGURE STEPS FROM THE SHADOWS"
+msgstr "csb.greylord.intro"
 
 msgid "csb.greylord.choose"
-msgstr "THE GREY LORD OFFERS A BARGAIN"
+msgstr "csb.greylord.choose"
 
 # Hint Oracle
 msgid "csb.oracle.title"
-msgstr "THE HINT ORACLE"
+msgstr "csb.oracle.title"
 
 msgid "csb.oracle.prompt"
-msgstr "WOULD YOU LIKE A HINT?"
+msgstr "csb.oracle.prompt"
 
 # Champion pool (CSB has 4 max in active party vs 16 candidates)
 msgid "csb.party.max"
-msgstr "MAXIMUM PARTY SIZE 4"
+msgstr "csb.party.max"
 
 msgid "csb.party.slot"
-msgstr "PARTY SLOT"
+msgstr "csb.party.slot"
 
 # Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
 msgid "csb.save.import"
-msgstr "IMPORT CSB SAVEGAME"
+msgstr "csb.save.import"
 
 msgid "csb.save.csb-st-v20"
-msgstr "ATARI ST CSB 2.0"
+msgstr "csb.save.csb-st-v20"
 
 msgid "csb.save.csb-st-v21"
-msgstr "ATARI ST CSB 2.1"
+msgstr "csb.save.csb-st-v21"
 
 msgid "csb.save.amiga-v35"
-msgstr "AMIGA CSB 3.5"
+msgstr "csb.save.amiga-v35"
 
 msgid "csb.save.pc34"
-msgstr "CSB PC 3.4"
+msgstr "csb.save.pc34"
 
 # Neophyte mode (CSB-only training option)
 msgid "csb.neophyte.title"
-msgstr "NEOPHYTE MODE"
+msgstr "csb.neophyte.title"
 
 msgid "csb.neophyte.desc"
-msgstr "TRAINING DIFFICULTY"
+msgstr "csb.neophyte.desc"
 
 # Engine version (CHANGE7_36, CHANGE8_13)
 msgid "csb.engine.dm1"
-msgstr "v2.0"
+msgstr "csb.engine.dm1"
 
 msgid "csb.engine.csb"
-msgstr "v2.1"
+msgstr "csb.engine.csb"
 
 # CSB launcher entry
 msgid "csb.launcher.title"
-msgstr "CHAOS STRIKES BACK"
+msgstr "csb.launcher.title"
 
 msgid "csb.launcher.subtitle"
-msgstr "THE CHAMPIONS RETURN"
+msgstr "csb.launcher.subtitle"
 
 msgid "csb.launcher.lore-shape"
-msgstr "LORE SHAPE"
+msgstr "csb.launcher.lore-shape"
 
 msgid "csb.launcher.lore-line-1"
-msgstr "CHAOS STILL CASTS A LONG SHADOW"
+msgstr "csb.launcher.lore-line-1"
 
 msgid "csb.launcher.lore-line-2"
-msgstr "THE PLAYER HUNTS CORBUM MATERIAL"
+msgstr "csb.launcher.lore-line-2"
 
 msgid "csb.launcher.lore-line-3"
-msgstr "RETURNING CHAMPIONS FACE A HARDER MAZE"
+msgstr "csb.launcher.lore-line-3"
 
 msgid "csb.launcher.lore-line-4"
-msgstr "THE WORLD FEELS OLDER AND LESS SAFE"
+msgstr "csb.launcher.lore-line-4"

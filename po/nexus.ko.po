@@ -8,89 +8,89 @@ msgid "Attack"
 msgstr "공격"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "주문 시전"
 
 msgid "Track %d"
-msgstr ""
+msgstr "레벨 %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s 가 죽었음"
 
 msgid "Continue"
-msgstr ""
+msgstr "계속"
 
 msgid "Defend"
-msgstr ""
+msgstr "방어"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "이 문은 잠겨 있다"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "파이어스태프를 찾았다!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "축하합니다! 왕국을 구했습니다!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "당신의 파티는 전멸했다"
 
 msgid "Hall of Champions"
-msgstr "챔피언의 전당"
+msgstr "용자의 전당"
 
 msgid "Health"
 msgstr "체력"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "인벤토리 가득"
 
 msgid "A key is required"
-msgstr ""
+msgstr "열쇠 필요"
 
 msgid "Level %d"
-msgstr ""
+msgstr "레벨 %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s 레벨 업"
 
 msgid "Load Game"
-msgstr ""
+msgstr "로드"
 
 msgid "Mana"
-msgstr ""
+msgstr "마나"
 
 msgid "New Game"
-msgstr ""
+msgstr "새 게임"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "마나 부족"
 
 msgid "Recruit"
 msgstr "모집"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "환생"
 
 msgid "Rest"
-msgstr ""
+msgstr "휴식"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "부활"
 
 msgid "Save Game"
-msgstr ""
+msgstr "저장"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "챔피언 선택"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "주문 실패"
 
 msgid "Stamina"
-msgstr ""
+msgstr "스태미나"
 
 msgid "Party is full"
-msgstr ""
+msgstr "파티 가득"
 
 msgid "Use Item"
-msgstr ""
+msgstr "아이템 사용"
 

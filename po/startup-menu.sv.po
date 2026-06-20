@@ -19,11 +19,11 @@ msgstr ""
 
 #. Launcher title / eyebrow
 msgid "FRONTEND PREVIEW"
-msgstr "FÖRHANDSVISNING AV GRÄNSSNITTET"
+msgstr "FRONTEND-FÖRHANDSVISNING"
 
 #. Main menu heading
 msgid "SELECT A DESTINATION"
-msgstr "VÄLJ ETT MÅL"
+msgstr "VÄLJ EN DESTINATION"
 
 #. Settings panel title
 msgid "SETTINGS"
@@ -35,19 +35,19 @@ msgstr "STATUS"
 
 #. Section heading for launcher entries
 msgid "LAUNCHER DESTINATIONS"
-msgstr "STARTMENYNS VAL"
+msgstr "LAUNCHER-DESTINATIONER"
 
 #. Data directory label
 msgid "DATA DIR"
-msgstr "DATAKATALOG"
+msgstr "DATAKAT"
 
 #. Main menu footer / navigation hint
 msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
-msgstr "UPP/NED FLYTTAR   ENTER ÖPPNAR   ESC AVSLUTAR"
+msgstr "UPP/NER FLYTTA   ENTER ÖPPNA   ESC AVSLUTA"
 
 #. Settings section heading
 msgid "PERSISTED OPTIONS"
-msgstr "SPARADE ALTERNATIV"
+msgstr "PERSISTERADE ALTERNATIV"
 
 #. Settings row label
 msgid "LANGUAGE"
@@ -63,11 +63,11 @@ msgstr "FÖNSTERLÄGE"
 
 #. Settings save confirmation
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
-msgstr "ÄNDRINGAR SPARAS DIREKT I KONFIGURATIONEN"
+msgstr "ÄNDRINGAR SPARAS DIREKT TILL KONFIG"
 
 #. Settings footer / navigation hint
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
-msgstr "VÄNSTER/HÖGER VÄXLAR   ENTER GÅR VIDARE   ESC TILLBAKA"
+msgstr "VÄNSTER/HÖGER CYKEL   ENTER AVANCERA   ESC TILLBAKA"
 
 #. Message view return hint
 msgid "ENTER OR ESC RETURNS TO MENU"
@@ -83,11 +83,11 @@ msgstr "ESC ÅTERGÅR TILL MENYN"
 
 #. Missing hash-verified data message
 msgid "VALIDATOR SCAFFOLD ONLY"
-msgstr "ENDAST VALIDERINGSSTOMME"
+msgstr "ENDAST VALIDATOR-MALL"
 
 #. Missing hash-verified data detail
 msgid "ADD VERIFIED RETAIL HASHES"
-msgstr "LÄGG TILL VERIFIERADE RETAIL-HASHAR"
+msgstr "LÄGG TILL VERIFIERADE DETALJHANDEL-HASHAR"
 
 #. Missing game data message
 msgid "GAME DATA NOT FOUND"
@@ -95,27 +95,27 @@ msgstr "SPELDATA HITTADES INTE"
 
 #. Missing game data detail
 msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "KONTROLLERA FIRESTAFFS DATAKATALOG"
+msgstr "KONTROLLERA FIRESTAFF DATAKAT"
 
 #. Card art slot status
 msgid "ART SLOT READY"
-msgstr "BILDPLATS REDO"
+msgstr "KONSTSLOTS REDO"
 
 #. Card art slot status
 msgid "ART SLOT EMPTY"
-msgstr "BILDPLATS TOM"
+msgstr "KONSTSLOTS TOMT"
 
 #. Card art slot instruction
 msgid "DROP ART INTO SLOT"
-msgstr "SLÄPP IN EN BILD HÄR"
+msgstr "SLÄPP KONST I SLOTSEN"
 
 #. Card art active label
 msgid "CARD ART ACTIVE"
-msgstr "KORTBILD AKTIV"
+msgstr "KORTKONST AKTIV"
 
 #. Card art slot label
 msgid "CARD ART SLOT"
-msgstr "PLATS FÖR KORTBILD"
+msgstr "KORTKONST-SLOTS"
 
 #. Game card label
 msgid "Dungeon Master"
@@ -175,7 +175,7 @@ msgstr "SNABBARE"
 
 #. Game options row label
 msgid "ASPECT RATIO"
-msgstr "BILDFORMAT"
+msgstr "BILDFÖRHÅLLANDE"
 
 #. Game options row label
 msgid "RESOLUTION"
@@ -203,7 +203,7 @@ msgstr "KOMMER SNART"
 
 #. Language names
 msgid "ENGLISH"
-msgstr "ENGELSKA"
+msgstr "ENGLISH"
 
 #. Language names
 msgid "SVENSKA"
@@ -211,11 +211,11 @@ msgstr "SVENSKA"
 
 #. Language names
 msgid "FRANCAIS"
-msgstr "FRANSKA"
+msgstr "FRANÇAIS"
 
 #. Language names
 msgid "DEUTSCH"
-msgstr "TYSKA"
+msgstr "DEUTSCH"
 
 #. Window mode values
 msgid "WINDOWED"
@@ -223,7 +223,7 @@ msgstr "FÖNSTER"
 
 #. Window mode values
 msgid "FULLSCREEN"
-msgstr "HELSKÄRM"
+msgstr "FULLSKÄRM"
 
 #. Game options panel title
 msgid "GAME OPTIONS"
@@ -251,15 +251,15 @@ msgstr "LÅST AV V1 ORIGINAL-LÄGET"
 
 #. Renderer/settings label
 msgid "RENDERER BACKEND"
-msgstr "RENDERARBAKÄNDE"
+msgstr "RENDERINGS-BACKEND"
 
 #. Renderer/settings label
 msgid "RENDERER BACKEND UNAVAILABLE"
-msgstr "RENDERARBAKÄNDE EJ TILLGÄNGLIG"
+msgstr "RENDERINGS-BACKEND OTILLGÄNGLIG"
 
 #. Renderer/settings label
 msgid "RENDERER"
-msgstr "RENDERARE"
+msgstr "RENDERING"
 
 #. Renderer/settings label
 msgid "AUTO"
@@ -287,7 +287,7 @@ msgstr "TILLGÄNGLIG"
 
 #. Renderer/settings label
 msgid "UNAVAILABLE"
-msgstr "EJ TILLGÄNGLIG"
+msgstr "OTILLGÄNGLIG"
 
 #. Renderer/settings label
 msgid "SCALE"

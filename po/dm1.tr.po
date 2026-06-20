@@ -340,43 +340,43 @@ msgstr "HIZ YAYı"
 
 #. Extracted from current DM1 runtime
 msgid "CAPE"
-msgstr "CAPE"
+msgstr "PELERİN"
 
 #. Extracted from current DM1 runtime
 msgid "CLOAK OF NIGHT"
-msgstr "CLOAK OF NIGHT"
+msgstr "GECE PELERİNİ"
 
 #. Extracted from current DM1 runtime
 msgid "BARBARIAN HIDE"
-msgstr "BARBARIAN HIDE"
+msgstr "BARBAR POSTU"
 
 #. Extracted from current DM1 runtime
 msgid "SANDALS"
-msgstr "SANDALS"
+msgstr "SANDALET"
 
 #. Extracted from current DM1 runtime
 msgid "LEATHER BOOTS"
-msgstr "LEATHER BOOTS"
+msgstr "DERİ ÇİZME"
 
 #. Extracted from current DM1 runtime
 msgid "ELVEN BOOTS"
-msgstr "ELVEN BOOTS"
+msgstr "ELF ÇİZMESİ"
 
 #. Extracted from current DM1 runtime
 msgid "LEATHER JERKIN"
-msgstr "LEATHER JERKIN"
+msgstr "DERİ CEKET"
 
 #. Extracted from current DM1 runtime
 msgid "LEATHER PANTS"
-msgstr "LEATHER PANTS"
+msgstr "DERİ PANTOLON"
 
 #. Extracted from current DM1 runtime
 msgid "SUEDE BOOTS"
-msgstr "SUEDE BOOTS"
+msgstr "SÜET ÇİZME"
 
 #. Extracted from current DM1 runtime
 msgid "BLUE PANTS"
-msgstr "BLUE PANTS"
+msgstr "MAVİ PANTOLON"
 
 #. Extracted from current DM1 runtime
 msgid "GHI"
@@ -384,7 +384,7 @@ msgstr "GHI"
 
 #. Extracted from current DM1 runtime
 msgid "GHI TROUSERS"
-msgstr "GHI TROUSERS"
+msgstr "GHI PANTOLON"
 
 #. Extracted from current DM1 runtime
 msgid "CALISTA"
@@ -392,11 +392,11 @@ msgstr "CALISTA"
 
 #. Extracted from current DM1 runtime
 msgid "CROWN OF NERRA"
-msgstr "CROWN OF NERRA"
+msgstr "NERRA'NIN TACI"
 
 #. Extracted from current DM1 runtime
 msgid "BEZERKER HELM"
-msgstr "BEZERKER HELM"
+msgstr "BERSERKER MIĞFERİ"
 
 #. Extracted from current DM1 runtime
 msgid "HELMET"
@@ -408,31 +408,31 @@ msgstr "BASINET"
 
 #. Extracted from current DM1 runtime
 msgid "NETA SHIRT"
-msgstr "NETA SHIRT"
+msgstr "NETA GÖMLEĞİ"
 
 #. Extracted from current DM1 runtime
 msgid "CHAINMAIL"
-msgstr "CHAINMAIL"
+msgstr "ZIRH ZINCİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "PLATE MAIL"
-msgstr "PLATE MAIL"
+msgstr "PLAKA ZIRH"
 
 #. Extracted from current DM1 runtime
 msgid "MITHRAL MAIL"
-msgstr "MITHRAL MAIL"
+msgstr "MITHRIL ZINCİR"
 
 #. Extracted from current DM1 runtime
 msgid "MITHRAL HOSEN"
-msgstr "MITHRAL HOSEN"
+msgstr "MITHRIL PANTOLON"
 
 #. Extracted from current DM1 runtime
 msgid "LEG MAIL"
-msgstr "LEG MAIL"
+msgstr "BACAK ZINCİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "FOOT PLATE"
-msgstr "FOOT PLATE"
+msgstr "AYAK PLAĞI"
 
 #. Extracted from current DM1 runtime
 msgid "SMALL SHIELD"
@@ -456,67 +456,67 @@ msgstr "KARANLIK KALKANI"
 
 #. Extracted from current DM1 runtime
 msgid "DEXHELM"
-msgstr "DEXHELM"
+msgstr "DEX MIĞFER"
 
 #. Extracted from current DM1 runtime
 msgid "MON POTION"
-msgstr "MON POTION"
+msgstr "MON İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "UM POTION"
-msgstr "UM POTION"
+msgstr "UM İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "DES POTION"
-msgstr "DES POTION"
+msgstr "DES İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "VEN POTION"
-msgstr "VEN POTION"
+msgstr "VEN İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "SAR POTION"
-msgstr "SAR POTION"
+msgstr "SAR İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "ZO POTION"
-msgstr "ZO POTION"
+msgstr "ZO İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "ROS POTION"
-msgstr "ROS POTION"
+msgstr "ROS İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "KU POTION"
-msgstr "KU POTION"
+msgstr "KU İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "DANE POTION"
-msgstr "DANE POTION"
+msgstr "DANE İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "NETA POTION"
-msgstr "NETA POTION"
+msgstr "NETA İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "BRO POTION"
-msgstr "BRO POTION"
+msgstr "BRO İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "MA POTION"
-msgstr "MA POTION"
+msgstr "MA İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "YA POTION"
-msgstr "YA POTION"
+msgstr "YA İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "EE POTION"
-msgstr "EE POTION"
+msgstr "EE İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "VI POTION"
-msgstr "VI POTION"
+msgstr "VI İKSİRİ"
 
 #. Extracted from current DM1 runtime
 msgid "WATER FLASK"
@@ -536,259 +536,259 @@ msgstr "SU TULUMU"
 
 #. Extracted from current DM1 runtime
 msgid "JEWEL SYMAL"
-msgstr "JEWEL SYMAL"
+msgstr "MÜCEVHER SEMBOL"
 
 #. Extracted from current DM1 runtime
 msgid "ILLUMULET"
-msgstr "ILLUMULET"
+msgstr "AYDINLATAN"
 
 #. Extracted from current DM1 runtime
 msgid "ASHES"
-msgstr "ASHES"
+msgstr "KÜL"
 
 #. Extracted from current DM1 runtime
 msgid "BONES"
-msgstr "BONES"
+msgstr "KEMİKLER"
 
 #. Extracted from current DM1 runtime
 msgid "SAR COIN"
-msgstr "SAR COIN"
+msgstr "SAR MADENİ PARA"
 
 #. Extracted from current DM1 runtime
 msgid "GOLD COIN"
-msgstr "GOLD COIN"
+msgstr "ALTIN PARA"
 
 #. Extracted from current DM1 runtime
 msgid "IRON KEY"
-msgstr "IRON KEY"
+msgstr "DEMİR ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "KEY OF B"
-msgstr "KEY OF B"
+msgstr "B ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "SOLID KEY"
-msgstr "SOLID KEY"
+msgstr "KATI ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "SQUARE KEY"
-msgstr "SQUARE KEY"
+msgstr "KARE ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "TOURQUOISE KEY"
-msgstr "TOURQUOISE KEY"
+msgstr "TURKUAZ ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "CROSS KEY"
-msgstr "CROSS KEY"
+msgstr "HAÇ ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "ONYX KEY"
-msgstr "ONYX KEY"
+msgstr "ONİKS ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "SKELETON KEY"
-msgstr "SKELETON KEY"
+msgstr "İSKELET ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "GOLD KEY"
-msgstr "GOLD KEY"
+msgstr "ALTIN ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "WINGED KEY"
-msgstr "WINGED KEY"
+msgstr "KANATLI ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "TOPAZ KEY"
-msgstr "TOPAZ KEY"
+msgstr "TOPAZ ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "SAPPHIRE KEY"
-msgstr "SAPPHIRE KEY"
+msgstr "YAKUT ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "EMERALD KEY"
-msgstr "EMERALD KEY"
+msgstr "ZÜMRÜT ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "RUBY KEY"
-msgstr "RUBY KEY"
+msgstr "RUBİN ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "RA KEY"
-msgstr "RA KEY"
+msgstr "RA ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "MASTER KEY"
-msgstr "MASTER KEY"
+msgstr "ANA ANAHTAR"
 
 #. Extracted from current DM1 runtime
 msgid "BOULDER"
-msgstr "BOULDER"
+msgstr "KAYA BLOK"
 
 #. Extracted from current DM1 runtime
 msgid "BLUE GEM"
-msgstr "BLUE GEM"
+msgstr "MAVİ MÜCEVHER"
 
 #. Extracted from current DM1 runtime
 msgid "ORANGE GEM"
-msgstr "ORANGE GEM"
+msgstr "TURUNCU MÜCEVHER"
 
 #. Extracted from current DM1 runtime
 msgid "GREEN GEM"
-msgstr "GREEN GEM"
+msgstr "YEŞİL MÜCEVHER"
 
 #. Extracted from current DM1 runtime
 msgid "APPLE"
-msgstr "APPLE"
+msgstr "ELMA"
 
 #. Extracted from current DM1 runtime
 msgid "CORN"
-msgstr "CORN"
+msgstr "MISIR"
 
 #. Extracted from current DM1 runtime
 msgid "BREAD"
-msgstr "BREAD"
+msgstr "EKMEK"
 
 #. Extracted from current DM1 runtime
 msgid "CHEESE"
-msgstr "CHEESE"
+msgstr "PEYNİR"
 
 #. Extracted from current DM1 runtime
 msgid "SCREAMER SLICE"
-msgstr "SCREAMER SLICE"
+msgstr "ÇIĞLIKÇI DİLİM"
 
 #. Extracted from current DM1 runtime
 msgid "WORM ROUND"
-msgstr "WORM ROUND"
+msgstr "KURT YUVARLAK"
 
 #. Extracted from current DM1 runtime
 msgid "DRUMSTICK"
-msgstr "DRUMSTICK"
+msgstr "BUDU"
 
 #. Extracted from current DM1 runtime
 msgid "DRAGON STEAK"
-msgstr "DRAGON STEAK"
+msgstr "EJDER BİFTEK"
 
 #. Extracted from current DM1 runtime
 msgid "GEM OF AGES"
-msgstr "GEM OF AGES"
+msgstr "ÇAĞLARIN MÜCEVHERİ"
 
 #. Extracted from current DM1 runtime
 msgid "EKKHARD CROSS"
-msgstr "EKKHARD CROSS"
+msgstr "EKKHARD HAÇI"
 
 #. Extracted from current DM1 runtime
 msgid "MOONSTONE"
-msgstr "MOONSTONE"
+msgstr "AY TAŞI"
 
 #. Extracted from current DM1 runtime
 msgid "THE HELLION"
-msgstr "THE HELLION"
+msgstr "HELLION"
 
 #. Extracted from current DM1 runtime
 msgid "PENDANT FERAL"
-msgstr "PENDANT FERAL"
+msgstr "FERAL KOLYE"
 
 #. Extracted from current DM1 runtime
 msgid "MAGICAL BOX"
-msgstr "MAGICAL BOX"
+msgstr "BÜYÜLÜ KUTU"
 
 #. Extracted from current DM1 runtime
 msgid "MIRROR OF DAWN"
-msgstr "MIRROR OF DAWN"
+msgstr "ŞAFAK AYNASI"
 
 #. Extracted from current DM1 runtime
 msgid "ROPE"
-msgstr "ROPE"
+msgstr "İP"
 
 #. Extracted from current DM1 runtime
 msgid "RABBIT FOOT"
-msgstr "RABBIT FOOT"
+msgstr "TAVŞAN AYAĞI"
 
 #. Extracted from current DM1 runtime
 msgid "CORBAMITE"
-msgstr "CORBAMITE"
+msgstr "KORBAMİT"
 
 #. Extracted from current DM1 runtime
 msgid "CHOKER"
-msgstr "CHOKER"
+msgstr "BOĞUCU"
 
 #. Extracted from current DM1 runtime
 msgid "LOCK PICKS"
-msgstr "LOCK PICKS"
+msgstr "MAYMUNCU"
 
 #. Extracted from current DM1 runtime
 msgid "MAGNIFIER"
-msgstr "MAGNIFIER"
+msgstr "BÜYÜTEÇ"
 
 #. Extracted from current DM1 runtime
 msgid "ZOKATHRA SPELL"
-msgstr "ZOKATHRA SPELL"
+msgstr "ZOKATHRA BÜYÜSÜ"
 
 #. Extracted from current DM1 runtime
 msgid "SCROLL"
-msgstr "SCROLL"
+msgstr "PARŞÖMEN"
 
 #. Extracted from current DM1 runtime
 msgid "CHEST"
-msgstr "CHEST"
+msgstr "SANDIK"
 
 #. Extracted from current DM1 runtime
 msgid "OPEN CHEST"
-msgstr "OPEN CHEST"
+msgstr "SANDIĞI AÇ"
 
 #. Extracted from current DM1 runtime
 msgid "GIANT SCORPION"
-msgstr "GIANT SCORPION"
+msgstr "DEV AKREP"
 
 #. Extracted from current DM1 runtime
 msgid "SWAMP SLIME"
-msgstr "SWAMP SLIME"
+msgstr "BATAKLIK SLİMİ"
 
 #. Extracted from current DM1 runtime
 msgid "GIGGLER"
-msgstr "GIGGLER"
+msgstr "GÜLÜCÜ"
 
 #. Extracted from current DM1 runtime
 msgid "WIZARD EYE"
-msgstr "WIZARD EYE"
+msgstr "BÜYÜCÜ GÖZÜ"
 
 #. Extracted from current DM1 runtime
 msgid "PAIN RAT"
-msgstr "PAIN RAT"
+msgstr "ACI FARESİ"
 
 #. Extracted from current DM1 runtime
 msgid "RUSTER"
-msgstr "RUSTER"
+msgstr "PASLANMIŞ"
 
 #. Extracted from current DM1 runtime
 msgid "SCREAMER"
-msgstr "SCREAMER"
+msgstr "ÇIĞLIKÇI"
 
 #. Extracted from current DM1 runtime
 msgid "ROCKPILE"
-msgstr "ROCKPILE"
+msgstr "KAYA YIĞINI"
 
 #. Extracted from current DM1 runtime
 msgid "GHOST"
-msgstr "GHOST"
+msgstr "HAYALET"
 
 #. Extracted from current DM1 runtime
 msgid "STONE GOLEM"
-msgstr "STONE GOLEM"
+msgstr "TAŞ GOLEM"
 
 #. Extracted from current DM1 runtime
 msgid "MUMMY"
-msgstr "MUMMY"
+msgstr "MUMYA"
 
 #. Extracted from current DM1 runtime
 msgid "BLACK FLAME"
-msgstr "BLACK FLAME"
+msgstr "SİYAH ALEV"
 
 #. Extracted from current DM1 runtime
 msgid "SKELETON"
-msgstr "SKELETON"
+msgstr "İSKELET"
 
 #. Extracted from current DM1 runtime
 msgid "COUATL"
@@ -800,27 +800,27 @@ msgstr "VEXIRK"
 
 #. Extracted from current DM1 runtime
 msgid "MAGENTA WORM"
-msgstr "MAGENTA WORM"
+msgstr "MACENTA KURT"
 
 #. Extracted from current DM1 runtime
 msgid "TROLIN"
-msgstr "TROLIN"
+msgstr "TROLİN"
 
 #. Extracted from current DM1 runtime
 msgid "GIANT WASP"
-msgstr "GIANT WASP"
+msgstr "DEV EŞEK ARISI"
 
 #. Extracted from current DM1 runtime
 msgid "ANIMATED ARMOUR"
-msgstr "ANIMATED ARMOUR"
+msgstr "CANLANAN ZIRH"
 
 #. Extracted from current DM1 runtime
 msgid "MATERIALIZER"
-msgstr "MATERIALIZER"
+msgstr "MADDİLEŞTİRİCİ"
 
 #. Extracted from current DM1 runtime
 msgid "WATER ELEMENTAL"
-msgstr "WATER ELEMENTAL"
+msgstr "SU ELEMENTALİ"
 
 #. Extracted from current DM1 runtime
 msgid "OITU"
@@ -828,143 +828,143 @@ msgstr "OITU"
 
 #. Extracted from current DM1 runtime
 msgid "DEMON"
-msgstr "DEMON"
+msgstr "ŞEYTAN"
 
 #. Extracted from current DM1 runtime
 msgid "LORD CHAOS"
-msgstr "LORD CHAOS"
+msgstr "KAOS LORTU"
 
 #. Extracted from current DM1 runtime
 msgid "RED DRAGON"
-msgstr "RED DRAGON"
+msgstr "KIRMIZI EJDER"
 
 #. Extracted from current DM1 runtime
 msgid "LORD ORDER"
-msgstr "LORD ORDER"
+msgstr "DÜZEN LORTU"
 
 #. Extracted from current DM1 runtime
 msgid "GREY LORD"
-msgstr "GREY LORD"
+msgstr "GRİ LORT"
 
 #. Extracted from current DM1 runtime
 msgid "UNKNOWN CREATURE"
-msgstr "UNKNOWN CREATURE"
+msgstr "BİLİNMEYEN YARATIK"
 
 #. Extracted from current DM1 runtime
 msgid "NOTHING"
-msgstr "NOTHING"
+msgstr "HİÇ"
 
 #. Extracted from current DM1 runtime
 msgid "WEAPON %d"
-msgstr "WEAPON %d"
+msgstr "SİLAH %D"
 
 #. Extracted from current DM1 runtime
 msgid "ARMOUR %d"
-msgstr "ARMOUR %d"
+msgstr "ZIRH %D"
 
 #. Extracted from current DM1 runtime
 msgid "POTION %d"
-msgstr "POTION %d"
+msgstr "İKSİR %D"
 
 #. Extracted from current DM1 runtime
 msgid "JUNK %d"
-msgstr "JUNK %d"
+msgstr "ÇÖP %D"
 
 #. Extracted from current DM1 runtime
 msgid "CONTAINER %d"
-msgstr "CONTAINER %d"
+msgstr "KAP %D"
 
 #. Extracted from current DM1 runtime
 msgid "%s %d"
-msgstr "%s %d"
+msgstr "%s %D"
 
 #. Extracted from current DM1 runtime
 msgid "PICKUP"
-msgstr "PICKUP"
+msgstr "AL"
 
 #. Extracted from current DM1 runtime
 msgid "NO ACTIVE CHAMPION"
-msgstr "NO ACTIVE CHAMPION"
+msgstr "AKTİF ŞAMPİYON YOK"
 
 #. Extracted from current DM1 runtime
 msgid "CHAMPION CANNOT ACT"
-msgstr "CHAMPION CANNOT ACT"
+msgstr "ŞAMPİYON HAREKET EDEMEZ"
 
 #. Extracted from current DM1 runtime
 msgid "NOTHING TO PICK UP"
-msgstr "NOTHING TO PICK UP"
+msgstr "ALINACAK BİR ŞEY YOK"
 
 #. Extracted from current DM1 runtime
 msgid "EMPTY FLOOR"
-msgstr "EMPTY FLOOR"
+msgstr "BOŞ ZEMİN"
 
 #. Extracted from current DM1 runtime
 msgid "NO ITEMS ON THIS CELL"
-msgstr "NO ITEMS ON THIS CELL"
+msgstr "BU HÜCREDE ÖĞE YOK"
 
 #. Extracted from current DM1 runtime
 msgid "INVENTORY FULL"
-msgstr "INVENTORY FULL"
+msgstr "ENVANTER DOLU"
 
 #. Extracted from current DM1 runtime
 msgid "HANDS FULL"
-msgstr "HANDS FULL"
+msgstr "ELLER DOLU"
 
 #. Extracted from current DM1 runtime
 msgid "DROP SOMETHING FIRST (P KEY)"
-msgstr "DROP SOMETHING FIRST (P KEY)"
+msgstr "ÖNCE BİR ŞEY DÜŞÜR (P TUŞU)"
 
 #. Extracted from current DM1 runtime
 msgid "CHAIN ERROR"
-msgstr "CHAIN ERROR"
+msgstr "ZİNCİR HATASI"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s TOOK %s"
-msgstr "T%u: %s TOOK %s"
+msgstr "T%U: %S ALDI %S"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM TAKEN"
-msgstr "ITEM TAKEN"
+msgstr "ÖĞE ALINDI"
 
 #. Extracted from current DM1 runtime
 msgid "PICKED UP"
-msgstr "PICKED UP"
+msgstr "ALINDI"
 
 #. Extracted from current DM1 runtime
 msgid "%s -> %s SLOT %d"
-msgstr "%s -> %s SLOT %d"
+msgstr "%S -> %S YUVA %D"
 
 #. Extracted from current DM1 runtime
 msgid "DROP"
-msgstr "DROP"
+msgstr "DÜŞÜR"
 
 #. Extracted from current DM1 runtime
 msgid "NOTHING TO DROP"
-msgstr "NOTHING TO DROP"
+msgstr "DÜŞÜRÜLECEK BİR ŞEY YOK"
 
 #. Extracted from current DM1 runtime
 msgid "EMPTY HANDS"
-msgstr "EMPTY HANDS"
+msgstr "BOŞ ELLER"
 
 #. Extracted from current DM1 runtime
 msgid "PICK SOMETHING UP FIRST (G KEY)"
-msgstr "PICK SOMETHING UP FIRST (G KEY)"
+msgstr "ÖNCE BİR ŞEY AL (G TUŞU)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DROPPED %s"
-msgstr "T%u: %s DROPPED %s"
+msgstr "T%U: %S DÜŞÜRDÜ %S"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM DROPPED"
-msgstr "ITEM DROPPED"
+msgstr "ÖĞE DÜŞÜRÜLDÜ"
 
 #. Extracted from current DM1 runtime
 msgid "DROPPED"
-msgstr "DROPPED"
+msgstr "DÜŞÜRÜLDÜ"
 
 #. Extracted from current DM1 runtime
 msgid "%s FROM %s SLOT %d"
-msgstr "%s FROM %s SLOT %d"
+msgstr "%S YUVASINDAN %S %D"
 
 #. Extracted from current DM1 runtime
 msgid "LO"
@@ -1064,371 +1064,371 @@ msgstr "SAR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL PANEL OPENED"
-msgstr "T%u: SPELL PANEL OPENED"
+msgstr "T%U: BÜYÜ PANELİ AÇILDI"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RUNE %s (%d)"
-msgstr "T%u: RUNE %s (%d)"
+msgstr "T%U: RUNİK %S (%D)"
 
 #. Extracted from current DM1 runtime
 msgid "RUNE ENTERED"
-msgstr "RUNE ENTERED"
+msgstr "RUNİK GİRİLDİ"
 
 #. Extracted from current DM1 runtime
 msgid "%s - %d OF 4 SYMBOLS"
-msgstr "%s - %d OF 4 SYMBOLS"
+msgstr "%S - 4 SEMBOLDEN %D"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL CLEARED"
-msgstr "T%u: SPELL CLEARED"
+msgstr "T%U: BÜYÜ TEMİZLENDİ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: NEED AT LEAST 2 RUNES"
-msgstr "T%u: NEED AT LEAST 2 RUNES"
+msgstr "T%U: EN AZ 2 RUNİK GEREKLİ"
 
 #. Extracted from current DM1 runtime
 msgid "CAST"
-msgstr "CAST"
+msgstr "YAP"
 
 #. Extracted from current DM1 runtime
 msgid "NOT ENOUGH RUNES"
-msgstr "NOT ENOUGH RUNES"
+msgstr "YETERLİ RUNİK YOK"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - INVALID RUNES"
-msgstr "T%u: %s - INVALID RUNES"
+msgstr "T%U: %S - GEÇERSİZ RUNİKLER"
 
 #. Extracted from current DM1 runtime
 msgid "INVALID RUNE SEQUENCE"
-msgstr "INVALID RUNE SEQUENCE"
+msgstr "GEÇERSİZ RUNİK SIRASI"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - MEANINGLESS SPELL"
-msgstr "T%u: %s - MEANINGLESS SPELL"
+msgstr "T%U: %S - ANLAMSIZ BÜYÜ"
 
 #. Extracted from current DM1 runtime
 msgid "UNKNOWN SPELL"
-msgstr "UNKNOWN SPELL"
+msgstr "BİLİNMEYEN BÜYÜ"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL FAILED"
-msgstr "SPELL FAILED"
+msgstr "BÜYÜ BAŞARISIZ"
 
 #. Extracted from current DM1 runtime
 msgid "NO MATCHING SPELL IN TABLE"
-msgstr "NO MATCHING SPELL IN TABLE"
+msgstr "TABLODA EŞLEŞEN BÜYÜ YOK"
 
 #. Extracted from current DM1 runtime
 msgid "OUT OF MANA"
-msgstr "OUT OF MANA"
+msgstr "MANA BİTTİ"
 
 #. Extracted from current DM1 runtime
 msgid "NEED MANA"
-msgstr "NEED MANA"
+msgstr "MANA GEREKLİ"
 
 #. Extracted from current DM1 runtime
 msgid "COST %d, HAVE %d"
-msgstr "COST %d, HAVE %d"
+msgstr "ÜCRET %D, VAR %D"
 
 #. Extracted from current DM1 runtime
 msgid "NEEDS MORE PRACTICE"
-msgstr "NEEDS MORE PRACTICE"
+msgstr "DAHA ÇOK PRATİK GEREKLİ"
 
 #. Extracted from current DM1 runtime
 msgid "MEANINGLESS SPELL"
-msgstr "MEANINGLESS SPELL"
+msgstr "ANLAMSIZ BÜYÜ"
 
 #. Extracted from current DM1 runtime
 msgid "NEED FLASK"
-msgstr "NEED FLASK"
+msgstr "ŞİŞE GEREKLİ"
 
 #. Extracted from current DM1 runtime
 msgid "NEED MAGIC MAP"
-msgstr "NEED MAGIC MAP"
+msgstr "BÜYÜLÜ HARİTA GEREKLİ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - %s"
-msgstr "T%u: %s - %s"
+msgstr "T%U: %S - %S"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s CAST SPELL #%d (COST %d MANA)"
-msgstr "T%u: %s CAST SPELL #%d (COST %d MANA)"
+msgstr "T%U: %S BÜYÜ YAPTI #%D (ÜCRET %D MANA)"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL COMMITTED"
-msgstr "SPELL COMMITTED"
+msgstr "BÜYÜ UYGULANDI"
 
 #. Extracted from current DM1 runtime
 msgid "%s CASTS"
-msgstr "%s CASTS"
+msgstr "%S YAPIYOR"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL #%d, COST %d MANA, %d REMAINING"
-msgstr "SPELL #%d, COST %d MANA, %d REMAINING"
+msgstr "BÜYÜ #%D, ÜCRET %D MANA, %D KALDI"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: ALL CHAMPIONS HAVE FALLEN"
-msgstr "T%u: ALL CHAMPIONS HAVE FALLEN"
+msgstr "T%U: TÜM ŞAMPİYONLAR DÜŞTÜ"
 
 #. Extracted from current DM1 runtime
 msgid "DEATH"
-msgstr "DEATH"
+msgstr "ÖLÜM"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY WIPED"
-msgstr "PARTY WIPED"
+msgstr "GRUP YOK EDİLDİ"
 
 #. Extracted from current DM1 runtime
 msgid "GAME OVER"
-msgstr "GAME OVER"
+msgstr "OYUN BİTTİ"
 
 #. Extracted from current DM1 runtime
 msgid "THE DUNGEON CLAIMS YOUR SOULS. LOAD A SAVE OR RETURN TO MENU."
-msgstr "THE DUNGEON CLAIMS YOUR SOULS. LOAD A SAVE OR RETURN TO MENU."
+msgstr "ZINDAN RUHUNUZU İSTİYOR. KAYIT YÜKLEYİN VEYA MENÜYE DÖNÜN."
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HIT BY %s FOR %d"
-msgstr "T%u: %s HIT BY %s FOR %d"
+msgstr "T%U: %S VURULDU %S İLE %D"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s REACHES THE PARTY!"
-msgstr "T%u: %s REACHES THE PARTY!"
+msgstr "T%U: %S GRUBA ULAŞTI!"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr "T%U: %S SEVİYE ATLADI! (%S %D -> %D)"
 
 #. Extracted from current DM1 runtime
 msgid "FIGHTER"
-msgstr "FIGHTER"
+msgstr "SAVAŞÇI"
 
 #. Extracted from current DM1 runtime
 msgid "NINJA"
-msgstr "NINJA"
+msgstr "NİNJA"
 
 #. Extracted from current DM1 runtime
 msgid "PRIEST"
-msgstr "PRIEST"
+msgstr "RAHİP"
 
 #. Extracted from current DM1 runtime
 msgid "WIZARD"
-msgstr "WIZARD"
+msgstr "BÜYÜCÜ"
 
 #. Extracted from current DM1 runtime
 msgid "SKILL"
-msgstr "SKILL"
+msgstr "BECERİ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EARNS %d KILL XP (%s)"
-msgstr "T%u: %s EARNS %d KILL XP (%s)"
+msgstr "T%U: %S KAZANDI %D ÖLDÜRME XP (%S)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HEALED %d HP"
-msgstr "T%u: %s HEALED %d HP"
+msgstr "T%U: %S İYİLEŞTİ %D HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s STAMINA RESTORED +%d"
-msgstr "T%u: %s STAMINA RESTORED +%d"
+msgstr "T%U: %S DAYANIKLILIK +%D"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s MANA RESTORED +%d"
-msgstr "T%u: %s MANA RESTORED +%d"
+msgstr "T%U: %S MANA +%D"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s POISONED! -%d HP"
-msgstr "T%u: %s POISONED! -%d HP"
+msgstr "T%U: %S ZEHİRLENDİ! -%D HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s VITALITY RESTORED"
-msgstr "T%u: %s VITALITY RESTORED"
+msgstr "T%U: %S CANLILIK GERİ GELDİ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS WATER"
-msgstr "T%u: %s DRINKS WATER"
+msgstr "T%U: %S SU İÇİYOR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - FLASK IS EMPTY"
-msgstr "T%u: %s - FLASK IS EMPTY"
+msgstr "T%U: %S - ŞİŞE BOŞ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s FEELS SHIELDED"
-msgstr "T%u: %s FEELS SHIELDED"
+msgstr "T%U: %S KORUNMUŞ HİSSEDİYOR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS POTION (+%d HP)"
-msgstr "T%u: %s DRINKS POTION (+%d HP)"
+msgstr "T%U: %S İKSİR İÇİYOR (+%D HP)"
 
 #. Extracted from current DM1 runtime
 msgid "USE"
-msgstr "USE"
+msgstr "KULLAN"
 
 #. Extracted from current DM1 runtime
 msgid "HANDS ARE EMPTY"
-msgstr "HANDS ARE EMPTY"
+msgstr "ELLER BOŞ"
 
 #. Extracted from current DM1 runtime
 msgid "NOTHING TO USE"
-msgstr "NOTHING TO USE"
+msgstr "KULLANACAK BİR ŞEY YOK"
 
 #. Extracted from current DM1 runtime
 msgid "PICK UP A POTION OR FLASK FIRST (G KEY)"
-msgstr "PICK UP A POTION OR FLASK FIRST (G KEY)"
+msgstr "ÖNCE İKSİR VEYA ŞİŞE AL (G TUŞU)"
 
 #. Extracted from current DM1 runtime
 msgid "FLASK IS EMPTY"
-msgstr "FLASK IS EMPTY"
+msgstr "ŞİŞE BOŞ"
 
 #. Extracted from current DM1 runtime
 msgid "NOTHING TO DRINK"
-msgstr "NOTHING TO DRINK"
+msgstr "İÇECEK BİR ŞEY YOK"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s NOW HOLDS AN EMPTY FLASK"
-msgstr "T%u: %s NOW HOLDS AN EMPTY FLASK"
+msgstr "T%U: %S ARTIK BOŞ BİR ŞİŞE TUTUYOR"
 
 #. Extracted from current DM1 runtime
 msgid "POTION CONSUMED"
-msgstr "POTION CONSUMED"
+msgstr "İKSİR TÜKETİLDİ"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK %s"
-msgstr "DRANK %s"
+msgstr "İÇTİ %S"
 
 #. Extracted from current DM1 runtime
 msgid "%s USED %s (POWER %d)"
-msgstr "%s USED %s (POWER %d)"
+msgstr "%S KULLANDI %S (GÜÇ %D)"
 
 #. Extracted from current DM1 runtime
 msgid "POTION DATA ERROR"
-msgstr "POTION DATA ERROR"
+msgstr "İKSİR VERİ HATASI"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS FROM WATERSKIN"
-msgstr "T%u: %s DRINKS FROM WATERSKIN"
+msgstr "T%U: %S SU TULUMUNDAN İÇİYOR"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK WATER"
-msgstr "DRANK WATER"
+msgstr "SU İÇTİ"
 
 #. Extracted from current DM1 runtime
 msgid "%s QUENCHED THIRST"
-msgstr "%s QUENCHED THIRST"
+msgstr "%S SUSUZLUĞUNU GİDERDİ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (KEEPS ITEM)"
-msgstr "T%u: %s ATE %s (KEEPS ITEM)"
+msgstr "T%U: %S YEDİ %S (ÖĞEYİ TUTAR)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (+%d FOOD)"
-msgstr "T%u: %s ATE %s (+%d FOOD)"
+msgstr "T%U: %S YEDİ %S (+%D YİYECEK)"
 
 #. Extracted from current DM1 runtime
 msgid "FOOD CONSUMED"
-msgstr "FOOD CONSUMED"
+msgstr "YİYECEK TÜKETİLDİ"
 
 #. Extracted from current DM1 runtime
 msgid "ATE %s"
-msgstr "ATE %s"
+msgstr "YEDİ %S"
 
 #. Extracted from current DM1 runtime
 msgid "%s FEELS LESS HUNGRY (+%d)"
-msgstr "%s FEELS LESS HUNGRY (+%d)"
+msgstr "%S DAHA AZ AÇ (+%D)"
 
 #. Extracted from current DM1 runtime
 msgid "CANNOT USE THIS ITEM"
-msgstr "CANNOT USE THIS ITEM"
+msgstr "BU ÖĞE KULLANILAMAZ"
 
 #. Extracted from current DM1 runtime
 msgid "THIS ITEM CANNOT BE USED DIRECTLY"
-msgstr "THIS ITEM CANNOT BE USED DIRECTLY"
+msgstr "BU ÖĞE DOĞRUDAN KULLANILAMAZ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DAMAGE %d DEALT"
-msgstr "T%u: DAMAGE %d DEALT"
+msgstr "T%U: %D HASAR VERİLDİ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DEFEATED"
-msgstr "T%u: %s DEFEATED"
+msgstr "T%U: %S YENİLDİ"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY"
-msgstr "ENEMY"
+msgstr "DÜŞMAN"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: EXPERIENCE GAINED"
-msgstr "T%u: EXPERIENCE GAINED"
+msgstr "T%U: TECRÜBE KAZANILDI"
 
 #. Extracted from current DM1 runtime
 msgid "CHAMPION"
-msgstr "CHAMPION"
+msgstr "ŞAMPİYON"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HAS FALLEN"
-msgstr "T%u: %s HAS FALLEN"
+msgstr "T%U: %S DÜŞTÜ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: PARTY MOVED TO %d,%d"
-msgstr "T%u: PARTY MOVED TO %d,%d"
+msgstr "T%U: GRUP %D,%D YE HAREKET ETTİ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DOOR STATE CHANGED"
-msgstr "T%u: DOOR STATE CHANGED"
+msgstr "T%U: KAPI DURUMU DEĞİŞTİ"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL"
-msgstr "SPELL"
+msgstr "BÜYÜ"
 
 #. Extracted from current DM1 runtime
 msgid "PROJECTILE"
-msgstr "PROJECTILE"
+msgstr "MERMİ"
 
 #. Extracted from current DM1 runtime
 msgid "ENCHANTMENT"
-msgstr "ENCHANTMENT"
+msgstr "BÜYÜLEME"
 
 #. Extracted from current DM1 runtime
 msgid "POTION"
-msgstr "POTION"
+msgstr "İKSİR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)"
-msgstr "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)"
+msgstr "T%U: %S ETKİ UYGULANDI (TÜR %D, GÜÇ %D)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: THE QUEST IS COMPLETE!"
-msgstr "T%u: THE QUEST IS COMPLETE!"
+msgstr "T%U: GÖREV TAMAMLANDI!"
 
 #. Extracted from current DM1 runtime
 msgid "ENDGAME"
-msgstr "ENDGAME"
+msgstr "OYUN SONU"
 
 #. Extracted from current DM1 runtime
 msgid "VICTORY!"
-msgstr "VICTORY!"
+msgstr "ZAfer!"
 
 #. Extracted from current DM1 runtime
 msgid "VICTORY"
-msgstr "VICTORY"
+msgstr "ZAfer"
 
 #. Extracted from current DM1 runtime
 msgid "LORD CHAOS IS DEFEATED. THE FIRESTAFF IS RESTORED."
-msgstr "LORD CHAOS IS DEFEATED. THE FIRESTAFF IS RESTORED."
+msgstr "KAOS LORTU YENİLDİ. ATEŞ DEYNEĞİ YENİDEN KURULDU."
 
 #. Extracted from current DM1 runtime
 msgid "BOOT"
-msgstr "BOOT"
+msgstr "BAŞLAT"
 
 #. Extracted from current DM1 runtime
 msgid "GAME VIEW NOT STARTED"
-msgstr "GAME VIEW NOT STARTED"
+msgstr "OYUN GÖRÜNÜMÜ BAŞLATILMADI"
 
 #. Extracted from current DM1 runtime
 msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
-msgstr "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr "ÖN HÜCREYİ OKUMAK İÇİN ENTER'A BASIN VEYA GÖRÜNÜME TIKLAYIN"
 
 #. Extracted from current DM1 runtime
 msgid "FAILED TO LOAD DUNGEON.DAT"
-msgstr "FAILED TO LOAD DUNGEON.DAT"
+msgstr "DUNGEON.DAT YÜKLENEMEDİ"
 
 #. Extracted from current DM1 runtime
 msgid "GRAPHICS.DAT"
@@ -1436,15 +1436,15 @@ msgstr "GRAPHICS.DAT"
 
 #. Extracted from current DM1 runtime
 msgid "T0: %s LOADED"
-msgstr "T0: %s LOADED"
+msgstr "T0: %S YÜKLENDİ"
 
 #. Extracted from current DM1 runtime
 msgid "GAME DATA LOADED"
-msgstr "GAME DATA LOADED"
+msgstr "OYUN VERİSİ YÜKLENDİ"
 
 #. Extracted from current DM1 runtime
 msgid "READY"
-msgstr "READY"
+msgstr "HAZIR"
 
 #. Extracted from current DM1 runtime
 msgid ""
@@ -1458,567 +1458,567 @@ msgstr "DUNGEON MASTER"
 
 #. Extracted from current DM1 runtime
 msgid "SAVE"
-msgstr "SAVE"
+msgstr "KAYDET"
 
 #. Extracted from current DM1 runtime
 msgid "SAVE PATH TOO LONG"
-msgstr "SAVE PATH TOO LONG"
+msgstr "KAYIT YOLU ÇOK UZUN"
 
 #. Extracted from current DM1 runtime
 msgid "SERIALISE SIZE FAILED"
-msgstr "SERIALISE SIZE FAILED"
+msgstr "SERİLEŞTİRME BOYUTU BAŞARISIZ"
 
 #. Extracted from current DM1 runtime
 msgid "OUT OF MEMORY"
-msgstr "OUT OF MEMORY"
+msgstr "BELLEK YETERSİZ"
 
 #. Extracted from current DM1 runtime
 msgid "SERIALISE FAILED"
-msgstr "SERIALISE FAILED"
+msgstr "SERİLEŞTİRME BAŞARISIZ"
 
 #. Extracted from current DM1 runtime
 msgid "OPEN FAILED"
-msgstr "OPEN FAILED"
+msgstr "AÇMA BAŞARISIZ"
 
 #. Extracted from current DM1 runtime
 msgid "WRITE FAILED"
-msgstr "WRITE FAILED"
+msgstr "YAZMA BAŞARISIZ"
 
 #. Extracted from current DM1 runtime
 msgid "QUICKSAVE WRITTEN"
-msgstr "QUICKSAVE WRITTEN"
+msgstr "HIZLI KAYIT YAZILDI"
 
 #. Extracted from current DM1 runtime
 msgid "SAVE SLOT READY"
-msgstr "SAVE SLOT READY"
+msgstr "KAYIT YUVASI HAZIR"
 
 #. Extracted from current DM1 runtime
 msgid "F9 RESTORES TICK %u FROM %s"
-msgstr "F9 RESTORES TICK %u FROM %s"
+msgstr "F9 TIK %U %S TEN GERİ YÜKLER"
 
 #. Extracted from current DM1 runtime
 msgid "LOAD"
-msgstr "LOAD"
+msgstr "YÜKLE"
 
 #. Extracted from current DM1 runtime
 msgid "NO QUICKSAVE FOUND"
-msgstr "NO QUICKSAVE FOUND"
+msgstr "HIZLI KAYIT BULUNAMADI"
 
 #. Extracted from current DM1 runtime
 msgid "SAVE HEADER INVALID"
-msgstr "SAVE HEADER INVALID"
+msgstr "KAYIT BAŞLIĞI GEÇERSİZ"
 
 #. Extracted from current DM1 runtime
 msgid "SAVE SIZE INVALID"
-msgstr "SAVE SIZE INVALID"
+msgstr "KAYIT BOYUTU GEÇERSİZ"
 
 #. Extracted from current DM1 runtime
 msgid "SAVE SEEK FAILED"
-msgstr "SAVE SEEK FAILED"
+msgstr "KAYIT ARAMA BAŞARISIZ"
 
 #. Extracted from current DM1 runtime
 msgid "SAVE LENGTH MISMATCH"
-msgstr "SAVE LENGTH MISMATCH"
+msgstr "KAYIT UZUNLUK UYUŞMAZLIĞI"
 
 #. Extracted from current DM1 runtime
 msgid "READ FAILED"
-msgstr "READ FAILED"
+msgstr "OKUMA BAŞARISIZ"
 
 #. Extracted from current DM1 runtime
 msgid "SAVE VERIFY FAILED"
-msgstr "SAVE VERIFY FAILED"
+msgstr "KAYIT DOĞRULAMA BAŞARISIZ"
 
 #. Extracted from current DM1 runtime
 msgid "QUICKSAVE RESTORED"
-msgstr "QUICKSAVE RESTORED"
+msgstr "HIZLI KAYIT GERİ YÜKLENDİ"
 
 #. Extracted from current DM1 runtime
 msgid "RESTORED"
-msgstr "RESTORED"
+msgstr "GERİ YÜKLENDİ"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u HASH %08X RELOADED FROM %s"
-msgstr "TICK %u HASH %08X RELOADED FROM %s"
+msgstr "TIK %U HASH %08X %S TEN YENİDEN YÜKLENDİ"
 
 #. Extracted from current DM1 runtime
 msgid "WAIT"
-msgstr "WAIT"
+msgstr "BEKLE"
 
 #. Extracted from current DM1 runtime
 msgid "TICK REJECTED"
-msgstr "TICK REJECTED"
+msgstr "TIK REDDEDİLDİ"
 
 #. Extracted from current DM1 runtime
 msgid "STRIKE COMMITTED"
-msgstr "STRIKE COMMITTED"
+msgstr "DARBE UYGULANDI"
 
 #. Extracted from current DM1 runtime
 msgid "%s ATTACKS"
-msgstr "%s ATTACKS"
+msgstr "%S SALDIRIYOR"
 
 #. Extracted from current DM1 runtime
 msgid "FRONT CONTACT, ROLL %d, TICK %u"
-msgstr "FRONT CONTACT, ROLL %d, TICK %u"
+msgstr "ÖN TEMAS, ATIŞ %D, TIK %U"
 
 #. Extracted from current DM1 runtime
 msgid "FACING UPDATED"
-msgstr "FACING UPDATED"
+msgstr "YÖN GÜNCELLENDİ"
 
 #. Extracted from current DM1 runtime
 msgid "TURN IGNORED"
-msgstr "TURN IGNORED"
+msgstr "DÖNME YOK SAYILDI"
 
 #. Extracted from current DM1 runtime
 msgid "IDLE TICK ADVANCED"
-msgstr "IDLE TICK ADVANCED"
+msgstr "BOŞ TİK İLERLEDİ"
 
 #. Extracted from current DM1 runtime
 msgid "IDLE TICK HELD"
-msgstr "IDLE TICK HELD"
+msgstr "BOŞ TİK TUTULDU"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY MOVED"
-msgstr "PARTY MOVED"
+msgstr "GRUP HAREKET ETTİ"
 
 #. Extracted from current DM1 runtime
 msgid "MOVEMENT BLOCKED"
-msgstr "MOVEMENT BLOCKED"
+msgstr "HAREKET ENGELLENDİ"
 
 #. Extracted from current DM1 runtime
 msgid "RETURN"
-msgstr "RETURN"
+msgstr "GERİ DÖN"
 
 #. Extracted from current DM1 runtime
 msgid "BACK TO LAUNCHER"
-msgstr "BACK TO LAUNCHER"
+msgstr "BAŞLATICIYA GERİ DÖN"
 
 #. Extracted from current DM1 runtime
 msgid "FORWARD"
-msgstr "FORWARD"
+msgstr "İLERİ"
 
 #. Extracted from current DM1 runtime
 msgid "BACKSTEP"
-msgstr "BACKSTEP"
+msgstr "GERİ ADIM"
 
 #. Extracted from current DM1 runtime
 msgid "TURN LEFT"
-msgstr "TURN LEFT"
+msgstr "SOLA DÖN"
 
 #. Extracted from current DM1 runtime
 msgid "TURN RIGHT"
-msgstr "TURN RIGHT"
+msgstr "SAĞA DÖN"
 
 #. Extracted from current DM1 runtime
 msgid "STRAFE LEFT"
-msgstr "STRAFE LEFT"
+msgstr "SOLA YANAŞ"
 
 #. Extracted from current DM1 runtime
 msgid "STRAFE RIGHT"
-msgstr "STRAFE RIGHT"
+msgstr "SAĞA YANAŞ"
 
 #. Extracted from current DM1 runtime
 msgid "ATTACK"
-msgstr "ATTACK"
+msgstr "SALDIRI"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RESTING"
-msgstr "T%u: RESTING"
+msgstr "T%U: DİNLENİYOR"
 
 #. Extracted from current DM1 runtime
 msgid "REST"
-msgstr "REST"
+msgstr "DİNLEN"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY IS RESTING"
-msgstr "PARTY IS RESTING"
+msgstr "GRUP DİNLENİYOR"
 
 #. Extracted from current DM1 runtime
 msgid "RESTING"
-msgstr "RESTING"
+msgstr "DİNLENİYOR"
 
 #. Extracted from current DM1 runtime
 msgid "HP AND STAMINA RECOVER SLOWLY. PRESS R AGAIN TO WAKE."
-msgstr "HP AND STAMINA RECOVER SLOWLY. PRESS R AGAIN TO WAKE."
+msgstr "HP VE DAYANIKLILIK YAVAŞÇA İYİLEŞİR. UYANMAK İÇİN TEKRAR R'YE BAS."
 
 #. Extracted from current DM1 runtime
 msgid "T%u: WOKE UP"
-msgstr "T%u: WOKE UP"
+msgstr "T%U: UYANDI"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY AWAKE"
-msgstr "PARTY AWAKE"
+msgstr "GRUP UYANIK"
 
 #. Extracted from current DM1 runtime
 msgid "AWAKE"
-msgstr "AWAKE"
+msgstr "UYANIK"
 
 #. Extracted from current DM1 runtime
 msgid "REST ENDED. RESUME EXPLORING."
-msgstr "REST ENDED. RESUME EXPLORING."
+msgstr "DİNLENME BİTTİ. KEŞFE DEVAM."
 
 #. Extracted from current DM1 runtime
 msgid "NO STAIRS HERE"
-msgstr "NO STAIRS HERE"
+msgstr "BURADA MERDİVEN YOK"
 
 #. Extracted from current DM1 runtime
 msgid "%d %s"
-msgstr "%d %s"
+msgstr "%D %S"
 
 #. Extracted from current DM1 runtime
 msgid "VOID"
-msgstr "VOID"
+msgstr "BOŞLUK"
 
 #. Extracted from current DM1 runtime
 msgid "OPEN"
-msgstr "OPEN"
+msgstr "AÇIK"
 
 #. Extracted from current DM1 runtime
 msgid "SHUT"
-msgstr "SHUT"
+msgstr "KAPALI"
 
 #. Extracted from current DM1 runtime
 msgid "FOE"
-msgstr "FOE"
+msgstr "DÜŞMAN"
 
 #. Extracted from current DM1 runtime
 msgid "FOES"
-msgstr "FOES"
+msgstr "DÜŞMANLAR"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM"
-msgstr "ITEM"
+msgstr "ÖĞE"
 
 #. Extracted from current DM1 runtime
 msgid "ITEMS"
-msgstr "ITEMS"
+msgstr "ÖĞELER"
 
 #. Extracted from current DM1 runtime
 msgid "EFFECT"
-msgstr "EFFECT"
+msgstr "ETKİ"
 
 #. Extracted from current DM1 runtime
 msgid "EFFECTS"
-msgstr "EFFECTS"
+msgstr "ETKİLER"
 
 #. Extracted from current DM1 runtime
 msgid "SENSOR"
-msgstr "SENSOR"
+msgstr "SENSÖR"
 
 #. Extracted from current DM1 runtime
 msgid "SENSORS"
-msgstr "SENSORS"
+msgstr "SENSÖRLER"
 
 #. Extracted from current DM1 runtime
 msgid "MARK"
-msgstr "MARK"
+msgstr "İŞARET"
 
 #. Extracted from current DM1 runtime
 msgid "MARKS"
-msgstr "MARKS"
+msgstr "İŞARETLER"
 
 #. Extracted from current DM1 runtime
 msgid "%s, %s"
-msgstr "%s, %s"
+msgstr "%S, %S"
 
 #. Extracted from current DM1 runtime
 msgid "QUIET FLOOR"
-msgstr "QUIET FLOOR"
+msgstr "SESSİZ ZEMİN"
 
 #. Extracted from current DM1 runtime
 msgid "%d CREATURE %s"
-msgstr "%d CREATURE %s"
+msgstr "%D YARATIK %S"
 
 #. Extracted from current DM1 runtime
 msgid "CONTACT"
-msgstr "CONTACT"
+msgstr "TEMAS"
 
 #. Extracted from current DM1 runtime
 msgid "CONTACTS"
-msgstr "CONTACTS"
+msgstr "TEMASLAR"
 
 #. Extracted from current DM1 runtime
 msgid "%d LIVE EFFECT %s"
-msgstr "%d LIVE EFFECT %s"
+msgstr "%D AKTİF ETKİ %S"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD"
-msgstr "AHEAD"
+msgstr "İLERDE"
 
 #. Extracted from current DM1 runtime
 msgid "STACKED"
-msgstr "STACKED"
+msgstr "YIĞILMIŞ"
 
 #. Extracted from current DM1 runtime
 msgid "TEXT PLAQUE"
-msgstr "TEXT PLAQUE"
+msgstr "METİN LEVHASI"
 
 #. Extracted from current DM1 runtime
 msgid "TRIGGER TILE"
-msgstr "TRIGGER TILE"
+msgstr "TETİKLEYİCİ KARO"
 
 #. Extracted from current DM1 runtime
 msgid "TELEPORT FIELD"
-msgstr "TELEPORT FIELD"
+msgstr "IŞINLANMA ALANI"
 
 #. Extracted from current DM1 runtime
 msgid "%d FLOOR %s"
-msgstr "%d FLOOR %s"
+msgstr "%D ZEMİN %S"
 
 #. Extracted from current DM1 runtime
 msgid "TEXT OFFSET %u (DECODE UNAVAILABLE)"
-msgstr "TEXT OFFSET %u (DECODE UNAVAILABLE)"
+msgstr "METİN OFSETİ %U (KOD ÇÖZME YOK)"
 
 #. Extracted from current DM1 runtime
 msgid "INSPECT"
-msgstr "INSPECT"
+msgstr "İNCELE"
 
 #. Extracted from current DM1 runtime
 msgid "VOID AHEAD"
-msgstr "VOID AHEAD"
+msgstr "İLERDE BOŞLUK"
 
 #. Extracted from current DM1 runtime
 msgid "TURN TO RE-ENTER THE MAP"
-msgstr "TURN TO RE-ENTER THE MAP"
+msgstr "HARİTAYA TEKRAR GİRMEK İÇİN DÖN"
 
 #. Extracted from current DM1 runtime
 msgid "READ TEXT"
-msgstr "READ TEXT"
+msgstr "METNİ OKU"
 
 #. Extracted from current DM1 runtime
 msgid "FRONT DOOR"
-msgstr "FRONT DOOR"
+msgstr "ÖN KAPI"
 
 #. Extracted from current DM1 runtime
 msgid "%s, STATE %d, %s"
-msgstr "%s, STATE %d, %s"
+msgstr "%S, DURUM %D, %S"
 
 #. Extracted from current DM1 runtime
 msgid "VERTICAL"
-msgstr "VERTICAL"
+msgstr "DİKEY"
 
 #. Extracted from current DM1 runtime
 msgid "HORIZONTAL"
-msgstr "HORIZONTAL"
+msgstr "YATAY"
 
 #. Extracted from current DM1 runtime
 msgid "OPEN ENOUGH TO CROSS"
-msgstr "OPEN ENOUGH TO CROSS"
+msgstr "GEÇMEK İÇİN YETERLİ AÇIK"
 
 #. Extracted from current DM1 runtime
 msgid "STILL CLOSED"
-msgstr "STILL CLOSED"
+msgstr "HÂLÂ KAPALI"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR CHECK"
-msgstr "DOOR CHECK"
+msgstr "KAPI KONTROL"
 
 #. Extracted from current DM1 runtime
 msgid "CREATURE CONTACT"
-msgstr "CREATURE CONTACT"
+msgstr "YARATIK TEMASI"
 
 #. Extracted from current DM1 runtime
 msgid "%d GROUP TARGET%s IN FRONT CELL"
-msgstr "%d GROUP TARGET%s IN FRONT CELL"
+msgstr "ÖN HÜCREDE %D GRUP HEDEF%s"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY SPOTTED"
-msgstr "ENEMY SPOTTED"
+msgstr "DÜŞMAN GÖRÜLDÜ"
 
 #. Extracted from current DM1 runtime
 msgid "FRONT CELL READOUT"
-msgstr "FRONT CELL READOUT"
+msgstr "ÖN HÜCRE ÇIKTISI"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR"
-msgstr "DOOR"
+msgstr "KAPI"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR DESTROYED"
-msgstr "DOOR DESTROYED"
+msgstr "KAPI YOK EDİLDİ"
 
 #. Extracted from current DM1 runtime
 msgid "DESTROYED, NO LONGER BLOCKING THE PASSAGE"
-msgstr "DESTROYED, NO LONGER BLOCKING THE PASSAGE"
+msgstr "YOK EDİLDİ, ARTIK GEÇİŞİ ENGELLEMİYOR"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR OPENED"
-msgstr "DOOR OPENED"
+msgstr "KAPI AÇILDI"
 
 #. Extracted from current DM1 runtime
 msgid "OPEN, PASSAGE CLEAR, CLICK CENTER OR PRESS UP TO CROSS"
-msgstr "OPEN, PASSAGE CLEAR, CLICK CENTER OR PRESS UP TO CROSS"
+msgstr "AÇIK, GEÇİŞ TEMİZ, GEÇMEK İÇİN ORTAYA TIKLA VEYA YUKARI BAS"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR CLOSED"
-msgstr "DOOR CLOSED"
+msgstr "KAPI KAPANDI"
 
 #. Extracted from current DM1 runtime
 msgid "SHUT, ENTER INSPECTS, SPACE TOGGLES AGAIN"
-msgstr "SHUT, ENTER INSPECTS, SPACE TOGGLES AGAIN"
+msgstr "KAPALI, ENTER İNCELE, BOŞLUK TUŞU TEKRAR DEĞİŞTİRİR"
 
 #. Extracted from current DM1 runtime
 msgid "%s VOID"
-msgstr "%s VOID"
+msgstr "%S BOŞLUK"
 
 #. Extracted from current DM1 runtime
 msgid "%s %dG"
-msgstr "%s %dG"
+msgstr "%S %DG"
 
 #. Extracted from current DM1 runtime
 msgid "%s DOOR"
-msgstr "%s DOOR"
+msgstr "%S KAPI"
 
 #. Extracted from current DM1 runtime
 msgid "%s PIT"
-msgstr "%s PIT"
+msgstr "%S ÇUKUR"
 
 #. Extracted from current DM1 runtime
 msgid "%s STEP"
-msgstr "%s STEP"
+msgstr "%S ADIM"
 
 #. Extracted from current DM1 runtime
 msgid "%s TELE"
-msgstr "%s TELE"
+msgstr "%S IŞIN"
 
 #. Extracted from current DM1 runtime
 msgid "%s ITEM"
-msgstr "%s ITEM"
+msgstr "%S ÖĞE"
 
 #. Extracted from current DM1 runtime
 msgid "%s MARK"
-msgstr "%s MARK"
+msgstr "%S İŞARET"
 
 #. Extracted from current DM1 runtime
 msgid "%s OPEN"
-msgstr "%s OPEN"
+msgstr "%S AÇIK"
 
 #. Extracted from current DM1 runtime
 msgid "%s WALL"
-msgstr "%s WALL"
+msgstr "%S DUVAR"
 
 #. Extracted from current DM1 runtime
 msgid "TURN"
-msgstr "TURN"
+msgstr "DÖN"
 
 #. Extracted from current DM1 runtime
 msgid "BLOCKED"
-msgstr "BLOCKED"
+msgstr "ENGELLİ"
 
 #. Extracted from current DM1 runtime
 msgid "HIT %d"
-msgstr "HIT %d"
+msgstr "İSABET %D"
 
 #. Extracted from current DM1 runtime
 msgid "TURN %s"
-msgstr "TURN %s"
+msgstr "%S DÖN"
 
 #. Extracted from current DM1 runtime
 msgid "STEP %d:%d"
-msgstr "STEP %d:%d"
+msgstr "ADIM %D:%D"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR %d:%d"
-msgstr "DOOR %d:%d"
+msgstr "KAPI %D:%D"
 
 #. Extracted from current DM1 runtime
 msgid "FX %d"
-msgstr "FX %d"
+msgstr "ETKİ %D"
 
 #. Extracted from current DM1 runtime
 msgid "DOWN %d"
-msgstr "DOWN %d"
+msgstr "AŞAĞI %D"
 
 #. Extracted from current DM1 runtime
 msgid "KILL"
-msgstr "KILL"
+msgstr "ÖLDÜR"
 
 #. Extracted from current DM1 runtime
 msgid "DANGER"
-msgstr "DANGER"
+msgstr "TEHLİKE"
 
 #. Extracted from current DM1 runtime
 msgid "ENTRY"
-msgstr "ENTRY"
+msgstr "GİRİŞ"
 
 #. Extracted from current DM1 runtime
 msgid "BARRIER"
-msgstr "BARRIER"
+msgstr "BARIYER"
 
 #. Extracted from current DM1 runtime
 msgid "HAZARD"
-msgstr "HAZARD"
+msgstr "RİSK"
 
 #. Extracted from current DM1 runtime
 msgid "INTERACT"
-msgstr "INTERACT"
+msgstr "ETKİLEŞİM"
 
 #. Extracted from current DM1 runtime
 msgid "CLEAR"
-msgstr "CLEAR"
+msgstr "TEMİZ"
 
 #. Extracted from current DM1 runtime
 msgid "STONE"
-msgstr "STONE"
+msgstr "TAŞ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TORCH DIMS"
-msgstr "T%u: TORCH DIMS"
+msgstr "T%U: MEŞALE SOLUYOR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FLAMITT DIMS"
-msgstr "T%u: FLAMITT DIMS"
+msgstr "T%U: FLAMITT SOLUYOR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s BURNS OUT"
-msgstr "T%u: %s BURNS OUT"
+msgstr "T%U: %S YANDI"
 
 #. Extracted from current DM1 runtime
 msgid "MENU"
-msgstr "MENU"
+msgstr "MENÜ"
 
 #. Extracted from current DM1 runtime
 msgid "%s %s"
-msgstr "%s %s"
+msgstr "%S %S"
 
 #. Extracted from current DM1 runtime
 msgid "L%d HP%u ST%u"
-msgstr "L%d HP%u ST%u"
+msgstr "L%D HP%U DN%U"
 
 #. Extracted from current DM1 runtime
 msgid "BRIGHT"
-msgstr "BRIGHT"
+msgstr "PARLAK"
 
 #. Extracted from current DM1 runtime
 msgid "LIT"
-msgstr "LIT"
+msgstr "AYDINLIK"
 
 #. Extracted from current DM1 runtime
 msgid "DIM"
-msgstr "DIM"
+msgstr "LOŞ"
 
 #. Extracted from current DM1 runtime
 msgid "DARK"
-msgstr "DARK"
+msgstr "KARANLIK"
 
 #. Extracted from current DM1 runtime
 msgid "EMPTY"
-msgstr "EMPTY"
+msgstr "BOŞ"
 
 #. Extracted from current DM1 runtime
 msgid "LEADER"
-msgstr "LEADER"
+msgstr "LİDER"
 
 #. Extracted from current DM1 runtime
 msgid "CHAMP"
-msgstr "CHAMP"
+msgstr "ŞAMPİYON"
 
 #. Extracted from current DM1 runtime
 msgid "ACTIVE CHAMPION READY"
-msgstr "ACTIVE CHAMPION READY"
+msgstr "AKTİF ŞAMPİYON HAZIR"
 
 #. Extracted from current DM1 runtime
 msgid "%s READY"
-msgstr "%s READY"
+msgstr "%S HAZIR"
 
 #. Extracted from current DM1 runtime
 msgid ""
@@ -2033,95 +2033,95 @@ msgstr ""
 
 #. Extracted from current DM1 runtime
 msgid "DEAD"
-msgstr "DEAD"
+msgstr "ÖLÜ"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u I%d"
-msgstr "HP%u I%d"
+msgstr "HP%U I%D"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u ST%u"
-msgstr "HP%u ST%u"
+msgstr "HP%U DN%U"
 
 #. Extracted from current DM1 runtime
 msgid "SLOT %d"
-msgstr "SLOT %d"
+msgstr "YUVA %D"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS VOID"
-msgstr "FOCUS VOID"
+msgstr "ODAK BOŞLUK"
 
 #. Extracted from current DM1 runtime
 msgid "ATTACK WITH %s"
-msgstr "ATTACK WITH %s"
+msgstr "%S İLE SALDIR"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS ACTIVE EFFECT"
-msgstr "FOCUS ACTIVE EFFECT"
+msgstr "ODAK AKTİF ETKİ"
 
 #. Extracted from current DM1 runtime
 msgid "SPACE WAITS, ENTER INSPECTS, TURN IF THE CELL STAYS HOT"
-msgstr "SPACE WAITS, ENTER INSPECTS, TURN IF THE CELL STAYS HOT"
+msgstr "BOŞLUK BEKLER, ENTER İNCELE, HÜCRE SICAK KALIRSA DÖN"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS OPEN DOOR"
-msgstr "FOCUS OPEN DOOR"
+msgstr "ODAK AÇIK KAPI"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS CLOSED DOOR"
-msgstr "FOCUS CLOSED DOOR"
+msgstr "ODAK KAPALI KAPI"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS PIT"
-msgstr "FOCUS PIT"
+msgstr "ODAK ÇUKUR"
 
 #. Extracted from current DM1 runtime
 msgid "UP RISKS A DROP, ENTER INSPECTS BEFORE COMMITTING"
-msgstr "UP RISKS A DROP, ENTER INSPECTS BEFORE COMMITTING"
+msgstr "YUKARI DÜŞME RİSKİ, ONAYLAMADAN ÖNCE ENTER İLE İNCELE"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS STAIRS"
-msgstr "FOCUS STAIRS"
+msgstr "ODAK MERDİVEN"
 
 #. Extracted from current DM1 runtime
 msgid "UP CLIMBS, ENTER INSPECTS, SPACE WAITS"
-msgstr "UP CLIMBS, ENTER INSPECTS, SPACE WAITS"
+msgstr "YUKARI TIRMANIR, ENTER İNCELE, BOŞLUK BEKLER"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS TELEPORTER"
-msgstr "FOCUS TELEPORTER"
+msgstr "ODAK IŞINLAYICI"
 
 #. Extracted from current DM1 runtime
 msgid "UP TESTS THE RIFT, ENTER INSPECTS FIRST"
-msgstr "UP TESTS THE RIFT, ENTER INSPECTS FIRST"
+msgstr "YUKARI YARIK TEST EDER, ÖNCE ENTER İNCELE"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS INTERACTABLE"
-msgstr "FOCUS INTERACTABLE"
+msgstr "ODAK ETKİLEŞİMLİ"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS CLEAR PASSAGE"
-msgstr "FOCUS CLEAR PASSAGE"
+msgstr "ODAK TEMİZ GEÇİŞ"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS BLOCKED"
-msgstr "FOCUS BLOCKED"
+msgstr "ODAK ENGELLİ"
 
 #. Extracted from current DM1 runtime
 msgid "ENTER INSPECTS, SPACE WAITS, TURN TO SEARCH"
-msgstr "ENTER INSPECTS, SPACE WAITS, TURN TO SEARCH"
+msgstr "ENTER İNCELE, BOŞLUK BEKLER, ARAMAK İÇİN DÖN"
 
 #. Extracted from current DM1 runtime
 msgid "NO GAME VIEW"
-msgstr "NO GAME VIEW"
+msgstr "OYUN GÖRÜNÜMÜ YOK"
 
 #. Extracted from current DM1 runtime
 msgid "GAME VIEW"
-msgstr "GAME VIEW"
+msgstr "OYUN GÖRÜNÜMÜ"
 
 #. Extracted from current DM1 runtime
 msgid "L%d %s %s%s"
-msgstr "L%d %s %s%s"
+msgstr "L%D %S %S%S"
 
 #. Extracted from current DM1 runtime
 msgid " ZZZ"
@@ -2129,31 +2129,31 @@ msgstr " ZZZ"
 
 #. Extracted from current DM1 runtime
 msgid "G GRAB P DROP R REST 1-6 RUNE C CAST"
-msgstr "G GRAB P DROP R REST 1-6 RUNE C CAST"
+msgstr "G AL P DÜŞÜR R DİNLEN 1-6 RUNİK C YAP"
 
 #. Extracted from current DM1 runtime
 msgid "HERE  %s"
-msgstr "HERE  %s"
+msgstr "BURADA  %S"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u"
-msgstr "TICK %u"
+msgstr "TIK %U"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD %s"
-msgstr "AHEAD %s"
+msgstr "İLERDE %S"
 
 #. Extracted from current DM1 runtime
 msgid "%s F%03d W%03d"
-msgstr "%s F%03d W%03d"
+msgstr "%S F%03D W%03D"
 
 #. Extracted from current DM1 runtime
 msgid "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)"
-msgstr "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)"
+msgstr "BÜYÜ YAP (1-6 RUNİK, C YAP, V TEMİZLE)"
 
 #. Extracted from current DM1 runtime
 msgid "POWER"
-msgstr "POWER"
+msgstr "GÜÇ"
 
 #. Extracted from current DM1 runtime
 msgid "ELEMENT"
@@ -2165,52 +2165,52 @@ msgstr "FORM"
 
 #. Extracted from current DM1 runtime
 msgid "CLASS"
-msgstr "CLASS"
+msgstr "SINIF"
 
 #. Extracted from current DM1 runtime
 msgid "ROW %d: %s"
-msgstr "ROW %d: %s"
+msgstr "SATIR %D: %S"
 
 #. Extracted from current DM1 runtime
 msgid "%d:%s"
-msgstr "%d:%s"
+msgstr "%D:%S"
 
 #. Extracted from current DM1 runtime
 msgid "READY TO CAST (C) OR CLEAR (V)"
-msgstr "READY TO CAST (C) OR CLEAR (V)"
+msgstr "YAPMAYA (C) VEYA TEMİZLEMEYE (V) HAZIR"
 
 #. Extracted from current DM1 runtime
 msgid "QUEST COMPLETE"
-msgstr "QUEST COMPLETE"
+msgstr "GÖREV TAMAMLANDI"
 
 #. Extracted from current DM1 runtime
 msgid "LORD CHAOS IS DEFEATED."
-msgstr "LORD CHAOS IS DEFEATED."
+msgstr "KAOS LORTU YENİLDİ."
 
 #. Extracted from current DM1 runtime
 msgid "THE FIRESTAFF IS RESTORED."
-msgstr "THE FIRESTAFF IS RESTORED."
+msgstr "ATEŞ DEYNEĞİ YENİDEN KURULDU."
 
 #. Extracted from current DM1 runtime
 msgid "VICTORY AT TICK %u"
-msgstr "VICTORY AT TICK %u"
+msgstr "TIK %U DE ZAFER"
 
 #. Extracted from current DM1 runtime
 msgid "ESC TO RETURN TO MENU"
-msgstr "ESC TO RETURN TO MENU"
+msgstr "MENÜYE DÖNMEK İÇİN ESC"
 
 #. Extracted from current DM1 runtime
 msgid "PRESS ANY KEY TO DISMISS"
-msgstr "PRESS ANY KEY TO DISMISS"
+msgstr "KAPATMAK İÇİN HERHANGİ BİR TUŞA BAS"
 
 #. Extracted from current DM1 runtime
 msgid "LOAD SAVE OR ESC TO MENU"
-msgstr "LOAD SAVE OR ESC TO MENU"
+msgstr "KAYIT YÜKLE VEYA ESC İLE MENÜYE"
 
 #. Extracted from current DM1 runtime
 msgid "RESTING..."
-msgstr "RESTING..."
+msgstr "DİNLENİYOR..."
 
 #. Extracted from current DM1 runtime
 msgid "R TO WAKE"
-msgstr "R TO WAKE"
+msgstr "UYANMAK İÇİN R"

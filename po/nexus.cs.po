@@ -8,89 +8,89 @@ msgid "Attack"
 msgstr "Útok"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "Seslat kouzlo"
 
 msgid "Track %d"
-msgstr ""
+msgstr "Úroveň %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s zemřel"
 
 msgid "Continue"
-msgstr ""
+msgstr "Pokračovat"
 
 msgid "Defend"
-msgstr ""
+msgstr "Bránit"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "Tyto dveře jsou zamčené"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "Našel jsi Ohnivou hůl!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "Gratulujeme! Zachránil jsi říši!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "Tvoje družina zahynula"
 
 msgid "Hall of Champions"
-msgstr "Síň šampionů"
+msgstr "Síň hrdinů"
 
 msgid "Health"
 msgstr "Zdraví"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "Inventář plný"
 
 msgid "A key is required"
-msgstr ""
+msgstr "Vyžadován klíč"
 
 msgid "Level %d"
-msgstr ""
+msgstr "Úroveň %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s postoupil"
 
 msgid "Load Game"
-msgstr ""
+msgstr "Načíst"
 
 msgid "Mana"
-msgstr ""
+msgstr "Mana"
 
 msgid "New Game"
-msgstr ""
+msgstr "Nová hra"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "Nedostatek many"
 
 msgid "Recruit"
-msgstr "Naverbovat"
+msgstr "Najmout"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "Reinkarnovat"
 
 msgid "Rest"
-msgstr ""
+msgstr "Odpočinek"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "Vzkřísit"
 
 msgid "Save Game"
-msgstr ""
+msgstr "Uložit"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "Vyber hrdinu"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "Kouzlo selhalo"
 
 msgid "Stamina"
-msgstr ""
+msgstr "Výdrž"
 
 msgid "Party is full"
-msgstr ""
+msgstr "Družina je plná"
 
 msgid "Use Item"
-msgstr ""
+msgstr "Použít předmět"
 

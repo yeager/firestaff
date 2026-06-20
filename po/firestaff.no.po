@@ -5,64 +5,64 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "Tilgjengelighet"
 
 msgid "Audio"
-msgstr ""
+msgstr "Lyd"
 
 msgid "Back"
 msgstr "Tilbake"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "Bestiarium"
 
 msgid "Changelog"
-msgstr ""
+msgstr "Endringslogg"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "Kommer snart"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "Fortsett lagret spill"
 
 msgid "Controls"
-msgstr ""
+msgstr "Kontroller"
 
 msgid "Display"
-msgstr ""
+msgstr "Skjerm"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "EKSTRA"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "Gjenstandsleksikon"
 
 msgid "Language"
 msgstr "Språk"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "Kartviser"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "Lore-museum"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "Nytt spill (V1 Original)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "Nytt spill (V2.1 Oppskalert)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "Nytt spill (V2.2 Forbedret)"
 
 msgid "No data files"
-msgstr ""
+msgstr "Ingen datafiler"
 
 msgid "Off"
-msgstr ""
+msgstr "Av"
 
 msgid "On"
-msgstr ""
+msgstr "På"
 
 msgid "PLAY"
 msgstr "SPILL"
@@ -71,23 +71,23 @@ msgid "QUIT"
 msgstr "AVSLUTT"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "Skjermbildegalleri"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "VELG SPILL"
 
 msgid "SETTINGS"
 msgstr "INNSTILLINGER"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "Trolldomsreferanse"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "Valider spilldata"
 
 msgid "Version"
-msgstr ""
+msgstr "Versjon"
 
 msgid "Video"
-msgstr ""
+msgstr "Video"
 

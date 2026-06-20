@@ -5,92 +5,92 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Attack"
-msgstr "Aanval"
+msgstr "Aanvallen"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "Spreuk werpen"
 
 msgid "Track %d"
-msgstr ""
+msgstr "Niveau %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s is gestorven"
 
 msgid "Continue"
-msgstr ""
+msgstr "Doorgaan"
 
 msgid "Defend"
-msgstr ""
+msgstr "Verdedigen"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "Deze deur is vergrendeld"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "Je vond de Vuur Staf!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "Gefeliciteerd! Je hebt het koninkrijk gered!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "Je groep is omgekomen"
 
 msgid "Hall of Champions"
-msgstr "Zaal der Kampioenen"
+msgstr "Hal der Helden"
 
 msgid "Health"
 msgstr "Gezondheid"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "Inventaris vol"
 
 msgid "A key is required"
-msgstr ""
+msgstr "Sleutel vereist"
 
 msgid "Level %d"
-msgstr ""
+msgstr "Niveau %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s is gestegen"
 
 msgid "Load Game"
-msgstr ""
+msgstr "Laden"
 
 msgid "Mana"
-msgstr ""
+msgstr "Mana"
 
 msgid "New Game"
-msgstr ""
+msgstr "Nieuw spel"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "Niet genoeg mana"
 
 msgid "Recruit"
 msgstr "Rekruteren"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "Reïncarneren"
 
 msgid "Rest"
-msgstr ""
+msgstr "Rusten"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "Wederopstanding"
 
 msgid "Save Game"
-msgstr ""
+msgstr "Opslaan"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "Kies held"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "Spreuk mislukt"
 
 msgid "Stamina"
-msgstr ""
+msgstr "Uithouding"
 
 msgid "Party is full"
-msgstr ""
+msgstr "Groep vol"
 
 msgid "Use Item"
-msgstr ""
+msgstr "Voorwerp gebruiken"
 

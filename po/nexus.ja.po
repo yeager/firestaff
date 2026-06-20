@@ -8,89 +8,89 @@ msgid "Attack"
 msgstr "攻撃"
 
 msgid "Cast Spell"
-msgstr "呪文を唱える"
+msgstr "呪文詠唱"
 
 msgid "Track %d"
-msgstr ""
+msgstr "レベル %d"
 
 msgid "%s has died"
-msgstr "%sは死んだ"
+msgstr "%s が死んだ"
 
 msgid "Continue"
-msgstr ""
+msgstr "続ける"
 
 msgid "Defend"
 msgstr "防御"
 
 msgid "This door is locked"
-msgstr "この扉は鍵がかかっている"
+msgstr "この扉はロックされている"
 
 msgid "You found the Firestaff!"
-msgstr "ファイアスタッフを見つけた！"
+msgstr "ファイアスタッフを見つけた!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr "おめでとう！世界を救った！"
+msgstr "おめでとう! あなたは王国を救った!"
 
 msgid "Your party has perished"
-msgstr "一行は全滅した"
+msgstr "パーティは壊滅した"
 
 msgid "Hall of Champions"
-msgstr "冒険者の殿堂"
+msgstr "勇者の間"
 
 msgid "Health"
 msgstr "体力"
 
 msgid "Inventory full"
-msgstr "持ち物が一杯"
+msgstr "インベントリ満杯"
 
 msgid "A key is required"
 msgstr "鍵が必要"
 
 msgid "Level %d"
-msgstr ""
+msgstr "レベル %d"
 
 msgid "%s gained a level"
-msgstr "%sはレベルアップした"
+msgstr "%s がレベルアップ"
 
 msgid "Load Game"
-msgstr ""
+msgstr "ロード"
 
 msgid "Mana"
 msgstr "マナ"
 
 msgid "New Game"
-msgstr ""
+msgstr "新規ゲーム"
 
 msgid "Not enough mana"
-msgstr "マナが足りない"
+msgstr "マナ不足"
 
 msgid "Recruit"
-msgstr "仲間にする"
+msgstr "招募"
 
 msgid "Reincarnate"
-msgstr "転生させる"
+msgstr "転生"
 
 msgid "Rest"
-msgstr ""
+msgstr "休息"
 
 msgid "Resurrect"
-msgstr "復活させる"
+msgstr "復活"
 
 msgid "Save Game"
-msgstr ""
+msgstr "セーブ"
 
 msgid "Select a champion"
-msgstr "冒険者を選べ"
+msgstr "勇者選択"
 
 msgid "Spell failed"
-msgstr "呪文が失敗した"
+msgstr "呪文失敗"
 
 msgid "Stamina"
 msgstr "スタミナ"
 
 msgid "Party is full"
-msgstr "パーティーが一杯です"
+msgstr "パーティ満杯"
 
 msgid "Use Item"
-msgstr ""
+msgstr "アイテム使用"
 

@@ -7,7 +7,7 @@ msgstr ""
 
 
 msgid "GRAPHICS MODE"
-msgstr "グラフィック設定"
+msgstr "グラフィックス モード"
 
 msgid "SETTINGS"
 msgstr "設定"

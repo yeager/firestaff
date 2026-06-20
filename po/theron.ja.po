@@ -1,0 +1,167 @@
+# firestaff-theron-en English catalog (auto-generated from theron.pot).
+# Source msgid = English source string; msgstr mirrors it.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-theron-en\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-20 06:50+0200\n"
+"PO-Revision-Date: 2026-06-20+00:00\n"
+"Last-Translator: Firestaff auto-pass\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+#. Direction / compass
+
+msgid "NORTH"
+msgstr "北"
+#. Direction / compass
+
+msgid "EAST"
+msgstr "東"
+#. Direction / compass
+
+msgid "SOUTH"
+msgstr "南"
+#. Direction / compass
+
+msgid "WEST"
+msgstr "西"
+#. Stairs
+
+msgid "STAIRS"
+msgstr "階段"
+#. Pit
+
+msgid "PIT"
+msgstr "落とし穴"
+#. Teleporter
+
+msgid "TELEPORTER"
+msgstr "テレポーター"
+#. Door
+
+msgid "DOOR"
+msgstr "扉"
+#. Inventory / item action
+
+msgid "PICK UP"
+msgstr "拾う"
+#. Inventory / item action
+
+msgid "DROP"
+msgstr "落とす"
+#. Inventory / item action
+
+msgid "USE"
+msgstr "使う"
+#. Combat action
+
+msgid "ATTACK"
+msgstr "攻撃"
+#. Combat action
+
+msgid "DEFEND"
+msgstr "防御"
+#. Combat action
+
+msgid "CAST SPELL"
+msgstr "呪文詠唱"
+#. Status label
+
+msgid "NO FOCUS"
+msgstr "対象なし"
+#. Status label
+
+msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
+msgstr "実際の前セルターゲットでENTERを押す"
+#. Generic
+
+msgid "UNKNOWN"
+msgstr "不明"
+#. Generic
+
+msgid "NONE"
+msgstr "なし"
+#. Save / load
+
+msgid "SAVE GAME"
+msgstr "セーブ"
+#. Save / load
+
+msgid "LOAD GAME"
+msgstr "ロード"
+#. Shop
+
+msgid "SHOP"
+msgstr "店"
+#. Shop
+
+msgid "NOT ENOUGH GOLD"
+msgstr "ゴールド不足"
+#. Shop
+
+msgid "PURCHASED %s FOR %d GOLD"
+msgstr "%S を %D ゴールドで購入"
+#. Dungeon progression
+
+msgid "T%u: ASCENDED TO LEVEL %d"
+msgstr "T%U: レベル %D へ上昇"
+#. Dungeon progression
+
+msgid "T%u: DESCENDED TO LEVEL %d"
+msgstr "T%U: レベル %D へ下降"
+#. Dungeon progression
+
+msgid "T%u: FELL INTO PIT"
+msgstr "T%U: 落とし穴に落ちた"
+#. Dungeon progression
+
+msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
+msgstr "T%U: マップ %D (%D,%D) へ転移"
+#. Teleporter chain
+
+msgid "T%u: TELEPORTER HAS NO THING DATA"
+msgstr "T%U: テレポーターに物データがない"
+#. Teleporter chain
+
+msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
+msgstr "T%U: テレポーターの目標マップ %D が範囲外"
+#. Teleporter chain
+
+msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr "T%U: %S レベルアップ! (%S %D -> %D)"
+#. Combat log
+
+msgid "T%u: %s CASTS %s"
+msgstr "T%U: %S が %S を詠唱"
+#. Combat log
+
+msgid "T%u: %s HITS %s FOR %d"
+msgstr "T%U: %S が %S に %D 命中"
+#. Combat log
+
+msgid "T%u: %s MISSES %s"
+msgstr "T%U: %S が %S にミス"
+#. Altar
+
+msgid "OFFERING ACCEPTED"
+msgstr "供物受理"
+#. Inventory capacity
+
+msgid "INVENTORY FULL"
+msgstr "インベントリ満杯"
+#. Sound / feedback
+
+msgid "OUT OF RANGE"
+msgstr "範囲外"
+#. Generic message
+
+msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr "ENTER または ビューをクリック"
+#. Status footer
+
+msgid "HP AND STAMINA RECOVER SLOWLY"
+msgstr "HP AND STAMINA RECOVER SLOWLY"

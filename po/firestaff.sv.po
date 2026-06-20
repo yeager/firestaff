@@ -14,7 +14,7 @@ msgid "Back"
 msgstr "Tillbaka"
 
 msgid "Bestiary"
-msgstr "Bestiary"
+msgstr "Bestiarium"
 
 msgid "Changelog"
 msgstr "Ändringslogg"
@@ -32,7 +32,7 @@ msgid "Display"
 msgstr "Bildskärm"
 
 msgid "EXTRAS"
-msgstr "EXTRA"
+msgstr "EXTRAS"
 
 msgid "Item Encyclopedia"
 msgstr "Föremålsencyklopedi"
@@ -44,19 +44,19 @@ msgid "Map Viewer"
 msgstr "Kartvisare"
 
 msgid "Museum of Lore"
-msgstr "Kunskapsmuseet"
+msgstr "Lore-museum"
 
 msgid "New Game (V1 Original)"
 msgstr "Nytt spel (V1 Original)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr "Nytt spel (V2.1 Uppskalat)"
+msgstr "Nytt spel (V2.1 Uppskalad)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr "Nytt spel (V2.2 Förbättrat)"
+msgstr "Nytt spel (V2.2 Förbättrad)"
 
 msgid "No data files"
-msgstr "Saknar spelfiler"
+msgstr "Inga datafiler"
 
 msgid "Off"
 msgstr "Av"
@@ -80,7 +80,7 @@ msgid "SETTINGS"
 msgstr "INSTÄLLNINGAR"
 
 msgid "Spell Reference"
-msgstr "Trollformler"
+msgstr "Besvärjelsereferens"
 
 msgid "Validate game data"
 msgstr "Validera speldata"
@@ -94,7 +94,7 @@ msgstr "Video"
 
 #: src/engine/m11_game_view.c
 msgid "RETURN TO START MENU?"
-msgstr "TILLBAKA TILL STARTMENYN?"
+msgstr "ÅTERGÅ TILL STARTMENYN?"
 
 #: src/engine/m11_game_view.c
 msgid "YES"

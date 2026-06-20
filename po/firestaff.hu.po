@@ -5,64 +5,64 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "Akadálymentesség"
 
 msgid "Audio"
-msgstr ""
+msgstr "Hang"
 
 msgid "Back"
 msgstr "Vissza"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "Bestiárium"
 
 msgid "Changelog"
-msgstr ""
+msgstr "Változásnapló"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "Hamarosan"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "Mentett játék folytatása"
 
 msgid "Controls"
-msgstr ""
+msgstr "Irányítás"
 
 msgid "Display"
-msgstr ""
+msgstr "Kijelző"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "EXTRÁK"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "Tárgy enciklopédia"
 
 msgid "Language"
 msgstr "Nyelv"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "Térképnézegető"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "Lore Múzeum"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "Új játék (V1 Eredeti)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "Új játék (V2.1 Skálázott)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "Új játék (V2.2 Továbbfejlesztett)"
 
 msgid "No data files"
-msgstr ""
+msgstr "Nincs adatfájl"
 
 msgid "Off"
-msgstr ""
+msgstr "Ki"
 
 msgid "On"
-msgstr ""
+msgstr "Be"
 
 msgid "PLAY"
 msgstr "JÁTÉK"
@@ -71,23 +71,23 @@ msgid "QUIT"
 msgstr "KILÉPÉS"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "Képernyőkép galéria"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "JÁTÉK VÁLASZTÁSA"
 
 msgid "SETTINGS"
 msgstr "BEÁLLÍTÁSOK"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "Varázslat referencia"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "Játék adatok ellenőrzése"
 
 msgid "Version"
-msgstr ""
+msgstr "Verzió"
 
 msgid "Video"
-msgstr ""
+msgstr "Videó"
 

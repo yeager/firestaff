@@ -5,34 +5,34 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Attack"
-msgstr "Ataque"
+msgstr "Atacar"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "Lançar feitiço"
 
 msgid "Track %d"
-msgstr ""
+msgstr "Nível %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s morreu"
 
 msgid "Continue"
-msgstr ""
+msgstr "Continuar"
 
 msgid "Defend"
-msgstr ""
+msgstr "Defender"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "Esta porta está trancada"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "Encontraste o Cajado de Fogo!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "Parabéns! Salvaste o reino!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "O teu grupo pereceu"
 
 msgid "Hall of Champions"
 msgstr "Salão dos Campeões"
@@ -41,56 +41,56 @@ msgid "Health"
 msgstr "Saúde"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "Inventário cheio"
 
 msgid "A key is required"
-msgstr ""
+msgstr "Chave necessária"
 
 msgid "Level %d"
-msgstr ""
+msgstr "Nível %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s subiu de nível"
 
 msgid "Load Game"
-msgstr ""
+msgstr "Carregar"
 
 msgid "Mana"
-msgstr ""
+msgstr "Mana"
 
 msgid "New Game"
-msgstr ""
+msgstr "Novo jogo"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "Mana insuficiente"
 
 msgid "Recruit"
 msgstr "Recrutar"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "Reencarnar"
 
 msgid "Rest"
-msgstr ""
+msgstr "Descansar"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "Ressuscitar"
 
 msgid "Save Game"
-msgstr ""
+msgstr "Guardar"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "Escolher campeão"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "Feitiço falhou"
 
 msgid "Stamina"
-msgstr ""
+msgstr "Vigor"
 
 msgid "Party is full"
-msgstr ""
+msgstr "Grupo cheio"
 
 msgid "Use Item"
-msgstr ""
+msgstr "Usar item"
 

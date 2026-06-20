@@ -1094,19 +1094,24 @@ LANG_NAMES = {
 
 
 def main():
-    """Apply seed translations to dm1.<lang>.po files in-place.
+    """Apply complete translations to dm1.<lang>.po files in-place.
 
-    For each msgid in SEED_MSGIDS:
-      - If a translation exists in TRANSLATIONS[lang], set msgstr to it.
-      - Otherwise, set msgstr to msgid (English fallback).
-
-    All other msgids (not in SEED_MSGIDS) keep their existing msgstr
-    (which is typically empty from msginit).
+    Uses dm1_translations_complete.py (547 strings x 17 locales) if
+    available, otherwise falls back to the 90-string seed in this file.
+    Every msgid in dm1.<lang>.po gets a msgstr; missing translations
+    fall through to the English source string.
     """
     import os
+    try:
+        from dm1_translations_complete import TRANSLATIONS as FULL
+        print("Using dm1_translations_complete.py (547 x 17 locales)")
+        table_dict = FULL
+    except ImportError:
+        print("Using dm1_translations_seed.py (90 strings x 17 locales)")
+        table_dict = TRANSLATIONS
     po_dir = os.path.dirname(os.path.abspath(__file__))
     total_updated = 0
-    for lang, table in TRANSLATIONS.items():
+    for lang, table in table_dict.items():
         path = os.path.join(po_dir, f'dm1.{lang}.po')
         if not os.path.exists(path):
             print(f"SKIP {lang}: {path} not found")
@@ -1155,7 +1160,7 @@ def main():
         with open(path, 'w', encoding='utf-8') as f:
             f.write(new_text)
         total_updated += updated
-        print(f"  {lang}: updated {updated}/{len(SEED_MSGIDS)} msgids")
+        print(f"  {lang}: updated {updated} msgids")
     print(f"Total translations applied: {total_updated}")
 
 

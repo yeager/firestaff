@@ -5,92 +5,92 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Attack"
-msgstr "Atak"
+msgstr "Atakuj"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "Rzuć zaklęcie"
 
 msgid "Track %d"
-msgstr ""
+msgstr "Poziom %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s zginął"
 
 msgid "Continue"
-msgstr ""
+msgstr "Kontynuuj"
 
 msgid "Defend"
-msgstr ""
+msgstr "Broń się"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "Te drzwi są zamknięte"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "Znalazłeś Ognistą Laskę!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "Gratulacje! Uratowałeś królestwo!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "Twoja drużyna zginęła"
 
 msgid "Hall of Champions"
-msgstr "Sala Mistrzów"
+msgstr "Sala Bohaterów"
 
 msgid "Health"
 msgstr "Zdrowie"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "Ekwipunek pełny"
 
 msgid "A key is required"
-msgstr ""
+msgstr "Wymagany klucz"
 
 msgid "Level %d"
-msgstr ""
+msgstr "Poziom %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s awansował"
 
 msgid "Load Game"
-msgstr ""
+msgstr "Wczytaj"
 
 msgid "Mana"
-msgstr ""
+msgstr "Mana"
 
 msgid "New Game"
-msgstr ""
+msgstr "Nowa gra"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "Za mało many"
 
 msgid "Recruit"
 msgstr "Rekrutuj"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "Reinkarnuj"
 
 msgid "Rest"
-msgstr ""
+msgstr "Odpoczynek"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "Wskrześ"
 
 msgid "Save Game"
-msgstr ""
+msgstr "Zapisz"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "Wybierz bohatera"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "Zaklęcie nie powiodło się"
 
 msgid "Stamina"
-msgstr ""
+msgstr "Wytrzymałość"
 
 msgid "Party is full"
-msgstr ""
+msgstr "Drużyna pełna"
 
 msgid "Use Item"
-msgstr ""
+msgstr "Użyj przedmiotu"
 
