@@ -5985,6 +5985,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/asset-validate/coverage_by_game.py
         )
         add_test(
+            NAME pass1057_dm1_amiga22_dungeonb_asset_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1057_dm1_amiga22_dungeonb_asset_lock.py
+        )
+        add_test(
             NAME dm2_v1_phase0_provenance_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_phase0_provenance_gate.py
         )
