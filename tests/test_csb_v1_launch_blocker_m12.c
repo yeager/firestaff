@@ -12,11 +12,19 @@ static void force_csb_available(M12_StartupMenuState* state) {
     state->entries[1].kind = M12_MENU_ENTRY_GAME;
     state->entries[1].sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG;
     state->entries[1].available = 1;
-    /* Reset to MAIN view: M12_StartupMenu_InitWithDataDir triggers a
-     * "no game data" popup that overlays the main view, which would
-     * intercept clicks as MESSAGE_DISMISS instead of MAIN_CARD. */
+    /* Suppress the NO GAME DATA FOUND popup that m12_show_no_game_data_popup()
+     * raised during M12_StartupMenu_InitWithDataDir() because the test data
+     * dir (/tmp/firestaff-test-no-assets) is empty. The fixture manually
+     * arranges CSB availability, so we treat it as if a candidate was found,
+     * then return the view to MAIN so the card-click path is reachable. */
+    state->assetStatus.originalFileCandidateFound = 1;
     state->view = M12_MENU_VIEW_MAIN;
-    state->selectedIndex = 0;
+    state->activatedIndex = -1;
+    state->launchRequested = 0;
+    state->quickResumeLaunchRequested = 0;
+    state->messageLine1 = "";
+    state->messageLine2 = "";
+    state->messageLine3 = "";
     state->assetStatus.csbAvailable = 1;
     state->assetStatus.versions[1][0].gameId = "csb";
     state->assetStatus.versions[1][0].versionId = "atari-st-v20";

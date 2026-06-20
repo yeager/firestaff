@@ -149,6 +149,16 @@ int  M11_Render_PumpEvents(void);
 int  M11_Render_HandleResize(int newWidth, int newHeight);
 int  M11_Render_GetWindowWidth(void);
 int  M11_Render_GetWindowHeight(void);
+
+/* Direct SDL handle accessors for probes + test harnesses that need to
+   read back rendered pixels (e.g. firestaff_v1_dm_title_palette_silicon_probe
+   uses SDL_RenderReadPixels on the active renderer to verify the Apple
+   Silicon Metal path matches the CPU-side F9011_VGA_GetSpecialColorRgb_Compat
+   lookup). Returns NULL when the module is not initialised. */
+struct SDL_Window;
+struct SDL_Renderer;
+struct SDL_Window*   M11_Render_GetWindow(void);
+struct SDL_Renderer* M11_Render_GetRenderer(void);
 int  M11_Render_SetWindowSize(int width, int height);
 int  M11_Render_SetScaleMode(int scaleMode);
 int  M11_Render_GetScaleMode(void);
