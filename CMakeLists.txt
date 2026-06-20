@@ -7516,6 +7516,28 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_pak_decode
     )
 
+    # ── CSB Utility Disk .CMP file decoder (Tier 2 #6) ──
+    # Verifies src/shared/firestaff_cmp_decode.c parses the
+    # 496-byte CMP format used by Chaos Strikes Back's
+    # Champion Editor: 32x29 4bpp portrait + champion name
+    # + title. The decoder validates file size, magic
+    # (cmp_i_C == cmp_i_E == 0), and Name/Title character
+    # set (uppercase A-Z, digits, space, NUL).
+    add_executable(test_firestaff_cmp_decode
+        tests/test_firestaff_cmp_decode.c
+        src/shared/firestaff_cmp_decode.c
+    )
+    target_include_directories(test_firestaff_cmp_decode PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_cmp_decode PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_cmp_decode_unit
+        COMMAND test_firestaff_cmp_decode
+    )
+
     # ── DM1 V1 graphics LZW round-trip test (Tier 2 #4 from FIRESTAFF_GAP_LIST) ──
     # Verifies the existing m11_gfx_lzw_decompress() in
     # src/dm1/dm1_v1_graphics_loader_pc34_compat.c by:
