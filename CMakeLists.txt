@@ -8553,6 +8553,66 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass851_dm1_v1_palette_changes_mouse_pointer_icon_shadow PROPERTIES DEPENDS dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat)
         add_test(
+            NAME pass852_dm1_v1_mandatory_graphic_indices
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass852_dm1_v1_mandatory_graphic_indices_pc34_compat.py
+        )
+        set_tests_properties(pass852_dm1_v1_mandatory_graphic_indices PROPERTIES DEPENDS dm1_v1_mandatory_graphic_indices_pc34_compat)
+        add_test(
+            NAME pass853_dm1_v1_wound_defense_factor
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass853_dm1_v1_wound_defense_factor_pc34_compat.py
+        )
+        set_tests_properties(pass853_dm1_v1_wound_defense_factor PROPERTIES DEPENDS dm1_v1_wound_defense_factor_pc34_compat)
+        add_test(
+            NAME pass854_dm1_v1_underscore_character_string
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass854_dm1_v1_underscore_character_string_pc34_compat.py
+        )
+        set_tests_properties(pass854_dm1_v1_underscore_character_string PROPERTIES DEPENDS dm1_v1_underscore_character_string_pc34_compat)
+        add_test(
+            NAME pass855_dm1_v1_rename_champion_input_character_string
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass855_dm1_v1_rename_champion_input_character_string_pc34_compat.py
+        )
+        set_tests_properties(pass855_dm1_v1_rename_champion_input_character_string PROPERTIES DEPENDS dm1_v1_rename_champion_input_character_string_pc34_compat)
+        add_test(
+            NAME pass856_dm1_v1_reincarnate_special_characters
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass856_dm1_v1_reincarnate_special_characters_pc34_compat.py
+        )
+        set_tests_properties(pass856_dm1_v1_reincarnate_special_characters PROPERTIES DEPENDS dm1_v1_reincarnate_special_characters_pc34_compat)
+        add_test(
+            NAME pass857_dm1_v1_bitmap_arrow_pointer
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass857_dm1_v1_bitmap_arrow_pointer_pc34_compat.py
+        )
+        set_tests_properties(pass857_dm1_v1_bitmap_arrow_pointer PROPERTIES DEPENDS dm1_v1_bitmap_arrow_pointer_pc34_compat)
+        add_test(
+            NAME pass858_dm1_v1_bitmap_hand_pointer
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass858_dm1_v1_bitmap_hand_pointer_pc34_compat.py
+        )
+        set_tests_properties(pass858_dm1_v1_bitmap_hand_pointer PROPERTIES DEPENDS dm1_v1_bitmap_hand_pointer_pc34_compat)
+        add_test(
+            NAME pass859_dm1_v1_square_type_to_event_type
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass859_dm1_v1_square_type_to_event_type_pc34_compat.py
+        )
+        set_tests_properties(pass859_dm1_v1_square_type_to_event_type PROPERTIES DEPENDS dm1_v1_square_type_to_event_type_pc34_compat)
+        add_test(
+            NAME pass860_dm1_v1_box_champion_icons
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass860_dm1_v1_box_champion_icons_pc34_compat.py
+        )
+        set_tests_properties(pass860_dm1_v1_box_champion_icons PROPERTIES DEPENDS dm1_v1_box_champion_icons_pc34_compat)
+        add_test(
+            NAME pass861_dm1_v1_bar_graph_masks
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass861_dm1_v1_bar_graph_masks_pc34_compat.py
+        )
+        set_tests_properties(pass861_dm1_v1_bar_graph_masks PROPERTIES DEPENDS dm1_v1_bar_graph_masks_pc34_compat)
+        add_test(
+            NAME pass862_dm1_v1_bar_graph_byte_offsets
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass862_dm1_v1_bar_graph_byte_offsets_pc34_compat.py
+        )
+        set_tests_properties(pass862_dm1_v1_bar_graph_byte_offsets PROPERTIES DEPENDS dm1_v1_bar_graph_byte_offsets_pc34_compat)
+        add_test(
+            NAME pass863_dm1_v1_slot_drop_order
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass863_dm1_v1_slot_drop_order_pc34_compat.py
+        )
+        set_tests_properties(pass863_dm1_v1_slot_drop_order PROPERTIES DEPENDS dm1_v1_slot_drop_order_pc34_compat)
+        add_test(
             NAME pass840_dm1_v1_box_entrance_doors
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass840_dm1_v1_box_entrance_doors_pc34_compat.py
         )
@@ -8866,5 +8926,86 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_square_type_to_event_ty
     add_test(
         NAME dm1_v1_square_type_to_event_type_pc34_compat
         COMMAND test_dm1_v1_square_type_to_event_type_pc34_compat
+    )
+endif()
+
+# pass860 — DM1 V1 box-champion-icons: G0054_ai_Graphic562_Box_ChampionIcons[16]
+# — 4 boxes × {X, Y, W, H} for on-screen champion-icon rectangles.
+# Source-locked against DATA.C:92/431/1112 + CHAMDRAW.C:830/1022/1025/1028
+# + CHAMPION.C:1656 + IO.C:2433/2619/2677. Disjoint from pass784-859.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_box_champion_icons_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_box_champion_icons_pc34_compat.c")
+    add_executable(test_dm1_v1_box_champion_icons_pc34_compat
+        tests/test_dm1_v1_box_champion_icons_pc34_compat.c
+        src/dm1/dm1_v1_box_champion_icons_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_champion_icons_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_champion_icons_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_champion_icons_pc34_compat
+        COMMAND test_dm1_v1_box_champion_icons_pc34_compat
+    )
+endif()
+
+# pass861 — DM1 V1 bar-graph-masks: G0055_aaaui_Graphic562_BarGraphMasks[4][3][2]
+# — 4 champions × 3 bar graphs (health/mana/stamina) × 2-mask bitmask
+# pairs for status-panel bar-graph rendering. Source-locked against
+# DATA.C:93-98 + CHAMDRAW.C:204/207/208. Disjoint from pass784-860.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_bar_graph_masks_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_bar_graph_masks_pc34_compat.c")
+    add_executable(test_dm1_v1_bar_graph_masks_pc34_compat
+        tests/test_dm1_v1_bar_graph_masks_pc34_compat.c
+        src/dm1/dm1_v1_bar_graph_masks_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_bar_graph_masks_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_bar_graph_masks_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_bar_graph_masks_pc34_compat
+        COMMAND test_dm1_v1_bar_graph_masks_pc34_compat
+    )
+endif()
+
+# pass862 — DM1 V1 bar-graph-byte-offsets: G0056_aaui_Graphic562_BarGraphByteOffsets[4][3]
+# — 4 champions × 3 bar graphs (health/mana/stamina) byte offsets into
+# the per-byte bar-graph renderer. Source-locked against DATA.C:99-104
+# + CHAMDRAW.C:204/208. Disjoint from pass784-861.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_bar_graph_byte_offsets_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_bar_graph_byte_offsets_pc34_compat.c")
+    add_executable(test_dm1_v1_bar_graph_byte_offsets_pc34_compat
+        tests/test_dm1_v1_bar_graph_byte_offsets_pc34_compat.c
+        src/dm1/dm1_v1_bar_graph_byte_offsets_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_bar_graph_byte_offsets_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_bar_graph_byte_offsets_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_bar_graph_byte_offsets_pc34_compat
+        COMMAND test_dm1_v1_bar_graph_byte_offsets_pc34_compat
+    )
+endif()
+
+# pass863 — DM1 V1 slot-drop-order: G0057_ai_Graphic562_SlotDropOrder[30]
+# — 30-entry slot drop-order priority table used by
+# F0300_CHAMPION_GetObjectRemovedFromSlot during forced-drop. Source-locked
+# against DATA.C:105/436-466/1119 + CHAMPION.C:1546 + DEFS.H C00_SLOT..
+# C29_SLOT constants. Disjoint from pass784-862.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_slot_drop_order_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_slot_drop_order_pc34_compat.c")
+    add_executable(test_dm1_v1_slot_drop_order_pc34_compat
+        tests/test_dm1_v1_slot_drop_order_pc34_compat.c
+        src/dm1/dm1_v1_slot_drop_order_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_slot_drop_order_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_slot_drop_order_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_slot_drop_order_pc34_compat
+        COMMAND test_dm1_v1_slot_drop_order_pc34_compat
     )
 endif()
