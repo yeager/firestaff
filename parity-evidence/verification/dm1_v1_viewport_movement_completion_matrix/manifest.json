@@ -21,12 +21,12 @@
         "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "[ 96%] Built target firestaff_m10",
+        "[100%] Built target firestaff_m10",
         "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
         "[100%] Built target firestaff_m10",
-        "[  0%] Built target test_m11_v1_turning_presentation_pc34_compat",
-        "Built target firestaff_m10",
-        "[  0%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
+        "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
+        "[ 96%] Built target firestaff_m10",
+        "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
       "returncode": 0
@@ -149,7 +149,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:7449-7628; main_loop_m11.c:2547-2559; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
+        "- Firestaff: m11_game_view.c:7449-7628; main_loop_m11.c:2534-2546; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -409,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-20T09:16:16.576242+00:00"
+  "timestampUtc": "2026-06-20T11:46:32.275699+00:00"
 }
