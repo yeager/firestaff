@@ -7489,6 +7489,33 @@ if(BUILD_TESTING)
         COMMAND test_csb_hidden_code_skip_table
     )
 
+    # ── Atari ST PAK decoder test (Tier 2 #5 from FIRESTAFF_GAP_LIST) ──
+    # Verifies src/shared/firestaff_pak_decode.c by:
+    #   * parsing the PAK + Atari ST headers (magic 0x601A)
+    #   * decoding the 1920-word most-frequent-words table
+    #   * running the greatstone-spec nibble decoder:
+    #       nibble 0xF  -> 4 nibbles -> 2 literal bytes
+    #       nibble 8..E -> 12-bit index into table 128..1919
+    #       nibble 0..7 ->  8-bit index into table 0..127
+    #   * the same algorithm is used by FTL HUNK_CODE in the
+    #     FTL container format (greatstone d_ftl.html), so
+    #     this decoder is a building block for Tier 3's
+    #     full FTL container support
+    add_executable(test_firestaff_pak_decode
+        tests/test_firestaff_pak_decode.c
+        src/shared/firestaff_pak_decode.c
+    )
+    target_include_directories(test_firestaff_pak_decode PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_pak_decode PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_pak_decode_unit
+        COMMAND test_firestaff_pak_decode
+    )
+
     # ── DM1 V1 graphics LZW round-trip test (Tier 2 #4 from FIRESTAFF_GAP_LIST) ──
     # Verifies the existing m11_gfx_lzw_decompress() in
     # src/dm1/dm1_v1_graphics_loader_pc34_compat.c by:
