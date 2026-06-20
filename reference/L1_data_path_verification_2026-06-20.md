@@ -8,15 +8,42 @@ matchar nu en kanonisk hash och visas som READY i default-scan.
 Frågan Tier 1 #5 ställer: fungerar dessa path:er som fristående
 launch-källor med `--data-dir <path>`?
 
-## Resultat (2026-06-20, post-rebuild)
+## Resultat v1 (2026-06-20 17:16, före Tier 1 #6 fix)
+
+| Path | Förväntat | Faktiskt `--scan-data` med `--data-dir <path>` |
+|---|---|---|
+| `dm1-extras/legacy-dos` | READY (DM1) | ✅ READY, `FOUND .../DATA/GRAPHICS.DAT` |
+| `csb-extras/legacy-amiga-dms` | READY (CSB) | ✅ READY, `FOUND ...Meynaf/DungeonMaster/Graphics.DAT` |
+| `nexus-extras/saturn-ja` | READY (Nexus) | ⚠️ MISSING vid `--data-dir` — hittas bara i default-scope |
+| `theron-extras/japan` | READY (Theron) | ⚠️ MISSING vid `--data-dir` — hittas bara i default-scope |
+| `dm1-extras/pc-3.4-en-3.5in` | READY (DM1) | ⚠️ MISSING — `.raw`-filer (CTRaw emulator-format) scanner mappar inte |
+
+## Resultat v2 (2026-06-20 18:30, efter Tier 1 #6 fix)
+
+Tre ändringar löste de tre MISSING-raders:
+
+1. `src/shared/asset_find_by_hash.c::scan_iso_by_md5[,_list]`:
+   whole-file MD5 fallback för .bin-filer utan ISO 9660 PVD
+   (Nexus Track 1.bin och Theron Track 02.bin är raw CD-data,
+   inte ISO images).
+2. `src/shared/asset_status_m12.c::g_requiredFiles[]`: Theron
+   track02-entry får hash-ankarpunkt (`b7afb338…` JP primary).
+3. `src/shared/asset_status_m12.c::m12_fill_required_files`:
+   `fileStatus->required = spec->matchAnyVersion ? 0 : 1` —
+   matchAnyVersion=true innebär nu att filen är soft/informativ
+   och inte blockerar game availability (Theron pce-en-versionen
+   kan nu markera Theron AVAILABLE även när bara US-hash finns).
 
 | Path | Förväntat | Faktiskt `--scan-data` med `--data-dir <path>` |
 |---|---|---|
 | `dm1-extras/legacy-dos` | READY (DM1) | ✅ READY, `FOUND .../DATA/GRAPHICS.DAT` |
 | `csb-extras/legacy-amiga-dms` | READY (CSB) | ✅ READY, `FOUND ...Meynaf/DungeonMaster/Graphics.DAT` |
 | `nexus-extras/saturn-ja` | READY (Nexus) | ✅ READY, `FOUND ...Track 1).bin::DM.BIN` |
-| `theron-extras/japan` | READY (Theron) | ✅ READY, `FOUND ...Track 02).bin` |
-| `dm1-extras/pc-3.4-en-3.5in` | READY (DM1) | ❌ MISSING — fel katalogstruktur (sub-3.5"-floppy layout, scanner letar efter `/DATA/GRAPHICS.DAT` men detta är en annan katalogstruktur) |
+| `theron-extras/japan` | READY (Theron) | ✅ READY, `FOUND ...Track 02).bin` (JP-hash match) |
+| `theron-extras/usa` | READY (Theron) | ✅ READY, `FOUND ...Track 02).bin` (US-hash match via pce-en version-spec) |
+| `dm1-extras/pc-3.4-en-3.5in` | READY (DM1) | ⚠️ fortfarande MISSING — `.raw`-filer (CTRaw emulator-format) behöver separat hantering (se Tier 1 #7 nedan) |
+
+**Resultat: 5 av 6 paths READY, 1 kvar (CTRaw .raw-format)**
 
 ## Vad detta betyder
 

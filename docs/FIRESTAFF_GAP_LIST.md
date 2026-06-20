@@ -384,21 +384,17 @@ order:
    paths have been launched). Open until each alternative path
    passes an `m11_phase_a` boot probe with the same assertion set
    the canonical paths use.
-6. **Scanner path-naming limitations**: as of 2026-06-20 the
-   scanner's filename patterns (`g_nexusArchiveNames`,
-   `g_theronTrack02Names`) only recognise a small set of
-   canonical filenames (`DM.BIN`, `SEGADATA.BIN`,
-   `Theron's Quest (Japan) (Track 02).bin`, etc.). Real-asset
-   extractions preserve source filenames like
-   `Dungeon Master Nexus (Japan) (Track 1).bin` and
-   `Dungeon Master - Theron's Quest (Japan) (Track 02).bin`,
-   which do NOT match the patterns, so `--data-dir` cannot find
-   them in isolation. Workaround: scan with default scope (no
-   `--data-dir`) which walks the whole root. Permanent fix:
-   extend the scanner's container-walk to also try
-   `m12_scan_inside_bin` for any `Track NN.bin` file in
-   search roots (i.e. treat all `.bin` files as candidate
-   containers unless the filename is on a deny-list).
+6. ~~**Scanner path-naming limitations**:~~ CLOSED as NO-GAP
+   2026-06-20. The scanner already matches on MD5 via
+   `asset_find_by_md5` and `scan_iso_by_md5` now also falls
+   back to whole-file MD5 for non-ISO-9660 .bin files (Theron
+   Track 02, raw Saturn tracks). Verified: `--data-dir
+   ~/.firestaff/data/nexus-extras/saturn-ja` reports Nexus
+   READY (`FOUND ...Track 1).bin::DM.BIN`) and `--data-dir
+   ~/.firestaff/data/theron-extras/{japan,usa}` reports
+   Theron READY (`FOUND ...Track 02).bin`). See
+   `reference/L1_data_path_verification_2026-06-20.md`
+   Resultat v2 för verifieringsdata.
 3. **Mirror dmweb /community/documentation/ for offline research**
    — DONE 2026-06-20 (commit pending; 43 pages mirrored at
    `reference/dmweb-community-docs/` with INDEX.md + index.json +
