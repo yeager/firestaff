@@ -373,7 +373,10 @@ order:
    `compare_to_greatstone.py`.
 2. **Add `compare_to_greatstone.py` summary mode** that prints a
    per-game "data gap" view (which files in VERIFIED_HASHES.md are
-   not on disk).
+   not on disk). — DONE (new `--summary` mode in
+   `tools/asset-validate/compare_to_greatstone.py`: prints
+   per-game TOTAL/FOUND/MISS table from any data root; default to
+   `~/.firestaff/data`). Run: `python3 tools/asset-validate/compare_to_greatstone.py --summary`.
 5. **Verify all `--scan-data` READY-path:er are actually
    launchable** by M11. As of 2026-06-20 the scanner reports 4
    alternative READY-path:er (DM1 legacy-dos PC34, CSB Amiga 3.3
@@ -421,7 +424,7 @@ order:
    firestaff_m10 source list). — DONE (commit 3588798f, added
    `image_backend_pc34_compat_globals.c` instead which provides the
    same symbols without dragging in the legacy frontend)
-9. Lefthook-in-CI install step.
+9. Lefthook-in-CI install step. — DONE (`.github/workflows/verify.yml:227-253` installs Go + lefthook via `go install github.com/evilmartians/lefthook@latest`, then runs `lefthook run ci` for po_layout + hash_harmonization as CI sanity gate).
 10. **`--data-dir` override in `m12_build_search_roots`** — DONE
     2026-06-20 (commit `6a7eccdc`). Explicit `--data-dir` no longer
     silently falls back to `~/.firestaff/data`; runtime
