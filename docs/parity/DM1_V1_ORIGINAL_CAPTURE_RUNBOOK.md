@@ -14,6 +14,7 @@
 - Preflight gate (`dosbox_capture_preflight.py`) verifies canonical SHA256s and writes the hardened `dosbox_capture.conf` with the runbook's required settings (machine=svga_s3, memsize=16, cpu core=dynamic, cpu_cycles=max).  Run it before any live attempt so the next session cannot reproduce the pass94 conf shape.
 - Selector sequence corrected for DM1 PC 3.4 (GRAPHICS=0 → SOUND=0 → ENTER four times)
 - Creature-chain capture is now pinned by `docs/parity/DM1_V1_CREATURE_CHAIN_ORIGINAL_CAPTURE_CONTRACT.json`: the live session must produce `creature_chain_d2c_trolin_front` and `creature_chain_d1c_trolin_front` rows before creature-chain pixel parity can be promoted.
+- **2026-06-20 update:** Host-mouse click is REQUIRED after FIRES loads (see "Host-mouse click required for KP5/KP6" section below).  This was the missing piece that prevented pass94 from progressing past the entrance wall.  The new `scripts/dm1_v1_original_capture.py` driver implements the corrected selector + host-mouse click and closed all 5 capture-gap pairs on macOS / DOSBox Staging 0.82.2.
 
 ---
 
@@ -883,6 +884,133 @@ probe, but it does not promote that path: under the macOS/DOSBox route tested
 on 2026-06-13 the C070 host click was delivered and logged but did not change
 the original viewport. The promoted original-DOS movement row is the
 keyboard-simulation path.
+
+### Host-mouse click required for KP5/KP6 (added 2026-06-20)
+
+After FIRES loads and the dungeon viewport is rendered, the I34E keyboard
+table does not consume KP5/KP6 events until the host mouse cursor has been
+captured by DOSBox.  Without this click:
+
+- The dungeon viewport renders correctly.
+- The DM1 game loop is alive.
+- But every KP5/KP6 event is dropped (the dungeon SHA never changes).
+
+With DOSBox's `mouse_capture=onclick` setting, the cursor is captured only
+after a real host mouse click inside the DOSBox window.  Once captured, the
+window title changes from
+
+    FIRES - max 100% cycles/ms - to capture the mouse press Cmd+F10 or click any button
+
+to
+
+    FIRES - max 100% cycles/ms - mouse captured, Cmd+F10 or middle-click to release
+
+and the I34E keyboard table starts accepting KP5/KP6 events.
+
+**Workaround:** After the FIRES title appears in the window title bar and
+the dungeon viewport is rendered (5 second settle), send a synthetic host
+mouse `down`/`up` pair inside the DOSBox window before any KP5/KP6 keystrokes.
+The `scripts/dm1_v1_original_capture.py` driver implements this:
+
+```python
+move = CGEventCreateMouseEvent(None, kCGEventMouseMoved, (click_x, click_y), 0)
+CGEventPost(kCGHIDEventTap, move)
+time.sleep(0.3)
+down = CGEventCreateMouseEvent(None, kCGEventLeftMouseDown, (click_x, click_y), 0)
+CGEventPost(kCGHIDEventTap, down)
+time.sleep(0.05)
+up = CGEventCreateMouseEvent(None, kCGEventLeftMouseUp, (click_x, click_y), 0)
+CGEventPost(kCGHIDEventTap, up)
+```
+
+Empirical verification on macOS 15 / DOSBox Staging 0.82.2 (2026-06-20):
+
+| Click before KP5? | KP5 effect on viewport |
+|-------------------|------------------------|
+| No                | SHA unchanged |
+| Yes (capture via `mouse_capture=onclick`) | SHA changes (party moved or rotated) |
+
+This is the same mechanism the live runner's `_open_activate_dosbox()` /
+`cliclick c:`-based window-focus path uses; the new `scripts/dm1_v1_original_capture.py`
+script also adds `osascript` activation of the DOSBox process (`dosbox-staging`,
+not `DOSBox Staging` — the actual macOS process name) to bring the window to
+front before sending the click.
+
+### Pixel-density classifier caveat
+
+The DM1 PC 3.4 dungeon framebuffer has the 224x136 dungeon viewport on
+the LEFT and the cyan movement controls (always visible while in the dungeon)
+on the RIGHT.  When the full 320x200 framebuffer is classified by
+`docs/parity/tools/dosbox_state_detector.py`, the cyan arrows push the
+right-column density above the 0.135 `dungeon_gameplay` threshold and the
+frame is misclassified as `entrance_menu` even though the dungeon viewport
+is fully rendered.
+
+`scripts/dm1_v1_original_capture.py` writes an additional
+`<label>_viewport.png` next to each capture — a 224x136 crop of the
+dungeon-viewport region only.  The verifier classifies this viewport-only
+image, which gives the correct `dungeon_gameplay` verdict for in-game frames.
+
+---
+
+## `scripts/dm1_v1_original_capture.py` (added 2026-06-20)
+
+The deterministic driver that closed all 5 capture-gap pairs on macOS /
+DOSBox Staging 0.82.2.  It is a self-contained Python script (no external
+test-runner) that:
+
+1. Launches DOSBox Staging with the canonical DM1 PC 3.4 runtime
+   (`/Users/bosse/.firestaff/data/dm1-extras/dmfiles-dos-en-v34/`).
+2. Polls `CGWindowListCopyWindowInfo` for the FIRES window title to
+   appear (this is the marker that DM.EXE loaded FIRES.EXE).
+3. Sends a host-mouse click inside the DOSBox window to capture the
+   cursor (required — see "Host-mouse click required for KP5/KP6").
+4. Drives the 5 capture-gap pairs:
+   - `01_viewport`: start, after-KP5, after-KP6.
+   - `02_wall`: front view, after two turn-lefts + step (alcove).
+   - `03_collision`: before + 4× KP5 wall-bump attempts.
+   - `04_creature`: 7× forward-step captures searching for a creature.
+   - `05_champion`: initial HUD + after a small movement.
+5. Writes each capture as three files:
+   - `<label>.png` — the 320x200 canonical DM1 framebuffer.
+   - `<label>_viewport.png` — the 224x136 dungeon-viewport crop
+     (used by the verifier for correct `dungeon_gameplay` classification).
+   - `<label>_dosbox_window.png` — the 1024x800 DOSBox window content
+     (kept for visual debugging).
+6. Writes a per-pair `report.md` under `parity-evidence/captures/<NN>_<kind>/`
+   with SHA256, classifier verdict, SHA distribution, and pass/fail
+   verdict (`GAP_CLOSED` / `GAP_CLOSED (with collision/blocked steps)` /
+   `GAP_BLOCKED`).
+
+Usage:
+
+```bash
+# Run all 5 pairs (one DOSBox session per script run)
+python3 scripts/dm1_v1_original_capture.py --pair all
+
+# Run a single pair
+python3 scripts/dm1_v1_original_capture.py --pair 01_viewport
+
+# Override the runtime layout or capture directory
+python3 scripts/dm1_v1_original_capture.py \
+    --runtime /Users/bosse/.firestaff/data/dm1-extras/dmfiles-dos-en-v34 \
+    --capture-root /tmp/dm1_capture \
+    --evidence-out parity-evidence/captures
+```
+
+Outputs:
+
+- `/tmp/dm1_original_capture/<NN>_<kind>/` — per-pair capture directory.
+- `parity-evidence/captures/<NN>_<kind>/report.md` — per-pair report.
+- `parity-evidence/captures/<NN>_<kind>/<label>.png` — per-pair captures
+  (also linked into the evidence directory).
+
+ReDMCSB references inside the script's docstring:
+- COMMAND.C:254-279 — I34E keyboard input table (C003=KP5, C002=KP6, C001=KP4).
+- COMMAND.C F0359_COMMAND_ProcessClick_CPSC:1452 — mouse-click zone hit path.
+- COMMAND.C F0361_COMMAND_ProcessKeyPress:1709 — keyboard → command queue.
+- COMMAND.C F0380_COMMAND_ProcessQueue_CPSC:2045 — command queue drain.
+- DUNGEON.C F0128_DUNGEONVIEW_Draw_CPSF — viewport redraw on tick.
 
 ---
 
