@@ -1568,6 +1568,25 @@ foreach(_pool_probe_src IN ITEMS
     endif()
 endforeach()
 
+# DM1 V1 champion-mirror VISUAL CAPTURE probe — takes DATA_DIR OUT_DIR,
+# unlike the foreach probes above (DATA_DIR only). Saves 9 PPMs (one per
+# Hall of Champions pose: 6 with mirror ordinals + 3 corridor negatives)
+# plus a JSON+MD manifest for visual-evidence readiness against the
+# 'champion mirrors not visible' P1 bug ticket. The probe is not gated
+# by WORKSPACE_DATA_DIR — callers pass their own output directory.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_capture_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_capture_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_capture_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_capture_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_capture_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    # NOTE: no add_test() — this probe writes files and takes an OUT_DIR
+    # arg, so it's intended for manual visual-evidence capture runs, not
+    # for ctest automation. To exercise it: ./build/firestaff_dm1_v1_champion_mirror_capture_probe ~/.firestaff/data/dm1 /tmp/captures
+endif()
+
 # DM1 V1 champion-panel damage-flash-decay pc34_compat runtime test
 # (companion of the pool's 9 probes; same M11/M12 stack).
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c"
