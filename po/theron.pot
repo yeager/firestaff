@@ -1,0 +1,178 @@
+# Theron's Quest (PC Engine CD) string template.
+# Canonical English source-string template for Theron's Quest V1 runtime.
+#
+# Domain: theron
+# Covers: Theron V1 in-game HUD, runtime messages, prompts, labels, menus,
+#         item/creature names, dungeon depth/title text, world-serialize
+#         save/load labels, shop purchase text.
+#
+# Source notes: Theron's Quest was published by Westwood Associates /
+# NEC for PC Engine CD-ROM2 in 1992 (US) / 1991 (JP). The game used a
+# small text surface (compact HuC6280 ADPCM-streamed dialogue + HUD)
+# compared to DM1. This .pot captures the strings the Firestaff V1
+# runtime surfaces through the M11 game view.
+#
+# Track 02 (PCE CD data track) holds the game assets; SHA256 anchors
+# for JP Rev 1 (397039af02d50d15c70b74088eb8a1cb) and US ISO
+# (3d8b78571dcd0e6eb8eb4b01eeb7fbba) live in src/theron/theron_v1_track02.c.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-theron\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-20 06:50+0200\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\\n"
+
+#. Direction / compass
+msgid "NORTH"
+msgstr ""
+
+#. Direction / compass
+msgid "EAST"
+msgstr ""
+
+#. Direction / compass
+msgid "SOUTH"
+msgstr ""
+
+#. Direction / compass
+msgid "WEST"
+msgstr ""
+
+#. Stairs
+msgid "STAIRS"
+msgstr ""
+
+#. Pit
+msgid "PIT"
+msgstr ""
+
+#. Teleporter
+msgid "TELEPORTER"
+msgstr ""
+
+#. Door
+msgid "DOOR"
+msgstr ""
+
+#. Inventory / item action
+msgid "PICK UP"
+msgstr ""
+
+#. Inventory / item action
+msgid "DROP"
+msgstr ""
+
+#. Inventory / item action
+msgid "USE"
+msgstr ""
+
+#. Combat action
+msgid "ATTACK"
+msgstr ""
+
+#. Combat action
+msgid "DEFEND"
+msgstr ""
+
+#. Combat action
+msgid "CAST SPELL"
+msgstr ""
+
+#. Status label
+msgid "NO FOCUS"
+msgstr ""
+
+#. Status label
+msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
+msgstr ""
+
+#. Generic
+msgid "UNKNOWN"
+msgstr ""
+
+#. Generic
+msgid "NONE"
+msgstr ""
+
+#. Save / load
+msgid "SAVE GAME"
+msgstr ""
+
+#. Save / load
+msgid "LOAD GAME"
+msgstr ""
+
+#. Shop
+msgid "SHOP"
+msgstr ""
+
+#. Shop
+msgid "NOT ENOUGH GOLD"
+msgstr ""
+
+#. Shop
+msgid "PURCHASED %s FOR %d GOLD"
+msgstr ""
+
+#. Dungeon progression
+msgid "T%u: ASCENDED TO LEVEL %d"
+msgstr ""
+
+#. Dungeon progression
+msgid "T%u: DESCENDED TO LEVEL %d"
+msgstr ""
+
+#. Dungeon progression
+msgid "T%u: FELL INTO PIT"
+msgstr ""
+
+#. Dungeon progression
+msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
+msgstr ""
+
+#. Teleporter chain
+msgid "T%u: TELEPORTER HAS NO THING DATA"
+msgstr ""
+
+#. Teleporter chain
+msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
+msgstr ""
+
+#. Teleporter chain
+msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr ""
+
+#. Combat log
+msgid "T%u: %s CASTS %s"
+msgstr ""
+
+#. Combat log
+msgid "T%u: %s HITS %s FOR %d"
+msgstr ""
+
+#. Combat log
+msgid "T%u: %s MISSES %s"
+msgstr ""
+
+#. Altar
+msgid "OFFERING ACCEPTED"
+msgstr ""
+
+#. Inventory capacity
+msgid "INVENTORY FULL"
+msgstr ""
+
+#. Sound / feedback
+msgid "OUT OF RANGE"
+msgstr ""
+
+#. Generic message
+msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr ""
+
+#. Status footer
+msgid "HP AND STAMINA RECOVER SLOWLY"
+msgstr ""

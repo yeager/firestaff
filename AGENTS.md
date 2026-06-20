@@ -225,5 +225,5 @@ Before pushing from the main session, run the smallest relevant local verificati
 - **300+ source files**, **245K+ lines of C**
 - **365+ headers**, **149+ tests**, **80+ probes**
 - CI covers M10 verify, warnings, CMake builds, Phase A, audio probe, and determinism
-- **20 languages** supported in the launcher
+- **Localization:** M12 launcher has a 19-language UI cycle (`po/startup-menu.<lang>.po`); DM1 in-game strings load via a 19-language candidate list (`po/dm1.<lang>.po`) and fall back to English. Translation coverage is currently Swedish-only-completed; other locales ship as `msginit`-generated scaffolds pending translator pass. See `po/README.md` + `po/validate_po_layout.sh` for the layout contract.
 - **5 games:** DM1, CSB, DM2, DM Nexus, Theron's Quest

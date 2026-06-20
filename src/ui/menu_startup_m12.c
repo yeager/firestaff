@@ -272,9 +272,26 @@ static const M12_ResolutionSize g_resolutionSizes[M12_RES_COUNT] = {
     {3840, 2160}
 };
 static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
-static const char* g_languages[] = {_("EN"), _("SV"), _("FR"), _("DE"), _("JA"), _("ZH")};
+/* UI language cycle.  Order = display order in the LANGUAGE row.
+ * Codes are also used to resolve `po/startup-menu.<code>.po` at runtime.
+ * Codes match the second column of the dm1.<lang>.po 19-language list.
+ *
+ * Fallback behaviour (see m12_resolve_catalog_path):
+ *   - localeIndex 0 (EN) and missing .po files fall through to the English
+ *     source string; we don't crash, just show the key.
+ *   - SV is the only language with substantial translations today; other
+ *     locales get populated as the i18n sweep progresses.
+ */
+static const char* g_languages[] = {
+    _("EN"), _("SV"), _("FR"), _("DE"), _("JA"), _("ZH"),
+    _("CS"), _("DA"), _("ES"), _("FI"), _("HU"), _("IT"),
+    _("KO"), _("NL"), _("NO"), _("PL"), _("PT"), _("RU"), _("TR")
+};
 static const char* g_languageNames[] = {
-    _("ENGLISH"), _("SVENSKA"), _("FRANCAIS"), _("DEUTSCH"), "日本語", "简体中文"
+    _("ENGLISH"), _("SVENSKA"), "FRANÇAIS", _("DEUTSCH"), "日本語", "简体中文",
+    "ČEŠTINA", "DANSK", "ESPAÑOL", "SUOMI", "MAGYAR", "ITALIANO",
+    "한국어", "NEDERLANDS", "NORSK BOKMÅL", "POLSKI", "PORTUGUÊS",
+    "РУССКИЙ", "TÜRKÇE"
 };
 enum { M12_UI_LANGUAGE_COUNT = (int)(sizeof(g_languages) / sizeof(g_languages[0])) };
 static const char* g_cheatsToggle[] = {_("OFF"), _("ON")};
