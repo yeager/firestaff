@@ -637,10 +637,17 @@ Kort version:
 **Ny status:**
 - DM1 + CSB legacy path:er är nu `EXTRACTED + VERIFIED +
   LAUNCH-TESTED` (redo för framtida tester/parity-evidence).
-- Nexus + Theron container-path:er kräver steg 1.5 nedan (eller
-  canonical filnamn) innan de kan användas med `--data-dir`.
+- Nexus + Theron container-path:er: `--data-dir <path>` HITTAR dem
+  korrekt via MD5-hash-matchning (asset_find_by_md5), inte filnamn.
+  Source-filenamn som `Dungeon Master Nexus (Japan) (Track 1).bin`
+  accepteras direkt. Tidigare påstått problem med filnamn var FEL.
 
-**Ny upptäckt** — öppnar Tier 1 #6 (se nedan).
+**Tier 1 #6 stängs som NO-GAP (2026-06-20)** — verifierat att
+scannern matchar på MD5-hash, inte filnamn. Source-filenamn
+accepteras direkt av `--data-dir`. Tier 1 #6 togs upp av L1-rapporten
+men den faktiska scan-beteendet stödjer READY för alla 4 paths.
+Inget alias-steg krävs. Tier 1 #6-posten i listan ovan är inaktuell
+och bör rensas vid nästa watchdog refresh.
 
 ### L2. Skapa `tools/data-readiness-summary.py`
 
