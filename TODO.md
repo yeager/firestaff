@@ -20,8 +20,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ### DM1 V1
 
 - 🔧 Original DOS capture parity: five specific paired evidence sets are blocked. Details and honest status labels at `docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md`. Minimum runbook at `docs/parity/DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md`.
-  - Viewport: original pass94 captures exist (2026-04-28) but are impaired — frames 03–06 have duplicate SHA256, pass80 classifier reclassifies them as `entrance_menu`/`wall_closeup` instead of `dungeon_gameplay`. DOSBox input route failed to enter dungeon. New capture session with working dungeon-entry sequence required.
-  - Wall: no paired original wall screenshot exists. Wall composition is source-locked only.
+  - Viewport: pass1052 now has a clean original DM1 PC 3.4 DOSBox turn-cycle capture with 2 `dungeon_gameplay` frames, 0 duplicate raw hashes, and pass80 classifier PASS. Remaining work: pair these original frames with Firestaff captures/diffs and, separately, promote a debugger-observed I34E route transcript.
+  - Wall: pass1052 now has a clean original DM1 PC 3.4 DOSBox turn-cycle capture with 2 `wall_closeup` frames, 0 duplicate raw hashes, and pass80 classifier PASS. Remaining work: pair these original wall frames with Firestaff captures/diffs.
   - Collision: no paired original collision transcript exists. Collision logic is source-locked only.
   - Creature-chain: no paired original creature screenshot exists. Creature render is source-locked only.
   - Champion-panel: Firestaff V1 captures exist (party_hud_four_champions_vga.ppm, party_hud_statusbox_gfx_vga.ppm) but no paired original DM1 PC 3.4 champion panel screenshot exists.
