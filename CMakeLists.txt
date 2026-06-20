@@ -74,7 +74,14 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 
-add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c src/engine/m11_game_text_latin_extended_glyphs.c src/shared/image_backend_pc34_compat_globals.c)
+add_library(firestaff_m10 STATIC
+    ${M10_SOURCES}
+    src/shared/dungeon_decompressor_ftl.c
+    src/engine/m11_game_text_latin_extended_glyphs.c
+    src/shared/image_backend_pc34_compat_globals.c
+    src/dm2/dm2_v1_creature.c
+    src/dm2/dm2_v1_sound.c
+    src/dm2/dm2_v1_drops.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(firestaff_m10 PUBLIC
     COMPILE_H
