@@ -7488,6 +7488,39 @@ if(BUILD_TESTING)
         NAME csb_hidden_code_skip_table_unit
         COMMAND test_csb_hidden_code_skip_table
     )
+
+    # ── DM1 V1 graphics LZW round-trip test (Tier 2 #4 from FIRESTAFF_GAP_LIST) ──
+    # Verifies the existing m11_gfx_lzw_decompress() in
+    # src/dm1/dm1_v1_graphics_loader_pc34_compat.c by:
+    #   * providing a test-side reference LZW encoder that
+    #     produces bitstreams compatible with the decoder
+    #   * round-tripping known patterns (single byte, literal
+    #     runs, repeated bytes that exercise KwKwK, image-like
+    #     gradients, CLEAR_CODE handling, END_CODE handling,
+    #     code-width growth 9 -> 12 bits)
+    #
+    # Two real bugs were uncovered and fixed by writing this
+    # test (see commit message):
+    #   1. lzw_reset_dict was clearing the chunk state in
+    #      addition to the dictionary, causing every CLEAR_CODE
+    #      to be followed by a stale-chunk read.
+    #   2. The KwKwK output branch emitted first_char BEFORE the
+    #      decoded string instead of after it, producing "AAB"
+    #      instead of "ABA" on alternating inputs.
+    add_executable(test_dm1_lzw_round_trip
+        tests/test_dm1_lzw_round_trip.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    )
+    target_include_directories(test_dm1_lzw_round_trip PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_lzw_round_trip PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME dm1_lzw_round_trip
+        COMMAND test_dm1_lzw_round_trip
+    )
 endif()
 
 
