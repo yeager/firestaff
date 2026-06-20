@@ -106,10 +106,12 @@ int main(int argc, char **argv) {
     rc = dm2_v1_plate_check(3, 0);  /* first call: immediate */
     PROBE_ASSERT(rc == (int)DM2_PLATE_RESULT_OK,
                  "TIME plate first call fires immediately (rc=%d)", rc);
-    rc = dm2_v1_plate_check(3, 2000);  /* 2s, period=5s */
+    dm2_v1_plate_reset_fire_count(3);  /* re-arm for period test */
+    dm2_v1_plate_check(3, 1000);   /* fire at t=1000 */
+    rc = dm2_v1_plate_check(3, 2000);  /* 1s later, period=5s */
     PROBE_ASSERT(rc == (int)DM2_PLATE_RESULT_NOT_TIME_YET,
                  "TIME plate rejects re-fire before period elapses (rc=%d)", rc);
-    rc = dm2_v1_plate_check(3, 6000);  /* 6s, > 5s period */
+    rc = dm2_v1_plate_check(3, 7000);  /* 6s later, > 5s period */
     PROBE_ASSERT(rc == (int)DM2_PLATE_RESULT_OK,
                  "TIME plate re-fires after period elapses (rc=%d)", rc);
 

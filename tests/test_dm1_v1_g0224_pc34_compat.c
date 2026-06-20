@@ -59,9 +59,9 @@ static void test_first_last_specific(void)
     /* First set first frame coord 0 X=95, Y=70 */
     CHECK(dm1_v1_g0224_get_pc34(0, 0, 0, 0) == 95);
     CHECK(dm1_v1_g0224_get_pc34(0, 0, 0, 1) == 70);
-    /* Last set last frame coord 4 X=156, Y=96 */
-    CHECK(dm1_v1_g0224_get_pc34(2, 10, 4, 0) == 156);
-    CHECK(dm1_v1_g0224_get_pc34(2, 10, 4, 1) == 96);
+    /* Last set last frame coord 0 X=156, Y=96 (D0R frame, only coord 0 is set). */
+    CHECK(dm1_v1_g0224_get_pc34(2, 10, 0, 0) == 156);
+    CHECK(dm1_v1_g0224_get_pc34(2, 10, 0, 1) == 96);
 }
 
 static void test_run_accepted(void)
