@@ -2098,6 +2098,66 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_projectile_pc34_compat
     )
 
+    # ── DM2 V1 Phase 4: Shop + NPC mechanics parity ──
+    add_executable(test_dm2_v1_shop_pc34_compat
+        tests/test_dm2_v1_shop_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+    )
+    target_include_directories(test_dm2_v1_shop_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_shop_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_shop_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_shop_pc34_compat
+        COMMAND test_dm2_v1_shop_pc34_compat
+    )
+
+    add_executable(firestaff_dm2_v1_shop_probe
+        probes/dm2/firestaff_dm2_v1_shop_probe.c
+        src/dm2/dm2_v1_shop.c
+    )
+    target_include_directories(firestaff_dm2_v1_shop_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_shop_probe PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_shop_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+
+    # ── DM2 V1 Phase 4: Pressure plate mechanics parity ──
+    add_executable(test_dm2_v1_pressure_plate_pc34_compat
+        tests/test_dm2_v1_pressure_plate_pc34_compat.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_door_mechanics.c
+    )
+    target_include_directories(test_dm2_v1_pressure_plate_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    # Self-contained: doesn't link firestaff_m10 (avoid unrelated work-in-progress CSB files).
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_pressure_plate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_pressure_plate_pc34_compat
+        COMMAND test_dm2_v1_pressure_plate_pc34_compat
+    )
+
+    add_executable(firestaff_dm2_v1_pressure_plate_probe
+        probes/dm2/firestaff_dm2_v1_pressure_plate_probe.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_door_mechanics.c
+    )
+    target_include_directories(firestaff_dm2_v1_pressure_plate_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_pressure_plate_probe PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_pressure_plate_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+
     # ── DM2 V1 Phase 2 Probes: Dungeon/Object/World-State/Asset ──
 
     add_executable(probe_dm2_v1_dungeon_loader
@@ -7635,6 +7695,35 @@ if(BUILD_TESTING)
         COMMAND test_csb_hidden_code_skip_table
     )
 
+    # ── CSB V1 graphics hidden-item skip integration test ────────
+    # Verifies the safe-load wrapper around the DM1 V1 graphics
+    # loader honours the per-game hidden-code skip table for
+    # CSB Atari ST 2.0/2.1 (items 21, 538, 548, 558-562) and
+    # CSB Amiga 3.5 / 3.5 Multilanguage (items 21, 676, 686,
+    # 558-562). PC 3.4 must NOT skip (no hidden code in PC).
+    #
+    # Source-lock: ReDMCSB GRAPH21.C F0914_Graphic21,
+    #   GRAPH538.C F0915_Graphic538, GRAPH548.C F0916_Graphic548,
+    #   plus the dmweb Meynaf disassembly of CSB Atari ST + Amiga
+    #   GRAPHICS.DAT items.
+    add_executable(test_csb_v1_graphics_hidden_item_skip
+        tests/test_csb_v1_graphics_hidden_item_skip.c
+        src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c
+        src/csb/csb_hidden_code_skip_table.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_graphics_hidden_item_skip PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_graphics_hidden_item_skip PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_graphics_hidden_item_skip_pc34
+        COMMAND test_csb_v1_graphics_hidden_item_skip
+    )
+
     # ── Atari ST PAK decoder test (Tier 2 #5 from FIRESTAFF_GAP_LIST) ──
     # Verifies src/shared/firestaff_pak_decode.c by:
     #   * parsing the PAK + Atari ST headers (magic 0x601A)
@@ -12276,5 +12365,45 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0207_pc34_compat.c"
     add_test(
         NAME dm1_v1_g0207_pc34_compat
         COMMAND test_dm1_v1_g0207_pc34_compat
+    )
+endif()
+
+# pass1048 — DM1 V1 G0205_aaauc_Graphic558_WallOrnamentCoordinateSets[8][13][6]:
+# 8 sets × 13 frames × 6 fields = 624 bytes (wall ornament coords).
+# Source-locked against DUNVIEW.C:482/1061/2694/3578.
+# Disjoint from pass784-1047.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0205_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0205_pc34_compat.c")
+    add_executable(test_dm1_v1_g0205_pc34_compat
+        tests/test_dm1_v1_g0205_pc34_compat.c
+        src/dm1/dm1_v1_g0205_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0205_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0205_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0205_pc34_compat
+        COMMAND test_dm1_v1_g0205_pc34_compat
+    )
+endif()
+
+# pass1049 — DM1 V1 G0224_aaaauc_Graphic558_CreatureCoordinateSets[3][11][5][2]:
+# 3 sets × 11 frames × 5 coords × 2 fields = 330 bytes (creature coords).
+# Source-locked against DUNVIEW.C:513/1836/5307.
+# Disjoint from pass784-1048.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0224_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0224_pc34_compat.c")
+    add_executable(test_dm1_v1_g0224_pc34_compat
+        tests/test_dm1_v1_g0224_pc34_compat.c
+        src/dm1/dm1_v1_g0224_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0224_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0224_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0224_pc34_compat
+        COMMAND test_dm1_v1_g0224_pc34_compat
     )
 endif()
