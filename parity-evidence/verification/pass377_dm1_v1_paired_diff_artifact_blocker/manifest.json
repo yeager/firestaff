@@ -173,7 +173,7 @@
       "scene": "ingame_inventory_panel"
     }
   ],
-  "head": "dea8f3fda78293cc6b55b8010dc69a1ddb417aa2",
+  "head": "ec801d648ee50894692b9893433a1300a5a2398e",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "paired diff masks/stats",
@@ -336,5 +336,5 @@
   ],
   "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS377_PAIRED_DIFF_ARTIFACT_BLOCKER_AUDIT",
-  "timestamp_utc": "2026-06-20T15:54:32.198554+00:00"
+  "timestamp_utc": "2026-06-20T17:27:46.118194+00:00"
 }
