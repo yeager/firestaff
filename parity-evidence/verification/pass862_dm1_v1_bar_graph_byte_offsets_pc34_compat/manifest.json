@@ -1,0 +1,97 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin anchor line numbers when ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "DATA.C:99",
+    "DATA.C:104",
+    "CHAMDRAW.C:204",
+    "CHAMDRAW.C:208"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791+ (champion-panel/leader/mirror + chest).",
+    "Not pass798+ (Graphics.dat init-table gates)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:99",
+      "line": 99,
+      "lineText": "unsigned int16_t G0056_aaui_Graphic562_BarGraphByteOffsets[4][3]; /* = {",
+      "needle": "G0056_aaui_Graphic562_BarGraphByteOffsets",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:104",
+      "line": 104,
+      "lineText": "        { 120, 128, 128 } }; Champion 3 */",
+      "needle": "G0056_aaui_Graphic562_BarGraphByteOffsets",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "id": "CHAMDRAW.C:204",
+      "line": 204,
+      "lineText": "                        lea     G0056_aaui_Graphic562_BarGraphByteOffsets(A4),A1",
+      "needle": "G0056_aaui_Graphic562_BarGraphByteOffsets",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "id": "CHAMDRAW.C:208",
+      "line": 208,
+      "lineText": "/* G0055_aaaui_Graphic562_BarGraphMasks contains the following 16 bits masks: 3 pairs of masks (for each bar graph) for each champion:",
+      "needle": "G0055_aaaui_Graphic562_BarGraphMasks",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass862_dm1_v1_bar_graph_byte_offsets_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_bar_graph_byte_offsets_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_bar_graph_byte_offsets_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/bar_graph_byte_offsets_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_bar_graph_byte_offsets_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS862_DM1_V1_BAR_GRAPH_BYTE_OFFSETS_LOCKED",
+  "timestampUtc": "2026-06-20T09:21:51.830203+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_bar_graph_byte_offsets_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_bar_graph_byte_offsets: 65/65 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

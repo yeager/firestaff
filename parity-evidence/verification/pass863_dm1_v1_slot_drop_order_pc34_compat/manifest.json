@@ -1,0 +1,105 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin anchor line numbers when ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "DATA.C:105",
+    "DATA.C:436",
+    "DATA.C:466",
+    "CHAMPION.C:1546"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791+ (champion-panel/leader/mirror + chest).",
+    "Not pass798+ (Graphics.dat init-table gates)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:105",
+      "line": 105,
+      "lineText": "int16_t G0057_ai_Graphic562_SlotDropOrder[30];",
+      "needle": "G0057_ai_Graphic562_SlotDropOrder",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:436",
+      "line": 436,
+      "lineText": "int16_t G0057_ai_Graphic562_SlotDropOrder[30] = {",
+      "needle": "G0057_ai_Graphic562_SlotDropOrder",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:466",
+      "line": 466,
+      "lineText": "        C01_SLOT_ACTION_HAND };",
+      "needle": "G0057_ai_Graphic562_SlotDropOrder",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1119",
+      "line": 1119,
+      "lineText": "int16_t G0057_ai_Graphic562_SlotDropOrder[30] = {",
+      "needle": "G0057_ai_Graphic562_SlotDropOrder",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:1546",
+      "line": 1546,
+      "lineText": "                if ((L0960_T_Thing = F0300_CHAMPION_GetObjectRemovedFromSlot(P0660_ui_ChampionIndex, G0057_ai_Graphic562_SlotDropOrder[L0961_ui_SlotIndex])) != C0xFFFF_THING_NONE) {",
+      "needle": "G0057_ai_Graphic562_SlotDropOrder",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass863_dm1_v1_slot_drop_order_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_slot_drop_order_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_slot_drop_order_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/slot_drop_order_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_slot_drop_order_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS863_DM1_V1_SLOT_DROP_ORDER_LOCKED",
+  "timestampUtc": "2026-06-20T09:21:51.753458+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_slot_drop_order_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_slot_drop_order: 133/133 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
