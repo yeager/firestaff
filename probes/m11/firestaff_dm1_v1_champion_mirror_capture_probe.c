@@ -1,24 +1,28 @@
 /*
  * DM1 V1 champion mirror visual capture probe.
  *
- * This probe addresses the "champion mirrors not visible" P1 visual
- * bug by generating deterministic Firestaff runtime captures for
- * every Hall of Champions pose that has a known mirror ordinal,
- * plus the negative (no-mirror) corridor poses. Each pose is
+ * This probe addresses two P1 visual bugs by generating deterministic
+ * Firestaff runtime captures for every Hall of Champions pose that has
+ * a known mirror ordinal, plus the negative (no-mirror) corridor
+ * poses, plus the Z-order / no-floating side-wall poses. Each pose is
  * rendered with M11_GameView_Draw and saved as both a full-frame
  * 320x200 PPM and a 224x136 viewport crop PPM, plus a JSON+MD
  * manifest describing the capture.
  *
- * Visual evidence is what closes the P1 bug ticket: if a Hall pose
- * has a C127 sensorData = N but the capture shows no champion
- * portrait at the D1C front-wall rectangle, that's the bug. If the
- * portrait IS there and matches ReDMCSB DUNVIEW.C:3913-3928 source-
- * lock geometry, the bug is closed (or was never present).
+ * Visual evidence is what closes the P1 bug tickets:
+ *   - "champion mirrors not visible" closed when every positive-
+ *     ordinal pose shows the expected portrait in the D1C front-wall
+ *     rectangle (96,35)-(128,64) and every negative-ordinal pose
+ *     shows wall texture only.
+ *   - "champion Z-order/floating" closed when every no-floating
+ *     side-wall pose shows wall texture only (no champion portrait
+ *     sprite floating over a side wall after the player turns).
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps M011_CELL(sensor) against view dir
  *   ReDMCSB DUNGEON.C:2608-2612 stores C127 sensorData in G0289
  *   ReDMCSB DUNVIEW.C:3913-3928 blits D1C champion portrait
+ *   ReDMCSB DUNVIEW.C:8318-8618 F0128 viewport redraw order far-to-near
  *   ReDMCSB MOVESENS.C:1501-1503 passes C127 sensorData to F0280
  *   ReDMCSB REVIVE.C F0280 materializes the candidate from sensorData
  *   ReDMCSB COORD.C:1693-1722 PC34 viewport origin/224x136 dimensions
@@ -71,10 +75,21 @@ static MirrorCapture kCaptures[] = {
     {"hall_end_north_ordinal_10_ZED",       1, 5, 0, 10, 0, 0, 0},
     {"hall_end_east_ordinal_15_MOPHUS",     1, 5, 1, 15, 0, 0, 0},
     {"hall_end_south_ordinal_13_WUUF",      1, 5, 2, 13, 0, 0, 0},
-    /* Negative: corridor poses where no C127 sensor exists */
+    /* Negative ordinals: corridor poses where no C127 sensor exists */
     {"hall_start_west_no_portrait",         1, 2, 3, -1, 0, 0, 0},
     {"hall_corridor_north_no_portrait",     1, 3, 0, -1, 0, 0, 0},
     {"hall_corridor_north_no_portrait_2",   1, 4, 0, -1, 0, 0, 0},
+    /* Z-order / no-floating poses: side walls that must NOT show a
+     * champion portrait sprite floating over them. These mirror the
+     * scenarios covered by firestaff_dm1_v1_champion_mirror_zorder_runtime_probe
+     * but here we save visual evidence (PPMs) so the P1 ticket
+     * 'champion Z-order/floating' has both probe + capture coverage. */
+    {"hall_d1c_front_route_blocked_1_N",    1, 3, 0, -1, 0, 0, 0},
+    {"hall_d1c_front_route_blocked_2_N",    1, 4, 0, -1, 0, 0, 0},
+    {"hall_d1c_front_route_blocked_east",   1, 4, 1, -1, 0, 0, 0},
+    {"hall_d1c_front_route_blocked_south",  1, 4, 2, -1, 0, 0, 0},
+    {"hall_side_no_floating_west_1",        1, 3, 3, -1, 0, 0, 0},
+    {"hall_side_no_floating_west_2",        1, 4, 3, -1, 0, 0, 0},
 };
 
 static void ensure_output_dir(const char* outDir) {
