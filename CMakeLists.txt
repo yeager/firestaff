@@ -1587,6 +1587,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     # for ctest automation. To exercise it: ./build/firestaff_dm1_v1_champion_mirror_capture_probe ~/.firestaff/data/dm1 /tmp/captures
 endif()
 
+# DM1 V1 viewport wall visual capture probe — takes DATA_DIR OUT_DIR.
+# Sibling to the champion-mirror capture probe; addresses the
+# 'missing or incorrect viewport walls' P1 visual bug ticket by
+# capturing 24 poses (6 cells x 4 directions) plus per-pose grey
+# pixel count + non-black pixel count + texture-diversity heuristics
+# from the rendered viewport.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_viewport_wall_capture_probe.c")
+    add_executable(firestaff_dm1_v1_viewport_wall_capture_probe
+        probes/m11/firestaff_dm1_v1_viewport_wall_capture_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_viewport_wall_capture_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_viewport_wall_capture_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    # NOTE: no add_test() — this probe writes files and takes an OUT_DIR
+    # arg. Manual run: ./build/firestaff_dm1_v1_viewport_wall_capture_probe ~/.firestaff/data/dm1 /tmp/captures
+endif()
+
 # DM1 V1 champion-panel damage-flash-decay pc34_compat runtime test
 # (companion of the pool's 9 probes; same M11/M12 stack).
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c"
