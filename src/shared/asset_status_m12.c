@@ -1108,8 +1108,13 @@ static int m12_fill_required_files(M12_AssetStatus* status,
         fileStatus->gameId = spec->gameId;
         fileStatus->roleId = spec->roleId;
         fileStatus->label = spec->label;
-        fileStatus->required = 1;
+        fileStatus->required = spec->matchAnyVersion ? 0 : 1;
         if (spec->matchAnyVersion) {
+            /* matchAnyVersion=true: the file is "soft" — only used
+             * to surface the version's matchedPath in the report.
+             * It does NOT block game availability, since the version
+             * itself (matched in m12_fill_game_versions) is what
+             * gates availability. */
             const M12_AssetVersionStatus* version = m12_first_matched_version(status, gameIndex);
             if (version) {
                 fileStatus->matched = 1;

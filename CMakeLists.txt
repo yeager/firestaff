@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.9.1 LANGUAGES C)
+project(Firestaff VERSION 2.9.2 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -8821,6 +8821,21 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass869_dm1_v1_line_feed_character_string PROPERTIES DEPENDS dm1_v1_line_feed_character_string_pc34_compat)
         add_test(
+            NAME pass1039_dm1_v1_g0192
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1039_dm1_v1_g0192_pc34_compat.py
+        )
+        set_tests_properties(pass1039_dm1_v1_g0192 PROPERTIES DEPENDS dm1_v1_g0192_pc34_compat)
+        add_test(
+            NAME pass1040_dm1_v1_g0193
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1040_dm1_v1_g0193_pc34_compat.py
+        )
+        set_tests_properties(pass1040_dm1_v1_g0193 PROPERTIES DEPENDS dm1_v1_g0193_pc34_compat)
+        add_test(
+            NAME pass1041_dm1_v1_g0194
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1041_dm1_v1_g0194_pc34_compat.py
+        )
+        set_tests_properties(pass1041_dm1_v1_g0194 PROPERTIES DEPENDS dm1_v1_g0194_pc34_compat)
+        add_test(
             NAME pass873_dm1_v1_palette_top_and_bottom_screen
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass873_dm1_v1_palette_top_and_bottom_screen_pc34_compat.py
         )
@@ -12068,5 +12083,59 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0497_pc34_compat.c"
     add_test(
         NAME dm1_v1_g0497_pc34_compat
         COMMAND test_dm1_v1_g0497_pc34_compat
+    )
+endif()
+
+# pass1039 — DM1 V1 G0192_auc_Graphic558_alcove_ornament_indices[N]: ornament/init table.
+# Source-locked against DUNVIEW.C:465/init-block. Disjoint from pass784-1038.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0192_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0192_pc34_compat.c")
+    add_executable(test_dm1_v1_g0192_pc34_compat
+        tests/test_dm1_v1_g0192_pc34_compat.c
+        src/dm1/dm1_v1_g0192_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0192_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0192_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0192_pc34_compat
+        COMMAND test_dm1_v1_g0192_pc34_compat
+    )
+endif()
+
+# pass1040 — DM1 V1 G0193_auc_Graphic558_fountain_ornament_indices[N]: ornament/init table.
+# Source-locked against DUNVIEW.C:466/init-block. Disjoint from pass784-1038.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0193_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0193_pc34_compat.c")
+    add_executable(test_dm1_v1_g0193_pc34_compat
+        tests/test_dm1_v1_g0193_pc34_compat.c
+        src/dm1/dm1_v1_g0193_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0193_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0193_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0193_pc34_compat
+        COMMAND test_dm1_v1_g0193_pc34_compat
+    )
+endif()
+
+# pass1041 — DM1 V1 G0194_auc_Graphic558_wall_ornament_coordinate_set_indices[N]: ornament/init table.
+# Source-locked against DUNVIEW.C:467/init-block. Disjoint from pass784-1038.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0194_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0194_pc34_compat.c")
+    add_executable(test_dm1_v1_g0194_pc34_compat
+        tests/test_dm1_v1_g0194_pc34_compat.c
+        src/dm1/dm1_v1_g0194_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0194_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0194_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0194_pc34_compat
+        COMMAND test_dm1_v1_g0194_pc34_compat
     )
 endif()
