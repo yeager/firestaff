@@ -1,0 +1,93 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:88/427/1103",
+    "CHAMPION.C:1346"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791+ (champion-panel/leader/mirror + chest).",
+    "Not pass798+ (Graphics.dat init-table gates)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:88",
+      "line": 88,
+      "lineText": "unsigned char G0050_auc_Graphic562_WoundDefenseFactor[6];",
+      "needle": "G0050_auc_Graphic562_WoundDefenseFactor",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:427",
+      "line": 427,
+      "lineText": "unsigned char G0050_auc_Graphic562_WoundDefenseFactor[6] = { 5, 5, 4, 6, 3, 1 };",
+      "needle": "G0050_auc_Graphic562_WoundDefenseFactor",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1103",
+      "line": 1103,
+      "lineText": "unsigned char G0050_auc_Graphic562_WoundDefenseFactor[6] = { 5, 5, 4, 6, 3, 1 };",
+      "needle": "G0050_auc_Graphic562_WoundDefenseFactor",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:1346",
+      "line": 1346,
+      "lineText": "                                L0943_ui_ArmourShieldDefense += ((F0312_CHAMPION_GetStrength(P0652_i_ChampionIndex, AL0942_i_SlotIndex) + F0143_DUNGEON_GetArmourDefense(L0947_ps_ArmourInfo, L0944_B_UseSharpDefense)) * G0050_auc_Graphic562_WoundDefenseFactor[P0653_ui_WoundIndex]) >> ((AL0942_i_SlotIndex == P0653_ui_WoundIndex) ? 4 : 5);",
+      "needle": "G0050_auc_Graphic562_WoundDefenseFactor",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass853_dm1_v1_wound_defense_factor_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_wound_defense_factor_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_wound_defense_factor_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/wound_defense_factor_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_wound_defense_factor_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS853_DM1_V1_WOUND_DEFENSE_FACTOR_LOCKED",
+  "timestampUtc": "2026-06-20T07:36:53.282044+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_wound_defense_factor_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_wound_defense_factor: 46/46 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
