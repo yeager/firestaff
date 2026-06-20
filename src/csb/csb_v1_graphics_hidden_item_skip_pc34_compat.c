@@ -10,7 +10,7 @@
  * and the loader lives in dm1_v1_graphics_loader_pc34_compat.c.
  */
 
-#include "csb_hidden_code_skip_table.h"
+#include "csb_v1_graphics_hidden_item_skip_pc34_compat.h"
 
 #include <string.h>
 
@@ -26,12 +26,13 @@ FirestaffHiddenCodePlatform csb_v1_graphics_hidden_platform_to_table(
             return FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA;
         case CSB_V1_HIDDEN_PLATFORM_PC34:
         default:
-            /* PC 3.4: no entries in the table. Return NONE so the
-             * FirestaffHiddenCodeShouldSkip lookup never matches
-             * (NONE acts as "any known platform" in the table's
-             * current code; the CSB-specific rows above would
-             * match under NONE wildcard). The platform filter in
-             * the per-game lookup below keeps PC 3.4 safe. */
+            /* PC 3.4: no entries in the table. The should_skip_item
+             * wrapper short-circuits to false for PC 3.4 before
+             * consulting the table, so the value returned here is
+             * irrelevant. We return NONE so that any caller that
+             * bypasses the wrapper with PLATFORM_NONE explicitly
+             * will only match (game, ANY_PLATFORM, index) rows
+             * that share the explicit game id. */
             return FIRESTAFF_HIDDEN_CODE_PLATFORM_NONE;
     }
 }
@@ -49,11 +50,6 @@ FirestaffHiddenCodePlatform csb_v1_graphics_hidden_platform_to_table(
  * The game id is always CSB -- DM lookups go through the DM
  * path (csb_v1_graphics_change7_16_pc34_compat.c shim does
  * not look up DM items, so CSB-only callers are safe).
- *
- * Note: the lookup passes PLATFORM_NONE only for PC 3.4 in
- * order to defeat the wildcard behaviour. For Atari ST /
- * Amiga we pass the concrete platform so the (game,
- * platform, index) tuple is exact.
  */
 CSB_V1_HiddenSkipDecision csb_v1_graphics_hidden_should_skip_item(
     CSB_V1_HiddenPlatform platform,
@@ -66,8 +62,7 @@ CSB_V1_HiddenSkipDecision csb_v1_graphics_hidden_should_skip_item(
     if (platform == CSB_V1_HIDDEN_PLATFORM_PC34) {
         /* PC 3.4 has no hidden code at these indices; return
          * a guaranteed-false decision without consulting the
-         * table. This avoids the NONE-wildcard false-positive
-         * described in csb_v1_graphics_hidden_platform_to_table. */
+         * table. This avoids the NONE-wildcard false-positive. */
         return dec;
     }
 
