@@ -213,6 +213,37 @@ The Saturn's DMDF (data) and DGN (dungeon geometry) formats are documented elsew
 | **DM Forums** | <https://www.dungeon-master.com/forum/> | Active community forum (now ~25 years old) |
 | **DM Wiki** | <http://dmwiki.atomas.com/> | CSBwin-focused wiki |
 
+### Lokalt spegel av dmweb.free.fr
+
+En komplett offline-kopia av `community/documentation/` finns nu
+under `reference/dmweb-community-docs/`. 43 sidor, 5.5 MB,
+genererad 2026-06-20.
+
+- `reference/dmweb-community-docs/INDEX.md` — mänskligt läsbar
+  innehållsförteckning med titlar, URL:er, breadcrumbs,
+  filstorlekar och meta-beskrivningar.
+- `reference/dmweb-community-docs/index.json` — maskinläsbar
+  version av samma data.
+- `reference/dmweb-community-docs/SCRAPE_LOG.md` — hämtningslogg
+  (timestamp, HTTP-status, storlek per sida).
+- `reference/dmweb-community-docs/crawl.sh` + `build_index.py` —
+  reproducibelt crawl-skript (1.2s fördröjning per request,
+  identifierande User-Agent).
+- `reference/dmweb-community-docs/html/` — raw HTML.
+
+Täcker fem ämnesområden:
+
+| Sektion | Antal sidor |
+|---|---|
+| Copy Protection (Apple IIGS, Atari ST, generell + data-lagring på floppy) | 5 |
+| Dungeon Master & Chaos Strikes Back (actions, attacks, creature generators, items, skills, GRAPHICS.DAT hidden code, GRAPHICS.DAT items 558–562) | 11 |
+| Dungeon Master: Nexus (DGN files, MNS files, item.ibs, file formats) | 5 |
+| File Formats (animation script, animations, data files, dungeon files, DM2 data files, DM2 music triggers, hint/oracle, layout coordinates, portrait files, saved-game files) | 11 |
+| Miscellaneous (DM Atari ST history, DM PC, DM SNES/Super Famicom, FTL sound adapter, game versions) | 5 |
+
+Använd den lokala kopian som första källa vid research; hämta
+om sajten är nere eller långsam.
+
 ---
 
 ## License / Copyright notes
@@ -233,6 +264,7 @@ from the user's own legally-acquired game files in
 When we have time, the following pages from dmweb should be
 fetched in detail and incorporated into this reference:
 
+- [x] ~~Fetch the full `/community/documentation/` section from dmweb~~ — klar 2026-06-20, se `reference/dmweb-community-docs/` (43 sidor speglade)
 - [ ] All 12 "How to play" FAQ items
 - [ ] Per-edition pages for the 5 games (atari-st, amiga, pc, etc.)
 - [ ] Custom dungeons deep-dive pages (esp. Conflux III — uses CSBWin extensions)
