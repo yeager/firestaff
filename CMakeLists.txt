@@ -1,6 +1,27 @@
 cmake_minimum_required(VERSION 3.20)
 project(Firestaff VERSION 2.9.1 LANGUAGES C)
 
+# ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
+# Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
+# take the data directory as a positional CLI argument. Their add_test()
+# commands use the generator expression
+#   $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,
+#         $<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,
+#         ${CMAKE_CURRENT_SOURCE_DIR}/builds/nv1-build>
+# so the target just needs to exist with a VALUE property set to a
+# valid data directory. Default to the Firestaff canonical user data
+# root; callers may override with -DFIRESTAFF_WORKSPACE_DATA_DIR=... on
+# the cmake command line.
+if(NOT DEFINED FIRESTAFF_WORKSPACE_DATA_DIR)
+    set(FIRESTAFF_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data")
+endif()
+if(NOT TARGET WORKSPACE_DATA_DIR)
+    add_library(WORKSPACE_DATA_DIR INTERFACE IMPORTED GLOBAL)
+endif()
+set_target_properties(WORKSPACE_DATA_DIR PROPERTIES
+    "VALUE" "${FIRESTAFF_WORKSPACE_DATA_DIR}"
+)
+
 include_directories(include src)
 
 
@@ -8746,6 +8767,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass873_dm1_v1_palette_top_and_bottom_screen PROPERTIES DEPENDS dm1_v1_palette_top_and_bottom_screen_pc34_compat)
         add_test(
+            NAME pass874_dm1_v1_animtown_color_credits
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass874_dm1_v1_animtown_color_credits_pc34_compat.py
+        )
+        set_tests_properties(pass874_dm1_v1_animtown_color_credits PROPERTIES DEPENDS dm1_v1_animtown_color_credits_pc34_compat)
+        add_test(
+            NAME pass875_dm1_v1_animtown_color_entrance
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass875_dm1_v1_animtown_color_entrance_pc34_compat.py
+        )
+        set_tests_properties(pass875_dm1_v1_animtown_color_entrance PROPERTIES DEPENDS dm1_v1_animtown_color_entrance_pc34_compat)
+        add_test(
+            NAME pass876_dm1_v1_animtown_color_icon
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass876_dm1_v1_animtown_color_icon_pc34_compat.py
+        )
+        set_tests_properties(pass876_dm1_v1_animtown_color_icon PROPERTIES DEPENDS dm1_v1_animtown_color_icon_pc34_compat)
+        add_test(
+            NAME pass877_dm1_v1_animtown_color_inventory
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass877_dm1_v1_animtown_color_inventory_pc34_compat.py
+        )
+        set_tests_properties(pass877_dm1_v1_animtown_color_inventory PROPERTIES DEPENDS dm1_v1_animtown_color_inventory_pc34_compat)
+        add_test(
             NAME pass870_dm1_v1_palette_changes_cursor_mask
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass870_dm1_v1_palette_changes_cursor_mask_pc34_compat.py
         )
@@ -9359,3 +9400,82 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_palette_top_and_bottom_
 endif()
 
 
+
+# pass874 — DM1 V1 animtown-color-credits (G8147_CREDITS): 17-entry
+# VGA palette for the credits screen. Source-locked against
+# DRAWVIEW.C:25 + ANIMTOWN.C:9 + ANIMTOWN.C:404 + ANIMTOWN.C:624-629.
+# Disjoint from pass784-873.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_credits_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_credits_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_credits_pc34_compat
+        tests/test_dm1_v1_animtown_color_credits_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_credits_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_credits_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_credits_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_credits_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_credits_pc34_compat
+    )
+endif()
+
+# pass875 — DM1 V1 animtown-color-entrance (G8148_ENTRANCE): 17-entry
+# VGA palette for the entrance screen. Source-locked against
+# DRAWVIEW.C:43 + ANIMTOWN.C:27 + ANIMTOWN.C:405. Disjoint from pass784-874.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_entrance_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_entrance_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_entrance_pc34_compat
+        tests/test_dm1_v1_animtown_color_entrance_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_entrance_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_entrance_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_entrance_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_entrance_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_entrance_pc34_compat
+    )
+endif()
+
+# pass876 — DM1 V1 animtown-color-icon (G8149_ICON): 17-entry VGA
+# palette for icon rendering (shares RGB values with G8151_LIGHT0 but
+# uses color indices 0-15 instead of 16-31). Source-locked against
+# DRAWVIEW.C:61 + ANIMTOWN.C:45 + ANIMTOWN.C:409. Disjoint from pass784-875.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_icon_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_icon_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_icon_pc34_compat
+        tests/test_dm1_v1_animtown_color_icon_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_icon_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_icon_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_icon_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_icon_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_icon_pc34_compat
+    )
+endif()
+
+# pass877 — DM1 V1 animtown-color-inventory (G8150_INVENTORY): 17-entry
+# VGA palette for the inventory screen (uses color indices 0x10-0x1F).
+# Source-locked against DRAWVIEW.C:79 + ANIMTOWN.C:63 + ANIMTOWN.C:408.
+# Disjoint from pass784-876.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_inventory_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_inventory_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_inventory_pc34_compat
+        tests/test_dm1_v1_animtown_color_inventory_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_inventory_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_inventory_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_inventory_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_inventory_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_inventory_pc34_compat
+    )
+endif()
