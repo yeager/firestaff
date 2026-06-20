@@ -1,0 +1,94 @@
+{
+  "corrected_creature_route": {
+    "class_counts": {
+      "dungeon_gameplay": 1,
+      "wall_closeup": 3
+    },
+    "conclusion": "corrected route reaches new states, but the first target remains behind an inert door",
+    "labels": [
+      "start",
+      "stair_entry",
+      "creature_door_closed",
+      "creature_after_door_click"
+    ],
+    "ok": true,
+    "raw_sha256": [
+      "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "b235ea66987020ac21113543d5fcf0291b53060d812d61536d2bc8a1bdfea570",
+      "87271b0649d8a00500a2284cc69b6a6b275f1ce8e3d27607c346393e997dd4ed",
+      "87271b0649d8a00500a2284cc69b6a6b275f1ce8e3d27607c346393e997dd4ed"
+    ]
+  },
+  "door_probe": {
+    "conclusion": "enter/space/two clicks/forward do not open this first target door",
+    "labels": [
+      "start",
+      "stair_entry",
+      "creature_door_closed",
+      "after_enter",
+      "after_space",
+      "after_click_high"
+    ],
+    "ok": true,
+    "raw_sha256": [
+      "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "b235ea66987020ac21113543d5fcf0291b53060d812d61536d2bc8a1bdfea570",
+      "87271b0649d8a00500a2284cc69b6a6b275f1ce8e3d27607c346393e997dd4ed",
+      "87271b0649d8a00500a2284cc69b6a6b275f1ce8e3d27607c346393e997dd4ed",
+      "87271b0649d8a00500a2284cc69b6a6b275f1ce8e3d27607c346393e997dd4ed",
+      "87271b0649d8a00500a2284cc69b6a6b275f1ce8e3d27607c346393e997dd4ed",
+      "87271b0649d8a00500a2284cc69b6a6b275f1ce8e3d27607c346393e997dd4ed",
+      "87271b0649d8a00500a2284cc69b6a6b275f1ce8e3d27607c346393e997dd4ed"
+    ],
+    "stable_door_sha256": "87271b0649d8a00500a2284cc69b6a6b275f1ce8e3d27607c346393e997dd4ed",
+    "unchecked_extra_raw_rows": 2
+  },
+  "generated_at": "2026-06-20T21:56:29.045096+00:00",
+  "honesty": "This gate locks original keypad/route evidence only. It does not claim a paired original creature screenshot.",
+  "key_atlas": {
+    "class_counts": {
+      "dungeon_gameplay": 5
+    },
+    "conclusion": "kp5/kp8/forward-click move forward; kp2 moves backward",
+    "labels": [
+      "start",
+      "after_kp5",
+      "after_kp8",
+      "after_forward_click",
+      "after_kp2"
+    ],
+    "ok": true,
+    "raw_sha256": [
+      "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "40c678403d8f772822c1301bafa373adb0862915a8239d2bdb15f71fccf4b750",
+      "40c678403d8f772822c1301bafa373adb0862915a8239d2bdb15f71fccf4b750",
+      "40c678403d8f772822c1301bafa373adb0862915a8239d2bdb15f71fccf4b750",
+      "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f"
+    ]
+  },
+  "report": "parity-evidence/pass1058_dm1_v1_original_keypad_route_atlas.md",
+  "schema": "firestaff.parity.pass1058_dm1_v1_original_keypad_route_atlas.v1",
+  "status": "PASS",
+  "turn_atlas": {
+    "class_counts": {
+      "dungeon_gameplay": 3,
+      "wall_closeup": 2
+    },
+    "conclusion": "kp4 is right-turn from the start pose; kp6 is left-turn/back",
+    "labels": [
+      "start",
+      "after_kp4",
+      "after_kp6",
+      "after_kp6_again",
+      "after_kp4_again"
+    ],
+    "ok": true,
+    "raw_sha256": [
+      "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "0c64af7daab4229a2c1d56b8186c0546b48a27e2add751c8ffff2571c1c908db",
+      "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "0c64af7daab4229a2c1d56b8186c0546b48a27e2add751c8ffff2571c1c908db",
+      "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f"
+    ]
+  }
+}

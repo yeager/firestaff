@@ -15,6 +15,7 @@ place while those gaps are being closed.
 | `registry` | `PASS` |  |
 | `pass1056_pairing` | `PASS` |  |
 | `pass1057_dungeonb` | `PASS` |  |
+| `pass1058_keypad_route_atlas` | `PASS` |  |
 | `ctest` | `PASS` | regex `m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe` |
 
 ## Non-claims
