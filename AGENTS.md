@@ -162,10 +162,11 @@ Secondary references:
 
 ## Version Management
 
-Version must be synchronized in three places:
+Version must be synchronized in four places:
 1. `CMakeLists.txt` — `project(Firestaff VERSION x.y.z)`
 2. `src/ui/menu_startup_m12.c` — `#define FIRESTAFF_VERSION_STRING`
 3. `src/shared/changelog_m12.c` — `M12_Changelog_VersionString()`
+4. `include/firestaff_version.h` — `FIRESTAFF_VERSION_{MAJOR,MINOR,PATCH}` and `FIRESTAFF_VERSION_STRING` (consumed by `firestaff_main_m11.c` for `--version`). This header is currently hand-maintained; a follow-up CMake `configure_file` rule should derive it from `${PROJECT_VERSION}` so the manual step goes away.
 
 Release tags: `v2.7.1`, `v2.7.0`, etc. The CMake version should match the latest release.
 

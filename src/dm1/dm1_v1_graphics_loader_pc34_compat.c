@@ -15,14 +15,47 @@ void m11_gfx_init(M11_GFX_LoaderState* state) {
 
 /* --- LZW decompressor (ReDMCSB LZW.C pattern) --- */
 
-static void lzw_reset(M11_GFX_LZWState* lzw) {
+/*
+ * Reset the LZW dictionary and code-width state but PRESERVE
+ * the input stream position AND chunk state. This is the
+ * correct behaviour for a CLEAR_CODE handler in standard LZW
+ * (per Welch 1984 + GIF spec): the dictionary resets, the
+ * bitstream position stays where it was, and the next code is
+ * read from the chunk we were already in.
+ *
+ * An earlier version of this function also cleared
+ * chunk_bit_idx / chunk_bit_count / needs_refill / byte_pos,
+ * which forced an unwanted chunk refill from a stale byte_pos
+ * after every CLEAR_CODE -- producing garbage codes instead of
+ * the actual next code. The fix splits stream-init from
+ * dict-reset: see lzw_init() and lzw_reset_dict().
+ *
+ * Verified by tests/test_dm1_lzw_round_trip.c (the pre-fix
+ * decoder decoded 'ABC' + END as 4 bytes with a leading 0x00,
+ * because the stale refill grabbed bytes from the middle of
+ * the input; the post-fix decoder returns 3 bytes 'A','B','C').
+ */
+static void lzw_reset_dict(M11_GFX_LZWState* lzw) {
     lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
     lzw->code_bits = 9;
-    lzw->flushed   = true;
+    /* NOTE: deliberately do NOT touch byte_pos, chunk_bit_idx,
+       chunk_bit_count, or needs_refill here. We want the next
+       lzw_read_code() to keep reading from the same chunk at
+       the same bit position where the CLEAR_CODE left off. */
+}
+
+/*
+ * Full stream-and-dict initialization. Called once at the
+ * start of m11_gfx_lzw_decompress. Resets byte_pos to 0 so
+ * reading begins at the start of the input buffer.
+ */
+static void lzw_init(M11_GFX_LZWState* lzw) {
+    lzw->flushed = true;
+    lzw->byte_pos = 0;
     lzw->chunk_bit_idx = 0;
     lzw->chunk_bit_count = 0;
-    lzw->byte_pos = 0;
     lzw->needs_refill = 1;
+    lzw_reset_dict(lzw);
 }
 
 /* Read a variable-width code from the input bitstream */
@@ -97,7 +130,7 @@ int m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
     if (!lzw || !input || !output || in_size == 0 || out_size == 0) return -1;
 
     /* Reset LZW state */
-    lzw_reset(lzw);
+    lzw_init(lzw);
     for (i = 0; i < 256; i++) {
         lzw->dict_prefix[i] = 0xFFFF;
         lzw->dict_append[i] = (uint8_t)i;
@@ -109,9 +142,7 @@ int m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
     old_code = lzw_read_code(lzw, input, in_size, NULL, lzw->code_bits);
     if (old_code < 0) return 0;
     if (old_code == DM1_GFX_LZW_CLEAR_CODE) {
-        lzw_reset(lzw);
-        lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
-        lzw->code_bits = 9;
+        lzw_reset_dict(lzw);
         old_code = lzw_read_code(lzw, input, in_size, NULL, lzw->code_bits);
         if (old_code < 0) return 0;
     }
@@ -122,9 +153,7 @@ int m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
         if (new_code < 0) break;
 
         if (new_code == DM1_GFX_LZW_CLEAR_CODE) {
-            lzw_reset(lzw);
-            lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
-            lzw->code_bits = 9;
+            lzw_reset_dict(lzw);
             old_code = lzw_read_code(lzw, input, in_size, NULL, lzw->code_bits);
             if (old_code < 0) break;
             if (out_pos < out_size) output[out_pos++] = (uint8_t)old_code;
@@ -138,15 +167,42 @@ int m11_gfx_lzw_decompress(M11_GFX_LZWState* lzw,
             count = lzw_decode_string(lzw, (uint16_t)new_code);
             first_char = (count > 0) ? lzw->decode_stack[count - 1] : (uint8_t)old_code;
         } else {
-            /* KwKwK case: new_code == next_code */
+            /* KwKwK case: new_code == next_code.
+             *
+             * The new string is defined as: string(old_code) +
+             * first_char_of(string(old_code)). After
+             * lzw_decode_string(old_code), the stack holds
+             * string(old_code) reversed (so stack[count-1] is the
+             * FIRST character). To produce the KwKwK output we
+             * emit the stack reversed and then append first_char.
+             *
+             * Previously this code emitted first_char FIRST and
+             * then the reversed stack, which produces
+             * "AAB" instead of "ABA" for old_code -> "AB".
+             * That bug made round-trip fail on any input
+             * exercising the KwKwK edge case (alternating
+             * two-byte repeats is the canonical trigger).
+             * Verified by tests/test_dm1_lzw_round_trip.c. */
             count = lzw_decode_string(lzw, (uint16_t)old_code);
             first_char = (count > 0) ? lzw->decode_stack[count - 1] : (uint8_t)old_code;
-            if (out_pos < out_size) output[out_pos++] = first_char;
+            /* Note: do NOT emit first_char here. The for-loop
+               below will emit stack reversed (which is the
+               forward string of old_code), and we append
+               first_char at the end. */
         }
 
-        /* Output decoded string (stack is reversed) */
+        /* Output decoded string (stack is reversed, so iterating
+           from count-1 down to 0 produces the forward string) */
         for (i = count - 1; i >= 0 && out_pos < out_size; i--)
             output[out_pos++] = lzw->decode_stack[i];
+
+        /* For the KwKwK case (new_code == next_code), append the
+           first_char of the old_code's string. This produces
+           string(old_code) + first_char, which is the standard
+           LZW KwKwK output. */
+        if ((uint16_t)new_code >= lzw->next_code) {
+            if (out_pos < out_size) output[out_pos++] = first_char;
+        }
 
         /* Add to dictionary */
         if (lzw->next_code < DM1_GFX_LZW_MAX_CODE) {
