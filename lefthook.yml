@@ -97,3 +97,5 @@ ci:
       run: bash po/validate_po_layout.sh
     hash_harmonization:
       run: python3 tools/asset-validate/compare_md5_to_sha256.py
+    asset_gap_summary:
+      run: python3 tools/asset-validate/compare_to_greatstone.py --summary
