@@ -67,11 +67,13 @@ Firestaff-vs-original same-state pixel diff has been promoted yet.
 | Walls occlusion blockers probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c` | Source-locked wall occlusion logic; no paired capture. |
 | Door occlusion pixel gate | OK EXISTS (see above) | `probes/dm1/firestaff_dm1_v1_door_occlusion_pixel_gate.c` | Source-locked pixel-level door occlusion; no paired capture. |
 | Side contents center-blocker probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_side_contents_center_blocker_probe.c` | Documents side-panel center-blocker behavior; no paired capture. |
-| Original wall screenshot | PARTIAL OK | `verification-screens/pass1052-dm1-original-route-24h-turncycle/` | Pass1052 has 2 clean original `wall_closeup` frames. Still needs Firestaff pairing and wall-state diff. |
+| Original-to-Firestaff wall crop diff | PARTIAL MATCH | `verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/` | One wall crop is exact: original `02_left_1_wall_original_viewport_224x136.png` matches Firestaff `hall_1_4_dirE_viewport_224x136.ppm` with 0 changed pixels and MAE 0. |
+| Original wall screenshot | PARTIAL OK | `verification-screens/pass1052-dm1-original-route-24h-turncycle/` | Pass1052 has 2 clean original `wall_closeup` frames. One now has an exact pass1054 Firestaff match; broader wall-state route still needs more pairings. |
 
-**Gap:** Wall evidence is no longer original-capture-empty. Pass1052 provides two clean
-original wall frames, but wall composition parity still cannot be marked `MATCHED`
-until those frames are paired with identical Firestaff states and compared.
+**Gap:** Wall evidence is no longer original-capture-empty, and pass1054 proves one
+exact original-to-Firestaff wall-crop match. Wall composition parity for the whole
+surface still cannot be marked globally `MATCHED` until multiple deterministic wall
+states are paired and compared.
 
 **Minimum needed for `MATCHED`:**
 - 3 original screenshots: (a) front-wall view (D3C visible), (b) side-wall view
@@ -156,16 +158,17 @@ pixel-level rendering correctness.
 | Area | Source-Locked Probe | Firestaff Capture | Original Capture | Pairing | Blocking Issue |
 |------|--------------------|--------------------|-----------------|---------|---------------|
 | Viewport | OK | OK | PARTIAL OK (pass1052) | MISSING | Clean original gameplay frames exist; Firestaff pairing/diff still missing |
-| Wall | OK | MISSING | PARTIAL OK (pass1052) | MISSING | Clean original wall frames exist; Firestaff pairing/diff still missing |
+| Wall | OK | OK | PARTIAL OK (pass1052) | PARTIAL MATCH (pass1054) | One exact wall-crop match exists; broader wall-state route still needs more pairings |
 | Collision | OK | MISSING | MISSING | MISSING | No original collision transcript exists |
 | Creature-chain | OK | IMPAIRED Firestaff-only | MISSING | MISSING | No original creature screenshot exists |
 | Champion-panel | OK | IMPAIRED Firestaff-only | PARTIAL OK (pass1053 candidate/resurrect panel) | MISSING | Full four-champion HUD/status-panel pairing still missing |
 
 **Conclusion:** Existing Firestaff-side gates, source locks, and runtime routing are complete.
 Pass1052 and pass1053 reduce the original-reference gap: viewport, wall, and the
-candidate/resurrect champion panel now have clean original PC 3.4 frames. The remaining
-`MATCHED` blockers are Firestaff pairing/pixel-diff promotion for those frames, a
-collision transcript, a creature screenshot, and full four-champion/status-panel
+candidate/resurrect champion panel now have clean original PC 3.4 frames. Pass1054
+promotes one exact original-to-Firestaff wall-crop match. The remaining `MATCHED`
+blockers are broader Firestaff pairing/pixel-diff promotion for viewport and wall
+states, a collision transcript, a creature screenshot, and full four-champion/status-panel
 original captures.
 
 ---
@@ -212,12 +215,12 @@ Given the above gap inventory, the correct parity status labels for the five are
 | Area | Current Label | Honest Label | Reason |
 |------|-------------|--------------|--------|
 | Viewport | `MATCHED` (bounds) / `KNOWN_DIFF` (content) | `PARTIAL_REFERENCE_CAPTURED` | Pass1052 original gameplay frames exist; no Firestaff pairing/diff yet |
-| Wall | `KNOWN_DIFF` (narrowed) | `PARTIAL_REFERENCE_CAPTURED` | Pass1052 original wall frames exist; no Firestaff pairing/diff yet |
+| Wall | `KNOWN_DIFF` (narrowed) | `PARTIAL_MATCH` | Pass1054 has one exact original-to-Firestaff wall-crop match; broader wall route still partial |
 | Collision | (source-lock only) | `BLOCKED_ON_REFERENCE` | No original collision transcript exists |
 | Creature-chain | (source-lock only) | `BLOCKED_ON_REFERENCE` | No original creature screenshot exists |
 | Champion-panel | (source-lock only) | `PARTIAL_REFERENCE_CAPTURED` | Pass1053 candidate/resurrect panel exists; full party HUD/status-panel pair is still missing |
 
 **Recommendation:** Keep the content/pixel sub-rows out of `MATCHED` until same-state
-Firestaff comparisons exist. Viewport, wall, and champion candidate/resurrect panel can
-now be labelled `PARTIAL_REFERENCE_CAPTURED`; collision and creature-chain remain
-`BLOCKED_ON_REFERENCE`.
+Firestaff comparisons exist. Viewport and champion candidate/resurrect panel can now
+be labelled `PARTIAL_REFERENCE_CAPTURED`; wall can be labelled `PARTIAL_MATCH`;
+collision and creature-chain remain `BLOCKED_ON_REFERENCE`.
