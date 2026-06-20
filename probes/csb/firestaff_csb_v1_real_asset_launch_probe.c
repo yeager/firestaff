@@ -57,8 +57,10 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_graphics_hidden_item_skip_pc34_compat.h"
+#include "csb_v1_cmp_import_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_boot.h"
+#include "fs_portable_compat.h"
 
 #define DEFAULT_ATARI_ST_DIR "/Users/bosse/.firestaff/data/csb-atari-st-2x"
 #define DEFAULT_AMIGA_DIR    "/Users/bosse/.firestaff/data/csb"
@@ -465,7 +467,7 @@ int main(int argc, char** argv)
     printf("    Capture PPM:  %s\n", CAPTURE_PATH);
 
     /* Ensure /tmp/csb_runtime_logs exists for verbose logs. */
-    mkdir("/tmp/csb_runtime_logs", 0755);
+    (void)FSP_CreateDirectoryRecursive("/tmp/csb_runtime_logs");
 
     run_self_tests(&tally);
     run_atari_st(&tally, atari_dir);
