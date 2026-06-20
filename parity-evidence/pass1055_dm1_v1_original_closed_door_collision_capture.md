@@ -13,6 +13,9 @@ level and the 224x136 viewport-crop level. This is original runtime evidence tha
 the attempted action/forward step leaves the party view unchanged at this closed
 door.
 
+Firestaff now has a matching movement/collision probe for the same key sequence:
+`firestaff_dm1_v1_pass1055_closed_door_pair_probe`.
+
 ## Inputs
 
 - Canonical game: Dungeon Master PC DOS English v3.4
@@ -58,15 +61,35 @@ The full key transcript is tracked as
 
 - The original closed-door frame is stable across `door_before`,
   `after_viewport_click`, and `after_kp5`.
+- Firestaff replays the same movement key sequence to `map=0 x=6 y=9 dir=3`,
+  identifies the target square `(5,9)` as door square `0x94`, and blocks the
+  following forward command with `MOVE_BLOCKED_DOOR` while keeping the party at
+  `(0,6,9,3)`.
 - This narrows the collision evidence gap from no original runtime capture to one
-  original closed-door stasis capture.
+  original closed-door stasis capture with a Firestaff-side semantic pair.
 - The route also documents the current blocker for the attempted Hall-to-map1
   creature route: this path reaches a closed door, and the tested viewport click
   does not open it.
 
+## Firestaff-side pair
+
+Command:
+
+```sh
+./build/firestaff_dm1_v1_pass1055_closed_door_pair_probe
+```
+
+Observed output:
+
+```text
+[before_closed_door] map=0 x=6 y=9 dir=3 target=(5,9) square=0x94 type=4 passable=0
+[after_forward_into_closed_door] resultCode=2 blocked=1 anyMove=0 pos=(0,6,9,3)
+result=PASS
+```
+
 ## Non-claims
 
-- This is not a Firestaff-vs-original paired collision comparison.
+- This is not a Firestaff-vs-original pixel comparison.
 - This is not a complete collision transcript for walls, fake walls, doors, and
   door-state changes.
 - This is not a creature capture; no monster appears in this route.

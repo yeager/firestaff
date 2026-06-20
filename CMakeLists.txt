@@ -4473,6 +4473,21 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_playable_route_probe
     )
 
+    # Pass1055 Firestaff-side pair for the original closed-door collision
+    # capture: replay the same movement key sequence and verify the final
+    # forward command is blocked by the closed door without moving the party.
+    add_executable(firestaff_dm1_v1_pass1055_closed_door_pair_probe
+        probes/dm1/firestaff_dm1_v1_pass1055_closed_door_pair_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_pass1055_closed_door_pair_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_pass1055_closed_door_pair_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_pass1055_closed_door_pair_probe
+        COMMAND firestaff_dm1_v1_pass1055_closed_door_pair_probe
+    )
+
     # DM1 V1 Phase 8: door and special-square interaction probe.
     # Tests door state machine (0..5), C05 clickable front-cell zones,
     # teleporter activation, stairs transitions, and pit fall semantics.

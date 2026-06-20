@@ -91,13 +91,14 @@ states are paired and compared.
 | Fakewall view collision probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_original_fakewall_view_collision_probe.c` | Source-locked fakewall collision logic; no paired original transcript. |
 | Playable route probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_playable_route_probe.c` | Documents canonical movement route; no paired original transcript. |
 | Original closed-door collision/stasis capture | PARTIAL OK | `verification-screens/pass1055-dm1-original-closed-door-collision/` | Pass1055 captures original PC 3.4 closed-door stasis: `door_before`, `after_viewport_click`, and `after_kp5` have identical raw and viewport-crop SHA256 values. |
+| Firestaff closed-door semantic pair | PARTIAL PAIR | `probes/dm1/firestaff_dm1_v1_pass1055_closed_door_pair_probe.c` | Replays the pass1055 movement sequence to `map=0 x=6 y=9 dir=3`, sees closed door square `0x94` at `(5,9)`, and blocks the next forward command with no party movement. |
 | Full original collision transcript | MISSING MISSING | - | No paired original DOS transcript yet covers wall, door, fakewall, and door-state responses. |
 
 **Gap:** Collision probes verify that Firestaff's collision logic matches ReDMCSB
 source. Pass1055 adds original DM1 PC 3.4 runtime evidence for one closed-door
-stasis case, but no Firestaff pairing and no full wall/door/fakewall transcript
-has been promoted yet. The collision implementation is source-locked and now has
-partial original evidence, but cannot be marked globally `MATCHED`.
+stasis case plus a Firestaff-side semantic pair for the same movement sequence.
+No pixel comparison and no full wall/door/fakewall transcript has been promoted
+yet, so collision cannot be marked globally `MATCHED`.
 
 **Minimum needed for `MATCHED`:**
 - Deterministic collision transcript: record party movement commands and game responses
@@ -161,7 +162,7 @@ pixel-level rendering correctness.
 |------|--------------------|--------------------|-----------------|---------|---------------|
 | Viewport | OK | OK | PARTIAL OK (pass1052) | MISSING | Clean original gameplay frames exist; Firestaff pairing/diff still missing |
 | Wall | OK | OK | PARTIAL OK (pass1052) | PARTIAL MATCH (pass1054) | One exact wall-crop match exists; broader wall-state route still needs more pairings |
-| Collision | OK | MISSING | PARTIAL OK (pass1055 closed door) | MISSING | One original closed-door stasis capture exists; full paired transcript still missing |
+| Collision | OK | MISSING | PARTIAL OK (pass1055 closed door) | PARTIAL PAIR (semantic) | One original closed-door stasis capture and one Firestaff semantic pair exist; full paired transcript still missing |
 | Creature-chain | OK | IMPAIRED Firestaff-only | MISSING | MISSING | No original creature screenshot exists |
 | Champion-panel | OK | IMPAIRED Firestaff-only | PARTIAL OK (pass1053 candidate/resurrect panel) | MISSING | Full four-champion HUD/status-panel pairing still missing |
 
@@ -218,12 +219,12 @@ Given the above gap inventory, the correct parity status labels for the five are
 |------|-------------|--------------|--------|
 | Viewport | `MATCHED` (bounds) / `KNOWN_DIFF` (content) | `PARTIAL_REFERENCE_CAPTURED` | Pass1052 original gameplay frames exist; no Firestaff pairing/diff yet |
 | Wall | `KNOWN_DIFF` (narrowed) | `PARTIAL_MATCH` | Pass1054 has one exact original-to-Firestaff wall-crop match; broader wall route still partial |
-| Collision | (source-lock + pass1055 original closed-door stasis) | `PARTIAL_REFERENCE_CAPTURED` | Pass1055 captures one original closed-door stasis case; full Firestaff pairing and broader transcript are still missing |
+| Collision | (source-lock + pass1055 original closed-door stasis + Firestaff semantic pair) | `PARTIAL_PAIR` | Pass1055 captures one original closed-door stasis case and a Firestaff-side movement/collision pair; pixel comparison and broader transcript are still missing |
 | Creature-chain | (source-lock only) | `BLOCKED_ON_REFERENCE` | No original creature screenshot exists |
 | Champion-panel | (source-lock only) | `PARTIAL_REFERENCE_CAPTURED` | Pass1053 candidate/resurrect panel exists; full party HUD/status-panel pair is still missing |
 
 **Recommendation:** Keep the content/pixel sub-rows out of `MATCHED` until same-state
 Firestaff comparisons exist. Viewport and champion candidate/resurrect panel can now
 be labelled `PARTIAL_REFERENCE_CAPTURED`; wall can be labelled `PARTIAL_MATCH`;
-collision can be labelled `PARTIAL_REFERENCE_CAPTURED` for the single closed-door
+collision can be labelled `PARTIAL_PAIR` for the single closed-door semantic
 case; creature-chain remains `BLOCKED_ON_REFERENCE`.
