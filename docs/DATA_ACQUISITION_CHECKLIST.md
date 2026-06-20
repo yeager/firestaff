@@ -50,7 +50,7 @@ coverage**, not registry correctness.
 | Amiga 2.0 English | 🟡 `fa6b1aa2…`? | 🟡 | n/a | ADF disks extracted; need .adf→raw→hash |
 | Amiga 2.0 German | 🟡 | 🟡 | n/a | ADF disks extracted |
 | Amiga 2.0 French | 🟡 | 🟡 | n/a | ADF disks extracted |
-| Amiga 2.2 English (kid) | 🟡 | 🟡 | n/a | has the kid dungeonE.dat easter egg |
+| Amiga 2.2 English (kid) | ✅ | ✅ | n/a | `DUNGEONB.DAT` extracted and hash-locked (`9bac133b…`, 4,806 bytes); runtime coverage now 3/3 |
 | Apple IIGS 2.1 English | 🟡 | 🟡 | n/a | 800KB disk images |
 | FM-Towns English | 🟡 | 🟡 | n/a | CD image variant |
 | PC-98 Japanese | 🟡 | 🟡 | n/a | 2 disks, 1.2MB variant |
