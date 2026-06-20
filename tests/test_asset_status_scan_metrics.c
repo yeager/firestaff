@@ -477,10 +477,10 @@ int main(void) {
     M12_AssetStatus_Scan(&status, requestRoot);
     metrics = M12_AssetStatus_TestGetScanMetrics();
 
-    check_int(metrics.rootCount == 2U,
-              "requested root and default root should be scanned once each");
-    check_int(metrics.duplicateRootSkips == 1U,
-              "FIRESTAFF_DATA duplicate of requested root should be skipped");
+    check_int(metrics.rootCount == 1U,
+              "explicit --data-dir request must scan only the requested root, no fallbacks");
+    check_int(metrics.duplicateRootSkips == 0U,
+              "explicit --data-dir request must not even attempt to add fallbacks");
     check_int(metrics.versionHashLookups ==
                   (size_t)VERSION_SCAN_GROUPS * metrics.rootCount,
               "empty scan should batch version-hash searches once per game/root");

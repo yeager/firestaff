@@ -604,8 +604,17 @@ static size_t m12_build_search_roots(char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET
     legacyData[0] = '\0';
 
     if (requestedDataDir && requestedDataDir[0] != '\0') {
+        /* Caller passed --data-dir (or equivalent) explicitly. Honor that:
+         * use ONLY the requested directory as a search root. The default
+         * fallbacks (~/.firestaff/data + friends) only apply on the menu/
+         * launch path, which calls Scan with requestedDataDir == NULL. */
         m12_add_unique_search_root(roots, &count, requestedDataDir);
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+        g_m12ScanMetrics.rootCount = count;
+#endif
+        return count;
     }
+
     if (FSP_GetDefaultOriginalsDir(defaultOriginals, sizeof(defaultOriginals))) {
         m12_add_unique_search_root(roots, &count, defaultOriginals);
     }
@@ -914,7 +923,8 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                                    int gameIndex,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
                                    size_t rootCount,
-                                   int* dataDirResolvedToMatchedRoot) {
+                                   int* dataDirResolvedToMatchedRoot,
+                                   int userExplicitDataDir) {
     size_t i;
     size_t rootIndex;
     int matchedAny = 0;
@@ -978,13 +988,17 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                 m12_copy_string(status->runtimeDataDirs[gameIndex],
                                 sizeof(status->runtimeDataDirs[gameIndex]),
                                 roots[rootIndex]);
-                if (dataDirResolvedToMatchedRoot && !*dataDirResolvedToMatchedRoot) {
+                if (dataDirResolvedToMatchedRoot && !*dataDirResolvedToMatchedRoot && !userExplicitDataDir) {
                     /* Runtime source path: when the saved/default data_dir is the
                      * preferred ~/.firestaff/originals but the verified PC34 files
                      * only exist in the legacy ~/.firestaff/data tree, launch must
                      * use the root that actually matched.  Otherwise TITLE and
                      * GRAPHICS.DAT-backed startup animation code is present but
-                     * starved of assets at runtime. */
+                     * starved of assets at runtime.
+                     *
+                     * Skipped when the user passed --data-dir explicitly: CLI scan
+                     * must report the user-requested dir, not whatever fallback the
+                     * legacy tree happens to provide. */
                     m12_copy_string(status->dataDir, sizeof(status->dataDir), roots[rootIndex]);
                     *dataDirResolvedToMatchedRoot = 1;
                 }
@@ -1368,8 +1382,9 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
                         status->dataDir);
     }
     m12_scan_original_candidates(status, roots, rootCount);
+    int userExplicitDataDir = (requestedDataDir && requestedDataDir[0] != '\0') ? 1 : 0;
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
-        m12_fill_game_versions(status, i, roots, rootCount, &dataDirResolvedToMatchedRoot);
+        m12_fill_game_versions(status, i, roots, rootCount, &dataDirResolvedToMatchedRoot, userExplicitDataDir);
     }
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         m12_apply_required_game_availability(status,
