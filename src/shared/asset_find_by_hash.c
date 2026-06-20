@@ -1067,7 +1067,9 @@ static int scan_iso_by_md5(const char *isoPath, const char *expectedMd5,
     FILE *fp = fopen(isoPath, "rb");
     unsigned char pvd[ASSET_ISO_SECTOR_SIZE];
     int raw;
+    char hex[33];
     if (!fp) return 0;
+    /* Primary path: ISO 9660 directory walk. */
     for (raw = 0; raw <= 1; ++raw) {
         uint32_t rootLba, rootSize;
         if (!iso_read_sector(fp, raw, 16U, pvd)) continue;
@@ -1076,6 +1078,17 @@ static int scan_iso_by_md5(const char *isoPath, const char *expectedMd5,
         rootSize = read_u32le(pvd + 166);
         if (scan_iso_dir_by_md5(fp, raw, rootLba, rootSize, 0,
                                 expectedMd5, isoPath, outPath, outPathLen)) {
+            fclose(fp);
+            return 1;
+        }
+    }
+    /* Fallback: raw CD data image (no ISO 9660 PVD).
+     * Some game assets ship as raw sector dumps (PC Engine CD, raw
+     * Saturn tracks). Compute MD5 of the whole file and compare.
+     * The reference hashes for these are documented in the asset
+     * registry as the post-rip file content. */
+    if (file_md5(isoPath, hex) && strcmp(hex, expectedMd5) == 0) {
+        if (copy_match_path(isoPath, outPath, outPathLen)) {
             fclose(fp);
             return 1;
         }
@@ -1092,7 +1105,10 @@ static int scan_iso_by_md5_list(const char *isoPath, const char *const *md5List,
     unsigned char pvd[ASSET_ISO_SECTOR_SIZE];
     int raw;
     int foundCount = 0;
+    char hex[33];
+    int i;
     if (!fp) return 0;
+    /* Primary path: ISO 9660 directory walk. */
     for (raw = 0; raw <= 1; ++raw) {
         uint32_t rootLba, rootSize;
         if (!iso_read_sector(fp, raw, 16U, pvd)) continue;
@@ -1105,6 +1121,20 @@ static int scan_iso_by_md5_list(const char *isoPath, const char *const *md5List,
         if (foundCount >= md5Count) {
             fclose(fp);
             return foundCount;
+        }
+    }
+    /* Fallback: whole-file MD5 for raw CD images without ISO 9660 PVD. */
+    if (file_md5(isoPath, hex)) {
+        for (i = 0; i < md5Count; ++i) {
+            if (matched[i]) continue;
+            if (md5List[i] && strcmp(hex, md5List[i]) == 0) {
+                if (copy_match_path(isoPath, outPaths[i],
+                                    (int)ASSET_PATH_MAX)) {
+                    matched[i] = 1;
+                    ++foundCount;
+                }
+                break;
+            }
         }
     }
     fclose(fp);

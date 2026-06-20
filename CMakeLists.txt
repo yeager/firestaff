@@ -11755,3 +11755,249 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0712_pc34_compat.c"
         COMMAND test_dm1_v1_g0712_pc34_compat
     )
 endif()
+
+# pass1025 — DM1 V1 G0163_aauc_Graphic558_Frame_Walls[12][8]: dungeon-viewport
+# wall-frame coordinate table (12 rows × 8 cols). Source-locked against
+# DUNVIEW.C:440/581/6206/6289/6356. Disjoint from pass784-1024.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0163_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0163_pc34_compat.c")
+    add_executable(test_dm1_v1_g0163_pc34_compat
+        tests/test_dm1_v1_g0163_pc34_compat.c
+        src/dm1/dm1_v1_g0163_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0163_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0163_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0163_pc34_compat
+        COMMAND test_dm1_v1_g0163_pc34_compat
+    )
+endif()
+
+# pass1026 — DM1 V1 G0188_aauc_Graphic558_FieldAspects[12][8]:
+# field-aspect rendering table for dungeon viewport. Source-locked
+# against DUNVIEW.C:465/718/6206/6209/6289/6356. Disjoint from pass784-1025.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0188_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0188_pc34_compat.c")
+    add_executable(test_dm1_v1_g0188_pc34_compat
+        tests/test_dm1_v1_g0188_pc34_compat.c
+        src/dm1/dm1_v1_g0188_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0188_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0188_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0188_pc34_compat
+        COMMAND test_dm1_v1_g0188_pc34_compat
+    )
+endif()
+
+# pass1027 — DM1 V1 G0180_s_Graphic558_Frames_Door_*[DOOR_FRAMES struct]
+# door-frame coordinate struct (10 frames × 8 bytes = 80 bytes total).
+# Source-locked against DUNVIEW.C:46X declaration + DUNVIEW.C:658-706 PC 3.4 EN init
+# + DUNVIEW.C F0100_DUNGEONVIEW_DrawWallSetBitmap read sites.
+# Disjoint from pass784-1026.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0180_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0180_pc34_compat.c")
+    add_executable(test_dm1_v1_g0180_pc34_compat
+        tests/test_dm1_v1_g0180_pc34_compat.c
+        src/dm1/dm1_v1_g0180_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0180_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0180_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0180_pc34_compat
+        COMMAND test_dm1_v1_g0180_pc34_compat
+    )
+endif()
+
+# pass1028 — DM1 V1 G0181_s_Graphic558_Frames_Door_*[DOOR_FRAMES struct]
+# door-frame coordinate struct (10 frames × 8 bytes = 80 bytes total).
+# Source-locked against DUNVIEW.C:46X declaration + DUNVIEW.C:658-706 PC 3.4 EN init
+# + DUNVIEW.C F0100_DUNGEONVIEW_DrawWallSetBitmap read sites.
+# Disjoint from pass784-1026.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0181_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0181_pc34_compat.c")
+    add_executable(test_dm1_v1_g0181_pc34_compat
+        tests/test_dm1_v1_g0181_pc34_compat.c
+        src/dm1/dm1_v1_g0181_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0181_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0181_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0181_pc34_compat
+        COMMAND test_dm1_v1_g0181_pc34_compat
+    )
+endif()
+
+# pass1029 — DM1 V1 G0182_s_Graphic558_Frames_Door_*[DOOR_FRAMES struct]
+# door-frame coordinate struct (10 frames × 8 bytes = 80 bytes total).
+# Source-locked against DUNVIEW.C:46X declaration + DUNVIEW.C:658-706 PC 3.4 EN init
+# + DUNVIEW.C F0100_DUNGEONVIEW_DrawWallSetBitmap read sites.
+# Disjoint from pass784-1026.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0182_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0182_pc34_compat.c")
+    add_executable(test_dm1_v1_g0182_pc34_compat
+        tests/test_dm1_v1_g0182_pc34_compat.c
+        src/dm1/dm1_v1_g0182_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0182_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0182_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0182_pc34_compat
+        COMMAND test_dm1_v1_g0182_pc34_compat
+    )
+endif()
+
+# pass1030 — DM1 V1 G0183_s_Graphic558_Frames_Door_*[DOOR_FRAMES struct]
+# door-frame coordinate struct (10 frames × 8 bytes = 80 bytes total).
+# Source-locked against DUNVIEW.C:46X declaration + DUNVIEW.C:658-706 PC 3.4 EN init
+# + DUNVIEW.C F0100_DUNGEONVIEW_DrawWallSetBitmap read sites.
+# Disjoint from pass784-1026.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0183_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0183_pc34_compat.c")
+    add_executable(test_dm1_v1_g0183_pc34_compat
+        tests/test_dm1_v1_g0183_pc34_compat.c
+        src/dm1/dm1_v1_g0183_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0183_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0183_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0183_pc34_compat
+        COMMAND test_dm1_v1_g0183_pc34_compat
+    )
+endif()
+
+# pass1031 — DM1 V1 G0184_s_Graphic558_Frames_Door_*[DOOR_FRAMES struct]
+# door-frame coordinate struct (10 frames × 8 bytes = 80 bytes total).
+# Source-locked against DUNVIEW.C:46X declaration + DUNVIEW.C:658-706 PC 3.4 EN init
+# + DUNVIEW.C F0100_DUNGEONVIEW_DrawWallSetBitmap read sites.
+# Disjoint from pass784-1026.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0184_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0184_pc34_compat.c")
+    add_executable(test_dm1_v1_g0184_pc34_compat
+        tests/test_dm1_v1_g0184_pc34_compat.c
+        src/dm1/dm1_v1_g0184_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0184_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0184_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0184_pc34_compat
+        COMMAND test_dm1_v1_g0184_pc34_compat
+    )
+endif()
+
+# pass1032 — DM1 V1 G0185_s_Graphic558_Frames_Door_*[DOOR_FRAMES struct]
+# door-frame coordinate struct (10 frames × 8 bytes = 80 bytes total).
+# Source-locked against DUNVIEW.C:46X declaration + DUNVIEW.C:658-706 PC 3.4 EN init
+# + DUNVIEW.C F0100_DUNGEONVIEW_DrawWallSetBitmap read sites.
+# Disjoint from pass784-1026.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0185_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0185_pc34_compat.c")
+    add_executable(test_dm1_v1_g0185_pc34_compat
+        tests/test_dm1_v1_g0185_pc34_compat.c
+        src/dm1/dm1_v1_g0185_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0185_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0185_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0185_pc34_compat
+        COMMAND test_dm1_v1_g0185_pc34_compat
+    )
+endif()
+
+# pass1033 — DM1 V1 G0186_s_Graphic558_Frames_Door_*[DOOR_FRAMES struct]
+# door-frame coordinate struct (10 frames × 8 bytes = 80 bytes total).
+# Source-locked against DUNVIEW.C:46X declaration + DUNVIEW.C:658-706 PC 3.4 EN init
+# + DUNVIEW.C F0100_DUNGEONVIEW_DrawWallSetBitmap read sites.
+# Disjoint from pass784-1026.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0186_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0186_pc34_compat.c")
+    add_executable(test_dm1_v1_g0186_pc34_compat
+        tests/test_dm1_v1_g0186_pc34_compat.c
+        src/dm1/dm1_v1_g0186_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0186_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0186_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0186_pc34_compat
+        COMMAND test_dm1_v1_g0186_pc34_compat
+    )
+endif()
+
+# pass1034 — DM1 V1 G0187_s_Graphic558_Frames_Door_*[DOOR_FRAMES struct]
+# door-frame coordinate struct (10 frames × 8 bytes = 80 bytes total).
+# Source-locked against DUNVIEW.C:46X declaration + DUNVIEW.C:658-706 PC 3.4 EN init
+# + DUNVIEW.C F0100_DUNGEONVIEW_DrawWallSetBitmap read sites.
+# Disjoint from pass784-1026.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0187_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0187_pc34_compat.c")
+    add_executable(test_dm1_v1_g0187_pc34_compat
+        tests/test_dm1_v1_g0187_pc34_compat.c
+        src/dm1/dm1_v1_g0187_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0187_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0187_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0187_pc34_compat
+        COMMAND test_dm1_v1_g0187_pc34_compat
+    )
+endif()
+
+# pass1035 — DM1 V1 G0487_as_Graphic560_Spells[25] (SPELL struct array):
+# 25 PC 3.4 EN spell definitions, 8 bytes each = 200 bytes total.
+# Source-locked against MENU.C:18/50-86 + DEFS.H:1744-1752 (SPELL typedef).
+# Disjoint from pass784-1034.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0487_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0487_pc34_compat.c")
+    add_executable(test_dm1_v1_g0487_pc34_compat
+        tests/test_dm1_v1_g0487_pc34_compat.c
+        src/dm1/dm1_v1_g0487_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0487_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0487_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0487_pc34_compat
+        COMMAND test_dm1_v1_g0487_pc34_compat
+    )
+endif()
+
+# pass1036 — DM1 V1 G0489_as_Graphic560_ActionSets[44] (ACTION_SET struct):
+# 44 PC 3.4 EN action-set definitions, 6 bytes each = 264 bytes total.
+# Source-locked against MENU.C:20/90-136 + DEFS.H:1785-1790 (ACTION_SET typedef).
+# Disjoint from pass784-1035.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0489_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0489_pc34_compat.c")
+    add_executable(test_dm1_v1_g0489_pc34_compat
+        tests/test_dm1_v1_g0489_pc34_compat.c
+        src/dm1/dm1_v1_g0489_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0489_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0489_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0489_pc34_compat
+        COMMAND test_dm1_v1_g0489_pc34_compat
+    )
+endif()
