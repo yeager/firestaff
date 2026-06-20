@@ -13813,9 +13813,21 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
     char decoded[128];
     char* cursor;
     int line = 0;
-    M11_TextStyle inscriptionStyle = g_text_shadow;
+    /* BUG-DNY-DM1-2026-06-16 wall inscriptions are 'otydliga' (blurry)
+     * for the user.  When the dedicated 8x8 inscription font
+     * (M648_GRAPHIC_INSCRIPTION_FONT / DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34=258)
+     * is not loaded, the fallback path was using g_text_shadow
+     * which double-draws the 5x7 g_font[] bitmap at (+1,+1) shadow
+     * + (0,0) main, producing 2px-thick overlapping glyphs that look
+     * blurry/double-exposed on a 320x200 DM1 screen.  Use a
+     * no-shadow text style for the fallback so each glyph is drawn
+     * once at its true 5x7 pixel position, matching the original
+     * ReDMCSB DUNVIEW.C:3619-3638 (no shadow on M648_GRAPHIC_INSCRIPTION_FONT). */
+    M11_TextStyle inscriptionStyle = g_text_small;
     inscriptionStyle.color = M11_COLOR_LIGHT_GRAY;
-    inscriptionStyle.shadowColor = M11_COLOR_WHITE;
+    inscriptionStyle.shadowDx = 0;
+    inscriptionStyle.shadowDy = 0;
+    inscriptionStyle.shadowColor = M11_COLOR_BLACK;
     if (!m11_decode_visible_wall_text(state, cell, decoded, sizeof(decoded))) {
         return;
     }
