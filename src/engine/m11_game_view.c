@@ -1555,10 +1555,10 @@ static int m11_resolve_builtin_dungeon_path(char* out,
             if (asset_find_by_md5(dataDir, expectedMd5, resolved,
                                   (int)sizeof(resolved), 32)) {
                 fprintf(stderr, "  HASH-FALLBACK: [%s] FOUND\n", resolved);
-                if (FSP_JoinPath(out, outSize, resolved, "")) {
-                    return 1;
-                }
-                /* FSP_JoinPath may refuse empty tail; copy directly. */
+                /* resolved already includes the filename; copy verbatim
+                 * (FSP_JoinPath with empty tail would append a trailing
+                 * slash and break the dungeonPath string used by the
+                 * GRAPHICS.DAT slashPos reconstruction at line 10132). */
                 strncpy(out, resolved, outSize - 1);
                 out[outSize - 1] = '\0';
                 return 1;
