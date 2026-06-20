@@ -238,6 +238,14 @@ set(M11_SOURCES
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 firestaff_theron SDL3::SDL3 m)
+# main_loop_m11.c + m11_game_view.c reference M12_* startup-menu and
+# config helpers that live in firestaff_m12.a. Expose that link
+# requirement through firestaff_m11's PUBLIC interface so every
+# consumer (the firestaff executable and every probe that links
+# firestaff_m11) gets firestaff_m12 in its final link line. The
+# reverse circular link from m12 back to m11 is harmless because
+# CMake deduplicates static-lib pulls when both are listed.
+target_link_libraries(firestaff_m11 PUBLIC firestaff_m12)
 if(DM2_SOURCES)
     # 2026-06-17: DM2 V1 hand-off added in M11_GameView_Start (see
     # M11_GameView_StartDm2 in m11_game_view.c). Links the DM2 V1 boot
