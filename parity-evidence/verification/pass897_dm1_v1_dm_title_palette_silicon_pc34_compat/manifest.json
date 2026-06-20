@@ -1,0 +1,63 @@
+{
+  "anchors": [
+    "VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS",
+    "VGA_PALETTE_PC34_SPECIAL_TITLE",
+    "VGA_PALETTE_PC34_SPECIAL_ENTRANCE",
+    "VGA_PALETTE_PC34_SPECIAL_CREDITS"
+  ],
+  "hostCheck": {
+    "description": "Apple Silicon host (__APPLE__ + __arm64__) detected.",
+    "isAppleSilicon": true,
+    "machine": "arm64",
+    "platform": "Darwin"
+  },
+  "nonOverlap": [
+    "Disjoint from pass842 (dm_title_palette_regression): pass842 covers V1_TitleFrontend_* helpers without touching SDL3; pass897 covers M11_Render_PresentIndexedWithSpecialPalette + SDL_RenderReadPixels."
+  ],
+  "schema": "firestaff.parity.pass897_dm1_v1_dm_title_palette_silicon_pc34_compat.v1",
+  "scope": "DM1 V1 TITLE palette Apple-Silicon Metal-path probe.",
+  "sourceChecks": [
+    {
+      "file": "probes/v1/firestaff_v1_dm_title_palette_silicon_probe.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "probes/v1/firestaff_v1_dm_title_palette_silicon_probe.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/render_sdl_m11.h",
+      "id": "public_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/vga_palette_pc34_compat.h",
+      "id": "palette_header_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS897_DM1_V1_DM_TITLE_PALETTE_SILICON_LOCKED",
+  "timestampUtc": "2026-06-20T14:37:37.433698+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/firestaff_v1_dm_title_palette_silicon_probe"
+      ],
+      "outputTail": "info: Apple Silicon host detected\ninfo: window pixel format = 0x16161804\nPASS AS_TITLE_PALETTE_SLOT_0_TITLE_PRESENTS: Metal readback (R,G,B,A)=(255,255,255,255) vs F9011[TITLE_PRESENTS][0x0F]=(255,255,255)\nPASS AS_TITLE_PALETTE_SLOT_1_TITLE: Metal readback (R,G,B,A)=(255,0,0,255) vs F9011[TITLE][0x0F]=(255,0,0)\nPASS AS_TITLE_PALETTE_SLOT_2_ENTRANCE: Metal readback (R,G,B,A)=(255,255,255,255) vs F9011[ENTRANCE][0x0F]=(255,255,255)\nPASS AS_TITLE_PALETTE_SLOT_3_CREDITS: Metal readback (R,G,B,A)=(255,255,219,255) vs F9011[CREDITS][0x0F]=(255,255,219)\nPASS AS_DEFAULT_PALETTE_BRIGHTNESS_0: Metal readback matches F9010_VGA_GetColorRgb_Compat(0x0F, 0)\n# summary: 5/5 invariants passed (0 failed)",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}
