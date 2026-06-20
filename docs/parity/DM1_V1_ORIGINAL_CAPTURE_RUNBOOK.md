@@ -936,6 +936,43 @@ script also adds `osascript` activation of the DOSBox process (`dosbox-staging`,
 not `DOSBox Staging` — the actual macOS process name) to bring the window to
 front before sending the click.
 
+### Selector timing + window-title matching (added 2026-06-20)
+
+The DOSBox I34E selector processes each menu option sequentially and shows
+"Please select from '*'ed options" between transitions.  On macOS 15 /
+DOSBox Staging 0.82.2 the minimum reliable timing between keypresses is:
+
+| Between       | Minimum settle |
+|---------------|---------------|
+| option-key → Return | 0.5 s |
+| Return → next option-key | 4.0 s |
+| Last Return (entrance) → entrance wall rendered | 5.0 s + 6.0 s settle |
+| Entrance wall → FIRES title | 5.0 s after FIRES title appears |
+
+Earlier timing constants in the live runner (1.5–2.5 s) were insufficient;
+3.0 s also misses; 4.0 s is the minimum that reliably completes the
+selector → entrance wall → FIRES transition.
+
+**Window-title matching caveat:** the I34E selector / DM.EXE / FIRES.EXE
+title sequence is:
+
+    DM.EXE  - max 100% cycles/ms - to capture the mouse press Cmd+F10 or click any button
+    SELECTOR - max 100% cycles/ms - to capture the mouse press Cmd+F10 or click any button
+    FIRES   - max 100% cycles/ms - to capture the mouse press Cmd+F10 or click any button
+
+The macOS OpenClaw workspace title "Firestaff" contains "FIRES" as a
+substring, so a naive `"FIRES" in title.upper()` check matches the wrong
+window.  `scripts/dm1_v1_original_capture.py` uses:
+
+```python
+if "FIRES -" in title_upper:  # requires the trailing space+dash
+    ...
+```
+
+and additionally requires `kCGWindowOwnerName == "dosbox-staging"` (not
+just the title).  This rules out both the OpenClaw workspace and any
+helper/inspector windows.
+
 ### Pixel-density classifier caveat
 
 The DM1 PC 3.4 dungeon framebuffer has the 224x136 dungeon viewport on
