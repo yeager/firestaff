@@ -203,13 +203,15 @@ static const M12_RequiredFileSpec g_requiredFiles[] = {
     {"dm2", "graphics", "GRAPHICS.DAT", NULL, 1},
     {"dm2", "dungeon", "DUNGEON.DAT", "6caccd7875009e82fe2e28e7f6d6adc0", 0},
     {"nexus", "data", "DM.BIN / Saturn data marker", NULL, 1},
-    /* Theron Track 02 hashes are the whole-file MD5 of the raw CD
-     * data track (post-rip). scan_iso_by_md5 falls back to whole-
-     * file MD5 for non-ISO-9660 images. */
-    {"theron", "track02-jp", "Track 02 data image (JP)", "b7afb338ad31be1025b53f9aff12d73a", 1},
-    {"theron", "track02-us", "Track 02 data image (US)", "f23601102138f87c33025877767ebf76", 0},
-    {"theron", "track02-jp-rev1", "Track 02 data image (JP Rev 1)", "397039af02d50d15c70b74088eb8a1cb", 0},
-    {"theron", "track02-us-iso", "Track 02 data image (US ISO)", "3d8b78571dcd0e6eb8eb4b01eeb7fbba", 0},
+    /* Theron Track 02: hash-based, fallback path in scan_iso_by_md5.
+     * The 5th field of M12_RequiredFileSpec (matchAnyVersion) is
+     * the version-match toggle, not the required-flag toggle.
+     * m12_fill_required_files hardcodes fileStatus->required = 1,
+     * so we list only the primary hash here. Other variants (US,
+     * Rev1, US-ISO) live in g_theronVersions[] for runtime lookup
+     * but not as required-files (would mark Theron MISSING when
+     * not present). Future fix: add a proper required-flag field. */
+    {"theron", "track02", "Track 02 data image (JP, primary)", "b7afb338ad31be1025b53f9aff12d73a", 1},
     {NULL, NULL, NULL, NULL, 0}
 };
 

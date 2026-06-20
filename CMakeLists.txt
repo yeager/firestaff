@@ -7465,6 +7465,35 @@ if(BUILD_TESTING)
     )
 endif()
 
+# ── Apple Silicon DM V2.2 modern-renderer Metal-path probe ─────────
+# Companion to firestaff_v1_dm_title_palette_silicon_probe below.
+# Exercises the V22 modern-art render path end-to-end on the Apple
+# Silicon SDL3/Metal backend:
+#   m11_v22_shape_cache_update -> m11_v22_render_overlay ->
+#   M11_Render_PresentIndexed -> SDL_RenderReadPixels
+# Skips with PASS on non-Apple-Silicon hosts (Intel macOS, Linux,
+# Windows).
+if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_dm_v22_modern_renderer_silicon_probe.c")
+    add_executable(firestaff_v1_dm_v22_modern_renderer_silicon_probe
+        probes/v1/firestaff_v1_dm_v22_modern_renderer_silicon_probe.c
+        src/dm1v2/m11_v22_render_overlay_pc34.c
+        src/dm1v2/m11_v22_shape_cache_pc34.c
+        src/dm1v2/dm1_v2_shape_runtime_pc34.c
+        src/dm1v2/dm1_v22_shapes.c
+        src/dm1v2/dm1_v2_presentation_mode_pc34.c
+    )
+    target_link_libraries(firestaff_v1_dm_v22_modern_renderer_silicon_probe PRIVATE
+        firestaff_m11 firestaff_m10 SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_v1_dm_v22_modern_renderer_silicon_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm_v22_modern_renderer_silicon
+        COMMAND firestaff_v1_dm_v22_modern_renderer_silicon_probe
+    )
+endif()
+
 # ── Apple Silicon DM TITLE palette Metal-path probe ─────────────────
 # Companion to firestaff_v1_dm_title_palette_regression_probe above.
 # Exercises the SDL3 / Metal renderer path that pass842 explicitly does
@@ -11999,5 +12028,45 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0489_pc34_compat.c"
     add_test(
         NAME dm1_v1_g0489_pc34_compat
         COMMAND test_dm1_v1_g0489_pc34_compat
+    )
+endif()
+
+# pass1037 — DM1 V1 G0490_ac_Graphic560_ActionNames[300]: PC 3.4 EN
+# null-separated action name string (44 names packed in 288 chars +
+# 12 trailing zero-padding). Source-locked against MENU.C:21/137.
+# Disjoint from pass784-1036.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0490_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0490_pc34_compat.c")
+    add_executable(test_dm1_v1_g0490_pc34_compat
+        tests/test_dm1_v1_g0490_pc34_compat.c
+        src/dm1/dm1_v1_g0490_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0490_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0490_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0490_pc34_compat
+        COMMAND test_dm1_v1_g0490_pc34_compat
+    )
+endif()
+
+# pass1038 — DM1 V1 G0497_auc_Graphic560_ActionExperienceGain[44]:
+# PC 3.4 EN action experience table (44 entries, uses MEDIA728 branch
+# for BLOW HORN=1, HEAL=5, CALM=1, BRANDISH=3). Source-locked against
+# MENU.C:34/427-470. Disjoint from pass784-1037.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0497_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0497_pc34_compat.c")
+    add_executable(test_dm1_v1_g0497_pc34_compat
+        tests/test_dm1_v1_g0497_pc34_compat.c
+        src/dm1/dm1_v1_g0497_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0497_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0497_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0497_pc34_compat
+        COMMAND test_dm1_v1_g0497_pc34_compat
     )
 endif()
