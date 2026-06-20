@@ -8817,6 +8817,71 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass883_dm1_v1_animtown_color_light5 PROPERTIES DEPENDS dm1_v1_animtown_color_light5_pc34_compat)
         add_test(
+            NAME pass884_dm1_v1_animtown_color_presents
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass884_dm1_v1_animtown_color_presents_pc34_compat.py
+        )
+        set_tests_properties(pass884_dm1_v1_animtown_color_presents PROPERTIES DEPENDS dm1_v1_animtown_color_presents_pc34_compat)
+        add_test(
+            NAME pass885_dm1_v1_animtown_color_dungeon
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass885_dm1_v1_animtown_color_dungeon_pc34_compat.py
+        )
+        set_tests_properties(pass885_dm1_v1_animtown_color_dungeon PROPERTIES DEPENDS dm1_v1_animtown_color_dungeon_pc34_compat)
+        add_test(
+            NAME pass886_dm1_v1_animtown_color_master
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass886_dm1_v1_animtown_color_master_pc34_compat.py
+        )
+        set_tests_properties(pass886_dm1_v1_animtown_color_master PROPERTIES DEPENDS dm1_v1_animtown_color_master_pc34_compat)
+        add_test(
+            NAME pass887_dm1_v1_animtown_color_swoosh1
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass887_dm1_v1_animtown_color_swoosh1_pc34_compat.py
+        )
+        set_tests_properties(pass887_dm1_v1_animtown_color_swoosh1 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh1_pc34_compat)
+        add_test(
+            NAME pass888_dm1_v1_animtown_color_swoosh2
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass888_dm1_v1_animtown_color_swoosh2_pc34_compat.py
+        )
+        set_tests_properties(pass888_dm1_v1_animtown_color_swoosh2 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh2_pc34_compat)
+        add_test(
+            NAME pass889_dm1_v1_animtown_color_swoosh3
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass889_dm1_v1_animtown_color_swoosh3_pc34_compat.py
+        )
+        set_tests_properties(pass889_dm1_v1_animtown_color_swoosh3 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh3_pc34_compat)
+        add_test(
+            NAME pass890_dm1_v1_animtown_color_swoosh4
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass890_dm1_v1_animtown_color_swoosh4_pc34_compat.py
+        )
+        set_tests_properties(pass890_dm1_v1_animtown_color_swoosh4 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh4_pc34_compat)
+        add_test(
+            NAME pass891_dm1_v1_animtown_color_swoosh5
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass891_dm1_v1_animtown_color_swoosh5_pc34_compat.py
+        )
+        set_tests_properties(pass891_dm1_v1_animtown_color_swoosh5 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh5_pc34_compat)
+        add_test(
+            NAME pass892_dm1_v1_animtown_color_swoosh6
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass892_dm1_v1_animtown_color_swoosh6_pc34_compat.py
+        )
+        set_tests_properties(pass892_dm1_v1_animtown_color_swoosh6 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh6_pc34_compat)
+        add_test(
+            NAME pass893_dm1_v1_animtown_color_swoosh7
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass893_dm1_v1_animtown_color_swoosh7_pc34_compat.py
+        )
+        set_tests_properties(pass893_dm1_v1_animtown_color_swoosh7 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh7_pc34_compat)
+        add_test(
+            NAME pass894_dm1_v1_animtown_color_swoosh8
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass894_dm1_v1_animtown_color_swoosh8_pc34_compat.py
+        )
+        set_tests_properties(pass894_dm1_v1_animtown_color_swoosh8 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh8_pc34_compat)
+        add_test(
+            NAME pass895_dm1_v1_animtown_color_swoosh9
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass895_dm1_v1_animtown_color_swoosh9_pc34_compat.py
+        )
+        set_tests_properties(pass895_dm1_v1_animtown_color_swoosh9 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh9_pc34_compat)
+        add_test(
+            NAME pass896_dm1_v1_animtown_color_swoosh10
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass896_dm1_v1_animtown_color_swoosh10_pc34_compat.py
+        )
+        set_tests_properties(pass896_dm1_v1_animtown_color_swoosh10 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh10_pc34_compat)
+        add_test(
             NAME pass870_dm1_v1_palette_changes_cursor_mask
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass870_dm1_v1_palette_changes_cursor_mask_pc34_compat.py
         )
@@ -9609,5 +9674,213 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_light5_p
     add_test(
         NAME dm1_v1_animtown_color_light5_pc34_compat
         COMMAND test_dm1_v1_animtown_color_light5_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_presents_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_presents_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_presents_pc34_compat
+        tests/test_dm1_v1_animtown_color_presents_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_presents_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_presents_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_presents_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_presents_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_presents_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_dungeon_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_dungeon_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_dungeon_pc34_compat
+        tests/test_dm1_v1_animtown_color_dungeon_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_dungeon_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_dungeon_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_dungeon_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_dungeon_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_dungeon_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_master_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_master_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_master_pc34_compat
+        tests/test_dm1_v1_animtown_color_master_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_master_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_master_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_master_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_master_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_master_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh1_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_swoosh1_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_swoosh1_pc34_compat
+        tests/test_dm1_v1_animtown_color_swoosh1_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_swoosh1_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_swoosh1_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_swoosh1_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_swoosh1_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_swoosh1_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh2_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_swoosh2_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_swoosh2_pc34_compat
+        tests/test_dm1_v1_animtown_color_swoosh2_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_swoosh2_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_swoosh2_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_swoosh2_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_swoosh2_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_swoosh2_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh3_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_swoosh3_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_swoosh3_pc34_compat
+        tests/test_dm1_v1_animtown_color_swoosh3_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_swoosh3_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_swoosh3_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_swoosh3_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_swoosh3_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_swoosh3_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh4_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_swoosh4_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_swoosh4_pc34_compat
+        tests/test_dm1_v1_animtown_color_swoosh4_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_swoosh4_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_swoosh4_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_swoosh4_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_swoosh4_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_swoosh4_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh5_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_swoosh5_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_swoosh5_pc34_compat
+        tests/test_dm1_v1_animtown_color_swoosh5_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_swoosh5_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_swoosh5_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_swoosh5_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_swoosh5_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_swoosh5_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh6_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_swoosh6_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_swoosh6_pc34_compat
+        tests/test_dm1_v1_animtown_color_swoosh6_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_swoosh6_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_swoosh6_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_swoosh6_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_swoosh6_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_swoosh6_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh7_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_swoosh7_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_swoosh7_pc34_compat
+        tests/test_dm1_v1_animtown_color_swoosh7_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_swoosh7_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_swoosh7_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_swoosh7_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_swoosh7_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_swoosh7_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh8_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_swoosh8_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_swoosh8_pc34_compat
+        tests/test_dm1_v1_animtown_color_swoosh8_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_swoosh8_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_swoosh8_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_swoosh8_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_swoosh8_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_swoosh8_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh9_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_swoosh9_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_swoosh9_pc34_compat
+        tests/test_dm1_v1_animtown_color_swoosh9_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_swoosh9_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_swoosh9_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_swoosh9_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_swoosh9_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_swoosh9_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh10_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_animtown_color_swoosh10_pc34_compat.c")
+    add_executable(test_dm1_v1_animtown_color_swoosh10_pc34_compat
+        tests/test_dm1_v1_animtown_color_swoosh10_pc34_compat.c
+        src/dm1/dm1_v1_animtown_color_swoosh10_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_animtown_color_swoosh10_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_animtown_color_swoosh10_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_animtown_color_swoosh10_pc34_compat
+        COMMAND test_dm1_v1_animtown_color_swoosh10_pc34_compat
     )
 endif()
