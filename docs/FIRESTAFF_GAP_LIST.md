@@ -94,8 +94,8 @@ Classification:
 | Phase A probe (headless invariants) | CI | FIXED (23/23) |
 | Audio probe | CI | FIXED |
 | Cross-platform determinism | CI | FIXED |
-| `_G2157_` undefined symbol in firestaff_m10 | CMakeLists.txt | OPEN-BOUNDED — `image_frontend_pc34.c` not in source list |
-| **MD5 vs SHA256 inconsistency** | `asset_find_by_hash.c` vs `VERIFIED_HASHES.md` | OPEN-BOUNDED — needs harmonization |
+| `_G2157_` undefined symbol in firestaff_m10 | CMakeLists.txt | FIXED — `image_backend_pc34_compat_globals.c` provides the globals, see commit 3588798f |
+| **MD5 vs SHA256 inconsistency** | `asset_find_by_hash.c` vs `VERIFIED_HASHES.md` | FIXED — see docs/MD5_SHA256_HARMONIZATION.md and `tools/asset-validate/compare_md5_to_sha256.py` |
 
 ---
 
@@ -377,12 +377,14 @@ order:
 
 3. CSB hidden-code skip table for Atari ST + Amiga items 558-562.
 4. LZW decoder for Atari ST GRAPHICS.DAT (only Atari ST uses LZW).
-5. PAK container decoder for Atari ST START.PAK.
-6. CMP portrait loader for CSB utility disk.
+5. PAK container decoder for Atari ST START.PAK. — DONE (commit 3ee479de)
+6. CMP portrait loader for CSB utility disk. — DONE (commit 532c8250)
 7. Harmonize MD5 vs SHA256 in `asset_find_by_hash.c` (or add
-   wrapper).
+   wrapper). — DONE (commit 5988b620, see docs/MD5_SHA256_HARMONIZATION.md)
 8. `_G2157_` linker fix (add `image_frontend_pc34.c` to
-   firestaff_m10 source list).
+   firestaff_m10 source list). — DONE (commit 3588798f, added
+   `image_backend_pc34_compat_globals.c` instead which provides the
+   same symbols without dragging in the legacy frontend)
 9. Lefthook-in-CI install step.
 
 ### Tier 3 (OPEN-LARGE — separate milestones)
