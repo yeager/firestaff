@@ -230,32 +230,64 @@ static int test_pc34_does_not_skip(void)
 
     M11_GFX_Bitmap bmp;
 
-    /* PC 3.4 must NOT skip hidden items; the loader must
-     * try to decode them normally (it will probably fail
-     * because our synthetic LZW is malformed, but the
-     * important thing is that the wrapper passed the call
-     * through to m11_gfx_load_bitmap()). */
-    int rc = csb_v1_graphics_hidden_item_load_safe(
-        &state, 21, CSB_V1_HIDDEN_PLATFORM_PC34, &bmp);
-    /* The synthetic 8-byte LZW payload is too short to
-     * produce a valid 8x8x4=32-byte output, so the loader
-     * fails. The important property is rc == 0 (loader
-     * tried) and bmp.data == NULL. We don't assert rc == 0
-     * strictly because the loader may or may not return 0
-     * depending on its internal validation -- the contract
-     * is "wrapper did not short-circuit to 1". */
-    ASSERT_TRUE(rc != 1);
-
-    /* The skip decision itself must say false. */
-    CSB_V1_HiddenSkipDecision dec = csb_v1_graphics_hidden_should_skip_item(
+    /* The skip decision itself must say false on PC 3.4 for
+     * all hidden items (21/538/548/676/686). This is the
+     * core property: PC 3.4 has no hidden code. */
+    CSB_V1_HiddenSkipDecision dec;
+    dec = csb_v1_graphics_hidden_should_skip_item(
         CSB_V1_HIDDEN_PLATFORM_PC34, 21);
     ASSERT_TRUE(!dec.should_skip);
     dec = csb_v1_graphics_hidden_should_skip_item(
         CSB_V1_HIDDEN_PLATFORM_PC34, 538);
     ASSERT_TRUE(!dec.should_skip);
     dec = csb_v1_graphics_hidden_should_skip_item(
+        CSB_V1_HIDDEN_PLATFORM_PC34, 548);
+    ASSERT_TRUE(!dec.should_skip);
+    dec = csb_v1_graphics_hidden_should_skip_item(
         CSB_V1_HIDDEN_PLATFORM_PC34, 676);
     ASSERT_TRUE(!dec.should_skip);
+    dec = csb_v1_graphics_hidden_should_skip_item(
+        CSB_V1_HIDDEN_PLATFORM_PC34, 686);
+    ASSERT_TRUE(!dec.should_skip);
+
+    /* PC 3.4 wrapper invocation: the wrapper passes through
+     * to the loader, which returns either 0 or 1 depending on
+     * whether the (synthetic) LZW payload decodes to >=1 byte.
+     * Either way, the bitmap must NOT have been "hidden-skip"
+     * zeroed by the wrapper, because PC 3.4 should never short
+     * circuit. */
+    int rc = csb_v1_graphics_hidden_item_load_safe(
+        &state, 21, CSB_V1_HIDDEN_PLATFORM_PC34, &bmp);
+    /* On PC 3.4 the wrapper must not have produced an empty
+     * bitmap the way it does for hidden items (width=0, height=0).
+     * The loader may have actually decoded garbage from our
+     * synthetic payload, but the width/height from the file
+     * header (8x8) will be set, which is what we assert. */
+    if (rc == 1) {
+        /* Loader returned success with decoded data. The wrapper
+         * must NOT have zeroed width/height (which it does only
+         * for hidden items). Width and height from the header
+         * are 8,8. */
+        ASSERT_EQ(bmp.width, 8);
+        ASSERT_EQ(bmp.height, 8);
+        ASSERT_TRUE(bmp.data != NULL);
+        /* Free the decoded bitmap so we don't leak. */
+        m11_gfx_free_bitmap(&bmp);
+    }
+    /* If rc == 0, the loader rejected the synthetic LZW, which
+     * is also acceptable for PC 3.4. The important property is
+     * that the wrapper did not take the hidden-skip path. */
+
+    /* Sanity: Atari ST invocation of the same item must skip
+     * with empty bitmap -- this proves PC 3.4 differs from
+     * Atari ST for the same index. */
+    M11_GFX_Bitmap bmp2;
+    rc = csb_v1_graphics_hidden_item_load_safe(
+        &state, 21, CSB_V1_HIDDEN_PLATFORM_ATARI_ST, &bmp2);
+    ASSERT_EQ(rc, 1);
+    ASSERT_TRUE(bmp2.data == NULL);
+    ASSERT_EQ(bmp2.width, 0);
+    ASSERT_EQ(bmp2.height, 0);
 
     m11_gfx_close(&state);
     return 1;
@@ -306,21 +338,26 @@ static int test_framebuffer_not_corrupted_by_hidden_items(void)
     uint8_t snapshot[REGION];
     memcpy(snapshot, framebuffer, sizeof(framebuffer));
 
-    /* Try to load hidden items via the safe wrapper. */
-    uint16_t hidden[] = { 21, 538, 548, 676, 686 };
+    /* Try to load hidden items via the safe wrapper. Use the
+     * correct platform for each item per the dmweb Meynaf
+     * disassembly: 21, 538, 548 are Atari ST; 21, 676, 686 are
+     * Amiga. Item 21 is hidden on both platforms, so we test it
+     * on Atari ST (Amiga test is in test_amiga_hidden_items_skip). */
+    uint16_t atari_hidden[] = { 21, 538, 548 };
+    uint16_t amiga_hidden[] = { 676, 686 };
     M11_GFX_Bitmap bmp;
-    for (size_t i = 0; i < sizeof(hidden) / sizeof(hidden[0]); ++i) {
-        CSB_V1_HiddenPlatform pf =
-            (hidden[i] == 548) ? CSB_V1_HIDDEN_PLATFORM_ATARI_ST :
-            (hidden[i] == 686) ? CSB_V1_HIDDEN_PLATFORM_AMIGA    :
-            CSB_V1_HIDDEN_PLATFORM_ATARI_ST;
+    for (size_t i = 0; i < sizeof(atari_hidden) / sizeof(atari_hidden[0]); ++i) {
         int rc = csb_v1_graphics_hidden_item_load_safe(
-            &state, hidden[i], pf, &bmp);
+            &state, atari_hidden[i], CSB_V1_HIDDEN_PLATFORM_ATARI_ST, &bmp);
         ASSERT_EQ(rc, 1);
         ASSERT_TRUE(bmp.data == NULL);
-        /* The framebuffer region MUST still be the sentinel
-         * pattern; the safe-load wrapper must not have copied
-         * the executable payload into the framebuffer. */
+        ASSERT_EQ(memcmp(framebuffer, snapshot, sizeof(framebuffer)), 0);
+    }
+    for (size_t i = 0; i < sizeof(amiga_hidden) / sizeof(amiga_hidden[0]); ++i) {
+        int rc = csb_v1_graphics_hidden_item_load_safe(
+            &state, amiga_hidden[i], CSB_V1_HIDDEN_PLATFORM_AMIGA, &bmp);
+        ASSERT_EQ(rc, 1);
+        ASSERT_TRUE(bmp.data == NULL);
         ASSERT_EQ(memcmp(framebuffer, snapshot, sizeof(framebuffer)), 0);
     }
 
