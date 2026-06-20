@@ -1,0 +1,51 @@
+{
+  "attemptDir": "/tmp/firestaff-pass1055-door-click",
+  "captureCount": 4,
+  "captures": [
+    {
+      "height": 200,
+      "index": 1,
+      "nonblackRatio": 0.455219,
+      "path": "/tmp/firestaff-pass1055-door-click/image0001-raw.png",
+      "sha256": "40c678403d8f772822c1301bafa373adb0862915a8239d2bdb15f71fccf4b750",
+      "sizeBytes": 12370,
+      "uniqueColors": 7,
+      "width": 320
+    },
+    {
+      "height": 200,
+      "index": 2,
+      "nonblackRatio": 0.490406,
+      "path": "/tmp/firestaff-pass1055-door-click/image0002-raw.png",
+      "sha256": "a0d3a9cdbddc310e3ef195c9c7719508a5141fbd66e1acb6a8dbe4b14ebc0dd6",
+      "sizeBytes": 11838,
+      "uniqueColors": 9,
+      "width": 320
+    },
+    {
+      "height": 200,
+      "index": 3,
+      "nonblackRatio": 0.490406,
+      "path": "/tmp/firestaff-pass1055-door-click/image0003-raw.png",
+      "sha256": "a0d3a9cdbddc310e3ef195c9c7719508a5141fbd66e1acb6a8dbe4b14ebc0dd6",
+      "sizeBytes": 11838,
+      "uniqueColors": 9,
+      "width": 320
+    },
+    {
+      "height": 200,
+      "index": 4,
+      "nonblackRatio": 0.490406,
+      "path": "/tmp/firestaff-pass1055-door-click/image0004-raw.png",
+      "sha256": "a0d3a9cdbddc310e3ef195c9c7719508a5141fbd66e1acb6a8dbe4b14ebc0dd6",
+      "sizeBytes": 11838,
+      "uniqueColors": 9,
+      "width": 320
+    }
+  ],
+  "expectedCaptureCount": 4,
+  "honesty": "Rawshot health gate only. Passing this gate does not claim route semantics or pixel parity.",
+  "pass": true,
+  "problems": [],
+  "schema": "dm1_original_raw_frame_health.v1"
+}
