@@ -1,0 +1,732 @@
+{
+  "source": "http://dmweb.free.fr/community/documentation/",
+  "generated_at": "2026-06-20T07:45:39.373581+00:00",
+  "total_pages": 43,
+  "total_bytes": 5805075,
+  "entries": [
+    {
+      "url": "http://dmweb.free.fr/community/documentation/",
+      "slug": "/community/documentation",
+      "local_path": "html/community/documentation.html",
+      "title": "Documentation",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 176098,
+      "fetched_at": "2026-06-20T07:43:14.616688+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/copy-protection/basics-of-data-storage-on-floppy-disks/",
+      "slug": "/community/documentation/copy-protection/basics-of-data-storage-on-floppy-disks",
+      "local_path": "html/community/documentation/copy-protection/basics-of-data-storage-on-floppy-disks.html",
+      "title": "Basics of data storage on floppy disks",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 118302,
+      "fetched_at": "2026-06-20T07:43:17.370944+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Copy Protection",
+        "Basics Of Data Storage On Floppy Disks"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/copy-protection/conventions/",
+      "slug": "/community/documentation/copy-protection/conventions",
+      "local_path": "html/community/documentation/copy-protection/conventions.html",
+      "title": "Conventions",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 109146,
+      "fetched_at": "2026-06-20T07:43:18.723840+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Copy Protection",
+        "Conventions"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/copy-protection/copy-protection-apple-iigs/",
+      "slug": "/community/documentation/copy-protection/copy-protection-apple-iigs",
+      "local_path": "html/community/documentation/copy-protection/copy-protection-apple-iigs.html",
+      "title": "Copy Protection of Dungeon Master for Apple IIGS",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 135583,
+      "fetched_at": "2026-06-20T07:43:20.099505+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Copy Protection",
+        "Copy Protection Apple Iigs"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/copy-protection/copy-protection-atari-st/",
+      "slug": "/community/documentation/copy-protection/copy-protection-atari-st",
+      "local_path": "html/community/documentation/copy-protection/copy-protection-atari-st.html",
+      "title": "Detailed analysis of Atari ST Floppy Disks of Dungeon Master and Chaos Strikes Back",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 165621,
+      "fetched_at": "2026-06-20T07:43:21.471867+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Copy Protection",
+        "Copy Protection Atari St"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/copy-protection/copy-protection/",
+      "slug": "/community/documentation/copy-protection/copy-protection",
+      "local_path": "html/community/documentation/copy-protection/copy-protection.html",
+      "title": "Copy Protection",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 158605,
+      "fetched_at": "2026-06-20T07:43:22.836567+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Copy Protection",
+        "Copy Protection"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/copy-protection/",
+      "slug": "/community/documentation/copy-protection",
+      "local_path": "html/community/documentation/copy-protection.html",
+      "title": "Copy protection",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 113642,
+      "fetched_at": "2026-06-20T07:43:15.980346+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Copy Protection"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/actions-and-combos/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/actions-and-combos",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/actions-and-combos.html",
+      "title": "Dungeon Master and Chaos Strikes Back Actions and Combos",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 128774,
+      "fetched_at": "2026-06-20T07:43:25.592304+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Actions And Combos"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/attacks-and-defenses/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/attacks-and-defenses",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/attacks-and-defenses.html",
+      "title": "Dungeon Master and Chaos Strikes Back Attacks and Defenses",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 107654,
+      "fetched_at": "2026-06-20T07:43:26.965694+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Attacks And Defenses"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/creature-details/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/creature-details",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/creature-details.html",
+      "title": "Dungeon Master and Chaos Strikes Back Creature Details",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 139963,
+      "fetched_at": "2026-06-20T07:43:28.335501+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Creature Details"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/creature-generators/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/creature-generators",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/creature-generators.html",
+      "title": "Dungeon Master and Chaos Strikes Back Creature Generators",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 106636,
+      "fetched_at": "2026-06-20T07:43:29.755761+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Creature Generators"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/experience-and-training/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/experience-and-training",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/experience-and-training.html",
+      "title": "Dungeon Master and Chaos Strikes Back Experience and Training",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 113629,
+      "fetched_at": "2026-06-20T07:43:31.112056+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Experience And Training"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-hidden-code/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-hidden-code",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-hidden-code.html",
+      "title": "Dungeon Master and Chaos Strikes Back Graphics.dat: Hidden code",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 136038,
+      "fetched_at": "2026-06-20T07:43:32.461927+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Graphics.Dat Hidden Code"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-558/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-558",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-558.html",
+      "title": "Dungeon Master and Chaos Strikes Back Graphics.dat Item 558 Coordinates",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 376039,
+      "fetched_at": "2026-06-20T07:43:33.952022+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Graphics.Dat Item 558"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-559/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-559",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-559.html",
+      "title": "Dungeon Master and Chaos Strikes Back Graphics.dat Item 559",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 144584,
+      "fetched_at": "2026-06-20T07:43:35.316920+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Graphics.Dat Item 559"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-560/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-560",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-560.html",
+      "title": "Dungeon Master and Chaos Strikes Back Graphics.dat Item 560 Actions and spells",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 118579,
+      "fetched_at": "2026-06-20T07:43:36.698394+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Graphics.Dat Item 560"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-561/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-561",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-561.html",
+      "title": "Dungeon Master and Chaos Strikes Back Graphics.dat Item 561 Keyboard and mouse input",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 130725,
+      "fetched_at": "2026-06-20T07:43:38.078400+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Graphics.Dat Item 561"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-562/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-562",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-562.html",
+      "title": "Dungeon Master and Chaos Strikes Back Graphics.dat Item 562",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 131400,
+      "fetched_at": "2026-06-20T07:43:39.457431+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Graphics.Dat Item 562"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/items-properties/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/items-properties",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/items-properties.html",
+      "title": "Dungeon Master and Chaos Strikes Back Items properties",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 138571,
+      "fetched_at": "2026-06-20T07:43:40.976353+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Items Properties"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/skills-and-statistics/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back/skills-and-statistics",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back/skills-and-statistics.html",
+      "title": "Dungeon Master and Chaos Strikes Back Skills and Statistics",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 121128,
+      "fetched_at": "2026-06-20T07:43:42.347290+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back",
+        "Skills And Statistics"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-and-chaos-strikes-back/",
+      "slug": "/community/documentation/dungeon-master-and-chaos-strikes-back",
+      "local_path": "html/community/documentation/dungeon-master-and-chaos-strikes-back.html",
+      "title": "Dungeon Master and Chaos Strikes Back",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 130512,
+      "fetched_at": "2026-06-20T07:43:24.220086+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master & Chaos Strikes Back"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-nexus/dgn-files/",
+      "slug": "/community/documentation/dungeon-master-nexus/dgn-files",
+      "local_path": "html/community/documentation/dungeon-master-nexus/dgn-files.html",
+      "title": "Dungeon Master Nexus DGN files",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 145186,
+      "fetched_at": "2026-06-20T07:43:45.090175+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master: Nexus",
+        "Dgn Files"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/",
+      "slug": "/community/documentation/dungeon-master-nexus/file-formats",
+      "local_path": "html/community/documentation/dungeon-master-nexus/file-formats.html",
+      "title": "Dungeon Master Nexus File formats",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 112531,
+      "fetched_at": "2026-06-20T07:43:46.463644+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master: Nexus",
+        "File Formats"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-nexus/item.ibs-file/",
+      "slug": "/community/documentation/dungeon-master-nexus/item.ibs-file",
+      "local_path": "html/community/documentation/dungeon-master-nexus/item.ibs-file.html",
+      "title": "Dungeon Master Nexus ITEM.IBS file",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 117726,
+      "fetched_at": "2026-06-20T07:43:47.837659+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master: Nexus",
+        "Item.Ibs File"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-nexus/mns-files/",
+      "slug": "/community/documentation/dungeon-master-nexus/mns-files",
+      "local_path": "html/community/documentation/dungeon-master-nexus/mns-files.html",
+      "title": "Dungeon Master Nexus MNS files",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 110922,
+      "fetched_at": "2026-06-20T07:43:49.205419+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master: Nexus",
+        "Mns Files"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/dungeon-master-nexus/",
+      "slug": "/community/documentation/dungeon-master-nexus",
+      "local_path": "html/community/documentation/dungeon-master-nexus.html",
+      "title": "Dungeon Master Nexus",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 109961,
+      "fetched_at": "2026-06-20T07:43:43.714393+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Dungeon Master: Nexus"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/animation-script/",
+      "slug": "/community/documentation/file-formats/animation-script",
+      "local_path": "html/community/documentation/file-formats/animation-script.html",
+      "title": "Animation Script",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 123256,
+      "fetched_at": "2026-06-20T07:43:51.919015+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats",
+        "Animation Script"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/animations/",
+      "slug": "/community/documentation/file-formats/animations",
+      "local_path": "html/community/documentation/file-formats/animations.html",
+      "title": "Animations",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 149420,
+      "fetched_at": "2026-06-20T07:43:53.275215+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats",
+        "Animations"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/data-files/",
+      "slug": "/community/documentation/file-formats/data-files",
+      "local_path": "html/community/documentation/file-formats/data-files.html",
+      "title": "Data Files",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 175914,
+      "fetched_at": "2026-06-20T07:43:54.666920+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats",
+        "Data Files"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/dungeon-files/",
+      "slug": "/community/documentation/file-formats/dungeon-files",
+      "local_path": "html/community/documentation/file-formats/dungeon-files.html",
+      "title": "Dungeon Files",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 200926,
+      "fetched_at": "2026-06-20T07:43:56.053892+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats",
+        "Dungeon Files"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/dungeon-master-ii-data-files-notes/",
+      "slug": "/community/documentation/file-formats/dungeon-master-ii-data-files-notes",
+      "local_path": "html/community/documentation/file-formats/dungeon-master-ii-data-files-notes.html",
+      "title": "Dungeon Master II Data Files Notes",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 157487,
+      "fetched_at": "2026-06-20T07:43:57.407143+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats",
+        "Dungeon Master Ii Data Files Notes"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/dungeon-master-ii-music-triggers/",
+      "slug": "/community/documentation/file-formats/dungeon-master-ii-music-triggers",
+      "local_path": "html/community/documentation/file-formats/dungeon-master-ii-music-triggers.html",
+      "title": "Dungeon Master II Music Triggers",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 108913,
+      "fetched_at": "2026-06-20T07:43:58.771336+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats",
+        "Dungeon Master Ii Music Triggers"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/hint-oracle-files/",
+      "slug": "/community/documentation/file-formats/hint-oracle-files",
+      "local_path": "html/community/documentation/file-formats/hint-oracle-files.html",
+      "title": "Hint Oracle Files",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 120394,
+      "fetched_at": "2026-06-20T07:44:00.154368+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats",
+        "Hint Oracle Files"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/layout-coordinates/",
+      "slug": "/community/documentation/file-formats/layout-coordinates",
+      "local_path": "html/community/documentation/file-formats/layout-coordinates.html",
+      "title": "Layout coordinates",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 112220,
+      "fetched_at": "2026-06-20T07:44:01.541289+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats",
+        "Layout Coordinates"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/portrait-files/",
+      "slug": "/community/documentation/file-formats/portrait-files",
+      "local_path": "html/community/documentation/file-formats/portrait-files.html",
+      "title": "Portrait Files",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 121598,
+      "fetched_at": "2026-06-20T07:44:02.890132+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats",
+        "Portrait Files"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/saved-game-files/",
+      "slug": "/community/documentation/file-formats/saved-game-files",
+      "local_path": "html/community/documentation/file-formats/saved-game-files.html",
+      "title": "Saved Game Files",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 138908,
+      "fetched_at": "2026-06-20T07:44:04.275377+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats",
+        "Saved Game Files"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/file-formats/",
+      "slug": "/community/documentation/file-formats",
+      "local_path": "html/community/documentation/file-formats.html",
+      "title": "File formats",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 122144,
+      "fetched_at": "2026-06-20T07:43:50.559923+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "File Formats"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/miscellaneous/dungeon-master-for-atari-st-history/",
+      "slug": "/community/documentation/miscellaneous/dungeon-master-for-atari-st-history",
+      "local_path": "html/community/documentation/miscellaneous/dungeon-master-for-atari-st-history.html",
+      "title": "Dungeon Master for Atari ST History",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 123290,
+      "fetched_at": "2026-06-20T07:44:07.018036+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Miscellaneous",
+        "Dungeon Master For Atari St History"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/miscellaneous/dungeon-master-for-pc/",
+      "slug": "/community/documentation/miscellaneous/dungeon-master-for-pc",
+      "local_path": "html/community/documentation/miscellaneous/dungeon-master-for-pc.html",
+      "title": "Dungeon Master for PC",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 118421,
+      "fetched_at": "2026-06-20T07:44:08.362577+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Miscellaneous",
+        "Dungeon Master For Pc"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/miscellaneous/dungeon-master-for-super-nes-super-famicom/",
+      "slug": "/community/documentation/miscellaneous/dungeon-master-for-super-nes-super-famicom",
+      "local_path": "html/community/documentation/miscellaneous/dungeon-master-for-super-nes-super-famicom.html",
+      "title": "Dungeon Master for Super NES / Super Famicom",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 105852,
+      "fetched_at": "2026-06-20T07:44:09.792177+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Miscellaneous",
+        "Dungeon Master For Super Nes Super Famicom"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/miscellaneous/ftl-sound-adapter-schematic/",
+      "slug": "/community/documentation/miscellaneous/ftl-sound-adapter-schematic",
+      "local_path": "html/community/documentation/miscellaneous/ftl-sound-adapter-schematic.html",
+      "title": "FTL Sound Adapter Schematic",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 108373,
+      "fetched_at": "2026-06-20T07:44:11.138119+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Miscellaneous",
+        "Ftl Sound Adapter Schematic"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/miscellaneous/game-versions/",
+      "slug": "/community/documentation/miscellaneous/game-versions",
+      "local_path": "html/community/documentation/miscellaneous/game-versions.html",
+      "title": "Game versions",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 107206,
+      "fetched_at": "2026-06-20T07:44:12.462557+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Miscellaneous",
+        "Game Versions"
+      ]
+    },
+    {
+      "url": "http://dmweb.free.fr/community/documentation/miscellaneous/",
+      "slug": "/community/documentation/miscellaneous",
+      "local_path": "html/community/documentation/miscellaneous.html",
+      "title": "Miscellaneous",
+      "description": "",
+      "keywords": [],
+      "lang": "en",
+      "size_bytes": 113198,
+      "fetched_at": "2026-06-20T07:44:05.649002+00:00",
+      "breadcrumb": [
+        "Community",
+        "Documentation",
+        "Miscellaneous"
+      ]
+    }
+  ]
+}
