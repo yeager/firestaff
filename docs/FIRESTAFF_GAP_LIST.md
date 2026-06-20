@@ -178,15 +178,15 @@ greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
 | CSB Atari ST 2.0 (en) — original | BLOCKED-DATA |
 | CSB Atari ST 2.0 (en) — cracked Replicants | BLOCKED-DATA |
 | CSB Atari ST 2.1 (en) | BLOCKED-DATA |
-| CSB Amiga 3.1 (en-fr-ge) original | BLOCKED-DATA |
+| CSB Amiga 3.1 (en-fr-ge) original | EXTRACTED — `~/.firestaff/data/csb-extras/amiga-3.1-multi/` (no canonical hash match yet, awaiting verification) |
 | CSB Amiga 3.1 (en) cracked EndlessPiracy | BLOCKED-DATA |
 | CSB Amiga 3.1 (en) cracked Betrayal | BLOCKED-DATA |
-| CSB Amiga 3.3 (en-fr-ge) | BLOCKED-DATA |
-| CSB Amiga 3.5 (en) original | BLOCKED-DATA — only M12 launch intent exists locally |
-| CSB Amiga Utility disk (fr/ge/en/r1/r2/r3) | BLOCKED-DATA — champion editor, hint oracle |
-| CSB FM-Towns (en-jp) | BLOCKED-DATA |
-| CSB PC-98 3.1 (jp) | BLOCKED-DATA |
-| CSB X68000 (jp) | BLOCKED-DATA |
+| CSB Amiga 3.3 (en-fr-ge) | EXTRACTED + VERIFIED — `csb-extras/legacy-amiga-dms/...Meynaf/DungeonMaster/` matches a canonical hash (Meynaf FR hack variant) |
+| CSB Amiga 3.5 (en) original | EXTRACTED — `csb-extras/amiga-3.5-ctraw-en/` (CTRaw format, not the canonical CSB Amiga hash) |
+| CSB Amiga Utility disk (fr/ge/en/r1/r2/r3) | EXTRACTED — Disk 2 (en/fr/de) + Disk 3 (en/de) at `csb-extras/amiga-util-disk{2,3}-{en,fr,de}/` |
+| CSB FM-Towns (en-jp) | EXTRACTED — `csb-extras/fm-towns/` (484 MB ISO, awaiting canonical hash match) |
+| CSB PC-98 3.1 (jp) | EXTRACTED — `csb-extras/pc98-3.1-jp/` (171 .raw files, awaiting hash match) |
+| CSB X68000 (jp) | EXTRACTED — `csb-extras/legacy-jp-x68000/` |
 | CSBWin (PC port by Paul Stevens) | PARTIAL — synthetic loader exists; real-asset test missing |
 
 ### C3. CSB hidden-code items
@@ -249,12 +249,12 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone g_dm2.html
 
 | Version | Status |
 |---|---|
-| DM2 PC 0.9 / 1.0 (en/fr/ge) / demo | BLOCKED-DATA — only M12 launch intent |
-| DM2 Amiga 1.0 (en-fr-ge) | BLOCKED-DATA |
-| DM2 MegaCD/SegaCD 1.0 (jp/en) | BLOCKED-DATA |
-| DM2 Macintosh 1.0 (en/jp/demo) — uses QuickTime .moov | BLOCKED-DATA |
-| DM2 PC-9801/PC-9821/IBM PS/V 1.0 (jp) | BLOCKED-DATA |
-| DM2 FM-Towns 1.0 (jp) | BLOCKED-DATA |
+| DM2 PC 0.9 / 1.0 (en/fr/ge) / demo | EXTRACTED — `dm2-extras/dos-{en,fr}/` + `dm2-extras/pc-{fr,de}/` (awaiting canonical DM2 hash match) |
+| DM2 Amiga 1.0 (en-fr-ge) | EXTRACTED — `dm2-extras/amiga-en/` |
+| DM2 MegaCD/SegaCD 1.0 (jp/en) | EXTRACTED — `dm2-extras/mega-cd-jp/` |
+| DM2 Macintosh 1.0 (en/jp/demo) — uses QuickTime .moov | EXTRACTED — `dm2-extras/mac-{en-v1,en-zip,fr,ja}/` (StuffIt + DMFiles-zip, includes Credits/Ending/Title .MooV) |
+| DM2 PC-9801/PC-9821/IBM PS/V 1.0 (jp) | EXTRACTED — `dm2-extras/pc9821-jp/` |
+| DM2 FM-Towns 1.0 (jp) | EXTRACTED — `dm2-extras/fm-towns-ja/` |
 
 ---
 
@@ -274,7 +274,7 @@ Nexus locally verified files in `~/.firestaff/data/nexus/`.
 | TLINK/TAI/SAL/MAP runtime | PARTIAL |
 | Save/load (.sav) | PARTIAL |
 | V1 mechanics | PARTIAL |
-| **Real Saturn asset handoff (NEXUS.BIN/ISO)** | BLOCKED-DATA — only DM.BIN + components locally |
+| **Real Saturn asset handoff (NEXUS.BIN/ISO)** | EXTRACTED + VERIFIED — `nexus-extras/saturn-ja/Dungeon Master Nexus (Japan) (Track 1).bin::DM.BIN` matches canonical DM.BIN hash |
 
 ### E2. V2 phases
 
@@ -302,7 +302,7 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | Save/load (.SRM) | PARTIAL |
 | Track02 bank routing | FIXED |
 | Dungeon progression (7 dungeons) | FIXED |
-| **JP/US Track 02 BIN/ISO real-asset launch** | BLOCKED-DATA — only synthetic data locally |
+| **JP/US Track 02 BIN/ISO real-asset launch** | EXTRACTED + VERIFIED — `theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin` matches canonical Track 02 hash; US version + PC-Engine combined `rar` also extracted |
 | Cross-slot import/export against real Track 02 saves | OPEN-BOUNDED |
 | Cross-route mechanics runtime evidence | OPEN-BOUNDED |
 
@@ -430,14 +430,15 @@ order:
 | dmweb.free.fr (Custom dungeons) | 1 (g_csb.html) | 60+ custom dungeon index |
 | dmweb.free.fr (FAQ) | 1 index | category map only — Drupal URLs 404 |
 | dmweb.free.fr (ReDMCSB) | 0 — page not fetchable | fallback to local ReDMCSB |
+| dmweb.free.fr (Community documentation) | **43 (mirrored locally at `reference/dmweb-community-docs/`)** | copy protection, file formats (animation script, animations, data files, dungeon files, DM2 data files, DM2 music triggers, hint/oracle, layout coordinates, portrait files, saved-game files), Nexus file formats (DGN, MNS, item.ibs), DM+CSB mechanics (actions, attacks, creature generators, items, skills, GRAPHICS.DAT hidden code + items 558–562), miscellaneous (Atari ST history, PC, SNES, FTL sound adapter, game versions) |
 | greatstone (Tools) | 4 (Overview, Product, Screenshots, Tutorial) | sck usage, extraction CLI |
 | greatstone (Technical doc) | 4 (Mapfile, FTL, PAK, Items + IMG5) | all critical format specs |
 | greatstone (Games) | 4 (DM, CSB, DM2, Custom) | per-version file lists |
 | greatstone (Articles) | 0 — content empty | skipped |
 | Firestaff existing docs | FINAL_GAPS, FINAL_CSB_GAPS, PLATFORM_MATRIX, DMWEB_REFERENCE, csb_gap_*.md, dm1_gap_*.md | per-game gap detail |
 
-**Total new pages reviewed this session: 19** (beyond what was
-already covered in DMWEB_REFERENCE.md).
+**Total new pages reviewed this session: 62** (19 prior + 43 from
+the dmweb community/documentation mirror).
 
 ---
 
@@ -457,3 +458,85 @@ source-of-truth:
 - H → manual prioritization after the above regenerates
 
 Avoid duplicating content; this doc is an index, not a source.
+
+---
+
+## K. Session delta — 2026-06-20 (post v2.9.1)
+
+What changed in this session that affects the gap list above:
+
+### Data staging
+
+- **73 game archives extracted** from `~/Downloads/` to
+  `~/.firestaff/data/` via `reference/extract-game-archives.sh`.
+  - 71 new version-staging directories under
+    `<game>-extras/<version>/` (~6.2 GB extraherat)
+  - 4,232 extraherade filer utöver befintlig canonical staging
+  - Inga befintliga canonical-filer (dm1/, csb/, dm2/, nexus/, theron/)
+    skrivna över
+
+### New READY path:er (utöver canonical)
+
+`./build/firestaff --scan-data` hittar nu alternativa
+match-path:er för fyra av fem spel:
+
+| Spel | Ny match-path |
+|---|---|
+| DM1 | `dm1-extras/legacy-dos/DungeonMasterPC34/DATA/GRAPHICS.DAT` |
+| CSB | `csb-extras/legacy-amiga-dms/...Meynaf/DungeonMaster/Graphics.DAT` (Amiga 3.3 French hackad av Meynaf) |
+| DM2 | (oförändrad, canonical `dm2/` vinner) |
+| Nexus | `nexus-extras/saturn-ja/Dungeon Master Nexus (Japan) (Track 1).bin::DM.BIN` |
+| Theron | `theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin` |
+
+### Kanoniska hashar (VERIFIED_HASHES.md)
+
+`tools/asset-validate/compare_to_greatstone.py ~/.firestaff/data`
+körs mot alla 12 entries i registret: **148/148 OK, 0 FAIL** (alla
+filer refererade i `VERIFIED_HASHES.md` finns lokalt och matchar
+hasharna — några mappar till samma fil, därav 148 vs 12).
+
+### Documentation mirror
+
+- **43 sidor av dmweb.free.fr /community/documentation/**
+  speglade lokalt till `reference/dmweb-community-docs/` (5.5 MB)
+  - `INDEX.md` (19 KB) — mänskligt läsbar innehållsförteckning
+  - `index.json` (27 KB) — maskinläsbar
+  - `crawl.sh` — reproducibelt crawl-skript (curl + 1.2s rate limit)
+  - Täcker 5 ämnesområden (copy protection, DM+CSB mechanics,
+    Nexus file formats, file formats, miscellaneous)
+
+### Bug fix: CLI --data-dir
+
+- `src/shared/asset_status_m12.c::m12_build_search_roots` —
+  explicit `--data-dir` överskuggar nu default-fallbacks i
+  `--scan-data`-läge. Tidigare ignorerades flaggan och scannern
+  rapporterade FOUND-path:er från `~/.firestaff/data/` även när
+  användaren bad om en annan rot.
+- `m12_fill_game_versions` — runtime-dataDir-override skippas när
+  `requestedDataDir` är explicit satt (defensivt mot framtida
+  fallback-tillägg).
+- `tests/test_asset_status_scan_metrics.c` — uppdaterad till
+  `rootCount=1, duplicateRootSkips=0` när `--data-dir` är satt.
+- Committat: `6a7eccdc`.
+
+### Test coverage (smoke runs)
+
+- 40/40 DM1 V1 chest/item/weight/recompute-tester PASS
+- 23/23 Phase A invariants PASS
+- 12/12 kanoniska hashar matchar (0 fail)
+
+### Påverkan på gap-status
+
+Markerade i docen ovan som **EXTRACTED** (nya rader i C2, D3, E1,
+F1) — tidigare `BLOCKED-DATA`. Fyra markerade **EXTRACTED +
+VERIFIED** eftersom de nu också matchar en kanonisk hash:
+
+| Spel | Version | Status |
+|---|---|---|
+| DM1 | PC 3.4 (legacy-dos) | EXTRACTED + VERIFIED |
+| CSB | Amiga 3.3 (Meynaf FR hack) | EXTRACTED + VERIFIED |
+| Nexus | Saturn JA (Track 1) | EXTRACTED + VERIFIED |
+| Theron | JP Track 02 | EXTRACTED + VERIFIED |
+
+Dessa kan nu användas som real-asset testkällor utöver den
+befintliga canonical-staging som finns under `dm1/`, `csb/`, etc.
