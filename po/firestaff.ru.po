@@ -5,89 +5,89 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "Доступность"
 
 msgid "Audio"
-msgstr ""
+msgstr "Аудио"
 
 msgid "Back"
 msgstr "Назад"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "Бестиарий"
 
 msgid "Changelog"
-msgstr ""
+msgstr "История изменений"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "Скоро"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "Продолжить сохранение"
 
 msgid "Controls"
-msgstr ""
+msgstr "Управление"
 
 msgid "Display"
-msgstr ""
+msgstr "Экран"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "ДОПОЛНИТЕЛЬНО"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "Энциклопедия предметов"
 
 msgid "Language"
 msgstr "Язык"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "Просмотр карт"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "Музей Лора"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "Новая игра (V1 Оригинал)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "Новая игра (V2.1 Улучшенный)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "Новая игра (V2.2 Расширенный)"
 
 msgid "No data files"
-msgstr ""
+msgstr "Нет файлов данных"
 
 msgid "Off"
-msgstr ""
+msgstr "Выкл"
 
 msgid "On"
-msgstr ""
+msgstr "Вкл"
 
 msgid "PLAY"
 msgstr "ИГРАТЬ"
 
 msgid "QUIT"
-msgstr "ВЫХОД"
+msgstr "ВЫЙТИ"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "Галерея скриншотов"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "ВЫБРАТЬ ИГРУ"
 
 msgid "SETTINGS"
 msgstr "НАСТРОЙКИ"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "Справочник заклинаний"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "Проверить данные игры"
 
 msgid "Version"
-msgstr ""
+msgstr "Версия"
 
 msgid "Video"
-msgstr ""
+msgstr "Видео"
 

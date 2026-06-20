@@ -8,31 +8,31 @@ msgid "Attack"
 msgstr "Anfall"
 
 msgid "Cast Spell"
-msgstr "Kasta trollformel"
+msgstr "Kasta besvärjelse"
 
 msgid "Track %d"
-msgstr ""
+msgstr "Bana %d"
 
 msgid "%s has died"
 msgstr "%s har dött"
 
 msgid "Continue"
-msgstr ""
+msgstr "Fortsätt"
 
 msgid "Defend"
-msgstr "Försvara"
+msgstr "Försvar"
 
 msgid "This door is locked"
 msgstr "Dörren är låst"
 
 msgid "You found the Firestaff!"
-msgstr "Du hittade Firestaff!"
+msgstr "Du hittade eldstaven!"
 
 msgid "Congratulations! You have saved the realm!"
 msgstr "Grattis! Du har räddat riket!"
 
 msgid "Your party has perished"
-msgstr "Ditt sällskap har omkommit"
+msgstr "Din grupp har omkommit"
 
 msgid "Hall of Champions"
 msgstr "Hjältarnas sal"
@@ -41,25 +41,25 @@ msgid "Health"
 msgstr "Hälsa"
 
 msgid "Inventory full"
-msgstr "Inventariet är fullt"
+msgstr "Inventarie full"
 
 msgid "A key is required"
-msgstr "En nyckel krävs"
+msgstr "Nyckel krävs"
 
 msgid "Level %d"
-msgstr ""
+msgstr "Nivå %d"
 
 msgid "%s gained a level"
 msgstr "%s gick upp en nivå"
 
 msgid "Load Game"
-msgstr ""
+msgstr "Ladda spel"
 
 msgid "Mana"
 msgstr "Mana"
 
 msgid "New Game"
-msgstr ""
+msgstr "Nytt spel"
 
 msgid "Not enough mana"
 msgstr "Inte tillräckligt med mana"
@@ -68,22 +68,22 @@ msgid "Recruit"
 msgstr "Rekrytera"
 
 msgid "Reincarnate"
-msgstr "Reinkarnera"
+msgstr "Återfödas"
 
 msgid "Rest"
-msgstr ""
+msgstr "Vila"
 
 msgid "Resurrect"
-msgstr "Återuppväck"
+msgstr "Återuppstå"
 
 msgid "Save Game"
-msgstr ""
+msgstr "Spara spel"
 
 msgid "Select a champion"
-msgstr "Välj en hjälte"
+msgstr "Välj hjälte"
 
 msgid "Spell failed"
-msgstr "Besvärjelsen misslyckades"
+msgstr "Besvärjelse misslyckades"
 
 msgid "Stamina"
 msgstr "Uthållighet"
@@ -92,5 +92,5 @@ msgid "Party is full"
 msgstr "Gruppen är full"
 
 msgid "Use Item"
-msgstr ""
+msgstr "Använd föremål"
 

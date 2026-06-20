@@ -1,0 +1,135 @@
+# Firestaff — csb domain, Swedish catalog.
+# Svensk översättning för Chaos Strikes Back runtime-strängar.
+#
+# Domain: csb
+#
+# Baserad på po/dm1.sv.po (Slice 2) + CSB-specifika nycklar
+# från csb.pot.  CSB delar många gränssnittstermer med DM1
+# (FOOD/WATER, HUD-meters, inventory labels) men har unika
+# strängar för: engine version 2.1 (CHANGE7_36/8_13),
+# chaos cooldown (CHANGE7_28), reincarnation/resurrection,
+# grey lord encounter, hint oracle, neophyte mode.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-csb\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-22 05:00+0200\n"
+"PO-Revision-Date: 2026-06-15 17:00+0200\n"
+"Last-Translator: Firestaff Contributors\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
+msgid "csb.engine.version"
+msgstr "CSBエンジン バージョン"
+
+# Reincarnation panel
+msgid "csb.reincarnate.title"
+msgstr "転生"
+
+msgid "csb.reincarnate.chaos"
+msgstr "カオスの戦い。"
+
+msgid "csb.reincarnate.choose"
+msgstr "転生する新しい戦士を選んでください。"
+
+msgid "csb.reincarnate.stat-roll"
+msgstr "能力値のためのサイコロ"
+
+# Resurrection panel
+msgid "csb.resurrect.title"
+msgstr "復活"
+
+msgid "csb.resurrect.altar"
+msgstr "祭壇で血を捧げて戦士を蘇らせる。"
+
+msgid "csb.resurrect.choose"
+msgstr "蘇生する戦士を選んでください。"
+
+# Chaos magic cooldown (CHANGE7_28)
+msgid "csb.chaos.cooldown"
+msgstr "カオス魔法 クールダウン"
+
+msgid "csb.chaos.energy"
+msgstr "カオスエネルギー"
+
+msgid "csb.chaos.recharge"
+msgstr "チャージ中"
+
+# Grey Lord encounter
+msgid "csb.greylord.intro"
+msgstr "灰色卿が囁く: 選べ。"
+
+msgid "csb.greylord.choose"
+msgstr "選択してください。"
+
+# Hint Oracle
+msgid "csb.oracle.title"
+msgstr "神託"
+
+msgid "csb.oracle.prompt"
+msgstr "問うてください、神託が答えます。"
+
+# Champion pool (CSB has 4 max in active party vs 16 candidates)
+msgid "csb.party.max"
+msgstr "最大4人"
+
+msgid "csb.party.slot"
+msgstr "パーティ枠"
+
+# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
+msgid "csb.save.import"
+msgstr "CSBセーブをインポート"
+
+msgid "csb.save.csb-st-v20"
+msgstr "CSB Atari ST 2.0 セーブ"
+
+msgid "csb.save.csb-st-v21"
+msgstr "CSB Atari ST 2.1 セーブ"
+
+msgid "csb.save.amiga-v35"
+msgstr "CSB Amiga 3.5 セーブ"
+
+msgid "csb.save.pc34"
+msgstr "CSB PC 3.4 セーブ"
+
+# Neophyte mode (CSB-only training option)
+msgid "csb.neophyte.title"
+msgstr "初心者モード"
+
+msgid "csb.neophyte.desc"
+msgstr "罠のダメージ軽減、簡単なスタート。"
+
+# Engine version (CHANGE7_36, CHANGE8_13)
+msgid "csb.engine.dm1"
+msgstr "DM1エンジン v2.0"
+
+msgid "csb.engine.csb"
+msgstr "CSBエンジン v2.1"
+
+# CSB launcher entry
+msgid "csb.launcher.title"
+msgstr "カオス・ストライクス・バック"
+
+msgid "csb.launcher.subtitle"
+msgstr "ダンジョンマスター II の続編"
+
+msgid "csb.launcher.lore-shape"
+msgstr "混沌卿が立ち上がる..."
+
+msgid "csb.launcher.lore-line-1"
+msgstr "混沌卿が炎を盗んだ。"
+
+msgid "csb.launcher.lore-line-2"
+msgstr "火の杖は失われた。"
+
+msgid "csb.launcher.lore-line-3"
+msgstr "灰色卿がそれを取り返すよう呼びかける。"
+
+msgid "csb.launcher.lore-line-4"
+msgstr "混沌へ踏み込め。"

@@ -5,34 +5,34 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Attack"
-msgstr "Saldırı"
+msgstr "Saldır"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "Büyü Yap"
 
 msgid "Track %d"
-msgstr ""
+msgstr "Seviye %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s öldü"
 
 msgid "Continue"
-msgstr ""
+msgstr "Devam"
 
 msgid "Defend"
-msgstr ""
+msgstr "Savun"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "Bu kapı kilitli"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "Ateş Değneğini buldun!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "Tebrikler! Krallığı kurtardın!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "Grubun yok oldu"
 
 msgid "Hall of Champions"
 msgstr "Şampiyonlar Salonu"
@@ -41,56 +41,56 @@ msgid "Health"
 msgstr "Sağlık"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "Envanter dolu"
 
 msgid "A key is required"
-msgstr ""
+msgstr "Anahtar gerekli"
 
 msgid "Level %d"
-msgstr ""
+msgstr "Seviye %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s seviye atladı"
 
 msgid "Load Game"
-msgstr ""
+msgstr "Yükle"
 
 msgid "Mana"
-msgstr ""
+msgstr "Mana"
 
 msgid "New Game"
-msgstr ""
+msgstr "Yeni Oyun"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "Yeterli mana yok"
 
 msgid "Recruit"
-msgstr "İşe Al"
+msgstr "Topla"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "Yeniden Doğ"
 
 msgid "Rest"
-msgstr ""
+msgstr "Dinlen"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "Dirilt"
 
 msgid "Save Game"
-msgstr ""
+msgstr "Kaydet"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "Şampiyon seç"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "Büyü başarısız"
 
 msgid "Stamina"
-msgstr ""
+msgstr "Dayanıklılık"
 
 msgid "Party is full"
-msgstr ""
+msgstr "Grup dolu"
 
 msgid "Use Item"
-msgstr ""
+msgstr "Eşya kullan"
 

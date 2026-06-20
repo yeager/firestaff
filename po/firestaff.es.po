@@ -5,64 +5,64 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "Accesibilidad"
 
 msgid "Audio"
-msgstr ""
+msgstr "Audio"
 
 msgid "Back"
-msgstr "Volver"
+msgstr "Atrás"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "Bestiario"
 
 msgid "Changelog"
-msgstr ""
+msgstr "Registro de cambios"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "Próximamente"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "Continuar partida"
 
 msgid "Controls"
-msgstr ""
+msgstr "Controles"
 
 msgid "Display"
-msgstr ""
+msgstr "Pantalla"
 
 msgid "EXTRAS"
 msgstr "EXTRAS"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "Enciclopedia de objetos"
 
 msgid "Language"
 msgstr "Idioma"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "Visor de mapa"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "Museo del Lore"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "Nueva partida (V1 Original)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "Nueva partida (V2.1 Escalado)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "Nueva partida (V2.2 Mejorado)"
 
 msgid "No data files"
-msgstr ""
+msgstr "Sin archivos de datos"
 
 msgid "Off"
-msgstr "No"
+msgstr "Apagado"
 
 msgid "On"
-msgstr "Sí"
+msgstr "Encendido"
 
 msgid "PLAY"
 msgstr "JUGAR"
@@ -71,23 +71,23 @@ msgid "QUIT"
 msgstr "SALIR"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "Galería de capturas"
 
 msgid "SELECT GAME"
-msgstr "ELEGIR JUEGO"
+msgstr "SELECCIONAR JUEGO"
 
 msgid "SETTINGS"
-msgstr "CONFIGURACIÓN"
+msgstr "AJUSTES"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "Referencia de hechizos"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "Validar datos del juego"
 
 msgid "Version"
-msgstr ""
+msgstr "Versión"
 
 msgid "Video"
-msgstr ""
+msgstr "Vídeo"
 

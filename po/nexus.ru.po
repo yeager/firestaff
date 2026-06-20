@@ -8,89 +8,89 @@ msgid "Attack"
 msgstr "Атака"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "Заклинание"
 
 msgid "Track %d"
-msgstr ""
+msgstr "Уровень %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s погиб"
 
 msgid "Continue"
-msgstr ""
+msgstr "Продолжить"
 
 msgid "Defend"
-msgstr ""
+msgstr "Защита"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "Дверь заперта"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "Вы нашли Огненный посох!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "Поздравляем! Вы спасли королевство!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "Ваша группа погибла"
 
 msgid "Hall of Champions"
-msgstr "Зал чемпионов"
+msgstr "Зал Чемпионов"
 
 msgid "Health"
 msgstr "Здоровье"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "Инвентарь полон"
 
 msgid "A key is required"
-msgstr ""
+msgstr "Нужен ключ"
 
 msgid "Level %d"
-msgstr ""
+msgstr "Уровень %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s повысил уровень"
 
 msgid "Load Game"
-msgstr ""
+msgstr "Загрузить"
 
 msgid "Mana"
-msgstr ""
+msgstr "Мана"
 
 msgid "New Game"
-msgstr ""
+msgstr "Новая игра"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "Недостаточно маны"
 
 msgid "Recruit"
 msgstr "Нанять"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "Перерождение"
 
 msgid "Rest"
-msgstr ""
+msgstr "Отдых"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "Воскресить"
 
 msgid "Save Game"
-msgstr ""
+msgstr "Сохранить"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "Выбрать героя"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "Заклинание провалилось"
 
 msgid "Stamina"
-msgstr ""
+msgstr "Выносливость"
 
 msgid "Party is full"
-msgstr ""
+msgstr "Группа полна"
 
 msgid "Use Item"
-msgstr ""
+msgstr "Использовать предмет"
 

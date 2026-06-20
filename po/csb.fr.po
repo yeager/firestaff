@@ -1,0 +1,135 @@
+# Firestaff — csb domain, Swedish catalog.
+# Svensk översättning för Chaos Strikes Back runtime-strängar.
+#
+# Domain: csb
+#
+# Baserad på po/dm1.sv.po (Slice 2) + CSB-specifika nycklar
+# från csb.pot.  CSB delar många gränssnittstermer med DM1
+# (FOOD/WATER, HUD-meters, inventory labels) men har unika
+# strängar för: engine version 2.1 (CHANGE7_36/8_13),
+# chaos cooldown (CHANGE7_28), reincarnation/resurrection,
+# grey lord encounter, hint oracle, neophyte mode.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-csb\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-22 05:00+0200\n"
+"PO-Revision-Date: 2026-06-15 17:00+0200\n"
+"Last-Translator: Firestaff Contributors\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
+msgid "csb.engine.version"
+msgstr "Version du moteur CSB"
+
+# Reincarnation panel
+msgid "csb.reincarnate.title"
+msgstr "RÉINCARNATION"
+
+msgid "csb.reincarnate.chaos"
+msgstr "Bataille du Chaos."
+
+msgid "csb.reincarnate.choose"
+msgstr "Choisissez de nouveaux guerriers à réincarner."
+
+msgid "csb.reincarnate.stat-roll"
+msgstr "Lancer les dés pour les statistiques"
+
+# Resurrection panel
+msgid "csb.resurrect.title"
+msgstr "RÉSURRECTION"
+
+msgid "csb.resurrect.altar"
+msgstr "Sur l'autel, offrez votre sang pour ressusciter les guerriers."
+
+msgid "csb.resurrect.choose"
+msgstr "Choisissez les guerriers à ressusciter."
+
+# Chaos magic cooldown (CHANGE7_28)
+msgid "csb.chaos.cooldown"
+msgstr "Magie du Chaos en recharge"
+
+msgid "csb.chaos.energy"
+msgstr "Énergie du Chaos"
+
+msgid "csb.chaos.recharge"
+msgstr "Recharge"
+
+# Grey Lord encounter
+msgid "csb.greylord.intro"
+msgstr "Le Seigneur Gris murmure : Choisissez."
+
+msgid "csb.greylord.choose"
+msgstr "Faites votre choix."
+
+# Hint Oracle
+msgid "csb.oracle.title"
+msgstr "ORACLE"
+
+msgid "csb.oracle.prompt"
+msgstr "Demandez et l'oracle répondra."
+
+# Champion pool (CSB has 4 max in active party vs 16 candidates)
+msgid "csb.party.max"
+msgstr "Max 4 guerriers"
+
+msgid "csb.party.slot"
+msgstr "Emplacement du groupe"
+
+# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
+msgid "csb.save.import"
+msgstr "Importer sauvegarde CSB"
+
+msgid "csb.save.csb-st-v20"
+msgstr "Sauvegarde CSB Atari ST 2.0"
+
+msgid "csb.save.csb-st-v21"
+msgstr "Sauvegarde CSB Atari ST 2.1"
+
+msgid "csb.save.amiga-v35"
+msgstr "Sauvegarde CSB Amiga 3.5"
+
+msgid "csb.save.pc34"
+msgstr "Sauvegarde CSB PC 3.4"
+
+# Neophyte mode (CSB-only training option)
+msgid "csb.neophyte.title"
+msgstr "MODE NÉOPHYTE"
+
+msgid "csb.neophyte.desc"
+msgstr "Réduit les dégâts des pièges, démarrage plus facile."
+
+# Engine version (CHANGE7_36, CHANGE8_13)
+msgid "csb.engine.dm1"
+msgstr "Moteur DM1 v2.0"
+
+msgid "csb.engine.csb"
+msgstr "Moteur CSB v2.1"
+
+# CSB launcher entry
+msgid "csb.launcher.title"
+msgstr "CHAOS STRIKES BACK"
+
+msgid "csb.launcher.subtitle"
+msgstr "La suite de Dungeon Master II"
+
+msgid "csb.launcher.lore-shape"
+msgstr "Le Seigneur Chaos se dresse..."
+
+msgid "csb.launcher.lore-line-1"
+msgstr "Le Seigneur Chaos a volé la Flamme."
+
+msgid "csb.launcher.lore-line-2"
+msgstr "La Pierre de Feu est perdue."
+
+msgid "csb.launcher.lore-line-3"
+msgstr "Le Seigneur Gris vous appelle à la récupérer."
+
+msgid "csb.launcher.lore-line-4"
+msgstr "Entrez dans le Chaos."

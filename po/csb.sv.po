@@ -26,110 +26,110 @@ msgstr ""
 
 # Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
 msgid "csb.engine.version"
-msgstr "v2.1"
+msgstr "CSB-motorns version"
 
 # Reincarnation panel
 msgid "csb.reincarnate.title"
 msgstr "ÅTERFÖDAS"
 
 msgid "csb.reincarnate.chaos"
-msgstr "EN NY HJÄLTE STIGER IN I VÄRLDEN"
+msgstr "Kaosstrid."
 
 msgid "csb.reincarnate.choose"
-msgstr "VÄLJ ETT NAMN FÖR DEN NYA HJÄLTEN"
+msgstr "Välj nya krigare för återfödelse."
 
 msgid "csb.reincarnate.stat-roll"
-msgstr "SLÅ 12 NYA STATISTIKVÄRDEN"
+msgstr "Slå tärning för statistik"
 
 # Resurrection panel
 msgid "csb.resurrect.title"
-msgstr "ÅTERUPPVÄCKA"
+msgstr "ÅTERUPPSTÅ"
 
 msgid "csb.resurrect.altar"
-msgstr "VI ALTARE I DENDAR"
+msgstr "Offra blod vid altaret för att väcka krigare."
 
 msgid "csb.resurrect.choose"
-msgstr "VÄLJ EN HJÄLTE ATT ÅTERUPPVÄCKA"
+msgstr "Välj krigare att väcka."
 
 # Chaos magic cooldown (CHANGE7_28)
 msgid "csb.chaos.cooldown"
-msgstr "KAOS-NEDKYLNING"
+msgstr "Kaosmagi svalnar"
 
 msgid "csb.chaos.energy"
-msgstr "KAOS-ENERGI"
+msgstr "Kaosenergi"
 
 msgid "csb.chaos.recharge"
-msgstr "LADDAR KAOS-RESERVER"
+msgstr "Laddar"
 
 # Grey Lord encounter
 msgid "csb.greylord.intro"
-msgstr "EN FIGUR TRÄDER FRAM UR SKUGGORNA"
+msgstr "Den grå lorden viskar: Välj."
 
 msgid "csb.greylord.choose"
-msgstr "DEN GRÅ HERREN ERBJUDER EN ÖVERENSKOMMELSE"
+msgstr "Gör ditt val."
 
 # Hint Oracle
 msgid "csb.oracle.title"
-msgstr "TIPSPORREN"
+msgstr "SPÅDOMSORAKLET"
 
 msgid "csb.oracle.prompt"
-msgstr "VILL DU HA EN VINK?"
+msgstr "Fråga och oraklet ska svara."
 
 # Champion pool (CSB has 4 max in active party vs 16 candidates)
 msgid "csb.party.max"
-msgstr "MAX GRUPPSTORLEK 4"
+msgstr "Max 4 krigare"
 
 msgid "csb.party.slot"
-msgstr "GRUPPPLATS"
+msgstr "Parti-plats"
 
 # Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
 msgid "csb.save.import"
-msgstr "IMPORTERA CSB-SPARNING"
+msgstr "Importera CSB-sparning"
 
 msgid "csb.save.csb-st-v20"
-msgstr "ATARI ST CSB 2.0"
+msgstr "CSB Atari ST 2.0-sparning"
 
 msgid "csb.save.csb-st-v21"
-msgstr "ATARI ST CSB 2.1"
+msgstr "CSB Atari ST 2.1-sparning"
 
 msgid "csb.save.amiga-v35"
-msgstr "AMIGA CSB 3.5"
+msgstr "CSB Amiga 3.5-sparning"
 
 msgid "csb.save.pc34"
-msgstr "CSB PC 3.4"
+msgstr "CSB PC 3.4-sparning"
 
 # Neophyte mode (CSB-only training option)
 msgid "csb.neophyte.title"
 msgstr "NYBÖRJARLÄGE"
 
 msgid "csb.neophyte.desc"
-msgstr "TRÄNINGSSVÅRIGHETSGRAD"
+msgstr "Minska fällornas skada, lättare start."
 
 # Engine version (CHANGE7_36, CHANGE8_13)
 msgid "csb.engine.dm1"
-msgstr "v2.0"
+msgstr "DM1-motor v2.0"
 
 msgid "csb.engine.csb"
-msgstr "v2.1"
+msgstr "CSB-motor v2.1"
 
 # CSB launcher entry
 msgid "csb.launcher.title"
 msgstr "CHAOS STRIKES BACK"
 
 msgid "csb.launcher.subtitle"
-msgstr "HJÄLTARNA ÅTERVÄNDER"
+msgstr "Dungeon Master II-uppföljaren"
 
 msgid "csb.launcher.lore-shape"
-msgstr "BERÄTTELSEFORM"
+msgstr "Lord Chaos tornar upp sig..."
 
 msgid "csb.launcher.lore-line-1"
-msgstr "KAOS KASTAR FORTFARANDE EN LÅNG SKUGGA"
+msgstr "Lord Chaos har stulit eld personifikationen."
 
 msgid "csb.launcher.lore-line-2"
-msgstr "SPELAREN JAGAR CORBUM-MATERIAL"
+msgstr "Flamsten är förlorad."
 
 msgid "csb.launcher.lore-line-3"
-msgstr "ÅTERVÄNDANDE HJÄLTAR MÖTER EN HÅRDARE LABYRINT"
+msgstr "Den grå lorden kallar er att hämta den."
 
 msgid "csb.launcher.lore-line-4"
-msgstr "VÄRLDEN KÄNNS ÄLDRE OCH MINDRE SÄKER"
+msgstr "Stig in i kaoset."

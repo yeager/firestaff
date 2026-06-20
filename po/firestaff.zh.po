@@ -5,89 +5,89 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "无障碍"
 
 msgid "Audio"
-msgstr ""
+msgstr "音频"
 
 msgid "Back"
 msgstr "返回"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "怪物图鉴"
 
 msgid "Changelog"
-msgstr ""
+msgstr "更新日志"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "即将推出"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "继续存档"
 
 msgid "Controls"
-msgstr ""
+msgstr "控制"
 
 msgid "Display"
-msgstr ""
+msgstr "显示"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "附加"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "物品百科"
 
 msgid "Language"
 msgstr "语言"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "地图查看器"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "传说博物馆"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "新游戏 (V1 原始)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "新游戏 (V2.1 升频)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "新游戏 (V2.2 增强)"
 
 msgid "No data files"
-msgstr ""
+msgstr "无数据文件"
 
 msgid "Off"
-msgstr ""
+msgstr "关"
 
 msgid "On"
-msgstr ""
+msgstr "开"
 
 msgid "PLAY"
-msgstr "开始游戏"
+msgstr "开始"
 
 msgid "QUIT"
 msgstr "退出"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "截图画廊"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "选择游戏"
 
 msgid "SETTINGS"
 msgstr "设置"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "咒语参考"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "验证游戏数据"
 
 msgid "Version"
-msgstr ""
+msgstr "版本"
 
 msgid "Video"
-msgstr ""
+msgstr "视频"
 

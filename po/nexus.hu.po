@@ -8,89 +8,89 @@ msgid "Attack"
 msgstr "Támadás"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "Varázslat"
 
 msgid "Track %d"
-msgstr ""
+msgstr "Szint %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s meghalt"
 
 msgid "Continue"
-msgstr ""
+msgstr "Tovább"
 
 msgid "Defend"
-msgstr ""
+msgstr "Védekezés"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "Ez az ajtó zárva"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "Megtaláltad a Tűzbottot!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "Gratulálunk! Megmentetted a királyságot!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "A csapatod odaveszett"
 
 msgid "Hall of Champions"
-msgstr "Bajnokok csarnoka"
+msgstr "Hősök Csarnoka"
 
 msgid "Health"
-msgstr "Egészség"
+msgstr "Életerő"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "Leltár tele"
 
 msgid "A key is required"
-msgstr ""
+msgstr "Kulcs szükséges"
 
 msgid "Level %d"
-msgstr ""
+msgstr "Szint %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s szintet lépett"
 
 msgid "Load Game"
-msgstr ""
+msgstr "Betöltés"
 
 msgid "Mana"
-msgstr ""
+msgstr "Mana"
 
 msgid "New Game"
-msgstr ""
+msgstr "Új játék"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "Nincs elég mana"
 
 msgid "Recruit"
-msgstr "Toborozz"
+msgstr "Toboroz"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "Reinkarnál"
 
 msgid "Rest"
-msgstr ""
+msgstr "Pihenés"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "Feltámaszt"
 
 msgid "Save Game"
-msgstr ""
+msgstr "Mentés"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "Válassz hőst"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "Varázslat sikertelen"
 
 msgid "Stamina"
-msgstr ""
+msgstr "Állóképesség"
 
 msgid "Party is full"
-msgstr ""
+msgstr "A csapat tele"
 
 msgid "Use Item"
-msgstr ""
+msgstr "Tárgy használata"
 

@@ -8,89 +8,89 @@ msgid "Attack"
 msgstr "攻击"
 
 msgid "Cast Spell"
-msgstr ""
+msgstr "施法"
 
 msgid "Track %d"
-msgstr ""
+msgstr "关卡 %d"
 
 msgid "%s has died"
-msgstr ""
+msgstr "%s 已死亡"
 
 msgid "Continue"
-msgstr ""
+msgstr "继续"
 
 msgid "Defend"
-msgstr ""
+msgstr "防御"
 
 msgid "This door is locked"
-msgstr ""
+msgstr "此门已锁"
 
 msgid "You found the Firestaff!"
-msgstr ""
+msgstr "你找到了火杖!"
 
 msgid "Congratulations! You have saved the realm!"
-msgstr ""
+msgstr "恭喜!你拯救了王国!"
 
 msgid "Your party has perished"
-msgstr ""
+msgstr "你的队伍已覆灭"
 
 msgid "Hall of Champions"
-msgstr "冠军大厅"
+msgstr "英雄大厅"
 
 msgid "Health"
 msgstr "生命"
 
 msgid "Inventory full"
-msgstr ""
+msgstr "物品栏已满"
 
 msgid "A key is required"
-msgstr ""
+msgstr "需要钥匙"
 
 msgid "Level %d"
-msgstr ""
+msgstr "等级 %d"
 
 msgid "%s gained a level"
-msgstr ""
+msgstr "%s 升级了"
 
 msgid "Load Game"
-msgstr ""
+msgstr "载入"
 
 msgid "Mana"
-msgstr ""
+msgstr "法力"
 
 msgid "New Game"
-msgstr ""
+msgstr "新游戏"
 
 msgid "Not enough mana"
-msgstr ""
+msgstr "法力不足"
 
 msgid "Recruit"
 msgstr "招募"
 
 msgid "Reincarnate"
-msgstr ""
+msgstr "转世"
 
 msgid "Rest"
-msgstr ""
+msgstr "休息"
 
 msgid "Resurrect"
-msgstr ""
+msgstr "复活"
 
 msgid "Save Game"
-msgstr ""
+msgstr "保存"
 
 msgid "Select a champion"
-msgstr ""
+msgstr "选择英雄"
 
 msgid "Spell failed"
-msgstr ""
+msgstr "咒语失败"
 
 msgid "Stamina"
-msgstr ""
+msgstr "耐力"
 
 msgid "Party is full"
-msgstr ""
+msgstr "队伍已满"
 
 msgid "Use Item"
-msgstr ""
+msgstr "使用物品"
 

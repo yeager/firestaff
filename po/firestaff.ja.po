@@ -5,64 +5,64 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "アクセシビリティ"
 
 msgid "Audio"
-msgstr ""
+msgstr "オーディオ"
 
 msgid "Back"
 msgstr "戻る"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "魔物図鑑"
 
 msgid "Changelog"
-msgstr ""
+msgstr "更新履歴"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "近日公開"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "セーブから続ける"
 
 msgid "Controls"
-msgstr ""
+msgstr "操作"
 
 msgid "Display"
-msgstr ""
+msgstr "表示"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "EXTRAS"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "アイテム図鑑"
 
 msgid "Language"
 msgstr "言語"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "マップビューア"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "ロア博物館"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "新規ゲーム (V1 オリジナル)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "新規ゲーム (V2.1 アップスケール)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "新規ゲーム (V2.2 エンハンスド)"
 
 msgid "No data files"
-msgstr ""
+msgstr "データファイルなし"
 
 msgid "Off"
-msgstr ""
+msgstr "オフ"
 
 msgid "On"
-msgstr ""
+msgstr "オン"
 
 msgid "PLAY"
 msgstr "プレイ"
@@ -71,23 +71,23 @@ msgid "QUIT"
 msgstr "終了"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "スクリーンショットギャラリー"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "ゲーム選択"
 
 msgid "SETTINGS"
 msgstr "設定"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "呪文リファレンス"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "ゲームデータ検証"
 
 msgid "Version"
-msgstr ""
+msgstr "バージョン"
 
 msgid "Video"
-msgstr ""
+msgstr "ビデオ"
 

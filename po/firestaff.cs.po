@@ -5,64 +5,64 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "Přístupnost"
 
 msgid "Audio"
-msgstr ""
+msgstr "Zvuk"
 
 msgid "Back"
 msgstr "Zpět"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "Bestiář"
 
 msgid "Changelog"
-msgstr ""
+msgstr "Seznam změn"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "Již brzy"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "Pokračovat v uložené hře"
 
 msgid "Controls"
-msgstr ""
+msgstr "Ovládání"
 
 msgid "Display"
-msgstr ""
+msgstr "Displej"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "DOPLŇKY"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "Encyklopedie předmětů"
 
 msgid "Language"
 msgstr "Jazyk"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "Prohlížeč map"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "Muzeum Lore"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "Nová hra (V1 Originál)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "Nová hra (V2.1 Zvětšeno)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "Nová hra (V2.2 Vylepšeno)"
 
 msgid "No data files"
-msgstr ""
+msgstr "Žádné datové soubory"
 
 msgid "Off"
-msgstr ""
+msgstr "Vypnuto"
 
 msgid "On"
-msgstr ""
+msgstr "Zapnuto"
 
 msgid "PLAY"
 msgstr "HRÁT"
@@ -71,23 +71,23 @@ msgid "QUIT"
 msgstr "KONEC"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "Galerie snímků"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "VYBRAT HRU"
 
 msgid "SETTINGS"
 msgstr "NASTAVENÍ"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "Reference kouzel"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "Ověřit herní data"
 
 msgid "Version"
-msgstr ""
+msgstr "Verze"
 
 msgid "Video"
-msgstr ""
+msgstr "Video"
 

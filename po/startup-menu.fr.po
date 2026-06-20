@@ -19,19 +19,19 @@ msgstr ""
 
 #. Launcher title / eyebrow
 msgid "FRONTEND PREVIEW"
-msgstr "APERÇU DE L'INTERFACE"
+msgstr "APERÇU FRONTEND"
 
 #. Main menu heading
 msgid "SELECT A DESTINATION"
-msgstr "CHOISIR UNE DESTINATION"
+msgstr "SÉLECTIONNER UNE DESTINATION"
 
 #. Settings panel title
 msgid "SETTINGS"
-msgstr "RÉGLAGES"
+msgstr "PARAMÈTRES"
 
 #. Status label
 msgid "STATUS"
-msgstr "ÉTAT"
+msgstr "STATUT"
 
 #. Section heading for launcher entries
 msgid "LAUNCHER DESTINATIONS"
@@ -39,7 +39,7 @@ msgstr "DESTINATIONS DU LANCEUR"
 
 #. Data directory label
 msgid "DATA DIR"
-msgstr "DOSSIER DE DONNÉES"
+msgstr "RÉPERTOIRE DE DONNÉES"
 
 #. Main menu footer / navigation hint
 msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
@@ -47,7 +47,7 @@ msgstr "HAUT/BAS DÉPLACER   ENTRÉE OUVRIR   ÉCHAP QUITTER"
 
 #. Settings section heading
 msgid "PERSISTED OPTIONS"
-msgstr "OPTIONS ENREGISTRÉES"
+msgstr "OPTIONS PERSISTANTES"
 
 #. Settings row label
 msgid "LANGUAGE"
@@ -63,15 +63,15 @@ msgstr "MODE FENÊTRE"
 
 #. Settings save confirmation
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
-msgstr "LES MODIFICATIONS SONT ENREGISTRÉES IMMÉDIATEMENT"
+msgstr "CHANGEMENTS SAUVEGARDÉS IMMÉDIATEMENT"
 
 #. Settings footer / navigation hint
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
-msgstr "GAUCHE/DROITE CHANGER   ENTRÉE AVANCER   ÉCHAP RETOUR"
+msgstr "GAUCHE/DROITE CYCLE   ENTRÉE AVANCER   ÉCHAP RETOUR"
 
 #. Message view return hint
 msgid "ENTER OR ESC RETURNS TO MENU"
-msgstr "ENTRÉE OU ÉCHAP REVIENT AU MENU"
+msgstr "ENTRÉE OU ÉCHAP RETOURNE AU MENU"
 
 #. Launch confirmation
 msgid "READY TO LAUNCH"
@@ -79,15 +79,15 @@ msgstr "PRÊT À LANCER"
 
 #. Escape hint in messages
 msgid "ESC RETURNS TO MENU"
-msgstr "ÉCHAP REVIENT AU MENU"
+msgstr "ÉCHAP RETOURNE AU MENU"
 
 #. Missing hash-verified data message
 msgid "VALIDATOR SCAFFOLD ONLY"
-msgstr "VALIDATEUR SEULEMENT"
+msgstr "ÉCHAFAUDAGE VALIDATEUR UNIQUEMENT"
 
 #. Missing hash-verified data detail
 msgid "ADD VERIFIED RETAIL HASHES"
-msgstr "AJOUTER LES HASHES RETAIL VÉRIFIÉS"
+msgstr "AJOUTER HASHES COMMERCE VÉRIFIÉS"
 
 #. Missing game data message
 msgid "GAME DATA NOT FOUND"
@@ -95,27 +95,27 @@ msgstr "DONNÉES DE JEU INTROUVABLES"
 
 #. Missing game data detail
 msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "VÉRIFIEZ LE DOSSIER DE DONNÉES FIRESTAFF"
+msgstr "VÉRIFIER RÉPERTOIRE FIRESTAFF"
 
 #. Card art slot status
 msgid "ART SLOT READY"
-msgstr "EMPLACEMENT D'ILLUSTRATION PRÊT"
+msgstr "EMPLACEMENT ART PRÊT"
 
 #. Card art slot status
 msgid "ART SLOT EMPTY"
-msgstr "EMPLACEMENT D'ILLUSTRATION VIDE"
+msgstr "EMPLACEMENT ART VIDE"
 
 #. Card art slot instruction
 msgid "DROP ART INTO SLOT"
-msgstr "DÉPOSEZ UNE ILLUSTRATION DANS L'EMPLACEMENT"
+msgstr "DÉPOSER ART DANS EMPLACEMENT"
 
 #. Card art active label
 msgid "CARD ART ACTIVE"
-msgstr "ILLUSTRATION DE CARTE ACTIVE"
+msgstr "ART CARTE ACTIF"
 
 #. Card art slot label
 msgid "CARD ART SLOT"
-msgstr "EMPLACEMENT D'ILLUSTRATION"
+msgstr "EMPLACEMENT ART CARTE"
 
 #. Game card label
 msgid "Dungeon Master"
@@ -147,15 +147,15 @@ msgstr "PATCHÉ"
 
 #. Game options row label
 msgid "CHEATS"
-msgstr "TRICHES"
+msgstr "TRICHE"
 
 #. Game options value: off
 msgid "OFF"
-msgstr "DÉSACTIVÉ"
+msgstr "OFF"
 
 #. Game options value: on
 msgid "ON"
-msgstr "ACTIVÉ"
+msgstr "ON"
 
 #. Game options row label
 msgid "SPEED"
@@ -167,7 +167,7 @@ msgstr "PLUS LENT"
 
 #. Game options value: normal
 msgid "NORMAL"
-msgstr "NORMALE"
+msgstr "NORMAL"
 
 #. Game options value: faster
 msgid "FASTER"
@@ -175,7 +175,7 @@ msgstr "PLUS RAPIDE"
 
 #. Game options row label
 msgid "ASPECT RATIO"
-msgstr "FORMAT D'IMAGE"
+msgstr "RAPPORT D'ASPECT"
 
 #. Game options row label
 msgid "RESOLUTION"
@@ -191,7 +191,7 @@ msgstr "V1 ORIGINAL"
 
 #. Presentation mode name
 msgid "V2 ENHANCED 2D"
-msgstr "V2 2D AMÉLIORÉE"
+msgstr "V2 2D AMÉLIORÉ"
 
 #. Presentation mode name
 msgid "V3 MODERN/3D"
@@ -203,7 +203,7 @@ msgstr "BIENTÔT DISPONIBLE"
 
 #. Language names
 msgid "ENGLISH"
-msgstr "ANGLAIS"
+msgstr "ENGLISH"
 
 #. Language names
 msgid "SVENSKA"
@@ -219,7 +219,7 @@ msgstr "ALLEMAND"
 
 #. Window mode values
 msgid "WINDOWED"
-msgstr "FENÊTRÉ"
+msgstr "FENÊTRE"
 
 #. Window mode values
 msgid "FULLSCREEN"
@@ -251,11 +251,11 @@ msgstr "VERROUILLÉ PAR LE MODE V1 ORIGINAL"
 
 #. Renderer/settings label
 msgid "RENDERER BACKEND"
-msgstr "MOTEUR DE RENDU"
+msgstr "BACKEND RENDU"
 
 #. Renderer/settings label
 msgid "RENDERER BACKEND UNAVAILABLE"
-msgstr "MOTEUR DE RENDU INDISPONIBLE"
+msgstr "BACKEND RENDU INDISPONIBLE"
 
 #. Renderer/settings label
 msgid "RENDERER"
@@ -295,7 +295,7 @@ msgstr "ÉCHELLE"
 
 #. Renderer/settings label
 msgid "PIXEL SNAP"
-msgstr "ALIGNEMENT PIXEL"
+msgstr "SNAP PIXEL"
 
 #. Renderer/settings label
 msgid "FILTER"

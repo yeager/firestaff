@@ -5,64 +5,64 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
 msgid "Accessibility"
-msgstr ""
+msgstr "접근성"
 
 msgid "Audio"
-msgstr ""
+msgstr "오디오"
 
 msgid "Back"
 msgstr "뒤로"
 
 msgid "Bestiary"
-msgstr ""
+msgstr "도감"
 
 msgid "Changelog"
-msgstr ""
+msgstr "변경 로그"
 
 msgid "Coming soon"
-msgstr ""
+msgstr "곧 출시"
 
 msgid "Continue Saved Game"
-msgstr ""
+msgstr "저장 게임 계속"
 
 msgid "Controls"
-msgstr ""
+msgstr "조작"
 
 msgid "Display"
-msgstr ""
+msgstr "표시"
 
 msgid "EXTRAS"
-msgstr ""
+msgstr "추가"
 
 msgid "Item Encyclopedia"
-msgstr ""
+msgstr "아이템 도감"
 
 msgid "Language"
 msgstr "언어"
 
 msgid "Map Viewer"
-msgstr ""
+msgstr "지도 뷰어"
 
 msgid "Museum of Lore"
-msgstr ""
+msgstr "전승 박물관"
 
 msgid "New Game (V1 Original)"
-msgstr ""
+msgstr "새 게임 (V1 오리지널)"
 
 msgid "New Game (V2.1 Upscaled)"
-msgstr ""
+msgstr "새 게임 (V2.1 업스케일)"
 
 msgid "New Game (V2.2 Enhanced)"
-msgstr ""
+msgstr "새 게임 (V2.2 강화)"
 
 msgid "No data files"
-msgstr ""
+msgstr "데이터 파일 없음"
 
 msgid "Off"
-msgstr ""
+msgstr "끔"
 
 msgid "On"
-msgstr ""
+msgstr "켬"
 
 msgid "PLAY"
 msgstr "플레이"
@@ -71,23 +71,23 @@ msgid "QUIT"
 msgstr "종료"
 
 msgid "Screenshot Gallery"
-msgstr ""
+msgstr "스크린샷 갤러리"
 
 msgid "SELECT GAME"
-msgstr ""
+msgstr "게임 선택"
 
 msgid "SETTINGS"
 msgstr "설정"
 
 msgid "Spell Reference"
-msgstr ""
+msgstr "주문 참조"
 
 msgid "Validate game data"
-msgstr ""
+msgstr "게임 데이터 검증"
 
 msgid "Version"
-msgstr ""
+msgstr "버전"
 
 msgid "Video"
-msgstr ""
+msgstr "비디오"
 
