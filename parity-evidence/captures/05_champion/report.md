@@ -10,7 +10,7 @@ pass80 classifier verdict: ****
 ### 05_champion_hud
 
 - Path: `/tmp/dm1_original_capture/05_champion/05_champion_hud.png`
-- SHA256: `9d314f20ebfc222d26d40fe8e4090d8b826ab6d109dcaa71b0f98a0668ff8b49`
+- SHA256: `9164394fd354377f4413b407cb0bde127c279f93e0f287f8495c791b3f13fd0b`
 - Size: 320x200
 - pass80 classification: `entrance_menu`
 - Notes: Frame showing 4-champion party HUD at top of viewport
@@ -18,7 +18,7 @@ pass80 classifier verdict: ****
 ### 05_champion_hud_after
 
 - Path: `/tmp/dm1_original_capture/05_champion/05_champion_hud_after.png`
-- SHA256: `9d314f20ebfc222d26d40fe8e4090d8b826ab6d109dcaa71b0f98a0668ff8b49`
+- SHA256: `0e6eeb39bbbb314397882b796aa2c16c22a8e1723b13a82330705e2699b7aeb4`
 - Size: 320x200
 - pass80 classification: `entrance_menu`
 - Notes: Second HUD capture to verify distinct frame
@@ -30,8 +30,8 @@ pass80 classifier verdict: ****
 ## Pass/Fail Verdict
 
 **GAP_CLOSED**
-- 1 duplicate SHA(s) detected (expected for collision/creature/wall-blocked pairs)
 
 ### SHA distribution
 
-- `9d314f20ebfc`: 2 capture(s)
+- `0e6eeb39bbbb`: 1 capture(s)
+- `9164394fd354`: 1 capture(s)
