@@ -1,0 +1,85 @@
+{
+  "anchorDriftTodo": [],
+  "anchors": [
+    "DATA.C:109/531/1350",
+    "VIDEO.C status-row fill"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791+ (champion-panel/leader/mirror + chest).",
+    "Not pass798+ (Graphics.dat init-table gates)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:109",
+      "line": 109,
+      "lineText": "int16_t G0061_ai_Graphic562_Box_ScreenTop[4];",
+      "needle": "G0061_ai_Graphic562_Box_ScreenTop",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:531",
+      "line": 531,
+      "lineText": "int16_t G0061_ai_Graphic562_Box_ScreenTop[4] = { 0, 319, 0, 32 };",
+      "needle": "G0061_ai_Graphic562_Box_ScreenTop",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1350",
+      "line": 1350,
+      "lineText": "int16_t G0061_ai_Graphic562_Box_ScreenTop[4] = { 0, 319, 0, 32 };",
+      "needle": "G0061_ai_Graphic562_Box_ScreenTop",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass864_dm1_v1_box_screen_top_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_box_screen_top_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_box_screen_top_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/box_screen_top_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_box_screen_top_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS864_DM1_V1_BOX_SCREEN_TOP_LOCKED",
+  "timestampUtc": "2026-06-20T11:03:58.192107+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_box_screen_top_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_box_screen_top: 32/32 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

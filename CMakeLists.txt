@@ -8681,6 +8681,36 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass863_dm1_v1_slot_drop_order PROPERTIES DEPENDS dm1_v1_slot_drop_order_pc34_compat)
         add_test(
+            NAME pass864_dm1_v1_box_screen_top
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass864_dm1_v1_box_screen_top_pc34_compat.py
+        )
+        set_tests_properties(pass864_dm1_v1_box_screen_top PROPERTIES DEPENDS dm1_v1_box_screen_top_pc34_compat)
+        add_test(
+            NAME pass865_dm1_v1_box_screen_right
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass865_dm1_v1_box_screen_right_pc34_compat.py
+        )
+        set_tests_properties(pass865_dm1_v1_box_screen_right PROPERTIES DEPENDS dm1_v1_box_screen_right_pc34_compat)
+        add_test(
+            NAME pass866_dm1_v1_box_screen_bottom
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass866_dm1_v1_box_screen_bottom_pc34_compat.py
+        )
+        set_tests_properties(pass866_dm1_v1_box_screen_bottom PROPERTIES DEPENDS dm1_v1_box_screen_bottom_pc34_compat)
+        add_test(
+            NAME pass867_dm1_v1_print_text_masks2
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass867_dm1_v1_print_text_masks2_pc34_compat.py
+        )
+        set_tests_properties(pass867_dm1_v1_print_text_masks2 PROPERTIES DEPENDS dm1_v1_print_text_masks2_pc34_compat)
+        add_test(
+            NAME pass868_dm1_v1_print_text_masks1
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass868_dm1_v1_print_text_masks1_pc34_compat.py
+        )
+        set_tests_properties(pass868_dm1_v1_print_text_masks1 PROPERTIES DEPENDS dm1_v1_print_text_masks1_pc34_compat)
+        add_test(
+            NAME pass869_dm1_v1_line_feed_character_string
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass869_dm1_v1_line_feed_character_string_pc34_compat.py
+        )
+        set_tests_properties(pass869_dm1_v1_line_feed_character_string PROPERTIES DEPENDS dm1_v1_line_feed_character_string_pc34_compat)
+        add_test(
             NAME pass840_dm1_v1_box_entrance_doors
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass840_dm1_v1_box_entrance_doors_pc34_compat.py
         )
@@ -9075,5 +9105,122 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_slot_drop_order_pc34_co
     add_test(
         NAME dm1_v1_slot_drop_order_pc34_compat
         COMMAND test_dm1_v1_slot_drop_order_pc34_compat
+    )
+endif()
+
+# pass864 — DM1 V1 box-screen-top: G0061_ai_Graphic562_Box_ScreenTop[4] =
+# {0, 319, 0, 32}. Top status-bar area (champion icons).
+# Source-locked against DATA.C:109/531/1350. Disjoint from pass784-863.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_box_screen_top_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_box_screen_top_pc34_compat.c")
+    add_executable(test_dm1_v1_box_screen_top_pc34_compat
+        tests/test_dm1_v1_box_screen_top_pc34_compat.c
+        src/dm1/dm1_v1_box_screen_top_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_screen_top_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_screen_top_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_screen_top_pc34_compat
+        COMMAND test_dm1_v1_box_screen_top_pc34_compat
+    )
+endif()
+
+# pass865 — DM1 V1 box-screen-right: G0062_ai_Graphic562_Box_ScreenRight[4]
+# = {224, 319, 33, 169}. Right column (inventory/spell/action panel).
+# Source-locked against DATA.C:110/532/1351. Disjoint from pass784-864.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_box_screen_right_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_box_screen_right_pc34_compat.c")
+    add_executable(test_dm1_v1_box_screen_right_pc34_compat
+        tests/test_dm1_v1_box_screen_right_pc34_compat.c
+        src/dm1/dm1_v1_box_screen_right_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_screen_right_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_screen_right_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_screen_right_pc34_compat
+        COMMAND test_dm1_v1_box_screen_right_pc34_compat
+    )
+endif()
+
+# pass866 — DM1 V1 box-screen-bottom: G0063_ai_Graphic562_Box_ScreenBottom[4]
+# = {0, 319, 169, 199}. Bottom message-line strip below dungeon viewport.
+# Source-locked against DATA.C:111/533/1352. Disjoint from pass784-865.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_box_screen_bottom_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_box_screen_bottom_pc34_compat.c")
+    add_executable(test_dm1_v1_box_screen_bottom_pc34_compat
+        tests/test_dm1_v1_box_screen_bottom_pc34_compat.c
+        src/dm1/dm1_v1_box_screen_bottom_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_box_screen_bottom_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_box_screen_bottom_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_box_screen_bottom_pc34_compat
+        COMMAND test_dm1_v1_box_screen_bottom_pc34_compat
+    )
+endif()
+
+# pass867 — DM1 V1 print-text-masks2: G0064_al_Graphic562_PrintTextMasks2[4]
+# = {0xFFF0FFF0, 0xFFF8FFF8, 0xFFFCFFFC, 0xFFFEFFFE}. 32-bit text-print
+# mask-2 table for Atari ST 4bpp packed-pixel layout. Source-locked
+# against DATA.C:112/534 + F0040_TEXT_Print. Disjoint from pass784-866.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_print_text_masks2_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_print_text_masks2_pc34_compat.c")
+    add_executable(test_dm1_v1_print_text_masks2_pc34_compat
+        tests/test_dm1_v1_print_text_masks2_pc34_compat.c
+        src/dm1/dm1_v1_print_text_masks2_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_print_text_masks2_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_print_text_masks2_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_print_text_masks2_pc34_compat
+        COMMAND test_dm1_v1_print_text_masks2_pc34_compat
+    )
+endif()
+
+# pass868 — DM1 V1 print-text-masks1: G0065_al_Graphic562_PrintTextMasks1[4]
+# = {0x7FFF7FFF, 0x3FFF3FFF, 0x1FFF1FFF, 0x0FFF0FFF}. 32-bit text-print
+# mask-1 table for Atari ST 4bpp packed-pixel layout. Source-locked
+# against DATA.C:113/535 + F0040_TEXT_Print. Disjoint from pass784-867.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_print_text_masks1_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_print_text_masks1_pc34_compat.c")
+    add_executable(test_dm1_v1_print_text_masks1_pc34_compat
+        tests/test_dm1_v1_print_text_masks1_pc34_compat.c
+        src/dm1/dm1_v1_print_text_masks1_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_print_text_masks1_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_print_text_masks1_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_print_text_masks1_pc34_compat
+        COMMAND test_dm1_v1_print_text_masks1_pc34_compat
+    )
+endif()
+
+# pass869 — DM1 V1 line-feed-character-string: G0066_ac_Graphic562_LineFeedCharacterString[2]
+# = "\n". Single newline + NUL terminator used by F0040_TEXT_Print.
+# Source-locked against DATA.C:114/536 + F0040_TEXT_Print. Disjoint
+# from pass784-868.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_line_feed_character_string_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_line_feed_character_string_pc34_compat.c")
+    add_executable(test_dm1_v1_line_feed_character_string_pc34_compat
+        tests/test_dm1_v1_line_feed_character_string_pc34_compat.c
+        src/dm1/dm1_v1_line_feed_character_string_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_line_feed_character_string_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_line_feed_character_string_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_line_feed_character_string_pc34_compat
+        COMMAND test_dm1_v1_line_feed_character_string_pc34_compat
     )
 endif()
