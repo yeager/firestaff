@@ -321,7 +321,18 @@ endif()
 add_executable(firestaff src/shared/firestaff_main_m11.c)
 # M11 objects referenced by the executable call back into M12 menu/asset helpers;
 # repeat M12 after M11 so static linkers resolve both directions.
-target_link_libraries(firestaff PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3)
+# firestaff_v2 and firestaff_m10 are already pulled in transitively:
+#   firestaff_m12 PUBLIC firestaff_m11, firestaff_v2
+#   firestaff_m11 PUBLIC firestaff_v2, firestaff_m10
+# firestaff_m11 is also pulled in transitively by firestaff_m12's PUBLIC
+# link, so listing it explicitly here only triggers ld's "ignoring duplicate
+# libraries" warning without changing the resolved symbol set. The static
+# linker resolves all M11 symbols referenced by the executable's object file
+# from the single transitively-pulled libfirestaff_m11.a that m12 brings
+# along. firestaff_m12 is intentionally listed twice (after m11's transitive
+# pull) so the linker resolves M12 symbols referenced from M11-transitively
+# pulled objects in both directions.
+target_link_libraries(firestaff PRIVATE firestaff_m12 firestaff_m12 SDL3::SDL3)
 if(NOT MSVC)
     target_compile_options(firestaff PRIVATE -Wall -Wextra -O2)
 endif()
@@ -7454,6 +7465,28 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_img5_decode_unit
         COMMAND test_firestaff_img5_decode
+    )
+
+    # ── CSB / DM hidden-code skip table (Tier 2 from FIRESTAFF_GAP_LIST) ──
+    # Skips Atari ST and Amiga item indices 558-562 which contain
+    # 68k executable code left over from the original FTL port
+    # (greatstone d_items.html). Without this, real CSB / DM1
+    # GRAPHICS.DAT ingestion produces garbage pixels or crashes.
+    # Also covers the Amiga DM1 v2.2 "kid dungeon" string-key
+    # items 135-138.
+    add_executable(test_csb_hidden_code_skip_table
+        tests/test_csb_hidden_code_skip_table.c
+        src/csb/csb_hidden_code_skip_table.c
+    )
+    target_include_directories(test_csb_hidden_code_skip_table PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_hidden_code_skip_table PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_hidden_code_skip_table_unit
+        COMMAND test_csb_hidden_code_skip_table
     )
 endif()
 
