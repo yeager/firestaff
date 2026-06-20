@@ -5708,6 +5708,14 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass448_dm1_v1_dungeon_hash_provenance.py
         )
         add_test(
+            NAME asset_validate_compute_md5_for_registry
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/asset-validate/compute_md5_for_registry.py
+        )
+        add_test(
+            NAME asset_validate_compare_md5_to_sha256
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/asset-validate/compare_md5_to_sha256.py
+        )
+        add_test(
             NAME dm2_v1_phase0_provenance_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_phase0_provenance_gate.py
         )
