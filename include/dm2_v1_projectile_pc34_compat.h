@@ -134,6 +134,48 @@ int dm2_v1_projectile_spell_dispatch_count(void);
 int dm2_v1_projectile_bomb_dispatch_count(void);
 void dm2_v1_projectile_reset_counters(void);
 
+/* ── Phase 5 expansion: projectile drain to M11 ──────────────────
+ * Copies the DM2 projectile list into a caller-provided array so the
+ * M11 render path (firestaff_game_loop.c, m11_game_view.c) can iterate
+ * over them and draw fireballs/lightning/arrows in the V1 viewport.
+ *
+ * Each drained entry is a small DM2_V1_DrainedProjectile with screen-
+ * ready framebuffer coordinates (pixel_x, pixel_y) computed from the
+ * world (map_x, map_y) + direction.
+ *
+ * Source-lock:
+ *   skproject/SKULLWIN/c_render.cpp   - projectile draw routine
+ *   ReDMCSB DUNGEON.C:2362-2387       - F0209 visible row/column
+ *   ReDMCSB PROJEXPL.C:76-92          - F0212 projectile live
+ *
+ * Returns the number of projectiles drained (0..max_count). */
+#define DM2_DRAIN_MAX_PROJECTILES  60
+typedef struct {
+    int  slot_index;        /* slot in DM2 projectile list (-1 = empty) */
+    int  category;          /* PROJECTILE_CATEGORY_KINETIC / MAGICAL */
+    int  subtype;           /* DM2_PROJ_SUBTYPE_* */
+    int  owner_kind;        /* PROJECTILE_OWNER_* */
+    int  owner_index;       /* creature instance id or champion idx */
+    int  map_x, map_y;      /* world coords */
+    int  direction;         /* 0=N, 1=E, 2=S, 3=W */
+    int  pixel_x, pixel_y;  /* framebuffer pixel coords (for M11 draw) */
+    int  frame;             /* animation frame (0..7) */
+    int  active;            /* 1 if visible, 0 if ended */
+} DM2_V1_DrainedProjectile;
+
+int dm2_v1_projectile_drain_to_m11(DM2_V1_DrainedProjectile *out_list,
+                                    int max_count);
+
+/* ── Phase 5 expansion: synthetic dispatch for tests ─────────────
+ * Allows tests/probes to inject projectiles directly without going
+ * through the creature attack pipeline.  Returns the slot index or -1. */
+int dm2_v1_projectile_dispatch_synthetic(int category, int subtype,
+                                          int map_x, int map_y,
+                                          int map_index, int direction);
+
+/* ── Phase 5 expansion: count active projectiles ───────────────── */
+int dm2_v1_projectile_active_count(void);
+
 /* Source evidence citation */
 const char *dm2_v1_projectile_source_evidence(void);
 
