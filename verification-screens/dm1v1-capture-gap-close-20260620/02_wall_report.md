@@ -10,7 +10,7 @@ pass80 classifier verdict: ****
 ### 02_wall_front
 
 - Path: `/tmp/dm1_original_capture/02_wall/02_wall_front.png`
-- SHA256: `488cac97a1a62e7ee64c80beeb99d3c779479e927e60d22e4ca7920e58f87316`
+- SHA256: `8c43b579576568cac9754dc4b26f3c73a073af3376c82c0d75341123197d029a`
 - Size: 320x200
 - pass80 classification: `entrance_menu`
 - Notes: Frame facing D3C front wall (or D3C+D3L alcove)
@@ -18,7 +18,7 @@ pass80 classifier verdict: ****
 ### 02_wall_alcove
 
 - Path: `/tmp/dm1_original_capture/02_wall/02_wall_alcove.png`
-- SHA256: `9d314f20ebfc222d26d40fe8e4090d8b826ab6d109dcaa71b0f98a0668ff8b49`
+- SHA256: `9164394fd354377f4413b407cb0bde127c279f93e0f287f8495c791b3f13fd0b`
 - Size: 320x200
 - pass80 classification: `entrance_menu`
 - Notes: Frame after two turn-lefts + step: front + side wall view
@@ -34,5 +34,5 @@ pass80 classifier verdict: ****
 
 ### SHA distribution
 
-- `9d314f20ebfc`: 1 capture(s)
-- `488cac97a1a6`: 1 capture(s)
+- `8c43b5795765`: 1 capture(s)
+- `9164394fd354`: 1 capture(s)
