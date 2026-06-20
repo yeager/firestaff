@@ -10,25 +10,25 @@ pass80 classifier verdict: ****
 ### 01_viewport_start
 
 - Path: `/tmp/dm1_original_capture/01_viewport/01_viewport_start.png`
-- SHA256: `43ff9c0e400556a1b833923441329431a7697bd34e6bd39690e63627e1ee148c`
+- SHA256: `659628eb76d7d0f039dc719a2207c3ae08fdb6b09f798c2265dc8d666419d47b`
 - Size: 320x200
-- pass80 classification: `title_screen`
+- pass80 classification: `entrance_menu`
 - Notes: Frame after selector + entrance + ENTER; expected dungeon_gameplay
 
 ### 01_viewport_after_step
 
 - Path: `/tmp/dm1_original_capture/01_viewport/01_viewport_after_step.png`
-- SHA256: `43ff9c0e400556a1b833923441329431a7697bd34e6bd39690e63627e1ee148c`
+- SHA256: `659628eb76d7d0f039dc719a2207c3ae08fdb6b09f798c2265dc8d666419d47b`
 - Size: 320x200
-- pass80 classification: `title_screen`
+- pass80 classification: `entrance_menu`
 - Notes: Frame after one C003_COMMAND_MOVE_FORWARD (KP5)
 
 ### 01_viewport_after_turn
 
 - Path: `/tmp/dm1_original_capture/01_viewport/01_viewport_after_turn.png`
-- SHA256: `43ff9c0e400556a1b833923441329431a7697bd34e6bd39690e63627e1ee148c`
+- SHA256: `659628eb76d7d0f039dc719a2207c3ae08fdb6b09f798c2265dc8d666419d47b`
 - Size: 320x200
-- pass80 classification: `title_screen`
+- pass80 classification: `entrance_menu`
 - Notes: Frame after one C002_COMMAND_TURN_RIGHT (KP6)
 
 ## Notes
@@ -41,4 +41,3 @@ pass80 classifier verdict: ****
 
 **GAP_BLOCKED** — see notes
 - 2 duplicate SHA(s) detected
-- At least one capture is not dungeon_gameplay or entrance_menu
