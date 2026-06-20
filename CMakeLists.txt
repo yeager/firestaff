@@ -361,7 +361,10 @@ endif()
 # ── Probe executables ────────────────────────────────────────────────
 # M11 Phase A probe (only needs render_sdl + vga_palette, linked via m10)
 add_executable(firestaff_m11_phase_a_probe probes/m11/firestaff_m11_phase_a_probe.c)
-target_link_libraries(firestaff_m11_phase_a_probe PRIVATE firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+# firestaff_m11 includes main_loop_m11.c which references M12_* symbols;
+# those resolve through firestaff_m12 on Linux/Windows strict linkers
+# (macOS / BSD ld is more permissive and resolves them anyway).
+target_link_libraries(firestaff_m11_phase_a_probe PRIVATE firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_phase_a_probe PRIVATE -Wall -Wextra -O2)
 endif()
