@@ -1441,6 +1441,44 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_utility_import_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 real-asset launch probe (Atari ST 2.0/2.1 + Amiga 3.5).
+# Headless: no SDL rendering required. Reads the real
+# ~/.firestaff/data/csb-atari-st-2x/ + ~/.firestaff/data/csb/
+# assets, opens the Atari ST DMCSB1 GRAPHICS.DAT via the new
+# csb_v1_graphics_atari_st_loader, verifies hidden-code skip
+# for items 21/538/548 (Atari ST) and 21/676/686 (Amiga),
+# boots the CSB V1 runtime via csb_v1_runtime_boot, and writes
+# /tmp/csb_atari_st_real_capture.ppm as a deterministic capture.
+#
+# Source lock:
+#   - dmweb Data Files page: CSB Atari ST = BIG-endian DMCSB1, 563 items
+#   - dmweb Meynaf disassembly: Atari ST + Amiga hidden-code items
+#   - ReDMCSB ENTRANCE.C F0806 (CSB entrance), DUNGEON.C F0237 (load)
+#   - docs/VERIFIED_HASHES.md (local SHA256 of the assets)
+add_executable(firestaff_csb_v1_real_asset_launch_probe
+    probes/csb/firestaff_csb_v1_real_asset_launch_probe.c
+    src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
+    src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c
+    src/csb/csb_hidden_code_skip_table.c
+    src/csb/csb_v1_cmp_import_pc34_compat.c
+    src/csb/csb_v1_runtime_pc34_compat.c
+    src/csb/csb_v1_boot.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/csb/csb_v1_save_load_pc34_compat.c
+    src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    src/shared/firestaff_cmp_decode.c
+    src/shared/asset_find_by_hash.c
+    src/shared/dungeon_decompressor_ftl.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_real_asset_launch_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_real_asset_launch_probe PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_real_asset_launch_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Phase 2 — DSA Script Section Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: DSA section presence and scan feasibility after dungeon load;
@@ -2229,6 +2267,23 @@ if(BUILD_TESTING)
         NAME dm2_v1_ccm_pc34_compat
         COMMAND test_dm2_v1_ccm_pc34_compat
     )
+
+    # ── DM2 V1 Phase 5: Projectile drain to M11 (probe only) ──
+    add_executable(firestaff_dm2_v1_projectile_drain_probe
+        probes/dm2/firestaff_dm2_v1_projectile_drain_probe.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_drops.c
+    )
+    target_include_directories(firestaff_dm2_v1_projectile_drain_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/memory
+    )
+    target_link_libraries(firestaff_dm2_v1_projectile_drain_probe PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_projectile_drain_probe PRIVATE -Wall -Wextra -O2)
+    endif()
 
     # ── DM2 V1 Phase 2 Probes: Dungeon/Object/World-State/Asset ──
 
