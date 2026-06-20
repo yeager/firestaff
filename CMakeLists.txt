@@ -10208,3 +10208,1550 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_box_spell_ar
         COMMAND test_dm1_v1_graphic560_box_spell_area_controls_pc34_compat
     )
 endif()
+
+# pass934 — DM1 V1 Graphics.dat 558 init var: G0105_auc_Graphic558_Box_ExplosionPattern_D0C[4]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0105_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0105_pc34_compat.c")
+    add_executable(test_dm1_v1_g0105_pc34_compat
+        tests/test_dm1_v1_g0105_pc34_compat.c
+        src/dm1/dm1_v1_g0105_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0105_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0105_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0105_pc34_compat
+        COMMAND test_dm1_v1_g0105_pc34_compat
+    )
+endif()
+
+# pass935 — DM1 V1 Graphics.dat 558 init var: G0106_auc_Graphic558_Box_ThievesEye_ViewportVisibleArea[4]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0106_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0106_pc34_compat.c")
+    add_executable(test_dm1_v1_g0106_pc34_compat
+        tests/test_dm1_v1_g0106_pc34_compat.c
+        src/dm1/dm1_v1_g0106_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0106_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0106_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0106_pc34_compat
+        COMMAND test_dm1_v1_g0106_pc34_compat
+    )
+endif()
+
+# pass936 — DM1 V1 Graphics.dat 558 init var: G0107_auc_Graphic558_Box_ThievesEye_VisibleArea[4]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0107_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0107_pc34_compat.c")
+    add_executable(test_dm1_v1_g0107_pc34_compat
+        tests/test_dm1_v1_g0107_pc34_compat.c
+        src/dm1/dm1_v1_g0107_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0107_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0107_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0107_pc34_compat
+        COMMAND test_dm1_v1_g0107_pc34_compat
+    )
+endif()
+
+# pass937 — DM1 V1 Graphics.dat 558 init var: G0108_auc_Graphic558_Box_ThievesEye_HoleInDoorFrame[4]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0108_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0108_pc34_compat.c")
+    add_executable(test_dm1_v1_g0108_pc34_compat
+        tests/test_dm1_v1_g0108_pc34_compat.c
+        src/dm1/dm1_v1_g0108_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0108_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0108_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0108_pc34_compat
+        COMMAND test_dm1_v1_g0108_pc34_compat
+    )
+endif()
+
+# pass938 — DM1 V1 Graphics.dat 558 init var: G0109_auc_Graphic558_Box_ChampionPortraitOnWall[4]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0109_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0109_pc34_compat.c")
+    add_executable(test_dm1_v1_g0109_pc34_compat
+        tests/test_dm1_v1_g0109_pc34_compat.c
+        src/dm1/dm1_v1_g0109_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0109_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0109_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0109_pc34_compat
+        COMMAND test_dm1_v1_g0109_pc34_compat
+    )
+endif()
+
+# pass939 — DM1 V1 Graphics.dat 558 init var: G0110_auc_Graphic558_Frame_StairsUpFront_D3L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0110_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0110_pc34_compat.c")
+    add_executable(test_dm1_v1_g0110_pc34_compat
+        tests/test_dm1_v1_g0110_pc34_compat.c
+        src/dm1/dm1_v1_g0110_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0110_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0110_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0110_pc34_compat
+        COMMAND test_dm1_v1_g0110_pc34_compat
+    )
+endif()
+
+# pass940 — DM1 V1 Graphics.dat 558 init var: G0111_auc_Graphic558_Frame_StairsUpFront_D3C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0111_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0111_pc34_compat.c")
+    add_executable(test_dm1_v1_g0111_pc34_compat
+        tests/test_dm1_v1_g0111_pc34_compat.c
+        src/dm1/dm1_v1_g0111_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0111_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0111_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0111_pc34_compat
+        COMMAND test_dm1_v1_g0111_pc34_compat
+    )
+endif()
+
+# pass941 — DM1 V1 Graphics.dat 558 init var: G0112_auc_Graphic558_Frame_StairsUpFront_D3R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0112_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0112_pc34_compat.c")
+    add_executable(test_dm1_v1_g0112_pc34_compat
+        tests/test_dm1_v1_g0112_pc34_compat.c
+        src/dm1/dm1_v1_g0112_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0112_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0112_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0112_pc34_compat
+        COMMAND test_dm1_v1_g0112_pc34_compat
+    )
+endif()
+
+# pass942 — DM1 V1 Graphics.dat 558 init var: G0113_auc_Graphic558_Frame_StairsUpFront_D2L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0113_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0113_pc34_compat.c")
+    add_executable(test_dm1_v1_g0113_pc34_compat
+        tests/test_dm1_v1_g0113_pc34_compat.c
+        src/dm1/dm1_v1_g0113_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0113_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0113_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0113_pc34_compat
+        COMMAND test_dm1_v1_g0113_pc34_compat
+    )
+endif()
+
+# pass943 — DM1 V1 Graphics.dat 558 init var: G0114_auc_Graphic558_Frame_StairsUpFront_D2C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0114_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0114_pc34_compat.c")
+    add_executable(test_dm1_v1_g0114_pc34_compat
+        tests/test_dm1_v1_g0114_pc34_compat.c
+        src/dm1/dm1_v1_g0114_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0114_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0114_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0114_pc34_compat
+        COMMAND test_dm1_v1_g0114_pc34_compat
+    )
+endif()
+
+# pass944 — DM1 V1 Graphics.dat 558 init var: G0115_auc_Graphic558_Frame_StairsUpFront_D2R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0115_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0115_pc34_compat.c")
+    add_executable(test_dm1_v1_g0115_pc34_compat
+        tests/test_dm1_v1_g0115_pc34_compat.c
+        src/dm1/dm1_v1_g0115_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0115_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0115_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0115_pc34_compat
+        COMMAND test_dm1_v1_g0115_pc34_compat
+    )
+endif()
+
+# pass945 — DM1 V1 Graphics.dat 558 init var: G0116_auc_Graphic558_Frame_StairsUpFront_D1L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0116_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0116_pc34_compat.c")
+    add_executable(test_dm1_v1_g0116_pc34_compat
+        tests/test_dm1_v1_g0116_pc34_compat.c
+        src/dm1/dm1_v1_g0116_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0116_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0116_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0116_pc34_compat
+        COMMAND test_dm1_v1_g0116_pc34_compat
+    )
+endif()
+
+# pass946 — DM1 V1 Graphics.dat 558 init var: G0117_auc_Graphic558_Frame_StairsUpFront_D1C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0117_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0117_pc34_compat.c")
+    add_executable(test_dm1_v1_g0117_pc34_compat
+        tests/test_dm1_v1_g0117_pc34_compat.c
+        src/dm1/dm1_v1_g0117_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0117_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0117_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0117_pc34_compat
+        COMMAND test_dm1_v1_g0117_pc34_compat
+    )
+endif()
+
+# pass947 — DM1 V1 Graphics.dat 558 init var: G0118_auc_Graphic558_Frame_StairsUpFront_D1R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0118_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0118_pc34_compat.c")
+    add_executable(test_dm1_v1_g0118_pc34_compat
+        tests/test_dm1_v1_g0118_pc34_compat.c
+        src/dm1/dm1_v1_g0118_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0118_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0118_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0118_pc34_compat
+        COMMAND test_dm1_v1_g0118_pc34_compat
+    )
+endif()
+
+# pass948 — DM1 V1 Graphics.dat 558 init var: G0119_auc_Graphic558_Frame_StairsUpFront_D0L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0119_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0119_pc34_compat.c")
+    add_executable(test_dm1_v1_g0119_pc34_compat
+        tests/test_dm1_v1_g0119_pc34_compat.c
+        src/dm1/dm1_v1_g0119_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0119_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0119_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0119_pc34_compat
+        COMMAND test_dm1_v1_g0119_pc34_compat
+    )
+endif()
+
+# pass949 — DM1 V1 Graphics.dat 558 init var: G0120_auc_Graphic558_Frame_StairsUpFront_D0R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0120_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0120_pc34_compat.c")
+    add_executable(test_dm1_v1_g0120_pc34_compat
+        tests/test_dm1_v1_g0120_pc34_compat.c
+        src/dm1/dm1_v1_g0120_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0120_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0120_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0120_pc34_compat
+        COMMAND test_dm1_v1_g0120_pc34_compat
+    )
+endif()
+
+# pass950 — DM1 V1 Graphics.dat 558 init var: G0121_auc_Graphic558_Frame_StairsDownFront_D3L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0121_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0121_pc34_compat.c")
+    add_executable(test_dm1_v1_g0121_pc34_compat
+        tests/test_dm1_v1_g0121_pc34_compat.c
+        src/dm1/dm1_v1_g0121_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0121_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0121_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0121_pc34_compat
+        COMMAND test_dm1_v1_g0121_pc34_compat
+    )
+endif()
+
+# pass951 — DM1 V1 Graphics.dat 558 init var: G0122_auc_Graphic558_Frame_StairsDownFront_D3C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0122_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0122_pc34_compat.c")
+    add_executable(test_dm1_v1_g0122_pc34_compat
+        tests/test_dm1_v1_g0122_pc34_compat.c
+        src/dm1/dm1_v1_g0122_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0122_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0122_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0122_pc34_compat
+        COMMAND test_dm1_v1_g0122_pc34_compat
+    )
+endif()
+
+# pass952 — DM1 V1 Graphics.dat 558 init var: G0123_auc_Graphic558_Frame_StairsDownFront_D3R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0123_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0123_pc34_compat.c")
+    add_executable(test_dm1_v1_g0123_pc34_compat
+        tests/test_dm1_v1_g0123_pc34_compat.c
+        src/dm1/dm1_v1_g0123_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0123_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0123_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0123_pc34_compat
+        COMMAND test_dm1_v1_g0123_pc34_compat
+    )
+endif()
+
+# pass953 — DM1 V1 Graphics.dat 558 init var: G0124_auc_Graphic558_Frame_StairsDownFront_D2L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0124_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0124_pc34_compat.c")
+    add_executable(test_dm1_v1_g0124_pc34_compat
+        tests/test_dm1_v1_g0124_pc34_compat.c
+        src/dm1/dm1_v1_g0124_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0124_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0124_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0124_pc34_compat
+        COMMAND test_dm1_v1_g0124_pc34_compat
+    )
+endif()
+
+# pass954 — DM1 V1 Graphics.dat 558 init var: G0125_auc_Graphic558_Frame_StairsDownFront_D2C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0125_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0125_pc34_compat.c")
+    add_executable(test_dm1_v1_g0125_pc34_compat
+        tests/test_dm1_v1_g0125_pc34_compat.c
+        src/dm1/dm1_v1_g0125_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0125_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0125_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0125_pc34_compat
+        COMMAND test_dm1_v1_g0125_pc34_compat
+    )
+endif()
+
+# pass955 — DM1 V1 Graphics.dat 558 init var: G0126_auc_Graphic558_Frame_StairsDownFront_D2R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0126_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0126_pc34_compat.c")
+    add_executable(test_dm1_v1_g0126_pc34_compat
+        tests/test_dm1_v1_g0126_pc34_compat.c
+        src/dm1/dm1_v1_g0126_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0126_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0126_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0126_pc34_compat
+        COMMAND test_dm1_v1_g0126_pc34_compat
+    )
+endif()
+
+# pass956 — DM1 V1 Graphics.dat 558 init var: G0127_auc_Graphic558_Frame_StairsDownFront_D1L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0127_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0127_pc34_compat.c")
+    add_executable(test_dm1_v1_g0127_pc34_compat
+        tests/test_dm1_v1_g0127_pc34_compat.c
+        src/dm1/dm1_v1_g0127_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0127_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0127_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0127_pc34_compat
+        COMMAND test_dm1_v1_g0127_pc34_compat
+    )
+endif()
+
+# pass957 — DM1 V1 Graphics.dat 558 init var: G0128_auc_Graphic558_Frame_StairsDownFront_D1C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0128_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0128_pc34_compat.c")
+    add_executable(test_dm1_v1_g0128_pc34_compat
+        tests/test_dm1_v1_g0128_pc34_compat.c
+        src/dm1/dm1_v1_g0128_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0128_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0128_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0128_pc34_compat
+        COMMAND test_dm1_v1_g0128_pc34_compat
+    )
+endif()
+
+# pass958 — DM1 V1 Graphics.dat 558 init var: G0129_auc_Graphic558_Frame_StairsDownFront_D1R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0129_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0129_pc34_compat.c")
+    add_executable(test_dm1_v1_g0129_pc34_compat
+        tests/test_dm1_v1_g0129_pc34_compat.c
+        src/dm1/dm1_v1_g0129_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0129_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0129_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0129_pc34_compat
+        COMMAND test_dm1_v1_g0129_pc34_compat
+    )
+endif()
+
+# pass959 — DM1 V1 Graphics.dat 558 init var: G0130_auc_Graphic558_Frame_StairsDownFront_D0L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0130_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0130_pc34_compat.c")
+    add_executable(test_dm1_v1_g0130_pc34_compat
+        tests/test_dm1_v1_g0130_pc34_compat.c
+        src/dm1/dm1_v1_g0130_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0130_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0130_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0130_pc34_compat
+        COMMAND test_dm1_v1_g0130_pc34_compat
+    )
+endif()
+
+# pass960 — DM1 V1 Graphics.dat 558 init var: G0131_auc_Graphic558_Frame_StairsDownFront_D0R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0131_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0131_pc34_compat.c")
+    add_executable(test_dm1_v1_g0131_pc34_compat
+        tests/test_dm1_v1_g0131_pc34_compat.c
+        src/dm1/dm1_v1_g0131_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0131_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0131_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0131_pc34_compat
+        COMMAND test_dm1_v1_g0131_pc34_compat
+    )
+endif()
+
+# pass961 — DM1 V1 Graphics.dat 558 init var: G0132_auc_Graphic558_Frame_StairsSide_D2L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0132_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0132_pc34_compat.c")
+    add_executable(test_dm1_v1_g0132_pc34_compat
+        tests/test_dm1_v1_g0132_pc34_compat.c
+        src/dm1/dm1_v1_g0132_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0132_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0132_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0132_pc34_compat
+        COMMAND test_dm1_v1_g0132_pc34_compat
+    )
+endif()
+
+# pass962 — DM1 V1 Graphics.dat 558 init var: G0133_auc_Graphic558_Frame_StairsSide_D2R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0133_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0133_pc34_compat.c")
+    add_executable(test_dm1_v1_g0133_pc34_compat
+        tests/test_dm1_v1_g0133_pc34_compat.c
+        src/dm1/dm1_v1_g0133_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0133_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0133_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0133_pc34_compat
+        COMMAND test_dm1_v1_g0133_pc34_compat
+    )
+endif()
+
+# pass963 — DM1 V1 Graphics.dat 558 init var: G0134_auc_Graphic558_Frame_StairsUpSide_D1L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0134_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0134_pc34_compat.c")
+    add_executable(test_dm1_v1_g0134_pc34_compat
+        tests/test_dm1_v1_g0134_pc34_compat.c
+        src/dm1/dm1_v1_g0134_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0134_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0134_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0134_pc34_compat
+        COMMAND test_dm1_v1_g0134_pc34_compat
+    )
+endif()
+
+# pass964 — DM1 V1 Graphics.dat 558 init var: G0135_auc_Graphic558_Frame_StairsUpSide_D1R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0135_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0135_pc34_compat.c")
+    add_executable(test_dm1_v1_g0135_pc34_compat
+        tests/test_dm1_v1_g0135_pc34_compat.c
+        src/dm1/dm1_v1_g0135_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0135_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0135_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0135_pc34_compat
+        COMMAND test_dm1_v1_g0135_pc34_compat
+    )
+endif()
+
+# pass965 — DM1 V1 Graphics.dat 558 init var: G0136_auc_Graphic558_Frame_StairsDownSide_D1L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0136_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0136_pc34_compat.c")
+    add_executable(test_dm1_v1_g0136_pc34_compat
+        tests/test_dm1_v1_g0136_pc34_compat.c
+        src/dm1/dm1_v1_g0136_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0136_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0136_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0136_pc34_compat
+        COMMAND test_dm1_v1_g0136_pc34_compat
+    )
+endif()
+
+# pass966 — DM1 V1 Graphics.dat 558 init var: G0137_auc_Graphic558_Frame_StairsDownSide_D1R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0137_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0137_pc34_compat.c")
+    add_executable(test_dm1_v1_g0137_pc34_compat
+        tests/test_dm1_v1_g0137_pc34_compat.c
+        src/dm1/dm1_v1_g0137_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0137_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0137_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0137_pc34_compat
+        COMMAND test_dm1_v1_g0137_pc34_compat
+    )
+endif()
+
+# pass967 — DM1 V1 Graphics.dat 558 init var: G0138_auc_Graphic558_Frame_StairsSide_D0L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0138_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0138_pc34_compat.c")
+    add_executable(test_dm1_v1_g0138_pc34_compat
+        tests/test_dm1_v1_g0138_pc34_compat.c
+        src/dm1/dm1_v1_g0138_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0138_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0138_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0138_pc34_compat
+        COMMAND test_dm1_v1_g0138_pc34_compat
+    )
+endif()
+
+# pass968 — DM1 V1 Graphics.dat 558 init var: G0139_auc_Graphic558_Frame_StairsSide_D0R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0139_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0139_pc34_compat.c")
+    add_executable(test_dm1_v1_g0139_pc34_compat
+        tests/test_dm1_v1_g0139_pc34_compat.c
+        src/dm1/dm1_v1_g0139_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0139_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0139_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0139_pc34_compat
+        COMMAND test_dm1_v1_g0139_pc34_compat
+    )
+endif()
+
+# pass969 — DM1 V1 Graphics.dat 558 init var: G0140_auc_Graphic558_Frame_FloorPit_D3L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0140_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0140_pc34_compat.c")
+    add_executable(test_dm1_v1_g0140_pc34_compat
+        tests/test_dm1_v1_g0140_pc34_compat.c
+        src/dm1/dm1_v1_g0140_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0140_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0140_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0140_pc34_compat
+        COMMAND test_dm1_v1_g0140_pc34_compat
+    )
+endif()
+
+# pass970 — DM1 V1 Graphics.dat 558 init var: G0141_auc_Graphic558_Frame_FloorPit_D3C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0141_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0141_pc34_compat.c")
+    add_executable(test_dm1_v1_g0141_pc34_compat
+        tests/test_dm1_v1_g0141_pc34_compat.c
+        src/dm1/dm1_v1_g0141_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0141_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0141_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0141_pc34_compat
+        COMMAND test_dm1_v1_g0141_pc34_compat
+    )
+endif()
+
+# pass971 — DM1 V1 Graphics.dat 558 init var: G0142_auc_Graphic558_Frame_FloorPit_D3R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0142_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0142_pc34_compat.c")
+    add_executable(test_dm1_v1_g0142_pc34_compat
+        tests/test_dm1_v1_g0142_pc34_compat.c
+        src/dm1/dm1_v1_g0142_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0142_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0142_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0142_pc34_compat
+        COMMAND test_dm1_v1_g0142_pc34_compat
+    )
+endif()
+
+# pass972 — DM1 V1 Graphics.dat 558 init var: G0143_auc_Graphic558_Frame_FloorPit_D2L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0143_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0143_pc34_compat.c")
+    add_executable(test_dm1_v1_g0143_pc34_compat
+        tests/test_dm1_v1_g0143_pc34_compat.c
+        src/dm1/dm1_v1_g0143_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0143_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0143_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0143_pc34_compat
+        COMMAND test_dm1_v1_g0143_pc34_compat
+    )
+endif()
+
+# pass973 — DM1 V1 Graphics.dat 558 init var: G0144_auc_Graphic558_Frame_FloorPit_D2C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0144_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0144_pc34_compat.c")
+    add_executable(test_dm1_v1_g0144_pc34_compat
+        tests/test_dm1_v1_g0144_pc34_compat.c
+        src/dm1/dm1_v1_g0144_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0144_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0144_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0144_pc34_compat
+        COMMAND test_dm1_v1_g0144_pc34_compat
+    )
+endif()
+
+# pass974 — DM1 V1 Graphics.dat 558 init var: G0145_auc_Graphic558_Frame_FloorPit_D2R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0145_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0145_pc34_compat.c")
+    add_executable(test_dm1_v1_g0145_pc34_compat
+        tests/test_dm1_v1_g0145_pc34_compat.c
+        src/dm1/dm1_v1_g0145_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0145_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0145_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0145_pc34_compat
+        COMMAND test_dm1_v1_g0145_pc34_compat
+    )
+endif()
+
+# pass975 — DM1 V1 Graphics.dat 558 init var: G0146_auc_Graphic558_Frame_FloorPit_D1L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0146_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0146_pc34_compat.c")
+    add_executable(test_dm1_v1_g0146_pc34_compat
+        tests/test_dm1_v1_g0146_pc34_compat.c
+        src/dm1/dm1_v1_g0146_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0146_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0146_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0146_pc34_compat
+        COMMAND test_dm1_v1_g0146_pc34_compat
+    )
+endif()
+
+# pass976 — DM1 V1 Graphics.dat 558 init var: G0147_auc_Graphic558_Frame_FloorPit_D1C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0147_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0147_pc34_compat.c")
+    add_executable(test_dm1_v1_g0147_pc34_compat
+        tests/test_dm1_v1_g0147_pc34_compat.c
+        src/dm1/dm1_v1_g0147_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0147_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0147_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0147_pc34_compat
+        COMMAND test_dm1_v1_g0147_pc34_compat
+    )
+endif()
+
+# pass977 — DM1 V1 Graphics.dat 558 init var: G0148_auc_Graphic558_Frame_FloorPit_D1R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0148_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0148_pc34_compat.c")
+    add_executable(test_dm1_v1_g0148_pc34_compat
+        tests/test_dm1_v1_g0148_pc34_compat.c
+        src/dm1/dm1_v1_g0148_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0148_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0148_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0148_pc34_compat
+        COMMAND test_dm1_v1_g0148_pc34_compat
+    )
+endif()
+
+# pass978 — DM1 V1 Graphics.dat 558 init var: G0149_auc_Graphic558_Frame_FloorPit_D0L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0149_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0149_pc34_compat.c")
+    add_executable(test_dm1_v1_g0149_pc34_compat
+        tests/test_dm1_v1_g0149_pc34_compat.c
+        src/dm1/dm1_v1_g0149_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0149_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0149_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0149_pc34_compat
+        COMMAND test_dm1_v1_g0149_pc34_compat
+    )
+endif()
+
+# pass979 — DM1 V1 Graphics.dat 558 init var: G0150_auc_Graphic558_Frame_FloorPit_D0C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0150_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0150_pc34_compat.c")
+    add_executable(test_dm1_v1_g0150_pc34_compat
+        tests/test_dm1_v1_g0150_pc34_compat.c
+        src/dm1/dm1_v1_g0150_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0150_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0150_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0150_pc34_compat
+        COMMAND test_dm1_v1_g0150_pc34_compat
+    )
+endif()
+
+# pass980 — DM1 V1 Graphics.dat 558 init var: G0151_auc_Graphic558_Frame_FloorPit_D0R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0151_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0151_pc34_compat.c")
+    add_executable(test_dm1_v1_g0151_pc34_compat
+        tests/test_dm1_v1_g0151_pc34_compat.c
+        src/dm1/dm1_v1_g0151_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0151_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0151_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0151_pc34_compat
+        COMMAND test_dm1_v1_g0151_pc34_compat
+    )
+endif()
+
+# pass981 — DM1 V1 Graphics.dat 558 init var: G0152_auc_Graphic558_Frame_CeilingPit_D2L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0152_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0152_pc34_compat.c")
+    add_executable(test_dm1_v1_g0152_pc34_compat
+        tests/test_dm1_v1_g0152_pc34_compat.c
+        src/dm1/dm1_v1_g0152_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0152_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0152_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0152_pc34_compat
+        COMMAND test_dm1_v1_g0152_pc34_compat
+    )
+endif()
+
+# pass982 — DM1 V1 Graphics.dat 558 init var: G0153_auc_Graphic558_Frame_CeilingPit_D2C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0153_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0153_pc34_compat.c")
+    add_executable(test_dm1_v1_g0153_pc34_compat
+        tests/test_dm1_v1_g0153_pc34_compat.c
+        src/dm1/dm1_v1_g0153_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0153_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0153_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0153_pc34_compat
+        COMMAND test_dm1_v1_g0153_pc34_compat
+    )
+endif()
+
+# pass983 — DM1 V1 Graphics.dat 558 init var: G0154_auc_Graphic558_Frame_CeilingPit_D2R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0154_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0154_pc34_compat.c")
+    add_executable(test_dm1_v1_g0154_pc34_compat
+        tests/test_dm1_v1_g0154_pc34_compat.c
+        src/dm1/dm1_v1_g0154_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0154_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0154_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0154_pc34_compat
+        COMMAND test_dm1_v1_g0154_pc34_compat
+    )
+endif()
+
+# pass984 — DM1 V1 Graphics.dat 558 init var: G0155_auc_Graphic558_Frame_CeilingPit_D1L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0155_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0155_pc34_compat.c")
+    add_executable(test_dm1_v1_g0155_pc34_compat
+        tests/test_dm1_v1_g0155_pc34_compat.c
+        src/dm1/dm1_v1_g0155_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0155_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0155_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0155_pc34_compat
+        COMMAND test_dm1_v1_g0155_pc34_compat
+    )
+endif()
+
+# pass985 — DM1 V1 Graphics.dat 558 init var: G0156_auc_Graphic558_Frame_CeilingPit_D1C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0156_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0156_pc34_compat.c")
+    add_executable(test_dm1_v1_g0156_pc34_compat
+        tests/test_dm1_v1_g0156_pc34_compat.c
+        src/dm1/dm1_v1_g0156_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0156_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0156_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0156_pc34_compat
+        COMMAND test_dm1_v1_g0156_pc34_compat
+    )
+endif()
+
+# pass986 — DM1 V1 Graphics.dat 558 init var: G0157_auc_Graphic558_Frame_CeilingPit_D1R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0157_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0157_pc34_compat.c")
+    add_executable(test_dm1_v1_g0157_pc34_compat
+        tests/test_dm1_v1_g0157_pc34_compat.c
+        src/dm1/dm1_v1_g0157_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0157_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0157_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0157_pc34_compat
+        COMMAND test_dm1_v1_g0157_pc34_compat
+    )
+endif()
+
+# pass987 — DM1 V1 Graphics.dat 558 init var: G0158_auc_Graphic558_Frame_CeilingPit_D0L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0158_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0158_pc34_compat.c")
+    add_executable(test_dm1_v1_g0158_pc34_compat
+        tests/test_dm1_v1_g0158_pc34_compat.c
+        src/dm1/dm1_v1_g0158_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0158_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0158_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0158_pc34_compat
+        COMMAND test_dm1_v1_g0158_pc34_compat
+    )
+endif()
+
+# pass988 — DM1 V1 Graphics.dat 558 init var: G0159_auc_Graphic558_Frame_CeilingPit_D0C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0159_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0159_pc34_compat.c")
+    add_executable(test_dm1_v1_g0159_pc34_compat
+        tests/test_dm1_v1_g0159_pc34_compat.c
+        src/dm1/dm1_v1_g0159_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0159_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0159_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0159_pc34_compat
+        COMMAND test_dm1_v1_g0159_pc34_compat
+    )
+endif()
+
+# pass989 — DM1 V1 Graphics.dat 558 init var: G0160_auc_Graphic558_Frame_CeilingPit_D0R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0160_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0160_pc34_compat.c")
+    add_executable(test_dm1_v1_g0160_pc34_compat
+        tests/test_dm1_v1_g0160_pc34_compat.c
+        src/dm1/dm1_v1_g0160_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0160_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0160_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0160_pc34_compat
+        COMMAND test_dm1_v1_g0160_pc34_compat
+    )
+endif()
+
+# pass990 — DM1 V1 Graphics.dat 558 init var: G0161_auc_Graphic558_Box_WallBitmap_D3LCR[4]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0161_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0161_pc34_compat.c")
+    add_executable(test_dm1_v1_g0161_pc34_compat
+        tests/test_dm1_v1_g0161_pc34_compat.c
+        src/dm1/dm1_v1_g0161_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0161_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0161_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0161_pc34_compat
+        COMMAND test_dm1_v1_g0161_pc34_compat
+    )
+endif()
+
+# pass991 — DM1 V1 Graphics.dat 558 init var: G0162_auc_Graphic558_Box_WallBitmap_D2LCR[4]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0162_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0162_pc34_compat.c")
+    add_executable(test_dm1_v1_g0162_pc34_compat
+        tests/test_dm1_v1_g0162_pc34_compat.c
+        src/dm1/dm1_v1_g0162_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0162_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0162_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0162_pc34_compat
+        COMMAND test_dm1_v1_g0162_pc34_compat
+    )
+endif()
+
+# pass992 — DM1 V1 Graphics.dat 558 init var: G0164_auc_Graphic558_Frame_DoorFrameLeft_D3L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0164_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0164_pc34_compat.c")
+    add_executable(test_dm1_v1_g0164_pc34_compat
+        tests/test_dm1_v1_g0164_pc34_compat.c
+        src/dm1/dm1_v1_g0164_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0164_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0164_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0164_pc34_compat
+        COMMAND test_dm1_v1_g0164_pc34_compat
+    )
+endif()
+
+# pass993 — DM1 V1 Graphics.dat 558 init var: G0165_auc_Graphic558_Frame_DoorFrameRight_D3R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0165_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0165_pc34_compat.c")
+    add_executable(test_dm1_v1_g0165_pc34_compat
+        tests/test_dm1_v1_g0165_pc34_compat.c
+        src/dm1/dm1_v1_g0165_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0165_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0165_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0165_pc34_compat
+        COMMAND test_dm1_v1_g0165_pc34_compat
+    )
+endif()
+
+# pass994 — DM1 V1 Graphics.dat 558 init var: G0166_auc_Graphic558_Frame_DoorFrameLeft_D3C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0166_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0166_pc34_compat.c")
+    add_executable(test_dm1_v1_g0166_pc34_compat
+        tests/test_dm1_v1_g0166_pc34_compat.c
+        src/dm1/dm1_v1_g0166_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0166_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0166_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0166_pc34_compat
+        COMMAND test_dm1_v1_g0166_pc34_compat
+    )
+endif()
+
+# pass995 — DM1 V1 Graphics.dat 558 init var: G0167_auc_Graphic558_Frame_DoorFrameRight_D3C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0167_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0167_pc34_compat.c")
+    add_executable(test_dm1_v1_g0167_pc34_compat
+        tests/test_dm1_v1_g0167_pc34_compat.c
+        src/dm1/dm1_v1_g0167_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0167_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0167_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0167_pc34_compat
+        COMMAND test_dm1_v1_g0167_pc34_compat
+    )
+endif()
+
+# pass996 — DM1 V1 Graphics.dat 558 init var: G0168_auc_Graphic558_Frame_DoorFrameLeft_D2C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0168_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0168_pc34_compat.c")
+    add_executable(test_dm1_v1_g0168_pc34_compat
+        tests/test_dm1_v1_g0168_pc34_compat.c
+        src/dm1/dm1_v1_g0168_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0168_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0168_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0168_pc34_compat
+        COMMAND test_dm1_v1_g0168_pc34_compat
+    )
+endif()
+
+# pass997 — DM1 V1 Graphics.dat 558 init var: G0169_auc_Graphic558_Frame_DoorFrameRight_D2C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0169_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0169_pc34_compat.c")
+    add_executable(test_dm1_v1_g0169_pc34_compat
+        tests/test_dm1_v1_g0169_pc34_compat.c
+        src/dm1/dm1_v1_g0169_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0169_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0169_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0169_pc34_compat
+        COMMAND test_dm1_v1_g0169_pc34_compat
+    )
+endif()
+
+# pass998 — DM1 V1 Graphics.dat 558 init var: G0170_auc_Graphic558_Frame_DoorFrameLeft_D1C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0170_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0170_pc34_compat.c")
+    add_executable(test_dm1_v1_g0170_pc34_compat
+        tests/test_dm1_v1_g0170_pc34_compat.c
+        src/dm1/dm1_v1_g0170_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0170_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0170_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0170_pc34_compat
+        COMMAND test_dm1_v1_g0170_pc34_compat
+    )
+endif()
+
+# pass999 — DM1 V1 Graphics.dat 558 init var: G0171_auc_Graphic558_Frame_DoorFrameRight_D1C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0171_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0171_pc34_compat.c")
+    add_executable(test_dm1_v1_g0171_pc34_compat
+        tests/test_dm1_v1_g0171_pc34_compat.c
+        src/dm1/dm1_v1_g0171_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0171_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0171_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0171_pc34_compat
+        COMMAND test_dm1_v1_g0171_pc34_compat
+    )
+endif()
+
+# pass1000 — DM1 V1 Graphics.dat 558 init var: G0172_auc_Graphic558_Frame_DoorFrame_D0C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0172_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0172_pc34_compat.c")
+    add_executable(test_dm1_v1_g0172_pc34_compat
+        tests/test_dm1_v1_g0172_pc34_compat.c
+        src/dm1/dm1_v1_g0172_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0172_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0172_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0172_pc34_compat
+        COMMAND test_dm1_v1_g0172_pc34_compat
+    )
+endif()
+
+# pass1001 — DM1 V1 Graphics.dat 558 init var: G0173_auc_Graphic558_Frame_DoorFrameTop_D2L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0173_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0173_pc34_compat.c")
+    add_executable(test_dm1_v1_g0173_pc34_compat
+        tests/test_dm1_v1_g0173_pc34_compat.c
+        src/dm1/dm1_v1_g0173_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0173_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0173_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0173_pc34_compat
+        COMMAND test_dm1_v1_g0173_pc34_compat
+    )
+endif()
+
+# pass1002 — DM1 V1 Graphics.dat 558 init var: G0174_auc_Graphic558_Frame_DoorFrameTop_D2C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0174_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0174_pc34_compat.c")
+    add_executable(test_dm1_v1_g0174_pc34_compat
+        tests/test_dm1_v1_g0174_pc34_compat.c
+        src/dm1/dm1_v1_g0174_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0174_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0174_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0174_pc34_compat
+        COMMAND test_dm1_v1_g0174_pc34_compat
+    )
+endif()
+
+# pass1003 — DM1 V1 Graphics.dat 558 init var: G0175_auc_Graphic558_Frame_DoorFrameTop_D2R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0175_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0175_pc34_compat.c")
+    add_executable(test_dm1_v1_g0175_pc34_compat
+        tests/test_dm1_v1_g0175_pc34_compat.c
+        src/dm1/dm1_v1_g0175_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0175_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0175_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0175_pc34_compat
+        COMMAND test_dm1_v1_g0175_pc34_compat
+    )
+endif()
+
+# pass1004 — DM1 V1 Graphics.dat 558 init var: G0176_auc_Graphic558_Frame_DoorFrameTop_D1L[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0176_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0176_pc34_compat.c")
+    add_executable(test_dm1_v1_g0176_pc34_compat
+        tests/test_dm1_v1_g0176_pc34_compat.c
+        src/dm1/dm1_v1_g0176_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0176_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0176_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0176_pc34_compat
+        COMMAND test_dm1_v1_g0176_pc34_compat
+    )
+endif()
+
+# pass1005 — DM1 V1 Graphics.dat 558 init var: G0177_auc_Graphic558_Frame_DoorFrameTop_D1C[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0177_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0177_pc34_compat.c")
+    add_executable(test_dm1_v1_g0177_pc34_compat
+        tests/test_dm1_v1_g0177_pc34_compat.c
+        src/dm1/dm1_v1_g0177_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0177_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0177_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0177_pc34_compat
+        COMMAND test_dm1_v1_g0177_pc34_compat
+    )
+endif()
+
+# pass1006 — DM1 V1 Graphics.dat 558 init var: G0178_auc_Graphic558_Frame_DoorFrameTop_D1R[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0178_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0178_pc34_compat.c")
+    add_executable(test_dm1_v1_g0178_pc34_compat
+        tests/test_dm1_v1_g0178_pc34_compat.c
+        src/dm1/dm1_v1_g0178_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0178_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0178_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0178_pc34_compat
+        COMMAND test_dm1_v1_g0178_pc34_compat
+    )
+endif()
+
+# pass1007 — DM1 V1 Graphics.dat 558 init var: G0190_auc_Graphic558_WallOrnamentDerivedBitmapIndexIncrement[14]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0190_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0190_pc34_compat.c")
+    add_executable(test_dm1_v1_g0190_pc34_compat
+        tests/test_dm1_v1_g0190_pc34_compat.c
+        src/dm1/dm1_v1_g0190_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0190_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0190_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0190_pc34_compat
+        COMMAND test_dm1_v1_g0190_pc34_compat
+    )
+endif()
+
+# pass1008 — DM1 V1 Graphics.dat 558 init var: G0191_auc_Graphic558_FloorOrnamentNativeBitmapIndexIncrements[11]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0191_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0191_pc34_compat.c")
+    add_executable(test_dm1_v1_g0191_pc34_compat
+        tests/test_dm1_v1_g0191_pc34_compat.c
+        src/dm1/dm1_v1_g0191_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0191_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0191_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0191_pc34_compat
+        COMMAND test_dm1_v1_g0191_pc34_compat
+    )
+endif()
+
+# pass1009 — DM1 V1 Graphics.dat 558 init var: G0195_auc_Graphic558_FloorOrnamentCoordinateSetIndices[9]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0195_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0195_pc34_compat.c")
+    add_executable(test_dm1_v1_g0195_pc34_compat
+        tests/test_dm1_v1_g0195_pc34_compat.c
+        src/dm1/dm1_v1_g0195_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0195_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0195_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0195_pc34_compat
+        COMMAND test_dm1_v1_g0195_pc34_compat
+    )
+endif()
+
+# pass1010 — DM1 V1 Graphics.dat 558 init var: G0196_auc_Graphic558_DoorOrnamentCoordinateSetIndices[12]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0196_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0196_pc34_compat.c")
+    add_executable(test_dm1_v1_g0196_pc34_compat
+        tests/test_dm1_v1_g0196_pc34_compat.c
+        src/dm1/dm1_v1_g0196_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0196_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0196_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0196_pc34_compat
+        COMMAND test_dm1_v1_g0196_pc34_compat
+    )
+endif()
+
+# pass1011 — DM1 V1 Graphics.dat 558 init var: G0197_auc_Graphic558_DoorButtonCoordinateSet[1]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0197_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0197_pc34_compat.c")
+    add_executable(test_dm1_v1_g0197_pc34_compat
+        tests/test_dm1_v1_g0197_pc34_compat.c
+        src/dm1/dm1_v1_g0197_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0197_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0197_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0197_pc34_compat
+        COMMAND test_dm1_v1_g0197_pc34_compat
+    )
+endif()
+
+# pass1012 — DM1 V1 Graphics.dat 558 init var: G0198_auc_Graphic558_PaletteChanges_DoorButtonAndWallOrnament_D3[16]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0198_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0198_pc34_compat.c")
+    add_executable(test_dm1_v1_g0198_pc34_compat
+        tests/test_dm1_v1_g0198_pc34_compat.c
+        src/dm1/dm1_v1_g0198_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0198_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0198_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0198_pc34_compat
+        COMMAND test_dm1_v1_g0198_pc34_compat
+    )
+endif()
+
+# pass1013 — DM1 V1 Graphics.dat 558 init var: G0199_auc_Graphic558_PaletteChanges_DoorButtonAndWallOrnament_D2[16]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0199_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0199_pc34_compat.c")
+    add_executable(test_dm1_v1_g0199_pc34_compat
+        tests/test_dm1_v1_g0199_pc34_compat.c
+        src/dm1/dm1_v1_g0199_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0199_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0199_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0199_pc34_compat
+        COMMAND test_dm1_v1_g0199_pc34_compat
+    )
+endif()
+
+# pass1014 — DM1 V1 Graphics.dat 558 init var: G0200_auc_Graphic558_PaletteChanges_DoorOrnament_D3[16]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0200_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0200_pc34_compat.c")
+    add_executable(test_dm1_v1_g0200_pc34_compat
+        tests/test_dm1_v1_g0200_pc34_compat.c
+        src/dm1/dm1_v1_g0200_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0200_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0200_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0200_pc34_compat
+        COMMAND test_dm1_v1_g0200_pc34_compat
+    )
+endif()
+
+# pass1015 — DM1 V1 Graphics.dat 558 init var: G0201_auc_Graphic558_PaletteChanges_DoorOrnament_D2[16]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0201_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0201_pc34_compat.c")
+    add_executable(test_dm1_v1_g0201_pc34_compat
+        tests/test_dm1_v1_g0201_pc34_compat.c
+        src/dm1/dm1_v1_g0201_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0201_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0201_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0201_pc34_compat
+        COMMAND test_dm1_v1_g0201_pc34_compat
+    )
+endif()
+
+# pass1016 — DM1 V1 Graphics.dat 558 init var: G0202_auc_Graphic558_Box_WallPatchBehindInscription[4]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0202_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0202_pc34_compat.c")
+    add_executable(test_dm1_v1_g0202_pc34_compat
+        tests/test_dm1_v1_g0202_pc34_compat.c
+        src/dm1/dm1_v1_g0202_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0202_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0202_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0202_pc34_compat
+        COMMAND test_dm1_v1_g0202_pc34_compat
+    )
+endif()
+
+# pass1017 — DM1 V1 Graphics.dat 558 init var: G0204_auc_Graphic558_UnreadableInscriptionBoxY2[15]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0204_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0204_pc34_compat.c")
+    add_executable(test_dm1_v1_g0204_pc34_compat
+        tests/test_dm1_v1_g0204_pc34_compat.c
+        src/dm1/dm1_v1_g0204_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0204_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0204_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0204_pc34_compat
+        COMMAND test_dm1_v1_g0204_pc34_compat
+    )
+endif()
+
+# pass1018 — DM1 V1 Graphics.dat 558 init var: G0212_auc_Graphic558_PaletteChanges_Smoke[16]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0212_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0212_pc34_compat.c")
+    add_executable(test_dm1_v1_g0212_pc34_compat
+        tests/test_dm1_v1_g0212_pc34_compat.c
+        src/dm1/dm1_v1_g0212_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0212_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0212_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0212_pc34_compat
+        COMMAND test_dm1_v1_g0212_pc34_compat
+    )
+endif()
+
+# pass1019 — DM1 V1 Graphics.dat 558 init var: G0213_auc_Graphic558_PaletteChanges_FloorOrnament_D3[16]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0213_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0213_pc34_compat.c")
+    add_executable(test_dm1_v1_g0213_pc34_compat
+        tests/test_dm1_v1_g0213_pc34_compat.c
+        src/dm1/dm1_v1_g0213_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0213_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0213_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0213_pc34_compat
+        COMMAND test_dm1_v1_g0213_pc34_compat
+    )
+endif()
+
+# pass1020 — DM1 V1 Graphics.dat 558 init var: G0214_auc_Graphic558_PaletteChanges_FloorOrnament_D2[16]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0214_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0214_pc34_compat.c")
+    add_executable(test_dm1_v1_g0214_pc34_compat
+        tests/test_dm1_v1_g0214_pc34_compat.c
+        src/dm1/dm1_v1_g0214_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0214_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0214_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0214_pc34_compat
+        COMMAND test_dm1_v1_g0214_pc34_compat
+    )
+endif()
+
+# pass1021 — DM1 V1 Graphics.dat 558 init var: G0221_auc_Graphic558_PaletteChanges_Creature_D3[16]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0221_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0221_pc34_compat.c")
+    add_executable(test_dm1_v1_g0221_pc34_compat
+        tests/test_dm1_v1_g0221_pc34_compat.c
+        src/dm1/dm1_v1_g0221_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0221_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0221_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0221_pc34_compat
+        COMMAND test_dm1_v1_g0221_pc34_compat
+    )
+endif()
+
+# pass1022 — DM1 V1 Graphics.dat 558 init var: G0222_auc_Graphic558_PaletteChanges_Creature_D2[16]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0222_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0222_pc34_compat.c")
+    add_executable(test_dm1_v1_g0222_pc34_compat
+        tests/test_dm1_v1_g0222_pc34_compat.c
+        src/dm1/dm1_v1_g0222_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0222_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0222_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0222_pc34_compat
+        COMMAND test_dm1_v1_g0222_pc34_compat
+    )
+endif()
+
+# pass1023 — DM1 V1 Graphics.dat 558 init var: G0711_auc_Graphic558_Frame_Wall_D3L2[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0711_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0711_pc34_compat.c")
+    add_executable(test_dm1_v1_g0711_pc34_compat
+        tests/test_dm1_v1_g0711_pc34_compat.c
+        src/dm1/dm1_v1_g0711_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0711_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0711_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0711_pc34_compat
+        COMMAND test_dm1_v1_g0711_pc34_compat
+    )
+endif()
+
+# pass1024 — DM1 V1 Graphics.dat 558 init var: G0712_auc_Graphic558_Frame_Wall_D3R2[8]
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0712_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0712_pc34_compat.c")
+    add_executable(test_dm1_v1_g0712_pc34_compat
+        tests/test_dm1_v1_g0712_pc34_compat.c
+        src/dm1/dm1_v1_g0712_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0712_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0712_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0712_pc34_compat
+        COMMAND test_dm1_v1_g0712_pc34_compat
+    )
+endif()
