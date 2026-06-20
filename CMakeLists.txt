@@ -1558,7 +1558,7 @@ if(NOT MSVC)
 endif()
 add_test(
     NAME dm1_v1_chest_action_hand_close_runtime_probe
-    COMMAND firestaff_dm1_v1_chest_action_hand_close_runtime_probe $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,${CMAKE_CURRENT_SOURCE_DIR}/builds/nv1-build>
+    COMMAND firestaff_dm1_v1_chest_action_hand_close_runtime_probe $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
 )
 
 # DM1 V1 champion-panel runtime pixel/pose evidence probes. 9 orphaned
@@ -1584,7 +1584,7 @@ foreach(_pool_probe_src IN ITEMS
         endif()
         add_test(
             NAME ${_pool_probe_exe}
-            COMMAND ${_pool_probe_exe} $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,${CMAKE_CURRENT_SOURCE_DIR}/builds/nv1-build>
+            COMMAND ${_pool_probe_exe} $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
         )
     endif()
 endforeach()
