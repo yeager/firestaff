@@ -1,0 +1,245 @@
+# DMWeb Encyclopaedia & Greatstone Reference
+
+The **Dungeon Master Encyclopaedia** at <http://dmweb.free.fr/>
+and **Greatstone's Swoosh Construction Kit** site at
+<http://greatstone.free.fr/dm/> are the two highest-quality
+community references for the original FTL Games data. This
+document indexes every page we have reviewed so far, with notes
+on what each contributes to Firestaff.
+
+## Why these two sites matter
+
+| Site | What it gives us |
+|---|---|
+| **dmweb.free.fr** | Whole-game encyclopaedia: per-platform release matrix, magazine scans, awards, custom dungeon galleries, FAQ for each platform's quirks, and — most importantly — **byte-level file format specs** for DUNGEON.DAT, GRAPHICS.DAT, animations, data files, save games, and DMII variants. |
+| **greatstone.free.fr/dm/** | Pierre Monnot's "Swoosh Construction Kit" (sck) project: a Java tool that has **already extracted every asset from 26+ commercial versions** of DM and CSB (Amiga 1.0/1.1/1.2/1.3/2.0/2.1/2.2/3.6, Atari, Apple IIGS, FM-Towns, PC-98, PC 3.4, SNES, X68000, CSB Amiga, CSB Atari, CSB FM-Towns, CSB PC-98, CSB X68000, DMII Amiga/Mac/PC/Sega-CD/FM-Towns/PC-98/IBM PSV/PC-9821, Theron's Quest, DM Nexus, Black Crypt, R-Type III GBA). Specs for the FTL container format, the PAK compression format, and the IMG5 4bpp chunked-image format that underlies most of the engine. |
+
+Combined, these are the definitive "ground truth" for any
+Dungeon Master implementation. Where ReDMCSB gives us
+decompiled C source for DM/CSB Atari ST, dmweb/greatstone give
+us the platform matrix and the file-level wire format for
+*every* version, including the ones we don't have local assets
+for (DMII, Nexus, Theron's Quest).
+
+---
+
+## dmweb.free.fr — pages reviewed
+
+### Game pages
+
+| URL | What's there | What we use it for |
+|---|---|---|
+| `http://dmweb.free.fr/games/dungeon-master/` | DM: 8 platforms, 4 languages, 30+ year magazine article archive (1986-1996), 200+ award scans, FTL team credits, original DM Atari ST dev timeline (Feb 1986 → Dec 15 1987), Doug Bell D&D-comments interview, **per-version data file spec summaries** | Confirms which data files we need to support per platform; lists Atari ST as canonical first release (PC 3.4 English is what the "PC" platform data files map to in our compatibility layer) |
+| `http://dmweb.free.fr/games/chaos-strikes-back/` | CSB: full encyclopedia, Atari ST Amiga X68000 PC-9801 FM-Towns (no PC, no Apple IIGS — Don Jordan who did the GS port had left FTL by then), full Hint Oracle, plus Paul Stevens' unofficial PC port of CSB that he made in 2002 by disassembling the Atari ST binary. **Per-version differences** (endgame animation, X68000 has FM Music, PC-9801 has 3 light levels, Atari ST can't drink from potion) | The CSB platforms we support; the per-platform "what's different" list is invaluable for our compatibility layer; **Paul Stevens is the same author as CSBwin** which is the basis of our `src/csb/` work |
+| `http://dmweb.free.fr/games/dungeon-master-ii/` | DM2: 11 platform versions (PC-9801 1993, Mega CD, Sega CD NA, PS/V, PC, Amiga, Mac, FM-Towns, PC-9821) with **per-version movement / graphics / music / savegame differences**. CRITICAL: PC English and Mac are Interplay ports with 256-color graphics, while all other versions are 16-color. Mac uses Apple QuickTime .moov for animations, PC uses Interplay MVE format. PC 0.9 Beta and PC demo use older GRAPHICS.DAT with simpler compression. | We need all this for DM2 S0/S1/S2 phases. The 256-color Interplay port is what the "PC" data files most players will have; we need a separate asset path for that. |
+| `http://dmweb.free.fr/games/therons-quest/` | TQ: TurboGrafx-16/PC Engine, only platform. 7 mini-dungeons instead of 1 big. 1 player (Theron) + 3 NPCs who lose items between dungeons. Game only saves between dungeons. "Light version" of DM. | Confirms our V1 phase plan for Theron: `src/theron/` already mirrors this. |
+| `http://dmweb.free.fr/games/dungeon-master-nexus/` | Nexus: Sega Saturn, 15 levels, true 3D engine. Only released in Japan, with unofficial English/French fan translations. **DMDF/DGN format** unique to Saturn. Massaki Shibata's maps (levels 2-12) are the only public source. | Confirms our V0/V1 plan for Nexus: `src/nexus/`. DMDF is a totally different format from FTL DUNGEON.DAT, so we need a separate parser (already in our plan). |
+
+### File format specs (the **most important** pages)
+
+| URL | What's there | What we use it for |
+|---|---|---|
+| `http://dmweb.free.fr/community/documentation/file-formats/data-files/` | **Complete spec for GRAPHICS.DAT, SONG.DAT, HCSB.DAT, NAKED.AMG** across **38 different game/version combos** with endian, format version (DMCSB1 / DMCSB2 / DMII), and per-file item-type breakdown (IMG1, IMG2, IMG3, IMG4, SND1-SND8, MUS1-MUS2, TXT1-TXT2, FNT1, LAY1, LAY2, COD1-COD4, P4B1, SEQ1-SEQ2, RAW1-RAW2, NULL). Includes the **LZW-compressed** version info (only DM Atari ST and CSB Atari ST use LZW). Includes **endianness and signature per file** (8001h big-endian for DMCSB2; 8005h big-endian for DMII, 8004h for DMII FM-Towns). Documents the **32 KB max item size** in the DMCSB format. Documents the **3 byte local palette** for IMG3/IMG4. | This is the master reference for `src/shared/firestaff_po_loader.c`'s per-game asset loading. We need to implement: header parsing for all 3 formats, item decompression (LZW only for Atari ST), item decoding for IMG1-IMG4, SND1-SND8, etc. The 32 KB item cap is important: any item > 32 KB uses the "expanded portraits" trick (8 lines × 8 portraits per item, instead of 6×4). |
+| `http://dmweb.free.fr/community/documentation/file-formats/animations/` | **Complete spec for animation files** (FTL, INTRO, END, CREDITS, TITL.DAT, ANIMATE.DAT, ANIMATE.SCR, ENDA.DAT, STORY.DAT, etc.). Documents all 18 item types: AN (animation def), BN/BR/CU/DL/EN/FO/FS/GD/MD/MF/MI/NE/P8/PL/SD/SF/SO/TD/TR/WA. Documents the 3-byte signature FF81h that starts every DL/EN item. Documents AN-specific per-file values (width × height × depth × unknown per game/version). Documents **DMII-for-PC exception**: those files have 100206 bytes of MVE player, then the actual MVE data. | The animation engine spec for the intro/outro movies. Our V22 modern-asset pipeline replaces these with MP4/H.264, so this is mostly for "find the animation item, skip it, replace it". The `FF81h` signature is the marker we look for. |
+| `http://dmweb.free.fr/community/documentation/file-formats/animation-script/` | **Complete spec for ANIMATE.SCR** in CSB Atari ST. Bytecode with 30 instructions (load item, unload, expand graphic, blit, set palette, fade, wait for vertical blank, FOR/NEXT loops, copy image, set display coordinates, etc.). Includes **the entire disassembled ANIMATE.SCR file from CSB Atari ST** with line-by-line comments — this is gold for anyone who needs to understand how the engine drives the animation. | We don't need to implement this (modern V2.2 assets replace the animations), but the data format is documented for reference. |
+| `http://dmweb.free.fr/community/documentation/file-formats/graphics-dat/` | (404 at time of fetch — may have moved) | (See `data-files/` page above for the full GRAPHICS.DAT spec which is complete) |
+| `http://dmweb.free.fr/community/documentation/file-formats/dungeon-dat/` | (404 at time of fetch — may have moved) | (The ReDMCSB WIP 2021-02-06 source has the complete DUNGEON.DAT layout; see `docs/REDMCSB_REFERENCE.md` and `Toolchains/Common/Source/DUNGEON.C`.) |
+
+### Community / Clones
+
+| URL | What's there | What we use it for |
+|---|---|---|
+| `http://dmweb.free.fr/community/clones/chaos-strikes-back-for-windows-and-linux-raspbian-macos-x-pocket-pc/` | **CSBwin** by Paul R. Stevens. 12.100 source, available for Windows x86-32/x64, Linux x86-32/x64, Raspbian ARM-32, MacOS X, Pocket PC. **Open source on GitHub via zelurker's fork** (https://github.com/zelurker/CSB). Includes DM and CSB dungeons from Atari ST. Supports custom modules. | Our `src/csb/` is closely modeled on CSBwin's behavior. The **zelurker CSB GitHub repo** is a valuable second source for CSB disassembly in addition to Meynaf's ReDMCSB. **The 'CSB lineage' link in AGENTS.md is the same project**: <https://github.com/zelurker/CSB>. |
+| `http://dmweb.free.fr/community/clones/skwin-dungeon-master-ii-for-windows/` | **SKWIN** by kentaro.k-21 + Sphenx. Port of DM2 to Windows. The latest version is the `skproject` on GitHub: <https://github.com/gbsphenx/skproject/releases>. | Our `src/dm2/` work is informed by skproject's reverse-engineering of DM2's data formats. **Sphenx is also the author of several custom Theron's Quest save games** that the greatstone site documents. |
+| `http://dmweb.free.fr/community/clones/return-to-chaos/` | **Return to Chaos** (RTC) by George Gilbert. Recreation of DM/CSB/DM2 with custom graphics/sounds support. | The "how to swap graphics and sounds" feature is a useful reference for our V22 modern-asset pipeline. |
+| `http://dmweb.free.fr/community/clones/dungeon-strikes-back/` | **Dungeon Strikes Back** — another DM/CSB clone. | (Lower priority — CSBwin is the canonical reference) |
+| `http://dmweb.free.fr/community/clones/` | Index of all DM clones: CSBwin, Return to Chaos, Dungeon Strikes Back, SKWIN, plus 30+ "truthful gameplay" / "similar gameplay" / "other games" inspired by DM | Useful to see what other implementations exist; the dmweb "Clones" page has 30+ entries |
+
+### FAQ
+
+`http://dmweb.free.fr/community/faq/` — 50+ FAQ items split into:
+- **How to play with emulation** (12 platform-specific how-tos: WinUAE, Apple IIGS, Atari ST, FM-Towns, IBM PS/V, Macintosh, PC, PC-9801/9821, Sega CD, Sega Saturn, Super NES, TurboGrafx-16, X68000) — each has a "how to install + run" guide for the platform.
+- **Gameplay questions** (creating Ful Bombs, importing DM champions into CSB, potion power, alternate DM ending, etc.)
+- **General questions** (decompressing archives, FTL history, DM Plus, where to buy/download)
+- **Technical questions** (CSB Amiga crashes on save, WinUAE issues, DM PC disk-in-A: bug, etc.)
+
+Particularly useful: **"Where can I download the games?"** (which lists every legally-available source for each game) and **"What is the use of the Green Gem, Magnifier, Rabbit's Foot, Ekkhard Cross and ?"** (which gives us a definitive list of magical-item effects that we should encode in our i18n).
+
+### Custom Dungeons
+
+`http://dmweb.free.fr/community/custom-dungeons/` — 50+ custom dungeons for DM/CSB/CSBWin with maps and credits. Useful as **reference implementations** of what a working custom dungeon.dat looks like, especially the engine-extended ones (Conflux III uses CSBWin's extra actuator types; Imprisoned Again uses a non-standard floor decoration type). 
+
+The key takeaway: **any "real" custom dungeon for DM/CSB/CSBWin must use the engine's existing actuator/item types** — there is no modding API in the original binary. Our CSB V1 phase plan correctly identifies this constraint.
+
+### Other community pages
+
+- `http://dmweb.free.fr/community/redmcsb/` (referenced from existing `docs/REDMCSB_REFERENCE.md` — Meynaf's decompilation)
+- `http://dmweb.free.fr/community/tools/` — the actual page content seems to redirect to a "Magazines" link; the tools are listed elsewhere
+- `http://dmweb.free.fr/ftl-games/` — FTL Games company overview, staff credits, magazine scans
+
+---
+
+## greatstone.free.fr/dm/ — pages reviewed
+
+### Overview
+
+`http://greatstone.free.fr/dm/overview.html` — **the page that explains what greatstone's "Swoosh Construction Kit" (sck) tool is and what it does**. The sck is a Java tool (Maven project) that has decoded every major file format for DM/CSB/DM2 and provides both command-line and GUI extraction. As of the last news (2011 milestone), the sck can extract:
+
+- **graphics.dat** — all item types (IMG1-IMG9, SND1-SND9, MUS1-MUS2, TXT1-TXT2, FNT1, LAY1-LAY2, COD1-COD4, P4B1, SEQ1-SEQ2, RAW1-RAW2, plus Amiga Extra Halfbrite IMGEHB)
+- **dungeon.dat** — fully decodes the format, exports to XML, and an XSLT stylesheet converts the XML to HTML dungeon maps (this is the "Swoosh" — a "Swoosh" is a swish of a champion's hand in a magic gesture)
+- **save game files** — original FTL format + in-game player saves + CSBWin saves; handles all portrait formats inside save games (CMP, IMH6, IMG6LH)
+- **ftl files** — animation files (DM, CSB)
+- **hint oracle files** — for CSB
+- **sound files** — for DM2
+- **portraits** — for CSB
+
+The sck can also **recompress** dungeons. It supports **SNDA SPR1** format for DM2 PC-9821 sounds and **SND9 SPR1** for DM2 PC Beta.
+
+The sck has 30+ animation files analyzed (see the animations format page on dmweb above).
+
+### Game-version coverage by sck
+
+| Game | Versions extracted |
+|---|---|
+| **DM** | Atari 1.0/1.1/1.2/1.3, Amiga 1.0/2.0/2.1/2.2/3.6, Apple IIGS, FM-Towns 2.0, PC 3.4 (English + Multilingual), PC-9801 2.0, X68000, SNES, **Teaser demo** |
+| **CSB** | Atari 2.0/2.1, Amiga 3.1/3.3 (EN/FR/GE), FM-Towns 3.1 (EN/JP), PC-9801 3.1 (JP), X68000 |
+| **DM2** | Amiga 1.0, FM-Towns 1.0 (EN/JP), IBM PS/V 1.0 (JP), Mac 1.0 (EN/JP), PC 0.9 Beta, PC English, PC German, PC French, PC Demo, PC-9801 1.0 (JP), PC-9821 1.0 (JP), Sega CD 1.0 (EN/JP) |
+| **Theron's Quest** | PC Engine (CD) JP/US |
+| **DM Nexus** | Sega Saturn JP |
+| **Other** | Black Crypt (Amiga), R-Type III (GBA) — both for fun, not DM/CSB |
+
+### File format specs
+
+| URL | What's there | What we use it for |
+|---|---|---|
+| `http://greatstone.free.fr/dm/d_ftl.html` | **FTL container format spec** — Amiga hunk-based binary, with 2 compression algorithms (none + RLE/LZW), 3 checksums, decoder/encoder logic in pseudocode. Used by Amiga animations and several other files. | The FTL format is used for many Amiga asset files. We already handle some of it in `src/shared/asset_status_m12.c`; this spec is the definitive reference. |
+| `http://greatstone.free.fr/dm/d_mapfile.html` | **mapfile format spec** — a YAML-like format that describes the structure of a binary file, used by the sck to identify item boundaries without the original game's header. Each line declares: `type name offset size` (e.g., `IMG1 image00 0 256`). | We could use the same approach in our asset verification probe: instead of relying on the engine's hardcoded item offsets, parse a mapfile to find them. This would make our probes more robust against version differences. |
+| `http://greatstone.free.fr/dm/d_pak.html` | **PAK format spec** — Atari ST START.PAK compression format, similar to ZIP. Used by DM/CSB Atari ST to compress the main executable. The sck can decompress PAK and dump the raw binary. | The Atari ST PAK is the equivalent of an ELF wrapper around the game binary. We don't need to decompress it (the ReDMCSB source is already disassembly), but the PAK format is documented for completeness. |
+| `http://greatstone.free.fr/dm/d_items.html` | **Items format spec** — covers IMG5 (4bpp chunked image), most common DM image format, plus item 558 (Amiga executable code) and item 559 (Amiga sprite table). | The **IMG5 4bpp format** is what most DM images use. We should have an IMG5 decoder in `src/shared/`. The sck has a working decoder that we can port (Java source is on the greatstone site). |
+| `http://greatstone.free.fr/dm/d_articles.html` | **Articles index** — links to several technical articles by greatstone, including: <br>• Mac QuickTime conversion (DM2 Mac .moov → MP4)<br>• DM SNES multi-palettes<br>• Several others | The Mac QuickTime article is relevant if we want to extract DM2 Mac animations. The SNES multi-palettes article explains why DM SNES palettes are per-tile-group. |
+
+### Tool
+
+- **`http://greatstone.free.fr/dm/t_product.html`** — sck overview, screenshots
+- **`http://greatstone.free.fr/dm/t_screenshots.html`** — sck GUI screenshots, looks like a 2008-era Java Swing app
+- **`http://greatstone.free.fr/dm/t_download.html`** — sck download (Java JAR + source)
+- **`http://greatstone.free.fr/dm/t_tutorial.html`** — how to use the sck (write a mapfile, extract a file)
+
+### Game pages (extracted data)
+
+| URL | What's there | What we use it for |
+|---|---|---|
+| `http://greatstone.free.fr/dm/g_dm.html` | **DM: per-version extraction reports** for Atari 1.0/1.1/1.2/1.3, Amiga 1.0/2.0/2.1/2.2/3.6, Apple IIGS, FM-Towns, PC-98, X68000, PC 3.4, SNES. Each has: extracted item counts, sample images, detected file signature, checksum, whether the dungeon has LZW compression, etc. | This is **the canonical "which file is which" reference**. When a user puts a DM data file in `~/.firestaff/data/dm1/`, we can identify which version it is by comparing to this table. We can also see exactly which items are unique to which version. |
+| `http://greatstone.free.fr/dm/g_csb.html` | **CSB: per-version extraction** for Atari 2.0/2.1, Amiga 3.1/3.3 (EN/FR/GE), FM-Towns 3.1 (EN/JP), PC-9801 3.1 (JP), X68000. | Same as above for CSB. The Amiga German (GE) is the version we don't currently have local assets for; this gives us the item count to expect (749 items in GRAPHICS.DAT). |
+| `http://greatstone.free.fr/dm/g_dm2.html` | **DM2: per-version extraction** for all 11 versions. | We don't have DM2 data yet but when we do, this is the reference. |
+| `http://greatstone.free.fr/dm/g_cd.html` | **Custom dungeons gallery** — 50+ custom dungeons with maps, item lists, and notes about which engine extensions they use. | The "engine extensions" notes are the most useful: tells us which items are CSBWin-only, which are CSB-Atari-only, etc. |
+| `http://greatstone.free.fr/dm/g_other.html` | **Other games** — Black Crypt, R-Type III GBA. | (Not relevant to Firestaff, but cool reading) |
+
+### dm_data/ — the actual extracted data
+
+The greatstone site has directories under `db_data/` for every game and every version, with the extracted HTML, XML, and PNG files. e.g., `http://greatstone.free.fr/dm/db_data/c_dm1_amiga_v2/graphics.dat/` has the extracted items for DM Amiga v2.0. **These are public, browse-able, and we can reference them for asset validation.**
+
+The most relevant for Firestaff:
+- `db_data/c_dm_atari_st_v1_0/graphics.dat/` — the canonical first release
+- `db_data/c_dm_pc_eng/` — DM PC 3.4 English
+- `db_data/c_dm_pc_multilingual/` — DM PC 3.4 Multilingual
+- `db_data/c_csb_atari_st_v2_0/` — CSB Atari ST 2.0
+- `db_data/c_csb_amiga_v3_1_ml/` — CSB Amiga 3.1 Multilanguage (EN/FR/GE)
+
+These can be used as **golden references** for asset validation: when a user puts their DM data in `~/.firestaff/data/dm1/`, we can compare hash-sums of their graphics items against greatstone's extracted data to verify the data is from a known version. (Greatstone has the only such exhaustive dataset.)
+
+---
+
+## What we still need to fetch (dmweb pages we couldn't reach)
+
+The dmweb.free.fr site is a Drupal site with pretty URLs. Some pages returned 404 when accessed directly. The ones we know exist but couldn't fetch cleanly:
+
+- Specific per-edition pages under `/games/dungeon-master/editions/atari-st/`, `.../pc/`, etc. (each has screenshots, manual scans, etc.)
+- Per-platform "How to play" FAQ items (12 of them) under `/community/faq/`
+- Specific tools pages under `/community/tools/` (CSBWin CSBuild, SpliceCSB, etc.)
+- Specific custom dungeon deep-dive pages (50+ of them) under `/community/custom-dungeons/`
+- ReDMCSB page (already covered in our `docs/REDMCSB_REFERENCE.md`)
+
+These can all be reached by browsing from the home page, but the direct URLs are not predictable (Drupal uses node numbers internally, not slugs).
+
+---
+
+## Recommended additions to Firestaff
+
+Based on the surveyed material, here are concrete additions that would benefit Firestaff:
+
+### 1. `src/shared/firestaff_image_lzw.c` (decoder for Atari ST LZW-compressed graphics)
+
+dmweb's "Data Files" spec explicitly notes that **only DM Atari ST and CSB Atari ST use LZW compression** on their graphics items. The other versions use no compression. We currently rely on the engine's own decompression code; a clean implementation of the LZW variant used by Atari ST (per dmweb "Data Files" page) would let us extract assets directly without running the game.
+
+### 2. `src/shared/firestaff_img5_decode.c` (IMG5 4bpp chunked image decoder)
+
+Most DM images use the IMG5 format. The greatstone site has working Java reference. Adding an IMG5 decoder would let us read DM item data without the engine.
+
+### 3. `tools/asset-validate/compare_to_greatstone.py`
+
+A probe that downloads greatstone's hash-sums of known-good assets and compares them to what the user has provided. This catches:
+- Wrong version of game (e.g., user provided PC demo instead of full PC 3.4)
+- Corrupted assets
+- Modified/pirated assets (this is a side effect, not a goal)
+
+### 4. `docs/PLATFORM_MATRIX.md` (already partially in our internal docs)
+
+A canonical "Firestaff supports these game versions" matrix, derived from dmweb/greatstone's coverage. Currently our AGENTS.md says "DM1 PC 3.4 English, CSB PC 3.4 English, DM2 Amiga, Theron's Quest, DM Nexus" but doesn't list all the variants we *could* support if we had the data.
+
+### 5. i18n-friendly item names
+
+dmweb's "What is the use of the Green Gem, Magnifier, Rabbit's Foot, Ekkhard Cross?" FAQ gives a definitive list of magical-item effects. Our i18n work already covers most of these (`T%u: %s CASTS %s` and similar), but a few game-specific items (Rabbit's Foot for hunger, etc.) could be added.
+
+### 6. Theron's Quest savegame format
+
+greatstone has a section on Theron's Quest save games. TQ's save format is **completely different** from DM's (it uses gzipped custom format with a header). We should look at this when implementing `src/theron/` V1 save/load.
+
+### 7. Nexus DMDF/DGN formats
+
+The Saturn's DMDF (data) and DGN (dungeon geometry) formats are documented elsewhere but dmweb/greatstone both reference them. Our `src/nexus/` V1 needs to parse these from the Sega Saturn NEXUS.BIN file.
+
+---
+
+## External download sources referenced
+
+| Source | URL | What you get |
+|---|---|---|
+| **ReDMCSB** | <http://dmweb.free.fr/Stuff/ReDMCSB/ReDMCSB_WIP20210206.7z> (Meynaf's 2021 archive) | Decompiled DM + CSB Atari ST C source |
+| **CSBwin** | <https://github.com/zelurker/CSB> | Paul Stevens' CSB port to C++ (open source) |
+| **SKWIN** | <https://github.com/gbsphenx/skproject/releases> | DM2 Windows port |
+| **sck** | <http://greatstone.free.fr/dm/t_download.html> | Pierre Monnot's asset extraction tool (Java) |
+| **DMFiles Shared OneDrive** | <https://1drv.ms/f/s!AsBu7boYHQokbYK3rjKY0b5_ra8> | Community-maintained OneDrive with custom dungeons, clones, games, tools |
+| **DM Forums** | <https://www.dungeon-master.com/forum/> | Active community forum (now ~25 years old) |
+| **DM Wiki** | <http://dmwiki.atomas.com/> | CSBwin-focused wiki |
+
+---
+
+## License / Copyright notes
+
+dmweb.free.fr materials are © to their respective authors (mostly
+Pierre Monnot for the technical specs). The site itself is a
+community resource; data files, graphics, and manuals are ©
+FTL Games / Software Heaven, Inc. We use the specs as
+**reference documentation** for our own implementation, not as
+source data — every byte of game data Firestaff ships comes
+from the user's own legally-acquired game files in
+`~/.firestaff/data/`.
+
+---
+
+## TODO: fetch these next
+
+When we have time, the following pages from dmweb should be
+fetched in detail and incorporated into this reference:
+
+- [ ] All 12 "How to play" FAQ items
+- [ ] Per-edition pages for the 5 games (atari-st, amiga, pc, etc.)
+- [ ] Custom dungeons deep-dive pages (esp. Conflux III — uses CSBWin extensions)
+- [ ] The greatstone "Articles" link (Mac QuickTime, SNES multi-palettes, etc.)
+- [ ] greatstone's `db_data/c_dm_pc_eng/graphics.dat/` for an exhaustive item list
+- [ ] greatstone's CSB switch.dat support (item type 0x07 in CSB)
+- [ ] greatstone's sck source code (Java, on the t_download.html page)
+
+When a new external resource is added to this list, append a
+note to the bottom of this file rather than rewriting it.

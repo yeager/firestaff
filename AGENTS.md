@@ -156,7 +156,9 @@ Every game system is cross-referenced against the ReDMCSB decompilation:
 Secondary references:
 - **CSBWin:** https://github.com/BeipDev/CSBWin (champion/resurrect/mouse routing)
 - **CSB lineage:** https://github.com/zelurker/CSB (source under `src/`)
-- **Greatstone:** http://greatstone.free.fr/dm/g_dm.html (dungeon maps, graphics atlas)
+- **Greatstone:** http://greatstone.free.fr/dm/g_dm.html (dungeon maps, graphics atlas, 26+ game-version extractions, IMG5 4bpp format, FTL/PAK/Items format specs)
+- **DMWeb Encyclopaedia:** http://dmweb.free.fr/ (game-version matrix, per-platform awards & magazine scans, **byte-level file format specs** for GRAPHICS.DAT/animations/data files, FAQ per platform, custom dungeon gallery, clones index)
+- See `docs/DMWEB_REFERENCE.md` for the consolidated dmweb + greatstone reference: every page reviewed, what it gives us, and what we still need to fetch.
 
 ## Version Management
 
