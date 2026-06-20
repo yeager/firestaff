@@ -9,6 +9,7 @@ the narrow, already source-locked checks that matter most for the current
 - The hash registry agrees with local data when local data exists.
 - pass1056 keeps the pass1052/pass1054 viewport/wall pairing reproducible.
 - pass1057 keeps the Amiga 2.2 English DUNGEONB.DAT sidecar locked.
+- pass1058 keeps the original keypad/route-atlas blocker evidence locked.
 - Optional build-dir probes keep the DM1 playable route, pass1055 collision
   semantic pair, pass1056/pass1057 CTests, and Phase A probe green.
 
@@ -236,6 +237,12 @@ def main() -> int:
             [
                 ROOT / "parity-evidence/verification/pass1057_dm1_amiga22_dungeonb_asset_lock/manifest.json",
                 ROOT / "parity-evidence/pass1057_dm1_amiga22_dungeonb_asset_lock.md",
+            ],
+        ),
+        "pass1058_keypad_route_atlas": preserved_script_check(
+            "tools/verify_pass1058_dm1_v1_original_keypad_route_atlas.py",
+            [
+                ROOT / "parity-evidence/verification/pass1058_dm1_v1_original_keypad_route_atlas/manifest.json",
             ],
         ),
     }
