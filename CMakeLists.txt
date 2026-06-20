@@ -2214,6 +2214,22 @@ if(BUILD_TESTING)
         target_compile_options(firestaff_dm2_v1_timeline_probe PRIVATE -Wall -Wextra -O2)
     endif()
 
+    # ── DM2 V1 Phase 5: CCM (Creature Command Machine) parity ──
+    add_executable(test_dm2_v1_ccm_pc34_compat
+        tests/test_dm2_v1_ccm_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+    )
+    target_include_directories(test_dm2_v1_ccm_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_ccm_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_ccm_pc34_compat
+        COMMAND test_dm2_v1_ccm_pc34_compat
+    )
+
     # ── DM2 V1 Phase 2 Probes: Dungeon/Object/World-State/Asset ──
 
     add_executable(probe_dm2_v1_dungeon_loader
