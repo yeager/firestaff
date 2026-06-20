@@ -1,0 +1,291 @@
+{
+  "schema": "pass1053_dm1_v1_original_champion_candidate_panel.v1",
+  "source_pass": "pass455_dm1_v1_hall_corrected_click_primitive_capture",
+  "source_artifact_root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
+  "source_run": "probe-initial-south-corrected",
+  "status": "PASS1053_ORIGINAL_CHAMPION_CANDIDATE_PANEL_EVIDENCE_TRACKED",
+  "pc34_hashes": {
+    "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+  },
+  "route": [
+    "wait:9000",
+    "enter",
+    "enter",
+    "wait:1800",
+    "shot:start",
+    "click:111,82",
+    "wait:2500",
+    "shot:after_portrait",
+    "wait:1500",
+    "shot:panel_visible",
+    "click:130,115",
+    "wait:2000",
+    "shot:confirm",
+    "wait:1000",
+    "shot:hud_status_after",
+    "wait:500",
+    "shot:extra"
+  ],
+  "source_locks": [
+    "CLIKVIEW.C C080 viewport click -> MOVESENS.C C127 champion portrait -> REVIVE.C F0280 candidate append",
+    "COMMAND.C C160 panel command -> REVIVE.C F0282 confirm/cleanup path"
+  ],
+  "frames": [
+    {
+      "label": "start_before_portrait_click",
+      "source_file": "probe-initial-south-corrected/image0001-raw.png",
+      "file": "start_before_portrait_click.png",
+      "sha256": "50bead319e59bd42c9b5af6e4a39275e6cfc7a02fee96e6f6b766e575858fabc",
+      "bytes": 17995,
+      "width": 320,
+      "height": 200,
+      "regions": {
+        "viewport": {
+          "box": [
+            0,
+            33,
+            224,
+            169
+          ],
+          "width": 224,
+          "height": 136,
+          "mean_rgb": [
+            34.36,
+            29.19,
+            25.58
+          ],
+          "nonblack_ratio": 0.309349,
+          "sha256": "be3d78ea54a814a30894d58c24821a9de52454013093f541af163411a33134cc",
+          "bytes": 5099
+        },
+        "candidate_buttons": {
+          "box": [
+            70,
+            80,
+            225,
+            148
+          ],
+          "width": 155,
+          "height": 68,
+          "mean_rgb": [
+            39.19,
+            33.16,
+            29.14
+          ],
+          "nonblack_ratio": 0.344213,
+          "sha256": "93b8ab0a0ff860ea59da92f3f5866247327dd93cfb128c75ba776cacb63d9eee",
+          "bytes": 2295
+        },
+        "right_panel": {
+          "box": [
+            224,
+            0,
+            320,
+            136
+          ],
+          "width": 96,
+          "height": 136,
+          "mean_rgb": [
+            138.67,
+            133.46,
+            80.72
+          ],
+          "nonblack_ratio": 0.929688,
+          "sha256": "b770350704f1437e9cf193b3a96858dfbb4904abd4defc49907926a1d065ec64",
+          "bytes": 5737
+        },
+        "lower_panel": {
+          "box": [
+            0,
+            136,
+            320,
+            200
+          ],
+          "width": 320,
+          "height": 64,
+          "mean_rgb": [
+            60.93,
+            80.8,
+            47.39
+          ],
+          "nonblack_ratio": 0.558398,
+          "sha256": "91654a11f512c40242a61984f3830c1180e3629639b6a887f92819cca9255bb5",
+          "bytes": 6305
+        }
+      }
+    },
+    {
+      "label": "candidate_select_after_click_111_82",
+      "source_file": "probe-initial-south-corrected/image0002-raw.png",
+      "file": "candidate_select_after_click_111_82.png",
+      "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+      "bytes": 25550,
+      "width": 320,
+      "height": 200,
+      "regions": {
+        "viewport": {
+          "box": [
+            0,
+            33,
+            224,
+            169
+          ],
+          "width": 224,
+          "height": 136,
+          "mean_rgb": [
+            146.05,
+            146.05,
+            146.05
+          ],
+          "nonblack_ratio": 0.924961,
+          "sha256": "b9160a2d3335bbc5bfcfacfd2ad007afadbc8184b289c17c155567785336d691",
+          "bytes": 10567
+        },
+        "candidate_buttons": {
+          "box": [
+            70,
+            80,
+            225,
+            148
+          ],
+          "width": 155,
+          "height": 68,
+          "mean_rgb": [
+            130.79,
+            130.58,
+            130.37
+          ],
+          "nonblack_ratio": 0.882827,
+          "sha256": "f7a509ef3c959d6f9ea46d5f51619c2f80c8e696aab7f196711eea1e58c8d3e4",
+          "bytes": 4048
+        },
+        "right_panel": {
+          "box": [
+            224,
+            0,
+            320,
+            136
+          ],
+          "width": 96,
+          "height": 136,
+          "mean_rgb": [
+            143.85,
+            137.4,
+            83.43
+          ],
+          "nonblack_ratio": 0.965763,
+          "sha256": "fab39b11602704accbdfddd5d284f60935562a106563fd05de359fd1a5e8d6c3",
+          "bytes": 6009
+        },
+        "lower_panel": {
+          "box": [
+            0,
+            136,
+            320,
+            200
+          ],
+          "width": 320,
+          "height": 64,
+          "mean_rgb": [
+            147.52,
+            170.89,
+            140.37
+          ],
+          "nonblack_ratio": 0.988965,
+          "sha256": "be87cafb3bd870e4f5d417cc288ac28e700fbe567863530f4d4120066ea25ba0",
+          "bytes": 7715
+        }
+      }
+    },
+    {
+      "label": "resurrect_terminal_hud_after_click_130_115",
+      "source_file": "probe-initial-south-corrected/image0003-raw.png",
+      "file": "resurrect_terminal_hud_after_click_130_115.png",
+      "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "bytes": 13095,
+      "width": 320,
+      "height": 200,
+      "regions": {
+        "viewport": {
+          "box": [
+            0,
+            33,
+            224,
+            169
+          ],
+          "width": 224,
+          "height": 136,
+          "mean_rgb": [
+            146.05,
+            146.05,
+            146.05
+          ],
+          "nonblack_ratio": 0.924961,
+          "sha256": "b9160a2d3335bbc5bfcfacfd2ad007afadbc8184b289c17c155567785336d691",
+          "bytes": 10567
+        },
+        "candidate_buttons": {
+          "box": [
+            70,
+            80,
+            225,
+            148
+          ],
+          "width": 155,
+          "height": 68,
+          "mean_rgb": [
+            129.94,
+            129.94,
+            129.94
+          ],
+          "nonblack_ratio": 0.876376,
+          "sha256": "ea0c7aa7abf9dfc77c33cff4bc7f1ddd0de30b80b1e610506976bdc2700cccce",
+          "bytes": 4020
+        },
+        "right_panel": {
+          "box": [
+            224,
+            0,
+            320,
+            136
+          ],
+          "width": 96,
+          "height": 136,
+          "mean_rgb": [
+            1.05,
+            5.68,
+            5.68
+          ],
+          "nonblack_ratio": 0.025276,
+          "sha256": "aed027a74a4762747be638909ab5aa99bf7f251281e9f56b608649677e64ee79",
+          "bytes": 353
+        },
+        "lower_panel": {
+          "box": [
+            0,
+            136,
+            320,
+            200
+          ],
+          "width": 320,
+          "height": 64,
+          "mean_rgb": [
+            63.37,
+            72.68,
+            72.68
+          ],
+          "nonblack_ratio": 0.403467,
+          "sha256": "f0229dbb1c36b93830817715fb313cc5f2e8e6b7c921598b4cecf22dffb47b58",
+          "bytes": 2572
+        }
+      }
+    }
+  ],
+  "non_claims": [
+    "This is original DM1 PC 3.4 candidate/resurrect-panel evidence, not a full four-champion party HUD capture.",
+    "This does not include a Firestaff-vs-original pixel diff.",
+    "This does not close the creature-chain or collision-transcript gaps."
+  ]
+}
