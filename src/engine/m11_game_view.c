@@ -15,6 +15,7 @@
 #include "src/theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
+#include "asset_find_by_hash.h"
 #include "config_m12.h"
 #include "firestaff_accessibility.h"
 #include "fs_portable_compat.h"
@@ -1525,6 +1526,45 @@ static int m11_resolve_builtin_dungeon_path(char* out,
             FILE *test = fopen(out, "rb");
             fprintf(stderr, "  FALLBACK: [%s] %s\n", out, test ? "FOUND" : "MISS");
             if (test) { fclose(test); return 1; }
+        }
+    }
+    /* Final fallback (2026-06-20): recursive MD5-hash search.
+     * Mirrors the scanner's behaviour so runtime can find files that
+     * live in subdirs the original path-resolver doesn't enumerate
+     * (e.g. dm1-extras/pc-3.4-en-3.5in/DATA/, Meynaf FR hard-disk
+     * layout). Hashes match the canonical DUNGEON.DAT for each game
+     * from g_requiredFiles[].md5. */
+    {
+        static const struct { const char *game; const char *md5; } kExpectedHashes[] = {
+            { "dm1",  "766450c940651fc021c92fe5d0d0b3a6" },
+            { "csb",  "6695d2acebce49f95db1d8f3a5c733de" },
+            { "dm2",  "6caccd7875009e82fe2e28e7f6d6adc0" },
+            { "theron", "b7afb338ad31be1025b53f9aff12d73a" },
+            { NULL, NULL }
+        };
+        const char *expectedMd5 = NULL;
+        int i;
+        for (i = 0; kExpectedHashes[i].game != NULL; ++i) {
+            if (strcmp(gameId, kExpectedHashes[i].game) == 0) {
+                expectedMd5 = kExpectedHashes[i].md5;
+                break;
+            }
+        }
+        if (expectedMd5) {
+            char resolved[ASSET_PATH_MAX];
+            if (asset_find_by_md5(dataDir, expectedMd5, resolved,
+                                  (int)sizeof(resolved), 32)) {
+                fprintf(stderr, "  HASH-FALLBACK: [%s] FOUND\n", resolved);
+                if (FSP_JoinPath(out, outSize, resolved, "")) {
+                    return 1;
+                }
+                /* FSP_JoinPath may refuse empty tail; copy directly. */
+                strncpy(out, resolved, outSize - 1);
+                out[outSize - 1] = '\0';
+                return 1;
+            }
+            fprintf(stderr, "  HASH-FALLBACK: no match for %s hash %s\n",
+                    gameId, expectedMd5);
         }
     }
     return 0;
