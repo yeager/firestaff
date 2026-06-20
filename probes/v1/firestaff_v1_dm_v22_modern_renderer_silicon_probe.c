@@ -88,8 +88,13 @@ int main(void) {
     }
     printf("info: Apple Silicon host detected\n");
 
-    /* Force SDL3 onto the dummy video driver so CI + headless runs work. */
+    /* Force SDL3 onto the dummy video driver so CI + headless runs work.
+     * Use _putenv_s on MSVC/UCRT64 (Windows) and setenv elsewhere. */
+#if defined(_WIN32)
+    _putenv_s("SDL_VIDEODRIVER", "dummy");
+#else
     setenv("SDL_VIDEODRIVER", "dummy", 1);
+#endif
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         fprintf(stderr, "FAIL SDL_Init: %s\n", SDL_GetError());
