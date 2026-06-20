@@ -384,6 +384,21 @@ order:
    paths have been launched). Open until each alternative path
    passes an `m11_phase_a` boot probe with the same assertion set
    the canonical paths use.
+6. **Scanner path-naming limitations**: as of 2026-06-20 the
+   scanner's filename patterns (`g_nexusArchiveNames`,
+   `g_theronTrack02Names`) only recognise a small set of
+   canonical filenames (`DM.BIN`, `SEGADATA.BIN`,
+   `Theron's Quest (Japan) (Track 02).bin`, etc.). Real-asset
+   extractions preserve source filenames like
+   `Dungeon Master Nexus (Japan) (Track 1).bin` and
+   `Dungeon Master - Theron's Quest (Japan) (Track 02).bin`,
+   which do NOT match the patterns, so `--data-dir` cannot find
+   them in isolation. Workaround: scan with default scope (no
+   `--data-dir`) which walks the whole root. Permanent fix:
+   extend the scanner's container-walk to also try
+   `m12_scan_inside_bin` for any `Track NN.bin` file in
+   search roots (i.e. treat all `.bin` files as candidate
+   containers unless the filename is on a deny-list).
 3. **Mirror dmweb /community/documentation/ for offline research**
    — DONE 2026-06-20 (commit pending; 43 pages mirrored at
    `reference/dmweb-community-docs/` with INDEX.md + index.json +
@@ -606,6 +621,26 @@ done
 Förväntat: Phase A-probe-PASS + en spel-specifik asset-load PASS
 per path. Om något FAIL:ar, markera gap-status tillbaka till
 PARTIAL.
+
+**Resultat (2026-06-20):** Se
+`reference/L1_data_path_verification_2026-06-20.md` för detaljer.
+Kort version:
+
+| Path | READY? | Orsak |
+|---|---|---|
+| DM1 legacy-dos | ✅ | Canonical `GRAPHICS.DAT`/`DUNGEON.DAT` i katalogen — matchar hashen direkt |
+| CSB Amiga 3.3 Meynaf FR | ✅ | Matchar canonical CSB-hasen i `...Meynaf/DungeonMaster/Graphics.DAT` |
+| Nexus Saturn JA | ⚠️ | MD5 stämmer (`d8362321...`) men filnamnet matchar inte scanner-mönstret `g_nexusArchiveNames` (`DM.BIN`, `SEGADATA.BIN`, etc.) — hittas bara i default-scan, inte via `--data-dir` |
+| Theron JP Track 02 | ⚠️ | MD5 stämmer (`b7afb338...`) men samma filnamns-problem |
+| DM1 PC 3.4 English 3.5" (extras) | ⚠️ | Innehåller `.raw`-filer (CTRaw emulator-format) som scanner ej mappar |
+
+**Ny status:**
+- DM1 + CSB legacy path:er är nu `EXTRACTED + VERIFIED +
+  LAUNCH-TESTED` (redo för framtida tester/parity-evidence).
+- Nexus + Theron container-path:er kräver steg 1.5 nedan (eller
+  canonical filnamn) innan de kan användas med `--data-dir`.
+
+**Ny upptäckt** — öppnar Tier 1 #6 (se nedan).
 
 ### L2. Skapa `tools/data-readiness-summary.py`
 
