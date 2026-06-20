@@ -2158,6 +2158,62 @@ if(BUILD_TESTING)
         target_compile_options(firestaff_dm2_v1_pressure_plate_probe PRIVATE -Wall -Wextra -O2)
     endif()
 
+    # ── DM2 V1 Phase 4: Trigger system mechanics parity ──
+    add_executable(test_dm2_v1_trigger_pc34_compat
+        tests/test_dm2_v1_trigger_pc34_compat.c
+        src/dm2/dm2_v1_trigger.c
+    )
+    target_include_directories(test_dm2_v1_trigger_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_trigger_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_trigger_pc34_compat
+        COMMAND test_dm2_v1_trigger_pc34_compat
+    )
+
+    add_executable(firestaff_dm2_v1_trigger_probe
+        probes/dm2/firestaff_dm2_v1_trigger_probe.c
+        src/dm2/dm2_v1_trigger.c
+    )
+    target_include_directories(firestaff_dm2_v1_trigger_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_trigger_probe PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_trigger_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+
+    # ── DM2 V1 Phase 4: Timeline wiring mechanics parity ──
+    add_executable(test_dm2_v1_timeline_pc34_compat
+        tests/test_dm2_v1_timeline_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+    )
+    target_include_directories(test_dm2_v1_timeline_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_timeline_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_timeline_pc34_compat
+        COMMAND test_dm2_v1_timeline_pc34_compat
+    )
+
+    add_executable(firestaff_dm2_v1_timeline_probe
+        probes/dm2/firestaff_dm2_v1_timeline_probe.c
+        src/dm2/dm2_v1_timeline.c
+    )
+    target_include_directories(firestaff_dm2_v1_timeline_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_timeline_probe PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_timeline_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+
     # ── DM2 V1 Phase 2 Probes: Dungeon/Object/World-State/Asset ──
 
     add_executable(probe_dm2_v1_dungeon_loader
@@ -7771,6 +7827,32 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_cmp_decode_unit
         COMMAND test_firestaff_cmp_decode
+    )
+
+    # ── CSB V1 CMP import glue (Utility Disk Champion Editor flow) ──
+    # Wires the existing firestaff_cmp_decode.c decoder to the
+    # CSB_V1_Champion / CSB_V1_PartyState runtime data structures.
+    # Source lock:
+    #   - ReDMCSB DEFS.H CMP typedef (size 496 bytes)
+    #   - ReDMCSB PORTRAIT.C F0515_CHAMPION_ConvertPortraitsToAtariSTPlanar
+    #   - ReDMCSB CEDT002.C / CEDT021.C (Utility Disk Champion Editor)
+    #   - CSBWin/CedtData.cpp (CSB Utility Disk tool)
+    add_executable(test_csb_v1_cmp_import
+        tests/test_csb_v1_cmp_import.c
+        src/csb/csb_v1_cmp_import_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+        src/shared/firestaff_cmp_decode.c
+    )
+    target_include_directories(test_csb_v1_cmp_import PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_cmp_import PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_cmp_import_pc34
+        COMMAND test_csb_v1_cmp_import
     )
 
     # ── DM1 V1 graphics LZW round-trip test (Tier 2 #4 from FIRESTAFF_GAP_LIST) ──
