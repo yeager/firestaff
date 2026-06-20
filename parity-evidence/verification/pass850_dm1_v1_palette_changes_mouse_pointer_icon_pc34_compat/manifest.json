@@ -1,0 +1,127 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin anchor line numbers when ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "DATA.C:40/181/583",
+    "IO.C:164/2140/2167/2176/2443"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791+ (champion-panel/leader/mirror + chest).",
+    "Not pass798+ (Graphics.dat init-table gates)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:40",
+      "line": 40,
+      "lineText": "int16_t G0034_ai_Graphic562_Box_ObjectDescriptionCircle[4];",
+      "needle": "G0044_auc_Graphic562_PaletteChanges_MousePointerIcon",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:181",
+      "line": 181,
+      "lineText": "        C064_GRAPHIC_CEILING_PIT_D2C,",
+      "needle": "G0044_auc_Graphic562_PaletteChanges_MousePointerIcon",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:583",
+      "line": 583,
+      "lineText": "#endif",
+      "needle": "G0044_auc_Graphic562_PaletteChanges_MousePointerIcon",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "id": "IO.C:164",
+      "line": 164,
+      "lineText": "unsigned char G0044_auc_Graphic562_PaletteChanges_MousePointerIcon[16] = { 120, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 0, 130, 140, 150 }; /* Atari ST: { 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 120, 40, 40, 40 } */",
+      "needle": "G0044_auc_Graphic562_PaletteChanges_MousePointerIcon",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "id": "IO.C:2140",
+      "line": 2140,
+      "lineText": "        F0129_VIDEO_BlitShrinkWithPaletteChanges(P0093_puc_Bitmap_Object, G0618_puc_Bitmap_MousePointerHiddenScreenArea, 16, 16, 16, 16, G0044_auc_Graphic562_PaletteChanges_MousePointerIcon);",
+      "needle": "G0044_auc_Graphic562_PaletteChanges_MousePointerIcon",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "id": "IO.C:2167",
+      "line": 2167,
+      "lineText": "        F0129_VIDEO_BlitShrinkWithPaletteChanges(P0093_puc_Bitmap_Object, G0618_puc_Bitmap_MousePointerHiddenScreenArea, 16, 16, 16, 16, G0044_auc_Graphic562_PaletteChanges_MousePointerIcon);",
+      "needle": "G0044_auc_Graphic562_PaletteChanges_MousePointerIcon",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "id": "IO.C:2176",
+      "line": 2176,
+      "lineText": "        F0129_VIDEO_BlitShrinkWithPaletteChanges(P0093_puc_Bitmap_Object, G1142_puc_Bitmap_MousePointerTemporaryBuffer, 16, 16, 16, 16, G0044_auc_Graphic562_PaletteChanges_MousePointerIcon);",
+      "needle": "G0044_auc_Graphic562_PaletteChanges_MousePointerIcon",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "id": "IO.C:2443",
+      "line": 2443,
+      "lineText": "                F0129_VIDEO_BlitShrinkWithPaletteChanges(L0056_puc_Bitmap, L0056_puc_Bitmap, 32, 14, 32, 14, G0044_auc_Graphic562_PaletteChanges_MousePointerIcon);",
+      "needle": "G0044_auc_Graphic562_PaletteChanges_MousePointerIcon",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass850_dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/palette_changes_mouse_pointer_icon_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS850_DM1_V1_PALETTE_CHANGES_MOUSE_POINTER_ICON_LOCKED",
+  "timestampUtc": "2026-06-20T07:35:34.515909+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_palette_changes_mouse_pointer_icon: 85/85 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

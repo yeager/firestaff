@@ -1,0 +1,86 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin anchor line numbers when ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "DATA.C:48/362-376/120"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791+ (champion-panel/leader/mirror + chest).",
+    "Not pass798+ (Graphics.dat init-table gates)."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:48",
+      "line": 48,
+      "lineText": "unsigned char G0042_auc_Graphic562_Bitmap_ArrowPointer[M075_BITMAP_BYTE_COUNT(16, 16)]; /* = {",
+      "needle": "G0042_auc_Graphic562_Bitmap_ArrowPointer",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:362",
+      "line": 362,
+      "lineText": "unsigned char G0042_auc_Graphic562_Bitmap_ArrowPointer[2][66] = {",
+      "needle": "G0042_auc_Graphic562_Bitmap_ArrowPointer",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:376",
+      "line": 376,
+      "lineText": "          0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00,",
+      "needle": "G0042_auc_Graphic562_Bitmap_ArrowPointer",
+      "status": "DRIFT"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass857_dm1_v1_bitmap_arrow_pointer_pc34_compat.v1",
+  "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_bitmap_arrow_pointer_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_bitmap_arrow_pointer_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/firestaff/dm1/v1/bitmap_arrow_pointer_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_bitmap_arrow_pointer_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS857_DM1_V1_BITMAP_ARROW_POINTER_LOCKED",
+  "timestampUtc": "2026-06-20T07:36:53.436237+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_bitmap_arrow_pointer_pc34_compat"
+      ],
+      "outputTail": "dm1_v1_bitmap_arrow_pointer: 162/162 assertions passed",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

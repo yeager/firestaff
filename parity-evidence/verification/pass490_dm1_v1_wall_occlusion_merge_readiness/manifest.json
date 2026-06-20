@@ -98,14 +98,14 @@
       "id": "firestaff-side-content-center-blocker",
       "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
-      "line": 16559,
+      "line": 16571,
       "ok": true
     },
     {
       "id": "firestaff-side-door-occlusion",
       "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "m11_draw_dm1_side_doors",
-      "line": 14738,
+      "line": 14750,
       "ok": true
     },
     {

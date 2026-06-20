@@ -25,8 +25,8 @@
         "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
         "[100%] Built target firestaff_m10",
         "[100%] Built target test_m11_v1_turning_presentation_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[104%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
+        "[ 96%] Built target firestaff_m10",
+        "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
       "returncode": 0
@@ -248,8 +248,8 @@
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:14231",
-        "- Firestaff source viewport draw order: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:24354",
+        "- Firestaff field rows/zones: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:14243",
+        "- Firestaff source viewport draw order: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:24366",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -276,7 +276,7 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:17366",
+        "- Firestaff palette compute: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:17378",
         "- Firestaff palette apply: /Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c:12548",
         "- ReDMCSB F0337: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
@@ -409,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-19T19:14:27.209302+00:00"
+  "timestampUtc": "2026-06-20T07:40:16.258921+00:00"
 }
