@@ -372,11 +372,24 @@ order:
 2. **Add `compare_to_greatstone.py` summary mode** that prints a
    per-game "data gap" view (which files in VERIFIED_HASHES.md are
    not on disk).
+3. **Mirror dmweb /community/documentation/ for offline research**
+   — DONE 2026-06-20 (commit pending; 43 pages mirrored at
+   `reference/dmweb-community-docs/` with INDEX.md + index.json +
+   SCRAPE_LOG.md; reproduceable via `crawl.sh`). Eliminates the
+   "free.fr intermittent 404" risk for 5 topic areas.
+4. **Ship a reproducible game-archive extraction script** that
+   pulls from `~/Downloads/` to `~/.firestaff/data/<game>-extras/`
+   without overwriting canonical staging — DONE 2026-06-20 (commit
+   `4b097f54`; 73 archives → 71 version directories; ~6.2 GB
+   extraherat; 4 nya READY-path:er discovered by `--scan-data`).
 
 ### Tier 2 (OPEN-BOUNDED — fits one commit each)
 
 3. CSB hidden-code skip table for Atari ST + Amiga items 558-562.
 4. LZW decoder for Atari ST GRAPHICS.DAT (only Atari ST uses LZW).
+   — PARTIAL: `m11_gfx_lzw_decompress` has a contract-only
+   round-trip test (`test_dm1_lzw_round_trip.c`, 96/96 PASS,
+   pass852). Real Atari ST asset handoff still BLOCKED-DATA.
 5. PAK container decoder for Atari ST START.PAK. — DONE (commit 3ee479de)
 6. CMP portrait loader for CSB utility disk. — DONE (commit 532c8250)
 7. Harmonize MD5 vs SHA256 in `asset_find_by_hash.c` (or add
@@ -386,6 +399,14 @@ order:
    `image_backend_pc34_compat_globals.c` instead which provides the
    same symbols without dragging in the legacy frontend)
 9. Lefthook-in-CI install step.
+10. **`--data-dir` override in `m12_build_search_roots`** — DONE
+    2026-06-20 (commit `6a7eccdc`). Explicit `--data-dir` no longer
+    silently falls back to `~/.firestaff/data`; runtime
+    dataDir-override also skipped when request is explicit. 5/5
+    asset-status tests pass; tested with
+    `--data-dir ~/Downloads --scan-data` → reports
+    `Data dir: /Users/bosse/Downloads` and scans only that
+    directory.
 
 ### Tier 3 (OPEN-LARGE — separate milestones)
 
