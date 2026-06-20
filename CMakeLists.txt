@@ -7434,6 +7434,27 @@ if(BUILD_TESTING)
         NAME endgame_frontend_source_animation_schedule
         COMMAND test_endgame_frontend_pc34_compat_integration
     )
+
+    # ── IMG5 4bpp chunked image decoder unit test ───────────────
+    # Tests src/shared/firestaff_img5_decode.c (the IMG5 decoder
+    # used by Amiga and SNES versions of DM, plus the embedded
+    # items 558-562 in DM Amiga v2.0). Standalone -- does not
+    # depend on the legacy COMPILE.H or the image_backend_pc34
+    # compat layer.
+    add_executable(test_firestaff_img5_decode
+        tests/test_firestaff_img5_decode.c
+        src/shared/firestaff_img5_decode.c
+    )
+    target_include_directories(test_firestaff_img5_decode PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_img5_decode PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_img5_decode_unit
+        COMMAND test_firestaff_img5_decode
+    )
 endif()
 
 
