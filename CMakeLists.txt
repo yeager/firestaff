@@ -5734,6 +5734,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/asset-validate/compare_md5_to_sha256.py
         )
         add_test(
+            NAME asset_validate_coverage_by_game
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/asset-validate/coverage_by_game.py
+        )
+        add_test(
             NAME dm2_v1_phase0_provenance_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_phase0_provenance_gate.py
         )

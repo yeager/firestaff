@@ -150,21 +150,122 @@ def collect_embedded_md5() -> set[str]:
 
 
 def _candidate_paths(data_dir: Path, entry: RegistryEntry) -> list[Path]:
+    """Return possible on-disk paths for a registry entry, in priority order.
+
+    Search order (highest priority first):
+      1. <data_dir>/<game>/<filename>  (the canonical layout)
+      2. case-insensitive match under <data_dir>/<game>/
+      3. paths under <data_dir>/<game>-extras/ whose path embeds the variant
+         substring (e.g. entry.game="dm1-atari-st-1.2-en" -> prefer
+         paths containing "atari-st-1.2-en" or "atari-st-1.2" or
+         "atari-st" under dm1-extras/), then fall back to any other
+         match in that extras dir.
+
+    The first existing match in priority order is used. We deliberately
+    do NOT pick loose files at <data_dir>/ — a top-level GRAPHICS.DAT
+    there is typically a symlink to a different game's data and would
+    produce misleading "MISMATCH" reports.
+    """
     candidates: list[Path] = []
+
+    # Tier 1: canonical layout
     direct = data_dir / entry.game / entry.filename
-    candidates.append(direct)
+    if direct.is_file():
+        candidates.append(direct)
+
     parent = data_dir / entry.game
     if parent.is_dir():
         try:
             for child in parent.iterdir():
-                if child.name.lower() == entry.filename.lower():
+                if child.is_file() and child.name.lower() == entry.filename.lower():
                     candidates.append(child)
         except OSError:
             pass
-    if data_dir.is_dir():
-        for top in data_dir.iterdir():
-            if top.is_file() and top.name.lower() == entry.filename.lower():
-                candidates.append(top)
+
+    # Tier 2: parent-game extras with variant substring matching.
+    parent_game = entry.game
+    for sep in ("-atari-st-", "-amiga-", "-apple-iigs-", "-fm-towns-", "-pc-98-", "-x68000-", "-pc-", "-mac-", "-mega-cd-", "-sega-cd-"):
+        idx = entry.game.find(sep)
+        if idx > 0:
+            parent_game = entry.game[:idx]
+            break
+
+    parent_extras = data_dir / f"{parent_game}-extras"
+    if parent_extras.is_dir():
+        # Compute the variant substring (everything after parent_game-).
+        variant_substr = entry.game[len(parent_game) + 1:] if entry.game.startswith(parent_game + "-") else ""
+        # Tokens we use for matching: split on both "-" and "." so that
+        # "atari-st-1.2-en" yields ["atari", "st", "1", "2", "en"] and a
+        # path containing "atari-st" still matches on ["atari", "st"].
+        variant_tokens = [t for t in variant_substr.lower().replace("-", " ").replace(".", " ").split() if t] if variant_substr else []
+        # Platform prefix in the variant substr (first token, e.g.
+        # "atari-st", "amiga", "pc"). We use it as a strong discriminator
+        # when a path contains that platform prefix in a directory name.
+        platform_prefix = variant_tokens[0] if variant_tokens else ""
+
+        # Priority 2a: full variant substring in path.
+        priority_a: list[Path] = []
+        # Priority 2b: path contains platform prefix as a directory segment.
+        priority_b: list[Path] = []
+        # Priority 2c: path contains ALL variant tokens.
+        priority_c: list[Path] = []
+        # Priority 2d: path contains at least one variant token.
+        priority_d: list[Path] = []
+        # Priority 2e: any other match.
+        priority_e: list[Path] = []
+        try:
+            for child in parent_extras.rglob(entry.filename):
+                if not child.is_file():
+                    continue
+                path_str = str(child).lower()
+                # Look at directory segments AND space-separated tokens in
+                # segment names so that "Atari ST v1.2" inside one path
+                # segment counts as containing "atari" and "st".
+                segs = set(path_str.split("/"))
+                space_tokens: set[str] = set()
+                for seg in segs:
+                    space_tokens.update(
+                        seg.replace("(", " ")
+                        .replace(")", " ")
+                        .replace(",", " ")
+                        .replace(".", " ")
+                        .split()
+                    )
+                combined = segs | space_tokens
+                # Helper: test for a single token as a word boundary match
+                # (so "en" matches "english" only when it is its own token,
+                # not just as a substring of "meynaf").
+                def _token_match(tok: str) -> bool:
+                    return tok in space_tokens
+                if variant_substr and variant_substr.lower() in path_str:
+                    priority_a.append(child)
+                elif platform_prefix and platform_prefix in combined:
+                    priority_b.append(child)
+                elif variant_tokens and all(_token_match(tok) for tok in variant_tokens):
+                    priority_c.append(child)
+                elif variant_tokens and any(_token_match(tok) for tok in variant_tokens):
+                    priority_d.append(child)
+                else:
+                    priority_e.append(child)
+        except OSError:
+            pass
+        candidates.extend(priority_a)
+        candidates.extend(priority_b)
+        candidates.extend(priority_c)
+        candidates.extend(priority_d)
+        candidates.extend(priority_e)
+
+    # Tier 3: <game>-extras (only meaningful if game has no parent).
+    if parent_game == entry.game:
+        extras = data_dir / f"{entry.game}-extras"
+        if extras.is_dir():
+            try:
+                for child in extras.rglob(entry.filename):
+                    if child.is_file() and child not in candidates:
+                        candidates.append(child)
+            except OSError:
+                pass
+
     seen: set[Path] = set()
     out: list[Path] = []
     for c in candidates:
