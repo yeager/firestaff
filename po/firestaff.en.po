@@ -1,0 +1,114 @@
+# firestaff-en English catalog (auto-generated from firestaff.pot).
+# Source msgid = English source string; msgstr mirrors it so the runtime
+# fallback returns the source text instead of failing.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-en\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-20\n"
+"PO-Revision-Date: 2026-06-20+00:00\n"
+"Last-Translator: Firestaff auto-pass\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+
+#. ACCESSIBILITY
+msgid "Accessibility"
+msgstr "Accessibility"
+#. AUDIO
+msgid "Audio"
+msgstr "Audio"
+#. BACK
+msgid "Back"
+msgstr "Back"
+#. BESTIARY
+msgid "Bestiary"
+msgstr "Bestiary"
+#. CHANGELOG
+msgid "Changelog"
+msgstr "Changelog"
+#. COMING_SOON
+msgid "Coming soon"
+msgstr "Coming soon"
+#. CONTINUE
+msgid "Continue Saved Game"
+msgstr "Continue Saved Game"
+#. CONTROLS
+msgid "Controls"
+msgstr "Controls"
+#. DISPLAY
+msgid "Display"
+msgstr "Display"
+#. EXTRAS
+msgid "EXTRAS"
+msgstr "EXTRAS"
+#. ITEMS
+msgid "Item Encyclopedia"
+msgstr "Item Encyclopedia"
+#. LANGUAGE
+msgid "Language"
+msgstr "Language"
+#. MAP_VIEWER
+msgid "Map Viewer"
+msgstr "Map Viewer"
+#. MUSEUM
+msgid "Museum of Lore"
+msgstr "Museum of Lore"
+#. NEW_GAME_V1
+msgid "New Game (V1 Original)"
+msgstr "New Game (V1 Original)"
+#. NEW_GAME_V21
+msgid "New Game (V2.1 Upscaled)"
+msgstr "New Game (V2.1 Upscaled)"
+#. NEW_GAME_V22
+msgid "New Game (V2.2 Enhanced)"
+msgstr "New Game (V2.2 Enhanced)"
+#. NO_DATA
+msgid "No data files"
+msgstr "No data files"
+#. OFF
+msgid "Off"
+msgstr "Off"
+#. ON
+msgid "On"
+msgstr "On"
+#. PLAY
+msgid "PLAY"
+msgstr "PLAY"
+#. QUIT
+msgid "QUIT"
+msgstr "QUIT"
+#. SCREENSHOTS
+msgid "Screenshot Gallery"
+msgstr "Screenshot Gallery"
+#. SELECT_GAME
+msgid "SELECT GAME"
+msgstr "SELECT GAME"
+#. SETTINGS
+msgid "SETTINGS"
+msgstr "SETTINGS"
+#. SPELLS
+msgid "Spell Reference"
+msgstr "Spell Reference"
+#. VALIDATE
+msgid "Validate game data"
+msgstr "Validate game data"
+#. VERSION
+msgid "Version"
+msgstr "Version"
+#. VIDEO
+msgid "Video"
+msgstr "Video"
+#: src/engine/m11_game_view.c
+msgid "RETURN TO START MENU?"
+msgstr "RETURN TO START MENU?"
+#: src/engine/m11_game_view.c
+msgid "YES"
+msgstr "YES"
+#: src/engine/m11_game_view.c
+msgid "NO"
+msgstr "NO"
