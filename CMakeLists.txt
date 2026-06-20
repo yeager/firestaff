@@ -3672,7 +3672,6 @@ if(BUILD_TESTING)
     # scroll pickup, teleporter survival, etc.). All 73 are pre-existing
     # in tests/ + src/dm1/ + include/firestaff/dm1/v1/mirror_candidate/
     # but were not yet registered in ctest.
-    message(STATUS "[DEBUG-FOREACH] Starting mirror-candidate wire-up")
     foreach(_mirror_candidate_test IN ITEMS
             "c040_action_area_click_while_panel_live"
             "c040_cancel_then_reopen_same_tick"
@@ -3782,13 +3781,20 @@ if(BUILD_TESTING)
             "close_while_resurrect_pending_with_inventory_pickup_pc34_compat"
             "eye_slot_swap")
         set(_tgt "test_dm1_v1_mirror_candidate_${_mirror_candidate_test}_pc34_compat")
+        # Some entries in the IN ITEMS list above already include the
+        # _pc34_compat suffix (mirror of the existing hand-wired tests).
+        # Strip any trailing _pc34_compat before re-appending it so we do
+        # not produce names like "..._pc34_compat_pc34_compat.c" that
+        # do not exist on disk and break the cmake configure step.
+        if(_mirror_candidate_test MATCHES "_pc34_compat$")
+            string(REGEX REPLACE "_pc34_compat$" "" _mirror_candidate_test "${_mirror_candidate_test}")
+        endif()
+        set(_tgt "test_dm1_v1_mirror_candidate_${_mirror_candidate_test}_pc34_compat")
         set(_test_src "tests/${_tgt}.c")
         set(_mod_src "src/dm1/dm1_v1_mirror_candidate_${_mirror_candidate_test}_pc34_compat.c")
-        message(STATUS "[DEBUG-FOREACH] candidate=${_mirror_candidate_test} test=${_test_src} mod=${_mod_src} exists_test=$<EXISTS:${_test_src}> exists_mod=$<EXISTS:${_mod_src}>")
         if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_test_src}"
                 AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_mod_src}"
                 AND NOT TARGET ${_tgt})
-            message(STATUS "[DEBUG-FOREACH] adding ${_tgt}")
             add_executable(${_tgt} ${_test_src} ${_mod_src})
             target_link_libraries(${_tgt} PRIVATE firestaff_m10)
             if(NOT MSVC)
@@ -12148,5 +12154,67 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0194_pc34_compat.c"
     add_test(
         NAME dm1_v1_g0194_pc34_compat
         COMMAND test_dm1_v1_g0194_pc34_compat
+    )
+endif()
+
+# pass1042 — DM1 V1 G0203_auc_Graphic558_InscriptionLineY[4]: 4-entry
+# inscription-line Y-coordinate table (48, 59, 75, 86 for 1-4 lines).
+# Source-locked against DUNVIEW.C:480/1049/3628.
+# Disjoint from pass784-1041.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0203_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0203_pc34_compat.c")
+    add_executable(test_dm1_v1_g0203_pc34_compat
+        tests/test_dm1_v1_g0203_pc34_compat.c
+        src/dm1/dm1_v1_g0203_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0203_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0203_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0203_pc34_compat
+        COMMAND test_dm1_v1_g0203_pc34_compat
+    )
+endif()
+
+# pass1043 — DM1 V1 G0220_as_Graphic558_CreatureReplacementColorSets[13]
+# (CREATURE_REPLACEMENT_COLOR_SET struct): 13 PC 3.4 EN creature palette
+# replacement sets, 14 bytes each = 182 bytes total.
+# Source-locked against DUNVIEW.C:497/1705-1718 + DUNVIEW.C:2011-2014.
+# Disjoint from pass784-1042.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0220_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0220_pc34_compat.c")
+    add_executable(test_dm1_v1_g0220_pc34_compat
+        tests/test_dm1_v1_g0220_pc34_compat.c
+        src/dm1/dm1_v1_g0220_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0220_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0220_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0220_pc34_compat
+        COMMAND test_dm1_v1_g0220_pc34_compat
+    )
+endif()
+
+# pass1044 — DM1 V1 G0223_aac_Graphic558_ShiftSets[3][8]: 3-row × 8-col
+# int16_t shift-set table for creature viewport animation (D0/D1/D2
+# back offsets). PC 3.4 EN MEDIA365 branch.
+# Source-locked against DUNVIEW.C:512/1833 + DUNVIEW.C F0099/F0654.
+# Disjoint from pass784-1043.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0223_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0223_pc34_compat.c")
+    add_executable(test_dm1_v1_g0223_pc34_compat
+        tests/test_dm1_v1_g0223_pc34_compat.c
+        src/dm1/dm1_v1_g0223_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0223_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0223_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0223_pc34_compat
+        COMMAND test_dm1_v1_g0223_pc34_compat
     )
 endif()
