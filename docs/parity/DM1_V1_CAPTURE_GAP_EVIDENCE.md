@@ -1,7 +1,7 @@
 # DM1 V1 Original Capture Gap Evidence
 
 **Lane:** DM1 V1 finish-quality - original DOS capture/parity evidence lane
-**Date:** 2026-05-28; updated 2026-06-20 with pass1052/pass1053/pass1055
+**Date:** 2026-05-28; updated 2026-06-20 with pass1052/pass1053/pass1055/pass1056
 **Branch:** `dm1v1-capture-gap-evidence-20260528`
 **Author:** subagent (MiniMax-M2.7)
 
@@ -39,7 +39,7 @@ is sufficient for `SOURCE_LOCKED` but NOT for `MATCHED` pixel/content parity.
 
 | Evidence Item | Status | Path | Issue |
 |---|---|---|---|
-| 4x original DOSBox turn-cycle frames | PARTIAL OK | `verification-screens/pass1052-dm1-original-route-24h-turncycle/` | Clean original DM1 PC 3.4 capture: 2 `dungeon_gameplay` + 2 `wall_closeup`, 0 duplicate raw hashes, pass80 PASS. Still needs Firestaff pairing and pixel diff. |
+| 4x original DOSBox turn-cycle frames | PARTIAL OK | `verification-screens/pass1052-dm1-original-route-24h-turncycle/` | Clean original DM1 PC 3.4 capture: 2 `dungeon_gameplay` + 2 `wall_closeup`, 0 duplicate raw hashes, pass80 PASS. pass1056 now gates the pass1054 Firestaff nearest-neighbor pairing artifacts, but full same-state viewport parity still needs a debugger-observed route pair. |
 | 6x original DOSBox crops (224x136) | IMPAIRED EXISTS (impaired) | `firestaff-release-v0.3.28/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/` | Historical failed route. Frames 03-06 have duplicate SHA256 `701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c`; pass80 reclassifies frames 03-04 as `entrance_menu` and 05-06 as `wall_closeup`. |
 | 6x Firestaff V1 captures (VGA PPM) | OK EXISTS | `firestaff-v2-gap-manifest/verification-m11/lane3-inventory-followup-20260428-0914/` (selected files) | No paired original to compare against. |
 | Source-locked viewport probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c` | Documents draw-order contract from ReDMCSB; no paired capture. |
@@ -47,8 +47,10 @@ is sufficient for `SOURCE_LOCKED` but NOT for `MATCHED` pixel/content parity.
 | Viewport palette probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_viewport_palette_as_before_probe.c` | Palette-as-before for screenshot comparison; no paired capture. |
 
 **Gap:** Pass1052 supersedes the broken pass94 route for initial viewport evidence by
-capturing two clean `dungeon_gameplay` frames. It is still not `MATCHED` because no
-Firestaff-vs-original same-state pixel diff has been promoted yet.
+capturing two clean `dungeon_gameplay` frames. pass1054/pass1056 now provide a
+reproducible Firestaff nearest-neighbor pairing gate over those crops, including
+one exact wall row. Viewport content is still not `MATCHED` because the nonzero
+gameplay rows are scout candidates, not debugger-confirmed same-state pairs.
 
 **Minimum needed for `MATCHED`:**
 - At least 3 clean original `dungeon_gameplay` frames: (a) start-state 3x3 dungeon viewport,
@@ -160,7 +162,7 @@ pixel-level rendering correctness.
 
 | Area | Source-Locked Probe | Firestaff Capture | Original Capture | Pairing | Blocking Issue |
 |------|--------------------|--------------------|-----------------|---------|---------------|
-| Viewport | OK | OK | PARTIAL OK (pass1052) | MISSING | Clean original gameplay frames exist; Firestaff pairing/diff still missing |
+| Viewport | OK | OK | PARTIAL OK (pass1052) | SCOUT PAIRING (pass1056) | Clean original gameplay frames exist; pass1056 gates Firestaff nearest-neighbor pairing artifacts, but same-state viewport parity is still missing |
 | Wall | OK | OK | PARTIAL OK (pass1052) | PARTIAL MATCH (pass1054) | One exact wall-crop match exists; broader wall-state route still needs more pairings |
 | Collision | OK | MISSING | PARTIAL OK (pass1055 closed door) | PARTIAL PAIR (semantic) | One original closed-door stasis capture and one Firestaff semantic pair exist; full paired transcript still missing |
 | Creature-chain | OK | IMPAIRED Firestaff-only | MISSING | MISSING | No original creature screenshot exists |
@@ -169,8 +171,9 @@ pixel-level rendering correctness.
 **Conclusion:** Existing Firestaff-side gates, source locks, and runtime routing are complete.
 Pass1052 and pass1053 reduce the original-reference gap: viewport, wall, and the
 candidate/resurrect champion panel now have clean original PC 3.4 frames. Pass1054
-promotes one exact original-to-Firestaff wall-crop match. The remaining `MATCHED`
-blockers are broader Firestaff pairing/pixel-diff promotion for viewport and wall
+promotes one exact original-to-Firestaff wall-crop match, and pass1056 turns that
+pairing evidence into a CTest-backed gate. The remaining `MATCHED`
+blockers are same-state Firestaff pairing/pixel-diff promotion for viewport and wall
 states, a full paired collision transcript, a creature screenshot, and full four-champion/status-panel
 original captures.
 
@@ -217,7 +220,7 @@ Given the above gap inventory, the correct parity status labels for the five are
 
 | Area | Current Label | Honest Label | Reason |
 |------|-------------|--------------|--------|
-| Viewport | `MATCHED` (bounds) / `KNOWN_DIFF` (content) | `PARTIAL_REFERENCE_CAPTURED` | Pass1052 original gameplay frames exist; no Firestaff pairing/diff yet |
+| Viewport | `MATCHED` (bounds) / `KNOWN_DIFF` (content) | `SCOUT_PAIRING_AVAILABLE` | Pass1052 original gameplay frames exist; pass1056 gates pass1054 nearest-neighbor Firestaff pairing artifacts, but the nonzero rows are not same-state parity |
 | Wall | `KNOWN_DIFF` (narrowed) | `PARTIAL_MATCH` | Pass1054 has one exact original-to-Firestaff wall-crop match; broader wall route still partial |
 | Collision | (source-lock + pass1055 original closed-door stasis + Firestaff semantic pair) | `PARTIAL_PAIR` | Pass1055 captures one original closed-door stasis case and a Firestaff-side movement/collision pair; pixel comparison and broader transcript are still missing |
 | Creature-chain | (source-lock only) | `BLOCKED_ON_REFERENCE` | No original creature screenshot exists |
