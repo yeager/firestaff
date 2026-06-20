@@ -82,9 +82,11 @@ Classification:
 |---|---|---|
 | compare_to_greatstone.py SHA256 probe | tools/asset-validate/ | FIXED in v2.9.2 (commit `0d89adc6`) |
 | PLATFORM_MATRIX.md version support map | docs/PLATFORM_MATRIX.md | FIXED in v2.9.2 (commit `32dcf76c`) |
-| DMWEB_REFERENCE.md consolidated reference | docs/DMWEB_REFERENCE.md | FIXED in v2.9.2 (commit `b54b52c4`) |
-| **Real-data regression tests (greatstone db_data)** | greatstone sck tool | BLOCKED-DATA — db_data not currently fetchable from free.fr (404) |
-| **Lefthook in PATH for CI** | build/CI hygiene | OPEN-BOUNDED — currently no-ops gracefully |
+| DMWEB_REFERENCE.md consolidated reference | docs/DMWEB_REFERENCE.md | FIXED in v2.9.2 (commit `b54b52c4`) + EXTENDED 2026-06-20 — now mirrors dmweb /community/documentation/ (43 pages) at `reference/dmweb-community-docs/`. 19 → 62 pages surveyed, see Section I. |
+| **Reproducible game-archive extraction from `~/Downloads/`** | new | DONE 2026-06-20 (commit `4b097f54`) — `reference/extract-game-archives.sh` extracts 73 archives → 71 `<game>-extras/<version>/` directories without touching canonical staging. |
+| **`--scan-data` smoke reports real READY-path:er** | existing | PARTIAL — `--scan-data` works for default data dir; per-archive readiness confirmed via `compare_to_greatstone.py` (148/148 OK, 0 FAIL). Single-shot CI gate in CMake/CTest not yet wired. |
+| **Real-data regression tests (greatstone db_data)** | greatstone sck tool | BLOCKED-DATA — db_data not currently fetchable from free.fr (404). However: `compare_to_greatstone.py` covers the VERIFIED_HASHES.md side, and the new `*-extras/` tree gives us locally-available alternative matches that weren't possible a week ago. |
+| **Lefthook in PATH for CI** | build/CI hygiene | OPEN-BOUNDED — currently no-ops gracefully. Logged but not blocking. |
 
 ### A6. Build / CI
 
@@ -274,7 +276,7 @@ Nexus locally verified files in `~/.firestaff/data/nexus/`.
 | TLINK/TAI/SAL/MAP runtime | PARTIAL |
 | Save/load (.sav) | PARTIAL |
 | V1 mechanics | PARTIAL |
-| **Real Saturn asset handoff (NEXUS.BIN/ISO)** | EXTRACTED + VERIFIED — `nexus-extras/saturn-ja/Dungeon Master Nexus (Japan) (Track 1).bin::DM.BIN` matches canonical DM.BIN hash |
+| **Real Saturn asset handoff (NEXUS.BIN/ISO)** | EXTRACTED + VERIFIED — `nexus-extras/saturn-ja/Dungeon Master Nexus (Japan) (Track 1).bin::DM.BIN` matches canonical DM.BIN hash. Next: confirm Track 1 (not just DM.BIN) drives the full E1 V1 phases 0–7 launch path (DMDF parser, DGN loader, MNS rendering, S2D fonts, save/load). |
 
 ### E2. V2 phases
 
@@ -302,7 +304,7 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | Save/load (.SRM) | PARTIAL |
 | Track02 bank routing | FIXED |
 | Dungeon progression (7 dungeons) | FIXED |
-| **JP/US Track 02 BIN/ISO real-asset launch** | EXTRACTED + VERIFIED — `theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin` matches canonical Track 02 hash; US version + PC-Engine combined `rar` also extracted |
+| **JP/US Track 02 BIN/ISO real-asset launch** | EXTRACTED + VERIFIED — `theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin` matches canonical Track 02 hash; US version + PC-Engine combined `rar` also extracted. Next: confirm the 7-dungeon progression boots against `theron-extras/japan/` (currently only `theron/` is launched). |
 | Cross-slot import/export against real Track 02 saves | OPEN-BOUNDED |
 | Cross-route mechanics runtime evidence | OPEN-BOUNDED |
 
@@ -372,6 +374,16 @@ order:
 2. **Add `compare_to_greatstone.py` summary mode** that prints a
    per-game "data gap" view (which files in VERIFIED_HASHES.md are
    not on disk).
+5. **Verify all `--scan-data` READY-path:er are actually
+   launchable** by M11. As of 2026-06-20 the scanner reports 4
+   alternative READY-path:er (DM1 legacy-dos PC34, CSB Amiga 3.3
+   Meynaf FR, Nexus Saturn JA Track 1, Theron JP Track 02) that
+   pass the hash check but have not been proven to boot
+   end-to-end via `m11_phase_a --game <id> --data-dir <path>`
+   (current state: only the canonical `~/.firestaff/data/<game>/`
+   paths have been launched). Open until each alternative path
+   passes an `m11_phase_a` boot probe with the same assertion set
+   the canonical paths use.
 3. **Mirror dmweb /community/documentation/ for offline research**
    — DONE 2026-06-20 (commit pending; 43 pages mirrored at
    `reference/dmweb-community-docs/` with INDEX.md + index.json +
@@ -561,3 +573,90 @@ VERIFIED** eftersom de nu också matchar en kanonisk hash:
 
 Dessa kan nu användas som real-asset testkällor utöver den
 befintliga canonical-staging som finns under `dm1/`, `csb/`, etc.
+
+---
+
+## L. Follow-up — concrete next-session tasks
+
+Listan nedan är prioriterade mindre tasks som följer direkt av
+sessionens leveranser. Varje punkt tar < 1 dag och kräver ingen
+ny design.
+
+### L1. Verifiera alternativa READY-path:er bootar
+
+Den nya källan Tier 1 #5. Kör mot varje EXTRACTED + VERIFIED path
+och bekräfta att M11 faktiskt startar spelet, inte bara att
+scannern hittar hasharna.
+
+```bash
+for spec in \
+  "dm1   ~/.firestaff/data/dm1-extras/legacy-dos" \
+  "csb   ~/.firestaff/data/csb-extras/legacy-amiga-dms" \
+  "nexus ~/.firestaff/data/nexus-extras/saturn-ja" \
+  "theron ~/.firestaff/data/theron-extras/japan"
+do
+  set -- $spec
+  game=$1
+  path=$2
+  echo "=== $game @ $path ==="
+  SDL_VIDEODRIVER=dummy ./build/firestaff --data-dir "$path" --game $game --duration 1000 2>&1 | tail -5
+done
+```
+
+Förväntat: Phase A-probe-PASS + en spel-specifik asset-load PASS
+per path. Om något FAIL:ar, markera gap-status tillbaka till
+PARTIAL.
+
+### L2. Skapa `tools/data-readiness-summary.py`
+
+Tier 1 #2 --summary-mode. Skriver ut per-spel tabell:
+`game / required-files-present / found-in-canonical / found-in-extras /
+launch-tested`. Tar input från `compare_to_greatstone.py` + en
+manifest-läsare.
+
+Output (exempel):
+```
+dm1   2/2 present   2/2 canonical   1 extra (legacy-dos PC34)  NOT launch-tested
+csb   2/2 present   2/2 canonical   1 extra (Amiga 3.3 Meynaf FR) NOT launch-tested
+dm2   2/2 present   2/2 canonical   0 extras                       LAUNCH-TESTED
+nexus 1/1 present   1/1 canonical   1 extra (Saturn JA Track 1)     NOT launch-tested
+theron 1/1 present  1/1 canonical   1 extra (JP Track 02)           NOT launch-tested
+```
+
+Wire in i CMakeLists + `ci: asset-hygiene` job. Används vid varje
+`git push` för att snabbt se om något blockerar M12 launch.
+
+### L3. Utöka `extract-game-archives.sh` med verify-steg
+
+Efter extraktion, kör `compare_to_greatstone.py` per extras-
+katalog och rapportera per-version-summary. Loggas in i
+`.extract-log.md` och `.extract-manifest.json`. Detta gör att
+framtida körningar direkt ser vilka versioner som matchar en
+kanonisk hash och vilka som bara är reference-material.
+
+### L4. CSB Amiga 3.5 launch-barriär
+
+Den extraherade `csb-extras/amiga-3.5-ctraw-en` innehåller CTraw
+(.st/.raw/.err/.out) som scannern inte mappar till en canonical
+hash (CTRaw är ej CTraw-filen själv, den är bara Amiga-emulator-
+formatet). Skriv en liten helper `tools/ctraw_to_amiga_dat.py` som
+packar om .raw → .DAT/.DATA-format Firestaff kan läsa. Eller
+acceptera att 3.5 är oåtkomlig utan mer arbete och stryk den ur
+"extraherad"-listan.
+
+### L5. DM2 canonical launch-test
+
+DM2 var den enda spel-versionen utan ny EXTRACTED + VERIFIED path
+(det extraherade materialet har olika format och/eller språk mot
+det canonical `dm2/` använder). Kör `--game dm2 --data-dir
+~/.firestaff/data/dm2-extras/dos-en` och bekräfta att DM2 bootar
+mot en extraherad version. Detta skulle ge oss DM2-cross-version-
+regression-täckning vi saknar idag.
+
+### L6. README-public-dokumentation-uppdatering
+
+Per AGENTS.md: README ska vara honest, user-facing, sales-friendly
+med verklig per-spel-status. Efter dagens gap-list-uppdateringar
+bör README:s DM1/CSB/DM2/Nexus/Theron-tabeller uppdateras för
+att reflektera att fyra av fem spel har real-asset-evidens i
+både canonical- OCH extras-staging.
