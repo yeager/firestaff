@@ -1,0 +1,12 @@
+-rw-------  1 bosse  staff   638B Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_224x136_manifest.tsv
+-rw-------  1 bosse  staff   341B Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_shot_labels.tsv
+-rw-------  1 bosse  staff   1.8K Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/raw_frame_health.json
+-rw-------  1 bosse  staff   1.0K Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/raw_manifest.tsv
+-rw-------  1 bosse  staff   9.9K Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/01_party_hud_original_viewport_224x136.png
+-rw-------  1 bosse  staff    89K Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/01_party_hud_original_viewport_224x136.ppm
+-rw-------  1 bosse  staff   6.8K Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/02_left_1_wall_original_viewport_224x136.png
+-rw-------  1 bosse  staff    89K Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/02_left_1_wall_original_viewport_224x136.ppm
+-rw-------  1 bosse  staff   9.7K Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/03_left_2_view_original_viewport_224x136.png
+-rw-------  1 bosse  staff    89K Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/03_left_2_view_original_viewport_224x136.ppm
+-rw-------  1 bosse  staff   7.1K Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/04_left_3_view_original_viewport_224x136.png
+-rw-------  1 bosse  staff    89K Jun 20 21:17 /Users/bosse/.openclaw/workspace-main/verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/04_left_3_view_original_viewport_224x136.ppm
