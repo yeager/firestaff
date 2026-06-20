@@ -14,14 +14,36 @@ SHA256 checksums for known-good original game data files.
 | dm1-multilingual | DUNGEONG.DAT | `b2478d5cc3213725329cb42684f0309e5e95fd6789dc2cb0c3377b178ad75817` | 33,705 |
 | csb | GRAPHICS.DAT | `3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942` | 435,076 |
 | csb | DUNGEON.DAT | `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba` | 2,098 |
+| csb-atari-st-2x | GRAPHICS.DAT | `33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af` | 319,080 |
+| csb-atari-st-2x | DUNGEON.DAT | `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba` | 2,098 |
+| dm1 | GRAPHICS.DAT | `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` | 363,417 |
+| dm1 | DUNGEON.DAT | `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` | 33,357 |
+| dm1-atari-st-1.2-en | GRAPHICS.DAT | `8461648c1569539122182b731cb9a61f0610ec0534a3efb54cf98e9b4b14f015` | 322,861 |
+| dm1-atari-st-1.2-en | DUNGEON.DAT | `a26f0edc4fb13e3d38551d91ad7c24f517257cfc689affe72d657f4e423853b2` | 33,442 |
 | dm2 | GRAPHICS.DAT | `c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346` | 8,639,757 |
 | dm2 | DUNGEON.DAT | `cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef` | 39,437 |
+| dm2-pc-fr | GRAPHICS.DAT | `7b8bbf6a843b01449c1cca20438c9e5c5a8c5ba8fddad761d3e2b64c5daf1a9b` | 8,717,101 |
+| dm2-pc-fr | DUNGEON.DAT | `cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef` | 39,437 |
+| dm2-pc-de | GRAPHICS.DAT | `627cee1960f0fad93697c4c73eaea9c137d4e1ff34b6c2e6c27ac0a6f1237e77` | 8,678,304 |
+| dm2-pc-de | DUNGEON.DAT | `cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef` | 39,437 |
+| dm2-mac-en | GRAPHICS.DAT | `aa642a6e617b6fbf47ac0c9dde7aea3ef0fcfbded07c03c57c54c4f3fa5640b2` | 8,157,169 |
+| dm2-mac-en | DUNGEON.DAT | `68e51fddf4d6c664db172f7aa4c6ffacba936dcc6ccdd7f7c0a6167066613714` | 39,411 |
 | nexus | DM.BIN | `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124` | 555,144 |
 
 ## All Files
 
 - `csb/DUNGEON.DAT` (2,098 bytes): `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba`
 - `csb/GRAPHICS.DAT` (435,076 bytes): `3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942`
+- `csb-atari-st-2x/GRAPHICS.DAT` (319,080 bytes): `33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af`
+- `csb-atari-st-2x/DUNGEON.DAT` (2,098 bytes): `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba`
+- `dm1-atari-st-1.2-en/GRAPHICS.DAT` (322,861 bytes): `8461648c1569539122182b731cb9a61f0610ec0534a3efb54cf98e9b4b14f015`
+- `dm1-atari-st-1.2-en/DUNGEON.DAT` (33,442 bytes): `a26f0edc4fb13e3d38551d91ad7c24f517257cfc689affe72d657f4e423853b2`
+- `dm2-pc-fr/GRAPHICS.DAT` (8,717,101 bytes): `7b8bbf6a843b01449c1cca20438c9e5c5a8c5ba8fddad761d3e2b64c5daf1a9b`
+- `dm2-pc-fr/DUNGEON.DAT` (39,437 bytes): `cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef`
+- `dm2-pc-de/GRAPHICS.DAT` (8,678,304 bytes): `627cee1960f0fad93697c4c73eaea9c137d4e1ff34b6c2e6c27ac0a6f1237e77`
+- `dm2-pc-de/DUNGEON.DAT` (39,437 bytes): `cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef`
+- `dm2-mac-en/Graphics.dat` (8,157,169 bytes): `aa642a6e617b6fbf47ac0c9dde7aea3ef0fcfbded07c03c57c54c4f3fa5640b2`
+- `dm2-mac-en/Dungeon.dat` (39,411 bytes): `68e51fddf4d6c664db172f7aa4c6ffacba936dcc6ccdd7f7c0a6167066613714`
 - `dm1-multilingual/DUNGEON.DAT` (33,357 bytes): `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`
 - `dm1-multilingual/DUNGEONF.DAT` (33,687 bytes): `290543621ae7c465fee9651c4d3c44f5dc268f5e16fffc75da82a440274c0571`
 - `dm1-multilingual/DUNGEONG.DAT` (33,705 bytes): `b2478d5cc3213725329cb42684f0309e5e95fd6789dc2cb0c3377b178ad75817`
