@@ -88,21 +88,28 @@ int csb_v1_graphics_hidden_item_load_safe(M11_GFX_LoaderState* state,
                                            M11_GFX_Bitmap*      out)
 {
     if (!out) return -1;
-    /* Zero the output up front so callers can safely read all
-     * fields on both success and skip paths. */
-    memset(out, 0, sizeof(*out));
 
-    if (!state) return -1;
-
-    /* First: skip-check. Empty bitmap on match. */
+    /* First: skip-check. Empty bitmap on match.
+     * The skip-check is independent of loader state because it
+     * uses static table data only. This ordering lets callers
+     * skip-check before opening a .DAT file (useful for tests
+     * and for early validation). */
     CSB_V1_HiddenSkipDecision dec =
         csb_v1_graphics_hidden_should_skip_item(platform, item_index);
     if (dec.should_skip) {
+        /* Zero the output up front so callers can safely read
+         * all fields on the skip path. */
+        memset(out, 0, sizeof(*out));
         /* No data allocated; blit becomes a no-op. */
         return 1;
     }
 
-    /* Second: delegate to the real loader. */
+    /* Past this point we need a valid loader state. Zero the
+     * output so callers always see a clean bitmap on failure. */
+    memset(out, 0, sizeof(*out));
+    if (!state) return 0;  /* failure path: no real loader */
+
+    /* Delegate to the real loader. */
     if (m11_gfx_load_bitmap(state, item_index, out)) {
         return 1;
     }
