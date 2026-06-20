@@ -47,41 +47,42 @@ static const DM2_V1_PressurePlate g_builtin_plates[DM2_PLATE_NUM_BUILTIN] = {
     {
         1, DM2_PLATE_KIND_WEIGHT, 12, 8, 0,
         300,    /* weight_threshold (party + items) */
-        0, 0,   /* no item */
-        0,      /* no time */
+        0,      /* no required_item */
+        0,      /* no time_period */
         DM2_PLATE_TARGET_DOOR_TOGGLE, 13, 8, 0,
-        0, 1, 1  /* repeating, one-way (party departs resets) */
+        0, 0, 1  /* fire_once=0, one_way=0 (re-armable on weight change), enabled */
     },
     /* Plate 2: Item plate - place key on plate to open sealed door */
     {
         2, DM2_PLATE_KIND_ITEM, 5, 12, 0,
-        0,
+        0,      /* weight_threshold unused */
         111,    /* required_item_id (magic battery) */
-        0,
+        0,      /* time_period unused */
         DM2_PLATE_TARGET_DOOR_OPEN, 5, 13, 0,
-        1, 0, 1  /* fire once, not one-way */
+        1, 0, 1  /* fire_once=1, one_way=0, enabled */
     },
     /* Plate 3: Time plate - periodic message display every 5s */
     {
         3, DM2_PLATE_KIND_TIME, 0, 0, 0,
-        0, 0,
+        0,      /* weight_threshold unused */
+        0,      /* required_item_id unused */
         5000,   /* time_period_ms */
         DM2_PLATE_TARGET_MESSAGE, 0, 0, 0,
-        0, 0, 1
+        0, 0, 1  /* fire_once=0, one_way=0, enabled */
     },
     /* Plate 4: Party plate - any party member triggers pit toggle */
     {
         4, DM2_PLATE_KIND_PARTY, 7, 7, 1,
         0, 0, 0,
         DM2_PLATE_TARGET_PIT_TOGGLE, 7, 8, 1,
-        0, 1, 1
+        0, 1, 1  /* fire_once=0, one_way=1 (resets on party leave), enabled */
     },
     /* Plate 5: Creature plate - any creature triggers creature spawn */
     {
         5, DM2_PLATE_KIND_CREATURE, 20, 20, 2,
         0, 0, 0,
         DM2_PLATE_TARGET_CREATURE_SPAWN, 21, 20, 2,
-        0, 0, 1
+        0, 0, 1  /* fire_once=0, one_way=0, enabled */
     },
 };
 
@@ -144,6 +145,10 @@ void dm2_v1_plate_set_party_position(int x, int y, int level) {
         if (!p || !p->enabled) continue;
         int on_plate = (p->map_x == x && p->map_y == y && p->map_level == level);
         s_runtime.states[i].party_present = on_plate ? 1 : 0;
+        /* For one-way plates, also flip the active flag. */
+        if (p->one_way) {
+            s_runtime.states[i].active = on_plate ? 1 : 0;
+        }
     }
 }
 
