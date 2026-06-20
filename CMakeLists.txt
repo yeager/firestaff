@@ -2131,11 +2131,12 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_pressure_plate_pc34_compat
         tests/test_dm2_v1_pressure_plate_pc34_compat.c
         src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_door_mechanics.c
     )
     target_include_directories(test_dm2_v1_pressure_plate_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_dm2_v1_pressure_plate_pc34_compat PRIVATE firestaff_m10)
+    # Self-contained: doesn't link firestaff_m10 (avoid unrelated work-in-progress CSB files).
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_pressure_plate_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
@@ -2152,7 +2153,7 @@ if(BUILD_TESTING)
     target_include_directories(firestaff_dm2_v1_pressure_plate_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(firestaff_dm2_v1_pressure_plate_probe PRIVATE firestaff_m10 m)
+    target_link_libraries(firestaff_dm2_v1_pressure_plate_probe PRIVATE m)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v1_pressure_plate_probe PRIVATE -Wall -Wextra -O2)
     endif()
@@ -12384,5 +12385,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0205_pc34_compat.c"
     add_test(
         NAME dm1_v1_g0205_pc34_compat
         COMMAND test_dm1_v1_g0205_pc34_compat
+    )
+endif()
+
+# pass1049 — DM1 V1 G0224_aaaauc_Graphic558_CreatureCoordinateSets[3][11][5][2]:
+# 3 sets × 11 frames × 5 coords × 2 fields = 330 bytes (creature coords).
+# Source-locked against DUNVIEW.C:513/1836/5307.
+# Disjoint from pass784-1048.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0224_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0224_pc34_compat.c")
+    add_executable(test_dm1_v1_g0224_pc34_compat
+        tests/test_dm1_v1_g0224_pc34_compat.c
+        src/dm1/dm1_v1_g0224_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0224_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0224_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0224_pc34_compat
+        COMMAND test_dm1_v1_g0224_pc34_compat
     )
 endif()
