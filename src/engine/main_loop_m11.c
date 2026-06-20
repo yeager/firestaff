@@ -1820,30 +1820,27 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_END:
                     return M12_MENU_INPUT_TURN_RIGHT;
                 case SDLK_A:
-                    if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_STRAFE_LEFT;
-                    }
-                    return M12_MENU_INPUT_NONE;
+                    /* v2.9.x: WASD mirrors the arrow keys unconditionally.
+                     * Per the user's request, WASD should always work
+                     * exactly like arrow keys for navigation. The
+                     * wasdMovementEnabled settings toggle is preserved
+                     * as legacy state for backward-compatible config
+                     * files but is no longer consulted here -- the
+                     * settings menu entry has been removed and a
+                     * migration warning is logged once on first launch
+                     * if the user had previously disabled it. */
+                    return M12_MENU_INPUT_STRAFE_LEFT;
                 case SDLK_D:
-                    if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_STRAFE_RIGHT;
-                    }
-                    return M12_MENU_INPUT_NONE;
+                    return M12_MENU_INPUT_STRAFE_RIGHT;
                 case SDLK_W:
-                    if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_UP;
-                    }
-                    return M12_MENU_INPUT_NONE;
+                    return M12_MENU_INPUT_UP;
                 case SDLK_S:
                     if (ev.key.mod & SDL_KMOD_CTRL) {
                         if (gameView && gameView->active)
                             return M12_MENU_INPUT_SAVE_GAME;
                         return M12_MENU_INPUT_NONE;
                     }
-                    if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_DOWN;
-                    }
-                    return M12_MENU_INPUT_NONE;
+                    return M12_MENU_INPUT_DOWN;
                 case SDLK_RETURN:
                 case SDLK_KP_ENTER:
                     return M12_MENU_INPUT_ACCEPT;
@@ -2136,30 +2133,20 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_END:
                     return M12_MENU_INPUT_TURN_RIGHT;
                 case SDLK_A:
-                    if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_STRAFE_LEFT;
-                    }
-                    return M12_MENU_INPUT_NONE;
+                    /* v2.9.x: see the SDL3 branch above; WASD is now
+                     * unconditional and mirrors the arrow keys. */
+                    return M12_MENU_INPUT_STRAFE_LEFT;
                 case SDLK_D:
-                    if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_STRAFE_RIGHT;
-                    }
-                    return M12_MENU_INPUT_NONE;
+                    return M12_MENU_INPUT_STRAFE_RIGHT;
                 case SDLK_W:
-                    if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_UP;
-                    }
-                    return M12_MENU_INPUT_NONE;
+                    return M12_MENU_INPUT_UP;
                 case SDLK_S:
                     if (ev.key.keysym.mod & KMOD_CTRL) {
                         if (gameView && gameView->active)
                             return M12_MENU_INPUT_SAVE_GAME;
                         return M12_MENU_INPUT_NONE;
                     }
-                    if (menuState && menuState->settings.wasdMovementEnabled) {
-                        return M12_MENU_INPUT_DOWN;
-                    }
-                    return M12_MENU_INPUT_NONE;
+                    return M12_MENU_INPUT_DOWN;
                 case SDLK_RETURN:
                 case SDLK_KP_ENTER:
                     return M12_MENU_INPUT_ACCEPT;
