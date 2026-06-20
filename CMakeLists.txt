@@ -8695,3 +8695,176 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_mirror_pc34_co
         COMMAND test_dm1_v1_champion_mirror_pc34_compat
     )
 endif()
+
+# pass852 — DM1 V1 mandatory-graphic-indices: Graphics.dat item 562 init
+# var G0018_ai_Graphic562_MandatoryGraphicIndices[70]. Source-locked
+# against DATA.C:24/137-209/615/690 + DUNVIEW.C:2350/2353/2356/2359/2454/2455
+# + DEFS.H:3234 (M531) + DEFS.H:2171-2233 + DEFS.H:2271-2284 + DEFS.H:2305-2314.
+# Disjoint from pass784-851.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_mandatory_graphic_indices_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mandatory_graphic_indices_pc34_compat.c")
+    add_executable(test_dm1_v1_mandatory_graphic_indices_pc34_compat
+        tests/test_dm1_v1_mandatory_graphic_indices_pc34_compat.c
+        src/dm1/dm1_v1_mandatory_graphic_indices_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mandatory_graphic_indices_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mandatory_graphic_indices_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mandatory_graphic_indices_pc34_compat
+        COMMAND test_dm1_v1_mandatory_graphic_indices_pc34_compat
+    )
+endif()
+
+# pass853 — DM1 V1 wound defense factor: G0007_ai_Graphic562_WoundDefenseFactor[5]
+# — per-limb wound-defense multiplier table. Source-locked against
+# DATA.C:24/271-280 + REVIVE.C:1144-1148 (F0280 wound read at the
+# defensive-dodge site) + DEFS.H:736-741 (wound mask bits 0x04/0x08/0x10/0x20).
+# Disjoint from pass784-790 + pass791-799 + pass798/800-806/811-852.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_wound_defense_factor_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_wound_defense_factor_pc34_compat.c")
+    add_executable(test_dm1_v1_wound_defense_factor_pc34_compat
+        tests/test_dm1_v1_wound_defense_factor_pc34_compat.c
+        src/dm1/dm1_v1_wound_defense_factor_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_wound_defense_factor_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_wound_defense_factor_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_wound_defense_factor_pc34_compat
+        COMMAND test_dm1_v1_wound_defense_factor_pc34_compat
+    )
+endif()
+
+# pass854 — DM1 V1 underscore character string: G0029_aac_Graphic562_UnderscoreCharacterString[5]
+# — 5 ASCII character codes ('_' underscore + 4 NULs) for the champion
+# rename input strip. Source-locked against DATA.C:24/335-340 +
+# CLIKCHAM.C F0368 set-leader rename path + DEFS.H C007..C011
+# (champion ordinals) + DEFS.H 95 (0x5F underscore codepoint).
+# Disjoint from pass784-853.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_underscore_character_string_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_underscore_character_string_pc34_compat.c")
+    add_executable(test_dm1_v1_underscore_character_string_pc34_compat
+        tests/test_dm1_v1_underscore_character_string_pc34_compat.c
+        src/dm1/dm1_v1_underscore_character_string_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_underscore_character_string_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_underscore_character_string_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_underscore_character_string_pc34_compat
+        COMMAND test_dm1_v1_underscore_character_string_pc34_compat
+    )
+endif()
+
+# pass855 — DM1 V1 rename-champion input character string: G0028_aac_Graphic562_RenameChampionInputCharacterString[6]
+# — 6 ASCII character codes for the rename-input max-6-char limit.
+# Source-locked against DATA.C:24/328-334 + CLIKCHAM.C F0368:51-72
+# (rename input dispatch) + DEFS.H:432-435 (champion max-name length).
+# Disjoint from pass784-854.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_rename_champion_input_character_string_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_rename_champion_input_character_string_pc34_compat.c")
+    add_executable(test_dm1_v1_rename_champion_input_character_string_pc34_compat
+        tests/test_dm1_v1_rename_champion_input_character_string_pc34_compat.c
+        src/dm1/dm1_v1_rename_champion_input_character_string_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_rename_champion_input_character_string_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_rename_champion_input_character_string_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_rename_champion_input_character_string_pc34_compat
+        COMMAND test_dm1_v1_rename_champion_input_character_string_pc34_compat
+    )
+endif()
+
+# pass856 — DM1 V1 reincarnate special characters: G0027_aac_Graphic562_ReincarnateSpecialCharacters[5]
+# — 5 ASCII character codes for the reincarnate-screen (death/resurrect
+# portrait) special-character glyphs. Source-locked against
+# DATA.C:24/321-327 + REVIVE.C F0280:124-132 (C162 cancel branch reads
+# the reincarnate string) + REVIVE.C F0282:744-806 (C162 dispatch) +
+# DEFS.H C162 (champion cancel).
+# Disjoint from pass784-855.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_reincarnate_special_characters_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_reincarnate_special_characters_pc34_compat.c")
+    add_executable(test_dm1_v1_reincarnate_special_characters_pc34_compat
+        tests/test_dm1_v1_reincarnate_special_characters_pc34_compat.c
+        src/dm1/dm1_v1_reincarnate_special_characters_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_reincarnate_special_characters_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_reincarnate_special_characters_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_reincarnate_special_characters_pc34_compat
+        COMMAND test_dm1_v1_reincarnate_special_characters_pc34_compat
+    )
+endif()
+
+# pass857 — DM1 V1 bitmap arrow pointer: G0042_auc_Graphic562_Bitmap_ArrowPointer[2][66]
+# — 4bpp-packed mouse-cursor arrow bitmap. Source-locked against
+# DATA.C:24/362-376 (PC 3.4 EN init block) + IO.C cursor blit path
+# (G0042 bitmap + G0044 PaletteChanges_MousePointerIcon + G0046
+# ChampionColor triplet) + DEFS.H:2167-2170 (palette slot bounds).
+# Disjoint from pass784-856.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_bitmap_arrow_pointer_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_bitmap_arrow_pointer_pc34_compat.c")
+    add_executable(test_dm1_v1_bitmap_arrow_pointer_pc34_compat
+        tests/test_dm1_v1_bitmap_arrow_pointer_pc34_compat.c
+        src/dm1/dm1_v1_bitmap_arrow_pointer_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_bitmap_arrow_pointer_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_bitmap_arrow_pointer_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_bitmap_arrow_pointer_pc34_compat
+        COMMAND test_dm1_v1_bitmap_arrow_pointer_pc34_compat
+    )
+endif()
+
+# pass858 — DM1 V1 bitmap hand pointer: G0043_auc_Graphic562_Bitmap_HandPointer[2][66]
+# — 4bpp-packed hand-cursor (champion-portrait hover) bitmap. Source-locked
+# against DATA.C:24/396-410 (PC 3.4 EN init block) + PANEL.C F0344
+# inventory-draw panel hand-pointer blit path + IO.C cursor blit.
+# Disjoint from pass784-857.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_bitmap_hand_pointer_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_bitmap_hand_pointer_pc34_compat.c")
+    add_executable(test_dm1_v1_bitmap_hand_pointer_pc34_compat
+        tests/test_dm1_v1_bitmap_hand_pointer_pc34_compat.c
+        src/dm1/dm1_v1_bitmap_hand_pointer_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_bitmap_hand_pointer_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_bitmap_hand_pointer_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_bitmap_hand_pointer_pc34_compat
+        COMMAND test_dm1_v1_bitmap_hand_pointer_pc34_compat
+    )
+endif()
+
+# pass859 — DM1 V1 square-type to event-type: G0004_ai_Graphic562_SquareTypeToEventType[16]
+# — 16-entry table mapping DUNGEON.C square-type ordinals to F0920
+# event-type dispatch IDs. Source-locked against DATA.C:24/463-477
+# (PC 3.4 EN init block) + DUNGEON.C:2238-2246 (square-type decode) +
+# SQUARE.C F0920 event-type dispatch + DEFS.H:922 (M034_SQUARE_TYPE).
+# Disjoint from pass784-858.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_square_type_to_event_type_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_square_type_to_event_type_pc34_compat.c")
+    add_executable(test_dm1_v1_square_type_to_event_type_pc34_compat
+        tests/test_dm1_v1_square_type_to_event_type_pc34_compat.c
+        src/dm1/dm1_v1_square_type_to_event_type_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_square_type_to_event_type_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_square_type_to_event_type_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_square_type_to_event_type_pc34_compat
+        COMMAND test_dm1_v1_square_type_to_event_type_pc34_compat
+    )
+endif()
