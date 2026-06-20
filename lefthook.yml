@@ -1,0 +1,99 @@
+# Lefthook configuration for Firestaff
+#
+# Install:    brew install lefthook  (or `go install github.com/evilmartians/lefthook@latest`)
+# Setup:      lefthook install         (writes .git/hooks/pre-commit)
+# Run all:    lefthook run pre-commit
+#
+# Why a thin hook set:
+#   - We don't want a slow pre-commit. The pre-commit hook only runs
+#     the cheapest checks that catch the most regressions.
+#   - Full builds and tests live in CI (.github/workflows/verify.yml).
+#   - If you intentionally skip a hook, use `git commit --no-verify`.
+#
+# Adding a new hook:
+#   1. Add a `pre-commit:` or `pre-push:` block below.
+#   2. Run `lefthook install` to refresh .git/hooks.
+#   3. Bump the version comment so people know when it landed.
+
+min_version: 1.6.0
+
+source_dir: .
+
+# ─────────────────────────────────────────────────────────────────────────
+# pre-commit: fast checks before each commit
+# ─────────────────────────────────────────────────────────────────────────
+
+pre-commit:
+  parallel: true
+  commands:
+    po_layout:
+      glob: "po/**/*"
+      run: bash po/validate_po_layout.sh
+      stage_fixed: true
+
+    python_syntax:
+      glob: "tools/**/*.py"
+      exclude: "tools/.venv/**"
+      run: python3 -m py_compile {staged_files}
+      skip: |
+        # Skip if no Python files staged; command would error on empty argv.
+        [ -z "$(git diff --cached --name-only --diff-filter=ACMR -- 'tools/**/*.py' 2>/dev/null)" ]
+
+    trailing_whitespace:
+      run: |
+        bad=$(git diff --cached --name-only --diff-filter=ACMR -z | \
+              xargs -0 -I{} sh -c 'grep -nH " $" "{}" 2>/dev/null' || true)
+        if [ -n "$bad" ]; then
+          echo "ERROR: trailing whitespace in:"
+          echo "$bad"
+          exit 1
+        fi
+
+    newline_eof:
+      run: |
+        bad=""
+        for f in $(git diff --cached --name-only --diff-filter=ACMR); do
+          [ -f "$f" ] || continue
+          case "$f" in
+            *.png|*.jpg|*.gif|*.webp|*.ico|*.pdf|*.zip|*.gz|*.bz2|*.xz) continue ;;
+          esac
+          last=$(tail -c 1 "$f" | xxd -p)
+          if [ "$last" != "0a" ] && [ -n "$last" ]; then
+            bad="$bad $f"
+          fi
+        done
+        if [ -n "$bad" ]; then
+          echo "ERROR: missing trailing newline in:${bad}"
+          exit 1
+        fi
+
+    hash_harmonization:
+      glob: "{src/shared/asset_status_m12.c,src/shared/asset_find_by_hash.c,src/dm2/dm2_v1_*.c,docs/VERIFIED_HASHES.md}"
+      run: python3 tools/asset-validate/compare_md5_to_sha256.py
+      skip: |
+        # Skip if none of the harmonization-touching files changed.
+        [ -z "$(git diff --cached --name-only --diff-filter=ACMR -- 'src/shared/asset_status_m12.c' 'src/shared/asset_find_by_hash.c' 'src/dm2/dm2_v1_*.c' 'docs/VERIFIED_HASHES.md' 2>/dev/null)" ]
+
+# ─────────────────────────────────────────────────────────────────────────
+# pre-push: heavier checks before pushing
+# ─────────────────────────────────────────────────────────────────────────
+
+pre-push:
+  parallel: false
+  commands:
+    po_layout_full:
+      run: bash po/validate_po_layout.sh
+
+    hash_harmonization_full:
+      run: python3 tools/asset-validate/compare_md5_to_sha256.py
+
+# ─────────────────────────────────────────────────────────────────────────
+# CI: invoked by .github/workflows/verify.yml after checkout
+# ─────────────────────────────────────────────────────────────────────────
+
+ci:
+  commands:
+    po_layout:
+      run: bash po/validate_po_layout.sh
+    hash_harmonization:
+      run: python3 tools/asset-validate/compare_md5_to_sha256.py

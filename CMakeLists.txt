@@ -8719,6 +8719,21 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass869_dm1_v1_line_feed_character_string PROPERTIES DEPENDS dm1_v1_line_feed_character_string_pc34_compat)
         add_test(
+            NAME pass870_dm1_v1_palette_changes_cursor_mask
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass870_dm1_v1_palette_changes_cursor_mask_pc34_compat.py
+        )
+        set_tests_properties(pass870_dm1_v1_palette_changes_cursor_mask PROPERTIES DEPENDS dm1_v1_palette_changes_cursor_mask_pc34_compat)
+        add_test(
+            NAME pass871_dm1_v1_palette_changes
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass871_dm1_v1_palette_changes_pc34_compat.py
+        )
+        set_tests_properties(pass871_dm1_v1_palette_changes PROPERTIES DEPENDS dm1_v1_palette_changes_pc34_compat)
+        add_test(
+            NAME pass872_dm1_v1_palette_changes_cursor_mask_v2
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass872_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat.py
+        )
+        set_tests_properties(pass872_dm1_v1_palette_changes_cursor_mask_v2 PROPERTIES DEPENDS dm1_v1_palette_changes_cursor_mask_v2_pc34_compat)
+        add_test(
             NAME pass840_dm1_v1_box_entrance_doors
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass840_dm1_v1_box_entrance_doors_pc34_compat.py
         )
@@ -9230,5 +9245,66 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_line_feed_character_str
     add_test(
         NAME dm1_v1_line_feed_character_string_pc34_compat
         COMMAND test_dm1_v1_line_feed_character_string_pc34_compat
+    )
+endif()
+
+# pass870 — DM1 V1 palette-changes-cursor-mask (G4010): 16-entry
+# palette-change table for the dark-cursor mask blit. PC 3.4 init =
+# {15, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}. Source-locked
+# against DATA.C:420 + IO.C:2144/2151. Disjoint from pass784-869.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_palette_changes_cursor_mask_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_palette_changes_cursor_mask_pc34_compat.c")
+    add_executable(test_dm1_v1_palette_changes_cursor_mask_pc34_compat
+        tests/test_dm1_v1_palette_changes_cursor_mask_pc34_compat.c
+        src/dm1/dm1_v1_palette_changes_cursor_mask_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_changes_cursor_mask_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_changes_cursor_mask_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_changes_cursor_mask_pc34_compat
+        COMMAND test_dm1_v1_palette_changes_cursor_mask_pc34_compat
+    )
+endif()
+
+# pass871 — DM1 V1 palette-changes (G4011): 16-entry palette-change
+# table for cursor + champion-icon blits. PC 3.4 init = {15, 14, 13,
+# 12, 11, 10, 9, 8, 7, 6, 5, 4, 0, 2, 1, 0}. Source-locked against
+# DATA.C:421 + IO.C:2145/2152/2454. Disjoint from pass784-870.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_palette_changes_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_palette_changes_pc34_compat.c")
+    add_executable(test_dm1_v1_palette_changes_pc34_compat
+        tests/test_dm1_v1_palette_changes_pc34_compat.c
+        src/dm1/dm1_v1_palette_changes_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_changes_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_changes_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_changes_pc34_compat
+        COMMAND test_dm1_v1_palette_changes_pc34_compat
+    )
+endif()
+
+# pass872 — DM1 V1 palette-changes-cursor-mask-v2 (G4013): 16-entry
+# variant-2 palette-change table for the second-style cursor mask
+# blit + champion-icon mask path. PC 3.4 init = {15, 15, ..., 0,
+# 15, 15, 15}. Source-locked against DATA.C:422 + IO.C:2151/2453.
+# Disjoint from pass784-871.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_palette_changes_cursor_mask_v2_pc34_compat.c")
+    add_executable(test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat
+        tests/test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat.c
+        src/dm1/dm1_v1_palette_changes_cursor_mask_v2_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_palette_changes_cursor_mask_v2_pc34_compat
+        COMMAND test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat
     )
 endif()
