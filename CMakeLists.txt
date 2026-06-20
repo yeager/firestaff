@@ -7487,6 +7487,12 @@ if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_
         NAME dm_title_palette_silicon
         COMMAND firestaff_v1_dm_title_palette_silicon_probe
     )
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME verify_pass897_dm1_v1_dm_title_palette_silicon_pc34_compat
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass897_dm1_v1_dm_title_palette_silicon_pc34_compat.py
+        )
+    endif()
 endif()
 
 
@@ -8841,6 +8847,76 @@ if(BUILD_TESTING AND THERON_SOURCES)
         )
         set_tests_properties(pass883_dm1_v1_animtown_color_light5 PROPERTIES DEPENDS dm1_v1_animtown_color_light5_pc34_compat)
         add_test(
+            NAME pass920_dm1_v1_graphic560_symbol_base_mana_cost
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass920_dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat.py
+        )
+        set_tests_properties(pass920_dm1_v1_graphic560_symbol_base_mana_cost PROPERTIES DEPENDS dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat)
+        add_test(
+            NAME pass921_dm1_v1_graphic560_symbol_mana_cost_multiplier
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass921_dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat.py
+        )
+        set_tests_properties(pass921_dm1_v1_graphic560_symbol_mana_cost_multiplier PROPERTIES DEPENDS dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat)
+        add_test(
+            NAME pass922_dm1_v1_graphic560_action_disabled_ticks
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass922_dm1_v1_graphic560_action_disabled_ticks_pc34_compat.py
+        )
+        set_tests_properties(pass922_dm1_v1_graphic560_action_disabled_ticks PROPERTIES DEPENDS dm1_v1_graphic560_action_disabled_ticks_pc34_compat)
+        add_test(
+            NAME pass923_dm1_v1_graphic560_action_damage_factor
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass923_dm1_v1_graphic560_action_damage_factor_pc34_compat.py
+        )
+        set_tests_properties(pass923_dm1_v1_graphic560_action_damage_factor PROPERTIES DEPENDS dm1_v1_graphic560_action_damage_factor_pc34_compat)
+        add_test(
+            NAME pass924_dm1_v1_graphic560_action_hit_probability
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass924_dm1_v1_graphic560_action_hit_probability_pc34_compat.py
+        )
+        set_tests_properties(pass924_dm1_v1_graphic560_action_hit_probability PROPERTIES DEPENDS dm1_v1_graphic560_action_hit_probability_pc34_compat)
+        add_test(
+            NAME pass925_dm1_v1_graphic560_action_stamina
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass925_dm1_v1_graphic560_action_stamina_pc34_compat.py
+        )
+        set_tests_properties(pass925_dm1_v1_graphic560_action_stamina PROPERTIES DEPENDS dm1_v1_graphic560_action_stamina_pc34_compat)
+        add_test(
+            NAME pass926_dm1_v1_graphic560_action_defense
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass926_dm1_v1_graphic560_action_defense_pc34_compat.py
+        )
+        set_tests_properties(pass926_dm1_v1_graphic560_action_defense PROPERTIES DEPENDS dm1_v1_graphic560_action_defense_pc34_compat)
+        add_test(
+            NAME pass927_dm1_v1_graphic560_action_skill_index
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass927_dm1_v1_graphic560_action_skill_index_pc34_compat.py
+        )
+        set_tests_properties(pass927_dm1_v1_graphic560_action_skill_index PROPERTIES DEPENDS dm1_v1_graphic560_action_skill_index_pc34_compat)
+        add_test(
+            NAME pass928_dm1_v1_graphic560_box_action_area_3_actions_menu
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass928_dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat.py
+        )
+        set_tests_properties(pass928_dm1_v1_graphic560_box_action_area_3_actions_menu PROPERTIES DEPENDS dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat)
+        add_test(
+            NAME pass929_dm1_v1_graphic560_box_action_area_2_actions_menu
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass929_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat.py
+        )
+        set_tests_properties(pass929_dm1_v1_graphic560_box_action_area_2_actions_menu PROPERTIES DEPENDS dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat)
+        add_test(
+            NAME pass930_dm1_v1_graphic560_box_action_area_1_action_menu
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass930_dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat.py
+        )
+        set_tests_properties(pass930_dm1_v1_graphic560_box_action_area_1_action_menu PROPERTIES DEPENDS dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat)
+        add_test(
+            NAME pass931_dm1_v1_graphic560_box_action_area_medium_damage
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass931_dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat.py
+        )
+        set_tests_properties(pass931_dm1_v1_graphic560_box_action_area_medium_damage PROPERTIES DEPENDS dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat)
+        add_test(
+            NAME pass932_dm1_v1_graphic560_box_action_area_small_damage
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass932_dm1_v1_graphic560_box_action_area_small_damage_pc34_compat.py
+        )
+        set_tests_properties(pass932_dm1_v1_graphic560_box_action_area_small_damage PROPERTIES DEPENDS dm1_v1_graphic560_box_action_area_small_damage_pc34_compat)
+        add_test(
+            NAME pass933_dm1_v1_graphic560_box_spell_area_controls
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass933_dm1_v1_graphic560_box_spell_area_controls_pc34_compat.py
+        )
+        set_tests_properties(pass933_dm1_v1_graphic560_box_spell_area_controls PROPERTIES DEPENDS dm1_v1_graphic560_box_spell_area_controls_pc34_compat)
+        add_test(
             NAME pass884_dm1_v1_animtown_color_presents
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass884_dm1_v1_animtown_color_presents_pc34_compat.py
         )
@@ -9906,5 +9982,229 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_animtown_color_swoosh10
     add_test(
         NAME dm1_v1_animtown_color_swoosh10_pc34_compat
         COMMAND test_dm1_v1_animtown_color_swoosh10_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat
+        tests/test_dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat
+        COMMAND test_dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat
+        tests/test_dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat
+        COMMAND test_dm1_v1_graphic560_symbol_mana_cost_multiplier_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_action_disabled_ticks_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_action_disabled_ticks_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_action_disabled_ticks_pc34_compat
+        tests/test_dm1_v1_graphic560_action_disabled_ticks_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_disabled_ticks_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_action_disabled_ticks_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_action_disabled_ticks_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_action_disabled_ticks_pc34_compat
+        COMMAND test_dm1_v1_graphic560_action_disabled_ticks_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_action_damage_factor_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_action_damage_factor_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_action_damage_factor_pc34_compat
+        tests/test_dm1_v1_graphic560_action_damage_factor_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_damage_factor_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_action_damage_factor_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_action_damage_factor_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_action_damage_factor_pc34_compat
+        COMMAND test_dm1_v1_graphic560_action_damage_factor_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_action_hit_probability_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_action_hit_probability_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_action_hit_probability_pc34_compat
+        tests/test_dm1_v1_graphic560_action_hit_probability_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_hit_probability_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_action_hit_probability_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_action_hit_probability_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_action_hit_probability_pc34_compat
+        COMMAND test_dm1_v1_graphic560_action_hit_probability_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_action_stamina_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_action_stamina_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_action_stamina_pc34_compat
+        tests/test_dm1_v1_graphic560_action_stamina_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_stamina_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_action_stamina_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_action_stamina_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_action_stamina_pc34_compat
+        COMMAND test_dm1_v1_graphic560_action_stamina_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_action_defense_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_action_defense_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_action_defense_pc34_compat
+        tests/test_dm1_v1_graphic560_action_defense_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_defense_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_action_defense_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_action_defense_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_action_defense_pc34_compat
+        COMMAND test_dm1_v1_graphic560_action_defense_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_action_skill_index_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_action_skill_index_pc34_compat
+        tests/test_dm1_v1_graphic560_action_skill_index_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_action_skill_index_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_action_skill_index_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_action_skill_index_pc34_compat
+        COMMAND test_dm1_v1_graphic560_action_skill_index_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat
+        tests/test_dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat
+        COMMAND test_dm1_v1_graphic560_box_action_area_3_actions_menu_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat
+        tests/test_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat
+        COMMAND test_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat
+        tests/test_dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat
+        COMMAND test_dm1_v1_graphic560_box_action_area_1_action_menu_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat
+        tests/test_dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat
+        COMMAND test_dm1_v1_graphic560_box_action_area_medium_damage_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_box_action_area_small_damage_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_box_action_area_small_damage_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_box_action_area_small_damage_pc34_compat
+        tests/test_dm1_v1_graphic560_box_action_area_small_damage_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_box_action_area_small_damage_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_box_action_area_small_damage_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_box_action_area_small_damage_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_box_action_area_small_damage_pc34_compat
+        COMMAND test_dm1_v1_graphic560_box_action_area_small_damage_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_graphic560_box_spell_area_controls_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_graphic560_box_spell_area_controls_pc34_compat.c")
+    add_executable(test_dm1_v1_graphic560_box_spell_area_controls_pc34_compat
+        tests/test_dm1_v1_graphic560_box_spell_area_controls_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_box_spell_area_controls_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_graphic560_box_spell_area_controls_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_graphic560_box_spell_area_controls_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_graphic560_box_spell_area_controls_pc34_compat
+        COMMAND test_dm1_v1_graphic560_box_spell_area_controls_pc34_compat
     )
 endif()
