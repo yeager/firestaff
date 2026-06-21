@@ -41,7 +41,7 @@ Classification:
 | **S2D (Nexus font files)** | locally verified | PARTIAL — parser exists, font rendering incomplete |
 | **TAI/SAL/MAP (Nexus level data)** | locally verified | PARTIAL — loaders exist; TLINK metadata and rendering sparse |
 | **BPX/BPK (Nexus compressed archives)** | locally verified | OPEN-BOUNDED |
-| **Theron's Quest Track 02 BIN/ISO** | locally verified | OPEN-BOUNDED — loader exists, real-asset launch evidence missing |
+| **Theron's Quest Track 02 BIN/ISO** | locally verified | FIXED — JP canonical ISO, JP extras BIN, and US extras BIN launch-tested by `tier1_strict_boot_probe` (PASS 5/5 in-scope paths, 2026-06-21) plus `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` |
 
 ### A2. Mapfile system
 
@@ -306,7 +306,7 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | Save/load (.SRM) | PARTIAL |
 | Track02 bank routing | FIXED |
 | Dungeon progression (7 dungeons) | FIXED |
-| **JP/US Track 02 BIN/ISO real-asset launch** | EXTRACTED + VERIFIED — `theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin` matches canonical Track 02 hash; US version + PC-Engine combined `rar` also extracted. Next: confirm the 7-dungeon progression boots against `theron-extras/japan/` (currently only `theron/` is launched). |
+| **JP/US Track 02 BIN/ISO real-asset launch** | FIXED — `tier1_strict_boot_probe` PASS 5/5 in-scope paths on 2026-06-21 covers Theron JP canonical, Theron JP extras, and Theron US extras booting to the TQR level-load milestone; `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` also PASS. |
 | Cross-slot import/export against real Track 02 saves | OPEN-BOUNDED |
 | Cross-route mechanics runtime evidence | OPEN-BOUNDED |
 
@@ -646,14 +646,18 @@ Kort version:
 | DM1 legacy-dos | ✅ | Canonical `GRAPHICS.DAT`/`DUNGEON.DAT` i katalogen — matchar hashen direkt |
 | CSB Amiga 3.3 Meynaf FR | ✅ | Matchar canonical CSB-hasen i `...Meynaf/DungeonMaster/Graphics.DAT` |
 | Nexus Saturn JA | ⚠️ | MD5 stämmer (`d8362321...`) men filnamnet matchar inte scanner-mönstret `g_nexusArchiveNames` (`DM.BIN`, `SEGADATA.BIN`, etc.) — hittas bara i default-scan, inte via `--data-dir` |
-| Theron JP Track 02 | ⚠️ | MD5 stämmer (`b7afb338...`) men samma filnamns-problem |
+| Theron JP Track 02 | ✅ | MD5 stämmer (`b7afb338...`); 2026-06-21 `tier1_strict_boot_probe` launch-testar JP canonical + JP extras till TQR level-load milestone |
 | DM1 PC 3.4 English 3.5" (extras) | ⚠️ | Innehåller `.raw`-filer (CTRaw emulator-format) som scanner ej mappar |
 
 **Ny status:**
 - DM1 + CSB legacy path:er är nu `EXTRACTED + VERIFIED +
   LAUNCH-TESTED` (redo för framtida tester/parity-evidence).
-- Nexus + Theron container-path:er: `--data-dir <path>` HITTAR dem
-  korrekt via MD5-hash-matchning (asset_find_by_md5), inte filnamn.
+- Theron JP/US Track 02 path:er är `EXTRACTED + VERIFIED +
+  LAUNCH-TESTED` sedan 2026-06-21: `tier1_strict_boot_probe`
+  startar JP canonical, JP extras och US extras till TQR
+  level-load milestone.
+- Nexus container-path:er: `--data-dir <path>` HITTAR dem korrekt
+  via MD5-hash-matchning (asset_find_by_md5), inte filnamn.
   Source-filenamn som `Dungeon Master Nexus (Japan) (Track 1).bin`
   accepteras direkt. Tidigare påstått problem med filnamn var FEL.
 
@@ -677,7 +681,7 @@ dm1   2/2 present   2/2 canonical   1 extra (legacy-dos PC34)  NOT launch-tested
 csb   2/2 present   2/2 canonical   1 extra (Amiga 3.3 Meynaf FR) NOT launch-tested
 dm2   2/2 present   2/2 canonical   0 extras                       LAUNCH-TESTED
 nexus 1/1 present   1/1 canonical   1 extra (Saturn JA Track 1)     NOT launch-tested
-theron 1/1 present  1/1 canonical   1 extra (JP Track 02)           NOT launch-tested
+theron 1/1 present  1/1 canonical   JP+US extras Track 02           LAUNCH-TESTED
 ```
 
 Wire in i CMakeLists + `ci: asset-hygiene` job. Används vid varje
