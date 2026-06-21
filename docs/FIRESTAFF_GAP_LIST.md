@@ -143,7 +143,7 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 | AI pathfinding | `docs/ai_pathfinding.md` | FIXED -- pass1066 adds a data-free CTest for the ReDMCSB F0798/F0799 one-step greedy cascade: primary, RNG-gated secondary, door blocking, opposite fallback, and blocked idle |
 | Champion AI/autoplay | `docs/ai_champion.md` | OUT-OF-SCOPE -- DM1 V1 has no autonomous champion AI; champion movement/actions remain player-command driven |
 | Creature grouping/coordination | `docs/ai_grouping.md` | PARTIAL -- source-locked group direction, quarter-square melee adjustment, and split gates exist; broader real-runtime group evidence remains under creature-chain capture |
-| Creature AI aggro/reaction/spell behavior | `docs/ai_creature.md`, `docs/ai_aggro.md` | PARTIAL -- pass1067 gates F0790-F0796 perception, visibility/smell, aggro transition, determinism, and target selection; reaction consequences and spell behavior remain open |
+| Creature AI aggro/reaction/spell behavior | `docs/ai_creature.md`, `docs/ai_aggro.md` | FIXED -- pass1067 gates F0790-F0796 perception, visibility/smell, aggro transition, determinism, and target selection; pass1069 adds reaction-event creation, projectile-hit search turn, danger movement/stop-attacking, and existing caster projectile table/payload gates |
 
 ### B3. DM1 V2
 

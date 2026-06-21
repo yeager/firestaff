@@ -1,13 +1,20 @@
 # DM1 V1 — Creature Aggro / Alert / Detection
 
 ## Status
-**PARTIAL — core perception and target-selection gates are now data-free CTests**
+**RESOLVED for DM1 finish scope — perception, aggro, and reaction consequences gated**
 
 pass1067 adds `dm1_v1_ai_perception_target_pc34_compat`, covering the
 F0790-F0796 M10 seam for deterministic ticks, visible-party transition,
 sight range, blocked line of sight, invisibility plus smell fallback, and
-champion target selection. The remaining open AI work is narrower: reaction
-event consequences and richer spell-behavior coverage for creature casters.
+champion target selection. pass1069 extends the existing
+`dm1_v1_creature_ai_behavior_source_lock` gate with negative reaction-event
+creation, projectile-hit search-direction behavior, and danger-on-square movement
+that clears attack mode into approach. Caster projectile behavior is covered by
+the same gate through F0207/F0212 payload, Vexirk alternate spell table, and
+safe fallback checks.
+
+Broader creature-chain screenshot/runtime evidence is tracked outside this AI
+rule row.
 
 **Source-locked to:** ReDMCSB WIP20210206 GROUP.C, MOVESENS.C, DEFS.H
 
