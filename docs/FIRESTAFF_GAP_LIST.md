@@ -28,7 +28,7 @@ Classification:
 | IMG1/IMG2 RLE 16-color image decoder | ReDMCSB, sck | FIXED (`image_backend_pc34_compat.c` `IMG3_Compat_ExpandFromSource`) |
 | IMG3/IMG4 4bpp local-palette image | dmweb Data Files | FIXED (same code path) |
 | **IMG5 4bpp chunked image (Amiga, SNES)** | greatstone d_items.html | **FIXED in v2.9.2** (`firestaff_img5_decode.c`, commit `216b0b67`) |
-| LZW-compressed items (DM Atari ST, CSB Atari ST) | dmweb Data Files | OPEN-BOUNDED — only Atari ST uses LZW; need decoder |
+| LZW-compressed items (DM Atari ST, CSB Atari ST) | dmweb Data Files | PARTIAL — decoder is contract-verified (`m11_gfx_lzw_decompress`, `dm1_lzw_round_trip` PASS 1/1 on 2026-06-21); real Atari ST asset handoff remains BLOCKED-DATA |
 | **FTL container format (Amiga, X68000, MegaCD)** | greatstone d_ftl.html | OPEN-LARGE — 3-hunk Amiga-hunks structure, 4 checksums, two compression algorithms |
 | **PAK container format (Atari ST)** | greatstone d_pak.html | OPEN-BOUNDED — 28-byte Atari ST executable header + LZ77-like compression |
 | **HTC hint oracle text format (CSB)** | sck tutorial | OPEN-LARGE — text+layout format used by CSB Hint Oracle |
@@ -436,9 +436,10 @@ order:
    ST (21/538/548), 3 CSB Amiga (21/676/686). Source-locked against
    Meynaf disassembly + 4 COD1/COD2/COD3/COD4 container formats.
 4. LZW decoder for Atari ST GRAPHICS.DAT (only Atari ST uses LZW).
-   — PARTIAL: `m11_gfx_lzw_decompress` has a contract-only
-   round-trip test (`test_dm1_lzw_round_trip.c`, 96/96 PASS,
-   pass852). Real Atari ST asset handoff still BLOCKED-DATA.
+   — DONE for the decoder: `m11_gfx_lzw_decompress` has a contract-only
+   round-trip test (`test_dm1_lzw_round_trip.c`, `dm1_lzw_round_trip`
+   PASS 1/1 on 2026-06-21, pass852). Real Atari ST asset handoff still
+   BLOCKED-DATA.
 5. PAK container decoder for Atari ST START.PAK. — DONE (commit 3ee479de)
 6. CMP portrait loader for CSB utility disk. — DONE (commit 532c8250)
 7. Harmonize MD5 vs SHA256 in `asset_find_by_hash.c` (or add
