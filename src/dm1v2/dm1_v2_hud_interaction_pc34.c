@@ -3,6 +3,7 @@
  * This file deliberately consumes the existing V1-compatible touch tables instead
  * of redefining coordinates.  ReDMCSB anchors:
  * - COMMAND.C:375-395 primary champion status-box scan.
+ * - COMMAND.C:461-482 spell/action subroutes.
  * - COMMAND.C:461-471 action-area parent, rows, pass and champion action icons.
  * - COMMAND.C:484-497 champion name/ready/action hand subroutes.
  * - CLIKCHAM.C:24-35 F0367 dispatches status-box clicks to set-leader/slot paths.
@@ -12,6 +13,7 @@
 #include "dm1_v2_champion_select_pc34.h"
 #include "action_area_routes_pc34_compat.h"
 #include "champion_name_hand_routes_pc34_compat.h"
+#include "spell_area_routes_pc34_compat.h"
 #include <string.h>
 
 static void v2_hud_touch_clear(M11_V2_HudTouchResult* outResult) {
@@ -42,6 +44,10 @@ static int v2_route_is_action_icon(unsigned int commandId) {
     return commandId >= 116u && commandId <= 119u;
 }
 
+static int v2_route_is_spell_rune(unsigned int commandId) {
+    return commandId >= 101u && commandId <= 106u;
+}
+
 static void v2_apply_touch_zone(const TouchClickZonePc34Compat* zone,
                                 int screenX,
                                 int screenY,
@@ -56,6 +62,32 @@ static void v2_apply_touch_zone(const TouchClickZonePc34Compat* zone,
     outResult->screenY = screenY;
     outResult->groupName = zone->groupName;
     outResult->sourceEvidence = zone->sourceEvidence;
+
+    if (zone->commandId == 100u) {
+        outResult->kind = M11_V2_HUD_TOUCH_SPELL_PARENT_PC34;
+        return;
+    }
+
+    if (zone->commandId == 109u) {
+        outResult->kind = M11_V2_HUD_TOUCH_SPELL_CASTER_PC34;
+        return;
+    }
+
+    if (v2_route_is_spell_rune(zone->commandId)) {
+        outResult->kind = M11_V2_HUD_TOUCH_SPELL_RUNE_PC34;
+        outResult->slotIndex = zone->commandId - 101u;
+        return;
+    }
+
+    if (zone->commandId == 107u) {
+        outResult->kind = M11_V2_HUD_TOUCH_SPELL_RECANT_PC34;
+        return;
+    }
+
+    if (zone->commandId == 108u) {
+        outResult->kind = M11_V2_HUD_TOUCH_SPELL_CAST_PC34;
+        return;
+    }
 
     if (v2_route_is_action_icon(zone->commandId)) {
         championIndex = zone->commandId - 116u;
@@ -115,6 +147,7 @@ int v2_hud_interaction_dispatch_scaled_click(int physicalX,
 unsigned int v2_hud_interaction_source_lock_ok(void) {
     ChampionStatusDispatchPc34Compat championDispatch;
     return action_area_routes_GetTouchMatrixInvariant() &&
+           spell_area_routes_GetTouchMatrixInvariant() &&
            champion_name_hand_routes_GetInvariant() &&
            TOUCHCLICK_Compat_HitTestWithButton(25, 11, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 0) &&
            champion_name_hand_routes_ResolveStatusBoxClick(0u, 25, 11, 0u, &championDispatch) &&
@@ -123,5 +156,5 @@ unsigned int v2_hud_interaction_source_lock_ok(void) {
 }
 
 const char* v2_hud_interaction_get_source_evidence(void) {
-    return "V2 bridge consumes the V1 PC34 route matrix: touch_click_zone_matrix_pc34_compat.c:25-66 mirrors COMMAND.C champion/action subroutes; action_area_routes_pc34_compat.c:14-15 locks C111..C119 to COMMAND.C/CLIKMENU.C/MENU.C; champion_name_hand_routes_pc34_compat.c:10-22 and 73-74 lock C016..C027/C151..C154 to COMMAND.C/CLIKCHAM.C/CHAMPION.C.";
+    return "V2 bridge consumes the V1 PC34 route matrix: touch_click_zone_matrix_pc34_compat.c mirrors COMMAND.C champion/spell/action subroutes; spell_area_routes_pc34_compat.c locks C100..C109 to COMMAND.C/CLIKMENU.C; action_area_routes_pc34_compat.c locks C111..C119 to COMMAND.C/CLIKMENU.C/MENU.C; champion_name_hand_routes_pc34_compat.c locks C016..C027/C151..C154 to COMMAND.C/CLIKCHAM.C/CHAMPION.C.";
 }

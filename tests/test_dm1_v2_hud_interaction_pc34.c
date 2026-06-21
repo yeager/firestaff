@@ -3,6 +3,7 @@
 #include "dm1_v2_hud_overlay_pc34.h"
 #include "action_area_routes_pc34_compat.h"
 #include "champion_name_hand_routes_pc34_compat.h"
+#include "spell_area_routes_pc34_compat.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -37,6 +38,7 @@ int main(void) {
     printf("sourceEvidence=%s\n", v2_hud_interaction_get_source_evidence());
     printf("actionEvidence=%s\n", action_area_routes_GetEvidence());
     printf("championEvidence=%s\n", champion_name_hand_routes_GetEvidence());
+    printf("spellEvidence=%s\n", spell_area_routes_GetEvidence());
 
     v2_champion_select_init();
     v2_hud_init();
@@ -65,6 +67,21 @@ int main(void) {
     if (!expect_dispatch(234, 78, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
                          M11_V2_HUD_TOUCH_ACTION_PARENT_PC34,
                          111u, 11u, 0u, 0u, "action.parent", -1)) ok = 0;
+    if (!expect_dispatch(234, 50, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                         M11_V2_HUD_TOUCH_SPELL_PARENT_PC34,
+                         100u, 13u, 0u, 0u, "spell.parent", -1)) ok = 0;
+    if (!expect_dispatch(234, 43, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                         M11_V2_HUD_TOUCH_SPELL_CASTER_PC34,
+                         109u, 221u, 0u, 0u, "spell.caster", -1)) ok = 0;
+    if (!expect_dispatch(236, 52, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                         M11_V2_HUD_TOUCH_SPELL_RUNE_PC34,
+                         101u, 245u, 0u, 0u, "spell.symbol1", -1)) ok = 0;
+    if (!expect_dispatch(236, 64, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                         M11_V2_HUD_TOUCH_SPELL_CAST_PC34,
+                         108u, 252u, 0u, 0u, "spell.cast", -1)) ok = 0;
+    if (!expect_dispatch(306, 64, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                         M11_V2_HUD_TOUCH_SPELL_RECANT_PC34,
+                         107u, 254u, 0u, 0u, "spell.recant", -1)) ok = 0;
 
     if (!v2_hud_interaction_dispatch_scaled_click(100, 39, 1280, 800,
                                                   TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, &result) ||
