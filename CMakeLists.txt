@@ -8284,6 +8284,7 @@ function(firestaff_add_dm1_v1_viewport_contract_test target test_src impl_src ct
             ${CMAKE_CURRENT_SOURCE_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
+        target_compile_definitions(${target} PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
         if(NOT MSVC)
             target_compile_options(${target} PRIVATE -Wall -Wextra -O2)
         endif()
@@ -8294,6 +8295,12 @@ function(firestaff_add_dm1_v1_viewport_contract_test target test_src impl_src ct
     endif()
 endfunction()
 
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat
+    tests/test_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat.c
+    dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat
+)
 firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat
     tests/test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat.c
