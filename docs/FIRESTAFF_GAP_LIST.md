@@ -246,8 +246,8 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone g_dm2.html
 | **Real PBR hero art for DM2** | OPEN-LARGE |
 | **DM1 shared V2.2 in-place drawing pipeline** | OPEN-LARGE |
 | Per-cell modern-art swap in DM2 V1 (T560 indoor, T600 outdoor) | OPEN-LARGE |
-| Phase 3 HUD runtime | PARTIAL |
-| Phase 3 HUD bitmap assets + widgets (inventory quick-view, action prompt) | OPEN-BOUNDED |
+| Phase 3 HUD runtime | PARTIAL — `firestaff_dm2_v2_phase3_hud_overlay_probe` 61/61 PASS + `test_dm2_v2_hud_overlay` 76/76 PASS. Source-locked against ReDMCSB `PANEL.C`. Remaining: HUD widget bitmap assets (inventory quick-view, action prompt) for finished presentation polish. |
+| Phase 3 HUD bitmap assets + widgets (inventory quick-view, action prompt) | OPEN-BOUNDED — runtime gates are wired (probe 61/61 + test 76/76); bitmap assets need finished PBR HUD widget art. |
 
 ### D3. DM2 per-version coverage
 
