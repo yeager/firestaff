@@ -1,13 +1,20 @@
 # DM1 V1 — Creature AI Behavior
 
 ## Status
-**PARTIAL — movement and core perception are gated; caster/reaction edges remain**
+**RESOLVED for DM1 finish scope — movement, perception, reactions, and caster payloads gated**
 
 pass1066 gates the F0798/F0799 one-step movement selector. pass1067 gates
 F0790-F0796 perception, aggro transition, deterministic tick behavior, and
-champion target selection. Remaining finish-scope AI work is now tracked as
-creature reaction consequences and richer spell-behavior coverage rather than
-a generic "AI pathfinding" gap.
+champion target selection. pass1069 extends the creature-AI source-lock gate
+with reaction-event creation, projectile-hit search turning, and danger-on-square
+movement that stops attack behavior and returns the group to approach. Existing
+projectile/caster gates cover F0207/F0212 launch payloads, Vexirk alternate
+spell selection, Wizard Eye/Trolin-style spell palettes, and the C25/C26
+BUG0_13-safe fallback.
+
+Runtime creature-chain capture remains tracked separately under the
+`Creature grouping/coordination` and original-capture rows; it is not an
+unimplemented AI-rule gap.
 
 **Source-locked to:** ReDMCSB WIP20210206 GROUP.C, DEFS.H
 **Companion:** src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
