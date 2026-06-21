@@ -87,6 +87,13 @@ Observed output:
 result=PASS
 ```
 
+## Machine-check gate
+
+`pass1055_dm1_v1_original_closed_door_collision_capture` is now registered in
+CTest. It verifies the original raw-frame stasis, viewport-crop stasis,
+pass513 scaffold boundary, and Firestaff-side semantic pair probe, then writes
+`parity-evidence/verification/pass1055_dm1_v1_original_closed_door_collision_capture/manifest.json`.
+
 ## Non-claims
 
 - This is not a Firestaff-vs-original pixel comparison.

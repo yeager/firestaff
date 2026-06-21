@@ -21,7 +21,7 @@
       "sha256": "860bc022785b2567eedfa552a99e103d02c573b432446c679a273d96d0a18363"
     }
   ],
-  "generated_at": "2026-06-21T13:04:32.415137+00:00",
+  "generated_at": "2026-06-21T13:09:35.837147+00:00",
   "honesty": "Artifact gate only; no Firestaff-vs-original pixel parity is claimed.",
   "manifest_status": "PASS1053_ORIGINAL_CHAMPION_CANDIDATE_PANEL_EVIDENCE_TRACKED",
   "non_claim_boundary_ok": true,
