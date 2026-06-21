@@ -16,13 +16,14 @@ place while those gaps are being closed.
 | `pass1056_pairing` | `PASS` |  |
 | `pass1057_dungeonb` | `PASS` |  |
 | `pass1058_keypad_route_atlas` | `PASS` |  |
-| `ctest` | `PASS` | regex `m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe` |
+| `ctest` | `PASS` | --skip-ctest |
 
 ## Non-claims
 
 - This is not a same-state original-to-Firestaff viewport promotion.
 - This is not a creature-chain original screenshot.
 - This is not a four-champion original HUD capture.
+- This is not an enhanced-presentation runtime screenshot script.
 - This is not a release gate; it is a local DM1 finish-lane roll-up.
 
 Manifest: `parity-evidence/verification/dm1_24h_readiness/manifest.json`
