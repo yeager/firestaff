@@ -78,6 +78,11 @@ static int path_exists(const char* p) {
     return (p && stat(p, &st) == 0) ? 1 : 0;
 }
 
+static const char* firestaff_bin(void) {
+    const char* env = getenv("FIRESTAFF_BIN");
+    return (env && env[0]) ? env : FIRESTAFF_BIN;
+}
+
 static void run_path(const Tier1PathSpec* spec) {
     if (!spec->game) return;
     if (!path_exists(spec->path)) {
@@ -90,7 +95,7 @@ static void run_path(const Tier1PathSpec* spec) {
     char cmd[1024];
     snprintf(cmd, sizeof(cmd),
              "SDL_VIDEODRIVER=dummy timeout 6 %s --game %s --data-dir '%s' --duration 1500 2>&1",
-             FIRESTAFF_BIN, spec->game, spec->path);
+             firestaff_bin(), spec->game, spec->path);
 
     FILE* f = popen(cmd, "r");
     if (!f) {
@@ -139,7 +144,7 @@ static void run_path(const Tier1PathSpec* spec) {
 
 int main(void) {
     printf("=== Firestaff Tier 1 #5 strict boot-probe per path ===\n");
-    printf("FIRESTAFF_BIN=%s\n", FIRESTAFF_BIN);
+    printf("FIRESTAFF_BIN=%s\n", firestaff_bin());
     printf("DEFAULT_DATA_ROOT=%s\n\n", DEFAULT_DATA_ROOT);
 
     for (size_t i = 0; kPaths[i].game != NULL; ++i) {
