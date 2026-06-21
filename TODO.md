@@ -163,7 +163,7 @@ Source-locked against SKULL.ASM T520/T560/T600, ReDMCSB GAMELOOP.C:164-219, and 
 - ✅ CSB V2 lib link error (resolved 2026-06-17 by auto-fixer): was defined as TODO but now resolved — `csb_v2_vfx_fire_projectile` is properly defined in `src/csb/csb_v2_vfx_particles.c` and linked into the affected test executables. `test_csb_v2_smooth_runtime_binding`, `test_csb_v2_lighting_dynamic`, `test_csb_v2_phase7_verification` all green.
 - ✅ Theron V1 lib link errors (resolved 2026-06-17): was defined as TODO but now resolved — `src/theron/theron_v1_compat.c` provides compat shims for all combat symbols declared in `include/theron_v1_combat.h`. New `firestaff_theron_v1_mechanics_champions_probe` (68/68) now active.
 - 🔧 Watchdog parity-evidence manifests: parity-evidence files are refreshed by automated watchdog passes on every regression run. Manifests may report transient `FAIL` on gates whose line number has shifted (see the line-drift bullets above) or where a recent change has altered the test binary output; verify against the current source before treating any one FAIL as a real regression.
-- 🔧 Lefthook pre-commit hook: the repo's pre-commit pipeline expects `lefthook` on `$PATH`; the hook currently no-ops gracefully on dev machines without it, but CI runners should install it or wire the equivalent CMake-level check so commit messages and staged-file lint both run on every push.
+- ✅ Lefthook CI hook: `.github/workflows/verify.yml` installs Go, installs `lefthook`, adds `$(go env GOPATH)/bin` to PATH, and runs `lefthook run ci` in the asset-hygiene job. Local dev machines can still no-op gracefully when Lefthook is absent.
 
 ## Known Bugs
 
