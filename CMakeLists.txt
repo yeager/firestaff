@@ -2796,6 +2796,29 @@ if(BUILD_TESTING)
         COMMAND test_asset_find_by_hash
     )
 
+    add_executable(test_dm1_pc34_multilanguage_required_gate
+        tests/test_dm1_pc34_multilanguage_required_gate.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_dm1_pc34_multilanguage_required_gate PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_dm1_pc34_multilanguage_required_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_dm1_pc34_multilanguage_required_gate PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_pc34_multilanguage_required_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_pc34_multilanguage_required_gate
+        COMMAND test_dm1_pc34_multilanguage_required_gate
+    )
+
     add_executable(test_m12_quick_resume_gate
         tests/test_m12_quick_resume_gate.c
     )
