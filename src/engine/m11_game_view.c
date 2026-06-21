@@ -6798,6 +6798,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         m11_set_inspect_readout(state, "READY",
                                 "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE");
         m11_log_event(state, M11_COLOR_YELLOW, "T0: DM2 LOADED");
+        /* Tier 1 launch smoke: keep the DM2 direct-launch milestone
+         * observable to headless probes, matching the CSB stderr-pipe above.
+         * The boot itself stays owned by the DM2 V1 branch documented in
+         * dm2_v1_boot.h and firestaff_game_loop.c. */
+        fprintf(stderr, "DM2 READY: gameId=dm2 dataDir=%s\n",
+                spec->dataDir ? spec->dataDir : "(null)");
         return 1;
     }
     if (spec->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON) {

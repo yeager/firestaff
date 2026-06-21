@@ -98,6 +98,8 @@ Source-locked against SKULL.ASM T520/T560/T600, ReDMCSB GAMELOOP.C:164-219, and 
 ### DM2 CLI launch
 
 - ✅ `--game dm2` direct-launch wired (closed 2026-06-17 by adding M11_GameView_StartDm2 branch + fixing dm2_md5_body in src/dm2/dm2_v1_boot.c). verify_all_launches.sh now 59/59 PASS (was 49/49 + 10 FAIL_NODATA). See DONE.md for full fix details.
+- ✅ Canonical launch-smoke gate: `tier1_strict_boot_probe` now covers canonical `--game dm2 --data-dir ~/.firestaff/data/dm2` through the `DM2 READY` stderr milestone.
+- 🔧 DM2 extras/cross-version launch remains open: `dm2-extras/dos-en` still refuses direct launch because it does not match the canonical DM2 runtime hash/format path.
 
 ## Dungeon Master Nexus
 
