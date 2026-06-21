@@ -1165,6 +1165,24 @@ if(BUILD_TESTING)
     )
 endif()
 
+# DM1 V2 side-by-side presentation-disabled seed probe. Headless: no game data.
+add_executable(firestaff_dm1_v2_side_by_side_presentation_seed_probe
+    probes/dm1/firestaff_dm1_v2_side_by_side_presentation_seed_probe.c)
+target_include_directories(firestaff_dm1_v2_side_by_side_presentation_seed_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_dm1_v2_side_by_side_presentation_seed_probe
+    PRIVATE firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v2_side_by_side_presentation_seed_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v2_side_by_side_presentation_seed_probe
+        COMMAND firestaff_dm1_v2_side_by_side_presentation_seed_probe
+    )
+endif()
+
 # Theron V2.1 texture upscale probe. Headless: no game data.
 # See include/theron_v2_texture_upscale_pc34.h.
 add_executable(firestaff_theron_v2_texture_upscale_probe
