@@ -191,6 +191,12 @@ static void test_champion_portrait_candidate_route(void) {
     CHECK(r.setLeaderToFirstChampion == 0, "non-first candidate does not reset leader");
 
     in = base_portrait_click_input();
+    in.sensorData = 23;
+    r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(r.triggersCandidateAdd == 1, "last C026 atlas portrait index is accepted");
+    CHECK(r.championPortraitIndex == 23, "C127 sensorData is a 0..23 portrait atlas index");
+
+    in = base_portrait_click_input();
     in.leaderIndex = 0;
     r = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
     CHECK(r.triggersCandidateAdd == 1, "C127 route also works with existing leader");
