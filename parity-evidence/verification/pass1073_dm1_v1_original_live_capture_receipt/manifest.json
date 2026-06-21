@@ -1,0 +1,71 @@
+{
+  "decision": "The macOS DOSBox Staging live runner now reaches DM1 PC 3.4 dungeon gameplay and records a keyboard movement viewport-hash change. This is redacted live-capture receipt evidence only; the original frames remain operator-local and no original-vs-Firestaff pixel parity row is promoted.",
+  "gapRowMovement": {
+    "from": "PARTIAL",
+    "reason": "live original-DOS capture harness and movement receipt are now locked by hashes, classifications, source anchors, and non-claims, but the frames are not tracked and are not paired against Firestaff",
+    "row": "B1 original viewport / wall / collision capture evidence",
+    "to": "PARTIAL"
+  },
+  "liveRun": {
+    "actionAttempts": [
+      {
+        "actionKey": "dungeon_move_forward_click",
+        "inputMethod": "absolute_mouse_click_with_mouse_capture_onclick",
+        "sourceAnchor": "ReDMCSB COMMAND.C:396-405 / line 398: C003_COMMAND_MOVE_FORWARD -> C070_ZONE_MOVE_FORWARD",
+        "viewportRgbChanged": false
+      },
+      {
+        "actionKey": "Keypad-5",
+        "inputMethod": "keyboard_key_code_keypad_5",
+        "sourceAnchor": "ReDMCSB COMMAND.C:275-281: C003_COMMAND_MOVE_FORWARD is also bound to numeric keypad 5 and Up Arrow in the PC movement keyboard table",
+        "viewportRgbChanged": true
+      }
+    ],
+    "captureBackend": "peekaboo",
+    "dosboxLaunchMode": "staging_app_binary_dm_exe_path",
+    "engineState": "dungeon_gameplay",
+    "frames": [
+      {
+        "classification": "dungeon_gameplay",
+        "file": "original/01_ingame_start.png",
+        "frameSha256": "0f0ca865f9b7b50cd72525682eb9079d36baa2513ab9aeb90a67ae48fde73bb1",
+        "height": 200,
+        "normalizedRgbSha256": "434fae2aea190b25b379005624cba02194b90242df6075b3f68a60a42c4c9f3f",
+        "viewportRgbSha256": "307e2dd864df0e642177851b5f6278612ff9af3f97045ddadf8fb17a44eea5d4",
+        "width": 320
+      },
+      {
+        "classification": "dungeon_gameplay",
+        "file": "original/02_ingame_step_forward.png",
+        "frameSha256": "8e5ad2b999d1995a23e7756faebd56ccb3a1b593eac4e292704cdc97cd114dab",
+        "height": 200,
+        "normalizedRgbSha256": "429b0817bc629bb712c01e85a45cf37334e3f84dfb095673ce16a6615d3aeb66",
+        "viewportRgbSha256": "5c73694e24af7299fa1c0bb8c30ea2c712bed710558c5553c0e478db34824303",
+        "width": 320
+      }
+    ],
+    "liveConfPins": {
+      "core": "dynamic",
+      "cycles": "max",
+      "frameskip": "0",
+      "machine": "svga_s3",
+      "memsize": "16",
+      "mouse_capture": "onclick",
+      "output": "opengl"
+    },
+    "liveConfSha256": "743a37a2daf766496e025c30162cc1afb9b05ec3ca2d51cca41176b091393081",
+    "runtimeRequiredFiles": {
+      "DUNGEON.DAT": true,
+      "GRAPHICS.DAT": true
+    }
+  },
+  "nonClaims": [
+    "This is not original-vs-Firestaff pixel parity.",
+    "The proprietary frames remain operator-local and are not committed.",
+    "This is not an I34E debugger observation.",
+    "This does not close any B1 row."
+  ],
+  "ok": true,
+  "schema": "firestaff.parity.pass1073_dm1_v1_original_live_capture_receipt.v1",
+  "status": "PASS1073_DM1_V1_ORIGINAL_LIVE_CAPTURE_RECEIPT_LOCKED"
+}
