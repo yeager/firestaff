@@ -229,14 +229,14 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone g_dm2.html
 | Combat resolver | FIXED |
 | Spell module | FIXED |
 | Tech/magic module | FIXED |
-| **Shops/NPCs** | OPEN-BOUNDED |
-| **Pressure plates** | OPEN-BOUNDED |
-| **Triggers** | OPEN-BOUNDED |
-| **Timeline wiring** | OPEN-BOUNDED |
-| **Advanced CCM (DM2_PROCEED_CCM)** | OPEN-LARGE |
-| **Projectile-list drain back into M11 renderer** | OPEN-LARGE |
-| **Original-overlay proof** | OPEN-BOUNDED |
-| **Launch-smoke gate** | OPEN-BOUNDED |
+| **Shops/NPCs** | FIXED — 2026-06-21: Parts A landed (`1e756018 dm2_v1: Part A — shop + NPC parity (Phase 4 mechanics)`) + `a89c257f tier4-18: DM2 V1 shop-economy determinism probe (skproject c_shop.cpp)` (19/19 PASS) + `test_dm2_v1_shop_pc34_compat` (51/51 PASS). Source-locked against skproject `c_shop.cpp` transaction pricing + `SKWinGlobal.h:42` `NUM_NPCS=4`. |
+| **Pressure plates** | FIXED — 2026-06-21: `7fdc3537 feat: Tier 1 #5 strict boot-probe + Tier 2 #3 CSB hidden-code + DM2 pressure plate` + `firestaff_dm2_v1_pressure_plate_probe` (17/17 PASS) + `test_dm2_v1_pressure_plate_pc34_compat` (40/40 PASS). |
+| **Triggers** | FIXED — 2026-06-21: `fc608581 dm2_v1: Part C+D — trigger + timeline parity (Phase 4 mechanics)` + `firestaff_dm2_v1_trigger_probe` (14/14 PASS) + `test_dm2_v1_trigger_pc34_compat` (32/32 PASS). |
+| **Timeline wiring** | FIXED — 2026-06-21: `fc608581 dm2_v1: Part C+D — trigger + timeline parity (Phase 4 mechanics)` + `firestaff_dm2_v1_timeline_probe` (12/12 PASS) + `test_dm2_v1_timeline_pc34_compat` (34/34 PASS). |
+| **Advanced CCM (DM2_PROCEED_CCM)** | FIXED — 2026-06-21: `af5e7276 dm2_v1: Part E+F — CCM (advanced) + projectile drain to M11` + `test_dm2_v1_ccm_pc34_compat` (42/42 PASS, including stubbed-opcodes-return-unknown). Source-locked against skproject `c_ccm.cpp`. |
+| **Projectile-list drain back into M11 renderer** | FIXED — 2026-06-21: `af5e7276 dm2_v1: Part E+F — CCM (advanced) + projectile drain to M11` + `firestaff_dm2_v1_projectile_drain_probe` (12/12 PASS) + `test_dm2_v1_projectile_pc34_compat` (23/23 PASS). |
+| **Original-overlay proof** | OPEN-BOUNDED — no Firestaff-vs-original DM2 evidence yet (DM2 launch-blocked as Tier 4 launcher gap, not a D1 mechanics gap) |
+| **Launch-smoke gate** | OPEN-BOUNDED — DM2 launcher exits silently per Tier 4 launcher gap; per-path boot-probe for DM2 stays blocked until that gap closes |
 
 ### D2. DM2 V2
 
