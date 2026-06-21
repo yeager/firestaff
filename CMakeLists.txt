@@ -5493,6 +5493,19 @@ if(BUILD_TESTING)
         tests/test_dm1_v2_viewport_materials_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
     )
+    add_executable(test_dm1_v2_per_mode_material_signatures_pc34
+        tests/test_dm1_v2_per_mode_material_signatures_pc34.c
+        src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/m11_v22_inplace_draw_pc34.c
+        src/dm1v2/m11_v22_shape_cache_pc34.c
+        src/dm1v2/dm1_v2_shape_runtime_pc34.c
+        src/dm1v2/dm1_v2_presentation_mode_pc34.c
+        src/dm1v2/dm1_v22_shapes.c
+        src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm1v2/dm1_v2_texture_upscale_pc34.c
+        src/shared/fs_portable_compat.c
+    )
     add_executable(test_m11_display_aspect_present_rect
         tests/test_m11_display_aspect_present_rect.c
     )
@@ -5569,6 +5582,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_phase_gate_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_viewport_materials_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_per_mode_material_signatures_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
         target_compile_options(dm1_v2_export_entry_viewport_png PRIVATE -Wall -Wextra -O2)
     endif()
@@ -5883,6 +5897,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_viewport_materials_pc34
         COMMAND test_dm1_v2_viewport_materials_pc34
+    )
+    add_test(
+        NAME dm1_v2_per_mode_material_signatures_pc34
+        COMMAND test_dm1_v2_per_mode_material_signatures_pc34
     )
     add_test(
         NAME dm1_v2_settings_source_lock
