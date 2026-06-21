@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 MNU-01 spell lookup source-lock CTest: registered existing `test_dm1_v1_mnu01_f0750_f0755_spell_lookup_source_lock_pc34_compat` as CTest target `dm1_v1_mnu01_f0750_f0755_spell_lookup_source_lock`. The data-free gate pins F0750 rune-sequence packing and F0755 skill-requirement checks against the split MNU-01 spell lookup contract. This is source-lock coverage only; it does not add runtime casting, game assets, DOSBox evidence, or gameplay-completion claims.
+
 - ✅ 2026-06-21 DM1 V1 F0128 viewport-crop readiness CTest: registered existing `test_dm1_v1_f0128_viewport_pc34_compat` as CTest target `dm1_v1_f0128_viewport_pc34_compat`. The data-free gate pins the ReDMCSB F0128/F0674 viewport-compose readiness hook, G0076 default/toggle behavior, idempotent tuple composition, and defensive negative-tuple handling. This is source/regression fixture coverage only; it does not add original viewport screenshots, DOSBox evidence, or pixel parity.
 
 - ✅ 2026-06-21 DM1 V1 D3L1 viewport no-write CTest: registered existing `test_dm1_v1_d3l1_viewport_no_write_gate` as CTest target `dm1_v1_d3l1_viewport_no_write_gate`. The data-free gate pins ReDMCSB F0116 D3L1 as a documented no-write target while preserving the adjacent D3L/D3R/D3C and D2/D1/D0 draw-order contracts, source-evidence strings, and allowed touch-square list. This is source/viewport fixture coverage only; it does not add original screenshots, DOSBox evidence, or pixel parity.

@@ -57,7 +57,6 @@
 int main(void) {
     struct RuneSequence_Compat seq;
     uint32_t packed;
-    int rc;
     int missing;
 
     /* T1: NULL seq returns 0. */
