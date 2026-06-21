@@ -7292,16 +7292,28 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         probes/dm1/firestaff_dm1_v1_stair_pit_occlusion_pixel_gate.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     )
+    add_executable(firestaff_dm1_v1_side_wall_pixel_clip_probe
+        probes/dm1/firestaff_dm1_v1_side_wall_pixel_clip_probe.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
+    add_executable(firestaff_dm1_v1_d0_side_wall_edge_pixel_probe
+        probes/dm1/firestaff_dm1_v1_d0_side_wall_edge_pixel_probe.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
     target_link_libraries(test_dm1_v1_viewport_3d_pc34_compat PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_door_occlusion_pixel_gate PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_center_wall_parity_opaque_pixel_probe PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_stair_pit_occlusion_pixel_gate PRIVATE firestaff_m10)
+    target_link_libraries(firestaff_dm1_v1_side_wall_pixel_clip_probe PRIVATE firestaff_m10)
+    target_link_libraries(firestaff_dm1_v1_d0_side_wall_edge_pixel_probe PRIVATE firestaff_m10)
     target_compile_definitions(test_dm1_v1_viewport_3d_pc34_compat PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_viewport_3d_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_door_occlusion_pixel_gate PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_center_wall_parity_opaque_pixel_probe PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_stair_pit_occlusion_pixel_gate PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_dm1_v1_side_wall_pixel_clip_probe PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_dm1_v1_d0_side_wall_edge_pixel_probe PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
         NAME dm1_v1_viewport_3d_source_lock
@@ -7318,6 +7330,14 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_stair_pit_occlusion_pixel_gate
         COMMAND firestaff_dm1_v1_stair_pit_occlusion_pixel_gate
+    )
+    add_test(
+        NAME dm1_v1_side_wall_pixel_clip_probe
+        COMMAND firestaff_dm1_v1_side_wall_pixel_clip_probe
+    )
+    add_test(
+        NAME dm1_v1_d0_side_wall_edge_pixel_probe
+        COMMAND firestaff_dm1_v1_d0_side_wall_edge_pixel_probe
     )
     if(Python3_Interpreter_FOUND)
         add_test(
