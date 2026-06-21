@@ -1,56 +1,63 @@
-# GAP C25/C26: Lord Order and Grey Lord Creature Handler Gap
+# GAP C25/C26: Lord Order and Grey Lord Projectile Fallback
 
 ## Status
-**GAP — Latent handler gap, safe for normal play, modders need explicit handler**
+**RESOLVED — explicit safe fallback for ReDMCSB BUG0_13**
+
+This gap was stale. Firestaff now defines both late creature IDs and gives
+them explicit `F0823_DM1_GROUP_ResolveProjectileAttack_Compat` switch cases.
+The implementation deliberately preserves the safe PC34 behavior by launching
+a Fireball instead of using an uninitialized projectile thing.
 
 ## Affected Creatures
-- `DM1_CREATURE_TYPE_LORD_CHAOS` (C23, index 23) — **has explicit handler**
-- `DM1_CREATURE_TYPE_LORD_ORDER` (C25, index 25) — **NO explicit handler**
-- `DM1_CREATURE_TYPE_GREY_LORD`  (C26, index 26) — **NO explicit handler**
 
-## Source Location
-`src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c`, function `F0823_DM1_GROUP_ResolveProjectileAttack_Compat` (line 228).
+- `DM1_CREATURE_TYPE_LORD_CHAOS` (C23, index 23) — explicit boss handler
+- `DM1_CREATURE_TYPE_LORD_ORDER` (C25, index 25) — explicit safe fallback
+- `DM1_CREATURE_TYPE_GREY_LORD` (C26, index 26) — explicit safe fallback
 
-## Gap Description
+## Source Evidence
 
-F0823 dispatches creature projectile attacks via a `switch(ctx->creatureType)`.
+- ReDMCSB `DEFS.H` lines 1364-1365 define `C25_CREATURE_LORD_ORDER`
+  and `C26_CREATURE_GREY_LORD`.
+- ReDMCSB `DEFS.H` line 1679 classifies Grey Lord, Lord Order, Lord Chaos,
+  Materializer, Vexirk, and Wizard Eye under magic attack type C5.
+- ReDMCSB `GROUP.C` line 1763 documents BUG0_13: Lord Order and Grey Lord
+  can cast spells because their attack range is greater than 1, but original
+  code defines no projectile type for them. If a custom dungeon places them,
+  the original can create a projectile from an uninitialized thing value.
 
-**C01–C24 explicit cases (partial list):**
-- C01 Vexirk → FIREBALL (50%) or other (50%)
-- C05 Swamp Slime → SLIME
-- C09 Wizard Eye → LIGHTNING_BOLT or OPEN_DOOR
-- C23 Lord Chaos → same 50/50 as Vexirk
+## Firestaff Behavior
 
-**C25 Lord Order and C26 Grey Lord are absent from the switch.**
+`src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c` names both C25/C26 cases
+inside the F0823 projectile switch and routes them to
+`DM1_PROJECTILE_THING_FIREBALL`.
 
-They fall through to `default:`:
-```c
-default:
-    out->projectileThing = DM1_PROJECTILE_THING_FIREBALL;
-    break;
+That is not a claim that the DOS source explicitly chose Fireball. It is a
+source-cited hardening of BUG0_13: original dungeons do not contain groups of
+these types, so normal DM1 play is unaffected, while custom dungeons get
+deterministic behavior instead of undefined memory.
+
+## Verification
+
+pass1064 adds `test_lord_order_grey_lord_projectile_safe_fallback()` to
+`tests/test_dm1_v1_creature_ai_behavior_pc34_compat.c`.
+
+The test drives both C25 Lord Order and C26 Grey Lord through F0823 with
+ranged caster metadata and asserts:
+
+- resolver returns success;
+- `shouldLaunch == 1`;
+- projectile thing is `DM1_PROJECTILE_THING_FIREBALL`;
+- spell sound fallback remains active;
+- direction and attack payload still come from the source-mode context.
+
+CTest:
+
+```bash
+ctest --test-dir build -R '^dm1_v1_creature_ai_behavior_source_lock$' --output-on-failure
 ```
 
-Both creatures use the same graphic base as Lord Chaos (`{ 85|86, *, 0x14, 0xCB, 0x78AA }`), suggesting boss-tier classification. The identical graphic base and Lord-prefixed naming strongly implies similar attack behavior to Lord Chaos — but this is not confirmed.
+## Remaining Work
 
-## F0823 Default Fallback
-- `out->useSpellSoundFallback = 1` — spell-cast sound plays (not creature sound)
-- `out->shouldLaunch = 1`
-- `out->kineticEnergy` computed from creature attack stat
-- `out->attack = ctx->creatureInfo.dexterity`
-
-## BUG0_13
-BUG0_13 documents the latent ambiguity: two named creatures silently receiving identical FIREBALL-default behavior without explicit handler confirmation. If Lord Order or Grey Lord has a different attack type in the original DOS binary, this gap causes behavior divergence from the reference.
-
-## DOS Runtime Capture Blocked
-pass449 (Lord Order combat capture) and pass450 (Grey Lord combat capture) are blocked on missing DOS runtime environment. Without these captures the correct projectile type per creature is unconfirmed.
-
-## Safe for Normal Play
-For standard campaign dungeons where Lord Order and Grey Lord do not appear, this gap has zero effect. Even if they appear and default to FIREBALL, the creatures are fully hostile and dangerous.
-
-## Modding Implication
-Modders placing Lord Order or Grey Lord in custom dungeons via RE-DUNGEON.DAT will get FIREBALL as the attack. If the intended behavior differs (e.g., LIGHTNING_BOLT, POISON_CLOUD, unique projectile), F0823 must be patched.
-
-## Required Fix (Non-Blocking)
-1. Add `DM1_CREATURE_TYPE_LORD_ORDER` and `DM1_CREATURE_TYPE_GREY_LORD` to the enum (currently only LORD_CHAOS is defined for the C23+ tier)
-2. Add explicit `case` entries to F0823 once DOS runtime confirms intended projectile type
-3. Until then, FIREBALL default is the documented fallback behavior
+None for DM1 finish scope. A future DOS runtime capture can document the
+crash/undefined-projectile behavior directly, but Firestaff should keep the
+deterministic fallback for modded/custom dungeons.
