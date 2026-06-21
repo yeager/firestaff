@@ -1416,9 +1416,8 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
         m12_fill_game_versions(status, i, roots, rootCount, &dataDirResolvedToMatchedRoot, userExplicitDataDir);
     }
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
-        m12_apply_required_game_availability(status,
-                                             i,
-                                             m12_fill_required_files(status, i, roots, rootCount));
+        int reqMatch = m12_fill_required_files(status, i, roots, rootCount);
+        m12_apply_required_game_availability(status, i, reqMatch);
         if (!status->originalFileCandidateFound) {
             size_t fileIndex;
             for (fileIndex = 0U; fileIndex < status->requiredFileCounts[i]; ++fileIndex) {
@@ -1527,6 +1526,24 @@ const M12_AssetVersionStatus* M12_AssetStatus_GetVersion(const M12_AssetStatus* 
         return NULL;
     }
     return &status->versions[gameIndex][index];
+}
+
+const M12_AssetVersionStatus* M12_AssetStatus_GetFirstMatchedVersion(const M12_AssetStatus* status,
+                                                                    const char* gameId) {
+    int gameIndex = m12_game_index_from_id(gameId);
+    size_t i;
+    size_t count;
+    if (!status || gameIndex < 0) {
+        return NULL;
+    }
+    count = M12_AssetStatus_GetVersionCount(gameId);
+    for (i = 0U; i < count; ++i) {
+        const M12_AssetVersionStatus* v = &status->versions[gameIndex][i];
+        if (v->matched && v->matchedPath[0] != '\0') {
+            return v;
+        }
+    }
+    return NULL;
 }
 
 size_t M12_AssetStatus_GetRequiredFileCount(const M12_AssetStatus* status,

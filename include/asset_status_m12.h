@@ -74,6 +74,8 @@ size_t M12_AssetStatus_GetVersionCount(const char* gameId);
 const M12_AssetVersionStatus* M12_AssetStatus_GetVersion(const M12_AssetStatus* status,
                                                          const char* gameId,
                                                          size_t index);
+const M12_AssetVersionStatus* M12_AssetStatus_GetFirstMatchedVersion(const M12_AssetStatus* status,
+                                                                    const char* gameId);
 size_t M12_AssetStatus_GetRequiredFileCount(const M12_AssetStatus* status,
                                             const char* gameId);
 const M12_AssetRequiredFileStatus* M12_AssetStatus_GetRequiredFile(const M12_AssetStatus* status,
