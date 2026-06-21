@@ -1,5 +1,19 @@
 # DM1 V1 — Touchscreen Inventory Input
 
+## Status
+**RESOLVED — source-locked touch matrix and mouse-command queue coverage**
+
+pass1065 verifies this path through the existing DM1 V1 touch suite:
+`touch_click_zone_matrix_pc34_compat`,
+`touch_pointer_input_pc34_compat`,
+`touch_item_mouse_queue_pc34_compat`,
+`dm1_v1_touch_original_mouse_ui_action_zones_source_lock`, and
+`dm1_v1_touch_input_source_locked_ui_zones`.
+
+The touch path remains a coordinate producer for the original mouse-command
+tables. It does not synthesize keyboard input or replace the V1 inventory
+dispatcher.
+
 ## Source Lock
 ReDMCSB WIP20210206: CLIKCHAM.C F0360/F0361; INVENTORY.C F0428/F0429; PANEL.C F0351; COMMAND.C:419-438; DATA.C:986-996; layout-696 C105/C507-C536.
 

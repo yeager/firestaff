@@ -1,5 +1,17 @@
 # DM1 V1 — Pathfinding
 
+## Status
+**RESOLVED for DM1 finish scope — source-locked one-step F0798/F0799 cascade**
+
+pass1066 adds a data-free CTest,
+`dm1_v1_ai_pathfinding_pc34_compat`, for the movement-selection behavior
+described here. It verifies the original greedy cascade: open primary
+direction, RNG-gated secondary direction, closed-door blocking, opposite
+primary fallback, and all-directions-blocked idle behavior.
+
+This does not claim a graph-search pathfinder exists. DM1 V1 still has no A*
+or multi-square look-ahead; the test locks the original one-step behavior.
+
 **Source-locked to:** ReDMCSB WIP20210206 GROUP.C, MOVESENS.C, DEFS.H
 
 ---

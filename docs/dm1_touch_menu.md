@@ -1,5 +1,20 @@
 # DM1 V1 — Touchscreen Menu Input
 
+## Status
+**RESOLVED — source-locked movement, action, spell, and menu zone coverage**
+
+pass1065 verifies this path through the existing DM1 V1 touch suite:
+`touch_click_zone_matrix_pc34_compat`,
+`action_area_routes_pc34_compat`,
+`touch_movement_turn_routes_pc34_compat`,
+`dm1_v1_dungeon_view_touch_route_pc34_compat`,
+`touch_movement_viewport_source_lock`, and
+`dm1_v1_touch_input_source_locked_ui_zones`.
+
+Touch remains a mouse-coordinate input path into ReDMCSB-style command zones.
+The V1 movement/action/spell/menu command semantics stay owned by the
+existing mouse and command dispatchers.
+
 ## Source Lock
 ReDMCSB WIP20210206: MENUDRAW.C F0395/F0396/F0397/F0398/F0457; MENU.C F0392/F0802; COMMAND.C G0448/G0452/G0453/G0454; CLIKMENU.C F0363/F0365/F0366; GAMELOOP.C.
 

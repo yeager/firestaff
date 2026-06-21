@@ -1,5 +1,19 @@
 # DM1 V1 — Touchscreen Champion Panel Input
 
+## Status
+**RESOLVED — source-locked status-box, name, and hand-slot touch coverage**
+
+pass1065 verifies this path through the existing DM1 V1 touch suite:
+`touch_click_zone_matrix_pc34_compat`,
+`champion_status_slotbox_pc34_compat`,
+`touch_pointer_input_pc34_compat`,
+`touch_item_mouse_queue_pc34_compat`, and
+`dm1_v1_touch_original_mouse_ui_action_zones_source_lock`.
+
+Champion panel touches remain mapped through the original mouse-command zones
+and the existing V1 command queue. No separate touch-only gameplay dispatcher
+is introduced.
+
 ## Source Lock
 ReDMCSB WIP20210206: CLIKCHAM.C F0367; CHAMDRAW.C F0287/F0288/F0289/F0290/F0291/F0292; COMMAND.C G0455/G0452/G0453.
 

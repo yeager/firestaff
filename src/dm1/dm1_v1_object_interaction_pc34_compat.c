@@ -4,6 +4,42 @@
 #include <string.h>
 #include <stdio.h>
 
+enum {
+    DM1_OBJ_USE_ICON_WATER_PC34 = 8,
+    DM1_OBJ_USE_ICON_WATERSKIN_PC34 = 9,
+    DM1_OBJ_USE_ICON_FOOD_FIRST_PC34 = 168,
+    DM1_OBJ_USE_ICON_FOOD_LAST_PC34 = 175,
+    DM1_OBJ_USE_POTION_ROS_PC34 = 6,
+    DM1_OBJ_USE_POTION_WATER_FLASK_PC34 = 15
+};
+
+static int m11_obj_use_food_icon_from_object(const M11_WorldObject* obj)
+{
+    if (obj && obj->weight >= DM1_OBJ_USE_ICON_FOOD_FIRST_PC34 &&
+        obj->weight <= DM1_OBJ_USE_ICON_FOOD_LAST_PC34) {
+        return obj->weight;
+    }
+    return DM1_OBJ_USE_ICON_FOOD_FIRST_PC34;
+}
+
+static int m11_obj_use_water_icon_from_object(const M11_WorldObject* obj)
+{
+    if (obj && (obj->weight == DM1_OBJ_USE_ICON_WATER_PC34 ||
+                obj->weight == DM1_OBJ_USE_ICON_WATERSKIN_PC34)) {
+        return obj->weight;
+    }
+    return DM1_OBJ_USE_ICON_WATERSKIN_PC34;
+}
+
+static int m11_obj_use_potion_type_from_object(const M11_WorldObject* obj)
+{
+    if (obj && obj->stackCount >= DM1_OBJ_USE_POTION_ROS_PC34 &&
+        obj->stackCount <= DM1_OBJ_USE_POTION_WATER_FLASK_PC34) {
+        return obj->stackCount;
+    }
+    return 0;
+}
+
 void m11_obj_init(M11_ObjectState* s) {
     if (!s) return;
     memset(s, 0, sizeof(M11_ObjectState));
@@ -124,13 +160,13 @@ int m11_obj_use(M11_ObjectState* s, int champIdx, int objIdx,
     switch (obj->objectType) {
         case DM1_OBJTYPE_POTION: {
             /* Potion: delegate to consumables module (CONSUM.C F0340).
-             * champData carries current stat snapshot; result returns
-             * delta to apply. Caller is responsible for committing deltas
-             * to the actual champion state (health, stamina, mana, attrs).
+             * champData carries current stat snapshot; result returns the
+             * transformed champion values. Caller commits those values to the
+             * actual champion state (health, stamina, mana, attrs).
              * Source: PANEL.C:1850-1917 F0349 potion application + VI wound cure. */
             if (!champData || !result) return 0;
             return dm1_inventory_consume_potion_pc34(champData,
-                                                    0 /* potionType */,
+                                                    m11_obj_use_potion_type_from_object(obj),
                                                     obj->weight /* power proxy */,
                                                     NULL /* woundMasks */,
                                                     0 /* woundMaskCount */,
@@ -138,20 +174,22 @@ int m11_obj_use(M11_ObjectState* s, int champIdx, int objIdx,
         }
         case DM1_OBJTYPE_FOOD: {
             /* Food: delegate to food consumption (CONSUM.C F0343).
-             * obj->weight carries food amount proxy for food-type items.
+             * obj->weight carries the food icon proxy (C168..C175) in this
+             * compact object-state abstraction.
              * Source: PANEL.C:1918-1919 G0242 food amounts. */
             if (!champData || !result) return 0;
             return dm1_inventory_consume_food_junk_pc34(champData,
-                                                        0 /* iconIndex proxy */,
+                                                        m11_obj_use_food_icon_from_object(obj),
                                                         result);
         }
         case DM1_OBJTYPE_WATER: {
             /* Water/junk: delegate to water consumption (CONSUM.C F0342).
+             * obj->weight carries C008 water / C009 waterskin icon proxy and
              * obj->stackCount carries charge count for waterskins.
              * Source: PANEL.C:1824-1844 waterskin charge use. */
             if (!champData || !result) return 0;
             return dm1_inventory_consume_water_junk_pc34(champData,
-                                                         0 /* iconIndex */,
+                                                         m11_obj_use_water_icon_from_object(obj),
                                                          obj->stackCount,
                                                          result);
         }
