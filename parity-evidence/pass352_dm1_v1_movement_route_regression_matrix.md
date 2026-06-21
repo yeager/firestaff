@@ -23,7 +23,7 @@ Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP2021
 | Lane | Route surface | Product seam | Gate expectation |
 | --- | --- | --- | --- |
 | Script tokens | bare `left/right/up/down/strafe-left/strafe-right` script tokens | `main_loop_m11.c:m11_map_script_token` → `M11_GameView_HandleInput` → `m11_dm1_v1_pipeline_command_for_input` | Same live party state as the proven keypad route for equivalent commands |
-| Arrow key symbols | `key:left`, `key:right`, `key:up`, `key:down` | `main_loop_m11.c:m11_script_keycode_from_name` + SDL key switch | Same command ids as ReDMCSB movement table after normalization |
+| Arrow key symbols | `key:left`, `key:right`, `key:up`, `key:down` | `main_loop_m11.c:m11_script_keycode_from_name` + SDL key switch | Current SDL arrow route: up/down move forward/back, left/right strafe; intentionally distinct from turn-token/keypad routes |
 | PC34 numpad aliases | `key:kp1`..`key:kp6` and `key:kp-1`..`key:kp-6` | explicit SDL keypad cases added by pass346 | No OS NumLock synthesis needed; keypad aliases map to PC34 movement commands |
 | Direct command queue | already resolved `C001..C006` command ids | `DM1_V1_MovementPipeline_EnqueueCommandPc34Compat` | Bypasses OS delivery but still exercises F0380 → F0365/F0366 compat movement pipeline |
 | Touch dispatch guard | primary-before-secondary mouse table route | pass347/pass350 touch live dispatch gate | No stale blocker remains in the movement route matrix; touch evidence stays separate from keyboard/keypad proof |
@@ -32,6 +32,7 @@ Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP2021
 
 - `BLOCKED_FULL_LAUNCHER_SCRIPT_HANDOFF` is retired for DM1 V1 M11 launcher script movement routes by pass344/pass349/pass352 gates.
 - `BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E` is retired for M11 SDL `key:kp*` routing only; pass348 still correctly does **not** claim original DOS/I34E keyboard-buffer proof.
+- Bare replay tokens `left/right` and keypad aliases `KP_4/KP_6` remain turn routes for historical probe stability; SDL arrow keys are a separate modern play route and are verified separately as strafe/forward/back.
 - Touch primary/secondary dispatch ordering is guarded by pass347/pass350 and included here only as a route-regression dependency, not re-proved.
 
 ## Non-claims

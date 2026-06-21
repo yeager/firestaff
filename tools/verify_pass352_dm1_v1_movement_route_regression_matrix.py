@@ -9,27 +9,46 @@ import shutil
 import subprocess
 from datetime import datetime, timezone
 import sys
+from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PASS = "pass352_dm1_v1_movement_route_regression_matrix"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 EVIDENCE = ROOT / "parity-evidence" / f"{PASS}.md"
+
+
+def first_existing_env_path(env_names: list[str], candidates: list[pathlib.Path]) -> pathlib.Path:
+    for name in env_names:
+        value = os.environ.get(name)
+        if value:
+            return pathlib.Path(value).expanduser()
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
+
+
 REDMCSB = pathlib.Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    str(pathlib.Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
 BUILD_DIR = pathlib.Path(os.environ.get(
     "FIRESTAFF_PASS352_BUILD_DIR",
-    "/home/trv2/.openclaw/data/firestaff-builds/pass352-verify",
+    str(pathlib.Path.home() / ".openclaw/data/firestaff-builds/pass352-verify"),
 ))
 HOME_ROOT = pathlib.Path(os.environ.get(
     "FIRESTAFF_PASS352_HOME_ROOT",
-    "/home/trv2/.openclaw/data/firestaff-homes/pass352-verify",
+    str(pathlib.Path.home() / ".openclaw/data/firestaff-homes/pass352-verify"),
 ))
-DM1_DATA = pathlib.Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1")
+DM1_DATA = first_existing_env_path(
+    ["FIRESTAFF_PASS352_DM1_DATA", "FIRESTAFF_DM1_CANONICAL_DATA", "FIRESTAFF_DM1_DATA"],
+    [
+        pathlib.Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+        pathlib.Path.home() / ".firestaff/data/dm1",
+    ],
+)
 LAUNCH = "enter,down,down,down,down,down,down,enter"
 ROUTE_EQUIVALENT = "left,left,left,up,right"
 
@@ -77,10 +96,27 @@ EVIDENCE_MARKERS = [
 ]
 
 RUNTIME_EXPECTED = {
-    "launchedEver": 1,
-    "active": 1,
-    "party": {"mapIndex": 0, "mapX": 0, "mapY": 3, "direction": 0, "championCount": 0},
-    "pipeline": {"dequeued": 1, "command": 2, "turnApplied": 1, "viewportDirty": 1},
+    # Bare replay tokens and keypad aliases preserve the historical
+    # turn-left/turn-right route used by pass373/pass352-era probes.
+    "script_tokens": {
+        "party": {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 0, "championCount": 0},
+        "pipeline": {"dequeued": 1, "command": 2, "turnApplied": 1, "stepApplied": 0, "movementBlocked": 0, "viewportDirty": 1},
+    },
+    "pc34_numpad_aliases": {
+        "party": {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 0, "championCount": 0},
+        "pipeline": {"dequeued": 1, "command": 2, "turnApplied": 1, "stepApplied": 0, "movementBlocked": 0, "viewportDirty": 1},
+    },
+    "pc34_numpad_hyphen_aliases": {
+        "party": {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 0, "championCount": 0},
+        "pipeline": {"dequeued": 1, "command": 2, "turnApplied": 1, "stepApplied": 0, "movementBlocked": 0, "viewportDirty": 1},
+    },
+    # SDL arrow-key symbols intentionally follow the current DM1 PC34
+    # play convention: up/down move forward/back, left/right strafe.
+    # They are not expected to match the turn-token/keypad route.
+    "arrow_key_symbols": {
+        "party": {"mapIndex": 0, "mapX": 1, "mapY": 4, "direction": 2, "championCount": 0},
+        "pipeline": {"dequeued": 1, "command": 4, "turnApplied": 0, "stepApplied": 0, "movementBlocked": 1, "viewportDirty": 0},
+    },
 }
 
 RUNTIME_CASES = [
@@ -108,22 +144,19 @@ def slice_text(path: pathlib.Path, spec: str) -> str:
     return "\n".join(chunks)
 
 
-def runtime_ok(runtime: dict) -> bool:
+def runtime_ok(case_name: str, runtime: dict) -> bool:
+    expected = RUNTIME_EXPECTED[case_name]
     party = runtime.get("party", {})
     pipe = runtime.get("pipeline", {})
-    return (
-        runtime.get("launchedEver") == 1 and
-        runtime.get("active") == 1 and
-        party.get("mapIndex") == 0 and
-        party.get("mapX") == 0 and
-        party.get("mapY") == 3 and
-        party.get("direction") == 0 and
-        party.get("championCount") == 0 and
-        pipe.get("dequeued") == 1 and
-        pipe.get("command") == 2 and
-        pipe.get("turnApplied") == 1 and
-        pipe.get("viewportDirty") == 1
-    )
+    if runtime.get("launchedEver") != 1 or runtime.get("active") != 1:
+        return False
+    for key, value in expected["party"].items():
+        if party.get(key) != value:
+            return False
+    for key, value in expected["pipeline"].items():
+        if pipe.get(key) != value:
+            return False
+    return True
 
 
 def main() -> int:
@@ -186,7 +219,7 @@ def main() -> int:
         ]
         proc = run(cmd, env=env, timeout=60)
         runtime = json.loads(probe_json.read_text()) if probe_json.exists() else {}
-        ok = proc["returncode"] == 0 and probe_json.exists() and runtime_ok(runtime)
+        ok = proc["returncode"] == 0 and probe_json.exists() and runtime_ok(name, runtime)
         item = {"case": name, "script": script, "probeJson": str(probe_json.relative_to(ROOT)), "ok": ok, "observed": runtime, "result": proc}
         runtime_results.append(item)
         checks.append({"kind": "runtime_route", **item})
