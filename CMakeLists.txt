@@ -1098,6 +1098,10 @@ target_link_libraries(firestaff_dm1_v2_presentation_mode_probe
 if(NOT MSVC)
     target_compile_options(firestaff_dm1_v2_presentation_mode_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME dm1_v2_presentation_mode_probe
+    COMMAND firestaff_dm1_v2_presentation_mode_probe
+)
 
 # CSB V2 presentation-mode probe (V2.0 / V2.1 / V2.2 selection).
 # Headless: no game assets, no SDL rendering required.
