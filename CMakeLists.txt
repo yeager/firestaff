@@ -6177,6 +6177,10 @@ if(BUILD_TESTING)
         NAME dm1_v1_party_movement_sensor_order_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_party_movement_sensor_order_source_lock.py
     )
+    add_test(
+        NAME dm1_v1_party_footstep_sound_provenance
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_dm1_v1_party_footstep_sound_provenance.py
+    )
 
     add_test(
         NAME dm1_v1_movement_command_gate_source_lock
