@@ -1122,6 +1122,32 @@ if(BUILD_TESTING)
     )
 endif()
 
+# DM1 V2.2 in-place modern-renderer probe. Headless: creates its own tiny cache.
+add_executable(firestaff_dm1_v22_inplace_render_probe
+    probes/firestaff_dm1_v22_inplace_render_probe.c
+    src/dm1v2/m11_v22_inplace_draw_pc34.c
+    src/dm1v2/m11_v22_shape_cache_pc34.c
+    src/dm1v2/dm1_v2_shape_runtime_pc34.c
+    src/dm1v2/dm1_v2_presentation_mode_pc34.c
+    src/dm1v2/dm1_v22_shapes.c
+    src/dm1v2/dm1_v2_modern_assets_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_dm1_v22_inplace_render_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_dm1_v22_inplace_render_probe
+    PRIVATE firestaff_m12 firestaff_v2 firestaff_m11 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v22_inplace_render_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v22_inplace_render_probe
+        COMMAND firestaff_dm1_v22_inplace_render_probe
+    )
+endif()
+
 # Theron V2.1 texture upscale probe. Headless: no game data.
 # See include/theron_v2_texture_upscale_pc34.h.
 add_executable(firestaff_theron_v2_texture_upscale_probe

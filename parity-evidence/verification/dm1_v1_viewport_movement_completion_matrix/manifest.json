@@ -35,7 +35,7 @@
   "chainedGates": [
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass381_dm1_v1_movement_viewport_walls_source_lock.py",
         "--json",
         "--source",
@@ -72,7 +72,7 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py"
       ],
       "covers": "PC34 input, queue, F0380, F0365/F0366 and command-core regressions",
@@ -87,7 +87,7 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "scripts/verify_pass402_dm1_v1_movement_cooldown_order.py"
       ],
       "covers": "cooldown ageing before F0380 and no same-tick post-decrement",
@@ -121,7 +121,7 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass406_dm1_v1_movement_legality_completion_gate.py"
       ],
       "covers": "party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain",
@@ -140,7 +140,7 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass406_dm1_v1_game_loop_redraw_cadence.py"
       ],
       "covers": "game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering",
@@ -159,7 +159,7 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "scripts/verify_pass395_dm1_v1_viewport_walls_source_runtime_lock.py"
       ],
       "covers": "wall replay, door two-pass, F0115 handoff, and post-command redraw metadata/runtime contract",
@@ -193,7 +193,7 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion.py"
       ],
       "covers": "projectile/explosion layer split, deferred explosion pass, and center/side occlusion guards",
@@ -211,7 +211,7 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "scripts/verify_dm1_v1_viewport_square_collision_source_lock.py"
       ],
       "covers": "visible viewport cells are map-backed and agree with movement collision square state",
@@ -240,7 +240,7 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_field_zone_aspect_clip_gate.py"
       ],
       "covers": "field/teleporter zone/aspect clipping behind nearer blockers",
@@ -268,7 +268,7 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_palette_source_lock_gate.py"
       ],
       "covers": "single ReDMCSB dungeon palette cadence; rejects invented depth palette dimming",
@@ -288,7 +288,7 @@
     },
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass434_dm1_v1_original_viewport_crop_readiness_gate.py"
       ],
       "covers": "original viewport crop/source readiness is available",
@@ -310,7 +310,7 @@
   "expectedBlockerGates": [
     {
       "cmd": [
-        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py"
       ],
       "covers": "remaining original semantic route blocker: F0365/F0366 dispatch + six non-duplicate semantic route states not yet proven",
@@ -409,5 +409,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-06-21T08:12:03.567959+00:00"
+  "timestampUtc": "2026-06-21T08:24:21.201231+00:00"
 }
