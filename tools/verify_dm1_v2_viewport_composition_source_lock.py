@@ -86,13 +86,21 @@ FIRESTAFF_REQUIRED = [
     ('CMakeLists.txt', 'dm1_v2_viewport_composition_source_lock'),
     ('tools/verify_dm1_v2_completion_matrix.py', 'dm1_v2_viewport_composition_source_lock'),
     ('tools/verify_dm1_v2_dungeon_view_asset_bindings.py', 'REQUIRED_LOGICAL_IDS'),
-    ('dm1_v2_viewport_renderer_pc34.c', 'DUNVIEW.C:8357'),
-    ('dm1_v2_viewport_renderer_pc34.c', 'DUNVIEW.C:6697-6720'),
+    ('src/dm1v2/dm1_v2_viewport_renderer_pc34.c', 'DUNVIEW.C:8357'),
+    ('src/dm1v2/dm1_v2_viewport_renderer_pc34.c', 'DUNVIEW.C:6697-6720'),
 ]
 
 
 def read(path: Path) -> str:
     return path.read_text(encoding='utf-8', errors='replace')
+
+
+def display_path(path: Path) -> str:
+    text = str(path)
+    home = str(Path.home())
+    if text.startswith(home + '/'):
+        return '~/' + text[len(home) + 1:]
+    return text
 
 
 def source_line(text: str, line: int) -> str:
@@ -189,7 +197,7 @@ def main() -> int:
     result = {
         'status': 'failed' if errors else 'passed',
         'scope': 'DM1 V2 viewport composition source stack/order gate',
-        'redmcsbSourceRoot': str(SOURCE),
+        'redmcsbSourceRoot': display_path(SOURCE),
         'sourceAnchors': anchors,
         'drawOrder': order,
         'pass271LogicalBindings': bindings,

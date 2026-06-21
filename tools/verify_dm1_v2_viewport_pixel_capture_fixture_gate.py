@@ -28,15 +28,15 @@ SOURCE_ANCHORS = [
 ]
 
 FIRESTAFF_ANCHORS = [
-    ('dm1_v2_viewport_renderer_pc34.h', '#define DM1_V2_VIEWPORT_W 224'),
-    ('dm1_v2_viewport_renderer_pc34.h', '#define DM1_V2_VIEWPORT_H 136'),
-    ('dm1_v2_viewport_renderer_pc34.h', 'DM1_V2_ViewportRegion'),
-    ('dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_compare_viewport_region'),
-    ('dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_build_composition_from_dungeon'),
-    ('dm1_v2_viewport_renderer_pc34.c', 'dm1_v2_vp_dungeon_dat_get_square_raw'),
-    ('dm1_v2_viewport_renderer_pc34.c', 'dm1_v2_vp_compare_viewport_region'),
-    ('test_dm1_v2_movement_viewport_pc34.c', 'test_viewport_dungeon_dat_decoder_entry_draw_list'),
-    ('test_dm1_v2_movement_viewport_pc34.c', 'test_viewport_region_comparator_scaffold'),
+    ('include/dm1_v2_viewport_renderer_pc34.h', '#define DM1_V2_VIEWPORT_W 224'),
+    ('include/dm1_v2_viewport_renderer_pc34.h', '#define DM1_V2_VIEWPORT_H 136'),
+    ('include/dm1_v2_viewport_renderer_pc34.h', 'DM1_V2_ViewportRegion'),
+    ('include/dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_compare_viewport_region'),
+    ('include/dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_build_composition_from_dungeon'),
+    ('src/dm1v2/dm1_v2_viewport_renderer_pc34.c', 'dm1_v2_vp_dungeon_dat_get_square_raw'),
+    ('src/dm1v2/dm1_v2_viewport_renderer_pc34.c', 'dm1_v2_vp_compare_viewport_region'),
+    ('tests/test_dm1_v2_movement_viewport_pc34.c', 'test_viewport_dungeon_dat_decoder_entry_draw_list'),
+    ('tests/test_dm1_v2_movement_viewport_pc34.c', 'test_viewport_region_comparator_scaffold'),
     ('tools/verify_dm1_v2_completion_matrix.py', 'dm1_v2_viewport_pixel_capture_fixture_gate'),
     ('CMakeLists.txt', 'dm1_v2_viewport_pixel_capture_fixture_gate'),
 ]
@@ -79,6 +79,13 @@ def line_at(rel: str, line: int) -> str:
     lines = (SOURCE / rel).read_text(encoding='utf-8', errors='replace').splitlines()
     return lines[line - 1].strip() if 1 <= line <= len(lines) else ''
 
+def display_path(path: Path) -> str:
+    text = str(path)
+    home = str(Path.home())
+    if text.startswith(home + '/'):
+        return '~/' + text[len(home) + 1:]
+    return text
+
 def main() -> int:
     errors: list[str] = []
     checks = []
@@ -112,7 +119,7 @@ def main() -> int:
         'status': 'failed' if errors else 'passed',
         'pass': 'pass280_dm1_v2_viewport_pixel_capture_fixture',
         'scope': 'source-locked path for matched original/ReDMCSB and Firestaff entry viewport pixel capture/comparison',
-        'redmcsbSourceRoot': str(SOURCE),
+        'redmcsbSourceRoot': display_path(SOURCE),
         'sourceAnchors': checks,
         'fixturePath': str(FIXTURE.relative_to(ROOT)),
         'fixture': fixture,

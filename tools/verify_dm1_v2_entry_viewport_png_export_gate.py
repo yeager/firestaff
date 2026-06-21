@@ -18,6 +18,14 @@ def png_size(path: Path) -> tuple[int, int]:
     return struct.unpack('>II', data[16:24])
 
 
+def display_path(path: Path) -> str:
+    text = str(path)
+    home = str(Path.home())
+    if text.startswith(home + '/'):
+        return '~/' + text[len(home) + 1:]
+    return text
+
+
 def main() -> int:
     errors: list[str] = []
     anchors = [
@@ -35,9 +43,9 @@ def main() -> int:
             errors.append(f'{rel}:{line}: expected {needle!r}, got {actual!r}')
         anchor_checks.append({'file': rel, 'line': line, 'needle': needle, 'actual': actual})
     for rel, needle in [
-        ('dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_render_composition_flat'),
-        ('dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_write_png_rgba'),
-        ('dm1_v2_viewport_renderer_pc34.c', 'dm1_v2_vp_build_composition_from_dungeon'),
+        ('include/dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_render_composition_flat'),
+        ('include/dm1_v2_viewport_renderer_pc34.h', 'dm1_v2_vp_write_png_rgba'),
+        ('src/dm1v2/dm1_v2_viewport_renderer_pc34.c', 'dm1_v2_vp_build_composition_from_dungeon'),
         ('tools/dm1_v2_export_entry_viewport_png.c', 'dm1_v2_vp_build_composition_from_dungeon(&dungeon, 0, 1, 3, 2'),
         ('CMakeLists.txt', 'dm1_v2_entry_viewport_png_export_gate'),
     ]:
@@ -66,7 +74,7 @@ def main() -> int:
         'pngSha256': sha,
         'pixelParityClaim': False,
         'explicitBlocker': 'PNG is a deterministic Firestaff composition/materialization seam only; original asset-backed renderer pixels are not wired and no matched original-vs-Firestaff pixel comparison was performed.',
-        'redmcsbSourceRoot': str(SOURCE),
+        'redmcsbSourceRoot': display_path(SOURCE),
         'sourceAnchors': anchor_checks,
         'errors': errors,
     }
