@@ -140,12 +140,12 @@ an original screenshot.
 | Champion panel HUD test | OK EXISTS | `tests/test_dm1_v1_champion_panel_hud_pc34_compat.c` | Source-locked geometry/constants; no paired capture. |
 | Champion stats test | OK EXISTS | `tests/test_dm1_v1_champion_stats_pc34_compat.c` | Source-locked bar graph logic; no paired capture. |
 | Lane3 champion HUD captures | IMPAIRED FIRESTAFF ONLY | `firestaff-v2-gap-manifest/verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm`, `party_hud_statusbox_gfx_vga.ppm` | Firestaff V1 output only; no paired original DM1 PC 3.4 champion panel screenshot. |
-| Original champion candidate/resurrect panel | PARTIAL OK | `verification-screens/pass1053-dm1-original-champion-candidate-panel/` | Pass1053 tracks pass455 original candidate panel (`click:111,82`) and post-C160 terminal/HUD transition (`click:130,115`). Not a full four-champion HUD pair. |
+| Original champion candidate/resurrect panel | PARTIAL OK | `verification-screens/pass1053-dm1-original-champion-candidate-panel/` | Pass1053 tracks pass455 original candidate panel (`click:111,82`) and post-C160 terminal/HUD transition (`click:130,115`); `pass1053_dm1_v1_original_champion_candidate_panel_gate` now keeps the manifest, crops, source anchors, and Firestaff-side references reproducible in CTest. Not a full four-champion HUD pair. |
 | Original four-champion party HUD screenshot | MISSING MISSING | - | No paired original DM1 PC 3.4 four-champion party HUD screenshot exists. |
 
 **Gap:** The champion panel geometry, status-box stride, portrait positions, and
-bar-graph layout are all source-locked and probe-verified. Pass1053 now adds original
-PC 3.4 evidence for the candidate/resurrect panel transition, but no paired full
+bar-graph layout are all source-locked and probe-verified. Pass1053 now adds and
+CTest-gates original PC 3.4 evidence for the candidate/resurrect panel transition, but no paired full
 four-champion party HUD or single-champion status panel screenshot exists yet to verify
 pixel-level rendering correctness.
 
