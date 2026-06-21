@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 F0306 stamina compiler-order CTest: registered existing `test_dm1_v1_f0306_stamina_pc34_compat` as CTest target `dm1_v1_f0306_stamina_pc34_compat`. The data-free BUG-115 gate pins ReDMCSB `CHAMPION.C` F0306 stamina-adjusted value behavior for the PC 3.4 second-operand order, the first-operand variant, edge stamina cases, and divide-by-zero guard. This is formula/source-lock coverage only; it does not drive live champion stamina mutation, load assets, add DOSBox evidence, or make broader combat/champion parity claims.
+
 - ✅ 2026-06-21 DM1 V1 champion-panel HUD recompute CTest: registered existing `test_dm1_v1_champion_panel_hud_recompute_pc34_compat` as CTest target `dm1_v1_champion_panel_hud_recompute_pc34_compat`. The data-free gate pins the source-contract redraw tuple for champion index, poison, food, and water state changes against `CHAMDRAW.C` F0292 and `PANEL.C` F0349 evidence. This is source-contract redraw coverage only; it does not load live assets, capture pixels, drive runtime inventory/mouth actions, or claim original HUD parity.
 
 - ✅ 2026-06-21 DM1 V1 Thieves Eye duration source-lock CTest: registered existing `test_dm1_v1_magic_thieves_eye_duration_pc34_compat` as CTest target `dm1_v1_magic_thieves_eye_duration_source_lock`. The data-free gate pins the MNU-02/F0757 Thieves Eye duration contract, including source-locked zero-tick default behavior, the opt-in legacy envelope predicate, invalid-input rejection, and non-Thieves-Eye spell branch isolation. This is magic formula/source-lock coverage only; it does not add live casting, UI routing, private assets, DOSBox evidence, or gameplay parity claims.
