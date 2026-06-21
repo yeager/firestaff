@@ -1,0 +1,257 @@
+{
+  "schema": "pass80_original_frame_classifier.v1",
+  "attempt_dir": "/tmp/dm1_v3_capture/01_viewport",
+  "capture_count": 3,
+  "dimensions_seen": {
+    "320x200": 3
+  },
+  "expected_sequence": null,
+  "class_counts": {
+    "dungeon_gameplay": 2,
+    "inventory": 1
+  },
+  "duplicate_sha256_counts": {},
+  "honesty": "Classifier/audit only. A 320x200 frame is not parity evidence until its semantic class matches the intended route state.",
+  "captures": [
+    {
+      "file": "/tmp/dm1_v3_capture/01_viewport/image0001-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 26895,
+      "sha256": "8f62254638b4f69601158bca1cd505dc1bd344f8e55a11cafd516417e8b2a87c",
+      "classification": "dungeon_gameplay",
+      "reason": "viewport content with mostly dark in-game right column",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.8933,
+          "color_ratio": 0.0,
+          "unique_colors": 180,
+          "mean_rgb": [
+            124.58,
+            124.58,
+            124.58
+          ],
+          "luma_stddev": 60.3
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0156,
+          "color_ratio": 0.0,
+          "unique_colors": 16,
+          "mean_rgb": [
+            3.19,
+            3.19,
+            3.19
+          ],
+          "luma_stddev": 27.59
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.1055,
+          "color_ratio": 0.0612,
+          "unique_colors": 51,
+          "mean_rgb": [
+            3.06,
+            13.56,
+            13.43
+          ],
+          "luma_stddev": 37.82
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.8185,
+          "color_ratio": 0.0,
+          "unique_colors": 158,
+          "mean_rgb": [
+            96.43,
+            96.43,
+            96.43
+          ],
+          "luma_stddev": 62.65
+        },
+        "title_top": {
+          "nonblack_ratio": 0.242,
+          "color_ratio": 0.0058,
+          "unique_colors": 110,
+          "mean_rgb": [
+            8.14,
+            8.0,
+            7.71
+          ],
+          "luma_stddev": 20.19
+        }
+      }
+    },
+    {
+      "file": "/tmp/dm1_v3_capture/01_viewport/image0002-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 25731,
+      "sha256": "0e6eeb39bbbb314397882b796aa2c16c22a8e1723b13a82330705e2699b7aeb4",
+      "classification": "dungeon_gameplay",
+      "reason": "viewport content with mostly dark in-game right column",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.8843,
+          "color_ratio": 0.0,
+          "unique_colors": 178,
+          "mean_rgb": [
+            123.11,
+            123.11,
+            123.11
+          ],
+          "luma_stddev": 60.39
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0156,
+          "color_ratio": 0.0,
+          "unique_colors": 16,
+          "mean_rgb": [
+            3.19,
+            3.19,
+            3.19
+          ],
+          "luma_stddev": 27.59
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.1055,
+          "color_ratio": 0.0612,
+          "unique_colors": 51,
+          "mean_rgb": [
+            3.06,
+            13.56,
+            13.43
+          ],
+          "luma_stddev": 37.82
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.7989,
+          "color_ratio": 0.0,
+          "unique_colors": 149,
+          "mean_rgb": [
+            93.69,
+            93.69,
+            93.69
+          ],
+          "luma_stddev": 60.93
+        },
+        "title_top": {
+          "nonblack_ratio": 0.242,
+          "color_ratio": 0.0058,
+          "unique_colors": 110,
+          "mean_rgb": [
+            8.14,
+            8.0,
+            7.71
+          ],
+          "luma_stddev": 20.19
+        }
+      }
+    },
+    {
+      "file": "/tmp/dm1_v3_capture/01_viewport/image0003-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 17975,
+      "sha256": "8c43b579576568cac9754dc4b26f3c73a073af3376c82c0d75341123197d029a",
+      "classification": "inventory",
+      "reason": "dense low-color inventory extent over viewport",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.9557,
+          "color_ratio": 0.0,
+          "unique_colors": 128,
+          "mean_rgb": [
+            151.04,
+            151.04,
+            151.04
+          ],
+          "luma_stddev": 45.83
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0156,
+          "color_ratio": 0.0,
+          "unique_colors": 16,
+          "mean_rgb": [
+            3.19,
+            3.19,
+            3.19
+          ],
+          "luma_stddev": 27.59
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.1055,
+          "color_ratio": 0.0612,
+          "unique_colors": 51,
+          "mean_rgb": [
+            3.06,
+            13.56,
+            13.43
+          ],
+          "luma_stddev": 37.82
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 1.0,
+          "color_ratio": 0.0,
+          "unique_colors": 66,
+          "mean_rgb": [
+            164.43,
+            164.43,
+            164.43
+          ],
+          "luma_stddev": 27.18
+        },
+        "title_top": {
+          "nonblack_ratio": 0.242,
+          "color_ratio": 0.0058,
+          "unique_colors": 110,
+          "mean_rgb": [
+            8.14,
+            8.0,
+            7.71
+          ],
+          "luma_stddev": 20.19
+        }
+      }
+    }
+  ],
+  "warnings": [],
+  "problems": [],
+  "pass": true
+}

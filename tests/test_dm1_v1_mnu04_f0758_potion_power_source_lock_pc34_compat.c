@@ -74,7 +74,6 @@ int main(void) {
             CHECK(effect.kineticEnergy >= baseline[i], buf);
             CHECK(effect.kineticEnergy <= baseline[i] + 15, buf);
         }
-        snprintf((char[96]){0}, 96, "", 0);
     }
 
     /* T2: Monotonically increasing baseline (40, 80, 120, 160, 200, 240). */

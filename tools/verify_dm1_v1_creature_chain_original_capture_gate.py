@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import argparse
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -272,7 +273,15 @@ def write_report(manifest: dict[str, Any]) -> None:
     OUT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Validate the DM1 V1 creature-chain original-capture blocker contract.")
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="validate without rewriting the tracked manifest/report artifacts",
+    )
+    args = parser.parse_args(argv)
+
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
     source = audit_sources()
     contract_audit = audit_contract(contract)
@@ -301,9 +310,10 @@ def main() -> int:
         "decision": "The creature-chain original comparison route is narrowed to two Trolin viewport rows, D2C then D1C, with canonical PC 3.4 asset hashes and 320x200/raw plus 224x136 viewport-crop requirements. The lane remains blocked on real original DOS screenshots.",
         "problems": problems,
     }
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    OUT_JSON.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    write_report(manifest)
+    if not args.check_only:
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        OUT_JSON.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        write_report(manifest)
     print(json.dumps({"status": status, "manifest": str(OUT_JSON.relative_to(ROOT)), "report": str(OUT_MD.relative_to(ROOT))}, indent=2, sort_keys=True))
     return 0 if not problems else 1
 

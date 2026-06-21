@@ -9,6 +9,7 @@ extern "C" {
 
 #define DM1_V2_VIEWPORT_W 224
 #define DM1_V2_VIEWPORT_H 136
+#define DM1_V2_VIEWPORT_BYTE_W 112
 #define DM1_V2_MAX_DEPTH 4
 #define DM1_V2_FOG_LEVELS 8
 #define DM1_V2_MAX_DRAW_COMMANDS 64

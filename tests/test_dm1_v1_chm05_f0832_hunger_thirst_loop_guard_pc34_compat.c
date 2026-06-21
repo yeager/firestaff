@@ -69,7 +69,6 @@ int main(void) {
     champ.food = 100;
     {
         int16_t r3 = F0832_LIFECYCLE_TickHungerThirst_Compat(&champ, 2, 100);
-        int16_t loss = (int16_t)((unsigned)r3 & 0xFFu);
         /* Negative values stored as 16-bit signed loss — actual loss may be negative. */
         CHECK(r3 < 0, "T3: well-fed champ produces negative loss (gain)");
     }
