@@ -151,12 +151,12 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 |---|---|
 | V2.0/V2.1/V2.2 runtime pipeline | FIXED |
 | V2.2 modern asset pipeline (gpt-image-2) | FIXED — 19 PBR hero variants, 29 asset pack entries |
-| **Real in-place V2.2 drawing via m11_draw_dm1_\* passes** | OPEN-LARGE — overlay placeholder only |
+| **Real in-place V2.2 drawing via m11_draw_dm1_\* passes** | OPEN-LARGE — placeholder overlay still owns the live M11 game-view swap, but 2026-06-21 added `dm1_v22_inplace_render_probe`: a headless synthetic-cache gate proving DM1 V2.2 in-place cache load, bitmap lookup, 9-cell paint, and 4-direction sweep. Remaining: wire `m11_draw_dm1_*`/game-view draw passes to consume real modern art in-place and add material/pixel diffs. |
 | V2 modern UI overlay polish (inventory/champion/rune/action) | OPEN-LARGE |
 | Enhanced lighting/shadows/field/projectile VFX | OPEN-LARGE |
 | Smooth movement interpolation coverage | FIXED -- pass1068 expands `dm1_v2_movement_camera_pc34` with deterministic forward/back/left/right camera-offset coverage, end-offset reset checks, and presentation-only runtime invariants alongside the smooth-movement source-lock gate |
 | Full V1/V2 deterministic input scripts + screenshot/pixel gates | OPEN-BOUNDED |
-| Per-mode pixel/material verification gates | OPEN-BOUNDED |
+| Per-mode pixel/material verification gates | OPEN-BOUNDED — 2026-06-21: Apple-Silicon V2.0/V2.1/V2.2 GPU readback gates now cover filtered (`dm_v20_filtered_renderer_silicon`), upscale (`dm_v21_upscale_renderer_silicon`), and modern placeholder (`dm_v22_modern_renderer_silicon`) paths; `dm1_v22_inplace_render_probe` covers synthetic in-place cache painting. Remaining gap: finished V2.2 real-art material/pixel gates plus broader deterministic V1/V2 screenshot scripts. |
 
 ---
 

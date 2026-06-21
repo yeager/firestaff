@@ -100,7 +100,7 @@
     }
   },
   "data_dir": "/Users/bosse/.firestaff/data",
-  "generated_at": "2026-06-21T08:57:00.543414+00:00",
+  "generated_at": "2026-06-21T09:04:17.117144+00:00",
   "schema": "firestaff.parity.dm1_24h_readiness.v1",
   "status": "PASS"
 }
