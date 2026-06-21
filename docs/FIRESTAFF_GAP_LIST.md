@@ -41,7 +41,7 @@ Classification:
 | **S2D (Nexus font files)** | locally verified | PARTIAL — parser exists, font rendering incomplete |
 | **TAI/SAL/MAP (Nexus level data)** | locally verified | PARTIAL — loaders exist; TLINK metadata and rendering sparse |
 | **BPX/BPK (Nexus compressed archives)** | locally verified | OPEN-BOUNDED |
-| **Theron's Quest Track 02 BIN/ISO** | locally verified | FIXED — JP canonical ISO, JP extras BIN, and US extras BIN launch-tested by `tier1_strict_boot_probe` (PASS 5/5 in-scope paths, 2026-06-21) plus `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` |
+| **Theron's Quest Track 02 BIN/ISO** | locally verified | FIXED — JP canonical ISO, JP extras BIN, and US extras BIN launch-tested by `tier1_strict_boot_probe` (Theron rows PASS, 2026-06-21) plus `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` |
 
 ### A2. Mapfile system
 
@@ -84,7 +84,7 @@ Classification:
 | PLATFORM_MATRIX.md version support map | docs/PLATFORM_MATRIX.md | FIXED in v2.9.2 (commit `32dcf76c`) |
 | DMWEB_REFERENCE.md consolidated reference | docs/DMWEB_REFERENCE.md | FIXED in v2.9.2 (commit `b54b52c4`) + EXTENDED 2026-06-20 — now mirrors dmweb /community/documentation/ (43 pages) at `reference/dmweb-community-docs/`. 19 → 62 pages surveyed, see Section I. |
 | **Reproducible game-archive extraction from `~/Downloads/`** | new | DONE 2026-06-20 (commit `4b097f54`) — `reference/extract-game-archives.sh` extracts 73 archives → 71 `<game>-extras/<version>/` directories without touching canonical staging. |
-| **`--scan-data` smoke reports real READY-path:er** | existing | FIXED for the current gate — `asset_validate_coverage_by_game` is wired in CTest and PASS; `tier1_strict_boot_probe` is wired in CTest and PASS 5/5 in-scope launch paths on 2026-06-21. CSB silent-exit and Nexus virtual-ISO launch remain tracked as Tier 4 runtime/launcher gaps, not Tier 1 path-discovery gaps. |
+| **`--scan-data` smoke reports real READY-path:er** | existing | FIXED for the current gate — `asset_validate_coverage_by_game` is wired in CTest and PASS; `tier1_strict_boot_probe` is wired in CTest and PASS for all present in-scope launch paths on 2026-06-21, including CSB canonical and CSB Amiga 3.3 Meynaf FR via the `CSB READY` marker. Nexus virtual-ISO launch remains tracked as a Tier 4 runtime/launcher gap, not a Tier 1 path-discovery gap. |
 | **Real-data regression tests (greatstone db_data)** | greatstone sck tool | BLOCKED-DATA — db_data not currently fetchable from free.fr (404). However: `compare_to_greatstone.py` covers the VERIFIED_HASHES.md side, and the new `*-extras/` tree gives us locally-available alternative matches that weren't possible a week ago. |
 | **Lefthook in PATH for CI** | build/CI hygiene | FIXED — `.github/workflows/verify.yml` installs Go, installs `lefthook`, exports `$(go env GOPATH)/bin`, and runs `lefthook run ci`; local dev machines may still no-op gracefully when Lefthook is absent |
 
@@ -306,7 +306,7 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | Save/load (.SRM) | PARTIAL |
 | Track02 bank routing | FIXED |
 | Dungeon progression (7 dungeons) | FIXED |
-| **JP/US Track 02 BIN/ISO real-asset launch** | FIXED — `tier1_strict_boot_probe` PASS 5/5 in-scope paths on 2026-06-21 covers Theron JP canonical, Theron JP extras, and Theron US extras booting to the TQR level-load milestone; `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` also PASS. |
+| **JP/US Track 02 BIN/ISO real-asset launch** | FIXED — `tier1_strict_boot_probe` covers Theron JP canonical, Theron JP extras, and Theron US extras booting to the TQR level-load milestone; `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` also PASS. |
 | Cross-slot import/export against real Track 02 saves | OPEN-BOUNDED |
 | Cross-route mechanics runtime evidence | OPEN-BOUNDED |
 
@@ -384,12 +384,12 @@ order:
    `~/.firestaff/data`). Run: `python3 tools/asset-validate/compare_to_greatstone.py --summary`.
 5. **Verify all `--scan-data` READY-path:er are actually
    launchable** by M11. — DONE for Tier 1 path-discovery scope
-   2026-06-21: CTest `tier1_strict_boot_probe` PASS 5/5 in-scope
-   launch paths (DM1 canonical, DM1 legacy-dos, Theron JP canonical,
-   Theron JP extras, Theron US extras), and
-   `asset_validate_coverage_by_game` PASS. CSB silent-exit and Nexus
-   virtual-ISO launch remain out-of-scope here and tracked as Tier 4
-   runtime/launcher gaps, not path-discovery gaps.
+   2026-06-21: CTest `tier1_strict_boot_probe` PASS for all present
+   in-scope launch paths (DM1 canonical, DM1 legacy-dos, CSB canonical,
+   CSB Amiga 3.3 Meynaf FR, Theron JP canonical, Theron JP extras,
+   Theron US extras), and `asset_validate_coverage_by_game` PASS. Nexus
+   virtual-ISO launch remains out-of-scope here and tracked as a Tier 4
+   runtime/launcher gap, not a path-discovery gap.
 6. ~~**Scanner path-naming limitations**:~~ CLOSED as NO-GAP
    2026-06-20. The scanner already matches on MD5 via
    `asset_find_by_md5` and `scan_iso_by_md5` now also falls
@@ -638,9 +638,10 @@ ny design.
 ### L1. Verifiera alternativa READY-path:er bootar
 
 Status 2026-06-21: DONE för Tier 1 path-discovery scope via
-`tier1_strict_boot_probe` (5/5 in-scope launch paths). CSB silent-exit
-och Nexus virtual-ISO launch ligger kvar som separata Tier 4
-runtime/launcher-gaps.
+`tier1_strict_boot_probe` (alla närvarande in-scope launch paths). CSB
+canonical och CSB Amiga 3.3 Meynaf FR skriver nu `CSB READY`;
+Nexus virtual-ISO launch ligger kvar som separat Tier 4
+runtime/launcher-gap.
 
 Den ursprungliga källan Tier 1 #5: Kör mot varje EXTRACTED + VERIFIED path
 och bekräfta att M11 faktiskt startar spelet, inte bara att
@@ -774,8 +775,8 @@ What changed in this session that affects the gap list above:
 ### Tier 1 #5 strict boot-probe
 
 - New `firestaff_tier1_strict_boot_probe` ctest entry runs the launcher with `--game <id> --data-dir <path> --duration 1500` under `SDL_VIDEODRIVER=dummy` for every EXTRACTED + VERIFIED path.
-- 5/5 in-scope paths PASS: DM1 canonical, DM1 legacy-dos, Theron JP canonical, Theron JP extras, Theron US extras.
-- CSB (silent launcher exit) and Nexus (`Track 1.bin::DM.BIN` mount) remain tracked as Tier 4 runtime/launcher gaps, not Tier 1 path-discovery gaps.
+- All present in-scope paths PASS: DM1 canonical, DM1 legacy-dos, CSB canonical, CSB Amiga 3.3 Meynaf FR, Theron JP canonical, Theron JP extras, Theron US extras.
+- Nexus (`Track 1.bin::DM.BIN` mount) remains tracked as a Tier 4 runtime/launcher gap, not a Tier 1 path-discovery gap.
 
 ### Tier 2 #4 LZW Atari ST decoder DONE
 
