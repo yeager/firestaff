@@ -969,12 +969,25 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
         g_m12ScanMetrics.versionHashLookups++;
 #endif
+        if (getenv("FIRESTAFF_TIER1_DEBUG")) {
+            fprintf(stderr, "TIER1DEBUG: m12_fill_game_versions gameId=%s rootIndex=%zu root=%s md5Count=%zu\n",
+                    gameSpec->gameId, rootIndex, roots[rootIndex], md5Count);
+            for (size_t dbg = 0; dbg < md5Count; ++dbg) {
+                fprintf(stderr, "TIER1DEBUG:   md5List[%zu]=%s\n", dbg, md5List[dbg] ? md5List[dbg] : "(null)");
+            }
+        }
         (void)asset_find_all_by_md5_list(roots[rootIndex],
                                          md5List,
                                          rootMatchedPaths[rootIndex],
                                          rootMatched[rootIndex],
                                          (int)md5Count,
                                          32);
+        if (getenv("FIRESTAFF_TIER1_DEBUG")) {
+            for (size_t dbg = 0; dbg < md5Count; ++dbg) {
+                fprintf(stderr, "TIER1DEBUG:   rootMatched[%zu][%zu]=%d path=%s\n",
+                        rootIndex, dbg, rootMatched[rootIndex][dbg], rootMatchedPaths[rootIndex][dbg]);
+            }
+        }
     }
     for (i = 0U; i < gameSpec->versionCount; ++i) {
         M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
@@ -1108,13 +1121,29 @@ static int m12_fill_required_files(M12_AssetStatus* status,
         fileStatus->gameId = spec->gameId;
         fileStatus->roleId = spec->roleId;
         fileStatus->label = spec->label;
-        fileStatus->required = spec->matchAnyVersion ? 0 : 1;
+        /* Every required-files entry is part of the gate.
+         * The matchAnyVersion flag changes HOW we compute matched
+         * (surface the version's matchedPath for filename-only
+         * graphics, or run a hash fallback for hash-pinned files)
+         * but never WHETHER the file is required. Forcing
+         * required=1 keeps the launch_blocker popup honest: when
+         * the user has no CSB data, the CSBGRAPH.DAT-equivalent
+         * GRAPHICS.DAT row and the hash-pinned DUNGEON.DAT row
+         * must both show up as missing. The earlier
+         * `spec->matchAnyVersion ? 0 : 1` shortcut (introduced as
+         * a side-effect of pass1039-1041 in commit 35d60e1b)
+         * silently disabled the gate for filename-only graphics
+         * rows on DM1/CSB/DM2 and made Nexus + Theron report
+         * available-with-no-data because their sole required-file
+         * row carried matchAnyVersion=1. */
+        fileStatus->required = 1;
         if (spec->matchAnyVersion) {
-            /* matchAnyVersion=true: the file is "soft" — only used
-             * to surface the version's matchedPath in the report.
-             * It does NOT block game availability, since the version
-             * itself (matched in m12_fill_game_versions) is what
-             * gates availability. */
+            /* matchAnyVersion=true: filename-only graphics row.
+             * Surface the first matched version's path so the
+             * missing-files popup and report show where the runtime
+             * will load the asset from. The version match itself
+             * (m12_fill_game_versions) is what gates availability
+             * upstream — this just propagates the result down. */
             const M12_AssetVersionStatus* version = m12_first_matched_version(status, gameIndex);
             if (version) {
                 fileStatus->matched = 1;
