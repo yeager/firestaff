@@ -1,7 +1,24 @@
 #include "dm2_v1_boot.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+
+#if defined(_WIN32)
+#include <direct.h>
+#include <process.h>
+#define TEST_MKDIR(path) _mkdir(path)
+#define TEST_RMDIR(path) _rmdir(path)
+#define TEST_PATH_SEP "\\"
+#define TEST_GETPID() _getpid()
+#else
+#include <unistd.h>
+#define TEST_MKDIR(path) mkdir((path), 0700)
+#define TEST_RMDIR(path) rmdir(path)
+#define TEST_PATH_SEP "/"
+#define TEST_GETPID() getpid()
+#endif
 
 static int passed;
 static int failed;
@@ -10,6 +27,15 @@ static int failed;
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \
     else { failed++; printf("  FAIL: %s\n", msg); } \
 } while (0)
+
+static int write_file(const char *path, const char *bytes)
+{
+    FILE *f = fopen(path, "wb");
+    if (!f) return 0;
+    fputs(bytes, f);
+    fclose(f);
+    return 1;
+}
 
 static void test_defaults(void)
 {
@@ -50,6 +76,51 @@ static void test_probe_available(void)
 {
     CHECK(dm2_v1_boot_probe_available("/tmp/firestaff-dm2-v1-no-assets") == 0,
           "probe_available is false without both DM2 assets");
+}
+
+static void test_scan_nested_data_dir(void)
+{
+    DM2_V1_BootProfile p;
+    char root[256];
+    char data_dir[300];
+    char graphics_path[340];
+    char dungeon_path[340];
+    const char *tmp = getenv("TMPDIR");
+
+    if (!tmp || !tmp[0]) tmp = getenv("TEMP");
+    if (!tmp || !tmp[0]) tmp = ".";
+
+    snprintf(root, sizeof(root), "%s%sfirestaff-dm2-v1-data-%ld",
+             tmp, TEST_PATH_SEP, (long)TEST_GETPID());
+    snprintf(data_dir, sizeof(data_dir), "%s%sdata", root, TEST_PATH_SEP);
+    snprintf(graphics_path, sizeof(graphics_path), "%s%sgraphics.dat", data_dir, TEST_PATH_SEP);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s%sdungeon.dat", data_dir, TEST_PATH_SEP);
+
+    (void)TEST_RMDIR(data_dir);
+    (void)TEST_RMDIR(root);
+    CHECK(TEST_MKDIR(root) == 0, "temp root for nested data dir created");
+    CHECK(TEST_MKDIR(data_dir) == 0, "temp data dir created");
+    CHECK(write_file(graphics_path, "fake-dm2-graphics") == 1,
+          "nested graphics.dat fixture written");
+    CHECK(write_file(dungeon_path, "fake-dm2-dungeon") == 1,
+          "nested dungeon.dat fixture written");
+
+    dm2_v1_boot_profile_init(&p);
+    CHECK(dm2_v1_boot_scan_assets(&p, root) == 0,
+          "scan_assets accepts extracted DOS data/ layout");
+    CHECK(strstr(p.graphics_path, "data") != NULL,
+          "graphics_path points into data/ layout");
+    CHECK(strstr(p.dungeon_path, "data") != NULL,
+          "dungeon_path points into data/ layout");
+    CHECK(strstr(p.asset_root, "data") != NULL,
+          "asset_root follows resolved data/ layout");
+    CHECK(dm2_v1_boot_probe_available(root) == 0,
+          "probe_available still rejects tiny synthetic fixtures");
+
+    remove(graphics_path);
+    remove(dungeon_path);
+    (void)TEST_RMDIR(data_dir);
+    (void)TEST_RMDIR(root);
 }
 
 static void test_save_root_default(void)
@@ -99,6 +170,9 @@ int main(void)
 /* ── probe availability --─ */
     printf("\n--- test_probe_available ---\n");
     test_probe_available();
+/* ── extracted DOS data/ layout --─ */
+    printf("\n--- test_scan_nested_data_dir ---\n");
+    test_scan_nested_data_dir();
 /* ── save root --─ */
     printf("\n--- test_save_root_default ---\n");
     test_save_root_default();
