@@ -1097,6 +1097,31 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v22_shapes_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V2.2 in-place modern-renderer probe. Headless: creates its own tiny cache.
+add_executable(firestaff_csb_v22_inplace_render_probe
+    probes/firestaff_csb_v22_inplace_render_probe.c
+    src/csb/csb_v22_inplace_draw_pc34.c
+    src/csb/csb_v22_shape_cache_pc34.c
+    src/csb/csb_v22_shapes.c
+    src/csb/csb_v2_presentation_mode_pc34.c
+    src/csb/csb_v2_texture_upscale_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_csb_v22_inplace_render_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_csb_v22_inplace_render_probe
+    PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v22_inplace_render_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME csb_v22_inplace_render_probe
+        COMMAND firestaff_csb_v22_inplace_render_probe
+    )
+endif()
+
 # Theron V2.1 texture upscale probe. Headless: no game data.
 # See include/theron_v2_texture_upscale_pc34.h.
 add_executable(firestaff_theron_v2_texture_upscale_probe
