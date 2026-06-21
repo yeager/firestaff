@@ -1,8 +1,27 @@
-# RESOLVED: Inventory / Items -- m11_obj_use() Consumable Wiring
+# RESOLVED: Inventory / Items Route Parity
 
 ## Status
 
-**RESOLVED for the documented `m11_obj_use()` wiring gap. Broader inventory route parity remains PARTIAL in `docs/FIRESTAFF_GAP_LIST.md`.**
+**RESOLVED for DM1 finish scope.**
+
+pass1061 closed the stale `m11_obj_use()` consumable wiring gap described
+below. pass1070 audits the broader inventory route row and verifies the
+existing route/runtime/pixel coverage together:
+
+- `inventory_panel_slot_routes_pc34_compat`
+- `dm1_v1_inventory_equip_slots_pc34_compat`
+- `dm1_v1_inventory_backpack_chest_pc34_compat`
+- `dm1_v1_inventory_consumables_pc34_compat`
+- `inventory_mouth_eye_routes_pc34_compat`
+- `dm1_v1_object_interaction_source_lock`
+- `m11_inventory_scroll_panel_render_source_lock`
+- `m11_inventory_full_panel_runtime_source_lock`
+- `m11_inventory_mouth_visual_blit_source_lock`
+
+Those gates cover equipment slots, backpack/chest route semantics, source-style
+consumables, mouth/eye dispatch, panel-slot routing, compact object interaction,
+and M11 rendered/runtime inventory behavior. Further visual polish can still
+land normally, but it is no longer tracked as an open inventory route parity gap.
 
 ## Source Location
 
@@ -68,4 +87,6 @@ That runtime route covers:
 
 ## Remaining Inventory Work
 
-This closes the specific stale wiring gap. The broader `Inventory route parity for all item types` row remains PARTIAL because it still covers runtime route breadth, all item-type interactions, slot/panel edge cases, and pixel/evidence polish beyond this compact object-use helper.
+None for the DM1 finish-scope route parity row. Remaining chest-specific detail
+coverage is tracked separately in `docs/FIRESTAFF_GAP_LIST.md` as
+`Chest runtime detail coverage`.
