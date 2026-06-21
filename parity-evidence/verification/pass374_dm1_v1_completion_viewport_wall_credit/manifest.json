@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "dm1v1-capture-gap-close-20260620",
   "checks": [
     {
       "file": "DUNVIEW.C",
@@ -104,7 +104,7 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "59427f58a58ffb3b453b46e2f4febda2495b43bc",
+  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
@@ -223,5 +223,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-06-20T17:17:02.061412+00:00"
+  "timestampUtc": "2026-06-21T07:36:57.992553+00:00"
 }

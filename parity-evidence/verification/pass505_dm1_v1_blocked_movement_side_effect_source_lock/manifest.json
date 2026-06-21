@@ -1,12 +1,12 @@
 {
-  "branch": "main",
+  "branch": "dm1v1-capture-gap-close-20260620",
   "firestaffGuards": {
     "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
     "blockedBranch": "dm1_v1_movement_command_core_pc34_compat.c:219-294",
     "blockedDamageSeam": "dm1_v1_movement_command_core_pc34_compat.c:25-52",
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat"
   },
-  "head": "ec801d648ee50894692b9893433a1300a5a2398e",
+  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
   "notClaimed": [
     "combat RNG/wound materialization parity for the pending damage request",
     "representative original DOS overlay capture parity",
@@ -20,5 +20,5 @@
     "blockedSideEffects": "CLIKMENU.C:237-322"
   },
   "status": "PASS505_DM1_V1_BLOCKED_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN",
-  "timestampUtc": "2026-06-20T17:27:48.005644+00:00"
+  "timestampUtc": "2026-06-21T07:41:00.833888+00:00"
 }

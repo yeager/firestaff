@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "dm1v1-capture-gap-close-20260620",
   "checks": [
     "tools/verify_v1_movement_legality_source_lock.py",
     "build/test_dm1_v1_movement_core_pc34_compat"
@@ -9,7 +9,7 @@
     "F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat": "memory_movement_pc34_compat.c:714-846",
     "runtimeExecutable": "build/test_dm1_v1_movement_core_pc34_compat"
   },
-  "head": "ec801d648ee50894692b9893433a1300a5a2398e",
+  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
   "notClaimed": [
     "representative original DOS movement overlay parity",
     "complete movement side-effect parity",
@@ -25,5 +25,5 @@
   },
   "sourceLockOutputFirstLine": "DM1 V1 movement legality source-lock gate passed",
   "status": "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN",
-  "timestampUtc": "2026-06-20T17:27:46.628469+00:00"
+  "timestampUtc": "2026-06-21T07:40:58.944150+00:00"
 }

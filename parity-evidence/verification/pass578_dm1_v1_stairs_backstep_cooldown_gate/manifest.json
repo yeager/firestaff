@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "dm1v1-capture-gap-close-20260620",
   "firestaffAudit": {
     "dm1_v1_input_command_queue_pc34_compat.c:DM1_V1_InputCommandQueue_ProcessOnePc34Compat": {
       "claim": "gated movement returns before queue pop",
@@ -20,7 +20,7 @@
     "testExecutable": "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_movement_pipeline_pc34_compat",
     "testOutputLastLine": "400 passed, 0 failed"
   },
-  "head": "ec801d648ee50894692b9893433a1300a5a2398e",
+  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
   "nonClaims": [
     "does not replace pass571 turn no-step timing",
     "does not cover pass571 front-command queue/pending replay",
@@ -54,6 +54,6 @@
     }
   },
   "status": "PASS578_DM1_V1_STAIRS_BACKSTEP_COOLDOWN_GATE_SOURCE_LOCKED",
-  "timestampUtc": "2026-06-20T17:27:47.795188+00:00",
+  "timestampUtc": "2026-06-21T07:40:59.163895+00:00",
   "worktree": "/Users/bosse/.openclaw/workspace-main"
 }

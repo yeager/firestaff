@@ -110,12 +110,19 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 
 | Gap | Status |
 |---|---|
-| Original DOSBox/FIRES keyboard buffer transcript for I34E route keys | BLOCKED-DATA — needs Atari ST or DOSBox session |
-| Paired original viewport screenshot (pass94 captures impaired) | BLOCKED-DATA |
-| Paired original wall screenshot | BLOCKED-DATA |
-| Paired original collision transcript | BLOCKED-DATA |
-| Paired original creature-chain screenshot | BLOCKED-DATA |
-| Paired original champion-panel screenshot | BLOCKED-DATA |
+| Original DOSBox/FIRES keyboard buffer transcript for I34E route keys | PARTIAL — pass513 transcript SCAFFOLD_ONLY_MISSING_ORIGINAL_RUNTIME_DEBUG_FIELDS (route tokens to F0540/F0361/F0380 source-locked, runtime deltas null). I34E debugger session still BLOCKED-DATA. See `parity-evidence/pass1052_dm1_v1_original_turncycle_viewport_wall_capture.md` + the pass513 JSONs under `verification-screens/pass1052-.../` and `verification-screens/pass1055-.../`. |
+| Paired original viewport screenshot (pass94 captures impaired) | PARTIAL — pass1052 (clean `dungeon_gameplay` turn-cycle), pass1054 (Firestaff nearest-neighbor pairing artifacts), pass1056 (CTest gate over pairing rows). 1 exact wall row + 4 scout rows. Remaining: promote debugger-confirmed same-state viewport rows for the nonzero gameplay crops. |
+| Paired original wall screenshot | PARTIAL — pass1052 (2 clean `wall_closeup` frames), pass1054 (1 exact original-to-Firestaff 224x136 wall-crop match: `02_left_1_wall` == `hall_1_4_dirE`, 0 changed pixels / MAE 0). Remaining: broaden deterministic multi-state wall route. |
+| Paired original collision transcript | PARTIAL — pass1055 (closed-door stasis: 3 byte-identical original frames + 1 Firestaff semantic pair probe that blocks the next forward command with closed door square `0x94`). Remaining: pixel-pair this view, broaden to wall/door/fakewall transcript. |
+| Paired original creature-chain screenshot | BLOCKED-DATA — pass1058 locks the corrected original DOSBox keypad mapping (`F=kp8`, `B=kp2`, `TR=kp4`, `TL=kp6`, `kp5` forward) but the first level-1 target remains behind an inert closed door. Remaining: pick a level-1 group with open line of sight (or a controlled save/debug route), then promote a paired original creature screenshot. Creature render remains source-locked until then. |
+| Paired original champion-panel screenshot | PARTIAL — pass1053 (pass455 candidate/resurrect panel: `candidate_select` SHA256 `e4b37307...`, terminal/HUD after C160 SHA256 `7523b67f...`). Firestaff V1 captures exist (`party_hud_four_champions_vga.ppm`, `party_hud_statusbox_gfx_vga.ppm`). Remaining: full four-champion party HUD + single-champion status-panel original pairing + Firestaff-vs-original pixel diffs. |
+
+Note: every PARTIAL row above has a committed `parity-evidence/pass10XX_*.md` write-up
+plus a `verification-screens/pass10XX-.../` artifact bundle (md/json/tsv/sh/conf/swift/txt).
+These are honest intermediate states, not `MATCHED`. The original-capture drive
+(`scripts/dosbox_dm1_original_viewport_reference_capture.sh`) implements the post-FIRES
+host-mouse click + corrected selector sequence documented in
+`docs/parity/DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md` §"Host-mouse click required for KP5/KP6".
 
 ### B2. Per-domain DM1 gaps
 

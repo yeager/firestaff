@@ -161,6 +161,15 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - parity-evidence/verification/pass504_dm1_v1_keyboard_buffer_state_delta_blocker/manifest.json size=5057
 - parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json size=10565
 - parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json size=8206
+- verification-screens/pass1052-dm1-original-route-24h-turncycle/original-viewpoint-route-keys.log size=506
+- verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys.swift size=6062
+- verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys_xdotool.sh size=3995
+- verification-screens/pass1052-dm1-original-route-24h-turncycle/pass513_i34e_route_key_transcript_scaffold.json size=8229
+- verification-screens/pass1053-dm1-original-champion-candidate-panel/original-viewpoint-route-keys.log size=609
+- verification-screens/pass1055-dm1-original-closed-door-collision/original-viewpoint-route-keys.log size=1940
+- verification-screens/pass1055-dm1-original-closed-door-collision/original_viewport_route_keys.swift size=6062
+- verification-screens/pass1055-dm1-original-closed-door-collision/original_viewport_route_keys_xdotool.sh size=3995
+- verification-screens/pass1055-dm1-original-closed-door-collision/pass513_i34e_route_key_transcript_scaffold.json size=3990
 - verification-screens/pass112-n2-stable-hud-route/original-viewpoint-route-keys.log size=586
 - verification-screens/pass209-delayed-click-zone-route/original_viewport_route_keys.swift size=5604
 - verification-screens/pass209-delayed-click-zone-route/original_viewport_route_keys_xdotool.sh size=3664

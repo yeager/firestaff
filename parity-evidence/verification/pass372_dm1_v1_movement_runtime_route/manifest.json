@@ -1,5 +1,5 @@
 {
-  "branch": "main",
+  "branch": "dm1v1-capture-gap-close-20260620",
   "checks": [
     {
       "expected": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
@@ -118,7 +118,7 @@
     "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
     "ok": true
   },
-  "ctestTail": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start  91: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #91: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  93: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #93: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start 304: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #304: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 449: dm1_v1_input_command_queue_source_lock\n4/4 Test #449: dm1_v1_input_command_queue_source_lock .....   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.04 sec",
+  "ctestTail": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start  96: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #96: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  98: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #98: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start 310: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #310: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.01 sec\n    Start 457: dm1_v1_input_command_queue_source_lock\n4/4 Test #457: dm1_v1_input_command_queue_source_lock .....   Passed    0.05 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.08 sec",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -196,7 +196,7 @@
       "path": "tests/test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "ec801d648ee50894692b9893433a1300a5a2398e",
+  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
@@ -352,5 +352,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE",
-  "timestampUtc": "2026-06-20T17:27:45.701833+00:00"
+  "timestampUtc": "2026-06-21T07:40:57.829375+00:00"
 }

@@ -15,7 +15,7 @@
     "review_pair_metadata_materialized": true,
     "semantic_clean_original_required": true
   },
-  "branch": "main",
+  "branch": "dm1v1-capture-gap-close-20260620",
   "dependencies": {
     "blocker_1_original_true_stop_transcript": {
       "active_blocker": null,
@@ -173,7 +173,7 @@
       "scene": "ingame_inventory_panel"
     }
   ],
-  "head": "ec801d648ee50894692b9893433a1300a5a2398e",
+  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "paired diff masks/stats",
@@ -336,5 +336,5 @@
   ],
   "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS377_PAIRED_DIFF_ARTIFACT_BLOCKER_AUDIT",
-  "timestamp_utc": "2026-06-20T17:27:46.118194+00:00"
+  "timestamp_utc": "2026-06-21T07:40:58.147366+00:00"
 }
