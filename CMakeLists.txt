@@ -7759,6 +7759,25 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 original capture transcript handoff/live-row gates --------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME dm1_v1_original_capture_route_handoff
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_original_capture_route_handoff.py
+    )
+    set_tests_properties(dm1_v1_original_capture_route_handoff PROPERTIES TIMEOUT 300)
+    add_test(
+        NAME dm1_v1_original_capture_live_row_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_original_capture_live_row_gate.py
+    )
+    set_tests_properties(dm1_v1_original_capture_live_row_gate PROPERTIES TIMEOUT 300)
+    add_test(
+        NAME dm1_v1_capture_runbook_consistency
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_dm1_v1_capture_runbook_consistency.py
+    )
+    set_tests_properties(dm1_v1_capture_runbook_consistency PROPERTIES TIMEOUT 360)
+endif()
+
 # -- DM1 V1 original capture route preflight gate -------------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
