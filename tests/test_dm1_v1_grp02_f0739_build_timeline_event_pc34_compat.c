@@ -118,7 +118,7 @@ int main(void) {
          * valid range. */
         for (k = 0; k < 5; ++k) {
             /* aux0..aux4 should be sourced. */
-            CHECK(out.aux0 <= 0xFFFFu || out.aux0 == 0xCAFE,
+            CHECK(out.aux0 <= 0xFFFF || out.aux0 == 0xCAFE,
                   "T17: aux0 sourced");
         }
     }

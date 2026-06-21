@@ -22,7 +22,7 @@
     },
     "mapCount": 14,
     "ornamentRandomSeed": 99,
-    "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "path": "canonical DM1 DUNGEON.DAT (local hash-verified)",
     "rawMapDataByteCount": 12283,
     "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
     "squareFirstThingCount": 1679,
@@ -31,43 +31,43 @@
   "errors": [],
   "firestaffAnchors": [
     {
-      "file": "dm1_v2_viewport_renderer_pc34.h",
+      "file": "include/dm1_v2_viewport_renderer_pc34.h",
       "needle": "DM1_V2_DungeonDatState"
     },
     {
-      "file": "dm1_v2_viewport_renderer_pc34.h",
+      "file": "include/dm1_v2_viewport_renderer_pc34.h",
       "needle": "dm1_v2_vp_build_composition_from_dungeon"
     },
     {
-      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "file": "src/dm1v2/dm1_v2_viewport_renderer_pc34.c",
       "needle": "LOADSAVE.C:906-923"
     },
     {
-      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "file": "src/dm1v2/dm1_v2_viewport_renderer_pc34.c",
       "needle": "DEFS.H:972-1016"
     },
     {
-      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "file": "src/dm1v2/dm1_v2_viewport_renderer_pc34.c",
       "needle": "DUNGEON.C:2238-2239"
     },
     {
-      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "file": "src/dm1v2/dm1_v2_viewport_renderer_pc34.c",
       "needle": "DUNGEON.C:2243-2246"
     },
     {
-      "file": "dm1_v2_viewport_renderer_pc34.c",
+      "file": "src/dm1v2/dm1_v2_viewport_renderer_pc34.c",
       "needle": "dm1_v2_vp_dungeon_dat_get_square_raw"
     },
     {
-      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "file": "tests/test_dm1_v2_movement_viewport_pc34.c",
       "needle": "test_viewport_dungeon_dat_decoder_entry_draw_list"
     },
     {
-      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "file": "tests/test_dm1_v2_movement_viewport_pc34.c",
       "needle": "raw == 0xB0"
     },
     {
-      "file": "test_dm1_v2_movement_viewport_pc34.c",
+      "file": "tests/test_dm1_v2_movement_viewport_pc34.c",
       "needle": "DM1_V2_VIEW_SQUARE_D3L"
     },
     {
@@ -76,7 +76,7 @@
     }
   ],
   "pass": "pass279_dm1_v2_dungeon_dat_square_decoder",
-  "redmcsbSource": "/home/trv2/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/SOURCE",
+  "redmcsbSource": "ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceChecks": {
     "DEFS.H": [
       "M034_SQUARE_TYPE(square)",

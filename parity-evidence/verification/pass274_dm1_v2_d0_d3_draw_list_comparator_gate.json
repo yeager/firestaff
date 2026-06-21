@@ -3,51 +3,51 @@
   "errors": [],
   "firestaffOrder": [
     {
-      "offset": 113,
+      "offset": 106,
       "symbol": "DM1_V2_VIEW_SQUARE_D3L"
     },
     {
-      "offset": 179,
+      "offset": 172,
       "symbol": "DM1_V2_VIEW_SQUARE_D3R"
     },
     {
-      "offset": 230,
+      "offset": 223,
       "symbol": "DM1_V2_VIEW_SQUARE_D3C"
     },
     {
-      "offset": 296,
+      "offset": 289,
       "symbol": "DM1_V2_VIEW_SQUARE_D2L"
     },
     {
-      "offset": 362,
+      "offset": 355,
       "symbol": "DM1_V2_VIEW_SQUARE_D2R"
     },
     {
-      "offset": 413,
+      "offset": 406,
       "symbol": "DM1_V2_VIEW_SQUARE_D2C"
     },
     {
-      "offset": 479,
+      "offset": 472,
       "symbol": "DM1_V2_VIEW_SQUARE_D1L"
     },
     {
-      "offset": 545,
+      "offset": 538,
       "symbol": "DM1_V2_VIEW_SQUARE_D1R"
     },
     {
-      "offset": 596,
+      "offset": 589,
       "symbol": "DM1_V2_VIEW_SQUARE_D1C"
     },
     {
-      "offset": 662,
+      "offset": 655,
       "symbol": "DM1_V2_VIEW_SQUARE_D0L"
     },
     {
-      "offset": 728,
+      "offset": 721,
       "symbol": "DM1_V2_VIEW_SQUARE_D0R"
     },
     {
-      "offset": 779,
+      "offset": 772,
       "symbol": "DM1_V2_VIEW_SQUARE_D0C"
     }
   ],
@@ -67,7 +67,7 @@
     },
     "name": "dm1_pc34_entry_portrait_wall",
     "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-    "source": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "source": "canonical DM1 DUNGEON.DAT (local hash-verified)",
     "status": "source-locked sparse fixture feeds mapX/mapY/direction into renderer draw-list; full DUNGEON.DAT square decoder still pending"
   },
   "nextBlockers": [
@@ -75,7 +75,7 @@
     "Capture original/ReDMCSB and Firestaff viewport pixels for identical mapX/mapY/direction.",
     "Feed captured original/ReDMCSB and Firestaff framebuffers into the region comparator; only then promote to pixel parity."
   ],
-  "redmcsbSourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V2 renderer-side D0-D3 draw-list emission and matched-state comparator scaffold",
   "sourceAnchors": [
     {
