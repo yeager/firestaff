@@ -20,6 +20,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_projectile_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -66,11 +67,17 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
 
 /* ── V1 Game Tick ──────────────────────────────────────────────────── */
 
+/* Module-static projectile drain cache (refreshed each tick).
+ * M11 game view can read this to draw fireballs/lightning/arrows. */
+static DM2_V1_DrainedProjectile g_dm2_projectile_drain[DM2_DRAIN_MAX_PROJECTILES];
+static int g_dm2_projectile_drain_count = 0;
+
 /*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
  *
  * Called at 18.2 Hz (every ~55ms) from the Firestaff game loop.
- * Advances: time-of-day, movement cooldown, weather, timers.
+ * Advances: time-of-day, movement cooldown, weather, timers,
+ * and refreshes the projectile drain cache for M11 viewport rendering.
  *
  * Movement is gated by move_cooldown_ticks — each successful move
  * consumes 1 tick; failing a move (wall) may incur penalty.
@@ -78,6 +85,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
  * Source: SKULL.ASM T048 — input dispatch / tick update
  *         SKULL.ASM T560 — dungeon tick
  *         SKULL.ASM T600 — outdoor tick
+ *         skproject/SKULLWIN/c_render.cpp — projectile draw dispatch
  */
 void dm2_v1_runtime_tick(void) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
@@ -97,6 +105,29 @@ void dm2_v1_runtime_tick(void) {
     if (rt->outdoor && rt->tick_count % 182 == 0) {  /* ~10 sec */
         dm2_v1_weather_next_state(&rt->weather);
     }
+
+    /* Phase 5: drain DM2 projectile list into M11-ready cache.
+     * Refresh every V1 tick so the M11 viewport renderer can iterate
+     * over g_dm2_projectile_drain[] and draw fireballs / lightning /
+     * arrows in the V1 framebuffer.
+     * Source: skproject/SKULLWIN/c_render.cpp — projectile draw dispatch
+     *         ReDMCSB DUNGEON.C:2362-2387 — F0209 visible row/col
+     */
+    g_dm2_projectile_drain_count = dm2_v1_projectile_drain_to_m11(
+        g_dm2_projectile_drain, DM2_DRAIN_MAX_PROJECTILES);
+}
+
+/*
+ * dm2_v1_runtime_get_projectile_drain — read-only access to the
+ * per-tick projectile drain cache.  M11 game view calls this each
+ * render frame to draw DM2 projectiles in the V1 viewport.
+ *
+ * Returns the count (0..DM2_DRAIN_MAX_PROJECTILES).
+ * *out_list is set to the module-static array (do not free).
+ */
+int dm2_v1_runtime_get_projectile_drain(DM2_V1_DrainedProjectile **out_list) {
+    if (out_list) *out_list = g_dm2_projectile_drain;
+    return g_dm2_projectile_drain_count;
 }
 
 /* ── Viewport rendering ────────────────────────────────────────────── */

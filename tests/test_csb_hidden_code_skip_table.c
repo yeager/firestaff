@@ -34,13 +34,16 @@
 
 /* ── shape ─────────────────────────────────────────────────────── */
 
-static int test_table_size_is_six(void) {
+static int test_table_size_is_twelve(void) {
     size_t count = 0;
     const FirestaffHiddenCodeEntry* t =
         FirestaffHiddenCodeSkipTable(&count);
     ASSERT_TRUE(t != NULL);
-    /* 4 Atari/Amiga executable rows + 2 kid dungeon rows = 6 */
-    ASSERT_TRUE(count == 6);
+    /* 4 Atari/Amiga executable rows (558-562) +
+       2 kid dungeon rows (135-138) +
+       3 CSB Atari ST specific rows (21/538/548) +
+       3 CSB Amiga specific rows (21/676/686) = 12 */
+    ASSERT_TRUE(count == 12);
     return 1;
 }
 
@@ -107,6 +110,95 @@ static int test_amiga_kid_dungeon_range_skips(void) {
             FIRESTAFF_HIDDEN_CODE_GAME_DM,
             FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA, i));
     }
+    return 1;
+}
+
+/* CSB-specific: Atari ST 2.0/2.1 hidden-code items per dmweb Meynaf
+ * disassembly. Items 21, 538, 548 are 68k copy-protection code
+ * disguised as IMG1/IMG2 images. See ReDMCSB GRAPH21.C, GRAPH538.C,
+ * GRAPH548.C for the actual 68000 code. */
+static int test_csb_atari_st_21_skips(void) {
+    ASSERT_TRUE(FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_ATARI_ST, 21));
+    return 1;
+}
+
+static int test_csb_atari_st_538_skips(void) {
+    ASSERT_TRUE(FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_ATARI_ST, 538));
+    return 1;
+}
+
+static int test_csb_atari_st_548_skips(void) {
+    ASSERT_TRUE(FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_ATARI_ST, 548));
+    return 1;
+}
+
+static int test_csb_atari_st_hidden_items_do_not_skip_on_dm(void) {
+    /* DM1 Atari ST items 21/538/548 are NOT hidden code (DM only has
+       558-562); the CSB-specific rows must not falsely flag DM lookups. */
+    ASSERT_TRUE(!FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_DM,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_ATARI_ST, 21));
+    ASSERT_TRUE(!FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_DM,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_ATARI_ST, 538));
+    ASSERT_TRUE(!FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_DM,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_ATARI_ST, 548));
+    return 1;
+}
+
+/* CSB-specific: Amiga 3.5 / 3.5 Multilanguage hidden-code items. */
+static int test_csb_amiga_21_skips(void) {
+    ASSERT_TRUE(FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA, 21));
+    return 1;
+}
+
+static int test_csb_amiga_676_skips(void) {
+    ASSERT_TRUE(FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA, 676));
+    return 1;
+}
+
+static int test_csb_amiga_686_skips(void) {
+    ASSERT_TRUE(FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA, 686));
+    return 1;
+}
+
+static int test_csb_amiga_hidden_items_do_not_skip_on_dm(void) {
+    /* DM1 Amiga items 21/676/686 are NOT hidden code (DM only has
+       558-562 + kid dungeon 135-138); the CSB-specific rows must not
+       falsely flag DM lookups. */
+    ASSERT_TRUE(!FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_DM,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA, 21));
+    ASSERT_TRUE(!FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_DM,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA, 676));
+    ASSERT_TRUE(!FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_DM,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_AMIGA, 686));
+    return 1;
+}
+
+static int test_csb_hidden_items_not_skipped_on_pc34(void) {
+    /* PC 3.4 callers must gate by platform themselves. This test
+       documents the platform-gating behaviour: passing PLATFORM_NONE
+       as a wildcard WILL match CSB rows, so PC 3.4 callers must
+       check platform before calling. */
+    ASSERT_TRUE(FirestaffHiddenCodeShouldSkip(
+        FIRESTAFF_HIDDEN_CODE_GAME_CSB,
+        FIRESTAFF_HIDDEN_CODE_PLATFORM_NONE, 21));
     return 1;
 }
 
@@ -216,7 +308,7 @@ int main(void) {
     } while (0)
 
     /* shape */
-    RUN(test_table_size_is_six);
+    RUN(test_table_size_is_twelve);
     RUN(test_table_rows_have_valid_invariants);
 
     /* positive */
@@ -226,6 +318,21 @@ int main(void) {
     RUN(test_dm_amiga_full_range_skips);
     RUN(test_csb_amiga_full_range_skips);
     RUN(test_amiga_kid_dungeon_range_skips);
+
+    /* CSB Atari ST 2.0/2.1 hidden-code items (Meynaf disassembly). */
+    RUN(test_csb_atari_st_21_skips);
+    RUN(test_csb_atari_st_538_skips);
+    RUN(test_csb_atari_st_548_skips);
+    RUN(test_csb_atari_st_hidden_items_do_not_skip_on_dm);
+
+    /* CSB Amiga 3.5 / 3.5 Multilanguage hidden-code items. */
+    RUN(test_csb_amiga_21_skips);
+    RUN(test_csb_amiga_676_skips);
+    RUN(test_csb_amiga_686_skips);
+    RUN(test_csb_amiga_hidden_items_do_not_skip_on_dm);
+
+    /* PC 3.4 callers must gate by platform themselves. */
+    RUN(test_csb_hidden_items_not_skipped_on_pc34);
 
     /* negative */
     RUN(test_normal_graphics_items_do_not_skip);

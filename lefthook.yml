@@ -97,3 +97,10 @@ ci:
       run: bash po/validate_po_layout.sh
     hash_harmonization:
       run: python3 tools/asset-validate/compare_md5_to_sha256.py
+    asset_gap_summary:
+      run: |
+        if find "$HOME/.firestaff/data" -type f -print -quit | grep -q .; then
+          python3 tools/asset-validate/compare_to_greatstone.py --summary
+        else
+          echo "SKIP: no local game data; asset coverage summary is advisory-only."
+        fi

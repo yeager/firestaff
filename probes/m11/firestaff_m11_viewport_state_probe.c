@@ -22,9 +22,10 @@ unsigned char* G2160_puc_Bitmap_Destination;
  * This probe intentionally does not drive DOSBox or keyboard input.  It loads
  * the original DUNGEON.DAT into the same source-backed GameWorld_Compat layer
  * used by M11, samples the 3-depth x 3-lane viewport neighborhood from the
- * party's current map/X/Y/direction, traverses square thing chains, and locks
- * the key GRAPHICS.DAT viewport asset dimensions.  The output is a stable
- * state anchor for later pixel overlay work.
+ * party's current map/X/Y/direction (or an optional explicit map/x/y/dir
+ * pose), traverses square thing chains, and locks the key GRAPHICS.DAT
+ * viewport asset dimensions.  The output is a stable state anchor for later
+ * pixel overlay work.
  */
 
 typedef struct ViewCellProbe {
@@ -354,8 +355,10 @@ int main(int argc, char** argv) {
     int depth, lane;
     int ok;
 
-    if (argc < 3) {
-        fprintf(stderr, "Usage: %s <data_dir> <output_dir>\n", argv[0]);
+    if (argc != 3 && argc != 7) {
+        fprintf(stderr,
+                "Usage: %s <data_dir> <output_dir> [map_index map_x map_y direction]\n",
+                argv[0]);
         return 2;
     }
     memset(&world, 0, sizeof(world));
@@ -377,6 +380,12 @@ int main(int argc, char** argv) {
         fprintf(stderr, "FAIL: could not initialise GRAPHICS.DAT loader from %s\n", graphicsPath);
         F0883_WORLD_Free_Compat(&world);
         return 1;
+    }
+    if (argc == 7) {
+        world.party.mapIndex = atoi(argv[3]);
+        world.party.mapX = atoi(argv[4]);
+        world.party.mapY = atoi(argv[5]);
+        world.party.direction = atoi(argv[6]) & 3;
     }
 
     for (depth = 0; depth < 3; ++depth) {

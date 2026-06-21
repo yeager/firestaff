@@ -36,6 +36,20 @@ static const char *const g_csb_dungeon_hashes[] = {
     NULL
 };
 
+/* GRAPHICS.DAT (or CSB.DAT / CSBGRAPH.DAT) MD5 hashes for all known
+ * CSB variants — mirrors g_csb_boot_graphics_hashes in csb_v1_boot.c
+ * so the runtime path-finder matches the same set of files that the
+ * scanner accepts. 2026-06-20: extended the runtime search to be
+ * hash-based so files in arbitrary subdirs (e.g. Meynaf FR hard-disk
+ * layouts, CSB expansion sets) are found. */
+static const char *const g_csb_graphics_hashes[] = {
+    "61fbfd56887c94adc26888a9491c6611", /* CSB PC 3.4 English GRAPHICS.DAT */
+    "ebf6a57af3f27782e358c0490bfd2f2e", /* CSB Atari ST 2.0/2.1 English */
+    "291e1bc6803e3dc4b974c60117ca5d68", /* CSB Amiga 3.5 English */
+    "cefaddfdf5651df2c91f61b5611a8362", /* CSB Amiga 3.5 Multilanguage */
+    NULL
+};
+
 /* ── Variant info table ─────────────────────────────────────────────── */
 
 /*
@@ -320,6 +334,29 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
 
     if (!data_dir || !out_result) return NULL;
     memset(out_result, 0, sizeof(*out_result));
+
+    /* 2026-06-20: prefer MD5-hash search so files in arbitrary
+     * subdirs (Meynaf FR hard-disk layouts, CSB expansion sets) are
+     * discovered. Falls back to filname search if no hash match. */
+    int matchIndex = -1;
+    if (asset_find_by_md5_list(data_dir, g_csb_graphics_hashes,
+                                 found_path, sizeof(found_path),
+                                 &matchIndex, 4)) {
+        /* Determine archive kind from the matched hash + extension */
+        CSB_V1_AssetGfxArchiveType kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+        const char *base = strrchr(found_path, '/');
+        base = base ? base + 1 : found_path;
+        if (strcasecmp(base, "CSB.DAT") == 0 ||
+            strcasecmp(base, "csb.dat") == 0) {
+            kind = CSB_V1_ASSET_GFX_ARCHIVE_CSB;
+        } else if (strcasecmp(base, "CSBGRAPH.DAT") == 0 ||
+                   strcasecmp(base, "csbgraph.dat") == 0) {
+            kind = CSB_V1_ASSET_GFX_ARCHIVE_CSBGRAF;
+        }
+        out_result->path = found_path;
+        out_result->kind = kind;
+        return found_path;
+    }
 
     for (names = g_csb_gfx_search; *names != NULL; names++) {
         char tmp[ASSET_PATH_MAX];

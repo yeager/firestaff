@@ -74,7 +74,14 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 
-add_library(firestaff_m10 STATIC ${M10_SOURCES} src/shared/dungeon_decompressor_ftl.c src/engine/m11_game_text_latin_extended_glyphs.c src/shared/image_backend_pc34_compat_globals.c)
+add_library(firestaff_m10 STATIC
+    ${M10_SOURCES}
+    src/shared/dungeon_decompressor_ftl.c
+    src/engine/m11_game_text_latin_extended_glyphs.c
+    src/shared/image_backend_pc34_compat_globals.c
+    src/dm2/dm2_v1_creature.c
+    src/dm2/dm2_v1_sound.c
+    src/dm2/dm2_v1_drops.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(firestaff_m10 PUBLIC
     COMPILE_H
@@ -1441,6 +1448,44 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_utility_import_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 real-asset launch probe (Atari ST 2.0/2.1 + Amiga 3.5).
+# Headless: no SDL rendering required. Reads the real
+# ~/.firestaff/data/csb-atari-st-2x/ + ~/.firestaff/data/csb/
+# assets, opens the Atari ST DMCSB1 GRAPHICS.DAT via the new
+# csb_v1_graphics_atari_st_loader, verifies hidden-code skip
+# for items 21/538/548 (Atari ST) and 21/676/686 (Amiga),
+# boots the CSB V1 runtime via csb_v1_runtime_boot, and writes
+# /tmp/csb_atari_st_real_capture.ppm as a deterministic capture.
+#
+# Source lock:
+#   - dmweb Data Files page: CSB Atari ST = BIG-endian DMCSB1, 563 items
+#   - dmweb Meynaf disassembly: Atari ST + Amiga hidden-code items
+#   - ReDMCSB ENTRANCE.C F0806 (CSB entrance), DUNGEON.C F0237 (load)
+#   - docs/VERIFIED_HASHES.md (local SHA256 of the assets)
+add_executable(firestaff_csb_v1_real_asset_launch_probe
+    probes/csb/firestaff_csb_v1_real_asset_launch_probe.c
+    src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
+    src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c
+    src/csb/csb_hidden_code_skip_table.c
+    src/csb/csb_v1_cmp_import_pc34_compat.c
+    src/csb/csb_v1_runtime_pc34_compat.c
+    src/csb/csb_v1_boot.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/csb/csb_v1_save_load_pc34_compat.c
+    src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    src/shared/firestaff_cmp_decode.c
+    src/shared/asset_find_by_hash.c
+    src/shared/dungeon_decompressor_ftl.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_real_asset_launch_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_real_asset_launch_probe PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_real_asset_launch_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Phase 2 — DSA Script Section Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: DSA section presence and scan feasibility after dungeon load;
@@ -2097,6 +2142,155 @@ if(BUILD_TESTING)
         NAME dm2_v1_projectile_pc34_compat
         COMMAND test_dm2_v1_projectile_pc34_compat
     )
+
+    # ── DM2 V1 Phase 4: Shop + NPC mechanics parity ──
+    add_executable(test_dm2_v1_shop_pc34_compat
+        tests/test_dm2_v1_shop_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+    )
+    target_include_directories(test_dm2_v1_shop_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_shop_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_shop_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_shop_pc34_compat
+        COMMAND test_dm2_v1_shop_pc34_compat
+    )
+
+    add_executable(firestaff_dm2_v1_shop_probe
+        probes/dm2/firestaff_dm2_v1_shop_probe.c
+        src/dm2/dm2_v1_shop.c
+    )
+    target_include_directories(firestaff_dm2_v1_shop_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_shop_probe PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_shop_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+
+    # ── DM2 V1 Phase 4: Pressure plate mechanics parity ──
+    add_executable(test_dm2_v1_pressure_plate_pc34_compat
+        tests/test_dm2_v1_pressure_plate_pc34_compat.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_door_mechanics.c
+    )
+    target_include_directories(test_dm2_v1_pressure_plate_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    # Self-contained: doesn't link firestaff_m10 (avoid unrelated work-in-progress CSB files).
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_pressure_plate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_pressure_plate_pc34_compat
+        COMMAND test_dm2_v1_pressure_plate_pc34_compat
+    )
+
+    add_executable(firestaff_dm2_v1_pressure_plate_probe
+        probes/dm2/firestaff_dm2_v1_pressure_plate_probe.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_door_mechanics.c
+    )
+    target_include_directories(firestaff_dm2_v1_pressure_plate_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_pressure_plate_probe PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_pressure_plate_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+
+    # ── DM2 V1 Phase 4: Trigger system mechanics parity ──
+    add_executable(test_dm2_v1_trigger_pc34_compat
+        tests/test_dm2_v1_trigger_pc34_compat.c
+        src/dm2/dm2_v1_trigger.c
+    )
+    target_include_directories(test_dm2_v1_trigger_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_trigger_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_trigger_pc34_compat
+        COMMAND test_dm2_v1_trigger_pc34_compat
+    )
+
+    add_executable(firestaff_dm2_v1_trigger_probe
+        probes/dm2/firestaff_dm2_v1_trigger_probe.c
+        src/dm2/dm2_v1_trigger.c
+    )
+    target_include_directories(firestaff_dm2_v1_trigger_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_trigger_probe PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_trigger_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+
+    # ── DM2 V1 Phase 4: Timeline wiring mechanics parity ──
+    add_executable(test_dm2_v1_timeline_pc34_compat
+        tests/test_dm2_v1_timeline_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+    )
+    target_include_directories(test_dm2_v1_timeline_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_timeline_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_timeline_pc34_compat
+        COMMAND test_dm2_v1_timeline_pc34_compat
+    )
+
+    add_executable(firestaff_dm2_v1_timeline_probe
+        probes/dm2/firestaff_dm2_v1_timeline_probe.c
+        src/dm2/dm2_v1_timeline.c
+    )
+    target_include_directories(firestaff_dm2_v1_timeline_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_timeline_probe PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_timeline_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+
+    # ── DM2 V1 Phase 5: CCM (Creature Command Machine) parity ──
+    add_executable(test_dm2_v1_ccm_pc34_compat
+        tests/test_dm2_v1_ccm_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+    )
+    target_include_directories(test_dm2_v1_ccm_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_ccm_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_ccm_pc34_compat
+        COMMAND test_dm2_v1_ccm_pc34_compat
+    )
+
+    # ── DM2 V1 Phase 5: Projectile drain to M11 (probe only) ──
+    add_executable(firestaff_dm2_v1_projectile_drain_probe
+        probes/dm2/firestaff_dm2_v1_projectile_drain_probe.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_drops.c
+    )
+    target_include_directories(firestaff_dm2_v1_projectile_drain_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/memory
+    )
+    target_link_libraries(firestaff_dm2_v1_projectile_drain_probe PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_projectile_drain_probe PRIVATE -Wall -Wextra -O2)
+    endif()
 
     # ── DM2 V1 Phase 2 Probes: Dungeon/Object/World-State/Asset ──
 
@@ -4279,6 +4473,21 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_playable_route_probe
     )
 
+    # Pass1055 Firestaff-side pair for the original closed-door collision
+    # capture: replay the same movement key sequence and verify the final
+    # forward command is blocked by the closed door without moving the party.
+    add_executable(firestaff_dm1_v1_pass1055_closed_door_pair_probe
+        probes/dm1/firestaff_dm1_v1_pass1055_closed_door_pair_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_pass1055_closed_door_pair_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_pass1055_closed_door_pair_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_pass1055_closed_door_pair_probe
+        COMMAND firestaff_dm1_v1_pass1055_closed_door_pair_probe
+    )
+
     # DM1 V1 Phase 8: door and special-square interaction probe.
     # Tests door state machine (0..5), C05 clickable front-cell zones,
     # teleporter activation, stairs transitions, and pit fall semantics.
@@ -5776,6 +5985,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/asset-validate/coverage_by_game.py
         )
         add_test(
+            NAME pass1057_dm1_amiga22_dungeonb_asset_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1057_dm1_amiga22_dungeonb_asset_lock.py
+        )
+        add_test(
             NAME dm2_v1_phase0_provenance_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_phase0_provenance_gate.py
         )
@@ -5950,6 +6163,10 @@ if(BUILD_TESTING)
         add_test(
             NAME pass224_dm1_v1_runtime_state_probe_scaffold
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass224_dm1_v1_runtime_state_probe_scaffold.py
+        )
+        add_test(
+            NAME pass1056_dm1_v1_pass1052_firestaff_pairing_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1056_dm1_v1_pass1052_firestaff_pairing_gate.py
         )
         add_test(
             NAME pass227_dm1_v1_original_runtime_hook_design
@@ -7635,6 +7852,35 @@ if(BUILD_TESTING)
         COMMAND test_csb_hidden_code_skip_table
     )
 
+    # ── CSB V1 graphics hidden-item skip integration test ────────
+    # Verifies the safe-load wrapper around the DM1 V1 graphics
+    # loader honours the per-game hidden-code skip table for
+    # CSB Atari ST 2.0/2.1 (items 21, 538, 548, 558-562) and
+    # CSB Amiga 3.5 / 3.5 Multilanguage (items 21, 676, 686,
+    # 558-562). PC 3.4 must NOT skip (no hidden code in PC).
+    #
+    # Source-lock: ReDMCSB GRAPH21.C F0914_Graphic21,
+    #   GRAPH538.C F0915_Graphic538, GRAPH548.C F0916_Graphic548,
+    #   plus the dmweb Meynaf disassembly of CSB Atari ST + Amiga
+    #   GRAPHICS.DAT items.
+    add_executable(test_csb_v1_graphics_hidden_item_skip
+        tests/test_csb_v1_graphics_hidden_item_skip.c
+        src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c
+        src/csb/csb_hidden_code_skip_table.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_graphics_hidden_item_skip PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_graphics_hidden_item_skip PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_graphics_hidden_item_skip_pc34
+        COMMAND test_csb_v1_graphics_hidden_item_skip
+    )
+
     # ── Atari ST PAK decoder test (Tier 2 #5 from FIRESTAFF_GAP_LIST) ──
     # Verifies src/shared/firestaff_pak_decode.c by:
     #   * parsing the PAK + Atari ST headers (magic 0x601A)
@@ -7682,6 +7928,32 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_cmp_decode_unit
         COMMAND test_firestaff_cmp_decode
+    )
+
+    # ── CSB V1 CMP import glue (Utility Disk Champion Editor flow) ──
+    # Wires the existing firestaff_cmp_decode.c decoder to the
+    # CSB_V1_Champion / CSB_V1_PartyState runtime data structures.
+    # Source lock:
+    #   - ReDMCSB DEFS.H CMP typedef (size 496 bytes)
+    #   - ReDMCSB PORTRAIT.C F0515_CHAMPION_ConvertPortraitsToAtariSTPlanar
+    #   - ReDMCSB CEDT002.C / CEDT021.C (Utility Disk Champion Editor)
+    #   - CSBWin/CedtData.cpp (CSB Utility Disk tool)
+    add_executable(test_csb_v1_cmp_import
+        tests/test_csb_v1_cmp_import.c
+        src/csb/csb_v1_cmp_import_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+        src/shared/firestaff_cmp_decode.c
+    )
+    target_include_directories(test_csb_v1_cmp_import PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_cmp_import PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_cmp_import_pc34
+        COMMAND test_csb_v1_cmp_import
     )
 
     # ── DM1 V1 graphics LZW round-trip test (Tier 2 #4 from FIRESTAFF_GAP_LIST) ──
@@ -12276,5 +12548,45 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0207_pc34_compat.c"
     add_test(
         NAME dm1_v1_g0207_pc34_compat
         COMMAND test_dm1_v1_g0207_pc34_compat
+    )
+endif()
+
+# pass1048 — DM1 V1 G0205_aaauc_Graphic558_WallOrnamentCoordinateSets[8][13][6]:
+# 8 sets × 13 frames × 6 fields = 624 bytes (wall ornament coords).
+# Source-locked against DUNVIEW.C:482/1061/2694/3578.
+# Disjoint from pass784-1047.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0205_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0205_pc34_compat.c")
+    add_executable(test_dm1_v1_g0205_pc34_compat
+        tests/test_dm1_v1_g0205_pc34_compat.c
+        src/dm1/dm1_v1_g0205_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0205_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0205_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0205_pc34_compat
+        COMMAND test_dm1_v1_g0205_pc34_compat
+    )
+endif()
+
+# pass1049 — DM1 V1 G0224_aaaauc_Graphic558_CreatureCoordinateSets[3][11][5][2]:
+# 3 sets × 11 frames × 5 coords × 2 fields = 330 bytes (creature coords).
+# Source-locked against DUNVIEW.C:513/1836/5307.
+# Disjoint from pass784-1048.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0224_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0224_pc34_compat.c")
+    add_executable(test_dm1_v1_g0224_pc34_compat
+        tests/test_dm1_v1_g0224_pc34_compat.c
+        src/dm1/dm1_v1_g0224_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_g0224_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_g0224_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_g0224_pc34_compat
+        COMMAND test_dm1_v1_g0224_pc34_compat
     )
 endif()

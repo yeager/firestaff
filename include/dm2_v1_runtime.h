@@ -42,6 +42,16 @@ int  dm2_v1_runtime_move(int direction);        /* 0=N 1=E 2=S 3=W, returns 0=ok
 void dm2_v1_runtime_set_outdoor(int is_outdoor);/* 1=outdoor 0=dungeon */
 void dm2_v1_runtime_set_position(int level, int x, int y, int dir);
 
+/* ── Projectile drain (Phase 5) ──────────────────────────────────────
+ * dm2_v1_runtime_get_projectile_drain — returns the per-tick drain cache
+ * populated by dm2_v1_runtime_tick().  M11 game view calls this each
+ * render frame to draw DM2 projectiles (fireballs / lightning / arrows)
+ * in the V1 viewport.
+ *
+ * Source: skproject/SKULLWIN/c_render.cpp — projectile draw dispatch */
+#include "dm2_v1_projectile_pc34_compat.h"  /* DM2_V1_DrainedProjectile */
+int  dm2_v1_runtime_get_projectile_drain(DM2_V1_DrainedProjectile **out_list);
+
 /* ── Viewport rendering ─────────────────────────────────────────────── */
 
 /* dm2_v1_runtime_render_frame — render DM2 V1 viewport frame.

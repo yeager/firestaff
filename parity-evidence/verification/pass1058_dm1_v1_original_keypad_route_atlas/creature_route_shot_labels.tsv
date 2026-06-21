@@ -1,0 +1,5 @@
+index	filename	route_label	route_token
+01	01_start_original_viewport_224x136.ppm	start	shot:start
+02	02_stair_entry_original_viewport_224x136.ppm	stair_entry	shot:stair_entry
+03	03_creature_door_closed_original_viewport_224x136.ppm	creature_door_closed	shot:creature_door_closed
+04	04_creature_after_door_click_original_viewport_224x136.ppm	creature_after_door_click	shot:creature_after_door_click

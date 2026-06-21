@@ -236,9 +236,20 @@ jobs:
       - name: Install lefthook
         run: go install github.com/evilmartians/lefthook@latest
 
+      - name: Prepare empty asset data dir
+        run: mkdir -p "$HOME/.firestaff/data"
+
       - name: Run asset-validate hash harmonization
         run: |
           python3 tools/asset-validate/compare_md5_to_sha256.py
+
+      - name: Run asset-validate summary mode (Tier 1 #2)
+        run: |
+          if find "$HOME/.firestaff/data" -type f -print -quit | grep -q .; then
+            python3 tools/asset-validate/compare_to_greatstone.py --summary
+          else
+            echo "SKIP: no local game data on CI runner, so asset coverage summary is advisory-only."
+          fi
 
       - name: Run po layout structural validation
         run: |

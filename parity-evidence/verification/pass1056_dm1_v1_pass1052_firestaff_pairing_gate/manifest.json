@@ -1,0 +1,127 @@
+{
+  "generated_at": "2026-06-20T20:55:34.285286+00:00",
+  "original_crops": [
+    {
+      "dims": [
+        224,
+        136
+      ],
+      "exists": true,
+      "name": "01_party_hud_original_viewport_224x136.png",
+      "ok": true,
+      "path": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/01_party_hud_original_viewport_224x136.png",
+      "sha256": "0f71683d923b015831c6e230952226fc4dadaf681ad510b319803973188ad212"
+    },
+    {
+      "dims": [
+        224,
+        136
+      ],
+      "exists": true,
+      "name": "02_left_1_wall_original_viewport_224x136.png",
+      "ok": true,
+      "path": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/02_left_1_wall_original_viewport_224x136.png",
+      "sha256": "8d5d9bd870d9aab74907fcd2051ae71547dd27583b2b81758ebebf32cfa2161c"
+    },
+    {
+      "dims": [
+        224,
+        136
+      ],
+      "exists": true,
+      "name": "03_left_2_view_original_viewport_224x136.png",
+      "ok": true,
+      "path": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/03_left_2_view_original_viewport_224x136.png",
+      "sha256": "96bd18e5d98be4d36d3d990698d4bfc39ddac5505ce308ccf37ac9ed450c854f"
+    },
+    {
+      "dims": [
+        224,
+        136
+      ],
+      "exists": true,
+      "name": "04_left_3_view_original_viewport_224x136.png",
+      "ok": true,
+      "path": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/04_left_3_view_original_viewport_224x136.png",
+      "sha256": "1cb139bdb0b1fab1d970d80913f3f4e2f0763af8338324d67939361be6c765ed"
+    }
+  ],
+  "original_crops_ok": true,
+  "pairing": {
+    "all_artifacts_present": true,
+    "all_pair_hashes_match": true,
+    "exact_match_count": 1,
+    "exists": true,
+    "has_expected_exact_wall_match": true,
+    "honesty": "Nearest-neighbor visual pairing over the 24-pose Firestaff Hall capture. Only rows with exact_pixel_match=true are promoted as pixel-equal evidence; nonzero rows are scout data, not same-state parity claims.",
+    "ok": true,
+    "row_count": 4,
+    "rows": [
+      {
+        "artifacts_exist": true,
+        "best_firestaff": "hall_1_4_dirS_viewport_224x136.ppm",
+        "changed_pixels": 1303,
+        "diff_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/01_01_party_hud_original_viewport_224x136_vs_hall_1_4_dirS_viewport_224x136_diff.png",
+        "exact_pixel_match": false,
+        "firestaff_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/01_01_party_hud_original_viewport_224x136_vs_hall_1_4_dirS_viewport_224x136_firestaff.png",
+        "firestaff_sha256_matches": true,
+        "label": "01_01_party_hud_original_viewport_224x136_vs_hall_1_4_dirS_viewport_224x136",
+        "mae": 4.234178,
+        "max_delta": 219,
+        "original": "01_party_hud_original_viewport_224x136.png",
+        "original_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/01_01_party_hud_original_viewport_224x136_vs_hall_1_4_dirS_viewport_224x136_original.png",
+        "original_sha256_matches": true
+      },
+      {
+        "artifacts_exist": true,
+        "best_firestaff": "hall_1_4_dirE_viewport_224x136.ppm",
+        "changed_pixels": 0,
+        "diff_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/02_02_left_1_wall_original_viewport_224x136_vs_hall_1_4_dirE_viewport_224x136_diff.png",
+        "exact_pixel_match": true,
+        "firestaff_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/02_02_left_1_wall_original_viewport_224x136_vs_hall_1_4_dirE_viewport_224x136_firestaff.png",
+        "firestaff_sha256_matches": true,
+        "label": "02_02_left_1_wall_original_viewport_224x136_vs_hall_1_4_dirE_viewport_224x136",
+        "mae": 0.0,
+        "max_delta": 0,
+        "original": "02_left_1_wall_original_viewport_224x136.png",
+        "original_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/02_02_left_1_wall_original_viewport_224x136_vs_hall_1_4_dirE_viewport_224x136_original.png",
+        "original_sha256_matches": true
+      },
+      {
+        "artifacts_exist": true,
+        "best_firestaff": "hall_1_2_dirS_viewport_224x136.ppm",
+        "changed_pixels": 3967,
+        "diff_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/03_03_left_2_view_original_viewport_224x136_vs_hall_1_2_dirS_viewport_224x136_diff.png",
+        "exact_pixel_match": false,
+        "firestaff_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/03_03_left_2_view_original_viewport_224x136_vs_hall_1_2_dirS_viewport_224x136_firestaff.png",
+        "firestaff_sha256_matches": true,
+        "label": "03_03_left_2_view_original_viewport_224x136_vs_hall_1_2_dirS_viewport_224x136",
+        "mae": 12.887474,
+        "max_delta": 219,
+        "original": "03_left_2_view_original_viewport_224x136.png",
+        "original_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/03_03_left_2_view_original_viewport_224x136_vs_hall_1_2_dirS_viewport_224x136_original.png",
+        "original_sha256_matches": true
+      },
+      {
+        "artifacts_exist": true,
+        "best_firestaff": "hall_1_4_dirE_viewport_224x136.ppm",
+        "changed_pixels": 2858,
+        "diff_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/04_04_left_3_view_original_viewport_224x136_vs_hall_1_4_dirE_viewport_224x136_diff.png",
+        "exact_pixel_match": false,
+        "firestaff_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/04_04_left_3_view_original_viewport_224x136_vs_hall_1_4_dirE_viewport_224x136_firestaff.png",
+        "firestaff_sha256_matches": true,
+        "label": "04_04_left_3_view_original_viewport_224x136_vs_hall_1_4_dirE_viewport_224x136",
+        "mae": 4.937533,
+        "max_delta": 182,
+        "original": "04_left_3_view_original_viewport_224x136.png",
+        "original_artifact": "verification-screens/pass1054-dm1-original-firestaff-viewport-wall-diff/pairs/04_04_left_3_view_original_viewport_224x136_vs_hall_1_4_dirE_viewport_224x136_original.png",
+        "original_sha256_matches": true
+      }
+    ],
+    "schema": "pass1054_dm1_v1_original_firestaff_viewport_wall_diff.v1",
+    "status": "PASS1054_ONE_WALL_CROP_EXACT_MATCH_REST_SCOUT_ONLY"
+  },
+  "schema": "firestaff.parity.pass1056_dm1_v1_pass1052_firestaff_pairing_gate.v1",
+  "scope": "DM1 V1 pass1052 original PC 3.4 viewport crops plus pass1054 nearest-neighbour Firestaff pairing artifacts. Exactly one wall row is promoted as 0-pixel parity; nonzero rows are scout-only.",
+  "status": "PASS"
+}

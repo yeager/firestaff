@@ -1,0 +1,12 @@
+-rw-------  1 bosse  wheel   641B Jun 20 22:25 /tmp/firestaff-pass1055-door-click/original_viewport_224x136_manifest.tsv
+-rw-------  1 bosse  wheel   350B Jun 20 22:25 /tmp/firestaff-pass1055-door-click/original_viewport_shot_labels.tsv
+-rw-------  1 bosse  wheel   1.5K Jun 20 22:25 /tmp/firestaff-pass1055-door-click/raw_frame_health.json
+-rw-------  1 bosse  wheel   799B Jun 20 22:25 /tmp/firestaff-pass1055-door-click/raw_manifest.tsv
+-rw-------  1 bosse  wheel   9.9K Jun 20 22:25 /tmp/firestaff-pass1055-door-click/viewport_224x136/01_start_original_viewport_224x136.png
+-rw-------  1 bosse  wheel    89K Jun 20 22:25 /tmp/firestaff-pass1055-door-click/viewport_224x136/01_start_original_viewport_224x136.ppm
+-rw-------  1 bosse  wheel   9.7K Jun 20 22:25 /tmp/firestaff-pass1055-door-click/viewport_224x136/02_door_before_original_viewport_224x136.png
+-rw-------  1 bosse  wheel    89K Jun 20 22:25 /tmp/firestaff-pass1055-door-click/viewport_224x136/02_door_before_original_viewport_224x136.ppm
+-rw-------  1 bosse  wheel   9.7K Jun 20 22:25 /tmp/firestaff-pass1055-door-click/viewport_224x136/03_after_viewport_click_original_viewport_224x136.png
+-rw-------  1 bosse  wheel    89K Jun 20 22:25 /tmp/firestaff-pass1055-door-click/viewport_224x136/03_after_viewport_click_original_viewport_224x136.ppm
+-rw-------  1 bosse  wheel   9.7K Jun 20 22:25 /tmp/firestaff-pass1055-door-click/viewport_224x136/04_after_kp5_original_viewport_224x136.png
+-rw-------  1 bosse  wheel    89K Jun 20 22:25 /tmp/firestaff-pass1055-door-click/viewport_224x136/04_after_kp5_original_viewport_224x136.ppm

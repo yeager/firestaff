@@ -295,6 +295,102 @@ int dm2_v1_projectile_dispatch_count(void) { return s_dispatch_count; }
 int dm2_v1_projectile_spell_dispatch_count(void) { return s_spell_count; }
 int dm2_v1_projectile_bomb_dispatch_count(void) { return s_bomb_count; }
 
+/* ── Phase 5 expansion: projectile drain to M11 ────────────────────
+ *
+ * Drains the DM2 projectile list into a flat array of framebuffer-ready
+ * DM2_V1_DrainedProjectile entries.  M11's render path can iterate over
+ * this array each frame and draw fireballs / lightning / arrows in the
+ * V1 viewport.
+ *
+ * Pixel coordinate formula (simplified, matches skproject c_render.cpp):
+ *   pixel_x = 32 + (map_x - map_y) * 32 + (cell_offset_x * 16)
+ *   pixel_y = (map_x + map_y) * 8 + (cell_offset_y * 8)
+ * (For DM2 V1 320x200 viewport, isometric tile rendering.)
+ *
+ * Returns number of projectiles drained.
+ */
+static int drain_pixel_x(int map_x, int map_y, int cell) {
+    int cell_x = cell & 1;  /* 0 = left, 1 = right within cell */
+    return 32 + (map_x - map_y) * 32 + (cell_x ? 16 : 0);
+}
+static int drain_pixel_y(int map_x, int map_y, int cell) {
+    int cell_y = (cell >> 1) & 1;
+    return (map_x + map_y) * 8 + (cell_y ? 8 : 0);
+}
+
+int dm2_v1_projectile_drain_to_m11(DM2_V1_DrainedProjectile *out_list,
+                                    int max_count)
+{
+    if (!out_list || max_count <= 0) return 0;
+    ensure_init();
+    int drained = 0;
+    for (int i = 0; i < s_projectile_list.count
+                && i < PROJECTILE_LIST_CAPACITY
+                && drained < max_count; i++) {
+        const struct ProjectileInstance_Compat *p =
+            &s_projectile_list.entries[i];
+        if (p->slotIndex < 0) continue;
+        DM2_V1_DrainedProjectile *out = &out_list[drained];
+        out->slot_index = p->slotIndex;
+        out->category = p->projectileCategory;
+        out->subtype = p->projectileSubtype;
+        out->owner_kind = p->ownerKind;
+        out->owner_index = p->ownerIndex;
+        out->map_x = p->mapX;
+        out->map_y = p->mapY;
+        out->direction = p->direction;
+        out->pixel_x = drain_pixel_x(p->mapX, p->mapY, p->cell);
+        out->pixel_y = drain_pixel_y(p->mapX, p->mapY, p->cell);
+        out->frame = (p->launchedAtTick / 4) % 8;
+        out->active = 1;
+        drained++;
+    }
+    return drained;
+}
+
+/* ── Phase 5 expansion: synthetic dispatch for tests ─────────────── */
+int dm2_v1_projectile_dispatch_synthetic(int category, int subtype,
+                                          int map_x, int map_y,
+                                          int map_index, int direction)
+{
+    ensure_init();
+    struct ProjectileCreateInput_Compat input;
+    memset(&input, 0, sizeof(input));
+    input.category = category;
+    input.subtype = subtype;
+    input.ownerKind = PROJECTILE_OWNER_CREATURE;
+    input.ownerIndex = 0;
+    input.mapIndex = map_index;
+    input.mapX = map_x;
+    input.mapY = map_y;
+    input.cell = 0;
+    input.direction = direction;
+    input.kineticEnergy = 100;
+    input.attack = 10;
+    input.stepEnergy = 8;
+    input.currentTick = 0;
+    input.firstMoveGraceFlag = 1;
+    struct TimelineEvent_Compat firstMove;
+    memset(&firstMove, 0, sizeof(firstMove));
+    int slot = -1;
+    if (!F0810_PROJECTILE_Create_Compat(&input, &s_projectile_list,
+                                         &slot, &firstMove)) {
+        return -1;
+    }
+    s_dispatch_count++;
+    return slot;
+}
+
+int dm2_v1_projectile_active_count(void) {
+    ensure_init();
+    int n = 0;
+    for (int i = 0; i < s_projectile_list.count
+                && i < PROJECTILE_LIST_CAPACITY; i++) {
+        if (s_projectile_list.entries[i].slotIndex >= 0) n++;
+    }
+    return n;
+}
+
 const char *dm2_v1_projectile_source_evidence(void) {
     return
         "DM2 V1 Projectile Routing — Phase 5 source-lock\n"
