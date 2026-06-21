@@ -3071,6 +3071,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_door_button_click_pc34_compat
     )
 
+    add_executable(test_dm1_v1_chs02_bug78_door_wound_preserve_pc34_compat
+        tests/test_dm1_v1_chs02_bug78_door_wound_preserve_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chs02_bug78_door_wound_preserve_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chs02_bug78_door_wound_preserve_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chs02_bug78_door_wound_preserve_pc34_compat
+        COMMAND test_dm1_v1_chs02_bug78_door_wound_preserve_pc34_compat
+    )
+
     add_executable(test_dm1_v1_dor01_f0715_door_resolve_toggle_action_pc34_compat
         tests/test_dm1_v1_dor01_f0715_door_resolve_toggle_action_pc34_compat.c
     )
