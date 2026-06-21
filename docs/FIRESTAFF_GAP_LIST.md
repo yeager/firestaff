@@ -73,7 +73,7 @@ Classification:
 | DM2 native translations | po/dm2_translations | OUT-OF-SCOPE — DM2 slice not implemented |
 | Nexus native translations | po/nexus_translations | PARTIAL |
 | Theron native translations | po/theron_translations | OPEN-LARGE — 0 translations, Theron slice thin |
-| **Native-vs-fallback separation in validator** | po/validate_po_layout.sh | OPEN-BOUNDED — currently masks native translations |
+| **Native-vs-fallback separation in validator** | po/validate_po_layout.sh | FIXED — `validate_po_layout.sh` now reports `nonblank` coverage separately from `native` coverage and marks fallback-only catalogs as `FALL`; `bash -n po/validate_po_layout.sh && bash po/validate_po_layout.sh` PASS on 2026-06-21 |
 | Native QA on terminology / runtime rendering | po/ | OPEN-LARGE — needs native speakers |
 
 ### A5. Tooling
@@ -482,7 +482,10 @@ order:
 
 ### Tier 5 (i18n follow-up)
 
-21. Native-vs-fallback separation in `validate_po_layout.sh`.
+21. Native-vs-fallback separation in `validate_po_layout.sh`. — DONE:
+    validator now reports `nonblank` and `native` coverage separately,
+    with fallback-only catalogs marked `FALL` without failing the
+    structural CI gate.
 22. Fill DM1/nexus/csb/theron/firestaff missing native translations
     with native speakers (out of scope for AI).
 
