@@ -2868,6 +2868,52 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_d3c_f0107_f0108_first_backdrop_pc34_compat
     )
 
+    add_executable(test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat
+        tests/test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat.c
+        src/csb/csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat.c
+        src/csb/csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat
+        COMMAND test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat
+    )
+
+    add_executable(test_csb_v1_viewport_d3l_d3r_sidewall_backdrops_pc34_compat
+        tests/test_csb_v1_viewport_d3l_d3r_sidewall_backdrops_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l_d3r_sidewall_backdrops_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d3l_d3r_sidewall_backdrops_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d3l_d3r_sidewall_backdrops_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d3l_d3r_sidewall_backdrops_pc34_compat
+        COMMAND test_csb_v1_viewport_d3l_d3r_sidewall_backdrops_pc34_compat
+    )
+
+    add_executable(test_csb_v1_viewport_d2c_f0107_wall_ornament_with_f0111_door_front_pc34_compat
+        tests/test_csb_v1_viewport_d2c_f0107_wall_ornament_with_f0111_door_front_pc34_compat.c
+        src/csb/csb_v1_viewport_d2c_f0107_wall_ornament_with_f0111_door_front_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_d2c_f0107_wall_ornament_with_f0111_door_front_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_d2c_f0107_wall_ornament_with_f0111_door_front_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_d2c_f0107_wall_ornament_with_f0111_door_front_pc34_compat
+        COMMAND test_csb_v1_viewport_d2c_f0107_wall_ornament_with_f0111_door_front_pc34_compat
+    )
+
     add_executable(test_csb_v1_character_import
         tests/test_csb_v1_character_import.c
         src/csb/csb_v1_character_pc34_compat.c
