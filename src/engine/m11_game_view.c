@@ -6925,6 +6925,22 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             version->matchedMd5[0] != '\0') {
             spec.verifiedAssetPath = version->matchedPath;
             spec.verifiedAssetMd5 = version->matchedMd5;
+        } else {
+            /* Selected version not matched (e.g. user pointed --data-dir at
+             * a non-default variant). Fall back to the first matched version
+             * so direct launch can boot the data the user actually supplied
+             * instead of failing with "asset verify failed". Tier 1 #5
+             * (strict boot-probe per path) requires this so Theron US,
+             * CSB Amiga 3.3 Meynaf FR, and other non-default extras can
+             * launch via --data-dir without manual versionIndex tweaking. */
+            const M12_AssetVersionStatus* first =
+                M12_AssetStatus_GetFirstMatchedVersion(&menuState->assetStatus,
+                                                        entry->gameId);
+            if (first && first->matchedPath[0] != '\0' &&
+                first->matchedMd5[0] != '\0') {
+                spec.verifiedAssetPath = first->matchedPath;
+                spec.verifiedAssetMd5 = first->matchedMd5;
+            }
         }
     }
     if (menuState->launchRequested) {
