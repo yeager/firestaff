@@ -1,5 +1,5 @@
 {
-  "build_dir": "/Users/bosse/.openclaw/workspace-main/build",
+  "build_dir": "build",
   "checks": {
     "coverage": {
       "command": {
@@ -29,7 +29,7 @@
         "cmd": [
           "ctest",
           "--test-dir",
-          "/Users/bosse/.openclaw/workspace-main/build",
+          "build",
           "-R",
           "m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe",
           "--output-on-failure"
@@ -37,7 +37,7 @@
         "ok": true,
         "returncode": 0,
         "stderr": "",
-        "stdout": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start 220: firestaff_dm1_v1_playable_route_probe\n1/3 Test #220: firestaff_dm1_v1_playable_route_probe ..............   Passed    0.31 sec\n    Start 221: firestaff_dm1_v1_pass1055_closed_door_pair_probe\n2/3 Test #221: firestaff_dm1_v1_pass1055_closed_door_pair_probe ...   Passed    0.23 sec\n    Start 339: m11_phase_a\n3/3 Test #339: m11_phase_a ........................................   Passed    0.29 sec\n\n100% tests passed, 0 tests failed out of 3\n\nTotal Test time (real) =   0.84 sec"
+        "stdout": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start 222: firestaff_dm1_v1_playable_route_probe\n1/3 Test #222: firestaff_dm1_v1_playable_route_probe ..............   Passed    0.02 sec\n    Start 223: firestaff_dm1_v1_pass1055_closed_door_pair_probe\n2/3 Test #223: firestaff_dm1_v1_pass1055_closed_door_pair_probe ...   Passed    0.01 sec\n    Start 343: m11_phase_a\n3/3 Test #343: m11_phase_a ........................................   Passed    0.10 sec\n\n100% tests passed, 0 tests failed out of 3\n\nTotal Test time (real) =   0.14 sec"
       },
       "ok": true,
       "regex": "m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe"
@@ -100,7 +100,7 @@
     }
   },
   "data_dir": "/Users/bosse/.firestaff/data",
-  "generated_at": "2026-06-21T09:07:20.551611+00:00",
+  "generated_at": "2026-06-21T12:30:06.418026+00:00",
   "schema": "firestaff.parity.dm1_24h_readiness.v1",
   "status": "PASS"
 }

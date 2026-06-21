@@ -11,6 +11,7 @@
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
+#include "dm1_v2_camera_controller_pc34.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -349,20 +350,14 @@ typedef struct {
      * p5_camera: private camera controller for V2 presentation interpolation.
      *   Initialized in M11_GameView_Init, ticked in m11_apply_dm1_v1_pipeline_tick
      *   after each accepted movement command.  When smoothing is disabled the
-     *   camera stays inactive and camera_offset_x/y remain zero (V1 path unchanged). */
+     *   camera stays inactive and camera_offset_x/y remain zero (V1 path unchanged).
+     *   This must embed the full DM1_V2_CameraController, including completion
+     *   callback fields read by dm1_v2_camera_tick(). */
     int camera_offset_x;
     int camera_offset_y;
     int16_t camera_interpolated_facing;
     int camera_duration_ms;
-    struct DM1_V2_CameraController_P5 {
-        int logicalX, logicalY, visualX, visualY;
-        int fromX, fromY, targetX, targetY;
-        int16_t facingDir, fromFacingDir, targetFacingDir;
-        int32_t elapsedMs, durationMs;
-        int32_t turnPanOffsetX;
-        int active, turning;
-        int turnPanEnabled;
-    } p5_camera;
+    DM1_V2_CameraController p5_camera;
 
     /* Nexus V1 engine — active when sourceKind == M11_GAME_SOURCE_NEXUS_DGN.
      * Owned by nexus_v1_launcher.c (singleton). */
@@ -411,6 +406,16 @@ typedef struct {
      * 0 means "use built-in font's default scale from M11_TextStyle" (backward compat). */
     int fontScale;
 } M11_GameViewState;
+
+#ifdef __cplusplus
+static_assert(sizeof(((M11_GameViewState*)0)->p5_camera) ==
+                  sizeof(DM1_V2_CameraController),
+              "M11 p5_camera must embed the full V2 camera controller");
+#else
+_Static_assert(sizeof(((M11_GameViewState*)0)->p5_camera) ==
+                   sizeof(DM1_V2_CameraController),
+               "M11 p5_camera must embed the full V2 camera controller");
+#endif
 
 /* Spell casting API */
 int M11_GameView_OpenSpellPanel(M11_GameViewState* state);

@@ -145,7 +145,7 @@
           "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_v1_viewport_occlusion_gate.py"
         ],
-        "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:13381\n- pits gate before sampling: m11_game_view.c:13479\n- floor ornaments gate before sampling: m11_game_view.c:13547\n- stairs gate before sampling: m11_game_view.c:14213\n- teleporter fields gate before sampling: m11_game_view.c:14283\n- side walls gate before sampling: m11_game_view.c:14354\n- side doors gate before sampling: m11_game_view.c:14790\n- side door ornaments gate before sampling: m11_game_view.c:14890\n- side destroyed-door masks gate before sampling: m11_game_view.c:14968\n- viewport call-site wiring: m11_game_view.c:24406\n",
+        "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:13410\n- pits gate before sampling: m11_game_view.c:13508\n- floor ornaments gate before sampling: m11_game_view.c:13576\n- stairs gate before sampling: m11_game_view.c:14242\n- teleporter fields gate before sampling: m11_game_view.c:14312\n- side walls gate before sampling: m11_game_view.c:14383\n- side doors gate before sampling: m11_game_view.c:14819\n- side door ornaments gate before sampling: m11_game_view.c:14919\n- side destroyed-door masks gate before sampling: m11_game_view.c:14997\n- viewport call-site wiring: m11_game_view.c:24435\n",
         "returncode": 0
       }
     },
@@ -161,7 +161,7 @@
           "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
         ],
-        "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:13659, 13684\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:16599\n- Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:14354\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:14033\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:14790\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:14890\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:14968\n- Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:24406\n",
+        "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:13688, 13713\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:16628\n- Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:14383\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:14062\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:14819\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:14919\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:14997\n- Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:24435\n",
         "returncode": 0
       }
     },
@@ -178,7 +178,7 @@
           "-G",
           "Ninja"
         ],
-        "outputTail": "-- The C compiler identification is AppleClang 17.0.0.17000603\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /opt/homebrew/bin/pkg-config (found version \"2.5.1\")\n-- Found SDL3\n-- Configuring done (0.8s)\n-- Generating done (0.5s)\n-- Build files have been written to: /Users/bosse/.openclaw/data/firestaff-builds/pass373-verify\n",
+        "outputTail": "-- The C compiler identification is AppleClang 17.0.0.17000603\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found PkgConfig: /opt/homebrew/bin/pkg-config (found version \"2.5.1\")\n-- Found SDL3\n-- Configuring done (0.8s)\n-- Generating done (0.4s)\n-- Build files have been written to: /Users/bosse/.openclaw/data/firestaff-builds/pass373-verify\n",
         "returncode": 0
       }
     },
@@ -228,7 +228,7 @@
       "kind": "live_runtime_redraw_state",
       "observed": {
         "active": 1,
-        "gameTick": 22,
+        "gameTick": 23,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -262,7 +262,7 @@
     }
   ],
   "dm1Data": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
+  "head": "b7f4479b8f51a951b170b80b581541743de92f5c",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -444,5 +444,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
-  "timestampUtc": "2026-06-21T07:38:36.337194+00:00"
+  "timestampUtc": "2026-06-21T12:29:27.902221+00:00"
 }
