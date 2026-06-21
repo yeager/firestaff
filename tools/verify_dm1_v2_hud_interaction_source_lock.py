@@ -28,10 +28,14 @@ source_checks = [
         "needles": [
             "G0452_as_Graphic561_MouseInput_ActionAreaNames",
             "G0453_as_Graphic561_MouseInput_ActionAreaIcons",
+            "G0454_as_Graphic561_MouseInput_SpellArea",
+            "C101_COMMAND_CLICK_IN_SPELL_AREA_SYMBOL_1",
+            "C108_COMMAND_CLICK_IN_SPELL_AREA_CAST_SPELL",
+            "C109_COMMAND_CLICK_IN_SPELL_AREA_SET_MAGIC_CASTER",
             "G0455_as_Graphic561_MouseInput_ChampionNamesHands",
             "C020_COMMAND_CLICK_ON_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND",
         ],
-        "meaning": "action rows, action icons, champion names, and ready/action hands stay on the V1 mouse subroute tables",
+        "meaning": "action, spell/rune, champion names, and ready/action hands stay on the V1 mouse subroute tables",
     },
     {
         "file": "COMMAND.C",
@@ -98,15 +102,24 @@ checks = {
     "src/dm1v2/dm1_v2_hud_interaction_pc34.c": [
         "COMMAND.C:375-395",
         "COMMAND.C:461-471",
+        "COMMAND.C:461-482",
         "COMMAND.C:484-497",
         "CLIKCHAM.C:24-35",
         "TOUCHCLICK_Compat_HitTestWithButton",
         "action_area_routes_GetTouchMatrixInvariant",
+        "spell_area_routes_GetTouchMatrixInvariant",
         "champion_name_hand_routes_GetInvariant",
+        "M11_V2_HUD_TOUCH_SPELL_RUNE_PC34",
+        "M11_V2_HUD_TOUCH_SPELL_CAST_PC34",
     ],
     "include/dm1_v2_hud_interaction_pc34.h": [
         "M11_V2_HUD_TOUCH_CHAMPION_FOCUS_PC34",
         "M11_V2_HUD_TOUCH_ACTION_ICON_PC34",
+        "M11_V2_HUD_TOUCH_SPELL_PARENT_PC34",
+        "M11_V2_HUD_TOUCH_SPELL_CASTER_PC34",
+        "M11_V2_HUD_TOUCH_SPELL_RUNE_PC34",
+        "M11_V2_HUD_TOUCH_SPELL_RECANT_PC34",
+        "M11_V2_HUD_TOUCH_SPELL_CAST_PC34",
         "v2_hud_interaction_dispatch_scaled_click",
     ],
     "tests/test_dm1_v2_hud_interaction_pc34.c": [
@@ -115,6 +128,10 @@ checks = {
         "champion3.action_hand",
         "action.icon1",
         "action.row1",
+        "spell.caster",
+        "spell.symbol1",
+        "spell.cast",
+        "spell.recant",
     ],
 }
 
@@ -122,6 +139,9 @@ forbidden_transactions = [
     "F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox",
     "F0349_INVENTORY_ProcessCommand70_ClickOnMouth",
     "F0350_INVENTORY_ProcessCommands28To74_ClickInPanel",
+    "F0399_MENUS_AddChampionSymbol",
+    "F0400_MENUS_DeleteChampionSymbol",
+    "F0408_MENUS_GetClickOnSpellCastResult",
 ]
 
 errors: list[str] = []
@@ -168,6 +188,7 @@ for rel in [
     "src/shared/touch_click_zone_matrix_pc34_compat.c",
     "src/shared/champion_name_hand_routes_pc34_compat.c",
     "src/shared/action_area_routes_pc34_compat.c",
+    "src/shared/spell_area_routes_pc34_compat.c",
 ]:
     if not (root / rel).exists():
         errors.append(f"missing source-lock dependency {rel}")
