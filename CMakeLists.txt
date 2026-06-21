@@ -1553,6 +1553,24 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_real_asset_launch_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 Champion-stat determinism probe (Tier 4 #17 polish).
+# Headless: no game data, no SDL rendering required. Verifies the
+# source-locked champion-stat helpers (F0306 stamina adjustment +
+# F0309 maximum load + F0310 movement ticks + BUG0_72 boundary)
+# are deterministic across many invocations and safe on NULL.
+# Source-locks: ReDMCSB CHAMPION.C lines 1078-1214 + BUG0_72.
+add_executable(firestaff_csb_v1_champion_stat_determinism_probe
+    probes/csb/firestaff_csb_v1_champion_stat_determinism_probe.c
+    src/csb/csb_v1_character_pc34_compat.c
+)
+target_include_directories(firestaff_csb_v1_champion_stat_determinism_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_champion_stat_determinism_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_champion_stat_determinism_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Phase 2 — DSA Script Section Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: DSA section presence and scan feasibility after dungeon load;
@@ -8252,6 +8270,31 @@ if(BUILD_TESTING)
         set_tests_properties(tier1_strict_boot_probe PROPERTIES
             LABELS "tier1;boot_probe;data_path"
             TIMEOUT 90
+        )
+    endif()
+
+    # ── CSB V1 Champion-stat determinism probe ctest entry ─────────
+    # Headless: no game data, no SDL. Verifies F0306/F0309/F0310 +
+    # BUG0_72 are deterministic across many invocations.
+    if(TARGET firestaff_csb_v1_champion_stat_determinism_probe)
+        add_test(
+            NAME csb_v1_champion_stat_determinism
+            COMMAND firestaff_csb_v1_champion_stat_determinism_probe
+        )
+        set_tests_properties(csb_v1_champion_stat_determinism PROPERTIES
+            LABELS "tier4;csb;champion;determinism"
+        )
+    endif()
+
+    # ── CSB V1 real-asset launch probe ctest entry ────────────────
+    if(TARGET firestaff_csb_v1_real_asset_launch_probe)
+        add_test(
+            NAME csb_v1_real_asset_launch
+            COMMAND firestaff_csb_v1_real_asset_launch_probe
+        )
+        set_tests_properties(csb_v1_real_asset_launch PROPERTIES
+            LABELS "tier4;csb;launch;real_asset"
+            TIMEOUT 60
         )
     endif()
 
