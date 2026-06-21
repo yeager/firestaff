@@ -518,6 +518,114 @@ int theron_v1_save_delete_slot(const char *save_root, int slot_index) {
     return remove(slot_path) == 0 ? 0 : -1;
 }
 
+int theron_v1_save_export_slot(const char *save_root,
+                               int slot_index,
+                               const char *export_path) {
+    if (slot_index < 0 || slot_index >= THERON_SAVE_SLOT_COUNT) return -1;
+    if (!export_path || !export_path[0]) return -1;
+
+    char slot_path[512];
+    theron_v1_save_slot_path(save_root, slot_index, slot_path, sizeof(slot_path));
+    if (!file_exists(slot_path)) return -1;
+    if (!theron_v1_save_verify_slot(save_root, slot_index)) return -1;
+
+    FILE *src = fopen(slot_path, "rb");
+    if (!src) return -1;
+    FILE *dst = fopen(export_path, "wb");
+    if (!dst) {
+        fclose(src);
+        return -1;
+    }
+
+    int ok = 1;
+    uint8_t buf[4096];
+    for (;;) {
+        size_t n = fread(buf, 1, sizeof(buf), src);
+        if (n > 0 && fwrite(buf, 1, n, dst) != n) {
+            ok = 0;
+            break;
+        }
+        if (n < sizeof(buf)) {
+            if (ferror(src)) ok = 0;
+            break;
+        }
+    }
+
+    if (fclose(src) != 0) ok = 0;
+    if (fclose(dst) != 0) ok = 0;
+    if (!ok) {
+        remove(export_path);
+        return -1;
+    }
+    return 0;
+}
+
+int theron_v1_save_import_slot(const char *save_root,
+                               int slot_index,
+                               const char *import_path,
+                               Theron_SaveSlot *out_slot_info) {
+    if (slot_index < 0 || slot_index >= THERON_SAVE_SLOT_COUNT) return -1;
+    if (!import_path || !import_path[0]) return -1;
+    if (!file_exists(import_path)) return -1;
+    if (ensure_save_dir(save_root) != 0) return -1;
+
+    FILE *src = fopen(import_path, "rb");
+    if (!src) return -1;
+    struct stat st;
+    if (stat(import_path, &st) != 0 || st.st_size <= 0) {
+        fclose(src);
+        return -1;
+    }
+    size_t file_size = (size_t)st.st_size;
+    size_t min_save_size = THERON_SAVE_HEADER_SIZE +
+        (THERON_SAVE_CHAMPION_COUNT * THERON_SAVE_CHAMPION_BLOCK_SIZE) +
+        sizeof(Theron_DungeonProgression) +
+        THERON_SAVE_FOOTER_SIZE;
+    if (file_size < min_save_size) {
+        fclose(src);
+        return -1;
+    }
+    uint8_t *image = (uint8_t *)malloc(file_size);
+    if (!image) {
+        fclose(src);
+        return -1;
+    }
+    size_t n = fread(image, 1, file_size, src);
+    fclose(src);
+    if (n != file_size) {
+        free(image);
+        return -1;
+    }
+
+    Theron_SaveSlot info;
+    memset(&info, 0, sizeof(info));
+    if (parse_save_image(image, file_size, NULL, 0, NULL, 0, &info) != 0) {
+        free(image);
+        return -1;
+    }
+
+    char slot_path[512];
+    theron_v1_save_slot_path(save_root, slot_index, slot_path, sizeof(slot_path));
+    FILE *dst = fopen(slot_path, "wb");
+    if (!dst) {
+        free(image);
+        return -1;
+    }
+    n = fwrite(image, 1, file_size, dst);
+    int close_ok = fclose(dst) == 0;
+    free(image);
+    if (n != file_size || !close_ok) {
+        remove(slot_path);
+        return -1;
+    }
+
+    if (out_slot_info) {
+        info.slot_index = slot_index;
+        *out_slot_info = info;
+    }
+    return 0;
+}
+
 int theron_v1_save_verify_slot(const char *save_root, int slot_index) {
     if (slot_index < 0 || slot_index >= THERON_SAVE_SLOT_COUNT) return 0;
 
@@ -580,9 +688,10 @@ const char *theron_v1_save_source_evidence(void) {
         "Theron V1 Save/Load — Phase 6 source-lock\n"
         "THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon saves)\n"
         "THQUEST.ASM T800  — champion persistence between dungeons\n"
-        "TQR design: saves allowed ONLY at dungeon entrance; 8 slot slots (slotN.tqsv);\n"
+        "TQR design: saves allowed ONLY at dungeon entrance; 8 save slots (slotN.tqsv);\n"
         "  XOR obfuscation (seed 0x5A + slot index); 16-bit checksum footer;\n"
-        "  magic 'TQR '; version 1; 64-byte header; champion blocks after header\n"
+        "  magic 'TQR '; version 1; 64-byte header; champion blocks after header;\n"
+        "  exported/imported slots must validate before becoming launchable metadata\n"
         "Phase 0 provenance: docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md\n"
         "  JP MD5: b7afb338ad31be1025b53f9aff12d73a\n"
         "  US MD5: f23601102138f87c33025877767ebf76";
