@@ -605,6 +605,36 @@ hasharna — några mappar till samma fil, därav 148 vs 12).
 - 23/23 Phase A invariants PASS
 - 12/12 kanoniska hashar matchar (0 fail)
 
+### Bug fix: stale pass623 line ranges (2026-06-21)
+
+- `tools/verify_pass623_dm1_v1_input_capture_readiness_bridge.py` —
+  två `FIRESTAFF_LOCKS` pekade på stale radintervall
+  (`7430-7500` / `7498-7630`) för `src/engine/m11_game_view.c`.
+  Efter source-kind dispatcher-tillägg (Theron/DM2/Nexus brancher)
+  flyttades `case M12_MENU_INPUT_LEFT:`, `DM1_V1_MovementPipeline_*`
+  call sites + `lastDm1V1MovementPipelineResult.*` capture-fält
+  till `7491-7700`. Nål-listan var korrekt men radfönstret
+  uteslöt de flesta nålar — gate rapporterade FAIL trots att alla
+  nålar faktiskt fanns i filen.
+- Fix (commit `a79de2a7`): utöka båda lock-fönstren till
+  `7491-7700`. Gate går nu från
+  `FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE` →
+  `PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED`.
+
+### Tier 1 #5 progress (2026-06-21)
+
+- Watchdog commits `033edf66` + `f3018e72` lade till
+  first-matched-version fallback i M12 (så `--data-dir` mot
+  non-default Theron-region / CSB-Meynaf FR etc. nu väljer rätt
+  versionIndex automatiskt). 6/9 strict-boot paths är nu OK; de
+  tre kvarvarande (CSB canonical, CSB Meynaf, Nexus saturn-ja)
+  är launcher-specifika diagnostiska gap, inte Tier 1 #5
+  path-discovery gap. Se Tier 1 #5 status-tabellen ovan.
+- DM1 legacy-dos path är nu launch-testad mot
+  `firestaff_m11_game_view_probe`: **593/624 invariants PASS**
+  (625/625 mot canonical DM1 path; de 31 skillnaderna är
+  asset-dependent SKIP:er för PC 3.4 EN-specifika creatures).
+
 ### Påverkan på gap-status
 
 Markerade i docen ovan som **EXTRACTED** (nya rader i C2, D3, E1,
