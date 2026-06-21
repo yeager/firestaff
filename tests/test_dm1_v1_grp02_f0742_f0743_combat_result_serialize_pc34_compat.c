@@ -213,7 +213,7 @@ int main(void) {
     buf[0] = 0xDD; buf[1] = 0xCC; buf[2] = 0xBB; buf[3] = 0xAA;
     memset(&restored, 0, sizeof(restored));
     F0743_COMBAT_ResultDeserialize_Compat(&restored, buf, sizeof(buf));
-    CHECK(restored.outcome == 0xAABBCCDD, "T18: LSB read = 0xAABBCCDD");
+    CHECK((uint32_t)restored.outcome == 0xAABBCCDDu, "T18: LSB read = 0xAABBCCDD");
 
     /* T19: 100 random-ish values round-trip. */
     {

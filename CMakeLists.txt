@@ -7133,6 +7133,90 @@ if(BUILD_TESTING)
         NAME dm1_v1_grp02_f0192_poison_resistance_source_lock
         COMMAND test_dm1_v1_grp02_f0192_poison_resistance_source_lock_pc34_compat
     )
+    add_executable(test_dm1_v1_combat_f0730_f0731_f0732_rng_primitives_pc34_compat
+        tests/test_dm1_v1_combat_f0730_f0731_f0732_rng_primitives_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_combat_f0730_f0731_f0732_rng_primitives_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_combat_f0730_f0731_f0732_rng_primitives_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_combat_f0730_f0731_f0732_rng_primitives
+        COMMAND test_dm1_v1_combat_f0730_f0731_f0732_rng_primitives_pc34_compat
+    )
+    add_executable(test_dm1_v1_grp02_f0733_champion_wound_defense_pc34_compat
+        tests/test_dm1_v1_grp02_f0733_champion_wound_defense_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_grp02_f0733_champion_wound_defense_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_grp02_f0733_champion_wound_defense_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_grp02_f0733_champion_wound_defense
+        COMMAND test_dm1_v1_grp02_f0733_champion_wound_defense_pc34_compat
+    )
+    add_executable(test_dm1_v1_grp02_f0734_statistic_adjusted_attack_pc34_compat
+        tests/test_dm1_v1_grp02_f0734_statistic_adjusted_attack_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_grp02_f0734_statistic_adjusted_attack_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_grp02_f0734_statistic_adjusted_attack_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_grp02_f0734_statistic_adjusted_attack
+        COMMAND test_dm1_v1_grp02_f0734_statistic_adjusted_attack_pc34_compat
+    )
+    add_executable(test_dm1_v1_grp02_f0737_apply_damage_to_champion_pc34_compat
+        tests/test_dm1_v1_grp02_f0737_apply_damage_to_champion_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_grp02_f0737_apply_damage_to_champion_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_grp02_f0737_apply_damage_to_champion_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_grp02_f0737_apply_damage_to_champion
+        COMMAND test_dm1_v1_grp02_f0737_apply_damage_to_champion_pc34_compat
+    )
+    add_executable(test_dm1_v1_grp02_f0738_apply_damage_to_group_pc34_compat
+        tests/test_dm1_v1_grp02_f0738_apply_damage_to_group_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_grp02_f0738_apply_damage_to_group_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_grp02_f0738_apply_damage_to_group_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_grp02_f0738_apply_damage_to_group
+        COMMAND test_dm1_v1_grp02_f0738_apply_damage_to_group_pc34_compat
+    )
+    add_executable(test_dm1_v1_grp02_f0739_build_timeline_event_pc34_compat
+        tests/test_dm1_v1_grp02_f0739_build_timeline_event_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_grp02_f0739_build_timeline_event_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_grp02_f0739_build_timeline_event_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_grp02_f0739_build_timeline_event
+        COMMAND test_dm1_v1_grp02_f0739_build_timeline_event_pc34_compat
+    )
+    add_executable(test_dm1_v1_grp02_f0742_f0743_combat_result_serialize_pc34_compat
+        tests/test_dm1_v1_grp02_f0742_f0743_combat_result_serialize_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_grp02_f0742_f0743_combat_result_serialize_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_grp02_f0742_f0743_combat_result_serialize_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_grp02_f0742_f0743_combat_result_serialize
+        COMMAND test_dm1_v1_grp02_f0742_f0743_combat_result_serialize_pc34_compat
+    )
 
     add_executable(test_dm1_v1_combat_pc34_compat_integration
         tests/test_dm1_v1_combat_pc34_compat_integration.c
