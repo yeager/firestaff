@@ -1,0 +1,228 @@
+{
+  "expected_scene_count": 6,
+  "expected_scenes": [
+    "01_ingame_start_viewport_original_vs_firestaff",
+    "02_ingame_turn_right_viewport_original_vs_firestaff",
+    "03_ingame_move_forward_viewport_original_vs_firestaff",
+    "04_ingame_spell_panel_viewport_original_vs_firestaff",
+    "05_ingame_after_cast_viewport_original_vs_firestaff",
+    "06_ingame_inventory_panel_viewport_original_vs_firestaff"
+  ],
+  "nonClaims": [
+    "This gate does NOT claim original-vs-Firestaff parity.",
+    "This gate does NOT promote any scene to an exact-pixel-match.",
+    "Promotion requires pass376 semantic_promotion_ok=true on the original side and a confirmed paired capture route."
+  ],
+  "plan_path": "parity-evidence/overlays/pass376_firestaff_pairing/plan.json",
+  "plan_present": true,
+  "redmcsb_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "scenes": [
+    {
+      "delta_percent": 72.7055,
+      "differing_pixels": 22149,
+      "exists": true,
+      "firestaff": "verification-screens/01_ingame_start_latest_viewport_224x136.png",
+      "firestaff_sha256": "68b4df029a8e34e3290af4e36c285b0d2ada4ff14dd0d2cdccdd8bbef9e562ac",
+      "honesty": "Diff is measurement only; it is not a parity claim without source-backed interpretation of the mismatch.",
+      "mask_sha256": "531ac1e27c4da5304154e204f98517b104ed4c191a6f8ba4ff37e6b724daf1d5",
+      "ok": true,
+      "original": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.png",
+      "original_sha256": "c55c0311116bf2d3f9eeaaa238a01cdffd65a518e95e9526aa3e60d93454a73d",
+      "problems": [],
+      "region_xywh": [
+        0,
+        0,
+        224,
+        136
+      ],
+      "scene": "01_ingame_start_viewport_original_vs_firestaff",
+      "tolerance_per_channel": 0,
+      "total_pixels": 30464
+    },
+    {
+      "delta_percent": 82.0936,
+      "differing_pixels": 25009,
+      "exists": true,
+      "firestaff": "verification-screens/02_ingame_turn_right_latest_viewport_224x136.png",
+      "firestaff_sha256": "f6446591628751cecb6fcb04999e3e86ea1f067d6cd29946f7587963c14c7910",
+      "honesty": "Diff is measurement only; it is not a parity claim without source-backed interpretation of the mismatch.",
+      "mask_sha256": "fbc9065cf06d033ae89e48ed6d6fff6ceaad16e63ee8738c0b09dd682cddf1f2",
+      "ok": true,
+      "original": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png",
+      "original_sha256": "40140a2771d73c52ced24f280e922915227cbe62a85e8142c9f8aad23e5b3f96",
+      "problems": [],
+      "region_xywh": [
+        0,
+        0,
+        224,
+        136
+      ],
+      "scene": "02_ingame_turn_right_viewport_original_vs_firestaff",
+      "tolerance_per_channel": 0,
+      "total_pixels": 30464
+    },
+    {
+      "delta_percent": 77.1304,
+      "differing_pixels": 23497,
+      "exists": true,
+      "firestaff": "verification-screens/03_ingame_move_forward_latest_viewport_224x136.png",
+      "firestaff_sha256": "2d796ee923ac44b99880b4bd4201cbeeaab05f5905c0f42f7f156894eb474561",
+      "honesty": "Diff is measurement only; it is not a parity claim without source-backed interpretation of the mismatch.",
+      "mask_sha256": "049e394c6285876dc9f20367306ee15b730e25917923572c329ebcfaf7875384",
+      "ok": true,
+      "original": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png",
+      "original_sha256": "c55c0311116bf2d3f9eeaaa238a01cdffd65a518e95e9526aa3e60d93454a73d",
+      "problems": [],
+      "region_xywh": [
+        0,
+        0,
+        224,
+        136
+      ],
+      "scene": "03_ingame_move_forward_viewport_original_vs_firestaff",
+      "tolerance_per_channel": 0,
+      "total_pixels": 30464
+    },
+    {
+      "delta_percent": 77.1304,
+      "differing_pixels": 23497,
+      "exists": true,
+      "firestaff": "verification-screens/04_ingame_spell_panel_latest_viewport_224x136.png",
+      "firestaff_sha256": "2d796ee923ac44b99880b4bd4201cbeeaab05f5905c0f42f7f156894eb474561",
+      "honesty": "Diff is measurement only; it is not a parity claim without source-backed interpretation of the mismatch.",
+      "mask_sha256": "049e394c6285876dc9f20367306ee15b730e25917923572c329ebcfaf7875384",
+      "ok": true,
+      "original": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png",
+      "original_sha256": "c55c0311116bf2d3f9eeaaa238a01cdffd65a518e95e9526aa3e60d93454a73d",
+      "problems": [],
+      "region_xywh": [
+        0,
+        0,
+        224,
+        136
+      ],
+      "scene": "04_ingame_spell_panel_viewport_original_vs_firestaff",
+      "tolerance_per_channel": 0,
+      "total_pixels": 30464
+    },
+    {
+      "delta_percent": 88.9837,
+      "differing_pixels": 27108,
+      "exists": true,
+      "firestaff": "verification-screens/05_ingame_after_cast_latest_viewport_224x136.png",
+      "firestaff_sha256": "2d796ee923ac44b99880b4bd4201cbeeaab05f5905c0f42f7f156894eb474561",
+      "honesty": "Diff is measurement only; it is not a parity claim without source-backed interpretation of the mismatch.",
+      "mask_sha256": "b326b14386af0824bfbda4f83bbe962463a18e01696b77b59bf0dd8e5df56c40",
+      "ok": true,
+      "original": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png",
+      "original_sha256": "40140a2771d73c52ced24f280e922915227cbe62a85e8142c9f8aad23e5b3f96",
+      "problems": [],
+      "region_xywh": [
+        0,
+        0,
+        224,
+        136
+      ],
+      "scene": "05_ingame_after_cast_viewport_original_vs_firestaff",
+      "tolerance_per_channel": 0,
+      "total_pixels": 30464
+    },
+    {
+      "delta_percent": 93.4874,
+      "differing_pixels": 28480,
+      "exists": true,
+      "firestaff": "verification-screens/06_ingame_inventory_panel_latest_viewport_224x136.png",
+      "firestaff_sha256": "bb1c86d2a93a7e3079f7c8c5ec01e58663369b24be2726ad22f6819973baa62c",
+      "honesty": "Diff is measurement only; it is not a parity claim without source-backed interpretation of the mismatch.",
+      "mask_sha256": "12929df6b1050c82e396960ca87dee93c877ae5ed5100823e66b4856d0266094",
+      "ok": true,
+      "original": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png",
+      "original_sha256": "c55c0311116bf2d3f9eeaaa238a01cdffd65a518e95e9526aa3e60d93454a73d",
+      "problems": [],
+      "region_xywh": [
+        0,
+        0,
+        224,
+        136
+      ],
+      "scene": "06_ingame_inventory_panel_viewport_original_vs_firestaff",
+      "tolerance_per_channel": 0,
+      "total_pixels": 30464
+    }
+  ],
+  "schema": "pass376_dm1_v1_firestaff_overlay_diff_measurement.v1",
+  "sourceAudit": [
+    {
+      "exists": true,
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128_dunview_draw_consumes_party_tuple",
+      "lines": "8318-8611",
+      "needles_found": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "needles_missing": [],
+      "ok": true
+    },
+    {
+      "exists": true,
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "f0097_drawview_paints_viewport",
+      "lines": "709-858",
+      "needles_found": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "G0324_B_DrawViewportRequested = C1_TRUE",
+        "M526_WaitVerticalBlank",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "needles_missing": [],
+      "ok": true
+    },
+    {
+      "exists": true,
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "f0365_f0366_turn_move_dispatch",
+      "lines": "142-174,180-347",
+      "needles_found": [
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0284_CHAMPION_SetPartyDirection",
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "needles_missing": [],
+      "ok": true
+    },
+    {
+      "exists": true,
+      "file": "COORD.C",
+      "function": "",
+      "id": "viewport_geometry_pc34",
+      "lines": "1693-1724",
+      "needles_found": [
+        "G2067_i_ViewportScreenX = 0",
+        "G2068_i_ViewportScreenY = 33",
+        "G2073_C224_ViewportPixelWidth = 224",
+        "G2074_C136_ViewportHeight = 136",
+        "G2070_ViewportBitmapByteCount = 15232"
+      ],
+      "needles_missing": [],
+      "ok": true
+    }
+  ],
+  "status": "PASS376_FIRESTAFF_OVERLAY_DIFF_MEASUREMENT_REPRODUCIBLE",
+  "timestamp_utc": "2026-06-21T12:36:45.047226+00:00",
+  "viewport_xywh": [
+    0,
+    0,
+    224,
+    136
+  ]
+}
