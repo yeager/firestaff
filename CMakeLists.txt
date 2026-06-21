@@ -7470,6 +7470,21 @@ if(NOT TARGET test_dm1_v1_text_message_pc34_compat)
 endif()
 
 # ── DUNGEON.C F0168 scroll TextString source-lock gate ───────────────
+if(NOT TARGET test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat)
+    add_executable(test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat
+        tests/test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat.c
+        src/memory/memory_dungeon_dat_pc34_compat.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_dun01_f0501_party_location_source_lock
+        COMMAND test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_memory_dungeon_text_scroll_pc34_compat)
     add_executable(test_memory_dungeon_text_scroll_pc34_compat
         tests/test_memory_dungeon_text_scroll_pc34_compat.c
