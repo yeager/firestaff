@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 champion-panel name-box clip CTest: registered existing data-free `test_dm1_v1_champion_panel_name_box_clip_pc34_compat` as CTest target `dm1_v1_champion_panel_name_box_clip_pc34_compat`. The source-locked fixture pins the `CHAMDRAW.C` F0292 name-strip and inventory title clip geometry, print anchors, color cascade, and seven-character PC 3.4 name cap. This is clip/geometry contract coverage only; it does not load live portraits, drive inventory runtime, capture pixels, run DOSBox, or claim broader champion-panel parity.
+
 - ✅ 2026-06-21 DM1 V1 champion-panel damage-indicator CTest: registered existing data-free `test_dm1_v1_champion_panel_damage_indicator_pc34_compat` as CTest target `dm1_v1_champion_panel_damage_indicator_pc34_compat`. The source-locked synthetic gate pins `CHAMDRAW.C` F0623 damage graphic, zone, and text dispatch plus caller/evidence anchors. This is contract coverage only; it does not load real assets, run DOSBox, capture pixels, or claim original-vs-Firestaff parity.
 
 - ✅ 2026-06-21 DM1 V1 champion-panel hand-slot priority CTest: registered existing data-free `test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat` as CTest target `dm1_v1_champion_panel_hand_slot_priority_pc34_compat`. The gate pins status-hand, leader-hand, backpack, belt, and C30 chest-slot priority, guard ordering, transaction order, redraw contract, and source-evidence strings against `CHAMPION.C`, `CHAMDRAW.C`, and `PANEL.C` anchors. This is source-contract coverage only; it does not load private game data, drive live inventory clicks, capture pixels, run DOSBox, or claim original-vs-Firestaff parity.
