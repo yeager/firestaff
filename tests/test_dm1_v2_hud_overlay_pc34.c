@@ -67,6 +67,49 @@ int main(void) {
     v2_hud_render(fb, w, h);
     CHECK(fb[0 * w + 16] == 255);           /* clamp low to north */
 
+    /* Presentation-state overlay: champion/action/rune surfaces remain
+     * machine-checkable pixels and do not call V1 transaction owners. */
+    v2_hud_clear_presentation_state();
+    v2_hud_set_opacity(200);
+    v2_hud_set_champion_overlay_state(0, 50, 75, 25, true, true);
+    v2_hud_set_champion_overlay_state(1, 150, -4, 60, false, false);
+    v2_hud_set_champion_overlay_state(-1, 100, 100, 100, true, true);
+    v2_hud_set_rune_overlay_state(0x05u, 2, true, true, true);
+    v2_hud_set_action_overlay_state(1, 2, 2);
+    memset(fb, 0, sizeof(fb));
+    v2_hud_render(fb, w, h);
+    CHECK(fb[1 * w + 2] == 255);            /* active leader border */
+    CHECK(fb[6 * w + 7] == 200);            /* champion HP fill */
+    CHECK(fb[6 * w + 28] == 100);           /* champion HP empty tail */
+    CHECK(fb[11 * w + 7] == 150);           /* stamina tint */
+    CHECK(fb[16 * w + 7] == 133);           /* mana tint */
+    CHECK(fb[7 * w + 55] == 255);           /* spell-ready cue */
+    CHECK(fb[6 * w + 76] == 200);           /* clamped high HP fill */
+    CHECK(fb[11 * w + 76] == 100);          /* clamped low stamina */
+    CHECK(fb[43 * w + 234] == 255);         /* caster-ready strip */
+    CHECK(fb[52 * w + 236] == 200);         /* selected rune */
+    CHECK(fb[52 * w + 248] == 100);         /* unselected rune */
+    CHECK(fb[52 * w + 260] == 255);         /* active rune */
+    CHECK(fb[64 * w + 236] == 255);         /* cast rectangle */
+    CHECK(fb[64 * w + 300] == 200);         /* recant rectangle */
+    CHECK(fb[86 * w + 256] == 255);         /* active action icon */
+    CHECK(fb[86 * w + 276] == 200);         /* highlighted action icon */
+    CHECK(fb[78 * w + 252] == 255);         /* action flash */
+    check_guarded_tiny_render(24, 4);        /* presentation-state clipping */
+
+    v2_hud_tick_presentation_state();
+    v2_hud_tick_presentation_state();
+    memset(fb, 0, sizeof(fb));
+    v2_hud_render(fb, w, h);
+    CHECK(fb[78 * w + 252] == 100);         /* flash decays to action panel */
+
+    v2_hud_clear_presentation_state();
+    memset(fb, 0, sizeof(fb));
+    v2_hud_render(fb, w, h);
+    CHECK(fb[43 * w + 234] == 0);           /* clear hides rune strip */
+    CHECK(fb[86 * w + 256] == 0);           /* clear hides action strip */
+    CHECK(fb[1 * w + 140] == 0);            /* invalid champion write ignored */
+
     v2_hud_toggle();
     memset(fb, 0, sizeof(fb));
     v2_hud_render(fb, w, h);
