@@ -1444,6 +1444,18 @@ static void m11_write_autotest_screenshot(const char* outputDir) {
     fprintf(stderr, "AUTOTEST SCREENSHOT: %s\n", outPath);
 }
 
+static void m11_write_autotest_presented_screenshot(const char* outputDir) {
+    char outPath[1024];
+    if (!outputDir || outputDir[0] == '\0') {
+        return;
+    }
+    if (!M11_Screenshot_CapturePresentedRGBA(outputDir, outPath, (int)sizeof(outPath))) {
+        fprintf(stderr, "firestaff: autotest presented screenshot capture failed: %s\n", outputDir);
+        return;
+    }
+    fprintf(stderr, "AUTOTEST PRESENTED SCREENSHOT: %s\n", outPath);
+}
+
 static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
     if (!token || len == 0U) {
         return M12_MENU_INPUT_NONE;
@@ -2630,6 +2642,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
 cleanup:
     m11_write_autotest_screenshot(getenv("FIRESTAFF_AUTOTEST_SCREENSHOT_DIR"));
+    m11_write_autotest_presented_screenshot(getenv("FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR"));
     m11_write_autotest_runtime_probe(getenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
                                      launchedEver,
                                      &gameView,

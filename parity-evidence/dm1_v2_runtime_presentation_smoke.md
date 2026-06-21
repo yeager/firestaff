@@ -9,10 +9,14 @@ pixel-parity or finished V2.2 art claim.
 
 ## Mode results
 
-| Mode | Status | Runtime source | Presentation mode | Screenshot artifacts |
-|---|---:|---|---:|---:|
-| V2.0 filtered | PASS | `dm1` | `1` | `1` |
-| V2.1 enhanced 2D | PASS | `dm1` | `2` | `1` |
+| Mode | Status | Runtime source | Presentation mode | Source BMP | Presented BMP |
+|---|---:|---|---:|---:|---:|
+| V2.0 filtered | PASS | `dm1` | `1` | `1` | `1` |
+| V2.1 enhanced 2D | PASS | `dm1` | `2` | `1` | `1` |
+
+Presented-frame hashes differ across configured modes, so this gate
+covers the post-palette/post-filter buffer and not only the source
+indexed framebuffer.
 
 ## Non-claims
 

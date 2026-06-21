@@ -43,6 +43,12 @@ int M11_Screenshot_Capture(const unsigned char* framebuffer,
 int M11_Screenshot_CaptureCurrent(const char* outputDir,
                                   char* outPath, int outPathCap);
 
+/* Capture the most recent M11 RGBA presentation buffer. This is distinct
+ * from CaptureCurrent(): it records the post-palette/post-filter pixels that
+ * were uploaded by the last Present* call. */
+int M11_Screenshot_CapturePresentedRGBA(const char* outputDir,
+                                        char* outPath, int outPathCap);
+
 /* Resolve the default output directory (~/.firestaff/screenshots).  The
  * directory is created if missing.  Returns a static buffer. */
 const char* M11_Screenshot_DefaultDir(void);
