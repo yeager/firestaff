@@ -1848,6 +1848,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_viewport_wall
     # arg. Manual run: ./build/firestaff_dm1_v1_viewport_wall_capture_probe ~/.firestaff/data/dm1 /tmp/captures
 endif()
 
+# DM1 V1 champion-panel damage-indicator pc34_compat contract test
+# (CHAMDRAW.C F0623 damage graphic/zone/text dispatch).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_indicator_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_damage_indicator_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_damage_indicator_pc34_compat
+        tests/test_dm1_v1_champion_panel_damage_indicator_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_damage_indicator_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_damage_indicator_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_damage_indicator_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_damage_indicator_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_damage_indicator_pc34_compat
+    )
+endif()
+
 # DM1 V1 champion-panel damage-flash-decay pc34_compat runtime test
 # (companion of the pool's 9 probes; same M11/M12 stack).
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c"
