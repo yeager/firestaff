@@ -172,7 +172,7 @@ greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
 | Champions per-stat parity | csb_gap_champions.md | PARTIAL |
 | Combat mechanics | csb_gap_combat.md | PARTIAL |
 | Dungeon model/mechanics | csb_gap_dungeon.md | PARTIAL — 2026-06-21 PC launch boundary now has a positive real-data gate: `csb_v1_pc_real_asset_launch` verifies canonical PC CSB assets scan by hash, enter `csb_v1_boot_enter_game()`, load `DUNGEON.DAT` into the runtime-owned dungeon singleton, select map 0, tick once, and clean up. Core PC runtime/input/movement slices are now CTest-registered through `csb_v1_command_chain_move_attack_cast_runtime_pc34_compat`, `csb_v1_input_command_queue_binding`, `csb_v1_movement_command_step_runtime_pc34_compat`, and `csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat`. Remaining dungeon/mechanics work is deeper gameplay parity, viewport/UI runtime evidence, and end-to-end playability, not the PC asset handoff. |
-| Graphics + ornament blits (F0108, F0115, F0111, CustomBackgrounds) | csb_gap_graphics.md | OPEN-LARGE |
+| Graphics + ornament blits (F0108, F0115, F0111, CustomBackgrounds) | csb_gap_graphics.md | PARTIAL / OPEN-LARGE — 2026-06-21 CTest now covers four data-free CSB viewport/source-lock slices: first CustomBackgrounds backdrop, D1C F0108 floor/ceiling ornament, D1C F0115 thing pass, and D3C F0107/F0108 first-backdrop composition. Existing `csb_v1_viewport_phase3_rendering`, inventory-grid, and viewport-inventory mouse gates remain green. Remaining: live real-asset ornament blits, F0111 door-panel coverage, broader viewport/HUD captures, and pixel parity evidence. |
 | Full mechanics parity | csb_gap_mechanics.md | OPEN-LARGE |
 
 ### C2. Per-version CSB asset coverage
