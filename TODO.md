@@ -51,7 +51,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - ✅ GRAPHICS.DAT hidden-code item awareness (Atari ST 2.0/2.1 + Amiga 3.5/3.5 Multilanguage): skip-table and loader-integration gates now cover Atari ST CSB items 21/538/548 plus Atari/Amiga 558-562 and Amiga 21/676/686. Verification: `ctest --test-dir build -R 'csb_hidden_code_skip_table_unit|csb_v1_graphics_hidden_item_skip_pc34' --output-on-failure` PASS 2/2. Remaining CSB work is real-asset ingestion/rendering parity, not hidden-code skip awareness.
 - ✅ Phase 6 - Utility/import flow: champion import from DM1 saves (256-byte CSB block format, DM1→CSB record conversion), import state machine (ReDMCSB SAVEGAME.C F0100-F0120), utility disk flow state machine (INIT→INSERT_DISK→VERIFY_DISK→DISK_OK→SELECT_ACTION→IMPORT/LOAD/NEW→DONE), headless probe passes 33/33 tests.
 - ✅ Phase 7 - Verification suite: add deterministic boot, dungeon, combat, save/import, and rendering probes.
-- 🐛 Runtime handoff: the M12 launch/profile intent is valid for hash-matched CSB assets; remaining work is title/intro/import path, CSB-specific viewport integration, and end-to-end playability verification.
+- 🔧 Runtime handoff: the M12 launch/profile intent is valid for hash-matched CSB assets, and `csb_v1_pc_real_asset_launch` now proves canonical PC CSB `GRAPHICS.DAT`/`DUNGEON.DAT` scan by hash, enter `csb_v1_boot_enter_game()`, load the dungeon singleton, keep the source-locked start pose, initialize Chaos magic, tick once, and clean up. Remaining work is title/intro/import path, richer CSB-specific viewport evidence, and end-to-end playability verification.
 
 ### CSB V2.0 / V2.1 / V2.2
 

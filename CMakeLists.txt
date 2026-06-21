@@ -1613,6 +1613,23 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_real_asset_launch_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 PC real-asset launch probe.
+# Skip-safe CTest gate: when ~/.firestaff/data/csb (or FIRESTAFF_CSB_PC_DATA)
+# contains the canonical PC CSB pair, the probe verifies hash scan,
+# csb_v1_boot_enter_game(), loaded DUNGEON.DAT ownership, and one V1 tick.
+add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
+    probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c
+    src/csb/csb_v1_boot.c
+    src/csb/csb_v1_runtime_pc34_compat.c
+    src/shared/asset_find_by_hash.c
+)
+target_include_directories(firestaff_csb_v1_pc_real_asset_launch_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_pc_real_asset_launch_probe PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_pc_real_asset_launch_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Champion-stat determinism probe (Tier 4 #17 polish).
 # Headless: no game data, no SDL rendering required. Verifies the
 # source-locked champion-stat helpers (F0306 stamina adjustment +
@@ -8610,6 +8627,17 @@ if(BUILD_TESTING)
     endif()
 
     # ── CSB V1 real-asset launch probe ctest entry ────────────────
+    if(TARGET firestaff_csb_v1_pc_real_asset_launch_probe)
+        add_test(
+            NAME csb_v1_pc_real_asset_launch
+            COMMAND firestaff_csb_v1_pc_real_asset_launch_probe
+        )
+        set_tests_properties(csb_v1_pc_real_asset_launch PROPERTIES
+            LABELS "tier4;csb;launch;real_asset;pc"
+            TIMEOUT 30
+        )
+    endif()
+
     if(TARGET firestaff_csb_v1_real_asset_launch_probe)
         # NOTE: csb_v1_real_asset_launch requires the Atari ST 2.x CSB
         # data files (~/.firestaff/data/csb-atari-st-2x/GRAPHICS.DAT +

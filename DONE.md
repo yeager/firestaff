@@ -191,6 +191,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ### CSB V1
 
+- ✅ 2026-06-21 CSB V1 PC real-asset launch gate: added skip-safe CTest `csb_v1_pc_real_asset_launch` and probe `firestaff_csb_v1_pc_real_asset_launch_probe`. With local canonical PC CSB data it verifies hash scan for `GRAPHICS.DAT`/`DUNGEON.DAT`, PC 3.4 variant selection, `csb_v1_boot_enter_game()`, loaded dungeon ownership, map 0 selection, source-locked start pose, Chaos magic init, one V1 tick, and cleanup. Verification: direct probe PASS 20/20, `ctest --test-dir build -R '^csb_v1_pc_real_asset_launch$' --output-on-failure` PASS 1/1, and `ctest --test-dir build -R '^csb' --output-on-failure` PASS 45/45.
+
 - ✅ Phase 0 - Provenance and source audit setup.
 - ✅ Phase 1 - Boot/profile split, profile-specific asset discovery, boot state, diagnostics, and hash-matched launch boundary.
 - ✅ Phase 2 dungeon-data probe slice: synthetic CSB dungeon loading, square/thing accessors, door table, sensor helpers, endgame helpers, world-model behavior, and CSB-vs-DM1 difference checks are covered by `firestaff_csb_v1_dungeon_model_probe`.
