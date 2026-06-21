@@ -32,7 +32,7 @@ Classification:
 | **FTL container format (Amiga, X68000, MegaCD)** | greatstone d_ftl.html | OPEN-LARGE — 3-hunk Amiga-hunks structure, 4 checksums, two compression algorithms |
 | **PAK container format (Atari ST)** | greatstone d_pak.html | FIXED — `firestaff_pak_decode_unit` PASS 1/1 on 2026-06-21; parses 28-byte Atari ST executable header plus nibble-coded table/literal compression |
 | **HTC hint oracle text format (CSB)** | sck tutorial | OPEN-LARGE — text+layout format used by CSB Hint Oracle |
-| **CMP portrait image format** | sck tutorial | OPEN-BOUNDED — portrait compression used by CSB Amiga |
+| **CMP portrait image format** | sck tutorial | FIXED — `firestaff_cmp_decode_unit` + `csb_v1_cmp_import_pc34` PASS 2/2 on 2026-06-21; decoder parses the 496-byte CSB Utility Disk champion portrait format and import glue writes it into CSB V1 champion/party structures |
 | **AMG sound format (CSB utility disk)** | sck tutorial | OPEN-BOUNDED — sound effects storage |
 | **MVE (Interplay, DM2 PC)** | dmweb Animations | OPEN-LARGE — DOS-stub + Interplay MVE binary |
 | **QuickTime .moov (DM2 Macintosh)** | dmweb Animations | OPEN-LARGE — Apple QuickTime container |
@@ -441,7 +441,10 @@ order:
    PASS 1/1 on 2026-06-21, pass852). Real Atari ST asset handoff still
    BLOCKED-DATA.
 5. PAK container decoder for Atari ST START.PAK. — DONE (commit 3ee479de)
-6. CMP portrait loader for CSB utility disk. — DONE (commit 532c8250)
+6. CMP portrait loader for CSB utility disk. — DONE (commit 532c8250);
+   `firestaff_cmp_decode_unit` + `csb_v1_cmp_import_pc34` PASS 2/2 on
+   2026-06-21. Runtime champion portrait source-selection remains tracked
+   separately under A3, not as a CMP format decoder gap.
 7. Harmonize MD5 vs SHA256 in `asset_find_by_hash.c` (or add
    wrapper). — DONE (commit 5988b620, see docs/MD5_SHA256_HARMONIZATION.md)
 8. `_G2157_` linker fix (add `image_frontend_pc34.c` to
