@@ -99,7 +99,8 @@ Source-locked against SKULL.ASM T520/T560/T600, ReDMCSB GAMELOOP.C:164-219, and 
 
 - ✅ `--game dm2` direct-launch wired (closed 2026-06-17 by adding M11_GameView_StartDm2 branch + fixing dm2_md5_body in src/dm2/dm2_v1_boot.c). verify_all_launches.sh now 59/59 PASS (was 49/49 + 10 FAIL_NODATA). See DONE.md for full fix details.
 - ✅ Canonical launch-smoke gate: `tier1_strict_boot_probe` now covers canonical `--game dm2 --data-dir ~/.firestaff/data/dm2` through the `DM2 READY` stderr milestone.
-- 🔧 DM2 extras/cross-version launch remains open: `dm2-extras/dos-en` still refuses direct launch because it does not match the canonical DM2 runtime hash/format path.
+- ✅ DOS EN extras launch-smoke gate: `tier1_strict_boot_probe` now covers `--game dm2 --data-dir ~/.firestaff/data/dm2-extras/dos-en` through the extracted DOS `data/` layout.
+- 🔧 DM2 extras/cross-version launch remains open for other extracted PC/demo paths: `dm2-extras/dos-fr` and `dm2-extras/pc-{fr,de}` still need per-version launch normalization.
 
 ## Dungeon Master Nexus
 
