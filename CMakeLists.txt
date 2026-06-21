@@ -4666,6 +4666,22 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_pass1055_closed_door_pair_probe
     )
 
+    # DM1 V1 extended collision coverage probe.
+    # Firestaff-side superset of pass1055_closed_door_pair_probe: same
+    # canonical route and target square, plus repeated closed-door stasis and
+    # wall/door/fakewall/pit/teleporter element-substitution cases.
+    add_executable(firestaff_dm1_v1_extended_collision_pair_probe
+        probes/dm1/firestaff_dm1_v1_extended_collision_pair_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_extended_collision_pair_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_extended_collision_pair_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_extended_collision_pair_probe
+        COMMAND firestaff_dm1_v1_extended_collision_pair_probe
+    )
+
     # DM1 V1 Phase 8: door and special-square interaction probe.
     # Tests door state machine (0..5), C05 clickable front-cell zones,
     # teleporter activation, stairs transitions, and pit fall semantics.
