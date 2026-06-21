@@ -154,7 +154,7 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 | **Real in-place V2.2 drawing via m11_draw_dm1_\* passes** | OPEN-LARGE — overlay placeholder only |
 | V2 modern UI overlay polish (inventory/champion/rune/action) | OPEN-LARGE |
 | Enhanced lighting/shadows/field/projectile VFX | OPEN-LARGE |
-| Smooth movement interpolation coverage | OPEN-BOUNDED |
+| Smooth movement interpolation coverage | FIXED -- pass1068 expands `dm1_v2_movement_camera_pc34` with deterministic forward/back/left/right camera-offset coverage, end-offset reset checks, and presentation-only runtime invariants alongside the smooth-movement source-lock gate |
 | Full V1/V2 deterministic input scripts + screenshot/pixel gates | OPEN-BOUNDED |
 | Per-mode pixel/material verification gates | OPEN-BOUNDED |
 
