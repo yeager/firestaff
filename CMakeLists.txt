@@ -6447,6 +6447,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass376_dm1_v1_completion_deferred_explosion_credit.py
         )
         add_test(
+            NAME pass376_dm1_v1_firestaff_overlay_diff_measurement
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass376_dm1_v1_firestaff_overlay_diff_measurement.py
+        )
+        add_test(
             NAME pass377_dm1_v1_paired_diff_artifact_blocker
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass377_dm1_v1_paired_diff_artifact_blocker.py
         )

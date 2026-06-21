@@ -47,6 +47,7 @@
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
 #include "dm1_v2_shape_runtime_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
+#include "m11_v22_inplace_draw_pc34.h"
 #include "m11_v22_render_overlay_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
@@ -6552,6 +6553,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         free(state->theronAssets);
         state->theronAssets = NULL;
     }
+    m11_v22_inplace_draw_shutdown();
     if (state->theronWorld) {
         free(state->theronWorld);
         state->theronWorld = NULL;
@@ -6607,10 +6609,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
      * the V22 active branch stays the single source of truth. */
     if (dm1_v2_shape_runtime_v22_active() && spec->gameId
         && strcmp(spec->gameId, "dm1") == 0) {
-        /* V22 path is live: future renderer can resolve shapes per
-         * cell using dm1_v2_shape_runtime_composition(). For now the
-         * call is a no-op (the modern asset pack is a follow-up); the
-         * important part is the mode signal reaches the runtime. */
+        /* V22 path is live: initialize the optional in-place bitmap cache.
+         * Missing cache/assets are not fatal; the draw path falls back to the
+         * placeholder overlay so V1/V2 launch remains robust without private
+         * modern-art assets. */
+        (void)m11_v22_inplace_draw_init();
         (void)dm1_v2_shape_runtime_for_cell;
     }
     /* ── Theron's Quest V1: Track 02 runtime handoff ─────────────── */
@@ -24740,15 +24743,19 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                         M11_VIEWPORT_W, M11_VIEWPORT_H,
                                         paletteIndex);
     }
-    /* V2.2 GPU render path: V22 modern-art overlay pass. Paints a
-     * placeholder over each V22-active cell. The actual modern
-     * asset art is a follow-up; this overlay is the data-flow
-     * end-to-end test of the V2.2 dispatch.
+    /* V2.2 render path: prefer cached in-place modern-art bitmaps when the
+     * optional V22 cache is available. If no cache/bitmap is available, keep
+     * the previous placeholder overlay as the visible data-flow fallback.
      *
-     * m11_v22_render_overlay returns the count of cells painted
-     * (0 when V22 is inactive). The return value is currently
-     * ignored; a future render-loop metric could surface it. */
-    (void)m11_v22_render_overlay(framebuffer, framebufferWidth, framebufferHeight);
+     * Both paths are presentation-only and read the same V22 shape cache
+     * populated above from the V1 source viewport square sample. */
+    if (m11_v22_inplace_render_pass(framebuffer,
+                                    framebufferWidth,
+                                    framebufferHeight) == 0) {
+        (void)m11_v22_render_overlay(framebuffer,
+                                     framebufferWidth,
+                                     framebufferHeight);
+    }
 
     m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,
                                 M11_VIEWPORT_X, M11_VIEWPORT_Y,
