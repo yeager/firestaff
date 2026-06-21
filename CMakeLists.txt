@@ -6000,6 +6000,21 @@ if(BUILD_TESTING)
         NAME dm1_v1_ceiling_pit_and_explosion_bitmap_viewport_pc34_compat
         COMMAND test_dm1_v1_ceiling_pit_and_explosion_bitmap_viewport_pc34_compat
     )
+    add_executable(test_dm1_v1_ceiling_pit_f0108_f0111_dispatch_source_lock_pc34_compat
+        tests/test_dm1_v1_ceiling_pit_f0108_f0111_dispatch_source_lock_pc34_compat.c
+        src/dm1/dm1_v1_ceiling_pit_viewport_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d1c_stairs_pit_dispatch_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_ceiling_pit_f0108_f0111_dispatch_source_lock_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(test_dm1_v1_ceiling_pit_f0108_f0111_dispatch_source_lock_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_ceiling_pit_f0108_f0111_dispatch_source_lock_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_ceiling_pit_f0108_f0111_dispatch_source_lock_pc34_compat
+        COMMAND test_dm1_v1_ceiling_pit_f0108_f0111_dispatch_source_lock_pc34_compat
+    )
     add_test(
         NAME pass563_dm1_v1_projectile_travel_blockers_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass563_dm1_v1_projectile_travel_blockers_source_lock.py
