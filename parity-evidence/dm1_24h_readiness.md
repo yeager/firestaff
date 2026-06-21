@@ -16,7 +16,7 @@ place while those gaps are being closed.
 | `pass1056_pairing` | `PASS` |  |
 | `pass1057_dungeonb` | `PASS` |  |
 | `pass1058_keypad_route_atlas` | `PASS` |  |
-| `ctest` | `PASS` | --skip-ctest |
+| `ctest` | `PASS` | regex `m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe|m11_capture_route_state|dm1_v1_wall_collision_runtime_capture|m11_turn_viewport_orientation|pass610_dm1_v1_firestaff_viewport_crop_capture_gate|pass622_dm1_v1_viewport_wall_capture_closure_gap|pass623_dm1_v1_input_capture_readiness_bridge|dm1_v2_side_by_side_presentation_seed_probe|dm1_v2_side_by_side_seed_pc34|dm1_v2_v1_v2_side_by_side_seed_pc34` |
 
 ## Non-claims
 
