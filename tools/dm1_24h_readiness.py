@@ -10,8 +10,10 @@ the narrow, already source-locked checks that matter most for the current
 - pass1056 keeps the pass1052/pass1054 viewport/wall pairing reproducible.
 - pass1057 keeps the Amiga 2.2 English DUNGEONB.DAT sidecar locked.
 - pass1058 keeps the original keypad/route-atlas blocker evidence locked.
-- Optional build-dir probes keep the DM1 playable route, pass1055 collision
-  semantic pair, pass1056/pass1057 CTests, and Phase A probe green.
+- Optional build-dir probes keep the DM1 playable route, Firestaff-side
+  route/collision/orientation captures, pass610/pass622/pass623 readiness,
+  V1/V2 presentation-disabled seed gates, pass1055 collision semantic pair,
+  pass1056/pass1057 CTests, and Phase A probe green.
 
 The script writes a manifest/report so the roll-up can be cited without
 claiming that the remaining original-capture gaps are solved.
@@ -137,7 +139,16 @@ def ctest_check(build_dir: Path) -> dict[str, Any]:
     regex = (
         "m11_phase_a|"
         "firestaff_dm1_v1_playable_route_probe|"
-        "firestaff_dm1_v1_pass1055_closed_door_pair_probe"
+        "firestaff_dm1_v1_pass1055_closed_door_pair_probe|"
+        "m11_capture_route_state|"
+        "dm1_v1_wall_collision_runtime_capture|"
+        "m11_turn_viewport_orientation|"
+        "pass610_dm1_v1_firestaff_viewport_crop_capture_gate|"
+        "pass622_dm1_v1_viewport_wall_capture_closure_gap|"
+        "pass623_dm1_v1_input_capture_readiness_bridge|"
+        "dm1_v2_side_by_side_presentation_seed_probe|"
+        "dm1_v2_side_by_side_seed_pc34|"
+        "dm1_v2_v1_v2_side_by_side_seed_pc34"
     )
     env = os.environ.copy()
     env.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -193,6 +204,7 @@ def write_outputs(result: dict[str, Any]) -> None:
         "- This is not a same-state original-to-Firestaff viewport promotion.",
         "- This is not a creature-chain original screenshot.",
         "- This is not a four-champion original HUD capture.",
+        "- This is not an enhanced-presentation runtime screenshot script.",
         "- This is not a release gate; it is a local DM1 finish-lane roll-up.",
         "",
         f"Manifest: `{MANIFEST.relative_to(ROOT)}`",

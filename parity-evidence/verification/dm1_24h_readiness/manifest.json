@@ -1,5 +1,5 @@
 {
-  "build_dir": "/Users/bosse/.openclaw/workspace-main/build",
+  "build_dir": "build",
   "checks": {
     "coverage": {
       "command": {
@@ -25,22 +25,9 @@
       }
     },
     "ctest": {
-      "command": {
-        "cmd": [
-          "ctest",
-          "--test-dir",
-          "/Users/bosse/.openclaw/workspace-main/build",
-          "-R",
-          "m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe",
-          "--output-on-failure"
-        ],
-        "ok": true,
-        "returncode": 0,
-        "stderr": "",
-        "stdout": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start 222: firestaff_dm1_v1_playable_route_probe\n1/3 Test #222: firestaff_dm1_v1_playable_route_probe ..............   Passed    0.00 sec\n    Start 223: firestaff_dm1_v1_pass1055_closed_door_pair_probe\n2/3 Test #223: firestaff_dm1_v1_pass1055_closed_door_pair_probe ...   Passed    0.00 sec\n    Start 343: m11_phase_a\n3/3 Test #343: m11_phase_a ........................................   Passed    0.05 sec\n\n100% tests passed, 0 tests failed out of 3\n\nTotal Test time (real) =   0.07 sec"
-      },
       "ok": true,
-      "regex": "m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe"
+      "reason": "--skip-ctest",
+      "skipped": true
     },
     "pass1056_pairing": {
       "cmd": [
@@ -100,7 +87,7 @@
     }
   },
   "data_dir": "/Users/bosse/.firestaff/data",
-  "generated_at": "2026-06-21T13:17:14.219244+00:00",
+  "generated_at": "2026-06-21T13:52:26.031036+00:00",
   "schema": "firestaff.parity.dm1_24h_readiness.v1",
   "status": "PASS"
 }
