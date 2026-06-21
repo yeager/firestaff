@@ -2195,6 +2195,76 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_boot_profile_smoke
     )
 
+    add_executable(test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
+        tests/test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat.c
+        src/csb/csb_v1_command_chain_move_attack_cast_runtime_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
+        COMMAND test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
+    )
+
+    add_executable(test_csb_v1_input_command_queue_binding
+        tests/test_csb_v1_input_command_queue_binding.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_input_command_queue_binding PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_input_command_queue_binding PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_input_command_queue_binding PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_input_command_queue_binding
+        COMMAND test_csb_v1_input_command_queue_binding
+    )
+
+    add_executable(test_csb_v1_movement_command_step_runtime_pc34_compat
+        tests/test_csb_v1_movement_command_step_runtime_pc34_compat.c
+        src/csb/csb_v1_movement_command_step_runtime_pc34_compat.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_movement_command_step_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_movement_command_step_runtime_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_movement_command_step_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_movement_command_step_runtime_pc34_compat
+        COMMAND test_csb_v1_movement_command_step_runtime_pc34_compat
+    )
+
+    add_executable(test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat
+        tests/test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat.c
+        src/csb/csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat.c
+        src/csb/csb_v1_movement_command_step_runtime_pc34_compat.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    target_link_libraries(test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat
+        COMMAND test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat
+    )
+
     add_executable(test_dm2_v1_boot_profile_smoke
         tests/test_dm2_v1_boot_profile_smoke.c
         src/dm2/dm2_v1_boot.c
