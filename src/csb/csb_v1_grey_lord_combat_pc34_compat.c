@@ -20,6 +20,7 @@ void csb_v1_grey_lord_aware_set(int enabled) {
 int csb_v1_is_lord_chaos_or_grey_lord_here(int cellMask,
                                            int hasLordChaosCell,
                                            int hasGreyLordCell) {
+    (void)cellMask;
     /* Original ReDMCSB IsLordChaosHere(): */
     /*   1. cellMask has Lord-Chaos cell bit, OR
      *   2. (in CSB) cellMask has Grey-Lord cell bit AND
