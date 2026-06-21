@@ -1,0 +1,355 @@
+{
+  "blocked_on": [
+    "original four-champion HUD capture",
+    "original single-status-panel capture"
+  ],
+  "claim_parity": false,
+  "fingerprints_ok": true,
+  "firestaff_ppms": [
+    {
+      "dims": [
+        320,
+        200
+      ],
+      "exists": true,
+      "expected_dims": [
+        320,
+        200
+      ],
+      "expected_sha256": "d995c4991e5b973ea98c7eedd2d13bdca0e624061983da99131ea5110ddd17a9",
+      "name": "party_hud_four_champions_vga.ppm",
+      "ok": true,
+      "path": "verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm",
+      "sha256": "d995c4991e5b973ea98c7eedd2d13bdca0e624061983da99131ea5110ddd17a9"
+    },
+    {
+      "dims": [
+        320,
+        200
+      ],
+      "exists": true,
+      "expected_dims": [
+        320,
+        200
+      ],
+      "expected_sha256": "860bc022785b2567eedfa552a99e103d02c573b432446c679a273d96d0a18363",
+      "name": "party_hud_statusbox_gfx_vga.ppm",
+      "ok": true,
+      "path": "verification-m11/lane3-inventory-followup-20260428-0914/party_hud_statusbox_gfx_vga.ppm",
+      "sha256": "860bc022785b2567eedfa552a99e103d02c573b432446c679a273d96d0a18363"
+    }
+  ],
+  "firestaff_ppms_ok": true,
+  "generated_at": "2026-06-21T14:19:14.071133+00:00",
+  "original_crops": [
+    {
+      "dims": [
+        155,
+        68
+      ],
+      "exists": true,
+      "expected_dims": [
+        155,
+        68
+      ],
+      "expected_sha256": "93b8ab0a0ff860ea59da92f3f5866247327dd93cfb128c75ba776cacb63d9eee",
+      "name": "start_before_portrait_click_candidate_buttons.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/start_before_portrait_click_candidate_buttons.png",
+      "sha256": "93b8ab0a0ff860ea59da92f3f5866247327dd93cfb128c75ba776cacb63d9eee"
+    },
+    {
+      "dims": [
+        320,
+        64
+      ],
+      "exists": true,
+      "expected_dims": [
+        320,
+        64
+      ],
+      "expected_sha256": "91654a11f512c40242a61984f3830c1180e3629639b6a887f92819cca9255bb5",
+      "name": "start_before_portrait_click_lower_panel.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/start_before_portrait_click_lower_panel.png",
+      "sha256": "91654a11f512c40242a61984f3830c1180e3629639b6a887f92819cca9255bb5"
+    },
+    {
+      "dims": [
+        96,
+        136
+      ],
+      "exists": true,
+      "expected_dims": [
+        96,
+        136
+      ],
+      "expected_sha256": "b770350704f1437e9cf193b3a96858dfbb4904abd4defc49907926a1d065ec64",
+      "name": "start_before_portrait_click_right_panel.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/start_before_portrait_click_right_panel.png",
+      "sha256": "b770350704f1437e9cf193b3a96858dfbb4904abd4defc49907926a1d065ec64"
+    },
+    {
+      "dims": [
+        224,
+        136
+      ],
+      "exists": true,
+      "expected_dims": [
+        224,
+        136
+      ],
+      "expected_sha256": "be3d78ea54a814a30894d58c24821a9de52454013093f541af163411a33134cc",
+      "name": "start_before_portrait_click_viewport.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/start_before_portrait_click_viewport.png",
+      "sha256": "be3d78ea54a814a30894d58c24821a9de52454013093f541af163411a33134cc"
+    },
+    {
+      "dims": [
+        155,
+        68
+      ],
+      "exists": true,
+      "expected_dims": [
+        155,
+        68
+      ],
+      "expected_sha256": "f7a509ef3c959d6f9ea46d5f51619c2f80c8e696aab7f196711eea1e58c8d3e4",
+      "name": "candidate_select_after_click_111_82_candidate_buttons.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/candidate_select_after_click_111_82_candidate_buttons.png",
+      "sha256": "f7a509ef3c959d6f9ea46d5f51619c2f80c8e696aab7f196711eea1e58c8d3e4"
+    },
+    {
+      "dims": [
+        320,
+        64
+      ],
+      "exists": true,
+      "expected_dims": [
+        320,
+        64
+      ],
+      "expected_sha256": "be87cafb3bd870e4f5d417cc288ac28e700fbe567863530f4d4120066ea25ba0",
+      "name": "candidate_select_after_click_111_82_lower_panel.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/candidate_select_after_click_111_82_lower_panel.png",
+      "sha256": "be87cafb3bd870e4f5d417cc288ac28e700fbe567863530f4d4120066ea25ba0"
+    },
+    {
+      "dims": [
+        96,
+        136
+      ],
+      "exists": true,
+      "expected_dims": [
+        96,
+        136
+      ],
+      "expected_sha256": "fab39b11602704accbdfddd5d284f60935562a106563fd05de359fd1a5e8d6c3",
+      "name": "candidate_select_after_click_111_82_right_panel.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/candidate_select_after_click_111_82_right_panel.png",
+      "sha256": "fab39b11602704accbdfddd5d284f60935562a106563fd05de359fd1a5e8d6c3"
+    },
+    {
+      "dims": [
+        224,
+        136
+      ],
+      "exists": true,
+      "expected_dims": [
+        224,
+        136
+      ],
+      "expected_sha256": "b9160a2d3335bbc5bfcfacfd2ad007afadbc8184b289c17c155567785336d691",
+      "name": "candidate_select_after_click_111_82_viewport.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/candidate_select_after_click_111_82_viewport.png",
+      "sha256": "b9160a2d3335bbc5bfcfacfd2ad007afadbc8184b289c17c155567785336d691"
+    },
+    {
+      "dims": [
+        155,
+        68
+      ],
+      "exists": true,
+      "expected_dims": [
+        155,
+        68
+      ],
+      "expected_sha256": "ea0c7aa7abf9dfc77c33cff4bc7f1ddd0de30b80b1e610506976bdc2700cccce",
+      "name": "resurrect_terminal_hud_after_click_130_115_candidate_buttons.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/resurrect_terminal_hud_after_click_130_115_candidate_buttons.png",
+      "sha256": "ea0c7aa7abf9dfc77c33cff4bc7f1ddd0de30b80b1e610506976bdc2700cccce"
+    },
+    {
+      "dims": [
+        320,
+        64
+      ],
+      "exists": true,
+      "expected_dims": [
+        320,
+        64
+      ],
+      "expected_sha256": "f0229dbb1c36b93830817715fb313cc5f2e8e6b7c921598b4cecf22dffb47b58",
+      "name": "resurrect_terminal_hud_after_click_130_115_lower_panel.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/resurrect_terminal_hud_after_click_130_115_lower_panel.png",
+      "sha256": "f0229dbb1c36b93830817715fb313cc5f2e8e6b7c921598b4cecf22dffb47b58"
+    },
+    {
+      "dims": [
+        96,
+        136
+      ],
+      "exists": true,
+      "expected_dims": [
+        96,
+        136
+      ],
+      "expected_sha256": "aed027a74a4762747be638909ab5aa99bf7f251281e9f56b608649677e64ee79",
+      "name": "resurrect_terminal_hud_after_click_130_115_right_panel.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/resurrect_terminal_hud_after_click_130_115_right_panel.png",
+      "sha256": "aed027a74a4762747be638909ab5aa99bf7f251281e9f56b608649677e64ee79"
+    },
+    {
+      "dims": [
+        224,
+        136
+      ],
+      "exists": true,
+      "expected_dims": [
+        224,
+        136
+      ],
+      "expected_sha256": "b9160a2d3335bbc5bfcfacfd2ad007afadbc8184b289c17c155567785336d691",
+      "name": "resurrect_terminal_hud_after_click_130_115_viewport.png",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/crops/resurrect_terminal_hud_after_click_130_115_viewport.png",
+      "sha256": "b9160a2d3335bbc5bfcfacfd2ad007afadbc8184b289c17c155567785336d691"
+    }
+  ],
+  "original_crops_ok": true,
+  "original_frames": [
+    {
+      "dims": [
+        320,
+        200
+      ],
+      "exists": true,
+      "expected_dims": [
+        320,
+        200
+      ],
+      "expected_sha256": "50bead319e59bd42c9b5af6e4a39275e6cfc7a02fee96e6f6b766e575858fabc",
+      "name": "start_before_portrait_click",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/start_before_portrait_click.png",
+      "sha256": "50bead319e59bd42c9b5af6e4a39275e6cfc7a02fee96e6f6b766e575858fabc"
+    },
+    {
+      "dims": [
+        320,
+        200
+      ],
+      "exists": true,
+      "expected_dims": [
+        320,
+        200
+      ],
+      "expected_sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+      "name": "candidate_select_after_click_111_82",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/candidate_select_after_click_111_82.png",
+      "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e"
+    },
+    {
+      "dims": [
+        320,
+        200
+      ],
+      "exists": true,
+      "expected_dims": [
+        320,
+        200
+      ],
+      "expected_sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+      "name": "resurrect_terminal_hud_after_click_130_115",
+      "ok": true,
+      "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/resurrect_terminal_hud_after_click_130_115.png",
+      "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f"
+    }
+  ],
+  "original_frames_ok": true,
+  "parity_claim": "none",
+  "pass1053_manifest": {
+    "exists": true,
+    "expected_status": "PASS1053_ORIGINAL_CHAMPION_CANDIDATE_PANEL_EVIDENCE_TRACKED",
+    "frames": [
+      {
+        "expected_dims": [
+          320,
+          200
+        ],
+        "expected_file": "start_before_portrait_click.png",
+        "expected_sha256": "50bead319e59bd42c9b5af6e4a39275e6cfc7a02fee96e6f6b766e575858fabc",
+        "label": "start_before_portrait_click",
+        "manifest_dims": [
+          320,
+          200
+        ],
+        "manifest_file": "start_before_portrait_click.png",
+        "manifest_sha256": "50bead319e59bd42c9b5af6e4a39275e6cfc7a02fee96e6f6b766e575858fabc",
+        "ok": true
+      },
+      {
+        "expected_dims": [
+          320,
+          200
+        ],
+        "expected_file": "candidate_select_after_click_111_82.png",
+        "expected_sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+        "label": "candidate_select_after_click_111_82",
+        "manifest_dims": [
+          320,
+          200
+        ],
+        "manifest_file": "candidate_select_after_click_111_82.png",
+        "manifest_sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+        "ok": true
+      },
+      {
+        "expected_dims": [
+          320,
+          200
+        ],
+        "expected_file": "resurrect_terminal_hud_after_click_130_115.png",
+        "expected_sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+        "label": "resurrect_terminal_hud_after_click_130_115",
+        "manifest_dims": [
+          320,
+          200
+        ],
+        "manifest_file": "resurrect_terminal_hud_after_click_130_115.png",
+        "manifest_sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+        "ok": true
+      }
+    ],
+    "non_claim_boundary_ok": true,
+    "ok": true,
+    "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/manifest.json",
+    "report_exists": true,
+    "route_contains_hud_status_after": true,
+    "status": "PASS1053_ORIGINAL_CHAMPION_CANDIDATE_PANEL_EVIDENCE_TRACKED",
+    "status_ok": true
+  },
+  "schema": "firestaff.parity.pass1071_dm1_v1_champion_panel_pairing_readiness.v1",
+  "scope": "Readiness fingerprint for existing pass1053 original candidate-panel artifacts and existing Firestaff V1 champion HUD PPMs only.",
+  "status": "BLOCKED_ORIGINAL_FOUR_CHAMPION_HUD_AND_SINGLE_STATUS_PANEL_CAPTURE_MISSING"
+}
