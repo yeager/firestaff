@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 D1C center-field CTest: registered existing data-free `test_dm1_v1_viewport_d1c_center_field_pc34_compat` as CTest target `dm1_v1_viewport_d1c_center_field_pc34_compat`. The source-locked fixture pins ReDMCSB `DUNVIEW.C` F0124/F0115/F0098 and `DUNGEON.C` F0151/F0152/F0153 center-field routing for open fields, items, creatures, projectiles, explosions, doors, walls, pits, and stairs. This is synthetic viewport contract coverage only; it does not load game data, run DOSBox, capture pixels, write manifests, or claim real-asset/original parity.
+
 - ✅ 2026-06-21 DM1 V1 D0C F0108 floor-ornament CTest: registered existing data-free `test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat` as CTest target `dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat`. The source-locked fixture pins ReDMCSB `DUNVIEW.C` F0108/F0107/F0098/F0115 ordering, D0C floor-ornament ordinal handling, C10 transparency, and related floor/thing pass ownership. This is synthetic viewport contract coverage only; it does not load game data, run DOSBox, capture pixels, write manifests, or claim real-asset/original parity.
 
 - ✅ 2026-06-21 DM1 V1 D3C center-field source-lock CTest: registered existing data-free `test_dm1_v1_viewport_d3c_center_field_pc34_compat` as CTest target `dm1_v1_viewport_d3c_center_field_source_lock`. The fixture pins the ReDMCSB `DUNVIEW.C` F0128/F0118/F0113 and `DEFS.H` D3C view-square, zone, and C10 transparency contract. This is synthetic source-contract coverage only; it does not load game data, run DOSBox, capture pixels, write manifests, or claim real-asset/original parity.
