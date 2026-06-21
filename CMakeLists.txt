@@ -8587,8 +8587,9 @@ endif()
 
 
 # ── Known failing tests (WILL_FAIL = expected failure) ──
-set_tests_properties(pass372_dm1_v1_movement_runtime_route PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(pass377_dm1_v1_paired_diff_artifact_blocker PROPERTIES WILL_FAIL TRUE)
+# pass372/pass377: WILL_FAIL removed 2026-06-21 after the Firestaff route side
+# became source-locked; pass377 remains an expected BLOCKED audit only on the
+# semantic-clean original route, so the verifier exits 0 for that narrowed state.
 set_tests_properties(pass462_dm1_v1_title_end_original_capture_parity PROPERTIES WILL_FAIL TRUE)
 
 set_tests_properties(pass558_dm1_v1_pass514_io_blocker_classifier PROPERTIES WILL_FAIL TRUE)
