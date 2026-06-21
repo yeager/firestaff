@@ -132,7 +132,7 @@ Source-locked against SKULL.ASM T520/T560/T600, ReDMCSB GAMELOOP.C:164-219, and 
 
 - ✅ Runtime handoff/playability proof: hash-verified Track 02 availability is wired through validator/startup/menu state, JP canonical + JP extras + US extras now launch to the TQR level-load milestone through `tier1_strict_boot_probe`, and the focused reuse/bank gates (`theron_v1_launcher_scan_reuse`, `theron_v1_track02_bank`) are green. Remaining Theron V1 work is no longer positive launch proof; it is cross-slot import/export against real saves and broader gameplay-route evidence.
 - 🔧 Phase 5 - Mechanics parity hardening: 50-assertion mechanics probe covers movement, click routes, doors, pits, teleporters, altar, combat, drops, and sounds; remaining work is real-asset gameplay traces and broader cross-route runtime evidence.
-- 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, and shop price-table regressions are green; remaining work is cross-slot import/export against real Track 02 saves.
+- 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, shop price-table regressions, and data-free cross-slot export/import are green. Remaining work is a real Track 02 save artifact import/export pass when such a save is available.
 - ✅ Phase 8 - Verification suite: launch, dungeon progression, mechanics, rendering, save/load, direct-launch, M11-handoff, launcher scan-reuse, Track 02 bank, and Tier 1 strict real-asset launch gates are green for Theron JP canonical, JP extras, and US extras. Remaining verification work is cross-slot save evidence and broader real-route gameplay traces.
 
 ### Theron V2.0 / V2.1 / V2.2

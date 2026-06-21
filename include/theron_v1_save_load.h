@@ -126,6 +126,20 @@ int theron_v1_save_load_from_slot(const char *save_root,
 /* Delete a save slot. Returns 0 on success, -1 on error. */
 int theron_v1_save_delete_slot(const char *save_root, int slot_index);
 
+/* Export an existing valid save slot to an external file.
+ * Returns 0 on success, -1 if the slot/path is invalid or corrupt. */
+int theron_v1_save_export_slot(const char *save_root,
+                               int slot_index,
+                               const char *export_path);
+
+/* Import a valid external save image into a slot.
+ * Returns 0 on success, -1 if the input/path is invalid or corrupt.
+ * out_slot_info may be NULL. */
+int theron_v1_save_import_slot(const char *save_root,
+                               int slot_index,
+                               const char *import_path,
+                               Theron_SaveSlot *out_slot_info);
+
 /* Get the default saves root path for Theron. */
 void theron_v1_save_default_root(char *buf, size_t buf_size);
 

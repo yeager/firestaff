@@ -305,11 +305,11 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | V1 parser | FIXED |
 | Rendering pipeline | FIXED |
 | Mechanics | FIXED |
-| Save/load (.SRM) | PARTIAL |
+| Save/load (.SRM) | PARTIAL — data-free `.tqsv` slot round-trip, rejection, verification, and cross-slot export/import are CTest-gated; no real `.srm`/Track 02 save artifact is present locally yet. |
 | Track02 bank routing | FIXED |
 | Dungeon progression (7 dungeons) | FIXED |
 | **JP/US Track 02 BIN/ISO real-asset launch** | FIXED — `tier1_strict_boot_probe` covers Theron JP canonical, Theron JP extras, and Theron US extras booting to the TQR level-load milestone; `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` also PASS. |
-| Cross-slot import/export against real Track 02 saves | OPEN-BOUNDED |
+| Cross-slot import/export against real Track 02 saves | PARTIAL — `theron_v1_save_load` now covers export/import mechanics across save roots using validated Theron save images; remaining work is importing/exporting a real Track 02 save artifact when one is available. |
 | Cross-route mechanics runtime evidence | OPEN-BOUNDED |
 
 ### F2. V2
