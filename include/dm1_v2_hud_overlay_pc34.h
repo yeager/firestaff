@@ -19,9 +19,41 @@ typedef struct {
     int max_level;
 } M11_V2_HudDepth;
 
+#define M11_V2_HUD_CHAMPION_COUNT_PC34 4
+#define M11_V2_HUD_ACTION_ICON_COUNT_PC34 4
+#define M11_V2_HUD_RUNE_COUNT_PC34 6
+
+typedef struct {
+    int hp_pct;
+    int stamina_pct;
+    int mana_pct;
+    bool active_leader;
+    bool spell_ready;
+    bool visible;
+} M11_V2_HudChampionOverlayPc34;
+
+typedef struct {
+    bool visible;
+    int active_champion;
+    int highlighted_icon;
+    uint8_t flash_ticks;
+} M11_V2_HudActionOverlayPc34;
+
+typedef struct {
+    bool visible;
+    uint8_t selected_rune_mask;
+    int active_rune;
+    bool cast_enabled;
+    bool recant_enabled;
+    bool caster_ready;
+} M11_V2_HudRuneOverlayPc34;
+
 typedef struct {
     M11_V2_HudCompass compass;
     M11_V2_HudDepth depth;
+    M11_V2_HudChampionOverlayPc34 champions[M11_V2_HUD_CHAMPION_COUNT_PC34];
+    M11_V2_HudActionOverlayPc34 action;
+    M11_V2_HudRuneOverlayPc34 runes;
     bool visible;
     uint8_t opacity;
     bool stats_bar_visible;
@@ -37,6 +69,22 @@ void v2_hud_set_level(int cur, int max);
 void v2_hud_render(uint8_t* fb, int w, int h);
 void v2_hud_toggle(void);
 void v2_hud_set_opacity(uint8_t val);
+void v2_hud_clear_presentation_state(void);
+void v2_hud_set_champion_overlay_state(int champion_idx,
+                                       int hp_pct,
+                                       int stamina_pct,
+                                       int mana_pct,
+                                       bool active_leader,
+                                       bool spell_ready);
+void v2_hud_set_action_overlay_state(int active_champion,
+                                     int highlighted_icon,
+                                     uint8_t flash_ticks);
+void v2_hud_set_rune_overlay_state(uint8_t selected_rune_mask,
+                                   int active_rune,
+                                   bool cast_enabled,
+                                   bool recant_enabled,
+                                   bool caster_ready);
+void v2_hud_tick_presentation_state(void);
 
 /* V2.2 health-pulse alpha — V1 tick-synchronous ping-pong, 2 Hz.
  * Source: v22_hud_pulse_v1_sync marker; ReDMCSB TIMELINE.C F0260. */

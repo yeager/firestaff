@@ -7,9 +7,11 @@
 /* DM1 V2 HUD overlay completion note:
  * ReDMCSB keeps champion status-box refresh in TIMELINE.C:F0260 and
  * portrait/status drawing in PANEL.C:F0354.  This V2 overlay is deliberately
- * presentation-only: it draws an optional compass/depth/stats layer into the
- * supplied framebuffer and does not mutate dungeon, champion, or command
- * runtime state.
+ * presentation-only: it draws optional compass/depth/stats and bounded
+ * champion/action/rune presentation state into the supplied framebuffer and
+ * does not mutate dungeon, champion, or command runtime state.  This is not a
+ * finished V2 art, original screenshot parity, real-asset parity, or complete
+ * V2 UI parity claim.
  */
 
 static M11_V2_HudOverlay g_v2_hud_state;
@@ -82,6 +84,101 @@ static void v2_hud_draw_text(uint8_t* fb, int w, int h, int x, int y, const char
     }
 }
 
+static int v2_hud_clamp_pct(int pct) {
+    if (pct < 0) return 0;
+    if (pct > 100) return 100;
+    return pct;
+}
+
+static int v2_hud_clamp_index_or_none(int idx, int count) {
+    if (idx < 0 || idx >= count) return -1;
+    return idx;
+}
+
+static void v2_hud_draw_meter(uint8_t* fb,
+                              int w,
+                              int h,
+                              int x,
+                              int y,
+                              int width,
+                              int height,
+                              int pct,
+                              uint8_t low_val,
+                              uint8_t high_val) {
+    if (width <= 0 || height <= 0) return;
+    pct = v2_hud_clamp_pct(pct);
+    int fill = (width * pct + 99) / 100;
+    v2_hud_draw_rect(fb, w, h, x, y, width, height, low_val);
+    v2_hud_draw_rect(fb, w, h, x, y, fill, height, high_val);
+}
+
+static void v2_hud_render_presentation_state(uint8_t* fb, int w, int h,
+                                             uint8_t base_val,
+                                             uint8_t high_val) {
+    /* ReDMCSB: PANEL.C:F0354 and CHAMDRAW.C champion status boxes live in
+     * the top 0..28 pixel strip.  This V2 state is presentation-only and
+     * mirrors the already source-locked COMMAND.C:375-395 champion route
+     * state without calling any V1 transaction owner. */
+    for (int i = 0; i < M11_V2_HUD_CHAMPION_COUNT_PC34; ++i) {
+        const M11_V2_HudChampionOverlayPc34* c = &g_v2_hud_state.champions[i];
+        if (!c->visible) continue;
+        int sx = 2 + (i * 69);
+        int sy = 1;
+        uint8_t leader_val = c->active_leader ? 255u : high_val;
+        v2_hud_draw_rect(fb, w, h, sx, sy, 66, 1, leader_val);
+        v2_hud_draw_rect(fb, w, h, sx, sy + 27, 66, 1, leader_val);
+        v2_hud_draw_rect(fb, w, h, sx, sy, 1, 28, leader_val);
+        v2_hud_draw_rect(fb, w, h, sx + 65, sy, 1, 28, leader_val);
+        v2_hud_draw_meter(fb, w, h, sx + 5, sy + 5, 42, 3,
+                          c->hp_pct, base_val, high_val);
+        v2_hud_draw_meter(fb, w, h, sx + 5, sy + 10, 42, 3,
+                          c->stamina_pct, base_val, (uint8_t)(high_val * 3u / 4u));
+        v2_hud_draw_meter(fb, w, h, sx + 5, sy + 15, 42, 3,
+                          c->mana_pct, base_val, (uint8_t)(high_val * 2u / 3u));
+        if (c->spell_ready) {
+            v2_hud_draw_rect(fb, w, h, sx + 53, sy + 6, 8, 8, 255u);
+            v2_hud_plot_pixel(fb, w, h, sx + 56, sy + 9, base_val);
+            v2_hud_plot_pixel(fb, w, h, sx + 57, sy + 9, base_val);
+        }
+    }
+
+    /* ReDMCSB: COMMAND.C:461-482 owns action names/icons and spell/rune
+     * subroutes (C101..C109).  The overlay draws machine-checkable cues only;
+     * cast/recant/caster state remains data-free presentation state. */
+    if (g_v2_hud_state.runes.visible) {
+        const M11_V2_HudRuneOverlayPc34* r = &g_v2_hud_state.runes;
+        v2_hud_draw_rect(fb, w, h, 233, 42, 87, 31, base_val);
+        if (r->caster_ready) {
+            v2_hud_draw_rect(fb, w, h, 234, 43, 10, 7, 255u);
+        }
+        for (int i = 0; i < M11_V2_HUD_RUNE_COUNT_PC34; ++i) {
+            int rx = 236 + (i * 12);
+            int ry = 52;
+            uint8_t rune_val = (r->selected_rune_mask & (uint8_t)(1u << i)) ? high_val : base_val;
+            if (i == r->active_rune) rune_val = 255u;
+            v2_hud_draw_rect(fb, w, h, rx, ry, 10, 8, rune_val);
+            v2_hud_plot_pixel(fb, w, h, rx + 4, ry + 3, base_val);
+        }
+        v2_hud_draw_rect(fb, w, h, 236, 64, 50, 8, r->cast_enabled ? 255u : base_val);
+        v2_hud_draw_rect(fb, w, h, 300, 64, 18, 8, r->recant_enabled ? high_val : base_val);
+    }
+
+    if (g_v2_hud_state.action.visible) {
+        const M11_V2_HudActionOverlayPc34* a = &g_v2_hud_state.action;
+        v2_hud_draw_rect(fb, w, h, 233, 77, 87, 45, base_val);
+        for (int i = 0; i < M11_V2_HUD_ACTION_ICON_COUNT_PC34; ++i) {
+            int ax = 236 + (i * 20);
+            int ay = 86;
+            uint8_t icon_val = (i == a->highlighted_icon) ? high_val : (uint8_t)(base_val / 2u);
+            if (i == a->active_champion) icon_val = 255u;
+            v2_hud_draw_rect(fb, w, h, ax, ay, 16, 12, icon_val);
+        }
+        if (a->flash_ticks > 0) {
+            v2_hud_draw_rect(fb, w, h, 252, 78, 36, 4, 255u);
+        }
+    }
+}
+
 void v2_hud_init(void) {
     memset(&g_v2_hud_state, 0, sizeof(M11_V2_HudOverlay));
     g_v2_hud_state.compass.direction = 0;
@@ -92,6 +189,7 @@ void v2_hud_init(void) {
     g_v2_hud_state.visible = true;
     g_v2_hud_state.opacity = 255;
     g_v2_hud_state.stats_bar_visible = true;
+    v2_hud_clear_presentation_state();
     /* v2_hud_init() resets HUD state; g_health_pulse is a separate static
      * that starts at zero (active=0).  Callers explicitly invoke
      * v22_hud_start_health_pulse() before the first v22_hud_health_pulse_alpha(). */
@@ -154,6 +252,8 @@ void v2_hud_render(uint8_t* fb, int w, int h) {
         int fill = (int)((float)bar_w * 0.75f);
         v2_hud_draw_rect(fb, w, h, bar_x, bar_y, fill, bar_h, high_val);
     }
+
+    v2_hud_render_presentation_state(fb, w, h, base_val, high_val);
 }
 
 void v2_hud_toggle(void) {
@@ -162,6 +262,63 @@ void v2_hud_toggle(void) {
 
 void v2_hud_set_opacity(uint8_t val) {
     g_v2_hud_state.opacity = val;
+}
+
+void v2_hud_clear_presentation_state(void) {
+    memset(g_v2_hud_state.champions, 0, sizeof(g_v2_hud_state.champions));
+    memset(&g_v2_hud_state.action, 0, sizeof(g_v2_hud_state.action));
+    memset(&g_v2_hud_state.runes, 0, sizeof(g_v2_hud_state.runes));
+    g_v2_hud_state.action.active_champion = -1;
+    g_v2_hud_state.action.highlighted_icon = -1;
+    g_v2_hud_state.runes.active_rune = -1;
+}
+
+void v2_hud_set_champion_overlay_state(int champion_idx,
+                                       int hp_pct,
+                                       int stamina_pct,
+                                       int mana_pct,
+                                       bool active_leader,
+                                       bool spell_ready) {
+    if (champion_idx < 0 || champion_idx >= M11_V2_HUD_CHAMPION_COUNT_PC34) return;
+    M11_V2_HudChampionOverlayPc34* c = &g_v2_hud_state.champions[champion_idx];
+    c->hp_pct = v2_hud_clamp_pct(hp_pct);
+    c->stamina_pct = v2_hud_clamp_pct(stamina_pct);
+    c->mana_pct = v2_hud_clamp_pct(mana_pct);
+    c->active_leader = active_leader;
+    c->spell_ready = spell_ready;
+    c->visible = true;
+}
+
+void v2_hud_set_action_overlay_state(int active_champion,
+                                     int highlighted_icon,
+                                     uint8_t flash_ticks) {
+    g_v2_hud_state.action.visible = true;
+    g_v2_hud_state.action.active_champion =
+        v2_hud_clamp_index_or_none(active_champion, M11_V2_HUD_ACTION_ICON_COUNT_PC34);
+    g_v2_hud_state.action.highlighted_icon =
+        v2_hud_clamp_index_or_none(highlighted_icon, M11_V2_HUD_ACTION_ICON_COUNT_PC34);
+    g_v2_hud_state.action.flash_ticks = flash_ticks;
+}
+
+void v2_hud_set_rune_overlay_state(uint8_t selected_rune_mask,
+                                   int active_rune,
+                                   bool cast_enabled,
+                                   bool recant_enabled,
+                                   bool caster_ready) {
+    g_v2_hud_state.runes.visible = true;
+    g_v2_hud_state.runes.selected_rune_mask =
+        (uint8_t)(selected_rune_mask & ((1u << M11_V2_HUD_RUNE_COUNT_PC34) - 1u));
+    g_v2_hud_state.runes.active_rune =
+        v2_hud_clamp_index_or_none(active_rune, M11_V2_HUD_RUNE_COUNT_PC34);
+    g_v2_hud_state.runes.cast_enabled = cast_enabled;
+    g_v2_hud_state.runes.recant_enabled = recant_enabled;
+    g_v2_hud_state.runes.caster_ready = caster_ready;
+}
+
+void v2_hud_tick_presentation_state(void) {
+    if (g_v2_hud_state.action.flash_ticks > 0u) {
+        g_v2_hud_state.action.flash_ticks--;
+    }
 }
 
 /* ══════════════════════════════════════════════════════════════════════
