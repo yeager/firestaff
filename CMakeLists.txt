@@ -8357,6 +8357,17 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 route-token/key-symbol audit gate -------------------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass338b_dm1_v1_route_token_key_symbol_audit
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass338b_dm1_v1_route_token_key_symbol_audit.py
+    )
+    set_tests_properties(pass338b_dm1_v1_route_token_key_symbol_audit PROPERTIES
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif()
+
 # -- DM1 V1 original overlay keyboard-buffer blocker gate -------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
