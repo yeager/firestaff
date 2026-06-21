@@ -133,7 +133,7 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 | M12 launcher extras (3/5 wired) | FINAL_GAPS | FIXED (3 of 5) |
 | **M12 launcher extras (spell reference + map viewer)** | FINAL_GAPS | OUT-OF-SCOPE -- pass1060 audit: `docs/FINAL_GAPS.md` marks both as lacking a data source; `src/ui/menu_startup_m12.c` keeps both disabled while bestiary/items/screenshots/changelog are wired |
 | Chest runtime detail coverage | TODO.md | OPEN-BOUNDED |
-| Inventory route parity for all item types | `docs/dm1_gap_inventory_items.md` | PARTIAL |
+| Inventory route parity for all item types | `docs/dm1_gap_inventory_items.md` | PARTIAL -- pass1061 closes the stale `m11_obj_use()` consumable wiring gap; broader slot/panel/item-type runtime parity and pixel evidence remain |
 | Champion portrait sensor parity | `docs/dm1_gap_portrait_sensor.md` | FIXED -- pass1059 audit: C127 `sensorData` is a 0..23 C026 atlas ordinal, not 0..7; M11 runtime already clamps to `mirrorCatalog.count`; resurrection test keeps index 23 valid |
 | Per-champion C01-C24 stats | `docs/dm1_gap_c01_c24_stats.md` | PARTIAL |
 | C25-C26 anti-magic/spell items | `docs/dm1_gap_c25_c26.md` | PARTIAL |

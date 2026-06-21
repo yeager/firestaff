@@ -1,69 +1,71 @@
-# GAP: Inventory / Items — m11_obj_use() Champion-Slot Wiring Gap
+# RESOLVED: Inventory / Items -- m11_obj_use() Consumable Wiring
 
 ## Status
-**GAP — Item pickup/drop/use stubs need champion-slot wiring; F0349 complete but m11_obj_use() not wired**
+
+**RESOLVED for the documented `m11_obj_use()` wiring gap. Broader inventory route parity remains PARTIAL in `docs/FIRESTAFF_GAP_LIST.md`.**
 
 ## Source Location
-`src/dm1/dm1_v1_object_interaction_pc34_compat.c`, function `m11_obj_use()` (line 104).
+
+`src/dm1/dm1_v1_object_interaction_pc34_compat.c`, function `m11_obj_use()`.
 
 Consumables implementation: `src/dm1/dm1_v1_inventory_consumables_pc34_compat.c`.
-Reference: ReDMCSB PANEL.C:1743-1950, function F0349_INVENTORY_ProcessCommand70_ClickOnMouth.
 
-## Gap Description
+Runtime mouth-click path: `src/engine/m11_game_view.c`, function `m11_process_v1_mouth_click()`.
 
-`m11_obj_use()` is a stub that checks the `usable` flag on a world object and returns 1 if set:
+Reference: ReDMCSB `PANEL.C:1743-1950`, function `F0349_INVENTORY_ProcessCommand70_ClickOnMouth`.
+
+## Finding
+
+The previous version of this document described `m11_obj_use()` as a two-argument stub that only checked an object's `usable` flag. Current main no longer matches that description.
+
+`m11_obj_use()` now has champion data and result outputs:
+
 ```c
-int m11_obj_use(M11_ObjectState* s, int objIdx) {
-    if (!s || !m11_obj_is_valid(s, objIdx)) return -1;
-    M11_WorldObject* obj = &s->objects[objIdx];
-    if (obj->usable) {
-        return 1;   // item is usable — but no stat effect applied
-    }
-    return 0;
-}
+int m11_obj_use(M11_ObjectState* s, int champIdx, int objIdx,
+                DM1ConsumableChampionPc34* champData,
+                DM1ConsumableResultPc34* result);
 ```
 
-The TODO comment in the source explicitly acknowledges the gap:
-> "TODO: delegate to consumables module for actual stat effects."
+The function delegates consumable object classes to the F0349-compatible consumables module:
 
-The actual consumption logic (potions, food, water, scrolls, wands) is implemented in `dm1_v1_inventory_consumables_pc34_compat.c` and labeled with F0349 source references (lines 56, 272). F0349 is the ReDMCSB reference function that handles mouth-consumption (eating, drinking, reading).
+- `DM1_OBJTYPE_POTION` -> `dm1_inventory_consume_potion_pc34()`
+- `DM1_OBJTYPE_FOOD` -> `dm1_inventory_consume_food_junk_pc34()`
+- `DM1_OBJTYPE_WATER` -> `dm1_inventory_consume_water_junk_pc34()`
 
-**The gap is the wiring:** `m11_obj_use()` does not call into the F0349 consumables module. The `usable` flag check is necessary but not sufficient — the function must also identify *which champion* is consuming the item, apply the stat effect to that champion, and handle champion-specific state (e.g., anti-magic field, food/water tracking).
+The compact `M11_ObjectState` abstraction does not carry full THING subtype data, so the object-use wrapper uses testable proxies:
 
-## Item Pickup / Drop Stubs
+- potion type from `stackCount` when it is in the source potion type range `6..15`;
+- potion power from `weight`;
+- food icon from `weight` when it is in the source food icon range `168..175`, with apple as fallback;
+- water/waterskin icon from `weight` when it is `8` or `9`, with waterskin as fallback;
+- waterskin charges from `stackCount`.
 
-Three related stub functions exist in the same file:
-- `m11_obj_throw()` — marks object as in-flight (`x = -2`), returns 1 on success; no champion-slot association
-- `m11_obj_activate()` — checks `activatable` flag, returns 1; no champion association
-- `m11_obj_examine()` — returns object type name and weight; no champion association
+Equipment remains intentionally outside this mouth-use path. Weapons and armor return `0` from `m11_obj_use()` because equipping is owned by the slot system, not by F0349 mouth consumption.
 
-None of these functions are wired to the champion that is interacting with the object (no `championIndex` parameter).
+## Runtime Path
 
-## Champion-Slot Wiring Required
+The live M11 inventory mouth click does not rely on the compact object wrapper. `m11_process_v1_mouth_click()` reads the actual leader-hand THING, resolves junk/potion subtype data from `state->world.things`, calls the same consumables helpers, and commits the changed champion fields back into the active champion.
 
-To properly implement item use, the following information must be threaded through:
-1. **Which champion** is performing the action (leader or selected party member)
-2. **Which hand/slot** the item is in (left hand, right hand, backpack slot)
-3. **What type of item** it is (consumable: food/water/potion/scroll; equippable: weapon/armour)
-4. **Champion state** at time of use (anti-magic, anti-fire, current HP/MP/stamina)
+That runtime route covers:
 
-## F0349 Completeness
+- water and waterskin charge use;
+- food consumption and mouth animation;
+- potion effects, empty-flask conversion, VI wound masks, shield defense and health/stamina/mana/stat changes.
 
-`dm1_v1_inventory_consumables_pc34_compat.c` implements F0349 consumption effects:
-- Mouth consumption counter loop (lines 272: `for (counter=5; --counter;)`)
-- Stat effect application (HP, stamina, mana restoration)
-- Food/water tracking
+## Source-Lock
 
-However, F0349 is never called from `m11_obj_use()` or any parent function in the DM1 V1 compat layer. The wiring is the gap.
+- `PANEL.C:1743-1785` declares the F0349 mouth-consumption locals.
+- `PANEL.C:1824-1844` gates mouth-allowed objects, water/waterskin charge use, and leader-hand removal.
+- `PANEL.C:1850-1917` applies potion effects and converts potions to C20 empty flask.
+- `PANEL.C:1918-1919` applies `G0242` food amounts.
+- `PANEL.C:1922-1945` clamps health/stamina, drives the mouth animation, and routes the swallow sound.
+- `DUNGEON.C:428-436` defines the food amounts table.
 
-## Impact
-- Normal play: items with `usable=1` are recognized but their effects are not applied
-- Food/water depletion and restoration is tracked separately via `dm1_v1_food_water_pc34_compat.c`
-- Consumable items (potions, scrolls) appear usable but do nothing when consumed
+## Verification
 
-## Required Fix (Non-Blocking)
-1. Extend `m11_obj_use()` signature to include `int championIndex` and `int handSlot`
-2. Route to F0349 consumables handler based on `objectType`
-3. Wire champion state (stats, conditions) into the F0349 call
-4. Update call sites (viewport click routing, panel click routing) to pass the correct champion
-5. Add integration tests: use potion → check champion HP increases; eat food → check food decreases
+- `dm1_v1_inventory_consumables_pc34_compat` verifies the F0349-compatible consumables module.
+- `dm1_v1_object_interaction_source_lock` now verifies that `m11_obj_use()` delegates ROS potion, food icon, and waterskin objects to that module and leaves equipment to the slot system.
+
+## Remaining Inventory Work
+
+This closes the specific stale wiring gap. The broader `Inventory route parity for all item types` row remains PARTIAL because it still covers runtime route breadth, all item-type interactions, slot/panel edge cases, and pixel/evidence polish beyond this compact object-use helper.

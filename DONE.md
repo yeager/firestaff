@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 inventory object-use wiring (pass1061): `m11_obj_use()` now routes compact object-state potion, food, and water objects through the F0349-compatible consumables module with testable subtype proxies (`stackCount` for potion type/charges, `weight` for potion power and food/water icon). `dm1_v1_object_interaction_source_lock` covers ROS potion dexterity gain, food icon consumption, waterskin charge/water update, and equipment remaining slot-system owned. This closes the stale `docs/dm1_gap_inventory_items.md` wiring blocker; broader inventory route parity remains PARTIAL.
+
 - ✅ 2026-06-21 M12 launcher-extras audit (pass1060): closed the stale `docs/FIRESTAFF_GAP_LIST.md` "M12 launcher extras (2 remaining)" DM1 blocker as OUT-OF-SCOPE, matching `docs/FINAL_GAPS.md` Group 5. `src/ui/menu_startup_m12.c` keeps spell reference and map viewer disabled with "no data source yet"; bestiary, item encyclopedia, screenshot gallery, changelog, museum, and manual are available. This is not runtime DM1 parity work and should not consume the 24h DM1 finish lane.
 
 - ✅ 2026-06-21 DM1 V1 Hall portrait sensor audit (pass1059): closed the stale `docs/dm1_gap_portrait_sensor.md` blocker. ReDMCSB `MOVESENS.C:1501-1503`, `DUNGEON.C:2608-2612`, `DUNVIEW.C:3913-3928`, `REVIVE.C:142-167`, and `DEFS.H:821-826/2186` all show C127 `sensorData` as the 0..23 `C026_GRAPHIC_CHAMPION_PORTRAITS` atlas ordinal, not a 0..7 slot. `m11_front_cell_mirror_ordinal()` already clamps runtime clicks to `mirrorCatalog.count`; `test_dm1_v1_resurrection_pc34_compat` now keeps portrait index 23 valid so the false `>7` fix cannot regress real Hall portraits.
