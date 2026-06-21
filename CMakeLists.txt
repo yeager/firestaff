@@ -7724,6 +7724,27 @@ if(BUILD_TESTING)
     )
 endif()
 
+# -- Apple Silicon DM V2.0 filtered renderer Metal-path probe --------
+# Exercises the V20 indexed filter presentation path end to end:
+#   V1 indexed framebuffer -> palette LUT + CRT scanlines ->
+#   M11_Render_PresentIndexed -> SDL_RenderReadPixels
+# Skips with PASS on non-Apple-Silicon hosts.
+if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_dm_v20_filtered_renderer_silicon_probe.c")
+    add_executable(firestaff_v1_dm_v20_filtered_renderer_silicon_probe
+        probes/v1/firestaff_v1_dm_v20_filtered_renderer_silicon_probe.c
+    )
+    target_link_libraries(firestaff_v1_dm_v20_filtered_renderer_silicon_probe PRIVATE
+        firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_v1_dm_v20_filtered_renderer_silicon_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm_v20_filtered_renderer_silicon
+        COMMAND firestaff_v1_dm_v20_filtered_renderer_silicon_probe
+    )
+endif()
+
 # -- Apple Silicon DM V2.1 upscale renderer Metal-path probe ---------
 # Exercises the V21 EPX/RGBA presentation path end to end:
 #   V1 indexed framebuffer -> EPX 2x -> M11_Render_PresentRGBA
