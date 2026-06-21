@@ -19,8 +19,8 @@
       "expected": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
       "kind": "prior_status",
       "name": "pass352_dm1_v1_movement_route_regression_matrix",
-      "observed": "BLOCKED_PASS352_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX",
-      "ok": false
+      "observed": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
+      "ok": true
     },
     {
       "expected": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED",
@@ -118,7 +118,7 @@
     "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
     "ok": true
   },
-  "ctestTail": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start  96: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #96: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  98: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #98: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start 310: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #310: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.01 sec\n    Start 457: dm1_v1_input_command_queue_source_lock\n4/4 Test #457: dm1_v1_input_command_queue_source_lock .....   Passed    0.05 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.08 sec",
+  "ctestTail": "Test project /Users/bosse/.openclaw/workspace-main/build\n    Start  97: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #97: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start  99: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #99: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start 311: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #311: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.00 sec\n    Start 458: dm1_v1_input_command_queue_source_lock\n4/4 Test #458: dm1_v1_input_command_queue_source_lock .....   Passed    0.03 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.05 sec",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -196,7 +196,7 @@
       "path": "tests/test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
+  "head": "f3018e72448805d29a1db185c01195234785afe1",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
@@ -208,7 +208,7 @@
     },
     "pass352_dm1_v1_movement_route_regression_matrix": {
       "path": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/manifest.json",
-      "status": "BLOCKED_PASS352_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX"
+      "status": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED"
     },
     "pass359_dm1_v1_movement_route_runtime_blocker_followup": {
       "path": "parity-evidence/verification/pass359_dm1_v1_movement_route_runtime_blocker_followup/manifest.json",
@@ -351,6 +351,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE",
-  "timestampUtc": "2026-06-21T07:40:57.829375+00:00"
+  "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
+  "timestampUtc": "2026-06-21T08:12:00.870594+00:00"
 }

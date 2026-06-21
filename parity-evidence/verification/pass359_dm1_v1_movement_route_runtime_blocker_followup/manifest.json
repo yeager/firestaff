@@ -1,5 +1,5 @@
 {
-  "branch": "worker/dm1v1-post-main-movement-viewport-matrix-20260508",
+  "branch": "dm1v1-capture-gap-close-20260620",
   "classification": {
     "activeBlocker": "original FIRES strict true-stop sequence: F0128_DUNGEONVIEW_Draw_CPSF then F0097_DUNGEONVIEW_DrawViewport or VIDRV_09_BlitViewPort in one bounded controlled run",
     "firestaffMovementRoute": "unblocked/proved by pass349 plus pass351/pass352/pass358 guards",
@@ -14,7 +14,7 @@
       "pass333/pass335 keypad-symbol blockers are retired for Firestaff --script key:kp* routing by pass349/pass352"
     ]
   },
-  "head": "0bb88925aed0c74fac43d1712355b23c5dfb7a80",
+  "head": "f3018e72448805d29a1db185c01195234785afe1",
   "notClaimed": [
     "new original DOSBox/FIRES debugger hit",
     "F0128->F0097 true-stop transcript",
@@ -51,7 +51,7 @@
     "pass352": {
       "exists": true,
       "expected": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
-      "head": "1f57c034a026d07224ba1a4ecb9c08563e5656ef",
+      "head": "f3018e72448805d29a1db185c01195234785afe1",
       "manifest": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/manifest.json",
       "ok": true,
       "role": "route-surface regression matrix after pass349/pass356 integration",
@@ -78,42 +78,42 @@
   },
   "productMarkerAudit": [
     {
-      "file": "main_loop_m11.c",
+      "file": "src/engine/main_loop_m11.c",
       "marker": "kp4",
       "ok": true
     },
     {
-      "file": "main_loop_m11.c",
+      "file": "src/engine/main_loop_m11.c",
       "marker": "SDLK_KP_4",
       "ok": true
     },
     {
-      "file": "main_loop_m11.c",
+      "file": "src/engine/main_loop_m11.c",
       "marker": "M11_GameView_HandleInput(&gameView, input)",
       "ok": true
     },
     {
-      "file": "m11_game_view.c",
+      "file": "src/engine/m11_game_view.c",
       "marker": "DM1_V1_MovementPipeline_EnqueueCommandPc34Compat",
       "ok": true
     },
     {
-      "file": "m11_game_view.c",
+      "file": "src/engine/m11_game_view.c",
       "marker": "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat",
       "ok": true
     },
     {
-      "file": "touch_click_zone_matrix_pc34_compat.c",
+      "file": "src/shared/touch_click_zone_matrix_pc34_compat.c",
       "marker": "TOUCHCLICK_Compat_HitTestPrimaryThenSecondary",
       "ok": true
     },
     {
-      "file": "touch_pointer_input_pc34_compat.c",
+      "file": "src/shared/touch_pointer_input_pc34_compat.c",
       "marker": "DM1_V1_InputCommandQueue_EnqueueMouseCommandPc34Compat",
       "ok": true
     }
   ],
-  "repo": "/home/trv2/work/firestaff",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass359_dm1_v1_movement_route_runtime_blocker_followup.v1",
   "sourceAudit": [
     {
@@ -131,7 +131,7 @@
         "F0003_MAIN_ProcessNewPartyMap_CPSE(G0309_i_PartyMapIndex);"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
     },
     {
       "decision": "The PC34/I34E movement key table maps normalized movement keys to C001..C006.",
@@ -151,7 +151,7 @@
         "{ C004_COMMAND_MOVE_RIGHT,    0x0051 }"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "decision": "Mouse clicks resolve primary interface first, then secondary movement, and enqueue command/X/Y in source order.",
@@ -168,7 +168,7 @@
         "G0432_as_CommandQueue[L1108_i_CommandQueueIndex].Y = P0726_i_Y;"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "decision": "Keyboard input is table-resolved into the same command queue used by mouse movement commands.",
@@ -185,7 +185,7 @@
         "G2153_i_QueuedCommandsCount++"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "decision": "F0380 is the canonical command queue consumer and movement dispatcher.",
@@ -203,7 +203,7 @@
         "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "decision": "Accepted turns/steps mutate party facing/position and set the source movement cooldown.",
@@ -221,7 +221,7 @@
         "G0310_i_DisabledMovementTicks"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "decision": "The main loop drains input into F0361/F0380 and uses F0128 as the redraw seam for the current party tuple.",
@@ -236,7 +236,7 @@
         "F0380_COMMAND_ProcessQueue_CPSC();"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "decision": "F0128 composes the dungeon viewport into G0296 and then calls F0097 for presentation.",
@@ -251,7 +251,7 @@
         "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "decision": "F0097 is the PC34 viewport-present seam through video-driver slot 9.",
@@ -266,10 +266,10 @@
         "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED",
-  "timestampUtc": "2026-05-08T09:14:07.638380+00:00"
+  "timestampUtc": "2026-06-21T08:12:00.783510+00:00"
 }
