@@ -47,6 +47,7 @@ int v2_particle_emitter_create(float x, float y, float rate,
     uint32_t color, int max_count);
 void v2_particle_emitter_remove(int emitter_idx);
 void v2_particle_tick(float dt);
+int v2_particle_active_count(void);
 
 #ifdef __cplusplus
 }

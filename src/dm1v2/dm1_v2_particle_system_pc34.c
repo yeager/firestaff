@@ -123,6 +123,10 @@ void v2_particle_tick(float dt) {
     v2_particle_draw_all();
 }
 
+int v2_particle_active_count(void) {
+    return g_particle_count;
+}
+
 /* Mark an emitter inactive and reclaim its slot.
  * Does not compact g_emitters[]; dead slots are skipped by emitter-create.
  * Source: Firestaff DM1 V2 Phase 4 followup.
