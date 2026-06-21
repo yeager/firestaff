@@ -464,7 +464,17 @@ order:
 17. CSB mechanics parity (combat, dungeon, champion, inventory).
 18. DM2 mechanics (shops, NPCs, triggers, timeline).
 19. Nexus runtime/probe coverage beyond compile/save-load.
-20. Theron cross-slot import/export + cross-route evidence.
+20. Theron cross-slot import/export + cross-route evidence. — Dungeon-progression
+    determinism probe (`firestaff_theron_v1_dungeon_progression_determinism_probe`,
+    ctest `theron_v1_dungeon_progression_determinism_probe`, commit
+    `8a43fcf8`): 20/20 PASS covering the 7-dungeon progression state
+    machine (THQUEST.ASM T080 between-dungeon save/load), init / advance /
+    quest-complete transitions, NULL-safety, and 50-repetition
+    determinism. Source-locked per ReDMCSB GROUP.C analogue + THQUEST.ASM
+    T080. Between-dungeon save/load itself is already covered by
+    `tests/test_theron_v1_save_header_rejection.c` + the existing
+    Theron V1 mechanics probe (10 tests / 5 probes already green for
+    the V1 gameplay loop).
 
 ### Tier 5 (i18n follow-up)
 
