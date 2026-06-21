@@ -144,12 +144,14 @@ class KeyDispatch:
 #   * After the three selector pages the "Dungeon Master" title art and
 #     then the ENTER/RESUME/QUIT entrance wall appear.  With Keyboard
 #     Simulation of Digital Joystick selected, the wall's selector cursor
-#     starts on ENTER and Return activates it.  After that keypress the
-#     dungeon corridor viewport renders and classifies as ``dungeon_gameplay``
+#     starts on ENTER.  Once the live route launches DM.EXE through the
+#     app binary itself instead of the Homebrew wrapper, Return reliably
+#     activates it and avoids a host-mouse-capture dependency.  The dungeon
+#     corridor viewport then classifies as ``dungeon_gameplay``
 #     (v≈0.93, r≈0.12 < 0.135), which is the capture target.
-# The single click that crosses into the dungeon is the historically
-# hard part of this route; everything up to and including it is now a
-# deterministic, capture-verified sequence.
+# The entrance transition is the historically hard part of this route;
+# everything up to and including it is now a deterministic,
+# capture-verified sequence.
 DEFAULT_PLAN: list[PlanStep] = [
     PlanStep("graphics_select",  "entrance_menu",    keys=["1", "Return"], settle_only=True, settle_s=3.0),
     PlanStep("sound_select",     "entrance_menu",    keys=["1", "Return"], settle_only=True, settle_s=3.0),
@@ -236,6 +238,7 @@ RAWSHOT_FOCUS_RECOVERY_REASONS = (
     "no_focus_recovery_needed",
 )
 DOSBOX_INTERNAL_CAPTURE_GLOBS = ("*.png", "*.bmp", "*.raw")
+LIVE_DOSBOX_STARTUP_SETTLE_S = 8.0
 DosboxCaptureSignature = tuple[int, int]
 
 
@@ -275,6 +278,29 @@ def _resolve_dosbox_bin(args: argparse.Namespace) -> str | None:
         if found:
             return found
     return None
+
+
+def _dosbox_conf_command(
+        dosbox_bin: str,
+        conf: Path,
+        runtime_dir: Path | None = None) -> list[str]:
+    """Return the argv needed to launch DOSBox with ``conf``.
+
+    Homebrew ``dosbox-staging`` expects the long ``--conf`` option, while
+    DOSBox-X and older app-wrapper launches still accept the historical
+    ``-conf`` spelling used by earlier capture scripts.  The live runtime
+    launch passes DM.EXE as DOSBox's PATH argument; DOSBox Staging mounts
+    the executable's parent as C: and runs it without depending on
+    wrapper-sensitive [autoexec] or ``-c`` command forwarding.
+    """
+    bin_text = str(dosbox_bin).casefold()
+    conf_flag = "--conf" if (
+        "dosbox-staging" in bin_text or "dosbox staging.app" in bin_text
+    ) else "-conf"
+    argv = [dosbox_bin, conf_flag, str(conf)]
+    if runtime_dir is not None:
+        argv.append(str(runtime_dir / "DM.EXE"))
+    return argv
 
 
 def _is_executable_file(path: Path) -> bool:
@@ -757,6 +783,15 @@ def dry_run(plan: list[PlanStep],
         missing_bin = tmp_root / "missing-dosbox"
         if _resolve_dosbox_bin(argparse.Namespace(dosbox_bin=missing_bin)) is not None:
             failures.append("dosbox binary resolver: accepted a missing explicit path")
+        fake_staging_conf = tmp_root / "fake.conf"
+        if _dosbox_conf_command(str(fake_bin), fake_staging_conf)[1] != "--conf":
+            failures.append("dosbox launch argv: did not use --conf for dosbox-staging")
+        fake_x_bin = tmp_root / "dosbox-x"
+        if _dosbox_conf_command(str(fake_x_bin), fake_staging_conf)[1] != "-conf":
+            failures.append("dosbox launch argv: did not preserve -conf for non-staging DOSBox")
+        staging_launch = _dosbox_conf_command(str(fake_bin), fake_staging_conf, good)
+        if staging_launch[-1] != str(good / "DM.EXE"):
+            failures.append("dosbox launch argv: did not append runtime DM.EXE path")
         capture_root = tmp_root / "capture-root"
         conf = capture_root / "dosbox_capture.live.conf"
         _write_live_conf(conf, good, capture_root)
@@ -2097,7 +2132,9 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
 
     The preflight receipt proves the canonical hash root.  For actually
     launching DM.EXE, DOSBox needs the original runtime layout where
-    DM.EXE and DATA/ live together.
+    DM.EXE and DATA/ live together.  The live command line passes DM.EXE
+    as DOSBox's PATH argument, so this conf only owns render/capture/input
+    settings.
     """
     conf.parent.mkdir(parents=True, exist_ok=True)
     (capture_root / "dosbox-capture").mkdir(parents=True, exist_ok=True)
@@ -2145,11 +2182,6 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
             "mouse_raw_input=true",
             "dos_mouse_driver=true",
             "dos_mouse_immediate=true",
-            "",
-            "[autoexec]",
-            f"MOUNT C {runtime_dir}",
-            "C:",
-            "DM.EXE",
             "",
         ]),
         encoding="utf-8",
@@ -2561,13 +2593,16 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
     if receipt is not None:
         print(f"live input receipt: {receipt}", file=sys.stderr)
     proc = subprocess.Popen(
-        [dosbox_bin, "-conf", str(conf)],
+        _dosbox_conf_command(dosbox_bin, conf, runtime_dir),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         env={**os.environ, "LANG": os.environ.get("LANG", "C")},
     )
     try:
-        time.sleep(2.0)
+        # DM.EXE can still be in the DOS startup batch on DOSBox Staging
+        # 0.82.2 after the window appears.  Let the selector reach its first
+        # menu before route keys are dispatched; otherwise 1/1/4 land at Z:\>.
+        time.sleep(LIVE_DOSBOX_STARTUP_SETTLE_S)
         _activate_dosbox()
         for step in plan:
             for key in step.keys:
