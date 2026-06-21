@@ -214,6 +214,11 @@ int  M11_Render_SetVSync(int vsyncIndex);
 int  M11_Render_GetVSync(void);
 void M11_Render_RaiseWindow(void);
 
+/* Return the most recent RGBA presentation buffer written by one of the
+ * Present* calls. The pointer is owned by the renderer and remains valid only
+ * until the next present, resize, or shutdown. */
+const unsigned char* M11_Render_GetPresentedRGBA(int* outWidth, int* outHeight);
+
 /* Query which SDL major version the build is linked against (2 or 3). */
 int  M11_Render_GetSdlMajorVersion(void);
 

@@ -1,7 +1,7 @@
 {
   "data_dir": "/Users/bosse/.firestaff/data/dm1",
   "firestaff": "/private/tmp/firestaff-main-dm1-24h/build/firestaff",
-  "generated_at": "2026-06-21T22:54:42.883694+00:00",
+  "generated_at": "2026-06-21T23:08:18.527647+00:00",
   "modes": [
     {
       "command": {
@@ -16,7 +16,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260622-005447.bmp",
+        "stderr": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260622-010823.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v20_filtered_presented/firestaff-presented-20260622-010823.bmp",
         "stdout": ""
       },
       "mode": {
@@ -25,11 +25,20 @@
         "label": "V2.0 filtered"
       },
       "ok": true,
+      "presented_screenshots": [
+        {
+          "height": 400,
+          "name": "firestaff-presented-20260622-010823.bmp",
+          "sha256": "83ecbe0d6ae6d71184d0691a655e024ef27f0794c9a18d7053d85f91e7788a88",
+          "size": 768054,
+          "width": 640
+        }
+      ],
       "probe": {
         "active": 1,
-        "gameTick": 0,
-        "lastAction": "BOOT",
-        "lastOutcome": "GAME DATA LOADED",
+        "gameTick": 22,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
         "party": {
           "championCount": 0,
@@ -64,9 +73,11 @@
       },
       "screenshots": [
         {
-          "name": "firestaff-20260622-005447.bmp",
-          "sha256": "1b87bcc3ba41ac06f27f563b3bc237ca6b58a019f4a3f8270aa3ebed1315593a",
-          "size": 192054
+          "height": 200,
+          "name": "firestaff-20260622-010823.bmp",
+          "sha256": "d9fb403e4a51f8c00eb3329a935111914375367b2c18c84a0ea116ade58e0e8b",
+          "size": 192054,
+          "width": 320
         }
       ]
     },
@@ -83,7 +94,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260622-005451.bmp",
+        "stderr": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260622-010827.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v21_upscaled_presented/firestaff-presented-20260622-010827.bmp",
         "stdout": ""
       },
       "mode": {
@@ -92,11 +103,20 @@
         "label": "V2.1 enhanced 2D"
       },
       "ok": true,
+      "presented_screenshots": [
+        {
+          "height": 400,
+          "name": "firestaff-presented-20260622-010827.bmp",
+          "sha256": "b2ffc71c744ba98b6d40893350157c33ae0d076fbc8d732ae48857983e804896",
+          "size": 768054,
+          "width": 640
+        }
+      ],
       "probe": {
         "active": 1,
-        "gameTick": 0,
-        "lastAction": "BOOT",
-        "lastOutcome": "GAME DATA LOADED",
+        "gameTick": 22,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
         "party": {
           "championCount": 0,
@@ -131,9 +151,11 @@
       },
       "screenshots": [
         {
-          "name": "firestaff-20260622-005451.bmp",
-          "sha256": "1b87bcc3ba41ac06f27f563b3bc237ca6b58a019f4a3f8270aa3ebed1315593a",
-          "size": 192054
+          "height": 200,
+          "name": "firestaff-20260622-010827.bmp",
+          "sha256": "d9fb403e4a51f8c00eb3329a935111914375367b2c18c84a0ea116ade58e0e8b",
+          "size": 192054,
+          "width": 320
         }
       ]
     }
@@ -143,6 +165,7 @@
     "No finished V2.2 real-art material or pixel claim.",
     "No promotion of blocked DOSBox/debugger capture rows."
   ],
+  "presented_hashes_unique": true,
   "schema": "firestaff.parity.dm1_v2_runtime_presentation_smoke.v1",
   "status": "PASS"
 }

@@ -57,6 +57,7 @@ def dm1_data_available(data_dir: Path) -> bool:
 def write_temp_config(home: Path, data_dir: Path, mode: int) -> None:
     cfg_dir = home / "Library" / "Application Support" / "Firestaff"
     cfg_dir.mkdir(parents=True, exist_ok=True)
+    v20_filters = mode == 1
     (cfg_dir / "startup-menu.toml").write_text(
         "\n".join(
             [
@@ -67,11 +68,42 @@ def write_temp_config(home: Path, data_dir: Path, mode: int) -> None:
                 "window_mode_index = 1",
                 "scale_mode_index = 4",
                 "display_aspect_mode = 2",
+                f"dm1_v2_crt_scanlines_enabled = {1 if v20_filters else 0}",
+                f"dm1_v2_crt_scanline_strength = {65 if v20_filters else 0}",
+                f"dm1_v2_palette_correction_enabled = {1 if v20_filters else 0}",
+                "dm1_v2_palette_gamma = 100",
+                f"dm1_v2_palette_brightness = {10 if v20_filters else 0}",
+                "dm1_v2_palette_contrast = 0",
                 "",
             ]
         ),
         encoding="utf-8",
     )
+
+
+def bmp_dimensions(path: Path) -> dict[str, int]:
+    data = path.read_bytes()[:26]
+    if len(data) < 26 or data[:2] != b"BM":
+        return {"width": 0, "height": 0}
+    width = int.from_bytes(data[18:22], "little", signed=True)
+    height = int.from_bytes(data[22:26], "little", signed=True)
+    return {"width": width, "height": abs(height)}
+
+
+def screenshot_rows(directory: Path) -> list[dict[str, Any]]:
+    if not directory.exists():
+        return []
+    rows = []
+    for path in sorted(directory.glob("*.bmp")):
+        rows.append(
+            {
+                "name": path.name,
+                "size": path.stat().st_size,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                **bmp_dimensions(path),
+            }
+        )
+    return rows
 
 
 def run_mode(firestaff: Path, data_dir: Path, mode: dict[str, Any]) -> dict[str, Any]:
@@ -82,13 +114,14 @@ def run_mode(firestaff: Path, data_dir: Path, mode: dict[str, Any]) -> dict[str,
         write_temp_config(temp_home, data_dir, int(mode["index"]))
         probe_path = temp_root / f"{mode['id']}_probe.json"
         screenshot_dir = temp_root / f"{mode['id']}_screenshots"
+        presented_dir = temp_root / f"{mode['id']}_presented"
         env = os.environ.copy()
         env["HOME"] = str(temp_home)
         env.setdefault("SDL_VIDEODRIVER", "dummy")
         env["FIRESTAFF_FAIL_IF_NO_LAUNCH"] = "1"
-        env["FIRESTAFF_EXIT_AFTER_LAUNCH"] = "1"
         env["FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"] = str(probe_path)
         env["FIRESTAFF_AUTOTEST_SCREENSHOT_DIR"] = str(screenshot_dir)
+        env["FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR"] = str(presented_dir)
         cmd = [
             str(firestaff),
             "--game",
@@ -106,23 +139,18 @@ def run_mode(firestaff: Path, data_dir: Path, mode: dict[str, Any]) -> dict[str,
             "command": proc,
             "probe": None,
             "screenshots": [],
+            "presented_screenshots": [],
             "ok": False,
         }
         if probe_path.exists():
             row["probe"] = json.loads(probe_path.read_text(encoding="utf-8"))
-        if screenshot_dir.exists():
-            row["screenshots"] = [
-                {
-                    "name": path.name,
-                    "size": path.stat().st_size,
-                    "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-                }
-                for path in sorted(screenshot_dir.glob("*.bmp"))
-            ]
+        row["screenshots"] = screenshot_rows(screenshot_dir)
+        row["presented_screenshots"] = screenshot_rows(presented_dir)
         if proc["ok"] and row["probe"]:
             probe = row["probe"]
             presentation = probe.get("presentation", {})
             screenshots = row["screenshots"]
+            presented = row["presented_screenshots"]
             row["ok"] = (
                 probe.get("schema") == "firestaff_m11_autotest_runtime_probe.v1"
                 and probe.get("launchedEver") == 1
@@ -133,6 +161,10 @@ def run_mode(firestaff: Path, data_dir: Path, mode: dict[str, Any]) -> dict[str,
                 and presentation.get("height") == 400
                 and len(screenshots) == 1
                 and screenshots[0].get("size", 0) > 54
+                and len(presented) == 1
+                and presented[0].get("width") == 640
+                and presented[0].get("height") == 400
+                and presented[0].get("size", 0) > 54
             )
         return row
 
@@ -153,8 +185,8 @@ def write_outputs(result: dict[str, Any]) -> None:
         "",
         "## Mode results",
         "",
-        "| Mode | Status | Runtime source | Presentation mode | Screenshot artifacts |",
-        "|---|---:|---|---:|---:|",
+        "| Mode | Status | Runtime source | Presentation mode | Source BMP | Presented BMP |",
+        "|---|---:|---|---:|---:|---:|",
     ]
     for row in rows:
         probe = row.get("probe") or {}
@@ -162,8 +194,21 @@ def write_outputs(result: dict[str, Any]) -> None:
         lines.append(
             f"| {row['mode']['label']} | {'PASS' if row.get('ok') else 'FAIL'} | "
             f"`{probe.get('sourceId', '')}` | `{presentation.get('mode', '')}` | "
-            f"`{len(row.get('screenshots', []))}` |"
+            f"`{len(row.get('screenshots', []))}` | "
+            f"`{len(row.get('presented_screenshots', []))}` |"
         )
+    presented_hashes = [
+        row["presented_screenshots"][0]["sha256"]
+        for row in rows
+        if row.get("presented_screenshots")
+    ]
+    if len(presented_hashes) == len(rows) and len(set(presented_hashes)) > 1:
+        lines += [
+            "",
+            "Presented-frame hashes differ across configured modes, so this gate",
+            "covers the post-palette/post-filter buffer and not only the source",
+            "indexed framebuffer.",
+        ]
     if result.get("skipped"):
         lines += ["", f"Skipped: {result.get('reason', '')}"]
     lines += [
@@ -215,7 +260,16 @@ def main() -> int:
         return 0
 
     result["modes"] = [run_mode(firestaff, args.data_dir, mode) for mode in MODES]
-    ok = all(row.get("ok") for row in result["modes"])
+    presented_hashes = [
+        row["presented_screenshots"][0]["sha256"]
+        for row in result["modes"]
+        if row.get("presented_screenshots")
+    ]
+    result["presented_hashes_unique"] = (
+        len(presented_hashes) == len(result["modes"]) and
+        len(set(presented_hashes)) > 1
+    )
+    ok = all(row.get("ok") for row in result["modes"]) and result["presented_hashes_unique"]
     result["status"] = "PASS" if ok else "FAIL"
     write_outputs(result)
     if ok:
