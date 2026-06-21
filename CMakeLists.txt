@@ -8207,6 +8207,54 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_f0095_floor_ornament_aggreg
     )
 endif()
 
+function(firestaff_add_dm1_v1_viewport_contract_test target test_src impl_src ctest_name)
+    if(BUILD_TESTING AND NOT TARGET ${target})
+        add_executable(${target}
+            ${test_src}
+            ${impl_src}
+            ${ARGN}
+        )
+        target_link_libraries(${target} PRIVATE firestaff_m10)
+        target_include_directories(${target} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        if(NOT MSVC)
+            target_compile_options(${target} PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME ${ctest_name}
+            COMMAND ${target}
+        )
+    endif()
+endfunction()
+
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat
+    tests/test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat.c
+    dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat
+    tests/test_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat.c
+    dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat
+    tests/test_dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat.c
+    dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat
+    src/dm1/dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat.c
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d1c_f0111_door_pc34_compat
+    tests/test_dm1_v1_viewport_d1c_f0111_door_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d1c_f0111_door_pc34_compat.c
+    dm1_v1_viewport_d1c_f0111_door_pc34_compat
+)
+
 # ── DM1 V1 Viewport 3D source-lock gate ─────────────────────────────
 if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_executable(test_dm1_v1_viewport_3d_pc34_compat
