@@ -54,8 +54,8 @@ Classification:
 
 | Gap | Source | Status |
 |---|---|---|
-| CSB-specific hidden-code items 558-562 (Amiga executable blobs) | greatstone d_items.html | OPEN-BOUNDED — need skip table in graphics loader |
-| Atari ST hidden code skip | greatstone d_items.html | OPEN-BOUNDED — same mechanism, separate items |
+| CSB-specific hidden-code items 558-562 (Amiga executable blobs) | greatstone d_items.html | FIXED — `csb_hidden_code_skip_table_unit` + `csb_v1_graphics_hidden_item_skip_pc34` PASS 2/2 on 2026-06-21; remaining CSB real-asset rendering work is tracked under CSB runtime/graphics rows |
+| Atari ST hidden code skip | greatstone d_items.html | FIXED — same skip-table/loader gates cover Atari ST items 21/538/548 and 558-562 |
 | Champion panel portrait loading from CSB utility disk | CSB docs | PARTIAL — DM1 path exists, CSB-portrait-source selection missing |
 | Savegame format (DM1, CSB) | ReDMCSB + dmweb | FIXED for DM1 (`dm1_v1_save_load.c`), PARTIAL for CSB |
 | Savegame format (DM2) | skproject source | PARTIAL |
@@ -197,8 +197,8 @@ greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
 
 | Gap | Status |
 |---|---|
-| Atari ST hidden executable-code items (skip table) | OPEN-BOUNDED |
-| Amiga 558-562 items (skip table) | OPEN-BOUNDED |
+| Atari ST hidden executable-code items (skip table) | FIXED — `csb_hidden_code_skip_table_unit` + `csb_v1_graphics_hidden_item_skip_pc34` PASS 2/2 |
+| Amiga 558-562 items (skip table) | FIXED — same skip-table/loader gates cover Amiga 21/676/686 and 558-562 |
 | CSBWin custom resource handling (csbgraphics.dat + dmsave + csbgame) | OPEN-LARGE |
 
 ### C4. CSB V2
