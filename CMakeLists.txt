@@ -8479,6 +8479,10 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         NAME pass513_dm1_v1_i34e_route_key_transcript_contract
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass513_dm1_v1_i34e_route_key_transcript_contract.py
     )
+    add_test(
+        NAME pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness.py
+    )
 endif()
 
 # -- DM1 V1 PC/I34E runtime transcript capture path gate --------------
