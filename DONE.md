@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 MNU-03/MNU-04 magic source-lock CTests: registered existing F0757 duration, F0758 potion-power, and F0760 state-delta fixtures as CTest targets `dm1_v1_mnu03_f0757_spell_duration_source_lock`, `dm1_v1_mnu04_f0758_potion_power_source_lock`, and `dm1_v1_mnu03_f0760_apply_state_delta`. The data-free gates pin other-effect duration envelopes, potion kinetic-energy formula, and magic-state delta/event-count application against ReDMCSB `MENU.C` contracts. This is source-lock fixture coverage only; it does not add live casting, assets, DOSBox evidence, or gameplay-completion claims.
+
 - ✅ 2026-06-21 DM1 V1 party footstep provenance CTest: registered existing `tools/verify_dm1_v1_party_footstep_sound_provenance.py` as CTest target `dm1_v1_party_footstep_sound_provenance`. The read-only ReDMCSB source-audit gate proves only the narrow absence of a source-backed successful-party-movement footstep sound request in audited DM1 V1 source, separating it from footprint graphics/events and creature movement sounds. This does not add runtime audio coverage, DOSBox evidence, private asset use, or broad sound parity claims.
 
 - ✅ 2026-06-21 DM1 V1 D0C center-field viewport CTest: registered existing `test_dm1_v1_viewport_d0c_center_field_pc34_compat` as CTest target `dm1_v1_viewport_d0c_center_field_pc34_compat`. The data-free gate pins F0127 D0C dispatch, absence of the center-wall bitmap route, F0113 field drawing, C713/C715 wall-zone metadata, C10 transparency, and no extra F0111/F0115 side effects. This is source/viewport fixture coverage only; it does not add original screenshots, DOSBox evidence, or pixel parity.
