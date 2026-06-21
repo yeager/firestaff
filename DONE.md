@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V2 presentation-mode headless probe CTest gate: registered existing `firestaff_dm1_v2_presentation_mode_probe` as CTest target `dm1_v2_presentation_mode_probe`. The data-free probe covers default V1 mode, M12 V1/V20/V21/V22 selection mapping, V22-without-pack fallback to V2.1, per-mode settings defaults, source-evidence strings, mode names, and set-count bookkeeping. This is CTest metadata/probe coverage only; it does not claim private DM1 asset availability, real V2.2 art/material diffs, runtime screenshots, DOSBox parity, or broad M11 frame-path changes.
+
 - ✅ 2026-06-21 DM1 V1 CHS-02 door-wound preserve gate: registered existing `test_dm1_v1_chs02_bug78_door_wound_preserve_pc34_compat` as CTest target `dm1_v1_chs02_bug78_door_wound_preserve_pc34_compat`. The synthetic compat-layer gate pins BUG0_78 door-wound behavior, closing/open/destroyed no-obstruction cases, reschedule delay, and damage amount. This is source/runtime fixture coverage only; it does not add original capture, DOSBox, or pixel parity evidence.
 
 - ✅ 2026-06-21 DM1 V1 champion mouse leader-switch gate: registered existing `firestaff_dm1_v1_champion_mouse_leader_switch_probe` as CTest target `dm1_v1_champion_mouse_leader_switch_probe`. The synthetic source-locked gate verifies champion status-box mouse events enqueue C012..C015, nested name/hand routing resolves C016..C019 leader commands, and F0368-style leader changes update leader hand weight, direction, and redraw bookkeeping while ignoring same/dead targets. This is source-rule coverage only; it does not add original screenshot or pixel parity evidence.
