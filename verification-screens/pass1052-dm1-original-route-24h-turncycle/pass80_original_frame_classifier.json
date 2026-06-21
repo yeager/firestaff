@@ -1,0 +1,341 @@
+{
+  "schema": "pass80_original_frame_classifier.v1",
+  "attempt_dir": "verification-screens/pass1052-dm1-original-route-24h-turncycle",
+  "capture_count": 4,
+  "dimensions_seen": {
+    "320x200": 4
+  },
+  "expected_sequence": [
+    "dungeon_gameplay",
+    "wall_closeup",
+    "dungeon_gameplay",
+    "wall_closeup"
+  ],
+  "class_counts": {
+    "dungeon_gameplay": 2,
+    "wall_closeup": 2
+  },
+  "duplicate_sha256_counts": {},
+  "honesty": "Classifier/audit only. A 320x200 frame is not parity evidence until its semantic class matches the intended route state.",
+  "captures": [
+    {
+      "file": "verification-screens/pass1052-dm1-original-route-24h-turncycle/image0001-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 12370,
+      "sha256": "40c678403d8f772822c1301bafa373adb0862915a8239d2bdb15f71fccf4b750",
+      "classification": "dungeon_gameplay",
+      "reason": "viewport content with mostly dark in-game right column",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": true,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.9169,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            144.48,
+            144.48,
+            144.48
+          ],
+          "luma_stddev": 58.13
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0138,
+          "color_ratio": 0.0,
+          "unique_colors": 2,
+          "mean_rgb": [
+            3.52,
+            3.52,
+            3.52
+          ],
+          "luma_stddev": 29.74
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0626,
+          "color_ratio": 0.0597,
+          "unique_colors": 3,
+          "mean_rgb": [
+            0.72,
+            13.8,
+            13.8
+          ],
+          "luma_stddev": 38.64
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.7673,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            106.12,
+            106.12,
+            106.12
+          ],
+          "luma_stddev": 68.02
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass1052-dm1-original-route-24h-turncycle/image0002-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 8505,
+      "sha256": "932d9d84e55fedb9ac836e733009f5902e44944d8cce70b5774afcca3a414b2b",
+      "classification": "wall_closeup",
+      "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+      "expected_class": "wall_closeup",
+      "expected_match": true,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 1.0,
+          "color_ratio": 0.0,
+          "unique_colors": 5,
+          "mean_rgb": [
+            178.39,
+            178.39,
+            178.39
+          ],
+          "luma_stddev": 27.99
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0138,
+          "color_ratio": 0.0,
+          "unique_colors": 2,
+          "mean_rgb": [
+            3.52,
+            3.52,
+            3.52
+          ],
+          "luma_stddev": 29.74
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0626,
+          "color_ratio": 0.0597,
+          "unique_colors": 3,
+          "mean_rgb": [
+            0.72,
+            13.8,
+            13.8
+          ],
+          "luma_stddev": 38.64
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 1.0,
+          "color_ratio": 0.0,
+          "unique_colors": 5,
+          "mean_rgb": [
+            178.55,
+            178.55,
+            178.55
+          ],
+          "luma_stddev": 27.17
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass1052-dm1-original-route-24h-turncycle/image0003-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 12054,
+      "sha256": "966190b6ed4dd3d96b7b1302f2076b04cdc00f0551cb6b55dc4d6173bddb16fd",
+      "classification": "dungeon_gameplay",
+      "reason": "viewport content with mostly dark in-game right column",
+      "expected_class": "dungeon_gameplay",
+      "expected_match": true,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.8907,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            143.79,
+            143.79,
+            143.79
+          ],
+          "luma_stddev": 62.41
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0138,
+          "color_ratio": 0.0,
+          "unique_colors": 2,
+          "mean_rgb": [
+            3.52,
+            3.52,
+            3.52
+          ],
+          "luma_stddev": 29.74
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0626,
+          "color_ratio": 0.0597,
+          "unique_colors": 3,
+          "mean_rgb": [
+            0.72,
+            13.8,
+            13.8
+          ],
+          "luma_stddev": 38.64
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.6851,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            101.61,
+            101.61,
+            101.61
+          ],
+          "luma_stddev": 76.84
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass1052-dm1-original-route-24h-turncycle/image0004-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 9016,
+      "sha256": "278ba175878d0a06217dba37a504e949187fc9e821bb6614398b8104af41f8f9",
+      "classification": "wall_closeup",
+      "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+      "expected_class": "wall_closeup",
+      "expected_match": true,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.9998,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            174.06,
+            174.06,
+            174.06
+          ],
+          "luma_stddev": 30.72
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0138,
+          "color_ratio": 0.0,
+          "unique_colors": 2,
+          "mean_rgb": [
+            3.52,
+            3.52,
+            3.52
+          ],
+          "luma_stddev": 29.74
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0626,
+          "color_ratio": 0.0597,
+          "unique_colors": 3,
+          "mean_rgb": [
+            0.72,
+            13.8,
+            13.8
+          ],
+          "luma_stddev": 38.64
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 1.0,
+          "color_ratio": 0.0,
+          "unique_colors": 5,
+          "mean_rgb": [
+            178.55,
+            178.55,
+            178.55
+          ],
+          "luma_stddev": 27.17
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    }
+  ],
+  "warnings": [],
+  "problems": [],
+  "pass": true
+}

@@ -1,0 +1,5 @@
+index	filename	route_label	route_token
+01	01_party_hud_original_viewport_224x136.ppm	party_hud	shot:party_hud
+02	02_left_1_wall_original_viewport_224x136.ppm	left_1_wall	shot:left_1_wall
+03	03_left_2_view_original_viewport_224x136.ppm	left_2_view	shot:left_2_view
+04	04_left_3_view_original_viewport_224x136.ppm	left_3_view	shot:left_3_view

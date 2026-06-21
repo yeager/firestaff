@@ -446,3 +446,6 @@ build-arm64/
 builds/
 .openclaw/
 build-stack-merge/
+
+# runtime pid artifacts from DOSBox capture runs
+*.pid
