@@ -59,16 +59,16 @@
       "assertion": "Opening sets the inventory champion ordinal, hatches movement arrows on first open, expands C017_GRAPHIC_INVENTORY, draws slots, and marks viewport/status/panel/icons dirty."
     },
     {
-      "file": "m11_game_view.c",
-      "start": 5515,
-      "end": 5518,
+      "file": "src/engine/m11_game_view.c",
+      "start": 8359,
+      "end": 8363,
       "function": "M11_GameView_HandleMenuInput",
       "assertion": "Firestaff inventory-toggle input clears the map overlay, calls the inventory panel toggle, and requests redraw without touching debug HUD state."
     },
     {
-      "file": "m11_game_view.c",
-      "start": 21387,
-      "end": 21393,
+      "file": "src/engine/m11_game_view.c",
+      "start": 27896,
+      "end": 27905,
       "function": "M11_GameView_ToggleInventoryPanel",
       "assertion": "Firestaff toggle flips inventoryPanelActive and resets selected slot only when the panel opens."
     }

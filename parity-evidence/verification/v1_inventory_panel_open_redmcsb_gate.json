@@ -31,16 +31,16 @@
       "assertion": "Inventory champion slots use C08_SLOT_BOX_INVENTORY_FIRST_SLOT + slot, draw into the viewport, and call F0038_OBJECT_DrawIconInSlotBox."
     },
     {
-      "file": "m11_game_view.c",
-      "start": 19775,
-      "end": 19835,
+      "file": "src/engine/m11_game_view.c",
+      "start": 25673,
+      "end": 25772,
       "function": "m11_draw_inv_slot",
       "assertion": "Firestaff slot helper draws original 18x18 slot boxes and occupied 16x16 DM object icons."
     },
     {
-      "file": "m11_game_view.c",
-      "start": 19991,
-      "end": 20048,
+      "file": "src/engine/m11_game_view.c",
+      "start": 26254,
+      "end": 26402,
       "function": "m11_draw_inventory_panel",
       "assertion": "Firestaff normal V1 inventory branch draws source slot boxes 8..37 and returns before debug/freehand layout."
     }

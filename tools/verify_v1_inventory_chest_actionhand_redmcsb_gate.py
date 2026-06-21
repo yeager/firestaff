@@ -19,8 +19,9 @@ SOURCE_RANGES = [
     {"file": "CHAMDRAW.C", "start": 498, "end": 631},
     {"file": "CHEST.C", "start": 2, "end": 46},
     {"file": "CHAMPION.C", "start": 587, "end": 640},
-    {"file": "src/engine/m11_game_view.c", "start": 19831, "end": 19834},
-    {"file": "src/engine/m11_game_view.c", "start": 20030, "end": 20048},
+    {"file": "src/engine/m11_game_view.c", "start": 21177, "end": 21197},
+    {"file": "src/engine/m11_game_view.c", "start": 25722, "end": 25733},
+    {"file": "src/engine/m11_game_view.c", "start": 26291, "end": 26305},
 ]
 
 
@@ -43,7 +44,7 @@ def source_path(rel: str) -> Path:
 
 
 def find_source_window(text: str, name: str, next_name: str | None = None) -> tuple[int, int, str]:
-    prefix = r"(?m)^(?:STATICFUNCTION\s+)?(?:void|int16_t|BOOLEAN|THING|unsigned\s+int16_t|static\s+void)\s+"
+    prefix = r"(?m)^(?:STATICFUNCTION\s+)?(?:void|int|int16_t|BOOLEAN|THING|unsigned\s+int16_t|static\s+int|static\s+void)\s+"
     pattern = re.compile(prefix + re.escape(name) + r"\s*\(")
     match = pattern.search(text)
     if not match:
@@ -144,6 +145,19 @@ def verify_redmcsb() -> list[str]:
 
 def verify_firestaff_seam() -> list[str]:
     text = read_text(FIRESTAFF_SRC)
+    helper_start, _helper_end, helper_body = find_source_window(text, "m11_v1_inventory_slot_icon_index_for_thing")
+    helper_markers = require_in_order(
+        helper_body,
+        [
+            ("dm icon index", "m11_object_icon_index_for_thing"),
+            ("action hand predicate", "championSlot == CHAMPION_SLOT_ACTION_HAND"),
+            ("open chest match", "thing == M11_GameView_GetV1OpenChestThing(state)"),
+            ("eye press guard", "!state->v1OpenChestOpenedByEye"),
+            ("closed icon predicate", "iconIndex == 144"),
+            ("open icon return", "return 145"),
+        ],
+        "Firestaff action-hand chest icon helper",
+    )
     slot_start, _slot_end, slot_body = find_source_window(text, "m11_draw_inv_slot")
     slot_markers = require_in_order(
         slot_body,
@@ -161,15 +175,18 @@ def verify_firestaff_seam() -> list[str]:
             ("champion slot loop", "for (slotIdx = 0; slotIdx < CHAMPION_SLOT_COUNT; ++slotIdx)"),
             ("source slotbox map", "M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot"),
             ("thing nonempty gate", "thingId != THING_NONE && thingId != THING_ENDOFLIST"),
-            ("dm icon index", "m11_object_icon_index_for_thing"),
+            ("dm icon index", "m11_v1_inventory_slot_icon_index_for_thing"),
             ("source slotbox zone", "M11_GameView_GetV1InventorySourceSlotBoxZone"),
             ("draw object icon", "m11_draw_dm_object_icon_index"),
         ],
         "Firestaff normal V1 inventory source-slot seam",
     )
-    require_excerpt("src/engine/m11_game_view.c", 19831, 19834, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
-    require_excerpt("src/engine/m11_game_view.c", 20030, 20048, ["M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot", "m11_draw_dm_object_icon_index", "return;"])
+    require_excerpt("src/engine/m11_game_view.c", 21177, 21197, ["m11_v1_inventory_slot_icon_index_for_thing", "m11_object_icon_index_for_thing", "CHAMPION_SLOT_ACTION_HAND", "M11_GameView_GetV1OpenChestThing", "!state->v1OpenChestOpenedByEye", "iconIndex == 144", "return 145"])
+    require_excerpt("src/engine/m11_game_view.c", 25722, 25733, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 26291, 26305, ["M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot", "m11_v1_inventory_slot_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
     return [
+        f"Firestaff m11_v1_inventory_slot_icon_index_for_thing starts at {FIRESTAFF_SRC}:{line_no(text, helper_start)}",
+        *(f"Firestaff action-hand helper {name}: line {line_no(text, helper_start + pos)}" for name, pos in helper_markers),
         f"Firestaff m11_draw_inv_slot starts at {FIRESTAFF_SRC}:{line_no(text, slot_start)}",
         *(f"Firestaff slot seam {name}: line {line_no(text, slot_start + pos)}" for name, pos in slot_markers),
         f"Firestaff m11_draw_inventory_panel starts at {FIRESTAFF_SRC}:{line_no(text, panel_start)}",

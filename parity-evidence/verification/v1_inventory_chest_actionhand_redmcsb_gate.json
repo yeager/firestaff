@@ -24,18 +24,25 @@
       "assertion": "Adding a container chest to the inventory champion action hand marks MASK0x0800_PANEL for panel/action-hand refresh semantics."
     },
     {
-      "file": "m11_game_view.c",
-      "start": 19831,
-      "end": 19834,
-      "function": "m11_draw_inv_slot",
-      "assertion": "Firestaff's current occupied inventory slot helper resolves a DM object icon index before drawing; this gate does not claim open-chest state mutation is implemented."
+      "file": "src/engine/m11_game_view.c",
+      "start": 21177,
+      "end": 21197,
+      "function": "m11_v1_inventory_slot_icon_index_for_thing",
+      "assertion": "Firestaff action-hand inventory icon helper remaps a closed chest icon C144 to open chest C145 while the same chest is open and the panel was not opened through the eye route."
     },
     {
-      "file": "m11_game_view.c",
-      "start": 20030,
-      "end": 20048,
+      "file": "src/engine/m11_game_view.c",
+      "start": 25722,
+      "end": 25733,
+      "function": "m11_draw_inv_slot",
+      "assertion": "Firestaff occupied inventory slot helper resolves a DM object icon index before drawing the object icon into the original slot box."
+    },
+    {
+      "file": "src/engine/m11_game_view.c",
+      "start": 26291,
+      "end": 26305,
       "function": "m11_draw_inventory_panel",
-      "assertion": "Firestaff's normal V1 inventory overlay draws source-slot object icons, providing the narrow implementation seam for the ReDMCSB action-hand open-chest refresh rule."
+      "assertion": "Firestaff normal V1 inventory overlay maps champion slots through source slot-box zones and calls the action-hand-aware icon helper before drawing the icon."
     }
   ],
   "nonClaims": [
