@@ -161,7 +161,7 @@ host-mouse click + corrected selector sequence documented in
 | Enhanced lighting/shadows/field/projectile VFX | OPEN-LARGE |
 | Smooth movement interpolation coverage | OPEN-BOUNDED |
 | Full V1/V2 deterministic input scripts + screenshot/pixel gates | OPEN-BOUNDED |
-| Per-mode pixel/material verification gates | OPEN-BOUNDED — 2026-06-21: Apple-Silicon V2.1 upscale GPU readback gate added (`dm_v21_upscale_renderer_silicon`) and V2.2 Apple-Silicon gate is already 6-invariant. Remaining near-term gap: V2.0 filtered-mode GPU cross-check + finished V2.2 in-place material/pixel gates. |
+| Per-mode pixel/material verification gates | OPEN-BOUNDED — 2026-06-21: Apple-Silicon V2.0/V2.1/V2.2 GPU readback gates now cover filtered (`dm_v20_filtered_renderer_silicon`), upscale (`dm_v21_upscale_renderer_silicon`), and modern placeholder (`dm_v22_modern_renderer_silicon`) paths. Remaining gap: finished V2.2 in-place material/pixel gates plus broader deterministic V1/V2 screenshot scripts. |
 
 ---
 
