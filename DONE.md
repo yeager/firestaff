@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 Tier 1 data-path CTest gate cleanup: `ctest --test-dir build -R '^asset_validate_coverage_by_game$' --output-on-failure` PASS 1/1 and `ctest --test-dir build -R '^tier1_strict_boot_probe$' --output-on-failure` PASS 1/1 (5/5 in-scope launch paths: DM1 canonical, DM1 legacy-dos, Theron JP canonical, Theron JP extras, Theron US extras). `docs/FIRESTAFF_GAP_LIST.md` now marks the A5 `--scan-data` READY-path smoke row and Tier 1 #5 path-discovery row done for their current scope; CSB silent-exit and Nexus virtual-ISO launch stay in Tier 4 runtime/launcher follow-ups.
+
 - ✅ 2026-06-21 PO validator native-vs-fallback split: `po/validate_po_layout.sh` now reports `nonblank` and `native` coverage separately. Catalog entries where `msgstr == msgid` are counted as fallback/scaffold coverage, fallback-only locale files are marked `FALL`, and structural CI still passes unless required files/headers are broken. Verification: `bash -n po/validate_po_layout.sh && bash po/validate_po_layout.sh` PASS with 39 fallback-only warnings surfaced instead of hidden as 100 % native coverage.
 
 - ✅ 2026-06-21 Lefthook CI status cleanup: `.github/workflows/verify.yml` already installs Go, installs Lefthook with `go install github.com/evilmartians/lefthook@latest`, exports GOPATH/bin, and runs `lefthook run ci` in asset-hygiene. `docs/FIRESTAFF_GAP_LIST.md` now marks the CI-specific Lefthook row FIXED; local missing-Lefthook messages remain harmless developer-machine no-ops.

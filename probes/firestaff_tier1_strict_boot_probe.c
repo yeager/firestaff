@@ -20,7 +20,7 @@
  *     without an extract step; that is a Tier 4 launcher gap
  *     (Nexus runtime coverage), not a path-discovery gap.
  *
- * Pass: 6/6 in-scope paths reach their boot milestone.
+ * Pass: 5/5 in-scope paths reach their boot milestone.
  *
  * Run:
  *   SDL_VIDEODRIVER=dummy ./build/firestaff_tier1_strict_boot_probe
