@@ -5324,6 +5324,11 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE firestaff_m10)
+    add_executable(test_dm1_v22_asset_pipeline
+        tests/test_dm1_v22_asset_pipeline.c
+        src/dm1v2/dm1_v22_asset_pipeline.c
+    )
+    target_link_libraries(test_dm1_v22_asset_pipeline PRIVATE firestaff_v2)
     add_executable(test_dm1_v22_verification
         tests/test_dm1_v22_verification.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
@@ -5720,6 +5725,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v22_verification
         COMMAND test_dm1_v22_verification
+    )
+    add_test(
+        NAME dm1_v22_asset_pipeline
+        COMMAND test_dm1_v22_asset_pipeline
     )
     add_test(
         NAME dm1_v2_viewport_materials_pc34
