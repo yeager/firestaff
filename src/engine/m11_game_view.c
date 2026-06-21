@@ -7616,7 +7616,7 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
                     &state->dm1V1MovementPipeline,
                     &state->lastDm1V1MovementPipelineResult,
                     &state->world.party,
-                    (DM1_V2_CameraController*)&state->p5_camera,
+                    &state->p5_camera,
                     state->camera_duration_ms,
                     smoothTurnPanEnabled,
                     &br);
@@ -7625,16 +7625,15 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
              * immediately available for the upcoming render frame.
              * dm1_v2_camera_tick(dtMs) accumulates the elapsed animation time
              * and computes visualX/Y vs logicalX/Y for the sub-grid offset. */
-            dm1_v2_camera_tick((DM1_V2_CameraController*)&state->p5_camera,
-                              state->camera_duration_ms);
+            dm1_v2_camera_tick(&state->p5_camera, state->camera_duration_ms);
 
             /* Propagate camera state into M11_GameViewState for m11_sample_viewport_cell */
             state->camera_offset_x = (int)dm1_v2_camera_offset_x(
-                    (const DM1_V2_CameraController*)&state->p5_camera);
+                    &state->p5_camera);
             state->camera_offset_y = (int)dm1_v2_camera_offset_y(
-                    (const DM1_V2_CameraController*)&state->p5_camera);
+                    &state->p5_camera);
             state->camera_interpolated_facing = dm1_v2_camera_interpolated_facing(
-                    (const DM1_V2_CameraController*)&state->p5_camera);
+                    &state->p5_camera);
             (void)br; /* sourceEvidence for documentation only */
         }
     }
@@ -24451,8 +24450,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     int camX = state->camera_offset_x;
     int camY = state->camera_offset_y;
     int camDir = state->camera_interpolated_facing;
-    int turnPanX = dm1_v2_camera_turn_pan_offset_x(
-        (const DM1_V2_CameraController*)&state->p5_camera);
+    int turnPanX = dm1_v2_camera_turn_pan_offset_x(&state->p5_camera);
     (void)camDir; /* facing interpolation used by creature sprite pass */
     static const M11_ViewRect viewport = {M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H};
     static const M11_ViewRect frames[4] = {

@@ -1,0 +1,20 @@
+{
+  "pass": 70,
+  "tool": "tools/pass70_viewport_pair_compare.py",
+  "firestaff": "verification-screens/03_ingame_move_forward_latest_viewport_224x136.png",
+  "firestaff_sha256": "2d796ee923ac44b99880b4bd4201cbeeaab05f5905c0f42f7f156894eb474561",
+  "original": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png",
+  "original_sha256": "c55c0311116bf2d3f9eeaaa238a01cdffd65a518e95e9526aa3e60d93454a73d",
+  "region_xywh": [
+    0,
+    0,
+    224,
+    136
+  ],
+  "tolerance_per_channel": 0,
+  "differing_pixels": 23497,
+  "total_pixels": 30464,
+  "delta_percent": 77.1304,
+  "mask_path": "parity-evidence/overlays/pass376_firestaff_pairing/03_ingame_move_forward_viewport_original_vs_firestaff.mask.png",
+  "honesty": "Diff is measurement only; it is not a parity claim without source-backed interpretation of the mismatch."
+}
