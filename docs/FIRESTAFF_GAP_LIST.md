@@ -131,7 +131,7 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 | DM_SAVE_HEADER noise/keys/checksums | FINAL_GAPS | FIXED |
 | Hall of Champions 4-mirror + wall-mirror zones | FINAL_GAPS | FIXED |
 | M12 launcher extras (3/5 wired) | FINAL_GAPS | FIXED (3 of 5) |
-| **M12 launcher extras (2 remaining)** | FINAL_GAPS | OPEN-BOUNDED |
+| **M12 launcher extras (spell reference + map viewer)** | FINAL_GAPS | OUT-OF-SCOPE -- pass1060 audit: `docs/FINAL_GAPS.md` marks both as lacking a data source; `src/ui/menu_startup_m12.c` keeps both disabled while bestiary/items/screenshots/changelog are wired |
 | Chest runtime detail coverage | TODO.md | OPEN-BOUNDED |
 | Inventory route parity for all item types | `docs/dm1_gap_inventory_items.md` | PARTIAL |
 | Champion portrait sensor parity | `docs/dm1_gap_portrait_sensor.md` | FIXED -- pass1059 audit: C127 `sensorData` is a 0..23 C026 atlas ordinal, not 0..7; M11 runtime already clamps to `mirrorCatalog.count`; resurrection test keeps index 23 valid |
