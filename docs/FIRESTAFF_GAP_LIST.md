@@ -236,7 +236,7 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone g_dm2.html
 | **Advanced CCM (DM2_PROCEED_CCM)** | FIXED — 2026-06-21: `af5e7276 dm2_v1: Part E+F — CCM (advanced) + projectile drain to M11` + `test_dm2_v1_ccm_pc34_compat` (42/42 PASS, including stubbed-opcodes-return-unknown). Source-locked against skproject `c_ccm.cpp`. |
 | **Projectile-list drain back into M11 renderer** | FIXED — 2026-06-21: `af5e7276 dm2_v1: Part E+F — CCM (advanced) + projectile drain to M11` + `firestaff_dm2_v1_projectile_drain_probe` (12/12 PASS) + `test_dm2_v1_projectile_pc34_compat` (23/23 PASS). |
 | **Original-overlay proof** | OPEN-BOUNDED — no Firestaff-vs-original DM2 evidence yet; canonical launch smoke is now gated separately, but no original overlay/pixel evidence has been produced |
-| **Launch-smoke gate** | FIXED — 2026-06-21: DM2 canonical `--game dm2 --data-dir ~/.firestaff/data/dm2` and DM2 DOS EN extras `~/.firestaff/data/dm2-extras/dos-en` both emit `DM2 READY` through the M11 stderr-pipe and are covered by `tier1_strict_boot_probe`; broader DM2 cross-version launch remains tracked under D3 |
+| **Launch-smoke gate** | FIXED — 2026-06-21: DM2 canonical `--game dm2 --data-dir ~/.firestaff/data/dm2` and DM2 PC extras `dm2-extras/dos-en`, `dm2-extras/dos-fr`, `dm2-extras/pc-fr`, and `dm2-extras/pc-de` emit `DM2 READY` through the M11 stderr-pipe and are covered by `tier1_strict_boot_probe`; broader non-PC/demo launch remains tracked under D3 |
 
 ### D2. DM2 V2
 
@@ -253,7 +253,7 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone g_dm2.html
 
 | Version | Status |
 |---|---|
-| DM2 PC 0.9 / 1.0 (en/fr/ge) / demo | EXTRACTED — `dm2-extras/dos-en/` now matches canonical PC EN hashes and is LAUNCH-TESTED via `tier1_strict_boot_probe`; `dm2-extras/dos-fr/` + `dm2-extras/pc-{fr,de}/` remain extracted/pending per-version launch normalization |
+| DM2 PC 0.9 / 1.0 (en/fr/ge) / demo | EXTRACTED + VERIFIED + LAUNCH-TESTED for PC extras `dm2-extras/dos-en/`, `dm2-extras/dos-fr/`, `dm2-extras/pc-fr/`, and `dm2-extras/pc-de/` via `tier1_strict_boot_probe`; demo status still needs separate version classification |
 | DM2 Amiga 1.0 (en-fr-ge) | EXTRACTED — `dm2-extras/amiga-en/` |
 | DM2 MegaCD/SegaCD 1.0 (jp/en) | EXTRACTED — `dm2-extras/mega-cd-jp/` |
 | DM2 Macintosh 1.0 (en/jp/demo) — uses QuickTime .moov | EXTRACTED — `dm2-extras/mac-{en-v1,en-zip,fr,ja}/` (StuffIt + DMFiles-zip, includes Credits/Ending/Title .MooV) |
@@ -736,13 +736,14 @@ acceptera att 3.5 är oåtkomlig utan mer arbete och stryk den ur
 
 ### L5. DM2 extras launch-test
 
-Status 2026-06-21: DONE för DOS EN extras. `dm2_v1_boot_scan_assets`
+Status 2026-06-21: DONE för PC extras. `dm2_v1_boot_scan_assets`
 accepterar nu extracted DOS-layouten `data/graphics.dat` +
-`data/dungeon.dat`, `tier1_strict_boot_probe` kör
-`--game dm2 --data-dir ~/.firestaff/data/dm2-extras/dos-en`, och
-launch-smoken når `DM2 READY`. Återstående DM2-versionsteg ligger i D3:
-franska/tyska/demo-extras behöver samma hash-/layout-normalisering
-innan de kan bli cross-version-regressionstäckning.
+`data/dungeon.dat`, och `tier1_strict_boot_probe` kör DM2 canonical
+plus `dm2-extras/dos-en`, `dm2-extras/dos-fr`, `dm2-extras/pc-fr`
+och `dm2-extras/pc-de` till `DM2 READY`. Återstående DM2-versionsteg
+ligger i D3: demo och icke-PC-versioner behöver separat klassning och
+eventuell container-/formatnormalisering innan de kan bli
+cross-version-regressionstäckning.
 
 ### L6. README-public-dokumentation-uppdatering
 
