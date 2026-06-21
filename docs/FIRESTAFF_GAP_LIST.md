@@ -56,7 +56,7 @@ Classification:
 |---|---|---|
 | CSB-specific hidden-code items 558-562 (Amiga executable blobs) | greatstone d_items.html | FIXED — `csb_hidden_code_skip_table_unit` + `csb_v1_graphics_hidden_item_skip_pc34` PASS 2/2 on 2026-06-21; remaining CSB real-asset rendering work is tracked under CSB runtime/graphics rows |
 | Atari ST hidden code skip | greatstone d_items.html | FIXED — same skip-table/loader gates cover Atari ST items 21/538/548 and 558-562 |
-| Champion panel portrait loading from CSB utility disk | CSB docs | PARTIAL — CMP decode/import, Utility Disk flow, imported-party inventory handoff, and runtime load/attribute gates are now CTest-backed; CSB portrait source-selection/render handoff is still missing |
+| Champion panel portrait loading from CSB utility disk | CSB docs | FIXED for current Utility Disk portrait handoff — CMP decode/import, Utility Disk flow, imported-party inventory handoff, runtime load/attribute gates, and data-free runtime portrait render-source selection are now CTest-backed. `csb_v1_portrait_render_handoff_pc34_compat` proves synthetic `.CMP` → `CSB_V1_PartyState` → runtime party snapshot → exact `CSB_V1_Champion.Portrait` render source with ReDMCSB `PANEL.C:F0354` / `CHAMDRAW.C:F0292` source lock. Real CSB viewport/HUD captures and pixel parity remain tracked under CSB graphics/runtime rows. |
 | Savegame format (DM1, CSB) | ReDMCSB + dmweb | FIXED for DM1 (`dm1_v1_save_load.c`), PARTIAL for CSB |
 | Savegame format (DM2) | skproject source | PARTIAL |
 | Savegame format (Nexus .sav) | locally verified | PARTIAL |

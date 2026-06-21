@@ -43,6 +43,7 @@
 #ifndef FIRESTAFF_CSB_V1_RUNTIME_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_RUNTIME_PC34_COMPAT_H
 
+#include <stddef.h>
 #include <stdint.h>
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
@@ -272,6 +273,18 @@ typedef struct {
 } CSB_V1_RuntimeProfile;
 
 typedef struct {
+    const uint8_t *portrait;
+    size_t portrait_byte_count;
+    int portrait_width;
+    int portrait_height;
+    int portrait_byte_width;
+    int champion_index;
+    int is_leader;
+    const char *name;
+    const char *title;
+} CSB_V1_ChampionPortraitRenderSource;
+
+typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
     int old_party_y;
@@ -309,6 +322,10 @@ int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
                                    CSB_V1_PartyState *out_party);
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
+int csb_v1_runtime_select_champion_portrait_render_source(
+    const CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    CSB_V1_ChampionPortraitRenderSource *out_source);
 
 /* Rotate the party to a new direction.
  * Mirrors ReDMCSB CHAMPION.C F0284_CHAMPION_SetPartyDirection lines 117-130:
