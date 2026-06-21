@@ -442,9 +442,13 @@ order:
    ST (21/538/548), 3 CSB Amiga (21/676/686). Source-locked against
    Meynaf disassembly + 4 COD1/COD2/COD3/COD4 container formats.
 4. LZW decoder for Atari ST GRAPHICS.DAT (only Atari ST uses LZW).
-   — PARTIAL: `m11_gfx_lzw_decompress` has a contract-only
-   round-trip test (`test_dm1_lzw_round_trip.c`, 96/96 PASS,
-   pass852). Real Atari ST asset handoff still BLOCKED-DATA.
+   — DONE (commit per `src/shared/changelog_m12.c:14`: Tier 2 #4
+   "DM1 V1 graphics LZW decoder fix + tests"; `m11_gfx_lzw_decompress`
+   in `src/dm1/dm1_v1_graphics_loader_pc34_compat.c` round-trip-tested
+   via `test_dm1_lzw_round_trip.c` 8/8 PASS; CSB Atari ST loader in
+   `src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c` consumes
+   the same decoder). Source-locked to ReDMCSB LZW.C F0495 +
+   G0666 max=4096 + 12-bit codes.
 5. PAK container decoder for Atari ST START.PAK. — DONE (commit 3ee479de)
 6. CMP portrait loader for CSB utility disk. — DONE (commit 532c8250)
 7. Harmonize MD5 vs SHA256 in `asset_find_by_hash.c` (or add
