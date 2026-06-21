@@ -1993,6 +1993,45 @@ endif()
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
 if(BUILD_TESTING)
+    function(firestaff_add_test_if_missing test_name)
+        get_property(_firestaff_existing_tests DIRECTORY PROPERTY TESTS)
+        list(FIND _firestaff_existing_tests "${test_name}" _firestaff_test_index)
+        if(_firestaff_test_index EQUAL -1)
+            add_test(
+                NAME ${test_name}
+                COMMAND ${ARGN}
+            )
+        endif()
+    endfunction()
+
+    if(TARGET firestaff_dm1_v22_inplace_render_probe)
+        firestaff_add_test_if_missing(
+            dm1_v22_inplace_render_probe
+            firestaff_dm1_v22_inplace_render_probe
+        )
+        set_tests_properties(dm1_v22_inplace_render_probe PROPERTIES
+            LABELS "dm1;v2;render;readiness"
+        )
+    endif()
+    if(TARGET firestaff_dm1_v2_side_by_side_presentation_seed_probe)
+        firestaff_add_test_if_missing(
+            dm1_v2_side_by_side_presentation_seed_probe
+            firestaff_dm1_v2_side_by_side_presentation_seed_probe
+        )
+        set_tests_properties(dm1_v2_side_by_side_presentation_seed_probe PROPERTIES
+            LABELS "dm1;v2;presentation;readiness"
+        )
+    endif()
+    if(TARGET firestaff_dm1_v2_shape_runtime_probe)
+        firestaff_add_test_if_missing(
+            dm1_v2_shape_runtime_probe
+            firestaff_dm1_v2_shape_runtime_probe
+        )
+        set_tests_properties(dm1_v2_shape_runtime_probe PROPERTIES
+            LABELS "dm1;v2;shape_runtime;readiness"
+        )
+    endif()
+
     add_test(
         NAME dm1_v1_viewport_draw_order_probe
         COMMAND firestaff_dm1_v1_viewport_draw_order_probe
