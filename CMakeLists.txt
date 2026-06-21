@@ -1794,11 +1794,11 @@ foreach(_pool_probe_src IN ITEMS
 endforeach()
 
 # DM1 V1 champion-mirror VISUAL CAPTURE probe — takes DATA_DIR OUT_DIR,
-# unlike the foreach probes above (DATA_DIR only). Saves 9 PPMs (one per
-# Hall of Champions pose: 6 with mirror ordinals + 3 corridor negatives)
-# plus a JSON+MD manifest for visual-evidence readiness against the
-# 'champion mirrors not visible' P1 bug ticket. The probe is not gated
-# by WORKSPACE_DATA_DIR — callers pass their own output directory.
+# unlike the foreach probes above (DATA_DIR only). Saves PPMs plus a
+# JSON+MD manifest for visual-evidence readiness against the
+# 'champion mirrors not visible' P1 bug ticket. The CTest path writes
+# to a build-local output directory and skip-passes when hash-verified
+# DM1 data is unavailable.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_capture_probe.c")
     add_executable(firestaff_dm1_v1_champion_mirror_capture_probe
         probes/m11/firestaff_dm1_v1_champion_mirror_capture_probe.c
@@ -1807,9 +1807,12 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     if(NOT MSVC)
         target_compile_options(firestaff_dm1_v1_champion_mirror_capture_probe PRIVATE -Wall -Wextra -O2)
     endif()
-    # NOTE: no add_test() — this probe writes files and takes an OUT_DIR
-    # arg, so it's intended for manual visual-evidence capture runs, not
-    # for ctest automation. To exercise it: ./build/firestaff_dm1_v1_champion_mirror_capture_probe ~/.firestaff/data/dm1 /tmp/captures
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_capture_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_capture_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+            "${CMAKE_CURRENT_BINARY_DIR}/dm1_v1_champion_mirror_capture_ctest"
+    )
 endif()
 
 # DM1 V1 viewport wall visual capture probe — takes DATA_DIR OUT_DIR.
