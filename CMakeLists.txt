@@ -854,13 +854,15 @@ endif()
 # (Tier 4 diagnostic-blocker), Nexus Merged.iso::DM.BIN / Track 1.bin
 # mount (Tier 4 launcher gap). See docs/FIRESTAFF_GAP_LIST.md
 # Section H Tier 1 #5 + Section L1 for context.
-add_executable(firestaff_tier1_strict_boot_probe
-    probes/firestaff_tier1_strict_boot_probe.c)
-add_dependencies(firestaff_tier1_strict_boot_probe firestaff)
-target_include_directories(firestaff_tier1_strict_boot_probe PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
-if(NOT MSVC)
-    target_compile_options(firestaff_tier1_strict_boot_probe PRIVATE -Wall -Wextra -O2)
+if(NOT WIN32)
+    add_executable(firestaff_tier1_strict_boot_probe
+        probes/firestaff_tier1_strict_boot_probe.c)
+    add_dependencies(firestaff_tier1_strict_boot_probe firestaff)
+    target_include_directories(firestaff_tier1_strict_boot_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_tier1_strict_boot_probe PRIVATE -Wall -Wextra -O2)
+    endif()
 endif()
 
 # Nexus V2 HUD Overlay Probe
@@ -4975,6 +4977,9 @@ if(BUILD_TESTING)
         tests/test_dm1_v2_spell_effect_pc34.c
         src/dm1v2/dm1_v2_spell_effect_overlay_pc34.c
     )
+    if(NOT MSVC)
+        target_link_libraries(test_dm1_v2_spell_effect_pc34 PRIVATE m)
+    endif()
     target_compile_definitions(test_dm1_v2_spell_effect_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     add_executable(test_dm1_v2_item_render_pc34
         tests/test_dm1_v2_item_render_pc34.c
@@ -5632,6 +5637,10 @@ if(BUILD_TESTING)
         COMMAND test_theron_v22_modern_assets_pc34
     )
     add_test(
+        NAME pass648_dm1_v2_asset_pipeline
+        COMMAND firestaff_pass648_dm1_v2_asset_pipeline_probe
+    )
+    add_test(
         NAME theron_v2_smooth_movement_pc34
         COMMAND test_theron_v2_smooth_movement_pc34
     )
@@ -5663,11 +5672,10 @@ if(BUILD_TESTING)
         NAME m11_display_aspect_present_rect
         COMMAND test_m11_display_aspect_present_rect
     )
-    # DISABLED — test_dm1_v22_verification has API mismatches (see above)
-    # add_test(
-    #     NAME dm1_v22_verification
-    #     COMMAND test_dm1_v22_verification
-    # )
+    add_test(
+        NAME dm1_v22_verification
+        COMMAND test_dm1_v22_verification
+    )
     add_test(
         NAME dm1_v2_settings_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_settings_source_lock.py
