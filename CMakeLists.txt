@@ -7624,6 +7624,10 @@ if(NOT TARGET test_dm1_v1_text_message_pc34_compat)
         NAME dm1_v1_text_message_source_lock
         COMMAND test_dm1_v1_text_message_pc34_compat
     )
+    add_test(
+        NAME pass401_dm1_v1_text_window_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass401_dm1_v1_text_window_source_lock.py --json
+    )
 endif()
 
 # ── DUNGEON.C F0168 scroll TextString source-lock gate ───────────────
