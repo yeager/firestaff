@@ -66,7 +66,7 @@ timing and inventory routes.
 | **Chaos Strikes Back (CSB)** | Hash-verified launch/profile boundary, real DUNGEON.DAT load, dungeon handle handoff, object-chain access, imported champion stats/load behavior, party rotation, tick accumulation, timeline dispatch, wall text, and deterministic boot-to-viewport render slices are verified. End-to-end playability, title/import UI composition, broader command queue binding, and full viewport integration are still being hardened. | All three Custom modes share the same selectable 640x400..3840x2160 resolution. Original compatibility and launch/profile separation exist. HUD overlay and smooth-movement scaffolds are covered by probes, but enhanced assets, lighting, controller ergonomics, and full side-by-side screenshot verification remain open. |
 | **Dungeon Master II: Skullkeep (DM2)** | Boot/profile, utility/import, world-state, save/load, weather, projectile-door, asset-loader, dungeon-loader, object-model, and map-state probes exist. Broader dungeon, rendering, mechanics, creature/combat, shops/NPCs, and real-runtime compatibility remain active work. | All three Custom modes share the same selectable 640x400..3840x2160 resolution. Enhanced asset, HUD, lighting/outdoor effects, smooth movement, touch/controller, and verification scaffolds are implemented. Custom remains presentation work on top of the still-active Original parity effort. |
 | **DM Nexus (Saturn)** | Saturn DMDF/DGN parsing, world/runtime state, rendering slices, save/load, actor bounds, mechanics scaffolding, and verification paths exist. Launcher/game-loop handoff with real Saturn asset-path proof and broader runtime coverage remain active. | All three Custom modes share the same selectable 640x400..3840x2160 resolution once launchable. Asset, UI, lighting, and touch/controller slices exist, and v2.8.0 added the smooth-movement tick to the Custom render pipeline. Custom compatibility lock, launch/profile separation, and full verification remain behind the Original handoff proof. |
-| **Theron's Quest** | JP/US Track 02 provenance is hash-verified. Parser, world/progression state, viewport/UI, initial mechanics, save/load, shop-table guards, direct hash-verified boot-profile loading, and a narrow US bank-boundary signal are verified. Tier 1 #5 strict boot-probe confirms JP canonical, JP extras, and US extras all reach `TQR level load` via `--data-dir` (`firestaff_tier1_strict_boot_probe` 5/5 in-scope paths PASS as of 2026-06-21). Exact Track 02 dungeon-bank offsets, full dungeon loader parity, runtime playability path, and README-eligible real screenshots remain active work. | Not started beyond keeping the Original compatibility boundary honest. When a Custom path is exposed, it should use the same selectable 640x400..3840x2160 resolution as the other games. Custom work waits on stronger Original Track 02 parity and runtime proof. |
+| **Theron's Quest** | JP/US Track 02 provenance is hash-verified. Parser, world/progression state, viewport/UI, initial mechanics, save/load, shop-table guards, direct hash-verified boot-profile loading, and a narrow US bank-boundary signal are verified. Tier 1 #5 strict boot-probe confirms JP canonical, JP extras, and US extras all reach `TQR level load` via `--data-dir`. Exact Track 02 dungeon-bank offsets, full dungeon loader parity, runtime playability path, and README-eligible real screenshots remain active work. | Not started beyond keeping the Original compatibility boundary honest. When a Custom path is exposed, it should use the same selectable 640x400..3840x2160 resolution as the other games. Custom work waits on stronger Original Track 02 parity and runtime proof. |
 
 ## What Firestaff Gives You
 
@@ -87,7 +87,7 @@ timing and inventory routes.
   Track 02, CSB Amiga 3.3 Meynaf FR, DM1 legacy-dos PC34) launches
   without manual versionIndex tweaking. Tier 1 #5 strict boot-probe
   (`firestaff_tier1_strict_boot_probe` ctest entry) currently verifies
-  5/5 in-scope paths reach their boot milestone.
+  all present in-scope paths reach their boot milestone.
 - **Two presentation families per game**: pixel-faithful **Original** at
   320x200, and **Custom** with selectable filtered, upscaled, and modern
   targets up to 3840x2160.
@@ -143,14 +143,15 @@ history.
 - **Tier 1 #5 strict boot-probe per path** (`firestaff_tier1_strict_boot_probe`,
   ctest entry `tier1_strict_boot_probe`): runs the firestaff launcher
   with `--game <id> --data-dir <path>` under `SDL_VIDEODRIVER=dummy`
-  and asserts the per-game boot milestone. Currently 5/5 in-scope
-  paths PASS (DM1 canonical, DM1 legacy-dos, Theron JP canonical,
-  Theron JP extras, Theron US extras). The Theron US extras case
+  and asserts the per-game boot milestone. Current in-scope paths PASS:
+  DM1 canonical, DM1 legacy-dos, CSB canonical, CSB Amiga 3.3 Meynaf FR,
+  Theron JP canonical, Theron JP extras, and Theron US extras. The Theron
+  US extras case
   exercises the new `M12_AssetStatus_GetFirstMatchedVersion` +
   first-matched-version fallback in `M11_GameView_OpenSelectedMenuEntry`
   (commit `033edf66`), so direct launch via `--data-dir` works
-  without manual versionIndex tweaking. CSB (silent launcher exit)
-  and Nexus (Merged.iso::DM.BIN mount) remain out-of-scope and are
+  without manual versionIndex tweaking. Nexus (Merged.iso::DM.BIN mount)
+  remains out-of-scope and is
   tracked as Tier 4 / diagnostic gaps in `docs/FIRESTAFF_GAP_LIST.md`.
 - **Tier 2 #4 LZW Atari ST decoder** marked DONE in the gap-list:
   the decoder lives in `src/dm1/dm1_v1_graphics_loader_pc34_compat.c`,

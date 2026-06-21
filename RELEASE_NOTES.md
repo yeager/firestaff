@@ -25,19 +25,19 @@ as the previous release.
   launcher with `--game <id> --data-dir <path> --duration 1500`
   under `SDL_VIDEODRIVER=dummy` for every EXTRACTED + VERIFIED path
   `--scan-data` marks READY, and asserts the per-game boot milestone
-  (DM1 `LOADING DUNGEON`, Theron `TQR level load: status=OK`).
-  Current status: **5/5 in-scope paths PASS** (DM1 canonical, DM1
-  legacy-dos, Theron JP canonical, Theron JP extras, Theron US
-  extras). The Theron US extras case exercises the new
+  (DM1 `LOADING DUNGEON`, CSB `CSB READY`, Theron `TQR level load: status=OK`).
+  Current status: all present in-scope paths PASS (DM1 canonical, DM1
+  legacy-dos, CSB canonical, CSB Amiga 3.3 Meynaf FR,
+  Theron JP canonical, Theron JP extras, and Theron US extras). The
+  Theron US extras case exercises the new
   `M12_AssetStatus_GetFirstMatchedVersion` +
   first-matched-version fallback in
   `M11_GameView_OpenSelectedMenuEntry` so direct launch via
   `--data-dir` no longer fails when user-selected versionIndex
-  doesn't match the supplied variant. CSB (silent launcher exit)
-  and Nexus (`Merged.iso::DM.BIN` / `Track 1.bin::DM.BIN` mount
-  without extract step) remain out-of-scope and are tracked as
-  Tier 4 / diagnostic gaps in `docs/FIRESTAFF_GAP_LIST.md` Section H
-  + Section L1. Hash-fallback table in
+  doesn't match the supplied variant. Nexus (`Merged.iso::DM.BIN` /
+  `Track 1.bin::DM.BIN` mount without extract step) remains out-of-scope
+  and is tracked as a Tier 4 / diagnostic gap in
+  `docs/FIRESTAFF_GAP_LIST.md` Section H + Section L1. Hash-fallback table in
   `m11_resolve_builtin_dungeon_path` extended with Nexus DM.BIN
   (`e88d6085...`) + Theron US Track 02 (`f2360110...`) for
   callers that resolve the dungeon path explicitly.
