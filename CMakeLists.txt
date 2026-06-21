@@ -4706,6 +4706,30 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_special_square_interaction_probe
     )
 
+    add_executable(firestaff_dm1_v1_door_button_d1c_press_frame_gate
+        probes/dm1/firestaff_dm1_v1_door_button_d1c_press_frame_gate.c
+    )
+    target_link_libraries(firestaff_dm1_v1_door_button_d1c_press_frame_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_door_button_d1c_press_frame_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_door_button_d1c_press_frame_gate
+        COMMAND firestaff_dm1_v1_door_button_d1c_press_frame_gate
+    )
+
+    add_executable(firestaff_dm1_v1_pit_falling_damage_gate
+        probes/dm1/firestaff_dm1_v1_pit_falling_damage_gate.c
+    )
+    target_link_libraries(firestaff_dm1_v1_pit_falling_damage_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_pit_falling_damage_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_pit_falling_damage_gate
+        COMMAND firestaff_dm1_v1_pit_falling_damage_gate
+    )
+
     add_executable(firestaff_dm1_v1_walls_occlusion_blockers_probe
         probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c
     )
