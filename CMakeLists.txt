@@ -6557,6 +6557,20 @@ if(NOT TARGET test_dm1_v1_champion_stats_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_mirror_catalog_champion_stats_pc34_compat)
+    add_executable(test_dm1_v1_mirror_catalog_champion_stats_pc34_compat
+        tests/test_dm1_v1_mirror_catalog_champion_stats_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_catalog_champion_stats_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_catalog_champion_stats_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_catalog_champion_stats_pc34_compat
+        COMMAND test_dm1_v1_mirror_catalog_champion_stats_pc34_compat
+    )
+endif()
+
 # DM1 V1 champion statistic drawn-panel source-lock / pixel-parity blocker gate
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(

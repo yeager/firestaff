@@ -135,7 +135,7 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 | Chest runtime detail coverage | TODO.md | PARTIAL -- pass1062 wires the existing pass652 scroll-wheel pickup-overflow runtime regression into CTest/Python verification; remaining chest work is broader runtime detail and pixel-polish evidence |
 | Inventory route parity for all item types | `docs/dm1_gap_inventory_items.md` | PARTIAL -- pass1061 closes the stale `m11_obj_use()` consumable wiring gap; broader slot/panel/item-type runtime parity and pixel evidence remain |
 | Champion portrait sensor parity | `docs/dm1_gap_portrait_sensor.md` | FIXED -- pass1059 audit: C127 `sensorData` is a 0..23 C026 atlas ordinal, not 0..7; M11 runtime already clamps to `mirrorCatalog.count`; resurrection test keeps index 23 valid |
-| Per-champion C01-C24 stats | `docs/dm1_gap_c01_c24_stats.md` | PARTIAL |
+| Per-champion C01-C24 stats | `docs/dm1_gap_c01_c24_stats.md` | FIXED -- pass1063 audit/test: Hall recruitment uses decoded mirror records via `F0606`/`F0652`/`F0673`, not flat `m11_stats_add_champion()` defaults or G0243 creature data |
 | C25-C26 anti-magic/spell items | `docs/dm1_gap_c25_c26.md` | PARTIAL |
 | Touch zones for inventory | `docs/dm1_touch_inventory.md` | PARTIAL |
 | Touch zones for champion panel | `docs/dm1_touch_champion.md` | PARTIAL |
