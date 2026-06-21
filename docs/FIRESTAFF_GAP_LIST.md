@@ -142,7 +142,7 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 | Touch zones for menu | `docs/dm1_touch_menu.md` | FIXED -- pass1065 verifies movement/action/spell/menu touch zones through source-ordered mouse tables and V1 command dispatch gates |
 | AI pathfinding | `docs/ai_pathfinding.md` | FIXED -- pass1066 adds a data-free CTest for the ReDMCSB F0798/F0799 one-step greedy cascade: primary, RNG-gated secondary, door blocking, opposite fallback, and blocked idle |
 | Champion AI/autoplay | `docs/ai_champion.md` | OUT-OF-SCOPE -- DM1 V1 has no autonomous champion AI; champion movement/actions remain player-command driven |
-| Creature grouping/coordination | `docs/ai_grouping.md` | PARTIAL -- source-locked group direction, quarter-square melee adjustment, and split gates exist; broader real-runtime group evidence remains under creature-chain capture |
+| Creature grouping/coordination | `docs/ai_grouping.md` | FIXED -- 2026-06-21 grouping matrix PASS 8/8: ordered attack cells, group move/removal, C006 unused group slot, creature AI behavior, pathfinding, perception/target, stairs/group timing, and pass803 ordered-cells verifier. Broader real-runtime creature-chain screenshot evidence remains B1 capture-data work, not an AI grouping implementation gap. |
 | Creature AI aggro/reaction/spell behavior | `docs/ai_creature.md`, `docs/ai_aggro.md` | FIXED -- pass1067 gates F0790-F0796 perception, visibility/smell, aggro transition, determinism, and target selection; pass1069 adds reaction-event creation, projectile-hit search turn, danger movement/stop-attacking, and existing caster projectile table/payload gates |
 
 ### B3. DM1 V2
