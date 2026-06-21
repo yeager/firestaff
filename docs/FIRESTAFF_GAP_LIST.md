@@ -592,14 +592,16 @@ hasharna — några mappar till samma fil, därav 148 vs 12).
 
 Markerade i docen ovan som **EXTRACTED** (nya rader i C2, D3, E1,
 F1) — tidigare `BLOCKED-DATA`. Fyra markerade **EXTRACTED +
-VERIFIED** eftersom de nu också matchar en kanonisk hash:
+VERIFIED** eftersom de nu också matchar en kanonisk hash. Uppdatering
+2026-06-21: Theron JP/US Track 02 är dessutom launch-testad via
+`tier1_strict_boot_probe`.
 
 | Spel | Version | Status |
 |---|---|---|
 | DM1 | PC 3.4 (legacy-dos) | EXTRACTED + VERIFIED |
 | CSB | Amiga 3.3 (Meynaf FR hack) | EXTRACTED + VERIFIED |
 | Nexus | Saturn JA (Track 1) | EXTRACTED + VERIFIED |
-| Theron | JP Track 02 | EXTRACTED + VERIFIED |
+| Theron | JP/US Track 02 | EXTRACTED + VERIFIED + LAUNCH-TESTED |
 
 Dessa kan nu användas som real-asset testkällor utöver den
 befintliga canonical-staging som finns under `dm1/`, `csb/`, etc.
@@ -614,7 +616,12 @@ ny design.
 
 ### L1. Verifiera alternativa READY-path:er bootar
 
-Den nya källan Tier 1 #5. Kör mot varje EXTRACTED + VERIFIED path
+Status 2026-06-21: DONE för Tier 1 path-discovery scope via
+`tier1_strict_boot_probe` (5/5 in-scope launch paths). CSB silent-exit
+och Nexus virtual-ISO launch ligger kvar som separata Tier 4
+runtime/launcher-gaps.
+
+Den ursprungliga källan Tier 1 #5: Kör mot varje EXTRACTED + VERIFIED path
 och bekräfta att M11 faktiskt startar spelet, inte bara att
 scannern hittar hasharna.
 
