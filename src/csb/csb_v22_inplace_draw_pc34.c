@@ -37,7 +37,6 @@
 
 #include "csb_v22_inplace_draw_pc34.h"
 #include "csb_v22_shape_cache_pc34.h"
-#include "csb_v22_shape_cache_pc34.h" /* CSB_V22_CellRect + cache */
 #include "dm1_v2_asset_pipeline_pc34.h"
 #include "fs_portable_compat.h"
 
@@ -203,7 +202,7 @@ int csb_v22_inplace_draw_init(void) {
         const char* home = getenv("HOME");
         if (!home) home = ".";
         snprintf(manifest_path, sizeof(manifest_path),
-                 "%s/.firestaff/assets/dm1/modern/modern_asset_manifest.json", home);
+                 "%s/.firestaff/assets/csb/modern/modern_asset_manifest.json", home);
         char* last_slash = strrchr(manifest_path, '/');
         if (last_slash) *last_slash = '\0';
         snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", manifest_path);
@@ -341,7 +340,7 @@ int csb_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH) {
         for (lateral = -1; lateral <= 1; ++lateral) {
             int w = 0, h = 0;
             const uint32_t* rgba =
-                csb_v22_inplace_get_cell_bitmap(depth + 1, lateral, &w, &h);
+                csb_v22_inplace_get_cell_bitmap(depth, lateral, &w, &h);
             if (!rgba || w <= 0 || h <= 0) continue;
             const CSB_V22_CellRect* rect = &kV22CellRects[depth][lateral + 1];
             /* Clamp cell rect to framebuffer bounds */

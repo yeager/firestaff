@@ -56,7 +56,7 @@ void csb_v22_inplace_draw_shutdown(void);
 /* True when in-place has at least one cached bitmap. */
 int csb_v22_inplace_draw_active(void);
 
-/* Get the cached RGBA bitmap for a V22 cell. depth in {1,2,3},
+/* Get the cached RGBA bitmap for a V22 cell. depth in {0,1,2},
  * lateral in {-1,0,1}. Sets *out_w, *out_h to the bitmap dimensions.
  * Returns NULL if the cell has no V22 shape, the shape has no
  * mapped asset_id, or in-place has not been initialized.
@@ -80,8 +80,8 @@ const uint32_t* csb_v22_inplace_get_cell_bitmap(int depth, int lateral,
 const char* csb_v22_inplace_get_cell_asset_id(int depth, int lateral);
 
 /* csb_v22_inplace_render_pass — paints the cached V22 bitmaps into
- * the framebuffer at the CSB 3x3 cell rectangles (same coords as the
- * overlay pass: D1/D2/D3 × L/C/R). For each V22-active cell with a
+ * the framebuffer at the CSB 3x3 cell rectangles (D0/D1/D2 × L/C/R).
+ * For each V22-active cell with a
  * cached bitmap, nearest-neighbor scales the bitmap into the cell
  * rect and writes to framebuffer[y*fbW+x] (single-byte indexed mode).
  *
