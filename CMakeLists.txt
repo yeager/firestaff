@@ -7485,6 +7485,48 @@ if(NOT TARGET test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat)
+    add_executable(test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat
+        tests/test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat
+        COMMAND test_dm1_v1_dun01_f0150_f0701_step_delta_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_dm1_v1_dun05_f0502b_bug08_sft_overfill_pin_pc34_compat)
+    add_executable(test_dm1_v1_dun05_f0502b_bug08_sft_overfill_pin_pc34_compat
+        tests/test_dm1_v1_dun05_f0502b_bug08_sft_overfill_pin_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_dun05_f0502b_bug08_sft_overfill_pin_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_dun05_f0502b_bug08_sft_overfill_pin_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_dun05_f0502b_bug08_sft_overfill_pin
+        COMMAND test_dm1_v1_dun05_f0502b_bug08_sft_overfill_pin_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_dm1_v1_dun06_f0154_f0705_stairs_transition_pc34_compat)
+    add_executable(test_dm1_v1_dun06_f0154_f0705_stairs_transition_pc34_compat
+        tests/test_dm1_v1_dun06_f0154_f0705_stairs_transition_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_dun06_f0154_f0705_stairs_transition_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_dun06_f0154_f0705_stairs_transition_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_dun06_f0154_f0705_stairs_transition
+        COMMAND test_dm1_v1_dun06_f0154_f0705_stairs_transition_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_memory_dungeon_text_scroll_pc34_compat)
     add_executable(test_memory_dungeon_text_scroll_pc34_compat
         tests/test_memory_dungeon_text_scroll_pc34_compat.c
