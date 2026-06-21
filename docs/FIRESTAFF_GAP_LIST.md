@@ -235,8 +235,8 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone g_dm2.html
 | **Timeline wiring** | FIXED — 2026-06-21: `fc608581 dm2_v1: Part C+D — trigger + timeline parity (Phase 4 mechanics)` + `firestaff_dm2_v1_timeline_probe` (12/12 PASS) + `test_dm2_v1_timeline_pc34_compat` (34/34 PASS). |
 | **Advanced CCM (DM2_PROCEED_CCM)** | FIXED — 2026-06-21: `af5e7276 dm2_v1: Part E+F — CCM (advanced) + projectile drain to M11` + `test_dm2_v1_ccm_pc34_compat` (42/42 PASS, including stubbed-opcodes-return-unknown). Source-locked against skproject `c_ccm.cpp`. |
 | **Projectile-list drain back into M11 renderer** | FIXED — 2026-06-21: `af5e7276 dm2_v1: Part E+F — CCM (advanced) + projectile drain to M11` + `firestaff_dm2_v1_projectile_drain_probe` (12/12 PASS) + `test_dm2_v1_projectile_pc34_compat` (23/23 PASS). |
-| **Original-overlay proof** | OPEN-BOUNDED — no Firestaff-vs-original DM2 evidence yet (DM2 launch-blocked as Tier 4 launcher gap, not a D1 mechanics gap) |
-| **Launch-smoke gate** | OPEN-BOUNDED — DM2 launcher exits silently per Tier 4 launcher gap; per-path boot-probe for DM2 stays blocked until that gap closes |
+| **Original-overlay proof** | OPEN-BOUNDED — no Firestaff-vs-original DM2 evidence yet; canonical launch smoke is now gated separately, but no original overlay/pixel evidence has been produced |
+| **Launch-smoke gate** | FIXED — 2026-06-21: DM2 canonical `--game dm2 --data-dir ~/.firestaff/data/dm2` emits `DM2 READY` through the M11 stderr-pipe and is covered by `tier1_strict_boot_probe`; DM2 extras/cross-version launch remains tracked under D3/L5 |
 
 ### D2. DM2 V2
 
@@ -734,14 +734,15 @@ packar om .raw → .DAT/.DATA-format Firestaff kan läsa. Eller
 acceptera att 3.5 är oåtkomlig utan mer arbete och stryk den ur
 "extraherad"-listan.
 
-### L5. DM2 canonical launch-test
+### L5. DM2 extras launch-test
 
-DM2 var den enda spel-versionen utan ny EXTRACTED + VERIFIED path
-(det extraherade materialet har olika format och/eller språk mot
-det canonical `dm2/` använder). Kör `--game dm2 --data-dir
-~/.firestaff/data/dm2-extras/dos-en` och bekräfta att DM2 bootar
-mot en extraherad version. Detta skulle ge oss DM2-cross-version-
-regression-täckning vi saknar idag.
+Status 2026-06-21: canonical `dm2/` launch-smoke är stängd via
+`tier1_strict_boot_probe` och `DM2 READY`-markören. Extras-pathen
+`~/.firestaff/data/dm2-extras/dos-en` nekar fortfarande launch med
+`direct launch failed for --game dm2`, eftersom materialet skiljer sig
+i format och/eller språk från den canonical DM2-hash som `dm2/`
+använder. Nästa DM2-versionsteg är därför att normalisera eller mappa
+extras-materialet innan det kan bli cross-version-regressionstäckning.
 
 ### L6. README-public-dokumentation-uppdatering
 
