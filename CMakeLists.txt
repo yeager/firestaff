@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 2.9.2 LANGUAGES C)
+project(Firestaff VERSION 3.0.0 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -457,6 +457,15 @@ add_test(
 )
 set_tests_properties(theron_v1_dungeon_progression_determinism_probe PROPERTIES
     LABELS "tier4;theron;dungeon;determinism"
+)
+
+add_test(
+    NAME dm2_v1_shop_economy_determinism_probe
+    COMMAND firestaff_dm2_v1_shop_economy_determinism_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(dm2_v1_shop_economy_determinism_probe PROPERTIES
+    LABELS "tier4;dm2;shop;determinism"
 )
 
 # CSB V2 Phase 4/5/6 — Combined Runtime Wire-up Probe
@@ -2304,6 +2313,24 @@ if(BUILD_TESTING)
     target_link_libraries(firestaff_dm2_v1_shop_probe PRIVATE firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v1_shop_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+
+    # ── DM2 V1 shop-economy determinism probe (Tier 4 #18 polish) ──────
+    # Headless: no game data, no SDL rendering required. Verifies the
+    # source-locked buy/sell mechanics in dm2_v1_shop.c are deterministic
+    # across many invocations. Source-locks:
+    #   skproject/SKULLWIN/c_shop.cpp (transaction pricing)
+    #   skproject/SKULLWIN/SKWinGlobal.h:42 (NUM_NPCS=4)
+    add_executable(firestaff_dm2_v1_shop_economy_determinism_probe
+        probes/dm2/firestaff_dm2_v1_shop_economy_determinism_probe.c
+        src/dm2/dm2_v1_shop.c
+    )
+    target_include_directories(firestaff_dm2_v1_shop_economy_determinism_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_shop_economy_determinism_probe PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_shop_economy_determinism_probe PRIVATE -Wall -Wextra -O2)
     endif()
 
     # ── DM2 V1 Phase 4: Pressure plate mechanics parity ──
@@ -4919,6 +4946,20 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_particle_emitter_presets_pc34.c
         src/dm1v2/dm1_v2_particle_system_pc34.c
     )
+    add_executable(test_dm1_v2_anim_timing_pc34
+        tests/test_dm1_v2_anim_timing_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    add_executable(test_dm1_v2_creature_render_pc34
+        tests/test_dm1_v2_creature_render_pc34.c
+        src/dm1v2/dm1_v2_creature_animation_pc34.c
+    )
+    target_compile_definitions(test_dm1_v2_creature_render_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+    add_executable(test_dm1_v2_spell_effect_pc34
+        tests/test_dm1_v2_spell_effect_pc34.c
+        src/dm1v2/dm1_v2_spell_effect_overlay_pc34.c
+    )
+    target_compile_definitions(test_dm1_v2_spell_effect_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     add_executable(test_dm1_v2_item_render_pc34
         tests/test_dm1_v2_item_render_pc34.c
         src/dm1v2/dm1_v2_item_render_pc34.c
@@ -5277,6 +5318,9 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_field_projectile_effect_metadata_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_field_projectile_vfx_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_extended_field_vfx_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_anim_timing_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_creature_render_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_spell_effect_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_item_render_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
@@ -5454,6 +5498,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_extended_field_vfx_pc34
         COMMAND test_dm1_v2_extended_field_vfx_pc34
+    )
+    add_test(
+        NAME dm1_v2_anim_timing_pc34
+        COMMAND test_dm1_v2_anim_timing_pc34
+    )
+    add_test(
+        NAME dm1_v2_creature_render_pc34
+        COMMAND test_dm1_v2_creature_render_pc34
+    )
+    add_test(
+        NAME dm1_v2_spell_effect_pc34
+        COMMAND test_dm1_v2_spell_effect_pc34
     )
     add_test(
         NAME dm1_v2_field_projectile_effect_metadata_source_lock
