@@ -68,11 +68,11 @@ Classification:
 | Gap | Source | Status |
 |---|---|---|
 | 19-launcher-locale cycle | po/validate_po_layout.sh | FIXED in v2.9.2 |
-| DM1 native translations (17 non-Swedish locales) | po/dm1_translations_complete.py | PARTIAL — 90 strings seeded, rest = English fallback |
-| CSB native translations | po/csb_translations | PARTIAL — same pattern |
+| DM1 native translations (17 non-Swedish locales) | po/dm1_translations_complete.py | PARTIAL — validator now reports 492-540/547 native entries across the 17 non-Swedish catalogs; remaining gaps are fallback/blank entries plus native QA |
+| CSB native translations | po/csb_translations | PARTIAL — `sv/fr/de/ja/zh` are 33/33 native; the other shipped non-English catalogs are currently fallback-only |
 | DM2 native translations | po/dm2_translations | OUT-OF-SCOPE — DM2 slice not implemented |
-| Nexus native translations | po/nexus_translations | PARTIAL |
-| Theron native translations | po/theron_translations | OPEN-LARGE — 0 translations, Theron slice thin |
+| Nexus native translations | po/nexus_translations | PARTIAL — validator reports 28-30/30 native entries across every shipped non-English catalog; remaining work is native QA/runtime rendering, not empty scaffolding |
+| Theron native translations | po/theron_translations | PARTIAL — `fr/de/ja/zh` now have 35-37/38 native entries; 13 shipped catalogs remain fallback-only and `sv` is still absent |
 | **Native-vs-fallback separation in validator** | po/validate_po_layout.sh | FIXED — `validate_po_layout.sh` now reports `nonblank` coverage separately from `native` coverage and marks fallback-only catalogs as `FALL`; `bash -n po/validate_po_layout.sh && bash po/validate_po_layout.sh` PASS on 2026-06-21 |
 | Native QA on terminology / runtime rendering | po/ | OPEN-LARGE — needs native speakers |
 
