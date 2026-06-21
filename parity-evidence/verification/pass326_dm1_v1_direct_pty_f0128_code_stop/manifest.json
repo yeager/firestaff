@@ -10,40 +10,8 @@
     "tmux_echo_confuser": "BPLIST/setup text is present before any run marker, but pass326 does not count it. A stop requires (Running)->-> transition in an owned PTY."
   },
   "runtime_probe": {
-    "bounded_seconds": 100,
-    "bplist_negative_control_before_running": true,
-    "command_log": [
-      {
-        "cmd": "BPDEL *",
-        "excerpt": "\n-> B_  P_  D_  E_  L_   _  *_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
-        "t": 1778165028.8622472
-      },
-      {
-        "cmd": "BP 23AD:40FE",
-        "excerpt": "\n-> B_  P_   _  2_  3_  A_  D_  :_  4_  0_  F_  E_  \nDEBUG: Set breakpoint at 23AD:40FE\n\n-> _            ",
-        "t": 1778165029.6160698
-      },
-      {
-        "cmd": "BPLIST",
-        "excerpt": "\n-> B_  P_  L_  I_  S_  T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 23AD:40FE\n\n-> _      ",
-        "t": 1778165030.3707256
-      },
-      {
-        "bytes": "ESC O t",
-        "control": "F5",
-        "purpose": "run after arming F0128",
-        "t": 1778165030.421111
-      }
-    ],
-    "duration_seconds": 107.518,
-    "f0128_target_stops": [],
-    "method": "pexpect-owned PTY to dosbox-debug under Xvfb; no tmux/capture-pane",
-    "ran": true,
-    "route": "wait:9000 enter wait:8500 one wait:1800 click:276,140 wait:1800 one wait:1800 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp6 wait:900 kp4 wait:900 kp5 wait:900",
-    "route_log_path": "/home/trv2/work/firestaff-worktrees/pass326-direct-pty-proof-20260507142500/parity-evidence/verification/pass326_dm1_v1_direct_pty_f0128_code_stop/route_keylog.json",
-    "stops": [],
-    "strict_stop_detection_rule": "accept stop only after F5/run, observed (Running), observed prompt -> after running, and post-running disassembly address equals target; reject BPLIST/setup echoes",
-    "transcript_path": "/home/trv2/work/firestaff-worktrees/pass326-direct-pty-proof-20260507142500/parity-evidence/verification/pass326_dm1_v1_direct_pty_f0128_code_stop/dosbox_debug_pty.clean.txt"
+    "blocker": "missing tools: dosbox-debug, Xvfb, xdotool",
+    "ran": false
   },
   "schema": "pass326_dm1_v1_direct_pty_f0128_code_stop.v1",
   "source_audit": [
@@ -56,7 +24,7 @@
       "id": "DUNVIEW.C F0128",
       "missing": [],
       "ok": true,
-      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "anchors": {
@@ -67,7 +35,7 @@
       "id": "DRAWVIEW.C F0097",
       "missing": [],
       "ok": true,
-      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     },
     {
       "anchors": {
@@ -79,9 +47,9 @@
       "id": "COMMAND.C F0380",
       "missing": [],
       "ok": true,
-      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     }
   ],
   "status": "BLOCKED_PASS326_DIRECT_PTY_F0128_CODE_STOP_NOT_PROVEN",
-  "timestamp_utc": "2026-05-07T14:45:31.194535+00:00"
+  "timestamp_utc": "2026-06-21T16:04:27.002678+00:00"
 }

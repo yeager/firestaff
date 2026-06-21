@@ -1,6 +1,6 @@
 # Pass513 - DM1 V1 I34E route-key transcript contract
 
-Status: BLOCKED_PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_REQUIRED
+Status: PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_PROMOTABLE
 
 ## Decision
 
@@ -75,8 +75,8 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 ## Machine-checkable transcript validation
 
 - Optional promotion gate: FIRESTAFF_PASS513_TRANSCRIPT=path/to/transcript.json python3 tools/verify_pass513_dm1_v1_i34e_route_key_transcript_contract.py
-- Provided: False
-- Validation status: not_provided
+- Provided: True
+- Validation status: promotable
 - Minimum turnRows: 1
 - Minimum successfulStepRows: 1
 - Minimum blockedOrNoopRows: 1
@@ -188,6 +188,7 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - verification-screens/pass505-original-overlay-mouse-route-recapture/original-viewpoint-route-keys.log size=873
 - verification-screens/pass505-original-overlay-mouse-route-recapture/original_viewport_route_keys.swift size=6062
 - verification-screens/pass505-original-overlay-mouse-route-recapture/original_viewport_route_keys_xdotool.sh size=3995
+- verification-screens/pass513-dm1-v1-promoted-transcript/promoted_transcript.json size=7764
 - verification-screens/pass70-original-dm1-viewports/original_viewport_route_keys.swift size=6062
 - verification-screens/pass70-original-dm1-viewports/original_viewport_route_keys_xdotool.sh size=3995
 - verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_route_keys.swift size=5604
