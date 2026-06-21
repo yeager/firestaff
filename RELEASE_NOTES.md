@@ -11,6 +11,13 @@ as the previous release.
 
 ## Development since v2.8.0 (2026-06-21)
 
+- **v3.0.0 release-prep version sync**: the launcher, changelog API,
+  public version header, and CMake project version now agree on
+  `v3.0.0` / `3.0.0`. The in-app changelog summarizes the DM1
+  pass1052-1070 gap cascade, Tier 1 strict boot-probe cleanup,
+  V2.2 renderer/readback gates, and the current bounded remaining
+  DM1 V2 screenshot/material work.
+
 - **Tier 1 #5 strict boot-probe per path** (`a84a9d42`,
   `033edf66`, `f3018e72`, `a736a04d`): new
   `firestaff_tier1_strict_boot_probe` ctest entry
@@ -47,10 +54,11 @@ as the previous release.
 
 - **DM1 24h readiness roll-up** (`tools/dm1_24h_readiness.py`):
   continues to report PASS — DM1 is the strongest playable target
-  today, with all five capture-gap pairs closed (pass1052 viewport
-  + wall, pass1053 champion panel, pass1055 collision, pass1056
-  Firestaff-side pairing, pass1057 Amiga 2.2 DUNGEONB lock).
-  See `parity-evidence/verification/dm1_24h_readiness/manifest.json`
+  today, with Firestaff-side route, collision, pairing, keypad,
+  playable-route, closed-door, Phase A, and V1/V2 seed gates inside
+  the roll-up. Original-vs-Firestaff capture rows remain bounded
+  evidence work rather than broad parity claims; see
+  `parity-evidence/verification/dm1_24h_readiness/manifest.json`
   for the per-criterion breakdown.
 
 ## Headline features
