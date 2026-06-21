@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 champion mouse leader-switch gate: registered existing `firestaff_dm1_v1_champion_mouse_leader_switch_probe` as CTest target `dm1_v1_champion_mouse_leader_switch_probe`. The synthetic source-locked gate verifies champion status-box mouse events enqueue C012..C015, nested name/hand routing resolves C016..C019 leader commands, and F0368-style leader changes update leader hand weight, direction, and redraw bookkeeping while ignoring same/dead targets. This is source-rule coverage only; it does not add original screenshot or pixel parity evidence.
+
 - ✅ 2026-06-21 DM1 V1 empty-chest pointer integrity gate: registered existing `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` as CTest target `dm1_v1_chest_empty_pointer_integrity_probe`. The synthetic source-locked gate covers empty chest open/reopen/close behavior, `THING_NONE` visible-slot handling, empty-slot click no-op, open-chest pointer clearing, and preservation of champion hand/load state around an empty chest. This is source/runtime fixture coverage only; it does not add original capture or pixel parity evidence.
 
 - ✅ 2026-06-21 DM1 V1 negative wall-lane pixel gates: registered existing `firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe` and `firestaff_dm1_v1_d1l2_d1r2_absence_pixel_slice_probe` as CTest targets. The synthetic source-locked gates prove D0C has no accidental center-wall blit/write path and that D1L2/D1R2 are absent from the F0128 draw order, PC34 extra-side-wall masks, and pixel write lanes. This is Firestaff-side source/pixel-geometry coverage only; broader original wall screenshot pairing remains partial.
