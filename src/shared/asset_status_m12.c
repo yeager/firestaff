@@ -969,25 +969,12 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
         g_m12ScanMetrics.versionHashLookups++;
 #endif
-        if (getenv("FIRESTAFF_TIER1_DEBUG")) {
-            fprintf(stderr, "TIER1DEBUG: m12_fill_game_versions gameId=%s rootIndex=%zu root=%s md5Count=%zu\n",
-                    gameSpec->gameId, rootIndex, roots[rootIndex], md5Count);
-            for (size_t dbg = 0; dbg < md5Count; ++dbg) {
-                fprintf(stderr, "TIER1DEBUG:   md5List[%zu]=%s\n", dbg, md5List[dbg] ? md5List[dbg] : "(null)");
-            }
-        }
         (void)asset_find_all_by_md5_list(roots[rootIndex],
                                          md5List,
                                          rootMatchedPaths[rootIndex],
                                          rootMatched[rootIndex],
                                          (int)md5Count,
                                          32);
-        if (getenv("FIRESTAFF_TIER1_DEBUG")) {
-            for (size_t dbg = 0; dbg < md5Count; ++dbg) {
-                fprintf(stderr, "TIER1DEBUG:   rootMatched[%zu][%zu]=%d path=%s\n",
-                        rootIndex, dbg, rootMatched[rootIndex][dbg], rootMatchedPaths[rootIndex][dbg]);
-            }
-        }
     }
     for (i = 0U; i < gameSpec->versionCount; ++i) {
         M12_AssetVersionStatus* version = &status->versions[gameIndex][i];

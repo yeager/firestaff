@@ -457,3 +457,4 @@ build-stack-merge/
 
 # runtime pid artifacts from DOSBox capture runs
 *.pid
+openclaw-workspace-state.json

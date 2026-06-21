@@ -1528,18 +1528,30 @@ static int m11_resolve_builtin_dungeon_path(char* out,
             if (test) { fclose(test); return 1; }
         }
     }
-    /* Final fallback (2026-06-20): recursive MD5-hash search.
+    /* Final fallback (2026-06-20, hardened 2026-06-21): recursive MD5-hash search.
      * Mirrors the scanner's behaviour so runtime can find files that
      * live in subdirs the original path-resolver doesn't enumerate
      * (e.g. dm1-extras/pc-3.4-en-3.5in/DATA/, Meynaf FR hard-disk
-     * layout). Hashes match the canonical DUNGEON.DAT for each game
-     * from g_requiredFiles[].md5. */
+     * layout, theron-extras/{japan,usa}/, nexus ISO containers).
+     * Each game lists one or more candidate MD5s in priority order.
+     * The first match wins.
+     *
+     * Hashes:
+     *   dm1  DUNGEON.DAT PC 3.4 = 766450c940651fc021c92fe5d0d0b3a6
+     *   csb  DUNGEON.DAT (canonical Amiga) = 6695d2acebce49f95db1d8f3a5c733de
+     *   dm2  DUNGEON.DAT (canonical PC EN) = 6caccd7875009e82fe2e28e7f6d6adc0
+     *   nexus DM.BIN (extracted Saturn JP) = e88d60859f65f08fa622e1992b02280f
+     *   theron Track 02.bin (PCE JP)     = b7afb338ad31be1025b53f9aff12d73a
+     *   theron Track 02.bin (TG16 US)    = f23601102138f87c33025877767ebf76
+     */
     {
         static const struct { const char *game; const char *md5; } kExpectedHashes[] = {
             { "dm1",  "766450c940651fc021c92fe5d0d0b3a6" },
             { "csb",  "6695d2acebce49f95db1d8f3a5c733de" },
             { "dm2",  "6caccd7875009e82fe2e28e7f6d6adc0" },
+            { "nexus", "e88d60859f65f08fa622e1992b02280f" },
             { "theron", "b7afb338ad31be1025b53f9aff12d73a" },
+            { "theron", "f23601102138f87c33025877767ebf76" },
             { NULL, NULL }
         };
         const char *expectedMd5 = NULL;
@@ -1547,24 +1559,26 @@ static int m11_resolve_builtin_dungeon_path(char* out,
         for (i = 0; kExpectedHashes[i].game != NULL; ++i) {
             if (strcmp(gameId, kExpectedHashes[i].game) == 0) {
                 expectedMd5 = kExpectedHashes[i].md5;
-                break;
+                /* Try this hash; if it fails, keep looking for a
+                 * secondary match in the same game's entry list
+                 * (e.g. theron JP -> US fallback). */
+                {
+                    char resolved[ASSET_PATH_MAX];
+                    if (asset_find_by_md5(dataDir, expectedMd5, resolved,
+                                          (int)sizeof(resolved), 32)) {
+                        fprintf(stderr, "  HASH-FALLBACK: [%s] FOUND\n", resolved);
+                        /* resolved already includes the filename; copy verbatim
+                         * (FSP_JoinPath with empty tail would append a trailing
+                         * slash and break the dungeonPath string used by the
+                         * GRAPHICS.DAT slashPos reconstruction at line 10132). */
+                        strncpy(out, resolved, outSize - 1);
+                        out[outSize - 1] = '\0';
+                        return 1;
+                    }
+                    fprintf(stderr, "  HASH-FALLBACK: no match for %s hash %s (try next)\n",
+                            gameId, expectedMd5);
+                }
             }
-        }
-        if (expectedMd5) {
-            char resolved[ASSET_PATH_MAX];
-            if (asset_find_by_md5(dataDir, expectedMd5, resolved,
-                                  (int)sizeof(resolved), 32)) {
-                fprintf(stderr, "  HASH-FALLBACK: [%s] FOUND\n", resolved);
-                /* resolved already includes the filename; copy verbatim
-                 * (FSP_JoinPath with empty tail would append a trailing
-                 * slash and break the dungeonPath string used by the
-                 * GRAPHICS.DAT slashPos reconstruction at line 10132). */
-                strncpy(out, resolved, outSize - 1);
-                out[outSize - 1] = '\0';
-                return 1;
-            }
-            fprintf(stderr, "  HASH-FALLBACK: no match for %s hash %s\n",
-                    gameId, expectedMd5);
         }
     }
     return 0;

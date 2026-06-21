@@ -87,7 +87,7 @@
     }
   ],
   "status": "PASS804_DM1_V1_CHARGE_COUNT_TO_TORCH_TYPE_LOCKED",
-  "timestampUtc": "2026-06-20T17:27:46.306867+00:00",
+  "timestampUtc": "2026-06-21T07:40:37.370744+00:00",
   "verificationRuns": [
     {
       "command": [
