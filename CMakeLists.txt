@@ -8252,6 +8252,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 side-content far-to-near source-lock gate --------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass402_dm1_v1_side_content_far_to_near
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass402_dm1_v1_side_content_far_to_near.py
+    )
+endif()
+
 # -- DM1 V1 D0C Thieves Eye door-frame occlusion source-lock gate ----
 if(Python3_FOUND)
     add_test(
