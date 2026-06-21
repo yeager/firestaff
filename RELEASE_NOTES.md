@@ -9,6 +9,50 @@ closed. 9 commits ship on top of v2.7.25; ctest baseline is
 failures and one missing test binary (`test_nexus_v2_lighting`)
 as the previous release.
 
+## Development since v2.8.0 (2026-06-21)
+
+- **Tier 1 #5 strict boot-probe per path** (`a84a9d42`,
+  `033edf66`, `f3018e72`, `a736a04d`): new
+  `firestaff_tier1_strict_boot_probe` ctest entry
+  (`tier1_strict_boot_probe`, 90s timeout) runs the firestaff
+  launcher with `--game <id> --data-dir <path> --duration 1500`
+  under `SDL_VIDEODRIVER=dummy` for every EXTRACTED + VERIFIED path
+  `--scan-data` marks READY, and asserts the per-game boot milestone
+  (DM1 `LOADING DUNGEON`, Theron `TQR level load: status=OK`).
+  Current status: **5/5 in-scope paths PASS** (DM1 canonical, DM1
+  legacy-dos, Theron JP canonical, Theron JP extras, Theron US
+  extras). The Theron US extras case exercises the new
+  `M12_AssetStatus_GetFirstMatchedVersion` +
+  first-matched-version fallback in
+  `M11_GameView_OpenSelectedMenuEntry` so direct launch via
+  `--data-dir` no longer fails when user-selected versionIndex
+  doesn't match the supplied variant. CSB (silent launcher exit)
+  and Nexus (`Merged.iso::DM.BIN` / `Track 1.bin::DM.BIN` mount
+  without extract step) remain out-of-scope and are tracked as
+  Tier 4 / diagnostic gaps in `docs/FIRESTAFF_GAP_LIST.md` Section H
+  + Section L1. Hash-fallback table in
+  `m11_resolve_builtin_dungeon_path` extended with Nexus DM.BIN
+  (`e88d6085...`) + Theron US Track 02 (`f2360110...`) for
+  callers that resolve the dungeon path explicitly.
+
+- **Tier 2 #4 LZW Atari ST decoder** (`a736a04d`): gap-list entry
+  previously marked PARTIAL with stale "BLOCKED-DATA" wording is
+  now marked DONE. The decoder is in
+  `src/dm1/dm1_v1_graphics_loader_pc34_compat.c`
+  (`m11_gfx_lzw_decompress`), round-trip-tested via
+  `test_dm1_lzw_round_trip.c` 8/8 PASS, and consumed by
+  `src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c` for the
+  CSB Atari ST GRAPHICS.DAT path. Source-locked to ReDMCSB
+  `LZW.C F0495_GetNextInputCode`, `G0666 max=4096`, 12-bit codes.
+
+- **DM1 24h readiness roll-up** (`tools/dm1_24h_readiness.py`):
+  continues to report PASS — DM1 is the strongest playable target
+  today, with all five capture-gap pairs closed (pass1052 viewport
+  + wall, pass1053 champion panel, pass1055 collision, pass1056
+  Firestaff-side pairing, pass1057 Amiga 2.2 DUNGEONB lock).
+  See `parity-evidence/verification/dm1_24h_readiness/manifest.json`
+  for the per-criterion breakdown.
+
 ## Headline features
 
 - **Nexus V2 render-pipeline smooth-movement tick (commit
