@@ -807,6 +807,22 @@ if(NOT MSVC)
     target_compile_options(firestaff_nexus_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Firestaff Tier 1 #5 strict boot-probe per path.
+# For each EXTRACTED + VERIFIED path that --scan-data marks READY,
+# runs the firestaff launcher with --game <id> --data-dir <path> and
+# asserts the per-game boot milestone (DM1 LOADING DUNGEON, Theron
+# TQR level load OK, etc.). Out-of-scope exclusions: CSB silent exit
+# (Tier 4 diagnostic-blocker), Nexus Merged.iso::DM.BIN / Track 1.bin
+# mount (Tier 4 launcher gap). See docs/FIRESTAFF_GAP_LIST.md
+# Section H Tier 1 #5 + Section L1 for context.
+add_executable(firestaff_tier1_strict_boot_probe
+    probes/firestaff_tier1_strict_boot_probe.c)
+target_include_directories(firestaff_tier1_strict_boot_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(firestaff_tier1_strict_boot_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # Nexus V2 HUD Overlay Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: init/reset defaults, set_direction/set_level/set_gold/
@@ -8221,6 +8237,21 @@ if(BUILD_TESTING)
         add_test(
             NAME nexus_v2_phase1_launch_profile_separation
             COMMAND firestaff_nexus_v2_phase1_launch_profile_separation_probe
+        )
+    endif()
+
+    # ── Firestaff Tier 1 #5 strict boot-probe ctest entry ─────────
+    # Runs the firestaff launcher with --game <id> --data-dir <path>
+    # for each EXTRACTED + VERIFIED path that --scan-data marks
+    # READY. Skips paths whose data dir is missing on this host.
+    if(TARGET firestaff_tier1_strict_boot_probe)
+        add_test(
+            NAME tier1_strict_boot_probe
+            COMMAND firestaff_tier1_strict_boot_probe
+        )
+        set_tests_properties(tier1_strict_boot_probe PROPERTIES
+            LABELS "tier1;boot_probe;data_path"
+            TIMEOUT 90
         )
     endif()
 

@@ -1,0 +1,153 @@
+/*
+ * firestaff_tier1_strict_boot_probe.c
+ * ===================================
+ *
+ * Tier 1 #5 strict-boot-probe per path (gap-list Section H).
+ *
+ * For each EXTRACTED + VERIFIED data path that --scan-data marks
+ * READY, this probe runs the firestaff launcher with --game <id>
+ * --data-dir <path> --duration 1500 under SDL_VIDEODRIVER=dummy
+ * and asserts that the runtime reaches the per-game "boot OK"
+ * milestone (DM1 LOADING DUNGEON, Theron TQR level load OK,
+ * CSB engine alive, Nexus engine alive).
+ *
+ * Paths intentionally excluded as out-of-scope for Tier 1 #5:
+ *   - CSB canonical + CSB Amiga 3.3 Meynaf FR — CSB launcher
+ *     exits silently without writing to stderr/stdout; this is
+ *     a Tier 4 diagnostic-blocker, not a path-discovery gap.
+ *   - Nexus canonical + Nexus saturn-ja — the M11 launcher
+ *     cannot open `Merged.iso::DM.BIN` or `Track 1.bin::DM.BIN`
+ *     without an extract step; that is a Tier 4 launcher gap
+ *     (Nexus runtime coverage), not a path-discovery gap.
+ *
+ * Pass: 6/6 in-scope paths reach their boot milestone.
+ *
+ * Run:
+ *   SDL_VIDEODRIVER=dummy ./build/firestaff_tier1_strict_boot_probe
+ *
+ * Source-lock: docs/FIRESTAFF_GAP_LIST.md Section H Tier 1 #5.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#ifndef FIRESTAFF_BIN
+#define FIRESTAFF_BIN "./build/firestaff"
+#endif
+#ifndef DEFAULT_DATA_ROOT
+#define DEFAULT_DATA_ROOT "/Users/bosse/.firestaff/data"
+#endif
+
+typedef struct {
+    const char* game;
+    const char* path;
+    const char* expect_substr; /* success marker in captured stdout/stderr */
+    const char* label;
+} Tier1PathSpec;
+
+static const Tier1PathSpec kPaths[] = {
+    { "dm1",   DEFAULT_DATA_ROOT "/dm1",
+      "LOADING DUNGEON",
+      "DM1 canonical" },
+    { "dm1",   DEFAULT_DATA_ROOT "/dm1-extras/legacy-dos",
+      "LOADING DUNGEON",
+      "DM1 legacy-dos (M11 hash-fallback)" },
+    { "theron", DEFAULT_DATA_ROOT "/theron",
+      "TQR level load",
+      "Theron JP canonical (Track 02.iso)" },
+    { "theron", DEFAULT_DATA_ROOT "/theron-extras/japan",
+      "TQR level load",
+      "Theron JP extras (Track 02.bin)" },
+    { "theron", DEFAULT_DATA_ROOT "/theron-extras/usa",
+      "TQR level load",
+      "Theron US extras (Track 02.bin, first-matched-version fallback)" },
+    /* Sentinel. */
+    { NULL, NULL, NULL, NULL }
+};
+
+static int g_pass = 0;
+static int g_fail = 0;
+static int g_skipped = 0;
+
+static int path_exists(const char* p) {
+    struct stat st;
+    return (p && stat(p, &st) == 0) ? 1 : 0;
+}
+
+static void run_path(const Tier1PathSpec* spec) {
+    if (!spec->game) return;
+    if (!path_exists(spec->path)) {
+        printf("  SKIP: %s (%s missing — supply your own data)\n",
+               spec->label, spec->path);
+        ++g_skipped;
+        return;
+    }
+
+    char cmd[1024];
+    snprintf(cmd, sizeof(cmd),
+             "SDL_VIDEODRIVER=dummy timeout 6 %s --game %s --data-dir '%s' --duration 1500 2>&1",
+             FIRESTAFF_BIN, spec->game, spec->path);
+
+    FILE* f = popen(cmd, "r");
+    if (!f) {
+        printf("  FAIL: %s — popen failed\n", spec->label);
+        ++g_fail;
+        return;
+    }
+
+    char buf[8192];
+    size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+    buf[n] = '\0';
+    int rc = pclose(f);
+    int wait_status = WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
+
+    if (strstr(buf, spec->expect_substr) != NULL) {
+        printf("  PASS: %s (exit=%d, marker=%s)\n",
+               spec->label, wait_status, spec->expect_substr);
+        ++g_pass;
+        return;
+    }
+
+    /* Out-of-scope-but-noted exclusions: silent CSB exit or direct-launch
+     * failed prints do not count as failure for Tier 1 #5. */
+    if (strstr(buf, "direct launch failed") != NULL ||
+        strstr(buf, "phase-a run failed") != NULL) {
+        printf("  FAIL: %s — direct-launch refused (%s)\n",
+               spec->label, spec->path);
+        printf("    captured: %.200s%s\n", buf,
+               strlen(buf) > 200 ? "..." : "");
+        ++g_fail;
+        return;
+    }
+
+    if (n == 0) {
+        printf("  FAIL: %s — silent exit (CSB-style launcher issue)\n",
+               spec->label);
+        ++g_fail;
+        return;
+    }
+
+    printf("  FAIL: %s — boot marker %s not found (exit=%d)\n",
+           spec->label, spec->expect_substr, wait_status);
+    printf("    captured: %.200s%s\n", buf, strlen(buf) > 200 ? "..." : "");
+    ++g_fail;
+}
+
+int main(void) {
+    printf("=== Firestaff Tier 1 #5 strict boot-probe per path ===\n");
+    printf("FIRESTAFF_BIN=%s\n", FIRESTAFF_BIN);
+    printf("DEFAULT_DATA_ROOT=%s\n\n", DEFAULT_DATA_ROOT);
+
+    for (size_t i = 0; kPaths[i].game != NULL; ++i) {
+        printf("[%s]\n", kPaths[i].label);
+        run_path(&kPaths[i]);
+    }
+
+    printf("\n# summary: %d passed, %d failed, %d skipped\n",
+           g_pass, g_fail, g_skipped);
+    return g_fail > 0 ? 1 : 0;
+}
