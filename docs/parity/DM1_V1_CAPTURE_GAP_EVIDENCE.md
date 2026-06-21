@@ -92,12 +92,12 @@ states are paired and compared.
 | Collision overlay runtime probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_original_collision_overlay_runtime_probe.c` | Source-locked collision + overlay query; no paired original transcript. |
 | Fakewall view collision probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_original_fakewall_view_collision_probe.c` | Source-locked fakewall collision logic; no paired original transcript. |
 | Playable route probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_playable_route_probe.c` | Documents canonical movement route; no paired original transcript. |
-| Original closed-door collision/stasis capture | PARTIAL OK | `verification-screens/pass1055-dm1-original-closed-door-collision/` | Pass1055 captures original PC 3.4 closed-door stasis: `door_before`, `after_viewport_click`, and `after_kp5` have identical raw and viewport-crop SHA256 values. |
-| Firestaff closed-door semantic pair | PARTIAL PAIR | `probes/dm1/firestaff_dm1_v1_pass1055_closed_door_pair_probe.c` | Replays the pass1055 movement sequence to `map=0 x=6 y=9 dir=3`, sees closed door square `0x94` at `(5,9)`, and blocks the next forward command with no party movement. |
+| Original closed-door collision/stasis capture | PARTIAL OK | `verification-screens/pass1055-dm1-original-closed-door-collision/` | Pass1055 captures original PC 3.4 closed-door stasis: `door_before`, `after_viewport_click`, and `after_kp5` have identical raw and viewport-crop SHA256 values; `pass1055_dm1_v1_original_closed_door_collision_capture` now gates this in CTest. |
+| Firestaff closed-door semantic pair | PARTIAL PAIR | `probes/dm1/firestaff_dm1_v1_pass1055_closed_door_pair_probe.c` | Replays the pass1055 movement sequence to `map=0 x=6 y=9 dir=3`, sees closed door square `0x94` at `(5,9)`, and blocks the next forward command with no party movement; the pass1055 CTest gate runs this probe. |
 | Full original collision transcript | MISSING MISSING | - | No paired original DOS transcript yet covers wall, door, fakewall, and door-state responses. |
 
 **Gap:** Collision probes verify that Firestaff's collision logic matches ReDMCSB
-source. Pass1055 adds original DM1 PC 3.4 runtime evidence for one closed-door
+source. Pass1055 adds CTest-gated original DM1 PC 3.4 runtime evidence for one closed-door
 stasis case plus a Firestaff-side semantic pair for the same movement sequence.
 No pixel comparison and no full wall/door/fakewall transcript has been promoted
 yet, so collision cannot be marked globally `MATCHED`.

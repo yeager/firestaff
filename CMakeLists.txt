@@ -6455,6 +6455,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1053_dm1_v1_original_champion_candidate_panel_gate.py
         )
         add_test(
+            NAME pass1055_dm1_v1_original_closed_door_collision_capture
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1055_dm1_v1_original_closed_door_collision_capture.py
+        )
+        add_test(
             NAME pass377_dm1_v1_paired_diff_artifact_blocker
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass377_dm1_v1_paired_diff_artifact_blocker.py
         )
