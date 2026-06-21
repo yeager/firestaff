@@ -1,0 +1,120 @@
+#include "dm1_v2_enhanced_effects_runtime_pc34.h"
+#include "dm1_v2_lighting_dynamic_pc34.h"
+#include "dm1_v2_particle_system_pc34.h"
+
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+
+static int failures = 0;
+
+#define CHECK(expr) do { \
+    if (!(expr)) { \
+        fprintf(stderr, "FAIL %s:%d: %s\n", __FILE__, __LINE__, #expr); \
+        failures++; \
+    } \
+} while (0)
+
+static int approxf(float a, float b) {
+    return fabsf(a - b) < 0.0001f;
+}
+
+static void init_particle_with_short_life(void) {
+    int emitter;
+    v2_particle_init();
+    v2_particle_set_seed(1u);
+    emitter = v2_particle_emitter_create(
+        10.0f, 12.0f, 1.0f, 0.0f, 0.25f, 1.0f, 0.0f, 0x00FF00FFu, 8);
+    CHECK(emitter == 0);
+    v2_particle_emit(emitter, 10.0f, 12.0f);
+    CHECK(v2_particle_active_count() == 1);
+}
+
+static void test_default_gate_is_noop(void) {
+    DM1_V2_PhaseGateConfig gate;
+    DM1_V2_Settings settings;
+    float beforeLight;
+
+    dm1_v2_phase_gate_defaults(&gate);
+    memset(&settings, 0, sizeof(settings));
+    settings.dynamicLightingEnabled = 1;
+    init_particle_with_short_life();
+    v22_light_set_ambient(0.37f);
+    beforeLight = v22_light_get(4, 4);
+
+    CHECK(dm1_v2_enhanced_effects_runtime_tick(&gate, &settings, 1.0f) == 0);
+    CHECK(v2_particle_active_count() == 1);
+    CHECK(approxf(v22_light_get(4, 4), beforeLight));
+}
+
+static void test_presentation_gate_ticks_particles_without_lighting(void) {
+    DM1_V2_PhaseGateConfig gate;
+    DM1_V2_Settings settings;
+    float beforeLight;
+
+    dm1_v2_phase_gate_defaults(&gate);
+    gate.v2PresentationEnabled = 1;
+    memset(&settings, 0, sizeof(settings));
+    settings.dynamicLightingEnabled = 0;
+    init_particle_with_short_life();
+    v22_light_set_ambient(0.44f);
+    beforeLight = v22_light_get(5, 5);
+
+    CHECK(dm1_v2_enhanced_effects_runtime_tick(&gate, &settings, 1.0f) == 1);
+    CHECK(v2_particle_active_count() == 0);
+    CHECK(approxf(v22_light_get(5, 5), beforeLight));
+}
+
+static void test_presentation_gate_and_dynamic_lighting_tick_light_map(void) {
+    DM1_V2_PhaseGateConfig gate;
+    DM1_V2_Settings settings;
+
+    dm1_v2_phase_gate_defaults(&gate);
+    gate.v2PresentationEnabled = 1;
+    memset(&settings, 0, sizeof(settings));
+    settings.dynamicLightingEnabled = 1;
+    v2_light_init();
+    v22_light_clear();
+    v22_light_set_ambient(0.52f);
+
+    CHECK(dm1_v2_enhanced_effects_runtime_tick(&gate, &settings, 0.016f) == 1);
+    CHECK(approxf(v22_light_get(6, 6), 0.52f));
+}
+
+static void test_null_inputs_fail_safe(void) {
+    DM1_V2_PhaseGateConfig gate;
+    float beforeLight;
+
+    init_particle_with_short_life();
+    beforeLight = v22_light_get(7, 7);
+    CHECK(dm1_v2_enhanced_effects_runtime_tick(NULL, NULL, 1.0f) == 0);
+    CHECK(v2_particle_active_count() == 1);
+    CHECK(approxf(v22_light_get(7, 7), beforeLight));
+
+    dm1_v2_phase_gate_defaults(&gate);
+    gate.v2PresentationEnabled = 1;
+    init_particle_with_short_life();
+    beforeLight = v22_light_get(8, 8);
+    CHECK(dm1_v2_enhanced_effects_runtime_tick(&gate, NULL, 1.0f) == 1);
+    CHECK(v2_particle_active_count() == 0);
+    CHECK(approxf(v22_light_get(8, 8), beforeLight));
+}
+
+int main(void) {
+    const char* evidence = dm1_v2_enhanced_effects_runtime_source_evidence();
+    CHECK(evidence != NULL);
+    CHECK(strstr(evidence, "RENDER_PRESENTATION") != NULL);
+    CHECK(strstr(evidence, "PROJEXPL.C") != NULL);
+
+    test_default_gate_is_noop();
+    test_presentation_gate_ticks_particles_without_lighting();
+    test_presentation_gate_and_dynamic_lighting_tick_light_map();
+    test_null_inputs_fail_safe();
+
+    if (failures) {
+        fprintf(stderr, "%d failure(s)\n", failures);
+        return 1;
+    }
+    puts("dm1_v2_enhanced_effects_runtime_pc34: ok");
+    return 0;
+}
