@@ -1775,7 +1775,10 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.c"
         "probes/dm1/firestaff_dm1_v1_candidate_panel_spell_cast_suppression_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_panel_action_cell_slotbox_runtime_probe.c"
-        "probes/m11/firestaff_dm1_v1_champion_panel_bar_graph_pixel_slice_probe.c")
+        "probes/m11/firestaff_dm1_v1_champion_panel_bar_graph_pixel_slice_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_panel_status_box_asset_slice_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_panel_pixels_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_panel_partial_party_pixel_probe.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_pool_probe_src}")
         get_filename_component(_pool_probe_exe "${_pool_probe_src}" NAME_WE)
         add_executable(${_pool_probe_exe} ${_pool_probe_src})
