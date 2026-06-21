@@ -423,10 +423,40 @@ target_link_libraries(firestaff_theron_v1_mechanics_champions_probe
 if(NOT MSVC)
     target_compile_options(firestaff_theron_v1_mechanics_champions_probe PRIVATE -Wall -Wextra -O2)
 endif()
+
+# Theron V1 dungeon-progression determinism probe (Tier 4 #20 polish).
+# Headless: no game data, no SDL rendering required. Verifies the
+# 7-dungeon progression state machine in theron_v1_dungeon_progression.c
+# (THQUEST.ASM T080 between-dungeon save/load + ReDMCSB GROUP.C analogue)
+# is deterministic across many invocations. Source-locks:
+#   - THQUEST.ASM T080 between-dungeon save/load
+#   - include/theron_v1_dungeon_progression.h state enum
+#   - src/theron/theron_v1_dungeon_progression.c
+add_executable(firestaff_theron_v1_dungeon_progression_determinism_probe
+    probes/theron/firestaff_theron_v1_dungeon_progression_determinism_probe.c
+    src/theron/theron_v1_dungeon_progression.c
+)
+target_include_directories(firestaff_theron_v1_dungeon_progression_determinism_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v1_dungeon_progression_determinism_probe
+    PRIVATE firestaff_theron firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_dungeon_progression_determinism_probe PRIVATE -Wall -Wextra -O2)
+endif()
 add_test(
     NAME theron_v1_mechanics_champions_probe
     COMMAND firestaff_theron_v1_mechanics_champions_probe
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+add_test(
+    NAME theron_v1_dungeon_progression_determinism_probe
+    COMMAND firestaff_theron_v1_dungeon_progression_determinism_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v1_dungeon_progression_determinism_probe PROPERTIES
+    LABELS "tier4;theron;dungeon;determinism"
 )
 
 # CSB V2 Phase 4/5/6 — Combined Runtime Wire-up Probe
