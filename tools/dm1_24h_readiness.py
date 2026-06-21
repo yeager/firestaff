@@ -12,8 +12,9 @@ the narrow, already source-locked checks that matter most for the current
 - pass1058 keeps the original keypad/route-atlas blocker evidence locked.
 - Optional build-dir probes keep the DM1 playable route, Firestaff-side
   route/collision/orientation captures, pass610/pass622/pass623 readiness,
-  V1/V2 presentation-disabled seed gates, pass1055 collision semantic pair,
-  pass1056/pass1057 CTests, and Phase A probe green.
+  pass1073 redacted live-capture receipt, V1/V2 presentation-disabled seed
+  gates, pass1055 collision semantic pair, pass1056/pass1057 CTests, and
+  Phase A probe green.
 
 The script writes a manifest/report so the roll-up can be cited without
 claiming that the remaining original-capture gaps are solved.
@@ -47,6 +48,7 @@ CTEST_REQUIRED_TESTS = (
     "pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
     "pass622_dm1_v1_viewport_wall_capture_closure_gap",
     "pass623_dm1_v1_input_capture_readiness_bridge",
+    "pass1073_dm1_v1_original_live_capture_receipt",
     "dm1_v2_side_by_side_presentation_seed_probe",
     "dm1_v2_side_by_side_seed_pc34",
     "dm1_v2_v1_v2_side_by_side_seed_pc34",
