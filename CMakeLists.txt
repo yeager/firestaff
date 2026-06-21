@@ -1669,6 +1669,10 @@ target_link_libraries(firestaff_m11_chest_slot_zones_probe PRIVATE firestaff_m12
 if(NOT MSVC)
     target_compile_options(firestaff_m11_chest_slot_zones_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME dm1_v1_chest_slot_zones_source_lock
+    COMMAND firestaff_m11_chest_slot_zones_probe
+)
 
 # M11 Game View probe (needs full M10 + M11 + M12)
 add_executable(firestaff_m11_game_view_probe probes/m11/firestaff_m11_game_view_probe.c)
