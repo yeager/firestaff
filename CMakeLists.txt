@@ -5999,6 +5999,10 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_entry_viewport_png_comparator_gate.py
     )
     add_test(
+        NAME dm1_v2_runtime_presentation_smoke
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_runtime_presentation_smoke.py --build-dir ${CMAKE_BINARY_DIR}
+    )
+    add_test(
         NAME dm1_v2_entry_bitmap_materialization_blocker_gate
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_entry_bitmap_materialization_blocker.py
     )
