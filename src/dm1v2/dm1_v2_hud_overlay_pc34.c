@@ -115,8 +115,8 @@ static void v2_hud_draw_action_strip(uint8_t* fb, int w, int h,
 
 static void v2_hud_draw_rune_strip(uint8_t* fb, int w, int h,
                                    uint8_t base, uint8_t high) {
-    /* Source-lock: ReDMCSB COMMAND.C/G0454 rune buttons C101-C106, cast C107,
-     * and recant C108.  These are visual state pixels only; spell execution
+    /* Source-lock: ReDMCSB COMMAND.C/G0454 rune buttons C101-C106, cast C108,
+     * and recant C107.  These are visual state pixels only; spell execution
      * remains source-owned by the V1 spell command path. */
     if (!g_v2_hud_state.rune_strip.visible) return;
     for (int i = 0; i < 6; ++i) {
