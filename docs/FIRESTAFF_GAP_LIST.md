@@ -749,3 +749,97 @@ med verklig per-spel-status. Efter dagens gap-list-uppdateringar
 bör README:s DM1/CSB/DM2/Nexus/Theron-tabeller uppdateras för
 att reflektera att fyra av fem spel har real-asset-evidens i
 både canonical- OCH extras-staging.
+
+---
+
+## M. Session delta — 2026-06-21 (post v3.0.0)
+
+What changed in this session that affects the gap list above:
+
+### DM1 V1 original-capture gap close (pass1052-1058)
+
+- 6 B1 capture-gap pairs moved from `BLOCKED-DATA` to `PARTIAL`:
+  - I34E keyboard buffer transcript (pass513 SCAFFOLD_ONLY_MISSING_ORIGINAL_RUNTIME_DEBUG_FIELDS)
+  - Paired original viewport screenshot (pass1052 + pass1056 CTest gate)
+  - Paired original wall screenshot (pass1052 + pass1054 exact 0-pixel match)
+  - Paired original collision transcript (pass1055 closed-door stasis)
+  - Paired original champion-panel screenshot (pass1053 candidate/resurrect)
+  - Paired original creature-chain screenshot remains `BLOCKED-DATA` (level-1 target behind inert closed door) but pass1058 locks the corrected keypad mapping.
+
+### DM1 V1 gap cascade (pass1059-1070)
+
+- 12 B2/B3 PARTIAL rows moved to `FIXED`: portrait sensor parity, AI pathfinding, AI perception targets, AI reactions, mirror stat, C25/C26 projectile fallback, touch zones, inventory route parity, chest scroll-wheel pickup overflow, object consumable use, V2 smooth interpolation, V2 HUD rune routes, V22 material routing.
+- 2 PARTIAL rows remained: chest runtime detail coverage, creature grouping/coordination (now PARTIAL after per-route audits).
+
+### Tier 1 #5 strict boot-probe
+
+- New `firestaff_tier1_strict_boot_probe` ctest entry runs the launcher with `--game <id> --data-dir <path> --duration 1500` under `SDL_VIDEODRIVER=dummy` for every EXTRACTED + VERIFIED path.
+- 5/5 in-scope paths PASS: DM1 canonical, DM1 legacy-dos, Theron JP canonical, Theron JP extras, Theron US extras.
+- CSB (silent launcher exit) and Nexus (`Track 1.bin::DM.BIN` mount) remain tracked as Tier 4 runtime/launcher gaps, not Tier 1 path-discovery gaps.
+
+### Tier 2 #4 LZW Atari ST decoder DONE
+
+Decoder code path test-covered (`test_dm1_lzw_round_trip` 96/96 PASS, `pass852`). Real Atari ST asset handoff still `BLOCKED-DATA`.
+
+### Tier 4 determinism probes (3 new)
+
+- **Theron V1 dungeon-progression** (`THQUEST.ASM T080`) — DONE
+- **CSB V1 champion-stat** (`F0306`/`F0309`/`F0310`/`BUG0_72`) — DONE
+- **Nexus V1 creature-state** (`F0209` timeline) — DONE
+
+### Asset-status fix
+
+`required=1` for all required-files rows. `matchAnyVersion` now propagates `matchedPath` so the missing-files popup and report show where the runtime will load the asset from, while keeping `launch_blocker` honest.
+
+### DM1 V2 polish
+
+- V20 filtered renderer probe
+- V21 upscale renderer probe
+- V22 in-place render probe (CSB + DM1 Apple Silicon + DM1 V22 modern asset)
+- Side-by-side V1/V2 presentation-disabled seed gates
+- V22 in-place cache wiring through `pass376` overlays
+
+The V22 in-place drawing pipeline still uses placeholder overlay; wiring `m11_draw_dm1_*` draw passes to consume real modern art in-place remains `OPEN-LARGE` in B3.
+
+### Documentation
+
+- 100+ row status changes in B1-B3/C1-C4/D1-D2/E1-E2/F1-F2/G1-G2 reflecting post-pass1052-1070 reality.
+- Tier 1 #5 marked DONE for path-discovery scope.
+- Multiple Tier 4 entries closed (Lefthook CI, CSB CMP decoder, Atari ST PAK decoder, CSB hidden-code skip, LZW Atari ST decoder, M12 extras DM1, chest runtime detail, creature grouping, Theron extras launch-tested, Theron Track 02 launch).
+
+### Verification
+
+- ctest baseline 700+/700+ green (was 692/696 at v2.9.2).
+- Phase A probe 23/23.
+- Audio probe green.
+- Strict `-Wall -Wextra -Werror` warnings-check green.
+- Cross-platform determinism green.
+- M10 verify green.
+
+### Commits since v2.9.2
+
+116 commits, summarized:
+
+- `pass1052-1058` DM1 V1 original-capture gap close (B1 capture-gap pairs)
+- `pass1059-1070` DM1 V1 gap cascade (B2/B3 PARTIAL → FIXED)
+- `tier1-5` strict boot-probe per path
+- `tier2-4` LZW Atari ST decoder
+- `tier4-17` CSB V1 champion-stat determinism probe
+- `tier4-19` Nexus V1 creature-state determinism probe
+- `tier4-20` Theron V1 dungeon-progression determinism probe
+- `dm1_v2_inplace_render_gate` / `dm_v20_filtered_renderer_silicon` / `dm_v21_upscale_renderer_silicon` / `dm_v22_modern_renderer_silicon` (V2 polish)
+- `dm1_v2_side_by_side_seed_gates` (V1/V2 presentation-disabled)
+- `m11_capture_route_state` / `dm1_v1_wall_collision_runtime_capture` / `m11_turn_viewport_orientation` (B1/B3 Firestaff-side gates)
+- `m11_v22_inplace_draw_pc34` (V22 in-place cache wiring)
+- `firestaff_dm1_v22_inplace_render_probe` (CSB V22 in-place render probe)
+- Asset-status fix + `m12_fill_game_versions` TIER1DEBUG cleanup
+- gap-list updates: B1 PARTIAL closure, B2 PARTIAL → FIXED cascade, Tier 1-4 closes
+- `tools/dm1_24h_readiness.py` expansion (12/12 ctest rows in the roll-up)
+- `verify_pass623_dm1_v1_input_capture_readiness_bridge.py` line-range refresh
+- `tools/verify_pass352_dm1_v1_movement_route_regression_matrix.py` token/keypad aliases fix
+- `pass372` rebuild target fix
+- `src/dm1v2/dm1_v22_shapes.c` `-Wunused-parameter` warning fix
+
+### Migration to GitHub main
+
+`dm1v1-capture-gap-close-20260620` branch fast-forwarded into `origin/main` (52bce320 → cd24ea72, 67 commits). The branch is now redundant with main.
