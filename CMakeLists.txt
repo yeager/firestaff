@@ -6134,6 +6134,17 @@ if(BUILD_TESTING)
         NAME dm1_v1_f0306_stamina_pc34_compat
         COMMAND test_dm1_v1_f0306_stamina_pc34_compat
     )
+    add_executable(test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat
+        tests/test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mov05_f0284_cell_rotation_pc34_compat
+        COMMAND test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat
+    )
     add_executable(test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat
         tests/test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat.c
         src/memory/memory_magic_pc34_compat.c
