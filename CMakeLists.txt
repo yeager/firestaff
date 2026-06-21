@@ -8901,11 +8901,6 @@ set_tests_properties(pass547_csb_v1_runtime_readiness_backfill PROPERTIES WILL_F
 # after fixing the verifier's include-path convention (the local touch
 # header uses `#include "dm1_v1_input_command_queue_pc34_compat.h"`
 # matching the project convention, not `#include "include/..."`).
-set_tests_properties(v1_inventory_panel_open_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(v1_inventory_toggle_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(v1_inventory_chest_actionhand_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(v1_entrance_input_wait_redmcsb_gate PROPERTIES WILL_FAIL TRUE)
-
 # ── Theron V1 Phase 6 — Dungeon Progression Tests ──────────────────────────
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_dungeon_progression

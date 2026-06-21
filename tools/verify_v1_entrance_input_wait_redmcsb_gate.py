@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")).expanduser()
 EVIDENCE_JSON = ROOT / "parity-evidence/verification/v1_entrance_input_wait_redmcsb_gate.json"
-RANGES = [("ENTRANCE.C",850,883),("ENTRANCE.C",906,943),("COMMAND.C",551,577),("src/frontend/entrance_frontend_pc34_compat.c",39,58),("src/frontend/entrance_frontend_pc34_compat.c",61,99),("src/frontend/entrance_frontend_pc34_compat.c",102,103),("src/frontend/entrance_keyboard_routes_pc34_compat.c",2,3)]
+RANGES = [("ENTRANCE.C",850,883),("ENTRANCE.C",906,943),("COMMAND.C",551,577),("src/frontend/entrance_frontend_pc34_compat.c",39,58),("src/frontend/entrance_frontend_pc34_compat.c",61,99),("src/frontend/entrance_frontend_pc34_compat.c",121,122),("src/frontend/entrance_keyboard_routes_pc34_compat.c",2,3)]
 
 def read(path: Path) -> str:
     if not path.is_file(): raise AssertionError(f"missing source file: {path}")
@@ -81,7 +81,7 @@ def verify_firestaff() -> list[str]:
     notes.append(f"Firestaff entrance keyboard evidence: {kp}:2")
     excerpt("src/frontend/entrance_frontend_pc34_compat.c",39,58,["ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT","ENTRANCE.C:850-883","ENTRANCE.C:935"])
     excerpt("src/frontend/entrance_frontend_pc34_compat.c",61,99,["sourceStepOrdinal == 4u","step.vblankLoopCount = 1u","step.delayTicks = 20u"])
-    excerpt("src/frontend/entrance_frontend_pc34_compat.c",102,103,["wait on VBlank/input loop","F0022_MAIN_Delay(20)","F0438 opens doors"])
+    excerpt("src/frontend/entrance_frontend_pc34_compat.c",121,122,["wait on VBlank/input loop","F0022_MAIN_Delay(20)","F0438 opens doors"])
     excerpt("src/frontend/entrance_keyboard_routes_pc34_compat.c",2,3,["COMMAND.C:551-577","C200_COMMAND_ENTRANCE_ENTER_DUNGEON","C216_COMMAND_QUIT"])
     return notes
 

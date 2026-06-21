@@ -52,15 +52,15 @@ SOURCE_RANGES = [
     },
     {
         "file": "src/engine/m11_game_view.c",
-        "start": 19775,
-        "end": 19835,
+        "start": 25673,
+        "end": 25772,
         "function": "m11_draw_inv_slot",
         "assertion": "Firestaff occupied slots draw 16x16 DM object icons inside original 18x18 slot boxes when assets are available.",
     },
     {
         "file": "src/engine/m11_game_view.c",
-        "start": 19991,
-        "end": 20048,
+        "start": 26254,
+        "end": 26402,
         "function": "m11_draw_inventory_panel",
         "assertion": "Firestaff normal V1 inventory path draws source slot boxes 8..37, overlays champion objects by source slot-box zone, and returns before the debug/freehand layout.",
     },
@@ -277,13 +277,13 @@ def verify_firestaff() -> list[str]:
             ("source slotbox zone", "M11_GameView_GetV1InventorySourceSlotBoxZone"),
             ("champion slot loop", "for (slotIdx = 0; slotIdx < CHAMPION_SLOT_COUNT; ++slotIdx)"),
             ("champion slot to source slotbox", "M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot"),
-            ("dm icon index", "m11_object_icon_index_for_thing"),
+            ("dm icon index", "m11_v1_inventory_slot_icon_index_for_thing"),
             ("draw into source slot zone", "m11_draw_dm_object_icon_index"),
         ],
         "Firestaff normal V1 inventory source-slot branch",
     )
-    require_excerpt("src/engine/m11_game_view.c", 19775, 19835, ["m11_draw_inv_slot", "m11_draw_dm_object_icon_index"])
-    require_excerpt("src/engine/m11_game_view.c", 19991, 20048, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "return;"])
+    require_excerpt("src/engine/m11_game_view.c", 25673, 25772, ["m11_draw_inv_slot", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 26254, 26402, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "m11_v1_inventory_slot_icon_index_for_thing", "return;"])
 
     return [
         f"Firestaff m11_draw_inv_slot starts at {FIRESTAFF_SRC}:{line_no(text, slot_start)}",
