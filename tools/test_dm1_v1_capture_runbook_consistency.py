@@ -715,6 +715,42 @@ def check_capture_session_focus_recovery_dry_run() -> list[str]:
     return failures
 
 
+def check_capture_session_post_dungeon_route_parser() -> list[str]:
+    """The live capture session must validate post-dungeon route syntax
+    without launching DOSBox.
+
+    This keeps B1 follow-up capture attempts reproducible: creature-chain,
+    champion-panel, and route-specific captures can be expressed as a
+    machine-readable list of post-entry keys instead of an operator-only
+    manual sequence.
+    """
+    failures: list[str] = []
+    capture_session = TOOLS_DIR / "dosbox_capture_session.py"
+    if not capture_session.exists():
+        return [
+            f"{capture_session.relative_to(REPO_ROOT)}: tool not found; "
+            "the live capture session must ship alongside the runbook"
+        ]
+    proc = subprocess.run(
+        [sys.executable, str(capture_session), "--self-test-post-dungeon-route"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if proc.returncode != 0:
+        failures.append(
+            f"{capture_session.relative_to(REPO_ROOT)} "
+            f"--self-test-post-dungeon-route failed: "
+            f"{proc.stderr.strip() or proc.stdout.strip()}"
+        )
+    if "PASS post-dungeon route parser" not in proc.stdout:
+        failures.append(
+            f"{capture_session.relative_to(REPO_ROOT)} "
+            "did not report the post-dungeon route parser PASS marker"
+        )
+    return failures
+
+
 def check_detector_selftest_passes() -> list[str]:
     """The on-disk state detector self-test must keep passing; this
     is the regression guard for the calibrated 0.135 band that
@@ -1043,6 +1079,7 @@ def main() -> int:
         ("events_row_builder_selftest",  check_events_row_builder_selftest_passes, []),
         ("live_row_gate_selftest",       check_live_row_gate_selftest_passes, []),
         ("capture_session_focus_recovery_dry_run", check_capture_session_focus_recovery_dry_run, []),
+        ("capture_session_post_dungeon_route_parser", check_capture_session_post_dungeon_route_parser, []),
         ("original_viewport_capture_single_row_mode", check_original_viewport_capture_single_row_mode, []),
     ]
     for name, fn, args in tool_checks:
