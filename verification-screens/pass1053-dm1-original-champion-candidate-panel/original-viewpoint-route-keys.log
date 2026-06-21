@@ -1,0 +1,19 @@
+route-token wait:9000
+route-token enter
+route-token enter
+route-token wait:1800
+route-token shot:start
+route-token click:111,82
+left-click-mapped 111,82 -> absolute 797,465 client-relative 372,358 window=1067x832 origin=426,108
+route-token wait:2500
+route-token shot:after_portrait
+route-token wait:1500
+route-token shot:panel_visible
+route-token click:130,115
+left-click-mapped 130,115 -> absolute 861,575 client-relative 435,468 window=1067x832 origin=426,108
+route-token wait:2000
+route-token shot:confirm
+route-token wait:1000
+route-token shot:hud_status_after
+route-token wait:500
+route-token shot:extra

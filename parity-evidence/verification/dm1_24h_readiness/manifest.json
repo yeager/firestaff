@@ -1,0 +1,106 @@
+{
+  "build_dir": "/private/tmp/firestaff-main-dm1-pass1052/build",
+  "checks": {
+    "coverage": {
+      "command": {
+        "cmd": [
+          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/private/tmp/firestaff-main-dm1-pass1052/tools/asset-validate/coverage_by_game.py",
+          "--data-dir",
+          "/Users/bosse/.firestaff/data",
+          "--json"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "{\n  \"rows\": [\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"PC\",\n      \"variant\": \"PC 3.4 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"PC\",\n      \"variant\": \"PC 3.4 Multilingual\",\n      \"have_files\": 5,\n      \"need_files\": 5,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Atari ST\",\n      \"variant\": \"1.2 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Atari ST\",\n      \"variant\": \"1.2 German\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Atari ST\",\n      \"variant\": \"1.2 French\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Atari ST\",\n      \"variant\": \"1.1 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"2.0 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"2.0 German\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"2.0 French\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"2.2 English (kid)\",\n      \"have_files\": 3,\n      \"need_files\": 3,\n      \"in_registry\": 3,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Apple II GS\",\n      \"variant\": \"2.1 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"FM-Towns\",\n      \"variant\": \"2.0 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"PC-98\",\n      \"variant\": \"2.0 Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"X68000\",\n      \"variant\": \"3.0 Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"PC\",\n      \"variant\": \"PC 3.4 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"3.5 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"3.5 Multilingual\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"Atari ST\",\n      \"variant\": \"2.0/2.1 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"X68000\",\n      \"variant\": \"English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"FM-Towns\",\n      \"variant\": \"English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"FM-Towns\",\n      \"variant\": \"Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"PC-98\",\n      \"variant\": \"Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"Utility\",\n      \"variant\": \"Amiga Utility Disk\",\n      \"have_files\": 2,\n      \"need_files\": 5,\n      \"in_registry\": 2,\n      \"status\": \"ARCHIVED\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"PC\",\n      \"variant\": \"English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"PC\",\n      \"variant\": \"French\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"PC\",\n      \"variant\": \"German/English JewelCase\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"Macintosh\",\n      \"variant\": \"English (US)\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"Sega CD\",\n      \"variant\": \"English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"FM-Towns\",\n      \"variant\": \"Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"PC-98\",\n      \"variant\": \"Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"IBM PS/V\",\n      \"variant\": \"Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"nexus\",\n      \"platform\": \"Saturn\",\n      \"variant\": \"JP (138-file release)\",\n      \"have_files\": 1,\n      \"need_files\": 1,\n      \"in_registry\": 1,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"theron\",\n      \"platform\": \"PC Engine\",\n      \"variant\": \"JP Track 02\",\n      \"have_files\": 1,\n      \"need_files\": 1,\n      \"in_registry\": 0,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"theron\",\n      \"platform\": \"PC Engine\",\n      \"variant\": \"US Track 02\",\n      \"have_files\": 1,\n      \"need_files\": 1,\n      \"in_registry\": 0,\n      \"status\": \"READY\",\n      \"notes\": []\n    }\n  ],\n  \"summary\": {\n    \"dm1\": {\n      \"total\": 14,\n      \"ready\": 14,\n      \"archived\": 0,\n      \"missing\": 0\n    },\n    \"csb\": {\n      \"total\": 9,\n      \"ready\": 8,\n      \"archived\": 1,\n      \"missing\": 0\n    },\n    \"dm2\": {\n      \"total\": 9,\n      \"ready\": 9,\n      \"archived\": 0,\n      \"missing\": 0\n    },\n    \"nexus\": {\n      \"total\": 1,\n      \"ready\": 1,\n      \"archived\": 0,\n      \"missing\": 0\n    },\n    \"theron\": {\n      \"total\": 2,\n      \"ready\": 2,\n      \"archived\": 0,\n      \"missing\": 0\n    }\n  }\n}"
+      },
+      "missing_or_not_ready": [],
+      "ok": true,
+      "summary": {
+        "archived": 0,
+        "missing": 0,
+        "ready": 14,
+        "total": 14
+      }
+    },
+    "ctest": {
+      "command": {
+        "cmd": [
+          "ctest",
+          "--test-dir",
+          "/private/tmp/firestaff-main-dm1-pass1052/build",
+          "-R",
+          "m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe",
+          "--output-on-failure"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "Test project /private/tmp/firestaff-main-dm1-pass1052/build\n    Start 217: firestaff_dm1_v1_playable_route_probe\n1/3 Test #217: firestaff_dm1_v1_playable_route_probe ..............   Passed    0.00 sec\n    Start 218: firestaff_dm1_v1_pass1055_closed_door_pair_probe\n2/3 Test #218: firestaff_dm1_v1_pass1055_closed_door_pair_probe ...   Passed    0.00 sec\n    Start 336: m11_phase_a\n3/3 Test #336: m11_phase_a ........................................   Passed    0.05 sec\n\n100% tests passed, 0 tests failed out of 3\n\nTotal Test time (real) =   0.07 sec"
+      },
+      "ok": true,
+      "regex": "m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe"
+    },
+    "pass1056_pairing": {
+      "cmd": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/private/tmp/firestaff-main-dm1-pass1052/tools/verify_pass1056_dm1_v1_pass1052_firestaff_pairing_gate.py"
+      ],
+      "ok": true,
+      "preserved_outputs": [
+        "parity-evidence/verification/pass1056_dm1_v1_pass1052_firestaff_pairing_gate/manifest.json",
+        "parity-evidence/pass1056_dm1_v1_pass1052_firestaff_pairing_gate.md"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "PASS pass1056 DM1 pass1052 Firestaff pairing gate"
+    },
+    "pass1057_dungeonb": {
+      "cmd": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/private/tmp/firestaff-main-dm1-pass1052/tools/verify_pass1057_dm1_amiga22_dungeonb_asset_lock.py"
+      ],
+      "ok": true,
+      "preserved_outputs": [
+        "parity-evidence/verification/pass1057_dm1_amiga22_dungeonb_asset_lock/manifest.json",
+        "parity-evidence/pass1057_dm1_amiga22_dungeonb_asset_lock.md"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "PASS pass1057_dm1_amiga22_dungeonb_asset_lock status=PASS"
+    },
+    "pass1058_keypad_route_atlas": {
+      "cmd": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "/private/tmp/firestaff-main-dm1-pass1052/tools/verify_pass1058_dm1_v1_original_keypad_route_atlas.py"
+      ],
+      "ok": true,
+      "preserved_outputs": [
+        "parity-evidence/verification/pass1058_dm1_v1_original_keypad_route_atlas/manifest.json"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "PASS pass1058_dm1_v1_original_keypad_route_atlas"
+    },
+    "registry": {
+      "command": {
+        "cmd": [
+          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/private/tmp/firestaff-main-dm1-pass1052/tools/asset-validate/compare_to_greatstone.py",
+          "/Users/bosse/.firestaff/data",
+          "--quiet"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "summary: ok=155  missing=0  corrupt=0",
+        "stdout": ""
+      },
+      "ok": true
+    }
+  },
+  "data_dir": "/Users/bosse/.firestaff/data",
+  "generated_at": "2026-06-20T21:56:39.831702+00:00",
+  "schema": "firestaff.parity.dm1_24h_readiness.v1",
+  "status": "PASS"
+}

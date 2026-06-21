@@ -1,0 +1,340 @@
+{
+  "schema": "pass80_original_frame_classifier.v1",
+  "attempt_dir": "verification-screens/pass1055-dm1-original-closed-door-collision",
+  "capture_count": 4,
+  "dimensions_seen": {
+    "320x200": 4
+  },
+  "expected_sequence": null,
+  "class_counts": {
+    "dungeon_gameplay": 1,
+    "wall_closeup": 3
+  },
+  "duplicate_sha256_counts": {
+    "a0d3a9cdbddc310e3ef195c9c7719508a5141fbd66e1acb6a8dbe4b14ebc0dd6": 3
+  },
+  "honesty": "Classifier/audit only. A 320x200 frame is not parity evidence until its semantic class matches the intended route state.",
+  "captures": [
+    {
+      "file": "verification-screens/pass1055-dm1-original-closed-door-collision/image0001-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 12370,
+      "sha256": "40c678403d8f772822c1301bafa373adb0862915a8239d2bdb15f71fccf4b750",
+      "classification": "dungeon_gameplay",
+      "reason": "viewport content with mostly dark in-game right column",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.9169,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            144.48,
+            144.48,
+            144.48
+          ],
+          "luma_stddev": 58.13
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0138,
+          "color_ratio": 0.0,
+          "unique_colors": 2,
+          "mean_rgb": [
+            3.52,
+            3.52,
+            3.52
+          ],
+          "luma_stddev": 29.74
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0626,
+          "color_ratio": 0.0597,
+          "unique_colors": 3,
+          "mean_rgb": [
+            0.72,
+            13.8,
+            13.8
+          ],
+          "luma_stddev": 38.64
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.7673,
+          "color_ratio": 0.0,
+          "unique_colors": 6,
+          "mean_rgb": [
+            106.12,
+            106.12,
+            106.12
+          ],
+          "luma_stddev": 68.02
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass1055-dm1-original-closed-door-collision/image0002-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 11838,
+      "sha256": "a0d3a9cdbddc310e3ef195c9c7719508a5141fbd66e1acb6a8dbe4b14ebc0dd6",
+      "classification": "wall_closeup",
+      "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.9908,
+          "color_ratio": 0.0078,
+          "unique_colors": 8,
+          "mean_rgb": [
+            158.56,
+            157.99,
+            157.56
+          ],
+          "luma_stddev": 43.51
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0138,
+          "color_ratio": 0.0,
+          "unique_colors": 2,
+          "mean_rgb": [
+            3.52,
+            3.52,
+            3.52
+          ],
+          "luma_stddev": 29.74
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0626,
+          "color_ratio": 0.0597,
+          "unique_colors": 3,
+          "mean_rgb": [
+            0.72,
+            13.8,
+            13.8
+          ],
+          "luma_stddev": 38.64
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.9856,
+          "color_ratio": 0.0174,
+          "unique_colors": 8,
+          "mean_rgb": [
+            143.37,
+            142.1,
+            141.21
+          ],
+          "luma_stddev": 44.8
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass1055-dm1-original-closed-door-collision/image0003-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 11838,
+      "sha256": "a0d3a9cdbddc310e3ef195c9c7719508a5141fbd66e1acb6a8dbe4b14ebc0dd6",
+      "classification": "wall_closeup",
+      "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.9908,
+          "color_ratio": 0.0078,
+          "unique_colors": 8,
+          "mean_rgb": [
+            158.56,
+            157.99,
+            157.56
+          ],
+          "luma_stddev": 43.51
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0138,
+          "color_ratio": 0.0,
+          "unique_colors": 2,
+          "mean_rgb": [
+            3.52,
+            3.52,
+            3.52
+          ],
+          "luma_stddev": 29.74
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0626,
+          "color_ratio": 0.0597,
+          "unique_colors": 3,
+          "mean_rgb": [
+            0.72,
+            13.8,
+            13.8
+          ],
+          "luma_stddev": 38.64
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.9856,
+          "color_ratio": 0.0174,
+          "unique_colors": 8,
+          "mean_rgb": [
+            143.37,
+            142.1,
+            141.21
+          ],
+          "luma_stddev": 44.8
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    },
+    {
+      "file": "verification-screens/pass1055-dm1-original-closed-door-collision/image0004-raw.png",
+      "width": 320,
+      "height": 200,
+      "bytes": 11838,
+      "sha256": "a0d3a9cdbddc310e3ef195c9c7719508a5141fbd66e1acb6a8dbe4b14ebc0dd6",
+      "classification": "wall_closeup",
+      "reason": "flat low-color viewport fills inventory extent; unsafe for inventory/spell evidence",
+      "expected_class": null,
+      "expected_match": null,
+      "regions": {
+        "viewport": {
+          "nonblack_ratio": 0.9908,
+          "color_ratio": 0.0078,
+          "unique_colors": 8,
+          "mean_rgb": [
+            158.56,
+            157.99,
+            157.56
+          ],
+          "luma_stddev": 43.51
+        },
+        "right_action": {
+          "nonblack_ratio": 0.0138,
+          "color_ratio": 0.0,
+          "unique_colors": 2,
+          "mean_rgb": [
+            3.52,
+            3.52,
+            3.52
+          ],
+          "luma_stddev": 29.74
+        },
+        "spell_area": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        },
+        "right_column": {
+          "nonblack_ratio": 0.0626,
+          "color_ratio": 0.0597,
+          "unique_colors": 3,
+          "mean_rgb": [
+            0.72,
+            13.8,
+            13.8
+          ],
+          "luma_stddev": 38.64
+        },
+        "inventory_extent": {
+          "nonblack_ratio": 0.9856,
+          "color_ratio": 0.0174,
+          "unique_colors": 8,
+          "mean_rgb": [
+            143.37,
+            142.1,
+            141.21
+          ],
+          "luma_stddev": 44.8
+        },
+        "title_top": {
+          "nonblack_ratio": 0.0,
+          "color_ratio": 0.0,
+          "unique_colors": 1,
+          "mean_rgb": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "luma_stddev": 0.0
+        }
+      }
+    }
+  ],
+  "warnings": [
+    "duplicate raw frames detected: 1 unique sha256 value(s) repeat"
+  ],
+  "problems": [],
+  "pass": true
+}

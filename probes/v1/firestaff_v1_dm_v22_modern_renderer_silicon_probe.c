@@ -30,11 +30,13 @@
 #include "render_sdl_m11.h"
 #include "m11_v22_render_overlay_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
+#include "dm1_v2_shape_runtime_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 
 #include <SDL3/SDL.h>
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -71,6 +73,41 @@ static int is_apple_silicon(void) {
 #else
     return 0;
 #endif
+}
+
+static size_t count_nonzero_pixels(const unsigned char* framebuffer,
+                                   size_t framebuffer_size) {
+    size_t i;
+    size_t n = 0;
+    for (i = 0; i < framebuffer_size; ++i) {
+        if (framebuffer[i] != 0x00) n++;
+    }
+    return n;
+}
+
+static int v22_all_cell_centers_nonzero(const unsigned char* framebuffer,
+                                        int fbW) {
+    static const int centers[9][2] = {
+        { 42, 118 }, {108, 118 }, {173, 118 }, /* D1 L/C/R */
+        { 42,  87 }, {108,  87 }, {173,  87 }, /* D2 L/C/R */
+        { 42,  56 }, {108,  56 }, {173,  56 }  /* D3 L/C/R */
+    };
+    int i;
+    for (i = 0; i < 9; ++i) {
+        int x = centers[i][0];
+        int y = centers[i][1];
+        if (framebuffer[y * fbW + x] == 0x00) return 0;
+    }
+    return 1;
+}
+
+static int v22_composition_active_count(const DM1_V2_ShapeRuntimeComposition* c) {
+    int i;
+    int active = 0;
+    for (i = 0; i < c->count; ++i) {
+        if (c->cells[i].active) active++;
+    }
+    return active;
 }
 
 int main(void) {
@@ -125,7 +162,6 @@ int main(void) {
         unsigned char v1_fb[M11_FB_BYTES];
         int v1_painted;
         SDL_Surface* surf;
-        unsigned char sample[4];
         Uint8 r, g, b, a;
 
         memset(framebuffer, 0x00, framebuffer_size);
@@ -189,10 +225,7 @@ int main(void) {
 
         /* CPU-side: verify the overlay wrote some non-zero pixels
          * (the V22 placeholder rectangles). */
-        non_zero_cpu_pixels = 0;
-        for (size_t i = 0; i < framebuffer_size; ++i) {
-            if (framebuffer[i] != 0x00) non_zero_cpu_pixels++;
-        }
+        non_zero_cpu_pixels = count_nonzero_pixels(framebuffer, framebuffer_size);
 
         /* The D1L center pixel index (cpu-side) should NOT be 0x00
          * because the overlay fills the rect interior. */
@@ -230,6 +263,119 @@ int main(void) {
                                  "D1L center GPU pixel is non-black (V22 rect rendered through Metal)");
                 }
             }
+        }
+    }
+
+    /* Phase 2b: V22 direction sweep — pass898+ only sampled direction 0.
+     * Walk all four facing values through the same cache -> overlay ->
+     * SDL3/Metal readback path so direction-specific shape-cache mistakes
+     * cannot hide behind the north-facing smoke case. */
+    {
+        static const unsigned char raw_squares[3][3] = {
+            { 0x00, 0x04, 0x20 },
+            { 0x40, 0x10, 0x11 },
+            { 0x04, 0x20, 0x00 }
+        };
+        int direction;
+        int all_ok = 1;
+        int total_painted = 0;
+        size_t total_nonzero = 0;
+        unsigned int gpu_rgb_sum = 0;
+
+        for (direction = 0; direction < 4; ++direction) {
+            int painted;
+            size_t nonzero;
+            SDL_Surface* surf;
+            Uint8 r, g, b, a;
+
+            memset(framebuffer, 0x00, framebuffer_size);
+            dm1_v2_presentation_mode_reset();
+            dm1_v2_presentation_mode_set_modern_pack_available(1);
+            dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+            m11_v22_shape_cache_update(direction, raw_squares);
+            painted = m11_v22_render_overlay(framebuffer, 320, 200);
+            nonzero = count_nonzero_pixels(framebuffer, framebuffer_size);
+            total_painted += painted;
+            total_nonzero += nonzero;
+
+            rc = M11_Render_PresentIndexed(framebuffer, 320, 200);
+            if (rc != M11_RENDER_OK) {
+                all_ok = 0;
+                continue;
+            }
+
+            surf = SDL_RenderReadPixels(M11_Render_GetRenderer(), NULL);
+            if (!surf || !surf->pixels) {
+                if (surf) SDL_DestroySurface(surf);
+                all_ok = 0;
+                continue;
+            }
+            SDL_ReadSurfacePixel(surf, 108, 87, &r, &g, &b, &a); /* D2C center */
+            SDL_DestroySurface(surf);
+            gpu_rgb_sum += (unsigned int)r + (unsigned int)g + (unsigned int)b;
+
+            if (painted != 9 ||
+                nonzero == 0 ||
+                !v22_all_cell_centers_nonzero(framebuffer, 320) ||
+                ((unsigned int)r + (unsigned int)g + (unsigned int)b) == 0u) {
+                all_ok = 0;
+            }
+        }
+
+        {
+            char note[220];
+            snprintf(note, sizeof(note),
+                     "directions=4 total_painted=%d total_nonzero=%zu gpu_rgb_sum=%u "
+                     "(expect 36 painted cells, non-zero CPU/GPU samples)",
+                     total_painted, total_nonzero, gpu_rgb_sum);
+            probe_record(&stats, "AS_V22_DIRECTION_SWEEP_4X9",
+                         all_ok && total_painted == 36 &&
+                         total_nonzero > 0 && gpu_rgb_sum > 0u,
+                         note);
+        }
+    }
+
+    /* Phase 2c: 12-cell composition contract — the GPU overlay samples
+     * D1..D3, but the V22 runtime also exposes the full D0..D3, L/C/R
+     * composition used by the follow-up in-place draw path. Keep that
+     * contract in the Apple-Silicon probe so Metal coverage and the
+     * runtime composition gate advance together. */
+    {
+        static const uint8_t raw12[12] = {
+            0x00, 0x04, 0x20,  /* D0 */
+            0x40, 0x10, 0x11,  /* D1 */
+            0x04, 0x20, 0x00,  /* D2 */
+            0x00, 0x04, 0x20   /* D3 */
+        };
+        static const int lateral12[12] = {
+            -1, 0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1
+        };
+        static const int depth12[12] = {
+            0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3
+        };
+        DM1_V2_ShapeRuntimeComposition v1_comp;
+        DM1_V2_ShapeRuntimeComposition v22_comp;
+        int v1_active;
+        int v22_active;
+
+        dm1_v2_presentation_mode_reset();
+        v1_comp = dm1_v2_shape_runtime_composition(raw12, lateral12, depth12, 0);
+        v1_active = v22_composition_active_count(&v1_comp);
+
+        dm1_v2_presentation_mode_set_modern_pack_available(1);
+        dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+        v22_comp = dm1_v2_shape_runtime_composition(raw12, lateral12, depth12, 3);
+        v22_active = v22_composition_active_count(&v22_comp);
+
+        {
+            char note[180];
+            snprintf(note, sizeof(note),
+                     "V1 count=%d active=%d; V22 count=%d active=%d (expect 12-cell inactive/active split)",
+                     v1_comp.count, v1_active, v22_comp.count, v22_active);
+            probe_record(&stats, "AS_V22_COMPOSITION_12_CELLS",
+                         v1_comp.count == 12 && v1_active == 0 &&
+                         v22_comp.count == 12 && v22_active == 12,
+                         note);
         }
     }
 

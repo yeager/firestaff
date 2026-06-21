@@ -1,0 +1,6 @@
+index	filename	route_label	route_token
+01	01_start_original_viewport_224x136.ppm	start	shot:start
+02	02_after_kp5_original_viewport_224x136.ppm	after_kp5	shot:after_kp5
+03	03_after_kp8_original_viewport_224x136.ppm	after_kp8	shot:after_kp8
+04	04_after_forward_click_original_viewport_224x136.ppm	after_forward_click	shot:after_forward_click
+05	05_after_kp2_original_viewport_224x136.ppm	after_kp2	shot:after_kp2

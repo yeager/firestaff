@@ -229,7 +229,12 @@ def build_coverage(registry: dict[tuple[str, str], RegistryEntry], data_dir: Pat
                 continue
             if _local_has(data_dir, v.game, f):
                 have += 1
-                if (v.game, f) in registry:
+                if (v.game, f) in registry or (
+                    v.game == "dm1"
+                    and v.platform == "Amiga"
+                    and v.variant.startswith("2.2 English")
+                    and ("dm1-amiga-2.2-en", f) in registry
+                ):
                     reg_have += 1
             else:
                 # Maybe present as a raw disk image that needs extraction.

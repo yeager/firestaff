@@ -12,6 +12,7 @@ SHA256 checksums for known-good original game data files.
 | dm1-multilingual | DUNGEON.DAT | `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` | 33,357 |
 | dm1-multilingual | DUNGEONF.DAT | `290543621ae7c465fee9651c4d3c44f5dc268f5e16fffc75da82a440274c0571` | 33,687 |
 | dm1-multilingual | DUNGEONG.DAT | `b2478d5cc3213725329cb42684f0309e5e95fd6789dc2cb0c3377b178ad75817` | 33,705 |
+| dm1-amiga-2.2-en | DUNGEONB.DAT | `9bac133b4d8d6ca88abad70ff4a3a6436f264e3ae3a7503e0b40a8a6b4007730` | 4,806 |
 | csb | GRAPHICS.DAT | `3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942` | 435,076 |
 | csb | DUNGEON.DAT | `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba` | 2,098 |
 | csb-atari-st-2x | GRAPHICS.DAT | `33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af` | 319,080 |
@@ -49,6 +50,7 @@ SHA256 checksums for known-good original game data files.
 - `dm1-multilingual/DUNGEONG.DAT` (33,705 bytes): `b2478d5cc3213725329cb42684f0309e5e95fd6789dc2cb0c3377b178ad75817`
 - `dm1-multilingual/GRAPHICS.DAT` (398,925 bytes): `291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc`
 - `dm1-multilingual/SONG.DAT` (162,482 bytes): `71e1ba82b7f3cfeb99ae181bd9d685201bdc2b11f42643460120ddcb3470c177`
+- `dm1-extras/amiga-2.2-en/DUNGEONB.DAT` (4,806 bytes): `9bac133b4d8d6ca88abad70ff4a3a6436f264e3ae3a7503e0b40a8a6b4007730`
 - `dm1/DUNGEON.DAT` (33,357 bytes): `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`
 - `dm1/GRAPHICS.DAT` (363,417 bytes): `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`
 - `dm2/DUNGEON.DAT` (39,437 bytes): `cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef`
