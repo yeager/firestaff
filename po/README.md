@@ -25,4 +25,8 @@ Per-domain i18n layout for Firestaff. See `I18N_PO_LAYOUT_PLAN.md` at repo root 
 
 ## Validation
 
-Run `po/validate_po_layout.sh` to verify structural consistency.
+Run `po/validate_po_layout.sh` to verify structural consistency. The
+validator reports both `nonblank` coverage and `native` coverage:
+`msgstr == msgid` counts as fallback/scaffold coverage, not as native
+translation. Fallback-only catalogs are marked `FALL` but do not fail the
+structural CI gate.
