@@ -358,7 +358,49 @@ static void test_creature_projectile_launch_params(void) {
 }
 
 /* =========================================================
- *  Test 11c: Vexirk projectile type table is source-backed
+ *  Test 11c: C25/C26 BUG0_13 safe projectile fallback
+ * ========================================================= */
+static void test_lord_order_grey_lord_projectile_safe_fallback(void) {
+    const int types[] = {
+        DM1_CREATURE_TYPE_LORD_ORDER,
+        DM1_CREATURE_TYPE_GREY_LORD
+    };
+    int i;
+
+    for (i = 0; i < 2; ++i) {
+        struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+        struct DM1ActiveGroup_Compat ag = make_default_ag();
+        struct RngState_Compat rng = make_rng((uint32_t)(51 + i));
+        struct DM1CreatureProjectileAttack_Compat out;
+        int ok;
+
+        ctx.creatureType = types[i];
+        ctx.creatureInfo.ranges = 0x3005; /* attack range 3, sight 5 */
+        ctx.creatureInfo.attack = 64;
+        ctx.creatureInfo.dexterity = 33;
+        ctx.currentGroupDistanceToParty = 2;
+        ctx.currentGroupPrimaryDirToParty = 2; /* South */
+        ag.cells = 0xFF;
+
+        ok = F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
+            &ctx, &ag, 0, &rng, &out);
+        EXPECT_EQ(ok, 1,
+                  "lord_c25_c26_projectile: resolver returns 1");
+        EXPECT_EQ(out.shouldLaunch, 1,
+                  "lord_c25_c26_projectile: ranged boss launches");
+        EXPECT_EQ(out.projectileThing, DM1_PROJECTILE_THING_FIREBALL,
+                  "lord_c25_c26_projectile: BUG0_13 hardened fallback is fireball");
+        EXPECT_EQ(out.useSpellSoundFallback, 1,
+                  "lord_c25_c26_projectile: spell sound fallback stays active");
+        EXPECT_EQ(out.direction, 2,
+                  "lord_c25_c26_projectile: direction is primary direction to party");
+        EXPECT_EQ(out.attack, 33,
+                  "lord_c25_c26_projectile: attack uses creature dexterity");
+    }
+}
+
+/* =========================================================
+ *  Test 11d: Vexirk projectile type table is source-backed
  * ========================================================= */
 static void test_vexirk_projectile_type_table(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
@@ -397,7 +439,7 @@ static void test_vexirk_projectile_type_table(void) {
 }
 
 /* =========================================================
- *  Test 11d: Dispatch exposes projectile launch payload
+ *  Test 11e: Dispatch exposes projectile launch payload
  * ========================================================= */
 static void test_dispatch_projectile_payload(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
@@ -931,6 +973,7 @@ int main(void) {
     test_fear_check();
     test_projectile_decision();
     test_creature_projectile_launch_params();
+    test_lord_order_grey_lord_projectile_safe_fallback();
     test_vexirk_projectile_type_table();
     test_dispatch_projectile_payload();
     test_set_group_direction();
