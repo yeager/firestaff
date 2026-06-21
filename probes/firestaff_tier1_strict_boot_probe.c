@@ -12,15 +12,12 @@
  * CSB engine alive, Nexus engine alive).
  *
  * Paths intentionally excluded as out-of-scope for Tier 1 #5:
- *   - CSB canonical + CSB Amiga 3.3 Meynaf FR — CSB launcher
- *     exits silently without writing to stderr/stdout; this is
- *     a Tier 4 diagnostic-blocker, not a path-discovery gap.
  *   - Nexus canonical + Nexus saturn-ja — the M11 launcher
  *     cannot open `Merged.iso::DM.BIN` or `Track 1.bin::DM.BIN`
  *     without an extract step; that is a Tier 4 launcher gap
  *     (Nexus runtime coverage), not a path-discovery gap.
  *
- * Pass: 5/5 in-scope paths reach their boot milestone.
+ * Pass: all present in-scope paths reach their boot milestone.
  *
  * Run:
  *   SDL_VIDEODRIVER=dummy ./build/firestaff_tier1_strict_boot_probe
@@ -56,6 +53,12 @@ static const Tier1PathSpec kPaths[] = {
     { "dm1",   DEFAULT_DATA_ROOT "/dm1-extras/legacy-dos",
       "LOADING DUNGEON",
       "DM1 legacy-dos (M11 hash-fallback)" },
+    { "csb",   DEFAULT_DATA_ROOT "/csb",
+      "CSB READY",
+      "CSB canonical (M11 stderr-pipe)" },
+    { "csb",   DEFAULT_DATA_ROOT "/csb-extras/legacy-amiga-dms",
+      "CSB READY",
+      "CSB Amiga 3.3 Meynaf FR (M11 stderr-pipe)" },
     { "theron", DEFAULT_DATA_ROOT "/theron",
       "TQR level load",
       "Theron JP canonical (Track 02.iso)" },
