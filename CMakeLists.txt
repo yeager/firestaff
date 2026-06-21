@@ -3023,6 +3023,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_input_command_queue_pc34_compat
     )
 
+    add_executable(firestaff_dm1_v1_champion_mouse_leader_switch_probe
+        probes/dm1/firestaff_dm1_v1_champion_mouse_leader_switch_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mouse_leader_switch_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mouse_leader_switch_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_mouse_leader_switch_probe
+        COMMAND firestaff_dm1_v1_champion_mouse_leader_switch_probe
+    )
+
     add_executable(test_dm1_v1_movement_core_pc34_compat
         tests/test_dm1_v1_movement_core_pc34_compat.c
     )
