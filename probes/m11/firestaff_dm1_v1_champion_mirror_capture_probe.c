@@ -53,7 +53,8 @@ enum {
     VIEWPORT_X = 0,
     VIEWPORT_Y = 33,
     VIEWPORT_W = 224,
-    VIEWPORT_H = 136
+    VIEWPORT_H = 136,
+    PORTRAIT_WARM_THRESHOLD = 30
 };
 
 typedef struct MirrorCapture {
@@ -215,6 +216,19 @@ static int portrait_rect_warm_count(const unsigned char* fb) {
     return count;
 }
 
+static int capture_row_passes(const MirrorCapture* r) {
+    if (!r) {
+        return 0;
+    }
+    if (r->actualOrdinal != r->expectedOrdinal) {
+        return 0;
+    }
+    if (r->expectedOrdinal >= 0) {
+        return r->portraitRectWarmCount >= PORTRAIT_WARM_THRESHOLD;
+    }
+    return r->portraitRectWarmCount < PORTRAIT_WARM_THRESHOLD;
+}
+
 static int write_manifest(const char* outDir,
                           const MirrorCapture* rows,
                           int count) {
@@ -245,7 +259,7 @@ static int write_manifest(const char* outDir,
     fprintf(js, "    \"REVIVE.C F0280 materializes candidate from sensorData\",\n");
     fprintf(js, "    \"COORD.C:1693-1722 PC34 viewport origin/224x136 dimensions\"\n");
     fprintf(js, "  ],\n");
-    fprintf(js, "  \"honesty\": \"Firestaff deterministic runtime capture with exact state coordinates, full-frame PPM screenshots, and source-geometry viewport crop PPMs. The portrait_rect_nonzero column is a coarse heuristic that scans the (96,35)-(128,64) D1C front-wall rectangle for any non-black pixel. The portrait_rect_warm_count column counts pixels with palette indices in {0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0E} (green/red/orange/peach/yellow/blue — the warm-color set used by champion portrait sprites per ReDMCSB DUNVIEW.C:3913-3928) in the same rectangle. The grey-stone wall texture uses palette indices 0x01/0x02/0x07-grey/0x0D (grey shades) and never the warm-color set, so positive-ordinal poses have a high warm_count while negative-ordinal poses have a low one. Pass criterion: positive-ordinal >= 50 warm pixels (portrait detected); negative-ordinal < 50 warm pixels (no portrait, wall only). This is NOT pixel parity with original DM1 PC 3.4 — it is visual-evidence readiness for the 'champion mirrors not visible' P1 bug ticket.\",\n");
+    fprintf(js, "  \"honesty\": \"Firestaff deterministic runtime capture with exact state coordinates, full-frame PPM screenshots, and source-geometry viewport crop PPMs. The portrait_rect_nonzero column is a coarse heuristic that scans the (96,35)-(128,64) D1C front-wall rectangle for any non-black pixel. The portrait_rect_warm_count column counts pixels with palette indices in {0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0E} (green/red/orange/peach/yellow/blue — the warm-color set used by champion portrait sprites per ReDMCSB DUNVIEW.C:3913-3928) in the same rectangle. The grey-stone wall texture uses palette indices 0x01/0x02/0x07-grey/0x0D (grey shades) and never the warm-color set, so positive-ordinal poses have a high warm_count while negative-ordinal poses have a low one. Pass criterion: actual ordinal must equal expected ordinal, positive-ordinal poses must have >= 30 warm pixels (portrait detected), and negative-ordinal poses must have < 30 warm pixels (no portrait, wall only). This is NOT pixel parity with original DM1 PC 3.4 — it is visual-evidence readiness for the 'champion mirrors not visible' P1 bug ticket.\",\n");
     fprintf(js, "  \"captures\": [\n");
 
     fprintf(md, "# DM1 V1 champion mirror visual capture\n\n");
@@ -259,23 +273,14 @@ static int write_manifest(const char* outDir,
     fprintf(md, "- REVIVE.C F0280 — materializes candidate from sensorData\n");
     fprintf(md, "- COORD.C:1693-1722 — PC34 viewport origin/224x136 dimensions\n\n");
     fprintf(md, "## P1 bug status\n\n");
-    fprintf(md, "The original 'champion mirrors not visible' P1 bug ticket is closed-by-evidence when every positive-ordinal pose shows `portrait_rect_nonzero=1` AND every negative-ordinal pose shows `portrait_rect_nonzero=0` (because no portrait should be drawn on a side wall). If a positive pose shows zero pixels in the portrait rectangle, the portrait is missing and the bug is reproduced.\n\n");
+    fprintf(md, "The original 'champion mirrors not visible' P1 bug ticket is closed-by-evidence when every row has `actualOrdinal == expectedOrdinal`, every positive-ordinal pose has `portrait_rect_warm_count >= 30`, and every negative-ordinal/no-floating pose has `portrait_rect_warm_count < 30`. If a positive pose drops below the warm-pixel threshold, the portrait is missing; if a negative pose crosses the threshold, a champion portrait is floating where only wall texture should be drawn.\n\n");
     fprintf(md, "## Captures\n\n");
     fprintf(md, "| label | map | x | y | dir | expected | actual | portrait_rect_nonzero | portrait_rect_warm_count | screenshot | viewport crop |\n");
     fprintf(md, "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |\n");
 
     for (i = 0; i < count; ++i) {
         const MirrorCapture* r = &rows[i];
-        int pass;
-        /* Pass criterion: positive-ordinal poses should have warm
-         * pixels in the portrait rect (portrait present); negative-
-         * ordinal poses should have FEW warm pixels (wall texture
-         * only, no portrait). The portrait_rect_nonzero column is
-         * retained as a sanity-check heuristic for any rendering
-         * pipeline that produced a blank viewport. */
-        pass = (r->expectedOrdinal >= 0)
-                   ? (r->portraitRectWarmCount >= 30)
-                   : (r->portraitRectWarmCount < 30);
+        int pass = capture_row_passes(r);
         fprintf(js,
                 "    {\"label\":\"%s\",\"party\":{\"mapIndex\":0,\"mapX\":%d,\"mapY\":%d,\"direction\":%d},\"expectedOrdinal\":%d,\"actualOrdinal\":%d,\"portraitRectNonzero\":%d,\"portraitRectWarmCount\":%d,\"screenshot\":\"%s.ppm\",\"viewportCrop\":\"%s_viewport_224x136.ppm\",\"pass\":%s}%s\n",
                 r->label, r->mapX, r->mapY, r->direction,
@@ -309,6 +314,7 @@ int main(int argc, char** argv) {
     int i;
     int n = (int)(sizeof(kCaptures) / sizeof(kCaptures[0]));
     int rc;
+    int failures = 0;
 
     if (argc < 3) {
         fprintf(stderr,
@@ -324,6 +330,12 @@ int main(int argc, char** argv) {
     ensure_output_dir(outDir);
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
+    if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {
+        printf("SKIP dm1_v1_champion_mirror_capture_probe "
+               "no hash-verified DM1 data under %s\n", dataDir);
+        return 0;
+    }
+
     M11_GameView_Init(&game);
     if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
         fprintf(stderr,
@@ -352,6 +364,9 @@ int main(int argc, char** argv) {
 
         r->portraitRectNonzero = portrait_rect_nonzero(framebuffer);
         r->portraitRectWarmCount = portrait_rect_warm_count(framebuffer);
+        if (!capture_row_passes(r)) {
+            ++failures;
+        }
 
         snprintf(ppmPath, sizeof(ppmPath), "%s/%s.ppm", outDir, r->label);
         dump_vga_ppm(ppmPath, framebuffer);
@@ -359,16 +374,23 @@ int main(int argc, char** argv) {
                  "%s/%s_viewport_224x136.ppm", outDir, r->label);
         dump_vga_viewport_ppm(ppmViewportPath, framebuffer);
 
-        printf("  %s pose=(1,%d,%d) expected=%d actual=%d portrait_rect=%s blue_count=%d -> %s.ppm\n",
+        printf("  %s pose=(1,%d,%d) expected=%d actual=%d portrait_rect=%s warm_count=%d %s -> %s.ppm\n",
                r->label, r->mapY, r->direction,
                r->expectedOrdinal, r->actualOrdinal,
                r->portraitRectNonzero ? "nonzero" : "empty",
                r->portraitRectWarmCount,
+               capture_row_passes(r) ? "PASS" : "FAIL",
                r->label);
     }
 
     rc = write_manifest(outDir, kCaptures, n) ? 0 : 1;
     printf("wrote %s/dm1_v1_champion_mirror_capture.{json,md}\n", outDir);
     M11_GameView_Shutdown(&game);
+    if (failures > 0) {
+        fprintf(stderr,
+                "FAIL dm1_v1_champion_mirror_capture_probe %d/%d capture invariants failed\n",
+                failures, n);
+        return 1;
+    }
     return rc;
 }
