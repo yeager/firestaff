@@ -2886,6 +2886,75 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_character_import
     )
 
+    add_executable(test_csb_v1_utility_import_block_verify_pc34_compat
+        tests/test_csb_v1_utility_import_block_verify_pc34_compat.c
+        src/csb/csb_v1_utility_import_pc34.c
+        src/csb/csb_v1_character_pc34_compat.c
+        src/csb/csb_v1_save_load_pc34_compat.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_v1_utility_import_block_verify_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_utility_import_block_verify_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_utility_import_block_verify_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_utility_import_block_verify_pc34_compat
+        COMMAND test_csb_v1_utility_import_block_verify_pc34_compat
+    )
+
+    add_executable(test_csb_v1_runtime_champion_inventory_handoff_pc34_compat
+        tests/test_csb_v1_runtime_champion_inventory_handoff_pc34_compat.c
+        src/csb/csb_v1_runtime_champion_inventory_handoff_pc34_compat.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_runtime_champion_inventory_handoff_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    target_link_libraries(test_csb_v1_runtime_champion_inventory_handoff_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_runtime_champion_inventory_handoff_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_runtime_champion_inventory_handoff_pc34_compat
+        COMMAND test_csb_v1_runtime_champion_inventory_handoff_pc34_compat
+    )
+
+    add_executable(test_csb_v1_runtime_champion_load_attrs
+        tests/test_csb_v1_runtime_champion_load_attrs.c
+        src/csb/csb_v1_boot.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/csb/csb_v1_game_state_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+        src/csb/csb_v1_utility_flow_pc34.c
+        src/csb/csb_v1_utility_import_pc34.c
+        src/csb/csb_v1_save_load_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_v1_runtime_champion_load_attrs PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_runtime_champion_load_attrs PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_runtime_champion_load_attrs PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_runtime_champion_load_attrs
+        COMMAND test_csb_v1_runtime_champion_load_attrs
+    )
+
+    add_test(
+        NAME csb_v1_utility_import_probe
+        COMMAND firestaff_csb_v1_utility_import_probe ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
     # Bug C regression: csb_v1_save_game must self-heal the save
     # directory tree (and the parent of a custom save path) via
     # ensure_save_dir so a wiped save tree does not return
