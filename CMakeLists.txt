@@ -2942,6 +2942,17 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_inventory_backpack_chest_pc34_compat
     )
 
+    add_executable(firestaff_dm1_v1_chest_empty_pointer_integrity_probe
+        probes/dm1/firestaff_dm1_v1_chest_empty_pointer_integrity_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_chest_empty_pointer_integrity_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_chest_empty_pointer_integrity_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_empty_pointer_integrity_probe
+        COMMAND firestaff_dm1_v1_chest_empty_pointer_integrity_probe
+    )
 
     add_executable(test_dm1_v1_inventory_consumables_pc34_compat
         tests/test_dm1_v1_inventory_consumables_pc34_compat.c

@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 empty-chest pointer integrity gate: registered existing `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` as CTest target `dm1_v1_chest_empty_pointer_integrity_probe`. The synthetic source-locked gate covers empty chest open/reopen/close behavior, `THING_NONE` visible-slot handling, empty-slot click no-op, open-chest pointer clearing, and preservation of champion hand/load state around an empty chest. This is source/runtime fixture coverage only; it does not add original capture or pixel parity evidence.
+
 - ✅ 2026-06-21 DM1 V1 negative wall-lane pixel gates: registered existing `firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe` and `firestaff_dm1_v1_d1l2_d1r2_absence_pixel_slice_probe` as CTest targets. The synthetic source-locked gates prove D0C has no accidental center-wall blit/write path and that D1L2/D1R2 are absent from the F0128 draw order, PC34 extra-side-wall masks, and pixel write lanes. This is Firestaff-side source/pixel-geometry coverage only; broader original wall screenshot pairing remains partial.
 
 - ✅ 2026-06-21 DM1 V1 required-complete launcher gate: registered the existing synthetic `test_m12_dm1_v1_required_complete_launches` as CTest target `m12_dm1_v1_required_complete_launches`. The gate proves M12 requests a DM1 V1 launch when the required `GRAPHICS.DAT` + `DUNGEON.DAT` hash set is complete, while optional title/intro/FTL/original-candidate markers remain absent. This is launcher-intent coverage only; it does not prove real asset discovery, archive cache materialization, runtime handoff, DOSBox parity, or pixel parity.
