@@ -31,7 +31,8 @@ STATUS = "DM1_V1_CHAMPION_PANEL_PORTRAIT_BOX_BLIT_GATE_PC34_COMPAT_LOCKED"
 FAILED_STATUS = "FAILED_DM1_V1_CHAMPION_PANEL_PORTRAIT_BOX_BLIT_GATE_PC34_COMPAT"
 
 ROOT = Path(__file__).resolve().parents[1]
-BUILD = Path(os.environ.get("FIRESTAFF_BUILD_DIR", ROOT / "build-local"))
+_build_env = os.environ.get("FIRESTAFF_BUILD_DIR")
+BUILD = Path(_build_env) if _build_env else (ROOT / "build" if (ROOT / "build").exists() else ROOT / "build-local")
 DATA = Path.home() / ".openclaw/data"
 EXTERNAL_DATA = Path("/Volumes/Extern-disk/openclaw-data/firestaff")
 MANIFEST = (

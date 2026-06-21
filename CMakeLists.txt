@@ -1372,6 +1372,12 @@ target_link_libraries(firestaff_dm1_v2_shape_runtime_probe
 if(NOT MSVC)
     target_compile_options(firestaff_dm1_v2_shape_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v2_shape_runtime_probe
+        COMMAND firestaff_dm1_v2_shape_runtime_probe
+    )
+endif()
 
 # M11 V2.2 GPU render path: per-frame V22 shape cache probe.
 # Headless: no game data. Verifies that the per-frame cache is
@@ -1840,6 +1846,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_viewport_wall
     endif()
     # NOTE: no add_test() — this probe writes files and takes an OUT_DIR
     # arg. Manual run: ./build/firestaff_dm1_v1_viewport_wall_capture_probe ~/.firestaff/data/dm1 /tmp/captures
+endif()
+
+# DM1 V1 champion-panel damage-indicator pc34_compat contract test
+# (CHAMDRAW.C F0623 damage graphic/zone/text dispatch).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_indicator_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_damage_indicator_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_damage_indicator_pc34_compat
+        tests/test_dm1_v1_champion_panel_damage_indicator_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_damage_indicator_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_damage_indicator_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_damage_indicator_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_damage_indicator_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_damage_indicator_pc34_compat
+    )
 endif()
 
 # DM1 V1 champion-panel damage-flash-decay pc34_compat runtime test
@@ -3034,6 +3058,12 @@ if(BUILD_TESTING)
         NAME dm1_v1_input_command_queue_pc34_compat
         COMMAND test_dm1_v1_input_command_queue_pc34_compat
     )
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME pass387_dm1_v1_command_queue_state_map_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass387_dm1_v1_command_queue_state_map.py
+        )
+    endif()
 
     add_executable(firestaff_dm1_v1_champion_mouse_leader_switch_probe
         probes/dm1/firestaff_dm1_v1_champion_mouse_leader_switch_probe.c
@@ -6004,6 +6034,84 @@ if(BUILD_TESTING)
         NAME dm1_v1_projectile_explosion_render_source_lock
         COMMAND test_dm1_v1_projectile_explosion_render_pc34_compat
     )
+    add_executable(test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat
+        tests/test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_pje04_f0822_f0824_explosion_pc34_compat
+        COMMAND test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat
+    )
+    add_executable(test_dm1_v1_pje05_f0813_projectile_despawn_pc34_compat
+        tests/test_dm1_v1_pje05_f0813_projectile_despawn_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_pje05_f0813_projectile_despawn_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_pje05_f0813_projectile_despawn_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_pje05_f0813_projectile_despawn_pc34_compat
+        COMMAND test_dm1_v1_pje05_f0813_projectile_despawn_pc34_compat
+    )
+    add_executable(test_dm1_v1_projectile_list_overflow_pc34_compat
+        tests/test_dm1_v1_projectile_list_overflow_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_list_overflow_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_list_overflow_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_list_overflow_pc34_compat
+        COMMAND test_dm1_v1_projectile_list_overflow_pc34_compat
+    )
+    add_executable(test_dm1_v1_ra_door_projectile_reject_pc34_compat
+        tests/test_dm1_v1_ra_door_projectile_reject_pc34_compat.c
+        src/dm1/dm1_v1_ra_door_projectile_reject_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_ra_door_projectile_reject_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_ra_door_projectile_reject_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_ra_door_projectile_reject_pc34_compat
+        COMMAND test_dm1_v1_ra_door_projectile_reject_pc34_compat
+    )
+    add_executable(test_dm1_v1_projectile_wall_impact_sound_gate_pc34_compat
+        tests/test_dm1_v1_projectile_wall_impact_sound_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_wall_impact_sound_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_wall_impact_sound_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_wall_impact_sound_gate_pc34_compat
+        COMMAND test_dm1_v1_projectile_wall_impact_sound_gate_pc34_compat
+    )
+    add_executable(test_dm1_v1_projectile_side_wall_impact_pc34_compat
+        tests/test_dm1_v1_projectile_side_wall_impact_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_side_wall_impact_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_side_wall_impact_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_side_wall_impact_pc34_compat
+        COMMAND test_dm1_v1_projectile_side_wall_impact_pc34_compat
+    )
+    add_executable(test_dm1_v1_throw_into_open_door_cell_pc34_compat
+        tests/test_dm1_v1_throw_into_open_door_cell_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_throw_into_open_door_cell_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_throw_into_open_door_cell_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_throw_into_open_door_cell_pc34_compat
+        COMMAND test_dm1_v1_throw_into_open_door_cell_pc34_compat
+    )
     add_executable(test_dm1_v1_ceiling_pit_and_explosion_bitmap_viewport_pc34_compat
         tests/test_dm1_v1_ceiling_pit_and_explosion_bitmap_viewport_pc34_compat.c
         src/dm1/dm1_v1_ceiling_pit_viewport_pc34_compat.c
@@ -6123,6 +6231,28 @@ if(BUILD_TESTING)
         NAME dm1_v1_magic_thieves_eye_duration_source_lock
         COMMAND test_dm1_v1_magic_thieves_eye_duration_pc34_compat
     )
+    add_executable(test_dm1_v1_f0306_stamina_pc34_compat
+        tests/test_dm1_v1_f0306_stamina_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_f0306_stamina_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0306_stamina_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0306_stamina_pc34_compat
+        COMMAND test_dm1_v1_f0306_stamina_pc34_compat
+    )
+    add_executable(test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat
+        tests/test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mov05_f0284_cell_rotation_pc34_compat
+        COMMAND test_dm1_v1_mov05_f0284_cell_rotation_pc34_compat
+    )
     add_executable(test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat
         tests/test_dm1_v1_mnu04_f0758_potion_power_source_lock_pc34_compat.c
         src/memory/memory_magic_pc34_compat.c
@@ -6160,6 +6290,55 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_viewport_d0c_center_field_pc34_compat
         COMMAND test_dm1_v1_viewport_d0c_center_field_pc34_compat
+    )
+    add_executable(test_dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat
+        tests/test_dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat
+        COMMAND test_dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat
+    )
+    add_executable(test_dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat
+        tests/test_dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat
+        COMMAND test_dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat
+    )
+    add_executable(test_dm1_v1_viewport_d1c_center_field_pc34_compat
+        tests/test_dm1_v1_viewport_d1c_center_field_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d1c_center_field_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_d1c_center_field_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_d1c_center_field_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_d1c_center_field_pc34_compat
+        COMMAND test_dm1_v1_viewport_d1c_center_field_pc34_compat
+    )
+    add_executable(test_dm1_v1_viewport_d3c_center_field_pc34_compat
+        tests/test_dm1_v1_viewport_d3c_center_field_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d3c_center_field_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_d3c_center_field_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_d3c_center_field_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_d3c_center_field_source_lock
+        COMMAND test_dm1_v1_viewport_d3c_center_field_pc34_compat
     )
     add_executable(test_dm1_v1_viewport_hand_overlay_pc34_compat
         tests/test_dm1_v1_viewport_hand_overlay_pc34_compat.c
@@ -6209,6 +6388,113 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_champion_panel_hud_recompute_pc34_compat
         COMMAND test_dm1_v1_champion_panel_hud_recompute_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_panel_status_recompute_pc34_compat
+        tests/test_dm1_v1_champion_panel_status_recompute_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_status_recompute_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_status_recompute_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_status_recompute_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_status_recompute_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_status_recompute_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_panel_clock_tick_stat_repaint_pc34_compat
+        tests/test_dm1_v1_champion_panel_clock_tick_stat_repaint_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_clock_tick_stat_repaint_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_clock_tick_stat_repaint_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_clock_tick_stat_repaint_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_clock_tick_stat_repaint_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_clock_tick_stat_repaint_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat
+        tests/test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_hand_slot_priority_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat
+        tests/test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_panel_name_box_clip_pc34_compat
+        tests/test_dm1_v1_champion_panel_name_box_clip_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_name_box_clip_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_name_box_clip_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_name_box_clip_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_name_box_clip_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_name_box_clip_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_panel_f0354_box_variants_pc34_compat
+        tests/test_dm1_v1_champion_panel_f0354_box_variants_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_f0354_box_variants_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_f0354_box_variants_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_f0354_box_variants_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_f0354_box_variants_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_f0354_box_variants_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_panel_food_water_status_box_pc34_compat
+        tests/test_dm1_v1_champion_panel_food_water_status_box_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_food_water_status_box_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_food_water_status_box_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_food_water_status_box_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_food_water_status_box_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_food_water_status_box_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat
+        tests/test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat
     )
 
     add_executable(test_dm1_v1_viewport_status_bar_layout_pc34_compat
@@ -6342,6 +6628,19 @@ if(BUILD_TESTING)
         NAME dm1_v1_resurrection
         COMMAND test_dm1_v1_resurrection_pc34_compat
     )
+
+    add_executable(test_dm1_v1_rev03_f0863_rebirth_health_source_lock_pc34_compat
+        tests/test_dm1_v1_rev03_f0863_rebirth_health_source_lock_pc34_compat.c
+        src/dm1/dm1_v1_resurrection_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_rev03_f0863_rebirth_health_source_lock_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_rev03_f0863_rebirth_health_source_lock
+        COMMAND test_dm1_v1_rev03_f0863_rebirth_health_source_lock_pc34_compat
+    )
+
     add_executable(test_dm1_v1_lif01_f0830_time_criteria_source_lock_pc34_compat
         tests/test_dm1_v1_lif01_f0830_time_criteria_source_lock_pc34_compat.c
     )
@@ -6374,6 +6673,28 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_chm05_f0832_hunger_thirst_loop_guard
         COMMAND test_dm1_v1_chm05_f0832_hunger_thirst_loop_guard_pc34_compat
+    )
+    add_executable(test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat
+        tests/test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_sleep_wakeup_clock_gate_pc34_compat
+        COMMAND test_dm1_v1_sleep_wakeup_clock_gate_pc34_compat
+    )
+    add_executable(test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat
+        tests/test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat
+        COMMAND test_dm1_v1_sleep_wakeup_clock_temp_xp_gate_pc34_compat
     )
     add_executable(test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat
         tests/test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat.c
@@ -7041,6 +7362,18 @@ if(BUILD_TESTING)
         NAME dm1_v1_spell_casting_source_lock
         COMMAND test_dm1_v1_spell_casting_pc34_compat
     )
+    add_executable(test_dm1_v1_spell_rune_backspace_pc34_compat
+        tests/test_dm1_v1_spell_rune_backspace_pc34_compat.c
+        src/dm1/dm1_v1_spell_casting_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_spell_rune_backspace_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_spell_rune_backspace_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_spell_rune_backspace_pc34_compat
+        COMMAND test_dm1_v1_spell_rune_backspace_pc34_compat
+    )
     endif()
 
     # Launcher/entrance handoff wait policy: ReDMCSB waits for fresh input.
@@ -7511,6 +7844,14 @@ if(NOT TARGET test_dm1_v1_text_message_pc34_compat)
         NAME dm1_v1_text_message_source_lock
         COMMAND test_dm1_v1_text_message_pc34_compat
     )
+    add_test(
+        NAME pass401_dm1_v1_text_window_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass401_dm1_v1_text_window_source_lock.py --json
+    )
+    add_test(
+        NAME pass402_dm1_v1_message_area_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass402_dm1_v1_message_area_source_lock.py --json
+    )
 endif()
 
 # ── DUNGEON.C F0168 scroll TextString source-lock gate ───────────────
@@ -7727,6 +8068,21 @@ if(NOT TARGET test_dm1_v1_skill_experience_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_skill_levelup_formula_gate_pc34_compat)
+    add_executable(test_dm1_v1_skill_levelup_formula_gate_pc34_compat
+        tests/test_dm1_v1_skill_levelup_formula_gate_pc34_compat.c
+        src/dm1/dm1_v1_skill_experience_pc34_compat.c
+        src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_skill_levelup_formula_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_skill_levelup_formula_gate_pc34_compat
+        COMMAND test_dm1_v1_skill_levelup_formula_gate_pc34_compat
+    )
+endif()
+
 # ── DM1 V1 Endgame System source-lock gate ───────────────────────────
 if(NOT TARGET test_dm1_v1_endgame_system_pc34_compat)
     add_executable(test_dm1_v1_endgame_system_pc34_compat
@@ -7763,6 +8119,54 @@ if(NOT TARGET test_dm1_v1_room_transition_pc34_compat)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_room_transition_source_lock_gate.py
         )
     endif()
+endif()
+
+if(NOT TARGET test_dm1_v1_stairs_transition_light_state_pc34_compat)
+    add_executable(test_dm1_v1_stairs_transition_light_state_pc34_compat
+        tests/test_dm1_v1_stairs_transition_light_state_pc34_compat.c
+        src/dm1/dm1_v1_light_pc34_compat.c
+        src/dm1/dm1_v1_room_transition_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_stairs_transition_light_state_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_stairs_transition_light_state_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_stairs_transition_light_state_pc34_compat
+        COMMAND test_dm1_v1_stairs_transition_light_state_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_dm1_v1_stairs_inventory_state_pc34_compat)
+    add_executable(test_dm1_v1_stairs_inventory_state_pc34_compat
+        tests/test_dm1_v1_stairs_inventory_state_pc34_compat.c
+        src/dm1/dm1_v1_inventory_pc34_compat.c
+        src/dm1/dm1_v1_room_transition_pc34_compat.c
+        src/dm1/dm1_v1_stairs_level_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_stairs_inventory_state_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_stairs_inventory_state_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_stairs_inventory_state_pc34_compat
+        COMMAND test_dm1_v1_stairs_inventory_state_pc34_compat
+    )
+endif()
+
+if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat)
+    add_executable(test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat
+        tests/dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat
+        COMMAND test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat
+    )
 endif()
 
 # ── DM1 V1 Viewport 3D source-lock gate ─────────────────────────────
@@ -8051,6 +8455,22 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
         NAME pass503_dm1_v1_viewport_wall_draw_order_evidence
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass503_dm1_v1_viewport_wall_draw_order_evidence.py
+    )
+endif()
+
+# -- DM1 V1 side-content far-to-near source-lock gate --------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass402_dm1_v1_side_content_far_to_near
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass402_dm1_v1_side_content_far_to_near.py
+    )
+endif()
+
+# -- DM1 V1 viewport square/collision source-lock gate --------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME dm1_v1_viewport_square_collision_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_square_collision_source_lock.py
     )
 endif()
 
@@ -8520,6 +8940,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
         NAME pass552_dm1_v1_movement_cooldown_queue_loop
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass552_dm1_v1_movement_cooldown_queue_loop.py
+    )
+endif()
+
+# DM1 V1 movement cooldown/F0380 order source-lock gate
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass402_dm1_v1_movement_cooldown_order
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass402_dm1_v1_movement_cooldown_order.py
     )
 endif()
 
