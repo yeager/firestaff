@@ -253,6 +253,12 @@ int main(int argc, char** argv) {
     dataDir = argv[1];
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
+    if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {
+        printf("SKIP dm1_v1_champion_panel_icon_direction_swap_runtime_probe "
+               "no hash-verified DM1 data under %s\n", dataDir);
+        return 0;
+    }
+
     M11_GameView_Init(&game);
     if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
         fprintf(stderr, "FAIL could not open selected DM1 V1 game view from %s\n", dataDir);
