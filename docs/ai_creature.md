@@ -1,5 +1,14 @@
 # DM1 V1 — Creature AI Behavior
 
+## Status
+**PARTIAL — movement and core perception are gated; caster/reaction edges remain**
+
+pass1066 gates the F0798/F0799 one-step movement selector. pass1067 gates
+F0790-F0796 perception, aggro transition, deterministic tick behavior, and
+champion target selection. Remaining finish-scope AI work is now tracked as
+creature reaction consequences and richer spell-behavior coverage rather than
+a generic "AI pathfinding" gap.
+
 **Source-locked to:** ReDMCSB WIP20210206 GROUP.C, DEFS.H
 **Companion:** src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
 
