@@ -6692,6 +6692,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                  spec->sourceId ? spec->sourceId : "csb");
         m11_set_status(state, "BOOT", "CSB READY (FS LOOP)");
         m11_log_event(state, M11_COLOR_YELLOW, "T0: CSB LOADED (FS LOOP)");
+        /* Tier 4: CSB launcher stderr-pipe — surface the boot milestone to
+         * stderr so `firestaff_tier1_strict_boot_probe` and CI can detect
+         * a successful CSB direct launch via `--game csb --data-dir`. The
+         * matching DM1 path emits "LOADING DUNGEON" via
+         * m11_resolve_builtin_dungeon_path; we use "CSB READY" here as
+         * the canonical CSB-side marker (same string as the in-app status
+         * line above so probe + UI stay in sync). */
+        fprintf(stderr, "CSB READY: gameId=csb dataDir=%s\n",
+                spec->dataDir ? spec->dataDir : "(null)");
         return 1;
     }
     /* ── DM2 V1: bypass DM1 dungeon loader, use DM2 V1 runtime boot ──
