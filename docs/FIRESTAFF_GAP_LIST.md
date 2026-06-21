@@ -140,7 +140,7 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 | Touch zones for inventory | `docs/dm1_touch_inventory.md` | FIXED -- pass1065 verifies C507..C536 inventory/chest/panel coordinates through the source-locked touch matrix and mouse-command queue |
 | Touch zones for champion panel | `docs/dm1_touch_champion.md` | FIXED -- pass1065 verifies C151..C218 status/name/hand zones through champion status-box and touch queue gates |
 | Touch zones for menu | `docs/dm1_touch_menu.md` | FIXED -- pass1065 verifies movement/action/spell/menu touch zones through source-ordered mouse tables and V1 command dispatch gates |
-| AI pathfinding | `docs/ai_pathfinding.md` | PARTIAL |
+| AI pathfinding | `docs/ai_pathfinding.md` | FIXED -- pass1066 adds a data-free CTest for the ReDMCSB F0798/F0799 one-step greedy cascade: primary, RNG-gated secondary, door blocking, opposite fallback, and blocked idle |
 | AI champion, creature, grouping, aggro | `docs/ai_*.md` | PARTIAL |
 
 ### B3. DM1 V2

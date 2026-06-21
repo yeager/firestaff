@@ -6658,6 +6658,20 @@ endif()
         COMMAND test_dm1_v1_creature_ai_behavior_pc34_compat
     )
 
+    # DM1 V1 one-step creature pathfinding cascade
+    add_executable(test_dm1_v1_ai_pathfinding_pc34_compat
+        tests/test_dm1_v1_ai_pathfinding_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_ai_pathfinding_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_ai_pathfinding_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_ai_pathfinding_pc34_compat
+        COMMAND test_dm1_v1_ai_pathfinding_pc34_compat
+    )
+
 # ── DM1 V1 Light & Torch System source-lock gate ─────────────────────
 if(NOT TARGET test_dm1_v1_light_pc34_compat)
     add_executable(test_dm1_v1_light_pc34_compat
