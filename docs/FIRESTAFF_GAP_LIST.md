@@ -84,7 +84,7 @@ Classification:
 | PLATFORM_MATRIX.md version support map | docs/PLATFORM_MATRIX.md | FIXED in v2.9.2 (commit `32dcf76c`) |
 | DMWEB_REFERENCE.md consolidated reference | docs/DMWEB_REFERENCE.md | FIXED in v2.9.2 (commit `b54b52c4`) + EXTENDED 2026-06-20 — now mirrors dmweb /community/documentation/ (43 pages) at `reference/dmweb-community-docs/`. 19 → 62 pages surveyed, see Section I. |
 | **Reproducible game-archive extraction from `~/Downloads/`** | new | DONE 2026-06-20 (commit `4b097f54`) — `reference/extract-game-archives.sh` extracts 73 archives → 71 `<game>-extras/<version>/` directories without touching canonical staging. |
-| **`--scan-data` smoke reports real READY-path:er** | existing | PARTIAL — `--scan-data` works for default data dir; per-archive readiness confirmed via `compare_to_greatstone.py` (148/148 OK, 0 FAIL). Single-shot CI gate in CMake/CTest not yet wired. |
+| **`--scan-data` smoke reports real READY-path:er** | existing | FIXED for the current gate — `asset_validate_coverage_by_game` is wired in CTest and PASS; `tier1_strict_boot_probe` is wired in CTest and PASS 5/5 in-scope launch paths on 2026-06-21. CSB silent-exit and Nexus virtual-ISO launch remain tracked as Tier 4 runtime/launcher gaps, not Tier 1 path-discovery gaps. |
 | **Real-data regression tests (greatstone db_data)** | greatstone sck tool | BLOCKED-DATA — db_data not currently fetchable from free.fr (404). However: `compare_to_greatstone.py` covers the VERIFIED_HASHES.md side, and the new `*-extras/` tree gives us locally-available alternative matches that weren't possible a week ago. |
 | **Lefthook in PATH for CI** | build/CI hygiene | FIXED — `.github/workflows/verify.yml` installs Go, installs `lefthook`, exports `$(go env GOPATH)/bin`, and runs `lefthook run ci`; local dev machines may still no-op gracefully when Lefthook is absent |
 
@@ -383,27 +383,13 @@ order:
    per-game TOTAL/FOUND/MISS table from any data root; default to
    `~/.firestaff/data`). Run: `python3 tools/asset-validate/compare_to_greatstone.py --summary`.
 5. **Verify all `--scan-data` READY-path:er are actually
-   launchable** by M11. — PARTIAL 2026-06-20 (commits `4ba862d3` +
-   `56abb7e1`): 2/8 paths boot OK (DM1 canonical + Theron JP via
-   `m11_phase_a --game <id> --data-dir <path>`); the other 6 fail
-   due to M11 path-resolver limitations (it looks for files in
-   specific subdirs but not recursively). Fix: extend M11 path
-   discovery to recursively search for DUNGEON.DAT/GRAPHICS.DAT
-   via `asset_find_by_md5` (already partially implemented for the
-   4 gameIds with hash-fallback in
-   `m11_resolve_builtin_dungeon_path` at
-   `src/engine/m11_game_view.c:1536`). Remaining work: extend the
-   same hash-fallback to Nexus (DM.BIN via
-   `e88d60859f65f08fa622e1992b02280f` / `96e511c8d36ccbe30a48ba36c59df194`)
-   + Theron all-region variants (US/Rev1/ISO via
-   `f23601102138f87c33025877767ebf76` /
-   `397039af02d50d15c70b74088eb8a1cb` /
-   `3d8b78571dcd0e6eb8eb4b01eeb7fbba`) + extend M11 to launch
-   directly without requiring the explicit `--data-dir` per path
-   shape (e.g. Meynaf FR's `.../Meynaf/DungeonMaster/GRAPHICS.DAT`
-   nested layout). Until then, M11 reports `phase-a run failed
-   (rc=3)` for the 6 failing paths even though `--scan-data`
-   reports READY.
+   launchable** by M11. — DONE for Tier 1 path-discovery scope
+   2026-06-21: CTest `tier1_strict_boot_probe` PASS 5/5 in-scope
+   launch paths (DM1 canonical, DM1 legacy-dos, Theron JP canonical,
+   Theron JP extras, Theron US extras), and
+   `asset_validate_coverage_by_game` PASS. CSB silent-exit and Nexus
+   virtual-ISO launch remain out-of-scope here and tracked as Tier 4
+   runtime/launcher gaps, not path-discovery gaps.
 6. ~~**Scanner path-naming limitations**:~~ CLOSED as NO-GAP
    2026-06-20. The scanner already matches on MD5 via
    `asset_find_by_md5` and `scan_iso_by_md5` now also falls
