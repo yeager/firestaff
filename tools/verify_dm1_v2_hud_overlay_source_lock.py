@@ -10,6 +10,10 @@ EVIDENCE = ROOT / 'parity-evidence/verification/dm1_v2_hud_overlay_source_lock.j
 REQUIRED_SOURCE = [
     (SOURCE / 'TIMELINE.C', 'F0260_TIMELINE_RefreshAllChampionStatusBoxes', 1817),
     (SOURCE / 'PANEL.C', 'F0354_INVENTORY_DrawStatusBoxPortrait', 2195),
+    (SOURCE / 'PANEL.C', 'F0395_MENUS_DrawMovementArrows', 2337),
+    (SOURCE / 'CHAMDRAW.C', 'F0292_CHAMPION_DrawState', 703),
+    (SOURCE / 'COMMAND.C', 'G0454_as_Graphic561_MouseInput_SpellArea', 191),
+    (SOURCE / 'COMMAND.C', 'C108_COMMAND_CLICK_IN_SPELL_AREA_CAST_SPELL', 199),
     (SOURCE / 'GAMELOOP.C', 'F0128_DUNGEONVIEW_Draw_CPSF', 90),
     (SOURCE / 'DUNGEON.C', 'G0233_ai_Graphic559_DirectionToStepEastCount', 35),
     (SOURCE / 'DUNGEON.C', 'G0234_ai_Graphic559_DirectionToStepNorthCount', 40),
@@ -19,9 +23,17 @@ REQUIRED_FIRESTAFF = [
     (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'presentation-only'),
     (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'TIMELINE.C:F0260'),
     (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'PANEL.C:F0354'),
+    (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'CHAMDRAW.C F0292'),
+    (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'STATS.C F0090-F0092'),
+    (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'COMMAND.C/G0454'),
+    (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'does not own champion mutations'),
+    (ROOT / 'include/dm1_v2_hud_overlay_pc34.h', 'M11_V2_HudRuneStrip'),
+    (ROOT / 'include/dm1_v2_hud_overlay_pc34.h', 'v2_hud_set_spell_controls'),
     (ROOT / 'src/dm1v2/dm1_v2_hud_overlay_pc34.c', 'direction is a 0..3 logical value'),
     (ROOT / 'tests/test_dm1_v2_hud_overlay_pc34.c', 'north compass needle'),
     (ROOT / 'tests/test_dm1_v2_hud_overlay_pc34.c', 'clamp high to east'),
+    (ROOT / 'tests/test_dm1_v2_hud_overlay_pc34.c', 'active action flash border'),
+    (ROOT / 'tests/test_dm1_v2_hud_overlay_pc34.c', 'cast-ready control'),
 ]
 
 errors = []
@@ -45,7 +57,7 @@ result = {
     'status': 'failed' if errors else 'passed',
     'scope': 'dm1_v2_hud_overlay_pc34 presentation-only source-lock',
     'evidenceImpact': {
-        'completionMatrixGap': 'Phase 4 HUD/champion panels/interaction/touch-zone route equivalence gates were absent; this adds a first HUD overlay CTest plus source-reference gate, but does not prove the full Phase 4 lane complete.',
+        'completionMatrixGap': 'Phase 4 HUD/champion/action/rune presentation-state pixels are source-locked and CTest-gated; this does not prove finished art, live V1 transactions, or full Phase 4 parity.',
         'verifiedCompletionPercent': None,
     },
     'anchors': anchors,

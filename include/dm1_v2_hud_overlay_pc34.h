@@ -19,12 +19,49 @@ typedef struct {
     int max_level;
 } M11_V2_HudDepth;
 
+typedef enum {
+    M11_V2_HUD_ACTION_ATTACK = 0,
+    M11_V2_HUD_ACTION_CAST = 1,
+    M11_V2_HUD_ACTION_USE = 2,
+    M11_V2_HUD_ACTION_THROW = 3,
+    M11_V2_HUD_ACTION_MOVE = 4,
+    M11_V2_HUD_ACTION_COUNT = 5
+} M11_V2_HudActionIcon;
+
+typedef struct {
+    int hp_pct;
+    int stamina_pct;
+    int mana_pct;
+    bool leader;
+    bool spell_ready;
+} M11_V2_HudChampionBar;
+
+typedef struct {
+    bool active;
+} M11_V2_HudActionState;
+
+typedef struct {
+    M11_V2_HudActionState icons[M11_V2_HUD_ACTION_COUNT];
+    bool visible;
+} M11_V2_HudActionStrip;
+
+typedef struct {
+    bool rune_active[6];
+    bool cast_ready;
+    bool recant_ready;
+    bool visible;
+} M11_V2_HudRuneStrip;
+
 typedef struct {
     M11_V2_HudCompass compass;
     M11_V2_HudDepth depth;
+    M11_V2_HudChampionBar champion_bars[4];
+    M11_V2_HudActionStrip action_strip;
+    M11_V2_HudRuneStrip rune_strip;
     bool visible;
     uint8_t opacity;
     bool stats_bar_visible;
+    uint8_t action_flash_timer;
     /* pass601a: movement/turn complete signals for V2 interpolation consumers.
      * Source-lock: ReDMCSB GAMELOOP.C:90 viewport redraw cadence. */
     int moveCompletePending;
@@ -37,6 +74,12 @@ void v2_hud_set_level(int cur, int max);
 void v2_hud_render(uint8_t* fb, int w, int h);
 void v2_hud_toggle(void);
 void v2_hud_set_opacity(uint8_t val);
+void v2_hud_set_champion_bar(int champ_idx, int hp_pct, int stamina_pct,
+                             int mana_pct, bool leader, bool spell_ready);
+void v2_hud_set_action_active(M11_V2_HudActionIcon icon);
+void v2_hud_trigger_action_flash(void);
+void v2_hud_set_rune_active(int rune_idx, bool active);
+void v2_hud_set_spell_controls(bool cast_ready, bool recant_ready);
 
 /* V2.2 health-pulse alpha — V1 tick-synchronous ping-pong, 2 Hz.
  * Source: v22_hud_pulse_v1_sync marker; ReDMCSB TIMELINE.C F0260. */
