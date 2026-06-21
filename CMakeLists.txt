@@ -4904,6 +4904,12 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_spell_effect_overlay_pc34.c
         src/dm1v2/dm1_v2_lighting_dynamic_pc34.c
     )
+    add_executable(test_dm1_v2_extended_field_vfx_pc34
+        tests/test_dm1_v2_extended_field_vfx_pc34.c
+        src/dm1v2/dm1_v2_extended_field_vfx_pc34.c
+        src/dm1v2/dm1_v2_particle_emitter_presets_pc34.c
+        src/dm1v2/dm1_v2_particle_system_pc34.c
+    )
     add_executable(test_dm1_v2_item_render_pc34
         tests/test_dm1_v2_item_render_pc34.c
         src/dm1v2/dm1_v2_item_render_pc34.c
@@ -5236,6 +5242,7 @@ if(BUILD_TESTING)
         target_link_libraries(test_csb_v2_smooth_runtime_binding PRIVATE m)
         target_link_libraries(test_dm1_v2_lighting_dynamic_pc34 PRIVATE m)
         target_link_libraries(test_dm1_v2_field_projectile_vfx_pc34 PRIVATE m)
+        target_link_libraries(test_dm1_v2_extended_field_vfx_pc34 PRIVATE m)
     endif()
     if(NOT MSVC)
         target_compile_options(test_dm1_v2_movement_viewport_pc34 PRIVATE -Wall -Wextra -O2)
@@ -5258,6 +5265,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_enhanced_effects_runtime_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_field_projectile_effect_metadata_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_field_projectile_vfx_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_extended_field_vfx_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_item_render_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_settings_pc34 PRIVATE -Wall -Wextra -O2)
@@ -5423,6 +5431,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_field_projectile_vfx_pc34
         COMMAND test_dm1_v2_field_projectile_vfx_pc34
+    )
+    add_test(
+        NAME dm1_v2_extended_field_vfx_pc34
+        COMMAND test_dm1_v2_extended_field_vfx_pc34
     )
     add_test(
         NAME dm1_v2_field_projectile_effect_metadata_source_lock
