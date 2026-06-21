@@ -37,7 +37,7 @@
         "ok": true,
         "returncode": 0,
         "stderr": "",
-        "stdout": "Test project /private/tmp/firestaff-main-dm1-24h/build\n      Start  19: dm1_v2_side_by_side_presentation_seed_probe\n 1/13 Test  #19: dm1_v2_side_by_side_presentation_seed_probe ...........   Passed    0.01 sec\n      Start 242: firestaff_dm1_v1_playable_route_probe\n 2/13 Test #242: firestaff_dm1_v1_playable_route_probe .................   Passed    0.01 sec\n      Start 243: firestaff_dm1_v1_pass1055_closed_door_pair_probe\n 3/13 Test #243: firestaff_dm1_v1_pass1055_closed_door_pair_probe ......   Passed    0.00 sec\n      Start 278: dm1_v2_side_by_side_seed_pc34\n 4/13 Test #278: dm1_v2_side_by_side_seed_pc34 .........................   Passed    0.01 sec\n      Start 279: dm1_v2_v1_v2_side_by_side_seed_pc34\n 5/13 Test #279: dm1_v2_v1_v2_side_by_side_seed_pc34 ...................   Passed    0.01 sec\n      Start 424: m11_phase_a\n 6/13 Test #424: m11_phase_a ...........................................   Passed    0.06 sec\n      Start 435: m11_capture_route_state\n 7/13 Test #435: m11_capture_route_state ...............................   Passed   92.32 sec\n      Start 436: dm1_v1_wall_collision_runtime_capture\n 8/13 Test #436: dm1_v1_wall_collision_runtime_capture .................   Passed    0.05 sec\n      Start 439: m11_turn_viewport_orientation\n 9/13 Test #439: m11_turn_viewport_orientation .........................   Passed   88.57 sec\n      Start 657: pass1073_dm1_v1_original_live_capture_receipt\n10/13 Test #657: pass1073_dm1_v1_original_live_capture_receipt .........   Passed    0.07 sec\n      Start 709: pass610_dm1_v1_firestaff_viewport_crop_capture_gate\n11/13 Test #709: pass610_dm1_v1_firestaff_viewport_crop_capture_gate ...   Passed    2.06 sec\n      Start 710: pass622_dm1_v1_viewport_wall_capture_closure_gap\n12/13 Test #710: pass622_dm1_v1_viewport_wall_capture_closure_gap ......   Passed    0.03 sec\n      Start 711: pass623_dm1_v1_input_capture_readiness_bridge\n13/13 Test #711: pass623_dm1_v1_input_capture_readiness_bridge .........   Passed    0.04 sec\n\n100% tests passed, 0 tests failed out of 13\n\nLabel Time Summary:\ndm1             =   0.01 sec*proc (1 test)\npresentation    =   0.01 sec*proc (1 test)\nreadiness       =   0.01 sec*proc (1 test)\nv2              =   0.01 sec*proc (1 test)\n\nTotal Test time (real) = 183.25 sec"
+        "stdout": "Test project /private/tmp/firestaff-main-dm1-24h/build\n      Start  19: dm1_v2_side_by_side_presentation_seed_probe\n 1/13 Test  #19: dm1_v2_side_by_side_presentation_seed_probe ...........   Passed    0.01 sec\n      Start 242: firestaff_dm1_v1_playable_route_probe\n 2/13 Test #242: firestaff_dm1_v1_playable_route_probe .................   Passed    0.01 sec\n      Start 243: firestaff_dm1_v1_pass1055_closed_door_pair_probe\n 3/13 Test #243: firestaff_dm1_v1_pass1055_closed_door_pair_probe ......   Passed    0.00 sec\n      Start 278: dm1_v2_side_by_side_seed_pc34\n 4/13 Test #278: dm1_v2_side_by_side_seed_pc34 .........................   Passed    0.01 sec\n      Start 279: dm1_v2_v1_v2_side_by_side_seed_pc34\n 5/13 Test #279: dm1_v2_v1_v2_side_by_side_seed_pc34 ...................   Passed    0.01 sec\n      Start 424: m11_phase_a\n 6/13 Test #424: m11_phase_a ...........................................   Passed    0.06 sec\n      Start 435: m11_capture_route_state\n 7/13 Test #435: m11_capture_route_state ...............................   Passed   92.59 sec\n      Start 436: dm1_v1_wall_collision_runtime_capture\n 8/13 Test #436: dm1_v1_wall_collision_runtime_capture .................   Passed    0.03 sec\n      Start 439: m11_turn_viewport_orientation\n 9/13 Test #439: m11_turn_viewport_orientation .........................   Passed   92.02 sec\n      Start 658: pass1073_dm1_v1_original_live_capture_receipt\n10/13 Test #658: pass1073_dm1_v1_original_live_capture_receipt .........   Passed    0.07 sec\n      Start 710: pass610_dm1_v1_firestaff_viewport_crop_capture_gate\n11/13 Test #710: pass610_dm1_v1_firestaff_viewport_crop_capture_gate ...   Passed    2.04 sec\n      Start 711: pass622_dm1_v1_viewport_wall_capture_closure_gap\n12/13 Test #711: pass622_dm1_v1_viewport_wall_capture_closure_gap ......   Passed    0.03 sec\n      Start 712: pass623_dm1_v1_input_capture_readiness_bridge\n13/13 Test #712: pass623_dm1_v1_input_capture_readiness_bridge .........   Passed    0.04 sec\n\n100% tests passed, 0 tests failed out of 13\n\nLabel Time Summary:\ndm1             =   0.01 sec*proc (1 test)\npresentation    =   0.01 sec*proc (1 test)\nreadiness       =   0.01 sec*proc (1 test)\nv2              =   0.01 sec*proc (1 test)\n\nTotal Test time (real) = 186.93 sec"
       },
       "inventory": {
         "command": {
@@ -50,7 +50,7 @@
           "ok": true,
           "returncode": 0,
           "stderr": "",
-          "stdout": "<ctest json inventory: 1107 tests>"
+          "stdout": "<ctest json inventory: 1108 tests>"
         },
         "label_summary": {
           "dm1_v1_wall_collision_runtime_capture": [],
@@ -166,7 +166,7 @@
     }
   },
   "data_dir": "/Users/bosse/.firestaff/data",
-  "generated_at": "2026-06-21T22:04:37.187346+00:00",
+  "generated_at": "2026-06-21T22:32:11.656049+00:00",
   "schema": "firestaff.parity.dm1_24h_readiness.v1",
   "status": "PASS"
 }
