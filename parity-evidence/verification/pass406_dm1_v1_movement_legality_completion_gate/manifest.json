@@ -9,7 +9,7 @@
     "F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat": "memory_movement_pc34_compat.c:714-846",
     "runtimeExecutable": "build/test_dm1_v1_movement_core_pc34_compat"
   },
-  "head": "ab799bbfaf8252234036e12321e3f622ba9c2ded",
+  "head": "17082b6bd5e0c4d3921728e3c1eb229007a14a04",
   "notClaimed": [
     "representative original DOS movement overlay parity",
     "complete movement side-effect parity",
@@ -25,5 +25,5 @@
   },
   "sourceLockOutputFirstLine": "DM1 V1 movement legality source-lock gate passed",
   "status": "PASS406_DM1_V1_MOVEMENT_LEGALITY_COMPLETION_GATE_PROVEN",
-  "timestampUtc": "2026-06-21T12:31:34.069277+00:00"
+  "timestampUtc": "2026-06-21T12:32:08.729856+00:00"
 }
