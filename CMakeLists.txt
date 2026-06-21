@@ -6032,6 +6032,18 @@ if(BUILD_TESTING)
         NAME pass563_dm1_v1_projectile_travel_blockers_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass563_dm1_v1_projectile_travel_blockers_source_lock.py
     )
+    add_executable(test_dm1_v1_door_button_viewport_pc34_compat
+        tests/test_dm1_v1_door_button_viewport_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_door_button_viewport_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_door_button_viewport_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_door_button_viewport_pc34_compat
+        COMMAND test_dm1_v1_door_button_viewport_pc34_compat
+    )
     add_executable(test_dm1_v1_viewport_hand_overlay_pc34_compat
         tests/test_dm1_v1_viewport_hand_overlay_pc34_compat.c
     )
