@@ -14,6 +14,22 @@
 
 static M11_V2_HudOverlay g_v2_hud_state;
 
+#define M11_V2_CHAMP_BAR_X_START 40
+#define M11_V2_CHAMP_BAR_Y 8
+#define M11_V2_CHAMP_BAR_W 48
+#define M11_V2_CHAMP_BAR_H 9
+#define M11_V2_CHAMP_BAR_SPACING 4
+#define M11_V2_RUNE_STRIP_X 156
+#define M11_V2_RUNE_STRIP_Y 156
+#define M11_V2_RUNE_BOX_W 10
+#define M11_V2_RUNE_BOX_H 10
+#define M11_V2_RUNE_BOX_SPACING 3
+#define M11_V2_ACTION_STRIP_X 16
+#define M11_V2_ACTION_STRIP_Y 168
+#define M11_V2_ACTION_ICON_W 24
+#define M11_V2_ACTION_ICON_H 12
+#define M11_V2_ACTION_ICON_SPACING 5
+
 static void v2_hud_plot_pixel(uint8_t* fb, int w, int h, int x, int y, uint8_t val) {
     if (x >= 0 && x < w && y >= 0 && y < h) {
         fb[y * w + x] = val;
@@ -26,6 +42,97 @@ static void v2_hud_draw_rect(uint8_t* fb, int w, int h, int x, int y, int rw, in
             v2_hud_plot_pixel(fb, w, h, x + dx, y + dy, val);
         }
     }
+}
+
+static int v2_hud_clamp_pct(int pct) {
+    if (pct < 0) return 0;
+    if (pct > 100) return 100;
+    return pct;
+}
+
+static void v2_hud_draw_pct_bar(uint8_t* fb, int w, int h,
+                                int x, int y, int bw, int bh,
+                                int pct, uint8_t base, uint8_t high) {
+    pct = v2_hud_clamp_pct(pct);
+    v2_hud_draw_rect(fb, w, h, x, y, bw, bh, base);
+    int fill = (bw * pct) / 100;
+    v2_hud_draw_rect(fb, w, h, x, y, fill, bh, high);
+}
+
+static void v2_hud_draw_champion_summaries(uint8_t* fb, int w, int h,
+                                           uint8_t base, uint8_t high) {
+    /* Source-lock: ReDMCSB PANEL.C F0354/F0395 champion status-box refresh,
+     * CHAMDRAW.C F0292 champion bar redraw, STATS.C F0090-F0092 stat bars.
+     * This V2 path renders caller-provided state and does not own champion mutations,
+     * wounds, inventory, or command transactions. */
+    for (int i = 0; i < 4; ++i) {
+        const M11_V2_HudChampionBar* bar = &g_v2_hud_state.champion_bars[i];
+        int x = M11_V2_CHAMP_BAR_X_START + i * (M11_V2_CHAMP_BAR_W + M11_V2_CHAMP_BAR_SPACING);
+        int y = M11_V2_CHAMP_BAR_Y;
+        v2_hud_draw_rect(fb, w, h, x - 1, y - 1,
+                         M11_V2_CHAMP_BAR_W + 2, M11_V2_CHAMP_BAR_H + 2, base);
+        v2_hud_draw_pct_bar(fb, w, h, x, y,
+                            M11_V2_CHAMP_BAR_W, 3, bar->hp_pct, base, high);
+        v2_hud_draw_pct_bar(fb, w, h, x, y + 3,
+                            M11_V2_CHAMP_BAR_W, 3, bar->stamina_pct,
+                            base, (uint8_t)(high * 3 / 4));
+        v2_hud_draw_pct_bar(fb, w, h, x, y + 6,
+                            M11_V2_CHAMP_BAR_W, 3, bar->mana_pct,
+                            base, (uint8_t)(high * 2 / 3));
+        if (bar->leader) {
+            v2_hud_plot_pixel(fb, w, h, x + M11_V2_CHAMP_BAR_W - 2, y - 2, high);
+            v2_hud_plot_pixel(fb, w, h, x + M11_V2_CHAMP_BAR_W - 1, y - 1, high);
+        }
+        if (bar->spell_ready) {
+            v2_hud_plot_pixel(fb, w, h, x + M11_V2_CHAMP_BAR_W + 1, y + 7, high);
+            v2_hud_plot_pixel(fb, w, h, x + M11_V2_CHAMP_BAR_W + 2, y + 7, high);
+        }
+    }
+}
+
+static void v2_hud_draw_action_strip(uint8_t* fb, int w, int h,
+                                     uint8_t base, uint8_t high) {
+    /* Source-lock: ReDMCSB COMMAND.C action-hand routes and C100/C107/C108
+     * spell/action affordances.  The strip is presentation-only; click routing
+     * stays in dm1_v2_hud_interaction_pc34. */
+    if (!g_v2_hud_state.action_strip.visible) return;
+    for (int i = 0; i < M11_V2_HUD_ACTION_COUNT; ++i) {
+        int x = M11_V2_ACTION_STRIP_X + i * (M11_V2_ACTION_ICON_W + M11_V2_ACTION_ICON_SPACING);
+        int y = M11_V2_ACTION_STRIP_Y;
+        bool active = g_v2_hud_state.action_strip.icons[i].active;
+        bool flash = active && g_v2_hud_state.action_flash_timer > 0;
+        uint8_t border = flash ? 255u : (active ? high : base);
+        uint8_t fill = active ? (uint8_t)(high * 3 / 4) : (uint8_t)(base / 2);
+
+        v2_hud_draw_rect(fb, w, h, x, y, M11_V2_ACTION_ICON_W, M11_V2_ACTION_ICON_H, fill);
+        v2_hud_draw_rect(fb, w, h, x, y, M11_V2_ACTION_ICON_W, 1, border);
+        v2_hud_draw_rect(fb, w, h, x, y + M11_V2_ACTION_ICON_H - 1, M11_V2_ACTION_ICON_W, 1, border);
+        v2_hud_draw_rect(fb, w, h, x, y, 1, M11_V2_ACTION_ICON_H, border);
+        v2_hud_draw_rect(fb, w, h, x + M11_V2_ACTION_ICON_W - 1, y, 1, M11_V2_ACTION_ICON_H, border);
+        v2_hud_plot_pixel(fb, w, h, x + 4 + i, y + 5, border);
+    }
+}
+
+static void v2_hud_draw_rune_strip(uint8_t* fb, int w, int h,
+                                   uint8_t base, uint8_t high) {
+    /* Source-lock: ReDMCSB COMMAND.C/G0454 rune buttons C101-C106, cast C107,
+     * and recant C108.  These are visual state pixels only; spell execution
+     * remains source-owned by the V1 spell command path. */
+    if (!g_v2_hud_state.rune_strip.visible) return;
+    for (int i = 0; i < 6; ++i) {
+        int x = M11_V2_RUNE_STRIP_X + i * (M11_V2_RUNE_BOX_W + M11_V2_RUNE_BOX_SPACING);
+        int y = M11_V2_RUNE_STRIP_Y;
+        uint8_t val = g_v2_hud_state.rune_strip.rune_active[i] ? high : base;
+        v2_hud_draw_rect(fb, w, h, x, y, M11_V2_RUNE_BOX_W, M11_V2_RUNE_BOX_H, (uint8_t)(base / 2));
+        v2_hud_draw_rect(fb, w, h, x + 1, y + 1, M11_V2_RUNE_BOX_W - 2, M11_V2_RUNE_BOX_H - 2, val);
+    }
+
+    int cast_x = M11_V2_RUNE_STRIP_X + 6 * (M11_V2_RUNE_BOX_W + M11_V2_RUNE_BOX_SPACING) + 4;
+    int recant_x = cast_x + 28;
+    uint8_t cast_val = g_v2_hud_state.rune_strip.cast_ready ? high : base;
+    uint8_t recant_val = g_v2_hud_state.rune_strip.recant_ready ? high : base;
+    v2_hud_draw_rect(fb, w, h, cast_x, M11_V2_RUNE_STRIP_Y, 20, M11_V2_RUNE_BOX_H, cast_val);
+    v2_hud_draw_rect(fb, w, h, recant_x, M11_V2_RUNE_STRIP_Y, 20, M11_V2_RUNE_BOX_H, recant_val);
 }
 
 /* Standard 5×5 pixel font — 0..9, dash, period, space
@@ -92,6 +199,13 @@ void v2_hud_init(void) {
     g_v2_hud_state.visible = true;
     g_v2_hud_state.opacity = 255;
     g_v2_hud_state.stats_bar_visible = true;
+    g_v2_hud_state.action_strip.visible = true;
+    g_v2_hud_state.rune_strip.visible = true;
+    for (int i = 0; i < 4; ++i) {
+        g_v2_hud_state.champion_bars[i].hp_pct = 75;
+        g_v2_hud_state.champion_bars[i].stamina_pct = 80;
+        g_v2_hud_state.champion_bars[i].mana_pct = 60;
+    }
     /* v2_hud_init() resets HUD state; g_health_pulse is a separate static
      * that starts at zero (active=0).  Callers explicitly invoke
      * v22_hud_start_health_pulse() before the first v22_hud_health_pulse_alpha(). */
@@ -145,6 +259,13 @@ void v2_hud_render(uint8_t* fb, int w, int h) {
     snprintf(depth_buf, sizeof(depth_buf), "%d/%d", g_v2_hud_state.depth.current_level, g_v2_hud_state.depth.max_level);
     v2_hud_draw_text(fb, w, h, w - 60, 8, depth_buf, high_val);
 
+    v2_hud_draw_champion_summaries(fb, w, h, base_val, high_val);
+    v2_hud_draw_rune_strip(fb, w, h, base_val, high_val);
+    v2_hud_draw_action_strip(fb, w, h, base_val, high_val);
+    if (g_v2_hud_state.action_flash_timer > 0) {
+        g_v2_hud_state.action_flash_timer--;
+    }
+
     if (g_v2_hud_state.stats_bar_visible) {
         int bar_x = 8;
         int bar_y = h - 16;
@@ -162,6 +283,38 @@ void v2_hud_toggle(void) {
 
 void v2_hud_set_opacity(uint8_t val) {
     g_v2_hud_state.opacity = val;
+}
+
+void v2_hud_set_champion_bar(int champ_idx, int hp_pct, int stamina_pct,
+                             int mana_pct, bool leader, bool spell_ready) {
+    if (champ_idx < 0 || champ_idx >= 4) return;
+    M11_V2_HudChampionBar* bar = &g_v2_hud_state.champion_bars[champ_idx];
+    bar->hp_pct = v2_hud_clamp_pct(hp_pct);
+    bar->stamina_pct = v2_hud_clamp_pct(stamina_pct);
+    bar->mana_pct = v2_hud_clamp_pct(mana_pct);
+    bar->leader = leader;
+    bar->spell_ready = spell_ready;
+}
+
+void v2_hud_set_action_active(M11_V2_HudActionIcon icon) {
+    for (int i = 0; i < M11_V2_HUD_ACTION_COUNT; ++i) {
+        g_v2_hud_state.action_strip.icons[i].active =
+            (icon >= 0 && icon < M11_V2_HUD_ACTION_COUNT && i == (int)icon);
+    }
+}
+
+void v2_hud_trigger_action_flash(void) {
+    g_v2_hud_state.action_flash_timer = 6;
+}
+
+void v2_hud_set_rune_active(int rune_idx, bool active) {
+    if (rune_idx < 0 || rune_idx >= 6) return;
+    g_v2_hud_state.rune_strip.rune_active[rune_idx] = active;
+}
+
+void v2_hud_set_spell_controls(bool cast_ready, bool recant_ready) {
+    g_v2_hud_state.rune_strip.cast_ready = cast_ready;
+    g_v2_hud_state.rune_strip.recant_ready = recant_ready;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
