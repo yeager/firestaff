@@ -9972,8 +9972,8 @@ set_tests_properties(pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate PRO
 set_tests_properties(pass563_dm1_v1_pc34_original_c254_boundary PROPERTIES WILL_FAIL TRUE)
 
 
-set_tests_properties(csb_v1_m11_runtime_capture_boundary PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(pass547_csb_v1_runtime_readiness_backfill PROPERTIES WILL_FAIL TRUE)
+# csb_v1_m11_runtime_capture_boundary: WILL_FAIL removed 2026-06-21 - positive CSB launch handoff + PC real-asset boot/tick evidence now PASSES (csb_v1_pc_real_asset_launch_probe covers it). Marker kept as no-op.
+# pass547_csb_v1_runtime_readiness_backfill: WILL_FAIL removed 2026-06-21 - same retirement as csb_v1_m11_runtime_capture_boundary. Marker kept as no-op.
 # pass395_touch_queue_integration_source_lock: WILL_FAIL removed (2026-06-19)
 # after fixing the verifier's include-path convention (the local touch
 # header uses `#include "dm1_v1_input_command_queue_pc34_compat.h"`
