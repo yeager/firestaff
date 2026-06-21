@@ -4307,6 +4307,23 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_open_stack_split_press_eye_pc34_compat
     )
 
+    # pass652 — chest scroll-wheel pickup overflow runtime: occupied
+    # C544 replacement path when the leader hand is already full.
+    # Source-locked against CHEST.C F0333/F0334 + CHAMPION.C
+    # F0297-F0302 + PANEL.C/COMMAND.C/MOUSE.C routing.
+    add_executable(test_dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat
+        tests/test_dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat.c
+        src/dm1/dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat
+        COMMAND test_dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat
+    )
+
     # chest close-rewire runtime: rewire of M11 close handlers during
     # the live panel-redraw cycle. Source-locked against PANEL.C F0347.
     add_executable(test_dm1_v1_chest_close_rewire_runtime_pc34_compat
@@ -8819,6 +8836,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat.py
         )
         set_tests_properties(pass797_dm1_v1_auto_chest_action_hand_swap_during_close_gate PROPERTIES DEPENDS dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat)
+        add_test(
+            NAME pass652_dm1_v1_chest_scroll_wheel_pickup_overflow_runtime_regression
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass652_dm1_v1_chest_scroll_wheel_pickup_overflow_runtime_regression.py --run-test
+        )
+        set_tests_properties(pass652_dm1_v1_chest_scroll_wheel_pickup_overflow_runtime_regression PROPERTIES DEPENDS dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat)
         add_test(
             NAME pass799_dm1_v1_chest_open_stack_split_press_eye
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass799_dm1_v1_chest_open_stack_split_press_eye_pc34_compat.py
