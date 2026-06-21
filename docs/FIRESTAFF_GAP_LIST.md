@@ -388,27 +388,28 @@ order:
    per-game TOTAL/FOUND/MISS table from any data root; default to
    `~/.firestaff/data`). Run: `python3 tools/asset-validate/compare_to_greatstone.py --summary`.
 5. **Verify all `--scan-data` READY-path:er are actually
-   launchable** by M11. — PARTIAL 2026-06-20 (commits `4ba862d3` +
-   `56abb7e1`): 2/8 paths boot OK (DM1 canonical + Theron JP via
-   `m11_phase_a --game <id> --data-dir <path>`); the other 6 fail
-   due to M11 path-resolver limitations (it looks for files in
-   specific subdirs but not recursively). Fix: extend M11 path
-   discovery to recursively search for DUNGEON.DAT/GRAPHICS.DAT
-   via `asset_find_by_md5` (already partially implemented for the
-   4 gameIds with hash-fallback in
-   `m11_resolve_builtin_dungeon_path` at
-   `src/engine/m11_game_view.c:1536`). Remaining work: extend the
-   same hash-fallback to Nexus (DM.BIN via
-   `e88d60859f65f08fa622e1992b02280f` / `96e511c8d36ccbe30a48ba36c59df194`)
-   + Theron all-region variants (US/Rev1/ISO via
-   `f23601102138f87c33025877767ebf76` /
-   `397039af02d50d15c70b74088eb8a1cb` /
-   `3d8b78571dcd0e6eb8eb4b01eeb7fbba`) + extend M11 to launch
-   directly without requiring the explicit `--data-dir` per path
-   shape (e.g. Meynaf FR's `.../Meynaf/DungeonMaster/GRAPHICS.DAT`
-   nested layout). Until then, M11 reports `phase-a run failed
-   (rc=3)` for the 6 failing paths even though `--scan-data`
-   reports READY.
+   launchable** by M11. — PARTIAL 2026-06-21 (commit `033edf66`):
+   6/9 paths boot OK via `--game <id> --data-dir <path>`:
+
+   | Path | Status |
+   |---|---|
+   | DM1 canonical | ✅ |
+   | DM1 legacy-dos | ✅ (M11 hash-fallback via `766450c9...`) |
+   | Theron JP canonical | ✅ |
+   | Theron JP extras | ✅ |
+   | Theron US extras | ✅ (commit 033edf66: first-matched-version fallback) |
+   | CSB Amiga 3.3 Meynaf FR | ❌ silent — CSB launcher exits without writing to stderr; diagnostic-blocker, not Tier 1 #5 |
+   | CSB canonical | ❌ silent — same root cause |
+   | Nexus canonical | ❌ direct launch — launcher can't open `Dungeon Master Nexus (English) - Merged.iso::DM.BIN` without extract step (Tier 4 Nexus gap, not Tier 1 #5) |
+   | Nexus saturn-ja | ❌ direct launch — same root cause |
+
+   Hash-fallback table extended in
+   `m11_resolve_builtin_dungeon_path` (Nexus DM.BIN +
+   Theron US Track 02). First-matched-version fallback added
+   to `M11_GameView_OpenSelectedMenuEntry` so direct-launch
+   no longer fails when user-selected versionIndex doesn't
+   match the supplied data. Remaining work (out of Tier 1 #5
+   scope): CSB launcher stderr-pipe + Nexus ISO extract step.
 6. ~~**Scanner path-naming limitations**:~~ CLOSED as NO-GAP
    2026-06-20. The scanner already matches on MD5 via
    `asset_find_by_md5` and `scan_iso_by_md5` now also falls
@@ -649,25 +650,33 @@ Förväntat: Phase A-probe-PASS + en spel-specifik asset-load PASS
 per path. Om något FAIL:ar, markera gap-status tillbaka till
 PARTIAL.
 
-**Resultat (2026-06-20):** Se
+**Resultat (2026-06-20, uppdaterad 2026-06-21):** Se
 `reference/L1_data_path_verification_2026-06-20.md` för detaljer.
 Kort version:
 
 | Path | READY? | Orsak |
 |---|---|---|
+| DM1 canonical | ✅ | Canonical layout matchar hashen direkt |
 | DM1 legacy-dos | ✅ | Canonical `GRAPHICS.DAT`/`DUNGEON.DAT` i katalogen — matchar hashen direkt |
 | CSB Amiga 3.3 Meynaf FR | ✅ | Matchar canonical CSB-hasen i `...Meynaf/DungeonMaster/Graphics.DAT` |
-| Nexus Saturn JA | ⚠️ | MD5 stämmer (`d8362321...`) men filnamnet matchar inte scanner-mönstret `g_nexusArchiveNames` (`DM.BIN`, `SEGADATA.BIN`, etc.) — hittas bara i default-scan, inte via `--data-dir` |
-| Theron JP Track 02 | ⚠️ | MD5 stämmer (`b7afb338...`) men samma filnamns-problem |
-| DM1 PC 3.4 English 3.5" (extras) | ⚠️ | Innehåller `.raw`-filer (CTRaw emulator-format) som scanner ej mappar |
+| Theron JP canonical | ✅ | TQR level load OK (med Track 03/04 fallback warning) |
+| Theron JP extras | ✅ | TQR level load OK |
+| Theron US extras | ✅ | TQR level load OK — fixat 2026-06-21 via first-matched-version fallback (commit 033edf66) |
+| CSB canonical | ❌ silent | CSB launcher avslutar utan att skriva något — diagnostik-blockerare, inte Tier 1 #5 |
+| Nexus canonical | ❌ direct launch | Launcher kan inte mount:a `Dungeon Master Nexus (English) - Merged.iso::DM.BIN` utan extract-steg |
+| Nexus saturn-ja | ❌ direct launch | Launcher kan inte mount:a Track 1.bin utan extract-steg |
 
 **Ny status:**
 - DM1 + CSB legacy path:er är nu `EXTRACTED + VERIFIED +
   LAUNCH-TESTED` (redo för framtida tester/parity-evidence).
-- Nexus + Theron container-path:er: `--data-dir <path>` HITTAR dem
-  korrekt via MD5-hash-matchning (asset_find_by_md5), inte filnamn.
-  Source-filenamn som `Dungeon Master Nexus (Japan) (Track 1).bin`
-  accepteras direkt. Tidigare påstått problem med filnamn var FEL.
+- Theron path:er: Theron US extras öppnade 2026-06-21 med
+  first-matched-version fallback (commit 033edf66). Theron JP
+  canonical + extras har bootat sedan tidigare med Track 03/04
+  fallback-assets.
+- Nexus path:er: `--data-dir <path>` hittar DM.BIN-hash korrekt via
+  MD5-hash-matchning, men M11 launcher kan inte öppna
+  `Merged.iso::DM.BIN` utan ett extract-steg. Detta är en
+  launcher-specifik gap (Tier 4 Nexus), inte Tier 1 #5.
 
 **Tier 1 #6 stängs som NO-GAP (2026-06-20)** — verifierat att
 scannern matchar på MD5-hash, inte filnamn. Source-filenamn
@@ -675,6 +684,11 @@ accepteras direkt av `--data-dir`. Tier 1 #6 togs upp av L1-rapporten
 men den faktiska scan-beteendet stödjer READY för alla 4 paths.
 Inget alias-steg krävs. Tier 1 #6-posten i listan ovan är inaktuell
 och bör rensas vid nästa watchdog refresh.
+
+**Tier 1 #5 strict boot-probe per path (2026-06-21):** 6/9 paths
+strikt bootar. CSB (silent exit) och Nexus (Merged.iso::DM.BIN) är
+återstående och behöver launcher-specifika fixar — inte Tier 1 #5
+strict-path-discovery-arbete.
 
 ### L2. Skapa `tools/data-readiness-summary.py`
 
