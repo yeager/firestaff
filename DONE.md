@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 D3C center-field source-lock CTest: registered existing data-free `test_dm1_v1_viewport_d3c_center_field_pc34_compat` as CTest target `dm1_v1_viewport_d3c_center_field_source_lock`. The fixture pins the ReDMCSB `DUNVIEW.C` F0128/F0118/F0113 and `DEFS.H` D3C view-square, zone, and C10 transparency contract. This is synthetic source-contract coverage only; it does not load game data, run DOSBox, capture pixels, write manifests, or claim real-asset/original parity.
+
 - ✅ 2026-06-21 DM1 V1 pass387 command-queue state-map CTest: registered existing read-only `scripts/verify_pass387_dm1_v1_command_queue_state_map.py` as CTest target `pass387_dm1_v1_command_queue_state_map_source_lock`. The data-free gate verifies 13 ReDMCSB command/input queue anchors for the DM1 V1 state map. This is source-lock verification only; it does not load game data, drive live input, run DOSBox, write manifests, or claim runtime/pixel parity.
 
 - ✅ 2026-06-21 DM1 V1 champion-panel F0354 box-variants CTest: registered existing data-free `test_dm1_v1_champion_panel_f0354_box_variants_pc34_compat` as CTest target `dm1_v1_champion_panel_f0354_box_variants_pc34_compat`. The source-locked fixture pins `PANEL.C` F0354 post-dispatch portrait-box byte-coordinate geometry, zone-table variant, and invisibility-hatch gate while explicitly excluding F0292 dispatch/runtime/pixel lanes. This is synthetic geometry/variant contract coverage only; it does not load real assets, drive live rendering, run DOSBox, capture pixels, or claim parity.
