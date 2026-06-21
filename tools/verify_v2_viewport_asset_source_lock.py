@@ -103,19 +103,28 @@ def validate_v2_material_code(source_dims: dict[str, int]) -> None:
     require(f"#define DM1_V2_VIEWPORT_H {source_dims['height']}" in header, "V2 viewport height macro drifted")
     require(f"#define DM1_V2_VIEWPORT_BYTE_W {source_dims['byteWidth']}" in header, "V2 viewport byte-width macro drifted")
     for token in (
-        "DM1_V2_VIEW_MATERIAL_CEILING",
-        "DM1_V2_VIEW_MATERIAL_WALL",
-        "DM1_V2_VIEW_MATERIAL_FLOOR",
-        "dm1_v2_vp_material_at",
-        "dm1_v2_vp_field_aspect",
-        "dm1_v2_vp_wall_set_default",
+        "DM1_V2_DRAW_FLOOR_CEILING",
+        "DM1_V2_DRAW_WALL",
+        "DM1_V2_DRAW_PIT",
+        "DM1_V2_DRAW_FIELD",
+        "dm1_v2_vp_square_element_from_raw",
+        "dm1_v2_vp_emit_d0_d3_draw_list",
+        "dm1_v2_vp_render_composition_flat",
     ):
         require(token in header, f"missing V2 viewport material API token {token}")
-    require("{0, 59, 0x8A, 0xFF, 224, 136,  0, 64}" in impl, "V2 D0C field aspect no longer matches DUNVIEW.C:751")
-    require("{0, 63, 0x0A, 0x83,  32, 136,  0, 64}" in impl, "V2 D0L field aspect no longer matches DUNVIEW.C:752")
-    require("{0, 63, 0x0A, 0x03,  32, 136,  0, 64}" in impl, "V2 D0R field aspect no longer matches DUNVIEW.C:753")
-    require("-17, -16, -15, -14, -13" in impl and "-4,  -3,  -7,  -6,  -5" in impl, "V2 wall-set defaults no longer match DUNVIEW.C G2107")
-    require("DM1_V2_VIEWPORT_FLOOR_Y" in impl and "DM1_V2_VIEWPORT_CEILING_H" in impl, "V2 material bands are no longer explicit")
+    for token in (
+        "DUNVIEW.C:8337-8338",
+        "DUNVIEW.C:8490-8542",
+        "DUNVIEW.C:6697-6720",
+        "DUNVIEW.C:6820-6827",
+        "DUNVIEW.C:6828",
+        "kDm1V2EntryCeilingTone",
+        "kDm1V2EntryFloorTone",
+        "kDm1V2EntryWallOuterTone",
+        "kDm1V2EntryPitTone",
+        "DM1_V2_VIEWPORT_H / 2",
+    ):
+        require(token in impl, f"V2 viewport renderer lost source/material token {token}")
 
 
 def validate_manifest_asset(asset: dict[str, Any], source_dims: dict[str, int]) -> None:
