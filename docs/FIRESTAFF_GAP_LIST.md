@@ -30,7 +30,7 @@ Classification:
 | **IMG5 4bpp chunked image (Amiga, SNES)** | greatstone d_items.html | **FIXED in v2.9.2** (`firestaff_img5_decode.c`, commit `216b0b67`) |
 | LZW-compressed items (DM Atari ST, CSB Atari ST) | dmweb Data Files | PARTIAL — decoder is contract-verified (`m11_gfx_lzw_decompress`, `dm1_lzw_round_trip` PASS 1/1 on 2026-06-21); real Atari ST asset handoff remains BLOCKED-DATA |
 | **FTL container format (Amiga, X68000, MegaCD)** | greatstone d_ftl.html | OPEN-LARGE — 3-hunk Amiga-hunks structure, 4 checksums, two compression algorithms |
-| **PAK container format (Atari ST)** | greatstone d_pak.html | OPEN-BOUNDED — 28-byte Atari ST executable header + LZ77-like compression |
+| **PAK container format (Atari ST)** | greatstone d_pak.html | FIXED — `firestaff_pak_decode_unit` PASS 1/1 on 2026-06-21; parses 28-byte Atari ST executable header plus nibble-coded table/literal compression |
 | **HTC hint oracle text format (CSB)** | sck tutorial | OPEN-LARGE — text+layout format used by CSB Hint Oracle |
 | **CMP portrait image format** | sck tutorial | OPEN-BOUNDED — portrait compression used by CSB Amiga |
 | **AMG sound format (CSB utility disk)** | sck tutorial | OPEN-BOUNDED — sound effects storage |
