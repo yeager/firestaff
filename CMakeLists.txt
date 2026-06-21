@@ -6580,6 +6580,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_creature_render_source_lock.py
         )
         add_test(
+            NAME dm1_v1_creature_chain_original_capture_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_creature_chain_original_capture_gate.py --check-only
+        )
+        add_test(
             NAME touch_movement_viewport_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_touch_movement_viewport_source_lock.py
         )
