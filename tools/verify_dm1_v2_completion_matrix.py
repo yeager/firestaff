@@ -89,6 +89,17 @@ CATEGORY_RULES = [
     ("achievements", "support/achievements"),
 ]
 
+INTERNAL_MODULES_WITHOUT_PUBLIC_HEADER = {
+    "src/dm1v2/dm1_v2_anim_timing_pc34.c",
+    "src/dm1v2/dm1_v2_filter_crt_scanlines_pc34.c",
+    "src/dm1v2/dm1_v2_filter_dither_cleanup_pc34.c",
+    "src/dm1v2/dm1_v2_filter_palette_correct_pc34.c",
+    "src/dm1v2/dm1_v2_filter_palette_interpolate_pc34.c",
+    "src/dm1v2/dm1_v2_filter_sharpen_pc34.c",
+    "src/dm1v2/dm1_v2_modern_assets_pc34.c",
+    "src/dm1v2/dm1_v2_particle_tick_pc34.c",
+}
+
 
 def classify(name: str) -> str:
     stem = name.removeprefix("dm1_v2_").removesuffix("_pc34.c")
@@ -104,9 +115,9 @@ def ctest_names() -> set[str]:
 
 
 def main() -> int:
-    modules = sorted(p.name for p in ROOT.glob("dm1_v2_*_pc34.c"))
-    headers = {p.name for p in ROOT.glob("dm1_v2_*_pc34.h")}
-    tests = sorted(p.name for p in ROOT.glob("test_dm1_v2*.c"))
+    modules = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "src/dm1v2").glob("dm1_v2_*_pc34.c"))
+    headers = {str(p.relative_to(ROOT)) for p in (ROOT / "include").glob("dm1_v2_*_pc34.h")}
+    tests = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "tests").glob("test_dm1_v2*.c"))
     tools = sorted(p.name for p in (ROOT / "tools").glob("*v2*"))
     manifests = sorted(p.name for p in (ROOT / "assets-v2/manifests").glob("firestaff-v2-*.manifest.json"))
     names = ctest_names()
@@ -114,11 +125,13 @@ def main() -> int:
     errors: list[str] = []
     matrix = []
     for module in modules:
-        header = module[:-2] + ".h"
-        category = REQUIRED_MODULES.get(module, classify(module))
-        if header not in headers:
-            errors.append(f"missing header for {module}: {header}")
-        matrix.append({"module": module, "header": header, "category": category})
+        stem = Path(module).stem
+        header = f"include/{stem}.h"
+        category = REQUIRED_MODULES.get(module, classify(Path(module).name))
+        has_header = header in headers
+        if (module in REQUIRED_MODULES or module not in INTERNAL_MODULES_WITHOUT_PUBLIC_HEADER) and not has_header:
+            errors.append(f"missing public header for {module}: {header}")
+        matrix.append({"module": module, "header": header if has_header else None, "category": category})
 
     for module, category in sorted(REQUIRED_MODULES.items()):
         if module not in modules:
