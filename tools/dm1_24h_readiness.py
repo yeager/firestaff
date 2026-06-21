@@ -13,8 +13,8 @@ the narrow, already source-locked checks that matter most for the current
 - Optional build-dir probes keep the DM1 playable route, Firestaff-side
   route/collision/orientation captures, pass610/pass622/pass623 readiness,
   pass1073 redacted live-capture receipt, V1/V2 presentation-disabled seed
-  gates, pass1055 collision semantic pair, pass1056/pass1057 CTests, and
-  Phase A probe green.
+  gates, V2.0/V2.1 runtime presentation smoke, pass1055 collision semantic
+  pair, pass1056/pass1057 CTests, and Phase A probe green.
 
 The script writes a manifest/report so the roll-up can be cited without
 claiming that the remaining original-capture gaps are solved.
@@ -52,6 +52,7 @@ CTEST_REQUIRED_TESTS = (
     "dm1_v2_side_by_side_presentation_seed_probe",
     "dm1_v2_side_by_side_seed_pc34",
     "dm1_v2_v1_v2_side_by_side_seed_pc34",
+    "dm1_v2_runtime_presentation_smoke",
 )
 
 

@@ -1,0 +1,148 @@
+{
+  "data_dir": "/Users/bosse/.firestaff/data/dm1",
+  "firestaff": "/private/tmp/firestaff-main-dm1-24h/build/firestaff",
+  "generated_at": "2026-06-21T22:54:42.883694+00:00",
+  "modes": [
+    {
+      "command": {
+        "cmd": [
+          "/private/tmp/firestaff-main-dm1-24h/build/firestaff",
+          "--game",
+          "dm1",
+          "--data-dir",
+          "/Users/bosse/.firestaff/data/dm1",
+          "--duration",
+          "1500"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260622-005447.bmp",
+        "stdout": ""
+      },
+      "mode": {
+        "id": "v20_filtered",
+        "index": 1,
+        "label": "V2.0 filtered"
+      },
+      "ok": true,
+      "probe": {
+        "active": 1,
+        "gameTick": 0,
+        "lastAction": "BOOT",
+        "lastOutcome": "GAME DATA LOADED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 2,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 0,
+          "command": 0,
+          "dequeued": 0,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 0,
+          "viewportDirty": 0
+        },
+        "presentation": {
+          "height": 400,
+          "mode": 1,
+          "width": 640
+        },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 0,
+          "inputRedrawDrawCount": 0,
+          "lastInputRedrawAfterViewportDirty": 0
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "screenshots": [
+        {
+          "name": "firestaff-20260622-005447.bmp",
+          "sha256": "1b87bcc3ba41ac06f27f563b3bc237ca6b58a019f4a3f8270aa3ebed1315593a",
+          "size": 192054
+        }
+      ]
+    },
+    {
+      "command": {
+        "cmd": [
+          "/private/tmp/firestaff-main-dm1-24h/build/firestaff",
+          "--game",
+          "dm1",
+          "--data-dir",
+          "/Users/bosse/.firestaff/data/dm1",
+          "--duration",
+          "1500"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260622-005451.bmp",
+        "stdout": ""
+      },
+      "mode": {
+        "id": "v21_upscaled",
+        "index": 2,
+        "label": "V2.1 enhanced 2D"
+      },
+      "ok": true,
+      "probe": {
+        "active": 1,
+        "gameTick": 0,
+        "lastAction": "BOOT",
+        "lastOutcome": "GAME DATA LOADED",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 2,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 0,
+          "command": 0,
+          "dequeued": 0,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 0,
+          "viewportDirty": 0
+        },
+        "presentation": {
+          "height": 400,
+          "mode": 2,
+          "width": 640
+        },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 0,
+          "inputRedrawDrawCount": 0,
+          "lastInputRedrawAfterViewportDirty": 0
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
+      },
+      "screenshots": [
+        {
+          "name": "firestaff-20260622-005451.bmp",
+          "sha256": "1b87bcc3ba41ac06f27f563b3bc237ca6b58a019f4a3f8270aa3ebed1315593a",
+          "size": 192054
+        }
+      ]
+    }
+  ],
+  "non_claims": [
+    "No original PC 3.4 screenshot pairing.",
+    "No finished V2.2 real-art material or pixel claim.",
+    "No promotion of blocked DOSBox/debugger capture rows."
+  ],
+  "schema": "firestaff.parity.dm1_v2_runtime_presentation_smoke.v1",
+  "status": "PASS"
+}
