@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 Lefthook CI status cleanup: `.github/workflows/verify.yml` already installs Go, installs Lefthook with `go install github.com/evilmartians/lefthook@latest`, exports GOPATH/bin, and runs `lefthook run ci` in asset-hygiene. `docs/FIRESTAFF_GAP_LIST.md` now marks the CI-specific Lefthook row FIXED; local missing-Lefthook messages remain harmless developer-machine no-ops.
+
 - ✅ 2026-06-21 CSB Utility Disk CMP decoder status cleanup: `ctest --test-dir build -R 'firestaff_cmp_decode_unit|csb_v1_cmp_import_pc34' --output-on-failure` PASS 2/2. `docs/FIRESTAFF_GAP_LIST.md` now marks the A1 CMP portrait image format row FIXED, while leaving CSB champion portrait source-selection as a separate partial runtime handoff row.
 
 - ✅ 2026-06-21 Atari ST PAK decoder status cleanup: `ctest --test-dir build -R '^firestaff_pak_decode_unit$' --output-on-failure` PASS 1/1. `docs/FIRESTAFF_GAP_LIST.md` now marks the A1 PAK container row FIXED, matching the existing Tier 2 #5 decoder status.

@@ -86,7 +86,7 @@ Classification:
 | **Reproducible game-archive extraction from `~/Downloads/`** | new | DONE 2026-06-20 (commit `4b097f54`) — `reference/extract-game-archives.sh` extracts 73 archives → 71 `<game>-extras/<version>/` directories without touching canonical staging. |
 | **`--scan-data` smoke reports real READY-path:er** | existing | PARTIAL — `--scan-data` works for default data dir; per-archive readiness confirmed via `compare_to_greatstone.py` (148/148 OK, 0 FAIL). Single-shot CI gate in CMake/CTest not yet wired. |
 | **Real-data regression tests (greatstone db_data)** | greatstone sck tool | BLOCKED-DATA — db_data not currently fetchable from free.fr (404). However: `compare_to_greatstone.py` covers the VERIFIED_HASHES.md side, and the new `*-extras/` tree gives us locally-available alternative matches that weren't possible a week ago. |
-| **Lefthook in PATH for CI** | build/CI hygiene | OPEN-BOUNDED — currently no-ops gracefully. Logged but not blocking. |
+| **Lefthook in PATH for CI** | build/CI hygiene | FIXED — `.github/workflows/verify.yml` installs Go, installs `lefthook`, exports `$(go env GOPATH)/bin`, and runs `lefthook run ci`; local dev machines may still no-op gracefully when Lefthook is absent |
 
 ### A6. Build / CI
 
