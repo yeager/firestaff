@@ -249,6 +249,7 @@ static const M11_V22_ShapeParams g_default_shape = {
 /* Map view square + lateral to wall variant.
  * Source-lock: DUNVIEW.C:8490-8542 composition order. */
 static M11_V22_WallVariant wall_variant_for_square(int view_square, int lateral) {
+    (void)lateral;
     switch (view_square) {
         case DM1_V2_VIEW_SQUARE_D3L: return M11_V22_WALL_VARIANT_D3_LEFT;
         case DM1_V2_VIEW_SQUARE_D3R: return M11_V22_WALL_VARIANT_D3_RIGHT;
