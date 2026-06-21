@@ -817,6 +817,7 @@ endif()
 # Section H Tier 1 #5 + Section L1 for context.
 add_executable(firestaff_tier1_strict_boot_probe
     probes/firestaff_tier1_strict_boot_probe.c)
+add_dependencies(firestaff_tier1_strict_boot_probe firestaff)
 target_include_directories(firestaff_tier1_strict_boot_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(NOT MSVC)
@@ -8265,7 +8266,9 @@ if(BUILD_TESTING)
     if(TARGET firestaff_tier1_strict_boot_probe)
         add_test(
             NAME tier1_strict_boot_probe
-            COMMAND firestaff_tier1_strict_boot_probe
+            COMMAND ${CMAKE_COMMAND} -E env
+                    "FIRESTAFF_BIN=$<TARGET_FILE:firestaff>"
+                    "$<TARGET_FILE:firestaff_tier1_strict_boot_probe>"
         )
         set_tests_properties(tier1_strict_boot_probe PROPERTIES
             LABELS "tier1;boot_probe;data_path"
@@ -8467,6 +8470,46 @@ target_include_directories(firestaff_nexus_v1_save_load_round_trip_probe PRIVATE
 if(NOT MSVC)
     target_compile_options(firestaff_nexus_v1_save_load_round_trip_probe PRIVATE
         -Wall -Wextra -O2
+    )
+endif()
+
+# ── Nexus V1 creature-state determinism probe (Tier 4 #19 polish) ───────
+# Headless: no game data, no SDL rendering required. Verifies the
+# source-locked creature-state transitions in nexus_v1_creatures.c
+# (DM1 F0209_GROUP_ProcessEvents29to41 timeline + CREATURE.C movement
+# timing) are deterministic across many invocations. Source-lock:
+# src/nexus/nexus_v1_creatures.c, include/nexus_v1_creatures.h state
+# enum (0=idle, 1=patrol, 2=chase, 3=attack, 4=flee).
+add_executable(firestaff_nexus_v1_creature_state_determinism_probe
+    probes/nexus/firestaff_nexus_v1_creature_state_determinism_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_creature_state_determinism_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_creature_state_determinism_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_creature_state_determinism_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
+if(BUILD_TESTING)
+    add_test(
+        NAME nexus_v1_save_load_round_trip
+        COMMAND firestaff_nexus_v1_save_load_round_trip_probe
+    )
+    set_tests_properties(nexus_v1_save_load_round_trip PROPERTIES
+        LABELS "tier4;nexus;save_load"
+    )
+
+    add_test(
+        NAME nexus_v1_creature_state_determinism
+        COMMAND firestaff_nexus_v1_creature_state_determinism_probe
+    )
+    set_tests_properties(nexus_v1_creature_state_determinism PROPERTIES
+        LABELS "tier4;nexus;creature;determinism"
     )
 endif()
 
