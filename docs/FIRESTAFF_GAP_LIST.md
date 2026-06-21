@@ -171,7 +171,7 @@ greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
 |---|---|---|
 | Champions per-stat parity | csb_gap_champions.md | PARTIAL |
 | Combat mechanics | csb_gap_combat.md | PARTIAL |
-| Dungeon model/mechanics | csb_gap_dungeon.md | PARTIAL |
+| Dungeon model/mechanics | csb_gap_dungeon.md | PARTIAL — 2026-06-21 PC launch boundary now has a positive real-data gate: `csb_v1_pc_real_asset_launch` verifies canonical PC CSB assets scan by hash, enter `csb_v1_boot_enter_game()`, load `DUNGEON.DAT` into the runtime-owned dungeon singleton, select map 0, tick once, and clean up. Remaining dungeon/mechanics work is deeper gameplay parity, not the PC asset handoff. |
 | Graphics + ornament blits (F0108, F0115, F0111, CustomBackgrounds) | csb_gap_graphics.md | OPEN-LARGE |
 | Full mechanics parity | csb_gap_mechanics.md | OPEN-LARGE |
 
