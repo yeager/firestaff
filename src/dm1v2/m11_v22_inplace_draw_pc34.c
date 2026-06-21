@@ -85,6 +85,8 @@ static int              g_v22_bitmap_count = 0;
 static const char* v22_wall_asset_id  = "wall_d3_carved_01";
 static const char* v22_floor_plain_id = "floor_plain_01";
 static const char* v22_floor_cracked_id = "floor_cracked_01";
+static const char* v22_floor_pit_id = "floor_pit_01";
+static const char* v22_floor_stairs_down_id = "floor_stairs_down_01";
 static const char* v22_creature_asset_id = "creature_demon_01";
 
 static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
@@ -103,6 +105,15 @@ static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
         case M11_V22_SHAPE_FLOOR_CRACKED:
         case M11_V22_SHAPE_FLOOR_MOSSY:
             return v22_floor_cracked_id;
+        case M11_V22_SHAPE_FLOOR_PIT:
+            return v22_floor_pit_id;
+        case M11_V22_SHAPE_FLOOR_STAIRS_UP:
+        case M11_V22_SHAPE_FLOOR_STAIRS_DOWN:
+            return v22_floor_stairs_down_id;
+        case M11_V22_SHAPE_FIELD_TELEPORTER:
+        case M11_V22_SHAPE_FIELD_FLUXCAGE:
+        case M11_V22_SHAPE_FIELD_EXPLOSION:
+            return NULL;
         case M11_V22_SHAPE_CREATURE:
         case M11_V22_SHAPE_CREATURE_PROJECTILE:
             return v22_creature_asset_id;
@@ -112,7 +123,7 @@ static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
             /* Items use creature sprite as placeholder (no items asset yet) */
             return v22_creature_asset_id;
         default:
-            /* Walls (1-9), door (10-12), fields (50-52), stairs (14-15), pit (13) */
+            /* Walls and doors use the first-cut carved-stone asset. */
             return v22_wall_asset_id;
     }
 }
@@ -363,6 +374,7 @@ const char* m11_v22_inplace_draw_source_evidence(void) {
     return "m11_v22_shape_cache_pc34.c (per-cell V22 shape cache); "
            "dm1_v2_modern_assets_pc34.c (manifest path resolution); "
            "m11_v22_render_overlay_pc34.c (sibling overlay path, placeholder); "
+           "pit/stairs material routing and field no-wrong-wall fallback; "
            "include/dm1_v2_shape_runtime_pc34.h (shape variant enum); "
            "ReDMCSB DUNVIEW.C:6697-6816 (DM1 4x3 composition order); "
            "v22_inplace_cache.bin (build-time RGBA pack from PNG via PIL).";

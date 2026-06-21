@@ -54,35 +54,78 @@ static void put_u32(unsigned char* p, uint32_t v) {
     memcpy(p, &v, sizeof(v));
 }
 
+typedef struct ProbeCacheEntry {
+    const char* category;
+    const char* asset_id;
+    uint32_t rgba[4];
+} ProbeCacheEntry;
+
+static void put_cache_entry(unsigned char* entry,
+                            const ProbeCacheEntry* fixture,
+                            uint32_t rgba_offset) {
+    memset(entry, 0, 32);
+    put_u32(entry + 0, fnv1a_hash(fixture->category));
+    put_u32(entry + 4, fnv1a_hash(fixture->asset_id));
+    put_u32(entry + 8, 2u);
+    put_u32(entry + 12, 2u);
+    put_u32(entry + 16, 4u * (uint32_t)sizeof(uint32_t));
+    put_u32(entry + 20, rgba_offset);
+}
+
 static int write_minimal_dm1_v22_cache(const char* cache_path) {
     FILE* fp;
     unsigned char header[32];
-    unsigned char entry[32];
-    const uint32_t rgba[4] = {
-        0x00ffffffu, 0x0000ff00u,
-        0x000000ffu, 0x00ffffffu
+    unsigned char entries[4][32];
+    const ProbeCacheEntry fixtures[4] = {
+        {
+            "wall_shapes",
+            "wall_d3_carved_01",
+            { 0x00ff0000u, 0x00ff0000u, 0x00ff0000u, 0x00ff0000u }
+        },
+        {
+            "floor_shapes",
+            "floor_plain_01",
+            { 0x0000ff00u, 0x0000ff00u, 0x0000ff00u, 0x0000ff00u }
+        },
+        {
+            "floor_shapes",
+            "floor_pit_01",
+            { 0x000000ffu, 0x000000ffu, 0x000000ffu, 0x000000ffu }
+        },
+        {
+            "floor_shapes",
+            "floor_stairs_down_01",
+            { 0x00ffff00u, 0x00ffff00u, 0x00ffff00u, 0x00ffff00u }
+        }
     };
+    size_t i;
+    uint32_t data_offset;
 
     memset(header, 0, sizeof(header));
-    memset(entry, 0, sizeof(entry));
+    memset(entries, 0, sizeof(entries));
     memcpy(header, "FSV22C\0\0", 8);
     put_u32(header + 8, 1u);
-    put_u32(header + 12, 1u);
-
-    put_u32(entry + 0, fnv1a_hash("wall_shapes"));
-    put_u32(entry + 4, fnv1a_hash("wall_d3_carved_01"));
-    put_u32(entry + 8, 2u);
-    put_u32(entry + 12, 2u);
-    put_u32(entry + 16, (uint32_t)sizeof(rgba));
-    put_u32(entry + 20, 64u);
+    put_u32(header + 12, (uint32_t)(sizeof(fixtures) / sizeof(fixtures[0])));
+    data_offset = (uint32_t)(sizeof(header) + sizeof(entries));
+    for (i = 0; i < sizeof(fixtures) / sizeof(fixtures[0]); ++i) {
+        put_cache_entry(entries[i],
+                        &fixtures[i],
+                        data_offset + (uint32_t)(i * sizeof(fixtures[i].rgba)));
+    }
 
     fp = fopen(cache_path, "wb");
     if (!fp) return 0;
     if (fwrite(header, 1, sizeof(header), fp) != sizeof(header) ||
-        fwrite(entry, 1, sizeof(entry), fp) != sizeof(entry) ||
-        fwrite(rgba, 1, sizeof(rgba), fp) != sizeof(rgba)) {
+        fwrite(entries, 1, sizeof(entries), fp) != sizeof(entries)) {
         fclose(fp);
         return 0;
+    }
+    for (i = 0; i < sizeof(fixtures) / sizeof(fixtures[0]); ++i) {
+        if (fwrite(fixtures[i].rgba, 1, sizeof(fixtures[i].rgba), fp) !=
+            sizeof(fixtures[i].rgba)) {
+            fclose(fp);
+            return 0;
+        }
     }
     return fclose(fp) == 0;
 }
@@ -123,13 +166,31 @@ static int dm1_all_cell_centers_nonzero(const unsigned char* fb, int fbW) {
     return 1;
 }
 
+static unsigned char dm1_cell_center_pixel(const unsigned char* fb,
+                                           int fbW,
+                                           int depth,
+                                           int lateral) {
+    static const int centers[3][3][2] = {
+        { { 42, 118 }, {108, 118 }, {173, 118 } },
+        { { 42,  87 }, {108,  87 }, {173,  87 } },
+        { { 42,  56 }, {108,  56 }, {173,  56 } }
+    };
+    return fb[centers[depth - 1][lateral + 1][1] * fbW +
+              centers[depth - 1][lateral + 1][0]];
+}
+
+static int asset_id_equals(int depth, int lateral, const char* expected) {
+    const char* actual = m11_v22_inplace_get_cell_asset_id(depth, lateral);
+    return actual != NULL && strcmp(actual, expected) == 0;
+}
+
 int main(void) {
     ProbeStats stats;
     char cache_path[FSP_PATH_MAX];
     unsigned char raw_cells[3][3] = {
-        { 0x00, 0x00, 0x00 },
-        { 0x00, 0x00, 0x00 },
-        { 0x00, 0x00, 0x00 }
+        { 0x00, 0x20, 0x40 },
+        { 0x68, 0x80, 0xa0 },
+        { 0x00, 0x20, 0x40 }
     };
     unsigned char fb[320 * 200];
     int painted;
@@ -139,6 +200,7 @@ int main(void) {
     const uint32_t* bitmap;
     int direction;
     int sweep_painted = 0;
+    const char* asset_id;
 
     memset(&stats, 0, sizeof(stats));
     memset(cache_path, 0, sizeof(cache_path));
@@ -168,26 +230,46 @@ int main(void) {
 
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
-    bitmap = m11_v22_inplace_get_cell_bitmap(1, 0, &w, &h);
+    bitmap = m11_v22_inplace_get_cell_bitmap(1, -1, &w, &h);
     probe_record(&stats, "DM1_V22_CELL_BITMAP",
                  bitmap != NULL && w == 2 && h == 2,
                  "D1 center maps to wall_d3_carved_01 bitmap");
 
+    probe_record(&stats, "DM1_V22_MATERIAL_ASSET_ROUTES",
+                 asset_id_equals(1, -1, "wall_d3_carved_01") &&
+                 asset_id_equals(1, 0, "floor_plain_01") &&
+                 asset_id_equals(1, 1, "floor_pit_01") &&
+                 asset_id_equals(2, -1, "floor_stairs_down_01"),
+                 "wall/floor/pit/stairs map to distinct synthetic asset ids");
+
+    asset_id = m11_v22_inplace_get_cell_asset_id(2, 1);
+    probe_record(&stats, "DM1_V22_FIELD_NO_WRONG_WALL_FALLBACK",
+                 asset_id == NULL,
+                 "teleporter field has no placeholder asset and does not fall back to wall art");
+
     memset(fb, 0x00, sizeof(fb));
     painted = m11_v22_inplace_render_pass(fb, 320, 200);
     changed = count_changed_pixels(fb, sizeof(fb));
-    probe_record(&stats, "DM1_V22_RENDER_9_CELLS",
-                 painted == 9 && changed > 0 && dm1_all_cell_centers_nonzero(fb, 320),
-                 "render pass paints all 9 DM1 viewport cells");
+    probe_record(&stats, "DM1_V22_RENDER_8_CELLS_FIELD_EMPTY",
+                 painted == 8 && changed > 0 && !dm1_all_cell_centers_nonzero(fb, 320),
+                 "render pass paints 8 material-backed cells and leaves field cell empty");
+    probe_record(&stats, "DM1_V22_RENDER_MATERIAL_COLORS",
+                 dm1_cell_center_pixel(fb, 320, 1, -1) == 0x30 &&
+                 dm1_cell_center_pixel(fb, 320, 1, 0) == 0x0c &&
+                 dm1_cell_center_pixel(fb, 320, 1, 1) == 0x03 &&
+                 dm1_cell_center_pixel(fb, 320, 2, -1) == 0x3c &&
+                 dm1_cell_center_pixel(fb, 320, 2, 0) == 0x30 &&
+                 dm1_cell_center_pixel(fb, 320, 2, 1) == 0x00,
+                 "cell-center palette proves wall/floor/pit/stairs routing");
 
     for (direction = 0; direction < 4; ++direction) {
         memset(fb, 0x00, sizeof(fb));
         m11_v22_shape_cache_update(direction, (const unsigned char (*)[3])raw_cells);
         sweep_painted += m11_v22_inplace_render_pass(fb, 320, 200);
     }
-    probe_record(&stats, "DM1_V22_DIRECTION_SWEEP_4X9",
-                 sweep_painted == 36,
-                 "all 4 directions paint 4x9 DM1 V22 cells");
+    probe_record(&stats, "DM1_V22_DIRECTION_SWEEP_4X8",
+                 sweep_painted == 32,
+                 "all 4 directions paint 4x8 DM1 V22 material-backed cells");
 
     {
         const char* ev = m11_v22_inplace_draw_source_evidence();
