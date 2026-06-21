@@ -482,8 +482,25 @@ order:
 ### Tier 4 (per-game polish, partially started)
 
 17. CSB mechanics parity (combat, dungeon, champion, inventory).
+    — Champion-stat determinism probe (`firestaff_csb_v1_champion_stat_determinism_probe`,
+    ctest `csb_v1_champion_stat_determinism`, commit `96e68253`): 9/9 PASS
+    covering F0306 stamina adjustment, F0309 max-load, F0310 movement
+    ticks, BUG0_72 boundary (Load==MaxLoad -> 4 ticks), and NULL-safety.
+    Source-locked per ReDMCSB CHAMPION.C lines 1078-1214. Real-asset
+    launch path is also gated by the existing
+    `firestaff_csb_v1_real_asset_launch_probe` (ctest `csb_v1_real_asset_launch`,
+    9 Atari ST + Amiga launch invariants).
 18. DM2 mechanics (shops, NPCs, triggers, timeline).
-19. Nexus runtime/probe coverage beyond compile/save-load.
+19. Nexus runtime/probe coverage beyond compile/save-load. — Creature-state
+    determinism probe (`firestaff_nexus_v1_creature_state_determinism_probe`,
+    ctest `nexus_v1_creature_state_determinism`, commit `c819523e`):
+    9/9 PASS covering patrol/chase/attack transitions, speed-based
+    movement intervals, alert_all sweep, dead-creature skip, and
+    20-tick evolution stability across 5 fresh runs. Source-locked
+    per DM1 F0209_GROUP_ProcessEvents29to41 + CREATURE.C movement
+    timing. Save/load path already covered by
+    `firestaff_nexus_v1_save_load_round_trip_probe` (ctest
+    `nexus_v1_save_load_round_trip`).
 20. Theron cross-slot import/export + cross-route evidence.
 
 ### Tier 5 (i18n follow-up)
