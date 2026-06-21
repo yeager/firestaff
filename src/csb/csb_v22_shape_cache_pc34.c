@@ -7,6 +7,7 @@
  */
 
 #include "csb_v22_shape_cache_pc34.h"
+#include "csb_v2_presentation_mode_pc34.h"
 
 #include <string.h>
 
@@ -39,9 +40,14 @@ const CSB_V22_CellRect csb_v22_kCellRects[3][3] = {
 void csb_v22_shape_cache_update(int direction,
                                  const unsigned char raw_cells[3][3]) {
     int d, l;
+    const int v22_active = csb_v2_presentation_mode_is_v22();
     for (d = 0; d < 3; ++d) {
         for (l = -1; l <= 1; ++l) {
             int idx = l + 1;
+            if (!v22_active) {
+                memset(&g_csb_cache[d][idx], 0, sizeof(g_csb_cache[d][idx]));
+                continue;
+            }
             CSB_V22_ShapeParams p = csb_v22_shape_for_cell(
                 (int)raw_cells[d][idx], direction, d, l);
             g_csb_cache[d][idx].active = 1;
