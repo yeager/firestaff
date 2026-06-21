@@ -3058,6 +3058,12 @@ if(BUILD_TESTING)
         NAME dm1_v1_input_command_queue_pc34_compat
         COMMAND test_dm1_v1_input_command_queue_pc34_compat
     )
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME pass387_dm1_v1_command_queue_state_map_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_pass387_dm1_v1_command_queue_state_map.py
+        )
+    endif()
 
     add_executable(firestaff_dm1_v1_champion_mouse_leader_switch_probe
         probes/dm1/firestaff_dm1_v1_champion_mouse_leader_switch_probe.c

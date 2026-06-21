@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 pass387 command-queue state-map CTest: registered existing read-only `scripts/verify_pass387_dm1_v1_command_queue_state_map.py` as CTest target `pass387_dm1_v1_command_queue_state_map_source_lock`. The data-free gate verifies 13 ReDMCSB command/input queue anchors for the DM1 V1 state map. This is source-lock verification only; it does not load game data, drive live input, run DOSBox, write manifests, or claim runtime/pixel parity.
+
 - ✅ 2026-06-21 DM1 V1 champion-panel F0354 box-variants CTest: registered existing data-free `test_dm1_v1_champion_panel_f0354_box_variants_pc34_compat` as CTest target `dm1_v1_champion_panel_f0354_box_variants_pc34_compat`. The source-locked fixture pins `PANEL.C` F0354 post-dispatch portrait-box byte-coordinate geometry, zone-table variant, and invisibility-hatch gate while explicitly excluding F0292 dispatch/runtime/pixel lanes. This is synthetic geometry/variant contract coverage only; it does not load real assets, drive live rendering, run DOSBox, capture pixels, or claim parity.
 
 - ✅ 2026-06-21 DM1 V1 champion-panel dead-member hand refresh CTest: registered existing data-free `test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat` as CTest target `dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat`. The source-locked fixture pins F0296/F0295/F0386 dead-member action-hand icon refresh, F0292 dead-status-box dispatch, guard ordering, and non-overlap evidence against nearby champion-panel lanes. This is synthetic redraw/hand-refresh contract coverage only; it does not load real assets, drive live clicks, run DOSBox, capture pixels, or claim parity.
