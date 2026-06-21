@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 D3L1 viewport no-write CTest: registered existing `test_dm1_v1_d3l1_viewport_no_write_gate` as CTest target `dm1_v1_d3l1_viewport_no_write_gate`. The data-free gate pins ReDMCSB F0116 D3L1 as a documented no-write target while preserving the adjacent D3L/D3R/D3C and D2/D1/D0 draw-order contracts, source-evidence strings, and allowed touch-square list. This is source/viewport fixture coverage only; it does not add original screenshots, DOSBox evidence, or pixel parity.
+
 - ✅ 2026-06-21 DM1 V1 D0L/D0R wall row source-lock CTest: registered existing `test_dm1_v1_d0l_d0r_wall_source_lock_pc34_compat` as CTest target `dm1_v1_d0l_d0r_wall_source_lock_pc34_compat`. The data-free gate pins ReDMCSB F0128 D0L-before-D0R row order, C716/C717 wall-zone routing, C10 transparency, D0R overlap behavior, and wall-case return before F0115/F0111/F0108. This is source/viewport fixture coverage only; it does not add original screenshots, DOSBox evidence, or pixel parity.
 
 - ✅ 2026-06-21 DM1 V1 door-button viewport blit CTest: registered existing `test_dm1_v1_door_button_viewport_pc34_compat` as CTest target `dm1_v1_door_button_viewport_pc34_compat`. The data-free gate pins ReDMCSB DUNVIEW.C F0110 door-button frame lookup and C10 transparency for D3R/D3C/D2C button spans, including clipped D2C destination behavior and outside-blit preservation. This is source/viewport fixture coverage only; it does not add original screenshots, live door-button interaction, DOSBox evidence, or pixel parity.

@@ -6056,6 +6056,18 @@ if(BUILD_TESTING)
         NAME dm1_v1_d0l_d0r_wall_source_lock_pc34_compat
         COMMAND test_dm1_v1_d0l_d0r_wall_source_lock_pc34_compat
     )
+    add_executable(test_dm1_v1_d3l1_viewport_no_write_gate
+        tests/test_dm1_v1_d3l1_viewport_no_write_gate.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_d3l1_viewport_no_write_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_d3l1_viewport_no_write_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_d3l1_viewport_no_write_gate
+        COMMAND test_dm1_v1_d3l1_viewport_no_write_gate
+    )
     add_executable(test_dm1_v1_viewport_hand_overlay_pc34_compat
         tests/test_dm1_v1_viewport_hand_overlay_pc34_compat.c
     )
