@@ -9,6 +9,8 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 
 ## CTest Sweep Milestones
 
+- ✅ 2026-06-21 DM1 V1 champion-panel clock-tick stat repaint CTest: registered existing data-free `test_dm1_v1_champion_panel_clock_tick_stat_repaint_pc34_compat` as CTest target `dm1_v1_champion_panel_clock_tick_stat_repaint_pc34_compat`. The source-locked fixture pins `CHAMPION.C` F0331 tick-time stat recovery, dirty-mask assignment, direction resync, inventory-panel repaint eligibility, and F0293 all-status-box repaint ordering. This is stat/repaint contract coverage only; it does not drive live clock ticks, mutate real champions, load private game data, run DOSBox, capture pixels, or claim parity.
+
 - ✅ 2026-06-21 DM1 V1 champion-panel name-box clip CTest: registered existing data-free `test_dm1_v1_champion_panel_name_box_clip_pc34_compat` as CTest target `dm1_v1_champion_panel_name_box_clip_pc34_compat`. The source-locked fixture pins the `CHAMDRAW.C` F0292 name-strip and inventory title clip geometry, print anchors, color cascade, and seven-character PC 3.4 name cap. This is clip/geometry contract coverage only; it does not load live portraits, drive inventory runtime, capture pixels, run DOSBox, or claim broader champion-panel parity.
 
 - ✅ 2026-06-21 DM1 V1 champion-panel damage-indicator CTest: registered existing data-free `test_dm1_v1_champion_panel_damage_indicator_pc34_compat` as CTest target `dm1_v1_champion_panel_damage_indicator_pc34_compat`. The source-locked synthetic gate pins `CHAMDRAW.C` F0623 damage graphic, zone, and text dispatch plus caller/evidence anchors. This is contract coverage only; it does not load real assets, run DOSBox, capture pixels, or claim original-vs-Firestaff parity.
