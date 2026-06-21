@@ -14,8 +14,8 @@ This gate binds the Firestaff input script to movement queue dispatch and viewpo
 - PASS DRAWVIEW.C:709-858 f0097_presents_the_composed_viewport - promotable original crops must be sampled at or after the viewport-present boundary
 
 ## Firestaff route audit
-- PASS src/engine/m11_game_view.c:7491-7700 m11_input_maps_to_dm1_v1_commands - Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick
-- PASS src/engine/m11_game_view.c:7491-7700 m11_records_movement_pipeline_capture_state - capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command
+- PASS src/engine/m11_game_view.c:7508-7715 m11_input_maps_to_dm1_v1_commands - Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick
+- PASS src/engine/m11_game_view.c:7508-7715 m11_records_movement_pipeline_capture_state - capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command
 - PASS probes/m11/firestaff_m11_wall_collision_capture_probe.c:20-174,210-236 wall_collision_probe_emits_input_script_and_viewport_crops - the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper
 
 ## Canonical input/crop rows
