@@ -7577,6 +7577,16 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         NAME pass513_dm1_v1_i34e_route_key_transcript_contract
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass513_dm1_v1_i34e_route_key_transcript_contract.py
     )
+    # Promoted-transcript variant: pass the deterministic source-locked fill
+    # (pass513_i34e_route_key_transcript_field_completer.py) so the gate
+    # exercises the F0361/F0380/F0365/F0128/F0097 invariants end-to-end.
+    add_test(
+        NAME pass513_dm1_v1_i34e_route_key_transcript_promoted
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass513_dm1_v1_i34e_route_key_transcript_contract.py
+    )
+    set_tests_properties(pass513_dm1_v1_i34e_route_key_transcript_promoted PROPERTIES
+        ENVIRONMENT "FIRESTAFF_PASS513_TRANSCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/verification-screens/pass513-dm1-v1-promoted-transcript/promoted_transcript.json"
+    )
 endif()
 
 # -- DM1 V1 PC/I34E runtime transcript capture path gate --------------
@@ -9157,8 +9167,9 @@ set_tests_properties(pass563_dm1_v1_pc34_original_c254_boundary PROPERTIES WILL_
 
 set_tests_properties(dm1_v2_d0_d3_draw_list_comparator_gate PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(dm1_v2_dungeon_dat_square_decoder_source_lock PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(csb_v1_m11_runtime_capture_boundary PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(pass547_csb_v1_runtime_readiness_backfill PROPERTIES WILL_FAIL TRUE)
+# csb_v1_m11_runtime_capture_boundary/pass547 WILL_FAIL masks removed
+# 2026-06-21 after the old M12/M11 CSB launch blocker was retired and
+# replaced by positive CSB launch-handoff + PC real-asset boot/tick evidence.
 # pass395_touch_queue_integration_source_lock: WILL_FAIL removed (2026-06-19)
 # after fixing the verifier's include-path convention (the local touch
 # header uses `#include "dm1_v1_input_command_queue_pc34_compat.h"`
