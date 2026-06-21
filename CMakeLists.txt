@@ -1372,6 +1372,12 @@ target_link_libraries(firestaff_dm1_v2_shape_runtime_probe
 if(NOT MSVC)
     target_compile_options(firestaff_dm1_v2_shape_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v2_shape_runtime_probe
+        COMMAND firestaff_dm1_v2_shape_runtime_probe
+    )
+endif()
 
 # M11 V2.2 GPU render path: per-frame V22 shape cache probe.
 # Headless: no game data. Verifies that the per-frame cache is
