@@ -1,7 +1,7 @@
 {
   "data_dir": "/Users/bosse/.firestaff/data/dm1",
   "firestaff": "/private/tmp/firestaff-main-dm1-24h/build/firestaff",
-  "generated_at": "2026-06-21T23:08:18.527647+00:00",
+  "generated_at": "2026-06-21T23:21:43.056321+00:00",
   "modes": [
     {
       "command": {
@@ -16,7 +16,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260622-010823.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v20_filtered_presented/firestaff-presented-20260622-010823.bmp",
+        "stderr": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260622-012147.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v20_filtered_presented/firestaff-presented-20260622-012147.bmp",
         "stdout": ""
       },
       "mode": {
@@ -28,7 +28,7 @@
       "presented_screenshots": [
         {
           "height": 400,
-          "name": "firestaff-presented-20260622-010823.bmp",
+          "name": "firestaff-presented-20260622-012147.bmp",
           "sha256": "83ecbe0d6ae6d71184d0691a655e024ef27f0794c9a18d7053d85f91e7788a88",
           "size": 768054,
           "width": 640
@@ -36,7 +36,7 @@
       ],
       "probe": {
         "active": 1,
-        "gameTick": 22,
+        "gameTick": 21,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -74,7 +74,7 @@
       "screenshots": [
         {
           "height": 200,
-          "name": "firestaff-20260622-010823.bmp",
+          "name": "firestaff-20260622-012147.bmp",
           "sha256": "d9fb403e4a51f8c00eb3329a935111914375367b2c18c84a0ea116ade58e0e8b",
           "size": 192054,
           "width": 320
@@ -94,7 +94,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260622-010827.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v21_upscaled_presented/firestaff-presented-20260622-010827.bmp",
+        "stderr": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260622-012151.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v21_upscaled_presented/firestaff-presented-20260622-012151.bmp",
         "stdout": ""
       },
       "mode": {
@@ -106,7 +106,7 @@
       "presented_screenshots": [
         {
           "height": 400,
-          "name": "firestaff-presented-20260622-010827.bmp",
+          "name": "firestaff-presented-20260622-012151.bmp",
           "sha256": "b2ffc71c744ba98b6d40893350157c33ae0d076fbc8d732ae48857983e804896",
           "size": 768054,
           "width": 640
@@ -114,7 +114,7 @@
       ],
       "probe": {
         "active": 1,
-        "gameTick": 22,
+        "gameTick": 21,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -152,7 +152,7 @@
       "screenshots": [
         {
           "height": 200,
-          "name": "firestaff-20260622-010827.bmp",
+          "name": "firestaff-20260622-012151.bmp",
           "sha256": "d9fb403e4a51f8c00eb3329a935111914375367b2c18c84a0ea116ade58e0e8b",
           "size": 192054,
           "width": 320
