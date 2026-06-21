@@ -520,6 +520,39 @@ catches regressions in the writer itself.
 
 ---
 
+## Step 5b.1: Optional post-dungeon route receipt
+
+When the live runner has reached `dungeon_gameplay`, operators can append a
+bounded route after the first movement proof without editing Python. Use this
+for B1 follow-ups such as creature-chain scouting, champion-panel setup, or a
+door/wall route that needs more than the default start and forward-step frames.
+
+```bash
+python3 docs/parity/tools/dosbox_capture_session.py --live \
+    --runtime-dir /path/to/DungeonMasterPC34 \
+    --game-dir /path/to/canonical/dm1 \
+    --capture-root /tmp/firestaff-dm1-live-route \
+    --dosbox-bin /Applications/DOSBox\ Staging.app/Contents/MacOS/dosbox \
+    --capture-backend peekaboo \
+    --post-dungeon-route Keypad-5:forward_2,Keypad-4:turn_right
+```
+
+The route grammar is `Key[:label]` separated by commas. Supported keys are the
+source-locked keypad movement keys (`Keypad-2`, `Keypad-4`, `Keypad-5`,
+`Keypad-6`, `Keypad-8`). The runner writes
+`dosbox_capture.post_dungeon_route.json` beside the other live receipts, with
+frame hashes, classifier states, route keys, and local frame paths. It does not
+promote parity: proprietary frames remain operator-local until a separate,
+reviewed manifest/pairing pass decides what can be tracked.
+
+The syntax gate is hermetic:
+
+```bash
+python3 docs/parity/tools/dosbox_capture_session.py --self-test-post-dungeon-route
+```
+
+---
+
 ## Step 5c: Render the Runtime Transcript (deterministic)
 
 The pass608 / pass625 same-viewport capture blocker is reported by
