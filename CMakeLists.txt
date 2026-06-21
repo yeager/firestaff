@@ -9412,6 +9412,27 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 Saturn-font loader determinism probe (Tier 4 #19 polish).
+# Headless: no game data, no SDL rendering required. Verifies the
+# SEGA SATURN SCR font parser in nexus_v1_saturn_font.c is deterministic
+# across many invocations. Synthesizes a small SCR header + glyph
+# payload and exercises load/free/get_glyph + dimension inference +
+# NULL-safety + 50-repetition determinism.
+add_executable(firestaff_nexus_v1_saturn_font_determinism_probe
+    probes/nexus/firestaff_nexus_v1_saturn_font_determinism_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_saturn_font_determinism_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_saturn_font_determinism_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_saturn_font_determinism_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_save_load_round_trip
@@ -9427,6 +9448,14 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_creature_state_determinism PROPERTIES
         LABELS "tier4;nexus;creature;determinism"
+    )
+
+    add_test(
+        NAME nexus_v1_saturn_font_determinism
+        COMMAND firestaff_nexus_v1_saturn_font_determinism_probe
+    )
+    set_tests_properties(nexus_v1_saturn_font_determinism PROPERTIES
+        LABELS "tier4;nexus;font;determinism"
     )
 endif()
 
