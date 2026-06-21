@@ -2933,6 +2933,10 @@ if(BUILD_TESTING)
         NAME dm1_v1_inventory_equip_slots_pc34_compat
         COMMAND test_dm1_v1_inventory_equip_slots_pc34_compat
     )
+    add_test(
+        NAME dm1_v1_inventory_status_hand_slot_route_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_inventory_status_hand_slot_route_source_lock.py
+    )
 
     add_executable(test_dm1_v1_inventory_backpack_chest_pc34_compat
         tests/test_dm1_v1_inventory_backpack_chest_pc34_compat.c
