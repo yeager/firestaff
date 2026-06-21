@@ -6004,6 +6004,28 @@ if(BUILD_TESTING)
         NAME dm1_v1_projectile_explosion_render_source_lock
         COMMAND test_dm1_v1_projectile_explosion_render_pc34_compat
     )
+    add_executable(test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat
+        tests/test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_pje04_f0822_f0824_explosion_pc34_compat
+        COMMAND test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat
+    )
+    add_executable(test_dm1_v1_pje05_f0813_projectile_despawn_pc34_compat
+        tests/test_dm1_v1_pje05_f0813_projectile_despawn_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_pje05_f0813_projectile_despawn_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_pje05_f0813_projectile_despawn_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_pje05_f0813_projectile_despawn_pc34_compat
+        COMMAND test_dm1_v1_pje05_f0813_projectile_despawn_pc34_compat
+    )
     add_executable(test_dm1_v1_ceiling_pit_and_explosion_bitmap_viewport_pc34_compat
         tests/test_dm1_v1_ceiling_pit_and_explosion_bitmap_viewport_pc34_compat.c
         src/dm1/dm1_v1_ceiling_pit_viewport_pc34_compat.c
