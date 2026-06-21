@@ -336,7 +336,7 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | 19-locale UI cycle | FIXED in v2.9.2 |
 | Persistence for many options + 5 per-game slots | FIXED |
 | **Polished UI flow** | OPEN-BOUNDED |
-| Runtime handoff for every option | PARTIAL |
+| Runtime handoff for every option | PARTIAL — CSB V1 launch-readiness blocker retired on 2026-06-21: matched CSB assets now produce a valid M12 launch intent, M11 hands CSB to `FS_GAME_CSB`, and `csb_v1_pc_real_asset_launch` proves PC CSB boot/tick. Remaining gaps are per-game polished flows, richer CSB viewport/HUD/gameplay proof, original capture parity, and non-PC emulator parity. |
 | **Save export/import** | OPEN-BOUNDED |
 | **Session timer** | OPEN-BOUNDED |
 | **Manual/docs launcher** | OPEN-BOUNDED |
