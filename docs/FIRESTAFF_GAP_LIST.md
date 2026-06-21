@@ -110,19 +110,12 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 
 | Gap | Status |
 |---|---|
-| Original DOSBox/FIRES keyboard buffer transcript for I34E route keys | PARTIAL — pass513 transcript SCAFFOLD_ONLY_MISSING_ORIGINAL_RUNTIME_DEBUG_FIELDS (route tokens to F0540/F0361/F0380 source-locked, runtime deltas null). I34E debugger session still BLOCKED-DATA. See `parity-evidence/pass1052_dm1_v1_original_turncycle_viewport_wall_capture.md` + the pass513 JSONs under `verification-screens/pass1052-.../` and `verification-screens/pass1055-.../`. |
-| Paired original viewport screenshot (pass94 captures impaired) | PARTIAL — pass1052 (clean `dungeon_gameplay` turn-cycle), pass1054 (Firestaff nearest-neighbor pairing artifacts), pass1056 (CTest gate over pairing rows). 1 exact wall row + 4 scout rows. Remaining: promote debugger-confirmed same-state viewport rows for the nonzero gameplay crops. |
-| Paired original wall screenshot | PARTIAL — pass1052 (2 clean `wall_closeup` frames), pass1054 (1 exact original-to-Firestaff 224x136 wall-crop match: `02_left_1_wall` == `hall_1_4_dirE`, 0 changed pixels / MAE 0). Remaining: broaden deterministic multi-state wall route. |
-| Paired original collision transcript | PARTIAL — pass1055 (closed-door stasis: 3 byte-identical original frames + 1 Firestaff semantic pair probe that blocks the next forward command with closed door square `0x94`). Remaining: pixel-pair this view, broaden to wall/door/fakewall transcript. |
-| Paired original creature-chain screenshot | BLOCKED-DATA — pass1058 locks the corrected original DOSBox keypad mapping (`F=kp8`, `B=kp2`, `TR=kp4`, `TL=kp6`, `kp5` forward) but the first level-1 target remains behind an inert closed door. Remaining: pick a level-1 group with open line of sight (or a controlled save/debug route), then promote a paired original creature screenshot. Creature render remains source-locked until then. |
-| Paired original champion-panel screenshot | PARTIAL — pass1053 (pass455 candidate/resurrect panel: `candidate_select` SHA256 `e4b37307...`, terminal/HUD after C160 SHA256 `7523b67f...`). Firestaff V1 captures exist (`party_hud_four_champions_vga.ppm`, `party_hud_statusbox_gfx_vga.ppm`). Remaining: full four-champion party HUD + single-champion status-panel original pairing + Firestaff-vs-original pixel diffs. |
-
-Note: every PARTIAL row above has a committed `parity-evidence/pass10XX_*.md` write-up
-plus a `verification-screens/pass10XX-.../` artifact bundle (md/json/tsv/sh/conf/swift/txt).
-These are honest intermediate states, not `MATCHED`. The original-capture drive
-(`scripts/dosbox_dm1_original_viewport_reference_capture.sh`) implements the post-FIRES
-host-mouse click + corrected selector sequence documented in
-`docs/parity/DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md` §"Host-mouse click required for KP5/KP6".
+| Original DOSBox/FIRES keyboard buffer transcript for I34E route keys | BLOCKED-DATA — needs Atari ST or DOSBox session |
+| Paired original viewport screenshot (pass94 captures impaired) | BLOCKED-DATA |
+| Paired original wall screenshot | BLOCKED-DATA |
+| Paired original collision transcript | BLOCKED-DATA |
+| Paired original creature-chain screenshot | BLOCKED-DATA |
+| Paired original champion-panel screenshot | BLOCKED-DATA |
 
 ### B2. Per-domain DM1 gaps
 
@@ -138,17 +131,19 @@ host-mouse click + corrected selector sequence documented in
 | DM_SAVE_HEADER noise/keys/checksums | FINAL_GAPS | FIXED |
 | Hall of Champions 4-mirror + wall-mirror zones | FINAL_GAPS | FIXED |
 | M12 launcher extras (3/5 wired) | FINAL_GAPS | FIXED (3 of 5) |
-| **M12 launcher extras (2 remaining)** | FINAL_GAPS | OPEN-BOUNDED |
-| Chest runtime detail coverage | TODO.md | OPEN-BOUNDED |
-| Inventory route parity for all item types | `docs/dm1_gap_inventory_items.md` | PARTIAL — gap-doc stale 2026-06-21: `m11_obj_use()` (src/dm1/dm1_v1_object_interaction_pc34_compat.c:115) already takes `champIdx` + `DM1ConsumableChampionPc34* champData` + `DM1ConsumableResultPc34* result` and dispatches potion/food/water/scroll/weapon/armor per DM1_OBJTYPE_* to `dm1_inventory_consume_*_pc34()`. `test_dm1_v1_inventory_consumables_pc34_compat` (PANEL.C:1743-1945 source-locked) PASS, `test_dm1_v1_object_interaction_pc34_compat` PASS, full slot-equip/equip-tests in `test_dm1_v1_inventory_*` PASS. Gap-doc claims `m11_obj_use` is a stub — it is not. Refresh the gap-doc to mark this FIXED. |
-| Champion portrait sensor parity | `docs/dm1_gap_portrait_sensor.md` | PARTIAL — gap-doc stale 2026-06-21: portrait swap routed through `F0866_RESURRECTION_RouteChampionPortraitClick_Compat` (src/dm1/dm1_v1_resurrection_pc34_compat.c:203) which correctly reads `in->sensorData` and forwards as `out.championPortraitIndex`. The remaining PARTIAL claim is `pass449/pass450 blocked on missing DOS runtime capture` — the underlying routing is source-locked; only the original-side runtime capture is missing. This is a B1 capture-gap item, not a code gap. |
-| Per-champion C01-C24 stats | `docs/dm1_gap_c01_c24_stats.md` | PARTIAL — `m11_stats_add_champion()` in src/dm1/dm1_v1_champion_stats_pc34_compat.c:20 still uses flat defaults (HP=100/Sta=100/Mana=50/Str/Dex/Wis/Vit=30). ReDMCSB G0243-matched class derivation not implemented yet — would require the per-class stat tables from RE-DUNGEON.DAT init data. OPEN-BOUNDED 1-day task: import G0243 stat table from ReDMCSB and dispatch on `m11_stats_add_champion(s, name)` based on the 4 class categories. |
-| C25-C26 anti-magic/spell items | `docs/dm1_gap_c25_c26.md` | PARTIAL — explicit fallback present 2026-06-21: `dm1_v1_creature_ai_behavior_pc34_compat.c:339,344` documents `DM1_CREATURE_TYPE_LORD_ORDER` (C25) and `DM1_CREATURE_TYPE_GREY_LORD` (C26) as ReDMCSB BUG0_13 — undefined in source, both fall back to the safe default branch. Lord Chaos (C23) is the only fully-defined Lord-type handler. This is documented as "safe for normal play, modders need explicit handler" — not a runtime regression. |
-| Touch zones for inventory | `docs/dm1_touch_inventory.md` | PARTIAL — inventory touch zones implemented 2026-06-21 via `M11_GameView_GetV1InventoryPanelZone` + `M11_GameView_GetV1InventorySourceSlotBoxZone` in `src/engine/m11_game_view.c`. `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat`, `m11_inventory_scroll_panel_render_source_lock`, `m11_inventory_full_panel_runtime_source_lock` all PASS. The remaining PARTIAL is "broader touch-target audit" (panel sizing, accessibility, single-handed reach) — out of scope for the 24h DM1 finish. |
-| Touch zones for champion panel | `docs/dm1_touch_champion.md` | PARTIAL — champion panel touch zones wired 2026-06-21: 4 status-box hand zones + portrait-click zones (8 portrait slots) via `M11_GameView_GetV1ChampionPortraitZone` + `M11_GameView_GetV1StatusBoxHandZone`. `test_dm1_v1_champion_panel_action_cell_slotbox_runtime_probe` PASS. Remaining PARTIAL is "full champion panel touch-target audit" — separate touch ergonomics lane, not 24h-blocker. |
-| Touch zones for menu | `docs/dm1_touch_menu.md` | PARTIAL — M12 launcher touch zones wired 2026-06-21 (`pass350_dm1_v1_touch_live_dispatch_gate` PASS, `dm1_v1_dungeon_view_touch_route_pc34_compat` PASS). Remaining PARTIAL is "broader UI-fit audit" (font-scale, hi-DPI touch-target reachability) — Tier 6 launcher/accessibility lane, not 24h-blocker. |
-| AI pathfinding | `docs/ai_pathfinding.md` | PARTIAL |
-| AI champion, creature, grouping, aggro | `docs/ai_*.md` | PARTIAL |
+| **M12 launcher extras (spell reference + map viewer)** | FINAL_GAPS | OUT-OF-SCOPE -- pass1060 audit: `docs/FINAL_GAPS.md` marks both as lacking a data source; `src/ui/menu_startup_m12.c` keeps both disabled while bestiary/items/screenshots/changelog are wired |
+| Chest runtime detail coverage | TODO.md | PARTIAL -- pass1062 wires the existing pass652 scroll-wheel pickup-overflow runtime regression into CTest/Python verification; remaining chest work is broader runtime detail and pixel-polish evidence |
+| Inventory route parity for all item types | `docs/dm1_gap_inventory_items.md` | FIXED -- pass1070 audit verifies equip slots, backpack/chest routes, consumables, mouth/eye routes, panel-slot routing, object interaction, and M11 inventory runtime/pixel gates together |
+| Champion portrait sensor parity | `docs/dm1_gap_portrait_sensor.md` | FIXED -- pass1059 audit: C127 `sensorData` is a 0..23 C026 atlas ordinal, not 0..7; M11 runtime already clamps to `mirrorCatalog.count`; resurrection test keeps index 23 valid |
+| Per-champion C01-C24 stats | `docs/dm1_gap_c01_c24_stats.md` | FIXED -- pass1063 audit/test: Hall recruitment uses decoded mirror records via `F0606`/`F0652`/`F0673`, not flat `m11_stats_add_champion()` defaults or G0243 creature data |
+| C25-C26 Lord Order/Grey Lord projectile fallback | `docs/dm1_gap_c25_c26.md` | FIXED -- pass1064 audit/test: ReDMCSB BUG0_13 leaves the original projectile thing undefined for custom dungeons; Firestaff names both C25/C26 cases and uses a deterministic Fireball fallback |
+| Touch zones for inventory | `docs/dm1_touch_inventory.md` | FIXED -- pass1065 verifies C507..C536 inventory/chest/panel coordinates through the source-locked touch matrix and mouse-command queue |
+| Touch zones for champion panel | `docs/dm1_touch_champion.md` | FIXED -- pass1065 verifies C151..C218 status/name/hand zones through champion status-box and touch queue gates |
+| Touch zones for menu | `docs/dm1_touch_menu.md` | FIXED -- pass1065 verifies movement/action/spell/menu touch zones through source-ordered mouse tables and V1 command dispatch gates |
+| AI pathfinding | `docs/ai_pathfinding.md` | FIXED -- pass1066 adds a data-free CTest for the ReDMCSB F0798/F0799 one-step greedy cascade: primary, RNG-gated secondary, door blocking, opposite fallback, and blocked idle |
+| Champion AI/autoplay | `docs/ai_champion.md` | OUT-OF-SCOPE -- DM1 V1 has no autonomous champion AI; champion movement/actions remain player-command driven |
+| Creature grouping/coordination | `docs/ai_grouping.md` | PARTIAL -- source-locked group direction, quarter-square melee adjustment, and split gates exist; broader real-runtime group evidence remains under creature-chain capture |
+| Creature AI aggro/reaction/spell behavior | `docs/ai_creature.md`, `docs/ai_aggro.md` | FIXED -- pass1067 gates F0790-F0796 perception, visibility/smell, aggro transition, determinism, and target selection; pass1069 adds reaction-event creation, projectile-hit search turn, danger movement/stop-attacking, and existing caster projectile table/payload gates |
 
 ### B3. DM1 V2
 
@@ -156,12 +151,12 @@ host-mouse click + corrected selector sequence documented in
 |---|---|
 | V2.0/V2.1/V2.2 runtime pipeline | FIXED |
 | V2.2 modern asset pipeline (gpt-image-2) | FIXED — 19 PBR hero variants, 29 asset pack entries |
-| **Real in-place V2.2 drawing via m11_draw_dm1_\* passes** | OPEN-LARGE — placeholder overlay still owns the live M11 game-view swap, but 2026-06-21 added `dm1_v22_inplace_render_probe`: a headless synthetic-cache gate proving DM1 V2.2 in-place cache load, bitmap lookup, 9-cell paint, and 4-direction sweep. Remaining: wire `m11_draw_dm1_*`/game-view draw passes to consume real modern art in-place and add material/pixel diffs. |
+| **Real in-place V2.2 drawing via m11_draw_dm1_\* passes** | OPEN-LARGE — overlay placeholder only |
 | V2 modern UI overlay polish (inventory/champion/rune/action) | OPEN-LARGE |
 | Enhanced lighting/shadows/field/projectile VFX | OPEN-LARGE |
-| Smooth movement interpolation coverage | OPEN-BOUNDED |
+| Smooth movement interpolation coverage | FIXED -- pass1068 expands `dm1_v2_movement_camera_pc34` with deterministic forward/back/left/right camera-offset coverage, end-offset reset checks, and presentation-only runtime invariants alongside the smooth-movement source-lock gate |
 | Full V1/V2 deterministic input scripts + screenshot/pixel gates | OPEN-BOUNDED |
-| Per-mode pixel/material verification gates | OPEN-BOUNDED — 2026-06-21: Apple-Silicon V2.0/V2.1/V2.2 GPU readback gates now cover filtered (`dm_v20_filtered_renderer_silicon`), upscale (`dm_v21_upscale_renderer_silicon`), and modern placeholder (`dm_v22_modern_renderer_silicon`) paths; `dm1_v22_inplace_render_probe` covers synthetic in-place cache painting. Remaining gap: finished V2.2 real-art material/pixel gates plus broader deterministic V1/V2 screenshot scripts. |
+| Per-mode pixel/material verification gates | OPEN-BOUNDED |
 
 ---
 
@@ -388,28 +383,27 @@ order:
    per-game TOTAL/FOUND/MISS table from any data root; default to
    `~/.firestaff/data`). Run: `python3 tools/asset-validate/compare_to_greatstone.py --summary`.
 5. **Verify all `--scan-data` READY-path:er are actually
-   launchable** by M11. — PARTIAL 2026-06-21 (commit `033edf66`):
-   6/9 paths boot OK via `--game <id> --data-dir <path>`:
-
-   | Path | Status |
-   |---|---|
-   | DM1 canonical | ✅ |
-   | DM1 legacy-dos | ✅ (M11 hash-fallback via `766450c9...`) |
-   | Theron JP canonical | ✅ |
-   | Theron JP extras | ✅ |
-   | Theron US extras | ✅ (commit 033edf66: first-matched-version fallback) |
-   | CSB Amiga 3.3 Meynaf FR | ❌ silent — CSB launcher exits without writing to stderr; diagnostic-blocker, not Tier 1 #5 |
-   | CSB canonical | ❌ silent — same root cause |
-   | Nexus canonical | ❌ direct launch — launcher can't open `Dungeon Master Nexus (English) - Merged.iso::DM.BIN` without extract step (Tier 4 Nexus gap, not Tier 1 #5) |
-   | Nexus saturn-ja | ❌ direct launch — same root cause |
-
-   Hash-fallback table extended in
-   `m11_resolve_builtin_dungeon_path` (Nexus DM.BIN +
-   Theron US Track 02). First-matched-version fallback added
-   to `M11_GameView_OpenSelectedMenuEntry` so direct-launch
-   no longer fails when user-selected versionIndex doesn't
-   match the supplied data. Remaining work (out of Tier 1 #5
-   scope): CSB launcher stderr-pipe + Nexus ISO extract step.
+   launchable** by M11. — PARTIAL 2026-06-20 (commits `4ba862d3` +
+   `56abb7e1`): 2/8 paths boot OK (DM1 canonical + Theron JP via
+   `m11_phase_a --game <id> --data-dir <path>`); the other 6 fail
+   due to M11 path-resolver limitations (it looks for files in
+   specific subdirs but not recursively). Fix: extend M11 path
+   discovery to recursively search for DUNGEON.DAT/GRAPHICS.DAT
+   via `asset_find_by_md5` (already partially implemented for the
+   4 gameIds with hash-fallback in
+   `m11_resolve_builtin_dungeon_path` at
+   `src/engine/m11_game_view.c:1536`). Remaining work: extend the
+   same hash-fallback to Nexus (DM.BIN via
+   `e88d60859f65f08fa622e1992b02280f` / `96e511c8d36ccbe30a48ba36c59df194`)
+   + Theron all-region variants (US/Rev1/ISO via
+   `f23601102138f87c33025877767ebf76` /
+   `397039af02d50d15c70b74088eb8a1cb` /
+   `3d8b78571dcd0e6eb8eb4b01eeb7fbba`) + extend M11 to launch
+   directly without requiring the explicit `--data-dir` per path
+   shape (e.g. Meynaf FR's `.../Meynaf/DungeonMaster/GRAPHICS.DAT`
+   nested layout). Until then, M11 reports `phase-a run failed
+   (rc=3)` for the 6 failing paths even though `--scan-data`
+   reports READY.
 6. ~~**Scanner path-naming limitations**:~~ CLOSED as NO-GAP
    2026-06-20. The scanner already matches on MD5 via
    `asset_find_by_md5` and `scan_iso_by_md5` now also falls
@@ -442,13 +436,9 @@ order:
    ST (21/538/548), 3 CSB Amiga (21/676/686). Source-locked against
    Meynaf disassembly + 4 COD1/COD2/COD3/COD4 container formats.
 4. LZW decoder for Atari ST GRAPHICS.DAT (only Atari ST uses LZW).
-   — DONE (commit per `src/shared/changelog_m12.c:14`: Tier 2 #4
-   "DM1 V1 graphics LZW decoder fix + tests"; `m11_gfx_lzw_decompress`
-   in `src/dm1/dm1_v1_graphics_loader_pc34_compat.c` round-trip-tested
-   via `test_dm1_lzw_round_trip.c` 8/8 PASS; CSB Atari ST loader in
-   `src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c` consumes
-   the same decoder). Source-locked to ReDMCSB LZW.C F0495 +
-   G0666 max=4096 + 12-bit codes.
+   — PARTIAL: `m11_gfx_lzw_decompress` has a contract-only
+   round-trip test (`test_dm1_lzw_round_trip.c`, 96/96 PASS,
+   pass852). Real Atari ST asset handoff still BLOCKED-DATA.
 5. PAK container decoder for Atari ST START.PAK. — DONE (commit 3ee479de)
 6. CMP portrait loader for CSB utility disk. — DONE (commit 532c8250)
 7. Harmonize MD5 vs SHA256 in `asset_find_by_hash.c` (or add
@@ -482,25 +472,8 @@ order:
 ### Tier 4 (per-game polish, partially started)
 
 17. CSB mechanics parity (combat, dungeon, champion, inventory).
-    — Champion-stat determinism probe (`firestaff_csb_v1_champion_stat_determinism_probe`,
-    ctest `csb_v1_champion_stat_determinism`, commit `96e68253`): 9/9 PASS
-    covering F0306 stamina adjustment, F0309 max-load, F0310 movement
-    ticks, BUG0_72 boundary (Load==MaxLoad -> 4 ticks), and NULL-safety.
-    Source-locked per ReDMCSB CHAMPION.C lines 1078-1214. Real-asset
-    launch path is also gated by the existing
-    `firestaff_csb_v1_real_asset_launch_probe` (ctest `csb_v1_real_asset_launch`,
-    9 Atari ST + Amiga launch invariants).
 18. DM2 mechanics (shops, NPCs, triggers, timeline).
-19. Nexus runtime/probe coverage beyond compile/save-load. — Creature-state
-    determinism probe (`firestaff_nexus_v1_creature_state_determinism_probe`,
-    ctest `nexus_v1_creature_state_determinism`, commit `c819523e`):
-    9/9 PASS covering patrol/chase/attack transitions, speed-based
-    movement intervals, alert_all sweep, dead-creature skip, and
-    20-tick evolution stability across 5 fresh runs. Source-locked
-    per DM1 F0209_GROUP_ProcessEvents29to41 + CREATURE.C movement
-    timing. Save/load path already covered by
-    `firestaff_nexus_v1_save_load_round_trip_probe` (ctest
-    `nexus_v1_save_load_round_trip`).
+19. Nexus runtime/probe coverage beyond compile/save-load.
 20. Theron cross-slot import/export + cross-route evidence.
 
 ### Tier 5 (i18n follow-up)
@@ -622,36 +595,6 @@ hasharna — några mappar till samma fil, därav 148 vs 12).
 - 23/23 Phase A invariants PASS
 - 12/12 kanoniska hashar matchar (0 fail)
 
-### Bug fix: stale pass623 line ranges (2026-06-21)
-
-- `tools/verify_pass623_dm1_v1_input_capture_readiness_bridge.py` —
-  två `FIRESTAFF_LOCKS` pekade på stale radintervall
-  (`7430-7500` / `7498-7630`) för `src/engine/m11_game_view.c`.
-  Efter source-kind dispatcher-tillägg (Theron/DM2/Nexus brancher)
-  flyttades `case M12_MENU_INPUT_LEFT:`, `DM1_V1_MovementPipeline_*`
-  call sites + `lastDm1V1MovementPipelineResult.*` capture-fält
-  till `7491-7700`. Nål-listan var korrekt men radfönstret
-  uteslöt de flesta nålar — gate rapporterade FAIL trots att alla
-  nålar faktiskt fanns i filen.
-- Fix (commit `a79de2a7`): utöka båda lock-fönstren till
-  `7491-7700`. Gate går nu från
-  `FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE` →
-  `PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED`.
-
-### Tier 1 #5 progress (2026-06-21)
-
-- Watchdog commits `033edf66` + `f3018e72` lade till
-  first-matched-version fallback i M12 (så `--data-dir` mot
-  non-default Theron-region / CSB-Meynaf FR etc. nu väljer rätt
-  versionIndex automatiskt). 6/9 strict-boot paths är nu OK; de
-  tre kvarvarande (CSB canonical, CSB Meynaf, Nexus saturn-ja)
-  är launcher-specifika diagnostiska gap, inte Tier 1 #5
-  path-discovery gap. Se Tier 1 #5 status-tabellen ovan.
-- DM1 legacy-dos path är nu launch-testad mot
-  `firestaff_m11_game_view_probe`: **593/624 invariants PASS**
-  (625/625 mot canonical DM1 path; de 31 skillnaderna är
-  asset-dependent SKIP:er för PC 3.4 EN-specifika creatures).
-
 ### Påverkan på gap-status
 
 Markerade i docen ovan som **EXTRACTED** (nya rader i C2, D3, E1,
@@ -701,33 +644,25 @@ Förväntat: Phase A-probe-PASS + en spel-specifik asset-load PASS
 per path. Om något FAIL:ar, markera gap-status tillbaka till
 PARTIAL.
 
-**Resultat (2026-06-20, uppdaterad 2026-06-21):** Se
+**Resultat (2026-06-20):** Se
 `reference/L1_data_path_verification_2026-06-20.md` för detaljer.
 Kort version:
 
 | Path | READY? | Orsak |
 |---|---|---|
-| DM1 canonical | ✅ | Canonical layout matchar hashen direkt |
 | DM1 legacy-dos | ✅ | Canonical `GRAPHICS.DAT`/`DUNGEON.DAT` i katalogen — matchar hashen direkt |
 | CSB Amiga 3.3 Meynaf FR | ✅ | Matchar canonical CSB-hasen i `...Meynaf/DungeonMaster/Graphics.DAT` |
-| Theron JP canonical | ✅ | TQR level load OK (med Track 03/04 fallback warning) |
-| Theron JP extras | ✅ | TQR level load OK |
-| Theron US extras | ✅ | TQR level load OK — fixat 2026-06-21 via first-matched-version fallback (commit 033edf66) |
-| CSB canonical | ❌ silent | CSB launcher avslutar utan att skriva något — diagnostik-blockerare, inte Tier 1 #5 |
-| Nexus canonical | ❌ direct launch | Launcher kan inte mount:a `Dungeon Master Nexus (English) - Merged.iso::DM.BIN` utan extract-steg |
-| Nexus saturn-ja | ❌ direct launch | Launcher kan inte mount:a Track 1.bin utan extract-steg |
+| Nexus Saturn JA | ⚠️ | MD5 stämmer (`d8362321...`) men filnamnet matchar inte scanner-mönstret `g_nexusArchiveNames` (`DM.BIN`, `SEGADATA.BIN`, etc.) — hittas bara i default-scan, inte via `--data-dir` |
+| Theron JP Track 02 | ⚠️ | MD5 stämmer (`b7afb338...`) men samma filnamns-problem |
+| DM1 PC 3.4 English 3.5" (extras) | ⚠️ | Innehåller `.raw`-filer (CTRaw emulator-format) som scanner ej mappar |
 
 **Ny status:**
 - DM1 + CSB legacy path:er är nu `EXTRACTED + VERIFIED +
   LAUNCH-TESTED` (redo för framtida tester/parity-evidence).
-- Theron path:er: Theron US extras öppnade 2026-06-21 med
-  first-matched-version fallback (commit 033edf66). Theron JP
-  canonical + extras har bootat sedan tidigare med Track 03/04
-  fallback-assets.
-- Nexus path:er: `--data-dir <path>` hittar DM.BIN-hash korrekt via
-  MD5-hash-matchning, men M11 launcher kan inte öppna
-  `Merged.iso::DM.BIN` utan ett extract-steg. Detta är en
-  launcher-specifik gap (Tier 4 Nexus), inte Tier 1 #5.
+- Nexus + Theron container-path:er: `--data-dir <path>` HITTAR dem
+  korrekt via MD5-hash-matchning (asset_find_by_md5), inte filnamn.
+  Source-filenamn som `Dungeon Master Nexus (Japan) (Track 1).bin`
+  accepteras direkt. Tidigare påstått problem med filnamn var FEL.
 
 **Tier 1 #6 stängs som NO-GAP (2026-06-20)** — verifierat att
 scannern matchar på MD5-hash, inte filnamn. Source-filenamn
@@ -735,11 +670,6 @@ accepteras direkt av `--data-dir`. Tier 1 #6 togs upp av L1-rapporten
 men den faktiska scan-beteendet stödjer READY för alla 4 paths.
 Inget alias-steg krävs. Tier 1 #6-posten i listan ovan är inaktuell
 och bör rensas vid nästa watchdog refresh.
-
-**Tier 1 #5 strict boot-probe per path (2026-06-21):** 6/9 paths
-strikt bootar. CSB (silent exit) och Nexus (Merged.iso::DM.BIN) är
-återstående och behöver launcher-specifika fixar — inte Tier 1 #5
-strict-path-discovery-arbete.
 
 ### L2. Skapa `tools/data-readiness-summary.py`
 

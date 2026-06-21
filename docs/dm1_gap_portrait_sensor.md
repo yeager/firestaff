@@ -1,66 +1,72 @@
-# GAP: Portrait Sensor / Champion Portrait Swap in m11_game_view.c
+# RESOLVED: Portrait Sensor / Champion Portrait Ordinal in m11_game_view.c
 
 ## Status
-**GAP — Latent portrait sensorData routing gap; pass449/pass450 blocked on missing DOS runtime capture**
+
+**RESOLVED — previous 0-7 bound was a stale audit assumption; source-locked portrait ordinals are 0-23 and the M11 front-cell route already rejects out-of-catalog ordinals.**
 
 ## Source Location
-`src/dm1/dm1_v1_resurrection_pc34_compat.c`, function `F0866_RESURRECTION_RouteChampionPortraitClick_Compat` (line 203).
 
-Related: `src/dm1/dm1_v1_sensor_trigger_pc34_compat.c` — sensor trigger dispatch.
+`src/dm1/dm1_v1_resurrection_pc34_compat.c`, function `F0866_RESURRECTION_RouteChampionPortraitClick_Compat`.
 
-## Gap Description
+`src/engine/m11_game_view.c`, function `m11_front_cell_mirror_ordinal`.
 
-The champion portrait wall sensor in DM1 V1 is a `DM1_SENSOR_WALL_CHAMPION_PORTRAIT` sensor that uses `sensorData` to encode which champion portrait slot (0–7) was clicked. The routing function `F0866_RESURRECTION_RouteChampionPortraitClick_Compat` reads `in->sensorData` directly and returns it as `out.championPortraitIndex`.
+Related: `src/dm1/dm1_v1_sensor_trigger_pc34_compat.c` -- sensor trigger dispatch.
+
+## Finding
+
+The champion portrait wall sensor in DM1 V1 is a `DM1_SENSOR_WALL_CHAMPION_PORTRAIT` sensor that uses `sensorData` to encode the champion portrait atlas ordinal. The previous audit called this a 0-7 slot range and proposed rejecting `sensorData > 7`.
+
+That was incorrect. ReDMCSB routes `M040_DATA(sensor)` directly to `F0280_CHAMPION_AddCandidateChampionToParty`, and the same value is used for the wall portrait draw path. The portrait graphic is `C026_GRAPHIC_CHAMPION_PORTRAITS`, a 256x87 strip of 32x29 portraits: 8 columns by 3 rows, or ordinals 0-23.
 
 ```c
-out.championPortraitIndex = in->sensorData;   // line 221
+out.championPortraitIndex = in->sensorData;
 ```
 
-`in->sensorData` is the raw `sensorData` field from the sensor that triggered the click event. This value comes from the dungeon data (RE-DUNGEON.DAT or equivalent) as laid down by the dungeon editor.
-
-**The gap:** In `m11_game_view.c` (the viewport rendering/input layer), there is a latent code path where champion portrait click events are routed to the wrong `sensorData` value — portrait swap can occur between the intended portrait and an adjacent slot. The issue manifests when `pass449` (portrait swap under specific lighting/angle) or `pass450` (portrait swap on diagonal facing) is triggered.
+`in->sensorData` is the raw `sensorData` field from the C127 sensor that triggered the click event. This value comes from the dungeon data and is source-owned by the Hall of Champions mirror layout.
 
 ## Known Portrait Sensor Data Usage
 
-In `dm1_v1_resurrection_pc34_compat.c:398`, the test harness hardcodes `sensorData = 7` for a champion portrait click:
+The resurrection compatibility test keeps both cross-row ordinals live:
+
 ```c
-in.sensorData = 7;
+in.sensorData = 11;
+...
+in.sensorData = 23;
 ```
 
-This indicates that portrait index 7 is the "last slot" (party size 4 + candidates). The `championPortraitIndex` is used to select which champion portrait graphic is shown in the candidate panel.
+Both must route to `F0280`; otherwise Firestaff would reject valid Hall of Champions portraits beyond the first atlas row.
 
 ## Sensor Data Field Meaning per Type
 
 From `dm1_v1_sensor_trigger_pc34_compat.c`:
-- `sensorData` = 0: generic trigger
-- `sensorData` = 1–4: directional exits
-- `sensorData` = object type: storage/chest selectors
-- `sensorData` = 0–7: champion portrait slot index
 
-The portrait sensor is the only sensor type where `sensorData` encodes a UI selection index rather than a game world value.
+- `sensorData = 0`: generic trigger
+- `sensorData = 1-4`: directional exits
+- `sensorData = object type`: storage/chest selectors
+- `sensorData = 0-23`: champion portrait atlas ordinal for C127 Hall portraits
 
-## pass449 / pass450 Blocked
+The portrait sensor is the only sensor type where `sensorData` encodes a champion portrait atlas ordinal rather than a game world value.
 
-- **pass449**: Runtime capture of champion portrait swap under specific game state (party size 3, facing west, champion departed). Blocked because DOS runtime environment not available on current build infrastructure.
-- **pass450**: Runtime capture of diagonal-facing portrait swap. Same block.
+## Source-Lock
 
-Without these captures, the exact conditions that cause the portrait swap are unconfirmed. The gap is inferred from the code structure — `sensorData` is forwarded without validation that it falls within the valid portrait slot range when the sensor type is `DM1_SENSOR_WALL_CHAMPION_PORTRAIT`.
+- `DEFS.H:821-826` defines `M027_PORTRAIT_X(index)` and `M028_PORTRAIT_Y(index)` as 8-column atlas math.
+- `DEFS.H:2186` defines `C026_GRAPHIC_CHAMPION_PORTRAITS`.
+- `DUNGEON.C:2608-2612` stores `M000_INDEX_TO_ORDINAL(M040_DATA(sensor))` as `G0289_i_DungeonView_ChampionPortraitOrdinal`.
+- `DUNVIEW.C:3913-3928` decrements that ordinal and blits `(ordinal & 7) * 32`, `(ordinal >> 3) * 29`.
+- `MOVESENS.C:1501-1503` calls `F0280_CHAMPION_AddCandidateChampionToParty(M040_DATA(sensor))`.
+- `REVIVE.C:142-167` blits the selected portrait from `C026_GRAPHIC_CHAMPION_PORTRAITS` using the same `M027/M028` atlas macros.
 
-## Code Validation Present
+## Runtime Guard
 
-The routing function does check `sensorType`:
-```c
-if (in->sensorType != DM1_SENSOR_WALL_CHAMPION_PORTRAIT) return out;
-```
+`m11_front_cell_mirror_ordinal()` reads the C127 sensor on the actual front square and accepts the ordinal only when it is within `state->mirrorCatalog.count`. Current comment text documents the source shape as 24 portraits, 8 columns by 3 rows.
 
-But it does **not** validate that `sensorData` is in the range [0, 7] before returning it as `championPortraitIndex`. An out-of-range `sensorData` from a malicious or corrupted dungeon file would propagate directly to the portrait selection.
+This is the correct bound for malformed data in the M11 runtime. Adding `if (in->sensorData > 7) return out;` to `F0866` would be a regression.
 
-## Required Fix (Non-Blocking)
-1. Add bounds check: `if (in->sensorData > 7) return out;` in F0866
-2. Capture pass449 and pass450 DOS runtime traces to confirm portrait swap conditions
-3. Add integration test for portrait click with `sensorData = 8` (out of bounds)
+## Verification
+
+- `test_dm1_v1_resurrection_pc34_compat` asserts that `sensorData = 11` and `sensorData = 23` both reach `F0280`.
+- The M11 source path already carries the catalog-count guard for real runtime clicks.
 
 ## Impact
-- Normal gameplay: portrait slots 0–7 are well within valid range; no visible bug
-- Malicious dungeon: out-of-range `sensorData` could cause undefined portrait index
-- Modding: dungeon designers placing portrait sensors with incorrect `sensorData` get silent mis-routing
+
+No gameplay fix is required here. The DM1 finish queue should not carry this as an open code blocker; remaining champion-panel work belongs to original-runtime pairing and broader panel pixel evidence, not a portrait `sensorData` bounds change.

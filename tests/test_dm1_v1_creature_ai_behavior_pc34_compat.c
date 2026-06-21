@@ -358,7 +358,49 @@ static void test_creature_projectile_launch_params(void) {
 }
 
 /* =========================================================
- *  Test 11c: Vexirk projectile type table is source-backed
+ *  Test 11c: C25/C26 BUG0_13 safe projectile fallback
+ * ========================================================= */
+static void test_lord_order_grey_lord_projectile_safe_fallback(void) {
+    const int types[] = {
+        DM1_CREATURE_TYPE_LORD_ORDER,
+        DM1_CREATURE_TYPE_GREY_LORD
+    };
+    int i;
+
+    for (i = 0; i < 2; ++i) {
+        struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+        struct DM1ActiveGroup_Compat ag = make_default_ag();
+        struct RngState_Compat rng = make_rng((uint32_t)(51 + i));
+        struct DM1CreatureProjectileAttack_Compat out;
+        int ok;
+
+        ctx.creatureType = types[i];
+        ctx.creatureInfo.ranges = 0x3005; /* attack range 3, sight 5 */
+        ctx.creatureInfo.attack = 64;
+        ctx.creatureInfo.dexterity = 33;
+        ctx.currentGroupDistanceToParty = 2;
+        ctx.currentGroupPrimaryDirToParty = 2; /* South */
+        ag.cells = 0xFF;
+
+        ok = F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
+            &ctx, &ag, 0, &rng, &out);
+        EXPECT_EQ(ok, 1,
+                  "lord_c25_c26_projectile: resolver returns 1");
+        EXPECT_EQ(out.shouldLaunch, 1,
+                  "lord_c25_c26_projectile: ranged boss launches");
+        EXPECT_EQ(out.projectileThing, DM1_PROJECTILE_THING_FIREBALL,
+                  "lord_c25_c26_projectile: BUG0_13 hardened fallback is fireball");
+        EXPECT_EQ(out.useSpellSoundFallback, 1,
+                  "lord_c25_c26_projectile: spell sound fallback stays active");
+        EXPECT_EQ(out.direction, 2,
+                  "lord_c25_c26_projectile: direction is primary direction to party");
+        EXPECT_EQ(out.attack, 33,
+                  "lord_c25_c26_projectile: attack uses creature dexterity");
+    }
+}
+
+/* =========================================================
+ *  Test 11d: Vexirk projectile type table is source-backed
  * ========================================================= */
 static void test_vexirk_projectile_type_table(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
@@ -397,7 +439,7 @@ static void test_vexirk_projectile_type_table(void) {
 }
 
 /* =========================================================
- *  Test 11d: Dispatch exposes projectile launch payload
+ *  Test 11e: Dispatch exposes projectile launch payload
  * ========================================================= */
 static void test_dispatch_projectile_payload(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
@@ -502,6 +544,103 @@ static void test_reaction_during_freeze(void) {
     EXPECT_EQ(ok, 1, "reaction_freeze: returns 1");
     EXPECT_EQ(result.actionKind, DM1_ACTION_NONE,
               "reaction_freeze: reaction ignored during freeze");
+}
+
+/* =========================================================
+ *  Test 15b: Negative reaction events schedule source reactions
+ * ========================================================= */
+static void test_negative_reaction_event_creation(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng = make_rng(42);
+    struct DM1BehaviorResult_Compat result;
+    int ok;
+
+    ctx.groupBehavior = DM1_BEHAVIOR_WANDER;
+    ctx.eventType = DM1_CM1_REACTION_PARTY_IS_ADJACENT;
+    ctx.ticksSinceLastMove = 0;
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "reaction_create_adjacent: dispatch returns 1");
+    EXPECT_EQ(result.actionKind, DM1_ACTION_NONE,
+              "reaction_create_adjacent: no immediate action");
+    EXPECT_EQ(result.nextEventType, DM1_EVENT_REACTION_PARTY_IS_ADJACENT,
+              "reaction_create_adjacent: schedules C31 reaction");
+    EXPECT_EQ(result.nextEventDelayTicks, 1,
+              "reaction_create_adjacent: source one-tick delay");
+
+    ctx.eventType = DM1_CM2_REACTION_HIT_BY_PROJECTILE;
+    ctx.movementTicks = 20;
+    ctx.ticksSinceLastMove = 1;
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "reaction_create_projectile: dispatch returns 1");
+    EXPECT_EQ(result.nextEventType, DM1_EVENT_REACTION_HIT_BY_PROJECTILE,
+              "reaction_create_projectile: schedules C30 reaction");
+    EXPECT_EQ(result.nextEventDelayTicks, 4,
+              "reaction_create_projectile: movement-delay formula clamps after recent move");
+
+    ctx.eventType = DM1_CM3_REACTION_DANGER_ON_SQUARE;
+    ctx.ticksSinceLastMove = 30;
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "reaction_create_danger: dispatch returns 1");
+    EXPECT_EQ(result.nextEventType, DM1_EVENT_REACTION_DANGER_ON_SQUARE,
+              "reaction_create_danger: schedules C29 reaction");
+    EXPECT_EQ(result.nextEventDelayTicks, 1,
+              "reaction_create_danger: delay is clamped to one tick");
+}
+
+/* =========================================================
+ *  Test 15c: Projectile-hit reaction with no sight turns to search
+ * ========================================================= */
+static void test_projectile_hit_reaction_sets_search_direction(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng = make_rng(1);
+    struct DM1BehaviorResult_Compat result;
+    int ok;
+
+    ctx.groupBehavior = DM1_BEHAVIOR_WANDER;
+    ctx.eventType = DM1_EVENT_REACTION_HIT_BY_PROJECTILE;
+    ctx.distanceToVisibleParty = 0;
+
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "reaction_projectile_search: dispatch returns 1");
+    EXPECT_EQ(result.actionKind, DM1_ACTION_SET_DIRECTION,
+              "reaction_projectile_search: source turns to search");
+    EXPECT_EQ(result.newDirectionForGroup, 2,
+              "reaction_projectile_search: deterministic random search direction");
+    EXPECT_EQ(result.newBehavior, DM1_BEHAVIOR_WANDER,
+              "reaction_projectile_search: behavior remains wander");
+}
+
+/* =========================================================
+ *  Test 15d: Danger reaction moves and stops attacking
+ * ========================================================= */
+static void test_danger_reaction_moves_attack_group_to_approach(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng = make_rng(2);
+    struct DM1BehaviorResult_Compat result;
+    int ok;
+
+    ctx.groupBehavior = DM1_BEHAVIOR_ATTACK;
+    ctx.eventType = DM1_EVENT_REACTION_DANGER_ON_SQUARE;
+    ag.priorMapX = 0;
+    ag.priorMapY = 0;
+
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "reaction_danger_move: dispatch returns 1");
+    EXPECT_EQ(result.actionKind, DM1_ACTION_MOVE,
+              "reaction_danger_move: source moves away from danger");
+    EXPECT_EQ(result.moveDirection, 0,
+              "reaction_danger_move: deterministic start direction");
+    EXPECT_EQ(result.moveDestMapX, ctx.currentGroupMapX,
+              "reaction_danger_move: north move keeps X");
+    EXPECT_EQ(result.moveDestMapY, ctx.currentGroupMapY - 1,
+              "reaction_danger_move: north move decrements Y");
+    EXPECT_EQ(result.newBehavior, DM1_BEHAVIOR_APPROACH,
+              "reaction_danger_move: attacking group switches to approach");
+    EXPECT_EQ(result.stopAttacking, 1,
+              "reaction_danger_move: stop-attacking flag set");
 }
 
 /* =========================================================
@@ -931,12 +1070,16 @@ int main(void) {
     test_fear_check();
     test_projectile_decision();
     test_creature_projectile_launch_params();
+    test_lord_order_grey_lord_projectile_safe_fallback();
     test_vexirk_projectile_type_table();
     test_dispatch_projectile_payload();
     test_set_group_direction();
     test_smell_direction();
     test_per_creature_attack_event();
     test_reaction_during_freeze();
+    test_negative_reaction_event_creation();
+    test_projectile_hit_reaction_sets_search_direction();
+    test_danger_reaction_moves_attack_group_to_approach();
     test_flee_direction();
     test_giggler_steal_resolver();
     test_giggler_attack_dispatch_steals();

@@ -18,6 +18,7 @@
 #include "dm1_v2_movement_command_adapter_pc34.h"
 
 #include <stdio.h>
+#include <stddef.h>
 
 static int failures = 0;
 #define CHECK(expr) do { \
@@ -148,6 +149,81 @@ static void test_backward_command_tracks_new_logical_position(void) {
     CHECK(camera.visualY == camera.logicalY);
 }
 
+static void test_move_camera_offsets_cover_cardinal_routes(void) {
+    static const struct {
+        DM1_V2_MovementCommand command;
+        int sourceCommand;
+        int runtimeCommand;
+        int targetX;
+        int targetY;
+        int offsetX0;
+        int offsetY0;
+        int offsetXHalf;
+        int offsetYHalf;
+    } cases[] = {
+        { DM1_V2_MOVEMENT_COMMAND_MOVE_FORWARD, 3, 1,   1,  0, -1,  0, -1,  0 },
+        { DM1_V2_MOVEMENT_COMMAND_MOVE_BACKWARD, 5, 2, -1,  0,  1,  0,  1,  0 },
+        { DM1_V2_MOVEMENT_COMMAND_MOVE_RIGHT, 4, 5,     0,  1,  0, -1,  0, -1 },
+        { DM1_V2_MOVEMENT_COMMAND_MOVE_LEFT, 6, 6,      0, -1,  0,  1,  0,  1 },
+    };
+    size_t i;
+
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        DM1_V2_RuntimeState rt;
+        DM1_V2_CameraController camera;
+        DM1_V2_MovementCommandResult result;
+        uint32_t tickCount;
+        uint32_t lastTickMs;
+        int lastCommand;
+        int viewportDirty;
+
+        init_running(&rt, &camera);
+        result = dm1_v2_movement_command_apply(&rt,
+                                               &camera,
+                                               cases[i].command,
+                                               1000U,
+                                               96);
+
+        CHECK(result.accepted == 1);
+        CHECK(result.sourceCommand == cases[i].sourceCommand);
+        CHECK(result.runtimeCommand == cases[i].runtimeCommand);
+        CHECK(camera.targetX == cases[i].targetX);
+        CHECK(camera.targetY == cases[i].targetY);
+        CHECK(dm1_v2_camera_is_active(&camera));
+        CHECK(dm1_v2_camera_offset_x(&camera) == cases[i].offsetX0);
+        CHECK(dm1_v2_camera_offset_y(&camera) == cases[i].offsetY0);
+
+        tickCount = rt.tickCount;
+        lastTickMs = rt.lastTickMs;
+        lastCommand = rt.lastCommand;
+        viewportDirty = rt.viewport.dirty;
+
+        dm1_v2_camera_tick(&camera, 48);
+        CHECK(dm1_v2_camera_is_active(&camera));
+        CHECK(dm1_v2_camera_offset_x(&camera) == cases[i].offsetXHalf);
+        CHECK(dm1_v2_camera_offset_y(&camera) == cases[i].offsetYHalf);
+        CHECK(camera.logicalX == cases[i].targetX);
+        CHECK(camera.logicalY == cases[i].targetY);
+        CHECK(rt.tickCount == tickCount);
+        CHECK(rt.lastTickMs == lastTickMs);
+        CHECK(rt.lastCommand == lastCommand);
+        CHECK(rt.viewport.dirty == viewportDirty);
+
+        dm1_v2_camera_tick(&camera, 48);
+        CHECK(!dm1_v2_camera_is_active(&camera));
+        CHECK(dm1_v2_camera_offset_x(&camera) == 0);
+        CHECK(dm1_v2_camera_offset_y(&camera) == 0);
+        CHECK(camera.visualX == cases[i].targetX);
+        CHECK(camera.visualY == cases[i].targetY);
+        CHECK(camera.logicalX == cases[i].targetX);
+        CHECK(camera.logicalY == cases[i].targetY);
+        CHECK(rt.tickCount == tickCount);
+        CHECK(rt.lastTickMs == lastTickMs);
+        CHECK(rt.lastCommand == lastCommand);
+        CHECK(rt.viewport.dirty == viewportDirty);
+    }
+}
+
 static void test_none_command_does_not_start_camera(void) {
     DM1_V2_RuntimeState rt;
     DM1_V2_CameraController camera;
@@ -226,6 +302,7 @@ int main(void) {
     test_forward_command_starts_move_camera();
     test_turn_left_command_starts_turn_camera();
     test_backward_command_tracks_new_logical_position();
+    test_move_camera_offsets_cover_cardinal_routes();
     test_none_command_does_not_start_camera();
     test_camera_ticks_are_presentation_only();
 
