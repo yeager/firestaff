@@ -59,6 +59,7 @@ static DM1_V2_Color pixel_for_single_square(int element,
 static void test_source_locked_dimensions_and_square_types(void) {
     CHECK(DM1_V2_VIEWPORT_W == 224);
     CHECK(DM1_V2_VIEWPORT_H == 136);
+    CHECK(DM1_V2_VIEWPORT_BYTE_W == 112);
     CHECK(DM1_V2_VIEWPORT_W / 2 == 112);
 
     /* ReDMCSB DEFS.H:922-941 M034_SQUARE_TYPE and DUNGEON.C:2199-2250. */
