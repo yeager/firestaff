@@ -9873,6 +9873,10 @@ if(BUILD_TESTING)
             NAME nexus_v2_verification_suite_probe
             COMMAND firestaff_nexus_v2_verification_suite_probe
         )
+        add_test(
+            NAME nexus_v2_verification_suite_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_nexus_v2_verification_suite_source_lock.py
+        )
     endif()
 
     # ── Nexus V2 Phase 5 Smooth Movement smoke test ──────────────
