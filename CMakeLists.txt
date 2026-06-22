@@ -14641,6 +14641,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0205_pc34_compat.c"
     )
 endif()
 
+# Greatstone/SCK mapfile parser: data-free item-description rows
+# (`type name offset size`) used as a bridge toward multi-version asset maps.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_sck_mapfile.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/firestaff_sck_mapfile.c")
+    add_executable(test_firestaff_sck_mapfile
+        tests/test_firestaff_sck_mapfile.c
+        src/shared/firestaff_sck_mapfile.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_sck_mapfile PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_sck_mapfile
+        COMMAND test_firestaff_sck_mapfile
+    )
+endif()
+
 # pass1049 — DM1 V1 G0224_aaaauc_Graphic558_CreatureCoordinateSets[3][11][5][2]:
 # 3 sets × 11 frames × 5 coords × 2 fields = 330 bytes (creature coords).
 # Source-locked against DUNVIEW.C:513/1836/5307.
