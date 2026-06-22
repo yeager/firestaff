@@ -4555,6 +4555,7 @@ if(BUILD_TESTING)
             "close_after_party_shuffle"
             "close_order_party_shuffle"
             "close_while_resurrect_pending_with_inventory_pickup"
+            "c146_sleep_wakeup_repaint_gate"
             "c159_click_rotation_combo_pc34_compat"
             "panel_redraw_after_inventory_exit_pc34_compat"
             "c160_close_while_rotation_pending_pc34_compat"
