@@ -6003,6 +6003,10 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_runtime_presentation_smoke.py --build-dir ${CMAKE_BINARY_DIR}
     )
     add_test(
+        NAME theron_v1_runtime_screenshot_readiness
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_theron_v1_runtime_screenshot_readiness.py --build-dir ${CMAKE_BINARY_DIR}
+    )
+    add_test(
         NAME dm1_v2_entry_bitmap_materialization_blocker_gate
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_entry_bitmap_materialization_blocker.py
     )

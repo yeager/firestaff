@@ -41,7 +41,7 @@ Classification:
 | **S2D (Nexus font files)** | locally verified | PARTIAL — parser exists, font rendering incomplete. **2026-06-21 SEGA SATURN SCR parser determinism probe added:** `firestaff_nexus_v1_saturn_font_determinism_probe` (commit `b2157a62`, ctest `nexus_v1_saturn_font_determinism`, 16/16 PASS) covers load/free/get_glyph + dimension inference (16x16 / 12x12 / 8xN buckets) + NULL-safety + 50-repetition determinism. Remaining: actual Saturn FONT256.S2D asset handoff + bitmap-to-framebuffer rendering. |
 | **TAI/SAL/MAP (Nexus level data)** | locally verified | PARTIAL — loaders exist; TLINK metadata and rendering sparse |
 | **BPX/BPK (Nexus compressed archives)** | locally verified | OPEN-BOUNDED |
-| **Theron's Quest Track 02 BIN/ISO** | locally verified | FIXED — JP canonical ISO, JP extras BIN, and US extras BIN launch-tested by `tier1_strict_boot_probe` (Theron rows PASS, 2026-06-21) plus `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` |
+| **Theron's Quest Track 02 BIN/ISO** | locally verified | FIXED — JP canonical ISO, JP extras BIN, and US extras BIN launch-tested by `tier1_strict_boot_probe` (Theron rows PASS, 2026-06-21) plus `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank`. 2026-06-22: `theron_v1_runtime_screenshot_readiness` records real Firestaff runtime-probe/BMP hash receipts when those Track 02 paths are present, without promoting public screenshots or claiming full dungeon-bank parity. |
 
 ### A2. Mapfile system
 
