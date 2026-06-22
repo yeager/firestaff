@@ -391,6 +391,45 @@ int dm2_v1_projectile_active_count(void) {
     return n;
 }
 
+/* ── Phase 5 expansion: read-only slot snapshot ──────────────────
+ * Returns a copy of the live slot's identity + world-position fields.
+ * Used by the projectile-vs-creature collision module to read slot
+ * data without coupling to the dispatch module's internals.
+ *
+ * Source: same F0810 payload contract; the snapshot is purely a
+ * read-side helper, no behavioral change to dispatch. */
+int dm2_v1_projectile_get_slot(int slot_index,
+                                DM2_V1_ProjectileSlotSnapshot *out)
+{
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (slot_index < 0 || slot_index >= PROJECTILE_LIST_CAPACITY) return 0;
+    ensure_init();
+    const struct ProjectileInstance_Compat *p = &s_projectile_list.entries[slot_index];
+    if (p->slotIndex < 0) return 0;
+    out->slotIndex          = p->slotIndex;
+    out->projectileCategory = p->projectileCategory;
+    out->projectileSubtype  = p->projectileSubtype;
+    out->ownerKind          = p->ownerKind;
+    out->ownerIndex         = p->ownerIndex;
+    out->mapIndex           = p->mapIndex;
+    out->mapX               = p->mapX;
+    out->mapY               = p->mapY;
+    out->cell               = p->cell;
+    out->direction          = p->direction;
+    out->attack             = p->attack;
+    return 1;
+}
+
+/* ── Phase 5 expansion: despawn helper ────────────────────────────
+ * Routes through F0813_PROJECTILE_Despawn_Compat against the
+ * module-owned s_projectile_list.  Returns 1 if the slot was freed,
+ * 0 if the slot was already empty or invalid. */
+int dm2_v1_projectile_despawn(int slot_index) {
+    ensure_init();
+    return F0813_PROJECTILE_Despawn_Compat(&s_projectile_list, slot_index);
+}
+
 const char *dm2_v1_projectile_source_evidence(void) {
     return
         "DM2 V1 Projectile Routing — Phase 5 source-lock\n"
@@ -407,5 +446,7 @@ const char *dm2_v1_projectile_source_evidence(void) {
         "DM2 difference: 12 AI_ATTACK_FLAGS__* bits vs DM1's 8\n"
         "DM2 new: bombs (CCM 0x0d SHOOT_ITEM with AI_ATTACK_FLAGS__PUSH_BACK + area-effect)\n"
         "DM2 reuse: F0810_PROJECTILE_Create_Compat from DM1's PROJECT.C / PROJEXPL.C engine\n"
-        "V1 invariant: V1 projectile list state is preserved; DM2 projectiles are in their own list\n";
+        "V1 invariant: V1 projectile list state is preserved; DM2 projectiles are in their own list\n"
+        "Phase 5 read-side: dm2_v1_projectile_get_slot() exposes a non-aliasing snapshot\n"
+        "  for the collision resolver (src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c)\n";
 }

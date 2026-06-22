@@ -253,6 +253,28 @@ const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id) {
     return &g_creature_pool[instance_id];
 }
 
+/* ── Test-only API ────────────────────────────────────────────────
+ * Compiled in only when FIRESTAFF_DM2_CREATURE_TESTING=1.  Lets the
+ * collision gate inject a synthetic AI definition (with REFLECTOR /
+ * ABSORBS_MISSILE / NONMATERIAL / TURNS_MISSILE bits set) without
+ * depending on GDAT-loaded real AI table values.
+ *
+ * The override is a full-struct copy; the slot becomes a clone of the
+ * caller's spec.  clear_ai_overrides() restores the zero-init default
+ * so subsequent tests see a clean table. */
+#ifdef FIRESTAFF_DM2_CREATURE_TESTING
+void dm2_v1_creature_test_set_ai_spec(int ai_index,
+                                       const DM2_AIDefinition *spec) {
+    if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return;
+    if (!spec) return;
+    g_ai_table[ai_index] = *spec;
+}
+
+void dm2_v1_creature_test_clear_ai_overrides(void) {
+    memset(g_ai_table, 0, sizeof(g_ai_table));
+}
+#endif /* FIRESTAFF_DM2_CREATURE_TESTING */
+
 /* dm2_v1_creature_death_check — death → drop + spatial sound.
  * Source: SKULLWIN/c_creature.cpp, SKULLWIN/c_sound.cpp, SKWin.GDAT2.InternalCodes.txt */
 void dm2_v1_creature_death_check(int instance_id) {

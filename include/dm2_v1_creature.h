@@ -232,4 +232,20 @@ int dm2_v1_creature_instance_ai(int instance_id);
  * dispatch (Phase 5 wire-up) to read AI attack flags + position. */
 const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id);
 
+/* ── Test-only API (compiled in only when FIRESTAFF_DM2_CREATURE_TESTING=1) ──
+ * Used by tests/probes to inject a synthetic AIDefinition entry so the
+ * collision gate can exercise missile-redirect branches (NONMATERIAL /
+ * ABSORBS_MISSILE / REFLECTOR / TURNS_MISSILE) without depending on the
+ * real GDAT-loaded AI table (which is currently a zero-init stub).
+ *
+ * Always reset after use via dm2_v1_creature_test_clear_ai_overrides().
+ *
+ * Source: synthetic test scaffold only; no behavioral change in
+ * production builds (the macro is undefined by default). */
+#ifdef FIRESTAFF_DM2_CREATURE_TESTING
+void dm2_v1_creature_test_set_ai_spec(int ai_index,
+                                       const DM2_AIDefinition *spec);
+void dm2_v1_creature_test_clear_ai_overrides(void);
+#endif /* FIRESTAFF_DM2_CREATURE_TESTING */
+
 #endif /* FIRESTAFF_DM2_V1_CREATURE_H */
