@@ -14658,6 +14658,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_sck_mapfile.c"
     )
 endif()
 
+# M12 custom dungeon real-path scanner: disk-backed data/custom/<name>/DUNGEON.DAT
+# discovery with mixed-case community filenames and validation statuses.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_custom_dungeon_m12_real_path.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/custom_dungeon_m12.c")
+    add_executable(test_custom_dungeon_m12_real_path
+        tests/test_custom_dungeon_m12_real_path.c
+        src/shared/custom_dungeon_m12.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_custom_dungeon_m12_real_path PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME custom_dungeon_m12_real_path
+        COMMAND test_custom_dungeon_m12_real_path
+    )
+endif()
+
 # pass1049 — DM1 V1 G0224_aaaauc_Graphic558_CreatureCoordinateSets[3][11][5][2]:
 # 3 sets × 11 frames × 5 coords × 2 fields = 330 bytes (creature coords).
 # Source-locked against DUNVIEW.C:513/1836/5307.

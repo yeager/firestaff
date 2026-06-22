@@ -61,7 +61,7 @@ Classification:
 | Savegame format (DM2) | skproject source | PARTIAL |
 | Savegame format (Nexus .sav) | locally verified | PARTIAL |
 | Savegame format (Theron .SRM) | locally verified | PARTIAL |
-| Custom dungeon import (DM1 dungeon.dat, CSBWin dmsave/csbgame) | dmweb Custom Dungeons page | OPEN-BOUNDED — synthetic loader exists, real-asset path missing |
+| Custom dungeon import (DM1 dungeon.dat, CSBWin dmsave/csbgame) | dmweb Custom Dungeons page | PARTIAL — 2026-06-22: M12 now has a disk-backed `custom_dungeon_m12_real_path` CTest for `data/custom/<name>/DUNGEON.DAT` discovery, mixed-case community filenames, header validation, sorted listing, invalid-entry rejection, and valid-entry selection. Remaining: CSBWin `dmsave/csbgame` import/resource semantics stay in the separate CSBWin custom resource path row. |
 
 ### A4. i18n / l10n (post v2.9.1)
 

@@ -12,6 +12,7 @@
 #include "menu_startup_m12.h"  /* M12_MenuInput */
 #include "memory_dungeon_dat_pc34_compat.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +25,40 @@
 
 /* Minimum plausible DUNGEON.DAT: header (44) + at least 1 map desc (16). */
 #define MIN_DUNGEON_DAT_SIZE  60
+
+static int name_ieq(const char* a, const char* b) {
+    if (!a || !b) return 0;
+    while (*a && *b) {
+        if (tolower((unsigned char)*a) != tolower((unsigned char)*b)) return 0;
+        ++a;
+        ++b;
+    }
+    return *a == '\0' && *b == '\0';
+}
+
+static int find_case_insensitive_file(const char* dirPath,
+                                      const char* wanted,
+                                      char* outPath,
+                                      size_t outPathBytes,
+                                      struct stat* outStat) {
+    DIR* dir;
+    struct dirent* ent;
+    dir = opendir(dirPath);
+    if (!dir) return 0;
+    while ((ent = readdir(dir)) != NULL) {
+        char candidate[CUSTOM_DUNGEON_PATH_MAX];
+        struct stat st;
+        if (!name_ieq(ent->d_name, wanted)) continue;
+        snprintf(candidate, sizeof(candidate), "%s/%s", dirPath, ent->d_name);
+        if (stat(candidate, &st) != 0 || !S_ISREG(st.st_mode)) continue;
+        snprintf(outPath, outPathBytes, "%s", candidate);
+        if (outStat) *outStat = st;
+        closedir(dir);
+        return 1;
+    }
+    closedir(dir);
+    return 0;
+}
 
 /**
  * Validate a DUNGEON.DAT file by reading its 44-byte header.
@@ -112,20 +147,13 @@ static int try_add_entry(M12_CustomDungeonState* state,
     /* Build paths */
     snprintf(entry->dirPath, CUSTOM_DUNGEON_PATH_MAX, "%s/%s",
              customDir, subdirName);
-    snprintf(entry->path, CUSTOM_DUNGEON_PATH_MAX, "%s/%s/DUNGEON.DAT",
-             customDir, subdirName);
 
-    /* Check DUNGEON.DAT exists and get size */
-    if (stat(entry->path, &st) != 0) {
-        /* Try lowercase variant */
-        snprintf(entry->path, CUSTOM_DUNGEON_PATH_MAX, "%s/%s/dungeon.dat",
-                 customDir, subdirName);
-        if (stat(entry->path, &st) != 0) {
-            return 0;  /* No DUNGEON.DAT found */
-        }
+    /* Check DUNGEON.DAT exists and get size, accepting community archives
+     * that preserve mixed-case DOS/host filenames. */
+    if (!find_case_insensitive_file(entry->dirPath, "DUNGEON.DAT",
+                                    entry->path, sizeof(entry->path), &st)) {
+        return 0;
     }
-
-    if (!S_ISREG(st.st_mode)) return 0;
 
     /* Populate entry */
     snprintf(entry->name, CUSTOM_DUNGEON_NAME_MAX, "%s", subdirName);
