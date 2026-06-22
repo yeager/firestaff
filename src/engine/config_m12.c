@@ -311,6 +311,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->ambientVolume = 40;
     config->uiScale = 100;
     config->quickResumeEnabled = 1;
+    config->sessionTimerIndex = 0;
     config->customDungeonPath[0] = '\0';
     config->screenshotPath[0] = '\0';
     config->streamerMode = 0;
@@ -777,6 +778,13 @@ static void m12_parse_line(M12_Config* config, char* line) {
         config->quickResumeEnabled = m12_parse_int(value, config->quickResumeEnabled) ? 1 : 0;
         return;
     }
+    if (m12_string_equals(key, "session_timer_index")) {
+        int val = m12_parse_int(value, config->sessionTimerIndex);
+        if (val < 0) val = 0;
+        if (val > 4) val = 4;
+        config->sessionTimerIndex = val;
+        return;
+    }
     if (m12_string_equals(key, "custom_dungeon_path") &&
         m12_read_quoted_value(quoted, sizeof(quoted), value)) {
         m12_copy_string(config->customDungeonPath, sizeof(config->customDungeonPath), quoted);
@@ -928,6 +936,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "ambient_volume = %d\n", config->ambientVolume);
     fprintf(fp, "ui_scale = %d\n", config->uiScale);
     fprintf(fp, "quick_resume_enabled = %d\n", config->quickResumeEnabled ? 1 : 0);
+    fprintf(fp, "session_timer_index = %d\n", config->sessionTimerIndex);
     fputs("custom_dungeon_path = ", fp); m12_escape_and_write(fp, config->customDungeonPath); fputc('\n', fp);
     fputs("screenshot_path = ", fp); m12_escape_and_write(fp, config->screenshotPath); fputc('\n', fp);
     fprintf(fp, "streamer_mode = %d\n", config->streamerMode ? 1 : 0);
@@ -1183,6 +1192,7 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
     fprintf(fp, "  \"ambient_volume\": %d,\n", config->ambientVolume);
     fprintf(fp, "  \"ui_scale\": %d,\n", config->uiScale);
     fprintf(fp, "  \"quick_resume_enabled\": %d,\n", config->quickResumeEnabled ? 1 : 0);
+    fprintf(fp, "  \"session_timer_index\": %d,\n", config->sessionTimerIndex);
     fprintf(fp, "  \"streamer_mode\": %d,\n", config->streamerMode ? 1 : 0);
     fprintf(fp, "  \"cloud_sync_enabled\": %d,\n", config->cloudSyncEnabled ? 1 : 0);
     fprintf(fp, "  \"cloud_sync_policy\": %d,\n", config->cloudSyncPolicy);
@@ -1482,6 +1492,7 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         SET_INT("ambient_volume", ambientVolume)
         SET_INT("ui_scale", uiScale)
         SET_BOOL("quick_resume_enabled", quickResumeEnabled)
+        SET_INT("session_timer_index", sessionTimerIndex)
         SET_BOOL("streamer_mode", streamerMode)
         SET_BOOL("cloud_sync_enabled", cloudSyncEnabled)
         SET_INT("cloud_sync_policy", cloudSyncPolicy)

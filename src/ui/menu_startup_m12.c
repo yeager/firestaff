@@ -85,6 +85,7 @@ enum {
     M12_SETTINGS_ROW_THEME,
     M12_SETTINGS_ROW_BACKGROUND,
     M12_SETTINGS_ROW_QUICK_RESUME,
+    M12_SETTINGS_ROW_SESSION_TIMER,
     M12_SETTINGS_ROW_MINIMAP,
     M12_SETTINGS_ROW_AUTOMAP,
     M12_SETTINGS_ROW_COMBAT_LOG,
@@ -226,6 +227,7 @@ static const M12_ExtSettingsRow *m12_ext_settings_get_in_tab(int tab, int index)
 
 static int m12_cycle_index(int value, int delta, int count);
 static int m12_clamp_index(int value, int count);
+static const char* m12_session_timer_label_for_index(int index);
 static int m12_game_slot_from_id(const char* gameId);
 static int m12_game_supported(const char* gameId);
 static int m12_game_version_count(const M12_StartupMenuState* state, int gameIndex);
@@ -845,6 +847,52 @@ static int m12_clamp_index(int value, int count) {
         return count - 1;
     }
     return value;
+}
+
+int M12_SessionTimer_MinutesForIndex(int index) {
+    static const int minutes[] = {0, 15, 30, 60, 120};
+    if (index < 0 || index >= (int)(sizeof(minutes) / sizeof(minutes[0]))) {
+        return 0;
+    }
+    return minutes[index];
+}
+
+int M12_SessionTimer_IndexForMinutes(int minutes) {
+    static const int values[] = {0, 15, 30, 60, 120};
+    int i;
+    for (i = 0; i < (int)(sizeof(values) / sizeof(values[0])); ++i) {
+        if (minutes == values[i]) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+static const char* m12_session_timer_label_for_index(int index) {
+    static const char* const labels[] = {"Off", "15 min", "30 min", "60 min", "120 min"};
+    index = m12_clamp_index(index, (int)(sizeof(labels) / sizeof(labels[0])));
+    return labels[index];
+}
+
+int M12_StartupMenu_SessionTimerLimitMinutes(const M12_StartupMenuState* state) {
+    return M12_SessionTimer_MinutesForIndex(state ? state->settings.sessionTimerIndex : 0);
+}
+
+int M12_StartupMenu_SessionTimerRemainingSeconds(const M12_StartupMenuState* state,
+                                                 int elapsedSeconds) {
+    int limitMinutes = M12_StartupMenu_SessionTimerLimitMinutes(state);
+    int limitSeconds;
+    if (limitMinutes <= 0) {
+        return -1;
+    }
+    if (elapsedSeconds < 0) {
+        elapsedSeconds = 0;
+    }
+    limitSeconds = limitMinutes * 60;
+    if (elapsedSeconds >= limitSeconds) {
+        return 0;
+    }
+    return limitSeconds - elapsedSeconds;
 }
 
 static void m12_copy_string(char* out, size_t outSize, const char* value) {
@@ -1536,6 +1584,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.themeIndex = state->settings.themeIndex;
     config.bgAnimationPreset = state->settings.bgAnimationPreset;
     config.quickResumeEnabled = state->settings.quickResumeEnabled;
+    config.sessionTimerIndex = state->settings.sessionTimerIndex;
     config.minimapEnabled = state->settings.minimapEnabled;
     config.minimapSize = state->settings.minimapSize;
     config.minimapCorner = state->settings.minimapCorner;
@@ -1660,6 +1709,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dat
     state->settings.bgAnimationPreset = m12_clamp_index(config.bgAnimationPreset,
                                                         (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
     state->settings.quickResumeEnabled = config.quickResumeEnabled ? 1 : 0;
+    state->settings.sessionTimerIndex = m12_clamp_index(config.sessionTimerIndex, 5);
     state->settings.minimapEnabled = config.minimapEnabled ? 1 : 0;
     state->settings.minimapSize = config.minimapSize;
     if (state->settings.minimapSize < 64) state->settings.minimapSize = 64;
@@ -2106,6 +2156,10 @@ static const char* m12_settings_value_quick_resume(const M12_StartupMenuState* s
     return m12_tr(state, g_toggleModes[state && state->settings.quickResumeEnabled ? 1 : 0]);
 }
 
+static const char* m12_settings_value_session_timer(const M12_StartupMenuState* state) {
+    return m12_tr(state, m12_session_timer_label_for_index(state ? state->settings.sessionTimerIndex : 0));
+}
+
 static const char* m12_settings_value_minimap(const M12_StartupMenuState* state) {
     return m12_tr(state, g_toggleModes[state && state->settings.minimapEnabled ? 1 : 0]);
 }
@@ -2196,6 +2250,7 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_THEME: return m12_tr(state, "THEME");
         case M12_SETTINGS_ROW_BACKGROUND: return m12_tr(state, "BACKGROUND");
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_tr(state, "QUICK RESUME");
+        case M12_SETTINGS_ROW_SESSION_TIMER: return m12_tr(state, "SESSION TIMER");
         case M12_SETTINGS_ROW_MINIMAP: return m12_tr(state, "MINIMAP");
         case M12_SETTINGS_ROW_AUTOMAP: return m12_tr(state, "AUTOMAP");
         case M12_SETTINGS_ROW_COMBAT_LOG: return m12_tr(state, "COMBAT LOG");
@@ -2246,6 +2301,7 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_THEME: return m12_settings_value_theme(state);
         case M12_SETTINGS_ROW_BACKGROUND: return m12_settings_value_background(state);
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_settings_value_quick_resume(state);
+        case M12_SETTINGS_ROW_SESSION_TIMER: return m12_settings_value_session_timer(state);
         case M12_SETTINGS_ROW_MINIMAP: return m12_settings_value_minimap(state);
         case M12_SETTINGS_ROW_AUTOMAP: return m12_settings_value_automap(state);
         case M12_SETTINGS_ROW_COMBAT_LOG: return m12_settings_value_combat_log(state);
@@ -2440,6 +2496,7 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
     state->settings.bgAnimationPreset = m12_clamp_index(state->settings.bgAnimationPreset,
                                                         (int)(sizeof(g_bgPresetLabels) / sizeof(g_bgPresetLabels[0])));
     state->settings.quickResumeEnabled = state->settings.quickResumeEnabled ? 1 : 0;
+    state->settings.sessionTimerIndex = m12_clamp_index(state->settings.sessionTimerIndex, 5);
     state->settings.minimapEnabled = state->settings.minimapEnabled ? 1 : 0;
     state->settings.autoMapEnabled = state->settings.autoMapEnabled ? 1 : 0;
     state->settings.combatLogEnabled = state->settings.combatLogEnabled ? 1 : 0;
@@ -2718,6 +2775,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->quickResumeAvailable = 0;
                 state->quickResumeLaunchRequested = 0;
             }
+            break;
+        case M12_SETTINGS_ROW_SESSION_TIMER:
+            state->settings.sessionTimerIndex = m12_cycle_index(
+                state->settings.sessionTimerIndex,
+                delta,
+                5);
             break;
         case M12_SETTINGS_ROW_MINIMAP:
             state->settings.minimapEnabled = m12_cycle_index(

@@ -1328,7 +1328,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     int panelX = 96;
     int panelY = 260;
     int panelW = c->w - 2 * panelX;
-    int panelH = 540;
+    int panelH = 640;
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
@@ -1336,9 +1336,11 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     static const char* grf[]   = {"ORIGINAL", "ORIGINAL + FILTERS", "ORIGINAL 10X UPSCALE", "MODERN GRAPHICS"};
     static const char* win[]   = {"WINDOWED", "MAXIMIZED", "FULLSCREEN"};
     char dataDir[96];
+    char sessionTimer[24];
     int li = state->settings.languageIndex;
     int gi = state->settings.graphicsIndex;
     int wi = state->settings.windowModeIndex;
+    int sessionMinutes = M12_StartupMenu_SessionTimerLimitMinutes(state);
     if (li < 0) li = 0;
     if (li > 5) li = 5;
     if (gi < 0) gi = 0;
@@ -1346,6 +1348,11 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     if (wi < 0) wi = 0;
     if (wi > 2) wi = 2;
     format_settings_path_value(state, dataDir, sizeof(dataDir));
+    if (sessionMinutes <= 0) {
+        snprintf(sessionTimer, sizeof(sessionTimer), "%s", "OFF");
+    } else {
+        snprintf(sessionTimer, sizeof(sessionTimer), "%d MIN", sessionMinutes);
+    }
 
     int rowX = panelX + 36;
     int rowW = panelW - 72;
@@ -1361,10 +1368,14 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settingsSelectedIndex == 14);
     draw_setting_row(c, rowX, rowY + 280, rowW, "DATA DIRECTORY", dataDir,
                      state->settingsSelectedIndex == 15);
-    draw_setting_row(c, rowX, rowY + 350, rowW, "EXPORT SETTINGS", "SAVE...",
-                     state->settingsSelectedIndex == 41);
-    draw_setting_row(c, rowX, rowY + 420, rowW, "IMPORT SETTINGS", "LOAD...",
+    draw_setting_row(c, rowX, rowY + 350, rowW, "ORIGINAL DATA", settings_data_status_label(state),
+                     state->settingsSelectedIndex == 16);
+    draw_setting_row(c, rowX, rowY + 420, rowW, "SESSION TIMER", sessionTimer,
+                     state->settingsSelectedIndex == 30);
+    draw_setting_row(c, rowX, rowY + 490, rowW, "EXPORT SETTINGS", "SAVE...",
                      state->settingsSelectedIndex == 42);
+    draw_setting_row(c, rowX, rowY + 560, rowW, "IMPORT SETTINGS", "LOAD...",
+                     state->settingsSelectedIndex == 43);
 }
 
 typedef struct {

@@ -143,6 +143,7 @@ typedef struct {
     int ambientVolume;
     int uiScale;
     int streamerMode;
+    int sessionTimerIndex;
     int windowWidth;
     int windowHeight;
     /* ── Previously missing persisted fields ── */
@@ -408,6 +409,11 @@ void M12_StartupMenu_Init(M12_StartupMenuState* state);
 void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
                                      const char* dataDir,
                                      const char* gameId);
+int M12_SessionTimer_MinutesForIndex(int index);
+int M12_SessionTimer_IndexForMinutes(int minutes);
+int M12_StartupMenu_SessionTimerLimitMinutes(const M12_StartupMenuState* state);
+int M12_StartupMenu_SessionTimerRemainingSeconds(const M12_StartupMenuState* state,
+                                                 int elapsedSeconds);
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                  M12_MenuInput input);
 void M12_StartupMenu_Draw(const M12_StartupMenuState* state,

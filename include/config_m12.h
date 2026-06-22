@@ -141,6 +141,11 @@ typedef struct {
     /* Quick resume gating. */
     int quickResumeEnabled;              /* 0 = off, 1 = on; default 1 */
 
+    /* Launcher-owned session reminder timer. 0=off, 1=15m, 2=30m,
+     * 3=60m, 4=120m. The launcher stores the preference; runtime
+     * enforcement is deliberately out of scope for this setting. */
+    int sessionTimerIndex;
+
     /* Custom dungeon directory (community dungeons). */
     char customDungeonPath[M12_CONFIG_DATA_DIR_CAPACITY];
 
