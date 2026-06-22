@@ -330,6 +330,67 @@ int dm2_door_advance_close(int current_state) {
     return current_state + 1;
 }
 
+/* ── Door/button toggle step ──────────────────────────────────────── */
+
+/*
+ * dm2_door_apply_toggle_step — apply one toggle button tick to a door.
+ *
+ * Source-locked to ReDMCSB TIMELINE.C:803-806 (door-toggle early-out +
+ * single-tick step rule) and TIMELINE.C:750 (DESTROYED is sticky).
+ *
+ * Step 1 — DESTROYED is sticky in both directions:
+ *     if (current_state == C5_DOOR_STATE_DESTROYED) → return C5
+ *   Source: ReDMCSB TIMELINE.C:750:
+ *     "if ((L0596_i_DoorState = M036_DOOR_STATE(*L0597_puc_Square)) == C5_DOOR_STATE_DESTROYED)
+ *        return;"
+ *
+ * Step 2 — Already-at-target early-out:
+ *     if ((direction==OPEN  && state==C0_DOOR_STATE_OPEN))     → return C0
+ *     if ((direction==CLOSE && state==C4_DOOR_STATE_CLOSED))   → return C4
+ *   Source: ReDMCSB TIMELINE.C:803-805:
+ *     "if (((L0595_i_Effect == C00_EFFECT_SET)    && (L0596_i_DoorState == C0_DOOR_STATE_OPEN)) ||
+ *         ((L0595_i_Effect == C01_EFFECT_CLEAR)  && (L0596_i_DoorState == C4_DOOR_STATE_CLOSED))) {
+ *        goto T0241020_Return;
+ *     }"
+ *
+ * Step 3 — Single-tick ±1 step toward target direction:
+ *     direction=OPEN  → state -= 1   (C00_EFFECT_SET  → -1)
+ *     direction=CLOSE → state += 1   (C01_EFFECT_CLEAR → +1)
+ *   Source: ReDMCSB TIMELINE.C:806:
+ *     "L0596_i_DoorState += (L0595_i_Effect == C00_EFFECT_SET) ? -1 : 1;"
+ *
+ * Direction convention (matches ReDMCSB EFFECT_* values):
+ *   DM2_DOOR_TOGGLE_DIR_OPEN  (0)  ↔  C00_EFFECT_SET
+ *   DM2_DOOR_TOGGLE_DIR_CLOSE (1)  ↔  C01_EFFECT_CLEAR
+ *
+ * Unknown current_state values are returned unchanged so callers can
+ * detect misconfiguration; unknown direction values default to OPEN.
+ */
+int dm2_door_apply_toggle_step(int current_state, int direction)
+{
+    /* Step 1: DESTROYED is sticky in both directions. */
+    if (current_state == DM2_DOOR_STATE_DESTROYED) {
+        return DM2_DOOR_STATE_DESTROYED;
+    }
+
+    /* Step 2: Already-at-target early-out (TIMELINE.C:803-805). */
+    if (direction == DM2_DOOR_TOGGLE_DIR_OPEN &&
+        current_state == DM2_DOOR_STATE_OPEN) {
+        return DM2_DOOR_STATE_OPEN;
+    }
+    if (direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
+        current_state == DM2_DOOR_STATE_CLOSED) {
+        return DM2_DOOR_STATE_CLOSED;
+    }
+
+    /* Step 3: Single-tick ±1 step toward target direction. */
+    if (direction == DM2_DOOR_TOGGLE_DIR_OPEN) {
+        return dm2_door_advance_open(current_state);
+    }
+    /* Default: close direction (also covers any unknown direction value). */
+    return dm2_door_advance_close(current_state);
+}
+
 /* ── Door Type Parsing ─────────────────────────────────────────────── */
 
 /*

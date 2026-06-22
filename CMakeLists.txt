@@ -2724,6 +2724,30 @@ if(BUILD_TESTING)
         target_compile_options(firestaff_dm2_v1_pressure_plate_probe PRIVATE -Wall -Wextra -O2)
     endif()
 
+    # ── DM2 V1 Phase 4: Door/button toggle boundary regression ──
+    # Data-free regression for the open/close/toggle boundary.  Self-
+    # contained: only links door_mechanics + pressure_plate source files
+    # (avoids unrelated work-in-progress CSB files).  Source-locks:
+    #   ReDMCSB TIMELINE.C:803-806 (already-at-target early-out + ±1 step)
+    #   ReDMCSB TIMELINE.C:750       (DESTROYED is sticky)
+    #   ReDMCSB DEFS.H:1039-1046     (door state C0..C5 values)
+    add_executable(test_dm2_v1_door_button_toggle_pc34_compat
+        tests/test_dm2_v1_door_button_toggle_pc34_compat.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_pressure_plate.c
+    )
+    target_include_directories(test_dm2_v1_door_button_toggle_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    # Self-contained: doesn't link firestaff_m10 (avoid unrelated work-in-progress CSB files).
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_door_button_toggle_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_door_button_toggle_pc34_compat
+        COMMAND test_dm2_v1_door_button_toggle_pc34_compat
+    )
+
     # ── DM2 V1 Phase 4: Trigger system mechanics parity ──
     add_executable(test_dm2_v1_trigger_pc34_compat
         tests/test_dm2_v1_trigger_pc34_compat.c
