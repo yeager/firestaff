@@ -446,8 +446,15 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     probe_record(&tally,
                  "INV_M12_07",
+                 state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                     state.gameOptSelectedRow == M12_GAME_OPT_ROW_COUNT &&
+                     state.shouldExit == 0,
+                 "escape from a game-options popup restores the game-options focus row");
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    probe_record(&tally,
+                 "INV_M12_07B",
                  state.view == M12_MENU_VIEW_MAIN && state.shouldExit == 0,
-                 "escape returns from message view to main menu");
+                 "second escape from restored game options returns to the main menu");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
@@ -673,6 +680,12 @@ int main(void) {
                      file_contains(saveManifestPath, "\"runtime_save_bytes_included\": 0") &&
                      file_contains(saveManifestPath, "\"last_save_path\": \"/tmp/firestaff-dm1-quicksave.sav\""),
                  "settings export row writes a launcher-owned save manifest without embedding save bytes");
+    M12_StartupMenu_HandleInput(&reloaded, M12_MENU_INPUT_BACK);
+    probe_record(&tally,
+                 "INV_M12_11E2",
+                 reloaded.view == M12_MENU_VIEW_SETTINGS &&
+                     reloaded.settingsSelectedIndex == 42,
+                 "dismissing save export popup restores the same settings row");
 
     make_file_with_text(saveManifestPath,
                         "{\n"
@@ -693,6 +706,12 @@ int main(void) {
                      reloaded.view == M12_MENU_VIEW_MESSAGE &&
                          strcmp(reloaded.messageLine1, "SAVE MANIFEST IMPORTED") == 0,
                      "settings import row accepts a valid save manifest");
+        M12_StartupMenu_HandleInput(&reloaded, M12_MENU_INPUT_BACK);
+        probe_record(&tally,
+                     "INV_M12_11F2",
+                     reloaded.view == M12_MENU_VIEW_SETTINGS &&
+                         reloaded.settingsSelectedIndex == 43,
+                     "dismissing save import popup restores the same settings row");
         probe_record(&tally,
                      "INV_M12_11G",
                      importedConfig.quickResumeEnabled == 0,
@@ -1052,8 +1071,9 @@ int main(void) {
         probe_record(&tally,
                      "INV_M12_26B",
                      modeState.launchRequested == 0 &&
-                         modeState.view == M12_MENU_VIEW_MAIN,
-                     "space/action dismisses message view safely");
+                         modeState.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                         modeState.gameOptSelectedRow == M12_GAME_OPT_ROW_COUNT,
+                     "space/action dismisses launch popup back to the launch row");
 
         M12_StartupMenu_InitWithDataDir(&modeState, dataDir, NULL);
         force_dm1_version_ready(&modeState, 0U);
@@ -1104,6 +1124,7 @@ int main(void) {
                          intent.valid == 1 &&
                          strcmp(intent.gameId, "csb") == 0 &&
                          strcmp(modeState.messageLine1, "READY TO LAUNCH") == 0;
+        M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_BACK);
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_BACK);
         modeState.selectedIndex = 2;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
