@@ -6976,6 +6976,26 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_food_water_status_box_pc34_compat
     )
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_food_water_warning_tick_pc34_compat.c"
+            AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_food_water_warning_tick_pc34_compat.c")
+        # DM1 V1 food/water threshold warning on a single game tick:
+        # CHAMPION.C F0331:2360..2415 per-tick decay, PANEL.C F0344:1519..1525
+        # warning colour thresholds, CHAMDRAW.C F0292:1060..1062 panel sync
+        # mask.  Contract-only slice; does not load GRAPHICS.DAT or DUNGEON.DAT.
+        add_executable(test_dm1_v1_champion_panel_food_water_warning_tick_pc34_compat
+            tests/test_dm1_v1_champion_panel_food_water_warning_tick_pc34_compat.c
+            src/dm1/dm1_v1_champion_panel_food_water_warning_tick_pc34_compat.c
+        )
+        target_link_libraries(test_dm1_v1_champion_panel_food_water_warning_tick_pc34_compat PRIVATE firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(test_dm1_v1_champion_panel_food_water_warning_tick_pc34_compat PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME dm1_v1_champion_panel_food_water_warning_tick_pc34_compat
+            COMMAND test_dm1_v1_champion_panel_food_water_warning_tick_pc34_compat
+        )
+    endif()
+
     add_executable(test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat
         tests/test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat.c
