@@ -4584,6 +4584,33 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_action_hand_owner_change_pc34_compat
     )
 
+    # chest nested-container weight gate: when an open outer chest
+    # (G0426 live, G0425[0..7] populated) contains an inner CONTAINER
+    # at one of its visible slots, taking or dropping ONE non-container
+    # item from a different outer slot must (a) leave the inner
+    # CONTAINER's own Slot chain byte-stable, (b) preserve the inner
+    # CONTAINER's stored weight value (50 + inner Slot sum per F0140)
+    # at the outer visible slot, (c) shift the outer chest's visible
+    # contents weight by exactly the weight of the taken/dropped item,
+    # (d) update leader-hand Load through F0297/F0298 by the same
+    # weight, and (e) round-trip cleanly through F0334 close + F0333
+    # reopen. Source-locked against CHEST.C F0333:53-76 + F0334:113-132
+    # + CHAMPION.C F0297/F0298:243-298 + F0300/F0301:511-614 +
+    # F0302:662-714 + DUNGEON.C F0140:1082-1133 + F0159:1664-1681 +
+    # F0163:1769-1838 + DEFS.H CONTAINER struct lines 1485-1499.
+    add_executable(test_dm1_v1_chest_nested_container_weight_gate_pc34_compat
+        tests/test_dm1_v1_chest_nested_container_weight_gate_pc34_compat.c
+        src/dm1/dm1_v1_chest_nested_container_weight_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_nested_container_weight_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_nested_container_weight_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_nested_container_weight_gate_pc34_compat
+        COMMAND test_dm1_v1_chest_nested_container_weight_gate_pc34_compat
+    )
+
     # pass803 — chest auto-close on leader death: F0319 (kill) clears
     # CurrentHealth + G0333 (mouth) + G0331 (eye), dispatches F0355
     # with C04_CHAMPION_CLOSE_INVENTORY which calls F0334 to clear
