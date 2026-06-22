@@ -6631,6 +6631,18 @@ if(BUILD_TESTING)
         NAME dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat
         COMMAND test_dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat
     )
+    add_executable(test_dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat
+        tests/test_dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_d2l_d2r_door_frame_top_edge_source_lock
+        COMMAND test_dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat
+    )
     add_executable(test_dm1_v1_viewport_d1c_center_field_pc34_compat
         tests/test_dm1_v1_viewport_d1c_center_field_pc34_compat.c
         src/dm1/dm1_v1_viewport_d1c_center_field_pc34_compat.c
