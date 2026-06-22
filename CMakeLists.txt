@@ -10676,6 +10676,34 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
 endif()
 
+# ── Theron V1 Phase 7 — Save Progress Round-Trip Test ─────────────
+# Single between-dungeon checkpoint scenario: real Theron_V1_Party
+# packed via theron_v1_party_pack, written to a slot via
+# theron_v1_save_to_slot, read back via theron_v1_save_load_from_slot,
+# and unpacked via theron_v1_party_unpack. Asserts every documented
+# champion field survives byte-equal, plus a re-save overwrite round
+# trip. Disjoint from theron_v1_save_load (which uses dummy champion
+# bytes) and theron_v1_save_header_rejection (which checks invalid
+# headers).
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_save_progress_roundtrip_pc34
+        tests/test_theron_v1_save_progress_roundtrip_pc34.c
+    )
+    target_link_libraries(test_theron_v1_save_progress_roundtrip_pc34 PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_save_progress_roundtrip_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_save_progress_roundtrip_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_save_progress_roundtrip_pc34
+        COMMAND test_theron_v1_save_progress_roundtrip_pc34
+    )
+endif()
+
 # ── Theron V1 Phase 5 — Shop Price Table Test ──────────────────────
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_shop_price_table
