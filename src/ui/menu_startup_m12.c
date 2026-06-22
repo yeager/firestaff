@@ -4705,6 +4705,16 @@ static const char *m12_game_tag(int index) {
     return g_game_select_available[index] ? g_game_select_tags_ready[index] : g_game_select_tags_missing[index];
 }
 
+static const char* m12_game_select_game_id(int index) {
+    static const char* const gameIds[M12_GAME_SELECT_COUNT] = {
+        "dm1", "csb", "dm2", "nexus", "theron"
+    };
+    if (index < 0 || index >= M12_GAME_SELECT_COUNT) {
+        return NULL;
+    }
+    return gameIds[index];
+}
+
 static const char *g_game_mode_labels[M12_GAME_MODE_COUNT] = {
     _("New Game (Original)"),
     _("New Game (Original + Filters)"),
@@ -7879,10 +7889,18 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
                 state->gameSelectSelected--;
             if (key_down && state->gameSelectSelected < M12_GAME_SELECT_COUNT - 1)
                 state->gameSelectSelected++;
-            if (key_enter && g_game_select_available[state->gameSelectSelected]) {
-                g_nav_level = M12_NAV_GAME_MODE;
-                state->selectedGameId = state->gameSelectSelected;
-                state->gameModeSelected = M12_GAME_MODE_NEW_V1;
+            if (key_enter) {
+                if (g_game_select_available[state->gameSelectSelected]) {
+                    g_nav_level = M12_NAV_GAME_MODE;
+                    state->selectedGameId = state->gameSelectSelected;
+                    state->gameModeSelected = M12_GAME_MODE_NEW_V1;
+                } else {
+                    m12_show_missing_game_data_popup(
+                        state,
+                        m12_game_select_game_id((int)state->gameSelectSelected));
+                    state->messageReturnView = M12_MENU_VIEW_MAIN;
+                    state->messageReturnNavLevel = (int)M12_NAV_GAME_SELECT;
+                }
             }
             if (key_escape) g_nav_level = M12_NAV_MAIN;
             break;
