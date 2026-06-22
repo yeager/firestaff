@@ -2,9 +2,9 @@
  * firestaff_m12_extras_views_smoke_probe.c
  *
  * Smoke test for the v2.7.14 M12 launcher extras views that were
- * promoted from stub to real implementation.  Drives the launcher
- * state machine through the Extras menu to the BESTIARY, ITEM
- * ENCYCLOPEDIA, and SCREENSHOT GALLERY views, and asserts:
+ * promoted from stub to real implementation. Drives the launcher
+ * state machine through the Extras menu to the MANUAL / DOCS,
+ * BESTIARY, ITEM ENCYCLOPEDIA, and SCREENSHOT GALLERY views, and asserts:
  *   (1) the view transition succeeds (g_extras_available[i] = 1)
  *   (2) the draw function renders a non-trivial framebuffer
  *       (more than 1 unique byte, which rules out a blank screen
@@ -14,8 +14,8 @@
  *       the hero zone, which proves the data is flowing through
  *       to the rendered output.
  *
- * Source: bestiary_m12.c, firestaff_item_encyclopedia.c,
- *         screenshot_gallery_m12.c.
+ * Source: README.md plus docs launcher manual copy, bestiary_m12.c,
+ *         firestaff_item_encyclopedia.c, screenshot_gallery_m12.c.
  */
 #include "menu_startup_m12.h"
 #include "screenshot_gallery_m12.h"
@@ -70,7 +70,9 @@ static int navigate_to_extras_view(M12_StartupMenuState* state,
     /* The dispatch lives in M12_StartupMenu_HandleKey; we replicate
      * the EXTRAS/ENTER transition here so the test does not have to
      * call the input loop with synthesized key events. */
-    if (state->extrasSelected == M12_EXTRAS_BESTIARY) {
+    if (state->extrasSelected == M12_EXTRAS_MANUAL) {
+        state->view = M12_MENU_VIEW_MANUAL_DOCS;
+    } else if (state->extrasSelected == M12_EXTRAS_BESTIARY) {
         state->view = M12_MENU_VIEW_BESTIARY;
     } else if (state->extrasSelected == M12_EXTRAS_ITEMS) {
         state->view = M12_MENU_VIEW_ITEM_ENCYCLOPEDIA;
@@ -116,13 +118,27 @@ int main(int argc, char** argv) {
            0, /* unknown without helper */
            fbW >= 400 && fbH >= 240 ? 1 : 0);
 
-    /* The launcher must mark BESTIARY/ITEMS/SCREENSHOTS as
+    /* The launcher must mark MANUAL/BESTIARY/ITEMS/SCREENSHOTS as
      * available now that the views are wired.  The probe reaches
      * into the launcher-internal flag table via the public
      * navigation path (M12_StartupMenu_HandleKey), but here we
      * just verify the g_extras_available table values indirectly:
      * if any of these are 0 the transition is rejected.  We
      * check the visible behaviour instead of reading internals. */
+
+    /* -- Manual / Docs ------------------------------------------------ */
+    printf("\n[Manual / Docs] enter and draw\n");
+    rc = navigate_to_extras_view(&state, M12_EXTRAS_MANUAL,
+                                 M12_MENU_VIEW_MANUAL_DOCS);
+    CHECK(rc, "navigate to MANUAL / DOCS view");
+    memset(fb, 0, (size_t)fbSize);
+    M12_StartupMenu_Draw(&state, fb, fbW, fbH);
+    distinct = count_distinct_bytes(fb, fbSize);
+    CHECK(distinct >= 3 && count_nonzero_bytes(fb, fbSize) >= 1000,
+          "Manual / Docs draw produces non-trivial framebuffer");
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.view == M12_MENU_VIEW_MAIN,
+          "Manual / Docs BACK returns to main view");
 
     /* ── Bestiary ─────────────────────────────────────────────── */
     printf("\n[Bestiary] enter and draw\n");

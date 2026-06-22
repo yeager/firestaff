@@ -2465,6 +2465,7 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
         state->view != M12_MENU_VIEW_MESSAGE &&
         state->view != M12_MENU_VIEW_GAME_OPTIONS &&
         state->view != M12_MENU_VIEW_MUSEUM &&
+        state->view != M12_MENU_VIEW_MANUAL_DOCS &&
         state->view != M12_MENU_VIEW_CHANGELOG &&
         state->view != M12_MENU_VIEW_BESTIARY &&
         state->view != M12_MENU_VIEW_ITEM_ENCYCLOPEDIA &&
@@ -3052,6 +3053,15 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_NONE:
             default:
                 break;
+        }
+        return;
+    }
+
+    if (state->view == M12_MENU_VIEW_MANUAL_DOCS) {
+        if (input == M12_MENU_INPUT_BACK ||
+            input == M12_MENU_INPUT_ACCEPT ||
+            input == M12_MENU_INPUT_ACTION) {
+            state->view = M12_MENU_VIEW_MAIN;
         }
         return;
     }
@@ -5286,6 +5296,20 @@ static void m12_draw_sparse_museum_view(const M12_StartupMenuState* state,
                                M12_COLOR_WHITE);
 }
 
+static void m12_draw_sparse_manual_docs_view(unsigned char* framebuffer,
+                                             int framebufferWidth,
+                                             int framebufferHeight) {
+    m12_draw_sparse_center_box(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               218,
+                               70,
+                               "MANUAL / DOCS",
+                               "README  DATA  GAP LIST",
+                               "ESC BACK",
+                               M12_COLOR_WHITE);
+}
+
 static void m12_draw_sparse_message_view(const M12_StartupMenuState* state,
                                          unsigned char* framebuffer,
                                          int framebufferWidth,
@@ -6852,6 +6876,134 @@ static void m12_draw_museum_view_modern(const M12_StartupMenuState* state,
                     "ESC: BACK  UP/DOWN: SECTION  LEFT/RIGHT: PAGE");
 }
 
+static void m12_draw_manual_docs_view_modern(const M12_StartupMenuState* state,
+                                             unsigned char* framebuffer,
+                                             int framebufferWidth,
+                                             int framebufferHeight) {
+    int margin = framebufferWidth / 30;
+    int heroH = framebufferHeight / 4;
+    int contentY;
+    int panelW;
+    int leftW;
+    int rightX;
+    int rightW;
+    static const char* const primaryDocs[] = {
+        "README.md",
+        "RELEASE_NOTES.md",
+        "docs/FIRESTAFF_GAP_LIST.md",
+        "docs/DATA_ACQUISITION_CHECKLIST.md",
+        "docs/DMWEB_REFERENCE.md"
+    };
+    static const char* const runbooks[] = {
+        "docs/parity/DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md",
+        "docs/THERON_CAPTURE_READINESS.md",
+        "docs/FIRESTAFF_GAP_LIST.md section G1",
+        "GitHub README: https://github.com/yeager/firestaff#readme"
+    };
+    int i;
+    (void)state;
+    if (margin < 12) {
+        margin = 12;
+    }
+    if (heroH < 64) {
+        heroH = 64;
+    }
+    contentY = margin + heroH + 10;
+    panelW = framebufferWidth - (margin * 2);
+    leftW = (panelW - 12) / 2;
+    rightX = margin + leftW + 12;
+    rightW = framebufferWidth - margin - rightX;
+
+    m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
+    m12_draw_modern_hero(state,
+                         framebuffer,
+                         framebufferWidth,
+                         framebufferHeight,
+                         margin,
+                         margin,
+                         panelW,
+                         heroH,
+                         "MANUAL / DOCS");
+    snprintf(g_m12_extras_subtitle_buf,
+             sizeof(g_m12_extras_subtitle_buf),
+             "LOCAL PROJECT MANUAL, RUNBOOKS, DATA CHECKLISTS");
+    g_m12_extras_subtitle_active = 1;
+    g_m12_extras_subtitle_x_offset = 14;
+    g_m12_extras_subtitle_y_offset = 14;
+    g_m12_extras_subtitle_style = &g_textSmallShadow;
+    g_m12_extras_subtitle_right_active = 0;
+
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   margin,
+                   contentY,
+                   leftW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  margin + 10,
+                  contentY + 10,
+                  "START HERE",
+                  &g_textSmallAccent);
+    for (i = 0; i < (int)(sizeof(primaryDocs) / sizeof(primaryDocs[0])); ++i) {
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      margin + 18,
+                      contentY + 34 + i * 22,
+                      primaryDocs[i],
+                      i == 0 ? &g_textSmallShadow : &g_textSmall);
+    }
+
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   rightX,
+                   contentY,
+                   rightW,
+                   framebufferHeight - contentY - 28,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  rightX + 10,
+                  contentY + 10,
+                  "RUNBOOKS",
+                  &g_textSmallAccent);
+    for (i = 0; i < (int)(sizeof(runbooks) / sizeof(runbooks[0])); ++i) {
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      rightX + 18,
+                      contentY + 34 + i * 22,
+                      runbooks[i],
+                      &g_textSmall);
+    }
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  rightX + 18,
+                  contentY + 140,
+                  "Original game files stay user-supplied.",
+                  &g_textSmallMuted);
+    m12_draw_text(framebuffer,
+                  framebufferWidth,
+                  framebufferHeight,
+                  rightX + 18,
+                  contentY + 162,
+                  "Screenshots in README must be real captures.",
+                  &g_textSmallMuted);
+    m12_draw_footer(framebuffer,
+                    framebufferWidth,
+                    framebufferHeight,
+                    "ESC: BACK  ENTER: README URL IS LISTED ABOVE");
+}
+
 static void m12_draw_game_opt_row(unsigned char* framebuffer,
                                   int framebufferWidth,
                                   int framebufferHeight,
@@ -7333,6 +7485,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_sparse_changelog_view(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_MUSEUM) {
             m12_draw_sparse_museum_view(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_MANUAL_DOCS) {
+            m12_draw_sparse_manual_docs_view(framebuffer, framebufferWidth, framebufferHeight);
         } else {
             m12_draw_sparse_main_view(state, framebuffer, framebufferWidth, framebufferHeight);
         }
@@ -7349,6 +7503,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_changelog_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_MUSEUM) {
             m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_MANUAL_DOCS) {
+            m12_draw_manual_docs_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_BESTIARY) {
             m12_draw_bestiary_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
@@ -7375,6 +7531,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         m12_draw_changelog_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_MUSEUM) {
         m12_draw_museum_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_MANUAL_DOCS) {
+        m12_draw_manual_docs_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_BESTIARY) {
         m12_draw_bestiary_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
@@ -7621,15 +7779,7 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
             if (key_enter && g_extras_available[state->extrasSelected]) {
                 switch (state->extrasSelected) {
                     case M12_EXTRAS_MUSEUM: state->view = M12_MENU_VIEW_MUSEUM; break;
-                    case M12_EXTRAS_MANUAL: {
-                        if (!SDL_OpenURL(M12_ManualDocs_DefaultUrl())) {
-                            m12_set_buffered_message(state,
-                                                     "MANUAL / DOCS",
-                                                     M12_ManualDocs_DefaultUrl(),
-                                                     "ESC RETURNS TO MENU");
-                            state->view = M12_MENU_VIEW_MESSAGE;
-                        }
-                    } break;
+                    case M12_EXTRAS_MANUAL: state->view = M12_MENU_VIEW_MANUAL_DOCS; break;
                     case M12_EXTRAS_BESTIARY: state->view = M12_MENU_VIEW_BESTIARY; break;
                     case M12_EXTRAS_ITEMS: state->view = M12_MENU_VIEW_ITEM_ENCYCLOPEDIA; break;
                     case M12_EXTRAS_CHANGELOG: state->view = M12_MENU_VIEW_CHANGELOG; break;
@@ -7646,10 +7796,10 @@ M12_NavLevel m12_get_nav_level(void) { return g_nav_level; }
 
 /* ── Extras view stubs (#9) — replaced in v2.7.14 ───────────
  *
- * BESTIARY, ITEM ENCYCLOPEDIA, and SCREENSHOT GALLERY now have
+ * MANUAL / DOCS, BESTIARY, ITEM ENCYCLOPEDIA, and SCREENSHOT GALLERY now have
  * their own modern draw functions (m12_draw_*_view_modern) that
- * use the source-locked data APIs (bestiary_m12.c,
- * firestaff_item_encyclopedia.c, screenshot_gallery_m12.c).  The
+ * use local project docs or source-locked data APIs (bestiary_m12.c,
+ * firestaff_item_encyclopedia.c, screenshot_gallery_m12.c). The
  * dispatch in M12_StartupMenu_DrawFramebuffer routes to those
  * functions when state->view matches.
  *
