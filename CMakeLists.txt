@@ -2239,6 +2239,39 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait-22 front_north_entry runtime probe.
+# Real-asset regression for the narrow slice:
+#   ordinal       : 22  (C026 col 6 row 2; "GOTHMOG", untitled)
+#   route variant : front_north_entry (map=0, x=1, y=2, NORTH)
+#   aspect        : portrait_rect_position (D1C cutout at viewport 96,35,32,29)
+# Proves:
+#   (A) D1C wall-ornament frame helper returns the source-locked box.
+#   (B) ordinal 22 -> C026 source rect (192, 58, 32, 29) math is correct.
+#   (C) front_north_entry pose resolves to the source-locked ordinal.
+#   (D) ordinal 22 catalog name is GOTHMOG (untitled) (pinned to a real
+#       source identity even if no Hall map route exists).
+#   (E) side-wall corridor poses never expose the front-mirror route
+#       (no-floating contract).
+#   (F) front_north_entry route accepts a C127 sensorData=22 seed and
+#       reports ordinal 22, then restores the original sensorData.
+# Source evidence: DUNGEON.C:2558,2573,2608-2612; MOVESENS.C:1501-1503;
+#                  REVIVE.C F0280,F0282; DUNVIEW.C:3913-3928,8318-8542;
+#                  COORD.C:1693-1722; DEFS.H:2071-2079.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime_probe
+        probes/m11/firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime_probe
+        COMMAND firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 champion-panel damage-indicator pc34_compat contract test
 # (CHAMDRAW.C F0623 damage graphic/zone/text dispatch).
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_indicator_pc34_compat.c"
