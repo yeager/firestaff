@@ -531,6 +531,13 @@ int main(void) {
                      state.settings.windowModeIndex == 2,
                  "settings screen cycles persisted presentation, renderer backend, and window values from keyboard input");
 
+    state.settingsSelectedIndex = 14; /* M12_SETTINGS_ROW_SMOOTH_TURN_PAN */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
+    probe_record(&tally,
+                 "INV_M12_10B",
+                 state.settings.dm1V2SmoothTurnPanEnabled == 1,
+                 "settings screen exposes the Custom/V2 smooth-turn-pan toggle");
+
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK); /* to main */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* museum */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_UP);   /* theron */
@@ -583,6 +590,7 @@ int main(void) {
                      reloaded.settings.graphicsIndex == 1 &&
                      reloaded.settings.rendererBackendIndex == M12_RENDERER_BACKEND_SOFTWARE &&
                      reloaded.settings.windowModeIndex == 2 &&
+                     reloaded.settings.dm1V2SmoothTurnPanEnabled == 1 &&
                      reloaded.settings.windowWidth == 1234 &&
                      reloaded.settings.windowHeight == 777 &&
                      reloaded.settings.quickResumeEnabled == 0 &&
@@ -626,6 +634,7 @@ int main(void) {
                      file_contains(configPath, "game_0_language_index = 1") &&
                      file_contains(configPath, "presentation_mode = \"v2-filtered\"") &&
                      file_contains(configPath, "presentation_mode_index = 1") &&
+                     file_contains(configPath, "dm1_v2_smooth_turn_pan_enabled = 1") &&
                      file_contains(configPath, "renderer_backend_index = 1") &&
                      file_contains(configPath, "window_width = 1234") &&
                      file_contains(configPath, "window_height = 777") &&
@@ -644,7 +653,7 @@ int main(void) {
                      file_contains(configPath, "screenshot_path = \"/tmp/firestaff-shots\"") &&
                      file_contains(configPath, "game_4_language_index = 2") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
-                 "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, per-game language, session timer, and QoL/start-menu extras");
+                 "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, smooth turn-pan, per-game language, session timer, and QoL/start-menu extras");
 
     make_file_with_text(configPath,
                         "# Firestaff startup menu config\n"
