@@ -1007,6 +1007,14 @@ target_link_libraries(firestaff_csb_v2_phase0_v1_compatibility_lock_probe
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_phase0_v1_compatibility_lock_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME csb_v2_phase0_v1_compatibility_lock
+    COMMAND firestaff_csb_v2_phase0_v1_compatibility_lock_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(csb_v2_phase0_v1_compatibility_lock PROPERTIES
+    LABELS "tier2;csb;v2;phase0;v1-compatibility;source-lock"
+)
 
 # CSB V2 Phase 5 — Smooth Movement and Viewport Interpolation Probe
 # Headless: no game assets, no SDL rendering required.
