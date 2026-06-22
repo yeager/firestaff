@@ -2311,6 +2311,53 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait-01 east_walkpath portrait_rect_position
+# runtime probe.  Real-asset regression for one narrow DM1 V1 Hall of
+# Champions champion-portrait slice:
+#   ordinal       : 1   (C026 col 1 row 0; "HALK" / "BARBARIAN")
+#   route variant : east_walkpath (player walks east along the y=3
+#                   corridor wall facing NORTH -- (1,3), (2,3), (3,3))
+#   aspect        : portrait_rect_position (D1C cutout at viewport
+#                   (96,35) sized 32x29 inside the C346 frame at (80,29)
+#                   sized 64x43 per ReDMCSB DUNVIEW.C G0205)
+# Proves:
+#   (A) M11_GameView_GetD1CWallOrnamentZone returns the source-locked
+#       C346 wall-mirror frame box (80,29,64,43) with the C026 cutout
+#       (96,35,32,29) inside it -- no horizontal or vertical float.
+#   (B) ordinal 1 -> C026 source rect (32, 0, 32, 29) math is correct
+#       and all 24 ordinals produce in-strip source rects.
+#   (C) east_walkpath route no-portrait contract: the three corridor
+#       cells (1,3) NORTH, (2,3) NORTH, (3,3) NORTH all resolve to -1
+#       (no portrait over corridor wall), while the unique ordinal-1
+#       front_north_entry anchor (1,2) NORTH resolves to ordinal 1.
+#   (D) ordinal 1 catalog identity is pinned to "HALK" / "BARBARIAN"
+#       via M11_GameView_GetMirrorNameByOrdinal /
+#       _GetMirrorTitleByOrdinal.
+#   (E) D1C rectangle at (1,2) NORTH is dominated by ordinal-1 opaque
+#       pixels (>= 80% match against C026 source at the blit
+#       destination), and at every east_walkpath corridor cell the D1C
+#       rectangle matches < 5% ordinal-1 pixels (no float).
+#   (F) 16x16x4 Hall map sweep confirms ordinal 1 is visible at exactly
+#       one pose (the front_north_entry (1,2) NORTH) and not at any
+#       east_walkpath cell.
+# Source evidence: DUNGEON.C:2558,2573,2608-2612; MOVESENS.C:1501-1503,556;
+#                  REVIVE.C F0280,F0282; DUNVIEW.C:3913-3928,3916,8318-8542,
+#                  8522-8533; COORD.C:1693-1722; DEFS.H:2071-2079,2186.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion_portrait_01_east_walkpath_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_hall_champion_portrait_01_east_walkpath_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_hall_champion_portrait_01_east_walkpath_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_champion_portrait_01_east_walkpath_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_champion_portrait_01_east_walkpath_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hall_champion_portrait_01_east_walkpath_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_hall_champion_portrait_01_east_walkpath_portrait_rect_position_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 champion-panel damage-indicator pc34_compat contract test
 # (CHAMDRAW.C F0623 damage graphic/zone/text dispatch).
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_indicator_pc34_compat.c"
