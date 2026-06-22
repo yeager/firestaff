@@ -318,6 +318,7 @@ set(M12_SOURCES
     src/shared/creature_art_m12.c
     src/shared/data_validator_m12.c
     src/shared/changelog_m12.c
+    src/shared/manual_docs_m12.c
     src/ui/theme_m12.c
     src/shared/animated_bg_m12.c
     src/shared/input_remap_m12.c
@@ -14707,6 +14708,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12
     add_test(
         NAME save_browser_export_import_m12
         COMMAND test_save_browser_export_import_m12
+    )
+endif()
+
+# M12 manual/docs launcher: user-facing docs catalog and default README URL.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_manual_docs_launcher_m12.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/manual_docs_m12.c")
+    add_executable(test_manual_docs_launcher_m12
+        tests/test_manual_docs_launcher_m12.c
+        src/shared/manual_docs_m12.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_manual_docs_launcher_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME manual_docs_launcher_m12
+        COMMAND test_manual_docs_launcher_m12
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
 endif()
 
