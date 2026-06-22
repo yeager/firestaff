@@ -310,7 +310,7 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | Dungeon progression (7 dungeons) | FIXED |
 | **JP/US Track 02 BIN/ISO real-asset launch** | FIXED — `tier1_strict_boot_probe` covers Theron JP canonical, Theron JP extras, and Theron US extras booting to the TQR level-load milestone; `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` also PASS. |
 | Cross-slot import/export against real Track 02 saves | PARTIAL — `theron_v1_save_load` now covers export/import mechanics across save roots using validated Theron save images; remaining work is importing/exporting a real Track 02 save artifact when one is available. |
-| Cross-route mechanics runtime evidence | OPEN-BOUNDED |
+| Cross-route mechanics runtime evidence | FIXED for current data-free runtime route — `theron_v1_cross_route_mechanics` builds a synthetic TQ route and locks deterministic movement across door auto-open, pool recovery, alarm/spawner activation, trigger-linked activation, teleporter handoff, pit damage, post-move drain, click-route TAKE, and repeatable route hash/summary state. Remaining real Track 02 save/import artifacts stay tracked under the `.SRM` / real-save rows above. |
 
 ### F2. V2
 

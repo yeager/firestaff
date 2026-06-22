@@ -10284,6 +10284,24 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_mechanics_hardening_probe)
 endif()
 
+# ── Theron V1 cross-route mechanics evidence probe ─────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(firestaff_theron_v1_cross_route_mechanics_probe
+        probes/theron/firestaff_theron_v1_cross_route_mechanics_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_cross_route_mechanics_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_cross_route_mechanics_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    target_compile_options(firestaff_theron_v1_cross_route_mechanics_probe PRIVATE -Wall -Wextra -O2)
+
+    add_test(NAME theron_v1_cross_route_mechanics
+        COMMAND firestaff_theron_v1_cross_route_mechanics_probe)
+endif()
+
 # ── Theron V1 Phase 4 — Rendering Pipeline Probes ───────────────────
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_viewport_renderer_probe
