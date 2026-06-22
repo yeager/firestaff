@@ -5275,6 +5275,18 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_pit_falling_damage_gate
     )
 
+    add_executable(firestaff_dm1_v1_pit_chain_sensor_timeline_gate
+        probes/dm1/firestaff_dm1_v1_pit_chain_sensor_timeline_gate.c
+    )
+    target_link_libraries(firestaff_dm1_v1_pit_chain_sensor_timeline_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_pit_chain_sensor_timeline_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_pit_chain_sensor_timeline_gate
+        COMMAND firestaff_dm1_v1_pit_chain_sensor_timeline_gate
+    )
+
     add_executable(firestaff_dm1_v1_walls_occlusion_blockers_probe
         probes/dm1/firestaff_dm1_v1_walls_occlusion_blockers_probe.c
     )
