@@ -1145,6 +1145,8 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     }
 }
 
+static M12_NavLevel g_nav_level = M12_NAV_MAIN;
+
 static void m12_set_buffered_message(M12_StartupMenuState* state,
                                      const char* line1,
                                      const char* line2,
@@ -1158,6 +1160,50 @@ static void m12_set_buffered_message(M12_StartupMenuState* state,
     state->messageLine1 = state->messageLine1Storage;
     state->messageLine2 = state->messageLine2Storage;
     state->messageLine3 = state->messageLine3Storage;
+}
+
+static int m12_message_return_view_valid(M12_MenuView view) {
+    return view == M12_MENU_VIEW_MAIN ||
+           view == M12_MENU_VIEW_SETTINGS ||
+           view == M12_MENU_VIEW_GAME_OPTIONS ||
+           view == M12_MENU_VIEW_MUSEUM ||
+           view == M12_MENU_VIEW_MANUAL_DOCS ||
+           view == M12_MENU_VIEW_CHANGELOG ||
+           view == M12_MENU_VIEW_BESTIARY ||
+           view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA ||
+           view == M12_MENU_VIEW_SCREENSHOT_GALLERY;
+}
+
+static int m12_nav_level_valid(int navLevel) {
+    return navLevel >= M12_NAV_MAIN && navLevel <= M12_NAV_EXTRAS;
+}
+
+static void m12_enter_message_view(M12_StartupMenuState* state) {
+    if (!state) {
+        return;
+    }
+    if (state->view != M12_MENU_VIEW_MESSAGE) {
+        if (state->view == M12_MENU_VIEW_GAME_OPTIONS ||
+            state->view == M12_MENU_VIEW_SETTINGS) {
+            state->messageReturnView = state->view;
+            state->messageReturnNavLevel = (int)g_nav_level;
+        } else {
+            state->messageReturnView = M12_MENU_VIEW_MAIN;
+            state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+        }
+    }
+    state->view = M12_MENU_VIEW_MESSAGE;
+}
+
+static void m12_clear_message_view(M12_StartupMenuState* state) {
+    if (!state) {
+        return;
+    }
+    state->messageLine1 = "";
+    state->messageLine2 = "";
+    state->messageLine3 = "";
+    state->messageReturnView = M12_MENU_VIEW_MAIN;
+    state->messageReturnNavLevel = (int)M12_NAV_MAIN;
 }
 
 static const char* m12_game_popup_label(const char* gameId) {
@@ -1262,7 +1308,7 @@ static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
     snprintf(line1, sizeof(line1), "%s %s", m12_game_popup_label(gameId), m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND));
     m12_format_missing_files_for_game(state, gameId, line2, sizeof(line2));
     m12_format_data_dir_line(state, line3, sizeof(line3));
-    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_enter_message_view(state);
     state->launchRequested = 0;
     state->quickResumeLaunchRequested = 0;
     m12_set_buffered_message(state, line1, line2, line3);
@@ -1274,7 +1320,7 @@ static void m12_show_no_game_data_popup(M12_StartupMenuState* state) {
         return;
     }
     m12_format_data_dir_line(state, line3, sizeof(line3));
-    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_enter_message_view(state);
     m12_set_buffered_message(state,
                              m12_tr(state, "NO GAME DATA FOUND"),
                              m12_tr(state, "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"),
@@ -1327,7 +1373,7 @@ static void m12_show_data_dir_result_popup(M12_StartupMenuState* state,
         snprintf(line2, sizeof(line2), "%s", m12_tr(state, "NO VERIFIED GAME DATA FOUND"));
     }
     m12_format_data_dir_line(state, line3, sizeof(line3));
-    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_enter_message_view(state);
     m12_set_buffered_message(state,
                              changed ? m12_tr(state, "DATA DIRECTORY UPDATED")
                                      : m12_tr(state, "DATA DIRECTORY UNCHANGED"),
@@ -1343,7 +1389,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     if (!FSP_DirExists(dataDir)) {
         char line3[160];
         m12_format_data_dir_line(state, line3, sizeof(line3));
-        state->view = M12_MENU_VIEW_MESSAGE;
+        m12_enter_message_view(state);
         m12_set_buffered_message(state,
                                  m12_tr(state, "DATA DIRECTORY NOT FOUND"),
                                  m12_tr(state, "CHOOSE AN EXISTING FOLDER"),
@@ -1370,7 +1416,7 @@ static void m12_export_save_manifest_json(M12_StartupMenuState* state) {
     }
     m12_save_config(state);
     M12_Config_Load(&config, NULL);
-    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_enter_message_view(state);
     if (M12_Config_ExportSaveManifestJSON(&config, NULL)) {
         m12_set_buffered_message(state,
                                  m12_tr(state, "SAVE MANIFEST EXPORTED"),
@@ -1390,7 +1436,7 @@ static void m12_import_save_manifest_json(M12_StartupMenuState* state) {
         return;
     }
     M12_Config_Load(&config, NULL);
-    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_enter_message_view(state);
     if (M12_Config_ImportSaveManifestJSON(&config, NULL)) {
         M12_Config_Save(&config);
         m12_apply_loaded_config(state, NULL);
@@ -1442,7 +1488,7 @@ static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
         current = NULL;
     }
     state->dataDirPickerActive = 1;
-    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_enter_message_view(state);
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_set_buffered_message(state,
                              m12_tr(state, "CHOOSE GAME DATA FOLDER"),
@@ -1943,6 +1989,8 @@ void M12_StartupMenu_InitWithDataDir(M12_StartupMenuState* state,
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
+    state->messageReturnView = M12_MENU_VIEW_MAIN;
+    state->messageReturnNavLevel = (int)M12_NAV_MAIN;
     m12_show_no_game_data_popup(state);
     state->frameTick = 0;
     state->hoverX = -1;
@@ -2534,6 +2582,12 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS && state->activatedIndex < 0) {
         state->view = M12_MENU_VIEW_MAIN;
     }
+    if (!m12_message_return_view_valid(state->messageReturnView)) {
+        state->messageReturnView = M12_MENU_VIEW_MAIN;
+    }
+    if (!m12_nav_level_valid(state->messageReturnNavLevel)) {
+        state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+    }
 }
 
 static void m12_activate_selected(M12_StartupMenuState* state) {
@@ -2568,7 +2622,7 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
         state->gameOptSelectedRow = 0;
         return;
     }
-    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_enter_message_view(state);
     state->launchRequested = 0;
     if (!m12_game_supported(entry->gameId)) {
         state->messageLine1 = entry->available ? m12_tr(state, "ENTER FOR GAME MENU") : m12_tr(state, "DATA FILES NOT FOUND");
@@ -2852,14 +2906,33 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
     m12_save_config(state);
 }
 
-static M12_NavLevel g_nav_level = M12_NAV_MAIN;
-
 static void m12_return_to_main_view(M12_StartupMenuState* state) {
     if (!state) {
         return;
     }
     state->view = M12_MENU_VIEW_MAIN;
     g_nav_level = M12_NAV_MAIN;
+}
+
+static void m12_return_from_message_view(M12_StartupMenuState* state) {
+    M12_MenuView returnView;
+    int returnNav;
+    if (!state) {
+        return;
+    }
+    returnView = state->messageReturnView;
+    returnNav = state->messageReturnNavLevel;
+    if (!m12_message_return_view_valid(returnView) ||
+        (returnView == M12_MENU_VIEW_GAME_OPTIONS && state->activatedIndex < 0)) {
+        returnView = M12_MENU_VIEW_MAIN;
+        returnNav = (int)M12_NAV_MAIN;
+    }
+    if (!m12_nav_level_valid(returnNav)) {
+        returnNav = (int)M12_NAV_MAIN;
+    }
+    state->view = returnView;
+    g_nav_level = (M12_NavLevel)returnNav;
+    m12_clear_message_view(state);
 }
 
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
@@ -2884,10 +2957,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             input == M12_MENU_INPUT_ACTION) {
             state->launchRequested = 0;
             state->quickResumeLaunchRequested = 0;
-            m12_return_to_main_view(state);
-            state->messageLine1 = "";
-            state->messageLine2 = "";
-            state->messageLine3 = "";
+            m12_return_from_message_view(state);
         }
         return;
     }
@@ -2984,13 +3054,13 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                          * implemented. Remove this block once rendering is wired. */
                         state->launchRequested = 0;
                         state->quickResumeLaunchRequested = 0;
-                        state->view = M12_MENU_VIEW_MESSAGE;
+                        m12_enter_message_view(state);
                         state->messageLine1 = m12_tr(state, "V3 MODERN/3D");
                         state->messageLine2 = m12_tr(state, "COMING SOON");
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else if (!M12_StartupMenu_RendererBackendAvailable(state->settings.rendererBackendIndex)) {
                         state->launchRequested = 0;
-                        state->view = M12_MENU_VIEW_MESSAGE;
+                        m12_enter_message_view(state);
                         state->messageLine1 = m12_text(state, M12_TEXT_RENDERER_BACKEND_UNAVAILABLE);
                         state->messageLine2 = M12_StartupMenu_GetRendererBackendLabel(state);
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
@@ -3016,7 +3086,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         }
                         if (!found_match) {
                             state->launchRequested = 0;
-                            state->view = M12_MENU_VIEW_MESSAGE;
+                            m12_enter_message_view(state);
                             state->messageLine1 = m12_tr(state, "SELECTED VERSION NOT FOUND");
                             state->messageLine2 = m12_selected_version_label(state, gi, 0);
                             state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
@@ -3028,7 +3098,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     } else {
                         state->launchRequested = 1;
                         state->quickResumeLaunchRequested = 0;
-                        state->view = M12_MENU_VIEW_MESSAGE;
+                        m12_enter_message_view(state);
                         state->messageLine1 = m12_text(state, M12_TEXT_READY_TO_LAUNCH);
                         state->messageLine2 = (state->activatedIndex >= 0 &&
                                                state->activatedIndex < m12_entry_count())
@@ -3338,14 +3408,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     if (pmode == M12_PRESENTATION_V22_MODERN) {
                         state->launchRequested = 0;
                         state->quickResumeLaunchRequested = 0;
-                        state->view = M12_MENU_VIEW_MESSAGE;
+                        m12_enter_message_view(state);
                         state->messageLine1 = "V3 MODERN/3D";
                         state->messageLine2 = "DATA FILES NOT FOUND";
                         state->messageLine3 = "ESC RETURNS TO MENU";
                     } else {
                         state->launchRequested = 1;
                         state->quickResumeLaunchRequested = 1;
-                        state->view = M12_MENU_VIEW_MESSAGE;
+                        m12_enter_message_view(state);
                         state->messageLine1 = "RESUMING SAVE";
                         state->messageLine2 = state->entries[qrSlot].title;
                         state->messageLine3 = "ESC RETURNS TO MENU";
@@ -4695,7 +4765,7 @@ static void m12_show_unavailable_extra_popup(M12_StartupMenuState* state,
     snprintf(line1, sizeof(line1), "%s", m12_tr(state, label));
     state->launchRequested = 0;
     state->quickResumeLaunchRequested = 0;
-    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_enter_message_view(state);
     m12_set_buffered_message(state,
                              line1,
                              m12_tr(state, "NO DATA SOURCE YET"),

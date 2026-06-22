@@ -378,6 +378,8 @@ typedef struct M12_StartupMenuState {
     char messageLine1Storage[128];
     char messageLine2Storage[256];
     char messageLine3Storage[160];
+    M12_MenuView messageReturnView;
+    int messageReturnNavLevel;
     M12_MenuSettingsState settings;
     int languageExplicit;
     M12_AssetStatus assetStatus;
