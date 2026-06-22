@@ -2453,6 +2453,36 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_boot_profile_smoke
     )
 
+    # CSB V1 launcher/profile regression proving that missing optional
+    # title/intro assets do not block launch when required hashes are
+    # present. Mirrors the DM1 m12_dm1_v1_required_complete_launches
+    # gate: optional CSB extras (intro/title/media variations) must
+    # not affect the launch gate when GRAPHICS + DUNGEON are matched.
+    # The test consumes csb_v1_boot_enter_game() + dungeon loader to
+    # prove the intent reaches the boot/runtime boundary.
+    # Source-lock boundary:
+    #   ReDMCSB ENTRANCE.C F0806 lines 409-441 (CSB entrance setup)
+    #   ReDMCSB LOADSAVE.C F0435 lines 1940-1944 (new-game map 0)
+    add_executable(test_csb_v1_required_complete_launches
+        tests/test_csb_v1_required_complete_launches.c
+        src/csb/csb_v1_boot.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_required_complete_launches PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_required_complete_launches
+        PRIVATE firestaff_m12 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_required_complete_launches
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_required_complete_launches
+        COMMAND test_csb_v1_required_complete_launches
+    )
+
     add_executable(test_dm2_v1_boot_profile_smoke
         tests/test_dm2_v1_boot_profile_smoke.c
         src/dm2/dm2_v1_boot.c
