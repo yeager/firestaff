@@ -3071,6 +3071,25 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_phase3_rendering
     )
 
+    add_executable(test_csb_v1_boot_viewport_render_gate
+        tests/test_csb_v1_boot_viewport_render_gate.c
+        src/csb/csb_v1_boot.c
+        src/csb/csb_v1_viewport_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_boot_viewport_render_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_boot_viewport_render_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_boot_viewport_render_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_boot_viewport_render_gate
+        COMMAND test_csb_v1_boot_viewport_render_gate
+    )
+
     add_executable(test_csb_v1_character_import
         tests/test_csb_v1_character_import.c
         src/csb/csb_v1_character_pc34_compat.c
