@@ -320,6 +320,29 @@ int main(void) {
                  strcmp(M12_StartupMenu_GetDataStatusValue(&state), "FILES FOUND") == 0,
                  "settings scan feedback distinguishes original-file candidates from verified game sets");
 
+    state.mainMenuSelected = M12_MAIN_MENU_PLAY;
+    m12_redesigned_handle_input(&state, 0, 0, 0, 0, 1, 0);
+    state.gameSelectSelected = M12_GAME_SELECT_CSB;
+    m12_redesigned_handle_input(&state, 0, 0, 0, 0, 1, 0);
+    probe_record(&tally,
+                 "INV_M12_00C_GAME_SELECT_DETAILS",
+                 state.view == M12_MENU_VIEW_MESSAGE &&
+                     state.launchRequested == 0 &&
+                     state.messageLine1 &&
+                     strcmp(state.messageLine1, "CSB GAME DATA NOT FOUND") == 0 &&
+                     state.messageLine2 &&
+                     strstr(state.messageLine2, "GRAPHICS.DAT") != NULL &&
+                     strstr(state.messageLine2, "DUNGEON.DAT") != NULL,
+                 "redesigned game-select opens per-game missing-data details instead of silently ignoring unavailable rows");
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    probe_record(&tally,
+                 "INV_M12_00D_GAME_SELECT_DETAILS_BACK",
+                 state.view == M12_MENU_VIEW_MAIN &&
+                     m12_get_nav_level() == (int)M12_NAV_GAME_SELECT &&
+                     state.gameSelectSelected == M12_GAME_SELECT_CSB,
+                 "per-game missing-data details return to the game-select row that opened them");
+    m12_redesigned_handle_input(&state, 0, 0, 0, 0, 0, 1);
+
     probe_record(&tally,
                  "INV_M12_01",
                  M12_StartupMenu_GetEntryCount() == 7,
