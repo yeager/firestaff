@@ -170,6 +170,7 @@ Source-locked against SKULL.ASM T520/T560/T600, ReDMCSB GAMELOOP.C:164-219, and 
 ### Launcher and Settings
 
 - 🔧 Start-menu feature hardening: first-pass persistence exists for quick resume, minimap, automap, combat log, soundtrack, ambient audio, UI scale, streamer mode, custom music, custom dungeon, screenshot path, session timer, save export/import, manual/docs launcher, polished UI flow, and all five per-game option slots; remaining work is runtime handoff for every option and cloud sync.
+- 🔧 Custom dungeon import: `custom_dungeon_import` now CTest-gates synthetic M12 launcher and DM1 V1 engine scanning for `DUNGEON.DAT` fixtures, including header/map-count parsing, case-insensitive paths, optional `GRAPHICS.DAT`, compressed/tiny rejection, and valid-entry selection. Remaining work is real community dungeon corpus handoff plus CSBWin `dmsave`/`csbgame` import evidence.
 
 ### Touch and Controller Support
 
