@@ -131,7 +131,7 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 | C6 wisdom factor | FINAL_GAPS | FIXED |
 | Trolin anti-mage palette F0823 | FINAL_GAPS | FIXED |
 | DM_SAVE_HEADER noise/keys/checksums | FINAL_GAPS | FIXED |
-| Hall of Champions 4-mirror + wall-mirror zones | FINAL_GAPS | FIXED |
+| Hall of Champions 4-mirror + wall-mirror zones | FINAL_GAPS | FIXED -- 2026-06-22 Hall champion-mirror placement regression: C127 portraits now route through the fixed C346 D1C champion-mirror frame, not the map's last wall ornament or the generic wall-ornament pass; `firestaff_dm1_v1_champion_mirror_capture_probe` now requires both portrait pixels and mirror-frame pixels for reported Gando/Wuuf/Daroou floating cases plus Halk/Gothmog/Mophus/Sonja/Leif wrong-wall cases, so portraits cannot pass while floating over Hall stone. |
 | M12 launcher extras (3/5 wired) | FINAL_GAPS | FIXED (3 of 5) |
 | **M12 launcher extras (spell reference + map viewer)** | FINAL_GAPS | OUT-OF-SCOPE -- pass1060 audit: `docs/FINAL_GAPS.md` marks both as lacking a data source; `src/ui/menu_startup_m12.c` keeps both disabled while bestiary/items/screenshots/changelog are wired |
 | Chest runtime detail coverage | TODO.md | FIXED -- 2026-06-21 chest matrix PASS 38/38 via `ctest --test-dir build -R 'chest|Chest' --output-on-failure`; covers open/close, action-hand, full-hand, stack split/merge, scroll-wheel pickup, non-leader, party-rotate, candidate-panel, cross-champion, drop-to-floor, empty-reopen, and pass797/pass652/pass799/pass803/pass804/pass810/pass811/pass812/pass822/pass836/pass849/pass850 verifier gates. Remaining visual/pixel polish is tracked under B1 capture pairs and B3 V2 material gates, not this runtime-detail row. |
