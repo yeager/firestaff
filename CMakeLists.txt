@@ -14675,6 +14675,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_custom_dungeon_m12_real_path.c
     )
 endif()
 
+# M12 campaign session timer: start/pause/resume/tick/flush into
+# campaign slot playTimeSeconds.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_campaign_m12_session_timer.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/campaign_m12.c")
+    add_executable(test_campaign_m12_session_timer
+        tests/test_campaign_m12_session_timer.c
+        src/shared/campaign_m12.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_campaign_m12_session_timer PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME campaign_m12_session_timer
+        COMMAND test_campaign_m12_session_timer
+    )
+endif()
+
 # pass1049 — DM1 V1 G0224_aaaauc_Graphic558_CreatureCoordinateSets[3][11][5][2]:
 # 3 sets × 11 frames × 5 coords × 2 fields = 330 bytes (creature coords).
 # Source-locked against DUNVIEW.C:513/1836/5307.

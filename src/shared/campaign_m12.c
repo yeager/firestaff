@@ -777,6 +777,46 @@ void M12_Campaign_AddPlayTime(M12_CampaignSlot* slot, int seconds) {
     slot->modifiedAt = time(NULL);
 }
 
+void M12_CampaignSessionTimer_Init(M12_CampaignSessionTimer* timer) {
+    if (!timer) return;
+    memset(timer, 0, sizeof(*timer));
+}
+
+void M12_CampaignSessionTimer_Start(M12_CampaignSessionTimer* timer) {
+    if (!timer) return;
+    timer->running = 1;
+    timer->paused = 0;
+    timer->elapsedSeconds = 0;
+}
+
+void M12_CampaignSessionTimer_Pause(M12_CampaignSessionTimer* timer) {
+    if (!timer || !timer->running) return;
+    timer->paused = 1;
+}
+
+void M12_CampaignSessionTimer_Resume(M12_CampaignSessionTimer* timer) {
+    if (!timer || !timer->running) return;
+    timer->paused = 0;
+}
+
+void M12_CampaignSessionTimer_Tick(M12_CampaignSessionTimer* timer, int seconds) {
+    if (!timer || !timer->running || timer->paused || seconds <= 0) return;
+    timer->elapsedSeconds += seconds;
+    if (timer->elapsedSeconds < 0) {
+        timer->elapsedSeconds = 0;
+    }
+}
+
+int M12_CampaignSessionTimer_FlushToSlot(M12_CampaignSessionTimer* timer,
+                                         M12_CampaignSlot* slot) {
+    int flushed;
+    if (!timer || !slot || timer->elapsedSeconds <= 0) return 0;
+    flushed = timer->elapsedSeconds;
+    M12_Campaign_AddPlayTime(slot, flushed);
+    M12_CampaignSessionTimer_Init(timer);
+    return flushed;
+}
+
 void M12_Campaign_Draw(const M12_CampaignState* state,
                        unsigned char* fb, int fbWidth, int fbHeight) {
     int i, yPos, visible;
