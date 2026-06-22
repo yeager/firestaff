@@ -131,6 +131,36 @@ static int check_resurrect_round_trip(M11_GameViewState* game,
     return 1;
 }
 
+static void dump_all_mirror_poses(M11_GameViewState* game) {
+    int x;
+    int y;
+    int dir;
+    if (!game) {
+        return;
+    }
+    printf("=== all front C127 mirror poses ===\n");
+    for (y = 0; y < 32; ++y) {
+        for (x = 0; x < 32; ++x) {
+            for (dir = 0; dir < 4; ++dir) {
+                int ord;
+                char name[64];
+                game->world.party.mapIndex = 0;
+                game->world.party.mapX = x;
+                game->world.party.mapY = y;
+                game->world.party.direction = dir;
+                ord = M11_GameView_GetFrontMirrorOrdinal(game);
+                if (ord < 0) {
+                    continue;
+                }
+                name[0] = '\0';
+                (void)M11_GameView_GetMirrorNameByOrdinal(game, ord, name, sizeof(name));
+                printf("pose=(%d,%d,%d) ordinal=%d name=%s\n",
+                       x, y, dir, ord, name[0] ? name : "<unknown>");
+            }
+        }
+    }
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -153,12 +183,16 @@ int main(int argc, char** argv) {
         {1, 3, 1, 18, "hall_corridor_east_ordinal_18"},
         /* (1,4) facing N: front=(1,3) has only TextString, no C127 */
         {1, 4, 0, -1, "hall_corridor_north_no_portrait_2"},
-        /* (1,5) facing N: front=(1,4) has C127 sensor idx=16 data=10 (ZED) */
-        {1, 5, 0, 10, "hall_end_north_ordinal_10"},
+        /* (1,5) facing N: front=(1,4) has C127 sensor idx=16 data=10 (GANDO) */
+        {1, 5, 0, 10, "hall_end_north_ordinal_10_GANDO"},
         /* (1,5) facing E: front=(2,5) has C127 sensor idx=24 data=15 (MOPHUS) */
         {1, 5, 1, 15, "hall_end_east_ordinal_15"},
         /* (1,5) facing S: front=(1,6) has C127 sensor idx=17 data=13 (WUUF) */
         {1, 5, 2, 13, "hall_end_south_ordinal_13"},
+        /* (2,5) facing S: front=(2,6) has C127 sensor data=22 (GOTHMOG) */
+        {2, 5, 2, 22, "hall_gothmog_south_ordinal_22"},
+        /* (1,7) facing S: front=(1,8) has C127 sensor data=0 (DAROOU) */
+        {1, 7, 2, 0, "hall_daroou_south_ordinal_0"},
     };
     int i;
 
@@ -174,6 +208,11 @@ int main(int argc, char** argv) {
         fprintf(stderr, "FAIL could not open DM1 V1 game view from %s\n", dataDir);
         M11_GameView_Shutdown(&game);
         return 1;
+    }
+    if (argc > 2 && strcmp(argv[2], "--dump") == 0) {
+        dump_all_mirror_poses(&game);
+        M11_GameView_Shutdown(&game);
+        return 0;
     }
 
     printf("=== DM1 V1 champion mirror actual-pose runtime probe ===\n");
