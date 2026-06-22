@@ -213,7 +213,7 @@ greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
 | **DM1 shared V2.2 in-place drawing pipeline** | OPEN-LARGE — same as DM1 B3 |
 | Per-cell modern-art swap in CSB 9-square viewport | OPEN-LARGE |
 | Phase 3 enhanced UI overlays | PARTIAL |
-| Phase 5 smooth movement deterministic pixel gates | OPEN-BOUNDED |
+| Phase 5 smooth movement deterministic pixel gates | FIXED — 2026-06-22: `csb_v2_smooth_movement` + `csb_v2_smooth_runtime_binding` + `csb_v2_phase7_verification` + `csb_v2_phase7_verification_source_lock` are CTest-gated and PASS 4/4. Phase 7 verification suite is now active. |
 
 ---
 
@@ -288,7 +288,7 @@ Nexus locally verified files in `~/.firestaff/data/nexus/`.
 | Gap | Status |
 |---|---|
 | Phase 0/1/2 | FIXED |
-| Phase 5 smooth movement runtime | PARTIAL |
+| Phase 5 smooth movement runtime | FIXED — 2026-06-22: `nexus_v2_smooth_movement` + `nexus_v2_smooth_movement_runtime_probe` CTest-gated and PASS 2/2. |
 | Phase 7 verification (deterministic input + screenshot gates) | OPEN-BOUNDED |
 | **Real PBR hero art for Nexus** | OPEN-LARGE |
 | **Per-cell modern-art swap in Nexus V1 draw pipeline** | OPEN-LARGE |
@@ -327,7 +327,7 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | **Per-cell modern-art swap in T400/T600** | OPEN-LARGE |
 | **Phase 3 enhanced UI overlays** | OPEN-LARGE — not started per TODO |
 | **Phase 4 enhanced lighting/effects** | OPEN-LARGE — not started |
-| **Phase 5 smooth movement** | OPEN-LARGE — not started |
+| **Phase 5 smooth movement** | FIXED — 2026-06-22: `theron_v2_smooth_movement_pc34` CTest-gated and PASS. |
 | **Phase 6 touch/controller ergonomics** | OPEN-LARGE — not started |
 | **Phase 7 V2 verification suite** | OPEN-LARGE — not started |
 
