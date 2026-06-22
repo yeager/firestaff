@@ -36,10 +36,16 @@
  *   - Multi-script tick loops
  *     (csb_v1_chaos_tick is exercised by the same test below but
  *      not as a primary subject).
+ *
+ * Adjacent runtime-adjacent guards covered here:
+ *   - csb_v1_chaos_trigger out-of-range script_id rejection
+ *     (test_trigger_out_of_range_script_id_rejects_cleanly, the
+ *      actuator-target-data guard for the chaos dispatcher).
  */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -445,6 +451,93 @@ static void test_malformed_target_operands_reject_cleanly(void)
 }
 
 /* ----------------------------------------------------------------
+ * Test 7b: out-of-range script id must not crash, must not mutate,
+ * and must return -1.
+ * ----------------------------------------------------------------
+ * csb_v1_chaos_trigger is the runtime-adjacent entry point that turns
+ * a CSB chaos cast into an active DSA script.  It is the "actuator
+ * target data" surface for the chaos system: a malformed script_id
+ * (negative, equal to script_count, or beyond CSB_V1_MAX_DSA_SCRIPTS)
+ * must be rejected cleanly without writing into the scripts[] table.
+ *
+ * Source: csb_v1_chaos_trigger guard prologue (script_id range check
+ *         against state->script_count) and CSBWin/Chaos.cpp _CALL0..9
+ *         dispatch frame selection.
+ */
+static void test_trigger_out_of_range_script_id_rejects_cleanly(void)
+{
+    CSB_V1_ChaosMagicState chaos;
+    uint16_t script[] = {
+        CSB_DSA_OP_SET, (uint16_t)DSA_KNOWN_FLAG,
+        CSB_DSA_OP_END
+    };
+
+    /* Single known script -> script_count == 1.
+     * Valid script_id is 0.  Out-of-range cases:
+     *   -1 (negative)
+     *   1 (== script_count)
+     *   CSB_V1_MAX_DSA_SCRIPTS (way past the loaded table)
+     *   INT_MAX (worst-case saturated script_id) */
+    install_single_script(&chaos, script, (int)(sizeof(script) / sizeof(script[0])));
+
+    /* Negative script_id must reject without activating. */
+    check(csb_v1_chaos_trigger(&chaos, -1) == -1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "negative script_id rejects the trigger");
+    check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].active == 0,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "negative script_id leaves the known script inactive");
+    check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].pc == 0,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "negative script_id does not advance pc");
+
+    /* script_id equal to script_count (one past the last valid index)
+     * must reject without activating. */
+    check(csb_v1_chaos_trigger(&chaos, (int)chaos.script_count) == -1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "script_id == script_count rejects the trigger");
+    check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].active == 0,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "script_id == script_count leaves the known script inactive");
+
+    /* Script_id far above the loaded table must reject.  This is the
+     * actuator-target-data guard the chaos dispatcher needs when a
+     * imported script table reports an out-of-range script id. */
+    check(csb_v1_chaos_trigger(&chaos, CSB_V1_MAX_DSA_SCRIPTS) == -1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "script_id == CSB_V1_MAX_DSA_SCRIPTS rejects the trigger");
+    check(csb_v1_chaos_trigger(&chaos, CSB_V1_MAX_DSA_SCRIPTS + 1) == -1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "script_id == CSB_V1_MAX_DSA_SCRIPTS+1 rejects the trigger");
+    check(csb_v1_chaos_trigger(&chaos, 0x7fffffff) == -1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "saturated script_id rejects the trigger");
+    check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].active == 0,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "saturated script_id leaves the known script inactive");
+
+    /* NULL state pointer must reject cleanly. */
+    check(csb_v1_chaos_trigger(NULL, DSA_KNOWN_SCRIPT_ID) == -1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "null state pointer rejects the trigger");
+
+    /* Sanity: a valid script_id still works after the rejection path
+     * has been exercised.  The known script activates and a SET step
+     * writes the known flag, proving the rejected requests left the
+     * runtime in a usable state. */
+    check(csb_v1_chaos_trigger(&chaos, DSA_KNOWN_SCRIPT_ID) == 0,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "valid script_id still triggers after out-of-range rejects");
+    check(chaos.scripts[DSA_KNOWN_SCRIPT_ID].active == 1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "valid script_id leaves the script active after out-of-range rejects");
+    (void)csb_v1_dsa_execute_step(&chaos.scripts[DSA_KNOWN_SCRIPT_ID], &chaos);
+    check(chaos.flags[DSA_KNOWN_FLAG] == 1,
+          "src/csb/csb_v1_chaos_magic_pc34_compat.c:csb_v1_chaos_trigger",
+          "valid script_id still mutates flags after out-of-range rejects");
+}
+
+/* ----------------------------------------------------------------
  * Test 8: single MESSAGE step records one deterministic dispatch.
  * ----------------------------------------------------------------
  * This is intentionally only the DSA/message dispatch boundary: one
@@ -544,6 +637,7 @@ int main(void)
     test_single_step_test_set_flag_jumps_to_target();
     test_single_step_guards();
     test_malformed_target_operands_reject_cleanly();
+    test_trigger_out_of_range_script_id_rejects_cleanly();
     test_single_step_message_records_dispatch();
     test_source_evidence_anchors();
 
