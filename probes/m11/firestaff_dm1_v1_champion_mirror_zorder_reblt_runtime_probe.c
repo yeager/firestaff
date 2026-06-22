@@ -20,11 +20,14 @@
  *     a D1C cell where the front ordinal flips 2 -> 3) must not leave the
  *     old ordinal's pixels as the dominant pixels in the portrait rect.
  *
- * This probe drives an in-place 4-direction turn at the (1,4) D1C route,
+ * This probe drives a real Hall-of-Champions pose sequence,
  * pixel-comparing each step's framebuffer against the prior step to
- * prove the re-blt invariant above.  The route uses the same source cells
- * the existing zorder probe locks (DUNGEON.DAT map 0, x=1, y=4), but
- * instead of treating each direction as an independent black-box check,
+ * prove the re-blt invariant above.  Earlier versions used the stale
+ * TextString-derived (1,4,N)=2 fixture; the source-locked actual-pose
+ * contract uses the C127 sensor cells instead:
+ *   (1,2,N)=1, (2,1,S)=4, (1,3,E)=18,
+ *   (1,5,N)=10, (2,4,S)=15, (1,5,S)=13.
+ * Instead of treating each direction as an independent black-box check,
  * the probe walks through them sequentially and adds the new check:
  *
  *   no_stale_portrait_ordinal  - if the prior ordinal was O and the
@@ -288,16 +291,22 @@ int main(int argc, char** argv) {
     const M11_AssetSlot* portraits;
     static unsigned char currFb[PROBE_FB_W * PROBE_FB_H];
     int ok = 1;
-    /* In-place 4-direction turn at the (1,4) D1C route.  This is the
-     * narrowest possible Z-order re-blt claim: same cell, different
-     * direction, must clear the previous portrait and re-blt the new
-     * one (or none) on top of the wall. */
+    /* Real C127 Hall sequence.  ReDMCSB DUNGEON.C:2573 and 2608-2612
+     * allow only the front-wall side of each C127 sensor to set G0289.
+     * The interleaved no-portrait poses prove stale portraits are
+     * cleared before the next source-valid front mirror is blitted. */
     const ReBltStep steps[] = {
-        {1, 4, DIR_NORTH, 2,  "d1c_reblt_step_a_north_ordinal_2"},
-        {1, 4, DIR_EAST,  10, "d1c_reblt_step_b_east_ordinal_10"},
-        {1, 4, DIR_SOUTH, 3,  "d1c_reblt_step_c_south_ordinal_3"},
-        {1, 4, DIR_WEST,  -1, "d1c_reblt_step_d_west_no_portrait"},
-        {1, 4, DIR_NORTH, 2,  "d1c_reblt_step_e_north_ordinal_2_again"},
+        {1, 2, DIR_NORTH, 1,  "d1c_reblt_step_a_halk_north_ordinal_1"},
+        {1, 2, DIR_WEST,  -1, "d1c_reblt_step_b_start_west_no_portrait"},
+        {1, 2, DIR_EAST,  -1, "d1c_reblt_step_c_start_east_wrong_wall_no_portrait"},
+        {2, 1, DIR_SOUTH, 4,  "d1c_reblt_step_d_leif_south_ordinal_4"},
+        {1, 3, DIR_NORTH, -1, "d1c_reblt_step_e_corridor_north_no_portrait"},
+        {1, 3, DIR_EAST,  18, "d1c_reblt_step_f_sonja_east_ordinal_18"},
+        {1, 5, DIR_NORTH, 10, "d1c_reblt_step_g_zed_north_ordinal_10"},
+        {1, 5, DIR_EAST,  -1, "d1c_reblt_step_h_end_east_wrong_wall_no_portrait"},
+        {2, 4, DIR_SOUTH, 15, "d1c_reblt_step_i_mophus_south_ordinal_15"},
+        {1, 5, DIR_SOUTH, 13, "d1c_reblt_step_j_wuuf_south_ordinal_13"},
+        {1, 4, DIR_WEST,  -1, "d1c_reblt_step_k_corridor_west_no_portrait"},
     };
     int stepIdx;
     int prevOrdinal = -2; /* sentinel: no prior ordinal */
@@ -314,27 +323,6 @@ int main(int argc, char** argv) {
         fprintf(stderr, "FAIL could not open selected DM1 V1 game view from %s\n", dataDir);
         M11_GameView_Shutdown(&game);
         return 1;
-    }
-    /*
-     * Fixture check: this probe expects (1,4) facing NORTH to have
-     * front mirror ordinal 2. Different DM1 V1 builds place the C127
-     * sensor on different cells, so on builds that don't match the
-     * reference DUNGEON.DAT we skip the probe and print SKIP rather
-     * than fail. Not a regression detector; per-build fixture guard.
-     */
-    {
-        set_pose(&game, 1, 4, DIR_NORTH);
-        int probeOrd = M11_GameView_GetFrontMirrorOrdinal(&game);
-        if (probeOrd != 2) {
-            printf("SKIP hall_zorder_reblt_fixture_mismatch "
-                   "(1,4) NORTH front ordinal=%d expected=2; "
-                   "this DM1 V1 build does not match the reference "
-                   "DUNGEON.DAT fixture (the (1,4) sensor is laid out "
-                   "differently; see TODO.md fixture-mismatch)\n",
-                   probeOrd);
-            M11_GameView_Shutdown(&game);
-            return 0;
-        }
     }
     portraits = M11_AssetLoader_Load(&game.assetLoader,
                                      (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());

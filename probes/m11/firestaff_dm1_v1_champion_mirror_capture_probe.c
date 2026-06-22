@@ -71,10 +71,12 @@ typedef struct MirrorCapture {
 static MirrorCapture kCaptures[] = {
     /* Positive ordinals: front cell has C127 sensor with ordinal */
     {"hall_start_north_ordinal_1_HALK",     1, 2, 0,  1, 0, 0, 0},
-    {"hall_start_east_ordinal_4_LEIF",      1, 2, 1,  4, 0, 0, 0},
+    {"hall_start_east_wrong_wall_no_portrait", 1, 2, 1, -1, 0, 0, 0},
+    {"hall_leif_from_north_ordinal_4",      2, 1, 2,  4, 0, 0, 0},
     {"hall_corridor_east_ordinal_18_SONJA", 1, 3, 1, 18, 0, 0, 0},
     {"hall_end_north_ordinal_10_ZED",       1, 5, 0, 10, 0, 0, 0},
-    {"hall_end_east_ordinal_15_MOPHUS",     1, 5, 1, 15, 0, 0, 0},
+    {"hall_end_east_wrong_wall_no_portrait", 1, 5, 1, -1, 0, 0, 0},
+    {"hall_mophus_from_north_ordinal_15",   2, 4, 2, 15, 0, 0, 0},
     {"hall_end_south_ordinal_13_WUUF",      1, 5, 2, 13, 0, 0, 0},
     /* Negative ordinals: corridor poses where no C127 sensor exists */
     {"hall_start_west_no_portrait",         1, 2, 3, -1, 0, 0, 0},

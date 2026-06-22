@@ -11656,17 +11656,23 @@ static int m11_inspect_front_cell(M11_GameViewState* state) {
 static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
     M11_ViewportCell frontCell;
     unsigned short thing;
+    int visibleWallCell;
 
     if (!state || !state->active || !state->mirrorCatalogAvailable ||
         !m11_get_front_cell(state, &frontCell) || !frontCell.valid ||
         !state->world.things || !state->world.things->sensors) {
         return -1;
     }
+    visibleWallCell = (state->world.party.direction + 2) & 3;
 
     /* ReDMCSB DUNGEON.C:2573 / MOVESENS.C:1501-1503 / REVIVE.C F0280:
      * a C127 sensor on the front square carries the champion-portrait
      * ordinal in its sensorData.  DUNGEON.C:2608-2612 stores that
      * ordinal in G0289 and F0280 materializes the candidate from it.
+     * For PC34/I34E, DUNGEON.C:2573 computes
+     * normalize(M011_CELL(sensor) - partyDirection) + 3 and only lets
+     * M552_FRONT_WALL_ORNAMENT_ORDINAL (DEFS.H:2552, value 5) set
+     * G0289, so the source-visible wall cell is direction+2.
      * The TextString is the candidate's stats anchor on the corridor
      * floor (DUNGEON.C:2570-2584) and is not required to be present on
      * the front wall square. */
@@ -11678,6 +11684,11 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
             thingIndex >= 0 && thingIndex < state->world.things->sensorCount &&
             state->world.things->sensors[thingIndex].sensorType == 127) {
             int sensorData = (int)state->world.things->sensors[thingIndex].sensorData;
+            if (M11_DM1_ViewportSquareIsWallLikePc34(frontCell.square) &&
+                (int)THING_GET_CELL(thing) != visibleWallCell) {
+                thing = m11_raw_next_thing(state->world.things, thing);
+                continue;
+            }
             /* sensorData is a 0-based portrait ordinal within the C026
              * graphic (24 portraits, 8 cols x 3 rows).  Clamp to a
              * valid catalog range. */
