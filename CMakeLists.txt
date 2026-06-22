@@ -9892,6 +9892,25 @@ if(BUILD_TESTING)
         COMMAND test_csb_hidden_code_skip_table
     )
 
+    # CSB Utility Disk HCSB.HTC Hint Oracle text/layout format.
+    # Data-free parser gate for the dmweb/ReDMCSB format contract:
+    # big-endian headers, location records, hint records, page-length pool,
+    # compressed content slicing, and bounded HTC LZW decompression.
+    add_executable(test_csb_hint_oracle_htc
+        tests/test_csb_hint_oracle_htc.c
+        src/csb/csb_hint_oracle_htc.c
+    )
+    target_include_directories(test_csb_hint_oracle_htc PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_hint_oracle_htc PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_hint_oracle_htc_unit
+        COMMAND test_csb_hint_oracle_htc
+    )
+
     # ── CSB V1 graphics hidden-item skip integration test ────────
     # Verifies the safe-load wrapper around the DM1 V1 graphics
     # loader honours the per-game hidden-code skip table for
