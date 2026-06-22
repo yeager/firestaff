@@ -24,6 +24,7 @@
  */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
+#include "render_sdl_m11.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,7 +33,19 @@ unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
 
-enum { FB_W = 320, FB_H = 200 };
+enum {
+    FB_W = 320,
+    FB_H = 200,
+    VIEWPORT_X = 0,
+    VIEWPORT_Y = 33,
+    /* DUNVIEW.C:3913-3928 blits C026 into the D1C front-wall box
+     * (96,35)-(127,63), viewport-relative, with color 1 transparent. */
+    PORTRAIT_X = VIEWPORT_X + 96,
+    PORTRAIT_Y = VIEWPORT_Y + 35,
+    PORTRAIT_W = 32,
+    PORTRAIT_H = 29,
+    PORTRAIT_TRANSPARENT = 1
+};
 
 typedef struct MirrorPose {
     int mapX;
@@ -41,6 +54,13 @@ typedef struct MirrorPose {
     int expectedOrdinal; /* -1 means no mirror */
     const char* label;
 } MirrorPose;
+
+typedef struct PortraitRectMatch {
+    int bestOrdinal;
+    int bestMatched;
+    int expectedMatched;
+    int compared;
+} PortraitRectMatch;
 
 static int g_pass = 0;
 static int g_fail = 0;
@@ -65,6 +85,128 @@ static int check_pose(M11_GameViewState* game, const MirrorPose* pose) {
     printf("FAIL got=%d want=%d\n", actual, pose->expectedOrdinal);
     g_fail++;
     return 0;
+}
+
+static void set_pose(M11_GameViewState* game, int mapX, int mapY, int direction) {
+    game->world.party.mapIndex = 0;
+    game->world.party.mapX = mapX;
+    game->world.party.mapY = mapY;
+    game->world.party.direction = direction;
+    game->showDebugHUD = 0;
+    game->candidateMirrorPanelActive = 0;
+    game->candidateMirrorOrdinal = -1;
+    game->candidateMirrorPartyIndex = -1;
+}
+
+static PortraitRectMatch match_portrait_rect(const M11_AssetSlot* portraits,
+                                             const unsigned char* fb,
+                                             int expectedOrdinal) {
+    PortraitRectMatch out;
+    int ordinal;
+    memset(&out, 0, sizeof(out));
+    out.bestOrdinal = -1;
+    if (!portraits || !portraits->loaded || !portraits->pixels || !fb) {
+        return out;
+    }
+    for (ordinal = 0; ordinal < 24; ++ordinal) {
+        int x;
+        int y;
+        int matched = 0;
+        int compared = 0;
+        for (y = 0; y < PORTRAIT_H; ++y) {
+            for (x = 0; x < PORTRAIT_W; ++x) {
+                int srcX = (ordinal & 7) * PORTRAIT_W + x;
+                int srcY = (ordinal >> 3) * PORTRAIT_H + y;
+                unsigned char src =
+                    (unsigned char)(portraits->pixels[srcY * (int)portraits->width + srcX] & 0x0F);
+                unsigned char dst =
+                    M11_FB_DECODE_INDEX(fb[(PORTRAIT_Y + y) * FB_W + (PORTRAIT_X + x)]);
+                if (src == PORTRAIT_TRANSPARENT) {
+                    continue;
+                }
+                ++compared;
+                if (dst == src) {
+                    ++matched;
+                }
+            }
+        }
+        if (matched > out.bestMatched) {
+            out.bestMatched = matched;
+            out.bestOrdinal = ordinal;
+        }
+        if (ordinal == expectedOrdinal) {
+            out.expectedMatched = matched;
+            out.compared = compared;
+        }
+    }
+    return out;
+}
+
+static int check_portrait_rect(M11_GameViewState* game,
+                               const M11_AssetSlot* portraits,
+                               const MirrorPose* pose) {
+    unsigned char fb[FB_W * FB_H];
+    PortraitRectMatch match;
+    int actual;
+    printf("  TEST: %s portrait rect pose=(%d,%d,%d) expected=%d ... ",
+           pose->label, pose->mapX, pose->mapY, pose->direction,
+           pose->expectedOrdinal);
+    set_pose(game, pose->mapX, pose->mapY, pose->direction);
+    actual = M11_GameView_GetFrontMirrorOrdinal(game);
+    if (actual != pose->expectedOrdinal) {
+        printf("FAIL ordinal got=%d want=%d\n", actual, pose->expectedOrdinal);
+        g_fail++;
+        return 0;
+    }
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, FB_W, FB_H);
+    match = match_portrait_rect(portraits, fb, pose->expectedOrdinal);
+    if (match.bestOrdinal != pose->expectedOrdinal ||
+        match.compared <= 0 ||
+        match.expectedMatched * 100 < match.compared * 90) {
+        printf("FAIL best=%d matched=%d/%d bestMatched=%d\n",
+               match.bestOrdinal, match.expectedMatched,
+               match.compared, match.bestMatched);
+        g_fail++;
+        return 0;
+    }
+    printf("PASS best=%d matched=%d/%d\n",
+           match.bestOrdinal, match.expectedMatched, match.compared);
+    g_pass++;
+    return 1;
+}
+
+static int check_no_stale_ordinal_in_rect(M11_GameViewState* game,
+                                          const M11_AssetSlot* portraits,
+                                          const MirrorPose* pose,
+                                          int staleOrdinal) {
+    unsigned char fb[FB_W * FB_H];
+    PortraitRectMatch match;
+    int actual;
+    printf("  TEST: %s no ordinal %d in portrait rect ... ",
+           pose->label, staleOrdinal);
+    set_pose(game, pose->mapX, pose->mapY, pose->direction);
+    actual = M11_GameView_GetFrontMirrorOrdinal(game);
+    if (actual != pose->expectedOrdinal) {
+        printf("FAIL ordinal got=%d want=%d\n", actual, pose->expectedOrdinal);
+        g_fail++;
+        return 0;
+    }
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, FB_W, FB_H);
+    match = match_portrait_rect(portraits, fb, staleOrdinal);
+    if (match.compared > 0 &&
+        match.expectedMatched * 100 >= match.compared * 35) {
+        printf("FAIL staleMatched=%d/%d best=%d bestMatched=%d\n",
+               match.expectedMatched, match.compared,
+               match.bestOrdinal, match.bestMatched);
+        g_fail++;
+        return 0;
+    }
+    printf("PASS staleMatched=%d/%d best=%d\n",
+           match.expectedMatched, match.compared, match.bestOrdinal);
+    g_pass++;
+    return 1;
 }
 
 static int check_resurrect_round_trip(M11_GameViewState* game,
@@ -135,6 +277,7 @@ int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
     M11_GameViewState game;
+    const M11_AssetSlot* portraits;
     int ok = 1;
 
     /* Actual DM1 V1 DUNGEON.DAT mirror positions at (1,y) facing
@@ -188,12 +331,33 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&game);
         return 1;
     }
+    portraits = M11_AssetLoader_Load(&game.assetLoader,
+                                     (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());
+    if (!portraits || !portraits->loaded || !portraits->pixels ||
+        portraits->width < 256 || portraits->height < 87) {
+        fprintf(stderr, "FAIL GRAPHICS.DAT champion portrait strip unavailable\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
 
     printf("=== DM1 V1 champion mirror actual-pose runtime probe ===\n");
     for (i = 0; i < (int)(sizeof(kPoses) / sizeof(kPoses[0])); ++i) {
         if (!check_pose(&game, &kPoses[i])) {
             ok = 0;
         }
+    }
+    /* Assigned ordinal-2/front_north_entry slice: the historical
+     * (1,4,NORTH)=2 fixture was TextString-derived.  Source-visible PC34
+     * C127 metadata leaves (1,4,NORTH) with no mirror, so this locks the
+     * D1C portrait box against a stale ordinal-2 sprite. The source-valid
+     * ZED route is (1,3,SOUTH)=10 under the DUNGEON.C visible-wall-side
+     * filter, and proves the same DUNVIEW.C C026 portrait rectangle
+     * placement positively. */
+    if (!check_no_stale_ordinal_in_rect(&game, portraits, &kPoses[8], 2)) {
+        ok = 0;
+    }
+    if (!check_portrait_rect(&game, portraits, &kPoses[9])) {
+        ok = 0;
     }
     /* Round-trip: resurrect at (1,2) NORTH (HALK).  The champion
      * must be appended, the mirror must disable, and 20 idle ticks
