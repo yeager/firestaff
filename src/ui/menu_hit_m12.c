@@ -77,6 +77,14 @@ static const int m12_hit_visible_settings_rows[] = {0, 1, 3, 14, 15, 16, 30, 42,
 #define M12_HIT_MUSEUM_CONTENT_W      (M12_HIT_PANEL_W - M12_HIT_MUSEUM_CAT_W - 100)
 #define M12_HIT_MUSEUM_CONTENT_H      (M12_HIT_PANEL_H - 48)
 
+/* Redesigned extras list, matching m12_draw_extras_menu() geometry. */
+#define M12_HIT_REDESIGNED_MARGIN     (M12_HIT_CANVAS_W / 20)
+#define M12_HIT_EXTRAS_X              (M12_HIT_REDESIGNED_MARGIN + 20)
+#define M12_HIT_EXTRAS_Y0             (M12_HIT_CANVAS_H / 5)
+#define M12_HIT_EXTRAS_W              (M12_HIT_CANVAS_W / 2)
+#define M12_HIT_EXTRAS_H              26
+#define M12_HIT_EXTRAS_STEP           26
+
 /* Launch button inside game options panel.  Must mirror
  * menu_startup_render_modern_m12.c:draw_game_options_view(). */
 #define M12_HIT_LAUNCH_W     240
@@ -185,6 +193,23 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             hit.kind = M12_HIT_BACK;
             return hit;
         }
+    }
+
+    if (state->view == M12_MENU_VIEW_MAIN &&
+        m12_get_nav_level() == (int)M12_NAV_EXTRAS) {
+        for (i = 0; i < M12_EXTRAS_COUNT; ++i) {
+            if (rect_contains(M12_HIT_EXTRAS_X,
+                              M12_HIT_EXTRAS_Y0 + i * M12_HIT_EXTRAS_STEP,
+                              M12_HIT_EXTRAS_W,
+                              M12_HIT_EXTRAS_H,
+                              x,
+                              y)) {
+                hit.kind = M12_HIT_EXTRAS_ROW;
+                hit.index = i;
+                return hit;
+            }
+        }
+        return hit;
     }
 
     switch (state->view) {
@@ -387,7 +412,10 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
             }
             return 1;
         case M12_HIT_GAMEOPT_ROW:
-            while (state->gameOptSelectedRow != hit.index) {
+        {
+            int guard = 0;
+            while (state->gameOptSelectedRow != hit.index &&
+                   guard++ < M12_GAME_OPT_ROW_COUNT + 2) {
                 int before = state->gameOptSelectedRow;
                 M12_MenuInput mv = (hit.index > state->gameOptSelectedRow)
                                        ? M12_MENU_INPUT_DOWN
@@ -396,8 +424,12 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                 if (state->gameOptSelectedRow == before) break;
             }
             return 1;
+        }
         case M12_HIT_GAMEOPT_CYCLE:
-            while (state->gameOptSelectedRow != hit.index) {
+        {
+            int guard = 0;
+            while (state->gameOptSelectedRow != hit.index &&
+                   guard++ < M12_GAME_OPT_ROW_COUNT + 2) {
                 int before = state->gameOptSelectedRow;
                 M12_MenuInput mv = (hit.index > state->gameOptSelectedRow)
                                        ? M12_MENU_INPUT_DOWN
@@ -425,17 +457,29 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                                         hit.delta >= 0 ? M12_MENU_INPUT_RIGHT
                                                        : M12_MENU_INPUT_LEFT);
             return 1;
+        }
         case M12_HIT_GAMEOPT_LAUNCH:
-            /* Jump the cursor to the launch row, then accept. */
-            while (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
-                int before = state->gameOptSelectedRow;
-                M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_DOWN);
-                if (state->gameOptSelectedRow == before) break;
-            }
+            /* Pointer activation owns the launch button directly.  Avoid
+             * replaying DOWN events here because the keyboard cursor can
+             * wrap/clamp differently across presentation-mode rows. */
+            state->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
             M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
             return 1;
         case M12_HIT_MESSAGE_DISMISS:
             M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+            return 1;
+        case M12_HIT_EXTRAS_ROW:
+            while ((int)state->extrasSelected != hit.index) {
+                int before = (int)state->extrasSelected;
+                M12_MenuInput mv = (hit.index > (int)state->extrasSelected)
+                                       ? M12_MENU_INPUT_DOWN
+                                       : M12_MENU_INPUT_UP;
+                m12_redesigned_handle_input(state, mv == M12_MENU_INPUT_UP,
+                                            mv == M12_MENU_INPUT_DOWN,
+                                            0, 0, 0, 0);
+                if ((int)state->extrasSelected == before) break;
+            }
+            m12_redesigned_handle_input(state, 0, 0, 0, 0, 1, 0);
             return 1;
     }
     return 0;
@@ -488,6 +532,12 @@ int M12_ModernMenu_HandlePointer(M12_StartupMenuState* state,
             case M12_HIT_GAMEOPT_LAUNCH:
                 if (state->gameOptSelectedRow != hit.index) {
                     state->gameOptSelectedRow = hit.index;
+                    changed = 1;
+                }
+                break;
+            case M12_HIT_EXTRAS_ROW:
+                if ((int)state->extrasSelected != hit.index) {
+                    state->extrasSelected = (M12_ExtrasItem)hit.index;
                     changed = 1;
                 }
                 break;

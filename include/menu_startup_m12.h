@@ -325,6 +325,14 @@ typedef enum {
     M12_EXTRAS_COUNT
 } M12_ExtrasItem;
 
+typedef enum {
+    M12_NAV_MAIN = 0,
+    M12_NAV_GAME_SELECT,
+    M12_NAV_GAME_MODE,
+    M12_NAV_SETTINGS,
+    M12_NAV_EXTRAS
+} M12_NavLevel;
+
 /* ── Settings tabs (renamed for clarity) ──────────────────────────── */
 typedef enum {
     M12_SETTINGS_TAB2_DISPLAY = 0,
