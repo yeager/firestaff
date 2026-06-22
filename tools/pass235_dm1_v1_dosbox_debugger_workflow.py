@@ -9,6 +9,8 @@ until a symbol/global-address bridge exists.
 from __future__ import annotations
 
 import argparse
+import os
+import time
 import hashlib
 import json
 import re
@@ -89,7 +91,9 @@ def normalize_temp_paths(text: str) -> str:
     return re.sub(r"/tmp/firestaff-pass235-[^\s\"]+", "<TMP>", text)
 
 
-def clean_ansi(raw: bytes) -> str:
+def clean_ansi(raw) -> str:
+    if isinstance(raw, str):
+        raw = raw.encode("latin-1", errors="replace")
     text = raw.decode("latin-1", errors="replace")
     text = re.sub(r"\x1b\[[0-9;?]*[ -/]*[@-~]", "", text)
     text = text.replace("\r", "\n")
@@ -123,16 +127,89 @@ def run_entry_capture(timeout_s: int = 30) -> dict[str, Any]:
         conf.write_text("\n".join([
             "[sdl]", "fullscreen=false", "output=surface", "[dosbox]", "machine=svga_paradise", "memsize=4", "[cpu]", "core=normal", "cycles=3000", "[mixer]", "nosound=true", "[autoexec]", f"mount c \"{stage}\"", "c:", "DEBUG FIRES.EXE", "",
         ]))
-        cmd = ["bash", "-lc", f"TERM=xterm timeout {timeout_s} xvfb-run -a dosbox-debug -conf {shlex.quote(str(conf))} -exit"]
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout_s + 8)
-        clean = clean_ansi(proc.stdout)
+        # Spawn dosbox-debug via pexpect under a private Xvfb.  Two reasons
+        # we cannot use `subprocess.run + xvfb-run` here:
+        #   1. dosbox-x's in-tree debugger emits the line
+        #      "Debugger in Mac OS X is not available unless you start
+        #       DOSBox-X from a terminal" when its STDIN/STDOUT is a pipe
+        #      (i.e. anything except a real TTY).  pexpect.spawn owns a PTY
+        #      and is therefore considered a terminal by the runtime.
+        #   2. dosbox-x raises a Cocoa "Quit DOSBox-X warning" modal when
+        #      a SIGTERM-equivalent arrives; we suppress it with
+        #      `-o quit warning=false` on the command line so unattended
+        #      exit does not require AppleScript confirmation.
+        try:
+            import pexpect  # type: ignore
+        except ImportError:
+            return {"ok": False, "blocker": "pexpect not importable on this host"}
+        # Find a free :NN display so the gate does not collide with the
+        # firestaff watchdog or other harnesses that already own :91.
+        display = None
+        for candidate in range(90, 100):
+            if not Path(f"/tmp/.X11-unix/X{candidate}").exists():
+                display = f":{candidate}"
+                break
+        if display is None:
+            return {"ok": False, "blocker": "no free Xvfb display in 90..99"}
+        xvfb = subprocess.Popen(
+            ["Xvfb", display, "-screen", "0", "1024x768x24", "-nolisten", "tcp"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT,
+        )
+        for _ in range(40):
+            if Path(f"/tmp/.X11-unix/X{display[1:]}").exists():
+                break
+            time.sleep(0.05)
+        transcript_raw = ""
+        child = None
+        try:
+            child = pexpect.spawn(
+                "dosbox-debug",
+                ["-nogui", "-conf", str(conf), "-o", "quit warning=false"],
+                env={**os.environ, "DISPLAY": display, "TERM": "vt100"},
+                encoding="utf-8", timeout=timeout_s, echo=False, maxread=8192,
+            )
+            child.delaybeforesend = 0.05
+            deadline = time.time() + timeout_s
+            while time.time() < deadline:
+                try:
+                    chunk = child.read_nonblocking(size=4096, timeout=1.0)
+                    transcript_raw += chunk
+                except pexpect.TIMEOUT:
+                    pass
+                except pexpect.EOF:
+                    transcript_raw += "<EOF>"
+                    break
+                # The real entry-stop would surface as a (Running)->-> break
+                # followed by a disassembly line containing the FIRES entry
+                # CS:IP.  Until that path is proven we just record whatever
+                # the runtime emitted; the verifier below still reports the
+                # best known address from the captured transcript.
+                if "01ED:0000" in transcript_raw or "BADA26" in transcript_raw:
+                    break
+        finally:
+            try:
+                if child is not None:
+                    transcript_raw += child.read_nonblocking(size=4096, timeout=1.0)  # type: ignore
+            except Exception:
+                pass
+            try:
+                if child is not None:
+                    child.terminate(force=True)  # type: ignore
+            except Exception:
+                pass
+            try:
+                xvfb.terminate()
+                xvfb.wait(timeout=5)
+            except Exception:
+                pass
+        clean = clean_ansi(transcript_raw)
         transcript = OUT_DIR / "entry_debugger_transcript.clean.txt"
         transcript.write_text(clean[-12000:], encoding="latin-1")
         entry_hits = sorted(set(re.findall(r"([0-9A-F]{4}):0000\s+BADA26", clean)))
         cs_regs = sorted(set(re.findall(r"CS=([0-9A-F]{4})", clean)))
         runtime_cs = entry_hits[-1] if entry_hits else (cs_regs[-1] if cs_regs else None)
         psp = f"{(int(runtime_cs, 16) - 0x10) & 0xFFFF:04X}" if runtime_cs else None
-        return {"ok": bool(runtime_cs), "command": ["bash", "-lc", "TERM=xterm timeout 5 xvfb-run -a dosbox-debug -conf <TMP>/dosbox-debug.conf -exit"], "returncode": proc.returncode, "fires_exenew": exenew_info, "entry_runtime_cs_ip": f"{runtime_cs}:0000" if runtime_cs else None, "psp_segment_inferred": psp, "evidence_regex": "([0-9A-F]{4}):0000\\s+BADA26", "transcript_excerpt_path": str(transcript), "matched_entry_segments": entry_hits, "matched_cs_registers": cs_regs, "safe_interpretation": "actual DOSBox debugger runtime entry for temp FIRES.EXENEW copy; not a ReDMCSB function seam hit"}
+        return {"ok": bool(runtime_cs), "command": ["pexpect", "dosbox-debug", "-nogui", "-conf", "<TMP>/dosbox-debug.conf", "-o", "quit warning=false"], "returncode": child.exitstatus if child is not None else None, "xvfb_display": display, "pexept_transcript_length": len(transcript_raw), "fires_exenew": exenew_info, "entry_runtime_cs_ip": f"{runtime_cs}:0000" if runtime_cs else None, "psp_segment_inferred": psp, "evidence_regex": "([0-9A-F]{4}):0000\\s+BADA26", "transcript_excerpt_path": str(transcript), "matched_entry_segments": entry_hits, "matched_cs_registers": cs_regs, "safe_interpretation": "actual DOSBox debugger runtime entry for temp FIRES.EXENEW copy; not a ReDMCSB function seam hit"}
 
 
 def write_runbook(path: Path) -> None:
