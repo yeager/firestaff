@@ -72,7 +72,7 @@ Classification:
 | CSB native translations | po/csb_translations | PARTIAL — `sv/fr/de/ja/zh` are 33/33 native; the other shipped non-English catalogs are currently fallback-only |
 | DM2 native translations | po/dm2_translations | OUT-OF-SCOPE — DM2 slice not implemented |
 | Nexus native translations | po/nexus_translations | PARTIAL — validator reports 28-30/30 native entries across every shipped non-English catalog; remaining work is native QA/runtime rendering, not empty scaffolding |
-| Theron native translations | po/theron_translations | PARTIAL — `fr/de/ja/zh` now have 35-37/38 native entries; 13 shipped catalogs remain fallback-only and `sv` is still absent |
+| Theron native translations | po/theron_translations | PARTIAL — `sv` now has 38/38 native runtime entries; `fr/de/ja/zh` have 35-37/38 native entries; 13 shipped catalogs remain fallback-only and native QA/runtime rendering is still open |
 | **Native-vs-fallback separation in validator** | po/validate_po_layout.sh | FIXED — `validate_po_layout.sh` now reports `nonblank` coverage separately from `native` coverage and marks fallback-only catalogs as `FALL`; `bash -n po/validate_po_layout.sh && bash po/validate_po_layout.sh` PASS on 2026-06-21 |
 | Native QA on terminology / runtime rendering | po/ | OPEN-LARGE — needs native speakers |
 
