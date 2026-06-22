@@ -27,12 +27,22 @@
 #include <sys/stat.h>
 
 #ifdef _WIN32
+#include <direct.h>
+
 static int probe_setenv(const char* name, const char* value) {
     return _putenv_s(name, value);
+}
+
+static void probe_mkdir(const char* path) {
+    (void)_mkdir(path);
 }
 #else
 static int probe_setenv(const char* name, const char* value) {
     return setenv(name, value, 1);
+}
+
+static void probe_mkdir(const char* path) {
+    (void)mkdir(path, 0777);
 }
 #endif
 
@@ -103,9 +113,9 @@ int main(int argc, char** argv) {
         fprintf(stderr, "FAIL: out of memory\n");
         return 2;
     }
-    mkdir("verification-m12", 0777);
-    mkdir("verification-m12/extras-smoke-home", 0777);
-    mkdir("verification-m12/extras-smoke-empty-screenshots", 0777);
+    probe_mkdir("verification-m12");
+    probe_mkdir("verification-m12/extras-smoke-home");
+    probe_mkdir("verification-m12/extras-smoke-empty-screenshots");
     probe_setenv("HOME", "verification-m12/extras-smoke-home");
     probe_setenv("FIRESTAFF_SCREENSHOTS_DIR",
                  "verification-m12/extras-smoke-empty-screenshots");
