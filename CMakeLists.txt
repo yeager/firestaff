@@ -11716,6 +11716,45 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
 endif()
 
+# ── Data-dir change cache invalidation gate ──────────────────────────
+# Source-lock: src/shared/asset_status_m12.c M12_AssetStatus_Scan +
+#   m12_scan_direct_theron_request / m12_scan_explicit_file_request /
+#   m12_scan_original_candidates / m12_reuse_verified_theron_refresh /
+#   m12_materialize_runtime_cache_for_game, src/ui/menu_startup_m12.c
+#   M12_StartupMenu_SetDataDirectory, include/asset_status_m12.h.
+# The launcher keeps one M12_AssetStatus on the menu state for the
+# whole session; flipping the configured data root must invalidate
+# the prior scan's availability/paths/hashes, not re-publish stale
+# matches. This data-free regression proves A→B, A→B→A round-trip,
+# A→C variant swap, and legacy-fallback refresh.
+if(BUILD_TESTING)
+    add_executable(test_asset_status_data_dir_change_cache_invalidation
+        tests/test_asset_status_data_dir_change_cache_invalidation.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_asset_status_data_dir_change_cache_invalidation PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_asset_status_data_dir_change_cache_invalidation PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    # M12 testing-only API (M12_AssetStatusScanMetrics + Test* helpers).
+    target_compile_definitions(test_asset_status_data_dir_change_cache_invalidation PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1)
+    if(TARGET firestaff_m12)
+        target_link_libraries(test_asset_status_data_dir_change_cache_invalidation PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(test_asset_status_data_dir_change_cache_invalidation PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_status_data_dir_change_cache_invalidation
+        COMMAND test_asset_status_data_dir_change_cache_invalidation
+    )
+endif()
+
 # ── Theron V1 Phase 7 — Track 02 Bank Probe ───────────────────────
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_track02_bank_probe
