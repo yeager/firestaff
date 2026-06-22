@@ -38,6 +38,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 typedef struct {
     int total;
@@ -84,8 +87,13 @@ int main(void) {
     unsigned char* b = (unsigned char*)malloc(rgbaBytes);
     if (!a || !b) { free(a); free(b); return 2; }
 
+#ifdef _WIN32
+    _mkdir("verification-m12");
+    _mkdir("verification-m12/menu-mouse");
+#else
     mkdir("verification-m12", 0777);
     mkdir("verification-m12/menu-mouse", 0777);
+#endif
 
     /* ---------- INV_MOUSE_01 ---------- */
     {

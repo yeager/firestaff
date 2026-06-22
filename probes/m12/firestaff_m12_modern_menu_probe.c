@@ -36,6 +36,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 typedef struct {
     int total;
@@ -53,7 +56,11 @@ static void record(Tally* t, const char* id, int ok, const char* msg) {
 }
 
 static void ensure_dir(const char* path) {
+#ifdef _WIN32
+    _mkdir(path);
+#else
     mkdir(path, 0777);
+#endif
 }
 
 static int write_ppm(const char* path, const unsigned char* rgba, int w, int h) {
