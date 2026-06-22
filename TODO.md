@@ -163,6 +163,8 @@ Source-locked against SKULL.ASM T520/T560/T600, ReDMCSB GAMELOOP.C:164-219, and 
 ## Cross-Cutting
 ## Cross-Cutting
 
+- 🔧 Nexus BPX/BPK real-asset decoder: `nexus_v1_bpx_bpk` now has the verified `MENU.BPK` marker plus a data-free synthetic `BPX0` archive-boundary contract, but the actual Saturn `.BPK/.BPX` compression/table layout is still unknown. Remaining work requires real `MENU.BPK` byte inspection or executable/disassembly evidence, then a real-asset decode probe before this can move from PARTIAL to FIXED.
+
 - 🐛 2026-06-16 firestaff_m10 unresolved symbol `_G2157_`: `image_backend_pc34_compat.c` (F0687/F0688/IMG3_*) uses `unsigned int16_t G2157_` but the definition lives in `image_frontend_pc34.c` which is NOT in `firestaff_m10` lib source list (CMakeLists.txt:56). Discovered while writing F0376_COMMAND_IsPointInBox regression test. Fix: add `src/shared/image_frontend_pc34.c` to `firestaff_m10` lib source list, or move G2157_ definition into a shared header. This is a pre-existing module decomposition issue, not introduced by the audit. See `docs/audits/REDMSB_FIRESTAFF_AUDIT_2026-06-16.md` Section "Bug B".
 ### Launcher and Settings
 
