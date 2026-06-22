@@ -6813,6 +6813,31 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat
     )
 
+    # DM1 V1 champion-panel DISABLED/UNAVAILABLE ICON STATE gate.
+    # Source-locked against CHAMPION.C F0330:2208-2255
+    # (MASK0x8000_ACTION_HAND | MASK0x0008_DISABLE_ACTION) +
+    # ACTIDRAW.C F0386:201-296 (hatch gate at line 282 + dead-champion
+    # early-return at line 234) + MENU.C:27,157 G0491[44] +
+    # m11_collect_v1_status_shield_border_graphics + the
+    # M11_GameView_ShouldHatchV1ActionIconCells global hatch gate.
+    # Disjoint from existing shield-border ENABLED pixel coverage
+    # (firestaff_dm1_v1_champion_panel_shield_border_pixel_probe)
+    # and existing icon-direction ENABLED coverage
+    # (firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe).
+    # Contract-only; no real GRAPHICS.DAT / DUNGEON.DAT load.
+    add_executable(test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat
+        tests/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_disabled_icon_state_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_disabled_icon_state_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat
+    )
+
     add_executable(test_dm1_v1_viewport_status_bar_layout_pc34_compat
         src/test/test_dm1_v1_viewport_status_bar_layout_pc34_compat.c
     )
@@ -8791,6 +8816,19 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         NAME pass1073_dm1_v1_original_live_capture_receipt
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1073_dm1_v1_original_live_capture_receipt.py
     )
+    # pass1074 — DM1 V1 champion-panel DISABLED/UNAVAILABLE shield/action
+    # icon state gate.  Source-locked against CHAMPION.C F0330:2208-2255
+    # + ACTIDRAW.C F0386:201-296 + MENU.C:27,157 G0491[44] + the M11
+    # m11_collect_v1_status_shield_border_graphics disabled side.
+    # Disjoint from existing shield-border ENABLED pixel coverage
+    # (firestaff_dm1_v1_champion_panel_shield_border_pixel_probe) and
+    # existing icon-direction ENABLED coverage
+    # (firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe).
+    add_test(
+        NAME pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat.py
+    )
+    set_tests_properties(pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat PROPERTIES DEPENDS dm1_v1_champion_panel_disabled_icon_state_pc34_compat)
 endif()
 
 # -- DM1 V1 PC/I34E runtime transcript capture path gate --------------
