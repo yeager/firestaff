@@ -245,8 +245,8 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state);
 static void m12_save_config(const M12_StartupMenuState* state);
 static void m12_apply_loaded_config(M12_StartupMenuState* state, const char* dataDirOverride);
 static void m12_begin_data_dir_browse(M12_StartupMenuState* state);
-static void m12_export_settings_json(M12_StartupMenuState* state);
-static void m12_import_settings_json(M12_StartupMenuState* state);
+static void m12_export_save_manifest_json(M12_StartupMenuState* state);
+static void m12_import_save_manifest_json(M12_StartupMenuState* state);
 const char *m12_localized_main_label(int index);
 const char *m12_localized_extras_label(int index);
 
@@ -1363,7 +1363,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     return 1;
 }
 
-static void m12_export_settings_json(M12_StartupMenuState* state) {
+static void m12_export_save_manifest_json(M12_StartupMenuState* state) {
     M12_Config config;
     if (!state) {
         return;
@@ -1371,10 +1371,10 @@ static void m12_export_settings_json(M12_StartupMenuState* state) {
     m12_save_config(state);
     M12_Config_Load(&config, NULL);
     state->view = M12_MENU_VIEW_MESSAGE;
-    if (M12_Config_ExportJSON(&config, NULL)) {
+    if (M12_Config_ExportSaveManifestJSON(&config, NULL)) {
         m12_set_buffered_message(state,
-                                 m12_tr(state, "SETTINGS EXPORTED"),
-                                 m12_tr(state, "READY FOR BACKUP OR IMPORT"),
+                                 m12_tr(state, "SAVE MANIFEST EXPORTED"),
+                                 m12_tr(state, "SAVE FILES ARE NOT COPIED"),
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
     } else {
         m12_set_buffered_message(state,
@@ -1384,14 +1384,14 @@ static void m12_export_settings_json(M12_StartupMenuState* state) {
     }
 }
 
-static void m12_import_settings_json(M12_StartupMenuState* state) {
+static void m12_import_save_manifest_json(M12_StartupMenuState* state) {
     M12_Config config;
     if (!state) {
         return;
     }
     M12_Config_Load(&config, NULL);
     state->view = M12_MENU_VIEW_MESSAGE;
-    if (M12_Config_ImportJSON(&config, NULL)) {
+    if (M12_Config_ImportSaveManifestJSON(&config, NULL)) {
         M12_Config_Save(&config);
         m12_apply_loaded_config(state, NULL);
         m12_sync_entries_from_assets(state);
@@ -1401,14 +1401,16 @@ static void m12_import_settings_json(M12_StartupMenuState* state) {
                              M12_AssetStatus_GetDataDir(&state->assetStatus),
                              (unsigned int)time(NULL));
         m12_probe_quick_resume(state);
+        snprintf(state->quickResumeSavePath, sizeof(state->quickResumeSavePath),
+                 "%s", config.lastSavePath);
         m12_set_buffered_message(state,
-                                 m12_tr(state, "SETTINGS IMPORTED"),
-                                 m12_tr(state, "LAUNCHER UPDATED"),
+                                 m12_tr(state, "SAVE MANIFEST IMPORTED"),
+                                 m12_tr(state, "QUICK RESUME PATH UPDATED"),
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
     } else {
         m12_set_buffered_message(state,
                                  m12_tr(state, "IMPORT FAILED"),
-                                 m12_tr(state, "EXPORT SETTINGS FIRST OR RESTORE THE FILE"),
+                                 m12_tr(state, "EXPORT A SAVE MANIFEST FIRST"),
                                  m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
     }
 }
@@ -2262,8 +2264,8 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_tr(state, "CUSTOM DUNGEONS");
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_tr(state, "SCREENSHOTS");
         case M12_SETTINGS_ROW_STREAMER_MODE: return m12_tr(state, "STREAMER MODE");
-        case M12_SETTINGS_ROW_EXPORT: return m12_tr(state, "EXPORT SETTINGS");
-        case M12_SETTINGS_ROW_IMPORT: return m12_tr(state, "IMPORT SETTINGS");
+        case M12_SETTINGS_ROW_EXPORT: return m12_tr(state, "EXPORT SAVE MANIFEST");
+        case M12_SETTINGS_ROW_IMPORT: return m12_tr(state, "IMPORT SAVE MANIFEST");
         default: return "";
     }
 }
@@ -2313,8 +2315,8 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_settings_value_path_status(state, state ? state->settings.customDungeonPath : NULL);
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_settings_value_path_status(state, state ? state->settings.screenshotPath : NULL);
         case M12_SETTINGS_ROW_STREAMER_MODE: return m12_settings_value_streamer_mode(state);
-        case M12_SETTINGS_ROW_EXPORT: return m12_tr(state, "SAVE...");
-        case M12_SETTINGS_ROW_IMPORT: return m12_tr(state, "LOAD...");
+        case M12_SETTINGS_ROW_EXPORT: return m12_tr(state, "WRITE...");
+        case M12_SETTINGS_ROW_IMPORT: return m12_tr(state, "READ...");
         default: return "";
     }
 }
@@ -2839,10 +2841,10 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
         case M12_SETTINGS_ROW_EXPORT:
-            m12_export_settings_json(state);
+            m12_export_save_manifest_json(state);
             break;
         case M12_SETTINGS_ROW_IMPORT:
-            m12_import_settings_json(state);
+            m12_import_save_manifest_json(state);
             break;
         default:
             break;

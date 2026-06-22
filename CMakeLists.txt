@@ -2193,6 +2193,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_json_export_impo
     if(NOT MSVC)
         target_compile_options(firestaff_m12_json_export_import_probe PRIVATE -Wall -Wextra -O2)
     endif()
+    add_test(
+        NAME m12_json_export_import
+        COMMAND firestaff_m12_json_export_import_probe
+    )
 endif()
 
 # DM1 V1 wall inscription rendering probe

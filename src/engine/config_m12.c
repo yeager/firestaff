@@ -1057,6 +1057,16 @@ static void m12_default_export_path(char* out, size_t outSize) {
     m12_copy_string(out, outSize, "firestaff-settings-export.json");
 }
 
+static void m12_default_save_export_path(char* out, size_t outSize) {
+    char configDir[FSP_PATH_MAX];
+    if (FSP_GetUserConfigDir(configDir, sizeof(configDir))) {
+        if (FSP_JoinPath(out, outSize, configDir, "firestaff-save-export-manifest.json")) {
+            return;
+        }
+    }
+    m12_copy_string(out, outSize, "firestaff-save-export-manifest.json");
+}
+
 /* ── JSON string serialization helpers ───────────────────────────────── */
 static void m12_json_write_string(FILE* fp, const char* value) {
     const char* p;
@@ -1319,6 +1329,23 @@ static void m12_json_read_string_content(const char* quoted, char* out, size_t o
     out[dst] = '\0';
 }
 
+static int m12_manifest_path_is_valid(const char* path, size_t cap) {
+    size_t i;
+    if (!path) {
+        return 0;
+    }
+    if (strlen(path) >= cap) {
+        return 0;
+    }
+    for (i = 0U; path[i] != '\0'; ++i) {
+        unsigned char ch = (unsigned char)path[i];
+        if (ch < 32U || ch == 127U) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /* ── M12_Config_ImportJSON ─────────────────────────────────────────────
  * Deserializes settings from a JSON file at importPath into config.
  * Returns 1 on success, 0 on failure (file not found, parse error).
@@ -1513,10 +1540,19 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
                 }
                 continue;
             }
-            for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+            gi = 0;
+            while (m12_json_next_token(fp, token, sizeof(token))) {
                 char t2[256];
-                /* Expect { */
-                if (!m12_json_next_token(fp, t2, sizeof(t2)) || strcmp(t2, "{") != 0) break;
+                if (strcmp(token, "]") == 0) {
+                    break;
+                }
+                if (strcmp(token, ",") == 0) {
+                    continue;
+                }
+                if (strcmp(token, "{") != 0) {
+                    fclose(fp);
+                    return 0;
+                }
 
                 /* Parse game object */
                 while (m12_json_next_token(fp, t2, sizeof(t2))) {
@@ -1544,34 +1580,28 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
                     if (!m12_json_next_token(fp, t2, sizeof(t2))) break;
 
                     if (gi < M12_CONFIG_GAME_COUNT) {
-                        SET_INT("use_patch", gameUsePatch[gi])
-                        SET_INT("version_index", gameVersionIndex[gi])
-                        SET_INT("language_index", gameLanguageIndex[gi])
-                        SET_INT("cheats_enabled", gameCheatsEnabled[gi])
-                        SET_INT("speed", gameSpeed[gi])
-                        SET_INT("aspect_ratio", gameAspectRatio[gi])
-                        SET_INT("resolution", gameResolution[gi])
+                        if (strcmp(key, "use_patch") == 0) {
+                            config->gameUsePatch[gi] = m12_parse_int(t2, config->gameUsePatch[gi]);
+                        } else if (strcmp(key, "version_index") == 0) {
+                            config->gameVersionIndex[gi] = m12_parse_int(t2, config->gameVersionIndex[gi]);
+                        } else if (strcmp(key, "language_index") == 0) {
+                            config->gameLanguageIndex[gi] = m12_parse_int(t2, config->gameLanguageIndex[gi]);
+                        } else if (strcmp(key, "cheats_enabled") == 0) {
+                            config->gameCheatsEnabled[gi] = m12_parse_int(t2, config->gameCheatsEnabled[gi]);
+                        } else if (strcmp(key, "speed") == 0) {
+                            config->gameSpeed[gi] = m12_parse_int(t2, config->gameSpeed[gi]);
+                        } else if (strcmp(key, "aspect_ratio") == 0) {
+                            config->gameAspectRatio[gi] = m12_parse_int(t2, config->gameAspectRatio[gi]);
+                        } else if (strcmp(key, "resolution") == 0) {
+                            config->gameResolution[gi] = m12_parse_int(t2, config->gameResolution[gi]);
+                        }
                     }
                 }
-                /* Check for end of array */
-                {
-                    char t3[256];
-                    int peek;
-                    peek = fgetc(fp);
-                    if (peek != EOF) ungetc(peek, fp);
-                    if (peek == ',') {
-                        m12_json_next_token(fp, t3, sizeof(t3)); /* consume , */
-                        (void)t3;
-                    }
+                if (strcmp(t2, "}") != 0) {
+                    fclose(fp);
+                    return 0;
                 }
-            }
-            /* Skip to matching ] */
-            {
-                int depth = 1;
-                while (depth > 0 && m12_json_next_token(fp, token, sizeof(token))) {
-                    if (strcmp(token, "[") == 0) depth++;
-                    else if (strcmp(token, "]") == 0) depth--;
-                }
+                ++gi;
             }
             continue;
         }
@@ -1591,5 +1621,185 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
 const char* M12_Config_GetExportPath(void) {
     static char pathBuf[FSP_PATH_MAX];
     m12_default_export_path(pathBuf, sizeof(pathBuf));
+    return pathBuf;
+}
+
+int M12_Config_ExportSaveManifestJSON(const M12_Config* config, const char* exportPath) {
+    char pathBuf[FSP_PATH_MAX];
+    char tmpPathBuf[FSP_PATH_MAX + 16];
+    const char* path;
+    FILE* fp;
+    int gi;
+
+    if (!config) {
+        return 0;
+    }
+    if (!exportPath || exportPath[0] == '\0') {
+        m12_default_save_export_path(pathBuf, sizeof(pathBuf));
+        path = pathBuf;
+    } else {
+        path = exportPath;
+    }
+    if (!m12_manifest_path_is_valid(path, FSP_PATH_MAX)) {
+        return 0;
+    }
+    {
+        char parentDir[FSP_PATH_MAX];
+        if (FSP_ParentDir(parentDir, sizeof(parentDir), path)) {
+            if (!FSP_CreateDirectoryRecursive(parentDir)) {
+                return 0;
+            }
+        }
+    }
+    snprintf(tmpPathBuf, sizeof(tmpPathBuf), "%s.tmp", path);
+    fp = fopen(tmpPathBuf, "wb");
+    if (!fp) {
+        return 0;
+    }
+    fprintf(fp, "{\n");
+    fprintf(fp, "  \"version\": \"1.0\",\n");
+    fprintf(fp, "  \"type\": \"firestaff-launcher-save-export-manifest\",\n");
+    fprintf(fp, "  \"scope\": \"launcher-known-save-paths\",\n");
+    fprintf(fp, "  \"runtime_save_bytes_included\": 0,\n");
+    fprintf(fp, "  \"quick_resume_enabled\": %d,\n", config->quickResumeEnabled ? 1 : 0);
+    fprintf(fp, "  \"last_save_path\": ");
+    m12_json_write_string(fp, config->lastSavePath);
+    fprintf(fp, ",\n  \"data_dir\": ");
+    m12_json_write_string(fp, config->dataDir);
+    fprintf(fp, ",\n  \"game_options\": [\n");
+    for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+        fprintf(fp, "    {\"version_index\": %d, \"language_index\": %d}%s\n",
+                config->gameVersionIndex[gi],
+                config->gameLanguageIndex[gi],
+                gi + 1 < M12_CONFIG_GAME_COUNT ? "," : "");
+    }
+    fprintf(fp, "  ]\n");
+    fprintf(fp, "}\n");
+    if (fclose(fp) != 0) {
+        remove(tmpPathBuf);
+        return 0;
+    }
+    if (rename(tmpPathBuf, path) != 0) {
+        remove(tmpPathBuf);
+        return 0;
+    }
+    return 1;
+}
+
+int M12_Config_ImportSaveManifestJSON(M12_Config* config, const char* importPath) {
+    char pathBuf[FSP_PATH_MAX];
+    const char* path;
+    FILE* fp;
+    char token[256];
+    char key[128];
+    char manifestType[96];
+    char importedLastSave[M12_CONFIG_LAST_SAVE_PATH_CAPACITY];
+    int importedQuickResume;
+    int sawType = 0;
+    int sawLastSave = 0;
+
+    if (!config) {
+        return 0;
+    }
+    if (!importPath || importPath[0] == '\0') {
+        m12_default_save_export_path(pathBuf, sizeof(pathBuf));
+        path = pathBuf;
+    } else {
+        path = importPath;
+    }
+    if (!m12_manifest_path_is_valid(path, FSP_PATH_MAX)) {
+        return 0;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+    if (!m12_json_next_token(fp, token, sizeof(token)) || strcmp(token, "{") != 0) {
+        fclose(fp);
+        return 0;
+    }
+
+    manifestType[0] = '\0';
+    importedQuickResume = config->quickResumeEnabled ? 1 : 0;
+    importedLastSave[0] = '\0';
+
+    while (m12_json_next_token(fp, token, sizeof(token))) {
+        if (strcmp(token, "}") == 0) {
+            break;
+        }
+        if (strcmp(token, ",") == 0) {
+            continue;
+        }
+        if (token[0] != '"') {
+            fclose(fp);
+            return 0;
+        }
+        {
+            size_t i = 0U;
+            size_t src = 1U;
+            while (src < strlen(token) - 1U && i < sizeof(key) - 1U) {
+                if (token[src] == '\\' && src + 1U < strlen(token) - 1U) {
+                    ++src;
+                }
+                if (token[src] == '"') {
+                    break;
+                }
+                key[i++] = token[src++];
+            }
+            key[i] = '\0';
+        }
+        if (!m12_json_next_token(fp, token, sizeof(token)) || strcmp(token, ":") != 0) {
+            fclose(fp);
+            return 0;
+        }
+        if (!m12_json_next_token(fp, token, sizeof(token))) {
+            fclose(fp);
+            return 0;
+        }
+        if (strcmp(key, "type") == 0) {
+            m12_json_read_string_content(token, manifestType, sizeof(manifestType));
+            sawType = 1;
+        } else if (strcmp(key, "quick_resume_enabled") == 0) {
+            importedQuickResume = m12_parse_int(token, importedQuickResume) ? 1 : 0;
+        } else if (strcmp(key, "last_save_path") == 0) {
+            m12_json_read_string_content(token, importedLastSave, sizeof(importedLastSave));
+            sawLastSave = 1;
+        } else if (strcmp(token, "{") == 0 || strcmp(token, "[") == 0) {
+            char openToken[2];
+            char closeToken[2];
+            int depth = 1;
+            openToken[0] = token[0];
+            openToken[1] = '\0';
+            closeToken[0] = token[0] == '{' ? '}' : ']';
+            closeToken[1] = '\0';
+            while (depth > 0 && m12_json_next_token(fp, token, sizeof(token))) {
+                if (strcmp(token, openToken) == 0) {
+                    ++depth;
+                } else if (strcmp(token, closeToken) == 0) {
+                    --depth;
+                }
+            }
+            if (depth != 0) {
+                fclose(fp);
+                return 0;
+            }
+        }
+    }
+    fclose(fp);
+
+    if (!sawType ||
+        strcmp(manifestType, "firestaff-launcher-save-export-manifest") != 0 ||
+        !sawLastSave ||
+        !m12_manifest_path_is_valid(importedLastSave, sizeof(importedLastSave))) {
+        return 0;
+    }
+    config->quickResumeEnabled = importedQuickResume ? 1 : 0;
+    m12_copy_string(config->lastSavePath, sizeof(config->lastSavePath), importedLastSave);
+    return 1;
+}
+
+const char* M12_Config_GetSaveExportPath(void) {
+    static char pathBuf[FSP_PATH_MAX];
+    m12_default_save_export_path(pathBuf, sizeof(pathBuf));
     return pathBuf;
 }

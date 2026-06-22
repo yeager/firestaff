@@ -52,12 +52,25 @@ static void rec(Tally* t, const char* id, int ok, const char* msg) {
 
 static int files_equal_str(const char* path, const char* needle) {
     FILE* fp = fopen(path, "rb");
+    int found = 0;
     if (!fp) return 0;
-    char buf[256];
-    size_t n = fread(buf, 1, sizeof(buf) - 1, fp);
+    for (;;) {
+        char buf[512];
+        size_t n = fread(buf, 1, sizeof(buf) - 1, fp);
+        buf[n] = '\0';
+        if (strstr(buf, needle != NULL ? needle : "") != NULL) {
+            found = 1;
+            break;
+        }
+        if (n < sizeof(buf) - 1) {
+            break;
+        }
+        if (fseek(fp, -64L, SEEK_CUR) != 0) {
+            break;
+        }
+    }
     fclose(fp);
-    buf[n] = '\0';
-    return strstr(buf, needle != NULL ? needle : "") != NULL;
+    return found;
 }
 
 int main(void) {
@@ -66,6 +79,8 @@ int main(void) {
     char* dir = portable_mkdtemp(tpl);
     char exportPath[512];
     char importPath[512];
+    char saveManifestPath[512];
+    char badManifestPath[512];
     char expectedPath[512];
 
     if (!dir) { perror("mkdtemp"); return 2; }
@@ -73,7 +88,9 @@ int main(void) {
     if (portable_setenv("XDG_CONFIG_HOME", dir, 1) != 0) { (void)0; }
 
     snprintf(exportPath, sizeof(exportPath), "%s/export.json", dir);
-    snprintf(importPath, sizeof(importPath), "%s/import.json", dir);
+    snprintf(importPath, sizeof(importPath), "%s/export.json", dir);
+    snprintf(saveManifestPath, sizeof(saveManifestPath), "%s/save-manifest.json", dir);
+    snprintf(badManifestPath, sizeof(badManifestPath), "%s/bad-save-manifest.json", dir);
     snprintf(expectedPath, sizeof(expectedPath), "%s/.config/firestaff-settings-export.json", dir);
 
     /* ── Write config ───────────────────────────────────────────── */
@@ -146,6 +163,7 @@ int main(void) {
     cfg_write.ambientVolume         = 75;
     cfg_write.uiScale               = 150;
     cfg_write.quickResumeEnabled    = 0;
+    strcpy(cfg_write.lastSavePath, "/saves/firestaff-dm1-quicksave.sav");
     strcpy(cfg_write.customDungeonPath, "/dungeons/community");
     strcpy(cfg_write.screenshotPath, "/screenshots");
     cfg_write.streamerMode          = 1;
@@ -188,6 +206,9 @@ int main(void) {
     rec(&t, "JSON_08",
         files_equal_str(exportPath, "\"minimap_enabled\": 1"),
         "exported JSON contains non-default minimap_enabled");
+    rec(&t, "JSON_08B",
+        files_equal_str(exportPath, "\"last_save_path\": \"/saves/firestaff-dm1-quicksave.sav\""),
+        "exported JSON contains last_save_path");
 
     /* ── Import into fresh config ────────────────────────────────── */
     M12_Config cfg_read;
@@ -243,6 +264,9 @@ int main(void) {
     rec(&t, "JSON_42",
         cfg_read.gameCheatsEnabled[0] == 1 && cfg_read.gameCheatsEnabled[3] == 1,
         "gameCheatsEnabled array survives");
+    rec(&t, "JSON_42B",
+        strcmp(cfg_read.lastSavePath, "/saves/firestaff-dm1-quicksave.sav") == 0,
+        "lastSavePath survives settings JSON round-trip");
 
     /* Default path */
     const char* defPath = M12_Config_GetExportPath();
@@ -259,8 +283,78 @@ int main(void) {
         int before = cfg_bad.languageIndex;
         int r = M12_Config_ImportJSON(&cfg_bad, "/nonexistent/path/that/does/not/exist.json");
         rec(&t, "JSON_45", r == 0, "M12_Config_ImportJSON returns 0 for missing file");
-        rec(&t, "JSON_46", cfg_bad.languageIndex == before,
+    rec(&t, "JSON_46", cfg_bad.languageIndex == before,
             "failed import does not modify config");
+    }
+
+    /* Launcher-owned save export/import manifest. This records only
+     * the launcher-known quick-resume path and related context; it
+     * deliberately does not copy game save bytes. */
+    {
+        M12_Config manifest_src;
+        M12_Config manifest_dst;
+        M12_Config manifest_bad;
+        int r;
+        M12_Config_SetDefaults(&manifest_src);
+        manifest_src.quickResumeEnabled = 1;
+        strcpy(manifest_src.lastSavePath, "/portable/saves/firestaff-dm1-quicksave.sav");
+        strcpy(manifest_src.dataDir, "/portable/data");
+        manifest_src.gameVersionIndex[0] = 1;
+        manifest_src.gameLanguageIndex[0] = 2;
+
+        r = M12_Config_ExportSaveManifestJSON(&manifest_src, saveManifestPath);
+        rec(&t, "JSON_47", r == 1, "save manifest export returns 1 on success");
+        rec(&t, "JSON_48",
+            files_equal_str(saveManifestPath, "\"type\": \"firestaff-launcher-save-export-manifest\""),
+            "save manifest has manifest type");
+        rec(&t, "JSON_49",
+            files_equal_str(saveManifestPath, "\"runtime_save_bytes_included\": 0"),
+            "save manifest documents that runtime save bytes are not embedded");
+        rec(&t, "JSON_50",
+            files_equal_str(saveManifestPath, "\"last_save_path\": \"/portable/saves/firestaff-dm1-quicksave.sav\""),
+            "save manifest contains launcher-known quicksave path");
+
+        M12_Config_SetDefaults(&manifest_dst);
+        strcpy(manifest_dst.lastSavePath, "/existing/unchanged.sav");
+        manifest_dst.quickResumeEnabled = 0;
+        r = M12_Config_ImportSaveManifestJSON(&manifest_dst, saveManifestPath);
+        rec(&t, "JSON_51", r == 1, "save manifest import returns 1 on success");
+        rec(&t, "JSON_52",
+            manifest_dst.quickResumeEnabled == 1 &&
+                strcmp(manifest_dst.lastSavePath, "/portable/saves/firestaff-dm1-quicksave.sav") == 0,
+            "save manifest import updates only launcher save-resume fields");
+
+        {
+            FILE* fp = fopen(badManifestPath, "wb");
+            if (fp) {
+                fputs("{\"version\":\"1.0\",\"type\":\"firestaff-launcher-settings\","
+                      "\"last_save_path\":\"/bad/path.sav\"}\n", fp);
+                fclose(fp);
+            }
+        }
+        M12_Config_SetDefaults(&manifest_bad);
+        strcpy(manifest_bad.lastSavePath, "/keep/me.sav");
+        manifest_bad.quickResumeEnabled = 1;
+        r = M12_Config_ImportSaveManifestJSON(&manifest_bad, badManifestPath);
+        rec(&t, "JSON_53", r == 0, "settings JSON type is rejected as save manifest");
+        rec(&t, "JSON_54",
+            manifest_bad.quickResumeEnabled == 1 &&
+                strcmp(manifest_bad.lastSavePath, "/keep/me.sav") == 0,
+            "failed save manifest import preserves existing config");
+
+        {
+            FILE* fp = fopen(badManifestPath, "wb");
+            if (fp) {
+                fputs("{\"version\":\"1.0\",\"type\":\"firestaff-launcher-save-export-manifest\","
+                      "\"last_save_path\":\"bad\\npath.sav\"}\n", fp);
+                fclose(fp);
+            }
+        }
+        r = M12_Config_ImportSaveManifestJSON(&manifest_bad, badManifestPath);
+        rec(&t, "JSON_55", r == 0, "save manifest import rejects control characters in paths");
+        rec(&t, "JSON_56",
+            strstr(M12_Config_GetSaveExportPath(), "firestaff-save-export-manifest.json") != NULL,
+            "default save manifest path uses the expected filename");
     }
 
     printf("# summary: %d/%d invariants passed\n", t.passed, t.total);

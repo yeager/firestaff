@@ -234,6 +234,7 @@ int main(void) {
     char dataDir[1024];
     char firestaffDir[1024];
     char configPath[1024];
+    char saveManifestPath[1024];
     char graphicsPath[1024];
     char dungeonPath[1024];
     char csbGraphicsPath[1024];
@@ -259,8 +260,10 @@ int main(void) {
     snprintf(dataDir, sizeof(dataDir), "%s/data", firestaffDir);
 #if defined(__APPLE__)
     snprintf(configPath, sizeof(configPath), "%s/Library/Application Support/Firestaff/startup-menu.toml", rootDir);
+    snprintf(saveManifestPath, sizeof(saveManifestPath), "%s/Library/Application Support/Firestaff/firestaff-save-export-manifest.json", rootDir);
 #else
     snprintf(configPath, sizeof(configPath), "%s/.config/firestaff/startup-menu.toml", rootDir);
+    snprintf(saveManifestPath, sizeof(saveManifestPath), "%s/.config/firestaff/firestaff-save-export-manifest.json", rootDir);
 #endif
     snprintf(graphicsPath, sizeof(graphicsPath), "%s/GRAPHICS.DAT", dataDir);
     snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", dataDir);
@@ -654,6 +657,52 @@ int main(void) {
                      file_contains(configPath, "game_4_language_index = 2") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
                  "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, smooth turn-pan, per-game language, session timer, and QoL/start-menu extras");
+
+    reloaded.view = M12_MENU_VIEW_SETTINGS;
+    reloaded.settingsSelectedIndex = 42; /* Export save manifest row */
+    reloaded.settings.quickResumeEnabled = 1;
+    snprintf(reloaded.quickResumeSavePath, sizeof(reloaded.quickResumeSavePath),
+             "%s", "/tmp/firestaff-dm1-quicksave.sav");
+    M12_StartupMenu_HandleInput(&reloaded, M12_MENU_INPUT_VALUE_RIGHT);
+    probe_record(&tally,
+                 "INV_M12_11E",
+                 reloaded.view == M12_MENU_VIEW_MESSAGE &&
+                     strcmp(reloaded.messageLine1, "SAVE MANIFEST EXPORTED") == 0 &&
+                     file_exists(saveManifestPath) &&
+                     file_contains(saveManifestPath, "\"type\": \"firestaff-launcher-save-export-manifest\"") &&
+                     file_contains(saveManifestPath, "\"runtime_save_bytes_included\": 0") &&
+                     file_contains(saveManifestPath, "\"last_save_path\": \"/tmp/firestaff-dm1-quicksave.sav\""),
+                 "settings export row writes a launcher-owned save manifest without embedding save bytes");
+
+    make_file_with_text(saveManifestPath,
+                        "{\n"
+                        "  \"version\": \"1.0\",\n"
+                        "  \"type\": \"firestaff-launcher-save-export-manifest\",\n"
+                        "  \"quick_resume_enabled\": 0,\n"
+                        "  \"last_save_path\": \"/tmp/imported-firestaff-dm1-quicksave.sav\"\n"
+                        "}\n");
+    reloaded.view = M12_MENU_VIEW_SETTINGS;
+    reloaded.settingsSelectedIndex = 43; /* Import save manifest row */
+    M12_StartupMenu_HandleInput(&reloaded, M12_MENU_INPUT_VALUE_RIGHT);
+    {
+        M12_Config importedConfig;
+        M12_Config_SetDefaults(&importedConfig);
+        M12_Config_Load(&importedConfig, NULL);
+        probe_record(&tally,
+                     "INV_M12_11F",
+                     reloaded.view == M12_MENU_VIEW_MESSAGE &&
+                         strcmp(reloaded.messageLine1, "SAVE MANIFEST IMPORTED") == 0,
+                     "settings import row accepts a valid save manifest");
+        probe_record(&tally,
+                     "INV_M12_11G",
+                     importedConfig.quickResumeEnabled == 0,
+                     "settings import row persists the imported quick-resume enable flag");
+        probe_record(&tally,
+                     "INV_M12_11H",
+                     strcmp(importedConfig.lastSavePath,
+                            "/tmp/imported-firestaff-dm1-quicksave.sav") == 0,
+                     "settings import row persists the imported quick-resume path");
+    }
 
     make_file_with_text(configPath,
                         "# Firestaff startup menu config\n"
