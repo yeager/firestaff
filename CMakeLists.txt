@@ -64,6 +64,16 @@ endif()
 # ── Python discovery for source-shape/evidence gates ───────────────
 find_package(Python3 COMPONENTS Interpreter QUIET)
 
+# -- zlib discovery (optional, used by asset-scanner deflate paths) --
+pkg_check_modules(ZLIB QUIET IMPORTED_TARGET zlib)
+if(TARGET PkgConfig::ZLIB)
+    set(FIRESTAFF_HAS_ZLIB 1 CACHE BOOL "Whether Firestaff is built with zlib for ZIP inflate")
+    message(STATUS "Found zlib - asset-scanner ZIP deflate path enabled")
+else()
+    set(FIRESTAFF_HAS_ZLIB 0 CACHE BOOL "Whether Firestaff is built with zlib for ZIP inflate")
+    message(STATUS "zlib not found - asset-scanner ZIP deflate path falls back to stored entries only")
+endif()
+
 # ── M10 static library (frozen Turbo-C compat sources) ──────────────
 file(GLOB_RECURSE M10_SOURCES CONFIGURE_DEPENDS "src/*_pc34_compat.c")
 
@@ -3495,6 +3505,46 @@ if(BUILD_TESTING)
     add_test(
         NAME asset_find_by_hash_iso_case_duplicate
         COMMAND test_asset_find_by_hash_iso_case_duplicate
+    )
+
+    # -- Asset scanner + cache: nested deflated ZIP entry materialization --
+    # Synthesizes a ZIP whose graphics entry name contains four path
+    # separators (nested/inner/level1/level2/DM2GRAPHICS.DAT), so the
+    # regression specifically exercises the nested-name + deflate branch
+    # of asset_find_by_hash.c, asset_extract_virtual_path, and the M12
+    # asset-cache materializer. When zlib is available both entries are
+    # deflated (method=8) and the test asserts the deflated stream is
+    # strictly smaller than the source payload, so we are actually
+    # exercising the inflate code path and not a stored-entry fallback.
+    add_executable(test_asset_status_zip_cache_nested_deflate
+        tests/test_asset_status_zip_cache_nested_deflate.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_asset_status_zip_cache_nested_deflate PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_asset_status_zip_cache_nested_deflate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_asset_status_zip_cache_nested_deflate PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    if(FIRESTAFF_HAS_ZLIB)
+        target_compile_definitions(test_asset_status_zip_cache_nested_deflate PRIVATE
+            FIRESTAFF_HAS_ZLIB=1
+        )
+        target_link_libraries(test_asset_status_zip_cache_nested_deflate PRIVATE
+            PkgConfig::ZLIB
+        )
+    endif()
+    if(NOT MSVC)
+        target_compile_options(test_asset_status_zip_cache_nested_deflate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_status_zip_cache_nested_deflate
+        COMMAND test_asset_status_zip_cache_nested_deflate
     )
 
     add_executable(test_dm1_pc34_multilanguage_required_gate
