@@ -176,6 +176,44 @@ int dm2_v1_projectile_dispatch_synthetic(int category, int subtype,
 /* ── Phase 5 expansion: count active projectiles ───────────────── */
 int dm2_v1_projectile_active_count(void);
 
+/* ── Phase 5 expansion: read-only slot snapshot ──────────────────
+ * Returns 1 and fills *out on success; returns 0 if slot is out of
+ * range or empty.  The returned snapshot is a copy of the live slot
+ * (no aliasing into the projectile list).  Used by the projectile-vs-
+ * creature collision module to read world coordinates + ownerKind +
+ * subtype without coupling to the dispatch module's internals.
+ *
+ * Fields not exposed here (kineticEnergy, stepEnergy, etc.) are not
+ * needed for collision resolution; only the world-position + identity
+ * fields are. */
+typedef struct {
+    int slotIndex;
+    int projectileCategory;       /* PROJECTILE_CATEGORY_* */
+    int projectileSubtype;
+    int ownerKind;                /* PROJECTILE_OWNER_* */
+    int ownerIndex;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int cell;
+    int direction;
+    int attack;                   /* raw attack value carried on the slot */
+} DM2_V1_ProjectileSlotSnapshot;
+
+int dm2_v1_projectile_get_slot(int slot_index,
+                                DM2_V1_ProjectileSlotSnapshot *out);
+
+/* ── Phase 5 expansion: despawn helper ───────────────────────────
+ * Despawns the projectile at slot_index by invoking F0813 against the
+ * module-owned s_projectile_list.  Returns 1 on success, 0 if the slot
+ * is empty or invalid.  Used by the projectile-vs-creature collision
+ * module to consume a projectile after HIT / ABSORBED / REFLECTED.
+ *
+ * Source: F0813_PROJECTILE_Despawn_Compat contract in
+ * memory_projectile_pc34_compat.h + the despawn path in
+ * skproject/SKULLWIN/c_creature.cpp. */
+int dm2_v1_projectile_despawn(int slot_index);
+
 /* Source evidence citation */
 const char *dm2_v1_projectile_source_evidence(void);
 

@@ -2671,6 +2671,65 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_projectile_pc34_compat
     )
 
+    # ── DM2 V1 Phase 5: Projectile-vs-creature collision regression ──
+    # Companion to test_dm2_v1_projectile_pc34_compat.  The launch
+    # module dispatches a projectile via F0810; this gate resolves
+    # what happens when that projectile reaches a square containing a
+    # creature instance.  Covers the 5-branch missile-redirect dispatch
+    # (NONMATERIAL / ABSORBS_MISSILE / REFLECTOR / TURNS_MISSILE / HIT)
+    # + 8 pinned damage-formula cases + the deterministic damage + kill
+    # event outcome.  Source-locked against SKULL.ASM:10620-10710,
+    # ReDMCSB PROJEXPL.C:76-92, GROUP.C:1695-1770.
+    add_executable(test_dm2_v1_projectile_creature_collision_pc34_compat
+        tests/test_dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_drops.c
+    )
+    target_include_directories(test_dm2_v1_projectile_creature_collision_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/memory
+    )
+    target_link_libraries(test_dm2_v1_projectile_creature_collision_pc34_compat PRIVATE firestaff_m10 m)
+    # Test-only API: lets the gate inject synthetic AI specs (REFLECTOR /
+    # ABSORBS_MISSILE / NONMATERIAL / TURNS_MISSILE) without depending on
+    # the real GDAT-loaded AI table.
+    target_compile_definitions(test_dm2_v1_projectile_creature_collision_pc34_compat PRIVATE
+        FIRESTAFF_DM2_CREATURE_TESTING=1
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_projectile_creature_collision_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_projectile_creature_collision_pc34_compat
+        COMMAND test_dm2_v1_projectile_creature_collision_pc34_compat
+    )
+
+    # ── DM2 V1 Phase 5: Projectile-vs-creature collision probe ──
+    # Headless: no game data, no SDL rendering required.  Quick smoke
+    # for the 5-branch missile-redirect dispatch (one case per branch).
+    add_executable(firestaff_dm2_v1_projectile_creature_collision_probe
+        probes/dm2/firestaff_dm2_v1_projectile_creature_collision_probe.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_drops.c
+    )
+    target_include_directories(firestaff_dm2_v1_projectile_creature_collision_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/memory
+    )
+    target_link_libraries(firestaff_dm2_v1_projectile_creature_collision_probe PRIVATE firestaff_m10 m)
+    target_compile_definitions(firestaff_dm2_v1_projectile_creature_collision_probe PRIVATE
+        FIRESTAFF_DM2_CREATURE_TESTING=1
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_projectile_creature_collision_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+
     # ── DM2 V1 Phase 4: Shop + NPC mechanics parity ──
     add_executable(test_dm2_v1_shop_pc34_compat
         tests/test_dm2_v1_shop_pc34_compat.c
