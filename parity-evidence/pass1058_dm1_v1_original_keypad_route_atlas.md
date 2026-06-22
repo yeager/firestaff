@@ -53,12 +53,50 @@ the first chosen target remains blocked by a closed/inert door. A follow-up
 door probe tried enter, space, two door clicks, and a forward key after reaching
 the same frame. All post-door raw frames remained byte-identical.
 
+## Redacted route-token receipt
+
+The exact route-token stream has been recovered from the operator-local
+pass1058 logs and is now preserved in the CTest-generated manifest as text
+only. It contains no proprietary frame bytes.
+
+From the pass1058 start pose to `stair_entry`, the keypad sequence is:
+
+```text
+Keypad-8 Keypad-8 Keypad-8 Keypad-8 Keypad-4
+Keypad-2 Keypad-2 Keypad-2 Keypad-4 Keypad-8
+Keypad-8 Keypad-8 Keypad-8 Keypad-8 Keypad-4
+Keypad-8 Keypad-8 Keypad-4 Keypad-8 Keypad-4
+Keypad-2 Keypad-2 Keypad-4 Keypad-2 Keypad-4
+Keypad-8 Keypad-4 Keypad-8 Keypad-8 Keypad-8
+Keypad-8 Keypad-8 Keypad-4 Keypad-8 Keypad-8
+Keypad-8 Keypad-8 Keypad-8 Keypad-4 Keypad-2
+Keypad-2 Keypad-2 Keypad-2 Keypad-2 Keypad-2
+Keypad-4 Keypad-2
+```
+
+From `stair_entry` to `creature_door_closed`, the keypad sequence is:
+
+```text
+Keypad-8 Keypad-4 Keypad-8 Keypad-8 Keypad-8 Keypad-4
+```
+
+The door probe then tried `Enter`, `Space`, high click `(112,70)`, low click
+`(112,120)`, and `Keypad-8`; all stayed on the same door frame hash.
+
+This sequence preserves the old pass1058 start-pose route. The newer
+`dosbox_capture_session.py --post-dungeon-route` hook starts after the pass1073
+live start/first-movement proof, so a future operator must first align the
+starting pose before replaying the sequence. It should not be pasted blindly
+from the pass1073 post-dungeon state.
+
 ## Promoted evidence
 
 - Original keypad direction semantics are now locked for future DOSBox route
   work.
 - The corrected route reaches map-transition/new-state evidence instead of
   duplicate start frames.
+- The exact corrected route and door-probe token sequence is preserved as
+  redacted text in the manifest for future replay attempts.
 - The first selected creature target is documented as a blocker because the
   original view remains unchanged after all tested door/open/forward attempts.
 

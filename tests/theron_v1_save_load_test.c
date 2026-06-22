@@ -28,6 +28,7 @@
 /* ── Temp dir for tests ─────────────────────────────────────────── */
 
 static char g_test_dir[256];
+static char g_import_dir[256];
 
 static int test_mkdir(const char *path) {
 #ifdef _WIN32
@@ -41,8 +42,12 @@ static void test_dir_remove(void) {
     char cmd[512];
 #ifdef _WIN32
     snprintf(cmd, sizeof(cmd), "rmdir /S /Q \"%s\" >NUL 2>NUL", g_test_dir);
+    system(cmd);
+    snprintf(cmd, sizeof(cmd), "rmdir /S /Q \"%s\" >NUL 2>NUL", g_import_dir);
 #else
     snprintf(cmd, sizeof(cmd), "rm -rf \"%s\"", g_test_dir);
+    system(cmd);
+    snprintf(cmd, sizeof(cmd), "rm -rf \"%s\"", g_import_dir);
 #endif
     system(cmd);
 }
@@ -55,9 +60,12 @@ static void test_dir_setup(void) {
 #endif
     snprintf(g_test_dir, sizeof(g_test_dir), "%s/test_theron_save",
              tmp ? tmp : ".");
+    snprintf(g_import_dir, sizeof(g_import_dir), "%s/test_theron_save_import",
+             tmp ? tmp : ".");
     /* Remove any old test dir */
     test_dir_remove();
     test_mkdir(g_test_dir);
+    test_mkdir(g_import_dir);
 }
 
 static void test_dir_teardown(void) {
@@ -421,6 +429,123 @@ static int test_multi_slot_isolation(void) {
     return 1;
 }
 
+/* ── Test: cross-root slot export/import ─────────────────────────── */
+
+static int test_cross_slot_export_import(void) {
+    TEST("Cross-slot export/import — valid save image copied");
+
+    uint8_t champ_data[THERON_SAVE_CHAMPION_COUNT * THERON_SAVE_CHAMPION_BLOCK_SIZE];
+    memset(champ_data, 0, sizeof(champ_data));
+    for (size_t i = 0; i < sizeof(champ_data); ++i) {
+        champ_data[i] = (uint8_t)((i * 17U + 3U) & 0xFFU);
+    }
+
+    Theron_DungeonProgression prog;
+    theron_v1_dungeon_progression_init(&prog);
+    prog.current_dungeon = THERON_DUNGEON_6_CASTLE_OF_FATE;
+    prog.current_level = 3;
+    prog.quest_items_collected = (THERON_QUEST_ITEM_1_SACRED_AMPLIFIER |
+                                  THERON_QUEST_ITEM_2_SHADOW_KEY |
+                                  THERON_QUEST_ITEM_3_FLAME_ORBS |
+                                  THERON_QUEST_ITEM_4_STONE_SIGIL |
+                                  THERON_QUEST_ITEM_5_WAYWARD_RIBBON);
+    prog.dungeon_states[THERON_DUNGEON_6_CASTLE_OF_FATE - 1] =
+        THERON_DUNGEON_STATE_AVAILABLE;
+    prog.dungeon_playtime_seconds = 0x01020304u;
+    for (int i = 0; i < THERON_DUNGEON_COUNT; ++i) {
+        prog.dungeon_seeds[i] = (uint32_t)(0xCAFE0000u + (unsigned)i);
+    }
+
+    int r = theron_v1_save_to_slot(g_test_dir, 1, champ_data,
+                                   sizeof(champ_data), &prog,
+                                   "Export source slot");
+    ASSERT(r == 0, "source save failed");
+
+    char export_path[512];
+    snprintf(export_path, sizeof(export_path), "%s/exported_slot.tqsv", g_test_dir);
+    r = theron_v1_save_export_slot(g_test_dir, 1, export_path);
+    ASSERT(r == 0, "export failed");
+
+    Theron_SaveSlot imported_info;
+    memset(&imported_info, 0, sizeof(imported_info));
+    r = theron_v1_save_import_slot(g_import_dir, 4, export_path, &imported_info);
+    ASSERT(r == 0, "import failed");
+    ASSERT(imported_info.valid == 1, "imported slot info not valid");
+    ASSERT(imported_info.slot_index == 4, "imported slot index mismatch");
+    ASSERT(imported_info.current_dungeon == THERON_DUNGEON_6_CASTLE_OF_FATE,
+           "imported metadata current_dungeon mismatch");
+
+    uint8_t champ_read[sizeof(champ_data)];
+    memset(champ_read, 0, sizeof(champ_read));
+    Theron_DungeonProgression prog_read;
+    memset(&prog_read, 0, sizeof(prog_read));
+    Theron_SaveSlot load_info;
+    memset(&load_info, 0, sizeof(load_info));
+
+    r = theron_v1_save_load_from_slot(g_import_dir, 4,
+                                      champ_read, sizeof(champ_read),
+                                      &prog_read, sizeof(prog_read),
+                                      &load_info);
+    ASSERT(r == 0, "imported load failed");
+    ASSERT(memcmp(champ_read, champ_data, sizeof(champ_data)) == 0,
+           "imported champion bytes mismatch");
+    ASSERT(prog_read.current_dungeon == prog.current_dungeon,
+           "imported progression current_dungeon mismatch");
+    ASSERT(prog_read.current_level == prog.current_level,
+           "imported progression current_level mismatch");
+    ASSERT(prog_read.quest_items_collected == prog.quest_items_collected,
+           "imported progression quest_items mismatch");
+    ASSERT(prog_read.dungeon_playtime_seconds == prog.dungeon_playtime_seconds,
+           "imported progression playtime mismatch");
+
+    Theron_SaveSlot slots[THERON_SAVE_SLOT_COUNT];
+    memset(slots, 0, sizeof(slots));
+    int count = theron_v1_save_enum_slots(g_import_dir, slots, THERON_SAVE_SLOT_COUNT);
+    ASSERT(count == THERON_SAVE_SLOT_COUNT, "import root enumeration count mismatch");
+    ASSERT(slots[4].valid == 1, "imported slot not enumerated valid");
+
+    PASS();
+    return 1;
+}
+
+/* ── Test: invalid export/import guards ──────────────────────────── */
+
+static int test_export_import_rejects_invalid_images(void) {
+    TEST("Cross-slot export/import — invalid images rejected");
+
+    char export_path[512];
+    snprintf(export_path, sizeof(export_path), "%s/missing_export.tqsv", g_test_dir);
+    ASSERT(theron_v1_save_export_slot(g_test_dir, 7, export_path) == -1,
+           "empty slot export should fail");
+    ASSERT(theron_v1_save_import_slot(g_import_dir, -1, export_path, NULL) == -1,
+           "negative import slot should fail");
+    ASSERT(theron_v1_save_import_slot(g_import_dir, 0, export_path, NULL) == -1,
+           "missing import file should fail");
+
+    snprintf(export_path, sizeof(export_path), "%s/bad_import.tqsv", g_test_dir);
+    FILE *fp = fopen(export_path, "wb");
+    ASSERT(fp != NULL, "bad fixture open failed");
+    fputs("not a Theron save", fp);
+    fclose(fp);
+
+    uint8_t champ_data[THERON_SAVE_CHAMPION_COUNT * THERON_SAVE_CHAMPION_BLOCK_SIZE];
+    memset(champ_data, 0, sizeof(champ_data));
+    Theron_DungeonProgression prog;
+    theron_v1_dungeon_progression_init(&prog);
+    ASSERT(theron_v1_save_to_slot(g_import_dir, 0, champ_data,
+                                  sizeof(champ_data), &prog,
+                                  "preexisting") == 0,
+           "preexisting import-root slot failed");
+
+    ASSERT(theron_v1_save_import_slot(g_import_dir, 0, export_path, NULL) == -1,
+           "bad import image should fail");
+    ASSERT(theron_v1_save_verify_slot(g_import_dir, 0) == 1,
+           "failed import should preserve existing slot");
+
+    PASS();
+    return 1;
+}
+
 /* ── Test: source evidence ───────────────────────────────────────── */
 
 static int test_source_evidence(void) {
@@ -450,6 +575,8 @@ int main(void) {
         test_slot_deletion,
         test_slot_verification,
         test_multi_slot_isolation,
+        test_cross_slot_export_import,
+        test_export_import_rejects_invalid_images,
         test_source_evidence,
     };
     int n = (int)(sizeof(tests) / sizeof(tests[0]));

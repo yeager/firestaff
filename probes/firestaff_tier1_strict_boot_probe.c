@@ -9,7 +9,7 @@
  * --data-dir <path> --duration 1500 under SDL_VIDEODRIVER=dummy
  * and asserts that the runtime reaches the per-game "boot OK"
  * milestone (DM1 LOADING DUNGEON, Theron TQR level load OK,
- * CSB engine alive, Nexus engine alive).
+ * CSB engine alive, DM2 engine alive).
  *
  * Paths intentionally excluded as out-of-scope for Tier 1 #5:
  *   - Nexus canonical + Nexus saturn-ja — the M11 launcher
@@ -59,6 +59,21 @@ static const Tier1PathSpec kPaths[] = {
     { "csb",   DEFAULT_DATA_ROOT "/csb-extras/legacy-amiga-dms",
       "CSB READY",
       "CSB Amiga 3.3 Meynaf FR (M11 stderr-pipe)" },
+    { "dm2",   DEFAULT_DATA_ROOT "/dm2",
+      "DM2 READY",
+      "DM2 canonical (M11 stderr-pipe)" },
+    { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/dos-en",
+      "DM2 READY",
+      "DM2 DOS EN extras data/ layout (M11 stderr-pipe)" },
+    { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/dos-fr",
+      "DM2 READY",
+      "DM2 DOS FR extras data/ layout (M11 stderr-pipe)" },
+    { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/pc-fr",
+      "DM2 READY",
+      "DM2 PC FR extras DATA/ layout (M11 stderr-pipe)" },
+    { "dm2",   DEFAULT_DATA_ROOT "/dm2-extras/pc-de",
+      "DM2 READY",
+      "DM2 PC DE extras DATA/ layout (M11 stderr-pipe)" },
     { "theron", DEFAULT_DATA_ROOT "/theron",
       "TQR level load",
       "Theron JP canonical (Track 02.iso)" },

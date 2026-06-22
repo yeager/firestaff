@@ -125,6 +125,46 @@ int main(void) {
     check_guarded_tiny_render(16, 4);
     check_guarded_tiny_render(24, 2);
 
+    /* Presentation-state surfaces for the B3 champion/action/rune overlay
+     * gap are deterministic pixels only; the setters never call V1 command,
+     * inventory, or spell transactions. */
+    v2_hud_set_opacity(200);
+    v2_hud_set_champion_bar(2, 33, 66, 99, true, true);
+    v2_hud_set_champion_bar(-1, 100, 100, 100, true, true);
+    v2_hud_set_champion_bar(4, 100, 100, 100, true, true);
+    v2_hud_set_action_active(M11_V2_HUD_ACTION_CAST);
+    v2_hud_trigger_action_flash();
+    v2_hud_set_rune_active(3, true);
+    v2_hud_set_rune_active(-1, true);
+    v2_hud_set_rune_active(6, true);
+    v2_hud_set_spell_controls(true, false);
+
+    memset(fb, 0, sizeof(fb));
+    v2_hud_render(fb, w, h);
+    CHECK(fb[8 * w + 158] == 200);          /* champion 2 HP fill at 33% */
+    CHECK(fb[8 * w + 159] == 100);          /* champion 2 HP clamp boundary */
+    CHECK(fb[11 * w + 174] == 150);         /* stamina fill at 66% */
+    CHECK(fb[14 * w + 190] == 133);         /* mana fill at 99% */
+    CHECK(fb[6 * w + 190] == 200);          /* leader cue */
+    CHECK(fb[15 * w + 193] == 200);         /* spell-ready cue */
+    CHECK(fb[168 * w + 45] == 255);         /* active action flash border */
+    CHECK(fb[169 * w + 46] == 150);         /* active action interior */
+    CHECK(fb[157 * w + 196] == 200);        /* active rune 3 */
+    CHECK(fb[157 * w + 170] == 100);        /* inactive rune 1 */
+    CHECK(fb[156 * w + 238] == 200);        /* cast-ready control */
+    CHECK(fb[156 * w + 266] == 100);        /* recant disabled control */
+
+    for (int i = 0; i < 6; ++i) {
+        memset(fb, 0, sizeof(fb));
+        v2_hud_render(fb, w, h);
+    }
+    CHECK(fb[168 * w + 45] == 200);         /* flash decays to active border */
+
+    v2_hud_set_action_active((M11_V2_HudActionIcon)99);
+    memset(fb, 0, sizeof(fb));
+    v2_hud_render(fb, w, h);
+    CHECK(fb[168 * w + 45] == 100);         /* invalid action clears highlight */
+
     /* --- v22_hud_render_champion_panel tests (new) --- */
     v2_hud_set_opacity(200);
 

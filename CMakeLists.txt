@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.0 LANGUAGES C)
+project(Firestaff VERSION 3.0.1 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -1993,6 +1993,45 @@ endif()
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
 if(BUILD_TESTING)
+    function(firestaff_add_test_if_missing test_name)
+        get_property(_firestaff_existing_tests DIRECTORY PROPERTY TESTS)
+        list(FIND _firestaff_existing_tests "${test_name}" _firestaff_test_index)
+        if(_firestaff_test_index EQUAL -1)
+            add_test(
+                NAME ${test_name}
+                COMMAND ${ARGN}
+            )
+        endif()
+    endfunction()
+
+    if(TARGET firestaff_dm1_v22_inplace_render_probe)
+        firestaff_add_test_if_missing(
+            dm1_v22_inplace_render_probe
+            firestaff_dm1_v22_inplace_render_probe
+        )
+        set_tests_properties(dm1_v22_inplace_render_probe PROPERTIES
+            LABELS "dm1;v2;render;readiness"
+        )
+    endif()
+    if(TARGET firestaff_dm1_v2_side_by_side_presentation_seed_probe)
+        firestaff_add_test_if_missing(
+            dm1_v2_side_by_side_presentation_seed_probe
+            firestaff_dm1_v2_side_by_side_presentation_seed_probe
+        )
+        set_tests_properties(dm1_v2_side_by_side_presentation_seed_probe PROPERTIES
+            LABELS "dm1;v2;presentation;readiness"
+        )
+    endif()
+    if(TARGET firestaff_dm1_v2_shape_runtime_probe)
+        firestaff_add_test_if_missing(
+            dm1_v2_shape_runtime_probe
+            firestaff_dm1_v2_shape_runtime_probe
+        )
+        set_tests_properties(dm1_v2_shape_runtime_probe PROPERTIES
+            LABELS "dm1;v2;shape_runtime;readiness"
+        )
+    endif()
+
     add_test(
         NAME dm1_v1_viewport_draw_order_probe
         COMMAND firestaff_dm1_v1_viewport_draw_order_probe
@@ -5493,6 +5532,19 @@ if(BUILD_TESTING)
         tests/test_dm1_v2_viewport_materials_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
     )
+    add_executable(test_dm1_v2_per_mode_material_signatures_pc34
+        tests/test_dm1_v2_per_mode_material_signatures_pc34.c
+        src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/dm1v2/m11_v22_inplace_draw_pc34.c
+        src/dm1v2/m11_v22_shape_cache_pc34.c
+        src/dm1v2/dm1_v2_shape_runtime_pc34.c
+        src/dm1v2/dm1_v2_presentation_mode_pc34.c
+        src/dm1v2/dm1_v22_shapes.c
+        src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm1v2/dm1_v2_texture_upscale_pc34.c
+        src/shared/fs_portable_compat.c
+    )
     add_executable(test_m11_display_aspect_present_rect
         tests/test_m11_display_aspect_present_rect.c
     )
@@ -5569,6 +5621,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_phase_gate_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_phase5_runtime_bridge_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_viewport_materials_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_per_mode_material_signatures_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
         target_compile_options(dm1_v2_export_entry_viewport_png PRIVATE -Wall -Wextra -O2)
     endif()
@@ -5885,6 +5938,10 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v2_viewport_materials_pc34
     )
     add_test(
+        NAME dm1_v2_per_mode_material_signatures_pc34
+        COMMAND test_dm1_v2_per_mode_material_signatures_pc34
+    )
+    add_test(
         NAME dm1_v2_settings_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_settings_source_lock.py
     )
@@ -5940,6 +5997,14 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_entry_viewport_png_comparator_gate
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_entry_viewport_png_comparator_gate.py
+    )
+    add_test(
+        NAME dm1_v2_runtime_presentation_smoke
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_runtime_presentation_smoke.py --build-dir ${CMAKE_BINARY_DIR}
+    )
+    add_test(
+        NAME theron_v1_runtime_screenshot_readiness
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_theron_v1_runtime_screenshot_readiness.py --build-dir ${CMAKE_BINARY_DIR}
     )
     add_test(
         NAME dm1_v2_entry_bitmap_materialization_blocker_gate
@@ -6066,6 +6131,17 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_projectile_list_overflow_pc34_compat
         COMMAND test_dm1_v1_projectile_list_overflow_pc34_compat
+    )
+    add_executable(test_dm1_v1_monster_poison_cloud_overlap_tick_pc34_compat
+        tests/test_dm1_v1_monster_poison_cloud_overlap_tick_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_monster_poison_cloud_overlap_tick_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_monster_poison_cloud_overlap_tick_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_monster_poison_cloud_overlap_tick_pc34_compat
+        COMMAND test_dm1_v1_monster_poison_cloud_overlap_tick_pc34_compat
     )
     add_executable(test_dm1_v1_ra_door_projectile_reject_pc34_compat
         tests/test_dm1_v1_ra_door_projectile_reject_pc34_compat.c
@@ -6314,6 +6390,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat
         COMMAND test_dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat
+    )
+    add_executable(test_dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat
+        tests/test_dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat
+        COMMAND test_dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat
     )
     add_executable(test_dm1_v1_viewport_d1c_center_field_pc34_compat
         tests/test_dm1_v1_viewport_d1c_center_field_pc34_compat.c
@@ -7002,6 +7090,10 @@ if(BUILD_TESTING)
         add_test(
             NAME pass1057_dm1_amiga22_dungeonb_asset_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1057_dm1_amiga22_dungeonb_asset_lock.py
+        )
+        add_test(
+            NAME pass1058_dm1_v1_original_keypad_route_atlas
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1058_dm1_v1_original_keypad_route_atlas.py
         )
         add_test(
             NAME dm2_v1_phase0_provenance_gate
@@ -8169,6 +8261,106 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc
     )
 endif()
 
+if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_f0095_floor_ornament_aggregate_pc34_compat)
+    add_executable(test_dm1_v1_viewport_f0095_floor_ornament_aggregate_pc34_compat
+        tests/test_dm1_v1_viewport_f0095_floor_ornament_aggregate_pc34_compat.c
+        src/dm1/dm1_v1_viewport_f0095_floor_ornament_aggregate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_viewport_f0095_floor_ornament_aggregate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_f0095_floor_ornament_aggregate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_f0095_floor_ornament_aggregate_pc34_compat
+        COMMAND test_dm1_v1_viewport_f0095_floor_ornament_aggregate_pc34_compat
+    )
+endif()
+
+function(firestaff_add_dm1_v1_viewport_contract_test target test_src impl_src ctest_name)
+    if(BUILD_TESTING AND NOT TARGET ${target})
+        add_executable(${target}
+            ${test_src}
+            ${impl_src}
+            ${ARGN}
+        )
+        target_link_libraries(${target} PRIVATE firestaff_m10)
+        target_include_directories(${target} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_compile_definitions(${target} PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+        if(NOT MSVC)
+            target_compile_options(${target} PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME ${ctest_name}
+            COMMAND ${target}
+        )
+    endif()
+endfunction()
+
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat
+    tests/test_dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat.c
+    dm1_v1_viewport_d0c_f0111_door_panel_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat
+    tests/test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat.c
+    dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat
+    tests/test_dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat.c
+    dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat
+    tests/test_dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat.c
+    dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat
+    src/dm1/dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat.c
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d1c_f0111_door_pc34_compat
+    tests/test_dm1_v1_viewport_d1c_f0111_door_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d1c_f0111_door_pc34_compat.c
+    dm1_v1_viewport_d1c_f0111_door_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat
+    tests/test_dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat.c
+    dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat
+    tests/test_dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat.c
+    dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat
+    tests/test_dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat.c
+    dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d1c_stairs_pit_dispatch_pc34_compat
+    tests/test_dm1_v1_viewport_d1c_stairs_pit_dispatch_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d1c_stairs_pit_dispatch_pc34_compat.c
+    dm1_v1_viewport_d1c_stairs_pit_dispatch_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d1c_wall_pc34_compat
+    tests/test_dm1_v1_viewport_d1c_wall_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d1c_wall_pc34_compat.c
+    dm1_v1_viewport_d1c_wall_pc34_compat
+)
+
 # ── DM1 V1 Viewport 3D source-lock gate ─────────────────────────────
 if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_executable(test_dm1_v1_viewport_3d_pc34_compat
@@ -8330,6 +8522,17 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
 endif()
 
+# -- DM1 V1 route-token/key-symbol audit gate -------------------------
+if(BUILD_TESTING AND Python3_Interpreter_FOUND)
+    add_test(
+        NAME pass338b_dm1_v1_route_token_key_symbol_audit
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass338b_dm1_v1_route_token_key_symbol_audit.py
+    )
+    set_tests_properties(pass338b_dm1_v1_route_token_key_symbol_audit PROPERTIES
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif()
+
 # -- DM1 V1 original overlay keyboard-buffer blocker gate -------------
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
@@ -8351,6 +8554,14 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
         NAME pass513_dm1_v1_i34e_route_key_transcript_contract
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass513_dm1_v1_i34e_route_key_transcript_contract.py
+    )
+    add_test(
+        NAME pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness.py
+    )
+    add_test(
+        NAME pass1073_dm1_v1_original_live_capture_receipt
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1073_dm1_v1_original_live_capture_receipt.py
     )
 endif()
 
@@ -9429,6 +9640,27 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_cmp_import
     )
 
+    add_executable(test_csb_v1_portrait_render_handoff_pc34_compat
+        tests/test_csb_v1_portrait_render_handoff_pc34_compat.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_cmp_import_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+        src/shared/firestaff_cmp_decode.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_portrait_render_handoff_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_portrait_render_handoff_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_portrait_render_handoff_pc34_compat PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_portrait_render_handoff_pc34_compat
+        COMMAND test_csb_v1_portrait_render_handoff_pc34_compat
+    )
+
     # ── DM1 V1 graphics LZW round-trip test (Tier 2 #4 from FIRESTAFF_GAP_LIST) ──
     # Verifies the existing m11_gfx_lzw_decompress() in
     # src/dm1/dm1_v1_graphics_loader_pc34_compat.c by:
@@ -10054,6 +10286,24 @@ if(BUILD_TESTING AND THERON_SOURCES)
 
     add_test(NAME theron_v1_mechanics_hardening
         COMMAND firestaff_theron_v1_mechanics_hardening_probe)
+endif()
+
+# ── Theron V1 cross-route mechanics evidence probe ─────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(firestaff_theron_v1_cross_route_mechanics_probe
+        probes/theron/firestaff_theron_v1_cross_route_mechanics_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_cross_route_mechanics_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_cross_route_mechanics_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    target_compile_options(firestaff_theron_v1_cross_route_mechanics_probe PRIVATE -Wall -Wextra -O2)
+
+    add_test(NAME theron_v1_cross_route_mechanics
+        COMMAND firestaff_theron_v1_cross_route_mechanics_probe)
 endif()
 
 # ── Theron V1 Phase 4 — Rendering Pipeline Probes ───────────────────

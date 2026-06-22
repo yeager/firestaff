@@ -30,6 +30,7 @@
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
+#include "screenshot_m11.h"
 #include "swsh_intro_pathfinder_m11.h"
 
 #include <stdio.h>
@@ -1394,6 +1395,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"active\": %d,\n"
             "  \"title\": \"%s\",\n"
             "  \"sourceId\": \"%s\",\n"
+            "  \"presentation\": {\"mode\": %d, \"width\": %d, \"height\": %d},\n"
             "  \"lastAction\": \"%s\",\n"
             "  \"lastOutcome\": \"%s\",\n"
             "  \"gameTick\": %u,\n"
@@ -1405,6 +1407,9 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->active : 0,
             gameView ? gameView->title : "",
             gameView ? gameView->sourceId : "",
+            gameView ? gameView->presentationMode : -1,
+            gameView ? gameView->presentationWidth : 0,
+            gameView ? gameView->presentationHeight : 0,
             gameView ? gameView->lastAction : "",
             gameView ? gameView->lastOutcome : "",
             gameView ? (unsigned int)gameView->world.gameTick : 0U,
@@ -1425,6 +1430,30 @@ static void m11_write_autotest_runtime_probe(const char* path,
             inputRedrawAfterViewportDirtyCount,
             lastInputRedrawAfterViewportDirty);
     fclose(f);
+}
+
+static void m11_write_autotest_screenshot(const char* outputDir) {
+    char outPath[1024];
+    if (!outputDir || outputDir[0] == '\0') {
+        return;
+    }
+    if (!M11_Screenshot_CaptureCurrent(outputDir, outPath, (int)sizeof(outPath))) {
+        fprintf(stderr, "firestaff: autotest screenshot capture failed: %s\n", outputDir);
+        return;
+    }
+    fprintf(stderr, "AUTOTEST SCREENSHOT: %s\n", outPath);
+}
+
+static void m11_write_autotest_presented_screenshot(const char* outputDir) {
+    char outPath[1024];
+    if (!outputDir || outputDir[0] == '\0') {
+        return;
+    }
+    if (!M11_Screenshot_CapturePresentedRGBA(outputDir, outPath, (int)sizeof(outPath))) {
+        fprintf(stderr, "firestaff: autotest presented screenshot capture failed: %s\n", outputDir);
+        return;
+    }
+    fprintf(stderr, "AUTOTEST PRESENTED SCREENSHOT: %s\n", outPath);
 }
 
 static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
@@ -2612,6 +2641,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         runRc = 3;
     }
 cleanup:
+    m11_write_autotest_screenshot(getenv("FIRESTAFF_AUTOTEST_SCREENSHOT_DIR"));
+    m11_write_autotest_presented_screenshot(getenv("FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR"));
     m11_write_autotest_runtime_probe(getenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
                                      launchedEver,
                                      &gameView,

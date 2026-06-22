@@ -5,7 +5,7 @@
       "command": {
         "cmd": [
           "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
-          "/Users/bosse/.openclaw/workspace-main/tools/asset-validate/coverage_by_game.py",
+          "/private/tmp/firestaff-main-dm1-24h/tools/asset-validate/coverage_by_game.py",
           "--data-dir",
           "/Users/bosse/.firestaff/data",
           "--json"
@@ -31,21 +31,90 @@
           "--test-dir",
           "build",
           "-R",
-          "m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe|m11_capture_route_state|dm1_v1_wall_collision_runtime_capture|m11_turn_viewport_orientation|pass610_dm1_v1_firestaff_viewport_crop_capture_gate|pass622_dm1_v1_viewport_wall_capture_closure_gap|pass623_dm1_v1_input_capture_readiness_bridge|dm1_v2_side_by_side_presentation_seed_probe|dm1_v2_side_by_side_seed_pc34|dm1_v2_v1_v2_side_by_side_seed_pc34",
+          "^(m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe|m11_capture_route_state|dm1_v1_wall_collision_runtime_capture|m11_turn_viewport_orientation|pass610_dm1_v1_firestaff_viewport_crop_capture_gate|pass622_dm1_v1_viewport_wall_capture_closure_gap|pass623_dm1_v1_input_capture_readiness_bridge|pass1073_dm1_v1_original_live_capture_receipt|dm1_v2_side_by_side_presentation_seed_probe|dm1_v2_side_by_side_seed_pc34|dm1_v2_v1_v2_side_by_side_seed_pc34|dm1_v2_runtime_presentation_smoke)$",
           "--output-on-failure"
         ],
         "ok": true,
         "returncode": 0,
         "stderr": "",
-        "stdout": "Test project /Users/bosse/.openclaw/workspace-main/build\n      Start  17: dm1_v2_side_by_side_presentation_seed_probe\n 1/12 Test  #17: dm1_v2_side_by_side_presentation_seed_probe ...........   Passed    0.00 sec\n      Start 222: firestaff_dm1_v1_playable_route_probe\n 2/12 Test #222: firestaff_dm1_v1_playable_route_probe .................   Passed    0.01 sec\n      Start 223: firestaff_dm1_v1_pass1055_closed_door_pair_probe\n 3/12 Test #223: firestaff_dm1_v1_pass1055_closed_door_pair_probe ......   Passed    0.00 sec\n      Start 255: dm1_v2_side_by_side_seed_pc34\n 4/12 Test #255: dm1_v2_side_by_side_seed_pc34 .........................   Passed    0.01 sec\n      Start 256: dm1_v2_v1_v2_side_by_side_seed_pc34\n 5/12 Test #256: dm1_v2_v1_v2_side_by_side_seed_pc34 ...................   Passed    0.00 sec\n      Start 347: m11_phase_a\n 6/12 Test #347: m11_phase_a ...........................................   Passed    0.06 sec\n      Start 358: m11_capture_route_state\n 7/12 Test #358: m11_capture_route_state ...............................   Passed   90.41 sec\n      Start 359: dm1_v1_wall_collision_runtime_capture\n 8/12 Test #359: dm1_v1_wall_collision_runtime_capture .................   Passed    0.04 sec\n      Start 362: m11_turn_viewport_orientation\n 9/12 Test #362: m11_turn_viewport_orientation .........................   Passed   91.80 sec\n      Start 589: pass610_dm1_v1_firestaff_viewport_crop_capture_gate\n10/12 Test #589: pass610_dm1_v1_firestaff_viewport_crop_capture_gate ...   Passed    0.16 sec\n      Start 590: pass622_dm1_v1_viewport_wall_capture_closure_gap\n11/12 Test #590: pass622_dm1_v1_viewport_wall_capture_closure_gap ......   Passed    0.03 sec\n      Start 591: pass623_dm1_v1_input_capture_readiness_bridge\n12/12 Test #591: pass623_dm1_v1_input_capture_readiness_bridge .........   Passed    0.04 sec\n\n100% tests passed, 0 tests failed out of 12\n\nTotal Test time (real) = 182.57 sec"
+        "stdout": "Test project /private/tmp/firestaff-main-dm1-24h/build\n      Start  19: dm1_v2_side_by_side_presentation_seed_probe\n 1/14 Test  #19: dm1_v2_side_by_side_presentation_seed_probe ...........   Passed    0.00 sec\n      Start 242: firestaff_dm1_v1_playable_route_probe\n 2/14 Test #242: firestaff_dm1_v1_playable_route_probe .................   Passed    0.01 sec\n      Start 243: firestaff_dm1_v1_pass1055_closed_door_pair_probe\n 3/14 Test #243: firestaff_dm1_v1_pass1055_closed_door_pair_probe ......   Passed    0.00 sec\n      Start 278: dm1_v2_side_by_side_seed_pc34\n 4/14 Test #278: dm1_v2_side_by_side_seed_pc34 .........................   Passed    0.01 sec\n      Start 279: dm1_v2_v1_v2_side_by_side_seed_pc34\n 5/14 Test #279: dm1_v2_v1_v2_side_by_side_seed_pc34 ...................   Passed    0.00 sec\n      Start 352: dm1_v2_runtime_presentation_smoke\n 6/14 Test #352: dm1_v2_runtime_presentation_smoke .....................   Passed    8.96 sec\n      Start 425: m11_phase_a\n 7/14 Test #425: m11_phase_a ...........................................   Passed    0.06 sec\n      Start 436: m11_capture_route_state\n 8/14 Test #436: m11_capture_route_state ...............................   Passed   92.87 sec\n      Start 437: dm1_v1_wall_collision_runtime_capture\n 9/14 Test #437: dm1_v1_wall_collision_runtime_capture .................   Passed    0.03 sec\n      Start 440: m11_turn_viewport_orientation\n10/14 Test #440: m11_turn_viewport_orientation .........................   Passed   89.70 sec\n      Start 660: pass1073_dm1_v1_original_live_capture_receipt\n11/14 Test #660: pass1073_dm1_v1_original_live_capture_receipt .........   Passed    0.07 sec\n      Start 712: pass610_dm1_v1_firestaff_viewport_crop_capture_gate\n12/14 Test #712: pass610_dm1_v1_firestaff_viewport_crop_capture_gate ...   Passed    0.07 sec\n      Start 713: pass622_dm1_v1_viewport_wall_capture_closure_gap\n13/14 Test #713: pass622_dm1_v1_viewport_wall_capture_closure_gap ......   Passed    0.03 sec\n      Start 714: pass623_dm1_v1_input_capture_readiness_bridge\n14/14 Test #714: pass623_dm1_v1_input_capture_readiness_bridge .........   Passed    0.04 sec\n\n100% tests passed, 0 tests failed out of 14\n\nLabel Time Summary:\ndm1             =   0.00 sec*proc (1 test)\npresentation    =   0.00 sec*proc (1 test)\nreadiness       =   0.00 sec*proc (1 test)\nv2              =   0.00 sec*proc (1 test)\n\nTotal Test time (real) = 191.86 sec"
+      },
+      "inventory": {
+        "command": {
+          "cmd": [
+            "ctest",
+            "--test-dir",
+            "build",
+            "--show-only=json-v1"
+          ],
+          "ok": true,
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "<ctest json inventory: 1110 tests>"
+        },
+        "label_summary": {
+          "dm1_v1_wall_collision_runtime_capture": [],
+          "dm1_v2_runtime_presentation_smoke": [],
+          "dm1_v2_side_by_side_presentation_seed_probe": [
+            "dm1",
+            "presentation",
+            "readiness",
+            "v2"
+          ],
+          "dm1_v2_side_by_side_seed_pc34": [],
+          "dm1_v2_v1_v2_side_by_side_seed_pc34": [],
+          "firestaff_dm1_v1_pass1055_closed_door_pair_probe": [],
+          "firestaff_dm1_v1_playable_route_probe": [],
+          "m11_capture_route_state": [],
+          "m11_phase_a": [],
+          "m11_turn_viewport_orientation": [],
+          "pass1073_dm1_v1_original_live_capture_receipt": [],
+          "pass610_dm1_v1_firestaff_viewport_crop_capture_gate": [],
+          "pass622_dm1_v1_viewport_wall_capture_closure_gap": [],
+          "pass623_dm1_v1_input_capture_readiness_bridge": []
+        },
+        "matched": [
+          "dm1_v1_wall_collision_runtime_capture",
+          "dm1_v2_runtime_presentation_smoke",
+          "dm1_v2_side_by_side_presentation_seed_probe",
+          "dm1_v2_side_by_side_seed_pc34",
+          "dm1_v2_v1_v2_side_by_side_seed_pc34",
+          "firestaff_dm1_v1_pass1055_closed_door_pair_probe",
+          "firestaff_dm1_v1_playable_route_probe",
+          "m11_capture_route_state",
+          "m11_phase_a",
+          "m11_turn_viewport_orientation",
+          "pass1073_dm1_v1_original_live_capture_receipt",
+          "pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+          "pass622_dm1_v1_viewport_wall_capture_closure_gap",
+          "pass623_dm1_v1_input_capture_readiness_bridge"
+        ],
+        "missing": [],
+        "ok": true,
+        "required": [
+          "m11_phase_a",
+          "firestaff_dm1_v1_playable_route_probe",
+          "firestaff_dm1_v1_pass1055_closed_door_pair_probe",
+          "m11_capture_route_state",
+          "dm1_v1_wall_collision_runtime_capture",
+          "m11_turn_viewport_orientation",
+          "pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+          "pass622_dm1_v1_viewport_wall_capture_closure_gap",
+          "pass623_dm1_v1_input_capture_readiness_bridge",
+          "pass1073_dm1_v1_original_live_capture_receipt",
+          "dm1_v2_side_by_side_presentation_seed_probe",
+          "dm1_v2_side_by_side_seed_pc34",
+          "dm1_v2_v1_v2_side_by_side_seed_pc34",
+          "dm1_v2_runtime_presentation_smoke"
+        ]
       },
       "ok": true,
-      "regex": "m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe|m11_capture_route_state|dm1_v1_wall_collision_runtime_capture|m11_turn_viewport_orientation|pass610_dm1_v1_firestaff_viewport_crop_capture_gate|pass622_dm1_v1_viewport_wall_capture_closure_gap|pass623_dm1_v1_input_capture_readiness_bridge|dm1_v2_side_by_side_presentation_seed_probe|dm1_v2_side_by_side_seed_pc34|dm1_v2_v1_v2_side_by_side_seed_pc34"
+      "regex": "^(m11_phase_a|firestaff_dm1_v1_playable_route_probe|firestaff_dm1_v1_pass1055_closed_door_pair_probe|m11_capture_route_state|dm1_v1_wall_collision_runtime_capture|m11_turn_viewport_orientation|pass610_dm1_v1_firestaff_viewport_crop_capture_gate|pass622_dm1_v1_viewport_wall_capture_closure_gap|pass623_dm1_v1_input_capture_readiness_bridge|pass1073_dm1_v1_original_live_capture_receipt|dm1_v2_side_by_side_presentation_seed_probe|dm1_v2_side_by_side_seed_pc34|dm1_v2_v1_v2_side_by_side_seed_pc34|dm1_v2_runtime_presentation_smoke)$"
     },
     "pass1056_pairing": {
       "cmd": [
         "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
-        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass1056_dm1_v1_pass1052_firestaff_pairing_gate.py"
+        "/private/tmp/firestaff-main-dm1-24h/tools/verify_pass1056_dm1_v1_pass1052_firestaff_pairing_gate.py"
       ],
       "ok": true,
       "preserved_outputs": [
@@ -59,7 +128,7 @@
     "pass1057_dungeonb": {
       "cmd": [
         "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
-        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass1057_dm1_amiga22_dungeonb_asset_lock.py"
+        "/private/tmp/firestaff-main-dm1-24h/tools/verify_pass1057_dm1_amiga22_dungeonb_asset_lock.py"
       ],
       "ok": true,
       "preserved_outputs": [
@@ -73,7 +142,7 @@
     "pass1058_keypad_route_atlas": {
       "cmd": [
         "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
-        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass1058_dm1_v1_original_keypad_route_atlas.py"
+        "/private/tmp/firestaff-main-dm1-24h/tools/verify_pass1058_dm1_v1_original_keypad_route_atlas.py"
       ],
       "ok": true,
       "preserved_outputs": [
@@ -87,7 +156,7 @@
       "command": {
         "cmd": [
           "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
-          "/Users/bosse/.openclaw/workspace-main/tools/asset-validate/compare_to_greatstone.py",
+          "/private/tmp/firestaff-main-dm1-24h/tools/asset-validate/compare_to_greatstone.py",
           "/Users/bosse/.firestaff/data",
           "--quiet"
         ],
@@ -100,7 +169,7 @@
     }
   },
   "data_dir": "/Users/bosse/.firestaff/data",
-  "generated_at": "2026-06-21T13:55:40.475287+00:00",
+  "generated_at": "2026-06-21T23:24:54.842842+00:00",
   "schema": "firestaff.parity.dm1_24h_readiness.v1",
   "status": "PASS"
 }
