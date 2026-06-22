@@ -2,6 +2,8 @@
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-06-22 CSB V1 save runtime boundary follow-up: data-free `csb_v1_save_runtime_boundary_pc34_compat` gate is now wired into CTest (see DONE.md 2026-06-22 entry). Remaining CSB save work is real save compatibility artifacts (binary DUNGEON.DAT + party state round-tripped through the live F0435 STARTEND_LoadGame flow), CSB save/audio/gameplay depth, and broader end-to-end playability.
+
 - 🔧 2026-06-22 Mapfile-to-asset-loader bridge follow-up: `tools/fetch_greatstone_sck_mapfiles.sh` can now fetch/extract the SCK `db/map/*.map` corpus from Greatstone, and `firestaff_sck_mapfile` parses SCK 2.x rows plus `SIZE=` slices. Remaining work is wiring parsed SCK metadata into live Firestaff asset-loader/runtime selection, including non-`SIZE=` item formats and per-game map selection from `_mapping.xml`.
 - 🔧 2026-06-22 Greatstone mapfile parser follow-up: bounded `firestaff_mapfile` parsing is now CTest-backed for documented mapfile 2.5-style header properties and item description rows. Remaining work is full bundled sck mapfile corpus verification, any needed shortcut/alias normalization beyond raw attribute preservation, and the mapfile-to-Firestaff asset-loader/probe bridge.
 - 🔧 2026-06-22 Launcher session timer follow-up: M12 now persists and verifies the launcher-owned Session Timer setting, but in-game reminder overlay / forced-pause behavior remains deliberately out of scope until a separate runtime UX pass defines it.
