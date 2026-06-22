@@ -2241,6 +2241,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_session_timer_pr
     endif()
 endif()
 
+# M12 language-cycle layout probe
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_language_cycle_layout_probe.c")
+    add_executable(firestaff_m12_language_cycle_layout_probe probes/m12/firestaff_m12_language_cycle_layout_probe.c)
+    target_link_libraries(firestaff_m12_language_cycle_layout_probe PRIVATE firestaff_m12 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m12_language_cycle_layout_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # M12 config persistence probe
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_config_persist_probe.c")
     add_executable(firestaff_m12_config_persist_probe probes/m12/firestaff_m12_config_persist_probe.c)
@@ -7742,6 +7751,13 @@ if(BUILD_TESTING)
         add_test(
             NAME m12_session_timer
             COMMAND firestaff_m12_session_timer_probe
+        )
+    endif()
+
+    if(TARGET firestaff_m12_language_cycle_layout_probe)
+        add_test(
+            NAME m12_language_cycle_layout
+            COMMAND firestaff_m12_language_cycle_layout_probe
         )
     endif()
 
