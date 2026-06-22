@@ -559,6 +559,7 @@ int main(void) {
     state.settings.windowWidth = 1234;
     state.settings.windowHeight = 777;
     state.settings.quickResumeEnabled = 0;
+    state.settings.sessionTimerIndex = 3;
     state.settings.minimapEnabled = 1;
     state.settings.autoMapEnabled = 0;
     state.settings.combatLogEnabled = 1;
@@ -585,6 +586,9 @@ int main(void) {
                      reloaded.settings.windowWidth == 1234 &&
                      reloaded.settings.windowHeight == 777 &&
                      reloaded.settings.quickResumeEnabled == 0 &&
+                     reloaded.settings.sessionTimerIndex == 3 &&
+                     M12_StartupMenu_SessionTimerLimitMinutes(&reloaded) == 60 &&
+                     M12_StartupMenu_SessionTimerRemainingSeconds(&reloaded, 3590) == 10 &&
                      reloaded.settings.minimapEnabled == 1 &&
                      reloaded.settings.autoMapEnabled == 0 &&
                      reloaded.settings.combatLogEnabled == 1 &&
@@ -626,6 +630,7 @@ int main(void) {
                      file_contains(configPath, "window_width = 1234") &&
                      file_contains(configPath, "window_height = 777") &&
                      file_contains(configPath, "quick_resume_enabled = 0") &&
+                     file_contains(configPath, "session_timer_index = 3") &&
                      file_contains(configPath, "minimap_enabled = 1") &&
                      file_contains(configPath, "auto_map_enabled = 0") &&
                      file_contains(configPath, "combat_log_enabled = 1") &&
@@ -639,7 +644,7 @@ int main(void) {
                      file_contains(configPath, "screenshot_path = \"/tmp/firestaff-shots\"") &&
                      file_contains(configPath, "game_4_language_index = 2") &&
                      strcmp(M12_AssetStatus_GetDataDir(&reloaded.assetStatus), dataDir) == 0,
-                 "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, per-game language, and QoL/start-menu extras");
+                 "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, per-game language, session timer, and QoL/start-menu extras");
 
     make_file_with_text(configPath,
                         "# Firestaff startup menu config\n"

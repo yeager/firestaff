@@ -57,12 +57,12 @@
 
 /* Modern renderer shows a small curated settings subset. Values are the
  * private M12_SETTINGS_ROW_* indices in menu_startup_m12.c. */
-static const int m12_hit_visible_settings_rows[] = {0, 1, 3, 14, 15, 41, 42};
+static const int m12_hit_visible_settings_rows[] = {0, 1, 3, 14, 15, 16, 30, 42, 43};
 #define M12_HIT_SETTINGS_VISIBLE_ROW_COUNT \
     ((int)(sizeof(m12_hit_visible_settings_rows) / sizeof(m12_hit_visible_settings_rows[0])))
 #define M12_HIT_SETTINGS_ROW_DATA_DIR 15
-#define M12_HIT_SETTINGS_ROW_EXPORT 41
-#define M12_HIT_SETTINGS_ROW_IMPORT 42
+#define M12_HIT_SETTINGS_ROW_EXPORT 42
+#define M12_HIT_SETTINGS_ROW_IMPORT 43
 
 /* Museum view mirrors the modern renderer: section rows in the left
  * panel, broad content area on the right for page cycling. */
