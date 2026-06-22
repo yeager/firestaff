@@ -16,7 +16,7 @@ finished runtime playability or original pixel parity.
 
 ## Non-claims
 
-- This is not exact Track 02 dungeon-bank offset parity.
+- This is not semantic Track 02 dungeon-table/full-loader parity.
 - This is not full Theron dungeon-loader parity.
 - This is not a real `.srm` / Track 02 save import/export artifact pass.
 - This is not a broader real-route gameplay trace or playability claim.

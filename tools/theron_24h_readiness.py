@@ -16,9 +16,10 @@ CTest without claiming that Theron is finished:
   runtime claim.
 
 The script writes a manifest/report so the roll-up can be cited while keeping
-the remaining blockers explicit: exact dungeon-bank offsets, full dungeon
-loader parity, real Track 02 .srm import/export evidence, broader real-route
-runtime traces, original pixel/capture parity, and README-eligible screenshots.
+the remaining blockers explicit: semantic Track 02 dungeon-table decoding, full
+dungeon-loader parity, real Track 02 .srm import/export evidence, broader
+real-route runtime traces, original pixel/capture parity, and README-eligible
+screenshots.
 """
 from __future__ import annotations
 
@@ -99,6 +100,41 @@ def run(cmd: list[str], *, timeout: int = 120, env: dict[str, str] | None = None
         "stderr": proc.stderr.strip(),
         "ok": proc.returncode == 0,
     }
+
+
+def _redact_string(value: str, replacements: dict[str, str]) -> str:
+    out = value
+    for raw, token in sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True):
+        if raw:
+            out = out.replace(raw, token)
+    return out
+
+
+def redact_paths(value: Any, *, data_dir: Path, build_dir: Path) -> Any:
+    replacements = {
+        str(ROOT): "<repo>",
+        str(ROOT.resolve()): "<repo>",
+        str(data_dir): "<data-dir>",
+    }
+    try:
+        replacements[str(data_dir.resolve())] = "<data-dir>"
+    except OSError:
+        pass
+    try:
+        replacements[str(build_dir.resolve())] = "<build-dir>"
+    except OSError:
+        pass
+
+    if isinstance(value, str):
+        return _redact_string(value, replacements)
+    if isinstance(value, list):
+        return [redact_paths(item, data_dir=data_dir, build_dir=build_dir) for item in value]
+    if isinstance(value, dict):
+        return {
+            str(key): redact_paths(item, data_dir=data_dir, build_dir=build_dir)
+            for key, item in value.items()
+        }
+    return value
 
 
 def coverage_check(data_dir: Path) -> dict[str, Any]:
@@ -307,7 +343,7 @@ def write_outputs(result: dict[str, Any]) -> None:
         "",
         "## Non-claims",
         "",
-        "- This is not exact Track 02 dungeon-bank offset parity.",
+        "- This is not semantic Track 02 dungeon-table/full-loader parity.",
         "- This is not full Theron dungeon-loader parity.",
         "- This is not a real `.srm` / Track 02 save import/export artifact pass.",
         "- This is not a broader real-route gameplay trace or playability claim.",
@@ -362,12 +398,13 @@ def main() -> int:
         "build_dir": str(args.build_dir),
         "checks": checks,
     }
-    write_outputs(result)
+    public_result = redact_paths(result, data_dir=args.data_dir, build_dir=args.build_dir)
+    write_outputs(public_result)
     if ok:
         print(f"PASS {PASS}")
         return 0
     print(f"FAIL {PASS}", file=sys.stderr)
-    print(json.dumps(result, indent=2)[:6000], file=sys.stderr)
+    print(json.dumps(public_result, indent=2)[:6000], file=sys.stderr)
     return 1
 
 
