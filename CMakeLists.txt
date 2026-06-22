@@ -9948,6 +9948,28 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_pak_decode
     )
 
+    # ── FTL container parser/checksum verifier ───────────────────
+    # Verifies the greatstone d_ftl.html common header, 12-byte
+    # hunk headers, BSS/DATA/CODE hunk discovery, and documented
+    # common/BSS/DATA/uncompressed-CODE checksum algorithms. This
+    # deliberately does not claim HUNK_DATA/HUNK_CODE decompression
+    # or runtime loading; compressed 0x5223 CODE checksums are
+    # reported as unsupported until decompression is owned here.
+    add_executable(test_firestaff_ftl_container
+        tests/test_firestaff_ftl_container.c
+        src/shared/firestaff_ftl_container.c
+    )
+    target_include_directories(test_firestaff_ftl_container PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_ftl_container PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_ftl_container_unit
+        COMMAND test_firestaff_ftl_container
+    )
+
     # ── CSB Utility Disk .CMP file decoder (Tier 2 #6) ──
     # Verifies src/shared/firestaff_cmp_decode.c parses the
     # 496-byte CMP format used by Chaos Strikes Back's

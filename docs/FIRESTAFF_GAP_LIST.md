@@ -29,7 +29,7 @@ Classification:
 | IMG3/IMG4 4bpp local-palette image | dmweb Data Files | FIXED (same code path) |
 | **IMG5 4bpp chunked image (Amiga, SNES)** | greatstone d_items.html | **FIXED in v2.9.2** (`firestaff_img5_decode.c`, commit `216b0b67`) |
 | LZW-compressed items (DM Atari ST, CSB Atari ST) | dmweb Data Files | PARTIAL — decoder is contract-verified (`m11_gfx_lzw_decompress`, `dm1_lzw_round_trip` PASS 1/1 on 2026-06-21); real Atari ST asset handoff remains BLOCKED-DATA |
-| **FTL container format (Amiga, X68000, MegaCD)** | greatstone d_ftl.html | OPEN-LARGE — 3-hunk Amiga-hunks structure, 4 checksums, two compression algorithms |
+| **FTL container format (Amiga, X68000, MegaCD)** | greatstone d_ftl.html | PARTIAL / OPEN-BOUNDED — `firestaff_ftl_container_unit` PASS 1/1 on 2026-06-22; parses the 20-byte common header, 12-byte hunk headers, BSS/DATA/CODE hunk discovery, BSS metadata, and verifies documented common/BSS/DATA/uncompressed-CODE checksums. Remaining: HUNK_DATA zero-run decompression, HUNK_CODE 0x5223 decompression/checksum verification, mapfile item extraction, real FTL corpus gates, and runtime asset loading. |
 | **PAK container format (Atari ST)** | greatstone d_pak.html | FIXED — `firestaff_pak_decode_unit` PASS 1/1 on 2026-06-21; parses 28-byte Atari ST executable header plus nibble-coded table/literal compression |
 | **HTC hint oracle text format (CSB)** | sck tutorial | OPEN-LARGE — text+layout format used by CSB Hint Oracle |
 | **CMP portrait image format** | sck tutorial | FIXED — `firestaff_cmp_decode_unit` + `csb_v1_cmp_import_pc34` PASS 2/2 on 2026-06-21; decoder parses the 496-byte CSB Utility Disk champion portrait format and import glue writes it into CSB V1 champion/party structures |
@@ -462,7 +462,7 @@ order:
 
 ### Tier 3 (OPEN-LARGE — separate milestones)
 
-10. FTL container decoder (Amiga, X68000, MegaCD).
+10. FTL container decoder (Amiga, X68000, MegaCD). — PARTIAL: generic header/hunk/checksum parser is CTest-gated; decompression, mapfile extraction, real corpus verification, and runtime loading remain.
 11. CSBWin custom resource path (csbgraphics.dat + dmsave).
 12. DM2 advanced CCM + projectile-list drain.
 13. DM2 per-cell modern-art swap (T560/T600).
