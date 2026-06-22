@@ -10438,6 +10438,28 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_bpk_archive
     )
 
+    # ── Nexus V1 DGN actor slot bounds ────────────────────────────
+    # Data-free regression: malformed Nexus DGN actor records must clamp
+    # spatial fields into the 64x64 grid and normalize the 0..3 facing
+    # direction, while out-of-range type refs and the fixed active-pool
+    # boundary (ReDMCSB GROUP.C F0183) stay hard rejects. Pins the
+    # contract documented in src/nexus/nexus_v1_creatures.c and exercised
+    # by probe 4 of probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c.
+    add_executable(test_nexus_v1_dgn_actor_slot_bounds
+        tests/test_nexus_v1_dgn_actor_slot_bounds.c
+    )
+    target_include_directories(test_nexus_v1_dgn_actor_slot_bounds PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_dgn_actor_slot_bounds PRIVATE firestaff_nexus)
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_actor_slot_bounds PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_actor_slot_bounds
+        COMMAND test_nexus_v1_dgn_actor_slot_bounds
+    )
+
     # ── CSB / DM hidden-code skip table (Tier 2 from FIRESTAFF_GAP_LIST) ──
     # Skips Atari ST and Amiga item indices 558-562 which contain
     # 68k executable code left over from the original FTL port

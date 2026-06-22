@@ -476,21 +476,45 @@ static void probe_dgn_actor_refs(void)
     CHECK(slot == 0, "valid DGN actor reference consumes slot 0");
     CHECK(mgr.active_count == 1, "active_count increments after valid spawn");
 
-    int before = mgr.active_count;
-    CHECK(nexus_v1_creature_spawn(&mgr, 0, -1, 1, NEXUS_DIR_NORTH) == -1,
-          "malformed DGN actor x=-1 is rejected");
-    CHECK(nexus_v1_creature_spawn(&mgr, 0, NEXUS_MAX_MAP_SIZE, 1,
-                                  NEXUS_DIR_NORTH) == -1,
-          "malformed DGN actor x=64 is rejected");
-    CHECK(nexus_v1_creature_spawn(&mgr, 0, 1, -1, NEXUS_DIR_NORTH) == -1,
-          "malformed DGN actor y=-1 is rejected");
-    CHECK(nexus_v1_creature_spawn(&mgr, 0, 1, NEXUS_MAX_MAP_SIZE,
-                                  NEXUS_DIR_NORTH) == -1,
-          "malformed DGN actor y=64 is rejected");
-    CHECK(nexus_v1_creature_spawn(&mgr, 0, 1, 1, 4) == -1,
-          "malformed DGN actor facing=4 is rejected");
-    CHECK(mgr.active_count == before,
-          "malformed actor references do not consume active slots");
+    /* Malformed spatial fields from external Nexus DGN actor records are
+     * clamped/normalized into the 64x64 grid rather than dropped, so a
+     * single bad coordinate does not silently lose an otherwise-valid
+     * actor. OOB squares read as wall at runtime (DUNGEON.C F0151), and
+     * the clamp keeps the AI grid index in bounds. Only the actor-type
+     * ref and the fixed active-pool boundary (GROUP.C F0183) are hard
+     * rejects. See tests/test_nexus_v1_dgn_actor_slot_bounds.c. */
+    {
+        int s;
+        s = nexus_v1_creature_spawn(&mgr, 0, -1, 1, NEXUS_DIR_NORTH);
+        CHECK(s >= 0 && mgr.active[s].x == 0,
+              "malformed DGN actor x=-1 clamps to grid minimum");
+        s = nexus_v1_creature_spawn(&mgr, 0, NEXUS_MAX_MAP_SIZE, 1,
+                                    NEXUS_DIR_NORTH);
+        CHECK(s >= 0 && mgr.active[s].x == NEXUS_MAX_MAP_SIZE - 1,
+              "malformed DGN actor x=64 clamps to grid maximum");
+        s = nexus_v1_creature_spawn(&mgr, 0, 1, -1, NEXUS_DIR_NORTH);
+        CHECK(s >= 0 && mgr.active[s].y == 0,
+              "malformed DGN actor y=-1 clamps to grid minimum");
+        s = nexus_v1_creature_spawn(&mgr, 0, 1, NEXUS_MAX_MAP_SIZE,
+                                    NEXUS_DIR_NORTH);
+        CHECK(s >= 0 && mgr.active[s].y == NEXUS_MAX_MAP_SIZE - 1,
+              "malformed DGN actor y=64 clamps to grid maximum");
+        s = nexus_v1_creature_spawn(&mgr, 0, 1, 1, 4);
+        CHECK(s >= 0 && mgr.active[s].facing == 0,
+              "malformed DGN actor facing=4 normalizes into [0,3]");
+    }
+    /* The actor-type reference is still a hard reject (a bad type index
+     * would read garbage stats) and must not consume an active slot. */
+    {
+        int before = mgr.active_count;
+        CHECK(nexus_v1_creature_spawn(&mgr, mgr.type_count, 1, 1,
+                                      NEXUS_DIR_NORTH) == -1 &&
+              nexus_v1_creature_spawn(&mgr, -1, 1, 1,
+                                      NEXUS_DIR_NORTH) == -1,
+              "malformed actor type reference is rejected");
+        CHECK(mgr.active_count == before,
+              "rejected actor type does not consume active slots");
+    }
 
     while (mgr.active_count < NEXUS_MAX_ACTIVE_CREATURES) {
         int r = nexus_v1_creature_spawn(&mgr, 0,
