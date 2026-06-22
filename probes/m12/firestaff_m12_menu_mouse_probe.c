@@ -42,15 +42,21 @@
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <direct.h>
-#endif
 
-#ifdef _WIN32
 static int probe_setenv(const char* name, const char* value) {
     return _putenv_s(name, value);
+}
+
+static void probe_mkdir(const char* path) {
+    (void)_mkdir(path);
 }
 #else
 static int probe_setenv(const char* name, const char* value) {
     return setenv(name, value, 1);
+}
+
+static void probe_mkdir(const char* path) {
+    (void)mkdir(path, 0777);
 }
 #endif
 
@@ -122,18 +128,13 @@ int main(void) {
     unsigned char* b = (unsigned char*)malloc(rgbaBytes);
     if (!a || !b) { free(a); free(b); return 2; }
 
-#ifdef _WIN32
-    _mkdir("verification-m12");
-    _mkdir("verification-m12/menu-mouse");
-#else
-    mkdir("verification-m12", 0777);
-    mkdir("verification-m12/menu-mouse", 0777);
-    mkdir("verification-m12/menu-mouse/home", 0777);
-    mkdir("verification-m12/menu-mouse/empty-screenshots", 0777);
+    probe_mkdir("verification-m12");
+    probe_mkdir("verification-m12/menu-mouse");
+    probe_mkdir("verification-m12/menu-mouse/home");
+    probe_mkdir("verification-m12/menu-mouse/empty-screenshots");
     probe_setenv("HOME", "verification-m12/menu-mouse/home");
     probe_setenv("FIRESTAFF_SCREENSHOTS_DIR",
                  "verification-m12/menu-mouse/empty-screenshots");
-#endif
 
     /* ---------- INV_MOUSE_01 ---------- */
     {
