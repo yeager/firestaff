@@ -139,11 +139,11 @@
     "tools": {
       "dosbox": "/opt/homebrew/bin/dosbox",
       "dosbox-debug": null,
-      "dosbox-x": null,
+      "dosbox-x": "/opt/homebrew/bin/dosbox-x",
       "gdb": null,
       "objdump": "/usr/bin/objdump",
       "strings": "/usr/bin/strings",
-      "xdotool": null,
+      "xdotool": "/opt/homebrew/bin/xdotool",
       "xvfb-run": null
     }
   },

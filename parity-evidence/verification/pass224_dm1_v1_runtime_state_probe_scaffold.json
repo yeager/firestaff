@@ -40,7 +40,7 @@
         "-version"
       ],
       "output_head": [
-        "2026-06-21 09:40:59.421 | LANG: The 'sv' language resource file could not be loaded, using internal English messages",
+        "2026-06-21 21:17:17.717 | LANG: The 'sv' language resource file could not be loaded, using internal English messages",
         "dosbox-staging, version 0.82.2 ()",
         "",
         "Copyright (C) 2020-2024  The DOSBox Staging Team",
@@ -53,7 +53,21 @@
       "returncode": 0
     },
     "dosbox_x_version": {
-      "missing": "dosbox-x"
+      "argv": [
+        "/opt/homebrew/bin/dosbox-x",
+        "-version"
+      ],
+      "output_head": [
+        "",
+        "DOSBox-X version 2026.06.02 SDL2, copyright 2011-2026 The DOSBox-X Team.",
+        "DOSBox-X project maintainer: joncampbell123 (The Great Codeholio)",
+        "",
+        "DOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,",
+        "and you are welcome to redistribute it under certain conditions;",
+        "please read the COPYING file thoroughly before doing so.",
+        ""
+      ],
+      "returncode": 1
     },
     "existing_runner_api_files": [
       {
@@ -97,9 +111,9 @@
     "host_tools": {
       "dosbox": "/opt/homebrew/bin/dosbox",
       "dosbox-debug": null,
-      "dosbox-x": null,
+      "dosbox-x": "/opt/homebrew/bin/dosbox-x",
       "gdb": null,
-      "xdotool": null,
+      "xdotool": "/opt/homebrew/bin/xdotool",
       "xvfb-run": null
     }
   },

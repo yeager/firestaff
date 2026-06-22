@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-06-21T07:40:59.602196+00:00",
+  "timestampUtc": "2026-06-21T19:17:11.197987+00:00",
   "status": "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED",
   "repo": "/Users/bosse/.openclaw/workspace-main",
   "branch": "dm1v1-capture-gap-close-20260620",
-  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
+  "head": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
@@ -3723,8 +3723,8 @@
       },
       {
         "name": "dosbox-x",
-        "path": null,
-        "available": false
+        "path": "/opt/homebrew/bin/dosbox-x",
+        "available": true
       }
     ],
     "selectedDosbox": {
@@ -3733,7 +3733,7 @@
       "available": true
     },
     "dosbox": "/opt/homebrew/bin/dosbox",
-    "dosboxX": null,
+    "dosboxX": "/opt/homebrew/bin/dosbox-x",
     "xvfbRun": null,
     "needsXvfb": false,
     "stageDir": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",

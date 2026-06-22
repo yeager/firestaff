@@ -16,10 +16,10 @@
     "G0434_i_CommandQueueLastIndex": "2C23:1F08",
     "G2153_i_QueuedCommandsCount": "2C23:3E78"
   },
-  "blocker": "missing prerequisite: dosbox-debug, Xvfb, xdotool",
+  "blocker": "missing prerequisite: dosbox-debug",
   "branch": "dm1v1-capture-gap-close-20260620",
   "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
+  "head": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
   "nonClaims": [
     "no movement behavior changed",
     "no pass513 scaffold promoted",
@@ -29,9 +29,7 @@
     "dmExeExists": true,
     "missingHelpers": [],
     "missingTools": [
-      "dosbox-debug",
-      "Xvfb",
-      "xdotool"
+      "dosbox-debug"
     ],
     "originalStage": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
     "originalStageExists": true,
@@ -41,9 +39,9 @@
       "tools/verify_pass388_dm1_v1_queue_producer_runtime.py": true
     },
     "tools": {
-      "Xvfb": null,
+      "Xvfb": "/opt/homebrew/bin/Xvfb",
       "dosbox-debug": null,
-      "xdotool": null
+      "xdotool": "/opt/homebrew/bin/xdotool"
     }
   },
   "priorRuntimeEvidence": {
@@ -225,5 +223,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE",
-  "timestampUtc": "2026-06-21T07:40:59.621433+00:00"
+  "timestampUtc": "2026-06-21T19:20:33.797869+00:00"
 }
