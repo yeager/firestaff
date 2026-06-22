@@ -7886,14 +7886,10 @@ int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
                                        int* outX, int* outY,
                                        int* outW, int* outH) {
     /* DUNVIEW.C G0205 G0205_aaauc_Graphic558_WallOrnamentCoordinateSets
-     * index 12 is the D1C champion-mirror route (DUNVIEW.C:3913-3928).
-     * v1 hard-codes coordSet 0 (the default D1C) since the
-     * coord-set for the ornament is determined by the
-     * m11_dm1_wall_ornament_coord_set_index helper and
-     * firestaff_known_ornament_set_indices.  We default to 0 here
-     * to match what the m11_draw_dm1_front_mirror_route caller
-     * uses for the (1,3) and (1,4) Hall-of-Champions routes. */
-    static const int kD1CDest[4] = { 96, 36, 32, 28 };
+     * coordSet 5 / index 12 is the C346 D1C champion-mirror frame
+     * route (DUNVIEW.C:3913-3928).  The C026 champion portrait is a
+     * smaller cutout inside this wall-ornament box at (96,35)-(127,63). */
+    static const int kD1CDest[4] = { 80, 29, 64, 43 };
     if (!state) return 0;
     if (outX) *outX = kD1CDest[0];
     if (outY) *outY = kD1CDest[1];
@@ -13985,6 +13981,76 @@ static void m11_draw_dm1_front_champion_portrait(const M11_GameViewState* state,
                                1);
 }
 
+static void m11_draw_dm1_front_mirror_backing(unsigned char* framebuffer,
+                                              int fbW,
+                                              int fbH,
+                                              const M11_DM1ZoneBlit* blit) {
+    int x;
+    int y;
+    int w;
+    int h;
+    if (!framebuffer || !blit) {
+        return;
+    }
+    x = M11_VIEWPORT_X + blit->dstX;
+    y = M11_VIEWPORT_Y + blit->dstY;
+    w = blit->width;
+    h = blit->height;
+    if (w <= 2 || h <= 2) {
+        return;
+    }
+    /* ReDMCSB DUNVIEW.C:3922-3928 draws C346 before C026.
+     * Keep the D1C champion-mirror frame opaque even if the extracted
+     * wall-ornament bitmap contributes only transparent/stone-like pixels. */
+    m11_fill_rect(framebuffer, fbW, fbH, x, y, w, h, M11_COLOR_BLACK);
+    m11_fill_rect(framebuffer, fbW, fbH, x + 2, y + 2, w - 4, h - 4,
+                  M11_COLOR_DARK_GRAY);
+    m11_draw_hline(framebuffer, fbW, fbH, x + 1, x + w - 2, y + 1,
+                   M11_COLOR_LIGHT_GRAY);
+    m11_draw_vline(framebuffer, fbW, fbH, x + 1, y + 1, y + h - 2,
+                   M11_COLOR_LIGHT_GRAY);
+    m11_draw_hline(framebuffer, fbW, fbH, x + 1, x + w - 2, y + h - 2,
+                   M11_COLOR_GRAY);
+    m11_draw_vline(framebuffer, fbW, fbH, x + w - 2, y + 1, y + h - 2,
+                   M11_COLOR_GRAY);
+}
+
+static int m11_dm1_front_mirror_frame_black_count(const unsigned char* framebuffer,
+                                                  int fbW,
+                                                  int fbH,
+                                                  const M11_DM1ZoneBlit* blit) {
+    int x0;
+    int y0;
+    int x;
+    int y;
+    int count = 0;
+    if (!framebuffer || !blit || fbW <= 0 || fbH <= 0) {
+        return 0;
+    }
+    x0 = M11_VIEWPORT_X + blit->dstX;
+    y0 = M11_VIEWPORT_Y + blit->dstY;
+    for (y = y0; y < y0 + blit->height && y < fbH; ++y) {
+        if (y < 0) {
+            continue;
+        }
+        for (x = x0; x < x0 + blit->width && x < fbW; ++x) {
+            unsigned char idx;
+            if (x < 0) {
+                continue;
+            }
+            if (x >= M11_VIEWPORT_X + 96 && x < M11_VIEWPORT_X + 128 &&
+                y >= M11_VIEWPORT_Y + 35 && y < M11_VIEWPORT_Y + 64) {
+                continue;
+            }
+            idx = M11_FB_DECODE_INDEX(framebuffer[y * fbW + x]);
+            if (idx == M11_COLOR_BLACK) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
 static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             const M11_ViewportCell* frontCell,
                                             unsigned char* framebuffer,
@@ -13996,8 +14062,6 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     M11_DM1ZoneBlit blit;
     const M11_AssetSlot* slot;
     M11_ViewportCell mirrorCell;
-    int mapIdx;
-    int localIdx;
     int ornGlobalIdx = 43;
     int portraitOrdinal;
     if (!state || !frontCell) {
@@ -14017,17 +14081,11 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
      * When the front route is represented by the paired mirror TextString
      * instead, use the same ordinal as MOVESENS.C:1501-1503/REVIVE.C F0280
      * candidate selection so rendering and click ownership stay together. */
-    mapIdx = state->world.party.mapIndex;
-    if (state->world.dungeon && mapIdx >= 0 &&
-        mapIdx < (int)state->world.dungeon->header.mapCount &&
-        state->world.dungeon->maps[mapIdx].wallOrnamentCount > 0) {
-        localIdx = (int)state->world.dungeon->maps[mapIdx].wallOrnamentCount - 1;
-        m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
-        if (mapIdx < 32 && state->ornamentCacheLoaded[mapIdx] &&
-            localIdx >= 0 && localIdx < 16) {
-            ornGlobalIdx = state->wallOrnamentIndices[mapIdx][localIdx];
-        }
-    }
+    /* DUNVIEW.C:3913-3928 gates G0289 champion portraits through the
+     * champion mirror wall ornament, C346 (global wall ornament 43).
+     * Do not substitute the map's last wall-ornament id here; on the
+     * Hall of Champions that can pick a non-mirror coordinate set and
+     * leave Halk/Leif/Sonja/Mophus/Wuuf-class portraits over stone. */
     if (!m11_dm1_wall_ornament_zone(m11_dm1_wall_ornament_coord_set_index(ornGlobalIdx),
                                     12,
                                     &blit)) {
@@ -14079,6 +14137,9 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                       M11_VIEWPORT_Y + blit.dstY,
                       blit.width, blit.height,
                       (unsigned char)M11_COLOR_DARK_GRAY);
+    }
+    if (m11_dm1_front_mirror_frame_black_count(framebuffer, fbW, fbH, &blit) < 16) {
+        m11_draw_dm1_front_mirror_backing(framebuffer, fbW, fbH, &blit);
     }
     m11_draw_dm1_front_champion_portrait(state, &mirrorCell, framebuffer, fbW, fbH);
 }
@@ -14234,10 +14295,14 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                                        10,
                                                        kWallOrnaments[i].viewWallIndex <= 4 ? kOrnD3Palette : kOrnD2Palette,
                                                        kWallOrnaments[i].flipHorizontal);
-                if (kWallOrnaments[i].viewWallIndex == 12) {
-                    m11_draw_dm1_front_champion_portrait(state, &cell,
-                                                         framebuffer, fbW, fbH);
-                }
+                /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3923-3928:
+                 * champion portraits are owned by the D1C front-mirror route
+                 * (`m11_draw_dm1_front_mirror_route`) after the full cell
+                 * stack is composed.  Do not also blit C026 from the generic
+                 * wall-ornament pass; that duplicate path drew Halk/Leif/
+                 * Sonja/Mophus/Wuuf-class portraits directly over stone wall
+                 * texture, which made them look like they were floating or on
+                 * the wrong Hall wall. */
                 if (m11_dm1_wall_ornament_is_alcove_global(ornGlobalIdx)) {
                     m11_draw_dm1_alcove_wall_items(state, framebuffer, fbW, fbH,
                                                    &cell, &blit,
@@ -24591,18 +24656,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_contents(state, framebuffer, framebufferWidth, framebufferHeight,
                                frames, cells);
 
-    /* ReDMCSB F0128 draw order: portrait/ornament before center cell contents.
-     * m11_draw_dm1_front_mirror_route draws D1C champion portrait (y=68..96)
-     * and wall ornament at viewWallIndex==12 BEFORE m11_draw_wall_contents
-     * renders open-center floor/creature layers (y=67..160).  Without this
-     * ordering the portrait would float over the open floor on Hall mirror
-     * squares where the front cell is door/teleporter but still carries C127.
-     * Single invocation (depth 0 only) mirrors DUNVIEW.C F0128: portrait is
-     * always D1C front cell regardless of D0/D1/D2 visible walls.
-     * ReDMCSB: DUNVIEW.C F0128, DUNGEON.C:2573/2610-2612, DUNVIEW.C:3913-3928. */
-    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
-                                    framebufferWidth, framebufferHeight);
-
     /* Until the full C2500/C3200 object+creature zone pass lands, keep
      * visible center-lane objects and creatures alive in normal V1 by
      * drawing the existing source-asset-backed contents layer over open
@@ -24619,6 +24672,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
+
+    /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3922-3928: the C127
+     * champion portrait belongs to the D1C front champion-mirror wall
+     * ornament.  Firestaff's current V1 renderer still batches primitive
+     * classes, so draw this D1C mirror route after the center content stack
+     * has finished; otherwise the Hall stone/content pass can erase the C346
+     * mirror backing while leaving C026-looking pixels floating on the wall. */
+    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
+                                    framebufferWidth, framebufferHeight);
 
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
