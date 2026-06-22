@@ -307,8 +307,11 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | Track02 bank routing | FIXED |
 | Dungeon progression (7 dungeons) | FIXED |
 | **JP/US Track 02 BIN/ISO real-asset launch** | FIXED — `tier1_strict_boot_probe` covers Theron JP canonical, Theron JP extras, and Theron US extras booting to the TQR level-load milestone; `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` also PASS. |
-| Cross-slot import/export against real Track 02 saves | OPEN-BOUNDED |
-| Cross-route mechanics runtime evidence | OPEN-BOUNDED |
+| **Theron m11 runtime command proof** | FIXED — 2026-06-21 (commit `cd86d520`): `firestaff_theron_v1_cross_route_mechanics_probe` CTest-gates a real `firestaff --game theron` run via temporary launcher config, captures a M11 run receipt (launch + early command tick), verifies M11 reports source `theron` plus command processing, and proves the M11 run path is launchable on this host. 2026-06-21 (commit `363bf3b9`): `tqr_v1_track02_bank_signal_2026-06-03.md` locks raw Track 02 bank anchors (`0x1F000..0x1FFFF` graphics bank + 0x20000..0x27FFF dialogue + `0x28000..0x2BFFF` map-data) against the CD-ROM2 1MB sector map. |
+| **Theron 24h readiness rollup** | FIXED — 2026-06-21 (commit `a0592d6d`): `tools/theron_24h_readiness.py` + `parity-evidence/verification/theron_24h_readiness/manifest.json` + `docs/THERON_CAPTURE_READINESS.md` roll up 7 Theron V1 readiness gates (track02 bank, save/load, cross-route mechanics, runtime screenshot, dungeon progression, cross-slot, m11 launch) into a single per-day PASS/FAIL line, mirroring the DM1 24h readiness pattern. 2026-06-21 (commit `393d9f64`): `theron: refresh readiness reports` re-emits the manifest with current commit SHAs. |
+| **Theron runtime screenshot readiness** | FIXED — 2026-06-21 (commit `b7dbcd60`): `firestaff_theron_v1_runtime_screenshot_readiness` CTest-gate + `tools/verify_theron_v1_runtime_screenshot_readiness.py` + `parity-evidence/theron_v1_runtime_screenshot_readiness.md` prove the M11 path can produce a Track-02-backed screenshot receipt on the current host. CTest/screenshot gates pass for the launchable Theron paths. |
+| Cross-slot import/export against real Track 02 saves | OPEN-BOUNDED — verification of cross-slot save/load handoff against real Track 02 saves remains a separate capture pair; `theron_v1_save_load` CTest gate covers the in-memory path. |
+| Cross-route mechanics runtime evidence | FIXED for the CTest-gated mechanics path — 2026-06-21 `firestaff_theron_v1_cross_route_mechanics_probe` CTest-gates real `firestaff --game theron` command proof (commit `cd86d520`). Broader real-asset cross-route capture pairs (level-by-level route transcript) remain out-of-24h scope. |
 
 ### F2. V2
 
@@ -868,6 +871,7 @@ The V22 in-place drawing pipeline still uses placeholder overlay; wiring `m11_dr
 - `pass372` rebuild target fix
 - `src/dm1v2/dm1_v22_shapes.c` `-Wunused-parameter` warning fix
 - `22a8caa3` (2026-06-22) — `tools/asset-validate/data-readiness-summary.py` cherry-picked to `main` from `csb-v1-hidden-skip-cmp-real-asset-2026-06-20` (commit `a56d79c70`). Closes Tier 1 #2 L2. The other 6 subagent branches' commits were audited file-for-file against `origin/main` and were subsumed by newer in-main versions; only this one had substantively new content. `dm1v1-capture-gap-close-20260620`, `csb-v1-hidden-skip-cmp-real-asset-2026-06-20`, `dm1-b3-v2-gates-20260621`, `dm1-lane-a-original-evidence-20260621`, `dm1-lane-c-gap-audit-20260621`, `dm1-lane-d-readiness-20260621`, `dm2-v1-mechanics-parity-2026-06-20`, `main-cmake-fix` — all left in place on origin as historical branches; the 15 worktrees have been removed and only `workspace-main` + the main-pass1052 worktree remain locally.
+- `363bf3b9`, `cd86d520`, `b7dbcd60`, `a0592d6d`, `393d9f64` (2026-06-21, on `origin/main` post-cherry-pick) — Theron 24h readiness cascade: raw Track 02 bank anchors locked, m11 runtime command proof, runtime screenshot readiness gate, 24h readiness rollup tool, and readiness-report refresh. Closes F1 cross-route mechanics runtime evidence (CTest path) and adds the Theron 24h readiness row to the per-day PASS/FAIL list. `152c6a8a release: prepare v3.0.1` then tags the cascade as v3.0.1.
 
 ### Migration to GitHub main
 
