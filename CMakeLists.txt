@@ -2146,6 +2146,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_startup_menu_pro
     endif()
 endif()
 
+# M12 launcher extras view smoke probe
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_extras_views_smoke_probe.c")
+    add_executable(firestaff_m12_extras_views_smoke_probe probes/m12/firestaff_m12_extras_views_smoke_probe.c)
+    target_link_libraries(firestaff_m12_extras_views_smoke_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m12_extras_views_smoke_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # M12 config persistence probe
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_config_persist_probe.c")
     add_executable(firestaff_m12_config_persist_probe probes/m12/firestaff_m12_config_persist_probe.c)
@@ -7083,6 +7092,13 @@ if(BUILD_TESTING)
         add_test(
             NAME m12_startup_menu
             COMMAND firestaff_m12_startup_menu_probe
+        )
+    endif()
+
+    if(TARGET firestaff_m12_extras_views_smoke_probe)
+        add_test(
+            NAME m12_extras_views_smoke
+            COMMAND firestaff_m12_extras_views_smoke_probe
         )
     endif()
 
