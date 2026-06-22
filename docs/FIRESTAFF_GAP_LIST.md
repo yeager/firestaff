@@ -61,7 +61,7 @@ Classification:
 | Savegame format (DM2) | skproject source | PARTIAL |
 | Savegame format (Nexus .sav) | locally verified | PARTIAL |
 | Savegame format (Theron .SRM) | locally verified | PARTIAL |
-| Custom dungeon import (DM1 dungeon.dat, CSBWin dmsave/csbgame) | dmweb Custom Dungeons page | PARTIAL — 2026-06-22: M12 now has a disk-backed `custom_dungeon_m12_real_path` CTest for `data/custom/<name>/DUNGEON.DAT` discovery, mixed-case community filenames, header validation, sorted listing, invalid-entry rejection, and valid-entry selection. Remaining: CSBWin `dmsave/csbgame` import/resource semantics stay in the separate CSBWin custom resource path row. |
+| Custom dungeon import (DM1 dungeon.dat, CSBWin dmsave/csbgame) | dmweb Custom Dungeons page | PARTIAL / BLOCKED-DATA — 2026-06-22: M12 has a disk-backed `custom_dungeon_m12_real_path` CTest for `data/custom/<name>/DUNGEON.DAT` discovery, mixed-case community filenames, header validation, sorted listing, invalid-entry rejection, and valid-entry selection. `custom_dungeon_import` also covers the existing M12 launcher scanner and DM1 V1 engine scanner with synthetic `DUNGEON.DAT` fixtures: valid header/map-count parsing, alphabetical launcher list, case-insensitive `dungeon.dat`/`graphics.dat` discovery, compressed-signature rejection, too-small rejection, valid-entry selection, and invalid-entry refusal. Remaining blocker: real community/custom dungeon corpus handoff plus CSBWin `dmsave`/`csbgame` import evidence before this can be called FIXED. |
 
 ### A4. i18n / l10n (post v2.9.1)
 

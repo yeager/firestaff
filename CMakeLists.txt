@@ -5280,6 +5280,13 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
+    add_executable(test_custom_dungeon_import
+        tests/test_custom_dungeon_import.c
+    )
+    target_link_libraries(test_custom_dungeon_import PRIVATE firestaff_m12 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_custom_dungeon_import PRIVATE -Wall -Wextra -O2)
+    endif()
     add_executable(test_dm1_v2_movement_camera_pc34
         tests/test_dm1_v2_movement_camera_pc34.c
         src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
@@ -5925,6 +5932,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_camera_turn_edge_cases_pc34
         COMMAND test_dm1_v2_camera_turn_edge_cases_pc34
+    )
+    add_test(
+        NAME custom_dungeon_import
+        COMMAND test_custom_dungeon_import
     )
     add_test(
         NAME dm1_v2_camera_controller_source_lock
