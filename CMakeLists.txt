@@ -461,6 +461,38 @@ set_tests_properties(theron_v1_dungeon_progression_determinism_probe PROPERTIES
     LABELS "tier4;theron;dungeon;determinism"
 )
 
+# Theron V1 shop purchase gate probe.
+# Headless: no game data, no SDL rendering required. Exercises the
+# purchase-gate edges that test_theron_v1_shop_price_table does not
+# lock: multi-champion slot targeting, sequential stock decrement
+# chain, exact-gold purchase (no underflow), inventory slot
+# allocation monotonicity, stock=255 boundary depletion, status-name
+# round-trip, and source-evidence citation. Source-locks:
+#   - THQUEST.ASM T560 (item table) + T800 (champion persistence/gold)
+#   - docs/source-lock/tqr_v1_phase2_data_formats_H2339.md §5.3
+#   - ReDMCSB has no Theron shop source (DM1/CSB only)
+add_executable(firestaff_theron_v1_shop_purchase_gate_probe
+    probes/firestaff_theron_v1_shop_purchase_gate_probe.c
+    src/theron/theron_v1_shop.c
+    src/theron/theron_v1_champions.c
+)
+target_include_directories(firestaff_theron_v1_shop_purchase_gate_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v1_shop_purchase_gate_probe
+    PRIVATE firestaff_theron firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_shop_purchase_gate_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v1_shop_purchase_gate_probe
+    COMMAND firestaff_theron_v1_shop_purchase_gate_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v1_shop_purchase_gate_probe PROPERTIES
+    LABELS "tier4;theron;shop;purchase;gate"
+)
+
 add_test(
     NAME dm2_v1_shop_economy_determinism_probe
     COMMAND firestaff_dm2_v1_shop_economy_determinism_probe
