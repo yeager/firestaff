@@ -6,11 +6,15 @@
   },
   "entry_capture": {
     "command": [
-      "bash",
-      "-lc",
-      "TERM=xterm timeout 5 xvfb-run -a dosbox-debug -conf <TMP>/dosbox-debug.conf -exit"
+      "pexpect",
+      "dosbox-debug",
+      "-nogui",
+      "-conf",
+      "<TMP>/dosbox-debug.conf",
+      "-o",
+      "quit warning=false"
     ],
-    "entry_runtime_cs_ip": "01ED:0000",
+    "entry_runtime_cs_ip": null,
     "evidence_regex": "([0-9A-F]{4}):0000\\s+BADA26",
     "fires_exenew": {
       "mz": {
@@ -27,22 +31,21 @@
       "sha256_matches_expected": true,
       "size": 178224,
       "size_matches_expected": true,
-      "stdout_tail": "0050:err:winediag:nodrv_CreateWindow Application tried to create a window, but no driver could be loaded.\n0050:err:winediag:nodrv_CreateWindow L\"The explorer process failed to start.\"\n0050:err:systray:initialize_systray Could not create tray window\nUNLZEXE Ver. 0.81\nDetected size of File is 94779 bytes\nfile 'Z:<TMP> is compressed by LZEXE Ver. 0.91\n unpacking....................end\nThe uncompressed size of the file is 178224 bytes",
-      "tool": "<redmcsb-source>/Toolchains/Common/Base/UNLZEXE/unlzexe.exe"
+      "stdout_tail": "UNLZEXE Ver. 0.8p1 (2020-03-26)\nfile '/Users/bosse/.openclaw<TMP> is compressed by LZEXE Ver. 0.91\n unpacking. ...................end\nunpacked file '/Users/bosse/.openclaw<TMP> is generated.\n",
+      "tool": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Base/UNLZEXE/unlzexe.exe"
     },
-    "matched_cs_registers": [
-      "0000",
-      "01ED"
-    ],
+    "matched_cs_registers": [],
     "matched_entry_segments": [],
-    "ok": true,
-    "psp_segment_inferred": "01DD",
-    "returncode": 124,
+    "ok": false,
+    "pexept_transcript_length": 2840,
+    "psp_segment_inferred": null,
+    "returncode": null,
     "safe_interpretation": "actual DOSBox debugger runtime entry for temp FIRES.EXENEW copy; not a ReDMCSB function seam hit",
-    "transcript_excerpt_path": "<firestaff-repo>/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/entry_debugger_transcript.clean.txt"
+    "transcript_excerpt_path": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/entry_debugger_transcript.clean.txt",
+    "xvfb_display": ":91"
   },
-  "repo": "<firestaff-repo>",
-  "runbook": "<firestaff-repo>/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/dosbox_debugger_runbook.md",
+  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "runbook": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/dosbox_debugger_runbook.md",
   "runtime_seam_blocker": "Actual loader entry CS:IP is captured, but COMMAND.C F0380, CLIKMENU movement, MOVESENS F0267, GAMELOOP/DUNVIEW/DRAWVIEW viewport breakpoints remain blocked by missing FIRES.EXENEW source-symbol/global-address map. Numeric DOSBox BP/BPM addresses are required before runtime hits can be claimed.",
   "schema": "pass235_dm1_v1_dosbox_debugger_workflow.v1",
   "source_audit": [
@@ -76,7 +79,7 @@
         "F0366_COMMAND_ProcessTypes3To6_MoveParty"
       ],
       "ok": true,
-      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "CLIKMENU.C",
@@ -100,7 +103,7 @@
         "F0284_CHAMPION_SetPartyDirection"
       ],
       "ok": true,
-      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "file": "CLIKMENU.C",
@@ -126,7 +129,7 @@
         "G0310_i_DisabledMovementTicks"
       ],
       "ok": true,
-      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "file": "MOVESENS.C",
@@ -154,7 +157,7 @@
         "C05_ELEMENT_TELEPORTER"
       ],
       "ok": true,
-      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
     },
     {
       "file": "GAMELOOP.C",
@@ -176,7 +179,7 @@
         "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);"
       ],
       "ok": true,
-      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "file": "DUNVIEW.C",
@@ -198,7 +201,7 @@
         "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
       ],
       "ok": true,
-      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DRAWVIEW.C",
@@ -220,9 +223,9 @@
         "VIDRV_09_BlitViewPort"
       ],
       "ok": true,
-      "source_path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS_ENTRY_CAPTURE_BLOCKED_SOURCE_SEAM_CSIP"
+  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "FAIL"
 }
