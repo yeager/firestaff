@@ -494,6 +494,33 @@ add_test(
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
+# CSB V2 Phase 3 — Enhanced UI Overlays (HUD) Probe
+# Headless: no game assets, no SDL rendering required.
+# Verifies CSB_V2_PHASE_DOMAIN_HUD gate, HUD domain activates only when
+# v2PresentationEnabled is true, csb_v2_hud_init/render/set/access cycle,
+# csb_v2_hud_runtime integration (no V1 state mutation), phase gate
+# integration (HUD gated on V2 active, not on LAUNCH/PROFILE).
+add_executable(firestaff_csb_v2_hud_overlay_probe
+    probes/firestaff_csb_v2_hud_overlay_probe.c
+    src/csb/csb_v2_hud_overlay_pc34.c
+    src/csb/csb_v2_hud_runtime.c
+    src/csb/csb_v2_phase_gate_pc34.c)
+target_include_directories(firestaff_csb_v2_hud_overlay_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v2_hud_overlay_probe
+    PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_hud_overlay_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v2_hud_overlay_probe
+    COMMAND firestaff_csb_v2_hud_overlay_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(csb_v2_hud_overlay_probe PROPERTIES
+    LABELS "tier2;csb;v2;phase3;hud;presentation-only"
+)
+
 # DM2 V2 Phase 1 — Launch/Profile Separation Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies DM2_V2_PHASE_DOMAIN_LAUNCH and DM2_V2_PHASE_DOMAIN_PROFILE compile gates,
