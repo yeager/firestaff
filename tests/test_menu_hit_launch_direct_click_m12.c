@@ -84,7 +84,9 @@ int main(void) {
     const int customModeCenterX = 132 + 817 + 22 + 408;
     const int modeChoiceCenterY = 190 + 34 + 78;
     const int settingsDataDirCenterX = 960;
-    const int settingsDataDirCenterY = 260 + 36 + 3 * 70 + 25;
+    const int settingsCycleCenterX = 1240;
+    const int settingsSmoothTurnPanCenterY = 260 + 36 + 3 * 70 + 25;
+    const int settingsDataDirCenterY = 260 + 36 + 4 * 70 + 25;
     const int settingsExportCenterY = 260 + 36 + 5 * 70 + 25;
     const int settingsImportCenterY = 260 + 36 + 6 * 70 + 25;
 
@@ -143,6 +145,21 @@ int main(void) {
         if (!expect(changed == 1 && state.view == M12_MENU_VIEW_SETTINGS, "Firestaff click should open settings view")) return 1;
     }
 
+    state.settings.dm1V2SmoothTurnPanEnabled = 0;
+    state.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    hit = M12_ModernMenu_HitTest(&state, settingsCycleCenterX, settingsSmoothTurnPanCenterY);
+    if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 14,
+                "visible Smooth Turn Pan settings row should hit the V2 turn-pan toggle")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, settingsCycleCenterX, settingsSmoothTurnPanCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.settings.dm1V2SmoothTurnPanEnabled == 1,
+                "Smooth Turn Pan click should toggle the V2 turn-pan setting on")) return 1;
+    M12_StartupMenu_SaveConfig(&state);
+    M12_Config_Load(&config, NULL);
+    if (!expect(config.dm1V2SmoothTurnPanEnabled == 1,
+                "Smooth Turn Pan click should persist through M12 config")) return 1;
+    if (!expect(config.graphicsIndex == M12_PRESENTATION_V1_ORIGINAL,
+                "Smooth Turn Pan persistence should preserve original graphics mode")) return 1;
+
     hit = M12_ModernMenu_HitTest(&state, settingsDataDirCenterX, settingsDataDirCenterY);
     if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 15,
                 "visible Data Directory settings row should hit the browse action")) return 1;
@@ -187,6 +204,6 @@ int main(void) {
     if (!expect(strcmp(config.dataDir, manualDir) == 0,
                 "failed settings import should preserve the persisted data directory")) return 1;
 
-    puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1; settings rows export/import JSON, missing import preserves data directory, and data directory accepts an arbitrary selected folder");
+    puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1; Smooth Turn Pan toggles/persists; settings rows export/import JSON, missing import preserves data directory, and data directory accepts an arbitrary selected folder");
     return 0;
 }
