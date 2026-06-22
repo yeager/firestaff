@@ -18,6 +18,25 @@ typedef struct {
 int nexus_v1_font_load(Nexus_V1_Font *font, const uint8_t *data, int size);
 void nexus_v1_font_free(Nexus_V1_Font *font);
 const uint8_t *nexus_v1_font_get_glyph(const Nexus_V1_Font *font, int char_index);
+int nexus_v1_font_get_glyph_pixel(const Nexus_V1_Font *font,
+                                  int char_index,
+                                  int x,
+                                  int y);
+int nexus_v1_font_expand_glyph_bitmap(const Nexus_V1_Font *font,
+                                      int char_index,
+                                      uint8_t *out_bitmap,
+                                      int out_width,
+                                      int out_height,
+                                      int out_stride);
+int nexus_v1_font_draw_glyph_indexed(const Nexus_V1_Font *font,
+                                     uint8_t *framebuffer,
+                                     int fb_width,
+                                     int fb_height,
+                                     int fb_stride,
+                                     int dst_x,
+                                     int dst_y,
+                                     int char_index,
+                                     uint8_t fg_index,
+                                     int bg_index);
 
 #endif
-
