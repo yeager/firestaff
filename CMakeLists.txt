@@ -2128,6 +2128,34 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     )
 endif()
 
+# DM1 V1 champion-mirror ordinal 4 (LEIF) sealed-chamber ->
+# portrait_rect_position runtime probe.  Originally authored as an
+# east_walkpath drive to (2,1,SOUTH) via (2,3)-(2,2)-(2,1), but the
+# x=2 column at y=0..5 is sealed by surrounding walls in DM1 V1
+# Hall of Champions so no forward-walk route exists; the probe was
+# rewritten to anchor at the synthetic (2,1,SOUTH) pose (same anchor
+# pattern as the actual_pose probe) and verify the D1C front-wall
+# portrait rectangle (96,35)-(127,63) is the destination of the C026
+# portrait blit, plus a rotate-away no-floating invariant.  A new
+# sealed-chamber walkpath-impossible guard drives forward into the
+# x=2 column from every adjacent cell at y=0..5 and asserts every
+# approach is BLOCKED.  Sibling to the existing walkpath / zorder /
+# reblt / actual_pose / capture probes; takes DATA_DIR.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_4_east_walkpath_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_ordinal_4_east_walkpath_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_4_east_walkpath_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_ordinal_4_east_walkpath_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_ordinal_4_east_walkpath_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_ordinal_4_east_walkpath_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_ordinal_4_east_walkpath_portrait_rect_position_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 viewport wall visual capture probe — takes DATA_DIR OUT_DIR.
 # Sibling to the champion-mirror capture probe; addresses the
 # 'missing or incorrect viewport walls' P1 visual bug ticket by
