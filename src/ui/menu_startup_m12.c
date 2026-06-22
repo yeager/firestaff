@@ -2850,6 +2850,24 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
     m12_save_config(state);
 }
 
+typedef enum {
+    M12_NAV_MAIN = 0,
+    M12_NAV_GAME_SELECT,
+    M12_NAV_GAME_MODE,
+    M12_NAV_SETTINGS,
+    M12_NAV_EXTRAS,
+} M12_NavLevel;
+
+static M12_NavLevel g_nav_level = M12_NAV_MAIN;
+
+static void m12_return_to_main_view(M12_StartupMenuState* state) {
+    if (!state) {
+        return;
+    }
+    state->view = M12_MENU_VIEW_MAIN;
+    g_nav_level = M12_NAV_MAIN;
+}
+
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                  M12_MenuInput input) {
     int count;
@@ -2872,7 +2890,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             input == M12_MENU_INPUT_ACTION) {
             state->launchRequested = 0;
             state->quickResumeLaunchRequested = 0;
-            state->view = M12_MENU_VIEW_MAIN;
+            m12_return_to_main_view(state);
             state->messageLine1 = "";
             state->messageLine2 = "";
             state->messageLine3 = "";
@@ -3044,7 +3062,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 break;
             case M12_MENU_INPUT_BACK:
                 state->launchRequested = 0;
-                state->view = M12_MENU_VIEW_MAIN;
+                m12_return_to_main_view(state);
                 break;
             case M12_MENU_INPUT_NONE:
             default:
@@ -3068,7 +3086,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 M12_Changelog_Scroll(&state->changelog, M12_CHANGELOG_VISIBLE_LINES);
                 break;
             case M12_MENU_INPUT_BACK:
-                state->view = M12_MENU_VIEW_MAIN;
+                m12_return_to_main_view(state);
                 break;
             case M12_MENU_INPUT_NONE:
             default:
@@ -3111,7 +3129,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                                          category->pageCount);
                 break;
             case M12_MENU_INPUT_BACK:
-                state->view = M12_MENU_VIEW_MAIN;
+                m12_return_to_main_view(state);
                 break;
             case M12_MENU_INPUT_NONE:
             default:
@@ -3124,7 +3142,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
         if (input == M12_MENU_INPUT_BACK ||
             input == M12_MENU_INPUT_ACCEPT ||
             input == M12_MENU_INPUT_ACTION) {
-            state->view = M12_MENU_VIEW_MAIN;
+            m12_return_to_main_view(state);
         }
         return;
     }
@@ -3145,7 +3163,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 M12_Bestiary_CycleCategory(&state->bestiary, 1);
                 break;
             case M12_MENU_INPUT_BACK:
-                state->view = M12_MENU_VIEW_MAIN;
+                m12_return_to_main_view(state);
                 break;
             case M12_MENU_INPUT_NONE:
             default:
@@ -3212,7 +3230,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 }
                 break;
             case M12_MENU_INPUT_BACK:
-                state->view = M12_MENU_VIEW_MAIN;
+                m12_return_to_main_view(state);
                 break;
             case M12_MENU_INPUT_NONE:
             default:
@@ -3225,7 +3243,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
     if (state->view == M12_MENU_VIEW_SCREENSHOT_GALLERY) {
         if (M12_ScreenshotGallery_HandleInput(&state->screenshotGallery, input)) {
             /* The gallery asked us to back out (BACK from grid). */
-            state->view = M12_MENU_VIEW_MAIN;
+            m12_return_to_main_view(state);
         }
         return;
     }
@@ -3276,7 +3294,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 m12_cycle_setting(state, 1);
                 break;
             case M12_MENU_INPUT_BACK:
-                state->view = M12_MENU_VIEW_MAIN;
+                m12_return_to_main_view(state);
                 break;
             case M12_MENU_INPUT_NONE:
             default:
@@ -4670,6 +4688,25 @@ static const int g_extras_available[M12_EXTRAS_COUNT] = {
     1, /* changelog */
     1  /* screenshots — wired in v2.7.14 (was stub) */
 };
+
+static void m12_show_unavailable_extra_popup(M12_StartupMenuState* state,
+                                             int extrasIndex) {
+    char line1[128];
+    const char* label;
+    if (!state) {
+        return;
+    }
+    extrasIndex = m12_clamp_index(extrasIndex, M12_EXTRAS_COUNT);
+    label = g_extras_labels[extrasIndex] ? g_extras_labels[extrasIndex] : "EXTRA";
+    snprintf(line1, sizeof(line1), "%s", m12_tr(state, label));
+    state->launchRequested = 0;
+    state->quickResumeLaunchRequested = 0;
+    state->view = M12_MENU_VIEW_MESSAGE;
+    m12_set_buffered_message(state,
+                             line1,
+                             m12_tr(state, "NO DATA SOURCE YET"),
+                             m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+}
 
 static void m12_draw_menu_item(unsigned char *fb, int fw, int fh,
     int x, int y, const char *label, const char *tag,
@@ -7751,16 +7788,6 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
  * Escape = back one level
  * ══════════════════════════════════════════════════════════════════════ */
 
-typedef enum {
-    M12_NAV_MAIN = 0,
-    M12_NAV_GAME_SELECT,
-    M12_NAV_GAME_MODE,
-    M12_NAV_SETTINGS,
-    M12_NAV_EXTRAS,
-} M12_NavLevel;
-
-static M12_NavLevel g_nav_level = M12_NAV_MAIN;
-
 void m12_redesigned_handle_input(M12_StartupMenuState *state,
     int key_up, int key_down, int key_left, int key_right,
     int key_enter, int key_escape)
@@ -7831,7 +7858,9 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
             if (key_up && state->settingsTabRowIndex > 0)
                 state->settingsTabRowIndex--;
             if (key_down) state->settingsTabRowIndex++;
-            if (key_escape) { g_nav_level = M12_NAV_MAIN; state->view = M12_MENU_VIEW_MAIN; }
+            if (key_escape) {
+                m12_return_to_main_view(state);
+            }
             break;
 
         case M12_NAV_EXTRAS:
@@ -7839,23 +7868,29 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
                 state->extrasSelected--;
             if (key_down && state->extrasSelected < M12_EXTRAS_COUNT - 1)
                 state->extrasSelected++;
-            if (key_enter && g_extras_available[state->extrasSelected]) {
-                switch (state->extrasSelected) {
-                    case M12_EXTRAS_MUSEUM: state->view = M12_MENU_VIEW_MUSEUM; break;
-                    case M12_EXTRAS_MANUAL: state->view = M12_MENU_VIEW_MANUAL_DOCS; break;
-                    case M12_EXTRAS_BESTIARY: state->view = M12_MENU_VIEW_BESTIARY; break;
-                    case M12_EXTRAS_ITEMS: state->view = M12_MENU_VIEW_ITEM_ENCYCLOPEDIA; break;
-                    case M12_EXTRAS_CHANGELOG: state->view = M12_MENU_VIEW_CHANGELOG; break;
-                    case M12_EXTRAS_SCREENSHOTS: state->view = M12_MENU_VIEW_SCREENSHOT_GALLERY; break;
-                    default: break; /* SPELL_REFERENCE / MAP_VIEWER: no data source yet */
+            if (key_enter) {
+                if (g_extras_available[state->extrasSelected]) {
+                    switch (state->extrasSelected) {
+                        case M12_EXTRAS_MUSEUM: state->view = M12_MENU_VIEW_MUSEUM; break;
+                        case M12_EXTRAS_MANUAL: state->view = M12_MENU_VIEW_MANUAL_DOCS; break;
+                        case M12_EXTRAS_BESTIARY: state->view = M12_MENU_VIEW_BESTIARY; break;
+                        case M12_EXTRAS_ITEMS: state->view = M12_MENU_VIEW_ITEM_ENCYCLOPEDIA; break;
+                        case M12_EXTRAS_CHANGELOG: state->view = M12_MENU_VIEW_CHANGELOG; break;
+                        case M12_EXTRAS_SCREENSHOTS: state->view = M12_MENU_VIEW_SCREENSHOT_GALLERY; break;
+                        default: break;
+                    }
+                } else {
+                    m12_show_unavailable_extra_popup(state, state->extrasSelected);
                 }
             }
-            if (key_escape) g_nav_level = M12_NAV_MAIN;
+            if (key_escape) {
+                m12_return_to_main_view(state);
+            }
             break;
     }
 }
 
-M12_NavLevel m12_get_nav_level(void) { return g_nav_level; }
+int m12_get_nav_level(void) { return (int)g_nav_level; }
 
 /* ── Extras view stubs (#9) — replaced in v2.7.14 ───────────
  *

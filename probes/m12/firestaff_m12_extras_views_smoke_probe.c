@@ -56,31 +56,21 @@ static int count_nonzero_bytes(const unsigned char* fb, int n) {
 }
 
 static int navigate_to_extras_view(M12_StartupMenuState* state,
-                                    int extrasIndex,
-                                    M12_MenuView expectedView) {
-    /* Simulate the extras nav: select the entry, then press enter. */
-    state->extrasSelected = extrasIndex;
-    /* The M12_NAV_EXTRAS dispatch path is what we just wired; the
-     * probe bypasses the key event loop and calls the same view
-     * transition directly.  This is the source-locked entry point. */
-    if (state->extrasSelected < 0 ||
-        state->extrasSelected >= M12_EXTRAS_COUNT) {
+                                   int extrasIndex,
+                                   M12_MenuView expectedView) {
+    if (!state || extrasIndex < 0 || extrasIndex >= M12_EXTRAS_COUNT) {
         return 0;
     }
-    /* The dispatch lives in M12_StartupMenu_HandleKey; we replicate
-     * the EXTRAS/ENTER transition here so the test does not have to
-     * call the input loop with synthesized key events. */
-    if (state->extrasSelected == M12_EXTRAS_MANUAL) {
-        state->view = M12_MENU_VIEW_MANUAL_DOCS;
-    } else if (state->extrasSelected == M12_EXTRAS_BESTIARY) {
-        state->view = M12_MENU_VIEW_BESTIARY;
-    } else if (state->extrasSelected == M12_EXTRAS_ITEMS) {
-        state->view = M12_MENU_VIEW_ITEM_ENCYCLOPEDIA;
-    } else if (state->extrasSelected == M12_EXTRAS_SCREENSHOTS) {
-        state->view = M12_MENU_VIEW_SCREENSHOT_GALLERY;
-    } else {
-        return 0;
+    state->view = M12_MENU_VIEW_MAIN;
+    state->mainMenuSelected = M12_MAIN_MENU_EXTRAS;
+    m12_redesigned_handle_input(state, 0, 0, 0, 0, 1, 0);
+    while ((int)state->extrasSelected < extrasIndex) {
+        m12_redesigned_handle_input(state, 0, 1, 0, 0, 0, 0);
     }
+    while ((int)state->extrasSelected > extrasIndex) {
+        m12_redesigned_handle_input(state, 1, 0, 0, 0, 0, 0);
+    }
+    m12_redesigned_handle_input(state, 0, 0, 0, 0, 1, 0);
     return state->view == expectedView;
 }
 
@@ -139,6 +129,8 @@ int main(int argc, char** argv) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     CHECK(state.view == M12_MENU_VIEW_MAIN,
           "Manual / Docs BACK returns to main view");
+    CHECK(m12_get_nav_level() == 0,
+          "Manual / Docs BACK restores main navigation level");
 
     /* ── Bestiary ─────────────────────────────────────────────── */
     printf("\n[Bestiary] enter and draw\n");
@@ -169,7 +161,11 @@ int main(int argc, char** argv) {
         int n = M12_Bestiary_TotalCount();
         CHECK(n >= 10, "Bestiary reports >= 10 creatures");
     }
-    state.view = M12_MENU_VIEW_MAIN;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.view == M12_MENU_VIEW_MAIN,
+          "Bestiary BACK returns to main view");
+    CHECK(m12_get_nav_level() == 0,
+          "Bestiary BACK restores main navigation level");
 
     /* ── Item Encyclopedia ───────────────────────────────────── */
     printf("\n[Item Encyclopedia] enter and draw\n");
@@ -196,7 +192,11 @@ int main(int argc, char** argv) {
     distinct = count_distinct_bytes(fb, fbSize);
     CHECK(distinct >= 3 && count_nonzero_bytes(fb, fbSize) >= 1000,
           "Item Encyclopedia draws on ARMOR category");
-    state.view = M12_MENU_VIEW_MAIN;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.view == M12_MENU_VIEW_MAIN,
+          "Item Encyclopedia BACK returns to main view");
+    CHECK(m12_get_nav_level() == 0,
+          "Item Encyclopedia BACK restores main navigation level");
 
     /* ── Screenshot Gallery ──────────────────────────────────── */
     printf("\n[Screenshot Gallery] enter and draw\n");
@@ -219,6 +219,31 @@ int main(int argc, char** argv) {
      * gate (CI runners may not have a populated gallery). */
     printf("  gallery entryCount = %d (informational)\n",
            state.screenshotGallery.entryCount);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.view == M12_MENU_VIEW_MAIN,
+          "Screenshot Gallery BACK returns to main view");
+    CHECK(m12_get_nav_level() == 0,
+          "Screenshot Gallery BACK restores main navigation level");
+
+    /* -- Disabled extras ------------------------------------------------ */
+    printf("\n[Disabled Extras] enter and dismiss\n");
+    rc = navigate_to_extras_view(&state, M12_EXTRAS_SPELLS,
+                                 M12_MENU_VIEW_MESSAGE);
+    CHECK(rc, "disabled Spell Reference opens explanatory popup");
+    CHECK(state.messageLine2 && strstr(state.messageLine2, "NO DATA SOURCE") != NULL,
+          "Spell Reference popup explains missing data source");
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.view == M12_MENU_VIEW_MAIN && m12_get_nav_level() == 0,
+          "Spell Reference popup BACK returns to main navigation");
+
+    rc = navigate_to_extras_view(&state, M12_EXTRAS_MAP_VIEWER,
+                                 M12_MENU_VIEW_MESSAGE);
+    CHECK(rc, "disabled Map Viewer opens explanatory popup");
+    CHECK(state.messageLine2 && strstr(state.messageLine2, "NO DATA SOURCE") != NULL,
+          "Map Viewer popup explains missing data source");
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.view == M12_MENU_VIEW_MAIN && m12_get_nav_level() == 0,
+          "Map Viewer popup BACK returns to main navigation");
 
     free(fb);
     printf("\n=== Summary: %d passed, %d failed ===\n", g_pass, g_fail);
