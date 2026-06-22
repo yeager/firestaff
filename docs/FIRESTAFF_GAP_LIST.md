@@ -290,7 +290,7 @@ Nexus locally verified files in `~/.firestaff/data/nexus/`.
 |---|---|
 | Phase 0/1/2 | FIXED |
 | Phase 5 smooth movement runtime | FIXED — 2026-06-22: `nexus_v2_smooth_movement` + `nexus_v2_smooth_movement_runtime_probe` CTest-gated and PASS 2/2. |
-| Phase 7 verification (deterministic input + screenshot gates) | OPEN-BOUNDED |
+| Phase 7 verification (deterministic input + screenshot gates) | PARTIAL — `nexus_v2_verification_suite_probe` is CTest-gated and PASS (35/35): V2 OFF byte-stability/determinism, V2.1 640x400 scaling, V2.2 1280x800 enhanced defaults, config→dimension mapping, lifecycle/null safety, and state-hash determinism. 2026-06-22 source-lock verifier `nexus_v2_verification_suite_source_lock` records the ReDMCSB F0128 320x200 base anchors plus Nexus V1/V2 pipeline anchors. Remaining: broader side-by-side deterministic input scripts and screenshot/pixel receipts for finished presentation. |
 | **Real PBR hero art for Nexus** | OPEN-LARGE |
 | **Per-cell modern-art swap in Nexus V1 draw pipeline** | OPEN-LARGE |
 
