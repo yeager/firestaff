@@ -19,6 +19,6 @@ hash receipts only; it does not add screenshots to public docs.
 - These receipts prove Firestaff can emit Theron runtime screenshot artifacts when the Track 02 launch reaches M11.
 - Rows that use deterministic fallback assets are runtime/capture-path proof, not final art or source-bank proof.
 - No generated, mock, or synthetic image is promoted by this gate.
-- README-eligible Theron screenshots still need reviewed real runtime frames and stronger Track 02 dungeon-bank parity.
+- README-eligible Theron screenshots still need reviewed real runtime frames and stronger semantic Track 02 loader parity.
 
 Manifest: `parity-evidence/verification/theron_v1_runtime_screenshot_readiness/manifest.json`

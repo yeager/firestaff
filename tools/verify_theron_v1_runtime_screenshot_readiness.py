@@ -246,7 +246,7 @@ def write_outputs(result: dict[str, Any]) -> None:
         "- These receipts prove Firestaff can emit Theron runtime screenshot artifacts when the Track 02 launch reaches M11.",
         "- Rows that use deterministic fallback assets are runtime/capture-path proof, not final art or source-bank proof.",
         "- No generated, mock, or synthetic image is promoted by this gate.",
-        "- README-eligible Theron screenshots still need reviewed real runtime frames and stronger Track 02 dungeon-bank parity.",
+        "- README-eligible Theron screenshots still need reviewed real runtime frames and stronger semantic Track 02 loader parity.",
         "",
         f"Manifest: `{rel_or_str(MANIFEST)}`",
         "",
@@ -283,7 +283,7 @@ def main() -> int:
         "non_claims": [
             "No public Theron screenshot image is promoted.",
             "No generated or mock image is used.",
-            "No claim of full Theron runtime playability or Track 02 dungeon-bank parity.",
+            "No claim of full Theron runtime playability or semantic Track 02 loader parity.",
         ],
     }
     if not firestaff.exists():
