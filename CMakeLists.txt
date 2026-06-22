@@ -4945,6 +4945,30 @@ if(BUILD_TESTING)
         COMMAND test_m11_overlay_command_queue_block
     )
 
+    # M11 UI scale global state — single source of truth that
+    # HUD, menu, and font code read before drawing text.  Default
+    # 100% must stay bit-identical to V1 launches; NormalizePercent
+    # snaps any input into {100, 150, 200}; Apply is integer
+    # nearest ((value * percent + 50) / 100).
+    add_executable(test_m11_ui_scale
+        tests/test_m11_ui_scale.c
+        src/engine/ui_scale_m11.c
+    )
+    target_include_directories(test_m11_ui_scale PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_ui_scale PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME m11_ui_scale
+        COMMAND test_m11_ui_scale
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    set_tests_properties(m11_ui_scale PROPERTIES
+        LABELS "tier2;m11;ui-scale;accessibility"
+    )
+
     # v2.8.x: keyboard layout contract regression.  Pins the new
     # arrow-key mapping (arrows strafe, Home/End/Q/E turn, WASD
     # mirrors arrows) so the production code cannot silently drift
@@ -14708,6 +14732,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12
     add_test(
         NAME save_browser_export_import_m12
         COMMAND test_save_browser_export_import_m12
+    )
+endif()
+
+# M12 polished UI flow: public startup-menu state-machine coverage for
+# main, unavailable-game messages, museum, changelog, settings, and launch.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_polished_ui_flow.c")
+    add_executable(test_m12_polished_ui_flow
+        tests/test_m12_polished_ui_flow.c
+    )
+    target_link_libraries(test_m12_polished_ui_flow PRIVATE firestaff_m12 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m12_polished_ui_flow PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_polished_ui_flow
+        COMMAND test_m12_polished_ui_flow
     )
 endif()
 
