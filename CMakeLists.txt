@@ -4916,6 +4916,32 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat
     )
 
+    # DM1 V1 chest <-> action-hand swap no-duplicate / no-loss chain
+    # gate: open chest, click the C09 action hand on a C30+ G0425 slot,
+    # and assert the (action-hand + 8 chest slots) multiset union is
+    # preserved across the click. Covers empty-pickup, full-drop, full
+    # swap, identical-type swap, empty/empty no-op, and F0334
+    # close/reopen round-trip. Source-locked against CHEST.C
+    # F0333:30-67 + 70-74 + F0334:113-132, CHAMPION.C F0297:243-268 +
+    # F0298:270-298 + F0300:511-584 + F0301:606-660 + F0302:662-713,
+    # PANEL.C F0347:1639-1691, and DEFS.H C0xFFFF_THING_NONE /
+    # C0xFFFE_THING_ENDOFLIST. Disjoint from pass797 (press-eye
+    # auto-close), pass706 (chest-slot <-> chest-slot), and
+    # hand_swap_with_chest_pc34_compat (per-slot click results without
+    # multiset guard).
+    add_executable(test_dm1_v1_chest_hand_swap_no_duplicate_gate_pc34_compat
+        tests/test_dm1_v1_chest_hand_swap_no_duplicate_gate_pc34_compat.c
+        src/dm1/dm1_v1_chest_hand_swap_no_duplicate_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_hand_swap_no_duplicate_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_hand_swap_no_duplicate_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_hand_swap_no_duplicate_gate_pc34_compat
+        COMMAND test_dm1_v1_chest_hand_swap_no_duplicate_gate_pc34_compat
+    )
+
     # pass799 — chest open-stack-split press-eye path: press-eye
     # F0333 auto-close + C09 action-hand PICKUP of one stack member
     # mid-close. Source-locked against CHEST.C F0333:32-42 + 44 +
