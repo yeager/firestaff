@@ -1372,9 +1372,9 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settingsSelectedIndex == 16);
     draw_setting_row(c, rowX, rowY + 420, rowW, "SESSION TIMER", sessionTimer,
                      state->settingsSelectedIndex == 30);
-    draw_setting_row(c, rowX, rowY + 490, rowW, "EXPORT SETTINGS", "SAVE...",
+    draw_setting_row(c, rowX, rowY + 490, rowW, "EXPORT SAVE MANIFEST", "WRITE...",
                      state->settingsSelectedIndex == 42);
-    draw_setting_row(c, rowX, rowY + 560, rowW, "IMPORT SETTINGS", "LOAD...",
+    draw_setting_row(c, rowX, rowY + 560, rowW, "IMPORT SAVE MANIFEST", "READ...",
                      state->settingsSelectedIndex == 43);
 }
 
