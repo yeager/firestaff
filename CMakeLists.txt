@@ -5777,6 +5777,15 @@ if(BUILD_TESTING)
         tests/test_m11_display_aspect_present_rect.c
     )
     target_link_libraries(test_m11_display_aspect_present_rect PRIVATE firestaff_m11)
+    # DM1 V1 HiDPI chest slot hit-zone gate: scaled window
+    # coordinates must route to the same C537..C544 chest slot box
+    # as the source-locked 320x200 coordinates. Locks the touch
+    # dispatch + SDL render framebuffer-map paths against the
+    # ReDMCSB COMMAND.C:215-227 G0456 chest slot geometry.
+    add_executable(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat
+        tests/test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat PRIVATE firestaff_m11)
     add_executable(dm1_v2_export_entry_viewport_png
         tools/dm1_v2_export_entry_viewport_png.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
@@ -5851,6 +5860,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_viewport_materials_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_per_mode_material_signatures_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(dm1_v2_export_entry_viewport_png PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
@@ -6152,6 +6162,10 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_display_aspect_present_rect
         COMMAND test_m11_display_aspect_present_rect
+    )
+    add_test(
+        NAME dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat
+        COMMAND test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat
     )
     add_test(
         NAME dm1_v22_verification
