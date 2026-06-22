@@ -111,7 +111,7 @@ def make_fires_exenew(stage: Path) -> tuple[Path, dict[str, Any]]:
     return exenew, info
 
 
-def run_entry_capture(timeout_s: int = 5) -> dict[str, Any]:
+def run_entry_capture(timeout_s: int = 30) -> dict[str, Any]:
     if not shutil.which("dosbox-debug") or not shutil.which("xvfb-run"):
         return {"ok": False, "blocker": "dosbox-debug or xvfb-run missing"}
     with tempfile.TemporaryDirectory(prefix="firestaff-pass235-") as td:
@@ -180,12 +180,13 @@ def write_report(manifest: dict[str, Any]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--self-test", action="store_true", help="kept for gate compatibility; full run is always bounded")
-    _ = parser.parse_args()
+    parser.add_argument("--timeout", type=int, default=30, help="seconds to wait for dosbox-debug entry stop (default 30; DOSBox-X bootstrap is heavier than 0.74)")
+    args = parser.parse_args()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     audit = source_audit()
     runbook = OUT_DIR / "dosbox_debugger_runbook.md"
     write_runbook(runbook)
-    entry = run_entry_capture()
+    entry = run_entry_capture(timeout_s=args.timeout)
     status = "PASS_ENTRY_CAPTURE_BLOCKED_SOURCE_SEAM_CSIP" if entry.get("ok") and all(i["ok"] for i in audit) else "FAIL"
     manifest = {"schema": "pass235_dm1_v1_dosbox_debugger_workflow.v1", "status": status, "repo": str(ROOT), "source_root": str(SOURCE_ROOT), "source_audit": audit, "entry_capture": entry, "runbook": str(runbook), "runtime_seam_blocker": "Actual loader entry CS:IP is captured, but COMMAND.C F0380, CLIKMENU movement, MOVESENS F0267, GAMELOOP/DUNVIEW/DRAWVIEW viewport breakpoints remain blocked by missing FIRES.EXENEW source-symbol/global-address map. Numeric DOSBox BP/BPM addresses are required before runtime hits can be claimed.", "artifact_policy": {"no_binary_payloads_in_repo": True, "no_screenshots": True, "text_only": True}}
     (OUT_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
