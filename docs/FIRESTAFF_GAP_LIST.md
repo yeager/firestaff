@@ -382,6 +382,11 @@ order:
    `tools/asset-validate/compare_to_greatstone.py`: prints
    per-game TOTAL/FOUND/MISS table from any data root; default to
    `~/.firestaff/data`). Run: `python3 tools/asset-validate/compare_to_greatstone.py --summary`.
+   Companion tool `tools/asset-validate/data-readiness-summary.py`
+   (Tier 1 #2 L2, FIXED 2026-06-22 commit `a56d79c70` → main
+   `22a8caa3`) builds a per-game readiness table by combining
+   `--scan-data`, the `--summary` hash table, and an opt-in
+   `--boot-probe`. See L2 below for full description.
 5. **Verify all `--scan-data` READY-path:er are actually
    launchable** by M11. — DONE for Tier 1 path-discovery scope
    2026-06-21: CTest `tier1_strict_boot_probe` PASS for all present
@@ -697,7 +702,7 @@ men den faktiska scan-beteendet stödjer READY för alla 4 paths.
 Inget alias-steg krävs. Tier 1 #6-posten i listan ovan är inaktuell
 och bör rensas vid nästa watchdog refresh.
 
-### L2. Skapa `tools/data-readiness-summary.py`
+### L2. ~~Skapa `tools/data-readiness-summary.py`~~ — FIXED 2026-06-22
 
 Tier 1 #2 --summary-mode. Skriver ut per-spel tabell:
 `game / required-files-present / found-in-canonical / found-in-extras /
@@ -715,6 +720,28 @@ theron 1/1 present  1/1 canonical   JP+US extras Track 02           LAUNCH-TESTE
 
 Wire in i CMakeLists + `ci: asset-hygiene` job. Används vid varje
 `git push` för att snabbt se om något blockerar M12 launch.
+
+**Status 2026-06-22 (commit `a56d79c70`, cherry-picked to main
+as `22a8caa3`):** Shipped at
+`tools/asset-validate/data-readiness-summary.py` (342 lines,
+executable). Combines three sources into one human + JSON table:
+
+1. `firestaff --scan-data` against a data root
+   (`~/.firestaff/data/` by default — covers canonical + extras).
+2. `compare_to_greatstone.py` SHA-256 hash-match summary against
+   `VERIFIED_HASHES.md`.
+3. Optional `--boot-probe` (`firestaff --game X --data-dir Y`,
+   ~8s per path) — opt-in only, since it's slow.
+
+Output: human-readable per-game table on stdout, JSON dump with
+`--json`, exit code 0 iff all 5 games canonical-READY, 1 otherwise.
+Verified running example captured in the commit message.
+
+**Remaining (out of L2 scope):** not yet wired into CMakeLists
+or the `ci: asset-hygiene` job. `--boot-probe` mode is opt-in
+and unverified on a CI runner. A future pass should add a
+CMake target + CI step that runs `--json` and posts a status
+check on each push.
 
 ### L3. Utöka `extract-game-archives.sh` med verify-steg
 
@@ -840,6 +867,7 @@ The V22 in-place drawing pipeline still uses placeholder overlay; wiring `m11_dr
 - `tools/verify_pass352_dm1_v1_movement_route_regression_matrix.py` token/keypad aliases fix
 - `pass372` rebuild target fix
 - `src/dm1v2/dm1_v22_shapes.c` `-Wunused-parameter` warning fix
+- `22a8caa3` (2026-06-22) — `tools/asset-validate/data-readiness-summary.py` cherry-picked to `main` from `csb-v1-hidden-skip-cmp-real-asset-2026-06-20` (commit `a56d79c70`). Closes Tier 1 #2 L2. The other 6 subagent branches' commits were audited file-for-file against `origin/main` and were subsumed by newer in-main versions; only this one had substantively new content. `dm1v1-capture-gap-close-20260620`, `csb-v1-hidden-skip-cmp-real-asset-2026-06-20`, `dm1-b3-v2-gates-20260621`, `dm1-lane-a-original-evidence-20260621`, `dm1-lane-c-gap-audit-20260621`, `dm1-lane-d-readiness-20260621`, `dm2-v1-mechanics-parity-2026-06-20`, `main-cmake-fix` — all left in place on origin as historical branches; the 15 worktrees have been removed and only `workspace-main` + the main-pass1052 worktree remain locally.
 
 ### Migration to GitHub main
 
