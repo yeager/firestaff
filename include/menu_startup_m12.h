@@ -416,6 +416,14 @@ int M12_StartupMenu_SessionTimerRemainingSeconds(const M12_StartupMenuState* sta
                                                  int elapsedSeconds);
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                  M12_MenuInput input);
+void m12_redesigned_handle_input(M12_StartupMenuState* state,
+                                 int key_up,
+                                 int key_down,
+                                 int key_left,
+                                 int key_right,
+                                 int key_enter,
+                                 int key_escape);
+int m12_get_nav_level(void);
 void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
                           unsigned char* framebuffer,
                           int framebufferWidth,
