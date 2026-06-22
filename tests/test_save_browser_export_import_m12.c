@@ -5,6 +5,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 static int failures = 0;
 
@@ -18,7 +21,11 @@ static void check(int ok, const char* name) {
 }
 
 static int mkdir_one(const char* path) {
+#ifdef _WIN32
+    if (_mkdir(path) == 0 || errno == EEXIST) return 1;
+#else
     if (mkdir(path, 0755) == 0 || errno == EEXIST) return 1;
+#endif
     return 0;
 }
 
