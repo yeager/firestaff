@@ -10515,6 +10515,25 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 BPX/BPK archive-boundary probe. Headless and data-free:
+# recognizes the verified MENU.BPK marker, keeps real unknown .BPK/.BPX
+# streams unsupported, and locks a synthetic BPX0 parser/extraction
+# contract for bounds-safe future reverse engineering.
+add_executable(firestaff_nexus_v1_bpx_bpk_probe
+    probes/nexus/firestaff_nexus_v1_bpx_bpk_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_bpx_bpk_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_bpx_bpk_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_bpx_bpk_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_save_load_round_trip
@@ -10538,6 +10557,14 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_saturn_font_determinism PROPERTIES
         LABELS "tier4;nexus;font;determinism"
+    )
+
+    add_test(
+        NAME nexus_v1_bpx_bpk_archive_boundary
+        COMMAND firestaff_nexus_v1_bpx_bpk_probe
+    )
+    set_tests_properties(nexus_v1_bpx_bpk_archive_boundary PROPERTIES
+        LABELS "tier4;nexus;bpx_bpk;archive"
     )
 endif()
 
