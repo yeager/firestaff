@@ -18,6 +18,48 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+static const char* path_basename(const char* path) {
+    const char* slash;
+    const char* backslash;
+    if (!path) return "";
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    if (backslash && (!slash || backslash > slash)) slash = backslash;
+    return slash ? slash + 1 : path;
+}
+
+static int file_exists(const char* path) {
+    struct stat st;
+    return path && stat(path, &st) == 0 && S_ISREG(st.st_mode);
+}
+
+static int copy_file_bytes(const char* srcPath, const char* dstPath) {
+    FILE* src;
+    FILE* dst;
+    unsigned char buf[8192];
+    size_t n;
+    int ok = 0;
+
+    if (!srcPath || !dstPath || strcmp(srcPath, dstPath) == 0) return -1;
+    src = fopen(srcPath, "rb");
+    if (!src) return -1;
+    dst = fopen(dstPath, "wb");
+    if (!dst) {
+        fclose(src);
+        return -1;
+    }
+    while ((n = fread(buf, 1, sizeof(buf), src)) > 0) {
+        if (fwrite(buf, 1, n, dst) != n) {
+            ok = -1;
+            break;
+        }
+    }
+    if (ferror(src)) ok = -1;
+    if (fclose(dst) != 0) ok = -1;
+    fclose(src);
+    return ok;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Internal helpers                                                   */
 /* ------------------------------------------------------------------ */
@@ -293,6 +335,54 @@ int M12_SaveBrowser_DeleteSelected(M12_SaveBrowserState* state) {
         state->selectedIndex = 0;
     }
 
+    return 0;
+}
+
+int M12_SaveBrowser_ExportSelected(const M12_SaveBrowserState* state,
+                                   const char* exportDir,
+                                   char* outPath,
+                                   int outPathSize) {
+    const M12_SaveBrowserEntry* entry;
+    char dst[512];
+    if (outPath && outPathSize > 0) outPath[0] = '\0';
+    entry = M12_SaveBrowser_GetSelected(state);
+    if (!entry || !exportDir || !*exportDir || !file_exists(entry->fullPath)) {
+        return -1;
+    }
+    snprintf(dst, sizeof(dst), "%s/%s", exportDir, entry->filename);
+    if (copy_file_bytes(entry->fullPath, dst) != 0) {
+        return -1;
+    }
+    if (outPath && outPathSize > 0) {
+        snprintf(outPath, (size_t)outPathSize, "%s", dst);
+    }
+    return 0;
+}
+
+int M12_SaveBrowser_ImportFile(const char* dataDir,
+                               const char* importPath,
+                               char* outPath,
+                               int outPathSize) {
+    const char* base;
+    char dst[512];
+    if (outPath && outPathSize > 0) outPath[0] = '\0';
+    if (!dataDir || !*dataDir || !importPath || !file_exists(importPath)) {
+        return -1;
+    }
+    base = path_basename(importPath);
+    if (!is_save_file(base)) {
+        return -1;
+    }
+    snprintf(dst, sizeof(dst), "%s/%s", dataDir, base);
+    if (file_exists(dst)) {
+        return -1;
+    }
+    if (copy_file_bytes(importPath, dst) != 0) {
+        return -1;
+    }
+    if (outPath && outPathSize > 0) {
+        snprintf(outPath, (size_t)outPathSize, "%s", dst);
+    }
     return 0;
 }
 

@@ -14692,6 +14692,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_campaign_m12_session_timer.c"
     )
 endif()
 
+# M12 save browser export/import: file-copy backup and restore path for
+# firestaff-*.sav entries without overwriting existing imported saves.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/save_browser_m12.c")
+    add_executable(test_save_browser_export_import_m12
+        tests/test_save_browser_export_import_m12.c
+        src/shared/save_browser_m12.c
+    )
+    target_link_libraries(test_save_browser_export_import_m12 PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_save_browser_export_import_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME save_browser_export_import_m12
+        COMMAND test_save_browser_export_import_m12
+    )
+endif()
+
 # pass1049 — DM1 V1 G0224_aaaauc_Graphic558_CreatureCoordinateSets[3][11][5][2]:
 # 3 sets × 11 frames × 5 coords × 2 fields = 330 bytes (creature coords).
 # Source-locked against DUNVIEW.C:513/1836/5307.
