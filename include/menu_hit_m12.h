@@ -44,6 +44,8 @@ typedef enum {
     M12_HIT_GAMEOPT_LAUNCH,
     /* Message view: anywhere inside the dialog dismisses */
     M12_HIT_MESSAGE_DISMISS,
+    /* Redesigned Extras navigation: row 0..M12_EXTRAS_COUNT-1 */
+    M12_HIT_EXTRAS_ROW,
     /* Back button (visible in all views except main) */
     M12_HIT_BACK
 } M12_HitKind;

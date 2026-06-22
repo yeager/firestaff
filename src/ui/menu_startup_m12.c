@@ -2852,14 +2852,6 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
     m12_save_config(state);
 }
 
-typedef enum {
-    M12_NAV_MAIN = 0,
-    M12_NAV_GAME_SELECT,
-    M12_NAV_GAME_MODE,
-    M12_NAV_SETTINGS,
-    M12_NAV_EXTRAS,
-} M12_NavLevel;
-
 static M12_NavLevel g_nav_level = M12_NAV_MAIN;
 
 static void m12_return_to_main_view(M12_StartupMenuState* state) {

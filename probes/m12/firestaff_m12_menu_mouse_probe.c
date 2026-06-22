@@ -26,6 +26,8 @@
  *                  rendered frame (no reinit required).
  *   INV_MOUSE_09   frameTick animation tick affects the selected-card
  *                  rendered signature (visible pulse).
+ *   INV_MOUSE_10   redesigned Extras rows can be selected and opened
+ *                  through the same pointer hit path as keyboard input.
  */
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
@@ -40,6 +42,16 @@
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <direct.h>
+#endif
+
+#ifdef _WIN32
+static int probe_setenv(const char* name, const char* value) {
+    return _putenv_s(name, value);
+}
+#else
+static int probe_setenv(const char* name, const char* value) {
+    return setenv(name, value, 1);
+}
 #endif
 
 typedef struct {
@@ -78,6 +90,29 @@ static void force_dm1_ready(M12_StartupMenuState* state) {
     state->gameOptions[0].versionIndex = 0;
 }
 
+static void init_probe_menu_state(M12_StartupMenuState* state) {
+    M12_StartupMenu_Init(state);
+    if (state && state->view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_BACK);
+    }
+}
+
+static void main_card_center(int entry, int* cx, int* cy) {
+    const int railX = 42;
+    const int railW = 390;
+    const int gridLeft = railX + railW + 44;
+    const int gridTop = 40;
+    const int gridBottom = 1080 - 130;
+    const int gap = 22;
+    const int cols = 3;
+    const int cardW = (1920 - gridLeft - 48 - gap * (cols - 1)) / cols;
+    const int cardH = (gridBottom - gridTop - gap) / 2;
+    int col = entry % cols;
+    int row = entry / cols;
+    if (cx) *cx = gridLeft + col * (cardW + gap) + cardW / 2;
+    if (cy) *cy = gridTop + row * (cardH + gap) + cardH / 2;
+}
+
 int main(void) {
     Tally t = {0, 0};
     const int W = M12_ModernMenu_NativeWidth();
@@ -93,28 +128,26 @@ int main(void) {
 #else
     mkdir("verification-m12", 0777);
     mkdir("verification-m12/menu-mouse", 0777);
+    mkdir("verification-m12/menu-mouse/home", 0777);
+    mkdir("verification-m12/menu-mouse/empty-screenshots", 0777);
+    probe_setenv("HOME", "verification-m12/menu-mouse/home");
+    probe_setenv("FIRESTAFF_SCREENSHOTS_DIR",
+                 "verification-m12/menu-mouse/empty-screenshots");
 #endif
 
     /* ---------- INV_MOUSE_01 ---------- */
     {
         M12_StartupMenuState s;
-        M12_StartupMenu_Init(&s);
-        /* Modern front-door layout: brand card at visual slot 0,
-         * then four game/destination cards at visual slots 1..4. */
-        int side = 48;
-        int gap = 22;
-        int visualCount = 5;
-        int cardW = (W - 2 * side - gap * (visualCount - 1)) / visualCount;
+        init_probe_menu_state(&s);
         int allOk = 1;
         for (int entry = 0; entry < 4; ++entry) {
-            int visualSlot = entry + 1;
-            int cx = side + visualSlot * (cardW + gap) + cardW / 2;
-            int cy = 400;
+            int cx, cy;
+            main_card_center(entry, &cx, &cy);
             M12_MouseHit h_ = M12_ModernMenu_HitTest(&s, cx, cy);
             if (!(h_.kind == M12_HIT_MAIN_CARD && h_.index == entry)) {
                 allOk = 0;
-                printf("  DEBUG visual card %d at (%d,%d) -> kind=%d index=%d\n",
-                       visualSlot, cx, cy, h_.kind, h_.index);
+                printf("  DEBUG entry card %d at (%d,%d) -> kind=%d index=%d\n",
+                       entry, cx, cy, h_.kind, h_.index);
             }
         }
         record(&t, "INV_MOUSE_01", allOk,
@@ -124,16 +157,12 @@ int main(void) {
     /* ---------- INV_MOUSE_02 ---------- */
     {
         M12_StartupMenuState s;
-        M12_StartupMenu_Init(&s);
+        init_probe_menu_state(&s);
         force_dm1_ready(&s);
-        int side = 48;
-        int gap = 22;
-        int visualCount = 5;
-        int cardW = (W - 2 * side - gap * (visualCount - 1)) / visualCount;
-        /* Click visual card 3 / entry 2 (DM2): visible in the catalog,
+        /* Click entry 2 (DM2): visible in the catalog,
          * but not launch-supported. */
-        int cx = side + 3 * (cardW + gap) + cardW / 2;
-        int cy = 400;
+        int cx, cy;
+        main_card_center(2, &cx, &cy);
         int changed = M12_ModernMenu_HandlePointer(&s, cx, cy, 1, NULL);
         int ok = changed == 1 &&
                  s.selectedIndex == 2 &&
@@ -144,10 +173,9 @@ int main(void) {
                "clicking an unsupported card selects it and shows coming-soon without launch");
 
         /* Card 0 is DM1 and it's forced-ready, click should open game-opts. */
-        M12_StartupMenu_Init(&s);
+        init_probe_menu_state(&s);
         force_dm1_ready(&s);
-        cx = side + 1 * (cardW + gap) + cardW / 2;
-        cy = 400;
+        main_card_center(0, &cx, &cy);
         M12_ModernMenu_HandlePointer(&s, cx, cy, 1, NULL);
         record(&t, "INV_MOUSE_02B",
                s.selectedIndex == 0 && s.view == M12_MENU_VIEW_GAME_OPTIONS,
@@ -157,7 +185,7 @@ int main(void) {
     /* ---------- INV_MOUSE_03 ---------- */
     {
         M12_StartupMenuState s;
-        M12_StartupMenu_Init(&s);
+        init_probe_menu_state(&s);
         s.view = M12_MENU_VIEW_SETTINGS;
         s.settingsSelectedIndex = 0;
         s.settings.languageIndex = 0;
@@ -191,7 +219,7 @@ int main(void) {
     /* ---------- INV_MOUSE_04 ---------- */
     {
         M12_StartupMenuState s;
-        M12_StartupMenu_Init(&s);
+        init_probe_menu_state(&s);
         s.view = M12_MENU_VIEW_SETTINGS;
         /* Back button at (24,120)-(134,164) */
         M12_ModernMenu_HandlePointer(&s, 60, 140, 1, NULL);
@@ -203,7 +231,7 @@ int main(void) {
     /* ---------- INV_MOUSE_05 ---------- */
     {
         M12_StartupMenuState s;
-        M12_StartupMenu_Init(&s);
+        init_probe_menu_state(&s);
         force_dm1_ready(&s);
         s.selectedIndex = 0;
         s.view = M12_MENU_VIEW_GAME_OPTIONS;
@@ -212,9 +240,9 @@ int main(void) {
 
         /* Launch button is rendered centered at panel bottom. */
         int panelX = 96;
-        int panelY = 260;
+        int panelY = 190;
         int panelW = W - 2 * panelX;
-        int panelH = 400;
+        int panelH = 780;
         int w = 240, h = 54;
         int lx = panelX + (panelW - w) / 2;
         int ly = panelY + panelH - h - 24;
@@ -231,7 +259,7 @@ int main(void) {
     /* ---------- INV_MOUSE_06 ---------- */
     {
         M12_StartupMenuState s;
-        M12_StartupMenu_Init(&s);
+        init_probe_menu_state(&s);
         M12_ModernMenu_HandlePointer(&s, 640, 360, 0, NULL);
         record(&t, "INV_MOUSE_06",
                s.hoverX == 640 && s.hoverY == 360 && s.view == M12_MENU_VIEW_MAIN,
@@ -242,7 +270,7 @@ int main(void) {
     /* ---------- INV_MOUSE_07 ---------- */
     {
         M12_StartupMenuState s;
-        M12_StartupMenu_Init(&s);
+        init_probe_menu_state(&s);
         int ok = s.selectedIndex == 0;
         int visits[5] = {0, 0, 0, 0, 0};
         for (int i = 0; i < 10; ++i) {
@@ -264,7 +292,7 @@ int main(void) {
     /* ---------- INV_MOUSE_08 ---------- */
     {
         M12_StartupMenuState s;
-        M12_StartupMenu_Init(&s);
+        init_probe_menu_state(&s);
         s.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         s.settings.languageIndex = 0;
         memset(a, 0, rgbaBytes);
@@ -293,7 +321,7 @@ int main(void) {
     /* ---------- INV_MOUSE_09 ---------- */
     {
         M12_StartupMenuState s;
-        M12_StartupMenu_Init(&s);
+        init_probe_menu_state(&s);
         s.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         s.selectedIndex = 1;
         s.frameTick = 0;
@@ -309,10 +337,65 @@ int main(void) {
                "frameTick drives a visible pulse on the selected card");
     }
 
+    /* ---------- INV_MOUSE_10 ---------- */
+    {
+        M12_StartupMenuState s;
+        M12_MouseHit h_;
+        init_probe_menu_state(&s);
+        s.mainMenuSelected = M12_MAIN_MENU_EXTRAS;
+        m12_redesigned_handle_input(&s, 0, 0, 0, 0, 1, 0);
+
+        int rowX = W / 20 + 40;
+        int rowY0 = H / 5;
+        h_ = M12_ModernMenu_HitTest(&s,
+                                    rowX,
+                                    rowY0 + M12_EXTRAS_ITEMS * 26 + 13);
+        record(&t, "INV_MOUSE_10A",
+               m12_get_nav_level() == (int)M12_NAV_EXTRAS &&
+               h_.kind == M12_HIT_EXTRAS_ROW &&
+               h_.index == M12_EXTRAS_ITEMS,
+               "hit-test maps redesigned Extras row centres to extras indices");
+
+        M12_ModernMenu_HandlePointer(&s,
+                                     rowX,
+                                     rowY0 + M12_EXTRAS_ITEMS * 26 + 13,
+                                     0,
+                                     NULL);
+        record(&t, "INV_MOUSE_10B",
+               s.extrasSelected == M12_EXTRAS_ITEMS &&
+               s.view == M12_MENU_VIEW_MAIN,
+               "hovering an Extras row updates the same selection as keyboard navigation");
+
+        M12_ModernMenu_HandlePointer(&s,
+                                     rowX,
+                                     rowY0 + M12_EXTRAS_SPELLS * 26 + 13,
+                                     1,
+                                     NULL);
+        record(&t, "INV_MOUSE_10C",
+               s.extrasSelected == M12_EXTRAS_SPELLS &&
+               s.view == M12_MENU_VIEW_MESSAGE &&
+               s.messageLine2 &&
+               strstr(s.messageLine2, "NO DATA SOURCE") != NULL,
+               "clicking a disabled Extras row opens the explanatory popup");
+
+        M12_StartupMenu_HandleInput(&s, M12_MENU_INPUT_BACK);
+        s.mainMenuSelected = M12_MAIN_MENU_EXTRAS;
+        m12_redesigned_handle_input(&s, 0, 0, 0, 0, 1, 0);
+        M12_ModernMenu_HandlePointer(&s,
+                                     rowX,
+                                     rowY0 + M12_EXTRAS_MANUAL * 26 + 13,
+                                     1,
+                                     NULL);
+        record(&t, "INV_MOUSE_10D",
+               s.extrasSelected == M12_EXTRAS_MANUAL &&
+               s.view == M12_MENU_VIEW_MANUAL_DOCS,
+               "clicking an available Extras row opens its real view");
+    }
+
     /* Write a screenshot of the modern main view with hover for audit. */
     {
         M12_StartupMenuState s;
-        M12_StartupMenu_Init(&s);
+        init_probe_menu_state(&s);
         force_dm1_ready(&s);
         s.selectedIndex = 1;
         s.hoverX = 700;
