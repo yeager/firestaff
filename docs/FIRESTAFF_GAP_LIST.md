@@ -212,7 +212,7 @@ greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
 | **Real PBR hero art for CSB** | OPEN-LARGE |
 | **DM1 shared V2.2 in-place drawing pipeline** | OPEN-LARGE — same as DM1 B3 |
 | Per-cell modern-art swap in CSB 9-square viewport | OPEN-LARGE |
-| Phase 3 enhanced UI overlays | PARTIAL |
+| Phase 3 enhanced UI overlays | FIXED — 2026-06-22: `firestaff_csb_v2_hud_overlay_probe` CTest-gated and PASS 61/61. Covers CSB_V2_PHASE_DOMAIN_HUD gate, presentation-only runtime, phase-gate integration (V1 stays source-locked), and source evidence citations. Library sources `csb_v2_hud_overlay_pc34.c` + `csb_v2_hud_runtime.c` + `csb_v2_phase_gate_pc34.c` wired in CMakeLists. Labels: tier2;csb;v2;phase3;hud;presentation-only. |
 | Phase 5 smooth movement deterministic pixel gates | FIXED — 2026-06-22: `csb_v2_smooth_movement` + `csb_v2_smooth_runtime_binding` + `csb_v2_phase7_verification` + `csb_v2_phase7_verification_source_lock` are CTest-gated and PASS 4/4. Phase 7 verification suite is now active. |
 
 ---
