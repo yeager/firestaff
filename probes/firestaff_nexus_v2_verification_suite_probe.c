@@ -34,14 +34,21 @@
  *      input state across two consecutive renders (no hidden state
  *      leaking between frames).
  *
- *   7. nexus_v2_pipeline_shutdown() frees the output buffer
+ *   7. Deterministic Nexus V1 input scripts produce identical final
+ *      state hashes across V1/V2 presentation modes.
+ *
+ *   8. Screenshot gates: synthetic V1 framebuffer captures produce
+ *      deterministic full-frame and viewport-region pixel hashes for
+ *      V1 OFF, V2 UPSCALED, and V2 ENHANCED output buffers.
+ *
+ *   9. nexus_v2_pipeline_shutdown() frees the output buffer
  *      and is safe to call multiple times.
  *
- *   8. Null-args are safe on init/render/shutdown.
+ *  10. Null-args are safe on init/render/shutdown.
  *
- *   9. Config mode drives output dimensions correctly.
+ *  11. Config mode drives output dimensions correctly.
  *
- *  10. Pipeline can be re-init'd after shutdown (lifecycle).
+ *  12. Pipeline can be re-init'd after shutdown (lifecycle).
  *
  * Exit codes:
  *   0  - all checks passed
@@ -69,10 +76,13 @@
 #include "nexus_v2_lighting.h"
 #include "nexus_v2_particles.h"
 #include "nexus_v2_atmosphere.h"
+#include "nexus_v2_phase_gate_pc34.h"
 #include "nexus_v1_rasterizer.h"
+#include "nexus_v1_movement.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 static int g_total = 0;
@@ -114,6 +124,107 @@ static void fill_v1_fb(Nexus_Framebuffer *fb, int pattern) {
             fb->color_buffer[y * NEXUS_FB_W + x] = (uint8_t)idx;
         }
     }
+}
+
+static uint64_t fnv1a_u32(uint64_t hash, uint32_t value)
+{
+    int byteIndex;
+    for (byteIndex = 0; byteIndex < 4; byteIndex++) {
+        hash ^= (uint64_t)((value >> (byteIndex * 8)) & 0xFFU);
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
+static uint64_t fnv1a_bytes(uint64_t hash, const void *data, size_t bytes)
+{
+    const uint8_t *p = (const uint8_t *)data;
+    size_t i;
+    for (i = 0; i < bytes; i++) {
+        hash ^= (uint64_t)p[i];
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
+static uint64_t hash_nexus_movement_state(uint64_t hash,
+                                          const Nexus_MovementState *ms,
+                                          const Nexus_MoveResultData *last)
+{
+    hash = fnv1a_u32(hash, (uint32_t)ms->party_x);
+    hash = fnv1a_u32(hash, (uint32_t)ms->party_y);
+    hash = fnv1a_u32(hash, (uint32_t)ms->party_dir);
+    hash = fnv1a_u32(hash, (uint32_t)ms->level_index);
+    hash = fnv1a_u32(hash, (uint32_t)ms->move_cooldown_ticks);
+    if (last) {
+        hash = fnv1a_u32(hash, (uint32_t)last->result);
+        hash = fnv1a_u32(hash, (uint32_t)last->new_map_x);
+        hash = fnv1a_u32(hash, (uint32_t)last->new_map_y);
+        hash = fnv1a_u32(hash, (uint32_t)last->new_dir);
+        hash = fnv1a_u32(hash, (uint32_t)last->new_map_index);
+    }
+    return hash;
+}
+
+static void fill_open_floor_map(uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE])
+{
+    int x, y;
+    for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++) {
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            squares[y][x] = NEXUS_SQUARE_FLOOR;
+        }
+    }
+}
+
+static uint64_t run_input_script(const int *commands, size_t count,
+                                 Nexus_MovementState *out_state)
+{
+    uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    Nexus_MovementState ms;
+    Nexus_MoveResultData last;
+    uint64_t hash = 14695981039346656037ULL;
+    size_t i;
+
+    fill_open_floor_map(squares);
+    nexus_movement_init(&ms, 20, 20, NEXUS_DIR_NORTH);
+    memset(&last, 0, sizeof(last));
+
+    for (i = 0; i < count; i++) {
+        int cmd = commands[i];
+        if (cmd == NEXUS_CMD_TURN_LEFT) {
+            nexus_movement_turn(&ms, 0, &last);
+        } else if (cmd == NEXUS_CMD_TURN_RIGHT) {
+            nexus_movement_turn(&ms, 1, &last);
+        } else {
+            (void)nexus_movement_step(&ms, squares, cmd, &last);
+        }
+        hash = hash_nexus_movement_state(hash, &ms, &last);
+    }
+
+    if (out_state) {
+        *out_state = ms;
+    }
+    return hash;
+}
+
+static uint64_t hash_pipeline_output(const Nexus_V2_RenderPipeline *pipe)
+{
+    size_t pixels = (size_t)pipe->output_w * (size_t)pipe->output_h;
+    return fnv1a_bytes(14695981039346656037ULL,
+                       pipe->output_buffer,
+                       pixels * sizeof(pipe->output_buffer[0]));
+}
+
+static uint64_t hash_output_region(const Nexus_V2_RenderPipeline *pipe,
+                                   int x0, int y0, int w, int h)
+{
+    uint64_t hash = 14695981039346656037ULL;
+    int y;
+    for (y = 0; y < h; y++) {
+        const uint32_t *row = pipe->output_buffer + (size_t)(y0 + y) * pipe->output_w + x0;
+        hash = fnv1a_bytes(hash, row, (size_t)w * sizeof(row[0]));
+    }
+    return hash;
 }
 
 static void check_v2_off_init(void)
@@ -349,6 +460,221 @@ static void check_config_mode_to_dimensions(void)
     nexus_v2_pipeline_shutdown(&pipe);
 }
 
+static void check_phase_gate_domain_boundaries(void)
+{
+    NEXUS_V2_PhaseGateConfig off_cfg;
+    NEXUS_V2_PhaseGateConfig on_cfg;
+    NEXUS_V2_PhaseGateDecision movement_dec;
+    NEXUS_V2_PhaseGateDecision render_dec_off;
+    NEXUS_V2_PhaseGateDecision render_dec_on;
+    const char *evidence;
+
+    nexus_v2_phase_gate_defaults(&off_cfg);
+    nexus_v2_phase_gate_defaults(&on_cfg);
+    on_cfg.v2PresentationEnabled = 1;
+    on_cfg.v2ConfigPersistenceEnabled = 1;
+
+    movement_dec = nexus_v2_phase_gate_decide(&on_cfg,
+        NEXUS_V2_PHASE_DOMAIN_MOVEMENT);
+    render_dec_off = nexus_v2_phase_gate_decide(&off_cfg,
+        NEXUS_V2_PHASE_DOMAIN_RENDER_PRESENTATION);
+    render_dec_on = nexus_v2_phase_gate_decide(&on_cfg,
+        NEXUS_V2_PHASE_DOMAIN_RENDER_PRESENTATION);
+
+    check(movement_dec.v1SourceLocked == 1,
+          "phase gate: MOVEMENT remains V1-source-locked");
+    check(movement_dec.v2PresentationAllowed == 0,
+          "phase gate: MOVEMENT never allows V2 presentation mutation");
+    check(render_dec_off.v1SourceLocked == 0 &&
+          render_dec_off.v2PresentationAllowed == 0,
+          "phase gate: RENDER_PRESENTATION is V2-eligible but off by default");
+    check(render_dec_on.v1SourceLocked == 0 &&
+          render_dec_on.v2PresentationAllowed == 1,
+          "phase gate: RENDER_PRESENTATION allowed when V2 presentation enabled");
+
+    evidence = nexus_v2_phase_gate_source_evidence();
+    check(evidence != 0 && strstr(evidence, "nexus_v1_movement.c") != 0,
+          "phase gate: source evidence names Nexus V1 movement");
+    check(evidence != 0 && strstr(evidence, "COMMAND.C") != 0,
+          "phase gate: source evidence names ReDMCSB command loop");
+}
+
+static void check_deterministic_input_scripts(void)
+{
+    static const int route[] = {
+        NEXUS_CMD_FORWARD,
+        NEXUS_CMD_FORWARD,
+        NEXUS_CMD_TURN_RIGHT,
+        NEXUS_CMD_FORWARD,
+        NEXUS_CMD_BACKWARD,
+        NEXUS_CMD_TURN_LEFT,
+        NEXUS_CMD_FORWARD
+    };
+    static const int turn_loop[] = {
+        NEXUS_CMD_TURN_RIGHT,
+        NEXUS_CMD_TURN_RIGHT,
+        NEXUS_CMD_TURN_RIGHT,
+        NEXUS_CMD_TURN_RIGHT
+    };
+    Nexus_MovementState route_state_a;
+    Nexus_MovementState route_state_b;
+    Nexus_MovementState turn_state;
+    uint64_t hash_a = run_input_script(route, sizeof(route) / sizeof(route[0]),
+                                       &route_state_a);
+    uint64_t hash_b = run_input_script(route, sizeof(route) / sizeof(route[0]),
+                                       &route_state_b);
+    uint64_t turn_hash = run_input_script(turn_loop,
+                                          sizeof(turn_loop) / sizeof(turn_loop[0]),
+                                          &turn_state);
+    uint64_t turn_hash_again = run_input_script(turn_loop,
+                                                sizeof(turn_loop) / sizeof(turn_loop[0]),
+                                                0);
+    (void)turn_hash;
+
+    check(hash_a == hash_b,
+          "input script: repeated route yields identical state hash");
+    check(route_state_a.party_x == 20 && route_state_a.party_y == 17 &&
+          route_state_a.party_dir == NEXUS_DIR_NORTH,
+          "input script: route final state is (20,17,N)");
+    check(route_state_a.party_x == route_state_b.party_x &&
+          route_state_a.party_y == route_state_b.party_y &&
+          route_state_a.party_dir == route_state_b.party_dir,
+          "input script: repeated route final state fields match");
+    check(turn_state.party_x == 20 && turn_state.party_y == 20 &&
+          turn_state.party_dir == NEXUS_DIR_NORTH,
+          "input script: four right turns return to north without moving");
+    check(turn_hash == turn_hash_again,
+          "input script: turn loop hash is idempotent");
+}
+
+static void check_state_hash_equality_across_modes(void)
+{
+    static const int route[] = {
+        NEXUS_CMD_FORWARD,
+        NEXUS_CMD_TURN_RIGHT,
+        NEXUS_CMD_FORWARD,
+        NEXUS_CMD_BACKWARD,
+        NEXUS_CMD_TURN_LEFT,
+        NEXUS_CMD_FORWARD
+    };
+    Nexus_V2_RenderPipeline off_pipe;
+    Nexus_V2_RenderPipeline up_pipe;
+    Nexus_V2_RenderPipeline enhanced_pipe;
+    Nexus_Framebuffer fb;
+    Nexus_MovementState state_off;
+    Nexus_MovementState state_up;
+    Nexus_MovementState state_enhanced;
+    uint64_t hash_off;
+    uint64_t hash_up;
+    uint64_t hash_enhanced;
+
+    fill_v1_fb(&fb, 2);
+    nexus_v2_pipeline_init(&off_pipe, NEXUS_V2_OFF);
+    nexus_v2_pipeline_init(&up_pipe, NEXUS_V2_UPSCALED);
+    nexus_v2_pipeline_init(&enhanced_pipe, NEXUS_V2_ENHANCED);
+
+    hash_off = run_input_script(route, sizeof(route) / sizeof(route[0]),
+                                &state_off);
+    nexus_v2_pipeline_render(&off_pipe, &fb,
+                             (float)state_off.party_x,
+                             (float)state_off.party_y,
+                             (float)(state_off.party_dir * 90),
+                             0.0f);
+
+    hash_up = run_input_script(route, sizeof(route) / sizeof(route[0]),
+                               &state_up);
+    nexus_v2_pipeline_render(&up_pipe, &fb,
+                             (float)state_up.party_x,
+                             (float)state_up.party_y,
+                             (float)(state_up.party_dir * 90),
+                             0.0f);
+
+    hash_enhanced = run_input_script(route, sizeof(route) / sizeof(route[0]),
+                                     &state_enhanced);
+    nexus_v2_pipeline_render(&enhanced_pipe, &fb,
+                             (float)state_enhanced.party_x,
+                             (float)state_enhanced.party_y,
+                             (float)(state_enhanced.party_dir * 90),
+                             0.0f);
+
+    check(hash_off == hash_up && hash_off == hash_enhanced,
+          "state hash: V1/V2.1/V2.2 presentation modes preserve gameplay state");
+    check(state_off.party_x == state_up.party_x &&
+          state_off.party_y == state_up.party_y &&
+          state_off.party_dir == state_up.party_dir &&
+          state_off.party_x == state_enhanced.party_x &&
+          state_off.party_y == state_enhanced.party_y &&
+          state_off.party_dir == state_enhanced.party_dir,
+          "state hash: final position fields match across modes");
+
+    nexus_v2_pipeline_shutdown(&off_pipe);
+    nexus_v2_pipeline_shutdown(&up_pipe);
+    nexus_v2_pipeline_shutdown(&enhanced_pipe);
+}
+
+static void check_screenshot_pixel_gates(void)
+{
+    Nexus_Framebuffer fb;
+    Nexus_V2_RenderPipeline off_a, off_b;
+    Nexus_V2_RenderPipeline up_a, up_b;
+    Nexus_V2_RenderPipeline enhanced_a, enhanced_b;
+    uint64_t off_full_a, off_full_b;
+    uint64_t off_region_a, off_region_b;
+    uint64_t up_full_a, up_full_b;
+    uint64_t up_region_a, up_region_b;
+    uint64_t enhanced_full_a, enhanced_full_b;
+    uint64_t enhanced_region_a, enhanced_region_b;
+
+    fill_v1_fb(&fb, 1);
+    nexus_v2_pipeline_init(&off_a, NEXUS_V2_OFF);
+    nexus_v2_pipeline_init(&off_b, NEXUS_V2_OFF);
+    nexus_v2_pipeline_init(&up_a, NEXUS_V2_UPSCALED);
+    nexus_v2_pipeline_init(&up_b, NEXUS_V2_UPSCALED);
+    nexus_v2_pipeline_init(&enhanced_a, NEXUS_V2_ENHANCED);
+    nexus_v2_pipeline_init(&enhanced_b, NEXUS_V2_ENHANCED);
+
+    nexus_v2_pipeline_render(&off_a, &fb, 20.0f, 17.0f, 0.0f, 0.0f);
+    nexus_v2_pipeline_render(&off_b, &fb, 20.0f, 17.0f, 0.0f, 0.0f);
+    nexus_v2_pipeline_render(&up_a, &fb, 20.0f, 17.0f, 0.0f, 0.0f);
+    nexus_v2_pipeline_render(&up_b, &fb, 20.0f, 17.0f, 0.0f, 0.0f);
+    nexus_v2_pipeline_render(&enhanced_a, &fb, 20.0f, 17.0f, 0.0f, 0.0f);
+    nexus_v2_pipeline_render(&enhanced_b, &fb, 20.0f, 17.0f, 0.0f, 0.0f);
+
+    off_full_a = hash_pipeline_output(&off_a);
+    off_full_b = hash_pipeline_output(&off_b);
+    off_region_a = hash_output_region(&off_a, 96, 54, 128, 92);
+    off_region_b = hash_output_region(&off_b, 96, 54, 128, 92);
+
+    up_full_a = hash_pipeline_output(&up_a);
+    up_full_b = hash_pipeline_output(&up_b);
+    up_region_a = hash_output_region(&up_a, 192, 108, 256, 184);
+    up_region_b = hash_output_region(&up_b, 192, 108, 256, 184);
+
+    enhanced_full_a = hash_pipeline_output(&enhanced_a);
+    enhanced_full_b = hash_pipeline_output(&enhanced_b);
+    enhanced_region_a = hash_output_region(&enhanced_a, 384, 216, 512, 368);
+    enhanced_region_b = hash_output_region(&enhanced_b, 384, 216, 512, 368);
+
+    check(off_full_a == off_full_b && off_region_a == off_region_b,
+          "screenshot gate: V2 OFF full-frame and viewport region hashes stable");
+    check(up_full_a == up_full_b && up_region_a == up_region_b,
+          "screenshot gate: V2 UPSCALED full-frame and viewport region hashes stable");
+    check(enhanced_full_a == enhanced_full_b &&
+          enhanced_region_a == enhanced_region_b,
+          "screenshot gate: V2 ENHANCED full-frame and viewport region hashes stable");
+    check(off_full_a != up_full_a && up_full_a != enhanced_full_a,
+          "screenshot gate: presentation modes produce distinct full-frame hashes");
+    check(off_region_a != 0 && up_region_a != 0 && enhanced_region_a != 0,
+          "screenshot gate: viewport region hashes are non-zero receipts");
+
+    nexus_v2_pipeline_shutdown(&off_a);
+    nexus_v2_pipeline_shutdown(&off_b);
+    nexus_v2_pipeline_shutdown(&up_a);
+    nexus_v2_pipeline_shutdown(&up_b);
+    nexus_v2_pipeline_shutdown(&enhanced_a);
+    nexus_v2_pipeline_shutdown(&enhanced_b);
+}
+
 int main(void)
 {
     printf("=== Nexus V2 Phase 7 — Verification Suite Probe ===\n");
@@ -361,6 +687,10 @@ int main(void)
     check_config_mode_to_dimensions();
     check_state_hash_gate();
     check_state_hash_different_pattern();
+    check_phase_gate_domain_boundaries();
+    check_deterministic_input_scripts();
+    check_state_hash_equality_across_modes();
+    check_screenshot_pixel_gates();
     check_lifecycle_reinit();
     check_null_args();
     printf("--- %d / %d passed ---\n", g_total - g_failed, g_total);
