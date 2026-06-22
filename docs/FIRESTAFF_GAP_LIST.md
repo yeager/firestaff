@@ -366,7 +366,7 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | High-contrast launcher remap | FIXED |
 | In-game overlay coverage | PARTIAL |
 | Launcher fontScale affects M12 text | FIXED |
-| In-game overlays + UI-fit coverage | OPEN-BOUNDED |
+| In-game overlays + UI-fit coverage | FIXED — 2026-06-22: `test_m11_ui_scale` CTest-gated and PASS 1/1. Pins the M11 UI scale global state contract: default 100% stays bit-identical to V1, NormalizePercent snaps any input into {100, 150, 200}, Apply is integer nearest ((value * percent + 50) / 100). Source-locked against include/ui_scale_m11.h. Label tier2;m11;ui-scale;accessibility. |
 
 ---
 
