@@ -1342,6 +1342,22 @@ static int m12_ready_game_count(const M12_StartupMenuState* state) {
     return ready;
 }
 
+static const char* m12_scan_feedback_value(const M12_StartupMenuState* state) {
+    static char text[32];
+    int ready = m12_ready_game_count(state);
+    if (!state) {
+        return "UNKNOWN";
+    }
+    if (ready > 0) {
+        snprintf(text, sizeof(text), "%d GAME%s READY", ready, ready == 1 ? "" : "S");
+        return text;
+    }
+    if (M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
+        return "FILES FOUND";
+    }
+    return "NO VERIFIED DATA";
+}
+
 static void m12_publish_game_availability(M12_StartupMenuState* state) {
     FS_GameAvailability avail;
     if (!state) {
@@ -1358,26 +1374,16 @@ static void m12_publish_game_availability(M12_StartupMenuState* state) {
 
 static void m12_show_data_dir_result_popup(M12_StartupMenuState* state,
                                            int changed) {
-    char line2[160];
     char line3[160];
-    int ready;
     if (!state) {
         return;
-    }
-    ready = m12_ready_game_count(state);
-    if (ready > 0) {
-        snprintf(line2, sizeof(line2), "%d GAME%s READY", ready, ready == 1 ? "" : "S");
-    } else if (M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
-        snprintf(line2, sizeof(line2), "%s", m12_tr(state, "ORIGINAL FILES FOUND, VERIFIED SET MISSING"));
-    } else {
-        snprintf(line2, sizeof(line2), "%s", m12_tr(state, "NO VERIFIED GAME DATA FOUND"));
     }
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_enter_message_view(state);
     m12_set_buffered_message(state,
                              changed ? m12_tr(state, "DATA DIRECTORY UPDATED")
                                      : m12_tr(state, "DATA DIRECTORY UNCHANGED"),
-                             line2,
+                             m12_scan_feedback_value(state),
                              line3);
 }
 
@@ -2078,31 +2084,7 @@ static const char* m12_settings_value_movement_mode(const M12_StartupMenuState* 
 }
 
 static const char* m12_settings_value_data_status(const M12_StartupMenuState* state) {
-    int ready = 0;
-    int known = 0;
-    int gi;
-    if (!state) {
-        return "UNKNOWN";
-    }
-    for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
-        const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, gi);
-        if (!entry || !entry->gameId) {
-            continue;
-        }
-        if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
-            known += 1;
-            if (entry->available) {
-                ready += 1;
-            }
-        }
-    }
-    if (ready > 0) {
-        return "HASHED READY";
-    }
-    if (known > 0) {
-        return "HASHED BLOCKED";
-    }
-    return "MISSING DATA";
+    return m12_scan_feedback_value(state);
 }
 
 static const char* m12_settings_value_data_dir(const M12_StartupMenuState* state) {
@@ -2367,6 +2349,10 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_IMPORT: return m12_tr(state, "READ...");
         default: return "";
     }
+}
+
+const char* M12_StartupMenu_GetDataStatusValue(const M12_StartupMenuState* state) {
+    return m12_settings_value_data_status(state);
 }
 
 static const char* m12_settings_group_label(const M12_StartupMenuState* state, int row) {
