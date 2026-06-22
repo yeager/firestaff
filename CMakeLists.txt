@@ -3110,6 +3110,29 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_save_ensure_dir_pc34_compat
     )
 
+    # CSB V1 save/load runtime boundary gate: prove the 512-byte
+    # obfuscated save header + a bounded state prefix survives a
+    # full save -> compatibility-check -> bounded-prefix load ->
+    # direct header-only load roundtrip. Source-locked against
+    # ReDMCSB SAVEHEAD.C F0429/F0430 and LOADSAVE.C F0435 lines
+    # ~2665-2724 (header + GameID validation before GLOBAL_DATA).
+    add_executable(test_csb_v1_save_runtime_boundary_pc34_compat
+        tests/test_csb_v1_save_runtime_boundary_pc34_compat.c
+        src/csb/csb_v1_save_load_pc34_compat.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_v1_save_runtime_boundary_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_save_runtime_boundary_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_save_runtime_boundary_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_save_runtime_boundary_pc34_compat
+        COMMAND test_csb_v1_save_runtime_boundary_pc34_compat
+    )
+
     add_executable(test_csb_v1_phase7_verification
         tests/test_csb_v1_phase7_verification.c
         src/csb/csb_v1_boot.c
