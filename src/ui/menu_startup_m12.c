@@ -17,6 +17,7 @@
 #include "ui_scale_m11.h"
 #include "ambient_layer_m11.h"
 #include "fs_portable_compat.h"
+#include "manual_docs_m12.h"
 
 #include <SDL3/SDL_misc.h>
 #include <SDL3/SDL_dialog.h>
@@ -7621,8 +7622,13 @@ void m12_redesigned_handle_input(M12_StartupMenuState *state,
                 switch (state->extrasSelected) {
                     case M12_EXTRAS_MUSEUM: state->view = M12_MENU_VIEW_MUSEUM; break;
                     case M12_EXTRAS_MANUAL: {
-                        /* Open the Firestaff documentation site */
-                        SDL_OpenURL("https://github.com/yeager/firestaff#readme");
+                        if (!SDL_OpenURL(M12_ManualDocs_DefaultUrl())) {
+                            m12_set_buffered_message(state,
+                                                     "MANUAL / DOCS",
+                                                     M12_ManualDocs_DefaultUrl(),
+                                                     "ESC RETURNS TO MENU");
+                            state->view = M12_MENU_VIEW_MESSAGE;
+                        }
                     } break;
                     case M12_EXTRAS_BESTIARY: state->view = M12_MENU_VIEW_BESTIARY; break;
                     case M12_EXTRAS_ITEMS: state->view = M12_MENU_VIEW_ITEM_ENCYCLOPEDIA; break;
