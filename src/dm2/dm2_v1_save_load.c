@@ -472,7 +472,11 @@ int dm2_suppress_decode_champion(const uint8_t *in, size_t in_sz,
                                   uint8_t fill)
 {
     if (!in || !mask || !c) return -1;
-    if (in_sz < 261) return -1;
+    /* in_sz is the SUPPRESS-encoded stream length; encoded form is
+     * typically shorter than 261 bytes since masked nibbles are packed
+     * into 1-7 LSBs. dm2_suppress_decode detects bit-underflow, so only
+     * the empty-input case is rejected here. */
+    if (in_sz == 0) return -1;
     return dm2_suppress_decode(in, in_sz, mask, 261, (uint8_t *)c, fill);
 }
 
@@ -602,7 +606,12 @@ int dm2_suppress_decode_gamestate(const uint8_t *in, size_t in_sz,
                                    DM2_GameStateBlock *gs, uint8_t fill)
 {
     if (!in || !gs) return -1;
-    if (in_sz < DM2_GAME_STATE_BLOCK_SIZE) return -1;
+    /* in_sz is the SUPPRESS-encoded stream length; the encoded form is
+     * typically shorter than DM2_GAME_STATE_BLOCK_SIZE (56) bytes since
+     * every masked byte is packed into 7 LSBs. dm2_suppress_decode
+     * itself detects bit-underflow, so the wrapper only needs to reject
+     * the empty-input case. */
+    if (in_sz == 0) return -1;
     uint8_t mask[DM2_GAME_STATE_BLOCK_SIZE];
     dm2_suppress_gamestate_mask(mask);
     return dm2_suppress_decode(in, in_sz, mask,
@@ -772,7 +781,11 @@ int dm2_suppress_decode_timer(const uint8_t *in, size_t in_sz,
                                DM2_TimerEntry *t, uint8_t fill)
 {
     if (!in || !t) return -1;
-    if (in_sz < DM2_TIMER_ENTRY_SIZE) return -1;
+    /* in_sz is the SUPPRESS-encoded stream length; encoded form is
+     * typically shorter than DM2_TIMER_ENTRY_SIZE (10) bytes since every
+     * masked byte is packed into 7 LSBs. dm2_suppress_decode detects
+     * bit-underflow, so only the empty-input case is rejected here. */
+    if (in_sz == 0) return -1;
     uint8_t mask[DM2_TIMER_ENTRY_SIZE];
     dm2_suppress_timer_mask(mask);
     return dm2_suppress_decode(in, in_sz, mask, DM2_TIMER_ENTRY_SIZE,
