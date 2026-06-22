@@ -1318,26 +1318,6 @@ static void format_settings_path_value(const M12_StartupMenuState* state,
     }
 }
 
-static const char* settings_data_status_label(const M12_StartupMenuState* state) {
-    int ready = 0;
-    if (!state) {
-        return "UNKNOWN";
-    }
-    for (int i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
-        const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, i);
-        if (entry && entry->available) {
-            ready += 1;
-        }
-    }
-    if (ready > 0) {
-        return "HASHED READY";
-    }
-    if (M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
-        return "CHECK FILES";
-    }
-    return "MISSING DATA";
-}
-
 static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     draw_back_button(c, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
@@ -1376,10 +1356,11 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settingsSelectedIndex == 1);
     draw_setting_row(c, rowX, rowY + 140, rowW, "WINDOW MODE",   win[wi],
                      state->settingsSelectedIndex == 3);
-    draw_setting_row(c, rowX, rowY + 210, rowW, "DATA DIRECTORY", dataDir,
+    draw_setting_row(c, rowX, rowY + 210, rowW, "SMOOTH TURN PAN",
+                     state->settings.dm1V2SmoothTurnPanEnabled ? "ON" : "OFF",
+                     state->settingsSelectedIndex == 14);
+    draw_setting_row(c, rowX, rowY + 280, rowW, "DATA DIRECTORY", dataDir,
                      state->settingsSelectedIndex == 15);
-    draw_setting_row(c, rowX, rowY + 280, rowW, "ORIGINAL DATA", settings_data_status_label(state),
-                     state->settingsSelectedIndex == 16);
     draw_setting_row(c, rowX, rowY + 350, rowW, "EXPORT SETTINGS", "SAVE...",
                      state->settingsSelectedIndex == 41);
     draw_setting_row(c, rowX, rowY + 420, rowW, "IMPORT SETTINGS", "LOAD...",
