@@ -1,0 +1,229 @@
+{
+  "build_dir": "build",
+  "checks": {
+    "coverage": {
+      "command": {
+        "cmd": [
+          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/private/tmp/firestaff-theron-24h-readiness-rollup/tools/asset-validate/coverage_by_game.py",
+          "--data-dir",
+          "/Users/bosse/.firestaff/data",
+          "--json"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "{\n  \"rows\": [\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"PC\",\n      \"variant\": \"PC 3.4 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"PC\",\n      \"variant\": \"PC 3.4 Multilingual\",\n      \"have_files\": 5,\n      \"need_files\": 5,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Atari ST\",\n      \"variant\": \"1.2 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Atari ST\",\n      \"variant\": \"1.2 German\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Atari ST\",\n      \"variant\": \"1.2 French\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Atari ST\",\n      \"variant\": \"1.1 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"2.0 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"2.0 German\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"2.0 French\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"2.2 English (kid)\",\n      \"have_files\": 3,\n      \"need_files\": 3,\n      \"in_registry\": 3,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"Apple II GS\",\n      \"variant\": \"2.1 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"FM-Towns\",\n      \"variant\": \"2.0 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"PC-98\",\n      \"variant\": \"2.0 Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm1\",\n      \"platform\": \"X68000\",\n      \"variant\": \"3.0 Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"PC\",\n      \"variant\": \"PC 3.4 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"3.5 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"3.5 Multilingual\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"Atari ST\",\n      \"variant\": \"2.0/2.1 English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"X68000\",\n      \"variant\": \"English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"FM-Towns\",\n      \"variant\": \"English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"FM-Towns\",\n      \"variant\": \"Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"PC-98\",\n      \"variant\": \"Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"csb\",\n      \"platform\": \"Utility\",\n      \"variant\": \"Amiga Utility Disk\",\n      \"have_files\": 2,\n      \"need_files\": 5,\n      \"in_registry\": 2,\n      \"status\": \"ARCHIVED\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"PC\",\n      \"variant\": \"English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"PC\",\n      \"variant\": \"French\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"PC\",\n      \"variant\": \"German/English JewelCase\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"Amiga\",\n      \"variant\": \"English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"Macintosh\",\n      \"variant\": \"English (US)\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"Sega CD\",\n      \"variant\": \"English\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"FM-Towns\",\n      \"variant\": \"Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"PC-98\",\n      \"variant\": \"Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"dm2\",\n      \"platform\": \"IBM PS/V\",\n      \"variant\": \"Japanese\",\n      \"have_files\": 2,\n      \"need_files\": 2,\n      \"in_registry\": 2,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"nexus\",\n      \"platform\": \"Saturn\",\n      \"variant\": \"JP (138-file release)\",\n      \"have_files\": 1,\n      \"need_files\": 1,\n      \"in_registry\": 1,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"theron\",\n      \"platform\": \"PC Engine\",\n      \"variant\": \"JP Track 02\",\n      \"have_files\": 1,\n      \"need_files\": 1,\n      \"in_registry\": 0,\n      \"status\": \"READY\",\n      \"notes\": []\n    },\n    {\n      \"game\": \"theron\",\n      \"platform\": \"PC Engine\",\n      \"variant\": \"US Track 02\",\n      \"have_files\": 1,\n      \"need_files\": 1,\n      \"in_registry\": 0,\n      \"status\": \"READY\",\n      \"notes\": []\n    }\n  ],\n  \"summary\": {\n    \"dm1\": {\n      \"total\": 14,\n      \"ready\": 14,\n      \"archived\": 0,\n      \"missing\": 0\n    },\n    \"csb\": {\n      \"total\": 9,\n      \"ready\": 8,\n      \"archived\": 1,\n      \"missing\": 0\n    },\n    \"dm2\": {\n      \"total\": 9,\n      \"ready\": 9,\n      \"archived\": 0,\n      \"missing\": 0\n    },\n    \"nexus\": {\n      \"total\": 1,\n      \"ready\": 1,\n      \"archived\": 0,\n      \"missing\": 0\n    },\n    \"theron\": {\n      \"total\": 2,\n      \"ready\": 2,\n      \"archived\": 0,\n      \"missing\": 0\n    }\n  }\n}"
+      },
+      "missing_or_not_ready": [],
+      "ok": true,
+      "rows": [
+        {
+          "game": "theron",
+          "have_files": 1,
+          "in_registry": 0,
+          "need_files": 1,
+          "notes": [],
+          "platform": "PC Engine",
+          "status": "READY",
+          "variant": "JP Track 02"
+        },
+        {
+          "game": "theron",
+          "have_files": 1,
+          "in_registry": 0,
+          "need_files": 1,
+          "notes": [],
+          "platform": "PC Engine",
+          "status": "READY",
+          "variant": "US Track 02"
+        }
+      ],
+      "summary": {
+        "archived": 0,
+        "missing": 0,
+        "ready": 2,
+        "total": 2
+      }
+    },
+    "ctest": {
+      "command": {
+        "cmd": [
+          "ctest",
+          "--test-dir",
+          "build",
+          "-R",
+          "^(tier1_strict_boot_probe|theron_v1_availability|theron_v1_dungeon_progression|theron_v1_dungeon_progression_determinism_probe|theron_v1_mechanics_champions_probe|theron_v1_mechanics_hardening|theron_v1_cross_route_mechanics|theron_v1_teleporter_chain|theron_v1_viewport_renderer|theron_v1_tile_renderer|theron_v1_rendering|theron_v1_save_load|theron_v1_save_header_rejection|theron_v1_shop_price_table|theron_v1_world_serialize_purchase_state|theron_v1_direct_launch|theron_v1_m11_direct_launch|theron_v1_launcher_scan_reuse|theron_v1_track02_bank|theron_v2_phase_gate_pc34|theron_v2_phase0_v1_compatibility_lock|theron_v2_phase1_launch_profile_separation|theron_v2_settings_pc34|theron_v2_filter_config_pc34|theron_v2_presentation_mode_pc34|theron_v2_texture_upscale_pc34|theron_v22_shapes_pc34|theron_v22_inplace_draw_pc34|theron_v22_modern_assets_pc34|theron_v2_smooth_movement_pc34)$",
+          "--output-on-failure"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "Test project /private/tmp/firestaff-theron-24h-readiness-rollup/build\n      Start   1: theron_v1_mechanics_champions_probe\n 1/30 Test   #1: theron_v1_mechanics_champions_probe ...............   Passed    0.00 sec\n      Start   2: theron_v1_dungeon_progression_determinism_probe\n 2/30 Test   #2: theron_v1_dungeon_progression_determinism_probe ...   Passed    0.00 sec\n      Start 254: theron_v2_phase_gate_pc34\n 3/30 Test #254: theron_v2_phase_gate_pc34 .........................   Passed    0.00 sec\n      Start 255: theron_v2_phase0_v1_compatibility_lock\n 4/30 Test #255: theron_v2_phase0_v1_compatibility_lock ............   Passed    0.00 sec\n      Start 256: theron_v2_phase1_launch_profile_separation\n 5/30 Test #256: theron_v2_phase1_launch_profile_separation ........   Passed    0.00 sec\n      Start 303: theron_v2_settings_pc34\n 6/30 Test #303: theron_v2_settings_pc34 ...........................   Passed    0.01 sec\n      Start 311: theron_v2_filter_config_pc34\n 7/30 Test #311: theron_v2_filter_config_pc34 ......................   Passed    0.00 sec\n      Start 315: theron_v2_presentation_mode_pc34\n 8/30 Test #315: theron_v2_presentation_mode_pc34 ..................   Passed    0.01 sec\n      Start 320: theron_v2_texture_upscale_pc34\n 9/30 Test #320: theron_v2_texture_upscale_pc34 ....................   Passed    0.00 sec\n      Start 321: theron_v22_shapes_pc34\n10/30 Test #321: theron_v22_shapes_pc34 ............................   Passed    0.00 sec\n      Start 322: theron_v22_inplace_draw_pc34\n11/30 Test #322: theron_v22_inplace_draw_pc34 ......................   Passed    0.01 sec\n      Start 323: theron_v22_modern_assets_pc34\n12/30 Test #323: theron_v22_modern_assets_pc34 .....................   Passed    0.01 sec\n      Start 325: theron_v2_smooth_movement_pc34\n13/30 Test #325: theron_v2_smooth_movement_pc34 ....................   Passed    0.00 sec\n      Start 773: tier1_strict_boot_probe\n14/30 Test #773: tier1_strict_boot_probe ...........................   Passed   43.42 sec\n      Start 781: theron_v1_availability\n15/30 Test #781: theron_v1_availability ............................   Passed    0.08 sec\n      Start 788: theron_v1_dungeon_progression\n16/30 Test #788: theron_v1_dungeon_progression .....................   Passed    0.00 sec\n      Start 789: theron_v1_save_load\n17/30 Test #789: theron_v1_save_load ...............................   Passed    0.02 sec\n      Start 790: theron_v1_teleporter_chain\n18/30 Test #790: theron_v1_teleporter_chain ........................   Passed    0.00 sec\n      Start 791: theron_v1_mechanics_hardening\n19/30 Test #791: theron_v1_mechanics_hardening .....................   Passed    0.00 sec\n      Start 792: theron_v1_cross_route_mechanics\n20/30 Test #792: theron_v1_cross_route_mechanics ...................   Passed    0.00 sec\n      Start 793: theron_v1_viewport_renderer\n21/30 Test #793: theron_v1_viewport_renderer .......................   Passed    0.00 sec\n      Start 794: theron_v1_tile_renderer\n22/30 Test #794: theron_v1_tile_renderer ...........................   Passed    0.00 sec\n      Start 795: theron_v1_rendering\n23/30 Test #795: theron_v1_rendering ...............................   Passed    0.01 sec\n      Start 796: theron_v1_save_header_rejection\n24/30 Test #796: theron_v1_save_header_rejection ...................   Passed    0.00 sec\n      Start 797: theron_v1_shop_price_table\n25/30 Test #797: theron_v1_shop_price_table ........................   Passed    0.00 sec\n      Start 798: theron_v1_world_serialize_purchase_state\n26/30 Test #798: theron_v1_world_serialize_purchase_state ..........   Passed    0.00 sec\n      Start 799: theron_v1_direct_launch\n27/30 Test #799: theron_v1_direct_launch ...........................   Passed    0.01 sec\n      Start 800: theron_v1_m11_direct_launch\n28/30 Test #800: theron_v1_m11_direct_launch .......................   Passed    0.01 sec\n      Start 801: theron_v1_launcher_scan_reuse\n29/30 Test #801: theron_v1_launcher_scan_reuse .....................   Passed    0.01 sec\n      Start 802: theron_v1_track02_bank\n30/30 Test #802: theron_v1_track02_bank ............................   Passed    0.01 sec\n\n100% tests passed, 0 tests failed out of 30\n\nLabel Time Summary:\nboot_probe     =  43.42 sec*proc (1 test)\ndata_path      =  43.42 sec*proc (1 test)\ndeterminism    =   0.00 sec*proc (1 test)\ndungeon        =   0.00 sec*proc (1 test)\ntheron         =   0.00 sec*proc (1 test)\ntier1          =  43.42 sec*proc (1 test)\ntier4          =   0.00 sec*proc (1 test)\n\nTotal Test time (real) =  43.65 sec"
+      },
+      "inventory": {
+        "command": {
+          "cmd": [
+            "ctest",
+            "--test-dir",
+            "build",
+            "--show-only=json-v1"
+          ],
+          "ok": true,
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "<ctest json inventory: 1111 tests>"
+        },
+        "groups": {
+          "v1": [
+            "theron_v1_availability",
+            "theron_v1_cross_route_mechanics",
+            "theron_v1_direct_launch",
+            "theron_v1_dungeon_progression",
+            "theron_v1_dungeon_progression_determinism_probe",
+            "theron_v1_launcher_scan_reuse",
+            "theron_v1_m11_direct_launch",
+            "theron_v1_mechanics_champions_probe",
+            "theron_v1_mechanics_hardening",
+            "theron_v1_rendering",
+            "theron_v1_save_header_rejection",
+            "theron_v1_save_load",
+            "theron_v1_shop_price_table",
+            "theron_v1_teleporter_chain",
+            "theron_v1_tile_renderer",
+            "theron_v1_track02_bank",
+            "theron_v1_viewport_renderer",
+            "theron_v1_world_serialize_purchase_state",
+            "tier1_strict_boot_probe"
+          ],
+          "v2_boundary": [
+            "theron_v22_inplace_draw_pc34",
+            "theron_v22_modern_assets_pc34",
+            "theron_v22_shapes_pc34",
+            "theron_v2_filter_config_pc34",
+            "theron_v2_phase0_v1_compatibility_lock",
+            "theron_v2_phase1_launch_profile_separation",
+            "theron_v2_phase_gate_pc34",
+            "theron_v2_presentation_mode_pc34",
+            "theron_v2_settings_pc34",
+            "theron_v2_smooth_movement_pc34",
+            "theron_v2_texture_upscale_pc34"
+          ]
+        },
+        "label_summary": {
+          "theron_v1_availability": [],
+          "theron_v1_cross_route_mechanics": [],
+          "theron_v1_direct_launch": [],
+          "theron_v1_dungeon_progression": [],
+          "theron_v1_dungeon_progression_determinism_probe": [
+            "determinism",
+            "dungeon",
+            "theron",
+            "tier4"
+          ],
+          "theron_v1_launcher_scan_reuse": [],
+          "theron_v1_m11_direct_launch": [],
+          "theron_v1_mechanics_champions_probe": [],
+          "theron_v1_mechanics_hardening": [],
+          "theron_v1_rendering": [],
+          "theron_v1_save_header_rejection": [],
+          "theron_v1_save_load": [],
+          "theron_v1_shop_price_table": [],
+          "theron_v1_teleporter_chain": [],
+          "theron_v1_tile_renderer": [],
+          "theron_v1_track02_bank": [],
+          "theron_v1_viewport_renderer": [],
+          "theron_v1_world_serialize_purchase_state": [],
+          "theron_v22_inplace_draw_pc34": [],
+          "theron_v22_modern_assets_pc34": [],
+          "theron_v22_shapes_pc34": [],
+          "theron_v2_filter_config_pc34": [],
+          "theron_v2_phase0_v1_compatibility_lock": [],
+          "theron_v2_phase1_launch_profile_separation": [],
+          "theron_v2_phase_gate_pc34": [],
+          "theron_v2_presentation_mode_pc34": [],
+          "theron_v2_settings_pc34": [],
+          "theron_v2_smooth_movement_pc34": [],
+          "theron_v2_texture_upscale_pc34": [],
+          "tier1_strict_boot_probe": [
+            "boot_probe",
+            "data_path",
+            "tier1"
+          ]
+        },
+        "matched": [
+          "theron_v1_availability",
+          "theron_v1_cross_route_mechanics",
+          "theron_v1_direct_launch",
+          "theron_v1_dungeon_progression",
+          "theron_v1_dungeon_progression_determinism_probe",
+          "theron_v1_launcher_scan_reuse",
+          "theron_v1_m11_direct_launch",
+          "theron_v1_mechanics_champions_probe",
+          "theron_v1_mechanics_hardening",
+          "theron_v1_rendering",
+          "theron_v1_save_header_rejection",
+          "theron_v1_save_load",
+          "theron_v1_shop_price_table",
+          "theron_v1_teleporter_chain",
+          "theron_v1_tile_renderer",
+          "theron_v1_track02_bank",
+          "theron_v1_viewport_renderer",
+          "theron_v1_world_serialize_purchase_state",
+          "theron_v22_inplace_draw_pc34",
+          "theron_v22_modern_assets_pc34",
+          "theron_v22_shapes_pc34",
+          "theron_v2_filter_config_pc34",
+          "theron_v2_phase0_v1_compatibility_lock",
+          "theron_v2_phase1_launch_profile_separation",
+          "theron_v2_phase_gate_pc34",
+          "theron_v2_presentation_mode_pc34",
+          "theron_v2_settings_pc34",
+          "theron_v2_smooth_movement_pc34",
+          "theron_v2_texture_upscale_pc34",
+          "tier1_strict_boot_probe"
+        ],
+        "missing": [],
+        "ok": true,
+        "required": [
+          "tier1_strict_boot_probe",
+          "theron_v1_availability",
+          "theron_v1_dungeon_progression",
+          "theron_v1_dungeon_progression_determinism_probe",
+          "theron_v1_mechanics_champions_probe",
+          "theron_v1_mechanics_hardening",
+          "theron_v1_cross_route_mechanics",
+          "theron_v1_teleporter_chain",
+          "theron_v1_viewport_renderer",
+          "theron_v1_tile_renderer",
+          "theron_v1_rendering",
+          "theron_v1_save_load",
+          "theron_v1_save_header_rejection",
+          "theron_v1_shop_price_table",
+          "theron_v1_world_serialize_purchase_state",
+          "theron_v1_direct_launch",
+          "theron_v1_m11_direct_launch",
+          "theron_v1_launcher_scan_reuse",
+          "theron_v1_track02_bank",
+          "theron_v2_phase_gate_pc34",
+          "theron_v2_phase0_v1_compatibility_lock",
+          "theron_v2_phase1_launch_profile_separation",
+          "theron_v2_settings_pc34",
+          "theron_v2_filter_config_pc34",
+          "theron_v2_presentation_mode_pc34",
+          "theron_v2_texture_upscale_pc34",
+          "theron_v22_shapes_pc34",
+          "theron_v22_inplace_draw_pc34",
+          "theron_v22_modern_assets_pc34",
+          "theron_v2_smooth_movement_pc34"
+        ]
+      },
+      "ok": true,
+      "regex": "^(tier1_strict_boot_probe|theron_v1_availability|theron_v1_dungeon_progression|theron_v1_dungeon_progression_determinism_probe|theron_v1_mechanics_champions_probe|theron_v1_mechanics_hardening|theron_v1_cross_route_mechanics|theron_v1_teleporter_chain|theron_v1_viewport_renderer|theron_v1_tile_renderer|theron_v1_rendering|theron_v1_save_load|theron_v1_save_header_rejection|theron_v1_shop_price_table|theron_v1_world_serialize_purchase_state|theron_v1_direct_launch|theron_v1_m11_direct_launch|theron_v1_launcher_scan_reuse|theron_v1_track02_bank|theron_v2_phase_gate_pc34|theron_v2_phase0_v1_compatibility_lock|theron_v2_phase1_launch_profile_separation|theron_v2_settings_pc34|theron_v2_filter_config_pc34|theron_v2_presentation_mode_pc34|theron_v2_texture_upscale_pc34|theron_v22_shapes_pc34|theron_v22_inplace_draw_pc34|theron_v22_modern_assets_pc34|theron_v2_smooth_movement_pc34)$"
+    }
+  },
+  "data_dir": "/Users/bosse/.firestaff/data",
+  "generated_at": "2026-06-22T06:55:09.340289+00:00",
+  "schema": "firestaff.parity.theron_24h_readiness.v1",
+  "status": "PASS"
+}
