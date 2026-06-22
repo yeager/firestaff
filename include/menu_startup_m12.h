@@ -452,6 +452,7 @@ const char* M12_StartupMenu_GetRendererBackendLabel(const M12_StartupMenuState* 
 const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuState* state);
 int M12_StartupMenu_RendererBackendAvailable(int rendererBackend);
 const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state);
+const char* M12_StartupMenu_GetDataStatusValue(const M12_StartupMenuState* state);
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir);
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);

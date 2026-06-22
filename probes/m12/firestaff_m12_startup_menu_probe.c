@@ -288,8 +288,9 @@ int main(void) {
                      state.launchRequested == 0 &&
                      state.messageLine1 && strcmp(state.messageLine1, "NO GAME DATA FOUND") == 0 &&
                      state.messageLine2 && strcmp(state.messageLine2, "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY") == 0 &&
-                     state.messageLine3 && strstr(state.messageLine3, dataDir) != NULL,
-                 "empty originals directory opens an OK startup popup that shows the scanned data directory");
+                     state.messageLine3 && strstr(state.messageLine3, dataDir) != NULL &&
+                     strcmp(M12_StartupMenu_GetDataStatusValue(&state), "NO VERIFIED DATA") == 0,
+                 "empty originals directory opens an OK startup popup and settings scan feedback shows no verified data");
 
     make_file_with_text(graphicsPath, "ok");
     make_file_with_text(dungeonPath, "ok");
@@ -314,6 +315,10 @@ int main(void) {
     remove_if_present(configPath);
     portable_setenv("LANG", "C", 1);
     M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    probe_record(&tally,
+                 "INV_M12_00B_SCAN_FEEDBACK",
+                 strcmp(M12_StartupMenu_GetDataStatusValue(&state), "FILES FOUND") == 0,
+                 "settings scan feedback distinguishes original-file candidates from verified game sets");
 
     probe_record(&tally,
                  "INV_M12_01",
@@ -368,6 +373,10 @@ int main(void) {
                  "asset scan exposes the bounded per-game version matrix and leaves unmatched versions unavailable");
 
     force_dm1_version_ready(&state, 0U);
+    probe_record(&tally,
+                 "INV_M12_03B_SCAN_FEEDBACK",
+                 strcmp(M12_StartupMenu_GetDataStatusValue(&state), "1 GAME READY") == 0,
+                 "settings scan feedback reports the exact ready-game count after verification");
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
     probe_record(&tally,
