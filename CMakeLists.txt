@@ -14666,8 +14666,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0205_pc34_compat.c"
     )
 endif()
 
-# Greatstone/SCK mapfile parser: data-free item-description rows
-# (`type name offset size`) used as a bridge toward multi-version asset maps.
+# Greatstone/SCK mapfile parser: data-free item-description rows plus
+# SCK 2.x comma rows used as a bridge toward multi-version asset maps.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_sck_mapfile.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/firestaff_sck_mapfile.c")
     add_executable(test_firestaff_sck_mapfile

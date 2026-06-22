@@ -47,8 +47,8 @@ Classification:
 
 | Gap | Source | Status |
 |---|---|---|
-| YAML/TOML mapfile parser for arbitrary item description | greatstone d_mapfile.html | FIXED — 2026-06-22: added the data-free `firestaff_sck_mapfile` parser/CTest for Greatstone/SCK `type name offset size` rows, including comments, blank/CRLF lines, decimal/hex offsets, name lookup, u32 rejection, trailing-token rejection, and target-file bounds validation. The mapfile-to-asset-loader handoff remains tracked separately below as `OPEN-LARGE`. |
-| Mapfile-to-Firestaff-asset-loader bridge | greatstone d_mapfile.html | OPEN-LARGE — Firestaff uses hard-coded table lookups in `image_backend_pc34_compat_globals.c` |
+| YAML/TOML mapfile parser for arbitrary item description | greatstone d_mapfile.html | FIXED — 2026-06-22: added the data-free `firestaff_sck_mapfile` parser/CTest for Greatstone/SCK `type name offset size` rows, including comments, blank/CRLF lines, decimal/hex offsets, name lookup, u32 rejection, trailing-token rejection, and target-file bounds validation. The mapfile-to-asset-loader handoff remains tracked separately below. |
+| Mapfile-to-Firestaff-asset-loader bridge | greatstone d_mapfile.html | PARTIAL — 2026-06-22: `tools/fetch_greatstone_sck_mapfiles.sh` now reproduces the bounded curl/unzip handoff from Greatstone's SCK release into a local `db/map/*.map` corpus, and `firestaff_sck_mapfile` now parses real SCK 2.x comma rows (`item,type,attrs,description,long,comment`), captures `FORMAT`/`ENDIAN`, preserves ordinal/type/label metadata, extracts `SIZE=` attributes, and builds bounds-checked asset slices for offset/size-backed rows. Remaining: wire the parsed SCK metadata into the live Firestaff asset-loader/runtime selection path and broaden coverage beyond `SIZE=` slices. |
 
 ### A3. Engine behaviour parity
 
