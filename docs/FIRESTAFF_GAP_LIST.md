@@ -33,7 +33,7 @@ Classification:
 | **PAK container format (Atari ST)** | greatstone d_pak.html | FIXED — `firestaff_pak_decode_unit` PASS 1/1 on 2026-06-21; parses 28-byte Atari ST executable header plus nibble-coded table/literal compression |
 | **HTC hint oracle text format (CSB)** | sck tutorial | OPEN-LARGE — text+layout format used by CSB Hint Oracle |
 | **CMP portrait image format** | sck tutorial | FIXED — `firestaff_cmp_decode_unit` + `csb_v1_cmp_import_pc34` PASS 2/2 on 2026-06-21; decoder parses the 496-byte CSB Utility Disk champion portrait format and import glue writes it into CSB V1 champion/party structures |
-| **AMG sound format (CSB utility disk)** | sck tutorial | OPEN-BOUNDED — sound effects storage |
+| **AMG sound format (CSB utility disk)** | sck tutorial / locally verified Utility Disk sound-effect AMG files | PARTIAL — `csb_v1_amg_sound` is CTest-gated and covers the observed sound-effect AMG container header (`u16be sampleByteCount`, `u16be controlWord`, signed 8-bit sample bytes) plus sample-to-S16 handoff and rejection of the non-sound `MIDI/NAKED.AMG` shape. Remaining: full playback/mixer integration and any separate AMG music-sequence semantics. |
 | **MVE (Interplay, DM2 PC)** | dmweb Animations | OPEN-LARGE — DOS-stub + Interplay MVE binary |
 | **QuickTime .moov (DM2 Macintosh)** | dmweb Animations | OPEN-LARGE — Apple QuickTime container |
 | **DMDF/DGN (Nexus Saturn)** | AGENTS.md / ReDMCSB | PARTIAL — DMDF parser exists (`src/nexus/`), DGN partially |
@@ -215,6 +215,7 @@ greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
 | Phase 3 enhanced UI overlays | FIXED — 2026-06-22: `firestaff_csb_v2_hud_overlay_probe` CTest-gated and PASS 61/61. Covers CSB_V2_PHASE_DOMAIN_HUD gate, presentation-only runtime, phase-gate integration (V1 stays source-locked), and source evidence citations. Library sources `csb_v2_hud_overlay_pc34.c` + `csb_v2_hud_runtime.c` + `csb_v2_phase_gate_pc34.c` wired in CMakeLists. Labels: tier2;csb;v2;phase3;hud;presentation-only. |
 | Phase 5 smooth movement deterministic pixel gates | FIXED — 2026-06-22: `csb_v2_smooth_movement` + `csb_v2_smooth_runtime_binding` + `csb_v2_phase7_verification` + `csb_v2_phase7_verification_source_lock` are CTest-gated and PASS 4/4. Phase 7 verification suite is now active. |
 | Phase 0/1/2/3/4/5/7 probes wired to CTest | FIXED — 2026-06-22: 7 CSB V2 probes previously buildable but not CTest-registered are now wired as test targets: `csb_v2_presentation_mode_probe` (mode-selector), `csb_v2_texture_upscale_probe` (v2.1), `csb_v22_shapes_probe` (v2.2 modern shapes), `csb_v2_filter_config_probe` (v2.0), `csb_v2_per_frame_filter_dispatch_probe` (v2.0), `csb_v2_filter_chain_probe` (v2.0), `csb_v2_settings_probe` (v2-config). All 13 related tests PASS. |
+| Cross-domain probe watchdog batch (5 probes) | FIXED — 2026-06-22: 5 data-free probes previously either not built (no add_executable) or built but not CTest-registered are now wired as test targets: `dm2_v2_phase3_hud_overlay_probe` (added add_test, 61/61 PASS), `dm1_v2_v1_v2_side_by_side_seed_probe` (NEW, PASS), `dm2_v1_creature_combat_probe` (NEW, PASS), `m11_inscription_font_probe` (NEW, PASS), `m11_pass30_movement_legality_probe` (NEW, 17/17 PASS). All 6 related tests PASS. |
 
 ---
 
