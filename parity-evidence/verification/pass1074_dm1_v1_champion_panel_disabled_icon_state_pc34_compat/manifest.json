@@ -1,0 +1,82 @@
+{
+  "anchors": [
+    "CHAMPION.C F0330:2208-2255",
+    "CHAMPION.C F0330:2252 M008_SET",
+    "CHAMPION.C F0330:2253-2255 C11_EVENT_ENABLE_CHAMPION_ACTION",
+    "ACTIDRAW.C F0386:201-296",
+    "ACTIDRAW.C F0386_MENUS_DrawActionIcon:282-286",
+    "ACTIDRAW.C F0386_MENUS_DrawActionIcon:234-238",
+    "ACTIDRAW.C F0386_MENUS_DrawActionIcon:262-264",
+    "MENU.C G0491_auc_Graphic560_ActionDisabledTicks[44]",
+    "MENU.C:27,157",
+    "m11_collect_v1_status_shield_border_graphics",
+    "M11_GameView_ShouldHatchV1ActionIconCells",
+    "DEFS.H MASK0x8000_ACTION_HAND",
+    "DEFS.H MASK0x0008_DISABLE_ACTION"
+  ],
+  "nonClaims": [
+    "No real GRAPHICS.DAT or DUNGEON.DAT load.",
+    "No live rendering, no DOSBox / dosbox-debug / dosbox-x capture.",
+    "No Firestaff-vs-original pixel parity claim."
+  ],
+  "nonOverlap": [
+    "Disjoint from pass784-790 (mirror-candidate C040 + wound).",
+    "Disjoint from pass791 (champion-panel ammunition-compat).",
+    "Disjoint from pass793 (action-hand slot-priority).",
+    "Disjoint from pass794 (all-states redraw dispatcher).",
+    "Disjoint from pass795-797 (leader/mirror/chest-action-hand).",
+    "Disjoint from pass798-806 (graphics.dat init-table gates).",
+    "Disjoint from pass922 (G0491 table bytes \u2014 separate gate; this gate re-uses the values for the per-action predicate).",
+    "Disjoint from M11_GetV1StatusShieldBorderGraphicForChampion + the firestaff_dm1_v1_champion_panel_shield_border_pixel_probe ENABLED pixel path.",
+    "Disjoint from M11_GetV1ChampionIconSourceIndex + the firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe ENABLED direction-swap path."
+  ],
+  "schema": "firestaff.parity.pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat.v1",
+  "scope": "DM1 V1 champion-panel DISABLED/UNAVAILABLE shield/action icon state contract \u2014 disjoint from existing shield-border ENABLED pixel coverage and existing icon-direction ENABLED coverage.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_disabled_icon_state_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_champion_panel_disabled_icon_state_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/dm1_v1_champion_panel_disabled_icon_state_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED",
+  "timestampUtc": "2026-06-22T13:56:17.807899+00:00",
+  "verificationRuns": [
+    {
+      "assertions": 153,
+      "command": [
+        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/202606221508270004_q50_20260622_dm1_v1_champion_panel_shield_disabled_icon_gate/builds/nv1-build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
+      ],
+      "fails": 0,
+      "finalMarker": "DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_PC34_COMPAT_OK",
+      "passed": true,
+      "passes": 153,
+      "returncode": 0
+    }
+  ]
+}
