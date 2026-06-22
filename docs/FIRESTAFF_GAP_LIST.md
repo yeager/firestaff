@@ -214,6 +214,7 @@ greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
 | Per-cell modern-art swap in CSB 9-square viewport | OPEN-LARGE |
 | Phase 3 enhanced UI overlays | FIXED — 2026-06-22: `firestaff_csb_v2_hud_overlay_probe` CTest-gated and PASS 61/61. Covers CSB_V2_PHASE_DOMAIN_HUD gate, presentation-only runtime, phase-gate integration (V1 stays source-locked), and source evidence citations. Library sources `csb_v2_hud_overlay_pc34.c` + `csb_v2_hud_runtime.c` + `csb_v2_phase_gate_pc34.c` wired in CMakeLists. Labels: tier2;csb;v2;phase3;hud;presentation-only. |
 | Phase 5 smooth movement deterministic pixel gates | FIXED — 2026-06-22: `csb_v2_smooth_movement` + `csb_v2_smooth_runtime_binding` + `csb_v2_phase7_verification` + `csb_v2_phase7_verification_source_lock` are CTest-gated and PASS 4/4. Phase 7 verification suite is now active. |
+| Phase 0/1/2/3/4/5/7 probes wired to CTest | FIXED — 2026-06-22: 7 CSB V2 probes previously buildable but not CTest-registered are now wired as test targets: `csb_v2_presentation_mode_probe` (mode-selector), `csb_v2_texture_upscale_probe` (v2.1), `csb_v22_shapes_probe` (v2.2 modern shapes), `csb_v2_filter_config_probe` (v2.0), `csb_v2_per_frame_filter_dispatch_probe` (v2.0), `csb_v2_filter_chain_probe` (v2.0), `csb_v2_settings_probe` (v2-config). All 13 related tests PASS. |
 
 ---
 
