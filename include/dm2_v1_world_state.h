@@ -176,6 +176,24 @@ int dm2_v1_world_state_get_explored(const DM2_WorldState *state, int level, int 
 void dm2_v1_world_state_set_explored(DM2_WorldState *state, int level, int x, int y, int value);
 const char *dm2_v1_world_state_source_evidence(void);
 
+/* Level transition helper.
+ *
+ * Updates current_level on a world state to a new map index in
+ * [0, DM2_WORLD_STATE_MAX_LEVELS). Out-of-range target levels are
+ * rejected without mutating the state. Per-level exploration data
+ * for OTHER levels is left untouched; only the current_level
+ * pointer moves. The Firestaff-owned per-level explored bitmap is
+ * keyed on the level index, not on current_level, so changing the
+ * pointer does not clear earlier exploration reveals.
+ *
+ * Source: ReDMCSB DEFS.H:560 (PartyMapIndex field, GLOBAL_DATA)
+ *         ReDMCSB LOADSAVE.C:1515-1524 (PartyMapIndex round-trip)
+ *         ReDMCSB CLIKMENU.C:177-179,265 (stairs / map transition)
+ *         SKULL.ASM T520 (party placement tick)
+ *         SKULL.ASM T560/T600 (dungeon/outdoor tick)
+ */
+void dm2_v1_world_state_set_current_level(DM2_WorldState *state, int target_level);
+
 #ifdef __cplusplus
 }
 #endif

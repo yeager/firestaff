@@ -288,6 +288,30 @@ void dm2_v1_world_state_set_explored(DM2_WorldState *state,
     }
 }
 
+/*
+ * dm2_v1_world_state_set_current_level — transition the world-state
+ * current_level pointer to a new map index.
+ *
+ * The DM2 per-level explored bitmap is keyed by level index, not by
+ * current_level, so changing the pointer MUST NOT wipe previously
+ * revealed cells on other levels. This helper enforces the bounds
+ * check the field itself cannot provide, and keeps callers from
+ * having to mutate the struct field directly. Stair/transition
+ * callers (SKULL.ASM T520 stairs handler, ReDMCSB CLIKMENU.C:177-179)
+ * and save/load round-trip code (ReDMCSB LOADSAVE.C:1523 PartyMapIndex)
+ * use the same pointer-only semantics.
+ *
+ * Source: ReDMCSB DEFS.H:560 GLOBAL_DATA.PartyMapIndex
+ *         ReDMCSB LOADSAVE.C:1515-1524 GLOBAL_DATA round-trip
+ *         ReDMCSB CLIKMENU.C:177-179,265 stairs / map transition
+ *         SKULL.ASM T520 party placement tick
+ */
+void dm2_v1_world_state_set_current_level(DM2_WorldState *state, int target_level) {
+    if (!state) return;
+    if (target_level < 0 || target_level >= DM2_WORLD_STATE_MAX_LEVELS) return;
+    state->current_level = target_level;
+}
+
 void dm2_v1_world_state_free(DM2_WorldState *state) {
     if (!state) return;
     if (state->raw_save) { free(state->raw_save); state->raw_save = NULL; }

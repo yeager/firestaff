@@ -2569,6 +2569,31 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_save_load
     )
 
+    # ── DM2 V1 minimap persistence across a level transition ──
+    # The explored bitmap is keyed on level index, not on current_level,
+    # so changing the level pointer must not wipe prior map reveals.
+    # Source: ReDMCSB DEFS.H:560 GLOBAL_DATA.PartyMapIndex,
+    #         ReDMCSB LOADSAVE.C:1515-1524 GLOBAL_DATA round-trip.
+    add_executable(test_dm2_v1_world_state_minimap_level_transition
+        tests/test_dm2_v1_world_state_minimap_level_transition.c
+        src/dm2/dm2_v1_world_state.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_world_model.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_world_state_minimap_level_transition PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(test_dm2_v1_world_state_minimap_level_transition PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_world_state_minimap_level_transition PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_world_state_minimap_level_transition
+        COMMAND test_dm2_v1_world_state_minimap_level_transition
+    )
+
     add_executable(test_dm2_v1_utility_import
         tests/test_dm2_v1_utility_import.c
         src/dm2/dm2_v1_new_game.c
