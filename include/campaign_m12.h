@@ -97,6 +97,12 @@ typedef struct {
     int  newGameIndex;          /* Index into game list (0=DM1, etc.)  */
 } M12_CampaignState;
 
+typedef struct {
+    int running;
+    int paused;
+    int elapsedSeconds;
+} M12_CampaignSessionTimer;
+
 /* ── Initialization ──────────────────────────────────────────────── */
 
 /** Reset all campaign state to zeroes. */
@@ -188,6 +194,25 @@ void M12_Campaign_UpdateLevel(M12_CampaignSlot* slot, int newLevel);
  * Add elapsed seconds to the campaign's play time counter.
  */
 void M12_Campaign_AddPlayTime(M12_CampaignSlot* slot, int seconds);
+
+/* ── Session timer ───────────────────────────────────────────────── */
+
+/** Reset a session timer to stopped/zero state. */
+void M12_CampaignSessionTimer_Init(M12_CampaignSessionTimer* timer);
+
+/** Start a fresh session, discarding any unflushed elapsed seconds. */
+void M12_CampaignSessionTimer_Start(M12_CampaignSessionTimer* timer);
+
+/** Pause or resume elapsed-time accumulation without clearing it. */
+void M12_CampaignSessionTimer_Pause(M12_CampaignSessionTimer* timer);
+void M12_CampaignSessionTimer_Resume(M12_CampaignSessionTimer* timer);
+
+/** Add elapsed wall-clock seconds while running and unpaused. */
+void M12_CampaignSessionTimer_Tick(M12_CampaignSessionTimer* timer, int seconds);
+
+/** Add accumulated session time to a campaign slot and reset the timer. */
+int M12_CampaignSessionTimer_FlushToSlot(M12_CampaignSessionTimer* timer,
+                                         M12_CampaignSlot* slot);
 
 /* ── Rendering ───────────────────────────────────────────────────── */
 

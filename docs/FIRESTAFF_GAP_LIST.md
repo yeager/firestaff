@@ -346,7 +346,7 @@ Source: `docs/NEXUS_PLAN.md` (similar shape), Theron local probes.
 | **Polished UI flow** | OPEN-BOUNDED |
 | Runtime handoff for every option | PARTIAL — CSB V1 launch-readiness blocker retired on 2026-06-21: matched CSB assets now produce a valid M12 launch intent, M11 hands CSB to `FS_GAME_CSB`, and `csb_v1_pc_real_asset_launch` proves PC CSB boot/tick. Remaining gaps are per-game polished flows, richer CSB viewport/HUD/gameplay proof, original capture parity, and non-PC emulator parity. |
 | **Save export/import** | OPEN-BOUNDED |
-| **Session timer** | OPEN-BOUNDED |
+| **Session timer** | FIXED — 2026-06-22: added `M12_CampaignSessionTimer` with start/pause/resume/tick/flush-to-slot semantics and CTest `campaign_m12_session_timer`, covering stopped/paused no-op behavior, positive accumulation, negative tick rejection, HH:MM:SS formatting, flush into `playTimeSeconds`, modification timestamp update, reset after flush, empty flush no-op, and stale-session reset on restart. Broader gameplay/runtime handoff remains tracked in the separate runtime-handoff row. |
 | **Manual/docs launcher** | OPEN-BOUNDED |
 | **Cloud sync** | OPEN-LARGE |
 | Custom/V2 smooth-turn-pan toggles | FIXED — 2026-06-22: M12 modern settings now exposes `SMOOTH TURN PAN` as a visible toggle row, `menu_hit_launch_direct_click_m12` CTest-gates hit-testing/click cycling/persistence, `dm1_v2_settings_pc34` gates settings-file handoff, and `dm1_v2_camera_turn_edge_cases_pc34` gates the V2-only presentation pan offsets. V1 source-snap remains preserved because the saved flag does not change the original graphics mode. |
