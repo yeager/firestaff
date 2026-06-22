@@ -2776,6 +2776,58 @@ if(BUILD_TESTING)
         target_compile_options(firestaff_dm2_v1_projectile_creature_collision_probe PRIVATE -Wall -Wextra -O2)
     endif()
 
+    # ── DM2 V1 Phase 5: Creature death → drop observer gate ──
+    # Source-locked coverage of the death_check() loot-state contract:
+    # Thorn Demon (AI 19) drops DM2_DROP_THORN_DEMON_WORM_FOOD count=1;
+    # non-Thorn-Demon kills record dropped=0; out-of-range / re-kill /
+    # positive-HP calls do not pollute the observer. Disjoint from
+    # dm2_v1_projectile_pc34_compat (which covers attack-flag routing)
+    # and dm2_v1_creature_combat_probe (which covers the broader
+    # creature+combat integration).
+    add_executable(test_dm2_v1_creature_death_drop_pc34_compat
+        tests/test_dm2_v1_creature_death_drop_pc34_compat.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+    )
+    target_include_directories(test_dm2_v1_creature_death_drop_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_death_drop_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_death_drop_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_death_drop_pc34_compat
+        COMMAND test_dm2_v1_creature_death_drop_pc34_compat
+    )
+
+    # ── DM2 V1 Phase 5: Creature death/drop headless probe ──
+    # Headless, data-free sibling of the CTest gate above; suitable for
+    # the firestaff pool workers.
+    add_executable(firestaff_dm2_v1_creature_death_drop_probe
+        probes/firestaff_dm2_v1_creature_death_drop_probe.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c)
+    target_include_directories(firestaff_dm2_v1_creature_death_drop_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(firestaff_dm2_v1_creature_death_drop_probe
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_creature_death_drop_probe
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_death_drop_probe
+        COMMAND firestaff_dm2_v1_creature_death_drop_probe
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    set_tests_properties(dm2_v1_creature_death_drop_probe PROPERTIES
+        LABELS "tier2;dm2;v1;creature;death;drop;phase5")
+
     # ── DM2 V1 Phase 4: Shop + NPC mechanics parity ──
     add_executable(test_dm2_v1_shop_pc34_compat
         tests/test_dm2_v1_shop_pc34_compat.c

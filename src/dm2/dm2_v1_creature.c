@@ -174,6 +174,14 @@ int dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags) {
 static DM2_V1_CreatureInstance g_creature_pool[DM2_MAX_CREATURE_INSTANCES];
 static int g_next_instance_id = 0;
 
+/* ── Death/drop observer (Phase 5 followup, 2026-06-22) ────────────────
+ * Captures the most recent death_check event so the CTest gate can assert
+ * the loot-state contract deterministically (item_id, count, slot, AI).
+ * Initialized to all-zero / dropped=0 / count=0 so a fresh module load
+ * before any death is observable as "no death yet" rather than garbage. */
+static DM2_V1_CreatureDeathDropObserver g_last_death_drop;
+static int g_death_observer_count = 0;
+
 /* dm2_v1_creature_spawn — spawn a creature instance.
  * Source: SkWinCore.cpp:16815 — ALLOC_NEW_CREATURE(type, mult, dir, x, y)
  * healthMultiplier: 0=default (8), 1–16 scale HP. DM2_CREATURE_SPAWN_MAX=64. */
@@ -282,6 +290,12 @@ void dm2_v1_creature_death_check(int instance_id) {
     DM2_V1_CreatureInstance *c = &g_creature_pool[instance_id];
     if (!c->alive || c->hp_current > 0) return;
 
+    /* Snapshot creature state for the observer before we mutate. */
+    int snap_ai    = c->ai_index;
+    int snap_x     = c->world_x;
+    int snap_y     = c->world_y;
+    int snap_map   = c->map_index;
+
     c->alive = 0;
 
     /* SOUND_CREATURE_DEATH (constant) positional at creature position.
@@ -294,13 +308,50 @@ void dm2_v1_creature_death_check(int instance_id) {
      * Real: GDAT creature category 0x0A, sub-entries 0x0A-0x14, 11 slots.
      * Source: SKWin.GDAT2.InternalCodes.txt, dm2_v1_drops.c */
     DM2_V1_DropTable dt = {0};
-    if (c->ai_index == DM2_AI_THORN_DEMON) {
+    if (snap_ai == DM2_AI_THORN_DEMON) {
         dt.slots[0].item_id = DM2_DROP_THORN_DEMON_WORM_FOOD;
         dt.slots[0].count   = 1;
     }
     DM2_DropEntry drop = {0};
-    dm2_v1_drops_generate(&dt, (uint32_t)instance_id, &drop);
-    (void)drop;
+    int drop_hit = dm2_v1_drops_generate(&dt, (uint32_t)instance_id, &drop);
+
+    /* Populate the observer so the CTest gate can assert the loot-state
+     * contract deterministically.  drop_hit==1 + drop.item_id!=0 means
+     * a non-empty drop entry; for non-Thorn-Demon AI the stub returns 0
+     * and the observer records dropped=0 (death still observed). */
+    memset(&g_last_death_drop, 0, sizeof(g_last_death_drop));
+    g_last_death_drop.instance_id = instance_id;
+    g_last_death_drop.ai_index    = snap_ai;
+    g_last_death_drop.world_x     = snap_x;
+    g_last_death_drop.world_y     = snap_y;
+    g_last_death_drop.map_index   = snap_map;
+    if (drop_hit && drop.item_id != 0) {
+        g_last_death_drop.dropped = 1;
+        g_last_death_drop.item_id = drop.item_id;
+        g_last_death_drop.count   = drop.count;
+    }
+    g_death_observer_count++;
+}
+
+/* ── Death/drop observer accessors ─────────────────────────────────────── */
+
+int dm2_v1_creature_last_death_drop(DM2_V1_CreatureDeathDropObserver *out) {
+    if (!out) return 0;
+    if (g_death_observer_count <= 0) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    *out = g_last_death_drop;
+    return 1;
+}
+
+int dm2_v1_creature_death_observer_count(void) {
+    return g_death_observer_count;
+}
+
+void dm2_v1_creature_reset_death_observer(void) {
+    memset(&g_last_death_drop, 0, sizeof(g_last_death_drop));
+    g_death_observer_count = 0;
 }
 
 /* dm2_v1_creature_tick — advance all creature instances by one tick.

@@ -248,4 +248,55 @@ void dm2_v1_creature_test_set_ai_spec(int ai_index,
 void dm2_v1_creature_test_clear_ai_overrides(void);
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 
+/* ── Death/drop observer (Phase 5 followup, 2026-06-22) ────────────────
+ * The death_check() flow plays a sound, marks the instance dead, and rolls
+ * a drop entry from the 11-slot GDAT table.  Without a deterministic
+ * observer the drop result is discarded, which makes "creature dies → loot
+ * state" impossible to gate.  These accessors expose the most recent death
+ * event so the CTest gate can assert the loot-state contract:
+ *
+ *   1. spawn Thorn Demon (AI 19) → deal_damage until hp==0
+ *      → tick → death_check fires
+ *      → drop_observer.item_id == DM2_DROP_THORN_DEMON_WORM_FOOD
+ *      → drop_observer.count   == 1
+ *      → drop_observer.instance_id matches the killed slot
+ *      → drop_observer.dropped == 1
+ *      → death_observer_count incremented
+ *
+ *   2. spawn non-Thorn-Demon (Cavern Bat, AI 23) → kill
+ *      → drop_observer.item_id == 0 (no drop)
+ *      → drop_observer.dropped == 0 (kill landed, but no loot)
+ *      → death_observer_count still incremented (death happened)
+ *
+ * Source-locked against SKULL.ASM death dispatch (sha256 a2a04b0e...)
+ * + skproject/SKWIN/SkWinCore.cpp:16815-16936 ALLOC_NEW_CREATURE
+ * + SKWin.GDAT2.InternalCodes.txt creature category 0x0A (11 drop slots)
+ * + ReDMCSB DEFS.H C040-equivalent dead-instance sentinel. */
+
+typedef struct {
+    int instance_id;    /* instance that just died (0..DM2_MAX_CREATURE_INSTANCES-1) */
+    int ai_index;       /* creature AI index at death time */
+    int world_x;        /* world X coordinate at death */
+    int world_y;        /* world Y coordinate at death */
+    int map_index;      /* dungeon map index at death */
+    int dropped;        /* 1=drop entry non-empty, 0=no drop */
+    int item_id;        /* GDAT item ID (0 if dropped==0) */
+    int count;          /* drop count (0 if dropped==0) */
+} DM2_V1_CreatureDeathDropObserver;
+
+/* dm2_v1_creature_last_death_drop — read the most recent death-drop observer.
+ * Returns 1 if a death has been observed since reset, 0 otherwise.
+ * When 0 is returned, out_observer is zero-initialized. */
+int dm2_v1_creature_last_death_drop(DM2_V1_CreatureDeathDropObserver *out_observer);
+
+/* dm2_v1_creature_death_observer_count — total death events observed
+ * (including events that produced no drop).  Monotonic; reset only
+ * by dm2_v1_creature_reset_death_observer. */
+int dm2_v1_creature_death_observer_count(void);
+
+/* dm2_v1_creature_reset_death_observer — clear the last-death observer
+ * and zero the monotonic count.  Tests must call this before exercising
+ * a fresh death sequence so previous observations don't leak in. */
+void dm2_v1_creature_reset_death_observer(void);
+
 #endif /* FIRESTAFF_DM2_V1_CREATURE_H */
