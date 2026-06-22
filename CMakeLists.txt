@@ -10546,6 +10546,26 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 Saturn-font bitmap render probe. Headless and data-free by
+# default: expands a synthetic decoded 1bpp glyph and draws it into an
+# indexed framebuffer with clipping/background/hash checks. If a local
+# FONT256.S2D exists, the probe also exercises a read-only parser-to-render
+# handoff without committing asset bytes or claiming full SCR section parity.
+add_executable(firestaff_nexus_v1_saturn_font_render_probe
+    probes/nexus/firestaff_nexus_v1_saturn_font_render_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_saturn_font_render_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_saturn_font_render_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_saturn_font_render_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus V1 BPX/BPK archive-boundary probe. Headless and data-free:
 # recognizes the verified MENU.BPK marker, keeps real unknown .BPK/.BPX
 # streams unsupported, and locks a synthetic BPX0 parser/extraction
@@ -10588,6 +10608,14 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_saturn_font_determinism PROPERTIES
         LABELS "tier4;nexus;font;determinism"
+    )
+
+    add_test(
+        NAME nexus_v1_saturn_font_render
+        COMMAND firestaff_nexus_v1_saturn_font_render_probe
+    )
+    set_tests_properties(nexus_v1_saturn_font_render PROPERTIES
+        LABELS "tier4;nexus;font;render"
     )
 
     add_test(
