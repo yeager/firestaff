@@ -10056,6 +10056,42 @@ if(BUILD_TESTING)
 endif()
 
 
+# ── DM1 V1 intro/title skip state cleanup gate ────────────────────
+# Data-free regression: proves that skipping the PRESENTS / ZOOM /
+# STRIKES BACK / FINAL_GUARD / MENU_ELIGIBLE animation chain leaves
+# no stale input, palette, transition, or M11 title-state heap behind.
+# Source-locked against ReDMCSB TITLE.C F0437_STARTEND_DrawTitle +
+# F9012 stateful boot-plan reachability phases.
+if(BUILD_TESTING)
+    add_executable(test_dm1_v1_intro_skip_state_cleanup_pc34_compat
+        tests/test_dm1_v1_intro_skip_state_cleanup_pc34_compat.c
+        src/frontend/title_frontend_v1.c
+        src/frontend/title_dat_loader_v1.c
+        src/dm1/dm1_v1_title_screen_pc34_compat.c
+        src/shared/vga_palette_pc34_compat.c
+    )
+    target_compile_definitions(test_dm1_v1_intro_skip_state_cleanup_pc34_compat PRIVATE
+        COMPILE_H
+        STATICFUNCTION=static
+        "SEPARATOR=,"
+        "FINAL_SEPARATOR=)"
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_intro_skip_state_cleanup_pc34_compat PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_intro_skip_state_cleanup_pc34_compat
+        COMMAND test_dm1_v1_intro_skip_state_cleanup_pc34_compat
+    )
+    if(Python3_EXECUTABLE)
+        add_test(
+            NAME pass1074_dm1_v1_intro_skip_state_cleanup_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1074_dm1_v1_intro_skip_state_cleanup_gate.py
+        )
+    endif()
+endif()
+
+
 # ── DM1 V1 ENDGAME source animation/capture schedule gate ─────────────
 if(BUILD_TESTING)
     add_executable(test_endgame_frontend_pc34_compat_integration
