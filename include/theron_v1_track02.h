@@ -4,11 +4,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define THERON_TRACK02_MAX_BANK_ANCHORS 3u
+
+#define THERON_TRACK02_MD5_JP_BIN      "b7afb338ad31be1025b53f9aff12d73a"
+#define THERON_TRACK02_MD5_US_BIN      "f23601102138f87c33025877767ebf76"
 #define THERON_TRACK02_MD5_JP_REV1_ISO "397039af02d50d15c70b74088eb8a1cb"
 #define THERON_TRACK02_MD5_US_ISO      "3d8b78571dcd0e6eb8eb4b01eeb7fbba"
 
 typedef enum {
     THERON_TRACK02_VARIANT_UNKNOWN = 0,
+    THERON_TRACK02_VARIANT_JP_BIN,
+    THERON_TRACK02_VARIANT_US_BIN,
     THERON_TRACK02_VARIANT_JP_REV1_ISO,
     THERON_TRACK02_VARIANT_US_ISO
 } Theron_Track02Variant;
@@ -23,8 +29,10 @@ typedef enum {
 
 typedef struct {
     Theron_Track02Variant variant;
+    size_t anchor_count;
     size_t descriptor_offset;
     size_t descriptor_size;
+    size_t descriptor_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t occurrence_count;
     uint16_t first_value;
     uint16_t last_value;
@@ -36,9 +44,16 @@ typedef struct {
     size_t boundary_prefix_size;
     size_t boundary_prefix_occurrence_count;
     size_t post_boundary_span_size;
+    size_t post_boundary_span_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t post_boundary_span_occurrence_count;
     uint16_t post_boundary_span_first_word;
     uint16_t post_boundary_span_last_word;
+    size_t raw_sector_bytes;
+    size_t raw_sector_user_data_offset;
+    size_t descriptor_raw_sector_numbers[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t descriptor_raw_sector_user_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t post_boundary_span_raw_sector_numbers[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t post_boundary_span_raw_sector_user_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
 } Theron_Track02BankSignal;
 
 Theron_Track02Variant theron_v1_track02_variant_for_md5(const char *md5_hex);
