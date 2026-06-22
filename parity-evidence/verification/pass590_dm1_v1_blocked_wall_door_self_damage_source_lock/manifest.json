@@ -16,7 +16,7 @@
       ]
     }
   },
-  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
+  "head": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
   "notClaimed": [
     "new original DOS runtime trace",
     "actual random wound materialization parity beyond the recorded request",
@@ -66,6 +66,6 @@
   "status": "PASS590_DM1_V1_BLOCKED_WALL_DOOR_SELF_DAMAGE_SOURCE_LOCKED",
   "testExecutable": "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_movement_command_core_pc34_compat",
   "testOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1",
-  "timestampUtc": "2026-06-21T07:41:00.459095+00:00",
+  "timestampUtc": "2026-06-21T19:20:39.514208+00:00",
   "worktree": "/Users/bosse/.openclaw/workspace-main"
 }

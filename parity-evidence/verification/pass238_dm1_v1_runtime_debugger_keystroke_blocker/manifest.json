@@ -84,6 +84,6 @@
   },
   "tools": {
     "dosbox-debug": null,
-    "dosbox-x": null
+    "dosbox-x": "/opt/homebrew/bin/dosbox-x"
   }
 }

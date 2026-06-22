@@ -6,7 +6,7 @@
     "stderr": "",
     "stdout": "probe=firestaff_dm1_v1_pass1055_closed_door_pair_probe\ndungeon=/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\nsource=COMMAND.C:F0380 CLIKMENU.C:F0365/F0366 MOVESENS.C:F0267\n[before_closed_door] map=0 x=6 y=9 dir=3 target=(5,9) square=0x94 type=4 passable=0\n[after_forward_into_closed_door] resultCode=2 blocked=1 anyMove=0 pos=(0,6,9,3)\nresult=PASS\n"
   },
-  "generated_at": "2026-06-21T13:10:28.398988+00:00",
+  "generated_at": "2026-06-21T19:17:25.317969+00:00",
   "honesty": "Evidence gate only; no complete collision parity or pixel parity is claimed.",
   "raw_frames": {
     "capture_count": 4,

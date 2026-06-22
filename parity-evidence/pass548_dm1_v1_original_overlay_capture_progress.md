@@ -17,7 +17,7 @@ Status: BLOCKED_PASS548_MISSING_N2_PREREQUISITE
 
 ## Result
 
-missing prerequisite(s): dosbox-debug, Xvfb, xdotool
+missing prerequisite(s): dosbox-debug
 
 ## Evidence
 

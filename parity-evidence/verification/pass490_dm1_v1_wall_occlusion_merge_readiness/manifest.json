@@ -77,35 +77,35 @@
       "id": "firestaff-nearest-center-blocker",
       "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "m11_dm1_nearest_blocking_center_depth_index",
-      "line": 13408,
+      "line": 13435,
       "ok": true
     },
     {
       "id": "firestaff-front-wall-depth-collapse",
       "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "m11_draw_dm1_front_walls",
-      "line": 13439,
+      "line": 13466,
       "ok": true
     },
     {
       "id": "firestaff-side-lane-clear",
       "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "m11_dm1_side_lane_clear_before_depth",
-      "line": 13486,
+      "line": 13513,
       "ok": true
     },
     {
       "id": "firestaff-side-content-center-blocker",
       "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
-      "line": 16625,
+      "line": 16652,
       "ok": true
     },
     {
       "id": "firestaff-side-door-occlusion",
       "file": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
       "needle": "m11_draw_dm1_side_doors",
-      "line": 14804,
+      "line": 14831,
       "ok": true
     },
     {

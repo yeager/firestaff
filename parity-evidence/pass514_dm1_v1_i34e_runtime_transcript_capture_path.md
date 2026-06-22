@@ -20,7 +20,7 @@ Status: BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE
 
 ## Decision
 
-missing prerequisite: dosbox-debug, Xvfb, xdotool
+missing prerequisite: dosbox-debug
 
 ## Evidence
 

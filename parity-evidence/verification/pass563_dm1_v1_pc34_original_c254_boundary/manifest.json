@@ -1,7 +1,7 @@
 {
   "branch": "dm1v1-capture-gap-close-20260620",
   "decision": "Existing pass514/pass558/pass560/pass562 evidence chain is incomplete in this checkout.",
-  "head": "7ba8f9c2643562dec6da694a2af9abcc9fe308c3",
+  "head": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
   "nonClaims": [
     "no new original runtime capture",
     "no pixel parity promotion",
@@ -44,7 +44,7 @@
   "originalRoot": "/Users/bosse/.openclaw/data/firestaff-original-games/DM",
   "passChain": {
     "pass514": {
-      "blocker": "missing prerequisite: dosbox-debug, Xvfb, xdotool",
+      "blocker": "missing prerequisite: dosbox-debug",
       "decision": null,
       "path": "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
       "present": true,
@@ -278,5 +278,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS563_PC34_C254_CHAIN_INCOMPLETE",
-  "timestampUtc": "2026-06-21T07:40:59.790757+00:00"
+  "timestampUtc": "2026-06-21T19:20:34.087271+00:00"
 }

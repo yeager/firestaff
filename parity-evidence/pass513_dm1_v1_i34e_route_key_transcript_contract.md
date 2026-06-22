@@ -1,6 +1,6 @@
 # Pass513 - DM1 V1 I34E route-key transcript contract
 
-Status: PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_PROMOTABLE
+Status: BLOCKED_PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_REQUIRED
 
 ## Decision
 
@@ -75,8 +75,8 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 ## Machine-checkable transcript validation
 
 - Optional promotion gate: FIRESTAFF_PASS513_TRANSCRIPT=path/to/transcript.json python3 tools/verify_pass513_dm1_v1_i34e_route_key_transcript_contract.py
-- Provided: True
-- Validation status: promotable
+- Provided: False
+- Validation status: not_provided
 - Minimum turnRows: 1
 - Minimum successfulStepRows: 1
 - Minimum blockedOrNoopRows: 1

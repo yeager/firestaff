@@ -79,7 +79,7 @@
 - local host capture ready: `True`
 - platform: `Darwin` `arm64`
 - dosbox: `/opt/homebrew/bin/dosbox`
-- dosbox-x: `None`
+- dosbox-x: `/opt/homebrew/bin/dosbox-x`
 - selected DOSBox: `/opt/homebrew/bin/dosbox`
 - xvfb-run: `None` needsXvfb=`False` display=`None`
 - stage exists: `True` `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`

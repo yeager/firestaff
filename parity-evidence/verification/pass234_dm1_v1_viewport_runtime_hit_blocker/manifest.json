@@ -14,15 +14,23 @@
   },
   "debugger_inventory": {
     "probes": {
+      "dosbox_x_version_probe": {
+        "cmd": [
+          "dosbox-x",
+          "-version"
+        ],
+        "returncode": 1,
+        "stderr_tail": "\nDOSBox-X version 2026.06.02 SDL2, copyright 2011-2026 The DOSBox-X Team.\nDOSBox-X project maintainer: joncampbell123 (The Great Codeholio)\n\nDOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,\nand you are welcome to redistribute it under certain conditions;\nplease read the COPYING file thoroughly before doing so.\n\n",
+        "stdout_tail": ""
+      },
       "fires_exenew_probe": {
         "cmd": [
           "bash",
           "-lc",
           "find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f"
         ],
-        "returncode": 0,
-        "stderr_tail": "",
-        "stdout_tail": ""
+        "error": "TimeoutExpired",
+        "message": "Command '['bash', '-lc', 'find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f']' timed out after 6 seconds"
       }
     },
     "symbol_map_exists": true,
@@ -30,7 +38,7 @@
     "tools": {
       "dosbox": "/opt/homebrew/bin/dosbox",
       "dosbox-debug": null,
-      "dosbox-x": null,
+      "dosbox-x": "/opt/homebrew/bin/dosbox-x",
       "objdump": "/usr/bin/objdump",
       "wine": null
     }
