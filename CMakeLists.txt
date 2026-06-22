@@ -2095,7 +2095,8 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_07_portrait_rect_position_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_02_east_walkpath_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_06_east_walkpath_rect_position_runtime_probe.c"
-        "probes/m11/firestaff_dm1_v1_hall_champion_portrait_07_east_walkpath_rect_position_runtime_probe.c")
+        "probes/m11/firestaff_dm1_v1_hall_champion_portrait_07_east_walkpath_rect_position_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_hoc_mophus_ordinal15_unreachable_probe.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_pool_probe_src}")
         get_filename_component(_pool_probe_exe "${_pool_probe_src}" NAME_WE)
         add_executable(${_pool_probe_exe} ${_pool_probe_src})
