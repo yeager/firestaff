@@ -207,6 +207,44 @@ int dm2_door_advance_open(int current_state);
  */
 int dm2_door_advance_close(int current_state);
 
+/* ── Door/button toggle direction ─────────────────────────────────── */
+/*
+ * Toggle direction for dm2_door_apply_toggle_step.  Matches the
+ * EFFECT_SET/EFFECT_CLEAR convention used by ReDMCSB TIMELINE.C:753,806:
+ *   - DM2_DOOR_TOGGLE_DIR_OPEN  (0)  ↔  C00_EFFECT_SET   (open direction)
+ *   - DM2_DOOR_TOGGLE_DIR_CLOSE (1)  ↔  C01_EFFECT_CLEAR (close direction)
+ */
+#define DM2_DOOR_TOGGLE_DIR_OPEN  0
+#define DM2_DOOR_TOGGLE_DIR_CLOSE 1
+
+/*
+ * dm2_door_apply_toggle_step — apply one toggle button tick to a door.
+ *
+ * A "button press" advances the door by exactly one state toward the
+ * target direction, with two sticky boundaries and one sticky destroyed
+ * state:
+ *
+ *   - OPEN  + direction=OPEN  → OPEN    (sticky: TIMELINE.C:803)
+ *   - CLOSED + direction=CLOSE → CLOSED (sticky: TIMELINE.C:804)
+ *   - DESTROYED + any direction → DESTROYED (sticky: TIMELINE.C:750)
+ *   - Otherwise: step ±1 toward target (TIMELINE.C:806)
+ *
+ * This is the natural boundary helper for pressure-plate
+ * DM2_PLATE_TARGET_DOOR_TOGGLE actuators, button-triggered timeline
+ * events, and parity-evidence replay of the door state cycle.
+ *
+ * Parameters:
+ *   current_state — door state value (0..5)
+ *   direction     — DM2_DOOR_TOGGLE_DIR_OPEN or DM2_DOOR_TOGGLE_DIR_CLOSE
+ *
+ * Returns the new door state (0..5).
+ *
+ * Source: ReDMCSB TIMELINE.C:803-806 (already-at-target early-out +
+ *         single-tick ±1 step rule)
+ * Source: ReDMCSB TIMELINE.C:750   (DESTROYED is sticky)
+ */
+int dm2_door_apply_toggle_step(int current_state, int direction);
+
 /*
  * dm2_door_get_type_from_thing_record — get door type (0-3) from thing record.
  *
