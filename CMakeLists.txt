@@ -1160,6 +1160,14 @@ target_link_libraries(firestaff_csb_v2_presentation_mode_probe
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_presentation_mode_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME csb_v2_presentation_mode_probe
+    COMMAND firestaff_csb_v2_presentation_mode_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(csb_v2_presentation_mode_probe PROPERTIES
+    LABELS "tier2;csb;v2;presentation;mode-selector"
+)
 
 # CSB V2.1 texture upscale probe. Headless: no game data.
 # See include/csb_v2_texture_upscale_pc34.h.
@@ -1178,6 +1186,14 @@ target_link_libraries(firestaff_csb_v2_texture_upscale_probe
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_texture_upscale_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME csb_v2_texture_upscale_probe
+    COMMAND firestaff_csb_v2_texture_upscale_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(csb_v2_texture_upscale_probe PROPERTIES
+    LABELS "tier2;csb;v2;texture-upscale;v2.1"
+)
 
 # CSB V2.2 modern shape book probe. Headless: no game data.
 # See include/csb_v22_shapes.h.
@@ -1193,6 +1209,14 @@ target_link_libraries(firestaff_csb_v22_shapes_probe
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v22_shapes_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME csb_v22_shapes_probe
+    COMMAND firestaff_csb_v22_shapes_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(csb_v22_shapes_probe PROPERTIES
+    LABELS "tier2;csb;v2.2;modern-shapes;presentation-only"
+)
 
 # CSB V2.2 in-place modern-renderer probe. Headless: creates its own tiny cache.
 add_executable(firestaff_csb_v22_inplace_render_probe
@@ -1314,6 +1338,14 @@ target_link_libraries(firestaff_csb_v2_filter_config_probe
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_filter_config_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME csb_v2_filter_config_probe
+    COMMAND firestaff_csb_v2_filter_config_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(csb_v2_filter_config_probe PROPERTIES
+    LABELS "tier2;csb;v2;filter-config;v2.0"
+)
 
 # CSB V2.0 per-frame filter chain dispatch probe. Verifies that the
 # csb_v2_filter_chain_apply_indexed and _rgba functions honor the
@@ -1331,6 +1363,14 @@ target_link_libraries(firestaff_csb_v2_per_frame_filter_dispatch_probe
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_per_frame_filter_dispatch_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME csb_v2_per_frame_filter_dispatch_probe
+    COMMAND firestaff_csb_v2_per_frame_filter_dispatch_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(csb_v2_per_frame_filter_dispatch_probe PROPERTIES
+    LABELS "tier2;csb;v2;per-frame-filter;v2.0"
+)
 
 # CSB V2.0 per-frame filter chain probe. Headless: no game data.
 # Covers all 5 filter functions: CRT scanlines, palette build LUT,
@@ -1350,6 +1390,17 @@ target_include_directories(firestaff_csb_v2_filter_chain_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(firestaff_csb_v2_filter_chain_probe
     PRIVATE firestaff_csb_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v2_filter_chain_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v2_filter_chain_probe
+    COMMAND firestaff_csb_v2_filter_chain_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(csb_v2_filter_chain_probe PROPERTIES
+    LABELS "tier2;csb;v2;filter-chain;v2.0"
+)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_filter_chain_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -1534,6 +1585,14 @@ target_link_libraries(firestaff_csb_v2_settings_probe
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v2_settings_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME csb_v2_settings_probe
+    COMMAND firestaff_csb_v2_settings_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(csb_v2_settings_probe PROPERTIES
+    LABELS "tier2;csb;v2;settings;v2-config"
+)
 
 # Theron V2 settings bridge probe. Headless: no game data.
 # See include/theron_v2_settings_pc34.h.
