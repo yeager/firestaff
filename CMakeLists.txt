@@ -552,6 +552,14 @@ target_link_libraries(firestaff_dm2_v2_phase3_hud_overlay_probe
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_phase3_hud_overlay_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME dm2_v2_phase3_hud_overlay_probe
+    COMMAND firestaff_dm2_v2_phase3_hud_overlay_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(dm2_v2_phase3_hud_overlay_probe PROPERTIES
+    LABELS "tier2;dm2;v2;phase3;hud;presentation-only"
+)
 
 # DM2 V2 Phase 3 — HUD Runtime Wire-up Probe
 # Headless: no game assets, no SDL rendering required.
@@ -1136,6 +1144,107 @@ endif()
 add_test(
     NAME dm1_v2_presentation_mode_probe
     COMMAND firestaff_dm1_v2_presentation_mode_probe
+)
+
+# DM1 V2 — V1/V2 side-by-side verification seed probe.
+# Headless: no game assets, no SDL rendering required.
+# Verifies: presentation-disabled parity across every V1-source-locked
+# domain, V1 movement adapter truth for every direction, V1 viewport
+# geometry constants. Source-locked against DEFS.H:238-243, COMMAND.C:2045,
+# CLIKMENU.C:142/180/278, MOVESENS.C:316, LOADSAVE.C:1520/2730,
+# COORD.C:1721, DUNVIEW.C:2999, PANEL.C:418, DUNGEON.C:2573/2610.
+add_executable(firestaff_dm1_v2_v1_v2_side_by_side_seed_probe
+    probes/firestaff_dm1_v2_v1_v2_side_by_side_seed_probe.c
+    src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c)
+target_include_directories(firestaff_dm1_v2_v1_v2_side_by_side_seed_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_dm1_v2_v1_v2_side_by_side_seed_probe
+    PRIVATE firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v2_v1_v2_side_by_side_seed_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm1_v2_v1_v2_side_by_side_seed_probe
+    COMMAND firestaff_dm1_v2_v1_v2_side_by_side_seed_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(dm1_v2_v1_v2_side_by_side_seed_probe PROPERTIES
+    LABELS "tier2;dm1;v2;side-by-side;v1-compatibility"
+)
+
+# DM2 V1 Phase 5 — Creature/Combat Integration Probe.
+# Headless: no game data required. Pass H2312.
+# Verifies: AI name table (64), AI spec access (63+boundary), CCM
+# dispatch constants, creature_attacks_party and creature_resolves_spell
+# stub routing, combat resolver (ranged/melee, range penalty), drops
+# 11-slot table, sound query_entry/play/positional/music stubs.
+add_executable(firestaff_dm2_v1_creature_combat_probe
+    probes/firestaff_dm2_v1_creature_combat_probe.c
+    src/dm2/dm2_v1_creature.c
+    src/dm2/dm2_v1_combat.c
+    src/dm2/dm2_v1_drops.c
+    src/dm2/dm2_v1_sound.c)
+target_include_directories(firestaff_dm2_v1_creature_combat_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_dm2_v1_creature_combat_probe
+    PRIVATE firestaff_dm2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v1_creature_combat_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm2_v1_creature_combat_probe
+    COMMAND firestaff_dm2_v1_creature_combat_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(dm2_v1_creature_combat_probe PROPERTIES
+    LABELS "tier2;dm2;v1;creature;combat;phase5"
+)
+
+# M11 — Wall-inscription font regression probe.
+# Headless: no game assets required.
+# Source-locked: ReDMCSB DUNVIEW.C:3619 (M648_GRAPHIC_INSCRIPTION_FONT
+# load), DUNVIEW.C:3627 (112 - (characterCount << 2) center math),
+# DUNVIEW.C:3631-3637 (8x8 glyph cells with C10 transparency).
+add_executable(firestaff_m11_inscription_font_probe
+    probes/firestaff_m11_inscription_font_probe.c)
+target_include_directories(firestaff_m11_inscription_font_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_m11_inscription_font_probe
+    PRIVATE firestaff_m11 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_inscription_font_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME m11_inscription_font_probe
+    COMMAND firestaff_m11_inscription_font_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(m11_inscription_font_probe PROPERTIES
+    LABELS "tier2;m11;dm1;inscription;font;regression"
+)
+
+# Pass 30 — Movement legality migration bounded probe.
+# Headless: synthesises a 4x4 dungeon in memory, no DUNGEON.DAT needed.
+# Source-locked: F0702 (closed doors), F0705 (stairs transition),
+# F0706 (square passable). Verifies: party-side movement legality
+# migration, element-type pass matrix, dungeon-end transition refusal.
+add_executable(firestaff_m11_pass30_movement_legality_probe
+    probes/firestaff_m11_pass30_movement_legality_probe.c)
+target_include_directories(firestaff_m11_pass30_movement_legality_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_m11_pass30_movement_legality_probe
+    PRIVATE firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_pass30_movement_legality_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME m11_pass30_movement_legality_probe
+    COMMAND firestaff_m11_pass30_movement_legality_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(m11_pass30_movement_legality_probe PROPERTIES
+    LABELS "tier2;m11;movement;pass30;source-lock"
 )
 
 # CSB V2 presentation-mode probe (V2.0 / V2.1 / V2.2 selection).
@@ -9606,6 +9715,22 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_img5_decode_unit
         COMMAND test_firestaff_img5_decode
+    )
+
+    # ── CSB Utility Disk Sound/*.AMG container metadata ─────────
+    add_executable(test_csb_v1_amg_sound
+        tests/test_csb_v1_amg_sound.c
+        src/csb/csb_v1_amg_sound.c
+    )
+    target_include_directories(test_csb_v1_amg_sound PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_amg_sound PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_amg_sound
+        COMMAND test_csb_v1_amg_sound
     )
 
     # ── CSB / DM hidden-code skip table (Tier 2 from FIRESTAFF_GAP_LIST) ──
