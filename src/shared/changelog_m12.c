@@ -9,6 +9,14 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.1  (2026-06-22)",
+    "  - Theron V1 readiness push. Raw JP/US Track 02 BIN variants now lock exact descriptor/span bank anchors with 2352-byte raw CD sector reporting; the M11 runtime path routes turn/move through Theron V1 mechanics instead of mutating coordinates directly.",
+    "  - Theron runtime evidence expanded. New screenshot-readiness and 24h-readiness gates record metadata-only receipts, M11 command/tick proof, nonblank draw output, and 30-row readiness coverage while keeping semantic dungeon-table decoding, real .srm import, broad route proof, and public screenshots honest as open work.",
+    "  - DM1 V1 original-capture evidence advanced. Live capture receipts, keyboard-buffer provenance, scripted post-dungeon routes, capture runbook checks, V2 runtime presentation smoke, HUD overlay state, per-mode material signatures, and additional viewport/source-lock CTests landed after v3.0.0.",
+    "  - DM2 launch smoke widened. Canonical, DOS extras, and PC extras launch paths now have focused smoke coverage so DM2 availability and boot-profile work is visible in CI without overstating finished V1 parity.",
+    "  - CSB and Nexus coverage tightened. CSB portrait render handoff and runtime-readiness gates were refreshed; Nexus Saturn-font determinism is covered by a new probe.",
+    "  - 142 commits since v3.0.0. Main-session verification before release prep kept the GitHub verify workflow green on commit 393d9f64; this release adds the v3.0.1 version sync and packaging tag.",
+    "",
     "V3.0.0  (2026-06-21)",
     "  - DM1 V1 original-capture gap close (pass1052-1058). Deterministic original DM1 PC 3.4 DOSBox capture-evidence: pass1052 clean turn-cycle (4 raw 320x200 frames, 2 dungeon_gameplay + 2 wall_closeup, 0 duplicate raw hashes, pass80 classifier 4/4 PASS), pass1053 champion candidate/resurrect panel (pass455 SHA e4b37307.../7523b67f...), pass1054 one exact original-to-Firestaff 224x136 wall-crop match (0 changed pixels / MAE 0), pass1055 closed-door stasis (3 byte-identical original frames + Firestaff semantic pair that blocks forward), pass1056 CTest gate over pass1054 pairing artifacts, pass1057 Amiga 2.2 DUNGEONB.DAT sidecar lock (9bac133b..., 4,806 bytes, coverage 3/3 registry-backed), pass1058 keypad/route atlas (corrected F=kp8, B=kp2, TR=kp4, TL=kp6, kp5 forward). B1 capture-gap pairs in docs/FIRESTAFF_GAP_LIST.md moved BLOCKED-DATA → PARTIAL with remaining-work lines.",
     "  - DM1 V1 gap cascade (pass1059-1070). Touch zones (pass1059 portrait sensor), C25/C26 projectile fallback (pass1064), mirror stat (pass1063), chest scroll-wheel pickup overflow (pass1062), object consumable use (pass1061), AI pathfinding (pass1066), AI perception targets (pass1067), V2 smooth interpolation (pass1068), AI reactions (pass1069), inventory route parity (pass1070). All gates source-locked and CTest-green.",
@@ -254,5 +262,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.0";
+    return "3.0.1";
 }

@@ -1,4 +1,52 @@
 
+# Firestaff v3.0.1
+
+Firestaff v3.0.1 packages the post-v3.0.0 readiness push on top of
+current `main`. The release is intentionally conservative: it promotes
+new verifier coverage, runtime handoff proof, and public status wording
+without claiming that Theron's Quest, DM2, Nexus, or CSB are fully
+finished.
+
+## Highlights since v3.0.0
+
+- **Theron V1 Track 02 bank anchors**: raw JP/US Track 02 BIN variants
+  now have exact descriptor/span anchor triads and 2352-byte raw CD
+  sector reporting. This closes the raw bank-anchor offset question, but
+  semantic dungeon-table decoding and full loader parity remain open.
+- **Theron M11 runtime command proof**: turn, forward, and backward
+  input now route through `theron_v1_turn_party()` and
+  `theron_v1_move_party()`. The direct-launch test proves hash-verified
+  Track 02 handoff, initial level load, post-move tick effects, idle tick
+  sync, backward movement with facing preserved, and nonblank M11 draw
+  output.
+- **Theron screenshot and 24h readiness gates**: new metadata-only
+  screenshot-readiness receipts and the 30-row 24h roll-up make the
+  capture path measurable while still flagging fallback-asset rows and
+  keeping README screenshots unpromoted until real-art/source-bank proof
+  exists.
+- **DM1 V1 capture evidence advanced**: live original-capture receipts,
+  keyboard-buffer provenance, scripted post-dungeon routes, pass1073
+  live-capture locking, V2 runtime presentation smoke, HUD overlay state,
+  per-mode material signatures, and additional viewport/source-lock CTests
+  landed after v3.0.0.
+- **DM2, CSB, and Nexus coverage widened**: DM2 canonical/DOS/PC extras
+  launch smoke gates, CSB portrait render handoff/runtime-readiness
+  refreshes, and the Nexus Saturn-font determinism probe are now part of
+  the tracked readiness surface.
+
+## Verification
+
+- 142 commits ship on top of `v3.0.0`.
+- Main-session verification before release prep kept GitHub Actions green
+  for commit `393d9f64`: M10 verify + CMake build + cross-platform
+  determinism, plus GitHub Pages.
+- Focused local verification for the latest Theron readiness batch passed:
+  Debug configure/build, Theron focused CTest 5/5,
+  `theron_v1_runtime_screenshot_readiness`, and
+  `tools/theron_24h_readiness.py`.
+- The release workflow builds the public macOS, Windows, Linux x86_64,
+  and Linux ARM64 packages from the `v3.0.1` tag.
+
 # Firestaff v2.8.0
 
 Nexus V2 smooth-movement tick (Phase 5) lands as a first-class
