@@ -2272,6 +2272,45 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait-03 east_walkpath runtime probe.
+# Real-asset regression for the narrow slice:
+#   ordinal       : 3
+#   route variant : east_walkpath (party walks east along y=7 facing SOUTH,
+#                   starting from no-portrait corridor (1,7), through
+#                   ordinal-16 wall (2,7), ordinal-3 wall (3,7), and
+#                   back to no-portrait corridor (4,7) / (5,7))
+#   aspect        : portrait_rect_position (D1C cutout at viewport 96,35,32,29)
+# Proves:
+#   (A) D1C wall-ornament frame helper returns the source-locked box.
+#   (B) ordinal 3 -> C026 source rect (96, 0, 32, 29) math is correct.
+#   (C) east_walkpath ordinal pose at (3,7,SOUTH) resolves to ordinal 3.
+#   (D) ordinal 3 ANY-pose discovery on Hall map 0 (no invented values).
+#   (E) east_walkpath route contract: walking east along y=7 facing SOUTH
+#       crosses the source-locked ordinal-3 cell deterministically.
+#   (F) No-floating contract: side-wall poses outside the corridor slice
+#       do not expose the front mirror ordinal (D1C portrait not drawn).
+#   (G) Pixel-level proof that the D1C portrait rectangle at viewport
+#       (96,35)-(127,63) carries the ordinal-3 C026 cutout at the
+#       east_walkpath ordinal step and that walking east past the
+#       ordinal-3 wall clears ordinal-3 pixels from the corridor.
+# Source evidence: DUNGEON.C:2558,2573,2608-2612; MOVESENS.C:1501-1503;
+#                  REVIVE.C F0280,F0282; DUNVIEW.C:3913-3928,8318-8542;
+#                  COORD.C:1693-1722; DEFS.H:2071-2079.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion_portrait_03_east_walkpath_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_hall_champion_portrait_03_east_walkpath_runtime_probe
+        probes/m11/firestaff_dm1_v1_hall_champion_portrait_03_east_walkpath_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_champion_portrait_03_east_walkpath_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_champion_portrait_03_east_walkpath_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hall_champion_portrait_03_east_walkpath_runtime_probe
+        COMMAND firestaff_dm1_v1_hall_champion_portrait_03_east_walkpath_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 champion-panel damage-indicator pc34_compat contract test
 # (CHAMDRAW.C F0623 damage graphic/zone/text dispatch).
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_indicator_pc34_compat.c"
