@@ -51,6 +51,20 @@ int M12_SaveBrowser_HandleInput(M12_SaveBrowserState* state, int input);
 /* Delete the currently selected save file. Returns 0 on success. */
 int M12_SaveBrowser_DeleteSelected(M12_SaveBrowserState* state);
 
+/* Export the selected save file into exportDir using the same basename.
+ * Returns 0 on success and optionally writes the destination path. */
+int M12_SaveBrowser_ExportSelected(const M12_SaveBrowserState* state,
+                                   const char* exportDir,
+                                   char* outPath,
+                                   int outPathSize);
+
+/* Import a firestaff-*.sav file into dataDir. Existing destination files
+ * are preserved. Returns 0 on success and optionally writes the target path. */
+int M12_SaveBrowser_ImportFile(const char* dataDir,
+                               const char* importPath,
+                               char* outPath,
+                               int outPathSize);
+
 /* Get the currently selected entry, or NULL if none. */
 const M12_SaveBrowserEntry* M12_SaveBrowser_GetSelected(
     const M12_SaveBrowserState* state);
