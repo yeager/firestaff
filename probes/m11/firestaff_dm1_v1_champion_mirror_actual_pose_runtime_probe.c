@@ -143,8 +143,13 @@ int main(int argc, char** argv) {
     static const MirrorPose kPoses[] = {
         /* (1,2) facing N: front=(1,1) has C127 sensor idx=15 data=1 (HALK) */
         {1, 2, 0, 1,  "hall_start_north_ordinal_1"},
-        /* (1,2) facing E: front=(2,2) has C127 sensor idx=22 data=4 (LEIF) */
-        {1, 2, 1, 4,  "hall_start_east_ordinal_4"},
+        /* Candidate poses around the (2,2) C127 sensor formerly assumed
+         * to be visible from (1,2) EAST.  The source front-cell filter
+         * decides which side, if any, owns LEIF. */
+        {1, 2, 1, -1, "hall_start_east_wrong_wall_no_portrait"},
+        {2, 1, 2, 4,  "hall_leif_from_north_ordinal_4"},
+        {3, 2, 3, -1, "hall_leif_probe_from_east"},
+        {2, 3, 0, -1, "hall_leif_probe_from_south"},
         /* (1,2) facing W: front=(0,2) has door, no mirror */
         {1, 2, 3, -1, "hall_start_west_no_portrait"},
         /* (1,3) facing N: front=(1,2) has only TextString, no C127 */
@@ -155,8 +160,12 @@ int main(int argc, char** argv) {
         {1, 4, 0, -1, "hall_corridor_north_no_portrait_2"},
         /* (1,5) facing N: front=(1,4) has C127 sensor idx=16 data=10 (ZED) */
         {1, 5, 0, 10, "hall_end_north_ordinal_10"},
-        /* (1,5) facing E: front=(2,5) has C127 sensor idx=24 data=15 (MOPHUS) */
-        {1, 5, 1, 15, "hall_end_east_ordinal_15"},
+        /* Same for the (2,5) MOPHUS sensor: (1,5) EAST is a wrong-wall
+         * pose under the ReDMCSB front-wall side filter. */
+        {1, 5, 1, -1, "hall_end_east_wrong_wall_no_portrait"},
+        {2, 4, 2, 15, "hall_mophus_from_north_ordinal_15"},
+        {3, 5, 3, -1, "hall_mophus_probe_from_east"},
+        {2, 6, 0, -1, "hall_mophus_probe_from_south"},
         /* (1,5) facing S: front=(1,6) has C127 sensor idx=17 data=13 (WUUF) */
         {1, 5, 2, 13, "hall_end_south_ordinal_13"},
     };
