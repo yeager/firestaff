@@ -448,6 +448,7 @@ This file tracks completed capabilities by game. It is not a changelog; see git 
 - ✅ Completed rendering slices: D3/D2 wall-table mapping, parity bitmap selection, grid routing, and initial CSB viewport source-lock gates.
 - ✅ CSB V1 viewport Phase 3 gate: D3L2/D3R2 and D2L2/D2R2 draw-order, coordinate, frame, and PC34 zone contracts are source-locked against F0676-F0679/F0128.
 - ✅ CSB V1 back-wall ornament routing gate: D3L2/D3R2 wall cases source-lock their F0107 ordinal slots and view-wall indices, while D2L2/D2R2 prove the no-F0107 return path.
+- ✅ CSB V1 DSA trigger actuator-target guard: `test_csb_v1_dsa_trigger_single_step_pc34_compat` now covers `csb_v1_chaos_trigger` out-of-range `script_id` rejection (negative, == `script_count`, `CSB_V1_MAX_DSA_SCRIPTS`, `+1`, and saturated `INT_MAX` all return -1 without mutating the known script), null state pointer rejection, and a sanity pass that a valid `script_id` still triggers and mutates flags after the rejection path. CTest registered and PASS 82/82 assertions, 0 failures.
 
 ### CSB V2.0 / V2.1 / V2.2
 

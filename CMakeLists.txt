@@ -3133,6 +3133,26 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_save_runtime_boundary_pc34_compat
     )
 
+    # CSB V1 DSA trigger single-step gate (csb_v1_dsa_trigger_single_step_pc34_compat).
+    # Source-locked against CSBWin/DSA.cpp + Chaos.cpp + ReDMCSB DEFS.H/MOVESENS.C
+    # for the chaos magic / DSA interpreter surface and the runtime-adjacent
+    # csb_v1_chaos_trigger out-of-range script_id guard.
+    add_executable(test_csb_v1_dsa_trigger_single_step_pc34_compat
+        tests/test_csb_v1_dsa_trigger_single_step_pc34_compat.c
+        src/csb/csb_v1_chaos_magic_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_dsa_trigger_single_step_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_dsa_trigger_single_step_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_dsa_trigger_single_step_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_dsa_trigger_single_step_pc34_compat
+        COMMAND test_csb_v1_dsa_trigger_single_step_pc34_compat
+    )
+
     add_executable(test_csb_v1_phase7_verification
         tests/test_csb_v1_phase7_verification.c
         src/csb/csb_v1_boot.c
