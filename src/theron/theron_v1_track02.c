@@ -28,6 +28,30 @@
 #define TQR_RAW_SECTOR_USER_DATA_OFFSET 0x10u
 #define TQR_RAW_BIN_BANK_ANCHOR_COUNT 3u
 
+/* Audio-bank marker fingerprint (raw Track 02 BIN only).
+ *
+ * The 16-byte prefix immediately preceding each post-boundary span is
+ * exactly:
+ *   bytes 0..11   = 0x00, 0xff*10, 0x00  (12-byte sentinel)
+ *   bytes 12..15  = a 4-byte little-endian audio-bank id word
+ *
+ * The sentinel prefix itself appears in many places (sector-index table),
+ * but the (sentinel + 4-byte LE word + 44-byte post-boundary span) tuple
+ * has been observed to occur exactly once per anchor in raw US and JP
+ * Track 02 BINs at the offsets documented in
+ * theron_v1_track02_source_evidence().  The 4-byte LE word therefore
+ * acts as a per-anchor audio-bank-id marker.
+ *
+ * Source/evidence: docs/source-lock/tqr_v1_phase2_data_formats_H2339.md
+ * §10.2 marks the ADPCM data block location as STUB; this marker is one
+ * ADPCM-bank anchor candidate.  Bytes inspected locally from
+ *   THERON_TRACK02_MD5_US_BIN  (f23601102138f87c33025877767ebf76)
+ *   THERON_TRACK02_MD5_JP_BIN  (b7afb338ad31be1025b53f9aff12d73a)
+ * via a 2352-byte CD-sector pointer scan.
+ */
+#define TQR_RAW_BIN_AUDIO_BANK_PREFIX_BYTES 12u
+#define TQR_RAW_BIN_AUDIO_BANK_ID_BYTES      4u
+
 static const uint8_t g_us_iso_bank_stride_descriptor[TQR_US_ISO_BANK_STRIDE_BYTES] = {
     0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
     0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
@@ -63,8 +87,80 @@ static const uint8_t g_us_iso_post_boundary_span[TQR_US_ISO_POST_BOUNDARY_SPAN_B
     0x93, 0x80, 0x00, 0x3f
 };
 
+/* 12-byte sentinel that immediately precedes the 4-byte audio-bank id word
+ * (and therefore the post-boundary span) at every audio-bank anchor in raw
+ * US/JP Track 02 BINs.  See TQR_RAW_BIN_AUDIO_BANK_PREFIX_BYTES. */
+static const uint8_t g_audio_bank_prefix[TQR_RAW_BIN_AUDIO_BANK_PREFIX_BYTES] = {
+    0x00,
+    0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff,
+    0x00
+};
+
 static uint16_t rd16le(const uint8_t *p) {
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+static uint32_t rd32le(const uint8_t *p) {
+    return (uint32_t)p[0] |
+           ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) |
+           ((uint32_t)p[3] << 24);
+}
+
+/* Read and validate the audio-bank marker at one raw-BIN anchor.
+ *
+ * anchor_index selects which of (descriptor_offsets, span_offsets) to use;
+ * the function verifies that the 16-byte audio-bank prefix
+ * (12-byte sentinel + 4-byte LE word) immediately precedes the
+ * post-boundary span at that anchor.
+ *
+ * Returns 1 on success (out_* populated), 0 otherwise.  Out-args are
+ * always zeroed on failure so callers can rely on default-zero state. */
+static int read_audio_bank_marker(const uint8_t *track02_data,
+                                  size_t track02_size,
+                                  const size_t *span_offsets,
+                                  size_t anchor_index,
+                                  uint32_t *out_audio_bank_id,
+                                  size_t *out_audio_bank_id_offset,
+                                  size_t *out_audio_bank_prefix_offset) {
+    const size_t prefix_total_bytes =
+        TQR_RAW_BIN_AUDIO_BANK_PREFIX_BYTES + TQR_RAW_BIN_AUDIO_BANK_ID_BYTES;
+    size_t span_offset;
+    size_t prefix_offset;
+    size_t id_offset;
+
+    if (out_audio_bank_id) *out_audio_bank_id = 0u;
+    if (out_audio_bank_id_offset) *out_audio_bank_id_offset = 0u;
+    if (out_audio_bank_prefix_offset) *out_audio_bank_prefix_offset = 0u;
+
+    if (!track02_data || !span_offsets ||
+        anchor_index >= TQR_RAW_BIN_BANK_ANCHOR_COUNT ||
+        prefix_total_bytes > track02_size) {
+        return 0;
+    }
+
+    span_offset = span_offsets[anchor_index];
+    if (span_offset < prefix_total_bytes ||
+        span_offset > track02_size ||
+        TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES >
+            track02_size - span_offset) {
+        return 0;
+    }
+
+    id_offset = span_offset - TQR_RAW_BIN_AUDIO_BANK_ID_BYTES;
+    prefix_offset = id_offset - TQR_RAW_BIN_AUDIO_BANK_PREFIX_BYTES;
+
+    if (memcmp(track02_data + prefix_offset,
+               g_audio_bank_prefix,
+               TQR_RAW_BIN_AUDIO_BANK_PREFIX_BYTES) != 0) {
+        return 0;
+    }
+
+    if (out_audio_bank_id) *out_audio_bank_id = rd32le(track02_data + id_offset);
+    if (out_audio_bank_id_offset) *out_audio_bank_id_offset = id_offset;
+    if (out_audio_bank_prefix_offset) *out_audio_bank_prefix_offset = prefix_offset;
+    return 1;
 }
 
 Theron_Track02Variant theron_v1_track02_variant_for_md5(const char *md5_hex) {
@@ -237,6 +333,21 @@ static Theron_Track02SignalStatus find_raw_bin_bank_signal(
                                 span_offsets,
                                 TQR_RAW_BIN_BANK_ANCHOR_COUNT);
 
+    /* Per-anchor audio-bank marker: 4-byte LE word that immediately
+     * precedes the post-boundary span.  Read independently for each
+     * anchor; failure on any one anchor is recorded in the per-anchor
+     * recognized[] flag rather than failing the overall signal. */
+    for (size_t i = 0; i < TQR_RAW_BIN_BANK_ANCHOR_COUNT; ++i) {
+        out_signal->audio_bank_id_recognized[i] = read_audio_bank_marker(
+            track02_data,
+            track02_size,
+            span_offsets,
+            i,
+            &out_signal->audio_bank_id[i],
+            &out_signal->audio_bank_id_offsets[i],
+            &out_signal->audio_bank_prefix_offsets[i]);
+    }
+
     return occurrence_count == TQR_RAW_BIN_BANK_ANCHOR_COUNT &&
            boundary_prefix_occurrence_count == TQR_RAW_BIN_BANK_ANCHOR_COUNT &&
            post_boundary_span_occurrence_count == TQR_RAW_BIN_BANK_ANCHOR_COUNT
@@ -355,6 +466,56 @@ Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
         : THERON_TRACK02_SIGNAL_NOT_FOUND;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_find_audio_bank_marker(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t anchor_index,
+    uint32_t *out_audio_bank_id,
+    size_t *out_audio_bank_id_offset,
+    size_t *out_audio_bank_prefix_offset) {
+    Theron_Track02Variant variant;
+
+    if (out_audio_bank_id) *out_audio_bank_id = 0u;
+    if (out_audio_bank_id_offset) *out_audio_bank_id_offset = 0u;
+    if (out_audio_bank_prefix_offset) *out_audio_bank_prefix_offset = 0u;
+
+    if (!track02_data || track02_size == 0 || !md5_hex) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    if (anchor_index >= TQR_RAW_BIN_BANK_ANCHOR_COUNT) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        return read_audio_bank_marker(track02_data,
+                                      track02_size,
+                                      g_us_bin_post_boundary_span_offsets,
+                                      anchor_index,
+                                      out_audio_bank_id,
+                                      out_audio_bank_id_offset,
+                                      out_audio_bank_prefix_offset)
+            ? THERON_TRACK02_SIGNAL_OK
+            : THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        return read_audio_bank_marker(track02_data,
+                                      track02_size,
+                                      g_jp_bin_post_boundary_span_offsets,
+                                      anchor_index,
+                                      out_audio_bank_id,
+                                      out_audio_bank_id_offset,
+                                      out_audio_bank_prefix_offset)
+            ? THERON_TRACK02_SIGNAL_OK
+            : THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    /* US ISO is a partial extract and JP Rev 1 ISO is zero-filled; both
+     * lack the post-boundary span audio-bank anchors, so the marker is
+     * unsupported on those variants rather than missing. */
+    return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+}
+
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status) {
     switch (status) {
     case THERON_TRACK02_SIGNAL_OK:
@@ -405,5 +566,9 @@ const char *theron_v1_track02_source_evidence(void) {
            "and span offsets 0x2d4ab0, 0x47c710, 0x711f10; JP Rev 1 ISO "
            THERON_TRACK02_MD5_JP_REV1_ISO
            " is hash-verified but zero-filled in the available image, so no "
-           "JP Rev 1 ISO dungeon-bank offset is claimed.";
+           "JP Rev 1 ISO dungeon-bank offset is claimed.  Audio-bank marker: "
+           "raw US/JP BINs each carry a 12-byte `00 ff*10 00` sentinel "
+           "immediately preceding the 4-byte little-endian audio-bank id word "
+           "at every post-boundary span anchor; US anchor 1 audio-bank id is "
+           "0x01725800 at offset 0x2d53dc.";
 }
