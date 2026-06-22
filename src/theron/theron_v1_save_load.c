@@ -504,6 +504,16 @@ int theron_v1_save_load_from_slot(const char *save_root,
                                    dungeon_progression, dungeon_progression_size,
                                    out_slot_info);
 
+    /* Mirror theron_v1_save_import_slot: parse_save_image() memsets
+     * out_info before extracting fields from the file bytes, so the
+     * slot_index we want to surface (the one the caller asked for) is
+     * not preserved by the parse. Pin it here, only on success, so the
+     * caller can cross-check the slot they just loaded against the
+     * metadata they receive. */
+    if (result == 0 && out_slot_info) {
+        out_slot_info->slot_index = slot_index;
+    }
+
     free(image);
     return result;
 }
