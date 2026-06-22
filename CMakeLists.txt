@@ -2594,6 +2594,52 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_world_state_minimap_level_transition
     )
 
+    # ── DM2 V1 Weather Seed Regression (deterministic tick gate)
+    # Source-locked: dm2_v1_weather.c LCG (0xBB40E62D, +11) + 182-tick
+    # outdoor boundary. ReDMCSB BASE.C F0027/F0029.
+    add_executable(test_dm2_v1_weather_seed_regression
+        tests/test_dm2_v1_weather_seed_regression.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_dm2_v1_weather_seed_regression PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_weather_seed_regression PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_weather_seed_regression PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_weather_seed_regression
+        COMMAND test_dm2_v1_weather_seed_regression
+    )
+
+    # ── DM2 V1 Weather/Timer Save Round-Trip (weather persistence gate)
+    # Source-locked: dm2_v1_save_load.c skload_table_60 +
+    # SKULL.ASM skload_table_60 + PROCESS_TIMER_0C.
+    # Verifies DM2_GameStateBlock (rain_state[8]) and DM2_TimerEntry
+    # survive SUPPRESS encode/decode round-trip.
+    add_executable(test_dm2_v1_weather_timer_save_round_trip_pc34_compat
+        tests/test_dm2_v1_weather_timer_save_round_trip_pc34_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_weather.c
+    )
+    target_include_directories(test_dm2_v1_weather_timer_save_round_trip_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_weather_timer_save_round_trip_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_weather_timer_save_round_trip_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_weather_timer_save_round_trip_pc34_compat
+        COMMAND test_dm2_v1_weather_timer_save_round_trip_pc34_compat
+    )
+
     add_executable(test_dm2_v1_utility_import
         tests/test_dm2_v1_utility_import.c
         src/dm2/dm2_v1_new_game.c
