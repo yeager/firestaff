@@ -54,6 +54,24 @@ typedef struct {
     size_t descriptor_raw_sector_user_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t post_boundary_span_raw_sector_numbers[THERON_TRACK02_MAX_BANK_ANCHORS];
     size_t post_boundary_span_raw_sector_user_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    /* Audio-bank marker: 4-byte little-endian word that immediately precedes
+     * the post-boundary span at each anchor in raw Track 02 BINs.
+     * Audio-bank prefix is 12 bytes of `00 ff*10 00` followed by this word,
+     * which we have observed to encode a 2352-byte CD sector pointer at all
+     * three anchors in both US and JP raw Track 02 BINs.  Populated only for
+     * raw BIN variants (THERON_TRACK02_VARIANT_US_BIN / JP_BIN); zeroed for
+     * the US Track 02 ISO (partial extract, no anchors present) and for the
+     * JP Rev 1 ISO (zero-filled image).
+     *
+     * Source/evidence:
+     *   src/theron/theron_v1_track02.c (this module, post-boundary span
+     *   fingerprinting); docs/source-lock/tqr_v1_phase2_data_formats_H2339.md
+     *   §10.2 (ADPCM audio data block location is STUB; this marker is one
+     *   ADPCM-bank-table anchor candidate). */
+    uint32_t audio_bank_id[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t audio_bank_id_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    size_t audio_bank_prefix_offsets[THERON_TRACK02_MAX_BANK_ANCHORS];
+    int audio_bank_id_recognized[THERON_TRACK02_MAX_BANK_ANCHORS];
 } Theron_Track02BankSignal;
 
 Theron_Track02Variant theron_v1_track02_variant_for_md5(const char *md5_hex);
@@ -63,6 +81,30 @@ Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02BankSignal *out_signal);
+
+/* One-shot audio-bank marker reader for a single anchor index.
+ *
+ * Hash-gated to raw BIN variants only (US_BIN, JP_BIN).  Validates the
+ * 12-byte `00 ff*10 00` prefix and the 44-byte post-boundary span at the
+ * known anchor offset for (variant, anchor_index), then returns the 4-byte
+ * little-endian audio-bank id word immediately preceding the span.
+ *
+ * Returns:
+ *   THERON_TRACK02_SIGNAL_OK on success (out_* populated).
+ *   THERON_TRACK02_SIGNAL_NOT_FOUND if the prefix or span is missing.
+ *   THERON_TRACK02_SIGNAL_BAD_INPUT for NULL/zero-size inputs.
+ *   THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT for non-raw-BIN variants.
+ *
+ * Source/evidence: src/theron/theron_v1_track02.c (audio-bank prefix
+ * fingerprint); see theron_v1_track02_source_evidence() for full citation. */
+Theron_Track02SignalStatus theron_v1_track02_find_audio_bank_marker(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    size_t anchor_index,
+    uint32_t *out_audio_bank_id,
+    size_t *out_audio_bank_id_offset,
+    size_t *out_audio_bank_prefix_offset);
 
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status);
 const char *theron_v1_track02_variant_name(Theron_Track02Variant variant);
