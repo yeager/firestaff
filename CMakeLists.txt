@@ -3462,6 +3462,18 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_mapfile
     )
 
+    add_executable(test_asset_find_by_hash_iso_case_duplicate
+        tests/test_asset_find_by_hash_iso_case_duplicate.c
+    )
+    target_link_libraries(test_asset_find_by_hash_iso_case_duplicate PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_asset_find_by_hash_iso_case_duplicate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_find_by_hash_iso_case_duplicate
+        COMMAND test_asset_find_by_hash_iso_case_duplicate
+    )
+
     add_executable(test_dm1_pc34_multilanguage_required_gate
         tests/test_dm1_pc34_multilanguage_required_gate.c
         src/shared/asset_status_m12.c

@@ -270,6 +270,19 @@ static int asset_casecmp(const char *a, const char *b) {
     return (int)(unsigned char)*a - (int)(unsigned char)*b;
 }
 
+/* Case-insensitive variant of is_better_zip_entry for ISO 9660 directory
+ * entries. ISO 9660:1988 §7.5 mandates that file identifiers be compared
+ * without regard to case at the filesystem level, even though the on-disk
+ * bytes may preserve Joliet/lower-case form. Using case-sensitive
+ * strcmp would cause a directory containing both "DUNGEON.DAT" and
+ * "dungeon.dat" (Joliet extension) to deterministically pick the
+ * uppercase form, which is the wrong semantic for ISO 9660. */
+static int is_better_iso_entry(const char *candidate, const char *current) {
+    if (!candidate || !*candidate) return 0;
+    if (!current || !*current) return 1;
+    return asset_casecmp(candidate, current) < 0;
+}
+
 static int is_zip_path(const char *path) {
     return has_case_suffix(path, ".zip");
 }
@@ -925,7 +938,10 @@ static int scan_iso_dir_by_md5(FILE *fp, int raw2352, uint32_t dirLba,
     unsigned char sector[ASSET_ISO_SECTOR_SIZE];
     uint32_t sectors = (dirSize + ASSET_ISO_SECTOR_SIZE - 1U) / ASSET_ISO_SECTOR_SIZE;
     uint32_t s;
+    char bestName[128];
+    int hasMatch = 0;
     if (depth > ASSET_ISO_MAX_DIR_DEPTH) return 0;
+    bestName[0] = '\0';
     for (s = 0U; s < sectors; ++s) {
         int offset = 0;
         if (!iso_read_sector(fp, raw2352, dirLba + s, sector)) return 0;
@@ -944,16 +960,29 @@ static int scan_iso_dir_by_md5(FILE *fp, int raw2352, uint32_t dirLba,
                     }
                 } else if (size >= 16U && size <= ASSET_ZIP_MAX_ENTRY_BYTES) {
                     char hex[33];
+                    /* Duplicate-hash tiebreak (mirrors the ZIP
+                     * is_better_zip_entry logic in scan_zip_by_md5):
+                     * walk the entire directory before returning so the
+                     * reported virtual path is the case-insensitively
+                     * smallest ISO entry name with the matching MD5
+                     * (ISO 9660:1988 §7.5 — file identifiers compare
+                     * case-insensitively at the filesystem level). */
                     if (iso_file_md5(fp, raw2352, lba, size, hex) &&
-                        strcmp(hex, expectedMd5) == 0) {
-                        return copy_virtual_match_path(isoPath, name, outPath, outPathLen);
+                        strcmp(hex, expectedMd5) == 0 &&
+                        is_better_iso_entry(name, hasMatch ? bestName : NULL)) {
+                        size_t nameLen = strlen(name);
+                        if (nameLen < sizeof(bestName)) {
+                            memcpy(bestName, name, nameLen + 1U);
+                            hasMatch = 1;
+                        }
                     }
                 }
             }
             offset += recLen;
         }
     }
-    return 0;
+    if (!hasMatch) return 0;
+    return copy_virtual_match_path(isoPath, bestName, outPath, outPathLen);
 }
 
 static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
@@ -967,6 +996,21 @@ static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
     uint32_t sectors = (dirSize + ASSET_ISO_SECTOR_SIZE - 1U) / ASSET_ISO_SECTOR_SIZE;
     uint32_t s;
     int foundCount = 0;
+    /* Duplicate-hash tiebreak buffers (mirrors the ZIP
+     * is_better_zip_entry tiebreak in scan_zip_by_md5_list). Sized to
+     * ASSET_PATH_MAX / 128 worst-case bestNames = 4, which is well
+     * above any realistic md5Count for a single game-data ISO (CSB,
+     * DM2, Nexus, Theron all use <=4 unique file MD5s per ISO).
+     * Caller-supplied md5Count larger than this falls back to
+     * first-match-wins for those extra slots (conservative). */
+    enum { ASSET_ISO_LIST_BEST_MAX = 4 };
+    char bestNames[ASSET_ISO_LIST_BEST_MAX][128];
+    int hasBest[ASSET_ISO_LIST_BEST_MAX];
+    int i;
+    for (i = 0; i < ASSET_ISO_LIST_BEST_MAX; ++i) {
+        bestNames[i][0] = '\0';
+        hasBest[i] = 0;
+    }
     if (depth > ASSET_ISO_MAX_DIR_DEPTH) return 0;
     for (s = 0U; s < sectors; ++s) {
         int offset = 0;
@@ -990,17 +1034,45 @@ static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
                     int matchIndex;
                     if (iso_file_md5(fp, raw2352, lba, size, hex)) {
                         matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
-                        if (matchIndex >= 0 &&
-                            copy_virtual_match_path(isoPath, name, outPaths[matchIndex],
-                                                    ASSET_PATH_MAX)) {
-                            matched[matchIndex] = 1;
-                            ++foundCount;
-                            if (foundCount >= md5Count) return foundCount;
+                        if (matchIndex >= 0 && matchIndex < ASSET_ISO_LIST_BEST_MAX &&
+                            is_better_iso_entry(name, hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
+                            size_t nameLen = strlen(name);
+                            if (nameLen < sizeof(bestNames[matchIndex])) {
+                                memcpy(bestNames[matchIndex], name, nameLen + 1U);
+                                hasBest[matchIndex] = 1;
+                            }
                         }
                     }
                 }
             }
             offset += recLen;
+        }
+    }
+    /* Commit best-name slots now that the directory walk is complete,
+     * so each md5List slot is written with the lexicographically
+     * smallest matching ISO entry name. If a recursive child already
+     * wrote a name, compare and overwrite only if ours is smaller. */
+    for (i = 0; i < ASSET_ISO_LIST_BEST_MAX && i < md5Count; ++i) {
+        char existingEntry[128];
+        if (!hasBest[i]) continue;
+        if (matched[i]) {
+            const char* slash = strstr(outPaths[i], "::");
+            const char* currentEntry = (slash != NULL) ? (slash + 2) : outPaths[i];
+            size_t currentLen = strlen(currentEntry);
+            if (currentLen >= sizeof(existingEntry)) {
+                continue;
+            }
+            memcpy(existingEntry, currentEntry, currentLen + 1U);
+            if (!is_better_iso_entry(bestNames[i], existingEntry)) continue;
+            (void)copy_virtual_match_path(isoPath, bestNames[i],
+                                          outPaths[i], ASSET_PATH_MAX);
+        } else {
+            if (copy_virtual_match_path(isoPath, bestNames[i],
+                                        outPaths[i], ASSET_PATH_MAX)) {
+                matched[i] = 1;
+                ++foundCount;
+                if (foundCount >= md5Count) return foundCount;
+            }
         }
     }
     return foundCount;
