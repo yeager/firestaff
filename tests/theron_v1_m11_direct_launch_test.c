@@ -12,6 +12,7 @@
 
 #include "m11_game_view.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_world.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,15 +64,31 @@ static int make_temp_dir(char out[512]) {
 #endif
 }
 
+static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
+    int n = 0;
+    size_t i;
+    if (!pixels) return 0;
+    for (i = 0; i < count; ++i) {
+        if (pixels[i] != 0) {
+            ++n;
+        }
+    }
+    return n;
+}
+
 int main(void) {
+    enum { FB_W = 320, FB_H = 200 };
     char temp_dir[512];
     char theron_dir[512];
     char track_path[512];
+    unsigned char framebuffer[FB_W * FB_H];
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     Theron_V1_BootProfile* profile;
+    Theron_V1_World* world;
     unsigned long rescans_before;
     unsigned long rescans_after;
+    int render_pixels;
 
     expect_true(make_temp_dir(temp_dir), "temporary root created");
     snprintf(theron_dir, sizeof(theron_dir), "%s%stheron", temp_dir, PATH_SEP);
@@ -113,12 +130,61 @@ int main(void) {
                 "M11 builds Theron world and viewport");
 
     profile = (Theron_V1_BootProfile*)view.theronBootProfile;
+    world = (Theron_V1_World*)view.theronWorld;
     expect_true(profile->assets_verified == 1,
                 "boot profile remains assets_verified");
     expect_true(strcmp(profile->graphics_md5, spec.verifiedAssetMd5) == 0,
                 "boot profile carries the verified MD5");
     expect_true(strcmp(profile->graphics_path, track_path) == 0,
                 "boot profile carries the verified path");
+    expect_true(world != NULL && world->level_loaded[0][0] == 1,
+                "M11 loaded the initial Theron level");
+    expect_true(view.theronState.party_x == 3 &&
+                view.theronState.party_y == 5 &&
+                view.theronState.party_dir == 0 &&
+                view.theronState.tick_count == 0,
+                "M11 starts at the deterministic Theron runtime pose");
+
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron turn command requests redraw");
+    expect_true(view.theronState.party_dir == 1 &&
+                world->party.leader_dir == 1,
+                "M11 Theron turn command updates world and mirror state");
+
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron forward command requests redraw");
+    expect_true(view.theronState.party_x == 4 &&
+                view.theronState.party_y == 5 &&
+                view.theronState.party_dir == 1,
+                "M11 Theron forward command advances through mechanics");
+    expect_true(view.theronState.tick_count == 1 &&
+                world->world_tick == 1,
+                "M11 Theron forward command runs post-move tick effects");
+
+    expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
+                "M11 Theron idle tick requests redraw");
+    expect_true(view.theronState.tick_count == 2 &&
+                world->world_tick == 2,
+                "M11 Theron idle tick stays synced with world tick");
+
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                M11_GAME_INPUT_REDRAW,
+                "M11 Theron backward command requests redraw");
+    expect_true(view.theronState.party_x == 3 &&
+                view.theronState.party_y == 5 &&
+                view.theronState.party_dir == 1,
+                "M11 Theron backward command moves without changing facing");
+    expect_true(view.theronState.tick_count == 3 &&
+                world->world_tick == 3,
+                "M11 Theron backward command also runs post-move tick effects");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, FB_W, FB_H);
+    render_pixels = count_nonzero_pixels(framebuffer, sizeof(framebuffer));
+    expect_true(render_pixels > 1000,
+                "M11 Theron draw path produces a nonblank framebuffer");
 
     M11_GameView_Shutdown(&view);
 
