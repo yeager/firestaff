@@ -1,0 +1,169 @@
+{
+  "decision": "The pass513 transcript is source-filled and reproducible, but it has zero debugger-observed original PC/I34E keyboard-buffer rows. The B1 keyboard-buffer evidence row remains PARTIAL until a live dosbox-debug run records M527/M528, F0361, F0380, F0128, and F0097 for the same route.",
+  "gapRowMovement": {
+    "from": "PARTIAL",
+    "reason": "deterministic source-filled transcript and capture hashes are now fingerprinted; live original debugger provenance is still missing",
+    "row": "B1 Original DOSBox/FIRES keyboard buffer transcript for I34E route keys",
+    "to": "PARTIAL"
+  },
+  "nonClaims": [
+    "no original DOSBox/FIRES runtime was launched by this verifier",
+    "no source-filled transcript row is treated as live debugger observation",
+    "no original-vs-Firestaff pixel parity is promoted",
+    "no gameplay, renderer, or input behavior is changed",
+    "no push, tag, package, or release action"
+  ],
+  "ok": true,
+  "pass513Acceptance": {
+    "deterministicTranscriptAcceptedAsReadiness": true,
+    "pass513Report": "parity-evidence/pass513_dm1_v1_i34e_route_key_transcript_contract.md",
+    "pass513Scaffold": "verification-screens/pass1052-dm1-original-route-24h-turncycle/pass513_i34e_route_key_transcript_scaffold.json",
+    "pass513Verifier": "tools/verify_pass513_dm1_v1_i34e_route_key_transcript_contract.py",
+    "problems": []
+  },
+  "problems": [],
+  "schema": "firestaff.parity.pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness.v1",
+  "sourceAudit": [
+    {
+      "file": "IO2.C",
+      "id": "m528_f0540_keyboard_buffer_read",
+      "lines": "27-61",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "id": "i34e_keyboard_table_codes",
+      "lines": "636-685",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "id": "f0361_queue_write_count_delta",
+      "lines": "1734-1812",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "id": "f0380_queue_pop_dispatch",
+      "lines": "2075-2156",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "f0128_redraw_tuple",
+      "lines": "8318-8611",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "id": "f0097_viewport_present",
+      "lines": "709-858",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_ORIGINAL_I34E_KEYBOARD_BUFFER_LIVE_DEBUGGER_OBSERVATION_MISSING",
+  "timestampUtc": "2026-06-21T20:40:47.650477+00:00",
+  "toolAudit": {
+    "allRequiredToolsAvailable": false,
+    "debuggerHarness": "tools/run_dosbox_debug_pty.py",
+    "debuggerHarnessExists": true,
+    "debuggerHarnessMissingNeedles": [],
+    "debuggerHarnessOk": true,
+    "requiredTools": [
+      {
+        "available": false,
+        "name": "dosbox-debug",
+        "path": null
+      },
+      {
+        "available": true,
+        "name": "Xvfb",
+        "path": "/opt/homebrew/bin/Xvfb"
+      },
+      {
+        "available": true,
+        "name": "xdotool",
+        "path": "/opt/homebrew/bin/xdotool"
+      }
+    ]
+  },
+  "transcript": {
+    "allCapturesOk": true,
+    "exists": true,
+    "explicitNonLiveBoundary": true,
+    "liveDebuggerRowCount": 0,
+    "nonClaims": [
+      "This is not a live I34E debugger transcript. The 23 fields are computed from source-locked determinism, not runtime observation.",
+      "Pass608 promote-to-experimental requires the verifier to accept the F0361/F0380/F0365/F0128/F0097 invariants; if any field contradicts source, the verifier will reject."
+    ],
+    "path": "verification-screens/pass513-dm1-v1-promoted-transcript/promoted_transcript.json",
+    "promotionNote": "All 23 missingOriginalRuntimeFields replaced from deterministic source-locked semantics. Values agree with F0361/F0380/F0365/F0128/F0097 source contracts (COMMAND.C, CLIKMENU.C, DUNVIEW.C, DRAWVIEW.C). This is NOT a live I34E debugger observation \u2014 it is a source-anchored reproduction of the same post-command values F0380 and F0128 would emit at runtime.",
+    "rowCount": 3,
+    "rows": [
+      {
+        "captureOk": true,
+        "capturePath": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/02_left_1_wall_original_viewport_224x136.ppm",
+        "captureSha256": "04dbdaa0a0b3e2a763f79e6fd9b73e32f1d3819da6c645f5c949186c76483d2c",
+        "captureSha256Expected": "04dbdaa0a0b3e2a763f79e6fd9b73e32f1d3819da6c645f5c949186c76483d2c",
+        "index": 0,
+        "inputSource": "dosbox-route-token",
+        "liveDebuggerObserved": false,
+        "promotionEvidence": "F0361/F0380/F0365/F0366/F0128/F0097 source-locked deterministic fill (COMMAND.C:1734-1812, COMMAND.C:2075-2156, CLIKMENU.C:142-347, DUNVIEW.C:8318-8611, DRAWVIEW.C:709-858); not a live I34E debugger observation",
+        "rawCaptureOk": true,
+        "rawCapturePath": "verification-screens/pass1052-dm1-original-route-24h-turncycle/image0002-raw.png",
+        "rawCaptureSha256": "932d9d84e55fedb9ac836e733009f5902e44944d8cce70b5774afcca3a414b2b",
+        "rawCaptureSha256Expected": "932d9d84e55fedb9ac836e733009f5902e44944d8cce70b5774afcca3a414b2b",
+        "routeShotLabel": "left_1_wall",
+        "sampleIndex": 1
+      },
+      {
+        "captureOk": true,
+        "capturePath": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/03_left_2_view_original_viewport_224x136.ppm",
+        "captureSha256": "a741703d7a33b6bbfd0a0be76cd0d3a804cc919da2e40eef6eac243ac595ecbf",
+        "captureSha256Expected": "a741703d7a33b6bbfd0a0be76cd0d3a804cc919da2e40eef6eac243ac595ecbf",
+        "index": 1,
+        "inputSource": "dosbox-route-token",
+        "liveDebuggerObserved": false,
+        "promotionEvidence": "F0361/F0380/F0365/F0366/F0128/F0097 source-locked deterministic fill (COMMAND.C:1734-1812, COMMAND.C:2075-2156, CLIKMENU.C:142-347, DUNVIEW.C:8318-8611, DRAWVIEW.C:709-858); not a live I34E debugger observation",
+        "rawCaptureOk": true,
+        "rawCapturePath": "verification-screens/pass1052-dm1-original-route-24h-turncycle/image0003-raw.png",
+        "rawCaptureSha256": "966190b6ed4dd3d96b7b1302f2076b04cdc00f0551cb6b55dc4d6173bddb16fd",
+        "rawCaptureSha256Expected": "966190b6ed4dd3d96b7b1302f2076b04cdc00f0551cb6b55dc4d6173bddb16fd",
+        "routeShotLabel": "synthetic_step_left_2_view",
+        "sampleIndex": 2
+      },
+      {
+        "captureOk": true,
+        "capturePath": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/04_left_3_view_original_viewport_224x136.ppm",
+        "captureSha256": "ecde8973a424502e0fcf0c5994b6ca51ae5f0d48cf51705d6593049f14b3ec3b",
+        "captureSha256Expected": "ecde8973a424502e0fcf0c5994b6ca51ae5f0d48cf51705d6593049f14b3ec3b",
+        "index": 2,
+        "inputSource": "dosbox-route-token",
+        "liveDebuggerObserved": false,
+        "promotionEvidence": "F0361/F0380/F0365/F0366/F0128/F0097 source-locked deterministic fill (COMMAND.C:1734-1812, COMMAND.C:2075-2156, CLIKMENU.C:142-347, DUNVIEW.C:8318-8611, DRAWVIEW.C:709-858); not a live I34E debugger observation",
+        "rawCaptureOk": true,
+        "rawCapturePath": "verification-screens/pass1052-dm1-original-route-24h-turncycle/image0004-raw.png",
+        "rawCaptureSha256": "278ba175878d0a06217dba37a504e949187fc9e821bb6614398b8104af41f8f9",
+        "rawCaptureSha256Expected": "278ba175878d0a06217dba37a504e949187fc9e821bb6614398b8104af41f8f9",
+        "routeShotLabel": "synthetic_blocked_left_3_view",
+        "sampleIndex": 3
+      }
+    ],
+    "schema": "pass513_i34e_route_transcript_deterministic.v1",
+    "sha256": "124284703846ba26355235b6eacd24621c3d5234fbfe1088ea1ea3d68afd8396",
+    "status": "PROMOTED_TRANSCRIPT_DETERMINISTIC_SOURCE_LOCKED"
+  }
+}

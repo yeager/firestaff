@@ -1,0 +1,168 @@
+# Firestaff — theron domain, Swedish catalog.
+# Svensk översättning för Theron's Quest-runtime-strängar.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-theron-sv\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-20 06:50+0200\n"
+"PO-Revision-Date: 2026-06-21 23:20+0200\n"
+"Last-Translator: Firestaff Contributors\n"
+"Language-Team: Swedish\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Direction / compass
+msgid "NORTH"
+msgstr "NORR"
+
+#. Direction / compass
+msgid "EAST"
+msgstr "ÖST"
+
+#. Direction / compass
+msgid "SOUTH"
+msgstr "SÖDER"
+
+#. Direction / compass
+msgid "WEST"
+msgstr "VÄST"
+
+#. Stairs
+msgid "STAIRS"
+msgstr "TRAPPA"
+
+#. Pit
+msgid "PIT"
+msgstr "GROP"
+
+#. Teleporter
+msgid "TELEPORTER"
+msgstr "TELEPORTÖR"
+
+#. Door
+msgid "DOOR"
+msgstr "DÖRR"
+
+#. Inventory / item action
+msgid "PICK UP"
+msgstr "PLOCKA UPP"
+
+#. Inventory / item action
+msgid "DROP"
+msgstr "SLÄPP"
+
+#. Inventory / item action
+msgid "USE"
+msgstr "ANVÄND"
+
+#. Combat action
+msgid "ATTACK"
+msgstr "ATTACKERA"
+
+#. Combat action
+msgid "DEFEND"
+msgstr "FÖRSVARA"
+
+#. Combat action
+msgid "CAST SPELL"
+msgstr "KASTA BESVÄRJELSE"
+
+#. Status label
+msgid "NO FOCUS"
+msgstr "INGET MÅL"
+
+#. Status label
+msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
+msgstr "TRYCK ENTER VID ETT RIKTIGT MÅL I RUTAN FRAMFÖR"
+
+#. Generic
+msgid "UNKNOWN"
+msgstr "OKÄNT"
+
+#. Generic
+msgid "NONE"
+msgstr "INGET"
+
+#. Save / load
+msgid "SAVE GAME"
+msgstr "SPARA SPEL"
+
+#. Save / load
+msgid "LOAD GAME"
+msgstr "LADDA SPEL"
+
+#. Shop
+msgid "SHOP"
+msgstr "BUTIK"
+
+#. Shop
+msgid "NOT ENOUGH GOLD"
+msgstr "INTE TILLRÄCKLIGT MED GULD"
+
+#. Shop
+msgid "PURCHASED %s FOR %d GOLD"
+msgstr "KÖPTE %s FÖR %d GULD"
+
+#. Dungeon progression
+msgid "T%u: ASCENDED TO LEVEL %d"
+msgstr "T%u: GICK UPP TILL NIVÅ %d"
+
+#. Dungeon progression
+msgid "T%u: DESCENDED TO LEVEL %d"
+msgstr "T%u: GICK NER TILL NIVÅ %d"
+
+#. Dungeon progression
+msgid "T%u: FELL INTO PIT"
+msgstr "T%u: FÖLL NER I GROPEN"
+
+#. Dungeon progression
+msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
+msgstr "T%u: TELEPORTERAD TILL KARTA %d (%d,%d)"
+
+#. Teleporter chain
+msgid "T%u: TELEPORTER HAS NO THING DATA"
+msgstr "T%u: TELEPORTÖREN SAKNAR FÖREMÅLSDATA"
+
+#. Teleporter chain
+msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
+msgstr "T%u: TELEPORTÖRENS MÅLKARTA %d ÄR UTANFÖR RÄCKHÅLL"
+
+#. Teleporter chain
+msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr "T%u: %s GICK UPP I NIVÅ! (%s %d -> %d)"
+
+#. Combat log
+msgid "T%u: %s CASTS %s"
+msgstr "T%u: %s KASTAR %s"
+
+#. Combat log
+msgid "T%u: %s HITS %s FOR %d"
+msgstr "T%u: %s TRÄFFAR %s FÖR %d"
+
+#. Combat log
+msgid "T%u: %s MISSES %s"
+msgstr "T%u: %s MISSAR %s"
+
+#. Altar
+msgid "OFFERING ACCEPTED"
+msgstr "OFFRET GODTAS"
+
+#. Inventory capacity
+msgid "INVENTORY FULL"
+msgstr "INVENTARIET ÄR FULLT"
+
+#. Sound / feedback
+msgid "OUT OF RANGE"
+msgstr "UTANFÖR RÄCKHÅLL"
+
+#. Generic message
+msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr "TRYCK ENTER ELLER KLICKA I VYN FÖR ATT LÄSA RUTAN FRAMFÖR"
+
+#. Status footer
+msgid "HP AND STAMINA RECOVER SLOWLY"
+msgstr "HP OCH UTHÅLLIGHET ÅTERHÄMTAS LÅNGSAMT"

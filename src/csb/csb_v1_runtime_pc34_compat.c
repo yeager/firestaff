@@ -653,6 +653,41 @@ int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
     return 0;
 }
 
+int csb_v1_runtime_select_champion_portrait_render_source(
+    const CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    CSB_V1_ChampionPortraitRenderSource *out_source)
+{
+    const CSB_V1_Champion *champion;
+    if (out_source) {
+        memset(out_source, 0, sizeof(*out_source));
+        out_source->champion_index = -1;
+    }
+    if (!profile || !out_source || !profile->party_state_valid) return -1;
+    if (champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+
+    champion = &profile->party_state.Champions[champion_index];
+    /* ReDMCSB: PANEL.C F0354 lines 2195-2239 draws the status-box portrait
+     * directly from M516_CHAMPIONS[ChampionIndex].Portrait.  Firestaff keeps
+     * the same ownership boundary here: Utility Disk/CMP import may populate
+     * CSB_V1_Champion.Portrait, and the renderer receives only a source view
+     * into the runtime-owned champion snapshot. */
+    out_source->portrait = champion->Portrait;
+    out_source->portrait_byte_count = CSB_V1_PORTRAIT_BYTE_COUNT;
+    out_source->portrait_width = CSB_V1_PORTRAIT_WIDTH;
+    out_source->portrait_height = CSB_V1_PORTRAIT_HEIGHT;
+    out_source->portrait_byte_width = CSB_V1_PORTRAIT_BYTE_WIDTH;
+    out_source->champion_index = champion_index;
+    out_source->is_leader = (champion_index == profile->leader_index);
+    out_source->name = champion->Name;
+    out_source->title = champion->Title;
+    return 0;
+}
+
 int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
                                  int target_dir)
 {

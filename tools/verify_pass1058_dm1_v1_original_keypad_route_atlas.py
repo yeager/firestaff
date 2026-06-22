@@ -21,6 +21,32 @@ VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 
+CORRECTED_ROUTE_TO_STAIR_KEYS = [
+    "Keypad-8", "Keypad-8", "Keypad-8", "Keypad-8", "Keypad-4",
+    "Keypad-2", "Keypad-2", "Keypad-2", "Keypad-4", "Keypad-8",
+    "Keypad-8", "Keypad-8", "Keypad-8", "Keypad-8", "Keypad-4",
+    "Keypad-8", "Keypad-8", "Keypad-4", "Keypad-8", "Keypad-4",
+    "Keypad-2", "Keypad-2", "Keypad-4", "Keypad-2", "Keypad-4",
+    "Keypad-8", "Keypad-4", "Keypad-8", "Keypad-8", "Keypad-8",
+    "Keypad-8", "Keypad-8", "Keypad-4", "Keypad-8", "Keypad-8",
+    "Keypad-8", "Keypad-8", "Keypad-8", "Keypad-4", "Keypad-2",
+    "Keypad-2", "Keypad-2", "Keypad-2", "Keypad-2", "Keypad-2",
+    "Keypad-4", "Keypad-2",
+]
+
+CORRECTED_ROUTE_STAIR_TO_DOOR_KEYS = [
+    "Keypad-8", "Keypad-4", "Keypad-8", "Keypad-8", "Keypad-8",
+    "Keypad-4",
+]
+
+DOOR_PROBE_ACTIONS = [
+    "Enter",
+    "Space",
+    "click:112,70",
+    "click:112,120",
+    "Keypad-8",
+]
+
 
 def load_tsv(name: str) -> list[dict[str, str]]:
     path = VERIFY_DIR / name
@@ -48,6 +74,46 @@ def shas(name: str) -> list[str]:
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise AssertionError(message)
+
+
+def check_route_token_receipt() -> dict[str, Any]:
+    require(len(CORRECTED_ROUTE_TO_STAIR_KEYS) == 47, "route-to-stair key count drifted")
+    require(len(CORRECTED_ROUTE_STAIR_TO_DOOR_KEYS) == 6, "stair-to-door key count drifted")
+    require(
+        CORRECTED_ROUTE_TO_STAIR_KEYS[0] == "Keypad-8"
+        and CORRECTED_ROUTE_TO_STAIR_KEYS[-1] == "Keypad-2",
+        "route-to-stair boundary tokens drifted",
+    )
+    require(
+        CORRECTED_ROUTE_STAIR_TO_DOOR_KEYS == [
+            "Keypad-8", "Keypad-4", "Keypad-8", "Keypad-8", "Keypad-8", "Keypad-4",
+        ],
+        "stair-to-door sequence drifted",
+    )
+    require(
+        DOOR_PROBE_ACTIONS == ["Enter", "Space", "click:112,70", "click:112,120", "Keypad-8"],
+        "door-probe action sequence drifted",
+    )
+    return {
+        "ok": True,
+        "source": "redacted from local route-token logs; no proprietary frames embedded",
+        "start_pose_route": {
+            "to_stair_entry_keys": CORRECTED_ROUTE_TO_STAIR_KEYS,
+            "stair_entry_to_creature_door_keys": CORRECTED_ROUTE_STAIR_TO_DOOR_KEYS,
+            "total_key_count": (
+                len(CORRECTED_ROUTE_TO_STAIR_KEYS)
+                + len(CORRECTED_ROUTE_STAIR_TO_DOOR_KEYS)
+            ),
+        },
+        "door_probe_actions": DOOR_PROBE_ACTIONS,
+        "post_dungeon_runner_note": (
+            "These tokens preserve the pass1058 start-pose route. The newer "
+            "dosbox_capture_session.py --post-dungeon-route hook starts after "
+            "the pass1073 live start/first-movement proof, so operators must "
+            "align the starting pose before replay rather than pasting this "
+            "sequence blindly."
+        ),
+    }
 
 
 def check_key_atlas() -> dict[str, Any]:
@@ -184,6 +250,7 @@ def main() -> int:
             "report": str(REPORT.relative_to(ROOT)),
             "key_atlas": check_key_atlas(),
             "turn_atlas": check_turn_atlas(),
+            "route_token_receipt": check_route_token_receipt(),
             "corrected_creature_route": check_creature_route(),
             "door_probe": check_door_probe(),
             "honesty": (

@@ -1989,6 +1989,26 @@ void M11_Render_RaiseWindow(void) {
     SDL_RaiseWindow(g_state.window);
 }
 
+const unsigned char* M11_Render_GetPresentedRGBA(int* outWidth, int* outHeight) {
+    if (outWidth) {
+        *outWidth = 0;
+    }
+    if (outHeight) {
+        *outHeight = 0;
+    }
+    if (!g_state.initialised || !g_state.presentBuffer ||
+        g_state.contentW <= 0 || g_state.contentH <= 0) {
+        return NULL;
+    }
+    if (outWidth) {
+        *outWidth = g_state.contentW;
+    }
+    if (outHeight) {
+        *outHeight = g_state.contentH;
+    }
+    return g_state.presentBuffer;
+}
+
 int M11_Render_GetSdlMajorVersion(void) {
     return M11_SDL_MAJOR;
 }

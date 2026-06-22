@@ -6798,6 +6798,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         m11_set_inspect_readout(state, "READY",
                                 "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE");
         m11_log_event(state, M11_COLOR_YELLOW, "T0: DM2 LOADED");
+        /* Tier 1 launch smoke: keep the DM2 direct-launch milestone
+         * observable to headless probes, matching the CSB stderr-pipe above.
+         * The boot itself stays owned by the DM2 V1 branch documented in
+         * dm2_v1_boot.h and firestaff_game_loop.c. */
+        fprintf(stderr, "DM2 READY: gameId=dm2 dataDir=%s\n",
+                spec->dataDir ? spec->dataDir : "(null)");
         return 1;
     }
     if (spec->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON) {
@@ -8217,11 +8223,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
          * who only pressed arrow keys will see strafe become a no-op
          * (no harm) and turn is still reachable via Q/E/Home/End. */
         if (input == M12_MENU_INPUT_TURN_LEFT) {
-            world->party.leader_dir = (world->party.leader_dir + 3) & 3;
+            (void)theron_v1_turn_party(world, -1);
             moved = 1;
             m11_set_status(state, "TURN", "LEFT");
         } else if (input == M12_MENU_INPUT_TURN_RIGHT) {
-            world->party.leader_dir = (world->party.leader_dir + 1) & 3;
+            (void)theron_v1_turn_party(world, 1);
             moved = 1;
             m11_set_status(state, "TURN", "RIGHT");
         } else if (input == M12_MENU_INPUT_LEFT ||
@@ -8231,28 +8237,23 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             /* Theron has no strafe route: ignore. */
             m11_set_status(state, "NO-OP", "THERON HAS NO STRAFE");
         } else if (input == M12_MENU_INPUT_UP) {
-            static const int dx[4] = {0, 1, 0, -1};
-            static const int dy[4] = {-1, 0, 1, 0};
             int dir = world->party.leader_dir & 3;
-            int nx = world->party.leader_x + dx[dir];
-            int ny = world->party.leader_y + dy[dir];
-            uint8_t sq = theron_v1_world_get_square(world, nx, ny);
-            moved = THERON_SQUARE_IS_PASSABLE(sq);
-            if (moved) {
-                theron_v1_party_place(world, nx, ny, dir);
-            }
+            int moveResult;
+            /* ReDMCSB analogues: COMMAND.C F7015 consumes a queued input,
+             * then MOVESENS.C F0267 resolves movement/sensors.  Theron uses
+             * its source-locked THQUEST.ASM T600/T700 adapter here so the M11
+             * path gets post-move effects instead of mutating coordinates. */
+            moveResult = theron_v1_move_party(world, dir);
+            moved = (moveResult != THERON_MOVE_BLOCKED);
             m11_set_status(state, "MOVE",
                            moved ? "THERON ADVANCED" : "BLOCKED");
         } else if (input == M12_MENU_INPUT_DOWN) {
-            static const int dx[4] = {0, 1, 0, -1};
-            static const int dy[4] = {-1, 0, 1, 0};
-            int dir = (world->party.leader_dir + 2) & 3;
-            int nx = world->party.leader_x + dx[dir];
-            int ny = world->party.leader_y + dy[dir];
-            uint8_t sq = theron_v1_world_get_square(world, nx, ny);
-            moved = THERON_SQUARE_IS_PASSABLE(sq);
+            int oldDir = world->party.leader_dir & 3;
+            int dir = (oldDir + 2) & 3;
+            int moveResult = theron_v1_move_party(world, dir);
+            moved = (moveResult != THERON_MOVE_BLOCKED);
             if (moved) {
-                theron_v1_party_place(world, nx, ny, world->party.leader_dir);
+                world->party.leader_dir = (int8_t)oldDir;
             }
             m11_set_status(state, "MOVE",
                            moved ? "THERON STEPPED BACK" : "BLOCKED");

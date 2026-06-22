@@ -12,8 +12,9 @@ the narrow, already source-locked checks that matter most for the current
 - pass1058 keeps the original keypad/route-atlas blocker evidence locked.
 - Optional build-dir probes keep the DM1 playable route, Firestaff-side
   route/collision/orientation captures, pass610/pass622/pass623 readiness,
-  V1/V2 presentation-disabled seed gates, pass1055 collision semantic pair,
-  pass1056/pass1057 CTests, and Phase A probe green.
+  pass1073 redacted live-capture receipt, V1/V2 presentation-disabled seed
+  gates, V2.0/V2.1 runtime presentation smoke, pass1055 collision semantic
+  pair, pass1056/pass1057 CTests, and Phase A probe green.
 
 The script writes a manifest/report so the roll-up can be cited without
 claiming that the remaining original-capture gaps are solved.
@@ -23,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -35,6 +37,27 @@ PASS = "dm1_24h_readiness"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
+
+CTEST_REQUIRED_TESTS = (
+    "m11_phase_a",
+    "firestaff_dm1_v1_playable_route_probe",
+    "firestaff_dm1_v1_pass1055_closed_door_pair_probe",
+    "m11_capture_route_state",
+    "dm1_v1_wall_collision_runtime_capture",
+    "m11_turn_viewport_orientation",
+    "pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+    "pass622_dm1_v1_viewport_wall_capture_closure_gap",
+    "pass623_dm1_v1_input_capture_readiness_bridge",
+    "pass1073_dm1_v1_original_live_capture_receipt",
+    "dm1_v2_side_by_side_presentation_seed_probe",
+    "dm1_v2_side_by_side_seed_pc34",
+    "dm1_v2_v1_v2_side_by_side_seed_pc34",
+    "dm1_v2_runtime_presentation_smoke",
+)
+
+
+def ctest_required_regex() -> str:
+    return "^(" + "|".join(re.escape(name) for name in CTEST_REQUIRED_TESTS) + ")$"
 
 
 def run(cmd: list[str], *, timeout: int = 120, env: dict[str, str] | None = None) -> dict[str, Any]:
@@ -136,20 +159,64 @@ def ctest_check(build_dir: Path) -> dict[str, Any]:
             "skipped": True,
             "reason": f"build dir missing: {build_dir}",
         }
-    regex = (
-        "m11_phase_a|"
-        "firestaff_dm1_v1_playable_route_probe|"
-        "firestaff_dm1_v1_pass1055_closed_door_pair_probe|"
-        "m11_capture_route_state|"
-        "dm1_v1_wall_collision_runtime_capture|"
-        "m11_turn_viewport_orientation|"
-        "pass610_dm1_v1_firestaff_viewport_crop_capture_gate|"
-        "pass622_dm1_v1_viewport_wall_capture_closure_gap|"
-        "pass623_dm1_v1_input_capture_readiness_bridge|"
-        "dm1_v2_side_by_side_presentation_seed_probe|"
-        "dm1_v2_side_by_side_seed_pc34|"
-        "dm1_v2_v1_v2_side_by_side_seed_pc34"
+    regex = ctest_required_regex()
+    inventory_proc = run(
+        [
+            "ctest",
+            "--test-dir",
+            str(build_dir),
+            "--show-only=json-v1",
+        ],
+        timeout=60,
     )
+    inventory: dict[str, Any] = {
+        "ok": False,
+        "command": inventory_proc,
+        "required": list(CTEST_REQUIRED_TESTS),
+        "missing": list(CTEST_REQUIRED_TESTS),
+        "matched": [],
+        "label_summary": {},
+    }
+    if inventory_proc["ok"]:
+        try:
+            data = json.loads(inventory_proc["stdout"])
+            tests = data.get("tests", [])
+            inventory_proc_summary = dict(inventory_proc)
+            inventory_proc_summary["stdout"] = f"<ctest json inventory: {len(tests)} tests>"
+            inventory["command"] = inventory_proc_summary
+            available: dict[str, dict[str, Any]] = {}
+            for test in tests:
+                name = str(test.get("name", ""))
+                properties = test.get("properties", [])
+                labels: list[str] = []
+                for prop in properties:
+                    if prop.get("name") != "LABELS":
+                        continue
+                    value = prop.get("value", [])
+                    if isinstance(value, str):
+                        labels = [value]
+                    elif isinstance(value, list):
+                        labels = [str(v) for v in value]
+                if name:
+                    available[name] = {"labels": labels}
+            missing = [name for name in CTEST_REQUIRED_TESTS if name not in available]
+            matched = sorted(name for name in available if re.search(regex, name))
+            inventory.update(
+                {
+                    "ok": not missing,
+                    "missing": missing,
+                    "matched": matched,
+                    "label_summary": {
+                        name: available.get(name, {}).get("labels", [])
+                        for name in CTEST_REQUIRED_TESTS
+                    },
+                }
+            )
+        except json.JSONDecodeError as exc:
+            inventory["reason"] = f"failed to parse ctest JSON inventory: {exc}"
+    if not inventory["ok"]:
+        return {"ok": False, "regex": regex, "inventory": inventory}
+
     env = os.environ.copy()
     env.setdefault("SDL_VIDEODRIVER", "dummy")
     proc = run(
@@ -164,7 +231,16 @@ def ctest_check(build_dir: Path) -> dict[str, Any]:
         timeout=240,
         env=env,
     )
-    return {"ok": proc["ok"], "regex": regex, "command": proc}
+    no_tests = "No tests were found" in proc["stdout"] or "Total Tests: 0" in proc["stdout"]
+    result = {
+        "ok": proc["ok"] and not no_tests,
+        "regex": regex,
+        "inventory": inventory,
+        "command": proc,
+    }
+    if no_tests:
+        result["reason"] = "ctest selected zero tests"
+    return result
 
 
 def write_outputs(result: dict[str, Any]) -> None:
@@ -194,7 +270,11 @@ def write_outputs(result: dict[str, Any]) -> None:
             dm1 = check["summary"]
             note = f"DM1 ready {dm1.get('ready')}/{dm1.get('total')}"
         elif name == "ctest" and check.get("regex"):
-            note = f"regex `{check['regex']}`"
+            inventory = check.get("inventory", {})
+            if inventory.get("missing"):
+                note = "missing " + ", ".join(f"`{n}`" for n in inventory["missing"])
+            else:
+                note = f"{len(inventory.get('matched', []))} required tests; regex `{check['regex']}`"
         lines.append(f"| `{name}` | `{status}` | {note} |")
 
     lines += [

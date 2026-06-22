@@ -1,0 +1,268 @@
+{
+  "cases": [
+    {
+      "command": {
+        "cmd": [
+          "<build-firestaff>",
+          "--game",
+          "theron",
+          "--data-dir",
+          "<canonical_pcengine_root-data-dir>",
+          "--duration",
+          "1500"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260622-091335.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260622-091335.bmp",
+        "stdout": "[TQR] No Track 03/04 markers in <canonical_pcengine_root-data-dir>/TQJP02End.iso; keeping raw Track 02 data with deterministic fallback assets\nTQR level load: dungeon=1 level=0 size=8x8 status=OK entrance=(1,1)\n[TQR] viewport initialized: 256x224 planar fb, palette ready"
+      },
+      "fallback_assets_used": true,
+      "id": "canonical_pcengine_root",
+      "label": "Theron canonical PC Engine root",
+      "marker_found": true,
+      "ok": true,
+      "present": true,
+      "presented_screenshots": [
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-presented-20260622-091335.bmp",
+          "non_black_pixels": 21120,
+          "sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        }
+      ],
+      "probe": {
+        "active": 1,
+        "gameTick": 0,
+        "lastAction": "BOOT",
+        "lastOutcome": "THERON READY",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 0
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 0,
+          "command": 0,
+          "dequeued": 0,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 0,
+          "viewportDirty": 0
+        },
+        "presentation": {
+          "height": 200,
+          "mode": 0,
+          "width": 320
+        },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 0,
+          "inputRedrawDrawCount": 0,
+          "lastInputRedrawAfterViewportDirty": 0
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "theron",
+        "title": "THERON'S QUEST"
+      },
+      "screenshots": [
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-20260622-091335.bmp",
+          "non_black_pixels": 21120,
+          "sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "command": {
+        "cmd": [
+          "<build-firestaff>",
+          "--game",
+          "theron",
+          "--data-dir",
+          "<jp_extras_track02_bin-data-dir>",
+          "--duration",
+          "1500"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260622-091345.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260622-091345.bmp",
+        "stdout": "[TQR] No Track 03/04 markers in <jp_extras_track02_bin-data-dir>/Dungeon Master - Theron's Quest (Japan) (Track 02).bin; keeping raw Track 02 data with deterministic fallback assets\nTQR level load: dungeon=1 level=0 size=8x8 status=OK entrance=(1,1)\n[TQR] viewport initialized: 256x224 planar fb, palette ready"
+      },
+      "fallback_assets_used": true,
+      "id": "jp_extras_track02_bin",
+      "label": "Theron JP extras Track 02",
+      "marker_found": true,
+      "ok": true,
+      "present": true,
+      "presented_screenshots": [
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-presented-20260622-091345.bmp",
+          "non_black_pixels": 21120,
+          "sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        }
+      ],
+      "probe": {
+        "active": 1,
+        "gameTick": 0,
+        "lastAction": "BOOT",
+        "lastOutcome": "THERON READY",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 0
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 0,
+          "command": 0,
+          "dequeued": 0,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 0,
+          "viewportDirty": 0
+        },
+        "presentation": {
+          "height": 200,
+          "mode": 0,
+          "width": 320
+        },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 0,
+          "inputRedrawDrawCount": 0,
+          "lastInputRedrawAfterViewportDirty": 0
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "theron",
+        "title": "THERON'S QUEST"
+      },
+      "screenshots": [
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-20260622-091345.bmp",
+          "non_black_pixels": 21120,
+          "sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "command": {
+        "cmd": [
+          "<build-firestaff>",
+          "--game",
+          "theron",
+          "--data-dir",
+          "<us_extras_track02_bin-data-dir>",
+          "--duration",
+          "1500"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260622-091355.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260622-091355.bmp",
+        "stdout": "[TQR] No Track 03/04 markers in <us_extras_track02_bin-data-dir>/Dungeon Master - Theron's Quest (USA) (Track 02).bin; keeping raw Track 02 data with deterministic fallback assets\nTQR level load: dungeon=1 level=0 size=8x8 status=OK entrance=(1,1)\n[TQR] viewport initialized: 256x224 planar fb, palette ready"
+      },
+      "fallback_assets_used": true,
+      "id": "us_extras_track02_bin",
+      "label": "Theron US extras Track 02",
+      "marker_found": true,
+      "ok": true,
+      "present": true,
+      "presented_screenshots": [
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-presented-20260622-091355.bmp",
+          "non_black_pixels": 21120,
+          "sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        }
+      ],
+      "probe": {
+        "active": 1,
+        "gameTick": 0,
+        "lastAction": "BOOT",
+        "lastOutcome": "THERON READY",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 0
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 0,
+          "command": 0,
+          "dequeued": 0,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 0,
+          "viewportDirty": 0
+        },
+        "presentation": {
+          "height": 200,
+          "mode": 0,
+          "width": 320
+        },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 0,
+          "inputRedrawDrawCount": 0,
+          "lastInputRedrawAfterViewportDirty": 0
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "theron",
+        "title": "THERON'S QUEST"
+      },
+      "screenshots": [
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-20260622-091355.bmp",
+          "non_black_pixels": 21120,
+          "sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        }
+      ],
+      "status": "PASS"
+    }
+  ],
+  "firestaff": "build/firestaff",
+  "generated_at": "2026-06-22T07:13:33.762969+00:00",
+  "non_claims": [
+    "No public Theron screenshot image is promoted.",
+    "No generated or mock image is used.",
+    "No claim of full Theron runtime playability or semantic Track 02 loader parity."
+  ],
+  "schema": "firestaff.parity.theron_v1_runtime_screenshot_readiness.v1",
+  "status": "PASS"
+}

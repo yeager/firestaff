@@ -42,6 +42,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -122,6 +123,12 @@ class KeyDispatch:
     error: str = ""
 
 
+@dataclass(frozen=True)
+class PostDungeonRouteStep:
+    key: str
+    label: str
+
+
 # The capture route plan.  This mirrors the runbook §3 state machine
 # but uses the calibrated band 0.135 thresholds from the post-fix
 # classifier.  Stable-frames requirement follows the runbook default.
@@ -144,12 +151,14 @@ class KeyDispatch:
 #   * After the three selector pages the "Dungeon Master" title art and
 #     then the ENTER/RESUME/QUIT entrance wall appear.  With Keyboard
 #     Simulation of Digital Joystick selected, the wall's selector cursor
-#     starts on ENTER and Return activates it.  After that keypress the
-#     dungeon corridor viewport renders and classifies as ``dungeon_gameplay``
+#     starts on ENTER.  Once the live route launches DM.EXE through the
+#     app binary itself instead of the Homebrew wrapper, Return reliably
+#     activates it and avoids a host-mouse-capture dependency.  The dungeon
+#     corridor viewport then classifies as ``dungeon_gameplay``
 #     (v≈0.93, r≈0.12 < 0.135), which is the capture target.
-# The single click that crosses into the dungeon is the historically
-# hard part of this route; everything up to and including it is now a
-# deterministic, capture-verified sequence.
+# The entrance transition is the historically hard part of this route;
+# everything up to and including it is now a deterministic,
+# capture-verified sequence.
 DEFAULT_PLAN: list[PlanStep] = [
     PlanStep("graphics_select",  "entrance_menu",    keys=["1", "Return"], settle_only=True, settle_s=3.0),
     PlanStep("sound_select",     "entrance_menu",    keys=["1", "Return"], settle_only=True, settle_s=3.0),
@@ -165,7 +174,11 @@ KEY_MAP = {
     "Key-Down": "arrow-down",
     "Key-Left": "arrow-left",
     "Key-Right": "arrow-right",
+    "Keypad-2": "keypad-2",
+    "Keypad-4": "keypad-4",
     "Keypad-5": "keypad-5",
+    "Keypad-6": "keypad-6",
+    "Keypad-8": "keypad-8",
 }
 
 # Pseudo-key for the one mouse click that crosses the DM entrance wall into
@@ -236,6 +249,7 @@ RAWSHOT_FOCUS_RECOVERY_REASONS = (
     "no_focus_recovery_needed",
 )
 DOSBOX_INTERNAL_CAPTURE_GLOBS = ("*.png", "*.bmp", "*.raw")
+LIVE_DOSBOX_STARTUP_SETTLE_S = 8.0
 DosboxCaptureSignature = tuple[int, int]
 
 
@@ -275,6 +289,29 @@ def _resolve_dosbox_bin(args: argparse.Namespace) -> str | None:
         if found:
             return found
     return None
+
+
+def _dosbox_conf_command(
+        dosbox_bin: str,
+        conf: Path,
+        runtime_dir: Path | None = None) -> list[str]:
+    """Return the argv needed to launch DOSBox with ``conf``.
+
+    Homebrew ``dosbox-staging`` expects the long ``--conf`` option, while
+    DOSBox-X and older app-wrapper launches still accept the historical
+    ``-conf`` spelling used by earlier capture scripts.  The live runtime
+    launch passes DM.EXE as DOSBox's PATH argument; DOSBox Staging mounts
+    the executable's parent as C: and runs it without depending on
+    wrapper-sensitive [autoexec] or ``-c`` command forwarding.
+    """
+    bin_text = str(dosbox_bin).casefold()
+    conf_flag = "--conf" if (
+        "dosbox-staging" in bin_text or "dosbox staging.app" in bin_text
+    ) else "-conf"
+    argv = [dosbox_bin, conf_flag, str(conf)]
+    if runtime_dir is not None:
+        argv.append(str(runtime_dir / "DM.EXE"))
+    return argv
 
 
 def _is_executable_file(path: Path) -> bool:
@@ -382,6 +419,59 @@ def dump_plan(plan: list[PlanStep], out: Path | None = None) -> None:
         print(f"wrote plan: {out}")
     else:
         print(rendered)
+
+
+def parse_post_dungeon_route(spec: str) -> list[PostDungeonRouteStep]:
+    """Parse a comma-separated post-dungeon key route.
+
+    Format: ``Keypad-5:label,Keypad-4:turn_right``.  Labels become local
+    screenshot filenames in the operator capture directory, so keep the
+    accepted grammar intentionally small and portable.
+    """
+    route: list[PostDungeonRouteStep] = []
+    if not spec.strip():
+        return route
+    for index, raw_part in enumerate(spec.split(","), start=1):
+        part = raw_part.strip()
+        if not part:
+            continue
+        key, sep, label = part.partition(":")
+        key = key.strip()
+        label = label.strip() if sep else f"post_{index:02d}_{key.lower().replace('-', '_')}"
+        if key not in KEY_MAP:
+            raise ValueError(f"unsupported post-dungeon route key: {key}")
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", label):
+            raise ValueError(f"unsafe post-dungeon route label: {label!r}")
+        route.append(PostDungeonRouteStep(key=key, label=label))
+    return route
+
+
+def self_test_post_dungeon_route_parser() -> int:
+    try:
+        route = parse_post_dungeon_route("Keypad-5:forward_1, Keypad-4:turn_right")
+        assert route == [
+            PostDungeonRouteStep("Keypad-5", "forward_1"),
+            PostDungeonRouteStep("Keypad-4", "turn_right"),
+        ]
+        auto = parse_post_dungeon_route("Keypad-6")[0]
+        assert auto == PostDungeonRouteStep("Keypad-6", "post_01_keypad_6")
+        try:
+            parse_post_dungeon_route("Keypad-9:bad")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("unsupported key accepted")
+        try:
+            parse_post_dungeon_route("Keypad-5:../bad")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("unsafe label accepted")
+    except Exception as exc:
+        print(f"FAIL post-dungeon route parser: {exc}", file=sys.stderr)
+        return 1
+    print("PASS post-dungeon route parser")
+    return 0
 
 
 def dry_run(plan: list[PlanStep],
@@ -757,6 +847,15 @@ def dry_run(plan: list[PlanStep],
         missing_bin = tmp_root / "missing-dosbox"
         if _resolve_dosbox_bin(argparse.Namespace(dosbox_bin=missing_bin)) is not None:
             failures.append("dosbox binary resolver: accepted a missing explicit path")
+        fake_staging_conf = tmp_root / "fake.conf"
+        if _dosbox_conf_command(str(fake_bin), fake_staging_conf)[1] != "--conf":
+            failures.append("dosbox launch argv: did not use --conf for dosbox-staging")
+        fake_x_bin = tmp_root / "dosbox-x"
+        if _dosbox_conf_command(str(fake_x_bin), fake_staging_conf)[1] != "-conf":
+            failures.append("dosbox launch argv: did not preserve -conf for non-staging DOSBox")
+        staging_launch = _dosbox_conf_command(str(fake_bin), fake_staging_conf, good)
+        if staging_launch[-1] != str(good / "DM.EXE"):
+            failures.append("dosbox launch argv: did not append runtime DM.EXE path")
         capture_root = tmp_root / "capture-root"
         conf = capture_root / "dosbox_capture.live.conf"
         _write_live_conf(conf, good, capture_root)
@@ -2097,7 +2196,9 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
 
     The preflight receipt proves the canonical hash root.  For actually
     launching DM.EXE, DOSBox needs the original runtime layout where
-    DM.EXE and DATA/ live together.
+    DM.EXE and DATA/ live together.  The live command line passes DM.EXE
+    as DOSBox's PATH argument, so this conf only owns render/capture/input
+    settings.
     """
     conf.parent.mkdir(parents=True, exist_ok=True)
     (capture_root / "dosbox-capture").mkdir(parents=True, exist_ok=True)
@@ -2145,11 +2246,6 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
             "mouse_raw_input=true",
             "dos_mouse_driver=true",
             "dos_mouse_immediate=true",
-            "",
-            "[autoexec]",
-            f"MOUNT C {runtime_dir}",
-            "C:",
-            "DM.EXE",
             "",
         ]),
         encoding="utf-8",
@@ -2456,6 +2552,66 @@ def _write_live_movement_receipt(
     return out
 
 
+def _write_post_dungeon_route_receipt(
+        capture_root: Path,
+        route: list[PostDungeonRouteStep],
+        rows: list[dict[str, object]]) -> Path:
+    """Write an operator-local receipt for a custom post-dungeon route."""
+    receipt = {
+        "schema": "firestaff.dosbox_capture_session.post_dungeon_route.v1",
+        "capture_root": str(capture_root),
+        "route": [asdict(step) for step in route],
+        "frames": rows,
+        "non_claims": [
+            "This is original-DOS route evidence, not an original-vs-Firestaff pixel parity promotion.",
+            "The proprietary game frames remain in the operator-local capture root.",
+            "A B1 gap row stays partial until the frames are reviewed, classified, and paired against Firestaff.",
+        ],
+    }
+    out = capture_root / "dosbox_capture.post_dungeon_route.json"
+    out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+                   encoding="utf-8")
+    return out
+
+
+def _run_post_dungeon_route(
+        capture_root: Path,
+        original_dir: Path,
+        route: list[PostDungeonRouteStep],
+        capture_backend: str,
+        settle_s: float) -> Path | None:
+    if not route:
+        return None
+    rows: list[dict[str, object]] = []
+    for index, step in enumerate(route, start=3):
+        print(f"send={step.key} label={step.label}", file=sys.stderr)
+        _dispatch_key_for_live_step(capture_root, step.label, step.key)
+        time.sleep(settle_s)
+        img, capture_meta = _screenshot_frame(
+            capture_root,
+            f"capture_{index:02d}_{step.label}",
+            capture_backend,
+        )
+        frame_path = original_dir / f"{index:02d}_{step.label}.png"
+        img.save(frame_path)
+        state = classify(img)
+        quality = _frame_quality(img, f"capture_{index:02d}_{step.label}", state, capture_meta)
+        _write_quality_log(capture_root, quality)
+        rows.append({
+            "index": index,
+            "label": step.label,
+            "action_key": step.key,
+            "frame": str(frame_path),
+            "state": state,
+            "width": quality.width,
+            "height": quality.height,
+            "viewport_rgb_sha256": _viewport_rgb_sha256(img),
+            "normalized_rgb_sha256": quality.normalized_rgb_sha256,
+            "frame_quality": asdict(quality),
+        })
+    return _write_post_dungeon_route_receipt(capture_root, route, rows)
+
+
 def _capture_after_movement_until_distinct(
         capture_root: Path,
         before_viewport_sha256: str,
@@ -2561,13 +2717,16 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
     if receipt is not None:
         print(f"live input receipt: {receipt}", file=sys.stderr)
     proc = subprocess.Popen(
-        [dosbox_bin, "-conf", str(conf)],
+        _dosbox_conf_command(dosbox_bin, conf, runtime_dir),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         env={**os.environ, "LANG": os.environ.get("LANG", "C")},
     )
     try:
-        time.sleep(2.0)
+        # DM.EXE can still be in the DOS startup batch on DOSBox Staging
+        # 0.82.2 after the window appears.  Let the selector reach its first
+        # menu before route keys are dispatched; otherwise 1/1/4 land at Z:\>.
+        time.sleep(LIVE_DOSBOX_STARTUP_SETTLE_S)
         _activate_dosbox()
         for step in plan:
             for key in step.keys:
@@ -2720,9 +2879,18 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
                 file=sys.stderr,
             )
             return 1
+        post_route = parse_post_dungeon_route(args.post_dungeon_route)
+        post_route_receipt = _run_post_dungeon_route(
+            capture_root,
+            original_dir,
+            post_route,
+            args.capture_backend,
+            args.post_dungeon_settle,
+        )
         print(
             f"PASS live captures written: {original_dir} "
             f"movement_receipt={movement_receipt}"
+            + (f" post_route_receipt={post_route_receipt}" if post_route_receipt else "")
         )
         return 0
     finally:
@@ -2745,6 +2913,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="write the planned key sequence to this JSON file")
     parser.add_argument("--dry-run", action="store_true",
                         help="walk the state machine using synthetic fixtures (no DOSBox)")
+    parser.add_argument("--self-test-post-dungeon-route", action="store_true",
+                        help="run the post-dungeon route parser self-test and exit")
     parser.add_argument("--live", action="store_true",
                         help="drive a real DOSBox session via cliclick (macOS only)")
     parser.add_argument("--validate-live-inputs", action="store_true",
@@ -2775,9 +2945,16 @@ def main(argv: list[str] | None = None) -> int:
                         help="host screenshot backend for --live (default auto: "
                              "Peekaboo when available, else screencapture; "
                              "dosbox-rawshot uses DOSBox's internal rendered screenshot via Alt+F5)")
+    parser.add_argument("--post-dungeon-route", default="",
+                        help="optional comma-separated live route after the first movement proof, "
+                             "for example Keypad-5:forward_2,Keypad-4:turn_right")
+    parser.add_argument("--post-dungeon-settle", type=float, default=1.5,
+                        help="seconds to wait after each --post-dungeon-route key before capture")
     args = parser.parse_args(argv)
 
     plan = DEFAULT_PLAN
+    if args.self_test_post_dungeon_route:
+        return self_test_post_dungeon_route_parser()
     if args.plan or args.plan_out is not None:
         dump_plan(plan, args.plan_out)
         return 0

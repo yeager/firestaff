@@ -66,7 +66,7 @@ timing and inventory routes.
 | **Chaos Strikes Back (CSB)** | Hash-verified launch/profile boundary, real DUNGEON.DAT load, dungeon handle handoff, object-chain access, imported champion stats/load behavior, party rotation, tick accumulation, timeline dispatch, wall text, and deterministic boot-to-viewport render slices are verified. End-to-end playability, title/import UI composition, broader command queue binding, and full viewport integration are still being hardened. | All three Custom modes share the same selectable 640x400..3840x2160 resolution. Original compatibility and launch/profile separation exist. HUD overlay and smooth-movement scaffolds are covered by probes, but enhanced assets, lighting, controller ergonomics, and full side-by-side screenshot verification remain open. |
 | **Dungeon Master II: Skullkeep (DM2)** | Boot/profile, utility/import, world-state, save/load, weather, projectile-door, asset-loader, dungeon-loader, object-model, and map-state probes exist. Broader dungeon, rendering, mechanics, creature/combat, shops/NPCs, and real-runtime compatibility remain active work. | All three Custom modes share the same selectable 640x400..3840x2160 resolution. Enhanced asset, HUD, lighting/outdoor effects, smooth movement, touch/controller, and verification scaffolds are implemented. Custom remains presentation work on top of the still-active Original parity effort. |
 | **DM Nexus (Saturn)** | Saturn DMDF/DGN parsing, world/runtime state, rendering slices, save/load, actor bounds, mechanics scaffolding, and verification paths exist. Launcher/game-loop handoff with real Saturn asset-path proof and broader runtime coverage remain active. | All three Custom modes share the same selectable 640x400..3840x2160 resolution once launchable. Asset, UI, lighting, and touch/controller slices exist, and v2.8.0 added the smooth-movement tick to the Custom render pipeline. Custom compatibility lock, launch/profile separation, and full verification remain behind the Original handoff proof. |
-| **Theron's Quest** | JP/US Track 02 provenance is hash-verified. Parser, world/progression state, viewport/UI, initial mechanics, save/load, shop-table guards, direct hash-verified boot-profile loading, and a narrow US bank-boundary signal are verified. Tier 1 #5 strict boot-probe confirms JP canonical, JP extras, and US extras all reach `TQR level load` via `--data-dir`. Exact Track 02 dungeon-bank offsets, full dungeon loader parity, runtime playability path, and README-eligible real screenshots remain active work. | Not started beyond keeping the Original compatibility boundary honest. When a Custom path is exposed, it should use the same selectable 640x400..3840x2160 resolution as the other games. Custom work waits on stronger Original Track 02 parity and runtime proof. |
+| **Theron's Quest** | JP/US Track 02 provenance is hash-verified. Parser, world/progression state, viewport/UI, mechanics, save/load, shop-table guards, direct hash-verified boot-profile loading, raw JP/US Track 02 bank-anchor offsets, US ISO bank-boundary signal, M11 command/tick handoff, and metadata-only runtime screenshot readiness receipts are verified. Tier 1 #5 strict boot-probe confirms JP canonical, JP extras, and US extras all reach `TQR level load` via `--data-dir`. Semantic Track 02 dungeon-table decoding, full dungeon loader parity, real `.srm` import, broader runtime playability proof, and README-eligible real screenshots remain active work. | Custom selection, settings, V2.0 filter config, V2.1 upscale, V2.2 shape/modern-asset scaffolding, and smooth movement gates are verified. Finished real PBR art, per-cell modern-art swap, enhanced UI overlays, and screenshot/material pixel gates remain active work. |
 
 ## What Firestaff Gives You
 
@@ -97,71 +97,34 @@ timing and inventory routes.
 
 ## Latest Release
 
-**Current version:** `2.8.0` (with 2026-06-21 development branch
-additions tracked in `docs/FIRESTAFF_GAP_LIST.md` + below).
+**Current version:** `3.0.1`.
 
-The latest release adds the Nexus **Custom** render-pipeline smooth-movement tick (Phase 5) as a
-first-class feature in the Custom render pipeline, makes the strict
-`-Wall -Wextra -Werror` CI matrix go green across all five release
-platforms, and closes a long-standing set of Theron Original linker
-gaps. Documented in `RELEASE_NOTES.md`:
+The latest release packages the post-v3.0.0 readiness push. It adds
+Theron Track 02 raw bank-anchor proof, routes Theron M11 movement through
+the V1 mechanics layer, records metadata-only Theron screenshot-readiness
+receipts, refreshes the 24h Theron readiness roll-up, and widens DM1,
+DM2, CSB, and Nexus verification coverage. It does not claim finished
+Theron playability, full Track 02 dungeon-loader parity, real `.srm`
+import proof, or public Theron screenshots.
 
-- **Nexus Custom render-pipeline smooth-movement tick**: `Nexus_V2_RenderPipeline`
-  now owns a `Nexus_V2_SmoothState`, calls `nexus_v2_smooth_init()` from
-  `nexus_v2_pipeline_init()`, records raw Original game state per tick
-  (55ms) and auto-triggers walk/turn animations on position/angle deltas,
-  and derives the camera position and angle from the smooth state when
-  smooth-movement is enabled (falling back to raw Original state
-  otherwise). The render signature changed from explicit `(cam_x, cam_y,
-  cam_z, cam_dir)` to `(game_x, game_y, game_angle)` so the pipeline
-  contract is explicit that interpolation is owned by the pipeline, not
-  the host.
-- **Strict-warnings CI matrix green**: silenced 270+ Clang and GCC
-  warnings across all targets. Categories: `-Wunused-*`,
-  `-Wswitch` (for the 10 CSB-specific view-square cases), `-Wcomment`,
-  `-Wincompatible-pointer-types-discards-qualifiers`,
-  `-Wmissing-field-initializers`, `-Wsign-compare`. CMake
-  `-Wno-maybe-uninitialized` and `-Wno-restrict` are guarded behind
-  `CMAKE_C_COMPILER_ID STREQUAL "GNU"`.
-- **Theron Original linker gaps closed**: three pre-existing linker
-  gaps exposed by the unified `firestaff` binary build are fixed; test
-  binaries that previously linked against the wrong helper lib now
-  resolve the Theron static-library symbols directly.
-- **Cross-platform release verified**: macOS arm64+x86_64, Linux
-  x86_64+arm64, Windows x86_64. Plus the `test_nexus_v2_smooth_movement`,
-  `test_csb_v2_smooth_runtime_binding`, `m11_game_text_latin_extended_*`,
-  and `test_theron_v1_m11_direct_launch` link fixes that were required
-  to make the strict-`ld` CI matrix green.
+### Development since v3.0.0 (2026-06-22)
 
-ctest baseline is 440/447 with the same 7 pre-existing parity-evidence
-line-drift failures and one missing test binary as the previous
-release. See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for the full
-history.
-
-### Development since v2.8.0 (2026-06-21)
-
-- **Tier 1 #5 strict boot-probe per path** (`firestaff_tier1_strict_boot_probe`,
-  ctest entry `tier1_strict_boot_probe`): runs the firestaff launcher
-  with `--game <id> --data-dir <path>` under `SDL_VIDEODRIVER=dummy`
-  and asserts the per-game boot milestone. Current in-scope paths PASS:
-  DM1 canonical, DM1 legacy-dos, CSB canonical, CSB Amiga 3.3 Meynaf FR,
-  Theron JP canonical, Theron JP extras, and Theron US extras. The Theron
-  US extras case
-  exercises the new `M12_AssetStatus_GetFirstMatchedVersion` +
-  first-matched-version fallback in `M11_GameView_OpenSelectedMenuEntry`
-  (commit `033edf66`), so direct launch via `--data-dir` works
-  without manual versionIndex tweaking. Nexus (Merged.iso::DM.BIN mount)
-  remains out-of-scope and is
-  tracked as Tier 4 / diagnostic gaps in `docs/FIRESTAFF_GAP_LIST.md`.
-- **Tier 2 #4 LZW Atari ST decoder** marked DONE in the gap-list:
-  the decoder lives in `src/dm1/dm1_v1_graphics_loader_pc34_compat.c`,
-  is round-trip-tested via `test_dm1_lzw_round_trip.c` 8/8 PASS,
-  and is consumed by `src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c`.
-- **DM1 24h readiness roll-up** (`tools/dm1_24h_readiness.py`):
-  continues to report PASS — DM1 is the strongest playable target
-  today, with all five capture-gap pairs closed (pass1052 viewport +
-  wall, pass1053 champion panel, pass1055 collision, pass1056
-  Firestaff-side pairing, pass1057 Amiga 2.2 DUNGEONB lock).
+- **Theron Track 02 bank anchors**: raw JP/US Track 02 BIN variants now
+  have exact descriptor/span anchor triads and 2352-byte raw CD sector
+  reporting. This verifies the bank signal while leaving semantic
+  dungeon-table decoding and full loader parity open.
+- **Theron M11 command and draw proof**: hash-verified Track 02 handoff
+  now reaches initial level load, routed turn/move commands,
+  post-move tick effects, idle tick sync, backward movement with facing
+  preserved, and nonblank M11 draw output.
+- **Theron readiness receipts**: the runtime screenshot-readiness gate
+  and 24h roll-up record metadata-only evidence and flag fallback-asset
+  rows, so the project has capture-path proof without promoting
+  README screenshots too early.
+- **DM1, DM2, CSB, and Nexus gates**: DM1 live capture/provenance and V2
+  presentation gates advanced, DM2 canonical/DOS/PC extras launch smoke
+  landed, CSB portrait/render-readiness rows were refreshed, and Nexus
+  gained Saturn-font determinism coverage.
 
 ## Download
 

@@ -280,6 +280,52 @@ static int resolve_asset_path(const char *base_dir,
     return 0;
 }
 
+static int resolve_dm2_asset_path(const char *base,
+                                  const char *file_candidates[],
+                                  char resolved_path[512],
+                                  size_t *out_size,
+                                  char out_md5[33]) {
+    const char *subdirs[] = {
+        "dm2",
+        "data",
+        "",
+        NULL
+    };
+    size_t i;
+    for (i = 0; subdirs[i]; ++i) {
+        if (resolve_asset_path(base, subdirs[i], file_candidates,
+                               resolved_path, out_size, out_md5)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void copy_parent_dir(char dst[512], const char *path) {
+    const char *slash;
+    const char *backslash;
+    size_t n;
+    if (!dst) return;
+    dst[0] = '\0';
+    if (!path || !path[0]) {
+        snprintf(dst, 512, ".");
+        return;
+    }
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    if (!slash || (backslash && backslash > slash)) {
+        slash = backslash;
+    }
+    if (!slash) {
+        snprintf(dst, 512, ".");
+        return;
+    }
+    n = (size_t)(slash - path);
+    if (n >= 512) n = 511;
+    memcpy(dst, path, n);
+    dst[n] = '\0';
+}
+
 /* ── Scan and verify DM2 assets ─────────────────────────────────────── */
 
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
@@ -297,16 +343,10 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
             "graphics.dat",
             NULL
         };
-        if (!resolve_asset_path(base, "dm2", gfx_candidates,
-                                profile->graphics_path,
-                                &profile->graphics_size,
-                                profile->graphics_md5)) {
-            /* Try without subdir */
-            resolve_asset_path(base, "", gfx_candidates,
+        resolve_dm2_asset_path(base, gfx_candidates,
                                profile->graphics_path,
                                &profile->graphics_size,
                                profile->graphics_md5);
-        }
     }
 
     /* Resolve DUNGEON.DAT or DM2DUNGEON.DAT */
@@ -318,15 +358,10 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
             "dungeon.dat",
             NULL
         };
-        if (!resolve_asset_path(base, "dm2", dun_candidates,
-                                profile->dungeon_path,
-                                &profile->dungeon_size,
-                                profile->dungeon_md5)) {
-            resolve_asset_path(base, "", dun_candidates,
+        resolve_dm2_asset_path(base, dun_candidates,
                                profile->dungeon_path,
                                &profile->dungeon_size,
                                profile->dungeon_md5);
-        }
     }
 
     /* Determine if using DM2-specific filenames */
@@ -370,9 +405,19 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         default:                    strncpy(profile->version_id, "unknown", sizeof(profile->version_id) - 1); break;
     }
 
-    /* Build asset root */
-    snprintf(profile->asset_root, sizeof(profile->asset_root),
-             "%s%cdm2", base, DM2_PATH_SEP);
+    /* Build asset root from the actual resolved file location.  The
+     * canonical user staging can be either <root>/dm2/ or an extracted
+     * DOS install where the real files live in <root>/data/.  SKULL.ASM
+     * T560 owns the DUNGEON.DAT load; this helper only normalizes the
+     * Firestaff launch path before that parser runs. */
+    if (profile->dungeon_path[0]) {
+        copy_parent_dir(profile->asset_root, profile->dungeon_path);
+    } else if (profile->graphics_path[0]) {
+        copy_parent_dir(profile->asset_root, profile->graphics_path);
+    } else {
+        snprintf(profile->asset_root, sizeof(profile->asset_root),
+                 "%s%cdm2", base, DM2_PATH_SEP);
+    }
 
     /* Determine if we found both required files */
     if (profile->graphics_path[0] && profile->dungeon_path[0]) {
@@ -411,13 +456,22 @@ void dm2_v1_boot_profile_init(DM2_V1_BootProfile *profile) {
 int dm2_v1_boot_probe_available(const char *data_dir) {
     char path[512];
     const char *base = data_dir ? data_dir : ".";
-    /* Quick check: look for DM2DUNGEON.DAT or DUNGEON.DAT in dm2/ */
+    /* Quick check: look for DM2DUNGEON.DAT or DUNGEON.DAT in dm2/,
+     * data/, or the root.  Extracted DOS installs use data/dungeon.dat. */
     struct stat st;
     snprintf(path, sizeof(path), "%s%cdm2%cDM2DUNGEON.DAT", base, DM2_PATH_SEP, DM2_PATH_SEP);
     if (stat(path, &st) == 0 && st.st_size > 1000) return 1;
     snprintf(path, sizeof(path), "%s%cdm2%cDUNGEON.DAT", base, DM2_PATH_SEP, DM2_PATH_SEP);
     if (stat(path, &st) == 0 && st.st_size > 1000) return 1;
     snprintf(path, sizeof(path), "%s%cdm2%cGRAPHICS.DAT", base, DM2_PATH_SEP, DM2_PATH_SEP);
+    if (stat(path, &st) == 0 && st.st_size > 100000) return 1;
+    snprintf(path, sizeof(path), "%s%cdata%cdungeon.dat", base, DM2_PATH_SEP, DM2_PATH_SEP);
+    if (stat(path, &st) == 0 && st.st_size > 1000) return 1;
+    snprintf(path, sizeof(path), "%s%cdata%cgraphics.dat", base, DM2_PATH_SEP, DM2_PATH_SEP);
+    if (stat(path, &st) == 0 && st.st_size > 100000) return 1;
+    snprintf(path, sizeof(path), "%s%cDUNGEON.DAT", base, DM2_PATH_SEP);
+    if (stat(path, &st) == 0 && st.st_size > 1000) return 1;
+    snprintf(path, sizeof(path), "%s%cGRAPHICS.DAT", base, DM2_PATH_SEP);
     if (stat(path, &st) == 0 && st.st_size > 100000) return 1;
     return 0;
 }
