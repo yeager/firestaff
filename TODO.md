@@ -136,6 +136,7 @@ Source-locked against SKULL.ASM T520/T560/T600, ReDMCSB GAMELOOP.C:164-219, and 
 - 🔧 Runtime handoff/playability proof: V1 phases 0-7 are implemented/source-locked; remaining work is launcher/game-loop handoff and real Saturn asset-path proof.
 - 🔧 Mechanics parity hardening: movement, click routes, item usage, doors, pits, teleporters, triggers, combat, AI, and sound are implemented; remaining work is broader runtime/probe coverage beyond compile/save-load gates.
 - 🔧 DMDF embedded palette/string runtime handoff remains open after the parser-level bounds gate: real VDP1 BITMAP decoder + per-cell palette lookup from a real `.MNS` are still needed once the VDP1 BITMAP format is documented end-to-end; today the runtime still ignores the embedded palette/string blocks entirely.
+- 🔧 Save-slot coverage remains open beyond the single-field manager-API gate: add multi-slot coverage and broader world/champion object/event/timer round-trip proof. The slot-0 `world.party_x` round-trip is already covered by `test_nexus_v1_save_slot_roundtrip_pc34_compat`.
 
 ### Nexus V2.0 / V2.1 / V2.2
 
