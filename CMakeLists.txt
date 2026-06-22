@@ -9733,6 +9733,24 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_amg_sound
     )
 
+    # ── Nexus Saturn BPPK/BMPD packed-menu archive directory ────
+    # Directory gate only: validates the MENU.BPK BPPK/BMPD wrapper
+    # and PRS3 payload markers without claiming PRS3 decompression yet.
+    add_executable(test_nexus_v1_bpk_archive
+        tests/test_nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_bpk_archive.c
+    )
+    target_include_directories(test_nexus_v1_bpk_archive PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_bpk_archive PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_bpk_archive
+        COMMAND test_nexus_v1_bpk_archive
+    )
+
     # ── CSB / DM hidden-code skip table (Tier 2 from FIRESTAFF_GAP_LIST) ──
     # Skips Atari ST and Amiga item indices 558-562 which contain
     # 68k executable code left over from the original FTL port
