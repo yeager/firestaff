@@ -15714,6 +15714,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_polished_ui_flow.c")
     )
 endif()
 
+# M12 no-data popup once gate: regression proving the no-data or
+# missing-required-files popup appears exactly once per relevant scan
+# or selection state (init, dismiss, unavailable-game ACK, data-dir
+# picker cancel, no-op rescan, quick resume) without stacking or
+# repeating within the same state.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_no_data_popup_once_gate.c")
+    add_executable(test_m12_no_data_popup_once_gate
+        tests/test_m12_no_data_popup_once_gate.c
+    )
+    target_link_libraries(test_m12_no_data_popup_once_gate PRIVATE firestaff_m12 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m12_no_data_popup_once_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_no_data_popup_once_gate
+        COMMAND test_m12_no_data_popup_once_gate
+    )
+endif()
+
 # M12 manual/docs launcher: user-facing docs catalog and default README URL.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_manual_docs_launcher_m12.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/manual_docs_m12.c")
