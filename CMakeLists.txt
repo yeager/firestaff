@@ -1415,6 +1415,29 @@ if(BUILD_TESTING)
     )
 endif()
 
+# DM1 V2 actual-render screenshot / pixel-fixture probe. Headless: no game
+# data, host-agnostic (uses SDL_VIDEODRIVER=dummy). Drives the real V2
+# render pipeline for V1 / V2.0 / V2.1 / V2.2, writes a 24-bit BMP
+# fixture per mode under a probe-controlled temp dir, and asserts the
+# BMPs are distinct (proves actual rendered output, not just config).
+# Source-lock: ReDMCSB DUNVIEW.C:8318-8542 + GAMELOOP.C:90 + F0128.
+add_executable(firestaff_dm1_v2_actual_render_screenshot_probe
+    probes/firestaff_dm1_v2_actual_render_screenshot_probe.c)
+target_include_directories(firestaff_dm1_v2_actual_render_screenshot_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_dm1_v2_actual_render_screenshot_probe
+    PRIVATE firestaff_m11 firestaff_m10 SDL3::SDL3)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v2_actual_render_screenshot_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v2_actual_render_screenshot_probe
+        COMMAND firestaff_dm1_v2_actual_render_screenshot_probe
+    )
+endif()
+
 # DM1 V2 side-by-side presentation-disabled seed probe. Headless: no game data.
 add_executable(firestaff_dm1_v2_side_by_side_presentation_seed_probe
     probes/dm1/firestaff_dm1_v2_side_by_side_presentation_seed_probe.c)
