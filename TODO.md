@@ -135,6 +135,7 @@ Source-locked against SKULL.ASM T520/T560/T600, ReDMCSB GAMELOOP.C:164-219, and 
 
 - 🔧 Runtime handoff/playability proof: V1 phases 0-7 are implemented/source-locked; remaining work is launcher/game-loop handoff and real Saturn asset-path proof.
 - 🔧 Mechanics parity hardening: movement, click routes, item usage, doors, pits, teleporters, triggers, combat, AI, and sound are implemented; remaining work is broader runtime/probe coverage beyond compile/save-load gates.
+- ✅ 2026-06-22 DGN malformed-actor gate (closed this pass): the dead hard-reject guard for OOB spatial fields in `nexus_v1_creature_spawn` was removed so malformed x/y/facing bytes from external DGN actor records clamp/normalize into the 64x64 grid instead of silently dropping the actor, while out-of-range type refs and the fixed active-pool boundary (ReDMCSB GROUP.C F0183) stay hard rejects. `tests/test_nexus_v1_dgn_actor_slot_bounds.c` is now wired into CTest as `nexus_v1_dgn_actor_slot_bounds`, and the focused parity probe `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c::probe_dgn_actor_refs` was updated to the same clamp/reject contract. Verified: 27/27 Nexus ctest subset PASS. Remaining Nexus V1 work is unchanged (real Saturn asset handoff, original pixel parity, broader runtime playability proof).
 
 ### Nexus V2.0 / V2.1 / V2.2
 

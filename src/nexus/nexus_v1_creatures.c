@@ -40,13 +40,16 @@ void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
 int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir) {
     Nexus_Creature *c;
     if (!mgr || type_idx < 0 || type_idx >= mgr->type_count) return -1;
-    /* ReDMCSB: DUNGEON.C F0151 lines ~1423-1445 returns wall for
-     * out-of-map squares; GROUP.C F0183 lines ~414-424 refuses to assign an
-     * active-group slot after the active pool is exhausted. Nexus DGN actor
-     * records are external data, so malformed references must fail before
-     * consuming an active creature slot. */
-    if (x < 0 || x >= NEXUS_MAX_MAP_SIZE || y < 0 || y >= NEXUS_MAX_MAP_SIZE) return -1;
-    if (dir < 0 || dir > 3) return -1;
+    /* ReDMCSB: GROUP.C F0183 lines ~414-424 refuses to assign an active-group
+     * slot after the active pool is exhausted, and the actor-type reference
+     * is a hard reject (a bad type index would read garbage stats from the
+     * type table). Malformed spatial fields from external Nexus DGN actor
+     * records, however, are clamped/normalized below rather than dropped,
+     * so a single bad coordinate does not silently lose an otherwise-valid
+     * actor and the AI grid index stays in bounds. See
+     * tests/test_nexus_v1_dgn_actor_slot_bounds.c and
+     * probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c
+     * probe_dgn_actor_refs() for the clamp/reject contract. */
     if (mgr->active_count >= NEXUS_MAX_ACTIVE_CREATURES) return -1;
     /* ReDMCSB: GROUP.C F0183 lines 389-432 caps active group slots before
      * writing G0375_ps_ActiveGroups. Nexus DGN actor records can be malformed
