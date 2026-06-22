@@ -309,6 +309,7 @@ set(M12_SOURCES
     src/engine/config_m12.c
     src/shared/asset_status_m12.c
     src/shared/asset_find_by_hash.c
+    src/shared/firestaff_mapfile.c
     src/shared/card_art_m12.c
     src/shared/card_art_generated_m12.c
     src/ui/branding_firestaff_rail_m12.c
@@ -3102,6 +3103,21 @@ if(BUILD_TESTING)
     add_test(
         NAME asset_find_by_hash
         COMMAND test_asset_find_by_hash
+    )
+
+    add_executable(test_firestaff_mapfile
+        tests/test_firestaff_mapfile.c
+        src/shared/firestaff_mapfile.c
+    )
+    target_include_directories(test_firestaff_mapfile PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_mapfile PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_mapfile_unit
+        COMMAND test_firestaff_mapfile
     )
 
     add_executable(test_dm1_pc34_multilanguage_required_gate
