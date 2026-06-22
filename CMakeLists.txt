@@ -10460,6 +10460,28 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_dgn_actor_slot_bounds
     )
 
+    # ── Nexus V1 DMDF embedded palette / string block bounds gate ──
+    # Parser-level gate (no game data required). Verifies the new
+    # nexus_v1_dmdf_parse_palette_block / nexus_v1_dmdf_parse_string_block
+    # helpers reject every kind of bounds-violating input we have
+    # seen in fuzz testing of the DMDF loader — wrong magic, truncated
+    # headers, oversize counts, length overflows, null args, non-zero
+    # block offsets, etc. Phase A / CI friendly.
+    add_executable(test_nexus_v1_dmdf_palette_bounds
+        tests/test_nexus_v1_dmdf_palette_bounds.c
+        src/nexus/nexus_v1_dmdf_model.c
+    )
+    target_include_directories(test_nexus_v1_dmdf_palette_bounds PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dmdf_palette_bounds PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_dmdf_palette_bounds
+        COMMAND test_nexus_v1_dmdf_palette_bounds
+    )
+
     # ── CSB / DM hidden-code skip table (Tier 2 from FIRESTAFF_GAP_LIST) ──
     # Skips Atari ST and Amiga item indices 558-562 which contain
     # 68k executable code left over from the original FTL port
