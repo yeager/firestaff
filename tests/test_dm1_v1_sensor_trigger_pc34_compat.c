@@ -577,6 +577,100 @@ static void test_floor_pressure_plate_runtime_party_object_weight_gate(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test F0718: Runtime floor C001 multi-item weight gate.
+ *
+ *  Verifies a party/object/creature pressure pad (sensor type 1)
+ *  stays SET the entire time multiple items of different categories
+ *  (weapon + armour + junk) all weigh the same square, and that the
+ *  party walk-on does not retrigger a TOGGLE while the stacked
+ *  weight is present.
+ *
+ *  Source: MOVESENS.C F0276 lines 1624-1648 and case C001 at
+ *  lines 1664-1667.  Case C001 suppresses the party/object/creature
+ *  pressure pad whenever L0772_B_SquareContainsObject or
+ *  L0773_B_SquareContainsGroup holds for the entered square; the
+ *  weight decision is square-wide and ignores the item category.
+ * ---------------------------------------------------------------- */
+static void test_floor_pressure_plate_runtime_multi_item_weight_gate(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    unsigned char squares[4];
+    unsigned short squareFirstThings[4];
+    struct DungeonSensor_Compat sensors[1];
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonArmour_Compat armours[1];
+    struct DungeonJunk_Compat junks[1];
+    struct SensorEffectList_Compat effects;
+    int i;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    memset(weapons, 0, sizeof(weapons));
+    memset(armours, 0, sizeof(armours));
+    memset(junks, 0, sizeof(junks));
+    for (i = 0; i < 4; ++i) {
+        squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    map.width = 2;
+    map.height = 2;
+    tiles.squareData = squares;
+    tiles.squareCount = 4;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+
+    squares[1] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0, 0);
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT;
+    sensors[0].targetMapX = 1;
+    sensors[0].targetMapY = 1;
+    sensors[0].targetCell = 0;
+    /* Baseline: with no items weighing the pad, the party walk-on
+     * must still fire TOGGLE_REMOTE -- this confirms the helper is
+     * invoked on the deterministic square (map 0, x=0, y=1). */
+    sensors[0].next = THING_ENDOFLIST;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 4;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.armours = armours;
+    things.armourCount = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    things.loaded = 1;
+
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 0, 1,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.count == 1,
+          "Runtime C001 multi-item baseline: empty pad triggers party walk-on");
+
+    /* Now stack three weight-bearing items of different categories on
+     * the same deterministic pressure pad square.  The chain is
+     * sensor -> weapon -> armour -> junk -> ENDOFLIST, so the helper
+     * must walk past the head sensor (not weight-bearing) before the
+     * first weight-bearing item suppresses the party retrigger. */
+    sensors[0].next = make_thing(THING_TYPE_WEAPON, 0, 0);
+    weapons[0].next = make_thing(THING_TYPE_ARMOUR, 0, 0);
+    armours[0].next = make_thing(THING_TYPE_JUNK, 0, 0);
+    junks[0].next = THING_ENDOFLIST;
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 0, 1,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.count == 0,
+          "Runtime C001 multi-item: weapon+armour+junk stack suppresses party walk-on");
+}
+
+/* ----------------------------------------------------------------
  *  Test F0718/F0724: Runtime floor C003 party plate targets a door
  *  event.
  *  Source: MOVESENS.C F0268 lines 1000-1035 queues timed target
@@ -1518,6 +1612,7 @@ int main(void) {
     test_floor_party_on_stairs();
     test_floor_party_on_stairs_runtime_gate();
     test_floor_pressure_plate_runtime_party_object_weight_gate();
+    test_floor_pressure_plate_runtime_multi_item_weight_gate();
     test_floor_party_plate_runtime_door_event_gate();
     test_wall_ornament_click();
     test_wall_click_specific_object();
