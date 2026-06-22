@@ -8583,6 +8583,12 @@ firestaff_add_dm1_v1_viewport_contract_test(
     dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat
 )
 firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat
+    tests/test_dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat.c
+    dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat
     tests/test_dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat.c
     src/dm1/dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat.c
