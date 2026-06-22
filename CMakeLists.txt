@@ -941,16 +941,19 @@ endif()
 # V2 UPSCALED init (640x400) + 2x scaling,
 # V2 ENHANCED init (1280x800) with all V2.2 features on,
 # state-hash gate (deterministic for same V1 input),
+# deterministic input scripts + screenshot/pixel hash gates,
 # config->dim mapping for all 3 modes,
 # lifecycle (re-init after shutdown), null-arg safety.
 add_executable(firestaff_nexus_v2_verification_suite_probe
     probes/firestaff_nexus_v2_verification_suite_probe.c
+    src/nexus/nexus_v1_movement.c
     src/nexus/nexus_v2_render_pipeline.c
     src/nexus/nexus_v2_upscaler.c
     src/nexus/nexus_v2_lighting.c
     src/nexus/nexus_v2_particles.c
     src/nexus/nexus_v2_atmosphere.c
     src/nexus/nexus_v2_smooth_movement.c
+    src/nexus/nexus_v2_phase_gate_pc34.c
     src/nexus/nexus_v2_config.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_include_directories(firestaff_nexus_v2_verification_suite_probe PRIVATE
