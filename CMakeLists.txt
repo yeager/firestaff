@@ -9954,6 +9954,27 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_cmp_decode
     )
 
+    # ── CSB Utility Disk .AMG SND2 decoder ───────────────────────
+    # Verifies src/shared/firestaff_amg_decode.c parses the CSB
+    # Amiga Utility Disk single-item SND2 sound-effect files listed
+    # by dmweb: big-endian sample count, signed 8-bit mono PCM, and
+    # 0..3 trailing bytes. Runtime playback/rate binding is out of
+    # scope for this read-only decoder gate.
+    add_executable(test_firestaff_amg_decode
+        tests/test_firestaff_amg_decode.c
+        src/shared/firestaff_amg_decode.c
+    )
+    target_include_directories(test_firestaff_amg_decode PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_amg_decode PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_amg_decode_unit
+        COMMAND test_firestaff_amg_decode
+    )
+
     # ── CSB V1 CMP import glue (Utility Disk Champion Editor flow) ──
     # Wires the existing firestaff_cmp_decode.c decoder to the
     # CSB_V1_Champion / CSB_V1_PartyState runtime data structures.
