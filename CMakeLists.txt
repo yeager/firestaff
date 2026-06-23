@@ -2619,6 +2619,39 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait-00 front_north_entry runtime probe.
+# Real-asset regression for the narrow slice:
+#   ordinal       : 0   (C026 col 0 row 0; "DAROOU", untitled)
+#   route variant : front_north_entry (map=0, x=1, y=2, NORTH)
+#   aspect        : portrait_rect_position (D1C cutout at viewport 96,35,32,29)
+# Proves:
+#   (A) D1C wall-ornament frame helper returns the source-locked box.
+#   (B) ordinal 0 -> C026 source rect (0, 0, 32, 29) math is correct.
+#   (C) front_north_entry pose resolves to the source-locked ordinal.
+#   (D) ordinal 0 catalog name is DAROOU (untitled) (pinned to a real
+#       source identity even if no Hall map route exists).
+#   (E) side-wall corridor poses never expose the front-mirror route
+#       (no-floating contract).
+#   (F) front_north_entry route accepts a C127 sensorData=0 seed and
+#       reports ordinal 0, then restores the original sensorData.
+# Source evidence: DUNGEON.C:2558,2573,2608-2612; MOVESENS.C:1501-1503;
+#                  REVIVE.C F0280,F0282; DUNVIEW.C:3913-3928,8318-8542;
+#                  COORD.C:1693-1722; DEFS.H:2071-2079.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion_portrait_00_front_north_entry_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_hall_champion_portrait_00_front_north_entry_runtime_probe
+        probes/m11/firestaff_dm1_v1_hall_champion_portrait_00_front_north_entry_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_champion_portrait_00_front_north_entry_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_champion_portrait_00_front_north_entry_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hall_champion_portrait_00_front_north_entry_runtime_probe
+        COMMAND firestaff_dm1_v1_hall_champion_portrait_00_front_north_entry_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 Hall of Champions portrait-03 east_walkpath runtime probe.
 # Real-asset regression for the narrow slice:
 #   ordinal       : 3
