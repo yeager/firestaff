@@ -2094,6 +2094,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_22_walkpath_from_entrance_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_08_walkpath_from_entrance_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_portrait_13_east_walkpath_portrait_rect_position_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_07_turn_away_return_portrait_rect_position_137_gate_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal21_east_walkpath_portrait_rect_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_portrait00_south_return_portrait_rect_position_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_2_south_return_portrait_rect_position_runtime_probe.c"
