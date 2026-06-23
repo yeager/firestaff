@@ -1,56 +1,51 @@
 
-# Firestaff v3.0.1
+# Firestaff v3.0.2
 
-Firestaff v3.0.1 packages the post-v3.0.0 readiness push on top of
-current `main`. The release is intentionally conservative: it promotes
-new verifier coverage, runtime handoff proof, and public status wording
-without claiming that Theron's Quest, DM2, Nexus, or CSB are fully
-finished.
+Firestaff v3.0.2 packages the 2026-06-23 DM1/CSB hardening batch on top
+of the v3.0.1 readiness release. The release is intentionally
+conservative: it promotes source-locked probes, launch-readiness
+verifiers, and public status wording without claiming finished parity for
+DM1 V1, CSB, DM2, Nexus, or Theron's Quest beyond the evidence now in
+CI.
 
-## Highlights since v3.0.0
+## Highlights since v3.0.1
 
-- **Theron V1 Track 02 bank anchors**: raw JP/US Track 02 BIN variants
-  now have exact descriptor/span anchor triads and 2352-byte raw CD
-  sector reporting. This closes the raw bank-anchor offset question, but
-  semantic dungeon-table decoding and full loader parity remain open.
-- **Theron M11 runtime command proof**: turn, forward, and backward
-  input now route through `theron_v1_turn_party()` and
-  `theron_v1_move_party()`. The direct-launch test proves hash-verified
-  Track 02 handoff, initial level load, post-move tick effects, idle tick
-  sync, backward movement with facing preserved, and nonblank M11 draw
-  output.
-- **Theron screenshot and 24h readiness gates**: new metadata-only
-  screenshot-readiness receipts and the 30-row 24h roll-up make the
-  capture path measurable while still flagging fallback-asset rows and
-  keeping README screenshots unpromoted until real-art/source-bank proof
-  exists.
-- **DM1 V1 capture evidence advanced**: live original-capture receipts,
-  keyboard-buffer provenance, scripted post-dungeon routes, pass1073
-  live-capture locking, V2 runtime presentation smoke, HUD overlay state,
-  per-mode material signatures, and additional viewport/source-lock CTests
-  landed after v3.0.0.
 - **DM1 FTL swoosh intro fixed**: the launcher now unpacks the PC
   `SWOOSH` LZEXE file before extracting the logo, then decodes the
   source IMG2 stream and rejects false 320x200 matches. The animated FTL
   logo now uses the original silhouette instead of a corrupted filled
   frame.
-- **DM2, CSB, and Nexus coverage widened**: DM2 canonical/DOS/PC extras
-  launch smoke gates, CSB portrait render handoff/runtime-readiness
-  refreshes, and the Nexus Saturn-font determinism probe are now part of
-  the tracked readiness surface.
+- **Hall of Champions probe coverage expanded**: new real-asset DM1
+  runtime gates lock additional champion portrait rectangles and redraw
+  paths, including DAROOU/HALK ownership checks, ordinal 20-23 redraw
+  probes, cancel/reopen behavior, and stale side-pose pixel absence.
+- **CSB launch-readiness verifier anchors refreshed**: the
+  `csb_v1_m11_runtime_capture_boundary` and
+  `pass547_csb_v1_runtime_readiness_backfill` gates now track the current
+  `M12_StartupMenu_GetLaunchIntent()` source span after the
+  supported-game/assets expression moved to line 7513.
+- **Public gap list refreshed**: `docs/FIRESTAFF_GAP_LIST.md` now records
+  the 2026-06-23 Hall of Champions probe evidence, CSB anchor refreshes,
+  focused queue progress, and current limits without exposing worker logs
+  or failed-job counters as release copy.
+- **V1 inventory/status gate drift fixed**: the source-gate ranges were
+  refreshed after code motion so the existing V1 inventory/status evidence
+  is checked against the current source layout.
 
 ## Verification
 
-- 142 commits ship on top of `v3.0.0`.
-- Main-session verification before release prep kept GitHub Actions green
-  for commit `393d9f64`: M10 verify + CMake build + cross-platform
-  determinism, plus GitHub Pages.
-- Focused local verification for the latest Theron readiness batch passed:
-  Debug configure/build, Theron focused CTest 5/5,
-  `theron_v1_runtime_screenshot_readiness`, and
-  `tools/theron_24h_readiness.py`.
+- 54 commits ship on top of `v3.0.1`, including this release-prep
+  commit.
+- GitHub Actions was green on `fff924d0` before release prep: M10 verify,
+  CMake build on macOS/Windows/Linux, strict warnings, asset hygiene, and
+  cross-platform determinism.
+- Focused local verification before release prep included `git diff
+  --check`, full CMake build, Phase A `23/23`, four Hall of Champions
+  real-asset CTests `4/4`, V1 inventory/status gates `4/4`, FTL
+  swoosh/source-animation CTests `3/3`, and the CSB launch-readiness
+  verifier refreshes.
 - The release workflow builds the public macOS, Windows, Linux x86_64,
-  and Linux ARM64 packages from the `v3.0.1` tag.
+  and Linux ARM64 packages from the `v3.0.2` tag.
 
 # Firestaff v2.8.0
 
