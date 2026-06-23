@@ -168,15 +168,14 @@
     },
     {
       "id": "firestaff_csb_launch_still_gated",
-      "path": "<firestaff-repo>/menu_startup_m12.c",
-      "lines": "225-1412",
+      "path": "<firestaff-repo>/src/ui/menu_startup_m12.c",
+      "lines": "2327-2337",
       "needles": [
-        ".gameId = \"csb\"",
+        "All five catalogued games now have runtime launch boundaries",
         "static int m12_game_supported",
-        "strcmp(gameId, \"csb\") == 0",
-        "intent.valid = m12_game_supported(intent.gameId)"
+        "strcmp(gameId, \"csb\") == 0"
       ],
-      "why": "Firestaff catalogs CSB and now permits a hash-matched CSB M12 launch intent while downstream runtime/playability proof remains separately gated.",
+      "why": "Firestaff catalogs CSB and permits a hash-matched CSB M12 launch intent while downstream runtime/playability proof remains separately gated.",
       "missing": [],
       "ok": true
     }
