@@ -2120,6 +2120,37 @@ foreach(_pool_probe_src IN ITEMS
     endif()
 endforeach()
 
+# DM1 V1 Hall of Champions portrait ordinal 16 — south_return /
+# portrait_rect_position runtime probe.  Source-locked to:
+#   DUNGEON.C:2573 maps M011_CELL(sensor) against view dir.
+#   DUNGEON.C:2608-2612 stores C127 sensorData in G0289.
+#   DUNVIEW.C:3913-3928 blits C026 ordinal 16 (col 0, row 2) into
+#     the D1C portrait-on-wall cutout at viewport (96, 35, 32, 29).
+#   DUNVIEW.C:8318-8618 F0128 viewport redraw order (far-to-near)
+#     overpaints the D1C rect with side-wall geometry when the
+#     front cell no longer has a C127 sensor.
+# The probe seeds the C127 sensor data on the canonical (1,5)
+# DIR_SOUTH pose from 13 (WUUF, shipped) to 16 (target) and proves
+# the D1C portrait rect is painted with ordinal 16 pixels and does
+# not float on the side walls.  Sibling to the other ordinal-XX
+# south_return portrait_rect_position probes (0, 1, 2, 3, 4, 6, 7,
+# 8, 9, 10).  This is a Firestaff-runtime slice proof, not DOS
+# pixel parity.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_16_south_return_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_ordinal_16_south_return_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_16_south_return_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_ordinal_16_south_return_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_ordinal_16_south_return_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_ordinal_16_south_return_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_ordinal_16_south_return_portrait_rect_position_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 champion-mirror VISUAL CAPTURE probe — takes DATA_DIR OUT_DIR,
 # unlike the foreach probes above (DATA_DIR only). Saves PPMs plus a
 # JSON+MD manifest for visual-evidence readiness against the
