@@ -15,6 +15,9 @@ project(Firestaff VERSION 3.0.3 LANGUAGES C)
 if(NOT DEFINED FIRESTAFF_WORKSPACE_DATA_DIR)
     set(FIRESTAFF_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data")
 endif()
+if(NOT DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
+    set(FIRESTAFF_DM1_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data/dm1")
+endif()
 if(NOT TARGET WORKSPACE_DATA_DIR)
     add_library(WORKSPACE_DATA_DIR INTERFACE IMPORTED GLOBAL)
 endif()
@@ -1981,7 +1984,7 @@ if(NOT MSVC)
 endif()
 add_test(
     NAME dm1_v1_chest_action_hand_close_runtime_probe
-    COMMAND firestaff_dm1_v1_chest_action_hand_close_runtime_probe $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    COMMAND firestaff_dm1_v1_chest_action_hand_close_runtime_probe "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
 )
 
 # DM1 V1 champion-panel runtime pixel/pose evidence probes. 9 orphaned
@@ -2026,7 +2029,7 @@ foreach(_pool_probe_src IN ITEMS
         endif()
         add_test(
             NAME ${_pool_probe_exe}
-            COMMAND ${_pool_probe_exe} $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+            COMMAND ${_pool_probe_exe} "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
         )
     endif()
 endforeach()
@@ -2048,7 +2051,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     add_test(
         NAME firestaff_dm1_v1_champion_mirror_capture_probe
         COMMAND firestaff_dm1_v1_champion_mirror_capture_probe
-            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
             "${CMAKE_CURRENT_BINARY_DIR}/dm1_v1_champion_mirror_capture_ctest"
     )
 endif()
