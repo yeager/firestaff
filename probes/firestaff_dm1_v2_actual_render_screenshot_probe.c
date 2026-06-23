@@ -77,6 +77,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#if defined(_WIN32)
+#include <direct.h>
+#endif
 
 /* ---------- Probe statistics ---------- */
 
@@ -276,7 +279,11 @@ static int ensure_dir(const char* path) {
     if (stat(path, &st) == 0) {
         return S_ISDIR(st.st_mode) ? 1 : 0;
     }
+#if defined(_WIN32)
+    return _mkdir(path) == 0 ? 1 : 0;
+#else
     return mkdir(path, 0755) == 0 ? 1 : 0;
+#endif
 }
 
 static int run_mode_capture(ModeCapture* cap,
