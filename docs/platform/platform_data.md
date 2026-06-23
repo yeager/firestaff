@@ -40,8 +40,8 @@ validating game data files. Called during startup to scan for original files.
 
 M12_AssetStatus_Scan() uses 3 search roots:
 1. FIRESTAFF_DATA environment variable
-2. Platform-specific user data dir (%APPDATA%/Firestaff on Win,
-   ~/Library/Application Support/Firestaff on macOS, ~/.local/share/firestaff on Linux)
+2. Default game-data dir: ~/.firestaff/data on macOS/Linux,
+   <installation-directory>/data on Windows
 3. Hardcoded fallback directories for each game
 
 ### Original Candidate Names
@@ -98,9 +98,9 @@ Also writes data/README.txt with placement instructions.
 
 1. Explicit requestedDir argument (if non-empty)
 2. FIRESTAFF_DATA environment variable
-3. Legacy ~/.firestaff/data on POSIX (only if directory already exists)
-4. <user-data-dir>/data
-5. Current directory .
+3. ~/.firestaff/data on macOS/Linux
+4. <installation-directory>/data on Windows
+5. Current directory ./data
 
 ## ReDMCSB Reference
 

@@ -319,7 +319,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->cloudSyncEnabled = 0;
     config->cloudSyncPolicy = 0;  /* M12_SYNC_POLICY_NEWER_WINS */
     config->cloudSyncDir[0] = '\0';
-    FSP_GetDefaultOriginalsDir(config->dataDir, sizeof(config->dataDir));
+    FSP_ResolveDataDir(config->dataDir, sizeof(config->dataDir), NULL);
     m12_default_config_path(config->path, sizeof(config->path));
 }
 

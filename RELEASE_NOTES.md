@@ -1,4 +1,12 @@
 
+# Firestaff next
+
+- Fixes the game-data default used by launcher/startup config resolution:
+  macOS and Linux now default to `~/.firestaff/data`, while Windows
+  defaults to the installed executable's `data` directory. The old
+  `/tmp/firestaff-test-no-assets` path remains only an explicit test
+  fixture and is now guarded by the portable filesystem probe.
+
 # Firestaff v3.0.3
 
 Firestaff v3.0.3 packages the post-v3.0.2 hardening batch from

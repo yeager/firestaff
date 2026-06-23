@@ -64,9 +64,9 @@ Same pattern as user data dir, but XDG_CONFIG_HOME on Linux, %APPDATA% on Window
 
 Platform-specific data directory and startup validation:
 #ifdef _WIN32
-    // %APPDATA%\Firestaff\data (fallback C:\Firestaff\data)
+    // <module-path>\data (fallback .\data)
 #else
-    // ~/.firestaff/data (fallback /tmp/firestaff/data)
+    // ~/.firestaff/data (fallback ./data)
 #endif
 
 Directory creation uses mkdir -p on POSIX, mkdir with 2>nul on Windows.
@@ -95,9 +95,9 @@ Explicitly has NO platform ifdefs — platform-neutral by design.
 
 1. Explicit requestedDir argument (if non-empty)
 2. FIRESTAFF_DATA environment variable
-3. Legacy ~/.firestaff/data on POSIX (only if directory already exists)
-4. <user-data-dir>/data (platform-appropriate)
-5. Current directory .
+3. ~/.firestaff/data on macOS/Linux
+4. <installation-directory>\data on Windows
+5. Current directory ./data
 
 ## CMake Platform Handling
 

@@ -7,12 +7,19 @@
  */
 
 #include "fs_portable_compat.h"
+#include "config_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
+#if defined(_WIN32)
+#include <direct.h>
+#include <process.h>
+#else
 #include <unistd.h>
+#endif
 
 static int g_passed = 0;
 static int g_total = 0;
@@ -30,8 +37,31 @@ static void check(const char* tag, int cond) {
 /* Remove a directory tree (test cleanup). Shallow — only handles one level. */
 static void rmdir_shallow(const char* path) {
     char cmd[FSP_PATH_MAX + 16];
+#if defined(_WIN32)
+    snprintf(cmd, sizeof(cmd), "rmdir /s /q \"%s\" >nul 2>nul", path);
+#else
     snprintf(cmd, sizeof(cmd), "rm -rf '%s'", path);
+#endif
     if(system(cmd)){;}
+}
+
+static int portable_setenv(const char* name, const char* value) {
+#if defined(_WIN32)
+    return _putenv_s(name, value) == 0;
+#else
+    if (!value) {
+        return unsetenv(name) == 0;
+    }
+    return setenv(name, value, 1) == 0;
+#endif
+}
+
+static int portable_unsetenv(const char* name) {
+#if defined(_WIN32)
+    return _putenv_s(name, "") == 0;
+#else
+    return unsetenv(name) == 0;
+#endif
 }
 
 int main(void) {
@@ -109,7 +139,11 @@ int main(void) {
     check("INV_FS_13b FileExists on cwd", FSP_FileExists(".") == 0);
 
     /* --- INV_FS_14: CreateDirectory + DirExists --- */
+#if defined(_WIN32)
+    snprintf(tmpBase, sizeof(tmpBase), ".\\fsp_probe_%d", (int)_getpid());
+#else
     snprintf(tmpBase, sizeof(tmpBase), "/tmp/fsp_probe_%d", (int)getpid());
+#endif
     rmdir_shallow(tmpBase);
     rc = FSP_CreateDirectory(tmpBase);
     check("INV_FS_14 CreateDirectory", rc == 1 && FSP_DirExists(tmpBase));
@@ -169,6 +203,55 @@ int main(void) {
     rc = FSP_ResolveDataDir(buf, sizeof(buf), "");
     check("INV_FS_22 ResolveDataDir empty string",
           rc == 1 && buf[0] != '\0');
+
+    /* --- INV_FS_23: Env override keeps explicit runtime data roots --- */
+    rc = portable_setenv("FIRESTAFF_DATA", "/tmp/firestaff-explicit-data");
+    if (rc) {
+        rc = FSP_ResolveDataDir(buf, sizeof(buf), NULL);
+        check("INV_FS_23 ResolveDataDir FIRESTAFF_DATA override",
+              rc == 1 && strcmp(buf, "/tmp/firestaff-explicit-data") == 0);
+    } else {
+        check("INV_FS_23 ResolveDataDir FIRESTAFF_DATA override (setenv failed)", 0);
+    }
+    (void)portable_unsetenv("FIRESTAFF_DATA");
+
+    /* --- INV_FS_24: Public release default data root --- */
+#if defined(_WIN32)
+    rc = FSP_ResolveDataDir(buf, sizeof(buf), NULL);
+    check("INV_FS_24 ResolveDataDir Windows install data",
+          rc == 1 &&
+          strstr(buf, "\\data") != NULL &&
+          strstr(buf, "firestaff-test-no-assets") == NULL &&
+          strstr(buf, "AppData") == NULL);
+#else
+    rc = portable_setenv("HOME", tmpBase);
+    if (rc) {
+        rc = FSP_ResolveDataDir(buf, sizeof(buf), NULL);
+        rc = rc && FSP_JoinPath(buf2, sizeof(buf2), tmpBase, ".firestaff/data");
+        check("INV_FS_24 ResolveDataDir POSIX home data",
+              rc == 1 &&
+              strcmp(buf, buf2) == 0 &&
+              strstr(buf, "firestaff-test-no-assets") == NULL);
+    } else {
+        check("INV_FS_24 ResolveDataDir POSIX home data (setenv failed)", 0);
+    }
+#endif
+
+    /* --- INV_FS_25: M12 config defaults use game data, not originals/test roots --- */
+    {
+        M12_Config config;
+        M12_Config_SetDefaults(&config);
+#if defined(_WIN32)
+        check("INV_FS_25 M12 config default data dir",
+              strstr(config.dataDir, "\\data") != NULL &&
+              strstr(config.dataDir, "\\originals") == NULL &&
+              strstr(config.dataDir, "firestaff-test-no-assets") == NULL);
+#else
+        check("INV_FS_25 M12 config default data dir",
+              strcmp(config.dataDir, buf2) == 0 &&
+              strstr(config.dataDir, "firestaff-test-no-assets") == NULL);
+#endif
+    }
 
     /* Cleanup. */
     rmdir_shallow(tmpBase);

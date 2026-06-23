@@ -1,30 +1,18 @@
 
 #include "asset_status_m12.h"
 #include "firestaff_startup.h"
+#include "fs_portable_compat.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 
-/* Platform-specific data directory */
 static const char *fs_get_default_data_dir(void) {
-#ifdef _WIN32
-    static char buf[512];
-    const char *appdata = getenv("APPDATA");
-    if (appdata) {
-        snprintf(buf, sizeof(buf), "%s\\Firestaff\\data", appdata);
+    static char buf[FSP_PATH_MAX];
+    if (FSP_ResolveDataDir(buf, sizeof(buf), NULL)) {
         return buf;
     }
-    return "C:\\Firestaff\\data";
-#else
-    static char buf[512];
-    const char *home = getenv("HOME");
-    if (home) {
-        snprintf(buf, sizeof(buf), "%s/.firestaff/data", home);
-        return buf;
-    }
-    return "/tmp/firestaff/data";
-#endif
+    return "data";
 }
 
 static void fs_mkdir_p(const char *path) {

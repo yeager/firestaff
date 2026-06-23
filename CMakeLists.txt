@@ -2714,6 +2714,7 @@ target_link_libraries(firestaff_m11_fs_portable_probe PRIVATE firestaff_m11 fire
 if(NOT MSVC)
     target_compile_options(firestaff_m11_fs_portable_probe PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(NAME firestaff_m11_fs_portable_probe COMMAND firestaff_m11_fs_portable_probe)
 
 
 # M11 Pass 418 -- DM1 V1 door closing obstruction parity probe
