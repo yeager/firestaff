@@ -14015,42 +14015,6 @@ static void m11_draw_dm1_front_mirror_backing(unsigned char* framebuffer,
                    M11_COLOR_GRAY);
 }
 
-static int m11_dm1_front_mirror_frame_black_count(const unsigned char* framebuffer,
-                                                  int fbW,
-                                                  int fbH,
-                                                  const M11_DM1ZoneBlit* blit) {
-    int x0;
-    int y0;
-    int x;
-    int y;
-    int count = 0;
-    if (!framebuffer || !blit || fbW <= 0 || fbH <= 0) {
-        return 0;
-    }
-    x0 = M11_VIEWPORT_X + blit->dstX;
-    y0 = M11_VIEWPORT_Y + blit->dstY;
-    for (y = y0; y < y0 + blit->height && y < fbH; ++y) {
-        if (y < 0) {
-            continue;
-        }
-        for (x = x0; x < x0 + blit->width && x < fbW; ++x) {
-            unsigned char idx;
-            if (x < 0) {
-                continue;
-            }
-            if (x >= M11_VIEWPORT_X + 96 && x < M11_VIEWPORT_X + 128 &&
-                y >= M11_VIEWPORT_Y + 35 && y < M11_VIEWPORT_Y + 64) {
-                continue;
-            }
-            idx = M11_FB_DECODE_INDEX(framebuffer[y * fbW + x]);
-            if (idx == M11_COLOR_BLACK) {
-                ++count;
-            }
-        }
-    }
-    return count;
-}
-
 static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             const M11_ViewportCell* frontCell,
                                             unsigned char* framebuffer,
@@ -14138,9 +14102,14 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                       blit.width, blit.height,
                       (unsigned char)M11_COLOR_DARK_GRAY);
     }
-    if (m11_dm1_front_mirror_frame_black_count(framebuffer, fbW, fbH, &blit) < 16) {
-        m11_draw_dm1_front_mirror_backing(framebuffer, fbW, fbH, &blit);
-    }
+    /* ReDMCSB DUNVIEW.C:3913-3928 draws the C346 D1C wall ornament
+     * before the C026 champion portrait, with coord-set 5 from
+     * G0205_aaauc_Graphic558_WallOrnamentCoordinateSets (80,143,29,71)
+     * and G0109_ac_Box_ChampionPortraitOnWall (96,127,35,63) inside it.
+     * Make that source geometry an invariant for every C127 route: the
+     * extracted C346 bitmap may still contribute source pixels above, but
+     * the portrait must never sit directly on stone or appear to float. */
+    m11_draw_dm1_front_mirror_backing(framebuffer, fbW, fbH, &blit);
     m11_draw_dm1_front_champion_portrait(state, &mirrorCell, framebuffer, fbW, fbH);
 }
 
