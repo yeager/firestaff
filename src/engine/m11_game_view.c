@@ -10768,8 +10768,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                          * the view direction, DUNGEON.C:2610-2612 lets only the
                          * front wall aspect set G0289, and DUNVIEW.C:3913-3928
                          * blits that D1C front champion portrait. */
-                        if (M11_DM1_ViewportSquareIsWallLikePc34(cell.square) &&
-                            (int)THING_GET_CELL(scanThing) != visibleWallCell) {
+                        if ((int)THING_GET_CELL(scanThing) != visibleWallCell) {
                             scanThing = m11_raw_next_thing(state->world.things, scanThing);
                             ++scanSafety;
                             continue;
@@ -11680,8 +11679,7 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
             thingIndex >= 0 && thingIndex < state->world.things->sensorCount &&
             state->world.things->sensors[thingIndex].sensorType == 127) {
             int sensorData = (int)state->world.things->sensors[thingIndex].sensorData;
-            if (M11_DM1_ViewportSquareIsWallLikePc34(frontCell.square) &&
-                (int)THING_GET_CELL(thing) != visibleWallCell) {
+            if ((int)THING_GET_CELL(thing) != visibleWallCell) {
                 thing = m11_raw_next_thing(state->world.things, thing);
                 continue;
             }
