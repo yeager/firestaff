@@ -146,10 +146,16 @@ assets.
 4. Start Firestaff. The launcher scans the directory automatically and shows
    which games are ready.
 
-Default data directory:
+Default data directory on macOS and Linux:
 
 ```text
 ~/.firestaff/data/
+```
+
+Default data directory on Windows:
+
+```text
+<Firestaff installation folder>\data\
 ```
 
 Suggested subdirectories:
