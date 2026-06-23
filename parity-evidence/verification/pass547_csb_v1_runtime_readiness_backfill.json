@@ -77,7 +77,7 @@
       "id": "firestaff_m12_launch_intent_accepts_available_csb",
       "role": "firestaff_positive",
       "path": "/Users/bosse/.openclaw/workspace-main/src/ui/menu_startup_m12.c",
-      "lines": "7440-7512",
+      "lines": "7440-7513",
       "needles": [
         "M12_StartupMenu_GetLaunchIntent",
         "m12_game_supported(intent.gameId)",
