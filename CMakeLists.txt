@@ -2174,6 +2174,46 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_15_west_negative_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_21_west_negative_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_11_after_party_shuffle_portrait_rect_position_runtime_probe.c"
+# DM1 V1 Hall of Champions portrait ordinal 1 (HALK) front_east_entry
+# portrait_rect_position runtime probe.  Source-locked to:
+#   DUNGEON.C:2573 visibleWallCell = (partyDirection + 2) & 3 selects
+#     the source-visible wall bit on the front cell.
+#   DUNGEON.C:2608-2612 stores C127 sensorData in G0289.
+#   DUNVIEW.C:3913-3928 D1C champion portrait blit (C026) at viewport
+#     (96, 35) sized 32x29, source cell (ord&7)*32, (ord>>3)*29.
+#   DUNVIEW.C:525 G0109_auc_Graphic558_Box_ChampionPortraitOnWall =
+#     { 96, 127, 35, 63 }.
+#   DUNVIEW.C:4547-4581 G0289 ordinal decode.
+#   DUNVIEW.C:8318-8542 F0128 viewport redraw order (far-to-near).
+#   MOVESENS.C:1501-1503 passes C127 sensorData to F0280 candidate.
+# The probe drives the (2, 1) DIR_EAST front_east_entry pose,
+# mutates the (3, 1) west-wall C127 sensorData from 8 (VIBIA,
+# shipped) to 1 (HALK), and asserts the D1C portrait rect at
+# viewport (96, 35, 32, 29) renders the C026 ordinal 1 strip cell
+# at >= 95% per-pixel agreement.  After restore, the D1C rect no
+# longer matches ordinal 1 and the front ordinal returns to 8.
+# Side walls (NORTH, SOUTH, WEST) at (2, 1) do not show ordinal 1
+# pixels (no float), and the (2, 1) SOUTH pose correctly reports
+# ordinal 4 (LEIF) -- proving the (3, 1) sensor mutation does not
+# leak through the south front cell.  Sibling to the ordinal-XX
+# front_north_entry / south_return probes (0, 1, 2, 3, 4, 6, 7,
+# 8, 9, 10, 14, 21) but for the east-facing entry pose.  This is
+# a Firestaff-runtime slice proof, not DOS pixel parity.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hoc_champion_portrait_01_front_east_entry_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_hoc_champion_portrait_01_front_east_entry_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_hoc_champion_portrait_01_front_east_entry_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hoc_champion_portrait_01_front_east_entry_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hoc_champion_portrait_01_front_east_entry_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hoc_champion_portrait_01_front_east_entry_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_hoc_champion_portrait_01_front_east_entry_portrait_rect_position_runtime_probe
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+    )
+endif()
+
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_02_after_party_shuffle_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_03_double_click_stability_portrait_rect_position_075_gate_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_03_save_load_reopen_portrait_rect_position_219_gate_probe.c"
