@@ -1992,6 +1992,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_resurrect_survival_load_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_portrait00_rect_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_02_cancel_reopen_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_21_redraw_after_candidate_portrait_rect_position_117_gate_probe.c"
