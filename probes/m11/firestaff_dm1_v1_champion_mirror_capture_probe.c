@@ -65,8 +65,7 @@ enum {
     PORTRAIT_WARM_THRESHOLD = 30,
     PORTRAIT_DETAIL_THRESHOLD = 30,
     MIRROR_FRAME_BLACK_THRESHOLD = 180,
-    HALL_SCAN_W = 18,
-    HALL_SCAN_H = 19
+    C026_CHAMPION_PORTRAIT_COUNT = 24
 };
 
 typedef struct MirrorCapture {
@@ -88,7 +87,8 @@ static MirrorCapture kCaptures[] = {
     {"hall_start_east_wrong_wall_no_portrait", 1, 2, 1, -1, 0, 0, 0, 0, 0},
     {"hall_leif_from_north_ordinal_4",      2, 1, 2,  4, 0, 0, 0, 0, 0},
     {"hall_corridor_east_ordinal_18_SONJA", 1, 3, 1, 18, 0, 0, 0, 0, 0},
-    {"hall_end_north_ordinal_10_ZED",       1, 5, 0, 10, 0, 0, 0, 0, 0},
+    {"hall_zed_from_north_ordinal_10",      1, 3, 2, 10, 0, 0, 0, 0, 0},
+    {"hall_end_north_wrong_wall_no_portrait", 1, 5, 0, -1, 0, 0, 0, 0, 0},
     {"hall_end_east_wrong_wall_no_portrait", 1, 5, 1, -1, 0, 0, 0, 0, 0},
     {"hall_mophus_from_north_ordinal_15",   2, 4, 2, 15, 0, 0, 0, 0, 0},
     {"hall_end_south_ordinal_13_WUUF",      1, 5, 2, 13, 0, 0, 0, 0, 0},
@@ -291,16 +291,221 @@ static int capture_row_passes(const MirrorCapture* r) {
     return r->portraitRectWarmCount < PORTRAIT_WARM_THRESHOLD;
 }
 
+static unsigned short probe_raw_next_thing(const struct DungeonThings_Compat* things,
+                                           unsigned short thing) {
+    int type;
+    int index;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return THING_ENDOFLIST;
+    }
+    type = (int)THING_GET_TYPE(thing);
+    index = (int)THING_GET_INDEX(thing);
+    switch (type) {
+        case THING_TYPE_DOOR:
+            return (index >= 0 && index < things->doorCount)
+                ? things->doors[index].next : THING_ENDOFLIST;
+        case THING_TYPE_TELEPORTER:
+            return (index >= 0 && index < things->teleporterCount)
+                ? things->teleporters[index].next : THING_ENDOFLIST;
+        case THING_TYPE_TEXTSTRING:
+            return (index >= 0 && index < things->textStringCount)
+                ? things->textStrings[index].next : THING_ENDOFLIST;
+        case THING_TYPE_SENSOR:
+            return (index >= 0 && index < things->sensorCount)
+                ? things->sensors[index].next : THING_ENDOFLIST;
+        case THING_TYPE_GROUP:
+            return (index >= 0 && index < things->groupCount)
+                ? things->groups[index].next : THING_ENDOFLIST;
+        case THING_TYPE_WEAPON:
+            return (index >= 0 && index < things->weaponCount)
+                ? things->weapons[index].next : THING_ENDOFLIST;
+        case THING_TYPE_ARMOUR:
+            return (index >= 0 && index < things->armourCount)
+                ? things->armours[index].next : THING_ENDOFLIST;
+        case THING_TYPE_SCROLL:
+            return (index >= 0 && index < things->scrollCount)
+                ? things->scrolls[index].next : THING_ENDOFLIST;
+        case THING_TYPE_POTION:
+            return (index >= 0 && index < things->potionCount)
+                ? things->potions[index].next : THING_ENDOFLIST;
+        case THING_TYPE_CONTAINER:
+            return (index >= 0 && index < things->containerCount)
+                ? things->containers[index].next : THING_ENDOFLIST;
+        case THING_TYPE_JUNK:
+            return (index >= 0 && index < things->junkCount)
+                ? things->junks[index].next : THING_ENDOFLIST;
+        case THING_TYPE_PROJECTILE:
+            return (index >= 0 && index < things->projectileCount)
+                ? things->projectiles[index].next : THING_ENDOFLIST;
+        case THING_TYPE_EXPLOSION:
+            return (index >= 0 && index < things->explosionCount)
+                ? things->explosions[index].next : THING_ENDOFLIST;
+        default:
+            return THING_ENDOFLIST;
+    }
+}
+
+static int probe_map_square_base(const struct DungeonDatState_Compat* dungeon,
+                                 int mapIndex) {
+    int i;
+    int base = 0;
+    if (!dungeon || !dungeon->maps ||
+        mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) {
+        return -1;
+    }
+    for (i = 0; i < mapIndex; ++i) {
+        base += (int)dungeon->maps[i].width * (int)dungeon->maps[i].height;
+    }
+    return base;
+}
+
+static unsigned short probe_first_square_thing(const struct GameWorld_Compat* world,
+                                               int mapIndex,
+                                               int mapX,
+                                               int mapY) {
+    const struct DungeonMapDesc_Compat* map;
+    int base;
+    int squareIndex;
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->squareFirstThings ||
+        mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return THING_ENDOFLIST;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapY < 0 ||
+        mapX >= (int)map->width || mapY >= (int)map->height) {
+        return THING_ENDOFLIST;
+    }
+    base = probe_map_square_base(world->dungeon, mapIndex);
+    if (base < 0) {
+        return THING_ENDOFLIST;
+    }
+    squareIndex = base + mapX * (int)map->height + mapY;
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return THING_ENDOFLIST;
+    }
+    return world->things->squareFirstThings[squareIndex];
+}
+
+static void probe_direction_forward(int direction, int* outDx, int* outDy) {
+    switch (direction & 3) {
+        case 0:
+            *outDx = 0;
+            *outDy = -1;
+            break;
+        case 1:
+            *outDx = 1;
+            *outDy = 0;
+            break;
+        case 2:
+            *outDx = 0;
+            *outDy = 1;
+            break;
+        default:
+            *outDx = -1;
+            *outDy = 0;
+            break;
+    }
+}
+
+static int scan_source_c127_ordinals(const M11_GameViewState* game,
+                                     int outRawOrdinals[C026_CHAMPION_PORTRAIT_COUNT],
+                                     int outReachableOrdinals[C026_CHAMPION_PORTRAIT_COUNT]) {
+    const struct DungeonMapDesc_Compat* map;
+    int rawCount = 0;
+    int uniqueCount = 0;
+    int reachableUniqueCount = 0;
+    int x, y;
+    if (!game || !game->world.dungeon || !game->world.things ||
+        !game->world.dungeon->maps || !game->world.things->sensors ||
+        game->world.dungeon->header.mapCount <= 0 ||
+        !outRawOrdinals || !outReachableOrdinals) {
+        return 0;
+    }
+    memset(outRawOrdinals, 0,
+           sizeof(int) * (size_t)C026_CHAMPION_PORTRAIT_COUNT);
+    memset(outReachableOrdinals, 0,
+           sizeof(int) * (size_t)C026_CHAMPION_PORTRAIT_COUNT);
+    map = &game->world.dungeon->maps[0];
+    printf("=== DM1 V1 raw map-0 C127 sensor scan ===\n");
+    for (y = 0; y < (int)map->height; ++y) {
+        for (x = 0; x < (int)map->width; ++x) {
+            unsigned short thing = probe_first_square_thing(&game->world, 0, x, y);
+            int safety = 0;
+            while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
+                int type = (int)THING_GET_TYPE(thing);
+                int index = (int)THING_GET_INDEX(thing);
+                int cell = (int)THING_GET_CELL(thing);
+                if (type == THING_TYPE_SENSOR &&
+                    index >= 0 && index < game->world.things->sensorCount &&
+                    game->world.things->sensors[index].sensorType == SENSOR_WALL_TYPE_PORTRAIT) {
+                    int ordinal = (int)game->world.things->sensors[index].sensorData;
+                    ++rawCount;
+                    printf("  raw_c127 square=(%d,%d) cell=%d sensor=%d ordinal=%d ornament=%d\n",
+                           x, y, cell, index, ordinal,
+                           (int)game->world.things->sensors[index].ornamentOrdinal);
+                    if (ordinal >= 0 && ordinal < C026_CHAMPION_PORTRAIT_COUNT &&
+                        !outRawOrdinals[ordinal]) {
+                        outRawOrdinals[ordinal] = 1;
+                        ++uniqueCount;
+                    }
+                    if (ordinal >= 0 && ordinal < C026_CHAMPION_PORTRAIT_COUNT) {
+                        int dir = (cell + 2) & 3;
+                        int dx = 0;
+                        int dy = 0;
+                        int partyX;
+                        int partyY;
+                        probe_direction_forward(dir, &dx, &dy);
+                        partyX = x - dx;
+                        partyY = y - dy;
+                        if (partyX >= 0 && partyX < (int)map->width &&
+                            partyY >= 0 && partyY < (int)map->height) {
+                            if (!outReachableOrdinals[ordinal]) {
+                                outReachableOrdinals[ordinal] = 1;
+                                ++reachableUniqueCount;
+                            }
+                            printf("    source_front_pose=(%d,%d,%d)\n",
+                                   partyX, partyY, dir);
+                        } else {
+                            printf("    source_front_pose=(%d,%d,%d) out_of_map0\n",
+                                   partyX, partyY, dir);
+                        }
+                    }
+                }
+                thing = probe_raw_next_thing(game->world.things, thing);
+                ++safety;
+            }
+        }
+    }
+    printf("raw_c127_count=%d raw_unique_ordinals=%d source_reachable_ordinals=%d\n",
+           rawCount, uniqueCount, reachableUniqueCount);
+    return reachableUniqueCount;
+}
+
 static int scan_all_hall_mirror_routes(M11_GameViewState* game) {
+    const struct DungeonMapDesc_Compat* map;
+    int seenOrdinals[C026_CHAMPION_PORTRAIT_COUNT];
+    int rawOrdinals[C026_CHAMPION_PORTRAIT_COUNT];
+    int reachableOrdinals[C026_CHAMPION_PORTRAIT_COUNT];
+    int reachableUniqueOrdinalCount;
     int failures = 0;
     int routeCount = 0;
+    int uniqueOrdinalCount = 0;
     int x, y, dir;
-    if (!game) {
+    int i;
+    if (!game || !game->world.dungeon || !game->world.dungeon->maps ||
+        game->world.dungeon->header.mapCount <= 0) {
         return 1;
     }
+    map = &game->world.dungeon->maps[0];
+    memset(seenOrdinals, 0, sizeof(seenOrdinals));
+    reachableUniqueOrdinalCount =
+        scan_source_c127_ordinals(game, rawOrdinals, reachableOrdinals);
     printf("=== DM1 V1 Hall all-front-mirror route scan ===\n");
-    for (y = 0; y < HALL_SCAN_H; ++y) {
-        for (x = 0; x < HALL_SCAN_W; ++x) {
+    printf("  map=0 dimensions=%dx%d expected_ordinals=0..23\n",
+           (int)map->width, (int)map->height);
+    for (y = 0; y < (int)map->height; ++y) {
+        for (x = 0; x < (int)map->width; ++x) {
             for (dir = 0; dir < 4; ++dir) {
                 unsigned char framebuffer[FB_W * FB_H];
                 int ordinal;
@@ -333,6 +538,17 @@ static int scan_all_hall_mirror_routes(M11_GameViewState* game) {
                     frameBlack < MIRROR_FRAME_BLACK_THRESHOLD) {
                     ++failures;
                 }
+                if (ordinal >= 0 && ordinal < C026_CHAMPION_PORTRAIT_COUNT) {
+                    if (!seenOrdinals[ordinal]) {
+                        seenOrdinals[ordinal] = 1;
+                        ++uniqueOrdinalCount;
+                    }
+                } else {
+                    fprintf(stderr,
+                            "FAIL Hall mirror route returned out-of-range C026 ordinal %d at x=%d y=%d dir=%d\n",
+                            ordinal, x, y, dir);
+                    ++failures;
+                }
             }
         }
     }
@@ -340,7 +556,20 @@ static int scan_all_hall_mirror_routes(M11_GameViewState* game) {
         fprintf(stderr, "FAIL Hall mirror route scan found no C127 routes\n");
         ++failures;
     }
-    printf("all_route_scan_count=%d failures=%d\n", routeCount, failures);
+    for (i = 0; i < C026_CHAMPION_PORTRAIT_COUNT; ++i) {
+        if (reachableOrdinals[i] && !seenOrdinals[i]) {
+            fprintf(stderr,
+                    "FAIL Hall mirror route scan did not expose source-reachable C127 champion portrait ordinal %d\n",
+                    i);
+            ++failures;
+        }
+    }
+    printf("all_route_scan_count=%d source_reachable_ordinals=%d visible_unique_ordinals=%d missing_source_reachable_ordinals=%d failures=%d\n",
+           routeCount,
+           reachableUniqueOrdinalCount,
+           uniqueOrdinalCount,
+           reachableUniqueOrdinalCount - uniqueOrdinalCount,
+           failures);
     return failures;
 }
 
@@ -495,8 +724,8 @@ int main(int argc, char** argv) {
                  "%s/%s_viewport_224x136.ppm", outDir, r->label);
         dump_vga_viewport_ppm(ppmViewportPath, framebuffer);
 
-        printf("  %s pose=(1,%d,%d) expected=%d actual=%d portrait_rect=%s warm_count=%d detail_count=%d frame_black=%d %s -> %s.ppm\n",
-               r->label, r->mapY, r->direction,
+        printf("  %s pose=(%d,%d,%d) expected=%d actual=%d portrait_rect=%s warm_count=%d detail_count=%d frame_black=%d %s -> %s.ppm\n",
+               r->label, r->mapX, r->mapY, r->direction,
                r->expectedOrdinal, r->actualOrdinal,
                r->portraitRectNonzero ? "nonzero" : "empty",
                r->portraitRectWarmCount,

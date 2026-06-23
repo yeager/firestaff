@@ -158,8 +158,12 @@ int main(int argc, char** argv) {
         {1, 3, 1, 18, "hall_corridor_east_ordinal_18"},
         /* (1,4) facing N: front=(1,3) has only TextString, no C127 */
         {1, 4, 0, -1, "hall_corridor_north_no_portrait_2"},
-        /* (1,5) facing N: front=(1,4) has C127 sensor idx=16 data=10 (ZED) */
-        {1, 5, 0, 10, "hall_end_north_ordinal_10"},
+        /* (1,3) facing S: front=(1,4) has C127 sensor idx=16 data=10 (ZED)
+         * on cell 0, which matches visibleWallCell=(S+2)&3. */
+        {1, 3, 2, 10, "hall_zed_from_north_ordinal_10"},
+        /* (1,5) facing N sees the same front square from the wrong side;
+         * DUNGEON.C:2573/2610-2612 does not set G0289 for that view. */
+        {1, 5, 0, -1, "hall_end_north_wrong_wall_no_portrait"},
         /* Same for the (2,5) MOPHUS sensor: (1,5) EAST is a wrong-wall
          * pose under the ReDMCSB front-wall side filter. */
         {1, 5, 1, -1, "hall_end_east_wrong_wall_no_portrait"},

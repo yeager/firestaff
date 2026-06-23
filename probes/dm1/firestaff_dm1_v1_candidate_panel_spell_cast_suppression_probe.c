@@ -177,9 +177,11 @@ int main(int argc, char** argv) {
     }
 
     /* v2.7.22: real DM1 V1 Hall of Champions C127 mirror positions
-     * are (1,2) NORTH ordinal=1 (HALK) and (1,5) NORTH ordinal=10
-     * (ZED).  Use (1,2) NORTH ordinal=1 for the candidate-panel
-     * suppression regression. */
+     * use the ReDMCSB DUNGEON.C:2573/2610-2612 front-wall side filter.
+     * HALK is visible from (1,2) NORTH ordinal=1; ZED's raw sensor is
+     * on (1,4) cell 0, so the source-visible pose is (1,3) SOUTH
+     * ordinal=10, not the wrong-wall (1,5) NORTH view.  Use HALK for
+     * the candidate-panel suppression regression. */
     if (prepare_candidate_with_spell(&game, 1)) {
         ok &= check_spell_cast_input_ignored(&game, 1);
         ok &= check_spell_clear_input_ignored(&game, 1);
