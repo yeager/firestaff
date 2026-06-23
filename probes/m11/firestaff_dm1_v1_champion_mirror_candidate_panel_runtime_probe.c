@@ -112,6 +112,32 @@ typedef struct PortraitRectMatch {
     int percent;
 } PortraitRectMatch;
 
+static int file_exists(const char* path) {
+    FILE* f = fopen(path, "rb");
+    if (!f) {
+        return 0;
+    }
+    fclose(f);
+    return 1;
+}
+
+static const char* narrow_dm1_data_dir(const char* dataDir,
+                                       char* out,
+                                       size_t outSize) {
+    char graphicsPath[512];
+    char dungeonPath[512];
+    if (!dataDir || !out || outSize == 0U) {
+        return dataDir;
+    }
+    snprintf(graphicsPath, sizeof(graphicsPath), "%s/dm1/GRAPHICS.DAT", dataDir);
+    snprintf(dungeonPath, sizeof(dungeonPath), "%s/dm1/DUNGEON.DAT", dataDir);
+    if (file_exists(graphicsPath) && file_exists(dungeonPath)) {
+        snprintf(out, outSize, "%s/dm1", dataDir);
+        return out;
+    }
+    return dataDir;
+}
+
 static PanelMatch match_panel(const M11_AssetSlot* panel,
                               const unsigned char* fb,
                               int fbW,
@@ -1554,6 +1580,7 @@ static int check_append_clear_cycle_pixels(M11_GameViewState* game,
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowedDataDir[512];
     /*
      * M11_GameViewState (~579KB) + M12_StartupMenuState (~186KB) declared
      * 13 times = ~10MB total; default macOS thread stack is 8MB, so
@@ -1600,7 +1627,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
-    dataDir = argv[1];
+    dataDir = narrow_dm1_data_dir(argv[1], narrowedDataDir, sizeof(narrowedDataDir));
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);
