@@ -1368,7 +1368,7 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
                      state->settingsSelectedIndex == 14);
     draw_setting_row(c, rowX, rowY + 280, rowW, "DATA DIRECTORY", dataDir,
                      state->settingsSelectedIndex == 15);
-    draw_setting_row(c, rowX, rowY + 350, rowW, "ORIGINAL DATA", settings_data_status_label(state),
+    draw_setting_row(c, rowX, rowY + 350, rowW, "ORIGINAL DATA", M12_StartupMenu_GetDataStatusValue(state),
                      state->settingsSelectedIndex == 16);
     draw_setting_row(c, rowX, rowY + 420, rowW, "SESSION TIMER", sessionTimer,
                      state->settingsSelectedIndex == 30);

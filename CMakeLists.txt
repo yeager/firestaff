@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.2 LANGUAGES C)
+project(Firestaff VERSION 3.0.3 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -14,6 +14,9 @@ project(Firestaff VERSION 3.0.2 LANGUAGES C)
 # the cmake command line.
 if(NOT DEFINED FIRESTAFF_WORKSPACE_DATA_DIR)
     set(FIRESTAFF_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data")
+endif()
+if(NOT DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
+    set(FIRESTAFF_DM1_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data/dm1")
 endif()
 if(NOT TARGET WORKSPACE_DATA_DIR)
     add_library(WORKSPACE_DATA_DIR INTERFACE IMPORTED GLOBAL)
@@ -2046,7 +2049,7 @@ if(NOT MSVC)
 endif()
 add_test(
     NAME dm1_v1_chest_action_hand_close_runtime_probe
-    COMMAND firestaff_dm1_v1_chest_action_hand_close_runtime_probe $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    COMMAND firestaff_dm1_v1_chest_action_hand_close_runtime_probe "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
 )
 
 # DM1 V1 champion-panel runtime pixel/pose evidence probes. 9 orphaned
@@ -2107,6 +2110,9 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_05_cancel_reopen_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_06_cancel_reopen_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_08_cancel_reopen_portrait_rect_position_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_15_cancel_reopen_portrait_rect_position_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_16_cancel_reopen_portrait_rect_position_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_17_cancel_reopen_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_22_redraw_after_candidate_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_23_redraw_after_candidate_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_07_portrait_rect_position_probe.c"
@@ -2129,7 +2135,7 @@ foreach(_pool_probe_src IN ITEMS
         endif()
         add_test(
             NAME ${_pool_probe_exe}
-            COMMAND ${_pool_probe_exe} $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+            COMMAND ${_pool_probe_exe} "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
         )
     endif()
 endforeach()
@@ -2182,7 +2188,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     add_test(
         NAME firestaff_dm1_v1_champion_mirror_capture_probe
         COMMAND firestaff_dm1_v1_champion_mirror_capture_probe
-            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
             "${CMAKE_CURRENT_BINARY_DIR}/dm1_v1_champion_mirror_capture_ctest"
     )
 endif()
