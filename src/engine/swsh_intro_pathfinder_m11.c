@@ -4,10 +4,10 @@
  * See swsh_intro_pathfinder_m11.h for the design contract.
  *
  * ReDMCSB SWSH.C T0901006 ties the FTL logo (SWSHGDAT.C) to a
- * 320x200 IMG1 bitmap that the SWSH.PRG expands to the Atari ST
- * Physbase. The canonical PC 3.4 SWOOSH ships as an MZ executable that
- * embeds the same bitmap. This file only locates that SWOOSH on disk;
- * the actual IMG1 decode and palette animation live in
+ * 320x200 bitmap that the original expands to Physbase. The canonical
+ * PC 3.4 SWOOSH ships as an LZEXE-compressed MZ executable carrying
+ * the PC IMG2/little-endian logo stream. This file only locates that
+ * SWOOSH on disk; the actual decode and palette animation live in
  * swsh_frontend_pc34_compat.c (SWSH.C PC/F20 source-lock) and
  * main_loop_m11.c (M11 launcher handoff).
  */
@@ -17,40 +17,44 @@
 #endif
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
+#include "swsh_frontend_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 int M11_SWSH_Intro_PayloadLooksValid(const char* path) {
-    unsigned char head[8];
-    size_t got;
     FILE* f;
-    unsigned int widthLo;
-    unsigned int widthHi;
-    unsigned int heightLo;
-    unsigned int heightHi;
+    long fsize;
+    unsigned char* data;
+    SWSH_CompatLogoPayload payload;
+    int ok;
     if (!path || path[0] == '\0') return 0;
     f = fopen(path, "rb");
     if (!f) return 0;
-    got = fread(head, 1, sizeof(head), f);
+    fseek(f, 0, SEEK_END);
+    fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (fsize <= 0 || fsize > (long)(8u * 1024u * 1024u)) {
+        fclose(f);
+        return 0;
+    }
+    data = (unsigned char*)malloc((size_t)fsize);
+    if (!data) {
+        fclose(f);
+        return 0;
+    }
+    if (fread(data, 1, (size_t)fsize, f) != (size_t)fsize) {
+        free(data);
+        fclose(f);
+        return 0;
+    }
     fclose(f);
-    if (got < 4u) return 0;
-    widthLo = (unsigned int)head[0];
-    widthHi = (unsigned int)head[1];
-    heightLo = (unsigned int)head[2];
-    heightHi = (unsigned int)head[3];
-    if ((widthLo | (widthHi << 8)) == 320u && (heightLo | (heightHi << 8)) == 200u) {
-        /* Raw IMG1 320x200 logo (Atari ST layout). */
-        return 1;
-    }
-    if (got >= 2u && head[0] == 'M' && head[1] == 'Z') {
-        /* PC 3.4 SWOOSH is wrapped in an MZ executable; the IMG1
-         * header is somewhere in the payload. SWSH_Compat_FindLogoImagePayload
-         * picks it up at decode time. */
-        return 1;
-    }
-    return 0;
+    memset(&payload, 0, sizeof(payload));
+    ok = SWSH_Compat_FindLogoImagePayloadEx(data, (unsigned int)fsize, &payload);
+    SWSH_Compat_ReleaseLogoImagePayload(&payload);
+    free(data);
+    return ok;
 }
 
 int M11_SWSH_Intro_FindLogoPath(const M12_StartupMenuState* menuState,

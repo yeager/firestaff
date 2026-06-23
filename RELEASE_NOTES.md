@@ -29,6 +29,11 @@ finished.
   live-capture locking, V2 runtime presentation smoke, HUD overlay state,
   per-mode material signatures, and additional viewport/source-lock CTests
   landed after v3.0.0.
+- **DM1 FTL swoosh intro fixed**: the launcher now unpacks the PC
+  `SWOOSH` LZEXE file before extracting the logo, then decodes the
+  source IMG2 stream and rejects false 320x200 matches. The animated FTL
+  logo now uses the original silhouette instead of a corrupted filled
+  frame.
 - **DM2, CSB, and Nexus coverage widened**: DM2 canonical/DOS/PC extras
   launch smoke gates, CSB portrait render handoff/runtime-readiness
   refreshes, and the Nexus Saturn-font determinism probe are now part of

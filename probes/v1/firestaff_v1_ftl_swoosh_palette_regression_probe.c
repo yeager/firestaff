@@ -12,12 +12,12 @@
  *
  * This probe is a headless regression guard. It:
  *   1. Loads the SWOOSH binary from a path passed in argv[1] (the
- *      SWOOSH payload is MZ-wrapped on PC and the IMG1 320x200 logo
- *      is at an offset; we use SWSH_Compat_FindLogoImagePayload to
- *      locate it).
+ *      SWOOSH payload is LZEXE-wrapped on PC and the IMG2 320x200 logo
+ *      is inside the unpacked load module; we use
+ *      SWSH_Compat_FindLogoImagePayloadEx to locate it).
  *   2. Decodes the logo into a 320x200 indexed bitmap via
- *      SWSH_Compat_ExpandLogoToBitmap (the IMG1 4-plane Atari ST
- *      decode is the same path the runtime uses).
+ *      SWSH_Compat_ExpandLogoToBitmap (the ReDMCSB IMAGE2.C C01_SWOOSH
+ *      path is the same path the runtime uses).
  *   3. Walks all 29 animation source steps from
  *      SWSH_Compat_GetSourceAnimationStep().
  *   4. At every step, records the 16-color palette state and a
@@ -274,7 +274,7 @@ int main(int argc, char** argv) {
     FILE* f = NULL;
     long fsize = 0;
     unsigned char* swooshBuf = NULL;
-    const unsigned char* logoPayload = NULL;
+    SWSH_CompatLogoPayload logoPayload;
     unsigned char swshPalette[16][3];
     unsigned int sourceStep;
     unsigned int stepCount;
@@ -326,16 +326,16 @@ int main(int argc, char** argv) {
     }
     fclose(f);
 
-    logoPayload = SWSH_Compat_FindLogoImagePayload(swooshBuf, (unsigned int)fsize);
-    if (!logoPayload) {
-        fprintf(stderr, "FAIL SWOOSH payload detection (not MZ-wrapped, not raw IMG1)\n");
+    memset(&logoPayload, 0, sizeof(logoPayload));
+    if (!SWSH_Compat_FindLogoImagePayloadEx(swooshBuf, (unsigned int)fsize, &logoPayload)) {
+        fprintf(stderr, "FAIL SWOOSH payload detection (not LZEXE/MZ-wrapped, not raw source-shaped IMG2)\n");
         free(swooshBuf);
         return 1;
     }
 
     memset(g_screenFb, 0, sizeof(g_screenFb));
-    SWSH_Compat_ExpandLogoToBitmap(logoPayload, g_screenFb);
-    /* Sanity: the IMG1 logo decode should touch most bytes. */
+    SWSH_Compat_ExpandLogoToBitmap(logoPayload.payload, g_screenFb);
+    /* Sanity: the IMG2 logo decode should touch the packed bitmap. */
     {
         unsigned int nonzero = 0u;
         unsigned int maxIdx = 0u;
@@ -353,7 +353,7 @@ int main(int argc, char** argv) {
         for (i = 0u; i < 16u; ++i) printf("%u%s", hist[i], i < 15u ? "," : "\n");
         probe_record(&stats, "F841_SWSH_LOAD_01",
                      nonzero > 1000u,
-                     "decoded IMG1 logo bitmap has non-zero pixel coverage");
+                     "decoded IMG2 logo bitmap has non-zero packed-byte coverage");
         /* LOAD_02 retired: see F841_SWSH_BUG_PACKED_DETECTED below for the
          * actual packed-vs-indexed check. The raw maxIdx > 15 IS the bug
          * signal, so it does not need a redundant assertion. */
@@ -404,6 +404,10 @@ int main(int argc, char** argv) {
             unsigned int nonzero = 0u;
             unsigned int maxIdx = 0u;
             unsigned int hist[16] = {0u};
+            int firstRow = -1;
+            int lastRow = -1;
+            int firstCol = -1;
+            int lastCol = -1;
             for (i = 0u; i < FB_BYTES; ++i) unpacked[i] = 0u;
             for (i = 0u; i < FB_BYTES; i += 2u) {
                 unsigned char b = g_screenFb[i >> 1];
@@ -412,20 +416,33 @@ int main(int argc, char** argv) {
             }
             for (i = 0u; i < FB_BYTES; ++i) {
                 if (unpacked[i] != 0u) {
+                    int row = (int)(i / FB_W);
+                    int col = (int)(i % FB_W);
                     nonzero++;
                     if (unpacked[i] > maxIdx) maxIdx = unpacked[i];
                     hist[unpacked[i]]++;
+                    if (firstRow < 0 || row < firstRow) firstRow = row;
+                    if (row > lastRow) lastRow = row;
+                    if (firstCol < 0 || col < firstCol) firstCol = col;
+                    if (col > lastCol) lastCol = col;
                 }
             }
-            printf("afterUnpack: nonzero=%u maxIdx=%u\n", nonzero, maxIdx);
+            printf("afterUnpack: nonzero=%u maxIdx=%u firstRow=%d lastRow=%d firstCol=%d lastCol=%d\n",
+                   nonzero, maxIdx, firstRow, lastRow, firstCol, lastCol);
             printf("unpackedHistogram: ");
             for (i = 0u; i < 16u; ++i) printf("%u%s", hist[i], i < 15u ? "," : "\n");
             probe_record(&stats, "F841_SWSH_UNPACK_VALID",
                          maxIdx <= 15u,
                          "after unpack, all bytes are valid 4-bit palette indices (0..15)");
             probe_record(&stats, "F841_SWSH_UNPACK_COVERAGE",
-                         nonzero > 1000u,
-                         "after unpack, the logo covers >1000 pixels (full-width, not half-blank)");
+                         nonzero >= 8000u && nonzero <= 12000u,
+                         "after unpack, the FTL logo has source-shaped nonzero coverage");
+            probe_record(&stats, "F841_SWSH_UNPACK_SILHOUETTE",
+                         firstRow >= 45 && firstRow <= 60 &&
+                         lastRow >= 160 && lastRow <= 180 &&
+                         firstCol >= 15 && firstCol <= 35 &&
+                         lastCol >= 250 && lastCol <= 280,
+                         "after unpack, the FTL logo bounding box matches the original swoosh silhouette");
 
             /* Apply the unpack in-place over g_screenFb so the per-step
              * palette+RGBA dumps below reflect the fixed runtime path. */
@@ -455,6 +472,7 @@ int main(int argc, char** argv) {
     digests = (StepDigest*)calloc(stepCount, sizeof(StepDigest));
     if (!digests) {
         fprintf(stderr, "FAIL alloc digests\n");
+        SWSH_Compat_ReleaseLogoImagePayload(&logoPayload);
         free(swooshBuf);
         return 1;
     }
@@ -546,6 +564,7 @@ int main(int argc, char** argv) {
            stats.passed, stats.total, stats.failed);
 
     free(digests);
+    SWSH_Compat_ReleaseLogoImagePayload(&logoPayload);
     free(swooshBuf);
     return (stats.failed == 0) ? 0 : 1;
 }

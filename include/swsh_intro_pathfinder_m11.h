@@ -3,10 +3,11 @@
  *
  * DM1 V1 SWSH/FTL logo path finder for the M11 launcher handoff.
  *
- * ReDMCSB SWSH.C T0901006: the FTL logo is a raw IMG1 320x200 bitmap
- * that is expanded to Physbase. The canonical PC 3.4 SWOOSH file is an
- * MZ executable that embeds that bitmap. Firestaff has to find SWOOSH
- * on disk before the SWSH.C palette animation can run.
+ * ReDMCSB SWSH.C T0901006: the FTL logo is a 320x200 SWSHGDAT bitmap
+ * expanded to Physbase. The canonical PC 3.4 SWOOSH file is an
+ * LZEXE-compressed MZ executable that carries the PC IMG2/little-endian
+ * logo stream. Firestaff has to find SWOOSH on disk before the SWSH.C
+ * palette animation can run.
  *
  * This module centralises the search so the v2.7.4 release path stops
  * silently skipping the FTL intro when the file is anywhere other than
@@ -24,8 +25,8 @@
  *   4. $HOME canonical OpenClaw/firestaff original-games anchors.
  *
  * Every candidate is validated by M11_SWSH_Intro_PayloadLooksValid()
- * which accepts either a raw IMG1 320x200 header or an MZ executable
- * (canonical PC 3.4 SWOOSH is MZ-wrapped). Junk files are rejected so
+ * which accepts either a raw source-shaped 320x200 logo stream or an
+ * MZ executable (canonical PC 3.4 SWOOSH is LZEXE-compressed). Junk files are rejected so
  * a stray "SWOOSH" of random bytes cannot break the FTL playback.
  */
 
@@ -41,8 +42,8 @@ extern "C" {
 #endif
 
 /* Returns 1 if `path` looks like a real DM1 FTL SWOOSH payload:
- * either a raw IMG1 320x200 header or an MZ executable that contains
- * one. Returns 0 for missing/short/junk files. */
+ * either a raw source-shaped 320x200 logo stream or an MZ executable
+ * that contains one after LZEXE unpacking. Returns 0 for missing/short/junk files. */
 int M11_SWSH_Intro_PayloadLooksValid(const char* path);
 
 /* Locate the FTL SWOOSH file. On success returns 1 and writes the
