@@ -9,6 +9,13 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.3  (2026-06-23)",
+    "  - DM1 Hall of Champions gates expanded again. New real-asset runtime probes cover additional cancel/reopen portrait-rectangle slices, including row-2 C026 atlas coverage for ordinal 15-17, so stale panel pixels and portrait placement regressions are caught earlier.",
+    "  - DM1 V1 regression coverage widened across intro/title skip cleanup, HiDPI chest-slot hit zones, open-pit transition chains, single-tick food/water warning, door-bash no-open state, projectile/portcullis behavior, chest hand-swap and nested-container weight handling, C146 sleep/wake repaint, disabled champion-panel icons, and mana-bar repaint.",
+    "  - CSB and DM2 gates added for boot-to-first-viewport readiness, save-runtime boundaries, DSA trigger bounds, DM2 projectile/creature collision, minimap persistence across level transitions, and door/button toggle boundaries.",
+    "  - M12 data UX hardened. Launcher settings now use the scanned data-status value, show clearer scan feedback, retain popup focus context, cover extras mouse-hit flow, support save-manifest export/import, and expose manual docs from the launcher.",
+    "  - Release verification: based on 51 commits after v3.0.2 with GitHub M10 verify + CMake build + cross-platform determinism green on main before release prep.",
+    "",
     "V3.0.2  (2026-06-23)",
     "  - DM1 FTL swoosh intro fixed. The launcher now unpacks the PC SWOOSH LZEXE file before extracting the logo, decodes the source IMG2 stream, rejects false 320x200 matches, and animates the original FTL silhouette instead of a corrupted filled frame.",
     "  - DM1 Hall of Champions coverage tightened. New real-asset runtime probes lock additional champion portrait rectangles, candidate redraw behavior, cancel/reopen handling, and side-pose stale-pixel absence without broadening the finished-parity claim.",
@@ -261,5 +268,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.2";
+    return "3.0.3";
 }
