@@ -2349,6 +2349,28 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     )
 endif()
 
+# DM1 V1 champion-portrait ordinal 17 / west_negative / portrait_rect_position
+# runtime probe — locks the source-locked wall/west_rect contract for
+# ordinal 17 across every west-facing Hall of Champions corridor pose
+# plus a cross-check that ordinal 13 (WUUF) dominates the D1C portrait
+# rect on the positive (1, 5) SOUTH route. Source-locked to ReDMCSB
+# DUNGEON.C:2573 / DUNGEON.C:2608-2612 (C127 sensorData -> G0289) and
+# DUNVIEW.C:3913-3928 (C026 blit only on D1C_FRONT walls).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_17_west_negative_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_ordinal_17_west_negative_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_17_west_negative_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_ordinal_17_west_negative_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_ordinal_17_west_negative_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_ordinal_17_west_negative_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_ordinal_17_west_negative_portrait_rect_position_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 viewport wall visual capture probe — takes DATA_DIR OUT_DIR.
 # Sibling to the champion-mirror capture probe; addresses the
 # 'missing or incorrect viewport walls' P1 visual bug ticket by
