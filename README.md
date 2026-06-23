@@ -97,34 +97,32 @@ timing and inventory routes.
 
 ## Latest Release
 
-**Current version:** `3.0.1`.
+**Current version:** `3.0.3`.
 
-The latest release packages the post-v3.0.0 readiness push. It adds
-Theron Track 02 raw bank-anchor proof, routes Theron M11 movement through
-the V1 mechanics layer, records metadata-only Theron screenshot-readiness
-receipts, refreshes the 24h Theron readiness roll-up, and widens DM1,
-DM2, CSB, and Nexus verification coverage. It does not claim finished
-Theron playability, full Track 02 dungeon-loader parity, real `.srm`
-import proof, or public Theron screenshots.
+The latest release packages the 2026-06-23 hardening batch after
+v3.0.2. It adds more source-locked DM1 Hall of Champions
+cancel/reopen portrait probes, widens DM1 V1 regression coverage, adds
+CSB and DM2 runtime gates, and tightens M12 launcher data-status
+behavior. It does not claim finished parity for CSB, DM2, Nexus, or
+Theron's Quest beyond the runtime slices now covered by tests and
+probes.
 
-### Development since v3.0.0 (2026-06-22)
+### v3.0.3 release highlights
 
-- **Theron Track 02 bank anchors**: raw JP/US Track 02 BIN variants now
-  have exact descriptor/span anchor triads and 2352-byte raw CD sector
-  reporting. This verifies the bank signal while leaving semantic
-  dungeon-table decoding and full loader parity open.
-- **Theron M11 command and draw proof**: hash-verified Track 02 handoff
-  now reaches initial level load, routed turn/move commands,
-  post-move tick effects, idle tick sync, backward movement with facing
-  preserved, and nonblank M11 draw output.
-- **Theron readiness receipts**: the runtime screenshot-readiness gate
-  and 24h roll-up record metadata-only evidence and flag fallback-asset
-  rows, so the project has capture-path proof without promoting
-  README screenshots too early.
-- **DM1, DM2, CSB, and Nexus gates**: DM1 live capture/provenance and V2
-  presentation gates advanced, DM2 canonical/DOS/PC extras launch smoke
-  landed, CSB portrait/render-readiness rows were refreshed, and Nexus
-  gained Saturn-font determinism coverage.
+- **DM1 Hall of Champions**: additional real-asset cancel/reopen
+  portrait-rectangle gates cover row-2 C026 atlas slices and stale-pixel
+  absence after candidate-panel redraws.
+- **DM1 V1 hardening**: new focused gates cover intro/title cleanup,
+  HiDPI chest hit zones, pit transitions, door/projectile edge cases,
+  champion-panel repaint paths, food/water warnings and container weight
+  behavior.
+- **CSB and DM2 readiness**: runtime gates now cover CSB first-viewport
+  boot, save boundaries and DSA trigger bounds, plus DM2 projectile,
+  minimap and door/button edge cases.
+- **Launcher and shared parsers**: M12 data-status handling is clearer,
+  manual docs and save-manifest flows are reachable from the launcher,
+  and parser gates expanded for Nexus BPX/BPK, Greatstone rows, FTL
+  checksums, CSB HTC hints and Utility Disk AMG sounds.
 
 ## Download
 

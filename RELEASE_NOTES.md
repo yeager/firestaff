@@ -1,4 +1,53 @@
 
+# Firestaff v3.0.3
+
+Firestaff v3.0.3 packages the post-v3.0.2 hardening batch from
+2026-06-23. It is a focused verification and launcher-polish release:
+more source-locked runtime gates, stronger data-status behavior in the
+launcher, and package builds for all supported desktop targets. It does
+not change the public game-status claims beyond the evidence now covered
+by tests and probes.
+
+## Highlights since v3.0.2
+
+- **DM1 Hall of Champions coverage expanded again**: new real-asset
+  cancel/reopen portrait-rectangle probes cover additional champion
+  ordinals, including row-2 C026 atlas cases. These gates verify the D1C
+  portrait destination rectangle, panel reopen behavior, champion-count
+  rollback, and stale side-wall pixel absence without claiming DOS pixel
+  parity.
+- **DM1 V1 regression coverage widened**: focused CTest gates now cover
+  intro/title skip cleanup, HiDPI chest-slot hit zones, open-pit
+  transition chains, single-tick food/water warnings, door-bash no-open
+  state, projectile/portcullis behavior, chest hand-swap and
+  nested-container weight handling, C146 sleep/wake repaint, disabled
+  champion-panel icons, and mana-bar repaint.
+- **CSB and DM2 gates added**: new checks cover CSB boot-to-first
+  viewport readiness, save-runtime boundaries, DSA trigger bounds, DM2
+  projectile/creature collision, minimap persistence across level
+  transitions, and door/button toggle boundaries.
+- **Launcher data UX hardened**: M12 now uses the scanned data-status
+  value in settings, shows clearer scan feedback, retains popup focus
+  context, covers extras mouse-hit flow, supports save-manifest
+  export/import, and exposes manual docs from the launcher.
+- **Nexus/shared parser coverage improved**: the release includes bounded
+  BPX/BPK archive parsing, S2D font render coverage, Greatstone row
+  parser hardening, custom dungeon scanner gates, FTL container checksum
+  parsing, CSB HTC hint-oracle parsing, and CSB Utility Disk AMG SND2
+  decoding.
+
+## Verification
+
+- 52 commits ship on top of `v3.0.2`, including this release-prep
+  commit.
+- GitHub Actions was green on `8566c5a2` before release prep: M10
+  verify, CMake build on macOS/Windows/Linux, strict warnings, asset
+  hygiene, and cross-platform determinism.
+- Focused local verification before release prep included
+  `git diff --check`. The release workflow rebuilds and packages macOS
+  arm64, macOS x86_64, Windows x86_64, Linux x86_64, and Linux arm64
+  artifacts from the `v3.0.3` release commit.
+
 # Firestaff v3.0.2
 
 Firestaff v3.0.2 packages the 2026-06-23 DM1/CSB hardening batch on top
