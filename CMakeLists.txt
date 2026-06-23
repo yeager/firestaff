@@ -2277,6 +2277,37 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_of_champ
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait ordinal 04 / approach_from_left /
+# portrait_rect_position runtime probe.  Source-locked to
+# DUNGEON.C:2573 (C127 front-wall sensor filter), DUNGEON.C:2608-2612
+# (G0289 portrait ordinal storage), DUNVIEW.C:3913-3928 (D1C C026
+# portrait blit at viewport (96, 35, 32, 29)), DUNVIEW.C G0205
+# Graphic558 coordSet 5 (C346 wall-ornament box), and the actual-pose
+# probe's (1, 2) DIR_EAST = -1 fixture line.  The probe drives the
+# (1, 2) DIR_EAST approach_from_left anchor (party stands to the
+# west of the (2, 2) LEIF chamber, looking east at its west wall —
+# the wrong wall) and pixel-verifies that the D1C portrait cutout
+# does NOT carry ordinal 4 (LEIF) pixels.  Companion slice to the
+# ordinal_4 south_return probe (same ordinal, same chamber, opposite
+# side).  Disjoint from the ordinal_4 east_walkpath probe (sealed-
+# chamber walkability guard), the portrait04_rect_position probe
+# (positive-route D1C match), and the actual-pose probe (16-pose
+# ordinal map, no pixel rect match).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_4_approach_from_left_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_ordinal_4_approach_from_left_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_4_approach_from_left_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_ordinal_4_approach_from_left_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_ordinal_4_approach_from_left_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_ordinal_4_approach_from_left_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_ordinal_4_approach_from_left_portrait_rect_position_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 Hall of Champions portrait ordinal 08 / south_return /
 # portrait_rect_position regression probe.  Source-locked to
 # DUNVIEW.C:3913-3928 + G0109 + REVIVE.C F0280 + REVIVE.C:142-146
