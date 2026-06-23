@@ -2585,6 +2585,45 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait ordinal 08 / sleep_repaint /
+# portrait_rect_position runtime probe.  Source-locked to
+# DUNGEON.C:2573 + 2608-2612 + MOVESENS.C:1501-1503 + REVIVE.C F0280
+# + DUNVIEW.C:3913-3928 + 525 G0109 + 8318-8542 F0128 + 7727-7924
+# F0124 + COORD.C:1693-1749 + DEFS.H:821-826/2186 +
+# main_loop_m11.c:2620 + m11_game_view.c:7438 AdvanceIdleTick.
+# Patches the (1,2) NORTH C127 sensor from 1 (HALK, shipped) to 8
+# (IAIDO) to lock ordinal 8 on the (1,2) NORTH D1C route, then
+# drives M11_GameView_AdvanceIdleTick for 200 + 400 = 600 idle
+# ticks (the M11 main loop's "sleep" path: mouth animation +
+# m11_apply_tick on the resting party) and re-renders the
+# framebuffer.  Verifies the D1C portrait rectangle (96, 35, 32, 29)
+# still carries ordinal 8 pixels at >= 90% match, the warm-count is
+# stable vs the baseline (|delta| <= 10% of baseline), the front-
+# mirror ordinal stays at 8 (idle ticks must not disable the C127
+# sensor or invoke F0280/F0282), the party pose is unchanged, no
+# floating on the left/right side walls, and ordinal 8 dominates the
+# per-ordinal match (best == 8, second-best strictly less).  This
+# is the ordinal-8 / sleep_repaint gate from the gate table; it is
+# disjoint from the ordinal-8 / south_return probe (no idle ticks,
+# south-facing pose), the ordinal-8 / cancel_reopen probe (no idle
+# ticks, panel-state cycle), and the ordinal-8 / east_walkpath probe
+# (no idle ticks, east-facing pose).  SKIP-safe when (1,2) NORTH
+# does not ship with sensorData=1 (HALK).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_8_sleep_repaint_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_ordinal_8_sleep_repaint_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_8_sleep_repaint_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_ordinal_8_sleep_repaint_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_ordinal_8_sleep_repaint_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_ordinal_8_sleep_repaint_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_ordinal_8_sleep_repaint_portrait_rect_position_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 Hall of Champions portrait ordinal 09 / south_return /
 # portrait_rect_position regression probe.  Source-locked to
 # DUNVIEW.C:3913-3928 + G0109 + REVIVE.C F0280 + REVIVE.C:142-146
