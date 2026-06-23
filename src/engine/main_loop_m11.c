@@ -1244,6 +1244,14 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
              * canonical $HOME OpenClaw original-games anchors. */
             M11_Render_RaiseWindow();
             m11_play_ftl_swoosh_if_available(menuState, dataDir, 0);
+            /* ReDMCSB source order is SWSH.C -> STARTUP1.C:143 ->
+             * TITLE.C F0437.  The SWSH path presents caller-owned RGBA
+             * frames, while TITLE.C presents indexed C001 pixels through the
+             * C12/C13/C14 VGA palette tables.  Recreate the SDL streaming
+             * texture at this one-time handoff so SDL3/Metal does not carry
+             * stale true-colour texture state into the indexed title
+             * animation on Apple Silicon. */
+            M11_Render_DiscardPresentationTexture();
         }
         /* CSB has its own title/entrance sequence.  ReDMCSB ENTRANCE.C
          * F0806 builds the CSB entrance micro-dungeon with C28_ENTRANCE_CSB
