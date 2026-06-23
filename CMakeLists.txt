@@ -2015,6 +2015,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_15_cancel_reopen_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_16_cancel_reopen_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_17_cancel_reopen_portrait_rect_position_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_19_cancel_reopen_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_22_redraw_after_candidate_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_23_redraw_after_candidate_runtime_probe.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_pool_probe_src}")
