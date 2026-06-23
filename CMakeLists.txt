@@ -2174,6 +2174,43 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait ordinal 17 — inventory_exit_restore /
+# portrait_rect_position runtime probe.  Source-locked to:
+#   DUNGEON.C:2573 maps M011_CELL(sensor) against view dir.
+#   DUNGEON.C:2608-2612 stores C127 sensorData in G0289.
+#   DUNVIEW.C:3913-3928 blits C026 ordinal 17 (col 1, row 2) into
+#     the D1C portrait-on-wall cutout at viewport (96, 35, 32, 29).
+#   PANEL.C F0355_INVENTORY_Toggle_CPSE:2244-2330 owns the close
+#     path; the !G0299_ui_CandidateChampionOrdinal gate at line
+#     2318 suppresses the F0292 inventory-champion redraw while the
+#     C040 candidate is live.
+#   PANEL.C F0347_INVENTORY_DrawPanel:1639-1693 reroutes the
+#     reopen panel draw to F0346_INVENTORY_DrawPanel_ResurrectReincarnate
+#     because G0299 is still non-zero.
+# The probe seeds the C127 sensor data on the canonical (1,2,0)
+# DIR_NORTH pose from 1 (HALK, shipped) to 17 (BORIS, target) and
+# proves the D1C portrait rect is painted with ordinal 17 pixels,
+# survives an inventory panel close + reopen via the !G0299 gate,
+# and does not float on the side walls.  Sibling to the ordinal
+# 17 cancel_reopen probe (different route variant: select -> inv-off
+# -> inv-on vs select -> cancel -> re-select) and to the contract-
+# only test_dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit
+# _pc34_compat gate (state-machine invariants vs runtime pixels).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_17_inventory_exit_restore_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_hall_of_champions_portrait_17_inventory_exit_restore_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_17_inventory_exit_restore_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_of_champions_portrait_17_inventory_exit_restore_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_of_champions_portrait_17_inventory_exit_restore_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hall_of_champions_portrait_17_inventory_exit_restore_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_hall_of_champions_portrait_17_inventory_exit_restore_portrait_rect_position_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 champion-mirror VISUAL CAPTURE probe — takes DATA_DIR OUT_DIR,
 # unlike the foreach probes above (DATA_DIR only). Saves PPMs plus a
 # JSON+MD manifest for visual-evidence readiness against the
