@@ -19,25 +19,57 @@ static const char* swsh_kind_name(SWSH_CompatSourceEventKind kind) {
 }
 
 static int test_swsh_logo_expand_same_stride(void) {
-    unsigned char src[8] = {0x02, 0x00, 0x01, 0x00, 0x12, 0x34, 0x56, 0x11};
+    unsigned char src[6] = {0x04, 0x00, 0x01, 0x00, 0x31};
     unsigned char dst[2] = {0x00, 0x00};
     SWSH_Compat_ExpandLogoToBitmap(src, dst);
-    return dst[0] == 0x22 && dst[1] == 0x00;
+    return dst[0] == 0x11 && dst[1] == 0x11;
 }
 
-static int test_swsh_logo_expand_padded(void) {
-    unsigned char src[9] = {0x03, 0x00, 0x02, 0x00, 0x12, 0x34, 0x56, 0x91, 0xE1};
-    unsigned char dst[4] = {0x00, 0x00, 0x00, 0x00};
+static int test_swsh_logo_expand_raw_literal(void) {
+    unsigned char src[8] = {0x04, 0x00, 0x01, 0x00, 0x91, 0x03, 0x23, 0x45};
+    unsigned char dst[2] = {0x00, 0x00};
     SWSH_Compat_ExpandLogoToBitmap(src, dst);
-    return dst[0] == 0x22 && dst[1] == 0x20 && dst[2] == 0x22 && dst[3] == 0x20;
+    return dst[0] == 0x23 && dst[1] == 0x45;
+}
+
+static int test_swsh_logo_expand_previous_line(void) {
+    unsigned char src[11] = {
+        0x06, 0x00, 0x02, 0x00,
+        0x52,
+        0xb3, 0x04,
+        0x00, 0x00, 0x00, 0x00
+    };
+    unsigned char dst[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    SWSH_Compat_ExpandLogoToBitmap(src, dst);
+    return dst[0] == 0x22 && dst[1] == 0x22 && dst[2] == 0x22 &&
+           dst[3] == 0x22 && dst[4] == 0x22 && dst[5] == 0x23;
 }
 
 static int test_swsh_embedded_mz_payload_detection(void) {
-    unsigned char rawImg[8] = {0x40, 0x01, 0xC8, 0x00, 0x12, 0x34, 0x56, 0x11};
-    unsigned char mzImg[16] = {'M', 'Z', 0x90, 0x00, 0x00, 0x00, 0x40, 0x01,
-                               0xC8, 0x00, 0x12, 0x34, 0x56, 0x11, 0x00, 0x00};
-    return SWSH_Compat_FindLogoImagePayload(rawImg, sizeof(rawImg)) == rawImg &&
-           SWSH_Compat_FindLogoImagePayload(mzImg, sizeof(mzImg)) == mzImg + 6 &&
+    unsigned char rawImg[1600];
+    unsigned char mzImg[2048];
+    unsigned int pos = 0u;
+    unsigned int row;
+    const unsigned char* rawPayload;
+    const unsigned char* mzPayload;
+    memset(rawImg, 0, sizeof(rawImg));
+    rawImg[pos++] = 0x40u; rawImg[pos++] = 0x01u; rawImg[pos++] = 0xc8u; rawImg[pos++] = 0x00u;
+    for (row = 0u; row < 51u; ++row) { rawImg[pos++] = 0xc0u; rawImg[pos++] = 0x01u; rawImg[pos++] = 0x3fu; }
+    for (row = 0u; row < 119u; ++row) {
+        rawImg[pos++] = 0x80u; rawImg[pos++] = 0x17u;
+        rawImg[pos++] = 0x8fu; rawImg[pos++] = 0x51u;
+        rawImg[pos++] = 0x80u; rawImg[pos++] = 0xa2u;
+        rawImg[pos++] = 0x0fu;
+        rawImg[pos++] = 0x80u; rawImg[pos++] = 0x31u;
+    }
+    for (row = 0u; row < 30u; ++row) { rawImg[pos++] = 0xc0u; rawImg[pos++] = 0x01u; rawImg[pos++] = 0x3fu; }
+    memset(mzImg, 0, sizeof(mzImg));
+    mzImg[0] = 'M'; mzImg[1] = 'Z';
+    memcpy(mzImg + 64u, rawImg, pos);
+    rawPayload = SWSH_Compat_FindLogoImagePayload(rawImg, pos);
+    mzPayload = SWSH_Compat_FindLogoImagePayload(mzImg, 64u + pos);
+    return rawPayload == rawImg &&
+           mzPayload == mzImg + 64u &&
            SWSH_Compat_FindLogoImagePayload(mzImg, 5u) == NULL;
 }
 
@@ -119,8 +151,12 @@ int main(void) {
         fprintf(stderr, "test_swsh_logo_expand_same_stride failed\n");
         return 1;
     }
-    if (!test_swsh_logo_expand_padded()) {
-        fprintf(stderr, "test_swsh_logo_expand_padded failed\n");
+    if (!test_swsh_logo_expand_raw_literal()) {
+        fprintf(stderr, "test_swsh_logo_expand_raw_literal failed\n");
+        return 1;
+    }
+    if (!test_swsh_logo_expand_previous_line()) {
+        fprintf(stderr, "test_swsh_logo_expand_previous_line failed\n");
         return 1;
     }
     if (!test_swsh_embedded_mz_payload_detection()) {

@@ -12,7 +12,7 @@
  * on.
  *
  * Synthetic, no copyrighted data required: tests build tiny MZ-shaped
- * or IMG1-shaped SWOOSH payloads in /tmp.
+ * or source-shaped raw logo payloads in /tmp.
  */
 
 #include "swsh_intro_pathfinder_m11.h"
@@ -61,20 +61,58 @@ static int test_unsetenv(const char* name) {
     } \
 } while (0)
 
+static size_t append_run(unsigned char* buf, size_t pos, unsigned int count, unsigned int color) {
+    while (count > 0u) {
+        unsigned int chunk = count > 320u ? 320u : count;
+        if (chunk <= 8u) {
+            buf[pos++] = (unsigned char)(((chunk - 1u) << 4) | (color & 0x0fu));
+        } else if (chunk <= 256u) {
+            buf[pos++] = (unsigned char)(0x80u | (color & 0x0fu));
+            buf[pos++] = (unsigned char)(chunk - 1u);
+        } else {
+            buf[pos++] = (unsigned char)(0xc0u | (color & 0x0fu));
+            buf[pos++] = (unsigned char)(((chunk - 1u) >> 8) & 0xffu);
+            buf[pos++] = (unsigned char)((chunk - 1u) & 0xffu);
+        }
+        count -= chunk;
+    }
+    return pos;
+}
+
+static size_t build_synthetic_source_shaped_swoosh(unsigned char* buf, size_t cap) {
+    unsigned int row;
+    size_t pos = 0u;
+    if (cap < 1600u) return 0u;
+    buf[pos++] = 0x40u;
+    buf[pos++] = 0x01u;
+    buf[pos++] = 0xc8u;
+    buf[pos++] = 0x00u;
+    for (row = 0u; row < 51u; ++row) pos = append_run(buf, pos, 320u, 0u);
+    for (row = 0u; row < 119u; ++row) {
+        pos = append_run(buf, pos, 24u, 0u);
+        pos = append_run(buf, pos, 82u, 15u);
+        pos = append_run(buf, pos, 163u, 0u);
+        pos = append_run(buf, pos, 1u, 15u);
+        pos = append_run(buf, pos, 50u, 0u);
+    }
+    for (row = 0u; row < 30u; ++row) pos = append_run(buf, pos, 320u, 0u);
+    return pos;
+}
+
 /* Build a fake MZ-wrapped SWOOSH payload: an MZ header + padding + a
- * raw IMG1 320x200 header embedded somewhere in the file. */
+ * raw IMG2 320x200 logo stream embedded somewhere in the file. */
 static int write_mz_wrapped_swoosh(const char* path) {
-    unsigned char buf[256];
+    unsigned char buf[2048];
+    unsigned char logo[1600];
     FILE* f;
     size_t wrote;
+    size_t logoBytes;
     memset(buf, 0, sizeof(buf));
     buf[0] = 'M';
     buf[1] = 'Z';
-    /* Embed an IMG1 320x200 header at offset 64. */
-    buf[64] = 0x40u;       /* 320 low */
-    buf[65] = 0x01u;       /* 320 high */
-    buf[66] = 0xC8u;       /* 200 low */
-    buf[67] = 0x00u;       /* 200 high */
+    logoBytes = build_synthetic_source_shaped_swoosh(logo, sizeof(logo));
+    if (logoBytes == 0u || 64u + logoBytes > sizeof(buf)) return 0;
+    memcpy(buf + 64u, logo, logoBytes);
     f = fopen(path, "wb");
     if (!f) return 0;
     wrote = fwrite(buf, 1, sizeof(buf), f);
@@ -82,21 +120,20 @@ static int write_mz_wrapped_swoosh(const char* path) {
     return wrote == sizeof(buf);
 }
 
-/* Build a raw IMG1 320x200 logo (Atari ST layout, no MZ wrapper). */
+/* Build a raw PC IMG2 320x200 logo stream (no MZ wrapper). */
 static int write_raw_img1_swoosh(const char* path) {
-    unsigned char buf[64];
+    unsigned char buf[1600];
     FILE* f;
     size_t wrote;
+    size_t logoBytes;
     memset(buf, 0, sizeof(buf));
-    buf[0] = 0x40u;        /* 320 low */
-    buf[1] = 0x01u;        /* 320 high */
-    buf[2] = 0xC8u;        /* 200 low */
-    buf[3] = 0x00u;        /* 200 high */
+    logoBytes = build_synthetic_source_shaped_swoosh(buf, sizeof(buf));
+    if (logoBytes == 0u) return 0;
     f = fopen(path, "wb");
     if (!f) return 0;
-    wrote = fwrite(buf, 1, sizeof(buf), f);
+    wrote = fwrite(buf, 1, logoBytes, f);
     fclose(f);
-    return wrote == sizeof(buf);
+    return wrote == logoBytes;
 }
 
 /* Junk payload: not MZ, not 320x200, just garbage. Must be rejected
@@ -236,7 +273,7 @@ static void test_payload_looks_valid_accepts_mz(void) {
     rm_rf(path);
 }
 
-/* (C) Raw IMG1 320x200 SWOOSH must be accepted. */
+/* (C) Raw source-shaped 320x200 SWOOSH must be accepted. */
 static void test_payload_looks_valid_accepts_raw_img1(void) {
     const char* path = "/tmp/firestaff-test-swsh-raw.bin";
     rm_rf(path);

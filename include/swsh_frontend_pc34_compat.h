@@ -32,9 +32,19 @@ typedef struct SWSH_CompatSourceTiming {
     const char* evidenceNote;
 } SWSH_CompatSourceTiming;
 
+typedef struct SWSH_CompatLogoPayload {
+    const unsigned char* payload;
+    unsigned char* ownedBytes;
+    unsigned int ownedByteCount;
+} SWSH_CompatLogoPayload;
+
 void SWSH_Compat_ExpandLogoToBitmap(const unsigned char* graphic, unsigned char* bitmap);
 const unsigned char* SWSH_Compat_FindLogoImagePayload(const unsigned char* data,
                                                        unsigned int dataBytes);
+int SWSH_Compat_FindLogoImagePayloadEx(const unsigned char* data,
+                                       unsigned int dataBytes,
+                                       SWSH_CompatLogoPayload* outPayload);
+void SWSH_Compat_ReleaseLogoImagePayload(SWSH_CompatLogoPayload* payload);
 void SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(unsigned int colorValue,
                                               unsigned char outRgb[3]);
 unsigned int SWSH_Compat_GetSourceAnimationStepCount(void);

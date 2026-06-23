@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     FILE* f;
     long fsize;
     unsigned char* buf;
-    const unsigned char* payload;
+    SWSH_CompatLogoPayload payload;
     unsigned char* packed = s_packed;
     unsigned char* indexed = s_indexed;
     unsigned int i;
@@ -43,6 +43,9 @@ int main(int argc, char** argv) {
     int totalNonzero = 0;
     int lastNonzeroRow = -1;
     int firstNonzeroRow = -1;
+    int firstNonzeroCol = -1;
+    int lastNonzeroCol = -1;
+    int fullResNonzero = 0;
 
     if (argc < 2) {
         fprintf(stderr, "usage: %s <SWOOSH-path>\n", argv[0]);
@@ -60,13 +63,17 @@ int main(int argc, char** argv) {
     }
     fclose(f);
 
-    payload = SWSH_Compat_FindLogoImagePayload(buf, (unsigned int)fsize);
-    if (!payload) { fprintf(stderr, "FAIL no IMG1 header\n"); return 1; }
+    memset(&payload, 0, sizeof(payload));
+    if (!SWSH_Compat_FindLogoImagePayloadEx(buf, (unsigned int)fsize, &payload)) {
+        fprintf(stderr, "FAIL no source-shaped FTL logo payload\n");
+        free(buf);
+        return 1;
+    }
 
-    memset(packed, 0, sizeof(packed));
-    SWSH_Compat_ExpandLogoToBitmap(payload, packed);
+    memset(packed, 0, FB_BYTES / 2u);
+    SWSH_Compat_ExpandLogoToBitmap(payload.payload, packed);
 
-    memset(indexed, 0, sizeof(indexed));
+    memset(indexed, 0, FB_BYTES);
     for (i = 0u; i < FB_BYTES; i += 2u) {
         unsigned char b = packed[i >> 1];
         indexed[i]      = (unsigned char)((b >> 4) & 0x0Fu);
@@ -98,9 +105,31 @@ int main(int argc, char** argv) {
         }
     }
 
-    printf("\n# logoStats: totalNonzero=%d nonzeroRows=%d firstRow=%d lastRow=%d\n",
-           totalNonzero, nonzeroRows, firstNonzeroRow, lastNonzeroRow);
+    for (i = 0u; i < FB_BYTES; ++i) {
+        if (indexed[i] != 0u) {
+            int col = (int)(i % FB_W);
+            int row = (int)(i / FB_W);
+            fullResNonzero++;
+            if (firstNonzeroCol < 0 || col < firstNonzeroCol) firstNonzeroCol = col;
+            if (col > lastNonzeroCol) lastNonzeroCol = col;
+            if (firstNonzeroRow < 0 || row < firstNonzeroRow) firstNonzeroRow = row;
+            if (row > lastNonzeroRow) lastNonzeroRow = row;
+        }
+    }
 
+    printf("\n# logoStats: sampledNonzero=%d fullNonzero=%d nonzeroRows=%d firstRow=%d lastRow=%d firstCol=%d lastCol=%d\n",
+           totalNonzero, fullResNonzero, nonzeroRows, firstNonzeroRow, lastNonzeroRow,
+           firstNonzeroCol, lastNonzeroCol);
+
+    SWSH_Compat_ReleaseLogoImagePayload(&payload);
     free(buf);
+    if (fullResNonzero < 8000 || fullResNonzero > 12000 ||
+        firstNonzeroRow < 45 || firstNonzeroRow > 60 ||
+        lastNonzeroRow < 160 || lastNonzeroRow > 180 ||
+        firstNonzeroCol < 15 || firstNonzeroCol > 35 ||
+        lastNonzeroCol < 250 || lastNonzeroCol > 280) {
+        fprintf(stderr, "FAIL decoded FTL logo silhouette is not source-shaped\n");
+        return 1;
+    }
     return 0;
 }

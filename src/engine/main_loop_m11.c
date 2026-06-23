@@ -898,9 +898,10 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
     unsigned char* screenFbIndexed = NULL;
     unsigned char* screenRgba = NULL;
     FILE* f = NULL; long fsize = 0;
-    const unsigned char* logoPayload = NULL;
+    SWSH_CompatLogoPayload logoPayload;
     unsigned char swshPalette[16][3];
     if (skipSwoosh) return;
+    memset(&logoPayload, 0, sizeof(logoPayload));
     if (!M11_SWSH_Intro_FindLogoPath(menuState, dataDir, logoPath, sizeof(logoPath))) return;
     f = fopen(logoPath, "rb"); if (!f) return;
     fseek(f, 0, SEEK_END); fsize = ftell(f); fseek(f, 0, SEEK_SET);
@@ -914,9 +915,8 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
     screenRgba      = (unsigned char*)malloc((size_t)M11_FB_BYTES * 4U);
     if (!logoImg || !screenFbPacked || !screenFbIndexed || !screenRgba) goto cleanup;
     if (fread(logoImg, 1, (size_t)fsize, f) != (size_t)fsize) goto cleanup;
-    logoPayload = SWSH_Compat_FindLogoImagePayload(logoImg, (unsigned int)fsize);
-    if (!logoPayload) goto cleanup;
-    SWSH_Compat_ExpandLogoToBitmap(logoPayload, screenFbPacked);
+    if (!SWSH_Compat_FindLogoImagePayloadEx(logoImg, (unsigned int)fsize, &logoPayload)) goto cleanup;
+    SWSH_Compat_ExpandLogoToBitmap(logoPayload.payload, screenFbPacked);
     /* BUG-PASS841-FIX: pass841 — the FTL swoosh logo was rendered as a
      * half-blank vertically-striped image because the runtime treated
      * the 4bpp-packed Atari ST low-res output of SWSH_Compat_ExpandLogoToBitmap
@@ -968,6 +968,7 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
       }
       SDL_Delay(120); }
 cleanup:
+    SWSH_Compat_ReleaseLogoImagePayload(&logoPayload);
     if (logoImg) free(logoImg);
     if (screenFbPacked) free(screenFbPacked);
     if (screenFbIndexed) free(screenFbIndexed);
