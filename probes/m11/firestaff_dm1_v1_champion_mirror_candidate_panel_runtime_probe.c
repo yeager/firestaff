@@ -106,6 +106,12 @@ typedef struct PanelOverPortraitMatch {
     int other;
 } PanelOverPortraitMatch;
 
+typedef struct PortraitRectMatch {
+    int compared;
+    int matched;
+    int percent;
+} PortraitRectMatch;
+
 static PanelMatch match_panel(const M11_AssetSlot* panel,
                               const unsigned char* fb,
                               int fbW,
@@ -142,6 +148,58 @@ static PanelMatch match_panel(const M11_AssetSlot* panel,
                 }
             }
         }
+    }
+    return out;
+}
+
+static PortraitRectMatch match_portrait_rect(const M11_AssetSlot* portraits,
+                                             const unsigned char* fb,
+                                             int fbW,
+                                             int fbH,
+                                             int portraitX,
+                                             int portraitY,
+                                             int portraitOrdinal) {
+    PortraitRectMatch out;
+    int x;
+    int y;
+
+    memset(&out, 0, sizeof(out));
+    if (!portraits || !portraits->loaded || !portraits->pixels || !fb ||
+        portraitOrdinal < 0) {
+        return out;
+    }
+
+    for (y = 0; y < PROBE_PORTRAIT_H; ++y) {
+        int fbY = portraitY + y;
+        if (fbY < 0 || fbY >= fbH) continue;
+        for (x = 0; x < PROBE_PORTRAIT_W; ++x) {
+            int fbX = portraitX + x;
+            int srcX = (portraitOrdinal & 7) * PROBE_PORTRAIT_W + x;
+            int srcY = (portraitOrdinal >> 3) * PROBE_PORTRAIT_H + y;
+            unsigned char src;
+            unsigned char dst;
+
+            if (fbX < 0 || fbX >= fbW ||
+                srcX < 0 || srcX >= (int)portraits->width ||
+                srcY < 0 || srcY >= (int)portraits->height) {
+                continue;
+            }
+
+            src = (unsigned char)
+                (portraits->pixels[srcY * (int)portraits->width + srcX] & 0x0F);
+            if (src == 1) {
+                continue;
+            }
+            dst = M11_FB_DECODE_INDEX(fb[fbY * fbW + fbX]);
+            ++out.compared;
+            if (dst == src) {
+                ++out.matched;
+            }
+        }
+    }
+
+    if (out.compared > 0) {
+        out.percent = out.matched * 100 / out.compared;
     }
     return out;
 }
@@ -500,6 +558,161 @@ static int check_cancel(M11_GameViewState* game,
     printf("%s cancel drawn=%d/%d championCount=%d\n",
            label, match.assetDrawn, match.assetOpaque,
            game->world.party.championCount);
+    return ok;
+}
+
+static int retarget_c127_mirror_ordinal(M11_GameViewState* game,
+                                        int oldOrdinal,
+                                        int newOrdinal,
+                                        const char* label) {
+    int i;
+    int changed = 0;
+
+    if (!game || !game->world.things || !game->world.things->sensors) {
+        fprintf(stderr, "FAIL %s missing dungeon sensor table\n", label);
+        return 0;
+    }
+
+    for (i = 0; i < game->world.things->sensorCount; ++i) {
+        if (game->world.things->sensors[i].sensorType == 127 &&
+            (int)game->world.things->sensors[i].sensorData == oldOrdinal) {
+            game->world.things->sensors[i].sensorData =
+                (unsigned short)newOrdinal;
+            ++changed;
+        }
+    }
+
+    if (changed <= 0) {
+        fprintf(stderr, "FAIL %s did not find C127 ordinal %d to retarget\n",
+                label, oldOrdinal);
+        return 0;
+    }
+
+    printf("%s retargeted %d C127 sensor(s) from ordinal %d to %d\n",
+           label, changed, oldOrdinal, newOrdinal);
+    return 1;
+}
+
+static int check_redraw_after_cancel_portrait_rect(
+    M11_GameViewState* game,
+    const M11_AssetSlot* rrPanel,
+    const M11_AssetSlot* portraits,
+    int mapX,
+    int mapY,
+    int dir,
+    int expectedOrdinal,
+    const char* label) {
+    unsigned char fb[PROBE_FB_W * PROBE_FB_H];
+    PanelMatch panelMatch;
+    PortraitRectMatch portraitMatch;
+    PortraitRectMatch sideMatch;
+    char expectedName[CHAMPION_NAME_TEXT_CAPACITY];
+    char expectedTitle[CHAMPION_TITLE_TEXT_CAPACITY];
+    int ok = 1;
+
+    expectedName[0] = '\0';
+    expectedTitle[0] = '\0';
+    ok &= expect_true("ordinal 20 catalog name present",
+                      M11_GameView_GetMirrorNameByOrdinal(game,
+                                                          expectedOrdinal,
+                                                          expectedName,
+                                                          (int)sizeof(expectedName)) > 0);
+    ok &= expect_true("ordinal 20 catalog title lookup reachable",
+                      M11_GameView_GetMirrorTitleByOrdinal(game,
+                                                           expectedOrdinal,
+                                                           expectedTitle,
+                                                           (int)sizeof(expectedTitle)) >= 0);
+    ok &= expect_int("ordinal 20 catalog name ALEX",
+                     strcmp(expectedName, "ALEX") == 0, 1);
+    ok &= expect_int("ordinal 20 catalog title ANDER",
+                     strcmp(expectedTitle, "ANDER") == 0, 1);
+    if (!ok) {
+        return 0;
+    }
+
+    set_pose(game, mapX, mapY, dir);
+    ok &= expect_int("ordinal 20 retargeted front mirror",
+                     M11_GameView_GetFrontMirrorOrdinal(game),
+                     expectedOrdinal);
+    if (M11_GameView_SelectFrontMirrorCandidate(game) != 1) {
+        fprintf(stderr, "FAIL %s SelectFrontMirrorCandidate returned 0\n",
+                label);
+        return 0;
+    }
+    ok &= expect_int("ordinal 20 candidate panel on",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("ordinal 20 candidate recorded",
+                     game->candidateMirrorOrdinal, expectedOrdinal);
+    ok &= expect_int("ordinal 20 candidate appended",
+                     game->world.party.championCount, 1);
+
+    /* ReDMCSB REVIVE.C:744-783 cancels C162 by clearing G0299 and removing
+     * the temporary champion without disabling the C127 sensor.  The next
+     * DUNVIEW.C:3913-3928 redraw must therefore repaint C026 at the fixed
+     * source portrait rectangle, G0109={96,127,35,63}. */
+    if (M11_GameView_CancelMirrorCandidate(game) != 1) {
+        fprintf(stderr, "FAIL %s CancelMirrorCandidate returned 0\n", label);
+        return 0;
+    }
+    ok &= expect_int("ordinal 20 post-cancel panel off",
+                     game->candidateMirrorPanelActive, 0);
+    ok &= expect_int("ordinal 20 post-cancel champion removed",
+                     game->world.party.championCount, 0);
+    ok &= expect_int("ordinal 20 post-cancel front mirror remains armed",
+                     M11_GameView_GetFrontMirrorOrdinal(game),
+                     expectedOrdinal);
+
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    panelMatch = match_panel(rrPanel, fb, PROBE_FB_W, PROBE_FB_H,
+                             PROBE_PANEL_X, PROBE_PANEL_Y, 6);
+    if (panelMatch.assetOpaque > 0 &&
+        panelMatch.assetDrawn * 100 > 5 * panelMatch.assetOpaque) {
+        fprintf(stderr,
+                "FAIL %s RR panel leaked after ordinal-20 cancel drawn=%d/%d\n",
+                label, panelMatch.assetDrawn, panelMatch.assetOpaque);
+        ok = 0;
+    }
+
+    portraitMatch = match_portrait_rect(portraits, fb, PROBE_FB_W, PROBE_FB_H,
+                                        PROBE_PORTRAIT_X, PROBE_PORTRAIT_Y,
+                                        expectedOrdinal);
+    if (portraitMatch.compared <= 0 ||
+        portraitMatch.percent < 90) {
+        fprintf(stderr,
+                "FAIL %s ordinal-20 D1C portrait rect match=%d/%d (%d%%)\n",
+                label, portraitMatch.matched, portraitMatch.compared,
+                portraitMatch.percent);
+        ok = 0;
+    }
+
+    set_pose(game, mapX, mapY, DIR_WEST);
+    ok &= expect_int("ordinal 20 side wall has no front mirror route",
+                     M11_GameView_GetFrontMirrorOrdinal(game), -1);
+    memset(fb, 0, sizeof(fb));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    sideMatch = match_portrait_rect(portraits, fb, PROBE_FB_W, PROBE_FB_H,
+                                    PROBE_PORTRAIT_X, PROBE_PORTRAIT_Y,
+                                    expectedOrdinal);
+    if (sideMatch.percent >= 45) {
+        fprintf(stderr,
+                "FAIL %s ordinal-20 portrait floated on side/no-front wall match=%d/%d (%d%%)\n",
+                label, sideMatch.matched, sideMatch.compared,
+                sideMatch.percent);
+        ok = 0;
+    }
+
+    printf("%s ordinal=%d name=%s title=%s post-cancel rect=%d/%d (%d%%) side=%d/%d (%d%%)\n",
+           label,
+           expectedOrdinal,
+           expectedName,
+           expectedTitle,
+           portraitMatch.matched,
+           portraitMatch.compared,
+           portraitMatch.percent,
+           sideMatch.matched,
+           sideMatch.compared,
+           sideMatch.percent);
     return ok;
 }
 
@@ -1373,9 +1586,12 @@ int main(int argc, char** argv) {
     static M11_GameViewState game12;
     static M12_StartupMenuState menu13;
     static M11_GameViewState game13;
+    static M12_StartupMenuState menu14;
+    static M11_GameViewState game14;
     const M11_AssetSlot* rrPanel;
     const M11_AssetSlot* portraits;
     int ok = 1;
+    int legacyOrdinal2FixtureMatches = 0;
 
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
@@ -1406,16 +1622,7 @@ int main(int argc, char** argv) {
     {
         set_pose(&game, 1, 4, 0 /*DIR_NORTH*/);
         int probeOrd = M11_GameView_GetFrontMirrorOrdinal(&game);
-        if (probeOrd != 2) {
-            printf("SKIP hall_candidate_panel_fixture_mismatch "
-                   "(1,4) NORTH front ordinal=%d expected=2; "
-                   "this DM1 V1 build does not match the reference "
-                   "DUNGEON.DAT fixture (the (1,4) sensor is laid out "
-                   "differently; see TODO.md fixture-mismatch)\n",
-                   probeOrd);
-            M11_GameView_Shutdown(&game);
-            return 0;
-        }
+        legacyOrdinal2FixtureMatches = (probeOrd == 2);
     }
 
     /* The C040 RESURRECT_REINCARNATE panel is a single-frame asset drawn
@@ -1445,16 +1652,8 @@ int main(int argc, char** argv) {
     {
         set_pose(&game, 1, 4, DIR_NORTH);
         int probeOrd = M11_GameView_GetFrontMirrorOrdinal(&game);
-        if (probeOrd != 2) {
-            printf("SKIP hall_candidate_panel_fixture_mismatch "
-                   "(1,4) NORTH front ordinal=%d expected=2; "
-                   "this DM1 V1 build does not match the reference "
-                   "DUNGEON.DAT fixture (the (1,4) sensor is laid out "
-                   "differently; see TODO.md fixture-mismatch)\n",
-                   probeOrd);
-            M11_GameView_Shutdown(&game);
-            return 0;
-        }
+        legacyOrdinal2FixtureMatches = legacyOrdinal2FixtureMatches &&
+            probeOrd == 2;
     }
     portraits = M11_AssetLoader_Load(&game.assetLoader,
                                      (unsigned int)M11_GameView_GetV1ChampionPortraitGraphicId());
@@ -1463,6 +1662,40 @@ int main(int argc, char** argv) {
         fprintf(stderr, "FAIL GRAPHICS.DAT champion portrait strip unavailable\n");
         M11_GameView_Shutdown(&game);
         return 1;
+    }
+
+    /* Pose A0: same real Hall C127 front-cell route, retargeted in an
+     * isolated runtime to portrait ordinal 20.  This locks the
+     * redraw-after-candidate path for the D1C C026 rectangle after C162
+     * cancel clears the candidate panel, without disturbing the ordinal-2
+     * regression cases below. */
+    M12_StartupMenu_InitWithDataDir(&menu14, dataDir, NULL);
+    M11_GameView_Init(&game14);
+    if (!M11_GameView_OpenSelectedMenuEntry(&game14, &menu14)) {
+        fprintf(stderr, "FAIL could not reopen DM1 V1 game view for ordinal-20 redraw pose\n");
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    if (!retarget_c127_mirror_ordinal(&game14, 1, 20,
+                                      "ordinal20_redraw_after_candidate")) {
+        ok = 0;
+    } else {
+        ok &= check_redraw_after_cancel_portrait_rect(
+            &game14, rrPanel, portraits, 1, 2, DIR_NORTH, 20,
+            "ordinal20_redraw_after_candidate");
+    }
+    M11_GameView_Shutdown(&game14);
+
+    if (!legacyOrdinal2FixtureMatches) {
+        set_pose(&game, 1, 4, DIR_NORTH);
+        printf("SKIP hall_candidate_panel_legacy_ordinal2_fixture_mismatch "
+               "(1,4) NORTH front ordinal=%d expected=2; "
+               "ordinal-20 redraw-after-candidate slice already ran above; "
+               "skipping older ordinal-2 panel regression poses for this "
+               "DM1 V1 fixture\n",
+               M11_GameView_GetFrontMirrorOrdinal(&game));
+        M11_GameView_Shutdown(&game);
+        return ok ? 0 : 1;
     }
 
     /* Pose A: corridor (1,4) facing north has mirror ordinal 2 on the
