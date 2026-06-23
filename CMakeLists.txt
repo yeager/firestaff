@@ -2135,6 +2135,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_05_after_party_shuffle_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_05_candidate_panel_cancel_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_5_front_south_entry_portrait_rect_position_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_05_approach_from_right_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_06_cancel_reopen_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_06_leave_and_reenter_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_06_backtrack_same_tick_portrait_rect_position_runtime_probe.c"
