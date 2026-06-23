@@ -139,6 +139,12 @@ int  M11_Render_PresentRGBA(const unsigned char* rgba,
                             int logicalWidth,
                             int logicalHeight);
 
+/* Drop the current SDL streaming texture while keeping renderer/window state.
+ * The next Present* call recreates it. Used at rare intro handoff boundaries
+ * where true-colour RGBA presentation is followed by source-indexed VGA
+ * palette presentation. */
+void M11_Render_DiscardPresentationTexture(void);
+
 /* Event pump — drains the SDL event queue once and returns whether a
    quit request (window close / ESC) was observed. Safe to call when
    not initialised (returns 0). */

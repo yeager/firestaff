@@ -166,6 +166,15 @@ static void m11_retire_texture(SDL_Texture* texture) {
     SDL_DestroyTexture(texture);
 }
 
+static void m11_discard_presentation_texture(void) {
+    if (g_state.texture) {
+        m11_retire_texture(g_state.texture);
+        g_state.texture = NULL;
+    }
+    g_state.textureW = 0;
+    g_state.textureH = 0;
+}
+
 static int m11_min_texture_w(void) { return 480; }
 static int m11_min_texture_h(void) { return 270; }
 
@@ -1017,6 +1026,13 @@ void M11_Render_Shutdown(void) {
     g_state.contentH = 0;
     g_state.textureW = 0;
     g_state.textureH = 0;
+}
+
+void M11_Render_DiscardPresentationTexture(void) {
+    if (!g_state.initialised) {
+        return;
+    }
+    m11_discard_presentation_texture();
 }
 
 int M11_Render_IsInitialized(void) {

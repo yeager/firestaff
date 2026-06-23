@@ -9707,6 +9707,29 @@ if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_
 endif()
 
 
+# -- DM1 V1 FTL/SWSH -> C001 TITLE palette handoff probe -------------
+# Covers the release-3.0.2 MacBook Pro regression class that isolated
+# SWSH and TITLE palette probes missed: a true-colour RGBA SWSH frame
+# followed by a source-indexed GRAPHICS.DAT C001 TITLE frame using the
+# C13_DUNGEON + C14_MASTER special palette.
+if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_dm_title_swoosh_handoff_palette_probe.c")
+    add_executable(firestaff_v1_dm_title_swoosh_handoff_palette_probe
+        probes/v1/firestaff_v1_dm_title_swoosh_handoff_palette_probe.c
+    )
+    target_link_libraries(firestaff_v1_dm_title_swoosh_handoff_palette_probe PRIVATE
+        firestaff_m11 firestaff_m10 SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_v1_dm_title_swoosh_handoff_palette_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm_title_swoosh_handoff_palette
+        COMMAND firestaff_v1_dm_title_swoosh_handoff_palette_probe
+                $ENV{HOME}/.firestaff/data/dm1/GRAPHICS.DAT
+    )
+endif()
+
+
 # ── DM1 V1 TITLE runtime cadence source-lock gate ───────────────────
 if(BUILD_TESTING)
     add_executable(test_title_frontend_runtime_cadence_pc34_compat
