@@ -2310,6 +2310,38 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait ordinal 1 (HALK) / route
+# west_negative_portrait_rect_position runtime probe.  Source-locked
+# against ReDMCSB DUNGEON.C:2573 (C127 sensor front-wall filter) +
+# MOVESENS.C:1501-1503 (sensorData routing) + REVIVE.C F0280
+# (candidate materialization) + DUNVIEW.C:3913-3928 (C026 portrait
+# blit) + DUNVIEW.C G0205 Graphic558 coordSet 5 (C346 D1C
+# wall-mirror frame) + F0660/F0661 (mirror catalog identity).
+# Proves that ordinal 1 (HALK) renders at the source-locked D1C
+# portrait rect (96, 35, 32, 29) on the (1,2) NORTH positive route
+# and that the SAME rect is empty on the (1,2) WEST negative route,
+# and that the resurrect round-trip via
+# SelectFrontMirrorCandidate/ConfirmMirrorCandidate survives 20
+# idle ticks.  Distinct from sibling probes: actual_pose_runtime
+# (16-pose coverage, no pixel rect match), capture_probe (PPM dumps
+# to OUT_DIR), and the panel_guard_probe (BUG-120/121 panel-active
+# early-return).  This probe is the ordinal-1 portrait_rect_position
+# focus.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_1_halk_pose_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_ordinal_1_halk_pose_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_1_halk_pose_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_ordinal_1_halk_pose_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_ordinal_1_halk_pose_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_ordinal_1_halk_pose_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_ordinal_1_halk_pose_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 viewport wall visual capture probe — takes DATA_DIR OUT_DIR.
 # Sibling to the champion-mirror capture probe; addresses the
 # 'missing or incorrect viewport walls' P1 visual bug ticket by
