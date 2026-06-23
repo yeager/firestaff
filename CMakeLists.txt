@@ -2220,6 +2220,31 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_of_champ
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait ordinal 08 / south_return /
+# portrait_rect_position regression probe.  Source-locked to
+# DUNVIEW.C:3913-3928 + G0109 + REVIVE.C F0280 + REVIVE.C:142-146
+# (G0047 inner-portrait rect).  Patches the (1,6) C127 sensor from
+# 13 (WUUF) to 8 (IAIDO) to lock the ordinal-8 column-0/row-1
+# C026 portrait blit into the fixed D1C portrait rectangle
+# (96, 35, 32, 29) on the south-facing DIR_SOUTH route.  Disjoint
+# from the actual-pose / capture / visibility / walkpath / zorder /
+# candidate-panel probes and from the other ordinal-XX south_return
+# portrait_rect_position probes.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_8_south_return_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_ordinal_8_south_return_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_8_south_return_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_ordinal_8_south_return_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_ordinal_8_south_return_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_ordinal_8_south_return_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_ordinal_8_south_return_portrait_rect_position_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 viewport wall visual capture probe — takes DATA_DIR OUT_DIR.
 # Sibling to the champion-mirror capture probe; addresses the
 # 'missing or incorrect viewport walls' P1 visual bug ticket by
