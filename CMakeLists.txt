@@ -2576,6 +2576,37 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion
     )
 endif()
 
+# DM1 V1 Hall of Champions west_negative portrait_rect_position probe —
+# focused regression for the (1,2) facing WEST slice (no C127 mirror on
+# the front square).  Closes the portrait_rect_position aspect gap that
+# the broader firestaff_dm1_v1_champion_mirror_capture_probe covers
+# with hardcoded (96,35)-(128,64) coordinates: this probe drives the
+# engine helper M11_GameView_GetD1CWallOrnamentZone() to read the
+# source-locked D1C wall-box rectangle (80, 29, 64, 43) at runtime,
+# then asserts the inner portrait cutout (96, 35, 32, 29) and the
+# wider wall box are warm-color-empty for the negative route, and
+# warm-color-positive for the cross-check (1,2) NORTH HALK route.
+# Source-locked against ReDMCSB DUNVIEW.C G0205 Graphic558 coordSet 5
+# + DUNVIEW.C:3913-3928 + DUNGEON.C:2573 + MOVESENS.C:1501-1503 +
+# REVIVE.C F0280.  Distinct from sibling hall_of_champions probes
+# (panel_guard, wall_mirror_zones, mirror_zones) which cover BUG-120
+# / 121, positive (1,2)N+(1,5)N wall zones, and 4-mirror endgame
+# zones respectively.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_of_champions_west_negative_portrait_rect_position_probe.c")
+    add_executable(firestaff_dm1_v1_hall_of_champions_west_negative_portrait_rect_position_probe
+        probes/m11/firestaff_dm1_v1_hall_of_champions_west_negative_portrait_rect_position_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_of_champions_west_negative_portrait_rect_position_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_of_champions_west_negative_portrait_rect_position_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hall_of_champions_west_negative_portrait_rect_position_probe
+        COMMAND firestaff_dm1_v1_hall_of_champions_west_negative_portrait_rect_position_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 champion-panel damage-indicator pc34_compat contract test
 # (CHAMDRAW.C F0623 damage graphic/zone/text dispatch).
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_indicator_pc34_compat.c"
