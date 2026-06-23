@@ -1,4 +1,5 @@
 #include "memory_champion_state_pc34_compat.h"
+#include "memory_champion_lifecycle_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -87,6 +88,14 @@ int main(void)
                recruited->attributeMaximums[CHAMPION_ATTR_STRENGTH], 30);
     expect_int("stamina is not flat default", recruited->stamina.maximum != 100, 1);
     expect_int("mana is not flat default", recruited->mana.maximum != 50, 1);
+    expect_int("decoded source maximum load", recruited->maxLoad, 340);
+    expect_int("empty resurrected movement ticks",
+               F0841_LIFECYCLE_ComputeMoveTicks_Compat(
+                   recruited->load,
+                   recruited->maxLoad,
+                   recruited->wounds,
+                   LIFECYCLE_ICON_NONE),
+               2);
 
     name[0] = '\0';
     title[0] = '\0';

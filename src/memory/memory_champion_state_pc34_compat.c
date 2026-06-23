@@ -7,6 +7,8 @@
  * NO UI, NO render, NO strings, NO cheats.
  */
 
+#define CHAMPION_WOUND_LEGS_MASK 0x0010
+
 /* ---- Little-endian helpers ---- */
 static void write_u16_le(unsigned char* buf, unsigned short v) {
     buf[0] = (unsigned char)(v & 0xFF);
@@ -86,6 +88,39 @@ static unsigned short mirror_text_decode_value(const unsigned char* packed,
     return (unsigned short)value;
 }
 
+static unsigned short champion_max_load_from_current_state(
+    const struct ChampionState_Compat* champ)
+{
+    int maximumLoad;
+    int halfMaximumStamina;
+    int currentStamina;
+    int maximumStamina;
+
+    if (!champ) return 0;
+
+    /* ReDMCSB CHAMPION.C F0309 lines 1157-1177 computes the cached
+     * maximum load from strength and stamina after REVIVE.C F0280 has
+     * materialized a mirror candidate's current/maximum statistics. */
+    maximumLoad = ((int)champ->attributes[CHAMPION_ATTR_STRENGTH] << 3) + 100;
+    currentStamina = (int)champ->stamina.current;
+    maximumStamina = (int)champ->stamina.maximum;
+    halfMaximumStamina = maximumStamina >> 1;
+    if (halfMaximumStamina > 0 && currentStamina < halfMaximumStamina) {
+        maximumLoad >>= 1;
+        maximumLoad += (int)(((long)maximumLoad * (long)currentStamina) /
+                             (long)halfMaximumStamina);
+    }
+    if (champ->wounds) {
+        maximumLoad -= maximumLoad >>
+            ((champ->wounds & CHAMPION_WOUND_LEGS_MASK) ? 2 : 3);
+    }
+    maximumLoad += 9;
+    maximumLoad -= maximumLoad % 10;
+    if (maximumLoad < 0) maximumLoad = 0;
+    if (maximumLoad > 65535) maximumLoad = 65535;
+    return (unsigned short)maximumLoad;
+}
+
 static void apply_mirror_candidate_values(struct ChampionState_Compat* champ) {
     int attr;
     if (!champ) return;
@@ -121,6 +156,7 @@ static void apply_mirror_candidate_values(struct ChampionState_Compat* champ) {
     }
     champ->food = 1500;
     champ->water = 1500;
+    champ->maxLoad = champion_max_load_from_current_state(champ);
 }
 
 int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
