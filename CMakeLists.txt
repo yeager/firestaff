@@ -2191,6 +2191,35 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_of_champ
     )
 endif()
 
+# DM1 V1 Hall of Champions champion-portrait slice probe —
+# ordinal_4 south_return portrait_rect_position.  Source-locked to
+# ReDMCSB DUNGEON.C:2573 (C127 front-cell filter), DUNGEON.C:2608-2612
+# (G0289 portrait storage), DUNVIEW.C:3913-3928 (D1C portrait blit),
+# DUNVIEW.C G0205[coordSet=0][12] (D1C wall-ornament destination),
+# MOVESENS.C:1501-1503 / REVIVE.C F0280 (candidate materialization).
+# The slice covers the south_return pose (2,1) DIR_SOUTH where LEIF
+# is visible from the south side of the (2,2) chamber, plus the
+# corridor negative-control pose (2,2) DIR_NORTH and a deterministic
+# re-render of the canonical south_return anchor.  Companion slice to
+# firestaff_dm1_v1_champion_mirror_ordinal_4_east_walkpath_
+# portrait_rect_position_runtime_probe which uses the same anchor but
+# the post-fix-only contract and the x=2 sealed-chamber walkpath
+# guard.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_of_champions_champion_portrait_04_south_return_portrait_rect_position_probe.c")
+    add_executable(firestaff_dm1_v1_hall_of_champions_champion_portrait_04_south_return_portrait_rect_position_probe
+        probes/m11/firestaff_dm1_v1_hall_of_champions_champion_portrait_04_south_return_portrait_rect_position_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_of_champions_champion_portrait_04_south_return_portrait_rect_position_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_of_champions_champion_portrait_04_south_return_portrait_rect_position_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hall_of_champions_champion_portrait_04_south_return_portrait_rect_position_probe
+        COMMAND firestaff_dm1_v1_hall_of_champions_champion_portrait_04_south_return_portrait_rect_position_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 viewport wall visual capture probe — takes DATA_DIR OUT_DIR.
 # Sibling to the champion-mirror capture probe; addresses the
 # 'missing or incorrect viewport walls' P1 visual bug ticket by
