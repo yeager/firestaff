@@ -118,7 +118,7 @@ coverage**, not registry correctness.
 | Macintosh | 🔴 | 🔴 | .moov QuickTime animations + EN/JP variants |
 | Sega CD / Mega CD | 🔴 | 🔴 | `.dat` animations |
 | FM-Towns | 🔴 | 🔴 | `graphics.dat` only |
-| PC-9801 | 🔴 | 🔴 | 16-color dithered |
+| PC-9801 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as four FDI disk images; no music; separate HDM/HDI demo |
 | IBM PS/V | 🔴 | 🔴 | no music variant |
 | PC beta | 🔴 | 🔴 | split-file, byte-concat required |
 
