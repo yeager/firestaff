@@ -7382,6 +7382,26 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     }
     free(blob);
 
+    /* ReDMCSB F0898_WORLD_Deserialize_Compat preserves the existing
+     * pointer fields (dungeon / things / ownsDungeon) on the world
+     * struct it deserializes into.  The live M11 game view holds the
+     * only reference to the DUNGEON.DAT-backed dungeon and things
+     * state, so the loaded world must inherit those pointers or
+     * F0883_WORLD_Free_Compat(state->world) below would drop them
+     * on the floor.  Transfer ownership of the live dungeon/things
+     * from the old state.world to loadedWorld (so loadedWorld now
+     * owns the live dungeon and F0883 will free them at the next
+     * state.world release), then null out the old state.world
+     * pointers and free the now-empty state.world.  The subsequent
+     * assignment of loadedWorld to state.world restores the live
+     * dungeon pointers and the ownsDungeon=1 flag, so the next
+     * M11_GameView_Shutdown still frees the dungeon properly. */
+    loadedWorld.dungeon = state->world.dungeon;
+    loadedWorld.things  = state->world.things;
+    loadedWorld.ownsDungeon = state->world.ownsDungeon;
+    state->world.dungeon = NULL;
+    state->world.things = NULL;
+    state->world.ownsDungeon = 0;
     F0883_WORLD_Free_Compat(&state->world);
     state->world = loadedWorld;
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
