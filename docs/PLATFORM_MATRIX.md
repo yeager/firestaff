@@ -18,12 +18,12 @@ Firestaff's actual implementation state.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| Atari ST | 1.0 | EN | 🟡 | `c_dm_atari_st_v1_0/` | — | ReDMCSB source-locked; first commercial release |
-| Atari ST | 1.1 | EN | 🟡 | `c_dm_atari_st_v1_1/` | — | ReDMCSB |
-| Atari ST | 1.2 | EN | 🟡 | `c_dm_atari_st_v1_2/` | — | ReDMCSB |
-| Atari ST | 1.2 | DE | 🟡 | `c_dm_atari_st_v1_2/` | — | ReDMCSB |
-| Atari ST | 1.3 | FR | 🟡 | `c_dm_atari_st_v1_3/` | — | ReDMCSB |
-| Atari ST | Teaser demo | EN | 🔵 | `c_dm_teaser_atari/` | — | demo.dat only |
+| Atari ST | 1.0 | EN | 🟡 | `c_dm_atari_st_v1_0/` | — | ReDMCSB source-locked; DMWeb page: first commercial release, 1987-12-15 US date, two known 1.0 STX builds dated 1987-12-08 and 1987-12-11 |
+| Atari ST | 1.1 | EN | 🟡 | `c_dm_atari_st_v1_1/` | — | ReDMCSB; DMWeb page lists preserved STX plus cracked MSA and hard-disk/RamDisk hack derivatives |
+| Atari ST | 1.2 | EN | 🟡 | `c_dm_atari_st_v1_2/` | — | ReDMCSB; DMWeb page lists preserved STX; Atari input uses Insert/Clr Home turns and Ctrl-S disk menu |
+| Atari ST | 1.2 | DE | 🟡 | `c_dm_atari_st_v1_2/` | — | ReDMCSB; DMWeb page lists preserved German 1.2 STX and German/Psygnosis bundle provenance |
+| Atari ST | 1.3 | FR | 🟡 | `c_dm_atari_st_v1_3/` | — | ReDMCSB; DMWeb page lists French 1.3 with two variants and French Mirrorsoft edition/bundle provenance |
+| Atari ST | Teaser demo | EN | 🔵 | `c_dm_teaser_atari/` | — | demo.dat only; DMWeb page keeps teaser as a separate Atari ST edition |
 | Amiga | 1.0 | EN | 🔵 | `c_dm_amiga_v1_0/` | — | earliest Amiga port |
 | Amiga | 2.0 | EN | 🔵 | `c_dm_amiga_v2_0/` | — | LZW-compressed graphics |
 | Amiga | 2.0 | FR | 🔵 | `c_dm_amiga_v2_0/` | — | |

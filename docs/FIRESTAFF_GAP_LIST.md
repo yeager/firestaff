@@ -28,9 +28,9 @@ Classification:
 | IMG1/IMG2 RLE 16-color image decoder | ReDMCSB, sck | FIXED (`image_backend_pc34_compat.c` `IMG3_Compat_ExpandFromSource`) |
 | IMG3/IMG4 4bpp local-palette image | dmweb Data Files | FIXED (same code path) |
 | **IMG5 4bpp chunked image (Amiga, SNES)** | greatstone d_items.html | **FIXED in v2.9.2** (`firestaff_img5_decode.c`, commit `216b0b67`) |
-| LZW-compressed items (DM Atari ST, CSB Atari ST) | dmweb Data Files | PARTIAL — decoder is contract-verified (`m11_gfx_lzw_decompress`, `dm1_lzw_round_trip` PASS 1/1 on 2026-06-21); real Atari ST asset handoff remains BLOCKED-DATA |
+| LZW-compressed items (DM Atari ST, CSB Atari ST) | dmweb Data Files + DM Atari ST edition page | PARTIAL — decoder is contract-verified (`m11_gfx_lzw_decompress`, `dm1_lzw_round_trip` PASS 1/1 on 2026-06-21); DMWeb's DM Atari ST page now pins the source-media set for real handoff (STX originals for English 1.0/1.1/1.2, German 1.2, French 1.3, plus separate cracked/hacked media); real Atari ST asset handoff remains BLOCKED-DATA |
 | **FTL container format (Amiga, X68000, MegaCD)** | greatstone d_ftl.html | PARTIAL / OPEN-BOUNDED — `firestaff_ftl_container_unit` PASS 1/1 on 2026-06-22; parses the 20-byte common header, 12-byte hunk headers, BSS/DATA/CODE hunk discovery, BSS metadata, and verifies documented common/BSS/DATA/uncompressed-CODE checksums. Remaining: HUNK_DATA zero-run decompression, HUNK_CODE 0x5223 decompression/checksum verification, mapfile item extraction, real FTL corpus gates, and runtime asset loading. |
-| **PAK container format (Atari ST)** | greatstone d_pak.html | FIXED — `firestaff_pak_decode_unit` PASS 1/1 on 2026-06-21; parses 28-byte Atari ST executable header plus nibble-coded table/literal compression |
+| **PAK container format (Atari ST)** | greatstone d_pak.html + DM Atari ST edition page | FIXED — `firestaff_pak_decode_unit` PASS 1/1 on 2026-06-21; parses 28-byte Atari ST executable header plus nibble-coded table/literal compression. Remaining proof is real-media extraction only: DMWeb's DM Atari ST page records `START.PAK`-adjacent STX/ST/MSA/RamDisk provenance and sector `#F7` copy-protection context |
 | **HTC hint oracle text format (CSB)** | dmweb Hint Oracle Files / ReDMCSB HINTHTC.C,HINTLZW.C | PARTIAL / OPEN-BOUNDED — 2026-06-22 added data-free `csb_hint_oracle_htc_unit`: read-only HCSB.HTC parser for big-endian format word/dungeon id/header skip, location records, hint records, page compressed-length pool, content slicing, level/X/Y matching including the 255/255 any-XY rule, and bounded HTC LZW decompression with the ReDMCSB 0x90 repeat marker. Remaining: scan/cache real Utility Disk `HCSB.HTC` files by hash, bind parsed hints into a CSB Hint Oracle UI/runtime path, and verify real-asset pages/screens. |
 | **CMP portrait image format** | sck tutorial | FIXED — `firestaff_cmp_decode_unit` + `csb_v1_cmp_import_pc34` PASS 2/2 on 2026-06-21; decoder parses the 496-byte CSB Utility Disk champion portrait format and import glue writes it into CSB V1 champion/party structures |
 | **AMG sound format (CSB utility disk)** | dmweb Data Files / sck tutorial | FIXED for documented CSB Utility Disk sound-effect files — `firestaff_amg_decode_unit` parses the single-item Amiga SND2 `.AMG` shape (`TELE2`, `SWIPE`, `MAGEXPLO`, `EXPLOS1`, `DRAGON`): big-endian sample count, signed 8-bit mono PCM, 0..3 trailing bytes, plus source-cited PAL/NTSC rate helpers. Runtime playback/rate binding and non-SND2 `NAKED.AMG` are not claimed. |
@@ -438,9 +438,13 @@ order:
 4. LZW decoder for Atari ST GRAPHICS.DAT (only Atari ST uses LZW).
    — DONE for the decoder: `m11_gfx_lzw_decompress` has a contract-only
    round-trip test (`test_dm1_lzw_round_trip.c`, `dm1_lzw_round_trip`
-   PASS 1/1 on 2026-06-21, pass852). Real Atari ST asset handoff still
-   BLOCKED-DATA.
-5. PAK container decoder for Atari ST START.PAK. — DONE (commit 3ee479de)
+   PASS 1/1 on 2026-06-21, pass852). DMWeb's DM Atari ST edition page
+   now documents the expected original media set and per-version split
+   (two English 1.0 builds, English 1.1/1.2, German 1.2, French 1.3);
+   real Atari ST asset handoff still BLOCKED-DATA.
+5. PAK container decoder for Atari ST START.PAK. — DONE (commit 3ee479de);
+   real-media proof should keep DMWeb's cracked ST/MSA, hard-disk, and
+   RamDisk hack derivatives separate from canonical STX originals.
 6. CMP portrait loader for CSB utility disk. — DONE (commit 532c8250);
    `firestaff_cmp_decode_unit` + `csb_v1_cmp_import_pc34` PASS 2/2 on
    2026-06-21. Runtime champion portrait source-selection remains tracked
@@ -818,7 +822,7 @@ What changed in this session that affects the gap list above:
 
 ### Tier 2 #4 LZW Atari ST decoder DONE
 
-Decoder code path test-covered (`test_dm1_lzw_round_trip` 96/96 PASS, `pass852`). Real Atari ST asset handoff still `BLOCKED-DATA`.
+Decoder code path test-covered (`test_dm1_lzw_round_trip` 96/96 PASS, `pass852`). DMWeb's DM Atari ST edition page now documents the source-media/per-version split for the future real-asset handoff. Real Atari ST asset handoff still `BLOCKED-DATA`.
 
 ### Tier 4 determinism probes (3 new)
 

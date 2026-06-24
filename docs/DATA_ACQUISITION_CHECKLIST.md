@@ -43,10 +43,11 @@ coverage**, not registry correctness.
 |---|---|---|---|---|
 | PC 3.4 English | ✅ `2c3aa836…` | ✅ `d90b6b1c…` | ✅ (in legacy) | runtime target, fully hash-locked |
 | PC 3.4 Multilingual | ✅ `291eb38e…` | ✅ | ✅ `71e1ba82…` | runtime target, hash-locked |
-| Atari ST 1.2 English | 🟡 `9ce2eaf7…` | 🟡 | n/a | archived in `_canonical/`, LZW-compressed GRAPHICS.DAT, needs START.PAK extraction |
-| Atari ST 1.2 German | 🟡 | 🟡 | n/a | archived in `_canonical/dm1-extras/` |
-| Atari ST 1.2 French | 🟡 | 🟡 | n/a | archived |
-| Atari ST 1.1 English | 🟡 | 🟡 | n/a | archived |
+| Atari ST 1.0 English | 🟡 | 🟡 | n/a | DMWeb page lists two preserved STX builds dated 1987-12-08 and 1987-12-11; needs protected-disk extraction and per-build hash split |
+| Atari ST 1.1 English | 🟡 | 🟡 | n/a | DMWeb page lists preserved STX plus cracked MSA and hard-disk/RamDisk hack derivatives; needs clean original-vs-hack classification |
+| Atari ST 1.2 English | 🟡 `9ce2eaf7…` | 🟡 | n/a | archived in `_canonical/`, LZW-compressed GRAPHICS.DAT, needs START.PAK extraction; DMWeb page lists preserved STX plus Atari-specific Insert/Clr Home/Ctrl-S input table |
+| Atari ST 1.2 German | 🟡 | 🟡 | n/a | archived in `_canonical/dm1-extras/`; DMWeb page lists preserved German 1.2 STX and German/Psygnosis bundle provenance |
+| Atari ST 1.3 French | 🟡 | 🟡 | n/a | archived; DMWeb page lists French 1.3 with two variants and French Mirrorsoft first/second edition provenance |
 | Amiga 2.0 English | 🟡 `fa6b1aa2…`? | 🟡 | n/a | ADF disks extracted; need .adf→raw→hash |
 | Amiga 2.0 German | 🟡 | 🟡 | n/a | ADF disks extracted |
 | Amiga 2.0 French | 🟡 | 🟡 | n/a | ADF disks extracted |
@@ -65,7 +66,10 @@ coverage**, not registry correctness.
    decode path, but we still need an extracted local copy under
    `~/.firestaff/data/dm1-atari-st/` (or the
    `dm1-extras/atari-st-1.2-en/` raw folder) to feed real Atari ST
-   bytes into `test_dm1_lzw_round_trip.c`.
+   bytes into `test_dm1_lzw_round_trip.c`. DMWeb's Atari ST page gives
+   the source media boundary for that work: STX originals for 1.0/1.1/1.2
+   English, German 1.2, and French 1.3, plus cracked ST/MSA and
+   hard-disk/RamDisk hacks that must stay separate from canonical hashes.
 2. **Amiga 2.0 EN** GRAPHICS.DAT hash is the same as PC 3.4 EN
    (`fa6b1aa2…`) but the 4bpp planar encoding differs and we have
    not yet exercised our Tier 2 #4 IMG5 decoder on a real Amiga
@@ -194,7 +198,9 @@ coverage**, not registry correctness.
 3. **PAK container** — Tier 2 #5 done (`3ee479de`); no
    extracted `START.PAK` yet. Atari ST DM1/CSB archives contain
    `START.PAK` and would let us regression-test the decoder
-   against real bytes.
+   against real bytes. DMWeb's Atari ST page also records the sector
+   `#F7` protection and RamDisk custom-dungeon workflow, which should be
+   treated as provenance/extraction context rather than bundled game data.
 4. **CMP portraits** — decoder shipped (`532c8250`); no real
    `.CMP` files yet (blocked by CSB Utility Disk acquisition).
 5. **MD5/SHA256 harmonization** — done (`5988b620`); registry
