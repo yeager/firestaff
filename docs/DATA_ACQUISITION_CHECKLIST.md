@@ -41,8 +41,8 @@ coverage**, not registry correctness.
 
 | Variant | GRAPHICS.DAT | DUNGEON.DAT | SONG.DAT | Notes |
 |---|---|---|---|---|
-| PC 3.4 English | ✅ `2c3aa836…` | ✅ `d90b6b1c…` | ✅ (in legacy) | runtime target, fully hash-locked |
-| PC 3.4 Multilingual | ✅ `291eb38e…` | ✅ | ✅ `71e1ba82…` | runtime target, hash-locked |
+| PC 3.4 English | ✅ `2c3aa836…` | ✅ `d90b6b1c…` | ✅ (in legacy) | runtime target, fully hash-locked; DMWeb page identifies the USA English 1992 DOS line, VGA/EGA screenshots, PC-only ending animation, entrance music excerpt, and DOS keypad / Alt-S command table |
+| PC 3.4 Multilingual | ✅ `291eb38e…` | ✅ | ✅ `71e1ba82…` | runtime target, hash-locked; DMWeb page identifies the Europe English/French/German package, French/German VGA screenshots, DOSBox-ready package provenance, and Spanish fan translation as separate non-canonical media |
 | Atari ST 1.0 English | 🟡 | 🟡 | n/a | DMWeb page lists two preserved STX builds dated 1987-12-08 and 1987-12-11; needs protected-disk extraction and per-build hash split |
 | Atari ST 1.1 English | 🟡 | 🟡 | n/a | DMWeb page lists preserved STX plus cracked MSA and hard-disk/RamDisk hack derivatives; needs clean original-vs-hack classification |
 | Atari ST 1.2 English | 🟡 `9ce2eaf7…` | 🟡 | n/a | archived in `_canonical/`, LZW-compressed GRAPHICS.DAT, needs START.PAK extraction; DMWeb page lists preserved STX plus Atari-specific Insert/Clr Home/Ctrl-S input table |
@@ -127,7 +127,16 @@ coverage**, not registry correctness.
    import/classification, SNES tile/palette rendering, controller/input
    mapping, SPC/music receipts, and explicit bug gates before any native
    SNES runtime claim.
-10. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
+10. **PC 3.4 presentation/input receipts** are follow-up evidence work,
+   not missing data. DMWeb's PC page pins the current runtime target's
+   edition boundary as USA English plus Europe English/French/German,
+   with VGA/EGA presentation, PC-only ending animation, entrance music
+   borrowed from FM Towns track 05, DOS keypad/Alt-S/Ctrl-Q-Ctrl-A input,
+   analog joystick sensitivity, and Alt-keypad mouse simulation. Firestaff
+   already has the canonical hashes; remaining PC-specific work is focused
+   receipt/gate coverage plus keeping the Spanish fan translation outside
+   canonical hash claims.
+11. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
    listed on dmweb as 60+ variants. Currently we ship none; we need
    at least Conflux II/III and one CSBWin custom dungeon to exercise
    `csbgraphics.dat` (Tier 3 work).

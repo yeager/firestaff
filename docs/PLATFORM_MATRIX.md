@@ -35,8 +35,8 @@ Firestaff's actual implementation state.
 | Apple IIGS | 2.0 | EN | 🔵 | `c_dm_iigs/` | — | DMWeb page: 1989 line, PO disk images, 1 MB RAM, ROM03 main-dungeon `->002C` failure unless expansion memory is present, original images lack copy-protection sector |
 | Apple IIGS | 2.1 | EN | 🔵 | `c_dm_iigs/` | — | DMWeb page: fixes the ROM03 2.0 main-dungeon memory failure; separate original/cracked PO images and IIGS keypad/speaker/volume hotkeys |
 | FM-Towns | 2.0 | EN/JP | 🔵 | `c_dm_fmtowns/` | — | DMWeb page: Japan CD line, November 1989, ¥8800, redump BIN/CUE masters T1/T2 plus ISO/CUE archive, English/Japanese screenshots, CD audio tracks 02-20, and FM Towns Shift-S / shifted-arrow command table |
-| PC | 3.4 | EN | ✅ | `c_dm_pc_eng/` | yes (363,417 B) | our canonical "PC" target |
-| PC | 3.4 | EN/FR/GE | ✅ | `c_dm_pc_multilingual/` | yes (398,925 B) | multilingual, 748 items |
+| PC | 3.4 | EN | ✅ | `c_dm_pc_eng/` | yes (363,417 B) | canonical PC target; DMWeb page: 1992 DOS line, USA English media, VGA/EGA screenshots, PC-only ending animation, entrance music excerpt, and DOS keypad / Alt-S command table |
+| PC | 3.4 | EN/FR/GE | ✅ | `c_dm_pc_multilingual/` | yes (398,925 B) | multilingual, 748 items; DMWeb page: Europe English/French/German package plus French/German VGA screenshots and Spanish fan-translation provenance kept separate |
 | PC-9801 | 2.0a/2.0b | JP | 🔵 | `c_dm_pc98/` | — | DMWeb page: Japan 3.5-inch and 5.25-inch HDM/floppy line, 1990-02-09, ¥9800, 8-bit/16-bit screenshots, `2.0a` copy-protected original plus cracked image, and newer non-copy-protected `2.0b` original |
 | SNES | 1.0 NTSC | EN | 🔵 | `c_dm_snes/` | — | DMWeb page: SMC cartridge ROM, English screenshots/videos, SPC music, and English-only "master" skill-prefix bug |
 | SNES | 1.0 PAL | EN | 🔵 | `c_dm_snes/` | — | DMWeb page: Europe cartridge line; same English-version bug family, PAL timing needs separate runtime proof |
@@ -141,6 +141,7 @@ support is to add any one of these data files:
 | Medium | CSB Atari ST 2.1 GRAPHICS.DAT | second Atari CSB line; v2.0 graphics/dungeon hashes are already locally recorded |
 | Medium | DM PC-9801 2.0a/2.0b HDM/floppy images | Japanese v2.0 hash classification, 8-bit/16-bit presentation evidence, PC-98 keypad / Alt-S input gates, and copy-protection/crack separation |
 | Medium | DM X68000 3.0 HDM/floppy images | Japanese v3.0 hash classification, 31 kHz presentation evidence, X68000 keypad / arrow input gates, and copy-protection/crack separation |
+| Medium | DM PC 3.4 VGA/EGA and PC-only presentation receipts | Existing hash-verified PC runtime target; add focused receipts for DMWeb's VGA/EGA split, PC ending animation, entrance music excerpt, DOS keypad / Alt-S / analog-joystick / mouse-simulation input table, and Spanish fan-translation non-canonical boundary |
 | Medium | DM2 PC-9801 1.0 FDI set | Japanese four-disk FDI media, no-music behavior, PC-98-specific keyboard bridge |
 | Medium | DM2 PC-9821 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, PC-98 keyboard bridge, `FIRE.EXE` CD-ROM protection behavior evidence |
 | Medium | DM2 IBM PS/V 1.0 floppy/WinImage set | Japanese three-floppy media, no-music behavior, IBM PS/V keyboard bridge, `FIRE.EXE` protection behavior evidence |
