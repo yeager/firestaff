@@ -57,7 +57,7 @@ coverage**, not registry correctness.
 | Apple IIGS 2.0 English | 🟡 | 🟡 | n/a | DMWeb page lists PO disk images: original copy-protected image without working sector `$17`, Computist/ACS cracks, a hard-disk-patched image, and a save disk; 2.0 has a ROM03 main-dungeon `->002C` memory failure unless expansion memory is present |
 | Apple IIGS 2.1 English | 🟡 | 🟡 | n/a | DMWeb page lists separate original and Computist-cracked PO images; 2.1 fixes the ROM03 2.0 main-dungeon memory failure |
 | FM-Towns 2.0 English/Japanese | 🟡 | 🟡 | CD audio tracks 02-20 | DMWeb page identifies Japan v2.0 EN/JP media as redump BIN/CUE masters T1/T2 plus an ISO/CUE archive, with track 20 as 20 seconds of silence and an FM Towns-specific Shift-S / shifted-arrow input table |
-| PC-98 Japanese | 🟡 | 🟡 | n/a | 2 disks, 1.2MB variant |
+| PC-9801 2.0a/2.0b Japanese | 🟡 | 🟡 | n/a | DMWeb page identifies Japan HDM/floppy media: `2.0a` original image missing the copy-protection sector and a cracked `2.0a`, plus newer bug-fixed non-copy-protected `2.0b`; 8-bit/16-bit screenshot split and PC-98 keypad / Alt-S input table |
 | X68000 3.0 Japanese | 🟡 | 🟡 | n/a | XDF/X68000 format |
 | SNES (NTSC/PAL/JP) | ⚪ | ⚪ | ⚪ | not on code-complete path (rejected: 8-bit tile-renderer work is disproportionate) |
 
@@ -104,7 +104,15 @@ coverage**, not registry correctness.
    keyboard table. Firestaff needs BIN/CUE or ISO/CUE extraction, EN/JP
    hash classification, IMG2 real-asset proof, CD-audio receipts, and
    FM Towns input gates before native runtime claims.
-7. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
+7. **PC-9801 2.0a / 2.0b JP** should be treated as a disk-image import
+   target. DMWeb's PC-9801 page separates `2.0a` original media that
+   cannot boot without its copy-protection sector from a cracked `2.0a`
+   and a newer, bug-fixed, non-copy-protected `2.0b` original. Firestaff
+   needs HDM/floppy extraction, original-vs-cracked classification,
+   extracted data-file hashes, 8-bit/16-bit presentation receipts, PC-98
+   keypad/Alt-S input gates, and protection provenance without committing
+   patched executables.
+8. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
    listed on dmweb as 60+ variants. Currently we ship none; we need
    at least Conflux II/III and one CSBWin custom dungeon to exercise
    `csbgraphics.dat` (Tier 3 work).
