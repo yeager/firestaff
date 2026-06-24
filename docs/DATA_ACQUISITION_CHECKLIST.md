@@ -295,15 +295,18 @@ coverage**, not registry correctness.
 
 | Variant | Track02 ISO/BIN | OGG audio | Notes |
 |---|---|---|---|
-| JP Track 02 (`TQJP02End.iso`) | ✅ (61 MB) | ✅ 19 tracks | runtime target, hash-locked |
-| US Track 02 (`TQUS02End.iso`) | ✅ | ✅ 19 tracks | runtime target |
+| JP Track 02 (`TQJP02End.iso`) | ✅ (61 MB) | ✅ 19 tracks | runtime target, hash-locked; DMWeb overview identifies the Japanese PC Engine CD release date as 1992-09-18 and the game structure as seven small dungeons |
+| US Track 02 (`TQUS02End.iso`) | ✅ | ✅ 19 tracks | runtime target; DMWeb overview identifies the USA TurboGrafx-16 release as 1993 and says its reference information is based on the English version |
 
 ### Theron acquisition gaps
 
 1. **Savegame imports** — Theron's 7 dungeons each have a separate
    save. We have no cross-slot import/export test data, and there
    is no fan-curated cross-slot save pack for PC Engine Theron.
-   This blocks Tier 1 #6 "Save/import cross-slot."
+   This blocks Tier 1 #6 "Save/import cross-slot." DMWeb's overview
+   reinforces the boundary: the game saves only between dungeons,
+   Theron's companions lose skills/items after each dungeon, and
+   Theron keeps skills/statistics but loses items.
 2. **US Track 02 cue sheet + subtrack offsets** — the OGGs are
    extracted but we lack the cue sheet / subtrack index for
    in-game music routing. Manual authoring from the redump PCE
@@ -311,6 +314,14 @@ coverage**, not registry correctness.
 3. **Original PC Engine CD-ROM BIOS** — needed only for full
    emulation regression; Firestaff runs on the extracted ISO
    directly, so this is a Tier 4 nice-to-have, not a Tier 1 gap.
+4. **Theron overview receipts** are evidence work for the existing
+   runtime target rather than new acquisition. DMWeb identifies the
+   seven relics (Shield Defiant, Taza Poleyn, Tazahelm, Taza Boots,
+   Taza Armor, Soulcage, The Retaliator), the seven-dungeon structure,
+   the "light DM" subset of items/creatures/spells, and the Winter CES
+   1993 / magazine provenance. Future public proof should tie those
+   receipts to route/progression gates before broadening user-facing
+   Theron claims.
 
 ## Cross-cutting gaps
 
