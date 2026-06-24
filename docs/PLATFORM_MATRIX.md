@@ -62,7 +62,7 @@ the Amiga 1.0, Atari 1.0, FM-Towns 2.0, or PC-98 2.0 data files.
 | X68000 | 3.1 | JP | 🔵 | `c_csb_x68k/` | — | 732-item GRAPHICS.DAT |
 | Apple IIGS | — | — | ❌ | not released | — | FTL never ported CSB to IIGS |
 
-## DM2 (Dungeon Master II: The Legend of Skullkeep) — 11 known versions
+## DM2 (Dungeon Master II: The Legend of Skullkeep) — 15 tracked DMWeb/Greatstone rows
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
@@ -85,6 +85,10 @@ the Amiga 1.0, Atari 1.0, FM-Towns 2.0, or PC-98 2.0 data files.
 **Notes:** The PC English version is the only one that uses
 Interplay MVE animations and 256-color graphics. All other
 versions use IMG2-style compressed bitmaps and 16-color palettes.
+DMWeb's DM2 page also tracks the inventory-eye mouse-cursor bug:
+all listed non-Mac platforms show the cursor/cross graphical glitch,
+with Amiga retaining the cursor-loss bug after button release; Japanese
+and English Macintosh versions are explicitly exempt.
 
 ## Theron's Quest — 1 known version
 
