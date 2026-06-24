@@ -227,6 +227,11 @@ static void open_panel(
     state->lastOpenTick = event ? event->tick : state->lastOpenTick;
     ++state->openDispatchCount;
     ++state->candidateAppendCount;
+    if (!state->expectedCandidateOrdinalSeen &&
+        event && event->candidateChampionOrdinal != 0u) {
+        state->expectedCandidateOrdinal = event->candidateChampionOrdinal;
+        state->expectedCandidateOrdinalSeen = 1;
+    }
     if (route_icon_refresh_while_open()) {
         ++state->iconRefreshSuppressedCount;
     }
@@ -323,6 +328,30 @@ static void fill_result(
     result->actionGateOpenAfterClose =
         !state->c040PanelOpen ||
         state->candidateChampionOrdinal != 0u;
+    result->expectedCandidateOrdinal = (int)state->expectedCandidateOrdinal;
+    /* candidateOrdinalMatchesExpected is true when (a) no open event was
+     * observed (panel stayed closed, no ordinal expected, 0 == 0 is trivially
+     * satisfied when expectedCandidateOrdinalSeen=0), OR (b) the panel is
+     * currently open with the candidate champion installed and the runtime
+     * keeps selectedCandidateChampionOrdinal == expectedCandidateOrdinal,
+     * OR (c) the panel has been closed since the last open -- in that case
+     * close_panel clears candidateChampionOrdinal to 0 and the runtime
+     * retains selectedCandidateChampionOrdinal until the next open_panel
+     * re-installs it. The closed-state contract only requires that the
+     * live candidateChampionOrdinal is 0; selectedCandidateChampionOrdinal
+     * carries the last-open ordinal forward for the next re-open. */
+    if (!state->expectedCandidateOrdinalSeen) {
+        result->candidateOrdinalMatchesExpected = 1;
+    } else if (!state->c040PanelOpen) {
+        result->candidateOrdinalMatchesExpected =
+            state->candidateChampionOrdinal == 0u;
+    } else {
+        result->candidateOrdinalMatchesExpected =
+            state->selectedCandidateChampionOrdinal ==
+                state->expectedCandidateOrdinal &&
+            state->candidateChampionOrdinal ==
+                state->expectedCandidateOrdinal;
+    }
 }
 
 int DM1_V1_MirrorCandidateDoubleOpenClose_DispatchPc34Compat(
