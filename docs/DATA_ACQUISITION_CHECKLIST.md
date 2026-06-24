@@ -120,7 +120,7 @@ coverage**, not registry correctness.
 | FM-Towns | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a redump BIN/CUE CD image; CD audio has quieter tracks 2-6 plus silent track 8; Ctrl-Shift-S disk menu |
 | PC-9801 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as four FDI disk images; no music; separate HDM/HDI demo |
 | PC-9821 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a BIN/CUE CD image; six CD.DAT music tracks; PC-98 keypad / Alt-S input table; LZEXE `FIRE.EXE` CD-ROM protection notes |
-| IBM PS/V | 🔴 | 🔴 | no music variant |
+| IBM PS/V | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as original three floppy disks plus WinImage disk images; no music; IBM PS/V keypad / Alt-S / Shift-arrow input table; LZEXE `FIRE.EXE` protection offsets `0x21989`/`0x1FB77` |
 | PC beta | 🔴 | 🔴 | split-file, byte-concat required |
 
 ### DM2 acquisition gaps
