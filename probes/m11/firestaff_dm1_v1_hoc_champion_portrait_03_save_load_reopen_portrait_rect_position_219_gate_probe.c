@@ -90,20 +90,26 @@
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
 #include "dm1_v1_save_load.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#if defined(_WIN32)
-#include <process.h>
-#else
-#include <unistd.h>
-#endif
+#include <time.h>
 
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
+
+static const char* probe_tmp_root(void) {
+    const char* tmp = getenv("TMPDIR");
+    if (tmp && tmp[0]) return tmp;
+    tmp = getenv("TEMP");
+    if (tmp && tmp[0]) return tmp;
+    tmp = getenv("TMP");
+    if (tmp && tmp[0]) return tmp;
+    return ".";
+}
 
 enum {
     FB_W = 320,
@@ -311,7 +317,6 @@ int main(int argc, char** argv) {
     int nonzeroAfterReopen, distinctAfterReopen, warmAfterReopen;
     int leftSideAfterReopen, rightSideAfterReopen;
     int quicksaveIsolated;
-    const char* oldQuicksaveEnv = NULL;
     char nameBuf[32];
     int nameLookupRc;
 
@@ -334,10 +339,19 @@ int main(int argc, char** argv) {
         quicksavePath[0] = '\0';
         snprintf(quicksavePath, sizeof(quicksavePath), "%s", argv[2]);
     } else {
+        char leaf[160];
+        int leafRc;
         quicksavePath[0] = '\0';
-        snprintf(quicksavePath, sizeof(quicksavePath),
-                 "/tmp/firestaff-portrait-03-save-load-reopen-219-%d.qsv",
-                 (int)getpid());
+        leafRc = snprintf(leaf, sizeof(leaf),
+                          "firestaff-portrait-03-save-load-reopen-219-%lu-%lu.qsv",
+                          (unsigned long)time(NULL),
+                          (unsigned long)clock());
+        if (leafRc <= 0 || (size_t)leafRc >= sizeof(leaf) ||
+            !FSP_JoinPath(quicksavePath, sizeof(quicksavePath),
+                          probe_tmp_root(), leaf)) {
+            fprintf(stderr, "FAIL: could not build isolated quicksave path\n");
+            return 1;
+        }
     }
     /* Build the sidecar path: the V1 runtime sidecar lives next to
      * the quicksave file with a ".v1runtime" suffix. */
@@ -351,8 +365,7 @@ int main(int argc, char** argv) {
     (void)remove(quicksavePath);
     (void)remove(quicksaveSidecarPath);
 
-    oldQuicksaveEnv = getenv("FIRESTAFF_QUICKSAVE_PATH");
-    if (setenv("FIRESTAFF_QUICKSAVE_PATH", quicksavePath, 1) != 0) {
+    if (FSP_SetEnv("FIRESTAFF_QUICKSAVE_PATH", quicksavePath, 1) != 0) {
         fprintf(stderr,
                 "FAIL: could not set FIRESTAFF_QUICKSAVE_PATH=%s\n",
                 quicksavePath);
@@ -963,14 +976,9 @@ int main(int argc, char** argv) {
     }
 
     /* Cleanup: remove the isolated quicksave + sidecar so we leave
-     * /tmp tidy. */
+     * the temp directory tidy. */
     (void)remove(quicksavePath);
     (void)remove(quicksaveSidecarPath);
-    if (oldQuicksaveEnv) {
-        (void)setenv("FIRESTAFF_QUICKSAVE_PATH", oldQuicksaveEnv, 1);
-    } else {
-        (void)unsetenv("FIRESTAFF_QUICKSAVE_PATH");
-    }
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 HoC champion portrait ordinal 3 save_load_reopen portrait_rect_position\n",
