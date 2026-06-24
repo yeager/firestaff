@@ -111,6 +111,23 @@
  *   - m11_draw_dm1_front_mirror_route (BUG-120/121 panel guard)
  *   - M11_GameView_CancelMirrorCandidate (F0282 C162 cancel path)
  *   - M11_GameView_SelectFrontMirrorCandidate (F0280 reopen path)
+ *
+ * Group E hardening (gate 092):
+ *   The 41 pass140 assertions (Groups A-D) cover the slice
+ *   thoroughly with match-based and warm-pixel sampling.  Group E
+ *   adds a stronger byte-stability assertion: the D1C destination
+ *   rectangle (96, 35, 32, 29) and the D1C row band (96, 35, 32, 30)
+ *   must be byte-identical between the pre-select pose (panel off,
+ *   championCount=0) and the post-cancel pose (panel off after F0282
+ *   C162, championCount=0).  The M11 redraw path is deterministic:
+ *   the C040 panel chrome must be fully cleared by the C162 cancel
+ *   branch, the C127 sensorData=20 still holds, and the same C026
+ *   portrait blit must hit the same 928 cells.  This catches a
+ *   regression where the C040 chrome bleeds through a single row
+ *   below the portrait (an off-by-one border bug) and any other
+ *   non-deterministic drift in the cancel path.  The 19-cancel_reopen
+ *   companion probe does not assert byte-stability; this is the
+ *   non-duplicative hardening for ordinal 20.
  */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
@@ -392,6 +409,14 @@ int main(int argc, char** argv) {
     char titleBuf[32];
     int nameLookupRc;
     int titleLookupRc;
+    /* Group E byte-stability counters: track how many bytes differ
+     * between fbBefore and fbAfterCancel in the D1C rect and the D1C
+     * row band.  The M11 redraw is deterministic so the expected
+     * difference is 0 in the portrait area; any non-zero diff is a
+     * regression in the cancel path (e.g. C040 chrome bleed, palette
+     * remap not undone). */
+    int d1cRectByteDiff;
+    int d1cBandByteDiff;
 
     if (argc > 1) dataDir = argv[1];
     else          dataDir = getenv("FIRESTAFF_DATA");
@@ -989,6 +1014,111 @@ int main(int argc, char** argv) {
               matchAfterSelect <= 20 &&
               matchAfterCancel >= 90 &&
               matchAfterReopen <= 20, msg);
+    }
+
+    /* ----------------------------------------------------------------
+     * Group E - cancel_reopen byte-stability
+     * ----------------------------------------------------------------
+     * Stronger invariant than the Group C match-based checks.  The M11
+     * redraw path is deterministic: with the same party state, the
+     * same dungeon, the same pose, and the same panel state, two
+     * successive Draw() calls must produce byte-identical framebuffers
+     * (M11 does not run a free-running clock; the C146_COMMAND_WAKE_UP
+     * and C162 cancel paths both leave the panel state and HUD back
+     * to the same source-locked baseline).
+     *
+     * The pre-select pose (panel off, championCount=0, ordinal=20) and
+     * the post-cancel pose (panel off after F0282 C162, championCount=0,
+     * ordinal=20) are observationally equivalent for the portrait
+     * cutout at (96, 35, 32, 29): the C040 panel chrome is fully
+     * cleared by the F0282 C162 branch, and the C127 sensor is still
+     * on the front square (sensorData=20 after the seed).  This
+     * group asserts that the D1C destination rectangle is byte-stable
+     * across the cycle, which is a stronger invariant than
+     * match_portrait_at_rect >= 90 (which only samples the 928-cell
+     * pixel set and tolerates 10% mismatch).  Any non-zero diff here
+     * is a regression in the cancel path - e.g. the C040 chrome not
+     * fully cleared, or the panel backdrop leaking through the
+     * portrait cutout.
+     *
+     * Source evidence:
+     *   - DUNVIEW.C:3913-3928 (C026 portrait blit is the only D1C
+     *                 cutout write - no other draw path touches the
+     *                 96,35,32,29 rect when panel=0)
+     *   - PANEL.C F0355:2299-2318 (inventory close on cancel clears
+     *                 the C017 backdrop overlay that lives in the
+     *                 viewport but ABOVE the C040 panel; the
+     *                 inventory backdrop does not overlap the D1C
+     *                 cutout at viewport (96, 35))
+     *   - REVIVE.C F0282:744-783 (C162 cancel branch resets G0299,
+     *                 G0305, and the panel draw state)
+     *   - DUNGEON.C:2608-2612 (G0289 stays 20 between pre-select
+     *                          and post-cancel because the C127
+     *                          sensor is still active on the same
+     *                          front square)
+     *   - The 19-cancel_reopen companion probe (pass140 row 2 / col 3)
+     *     does not assert byte-stability; this group is the
+     *     non-duplicative hardening for ordinal 20. */
+    printf("\n[Group E] cancel_reopen byte-stability: D1C rect is byte-stable across select->cancel\n");
+
+    /* The D1C destination rectangle (96, 35, 32, 29) must be
+     * byte-identical between fbBefore and fbAfterCancel.  Both
+     * framebuffers are drawn with candidateMirrorPanelActive=0 and
+     * championCount=0, and the C127 sensor on the front square is
+     * still sensorData=20, so the same C026 portrait blit must hit
+     * the same 928 cells.  The byte-equality is the strict
+     * source-locked expectation: the M11 redraw path is
+     * deterministic. */
+    d1cRectByteDiff = 0;
+    {
+        int xx, yy;
+        for (yy = 0; yy < D1C_PORTRAIT_H; ++yy) {
+            for (xx = 0; xx < D1C_PORTRAIT_W; ++xx) {
+                int idxA = (D1C_PORTRAIT_Y + yy) * FB_W + (D1C_PORTRAIT_X + xx);
+                int idxB = idxA;
+                if (fbBefore[idxA] != fbAfterCancel[idxB]) {
+                    ++d1cRectByteDiff;
+                }
+            }
+        }
+    }
+    {
+        char msg[240];
+        snprintf(msg, sizeof(msg),
+                 "D1C rect (96, 35, 32, 29) is byte-stable across "
+                 "pre-select -> post-cancel (diff=%d / %d cells; "
+                 "expected 0 - cancel path must leave no chrome bleed)",
+                 d1cRectByteDiff, D1C_PORTRAIT_W * D1C_PORTRAIT_H);
+        CHECK(d1cRectByteDiff == 0, msg);
+    }
+
+    /* The wider D1C row band (96, 35, 32, 30) including the 1px border
+     * below the portrait cutout must also be byte-stable.  This
+     * catches a regression where the C040 panel border bleeds through
+     * a single row below the portrait (an off-by-one border bug would
+     * show up here, not in the inner-rect check above). */
+    d1cBandByteDiff = 0;
+    {
+        int xx, yy;
+        for (yy = 0; yy < D1C_PORTRAIT_H + 1; ++yy) {
+            for (xx = 0; xx < D1C_PORTRAIT_W; ++xx) {
+                int idxA = (D1C_PORTRAIT_Y + yy) * FB_W + (D1C_PORTRAIT_X + xx);
+                int idxB = idxA;
+                if (fbBefore[idxA] != fbAfterCancel[idxB]) {
+                    ++d1cBandByteDiff;
+                }
+            }
+        }
+    }
+    {
+        char msg[240];
+        snprintf(msg, sizeof(msg),
+                 "D1C row band (96, 35, 32, 30) is byte-stable across "
+                 "pre-select -> post-cancel (diff=%d / %d cells; "
+                 "expected 0 - 1px border below portrait must also be "
+                 "stable)",
+                 d1cBandByteDiff, D1C_PORTRAIT_W * (D1C_PORTRAIT_H + 1));
+        CHECK(d1cBandByteDiff == 0, msg);
     }
 
     /* ----------------------------------------------------------------
