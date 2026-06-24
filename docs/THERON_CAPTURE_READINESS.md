@@ -22,11 +22,17 @@ The strongest current proof is:
   runtime-probe JSON plus source/presented BMP hash receipts. Rows that report
   deterministic fallback assets are capture-path proof, not final art or
   source-bank proof. Missing data is a successful SKIP, not a failure.
+- `theron_24h_readiness`: the daily readiness rollup ties the Track 02 bank,
+  save/load, cross-route mechanics, runtime screenshot, dungeon progression,
+  cross-slot, and M11 launch gates into one PASS/FAIL manifest so later
+  screenshot promotion can start from a known-good baseline.
 
 These are readiness receipts, not public screenshot assets. Do not add Theron
 images to the README until a reviewed real Firestaff runtime frame is promoted
 from tracked evidence. Do not use generated, illustrated, or mock Theron images
-as screenshots.
+as screenshots. A green readiness row proves the launch/capture path is alive;
+it does not prove semantic Track 02 dungeon-table parity, real `.srm`
+interchange, or broader playability.
 
 Run the focused readiness check with:
 

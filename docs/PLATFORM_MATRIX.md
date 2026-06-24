@@ -50,7 +50,7 @@ the Amiga 1.0, Atari 1.0, FM-Towns 2.0, or PC-98 2.0 data files.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| Atari ST | 2.0 | EN | 🟡 | `c_csb_atari_st_v2_0/` | — | ReDMCSB source-locked (incl CSB engine mods) |
+| Atari ST | 2.0 | EN | 🟡 | `c_csb_atari_st_v2_0/` | yes (319,080 B graphics + 2,098 B dungeon) | ReDMCSB source-locked (incl CSB engine mods); local Atari ST v2.0 GRAPHICS/DUNGEON hashes are recorded, but full Atari-runtime parity is not yet promoted |
 | Atari ST | 2.1 | EN | 🟡 | `c_csb_atari_st_v2_1/` | — | ReDMCSB |
 | Amiga | 3.1 | EN | 🔵 | `c_csb_amiga_v3_1_en/` | — | |
 | Amiga | 3.1 | EN/FR/GE | 🔵 | `c_csb_amiga_v3_1_ml/` | — | 749-item GRAPHICS.DAT, multilingual |
@@ -90,14 +90,14 @@ versions use IMG2-style compressed bitmaps and 16-color palettes.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| TurboGrafx-16 / PC Engine | 1.0 (CD) | JP | 🔵 | `c_therons_quest_jp/` | — | 7 mini-dungeons |
-| TurboGrafx-16 / PC Engine | 1.0 (CD) | EN | 🔵 | `c_therons_quest_en/` | — | |
+| TurboGrafx-16 / PC Engine | 1.0 (CD) | JP | ✅ | `c_therons_quest_jp/` | yes (Track 02) | JP canonical + JP extras Track 02 launch to the TQR level-load milestone; screenshot readiness records metadata/hash receipts only |
+| TurboGrafx-16 / PC Engine | 1.0 (CD) | EN | ✅ | `c_therons_quest_en/` | yes (Track 02) | US extras Track 02 launch to the TQR level-load milestone; full semantic dungeon-bank parity and public screenshot promotion remain separate work |
 
 ## DM Nexus — 1 known version
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| Sega Saturn | 1.0 | JP | 🔵 | `c_dm_nexus_saturn/` | yes (DM.BIN 555,144 B) | true 3D, 15 levels |
+| Sega Saturn | 1.0 | JP | 🔵 | `c_dm_nexus_saturn/` | yes (DM.BIN 555,144 B) | true 3D, 15 levels; hash-verified Track 1 can expose `DM.BIN`, but full Saturn V1 runtime handoff remains a Nexus gap |
 
 **Notes:** DM Nexus uses the proprietary DMDF (Dungeon Master
 Data File) format, completely different from the FTL
@@ -110,11 +110,11 @@ the start of the parser.
 | Game | Verified working | Source-locked | Greatstone-extracted | Publicly documented | Total known |
 |---|---|---|---|---|---|
 | DM1 | 2 (PC 3.4 EN + Multilingual) | 5 (Atari ST) | 22 (Amiga/PC-98/Apple IIGS/FM-Towns/X68000/SNES) | 0 | 22+ |
-| CSB | 1 (PC 3.4 via CSBwin) | 2 (Atari ST) | 11 (Amiga/PC-98/FM-Towns/X68000) | 0 | 11 |
+| CSB | 1 (PC 3.4 via CSBwin) | 2 (Atari ST, with local v2.0 hashes) | 11 (Amiga/PC-98/FM-Towns/X68000) | 0 | 11 |
 | DM2 | 1 (PC EN) | 0 | 13 (Amiga/Mac/PC-98/PS/V/PC-9821/Sega-CD/FM-Towns/Demo/Beta) | 0 | 13+ |
-| TQ | 0 | 0 | 2 (PC Engine JP + EN) | 0 | 2 |
+| TQ | 2 (JP + EN Track 02 launch/readiness) | 0 | 0 | 0 | 2 |
 | Nexus | 0 | 0 | 1 (Saturn JP) | 0 | 1 |
-| **Total** | **4** | **7** | **49** | **0** | **49+** |
+| **Total** | **6** | **7** | **47** | **0** | **49+** |
 
 ## What we'd need to unlock more 1️⃣/2️⃣ coverage
 
@@ -128,11 +128,11 @@ support is to add any one of these data files:
 | Easy | DM Atari ST 1.0 GRAPHICS.DAT | canonical first-release DM, 532 items |
 | Easy | DM Amiga 2.0 EN GRAPHICS.DAT | Amiga-specific IMG1 format, 532 items |
 | Medium | DM FM-Towns 2.0 GRAPHICS.DAT | IMG2 format, 532 items |
-| Medium | CSB Atari ST 2.0 GRAPHICS.DAT | canonical first-release CSB, 563 items |
+| Medium | CSB Atari ST 2.1 GRAPHICS.DAT | second Atari CSB line; v2.0 graphics/dungeon hashes are already locally recorded |
 | Medium | DM PC-9801 2.0 GRAPHICS.DAT | PC-98-specific LZW+IMG2, 575 items |
 | Hard | CSB X68000 3.1 GRAPHICS.DAT | X68000-specific, 732 items |
 | Hard | DM2 Amiga 1.0 GRAPHICS.DAT | 4630 items, 16-color |
-| Hard | TQ JP Track 02 BIN | first TQ asset for our v1 phase |
+| Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence beyond the current launch/readiness gates |
 | Very hard | Nexus Saturn NEXUS.BIN | already have, but the .MNS, .AVI companions are large |
 
 ## Adding a new version to Firestaff
