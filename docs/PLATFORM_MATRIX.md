@@ -38,10 +38,10 @@ Firestaff's actual implementation state.
 | PC | 3.4 | EN | ✅ | `c_dm_pc_eng/` | yes (363,417 B) | our canonical "PC" target |
 | PC | 3.4 | EN/FR/GE | ✅ | `c_dm_pc_multilingual/` | yes (398,925 B) | multilingual, 748 items |
 | PC-9801 | 2.0a/2.0b | JP | 🔵 | `c_dm_pc98/` | — | DMWeb page: Japan 3.5-inch and 5.25-inch HDM/floppy line, 1990-02-09, ¥9800, 8-bit/16-bit screenshots, `2.0a` copy-protected original plus cracked image, and newer non-copy-protected `2.0b` original |
-| SNES | 1.0 NTSC | EN | 🔵 | `c_dm_snes/` | — | ROM .smc, per-tile palettes |
-| SNES | 1.0 PAL | EN | 🔵 | `c_dm_snes/` | — | |
-| SNES | 1.0 NTSC | JP | 🔵 | `c_dm_snes/` | — | |
-| SNES | 1.1 NTSC | JP | 🔵 | `c_dm_snes/` | — | |
+| SNES | 1.0 NTSC | EN | 🔵 | `c_dm_snes/` | — | DMWeb page: SMC cartridge ROM, English screenshots/videos, SPC music, and English-only "master" skill-prefix bug |
+| SNES | 1.0 PAL | EN | 🔵 | `c_dm_snes/` | — | DMWeb page: Europe cartridge line; same English-version bug family, PAL timing needs separate runtime proof |
+| SNES | 1.0 NTSC | JP | 🔵 | `c_dm_snes/` | — | DMWeb page: Super Famicom ROM, Japanese screenshots/videos, alternate-ending save-corruption bug, Hissssa redraw bug, and See Through Walls freeze |
+| SNES | 1.1 NTSC | JP | 🔵 | `c_dm_snes/` | — | DMWeb page: fixes Japanese 1.0 alternate-ending save corruption and Hissssa redraw, but still has the Japanese See Through Walls freeze |
 | X68000 | 3.0 | JP | 🔵 | `c_dm_x68k/` | — | DMWeb page: Japan HDM/floppy line, 1990-01-26, ¥9800, 31 kHz screenshots, original image missing copy-protection sectors, cracked image, save disk, and X68000 keypad / Ctrl-S command table |
 
 **Missing data on disk that would unlock 2️⃣ more:** any one of
@@ -150,6 +150,7 @@ support is to add any one of these data files:
 | Medium | DM2 FM Towns 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, quieter Red Book tracks 2-6, silent track 8, FM Towns-specific keyboard bridge |
 | Medium | DM2 Sega CD / Mega CD 1.0 BIN/CUE CD image | Europe/USA/Japan CD media, split data-track ISO + audio-track archive evidence, track-7 silence variant, Sega-CD-specific runtime/input bridge |
 | Hard | CSB X68000 3.1 GRAPHICS.DAT | X68000-specific, 732 items |
+| Hard | DM SNES / Super Famicom SMC ROM set | four cartridge versions, per-tile palettes, SPC music, console input, and SNES-specific bug gates |
 | Hard | DM2 Amiga 1.0 GRAPHICS.DAT | 4630 items, 16-color |
 | Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence beyond the current launch/readiness gates |
 | Very hard | Nexus Saturn full Track 1 / fan-translation matrix | original JP Track 1 is present, but full-disc runtime handoff, CD audio tracks 02-09, demo classification, and EN/FR fan-translation hashes still need proof |
