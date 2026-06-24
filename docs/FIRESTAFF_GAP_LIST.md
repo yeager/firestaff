@@ -200,7 +200,7 @@ and DMWeb's CSB Atari ST edition page.
 | CSB Amiga 3.3 (en-fr-ge) | EXTRACTED + VERIFIED — `csb-extras/legacy-amiga-dms/...Meynaf/DungeonMaster/` matches a canonical hash (Meynaf FR hack variant); DMWeb identifies this as a hard-disk/accelerator hack with original game+utility files copied into folders and patched in memory |
 | CSB Amiga 3.5 (en/en-fr-ge) original | EXTRACTED — `csb-extras/amiga-3.5-ctraw-en/` (CTRaw format, not the canonical CSB Amiga hash); DMWeb lists protected original ADF and unofficial IPF media, v3.5 multilingual language-choice/entrance screenshots, Quit button, and Ctrl-Q/Ctrl-A entrance quit |
 | CSB Amiga Utility disk (fr/ge/en/r1/r2/r3) | EXTRACTED — Disk 2 (en/fr/de) + Disk 3 (en/de) at `csb-extras/amiga-util-disk{2,3}-{en,fr,de}/`; DMWeb separates English releases 1-3, French release 1, German releases 1-2, release 2 as buggy, and release 3 as the fixed English utility disk |
-| CSB FM-Towns (en-jp) | EXTRACTED — `csb-extras/fm-towns/` (484 MB ISO, awaiting canonical hash match) |
+| CSB FM-Towns (en-jp) | EXTRACTED — `csb-extras/fm-towns/` (484 MB ISO, awaiting canonical hash match); DMWeb identifies the Japan v3.1 BIN/CUE CD line, English/Japanese screenshots, Champion Editor and portrait-loading screens, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow input |
 | CSB PC-98 3.1 (jp) | EXTRACTED — `csb-extras/pc98-3.1-jp/` (171 .raw files, awaiting hash match) |
 | CSB X68000 (jp) | EXTRACTED — `csb-extras/legacy-jp-x68000/` |
 | CSBWin (PC port by Paul Stevens) | PARTIAL — synthetic loader exists; real-asset test missing |

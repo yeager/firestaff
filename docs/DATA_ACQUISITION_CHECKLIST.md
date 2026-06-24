@@ -163,7 +163,7 @@ coverage**, not registry correctness.
 | Atari ST 2.0/2.1 English | 🟡 `33f672bf…` / 🔴 | 🟡 `3cafd2fb…` / 🔴 | DMWeb page separates original STX game+utility disks for 2.0 and 2.1, cracked Automation ST media, MSA game+utility+save disks, hard-disk/RamDisk hacks, and Meynaf's v2.1 assembler-source disassembly; local v2.0 game-disk hashes are recorded, but v2.1 and utility disks still need classification |
 | PC 3.4 English | 🔴 | 🔴 | not yet acquired; would be easiest runtime target after Amiga |
 | X68000 English | 🟡 `291e1bc6…` | 🟡 | archived |
-| FM-Towns English | 🟡 | 🟡 | cdata/ + cjdata/ folders |
+| FM-Towns English/Japanese | 🟡 | 🟡 | DMWeb page identifies Japan v3.1 BIN/CUE CD media, English/Japanese screenshot sets, Champion Editor and portrait-loading screens, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow command table; local `csb-extras/fm-towns/` is extracted but still awaits canonical hash classification |
 | PC-98 Japanese | 🟡 | 🟡 | archived |
 | CSB Utility Disk (any) | 🔴 | n/a | has CMP portraits, HTC hint text, AMG sounds, FTL utility — needed for Tier 3 #6 CMP runtime, Tier 3 hidden-code skip |
 | CSBWin custom resources | 🔴 | 🔴 | `csbgraphics.dat` is a third graphics file beyond DM/CSB; Tier 3 #11 |
@@ -205,7 +205,13 @@ coverage**, not registry correctness.
    aliases, Ctrl-S disk menu, v3.5 multilingual entrance quit, WinUAE
    / Smacker intro and ending videos, and the longer Amiga intro with
    music before any native Amiga parity claim.
-7. **Atari ST CSB input/presentation receipts** should follow DMWeb's
+7. **FM Towns CSB CD/image/audio receipts** should follow DMWeb's
+   FM Towns page: Japan v3.1 English/Japanese BIN/CUE sources,
+   CD-audio tracks 02-31, story/ending/game-over track mapping,
+   Champion Editor and portrait-loading screens, and the FM Towns
+   Ctrl-S/Shift-S plus shifted-arrow input table before any native
+   FM Towns CSB claim.
+8. **Atari ST CSB input/presentation receipts** should follow DMWeb's
    table and media notes: Insert/Clr Home turns, arrow movement, Ctrl-S
    disk menu, WinSTon/Smacker introduction video, no ending animation,
    slower creature-heavy runtime, and single-sided compressed disk
