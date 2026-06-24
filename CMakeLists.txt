@@ -2089,6 +2089,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_12_east_walkpath_portrait_rect_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_12_front_south_entry_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_12_walkpath_from_entrance_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_hall_champion_portrait_12_screenshot_receipt_rect_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_22_walkpath_from_entrance_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_08_walkpath_from_entrance_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_portrait_13_east_walkpath_portrait_rect_position_runtime_probe.c"
@@ -2742,6 +2743,32 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion
             $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
     )
 endif()
+
+# DM1 V1 Hall of Champions portrait-12 screenshot_receipt_rect runtime
+# probe. Registered via the pool-promote foreach loop above (line ~2086).
+# Source-locked contract for the on-disk BMP receipt of the LINFLAS pose
+# at (2,10,N): renders the pose to the M11 320x200 indexed framebuffer,
+# captures a 24-bit BMP via M11_Screenshot_Capture, re-reads it from
+# disk, and decodes the source-locked D1C portrait rectangle
+# (96,35,32,29) back into palette indices using G9010_auc_VgaPaletteAll_Compat
+# to assert the LINFLAS portrait pixels made it onto disk correctly.
+# Proves:
+#   (A) receipt byte stability: BMP file on disk is well-formed (BM magic,
+#       320x200, source-locked 192054 byte footprint, 14+40 header +
+#       960*200 image payload with 320*3 = 960 row stride already
+#       4-aligned).
+#   (B) rect received ordinal 12: decoded D1C rect on disk matches C026
+#       ordinal-12 opaque pixels above the 90% threshold, AND the
+#       dominant ordinal in the decoded rect is 12 (rules out a
+#       wrong-ordinal paint that happens to satisfy the threshold).
+#   (C) no floating negative: the same screenshot receipt path run for
+#       the no-portrait side pose (2,10,EAST) shows ordinal-12 leak pct
+#       below 35% in the decoded D1C rect.
+# Source evidence: DUNGEON.C:2558,2573,2608-2612; MOVESENS.C:1501-1503;
+#                  REVIVE.C F0280,F0282; DUNVIEW.C:3913-3928,8318-8542,
+#                  8522-8533; COORD.C:1693-1722; DEFS.H:2071-2079;
+#                  GAMELOOP.C:90 + F0128; screenshot_m11.c (24-bit BMP
+#                  writer); vga_palette_pc34_compat.h (G9010 palette).
 
 # DM1 V1 Hall of Champions portrait-17 front_north_entry runtime probe.
 # Real-asset regression for the narrow slice:
