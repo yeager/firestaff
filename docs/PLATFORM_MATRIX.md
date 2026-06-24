@@ -42,10 +42,11 @@ Firestaff's actual implementation state.
 | SNES | 1.0 PAL | EN | 🔵 | `c_dm_snes/` | — | |
 | SNES | 1.0 NTSC | JP | 🔵 | `c_dm_snes/` | — | |
 | SNES | 1.1 NTSC | JP | 🔵 | `c_dm_snes/` | — | |
-| X68000 | 3.0 | JP | 🔵 | `c_dm_x68k/` | — | 562-item GRAPHICS.DAT |
+| X68000 | 3.0 | JP | 🔵 | `c_dm_x68k/` | — | DMWeb page: Japan HDM/floppy line, 1990-01-26, ¥9800, 31 kHz screenshots, original image missing copy-protection sectors, cracked image, save disk, and X68000 keypad / Ctrl-S command table |
 
 **Missing data on disk that would unlock 2️⃣ more:** any one of
-the Amiga 1.0, Atari 1.0, FM-Towns 2.0, or PC-98 2.0 data files.
+the Amiga 1.0, Atari 1.0, FM-Towns 2.0, PC-98 2.0, or X68000 3.0
+data files.
 
 ## CSB (Chaos Strikes Back) — 11 known versions
 
@@ -139,6 +140,7 @@ support is to add any one of these data files:
 | Medium | DM FM-Towns 2.0 BIN/CUE or ISO/CUE CD image | English/Japanese v2.0 hash classification, IMG2 real-asset evidence, CD audio tracks 02-20, and FM Towns keyboard bridge |
 | Medium | CSB Atari ST 2.1 GRAPHICS.DAT | second Atari CSB line; v2.0 graphics/dungeon hashes are already locally recorded |
 | Medium | DM PC-9801 2.0a/2.0b HDM/floppy images | Japanese v2.0 hash classification, 8-bit/16-bit presentation evidence, PC-98 keypad / Alt-S input gates, and copy-protection/crack separation |
+| Medium | DM X68000 3.0 HDM/floppy images | Japanese v3.0 hash classification, 31 kHz presentation evidence, X68000 keypad / arrow input gates, and copy-protection/crack separation |
 | Medium | DM2 PC-9801 1.0 FDI set | Japanese four-disk FDI media, no-music behavior, PC-98-specific keyboard bridge |
 | Medium | DM2 PC-9821 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, PC-98 keyboard bridge, `FIRE.EXE` CD-ROM protection behavior evidence |
 | Medium | DM2 IBM PS/V 1.0 floppy/WinImage set | Japanese three-floppy media, no-music behavior, IBM PS/V keyboard bridge, `FIRE.EXE` protection behavior evidence |

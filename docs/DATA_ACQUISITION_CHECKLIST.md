@@ -58,7 +58,7 @@ coverage**, not registry correctness.
 | Apple IIGS 2.1 English | 🟡 | 🟡 | n/a | DMWeb page lists separate original and Computist-cracked PO images; 2.1 fixes the ROM03 2.0 main-dungeon memory failure |
 | FM-Towns 2.0 English/Japanese | 🟡 | 🟡 | CD audio tracks 02-20 | DMWeb page identifies Japan v2.0 EN/JP media as redump BIN/CUE masters T1/T2 plus an ISO/CUE archive, with track 20 as 20 seconds of silence and an FM Towns-specific Shift-S / shifted-arrow input table |
 | PC-9801 2.0a/2.0b Japanese | 🟡 | 🟡 | n/a | DMWeb page identifies Japan HDM/floppy media: `2.0a` original image missing the copy-protection sector and a cracked `2.0a`, plus newer bug-fixed non-copy-protected `2.0b`; 8-bit/16-bit screenshot split and PC-98 keypad / Alt-S input table |
-| X68000 3.0 Japanese | 🟡 | 🟡 | n/a | XDF/X68000 format |
+| X68000 3.0 Japanese | 🟡 | 🟡 | n/a | DMWeb page identifies Japan v3.0 HDM/floppy media: original image missing copy-protection sectors, cracked image, and blank save disk; 31 kHz screenshot set and X68000 keypad / Ctrl-S input table |
 | SNES (NTSC/PAL/JP) | ⚪ | ⚪ | ⚪ | not on code-complete path (rejected: 8-bit tile-renderer work is disproportionate) |
 
 ### DM1 acquisition gaps
@@ -112,7 +112,14 @@ coverage**, not registry correctness.
    extracted data-file hashes, 8-bit/16-bit presentation receipts, PC-98
    keypad/Alt-S input gates, and protection provenance without committing
    patched executables.
-8. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
+8. **X68000 3.0 JP** should be treated as a disk-image import target.
+   DMWeb's X68000 page separates original HDM media that cannot boot
+   without copy-protection sectors from a cracked image and a blank save
+   disk. Firestaff needs HDM extraction, original-vs-cracked/save-disk
+   classification, extracted data-file hashes, 31 kHz presentation
+   receipts, X68000 keypad/arrow input gates, and `FTLCODE` / `DM.X`
+   protection provenance without committing patched executables.
+9. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
    listed on dmweb as 60+ variants. Currently we ship none; we need
    at least Conflux II/III and one CSBWin custom dungeon to exercise
    `csbgraphics.dat` (Tier 3 work).
