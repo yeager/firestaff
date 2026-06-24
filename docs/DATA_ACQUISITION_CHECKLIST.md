@@ -115,7 +115,7 @@ coverage**, not registry correctness.
 | PC French | 🔴 `b4d73357…` | 🔴 | MD5 known, file not acquired |
 | PC German/English JewelCase | 🔴 `e52ab5e0…` | 🔴 | MD5 known, file not acquired |
 | Amiga | 🟡 | 🟡 | archived, big-endian variant |
-| Macintosh | 🔴 | 🔴 | .moov QuickTime animations + EN/JP variants |
+| Macintosh | 🔴 | 🔴 | DMWeb page identifies JP, USA, and USA demo as redump BIN/CUE CD images plus CD-content archives; JP has 16-color graphics, intro animation, CD-audio, and `Skullkeep` resource-fork protection offsets; USA has 256-color graphics, QuickTime/MooV, MIDI/SoundMusicSys resources, Mac menu/balloon help, and Command-key input |
 | Sega CD / Mega CD | 🔴 | 🔴 | DMWeb page identifies Europe/USA/Japan v1.0 as redump BIN/CUE CD images; USA/JP CD-content archives exist; data-track ISO + audio-track MP3 split; track 7 is 15 seconds of silence |
 | FM-Towns | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a redump BIN/CUE CD image; CD audio has quieter tracks 2-6 plus silent track 8; Ctrl-Shift-S disk menu |
 | PC-9801 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as four FDI disk images; no music; separate HDM/HDI demo |
