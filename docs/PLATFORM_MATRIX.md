@@ -80,7 +80,7 @@ the Amiga 1.0, Atari 1.0, FM-Towns 2.0, or PC-98 2.0 data files.
 | IBM PS/V | 1.0 | JP | 🔵 | `c_dm2_ibmpsv/` | — | split graphics.dat |
 | Sega CD / Mega CD | 1.0 | EN | 🔵 | `c_dm2_segacd_en/` | — | Interplay MVE animations |
 | Sega CD / Mega CD | 1.0 | JP | 🔵 | `c_dm2_segacd_jp/` | — | |
-| FM-Towns | 1.0 | EN/JP | 🔵 | `c_dm2_fmtowns/` | — | 3407 items, signature 8004h |
+| FM-Towns | 1.0 | EN/JP | 🔵 | `c_dm2_fmtowns/` | — | DMWeb JP edition page: redump BIN/CUE CD image; 3407 items, signature 8004h; CD-audio variant with quieter tracks 2-6, silent track 8, and Ctrl-Shift-S disk menu |
 
 **Notes:** The PC English version is the only one that uses
 Interplay MVE animations and 256-color graphics. All other
@@ -135,6 +135,7 @@ support is to add any one of these data files:
 | Medium | CSB Atari ST 2.1 GRAPHICS.DAT | second Atari CSB line; v2.0 graphics/dungeon hashes are already locally recorded |
 | Medium | DM PC-9801 2.0 GRAPHICS.DAT | PC-98-specific LZW+IMG2, 575 items |
 | Medium | DM2 PC-9801 1.0 FDI set | Japanese four-disk FDI media, no-music behavior, PC-98-specific keyboard bridge |
+| Medium | DM2 FM Towns 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, quieter Red Book tracks 2-6, silent track 8, FM Towns-specific keyboard bridge |
 | Hard | CSB X68000 3.1 GRAPHICS.DAT | X68000-specific, 732 items |
 | Hard | DM2 Amiga 1.0 GRAPHICS.DAT | 4630 items, 16-color |
 | Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence beyond the current launch/readiness gates |
