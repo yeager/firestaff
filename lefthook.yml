@@ -74,6 +74,9 @@ pre-commit:
         # Skip if none of the harmonization-touching files changed.
         [ -z "$(git diff --cached --name-only --diff-filter=ACMR -- 'src/shared/asset_status_m12.c' 'src/shared/asset_find_by_hash.c' 'src/dm2/dm2_v1_*.c' 'docs/VERIFIED_HASHES.md' 2>/dev/null)" ]
 
+    no_game_data_payloads:
+      run: python3 tools/asset-validate/no_game_data_in_git.py
+
 # ─────────────────────────────────────────────────────────────────────────
 # pre-push: heavier checks before pushing
 # ─────────────────────────────────────────────────────────────────────────
@@ -87,6 +90,9 @@ pre-push:
     hash_harmonization_full:
       run: python3 tools/asset-validate/compare_md5_to_sha256.py
 
+    no_game_data_payloads:
+      run: python3 tools/asset-validate/no_game_data_in_git.py
+
 # ─────────────────────────────────────────────────────────────────────────
 # CI: invoked by .github/workflows/verify.yml after checkout
 # ─────────────────────────────────────────────────────────────────────────
@@ -97,6 +103,8 @@ ci:
       run: bash po/validate_po_layout.sh
     hash_harmonization:
       run: python3 tools/asset-validate/compare_md5_to_sha256.py
+    no_game_data_payloads:
+      run: python3 tools/asset-validate/no_game_data_in_git.py
     asset_gap_summary:
       run: |
         if find "$HOME/.firestaff/data" -type f -print -quit | grep -q .; then

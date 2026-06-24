@@ -243,6 +243,10 @@ jobs:
         run: |
           python3 tools/asset-validate/compare_md5_to_sha256.py
 
+      - name: Assert no original game data is tracked
+        run: |
+          python3 tools/asset-validate/no_game_data_in_git.py
+
       - name: Run asset-validate summary mode (Tier 1 #2)
         run: |
           if find "$HOME/.firestaff/data" -type f -print -quit | grep -q .; then
