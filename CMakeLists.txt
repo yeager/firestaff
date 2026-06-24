@@ -7161,6 +7161,20 @@ if(BUILD_TESTING)
         tests/test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat PRIVATE firestaff_m11)
+    # DM1 V1 HiDPI champion portrait 11 mouse-rect gate: scaled
+    # window coordinates must route to the source-locked D1C
+    # champion portrait rect (96, 35, 32, 29) for the ordinal-11
+    # C026 atlas cell. Locks the SDL render framebuffer-map path
+    # against the ReDMCSB DUNVIEW.C:3913-3928 + DUNVIEW.C:525
+    # G0109 portrait box + DEFS.H:821-826 portrait-grid 8-col
+    # math + COORD.C source viewport (0, 33, 224, 136) on
+    # 1280x720, 1920x1080, 2560x1440, and 1512x982 (MacBook Pro
+    # Retina HiDPI failure case). Off-by-one neighbor clicks and
+    # corridor west-wall clicks must not leak into the D1C rect.
+    add_executable(test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat
+        tests/test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat PRIVATE firestaff_m11)
     add_executable(dm1_v2_export_entry_viewport_png
         tools/dm1_v2_export_entry_viewport_png.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
@@ -7236,6 +7250,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_per_mode_material_signatures_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(dm1_v2_export_entry_viewport_png PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
@@ -7545,6 +7560,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat
         COMMAND test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat
+        COMMAND test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat
     )
     add_test(
         NAME dm1_v22_verification
