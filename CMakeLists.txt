@@ -2564,6 +2564,37 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait ordinal 17 / approach_from_left /
+# portrait_rect_position regression probe.  Source-locked to
+# DUNGEON.C:2573 / DUNGEON.C:2608-2612 (C127 sensorData -> G0289)
+# and DUNVIEW.C:3913-3928 (C026 blit only on D1C_FRONT walls).
+# The route-variant complement of the ordinal_17_west_negative
+# probe above: that probe locks the (1, y) DIR_WEST band y=2..6;
+# this probe locks the (1, y) DIR_EAST band y=2..6.  Ordinal 17
+# (BORIS) is not a C127 sensorData value in the source-visible
+# DM1 V1 PC 3.4 DUNGEON.DAT, so the slice is the no-floating
+# invariant across the entire (x=1) corridor approach_from_left
+# wall, anchored at (1, 3) DIR_EAST = 18 (SONJA) for the
+# positive cross-check.  Disjoint from the ordinal_4
+# approach_from_left probe (different ordinal, single-cell focus
+# on the LEIF (2, 2) chamber) and from the ordinal_17 front_north
+# _entry / cancel_reopen / inventory_exit_restore probes
+# (different route variant or aspect).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_17_approach_from_left_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_ordinal_17_approach_from_left_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_17_approach_from_left_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_ordinal_17_approach_from_left_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_ordinal_17_approach_from_left_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_ordinal_17_approach_from_left_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_ordinal_17_approach_from_left_portrait_rect_position_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 viewport wall visual capture probe — takes DATA_DIR OUT_DIR.
 # Sibling to the champion-mirror capture probe; addresses the
 # 'missing or incorrect viewport walls' P1 visual bug ticket by
