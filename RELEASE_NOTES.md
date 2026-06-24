@@ -1,11 +1,48 @@
 
-# Firestaff next
+# Firestaff v3.0.4
 
-- Fixes the game-data default used by launcher/startup config resolution:
-  macOS and Linux now default to `~/.firestaff/data`, while Windows
-  defaults to the installed executable's `data` directory. The old
-  `/tmp/firestaff-test-no-assets` path remains only an explicit test
-  fixture and is now guarded by the portable filesystem probe.
+Firestaff v3.0.4 packages the 2026-06-24 post-v3.0.3 evidence and
+release-hardening batch. The release is still conservative about public
+game-status claims: it promotes source-locked probes, launcher data-path
+fixes, and packaging confidence without claiming complete parity for
+DM1, CSB, DM2, Nexus, or Theron's Quest beyond the evidence now covered.
+
+## Highlights since v3.0.3
+
+- **DM1 Hall of Champions coverage fills out the ordinal sweep**: new
+  real-asset runtime probes cover more portrait routes across front
+  entries, side entries, walkpaths, redraw-after-candidate flows,
+  panel-open/cancel behavior, fullscreen scaling, HiDPI mouse mapping,
+  transparent-pixel checks, and no-floating side-wall pixels. Ordinal 22
+  now has dedicated front and walkpath lanes instead of remaining only an
+  indirect coverage note.
+- **Launcher data defaults corrected for real installs**: macOS and
+  Linux now resolve game data from `~/.firestaff/data`, while Windows
+  resolves beside the installed executable. The old
+  `/tmp/firestaff-test-no-assets` path remains only as an explicit test
+  fixture and is guarded by the portable filesystem probe.
+- **Asset scanner and launcher gates widened**: nested ZIP cache handoff,
+  ISO/BIN duplicate-hash handling, data-dir cache invalidation, no-data
+  popup behavior, and M12 language-cycle layout are now covered by
+  focused tests or probes.
+- **Cross-game runtime evidence expanded**: the batch adds DM2
+  creature/save gates, Nexus DMDF and save-slot checks, Theron Track 02
+  and shop/progression gates, and DM1 V2 actual-render screenshot
+  coverage.
+
+## Verification
+
+- 174 commits ship on top of `v3.0.3`, including this release-prep
+  commit.
+- GitHub Actions was green on `b9a9d8095` before release prep: M10
+  verify, CMake build on macOS/Windows/Linux, strict warnings, asset
+  hygiene, and cross-platform determinism.
+- Focused local verification before release prep included `git diff
+  --check`, CMake configure, and targeted DM1 Hall of Champions probe
+  builds/CTest runs with `--parallel 4`.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
+  `v3.0.4` release commit.
 
 # Firestaff v3.0.3
 
