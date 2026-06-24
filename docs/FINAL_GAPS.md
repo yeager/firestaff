@@ -179,7 +179,7 @@ be read with these cross-references rather than at face value.
 | **PJE-05 / BUG0_16** (projectile list overfill) | "silently dropped, not crashed" | Deliberate v1 hard cap with diagnostic at `memory_projectile_pc34_compat.c:255-270`. | **DOCUMENTED** (intentional defensive) |
 | **LSV-01/02/03 / SAV-01** (save/load not original-compatible) | "native format, not PC 3.4 interop" | By design: Firestaff uses its own atomic native save format (`dm1_v1_save_load.c`). Original-save interop is an OPEN-OMFATTANDE milestone, not a parity gap. | **OPEN-OMFATTANDE** (separate milestone) |
 | **REV-01** (F0281 CHAMPION_Rename UI) | "resurrection rename prompt silently missing" | Still not ported to the new M11 path (amalgam-only). Player-facing but low-frequency; bounded UI work for a future pass. | **OPEN-BOUNDED** (deferred) |
-| **MOV-05** (F0284 rotates Direction but not Cell) | "inventory panel may mis-render when turning with a candidate present" | `set_party_direction_redmcsb_compat` rotates per-champion Direction; the compat `ChampionState` has no Cell field (party Cell is modelled at party level). Touches the just-stabilized v2.7.22 mirror/candidate machinery — **not a safe bounded fix on a 99%-parity target.** | **OPEN-BOUNDED** (deferred; risk-gated) |
+| **MOV-05** (F0284 rotates Direction but not Cell) | "inventory panel may mis-render when turning with a candidate present" | `dm1_v1_mov05_f0284_cell_rotation_pc34_compat` is now CTest-registered and pins the bounded F0284 party cell/direction rotation contract for no-op turns, present-list rotation, active champion tracking, empty-slot preservation, two- and three-champion parties, portrait identity preservation, and cardinal reachability. This is source-lock fixture coverage only; it does not claim live inventory redraw, candidate-panel runtime, DOSBox evidence, or pixel parity. | **FIXED** (bounded source-lock fixture) |
 
 The ~50 **Minor** findings are overwhelmingly "two parallel
 implementations exist" (amalgam vs compat layer) or "F-function
@@ -208,11 +208,11 @@ remaining work is:
 1. **Group 8 functional divergence findings (~68)** — the
    2026-06-13 report is now substantially stale; its Major
    "Top 10" items are mostly FIXED (GRP-02, GRP-03, CHM-02,
-   CHM-06) or deliberate-by-design (CHM-01, MNU-02, DUN-05,
-   PJE-05, LSV-01). Only REV-01 (resurrection rename UI) and
-   MOV-05 (champion Cell rotation) remain genuinely open, and
-   both are deferred/risk-gated. See the Group 8
-   reconciliation table above. None block parity.
+   CHM-06, MOV-05) or deliberate-by-design (CHM-01, MNU-02,
+   DUN-05, PJE-05, LSV-01). REV-01 (resurrection rename UI)
+   remains the only bounded UI item still open in this
+   reconciliation table; it does not block parity. See the Group 8
+   reconciliation table above.
 
 2. **DM2 / CSB / Nexus / Theron** — separate milestones, not
    considered gaps for DM1 V1 parity. CSB at 110/110 ctest

@@ -182,7 +182,7 @@ greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
 
 | Version | Status |
 |---|---|
-| CSB Atari ST 2.0 (en) — original | BLOCKED-DATA |
+| CSB Atari ST 2.0 (en) — original | EXTRACTED + VERIFIED — local GRAPHICS.DAT/DUNGEON.DAT sizes and SHA256 hashes are recorded; full Atari-runtime parity is still separate |
 | CSB Atari ST 2.0 (en) — cracked Replicants | BLOCKED-DATA |
 | CSB Atari ST 2.1 (en) | BLOCKED-DATA |
 | CSB Amiga 3.1 (en-fr-ge) original | EXTRACTED — `~/.firestaff/data/csb-extras/amiga-3.1-multi/` (no canonical hash match yet, awaiting verification) |
@@ -689,7 +689,7 @@ Kort version:
 | DM1 legacy-dos | ✅ | Canonical `GRAPHICS.DAT`/`DUNGEON.DAT` i katalogen — matchar hashen direkt |
 | CSB Amiga 3.3 Meynaf FR | ✅ | Matchar canonical CSB-hasen i `...Meynaf/DungeonMaster/Graphics.DAT` |
 | Nexus Saturn JA | ⚠️ | MD5 stämmer (`d8362321...`) men filnamnet matchar inte scanner-mönstret `g_nexusArchiveNames` (`DM.BIN`, `SEGADATA.BIN`, etc.) — hittas bara i default-scan, inte via `--data-dir` |
-| Theron JP Track 02 | ✅ | MD5 stämmer (`b7afb338...`); 2026-06-21 `tier1_strict_boot_probe` launch-testar JP canonical + JP extras till TQR level-load milestone |
+| Theron JP Track 02 | ✅ | MD5 stämmer (`b7afb338...`); 2026-06-21 `tier1_strict_boot_probe` launch-testar JP canonical + JP extras till TQR level-load milestone; `theron_v1_runtime_screenshot_readiness` och `theron_24h_readiness` ger metadata-/hashkvitton utan att marknadsföra skärmbilder |
 | DM1 PC 3.4 English 3.5" (extras) | ⚠️ | Innehåller `.raw`-filer (CTRaw emulator-format) som scanner ej mappar |
 
 **Ny status:**
