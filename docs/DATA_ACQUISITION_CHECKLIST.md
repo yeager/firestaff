@@ -171,7 +171,7 @@ coverage**, not registry correctness.
 
 | Variant | DM.BIN | 137 satellite files | Notes |
 |---|---|---|---|
-| Sega Saturn JP (extracted) | ✅ `e88d6085…` | ✅ (all 137 in registry) | runtime target, fully present; DMWeb page identifies the official Japan release as 1998-03-26 retail media with redump/CloneCD sources, CD audio tracks 02-09, box/manual/disc scans, and Japanese videos |
+| Sega Saturn JP (extracted) | ✅ `e88d6085…` | ✅ (all 137 in registry) | runtime target, fully present; DMWeb identifies the official Japan release as Victor Interactive Software catalog `T-9111G` on 1998-03-26 with redump/CloneCD sources, CD audio tracks 02-09, box/manual/disc/registration scans, Japanese screenshots, and a two-part Japanese playthrough |
 
 ### Nexus acquisition gaps
 
@@ -187,8 +187,10 @@ coverage**, not registry correctness.
    and BIN/CUE downloads. This needs its own hash/profile classification
    instead of being folded into the retail JP row.
 3. **CD audio/video/manual provenance** — DMWeb lists tracks 02-09,
-   Japanese videos, and box/manual/disc scans. These are public-proof
-   and media-trigger backlog items, not required game-data payloads.
+   Japanese screenshots, a 48-page booklet, box/back-card/spine-card/
+   compact-disc/registration scans, and a two-part Japanese playthrough.
+   These are public-proof and media-trigger backlog items, not required
+   game-data payloads.
 4. **Saturn BIOS / emulator-required ancillary** — out of scope;
    Firestaff uses its own renderer and reads the data files
    directly, not the BIOS.

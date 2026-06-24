@@ -285,7 +285,7 @@ Nexus locally verified files in `~/.firestaff/data/nexus/`.
 | TLINK/TAI/SAL/MAP runtime | PARTIAL |
 | Save/load (.sav) | PARTIAL |
 | V1 mechanics | PARTIAL |
-| **Real Saturn asset handoff (NEXUS.BIN/ISO)** | EXTRACTED + VERIFIED — `nexus-extras/saturn-ja/Dungeon Master Nexus (Japan) (Track 1).bin::DM.BIN` matches canonical DM.BIN hash. DMWeb's Saturn page identifies the official JP retail disc, a separate JP demo, CD audio tracks 02-09, and optional EN/FR fan-translation disc images. Next: confirm Track 1 (not just DM.BIN) drives the full E1 V1 phases 0–7 launch path (DMDF parser, DGN loader, MNS rendering, S2D fonts, save/load), then classify demo/fan-translation media separately. |
+| **Real Saturn asset handoff (NEXUS.BIN/ISO)** | EXTRACTED + VERIFIED — `nexus-extras/saturn-ja/Dungeon Master Nexus (Japan) (Track 1).bin::DM.BIN` matches canonical DM.BIN hash. DMWeb's Saturn pages identify the official JP retail disc (Victor Interactive Software catalog `T-9111G`, 1998-03-26), a separate JP demo, CD audio tracks 02-09, optional EN/FR fan-translation disc images, and public-proof material from the Japan retail page: screenshots, 48-page booklet, physical scans, and a two-part Japanese playthrough. Next: confirm Track 1 (not just DM.BIN) drives the full E1 V1 phases 0-7 launch path (DMDF parser, DGN loader, MNS rendering, S2D fonts, save/load), then classify demo/fan-translation media separately. |
 
 ### E2. V2 phases
 
