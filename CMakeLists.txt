@@ -2174,6 +2174,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_11_after_party_shuffle_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_02_after_party_shuffle_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_03_double_click_stability_portrait_rect_position_075_gate_probe.c"
+        "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_03_save_load_reopen_portrait_rect_position_219_gate_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_04_panel_chrome_preserve_portrait_rect_position_196_gate_probe.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_pool_probe_src}")
         get_filename_component(_pool_probe_exe "${_pool_probe_src}" NAME_WE)
