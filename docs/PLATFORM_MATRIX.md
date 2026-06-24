@@ -66,11 +66,11 @@ the Amiga 1.0, Atari 1.0, FM-Towns 2.0, or PC-98 2.0 data files.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| PC | 0.9 Beta | EN | 🔵 | `c_dm2_pc_beta/` | — | split graphics.dat + graphic2.dat |
-| PC | 1.0 | EN | ✅ | `c_dm2_pc/` | yes (8,639,757 B) | Interplay port, 256-color, 5624 items |
-| PC | 1.0 | DE | 🔵 | `c_dm2_pc_de/` | — | |
-| PC | 1.0 | FR | 🔵 | `c_dm2_pc_fr/` | — | |
-| PC | 1.0 | Demo | 🔵 | `c_dm2_pc_demo/` | — | 3332 items |
+| PC | 0.9 Beta | EN | 🔵 | `c_dm2_pc_beta/` | — | DMWeb PC page: early DOS beta line with split `GRAPHICS.DAT` + `GRAPHIC2.DAT`; no final DOS music path |
+| PC | 1.0 | EN | ✅ | `c_dm2_pc/` | yes (8,639,757 B) | DMWeb PC page: Interplay 256-color DOS line, Europe/USA redump BIN/CUE CD images, USA CD-content archive, HMP music in `GRAPHICS.DAT`, VGA/SVGA MVE videos, Alt-S / Shift-arrow / keypad command table |
+| PC | 1.0 | DE | 🔵 | `c_dm2_pc_de/` | — | DMWeb PC page: Germany CD and Bestseller CD lines, redump BIN/CUE and CD-content archive coverage |
+| PC | 1.0 | FR | 🔵 | `c_dm2_pc_fr/` | — | DMWeb PC page: France floppy/CD/Bestseller lines and CD-content archives |
+| PC | 1.0 | Demo | 🔵 | `c_dm2_pc_demo/` | — | DMWeb PC page: five known 1995 demo builds; earliest `FIRE.EXE`/LZ91 build has no music or save/load, later `SKULL.EXE`/Watcom builds vary sound, logo, title, and order assets; 3332 items in Greatstone row |
 | Amiga | 1.0 | EN | 🔵 | `c_dm2_amiga/` | — | 4630 items, 16-color |
 | Macintosh | 1.0 | EN | 🔵 | `c_dm2_mac/` | — | DMWeb edition page: USA redump BIN/CUE CD image plus CD-content archives; upgraded 256-color graphics; QuickTime/MooV, MIDI/SoundMusicSys resources, Mac menu/balloon help, Command-key input table |
 | Macintosh | 1.0 | JP | 🔵 | `c_dm2_mac_jp/` | — | DMWeb edition page: Japan redump BIN/CUE CD image plus DMFiles archive; older 16-color graphics; intro animation also present on Sega CD; CD-audio tracks; `Skullkeep` resource-fork protection notes |
@@ -138,6 +138,7 @@ support is to add any one of these data files:
 | Medium | DM2 PC-9821 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, PC-98 keyboard bridge, `FIRE.EXE` CD-ROM protection behavior evidence |
 | Medium | DM2 IBM PS/V 1.0 floppy/WinImage set | Japanese three-floppy media, no-music behavior, IBM PS/V keyboard bridge, `FIRE.EXE` protection behavior evidence |
 | Medium | DM2 Macintosh 1.0 BIN/CUE/CD-content set | Japanese + USA CD media, StuffIt/HQX/resource-fork handling, QuickTime/MooV animations, MIDI/SoundMusicSys resources, Mac keyboard/menu bridge |
+| Medium | DM2 PC demo/build matrix | five 1995 DOS demo builds, `FIRE.EXE`/LZ91 versus `SKULL.EXE`/Watcom split, save/load and music differences, distinct `GRAPHICS.DAT`/`DUNGEON.DAT` evidence |
 | Medium | DM2 FM Towns 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, quieter Red Book tracks 2-6, silent track 8, FM Towns-specific keyboard bridge |
 | Medium | DM2 Sega CD / Mega CD 1.0 BIN/CUE CD image | Europe/USA/Japan CD media, split data-track ISO + audio-track archive evidence, track-7 silence variant, Sega-CD-specific runtime/input bridge |
 | Hard | CSB X68000 3.1 GRAPHICS.DAT | X68000-specific, 732 items |

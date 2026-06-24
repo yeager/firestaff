@@ -111,9 +111,9 @@ coverage**, not registry correctness.
 
 | Variant | GRAPHICS.DAT | DUNGEON.DAT | Notes |
 |---|---|---|---|
-| PC English | ✅ `c387ee42…` (8.6 MB) | ✅ `cfadfd40…` (39 KB) | runtime target |
-| PC French | 🔴 `b4d73357…` | 🔴 | MD5 known, file not acquired |
-| PC German/English JewelCase | 🔴 `e52ab5e0…` | 🔴 | MD5 known, file not acquired |
+| PC English | ✅ `c387ee42…` (8.6 MB) | ✅ `cfadfd40…` (39 KB) | runtime target; DMWeb PC page identifies Europe/USA redump BIN/CUE CD images, USA CD-content archive, HMP music in `GRAPHICS.DAT`, VGA/SVGA MVE videos, HMI sound-driver patch/update material, and DOS Alt-S / Shift-arrow / keypad command table |
+| PC French | 🔴 `b4d73357…` | 🔴 | DMWeb PC page identifies France floppy/CD/Bestseller editions and CD-content archive sources; file not acquired |
+| PC German/English JewelCase | 🔴 `e52ab5e0…` | 🔴 | DMWeb PC page identifies Germany CD/JewelCase/Blackmarket/Bestseller lines, redump BIN/CUE images, and CD-content archive sources; file not acquired |
 | Amiga | 🟡 | 🟡 | archived, big-endian variant |
 | Macintosh | 🔴 | 🔴 | DMWeb page identifies JP, USA, and USA demo as redump BIN/CUE CD images plus CD-content archives; JP has 16-color graphics, intro animation, CD-audio, and `Skullkeep` resource-fork protection offsets; USA has 256-color graphics, QuickTime/MooV, MIDI/SoundMusicSys resources, Mac menu/balloon help, and Command-key input |
 | Sega CD / Mega CD | 🔴 | 🔴 | DMWeb page identifies Europe/USA/Japan v1.0 as redump BIN/CUE CD images; USA/JP CD-content archives exist; data-track ISO + audio-track MP3 split; track 7 is 15 seconds of silence |
@@ -121,7 +121,7 @@ coverage**, not registry correctness.
 | PC-9801 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as four FDI disk images; no music; separate HDM/HDI demo |
 | PC-9821 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a BIN/CUE CD image; six CD.DAT music tracks; PC-98 keypad / Alt-S input table; LZEXE `FIRE.EXE` CD-ROM protection notes |
 | IBM PS/V | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as original three floppy disks plus WinImage disk images; no music; IBM PS/V keypad / Alt-S / Shift-arrow input table; LZEXE `FIRE.EXE` protection offsets `0x21989`/`0x1FB77` |
-| PC beta | 🔴 | 🔴 | split-file, byte-concat required |
+| PC beta/demo | 🔴 | 🔴 | DMWeb PC page documents PC 0.9 beta plus five 1995 demo builds; earliest `FIRE.EXE`/LZ91 demo lacks music and save/load, later `SKULL.EXE`/Watcom demos vary `GRAPHICS.DAT`, `DUNGEON.DAT`, sound, logo, title, and ordering assets |
 
 ### DM2 acquisition gaps
 
