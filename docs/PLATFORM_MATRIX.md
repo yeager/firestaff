@@ -110,8 +110,8 @@ and English Macintosh versions are explicitly exempt.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| TurboGrafx-16 / PC Engine | 1.0 (CD) | JP | ✅ | `c_therons_quest_jp/` | yes (Track 02) | JP canonical + JP extras Track 02 launch to the TQR level-load milestone; screenshot readiness records metadata/hash receipts only |
-| TurboGrafx-16 / PC Engine | 1.0 (CD) | EN | ✅ | `c_therons_quest_en/` | yes (Track 02) | US extras Track 02 launch to the TQR level-load milestone; full semantic dungeon-bank parity and public screenshot promotion remain separate work |
+| TurboGrafx-16 / PC Engine | 1.0 (CD) | JP | ✅ | `c_therons_quest_jp/` | yes (Track 02) | DMWeb overview: Japan release 1992-09-18, PC Engine CD adaptation with seven small dungeons; JP canonical + JP extras Track 02 launch to the TQR level-load milestone, while screenshot readiness records metadata/hash receipts only |
+| TurboGrafx-16 / PC Engine | 1.0 (CD) | EN | ✅ | `c_therons_quest_en/` | yes (Track 02) | DMWeb overview: USA release in 1993 and reference data based on English version; US extras Track 02 launch to the TQR level-load milestone, with full semantic dungeon-bank parity and public screenshot promotion kept separate |
 
 ## DM Nexus — 1 known version
 
@@ -169,7 +169,7 @@ support is to add any one of these data files:
 | Hard | CSB X68000 3.1 HDM/floppy images | X68000-specific 732-item GRAPHICS.DAT, 24/31 kHz presentation receipts, Champion Editor/portrait-loading proof, X68000 Ctrl-S / Opt.1 / Opt.2 input gates, and original/cracked/save-disk classification |
 | Hard | DM SNES / Super Famicom SMC ROM set | four cartridge versions, per-tile palettes, SPC music, console input, and SNES-specific bug gates |
 | Hard | DM2 Amiga 1.0 GRAPHICS.DAT | 4630 items, 16-color |
-| Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence beyond the current launch/readiness gates |
+| Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence for DMWeb's between-dungeon save model beyond the current launch/readiness gates |
 | Very hard | Nexus Saturn full Track 1 / fan-translation matrix | original JP Track 1 is present, but full-disc runtime handoff, CD audio tracks 02-09, demo classification, and EN/FR fan-translation hashes still need proof |
 
 ## Adding a new version to Firestaff
