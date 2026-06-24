@@ -295,8 +295,8 @@ coverage**, not registry correctness.
 
 | Variant | Track02 ISO/BIN | OGG audio | Notes |
 |---|---|---|---|
-| JP Track 02 (`TQJP02End.iso`) | ✅ (61 MB) | ✅ 19 tracks | runtime target, hash-locked; DMWeb overview identifies the Japanese PC Engine CD release date as 1992-09-18 and the game structure as seven small dungeons; edition page lists JP redump BIN/CUE, CloneCD, DMFiles ISO/OGG, intro/outro video, and JP tracks 01/03-18 with Track 17 static noise from 1:04 |
-| US Track 02 (`TQUS02End.iso`) | ✅ | ✅ 19 tracks | runtime target; DMWeb overview identifies the USA TurboGrafx-16 release as 1993 and says its reference information is based on the English version; edition page lists USA redump BIN/CUE, CloneCD, DMFiles ISO/OGG, intro/outro video, and the fixed shorter Track 17 |
+| JP Track 02 (`TQJP02End.iso`) | ✅ (61 MB) | ✅ 19 tracks | runtime target, hash-locked; DMWeb overview identifies the Japanese PC Engine CD release date as 1992-09-18 and the game structure as seven small dungeons; retail page lists bar code `4 988002 247950`, ¥8200 price, 142x125x10 mm package, booklet/back-card/spine-card/CD scans; edition page lists JP redump BIN/CUE, CloneCD, DMFiles ISO/OGG, intro/outro video, and JP tracks 01/03-18 with Track 17 static noise from 1:04 |
+| US Track 02 (`TQUS02End.iso`) | ✅ | ✅ 19 tracks | runtime target; DMWeb overview identifies the USA TurboGrafx-16 release as 1993 and says its reference information is based on the English version; retail page lists bar code `0 92218 00178 8`, 142x125x10 mm package, box hook-back, booklet/back-card/CD scans; edition page lists USA redump BIN/CUE, CloneCD, DMFiles ISO/OGG, intro/outro video, and the fixed shorter Track 17 |
 
 ### Theron acquisition gaps
 
@@ -331,6 +331,14 @@ coverage**, not registry correctness.
    evidence should classify BIN/CUE versus ISO/OGG handoff, keep the
    bootleg noncanonical, and add audio/intro/outro/screenshot receipts
    without treating those media links as bundled data.
+6. **Theron physical-retail receipts** — the DMWeb JP page records bar
+   code `4 988002 247950`, release 1992-09-18, ¥8200 price, jewel-case
+   package contents, a 32-page booklet, back card, spine card, and CD
+   scan; the USA page records bar code `0 92218 00178 8`, 1993 release,
+   jewel-case package contents, hook-back box scan, 32-page booklet,
+   back card, and CD scan. These are public-proof receipts only; they do
+   not change the current Track 02 acquisition target or allow PCEWorks
+   bootleg media into canonical classification.
 
 ## Cross-cutting gaps
 
