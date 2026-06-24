@@ -174,7 +174,8 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 ## C. CSB gaps
 
 Source: `docs/FINAL_CSB_GAPS.md` (135 lines), 5 csb_gap_*.md files,
-greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
+greatstone g_csb.html (14 versions documented), dmweb CSB Game Page,
+and DMWeb's CSB Atari ST edition page.
 
 ### C1. Champions/mechanics/dungeon/graphics
 
@@ -190,9 +191,9 @@ greatstone g_csb.html (14 versions documented), dmweb CSB Game Page.
 
 | Version | Status |
 |---|---|
-| CSB Atari ST 2.0 (en) — original | EXTRACTED + VERIFIED — local GRAPHICS.DAT/DUNGEON.DAT sizes and SHA256 hashes are recorded; full Atari-runtime parity is still separate |
-| CSB Atari ST 2.0 (en) — cracked Replicants | BLOCKED-DATA |
-| CSB Atari ST 2.1 (en) | BLOCKED-DATA |
+| CSB Atari ST 2.0 (en) — original | EXTRACTED + VERIFIED — local GRAPHICS.DAT/DUNGEON.DAT sizes and SHA256 hashes are recorded. DMWeb identifies original STX game+utility disks, v2.x screenshots, Atari ST utility screens, introduction-video provenance, no ending animation, and Insert/Clr Home/Ctrl-S input. Full Atari-runtime parity and utility-disk receipts are still separate |
+| CSB Atari ST 2.0 (en) — cracked / MSA / hard-disk variants | BLOCKED-DATA — DMWeb separates cracked Automation ST media, MSA game+utility+save disks, ELiTE and Peter Putnik hard-disk hacks, and RamDisk hack references from the original STX media |
+| CSB Atari ST 2.1 (en) | BLOCKED-DATA — DMWeb lists original STX game+utility disks and Meynaf's v2.1 assembler-source disassembly; needs v2.1 hash classification and utility-disk receipts before any runtime claim |
 | CSB Amiga 3.1 (en-fr-ge) original | EXTRACTED — `~/.firestaff/data/csb-extras/amiga-3.1-multi/` (no canonical hash match yet, awaiting verification) |
 | CSB Amiga 3.1 (en) cracked EndlessPiracy | BLOCKED-DATA |
 | CSB Amiga 3.1 (en) cracked Betrayal | BLOCKED-DATA |

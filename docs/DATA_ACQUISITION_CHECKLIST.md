@@ -160,7 +160,7 @@ coverage**, not registry correctness.
 |---|---|---|---|
 | Amiga 3.5 English | ✅ `3af5396f…` (435,076) | ✅ `3cafd2fb…` (2,098) | runtime target |
 | Amiga 3.5 Multilingual | 🟡 `cefaddfd…`? | 🟡 | archive only |
-| Atari ST 2.0/2.1 English | 🟡 `ebf6a57a…` | 🟡 | MSA disks, LZW-compressed |
+| Atari ST 2.0/2.1 English | 🟡 `33f672bf…` / 🔴 | 🟡 `3cafd2fb…` / 🔴 | DMWeb page separates original STX game+utility disks for 2.0 and 2.1, cracked Automation ST media, MSA game+utility+save disks, hard-disk/RamDisk hacks, and Meynaf's v2.1 assembler-source disassembly; local v2.0 game-disk hashes are recorded, but v2.1 and utility disks still need classification |
 | PC 3.4 English | 🔴 | 🔴 | not yet acquired; would be easiest runtime target after Amiga |
 | X68000 English | 🟡 `291e1bc6…` | 🟡 | archived |
 | FM-Towns English | 🟡 | 🟡 | cdata/ + cjdata/ folders |
@@ -180,10 +180,22 @@ coverage**, not registry correctness.
    Hint Oracle HTC text are pure spec, not exercised. The Champion
    Editor from the utility disk is also the simplest path to
    exercising the CMP decoder we already shipped (`532c8250`).
-3. **Atari ST CSB GRAPHICS.DAT** for the hidden-code skip table —
+3. **Atari ST CSB 2.0 / 2.1 media split** is pinned by the DMWeb
+   Atari ST page. Firestaff already records local v2.0 game-disk
+   `GRAPHICS.DAT` and `DUNGEON.DAT` hashes, but still needs v2.1
+   game-disk classification and original utility-disk receipts for
+   both versions. Keep STX originals separate from cracked Automation
+   ST media, MSA save-disk workflows, hard-disk/RamDisk hacks, and
+   Meynaf's v2.1 assembler-source disassembly.
+4. **Atari ST CSB GRAPHICS.DAT** for the hidden-code skip table —
    we shipped the table (`4e00a0ef`) but `csb_hidden_code_skip_table`
    tests only know the index range. A real Atari ST CSB GRAPHICS.DAT
    would let us confirm items 558–562 are not consumed as images.
+5. **Atari ST CSB input/presentation receipts** should follow DMWeb's
+   table and media notes: Insert/Clr Home turns, arrow movement, Ctrl-S
+   disk menu, WinSTon/Smacker introduction video, no ending animation,
+   slower creature-heavy runtime, and single-sided compressed disk
+   loading behavior before any native Atari-runtime claim.
 
 ## DM2 — Dungeon Master II: Skullkeep
 

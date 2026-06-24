@@ -64,8 +64,8 @@ data files.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| Atari ST | 2.0 | EN | 🟡 | `c_csb_atari_st_v2_0/` | yes (319,080 B graphics + 2,098 B dungeon) | ReDMCSB source-locked (incl CSB engine mods); local Atari ST v2.0 GRAPHICS/DUNGEON hashes are recorded, but full Atari-runtime parity is not yet promoted |
-| Atari ST | 2.1 | EN | 🟡 | `c_csb_atari_st_v2_1/` | — | ReDMCSB |
+| Atari ST | 2.0 | EN | 🟡 | `c_csb_atari_st_v2_0/` | yes (319,080 B graphics + 2,098 B dungeon) | ReDMCSB source-locked (incl CSB engine mods); DMWeb Atari ST page: December 1989 line, original STX game+utility disks, cracked ST/MSA media, save disk, hard-disk/RamDisk hacks, intro video, no ending animation, and Atari Insert/Clr Home/Ctrl-S command table; local v2.0 game-disk hashes are recorded, but full Atari-runtime parity is not yet promoted |
+| Atari ST | 2.1 | EN | 🟡 | `c_csb_atari_st_v2_1/` | — | ReDMCSB; DMWeb page lists original STX game+utility disks plus Meynaf's v2.1 assembler-source disassembly, so v2.1 needs separate media/hash and utility-disk classification |
 | Amiga | 3.1 | EN | 🔵 | `c_csb_amiga_v3_1_en/` | — | |
 | Amiga | 3.1 | EN/FR/GE | 🔵 | `c_csb_amiga_v3_1_ml/` | — | 749-item GRAPHICS.DAT, multilingual |
 | Amiga | 3.3 | EN/FR/GE | 🔵 | `c_csb_amiga_v3_3_ml/` | — | |
