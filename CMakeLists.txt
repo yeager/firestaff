@@ -6021,6 +6021,34 @@ if(BUILD_TESTING)
         endif()
     endforeach()
 
+    # DM1 V1 Hall of Champions portrait ordinal 13 (WUUF) double_click_stability
+    # runtime/contract gate.  Drives the existing
+    # DM1_V1_MirrorCandidateDoubleOpenClose_* runtime with explicit WUUF
+    # (ordinal 13) open events and asserts the rapid double-tap,
+    # close-then-open, and deadzone-burst dispatch contracts at the WUUF
+    # slot.  Disjoint from the existing ordinal-13 portrait probes
+    # (east_walkpath / south_return / west_negative / after_party_shuffle
+    #  portrait_rect_position) and from the historical default-ordinal-4
+    # double-open/close pc34_compat test.  Source-locked against
+    # ReDMCSB DEFS.H:821-826 M027_PORTRAIT_X/Y + DEFS.H C026 atlas +
+    # DUNVIEW.C:3913-3928 D1C portrait blit + DUNVIEW.C:525 G0109 +
+    # DUNGEON.C:2608-2612 C127 sensorData + MOVESENS.C:1501-1503 +
+    # REVIVE.C:272-276 + REVIVE.C:744-758 + COMMAND.C F0359:1452-1661 +
+    # COMMAND.C F0378:1985-1991 + COMMAND.C F0380:2045-2156.  Contract
+    # only: no game data, no M11 pipeline, no original DOS parity claim.
+    add_executable(test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat
+        tests/test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_double_open_close_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat
+        COMMAND test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat
+    )
+
     # chest action-hand owner-change (CONTAINER <-> NON-CONTAINER action
     # hand transitions while a G0426 chest is live: closes the chest,
     # preserves the visible G0425[0..7] items, re-routes the panel from
