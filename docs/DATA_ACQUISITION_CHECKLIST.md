@@ -119,6 +119,7 @@ coverage**, not registry correctness.
 | Sega CD / Mega CD | 🔴 | 🔴 | DMWeb page identifies Europe/USA/Japan v1.0 as redump BIN/CUE CD images; USA/JP CD-content archives exist; data-track ISO + audio-track MP3 split; track 7 is 15 seconds of silence |
 | FM-Towns | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a redump BIN/CUE CD image; CD audio has quieter tracks 2-6 plus silent track 8; Ctrl-Shift-S disk menu |
 | PC-9801 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as four FDI disk images; no music; separate HDM/HDI demo |
+| PC-9821 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a BIN/CUE CD image; six CD.DAT music tracks; PC-98 keypad / Alt-S input table; LZEXE `FIRE.EXE` CD-ROM protection notes |
 | IBM PS/V | 🔴 | 🔴 | no music variant |
 | PC beta | 🔴 | 🔴 | split-file, byte-concat required |
 

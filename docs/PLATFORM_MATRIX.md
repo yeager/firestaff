@@ -76,7 +76,7 @@ the Amiga 1.0, Atari 1.0, FM-Towns 2.0, or PC-98 2.0 data files.
 | Macintosh | 1.0 | JP | 🔵 | `c_dm2_mac_jp/` | — | |
 | Macintosh | 1.0 | EN (demo) | 🔵 | `c_dm2_mac_demo/` | — | |
 | PC-9801 | 1.0 | JP | 🔵 | `c_dm2_pc98/` | — | four FDI disk images; no music; PC-98 keypad / Alt-S input table |
-| PC-9821 | 1.0 | JP | 🔵 | `c_dm2_pc9821/` | — | |
+| PC-9821 | 1.0 | JP | 🔵 | `c_dm2_pc9821/` | — | DMWeb edition page: Victor JP v1.0 BIN/CUE CD image, six CD.DAT music tracks, PC-98 keypad / Alt-S input table, LZEXE `FIRE.EXE` CD-ROM protection notes |
 | IBM PS/V | 1.0 | JP | 🔵 | `c_dm2_ibmpsv/` | — | split graphics.dat |
 | Sega CD / Mega CD | 1.0 | EN | 🔵 | `c_dm2_segacd_en/` | — | DMWeb edition page: Europe + USA redump BIN/CUE CD images; USA also has DMFiles CD-content archive plus split data-track ISO and audio-track MP3 archives |
 | Sega CD / Mega CD | 1.0 | JP | 🔵 | `c_dm2_segacd_jp/` | — | DMWeb edition page: Japan redump BIN/CUE CD image plus DMFiles CD-content archive; same CD.DAT trigger table, but track 7 is a 15-second silent track |
@@ -135,6 +135,7 @@ support is to add any one of these data files:
 | Medium | CSB Atari ST 2.1 GRAPHICS.DAT | second Atari CSB line; v2.0 graphics/dungeon hashes are already locally recorded |
 | Medium | DM PC-9801 2.0 GRAPHICS.DAT | PC-98-specific LZW+IMG2, 575 items |
 | Medium | DM2 PC-9801 1.0 FDI set | Japanese four-disk FDI media, no-music behavior, PC-98-specific keyboard bridge |
+| Medium | DM2 PC-9821 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, PC-98 keyboard bridge, `FIRE.EXE` CD-ROM protection behavior evidence |
 | Medium | DM2 FM Towns 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, quieter Red Book tracks 2-6, silent track 8, FM Towns-specific keyboard bridge |
 | Medium | DM2 Sega CD / Mega CD 1.0 BIN/CUE CD image | Europe/USA/Japan CD media, split data-track ISO + audio-track archive evidence, track-7 silence variant, Sega-CD-specific runtime/input bridge |
 | Hard | CSB X68000 3.1 GRAPHICS.DAT | X68000-specific, 732 items |
