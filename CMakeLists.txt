@@ -2084,6 +2084,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_04_after_party_shuffle_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_corridor_ordinal_scanner_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_12_east_walkpath_portrait_rect_probe.c"
+        "probes/m11/firestaff_dm1_v1_hall_champion_portrait_12_front_south_entry_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_champion_portrait_12_walkpath_from_entrance_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_portrait_13_east_walkpath_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal21_east_walkpath_portrait_rect_probe.c"
@@ -2522,6 +2523,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion
             $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
     )
 endif()
+
+# DM1 V1 Hall of Champions portrait-12 front_south_entry runtime probe.
+# Registered via the pool-promote foreach loop above (see line ~2086).
+# Source-locked contract for the ordinal 12 = LINFLAS south-facing
+# exit at (2,10,SOUTH): no-route for south-facing C127 sensors on
+# Hall map 0, no-floating side-pose at (2,10) facing SOUTH, and
+# candidate-panel return after cancelling at (2,10,N) then turning
+# SOUTH. See probes/m11/firestaff_dm1_v1_hall_champion_portrait_12
+# _front_south_entry_runtime_probe.c for full evidence citations.
 
 # DM1 V1 Hall of Champions portrait-17 front_north_entry runtime probe.
 # Real-asset regression for the narrow slice:
