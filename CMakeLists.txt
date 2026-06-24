@@ -2134,6 +2134,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_6_west_negative_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_diag_2_4_west_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_11_west_negative_portrait_rect_position_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_11_resurrect_reselect_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_15_west_negative_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_21_west_negative_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_11_after_party_shuffle_portrait_rect_position_runtime_probe.c")
