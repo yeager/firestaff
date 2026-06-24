@@ -2792,6 +2792,52 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait-22 front_south_entry runtime probe.
+# Real-asset regression for the narrow slice:
+#   ordinal       : 22  (C026 col 6 row 2; "GOTHMOG", untitled)
+#   route variant : front_south_entry (party at (3,6) facing SOUTH; the
+#                   ordinal-22 cell exposed by the front_north_entry
+#                   probe's [D] scan; the south-entry approach from
+#                   (3,7) facing NORTH is the south wall of (3,6))
+#   aspect        : portrait_rect_position + candidate_panel_return +
+#                   redraw_stability
+# Proves:
+#   (A) ordinal 22 catalog identity is GOTHMOG (untitled) (pinned to a
+#       real source identity).
+#   (B) ordinal 22 lives at (3, 6, WEST) on Hall map 0 in real DM1 V1
+#       DUNGEON.DAT (the single-hit contract the front_north_entry
+#       probe [D] reports, re-verified here so this probe stays
+#       independent).
+#   (C) South-facing side pose at (3, 6) is a no-floating contract:
+#       front_mirror ordinal == -1, D1C rect ordinal-22 leak < 35%,
+#       east/north side poses also no-floating, redraw byte stability
+#       across 3 cycles.
+#   (D) South-entry approach pose (3, 7, NORTH) is a no-portrait
+#       contract: the south wall of (3, 6) has no C127 sensor for
+#       ordinal 22, so the south-entry arc into the ordinal-22 cell
+#       reports ordinal -1 and the D1C rect carries no ordinal-22
+#       pixels.
+#   (E) Candidate-panel return at (3, 6, WEST) -> cancel -> turn
+#       SOUTH: panel state cleared, D1C rect stable (no stale-panel
+#       bleed into the south-facing redraw).
+# Source evidence: DUNGEON.C:2558,2573,2608-2612; MOVESENS.C:1501-1503;
+#                  REVIVE.C F0280,F0282; DUNVIEW.C:3913-3928,8318-8542;
+#                  COORD.C:1693-1722; DEFS.H:2071-2079,821-826.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion_portrait_22_front_south_entry_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_hall_champion_portrait_22_front_south_entry_runtime_probe
+        probes/m11/firestaff_dm1_v1_hall_champion_portrait_22_front_south_entry_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_champion_portrait_22_front_south_entry_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_champion_portrait_22_front_south_entry_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hall_champion_portrait_22_front_south_entry_runtime_probe
+        COMMAND firestaff_dm1_v1_hall_champion_portrait_22_front_south_entry_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 Hall of Champions portrait-00 front_north_entry runtime probe.
 # Real-asset regression for the narrow slice:
 #   ordinal       : 0   (C026 col 0 row 0; "DAROOU", untitled)
