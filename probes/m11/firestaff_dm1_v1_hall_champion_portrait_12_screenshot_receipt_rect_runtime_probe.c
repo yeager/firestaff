@@ -137,6 +137,7 @@
  *   2  bad invocation
  *   3  data-dir / GRAPHICS.DAT unavailable
  */
+#include "fs_portable_compat.h"
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
@@ -873,13 +874,8 @@ int main(int argc, char** argv) {
         /* Best-effort mkdir; ignore EEXIST.  screenshot_m11.c will
          * also create the directory if missing but doing it here
          * makes the probe self-contained. */
-#ifdef _WIN32
-        _mkdir(bmpDir);
-        _mkdir(bmpDirEast);
-#else
-        (void)mkdir(bmpDir, 0755);
-        (void)mkdir(bmpDirEast, 0755);
-#endif
+        (void)FSP_CreateDirectoryRecursive(bmpDir);
+        (void)FSP_CreateDirectoryRecursive(bmpDirEast);
     }
     bmpPath[0] = '\0';
 
