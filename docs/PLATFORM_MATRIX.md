@@ -74,7 +74,7 @@ data files.
 | FM-Towns | 3.1 | EN | 🔵 | `c_csb_fmtowns_en/` | — | 728-item GRAPHICS.DAT; DMWeb page: Japan BIN/CUE CD line, English screenshots, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow input |
 | FM-Towns | 3.1 | JP | 🔵 | `c_csb_fmtowns_jp/` | — | DMWeb page: Japan v3.1, release 1990-12-14, ¥9800, Japanese screenshots, Champion Editor/portrait-loading screens, redump.org and DMFiles BIN/CUE sources |
 | PC | 3.4 | EN | ✅ | — | yes (435,076 B) | Paul Stevens' unofficial Windows port (`CSBwin`) is what our `src/csb/` is based on; the underlying game is Atari ST 2.0. The PC "version" is a port, not a separate FTL release. |
-| PC-98 | 3.1 | JP | 🔵 | `c_csb_pc98/` | — | |
+| PC-98 | 3.1 | JP | 🔵 | `c_csb_pc98/` | — | DMWeb PC-9801 page: Japan HDM/floppy line, 1990-12-21, ¥9800, original image missing copy-protection sectors, cracked image, 8-bit/16-bit screenshots, Champion Editor/portrait-loading screens, and PC-98 keypad / Alt-S input |
 | X68000 | 3.1 | JP | 🔵 | `c_csb_x68k/` | — | 732-item GRAPHICS.DAT |
 | Apple IIGS | — | — | ❌ | not released | — | FTL never ported CSB to IIGS |
 
