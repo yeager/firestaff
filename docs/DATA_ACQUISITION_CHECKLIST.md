@@ -114,7 +114,7 @@ coverage**, not registry correctness.
 | PC English | ✅ `c387ee42…` (8.6 MB) | ✅ `cfadfd40…` (39 KB) | runtime target; DMWeb PC page identifies Europe/USA redump BIN/CUE CD images, USA CD-content archive, HMP music in `GRAPHICS.DAT`, VGA/SVGA MVE videos, HMI sound-driver patch/update material, and DOS Alt-S / Shift-arrow / keypad command table |
 | PC French | 🔴 `b4d73357…` | 🔴 | DMWeb PC page identifies France floppy/CD/Bestseller editions and CD-content archive sources; file not acquired |
 | PC German/English JewelCase | 🔴 `e52ab5e0…` | 🔴 | DMWeb PC page identifies Germany CD/JewelCase/Blackmarket/Bestseller lines, redump BIN/CUE images, and CD-content archive sources; file not acquired |
-| Amiga | 🟡 | 🟡 | archived, big-endian variant |
+| Amiga | 🟡 | 🟡 | DMWeb page identifies Europe-only EN/FR/GE v1.0 as six ADF/IPF floppy images that must be installed to hard disk; MOD music maps through `CD.DAT`; hardware reality is 68020+, OCS/ECS works, AGA not required; Amiga keyboard table uses Ctrl-S disk menu, Del/Help movement, and keypad wall-ornate hotkeys |
 | Macintosh | 🔴 | 🔴 | DMWeb page identifies JP, USA, and USA demo as redump BIN/CUE CD images plus CD-content archives; JP has 16-color graphics, intro animation, CD-audio, and `Skullkeep` resource-fork protection offsets; USA has 256-color graphics, QuickTime/MooV, MIDI/SoundMusicSys resources, Mac menu/balloon help, and Command-key input |
 | Sega CD / Mega CD | 🔴 | 🔴 | DMWeb page identifies Europe/USA/Japan v1.0 as redump BIN/CUE CD images; USA/JP CD-content archives exist; data-track ISO + audio-track MP3 split; track 7 is 15 seconds of silence |
 | FM-Towns | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a redump BIN/CUE CD image; CD audio has quieter tracks 2-6 plus silent track 8; Ctrl-Shift-S disk menu |
@@ -234,7 +234,7 @@ picks (most unblocked downstream work) are:
 4. **Atari ST DM1 GRAPHICS.DAT** (real LZW regression).
 5. **Atari ST CSB GRAPHICS.DAT** (real hidden-code skip
    regression).
-6. **DM2 Sega CD / Macintosh .moov** (animations + audio).
+6. **DM2 Sega CD / Macintosh .moov / Amiga MOD+Smacker** (animations + audio).
 
 Tier 1 is closed by what we already have. Tier 2 work continues
 unblocked even without any of the above. Tier 3 work is where
