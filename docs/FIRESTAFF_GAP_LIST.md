@@ -263,7 +263,7 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone g_dm2.html
 | DM2 MegaCD/SegaCD 1.0 (jp/en) | EXTRACTED — `dm2-extras/mega-cd-jp/` |
 | DM2 Macintosh 1.0 (en/jp/demo) — uses QuickTime .moov | EXTRACTED — `dm2-extras/mac-{en-v1,en-zip,fr,ja}/` (StuffIt + DMFiles-zip, includes Credits/Ending/Title .MooV) |
 | DM2 PC-9801/PC-9821/IBM PS/V 1.0 (jp) | EXTRACTED — `dm2-extras/pc9821-jp/`; DMWeb's PC-9801 edition page identifies the JP v1.0 full release as four FDI disk images, the demo as `.hdm` setup media + `.hdi` bootable hard-disk image, and the PC-9801 runtime as no-music with a distinct keypad / Alt-S command table |
-| DM2 FM-Towns 1.0 (jp) | EXTRACTED — `dm2-extras/fm-towns-ja/` |
+| DM2 FM-Towns 1.0 (jp) | EXTRACTED — `dm2-extras/fm-towns-ja/`; DMWeb's FM Towns edition page identifies the JP v1.0 release as a redump BIN/CUE CD image with CD-audio differences (tracks 2-6 slightly quieter, extra silent track 8) and a distinct Ctrl-Shift-S / shifted-arrow command table |
 
 ---
 

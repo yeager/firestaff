@@ -117,7 +117,7 @@ coverage**, not registry correctness.
 | Amiga | 🟡 | 🟡 | archived, big-endian variant |
 | Macintosh | 🔴 | 🔴 | .moov QuickTime animations + EN/JP variants |
 | Sega CD / Mega CD | 🔴 | 🔴 | `.dat` animations |
-| FM-Towns | 🔴 | 🔴 | `graphics.dat` only |
+| FM-Towns | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a redump BIN/CUE CD image; CD audio has quieter tracks 2-6 plus silent track 8; Ctrl-Shift-S disk menu |
 | PC-9801 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as four FDI disk images; no music; separate HDM/HDI demo |
 | IBM PS/V | 🔴 | 🔴 | no music variant |
 | PC beta | 🔴 | 🔴 | split-file, byte-concat required |
