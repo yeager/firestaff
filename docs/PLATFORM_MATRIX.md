@@ -102,7 +102,7 @@ and English Macintosh versions are explicitly exempt.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| Sega Saturn | 1.0 | JP | 🔵 | `c_dm_nexus_saturn/` | yes (DM.BIN 555,144 B) | DMWeb page: Japan-only Saturn release, 1998-03-26, ¥6800, true 3D, 15 levels, CD audio tracks 02-09, Japanese demo plus unofficial EN/FR fan translations; hash-verified Track 1 can expose `DM.BIN`, but full Saturn V1 runtime handoff remains a Nexus gap |
+| Sega Saturn | 1.0 | JP | 🔵 | `c_dm_nexus_saturn/` | yes (DM.BIN 555,144 B) | DMWeb page: Japan-only Saturn release by Victor Interactive Software, 1998-03-26, ¥6800, catalog `T-9111G`, true 3D, 15 levels, CD audio tracks 02-09, Japanese screenshots/manual scans/playthrough, Japanese demo plus unofficial EN/FR fan translations; hash-verified Track 1 can expose `DM.BIN`, but full Saturn V1 runtime handoff remains a Nexus gap |
 
 **Notes:** DM Nexus uses the proprietary DMDF (Dungeon Master
 Data File) format, completely different from the FTL
