@@ -60,15 +60,17 @@ FM Towns CD audio.
 the Amiga 1.0, Atari 1.0, FM-Towns 2.0, PC-98 2.0, or X68000 3.0
 data files.
 
-## CSB (Chaos Strikes Back) — 11 known versions
+## CSB (Chaos Strikes Back) — 12 known versions
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
 | Atari ST | 2.0 | EN | 🟡 | `c_csb_atari_st_v2_0/` | yes (319,080 B graphics + 2,098 B dungeon) | ReDMCSB source-locked (incl CSB engine mods); DMWeb Atari ST page: December 1989 line, original STX game+utility disks, cracked ST/MSA media, save disk, hard-disk/RamDisk hacks, intro video, no ending animation, and Atari Insert/Clr Home/Ctrl-S command table; local v2.0 game-disk hashes are recorded, but full Atari-runtime parity is not yet promoted |
 | Atari ST | 2.1 | EN | 🟡 | `c_csb_atari_st_v2_1/` | — | ReDMCSB; DMWeb page lists original STX game+utility disks plus Meynaf's v2.1 assembler-source disassembly, so v2.1 needs separate media/hash and utility-disk classification |
-| Amiga | 3.1 | EN | 🔵 | `c_csb_amiga_v3_1_en/` | — | |
-| Amiga | 3.1 | EN/FR/GE | 🔵 | `c_csb_amiga_v3_1_ml/` | — | 749-item GRAPHICS.DAT, multilingual |
-| Amiga | 3.3 | EN/FR/GE | 🔵 | `c_csb_amiga_v3_3_ml/` | — | |
+| Amiga | 3.1 | EN | 🔵 | `c_csb_amiga_v3_1_en/` | — | DMWeb Amiga page: December 1990 line, separate English media, v3.1 screenshots, unofficial IPF/protected ADF/cracked ADF boundaries, WinUAE/Smacker intro+ending, and Amiga keypad/Del/Help/Ctrl-S input |
+| Amiga | 3.1 | EN/FR/GE | 🔵 | `c_csb_amiga_v3_1_ml/` | — | 749-item GRAPHICS.DAT, multilingual; DMWeb separates unofficial IPF, protected original ADF, imperfect cracked ADF, and utility disks by language/release |
+| Amiga | 3.3 | EN/FR/GE | 🔵 | `c_csb_amiga_v3_3_ml/` | — | DMWeb lists multilingual v3.3 media plus Meynaf's French hard-disk/accelerator-card hack; Firestaff's verified extra path is a hack variant, not a canonical original |
+| Amiga | 3.5 | EN | ✅ | — | yes (435,076 B graphics + 2,098 B dungeon) | canonical CSB hash set; DMWeb lists protected original ADF/IPF media, WinUAE/Smacker intro+ending evidence, and Amiga input table |
+| Amiga | 3.5 | EN/FR/GE | ⚪ | — | — | DMWeb lists multilingual v3.5 media, v3.5 language-choice/entrance screenshots with Quit button, and v3.5 multilingual Ctrl-Q/Ctrl-A entrance quit behavior; needs separate canonical hash classification |
 | FM-Towns | 3.1 | EN | 🔵 | `c_csb_fmtowns_en/` | — | 728-item GRAPHICS.DAT |
 | FM-Towns | 3.1 | JP | 🔵 | `c_csb_fmtowns_jp/` | — | |
 | PC | 3.4 | EN | ✅ | — | yes (435,076 B) | Paul Stevens' unofficial Windows port (`CSBwin`) is what our `src/csb/` is based on; the underlying game is Atari ST 2.0. The PC "version" is a port, not a separate FTL release. |
@@ -131,11 +133,11 @@ future hashes or launch profiles.
 | Game | Verified working | Source-locked | Greatstone-extracted | Publicly documented | Total known |
 |---|---|---|---|---|---|
 | DM1 | 2 (PC 3.4 EN + Multilingual) | 5 (Atari ST) | 22 (Amiga/PC-98/Apple IIGS/FM-Towns/X68000/SNES) | 0 | 22+ |
-| CSB | 1 (PC 3.4 via CSBwin) | 2 (Atari ST, with local v2.0 hashes) | 11 (Amiga/PC-98/FM-Towns/X68000) | 0 | 11 |
+| CSB | 2 (CSBwin PC port + Amiga 3.5 EN hash set) | 2 (Atari ST, with local v2.0 hashes) | 7 (Amiga 3.1/3.3, PC-98, FM-Towns, X68000) | 1 (Amiga 3.5 multilingual) | 12 |
 | DM2 | 1 (PC EN) | 0 | 13 (Amiga/Mac/PC-98/PS/V/PC-9821/Sega-CD/FM-Towns/Demo/Beta) | 0 | 13+ |
 | TQ | 2 (JP + EN Track 02 launch/readiness) | 0 | 0 | 0 | 2 |
 | Nexus | 0 | 0 | 1 (Saturn JP) | 0 | 1 |
-| **Total** | **6** | **7** | **47** | **0** | **49+** |
+| **Total** | **7** | **7** | **43** | **1** | **50+** |
 
 ## What we'd need to unlock more 1️⃣/2️⃣ coverage
 
