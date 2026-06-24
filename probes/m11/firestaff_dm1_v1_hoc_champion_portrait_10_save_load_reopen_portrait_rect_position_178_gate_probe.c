@@ -121,11 +121,12 @@
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <time.h>
 
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
@@ -356,28 +357,31 @@ static int collect_panel_evidence(const M11_AssetSlot* panel,
     return 1;
 }
 
-/* Build a unique quicksave path under /tmp so the test does not
+static const char* probe_tmp_root(void) {
+    const char* tmp = getenv("TMPDIR");
+    if (tmp && tmp[0]) return tmp;
+    tmp = getenv("TEMP");
+    if (tmp && tmp[0]) return tmp;
+    tmp = getenv("TMP");
+    if (tmp && tmp[0]) return tmp;
+    return ".";
+}
+
+/* Build a unique quicksave path under the platform temp directory so the test does not
  * collide with previous runs and does not pollute the data dir.
  * The probe caller is responsible for setting FIRESTAFF_QUICKSAVE_PATH
  * to the returned buffer before QuickSave.  Writes the path into
  * outPath (caller-supplied, >= 256 bytes).  Returns 1 on success. */
 static int build_quicksave_path(char* outPath, size_t outSize) {
-    char tmpDir[256];
+    char leaf[160];
     int rc;
     if (outSize == 0) return 0;
-    const char* tmpl = "/tmp/firestaff_portrait10_save_load_reopen_XXXXXX";
-    char templateBuf[64];
-    snprintf(templateBuf, sizeof(templateBuf), "%s", tmpl);
-    if (mkstemp(templateBuf) < 0) {
-        return 0;
-    }
-    /* mkstemp creates the file; close and remove so QuickSave can
-     * create it fresh with the magic header. */
-    (void)unlink(templateBuf);
-    snprintf(tmpDir, sizeof(tmpDir), "%s", templateBuf);
-    rc = snprintf(outPath, outSize, "%s.sav", tmpDir);
-    if (rc <= 0 || (size_t)rc >= outSize) return 0;
-    return 1;
+    rc = snprintf(leaf, sizeof(leaf),
+                  "firestaff_portrait10_save_load_reopen_%lu_%lu.sav",
+                  (unsigned long)time(NULL),
+                  (unsigned long)clock());
+    if (rc <= 0 || (size_t)rc >= sizeof(leaf)) return 0;
+    return FSP_JoinPath(outPath, outSize, probe_tmp_root(), leaf);
 }
 
 int main(int argc, char** argv) {
@@ -613,21 +617,21 @@ int main(int argc, char** argv) {
     printf("\n[Group C] M11_GameView_QuickSave serialises world + v1 runtime sidecar\n");
 
     if (!build_quicksave_path(quicksavePath, sizeof(quicksavePath))) {
-        fprintf(stderr, "FAIL could not allocate quicksave path under /tmp\n");
+        fprintf(stderr, "FAIL could not allocate quicksave path under temp dir\n");
         M11_GameView_Shutdown(&game);
         return 1;
     }
-    if (setenv("FIRESTAFF_QUICKSAVE_PATH", quicksavePath, 1) != 0) {
+    if (FSP_SetEnv("FIRESTAFF_QUICKSAVE_PATH", quicksavePath, 1) != 0) {
         fprintf(stderr, "FAIL could not set FIRESTAFF_QUICKSAVE_PATH\n");
         M11_GameView_Shutdown(&game);
         return 1;
     }
     /* Clean any leftover from a prior aborted run. */
-    (void)unlink(quicksavePath);
+    (void)remove(quicksavePath);
     {
         char sidecar[600];
         snprintf(sidecar, sizeof(sidecar), "%s.v1runtime", quicksavePath);
-        (void)unlink(sidecar);
+        (void)remove(sidecar);
     }
 
     saveRc = M11_GameView_QuickSave(&game);
@@ -900,13 +904,12 @@ int main(int argc, char** argv) {
     /* ----------------------------------------------------------------
      * Cleanup
      * ---------------------------------------------------------------- */
-    (void)unlink(quicksavePath);
+    (void)remove(quicksavePath);
     {
         char sidecar[600];
         snprintf(sidecar, sizeof(sidecar), "%s.v1runtime", quicksavePath);
-        (void)unlink(sidecar);
+        (void)remove(sidecar);
     }
-    (void)unsetenv("FIRESTAFF_QUICKSAVE_PATH");
 
     M11_GameView_Shutdown(&game);
     printf("\n=== Summary: %d passed, %d failed ===\n", g_pass, g_fail);
