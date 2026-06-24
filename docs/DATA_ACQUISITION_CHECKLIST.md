@@ -158,8 +158,8 @@ coverage**, not registry correctness.
 
 | Variant | GRAPHICS.DAT | DUNGEON.DAT | Notes |
 |---|---|---|---|
-| Amiga 3.5 English | ✅ `3af5396f…` (435,076) | ✅ `3cafd2fb…` (2,098) | runtime target |
-| Amiga 3.5 Multilingual | 🟡 `cefaddfd…`? | 🟡 | archive only |
+| Amiga 3.5 English | ✅ `3af5396f…` (435,076) | ✅ `3cafd2fb…` (2,098) | runtime target; DMWeb Amiga page lists 3.5 English protected original ADF/IPF media, Amiga intro+ending video provenance, and the Amiga keypad/Del/Help/Ctrl-S command table |
+| Amiga 3.1/3.3/3.5 Multilingual | 🟡 `cefaddfd…`? | 🟡 | DMWeb page splits 3.1/3.3/3.5 EN/FR/GE game disks, unofficial IPFs, protected original ADFs, cracked ADFs, v3.5 Quit-button presentation, and Meynaf's v3.3 French hard-disk/accelerator hack; archive/local-extra variants need canonical classification |
 | Atari ST 2.0/2.1 English | 🟡 `33f672bf…` / 🔴 | 🟡 `3cafd2fb…` / 🔴 | DMWeb page separates original STX game+utility disks for 2.0 and 2.1, cracked Automation ST media, MSA game+utility+save disks, hard-disk/RamDisk hacks, and Meynaf's v2.1 assembler-source disassembly; local v2.0 game-disk hashes are recorded, but v2.1 and utility disks still need classification |
 | PC 3.4 English | 🔴 | 🔴 | not yet acquired; would be easiest runtime target after Amiga |
 | X68000 English | 🟡 `291e1bc6…` | 🟡 | archived |
@@ -180,18 +180,32 @@ coverage**, not registry correctness.
    Hint Oracle HTC text are pure spec, not exercised. The Champion
    Editor from the utility disk is also the simplest path to
    exercising the CMP decoder we already shipped (`532c8250`).
-3. **Atari ST CSB 2.0 / 2.1 media split** is pinned by the DMWeb
+3. **Amiga CSB 3.1 / 3.3 / 3.5 media split** is pinned by the
+   DMWeb Amiga page. Firestaff has canonical CSB hashes and a
+   verified Meynaf FR extra path, but the page separates unofficial
+   IPF images, protected original ADFs, cracked ADFs with known
+   defects, English/French/German utility disk releases, a buggy
+   English utility release 2, a fixed release 3, hard-disk patches,
+   and the Meynaf hard-disk/accelerator hack. Keep those sources
+   separate from canonical originals before broadening Amiga runtime
+   or utility-disk claims.
+4. **Atari ST CSB 2.0 / 2.1 media split** is pinned by the DMWeb
    Atari ST page. Firestaff already records local v2.0 game-disk
    `GRAPHICS.DAT` and `DUNGEON.DAT` hashes, but still needs v2.1
    game-disk classification and original utility-disk receipts for
    both versions. Keep STX originals separate from cracked Automation
    ST media, MSA save-disk workflows, hard-disk/RamDisk hacks, and
    Meynaf's v2.1 assembler-source disassembly.
-4. **Atari ST CSB GRAPHICS.DAT** for the hidden-code skip table —
+5. **Atari ST CSB GRAPHICS.DAT** for the hidden-code skip table —
    we shipped the table (`4e00a0ef`) but `csb_hidden_code_skip_table`
    tests only know the index range. A real Atari ST CSB GRAPHICS.DAT
    would let us confirm items 558–562 are not consumed as images.
-5. **Atari ST CSB input/presentation receipts** should follow DMWeb's
+6. **CSB Amiga input/presentation receipts** should follow DMWeb's
+   table and media notes: Amiga keypad/Del/Help/arrows, shifted key
+   aliases, Ctrl-S disk menu, v3.5 multilingual entrance quit, WinUAE
+   / Smacker intro and ending videos, and the longer Amiga intro with
+   music before any native Amiga parity claim.
+7. **Atari ST CSB input/presentation receipts** should follow DMWeb's
    table and media notes: Insert/Clr Home turns, arrow movement, Ctrl-S
    disk menu, WinSTon/Smacker introduction video, no ending animation,
    slower creature-heavy runtime, and single-sided compressed disk
