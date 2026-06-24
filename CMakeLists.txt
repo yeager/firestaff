@@ -7329,6 +7329,23 @@ if(BUILD_TESTING)
         tests/test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat PRIVATE firestaff_m11)
+    # DM1 V1 Hall of Champions portrait ordinal 8 (IAIDO) high-DPI
+    # mouse-rect gate: the source-locked D1C portrait destination
+    # rectangle (96, 35, 32, 29) per DUNVIEW.C:525 G0109 must be hit
+    # by a scaled-window mouse click on every HiDPI surface (1280x720,
+    # 1920x1080, 2560x1440, 1512x982 MacBook Pro Retina, 3024x1964
+    # MacBook Pro Retina pixel output), and the screen dispatch path
+    # must route to viewport.dungeon (C080, zone 7) per the
+    # ReDMCSB COMMAND.C:1641-1644 primary screen-relative table scan.
+    # Companion to test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat
+    # (panel-table C537/C544 chest slots) and disjoint from the
+    # ordinal-8 portrait_rect_position runtime probes (real-asset
+    # source-framebuffer pixel proofs). This is the data-free HiDPI
+    # mouse-rect coverage gate for the ordinal-8 D1C portrait rect.
+    add_executable(test_dm1_v1_hidpi_ordinal_8_portrait_mouse_rect_pc34_compat
+        tests/test_dm1_v1_hidpi_ordinal_8_portrait_mouse_rect_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_hidpi_ordinal_8_portrait_mouse_rect_pc34_compat PRIVATE firestaff_m11)
     add_executable(dm1_v2_export_entry_viewport_png
         tools/dm1_v2_export_entry_viewport_png.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
@@ -7405,6 +7422,7 @@ if(BUILD_TESTING)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_hidpi_ordinal_8_portrait_mouse_rect_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(dm1_v2_export_entry_viewport_png PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
@@ -7718,6 +7736,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat
         COMMAND test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_hidpi_ordinal_8_portrait_mouse_rect_pc34_compat
+        COMMAND test_dm1_v1_hidpi_ordinal_8_portrait_mouse_rect_pc34_compat
     )
     add_test(
         NAME dm1_v22_verification
