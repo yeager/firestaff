@@ -975,6 +975,22 @@ int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state);
 int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
                                        int* outX, int* outY,
                                        int* outW, int* outH);
+/* DUNVIEW.C G0205 G0205_aaauc_Graphic558_WallOrnamentCoordinateSets
+ * lookup: returns the destination box for a (coordSet, viewWallIndex)
+ * pair in viewport coordinates.  coordSet is 0..7, viewWallIndex is
+ * 0..12.  Used by the ordinal-10 fullscreen_scale_rect gate probe to
+ * prove the source-locked coordSet=5/index=12 (D1C champion-mirror
+ * frame route, 80x29..143x71) and the coordSet=7/index=12 fullscreen
+ * variant (32x9..191x119) are correctly distinct, and that the C026
+ * champion-portrait blit is anchored inside the coordSet=5 frame and
+ * not into the coordSet=7 fullscreen variant.  Returns 1 on a valid
+ * (coordSet, viewWallIndex) lookup, 0 on out-of-range. */
+int M11_GameView_GetDm1WallOrnamentZone(int coordSet,
+                                        int viewWallIndex,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH);
 int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state);
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate);
