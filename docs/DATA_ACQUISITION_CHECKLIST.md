@@ -59,7 +59,7 @@ coverage**, not registry correctness.
 | FM-Towns 2.0 English/Japanese | 🟡 | 🟡 | CD audio tracks 02-20 | DMWeb page identifies Japan v2.0 EN/JP media as redump BIN/CUE masters T1/T2 plus an ISO/CUE archive, with track 20 as 20 seconds of silence and an FM Towns-specific Shift-S / shifted-arrow input table |
 | PC-9801 2.0a/2.0b Japanese | 🟡 | 🟡 | n/a | DMWeb page identifies Japan HDM/floppy media: `2.0a` original image missing the copy-protection sector and a cracked `2.0a`, plus newer bug-fixed non-copy-protected `2.0b`; 8-bit/16-bit screenshot split and PC-98 keypad / Alt-S input table |
 | X68000 3.0 Japanese | 🟡 | 🟡 | n/a | DMWeb page identifies Japan v3.0 HDM/floppy media: original image missing copy-protection sectors, cracked image, and blank save disk; 31 kHz screenshot set and X68000 keypad / Ctrl-S input table |
-| SNES (NTSC/PAL/JP) | ⚪ | ⚪ | ⚪ | not on code-complete path (rejected: 8-bit tile-renderer work is disproportionate) |
+| SNES / Super Famicom 1.0/1.1 | ⚪ | ⚪ | SPC music | DMWeb page identifies four SMC cartridge ROMs: English NTSC 1.0, English PAL 1.0, Japanese NTSC 1.0, and Japanese NTSC 1.1; includes 19 SPC files, bsnes MP3 recordings, screenshots/videos, known slow-rendering behavior, and SNES-specific bug differences |
 
 ### DM1 acquisition gaps
 
@@ -119,7 +119,15 @@ coverage**, not registry correctness.
    classification, extracted data-file hashes, 31 kHz presentation
    receipts, X68000 keypad/arrow input gates, and `FTLCODE` / `DM.X`
    protection provenance without committing patched executables.
-9. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
+9. **SNES / Super Famicom 1.0/1.1** remains outside the current
+   code-complete path, but DMWeb now pins the ROM set and evidence
+   boundary: English NTSC/PAL 1.0, Japanese NTSC 1.0/1.1, SMC cartridge
+   images, 19 SPC music dumps, bsnes-recorded track receipts, and
+   version-specific bug behavior. Firestaff would need cartridge-ROM
+   import/classification, SNES tile/palette rendering, controller/input
+   mapping, SPC/music receipts, and explicit bug gates before any native
+   SNES runtime claim.
+10. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
    listed on dmweb as 60+ variants. Currently we ship none; we need
    at least Conflux II/III and one CSBWin custom dungeon to exercise
    `csbgraphics.dat` (Tier 3 work).
