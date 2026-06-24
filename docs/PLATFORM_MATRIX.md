@@ -75,7 +75,7 @@ the Amiga 1.0, Atari 1.0, FM-Towns 2.0, or PC-98 2.0 data files.
 | Macintosh | 1.0 | EN | 🔵 | `c_dm2_mac/` | — | Apple QuickTime anims, IMG4 |
 | Macintosh | 1.0 | JP | 🔵 | `c_dm2_mac_jp/` | — | |
 | Macintosh | 1.0 | EN (demo) | 🔵 | `c_dm2_mac_demo/` | — | |
-| PC-9801 | 1.0 | JP | 🔵 | `c_dm2_pc98/` | — | split graphics.dat |
+| PC-9801 | 1.0 | JP | 🔵 | `c_dm2_pc98/` | — | four FDI disk images; no music; PC-98 keypad / Alt-S input table |
 | PC-9821 | 1.0 | JP | 🔵 | `c_dm2_pc9821/` | — | |
 | IBM PS/V | 1.0 | JP | 🔵 | `c_dm2_ibmpsv/` | — | split graphics.dat |
 | Sega CD / Mega CD | 1.0 | EN | 🔵 | `c_dm2_segacd_en/` | — | Interplay MVE animations |
@@ -134,6 +134,7 @@ support is to add any one of these data files:
 | Medium | DM FM-Towns 2.0 GRAPHICS.DAT | IMG2 format, 532 items |
 | Medium | CSB Atari ST 2.1 GRAPHICS.DAT | second Atari CSB line; v2.0 graphics/dungeon hashes are already locally recorded |
 | Medium | DM PC-9801 2.0 GRAPHICS.DAT | PC-98-specific LZW+IMG2, 575 items |
+| Medium | DM2 PC-9801 1.0 FDI set | Japanese four-disk FDI media, no-music behavior, PC-98-specific keyboard bridge |
 | Hard | CSB X68000 3.1 GRAPHICS.DAT | X68000-specific, 732 items |
 | Hard | DM2 Amiga 1.0 GRAPHICS.DAT | 4630 items, 16-color |
 | Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence beyond the current launch/readiness gates |
