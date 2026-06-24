@@ -56,7 +56,7 @@ coverage**, not registry correctness.
 | Amiga 3.6 English/French/German | 🟡 | 🟡 | n/a | DMWeb page lists official SPS IPF 3.6 (not copy protected), ADF, 1992 USA/Psygnosis/bundle provenance, changed title/menu/perspective versus 2.0, and distinct 3.6 keypad layout |
 | Apple IIGS 2.0 English | 🟡 | 🟡 | n/a | DMWeb page lists PO disk images: original copy-protected image without working sector `$17`, Computist/ACS cracks, a hard-disk-patched image, and a save disk; 2.0 has a ROM03 main-dungeon `->002C` memory failure unless expansion memory is present |
 | Apple IIGS 2.1 English | 🟡 | 🟡 | n/a | DMWeb page lists separate original and Computist-cracked PO images; 2.1 fixes the ROM03 2.0 main-dungeon memory failure |
-| FM-Towns English | 🟡 | 🟡 | n/a | CD image variant |
+| FM-Towns 2.0 English/Japanese | 🟡 | 🟡 | CD audio tracks 02-20 | DMWeb page identifies Japan v2.0 EN/JP media as redump BIN/CUE masters T1/T2 plus an ISO/CUE archive, with track 20 as 20 seconds of silence and an FM Towns-specific Shift-S / shifted-arrow input table |
 | PC-98 Japanese | 🟡 | 🟡 | n/a | 2 disks, 1.2MB variant |
 | X68000 3.0 Japanese | 🟡 | 🟡 | n/a | XDF/X68000 format |
 | SNES (NTSC/PAL/JP) | ⚪ | ⚪ | ⚪ | not on code-complete path (rejected: 8-bit tile-renderer work is disproportionate) |
@@ -97,7 +97,14 @@ coverage**, not registry correctness.
    needs PO/ProDOS extraction, canonical-vs-cracked classification, the
    2.0 ROM03 `->002C` memory-failure boundary, the 2.1 fix, and IIGS
    keyboard/audio hotkey gates.
-6. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
+6. **FM Towns 2.0 EN/JP** should be treated as a CD-image import target.
+   DMWeb's FM Towns page separates redump BIN/CUE masters T1/T2 from an
+   ISO/CUE archive, documents CD audio tracks 02-20 including three unused
+   tracks and a 20-second silent track 20, and gives an FM Towns-specific
+   keyboard table. Firestaff needs BIN/CUE or ISO/CUE extraction, EN/JP
+   hash classification, IMG2 real-asset proof, CD-audio receipts, and
+   FM Towns input gates before native runtime claims.
+7. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
    listed on dmweb as 60+ variants. Currently we ship none; we need
    at least Conflux II/III and one CSBWin custom dungeon to exercise
    `csbgraphics.dat` (Tier 3 work).

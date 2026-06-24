@@ -34,7 +34,7 @@ Firestaff's actual implementation state.
 | Amiga | 3.6 | EN/FR/GE | 🔵 | `c_dm_amiga_v3_6/` | — | DMWeb page: June 1992 line, official SPS IPF not copy protected, 749-item multilingual GRAPHICS.DAT, changed title/menu/perspective versus 2.0, distinct 3.6 keypad layout |
 | Apple IIGS | 2.0 | EN | 🔵 | `c_dm_iigs/` | — | DMWeb page: 1989 line, PO disk images, 1 MB RAM, ROM03 main-dungeon `->002C` failure unless expansion memory is present, original images lack copy-protection sector |
 | Apple IIGS | 2.1 | EN | 🔵 | `c_dm_iigs/` | — | DMWeb page: fixes the ROM03 2.0 main-dungeon memory failure; separate original/cracked PO images and IIGS keypad/speaker/volume hotkeys |
-| FM-Towns | 2.0 | EN/JP | 🔵 | `c_dm_fmtowns/` | — | |
+| FM-Towns | 2.0 | EN/JP | 🔵 | `c_dm_fmtowns/` | — | DMWeb page: Japan CD line, November 1989, ¥8800, redump BIN/CUE masters T1/T2 plus ISO/CUE archive, English/Japanese screenshots, CD audio tracks 02-20, and FM Towns Shift-S / shifted-arrow command table |
 | PC | 3.4 | EN | ✅ | `c_dm_pc_eng/` | yes (363,417 B) | our canonical "PC" target |
 | PC | 3.4 | EN/FR/GE | ✅ | `c_dm_pc_multilingual/` | yes (398,925 B) | multilingual, 748 items |
 | PC-98 | 2.0 | JP | 🔵 | `c_dm_pc98/` | — | |
@@ -136,7 +136,7 @@ support is to add any one of these data files:
 | Easy | DM Atari ST 1.0 GRAPHICS.DAT | canonical first-release DM, 532 items |
 | Easy | DM Amiga 2.0 EN GRAPHICS.DAT | Amiga-specific IMG1 format, 532 items; DMWeb page adds ADF/IPF provenance, 1 MB/Kickstart boundary, and Amiga 2.x keypad/Del/Help input table |
 | Medium | DM Apple IIGS 2.0/2.1 PO disk images | Apple IIGS ProDOS/PO import, 2.0 ROM03 memory-failure boundary, 2.1 fix evidence, IIGS keyboard/audio hotkeys, copy-protection/crack classification |
-| Medium | DM FM-Towns 2.0 GRAPHICS.DAT | IMG2 format, 532 items |
+| Medium | DM FM-Towns 2.0 BIN/CUE or ISO/CUE CD image | English/Japanese v2.0 hash classification, IMG2 real-asset evidence, CD audio tracks 02-20, and FM Towns keyboard bridge |
 | Medium | CSB Atari ST 2.1 GRAPHICS.DAT | second Atari CSB line; v2.0 graphics/dungeon hashes are already locally recorded |
 | Medium | DM PC-9801 2.0 GRAPHICS.DAT | PC-98-specific LZW+IMG2, 575 items |
 | Medium | DM2 PC-9801 1.0 FDI set | Japanese four-disk FDI media, no-music behavior, PC-98-specific keyboard bridge |
