@@ -48,10 +48,12 @@ coverage**, not registry correctness.
 | Atari ST 1.2 English | 🟡 `9ce2eaf7…` | 🟡 | n/a | archived in `_canonical/`, LZW-compressed GRAPHICS.DAT, needs START.PAK extraction; DMWeb page lists preserved STX plus Atari-specific Insert/Clr Home/Ctrl-S input table |
 | Atari ST 1.2 German | 🟡 | 🟡 | n/a | archived in `_canonical/dm1-extras/`; DMWeb page lists preserved German 1.2 STX and German/Psygnosis bundle provenance |
 | Atari ST 1.3 French | 🟡 | 🟡 | n/a | archived; DMWeb page lists French 1.3 with two variants and French Mirrorsoft first/second edition provenance |
-| Amiga 2.0 English | 🟡 `fa6b1aa2…`? | 🟡 | n/a | ADF disks extracted; need .adf→raw→hash |
-| Amiga 2.0 German | 🟡 | 🟡 | n/a | ADF disks extracted |
-| Amiga 2.0 French | 🟡 | 🟡 | n/a | ADF disks extracted |
-| Amiga 2.2 English (kid) | ✅ | ✅ | n/a | `DUNGEONB.DAT` extracted and hash-locked (`9bac133b…`, 4,806 bytes); runtime coverage now 3/3 |
+| Amiga 2.0 English | 🟡 `fa6b1aa2…`? | 🟡 | n/a | DMWeb page lists USA 1988 / UK import provenance plus ADF/IPF media; ADF disks extracted locally but need .adf→raw→hash and copy-protection/original-vs-hard-disk classification |
+| Amiga 2.0 German | 🟡 | 🟡 | n/a | DMWeb page lists German Mirrorsoft editions, unofficial IPF and cracked ADF evidence; keep cracked images separate from canonical hashes |
+| Amiga 2.0 French | 🟡 | 🟡 | n/a | DMWeb page lists France Mirrorsoft edition, unofficial IPF, copy-protected original ADF, and Meynaf cracked ADF/protection notes |
+| Amiga 2.1 English | 🟡 | 🟡 | n/a | DMWeb page dates 2.1 to 1989-02 and lists an original ADF that does not boot because of copy protection; needs protected-media extraction |
+| Amiga 2.2 English/German | ✅ / 🟡 | ✅ / 🟡 | n/a | English `DUNGEONB.DAT` is hash-locked (`9bac133b…`, 4,806 bytes); DMWeb page lists 2.2 EN/DE media, unofficial 2.2 EN IPF, and protected original ADFs |
+| Amiga 3.6 English/French/German | 🟡 | 🟡 | n/a | DMWeb page lists official SPS IPF 3.6 (not copy protected), ADF, 1992 USA/Psygnosis/bundle provenance, changed title/menu/perspective versus 2.0, and distinct 3.6 keypad layout |
 | Apple IIGS 2.1 English | 🟡 | 🟡 | n/a | 800KB disk images |
 | FM-Towns English | 🟡 | 🟡 | n/a | CD image variant |
 | PC-98 Japanese | 🟡 | 🟡 | n/a | 2 disks, 1.2MB variant |
@@ -70,12 +72,23 @@ coverage**, not registry correctness.
    the source media boundary for that work: STX originals for 1.0/1.1/1.2
    English, German 1.2, and French 1.3, plus cracked ST/MSA and
    hard-disk/RamDisk hacks that must stay separate from canonical hashes.
-2. **Amiga 2.0 EN** GRAPHICS.DAT hash is the same as PC 3.4 EN
+2. **Amiga 2.0 / 2.1 / 2.2 / 3.6 split** is now pinned by the
+   DMWeb Amiga page. The page separates original IPF/ADF media, cracked
+   FR/DE images, a partly cracked hard-disk ADF, WHDLoad/Aminet patches,
+   and Meynaf's Atari ST-to-Amiga port. Firestaff should hash canonical
+   originals separately from cracks, hard-disk patches, and ports.
+3. **Amiga 2.0 EN** GRAPHICS.DAT hash is the same as PC 3.4 EN
    (`fa6b1aa2…`) but the 4bpp planar encoding differs and we have
    not yet exercised our Tier 2 #4 IMG5 decoder on a real Amiga
    asset. The archived `DungeonMasterAmiga20English.adf` needs
    un-ADF, then file-grab `graphics.dat` + `dungeon.dat`.
-3. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
+4. **Amiga keyboard/hardware gates** should follow the DMWeb table:
+   2.x uses keypad 4/5/6/1/2/3 plus Del/Help/arrows, while 3.6 shifts
+   movement to keypad 7/8/9/4/5/6 and adds entrance Return plus
+   Ctrl-Q/Ctrl-A quit. The 2.x path also needs a Kickstart 1.2/1.3 and
+   1 MB RAM assumption boundary; later Amiga models need compatibility
+   handling or 3.6.
+5. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
    listed on dmweb as 60+ variants. Currently we ship none; we need
    at least Conflux II/III and one CSBWin custom dungeon to exercise
    `csbgraphics.dat` (Tier 3 work).
