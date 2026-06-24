@@ -71,8 +71,8 @@ data files.
 | Amiga | 3.3 | EN/FR/GE | 🔵 | `c_csb_amiga_v3_3_ml/` | — | DMWeb lists multilingual v3.3 media plus Meynaf's French hard-disk/accelerator-card hack; Firestaff's verified extra path is a hack variant, not a canonical original |
 | Amiga | 3.5 | EN | ✅ | — | yes (435,076 B graphics + 2,098 B dungeon) | canonical CSB hash set; DMWeb lists protected original ADF/IPF media, WinUAE/Smacker intro+ending evidence, and Amiga input table |
 | Amiga | 3.5 | EN/FR/GE | ⚪ | — | — | DMWeb lists multilingual v3.5 media, v3.5 language-choice/entrance screenshots with Quit button, and v3.5 multilingual Ctrl-Q/Ctrl-A entrance quit behavior; needs separate canonical hash classification |
-| FM-Towns | 3.1 | EN | 🔵 | `c_csb_fmtowns_en/` | — | 728-item GRAPHICS.DAT |
-| FM-Towns | 3.1 | JP | 🔵 | `c_csb_fmtowns_jp/` | — | |
+| FM-Towns | 3.1 | EN | 🔵 | `c_csb_fmtowns_en/` | — | 728-item GRAPHICS.DAT; DMWeb page: Japan BIN/CUE CD line, English screenshots, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow input |
+| FM-Towns | 3.1 | JP | 🔵 | `c_csb_fmtowns_jp/` | — | DMWeb page: Japan v3.1, release 1990-12-14, ¥9800, Japanese screenshots, Champion Editor/portrait-loading screens, redump.org and DMFiles BIN/CUE sources |
 | PC | 3.4 | EN | ✅ | — | yes (435,076 B) | Paul Stevens' unofficial Windows port (`CSBwin`) is what our `src/csb/` is based on; the underlying game is Atari ST 2.0. The PC "version" is a port, not a separate FTL release. |
 | PC-98 | 3.1 | JP | 🔵 | `c_csb_pc98/` | — | |
 | X68000 | 3.1 | JP | 🔵 | `c_csb_x68k/` | — | 732-item GRAPHICS.DAT |
@@ -153,6 +153,7 @@ support is to add any one of these data files:
 | Medium | DM Apple IIGS 2.0/2.1 PO disk images | Apple IIGS ProDOS/PO import, 2.0 ROM03 memory-failure boundary, 2.1 fix evidence, IIGS keyboard/audio hotkeys, copy-protection/crack classification |
 | Medium | DM FM-Towns 2.0 BIN/CUE or ISO/CUE CD image | English/Japanese v2.0 hash classification, IMG2 real-asset evidence, CD audio tracks 02-20, and FM Towns keyboard bridge |
 | Medium | CSB Atari ST 2.1 GRAPHICS.DAT | second Atari CSB line; v2.0 graphics/dungeon hashes are already locally recorded |
+| Medium | CSB FM Towns 3.1 BIN/CUE CD image | English/Japanese v3.1 hash classification, CD audio tracks 02-31, Champion Editor/portrait-loading receipts, and FM Towns keyboard bridge |
 | Medium | DM PC-9801 2.0a/2.0b HDM/floppy images | Japanese v2.0 hash classification, 8-bit/16-bit presentation evidence, PC-98 keypad / Alt-S input gates, and copy-protection/crack separation |
 | Medium | DM X68000 3.0 HDM/floppy images | Japanese v3.0 hash classification, 31 kHz presentation evidence, X68000 keypad / arrow input gates, and copy-protection/crack separation |
 | Medium | DM PC 3.4 VGA/EGA and PC-only presentation receipts | Existing hash-verified PC runtime target; add focused receipts for DMWeb's VGA/EGA split, PC ending animation, entrance music excerpt, DOS keypad / Alt-S / analog-joystick / mouse-simulation input table, and Spanish fan-translation non-canonical boundary |
