@@ -2918,6 +2918,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait-22 d2c_far_positive runtime probe.
+# Real-asset regression for the D2C-far-to-D1C transition slice:
+# ordinal 22 (GOTHMOG), route variant d2c_far_positive, aspect
+# portrait_rect_position.  Source evidence: DUNGEON.C:2558,2573,2608-2612;
+# MOVESENS.C:1501-1503; REVIVE.C F0280/F0282; DUNVIEW.C:3913-3928,
+# 8318-8542,8520-8521; COORD.C:1693-1722; DEFS.H:821-826,2071-2079.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion_portrait_22_d2c_far_positive_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_hall_champion_portrait_22_d2c_far_positive_runtime_probe
+        probes/m11/firestaff_dm1_v1_hall_champion_portrait_22_d2c_far_positive_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_champion_portrait_22_d2c_far_positive_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_champion_portrait_22_d2c_far_positive_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hall_champion_portrait_22_d2c_far_positive_runtime_probe
+        COMMAND firestaff_dm1_v1_hall_champion_portrait_22_d2c_far_positive_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 Hall of Champions portrait-00 front_north_entry runtime probe.
 # Real-asset regression for the narrow slice:
 #   ordinal       : 0   (C026 col 0 row 0; "DAROOU", untitled)
