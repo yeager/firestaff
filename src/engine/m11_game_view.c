@@ -12802,6 +12802,14 @@ typedef struct M11_DM1ZoneBlit {
     int height;
 } M11_DM1ZoneBlit;
 
+/* Forward declaration for the file-private DUNVIEW.C G0205 lookup,
+ * so the public M11_GameView_GetDm1WallOrnamentZone wrapper below
+ * (just before m11_dm1_wall_ornament_zone's definition) can call it
+ * without a separate header dependency. */
+static int m11_dm1_wall_ornament_zone(int coordSet,
+                                      int viewWallIndex,
+                                      M11_DM1ZoneBlit* outBlit);
+
 typedef struct M11_DM1FloorOrnSpec {
     int relForward;
     int relSide;
@@ -13267,6 +13275,43 @@ static int m11_dm1_wall_ornament_coord_set_index(int globalIndex) {
         return 0;
     }
     return kCoordSet[globalIndex];
+}
+
+int M11_GameView_GetDm1WallOrnamentZone(int coordSet,
+                                        int viewWallIndex,
+                                        int* outX,
+                                        int* outY,
+                                        int* outW,
+                                        int* outH) {
+    /* Public wrapper around m11_dm1_wall_ornament_zone.  Exposes the
+     * DUNVIEW.C G0205 lookup so probes can verify each (coordSet,
+     * viewWallIndex) destination box directly without re-typing the
+     * kZones[8][13][6] table.  coordSet 0..7, viewWallIndex 0..12.
+     * Returns 1 on a valid lookup, 0 on out-of-range or null out params.
+     *
+     * The ordinal-10 fullscreen_scale_rect gate probe uses this helper
+     * to confirm:
+     *   - coordSet=5/index=12 is the D1C champion-mirror frame route
+     *     (80, 29, 64, 43), which is the destination of the C026
+     *     champion portrait blit (DUNVIEW.C:3913-3928).
+     *   - coordSet=7/index=12 is the fullscreen D1C variant
+     *     (32, 9, 160, 111), which is wall-texture only and is NOT
+     *     a destination for the C026 champion portrait sprite.
+     * Both invariants must hold at the (1,5,N) GANDO / ordinal-10
+     * pose (C127 sensor with sensorData=10 on the (1,4) front
+     * square per DUNGEON.C:2573 + 2608-2612). */
+    M11_DM1ZoneBlit blit;
+    if (!outX || !outY || !outW || !outH) {
+        return 0;
+    }
+    if (!m11_dm1_wall_ornament_zone(coordSet, viewWallIndex, &blit)) {
+        return 0;
+    }
+    *outX = blit.dstX;
+    *outY = blit.dstY;
+    *outW = blit.width;
+    *outH = blit.height;
+    return 1;
 }
 
 static int m11_dm1_wall_ornament_zone(int coordSet,
