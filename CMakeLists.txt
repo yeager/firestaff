@@ -205,6 +205,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_combat_log_pc34_compat.c
     src/dm1/dm1_v1_custom_dungeon_loader.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_keyboard_commands_pc34_compat.c
     src/engine/render_sdl_m11.c
     src/engine/color_presets_m11.c
     src/engine/colorblind_m11.c
@@ -3649,6 +3650,23 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_required_complete_launches
         COMMAND test_csb_v1_required_complete_launches
+    )
+
+    add_executable(test_csb_v1_keyboard_commands_pc34_compat
+        tests/test_csb_v1_keyboard_commands_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_keyboard_commands_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_keyboard_commands_pc34_compat
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_keyboard_commands_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_keyboard_commands_pc34_compat
+        COMMAND test_csb_v1_keyboard_commands_pc34_compat
     )
 
     add_executable(test_dm2_v1_boot_profile_smoke
