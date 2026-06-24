@@ -202,7 +202,7 @@ and DMWeb's CSB Atari ST edition page.
 | CSB Amiga Utility disk (fr/ge/en/r1/r2/r3) | EXTRACTED — Disk 2 (en/fr/de) + Disk 3 (en/de) at `csb-extras/amiga-util-disk{2,3}-{en,fr,de}/`; DMWeb separates English releases 1-3, French release 1, German releases 1-2, release 2 as buggy, and release 3 as the fixed English utility disk |
 | CSB FM-Towns (en-jp) | EXTRACTED — `csb-extras/fm-towns/` (484 MB ISO, awaiting canonical hash match); DMWeb identifies the Japan v3.1 BIN/CUE CD line, English/Japanese screenshots, Champion Editor and portrait-loading screens, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow input |
 | CSB PC-98 3.1 (jp) | EXTRACTED — `csb-extras/pc98-3.1-jp/` (171 .raw files, awaiting hash match); DMWeb identifies the Japan v3.1 HDM/floppy line, original media missing copy-protection sectors, cracked media kept separate, 8-bit/16-bit screenshots, Champion Editor/portrait-loading screens, PC-98 keypad / Alt-S input, and `CSBGAME` protection offsets |
-| CSB X68000 (jp) | EXTRACTED — `csb-extras/legacy-jp-x68000/` |
+| CSB X68000 (jp) | EXTRACTED — `csb-extras/legacy-jp-x68000/`; DMWeb identifies the Japan v3.1 HDM/floppy line, original media missing copy-protection sectors, `CK.R` cracked media kept separate, blank save disk, 24/31 kHz screenshots, Champion Editor/portrait-loading screens, and X68000 Ctrl-S / Opt.1 / Opt.2 input |
 | CSBWin (PC port by Paul Stevens) | PARTIAL — synthetic loader exists; real-asset test missing |
 
 ### C3. CSB hidden-code items
