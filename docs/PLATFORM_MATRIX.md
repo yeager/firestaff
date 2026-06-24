@@ -101,13 +101,16 @@ and English Macintosh versions are explicitly exempt.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| Sega Saturn | 1.0 | JP | 🔵 | `c_dm_nexus_saturn/` | yes (DM.BIN 555,144 B) | true 3D, 15 levels; hash-verified Track 1 can expose `DM.BIN`, but full Saturn V1 runtime handoff remains a Nexus gap |
+| Sega Saturn | 1.0 | JP | 🔵 | `c_dm_nexus_saturn/` | yes (DM.BIN 555,144 B) | DMWeb page: Japan-only Saturn release, 1998-03-26, ¥6800, true 3D, 15 levels, CD audio tracks 02-09, Japanese demo plus unofficial EN/FR fan translations; hash-verified Track 1 can expose `DM.BIN`, but full Saturn V1 runtime handoff remains a Nexus gap |
 
 **Notes:** DM Nexus uses the proprietary DMDF (Dungeon Master
 Data File) format, completely different from the FTL
 DUNGEON.DAT format used by DM1/CSB/DM2. Firestaff's
 `src/nexus/nexus_v1_iso_reader.c` and `nexus_v1_engine.c` are
-the start of the parser.
+the start of the parser. DMWeb keeps the official Japanese release,
+the Japanese demo, and the 2023-2024 English/French fan translations
+as separate media lines; Firestaff should do the same when adding
+future hashes or launch profiles.
 
 ## Total coverage
 
@@ -145,7 +148,7 @@ support is to add any one of these data files:
 | Hard | CSB X68000 3.1 GRAPHICS.DAT | X68000-specific, 732 items |
 | Hard | DM2 Amiga 1.0 GRAPHICS.DAT | 4630 items, 16-color |
 | Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence beyond the current launch/readiness gates |
-| Very hard | Nexus Saturn NEXUS.BIN | already have, but the .MNS, .AVI companions are large |
+| Very hard | Nexus Saturn full Track 1 / fan-translation matrix | original JP Track 1 is present, but full-disc runtime handoff, CD audio tracks 02-09, demo classification, and EN/FR fan-translation hashes still need proof |
 
 ## Adding a new version to Firestaff
 

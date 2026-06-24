@@ -149,20 +149,25 @@ coverage**, not registry correctness.
 
 | Variant | DM.BIN | 137 satellite files | Notes |
 |---|---|---|---|
-| Sega Saturn JP (extracted) | ✅ `e88d6085…` | ✅ (all 137 in registry) | runtime target, fully present |
+| Sega Saturn JP (extracted) | ✅ `e88d6085…` | ✅ (all 137 in registry) | runtime target, fully present; DMWeb page identifies the official Japan release as 1998-03-26 retail media with redump/CloneCD sources, CD audio tracks 02-09, box/manual/disc scans, and Japanese videos |
 
 ### Nexus acquisition gaps
 
-1. **Unofficial English / French fan translations** — dmweb notes
-   these exist but are not bundled with original Saturn JP. Without
-   them, our launcher has no second-language target for Nexus. The
-   Saturn release itself is the only target on Tier 1; we should
-   not over-invest in fan translations before Tier 3 #14 (per-cell
-   modern-art swap) lands.
-2. **Real Sega CD / Mega CD assets for Nexus** — these are not
-   part of the original Nexus release; the registry's 137 file
-   list is exhaustive. Tier 1 coverage is satisfied.
-3. **Saturn BIOS / emulator-required ancillary** — out of scope;
+1. **Unofficial English / French fan translations** — DMWeb notes
+   these exist but are not bundled with original Saturn JP. The Sega
+   Saturn edition page dates English version 1 to 2023-09-20,
+   English version 2 to 2024-01-02, and French to 2024-01-02, with
+   ISO/BIN/CUE or merged ISO/CUE handoffs. Without these, our launcher
+   has no second-language target for Nexus. The Saturn release itself is
+   the only target on Tier 1; fan translations should stay optional
+   until the core JP launch path is stronger.
+2. **Japanese demo BIN/CUE** — DMWeb lists a separate March 1998 demo
+   and BIN/CUE downloads. This needs its own hash/profile classification
+   instead of being folded into the retail JP row.
+3. **CD audio/video/manual provenance** — DMWeb lists tracks 02-09,
+   Japanese videos, and box/manual/disc scans. These are public-proof
+   and media-trigger backlog items, not required game-data payloads.
+4. **Saturn BIOS / emulator-required ancillary** — out of scope;
    Firestaff uses its own renderer and reads the data files
    directly, not the BIOS.
 

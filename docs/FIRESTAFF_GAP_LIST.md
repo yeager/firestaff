@@ -36,7 +36,7 @@ Classification:
 | **AMG sound format (CSB utility disk)** | dmweb Data Files / sck tutorial | FIXED for documented CSB Utility Disk sound-effect files — `firestaff_amg_decode_unit` parses the single-item Amiga SND2 `.AMG` shape (`TELE2`, `SWIPE`, `MAGEXPLO`, `EXPLOS1`, `DRAGON`): big-endian sample count, signed 8-bit mono PCM, 0..3 trailing bytes, plus source-cited PAL/NTSC rate helpers. Runtime playback/rate binding and non-SND2 `NAKED.AMG` are not claimed. |
 | **MVE (Interplay, DM2 PC)** | dmweb Animations | OPEN-LARGE — DOS-stub + Interplay MVE binary |
 | **QuickTime .moov (DM2 Macintosh)** | dmweb Animations | OPEN-LARGE — Apple QuickTime container |
-| **DMDF/DGN (Nexus Saturn)** | AGENTS.md / ReDMCSB | PARTIAL — DMDF parser exists (`src/nexus/`), DGN partially |
+| **DMDF/DGN (Nexus Saturn)** | DMWeb Nexus pages / local verified assets | PARTIAL — DMDF parser exists (`src/nexus/`), DGN partially. DMWeb's Nexus page confirms the Saturn-only Japanese release, true 3D engine, 15-level structure, and Masaaki Shibata map material for levels 2-12; these should bound future DGN/world-loader evidence |
 | **MNS (Nexus monster/spell files)** | locally verified | PARTIAL — handled in launcher/profile detection, runtime sparse |
 | **S2D (Nexus font files)** | locally verified | PARTIAL — parser exists and now has a bounded bitmap-to-indexed-framebuffer renderer, but full Saturn SCR section-table decode/layout parity is not proven. **2026-06-21 SEGA SATURN SCR parser determinism probe added:** `firestaff_nexus_v1_saturn_font_determinism_probe` (commit `b2157a62`, ctest `nexus_v1_saturn_font_determinism`) covers load/free/get_glyph + dimension inference (16x16 / 12x12 / 8xN buckets) + NULL-safety + 50-repetition determinism. **2026-06-22 render gate added:** `firestaff_nexus_v1_saturn_font_render_probe` (ctest `nexus_v1_saturn_font_render`) expands parser-exposed 1bpp glyph bytes, draws into a synthetic indexed framebuffer, and verifies glyph dimensions, expansion, clipping, transparent/background behavior, deterministic framebuffer hash, NULL/bounds handling, plus an optional local `FONT256.S2D` parser-to-render handoff when the verified 25,012-byte asset is present. Remaining: decode the real SCR section table/glyph layout with asset-backed evidence, bind text layout/runtime drawing, and capture an actual Nexus screen using the real font before calling this FIXED. |
 | **TAI/SAL/MAP (Nexus level data)** | locally verified | PARTIAL — loaders exist; TLINK metadata and rendering sparse |
@@ -283,7 +283,7 @@ Nexus locally verified files in `~/.firestaff/data/nexus/`.
 | TLINK/TAI/SAL/MAP runtime | PARTIAL |
 | Save/load (.sav) | PARTIAL |
 | V1 mechanics | PARTIAL |
-| **Real Saturn asset handoff (NEXUS.BIN/ISO)** | EXTRACTED + VERIFIED — `nexus-extras/saturn-ja/Dungeon Master Nexus (Japan) (Track 1).bin::DM.BIN` matches canonical DM.BIN hash. Next: confirm Track 1 (not just DM.BIN) drives the full E1 V1 phases 0–7 launch path (DMDF parser, DGN loader, MNS rendering, S2D fonts, save/load). |
+| **Real Saturn asset handoff (NEXUS.BIN/ISO)** | EXTRACTED + VERIFIED — `nexus-extras/saturn-ja/Dungeon Master Nexus (Japan) (Track 1).bin::DM.BIN` matches canonical DM.BIN hash. DMWeb's Saturn page identifies the official JP retail disc, a separate JP demo, CD audio tracks 02-09, and optional EN/FR fan-translation disc images. Next: confirm Track 1 (not just DM.BIN) drives the full E1 V1 phases 0–7 launch path (DMDF parser, DGN loader, MNS rendering, S2D fonts, save/load), then classify demo/fan-translation media separately. |
 
 ### E2. V2 phases
 
@@ -294,6 +294,7 @@ Nexus locally verified files in `~/.firestaff/data/nexus/`.
 | Phase 7 verification (deterministic input + screenshot gates) | FIXED — 2026-06-22: data-free `firestaff_nexus_v2_verification_suite_probe` now extends the existing render-pipeline checks to 53/53 assertions with Nexus V1 movement-backed deterministic input scripts, phase-gate domain boundaries, V1/V2.1/V2.2 gameplay state-hash equality, and synthetic screenshot-style full-frame + viewport-region pixel hash gates for V2 OFF, V2 UPSCALED, and V2 ENHANCED. CTest `nexus_v2_verification_suite_probe` and focused Nexus sweep PASS 17/17. This closes the bounded deterministic gate without requiring Saturn assets; real-asset/public screenshot promotion remains separate from Phase 7. |
 | **Real PBR hero art for Nexus** | OPEN-LARGE |
 | **Per-cell modern-art swap in Nexus V1 draw pipeline** | OPEN-LARGE |
+| Light-overflow gameplay bug | OPEN-BOUNDED — DMWeb documents that repeated `Ful` / `Oh Ir Ra` can overflow light and plunge the dungeon into darkness. Needs source/runtime classification before deciding whether Firestaff should emulate or guard the behavior. |
 
 ---
 
