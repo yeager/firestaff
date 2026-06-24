@@ -71,7 +71,7 @@ the Amiga 1.0, Atari 1.0, FM-Towns 2.0, or PC-98 2.0 data files.
 | PC | 1.0 | DE | 🔵 | `c_dm2_pc_de/` | — | DMWeb PC page: Germany CD and Bestseller CD lines, redump BIN/CUE and CD-content archive coverage |
 | PC | 1.0 | FR | 🔵 | `c_dm2_pc_fr/` | — | DMWeb PC page: France floppy/CD/Bestseller lines and CD-content archives |
 | PC | 1.0 | Demo | 🔵 | `c_dm2_pc_demo/` | — | DMWeb PC page: five known 1995 demo builds; earliest `FIRE.EXE`/LZ91 build has no music or save/load, later `SKULL.EXE`/Watcom builds vary sound, logo, title, and order assets; 3332 items in Greatstone row |
-| Amiga | 1.0 | EN | 🔵 | `c_dm2_amiga/` | — | 4630 items, 16-color |
+| Amiga | 1.0 | EN/FR/GE | 🔵 | `c_dm2_amiga/` | — | DMWeb Amiga edition page: Europe-only release with Germany/UK edition pages, six ADF/IPF floppy images but hard-disk install required, MOD music keyed by `CD.DAT`, WinUAE/Smacker video captures, 68020+ with OCS/ECS support, and Ctrl-S / Del-Help / keypad wall-ornate input table; 4630 items, 16-color |
 | Macintosh | 1.0 | EN | 🔵 | `c_dm2_mac/` | — | DMWeb edition page: USA redump BIN/CUE CD image plus CD-content archives; upgraded 256-color graphics; QuickTime/MooV, MIDI/SoundMusicSys resources, Mac menu/balloon help, Command-key input table |
 | Macintosh | 1.0 | JP | 🔵 | `c_dm2_mac_jp/` | — | DMWeb edition page: Japan redump BIN/CUE CD image plus DMFiles archive; older 16-color graphics; intro animation also present on Sega CD; CD-audio tracks; `Skullkeep` resource-fork protection notes |
 | Macintosh | 1.0 | EN (demo) | 🔵 | `c_dm2_mac_demo/` | — | DMWeb edition page: USA demo redump BIN/CUE CD image plus HQX/CD-content handoff |
@@ -139,6 +139,7 @@ support is to add any one of these data files:
 | Medium | DM2 IBM PS/V 1.0 floppy/WinImage set | Japanese three-floppy media, no-music behavior, IBM PS/V keyboard bridge, `FIRE.EXE` protection behavior evidence |
 | Medium | DM2 Macintosh 1.0 BIN/CUE/CD-content set | Japanese + USA CD media, StuffIt/HQX/resource-fork handling, QuickTime/MooV animations, MIDI/SoundMusicSys resources, Mac keyboard/menu bridge |
 | Medium | DM2 PC demo/build matrix | five 1995 DOS demo builds, `FIRE.EXE`/LZ91 versus `SKULL.EXE`/Watcom split, save/load and music differences, distinct `GRAPHICS.DAT`/`DUNGEON.DAT` evidence |
+| Medium | DM2 Amiga 1.0 ADF/IPF hard-disk install set | Europe EN/FR/GE six-disk media, installed-hard-disk layout, MOD/CD.DAT music triggers, Amiga keyboard bridge, WinUAE/Smacker video evidence |
 | Medium | DM2 FM Towns 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, quieter Red Book tracks 2-6, silent track 8, FM Towns-specific keyboard bridge |
 | Medium | DM2 Sega CD / Mega CD 1.0 BIN/CUE CD image | Europe/USA/Japan CD media, split data-track ISO + audio-track archive evidence, track-7 silence variant, Sega-CD-specific runtime/input bridge |
 | Hard | CSB X68000 3.1 GRAPHICS.DAT | X68000-specific, 732 items |
