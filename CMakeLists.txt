@@ -2420,6 +2420,41 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait ordinal 18 (SONJA) /
+# approach_from_right / portrait_rect_position gate 210 probe.
+# Source-locked to DUNGEON.C:2573 (visibleWallCell = (dir+2)&3),
+# DUNVIEW.C:3913-3928 (C026 portrait blit into G0109 portrait box),
+# DUNVIEW.C:525 G0109_auc_Graphic558_Box_ChampionPortraitOnWall =
+# {96, 127, 35, 63}, MOVESENS.C:1501-1503 (sensorData -> F0280),
+# DEFS.H:821-826 (M027/M028 portrait-grid 8-col atlas math) and
+# DEFS.H:2186 C026_GRAPHIC_CHAMPION_PORTRAITS.  The slice is the
+# east-side mirror of the ordinal_4 approach_from_left probe:
+# party at (3, 3) DIR_WEST approaches the SONJA chamber (2, 3)
+# from the right, the visible wall is the EAST wall of (2, 3),
+# no C127 sensor with sensorData=18 lives there, and the D1C
+# portrait cutout (96, 35, 32, 29) must NOT carry SONJA pixels.
+# Batch group 8 portrait_rect_position gate (next free tag after
+# groups 0/3/4/6 used by the existing palette_match_rect,
+# d2r_negative, double_click_stability, and sleep_repaint gate
+# probes).  Disjoint from the cancel_reopen and sleep_repaint
+# ordinal-18 probes (different route) and from the
+# ordinal_2/6/9/11/13/15/17/21 west_negative probes (different
+# ordinal + different anchor cell).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hoc_champion_portrait_18_approach_from_right_portrait_rect_position_210_gate_probe.c")
+    add_executable(firestaff_dm1_v1_hoc_champion_portrait_18_approach_from_right_portrait_rect_position_210_gate_probe
+        probes/m11/firestaff_dm1_v1_hoc_champion_portrait_18_approach_from_right_portrait_rect_position_210_gate_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hoc_champion_portrait_18_approach_from_right_portrait_rect_position_210_gate_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hoc_champion_portrait_18_approach_from_right_portrait_rect_position_210_gate_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hoc_champion_portrait_18_approach_from_right_portrait_rect_position_210_gate_probe
+        COMMAND firestaff_dm1_v1_hoc_champion_portrait_18_approach_from_right_portrait_rect_position_210_gate_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 Hall of Champions portrait ordinal 08 / south_return /
 # portrait_rect_position regression probe.  Source-locked to
 # DUNVIEW.C:3913-3928 + G0109 + REVIVE.C F0280 + REVIVE.C:142-146
