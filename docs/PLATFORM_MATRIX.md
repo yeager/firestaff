@@ -24,14 +24,14 @@ Firestaff's actual implementation state.
 | Atari ST | 1.2 | DE | 🟡 | `c_dm_atari_st_v1_2/` | — | ReDMCSB; DMWeb page lists preserved German 1.2 STX and German/Psygnosis bundle provenance |
 | Atari ST | 1.3 | FR | 🟡 | `c_dm_atari_st_v1_3/` | — | ReDMCSB; DMWeb page lists French 1.3 with two variants and French Mirrorsoft edition/bundle provenance |
 | Atari ST | Teaser demo | EN | 🔵 | `c_dm_teaser_atari/` | — | demo.dat only; DMWeb page keeps teaser as a separate Atari ST edition |
-| Amiga | 1.0 | EN | 🔵 | `c_dm_amiga_v1_0/` | — | earliest Amiga port |
-| Amiga | 2.0 | EN | 🔵 | `c_dm_amiga_v2_0/` | — | LZW-compressed graphics |
-| Amiga | 2.0 | FR | 🔵 | `c_dm_amiga_v2_0/` | — | |
-| Amiga | 2.0 | GE | 🔵 | `c_dm_amiga_v2_0/` | — | cracked Rainbow |
-| Amiga | 2.1 | EN | 🔵 | `c_dm_amiga_v2_1/` | — | |
-| Amiga | 2.2 | EN | 🔵 | `c_dm_amiga_v2_2/` | — | + DUNGEONB.DAT ("kid" dungeon) |
-| Amiga | 2.2 | GE | 🔵 | `c_dm_amiga_v2_2/` | — | |
-| Amiga | 3.6 | EN/FR/GE | 🔵 | `c_dm_amiga_v3_6/` | — | 749-item GRAPHICS.DAT, multilingual |
+| Amiga | 1.0 | EN | 🔵 | `c_dm_amiga_v1_0/` | — | earliest Amiga port in Greatstone corpus; DMWeb edition page starts the public Amiga release notes at 2.0-era 1988 media |
+| Amiga | 2.0 | EN | 🔵 | `c_dm_amiga_v2_0/` | — | DMWeb page: November 1988 line, USA/UK import provenance, fastest blitter-backed port, ADF/IPF media, 1 MB RAM, Kickstart 1.2/1.3 assumptions |
+| Amiga | 2.0 | FR | 🔵 | `c_dm_amiga_v2_0/` | — | DMWeb page: France Mirrorsoft edition, protected original ADF plus Meynaf cracked ADF/protection notes |
+| Amiga | 2.0 | GE | 🔵 | `c_dm_amiga_v2_0/` | — | DMWeb page: German Mirrorsoft editions, unofficial IPF/cracked ADF evidence; cracked images stay non-canonical |
+| Amiga | 2.1 | EN | 🔵 | `c_dm_amiga_v2_1/` | — | DMWeb page: February 1989 line, original ADF does not boot because of copy protection |
+| Amiga | 2.2 | EN | 🔵 | `c_dm_amiga_v2_2/` | — | DMWeb page: September 1989 line; + DUNGEONB.DAT ("kid" dungeon); unofficial IPF and protected original ADF evidence |
+| Amiga | 2.2 | GE | 🔵 | `c_dm_amiga_v2_2/` | — | DMWeb page: protected original ADF evidence and German media provenance |
+| Amiga | 3.6 | EN/FR/GE | 🔵 | `c_dm_amiga_v3_6/` | — | DMWeb page: June 1992 line, official SPS IPF not copy protected, 749-item multilingual GRAPHICS.DAT, changed title/menu/perspective versus 2.0, distinct 3.6 keypad layout |
 | Apple IIGS | 1.0 | EN | 🔵 | `c_dm_iigs/` | — | IMG2 format |
 | FM-Towns | 2.0 | EN/JP | 🔵 | `c_dm_fmtowns/` | — | |
 | PC | 3.4 | EN | ✅ | `c_dm_pc_eng/` | yes (363,417 B) | our canonical "PC" target |
@@ -130,10 +130,10 @@ support is to add any one of these data files:
 
 | Effort | File | Unlocks |
 |---|---|---|
-| Easy | DM Amiga 3.6 EN/FR/GE GRAPHICS.DAT | 1 new language (FR+GE) for DM, with all 749 items extracted (greatstone already did the work) |
+| Easy | DM Amiga 3.6 EN/FR/GE GRAPHICS.DAT | 1 new language (FR+GE) for DM, with all 749 items extracted; DMWeb identifies official SPS IPF media that is not copy protected |
 | Easy | CSB Amiga 3.1 EN/FR/GE GRAPHICS.DAT | FR/GE for CSB, 749 items |
 | Easy | DM Atari ST 1.0 GRAPHICS.DAT | canonical first-release DM, 532 items |
-| Easy | DM Amiga 2.0 EN GRAPHICS.DAT | Amiga-specific IMG1 format, 532 items |
+| Easy | DM Amiga 2.0 EN GRAPHICS.DAT | Amiga-specific IMG1 format, 532 items; DMWeb page adds ADF/IPF provenance, 1 MB/Kickstart boundary, and Amiga 2.x keypad/Del/Help input table |
 | Medium | DM FM-Towns 2.0 GRAPHICS.DAT | IMG2 format, 532 items |
 | Medium | CSB Atari ST 2.1 GRAPHICS.DAT | second Atari CSB line; v2.0 graphics/dungeon hashes are already locally recorded |
 | Medium | DM PC-9801 2.0 GRAPHICS.DAT | PC-98-specific LZW+IMG2, 575 items |
