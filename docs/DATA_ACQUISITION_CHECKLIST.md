@@ -116,7 +116,7 @@ coverage**, not registry correctness.
 | PC German/English JewelCase | 🔴 `e52ab5e0…` | 🔴 | MD5 known, file not acquired |
 | Amiga | 🟡 | 🟡 | archived, big-endian variant |
 | Macintosh | 🔴 | 🔴 | .moov QuickTime animations + EN/JP variants |
-| Sega CD / Mega CD | 🔴 | 🔴 | `.dat` animations |
+| Sega CD / Mega CD | 🔴 | 🔴 | DMWeb page identifies Europe/USA/Japan v1.0 as redump BIN/CUE CD images; USA/JP CD-content archives exist; data-track ISO + audio-track MP3 split; track 7 is 15 seconds of silence |
 | FM-Towns | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a redump BIN/CUE CD image; CD audio has quieter tracks 2-6 plus silent track 8; Ctrl-Shift-S disk menu |
 | PC-9801 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as four FDI disk images; no music; separate HDM/HDI demo |
 | IBM PS/V | 🔴 | 🔴 | no music variant |
@@ -131,10 +131,11 @@ coverage**, not registry correctness.
    `src/dm2/dm2_v1_boot.c` and would close several Tier 3 #12
    advanced-CCM gates that currently sit at single-variant.
 2. **Sega CD / Mega CD** — without it we cannot verify DM2's
-   CD-audio path or its `*.dat` animations against real data. The
-   Macintosh `.moov` variant is the closest substitute for the
-   animation side (QuickTime vs Sega CD raw) and we should
-   acquire at least one of the two.
+   BIN/CUE mixed-mode CD path, data-track extraction, CD-audio path,
+   track-7 silence variant, or its `*.dat` animations against real
+   data. The Macintosh `.moov` variant is the closest substitute for
+   the animation side (QuickTime vs Sega CD raw) and we should acquire
+   at least one of the two.
 3. **DM2 demo** (PC + Mac) — useful for regression baselines because
    the demo has shorter level data and known-good Greatstone
    extractions exist.
