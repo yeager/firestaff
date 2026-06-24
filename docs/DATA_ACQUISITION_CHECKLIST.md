@@ -136,7 +136,20 @@ coverage**, not registry correctness.
    already has the canonical hashes; remaining PC-specific work is focused
    receipt/gate coverage plus keeping the Spanish fan translation outside
    canonical hash claims.
-11. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
+11. **DM1 overview version-comparison receipts** are evidence work
+   across existing and future ports, not a separate asset acquisition
+   line. DMWeb's DM overview page records umbrella differences that
+   should become focused gates as each platform is promoted: the two
+   dungeon-view perspective families; PC/Atari ST/X68000 mono sound
+   versus Amiga/Apple IIGS/SNES stereo; missing Atari ST/X68000 creature,
+   War Cry, and Blow Horn sounds; early-version fountain/wall-click
+   behavior; Kid Dungeon only on Apple IIGS 2.0/2.1 and Amiga 2.2 English;
+   PC-only entrance music and ending animation; Atari ST 1.0 Lock Pick
+   and v1.2 regeneration differences; X68000 larger screen view;
+   PC-9801 reduced palette and three light levels; SNES redrawn
+   graphics/music/introduction; FM Towns CD audio; and concrete
+   Atari ST-vs-PC dungeon deltas.
+12. **Custom dungeons** for DM1 (Conflux, Tower of Chaos, etc.) are
    listed on dmweb as 60+ variants. Currently we ship none; we need
    at least Conflux II/III and one CSBWin custom dungeon to exercise
    `csbgraphics.dat` (Tier 3 work).

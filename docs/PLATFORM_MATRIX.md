@@ -44,6 +44,18 @@ Firestaff's actual implementation state.
 | SNES | 1.1 NTSC | JP | 🔵 | `c_dm_snes/` | — | DMWeb page: fixes Japanese 1.0 alternate-ending save corruption and Hissssa redraw, but still has the Japanese See Through Walls freeze |
 | X68000 | 3.0 | JP | 🔵 | `c_dm_x68k/` | — | DMWeb page: Japan HDM/floppy line, 1990-01-26, ¥9800, 31 kHz screenshots, original image missing copy-protection sectors, cracked image, save disk, and X68000 keypad / Ctrl-S command table |
 
+**DMWeb overview boundary:** the DM overview page is the umbrella
+source for the cross-port differences that sit above the individual
+edition pages. It pins Atari ST as the original development/release
+family, PC 3.4 as the site's reference-data basis, and the other ports
+as distinct runtime families with their own presentation and behavior:
+two dungeon-view perspective groups, mono/stereo and missing-effect
+sound splits, Kid Dungeon only on Apple IIGS 2.0/2.1 and Amiga 2.2 EN,
+PC-only entrance music and ending animation, Atari ST 1.0/v1.2 item and
+regeneration differences, X68000 larger view, PC-9801 reduced palette
+with three light levels, SNES redrawn graphics/music/introduction, and
+FM Towns CD audio.
+
 **Missing data on disk that would unlock 2️⃣ more:** any one of
 the Amiga 1.0, Atari 1.0, FM-Towns 2.0, PC-98 2.0, or X68000 3.0
 data files.
@@ -142,6 +154,7 @@ support is to add any one of these data files:
 | Medium | DM PC-9801 2.0a/2.0b HDM/floppy images | Japanese v2.0 hash classification, 8-bit/16-bit presentation evidence, PC-98 keypad / Alt-S input gates, and copy-protection/crack separation |
 | Medium | DM X68000 3.0 HDM/floppy images | Japanese v3.0 hash classification, 31 kHz presentation evidence, X68000 keypad / arrow input gates, and copy-protection/crack separation |
 | Medium | DM PC 3.4 VGA/EGA and PC-only presentation receipts | Existing hash-verified PC runtime target; add focused receipts for DMWeb's VGA/EGA split, PC ending animation, entrance music excerpt, DOS keypad / Alt-S / analog-joystick / mouse-simulation input table, and Spanish fan-translation non-canonical boundary |
+| Medium | DM1 overview version-comparison receipts | Cross-port proof from DMWeb's overview page: two perspective families, sound/stereo/missing-effect behavior, fountain/wall-click differences, Kid Dungeon gates, Atari ST-vs-PC dungeon deltas, PC-only ending/music, PC-9801 light-level boundary, SNES presentation differences, and FM Towns CD-audio receipts |
 | Medium | DM2 PC-9801 1.0 FDI set | Japanese four-disk FDI media, no-music behavior, PC-98-specific keyboard bridge |
 | Medium | DM2 PC-9821 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, PC-98 keyboard bridge, `FIRE.EXE` CD-ROM protection behavior evidence |
 | Medium | DM2 IBM PS/V 1.0 floppy/WinImage set | Japanese three-floppy media, no-music behavior, IBM PS/V keyboard bridge, `FIRE.EXE` protection behavior evidence |
