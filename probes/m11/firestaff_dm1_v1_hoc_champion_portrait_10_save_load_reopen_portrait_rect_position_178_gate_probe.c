@@ -394,6 +394,7 @@ int main(int argc, char** argv) {
     int panelOnCompared;
     int postLoadMatchedPct;
     int postLoadCompared;
+    int cancelPct;
     int candidateOrdinal;
     int candidatePartyIndex;
     int panelActive;
@@ -746,31 +747,19 @@ int main(int argc, char** argv) {
     ok &= expect_int("post-load front mirror ordinal = 10 (reopen)",
                      M11_GameView_GetFrontMirrorOrdinal(&game), ORDINAL_GANDO);
 
-    /* The post-load panel-on D1C cutout must still show ordinal-10
-     * pixels at >= %d%% match (panel-off view of the loaded state). */
+    /* The post-load panel-on D1C cutout must still be suppressed:
+     * QuickLoad restores the candidate panel as live, so the C040
+     * panel guard owns the D1C cutout until the candidate is
+     * explicitly cancelled. */
     postLoadMatchedPct = draw_and_collect(&game, portraits, ORDINAL_GANDO,
                                           &postLoadCompared);
     {
         char msg[256];
         snprintf(msg, sizeof(msg),
-                 "post-load D1C cutout ordinal 10 match >= %d%% got=%d%% (%d)",
-                 CORRECT_MATCH_PCT, postLoadMatchedPct, postLoadCompared);
-        if (postLoadMatchedPct >= CORRECT_MATCH_PCT) pass(msg);
-        else { fail(msg); ok = 0; }
-    }
-    /* The post-load panel-off matchedPct must match the pre-save
-     * panel-off matchedPct exactly: the C026 atlas blit is
-     * byte-stable, and the loaded state has the same party pose,
-     * the same candidate ordinal, and the same championCount
-     * (1 champion, ordinal 10) - the wall-ornament blit and the
-     * portrait blit are deterministic. */
-    {
-        char msg[256];
-        snprintf(msg, sizeof(msg),
-                 "post-load panel-off D1C cutout match is byte-stable: "
-                 "pre=%d%% post=%d%% (must match exactly)",
-                 preSavePanelOffPct, postLoadMatchedPct);
-        if (preSavePanelOffPct == postLoadMatchedPct) pass(msg);
+                 "post-load panel-on D1C cutout ordinal 10 suppressed to <= %d%% got=%d%% (%d)",
+                 PANEL_OPEN_MAX_MATCH_PCT, postLoadMatchedPct, postLoadCompared);
+        if (postLoadMatchedPct >= 0 &&
+            postLoadMatchedPct <= PANEL_OPEN_MAX_MATCH_PCT) pass(msg);
         else { fail(msg); ok = 0; }
     }
 
@@ -797,12 +786,25 @@ int main(int argc, char** argv) {
     ok &= expect_int("post-load-then-cancel championCount = 0",
                      game.world.party.championCount, 0);
     {
-        int cancelPct = draw_and_collect(&game, portraits, ORDINAL_GANDO, NULL);
         char msg[256];
+        cancelPct = draw_and_collect(&game, portraits, ORDINAL_GANDO, NULL);
         snprintf(msg, sizeof(msg),
                  "post-load-then-cancel D1C cutout ordinal 10 match >= %d%% got=%d%%",
                  CORRECT_MATCH_PCT, cancelPct);
         if (cancelPct >= CORRECT_MATCH_PCT) pass(msg);
+        else { fail(msg); ok = 0; }
+    }
+    /* The post-load panel-off matchedPct must match the pre-save
+     * panel-off matchedPct exactly once the panel has been cancelled:
+     * the C026 atlas blit is byte-stable, and the loaded state has
+     * the same party pose and the same front C127 sensor route. */
+    {
+        char msg[256];
+        snprintf(msg, sizeof(msg),
+                 "post-load panel-off D1C cutout match is byte-stable after cancel: "
+                 "pre=%d%% post=%d%% (must match exactly)",
+                 preSavePanelOffPct, cancelPct);
+        if (preSavePanelOffPct == cancelPct) pass(msg);
         else { fail(msg); ok = 0; }
     }
 
@@ -868,9 +870,9 @@ int main(int argc, char** argv) {
         int reopenPct = draw_and_collect(&game, portraits, ORDINAL_GANDO, NULL);
         char msg[256];
         snprintf(msg, sizeof(msg),
-                 "post-second-load D1C cutout ordinal 10 match >= %d%% got=%d%%",
-                 CORRECT_MATCH_PCT, reopenPct);
-        if (reopenPct >= CORRECT_MATCH_PCT) pass(msg);
+                 "post-second-load panel-on D1C cutout ordinal 10 suppressed to <= %d%% got=%d%%",
+                 PANEL_OPEN_MAX_MATCH_PCT, reopenPct);
+        if (reopenPct >= 0 && reopenPct <= PANEL_OPEN_MAX_MATCH_PCT) pass(msg);
         else { fail(msg); ok = 0; }
     }
     /* The post-second-load panel-on D1C cutout must be suppressed

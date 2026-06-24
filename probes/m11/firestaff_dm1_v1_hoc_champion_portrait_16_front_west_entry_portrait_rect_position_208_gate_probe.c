@@ -191,6 +191,7 @@
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
 #include "vga_palette_pc34_compat.h"
+#include "memory_sensor_execution_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -450,16 +451,31 @@ static int portrait_rect_warm_count(const unsigned char* fb) {
 static int seed_c127_sensor(M11_GameViewState* state,
                             int oldData,
                             int newData) {
+    struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
+    int count;
     int i;
-    if (!state || !state->world.things || !state->world.things->sensors) {
+    if (!state || !state->world.dungeon || !state->world.things ||
+        !state->world.things->sensors) {
         return -1;
     }
-    for (i = 0; i < state->world.things->sensorCount; ++i) {
-        if (state->world.things->sensors[i].sensorType == 127 &&
-            (int)state->world.things->sensors[i].sensorData == oldData) {
-            state->world.things->sensors[i].sensorData =
+    memset(sensors, 0, sizeof(sensors));
+    count = F0717_SENSOR_EnumerateOnSquare_Compat(
+        state->world.dungeon,
+        state->world.things,
+        0,
+        PROBE_FRONT_CELL_X,
+        PROBE_FRONT_CELL_Y,
+        sensors);
+    for (i = 0; i < count && i < SENSOR_ENUM_CAPACITY; ++i) {
+        int sensorIndex = sensors[i].sensorIndex;
+        if (sensors[i].sensorType == 127 &&
+            sensors[i].cell == PROBE_VISIBLE_WALL &&
+            (int)sensors[i].sensorData == oldData &&
+            sensorIndex >= 0 &&
+            sensorIndex < state->world.things->sensorCount) {
+            state->world.things->sensors[sensorIndex].sensorData =
                 (unsigned short)newData;
-            return i;
+            return sensorIndex;
         }
     }
     return -1;
