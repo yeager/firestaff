@@ -164,7 +164,7 @@ coverage**, not registry correctness.
 | PC 3.4 English | 🔴 | 🔴 | not yet acquired; would be easiest runtime target after Amiga |
 | X68000 English | 🟡 `291e1bc6…` | 🟡 | archived |
 | FM-Towns English/Japanese | 🟡 | 🟡 | DMWeb page identifies Japan v3.1 BIN/CUE CD media, English/Japanese screenshot sets, Champion Editor and portrait-loading screens, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow command table; local `csb-extras/fm-towns/` is extracted but still awaits canonical hash classification |
-| PC-98 Japanese | 🟡 | 🟡 | archived |
+| PC-98 Japanese | 🟡 | 🟡 | DMWeb page identifies Japan v3.1 HDM/floppy media, original image without copy-protection sectors, cracked image, 8-bit/16-bit screenshots, Champion Editor and portrait-loading screens, and PC-98 keypad / Alt-S input; local `csb-extras/pc98-3.1-jp/` is extracted but still awaits canonical hash classification |
 | CSB Utility Disk (any) | 🔴 | n/a | has CMP portraits, HTC hint text, AMG sounds, FTL utility — needed for Tier 3 #6 CMP runtime, Tier 3 hidden-code skip |
 | CSBWin custom resources | 🔴 | 🔴 | `csbgraphics.dat` is a third graphics file beyond DM/CSB; Tier 3 #11 |
 
@@ -211,7 +211,13 @@ coverage**, not registry correctness.
    Champion Editor and portrait-loading screens, and the FM Towns
    Ctrl-S/Shift-S plus shifted-arrow input table before any native
    FM Towns CSB claim.
-8. **Atari ST CSB input/presentation receipts** should follow DMWeb's
+8. **PC-9801 CSB HDM/input/presentation receipts** should follow
+   DMWeb's PC-9801 page: Japanese v3.1 original HDM media missing
+   copy-protection sectors, cracked media kept separate, 8-bit/16-bit
+   screenshots, Champion Editor and portrait-loading screens, PC-98
+   keypad / Alt-S input, and `CSBGAME` protection provenance before any
+   native PC-9801 CSB claim.
+9. **Atari ST CSB input/presentation receipts** should follow DMWeb's
    table and media notes: Insert/Clr Home turns, arrow movement, Ctrl-S
    disk menu, WinSTon/Smacker introduction video, no ending animation,
    slower creature-heavy runtime, and single-sided compressed disk
