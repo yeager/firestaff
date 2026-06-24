@@ -28,6 +28,7 @@
 #include "dm1_v1_vblank_timing.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
+#include "csb_v1_keyboard_commands_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "screenshot_m11.h"
@@ -1627,6 +1628,39 @@ static int m11_script_keycode_from_name(const char* name) {
     return 0x7fffffff;
 }
 
+static int m11_game_view_is_csb(const M11_GameViewState* gameView) {
+    return gameView && gameView->active && strcmp(gameView->sourceId, "csb") == 0;
+}
+
+static int m11_csb_sdl_key_to_menu_input(int key, int ctrlDown, M12_MenuInput* outInput) {
+    CsbV1KeyboardKeyPc34Compat csbKey = CSB_V1_KEYBOARD_KEY_NONE;
+    switch (key) {
+        case SDLK_F1: csbKey = CSB_V1_KEYBOARD_KEY_F1; break;
+        case SDLK_F2: csbKey = CSB_V1_KEYBOARD_KEY_F2; break;
+        case SDLK_F3: csbKey = CSB_V1_KEYBOARD_KEY_F3; break;
+        case SDLK_F4: csbKey = CSB_V1_KEYBOARD_KEY_F4; break;
+        case SDLK_ESCAPE: csbKey = CSB_V1_KEYBOARD_KEY_ESCAPE; break;
+        case SDLK_RETURN: csbKey = CSB_V1_KEYBOARD_KEY_RETURN; break;
+        case SDLK_KP_ENTER: csbKey = CSB_V1_KEYBOARD_KEY_ENTER; break;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        case SDLK_S:
+#else
+        case SDLK_s:
+#endif
+            csbKey = CSB_V1_KEYBOARD_KEY_S;
+            break;
+        case SDLK_INSERT: csbKey = CSB_V1_KEYBOARD_KEY_INSERT; break;
+        case SDLK_UP: csbKey = CSB_V1_KEYBOARD_KEY_UP; break;
+        case SDLK_HOME: csbKey = CSB_V1_KEYBOARD_KEY_CLR_HOME; break;
+        case SDLK_LEFT: csbKey = CSB_V1_KEYBOARD_KEY_LEFT; break;
+        case SDLK_DOWN: csbKey = CSB_V1_KEYBOARD_KEY_DOWN; break;
+        case SDLK_RIGHT: csbKey = CSB_V1_KEYBOARD_KEY_RIGHT; break;
+        default:
+            return 0;
+    }
+    return CSB_V1_KeyboardCommandToMenuInputPc34Compat(csbKey, ctrlDown, outInput);
+}
+
 static int m11_push_script_event_token(const char* token, size_t len) {
     char buffer[128];
     SDL_Event ev;
@@ -1813,6 +1847,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_EVENT_KEY_DOWN) {
+            if (m11_game_view_is_csb(gameView)) {
+                M12_MenuInput csbInput = M12_MENU_INPUT_NONE;
+                if (m11_csb_sdl_key_to_menu_input((int)ev.key.key,
+                                                  (ev.key.mod & SDL_KMOD_CTRL) != 0,
+                                                  &csbInput)) {
+                    return csbInput;
+                }
+            }
             switch (ev.key.key) {
                 case SDLK_UP:
                     return M12_MENU_INPUT_UP;
@@ -2126,6 +2168,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             continue;
         }
         if (ev.type == SDL_KEYDOWN) {
+            if (m11_game_view_is_csb(gameView)) {
+                M12_MenuInput csbInput = M12_MENU_INPUT_NONE;
+                if (m11_csb_sdl_key_to_menu_input((int)ev.key.keysym.sym,
+                                                  (ev.key.keysym.mod & KMOD_CTRL) != 0,
+                                                  &csbInput)) {
+                    return csbInput;
+                }
+            }
             switch (ev.key.keysym.sym) {
                 case SDLK_UP:
                     return M12_MENU_INPUT_UP;

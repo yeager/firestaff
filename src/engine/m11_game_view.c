@@ -8150,6 +8150,10 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
     return 1;
 }
 
+static int m11_source_is_csb(const M11_GameViewState* state);
+static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* state,
+                                                          M12_MenuInput input);
+
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input) {
     uint8_t command = CMD_NONE;
@@ -8214,6 +8218,19 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (m11_source_is_csb(state)) {
+        M11_GameInputResult csbResult = m11_csb_handle_source_keyboard(state, input);
+        if (csbResult != M11_GAME_INPUT_IGNORED ||
+            input == M12_MENU_INPUT_FREEZE_TOGGLE ||
+            input == M12_MENU_INPUT_DISK_MENU ||
+            (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY &&
+             input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY) ||
+            state->csbGameFrozen ||
+            state->csbDiskMenuActive) {
+            return csbResult;
+        }
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
@@ -25032,6 +25049,105 @@ static int m11_set_active_champion(M11_GameViewState* state, int championIndex) 
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
              "CLICK OR TAB TO SWAP, CLICK CENTER TO COMMIT, SPACE ACTS, ENTER INSPECTS");
     return 1;
+}
+
+static int m11_source_is_csb(const M11_GameViewState* state) {
+    return state && strcmp(state->sourceId, "csb") == 0;
+}
+
+static M11_GameInputResult m11_csb_toggle_champion_inventory(M11_GameViewState* state,
+                                                             int championIndex) {
+    int sameOpen;
+    char champion[16];
+
+    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        championIndex >= state->world.party.championCount ||
+        !state->world.party.champions[championIndex].present) {
+        m11_set_status(state, "INVENTORY", "NO CHAMPION");
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    sameOpen = state->inventoryPanelActive &&
+               state->world.party.activeChampionIndex == championIndex;
+    state->mapOverlayActive = 0;
+    state->spellPanelOpen = 0;
+    state->world.party.activeChampionIndex = championIndex;
+    if (sameOpen) {
+        state->inventoryPanelActive = 0;
+        state->inventorySelectedSlot = -1;
+        m11_set_status(state, "INVENTORY", "CLOSED");
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    state->inventoryPanelActive = 1;
+    state->inventorySelectedSlot = 0;
+    m11_clear_v1_mouth_visual(state);
+    m11_get_active_champion_label(state, champion, sizeof(champion));
+    m11_set_status(state, "INVENTORY", "CHAMPION READY");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s INVENTORY", champion);
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "CSB F1-F4 CHAMPION INVENTORY TOGGLE");
+    return M11_GAME_INPUT_REDRAW;
+}
+
+static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* state,
+                                                          M12_MenuInput input) {
+    int championIndex = -1;
+
+    if (!m11_source_is_csb(state)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* ReDMCSB COMMAND.C:245-260 / 263-305 / 308-310 / 708-717:
+     * CSB routes F1-F4 to champion inventories, Ctrl-S to the disk/save
+     * menu, Escape to C147 freeze and C148 unfreeze, and Return to C146
+     * wake while resting.  Handle those before the generic DM1 quit and
+     * movement paths so CSB keeps its own keyboard contract. */
+    if (input == M12_MENU_INPUT_FREEZE_TOGGLE) {
+        state->csbGameFrozen = !state->csbGameFrozen;
+        state->csbDiskMenuActive = 0;
+        m11_set_status(state, "CSB", state->csbGameFrozen ? "FROZEN" : "UNFROZEN");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                 state->csbGameFrozen ? "CSB FROZEN" : "CSB ACTIVE");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "ESCAPE TO %s GAME", state->csbGameFrozen ? "UNFREEZE" : "FREEZE");
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    if (state->csbGameFrozen) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (input == M12_MENU_INPUT_DISK_MENU) {
+        state->csbDiskMenuActive = 1;
+        state->mapOverlayActive = 0;
+        state->inventoryPanelActive = 0;
+        state->spellPanelOpen = 0;
+        m11_set_status(state, "CSB", "DISK MENU");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "CSB DISK MENU");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "CTRL-S OPENED THE SOURCE-LOCKED C140 DISK/SAVE MENU ROUTE");
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    if (state->csbDiskMenuActive) {
+        if (input == M12_MENU_INPUT_ACCEPT ||
+            input == M12_MENU_INPUT_ACTION ||
+            input == M12_MENU_INPUT_BACK) {
+            state->csbDiskMenuActive = 0;
+            m11_set_status(state, "CSB", "DISK MENU CLOSED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY &&
+        input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY) {
+        championIndex = (int)(input - M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+        return m11_csb_toggle_champion_inventory(state, championIndex);
+    }
+
+    return M11_GAME_INPUT_IGNORED;
 }
 
 int M11_GameView_GetV1ChampionIconInvisibilityRemap(int paletteIndex) {

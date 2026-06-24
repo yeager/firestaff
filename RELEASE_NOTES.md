@@ -1,4 +1,12 @@
 
+# Firestaff next
+
+- **CSB keyboard commands source-locked**: CSB gameplay now has a
+  dedicated keyboard bridge for F1-F4 champion inventory toggles,
+  Escape freeze/unfreeze, resting Return/Enter wake-up, Ctrl-S disk menu,
+  and the Insert/arrow/Clr Home movement layout from the ReDMCSB command
+  tables.
+
 # Firestaff v3.0.4
 
 Firestaff v3.0.4 packages the 2026-06-24 post-v3.0.3 evidence and
