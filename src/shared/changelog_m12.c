@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.4  (2026-06-24)",
+    "  - DM1 Hall of Champions portrait evidence expanded across the full C026 ordinal sweep. New runtime probes cover additional front-entry, side-entry, walkpath, panel, redraw, HiDPI, fullscreen-scale, and no-floating-pixel routes, including ordinal 22 lanes.",
+    "  - The launcher/startup game-data default is corrected for real installs: macOS and Linux resolve to ~/.firestaff/data, while Windows resolves beside the installed executable. The old /tmp/firestaff-test-no-assets path remains only as an explicit test fixture.",
+    "  - Asset-container and runtime gates widened: nested ZIP cache handoff, ISO/BIN duplicate hash handling, launcher data-dir cache invalidation, no-data popup behavior, DM2/Nexus/Theron save and parser boundaries, and DM1 V2 actual-render screenshot coverage.",
+    "  - Release verification: based on 174 commits after v3.0.3 with GitHub M10 verify + CMake build + cross-platform determinism green on main before release prep, plus focused local release-prep checks.",
+    "",
     "V3.0.3  (2026-06-23)",
     "  - DM1 Hall of Champions gates expanded again. New real-asset runtime probes cover additional cancel/reopen portrait-rectangle slices, including row-2 C026 atlas coverage for ordinal 15-17, so stale panel pixels and portrait placement regressions are caught earlier.",
     "  - DM1 V1 regression coverage widened across intro/title skip cleanup, HiDPI chest-slot hit zones, open-pit transition chains, single-tick food/water warning, door-bash no-open state, projectile/portcullis behavior, chest hand-swap and nested-container weight handling, C146 sleep/wake repaint, disabled champion-panel icons, and mana-bar repaint.",
@@ -268,5 +274,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.3";
+    return "3.0.4";
 }

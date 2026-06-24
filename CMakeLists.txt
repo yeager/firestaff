@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.3 LANGUAGES C)
+project(Firestaff VERSION 3.0.4 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
