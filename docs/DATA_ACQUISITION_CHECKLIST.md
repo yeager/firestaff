@@ -295,8 +295,8 @@ coverage**, not registry correctness.
 
 | Variant | Track02 ISO/BIN | OGG audio | Notes |
 |---|---|---|---|
-| JP Track 02 (`TQJP02End.iso`) | ✅ (61 MB) | ✅ 19 tracks | runtime target, hash-locked; DMWeb overview identifies the Japanese PC Engine CD release date as 1992-09-18 and the game structure as seven small dungeons |
-| US Track 02 (`TQUS02End.iso`) | ✅ | ✅ 19 tracks | runtime target; DMWeb overview identifies the USA TurboGrafx-16 release as 1993 and says its reference information is based on the English version |
+| JP Track 02 (`TQJP02End.iso`) | ✅ (61 MB) | ✅ 19 tracks | runtime target, hash-locked; DMWeb overview identifies the Japanese PC Engine CD release date as 1992-09-18 and the game structure as seven small dungeons; edition page lists JP redump BIN/CUE, CloneCD, DMFiles ISO/OGG, intro/outro video, and JP tracks 01/03-18 with Track 17 static noise from 1:04 |
+| US Track 02 (`TQUS02End.iso`) | ✅ | ✅ 19 tracks | runtime target; DMWeb overview identifies the USA TurboGrafx-16 release as 1993 and says its reference information is based on the English version; edition page lists USA redump BIN/CUE, CloneCD, DMFiles ISO/OGG, intro/outro video, and the fixed shorter Track 17 |
 
 ### Theron acquisition gaps
 
@@ -322,6 +322,15 @@ coverage**, not registry correctness.
    1993 / magazine provenance. Future public proof should tie those
    receipts to route/progression gates before broadening user-facing
    Theron claims.
+5. **Theron edition/media/audio receipts** — the DMWeb PC Engine /
+   TurboGrafx-16 edition page separates JP, USA, and PCEWorks bootleg
+   editions and lists redump BIN/CUE, CloneCD, and DMFiles ISO/OGG
+   sources. Track 02 is the data track, tracks 01/03/04 share music
+   with Japanese or English speech, JP tracks 05-18 are listed, and
+   Track 17 has a JP static-noise defect fixed in the US version. Future
+   evidence should classify BIN/CUE versus ISO/OGG handoff, keep the
+   bootleg noncanonical, and add audio/intro/outro/screenshot receipts
+   without treating those media links as bundled data.
 
 ## Cross-cutting gaps
 

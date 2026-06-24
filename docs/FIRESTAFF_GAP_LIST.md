@@ -309,8 +309,9 @@ Nexus locally verified files in `~/.firestaff/data/nexus/`.
 
 ## F. Theron gaps (PC Engine / TurboGrafx-16)
 
-Source: DMWeb Theron's Quest overview page, `docs/NEXUS_PLAN.md`
-(similar shape), Theron local probes.
+Source: DMWeb Theron's Quest overview and PC Engine / TurboGrafx-16
+edition pages, `docs/NEXUS_PLAN.md` (similar shape), Theron local
+probes.
 
 ### F1. V1
 
@@ -327,6 +328,7 @@ Source: DMWeb Theron's Quest overview page, `docs/NEXUS_PLAN.md`
 | **Theron 24h readiness rollup** | FIXED — 2026-06-21 (commit `a0592d6d`): `tools/theron_24h_readiness.py` + `parity-evidence/verification/theron_24h_readiness/manifest.json` + `docs/THERON_CAPTURE_READINESS.md` roll up 7 Theron V1 readiness gates (track02 bank, save/load, cross-route mechanics, runtime screenshot, dungeon progression, cross-slot, m11 launch) into a single per-day PASS/FAIL line, mirroring the DM1 24h readiness pattern. 2026-06-21 (commit `393d9f64`): `theron: refresh readiness reports` re-emits the manifest with current commit SHAs. |
 | **Theron runtime screenshot readiness** | FIXED — 2026-06-21 (commit `b7dbcd60`): `firestaff_theron_v1_runtime_screenshot_readiness` CTest-gate + `tools/verify_theron_v1_runtime_screenshot_readiness.py` + `parity-evidence/theron_v1_runtime_screenshot_readiness.md` prove the M11 path can produce a Track-02-backed screenshot receipt on the current host. CTest/screenshot gates pass for the launchable Theron paths. |
 | **DMWeb overview provenance** | FIXED / EVIDENCE-BOUNDED — 2026-06-25: DMWeb's Theron's Quest overview page pins the JP release to 1992-09-18, the USA release to 1993, and the runtime shape as a PC Engine / TurboGrafx-16 CD adaptation with seven small dungeons, between-dungeon saves only, companion skill/item resets, Theron skill/stat retention, and seven relic goals. Remaining work is turning those details into public progression/save/relic receipts rather than broadening the current Track 02 launch claim. |
+| **DMWeb PC Engine / TurboGrafx edition provenance** | FIXED / EVIDENCE-BOUNDED — 2026-06-25: DMWeb's edition page separates JP, USA, and PCEWorks bootleg records; lists JP/USA redump BIN/CUE, CloneCD, and DMFiles ISO/OGG sources; identifies Track 02 as the data track; records tracks 01/03/04 as shared music with Japanese or English speech; lists JP tracks 05-18; and notes the JP Track 17 static-noise defect fixed in the US version. Remaining work is BIN/CUE-vs-ISO/OGG classification plus audio/intro/outro/screenshot receipts, while keeping the bootleg out of canonical data. |
 | Cross-slot import/export against real Track 02 saves | PARTIAL — `theron_v1_save_load` now covers export/import mechanics across save roots using validated Theron save images; remaining work is importing/exporting a real Track 02 save artifact when one is available. |
 | Cross-route mechanics runtime evidence | FIXED for the CTest-gated mechanics path — 2026-06-21 `firestaff_theron_v1_cross_route_mechanics_probe` CTest-gates real `firestaff --game theron` command proof (commit `cd86d520`). Broader real-asset cross-route capture pairs (level-by-level route transcript) remain out-of-24h scope. |
 
