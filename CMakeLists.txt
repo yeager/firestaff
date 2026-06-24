@@ -2218,6 +2218,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hoc_champion_
     )
 endif()
 
+        "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_09_after_party_shuffle_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_02_after_party_shuffle_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_03_double_click_stability_portrait_rect_position_075_gate_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_03_save_load_reopen_portrait_rect_position_219_gate_probe.c"
