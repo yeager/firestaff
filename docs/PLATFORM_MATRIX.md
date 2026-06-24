@@ -75,7 +75,7 @@ data files.
 | FM-Towns | 3.1 | JP | 🔵 | `c_csb_fmtowns_jp/` | — | DMWeb page: Japan v3.1, release 1990-12-14, ¥9800, Japanese screenshots, Champion Editor/portrait-loading screens, redump.org and DMFiles BIN/CUE sources |
 | PC | 3.4 | EN | ✅ | — | yes (435,076 B) | Paul Stevens' unofficial Windows port (`CSBwin`) is what our `src/csb/` is based on; the underlying game is Atari ST 2.0. The PC "version" is a port, not a separate FTL release. |
 | PC-98 | 3.1 | JP | 🔵 | `c_csb_pc98/` | — | DMWeb PC-9801 page: Japan HDM/floppy line, 1990-12-21, ¥9800, original image missing copy-protection sectors, cracked image, 8-bit/16-bit screenshots, Champion Editor/portrait-loading screens, and PC-98 keypad / Alt-S input |
-| X68000 | 3.1 | JP | 🔵 | `c_csb_x68k/` | — | 732-item GRAPHICS.DAT |
+| X68000 | 3.1 | JP | 🔵 | `c_csb_x68k/` | — | 732-item GRAPHICS.DAT; DMWeb X68000 page: Japan HDM/floppy line, 1990-12-21, ¥9800, original image missing copy-protection sectors, `CK.R` cracked image, save disk, 24/31 kHz screenshots, Champion Editor/portrait-loading screens, and X68000 Ctrl-S / Opt.1 / Opt.2 input |
 | Apple IIGS | — | — | ❌ | not released | — | FTL never ported CSB to IIGS |
 
 ## DM2 (Dungeon Master II: The Legend of Skullkeep) — 15 tracked DMWeb/Greatstone rows
@@ -166,7 +166,7 @@ support is to add any one of these data files:
 | Medium | DM2 Amiga 1.0 ADF/IPF hard-disk install set | Europe EN/FR/GE six-disk media, installed-hard-disk layout, MOD/CD.DAT music triggers, Amiga keyboard bridge, WinUAE/Smacker video evidence |
 | Medium | DM2 FM Towns 1.0 BIN/CUE CD image | Japanese CD media, CD.DAT music triggers, quieter Red Book tracks 2-6, silent track 8, FM Towns-specific keyboard bridge |
 | Medium | DM2 Sega CD / Mega CD 1.0 BIN/CUE CD image | Europe/USA/Japan CD media, split data-track ISO + audio-track archive evidence, track-7 silence variant, Sega-CD-specific runtime/input bridge |
-| Hard | CSB X68000 3.1 GRAPHICS.DAT | X68000-specific, 732 items |
+| Hard | CSB X68000 3.1 HDM/floppy images | X68000-specific 732-item GRAPHICS.DAT, 24/31 kHz presentation receipts, Champion Editor/portrait-loading proof, X68000 Ctrl-S / Opt.1 / Opt.2 input gates, and original/cracked/save-disk classification |
 | Hard | DM SNES / Super Famicom SMC ROM set | four cartridge versions, per-tile palettes, SPC music, console input, and SNES-specific bug gates |
 | Hard | DM2 Amiga 1.0 GRAPHICS.DAT | 4630 items, 16-color |
 | Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence beyond the current launch/readiness gates |

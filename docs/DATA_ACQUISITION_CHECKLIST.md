@@ -162,7 +162,7 @@ coverage**, not registry correctness.
 | Amiga 3.1/3.3/3.5 Multilingual | 🟡 `cefaddfd…`? | 🟡 | DMWeb page splits 3.1/3.3/3.5 EN/FR/GE game disks, unofficial IPFs, protected original ADFs, cracked ADFs, v3.5 Quit-button presentation, and Meynaf's v3.3 French hard-disk/accelerator hack; archive/local-extra variants need canonical classification |
 | Atari ST 2.0/2.1 English | 🟡 `33f672bf…` / 🔴 | 🟡 `3cafd2fb…` / 🔴 | DMWeb page separates original STX game+utility disks for 2.0 and 2.1, cracked Automation ST media, MSA game+utility+save disks, hard-disk/RamDisk hacks, and Meynaf's v2.1 assembler-source disassembly; local v2.0 game-disk hashes are recorded, but v2.1 and utility disks still need classification |
 | PC 3.4 English | 🔴 | 🔴 | not yet acquired; would be easiest runtime target after Amiga |
-| X68000 English | 🟡 `291e1bc6…` | 🟡 | archived |
+| X68000 Japanese | 🟡 `291e1bc6…` | 🟡 | DMWeb page identifies Japan v3.1 HDM/floppy media, original image without copy-protection sectors, `CK.R` cracked image, blank save disk, 24/31 kHz screenshots, Champion Editor and portrait-loading screens, and X68000 Ctrl-S / Opt.1 / Opt.2 input; local `csb-extras/legacy-jp-x68000/` remains extracted but not canonically classified |
 | FM-Towns English/Japanese | 🟡 | 🟡 | DMWeb page identifies Japan v3.1 BIN/CUE CD media, English/Japanese screenshot sets, Champion Editor and portrait-loading screens, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow command table; local `csb-extras/fm-towns/` is extracted but still awaits canonical hash classification |
 | PC-98 Japanese | 🟡 | 🟡 | DMWeb page identifies Japan v3.1 HDM/floppy media, original image without copy-protection sectors, cracked image, 8-bit/16-bit screenshots, Champion Editor and portrait-loading screens, and PC-98 keypad / Alt-S input; local `csb-extras/pc98-3.1-jp/` is extracted but still awaits canonical hash classification |
 | CSB Utility Disk (any) | 🔴 | n/a | has CMP portraits, HTC hint text, AMG sounds, FTL utility — needed for Tier 3 #6 CMP runtime, Tier 3 hidden-code skip |
@@ -217,7 +217,13 @@ coverage**, not registry correctness.
    screenshots, Champion Editor and portrait-loading screens, PC-98
    keypad / Alt-S input, and `CSBGAME` protection provenance before any
    native PC-9801 CSB claim.
-9. **Atari ST CSB input/presentation receipts** should follow DMWeb's
+9. **X68000 CSB HDM/input/presentation receipts** should follow
+   DMWeb's X68000 page: Japanese v3.1 original HDM media missing
+   copy-protection sectors, `CK.R` cracked media kept separate, blank
+   save disk, 24/31 kHz screenshots, Champion Editor and portrait-loading
+   screens, and X68000 Ctrl-S / Opt.1 / Opt.2 input before any native
+   X68000 CSB claim.
+10. **Atari ST CSB input/presentation receipts** should follow DMWeb's
    table and media notes: Insert/Clr Home turns, arrow movement, Ctrl-S
    disk menu, WinSTon/Smacker introduction video, no ending animation,
    slower creature-heavy runtime, and single-sided compressed disk
