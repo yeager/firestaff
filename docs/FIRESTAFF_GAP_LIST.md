@@ -548,13 +548,13 @@ order:
 | dmweb.free.fr (FAQ) | 1 index | category map only — Drupal URLs 404 |
 | dmweb.free.fr (ReDMCSB) | 0 — page not fetchable | fallback to local ReDMCSB |
 | dmweb.free.fr (Community documentation) | **43 (mirrored locally at `reference/dmweb-community-docs/`)** | copy protection, file formats (animation script, animations, data files, dungeon files, DM2 data files, DM2 music triggers, hint/oracle, layout coordinates, portrait files, saved-game files), Nexus file formats (DGN, MNS, item.ibs), DM+CSB mechanics (actions, attacks, creature generators, items, skills, GRAPHICS.DAT hidden code + items 558–562), miscellaneous (Atari ST history, PC, SNES, FTL sound adapter, game versions) |
-| greatstone (Tools) | 4 (Overview, Product, Screenshots, Tutorial) | SCK extraction model, bundled signature/mapfile databases, tested corpus, file/item format inventory, CLI/GUI extraction commands, signed/compressed dungeon handling, mapfile override flow, external palette/string resources, animation viewing, Atari PAK/dungeon compression helpers, SCKExtraPack web-output scripts for dungeon, FTL, graphics.dat, single-file, and HTC outputs, plus screenshot-backed smoke references for GUI flows and representative CSB/DM/SNES/DM2 extracted `db_data` images |
+| greatstone (Tools) | 5 (Overview, Product, Screenshots, Download, Tutorial) | SCK extraction model, bundled signature/mapfile databases, tested corpus, file/item format inventory, CLI/GUI extraction commands, signed/compressed dungeon handling, mapfile override flow, external palette/string resources, animation viewing, Atari PAK/dungeon compression helpers, SCKExtraPack web-output scripts for dungeon, FTL, graphics.dat, single-file, and HTC outputs, screenshot-backed smoke references for GUI flows and representative CSB/DM/SNES/DM2 extracted `db_data` images, plus downloadable SCK/SCKExtraPack release provenance from `1.5.1@20110502.0` back to `0.5@20051123.0` |
 | greatstone (Technical doc) | 4 (Mapfile, FTL, PAK, Items + IMG5) | all critical format specs |
 | greatstone (Games) | 4 (DM, CSB, DM2, Custom) | per-version file lists |
 | greatstone (Articles) | 0 — content empty | skipped |
 | Firestaff existing docs | FINAL_GAPS, FINAL_CSB_GAPS, PLATFORM_MATRIX, DMWEB_REFERENCE, csb_gap_*.md, dm1_gap_*.md | per-game gap detail |
 
-**Total new pages reviewed this session: 62** (19 prior + 43 from
+**Total new pages reviewed this session: 63** (20 prior + 43 from
 the dmweb community/documentation mirror).
 
 ---
