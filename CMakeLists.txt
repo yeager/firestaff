@@ -954,6 +954,47 @@ if(NOT WIN32)
     endif()
 endif()
 
+# Data-dir picker / platform-matrix scan regression (data-free, headless).
+# Exercises M12_AssetStatus_Scan + asset_find_by_md5 against a synthetic
+# data root that mirrors the tier1_strict_boot_probe sub-layouts
+# documented in docs/PLATFORM_MATRIX.md. Locks recursive discovery,
+# scan metrics invariants, launch-blocker correctness, and re-scan
+# state-clearing so the data-dir picker contract stays honest in
+# docs. Source-locked to docs/FIRESTAFF_GAP_LIST.md section A5 and
+# docs/PLATFORM_MATRIX.md platform + version support matrix.
+if(BUILD_TESTING)
+    add_executable(firestaff_data_dir_picker_platform_matrix_probe
+        probes/firestaff_data_dir_picker_platform_matrix_probe.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(firestaff_data_dir_picker_platform_matrix_probe
+        PRIVATE firestaff_v2)
+    target_include_directories(firestaff_data_dir_picker_platform_matrix_probe
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_compile_definitions(firestaff_data_dir_picker_platform_matrix_probe
+        PRIVATE FIRESTAFF_ASSET_STATUS_TESTING=1)
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_data_dir_picker_platform_matrix_probe
+            PRIVATE firestaff_m12)
+    endif()
+    if(FIRESTAFF_HAS_ZLIB)
+        target_compile_definitions(firestaff_data_dir_picker_platform_matrix_probe
+            PRIVATE FIRESTAFF_HAS_ZLIB=1)
+        target_link_libraries(firestaff_data_dir_picker_platform_matrix_probe
+            PRIVATE PkgConfig::ZLIB)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_data_dir_picker_platform_matrix_probe
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME data_dir_picker_platform_matrix
+        COMMAND firestaff_data_dir_picker_platform_matrix_probe
+    )
+endif()
+
 # Nexus V2 HUD Overlay Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: init/reset defaults, set_direction/set_level/set_gold/
