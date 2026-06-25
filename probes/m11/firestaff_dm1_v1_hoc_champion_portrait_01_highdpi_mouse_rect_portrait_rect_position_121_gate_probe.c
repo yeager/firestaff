@@ -45,10 +45,11 @@
  *
  * This probe fills that narrow slice: it pins the portrait_rect
  * (96, 35, 32, 29) viewport-local position invariant for ordinal 1
- * across the scaled-window dispatch math, on four distinct surface
+ * across the scaled-window dispatch math, on six distinct surface
  * sizes that cover the original HiDPI failure mode
- * (1512x982 MacBook Pro Retina) and a 4K letterbox case
- * (2560x1440). It does not duplicate any of the existing ordinal 1
+ * (1512x982 MacBook Pro Retina), a 1366x768 laptop/projector
+ * baseline, a 1440p letterbox case (2560x1440), and a 4K UHD case
+ * (3840x2160). It does not duplicate any of the existing ordinal 1
  * probes because none of them assert the scaled dispatch / SDL
  * framebuffer map path against the C026 cutout.
  *
@@ -65,7 +66,8 @@
  *                                 graphic is loaded and the
  *                                 ordinal-1 strip cell is reachable.
  *   Stage 3 (per-surface scaled dispatch):
- *     For each of 1280x720, 1920x1080, 2560x1440, 1512x982:
+ *     For each of 1280x720, 1366x768, 1920x1080, 2560x1440,
+ *     1512x982, and 3840x2160:
  *     a) TOUCHCLICK_Compat_NormalizeScaledViewportPoint maps a
  *        physical pixel picked at the inverse letterbox of the
  *        cutout center back to viewport-local coords inside the
@@ -95,6 +97,11 @@
  *     viewport-relative click zone in the public touch-click matrix
  *     confirms no zone covers the (96, 35, 32, 29) cutout.  This is
  *     the static no-float check that backs Stage 3b.
+ *   Stage 5 (panel-open overlap): after opening the C040 RR panel,
+ *     a lower-row cutout pixel at viewport (112, 58) is allowed to
+ *     hit panel.resurrect through the viewport-relative matrix, but
+ *     the matching screen-letterbox dispatch must still route through
+ *     C080 / C007 viewport.dungeon on every surface.
  *
  * Source-locked to:
  *   ReDMCSB DUNGEON.C:2573 maps M011_CELL(sensor) against view dir
@@ -163,6 +170,13 @@ enum {
      * screen (96, 35+33) = (96, 68). */
     PORTRAIT_X_FB = 96,
     PORTRAIT_Y_FB = 68,
+    /* Lower cutout sample that overlaps the C040 RR panel resurrect
+     * button.  This point is still inside the C026 portrait cutout:
+     * viewport (112,58), screen (112,91). */
+    PORTRAIT_PANEL_OVERLAP_X_VP = 112,
+    PORTRAIT_PANEL_OVERLAP_Y_VP = 58,
+    PORTRAIT_PANEL_OVERLAP_X_FB = 112,
+    PORTRAIT_PANEL_OVERLAP_Y_FB = 91,
     /* D1C champion-mirror frame zone from
      * M11_GameView_GetD1CWallOrnamentZone (coordSet 5 / index 12 per
      * DUNVIEW.C G0205): dstX=80, dstY=29, w=64, h=43 viewport-local.
@@ -180,15 +194,15 @@ enum {
      * firestaff touch-click matrix records zoneIndex=7 for that
      * mapping. */
     PORTRAIT_DISPATCH_COMMAND_ID = 80u,
-    PORTRAIT_DISPATCH_ZONE_INDEX = 7u
+    PORTRAIT_DISPATCH_ZONE_INDEX = 7u,
+    PANEL_RESURRECT_COMMAND_ID = 160u,
+    PANEL_RESURRECT_ZONE_INDEX = 570u
 };
 
-/* HiDPI surface sizes covered by the probe.  These are the same
- * surfaces the original HiDPI chest-slot regression test exercises
- * (tests/test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat.c).  The
- * 1512x982 surface is the original MacBook Pro Retina HiDPI failure
- * case (16" pre-2024), and 2560x1440 is the 4K letterbox case that
- * stresses aspect-ratio handling. */
+/* HiDPI surface sizes covered by the probe.  These include the
+ * canonical desktop surfaces, the original MacBook Pro Retina HiDPI
+ * failure case (1512x982), the 1366x768 laptop/projector baseline,
+ * and a 3840x2160 UHD case that stresses integer-scaling edges. */
 typedef struct Surface {
     const char* label;
     int width;
@@ -197,9 +211,11 @@ typedef struct Surface {
 
 static const Surface kSurfaces[] = {
     { "1280x720",   1280,  720  },
+    { "1366x768",   1366,  768  },
     { "1920x1080",  1920,  1080 },
     { "2560x1440",  2560,  1440 },
-    { "1512x982",   1512,  982  }
+    { "1512x982",   1512,  982  },
+    { "3840x2160",  3840,  2160 }
 };
 static const int kSurfacesCount = (int)(sizeof(kSurfaces) / sizeof(kSurfaces[0]));
 
@@ -608,6 +624,100 @@ int main(int argc, char** argv) {
         }
         printf("  static_coverer_scan: %d portrait/champion/mirror viewport-relative zones overlap portrait cutout (want 0)\n",
                portraitCoverers);
+    }
+
+    /* Stage 5: panel-open overlap.  The lower part of the C026
+     * portrait cutout overlaps the C040 RR panel command boxes once
+     * F0280 opens the candidate panel.  A viewport-relative scan may
+     * therefore hit panel.resurrect at viewport (112,58), but the
+     * source screen-coordinate route is still COMMAND.C:403 C080 /
+     * C007 viewport.dungeon for the same physical click. */
+    reset_to_ordinal1_pose(&game);
+    CHECK(M11_GameView_SelectFrontMirrorCandidate(&game) == 1);
+    CHECK(game.candidateMirrorPanelActive == 1);
+    CHECK(game.candidateMirrorOrdinal == ORDINAL_HALK);
+    CHECK(game.inventoryPanelActive == 1);
+    CHECK(PORTRAIT_PANEL_OVERLAP_X_VP >= PORTRAIT_X_VP &&
+          PORTRAIT_PANEL_OVERLAP_X_VP < PORTRAIT_X_VP + PORTRAIT_W);
+    CHECK(PORTRAIT_PANEL_OVERLAP_Y_VP >= PORTRAIT_Y_VP &&
+          PORTRAIT_PANEL_OVERLAP_Y_VP < PORTRAIT_Y_VP + PORTRAIT_H);
+    for (surfaceIndex = 0; surfaceIndex < kSurfacesCount; ++surfaceIndex) {
+        const Surface* surface = &kSurfaces[surfaceIndex];
+        int vpPhysX = -1;
+        int vpPhysY = -1;
+        int screenPhysX = -1;
+        int screenPhysY = -1;
+        TouchClickDispatchPc34Compat viewportDispatch;
+        TouchClickDispatchPc34Compat screenDispatch;
+
+        CHECK(pick_physical_pixel_for_source(
+                  surface, VIEWPORT_W, VIEWPORT_H,
+                  PORTRAIT_PANEL_OVERLAP_X_VP,
+                  PORTRAIT_PANEL_OVERLAP_Y_VP,
+                  &vpPhysX, &vpPhysY) == 1);
+        memset(&viewportDispatch, 0, sizeof(viewportDispatch));
+        if (TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(
+                vpPhysX, vpPhysY, surface->width, surface->height,
+                TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &viewportDispatch) != 1) {
+            fprintf(stderr,
+                    "FAIL surface=%s panel-open viewport dispatch at overlap phys=(%d,%d) returned 0 — should hit panel.resurrect\n",
+                    surface->label, vpPhysX, vpPhysY);
+            ++g_failures;
+        } else {
+            CHECK(viewportDispatch.commandId == PANEL_RESURRECT_COMMAND_ID);
+            CHECK(viewportDispatch.zoneIndex == PANEL_RESURRECT_ZONE_INDEX);
+            CHECK(viewportDispatch.coordMode ==
+                  TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT);
+            if (viewportDispatch.groupName == NULL ||
+                strcmp(viewportDispatch.groupName, "panel.resurrect") != 0) {
+                fprintf(stderr,
+                        "FAIL surface=%s panel-open viewport dispatch group=%s want=panel.resurrect\n",
+                        surface->label,
+                        viewportDispatch.groupName ? viewportDispatch.groupName : "(null)");
+                ++g_failures;
+            } else {
+                ++g_pass;
+            }
+        }
+
+        CHECK(pick_physical_pixel_for_screen_source(
+                  surface,
+                  PORTRAIT_PANEL_OVERLAP_X_FB,
+                  PORTRAIT_PANEL_OVERLAP_Y_FB,
+                  &screenPhysX, &screenPhysY) == 1);
+        memset(&screenDispatch, 0, sizeof(screenDispatch));
+        if (TOUCHCLICK_Compat_MapScaledScreenPointToDispatch(
+                screenPhysX, screenPhysY, surface->width, surface->height,
+                TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &screenDispatch) != 1) {
+            fprintf(stderr,
+                    "FAIL surface=%s panel-open screen dispatch at overlap phys=(%d,%d) returned 0 — should hit viewport.dungeon\n",
+                    surface->label, screenPhysX, screenPhysY);
+            ++g_failures;
+        } else {
+            CHECK(screenDispatch.commandId == PORTRAIT_DISPATCH_COMMAND_ID);
+            CHECK(screenDispatch.zoneIndex == PORTRAIT_DISPATCH_ZONE_INDEX);
+            CHECK(screenDispatch.coordMode ==
+                  TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT);
+            if (screenDispatch.groupName == NULL ||
+                strcmp(screenDispatch.groupName, "viewport.dungeon") != 0) {
+                fprintf(stderr,
+                        "FAIL surface=%s panel-open screen dispatch group=%s want=viewport.dungeon\n",
+                        surface->label,
+                        screenDispatch.groupName ? screenDispatch.groupName : "(null)");
+                ++g_failures;
+            } else {
+                ++g_pass;
+            }
+            CHECK(screenDispatch.screenX == PORTRAIT_PANEL_OVERLAP_X_FB);
+            CHECK(screenDispatch.screenY == PORTRAIT_PANEL_OVERLAP_Y_FB);
+        }
+
+        printf("  surface=%s panel_open_overlap viewport_phys=(%d,%d) viewport_dispatch=%s screen_phys=(%d,%d) screen_dispatch=%s\n",
+               surface->label,
+               vpPhysX, vpPhysY,
+               viewportDispatch.groupName ? viewportDispatch.groupName : "(null)",
+               screenPhysX, screenPhysY,
+               screenDispatch.groupName ? screenDispatch.groupName : "(null)");
     }
 
     M11_GameView_Shutdown(&game);
