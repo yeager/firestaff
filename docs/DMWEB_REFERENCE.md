@@ -144,7 +144,7 @@ The overview also states why mapfiles matter: a file description must be indepen
 
 ### Tool
 
-- **`http://greatstone.free.fr/dm/t_product.html`** — sck overview, screenshots
+- **`http://greatstone.free.fr/dm/t_product.html`** — SCK product/methodology page. It describes the tool contract directly: user-supplied game file + bundled signature database + bundled file-description/mapfile database in, optional part-map XML plus extracted BMP/WAV/TXT/PAL/dungeon-XML/raw resources out. It also explains the SCKExtraPack post-processing path used to generate the Greatstone web outputs, and lists 133 tested game/custom-dungeon rows, supported file families (`*.ftl`, `.cmp`, `dungeon?.dat`, savegames, `graphics.dat`/`csbgraphics.dat`, `hcsb.dat`, `.amg`, animation files, `.sng`, `song.dat`, `swoosh`, `.smc`) and 89 embedded item formats. The item table is a compact provenance map for future format coverage: IMG1-IMG14, ROMIMG variants, SND1-SND10/SNDS, MUS/SEQ, PAL/PALSEL, text, tilemap, raw/code, SNES metadata, DM2 STAT/LST/CMD/ICMP, and CSBWin extension formats.
 - **`http://greatstone.free.fr/dm/t_screenshots.html`** — sck GUI screenshots, looks like a 2008-era Java Swing app
 - **`http://greatstone.free.fr/dm/t_download.html`** — sck download (Java JAR + source)
 - **`http://greatstone.free.fr/dm/t_tutorial.html`** — how to use the sck (write a mapfile, extract a file)

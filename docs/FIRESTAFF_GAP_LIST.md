@@ -548,7 +548,7 @@ order:
 | dmweb.free.fr (FAQ) | 1 index | category map only — Drupal URLs 404 |
 | dmweb.free.fr (ReDMCSB) | 0 — page not fetchable | fallback to local ReDMCSB |
 | dmweb.free.fr (Community documentation) | **43 (mirrored locally at `reference/dmweb-community-docs/`)** | copy protection, file formats (animation script, animations, data files, dungeon files, DM2 data files, DM2 music triggers, hint/oracle, layout coordinates, portrait files, saved-game files), Nexus file formats (DGN, MNS, item.ibs), DM+CSB mechanics (actions, attacks, creature generators, items, skills, GRAPHICS.DAT hidden code + items 558–562), miscellaneous (Atari ST history, PC, SNES, FTL sound adapter, game versions) |
-| greatstone (Tools) | 4 (Overview, Product, Screenshots, Tutorial) | sck usage, extraction CLI |
+| greatstone (Tools) | 4 (Overview, Product, Screenshots, Tutorial) | SCK extraction model, bundled signature/mapfile databases, output formats, tested corpus, and file/item format inventory |
 | greatstone (Technical doc) | 4 (Mapfile, FTL, PAK, Items + IMG5) | all critical format specs |
 | greatstone (Games) | 4 (DM, CSB, DM2, Custom) | per-version file lists |
 | greatstone (Articles) | 0 — content empty | skipped |
