@@ -54,6 +54,8 @@ CTEST_REQUIRED_TESTS = (
     "theron_v1_rendering",
     "theron_v1_save_load",
     "theron_v1_save_header_rejection",
+    "theron_v1_srm_classifier",
+    "theron_v1_srm_classifier_probe",
     "theron_v1_shop_price_table",
     "theron_v1_world_serialize_purchase_state",
     "theron_v1_direct_launch",

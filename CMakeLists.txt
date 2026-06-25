@@ -13269,6 +13269,31 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
 endif()
 
+# ── Theron V1 SRM (Save RAM) classifier unit test ───────────────────
+# Bounded real-artifact boundary for Theron .srm save data.  Data-free
+# when no real Sphenx-format .srm file is staged; honest ABSENT manifest
+# is the expected outcome on the current host.  Companion unit test
+# for firestaff_theron_v1_srm_classifier_probe; both must pass before
+# any real .srm artifact can be promoted to a launchable Theron save.
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_srm_classifier_pc34
+        tests/test_theron_v1_srm_classifier_pc34.c
+    )
+    target_link_libraries(test_theron_v1_srm_classifier_pc34 PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_srm_classifier_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_srm_classifier_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_srm_classifier
+        COMMAND test_theron_v1_srm_classifier_pc34
+    )
+endif()
+
 # ── Theron V1 Phase 5 — Shop Price Table Test ──────────────────────
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_shop_price_table
@@ -13497,6 +13522,28 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_track02_descriptor_table
         COMMAND firestaff_theron_v1_track02_descriptor_table_probe
+    )
+
+    # ── Theron V1 SRM (Save RAM) classifier probe ───────────────────────
+    # Bounded real-artifact boundary for Theron .srm save data.  Data-free
+    # when no real Sphenx-format .srm file is staged; honest ABSENT manifest
+    # is the expected outcome on the current host.  See
+    # docs/THERON_CAPTURE_READINESS.md for the readiness statement.
+    add_executable(firestaff_theron_v1_srm_classifier_probe
+        probes/theron/firestaff_theron_v1_srm_classifier_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_srm_classifier_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_srm_classifier_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_srm_classifier_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_srm_classifier_probe
+        COMMAND firestaff_theron_v1_srm_classifier_probe
     )
 
     if(Python3_Interpreter_FOUND)
