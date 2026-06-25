@@ -7554,6 +7554,25 @@ static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input) {
     }
 }
 
+int M11_GameView_InputConsumesDm1V1SourceTick(const M11_GameViewState* state,
+                                              M12_MenuInput input) {
+    if (!state || !state->active ||
+        state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN ||
+        state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 ||
+        state->sourceKind == M11_GAME_SOURCE_DM2_BOOT ||
+        strncmp(state->sourceId, "csb", 3) == 0) {
+        return 0;
+    }
+    return m11_dm1_v1_pipeline_command_for_input(input) != DM1_V1_COMMAND_NONE;
+}
+
+int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state) {
+    if (!state || !state->active) {
+        return 0;
+    }
+    return state->vblankTiming.stopWaitingForInput ? 1 : 0;
+}
+
 static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
                                            M12_MenuInput input,
                                            const char* actionLabel) {

@@ -462,6 +462,9 @@ int M11_GameView_GetMusicEnabled(const M11_GameViewState* state);
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state);
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input);
+int M11_GameView_InputConsumesDm1V1SourceTick(const M11_GameViewState* state,
+                                              M12_MenuInput input);
+int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state);
 M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                                                int x,
                                                int y,

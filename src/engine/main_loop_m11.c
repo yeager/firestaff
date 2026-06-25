@@ -2652,7 +2652,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (input != M12_MENU_INPUT_NONE) {
             tickBeforeInput = gameView.world.gameTick;
             if (gameView.active) {
-                M11_GameInputResult result = M11_GameView_HandleInput(&gameView, input);
+                M11_GameInputResult result = M11_GAME_INPUT_IGNORED;
+                if (M11_GameView_InputConsumesDm1V1SourceTick(&gameView, input) &&
+                    !M11_GameView_Dm1V1SourceTickReadyForInput(&gameView)) {
+                    input = M12_MENU_INPUT_NONE;
+                } else {
+                    result = M11_GameView_HandleInput(&gameView, input);
+                }
                 if (result == M11_GAME_INPUT_RETURN_TO_MENU) {
                     M11_GameView_Shutdown(&gameView);
                     M11_GameView_Init(&gameView);
