@@ -164,6 +164,18 @@ static int m11_game_presentation_target(const M11_GameViewState* gameView,
     return targetW != M11_FB_WIDTH || targetH != M11_FB_HEIGHT;
 }
 
+int M11_ResolveGameScaleFilterForPresentation(int presentationMode,
+                                              int requestedScaleFilter) {
+    if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
+        return M11_SCALE_FILTER_NEAREST;
+    }
+    if (requestedScaleFilter != M11_SCALE_FILTER_NEAREST &&
+        requestedScaleFilter != M11_SCALE_FILTER_LINEAR) {
+        return M11_SCALE_FILTER_NEAREST;
+    }
+    return requestedScaleFilter;
+}
+
 static void m11_map_presented_game_point_to_source(const M11_GameViewState* gameView,
                                                    int* x,
                                                    int* y) {
@@ -181,20 +193,48 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
     int scale = m11_game_indexed_presentation_scale(gameView);
     int targetW = M11_FB_WIDTH;
     int targetH = M11_FB_HEIGHT;
+    int requestedFilter = M11_Render_GetScaleFilter();
+    int effectiveFilter = M11_ResolveGameScaleFilterForPresentation(
+        gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL,
+        requestedFilter);
+    int restoreFilter = 0;
+    int result;
+    /* ReDMCSB DUNVIEW.C:3619-3638 draws DM1 inscriptions as hard-edged
+     * M648 8x8 glyphs into the 320x200 viewport.  If the launcher's global
+     * scaling filter is LINEAR, SDL smooths those glyphs during window
+     * presentation and the wall text becomes unreadable.  V1 original mode
+     * therefore presents with nearest-neighbor regardless of the enhanced-mode
+     * filter setting; V2 modes keep honoring the user setting. */
+    if (effectiveFilter != requestedFilter) {
+        M11_Render_SetScaleFilter(effectiveFilter);
+        restoreFilter = 1;
+    }
     if (scale > 1) {
-        return M11_Render_PresentScaledIndexed(M11_Render_GetFramebuffer(),
-                                               M11_FB_WIDTH,
-                                               M11_FB_HEIGHT,
-                                               scale);
+        result = M11_Render_PresentScaledIndexed(M11_Render_GetFramebuffer(),
+                                                 M11_FB_WIDTH,
+                                                 M11_FB_HEIGHT,
+                                                 scale);
+        if (restoreFilter) {
+            M11_Render_SetScaleFilter(requestedFilter);
+        }
+        return result;
     }
     if (m11_game_presentation_target(gameView, &targetW, &targetH)) {
-        return M11_Render_PresentIndexedToResolution(M11_Render_GetFramebuffer(),
-                                                     M11_FB_WIDTH,
-                                                     M11_FB_HEIGHT,
-                                                     targetW,
-                                                     targetH);
+        result = M11_Render_PresentIndexedToResolution(M11_Render_GetFramebuffer(),
+                                                       M11_FB_WIDTH,
+                                                       M11_FB_HEIGHT,
+                                                       targetW,
+                                                       targetH);
+        if (restoreFilter) {
+            M11_Render_SetScaleFilter(requestedFilter);
+        }
+        return result;
     }
-    return M11_Render_Present();
+    result = M11_Render_Present();
+    if (restoreFilter) {
+        M11_Render_SetScaleFilter(requestedFilter);
+    }
+    return result;
 }
 
 void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {

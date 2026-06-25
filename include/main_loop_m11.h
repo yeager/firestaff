@@ -53,6 +53,13 @@ int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,
                                                      int* x,
                                                      int* y);
 
+/* V1 original is a 320x200 source-locked surface.  Enhanced modes may use the
+   user's scaling filter, but V1 must stay nearest-neighbor so small original
+   glyphs such as DM1 wall inscriptions remain readable when the window is
+   enlarged. */
+int M11_ResolveGameScaleFilterForPresentation(int presentationMode,
+                                              int requestedScaleFilter);
+
 /* Source-locked entrance wait policy: interactive builds must not auto-enter
    after launcher handoff; only headless/autotest runs may use a timeout. */
 int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
