@@ -1,4 +1,51 @@
 
+# Firestaff v3.0.6
+
+Firestaff v3.0.6 packages the later 2026-06-25 evidence, asset-format,
+and release-status refresh after v3.0.5. It is a conservative release:
+the new gates make more of the current work reproducible in CI, while
+remaining runtime, decoder, and original-capture gaps stay documented as
+open work.
+
+## Highlights since v3.0.5
+
+- **DM1 Hall of Champions portrait placement is gated end to end**: a new
+  all-portrait wall-coordinate probe scans all 24 source-visible C127
+  champion portrait poses in the Hall of Champions, including HALK,
+  GANDO, and WUUF. It locks the D1C wall frame and C026 portrait cutout
+  and checks wrong-wall stale redraw behavior without claiming original
+  DOS pixel parity.
+- **Greatstone/SCK evidence moved from notes to gates**: current
+  Greatstone `db_data/` paths now have an offline CTest-backed reachability
+  fixture, the SCK mapfile-to-asset selection bridge is covered by
+  synthetic and optional real-corpus probes, and FTL `HUNK_DATA` area-1
+  zero-run decompression is CTest-gated. FTL `HUNK_CODE`, mapfile item
+  extraction, real corpus promotion, and runtime loading remain open.
+- **FM Towns CD layouts are classified safely**: DM1, CSB, and DM2
+  BIN/CUE or ISO/CUE redump-style layouts now have a bounded classifier
+  with synthetic tests and ISO9660 PVD detection. It does not vendor game
+  data, extract payloads, decode assets, or claim runtime launch proof.
+- **Public project status was cleaned up**: TODO.md was audited back to
+  open work only, DONE.md records the verification sweep, and the
+  completion matrix plus verifier scripts now reflect the current
+  conservative per-game evidence totals.
+- **Build hygiene tightened**: duplicate modern static link lines were
+  cleaned up through modern CMake policies, while the public docs and
+  gap list keep the new evidence bounded to what is actually tested.
+
+## Verification
+
+- 18 commits ship on top of `v3.0.5`, including this release-prep commit.
+- GitHub Actions was green on `3fe55d680` before release prep: M10 verify,
+  CMake build on macOS/Windows/Linux, strict warnings, asset hygiene,
+  Pages, and cross-platform determinism.
+- Focused local verification before release prep included the completion
+  matrix verifiers, CSB V1 source-lock verifiers, a 14-test focused CTest
+  set covering the refreshed evidence manifests, and `git diff --check`.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
+  `v3.0.6` release commit.
+
 # Firestaff v3.0.5
 
 Firestaff v3.0.5 packages the 2026-06-25 post-v3.0.4 evidence and

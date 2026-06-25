@@ -9,6 +9,13 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.6  (2026-06-25)",
+    "  - DM1 Hall of Champions portrait placement is now guarded by an all-portrait wall-coordinate gate. The probe scans all 24 source-visible C127 champion portrait poses, including HALK, GANDO, and WUUF, and locks the D1C wall frame plus C026 portrait cutout without claiming original DOS pixel parity.",
+    "  - Greatstone/SCK evidence is stronger: db_data path reachability is CTest-gated offline, SCK mapfile-to-asset selection now has a bounded bridge and optional real-corpus probe, and FTL HUNK_DATA zero-run decompression is covered while HUNK_CODE/runtime loading remain explicit follow-ups.",
+    "  - FM Towns BIN/CUE and ISO/CUE redump layouts now have a bounded classifier for DM1, CSB, and DM2 track families. The classifier is data-free and keeps extraction, decoders, runtime launch, and real-media validation as open work.",
+    "  - Public status evidence was refreshed: TODO.md now tracks open work only, DONE.md records the status audit, and the completion matrix/scripts now reflect the current conservative per-game evidence totals.",
+    "  - Release verification: based on 18 commits after v3.0.5 with GitHub M10 verify + CMake build + cross-platform determinism green on main before release prep, plus focused local release-prep checks.",
+    "",
     "V3.0.5  (2026-06-25)",
     "  - CSB keyboard commands now have a source-locked bridge for F1-F4 champion inventory toggles, Escape freeze/unfreeze, resting Return/Enter wake-up, Ctrl-S disk menu, and the Insert/arrow/Clr Home movement layout from the ReDMCSB command tables.",
     "  - DMWeb and Greatstone provenance coverage expanded across DM1, CSB, DM2, Nexus, and Theron's Quest. The docs now capture platform/version boundaries, media/protection notes, current Greatstone db_data paths, and SCK extraction references without broadening runtime completion claims.",
@@ -281,5 +288,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.5";
+    return "3.0.6";
 }
