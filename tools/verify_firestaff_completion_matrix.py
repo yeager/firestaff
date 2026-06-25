@@ -11,14 +11,15 @@ ROOT = Path(__file__).resolve().parents[1]
 MATRIX = ROOT / "parity-evidence/verification/firestaff_completion_matrix.json"
 DOC = ROOT / "docs/parity/COMPLETION_MATRIX.md"
 EXPECTED = {
-    "DM1 V1": 58,
-    "DM1 V2": 27,
-    "CSB V1": 20,
-    "CSB V2": 0,
-    "DM2 V1": 7,
-    "DM2 V2": 0,
-    "DM Nexus V1": 0,
-    "DM Nexus V2": 0,
+    "DM1 V1": 78,
+    "DM1 V2": 51,
+    "CSB V1": 43,
+    "CSB V2": 31,
+    "DM2 V1": 34,
+    "DM2 V2": 16,
+    "DM Nexus V1": 37,
+    "DM Nexus V2": 20,
+    "Theron V1": 39,
 }
 
 

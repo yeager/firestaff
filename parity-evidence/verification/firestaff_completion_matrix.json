@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.completion_matrix.v1",
-  "updatedAt": "2026-05-09T06:13:00+02:00",
+  "updatedAt": "2026-06-25T15:38:00+02:00",
   "basis": "Conservative weighted parity completion model. Points count only when tied to repository evidence; blocked/unproven work scores 0 for that criterion.",
   "criteria": [
     {
@@ -50,44 +50,43 @@
       "scores": {
         "reference_inventory": [
           10,
-          "DM1 PC 3.4 canonical anchors, ReDMCSB source and Greatstone references are present and repeatedly cited."
+          "DM1 PC 3.4 anchors, ReDMCSB source, Greatstone references, and local evidence manifests remain source-locked."
         ],
         "definition_matrix": [
           10,
-          "docs/parity/PARITY_MATRIX_DM1_V1.md exists and carries DM1 V1 labels/status rows."
+          "`docs/parity/PARITY_MATRIX_DM1_V1.md`, DM1 V1 movement/completion evidence, and many pass manifests exist."
         ],
         "launch_smoke": [
-          8,
-          "M9/M10/M11 infrastructure and startup/menu/title gates exist, but current original route still has input/table blockers."
+          9,
+          "DM1 V1 launch/menu/title/runtime paths are repeatedly CTest- and probe-gated; release data defaults were restored after the v3.0.3 path fix."
         ],
         "core_input_movement": [
-          13,
-          "pass296/pass299 plus pass372/pass406 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, target-square legality, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof."
+          15,
+          "Input command queue, keypad route, movement timing/legal-target gates, touch/mouse queue routes, stairs transitions, and cooldown/F0380 ordering are source/runtime-gated."
         ],
         "viewport_ui_render": [
-          12,
-          "Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; pass373 proves the live launcher movement route reaches the source-locked wall/door/occlusion redraw stack, and pass375 moves explosions into the ReDMCSB F0115 after-all-packed-cells deferred pass. Full pixel/content parity remains open."
+          17,
+          "Viewport wall/door/ornament/side-content source slices, champion panel/HUD/status boxes, Hall mirror frame/portrait probes, chest UI, and title/swoosh gates are broad; full original pixel-pair coverage is still incomplete."
         ],
         "gameplay_systems": [
-          2,
-          "Semantic suites exist but most gameplay rows remain UNPROVEN or need original-backed cases."
+          14,
+          "Combat, creature AI/grouping, inventory/chest, champion lifecycle, spells, projectiles, sensors, save/load, resurrection, food/water, and many regression gates are covered. Remaining point is reserved for broader real-runtime parity depth."
         ],
         "audio_timing": [
           3,
-          "Audio assets/event mapping are partly source-backed; cadence/timing overlap remain blocked/unproven."
+          "Audio event mapping and some sound-specific gates exist, including door-bash/no-open coverage; cadence/overlap/original timing proof remains limited."
         ],
         "original_overlay_regression": [
           0,
-          "Representative original runtime overlay parity is not yet proven; route/capture remains active blocker."
+          "Original overlay/capture work has partial artifacts and exact wall matches, but representative movement/HUD/viewport parity is not yet promoted."
         ]
       },
-      "status": "in_progress_verified_partial",
+      "status": "playable_verified_partial",
       "primaryBlockers": [
-        "Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.",
-        "Representative original runtime movement/HUD/viewport overlay parity missing."
+        "Representative original-vs-Firestaff overlay parity remains incomplete. Original I34E keyboard-buffer live debugger observation still needs a host with `dosbox-debug`, `Xvfb`, and `xdotool`."
       ],
-      "completionPercent": 58,
-      "points": 58,
+      "completionPercent": 78,
+      "points": 78,
       "maxPoints": 100
     },
     {
@@ -95,308 +94,351 @@
       "scores": {
         "reference_inventory": [
           8,
-          "DM1 source/original inventory applies; V2 remains original-required but not separately complete."
+          "DM1 source/original inventory applies; V2 remains presentation over V1 source semantics."
         ],
         "definition_matrix": [
-          6,
-          "dm1_v2_completion_matrix/status artifacts exist but explicitly do not prove completion."
+          7,
+          "V2 completion/status artifacts, phase gates, and CTest-backed source-isolation exist."
         ],
         "launch_smoke": [
-          5,
-          "Some V2 shell/scaffold gates exist; full launcher/preview smoke is unproven."
+          8,
+          "`dm1_v2_runtime_presentation_smoke` runs real `firestaff --game dm1` paths for V2.0/V2.1 and verifies distinct presented frame receipts."
         ],
         "core_input_movement": [
-          4,
-          "Movement/camera scaffolds exist; source-locked V2 semantics incomplete."
+          8,
+          "Movement/camera, selected-resolution input mapping, 4K mapping, and phase-gated command adapters are covered."
         ],
         "viewport_ui_render": [
-          4,
-          "Viewport/wall/upscale scaffolds plus V2 manifest-shape gates exist; full V2 render/material/UI gates remain absent."
+          15,
+          "HUD overlay, item/render source locks, lighting/effects/VFX, viewport materials, per-mode signatures, and GPU/readback probes exist; finished V2.2 real-art gates remain open."
         ],
         "gameplay_systems": [
-          0,
-          "No complete V2 gameplay-system parity gates."
+          5,
+          "V2 preserves V1 gameplay ownership through phase gates, but V2-specific gameplay proof is intentionally limited."
         ],
         "audio_timing": [
           0,
-          "No V2 audio/timing completion gates."
+          "No complete V2 audio/timing parity gate."
         ],
         "original_overlay_regression": [
           0,
-          "No V2 representative original-overlay regression proof."
+          "No representative original-overlay regression proof for V2."
         ]
       },
-      "status": "in_progress_verified_partial",
+      "status": "runtime_presentation_verified_partial",
       "primaryBlockers": [
-        "V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete."
+        "V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open."
       ],
-      "completionPercent": 27,
-      "points": 27,
+      "completionPercent": 51,
+      "points": 51,
       "maxPoints": 100
     },
     {
       "target": "CSB V1",
       "scores": {
         "reference_inventory": [
-          8,
-          "CSB source/runtime archives and source-lock boundary guard exist."
+          9,
+          "CSB PC/Atari/Amiga references, source-lock manifests, archive/version inventories, and asset-pair manifests exist."
         ],
         "definition_matrix": [
           10,
-          "docs/parity/PARITY_MATRIX_CSB_V1.md now defines the full CSB V1 DoD matrix with acceptance labels, required proof boundaries, and verifier-backed source anchors; parity surface matrix remains evidence-only."
+          "`docs/parity/PARITY_MATRIX_CSB_V1.md`, completion matrix, and parity surface matrix define the CSB V1 evidence boundary."
         ],
         "launch_smoke": [
-          2,
-          "CSB V1 hash-matched launcher path is gated by csb_v1_launch_blocker_m12, and csb_v1_quickplay_load_route_source_lock source-locks the reference QuickPlay/load route as playback/load setup rather than Firestaff production launch entitlement."
+          6,
+          "Hash-matched launch intent, blocked-launch UI, quickplay/load-route source locks, PC real-asset launch boundary, and CSB profile/diagnostic gates exist."
         ],
         "core_input_movement": [
-          0,
-          "No CSB V1 movement/input completion gates."
+          5,
+          "Command-chain, input-queue, movement step/rotation, runtime tick, queue overflow, reincarnation, and related gates exist, but end-to-end runtime proof is not complete."
         ],
         "viewport_ui_render": [
-          0,
-          "No CSB V1 render/UI completion gates."
+          7,
+          "CSB-specific viewport source slices, CustomBackgrounds, D1/D2/D3 wall/door/ornament lanes, hidden item skip tables, and portrait render handoff are covered; real pixel captures remain open."
         ],
         "gameplay_systems": [
-          0,
-          "No CSB V1 gameplay completion gates."
+          4,
+          "Dungeon loader/world, DSA trigger, save runtime boundary, utility/CMP import, Grey Lord/Zokathra/chaos slices exist; broad mechanics parity remains open."
         ],
         "audio_timing": [
-          0,
-          "No CSB V1 audio/timing completion gates."
+          2,
+          "AMG Utility Disk sound decoding is fixed for documented SND2 files; runtime playback/rate binding and timing proof remain open."
         ],
         "original_overlay_regression": [
           0,
-          "No CSB V1 overlay regression proof."
+          "No CSB V1 representative original overlay regression proof."
         ]
       },
-      "status": "inventory_and_launch_blocker",
+      "status": "runtime_boundary_verified_partial",
       "primaryBlockers": [
-        "Positive front-door render smoke and source-locked QuickPlay/load-route boundaries exist, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.",
-        "Do not infer CSB runtime/render/gameplay parity from DM1."
+        "CSB has launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates, but end-to-end gameplay/render capture proof is still being hardened."
       ],
-      "completionPercent": 20,
-      "points": 20,
+      "completionPercent": 43,
+      "points": 43,
       "maxPoints": 100
     },
     {
       "target": "CSB V2",
       "scores": {
         "reference_inventory": [
-          0,
-          "No CSB V2 completion evidence/gate defined."
+          5,
+          "CSB V2 inherits CSB references but remains presentation-layer evidence."
         ],
         "definition_matrix": [
-          0,
-          "No CSB V2 completion evidence/gate defined."
+          4,
+          "V2 phase-gate and verification-suite tests exist, but no full CSB V2 completion matrix."
         ],
         "launch_smoke": [
-          0,
-          "No CSB V2 completion evidence/gate defined."
+          4,
+          "Presentation-mode and settings probes are wired."
         ],
         "core_input_movement": [
-          0,
-          "No CSB V2 completion evidence/gate defined."
+          6,
+          "Smooth movement, smooth runtime binding, and phase verification are CTest-gated."
         ],
         "viewport_ui_render": [
-          0,
-          "No CSB V2 completion evidence/gate defined."
+          10,
+          "HUD overlay, filter config/chain/dispatch, texture upscale, and V2.2 shape probes are wired and passing."
         ],
         "gameplay_systems": [
-          0,
-          "No CSB V2 completion evidence/gate defined."
+          2,
+          "V2 keeps source gameplay boundaries but does not add broad gameplay parity."
         ],
         "audio_timing": [
           0,
-          "No CSB V2 completion evidence/gate defined."
+          "No CSB V2 audio/timing parity gate."
         ],
         "original_overlay_regression": [
           0,
-          "No CSB V2 completion evidence/gate defined."
+          "No CSB V2 original overlay regression proof."
         ]
       },
-      "status": "not_started",
+      "status": "presentation_verified_partial",
       "primaryBlockers": [
-        "No CSB V2 matrix or gates."
+        "CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open."
       ],
-      "completionPercent": 0,
-      "points": 0,
+      "completionPercent": 31,
+      "points": 31,
       "maxPoints": 100
     },
     {
       "target": "DM2 V1",
       "scores": {
         "reference_inventory": [
-          7,
-          "DM2 DOS archive and SKULL.ASM inventory exist; no ReDMCSB C source-lock equivalent."
+          8,
+          "DM2 PC/French/German/Mac data inventories and SKULL.ASM/source references exist; no ReDMCSB C equivalent."
         ],
         "definition_matrix": [
-          0,
-          "No DM2 V1 parity matrix."
+          4,
+          "DM2 V1 does not yet have a complete parity matrix, but multiple scoped parity gates now define runtime boundaries."
         ],
         "launch_smoke": [
-          0,
-          "No DM2 V1 launch/render smoke proof."
+          4,
+          "Asset scanner/profile coverage and required-file launch gating exist; full runtime launch proof is still active work."
         ],
         "core_input_movement": [
-          0,
-          "No DM2 V1 movement/input completion gates."
+          2,
+          "Some minimap/transition and runtime scaffolds exist, but core movement parity remains incomplete."
         ],
         "viewport_ui_render": [
-          0,
-          "No DM2 V1 render/UI completion gates."
+          3,
+          "HUD/minimap/presentation-adjacent gates exist; V1 renderer parity remains open."
         ],
         "gameplay_systems": [
-          0,
-          "No DM2 V1 gameplay completion gates."
+          12,
+          "Door/button, pressure/trigger, projectile, creature collision/death/drop, weather/timer save, world-state/minimap, shop/combat slices, and save-adjacent gates are covered."
         ],
         "audio_timing": [
-          0,
-          "No DM2 V1 audio/timing completion gates."
+          1,
+          "Limited timing/weather seed coverage; no broad DM2 audio/timing parity proof."
         ],
         "original_overlay_regression": [
           0,
-          "No DM2 V1 overlay regression proof."
+          "No DM2 V1 representative original overlay regression proof."
         ]
       },
-      "status": "inventory_only",
+      "status": "runtime_slices_verified_partial",
       "primaryBlockers": [
-        "Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB."
+        "Door/button, projectile, creature, minimap, weather/timer, and save-adjacent slices exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work."
       ],
-      "completionPercent": 7,
-      "points": 7,
+      "completionPercent": 34,
+      "points": 34,
       "maxPoints": 100
     },
     {
       "target": "DM2 V2",
       "scores": {
         "reference_inventory": [
-          0,
-          "No DM2 V2 completion evidence/gate defined."
+          3,
+          "DM2 V2 inherits DM2 references but remains presentation-layer scaffolding."
         ],
         "definition_matrix": [
-          0,
-          "No DM2 V2 completion evidence/gate defined."
+          2,
+          "V2 probes exist, but no full DM2 V2 completion matrix."
         ],
         "launch_smoke": [
-          0,
-          "No DM2 V2 completion evidence/gate defined."
+          2,
+          "Some presentation/shape/in-place probes exist."
         ],
         "core_input_movement": [
-          0,
-          "No DM2 V2 completion evidence/gate defined."
+          1,
+          "V2 movement evidence is minimal."
         ],
         "viewport_ui_render": [
-          0,
-          "No DM2 V2 completion evidence/gate defined."
+          7,
+          "DM2 V2 HUD/in-place/modern assets/shape-related probes exist, but finished rendering proof is sparse."
         ],
         "gameplay_systems": [
-          0,
-          "No DM2 V2 completion evidence/gate defined."
+          1,
+          "V2 inherits V1 boundaries; no broad V2 gameplay proof."
         ],
         "audio_timing": [
           0,
-          "No DM2 V2 completion evidence/gate defined."
+          "No DM2 V2 audio/timing parity gate."
         ],
         "original_overlay_regression": [
           0,
-          "No DM2 V2 completion evidence/gate defined."
+          "No DM2 V2 original overlay regression proof."
         ]
       },
-      "status": "not_started",
+      "status": "presentation_scaffold_partial",
       "primaryBlockers": [
-        "No DM2 V2 matrix or gates."
+        "V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete."
       ],
-      "completionPercent": 0,
-      "points": 0,
+      "completionPercent": 16,
+      "points": 16,
       "maxPoints": 100
     },
     {
       "target": "DM Nexus V1",
       "scores": {
         "reference_inventory": [
-          0,
-          "No DM Nexus V1 completion evidence/gate defined."
+          8,
+          "Saturn DMDF/DGN/S2D/MNS/BPK/BPX inventories and hash/profile references exist."
         ],
         "definition_matrix": [
-          0,
-          "No DM Nexus V1 completion evidence/gate defined."
+          4,
+          "No full Nexus V1 parity matrix, but parser/runtime gate coverage is now substantial."
         ],
         "launch_smoke": [
-          0,
-          "No DM Nexus V1 completion evidence/gate defined."
+          4,
+          "Profile/asset scanner and launcher boundaries exist; real-asset end-to-end handoff remains active."
         ],
         "core_input_movement": [
-          0,
-          "No DM Nexus V1 completion evidence/gate defined."
+          2,
+          "World/save/mechanics slices exist, but movement/input parity is sparse."
         ],
         "viewport_ui_render": [
-          0,
-          "No DM Nexus V1 completion evidence/gate defined."
+          10,
+          "Saturn font parser/render, BPK/BPX archive parsing, DMDF palette/string bounds, DGN malformed actor guard, and renderer probes exist."
         ],
         "gameplay_systems": [
-          0,
-          "No DM Nexus V1 completion evidence/gate defined."
+          9,
+          "Save slot round-trip, mechanics parity, creature/world/dungeon data slices, and loader guards exist."
         ],
         "audio_timing": [
           0,
-          "No DM Nexus V1 completion evidence/gate defined."
+          "Nexus audio/timing parity gates remain open."
         ],
         "original_overlay_regression": [
           0,
-          "No DM Nexus V1 completion evidence/gate defined."
+          "No Nexus representative original overlay regression proof."
         ]
       },
-      "status": "not_started",
+      "status": "runtime_slices_verified_partial",
       "primaryBlockers": [
-        "No DM Nexus V1 reference inventory, matrix, or gates."
+        "DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work."
       ],
-      "completionPercent": 0,
-      "points": 0,
+      "completionPercent": 37,
+      "points": 37,
       "maxPoints": 100
     },
     {
       "target": "DM Nexus V2",
       "scores": {
         "reference_inventory": [
-          0,
-          "No DM Nexus V2 completion evidence/gate defined."
+          4,
+          "V2 inherits Nexus references."
         ],
         "definition_matrix": [
-          0,
-          "No DM Nexus V2 completion evidence/gate defined."
+          2,
+          "V2 probe coverage exists, but no full completion matrix."
         ],
         "launch_smoke": [
-          0,
-          "No DM Nexus V2 completion evidence/gate defined."
+          2,
+          "Presentation probes build/run in CI."
         ],
         "core_input_movement": [
-          0,
-          "No DM Nexus V2 completion evidence/gate defined."
+          2,
+          "Touch/smooth movement scaffolds exist, but movement parity is not complete."
         ],
         "viewport_ui_render": [
-          0,
-          "No DM Nexus V2 completion evidence/gate defined."
+          9,
+          "Lighting, atmosphere, upscaler, texture/modern asset, and in-place draw probes exist."
         ],
         "gameplay_systems": [
-          0,
-          "No DM Nexus V2 completion evidence/gate defined."
+          1,
+          "V2 gameplay proof is intentionally limited."
         ],
         "audio_timing": [
           0,
-          "No DM Nexus V2 completion evidence/gate defined."
+          "No Nexus V2 audio/timing parity gate."
         ],
         "original_overlay_regression": [
           0,
-          "No DM Nexus V2 completion evidence/gate defined."
+          "No Nexus V2 original overlay regression proof."
         ]
       },
-      "status": "not_started",
+      "status": "presentation_scaffold_partial",
       "primaryBlockers": [
-        "No DM Nexus V2 reference inventory, matrix, or gates."
+        "V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete."
       ],
-      "completionPercent": 0,
-      "points": 0,
+      "completionPercent": 20,
+      "points": 20,
+      "maxPoints": 100
+    },
+    {
+      "target": "Theron V1",
+      "scores": {
+        "reference_inventory": [
+          8,
+          "Track 02 JP/US provenance, launcher scan reuse, and hash/profile evidence exist."
+        ],
+        "definition_matrix": [
+          3,
+          "No complete Theron V1 parity matrix, but runtime/progression/save gates now define important slices."
+        ],
+        "launch_smoke": [
+          5,
+          "Track 02 bank/object marker, launcher scan reuse, and runtime screenshot-readiness receipts exist; positive real-asset launch remains active work."
+        ],
+        "core_input_movement": [
+          2,
+          "Dungeon progression/mechanics probes exist; broad input/movement parity is not complete."
+        ],
+        "viewport_ui_render": [
+          5,
+          "Tile/viewport/runtime screenshot-readiness and presentation scaffolds exist, but real screen parity remains open."
+        ],
+        "gameplay_systems": [
+          14,
+          "Save/load progress round-trip, shop purchase edges, dungeon progression, mechanics, champion, object-marker, and Track 02 parser slices are covered."
+        ],
+        "audio_timing": [
+          2,
+          "Track 02 bank evidence exists, but audio/timing parity is sparse."
+        ],
+        "original_overlay_regression": [
+          0,
+          "No representative original overlay regression proof for Theron."
+        ]
+      },
+      "status": "track02_slices_verified_partial",
+      "primaryBlockers": [
+        "Track 02 provenance, parser, save/progression/shop/mechanics slices exist; positive real-asset launch through Track 02 and broader runtime capture remain active work."
+      ],
+      "completionPercent": 39,
+      "points": 39,
       "maxPoints": 100
     }
   ]

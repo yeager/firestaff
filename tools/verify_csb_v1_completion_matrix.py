@@ -3,7 +3,7 @@
 
 Evidence-only gate. It validates the CSB V1 definition matrix, the existing
 CSB surface matrix, source anchors, and the conservative Firestaff completion
-credit. It does not enable or claim CSB launch/runtime parity.
+credit. It does not claim full CSB runtime parity.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
 CRITERIA = {
     "reference_inventory": (8, "SOURCE_LOCKED_PARTIAL"),
     "definition_matrix": (10, "MATCHED_DEFINITION_ONLY"),
-    "launch_smoke": (2, "POSITIVE_BLOCKER_RENDER_SMOKE"),
+    "launch_smoke": (6, "RUNTIME_BOUNDARY_VERIFIED_PARTIAL"),
     "core_input_movement": (0, "BLOCKED_RUNTIME"),
     "viewport_ui_render": (0, "BLOCKED_CAPTURE"),
     "gameplay_systems": (0, "BLOCKED_RUNTIME"),
@@ -63,7 +63,7 @@ REFERENCE_ANCHORS = [
 ]
 
 NON_CLAIMS = [
-    "No CSB runtime, launch, render, gameplay, save compatibility, or pixel parity is claimed by this matrix.",
+    "No full CSB runtime, render, gameplay, save compatibility, or pixel parity is claimed by this matrix.",
     "No Firestaff runtime code is modified by this matrix.",
     "DM1 gates cannot be counted as CSB V1 completion without CSB-specific evidence.",
 ]
@@ -136,24 +136,24 @@ def main() -> int:
         score = csb.get("scores", {}).get("definition_matrix")
         if score is None or score[0] != 10:
             failures.append(f"CSB V1 definition_matrix completion credit must be 10/10, got {score}")
-        if csb.get("completionPercent") != 20 or csb.get("points") != 20:
-            failures.append(f"CSB V1 completion should be 20/100 after QuickPlay/load source-lock gate, got {csb.get('completionPercent')}/{csb.get('points')}")
+        if csb.get("completionPercent") != 43 or csb.get("points") != 43:
+            failures.append(f"CSB V1 completion should be 43/100 after current runtime-boundary evidence, got {csb.get('completionPercent')}/{csb.get('points')}")
 
     result = {
         "schema": "firestaff.csb_v1_completion_matrix.v1",
         "pass": not failures,
-        "scope": "CSB V1 definition-of-done matrix; source/evidence boundary only, no runtime parity claim.",
+        "scope": "CSB V1 definition-of-done matrix; source/evidence boundary only, no full runtime parity claim.",
         "criteria": [{"id": k, "score": v[0], "status": v[1]} for k, v in CRITERIA.items()],
         "source_anchors": source_rows,
         "reference_anchors": reference_rows,
         "surface_matrix": {"path": str(SURFACE.relative_to(ROOT)), "pass": surface.get("pass"), "surface_count": surface.get("surface_count")},
-        "completion_impact": {"target": "CSB V1", "before_percent": 19, "after_percent": 20, "quickplay_load_source_lock_delta": 1, "launch_smoke_status": "POSITIVE_BLOCKER_RENDER_SMOKE"},
+        "completion_impact": {"target": "CSB V1", "current_percent": 43, "launch_smoke_score": 6, "launch_smoke_status": "RUNTIME_BOUNDARY_VERIFIED_PARTIAL"},
         "non_claims": NON_CLAIMS,
         "failures": failures,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    print(("PASS" if result["pass"] else "FAIL") + f" csb v1 completion matrix: criteria={len(CRITERIA)} anchors={len(source_rows)} reference_anchors={len(reference_rows)} impact=+1 point")
+    print(("PASS" if result["pass"] else "FAIL") + f" csb v1 completion matrix: criteria={len(CRITERIA)} anchors={len(source_rows)} reference_anchors={len(reference_rows)} completion=43/100")
     for failure in failures:
         print(f"- {failure}")
     return 0 if result["pass"] else 1

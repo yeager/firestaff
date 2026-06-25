@@ -148,10 +148,8 @@
   "completion_impact": {
     "target": "CSB V1",
     "criterion": "launch_smoke",
-    "before_score": 1,
-    "after_score": 2,
-    "before_completion_percent": 19,
-    "after_completion_percent": 20
+    "current_score": 6,
+    "current_completion_percent": 43
   },
   "non_claims": [
     "QuickPlay is source-locked as replay playback setup, not as a Firestaff production CSB launch route.",
