@@ -25,22 +25,22 @@
     },
     {
       "file": "src/engine/m11_game_view.c",
-      "start": 21263,
-      "end": 21281,
+      "start": 21358,
+      "end": 21377,
       "function": "m11_v1_inventory_slot_icon_index_for_thing",
       "assertion": "Firestaff action-hand inventory icon helper remaps a closed chest icon C144 to open chest C145 while the same chest is open and the panel was not opened through the eye route."
     },
     {
       "file": "src/engine/m11_game_view.c",
-      "start": 25805,
-      "end": 25815,
+      "start": 25999,
+      "end": 26009,
       "function": "m11_draw_inv_slot",
       "assertion": "Firestaff occupied inventory slot helper resolves a DM object icon index before drawing the object icon into the original slot box."
     },
     {
       "file": "src/engine/m11_game_view.c",
-      "start": 26374,
-      "end": 26388,
+      "start": 26568,
+      "end": 26582,
       "function": "m11_draw_inventory_panel",
       "assertion": "Firestaff normal V1 inventory overlay maps champion slots through source slot-box zones and calls the action-hand-aware icon helper before drawing the icon."
     }

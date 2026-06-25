@@ -19,9 +19,9 @@ SOURCE_RANGES = [
     {"file": "CHAMDRAW.C", "start": 498, "end": 631},
     {"file": "CHEST.C", "start": 2, "end": 46},
     {"file": "CHAMPION.C", "start": 587, "end": 640},
-    {"file": "src/engine/m11_game_view.c", "start": 21263, "end": 21281},
-    {"file": "src/engine/m11_game_view.c", "start": 25805, "end": 25815},
-    {"file": "src/engine/m11_game_view.c", "start": 26374, "end": 26388},
+    {"file": "src/engine/m11_game_view.c", "start": 21358, "end": 21377},
+    {"file": "src/engine/m11_game_view.c", "start": 25999, "end": 26009},
+    {"file": "src/engine/m11_game_view.c", "start": 26568, "end": 26582},
 ]
 
 
@@ -181,9 +181,9 @@ def verify_firestaff_seam() -> list[str]:
         ],
         "Firestaff normal V1 inventory source-slot seam",
     )
-    require_excerpt("src/engine/m11_game_view.c", 21263, 21281, ["m11_v1_inventory_slot_icon_index_for_thing", "m11_object_icon_index_for_thing", "CHAMPION_SLOT_ACTION_HAND", "M11_GameView_GetV1OpenChestThing", "!state->v1OpenChestOpenedByEye", "iconIndex == 144", "return 145"])
-    require_excerpt("src/engine/m11_game_view.c", 25805, 25815, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
-    require_excerpt("src/engine/m11_game_view.c", 26374, 26388, ["M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot", "m11_v1_inventory_slot_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 21358, 21377, ["m11_v1_inventory_slot_icon_index_for_thing", "m11_object_icon_index_for_thing", "CHAMPION_SLOT_ACTION_HAND", "M11_GameView_GetV1OpenChestThing", "!state->v1OpenChestOpenedByEye", "iconIndex == 144", "return 145"])
+    require_excerpt("src/engine/m11_game_view.c", 25999, 26009, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 26568, 26582, ["M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot", "m11_v1_inventory_slot_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
     return [
         f"Firestaff m11_v1_inventory_slot_icon_index_for_thing starts at {FIRESTAFF_SRC}:{line_no(text, helper_start)}",
         *(f"Firestaff action-hand helper {name}: line {line_no(text, helper_start + pos)}" for name, pos in helper_markers),
