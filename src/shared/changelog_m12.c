@@ -9,6 +9,13 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.7  (2026-06-25)",
+    "  - DM1 Hall of Champions evidence was tightened after v3.0.6. Stale probe registrations were removed, floating side-wall portrait pixels are blocked, HiDPI portrait-surface coverage is locked, and seven ordinal-22 dedicated runtime lanes are now CMake/CTest-gated.",
+    "  - DM1 V2.2 handoff evidence is now source-locked for M11: the verifier pins viewport sampling, shape-cache population, in-place render preference, legacy overlay fallback boundaries, and pit/stairs/teleporter/field asset routing.",
+    "  - Cross-game source-media work advanced without broadening runtime-completion claims: PC-98 and X68000 HDM classifiers, FTL HUNK_CODE/HUNK_DATA decoder gates, CSB HCSB.HTC scanning, DM2 overlay/HUD asset gates, Nexus Track 1/font/light probes, and Theron Track 02/SRM evidence were added or hardened.",
+    "  - Launcher/data-status coverage widened with data-dir platform-matrix and no-data popup gates, while TODO/DONE were refreshed so the open list tracks current follow-ups instead of already-promoted evidence.",
+    "  - Release verification: based on 21 commits after v3.0.6 with GitHub M10 verify + CMake build + cross-platform determinism green on main before release prep, plus focused local release-prep checks.",
+    "",
     "V3.0.6  (2026-06-25)",
     "  - DM1 Hall of Champions portrait placement is now guarded by an all-portrait wall-coordinate gate. The probe scans all 24 source-visible C127 champion portrait poses, including HALK, GANDO, and WUUF, and locks the D1C wall frame plus C026 portrait cutout without claiming original DOS pixel parity.",
     "  - Greatstone/SCK evidence is stronger: db_data path reachability is CTest-gated offline, SCK mapfile-to-asset selection now has a bounded bridge and optional real-corpus probe, and FTL HUNK_DATA zero-run decompression is covered while HUNK_CODE/runtime loading remain explicit follow-ups.",
@@ -288,5 +295,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.6";
+    return "3.0.7";
 }
