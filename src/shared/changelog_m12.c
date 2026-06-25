@@ -9,6 +9,13 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.5  (2026-06-25)",
+    "  - CSB keyboard commands now have a source-locked bridge for F1-F4 champion inventory toggles, Escape freeze/unfreeze, resting Return/Enter wake-up, Ctrl-S disk menu, and the Insert/arrow/Clr Home movement layout from the ReDMCSB command tables.",
+    "  - DMWeb and Greatstone provenance coverage expanded across DM1, CSB, DM2, Nexus, and Theron's Quest. The docs now capture platform/version boundaries, media/protection notes, current Greatstone db_data paths, and SCK extraction references without broadening runtime completion claims.",
+    "  - Greatstone/SCK format notes corrected for FTL hunks, SCK mapfiles, Atari ST PAK, IMG5 planar images, Mac QuickTime MooV assets, and SNES palette-selector metadata, with gap-list follow-up kept separate from already-fixed decoders.",
+    "  - DM1 Hall of Champions evidence continues after v3.0.4 with additional ordinal gates, including side-wall/no-portrait and D2C far-positive slices.",
+    "  - Release verification: based on 70 commits after v3.0.4 with GitHub M10 verify + CMake build + cross-platform determinism green on main before release prep, plus local release-prep checks.",
+    "",
     "V3.0.4  (2026-06-24)",
     "  - DM1 Hall of Champions portrait evidence expanded across the full C026 ordinal sweep. New runtime probes cover additional front-entry, side-entry, walkpath, panel, redraw, HiDPI, fullscreen-scale, and no-floating-pixel routes, including ordinal 22 lanes.",
     "  - The launcher/startup game-data default is corrected for real installs: macOS and Linux resolve to ~/.firestaff/data, while Windows resolves beside the installed executable. The old /tmp/firestaff-test-no-assets path remains only as an explicit test fixture.",
@@ -274,5 +281,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.4";
+    return "3.0.5";
 }
