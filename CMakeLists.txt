@@ -4372,6 +4372,41 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v22_modern_assets_pc34
     )
 
+    # ── DM2 V2 HUD Widget Asset Manifest + Gate ──────────────────
+    # Phase 3 placeholder-vs-real asset gate. Companion to the dm2_v22
+    # modern-asset module; smaller scope (2 Phase 3 primary + 5 chrome
+    # supporting slots), data-free, deterministic. Source-locked against
+    # SKULL.ASM T560, skproject/SKULLWIN/c_gui_vp.cpp, ReDMCSB PANEL.C.
+    add_executable(test_dm2_v2_hud_widget_assets
+        tests/test_dm2_v2_hud_widget_assets.c
+        src/dm2/dm2_v2_hud_widget_assets.c
+    )
+    target_include_directories(test_dm2_v2_hud_widget_assets PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v2_hud_widget_assets PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v2_hud_widget_assets PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v2_hud_widget_assets
+        COMMAND test_dm2_v2_hud_widget_assets
+    )
+
+    add_executable(firestaff_dm2_v2_hud_widget_assets_probe
+        probes/firestaff_dm2_v2_hud_widget_assets_probe.c
+        src/dm2/dm2_v2_hud_widget_assets.c
+    )
+    target_link_libraries(firestaff_dm2_v2_hud_widget_assets_probe
+        PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v2_hud_widget_assets_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm2_v2_hud_widget_assets_probe
+        COMMAND firestaff_dm2_v2_hud_widget_assets_probe
+    )
+
     add_executable(test_dm2_v22_inplace_draw_pc34
         tests/test_dm2_v22_inplace_draw_pc34.c
         src/dm2/dm2_v22_inplace_draw_pc34.c
