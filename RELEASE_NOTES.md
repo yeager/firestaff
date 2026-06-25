@@ -1,11 +1,51 @@
 
-# Firestaff next
+# Firestaff v3.0.5
+
+Firestaff v3.0.5 packages the 2026-06-25 post-v3.0.4 evidence and
+reference-hardening batch. This is still a conservative release: it adds
+source-locked CSB input coverage, platform/version provenance, and
+asset-format documentation without broadening public runtime-completion
+claims beyond the evidence now checked into the tree.
+
+## Highlights since v3.0.4
 
 - **CSB keyboard commands source-locked**: CSB gameplay now has a
   dedicated keyboard bridge for F1-F4 champion inventory toggles,
   Escape freeze/unfreeze, resting Return/Enter wake-up, Ctrl-S disk menu,
   and the Insert/arrow/Clr Home movement layout from the ReDMCSB command
   tables.
+- **DMWeb platform provenance expanded**: DM1, CSB, DM2, Nexus, and
+  Theron's Quest docs now record more exact per-platform and per-version
+  boundaries, including source-media notes, protection/copy boundaries,
+  version matrices, screenshots/video provenance, and remaining
+  real-media handoff gaps.
+- **Greatstone/SCK references corrected and widened**: the Greatstone
+  coverage now distinguishes the real FTL hunk container, SCK mapfile
+  metadata, Atari ST `START.PAK`, IMG5 planar images, Mac QuickTime
+  `MooV` assets, SNES palette-selector metadata, and current reachable
+  `db_data/` DM/CSB paths. The gap list keeps those follow-ups separate
+  from already-fixed raw decoders such as IMG5 and PAK.
+- **DM1 Hall of Champions evidence continues**: additional post-v3.0.4
+  gates cover more ordinal slices, including side-wall/no-portrait and
+  D2C far-positive cases, extending the source-locked runtime evidence
+  without claiming finished screenshot parity.
+- **Release hygiene tightened**: CI now blocks tracked original
+  game-data payloads, stale subproject metadata was removed, and the
+  public docs stay focused on user-facing status rather than worker logs
+  or private queue details.
+
+## Verification
+
+- 70 commits ship on top of `v3.0.4`, including this release-prep
+  commit.
+- GitHub Actions was green on `5a429a8b4` before release prep: M10
+  verify, CMake build on macOS/Windows/Linux, strict warnings, asset
+  hygiene, Pages, and cross-platform determinism.
+- Focused local verification before release prep included `git diff
+  --check`.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
+  `v3.0.5` release commit.
 
 # Firestaff v3.0.4
 
