@@ -11986,6 +11986,26 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_ftl_hunk_data_zero_run
     )
 
+    # -- PC-9801 HDM/floppy image classifier (DM1/CSB import gap) --
+    # Synthetic fixture gate for DMWeb's DM1/CSB PC-9801 media
+    # boundaries. It classifies raw 2HD/2DD HDM images and FDI-wrapped
+    # images, plus documented original/cracked executable markers,
+    # without claiming real media import or runtime launch support.
+    add_executable(test_firestaff_pc98_hdm_classify
+        tests/test_firestaff_pc98_hdm_classify.c
+        src/shared/firestaff_pc98_hdm_classify.c
+    )
+    target_include_directories(test_firestaff_pc98_hdm_classify PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_pc98_hdm_classify PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_pc98_hdm_classify_unit
+        COMMAND test_firestaff_pc98_hdm_classify
+    )
+
     # ── CSB Utility Disk .CMP file decoder (Tier 2 #6) ──
     # Verifies src/shared/firestaff_cmp_decode.c parses the
     # 496-byte CMP format used by Chaos Strikes Back's
