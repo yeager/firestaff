@@ -206,19 +206,22 @@ int FirestaffFtlContainer_VerifyChecksums(const uint8_t* data,
 
     if (ftl->code_index >= 0) {
         const FirestaffFtlHunkHeader* h = &ftl->hunks[ftl->code_index];
-        if (h->size >= 2u && h->payload[0] == 0x52u && h->payload[1] == 0x23u) {
-            fill_result(&out->code_hunk,
-                        FIRESTAFF_FTL_CHECK_UNSUPPORTED_COMPRESSED_CODE,
-                        ftl->bss.code_checksum,
-                        0);
-        } else {
-            uint16_t sum = FirestaffFtlContainer_ByteChecksum(h->payload, h->size);
-            fill_result(&out->code_hunk,
-                        sum == ftl->bss.code_checksum ?
-                            FIRESTAFF_FTL_CHECK_MATCH : FIRESTAFF_FTL_CHECK_MISMATCH,
-                        ftl->bss.code_checksum,
-                        sum);
-        }
+        /* The BSS metadata's code_checksum (greatstone checksum 4) is
+         * the byte checksum of the on-disk CODE payload, regardless
+         * of whether the payload is compressed (0x5223 + table +
+         * nibbles) or uncompressed. Both shapes can therefore be
+         * verified with the same byte-checksum helper.
+         *
+         * Decoding the 0x5223 compressed bytes is the job of the
+         * separate firestaff_ftl_decode.c HUNK_CODE decoder, not the
+         * checksum verifier; that path is exercised by
+         * firestaff_ftl_decode_unit. */
+        uint16_t sum = FirestaffFtlContainer_ByteChecksum(h->payload, h->size);
+        fill_result(&out->code_hunk,
+                    sum == ftl->bss.code_checksum ?
+                        FIRESTAFF_FTL_CHECK_MATCH : FIRESTAFF_FTL_CHECK_MISMATCH,
+                    ftl->bss.code_checksum,
+                    sum);
     } else {
         fill_result(&out->code_hunk, FIRESTAFF_FTL_CHECK_NOT_AVAILABLE,
                     ftl->bss.code_checksum, 0);
@@ -384,7 +387,7 @@ static int test_common_checksum_mismatch_reports(void) {
     return 1;
 }
 
-static int test_compressed_code_is_not_claimed(void) {
+static int test_compressed_code_byte_checksum_matches(void) {
     uint8_t buf[128];
     size_t size = build_valid_ftl(buf, sizeof(buf), 1);
 
@@ -393,9 +396,14 @@ static int test_compressed_code_is_not_claimed(void) {
     FirestaffFtlChecksumReport r;
     ST_ASSERT(FirestaffFtlContainer_VerifyChecksums(buf, size, &ftl, &r) == 0,
               "verify");
-    ST_ASSERT(r.code_hunk.status ==
-                  FIRESTAFF_FTL_CHECK_UNSUPPORTED_COMPRESSED_CODE,
-              "compressed code unsupported");
+    /* The CODE hunk byte-checksum contract is independent of whether
+     * the payload is compressed (0x5223 + table + nibbles) or
+     * uncompressed. The greatstone checksum 4 covers the on-disk
+     * bytes, so a correctly-built synthetic compressed-CODE container
+     * MUST report MATCH. The compressed bytes themselves are decoded
+     * separately by firestaff_ftl_decode (firestaff_ftl_decode_unit). */
+    ST_ASSERT(r.code_hunk.status == FIRESTAFF_FTL_CHECK_MATCH,
+              "compressed CODE byte checksum matches");
     ST_ASSERT(r.common_header.status == FIRESTAFF_FTL_CHECK_MATCH, "common");
     ST_ASSERT(r.bss_hunk.status == FIRESTAFF_FTL_CHECK_MATCH, "bss");
     ST_ASSERT(r.data_hunk.status == FIRESTAFF_FTL_CHECK_MATCH, "data");
@@ -412,7 +420,7 @@ int FirestaffFtlContainer_SelfTest(void) {
     RUN(test_out_of_bounds_hunk);
     RUN(test_checksum_mismatch_reports);
     RUN(test_common_checksum_mismatch_reports);
-    RUN(test_compressed_code_is_not_claimed);
+    RUN(test_compressed_code_byte_checksum_matches);
 #undef RUN
     if (passed != total) {
         fprintf(stderr, "firestaff_ftl_container self-test: %d/%d passed\n",

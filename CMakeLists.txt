@@ -12043,6 +12043,26 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_x68k_ftl_handoff
     )
 
+    # -- FTL container + HUNK_CODE 0x5223 decoder --
+    # Read-only decoder for the FTL container CODE hunk compression:
+    # 0x5223 signature, 1920-word table, and nibble-coded stream.
+    # Runtime asset loading and real corpus promotion remain separate
+    # follow-up gates.
+    add_executable(test_firestaff_ftl_decode
+        tests/test_firestaff_ftl_decode.c
+        src/shared/firestaff_ftl_decode.c
+    )
+    target_include_directories(test_firestaff_ftl_decode PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_ftl_decode PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_ftl_decode_unit
+        COMMAND test_firestaff_ftl_decode
+    )
+
     # ── CSB Utility Disk .CMP file decoder (Tier 2 #6) ──
     # Verifies src/shared/firestaff_cmp_decode.c parses the
     # 496-byte CMP format used by Chaos Strikes Back's
