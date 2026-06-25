@@ -13433,6 +13433,31 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_track02_bank_probe
     )
 
+    # ── Theron V1 Track 02 Descriptor Table Decoder Probe ─────────
+    # Narrow semantic Track 02 decoder probe: regression-locks the
+    # 9-word little-endian stride table shape (0x0020..0x2020, stride
+    # 0x0400) on synthetic fixtures and on every documented JP/US
+    # anchor when the hash-verified Track 02 data is present locally.
+    add_executable(firestaff_theron_v1_track02_descriptor_table_probe
+        probes/theron/firestaff_theron_v1_track02_descriptor_table_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_descriptor_table_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_track02_descriptor_table_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_track02_descriptor_table_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_descriptor_table_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_descriptor_table
+        COMMAND firestaff_theron_v1_track02_descriptor_table_probe
+    )
+
     if(Python3_Interpreter_FOUND)
         add_test(
             NAME pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick

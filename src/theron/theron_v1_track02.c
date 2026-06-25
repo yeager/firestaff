@@ -572,3 +572,110 @@ const char *theron_v1_track02_source_evidence(void) {
            "at every post-boundary span anchor; US anchor 1 audio-bank id is "
            "0x01725800 at offset 0x2d53dc.";
 }
+
+/* ── Semantic dungeon-descriptor table decoder ──────────────────── */
+
+/* Decode the documented 9-word little-endian stride table at the supplied
+ * bytes.  Returns THERON_TRACK02_TABLE_DECODE_OK on success.
+ *
+ * Shape locked (see theron_v1_track02.h for the source citation):
+ *   - 9 little-endian uint16 entries
+ *   - strictly ascending (entries[i+1] > entries[i])
+ *   - constant stride 0x0400 between adjacent entries
+ *   - all entries + stride land in the closed range [0x0020, 0x2020 + 0x0400)
+ *
+ * The decoder is independent of any single offset: callers pass the raw
+ * bytes, not an offset into Track 02.  This keeps the function
+ * regression-testable from synthetic fixtures and from real Track 02 data
+ * via theron_v1_track02_find_bank_signal(). */
+Theron_Track02TableDecodeStatus theron_v1_track02_decode_descriptor_table(
+    const uint8_t *descriptor_bytes,
+    size_t descriptor_size,
+    uint16_t expected_stride,
+    Theron_Track02DescriptorTable *out_table) {
+
+    const size_t required_bytes = THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES * 2u;
+    size_t i;
+
+    if (out_table) {
+        memset(out_table, 0, sizeof(*out_table));
+    }
+    if (!descriptor_bytes || !out_table || descriptor_size < required_bytes) {
+        return THERON_TRACK02_TABLE_DECODE_BAD_INPUT;
+    }
+    if (expected_stride == 0u) {
+        return THERON_TRACK02_TABLE_DECODE_BAD_INPUT;
+    }
+
+    for (i = 0; i < THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES; ++i) {
+        out_table->entries[i] = rd16le(descriptor_bytes + (i * 2u));
+    }
+    out_table->entry_count = THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES;
+    out_table->first_value = out_table->entries[0];
+    out_table->last_value =
+        out_table->entries[THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES - 1u];
+    out_table->stride = expected_stride;
+    out_table->exclusive_upper_bound =
+        (uint16_t)(out_table->last_value + expected_stride);
+
+    /* Strictly ascending: every adjacent pair must increase. */
+    for (i = 0; i + 1u < THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES; ++i) {
+        if (out_table->entries[i + 1u] <= out_table->entries[i]) {
+            return THERON_TRACK02_TABLE_DECODE_NOT_STRICTLY_ASCENDING;
+        }
+    }
+
+    /* Constant stride: every adjacent difference must equal expected_stride. */
+    for (i = 0; i + 1u < THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES; ++i) {
+        const uint16_t diff =
+            (uint16_t)(out_table->entries[i + 1u] - out_table->entries[i]);
+        if (diff != expected_stride) {
+            return THERON_TRACK02_TABLE_DECODE_WRONG_STRIDE;
+        }
+    }
+
+    /* Range sanity: documented shape is [0x0020, 0x2020 + 0x0400) inclusive
+     * on both ends (the last entry is 0x2020; the stride window ends at
+     * 0x2020 + 0x0400 == 0x2420, exclusive).  We also accept any strictly
+     * ascending 9-word stride sequence whose first value, last value, and
+     * exclusive upper bound all fit in 16 bits -- but require the range to
+     * stay sane (exclusive_upper_bound > last_value; first_value > 0) so
+     * empty-range and zero-origin decoders are rejected. */
+    if (out_table->first_value == 0u) {
+        return THERON_TRACK02_TABLE_DECODE_NOT_STRICTLY_ASCENDING;
+    }
+    if (out_table->exclusive_upper_bound <= out_table->last_value) {
+        return THERON_TRACK02_TABLE_DECODE_WRONG_STRIDE;
+    }
+
+    /* The documented 0x0020..0x2020 inclusive + 0x0400 stride window. */
+    {
+        const uint16_t lo = 0x0020u;
+        const uint16_t hi_inclusive = (uint16_t)(0x2020u + expected_stride);
+        out_table->range_inclusive =
+            (out_table->first_value >= lo) &&
+            (out_table->exclusive_upper_bound <= hi_inclusive) ? 1 : 0;
+    }
+
+    return THERON_TRACK02_TABLE_DECODE_OK;
+}
+
+const char *theron_v1_track02_table_decode_status_name(
+    Theron_Track02TableDecodeStatus status) {
+    switch (status) {
+    case THERON_TRACK02_TABLE_DECODE_OK:
+        return "ok";
+    case THERON_TRACK02_TABLE_DECODE_NOT_FOUND:
+        return "not-found";
+    case THERON_TRACK02_TABLE_DECODE_BAD_INPUT:
+        return "bad-input";
+    case THERON_TRACK02_TABLE_DECODE_WRONG_ENTRY_COUNT:
+        return "wrong-entry-count";
+    case THERON_TRACK02_TABLE_DECODE_NOT_STRICTLY_ASCENDING:
+        return "not-strictly-ascending";
+    case THERON_TRACK02_TABLE_DECODE_WRONG_STRIDE:
+        return "wrong-stride";
+    default:
+        return "unknown";
+    }
+}

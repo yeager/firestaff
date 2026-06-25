@@ -2,9 +2,10 @@
 
 Theron's Quest is not yet represented by README screenshots. The current public
 status should stay clear: Firestaff can hash-verify JP/US Track 02 data, lock
-raw bank-anchor offsets, and reach the M11 Theron runtime, but semantic
-Track 02 dungeon-table decoding, broader loader parity, runtime playability
-proof, and reviewed screenshot promotion are still active work.
+raw bank-anchor offsets, validate the 9-word descriptor-table shape, and reach
+the M11 Theron runtime, but per-entry semantic Track 02 dungeon-table binding,
+broader loader parity, runtime playability proof, and reviewed screenshot
+promotion are still active work.
 
 The strongest current proof is:
 
@@ -22,6 +23,14 @@ The strongest current proof is:
   runtime-probe JSON plus source/presented BMP hash receipts. Rows that report
   deterministic fallback assets are capture-path proof, not final art or
   source-bank proof. Missing data is a successful SKIP, not a failure.
+- `theron_v1_track02_bank` and `theron_v1_track02_descriptor_table`: when
+  real Track 02 data is present, both probes hash-gate the bank-anchor
+  offsets and the 9-word little-endian stride table shape on the US ISO
+  (`0x1584`) plus all three US raw BIN anchors and all three JP raw BIN
+  anchors. The descriptor-table decoder is shape-driven only: it validates
+  the 9-word stride sequence (entries 0x0020..0x2020, stride 0x0400) without
+  claiming per-entry semantic type, dungeon-level binding, or loader
+  handoff.
 - `theron_24h_readiness`: the daily readiness rollup ties the Track 02 bank,
   save/load, cross-route mechanics, runtime screenshot, dungeon progression,
   cross-slot, and M11 launch gates into one PASS/FAIL manifest so later
@@ -31,13 +40,14 @@ These are readiness receipts, not public screenshot assets. Do not add Theron
 images to the README until a reviewed real Firestaff runtime frame is promoted
 from tracked evidence. Do not use generated, illustrated, or mock Theron images
 as screenshots. A green readiness row proves the launch/capture path is alive;
-it does not prove semantic Track 02 dungeon-table parity, real `.srm`
-interchange, or broader playability.
+it does not prove per-entry semantic Track 02 dungeon-table binding, real
+`.srm` interchange, or broader playability.
 
 Run the focused readiness check with:
 
 ```bash
 ctest --test-dir build -R '^theron_v1_runtime_screenshot_readiness$' --output-on-failure
+ctest --test-dir build -R '^theron_v1_track02_' --output-on-failure
 ```
 
 The generated report lives at

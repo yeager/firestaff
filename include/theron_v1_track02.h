@@ -6,6 +6,13 @@
 
 #define THERON_TRACK02_MAX_BANK_ANCHORS 3u
 
+/* Maximum number of entries the documented 9-word stride table can hold.
+ * The 0x1584 descriptor observed in the hash-verified US Track 02 ISO and
+ * the three replicated anchors in the JP/US raw Track 02 BINs all carry
+ * exactly 9 little-endian uint16 words; this constant bounds the decoder
+ * table size and the synthetic-fixture/negative-fixture tests. */
+#define THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES 9u
+
 #define THERON_TRACK02_MD5_JP_BIN      "b7afb338ad31be1025b53f9aff12d73a"
 #define THERON_TRACK02_MD5_US_BIN      "f23601102138f87c33025877767ebf76"
 #define THERON_TRACK02_MD5_JP_REV1_ISO "397039af02d50d15c70b74088eb8a1cb"
@@ -109,5 +116,75 @@ Theron_Track02SignalStatus theron_v1_track02_find_audio_bank_marker(
 const char *theron_v1_track02_signal_status_name(Theron_Track02SignalStatus status);
 const char *theron_v1_track02_variant_name(Theron_Track02Variant variant);
 const char *theron_v1_track02_source_evidence(void);
+
+/* Semantic dungeon-descriptor table decoding.
+ *
+ * The 0x1584 descriptor block (US Track 02 ISO) and the three replicated
+ * raw BIN anchors in JP/US Track 02 BINs each carry the same nine
+ * little-endian uint16 words `0x0020, 0x0420, 0x0820, 0x0c20, 0x1020,
+ * 0x1420, 0x1820, 0x1c20, 0x2020` with stride `0x0400`.  This struct
+ * and decoder lock the shape that has been observed:
+ *
+ *   - entry_count == 9
+ *   - entries are strictly ascending uint16 words
+ *   - stride (entries[i+1] - entries[i]) == 0x0400
+ *   - all entries land in the half-open range [0x0020, 0x2020 + 0x0400)
+ *
+ * The values are documented offsets relative to the start of the data
+ * region (a 0x2000-byte descriptor block plus the 0x400 stride window).
+ * The decoder does NOT claim a semantic per-entry type, a per-dungeon
+ * level-table binding, or runtime loader handoff; it only validates the
+ * shape so a future level-descriptor reader can rely on it. */
+
+typedef enum {
+    THERON_TRACK02_TABLE_DECODE_OK = 1,
+    THERON_TRACK02_TABLE_DECODE_NOT_FOUND = 0,
+    THERON_TRACK02_TABLE_DECODE_BAD_INPUT = -1,
+    THERON_TRACK02_TABLE_DECODE_WRONG_ENTRY_COUNT = -2,
+    THERON_TRACK02_TABLE_DECODE_NOT_STRICTLY_ASCENDING = -3,
+    THERON_TRACK02_TABLE_DECODE_WRONG_STRIDE = -4
+} Theron_Track02TableDecodeStatus;
+
+typedef struct {
+    size_t entry_count;
+    uint16_t entries[THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES];
+    uint16_t stride;
+    uint16_t first_value;
+    uint16_t last_value;
+    /* exclusive upper bound == entries[entry_count - 1] + stride.
+     * Mirrors the half-open [first, exclusive) window the descriptor
+     * describes. */
+    uint16_t exclusive_upper_bound;
+    /* Sanity flag: 1 when all entries + stride land in the closed range
+     * [0x0020, 0x2020 + 0x0400). */
+    int range_inclusive;
+} Theron_Track02DescriptorTable;
+
+/* Decode a 9-word little-endian stride table starting at `descriptor_bytes`.
+ *
+ * `descriptor_bytes` must be at least 18 bytes; the decoder reads 9 little-
+ * endian uint16 words and validates the documented shape.  On success the
+ * out struct is filled and THERON_TRACK02_TABLE_DECODE_OK is returned.
+ *
+ * Negative fixtures:
+ *   - descriptor_bytes == NULL or descriptor_size < 18 -> BAD_INPUT
+ *   - wrong entry count encoded in the first 2 bytes ->
+ *     NOT_FOUND (only the canonical 9-word table is accepted)
+ *   - not strictly ascending (entries[i+1] <= entries[i]) ->
+ *     NOT_STRICTLY_ASCENDING
+ *   - stride mismatch (entries[i+1] - entries[i] != expected_stride) ->
+ *     WRONG_STRIDE
+ *
+ * Note: `expected_stride` is the value the caller assumes (the documented
+ * 0x0400).  The decoder computes the actual stride from entries and
+ * compares it.  A zero expected_stride is rejected as BAD_INPUT. */
+Theron_Track02TableDecodeStatus theron_v1_track02_decode_descriptor_table(
+    const uint8_t *descriptor_bytes,
+    size_t descriptor_size,
+    uint16_t expected_stride,
+    Theron_Track02DescriptorTable *out_table);
+
+const char *theron_v1_track02_table_decode_status_name(
+    Theron_Track02TableDecodeStatus status);
 
 #endif /* THERON_V1_TRACK02_H */
