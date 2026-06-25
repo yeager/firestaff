@@ -470,6 +470,26 @@ void F0504_DUNGEON_FreeThingData_Compat(
  */
 const char* F0505_DUNGEON_GetThingTypeName_Compat(int thingType);
 
+/*
+ * ReDMCSB DUNGEON.C:F0160/F0161 square-first-thing lookup.
+ *
+ * SquareFirstThings is compact: it has one entry per square whose raw
+ * square byte has DUNGEON_SQUARE_MASK_THING_LIST set, not one entry per
+ * map tile. Returns -1 / THING_ENDOFLIST when the square has no thing list.
+ */
+int F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
+unsigned short F0511_DUNGEON_GetSquareFirstThing_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 /* ---- Text data decoding (Phase 7 text-strings) ---- */
 
 /*
