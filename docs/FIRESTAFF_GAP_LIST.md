@@ -551,10 +551,10 @@ order:
 | greatstone (Tools) | 5 (Overview, Product, Screenshots, Download, Tutorial) | SCK extraction model, bundled signature/mapfile databases, tested corpus, file/item format inventory, CLI/GUI extraction commands, signed/compressed dungeon handling, mapfile override flow, external palette/string resources, animation viewing, Atari PAK/dungeon compression helpers, SCKExtraPack web-output scripts for dungeon, FTL, graphics.dat, single-file, and HTC outputs, screenshot-backed smoke references for GUI flows and representative CSB/DM/SNES/DM2 extracted `db_data` images, plus downloadable SCK/SCKExtraPack release provenance from `1.5.1@20110502.0` back to `0.5@20051123.0` |
 | greatstone (Technical doc) | 4 (Mapfile, FTL, PAK, Items + IMG5) | all critical format specs |
 | greatstone (Games) | 4 (DM, CSB, DM2, Custom) | per-version file lists |
-| greatstone (Articles) | 0 — content empty | skipped |
+| greatstone (Articles) | 3 (Mac QuickTime, SNES multi-palettes, dungeon XML/HTML) | DM2 Macintosh `MooV`/resource-fork and QuickTime flattening workflow, SNES `PALSEL`/`TILESBYITEM`/`PALSEL_INCR` palette-selection mapfile metadata, and SCK dungeon.dat-to-XML/HTML comparison/export flow for DM/CSB with limited DM2 support |
 | Firestaff existing docs | FINAL_GAPS, FINAL_CSB_GAPS, PLATFORM_MATRIX, DMWEB_REFERENCE, csb_gap_*.md, dm1_gap_*.md | per-game gap detail |
 
-**Total new pages reviewed this session: 63** (20 prior + 43 from
+**Total new pages reviewed this session: 66** (23 prior + 43 from
 the dmweb community/documentation mirror).
 
 ---
