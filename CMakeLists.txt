@@ -2642,6 +2642,43 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hoc_champion_
     )
 endif()
 
+# DM1 V1 Hall of Champions portrait ordinal 04 (LEIF) /
+# approach_from_right / portrait_rect_position runtime probe.
+# Source-locked to DUNGEON.C:2573 (visibleWallCell = (dir+2)&3),
+# DUNVIEW.C:3913-3928 (C026 portrait blit into G0109 portrait box),
+# DUNVIEW.C:525 G0109_auc_Graphic558_Box_ChampionPortraitOnWall =
+# {96, 127, 35, 63}, MOVESENS.C:1501-1503 (sensorData -> F0280),
+# DEFS.H:821-826 (M027/M028 portrait-grid 8-col atlas math) and
+# DEFS.H:2186 C026_GRAPHIC_CHAMPION_PORTRAITS.  The slice is the
+# east-side mirror of the ordinal_4 approach_from_left probe:
+# party at (3, 2) DIR_WEST approaches the LEIF chamber (2, 2)
+# from the right, the visible wall is the EAST wall of (2, 2),
+# no C127 sensor with sensorData=4 lives there, and the D1C
+# portrait cutout (96, 35, 32, 29) must NOT carry LEIF pixels.
+# Batch group 12 portrait_rect_position gate (next free tag
+# after groups 0/3/4/6/8 used by the existing palette_match_rect,
+# d2r_negative, double_click_stability, sleep_repaint, and the
+# ordinal-18 approach_from_right gate probes).  Disjoint from the
+# ordinal_4 approach_from_left / east_walkpath / south_return /
+# portrait04_rect_position probes (different route / different
+# anchor cell) and from the ordinal-1 and ordinal-5 and
+# ordinal-18 approach_from_right probes (different ordinal +
+# different anchor cell).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hoc_champion_portrait_04_approach_from_right_portrait_rect_position_runtime_probe.c")
+    add_executable(firestaff_dm1_v1_hoc_champion_portrait_04_approach_from_right_portrait_rect_position_runtime_probe
+        probes/m11/firestaff_dm1_v1_hoc_champion_portrait_04_approach_from_right_portrait_rect_position_runtime_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hoc_champion_portrait_04_approach_from_right_portrait_rect_position_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hoc_champion_portrait_04_approach_from_right_portrait_rect_position_runtime_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hoc_champion_portrait_04_approach_from_right_portrait_rect_position_runtime_probe
+        COMMAND firestaff_dm1_v1_hoc_champion_portrait_04_approach_from_right_portrait_rect_position_runtime_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 Hall of Champions portrait ordinal 00 (DAROOU) /
 # approach_from_left / portrait_rect_position runtime probe.
 # Source-locked to DUNGEON.C:2573 (C127 front-wall sensor filter),
