@@ -12765,6 +12765,38 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 light-overflow data-model + bug-classification probe.
+# Headless and data-free: implements the BUG0_18 timeline-full +
+# F0257 recursive-weaker event chain that DMWeb documents as the
+# root cause of the light-overflow gameplay bug (permanent Light
+# or dungeon-into-darkness symptom on the Saturn DM Nexus port).
+# Source-lock: ReDMCSB WIP20210206 Toolchains/Common/Source/
+#   DATA.C:359 — LightPowerToLightAmount[16] table
+#   MENU.C:1125-1143 — F0404_MENUS_CreateEvent70_Light wrapper
+#   MENU.C:1926-1942 — Light / Torch / Darkness spell dispatch
+#   TIMELINE.C:487-555 — F0238_AddEvent (BUG0_18 silent drop)
+#   TIMELINE.C:1720-1767 — F0257_ProcessEvent70_Light
+#   LOADSAVE.C:2041 — EventMaximumCount = 100 base cap
+#   CHAMPION.C:27 — MagicalLightAmount field
+# Probe verifies: documented table identity, spell-power formulas,
+# single-spell decay chain, cast-tick convergence, BUG0_18 silent
+# drops, permanent-light classification, light-bleed-through-zero
+# classification, guard-mode cast rejection, determinism, NULL safety.
+add_executable(firestaff_nexus_v1_light_overflow_probe
+    probes/nexus/firestaff_nexus_v1_light_overflow_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_light_overflow_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_light_overflow_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_light_overflow_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_save_load_round_trip
@@ -12804,6 +12836,14 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_bpx_bpk_archive_boundary PROPERTIES
         LABELS "tier4;nexus;bpx_bpk;archive"
+    )
+
+    add_test(
+        NAME nexus_v1_light_overflow
+        COMMAND firestaff_nexus_v1_light_overflow_probe
+    )
+    set_tests_properties(nexus_v1_light_overflow PROPERTIES
+        LABELS "tier4;nexus;mechanics;light_overflow"
     )
 endif()
 
