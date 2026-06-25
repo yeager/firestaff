@@ -4316,6 +4316,27 @@ if(BUILD_TESTING)
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
+    # ── DM2 V1 Phase H2313: Original-overlay capture scaffold probe ──
+    # Data-free source-lock contract for the DM2 viewport/backbuffer geometry,
+    # mouse + command queue bounds, mouse-event record layout, and the
+    # capture-script route token/shot-label vocabulary. This probe does NOT
+    # claim overlay parity; it locks the structural facts future paired
+    # original-vs-Firestaff DM2 evidence will need.
+    add_executable(firestaff_dm2_v1_original_overlay_capture_scaffold_probe
+        probes/firestaff_dm2_v1_original_overlay_capture_scaffold_probe.c
+    )
+    target_include_directories(firestaff_dm2_v1_original_overlay_capture_scaffold_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_original_overlay_capture_scaffold_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_original_overlay_capture_scaffold_probe
+        COMMAND firestaff_dm2_v1_original_overlay_capture_scaffold_probe
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
     add_executable(test_dm2_v2_hud_overlay
         tests/test_dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_hud_overlay.c
@@ -9245,6 +9266,10 @@ if(BUILD_TESTING)
         add_test(
             NAME dm2_v1_phase0_provenance_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_phase0_provenance_gate.py
+        )
+        add_test(
+            NAME dm2_v1_original_overlay_capture_source_lock
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_original_overlay_capture_source_lock.py
         )
         add_test(
             NAME pass512_dm1_v1_original_dungeon_packet_boundary
