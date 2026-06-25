@@ -77,6 +77,10 @@ extern "C" {
 #define FIRESTAFF_HUNK_DATA 0x0011
 #define FIRESTAFF_HUNK_CODE 0x0012
 
+/* FTL common-header magic (big-endian). Matches ReDMCSB FTL.H
+ * HEADER.Magic and greatstone d_ftl.html. */
+#define FIRESTAFF_FTL_CONTAINER_MAGIC 0x6160u
+
 typedef struct {
     uint16_t magic;             /* must be 0x6160 */
     uint16_t checksum;
@@ -117,13 +121,18 @@ typedef struct {
     uint16_t                  segment_count_parsed;
 
     /* Convenience slices indexed by segment type. NULL if the segment
-     * is absent. hunk_bss and hunk_data are zero-copy views; hunk_code
-     * is fully decoded via FirestaffPak_Decode and lives in code_alloc
-     * (callers must free the struct via FirestaffFtl_Free). */
+     * is absent. hunk_bss, hunk_data_raw, and hunk_code_raw are
+     * zero-copy views into the caller's input buffer (must stay alive
+     * for the lifetime of this struct and any decoded buffers).
+     * hunk_data_decoded is the zero-run-decoded HUNK_DATA payload;
+     * hunk_code is the 0x5223-decoded HUNK_CODE payload (or a verbatim
+     * copy for uncompressed CODE hunks). Both are owned by this struct
+     * and released by FirestaffFtl_Free. */
     FirestaffFtlSlice hunk_bss;
     FirestaffFtlSlice hunk_data_raw;
     uint8_t*          hunk_data_decoded;
     size_t            hunk_data_decoded_size;
+    FirestaffFtlSlice hunk_code_raw;
     uint8_t*          hunk_code;
     size_t            hunk_code_size;
 } FirestaffFtl;
