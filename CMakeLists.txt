@@ -9757,6 +9757,22 @@ if(BUILD_TESTING)
         COMMAND test_m11_v1_presentation_filter_pc34_compat
     )
 
+    add_executable(firestaff_m11_v1_nearest_cpu_present_probe
+        probes/m11/firestaff_m11_v1_nearest_cpu_present_probe.c
+    )
+    target_link_libraries(firestaff_m11_v1_nearest_cpu_present_probe PRIVATE firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m11_v1_nearest_cpu_present_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_v1_nearest_cpu_present_probe
+        COMMAND firestaff_m11_v1_nearest_cpu_present_probe
+    )
+    set_tests_properties(m11_v1_nearest_cpu_present_probe PROPERTIES
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy"
+        LABELS "tier2;m11;dm1;v1;presentation;nearest;regression"
+    )
+
     add_executable(test_entrance_mouse_routes_pc34_compat_integration
         tests/test_entrance_mouse_routes_pc34_compat_integration.c
     )
