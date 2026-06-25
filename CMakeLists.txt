@@ -11952,6 +11952,30 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_ftl_container
     )
 
+    # ── FTL HUNK_DATA zero-run decompression (greatstone Note 7) ─
+    # Companion to firestaff_ftl_container_unit. The container parser
+    # already exposes raw compressed HUNK_DATA bytes via the per-hunk
+    # payload pointer; this decoder turns those bytes into the
+    # in-memory area_1 resource pool that mapfile-driven item reads
+    # operate on. Source of truth: greatstone d_ftl.html "Note 7".
+    # Deliberately bounded: no mapfile interpretation, no HUNK_CODE
+    # (Note 8 / 0x5223), no runtime loading — those remain separate
+    # lanes against docs/FIRESTAFF_GAP_LIST.md.
+    add_executable(test_firestaff_ftl_hunk_data_zero_run
+        tests/test_firestaff_ftl_hunk_data_zero_run.c
+        src/shared/firestaff_ftl_hunk_data_zero_run.c
+    )
+    target_include_directories(test_firestaff_ftl_hunk_data_zero_run PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_ftl_hunk_data_zero_run PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_ftl_hunk_data_zero_run_unit
+        COMMAND test_firestaff_ftl_hunk_data_zero_run
+    )
+
     # ── CSB Utility Disk .CMP file decoder (Tier 2 #6) ──
     # Verifies src/shared/firestaff_cmp_decode.c parses the
     # 496-byte CMP format used by Chaos Strikes Back's
