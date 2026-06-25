@@ -146,10 +146,149 @@ static int v22_find_bitmap(uint32_t category_hash, uint32_t asset_id_hash) {
     return -1;
 }
 
+typedef struct {
+    uint32_t category_hash;
+    uint32_t asset_id_hash;
+} FsV22ManifestKey;
+
+static int v22_extract_string_field(const char* line,
+                                    const char* key,
+                                    char* out,
+                                    size_t out_size) {
+    char pattern[64];
+    const char* p;
+    size_t dst = 0U;
+    if (!line || !key || !out || out_size == 0U) return 0;
+    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+    p = strstr(line, pattern);
+    if (!p) return 0;
+    p += strlen(pattern);
+    while (*p == ' ' || *p == ':' || *p == '\t') ++p;
+    if (*p != '"') return 0;
+    ++p;
+    while (*p != '\0' && dst + 1U < out_size) {
+        if (*p == '"') break;
+        out[dst++] = *p++;
+    }
+    out[dst] = '\0';
+    return dst > 0U ? 1 : 0;
+}
+
+static int v22_manifest_category_from_line(const char* line,
+                                           char* out,
+                                           size_t out_size) {
+    static const char* const categories[] = {
+        "wall_shapes",
+        "floor_shapes",
+        "creature_shapes",
+        "ui_chrome",
+        "champion_portraits",
+        "door_shapes",
+        NULL
+    };
+    int i;
+    if (!line || !out || out_size == 0U) return 0;
+    for (i = 0; categories[i] != NULL; ++i) {
+        char pattern[64];
+        snprintf(pattern, sizeof(pattern), "\"%s\"", categories[i]);
+        if (strstr(line, pattern) != NULL && strchr(line, '[') != NULL) {
+            snprintf(out, out_size, "%s", categories[i]);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int v22_build_manifest_keys_for_cache(const char* cache_path,
+                                             FsV22ManifestKey* keys,
+                                             size_t max_keys) {
+    char manifest_path[FSP_PATH_MAX];
+    char current_category[64];
+    char line[512];
+    char* slash;
+    FILE* fp;
+    size_t count = 0U;
+    if (!cache_path || !keys || max_keys == 0U) return 0;
+    snprintf(manifest_path, sizeof(manifest_path), "%s", cache_path);
+    slash = strrchr(manifest_path, '/');
+    if (!slash) return 0;
+    slash[1] = '\0';
+    strncat(manifest_path, "modern_asset_manifest.json",
+            sizeof(manifest_path) - strlen(manifest_path) - 1U);
+
+    fp = fopen(manifest_path, "rb");
+    if (!fp) return 0;
+    current_category[0] = '\0';
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        char id[128];
+        if (v22_manifest_category_from_line(line,
+                                            current_category,
+                                            sizeof(current_category))) {
+            continue;
+        }
+        if (current_category[0] == '\0') continue;
+        if (!v22_extract_string_field(line, "id", id, sizeof(id))) continue;
+        if (count >= max_keys) break;
+        keys[count].category_hash = fnv1a_hash(current_category);
+        keys[count].asset_id_hash = fnv1a_hash(id);
+        count++;
+    }
+    fclose(fp);
+    return (int)count;
+}
+
 /* ── Cache load ─────────────────────────────────────────────────── */
+
+static int v22_parse_cache_entries(uint32_t count,
+                                   size_t entry_size,
+                                   size_t field_offset,
+                                   size_t data_off,
+                                   int offset_is_relative,
+                                   const FsV22ManifestKey* remap_keys,
+                                   int remap_key_count) {
+    uint32_t i;
+    size_t entries_off = FSV22C_HDR_SIZE;
+    if (count > FSV22C_MAX_ENT) return 0;
+    if (entries_off + (size_t)count * entry_size > g_v22_cache_size) return 0;
+    if (data_off >= g_v22_cache_size) return 0;
+    if (remap_keys && remap_key_count <= 0) return 0;
+
+    g_v22_bitmap_count = 0;
+    for (i = 0; i < count; ++i) {
+        const unsigned char* ep =
+            g_v22_cache_buf + entries_off + (size_t)i * entry_size + field_offset;
+        FsV22CacheEntry e;
+        size_t rgba_offset;
+        memcpy(&e.category_hash, ep + 0,  4);
+        memcpy(&e.asset_id_hash, ep + 4,  4);
+        memcpy(&e.width,         ep + 8,  4);
+        memcpy(&e.height,        ep + 12, 4);
+        memcpy(&e.rgba_size,      ep + 16, 4);
+        memcpy(&e.rgba_offset,    ep + 20, 4);
+        if (remap_keys && (int)i < remap_key_count) {
+            e.category_hash = remap_keys[i].category_hash;
+            e.asset_id_hash = remap_keys[i].asset_id_hash;
+        }
+        if (e.category_hash == 0U || e.asset_id_hash == 0U) continue;
+        if (e.width == 0 || e.height == 0 || e.rgba_size == 0) continue;
+        if (e.width > 4096U || e.height > 4096U) continue;
+        rgba_offset = offset_is_relative
+            ? data_off + (size_t)e.rgba_offset
+            : (size_t)e.rgba_offset;
+        if (rgba_offset > g_v22_cache_size) continue;
+        if ((size_t)e.rgba_size > g_v22_cache_size - rgba_offset) continue;
+        e.rgba_offset = (uint32_t)rgba_offset;
+        g_v22_bitmaps[g_v22_bitmap_count].entry = e;
+        g_v22_bitmaps[g_v22_bitmap_count].rgba = g_v22_cache_buf + rgba_offset;
+        g_v22_bitmap_count++;
+    }
+    return g_v22_bitmap_count > 0 ? 1 : 0;
+}
 
 static int v22_load_cache_file(const char* path) {
     FILE* fp = fopen(path, "rb");
+    FsV22ManifestKey manifest_keys[FSV22C_MAX_ENT];
+    int manifest_key_count = 0;
     if (!fp) return 0;
     fseek(fp, 0, SEEK_END);
     long sz = ftell(fp);
@@ -176,27 +315,33 @@ static int v22_load_cache_file(const char* path) {
     if (version != FSV22C_VERSION) return 0;
     if (count > FSV22C_MAX_ENT) return 0;
 
-    /* Parse entries + index RGBA pointers */
-    size_t entries_off = FSV22C_HDR_SIZE;
-    size_t data_off    = FSV22C_HDR_SIZE + (size_t)count * FSV22C_ENT_SIZE;
-    if (data_off >= g_v22_cache_size) return 0;
-
-    g_v22_bitmap_count = 0;
-    for (uint32_t i = 0; i < count; ++i) {
-        const unsigned char* ep = g_v22_cache_buf + entries_off + i * FSV22C_ENT_SIZE;
-        FsV22CacheEntry e;
-        memcpy(&e.category_hash, ep + 0,  4);
-        memcpy(&e.asset_id_hash, ep + 4,  4);
-        memcpy(&e.width,         ep + 8,  4);
-        memcpy(&e.height,        ep + 12, 4);
-        memcpy(&e.rgba_size,      ep + 16, 4);
-        memcpy(&e.rgba_offset,    ep + 20, 4);
-        if (e.rgba_offset + e.rgba_size > g_v22_cache_size) continue;
-        g_v22_bitmaps[g_v22_bitmap_count].entry = e;
-        g_v22_bitmaps[g_v22_bitmap_count].rgba = g_v22_cache_buf + e.rgba_offset;
-        g_v22_bitmap_count++;
+    /* The installed DM1 v1.4 material cache was generated by the PNG
+     * packer with a 4-byte reserved prefix, 40-byte entries, and RGBA
+     * offsets relative to the post-entry data block. Try that first:
+     * parsing it as the older 32-byte probe format can accidentally accept
+     * misaligned rows. The probe writer's original 32-byte absolute-offset
+     * format remains as a fallback for data-free tests. */
+    manifest_key_count =
+        v22_build_manifest_keys_for_cache(path, manifest_keys, FSV22C_MAX_ENT);
+    if (v22_parse_cache_entries(count,
+                                40U,
+                                4U,
+                                FSV22C_HDR_SIZE + (size_t)count * 40U,
+                                1,
+                                manifest_keys,
+                                manifest_key_count)) {
+        return 1;
     }
-    return g_v22_bitmap_count > 0 ? 1 : 0;
+    if (v22_parse_cache_entries(count,
+                                FSV22C_ENT_SIZE,
+                                0U,
+                                FSV22C_HDR_SIZE + (size_t)count * FSV22C_ENT_SIZE,
+                                0,
+                                NULL,
+                                0)) {
+        return 1;
+    }
+    return 0;
 }
 
 int m11_v22_inplace_draw_init(void) {

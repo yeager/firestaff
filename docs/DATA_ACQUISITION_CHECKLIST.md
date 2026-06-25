@@ -52,7 +52,8 @@ coverage**, not registry correctness.
 | Amiga 2.0 German | 🟡 | 🟡 | n/a | DMWeb page lists German Mirrorsoft editions, unofficial IPF and cracked ADF evidence; keep cracked images separate from canonical hashes |
 | Amiga 2.0 French | 🟡 | 🟡 | n/a | DMWeb page lists France Mirrorsoft edition, unofficial IPF, copy-protected original ADF, and Meynaf cracked ADF/protection notes |
 | Amiga 2.1 English | 🟡 | 🟡 | n/a | DMWeb page dates 2.1 to 1989-02 and lists an original ADF that does not boot because of copy protection; needs protected-media extraction |
-| Amiga 2.2 English/German | ✅ / 🟡 | ✅ / 🟡 | n/a | English `DUNGEONB.DAT` is hash-locked (`9bac133b…`, 4,806 bytes); DMWeb page lists 2.2 EN/DE media, unofficial 2.2 EN IPF, and protected original ADFs |
+| Amiga 2.2 English (kid) | ✅ | ✅ | n/a | `DUNGEONB.DAT` is hash-locked (`9bac133b…`, 4,806 bytes); provenance only, not promoted to PC34 runtime parity |
+| Amiga 2.2 German | 🟡 | 🟡 | n/a | DMWeb page lists 2.2 DE media and protected original ADFs; needs clean original-vs-cracked classification |
 | Amiga 3.6 English/French/German | 🟡 | 🟡 | n/a | DMWeb page lists official SPS IPF 3.6 (not copy protected), ADF, 1992 USA/Psygnosis/bundle provenance, changed title/menu/perspective versus 2.0, and distinct 3.6 keypad layout |
 | Apple IIGS 2.0 English | 🟡 | 🟡 | n/a | DMWeb page lists PO disk images: original copy-protected image without working sector `$17`, Computist/ACS cracks, a hard-disk-patched image, and a save disk; 2.0 has a ROM03 main-dungeon `->002C` memory failure unless expansion memory is present |
 | Apple IIGS 2.1 English | 🟡 | 🟡 | n/a | DMWeb page lists separate original and Computist-cracked PO images; 2.1 fixes the ROM03 2.0 main-dungeon memory failure |
