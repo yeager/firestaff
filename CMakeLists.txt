@@ -1964,6 +1964,18 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
 endif()
 
+add_executable(firestaff_dm1_v1_message_log_bottom_row_runtime_probe
+    probes/m11/firestaff_dm1_v1_message_log_bottom_row_runtime_probe.c)
+target_link_libraries(firestaff_dm1_v1_message_log_bottom_row_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_message_log_bottom_row_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_dm1_v1_message_log_bottom_row_runtime_probe
+    COMMAND firestaff_dm1_v1_message_log_bottom_row_runtime_probe
+        $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+)
+
 # V2 initial 4K capture scene (real M11 draw path for offline 4K composition)
 add_executable(firestaff_m11_v2_initial_4k_capture probes/m11/firestaff_m11_v2_initial_4k_capture.c)
 # M11 calls a small set of M12 startup/asset helpers; repeat m12 after m11 for static linkers.

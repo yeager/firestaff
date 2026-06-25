@@ -26977,7 +26977,7 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
     enum {
         M11_V1_MESSAGE_ROW_COUNT = 4,
         M11_V1_MESSAGE_LINE_HEIGHT = 7,
-        M11_V1_MESSAGE_TEXT_TOP_ADJUST = 4,
+        M11_V1_MESSAGE_TEXT_TOP_ADJUST = 0,
         M11_V1_MESSAGE_CHAR_WIDTH = 6
     };
     const M11_LogEntry* rows[M11_V1_MESSAGE_ROW_COUNT];
@@ -26985,6 +26985,7 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
     int reverseIndex;
     int visibleCount = 0;
     int row;
+    int savedFontScaleOverride;
 
     if (!state || !framebuffer || state->showDebugHUD ||
         !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
@@ -26999,9 +27000,11 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
      * C015 is bottom-anchored at y=199, DEFS.H sets
      * M532_MESSAGE_AREA_ROW_COUNT=4 for PC media, COORD.C sets
      * G2088_C7_TextLineHeight=7 and G2092_MessageAreaWidth=320, and
-     * F0049_TEXT_MESSAGEAREA_Clear fills C015 black before printing,
-     * and the PC print path writes rows at row*7+177.  Keep Firestaff's synthetic telemetry
-     * filtered at this boundary; only player-facing messages are drawn. */
+     * F0049_TEXT_MESSAGEAREA_Clear fills C015 black before printing.  The
+     * DM1 font is six visible pixels tall on a seven-pixel line; anchoring
+     * rows at 173/180/187/194 keeps all four rows readable through y=199.
+     * Keep Firestaff's synthetic telemetry filtered at this boundary; only
+     * player-facing messages are drawn. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   messageX, messageY, messageW, messageH, M11_COLOR_BLACK);
     memset(rows, 0, sizeof(rows));
@@ -27018,6 +27021,8 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
         ++visibleCount;
     }
 
+    savedFontScaleOverride = g_m11_font_scale_override;
+    g_m11_font_scale_override = 0;
     for (row = 0; row < M11_V1_MESSAGE_ROW_COUNT; ++row) {
         const M11_LogEntry* entry = rows[row];
         const char* text;
@@ -27045,6 +27050,7 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
                       clipped,
                       &style);
     }
+    g_m11_font_scale_override = savedFontScaleOverride;
 }
 
 static void m11_draw_map_panel(const M11_GameViewState* state,

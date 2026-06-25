@@ -10114,18 +10114,34 @@ int main(int argc, char** argv) {
             M11_GameViewState messageView;
             unsigned char fb_msg[320 * 200];
             size_t visibleYellow;
-            size_t suppressedYellow;
+            size_t topRowYellow;
+            size_t midRowYellow;
+            size_t lowerRowYellow;
+            size_t bottomRowYellow;
+            size_t suppressedRed;
             memcpy(&messageView, &gameView, sizeof(messageView));
             memset(&messageView.messageLog, 0, sizeof(messageView.messageLog));
-            M11_MessageLog_Push(&messageView.messageLog, "PARTY MOVED", PROBE_COLOR_YELLOW);
-            M11_MessageLog_Push(&messageView.messageLog, "IT COMES UP HEADS.", PROBE_COLOR_YELLOW);
+            M11_MessageLog_Push(&messageView.messageLog, "DOOR OPENING", PROBE_COLOR_YELLOW);
+            M11_MessageLog_Push(&messageView.messageLog, "IT IS LOCKED.", PROBE_COLOR_YELLOW);
+            M11_MessageLog_Push(&messageView.messageLog, "PARTY MOVED", PROBE_COLOR_RED);
+            M11_MessageLog_Push(&messageView.messageLog, "OUCH.", PROBE_COLOR_YELLOW);
+            M11_MessageLog_Push(&messageView.messageLog, "HEADS.", PROBE_COLOR_YELLOW);
             memset(fb_msg, 0, sizeof(fb_msg));
             M11_GameView_Draw(&messageView, fb_msg, 320, 200);
-            visibleYellow = probe_count_color(fb_msg, 320, 0, 194, 140, 6, PROBE_COLOR_YELLOW);
-            suppressedYellow = probe_count_color(fb_msg, 320, 0, 173, 140, 14, PROBE_COLOR_YELLOW);
+            topRowYellow = probe_count_color(fb_msg, 320, 0, 173, 320, 6, PROBE_COLOR_YELLOW);
+            midRowYellow = probe_count_color(fb_msg, 320, 0, 180, 320, 6, PROBE_COLOR_YELLOW);
+            lowerRowYellow = probe_count_color(fb_msg, 320, 0, 187, 320, 6, PROBE_COLOR_YELLOW);
+            bottomRowYellow = probe_count_color(fb_msg, 320, 0, 194, 320, 6, PROBE_COLOR_YELLOW);
+            visibleYellow = probe_count_color(fb_msg, 320, 0, 194, 320, 6, PROBE_COLOR_YELLOW);
+            suppressedRed = probe_count_color(fb_msg, 320, 0, 173, 320, 27, PROBE_COLOR_RED);
             probe_record(&tally, "INV_GV_300AM2",
-                         visibleYellow >= 3U && suppressedYellow == 0U,
-                         "V1 message area renders player-facing rows in source C015 and suppresses telemetry");
+                         visibleYellow >= 3U &&
+                             topRowYellow >= 3U &&
+                             midRowYellow >= 3U &&
+                             lowerRowYellow >= 3U &&
+                             bottomRowYellow >= 3U &&
+                             suppressedRed == 0U,
+                         "V1 message area renders four readable rows in source C015 through y=199 and suppresses telemetry");
         }
 
         {
