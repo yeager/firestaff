@@ -12746,6 +12746,30 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 Track 1 full E1 phase-launch handoff probe.
+# Data-free by default: synthetic DMWeb-style Structure1B / DMDF /
+# BPPK / S2D fixtures verify the engine parser contract for phases
+# 0-7 without claiming real-asset gameplay parity. When a real data
+# directory is supplied, the probe additionally exercises the live
+# nexus_v1_init / read_file / load_level / tick pipeline against
+# LEV00.DGN, FONT256.S2D, and MENU.BPK from the verified Track 1
+# media. Source-lock: docs/FIRESTAFF_GAP_LIST.md E1 Track 1 row,
+# docs/NEXUS_FILE_CLASSIFICATION.md, docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md.
+add_executable(firestaff_nexus_v1_track1_phase_launch_probe
+    probes/nexus_v1_track1_phase_launch_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_track1_phase_launch_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_track1_phase_launch_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_track1_phase_launch_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus V1 BPX/BPK archive-boundary probe. Headless and data-free:
 # recognizes the verified MENU.BPK marker, keeps real unknown .BPK/.BPX
 # streams unsupported, and locks a synthetic BPX0 parser/extraction
@@ -12844,6 +12868,38 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_light_overflow PROPERTIES
         LABELS "tier4;nexus;mechanics;light_overflow"
+    )
+
+    # Track 1 phase-launch handoff gate. Data-free by default;
+    # synthetic-only path still proves the engine parser contract for
+    # phases 0-7. The two real-data tests below additionally exercise
+    # the live nexus_v1_init / read_file / load_level / tick pipeline
+    # against verified Track 1 media. Source-lock:
+    #   docs/FIRESTAFF_GAP_LIST.md E1 Track 1 row.
+    add_test(
+        NAME nexus_v1_track1_phase_launch_synthetic
+        COMMAND firestaff_nexus_v1_track1_phase_launch_probe
+    )
+    set_tests_properties(nexus_v1_track1_phase_launch_synthetic PROPERTIES
+        LABELS "tier1;nexus;track1;phase_launch;synthetic"
+    )
+
+    add_test(
+        NAME nexus_v1_track1_phase_launch_extracted_root
+        COMMAND firestaff_nexus_v1_track1_phase_launch_probe
+                "$ENV{HOME}/.firestaff/data/nexus"
+    )
+    set_tests_properties(nexus_v1_track1_phase_launch_extracted_root PROPERTIES
+        LABELS "tier1;nexus;track1;phase_launch;live;extracted"
+    )
+
+    add_test(
+        NAME nexus_v1_track1_phase_launch_saturn_ja_iso
+        COMMAND firestaff_nexus_v1_track1_phase_launch_probe
+                "$ENV{HOME}/.firestaff/data/nexus-extras/saturn-ja"
+    )
+    set_tests_properties(nexus_v1_track1_phase_launch_saturn_ja_iso PROPERTIES
+        LABELS "tier1;nexus;track1;phase_launch;live;iso"
     )
 endif()
 
