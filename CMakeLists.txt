@@ -12006,6 +12006,43 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_pc98_hdm_classify
     )
 
+    # -- X68000 HDM/floppy media classifier (DMWeb copy-prot) --
+    # Bounded classifier for the DM1 / CSB X68000 import gap:
+    # 2DHD geometry, the documented HPR-0007 protection sentinel,
+    # and FTL magic handoff detection. This is a media boundary
+    # check only, not MFM/flux parsing or runtime asset loading.
+    add_executable(test_firestaff_x68k_media_classify
+        tests/test_firestaff_x68k_media_classify.c
+        src/shared/firestaff_x68k_media_classify.c
+    )
+    target_include_directories(test_firestaff_x68k_media_classify PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_x68k_media_classify PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_x68k_media_classify_unit
+        COMMAND test_firestaff_x68k_media_classify
+    )
+
+    # -- X68000 HDM <-> FTL container handoff boundary test --
+    add_executable(test_firestaff_x68k_ftl_handoff
+        tests/test_firestaff_x68k_ftl_handoff.c
+        src/shared/firestaff_x68k_media_classify.c
+        src/shared/firestaff_ftl_container.c
+    )
+    target_include_directories(test_firestaff_x68k_ftl_handoff PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_x68k_ftl_handoff PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_x68k_ftl_handoff_unit
+        COMMAND test_firestaff_x68k_ftl_handoff
+    )
+
     # ── CSB Utility Disk .CMP file decoder (Tier 2 #6) ──
     # Verifies src/shared/firestaff_cmp_decode.c parses the
     # 496-byte CMP format used by Chaos Strikes Back's
