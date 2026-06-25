@@ -71,35 +71,35 @@ def main():
     completion = json.loads(COMPLETION.read_text(encoding='utf-8'))
     rows = {row.get('target'): row for row in completion.get('rows', [])}
     csb = rows.get('CSB V1', {})
-    if csb.get('completionPercent') != 20 or csb.get('points') != 20:
-        failures.append(f"CSB V1 completion must be 20/100 after this evidence item, got {csb.get('completionPercent')}/{csb.get('points')}")
+    if csb.get('completionPercent') != 43 or csb.get('points') != 43:
+        failures.append(f"CSB V1 completion must be 43/100 after current runtime-boundary evidence, got {csb.get('completionPercent')}/{csb.get('points')}")
     launch_score = csb.get('scores', {}).get('launch_smoke', [None])[0]
-    if launch_score != 2:
-        failures.append(f'CSB V1 launch_smoke score must be 2/10, got {launch_score}')
+    if launch_score != 6:
+        failures.append(f'CSB V1 launch_smoke score must be 6/10, got {launch_score}')
     doc = DOC.read_text(encoding='utf-8')
     completion_doc = COMPLETION_DOC.read_text(encoding='utf-8')
-    required_doc_needles = ['csb_v1_quickplay_load_route_source_lock', chr(96)+'launch_smoke'+chr(96)+' | 2/10', 'QuickPlay/load-route boundaries', 'No CSB runtime, launch, render, gameplay, save compatibility, or pixel parity is claimed by this matrix.']
+    required_doc_needles = ['csb_v1_quickplay_load_route_source_lock', chr(96)+'launch_smoke'+chr(96)+' | 6/10', 'QuickPlay/load-route boundaries', 'No full CSB runtime, render, gameplay, save compatibility, or pixel parity is claimed by this matrix.']
     for needle in required_doc_needles:
         if needle not in doc:
             failures.append(f'CSB V1 parity matrix missing {needle!r}')
-    if '| CSB V1 | 20% | 20/100 |' not in completion_doc:
-        failures.append('completion matrix doc missing CSB V1 20% row')
-    if '| '+chr(96)+'launch_smoke'+chr(96)+' | 2/10 |' not in completion_doc:
-        failures.append('completion matrix doc missing CSB V1 launch_smoke 2/10 detail')
+    if '| CSB V1 | 43% | 43/100 |' not in completion_doc:
+        failures.append('completion matrix doc missing CSB V1 43% row')
+    if '| '+chr(96)+'launch_smoke'+chr(96)+' | 6/10 |' not in completion_doc:
+        failures.append('completion matrix doc missing CSB V1 launch_smoke 6/10 detail')
     result = {
         'schema':'firestaff.csb_v1_quickplay_load_route_source_lock.v1',
         'pass':not failures,
         'scope':'CSB V1 launch-surface source-lock evidence only; no Firestaff runtime launch claim.',
         'source_anchors':source_rows,
         'git_refs':git_rows,
-        'completion_impact':{'target':'CSB V1','criterion':'launch_smoke','before_score':1,'after_score':2,'before_completion_percent':19,'after_completion_percent':20},
+        'completion_impact':{'target':'CSB V1','criterion':'launch_smoke','current_score':6,'current_completion_percent':43},
         'non_claims':NON_CLAIMS,
         'remaining_blocker':'Production CSB runtime/capture handling remains blocked after the guarded M12 front door.',
         'failures':failures,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(result, indent=2)+'\n', encoding='utf-8')
-    print(('PASS' if result['pass'] else 'FAIL') + f' csb v1 quickplay/load source lock: anchors={len(source_rows)} completion=20/100')
+    print(('PASS' if result['pass'] else 'FAIL') + f' csb v1 quickplay/load source lock: anchors={len(source_rows)} completion=43/100')
     for failure in failures:
         print('- ' + failure)
     return 0 if result['pass'] else 1

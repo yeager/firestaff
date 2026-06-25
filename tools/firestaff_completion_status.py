@@ -23,6 +23,7 @@ EXPECTED_TARGETS = (
     "DM2 V2",
     "DM Nexus V1",
     "DM Nexus V2",
+    "Theron V1",
 )
 
 
