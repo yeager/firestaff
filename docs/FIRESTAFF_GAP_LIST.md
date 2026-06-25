@@ -92,7 +92,7 @@ Classification:
 | DMWEB_REFERENCE.md consolidated reference | docs/DMWEB_REFERENCE.md | FIXED in v2.9.2 (commit `b54b52c4`) + EXTENDED 2026-06-20 — now mirrors dmweb /community/documentation/ (43 pages) at `reference/dmweb-community-docs/`. 19 → 62 pages surveyed, see Section I. |
 | **Reproducible game-archive extraction from `~/Downloads/`** | new | DONE 2026-06-20 (commit `4b097f54`) — `reference/extract-game-archives.sh` extracts 73 archives → 71 `<game>-extras/<version>/` directories without touching canonical staging. |
 | **`--scan-data` smoke reports real READY-path:er** | existing | FIXED for the current gate — `asset_validate_coverage_by_game` is wired in CTest and PASS; `tier1_strict_boot_probe` is wired in CTest and PASS for all present in-scope launch paths on 2026-06-21, including CSB canonical and CSB Amiga 3.3 Meynaf FR via the `CSB READY` marker. Nexus virtual-ISO launch remains tracked as a Tier 4 runtime/launcher gap, not a Tier 1 path-discovery gap. |
-| **Real-data regression tests (greatstone db_data)** | greatstone sck tool | OPEN-BOUNDED — old `c_dm_*` / `c_csb_*` sample paths 404, but current `g_dm.html` and `g_csb.html` `db_data/` links are reachable. Verified examples include DM `dm_pc_34/graphics.dat/graphics.dat.html`, DM `dm_snes_11_jp_ntsc/smc/smc.html`, CSB `csb_atari_21_en_stx/graphics.dat/graphics.dat.html`, CSB `csb_amiga_udr2_en/hcsb.htc/hcsb.htc.html`, and CSB `csb_x68k_31_jp/graphics.dat/graphics.dat.html`. Next work is updating probes to current paths, caching only metadata/allowed derived evidence, and keeping `compare_to_greatstone.py` aligned with `VERIFIED_HASHES.md` plus local `*-extras/` alternatives. |
+| **Real-data regression tests (greatstone db_data)** | greatstone sck tool | OPEN-BOUNDED — old `c_dm_*` / `c_csb_*` sample paths and guessed DM2 paths may 404, but current `g_dm.html`, `g_csb.html`, and `g_dm2.html` `db_data/` links are reachable. Verified examples include DM `dm_pc_34/graphics.dat/graphics.dat.html`, DM `dm_snes_11_jp_ntsc/smc/smc.html`, CSB `csb_atari_21_en_stx/graphics.dat/graphics.dat.html`, CSB `csb_amiga_udr2_en/hcsb.htc/hcsb.htc.html`, DM2 `dm2_pc10_en/graphics.dat/graphics.dat.html`, DM2 `dm2_amiga_10_enfrge/lang.ftl/lang.ftl.html`, and DM2 `dm2_segacd_10_en/stry.dat/stry.dat.html`. Next work is updating probes to current paths, caching only metadata/allowed derived evidence, and keeping `compare_to_greatstone.py` aligned with `VERIFIED_HASHES.md` plus local `*-extras/` alternatives. |
 | **Lefthook in PATH for CI** | build/CI hygiene | FIXED — `.github/workflows/verify.yml` installs Go, installs `lefthook`, exports `$(go env GOPATH)/bin`, and runs `lefthook run ci`; local dev machines may still no-op gracefully when Lefthook is absent |
 
 ### A6. Build / CI
@@ -230,8 +230,8 @@ dmweb CSB Game Page, and DMWeb's CSB Atari ST edition page.
 
 ## D. DM2 gaps
 
-Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone g_dm2.html
-(11 versions), skproject source (DM2 Windows port).
+Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone `g_dm2.html`
+(15 extraction entries), skproject source (DM2 Windows port).
 
 ### D1. DM2 V1 mechanics
 
