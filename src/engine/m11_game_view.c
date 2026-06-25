@@ -11714,6 +11714,13 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
         !state->world.things || !state->world.things->sensors) {
         return -1;
     }
+    /* ReDMCSB DUNGEON.C F0172 lines 2523-2627 only routes C127 champion
+     * portrait sensors through the wall/fake-wall square-aspect path; open
+     * corridor, pit, and teleporter squares use the floor-ornament path at
+     * lines 2665-2681 and must not set G0289. */
+    if (!m11_viewport_cell_is_wall_like(&frontCell)) {
+        return -1;
+    }
     visibleWallCell = (state->world.party.direction + 2) & 3;
 
     /* ReDMCSB DUNGEON.C:2573 / MOVESENS.C:1501-1503 / REVIVE.C F0280:
@@ -14138,12 +14145,10 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     mirrorCell.championPortraitOrdinal = portraitOrdinal;
     /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
      * G0289 and DUNVIEW.C:3913-3928 blits the fixed D1C portrait-on-wall
-     * rectangle from that state.  The Firestaff loader can expose some Hall
-     * mirror front cells as door/teleporter squares while the C127 route still
-     * owns the source portrait, so do not gate this draw on wall-like type.
-     * When the front route is represented by the paired mirror TextString
-     * instead, use the same ordinal as MOVESENS.C:1501-1503/REVIVE.C F0280
-     * candidate selection so rendering and click ownership stay together. */
+     * rectangle from that state.  `m11_front_cell_mirror_ordinal` already
+     * enforces the source wall/fake-wall square-aspect gate, so open Hall
+     * corridor squares carrying unrelated or transplanted C127 data cannot
+     * draw a floating C026 portrait. */
     /* DUNVIEW.C:3913-3928 gates G0289 champion portraits through the
      * champion mirror wall ornament, C346 (global wall ornament 43).
      * Do not substitute the map's last wall-ornament id here; on the
