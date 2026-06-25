@@ -10,7 +10,7 @@
         "direction": 2,
         "label": "01_start_south_1_3",
         "map": 0,
-        "sha": "8d879bc0765ad6f20756b84630da78fa94c02eebdf61c8cf817ce02ada4dd712",
+        "sha": "78d456343429aa09a96cd649e85d89c0b394bf6bd50f1f46aa681165ccc936aa",
         "x": 1,
         "y": 3
       },
@@ -114,7 +114,7 @@
       "claim": "Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick",
       "file": "src/engine/m11_game_view.c",
       "id": "m11_input_maps_to_dm1_v1_commands",
-      "lines": "7508-7715",
+      "lines": "7539-7766",
       "missing": [],
       "ok": true
     },
@@ -122,7 +122,7 @@
       "claim": "capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command",
       "file": "src/engine/m11_game_view.c",
       "id": "m11_records_movement_pipeline_capture_state",
-      "lines": "7508-7715",
+      "lines": "7539-7766",
       "missing": [],
       "ok": true
     },
@@ -254,5 +254,5 @@
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED",
-  "timestampUtc": "2026-06-22T07:09:27.003797+00:00"
+  "timestampUtc": "2026-06-25T20:45:08.244333+00:00"
 }

@@ -14,12 +14,12 @@ This gate binds the Firestaff input script to movement queue dispatch and viewpo
 - PASS DRAWVIEW.C:709-858 f0097_presents_the_composed_viewport - promotable original crops must be sampled at or after the viewport-present boundary
 
 ## Firestaff route audit
-- PASS src/engine/m11_game_view.c:7508-7715 m11_input_maps_to_dm1_v1_commands - Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick
-- PASS src/engine/m11_game_view.c:7508-7715 m11_records_movement_pipeline_capture_state - capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command
+- PASS src/engine/m11_game_view.c:7539-7766 m11_input_maps_to_dm1_v1_commands - Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick
+- PASS src/engine/m11_game_view.c:7539-7766 m11_records_movement_pipeline_capture_state - capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command
 - PASS probes/m11/firestaff_m11_wall_collision_capture_probe.c:20-174,210-236 wall_collision_probe_emits_input_script_and_viewport_crops - the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper
 
 ## Canonical input/crop rows
-- PASS 01_start_south_1_3 inputs=[] commands=[] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 2} crop=01_start_south_1_3_viewport_224x136.ppm sha256=8d879bc0765ad6f20756b84630da78fa94c02eebdf61c8cf817ce02ada4dd712
+- PASS 01_start_south_1_3 inputs=[] commands=[] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 2} crop=01_start_south_1_3_viewport_224x136.ppm sha256=78d456343429aa09a96cd649e85d89c0b394bf6bd50f1f46aa681165ccc936aa
 - PASS 02_turn_right_west_1_3 inputs=['M12_MENU_INPUT_RIGHT'] commands=[2] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 3} crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
 - PASS 03_blocked_west_wall_1_3 inputs=['M12_MENU_INPUT_UP'] commands=[3] tuple={'map': 0, 'x': 1, 'y': 3, 'direction': 3} crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
 - PASS 04_forward_south_1_4 inputs=['M12_MENU_INPUT_LEFT', 'M12_MENU_INPUT_UP'] commands=[1, 3] tuple={'map': 0, 'x': 1, 'y': 4, 'direction': 2} crop=04_forward_south_1_4_viewport_224x136.ppm sha256=497e8745b44d1dbd423ae9174a4fd924678e2eac9b5ffe770a708099954d606a
