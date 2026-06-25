@@ -58,6 +58,8 @@ typedef struct {
     int contentH;
     int textureW;
     int textureH;
+    int presentedW;
+    int presentedH;
 
     SDL_Window*   window;
     SDL_Renderer* renderer;
@@ -750,6 +752,17 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
     g_state.v2_movement_active = 0;
 }
 
+static int m11_has_active_v2_filters(void) {
+    return g_state.v2_crt_enabled ||
+           g_state.v2_palette_enabled ||
+           g_state.v2_dither_enabled ||
+           g_state.v2_palette_interp_enabled ||
+           g_state.v2_sharpen_enabled ||
+           g_state.v2_phosphor_enabled ||
+           g_state.v2_color_preset > 0 ||
+           g_state.v2_motion_blur_enabled;
+}
+
 /* Pixel-grid overlay: draw thin darkening lines at every scaled-pixel
  * boundary in the destination rect.  Called after SDL_RenderTexture
  * (so the upscale is already on the back buffer) but before
@@ -981,6 +994,8 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.contentH = M11_FB_HEIGHT;
     g_state.textureW = m11_min_texture_w();
     g_state.textureH = m11_min_texture_h();
+    g_state.presentedW = 0;
+    g_state.presentedH = 0;
     g_state.initialised = 1;
     return M11_RENDER_OK;
 }
@@ -1026,6 +1041,8 @@ void M11_Render_Shutdown(void) {
     g_state.contentH = 0;
     g_state.textureW = 0;
     g_state.textureH = 0;
+    g_state.presentedW = 0;
+    g_state.presentedH = 0;
 }
 
 void M11_Render_DiscardPresentationTexture(void) {
@@ -1115,6 +1132,8 @@ int M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
     }
     g_state.contentW = scaledWidth;
     g_state.contentH = scaledHeight;
+    g_state.presentedW = scaledWidth;
+    g_state.presentedH = scaledHeight;
     if (g_state.v2_dither_enabled
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
@@ -1225,6 +1244,8 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
     }
     g_state.contentW = targetWidth;
     g_state.contentH = targetHeight;
+    g_state.presentedW = targetWidth;
+    g_state.presentedH = targetHeight;
     if (g_state.v2_dither_enabled
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
@@ -1310,6 +1331,9 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
 int M11_Render_PresentIndexed(const unsigned char* framebuffer,
                               int logicalWidth,
                               int logicalHeight) {
+    int uploadW;
+    int uploadH;
+    int cpuNearestPresent = 0;
     if (!g_state.initialised) {
         return M11_RENDER_ERR_NOT_INIT;
     }
@@ -1329,40 +1353,74 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     SDL_Rect destRect;
 #endif
 
-    if (m11_recreate_texture_if_needed(logicalWidth, logicalHeight) != M11_RENDER_OK) {
-        return M11_RENDER_ERR_TEXTURE;
-    }
     g_state.contentW = logicalWidth;
     g_state.contentH = logicalHeight;
+    m11_compute_present_rect(&destX, &destY, &destW, &destH);
+    uploadW = logicalWidth;
+    uploadH = logicalHeight;
+    /* DM1 V1 original must keep hard pixel edges for 32x29 wall portraits
+     * and 8x8 inscription glyphs.  The main loop forces NEAREST for V1, but
+     * some SDL3/Metal/HiDPI paths can still soften a tiny source texture while
+     * stretching it to the drawable.  For plain nearest presentations with no
+     * active V2 post-processing, build the stretched RGBA frame ourselves with
+     * integer nearest sampling, then ask SDL to render that texture 1:1. */
+    if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
+        !m11_has_active_v2_filters() &&
+        destW > 0 && destH > 0 &&
+        (destW != logicalWidth || destH != logicalHeight)) {
+        uploadW = destW;
+        uploadH = destH;
+        cpuNearestPresent = 1;
+    }
+    if (m11_recreate_texture_if_needed(uploadW, uploadH) != M11_RENDER_OK) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.presentedW = uploadW;
+    g_state.presentedH = uploadH;
     if (g_state.v2_dither_enabled
             && logicalWidth == M11_FB_WIDTH
             && logicalHeight == M11_FB_HEIGHT) {
         static unsigned char v2DitherScratch[M11_FB_BYTES];
         memcpy(v2DitherScratch, framebuffer, (size_t)M11_FB_BYTES);
         m11_apply_v2_filters_indexed_pre(v2DitherScratch, logicalWidth, logicalHeight);
-        m11_framebuffer_to_rgba(v2DitherScratch, logicalWidth, logicalHeight);
+        if (cpuNearestPresent) {
+            m11_framebuffer_to_rgba_resampled(v2DitherScratch,
+                                              logicalWidth,
+                                              logicalHeight,
+                                              uploadW,
+                                              uploadH);
+        } else {
+            m11_framebuffer_to_rgba(v2DitherScratch, logicalWidth, logicalHeight);
+        }
     } else {
-        m11_framebuffer_to_rgba(framebuffer, logicalWidth, logicalHeight);
+        if (cpuNearestPresent) {
+            m11_framebuffer_to_rgba_resampled(framebuffer,
+                                              logicalWidth,
+                                              logicalHeight,
+                                              uploadW,
+                                              uploadH);
+        } else {
+            m11_framebuffer_to_rgba(framebuffer, logicalWidth, logicalHeight);
+        }
     }
-    m11_apply_v2_filters_rgba_post(logicalWidth, logicalHeight);
-    m11_compute_present_rect(&destX, &destY, &destW, &destH);
+    m11_apply_v2_filters_rgba_post(uploadW, uploadH);
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     sourceRect.x = 0.0f;
     sourceRect.y = 0.0f;
-    sourceRect.w = (float)logicalWidth;
-    sourceRect.h = (float)logicalHeight;
+    sourceRect.w = (float)uploadW;
+    sourceRect.h = (float)uploadH;
     {
         SDL_Rect updateRect;
         updateRect.x = 0;
         updateRect.y = 0;
-        updateRect.w = logicalWidth;
-        updateRect.h = logicalHeight;
+        updateRect.w = uploadW;
+        updateRect.h = uploadH;
         if (!SDL_UpdateTexture(
                 g_state.texture,
                 &updateRect,
                 g_state.presentBuffer,
-                logicalWidth * 4)) {
+                uploadW * 4)) {
             return M11_RENDER_ERR_TEXTURE;
         }
     }
@@ -1373,6 +1431,10 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     destRect.y = (float)destY;
     destRect.w = (float)destW;
     destRect.h = (float)destH;
+    if (cpuNearestPresent) {
+        destRect.w = (float)uploadW;
+        destRect.h = (float)uploadH;
+    }
     if (!SDL_RenderTexture(g_state.renderer, g_state.texture, &sourceRect, &destRect)) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -1384,13 +1446,13 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
 #else
     sourceRect.x = 0;
     sourceRect.y = 0;
-    sourceRect.w = logicalWidth;
-    sourceRect.h = logicalHeight;
+    sourceRect.w = uploadW;
+    sourceRect.h = uploadH;
     if (SDL_UpdateTexture(
             g_state.texture,
             &sourceRect,
             g_state.presentBuffer,
-            logicalWidth * 4) != 0) {
+            uploadW * 4) != 0) {
         return M11_RENDER_ERR_TEXTURE;
     }
     if (SDL_RenderClear(g_state.renderer) != 0) {
@@ -1400,6 +1462,10 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
     destRect.y = destY;
     destRect.w = destW;
     destRect.h = destH;
+    if (cpuNearestPresent) {
+        destRect.w = uploadW;
+        destRect.h = uploadH;
+    }
     if (SDL_RenderCopy(g_state.renderer, g_state.texture, &sourceRect, &destRect) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -1440,6 +1506,8 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
     }
     g_state.contentW = logicalWidth;
     g_state.contentH = logicalHeight;
+    g_state.presentedW = logicalWidth;
+    g_state.presentedH = logicalHeight;
     m11_framebuffer_to_rgba_special(framebuffer, logicalWidth, logicalHeight, specialPalette);
     m11_compute_present_rect(&destX, &destY, &destW, &destH);
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -1524,6 +1592,8 @@ int M11_Render_PresentRGBA(const unsigned char* rgba,
     }
     g_state.contentW = logicalWidth;
     g_state.contentH = logicalHeight;
+    g_state.presentedW = logicalWidth;
+    g_state.presentedH = logicalHeight;
     if (g_state.presentBuffer) {
         memcpy(g_state.presentBuffer, rgba,
                (size_t)logicalWidth * (size_t)logicalHeight * 4U);
@@ -2013,14 +2083,14 @@ const unsigned char* M11_Render_GetPresentedRGBA(int* outWidth, int* outHeight) 
         *outHeight = 0;
     }
     if (!g_state.initialised || !g_state.presentBuffer ||
-        g_state.contentW <= 0 || g_state.contentH <= 0) {
+        g_state.presentedW <= 0 || g_state.presentedH <= 0) {
         return NULL;
     }
     if (outWidth) {
-        *outWidth = g_state.contentW;
+        *outWidth = g_state.presentedW;
     }
     if (outHeight) {
-        *outHeight = g_state.contentH;
+        *outHeight = g_state.presentedH;
     }
     return g_state.presentBuffer;
 }
