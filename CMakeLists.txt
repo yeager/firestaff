@@ -12029,6 +12029,34 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_amg_decode
     )
 
+    # ── FM Towns BIN/CUE and ISO/CUE redump-layout classifier ─────
+    # Bounded data-free classifier that parses redump-style CUE
+    # sheets for the FM Towns releases of DM1 (v2.0, 1989-11,
+    # tracks 02..20), CSB (v3.1, 1990-12-14, tracks 02..31), and
+    # DM2 (v1.0, 1994-01-28, tracks 02..06 + silent track 8).
+    # Source of truth: docs/DMWEB_REFERENCE.md lines 37, 44, 51.
+    # Deliberately does NOT extract ISO 9660 files, decode IMG2,
+    # or launch any FM Towns emulator -- those gates are tracked
+    # separately under docs/FIRESTAFF_GAP_LIST.md. The classifier
+    # only verifies the disc image layout (track count, audio
+    # track count, MODE1/2352 vs MODE1/2048 vs AUDIO) and an
+    # optional ISO 9660 Primary Volume Descriptor signature.
+    add_executable(test_firestaff_fmtowns_cd_classify
+        tests/test_firestaff_fmtowns_cd_classify.c
+        src/shared/firestaff_fmtowns_cd_classify.c
+    )
+    target_include_directories(test_firestaff_fmtowns_cd_classify PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_fmtowns_cd_classify PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_fmtowns_cd_classify_unit
+        COMMAND test_firestaff_fmtowns_cd_classify
+    )
+
     # ── CSB V1 CMP import glue (Utility Disk Champion Editor flow) ──
     # Wires the existing firestaff_cmp_decode.c decoder to the
     # CSB_V1_Champion / CSB_V1_PartyState runtime data structures.
