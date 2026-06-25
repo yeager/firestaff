@@ -54,6 +54,7 @@ REQUIRED_CTEST_NAMES = {
     "dm1_v2_graphics_pipeline_source_isolation",
     "dm1_v2_item_render_pc34",
     "dm1_v2_item_render_source_lock",
+    "dm1_v22_m11_inplace_handoff_source_lock",
 }
 
 CATEGORY_RULES = [

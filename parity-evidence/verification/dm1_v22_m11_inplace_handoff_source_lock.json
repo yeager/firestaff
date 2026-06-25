@@ -1,0 +1,53 @@
+{
+  "claims": [
+    "M11 samples the source V1 viewport cells before V22 shape-cache update.",
+    "DM1 V2.2 start initializes the optional in-place bitmap cache only on the DM1 V22-active branch.",
+    "The viewport draw path prefers m11_v22_inplace_render_pass and calls the colored overlay only when that pass paints zero cells.",
+    "Pit and stairs have distinct asset ids, and teleporter/field shapes do not fall back to wall art."
+  ],
+  "drawOrder": [
+    {
+      "marker": "m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])",
+      "offset": 0
+    },
+    {
+      "marker": "raw_squares[d][s] = cells[d][s].square;",
+      "offset": 1044
+    },
+    {
+      "marker": "m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
+      "offset": 1116
+    },
+    {
+      "marker": "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,",
+      "offset": 2336
+    },
+    {
+      "marker": "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
+      "offset": 14844
+    },
+    {
+      "marker": "if (m11_v22_inplace_render_pass(framebuffer,",
+      "offset": 15514
+    },
+    {
+      "marker": "m11_v22_render_overlay(framebuffer,",
+      "offset": 15690
+    }
+  ],
+  "errors": [],
+  "firestaffAnchors": {
+    "gameView": "src/engine/m11_game_view.c",
+    "inplaceDraw": "src/dm1v2/m11_v22_inplace_draw_pc34.c",
+    "overlayFallback": "src/dm1v2/m11_v22_render_overlay_pc34.c",
+    "shapeCache": "src/dm1v2/m11_v22_shape_cache_pc34.c"
+  },
+  "nonClaims": [
+    "No original DOS screenshot or pixel-parity claim.",
+    "No finished PBR-art quality claim.",
+    "No CSB V2 material gate."
+  ],
+  "redmcsbAnchor": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+  "scope": "DM1 V2.2 M11 in-place modern-art handoff source-lock",
+  "status": "passed"
+}
