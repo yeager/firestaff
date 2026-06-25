@@ -208,3 +208,10 @@ checklist (covered in `docs/DMWEB_REFERENCE.md`):
   discovery probe (uses MD5; mismatch with VERIFIED_HASHES.md
   SHA256 is a known issue, see `docs/PLATFORM_MATRIX.md` and
   `docs/VERIFIED_HASHES.md` for context)
+- `probes/firestaff_data_dir_picker_platform_matrix_probe.c` —
+  data-free regression (ctest `data_dir_picker_platform_matrix`)
+  that locks the M12 data-dir picker contract against the
+  sub-layouts documented in this matrix (recursive hash
+  discovery, per-game availability, first-matched-version
+  determinism, re-scan state-clearing). Complements the
+  real-binary `probes/firestaff_tier1_strict_boot_probe.c`.
