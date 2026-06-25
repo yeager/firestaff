@@ -11,7 +11,7 @@ Firestaff's actual implementation state.
 |---|---|
 | ✅ | **Verified working** — hash-verified game data exists locally (`docs/VERIFIED_HASHES.md`), M-series tests pass, runtime proof captured in `parity-evidence/` |
 | 🟡 | **Source-locked** — ReDMCSB/CSBwin/SKWIN source reverse-engineered, but no local data files (yet) for runtime proof |
-| 🔵 | **Greatstone-extracted** — Pierre Monnot's sck tool has decoded this version, data is publicly browsable at `http://greatstone.free.fr/dm/db_data/`, but Firestaff doesn't have a local probe for it yet |
+| 🔵 | **Greatstone-extracted** — Pierre Monnot's sck tool has decoded this version, data is publicly browsable at `http://greatstone.free.fr/dm/db_data/`, and `tools/verify_greatstone_db_data_paths.py` (CTest `greatstone_db_data_paths_probe`, OFFLINE by default with a metadata-only fixture) keeps the curated current-path set + the obsolete `c_dm_*` / `c_csb_*` / guessed-DM2 404-regression set in sync; per-row evidence lives at `parity-evidence/verification/greatstone_db_data_paths_probe/manifest.json` |
 | ⚪ | **Publicly documented only** — exists in the wild, no extraction tool covers it, would require new reverse-engineering |
 
 ## DM1 (Dungeon Master) — 22+ known versions
@@ -196,6 +196,11 @@ checklist (covered in `docs/DMWEB_REFERENCE.md`):
 - `docs/DMWEB_REFERENCE.md` — the dmweb + greatstone survey
 - `docs/VERIFIED_HASHES.md` — the 148 SHA256 checksums for our
   local data files
+- `tools/verify_greatstone_db_data_paths.py` +
+  `parity-evidence/verification/greatstone_db_data_paths_probe/manifest.json` —
+  the bounded regression gate for the current reachable
+  `db_data/` paths and the obsolete `c_dm_*` / `c_csb_*` /
+  guessed-DM2 404 paths. See FIRESTAFF_GAP_LIST.md A5.
 - `docs/REDMCSB_REFERENCE.md` — Meynaf's decompiled C source
 - `docs/dm2_platform_*.md` and `docs/nexus_platform.md` — the
   per-game deep-dive platform audits

@@ -503,6 +503,11 @@ __pycache__/
 !/parity-evidence/verification/pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat/**
 !/parity-evidence/verification/pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat/
 !/parity-evidence/verification/pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat/**
+# Bounded metadata-only probe for docs/FIRESTAFF_GAP_LIST.md A5
+# (greatstone db_data real-data regression); only the small JSON
+# evidence file is committed, never any body bytes.
+!/parity-evidence/verification/greatstone_db_data_paths_probe/
+!/parity-evidence/verification/greatstone_db_data_paths_probe/**
 
 # DOSBox/debugger scratch memory dumps
 /MEMDUMP.TXT

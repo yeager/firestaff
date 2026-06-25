@@ -1,0 +1,137 @@
+{
+  "paths": [
+    {
+      "actual_status": 206,
+      "content_length": 8192,
+      "content_type": "text/html",
+      "expected_status": 200,
+      "link_count": 7,
+      "path": "g_dm.html",
+      "title": "Dungeon Master: Swoosh Construction Kit - A data extractor",
+      "title_sha256": "b857c284566146b6c5d0b375a951f2865ef4135567d2f2df6f60391aa8dc6c59"
+    },
+    {
+      "actual_status": 206,
+      "content_length": 8192,
+      "content_type": "text/html",
+      "expected_status": 200,
+      "link_count": 7,
+      "path": "g_csb.html",
+      "title": "Dungeon Master: Swoosh Construction Kit - A data extractor",
+      "title_sha256": "b857c284566146b6c5d0b375a951f2865ef4135567d2f2df6f60391aa8dc6c59"
+    },
+    {
+      "actual_status": 206,
+      "content_length": 8192,
+      "content_type": "text/html",
+      "expected_status": 200,
+      "link_count": 6,
+      "path": "g_dm2.html",
+      "title": "Dungeon Master: Swoosh Construction Kit - A data extractor",
+      "title_sha256": "b857c284566146b6c5d0b375a951f2865ef4135567d2f2df6f60391aa8dc6c59"
+    },
+    {
+      "actual_status": 206,
+      "content_length": 8192,
+      "content_type": "text/html",
+      "expected_status": 200,
+      "link_count": 0,
+      "path": "db_data/dm_pc_34/graphics.dat/graphics.dat.html",
+      "title": "mapfile extracted items",
+      "title_sha256": "09721c375d90d53493c4940b5341a154561d6fd9aa1b228348ee07b203547411"
+    },
+    {
+      "actual_status": 206,
+      "content_length": 8192,
+      "content_type": "text/html",
+      "expected_status": 200,
+      "link_count": 0,
+      "path": "db_data/dm_snes_11_jp_ntsc/smc/smc.html",
+      "title": "mapfile extracted items",
+      "title_sha256": "09721c375d90d53493c4940b5341a154561d6fd9aa1b228348ee07b203547411"
+    },
+    {
+      "actual_status": 206,
+      "content_length": 8192,
+      "content_type": "text/html",
+      "expected_status": 200,
+      "link_count": 0,
+      "path": "db_data/csb_atari_21_en_stx/graphics.dat/graphics.dat.html",
+      "title": "mapfile extracted items",
+      "title_sha256": "09721c375d90d53493c4940b5341a154561d6fd9aa1b228348ee07b203547411"
+    },
+    {
+      "actual_status": 206,
+      "content_length": 8192,
+      "content_type": "text/html",
+      "expected_status": 200,
+      "link_count": 0,
+      "path": "db_data/csb_amiga_udr2_en/hcsb.htc/hcsb.htc.html",
+      "title": "HTC extracted items",
+      "title_sha256": "fb0d3a203978e1b4da2d81f7c6dcf25a5f015ba8e05eab8955edea3bdd1336f8"
+    },
+    {
+      "actual_status": 206,
+      "content_length": 8192,
+      "content_type": "text/html",
+      "expected_status": 200,
+      "link_count": 0,
+      "path": "db_data/dm2_pc10_en/graphics.dat/graphics.dat.html",
+      "title": "mapfile extracted items",
+      "title_sha256": "09721c375d90d53493c4940b5341a154561d6fd9aa1b228348ee07b203547411"
+    },
+    {
+      "actual_status": 206,
+      "content_length": 8192,
+      "content_type": "text/html",
+      "expected_status": 200,
+      "link_count": 0,
+      "path": "db_data/dm2_amiga_10_enfrge/lang.ftl/lang.ftl.html",
+      "title": "mapfile extracted items",
+      "title_sha256": "09721c375d90d53493c4940b5341a154561d6fd9aa1b228348ee07b203547411"
+    },
+    {
+      "actual_status": 206,
+      "content_length": 8192,
+      "content_type": "text/html",
+      "expected_status": 200,
+      "link_count": 0,
+      "path": "db_data/dm2_segacd_10_en/stry.dat/stry.dat.html",
+      "title": "mapfile extracted items",
+      "title_sha256": "09721c375d90d53493c4940b5341a154561d6fd9aa1b228348ee07b203547411"
+    },
+    {
+      "actual_status": 404,
+      "content_length": null,
+      "content_type": "text/html",
+      "expected_status": 404,
+      "link_count": 0,
+      "path": "db_data/c_dm_pc_34/graphics.dat/graphics.dat.html",
+      "title": null,
+      "title_sha256": null
+    },
+    {
+      "actual_status": 404,
+      "content_length": null,
+      "content_type": "text/html",
+      "expected_status": 404,
+      "link_count": 0,
+      "path": "db_data/c_csb_pc_34/graphics.dat/graphics.dat.html",
+      "title": null,
+      "title_sha256": null
+    },
+    {
+      "actual_status": 404,
+      "content_length": null,
+      "content_type": "text/html",
+      "expected_status": 404,
+      "link_count": 0,
+      "path": "db_data/dm2_pc10/graphics.dat/graphics.dat.html",
+      "title": null,
+      "title_sha256": null
+    }
+  ],
+  "regenerate_with": "python3 tools/verify_greatstone_db_data_paths.py --online --write",
+  "scope": "OFFLINE fixture: derived metadata only (status code, expected status, content-type hint, content-length hint, title text, title SHA-256, link count). No copyrighted bytes committed.",
+  "source": "docs/FIRESTAFF_GAP_LIST.md A5 (Real-data regression tests, greatstone db_data)"
+}
