@@ -8055,6 +8055,10 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v2_per_mode_material_signatures_pc34
     )
     add_test(
+        NAME dm1_v22_m11_inplace_handoff_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v22_m11_inplace_handoff_source_lock.py
+    )
+    add_test(
         NAME dm1_v2_settings_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_settings_source_lock.py
     )

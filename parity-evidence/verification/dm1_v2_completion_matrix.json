@@ -27,6 +27,7 @@
     "visual/transition": 1
   },
   "currentCTestNamesPresent": [
+    "dm1_v22_m11_inplace_handoff_source_lock",
     "dm1_v2_asset_manifest_validator",
     "dm1_v2_asset_manifest_validator_self_test",
     "dm1_v2_d0_d3_draw_list_comparator_gate",
@@ -336,6 +337,7 @@
   ],
   "moduleCount": 55,
   "requiredCTestNames": [
+    "dm1_v22_m11_inplace_handoff_source_lock",
     "dm1_v2_asset_manifest_validator",
     "dm1_v2_asset_manifest_validator_self_test",
     "dm1_v2_d0_d3_draw_list_comparator_gate",
@@ -366,5 +368,5 @@
   ],
   "status": "passed",
   "testCount": 35,
-  "toolCount": 46
+  "toolCount": 47
 }
