@@ -5047,6 +5047,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_movement_core_pc34_compat
     )
 
+    add_executable(test_dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat
+        tests/test_dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat
+        COMMAND test_dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat
+    )
+
     add_executable(test_dm1_v1_movement_command_core_pc34_compat
         tests/test_dm1_v1_movement_command_core_pc34_compat.c
     )
@@ -6886,6 +6898,20 @@ if(BUILD_TESTING)
         NAME firestaff_dm1_v1_playable_route_probe
         COMMAND firestaff_dm1_v1_playable_route_probe
     )
+
+    add_executable(firestaff_dm1_v1_hoc_floor_things_source_lock_probe
+        probes/dm1/firestaff_dm1_v1_hoc_floor_things_source_lock_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hoc_floor_things_source_lock_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hoc_floor_things_source_lock_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hoc_floor_things_source_lock_probe
+        COMMAND firestaff_dm1_v1_hoc_floor_things_source_lock_probe "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+    )
+    set_tests_properties(firestaff_dm1_v1_hoc_floor_things_source_lock_probe
+        PROPERTIES SKIP_RETURN_CODE 77)
 
     # Pass1055 Firestaff-side pair for the original closed-door collision
     # capture: replay the same movement key sequence and verify the final

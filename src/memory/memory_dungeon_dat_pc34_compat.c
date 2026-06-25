@@ -493,6 +493,87 @@ const char* F0505_DUNGEON_GetThingTypeName_Compat(int thingType) {
         return "Unknown";
 }
 
+int F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+        const struct DungeonDatState_Compat* dungeon,
+        int mapIndex,
+        int mapX,
+        int mapY)
+{
+        const struct DungeonMapDesc_Compat* map;
+        int sftIndex = 0;
+        int m;
+        int squareIndex;
+        int i;
+
+        if (!dungeon || !dungeon->tilesLoaded || !dungeon->maps || !dungeon->tiles) {
+                return -1;
+        }
+        if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) {
+                return -1;
+        }
+        map = &dungeon->maps[mapIndex];
+        if (mapX < 0 || mapY < 0 ||
+            mapX >= (int)map->width || mapY >= (int)map->height ||
+            !dungeon->tiles[mapIndex].squareData) {
+                return -1;
+        }
+
+        squareIndex = mapX * (int)map->height + mapY;
+        if (squareIndex < 0 || squareIndex >= dungeon->tiles[mapIndex].squareCount) {
+                return -1;
+        }
+
+        /* ReDMCSB DUNGEON.C:F0160 lines 1715-1727:
+         * G0270_pui_CurrentMapColumnsCumulativeSquareFirstThingCount[x]
+         * plus the count of earlier thing-list rows in the same column.
+         * We reconstruct that cumulative count from the loaded tile flags
+         * instead of using the on-disk column table directly. */
+        if (!(dungeon->tiles[mapIndex].squareData[squareIndex] &
+              DUNGEON_SQUARE_MASK_THING_LIST)) {
+                return -1;
+        }
+
+        for (m = 0; m < mapIndex; ++m) {
+                int count;
+                if (!dungeon->tiles[m].squareData) return -1;
+                count = dungeon->tiles[m].squareCount;
+                for (i = 0; i < count; ++i) {
+                        if (dungeon->tiles[m].squareData[i] &
+                            DUNGEON_SQUARE_MASK_THING_LIST) {
+                                ++sftIndex;
+                        }
+                }
+        }
+
+        for (i = 0; i < squareIndex; ++i) {
+                if (dungeon->tiles[mapIndex].squareData[i] &
+                    DUNGEON_SQUARE_MASK_THING_LIST) {
+                        ++sftIndex;
+                }
+        }
+
+        return sftIndex;
+}
+
+unsigned short F0511_DUNGEON_GetSquareFirstThing_Compat(
+        const struct DungeonDatState_Compat* dungeon,
+        const struct DungeonThings_Compat* things,
+        int mapIndex,
+        int mapX,
+        int mapY)
+{
+        int sftIndex;
+        if (!things || !things->loaded || !things->squareFirstThings) {
+                return THING_ENDOFLIST;
+        }
+        sftIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+                dungeon, mapIndex, mapX, mapY);
+        if (sftIndex < 0 || sftIndex >= things->squareFirstThingCount) {
+                return THING_ENDOFLIST;
+        }
+        return things->squareFirstThings[sftIndex];
+}
+
 static void decode_door(const unsigned char* raw, struct DungeonDoor_Compat* d) {
         /* Bytes 0-1: Next (THING, little-endian) */
         d->next = (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));

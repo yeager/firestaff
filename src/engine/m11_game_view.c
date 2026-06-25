@@ -1804,6 +1804,17 @@ static unsigned short m11_get_first_square_thing(const struct GameWorld_Compat* 
     return world->things->squareFirstThings[squareIndex];
 }
 
+static unsigned short m11_get_flagged_square_first_thing(const struct GameWorld_Compat* world,
+                                                         int mapIndex,
+                                                         int mapX,
+                                                         int mapY) {
+    if (!world || !world->dungeon || !world->things || !world->things->squareFirstThings) {
+        return THING_ENDOFLIST;
+    }
+    return F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, mapIndex, mapX, mapY);
+}
+
 static int m11_count_square_things(const struct GameWorld_Compat* world,
                                    int mapIndex,
                                    int mapX,
@@ -10632,68 +10643,79 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * Collect up to M11_MAX_CELL_ITEMS items for multi-item scatter.
      * The first one also populates the legacy single-item fields.
      *
-     * Do not filter WALL squares here.  ReDMCSB DUNVIEW.C F0115 draws
-     * alcove objects from WALL squares through the special
-     * C04_VIEW_CELL_ALCOVE path; floor/open-square renderers gate on
-     * element type, and the alcove renderer filters by sub-cell. */
-    if (cell.summary.items > 0 && state->world.things) {
-        unsigned short scanThing = firstThing;
+     * ReDMCSB DUNVIEW.C F0115 draws alcove objects from WALL squares
+     * through the special C04_VIEW_CELL_ALCOVE path, so wall cells keep
+     * the existing runtime thing route. Non-wall floor items must come
+     * from a square that actually carries MASK0x0010_THING_LIST_PRESENT;
+     * otherwise Hall floor cells can display unrelated dense-index chains
+     * as visible objects. */
+    if (state->world.things) {
+        unsigned short itemFirstThing = firstThing;
         int scanSafety = 0;
         int hiddenCandidatePayloadItems = 0;
-        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE &&
-               scanSafety < 64 && cell.floorItemCount < M11_MAX_CELL_ITEMS) {
-            int tType = THING_GET_TYPE(scanThing);
-            int tIdx = THING_GET_INDEX(scanThing);
-            if (m11_thing_is_item(tType)) {
-                int itemSubtype = -1;
-                if (m11_dm1_hall_candidate_payload_item(state, firstThing, scanThing)) {
-                    hiddenCandidatePayloadItems++;
-                    scanThing = m11_raw_next_thing(state->world.things, scanThing);
-                    ++scanSafety;
-                    continue;
-                }
-                switch (tType) {
-                    case THING_TYPE_WEAPON:
-                        if (state->world.things->weapons && tIdx >= 0 && tIdx < state->world.things->weaponCount)
-                            itemSubtype = (int)state->world.things->weapons[tIdx].type;
-                        break;
-                    case THING_TYPE_ARMOUR:
-                        if (state->world.things->armours && tIdx >= 0 && tIdx < state->world.things->armourCount)
-                            itemSubtype = (int)state->world.things->armours[tIdx].type;
-                        break;
-                    case THING_TYPE_POTION:
-                        if (state->world.things->potions && tIdx >= 0 && tIdx < state->world.things->potionCount)
-                            itemSubtype = (int)state->world.things->potions[tIdx].type;
-                        break;
-                    case THING_TYPE_JUNK:
-                        if (state->world.things->junks && tIdx >= 0 && tIdx < state->world.things->junkCount)
-                            itemSubtype = (int)state->world.things->junks[tIdx].type;
-                        break;
-                    case THING_TYPE_SCROLL:
-                        itemSubtype = 0;
-                        break;
-                    case THING_TYPE_CONTAINER:
-                        if (state->world.things->containers && tIdx >= 0 && tIdx < state->world.things->containerCount)
-                            itemSubtype = (int)state->world.things->containers[tIdx].type;
-                        break;
-                    default:
-                        itemSubtype = 0;
-                        break;
-                }
-                if (cell.floorItemCount == 0) {
-                    cell.firstItemThingType = tType;
-                    cell.firstItemSubtype = itemSubtype;
-                }
-                cell.floorItemTypes[cell.floorItemCount] = tType;
-                cell.floorItemSubtypes[cell.floorItemCount] = itemSubtype;
-                cell.floorItemCells[cell.floorItemCount] = (((int)(scanThing >> 14)) - state->world.party.direction) & 3;
-                cell.floorItemCount++;
-            }
-            scanThing = m11_raw_next_thing(state->world.things, scanThing);
-            ++scanSafety;
+        if (cell.elementType != DUNGEON_ELEMENT_WALL) {
+            itemFirstThing = m11_get_flagged_square_first_thing(&state->world,
+                                                                state->world.party.mapIndex,
+                                                                mapX,
+                                                                mapY);
         }
-        if (hiddenCandidatePayloadItems > 0) {
-            cell.summary.items = cell.floorItemCount;
+        if (itemFirstThing != THING_ENDOFLIST && itemFirstThing != THING_NONE) {
+            unsigned short scanThing = itemFirstThing;
+            while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE &&
+                   scanSafety < 64 && cell.floorItemCount < M11_MAX_CELL_ITEMS) {
+                int tType = THING_GET_TYPE(scanThing);
+                int tIdx = THING_GET_INDEX(scanThing);
+                if (m11_thing_is_item(tType)) {
+                    int itemSubtype = -1;
+                    if (m11_dm1_hall_candidate_payload_item(state, itemFirstThing, scanThing)) {
+                        hiddenCandidatePayloadItems++;
+                        scanThing = m11_raw_next_thing(state->world.things, scanThing);
+                        ++scanSafety;
+                        continue;
+                    }
+                    switch (tType) {
+                        case THING_TYPE_WEAPON:
+                            if (state->world.things->weapons && tIdx >= 0 && tIdx < state->world.things->weaponCount)
+                                itemSubtype = (int)state->world.things->weapons[tIdx].type;
+                            break;
+                        case THING_TYPE_ARMOUR:
+                            if (state->world.things->armours && tIdx >= 0 && tIdx < state->world.things->armourCount)
+                                itemSubtype = (int)state->world.things->armours[tIdx].type;
+                            break;
+                        case THING_TYPE_POTION:
+                            if (state->world.things->potions && tIdx >= 0 && tIdx < state->world.things->potionCount)
+                                itemSubtype = (int)state->world.things->potions[tIdx].type;
+                            break;
+                        case THING_TYPE_JUNK:
+                            if (state->world.things->junks && tIdx >= 0 && tIdx < state->world.things->junkCount)
+                                itemSubtype = (int)state->world.things->junks[tIdx].type;
+                            break;
+                        case THING_TYPE_SCROLL:
+                            itemSubtype = 0;
+                            break;
+                        case THING_TYPE_CONTAINER:
+                            if (state->world.things->containers && tIdx >= 0 && tIdx < state->world.things->containerCount)
+                                itemSubtype = (int)state->world.things->containers[tIdx].type;
+                            break;
+                        default:
+                            itemSubtype = 0;
+                            break;
+                    }
+                    if (cell.floorItemCount == 0) {
+                        cell.firstItemThingType = tType;
+                        cell.firstItemSubtype = itemSubtype;
+                    }
+                    cell.floorItemTypes[cell.floorItemCount] = tType;
+                    cell.floorItemSubtypes[cell.floorItemCount] = itemSubtype;
+                    cell.floorItemCells[cell.floorItemCount] = (((int)(scanThing >> 14)) - state->world.party.direction) & 3;
+                    cell.floorItemCount++;
+                }
+                scanThing = m11_raw_next_thing(state->world.things, scanThing);
+                ++scanSafety;
+            }
+            if (hiddenCandidatePayloadItems > 0) {
+                cell.summary.items = cell.floorItemCount;
+            }
         }
     }
 
