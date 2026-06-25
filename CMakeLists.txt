@@ -16958,6 +16958,47 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_sck_mapfile.c"
     )
 endif()
 
+# SCK mapfile -> Firestaff asset-loader bridge: bounded `_mapping.xml`
+# index parser, MD5+file lookup, and sized asset-slice selector for one
+# concrete resource.  Keeps the non-SIZE formats out of scope.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_sck_asset_bridge.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/firestaff_sck_asset_bridge.c")
+    add_executable(test_firestaff_sck_asset_bridge
+        tests/test_firestaff_sck_asset_bridge.c
+        src/shared/firestaff_sck_asset_bridge.c
+        src/shared/firestaff_sck_mapfile.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_sck_asset_bridge PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_sck_asset_bridge
+        COMMAND test_firestaff_sck_asset_bridge
+    )
+endif()
+
+# Real-corpus bridge probe: parses the actual `_mapping.xml` shipped in
+# sck.jar plus the bundled `dm_atari_demo.map` and selects a single
+# IMG1 SIZE= slice through the bridge.  Skips gracefully when the
+# corpus is not present so CTest stays green in offline environments.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/sck/firestaff_sck_asset_bridge_real_corpus_probe.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/firestaff_sck_asset_bridge.c")
+    add_executable(firestaff_sck_asset_bridge_real_corpus_probe
+        probes/sck/firestaff_sck_asset_bridge_real_corpus_probe.c
+        src/shared/firestaff_sck_asset_bridge.c
+        src/shared/firestaff_sck_mapfile.c
+    )
+    target_include_directories(firestaff_sck_asset_bridge_real_corpus_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_sck_asset_bridge_real_corpus_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_sck_asset_bridge_real_corpus_probe
+        COMMAND firestaff_sck_asset_bridge_real_corpus_probe
+    )
+endif()
+
 # M12 custom dungeon real-path scanner: disk-backed data/custom/<name>/DUNGEON.DAT
 # discovery with mixed-case community filenames and validation statuses.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_custom_dungeon_m12_real_path.c"
