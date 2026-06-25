@@ -24,7 +24,7 @@
  *      NOT push a duplicate no-data popup on top.
  *   6. A no-op rescan (M12_StartupMenu_SetDataDirectory with the same
  *      empty directory) shows the result popup once, with the empty-data
- *      line2 ("NO VERIFIED GAME DATA FOUND"), and the next ACK cleanly
+ *      line2 ("NO VERIFIED DATA"), and the next ACK cleanly
  *      returns to MAIN with cleared message lines.
  *   7. When quick resume is armed for an unavailable game, selecting it
  *      via the quick-resume slot surfaces the missing-game-data popup
@@ -228,8 +228,18 @@ static int launcher_has_clean_main_view(const M12_StartupMenuState* state) {
            popup_lines_are_cleared(state);
 }
 
+static int launcher_has_clean_settings_view(const M12_StartupMenuState* state) {
+    if (!state) return 0;
+    return state->view == M12_MENU_VIEW_SETTINGS &&
+           state->launchRequested == 0 &&
+           state->quickResumeLaunchRequested == 0 &&
+           state->dataDirPickerActive == 0 &&
+           popup_lines_are_cleared(state);
+}
+
 /* Helper: dismiss whatever popup is currently visible via the same BACK /
- * ACCEPT / ACTION keys the real launcher uses, returning to MAIN. */
+ * ACCEPT / ACTION keys the real launcher uses. The destination is whatever
+ * messageReturnView the launcher captured when the popup was opened. */
 static void dismiss_message(M12_StartupMenuState* state) {
     if (!state || state->view != M12_MENU_VIEW_MESSAGE) return;
     if (state->dataDirPickerActive) return;
@@ -417,15 +427,16 @@ static void check_data_dir_picker_cancel_does_not_re_show_no_data(void) {
     CHECK(strcmp(line1, "DATA DIRECTORY UNCHANGED") == 0);
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
 
-    /* Dismiss the result popup — the original no-data popup must NOT
-     * leak through. */
+    /* Dismiss the result popup. The original no-data popup must NOT leak
+     * through, and because the picker was opened from Settings the result
+     * returns to Settings rather than flattening the user back to MAIN. */
     dismiss_message(&state);
-    CHECK(launcher_has_clean_main_view(&state));
+    CHECK(launcher_has_clean_settings_view(&state));
 }
 
 /* ------------------------------------------------------------------------- */
 /* Scenario 6: a no-op rescan via M12_StartupMenu_SetDataDirectory must
- * surface the "NO VERIFIED GAME DATA FOUND" result popup exactly once,
+ * surface the "NO VERIFIED DATA" result popup exactly once,
  * and dismissal must return cleanly to MAIN. */
 
 static void check_rescan_with_empty_dir_shows_no_data_result_once(void) {
@@ -453,7 +464,7 @@ static void check_rescan_with_empty_dir_shows_no_data_result_once(void) {
     line1 = state.messageLine1 ? state.messageLine1 : "";
     line2 = state.messageLine2 ? state.messageLine2 : "";
     CHECK(strcmp(line1, "DATA DIRECTORY UPDATED") == 0);
-    CHECK(strcmp(line2, "NO VERIFIED GAME DATA FOUND") == 0);
+    CHECK(strcmp(line2, "NO VERIFIED DATA") == 0);
     CHECK(state.messageLine3 && has_text_prefix(state.messageLine3, "DATA DIR:"));
 
     /* Repeated ACKs while the result popup is open must not stack a
