@@ -35,6 +35,26 @@ The strongest current proof is:
   save/load, cross-route mechanics, runtime screenshot, dungeon progression,
   cross-slot, and M11 launch gates into one PASS/FAIL manifest so later
   screenshot promotion can start from a known-good baseline.
+- `theron_v1_srm_classifier` (probe + unit test, 2026-06-25): bounded
+  Save Disk manifest that detects the gzipped-deflate body dmweb's
+  `community/documentation/miscellaneous.html` and greatstone page
+  reference for Theron's Quest savegames, reports a clean
+  `present_count=0, recognized_count=0` ABSENT manifest on the current
+  host (no real `.srm` file is staged), and accepts a real `.srm`
+  when one is placed under
+  `$HOME/.firestaff/data/theron/save/slot0.srm` ... `slot4.srm` or
+  the `FIRESTAFF_THERON_SRM_DIR` override. Default root uses 5 disk
+  slots matching the original Save Disk cartridge model. The
+  classifier is the bounded real-artifact counterpart to the
+  synthetic `theron_v1_save_load.c` `slotN.tqsv` in-game save
+  format; the two are kept separate because the underlying save
+  models are different (Save Disk cartridge vs. in-game save
+  format). See `include/theron_v1_srm_classifier.h` for the
+  classifier contract and `docs/DMWEB_REFERENCE.md` §6 for the
+  format anchor. Real `.srm` payload decoding (gzipped Theron save
+  body) and cross-slot import to `Theron_DungeonProgression`/
+  champion blocks remain out of scope and are tracked under
+  `docs/FIRESTAFF_GAP_LIST.md` A3 `Savegame format (Theron .SRM)`.
 
 These are readiness receipts, not public screenshot assets. Do not add Theron
 images to the README until a reviewed real Firestaff runtime frame is promoted
@@ -48,6 +68,7 @@ Run the focused readiness check with:
 ```bash
 ctest --test-dir build -R '^theron_v1_runtime_screenshot_readiness$' --output-on-failure
 ctest --test-dir build -R '^theron_v1_track02_' --output-on-failure
+ctest --test-dir build -R '^theron_v1_srm_classifier' --output-on-failure
 ```
 
 The generated report lives at

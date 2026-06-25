@@ -169,7 +169,7 @@ support is to add any one of these data files:
 | Hard | CSB X68000 3.1 HDM/floppy images | X68000-specific 732-item GRAPHICS.DAT, 24/31 kHz presentation receipts, Champion Editor/portrait-loading proof, X68000 Ctrl-S / Opt.1 / Opt.2 input gates, and original/cracked/save-disk classification |
 | Hard | DM SNES / Super Famicom SMC ROM set | four cartridge versions, per-tile palettes, SPC music, console input, and SNES-specific bug gates |
 | Hard | DM2 Amiga 1.0 GRAPHICS.DAT | 4630 items, 16-color |
-| Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence for DMWeb's between-dungeon save model beyond the current launch/readiness gates |
+| Hard | Real Theron `.srm` save artifact | unlocks Track 02 save import/export evidence for DMWeb's between-dungeon save model beyond the current launch/readiness gates; 2026-06-25 adds the bounded `theron_v1_srm_classifier` (probe + unit test, 5-slot Save Disk manifest, gzip-deflate detection) that recognizes a real `.srm` when one is staged under `$HOME/.firestaff/data/theron/save/` or `$FIRESTAFF_THERON_SRM_DIR` and reports an honest `ABSENT` manifest on hosts without one. Real `.srm` payload decoding and cross-slot import to `Theron_DungeonProgression`/champion blocks remain the unblocked step. |
 | Very hard | Nexus Saturn full Track 1 / fan-translation matrix | original JP Track 1 is present, but full-disc runtime handoff, CD audio tracks 02-09, demo classification, and EN/FR fan-translation hashes still need proof |
 
 ## Adding a new version to Firestaff

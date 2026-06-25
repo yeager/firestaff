@@ -1,5 +1,5 @@
 {
-  "build_dir": "build",
+  "build_dir": "<build-dir>",
   "checks": {
     "coverage": {
       "command": {
@@ -51,28 +51,28 @@
         "cmd": [
           "ctest",
           "--test-dir",
-          "build",
+          "<build-dir>",
           "-R",
-          "^(tier1_strict_boot_probe|theron_v1_availability|theron_v1_dungeon_progression|theron_v1_dungeon_progression_determinism_probe|theron_v1_mechanics_champions_probe|theron_v1_mechanics_hardening|theron_v1_cross_route_mechanics|theron_v1_teleporter_chain|theron_v1_viewport_renderer|theron_v1_tile_renderer|theron_v1_rendering|theron_v1_save_load|theron_v1_save_header_rejection|theron_v1_shop_price_table|theron_v1_world_serialize_purchase_state|theron_v1_direct_launch|theron_v1_m11_direct_launch|theron_v1_launcher_scan_reuse|theron_v1_track02_bank|theron_v2_phase_gate_pc34|theron_v2_phase0_v1_compatibility_lock|theron_v2_phase1_launch_profile_separation|theron_v2_settings_pc34|theron_v2_filter_config_pc34|theron_v2_presentation_mode_pc34|theron_v2_texture_upscale_pc34|theron_v22_shapes_pc34|theron_v22_inplace_draw_pc34|theron_v22_modern_assets_pc34|theron_v2_smooth_movement_pc34)$",
+          "^(tier1_strict_boot_probe|theron_v1_availability|theron_v1_dungeon_progression|theron_v1_dungeon_progression_determinism_probe|theron_v1_mechanics_champions_probe|theron_v1_mechanics_hardening|theron_v1_cross_route_mechanics|theron_v1_teleporter_chain|theron_v1_viewport_renderer|theron_v1_tile_renderer|theron_v1_rendering|theron_v1_save_load|theron_v1_save_header_rejection|theron_v1_srm_classifier|theron_v1_srm_classifier_probe|theron_v1_shop_price_table|theron_v1_world_serialize_purchase_state|theron_v1_direct_launch|theron_v1_m11_direct_launch|theron_v1_launcher_scan_reuse|theron_v1_track02_bank|theron_v2_phase_gate_pc34|theron_v2_phase0_v1_compatibility_lock|theron_v2_phase1_launch_profile_separation|theron_v2_settings_pc34|theron_v2_filter_config_pc34|theron_v2_presentation_mode_pc34|theron_v2_texture_upscale_pc34|theron_v22_shapes_pc34|theron_v22_inplace_draw_pc34|theron_v22_modern_assets_pc34|theron_v2_smooth_movement_pc34)$",
           "--output-on-failure"
         ],
         "ok": true,
         "returncode": 0,
         "stderr": "",
-        "stdout": "Test project <build-dir>\n      Start   1: theron_v1_mechanics_champions_probe\n 1/30 Test   #1: theron_v1_mechanics_champions_probe ...............   Passed    0.01 sec\n      Start   2: theron_v1_dungeon_progression_determinism_probe\n 2/30 Test   #2: theron_v1_dungeon_progression_determinism_probe ...   Passed    0.01 sec\n      Start 254: theron_v2_phase_gate_pc34\n 3/30 Test #254: theron_v2_phase_gate_pc34 .........................   Passed    0.01 sec\n      Start 255: theron_v2_phase0_v1_compatibility_lock\n 4/30 Test #255: theron_v2_phase0_v1_compatibility_lock ............   Passed    0.01 sec\n      Start 256: theron_v2_phase1_launch_profile_separation\n 5/30 Test #256: theron_v2_phase1_launch_profile_separation ........   Passed    0.01 sec\n      Start 303: theron_v2_settings_pc34\n 6/30 Test #303: theron_v2_settings_pc34 ...........................   Passed    0.01 sec\n      Start 311: theron_v2_filter_config_pc34\n 7/30 Test #311: theron_v2_filter_config_pc34 ......................   Passed    0.01 sec\n      Start 315: theron_v2_presentation_mode_pc34\n 8/30 Test #315: theron_v2_presentation_mode_pc34 ..................   Passed    0.01 sec\n      Start 320: theron_v2_texture_upscale_pc34\n 9/30 Test #320: theron_v2_texture_upscale_pc34 ....................   Passed    0.01 sec\n      Start 321: theron_v22_shapes_pc34\n10/30 Test #321: theron_v22_shapes_pc34 ............................   Passed    0.01 sec\n      Start 322: theron_v22_inplace_draw_pc34\n11/30 Test #322: theron_v22_inplace_draw_pc34 ......................   Passed    0.02 sec\n      Start 323: theron_v22_modern_assets_pc34\n12/30 Test #323: theron_v22_modern_assets_pc34 .....................   Passed    0.02 sec\n      Start 325: theron_v2_smooth_movement_pc34\n13/30 Test #325: theron_v2_smooth_movement_pc34 ....................   Passed    0.01 sec\n      Start 774: tier1_strict_boot_probe\n14/30 Test #774: tier1_strict_boot_probe ...........................   Passed   42.94 sec\n      Start 782: theron_v1_availability\n15/30 Test #782: theron_v1_availability ............................   Passed    0.06 sec\n      Start 789: theron_v1_dungeon_progression\n16/30 Test #789: theron_v1_dungeon_progression .....................   Passed    0.01 sec\n      Start 790: theron_v1_save_load\n17/30 Test #790: theron_v1_save_load ...............................   Passed    0.02 sec\n      Start 791: theron_v1_teleporter_chain\n18/30 Test #791: theron_v1_teleporter_chain ........................   Passed    0.01 sec\n      Start 792: theron_v1_mechanics_hardening\n19/30 Test #792: theron_v1_mechanics_hardening .....................   Passed    0.01 sec\n      Start 793: theron_v1_cross_route_mechanics\n20/30 Test #793: theron_v1_cross_route_mechanics ...................   Passed    0.01 sec\n      Start 794: theron_v1_viewport_renderer\n21/30 Test #794: theron_v1_viewport_renderer .......................   Passed    0.01 sec\n      Start 795: theron_v1_tile_renderer\n22/30 Test #795: theron_v1_tile_renderer ...........................   Passed    0.01 sec\n      Start 796: theron_v1_rendering\n23/30 Test #796: theron_v1_rendering ...............................   Passed    0.01 sec\n      Start 797: theron_v1_save_header_rejection\n24/30 Test #797: theron_v1_save_header_rejection ...................   Passed    0.01 sec\n      Start 798: theron_v1_shop_price_table\n25/30 Test #798: theron_v1_shop_price_table ........................   Passed    0.01 sec\n      Start 799: theron_v1_world_serialize_purchase_state\n26/30 Test #799: theron_v1_world_serialize_purchase_state ..........   Passed    0.01 sec\n      Start 800: theron_v1_direct_launch\n27/30 Test #800: theron_v1_direct_launch ...........................   Passed    0.01 sec\n      Start 801: theron_v1_m11_direct_launch\n28/30 Test #801: theron_v1_m11_direct_launch .......................   Passed    0.02 sec\n      Start 802: theron_v1_launcher_scan_reuse\n29/30 Test #802: theron_v1_launcher_scan_reuse .....................   Passed    0.01 sec\n      Start 803: theron_v1_track02_bank\n30/30 Test #803: theron_v1_track02_bank ............................   Passed    0.13 sec\n\n100% tests passed, 0 tests failed out of 30\n\nLabel Time Summary:\nboot_probe     =  42.94 sec*proc (1 test)\ndata_path      =  42.94 sec*proc (1 test)\ndeterminism    =   0.01 sec*proc (1 test)\ndungeon        =   0.01 sec*proc (1 test)\ntheron         =   0.01 sec*proc (1 test)\ntier1          =  42.94 sec*proc (1 test)\ntier4          =   0.01 sec*proc (1 test)\n\nTotal Test time (real) =  43.42 sec"
+        "stdout": "Test project <build-dir>\n      Start    1: theron_v1_mechanics_champions_probe\n 1/32 Test    #1: theron_v1_mechanics_champions_probe ...............   Passed    0.01 sec\n      Start    2: theron_v1_dungeon_progression_determinism_probe\n 2/32 Test    #2: theron_v1_dungeon_progression_determinism_probe ...   Passed    0.01 sec\n      Start  447: theron_v2_phase_gate_pc34\n 3/32 Test  #447: theron_v2_phase_gate_pc34 .........................   Passed    0.26 sec\n      Start  448: theron_v2_phase0_v1_compatibility_lock\n 4/32 Test  #448: theron_v2_phase0_v1_compatibility_lock ............   Passed    0.20 sec\n      Start  449: theron_v2_phase1_launch_profile_separation\n 5/32 Test  #449: theron_v2_phase1_launch_profile_separation ........   Passed    0.20 sec\n      Start  497: theron_v2_settings_pc34\n 6/32 Test  #497: theron_v2_settings_pc34 ...........................   Passed    0.21 sec\n      Start  505: theron_v2_filter_config_pc34\n 7/32 Test  #505: theron_v2_filter_config_pc34 ......................   Passed    0.20 sec\n      Start  509: theron_v2_presentation_mode_pc34\n 8/32 Test  #509: theron_v2_presentation_mode_pc34 ..................   Passed    0.21 sec\n      Start  514: theron_v2_texture_upscale_pc34\n 9/32 Test  #514: theron_v2_texture_upscale_pc34 ....................   Passed    0.20 sec\n      Start  515: theron_v22_shapes_pc34\n10/32 Test  #515: theron_v22_shapes_pc34 ............................   Passed    0.22 sec\n      Start  516: theron_v22_inplace_draw_pc34\n11/32 Test  #516: theron_v22_inplace_draw_pc34 ......................   Passed    0.21 sec\n      Start  517: theron_v22_modern_assets_pc34\n12/32 Test  #517: theron_v22_modern_assets_pc34 .....................   Passed    0.21 sec\n      Start  519: theron_v2_smooth_movement_pc34\n13/32 Test  #519: theron_v2_smooth_movement_pc34 ....................   Passed    0.20 sec\n      Start  999: tier1_strict_boot_probe\n14/32 Test  #999: tier1_strict_boot_probe ...........................   Passed   42.93 sec\n      Start 1007: theron_v1_availability\n15/32 Test #1007: theron_v1_availability ............................   Passed    0.08 sec\n      Start 1016: theron_v1_dungeon_progression\n16/32 Test #1016: theron_v1_dungeon_progression .....................   Passed    0.01 sec\n      Start 1017: theron_v1_save_load\n17/32 Test #1017: theron_v1_save_load ...............................   Passed    0.03 sec\n      Start 1018: theron_v1_teleporter_chain\n18/32 Test #1018: theron_v1_teleporter_chain ........................   Passed    0.01 sec\n      Start 1019: theron_v1_mechanics_hardening\n19/32 Test #1019: theron_v1_mechanics_hardening .....................   Passed    0.01 sec\n      Start 1020: theron_v1_cross_route_mechanics\n20/32 Test #1020: theron_v1_cross_route_mechanics ...................   Passed    0.01 sec\n      Start 1021: theron_v1_viewport_renderer\n21/32 Test #1021: theron_v1_viewport_renderer .......................   Passed    0.01 sec\n      Start 1022: theron_v1_tile_renderer\n22/32 Test #1022: theron_v1_tile_renderer ...........................   Passed    0.01 sec\n      Start 1023: theron_v1_rendering\n23/32 Test #1023: theron_v1_rendering ...............................   Passed    0.01 sec\n      Start 1024: theron_v1_save_header_rejection\n24/32 Test #1024: theron_v1_save_header_rejection ...................   Passed    0.01 sec\n      Start 1026: theron_v1_srm_classifier\n25/32 Test #1026: theron_v1_srm_classifier ..........................   Passed    0.01 sec\n      Start 1027: theron_v1_shop_price_table\n26/32 Test #1027: theron_v1_shop_price_table ........................   Passed    0.01 sec\n      Start 1028: theron_v1_world_serialize_purchase_state\n27/32 Test #1028: theron_v1_world_serialize_purchase_state ..........   Passed    0.01 sec\n      Start 1029: theron_v1_direct_launch\n28/32 Test #1029: theron_v1_direct_launch ...........................   Passed    0.01 sec\n      Start 1030: theron_v1_m11_direct_launch\n29/32 Test #1030: theron_v1_m11_direct_launch .......................   Passed    0.02 sec\n      Start 1031: theron_v1_launcher_scan_reuse\n30/32 Test #1031: theron_v1_launcher_scan_reuse .....................   Passed    0.01 sec\n      Start 1033: theron_v1_track02_bank\n31/32 Test #1033: theron_v1_track02_bank ............................   Passed    0.20 sec\n      Start 1034: theron_v1_srm_classifier_probe\n32/32 Test #1034: theron_v1_srm_classifier_probe ....................   Passed    0.01 sec\n\n100% tests passed, 0 tests failed out of 32\n\nLabel Time Summary:\nboot_probe     =  42.93 sec*proc (1 test)\ndata_path      =  42.93 sec*proc (1 test)\ndeterminism    =   0.01 sec*proc (1 test)\ndungeon        =   0.01 sec*proc (1 test)\ntheron         =   0.01 sec*proc (1 test)\ntier1          =  42.93 sec*proc (1 test)\ntier4          =   0.01 sec*proc (1 test)\n\nTotal Test time (real) =  45.73 sec"
       },
       "inventory": {
         "command": {
           "cmd": [
             "ctest",
             "--test-dir",
-            "build",
+            "<build-dir>",
             "--show-only=json-v1"
           ],
           "ok": true,
           "returncode": 0,
           "stderr": "",
-          "stdout": "<ctest json inventory: 1112 tests>"
+          "stdout": "<ctest json inventory: 1350 tests>"
         },
         "groups": {
           "v1": [
@@ -89,6 +89,8 @@
             "theron_v1_save_header_rejection",
             "theron_v1_save_load",
             "theron_v1_shop_price_table",
+            "theron_v1_srm_classifier",
+            "theron_v1_srm_classifier_probe",
             "theron_v1_teleporter_chain",
             "theron_v1_tile_renderer",
             "theron_v1_track02_bank",
@@ -129,6 +131,8 @@
           "theron_v1_save_header_rejection": [],
           "theron_v1_save_load": [],
           "theron_v1_shop_price_table": [],
+          "theron_v1_srm_classifier": [],
+          "theron_v1_srm_classifier_probe": [],
           "theron_v1_teleporter_chain": [],
           "theron_v1_tile_renderer": [],
           "theron_v1_track02_bank": [],
@@ -165,6 +169,8 @@
           "theron_v1_save_header_rejection",
           "theron_v1_save_load",
           "theron_v1_shop_price_table",
+          "theron_v1_srm_classifier",
+          "theron_v1_srm_classifier_probe",
           "theron_v1_teleporter_chain",
           "theron_v1_tile_renderer",
           "theron_v1_track02_bank",
@@ -199,6 +205,8 @@
           "theron_v1_rendering",
           "theron_v1_save_load",
           "theron_v1_save_header_rejection",
+          "theron_v1_srm_classifier",
+          "theron_v1_srm_classifier_probe",
           "theron_v1_shop_price_table",
           "theron_v1_world_serialize_purchase_state",
           "theron_v1_direct_launch",
@@ -219,11 +227,11 @@
         ]
       },
       "ok": true,
-      "regex": "^(tier1_strict_boot_probe|theron_v1_availability|theron_v1_dungeon_progression|theron_v1_dungeon_progression_determinism_probe|theron_v1_mechanics_champions_probe|theron_v1_mechanics_hardening|theron_v1_cross_route_mechanics|theron_v1_teleporter_chain|theron_v1_viewport_renderer|theron_v1_tile_renderer|theron_v1_rendering|theron_v1_save_load|theron_v1_save_header_rejection|theron_v1_shop_price_table|theron_v1_world_serialize_purchase_state|theron_v1_direct_launch|theron_v1_m11_direct_launch|theron_v1_launcher_scan_reuse|theron_v1_track02_bank|theron_v2_phase_gate_pc34|theron_v2_phase0_v1_compatibility_lock|theron_v2_phase1_launch_profile_separation|theron_v2_settings_pc34|theron_v2_filter_config_pc34|theron_v2_presentation_mode_pc34|theron_v2_texture_upscale_pc34|theron_v22_shapes_pc34|theron_v22_inplace_draw_pc34|theron_v22_modern_assets_pc34|theron_v2_smooth_movement_pc34)$"
+      "regex": "^(tier1_strict_boot_probe|theron_v1_availability|theron_v1_dungeon_progression|theron_v1_dungeon_progression_determinism_probe|theron_v1_mechanics_champions_probe|theron_v1_mechanics_hardening|theron_v1_cross_route_mechanics|theron_v1_teleporter_chain|theron_v1_viewport_renderer|theron_v1_tile_renderer|theron_v1_rendering|theron_v1_save_load|theron_v1_save_header_rejection|theron_v1_srm_classifier|theron_v1_srm_classifier_probe|theron_v1_shop_price_table|theron_v1_world_serialize_purchase_state|theron_v1_direct_launch|theron_v1_m11_direct_launch|theron_v1_launcher_scan_reuse|theron_v1_track02_bank|theron_v2_phase_gate_pc34|theron_v2_phase0_v1_compatibility_lock|theron_v2_phase1_launch_profile_separation|theron_v2_settings_pc34|theron_v2_filter_config_pc34|theron_v2_presentation_mode_pc34|theron_v2_texture_upscale_pc34|theron_v22_shapes_pc34|theron_v22_inplace_draw_pc34|theron_v22_modern_assets_pc34|theron_v2_smooth_movement_pc34)$"
     }
   },
   "data_dir": "<data-dir>",
-  "generated_at": "2026-06-22T07:14:39.393816+00:00",
+  "generated_at": "2026-06-25T12:31:27.195863+00:00",
   "schema": "firestaff.parity.theron_24h_readiness.v1",
   "status": "PASS"
 }
