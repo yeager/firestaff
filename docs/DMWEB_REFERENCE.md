@@ -12,7 +12,7 @@ on what each contributes to Firestaff.
 | Site | What it gives us |
 |---|---|
 | **dmweb.free.fr** | Whole-game encyclopaedia: per-platform release matrix, magazine scans, awards, custom dungeon galleries, FAQ for each platform's quirks, and — most importantly — **byte-level file format specs** for DUNGEON.DAT, GRAPHICS.DAT, animations, data files, save games, and DMII variants. |
-| **greatstone.free.fr/dm/** | Pierre Monnot's "Swoosh Construction Kit" (sck) project: a Java tool that has **already extracted every asset from 26+ commercial versions** of DM and CSB (Amiga 1.0/1.1/1.2/1.3/2.0/2.1/2.2/3.6, Atari, Apple IIGS, FM-Towns, PC-98, PC 3.4, SNES, X68000, CSB Amiga, CSB Atari, CSB FM-Towns, CSB PC-98, CSB X68000, DMII Amiga/Mac/PC/Sega-CD/FM-Towns/PC-98/IBM PSV/PC-9821, Theron's Quest, DM Nexus, Black Crypt, R-Type III GBA). Specs for the FTL container format, the PAK compression format, and the IMG5 4bpp chunked-image format that underlies most of the engine. |
+| **greatstone.free.fr/dm/** | Pierre Monnot's "Swoosh Construction Kit" (sck) project: a data-extraction tool and mapfile/spec corpus for converting proprietary DM-family resources into ordinary formats such as BMP, WAV and TXT. It has **already extracted every asset from 26+ commercial versions** of DM and CSB (Amiga 1.0/1.1/1.2/1.3/2.0/2.1/2.2/3.6, Atari, Apple IIGS, FM-Towns, PC-98, PC 3.4, SNES, X68000, CSB Amiga, CSB Atari, CSB FM-Towns, CSB PC-98, CSB X68000, DMII Amiga/Mac/PC/Sega-CD/FM-Towns/PC-98/IBM PSV/PC-9821, Theron's Quest, DM Nexus, Black Crypt, R-Type III GBA). Specs for the FTL container format, the PAK compression format, the SCK mapfile format, and the IMG5 4bpp planar image format. |
 
 Combined, these are the definitive "ground truth" for any
 Dungeon Master implementation. Where ReDMCSB gives us
@@ -110,25 +110,22 @@ The key takeaway: **any "real" custom dungeon for DM/CSB/CSBWin must use the eng
 
 ### Overview
 
-`http://greatstone.free.fr/dm/overview.html` — **the page that explains what greatstone's "Swoosh Construction Kit" (sck) tool is and what it does**. The sck is a Java tool (Maven project) that has decoded every major file format for DM/CSB/DM2 and provides both command-line and GUI extraction. As of the last news (2011 milestone), the sck can extract:
+`http://greatstone.free.fr/dm/overview.html` — **the page that explains what greatstone's "Swoosh Construction Kit" (sck) tool is and what it does**. It frames the work as reverse-engineering proprietary, compressed or obfuscated customer-facing game files into common formats such as BMP, WAV and TXT. The tool model is: identify a file by signature, find or apply a mapfile description for the file and its embedded items, decode each format with a dedicated algorithm, split repositories into single resources, then export them. This is exactly the same split Firestaff needs for hash-verified discovery, archive/materialization, mapfile-backed slicing, and per-format decoders. The overview names representative DM-family containers and resources:
 
-- **graphics.dat** — all item types (IMG1-IMG9, SND1-SND9, MUS1-MUS2, TXT1-TXT2, FNT1, LAY1-LAY2, COD1-COD4, P4B1, SEQ1-SEQ2, RAW1-RAW2, plus Amiga Extra Halfbrite IMGEHB)
-- **dungeon.dat** — fully decodes the format, exports to XML, and an XSLT stylesheet converts the XML to HTML dungeon maps (this is the "Swoosh" — a "Swoosh" is a swish of a champion's hand in a magic gesture)
-- **save game files** — original FTL format + in-game player saves + CSBWin saves; handles all portrait formats inside save games (CMP, IMH6, IMG6LH)
-- **ftl files** — animation files (DM, CSB)
-- **hint oracle files** — for CSB
-- **sound files** — for DM2
-- **portraits** — for CSB
+- **graphics.dat / csbgraphics.dat** — repositories of sounds, images, texts and palettes
+- **dungeon.dat / mini.dat** — dungeon and CSB initial maps
+- **.ftl / swoosh** — proprietary containers with code plus sounds, images, texts and palettes
+- **.cmp / .amg / hcsb.htc** — portraits, single sounds and CSB Hint Oracle data
+- **.smc** — SNES ROMs containing the whole game
+- **.anm, end, swoosh, title, .dat** — animation files that SCK aims to view across DM, CSB and DM2
 
-The sck can also **recompress** dungeons. It supports **SNDA SPR1** format for DM2 PC-9821 sounds and **SND9 SPR1** for DM2 PC Beta.
-
-The sck has 30+ animation files analyzed (see the animations format page on dmweb above).
+The overview also states why mapfiles matter: a file description must be independent of the extraction tool, while the individual format algorithms live outside the mapfile specification. That matches Firestaff's current direction of keeping `firestaff_sck_mapfile` as metadata/slicing infrastructure and separate decoders for IMG5, PAK, CMP, etc.
 
 ### Game-version coverage by sck
 
 | Game | Versions extracted |
 |---|---|
-| **DM** | Atari 1.0/1.1/1.2/1.3, Amiga 1.0/2.0/2.1/2.2/3.6, Apple IIGS, FM-Towns 2.0, PC 3.4 (English + Multilingual), PC-9801 2.0, X68000, SNES, **Teaser demo** |
+| **DM** | 26 extraction entries: Amiga 2.0 (EN/FR/GE), 2.1 EN, 2.2 (EN/GE), 3.6 EN/FR/GE, Amiga Atari-1.2 Meynaf port, Apple IIGS EN, Atari teaser demo, Atari 1.0/1.1/1.2/1.3 plus cracked variants, FM-Towns 2.0 EN/JP, PC-98 2.0 JP, PC 3.4 and 3.4 EN/FR/GE, SNES 1.0 EN NTSC/PAL + JP NTSC, SNES 1.1 JP NTSC, X68000 3.0 JP |
 | **CSB** | Atari 2.0/2.1, Amiga 3.1/3.3 (EN/FR/GE), FM-Towns 3.1 (EN/JP), PC-9801 3.1 (JP), X68000 |
 | **DM2** | Amiga 1.0, FM-Towns 1.0 (EN/JP), IBM PS/V 1.0 (JP), Mac 1.0 (EN/JP), PC 0.9 Beta, PC English, PC German, PC French, PC Demo, PC-9801 1.0 (JP), PC-9821 1.0 (JP), Sega CD 1.0 (EN/JP) |
 | **Theron's Quest** | PC Engine (CD) JP/US |
@@ -139,11 +136,11 @@ The sck has 30+ animation files analyzed (see the animations format page on dmwe
 
 | URL | What's there | What we use it for |
 |---|---|---|
-| `http://greatstone.free.fr/dm/d_ftl.html` | **FTL container format spec** — Amiga hunk-based binary, with 2 compression algorithms (none + RLE/LZW), 3 checksums, decoder/encoder logic in pseudocode. Used by Amiga animations and several other files. | The FTL format is used for many Amiga asset files. We already handle some of it in `src/shared/asset_status_m12.c`; this spec is the definitive reference. |
-| `http://greatstone.free.fr/dm/d_mapfile.html` | **mapfile format spec** — a YAML-like format that describes the structure of a binary file, used by the sck to identify item boundaries without the original game's header. Each line declares: `type name offset size` (e.g., `IMG1 image00 0 256`). | We could use the same approach in our asset verification probe: instead of relying on the engine's hardcoded item offsets, parse a mapfile to find them. This would make our probes more robust against version differences. |
-| `http://greatstone.free.fr/dm/d_pak.html` | **PAK format spec** — Atari ST START.PAK compression format, similar to ZIP. Used by DM/CSB Atari ST to compress the main executable. The sck can decompress PAK and dump the raw binary. | The Atari ST PAK is the equivalent of an ELF wrapper around the game binary. We don't need to decompress it (the ReDMCSB source is already disassembly), but the PAK format is documented for completeness. |
-| `http://greatstone.free.fr/dm/d_items.html` | **Items format spec** — covers IMG5 (4bpp chunked image), most common DM image format, plus item 558 (Amiga executable code) and item 559 (Amiga sprite table). | The **IMG5 4bpp format** is what most DM images use. We should have an IMG5 decoder in `src/shared/`. The sck has a working decoder that we can port (Java source is on the greatstone site). |
-| `http://greatstone.free.fr/dm/d_articles.html` | **Articles index** — links to several technical articles by greatstone, including: <br>• Mac QuickTime conversion (DM2 Mac .moov → MP4)<br>• DM SNES multi-palettes<br>• Several others | The Mac QuickTime article is relevant if we want to extract DM2 Mac animations. The SNES multi-palettes article explains why DM SNES palettes are per-tile-group. |
+| `http://greatstone.free.fr/dm/d_ftl.html` | **FTL container format spec** — Amiga hunk-based binary, with `HUNK_DATA` zero-run compression and `HUNK_CODE` 0x5223 dictionary/nibble compression, plus checksum logic and decoder/encoder pseudocode. Used by Amiga animations and several other files. | The FTL format is used for many Amiga asset files. We already handle some of it in `src/shared/asset_status_m12.c`; this spec is the definitive reference. |
+| `http://greatstone.free.fr/dm/d_mapfile.html` | **SCK mapfile format overview** — points to the 1.0 and 2.5 specs. The 2.x format has a comma/property header (`MAPFORMATVERSION`, `MAPVERSION`, `FORMAT`, `CLOCKMODE`, `ENDIAN`) and CSV-like item rows: `item_number,item_type,item_attributes,item_description,item_long_description,comment`; attributes include `SIZE=`, `PAL=`, external references such as `[KAOS.FTL]PAL_INGAME`, and many type-specific fields. | We already parse the real SCK 2.x corpus enough to extract `SIZE=`-backed slices via `firestaff_sck_mapfile`; remaining work is live asset-loader/runtime selection from `_mapping.xml` and item-type-specific handling beyond simple slices. |
+| `http://greatstone.free.fr/dm/d_pak.html` | **PAK format spec** — Atari ST `START.PAK` executable wrapper: 4-byte file-size header, 28-byte Atari ST executable header (`0x601A`, text/data/BSS/symbol sizes, flags), then a 1920-word most-frequent-words table and compressed code using the same nibble-coded algorithm as FTL `HUNK_CODE`. | Covered by `firestaff_pak_decode`: the parser/decompressor is implemented and CTest-gated; the spec remains useful as the shared compression reference for PAK and FTL `HUNK_CODE`. |
+| `http://greatstone.free.fr/dm/d_items.html` | **Item data formats page** — work-in-progress Greatstone/SCK page currently documenting IMG5: a 4bpp planar image format with four concatenated bit planes, MSB plane first, producing 16-color palette indices from top-left to bottom-right. | Covered by `firestaff_img5_decode`: the decoder is implemented and CTest-gated. Hidden executable-code items and item 558/559 handling are tracked separately through dmweb/ReDMCSB references and the CSB hidden-item skip gates. |
+| `http://greatstone.free.fr/dm/d_articles.html` | **Articles index** — links to several technical articles by greatstone, including DM2 Mac QuickTime conversion, DM SNES multi-palettes, and other platform notes. The DM2 Mac article is at `http://greatstone.free.fr/dm/d_articles_mac.html`: Mac `MooV` videos may be split into data + resource fork, use QuickTime 1.x/2.x with Cinepak (`cvid`) and Animation (`rle`) video codecs, can be flattened with QT-Flattener into Windows `.mov`, then converted to modern MP4/H.264/AAC. It names the DM2 Mac movies: `credits.moov`, `ending.moov`, `swoosh.moov`, `title.moov`, and JP `story.moov`. The SNES multi-palettes article is at `http://greatstone.free.fr/dm/d_articles_snes_multipal.html`: SNES image graphics use 8x8 tiles and 16-color sub-palettes selected from a shared 256-color palette; SCK models per-tile-group palette choice with mapfile metadata `PALSEL`, `TILESBYITEM`, and `PALSEL_INCR`. Greatstone records eight discovered `PALSEL` lists for item graphics and champion portraits, with item graphics using 4-tile groups and champion portraits using 9-tile groups. | Direct reference for DM2 Macintosh video extraction/conversion and DM SNES palette-group decoding. The Mac article should inform any future `MooV`/resource-fork asset handling; for now the gap remains open unless we decide to materialize these movies as modern external media assets. The SNES article is separate from the raw IMG5 decoder: it documents the mapfile-driven palette-selection layer needed for correct SNES item/portrait colors. |
 
 ### Tool
 
@@ -156,24 +153,31 @@ The sck has 30+ animation files analyzed (see the animations format page on dmwe
 
 | URL | What's there | What we use it for |
 |---|---|---|
-| `http://greatstone.free.fr/dm/g_dm.html` | **DM: per-version extraction reports** for Atari 1.0/1.1/1.2/1.3, Amiga 1.0/2.0/2.1/2.2/3.6, Apple IIGS, FM-Towns, PC-98, X68000, PC 3.4, SNES. Each has: extracted item counts, sample images, detected file signature, checksum, whether the dungeon has LZW compression, etc. | This is **the canonical "which file is which" reference**. When a user puts a DM data file in `~/.firestaff/data/dm1/`, we can identify which version it is by comparing to this table. We can also see exactly which items are unique to which version. |
-| `http://greatstone.free.fr/dm/g_csb.html` | **CSB: per-version extraction** for Atari 2.0/2.1, Amiga 3.1/3.3 (EN/FR/GE), FM-Towns 3.1 (EN/JP), PC-9801 3.1 (JP), X68000. | Same as above for CSB. The Amiga German (GE) is the version we don't currently have local assets for; this gives us the item count to expect (749 items in GRAPHICS.DAT). |
+| `http://greatstone.free.fr/dm/g_dm.html` | **DM: per-version extraction table** with 26 entries. It links directly into current `db_data/` trees for Amiga 2.0/2.1/2.2/3.6 and the Meynaf Atari-1.2 port, Apple IIGS, Atari teaser/1.0/1.1/1.2/1.3/cracked variants, FM-Towns 2.0 EN/JP, PC-98 2.0 JP, PC 3.4 and PC 3.4 EN/FR/GE, SNES 1.0/1.1 ROM+dungeon extractions, and X68000 3.0 JP. Representative resources include `dungeon.dat`, `graphics.dat`, PC `song.dat`, `title`, `end`, Amiga `swoosh`/`.ftl` files, SNES `*.smc`, and multilingual `dungeonf.dat`/`dungeong.dat`. | This is **the canonical "which DM file is which" reference**. The current linked paths are useful for Firestaff asset-validation probes and for selecting version-specific SCK mapfiles; old `c_dm_*` examples are stale and may 404. |
+| `http://greatstone.free.fr/dm/g_csb.html` | **CSB: per-version extraction table** with 19 entries covering CSB itself and the utility disk. It links directly into current `db_data/` trees for Amiga 3.1 EN/FR/GE originals and cracks, Amiga 3.3 EN/FR/GE, Amiga 3.5 EN, Amiga utility disk FR/GE/EN releases, Atari 2.0 variants and 2.1 EN, FM-Towns EN/JP, PC-98 3.1 JP, and X68000 JP variants. Representative resources include `dungeon.dat`, `graphics.dat`, multilingual `dungeonf.dat`/`dungeong.dat`, `mini.dat`, `switch.dat`, `*.cmp`, `*.amg`, `hcsb.htc`, `hcsb.dat`, `animate.dat`/`anim.dat`, `story.anm`, `title.anm`, `ending.anm`, Amiga/X68000 `.ftl` files, and `enter.sng`. | This is **the canonical "which CSB file is which" reference**. It is especially useful for CSB launch/profile coverage, utility-disk import work, Hint Oracle (`hcsb.htc`), champion portrait (`*.cmp`) validation, AMG sound handling, Atari `switch.dat`, multilingual dungeon variants, and selecting version-specific SCK mapfiles. |
 | `http://greatstone.free.fr/dm/g_dm2.html` | **DM2: per-version extraction** for all 11 versions. | We don't have DM2 data yet but when we do, this is the reference. |
 | `http://greatstone.free.fr/dm/g_cd.html` | **Custom dungeons gallery** — 50+ custom dungeons with maps, item lists, and notes about which engine extensions they use. | The "engine extensions" notes are the most useful: tells us which items are CSBWin-only, which are CSB-Atari-only, etc. |
 | `http://greatstone.free.fr/dm/g_other.html` | **Other games** — Black Crypt, R-Type III GBA. | (Not relevant to Firestaff, but cool reading) |
 
-### dm_data/ — the actual extracted data
+### db_data/ — the actual extracted data
 
-The greatstone site has directories under `db_data/` for every game and every version, with the extracted HTML, XML, and PNG files. e.g., `http://greatstone.free.fr/dm/db_data/c_dm1_amiga_v2/graphics.dat/` has the extracted items for DM Amiga v2.0. **These are public, browse-able, and we can reference them for asset validation.**
+The greatstone site has directories under `db_data/` for game/version extractions, with linked HTML/XML/PNG-style outputs. The current direct paths are the ones exposed from the `g_*.html` tables; older `c_dm_*` and `c_csb_*` examples from earlier notes may 404. Verified current DM/CSB examples include:
 
 The most relevant for Firestaff:
-- `db_data/c_dm_atari_st_v1_0/graphics.dat/` — the canonical first release
-- `db_data/c_dm_pc_eng/` — DM PC 3.4 English
-- `db_data/c_dm_pc_multilingual/` — DM PC 3.4 Multilingual
-- `db_data/c_csb_atari_st_v2_0/` — CSB Atari ST 2.0
-- `db_data/c_csb_amiga_v3_1_ml/` — CSB Amiga 3.1 Multilanguage (EN/FR/GE)
+- `db_data/dm_atari_10_stx/graphics.dat/graphics.dat.html` — DM Atari ST 1.0 graphics
+- `db_data/dm_pc_34/graphics.dat/graphics.dat.html` — DM PC 3.4 graphics
+- `db_data/dm_pc_34_multi/graphics.dat/graphics.dat.html` — DM PC 3.4 multilingual graphics
+- `db_data/dm_amiga_20_en/graphics.dat/graphics.dat.html` — DM Amiga 2.0 EN graphics
+- `db_data/dm_amiga_36_caps/kaos.ftl/kaos.ftl.html` — DM Amiga 3.6 executable/data FTL mapfile output
+- `db_data/dm_snes_11_jp_ntsc/smc/smc.html` — DM SNES 1.1 JP NTSC ROM extraction
+- `db_data/csb_amiga_35_en_original/graphics.dat/graphics.dat.html` — CSB Amiga 3.5 EN graphics
+- `db_data/csb_atari_21_en_stx/graphics.dat/graphics.dat.html` — CSB Atari ST 2.1 graphics
+- `db_data/csb_amiga_udr2_en/hcsb.htc/hcsb.htc.html` — CSB Amiga utility disk Hint Oracle text
+- `db_data/csb_fmtowns_enjp/graphics.dat.en/graphics.dat.html` — CSB FM-Towns English graphics
+- `db_data/csb_pc98_31_jp/graphics.dat/graphics.dat.html` — CSB PC-98 3.1 JP graphics
+- `db_data/csb_x68k_31_jp/graphics.dat/graphics.dat.html` — CSB X68000 3.1 JP graphics
 
-These can be used as **golden references** for asset validation: when a user puts their DM data in `~/.firestaff/data/dm1/`, we can compare hash-sums of their graphics items against greatstone's extracted data to verify the data is from a known version. (Greatstone has the only such exhaustive dataset.)
+These can be used as **golden references** for asset validation once the probes use the current `db_data/` paths and respect the local cache/licensing boundary. When a user puts DM or CSB data in `~/.firestaff/data/`, Firestaff can compare extracted item/hash metadata against known Greatstone outputs to verify that the data is from a known version. Greatstone remains the broadest public extraction index for this.
 
 ---
 
@@ -199,9 +203,9 @@ Based on the surveyed material, here are concrete additions that would benefit F
 
 dmweb's "Data Files" spec explicitly notes that **only DM Atari ST and CSB Atari ST use LZW compression** on their graphics items. The other versions use no compression. We currently rely on the engine's own decompression code; a clean implementation of the LZW variant used by Atari ST (per dmweb "Data Files" page) would let us extract assets directly without running the game.
 
-### 2. `src/shared/firestaff_img5_decode.c` (IMG5 4bpp chunked image decoder)
+### 2. `src/shared/firestaff_img5_decode.c` (IMG5 4bpp planar image decoder)
 
-Most DM images use the IMG5 format. The greatstone site has working Java reference. Adding an IMG5 decoder would let us read DM item data without the engine.
+Greatstone's item-data page provides the IMG5 four-plane 4bpp reference algorithm. Firestaff now has this as `firestaff_img5_decode`, with unit coverage; keep the page as provenance for IMG5 assets and future SCK item-type work.
 
 ### 3. `tools/asset-validate/compare_to_greatstone.py`
 
@@ -295,8 +299,8 @@ fetched in detail and incorporated into this reference:
 - [ ] All 12 "How to play" FAQ items
 - [ ] Per-edition pages for the 5 games (atari-st, amiga, pc, etc.)
 - [ ] Custom dungeons deep-dive pages (esp. Conflux III — uses CSBWin extensions)
-- [ ] The greatstone "Articles" link (Mac QuickTime, SNES multi-palettes, etc.)
-- [ ] greatstone's `db_data/c_dm_pc_eng/graphics.dat/` for an exhaustive item list
+- [ ] Greatstone articles deep-dive: Mac QuickTime and SNES multi-palettes are summarized above; still fetch the remaining article pages.
+- [ ] Greatstone current `db_data/` DM/CSB item lists from `g_dm.html` and `g_csb.html`
 - [ ] greatstone's CSB switch.dat support (item type 0x07 in CSB)
 - [ ] greatstone's sck source code (Java, on the t_download.html page)
 
