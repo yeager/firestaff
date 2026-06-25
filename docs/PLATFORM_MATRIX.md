@@ -117,7 +117,7 @@ and English Macintosh versions are explicitly exempt.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| Sega Saturn | 1.0 | JP | 🔵 | `c_dm_nexus_saturn/` | yes (DM.BIN 555,144 B) | DMWeb page: Japan-only Saturn release by Victor Interactive Software, 1998-03-26, ¥6800, catalog `T-9111G`, true 3D, 15 levels, CD audio tracks 02-09, Japanese screenshots/manual scans/playthrough, Japanese demo plus unofficial EN/FR fan translations; hash-verified Track 1 can expose `DM.BIN`, but full Saturn V1 runtime handoff remains a Nexus gap |
+| Sega Saturn | 1.0 | JP | 🔵 | `c_dm_nexus_saturn/` | yes (DM.BIN 555,144 B) | DMWeb page: Japan-only Saturn release by Victor Interactive Software, 1998-03-26, ¥6800, catalog `T-9111G`, true 3D, 15 levels, CD audio tracks 02-09, Japanese screenshots/manual scans/playthrough, Japanese demo plus unofficial EN/FR fan translations. **2026-06-25:** hash-verified Track 1 is now the source the engine actually opens (`nexus_iso_open_cue` parses the first CUE FILE entry), and `firestaff_nexus_v1_track1_phase_launch_probe` is CTest-gated as `nexus_v1_track1_phase_launch_{synthetic,extracted_root,saturn_ja_iso}` (PASS 3/3) so the E1 V1 phase-launch path (engine init, DGN load, DMDF MNS load, S2D font parse, BPK archive) is provably driven by Track 1; demo and EN/FR fan-translation media lines remain classified separately. Full Nexus V1 runtime/playability + public screenshot promotion remain tracked gaps |
 
 **Notes:** DM Nexus uses the proprietary DMDF (Dungeon Master
 Data File) format, completely different from the FTL
