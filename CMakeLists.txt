@@ -9191,6 +9191,16 @@ if(BUILD_TESTING)
             NAME asset_validate_coverage_by_game
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/asset-validate/coverage_by_game.py
         )
+        # Bounded regression gate for docs/FIRESTAFF_GAP_LIST.md A5
+        # "Real-data regression tests (greatstone db_data)" row. Runs in
+        # OFFLINE mode (replays tests/fixtures/greatstone_db_data_paths/
+        # index.json) so CI hosts don't need network access. ONLINE mode
+        # is opt-in via `--online` or FIRESTAFF_GREATSTONE_PROBE=1 for
+        # operator-led refreshes.
+        add_test(
+            NAME greatstone_db_data_paths_probe
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_greatstone_db_data_paths.py
+        )
         add_test(
             NAME pass1057_dm1_amiga22_dungeonb_asset_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1057_dm1_amiga22_dungeonb_asset_lock.py
