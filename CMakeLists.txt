@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
+if(POLICY CMP0156)
+    cmake_policy(SET CMP0156 NEW)
+endif()
+if(POLICY CMP0179)
+    cmake_policy(SET CMP0179 NEW)
+endif()
 project(Firestaff VERSION 3.0.5 LANGUAGES C)
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
