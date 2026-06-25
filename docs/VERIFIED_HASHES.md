@@ -17,6 +17,8 @@ SHA256 checksums for known-good original game data files.
 | csb | DUNGEON.DAT | `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba` | 2,098 |
 | csb-atari-st-2x | GRAPHICS.DAT | `33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af` | 319,080 |
 | csb-atari-st-2x | DUNGEON.DAT | `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba` | 2,098 |
+| csb-atari-st-2x | HCSB.HTC | `1b2fbff81a11928afd153f46c117355cce1f9a93f482d14d58e35a115d9cde38` | 66,172 |
+| csb-extras/legacy-amiga-dms/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility | HCSBF.HTC | `79fd268631d3518462058c9e855b7b8a89c0ef8a0938adf9ed8ea17a55719ea7` | 75,424 |
 | dm1 | GRAPHICS.DAT | `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` | 363,417 |
 | dm1 | DUNGEON.DAT | `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` | 33,357 |
 | dm1-atari-st-1.2-en | GRAPHICS.DAT | `8461648c1569539122182b731cb9a61f0610ec0534a3efb54cf98e9b4b14f015` | 322,861 |
@@ -37,6 +39,8 @@ SHA256 checksums for known-good original game data files.
 - `csb/GRAPHICS.DAT` (435,076 bytes): `3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942`
 - `csb-atari-st-2x/GRAPHICS.DAT` (319,080 bytes): `33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af`
 - `csb-atari-st-2x/DUNGEON.DAT` (2,098 bytes): `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba`
+- `csb-atari-st-2x/HCSB.HTC` (66,172 bytes): `1b2fbff81a11928afd153f46c117355cce1f9a93f482d14d58e35a115d9cde38`
+- `csb-extras/legacy-amiga-dms/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility/HCSBF.HTC` (75,424 bytes): `79fd268631d3518462058c9e855b7b8a89c0ef8a0938adf9ed8ea17a55719ea7`
 - `dm1-atari-st-1.2-en/GRAPHICS.DAT` (322,861 bytes): `8461648c1569539122182b731cb9a61f0610ec0534a3efb54cf98e9b4b14f015`
 - `dm1-atari-st-1.2-en/DUNGEON.DAT` (33,442 bytes): `a26f0edc4fb13e3d38551d91ad7c24f517257cfc689affe72d657f4e423853b2`
 - `dm2-pc-fr/GRAPHICS.DAT` (8,717,101 bytes): `7b8bbf6a843b01449c1cca20438c9e5c5a8c5ba8fddad761d3e2b64c5daf1a9b`
