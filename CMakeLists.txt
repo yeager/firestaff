@@ -12821,6 +12821,28 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 Saturn-font SCR section-table probe. Headless and data-free by
+# default: synthesizes a small SEGA SATURN SCR section-table fixture and
+# walks the 32-entry table in src/nexus/nexus_v1_saturn_font.c via
+# nexus_v1_font_load_sections() + helpers. If a local FONT256.S2D exists
+# (verified 25,012-byte asset), the probe also checks the real on-disk
+# layout — four populated entries at indices 0, 2, 4, 6 — without
+# committing asset bytes or claiming full text-layout/render parity.
+add_executable(firestaff_nexus_v1_saturn_font_scr_sections_probe
+    probes/nexus/firestaff_nexus_v1_saturn_font_scr_sections_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_saturn_font_scr_sections_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_saturn_font_scr_sections_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_saturn_font_scr_sections_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_save_load_round_trip
@@ -12900,6 +12922,14 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_track1_phase_launch_saturn_ja_iso PROPERTIES
         LABELS "tier1;nexus;track1;phase_launch;live;iso"
+    )
+
+    add_test(
+        NAME nexus_v1_saturn_font_scr_sections
+        COMMAND firestaff_nexus_v1_saturn_font_scr_sections_probe
+    )
+    set_tests_properties(nexus_v1_saturn_font_scr_sections PROPERTIES
+        LABELS "tier4;nexus;font;scr_sections"
     )
 endif()
 
