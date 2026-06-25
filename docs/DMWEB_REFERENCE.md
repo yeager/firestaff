@@ -127,7 +127,7 @@ The overview also states why mapfiles matter: a file description must be indepen
 |---|---|
 | **DM** | 26 extraction entries: Amiga 2.0 (EN/FR/GE), 2.1 EN, 2.2 (EN/GE), 3.6 EN/FR/GE, Amiga Atari-1.2 Meynaf port, Apple IIGS EN, Atari teaser demo, Atari 1.0/1.1/1.2/1.3 plus cracked variants, FM-Towns 2.0 EN/JP, PC-98 2.0 JP, PC 3.4 and 3.4 EN/FR/GE, SNES 1.0 EN NTSC/PAL + JP NTSC, SNES 1.1 JP NTSC, X68000 3.0 JP |
 | **CSB** | Atari 2.0/2.1, Amiga 3.1/3.3 (EN/FR/GE), FM-Towns 3.1 (EN/JP), PC-9801 3.1 (JP), X68000 |
-| **DM2** | Amiga 1.0, FM-Towns 1.0 (EN/JP), IBM PS/V 1.0 (JP), Mac 1.0 (EN/JP), PC 0.9 Beta, PC English, PC German, PC French, PC Demo, PC-9801 1.0 (JP), PC-9821 1.0 (JP), Sega CD 1.0 (EN/JP) |
+| **DM2** | 15 extraction entries: Amiga 1.0 EN/FR/GE, FM-Towns 1.0 JP, IBM PS/V, Macintosh EN/JP/demo, MegaCD 1.0 JP, PC-9801 1.0 JP, PC-9821 1.0 JP, PC 0.9, PC 1.0 EN/FR/GE, PC demo EN, and Sega CD 1.0 EN |
 | **Theron's Quest** | PC Engine (CD) JP/US |
 | **DM Nexus** | Sega Saturn JP |
 | **Other** | Black Crypt (Amiga), R-Type III (GBA) — both for fun, not DM/CSB |
@@ -155,13 +155,13 @@ The overview also states why mapfiles matter: a file description must be indepen
 |---|---|---|
 | `http://greatstone.free.fr/dm/g_dm.html` | **DM: per-version extraction table** with 26 entries. It links directly into current `db_data/` trees for Amiga 2.0/2.1/2.2/3.6 and the Meynaf Atari-1.2 port, Apple IIGS, Atari teaser/1.0/1.1/1.2/1.3/cracked variants, FM-Towns 2.0 EN/JP, PC-98 2.0 JP, PC 3.4 and PC 3.4 EN/FR/GE, SNES 1.0/1.1 ROM+dungeon extractions, and X68000 3.0 JP. Representative resources include `dungeon.dat`, `graphics.dat`, PC `song.dat`, `title`, `end`, Amiga `swoosh`/`.ftl` files, SNES `*.smc`, and multilingual `dungeonf.dat`/`dungeong.dat`. | This is **the canonical "which DM file is which" reference**. The current linked paths are useful for Firestaff asset-validation probes and for selecting version-specific SCK mapfiles; old `c_dm_*` examples are stale and may 404. |
 | `http://greatstone.free.fr/dm/g_csb.html` | **CSB: per-version extraction table** with 19 entries covering CSB itself and the utility disk. It links directly into current `db_data/` trees for Amiga 3.1 EN/FR/GE originals and cracks, Amiga 3.3 EN/FR/GE, Amiga 3.5 EN, Amiga utility disk FR/GE/EN releases, Atari 2.0 variants and 2.1 EN, FM-Towns EN/JP, PC-98 3.1 JP, and X68000 JP variants. Representative resources include `dungeon.dat`, `graphics.dat`, multilingual `dungeonf.dat`/`dungeong.dat`, `mini.dat`, `switch.dat`, `*.cmp`, `*.amg`, `hcsb.htc`, `hcsb.dat`, `animate.dat`/`anim.dat`, `story.anm`, `title.anm`, `ending.anm`, Amiga/X68000 `.ftl` files, and `enter.sng`. | This is **the canonical "which CSB file is which" reference**. It is especially useful for CSB launch/profile coverage, utility-disk import work, Hint Oracle (`hcsb.htc`), champion portrait (`*.cmp`) validation, AMG sound handling, Atari `switch.dat`, multilingual dungeon variants, and selecting version-specific SCK mapfiles. |
-| `http://greatstone.free.fr/dm/g_dm2.html` | **DM2: per-version extraction** for all 11 versions. | We don't have DM2 data yet but when we do, this is the reference. |
+| `http://greatstone.free.fr/dm/g_dm2.html` | **DM2: per-version extraction table** with 15 entries. It links directly into current `db_data/` trees for Amiga 1.0 EN/FR/GE, FM-Towns JP, IBM PS/V, Macintosh EN/JP/demo, MegaCD JP, PC-9801 JP, PC-9821 JP, PC 0.9, PC 1.0 EN/FR/GE, PC demo EN, and Sega CD EN. Representative resources include `graphics.dat`, Amiga/MegaCD/SegaCD `swsh.dat`/`titl.dat`/`enda.dat`, Amiga `lang.ftl`, FM-Towns/IBM PS/V/PC-98 `swoosh`/`title`/`end`, Sega CD `stry.dat`, and Macintosh `*.moov` movies documented by the Mac article. | This is **the canonical "which DM2 file is which" reference** for cross-version asset work. It is especially useful for separating already-verified PC EN/FR/GE runtime assets from non-PC format-normalization work: Amiga/MegaCD/SegaCD FTL-style `.dat` containers, Mac `MooV`/resource-fork movies, FM-Towns/IBM PS/V/PC-98 graphics layouts, and selecting version-specific SCK mapfiles. |
 | `http://greatstone.free.fr/dm/g_cd.html` | **Custom dungeons gallery** — 50+ custom dungeons with maps, item lists, and notes about which engine extensions they use. | The "engine extensions" notes are the most useful: tells us which items are CSBWin-only, which are CSB-Atari-only, etc. |
 | `http://greatstone.free.fr/dm/g_other.html` | **Other games** — Black Crypt, R-Type III GBA. | (Not relevant to Firestaff, but cool reading) |
 
 ### db_data/ — the actual extracted data
 
-The greatstone site has directories under `db_data/` for game/version extractions, with linked HTML/XML/PNG-style outputs. The current direct paths are the ones exposed from the `g_*.html` tables; older `c_dm_*` and `c_csb_*` examples from earlier notes may 404. Verified current DM/CSB examples include:
+The greatstone site has directories under `db_data/` for game/version extractions, with linked HTML/XML/PNG-style outputs. The current direct paths are the ones exposed from the `g_*.html` tables; older `c_dm_*`, `c_csb_*`, and guessed DM2 examples may 404. Verified current DM/CSB/DM2 examples include:
 
 The most relevant for Firestaff:
 - `db_data/dm_atari_10_stx/graphics.dat/graphics.dat.html` — DM Atari ST 1.0 graphics
@@ -176,8 +176,15 @@ The most relevant for Firestaff:
 - `db_data/csb_fmtowns_enjp/graphics.dat.en/graphics.dat.html` — CSB FM-Towns English graphics
 - `db_data/csb_pc98_31_jp/graphics.dat/graphics.dat.html` — CSB PC-98 3.1 JP graphics
 - `db_data/csb_x68k_31_jp/graphics.dat/graphics.dat.html` — CSB X68000 3.1 JP graphics
+- `db_data/dm2_amiga_10_enfrge/graphics.dat/graphics.dat.html` — DM2 Amiga 1.0 EN/FR/GE graphics
+- `db_data/dm2_amiga_10_enfrge/lang.ftl/lang.ftl.html` — DM2 Amiga language-select FTL container
+- `db_data/dm2_fmtowns_10/graphics.dat/graphics.dat.html` — DM2 FM-Towns 1.0 JP graphics
+- `db_data/dm2_mac_en/graphics.dat/graphics.dat.html` — DM2 Macintosh EN graphics
+- `db_data/dm2_megacd_10_jp/graphics.dat/graphics.dat.html` — DM2 MegaCD 1.0 JP graphics
+- `db_data/dm2_pc10_en/graphics.dat/graphics.dat.html` — DM2 PC 1.0 EN graphics
+- `db_data/dm2_segacd_10_en/stry.dat/stry.dat.html` — DM2 Sega CD 1.0 EN story animation
 
-These can be used as **golden references** for asset validation once the probes use the current `db_data/` paths and respect the local cache/licensing boundary. When a user puts DM or CSB data in `~/.firestaff/data/`, Firestaff can compare extracted item/hash metadata against known Greatstone outputs to verify that the data is from a known version. Greatstone remains the broadest public extraction index for this.
+These can be used as **golden references** for asset validation once the probes use the current `db_data/` paths and respect the local cache/licensing boundary. When a user puts DM, CSB or DM2 data in `~/.firestaff/data/`, Firestaff can compare extracted item/hash metadata against known Greatstone outputs to verify that the data is from a known version. Greatstone remains the broadest public extraction index for this.
 
 ---
 
