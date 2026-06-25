@@ -3139,8 +3139,22 @@ endif()
 #       (no-floating contract).
 #   (F) front_north_entry route accepts a C127 sensorData=0 seed and
 #       reports ordinal 0, then restores the original sensorData.
+#   (G) candidate-panel return behavior on ordinal 0 / front_north_entry:
+#       C161 SELECT_PATHWAY -> C162 CANCEL_PATHWAY round-trip on the
+#       canonical (1,2,NORTH) pose with the seeded C127 sensor. Locks
+#       redraw stability (3 consecutive GetFrontMirrorOrdinal reads
+#       return 0), Select returns 1 with candidateMirrorOrdinal=0,
+#       candidateMirrorPanelActive=1, candidateMirrorPartyIndex=
+#       baselineCount, championCount incremented, recruited name
+#       matches catalog DAROOU, sensor still active (sensorType=127,
+#       sensorData=0); Cancel returns 1 with candidate state cleared
+#       and championCount back to baseline, sensor still alive; re-Select
+#       returns 1 on the same front square (no-floating holds across
+#       select->cancel->select); final cancel + sensor restore returns
+#       GetFrontMirrorOrdinal to the shipped DM1 V1 value (HALK).
 # Source evidence: DUNGEON.C:2558,2573,2608-2612; MOVESENS.C:1501-1503;
-#                  REVIVE.C F0280,F0282; DUNVIEW.C:3913-3928,8318-8542;
+#                  REVIVE.C F0280:124-132, F0282:744-806;
+#                  DUNVIEW.C:3913-3928,8318-8542;
 #                  COORD.C:1693-1722; DEFS.H:2071-2079.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_champion_portrait_00_front_north_entry_runtime_probe.c")
     add_executable(firestaff_dm1_v1_hall_champion_portrait_00_front_north_entry_runtime_probe

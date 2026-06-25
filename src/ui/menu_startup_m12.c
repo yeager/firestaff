@@ -2065,10 +2065,6 @@ static const char* m12_settings_value_input_mode(const M12_StartupMenuState* sta
     return m12_tr(state, g_inputModeLabels[index]);
 }
 
-static const char* m12_settings_value_wasd_movement(const M12_StartupMenuState* state) {
-    return m12_tr(state, g_toggleModes[state->settings.wasdMovementEnabled ? 1 : 0]);
-}
-
 static const char* m12_settings_value_touch_controls(const M12_StartupMenuState* state) {
     int index = state ? m12_clamp_index(state->settings.touchControlsIndex,
                                         (int)(sizeof(g_touchControlsLabels) / sizeof(g_touchControlsLabels[0])))

@@ -60,11 +60,38 @@
  *       bound to the actual front_north_entry route and the ordinal
  *       zero edge is locked at the canonical entry pose. The seed is
  *       reverted before the probe exits.
+ *   (G) candidate-panel return behavior on ordinal 0 / front_north_entry:
+ *       locks the C161 SELECT_PATHWAY -> C162 CANCEL_PATHWAY round-trip
+ *       on the canonical (1,2,NORTH) front_north_entry pose after the
+ *       C127 sensor is seeded to ordinal 0 (DAROOU). Asserts:
+ *         - redraw stability: GetFrontMirrorOrdinal returns ordinal 0
+ *           three consecutive times (no floating, no drift across reads).
+ *         - SelectFrontMirrorCandidate returns 1 (REVIVE.C F0280:124-132
+ *           C161 SELECT_PATHWAY); candidateMirrorOrdinal=0,
+ *           candidateMirrorPanelActive=1, candidateMirrorPartyIndex=
+ *           baselineCount, championCount incremented, recruited
+ *           champion name matches the catalog DAROOU entry, C127
+ *           sensor still active (sensorType=127, sensorData=0).
+ *         - CancelMirrorCandidate returns 1 (REVIVE.C F0282:744-806
+ *           C162 CANCEL_PATHWAY); candidateMirrorOrdinal=-1,
+ *           candidateMirrorPanelActive=0, candidateMirrorPartyIndex=-1,
+ *           championCount back to baseline, C127 sensor still active
+ *           and still sensorData=0, GetFrontMirrorOrdinal still 0.
+ *         - Re-select on the same front square returns 1 (sensor
+ *           preserved across cancel cycle, no-floating holds).
+ *         - Final cancel + sensor restore returns GetFrontMirrorOrdinal
+ *           to ordBeforeSeed (HALK = 1 in shipped DM1 V1 DUNGEON.DAT).
+ *       The C161 -> C162 candidate-panel return path on the ordinal-0
+ *       edge at the front_north_entry pose is the same path the
+ *       cancel_reopen companion probes exercise for other ordinals;
+ *       this group adds the same coverage for ordinal 0 on the
+ *       front_north_entry route specifically.
  *
  * Honest scope: this probe proves the source-locked ordinal/position
- * contract and the no-floating rule for the ordinal 0 slice. It does
- * NOT claim DOS pixel parity. Original DM1 PC 3.4 captures live under
- * parity-evidence/ and are referenced by separate parity gates.
+ * contract, the no-floating rule, and the candidate-panel return
+ * behavior for the ordinal 0 slice. It does NOT claim DOS pixel
+ * parity. Original DM1 PC 3.4 captures live under parity-evidence/
+ * and are referenced by separate parity gates.
  *
  * Companion to:
  *   firestaff_dm1_v1_champion_mirror_portrait00_rect_runtime_probe
@@ -490,6 +517,265 @@ static int test_front_north_entry_ordinal_0_seed(M11_GameViewState* game) {
     return ok;
 }
 
+/* (G) Candidate-panel return behavior on ordinal 0 / front_north_entry.
+ *     Locks the C161 SELECT_PATHWAY -> C162 CANCEL_PATHWAY round-trip
+ *     on the canonical (1,2,NORTH) front_north_entry pose after the
+ *     C127 sensor is seeded to ordinal 0 (DAROOU). Companion to the
+ *     existing front_north_entry ordinal-0 contract groups (A-F);
+ *     this group adds the same C161/C162 candidate-panel coverage
+ *     other ordinals' cancel_reopen probes already exercise, but
+ *     for ordinal 0 specifically on the front_north_entry route.
+ *
+ *     Source: REVIVE.C F0280:124-132 (C161 SELECT_PATHWAY) recruits the
+ *             mirror candidate from sensorData into a fresh champion
+ *             slot, sets G0299 (candidateMirrorOrdinal),
+ *             G0358 (candidateMirrorPartyIndex) and G0440
+ *             (inventoryPanelActive);
+ *             REVIVE.C F0282:744-806 (C162 CANCEL_PATHWAY) clears the
+ *             candidate slot via F0643_PARTY_ClearChampionSlot and
+ *             resets G0299/G0358/G0440 without disabling the sensor
+ *             (only Confirm disables the sensor through
+ *             m11_disable_front_mirror_route).
+ *
+ *     What this group locks:
+ *       - Redraw stability: GetFrontMirrorOrdinal returns ordinal 0
+ *         across 3 consecutive reads on the seeded pose (no floating,
+ *         no drift, no cache invalidation across reads).
+ *       - SelectFrontMirrorCandidate (F0280 C161) returns 1; the
+ *         candidate state is populated with ordinal 0, panel active,
+ *         partyIndex == baselineCount, championCount incremented,
+ *         recruited champion name matches catalog DAROOU.
+ *       - The C127 sensor on the (1,2) front square is NOT disabled
+ *         by Select (only Confirm/F0282 disables it); sensorType=127
+ *         and sensorData=0 stay alive.
+ *       - GetFrontMirrorOrdinal still returns 0 with the panel live.
+ *       - CancelMirrorCandidate (F0282 C162) returns 1; candidate
+ *         state cleared, championCount back to baseline, sensor still
+ *         alive, front ordinal still 0.
+ *       - Re-select on the same front square returns 1 (sensor
+ *         preserved across the cancel cycle; no-floating holds across
+ *         select->cancel->select).
+ *       - Final cancel + sensor restore returns the front ordinal to
+ *         the shipped DM1 V1 value (HALK = 1 in this build). */
+static int test_candidate_panel_return_behavior(M11_GameViewState* game) {
+    int baselineCount;
+    int seededIndex = -1;
+    unsigned short savedData = 0;
+    int ordBeforeSeed;
+    int i;
+    int selectRc;
+    int cancelRc;
+    int reselectRc;
+    int finalCancelRc;
+    int recruitedIndex;
+    int ord1;
+    int ord2;
+    int ord3;
+    int ordPanelLive;
+    int ordAfterCancel;
+    int ordFinal;
+    int nameLen;
+    int nameMatch;
+    char mirrorName[16];
+    const char* expectedName;
+    int ok = 1;
+    printf("[G] Candidate-panel return behavior on ordinal 0 / front_north_entry\n");
+    /* Reset party pose and clear any stale candidate state from
+     * earlier groups (the prior groups touch candidateMirrorOrdinal
+     * but always revert to -1 before returning). */
+    game->world.party.mapIndex = HALL_MAP_INDEX;
+    game->world.party.mapX = HALL_NORTH_ENTRY_X;
+    game->world.party.mapY = HALL_NORTH_ENTRY_Y;
+    game->world.party.direction = HALL_NORTH_ENTRY_DIR;
+    game->candidateMirrorOrdinal = -1;
+    game->candidateMirrorPartyIndex = -1;
+    game->candidateMirrorPanelActive = 0;
+    game->inventoryPanelActive = 0;
+    /* Capture the catalog name for ordinal 0 (DAROOU) so we can
+     * verify the recruited champion's identity after Select. The
+     * F0660 helper NUL-terminates the output. */
+    mirrorName[0] = '\0';
+    (void)M11_GameView_GetMirrorNameByOrdinal(
+        game, PORTRAIT_ORDINAL_TARGET, mirrorName, (int)sizeof(mirrorName));
+    expectedName = (mirrorName[0] != '\0') ? mirrorName : "DAROOU";
+    printf("  INFO: catalog name for ordinal 0 = \"%s\"\n", expectedName);
+    /* Capture the baseline champion count so Select / Cancel /
+     * re-Select / final-cancel can be checked against a clean
+     * +1 / -1 / +1 / -1 delta. The shipped DM1 V1 DUNGEON.DAT
+     * starts the party empty after M11_GameView_OpenSelectedMenuEntry. */
+    baselineCount = game->world.party.championCount;
+    printf("  INFO: baseline championCount = %d\n", baselineCount);
+    /* Seed the C127 sensor on the (1,2) front square to sensorData=0
+     * so the front cell reports ordinal 0 (DAROOU). Save the
+     * original sensorData so we can restore it after the panel cycle. */
+    ordBeforeSeed = M11_GameView_GetFrontMirrorOrdinal(game);
+    if (!game->world.things || !game->world.things->sensors) {
+        printf("  FAIL: no sensor list available\n");
+        ++g_fail;
+        return 0;
+    }
+    for (i = 0; i < game->world.things->sensorCount; ++i) {
+        if (game->world.things->sensors[i].sensorType == 127 &&
+            (int)game->world.things->sensors[i].sensorData == ordBeforeSeed) {
+            seededIndex = i;
+            savedData = game->world.things->sensors[i].sensorData;
+            game->world.things->sensors[i].sensorData =
+                (unsigned short)PORTRAIT_ORDINAL_TARGET;
+            break;
+        }
+    }
+    if (seededIndex < 0) {
+        printf("  FAIL: could not find a C127 sensor with sensorData=%d\n",
+               ordBeforeSeed);
+        ++g_fail;
+        return 0;
+    }
+    printf("  INFO: seeded C127 sensor %d sensorData %u -> %d (DAROOU)\n",
+           seededIndex, (unsigned)savedData, PORTRAIT_ORDINAL_TARGET);
+    /* Redraw stability: three consecutive GetFrontMirrorOrdinal reads
+     * on the seeded pose must all return ordinal 0. This pins the
+     * sensor-driven front-ordinal contract against any cache-invalidation
+     * or state-machine drift that could surface across consecutive
+     * probe calls. */
+    game->world.party.mapX = HALL_NORTH_ENTRY_X;
+    game->world.party.mapY = HALL_NORTH_ENTRY_Y;
+    game->world.party.direction = HALL_NORTH_ENTRY_DIR;
+    ord1 = M11_GameView_GetFrontMirrorOrdinal(game);
+    ord2 = M11_GameView_GetFrontMirrorOrdinal(game);
+    ord3 = M11_GameView_GetFrontMirrorOrdinal(game);
+    ok &= expect_int("redraw stability: ordinal 0 across 3 reads (call 1)",
+                     ord1, PORTRAIT_ORDINAL_TARGET);
+    ok &= expect_int("redraw stability: ordinal 0 across 3 reads (call 2)",
+                     ord2, PORTRAIT_ORDINAL_TARGET);
+    ok &= expect_int("redraw stability: ordinal 0 across 3 reads (call 3)",
+                     ord3, PORTRAIT_ORDINAL_TARGET);
+    /* Step 1: SelectFrontMirrorCandidate (REVIVE.C F0280:124-132
+     * C161 SELECT_PATHWAY). The seeded (1,2,NORTH) front square
+     * carries a C127 sensor with sensorData=0, so Select must recruit
+     * DAROOU into a fresh champion slot and populate the candidate
+     * panel state. */
+    game->world.party.mapX = HALL_NORTH_ENTRY_X;
+    game->world.party.mapY = HALL_NORTH_ENTRY_Y;
+    game->world.party.direction = HALL_NORTH_ENTRY_DIR;
+    selectRc = M11_GameView_SelectFrontMirrorCandidate(game);
+    printf("  INFO: SelectFrontMirrorCandidate rc=%d "
+           "candidateOrdinal=%d panelActive=%d partyIndex=%d "
+           "championCount=%d (was %d)\n",
+           selectRc, game->candidateMirrorOrdinal,
+           game->candidateMirrorPanelActive,
+           game->candidateMirrorPartyIndex,
+           game->world.party.championCount, baselineCount);
+    ok &= expect_int("SelectFrontMirrorCandidate returns 1 (F0280 C161)",
+                     selectRc, 1);
+    ok &= expect_int("candidateMirrorOrdinal == 0 (DAROOU)",
+                     game->candidateMirrorOrdinal, PORTRAIT_ORDINAL_TARGET);
+    ok &= expect_int("candidateMirrorPanelActive == 1 (panel live)",
+                     game->candidateMirrorPanelActive, 1);
+    ok &= expect_int("candidateMirrorPartyIndex == baselineCount (new slot)",
+                     game->candidateMirrorPartyIndex, baselineCount);
+    ok &= expect_int("championCount after Select == baselineCount + 1",
+                     game->world.party.championCount, baselineCount + 1);
+    /* The recruited champion's identity must be the catalog name for
+     * ordinal 0 (DAROOU). The packed name field is CHAMPION_NAME_LENGTH
+     * bytes without NUL, so we compare only the first strlen(expectedName)
+     * bytes from the recruited slot. */
+    recruitedIndex = game->candidateMirrorPartyIndex;
+    nameMatch = 0;
+    if (recruitedIndex >= 0 && recruitedIndex < CHAMPION_MAX_PARTY) {
+        nameLen = (int)strlen(expectedName);
+        if (nameLen > 0 && nameLen <= CHAMPION_NAME_LENGTH) {
+            nameMatch = (memcmp(
+                game->world.party.champions[recruitedIndex].name,
+                expectedName, (size_t)nameLen) == 0);
+        }
+    } else {
+        printf("  FAIL: recruited champion index out of range\n");
+        ++g_fail;
+        ok = 0;
+    }
+    ok &= expect_int("recruited champion name == DAROOU (F0280 identity)",
+                     nameMatch, 1);
+    /* The C127 sensor on the (1,2) front square must NOT be disabled
+     * by Select (only Confirm/F0282 disables it via
+     * m11_disable_front_mirror_route). The sensor is still active and
+     * GetFrontMirrorOrdinal still returns 0 with the panel live. */
+    ok &= expect_int("C127 sensor still active after Select (sensorType=127)",
+                     (int)game->world.things->sensors[seededIndex].sensorType,
+                     127);
+    ok &= expect_int("C127 sensor still sensorData=0 after Select",
+                     (int)game->world.things->sensors[seededIndex].sensorData,
+                     PORTRAIT_ORDINAL_TARGET);
+    game->world.party.mapX = HALL_NORTH_ENTRY_X;
+    game->world.party.mapY = HALL_NORTH_ENTRY_Y;
+    game->world.party.direction = HALL_NORTH_ENTRY_DIR;
+    ordPanelLive = M11_GameView_GetFrontMirrorOrdinal(game);
+    ok &= expect_int("GetFrontMirrorOrdinal still 0 with panel live",
+                     ordPanelLive, PORTRAIT_ORDINAL_TARGET);
+    /* Step 2: CancelMirrorCandidate (REVIVE.C F0282:744-806
+     * C162 CANCEL_PATHWAY). Cancel clears the candidate state and
+     * removes the recruited champion via F0643_PARTY_ClearChampionSlot,
+     * but must NOT touch the C127 sensor (the source path leaves the
+     * mirror alive for a later re-select). */
+    cancelRc = M11_GameView_CancelMirrorCandidate(game);
+    printf("  INFO: CancelMirrorCandidate rc=%d "
+           "candidateOrdinal=%d panelActive=%d championCount=%d (was %d)\n",
+           cancelRc, game->candidateMirrorOrdinal,
+           game->candidateMirrorPanelActive,
+           game->world.party.championCount, baselineCount);
+    ok &= expect_int("CancelMirrorCandidate returns 1 (F0282 C162)",
+                     cancelRc, 1);
+    ok &= expect_int("candidateMirrorOrdinal == -1 after Cancel",
+                     game->candidateMirrorOrdinal, -1);
+    ok &= expect_int("candidateMirrorPanelActive == 0 after Cancel",
+                     game->candidateMirrorPanelActive, 0);
+    ok &= expect_int("candidateMirrorPartyIndex == -1 after Cancel",
+                     game->candidateMirrorPartyIndex, -1);
+    ok &= expect_int("championCount after Cancel == baselineCount",
+                     game->world.party.championCount, baselineCount);
+    /* The C127 sensor must remain intact after Cancel so the
+     * ordinal 0 route can be re-entered. */
+    ok &= expect_int("C127 sensor still active after Cancel (sensorType=127)",
+                     (int)game->world.things->sensors[seededIndex].sensorType,
+                     127);
+    ok &= expect_int("C127 sensor still sensorData=0 after Cancel",
+                     (int)game->world.things->sensors[seededIndex].sensorData,
+                     PORTRAIT_ORDINAL_TARGET);
+    game->world.party.mapX = HALL_NORTH_ENTRY_X;
+    game->world.party.mapY = HALL_NORTH_ENTRY_Y;
+    game->world.party.direction = HALL_NORTH_ENTRY_DIR;
+    ordAfterCancel = M11_GameView_GetFrontMirrorOrdinal(game);
+    ok &= expect_int("GetFrontMirrorOrdinal still 0 after Cancel",
+                     ordAfterCancel, PORTRAIT_ORDINAL_TARGET);
+    /* Step 3: Re-select the same ordinal to prove the sensor is
+     * still bound to ordinal 0 after the cancel cycle (the
+     * no-floating invariant holds across select->cancel->select). */
+    reselectRc = M11_GameView_SelectFrontMirrorCandidate(game);
+    ok &= expect_int("Re-SelectFrontMirrorCandidate returns 1 after Cancel",
+                     reselectRc, 1);
+    ok &= expect_int("candidateMirrorOrdinal == 0 on re-Select",
+                     game->candidateMirrorOrdinal, PORTRAIT_ORDINAL_TARGET);
+    ok &= expect_int("championCount after re-Select == baselineCount + 1",
+                     game->world.party.championCount, baselineCount + 1);
+    /* Final cleanup: cancel the second selection and restore the
+     * original sensorData so subsequent CTest runs see the shipped
+     * DM1 V1 data. */
+    finalCancelRc = M11_GameView_CancelMirrorCandidate(game);
+    ok &= expect_int("Final CancelMirrorCandidate returns 1",
+                     finalCancelRc, 1);
+    game->world.things->sensors[seededIndex].sensorData = savedData;
+    game->candidateMirrorOrdinal = -1;
+    game->candidateMirrorPartyIndex = -1;
+    game->candidateMirrorPanelActive = 0;
+    game->inventoryPanelActive = 0;
+    game->world.party.mapX = HALL_NORTH_ENTRY_X;
+    game->world.party.mapY = HALL_NORTH_ENTRY_Y;
+    game->world.party.direction = HALL_NORTH_ENTRY_DIR;
+    ordFinal = M11_GameView_GetFrontMirrorOrdinal(game);
+    ok &= expect_int("After restore: GetFrontMirrorOrdinal back to HALK (1)",
+                     ordFinal, ordBeforeSeed);
+    return ok;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
@@ -515,7 +801,8 @@ int main(int argc, char** argv) {
     printf("sourceEvidence=DUNGEON.C:2558,2608-2612 (C127 sensorData -> G0289)\n");
     printf("                DUNGEON.C:2573 (M011_CELL(sensor) -> visible wall)\n");
     printf("                MOVESENS.C:1501-1503 (C127 -> F0280)\n");
-    printf("                REVIVE.C F0280,F0282 (candidate materialise/disable)\n");
+    printf("                REVIVE.C F0280:124-132 (C161 SELECT_PATHWAY)\n");
+    printf("                REVIVE.C F0282:744-806 (C162 CANCEL_PATHWAY)\n");
     printf("                DUNVIEW.C:3913-3928 (C346 frame + C026 portrait blit)\n");
     printf("                DUNVIEW.C:8318-8542 F0128 (far-to-near draw order)\n");
     printf("                COORD.C:1693-1722 (PC 3.4 viewport origin / 224x136)\n");
@@ -527,6 +814,7 @@ int main(int argc, char** argv) {
     ok &= test_ordinal_0_any_pose(&game);
     ok &= test_no_floating_on_side_walls(&game);
     ok &= test_front_north_entry_ordinal_0_seed(&game);
+    ok &= test_candidate_panel_return_behavior(&game);
 
     M11_GameView_Shutdown(&game);
     printf("\n=== Summary: %d passed, %d failed ===\n", g_pass, g_fail);
