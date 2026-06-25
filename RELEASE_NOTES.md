@@ -1,4 +1,48 @@
 
+# Firestaff v3.0.7
+
+Firestaff v3.0.7 packages the later 2026-06-25 post-v3.0.6
+verification batch from `main`. It is another conservative evidence
+release: more local branch/worktree work has been inspected, promoted
+where it was still missing, and locked behind source/build gates without
+claiming new finished-game parity.
+
+## Highlights since v3.0.6
+
+- **DM1 Hall of Champions evidence is tighter**: stale probe
+  registrations were removed, floating side-wall portrait pixels are now
+  blocked, HiDPI portrait-surface coverage is gated, and seven previously
+  local ordinal-22 runtime lanes are now CMake/CTest-backed on `main`.
+- **DM1 V2.2 M11 handoff is source-locked**: the verifier pins viewport
+  sampling, shape-cache population, in-place render preference, legacy
+  overlay fallback boundaries, and pit/stairs/teleporter/field asset
+  routing.
+- **Source-media and decoder coverage advanced**: PC-98 and X68000 HDM
+  media classifiers, FTL `HUNK_CODE` plus corrected `HUNK_DATA` zero-run
+  decoding, and CSB `HCSB.HTC` Hint Oracle scanning all have bounded
+  evidence without vendoring original game data.
+- **Cross-game runtime gates widened**: DM2 overlay/HUD asset gates,
+  Nexus Track 1/font/light probes, and Theron Track 02/SRM evidence were
+  added or hardened while keeping remaining real-asset handoff gaps
+  documented as open work.
+- **Launcher data-status coverage improved**: the data-dir platform
+  matrix and no-data popup paths are now covered, and TODO/DONE were
+  refreshed so promoted evidence is not still listed as open.
+
+## Verification
+
+- 22 commits ship on top of `v3.0.6`, including this release-prep
+  commit.
+- GitHub Actions was green on `cb4d171df` before release prep: M10
+  verify, CMake build on macOS/Windows/Linux, strict warnings, asset
+  hygiene, Pages, and cross-platform determinism.
+- Focused local verification before release prep included CMake
+  configure, builds for the seven new ordinal-22 probe targets, the
+  ordinal-22 CTest cluster at 11/11, and `git diff --check`.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
+  `v3.0.7` release commit.
+
 # Firestaff v3.0.6
 
 Firestaff v3.0.6 packages the later 2026-06-25 evidence, asset-format,
