@@ -12084,6 +12084,7 @@ if(BUILD_TESTING)
     add_executable(test_firestaff_ftl_decode
         tests/test_firestaff_ftl_decode.c
         src/shared/firestaff_ftl_decode.c
+        src/shared/firestaff_ftl_hunk_data_zero_run.c
     )
     target_include_directories(test_firestaff_ftl_decode PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

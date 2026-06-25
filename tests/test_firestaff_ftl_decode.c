@@ -14,12 +14,14 @@
  *   - Decode HUNK_CODE: literal escape (nibble 0xF, 4 nibbles -> 2 bytes)
  *   - Decode HUNK_CODE: bad 0x5223 signature, truncated input, zero
  *            word_count, mixed round-trip
- *   - Decode HUNK_DATA: literal block, zero-run block, empty input,
- *            bad control byte, truncated literal
+ *   - Decode HUNK_DATA: Greatstone Note 7 literal pairs, zero-run
+ *            block, empty input, truncated run header, odd input
  *
  * Build:
  *   cc -std=c99 -I include tests/test_firestaff_ftl_decode.c \
- *      src/shared/firestaff_ftl_decode.c -o test_firestaff_ftl_decode
+ *      src/shared/firestaff_ftl_decode.c \
+ *      src/shared/firestaff_ftl_hunk_data_zero_run.c \
+ *      -o test_firestaff_ftl_decode
  */
 
 #include "firestaff_ftl_decode.h"

@@ -39,6 +39,7 @@
  */
 
 #include "firestaff_ftl_decode.h"
+#include "firestaff_ftl_hunk_data_zero_run.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -163,114 +164,56 @@ int FirestaffFtl_Parse(const uint8_t* data, size_t data_size,
 
 /* ── HUNK_DATA zero-run decoder ───────────────────────── */
 
-/*
- * FTL HUNK_DATA uses a simple zero-run compression scheme documented
- * in greatstone d_ftl.html: a control byte encodes how many literal
- * bytes follow and whether a run of zeros follows. The exact bit
- * layout is:
- *
- *   bit 7 (0x80): 1 = run-of-zeros follows, 0 = literal only
- *   bits 6..0   : count - 1 of bytes to emit (0..127, so 1..128 bytes)
- *
- * Following the control byte:
- *   - if bit 7 == 0: exactly (count + 1) literal bytes follow
- *   - if bit 7 == 1: zero bytes are emitted (length already known),
- *     no further bytes are read from the stream
- *
- * The 0x00 control byte is invalid (count must be >= 1); we reject it.
- *
- * This implementation is intentionally conservative: it never reads
- * past the declared HUNK_DATA size and never writes past the
- * decoded buffer size. The decoded buffer is allocated exactly to
- * the worst-case output size (decompressed = sum of (count+1) over
- * all control bytes).
- *
- * Provenance:
- *   - Greatstone d_ftl.html "HUNK_DATA" section.
- *   - ReDMCSB FTL.H does not name HUNK_DATA compression (only the
- *     HUNK_CODE 0x5223 algorithm is in DECOMPCO.C). The data-area
- *     zero-run scheme is FTL's documented resource layout for
- *     Amiga/X68000/MegaCD asset files; we keep the decoder simple
- *     and well-bounded so we can promote real-asset receipts in a
- *     follow-up pass without over-claiming today.
- */
-
-static int decode_hunk_data(const uint8_t* in, size_t in_size,
-                            uint8_t** out_buf, size_t* out_size) {
-    if (!out_buf || !out_size) return -1;
-    /* Treat NULL input with size 0 as the empty HUNK_DATA case:
-     * no control bytes, no output bytes. */
-    if (!in && in_size == 0u) {
-        *out_buf = NULL;
-        *out_size = 0;
+static int hunk_data_expected_size(const FirestaffFtl* ftl,
+                                   size_t* out_size) {
+    if (!ftl || !out_size) return -1;
+    *out_size = 0u;
+    if (ftl->hunk_data_raw.data == NULL || ftl->hunk_data_raw.size == 0u) {
         return 0;
+    }
+    /* Greatstone d_ftl.html: HUNK_BSS offset 4 holds the in-memory
+     * size of HUNK_DATA area_1. The bounded Note 7 decoder needs this
+     * exact size so it can reject truncated or over-expanded data
+     * instead of silently guessing. */
+    if (ftl->hunk_bss.data == NULL || ftl->hunk_bss.size < 8u) {
+        return -1;
+    }
+    *out_size = (size_t)rd32_be(ftl->hunk_bss.data + 4u);
+    return 0;
+}
+
+static int decode_hunk_data(const uint8_t* in,
+                            size_t in_size,
+                            size_t uncompressed_size,
+                            uint8_t** out_buf,
+                            size_t* out_size) {
+    if (!out_buf || !out_size) return -1;
+    *out_buf = NULL;
+    *out_size = 0u;
+    if (!in && in_size == 0u) {
+        return uncompressed_size == 0u ? 0 : -1;
     }
     if (!in) return -1;
-    *out_buf = NULL;
-    *out_size = 0;
+    if (uncompressed_size == 0u) return -1;
 
-    /* Worst-case output: every control byte produces 128 literal bytes
-     * (count = 127, emit count+1 = 128). */
-    if (in_size > (SIZE_MAX / 128u)) return -1;
-    size_t worst = in_size * 128u;
-    uint8_t* buf = (uint8_t*)malloc(worst);
-    if (!buf) return -1;
-    size_t produced = 0;
-
-    size_t i = 0;
-    while (i < in_size) {
-        uint8_t ctrl = in[i++];
-        size_t count = (size_t)(ctrl & 0x7fu); /* 0..127 -> 1..128 bytes */
-        if (count == 0u) {
-            /* count == 0 is a malformed control byte (would mean
-             * "emit 1 byte of zeros" without the run flag, or
-             * "emit 0 literal bytes" with the run flag -- both
-             * useless). Treat as an error to avoid silent data loss. */
-            free(buf);
-            return -1;
-        }
-        size_t emit = count + 1u; /* 1..128 */
-
-        if (ctrl & 0x80u) {
-            /* Run of zeros: emit `emit` zero bytes, no further reads. */
-            if (produced + emit > worst) {
-                free(buf);
-                return -1;
-            }
-            memset(buf + produced, 0, emit);
-            produced += emit;
-        } else {
-            /* Literal block: read `emit` bytes from stream. */
-            if (i + emit > in_size) {
-                free(buf);
-                return -1;
-            }
-            if (produced + emit > worst) {
-                free(buf);
-                return -1;
-            }
-            memcpy(buf + produced, in + i, emit);
-            i += emit;
-            produced += emit;
-        }
+    uint8_t* buf = (uint8_t*)malloc(uncompressed_size);
+    if (!buf) {
+        return -1;
     }
-
-    /* Trim the worst-case allocation down to the actual output size. */
-    if (produced == 0u) {
-        free(buf);
-        *out_buf = NULL;
-        *out_size = 0;
-        return 0;
-    }
-    uint8_t* trimmed = (uint8_t*)malloc(produced);
-    if (!trimmed) {
+    size_t written = 0u;
+    FirestaffFtlHunkDataStatus rc =
+        FirestaffFtlHunkData_DecompressZeroRun(in,
+                                               in_size,
+                                               uncompressed_size,
+                                               buf,
+                                               &written);
+    if (rc != FIRESTAFF_FTL_HUNK_DATA_OK ||
+        written != uncompressed_size) {
         free(buf);
         return -1;
     }
-    memcpy(trimmed, buf, produced);
-    free(buf);
-    *out_buf = trimmed;
-    *out_size = produced;
+    *out_buf = buf;
+    *out_size = written;
     return 0;
 }
 
@@ -447,10 +390,14 @@ int FirestaffFtl_Decode(FirestaffFtl* ftl) {
      * during Parse(); just decode it into a freshly allocated buffer.
      * If HUNK_DATA is absent, this step is a no-op (output stays NULL). */
     if (ftl->hunk_data_raw.data != NULL && ftl->hunk_data_raw.size > 0u) {
-        int rc = decode_hunk_data(ftl->hunk_data_raw.data,
-                                   ftl->hunk_data_raw.size,
-                                   &ftl->hunk_data_decoded,
-                                   &ftl->hunk_data_decoded_size);
+        size_t uncompressed_size = 0u;
+        int rc = hunk_data_expected_size(ftl, &uncompressed_size);
+        if (rc != 0) return -1;
+        rc = decode_hunk_data(ftl->hunk_data_raw.data,
+                              ftl->hunk_data_raw.size,
+                              uncompressed_size,
+                              &ftl->hunk_data_decoded,
+                              &ftl->hunk_data_decoded_size);
         if (rc != 0) return -1;
     }
 
@@ -611,10 +558,12 @@ static int build_ftl_synthetic(FtlTestBitWriter* code,
     wr32_be(s + 4u, (uint32_t)code_off);
     wr32_be(s + 8u, (uint32_t)code_payload_size);
 
-    /* HUNK_DATA payload: literal block "ABCDEFGH" (8 bytes = count 7 + 1) */
+    /* HUNK_BSS offset 4: HUNK_DATA area_1 in-memory size. */
+    wr32_be(out + bss_off + 4u, 8u);
+
+    /* HUNK_DATA payload: literal pairs "ABCDEFGH" per Greatstone Note 7. */
     uint8_t* data_p = out + data_off;
-    data_p[0] = 0x07u; /* 7 + 1 = 8 literal bytes follow */
-    memcpy(data_p + 1, "ABCDEFGH", 8);
+    memcpy(data_p, "ABCDEFGH", 8);
 
     /* HUNK_CODE payload: 8-byte header + 3840-byte table + nibble stream */
     uint8_t* code_p = out + code_off;
@@ -967,13 +916,10 @@ static int test_decode_hunk_code_mixed_round_trip(void) {
 /* ── HUNK_DATA zero-run tests ─────────────────────────── */
 
 static int test_decode_hunk_data_literal(void) {
-    uint8_t in[] = {
-        0x07u,                          /* control: 8 literal bytes follow */
-        'A','B','C','D','E','F','G','H'
-    };
+    uint8_t in[] = { 'A','B','C','D','E','F','G','H' };
     uint8_t* decoded = NULL;
     size_t   decoded_size = 0;
-    int rc = decode_hunk_data(in, sizeof(in), &decoded, &decoded_size);
+    int rc = decode_hunk_data(in, sizeof(in), 8u, &decoded, &decoded_size);
     ST_ASSERT(rc == 0, "decode ok");
     ST_ASSERT(decoded_size == 8u, "8 bytes decoded");
     ST_ASSERT(decoded[0] == 'A', "[0]");
@@ -984,19 +930,21 @@ static int test_decode_hunk_data_literal(void) {
 
 static int test_decode_hunk_data_zero_run(void) {
     uint8_t in[] = {
-        0x07u,                          /* 8 literal bytes */
-        'A','B','C','D','E','F','G','H',
-        0x80u | 0x03u                   /* 4 zero bytes */
+        'A','B',
+        0x00u, 0x00u, 0x00u, 0x03u,
+        'C','D'
     };
     uint8_t* decoded = NULL;
     size_t   decoded_size = 0;
-    int rc = decode_hunk_data(in, sizeof(in), &decoded, &decoded_size);
+    int rc = decode_hunk_data(in, sizeof(in), 9u, &decoded, &decoded_size);
     ST_ASSERT(rc == 0, "decode ok");
-    ST_ASSERT(decoded_size == 12u, "8 + 4 bytes");
+    ST_ASSERT(decoded_size == 9u, "2 + 5 + 2 bytes");
     ST_ASSERT(decoded[0] == 'A', "[0]");
-    ST_ASSERT(decoded[7] == 'H', "[7]");
-    ST_ASSERT(decoded[8] == 0x00u, "[8] zero");
-    ST_ASSERT(decoded[11] == 0x00u, "[11] zero");
+    ST_ASSERT(decoded[1] == 'B', "[1]");
+    ST_ASSERT(decoded[2] == 0x00u, "[2] zero");
+    ST_ASSERT(decoded[6] == 0x00u, "[6] zero");
+    ST_ASSERT(decoded[7] == 'C', "[7]");
+    ST_ASSERT(decoded[8] == 'D', "[8]");
     free(decoded);
     return 1;
 }
@@ -1004,28 +952,28 @@ static int test_decode_hunk_data_zero_run(void) {
 static int test_decode_hunk_data_empty(void) {
     uint8_t* decoded = NULL;
     size_t   decoded_size = 99;
-    int rc = decode_hunk_data(NULL, 0, &decoded, &decoded_size);
+    int rc = decode_hunk_data(NULL, 0, 0u, &decoded, &decoded_size);
     ST_ASSERT(rc == 0, "empty ok");
     ST_ASSERT(decoded == NULL, "no alloc");
     ST_ASSERT(decoded_size == 0u, "size 0");
     return 1;
 }
 
-static int test_decode_hunk_data_bad_control(void) {
-    uint8_t in[] = { 0x00u };
+static int test_decode_hunk_data_truncated_run_header(void) {
+    uint8_t in[] = { 0x00u, 0x00u };
     uint8_t* decoded = NULL;
     size_t   decoded_size = 0;
-    int rc = decode_hunk_data(in, sizeof(in), &decoded, &decoded_size);
-    ST_ASSERT(rc != 0, "bad control rejected");
+    int rc = decode_hunk_data(in, sizeof(in), 4u, &decoded, &decoded_size);
+    ST_ASSERT(rc != 0, "truncated run rejected");
     return 1;
 }
 
-static int test_decode_hunk_data_truncated_literal(void) {
-    uint8_t in[] = { 0x07u, 'A','B','C' }; /* claims 8 literal bytes but only 3 */
+static int test_decode_hunk_data_odd_input(void) {
+    uint8_t in[] = { 'A' };
     uint8_t* decoded = NULL;
     size_t   decoded_size = 0;
-    int rc = decode_hunk_data(in, sizeof(in), &decoded, &decoded_size);
-    ST_ASSERT(rc != 0, "truncated literal rejected");
+    int rc = decode_hunk_data(in, sizeof(in), 1u, &decoded, &decoded_size);
+    ST_ASSERT(rc != 0, "odd input rejected");
     return 1;
 }
 
@@ -1048,8 +996,8 @@ int FirestaffFtl_SelfTest(void) {
     RUN(test_decode_hunk_data_literal);
     RUN(test_decode_hunk_data_zero_run);
     RUN(test_decode_hunk_data_empty);
-    RUN(test_decode_hunk_data_bad_control);
-    RUN(test_decode_hunk_data_truncated_literal);
+    RUN(test_decode_hunk_data_truncated_run_header);
+    RUN(test_decode_hunk_data_odd_input);
 #undef RUN
     return (passed == total) ? 0 : -1;
 }
