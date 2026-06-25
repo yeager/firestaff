@@ -526,3 +526,7 @@ build-stack-merge/
 # runtime pid artifacts from DOSBox capture runs
 *.pid
 openclaw-workspace-state.json
+
+# Theron V1 runtime screenshot promotion gate - bounded provenance gate
+!/parity-evidence/verification/theron_v1_runtime_screenshot_promotion_gate/
+!/parity-evidence/verification/theron_v1_runtime_screenshot_promotion_gate/**

@@ -31,6 +31,14 @@ The strongest current proof is:
   the 9-word stride sequence (entries 0x0020..0x2020, stride 0x0400) without
   claiming per-entry semantic type, dungeon-level binding, or loader
   handoff.
+- `theron_v1_runtime_screenshot_promotion_gate`: a bounded provenance gate
+  that audits every row of the readiness manifest against an explicit
+  README-eligibility contract (real Firestaff runtime capture, no
+  deterministic fallback assets, `TQR level load` boot marker, semantic
+  Track 02 loader evidence in the probe, unique source BMP sha256 per row,
+  valid 320x200 presented BMP) and locks the non-promotion state until at
+  least one row is `README_ELIGIBLE` AND a human reviewer promotes it from
+  tracked evidence.
 - `theron_24h_readiness`: the daily readiness rollup ties the Track 02 bank,
   save/load, cross-route mechanics, runtime screenshot, dungeon progression,
   cross-slot, and M11 launch gates into one PASS/FAIL manifest so later
@@ -57,11 +65,21 @@ The strongest current proof is:
   `docs/FIRESTAFF_GAP_LIST.md` A3 `Savegame format (Theron .SRM)`.
 
 These are readiness receipts, not public screenshot assets. Do not add Theron
-images to the README until a reviewed real Firestaff runtime frame is promoted
-from tracked evidence. Do not use generated, illustrated, or mock Theron images
-as screenshots. A green readiness row proves the launch/capture path is alive;
-it does not prove per-entry semantic Track 02 dungeon-table binding, real
-`.srm` interchange, or broader playability.
+images to the README until the `theron_v1_runtime_screenshot_promotion_gate`
+classifies at least one readiness row as `README_ELIGIBLE` AND a human
+reviewer promotes that specific row from tracked evidence into
+`verification-screens/`. Do not use generated, illustrated, or mock Theron
+images as screenshots. A green readiness row proves the launch/capture path
+is alive; it does not prove semantic Track 02 dungeon-table parity, real
+`.srm` interchange, broader playability, or that the captured frame is
+README-eligible.
+
+The promotion gate is the single source of truth for whether a Theron
+screenshot is eligible to be promoted into public docs. Today it reports
+`NO_README_PROMOTION_PERMITTED`: every readiness row still uses
+deterministic fallback assets and shows no semantic Track 02 loader
+evidence, so no Theron capture may yet be promoted into the README even
+if the runtime-screenshot gate is green. This is the honest current state.
 
 Run the focused readiness check with:
 
@@ -71,7 +89,16 @@ ctest --test-dir build -R '^theron_v1_track02_' --output-on-failure
 ctest --test-dir build -R '^theron_v1_srm_classifier' --output-on-failure
 ```
 
-The generated report lives at
-`parity-evidence/theron_v1_runtime_screenshot_readiness.md`; it records
-geometry and hashes only, leaving screenshot bytes operator-local until a
-separate promotion decision.
+Run the promotion-provenance check with:
+
+```bash
+ctest --test-dir build -R '^theron_v1_runtime_screenshot_promotion_gate$' --output-on-failure
+```
+
+The generated reports live at:
+
+- `parity-evidence/theron_v1_runtime_screenshot_readiness.md` — geometry
+  and hashes only, screenshot bytes operator-local until promotion.
+- `parity-evidence/theron_v1_runtime_screenshot_promotion_gate.md` — row
+  classification against the eligibility contract and the current
+  `NO_README_PROMOTION_PERMITTED` lock.
