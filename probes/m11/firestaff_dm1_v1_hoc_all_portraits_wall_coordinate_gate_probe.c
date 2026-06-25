@@ -2,9 +2,10 @@
  * DM1 V1 Hall of Champions all-portrait wall-coordinate gate.
  *
  * This closes the broad "Gando/Halk/Wuuf on wrong walls" class:
- * every real C127 pose in the PC 3.4 Hall must resolve only on its
- * source-visible front wall, and every C026 champion portrait must blit
- * inside the D1C mirror cutout at viewport (96,35,32,29).
+ * every real C127 placement in the PC 3.4 Hall is classified against the
+ * source square-aspect route: wall/fake-wall front placements resolve on
+ * their source-visible D1C front wall, while open corridor placements must
+ * not draw a floating C026 portrait.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps M011_CELL(sensor) against party direction.
@@ -19,6 +20,7 @@
 #include "menu_startup_m12.h"
 #include "asset_status_m12.h"
 #include "render_sdl_m11.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,33 +55,34 @@ typedef struct HocExpectedPose {
     int dir;
     int ordinal;
     const char* name;
+    int sourceDrawsD1C;
 } HocExpectedPose;
 
 static const HocExpectedPose kExpectedPoses[] = {
-    {2,  1, DIR_EAST,  8, "IAIDO"},
-    {2,  1, DIR_SOUTH, 4, "LEIF"},
-    {1,  2, DIR_NORTH, 1, "HALK"},
-    {1,  3, DIR_EAST, 18, "SONJA"},
-    {1,  3, DIR_SOUTH,10, "GANDO"},
-    {2,  3, DIR_EAST, 19, "HAWK"},
-    {2,  4, DIR_EAST,  6, "SYRA"},
-    {2,  4, DIR_SOUTH,15, "MOPHUS"},
-    {1,  5, DIR_SOUTH,13, "WUUF"},
-    {3,  6, DIR_NORTH,11, "STAMM"},
-    {3,  6, DIR_WEST, 22, "GOTHMOG"},
-    {2,  7, DIR_SOUTH,16, "CHANI"},
-    {3,  7, DIR_SOUTH, 3, "AZIZI"},
-    {2,  8, DIR_WEST,  0, "DAROOU"},
-    {1, 10, DIR_NORTH, 9, "ZED"},
-    {2, 10, DIR_NORTH,12, "LINFLAS"},
-    {3, 10, DIR_NORTH,21, "HISSSSA"},
-    {3, 11, DIR_SOUTH,20, "ALEX"},
-    {2, 13, DIR_NORTH,17, "BORIS"},
-    {1, 14, DIR_SOUTH, 2, "WU TSE"},
-    {1, 16, DIR_WEST, 23, "NABI"},
-    {2, 16, DIR_NORTH, 5, "ELIJA"},
-    {2, 17, DIR_SOUTH, 7, "TIGGY"},
-    {1, 19, DIR_NORTH,14, "LEYLA"}
+    {2,  1, DIR_EAST,  8, "IAIDO",   1},
+    {2,  1, DIR_SOUTH, 4, "LEIF",    1},
+    {1,  2, DIR_NORTH, 1, "HALK",    1},
+    {1,  3, DIR_EAST, 18, "SONJA",   1},
+    {1,  3, DIR_SOUTH,10, "GANDO",   0},
+    {2,  3, DIR_EAST, 19, "HAWK",    1},
+    {2,  4, DIR_EAST,  6, "SYRA",    1},
+    {2,  4, DIR_SOUTH,15, "MOPHUS",  1},
+    {1,  5, DIR_SOUTH,13, "WUUF",    0},
+    {3,  6, DIR_NORTH,11, "STAMM",   1},
+    {3,  6, DIR_WEST, 22, "GOTHMOG", 1},
+    {2,  7, DIR_SOUTH,16, "CHANI",   1},
+    {3,  7, DIR_SOUTH, 3, "AZIZI",   1},
+    {2,  8, DIR_WEST,  0, "DAROOU",  1},
+    {1, 10, DIR_NORTH, 9, "ZED",     1},
+    {2, 10, DIR_NORTH,12, "LINFLAS", 1},
+    {3, 10, DIR_NORTH,21, "HISSSSA", 1},
+    {3, 11, DIR_SOUTH,20, "ALEX",    1},
+    {2, 13, DIR_NORTH,17, "BORIS",   0},
+    {1, 14, DIR_SOUTH, 2, "WU TSE",  0},
+    {1, 16, DIR_WEST, 23, "NABI",    0},
+    {2, 16, DIR_NORTH, 5, "ELIJA",   1},
+    {2, 17, DIR_SOUTH, 7, "TIGGY",   1},
+    {1, 19, DIR_NORTH,14, "LEYLA",   1}
 };
 
 static int g_pass = 0;
@@ -116,16 +119,16 @@ static void set_pose(M11_GameViewState* state, int x, int y, int dir) {
     state->candidateMirrorPartyIndex = -1;
 }
 
-static int expected_ordinal_for_pose(int x, int y, int dir) {
+static const HocExpectedPose* expected_pose_for(int x, int y, int dir) {
     size_t i;
     for (i = 0; i < sizeof(kExpectedPoses) / sizeof(kExpectedPoses[0]); ++i) {
         if (kExpectedPoses[i].x == x &&
             kExpectedPoses[i].y == y &&
             kExpectedPoses[i].dir == dir) {
-            return kExpectedPoses[i].ordinal;
+            return &kExpectedPoses[i];
         }
     }
-    return -1;
+    return NULL;
 }
 
 static int rect_warm_count(const unsigned char* fb, int x, int y, int w, int h) {
@@ -253,6 +256,99 @@ static int first_thing_for_square(const M11_GameViewState* state,
     return state->world.things->squareFirstThings[squareIndex];
 }
 
+static int square_index_for(const M11_GameViewState* state,
+                            int mapIndex,
+                            int x,
+                            int y) {
+    const struct DungeonMapDesc_Compat* map;
+    if (!state || !state->world.dungeon ||
+        mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) {
+        return -1;
+    }
+    map = &state->world.dungeon->maps[mapIndex];
+    if (x < 0 || y < 0 || x >= (int)map->width || y >= (int)map->height) {
+        return -1;
+    }
+    return x * (int)map->height + y;
+}
+
+static int square_element_for(const M11_GameViewState* state,
+                              int mapIndex,
+                              int x,
+                              int y) {
+    int squareIndex = square_index_for(state, mapIndex, x, y);
+    unsigned char square;
+    if (squareIndex < 0 || !state->world.dungeon->tiles ||
+        !state->world.dungeon->tiles[mapIndex].squareData) {
+        return -1;
+    }
+    square = state->world.dungeon->tiles[mapIndex].squareData[squareIndex];
+    return (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+}
+
+static unsigned short make_thing_ref(int type, int index, int cell) {
+    return (unsigned short)(((cell & 3) << 14) |
+                            ((type & 15) << 10) |
+                            (index & 0x03FF));
+}
+
+static void dir_vector(int dir, int* outDx, int* outDy) {
+    int dx = 0;
+    int dy = 0;
+    switch (dir & 3) {
+        case DIR_NORTH: dy = -1; break;
+        case DIR_EAST:  dx =  1; break;
+        case DIR_SOUTH: dy =  1; break;
+        case DIR_WEST:  dx = -1; break;
+        default: break;
+    }
+    if (outDx) *outDx = dx;
+    if (outDy) *outDy = dy;
+}
+
+static int find_open_front_corridor_pose(const M11_GameViewState* state,
+                                         int* outPartyX,
+                                         int* outPartyY,
+                                         int* outDir,
+                                         int* outFrontX,
+                                         int* outFrontY) {
+    const struct DungeonMapDesc_Compat* map;
+    int x;
+    int y;
+    int dir;
+    if (!state || !state->world.dungeon ||
+        HALL_MAP_INDEX >= (int)state->world.dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[HALL_MAP_INDEX];
+    for (y = 0; y < (int)map->height; ++y) {
+        for (x = 0; x < (int)map->width; ++x) {
+            if (square_element_for(state, HALL_MAP_INDEX, x, y) != DUNGEON_ELEMENT_CORRIDOR) {
+                continue;
+            }
+            for (dir = 0; dir < 4; ++dir) {
+                int dx;
+                int dy;
+                int frontX;
+                int frontY;
+                dir_vector(dir, &dx, &dy);
+                frontX = x + dx;
+                frontY = y + dy;
+                if (square_element_for(state, HALL_MAP_INDEX, frontX, frontY) ==
+                    DUNGEON_ELEMENT_CORRIDOR) {
+                    if (outPartyX) *outPartyX = x;
+                    if (outPartyY) *outPartyY = y;
+                    if (outDir) *outDir = dir;
+                    if (outFrontX) *outFrontX = frontX;
+                    if (outFrontY) *outFrontY = frontY;
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static int find_c127_sensor_on_cell_bit(const M11_GameViewState* state,
                                         int x,
                                         int y,
@@ -286,25 +382,35 @@ static int check_actual_hall_poses(M11_GameViewState* state,
     for (y = 0; y < HOC_SCAN_LIMIT; ++y) {
         for (x = 0; x < HOC_SCAN_LIMIT; ++x) {
             for (dir = 0; dir < 4; ++dir) {
-                int expected = expected_ordinal_for_pose(x, y, dir);
+                const HocExpectedPose* expected = expected_pose_for(x, y, dir);
                 int actual;
                 set_pose(state, x, y, dir);
                 actual = M11_GameView_GetFrontMirrorOrdinal(state);
-                if (expected >= 0) {
+                if (expected) {
                     int pct;
                     char nameBuf[32];
                     nameBuf[0] = '\0';
                     ++found;
                     draw_pose(state, fb, x, y, dir, 1);
-                    pct = match_portrait(portraits, fb, expected);
+                    pct = match_portrait(portraits, fb, expected->ordinal);
                     (void)M11_GameView_GetMirrorNameByOrdinal(state, actual, nameBuf, (int)sizeof(nameBuf));
-                    CHECK(actual == expected,
-                          "(%d,%d,%s) reports ordinal %d %s",
-                          x, y, dir_name(dir), actual, nameBuf);
-                    CHECK(pct >= 90,
-                          "(%d,%d,%s) C026 ordinal %d matches D1C cutout at %d%%",
-                          x, y, dir_name(dir), expected, pct);
-                    ok = ok && actual == expected && pct >= 90;
+                    if (expected->sourceDrawsD1C) {
+                        CHECK(actual == expected->ordinal,
+                              "(%d,%d,%s) %s reports ordinal %d %s",
+                              x, y, dir_name(dir), expected->name, actual, nameBuf);
+                        CHECK(pct >= 90,
+                              "(%d,%d,%s) %s C026 ordinal %d matches D1C cutout at %d%%",
+                              x, y, dir_name(dir), expected->name, expected->ordinal, pct);
+                        ok = ok && actual == expected->ordinal && pct >= 90;
+                    } else {
+                        CHECK(actual == -1,
+                              "(%d,%d,%s) %s C127 is non-wall and reports no mirror ordinal: %d",
+                              x, y, dir_name(dir), expected->name, actual);
+                        CHECK(pct < 90,
+                              "(%d,%d,%s) %s non-wall C127 does not paint ordinal %d at D1C pct=%d",
+                              x, y, dir_name(dir), expected->name, expected->ordinal, pct);
+                        ok = ok && actual == -1 && pct < 90;
+                    }
                 } else if (actual >= 0) {
                     char nameBuf[32];
                     nameBuf[0] = '\0';
@@ -327,11 +433,11 @@ static int check_negative_redraws(M11_GameViewState* state,
                                   const M11_AssetSlot* portraits,
                                   unsigned char* fb) {
     static const HocExpectedPose kNegativeAfterPositive[] = {
-        {1, 2, DIR_WEST,  1, "HALK"},
-        {1, 3, DIR_NORTH,10, "GANDO"},
-        {1, 5, DIR_NORTH,13, "WUUF"},
-        {2, 1, DIR_WEST,  8, "IAIDO"},
-        {3, 6, DIR_EAST, 22, "GOTHMOG"}
+        {1, 2, DIR_WEST,  1, "HALK",    0},
+        {1, 3, DIR_NORTH,10, "GANDO",   0},
+        {1, 5, DIR_NORTH,13, "WUUF",    0},
+        {2, 1, DIR_WEST,  8, "IAIDO",   0},
+        {3, 6, DIR_EAST, 22, "GOTHMOG", 0}
     };
     size_t i;
     int ok = 1;
@@ -360,6 +466,67 @@ static int check_negative_redraws(M11_GameViewState* state,
             warm < NEGATIVE_WARM_THRESHOLD &&
             bestPct < 90;
     }
+    return ok;
+}
+
+static int check_open_front_c127_rejected(M11_GameViewState* state,
+                                          const M11_AssetSlot* portraits,
+                                          unsigned char* fb) {
+    int sensorIndex;
+    unsigned short savedData;
+    unsigned short savedFirstThing;
+    int partyX = -1;
+    int partyY = -1;
+    int dir = -1;
+    int frontX = -1;
+    int frontY = -1;
+    int frontSquareIndex;
+    int visibleWallCell;
+    int actual;
+    int bestOrdinal = -1;
+    int bestPct;
+    int ok = 1;
+
+    printf("\n[Group D] open corridor C127 cannot draw a floating portrait\n");
+    sensorIndex = find_c127_sensor_on_cell_bit(state, 1, 1, 2);
+    CHECK(sensorIndex >= 0, "found reusable HALK-route C127 sensor index %d", sensorIndex);
+    CHECK(find_open_front_corridor_pose(state, &partyX, &partyY, &dir, &frontX, &frontY) == 1,
+          "found open corridor front pose party=(%d,%d,%s) front=(%d,%d)",
+          partyX, partyY, dir_name(dir), frontX, frontY);
+    if (sensorIndex < 0 || partyX < 0 || partyY < 0 || dir < 0) {
+        return 0;
+    }
+
+    frontSquareIndex = square_index_for(state, HALL_MAP_INDEX, frontX, frontY);
+    if (frontSquareIndex < 0 || !state->world.things ||
+        !state->world.things->squareFirstThings) {
+        CHECK(0, "front square index is valid: %d", frontSquareIndex);
+        return 0;
+    }
+
+    savedData = state->world.things->sensors[sensorIndex].sensorData;
+    savedFirstThing = state->world.things->squareFirstThings[frontSquareIndex];
+    visibleWallCell = (dir + 2) & 3;
+
+    state->world.things->sensors[sensorIndex].sensorData = 10; /* GANDO */
+    state->world.things->squareFirstThings[frontSquareIndex] =
+        make_thing_ref(THING_TYPE_SENSOR, sensorIndex, visibleWallCell);
+
+    draw_pose(state, fb, partyX, partyY, dir, 1);
+    actual = M11_GameView_GetFrontMirrorOrdinal(state);
+    bestPct = strongest_portrait_match(portraits, fb, &bestOrdinal);
+
+    CHECK(actual == -1,
+          "open front corridor with C127 reports no mirror ordinal: %d",
+          actual);
+    CHECK(bestPct < 90,
+          "open front corridor D1C cutout does not contain GANDO/C026 portrait: ordinal=%d pct=%d",
+          bestOrdinal, bestPct);
+
+    ok = ok && actual == -1 && bestPct < 90;
+
+    state->world.things->squareFirstThings[frontSquareIndex] = savedFirstThing;
+    state->world.things->sensors[sensorIndex].sensorData = savedData;
     return ok;
 }
 
@@ -452,6 +619,7 @@ int main(int argc, char** argv) {
 
     ok = check_actual_hall_poses(&state, portraits, fb);
     ok = check_negative_redraws(&state, portraits, fb) && ok;
+    ok = check_open_front_c127_rejected(&state, portraits, fb) && ok;
     ok = check_seeded_all_ordinals(&state, portraits, fb) && ok;
 
     M11_GameView_Shutdown(&state);
