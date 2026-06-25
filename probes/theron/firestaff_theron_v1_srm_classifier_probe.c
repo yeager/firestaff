@@ -37,15 +37,20 @@
 #if defined(_WIN32) || defined(_WIN64)
 #define PROBE_PATH_SEP '\\'
 #include <direct.h>
+#include <process.h>
 #define probe_mkdir(p) _mkdir(p)
 #define probe_rmdir(p) _rmdir(p)
 #define probe_unlink(p) remove(p)
+#define PROBE_ENV_ROOT "firestaff_theron_srm_env"
+#define PROBE_EMPTY_ROOT "firestaff_theron_srm_empty_root"
 #else
 #define PROBE_PATH_SEP '/'
 #include <unistd.h>
 #define probe_mkdir(p) mkdir((p), 0700)
 #define probe_rmdir(p) rmdir(p)
 #define probe_unlink(p) unlink(p)
+#define PROBE_ENV_ROOT "/tmp/firestaff_theron_srm_env"
+#define PROBE_EMPTY_ROOT "/tmp/firestaff_theron_srm_empty_root"
 #endif
 
 static int g_fail = 0;
@@ -80,7 +85,27 @@ static void check_str(const char *label, const char *got, const char *want) {
     }
 }
 
+static int probe_setenv(const char *name, const char *value) {
+#if defined(_WIN32) || defined(_WIN64)
+    return _putenv_s(name, value ? value : "") == 0;
+#else
+    if (value) return setenv(name, value, 1) == 0;
+    return unsetenv(name) == 0;
+#endif
+}
+
 static int make_temp_save_root(char out[THERON_V1_SRM_PATH_MAX]) {
+#if defined(_WIN32) || defined(_WIN64)
+    int pid = _getpid();
+    for (int i = 0; i < 32; i++) {
+        int n = snprintf(out, THERON_V1_SRM_PATH_MAX,
+                         "firestaff_theron_srm_probe_%d_%d", pid, i);
+        if (n <= 0 || n >= THERON_V1_SRM_PATH_MAX) return 0;
+        if (probe_mkdir(out) == 0) return 1;
+    }
+    out[0] = '\0';
+    return 0;
+#else
     /* POSIX: mkdtemp for portability with the existing probes. */
     static const char *base_template = "/tmp/firestaff_theron_srm_probe_XXXXXX";
     if (strlen(base_template) + 1 > THERON_V1_SRM_PATH_MAX) return 0;
@@ -88,6 +113,7 @@ static int make_temp_save_root(char out[THERON_V1_SRM_PATH_MAX]) {
     strncpy(out, base_template, THERON_V1_SRM_PATH_MAX - 1);
     out[THERON_V1_SRM_PATH_MAX - 1] = '\0';
     return mkdtemp(out) != NULL;
+#endif
 }
 
 static void remove_dir_recursive(const char *path) {
@@ -213,17 +239,16 @@ static void probe_env_override_root(void) {
         strncpy(saved, prev, THERON_V1_SRM_PATH_MAX - 1);
         saved[THERON_V1_SRM_PATH_MAX - 1] = '\0';
     }
-    setenv("FIRESTAFF_THERON_SRM_DIR", "/tmp/firestaff_theron_srm_env",
-           1);
+    probe_setenv("FIRESTAFF_THERON_SRM_DIR", PROBE_ENV_ROOT);
     char root[THERON_V1_SRM_PATH_MAX] = {0};
     int rc = theron_v1_srm_default_root(root);
     check_int("env override resolves", rc, 1);
-    check_str("env override wins", root, "/tmp/firestaff_theron_srm_env");
+    check_str("env override wins", root, PROBE_ENV_ROOT);
 
     if (had_prev) {
-        setenv("FIRESTAFF_THERON_SRM_DIR", saved, 1);
+        probe_setenv("FIRESTAFF_THERON_SRM_DIR", saved);
     } else {
-        unsetenv("FIRESTAFF_THERON_SRM_DIR");
+        probe_setenv("FIRESTAFF_THERON_SRM_DIR", NULL);
     }
 }
 
@@ -239,8 +264,7 @@ static void probe_default_root_absent_manifest(void) {
         strncpy(saved, prev, THERON_V1_SRM_PATH_MAX - 1);
         saved[THERON_V1_SRM_PATH_MAX - 1] = '\0';
     }
-    setenv("FIRESTAFF_THERON_SRM_DIR", "/tmp/firestaff_theron_srm_empty_root",
-           1);
+    probe_setenv("FIRESTAFF_THERON_SRM_DIR", PROBE_EMPTY_ROOT);
 
     Theron_V1SrmManifest manifest;
     memset(&manifest, 0, sizeof(manifest));
@@ -267,9 +291,9 @@ static void probe_default_root_absent_manifest(void) {
     printf("default root classified as: %s\n", manifest.root);
 
     if (had_prev) {
-        setenv("FIRESTAFF_THERON_SRM_DIR", saved, 1);
+        probe_setenv("FIRESTAFF_THERON_SRM_DIR", saved);
     } else {
-        unsetenv("FIRESTAFF_THERON_SRM_DIR");
+        probe_setenv("FIRESTAFF_THERON_SRM_DIR", NULL);
     }
 }
 

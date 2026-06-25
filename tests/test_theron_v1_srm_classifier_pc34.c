@@ -32,15 +32,20 @@
 #if defined(_WIN32) || defined(_WIN64)
 #define TST_PATH_SEP '\\'
 #include <direct.h>
+#include <process.h>
 #define tst_mkdir(p) _mkdir(p)
 #define tst_rmdir(p) _rmdir(p)
 #define tst_unlink(p) remove(p)
+#define TST_ENV_ROOT "firestaff_theron_srm_unit_env"
+#define TST_ABSENT_ROOT "firestaff_theron_srm_unit_no_such_root"
 #else
 #define TST_PATH_SEP '/'
 #include <unistd.h>
 #define tst_mkdir(p) mkdir((p), 0700)
 #define tst_rmdir(p) rmdir(p)
 #define tst_unlink(p) unlink(p)
+#define TST_ENV_ROOT "/tmp/firestaff_theron_srm_unit_env"
+#define TST_ABSENT_ROOT "/tmp/firestaff_theron_srm_unit_no_such_root"
 #endif
 
 static int g_failures = 0;
@@ -57,13 +62,34 @@ static void expect_true(int cond, const char *msg) {
     }
 }
 
+static int tst_setenv(const char *name, const char *value) {
+#if defined(_WIN32) || defined(_WIN64)
+    return _putenv_s(name, value ? value : "") == 0;
+#else
+    if (value) return setenv(name, value, 1) == 0;
+    return unsetenv(name) == 0;
+#endif
+}
+
 static int make_temp_root(char out[THERON_V1_SRM_PATH_MAX]) {
+#if defined(_WIN32) || defined(_WIN64)
+    int pid = _getpid();
+    for (int i = 0; i < 32; i++) {
+        int n = snprintf(out, THERON_V1_SRM_PATH_MAX,
+                         "firestaff_theron_srm_unit_%d_%d", pid, i);
+        if (n <= 0 || n >= THERON_V1_SRM_PATH_MAX) return 0;
+        if (tst_mkdir(out) == 0) return 1;
+    }
+    out[0] = '\0';
+    return 0;
+#else
     /* POSIX: mkdtemp for portability. */
     static const char *template = "/tmp/firestaff_theron_srm_unit_XXXXXX";
     if (strlen(template) + 1 > THERON_V1_SRM_PATH_MAX) return 0;
     strncpy(out, template, THERON_V1_SRM_PATH_MAX - 1);
     out[THERON_V1_SRM_PATH_MAX - 1] = '\0';
     return mkdtemp(out) != NULL;
+#endif
 }
 
 static void cleanup_root(const char *root) {
@@ -119,17 +145,16 @@ static void test_env_override(void) {
         strncpy(saved, prev, THERON_V1_SRM_PATH_MAX - 1);
         saved[THERON_V1_SRM_PATH_MAX - 1] = '\0';
     }
-    setenv("FIRESTAFF_THERON_SRM_DIR", "/tmp/firestaff_theron_srm_unit_env",
-           1);
+    tst_setenv("FIRESTAFF_THERON_SRM_DIR", TST_ENV_ROOT);
     char root[THERON_V1_SRM_PATH_MAX] = {0};
     int rc = theron_v1_srm_default_root(root);
     expect_true(rc == 1, "env override resolves");
-    expect_true(strcmp(root, "/tmp/firestaff_theron_srm_unit_env") == 0,
+    expect_true(strcmp(root, TST_ENV_ROOT) == 0,
                 "env override wins over default");
     if (had_prev) {
-        setenv("FIRESTAFF_THERON_SRM_DIR", saved, 1);
+        tst_setenv("FIRESTAFF_THERON_SRM_DIR", saved);
     } else {
-        unsetenv("FIRESTAFF_THERON_SRM_DIR");
+        tst_setenv("FIRESTAFF_THERON_SRM_DIR", NULL);
     }
 }
 
@@ -195,9 +220,7 @@ static void test_absent_root_is_clean_manifest(void) {
         strncpy(saved, prev, THERON_V1_SRM_PATH_MAX - 1);
         saved[THERON_V1_SRM_PATH_MAX - 1] = '\0';
     }
-    setenv("FIRESTAFF_THERON_SRM_DIR",
-           "/tmp/firestaff_theron_srm_unit_no_such_root",
-           1);
+    tst_setenv("FIRESTAFF_THERON_SRM_DIR", TST_ABSENT_ROOT);
 
     Theron_V1SrmManifest m;
     memset(&m, 0, sizeof(m));
@@ -215,9 +238,9 @@ static void test_absent_root_is_clean_manifest(void) {
     }
 
     if (had_prev) {
-        setenv("FIRESTAFF_THERON_SRM_DIR", saved, 1);
+        tst_setenv("FIRESTAFF_THERON_SRM_DIR", saved);
     } else {
-        unsetenv("FIRESTAFF_THERON_SRM_DIR");
+        tst_setenv("FIRESTAFF_THERON_SRM_DIR", NULL);
     }
 }
 
