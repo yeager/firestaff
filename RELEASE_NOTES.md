@@ -1,4 +1,44 @@
 
+# Firestaff v3.0.8
+
+Firestaff v3.0.8 packages the late 2026-06-25 DM1 Hall of Champions
+verification and M11 presentation hardening that landed after v3.0.7.
+It is a narrow evidence release: the changes tighten source-locked DM1
+V1 behavior and rendering gates without broadening the public completion
+claims for the other game profiles.
+
+## Highlights since v3.0.7
+
+- **Hall of Champions floor objects are source-locked**: non-wall floor
+  object rendering now uses the compact ReDMCSB-style `SquareFirstThings`
+  lookup, so unflagged Hall floor squares cannot display unrelated
+  container, projectile, or explosion chains.
+- **Hall of Champions expected floor contents are verified**: a new
+  real-data probe pins the 70 compact thing-list squares on map 0, the
+  seven expected floor-object chains, eight visible objects, and zero
+  containers/projectiles/explosions on the Hall floor.
+- **Champion panel return coverage widened**: additional DM1 V1 runtime
+  gates cover ordinal 0 panel return and ordinal 4 rest/wake repaint
+  behavior, keeping champion portrait redraw evidence in CTest instead
+  of only local notes.
+- **M11 V1 presentation stays sharper**: nearest-neighbor presentation
+  preference is preserved for the original-pixel view path while keeping
+  the modern scaling routes separate.
+
+## Verification
+
+- 5 commits ship on top of `v3.0.7`, including this release-prep commit.
+- GitHub Actions was green on `478eb65c2` before release prep: M10
+  verify, CMake build on macOS/Windows/Linux, strict warnings, asset
+  hygiene, and cross-platform determinism.
+- Focused local verification before release prep included the Hall floor
+  source-lock probe, the compact square-first-thing unit test, the
+  relevant Hall of Champions CTest cluster at 7/7, pre-push hooks, and
+  `git diff --check`.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
+  `v3.0.8` release commit.
+
 # Firestaff v3.0.7
 
 Firestaff v3.0.7 packages the later 2026-06-25 post-v3.0.6

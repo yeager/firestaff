@@ -9,6 +9,13 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.8  (2026-06-25)",
+    "  - DM1 Hall of Champions floor objects now use the compact ReDMCSB-style SquareFirstThings lookup, so unflagged floor squares cannot display unrelated container, projectile, or explosion chains.",
+    "  - A new Hall floor source-lock probe pins 70 compact thing-list squares, seven expected floor-object chains, eight visible objects, and zero containers/projectiles/explosions on map 0.",
+    "  - DM1 champion-panel evidence now covers ordinal 0 panel return and ordinal 4 rest/wake repaint behavior in CTest-backed runtime probes.",
+    "  - M11 V1 nearest-neighbor presentation preference is preserved for the original-pixel view path while modern scaling remains separate.",
+    "  - Release verification: based on 5 commits after v3.0.7 with GitHub M10 verify + CMake build + cross-platform determinism green on main before release prep, plus focused local release-prep checks.",
+    "",
     "V3.0.7  (2026-06-25)",
     "  - DM1 Hall of Champions evidence was tightened after v3.0.6. Stale probe registrations were removed, floating side-wall portrait pixels are blocked, HiDPI portrait-surface coverage is locked, and seven ordinal-22 dedicated runtime lanes are now CMake/CTest-gated.",
     "  - DM1 V2.2 handoff evidence is now source-locked for M11: the verifier pins viewport sampling, shape-cache population, in-place render preference, legacy overlay fallback boundaries, and pit/stairs/teleporter/field asset routing.",
@@ -295,5 +302,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.7";
+    return "3.0.8";
 }
