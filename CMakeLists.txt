@@ -1924,6 +1924,39 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_champion_stat_determinism_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 Hint Oracle real Utility Disk HCSB.HTC scan/cache handoff.
+# Hash-based discovery of a real HCSB.HTC in the user's data tree,
+# virtual-path materialization into a local asset cache, and parser
+# round-trip on the discovered file. Skip-safe on hosts without a
+# known HCSB.HTC.
+#
+# Source-lock:
+#   - ReDMCSB HINTLOAD.C:11-18 names HCSB.HTC as the canonical CSB
+#     Utility Disk Hint Oracle content file.
+#   - ReDMCSB HINTHTC.C:177-358 validates the format 2 / dungeon 13
+#     big-endian table the parser expects.
+#   - dmweb Hint Oracle Files page describes the same layout.
+#   - Local HCSB.HTC provenance:
+#       ~/.firestaff/data/csb-atari-st-2x/HCSB.HTC (md5
+#       8ce69b54cf255a15e98e909bb45b9742, 66172 bytes)
+#       ~/.firestaff/data/csb-extras/legacy-amiga-dms/.../HCSBF.HTC
+#       (md5 803ede61136ccfc2bff8e266d8dc3935, 75424 bytes)
+add_executable(firestaff_csb_v1_hint_oracle_real_htc_scan_probe
+    probes/csb/firestaff_csb_v1_hint_oracle_real_htc_scan_probe.c
+    src/csb/csb_hint_oracle_htc.c
+    src/csb/csb_hint_oracle_htc_real_scan.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_hint_oracle_real_htc_scan_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_hint_oracle_real_htc_scan_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_hint_oracle_real_htc_scan_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Phase 2 — DSA Script Section Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: DSA section presence and scan feasibility after dungeon load;
@@ -12387,6 +12420,21 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_champion_stat_determinism PROPERTIES
             LABELS "tier4;csb;champion;determinism"
+        )
+    endif()
+
+    # ── CSB V1 Hint Oracle real HCSB.HTC scan/cache probe ctest entry
+    # Hash-based discovery of a real Utility Disk HCSB.HTC and parser
+    # round-trip on the discovered file. Skip-safe: hosts without a
+    # known HCSB.HTC exit 0 with a SKIP message and no failure count.
+    if(TARGET firestaff_csb_v1_hint_oracle_real_htc_scan_probe)
+        add_test(
+            NAME csb_v1_hint_oracle_real_htc_scan
+            COMMAND firestaff_csb_v1_hint_oracle_real_htc_scan_probe
+        )
+        set_tests_properties(csb_v1_hint_oracle_real_htc_scan PROPERTIES
+            LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
+            TIMEOUT 120
         )
     endif()
 
