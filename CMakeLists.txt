@@ -2261,9 +2261,10 @@ endif()
 
 # DM1 V1 all-map M11 runtime render sweep. Opens real DM1 data, moves
 # the party view across every non-wall source cell on every map, renders all
-# four directions through M11_GameView_Draw, and records the visible
-# F0115/F0128 thing coverage. Source-locked to ReDMCSB DUNGEON.C
-# F0151/F0161/F0172 and DUNVIEW.C F0115/F0128.
+# four directions through M11_GameView_Draw, records visible F0115/F0128
+# thing coverage, and pixel-compares the real view against a no-things
+# baseline. Source-locked to ReDMCSB DUNGEON.C F0151/F0161/F0172 and
+# DUNVIEW.C F0115/F0128.
 add_executable(firestaff_dm1_v1_all_map_render_probe
     probes/m11/firestaff_dm1_v1_all_map_render_probe.c)
 target_link_libraries(firestaff_dm1_v1_all_map_render_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)

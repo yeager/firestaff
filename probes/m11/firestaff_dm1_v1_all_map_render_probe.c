@@ -23,6 +23,14 @@ typedef struct ProbeCounts {
     int poses;
     int rendered;
     int blank;
+    int thingBackedPoses;
+    int thingPixelDeltaPoses;
+    int itemPixelDeltaPoses;
+    int groupPixelDeltaPoses;
+    int sensorTextPixelDeltaPoses;
+    int doorPixelDeltaPoses;
+    int totalThingDeltaPixels;
+    int maxThingDeltaPixels;
     int mapsTouched;
     int sourceCells;
     int partyCells;
@@ -154,7 +162,8 @@ static void count_square_things(const struct GameWorld_Compat* world,
                                 int mapIndex,
                                 int mapX,
                                 int mapY,
-                                ProbeCounts* counts) {
+                                ProbeCounts* counts,
+                                ProbeCounts* poseCounts) {
     unsigned short thing;
     int guard = 0;
     int saw = 0;
@@ -167,15 +176,39 @@ static void count_square_things(const struct GameWorld_Compat* world,
         int thingType = (int)THING_GET_TYPE(thing);
         saw = 1;
         switch (thingType) {
-            case THING_TYPE_DOOR: ++counts->doors; break;
-            case THING_TYPE_TELEPORTER: ++counts->teleporters; break;
-            case THING_TYPE_TEXTSTRING: ++counts->textStrings; break;
-            case THING_TYPE_SENSOR: ++counts->sensors; break;
-            case THING_TYPE_GROUP: ++counts->groups; break;
-            case THING_TYPE_PROJECTILE: ++counts->projectiles; break;
-            case THING_TYPE_EXPLOSION: ++counts->explosions; break;
+            case THING_TYPE_DOOR:
+                ++counts->doors;
+                if (poseCounts) ++poseCounts->doors;
+                break;
+            case THING_TYPE_TELEPORTER:
+                ++counts->teleporters;
+                if (poseCounts) ++poseCounts->teleporters;
+                break;
+            case THING_TYPE_TEXTSTRING:
+                ++counts->textStrings;
+                if (poseCounts) ++poseCounts->textStrings;
+                break;
+            case THING_TYPE_SENSOR:
+                ++counts->sensors;
+                if (poseCounts) ++poseCounts->sensors;
+                break;
+            case THING_TYPE_GROUP:
+                ++counts->groups;
+                if (poseCounts) ++poseCounts->groups;
+                break;
+            case THING_TYPE_PROJECTILE:
+                ++counts->projectiles;
+                if (poseCounts) ++poseCounts->projectiles;
+                break;
+            case THING_TYPE_EXPLOSION:
+                ++counts->explosions;
+                if (poseCounts) ++poseCounts->explosions;
+                break;
             default:
-                if (thing_is_item(thingType)) ++counts->items;
+                if (thing_is_item(thingType)) {
+                    ++counts->items;
+                    if (poseCounts) ++poseCounts->items;
+                }
                 break;
         }
         thing = raw_next_thing(world->things, thing);
@@ -190,7 +223,8 @@ static void count_square_things(const struct GameWorld_Compat* world,
 }
 
 static void count_visible_samples(const M11_GameViewState* game,
-                                  ProbeCounts* counts) {
+                                  ProbeCounts* counts,
+                                  ProbeCounts* poseCounts) {
     int fx = 0, fy = 0, rx = 0, ry = 0;
     int depth;
     if (!game || !counts) return;
@@ -214,7 +248,7 @@ static void count_visible_samples(const M11_GameViewState* game,
                 }
                 count_square_things(&game->world,
                                     game->world.party.mapIndex, x, y,
-                                    counts);
+                                    counts, poseCounts);
             }
         }
     }
@@ -236,6 +270,63 @@ static int viewport_non_black(const unsigned char* fb,
         }
     }
     return count;
+}
+
+static int viewport_pixel_delta(const unsigned char* a,
+                                const unsigned char* b,
+                                int vx,
+                                int vy,
+                                int vw,
+                                int vh) {
+    int y;
+    int count = 0;
+    for (y = 0; y < vh; ++y) {
+        int x;
+        for (x = 0; x < vw; ++x) {
+            int off = (vy + y) * kFbW + (vx + x);
+            if (a[off] != b[off]) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
+static int pose_has_pixel_backed_things(const ProbeCounts* poseCounts) {
+    if (!poseCounts) return 0;
+    return (poseCounts->items + poseCounts->groups +
+            poseCounts->projectiles + poseCounts->explosions +
+            poseCounts->sensors + poseCounts->textStrings +
+            poseCounts->doors) > 0;
+}
+
+static void record_thing_pixel_delta(ProbeCounts* counts,
+                                     const ProbeCounts* poseCounts,
+                                     int deltaPixels) {
+    if (!counts || !poseCounts || !pose_has_pixel_backed_things(poseCounts)) {
+        return;
+    }
+    ++counts->thingBackedPoses;
+    if (deltaPixels <= 4) {
+        return;
+    }
+    ++counts->thingPixelDeltaPoses;
+    counts->totalThingDeltaPixels += deltaPixels;
+    if (deltaPixels > counts->maxThingDeltaPixels) {
+        counts->maxThingDeltaPixels = deltaPixels;
+    }
+    if (poseCounts->items > 0) {
+        ++counts->itemPixelDeltaPoses;
+    }
+    if (poseCounts->groups > 0) {
+        ++counts->groupPixelDeltaPoses;
+    }
+    if (poseCounts->sensors > 0 || poseCounts->textStrings > 0) {
+        ++counts->sensorTextPixelDeltaPoses;
+    }
+    if (poseCounts->doors > 0) {
+        ++counts->doorPixelDeltaPoses;
+    }
 }
 
 static int write_report(const char* outDir,
@@ -260,13 +351,21 @@ static int write_report(const char* outDir,
 
     fprintf(md, "# DM1 V1 M11 all-map render probe\n\n");
     fprintf(md, "Source lock: ReDMCSB `DUNGEON.C` F0151 lines 1423-1478, F0161 lines 1730-1748, F0172 lines 2466-2710; `DUNVIEW.C` F0115 line 4547 and F0128/F0118+ lines 6642-8542.\n\n");
-    fprintf(md, "This probe opens real DM1 data, moves the live M11 party view across every non-wall source cell on every map and renders each of the four directions through `M11_GameView_Draw`.\n\n");
+    fprintf(md, "This probe opens real DM1 data, moves the live M11 party view across every non-wall source cell on every map and renders each of the four directions through `M11_GameView_Draw`. For every pose with visible item/group/door/sensor/text things, it also renders a second viewport with `world.things` disconnected and requires real viewport pixel deltas for item, group and sensor/text-backed drawing.\n\n");
     fprintf(md, "| metric | value |\n| --- | ---: |\n");
     fprintf(md, "| maps touched | %d |\n", counts->mapsTouched);
     fprintf(md, "| source cells | %d |\n", counts->sourceCells);
     fprintf(md, "| party-render cells | %d |\n", counts->partyCells);
     fprintf(md, "| rendered poses | %d / %d |\n", counts->rendered, counts->poses);
     fprintf(md, "| blank viewport failures | %d |\n", counts->blank);
+    fprintf(md, "| thing-backed poses | %d |\n", counts->thingBackedPoses);
+    fprintf(md, "| thing pixel delta poses | %d |\n", counts->thingPixelDeltaPoses);
+    fprintf(md, "| item pixel delta poses | %d |\n", counts->itemPixelDeltaPoses);
+    fprintf(md, "| group pixel delta poses | %d |\n", counts->groupPixelDeltaPoses);
+    fprintf(md, "| sensor/text pixel delta poses | %d |\n", counts->sensorTextPixelDeltaPoses);
+    fprintf(md, "| door pixel delta poses | %d |\n", counts->doorPixelDeltaPoses);
+    fprintf(md, "| total thing delta pixels | %d |\n", counts->totalThingDeltaPixels);
+    fprintf(md, "| max thing delta pixels | %d |\n", counts->maxThingDeltaPixels);
     fprintf(md, "| visible sampled cells | %d |\n", counts->visibleSamples);
     fprintf(md, "| visible samples with thing chains | %d |\n", counts->visibleThingSamples);
     fprintf(md, "| traversed thing chains | %d |\n", counts->thingChains);
@@ -308,6 +407,14 @@ static int write_report(const char* outDir,
             "  \"poses\": %d,\n"
             "  \"rendered\": %d,\n"
             "  \"blank\": %d,\n"
+            "  \"thingBackedPoses\": %d,\n"
+            "  \"thingPixelDeltaPoses\": %d,\n"
+            "  \"itemPixelDeltaPoses\": %d,\n"
+            "  \"groupPixelDeltaPoses\": %d,\n"
+            "  \"sensorTextPixelDeltaPoses\": %d,\n"
+            "  \"doorPixelDeltaPoses\": %d,\n"
+            "  \"totalThingDeltaPixels\": %d,\n"
+            "  \"maxThingDeltaPixels\": %d,\n"
             "  \"visibleSamples\": %d,\n"
             "  \"visibleThingSamples\": %d,\n"
             "  \"thingChains\": %d,\n"
@@ -317,6 +424,10 @@ static int write_report(const char* outDir,
             pass ? "PASS" : "FAIL",
             counts->mapsTouched, counts->sourceCells, counts->partyCells,
             counts->poses, counts->rendered, counts->blank,
+            counts->thingBackedPoses, counts->thingPixelDeltaPoses,
+            counts->itemPixelDeltaPoses, counts->groupPixelDeltaPoses,
+            counts->sensorTextPixelDeltaPoses, counts->doorPixelDeltaPoses,
+            counts->totalThingDeltaPixels, counts->maxThingDeltaPixels,
             counts->visibleSamples, counts->visibleThingSamples,
             counts->thingChains, counts->chainOverflows,
             counts->doors, counts->teleporters, counts->textStrings,
@@ -333,7 +444,9 @@ int main(int argc, char** argv) {
     const char* dataDir;
     const char* outDir;
     M11_GameViewState game;
+    M11_GameViewState noThingsGame;
     unsigned char framebuffer[kFbW * kFbH];
+    unsigned char noThingsFramebuffer[kFbW * kFbH];
     ProbeCounts counts;
     int vx = 0, vy = 0, vw = 0, vh = 0;
     int m;
@@ -381,7 +494,11 @@ int main(int argc, char** argv) {
                 ++counts.partyCells;
                 for (dir = 0; dir < 4; ++dir) {
                     int nonBlack;
+                    int deltaPixels;
+                    ProbeCounts poseCounts;
                     memset(framebuffer, 0, sizeof(framebuffer));
+                    memset(noThingsFramebuffer, 0, sizeof(noThingsFramebuffer));
+                    memset(&poseCounts, 0, sizeof(poseCounts));
                     game.world.party.mapIndex = m;
                     game.world.party.mapX = x;
                     game.world.party.mapY = y;
@@ -395,8 +512,14 @@ int main(int argc, char** argv) {
                     game.v1ChampionStatsPanelActive = 0;
                     game.v1FoodWaterPanelActive = 0;
                     ++counts.poses;
-                    count_visible_samples(&game, &counts);
+                    count_visible_samples(&game, &counts, &poseCounts);
                     M11_GameView_Draw(&game, framebuffer, kFbW, kFbH);
+                    noThingsGame = game;
+                    noThingsGame.world.things = NULL;
+                    M11_GameView_Draw(&noThingsGame, noThingsFramebuffer, kFbW, kFbH);
+                    deltaPixels = viewport_pixel_delta(framebuffer, noThingsFramebuffer,
+                                                       vx, vy, vw, vh);
+                    record_thing_pixel_delta(&counts, &poseCounts, deltaPixels);
                     nonBlack = viewport_non_black(framebuffer, vx, vy, vw, vh);
                     if (nonBlack <= 200) {
                         ++counts.blank;
@@ -420,18 +543,28 @@ int main(int argc, char** argv) {
            counts.rendered == counts.poses &&
            counts.blank == 0 &&
            counts.chainOverflows == 0 &&
+           counts.thingBackedPoses > 0 &&
+           counts.thingPixelDeltaPoses > 0 &&
+           counts.itemPixelDeltaPoses > 0 &&
+           counts.groupPixelDeltaPoses > 0 &&
+           counts.sensorTextPixelDeltaPoses > 0 &&
            counts.mapsTouched == (int)game.world.dungeon->header.mapCount &&
            counts.visibleThingSamples > 0 &&
            (counts.items + counts.groups + counts.doors + counts.sensors +
             counts.textStrings + counts.teleporters) > 0;
 
     (void)write_report(outDir, &game, &counts, pass);
-    printf("%s DM1 V1 all-map M11 render probe: maps=%d/%d poses=%d rendered=%d visibleThingSamples=%d items=%d groups=%d doors=%d sensors=%d text=%d teleporters=%d\n",
+    printf("%s DM1 V1 all-map M11 render probe: maps=%d/%d poses=%d rendered=%d thingPixelDeltaPoses=%d/%d itemsDelta=%d groupsDelta=%d sensorTextDelta=%d visibleThingSamples=%d items=%d groups=%d doors=%d sensors=%d text=%d teleporters=%d\n",
            pass ? "PASS" : "FAIL",
            counts.mapsTouched,
            (int)game.world.dungeon->header.mapCount,
            counts.poses,
            counts.rendered,
+           counts.thingPixelDeltaPoses,
+           counts.thingBackedPoses,
+           counts.itemPixelDeltaPoses,
+           counts.groupPixelDeltaPoses,
+           counts.sensorTextPixelDeltaPoses,
            counts.visibleThingSamples,
            counts.items,
            counts.groups,
