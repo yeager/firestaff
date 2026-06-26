@@ -59,6 +59,9 @@ typedef struct {
 } M12_AssetStatus;
 
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir);
+void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
+                              const char* requestedDataDir,
+                              const char* gameId);
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
                                   const char* gameId);
 int M12_AssetStatus_HasOriginalFileCandidate(const M12_AssetStatus* status);

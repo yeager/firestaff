@@ -1381,6 +1381,63 @@ static int m12_reuse_verified_theron_refresh(M12_AssetStatus* status,
     return 0;
 }
 
+static int m12_scan_theron_child_dir(M12_AssetStatus* status,
+                                     const char* requestedDataDir,
+                                     const char* childName,
+                                     const char* grandchildName) {
+    char child[M12_ASSET_DATA_DIR_CAPACITY];
+    char grandchild[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* candidate;
+    if (!status || !requestedDataDir || requestedDataDir[0] == '\0' ||
+        !childName || childName[0] == '\0') {
+        return 0;
+    }
+    if (!FSP_JoinPath(child, sizeof(child), requestedDataDir, childName)) {
+        return 0;
+    }
+    candidate = child;
+    if (grandchildName && grandchildName[0] != '\0') {
+        if (!FSP_JoinPath(grandchild, sizeof(grandchild), child, grandchildName)) {
+            return 0;
+        }
+        candidate = grandchild;
+    }
+    if (!FSP_DirExists(candidate)) {
+        return 0;
+    }
+    return m12_scan_direct_theron_request(status, candidate);
+}
+
+static int m12_scan_theron_direct_launch_roots(M12_AssetStatus* status,
+                                               const char* requestedDataDir) {
+    if (!status) {
+        return 0;
+    }
+    if (m12_scan_direct_theron_request(status, requestedDataDir)) {
+        return 1;
+    }
+    if (!requestedDataDir || requestedDataDir[0] == '\0' ||
+        !FSP_DirExists(requestedDataDir)) {
+        return 0;
+    }
+    if (m12_scan_theron_child_dir(status, requestedDataDir, "theron", NULL)) {
+        return 1;
+    }
+    if (m12_scan_theron_child_dir(status, requestedDataDir, "theron", "jp")) {
+        return 1;
+    }
+    if (m12_scan_theron_child_dir(status, requestedDataDir, "theron", "us")) {
+        return 1;
+    }
+    if (m12_scan_theron_child_dir(status, requestedDataDir, "theron-extras", "japan")) {
+        return 1;
+    }
+    if (m12_scan_theron_child_dir(status, requestedDataDir, "theron-extras", "usa")) {
+        return 1;
+    }
+    return 0;
+}
+
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir) {
     char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     size_t rootCount;
@@ -1431,6 +1488,23 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
     }
 
     m12_refresh_v22_modern_asset_status(status);
+}
+
+void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
+                              const char* requestedDataDir,
+                              const char* gameId) {
+    if (!status) {
+        return;
+    }
+    if (gameId && strcmp(gameId, "theron") == 0) {
+        if (m12_reuse_verified_theron_refresh(status, requestedDataDir)) {
+            return;
+        }
+        if (m12_scan_theron_direct_launch_roots(status, requestedDataDir)) {
+            return;
+        }
+    }
+    M12_AssetStatus_Scan(status, requestedDataDir);
 }
 
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,

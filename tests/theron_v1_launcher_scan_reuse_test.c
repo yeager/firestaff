@@ -78,6 +78,8 @@ int main(void) {
     char trackPath[512];
     char trackMd5[M12_ASSET_MD5_CAPACITY];
     M12_AssetStatus status;
+    M12_AssetStatus directRootStatus;
+    M12_AssetStatusScanMetrics directRootMetrics;
     M12_AssetStatusScanMetrics firstMetrics;
     M12_AssetStatusScanMetrics refreshMetrics;
     const M12_AssetVersionStatus* version;
@@ -99,6 +101,28 @@ int main(void) {
 
     memset(&status, 0, sizeof(status));
     M12_AssetStatus_TestSetTheronSyntheticHash(trackMd5);
+    memset(&directRootStatus, 0, sizeof(directRootStatus));
+    M12_AssetStatus_TestResetScanMetrics();
+    M12_AssetStatus_ScanGame(&directRootStatus, root, "theron");
+    directRootMetrics = M12_AssetStatus_TestGetScanMetrics();
+
+    check_int(M12_AssetStatus_GameAvailable(&directRootStatus, "theron") == 1,
+              "Theron direct-launch scan resolves root/theron without full menu scan");
+    version = M12_AssetStatus_GetVersion(&directRootStatus, "theron", 0U);
+    check_int(version && version->matched &&
+                  strcmp(version->matchedPath, trackPath) == 0 &&
+                  strcmp(version->matchedMd5, trackMd5) == 0,
+              "Theron direct-launch scan records the verified Track 02 child path");
+    required = M12_AssetStatus_GetRequiredFile(&directRootStatus, "theron", 0U);
+    check_int(required && required->matched &&
+                  strcmp(required->matchedPath, trackPath) == 0 &&
+                  strcmp(required->matchedHash, trackMd5) == 0,
+              "Theron direct-launch scan propagates the Track 02 required marker");
+    check_int(directRootMetrics.rootCount == 0U,
+              "Theron direct-launch scan skips root-wide search-root construction");
+    check_int(directRootMetrics.requiredHashLookups == 0U,
+              "Theron direct-launch scan skips root-wide required-file hash lookups");
+
     M12_AssetStatus_TestResetScanMetrics();
     M12_AssetStatus_Scan(&status, root);
     firstMetrics = M12_AssetStatus_TestGetScanMetrics();
