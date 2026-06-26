@@ -4810,6 +4810,30 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_character_import
     )
 
+    # CSB V1 champion per-stat parity fixture (Champions GAP 2 + GAP 3).
+    # Pins every per-stat field of the CHANGE7_24 reincarnation rule
+    # so the C160/C161 panel dispatch can rely on a deterministic
+    # HP/Mana/Stamina halve + 1/8th reduction on the six non-Luck
+    # stats + Luck exempt contract.  Data-free, no DM1/CSB assets
+    # required.  Companion to test_csb_v1_reincarnation_penalty_pc34_compat
+    # (older ChampionState_Compat shape) and test_csb_v1_runtime_champion_load_attrs
+    # (broader runtime handoff).
+    add_executable(test_csb_v1_champion_per_stat_parity_pc34_compat
+        tests/test_csb_v1_champion_per_stat_parity_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_champion_per_stat_parity_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_champion_per_stat_parity_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_champion_per_stat_parity_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_champion_per_stat_parity
+        COMMAND test_csb_v1_champion_per_stat_parity_pc34_compat
+    )
+
     # Bug C regression: csb_v1_save_game must self-heal the save
     # directory tree (and the parent of a custom save path) via
     # ensure_save_dir so a wiped save tree does not return
