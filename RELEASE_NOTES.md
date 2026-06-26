@@ -24,6 +24,10 @@ claims for the other game profiles.
 - **M11 V1 presentation stays sharper**: nearest-neighbor presentation
   preference is preserved for the original-pixel view path while keeping
   the modern scaling routes separate.
+- **DM intro/title palette presentation is hardened**: the special-palette
+  TITLE path now uses the same CPU-nearest V1 presentation path as ordinary
+  indexed rendering, so the Swoosh -> Dungeon Master title animation keeps
+  the source-locked C12/C13/C14 palette colors on HiDPI/Metal paths.
 
 ## Verification
 
