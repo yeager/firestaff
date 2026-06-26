@@ -29,6 +29,7 @@
 /* ── Internal state ───────────────────────────────────────────────── */
 
 static int g_ax_enabled = 0;
+static int g_ax_dir_overridden = 0;
 static char g_home_dir[MAX_STRING_LEN];
 static char g_json_path[MAX_STRING_LEN];
 static char g_tmp_path[MAX_STRING_LEN];
@@ -102,6 +103,11 @@ static const char* type_to_string(FS_AX_ElementType type)
     case FS_AX_MOVEMENT:      return "movement";
     case FS_AX_DIALOG_CHOICE: return "dialog_choice";
     case FS_AX_CHAMPION_MIRROR: return "champion_mirror";
+    case FS_AX_LAUNCHER_CARD: return "launcher_card";
+    case FS_AX_LAUNCHER_TAB:  return "launcher_tab";
+    case FS_AX_LAUNCHER_ROW:  return "launcher_row";
+    case FS_AX_POPUP:         return "popup";
+    case FS_AX_POPUP_OK:      return "popup_ok";
     default:                  return "unknown";
     }
 }
@@ -128,26 +134,59 @@ void fs_ax_set_enabled(int enabled)
 {
     g_ax_enabled = (enabled != 0) ? 1 : 0;
 
-    /* Populate path components once on enable */
+    /* Populate path components once on enable. If the launcher
+     * (or a test) explicitly overrode the output directory we honor
+     * that and skip the HOME-derived default. */
     if (g_ax_enabled) {
-        const char* home = getenv("HOME");
-        if (!home) home = "";
-
-        /* Build home dir path: ~/.firestaff */
-        int dlen = (int)strlen(home);
-        int nlen = (int)strlen(HOME_DIR_NAME);
-        int tlen = dlen + 1 + nlen;
-        (void)tlen;
-
-        if (dlen + 1 + nlen < MAX_STRING_LEN) {
-            snprintf(g_home_dir, sizeof(g_home_dir),
-                     "%s/%s", home, HOME_DIR_NAME);
+        if (g_ax_dir_overridden && g_home_dir[0] != '\0') {
             snprintf(g_json_path, sizeof(g_json_path),
                      "%s/%s", g_home_dir, JSON_FILENAME);
             snprintf(g_tmp_path, sizeof(g_tmp_path),
                      "%s%s", g_json_path, TMP_SUFFIX);
+        } else {
+            const char* home = getenv("HOME");
+            if (!home) home = "";
+
+            int dlen = (int)strlen(home);
+            int nlen = (int)strlen(HOME_DIR_NAME);
+            int tlen = dlen + 1 + nlen;
+            (void)tlen;
+
+            if (dlen + 1 + nlen < MAX_STRING_LEN) {
+                snprintf(g_home_dir, sizeof(g_home_dir),
+                         "%s/%s", home, HOME_DIR_NAME);
+                snprintf(g_json_path, sizeof(g_json_path),
+                         "%s/%s", g_home_dir, JSON_FILENAME);
+                snprintf(g_tmp_path, sizeof(g_tmp_path),
+                         "%s%s", g_json_path, TMP_SUFFIX);
+            }
         }
     }
+}
+
+void fs_ax_set_output_dir(const char* dir)
+{
+    if (!dir || !*dir) {
+        g_ax_dir_overridden = 0;
+        g_home_dir[0] = '\0';
+        return;
+    }
+    g_ax_dir_overridden = 1;
+    snprintf(g_home_dir, sizeof(g_home_dir), "%s", dir);
+    g_json_path[0] = '\0';
+    g_tmp_path[0] = '\0';
+    /* If we are already enabled, rebuild the trailing paths now. */
+    if (g_ax_enabled) {
+        snprintf(g_json_path, sizeof(g_json_path),
+                 "%s/%s", g_home_dir, JSON_FILENAME);
+        snprintf(g_tmp_path, sizeof(g_tmp_path),
+                 "%s%s", g_json_path, TMP_SUFFIX);
+    }
+}
+
+const char* fs_ax_get_output_path(void)
+{
+    return g_json_path;
 }
 
 int fs_ax_is_enabled(void)
