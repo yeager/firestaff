@@ -5708,13 +5708,20 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
 
     mapIdx = state->world.party.mapIndex;
     if (mapIdx < 0 || mapIdx >= (int)state->world.dungeon->header.mapCount) return;
+    if (mapIdx == 0) {
+        /* ReDMCSB: the DM1 Hall of Champions map has no active creature
+         * GROUP chains.  Keep the M11 creature-AI pass out of map 0 so an
+         * older dense squareFirstThings interpretation cannot animate a
+         * compact thing-list entry from elsewhere as a false HoC Screamer. */
+        return;
+    }
     map = &state->world.dungeon->maps[mapIdx];
     base = m11_map_square_base(state->world.dungeon, mapIdx);
     if (base < 0) return;
 
     /* ReDMCSB GROUP.C F0209/F0215 process the active map's group events by
-     * thing presence, not by rejecting map 0.  The stock Hall of Champions has
-     * no GROUP things, but synthetic/custom maps may, so scan the current map. */
+     * thing presence on creature-bearing maps.  Map 0 is handled above
+     * because the stock DM1 Hall of Champions is source-empty for GROUPs. */
     /* Scan all squares on the current map for groups */
     for (mx = 0; mx < (int)map->width; ++mx) {
         for (my = 0; my < (int)map->height; ++my) {
