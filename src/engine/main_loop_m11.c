@@ -29,6 +29,7 @@
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "csb_v1_keyboard_commands_pc34_compat.h"
+#include "input_remap_m11.h"
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "screenshot_m11.h"
@@ -36,6 +37,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include <SDL3/SDL.h>
@@ -1672,6 +1674,10 @@ static int m11_game_view_is_csb(const M11_GameViewState* gameView) {
     return gameView && gameView->active && strcmp(gameView->sourceId, "csb") == 0;
 }
 
+static int m11_game_view_is_dm1(const M11_GameViewState* gameView) {
+    return gameView && gameView->active && strcmp(gameView->sourceId, "dm1") == 0;
+}
+
 static int m11_csb_sdl_key_to_menu_input(int key, int ctrlDown, M12_MenuInput* outInput) {
     CsbV1KeyboardKeyPc34Compat csbKey = CSB_V1_KEYBOARD_KEY_NONE;
     switch (key) {
@@ -1753,6 +1759,106 @@ static int m11_push_script_event_token(const char* token, size_t len) {
         return 1;
     }
     return 0;
+}
+
+static int m11_input_action_is_motion(int action) {
+    switch (action) {
+        case M11_ACTION_MOVE_FORWARD:
+        case M11_ACTION_MOVE_BACKWARD:
+        case M11_ACTION_TURN_LEFT:
+        case M11_ACTION_TURN_RIGHT:
+        case M11_ACTION_STRAFE_LEFT:
+        case M11_ACTION_STRAFE_RIGHT:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static M12_MenuInput m11_menu_input_for_m11_action(int action) {
+    switch (action) {
+        case M11_ACTION_MOVE_FORWARD:
+            return M12_MENU_INPUT_UP;
+        case M11_ACTION_MOVE_BACKWARD:
+            return M12_MENU_INPUT_DOWN;
+        case M11_ACTION_TURN_LEFT:
+            return M12_MENU_INPUT_TURN_LEFT;
+        case M11_ACTION_TURN_RIGHT:
+            return M12_MENU_INPUT_TURN_RIGHT;
+        case M11_ACTION_STRAFE_LEFT:
+            return M12_MENU_INPUT_STRAFE_LEFT;
+        case M11_ACTION_STRAFE_RIGHT:
+            return M12_MENU_INPUT_STRAFE_RIGHT;
+        default:
+            return M12_MENU_INPUT_NONE;
+    }
+}
+
+static M12_MenuInput m11_motion_input_from_scancode(SDL_Scancode scancode) {
+    int action = M11_Input_ActionForScancode(scancode);
+    if (!m11_input_action_is_motion(action)) {
+        switch (scancode) {
+            case SDL_SCANCODE_KP_5:
+                return M12_MENU_INPUT_UP;
+            case SDL_SCANCODE_KP_2:
+                return M12_MENU_INPUT_DOWN;
+            case SDL_SCANCODE_KP_1:
+                return M12_MENU_INPUT_STRAFE_LEFT;
+            case SDL_SCANCODE_KP_3:
+                return M12_MENU_INPUT_STRAFE_RIGHT;
+            case SDL_SCANCODE_KP_4:
+                return M12_MENU_INPUT_TURN_LEFT;
+            case SDL_SCANCODE_KP_6:
+                return M12_MENU_INPUT_TURN_RIGHT;
+            default:
+                return M12_MENU_INPUT_NONE;
+        }
+    }
+    return m11_menu_input_for_m11_action(action);
+}
+
+static M12_MenuInput m11_held_motion_input_from_keyboard(void) {
+    int count = 0;
+    int i;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    const bool* keys = SDL_GetKeyboardState(&count);
+#else
+    const Uint8* keys = SDL_GetKeyboardState(&count);
+#endif
+    static const SDL_Scancode preferred[] = {
+        SDL_SCANCODE_UP,
+        SDL_SCANCODE_W,
+        SDL_SCANCODE_DOWN,
+        SDL_SCANCODE_S,
+        SDL_SCANCODE_LEFT,
+        SDL_SCANCODE_A,
+        SDL_SCANCODE_RIGHT,
+        SDL_SCANCODE_D,
+        SDL_SCANCODE_HOME,
+        SDL_SCANCODE_Q,
+        SDL_SCANCODE_END,
+        SDL_SCANCODE_E,
+        SDL_SCANCODE_KP_5,
+        SDL_SCANCODE_KP_2,
+        SDL_SCANCODE_KP_1,
+        SDL_SCANCODE_KP_3,
+        SDL_SCANCODE_KP_4,
+        SDL_SCANCODE_KP_6
+    };
+
+    if (!keys || count <= 0) {
+        return M12_MENU_INPUT_NONE;
+    }
+    for (i = 0; i < (int)(sizeof(preferred) / sizeof(preferred[0])); i++) {
+        int sc = (int)preferred[i];
+        if (sc >= 0 && sc < count && keys[sc]) {
+            M12_MenuInput input = m11_motion_input_from_scancode(preferred[i]);
+            if (input != M12_MENU_INPUT_NONE) {
+                return input;
+            }
+        }
+    }
+    return M12_MENU_INPUT_NONE;
 }
 
 static M12_MenuInput m11_next_script_input(const char** cursor) {
@@ -1893,6 +1999,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                   (ev.key.mod & SDL_KMOD_CTRL) != 0,
                                                   &csbInput)) {
                     return csbInput;
+                }
+            }
+            if (gameView && gameView->active) {
+                M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
+                if ((ev.key.mod & SDL_KMOD_CTRL) && ev.key.scancode == SDL_SCANCODE_S) {
+                    return M12_MENU_INPUT_SAVE_GAME;
+                }
+                mappedInput = m11_motion_input_from_scancode(ev.key.scancode);
+                if (mappedInput != M12_MENU_INPUT_NONE) {
+                    return mappedInput;
                 }
             }
             switch (ev.key.key) {
@@ -2214,6 +2330,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                   (ev.key.keysym.mod & KMOD_CTRL) != 0,
                                                   &csbInput)) {
                     return csbInput;
+                }
+            }
+            if (gameView && gameView->active) {
+                M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
+                if ((ev.key.keysym.mod & KMOD_CTRL) && ev.key.keysym.scancode == SDL_SCANCODE_S) {
+                    return M12_MENU_INPUT_SAVE_GAME;
+                }
+                mappedInput = m11_motion_input_from_scancode(ev.key.keysym.scancode);
+                if (mappedInput != M12_MENU_INPUT_NONE) {
+                    return mappedInput;
                 }
             }
             switch (ev.key.keysym.sym) {
@@ -2648,6 +2774,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     idleAccumulatorMs = 0;
                 }
             }
+        }
+        if (input == M12_MENU_INPUT_NONE &&
+            pointerResult == M11_GAME_INPUT_IGNORED &&
+            m11_game_view_is_dm1(&gameView) &&
+            M11_GameView_Dm1V1SourceTickReadyForInput(&gameView)) {
+            input = m11_held_motion_input_from_keyboard();
         }
         if (input != M12_MENU_INPUT_NONE) {
             tickBeforeInput = gameView.world.gameTick;
