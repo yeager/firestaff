@@ -21,6 +21,7 @@
 #define TQR_US_ISO_BANK_STRIDE_COUNT  9u
 #define TQR_US_ISO_BANK_STRIDE_BYTES  (TQR_US_ISO_BANK_STRIDE_COUNT * 2u)
 #define TQR_US_ISO_BANK_STRIDE_STEP   0x0400u
+#define TQR_US_ISO_BANK_STRIDE_WINDOW_WITH_DESCRIPTOR 5u
 #define TQR_US_ISO_BANK_BOUNDARY_OFFSET 0x3000u
 #define TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES 16u
 #define TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES 44u
@@ -660,6 +661,97 @@ Theron_Track02TableDecodeStatus theron_v1_track02_decode_descriptor_table(
     return THERON_TRACK02_TABLE_DECODE_OK;
 }
 
+Theron_Track02TableDecodeStatus theron_v1_track02_bind_descriptor_windows(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    const Theron_Track02DescriptorTable *table,
+    Theron_Track02DescriptorWindowBinding *out_binding) {
+
+    size_t base_offset;
+    size_t i;
+
+    if (out_binding) {
+        memset(out_binding, 0, sizeof(*out_binding));
+    }
+    if (!track02_data || track02_size == 0 || !table || !out_binding) {
+        return THERON_TRACK02_TABLE_DECODE_BAD_INPUT;
+    }
+    if (table->entry_count != THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES ||
+        table->stride == 0u) {
+        return THERON_TRACK02_TABLE_DECODE_BAD_INPUT;
+    }
+    if (descriptor_offset < TQR_US_ISO_BANK_STRIDE_OFFSET ||
+        TQR_US_ISO_BANK_STRIDE_BYTES > track02_size ||
+        descriptor_offset > track02_size - TQR_US_ISO_BANK_STRIDE_BYTES) {
+        return THERON_TRACK02_TABLE_DECODE_NOT_FOUND;
+    }
+
+    /* The source-locked descriptor offset is 0x1584 bytes into the
+     * descriptor region.  ReDMCSB has no Theron's Quest Track 02 loader;
+     * docs/source-lock/tqr_v1_track02_bank_signal_2026-06-03.md records
+     * this byte anchor for the US ISO and JP/US raw BIN replicas. */
+    base_offset = descriptor_offset - TQR_US_ISO_BANK_STRIDE_OFFSET;
+
+    out_binding->entry_count = table->entry_count;
+    out_binding->base_offset = base_offset;
+    out_binding->descriptor_offset = descriptor_offset;
+    out_binding->window_size = table->stride;
+
+    for (i = 0; i < table->entry_count; ++i) {
+        Theron_Track02DescriptorWindow *window = &out_binding->windows[i];
+        const size_t absolute_offset = base_offset + (size_t)table->entries[i];
+        const size_t window_size = (size_t)table->stride;
+        size_t j;
+        int saw_nonzero = 0;
+
+        if (absolute_offset < base_offset ||
+            absolute_offset > track02_size ||
+            window_size > track02_size - absolute_offset) {
+            memset(out_binding, 0, sizeof(*out_binding));
+            return THERON_TRACK02_TABLE_DECODE_NOT_FOUND;
+        }
+
+        window->entry_index = i;
+        window->relative_offset = table->entries[i];
+        window->absolute_offset = absolute_offset;
+        window->byte_count = window_size;
+
+        for (j = 0; j < window_size; ++j) {
+            if (track02_data[absolute_offset + j] != 0u) {
+                if (!saw_nonzero) {
+                    window->first_nonzero_offset = absolute_offset + j;
+                    saw_nonzero = 1;
+                }
+                window->last_nonzero_offset = absolute_offset + j;
+                ++window->nonzero_byte_count;
+            }
+        }
+
+        window->contains_descriptor_table =
+            descriptor_offset >= absolute_offset &&
+            descriptor_offset <= (absolute_offset + window_size) &&
+            TQR_US_ISO_BANK_STRIDE_BYTES <=
+                (absolute_offset + window_size) - descriptor_offset;
+        if (window->contains_descriptor_table) {
+            window->kind = THERON_TRACK02_DESCRIPTOR_WINDOW_DESCRIPTOR_TABLE;
+        } else if (window->nonzero_byte_count == 0u) {
+            window->kind = THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL;
+        } else {
+            window->kind = THERON_TRACK02_DESCRIPTOR_WINDOW_DATA;
+        }
+    }
+
+    if (!out_binding
+             ->windows[TQR_US_ISO_BANK_STRIDE_WINDOW_WITH_DESCRIPTOR]
+             .contains_descriptor_table) {
+        memset(out_binding, 0, sizeof(*out_binding));
+        return THERON_TRACK02_TABLE_DECODE_NOT_FOUND;
+    }
+
+    return THERON_TRACK02_TABLE_DECODE_OK;
+}
+
 const char *theron_v1_track02_table_decode_status_name(
     Theron_Track02TableDecodeStatus status) {
     switch (status) {
@@ -675,6 +767,21 @@ const char *theron_v1_track02_table_decode_status_name(
         return "not-strictly-ascending";
     case THERON_TRACK02_TABLE_DECODE_WRONG_STRIDE:
         return "wrong-stride";
+    default:
+        return "unknown";
+    }
+}
+
+const char *theron_v1_track02_descriptor_window_kind_name(
+    Theron_Track02DescriptorWindowKind kind) {
+    switch (kind) {
+    case THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL:
+        return "zero-fill";
+    case THERON_TRACK02_DESCRIPTOR_WINDOW_DATA:
+        return "data";
+    case THERON_TRACK02_DESCRIPTOR_WINDOW_DESCRIPTOR_TABLE:
+        return "descriptor-table";
+    case THERON_TRACK02_DESCRIPTOR_WINDOW_UNKNOWN:
     default:
         return "unknown";
     }

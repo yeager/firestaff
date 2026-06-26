@@ -132,9 +132,10 @@ const char *theron_v1_track02_source_evidence(void);
  *
  * The values are documented offsets relative to the start of the data
  * region (a 0x2000-byte descriptor block plus the 0x400 stride window).
- * The decoder does NOT claim a semantic per-entry type, a per-dungeon
- * level-table binding, or runtime loader handoff; it only validates the
- * shape so a future level-descriptor reader can rely on it. */
+ * The descriptor-window binding below gives each entry a bounded byte-level
+ * role (zero-fill, payload data, or the descriptor-table-bearing window).
+ * It still does NOT claim a per-dungeon level-table binding, map-grid
+ * decoding, object-table decoding, or runtime loader handoff. */
 
 typedef enum {
     THERON_TRACK02_TABLE_DECODE_OK = 1,
@@ -160,6 +161,33 @@ typedef struct {
     int range_inclusive;
 } Theron_Track02DescriptorTable;
 
+typedef enum {
+    THERON_TRACK02_DESCRIPTOR_WINDOW_UNKNOWN = 0,
+    THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL,
+    THERON_TRACK02_DESCRIPTOR_WINDOW_DATA,
+    THERON_TRACK02_DESCRIPTOR_WINDOW_DESCRIPTOR_TABLE
+} Theron_Track02DescriptorWindowKind;
+
+typedef struct {
+    size_t entry_index;
+    uint16_t relative_offset;
+    size_t absolute_offset;
+    size_t byte_count;
+    size_t nonzero_byte_count;
+    size_t first_nonzero_offset;
+    size_t last_nonzero_offset;
+    int contains_descriptor_table;
+    Theron_Track02DescriptorWindowKind kind;
+} Theron_Track02DescriptorWindow;
+
+typedef struct {
+    size_t entry_count;
+    size_t base_offset;
+    size_t descriptor_offset;
+    uint16_t window_size;
+    Theron_Track02DescriptorWindow windows[THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES];
+} Theron_Track02DescriptorWindowBinding;
+
 /* Decode a 9-word little-endian stride table starting at `descriptor_bytes`.
  *
  * `descriptor_bytes` must be at least 18 bytes; the decoder reads 9 little-
@@ -184,7 +212,29 @@ Theron_Track02TableDecodeStatus theron_v1_track02_decode_descriptor_table(
     uint16_t expected_stride,
     Theron_Track02DescriptorTable *out_table);
 
+/* Bind a decoded descriptor table back to Track 02 byte windows.
+ *
+ * `descriptor_offset` is the absolute Track 02 offset where the 18-byte
+ * descriptor table was found (0x1584 in the US ISO, or one of the raw BIN
+ * anchor offsets).  The function derives the descriptor-region base using
+ * the source-locked 0x1584 anchor, then classifies each 0x0400-byte entry
+ * window as zero-fill, payload data, or the window that contains the
+ * descriptor table.
+ *
+ * This is still a bounded byte-level semantic binding. It does not claim
+ * dungeon level records, map grids, object tables, or runtime loader handoff.
+ */
+Theron_Track02TableDecodeStatus theron_v1_track02_bind_descriptor_windows(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    const Theron_Track02DescriptorTable *table,
+    Theron_Track02DescriptorWindowBinding *out_binding);
+
 const char *theron_v1_track02_table_decode_status_name(
     Theron_Track02TableDecodeStatus status);
+
+const char *theron_v1_track02_descriptor_window_kind_name(
+    Theron_Track02DescriptorWindowKind kind);
 
 #endif /* THERON_V1_TRACK02_H */

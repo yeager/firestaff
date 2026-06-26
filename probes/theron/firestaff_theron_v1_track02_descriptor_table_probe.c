@@ -25,7 +25,10 @@
  *      NULL input, wrong entry count (handled by NOT_FOUND on shape).
  *   3. range_inclusive flag matches the documented 0x0020..0x2020+0x0400.
  *   4. exclusive_upper_bound == last_value + stride.
- *   5. Hash-gated real-data round-trip from the bank-signal module:
+ *   5. Per-entry byte-window binding: each table entry resolves to a
+ *      0x0400-byte Track 02 window classified as zero-fill, payload data,
+ *      or the descriptor-table window that contains the 18-byte table.
+ *   6. Hash-gated real-data round-trip from the bank-signal module:
  *      - US Track 02 ISO descriptor bytes at 0x1584 (when present).
  *      - All three US raw Track 02 BIN descriptor anchors (when present).
  *      - All three JP raw Track 02 BIN descriptor anchors (when present).
@@ -81,6 +84,18 @@ static void check_u16(const char *label, uint16_t got, uint16_t want) {
     if (got != want) {
         printf("FAIL %s: got 0x%04x want 0x%04x\n",
                label, (unsigned)got, (unsigned)want);
+        ++g_fail;
+    }
+}
+
+static void check_kind(const char *label,
+                       Theron_Track02DescriptorWindowKind got,
+                       Theron_Track02DescriptorWindowKind want) {
+    if (got != want) {
+        printf("FAIL %s: got %s want %s\n",
+               label,
+               theron_v1_track02_descriptor_window_kind_name(got),
+               theron_v1_track02_descriptor_window_kind_name(want));
         ++g_fail;
     }
 }
@@ -353,6 +368,130 @@ static void probe_out_of_range_positive_fixture(void) {
               0);
 }
 
+static void probe_synthetic_window_binding(void) {
+    uint8_t track[0x3000u];
+    Theron_Track02DescriptorTable table;
+    Theron_Track02DescriptorWindowBinding binding;
+    Theron_Track02TableDecodeStatus status;
+    size_t i;
+    static const Theron_Track02DescriptorWindowKind want_kind[THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES] = {
+        THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL,
+        THERON_TRACK02_DESCRIPTOR_WINDOW_DATA,
+        THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL,
+        THERON_TRACK02_DESCRIPTOR_WINDOW_DATA,
+        THERON_TRACK02_DESCRIPTOR_WINDOW_DATA,
+        THERON_TRACK02_DESCRIPTOR_WINDOW_DESCRIPTOR_TABLE,
+        THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL,
+        THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL,
+        THERON_TRACK02_DESCRIPTOR_WINDOW_DATA
+    };
+
+    memset(track, 0, sizeof(track));
+    track[0x0420u] = 0x11u;
+    track[0x0c30u] = 0x22u;
+    track[0x1020u] = 0x33u;
+    track[0x13ffu] = 0x44u;
+    memcpy(track + 0x1584u, g_canonical_descriptor, sizeof(g_canonical_descriptor));
+    track[0x2020u] = 0x55u;
+
+    status = theron_v1_track02_decode_descriptor_table(
+        g_canonical_descriptor,
+        sizeof(g_canonical_descriptor),
+        DOCUMENTED_STRIDE,
+        &table);
+    check_int("synthetic binding decode status",
+              status,
+              THERON_TRACK02_TABLE_DECODE_OK);
+
+    status = theron_v1_track02_bind_descriptor_windows(
+        track,
+        sizeof(track),
+        0x1584u,
+        &table,
+        &binding);
+    check_int("synthetic binding status",
+              status,
+              THERON_TRACK02_TABLE_DECODE_OK);
+    check_size("synthetic binding base", binding.base_offset, 0u);
+    check_size("synthetic binding descriptor offset", binding.descriptor_offset, 0x1584u);
+    check_u16("synthetic binding window size", binding.window_size, DOCUMENTED_STRIDE);
+    check_size("synthetic binding entry count",
+               binding.entry_count,
+               THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES);
+
+    for (i = 0; i < THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES; ++i) {
+        char name[96];
+        const Theron_Track02DescriptorWindow *window = &binding.windows[i];
+        snprintf(name, sizeof(name), "synthetic binding window[%zu] kind", i);
+        check_kind(name, window->kind, want_kind[i]);
+        snprintf(name, sizeof(name), "synthetic binding window[%zu] index", i);
+        check_size(name, window->entry_index, i);
+        snprintf(name, sizeof(name), "synthetic binding window[%zu] relative", i);
+        check_u16(name, window->relative_offset, (uint16_t)(0x0020u + (uint16_t)(i * DOCUMENTED_STRIDE)));
+        snprintf(name, sizeof(name), "synthetic binding window[%zu] absolute", i);
+        check_size(name, window->absolute_offset, (size_t)window->relative_offset);
+        snprintf(name, sizeof(name), "synthetic binding window[%zu] byte_count", i);
+        check_size(name, window->byte_count, DOCUMENTED_STRIDE);
+    }
+    check_int("synthetic descriptor window contains table",
+              binding.windows[5].contains_descriptor_table,
+              1);
+    check_size("synthetic descriptor window first nonzero",
+               binding.windows[5].first_nonzero_offset,
+               0x1584u);
+    check_size("synthetic descriptor window last nonzero",
+               binding.windows[5].last_nonzero_offset,
+               0x1595u);
+}
+
+static void probe_window_binding_negative_fixtures(void) {
+    Theron_Track02DescriptorTable table;
+    Theron_Track02DescriptorWindowBinding binding;
+    uint8_t track[0x3000u];
+    Theron_Track02TableDecodeStatus status;
+
+    memset(track, 0, sizeof(track));
+    memcpy(track + 0x1584u, g_canonical_descriptor, sizeof(g_canonical_descriptor));
+    status = theron_v1_track02_decode_descriptor_table(
+        g_canonical_descriptor,
+        sizeof(g_canonical_descriptor),
+        DOCUMENTED_STRIDE,
+        &table);
+    check_int("binding negative decode status",
+              status,
+              THERON_TRACK02_TABLE_DECODE_OK);
+
+    status = theron_v1_track02_bind_descriptor_windows(
+        NULL,
+        sizeof(track),
+        0x1584u,
+        &table,
+        &binding);
+    check_int("binding NULL data is bad-input",
+              status,
+              THERON_TRACK02_TABLE_DECODE_BAD_INPUT);
+
+    status = theron_v1_track02_bind_descriptor_windows(
+        track,
+        sizeof(track),
+        0x1500u,
+        &table,
+        &binding);
+    check_int("binding pre-anchor descriptor offset is not-found",
+              status,
+              THERON_TRACK02_TABLE_DECODE_NOT_FOUND);
+
+    status = theron_v1_track02_bind_descriptor_windows(
+        track,
+        0x1700u,
+        0x1584u,
+        &table,
+        &binding);
+    check_int("binding truncated track is not-found",
+              status,
+              THERON_TRACK02_TABLE_DECODE_NOT_FOUND);
+}
+
 /* All descriptor offsets documented for the bank-signal module. */
 static const size_t g_us_iso_descriptor_offset = 0x1584u;
 static const size_t g_us_bin_descriptor_offsets[THERON_TRACK02_MAX_BANK_ANCHORS] = {
@@ -406,6 +545,58 @@ static void check_descriptor_table_from_data(const uint8_t *data,
         char name[64];
         snprintf(name, sizeof(name), "%s entries[%zu]", label, i);
         check_u16(name, table.entries[i], want);
+    }
+
+    {
+        Theron_Track02DescriptorWindowBinding binding;
+        status = theron_v1_track02_bind_descriptor_windows(
+            data,
+            size,
+            offset,
+            &table,
+            &binding);
+        check_int("window binding status",
+                  status,
+                  THERON_TRACK02_TABLE_DECODE_OK);
+        check_size("window binding entry_count",
+                   binding.entry_count,
+                   THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES);
+        check_size("window binding descriptor offset",
+                   binding.descriptor_offset,
+                   offset);
+        check_u16("window binding size",
+                  binding.window_size,
+                  DOCUMENTED_STRIDE);
+        check_int("window binding descriptor entry contains table",
+                  binding.windows[5].contains_descriptor_table,
+                  1);
+        check_kind("window binding descriptor entry kind",
+                   binding.windows[5].kind,
+                   THERON_TRACK02_DESCRIPTOR_WINDOW_DESCRIPTOR_TABLE);
+        for (i = 0; i < THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES; ++i) {
+            char name[96];
+            const Theron_Track02DescriptorWindow *window = &binding.windows[i];
+            snprintf(name, sizeof(name), "%s window[%zu] relative", label, i);
+            check_u16(name, window->relative_offset, table.entries[i]);
+            snprintf(name, sizeof(name), "%s window[%zu] byte_count", label, i);
+            check_size(name, window->byte_count, DOCUMENTED_STRIDE);
+            if (window->contains_descriptor_table) {
+                snprintf(name, sizeof(name), "%s window[%zu] descriptor kind", label, i);
+                check_kind(name,
+                           window->kind,
+                           THERON_TRACK02_DESCRIPTOR_WINDOW_DESCRIPTOR_TABLE);
+            } else if (window->nonzero_byte_count == 0u) {
+                snprintf(name, sizeof(name), "%s window[%zu] zero kind", label, i);
+                check_kind(name,
+                           window->kind,
+                           THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL);
+            } else {
+                snprintf(name, sizeof(name), "%s window[%zu] data kind", label, i);
+                check_kind(name,
+                           window->kind,
+                           THERON_TRACK02_DESCRIPTOR_WINDOW_DATA);
+            }
+        }
     }
 }
 
@@ -525,6 +716,8 @@ int main(void) {
     probe_wrong_stride_negative_fixture();
     probe_alternative_stride_positive_fixture();
     probe_out_of_range_positive_fixture();
+    probe_synthetic_window_binding();
+    probe_window_binding_negative_fixtures();
     probe_real_data_all_anchors();
 
     printf("summary: fail=%d skip=%d\n", g_fail, g_skip);
