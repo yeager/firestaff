@@ -492,6 +492,16 @@ int M11_GameView_ProbeViewportFloorItemCounts(const M11_GameViewState* state,
                                               int* outElementType,
                                               int* outFloorItemCount,
                                               int* outSummaryItemCount);
+int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             int* outElementType,
+                                             int* outProjectileCount,
+                                             int* outExplosionCount,
+                                             int* outFirstProjectileGfx,
+                                             int* outFirstExplosionType);
 
 /* Post-move environmental transition check (pits, teleporters).
  * Returns 1 if a transition occurred. */

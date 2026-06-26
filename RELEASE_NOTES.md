@@ -22,10 +22,11 @@ Nexus, or Theron's Quest.
   synthetic inscription ornament slot and restores the clean D1C wall patch
   before drawing M648 glyph text, so readable Hall inscriptions are no
   longer painted directly over noisy wall stone.
-- **Hall floor false positives are blocked at runtime**: visible floor-item
-  summaries now come from compact ReDMCSB-style `SquareFirstThings` chains,
-  so stale dense-index fallback data cannot draw extra side-pane objects in
-  the Hall.
+- **Hall source-payload artifacts are blocked at runtime**: Hall of
+  Champions map-0 payload item chains are now treated as mirror/candidate
+  data, not loose floor loot, so they no longer render as fireball-like
+  floor objects or other artifacts. Stale dense-index floor fallbacks remain
+  blocked as well.
 - **Creature AI telemetry no longer leaks into the Hall message area**:
   synthetic M11 combat/movement narration such as `SCREAMER REACHES THE
   PARTY!` stays out of DM1's bottom C015 text surface unless the debug HUD
@@ -35,9 +36,10 @@ Nexus, or Theron's Quest.
   the old dense-index route from animating a false HoC Screamer from compact
   data.
 - **Runtime evidence widened**: new real-DM1-data probes cover HoC
-  inscription readability and HoC floor false-item prevention; the latter
-  found 596 old dense-index false-positive floor samples and proves they now
-  resolve to zero renderable items.
+  inscription readability, HoC payload suppression, and HoC projectile /
+  explosion artifact prevention. The floor gate found 596 old dense-index
+  false-positive floor samples and 83 source-payload samples that now resolve
+  to zero renderable items.
 
 ## Verification
 
@@ -56,6 +58,9 @@ Nexus, or Theron's Quest.
 - Post-release HoC no-creature verification covered a real-DM1-data probe
   proving zero compact GROUP chains on map 0 while documenting the old
   dense-index false positives that previously fed creature AI.
+- Post-release HoC artifact verification covered the updated floor runtime
+  probe, the source-payload data probe, the no-creature probe, the bottom
+  message-row probe, the new projectile/explosion artifact probe, and Phase A.
 - The release workflow rebuilds and packages macOS arm64, macOS x86_64,
   Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
   `v3.0.9` release commit.
@@ -70,16 +75,16 @@ claims for the other game profiles.
 
 ## Highlights since v3.0.7
 
-- **Hall of Champions floor objects are source-locked**: non-wall floor
-  object rendering now uses the compact ReDMCSB-style `SquareFirstThings`
-  lookup, so unflagged Hall floor squares cannot display unrelated
-  container, projectile, or explosion chains.
+- **Hall of Champions source payloads are source-locked**: the compact
+  ReDMCSB-style `SquareFirstThings` lookup proves map-0 Hall payload chains,
+  while runtime rendering keeps those payload objects out of the ordinary
+  floor-loot path.
 - **Hall floor false positives are blocked at runtime**: M11 now keeps the
   visible floor-item summary tied to the compact source chain, so stale dense
   fallback data cannot draw extra side-pane floor objects in the Hall.
-- **Hall of Champions expected floor contents are verified**: a new
+- **Hall of Champions expected payload contents are verified**: a new
   real-data probe pins the 70 compact thing-list squares on map 0, the
-  seven expected floor-object chains, eight visible objects, and zero
+  seven expected payload-object chains, eight payload objects, and zero
   containers/projectiles/explosions on the Hall floor.
 - **Champion panel return coverage widened**: additional DM1 V1 runtime
   gates cover ordinal 0 panel return and ordinal 4 rest/wake repaint
