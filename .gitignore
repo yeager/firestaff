@@ -580,6 +580,12 @@ __pycache__/
 !/parity-evidence/verification/pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat/**
 !/parity-evidence/verification/pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat/
 !/parity-evidence/verification/pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat/**
+# DM1 V1 full four-champion party HUD + single-champion status-panel
+# runtime pairing gate.  Companion to pass1071.  Bounded JSON-only
+# evidence (manifest + fingerprints); no Firestaff-vs-original pixel
+# diffs committed.
+!/parity-evidence/verification/pass_dm1_v1_full_party_hud_runtime_pairing_gate/
+!/parity-evidence/verification/pass_dm1_v1_full_party_hud_runtime_pairing_gate/**
 # Bounded metadata-only probe for docs/FIRESTAFF_GAP_LIST.md A5
 # (greatstone db_data real-data regression); only the small JSON
 # evidence file is committed, never any body bytes.

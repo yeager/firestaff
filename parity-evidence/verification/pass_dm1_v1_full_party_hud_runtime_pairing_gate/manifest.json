@@ -1,0 +1,33 @@
+{
+  "binary_path": "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees-builds/20260626101715562127000_dm1_v1_full_party_hud_runtime_pairing_gate_build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe",
+  "claim_parity": false,
+  "data_dir": "/Users/bosse/.firestaff/data/dm1",
+  "data_dir_exists": true,
+  "detail": "Probe exercised full4 HUD, single1 status panel, two-/three-champion intermediate cases, and all transitions against real Firestaff V1 assets.",
+  "generated_at": "2026-06-26T08:55:05.645428+00:00",
+  "parity_claim": "none",
+  "pass": "pass_dm1_v1_full_party_hud_runtime_pairing_gate",
+  "pass1071_report": "parity-evidence/pass1071_dm1_v1_champion_panel_pairing_readiness.md",
+  "pass1071_report_exists": true,
+  "probe": {
+    "fail_count": 0,
+    "fingerprints": {
+      "full4_panel_fnv1a64": "46204c70fa361433",
+      "full4_to_single1_panel_fnv1a64": "cae5465af0f96ba4",
+      "single1_panel_fnv1a64": "cae5465af0f96ba4",
+      "single1_to_full4_panel_fnv1a64": "46204c70fa361433",
+      "three3_panel_fnv1a64": "3f0011f93f1a4be2",
+      "two2_panel_fnv1a64": "275fb9537963913d",
+      "two2_to_full4_panel_fnv1a64": "46204c70fa361433"
+    },
+    "pass_count": 276,
+    "ran": true,
+    "returncode": 0,
+    "stderr_tail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\n",
+    "stdout_tail": "ll4->two2 slot2 champion icon empty\nPASS full4->two2 slot2 stat0 bar empty\nPASS full4->two2 slot2 stat1 bar empty\nPASS full4->two2 slot2 stat2 bar empty\nPASS full4->two2 slot2 hand0 slot-box graphic unavailable got=0\nPASS full4->two2 slot2 hand0 zone empty\nPASS full4->two2 slot2 hand1 slot-box graphic unavailable got=0\nPASS full4->two2 slot2 hand1 zone empty\nPASS full4->two2 slot3 status box empty\nPASS full4->two2 slot3 name color unavailable got=-1\nPASS full4->two2 slot3 champion icon empty\nPASS full4->two2 slot3 stat0 bar empty\nPASS full4->two2 slot3 stat1 bar empty\nPASS full4->two2 slot3 stat2 bar empty\nPASS full4->two2 slot3 hand0 slot-box graphic unavailable got=0\nPASS full4->two2 slot3 hand0 zone empty\nPASS full4->two2 slot3 hand1 slot-box graphic unavailable got=0\nPASS full4->two2 slot3 hand1 zone empty\nPASS two2->full4 slot2 status box populated\nPASS two2->full4 slot2 status-box stride 69\nPASS two2->full4 slot2 name color present\nPASS two2->full4 slot2 stat0 bar populated\nPASS two2->full4 slot2 stat1 bar populated\nPASS two2->full4 slot2 stat2 bar populated\nPASS two2->full4 slot2 champion icon populated\nPASS two2->full4 slot2 hand0 slot-box graphic available\nPASS two2->full4 slot2 hand0 slot-box populated\nPASS two2->full4 slot2 hand1 slot-box graphic available\nPASS two2->full4 slot2 hand1 slot-box populated\nPASS two2->full4 slot3 status box populated\nPASS two2->full4 slot3 status-box stride 69\nPASS two2->full4 slot3 name color present\nPASS two2->full4 slot3 stat0 bar populated\nPASS two2->full4 slot3 stat1 bar populated\nPASS two2->full4 slot3 stat2 bar populated\nPASS two2->full4 slot3 champion icon populated\nPASS two2->full4 slot3 hand0 slot-box graphic available\nPASS two2->full4 slot3 hand0 slot-box populated\nPASS two2->full4 slot3 hand1 slot-box graphic available\nPASS two2->full4 slot3 hand1 slot-box populated\nINFO two2_to_full4_panel_fnv1a64=0x46204c70fa361433\nPASS dm1 v1 full_party_hud_runtime_pairing_probe (Firestaff-side evidence, no original DOS claim)\n"
+  },
+  "schema": "firestaff.parity.pass_dm1_v1_full_party_hud_runtime_pairing_gate.v1",
+  "static_check_failures": [],
+  "static_checks_ok": true,
+  "status": "PASS_RUNTIME_PAIRING_EVIDENCE"
+}

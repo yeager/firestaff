@@ -3332,6 +3332,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_panel_hand_slot_inventory_owner_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_panel_damage_flash_decay_pixel_probe.c"
+        "probes/m11/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_14_south_return_rect_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_14_after_party_shuffle_portrait_rect_position_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_portrait21_south_return_portrait_rect_position_probe.c"
@@ -12885,6 +12886,10 @@ if(BUILD_TESTING)
         add_test(
             NAME pass1071_dm1_v1_champion_panel_pairing_readiness
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1071_dm1_v1_champion_panel_pairing_readiness.py
+        )
+        add_test(
+            NAME pass_dm1_v1_full_party_hud_runtime_pairing_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass_dm1_v1_full_party_hud_runtime_pairing.py
         )
         add_test(
             NAME pass1055_dm1_v1_original_closed_door_collision_capture
