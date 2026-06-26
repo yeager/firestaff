@@ -1998,6 +1998,31 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 Hint Oracle UI/runtime binding probe
+# Real-asset HCSB.HTC → Firestaff-facing oracle/hint binding
+# surface. The probe exercises the diagnostic/oracle report,
+# the per-hint text formatter, and the (level, x, y) → hint
+# resolver against a real Utility Disk HCSB.HTC discovered
+# through the existing known-hash list. Skip-safe by design.
+# Source: ReDMCSB HINTLOAD.C:11-18, HINTHTC.C:177-358,
+#         HINTLZW.C:122-212, dmweb Hint Oracle Files page.
+add_executable(firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe
+    probes/csb/firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe.c
+    src/csb/csb_hint_oracle_htc.c
+    src/csb/csb_hint_oracle_htc_real_scan.c
+    src/csb/csb_hint_oracle_ui_runtime_binding.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Phase 2 — DSA Script Section Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: DSA section presence and scan feasibility after dungeon load;
@@ -12102,6 +12127,33 @@ if(BUILD_TESTING)
         COMMAND test_csb_hint_oracle_htc
     )
 
+    # CSB Hint Oracle UI/runtime binding surface.
+    # Data-free contract tests for the report / hint / resolve
+    # helpers built on top of csb_hint_oracle_htc and
+    # csb_hint_oracle_htc_real_scan. No real asset is loaded;
+    # the synthetic in-memory fixture exercises the same path
+    # an M12/M11 popup would use to surface a decoded HCSB.HTC
+    # page to a Firestaff-facing oracle/hint surface.
+    add_executable(test_csb_hint_oracle_ui_runtime_binding
+        tests/test_csb_hint_oracle_ui_runtime_binding.c
+        src/csb/csb_hint_oracle_htc.c
+        src/csb/csb_hint_oracle_htc_real_scan.c
+        src/csb/csb_hint_oracle_ui_runtime_binding.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_hint_oracle_ui_runtime_binding PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_hint_oracle_ui_runtime_binding PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_hint_oracle_ui_runtime_binding_unit
+        COMMAND test_csb_hint_oracle_ui_runtime_binding
+    )
+
     # ── CSB V1 graphics hidden-item skip integration test ────────
     # Verifies the safe-load wrapper around the DM1 V1 graphics
     # loader honours the per-game hidden-code skip table for
@@ -12619,6 +12671,24 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_hint_oracle_real_htc_scan_probe
         )
         set_tests_properties(csb_v1_hint_oracle_real_htc_scan PROPERTIES
+            LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 Hint Oracle UI/runtime binding probe ctest entry
+    # Real-asset HCSB.HTC → Firestaff-facing oracle/hint binding
+    # surface. Skip-safe: hosts without a known HCSB.HTC exit 0
+    # with a SKIP message and no failure count. The probe proves
+    # a decoded HCSB.HTC page can reach a Firestaff-facing
+    # oracle/hint surface (a printable text buffer the launcher
+    # or M11 view can render).
+    if(TARGET firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe)
+        add_test(
+            NAME csb_v1_hint_oracle_ui_runtime_binding
+            COMMAND firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe
+        )
+        set_tests_properties(csb_v1_hint_oracle_ui_runtime_binding PROPERTIES
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
             TIMEOUT 120
         )
