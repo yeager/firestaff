@@ -1,4 +1,56 @@
 
+# Firestaff v3.0.10
+
+Firestaff v3.0.10 packages the 2026-06-26 runtime-hardening work that
+landed after v3.0.9. It keeps the public completion claims conservative:
+DM1 V1 gets wider real-data M11 coverage, CSB champion rules get a tighter
+source-locked fixture, and Theron's Quest direct startup becomes practical
+from a broad user data root without claiming full Theron playability.
+
+## Highlights since v3.0.9
+
+- **DM1 V1 all-map rendering is now pixel-gated**: the
+  `firestaff_dm1_v1_all_map_render_probe` sweeps every non-wall source cell
+  across all 14 DM1 maps in all four directions through the live M11 view
+  renderer, then compares thing-backed poses against a no-`world.things`
+  baseline. Visible items, groups, and sensor/text content must now produce
+  real viewport pixel deltas.
+- **Hall of Champions artifact suppression is stronger**: map-0 payload item
+  chains are treated as mirror/candidate data rather than visible floor loot,
+  runtime projectile/explosion artifact false positives are blocked, and the
+  Hall creature tick no longer scans compact source payload data as active
+  creature groups.
+- **Hall message text stays player-facing**: synthetic M11 creature movement
+  or combat telemetry such as `SCREAMER REACHES THE PARTY!` is filtered out
+  of the normal DM1 bottom message surface unless the debug HUD owns it.
+- **CSB champion reincarnation has per-stat parity evidence**: a new
+  data-free fixture pins the source-locked F0282 contract for HP/Mana/Stamina
+  halving, non-Luck stat penalties, minimum clamps, skill clearing,
+  NEEDS_RENAME/DEAD flags, and resurrect-vs-reincarnate behavior.
+- **Theron's Quest direct root startup is fast**: `--game theron --data-dir
+  <root>` now tries canonical Theron child roots first (`theron/`,
+  `theron/jp`, `theron/us`, `theron-extras/japan`, `theron-extras/usa`),
+  allowing a broad root such as `~/.firestaff/data` to reach `TQR level load`
+  quickly while leaving the normal launcher-wide catalog scan unchanged.
+
+## Verification
+
+- 9 commits ship on top of `v3.0.9`, including this release-prep commit.
+- GitHub Actions was green on `dc8a9d282` before release prep: M10 verify,
+  strict warnings, asset hygiene, CMake builds on macOS/Windows/Linux, Phase
+  A/audio probes, and cross-platform determinism.
+- Focused local DM1 verification covered the all-map render probe and its
+  sibling viewport/occlusion gates, plus the HoC no-creature, floor, message,
+  and artifact probes.
+- Focused local CSB verification covered the new champion per-stat parity
+  fixture and nearby character-import / phase-7 / save-boundary tests.
+- Focused local Theron verification covered the direct root startup path,
+  the 36-test Theron CTest slice, runtime screenshot readiness, and the Tier
+  1 strict boot probe.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
+  `v3.0.10` release commit.
+
 # Firestaff v3.0.9
 
 Firestaff v3.0.9 packages the 2026-06-26 fixes that followed the v3.0.8

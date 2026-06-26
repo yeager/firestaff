@@ -97,30 +97,30 @@ timing and inventory routes.
 
 ## Latest Release
 
-**Current version:** `3.0.9`.
+**Current version:** `3.0.10`.
 
-The latest release packages the 2026-06-26 DM1 V1 Hall of Champions
-stability work after v3.0.8. It focuses on the MacBook Pro feedback loop:
-held keyboard movement, readable wall inscriptions, false floor-object
-prevention, and sharp original TITLE/Swoosh presentation. It does not claim
-finished parity for CSB, DM2, Nexus, or Theron's Quest beyond the runtime
-slices now covered by tests and probes.
+The latest release packages the 2026-06-26 runtime-hardening work after
+v3.0.9. It widens real-data DM1 V1 render coverage, tightens CSB champion
+rule evidence, and makes Theron's Quest direct startup practical from a
+broad user data root. It does not claim finished parity for CSB, DM2, Nexus,
+or Theron's Quest beyond the runtime slices now covered by tests and probes.
 
-### v3.0.9 release highlights
+### v3.0.10 release highlights
 
-- **Hall of Champions movement**: active DM1 now routes W/A/S/D, arrows,
-  Home/End, Q/E, and keypad through the engine scancode remap path and polls
-  held movement keys at the DM1 source input cadence.
-- **Hall inscriptions and floor objects**: front-wall inscriptions use the
-  ReDMCSB synthetic inscription slot plus a clean D1C wall patch behind M648
-  glyphs, and visible floor summaries are tied to compact `SquareFirstThings`
-  chains so stale dense-index data cannot draw extra Hall objects.
-- **Original presentation**: the special-palette TITLE/Swoosh path now uses
-  CPU-nearest V1 presentation when scaling, preserving source-locked palette
-  colors and hard-edged pixels on HiDPI/Metal paths.
-- **Runtime gates**: new real-DM1-data probes cover HoC inscription
-  readability and the floor false-item class, alongside Phase A and the
-  existing Hall floor source-lock probe.
+- **DM1 all-map render proof**: the all-map M11 probe renders every non-wall
+  source cell across all 14 DM1 maps in all four directions and requires
+  visible items, groups, and sensor/text content to produce real viewport
+  pixel deltas against a no-things baseline.
+- **Hall of Champions hardening**: payload item chains no longer render as
+  loose floor artifacts, false creature AI on map 0 is blocked, and synthetic
+  creature telemetry stays out of the normal bottom message surface.
+- **CSB champion rules**: a new per-stat parity fixture pins the
+  source-locked reincarnate/resurrect contract for HP/Mana/Stamina, stat
+  penalties, skills, and panel-state flags.
+- **Theron direct startup**: `--game theron --data-dir <root>` now resolves
+  known Theron child roots before the broad launcher scan, so roots such as
+  `~/.firestaff/data` can reach `TQR level load` quickly when verified Track
+  02 data is present.
 
 ## Download
 

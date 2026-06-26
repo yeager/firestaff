@@ -9,6 +9,13 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.10  (2026-06-26)",
+    "  - DM1 Hall of Champions runtime hardening continues: map-0 payload artifacts, false creature AI, and creature telemetry leakage are now blocked with focused runtime probes.",
+    "  - DM1 V1 all-map M11 rendering now has a real-data sweep that renders every non-wall source cell on all 14 maps in all four directions and pixel-compares thing-backed poses against a no-things baseline.",
+    "  - CSB champion reincarnation/resurrection now has a data-free per-stat parity fixture covering the source-locked F0282 contract, including HP/Mana/Stamina halving, non-Luck stat penalties, skill clearing, and panel-state flags.",
+    "  - Theron's Quest direct startup from a broad data root now resolves known Track 02 child roots first, so --game theron --data-dir ~/.firestaff/data reaches TQR level load quickly without changing the normal launcher-wide scan.",
+    "  - Release verification: based on 9 commits after v3.0.9 with GitHub M10 verify + CMake build + cross-platform determinism green on main before release prep, plus focused local DM1, CSB, Theron, Phase A, and release-prep checks.",
+    "",
     "V3.0.9  (2026-06-26)",
     "  - DM1 Hall of Champions keyboard handling now uses the engine scancode remap path and polls held movement keys at the source input cadence, so WASD/arrows respond immediately on macOS instead of waiting for OS key repeat.",
     "  - DM1 TITLE/Swoosh special-palette presentation now uses the CPU-nearest V1 scaling path when needed, preserving C12/C13/C14 colors and sharp pixels on HiDPI/Metal paths.",
@@ -309,5 +316,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.9";
+    return "3.0.10";
 }
