@@ -13,6 +13,9 @@ claims for the other game profiles.
   object rendering now uses the compact ReDMCSB-style `SquareFirstThings`
   lookup, so unflagged Hall floor squares cannot display unrelated
   container, projectile, or explosion chains.
+- **Hall floor false positives are blocked at runtime**: M11 now keeps the
+  visible floor-item summary tied to the compact source chain, so stale dense
+  fallback data cannot draw extra side-pane floor objects in the Hall.
 - **Hall of Champions expected floor contents are verified**: a new
   real-data probe pins the 70 compact thing-list squares on map 0, the
   seven expected floor-object chains, eight visible objects, and zero
@@ -46,6 +49,9 @@ claims for the other game profiles.
 - Post-release main verification for the HoC inscription fix included the new
   real-DM1-data HoC inscription readability probe, the inscription font probe,
   nearest-presentation probe, and Phase A probe.
+- Post-release main verification for the HoC floor runtime fix included a new
+  real-DM1-data viewport probe that found 596 old dense-index false-positive
+  floor samples and proved all now resolve to zero renderable items.
 - The release workflow rebuilds and packages macOS arm64, macOS x86_64,
   Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
   `v3.0.8` release commit.
