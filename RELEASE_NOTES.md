@@ -28,6 +28,10 @@ claims for the other game profiles.
   TITLE path now uses the same CPU-nearest V1 presentation path as ordinary
   indexed rendering, so the Swoosh -> Dungeon Master title animation keeps
   the source-locked C12/C13/C14 palette colors on HiDPI/Metal paths.
+- **Hall of Champions inscriptions are readable again**: the front-wall
+  inscription path now uses ReDMCSB's synthetic inscription ornament slot and
+  restores the clean D1C wall patch behind M648 glyph text instead of drawing
+  the letters straight over noisy Hall stone.
 
 ## Verification
 
@@ -39,6 +43,9 @@ claims for the other game profiles.
   source-lock probe, the compact square-first-thing unit test, the
   relevant Hall of Champions CTest cluster at 7/7, pre-push hooks, and
   `git diff --check`.
+- Post-release main verification for the HoC inscription fix included the new
+  real-DM1-data HoC inscription readability probe, the inscription font probe,
+  nearest-presentation probe, and Phase A probe.
 - The release workflow rebuilds and packages macOS arm64, macOS x86_64,
   Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
   `v3.0.8` release commit.
