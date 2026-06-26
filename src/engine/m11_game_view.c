@@ -10690,7 +10690,11 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * from a square that actually carries MASK0x0010_THING_LIST_PRESENT;
      * otherwise Hall floor cells can display unrelated dense-index chains
      * as visible objects. */
-    if (state->world.things) {
+    /* Do not filter WALL squares here: ReDMCSB DUNVIEW.C F0115 draws
+     * alcove objects from wall-square thing chains after F0107 reports an
+     * alcove.  Non-wall squares still use the flagged first-thing path below
+     * so dense-index chains cannot leak into ordinary floor rendering. */
+    if (cell.summary.items > 0 && state->world.things) {
         unsigned short itemFirstThing = firstThing;
         int scanSafety = 0;
         int hiddenCandidatePayloadItems = 0;

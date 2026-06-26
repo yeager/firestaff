@@ -2259,6 +2259,24 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_hall_walkaround_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V1 all-map M11 runtime render sweep. Opens real DM1 data, moves
+# the party view across every non-wall source cell on every map, renders all
+# four directions through M11_GameView_Draw, and records the visible
+# F0115/F0128 thing coverage. Source-locked to ReDMCSB DUNGEON.C
+# F0151/F0161/F0172 and DUNVIEW.C F0115/F0128.
+add_executable(firestaff_dm1_v1_all_map_render_probe
+    probes/m11/firestaff_dm1_v1_all_map_render_probe.c)
+target_link_libraries(firestaff_dm1_v1_all_map_render_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_all_map_render_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_dm1_v1_all_map_render_probe
+    COMMAND firestaff_dm1_v1_all_map_render_probe
+        $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+        ${CMAKE_CURRENT_BINARY_DIR}/dm1-v1-all-map-render
+)
+
 # Deterministic in-game screenshot series used by parity evidence.
 add_executable(capture_ingame_series verification-screens/capture_firestaff_ingame_series.c)
 target_link_libraries(capture_ingame_series PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
