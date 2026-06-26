@@ -9,6 +9,13 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.9  (2026-06-26)",
+    "  - DM1 Hall of Champions keyboard handling now uses the engine scancode remap path and polls held movement keys at the source input cadence, so WASD/arrows respond immediately on macOS instead of waiting for OS key repeat.",
+    "  - DM1 TITLE/Swoosh special-palette presentation now uses the CPU-nearest V1 scaling path when needed, preserving C12/C13/C14 colors and sharp pixels on HiDPI/Metal paths.",
+    "  - HoC front-wall inscriptions now use the ReDMCSB synthetic inscription ornament slot and restore the clean D1C wall patch before drawing M648 glyph text.",
+    "  - HoC floor runtime summaries are tied to compact SquareFirstThings chains, blocking stale dense-index side-pane false items; a real-data viewport probe found 596 old false-positive samples and proves they now resolve to zero renderable items.",
+    "  - Release verification: based on 12 commits after v3.0.8 with GitHub M10 verify + CMake build + cross-platform determinism green on main before release prep, plus focused local HoC floor/inscription, presentation, and Phase A checks.",
+    "",
     "V3.0.8  (2026-06-25)",
     "  - DM1 Hall of Champions floor objects now use the compact ReDMCSB-style SquareFirstThings lookup, so unflagged floor squares cannot display unrelated container, projectile, or explosion chains.",
     "  - A new Hall floor source-lock probe pins 70 compact thing-list squares, seven expected floor-object chains, eight visible objects, and zero containers/projectiles/explosions on map 0.",
@@ -302,5 +309,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.8";
+    return "3.0.9";
 }
