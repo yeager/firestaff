@@ -10254,9 +10254,12 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
     m = &dun->maps[mapIndex];
     squareCount = (int)m->width * (int)m->height;
 
-    /* Compute metadata size: creature types + wall ornaments (+ inscription slot) +
-     * floor ornaments + door ornaments. */
-    metaSize = (int)m->creatureTypeCount + (int)m->wallOrnamentCount + 1 +
+    /* Compute metadata size: creature types + wall ornaments + floor ornaments
+     * + door ornaments.  ReDMCSB DUNGEON.C F0173 lines 2758-2762 reads only
+     * B.WallOrnamentCount bytes from map data, then assigns the synthetic
+     * inscription slot in memory:
+     * G0261[WallOrnamentCount] = C0_WALL_ORNAMENT_INSCRIPTION. */
+    metaSize = (int)m->creatureTypeCount + (int)m->wallOrnamentCount +
                (int)m->floorOrnamentCount + (int)m->doorOrnamentCount;
     if (metaSize <= 0 || metaSize > (int)sizeof(metaBuf)) {
         state->ornamentCacheLoaded[mapIndex] = 1;
@@ -10337,13 +10340,15 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
      *   G0261[InscriptionWallOrnamentIndex] = C0_WALL_ORNAMENT_INSCRIPTION */
     offset = (int)m->creatureTypeCount;
     for (i = 0; i < 16; ++i) {
-        if (i < (int)m->wallOrnamentCount + 1 && (offset + i) < metaSize) {
+        if (i < (int)m->wallOrnamentCount && (offset + i) < metaSize) {
             state->wallOrnamentIndices[mapIndex][i] = (int)metaBuf[offset + i];
+        } else if (i == (int)m->wallOrnamentCount) {
+            state->wallOrnamentIndices[mapIndex][i] = 0; /* C0_WALL_ORNAMENT_INSCRIPTION */
         } else {
             state->wallOrnamentIndices[mapIndex][i] = i; /* identity fallback */
         }
     }
-    offset += (int)m->wallOrnamentCount + 1; /* +1 for inscription ornament */
+    offset += (int)m->wallOrnamentCount;
 
     /* Read floor ornament indices.
      * Ref: ReDMCSB DUNGEON.C F173 — G262_auc_CurrentMapFloorOrnamentIndices.
@@ -10921,15 +10926,15 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         if (mi >= 0 && mi < (int)state->world.dungeon->header.mapCount) {
             const struct DungeonMapDesc_Compat* ornMap =
                 &state->world.dungeon->maps[mi];
-            int inscOrnIdx = -1;
-            if (mi < 32 && state->ornamentCacheLoaded[mi]) {
-                int inscSlot = (int)ornMap->wallOrnamentCount;
-                if (inscSlot < 16) {
-                    inscOrnIdx = state->wallOrnamentIndices[mi][inscSlot];
-                }
-            }
-            if (inscOrnIdx >= 0 &&
-                (cell.wallOrnamentOrdinal - 1) == inscOrnIdx) {
+            int inscSlot = (int)ornMap->wallOrnamentCount;
+            int localIdx = cell.wallOrnamentOrdinal - 1;
+            /* ReDMCSB DUNGEON.C F0172/F0174 lines 2585-2593 store the
+             * synthetic inscription wall-ornament *ordinal* in the square
+             * aspect, while F0173 lines 2758-2762 maps that local slot to
+             * global ornament 0 for drawing.  Match the local slot here;
+             * comparing against the global ornament value drops every map
+             * whose inscription slot is not local index 0. */
+            if (inscSlot >= 0 && inscSlot < 16 && localIdx == inscSlot) {
                 unsigned short tScan = firstThing;
                 int tSafety = 0;
                 while (tScan != THING_ENDOFLIST && tScan != THING_NONE &&
@@ -14021,6 +14026,38 @@ static int m11_draw_dm1_inscription_font_line(const M11_GameViewState* state,
     return 1;
 }
 
+static void m11_draw_dm1_front_wall_inscription_patch(unsigned char* framebuffer,
+                                                      int fbW,
+                                                      int fbH,
+                                                      int textX,
+                                                      int textY,
+                                                      int textWidth) {
+    int patchX;
+    int patchY;
+    int patchW;
+    int patchH;
+    if (!framebuffer || textWidth <= 0) {
+        return;
+    }
+    patchX = textX - 3;
+    patchY = textY - 2;
+    patchW = textWidth + 6;
+    patchH = DM1_V1_INSCRIPTION_GLYPH_HEIGHT + 4;
+    /* ReDMCSB: DUNVIEW.C F0107 lines 3679-3682 patches the readable
+     * D1C inscription wall via M712_NEGGRAPHIC_/C735 before lines
+     * 3697-3706 blit M648 glyph cells.  Keep Firestaff's M648 glyph path,
+     * but restore the clean wall patch so HoC inscriptions are not drawn
+     * directly over noisy Hall stone. */
+    m11_fill_rect(framebuffer, fbW, fbH,
+                  patchX, patchY, patchW, patchH,
+                  M11_COLOR_BLACK);
+    if (patchW > 2 && patchH > 2) {
+        m11_fill_rect(framebuffer, fbW, fbH,
+                      patchX + 1, patchY + 1, patchW - 2, patchH - 2,
+                      M11_COLOR_DARK_GRAY);
+    }
+}
+
 static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* state,
                                                      const M11_ViewportCell* cell,
                                                      unsigned char* framebuffer,
@@ -14058,8 +14095,11 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
         }
         if (*cursor) {
             int charCount = (int)strlen(cursor);
+            int textWidth = DM1_V1_InscriptionTextWidth(charCount);
             int textX = M11_VIEWPORT_X + DM1_V1_InscriptionTextX(charCount);
             int textY = M11_VIEWPORT_Y + kLineBottomY[line] - 7;
+            m11_draw_dm1_front_wall_inscription_patch(framebuffer, fbW, fbH,
+                                                      textX, textY, textWidth);
             if (!m11_draw_dm1_inscription_font_line(state, framebuffer, fbW, fbH,
                                                     textX, textY, cursor)) {
                 int textW = m11_measure_text_pixels(cursor, &inscriptionStyle);
