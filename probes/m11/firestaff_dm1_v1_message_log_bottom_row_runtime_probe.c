@@ -24,6 +24,7 @@ enum {
     PROBE_FB_W = 320,
     PROBE_FB_H = 200,
     PROBE_YELLOW = 11,
+    PROBE_ORANGE = 9,
     PROBE_RED = 8
 };
 
@@ -116,6 +117,7 @@ int main(int argc, char** argv) {
     size_t row2;
     size_t row3;
     size_t redTelemetry;
+    size_t orangeCreatureTelemetry;
 
     if (!root) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
@@ -135,6 +137,7 @@ int main(int argc, char** argv) {
     M11_MessageLog_Push(&game.messageLog, "DOOR OPENING", PROBE_YELLOW);
     M11_MessageLog_Push(&game.messageLog, "IT IS LOCKED.", PROBE_YELLOW);
     M11_MessageLog_Push(&game.messageLog, "PARTY MOVED", PROBE_RED);
+    M11_MessageLog_Push(&game.messageLog, "SCREAMER REACHES THE PARTY!", PROBE_ORANGE);
     M11_MessageLog_Push(&game.messageLog, "OUCH.", PROBE_YELLOW);
     M11_MessageLog_Push(&game.messageLog, "HEADS.", PROBE_YELLOW);
 
@@ -146,6 +149,7 @@ int main(int argc, char** argv) {
     row2 = count_color(fb, 0, 187, PROBE_FB_W, 6, PROBE_YELLOW);
     row3 = count_color(fb, 0, 194, PROBE_FB_W, 6, PROBE_YELLOW);
     redTelemetry = count_color(fb, 0, 173, PROBE_FB_W, 27, PROBE_RED);
+    orangeCreatureTelemetry = count_color(fb, 0, 173, PROBE_FB_W, 27, PROBE_ORANGE);
 
     printf("probe=firestaff_dm1_v1_message_log_bottom_row_runtime_probe\n");
     printf("dataDir=%s\n", dataDir);
@@ -154,9 +158,11 @@ int main(int argc, char** argv) {
     check_count_at_least("row2_y187_192_yellow", row2, 3);
     check_count_at_least("row3_y194_199_yellow", row3, 3);
     check_count_equals("suppressed_party_moved_red", redTelemetry, 0);
+    check_count_equals("suppressed_creature_ai_orange", orangeCreatureTelemetry, 0);
 
-    printf("summary passed=%d failed=%d rows=%zu,%zu,%zu,%zu red=%zu\n",
-           g_pass, g_fail, row0, row1, row2, row3, redTelemetry);
+    printf("summary passed=%d failed=%d rows=%zu,%zu,%zu,%zu red=%zu orange=%zu\n",
+           g_pass, g_fail, row0, row1, row2, row3,
+           redTelemetry, orangeCreatureTelemetry);
 
     M11_GameView_Shutdown(&game);
     return g_fail == 0 ? 0 : 1;

@@ -3203,6 +3203,9 @@ static int m11_v1_message_is_player_facing(const char* stripped) {
         " FADES",
         " OUT OF BOUNDS",
         " COLLIDES IN FLIGHT",
+        " HIT BY ",
+        "LAUNCHES PROJECTILE",
+        "REACHES THE PARTY",
         "CAST SPELL #",
         NULL
     };
