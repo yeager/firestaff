@@ -1811,6 +1811,56 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v2_actual_render_screenshot_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V2 source-owned deterministic screenshot script. Headless:
+# skip-safe when no DM1 PC 3.4 DUNGEON.DAT is present (exits 0 with
+# SKIP message). When DUNGEON.DAT is present it drives the real M11
+# present pipeline (V1 / V2.0 filtered / V2.1 EPX / V2.2 in-place
+# overlay) for the four N/E/S/W directions of the canonical PC 3.4
+# entry composition built from the real DUNGEON.DAT bytes. Writes a
+# 24-bit BMP per (direction, mode) and a single JSON receipts file
+# listing per-row FNV-1a 32-bit hashes for the on-disk BMPs. The
+# receipts file is the input to
+# tools/verify_dm1_v2_source_owned_screenshot_receipts.py which is
+# registered as a second CTest gate below.
+# Source-lock: ReDMCSB DUNVIEW.C:2999-3000 + 8318-8542, DUNGEON.C:2199-2250,
+# VIDEODRV.C G9010_auc_VgaPaletteAll_Compat, GAMELOOP.C:90 + F0128.
+add_executable(firestaff_dm1_v2_source_owned_screenshot_probe
+    probes/firestaff_dm1_v2_source_owned_screenshot_probe.c)
+target_include_directories(firestaff_dm1_v2_source_owned_screenshot_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_dm1_v2_source_owned_screenshot_probe
+    PRIVATE firestaff_m11 firestaff_m10 SDL3::SDL3)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v2_source_owned_screenshot_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v2_source_owned_screenshot_probe
+        COMMAND firestaff_dm1_v2_source_owned_screenshot_probe
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    set_tests_properties(dm1_v2_source_owned_screenshot_probe PROPERTIES
+        LABELS "tier2;dm1;v2;screenshot;source-owned;deterministic"
+    )
+endif()
+
+# DM1 V2 source-owned screenshot receipt verifier. Reads the JSON
+# manifest emitted by firestaff_dm1_v2_source_owned_screenshot_probe,
+# re-derives FNV-1a 32-bit hashes of every on-disk BMP, and asserts
+# BM magic + width/height + size + per-row hash invariants. Skip-safe
+# when no receipts file is present (exits 0). No DOSBox parity claim;
+# this proves the source-owned route is deterministic end-to-end on
+# the Firestaff side only.
+add_test(
+    NAME dm1_v2_source_owned_screenshot_receipts
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_source_owned_screenshot_receipts.py
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(dm1_v2_source_owned_screenshot_receipts PROPERTIES
+    LABELS "tier2;dm1;v2;screenshot;source-owned;deterministic"
+)
+
 # DM1 V2 side-by-side presentation-disabled seed probe. Headless: no game data.
 add_executable(firestaff_dm1_v2_side_by_side_presentation_seed_probe
     probes/dm1/firestaff_dm1_v2_side_by_side_presentation_seed_probe.c)
