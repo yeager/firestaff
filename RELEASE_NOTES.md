@@ -26,6 +26,10 @@ Nexus, or Theron's Quest.
   summaries now come from compact ReDMCSB-style `SquareFirstThings` chains,
   so stale dense-index fallback data cannot draw extra side-pane objects in
   the Hall.
+- **Creature AI telemetry no longer leaks into the Hall message area**:
+  synthetic M11 combat/movement narration such as `SCREAMER REACHES THE
+  PARTY!` stays out of DM1's bottom C015 text surface unless the debug HUD
+  is active.
 - **Runtime evidence widened**: new real-DM1-data probes cover HoC
   inscription readability and HoC floor false-item prevention; the latter
   found 596 old dense-index false-positive floor samples and proves they now
@@ -43,6 +47,8 @@ Nexus, or Theron's Quest.
 - Earlier focused verification for this batch covered the keyboard remap and
   held-key path, title special-palette nearest presentation, inscription
   font/source-lock checks, and `git diff --check`.
+- Post-release HoC text cleanup verification covered the bottom message-row
+  probe, the M11 Phase A probe, and `git diff --check`.
 - The release workflow rebuilds and packages macOS arm64, macOS x86_64,
   Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
   `v3.0.9` release commit.
