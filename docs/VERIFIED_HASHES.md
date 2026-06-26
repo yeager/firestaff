@@ -196,3 +196,15 @@ SHA256 checksums for known-good original game data files.
 - `nexus/VEXIRK.MNS` (51,640 bytes): `e3251f9c4658020cddc0713f129e6bb93ddbcfae4c4c5f761e46eb948a084450`
 - `nexus/WARNING.BIN` (101,256 bytes): `8783fa9defda0a358d0474da56480d476b5511c8ca6d3eb61fe097c5697d44ab`
 - `nexus/WORM.MNS` (55,832 bytes): `fd8170349f230b470689d6e2ac578a59a8150c06b69c483712a930232b1b1e7a`
+
+## X68000 DM1 Real Media Receipt (2026-06-26)
+
+Public DMFiles DM1 X68000 v3.0 Japanese HDM (DMWeb X68000 edition page,
+"HDM original image that cannot boot without copy-protection sectors").
+The hash anchors the X68000 real-media receipt + cross-module FTL-handoff
+gates in `probes/x68k/`. The HDM is the documented 2DHD geometry
+(2 sides * 77 tracks * 8 sectors * 1024 bytes = 1,261,568 bytes) and
+starts with the Hudson Soft boot block (`60 1c 48 75 64 73 6f 6e ...`)
+rather than the FTL 0x6160 big-endian magic.
+
+- `dm1-x68000-3.0-jp/DungeonMasterX68000version30Japanese.hdm` (1,261,568 bytes): `0831d170cb8f6c1c7b21db91cae22e6950f58abb8f81cee2293e55e4ae84a2fa`

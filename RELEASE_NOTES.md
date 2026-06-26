@@ -193,7 +193,8 @@ claiming new finished-game parity.
   overlay fallback boundaries, and pit/stairs/teleporter/field asset
   routing.
 - **Source-media and decoder coverage advanced**: PC-98 and X68000 HDM
-  media classifiers, FTL `HUNK_CODE` plus corrected `HUNK_DATA` zero-run
+  media classifiers, X68000 HDM real-media receipt + cross-module
+  FTL-handoff gates, FTL `HUNK_CODE` plus corrected `HUNK_DATA` zero-run
   decoding, and CSB `HCSB.HTC` Hint Oracle scanning all have bounded
   evidence without vendoring original game data.
 - **Cross-game runtime gates widened**: DM2 overlay/HUD asset gates,

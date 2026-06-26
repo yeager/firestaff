@@ -12605,6 +12605,62 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_x68k_ftl_handoff
     )
 
+    # -- X68000 HDM real-media receipt gate (skip-safe probe) --
+    # Receipt gate for the DM1 / CSB X68000 HDM import boundary
+    # (docs/FIRESTAFF_GAP_LIST.md "DM1 X68000 HDM/floppy media
+    # import"). Reads the public DMFiles DM1 X68000 v3.0 HDM
+    # (DMWeb X68000 edition page) when present, classifies it
+    # via firestaff_x68k_media_classify, and verifies the
+    # DMWeb-documented receipt surface: full 2DHD geometry,
+    # MEDIA_FULL_DISK class, no FTL magic at offset 0, no
+    # HPR-0007 sentinel at the DMWeb-documented Track 1 Side 1
+    # Sector 9 offset (public release lacks the protection
+    # sector), MFM-fill sector-9 region. Skip-safe: hosts
+    # without a known HDM exit 0 with SKIP. Does not vendor
+    # any game data; reads operator-supplied HDM only.
+    add_executable(firestaff_x68k_media_receipt_real_corpus_probe
+        probes/x68k/firestaff_x68k_media_receipt_real_corpus_probe.c
+        src/shared/firestaff_x68k_media_classify.c
+    )
+    target_include_directories(firestaff_x68k_media_receipt_real_corpus_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_x68k_media_receipt_real_corpus_probe PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_x68k_media_receipt_real_corpus
+        COMMAND firestaff_x68k_media_receipt_real_corpus_probe
+    )
+    set_tests_properties(firestaff_x68k_media_receipt_real_corpus PROPERTIES LABELS "x68k;real_corpus;skip_safe")
+
+    # -- X68000 HDM <-> FTL handoff real-corpus receipt gate --
+    # Cross-module receipt for the X68000 HDM <-> FTL handoff
+    # declared in include/firestaff_x68k_media_classify.h.
+    # Reads the real DMFiles DM1 X68000 v3.0 HDM, scans for
+    # embedded FTL containers (greatstone d_ftl.html common-
+    # header magic 0x6160 BE), parses them via
+    # firestaff_ftl_container, and verifies the FTLHandoffFits
+    # verdict accepts the FTL-declared BSS area_1 memory size
+    # against the on-disk HDM media class. Skip-safe: hosts
+    # without a known HDM exit 0 with SKIP.
+    add_executable(firestaff_x68k_ftl_handoff_real_corpus_probe
+        probes/x68k/firestaff_x68k_ftl_handoff_real_corpus_probe.c
+        src/shared/firestaff_x68k_media_classify.c
+        src/shared/firestaff_ftl_container.c
+    )
+    target_include_directories(firestaff_x68k_ftl_handoff_real_corpus_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_x68k_ftl_handoff_real_corpus_probe PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_x68k_ftl_handoff_real_corpus
+        COMMAND firestaff_x68k_ftl_handoff_real_corpus_probe
+    )
+    set_tests_properties(firestaff_x68k_ftl_handoff_real_corpus PROPERTIES LABELS "x68k;real_corpus;skip_safe;ftl")
+
     # -- FTL container + HUNK_CODE 0x5223 decoder --
     # Read-only decoder for the FTL container CODE hunk compression:
     # 0x5223 signature, 1920-word table, and nibble-coded stream.
