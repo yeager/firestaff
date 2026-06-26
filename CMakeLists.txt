@@ -1947,6 +1947,80 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_real_asset_launch_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 PC real-asset launch probe (PC 3.4 English GRAPHICS.DAT +
+# DUNGEON.DAT pair). This is the canonical PC CSB real-data gate
+# that proves csb_v1_boot_scan_assets() recognises the PC CSB
+# graphics MD5 (61fbfd56887c94adc26888a9491c6611), hands the
+# verified pair off to the CSB V1 runtime, owns the dungeon
+# singleton, and runs one source-locked tick. Skip-safe on hosts
+# without user-supplied game data (exits 0 with SKIP).
+#
+# Source-lock boundary:
+#   - ReDMCSB ENTRANCE.C F0806 lines 409-441 (CSB entrance).
+#   - ReDMCSB LOADSAVE.C F0435 lines 1936-1944 (new-game map 0).
+#   - ReDMCSB DUNGEON.C F0237 (dungeon load entry).
+add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
+    probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c
+    src/csb/csb_v1_runtime_pc34_compat.c
+    src/csb/csb_v1_boot.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_pc_real_asset_launch_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_pc_real_asset_launch_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_pc_real_asset_launch_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
+# CSB V1 PC real-asset ornament blit probe (pass for
+# docs/FIRESTAFF_GAP_LIST.md C5 "live real-asset ornament blits,
+# broader viewport/HUD captures, and pixel parity evidence"). The
+# probe parses the DMCSB1 BE (sig 0x8001) GRAPHICS.DAT header from
+# the verified PC CSB pair, finds a real ornament bitmap whose
+# inline BE w/h header matches the source-locked F0108 floor-band
+# fingerprint, drives the source-locked CSB V1 D1C ornament math
+# (csb_v1_viewport_d1c_f0108_zone_for_coordinate_set_pc34 +
+# csb_v1_viewport_d1c_f0108_blend_c10_pc34 + F0115 decode) against
+# the real bytes, and captures the resulting 320x200 PPM to
+# /tmp/csb_pc_real_ornament_capture.ppm with a SHA256 sidecar so
+# the run is ctest-stable. Skip-safe on hosts without user-supplied
+# PC CSB game data (exits 0 with SKIP).
+#
+# Source-lock boundary:
+#   - ReDMCSB DUNVIEW.C F0108:3940-4011 (floor ornament ordinal
+#     gate, MASK 0x8000 footprint recursion, C10 blit transparency,
+#     C1500 + CoordinateSet * 11 + ViewFloor zone math).
+#   - ReDMCSB DUNVIEW.C F0115:4547-4581, 4923, 5180-5188,
+#     5211-5214, 5458-5570, 5668-5671 (D1C thing-pass cell order).
+#   - ReDMCSB DEFS.H:2088 (C10_COLOR_FLESH), 2596-2611 (view
+#     squares), 2668-2677 (cell orders), 4045-4046 (C705/C706),
+#     4223 (C1500_ZONE_FLOOR_ORNAMENT).
+#   - dmweb Data Files page: PC CSB GRAPHICS.DAT = DMCSB1 BE.
+add_executable(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
+    probes/csb/firestaff_csb_v1_pc_real_asset_ornament_blit_probe.c
+    src/csb/csb_v1_runtime_pc34_compat.c
+    src/csb/csb_v1_boot.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/csb/csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat.c
+    src/csb/csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Champion-stat determinism probe (Tier 4 #17 polish).
 # Headless: no game data, no SDL rendering required. Verifies the
 # source-locked champion-stat helpers (F0306 stamina adjustment +
@@ -12842,6 +12916,47 @@ if(BUILD_TESTING)
         # it manually with:
         #   ./build/firestaff_csb_v1_real_asset_launch_probe \
         #       <atari_st_dir> <amiga_dir>
+    endif()
+
+    # ── CSB V1 PC real-asset launch probe ctest entry ─────────────
+    # Tier 2 / Skip-safe: hosts without user-supplied PC CSB data
+    # (e.g. ~/.firestaff/data/csb/GRAPHICS.DAT + DUNGEON.DAT) exit
+    # 0 with a SKIP message; hosts that DO have it run the boot
+    # handoff + one source-locked tick + cleanup. The probe is the
+    # canonical evidence path for the TODO.md "Runtime handoff"
+    # item and the docs/FIRESTAFF_GAP_LIST.md Tier 1 row.
+    if(TARGET firestaff_csb_v1_pc_real_asset_launch_probe)
+        add_test(
+            NAME csb_v1_pc_real_asset_launch
+            COMMAND firestaff_csb_v1_pc_real_asset_launch_probe
+        )
+        set_tests_properties(csb_v1_pc_real_asset_launch PROPERTIES
+            LABELS "tier1;csb;real_data;skip_safe;launch;boot_handoff"
+            TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 PC real-asset ornament blit probe ctest entry ──────
+    # Tier 1 / Skip-safe: hosts without user-supplied PC CSB data
+    # exit 0 with a SKIP message; hosts that DO have it parse the
+    # DMCSB1 BE GRAPHICS.DAT header, find a real ornament bitmap,
+    # drive the source-locked F0108 zone + C10 transparency +
+    # F0115 cell-order math against real bytes, and write a
+    # deterministic 320x200 PPM + SHA256 sidecar to /tmp. The
+    # probe is the canonical evidence path for the
+    # docs/FIRESTAFF_GAP_LIST.md "live real-asset ornament blits,
+    # broader viewport/HUD captures, and pixel parity evidence"
+    # gap and the TODO.md "richer CSB-specific viewport/HUD
+    # evidence" follow-up.
+    if(TARGET firestaff_csb_v1_pc_real_asset_ornament_blit_probe)
+        add_test(
+            NAME csb_v1_pc_real_asset_ornament_blit
+            COMMAND firestaff_csb_v1_pc_real_asset_ornament_blit_probe
+        )
+        set_tests_properties(csb_v1_pc_real_asset_ornament_blit PROPERTIES
+            LABELS "tier1;csb;real_data;skip_safe;viewport;ornament;f0108;f0115"
+            TIMEOUT 120
+        )
     endif()
 
     # ── Nexus V2 Phase 4 Lighting smoke test ──────────────────────
