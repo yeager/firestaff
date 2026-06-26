@@ -1998,6 +1998,41 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 CSBgraphics.dat index classifier + real-asset scan probe.
+# Bounded CSBWin custom graphics override classifier
+# (csbgraphics.dat header/index parser, no LZW/payload decode)
+# plus a skip-safe real-asset scan/cache probe keyed off the same
+# asset_find_by_md5_list pattern as the HCSB.HTC scanner. The
+# known-MD5 list is intentionally empty by default — CSBgraphics.dat
+# is a CSBGraffer / CSBWin Viewport Compiler product, not an
+# original CSB asset. The probe SKIPs cleanly on hosts without a
+# user-staged CSBgraphics.dat; the unit test exercises the parser
+# with synthetic fixtures so the contract is locked independent of
+# real assets.
+#
+# Source-lock:
+#   - CSBWin/Graphics.cpp:1838 OpenCSBgraphicsFile (file path)
+#   - CSBWin/Graphics.cpp:1918 ReadGraphicsIndex (count + size tables,
+#     0x8001 little-endian sentinel)
+#   - CSBWin/Graphics.cpp:1643 LocateNthGraphic (payload offset)
+#   - CSBWin/data.cpp:1936 Signature (file MD5 split as uint32 words)
+#   - ReDMCSB F0200_DMMISC_ReadCompressedGraphic
+add_executable(firestaff_csb_v1_csbgraphics_dat_real_scan_probe
+    probes/csb/firestaff_csb_v1_csbgraphics_dat_real_scan_probe.c
+    src/csb/csb_v1_csbgraphics_dat_classify.c
+    src/csb/csb_v1_csbgraphics_dat_real_scan.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_csbgraphics_dat_real_scan_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_csbgraphics_dat_real_scan_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_csbgraphics_dat_real_scan_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Hint Oracle UI/runtime binding probe
 # Real-asset HCSB.HTC → Firestaff-facing oracle/hint binding
 # surface. The probe exercises the diagnostic/oracle report,
@@ -12182,6 +12217,35 @@ if(BUILD_TESTING)
         COMMAND test_csb_hint_oracle_htc
     )
 
+    # CSB V1 CSBgraphics.dat index classifier — data-free contract
+    # tests for the CSBWin "CSBgraphics.dat" header/index parser.
+    # Synthetic fixtures cover the big-endian and 0x8001 little-endian
+    # marker layouts, count + parallel compressed/decompressed size
+    # tables, payload-offset derivation, max-entry tracking, and
+    # bounds rejection (too-small input, empty count, oversized
+    # count, total_compressed > payload_bytes_avail, truncated
+    # tables, truncated LE-marker input). No real CSBWin asset
+    # is loaded; the matching skip-safe real-asset probe lives
+    # next to it.
+    add_executable(test_csb_v1_csbgraphics_dat_classify
+        tests/test_csb_v1_csbgraphics_dat_classify.c
+        src/csb/csb_v1_csbgraphics_dat_classify.c
+    )
+    target_include_directories(test_csb_v1_csbgraphics_dat_classify PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbgraphics_dat_classify PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbgraphics_dat_classify_unit
+        COMMAND test_csb_v1_csbgraphics_dat_classify
+    )
+    set_tests_properties(csb_v1_csbgraphics_dat_classify_unit PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;data_free"
+    )
+
     # CSB Hint Oracle UI/runtime binding surface.
     # Data-free contract tests for the report / hint / resolve
     # helpers built on top of csb_hint_oracle_htc and
@@ -12745,6 +12809,25 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_hint_oracle_ui_runtime_binding PROPERTIES
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 CSBgraphics.dat real-asset scan probe ctest entry ──
+    # Hash-based discovery of a CSBWin-produced "CSBgraphics.dat" custom
+    # graphics override file in the user's data tree, virtual-path
+    # materialization into a local asset cache, and classifier
+    # round-trip on the discovered file. Skip-safe: hosts without a
+    # known CSBgraphics.dat exit 0 with a SKIP message — by default
+    # the known-hash list is empty (CSBgraphics.dat is a CSBGraffer /
+    # CSBwin Viewport Compiler product, not an original CSB asset).
+    if(TARGET firestaff_csb_v1_csbgraphics_dat_real_scan_probe)
+        add_test(
+            NAME csb_v1_csbgraphics_dat_real_scan
+            COMMAND firestaff_csb_v1_csbgraphics_dat_real_scan_probe
+        )
+        set_tests_properties(csb_v1_csbgraphics_dat_real_scan PROPERTIES
+            LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
             TIMEOUT 120
         )
     endif()
