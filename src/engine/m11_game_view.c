@@ -10722,6 +10722,17 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                 cell.summary.items = cell.floorItemCount;
             }
         }
+        if (cell.elementType != DUNGEON_ELEMENT_WALL) {
+            /* ReDMCSB: DUNGEON.C F0160/F0161 stores SquareFirstThings as a
+             * compact list indexed only by squares whose thing-list flag is
+             * set.  The source-locked floor-item path above uses
+             * F0511_DUNGEON_GetSquareFirstThing_Compat for non-wall squares,
+             * but the older summary helper still has a dense fallback for
+             * synthetic probes and debug labels.  Do not let that stale
+             * summary drive side-pane fallback object marks on Hall floor
+             * cells that have no flagged source chain. */
+            cell.summary.items = cell.floorItemCount;
+        }
     }
 
     /* Extract door ornament ordinal */
@@ -20223,6 +20234,27 @@ int M11_GameView_CountCellExplosions(
     M11_SquareThingSummary summary;
     m11_summarize_square_things(world, mapIndex, mapX, mapY, &summary);
     return summary.explosions;
+}
+
+int M11_GameView_ProbeViewportFloorItemCounts(const M11_GameViewState* state,
+                                              int relForward,
+                                              int relSide,
+                                              int* outMapX,
+                                              int* outMapY,
+                                              int* outElementType,
+                                              int* outFloorItemCount,
+                                              int* outSummaryItemCount) {
+    M11_ViewportCell cell;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    if (outMapX) *outMapX = cell.mapX;
+    if (outMapY) *outMapY = cell.mapY;
+    if (outElementType) *outElementType = cell.elementType;
+    if (outFloorItemCount) *outFloorItemCount = cell.floorItemCount;
+    if (outSummaryItemCount) *outSummaryItemCount = cell.summary.items;
+    return 1;
 }
 
 int M11_GameView_GetProjectileSourceScaleUnits(int depthIndex,
