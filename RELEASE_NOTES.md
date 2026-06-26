@@ -30,6 +30,10 @@ Nexus, or Theron's Quest.
   synthetic M11 combat/movement narration such as `SCREAMER REACHES THE
   PARTY!` stays out of DM1's bottom C015 text surface unless the debug HUD
   is active.
+- **Hall of Champions has no runtime creature AI**: M11 now exits the
+  creature tick on DM1 map 0 before scanning `SquareFirstThings`, preventing
+  the old dense-index route from animating a false HoC Screamer from compact
+  data.
 - **Runtime evidence widened**: new real-DM1-data probes cover HoC
   inscription readability and HoC floor false-item prevention; the latter
   found 596 old dense-index false-positive floor samples and proves they now
@@ -49,6 +53,9 @@ Nexus, or Theron's Quest.
   font/source-lock checks, and `git diff --check`.
 - Post-release HoC text cleanup verification covered the bottom message-row
   probe, the M11 Phase A probe, and `git diff --check`.
+- Post-release HoC no-creature verification covered a real-DM1-data probe
+  proving zero compact GROUP chains on map 0 while documenting the old
+  dense-index false positives that previously fed creature AI.
 - The release workflow rebuilds and packages macOS arm64, macOS x86_64,
   Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
   `v3.0.9` release commit.
