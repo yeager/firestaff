@@ -211,7 +211,7 @@ dmweb CSB Game Page, and DMWeb's CSB Atari ST edition page.
 |---|---|
 | Atari ST hidden executable-code items (skip table) | FIXED — `csb_hidden_code_skip_table_unit` + `csb_v1_graphics_hidden_item_skip_pc34` PASS 2/2 |
 | Amiga 558-562 items (skip table) | FIXED — same skip-table/loader gates cover Amiga 21/676/686 and 558-562 |
-| CSBWin custom resource handling (csbgraphics.dat + dmsave + csbgame) | OPEN-LARGE |
+| CSBWin custom resource handling (csbgraphics.dat + dmsave + csbgame) | PARTIAL — csbgraphics.dat side: 2026-06-26 bounded index classifier landed (`csb_v1_csbgraphics_dat_classify` + `csb_v1_csbgraphics_dat_real_scan` + `firestaff_csb_v1_csbgraphics_dat_real_scan_probe` + `test_csb_v1_csbgraphics_dat_classify`). CTest `csb_v1_csbgraphics_dat_classify_unit` PASS 11/11 (data-free synthetic fixtures, big-endian + 0x8001 little-endian marker round-trip, bounds rejection, max-tracking, source-evidence citation). CTest `csb_v1_csbgraphics_dat_real_scan` PASS (skip-safe on the empty default known-hash list). dmsave/csbgame side: 2026-06-26 `csb_v1_csbwin_save_scanner` (sibling branch `gapbug_20260626_custom_dungeon_csbwin_import_evidence`) covers the dmsave/csbgame discovery + classification half. Remaining work: actual CSBgraphics.dat LZW payload decoder, M11 viewport override hook, real user-staged CSBgraphics.dat MD5 to populate the default known-hash list, and end-to-end importer wiring that feeds both halves into `csb_v1_import_csb_save_buffer`. |
 
 ### C4. CSB V2
 
