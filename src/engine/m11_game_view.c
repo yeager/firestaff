@@ -1815,6 +1815,27 @@ static unsigned short m11_get_flagged_square_first_thing(const struct GameWorld_
         world->dungeon, world->things, mapIndex, mapX, mapY);
 }
 
+static unsigned short m11_get_viewport_static_first_thing(const struct GameWorld_Compat* world,
+                                                          int mapIndex,
+                                                          int mapX,
+                                                          int mapY) {
+    unsigned char square = 0;
+    int elementType;
+    if (m11_get_square_byte(world, mapIndex, mapX, mapY, &square)) {
+        elementType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        if (mapIndex == 0 && elementType != DUNGEON_ELEMENT_WALL) {
+            /* ReDMCSB DUNGEON.C F0160/F0161 stores SquareFirstThings as a
+             * compact table indexed only by squares with the thing-list flag.
+             * The stock DM1 Hall of Champions has no active creatures or
+             * static projectiles/explosions in non-wall floor cells; using
+             * the older dense mapX*height+mapY route here can draw unrelated
+             * compact entries as HoC artifacts, including false fireballs. */
+            return m11_get_flagged_square_first_thing(world, mapIndex, mapX, mapY);
+        }
+    }
+    return m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+}
+
 static int m11_count_square_things(const struct GameWorld_Compat* world,
                                    int mapIndex,
                                    int mapX,
@@ -2366,7 +2387,7 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                                         int mapY,
                                         M11_SquareThingSummary* outSummary) {
     M11_SquareThingSummary summary;
-    unsigned short thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+    unsigned short thing = m11_get_viewport_static_first_thing(world, mapIndex, mapX, mapY);
 
     memset(&summary, 0, sizeof(summary));
     while (thing != THING_ENDOFLIST && thing != THING_NONE && summary.total < 32) {
@@ -10474,6 +10495,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     int mapY;
     unsigned char square = 0;
     unsigned short firstThing = THING_ENDOFLIST;
+    unsigned short viewportStaticFirstThing = THING_ENDOFLIST;
     int visibleWallCell = -1;
     M11_ViewportCell cell;
 
@@ -10592,6 +10614,10 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                                             state->world.party.mapIndex,
                                             mapX,
                                             mapY);
+    viewportStaticFirstThing = m11_get_viewport_static_first_thing(&state->world,
+                                                                   state->world.party.mapIndex,
+                                                                   mapX,
+                                                                   mapY);
     cell.valid = 1;
     cell.square = square;
     cell.elementType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
@@ -10669,10 +10695,19 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         int scanSafety = 0;
         int hiddenCandidatePayloadItems = 0;
         if (cell.elementType != DUNGEON_ELEMENT_WALL) {
-            itemFirstThing = m11_get_flagged_square_first_thing(&state->world,
-                                                                state->world.party.mapIndex,
-                                                                mapX,
-                                                                mapY);
+            if (state->world.party.mapIndex == 0) {
+                /* ReDMCSB REVIVE.C F0280 owns the Hall of Champions
+                 * candidate/mirror payload objects.  The source DM1 Hall
+                 * has no loose visible floor loot; compact map-0 object
+                 * chains are data payload, not DUNVIEW.C floor pickups.
+                 * Do not render them as floating fireball-like artifacts. */
+                itemFirstThing = THING_ENDOFLIST;
+            } else {
+                itemFirstThing = m11_get_flagged_square_first_thing(&state->world,
+                                                                    state->world.party.mapIndex,
+                                                                    mapX,
+                                                                    mapY);
+            }
         }
         if (itemFirstThing != THING_ENDOFLIST && itemFirstThing != THING_NONE) {
             unsigned short scanThing = itemFirstThing;
@@ -10979,7 +11014,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * F0142/G0210 projectile-aspect native offset. */
     if (cell.summary.projectiles > 0 && state->world.things &&
         state->world.things->projectiles) {
-        unsigned short scanThing = firstThing;
+        unsigned short scanThing = viewportStaticFirstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
             if (THING_GET_TYPE(scanThing) == THING_TYPE_PROJECTILE) {
@@ -11067,7 +11102,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     /* Extract first explosion type */
     if (cell.summary.explosions > 0 && state->world.things &&
         state->world.things->explosions) {
-        unsigned short scanThing = firstThing;
+        unsigned short scanThing = viewportStaticFirstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
             if (THING_GET_TYPE(scanThing) == THING_TYPE_EXPLOSION) {
@@ -20264,6 +20299,31 @@ int M11_GameView_ProbeViewportFloorItemCounts(const M11_GameViewState* state,
     if (outElementType) *outElementType = cell.elementType;
     if (outFloorItemCount) *outFloorItemCount = cell.floorItemCount;
     if (outSummaryItemCount) *outSummaryItemCount = cell.summary.items;
+    return 1;
+}
+
+int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
+                                             int relForward,
+                                             int relSide,
+                                             int* outMapX,
+                                             int* outMapY,
+                                             int* outElementType,
+                                             int* outProjectileCount,
+                                             int* outExplosionCount,
+                                             int* outFirstProjectileGfx,
+                                             int* outFirstExplosionType) {
+    M11_ViewportCell cell;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    if (outMapX) *outMapX = cell.mapX;
+    if (outMapY) *outMapY = cell.mapY;
+    if (outElementType) *outElementType = cell.elementType;
+    if (outProjectileCount) *outProjectileCount = cell.summary.projectiles;
+    if (outExplosionCount) *outExplosionCount = cell.summary.explosions;
+    if (outFirstProjectileGfx) *outFirstProjectileGfx = cell.firstProjectileGfxIndex;
+    if (outFirstExplosionType) *outFirstExplosionType = cell.firstExplosionType;
     return 1;
 }
 

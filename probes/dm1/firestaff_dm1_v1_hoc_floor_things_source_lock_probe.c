@@ -166,7 +166,7 @@ int main(int argc, char** argv)
     int ok = 1;
     int flaggedCount = 0;
     int matchedExpected = 0;
-    int totalFloorObjects = 0;
+    int totalPayloadObjects = 0;
     int floorContainers = 0;
     int floorProjectiles = 0;
     int floorExplosions = 0;
@@ -247,7 +247,7 @@ int main(int argc, char** argv)
                             itemChain[itemCount] = thing;
                         }
                         ++itemCount;
-                        ++totalFloorObjects;
+                        ++totalPayloadObjects;
                         if (type == THING_TYPE_CONTAINER) ++floorContainers;
                         if (type == THING_TYPE_PROJECTILE) ++floorProjectiles;
                         if (type == THING_TYPE_EXPLOSION) ++floorExplosions;
@@ -277,8 +277,8 @@ int main(int argc, char** argv)
             matchedExpected, (unsigned long)(sizeof(s_expectedFloorChains) / sizeof(s_expectedFloorChains[0])));
         ok = 0;
     }
-    if (totalFloorObjects != 8) {
-        fprintf(stderr, "FAIL Hall floor visible object count got=%d want=8\n", totalFloorObjects);
+    if (totalPayloadObjects != 8) {
+        fprintf(stderr, "FAIL Hall source payload object count got=%d want=8\n", totalPayloadObjects);
         ok = 0;
     }
     if (floorContainers != 0 || floorProjectiles != 0 || floorExplosions != 0) {
@@ -297,6 +297,6 @@ cleanup:
         return 1;
     }
 
-    printf("PASS Hall of Champions floor things: 70 compact lists, 7 expected floor chains, 8 visible objects, no containers/projectiles/explosions\n");
+    printf("PASS Hall of Champions source payload things: 70 compact lists, 7 expected payload chains, 8 payload objects, no containers/projectiles/explosions\n");
     return 0;
 }

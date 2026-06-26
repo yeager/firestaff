@@ -2,14 +2,15 @@
  * DM1 V1 Hall of Champions floor runtime false-item guard.
  *
  * The data-only HoC floor gate proves the compact SquareFirstThings payload.
- * This runtime gate proves M11's viewport summary does not still draw fallback
- * objects from the old dense mapX*height+mapY interpretation.
+ * This runtime gate proves M11's viewport summary does not draw either old
+ * dense mapX*height+mapY false positives or source HoC candidate/mirror
+ * payload objects as loose floor loot.
  *
  * Source-locked to ReDMCSB:
  *   DUNGEON.C F0160/F0161: SquareFirstThings is compact and indexed only by
  *     squares with MASK0x0010_THING_LIST_PRESENT.
- *   DUNVIEW.C F0115: object drawing is driven by the source cell's real thing
- *     chain, not by a dense square index.
+ *   REVIVE.C F0280: Hall mirror/candidate payload objects are consumed by
+ *     the champion materialization path, not drawn as ordinary floor loot.
  */
 
 #include "asset_status_m12.h"
@@ -147,9 +148,9 @@ int main(int argc, char** argv) {
     M11_GameViewState state;
     const struct DungeonMapDesc_Compat* map;
     int sampled = 0;
-    int trueItemCells = 0;
+    int sourcePayloadSamples = 0;
     int denseFalsePositiveCells = 0;
-    int correctedFalsePositiveSamples = 0;
+    int suppressedPayloadSamples = 0;
     int mismatches = 0;
     int px;
     int py;
@@ -222,17 +223,16 @@ int main(int argc, char** argv) {
                         }
                         ++sampled;
                         if (compactItems > 0) {
-                            ++trueItemCells;
+                            ++sourcePayloadSamples;
                         }
                         if (denseItems > 0 && compactItems == 0) {
                             ++denseFalsePositiveCells;
-                            if (floorItems == 0 && summaryItems == 0) {
-                                ++correctedFalsePositiveSamples;
-                            }
                         }
-                        if (floorItems != compactItems ||
-                            summaryItems != floorItems) {
-                            printf("MISMATCH party=(%d,%d,%d) rel=(%d,%d) cell=(%d,%d) dense=%d compact=%d floor=%d summary=%d\n",
+                        if (compactItems > 0 && floorItems == 0 && summaryItems == 0) {
+                            ++suppressedPayloadSamples;
+                        }
+                        if (floorItems != 0 || summaryItems != 0) {
+                            printf("LEAK party=(%d,%d,%d) rel=(%d,%d) cell=(%d,%d) dense=%d sourcePayload=%d floor=%d summary=%d\n",
                                    px, py, dir, relForward, relSide,
                                    mapX, mapY, denseItems, compactItems,
                                    floorItems, summaryItems);
@@ -245,15 +245,16 @@ int main(int argc, char** argv) {
     }
 
     CHECK(sampled > 0, "sampled open HoC viewport cells count=%d", sampled);
-    CHECK(trueItemCells > 0, "sampled real compact HoC floor item cells count=%d",
-          trueItemCells);
+    CHECK(sourcePayloadSamples > 0,
+          "sampled source HoC payload item cells count=%d",
+          sourcePayloadSamples);
     CHECK(denseFalsePositiveCells > 0,
           "found dense-index false-positive floor cells count=%d",
           denseFalsePositiveCells);
-    CHECK(correctedFalsePositiveSamples == denseFalsePositiveCells,
-          "corrected dense false-positive samples %d/%d",
-          correctedFalsePositiveSamples, denseFalsePositiveCells);
-    CHECK(mismatches == 0, "viewport floor summary matches compact floor chains mismatches=%d",
+    CHECK(suppressedPayloadSamples == sourcePayloadSamples,
+          "suppressed source payload item samples %d/%d",
+          suppressedPayloadSamples, sourcePayloadSamples);
+    CHECK(mismatches == 0, "viewport HoC floor item leaks=%d",
           mismatches);
 
     M11_GameView_Shutdown(&state);
