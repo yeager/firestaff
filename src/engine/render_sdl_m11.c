@@ -851,6 +851,47 @@ static void m11_framebuffer_to_rgba_special(const unsigned char* src,
     }
 }
 
+static void m11_framebuffer_to_rgba_special_resampled(const unsigned char* src,
+                                                      int logicalWidth,
+                                                      int logicalHeight,
+                                                      int targetWidth,
+                                                      int targetHeight,
+                                                      int specialPalette) {
+    unsigned char* dst = g_state.presentBuffer;
+    int y;
+    if (!dst || !src ||
+        logicalWidth <= 0 || logicalHeight <= 0 ||
+        targetWidth <= 0 || targetHeight <= 0) {
+        return;
+    }
+    for (y = 0; y < targetHeight; ++y) {
+        int x;
+        int srcY = (y * logicalHeight) / targetHeight;
+        if (srcY >= logicalHeight) {
+            srcY = logicalHeight - 1;
+        }
+        for (x = 0; x < targetWidth; ++x) {
+            int srcX = (x * logicalWidth) / targetWidth;
+            unsigned char idx;
+            const unsigned char* rgb;
+            unsigned char* px;
+            if (srcX >= logicalWidth) {
+                srcX = logicalWidth - 1;
+            }
+            idx = src[srcY * logicalWidth + srcX] & M11_FB_INDEX_MASK;
+            rgb = F9011_VGA_GetSpecialColorRgb_Compat(idx, (unsigned int)specialPalette);
+            if (!rgb) {
+                rgb = G9010_auc_VgaPaletteAll_Compat[g_state.paletteLevel][idx];
+            }
+            px = dst + ((y * targetWidth + x) * 4);
+            px[0] = rgb[0];
+            px[1] = rgb[1];
+            px[2] = rgb[2];
+            px[3] = 0xFF;
+        }
+    }
+}
+
 /* ---------------- Public API ---------------- */
 
 int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
@@ -1485,6 +1526,9 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
     int destY = 0;
     int destW = 0;
     int destH = 0;
+    int uploadW;
+    int uploadH;
+    int cpuNearestPresent = 0;
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     SDL_FRect sourceRect;
     SDL_FRect destRect;
@@ -1501,27 +1545,55 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
     if (specialPalette < 0 || specialPalette >= VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT) {
         return M11_RENDER_ERR_INVALID_ARG;
     }
-    if (m11_recreate_texture_if_needed(logicalWidth, logicalHeight) != M11_RENDER_OK) {
-        return M11_RENDER_ERR_TEXTURE;
-    }
     g_state.contentW = logicalWidth;
     g_state.contentH = logicalHeight;
-    g_state.presentedW = logicalWidth;
-    g_state.presentedH = logicalHeight;
-    m11_framebuffer_to_rgba_special(framebuffer, logicalWidth, logicalHeight, specialPalette);
     m11_compute_present_rect(&destX, &destY, &destW, &destH);
+    uploadW = logicalWidth;
+    uploadH = logicalHeight;
+    /* ReDMCSB TITLE.C F0437 and SWSH.C F2255 drive their boot animations by
+     * changing VGA palettes around fixed 320x200 indexed pixels (TITLE.C:
+     * 312-367; SWSH.C:281-307).  Firestaff's special-palette path is the
+     * modern presentation of those hardware palette switches, so it must use
+     * the same CPU-nearest V1 scaling as M11_Render_PresentIndexed.  Otherwise
+     * the DM title/intro animation can look like it has the wrong palette on
+     * SDL3/Metal/HiDPI paths even though the source palette table is correct. */
+    if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
+        destW > 0 && destH > 0 &&
+        (destW != logicalWidth || destH != logicalHeight)) {
+        uploadW = destW;
+        uploadH = destH;
+        cpuNearestPresent = 1;
+    }
+    if (m11_recreate_texture_if_needed(uploadW, uploadH) != M11_RENDER_OK) {
+        return M11_RENDER_ERR_TEXTURE;
+    }
+    g_state.presentedW = uploadW;
+    g_state.presentedH = uploadH;
+    if (cpuNearestPresent) {
+        m11_framebuffer_to_rgba_special_resampled(framebuffer,
+                                                  logicalWidth,
+                                                  logicalHeight,
+                                                  uploadW,
+                                                  uploadH,
+                                                  specialPalette);
+    } else {
+        m11_framebuffer_to_rgba_special(framebuffer,
+                                        logicalWidth,
+                                        logicalHeight,
+                                        specialPalette);
+    }
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     sourceRect.x = 0.0f;
     sourceRect.y = 0.0f;
-    sourceRect.w = (float)logicalWidth;
-    sourceRect.h = (float)logicalHeight;
+    sourceRect.w = (float)uploadW;
+    sourceRect.h = (float)uploadH;
     {
         SDL_Rect updateRect;
         updateRect.x = 0;
         updateRect.y = 0;
-        updateRect.w = logicalWidth;
-        updateRect.h = logicalHeight;
-        if (!SDL_UpdateTexture(g_state.texture, &updateRect, g_state.presentBuffer, logicalWidth * 4)) {
+        updateRect.w = uploadW;
+        updateRect.h = uploadH;
+        if (!SDL_UpdateTexture(g_state.texture, &updateRect, g_state.presentBuffer, uploadW * 4)) {
             return M11_RENDER_ERR_TEXTURE;
         }
     }
@@ -1532,6 +1604,10 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
     destRect.y = (float)destY;
     destRect.w = (float)destW;
     destRect.h = (float)destH;
+    if (cpuNearestPresent) {
+        destRect.w = (float)uploadW;
+        destRect.h = (float)uploadH;
+    }
     if (!SDL_RenderTexture(g_state.renderer, g_state.texture, &sourceRect, &destRect)) {
         return M11_RENDER_ERR_RENDERER;
     }
@@ -1543,9 +1619,9 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
 #else
     sourceRect.x = 0;
     sourceRect.y = 0;
-    sourceRect.w = logicalWidth;
-    sourceRect.h = logicalHeight;
-    if (SDL_UpdateTexture(g_state.texture, &sourceRect, g_state.presentBuffer, logicalWidth * 4) != 0) {
+    sourceRect.w = uploadW;
+    sourceRect.h = uploadH;
+    if (SDL_UpdateTexture(g_state.texture, &sourceRect, g_state.presentBuffer, uploadW * 4) != 0) {
         return M11_RENDER_ERR_TEXTURE;
     }
     if (SDL_RenderClear(g_state.renderer) != 0) {
@@ -1555,6 +1631,10 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
     destRect.y = destY;
     destRect.w = destW;
     destRect.h = destH;
+    if (cpuNearestPresent) {
+        destRect.w = uploadW;
+        destRect.h = uploadH;
+    }
     if (SDL_RenderCopy(g_state.renderer, g_state.texture, &sourceRect, &destRect) != 0) {
         return M11_RENDER_ERR_RENDERER;
     }

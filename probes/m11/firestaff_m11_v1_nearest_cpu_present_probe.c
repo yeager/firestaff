@@ -8,6 +8,7 @@
  */
 
 #include "render_sdl_m11.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,6 +54,7 @@ int main(void) {
     int sx;
     int sy;
     int rc;
+    const unsigned char* expectedTitle;
 
 #if defined(_WIN32)
     _putenv_s("SDL_VIDEODRIVER", "dummy");
@@ -110,6 +112,37 @@ int main(void) {
         }
         check_true("portrait-size source pixels become solid 3x3 blocks", solid);
         check_true("adjacent source pixels remain distinct, not blended", adjacent_diff);
+    }
+
+    memset(fb, 0, M11_FB_BYTES);
+    for (y = 0; y < M11_FB_HEIGHT; ++y) {
+        for (x = 0; x < M11_FB_WIDTH; ++x) {
+            fb[y * M11_FB_WIDTH + x] = (unsigned char)(((x + y) & 1) ? 15 : 4);
+        }
+    }
+
+    /* ReDMCSB TITLE.C F0437 sets C13_DUNGEON + C14_MASTER before the DM
+     * title zoom blits (TITLE.C:364-367).  That runtime path calls
+     * M11_Render_PresentIndexedWithSpecialPalette, so it needs the same
+     * CPU-nearest scaling guard as ordinary V1 indexed presentation. */
+    rc = M11_Render_PresentIndexedWithSpecialPalette(
+        fb, M11_FB_WIDTH, M11_FB_HEIGHT, VGA_PALETTE_PC34_SPECIAL_TITLE);
+    check_true("present special palette nearest", rc == M11_RENDER_OK);
+    rgba = M11_Render_GetPresentedRGBA(&w, &h);
+    check_true("special presented width is CPU-upscaled 3x", w == 960);
+    check_true("special presented height is CPU-upscaled 3x", h == 600);
+
+    if (rgba && w == 960 && h == 600) {
+        const unsigned char* px = rgba + (((40 * 3) * w + (1 * 3)) * 4);
+        expectedTitle = F9011_VGA_GetSpecialColorRgb_Compat(
+            15, VGA_PALETTE_PC34_SPECIAL_TITLE);
+        check_true("special palette sample uses TITLE rgb, not base palette",
+                   expectedTitle &&
+                   px[0] == expectedTitle[0] &&
+                   px[1] == expectedTitle[1] &&
+                   px[2] == expectedTitle[2]);
+        check_true("special palette source pixels become solid 3x3 blocks",
+                   block_is_solid(rgba, w, 1 * 3, 40 * 3));
     }
 
     M11_Render_Shutdown();
