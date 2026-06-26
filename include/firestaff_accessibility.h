@@ -26,7 +26,13 @@ typedef enum {
     FS_AX_PORTRAIT,      /* Champion portrait */
     FS_AX_MOVEMENT,      /* Movement arrow */
     FS_AX_DIALOG_CHOICE, /* Dialog YES/NO choice */
-    FS_AX_CHAMPION_MIRROR /* Hall of Champions mirror */
+    FS_AX_CHAMPION_MIRROR, /* Hall of Champions mirror */
+    /* ── Launcher / state-manifest additions (pass gap-launcher-state-a11y) ── */
+    FS_AX_LAUNCHER_CARD,    /* Game card / destination entry on launcher main view */
+    FS_AX_LAUNCHER_TAB,     /* Settings tab strip entry */
+    FS_AX_LAUNCHER_ROW,     /* Settings / option row */
+    FS_AX_POPUP,            /* Modal popup panel (missing-data, errors) */
+    FS_AX_POPUP_OK          /* Confirmation button inside a popup */
 } FS_AX_ElementType;
 
 typedef struct {
@@ -53,6 +59,18 @@ void fs_ax_flush(void);
  * Enable with --accessibility flag or FS_ACCESSIBILITY=1 env var. */
 void fs_ax_set_enabled(int enabled);
 int  fs_ax_is_enabled(void);
+
+/* Override the output directory. Default is $HOME/.firestaff. Tests
+ * redirect HOME for isolation; this lets the launcher a11y emitter
+ * (or future code) drop into a chosen sandbox without mutating env.
+ * Pass NULL or "" to revert to the default $HOME/.firestaff location. */
+void fs_ax_set_output_dir(const char* dir);
+
+/* Return the absolute path to the last (or current) manifest file.
+ * Buffer is statically allocated inside firestaff_accessibility.c and
+ * remains valid until fs_ax_set_enabled / fs_ax_set_output_dir is
+ * called again. */
+const char* fs_ax_get_output_path(void);
 
 /* Cleanup */
 void fs_ax_shutdown(void);

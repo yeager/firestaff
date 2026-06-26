@@ -315,6 +315,7 @@ endif()
 # ── M12 static library ──────────────────────────────────────────────
 set(M12_SOURCES
     src/ui/menu_startup_m12.c
+    src/ui/menu_startup_a11y_m12.c
     src/ui/menu_startup_render_modern_m12.c
     src/ui/menu_unicode_glyphs_m12.c
     src/shared/firestaff_l10n.c
@@ -3595,6 +3596,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_startup_menu_pro
     endif()
 endif()
 
+# M12 launcher screen-reader / state manifest probe (gap: "Screen reader
+# launcher state manifest"). Exercises m12_launcher_a11y_emit against the
+# public M12_StartupMenuState and asserts the JSON manifest at
+# $TMPDIR/.firestaff/accessibility.json is well-formed, contains the
+# pinned element IDs (GAME_CARD_DM1, POPUP_OK, ...), and respects the
+# includePaths privacy contract. No game data needed.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_launcher_screen_reader_manifest_probe.c")
+    add_executable(firestaff_m12_launcher_screen_reader_manifest_probe
+        probes/m12/firestaff_m12_launcher_screen_reader_manifest_probe.c)
+    target_link_libraries(firestaff_m12_launcher_screen_reader_manifest_probe PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m12_launcher_screen_reader_manifest_probe PRIVATE
+            -Wall -Wextra -O2 -Wno-format-truncation)
+    endif()
+endif()
+
 # M12 launcher extras view smoke probe
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_extras_views_smoke_probe.c")
     add_executable(firestaff_m12_extras_views_smoke_probe probes/m12/firestaff_m12_extras_views_smoke_probe.c)
@@ -4979,6 +4997,25 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_mapfile_unit
         COMMAND test_firestaff_mapfile
+    )
+
+    # ── Accessibility manifest writer unit test ────────────────────
+    # Locks the fs_ax_* JSON contract used by both M11 game-view and
+    # M12 launcher screen-reader manifests (gap: "Screen reader
+    # launcher state manifest"). Standalone: no game data needed.
+    add_executable(test_firestaff_accessibility_manifest
+        tests/test_firestaff_accessibility_manifest.c
+        src/engine/firestaff_accessibility.c
+    )
+    target_include_directories(test_firestaff_accessibility_manifest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_accessibility_manifest PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_accessibility_manifest_unit
+        COMMAND test_firestaff_accessibility_manifest
     )
 
     add_executable(test_asset_find_by_hash_iso_case_duplicate
@@ -9349,6 +9386,13 @@ if(BUILD_TESTING)
         add_test(
             NAME m12_startup_menu
             COMMAND firestaff_m12_startup_menu_probe
+        )
+    endif()
+
+    if(TARGET firestaff_m12_launcher_screen_reader_manifest_probe)
+        add_test(
+            NAME m12_launcher_screen_reader_manifest
+            COMMAND firestaff_m12_launcher_screen_reader_manifest_probe
         )
     endif()
 

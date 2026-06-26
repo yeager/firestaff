@@ -2,6 +2,7 @@
 #include "firestaff_l10n.h"
 #include "firestaff_po_loader.h"
 #include "firestaff_startup.h"
+#include "menu_startup_a11y_m12.h"
 
 #define FIRESTAFF_VERSION_STRING "v3.0.10"
 #include "firestaff_bestiary.h"
@@ -7654,6 +7655,10 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         } else {
             m12_draw_sparse_main_view(state, framebuffer, framebufferWidth, framebufferHeight);
         }
+        /* Screen-reader / automation manifest for the launcher (gap:
+         * "Screen reader launcher state manifest"). Privacy: data-dir
+         * line is suppressed by default. */
+        m12_launcher_a11y_emit(state, framebufferWidth, framebufferHeight, 0);
         return;
     }
     if (m12_use_modern_layout(framebufferWidth, framebufferHeight)) {
@@ -7682,6 +7687,9 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         /* Group 7: re-draw the extras subtitle on top of the overlay
          * so the BLACK-filled mode 1 frame does not hide it. */
         m12_draw_extras_subtitle_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
+        /* Screen-reader / automation manifest for the launcher (gap:
+         * "Screen reader launcher state manifest"). */
+        m12_launcher_a11y_emit(state, framebufferWidth, framebufferHeight, 0);
         return;
     }
     m12_draw_background(state, framebuffer, framebufferWidth, framebufferHeight);
@@ -7707,6 +7715,9 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         m12_draw_main_view(state, framebuffer, framebufferWidth, framebufferHeight);
     }
     m12_apply_graphics_overlay(state, framebuffer, framebufferWidth, framebufferHeight);
+    /* Screen-reader / automation manifest for the launcher (gap:
+     * "Screen reader launcher state manifest"). */
+    m12_launcher_a11y_emit(state, framebufferWidth, framebufferHeight, 0);
 }
 
 int M12_StartupMenu_GetRenderPaletteLevel(const M12_StartupMenuState* state) {

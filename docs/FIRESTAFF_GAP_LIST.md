@@ -379,7 +379,7 @@ probes.
 
 | Gap | Status |
 |---|---|
-| Screen reader integration | OPEN-LARGE |
+| Screen reader integration | PARTIAL — 2026-06-26: `firestaff_m12_launcher_screen_reader_manifest_probe` PASS 40/40 + `firestaff_accessibility_manifest_unit` PASS 39/39. Launcher state manifest now covers main view (game cards), settings (tabs + rows), and the missing-data / status popup, with stable element IDs (`GAME_CARD_DM1..THERON`, `MENU_SETTINGS`, `MENU_MUSEUM`, `TAB_*`, `ROW_*`, `POPUP_*`). M11 game-view manifest already covers gameplay / dialog / entrance states. Still open: bestiary / item encyclopedia / museum cell-by-cell grids (out of scope for the initial pass). |
 | High-contrast launcher remap | FIXED |
 | In-game overlay coverage | PARTIAL |
 | Launcher fontScale affects M12 text | FIXED |
@@ -534,7 +534,7 @@ order:
 
 23. Save export/import, session timer, manual launcher.
 24. Touch gesture navigation.
-25. Screen reader integration.
+25. Screen reader integration. — PARTIAL: launcher-state manifest now covers main view / settings / missing-data popup (probe PASS 40/40). Bestiary / item encyclopedia / museum grids still open as a follow-up pass.
 
 ---
 

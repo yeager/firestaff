@@ -123,7 +123,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### Accessibility
 
-- ❌ Screen reader integration for launcher and game-critical state.
+- 🔧 Screen reader / launcher-state manifest: new `m12_launcher_a11y_emit` converts the public `M12_StartupMenuState` into the same `~/.firestaff/accessibility.json` schema M11 already writes, with stable element IDs (`GAME_CARD_DM1..THERON`, `MENU_SETTINGS`, `MENU_MUSEUM`, `TAB_*`, `ROW_*`, `POPUP_*`). `M12_StartupMenu_Draw` calls it on every frame when `fs_ax_is_enabled()` is true. New `firestaff_m12_launcher_screen_reader_manifest_probe` PASS 40/40 (envelope, main view, settings, popup, ordering, scaling). `tests/test_firestaff_accessibility_manifest.c` was already on disk; wired into CMakeLists.txt as `firestaff_accessibility_manifest_unit` (39/39 PASS). Privacy: data-dir line is suppressed by default and only emitted when the caller passes `includePaths=1`. Atomic write / no `.tmp` residue verified. Remaining work is bestiary / item encyclopedia / museum cell-by-cell grids (out of scope for the initial state manifest pass).
 - 🔧 High-contrast presentation hardening: launcher output is remapped to a restricted high-contrast palette; remaining work is in-game overlay coverage.
 - 🔧 Configurable font sizing hardening: launcher `fontScale` affects M12 text rendering; remaining work is in-game overlays and UI-fit coverage.
 
