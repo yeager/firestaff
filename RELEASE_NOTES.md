@@ -1,4 +1,52 @@
 
+# Firestaff v3.0.9
+
+Firestaff v3.0.9 packages the 2026-06-26 fixes that followed the v3.0.8
+Hall of Champions release. It is a focused DM1 V1 stability release for
+the MacBook Pro feedback loop: movement input, HoC inscriptions, HoC floor
+objects, and the original TITLE/Swoosh presentation path all get tighter
+runtime gates without changing the public completion claims for CSB, DM2,
+Nexus, or Theron's Quest.
+
+## Highlights since v3.0.8
+
+- **Hall of Champions movement is responsive on macOS**: active DM1 now
+  routes W/A/S/D, arrows, Home/End, Q/E, and keypad through the engine
+  scancode remap path, then polls held movement keys at the DM1 source
+  input cadence instead of relying on OS key repeat.
+- **DM intro/title pixels stay sharp and correctly colored**: the
+  special-palette TITLE/Swoosh path now shares the CPU-nearest V1
+  presentation route used by ordinary indexed frames, preserving the
+  source-locked C12/C13/C14 palette behavior on HiDPI/Metal paths.
+- **Hall of Champions inscriptions are readable**: M11 now uses ReDMCSB's
+  synthetic inscription ornament slot and restores the clean D1C wall patch
+  before drawing M648 glyph text, so readable Hall inscriptions are no
+  longer painted directly over noisy wall stone.
+- **Hall floor false positives are blocked at runtime**: visible floor-item
+  summaries now come from compact ReDMCSB-style `SquareFirstThings` chains,
+  so stale dense-index fallback data cannot draw extra side-pane objects in
+  the Hall.
+- **Runtime evidence widened**: new real-DM1-data probes cover HoC
+  inscription readability and HoC floor false-item prevention; the latter
+  found 596 old dense-index false-positive floor samples and proves they now
+  resolve to zero renderable items.
+
+## Verification
+
+- 12 commits ship on top of `v3.0.8`, including this release-prep commit.
+- GitHub Actions was green on `68ef65e68` before release prep: M10 verify,
+  CMake build on macOS/Windows/Linux, strict warnings, asset hygiene, and
+  cross-platform determinism.
+- Focused local verification after the final HoC floor fix included the new
+  floor runtime no-false-items probe, the HoC inscription readability probe,
+  the Hall floor source-lock probe, and Phase A, all passing through CTest.
+- Earlier focused verification for this batch covered the keyboard remap and
+  held-key path, title special-palette nearest presentation, inscription
+  font/source-lock checks, and `git diff --check`.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the
+  `v3.0.9` release commit.
+
 # Firestaff v3.0.8
 
 Firestaff v3.0.8 packages the late 2026-06-25 DM1 Hall of Champions

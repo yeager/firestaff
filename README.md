@@ -97,32 +97,30 @@ timing and inventory routes.
 
 ## Latest Release
 
-**Current version:** `3.0.3`.
+**Current version:** `3.0.9`.
 
-The latest release packages the 2026-06-23 hardening batch after
-v3.0.2. It adds more source-locked DM1 Hall of Champions
-cancel/reopen portrait probes, widens DM1 V1 regression coverage, adds
-CSB and DM2 runtime gates, and tightens M12 launcher data-status
-behavior. It does not claim finished parity for CSB, DM2, Nexus, or
-Theron's Quest beyond the runtime slices now covered by tests and
-probes.
+The latest release packages the 2026-06-26 DM1 V1 Hall of Champions
+stability work after v3.0.8. It focuses on the MacBook Pro feedback loop:
+held keyboard movement, readable wall inscriptions, false floor-object
+prevention, and sharp original TITLE/Swoosh presentation. It does not claim
+finished parity for CSB, DM2, Nexus, or Theron's Quest beyond the runtime
+slices now covered by tests and probes.
 
-### v3.0.3 release highlights
+### v3.0.9 release highlights
 
-- **DM1 Hall of Champions**: additional real-asset cancel/reopen
-  portrait-rectangle gates cover row-2 C026 atlas slices and stale-pixel
-  absence after candidate-panel redraws.
-- **DM1 V1 hardening**: new focused gates cover intro/title cleanup,
-  HiDPI chest hit zones, pit transitions, door/projectile edge cases,
-  champion-panel repaint paths, food/water warnings and container weight
-  behavior.
-- **CSB and DM2 readiness**: runtime gates now cover CSB first-viewport
-  boot, save boundaries and DSA trigger bounds, plus DM2 projectile,
-  minimap and door/button edge cases.
-- **Launcher and shared parsers**: M12 data-status handling is clearer,
-  manual docs and save-manifest flows are reachable from the launcher,
-  and parser gates expanded for Nexus BPX/BPK, Greatstone rows, FTL
-  checksums, CSB HTC hints and Utility Disk AMG sounds.
+- **Hall of Champions movement**: active DM1 now routes W/A/S/D, arrows,
+  Home/End, Q/E, and keypad through the engine scancode remap path and polls
+  held movement keys at the DM1 source input cadence.
+- **Hall inscriptions and floor objects**: front-wall inscriptions use the
+  ReDMCSB synthetic inscription slot plus a clean D1C wall patch behind M648
+  glyphs, and visible floor summaries are tied to compact `SquareFirstThings`
+  chains so stale dense-index data cannot draw extra Hall objects.
+- **Original presentation**: the special-palette TITLE/Swoosh path now uses
+  CPU-nearest V1 presentation when scaling, preserving source-locked palette
+  colors and hard-edged pixels on HiDPI/Metal paths.
+- **Runtime gates**: new real-DM1-data probes cover HoC inscription
+  readability and the floor false-item class, alongside Phase A and the
+  existing Hall floor source-lock probe.
 
 ## Download
 
