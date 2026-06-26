@@ -32,6 +32,26 @@ int main(void) {
     if (!expect(m11_test_setenv("HOME", tmpTemplate) == 0, "set HOME to test directory")) return 1;
 
     M11_Input_SetDefaults();
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_W) == M11_ACTION_MOVE_FORWARD,
+                "W scancode should move forward by default")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_A) == M11_ACTION_STRAFE_LEFT,
+                "A scancode should strafe left by default")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_S) == M11_ACTION_MOVE_BACKWARD,
+                "S scancode should move back by default")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_D) == M11_ACTION_STRAFE_RIGHT,
+                "D scancode should strafe right by default")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_UP) == M11_ACTION_MOVE_FORWARD,
+                "Up scancode should move forward by default")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_DOWN) == M11_ACTION_MOVE_BACKWARD,
+                "Down scancode should move back by default")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_LEFT) == M11_ACTION_STRAFE_LEFT,
+                "Left scancode should strafe left by default")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_RIGHT) == M11_ACTION_STRAFE_RIGHT,
+                "Right scancode should strafe right by default")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_Q) == M11_ACTION_TURN_LEFT,
+                "Q scancode should turn left by default")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_E) == M11_ACTION_TURN_RIGHT,
+                "E scancode should turn right by default")) return 1;
     M11_Input_SetBinding(M11_ACTION_ATTACK, 0, SDL_SCANCODE_J);
     M11_Input_SetBinding(M11_ACTION_ATTACK, 1, SDL_SCANCODE_K);
 
