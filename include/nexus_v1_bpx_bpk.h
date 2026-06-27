@@ -29,7 +29,12 @@
 typedef enum {
     NEXUS_V1_BPX_BPK_FORMAT_UNKNOWN = 0,
     NEXUS_V1_BPX_BPK_FORMAT_SYNTHETIC_BPX0 = 1,
-    NEXUS_V1_BPX_BPK_FORMAT_VERIFIED_MENU_BPK_MARKER = 2
+    NEXUS_V1_BPX_BPK_FORMAT_VERIFIED_MENU_BPK_MARKER = 2,
+    /* Synthetic PRS3-tagged BPK stream contract (pass1082). Locks the
+     * 20-byte MENU.BPK-shaped prefix (width/height/mode tag at bytes
+     * 12..14 / 15 / 19) plus the PRS3 magic + 0x00000001 version + pixel
+     * count sub-header without claiming PRS3 decompression. */
+    NEXUS_V1_BPX_BPK_FORMAT_SYNTHETIC_PRS3 = 3
 } Nexus_V1_BpxBpkFormat;
 
 typedef enum {
@@ -47,7 +52,11 @@ typedef enum {
 
 typedef enum {
     NEXUS_V1_BPX_BPK_METHOD_STORED = 0,
-    NEXUS_V1_BPX_BPK_METHOD_COMPRESSED_UNKNOWN = 1
+    NEXUS_V1_BPX_BPK_METHOD_COMPRESSED_UNKNOWN = 1,
+    /* Synthetic PRS3 stream contract (pass1082): the entry carries a
+     * PRS3 magic + 0x00000001 version sub-header, but the actual
+     * compression payload is still intentionally unsupported. */
+    NEXUS_V1_BPX_BPK_METHOD_PRS3_UNKNOWN = 2
 } Nexus_V1_BpxBpkMethod;
 
 typedef struct {
@@ -56,6 +65,13 @@ typedef struct {
     uint32_t packed_size;
     uint32_t unpacked_size;
     uint8_t method;
+    /* PRS3 sub-header fields (synthetic PRS3 stream contract only;
+     * zero on BPX0 stored entries). */
+    uint16_t width;
+    uint8_t height;
+    uint8_t mode;
+    uint32_t pixel_count;
+    int has_prs3_magic;
 } Nexus_V1_BpxBpkEntry;
 
 typedef struct {
@@ -74,6 +90,26 @@ int nexus_v1_bpx_bpk_identify_marker(const char *path,
 int nexus_v1_bpx0_parse(const uint8_t *data,
                         size_t size,
                         Nexus_V1_BpxBpkArchive *out_archive);
+
+/* Synthetic PRS3 stream contract parser (pass1082). The byte layout is:
+ *   bytes  0..16 : entry name (zero-padded, no NUL terminator required)
+ *   bytes 16..20 : width (BE uint16) and mode tag (byte 19)
+ *   byte  20   : height (BE uint8)
+ *   byte  21   : reserved (0x00 in observed MENU.BPK prefix)
+ *   bytes 22..24 : reserved (0x00 in observed MENU.BPK prefix)
+ *   bytes 24..28 : PRS3 magic
+ *   bytes 28..32 : version (BE uint32, must be 0x00000001)
+ *   bytes 32..36 : pixel count (BE uint32, must equal width * height)
+ *   bytes 36..36+payload_size : compressed payload (unsupported)
+ *
+ * Does NOT decompress the payload. Stores width/height/mode/pixel_count
+ * on the entry so probe/UI code can show what shape it WOULD decode to
+ * once a PRS3 implementation lands. */
+int nexus_v1_bpx_prs3_parse(const uint8_t *data,
+                            size_t size,
+                            Nexus_V1_BpxBpkArchive *out_archive);
+
+#define NEXUS_V1_BPX_PRS3_HEADER_BYTES 36U
 
 const Nexus_V1_BpxBpkEntry *nexus_v1_bpx_bpk_find_entry(
     const Nexus_V1_BpxBpkArchive *archive,

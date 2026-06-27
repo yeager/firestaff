@@ -137,6 +137,11 @@ static void test_optional_local_menu_bpk(void) {
     size_t size = 0;
     Nexus_V1_BpkArchiveInfo info;
     Nexus_V1_BpkEntry entry;
+    Nexus_V1_BpkModeDistribution dist;
+    Nexus_V1_BpkEntryPrefix prefix;
+    Nexus_V1_BpkPrs3Info prs3;
+    uint32_t prs3_seen;
+    uint32_t pix_matches;
 
     if (!home || !home[0]) {
         puts("SKIP: HOME is unset; no local Nexus MENU.BPK check");
@@ -171,12 +176,120 @@ static void test_optional_local_menu_bpk(void) {
     expect(entry.offset == 0x36CU, "local MENU.BPK first PRS3 offset");
     expect(entry.has_prs3 == 1, "local MENU.BPK first PRS3 marker");
 
+    /* pass1082: byte-level boundary inspection of the real MENU.BPK.
+     * Walks the observed prefix/mode/PRS3 layout and asserts the mode
+     * distribution the reverse-engineering pass identified. */
+    expect(nexus_v1_bpk_archive_mode_distribution(data, size, &dist) == 0,
+           "local MENU.BPK mode distribution walks");
+    expect(dist.total_with_prefix == 163U,
+           "local MENU.BPK all 163 entries span the 20-byte prefix");
+    expect(dist.mode_count[NEXUS_V1_BPK_MODE_8BPP] == 14U,
+           "local MENU.BPK mode tag 6: 14 entries");
+    expect(dist.mode_count[NEXUS_V1_BPK_MODE_16BPP] == 62U,
+           "local MENU.BPK mode tag 14: 62 entries");
+    expect(dist.mode_count[NEXUS_V1_BPK_MODE_24BPP] == 39U,
+           "local MENU.BPK mode tag 22: 39 entries");
+    expect(dist.mode_count[NEXUS_V1_BPK_MODE_32BPP] == 47U,
+           "local MENU.BPK mode tag 30: 47 entries");
+    expect(dist.mode_count[NEXUS_V1_BPK_MODE_TRAILER] == 1U,
+           "local MENU.BPK mode tag 10: 1 entry (directory trailer)");
+    expect(dist.trailer_found == 1,
+           "local MENU.BPK directory trailer detected");
+    expect(dist.trailer_index == 0U,
+           "local MENU.BPK directory trailer at entry index 0");
+
+    expect(nexus_v1_bpk_archive_get_entry_prefix(data, size, 1, &prefix)
+               == 0,
+           "local MENU.BPK entry[1] prefix readable");
+    expect(prefix.prefix_complete == 1,
+           "local MENU.BPK entry[1] spans >= 20 bytes");
+    expect(prefix.width == 16 && prefix.height == 15 &&
+               prefix.mode == NEXUS_V1_BPK_MODE_16BPP,
+           "local MENU.BPK entry[1] width=16 height=15 mode=14");
+
+    expect(nexus_v1_bpk_archive_inspect_prs3(data, size, 1, &prs3) == 0,
+           "local MENU.BPK entry[1] PRS3 inspect ok");
+    expect(prs3.has_prs3 == 1, "local MENU.BPK entry[1] has PRS3 magic");
+    expect(prs3.prs3_version_matches == 1,
+           "local MENU.BPK entry[1] PRS3 version == 0x00000001");
+    expect(prs3.prs3_pixel_count == 240U,
+           "local MENU.BPK entry[1] PRS3 pixel count = 240");
+    expect(prs3.prefix_pixels == 240U,
+           "local MENU.BPK entry[1] prefix pixels = 240");
+    expect(prs3.pixel_count_matches == 1,
+           "local MENU.BPK entry[1] prefix_pixels == prs3_pixel_count");
+
+    expect(nexus_v1_bpk_archive_inspect_prs3(data, size, 0, &prs3) == 0,
+           "local MENU.BPK entry[0] PRS3 inspect ok (no PRS3)");
+    expect(prs3.has_prs3 == 0,
+           "local MENU.BPK entry[0] directory trailer has no PRS3 magic");
+
+    /* Cross-check every PRS3 entry: prefix width*height must match the
+     * PRS3+8 pixel count. This is the strongest single signal we have
+     * that the reverse-engineered 20-byte prefix layout is right. */
+    prs3_seen = 0U;
+    pix_matches = 0U;
+    for (uint32_t i = 0; i < info.entry_count_hint; ++i) {
+        if (nexus_v1_bpk_archive_inspect_prs3(data, size, i, &prs3) != 0) {
+            continue;
+        }
+        if (!prs3.has_prs3) continue;
+        ++prs3_seen;
+        if (prs3.pixel_count_matches) ++pix_matches;
+    }
+    expect(prs3_seen == 162U,
+           "local MENU.BPK inspected 162/162 PRS3-bearing entries");
+    expect(pix_matches == 162U,
+           "local MENU.BPK every PRS3 entry has width*height == pixel count");
+
     free(data);
+}
+
+static void test_prefix_prs3_rejections(void) {
+    uint8_t data[160];
+    Nexus_V1_BpkModeDistribution dist;
+    Nexus_V1_BpkEntryPrefix prefix;
+    Nexus_V1_BpkPrs3Info prs3;
+
+    make_synthetic_bpk(data, sizeof(data));
+    expect(nexus_v1_bpk_archive_get_entry_prefix(NULL, sizeof(data), 0,
+                                                 &prefix) != 0,
+           "NULL data rejected in get_entry_prefix");
+    expect(nexus_v1_bpk_archive_get_entry_prefix(data, sizeof(data), 0,
+                                                 NULL) != 0,
+           "NULL output rejected in get_entry_prefix");
+    expect(nexus_v1_bpk_archive_get_entry_prefix(data, sizeof(data),
+                                                 99U, &prefix) != 0,
+           "out-of-range index rejected in get_entry_prefix");
+
+    make_synthetic_bpk(data, sizeof(data));
+    expect(nexus_v1_bpk_archive_inspect_prs3(NULL, sizeof(data), 0,
+                                              &prs3) != 0,
+           "NULL data rejected in inspect_prs3");
+    expect(nexus_v1_bpk_archive_inspect_prs3(data, sizeof(data), 0,
+                                              NULL) != 0,
+           "NULL output rejected in inspect_prs3");
+    expect(nexus_v1_bpk_archive_inspect_prs3(data, sizeof(data),
+                                              99U, &prs3) != 0,
+           "out-of-range index rejected in inspect_prs3");
+
+    make_synthetic_bpk(data, sizeof(data));
+    expect(nexus_v1_bpk_archive_mode_distribution(NULL, sizeof(data),
+                                                  &dist) != 0,
+           "NULL data rejected in mode_distribution");
+    expect(nexus_v1_bpk_archive_mode_distribution(data, sizeof(data),
+                                                  NULL) != 0,
+           "NULL output rejected in mode_distribution");
+    data[0] = 'X';
+    expect(nexus_v1_bpk_archive_mode_distribution(data, sizeof(data),
+                                                  &dist) != 0,
+           "bad BPPK magic rejected in mode_distribution");
 }
 
 int main(void) {
     test_synthetic_parse();
     test_rejections();
+    test_prefix_prs3_rejections();
     test_optional_local_menu_bpk();
 
     if (g_failures) return 1;
