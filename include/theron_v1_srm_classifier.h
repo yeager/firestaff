@@ -91,6 +91,16 @@ typedef struct {
     int root_resolved;                             /* 1 if root was non-NULL/non-empty */
 } Theron_V1SrmManifest;
 
+typedef enum {
+    THERON_V1_SRM_PAYLOAD_PROBE_OK = 1,
+    THERON_V1_SRM_PAYLOAD_PROBE_ZLIB_UNAVAILABLE = 0,
+    THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT = -1,
+    THERON_V1_SRM_PAYLOAD_PROBE_NOT_GZIP = -2,
+    THERON_V1_SRM_PAYLOAD_PROBE_UNSUPPORTED_METHOD = -3,
+    THERON_V1_SRM_PAYLOAD_PROBE_INFLATE_FAILED = -4,
+    THERON_V1_SRM_PAYLOAD_PROBE_OUTPUT_TRUNCATED = -5
+} Theron_V1SrmPayloadProbeStatus;
+
 /* Resolve the default save-disk root: env override
  * `FIRESTAFF_THERON_SRM_DIR` first, then
  * `$HOME/.firestaff/data/theron/save`, then `./theron-save/`.
@@ -113,8 +123,27 @@ int theron_v1_srm_slot_path(const char *root,
 int theron_v1_srm_classify_root(const char *root,
                                 Theron_V1SrmManifest *out_manifest);
 
+/* Bounded gzip-payload probe for recognized .srm bytes.
+ *
+ * When Firestaff is built with zlib, this inflates a gzip-wrapped DEFLATE
+ * stream into `out_payload` up to `out_payload_capacity` bytes and records
+ * the number of bytes written in `out_payload_size`.  It is deliberately
+ * a payload receipt gate, not a Theron's Quest save decoder: it does not
+ * interpret the custom Sphenx/TQ-RTC save body or synthesize runtime state.
+ *
+ * When zlib is unavailable, the function returns
+ * THERON_V1_SRM_PAYLOAD_PROBE_ZLIB_UNAVAILABLE after the cheap gzip/method
+ * checks. */
+Theron_V1SrmPayloadProbeStatus theron_v1_srm_probe_gzip_payload(
+    const uint8_t *srm_bytes,
+    size_t srm_size,
+    uint8_t *out_payload,
+    size_t out_payload_capacity,
+    size_t *out_payload_size);
+
 /* Status-name helpers (stable string contract for receipts/manifests). */
 const char *theron_v1_srm_slot_status_name(Theron_V1SrmSlotStatus status);
+const char *theron_v1_srm_payload_probe_status_name(Theron_V1SrmPayloadProbeStatus status);
 
 /* Source/evidence citation.  Same shape as the other Theron probes. */
 const char *theron_v1_srm_source_evidence(void);
