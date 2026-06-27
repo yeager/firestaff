@@ -52,6 +52,12 @@
 #define TSRM_PATH_SEP '/'
 #endif
 
+#define TSRM_PROGRESS_PAYLOAD_BYTES 44u
+
+static const uint8_t g_progress_payload_magic[8] = {
+    'F', 'S', 'T', 'Q', 'P', 'R', 'G', '1'
+};
+
 /* ── Path helpers ────────────────────────────────────────────────── */
 
 static int file_exists_regular(const char *path) {
@@ -141,6 +147,13 @@ static uint32_t rolling_checksum32(const uint8_t *buf, size_t size) {
         sum = (sum * 33u) + buf[i];
     }
     return sum;
+}
+
+static uint32_t rd32le(const uint8_t *p) {
+    return (uint32_t)p[0] |
+           ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) |
+           ((uint32_t)p[3] << 24);
 }
 
 /* Read up to `max_bytes` from `path` into a heap buffer.  Returns the
@@ -426,6 +439,103 @@ Theron_V1SrmPayloadProbeStatus theron_v1_srm_probe_gzip_payload(
 #endif
 }
 
+Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
+    const uint8_t *payload,
+    size_t payload_size,
+    Theron_DungeonProgression *out_progression,
+    Theron_V1SrmProgressionReceipt *out_receipt) {
+
+    uint8_t version;
+    uint8_t current_dungeon_raw;
+    uint8_t quest_mask;
+    uint8_t current_level;
+    uint32_t playtime;
+    uint32_t seeds[THERON_DUNGEON_COUNT];
+    uint8_t expected_prefix;
+    Theron_DungeonProgression restored;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!payload || !out_progression) {
+        return THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+    }
+    if (payload_size < sizeof(g_progress_payload_magic)) {
+        return THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+    }
+    if (memcmp(payload, g_progress_payload_magic, sizeof(g_progress_payload_magic)) != 0) {
+        return THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY;
+    }
+    if (payload_size < TSRM_PROGRESS_PAYLOAD_BYTES) {
+        return THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+    }
+
+    version = payload[8];
+    if (version != 1u) {
+        return THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_VERSION;
+    }
+
+    current_dungeon_raw = payload[9];
+    quest_mask = payload[10];
+    current_level = payload[11];
+    playtime = rd32le(payload + 12);
+
+    if (current_dungeon_raw < 1u ||
+        current_dungeon_raw > (uint8_t)THERON_DUNGEON_COUNT ||
+        (quest_mask & (uint8_t)~THERON_QUEST_ALL_ITEMS) != 0u ||
+        current_level < 1u ||
+        current_level > 3u) {
+        return THERON_V1_SRM_PROGRESS_IMPORT_OUT_OF_RANGE;
+    }
+
+    if (quest_mask == THERON_QUEST_ALL_ITEMS) {
+        if (current_dungeon_raw != (uint8_t)THERON_DUNGEON_7_TOWER_OF_EPILOGUE) {
+            return THERON_V1_SRM_PROGRESS_IMPORT_NON_MONOTONIC_QUEST_STATE;
+        }
+    } else {
+        expected_prefix = current_dungeon_raw == 1u
+            ? 0u
+            : (uint8_t)((1u << (current_dungeon_raw - 1u)) - 1u);
+        if (quest_mask != expected_prefix) {
+            return THERON_V1_SRM_PROGRESS_IMPORT_NON_MONOTONIC_QUEST_STATE;
+        }
+    }
+
+    for (int i = 0; i < THERON_DUNGEON_COUNT; i++) {
+        seeds[i] = rd32le(payload + 16u + ((size_t)i * 4u));
+    }
+
+    /* Source: THQUEST.ASM T080/T800 between-dungeon save semantics,
+     * encoded here only for the Firestaff readiness envelope.  Unknown
+     * Sphenx/Greatstone custom bodies remain unsupported until decoded. */
+    theron_v1_dungeon_progression_restore(
+        &restored,
+        quest_mask,
+        (Theron_DungeonID)current_dungeon_raw,
+        seeds);
+    restored.current_level = current_level;
+    restored.dungeon_playtime_seconds = playtime;
+    if (quest_mask != THERON_QUEST_ALL_ITEMS) {
+        const Theron_DungeonMeta *meta =
+            theron_v1_dungeon_meta((Theron_DungeonID)current_dungeon_raw);
+        restored.item_reset_mode = meta && meta->champion_reset
+            ? THERON_ITEM_RESET_MODE_CHAMPION
+            : THERON_ITEM_RESET_MODE_NONE;
+    }
+
+    *out_progression = restored;
+    if (out_receipt) {
+        out_receipt->version = version;
+        out_receipt->quest_items_bitmask = quest_mask;
+        out_receipt->current_dungeon = (Theron_DungeonID)current_dungeon_raw;
+        out_receipt->current_level = current_level;
+        out_receipt->dungeon_playtime_seconds = playtime;
+        memcpy(out_receipt->dungeon_seeds, seeds, sizeof(seeds));
+        out_receipt->restored = 1;
+    }
+    return THERON_V1_SRM_PROGRESS_IMPORT_OK;
+}
+
 /* ── Status names + source evidence ──────────────────────────────── */
 
 const char *theron_v1_srm_slot_status_name(Theron_V1SrmSlotStatus status) {
@@ -462,6 +572,24 @@ const char *theron_v1_srm_payload_probe_status_name(Theron_V1SrmPayloadProbeStat
     return "UNKNOWN";
 }
 
+const char *theron_v1_srm_progress_import_status_name(Theron_V1SrmProgressImportStatus status) {
+    switch (status) {
+    case THERON_V1_SRM_PROGRESS_IMPORT_OK:
+        return "OK";
+    case THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY:
+        return "UNSUPPORTED_BODY";
+    case THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT:
+        return "BAD_INPUT";
+    case THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_VERSION:
+        return "UNSUPPORTED_VERSION";
+    case THERON_V1_SRM_PROGRESS_IMPORT_OUT_OF_RANGE:
+        return "OUT_OF_RANGE";
+    case THERON_V1_SRM_PROGRESS_IMPORT_NON_MONOTONIC_QUEST_STATE:
+        return "NON_MONOTONIC_QUEST_STATE";
+    }
+    return "UNKNOWN";
+}
+
 const char *theron_v1_srm_source_evidence(void) {
     return
         "Theron V1 SRM (Save RAM) classifier — bounded real-artifact boundary\n"
@@ -486,6 +614,10 @@ const char *theron_v1_srm_source_evidence(void) {
         "  - Bounded gzip-payload probe inflates a recognized .srm stream\n"
         "    when Firestaff is built with zlib; without zlib it reports\n"
         "    ZLIB_UNAVAILABLE after the cheap gzip/method checks.\n"
+        "  - Bounded progression-envelope import maps an inflated\n"
+        "    Firestaff readiness payload into Theron_DungeonProgression\n"
+        "    with T080/T800 between-dungeon sequence validation.  Unknown\n"
+        "    real Sphenx/Greatstone custom bodies return UNSUPPORTED_BODY.\n"
         "  - Default save-disk root: $HOME/.firestaff/data/theron/save.\n"
         "  - Override: env FIRESTAFF_THERON_SRM_DIR.\n"
         "  - No real .srm file is present in the local data root on this\n"
@@ -493,8 +625,7 @@ const char *theron_v1_srm_source_evidence(void) {
         "    on the default root.  This is the expected honest outcome and\n"
         "    is recorded as a SKIP, not a failure, by the probe and unit\n"
         "    test.\n"
-        "  - Interpreting the inflated custom Theron save body and\n"
-        "    cross-slot import to Theron_DungeonProgression/champion blocks\n"
-        "    remain out of scope and are tracked under docs/FIRESTAFF_GAP_LIST.md\n"
-        "    A3 'Savegame format (Theron .SRM)'.";
+        "  - Interpreting the real inflated custom Theron save body and\n"
+        "    champion blocks remains out of scope and is tracked under\n"
+        "    docs/FIRESTAFF_GAP_LIST.md A3 'Savegame format (Theron .SRM)'.";
 }

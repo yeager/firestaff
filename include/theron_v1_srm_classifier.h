@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "theron_v1_dungeon_progression.h"
+
 /* ══════════════════════════════════════════════════════════════════════
  * Theron V1 SRM (Save RAM) classifier — bounded real-artifact boundary.
  *
@@ -101,6 +103,25 @@ typedef enum {
     THERON_V1_SRM_PAYLOAD_PROBE_OUTPUT_TRUNCATED = -5
 } Theron_V1SrmPayloadProbeStatus;
 
+typedef enum {
+    THERON_V1_SRM_PROGRESS_IMPORT_OK = 1,
+    THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY = 0,
+    THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT = -1,
+    THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_VERSION = -2,
+    THERON_V1_SRM_PROGRESS_IMPORT_OUT_OF_RANGE = -3,
+    THERON_V1_SRM_PROGRESS_IMPORT_NON_MONOTONIC_QUEST_STATE = -4
+} Theron_V1SrmProgressImportStatus;
+
+typedef struct {
+    uint8_t version;
+    uint8_t quest_items_bitmask;
+    Theron_DungeonID current_dungeon;
+    uint8_t current_level;
+    uint32_t dungeon_playtime_seconds;
+    uint32_t dungeon_seeds[THERON_DUNGEON_COUNT];
+    int restored;
+} Theron_V1SrmProgressionReceipt;
+
 /* Resolve the default save-disk root: env override
  * `FIRESTAFF_THERON_SRM_DIR` first, then
  * `$HOME/.firestaff/data/theron/save`, then `./theron-save/`.
@@ -141,9 +162,34 @@ Theron_V1SrmPayloadProbeStatus theron_v1_srm_probe_gzip_payload(
     size_t out_payload_capacity,
     size_t *out_payload_size);
 
+/* Interpret one inflated SRM body as a between-dungeon progression
+ * checkpoint, when the body carries Firestaff's bounded readiness
+ * envelope:
+ *
+ *   bytes 0..7    "FSTQPRG1"
+ *   byte  8       version (1)
+ *   byte  9       current dungeon (1..7)
+ *   byte 10       collected quest-item mask (0..0x7f)
+ *   byte 11       current level (1..3)
+ *   bytes 12..15  playtime seconds, little-endian
+ *   bytes 16..43  seven dungeon seeds, little-endian uint32
+ *
+ * This deliberately does not claim Sphenx/Greatstone custom-body coverage:
+ * real payloads without this envelope return UNSUPPORTED_BODY so they stay
+ * non-launchable until the real body layout is decoded.  The accepted
+ * checkpoint is constrained to TQ's documented between-dungeon sequence:
+ * collected quest bits must form a completed prefix and current_dungeon
+ * must be the next dungeon (or dungeon 7 for the all-complete state). */
+Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
+    const uint8_t *payload,
+    size_t payload_size,
+    Theron_DungeonProgression *out_progression,
+    Theron_V1SrmProgressionReceipt *out_receipt);
+
 /* Status-name helpers (stable string contract for receipts/manifests). */
 const char *theron_v1_srm_slot_status_name(Theron_V1SrmSlotStatus status);
 const char *theron_v1_srm_payload_probe_status_name(Theron_V1SrmPayloadProbeStatus status);
+const char *theron_v1_srm_progress_import_status_name(Theron_V1SrmProgressImportStatus status);
 
 /* Source/evidence citation.  Same shape as the other Theron probes. */
 const char *theron_v1_srm_source_evidence(void);
