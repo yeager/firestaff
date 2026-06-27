@@ -31,7 +31,6 @@ static int checks = 0;
         failures++; } } while (0)
 
 static void test_init_shutdown(void) {
-    int active_before = dm2_v22_inplace_draw_active();
     int r1 = dm2_v22_inplace_draw_init();
     int r2 = dm2_v22_inplace_draw_init();
     CHECK(r1 == r2, "init is idempotent (same return on repeat call)");

@@ -1817,6 +1817,7 @@ add_test(
 )
 set_tests_properties(firestaff_theron_v2_hud_widget_assets_probe PROPERTIES
     LABELS "tier2;theron;v2;phase3;hud;widget-assets;presentation-only"
+    RESOURCE_LOCK "theron_v2_hud_widget_assets_manifest"
 )
 
 # DM1 V2.2 shape runtime dispatch probe. Headless: no game data.
@@ -5111,6 +5112,28 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_champion_per_stat_parity_pc34_compat
     )
 
+    # CSB V1 champion per-stat ↔ F0309 max-load interaction fixture
+    # (Champions GAP 2 follow-up slice).  Pins the deterministic
+    # relationship between the per-champion `randomPoints` LCG and
+    # `reincarnateStatPenalty` divisor with the source-locked F0309
+    # maximum-load formula (CHAMPION.C F0309 + F0306).  Data-free,
+    # no DM1/CSB assets required.
+    add_executable(test_csb_v1_reincarnation_per_stat_max_load_f0309_pc34_compat
+        tests/test_csb_v1_reincarnation_per_stat_max_load_f0309_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_reincarnation_per_stat_max_load_f0309_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_reincarnation_per_stat_max_load_f0309_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_reincarnation_per_stat_max_load_f0309_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_reincarnation_per_stat_max_load_f0309
+        COMMAND test_csb_v1_reincarnation_per_stat_max_load_f0309_pc34_compat
+    )
+
     # CSB V1 champion reincarnation penalty over the ChampionState_Compat
     # surface (Champions GAP 2, CHANGE7_24).  Source-faithful port of
     # ReDMCSB REVIVE.C lines 809-822 (MEDIA332 + MEDIA265
@@ -7990,6 +8013,9 @@ if(BUILD_TESTING)
     add_test(
         NAME theron_v2_hud_widget_assets_pc34
         COMMAND test_theron_v2_hud_widget_assets_pc34
+    )
+    set_tests_properties(theron_v2_hud_widget_assets_pc34 PROPERTIES
+        RESOURCE_LOCK "theron_v2_hud_widget_assets_manifest"
     )
 
     # ── Theron V2 Phase 0/1 probe ctest entries ──────────────────
