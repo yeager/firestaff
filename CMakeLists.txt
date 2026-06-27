@@ -14086,6 +14086,31 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_track02_descriptor_table_probe
     )
 
+    # ── Theron V1 Track 02 Level Handoff Probe ────────────────────
+    # Bounded bridge from descriptor-window selection to the existing
+    # Theron V1 level loader. Synthetic fixtures own the positive level
+    # parse; real Track 02 data remains no-claim until its dungeon record
+    # format is decoded.
+    add_executable(firestaff_theron_v1_track02_level_handoff_probe
+        probes/theron/firestaff_theron_v1_track02_level_handoff_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_level_handoff_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_track02_level_handoff_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_track02_level_handoff_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_level_handoff_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_level_handoff
+        COMMAND firestaff_theron_v1_track02_level_handoff_probe
+    )
+
     # ── Theron V1 SRM (Save RAM) classifier probe ───────────────────────
     # Bounded real-artifact boundary for Theron .srm save data.  Data-free
     # when no real Sphenx-format .srm file is staged; honest ABSENT manifest
