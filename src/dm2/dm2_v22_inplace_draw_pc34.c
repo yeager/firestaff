@@ -183,19 +183,23 @@ static int v22_load_cache_file(const char* path) {
 int dm2_v22_inplace_draw_init(void) {
     if (g_v22_inplace_active) return 1;
 
-    /* Resolve cache path from manifest path */
+    /* Resolve cache path from manifest path. The cache file lives
+     * next to modern_asset_manifest.json under the conventional
+     * modern assets dir (sibling of the manifest file).
+     *
+     * NOTE: prior versions of this code hardcoded
+     *   ~/.firestaff/assets/dm1/modern/...
+     * which is the DM1 path — that was a copy/paste bug from the
+     * csb_v22_inplace_draw_init() template. The DM2 pack lives
+     * under assets/dm2/modern/, mirroring dm2_v22_set_manifest_path()
+     * in dm2_v22_modern_assets_pc34.c. */
     char cache_path[FSP_PATH_MAX];
     {
-        /* Re-use dm2_v22_get_shape_path to find the modern dir.
-         * The cache file lives next to modern_asset_manifest.json. */
         char manifest_path[FSP_PATH_MAX];
-        /* dm2_v22 doesn't expose its manifest path; reconstruct from data dir
-         * using the same logic as dm2_v22_set_manifest_path. For first cut,
-         * hardcode the conventional path ~/.firestaff/assets/dm2/modern/. */
         const char* home = getenv("HOME");
         if (!home) home = ".";
         snprintf(manifest_path, sizeof(manifest_path),
-                 "%s/.firestaff/assets/dm1/modern/modern_asset_manifest.json", home);
+                 "%s/.firestaff/assets/dm2/modern/modern_asset_manifest.json", home);
         char* last_slash = strrchr(manifest_path, '/');
         if (last_slash) *last_slash = '\0';
         snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", manifest_path);
@@ -247,6 +251,32 @@ const uint32_t* dm2_v22_inplace_get_cell_bitmap(int depth, int lateral,
 
 const char* dm2_v22_inplace_get_cell_asset_id(int depth, int lateral) {
     return v22_inplace_get_cell_asset_id(depth, lateral);
+}
+
+/* dm2_v22_inplace_get_bitmap_by_id — direct category + asset_id
+ * hash lookup against the loaded cache. Used by
+ * dm2_v22_viewport_swap_pc34.c to resolve per-cell asset_ids
+ * without going through the sibling shape cache.
+ *
+ * The category strings are the manifest categories documented in
+ * include/dm2_v22_modern_assets_pc34.h. The asset_id strings are
+ * the keys from modern_asset_manifest.json entries. */
+const uint32_t* dm2_v22_inplace_get_bitmap_by_id(const char* category,
+                                                  const char* asset_id,
+                                                  int* out_w, int* out_h) {
+    if (out_w) *out_w = 0;
+    if (out_h) *out_h = 0;
+    if (!g_v22_inplace_active) return NULL;
+    if (!category || !asset_id || !asset_id[0]) return NULL;
+    {
+        uint32_t cat_hash = fnv1a_hash(category);
+        uint32_t aid_hash = fnv1a_hash(asset_id);
+        int idx = v22_find_bitmap(cat_hash, aid_hash);
+        if (idx < 0) return NULL;
+        if (out_w) *out_w = (int)g_v22_bitmaps[idx].entry.width;
+        if (out_h) *out_h = (int)g_v22_bitmaps[idx].entry.height;
+        return (const uint32_t*)g_v22_bitmaps[idx].rgba;
+    }
 }
 
 /* ── In-place bitmap blit ──────────────────────────────────────── */
