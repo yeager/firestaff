@@ -7782,6 +7782,56 @@ const char* M12_StartupMenu_GetRendererBackendStatusLabel(const M12_StartupMenuS
     return g_rendererBackendAvailable[backend];
 }
 
+/* Return the display title for a Museum of Lore category index, or
+ * NULL if the index is out of range. The category data is private
+ * to menu_startup_m12.c, but the screen-reader manifest in
+ * menu_startup_a11y_m12.c needs the title to label the MUSEUM_CATEGORY
+ * element. This getter keeps the data private and gives the a11y
+ * layer a single, stable string per index. */
+const char* M12_Museum_GetCategoryTitle(int index)
+{
+    int i = m12_clamp_index(index, M12_MUSEUM_CATEGORY_COUNT);
+    if (i < 0 || i >= M12_MUSEUM_CATEGORY_COUNT) {
+        return NULL;
+    }
+    return g_museumCategories[i].title;
+}
+
+/* Return the number of pages in the active museum category, or 0 if
+ * the index is out of range. Pairs with M12_Museum_GetCategoryTitle
+ * so the a11y manifest can size the page-bullet emission correctly. */
+int M12_Museum_GetCategoryPageCount(int index)
+{
+    int i = m12_clamp_index(index, M12_MUSEUM_CATEGORY_COUNT);
+    if (i < 0 || i >= M12_MUSEUM_CATEGORY_COUNT) {
+        return 0;
+    }
+    return g_museumCategories[i].pageCount;
+}
+
+/* Return the bullet text at (category, page, bullet) in the museum.
+ * Returns NULL on any out-of-range index. The bullet is the visible
+ * lore line drawn at contentY + 58 + bulletIndex * 20 by
+ * m12_draw_museum_view_modern. */
+const char* M12_Museum_GetBullet(int categoryIndex, int pageIndex, int bulletIndex)
+{
+    int ci = m12_clamp_index(categoryIndex, M12_MUSEUM_CATEGORY_COUNT);
+    const M12_MuseumCategory* cat;
+    int pi;
+    if (ci < 0 || ci >= M12_MUSEUM_CATEGORY_COUNT) {
+        return NULL;
+    }
+    cat = &g_museumCategories[ci];
+    pi = m12_clamp_index(pageIndex, cat->pageCount);
+    if (pi < 0 || pi >= cat->pageCount) {
+        return NULL;
+    }
+    if (bulletIndex < 0 || bulletIndex >= 5) {
+        return NULL;
+    }
+    return cat->pages[pi][bulletIndex];
+}
+
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state) {
     M12_LaunchIntent intent;
     const M12_AssetVersionStatus* version;
