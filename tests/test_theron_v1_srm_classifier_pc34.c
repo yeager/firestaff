@@ -122,13 +122,19 @@ static int write_bytes(const char *path, const uint8_t *buf, size_t size) {
 
 static const uint8_t g_valid_gzip_srm[] = {
     0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff,
-    0x0b, 0xf1, 0x70, 0x0d, 0xf2, 0xf7, 0xd3, 0x0d, 0x0e, 0xf2,
-    0xd5, 0x0d, 0x70, 0x8c, 0xf4, 0xf1, 0x77, 0x74, 0xd1, 0x2d,
-    0x33, 0xe4, 0x2a, 0xce, 0xc9, 0x2f, 0xb1, 0x35, 0xe0, 0x02,
-    0x00, 0x28, 0x3c, 0x1d, 0xcd, 0x1d, 0x00, 0x00, 0x00
+    0x73, 0x0b, 0x0e, 0x09, 0x0c, 0x08, 0x72, 0x37, 0x64, 0x64,
+    0x66, 0x66, 0xd4, 0x61, 0x64, 0x60, 0x60, 0x14, 0x60, 0x60,
+    0x60, 0x02, 0x62, 0x66, 0x20, 0x66, 0x01, 0x62, 0x56, 0x20,
+    0x66, 0x03, 0x62, 0x76, 0x20, 0x06, 0x00, 0x50, 0x8a, 0x0c,
+    0xc3, 0x2c, 0x00, 0x00, 0x00
 };
 
-static const uint8_t g_valid_gzip_payload[] = "THERON-SRM-PAYLOAD-v1\nslot=0\n";
+static const uint8_t g_valid_gzip_payload[] = {
+    0x46, 0x53, 0x54, 0x51, 0x50, 0x52, 0x47, 0x31, 0x01, 0x03, 0x03, 0x01,
+    0x2c, 0x01, 0x00, 0x00, 0x01, 0x10, 0x00, 0x00, 0x02, 0x10, 0x00, 0x00,
+    0x03, 0x10, 0x00, 0x00, 0x04, 0x10, 0x00, 0x00, 0x05, 0x10, 0x00, 0x00,
+    0x06, 0x10, 0x00, 0x00, 0x07, 0x10, 0x00, 0x00
+};
 
 static int build_synthetic_gzip(uint8_t *out, size_t *out_size) {
     if (!out || !out_size) return 0;
@@ -331,7 +337,7 @@ static void test_gzip_payload_probe(void) {
 #if FIRESTAFF_HAS_ZLIB
     expect_true(status == THERON_V1_SRM_PAYLOAD_PROBE_OK,
                 "gzip payload probe inflates when zlib is available");
-    expect_true(payload_size == sizeof(g_valid_gzip_payload) - 1u,
+    expect_true(payload_size == sizeof(g_valid_gzip_payload),
                 "gzip payload size matches fixture");
     expect_true(memcmp(payload, g_valid_gzip_payload, payload_size) == 0,
                 "gzip payload bytes match fixture");
@@ -380,6 +386,95 @@ static void test_gzip_payload_probe(void) {
                 "payload status unknown name");
 }
 
+static void test_progression_payload_import(void) {
+    Theron_DungeonProgression prog;
+    Theron_V1SrmProgressionReceipt receipt;
+    Theron_V1SrmProgressImportStatus status;
+
+    memset(&prog, 0xCD, sizeof(prog));
+    memset(&receipt, 0xCD, sizeof(receipt));
+    status = theron_v1_srm_decode_progression_payload(
+        g_valid_gzip_payload,
+        sizeof(g_valid_gzip_payload),
+        &prog,
+        &receipt);
+    expect_true(status == THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                "progression payload imports");
+    expect_true(receipt.restored == 1, "progression receipt restored");
+    expect_true(receipt.version == 1, "progression receipt version");
+    expect_true(receipt.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                "progression receipt current dungeon");
+    expect_true(receipt.quest_items_bitmask ==
+                    (THERON_QUEST_ITEM_1_SACRED_AMPLIFIER |
+                     THERON_QUEST_ITEM_2_SHADOW_KEY),
+                "progression receipt quest mask");
+    expect_true(receipt.current_level == 1, "progression receipt current level");
+    expect_true(receipt.dungeon_playtime_seconds == 300u,
+                "progression receipt playtime");
+    expect_true(receipt.dungeon_seeds[0] == 0x1001u &&
+                receipt.dungeon_seeds[6] == 0x1007u,
+                "progression receipt seed range");
+
+    expect_true(prog.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                "progression current dungeon restored");
+    expect_true(prog.current_level == 1, "progression level restored");
+    expect_true(prog.dungeon_playtime_seconds == 300u,
+                "progression playtime restored");
+    expect_true(prog.quest_items_collected == 0x03u,
+                "progression quest mask restored");
+    expect_true(prog.dungeon_states[0] == THERON_DUNGEON_STATE_COMPLETE &&
+                prog.dungeon_states[1] == THERON_DUNGEON_STATE_COMPLETE &&
+                prog.dungeon_states[2] == THERON_DUNGEON_STATE_AVAILABLE,
+                "progression completed-prefix states restored");
+    expect_true(prog.item_reset_mode == THERON_ITEM_RESET_MODE_CHAMPION,
+                "progression reset mode restored for next dungeon");
+    expect_true(prog.champion_stats_persist == 1 &&
+                prog.champion_inv_persist == 0,
+                "progression champion persistence restored");
+
+    status = theron_v1_srm_decode_progression_payload(
+        (const uint8_t *)"THERON-SRM-PAYLOAD-v1",
+        21u,
+        &prog,
+        &receipt);
+    expect_true(status == THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY,
+                "unknown real/custom body stays unsupported");
+
+    {
+        uint8_t bad[sizeof(g_valid_gzip_payload)];
+        memcpy(bad, g_valid_gzip_payload, sizeof(bad));
+        bad[8] = 2;
+        status = theron_v1_srm_decode_progression_payload(
+            bad, sizeof(bad), &prog, &receipt);
+        expect_true(status == THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_VERSION,
+                    "progression unsupported version rejected");
+    }
+    {
+        uint8_t bad[sizeof(g_valid_gzip_payload)];
+        memcpy(bad, g_valid_gzip_payload, sizeof(bad));
+        bad[10] = 0x80;
+        status = theron_v1_srm_decode_progression_payload(
+            bad, sizeof(bad), &prog, &receipt);
+        expect_true(status == THERON_V1_SRM_PROGRESS_IMPORT_OUT_OF_RANGE,
+                    "progression out-of-range quest mask rejected");
+    }
+    {
+        uint8_t bad[sizeof(g_valid_gzip_payload)];
+        memcpy(bad, g_valid_gzip_payload, sizeof(bad));
+        bad[9] = 4;  /* Dungeon 4 would require quest mask 0x07. */
+        status = theron_v1_srm_decode_progression_payload(
+            bad, sizeof(bad), &prog, &receipt);
+        expect_true(status == THERON_V1_SRM_PROGRESS_IMPORT_NON_MONOTONIC_QUEST_STATE,
+                    "progression non-monotonic quest prefix rejected");
+    }
+
+    expect_true(strcmp(theron_v1_srm_progress_import_status_name(
+                    THERON_V1_SRM_PROGRESS_IMPORT_OK), "OK") == 0,
+                "progress import status OK name");
+    expect_true(strcmp(theron_v1_srm_progress_import_status_name(99), "UNKNOWN") == 0,
+                "progress import status unknown name");
+}
+
 int main(void) {
     printf("\n=== Theron V1 SRM Classifier Unit Tests ===\n\n");
     test_default_root_resolution();
@@ -390,6 +485,7 @@ int main(void) {
     test_absent_root_is_clean_manifest();
     test_classify_mixed_fixtures();
     test_gzip_payload_probe();
+    test_progression_payload_import();
 
     printf("=====================================================\n");
     printf("Results: %d/%d passed (failures=%d)\n",

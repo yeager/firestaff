@@ -170,13 +170,19 @@ static int file_size(const char *path, uint64_t *out_size) {
  * additionally inflates these bytes when zlib is available. */
 static const uint8_t g_valid_gzip_srm[] = {
     0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff,
-    0x0b, 0xf1, 0x70, 0x0d, 0xf2, 0xf7, 0xd3, 0x0d, 0x0e, 0xf2,
-    0xd5, 0x0d, 0x70, 0x8c, 0xf4, 0xf1, 0x77, 0x74, 0xd1, 0x2d,
-    0x33, 0xe4, 0x2a, 0xce, 0xc9, 0x2f, 0xb1, 0x35, 0xe0, 0x02,
-    0x00, 0x28, 0x3c, 0x1d, 0xcd, 0x1d, 0x00, 0x00, 0x00
+    0x73, 0x0b, 0x0e, 0x09, 0x0c, 0x08, 0x72, 0x37, 0x64, 0x64,
+    0x66, 0x66, 0xd4, 0x61, 0x64, 0x60, 0x60, 0x14, 0x60, 0x60,
+    0x60, 0x02, 0x62, 0x66, 0x20, 0x66, 0x01, 0x62, 0x56, 0x20,
+    0x66, 0x03, 0x62, 0x76, 0x20, 0x06, 0x00, 0x50, 0x8a, 0x0c,
+    0xc3, 0x2c, 0x00, 0x00, 0x00
 };
 
-static const uint8_t g_valid_gzip_payload[] = "THERON-SRM-PAYLOAD-v1\nslot=0\n";
+static const uint8_t g_valid_gzip_payload[] = {
+    0x46, 0x53, 0x54, 0x51, 0x50, 0x52, 0x47, 0x31, 0x01, 0x03, 0x03, 0x01,
+    0x2c, 0x01, 0x00, 0x00, 0x01, 0x10, 0x00, 0x00, 0x02, 0x10, 0x00, 0x00,
+    0x03, 0x10, 0x00, 0x00, 0x04, 0x10, 0x00, 0x00, 0x05, 0x10, 0x00, 0x00,
+    0x06, 0x10, 0x00, 0x00, 0x07, 0x10, 0x00, 0x00
+};
 
 static int build_synthetic_gzip_body(uint8_t *out, size_t *out_size) {
     if (!out || !out_size) return 0;
@@ -455,6 +461,11 @@ static void probe_source_evidence(void) {
         ++g_fail;
         return;
     }
+    if (!strstr(ev, "progression-envelope")) {
+        printf("FAIL source evidence: missing progression-envelope note\n");
+        ++g_fail;
+        return;
+    }
     ++g_pass;
 }
 
@@ -480,7 +491,7 @@ static void probe_gzip_payload_receipt(void) {
     check_int("gzip payload probe OK", status, THERON_V1_SRM_PAYLOAD_PROBE_OK);
     check_size("gzip payload size",
                payload_size,
-               sizeof(g_valid_gzip_payload) - 1u);
+               sizeof(g_valid_gzip_payload));
     check_int("gzip payload bytes match",
               memcmp(payload, g_valid_gzip_payload, payload_size) == 0,
               1);
@@ -516,6 +527,83 @@ static void probe_gzip_payload_receipt(void) {
     }
 }
 
+static void probe_progression_payload_import(void) {
+    Theron_DungeonProgression prog;
+    Theron_V1SrmProgressionReceipt receipt;
+    Theron_V1SrmProgressImportStatus status;
+
+    memset(&prog, 0, sizeof(prog));
+    memset(&receipt, 0, sizeof(receipt));
+    status = theron_v1_srm_decode_progression_payload(
+        g_valid_gzip_payload,
+        sizeof(g_valid_gzip_payload),
+        &prog,
+        &receipt);
+
+    printf("progression payload import: status=%s dungeon=%u quest=0x%02x restored=%d\n",
+           theron_v1_srm_progress_import_status_name(status),
+           (unsigned)receipt.current_dungeon,
+           (unsigned)receipt.quest_items_bitmask,
+           receipt.restored);
+
+    check_int("progression payload import OK",
+              status,
+              THERON_V1_SRM_PROGRESS_IMPORT_OK);
+    check_int("progression payload restored",
+              receipt.restored, 1);
+    check_int("progression current dungeon",
+              prog.current_dungeon,
+              THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+    check_int("progression quest mask",
+              prog.quest_items_collected, 0x03);
+    check_int("progression dungeon 1 complete",
+              prog.dungeon_states[0],
+              THERON_DUNGEON_STATE_COMPLETE);
+    check_int("progression dungeon 2 complete",
+              prog.dungeon_states[1],
+              THERON_DUNGEON_STATE_COMPLETE);
+    check_int("progression dungeon 3 available",
+              prog.dungeon_states[2],
+              THERON_DUNGEON_STATE_AVAILABLE);
+    check_int("progression playtime",
+              (int)prog.dungeon_playtime_seconds,
+              300);
+    check_int("progression first seed",
+              (int)prog.dungeon_seeds[0],
+              0x1001);
+    check_int("progression last seed",
+              (int)prog.dungeon_seeds[6],
+              0x1007);
+
+    status = theron_v1_srm_decode_progression_payload(
+        (const uint8_t *)"THERON-SRM-PAYLOAD-v1",
+        21u,
+        &prog,
+        &receipt);
+    check_int("unknown real/custom body unsupported",
+              status,
+              THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY);
+
+    {
+        uint8_t bad[sizeof(g_valid_gzip_payload)];
+        memcpy(bad, g_valid_gzip_payload, sizeof(bad));
+        bad[9] = 4;
+        status = theron_v1_srm_decode_progression_payload(
+            bad,
+            sizeof(bad),
+            &prog,
+            &receipt);
+        check_int("non-monotonic quest prefix rejected",
+                  status,
+                  THERON_V1_SRM_PROGRESS_IMPORT_NON_MONOTONIC_QUEST_STATE);
+    }
+
+    check_str("progress import status OK",
+              theron_v1_srm_progress_import_status_name(
+                  THERON_V1_SRM_PROGRESS_IMPORT_OK),
+              "OK");
+}
+
 int main(void) {
     printf("=== Theron V1 SRM Classifier Probe ===\n");
     printf("%s\n", theron_v1_srm_source_evidence());
@@ -526,6 +614,7 @@ int main(void) {
     probe_default_root_absent_manifest();
     probe_classify_mixed_fixtures();
     probe_gzip_payload_receipt();
+    probe_progression_payload_import();
     probe_status_names_stable();
     probe_source_evidence();
 
