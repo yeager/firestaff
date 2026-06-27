@@ -21,6 +21,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_projectile_pc34_compat.h"
+#include "dm2_v1_projectile_step_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -106,15 +107,18 @@ void dm2_v1_runtime_tick(void) {
         dm2_v1_weather_next_state(&rt->weather);
     }
 
-    /* Phase 5: drain DM2 projectile list into M11-ready cache.
-     * Refresh every V1 tick so the M11 viewport renderer can iterate
-     * over g_dm2_projectile_drain[] and draw fireballs / lightning /
-     * arrows in the V1 framebuffer.
-     * Source: skproject/SKULLWIN/c_render.cpp — projectile draw dispatch
-     *         ReDMCSB DUNGEON.C:2362-2387 — F0209 visible row/col
+    /* Phase 5+ extension: step then drain DM2 projectile list into
+     * M11-ready cache.  The step path applies the STEP_MISSILE
+     * energy-decay + despawn boundary (skproject/SKULLWIN/c_tim_proc.cpp
+     * m_7CE0/m_7D2A), so the drain reflects only post-step survivors.
+     * Without this step the cache would grow without bound and the
+     * M11 viewport would draw stale projectiles forever.
+     * Source: skproject/SKULLWIN/c_tim_proc.cpp:442-563   (DM2_STEP_MISSILE)
+     *         skproject/SKULLWIN/c_render.cpp              (projectile draw)
+     *         ReDMCSB DUNGEON.C:2362-2387                  (F0209 visible)
      */
-    g_dm2_projectile_drain_count = dm2_v1_projectile_drain_to_m11(
-        g_dm2_projectile_drain, DM2_DRAIN_MAX_PROJECTILES);
+    g_dm2_projectile_drain_count = dm2_v1_projectile_step_and_drain(
+        g_dm2_projectile_drain, DM2_DRAIN_MAX_PROJECTILES, NULL);
 }
 
 /*

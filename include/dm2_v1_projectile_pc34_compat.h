@@ -198,6 +198,21 @@ typedef struct {
     int cell;
     int direction;
     int attack;                   /* raw attack value carried on the slot */
+    /* Phase 5+ extension: energy fields needed by the per-tick missile
+     * step helper (dm2_v1_projectile_step_pc34_compat.c).  Exposed here
+     * so the step module can read the boundary inputs without coupling
+     * to s_projectile_list internals.
+     *
+     * Source: skproject/SKULLWIN/c_tim_proc.cpp:442-563 m_7CE0/m_7D2A
+     *         (DM2_STEP_MISSILE reads kineticEnergy + stepEnergy to
+     *          decide despawn vs. decrement).
+     *         skproject/SKWIN/SkWinCore.cpp:60920-61116 ^075F:1349/1375
+     *         (STEP_MISSILE applies the same boundary on a per-tick
+     *          queue-driven basis). */
+    int kineticEnergy;            /* projectile's current energy */
+    int stepEnergy;               /* energy cost per tick step */
+    int firstMoveGraceFlag;       /* C48 honor-on-first-step */
+    int scheduledAtTick;          /* tick at which this slot was scheduled */
 } DM2_V1_ProjectileSlotSnapshot;
 
 int dm2_v1_projectile_get_slot(int slot_index,
@@ -213,6 +228,53 @@ int dm2_v1_projectile_get_slot(int slot_index,
  * memory_projectile_pc34_compat.h + the despawn path in
  * skproject/SKULLWIN/c_creature.cpp. */
 int dm2_v1_projectile_despawn(int slot_index);
+
+/* ── Phase 5+ extension: per-tick step energy consumption ────────
+ *
+ * dm2_v1_projectile_consume_step_energy — apply the STEP_MISSILE
+ * energy-decay + despawn boundary to one slot.  Called once per slot
+ * per V1 tick from dm2_v1_projectile_step_tick().
+ *
+ * Behavior:
+ *   - If the slot is empty (slotIndex < 0), returns 0 with *out_post = 0
+ *     and *out_was_graced = 0.
+ *   - If kineticEnergy <= stepEnergy: despawns the slot via F0813 and
+ *     returns 0 (the slot is gone).
+ *   - Else if firstMoveGraceFlag == 1: clears the grace flag (so the
+ *     next step will decrement) and returns 1 with *out_post unchanged
+ *     and *out_was_graced = 1.  Matches ReDMCSB PROJEXPL.C:689-690
+ *     (F0219 C48_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS first-move rule).
+ *   - Else: decrements kineticEnergy by stepEnergy and returns 1 with
+ *     *out_post = post-decrement kineticEnergy and *out_was_graced = 0.
+ *
+ * Returns: 1 if the slot survived this tick, 0 if it was despawned.
+ * Side effects: may call F0813_PROJECTILE_Despawn_Compat on depletion,
+ * may mutate kineticEnergy + firstMoveGraceFlag on the live slot.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:442-563 m_7CE0/m_7D2A
+ *         skproject/SKWIN/SkWinCore.cpp:60920-61116 ^075F:1349/1375
+ *         ReDMCSB PROJEXPL.C:689-690 (F0219 first-move grace). */
+int dm2_v1_projectile_consume_step_energy(int slot_index,
+                                           int *out_post_energy,
+                                           int *out_was_graced);
+
+/* ── Phase 5+ extension: test-only plumbing ─────────────────────
+ *
+ * These helpers are gated on FIRESTAFF_DM2_PROJECTILE_TESTING=1
+ * (the CMake target that compiles the step test defines this).
+ * Production builds do not see these symbols; tests need them to
+ * drive the step helper with non-default kineticEnergy/stepEnergy
+ * values (the public dispatch API always sets ke=100, se=8 at
+ * F0810 time).  They are pure test plumbing — they do not affect
+ * runtime behavior. */
+#ifdef FIRESTAFF_DM2_PROJECTILE_TESTING
+void *dm2_v1_projectile_list_handle_for_test(void);
+int   dm2_v1_projectile_test_set_slot_energy(int slot_index,
+                                              int kinetic_energy,
+                                              int step_energy,
+                                              int first_grace);
+void  dm2_v1_projectile_test_reset_list(void);
+#endif
 
 /* Source evidence citation */
 const char *dm2_v1_projectile_source_evidence(void);
