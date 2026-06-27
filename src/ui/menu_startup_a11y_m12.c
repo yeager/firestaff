@@ -13,13 +13,22 @@
  *   - Settings rows                      → FS_AX_LAUNCHER_ROW per row
  *   - Missing-data popup                 → FS_AX_POPUP + FS_AX_POPUP_OK
  *   - General message view               → FS_AX_POPUP + FS_AX_POPUP_OK
+ *   - Bestiary view                      → FS_AX_CATEGORY_TAB per category
+ *                                           + FS_AX_BESTIARY_ROW per visible creature
+ *   - Item Encyclopedia view             → FS_AX_CATEGORY_TAB per category
+ *                                           + FS_AX_ITEM_ENCYCLOPEDIA_ROW per visible item
+ *   - Screenshot Gallery view            → FS_AX_SCREENSHOT_THUMB per visible entry
+ *   - Museum of Lore view                → FS_AX_MUSEUM_CATEGORY per section
+ *                                           + FS_AX_MUSEUM_BULLET per lore bullet on the active page
  *
  * Out of scope (kept for follow-up passes):
  *   - Quick-resume "CONTINUE" virtual entry on the main view
  *     (rendered inline in m12_draw_main_view, not in state->entries).
- *   - Bestiary / Item Encyclopedia / Museum cards. Those screens have
- *     a scrollable grid and need per-cell bounds; out of scope for
- *     the initial state manifest pass.
+ *   - Manual / docs / changelog / data-validator / theme / save-browser
+ *     / input-remap / custom-dungeon / campaign / spell-reference /
+ *     map-viewer / touch-layout / presentation-preview views.
+ *     Those still fall through to the main-view emission as a
+ *     navigation anchor.
  *
  * Determinism contract:
  *   - Element order is pinned: cards before tabs, tabs before rows,
@@ -40,6 +49,9 @@
 
 #include "menu_startup_a11y_m12.h"
 #include "firestaff_accessibility.h"
+#include "bestiary_m12.h"
+#include "firestaff_item_encyclopedia.h"
+#include "screenshot_gallery_m12.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -309,6 +321,321 @@ static void emit_game_options_view(const M12_StartupMenuState* state,
     }
 }
 
+/* ── Extras view emitters ────────────────────────────────────────────
+ *
+ * The four cell-by-cell views (bestiary, item encyclopedia,
+ * screenshot gallery, museum of lore) all use the same per-cell row
+ * model so a screen reader can announce "row N of M, NAME, selected"
+ * without the caller having to learn a new pattern per view.
+ *
+ * Rect math mirrors menu_startup_m12.c m12_draw_*_view_modern:
+ *   margin = framebufferWidth / 30
+ *   heroH   = framebufferHeight / 4 (clamped to >= 64)
+ *   contentY = margin + heroH + 10
+ *   panelH = framebufferHeight - contentY - 28
+ *   rowY  = contentY + 14 + i * 22  (i is visible row index)
+ * The base rects below are in the 480x270 legacy framebuffer; the
+ * scale_rect helper upscales them for 1920x1080. */
+
+/* Bestiary view: one category tab per known category, then one
+ * row per visible creature. The category tab strip is not
+ * separately drawn in the modern bestiary view (the filter name
+ * lives in the title), but the screen reader benefits from
+ * surfacing each category tab so a user can navigate to "beasts"
+ * or "dragons" by tab id. */
+static void emit_bestiary_view(const M12_StartupMenuState* state,
+                                int fbW, int fbH)
+{
+    int margin = 480 / 30;
+    int heroH = 270 / 4;
+    int contentY;
+    int i;
+    int filteredCount;
+    int scrollOff;
+    int visible;
+    int categoryCount = (int)M12_BESTIARY_CAT_COUNT;
+    int catTabY = 42; /* top tab strip; rowY starts below hero */
+
+    /* FS_AX_Element stores a `const char*` pointer that lives until
+     * fs_ax_flush() consumes it. Stack-allocated snprintf buffers
+     * would dangle, so we pre-format the dynamic IDs into a static
+     * scratch array below. */
+    static char s_bestiary_cat_id[8][32];
+    static char s_bestiary_cat_value[8][16];
+    static char s_bestiary_row_id[12][32];
+    static char s_bestiary_row_value[12][96];
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+
+    /* Emit category tabs. The legacy tab rect is 60w x 18h starting
+     * at x=122. With 7 categories, lay them out in a single row. */
+    for (i = 0; i < categoryCount; ++i) {
+        AxRect base = { 122 + (i % 5) * 60, catTabY + (i / 5) * 22, 60, 18 };
+        const char* name = M12_Bestiary_CategoryName((M12_BestiaryCategory)i);
+        int isSelected = (state->bestiary.categoryFilter == i);
+        const char* selValue = isSelected ? "selected" : NULL;
+        if ((int)(sizeof(s_bestiary_cat_id) / sizeof(s_bestiary_cat_id[0])) <= i) {
+            continue;
+        }
+        snprintf(s_bestiary_cat_id[i], sizeof(s_bestiary_cat_id[i]),
+                 "BESTIARY_CAT_%d", i);
+        s_bestiary_cat_value[i][0] = '\0';
+        if (isSelected) {
+            snprintf(s_bestiary_cat_value[i], sizeof(s_bestiary_cat_value[i]),
+                     "%s", "selected");
+            selValue = s_bestiary_cat_value[i];
+        }
+        add_element_rect(fbW, fbH, s_bestiary_cat_id[i], name ? name : "",
+                         FS_AX_CATEGORY_TAB, base, 1, selValue);
+    }
+
+    /* Emit creature rows. Row N is the Nth visible entry
+     * (scrollOff..scrollOff+visible-1) in the filtered list. */
+    filteredCount = M12_Bestiary_FilteredCount(&state->bestiary);
+    scrollOff = state->bestiary.scrollOffset;
+    visible = M12_BESTIARY_VISIBLE_LINES;
+    if (visible > filteredCount - scrollOff) {
+        visible = filteredCount - scrollOff;
+    }
+    if (visible < 0) visible = 0;
+    if (visible > 12) visible = 12; /* hard cap for element budget */
+    if (visible > (int)(sizeof(s_bestiary_row_id) / sizeof(s_bestiary_row_id[0]))) {
+        visible = (int)(sizeof(s_bestiary_row_id) / sizeof(s_bestiary_row_id[0]));
+    }
+
+    for (i = 0; i < visible; ++i) {
+        const M12_BestiaryEntry* e =
+            M12_Bestiary_GetFiltered(&state->bestiary, scrollOff + i);
+        if (!e) break;
+        {
+            AxRect base = { 130, contentY + 14 + (i * 22), 240, 22 };
+            int isSelected = (state->bestiary.selectedIndex == scrollOff + i);
+            const char* value;
+            snprintf(s_bestiary_row_id[i], sizeof(s_bestiary_row_id[i]),
+                     "BESTIARY_ROW_%d", scrollOff + i);
+            if (isSelected) {
+                value = "selected";
+            } else {
+                snprintf(s_bestiary_row_value[i], sizeof(s_bestiary_row_value[i]),
+                         "%s | HP %d-%d | L%d",
+                         e->name ? e->name : "",
+                         e->hpMin, e->hpMax, e->dungeonLevel);
+                value = s_bestiary_row_value[i];
+            }
+            add_element_rect(fbW, fbH, s_bestiary_row_id[i],
+                             e->name ? e->name : "",
+                             FS_AX_BESTIARY_ROW, base, 1, value);
+        }
+    }
+}
+
+/* Item Encyclopedia view: one category tab per known category,
+ * then one row per visible item in the active category. */
+static void emit_item_encyclopedia_view(const M12_StartupMenuState* state,
+                                         int fbW, int fbH)
+{
+    int margin = 480 / 30;
+    int heroH = 270 / 4;
+    int contentY;
+    int i;
+    int categoryCount = (int)FS_ITEM_CAT_COUNT;
+    int total;
+    int catTabY = 42;
+    int sel = state->itemEncyclopediaSelectedIndex;
+    int cat = state->itemEncyclopediaCategory;
+    int scrollOff = state->itemEncyclopediaScrollOffset;
+    int visible = 12;
+    int rendered = 0;
+
+    /* Pre-format dynamic IDs / values into static scratch space
+     * so the FS_AX_Element pointers remain valid until flush. */
+    static char s_item_cat_id[8][32];
+    static char s_item_cat_value[8][16];
+    static char s_item_row_id[12][32];
+    static char s_item_row_value[12][96];
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+
+    /* Category tabs. */
+    for (i = 0; i < categoryCount; ++i) {
+        AxRect base = { 122 + (i % 5) * 60, catTabY + (i / 5) * 22, 60, 18 };
+        const char* name = fs_item_category_name((FS_ItemCategory)i);
+        int isSelected = (state->itemEncyclopediaCategory == i);
+        const char* selValue = NULL;
+        if ((int)(sizeof(s_item_cat_id) / sizeof(s_item_cat_id[0])) <= i) {
+            continue;
+        }
+        snprintf(s_item_cat_id[i], sizeof(s_item_cat_id[i]), "ITEM_CAT_%d", i);
+        if (isSelected) {
+            snprintf(s_item_cat_value[i], sizeof(s_item_cat_value[i]),
+                     "%s", "selected");
+            selValue = s_item_cat_value[i];
+        }
+        add_element_rect(fbW, fbH, s_item_cat_id[i], name ? name : "",
+                         FS_AX_CATEGORY_TAB, base, 1, selValue);
+    }
+
+    /* Item rows. Walk the global item list (like the renderer does)
+     * and emit only items in the active category. */
+    total = fs_item_encyclopedia_count();
+    for (i = 0; i < total && rendered < visible; ++i) {
+        const FS_ItemEntry* e = fs_item_encyclopedia_get(i);
+        if (!e) break;
+        if ((int)e->category != cat) continue;
+        if (i < scrollOff) continue;
+        if (rendered >= (int)(sizeof(s_item_row_id) / sizeof(s_item_row_id[0]))) {
+            break;
+        }
+        {
+            AxRect base = { 130, contentY + 14 + (rendered * 22), 240, 22 };
+            int isSelected = (i == sel);
+            const char* value;
+            snprintf(s_item_row_id[rendered], sizeof(s_item_row_id[rendered]),
+                     "ITEM_ROW_%d", i);
+            if (isSelected) {
+                value = "selected";
+            } else {
+                if (e->attack > 0) {
+                    snprintf(s_item_row_value[rendered],
+                             sizeof(s_item_row_value[rendered]),
+                             "%s | ATK %d | WT %d",
+                             e->name ? e->name : "", e->attack, e->weight);
+                } else if (e->defense > 0) {
+                    snprintf(s_item_row_value[rendered],
+                             sizeof(s_item_row_value[rendered]),
+                             "%s | DEF %d | WT %d",
+                             e->name ? e->name : "", e->defense, e->weight);
+                } else {
+                    snprintf(s_item_row_value[rendered],
+                             sizeof(s_item_row_value[rendered]),
+                             "%s | WT %d",
+                             e->name ? e->name : "", e->weight);
+                }
+                value = s_item_row_value[rendered];
+            }
+            add_element_rect(fbW, fbH, s_item_row_id[rendered],
+                             e->name ? e->name : "",
+                             FS_AX_ITEM_ENCYCLOPEDIA_ROW, base, 1, value);
+        }
+        ++rendered;
+    }
+}
+
+/* Screenshot Gallery view: one row per visible entry. The gallery's
+ * cell data is the public M12_ScreenshotGalleryState.entries[] list. */
+static void emit_screenshot_gallery_view(const M12_StartupMenuState* state,
+                                           int fbW, int fbH)
+{
+    int margin = 480 / 30;
+    int heroH = 270 / 4;
+    int contentY;
+    int i;
+    const M12_ScreenshotGalleryState* gal = &state->screenshotGallery;
+    int total = gal->entryCount;
+    int sel = gal->selectedIndex;
+    int scrollOff = gal->scrollOffset;
+    int visible = 12;
+
+    static char s_screenshot_id[12][32];
+    static char s_screenshot_value[12][80];
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+
+    for (i = scrollOff; i < total && i < scrollOff + visible; ++i) {
+        const M12_ScreenshotGalleryEntry* e = &gal->entries[i];
+        AxRect base = { 130, contentY + 14 + ((i - scrollOff) * 22), 240, 22 };
+        int slot = i - scrollOff;
+        int isSelected = (i == sel);
+        const char* value;
+        if (slot < 0
+            || slot >= (int)(sizeof(s_screenshot_id) / sizeof(s_screenshot_id[0]))) {
+            break;
+        }
+        snprintf(s_screenshot_id[slot], sizeof(s_screenshot_id[slot]),
+                 "SCREENSHOT_ROW_%d", i);
+        if (isSelected) {
+            value = "selected";
+        } else {
+            snprintf(s_screenshot_value[slot], sizeof(s_screenshot_value[slot]),
+                     "%s | %dx%d | %ld B",
+                     e->filename, e->width, e->height, e->fileSize);
+            value = s_screenshot_value[slot];
+        }
+        add_element_rect(fbW, fbH, s_screenshot_id[slot], e->filename,
+                         FS_AX_SCREENSHOT_THUMB, base, 1, value);
+    }
+}
+
+/* Museum of Lore view: one MUSEUM_CATEGORY element per archive
+ * section, then one MUSEUM_BULLET element per lore bullet on the
+ * active page. The category titles are private to menu_startup_m12.c
+ * but exposed via M12_Museum_GetCategoryTitle(). */
+static void emit_museum_view(const M12_StartupMenuState* state,
+                              int fbW, int fbH)
+{
+    int margin = 480 / 30;
+    int heroH = 270 / 4;
+    int contentY;
+    int leftW = (480 * 32) / 100;
+    int panelX = margin + leftW + 12;
+    int i;
+    int categoryCount = 5; /* M12_MUSEUM_CATEGORY_COUNT */
+    int catIndex = state->museumSelectedIndex;
+    if (catIndex < 0) catIndex = 0;
+    if (catIndex >= categoryCount) catIndex = categoryCount - 1;
+
+    static char s_museum_cat_id[5][32];
+    static char s_museum_cat_value[5][16];
+    static char s_museum_bullet_id[5][32];
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+
+    /* Category list (left panel). */
+    for (i = 0; i < categoryCount; ++i) {
+        const char* title = M12_Museum_GetCategoryTitle(i);
+        AxRect base = { margin + 10, contentY + 30 + (i * 28), leftW - 20, 24 };
+        int isSelected = (i == catIndex);
+        const char* selValue = NULL;
+        snprintf(s_museum_cat_id[i], sizeof(s_museum_cat_id[i]),
+                 "MUSEUM_CATEGORY_%d", i);
+        if (isSelected) {
+            snprintf(s_museum_cat_value[i], sizeof(s_museum_cat_value[i]),
+                     "%s", "selected");
+            selValue = s_museum_cat_value[i];
+        }
+        add_element_rect(fbW, fbH, s_museum_cat_id[i], title ? title : "",
+                         FS_AX_MUSEUM_CATEGORY, base, 1, selValue);
+    }
+
+    /* Active page bullets (right panel). */
+    {
+        int pageIndex = state->museumPageIndex;
+        if (pageIndex < 0) pageIndex = 0;
+        /* Page-count is read from the helper but we just clamp
+         * to bullet index 0..4 here since the helper signature
+         * already clamps for us. */
+        for (i = 0; i < 5; ++i) {
+            const char* bullet = M12_Museum_GetBullet(catIndex, pageIndex, i);
+            if (!bullet || !bullet[0]) continue;
+            {
+                AxRect base = { panelX + 18, contentY + 58 + (i * 20), 240, 18 };
+                snprintf(s_museum_bullet_id[i], sizeof(s_museum_bullet_id[i]),
+                         "MUSEUM_BULLET_%d", i);
+                add_element_rect(fbW, fbH, s_museum_bullet_id[i], bullet,
+                                 FS_AX_MUSEUM_BULLET, base, 1, NULL);
+            }
+        }
+    }
+}
+
 /* Message view (used for missing-data popup, data-dir result,
  * quick-resume missing, and the general "OK" confirmation). The popup
  * rect comes from m12_draw_message_view at x=118 y=74 w=188 h=88 in
@@ -383,13 +710,21 @@ void m12_launcher_a11y_emit(const M12_StartupMenuState* state,
     case M12_MENU_VIEW_GAME_OPTIONS:
         emit_game_options_view(state, framebufferWidth, framebufferHeight);
         break;
-    case M12_MENU_VIEW_MAIN:
+    case M12_MENU_VIEW_BESTIARY:
+        emit_bestiary_view(state, framebufferWidth, framebufferHeight);
+        break;
+    case M12_MENU_VIEW_ITEM_ENCYCLOPEDIA:
+        emit_item_encyclopedia_view(state, framebufferWidth, framebufferHeight);
+        break;
+    case M12_MENU_VIEW_SCREENSHOT_GALLERY:
+        emit_screenshot_gallery_view(state, framebufferWidth, framebufferHeight);
+        break;
     case M12_MENU_VIEW_MUSEUM:
+        emit_museum_view(state, framebufferWidth, framebufferHeight);
+        break;
+    case M12_MENU_VIEW_MAIN:
     case M12_MENU_VIEW_MANUAL_DOCS:
     case M12_MENU_VIEW_CHANGELOG:
-    case M12_MENU_VIEW_BESTIARY:
-    case M12_MENU_VIEW_ITEM_ENCYCLOPEDIA:
-    case M12_MENU_VIEW_SCREENSHOT_GALLERY:
     case M12_MENU_VIEW_DATA_VALIDATOR:
     case M12_MENU_VIEW_AUDIO_SETTINGS:
     case M12_MENU_VIEW_ACCESSIBILITY:

@@ -32,7 +32,21 @@ typedef enum {
     FS_AX_LAUNCHER_TAB,     /* Settings tab strip entry */
     FS_AX_LAUNCHER_ROW,     /* Settings / option row */
     FS_AX_POPUP,            /* Modal popup panel (missing-data, errors) */
-    FS_AX_POPUP_OK          /* Confirmation button inside a popup */
+    FS_AX_POPUP_OK,         /* Confirmation button inside a popup */
+    /* ── Extras-view cell-by-cell manifest additions (gap bestiary/encyclopedia/museum) ──
+     * The launcher has four navigable cell-by-cell views: Bestiary,
+     * Item Encyclopedia, Screenshot Gallery, and Museum of Lore.
+     * Each uses the same per-cell row model so screen readers can
+     * announce a "row N of M, NAME, selected" pattern. Categories
+     * (bestiary filter, item-encyclopedia category strip) are surfaced
+     * as their own element type so a screen reader can announce
+     * "Category tab BEASTS selected" before the row content. */
+    FS_AX_CATEGORY_TAB,         /* Bestiary / item-encyclopedia category tab */
+    FS_AX_BESTIARY_ROW,         /* One creature row in the bestiary list */
+    FS_AX_ITEM_ENCYCLOPEDIA_ROW,/* One item row in the item encyclopedia */
+    FS_AX_SCREENSHOT_THUMB,     /* One screenshot entry in the gallery */
+    FS_AX_MUSEUM_CATEGORY,      /* One archive section in the Museum of Lore */
+    FS_AX_MUSEUM_BULLET         /* One lore bullet on the active museum page */
 } FS_AX_ElementType;
 
 typedef struct {

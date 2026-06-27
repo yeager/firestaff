@@ -464,6 +464,17 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);
 void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
 
+/* ── Museum of Lore content accessors ───────────────────────────────
+ * The category table itself is private to menu_startup_m12.c (it is
+ * a static const array). The screen-reader manifest in
+ * menu_startup_a11y_m12.c needs the per-index display title and the
+ * active page bullets so it can label the MUSEUM_CATEGORY /
+ * MUSEUM_BULLET elements. These getters expose the minimum surface
+ * needed for accessibility without leaking the static data. */
+const char* M12_Museum_GetCategoryTitle(int index);
+int M12_Museum_GetCategoryPageCount(int index);
+const char* M12_Museum_GetBullet(int categoryIndex, int pageIndex, int bulletIndex);
+
 #ifdef __cplusplus
 }
 #endif

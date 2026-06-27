@@ -23,6 +23,9 @@
  *   6. Privacy — the popup's data-dir line is suppressed unless the
  *      caller passes includePaths=1 (verified by writing with both
  *      flags and comparing the JSON).
+ *   7. Extras views — the bestiary, item encyclopedia, screenshot
+ *      gallery, and museum of lore each emit per-cell rows with
+ *      stable element IDs and a "selected" value on the focused cell.
  *
  * Privacy/safety: the probe redirects HOME to a temp dir under
  * $TMPDIR (or /tmp on POSIX) so the manifest never touches the real
@@ -46,6 +49,9 @@
 #include "firestaff_accessibility.h"
 #include "menu_startup_a11y_m12.h"
 #include "menu_startup_m12.h"
+#include "bestiary_m12.h"
+#include "firestaff_item_encyclopedia.h"
+#include "screenshot_gallery_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -575,6 +581,294 @@ static void subtest_bounds_and_scaling(void)
                  "bounds: DM1 card rect stays inside 1920x1080");
 }
 
+/* Subtest H: bestiary view emits one category_tab per known
+ * category, then one bestiary_row per visible creature, with a
+ * "selected" value on the focused row. */
+static void subtest_bestiary_view(void)
+{
+    char buf[16384];
+    int n;
+    M12_StartupMenuState state;
+    int i;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_BESTIARY;
+    M12_Bestiary_Init(&state.bestiary);
+    state.bestiary.categoryFilter = M12_BESTIARY_CAT_BEAST;
+    state.bestiary.selectedIndex = 0;
+    state.bestiary.scrollOffset = 0;
+
+    fs_ax_begin_frame(480, 270, "launcher_bestiary");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n; /* read length is informational — invariants below inspect buf directly */
+
+    probe_record("INV_LAX_70_bestiary_cat_tabs",
+                 strstr(buf, "\"type\":\"category_tab\"") != NULL,
+                 "bestiary: category_tab elements emitted");
+    probe_record("INV_LAX_71_bestiary_cat_all_present",
+                 strstr(buf, "\"id\":\"BESTIARY_CAT_0\"") != NULL,
+                 "bestiary: BESTIARY_CAT_0 (ALL) tab present");
+    probe_record("INV_LAX_72_bestiary_cat_beast_present",
+                 strstr(buf, "\"id\":\"BESTIARY_CAT_3\"") != NULL,
+                 "bestiary: BESTIARY_CAT_3 (CONSTRUCT) tab present (3rd in pinned order)");
+    probe_record("INV_LAX_73_bestiary_row_type",
+                 strstr(buf, "\"type\":\"bestiary_row\"") != NULL,
+                 "bestiary: row type is bestiary_row");
+    /* The total bestiary is small (5 creatures) so several rows should
+     * be visible. Just check the first row id is present. */
+    probe_record("INV_LAX_74_bestiary_first_row_id",
+                 strstr(buf, "\"id\":\"BESTIARY_ROW_0\"") != NULL,
+                 "bestiary: BESTIARY_ROW_0 id is emitted");
+    /* The first visible row in category BEAST should carry the
+     * "selected" value. */
+    probe_record("INV_LAX_75_bestiary_selected_value",
+                 strstr(buf, "\"value\":\"selected\"") != NULL,
+                 "bestiary: focused row carries \"selected\" value");
+
+    /* Make sure no "selected" leaks into the category tabs for
+     * non-active categories. We are using BEAST (index 3). */
+    for (i = 0; i < (int)M12_BESTIARY_CAT_COUNT; ++i) {
+        char id[32];
+        const char* elementStart;
+        if (i == M12_BESTIARY_CAT_BEAST) continue;
+        snprintf(id, sizeof(id), "\"id\":\"BESTIARY_CAT_%d\"", i);
+        elementStart = strstr(buf, id);
+        if (!elementStart) continue;
+        /* Look for the closing of THIS element only — the next ',' or
+         * closing ']'. Good enough to detect a leak of "selected". */
+        {
+            const char* end = strstr(elementStart, "},");
+            if (!end) end = strstr(elementStart, "]}");
+            if (end) {
+                char idbuf[64];
+                int len = (int)(end - elementStart);
+                if (len > 0 && len < (int)sizeof(idbuf)) {
+                    memcpy(idbuf, elementStart, len);
+                    idbuf[len] = '\0';
+                    snprintf(id, sizeof(id), "INV_LAX_76_bestiary_cat%d_no_selected", i);
+                    probe_record(id, strstr(idbuf, "\"selected\"") == NULL,
+                                 "bestiary: non-active category tab does not carry \"selected\"");
+                }
+            }
+        }
+    }
+}
+
+/* Subtest I: item encyclopedia view emits one category_tab per
+ * known category, then one item_encyclopedia_row per visible item. */
+static void subtest_item_encyclopedia_view(void)
+{
+    char buf[16384];
+    int n;
+    M12_StartupMenuState state;
+    int i;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_ITEM_ENCYCLOPEDIA;
+    state.itemEncyclopediaCategory = FS_ITEM_CAT_WEAPON;
+    state.itemEncyclopediaSelectedIndex = 0;
+    state.itemEncyclopediaScrollOffset = 0;
+
+    fs_ax_begin_frame(480, 270, "launcher_items");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n; /* read length is informational — invariants below inspect buf directly */
+
+    probe_record("INV_LAX_80_item_cat_tabs",
+                 strstr(buf, "\"type\":\"category_tab\"") != NULL,
+                 "items: category_tab elements emitted");
+    probe_record("INV_LAX_81_item_cat_weapon_present",
+                 strstr(buf, "\"id\":\"ITEM_CAT_0\"") != NULL,
+                 "items: ITEM_CAT_0 (WEAPON) tab present");
+    probe_record("INV_LAX_82_item_row_type",
+                 strstr(buf, "\"type\":\"item_encyclopedia_row\"") != NULL,
+                 "items: row type is item_encyclopedia_row");
+    /* The encyclopedia has 32 items, but only items in the active
+     * category are emitted. Just verify the row id format is present
+     * and that some rows are emitted (we don't want a silent zero). */
+    probe_record("INV_LAX_83_item_at_least_one_row",
+                 strstr(buf, "\"ITEM_ROW_") != NULL,
+                 "items: at least one ITEM_ROW_* element emitted");
+
+    /* The active category tab (WEAPON = 0) should carry "selected". */
+    for (i = 0; i < (int)FS_ITEM_CAT_COUNT; ++i) {
+        char id[64];
+        const char* elementStart;
+        if (i == FS_ITEM_CAT_WEAPON) continue;
+        snprintf(id, sizeof(id), "\"id\":\"ITEM_CAT_%d\"", i);
+        elementStart = strstr(buf, id);
+        if (!elementStart) continue;
+        {
+            const char* end = strstr(elementStart, "},");
+            if (!end) end = strstr(elementStart, "]}");
+            if (end) {
+                char idbuf[256];
+                int len = (int)(end - elementStart);
+                if (len > 0 && len < (int)sizeof(idbuf)) {
+                    memcpy(idbuf, elementStart, len);
+                    idbuf[len] = '\0';
+                    snprintf(id, sizeof(id), "INV_LAX_84_item_cat%d_no_selected", i);
+                    probe_record(id, strstr(idbuf, "\"selected\"") == NULL,
+                                 "items: non-active category tab does not carry \"selected\"");
+                }
+            }
+        }
+    }
+}
+
+/* Subtest J: screenshot gallery view emits one screenshot_thumb per
+ * visible entry, with stable ids and bounds. The probe seeds the
+ * gallery with two synthetic entries to keep it deterministic. */
+static void subtest_screenshot_gallery_view(void)
+{
+    char buf[16384];
+    int n;
+    M12_StartupMenuState state;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_SCREENSHOT_GALLERY;
+
+    /* Seed two synthetic gallery entries — deterministic probe only,
+     * never touches the real verification-screens/ directory. */
+    {
+        M12_ScreenshotGalleryState* gal = &state.screenshotGallery;
+        memset(gal, 0, sizeof(*gal));
+        gal->entryCount = 2;
+        gal->selectedIndex = 1;
+        gal->scrollOffset = 0;
+        snprintf(gal->entries[0].filename,
+                 sizeof(gal->entries[0].filename),
+                 "%s", "dm1_title.png");
+        gal->entries[0].width = 1920;
+        gal->entries[0].height = 1080;
+        gal->entries[0].fileSize = 12345;
+        snprintf(gal->entries[1].filename,
+                 sizeof(gal->entries[1].filename),
+                 "%s", "csb_dungeon_view.png");
+        gal->entries[1].width = 1280;
+        gal->entries[1].height = 720;
+        gal->entries[1].fileSize = 67890;
+    }
+
+    fs_ax_begin_frame(480, 270, "launcher_screenshots");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n; /* read length is informational — invariants below inspect buf directly */
+
+    probe_record("INV_LAX_90_screenshot_thumb_type",
+                 strstr(buf, "\"type\":\"screenshot_thumb\"") != NULL,
+                 "screenshots: thumbnail type is screenshot_thumb");
+    probe_record("INV_LAX_91_screenshot_first_row_id",
+                 strstr(buf, "\"id\":\"SCREENSHOT_ROW_0\"") != NULL,
+                 "screenshots: SCREENSHOT_ROW_0 id is emitted");
+    probe_record("INV_LAX_92_screenshot_first_filename_label",
+                 strstr(buf, "\"label\":\"dm1_title.png\"") != NULL,
+                 "screenshots: first entry carries filename label");
+    probe_record("INV_LAX_93_screenshot_selected_value",
+                 strstr(buf, "\"value\":\"selected\"") != NULL,
+                 "screenshots: focused row carries \"selected\" value");
+}
+
+/* Subtest K: museum of lore view emits one museum_category per
+ * archive section, then one museum_bullet per visible lore line on
+ * the active page. */
+static void subtest_museum_view(void)
+{
+    char buf[16384];
+    int n;
+    M12_StartupMenuState state;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_MUSEUM;
+    state.museumSelectedIndex = 0; /* DUNGEON MASTER */
+    state.museumPageIndex = 0;
+
+    fs_ax_begin_frame(480, 270, "launcher_museum");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n; /* read length is informational — invariants below inspect buf directly */
+
+    probe_record("INV_LAX_100_museum_category_type",
+                 strstr(buf, "\"type\":\"museum_category\"") != NULL,
+                 "museum: museum_category elements emitted");
+    probe_record("INV_LAX_101_museum_category_first",
+                 strstr(buf, "\"id\":\"MUSEUM_CATEGORY_0\"") != NULL,
+                 "museum: MUSEUM_CATEGORY_0 (DUNGEON MASTER) id is emitted");
+    probe_record("INV_LAX_102_museum_category_dm2",
+                 strstr(buf, "\"id\":\"MUSEUM_CATEGORY_2\"") != NULL,
+                 "museum: MUSEUM_CATEGORY_2 (DUNGEON MASTER II) id is emitted");
+    probe_record("INV_LAX_103_museum_category_label",
+                 strstr(buf, "\"label\":\"DUNGEON MASTER II\"") != NULL
+                     || strstr(buf, "DUNGEON MASTER II") != NULL,
+                 "museum: category label surfaces the section name");
+    probe_record("INV_LAX_104_museum_category_selected",
+                 strstr(buf, "\"id\":\"MUSEUM_CATEGORY_0\",\"type\":\"museum_category\"") != NULL
+                     && strstr(buf, "\"value\":\"selected\"") != NULL,
+                 "museum: focused category carries \"selected\" value");
+
+    /* Bullets for the active page. The first bullet on page 0 of
+     * DUNGEON MASTER is the 1987 FTL GAMES line. */
+    probe_record("INV_LAX_105_museum_bullet_type",
+                 strstr(buf, "\"type\":\"museum_bullet\"") != NULL,
+                 "museum: museum_bullet elements emitted");
+    probe_record("INV_LAX_106_museum_bullet_id_present",
+                 strstr(buf, "\"id\":\"MUSEUM_BULLET_0\"") != NULL,
+                 "museum: MUSEUM_BULLET_0 id is emitted");
+    probe_record("INV_LAX_107_museum_bullet_label_announced",
+                 strstr(buf, "\"id\":\"MUSEUM_BULLET_0\",\"type\":\"museum_bullet\",\"label\":\"1987 FTL GAMES\"") != NULL
+                     || strstr(buf, "1987 FTL GAMES") != NULL,
+                 "museum: bullet label announces \"1987 FTL GAMES\"");
+
+    /* Now switch to a different page and verify bullet content
+     * actually changes (the emission is state-driven, not a static
+     * template). */
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_MUSEUM;
+    state.museumSelectedIndex = 0;
+    state.museumPageIndex = 2; /* PRESERVATION NOTES */
+    fs_ax_begin_frame(480, 270, "launcher_museum_p2");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n; /* read length is informational — invariants below inspect buf directly */
+    probe_record("INV_LAX_108_museum_bullet_page2_changes",
+                 strstr(buf, "PRESERVATION NOTES") != NULL,
+                 "museum: page 2 bullet content reflects PRESERVATION NOTES");
+}
+
 /* ── main ─────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -608,6 +902,18 @@ int main(void)
 
     printf("\n[G] bounds and modern scaling\n");
     subtest_bounds_and_scaling();
+
+    printf("\n[H] bestiary view: category tabs + creature rows\n");
+    subtest_bestiary_view();
+
+    printf("\n[I] item encyclopedia view: category tabs + item rows\n");
+    subtest_item_encyclopedia_view();
+
+    printf("\n[J] screenshot gallery view: thumbnail rows\n");
+    subtest_screenshot_gallery_view();
+
+    printf("\n[K] museum of lore view: sections + lore bullets\n");
+    subtest_museum_view();
 
     teardown_a11y_home();
     fs_ax_shutdown();

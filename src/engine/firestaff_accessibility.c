@@ -108,6 +108,12 @@ static const char* type_to_string(FS_AX_ElementType type)
     case FS_AX_LAUNCHER_ROW:  return "launcher_row";
     case FS_AX_POPUP:         return "popup";
     case FS_AX_POPUP_OK:      return "popup_ok";
+    case FS_AX_CATEGORY_TAB:  return "category_tab";
+    case FS_AX_BESTIARY_ROW:  return "bestiary_row";
+    case FS_AX_ITEM_ENCYCLOPEDIA_ROW: return "item_encyclopedia_row";
+    case FS_AX_SCREENSHOT_THUMB: return "screenshot_thumb";
+    case FS_AX_MUSEUM_CATEGORY: return "museum_category";
+    case FS_AX_MUSEUM_BULLET:  return "museum_bullet";
     default:                  return "unknown";
     }
 }
