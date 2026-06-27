@@ -1,4 +1,5 @@
 #include "nexus_v1_bpx_bpk.h"
+#include "nexus_v1_bpk_archive.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -142,6 +143,116 @@ int nexus_v1_bpx0_parse(const uint8_t *data,
         entry->packed_size = packed_size;
         entry->unpacked_size = unpacked_size;
         entry->method = method;
+    }
+
+    return NEXUS_V1_BPX_BPK_OK;
+}
+
+int nexus_v1_bpx_prs3_parse(const uint8_t *data,
+                            size_t size,
+                            Nexus_V1_BpxBpkArchive *out_archive) {
+    uint16_t entry_count;
+    uint32_t table_offset;
+    uint32_t data_offset;
+    size_t table_bytes;
+    uint16_t i;
+
+    if (!data || !out_archive) return NEXUS_V1_BPX_BPK_ERR_NULL;
+    memset(out_archive, 0, sizeof(*out_archive));
+
+    if (size < NEXUS_V1_BPX0_HEADER_SIZE) {
+        return NEXUS_V1_BPX_BPK_ERR_TOO_SMALL;
+    }
+    if (memcmp(data, "BPX3", 4) != 0) {
+        return NEXUS_V1_BPX_BPK_ERR_BAD_MAGIC;
+    }
+
+    /* Layout: magic BPX3, version u16, count u16, table_offset u32,
+     * data_offset u32. Identical to BPX0 except for the magic byte. */
+    if (rb16(data + 4) != 1u) return NEXUS_V1_BPX_BPK_ERR_UNSUPPORTED;
+
+    entry_count = rb16(data + 6);
+    if (entry_count == 0u || entry_count > NEXUS_V1_BPX_BPK_MAX_ENTRIES) {
+        return NEXUS_V1_BPX_BPK_ERR_COUNT;
+    }
+
+    table_offset = rb32(data + 8);
+    data_offset = rb32(data + 12);
+    table_bytes = (size_t)entry_count * NEXUS_V1_BPX0_ENTRY_SIZE;
+    if (!range_fits(table_offset, table_bytes, size) ||
+        data_offset < table_offset + table_bytes ||
+        data_offset > size) {
+        return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
+    }
+
+    out_archive->format = NEXUS_V1_BPX_BPK_FORMAT_SYNTHETIC_PRS3;
+    out_archive->entry_count = entry_count;
+    out_archive->table_offset = table_offset;
+    out_archive->data_offset = data_offset;
+
+    for (i = 0; i < entry_count; ++i) {
+        const uint8_t *record = data + table_offset + ((size_t)i * NEXUS_V1_BPX0_ENTRY_SIZE);
+        Nexus_V1_BpxBpkEntry *entry = &out_archive->entries[i];
+        uint16_t width;
+        uint8_t mode;
+        uint8_t height;
+        uint32_t offset;
+        uint32_t pixel_count;
+
+        /* 32-byte synthetic PRS3 record layout (BPX3):
+         *   bytes  0..16 : entry name (NUL-padded)
+         *   bytes 16..18 : width (BE uint16)
+         *   byte  18    : mode tag (6/14/22/30)
+         *   byte  19    : height (BE uint8) -- aligned to MENU.BPK byte 19
+         *   bytes 20..24 : pixel count (BE uint32, must equal width*height)
+         *   bytes 24..28 : payload offset (BE uint32)
+         *   bytes 28..32 : reserved (must be zero)
+         *
+         * The PRS3 magic ("PRS3") and version word (0x00000001) are
+         * implicit and re-emitted by extract/printer helpers when needed.
+         * This keeps every entry at the fixed 32-byte BPX record size
+         * while preserving the MENU.BPK byte 19 anchor for height. */
+        memcpy(entry->name, record, sizeof(entry->name));
+        entry->name[sizeof(entry->name) - 1] = '\0';
+        if (entry->name[0] == '\0') {
+            return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
+        }
+
+        width = rb16(record + 16);
+        mode = record[18];
+        height = record[19];
+        if (mode != NEXUS_V1_BPK_MODE_8BPP &&
+            mode != NEXUS_V1_BPK_MODE_16BPP &&
+            mode != NEXUS_V1_BPK_MODE_24BPP &&
+            mode != NEXUS_V1_BPK_MODE_32BPP) {
+            return NEXUS_V1_BPX_BPK_ERR_METHOD;
+        }
+        if (width == 0u || height == 0u) {
+            return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
+        }
+
+        pixel_count = rb32(record + 20);
+        if (pixel_count != (uint32_t)width * (uint32_t)height) {
+            return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
+        }
+
+        offset = rb32(record + 24);
+        if (offset < data_offset || offset > size) {
+            return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
+        }
+        if (!is_zero_reserved(record + 28, 4)) {
+            return NEXUS_V1_BPX_BPK_ERR_UNSUPPORTED;
+        }
+
+        entry->offset = offset;
+        entry->packed_size = (uint32_t)(size - offset);
+        entry->unpacked_size = pixel_count * (uint32_t)mode;
+        entry->method = NEXUS_V1_BPX_BPK_METHOD_PRS3_UNKNOWN;
+        entry->width = width;
+        entry->height = height;
+        entry->mode = mode;
+        entry->pixel_count = pixel_count;
+        entry->has_prs3_magic = 1;
     }
 
     return NEXUS_V1_BPX_BPK_OK;

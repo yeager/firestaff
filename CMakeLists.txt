@@ -13782,6 +13782,35 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 MENU.BPK boundary inspection probe (pass1082). Data-free
+# synthetic BPX3 contract plus optional real MENU.BPK load. Walks the
+# observed BPPK outer wrapper, BMPD directory header, 163 candidate
+# offsets, 162 PRS3 sub-headers, and the unique entry[0] directory
+# trailer; never claims PRS3 decompression. CTest as
+# nexus_v1_menumenu_bpk_inspect so the gate runs without copyrighted
+# assets while still exercising the structural invariants.
+add_executable(firestaff_nexus_v1_menumenu_bpk_inspect_probe
+    probes/nexus/firestaff_nexus_v1_menumenu_bpk_inspect_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_menumenu_bpk_inspect_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_menumenu_bpk_inspect_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_menumenu_bpk_inspect_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_menumenu_bpk_inspect
+    COMMAND firestaff_nexus_v1_menumenu_bpk_inspect_probe
+)
+set_tests_properties(nexus_v1_menumenu_bpk_inspect PROPERTIES
+    LABELS "tier4;nexus;bpx_bpk;archive;skip_safe"
+)
+
 # Nexus V1 light-overflow data-model + bug-classification probe.
 # Headless and data-free: implements the BUG0_18 timeline-full +
 # F0257 recursive-weaker event chain that DMWeb documents as the

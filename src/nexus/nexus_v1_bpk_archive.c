@@ -140,3 +140,131 @@ int nexus_v1_bpk_archive_parse(const uint8_t *data,
     out_info->raw_payload_count = raw;
     return 0;
 }
+
+int nexus_v1_bpk_archive_get_entry_prefix(const uint8_t *data,
+                                          size_t data_size,
+                                          uint32_t index,
+                                          Nexus_V1_BpkEntryPrefix *out_prefix) {
+    Nexus_V1_BpkEntry entry;
+    uint16_t width;
+    uint8_t height;
+    uint8_t mode;
+
+    if (!out_prefix) return -1;
+    memset(out_prefix, 0, sizeof(*out_prefix));
+
+    if (nexus_v1_bpk_archive_get_entry(data, data_size, index, &entry) != 0) {
+        return -1;
+    }
+
+    out_prefix->prefix_complete = (entry.stored_size >=
+                                   NEXUS_V1_BPK_ENTRY_PREFIX_BYTES);
+
+    /* Even partial entries get the bytes we have; the rest stays zeroed. */
+    {
+        uint32_t copy = entry.stored_size;
+        if (copy > NEXUS_V1_BPK_ENTRY_PREFIX_BYTES) {
+            copy = NEXUS_V1_BPK_ENTRY_PREFIX_BYTES;
+        }
+        if (copy > 0U) {
+            memcpy(out_prefix->raw,
+                   data + entry.offset,
+                   copy);
+        }
+    }
+
+    width = (uint16_t)(((uint16_t)out_prefix->raw[NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET]
+                         << 8) |
+                        out_prefix->raw[NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET + 1U]);
+    height = out_prefix->raw[NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET];
+    mode = out_prefix->raw[NEXUS_V1_BPK_PREFIX_MODE_OFFSET];
+
+    out_prefix->width = width;
+    out_prefix->height = height;
+    out_prefix->mode = mode;
+    return 0;
+}
+
+int nexus_v1_bpk_archive_inspect_prs3(const uint8_t *data,
+                                      size_t data_size,
+                                      uint32_t index,
+                                      Nexus_V1_BpkPrs3Info *out_info) {
+    Nexus_V1_BpkEntry entry;
+    Nexus_V1_BpkEntryPrefix prefix;
+    uint32_t prs3_off;
+    uint32_t prs3_pixel_count;
+    uint32_t version;
+    uint32_t prefix_pixels;
+    uint32_t payload_start;
+
+    if (!out_info) return -1;
+    memset(out_info, 0, sizeof(*out_info));
+
+    if (nexus_v1_bpk_archive_get_entry(data, data_size, index, &entry) != 0) {
+        return -1;
+    }
+    if (nexus_v1_bpk_archive_get_entry_prefix(data, data_size, index,
+                                              &prefix) != 0) {
+        return -1;
+    }
+
+    out_info->has_prs3 = entry.has_prs3;
+    if (!entry.has_prs3) {
+        return 0;
+    }
+
+    /* Need 20 (prefix) + 12 (PRS3 hdr) = 32 bytes minimum to inspect. */
+    if (entry.stored_size <
+        NEXUS_V1_BPK_ENTRY_PREFIX_BYTES + NEXUS_V1_BPK_PRS3_HEADER_BYTES) {
+        return -1;
+    }
+
+    prs3_off = entry.offset + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES;
+
+    /* PRS3+0 is the magic (already verified by entry.has_prs3 == 1). */
+    version = rd32_be(data + prs3_off + 4U);
+    out_info->prs3_version_matches = (version == NEXUS_V1_BPK_PRS3_VERSION);
+
+    prs3_pixel_count = rd32_be(data + prs3_off + 8U);
+    out_info->prs3_pixel_count = prs3_pixel_count;
+
+    prefix_pixels = (uint32_t)prefix.width * (uint32_t)prefix.height;
+    out_info->prefix_pixels = prefix_pixels;
+    out_info->pixel_count_matches = (prs3_pixel_count == prefix_pixels);
+
+    payload_start = prs3_off + NEXUS_V1_BPK_PRS3_HEADER_BYTES;
+    if (payload_start <= entry.next_offset) {
+        out_info->payload_available = 1;
+        out_info->compressed_size = entry.next_offset - payload_start;
+    }
+    return 0;
+}
+
+int nexus_v1_bpk_archive_mode_distribution(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkModeDistribution *out_dist) {
+    uint32_t count;
+
+    if (!out_dist) return -1;
+    memset(out_dist, 0, sizeof(*out_dist));
+
+    if (read_header(data, data_size, &count) != 0) return -1;
+
+    for (uint32_t i = 0; i < count; ++i) {
+        Nexus_V1_BpkEntryPrefix prefix;
+        if (nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
+                                                  &prefix) != 0) {
+            return -1;
+        }
+        if (!prefix.prefix_complete) continue;
+
+        out_dist->mode_count[prefix.mode] += 1U;
+        out_dist->total_with_prefix += 1U;
+        if (prefix.mode == NEXUS_V1_BPK_MODE_TRAILER) {
+            out_dist->trailer_index = i;
+            out_dist->trailer_found = 1;
+        }
+    }
+    return 0;
+}
