@@ -39,7 +39,7 @@
     "source BMP sha256 unique across all rows",
     "presented BMP is valid 320x200 24-bit BMP with >200 non-black pixels"
   ],
-  "generated_at": "2026-06-25T14:57:50.259590+00:00",
+  "generated_at": "2026-06-27T07:20:13.198111+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this gate.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -57,9 +57,10 @@
       "notes": [
         "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
         "no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'); boot probe parked at THERON READY without decoding Track 02 content",
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
         "sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
       ],
-      "presented_sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5",
+      "presented_sha256": "4084621b493f0db180c5db5c99ba437764b265af6c47d55be03faa7829f2ab69",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON READY",
@@ -77,9 +78,10 @@
       "notes": [
         "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
         "no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'); boot probe parked at THERON READY without decoding Track 02 content",
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
         "sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
       ],
-      "presented_sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5",
+      "presented_sha256": "4084621b493f0db180c5db5c99ba437764b265af6c47d55be03faa7829f2ab69",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON READY",
@@ -97,9 +99,10 @@
       "notes": [
         "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
         "no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'); boot probe parked at THERON READY without decoding Track 02 content",
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
         "sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
       ],
-      "presented_sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5",
+      "presented_sha256": "4084621b493f0db180c5db5c99ba437764b265af6c47d55be03faa7829f2ab69",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON READY",

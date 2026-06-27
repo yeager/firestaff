@@ -1,5 +1,5 @@
 {
-  "branch": "dm1v1-capture-gap-close-20260620",
+  "branch": "main",
   "checks": [
     {
       "kind": "pass375_deferred_explosion_prerequisite",
@@ -36,16 +36,16 @@
     {
       "kind": "completion_matrix_credit",
       "observed": {
-        "completionPercent": 58,
-        "note": "Many source-backed UI/viewport/title/HUD/palette rows are MATCHED or narrowed; pass373 proves the live launcher movement route reaches the source-locked wall/door/occlusion redraw stack, and pass375 moves explosions into the ReDMCSB F0115 after-all-packed-cells deferred pass. Full pixel/content parity remains open.",
-        "points": 58,
-        "viewport_ui_render": 12
+        "completionPercent": 78,
+        "note": "Viewport wall/door/ornament/side-content source slices, champion panel/HUD/status boxes, Hall mirror frame/portrait probes, chest UI, and title/swoosh gates are broad; full original pixel-pair coverage is still incomplete.",
+        "points": 78,
+        "viewport_ui_render": 17
       },
-      "ok": true
+      "ok": false
     },
     {
       "kind": "completion_doc_credit",
-      "ok": true
+      "ok": false
     },
     {
       "kind": "firestaff_completion_matrix_verifier",
@@ -61,19 +61,19 @@
     },
     {
       "kind": "firestaff_completion_status_cli",
-      "ok": true,
+      "ok": false,
       "result": {
         "cmd": [
           "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/firestaff_completion_status.py"
         ],
-        "outputTail": "DM1 V1 | completionPercent=58% | points=58/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=20% | points=20/100 | status=inventory_and_launch_blocker | primaryBlocker=Positive front-door render smoke and source-locked QuickPlay/load-route boundaries exist, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
+        "outputTail": "DM1 V1 | completionPercent=78% | points=78/100 | status=playable_verified_partial | primaryBlocker=Representative original-vs-Firestaff overlay parity remains incomplete. Original I34E keyboard-buffer live debugger observation still needs a host with `dosbox-debug`, `Xvfb`, and `xdotool`.\nDM1 V2 | completionPercent=51% | points=51/100 | status=runtime_presentation_verified_partial | primaryBlocker=V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open.\nCSB V1 | completionPercent=43% | points=43/100 | status=runtime_boundary_verified_partial | primaryBlocker=CSB has launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates, but end-to-end gameplay/render capture proof is still being hardened.\nCSB V2 | completionPercent=31% | points=31/100 | status=presentation_verified_partial | primaryBlocker=CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open.\nDM2 V1 | completionPercent=34% | points=34/100 | status=runtime_slices_verified_partial | primaryBlocker=Door/button, projectile, creature, minimap, weather/timer, and save-adjacent slices exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work.\nDM2 V2 | completionPercent=16% | points=16/100 | status=presentation_scaffold_partial | primaryBlocker=V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete.\nDM Nexus V1 | completionPercent=37% | points=37/100 | status=runtime_slices_verified_partial | primaryBlocker=DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work.\nDM Nexus V2 | completionPercent=20% | points=20/100 | status=presentation_scaffold_partial | primaryBlocker=V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete.\nTheron V1 | completionPercent=39% | points=39/100 | status=track02_slices_verified_partial | primaryBlocker=Track 02 provenance, parser, save/progression/shop/mechanics slices exist; positive real-asset launch through Track 02 and broader runtime capture remain active work.\n",
         "returncode": 0
       }
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 56/100 to 57/100 by crediting one additional viewport_ui_render point for pass375's ReDMCSB F0115 after-all-packed-cells deferred explosion pass.",
-  "head": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
+  "head": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
@@ -82,6 +82,6 @@
   ],
   "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass376_dm1_v1_completion_deferred_explosion_credit.v1",
-  "status": "PASS376_DM1_V1_DEFERRED_EXPLOSION_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-06-21T19:17:25.131968+00:00"
+  "status": "BLOCKED_PASS376_DM1_V1_DEFERRED_EXPLOSION_COMPLETION_CREDIT",
+  "timestampUtc": "2026-06-25T21:02:44.669435+00:00"
 }

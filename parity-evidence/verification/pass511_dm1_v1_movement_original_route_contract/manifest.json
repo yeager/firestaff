@@ -38,18 +38,17 @@
     }
   },
   "completionBoundary": {
-    "completionPercent": 58,
+    "completionPercent": 78,
     "coreInputMovement": [
-      13,
-      "pass296/pass299 plus pass372/pass406 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, target-square legality, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof."
+      15,
+      "Input command queue, keypad route, movement timing/legal-target gates, touch/mouse queue routes, stairs transitions, and cooldown/F0380 ordering are source/runtime-gated."
     ],
     "originalOverlayRegression": [
       0,
-      "Representative original runtime overlay parity is not yet proven; route/capture remains active blocker."
+      "Original overlay/capture work has partial artifacts and exact wall matches, but representative movement/HUD/viewport parity is not yet promoted."
     ],
     "primaryBlockers": [
-      "Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.",
-      "Representative original runtime movement/HUD/viewport overlay parity missing."
+      "Representative original-vs-Firestaff overlay parity remains incomplete. Original I34E keyboard-buffer live debugger observation still needs a host with `dosbox-debug`, `Xvfb`, and `xdotool`."
     ]
   },
   "decision": "The next landable DM1 V1 movement step is a fresh original-runtime route transcript, not another Firestaff movement implementation patch: prove keyboard-buffer token -> F0361 queue write -> F0380 pop -> F0365/F0366 state delta -> F0267 tuple/timing for steps -> F0128/F0097 post-command viewport boundary, then attach route-labeled original captures.",
@@ -82,7 +81,7 @@
     "no completion percentage change is claimed",
     "no viewport/wall implementation is modified"
   ],
-  "ok": true,
+  "ok": false,
   "priorGates": {
     "pass504_keyboard_buffer_state_delta_blocker": {
       "expectedStatus": "PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED",
@@ -121,7 +120,10 @@
       "status": "PASS510_ORIGINAL_CAPTURE_ROUTE_LABEL_FILENAME_FIXTURE"
     }
   },
-  "problems": [],
+  "problems": [
+    "DM1 V1 matrix no longer has expected movement/original-overlay boundary",
+    "DM1 V1 matrix no longer names the keyboard-buffer transcript blocker"
+  ],
   "schema": "firestaff.parity.pass511_dm1_v1_movement_original_route_contract.v1",
   "sourceAudit": [
     {
@@ -206,5 +208,5 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED"
+  "status": "FAIL_PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT"
 }

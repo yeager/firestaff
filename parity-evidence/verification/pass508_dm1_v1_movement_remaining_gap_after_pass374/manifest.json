@@ -3,7 +3,7 @@
     "pass373",
     "pass374"
   ],
-  "branch": "dm1v1-capture-gap-close-20260620",
+  "branch": "main",
   "currentEvidenceChecks": [
     {
       "id": "pass373-live-route-wall-redraw-green",
@@ -13,30 +13,30 @@
     },
     {
       "id": "pass374-completion-credit-green",
-      "ok": true,
+      "ok": false,
       "path": "parity-evidence/verification/pass374_dm1_v1_completion_viewport_wall_credit/manifest.json",
-      "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED"
+      "status": "BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT"
     },
     {
       "id": "completion-matrix-current-after-pass374",
       "observed": {
-        "completionPercent": 58,
-        "core_input_movement": 13,
+        "completionPercent": 78,
+        "core_input_movement": 15,
         "original_overlay_regression": 0,
-        "points": 58,
-        "viewport_ui_render": 12
+        "points": 78,
+        "viewport_ui_render": 17
       },
-      "ok": true
+      "ok": false
     },
     {
-      "coreNote": "pass296/pass299 plus pass372/pass406 source-lock Firestaff input/keypad route through C001..C006 command queue, movement timing/pipeline, target-square legality, and first viewport redraw; residual is original DOS keyboard-buffer transcript/overlay proof.",
+      "coreNote": "Input command queue, keypad route, movement timing/legal-target gates, touch/mouse queue routes, stairs transitions, and cooldown/F0380 ordering are source/runtime-gated.",
       "id": "completion-notes-name-next-gap",
-      "ok": true,
-      "originalOverlayNote": "Representative original runtime overlay parity is not yet proven; route/capture remains active blocker."
+      "ok": false,
+      "originalOverlayNote": "Original overlay/capture work has partial artifacts and exact wall matches, but representative movement/HUD/viewport parity is not yet promoted."
     },
     {
       "id": "docs-carry-narrowed-nonclaim",
-      "ok": true
+      "ok": false
     },
     {
       "id": "prior-original-route-blocker-consulted",
@@ -59,7 +59,7 @@
         "python3",
         "tools/firestaff_completion_status.py"
       ],
-      "outputTail": "DM1 V1 | completionPercent=58% | points=58/100 | status=in_progress_verified_partial | primaryBlocker=Original DOSBox/FIRES keyboard-buffer transcript for I34E route keys remains unclaimed, but no longer blocks Firestaff live route.\nDM1 V2 | completionPercent=27% | points=27/100 | status=in_progress_verified_partial | primaryBlocker=V2 completion audit says 100% is not verifiable; phases 1\u20136 remain absent/incomplete.\nCSB V1 | completionPercent=20% | points=20/100 | status=inventory_and_launch_blocker | primaryBlocker=Positive front-door render smoke and source-locked QuickPlay/load-route boundaries exist, but true CSB runtime/capture gates remain blocked; current launch evidence is a deliberate runtime blocker, not playable CSB.\nCSB V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No CSB V2 matrix or gates.\nDM2 V1 | completionPercent=7% | points=7/100 | status=inventory_only | primaryBlocker=Need DM2-specific disassembly/runtime matrix; do not infer from DM1/CSB.\nDM2 V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM2 V2 matrix or gates.\nDM Nexus V1 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V1 reference inventory, matrix, or gates.\nDM Nexus V2 | completionPercent=0% | points=0/100 | status=not_started | primaryBlocker=No DM Nexus V2 reference inventory, matrix, or gates.\n",
+      "outputTail": "DM1 V1 | completionPercent=78% | points=78/100 | status=playable_verified_partial | primaryBlocker=Representative original-vs-Firestaff overlay parity remains incomplete. Original I34E keyboard-buffer live debugger observation still needs a host with `dosbox-debug`, `Xvfb`, and `xdotool`.\nDM1 V2 | completionPercent=51% | points=51/100 | status=runtime_presentation_verified_partial | primaryBlocker=V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open.\nCSB V1 | completionPercent=43% | points=43/100 | status=runtime_boundary_verified_partial | primaryBlocker=CSB has launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates, but end-to-end gameplay/render capture proof is still being hardened.\nCSB V2 | completionPercent=31% | points=31/100 | status=presentation_verified_partial | primaryBlocker=CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open.\nDM2 V1 | completionPercent=34% | points=34/100 | status=runtime_slices_verified_partial | primaryBlocker=Door/button, projectile, creature, minimap, weather/timer, and save-adjacent slices exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work.\nDM2 V2 | completionPercent=16% | points=16/100 | status=presentation_scaffold_partial | primaryBlocker=V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete.\nDM Nexus V1 | completionPercent=37% | points=37/100 | status=runtime_slices_verified_partial | primaryBlocker=DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work.\nDM Nexus V2 | completionPercent=20% | points=20/100 | status=presentation_scaffold_partial | primaryBlocker=V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete.\nTheron V1 | completionPercent=39% | points=39/100 | status=track02_slices_verified_partial | primaryBlocker=Track 02 provenance, parser, save/progression/shop/mechanics slices exist; positive real-asset launch through Track 02 and broader runtime capture remain active work.\n",
       "returncode": 0
     }
   ],
@@ -126,5 +126,5 @@
   },
   "repo": "/Users/bosse/.openclaw/workspace-main",
   "schema": "pass508_dm1_v1_movement_remaining_gap_after_pass374.v1",
-  "status": "BLOCKED_PASS508_DM1_V1_MOVEMENT_REMAINING_ORIGINAL_OVERLAY_GAP_PROVED"
+  "status": "FAIL_PASS508_DM1_V1_MOVEMENT_REMAINING_GAP_AUDIT"
 }

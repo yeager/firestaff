@@ -1,8 +1,8 @@
 {
   "schema": "firestaff.pass547_csb_v1_runtime_readiness_backfill.v2",
-  "pass": true,
+  "pass": false,
   "scope": "CSB V1 runtime readiness backfill; retired blocker gate with positive CSB launch handoff evidence.",
-  "blocker_retired": true,
+  "blocker_retired": false,
   "source_anchors": [
     {
       "id": "redmcsb_csb_header_identity",
@@ -70,8 +70,11 @@
         "All five catalogued games now have runtime launch boundaries",
         "strcmp(gameId, \"csb\") == 0"
       ],
-      "missing": [],
-      "ok": true
+      "missing": [
+        "All five catalogued games now have runtime launch boundaries",
+        "strcmp(gameId, \"csb\") == 0"
+      ],
+      "ok": false
     },
     {
       "id": "firestaff_m12_launch_intent_accepts_available_csb",
@@ -84,8 +87,13 @@
         "M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)",
         "version && version->matched ? 1 : 0"
       ],
-      "missing": [],
-      "ok": true
+      "missing": [
+        "M12_StartupMenu_GetLaunchIntent",
+        "m12_game_supported(intent.gameId)",
+        "M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)",
+        "version && version->matched ? 1 : 0"
+      ],
+      "ok": false
     },
     {
       "id": "firestaff_m11_csb_handoff_to_game_loop",
@@ -97,8 +105,10 @@
         "CSB READY (FS LOOP)",
         "CSB READY: gameId=csb dataDir=%s"
       ],
-      "missing": [],
-      "ok": true
+      "missing": [
+        "CSB READY: gameId=csb dataDir=%s"
+      ],
+      "ok": false
     },
     {
       "id": "firestaff_csb_game_loop_boot_profile",
@@ -154,5 +164,9 @@
     "This readiness gate does not claim Atari ST or Amiga emulator boot parity.",
     "CSB gameplay, viewport, audio, save, and overlay completion points require separate CSB-specific gates."
   ],
-  "failures": []
+  "failures": [
+    "firestaff_m12_launch_guard_supports_csb missing ['All five catalogued games now have runtime launch boundaries', 'strcmp(gameId, \"csb\") == 0'] path_exists=True",
+    "firestaff_m12_launch_intent_accepts_available_csb missing ['M12_StartupMenu_GetLaunchIntent', 'm12_game_supported(intent.gameId)', 'M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)', 'version && version->matched ? 1 : 0'] path_exists=True",
+    "firestaff_m11_csb_handoff_to_game_loop missing ['CSB READY: gameId=csb dataDir=%s'] path_exists=True"
+  ]
 }

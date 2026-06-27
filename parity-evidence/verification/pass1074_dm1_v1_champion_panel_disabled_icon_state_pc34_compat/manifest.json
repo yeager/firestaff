@@ -65,12 +65,12 @@
     }
   ],
   "status": "PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED",
-  "timestampUtc": "2026-06-22T13:56:17.807899+00:00",
+  "timestampUtc": "2026-06-25T21:01:34.595971+00:00",
   "verificationRuns": [
     {
       "assertions": 153,
       "command": [
-        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/202606221508270004_q50_20260622_dm1_v1_champion_panel_shield_disabled_icon_gate/builds/nv1-build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
+        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
       ],
       "fails": 0,
       "finalMarker": "DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_PC34_COMPAT_OK",

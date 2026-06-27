@@ -18,7 +18,7 @@ This gate checks the exact N2 prerequisites for the next original DM1 V1 movemen
 - `xvfb-run`: `None` ok=`True`
 - `xdotool`: `None` ok=`True`
 - `python3`: `/usr/bin/python3` ok=`True`
-- `dosbox-debug`: `None` ok=`False`
+- `dosbox-debug`: `/opt/homebrew/bin/dosbox-debug` ok=`True`
 - `python3-pillow`: `python3 import PIL.Image` ok=`True`
 
 ## Canonical DM1 Inputs

@@ -94,9 +94,9 @@
     },
     {
       "name": "dosbox-debug",
-      "ok": false,
+      "ok": true,
       "optionalButUseful": true,
-      "path": null
+      "path": "/opt/homebrew/bin/dosbox-debug"
     },
     {
       "error": "",
