@@ -312,6 +312,59 @@ int theron_v1_srm_classify_root(const char *root,
 
 /* ── Bounded gzip-payload probe ──────────────────────────────────── */
 
+#if FIRESTAFF_HAS_ZLIB
+static int theron_v1_srm_gzip_deflate_slice(const uint8_t *srm_bytes,
+                                            size_t srm_size,
+                                            size_t *out_offset,
+                                            size_t *out_size) {
+    if (!srm_bytes || !out_offset || !out_size || srm_size < 18u) {
+        return 0;
+    }
+    if (srm_bytes[0] != THERON_V1_SRM_GZIP_MAGIC_0 ||
+        srm_bytes[1] != THERON_V1_SRM_GZIP_MAGIC_1 ||
+        srm_bytes[2] != THERON_V1_SRM_GZIP_MAGIC_2_DEFLATE) {
+        return 0;
+    }
+
+    const uint8_t flags = srm_bytes[3];
+    size_t pos = 10u; /* gzip fixed header */
+
+    if (flags & 0x04u) { /* FEXTRA */
+        if (pos + 2u > srm_size) return 0;
+        size_t xlen = (size_t)srm_bytes[pos] | ((size_t)srm_bytes[pos + 1u] << 8);
+        pos += 2u;
+        if (pos + xlen > srm_size) return 0;
+        pos += xlen;
+    }
+    if (flags & 0x08u) { /* FNAME */
+        while (pos < srm_size && srm_bytes[pos] != 0u) pos++;
+        if (pos >= srm_size) return 0;
+        pos++;
+    }
+    if (flags & 0x10u) { /* FCOMMENT */
+        while (pos < srm_size && srm_bytes[pos] != 0u) pos++;
+        if (pos >= srm_size) return 0;
+        pos++;
+    }
+    if (flags & 0x02u) { /* FHCRC */
+        if (pos + 2u > srm_size) return 0;
+        pos += 2u;
+    }
+
+    if (pos + 8u > srm_size) {
+        return 0;
+    }
+
+    /* DMWeb/greatstone identify Theron save bodies as gzip-wrapped custom
+     * save data.  Strip only the gzip container here so both system zlib and
+     * bundled miniz can inflate the raw deflate stream; save-body semantics
+     * stay in the later Theron progression/champion import milestone. */
+    *out_offset = pos;
+    *out_size = srm_size - pos - 8u; /* trailer: CRC32 + ISIZE */
+    return *out_size > 0u;
+}
+#endif
+
 Theron_V1SrmPayloadProbeStatus theron_v1_srm_probe_gzip_payload(
     const uint8_t *srm_bytes,
     size_t srm_size,
@@ -335,14 +388,21 @@ Theron_V1SrmPayloadProbeStatus theron_v1_srm_probe_gzip_payload(
 #if FIRESTAFF_HAS_ZLIB
     z_stream zs;
     int ret;
+    size_t deflate_offset = 0;
+    size_t deflate_size = 0;
+
+    if (!theron_v1_srm_gzip_deflate_slice(srm_bytes, srm_size,
+                                          &deflate_offset, &deflate_size)) {
+        return THERON_V1_SRM_PAYLOAD_PROBE_INFLATE_FAILED;
+    }
 
     memset(&zs, 0, sizeof(zs));
-    zs.next_in = (Bytef *)srm_bytes;
-    zs.avail_in = (uInt)srm_size;
+    zs.next_in = (Bytef *)(srm_bytes + deflate_offset);
+    zs.avail_in = (uInt)deflate_size;
     zs.next_out = out_payload;
     zs.avail_out = (uInt)out_payload_capacity;
 
-    ret = inflateInit2(&zs, 16 + MAX_WBITS); /* gzip wrapper + deflate */
+    ret = inflateInit2(&zs, -MAX_WBITS); /* raw deflate after local gzip parse */
     if (ret != Z_OK) {
         return THERON_V1_SRM_PAYLOAD_PROBE_INFLATE_FAILED;
     }
