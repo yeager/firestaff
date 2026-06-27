@@ -1722,6 +1722,73 @@ if(NOT MSVC)
     target_compile_options(firestaff_theron_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Theron V2 Phase 3 HUD Overlay probe (initial seed). Headless: no game data.
+# See include/theron_v2_hud_overlay_pc34.h. Verifies phase-gate + presentation
+# mode contract (V1 stays source-locked, V2 modes paint into the PC Engine
+# 256x224 indexed fb), setter coverage, render into framebuffer, V1 chrome
+# preserved when V2 inactive, source evidence citations, null safety.
+add_executable(firestaff_theron_v2_phase3_hud_overlay_probe
+    probes/firestaff_theron_v2_phase3_hud_overlay_probe.c
+    src/theron/theron_v2_hud_overlay_pc34.c
+    src/theron/theron_v2_phase_gate_pc34.c
+    src/theron/theron_v2_presentation_mode_pc34.c
+    src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_palette.c
+    src/dm1v2/dm1_v2_modern_assets_pc34.c
+    src/dm1v2/dm1_v22_shapes.c
+    src/dm1v2/dm1_v2_presentation_mode_pc34.c
+    src/dm1v2/dm1_v2_asset_pipeline_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_theron_v2_phase3_hud_overlay_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/theron)
+target_link_libraries(firestaff_theron_v2_phase3_hud_overlay_probe
+    PRIVATE firestaff_theron firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v2_phase3_hud_overlay_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v2_phase3_hud_overlay_probe
+    COMMAND firestaff_theron_v2_phase3_hud_overlay_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v2_phase3_hud_overlay_probe PROPERTIES
+    LABELS "tier2;theron;v2;phase3;hud;presentation-only"
+)
+
+# Theron V2 HUD widget asset manifest probe. Headless: no game data.
+# See include/theron_v2_hud_widget_assets_pc34.h. Mirrors the DM2 V2
+# widget-assets gate pattern (dm2_v2_hud_widget_assets_pc34) but for
+# Theron-specific slots (compass_rose, quest_items, dungeon_progress,
+# relic_counter, rune_indicator, champion_bars, action_strip). Synthetic
+# manifests under /tmp/scratch exercise NO_MANIFEST / PLACEHOLDER /
+# PARTIAL / COMPLETE gate states. Source-lock: THQUEST.ASM T520/T560/
+# T600/T700/T800/T900 + HuC6260/HuC6270 + ReDMCSB PANEL.C F0354 +
+# DUNGEON.C F0260 + dmweb Theron overview + sibling DM2 widget assets.
+add_executable(firestaff_theron_v2_hud_widget_assets_probe
+    probes/firestaff_theron_v2_hud_widget_assets_probe.c
+    src/theron/theron_v2_hud_widget_assets_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_theron_v2_hud_widget_assets_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/theron)
+target_link_libraries(firestaff_theron_v2_hud_widget_assets_probe
+    PRIVATE firestaff_theron firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v2_hud_widget_assets_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_theron_v2_hud_widget_assets_probe
+    COMMAND firestaff_theron_v2_hud_widget_assets_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(firestaff_theron_v2_hud_widget_assets_probe PROPERTIES
+    LABELS "tier2;theron;v2;phase3;hud;widget-assets;presentation-only"
+)
+
 # DM1 V2.2 shape runtime dispatch probe. Headless: no game data.
 # See include/dm1_v2_shape_runtime_pc34.h.
 add_executable(firestaff_dm1_v2_shape_runtime_probe
@@ -7818,6 +7885,56 @@ if(BUILD_TESTING)
     add_test(
         NAME theron_v2_phase_gate_pc34
         COMMAND test_theron_v2_phase_gate_pc34
+    )
+
+    # ── Theron V2 Phase 3 HUD overlay smoke test ──────────────────
+    # Source-lock: src/theron/theron_v2_hud_overlay_pc34.c
+    # Phase 3 (initial seed): presentation-only enhanced UI chrome.
+    # Data-free: no game assets, no SDL rendering required.  Verifies
+    # init/set/render cycle on the PC Engine 256x224 indexed fb, hit-flash
+    # decay, low-HP pulse trigger, top-bar / stats-bar / action-strip
+    # visibility toggles, source evidence citations, and null safety.
+    add_executable(test_theron_v2_hud_overlay_pc34
+        tests/test_theron_v2_hud_overlay_pc34.c
+        src/theron/theron_v2_hud_overlay_pc34.c
+        src/theron/theron_v1_viewport.c
+        src/theron/theron_v1_palette.c
+    )
+    target_include_directories(test_theron_v2_hud_overlay_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    target_link_libraries(test_theron_v2_hud_overlay_pc34 PRIVATE firestaff_theron m)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v2_hud_overlay_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v2_hud_overlay_pc34
+        COMMAND test_theron_v2_hud_overlay_pc34
+    )
+
+    # ── Theron V2 HUD widget asset manifest gate ────────────────
+    # Source-lock: src/theron/theron_v2_hud_widget_assets_pc34.c
+    # Phase 3 (placeholder-vs-real) gate mirroring DM2 V2 widget
+    # assets. Data-free: synthetic manifests in /tmp/scratch. Covers
+    # NO_MANIFEST / PLACEHOLDER / PARTIAL / COMPLETE gates, source
+    # evidence citations, null/out-of-range safety.
+    add_executable(test_theron_v2_hud_widget_assets_pc34
+        tests/test_theron_v2_hud_widget_assets_pc34.c
+        src/theron/theron_v2_hud_widget_assets_pc34.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_theron_v2_hud_widget_assets_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    target_link_libraries(test_theron_v2_hud_widget_assets_pc34 PRIVATE firestaff_theron firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v2_hud_widget_assets_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v2_hud_widget_assets_pc34
+        COMMAND test_theron_v2_hud_widget_assets_pc34
     )
 
     # ── Theron V2 Phase 0/1 probe ctest entries ──────────────────
