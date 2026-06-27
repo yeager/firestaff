@@ -307,6 +307,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_engine_pc34_compat.c
     src/engine/firestaff_touch.c
     src/engine/firestaff_input.c
+    src/engine/runtime_gesture_navigation_gate_pc34_compat.c
     src/engine/swsh_intro_pathfinder_m11.c
     src/engine/m11_game_input_mapping.c
     src/shared/session_timer_runtime.c
@@ -1096,6 +1097,25 @@ if(BUILD_TESTING)
         COMMAND firestaff_data_dir_picker_platform_matrix_probe
     )
 endif()
+
+# Runtime gesture navigation gate probe.
+# Cross-game runtime gate for swipe/tap/edge-strafe gesture classification
+# across DM1/CSB/DM2/Nexus/Theron. Data-free: it does not require any game
+# data on disk, so it sits outside the data-required gate pool.
+# Source lock: header doc-block + COMMAND.C G0448 movement arrows.
+add_executable(firestaff_runtime_gesture_navigation_gate_probe
+    probes/firestaff_runtime_gesture_navigation_gate_probe.c)
+target_link_libraries(firestaff_runtime_gesture_navigation_gate_probe
+    PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_runtime_gesture_navigation_gate_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_runtime_gesture_navigation_gate_probe
+    COMMAND firestaff_runtime_gesture_navigation_gate_probe
+        "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+)
 
 # Nexus V2 HUD Overlay Probe
 # Headless: no game assets, no SDL rendering required.
@@ -4416,6 +4436,18 @@ if(BUILD_TESTING)
     add_test(
         NAME touch_movement_turn_routes_pc34_compat
         COMMAND test_touch_movement_turn_routes_pc34_compat
+    )
+
+    add_executable(test_runtime_gesture_navigation_gate_pc34_compat
+        tests/test_runtime_gesture_navigation_gate_pc34_compat.c
+    )
+    target_link_libraries(test_runtime_gesture_navigation_gate_pc34_compat PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_runtime_gesture_navigation_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME runtime_gesture_navigation_gate_pc34_compat
+        COMMAND test_runtime_gesture_navigation_gate_pc34_compat
     )
 
     add_executable(test_dm1_v1_dungeon_view_touch_route_pc34_compat
