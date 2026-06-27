@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "theron_v1_world.h"
+
 #define THERON_TRACK02_MAX_BANK_ANCHORS 3u
 
 /* Maximum number of entries the documented 9-word stride table can hold.
@@ -230,6 +232,50 @@ Theron_Track02TableDecodeStatus theron_v1_track02_bind_descriptor_windows(
     size_t descriptor_offset,
     const Theron_Track02DescriptorTable *table,
     Theron_Track02DescriptorWindowBinding *out_binding);
+
+typedef enum {
+    THERON_TRACK02_LEVEL_HANDOFF_OK = 1,
+    THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL = 0,
+    THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT = -1,
+    THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND = -2,
+    THERON_TRACK02_LEVEL_HANDOFF_WINDOW_NOT_DATA = -3,
+    THERON_TRACK02_LEVEL_HANDOFF_LEVEL_LOAD_FAILED = -4
+} Theron_Track02LevelHandoffStatus;
+
+typedef struct {
+    size_t entry_index;
+    size_t absolute_offset;
+    size_t byte_count;
+    Theron_Track02DescriptorWindowKind window_kind;
+    Theron_MapLoadResult map_status;
+    uint16_t header_width;
+    uint16_t header_height;
+    uint32_t header_seed;
+    uint16_t header_level_index;
+    int loaded;
+} Theron_Track02LevelHandoff;
+
+/* Bounded Track 02 -> V1 level-loader handoff.
+ *
+ * Decodes the 9-word descriptor table at `descriptor_offset`, binds the
+ * resulting 0x0400-byte windows, and attempts to pass one DATA window to
+ * theron_v1_level_load().  This is a handoff contract only: it proves that
+ * bytes selected by the descriptor table can reach the existing Theron V1
+ * level loader under a bounded API.  It does not claim that real Track 02
+ * windows are decoded dungeon records yet.
+ */
+Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    size_t entry_index,
+    int dungeon_id,
+    int sub_level_index,
+    Theron_V1_Level *out_level,
+    Theron_Track02LevelHandoff *out_handoff);
+
+const char *theron_v1_track02_level_handoff_status_name(
+    Theron_Track02LevelHandoffStatus status);
 
 const char *theron_v1_track02_table_decode_status_name(
     Theron_Track02TableDecodeStatus status);

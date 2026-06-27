@@ -752,6 +752,127 @@ Theron_Track02TableDecodeStatus theron_v1_track02_bind_descriptor_windows(
     return THERON_TRACK02_TABLE_DECODE_OK;
 }
 
+static uint16_t rd16be(const uint8_t *p) {
+    return ((uint16_t)p[0] << 8) | (uint16_t)p[1];
+}
+
+static uint32_t rd32be(const uint8_t *p) {
+    return ((uint32_t)rd16be(p) << 16) | rd16be(p + 2);
+}
+
+Theron_Track02LevelHandoffStatus theron_v1_track02_load_descriptor_window_level(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    size_t entry_index,
+    int dungeon_id,
+    int sub_level_index,
+    Theron_V1_Level *out_level,
+    Theron_Track02LevelHandoff *out_handoff) {
+
+    Theron_Track02DescriptorTable table;
+    Theron_Track02DescriptorWindowBinding binding;
+    const Theron_Track02DescriptorWindow *window;
+    Theron_Track02TableDecodeStatus table_status;
+    const uint8_t *level_bytes;
+    Theron_MapLoadResult map_status;
+
+    if (out_handoff) {
+        memset(out_handoff, 0, sizeof(*out_handoff));
+        out_handoff->map_status = THERON_MAP_ERR_NULL;
+    }
+    if (out_level) {
+        memset(out_level, 0, sizeof(*out_level));
+    }
+
+    if (!track02_data || track02_size == 0 || !out_level || !out_handoff) {
+        return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
+    }
+    if (entry_index >= THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES) {
+        return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
+    }
+    if (descriptor_offset > track02_size ||
+        TQR_US_ISO_BANK_STRIDE_BYTES > track02_size - descriptor_offset) {
+        return THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND;
+    }
+
+    table_status = theron_v1_track02_decode_descriptor_table(
+        track02_data + descriptor_offset,
+        TQR_US_ISO_BANK_STRIDE_BYTES,
+        TQR_US_ISO_BANK_STRIDE_STEP,
+        &table);
+    if (table_status != THERON_TRACK02_TABLE_DECODE_OK) {
+        return THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND;
+    }
+
+    table_status = theron_v1_track02_bind_descriptor_windows(
+        track02_data,
+        track02_size,
+        descriptor_offset,
+        &table,
+        &binding);
+    if (table_status != THERON_TRACK02_TABLE_DECODE_OK) {
+        return THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND;
+    }
+
+    window = &binding.windows[entry_index];
+    out_handoff->entry_index = entry_index;
+    out_handoff->absolute_offset = window->absolute_offset;
+    out_handoff->byte_count = window->byte_count;
+    out_handoff->window_kind = window->kind;
+
+    if (window->kind != THERON_TRACK02_DESCRIPTOR_WINDOW_DATA) {
+        return THERON_TRACK02_LEVEL_HANDOFF_WINDOW_NOT_DATA;
+    }
+    if (window->byte_count < 12u ||
+        window->absolute_offset > track02_size ||
+        window->byte_count > track02_size - window->absolute_offset) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    }
+
+    level_bytes = track02_data + window->absolute_offset;
+    out_handoff->header_width = rd16be(level_bytes + 0);
+    out_handoff->header_height = rd16be(level_bytes + 2);
+    out_handoff->header_seed = rd32be(level_bytes + 4);
+    out_handoff->header_level_index = rd16be(level_bytes + 8);
+
+    /* Handoff target: theron_v1_world.c T560-shaped 12-byte header + grid
+     * loader.  This keeps Track 02 selection separate from world parsing
+     * until real dungeon-window semantics are known. */
+    map_status = theron_v1_level_load(out_level,
+                                      level_bytes,
+                                      (int)window->byte_count,
+                                      dungeon_id,
+                                      sub_level_index);
+    out_handoff->map_status = map_status;
+    if (map_status != THERON_MAP_OK) {
+        return THERON_TRACK02_LEVEL_HANDOFF_LEVEL_LOAD_FAILED;
+    }
+
+    out_handoff->loaded = 1;
+    return THERON_TRACK02_LEVEL_HANDOFF_OK;
+}
+
+const char *theron_v1_track02_level_handoff_status_name(
+    Theron_Track02LevelHandoffStatus status) {
+    switch (status) {
+    case THERON_TRACK02_LEVEL_HANDOFF_OK:
+        return "ok";
+    case THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL:
+        return "no-level";
+    case THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT:
+        return "bad-input";
+    case THERON_TRACK02_LEVEL_HANDOFF_TABLE_NOT_FOUND:
+        return "table-not-found";
+    case THERON_TRACK02_LEVEL_HANDOFF_WINDOW_NOT_DATA:
+        return "window-not-data";
+    case THERON_TRACK02_LEVEL_HANDOFF_LEVEL_LOAD_FAILED:
+        return "level-load-failed";
+    default:
+        return "unknown";
+    }
+}
+
 const char *theron_v1_track02_table_decode_status_name(
     Theron_Track02TableDecodeStatus status) {
     switch (status) {
