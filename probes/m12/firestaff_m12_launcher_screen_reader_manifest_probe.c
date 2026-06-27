@@ -56,6 +56,7 @@
 #if defined(_WIN32)
 #include <direct.h>
 #include <process.h>
+#include <windows.h>
 static int portable_mkdir(const char* path) { return _mkdir(path); }
 static int portable_rmdir(const char* path) { return _rmdir(path); }
 static int portable_remove(const char* path) { return remove(path); }
@@ -81,7 +82,6 @@ static char* portable_mkdtemp(char* tmpl) {
     }
     return NULL;
 }
-#include <windows.h>
 #else
 #include <unistd.h>
 static int portable_mkdir(const char* path) { return mkdir(path, S_IRWXU); }
