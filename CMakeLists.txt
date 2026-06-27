@@ -2114,6 +2114,34 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 CSBWin save loader-boundary probe
+# Real-asset CSBWin save -> csb_v1_import_csb_save_buffer()
+# loader-verdict gate. The probe first runs the data-free
+# synthetic-fixture contract for every documented CSBWin / DM1
+# save shape (3 accept + 11 reject = 14 total), then optionally
+# probes a user-staged csbgame.dat / csbgame.bak / dmsave.dat /
+# dmsave.bak under data_dir. Skip-safe by design: hosts without
+# a known CSBWin save exit 0 with a SKIP message after the
+# synthetic-fixture portion has already proven the contract.
+# Source: ReDMCSB CEDTINC8.C:101-118 + LOADSAVE.C F0433/F0435
+#         + SAVEHEAD.C F0429/F0430 + DEFS.H:1289;
+#         CSBWin SaveGame.cpp:927/1711/2111 +
+#         CSBCode.cpp:421-422 (csbgame.dat / csbgame.bak).
+add_executable(firestaff_csb_v1_csbwin_save_loader_boundary_probe
+    probes/csb/firestaff_csb_v1_csbwin_save_loader_boundary_probe.c
+    src/csb/csb_v1_csbwin_save_loader_boundary_pc34_compat.c
+    src/csb/csb_v1_save_import_path_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+)
+target_include_directories(firestaff_csb_v1_csbwin_save_loader_boundary_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_csbwin_save_loader_boundary_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_csbwin_save_loader_boundary_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Hint Oracle UI/runtime binding probe
 # Real-asset HCSB.HTC → Firestaff-facing oracle/hint binding
 # surface. The probe exercises the diagnostic/oracle report,
@@ -12459,6 +12487,37 @@ if(BUILD_TESTING)
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 
+    # CSB V1 CSBWin save loader-boundary contract — data-free
+    # contract tests for csb_v1_import_csb_save_buffer()'s
+    # accept/reject verdict against every documented CSBWin /
+    # DM1 save shape (3 accept + 11 reject = 14 total). Synthetic
+    # fixtures cover CSBGAME\0+0x200/0x201, DM1 RDMCSB15, CDSA
+    # marker, CSBWin 512-byte CSB\1 / DM\0\1 / CEDT, too-small,
+    # no-magic, champion-count-out-of-range, truncated records,
+    # bad-version, and .bak payload. No real CSBWin save is
+    # loaded; the matching skip-safe real-asset probe lives
+    # next to it.
+    add_executable(test_csb_v1_csbwin_save_loader_boundary_pc34_compat
+        tests/test_csb_v1_csbwin_save_loader_boundary_pc34_compat.c
+        src/csb/csb_v1_csbwin_save_loader_boundary_pc34_compat.c
+        src/csb/csb_v1_save_import_path_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_csbwin_save_loader_boundary_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_save_loader_boundary_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_save_loader_boundary_pc34_compat_unit
+        COMMAND test_csb_v1_csbwin_save_loader_boundary_pc34_compat
+    )
+    set_tests_properties(csb_v1_csbwin_save_loader_boundary_pc34_compat_unit PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;data_free"
+    )
+
     # CSB Hint Oracle UI/runtime binding surface.
     # Data-free contract tests for the report / hint / resolve
     # helpers built on top of csb_hint_oracle_htc and
@@ -13096,6 +13155,28 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_csbgraphics_dat_real_scan_probe
         )
         set_tests_properties(csb_v1_csbgraphics_dat_real_scan PROPERTIES
+            LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 CSBWin save loader-boundary probe ctest entry ──
+    # Runs the data-free synthetic-fixture contract (3 accept + 11
+    # reject = 14 documented CSBWin / DM1 save shapes) and then
+    # optionally probes a user-staged csbgame.dat / csbgame.bak /
+    # dmsave.dat / dmsave.bak under data_dir. Skip-safe: hosts
+    # without a user-staged CSBWin save exit 0 with a SKIP message
+    # after the synthetic-fixture portion has already proven the
+    # contract. Complements the existing
+    # csb_v1_csbgraphics_dat_real_scan / csb_v1_csbgraphics_dat_
+    # classify gates by extending the CSBWin custom-resource
+    # coverage to the save-side loader boundary.
+    if(TARGET firestaff_csb_v1_csbwin_save_loader_boundary_probe)
+        add_test(
+            NAME csb_v1_csbwin_save_loader_boundary
+            COMMAND firestaff_csb_v1_csbwin_save_loader_boundary_probe
+        )
+        set_tests_properties(csb_v1_csbwin_save_loader_boundary PROPERTIES
             LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
             TIMEOUT 120
         )
