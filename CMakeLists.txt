@@ -1186,6 +1186,25 @@ if(BUILD_TESTING)
     )
 endif()
 
+# Runtime gesture navigation gate probe.
+# Cross-game runtime gate for swipe/tap/edge-strafe gesture classification
+# across DM1/CSB/DM2/Nexus/Theron. Data-free: it does not require any game
+# data on disk, so it sits outside the data-required gate pool.
+# Source lock: header doc-block + COMMAND.C G0448 movement arrows.
+add_executable(firestaff_runtime_gesture_navigation_gate_probe
+    probes/firestaff_runtime_gesture_navigation_gate_probe.c)
+target_link_libraries(firestaff_runtime_gesture_navigation_gate_probe
+    PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_runtime_gesture_navigation_gate_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_runtime_gesture_navigation_gate_probe
+    COMMAND firestaff_runtime_gesture_navigation_gate_probe
+        "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+)
+
 # Nexus V2 HUD Overlay Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: init/reset defaults, set_direction/set_level/set_gold/
