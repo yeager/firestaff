@@ -5647,6 +5647,31 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_fountain_interaction_pc34_compat
     )
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_food_water_pc34_compat.c"
+            AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_food_water_pc34_compat.c")
+        # DM1 V1 food/water state regression: pins the m11_fw_* API used by
+        # the fountain interaction and the inventory consume path. Locks
+        # init, tick (per-tick decay + non-negative clamp + starve/thirst
+        # flags), eat/drink (cap at 1000, clear flags, refresh timestamps),
+        # getter bounds, starvation damage output, and the inventory-side
+        # DUNGEON.C:428..436 G0242 food amount hand-off. Source-locked to
+        # ReDMCSB CHAMPION.C F0331:2360..2418, PANEL.C F0349:1743..1945,
+        # DUNGEON.C:428..436.
+        add_executable(test_dm1_v1_food_water_pc34_compat
+            tests/test_dm1_v1_food_water_pc34_compat.c
+            src/dm1/dm1_v1_food_water_pc34_compat.c
+            src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
+        )
+        target_link_libraries(test_dm1_v1_food_water_pc34_compat PRIVATE firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(test_dm1_v1_food_water_pc34_compat PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME dm1_v1_food_water_pc34_compat
+            COMMAND test_dm1_v1_food_water_pc34_compat
+        )
+    endif()
+
     add_executable(test_dm1_v1_input_command_queue_pc34_compat
         tests/test_dm1_v1_input_command_queue_pc34_compat.c
     )
