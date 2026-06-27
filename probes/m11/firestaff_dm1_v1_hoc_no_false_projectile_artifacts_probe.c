@@ -27,7 +27,19 @@ unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
 
 enum {
-    HOC_MAP = 0
+    HOC_MAP = 0,
+    FB_W = 320,
+    FB_H = 200,
+    /* D1C center effect-cue marker from m11_draw_effect_cue:
+     * frames[1] = {34,54,156,88}, inset=6 => face center (112,98).
+     * The old debug cue drew a 9x9 M11_COLOR_MAGENTA rectangle at
+     * (108,94)..(116,102), which is DM PC VGA palette slot 10
+     * (tan/orange) after the palette correction. */
+    D1C_DEBUG_MARKER_X = 108,
+    D1C_DEBUG_MARKER_Y = 94,
+    D1C_DEBUG_MARKER_W = 9,
+    D1C_DEBUG_MARKER_H = 9,
+    DM_PC_VGA_TAN_ORANGE = 10
 };
 
 static int g_pass;
@@ -180,6 +192,29 @@ static int compact_artifact_count_for_cell(const M11_GameViewState* state,
                                 outProjectiles, outExplosions);
 }
 
+static int has_d1c_debug_sensor_marker(const unsigned char* fb) {
+    int x;
+    int y;
+    int border = 0;
+    if (!fb) {
+        return 0;
+    }
+    for (y = 0; y < D1C_DEBUG_MARKER_H; ++y) {
+        for (x = 0; x < D1C_DEBUG_MARKER_W; ++x) {
+            int edge = (x == 0 || y == 0 ||
+                        x == D1C_DEBUG_MARKER_W - 1 ||
+                        y == D1C_DEBUG_MARKER_H - 1);
+            unsigned char px = fb[(D1C_DEBUG_MARKER_Y + y) * FB_W +
+                                  (D1C_DEBUG_MARKER_X + x)];
+            if (edge && px == (unsigned char)DM_PC_VGA_TAN_ORANGE) {
+                ++border;
+            }
+        }
+    }
+    return border == ((D1C_DEBUG_MARKER_W * 2) +
+                      ((D1C_DEBUG_MARKER_H - 2) * 2));
+}
+
 int main(int argc, char** argv) {
     const char* root = argc > 1 ? argv[1] : getenv("FIRESTAFF_DATA");
     const char* dataDir;
@@ -194,6 +229,8 @@ int main(int argc, char** argv) {
     int sampled = 0;
     int viewportLeaks = 0;
     int firstGfxLeaks = 0;
+    int normalHudSensorMarkerLeaks = 0;
+    unsigned char framebuffer[FB_W * FB_H];
     int px;
     int py;
     int dir;
@@ -254,6 +291,11 @@ int main(int argc, char** argv) {
                 state.world.party.mapX = px;
                 state.world.party.mapY = py;
                 state.world.party.direction = dir;
+                state.showDebugHUD = 0;
+                M11_GameView_Draw(&state, framebuffer, FB_W, FB_H);
+                if (has_d1c_debug_sensor_marker(framebuffer)) {
+                    ++normalHudSensorMarkerLeaks;
+                }
                 for (relForward = 1; relForward <= 3; ++relForward) {
                     int relSide;
                     for (relSide = -1; relSide <= 1; ++relSide) {
@@ -325,10 +367,13 @@ int main(int argc, char** argv) {
           viewportLeaks);
     CHECK(firstGfxLeaks == 0, "stale first projectile/explosion fields=%d",
           firstGfxLeaks);
+    CHECK(normalHudSensorMarkerLeaks == 0,
+          "normal V1 tan/orange D1C debug sensor-marker leaks=%d",
+          normalHudSensorMarkerLeaks);
 
     M11_GameView_Shutdown(&state);
-    printf("summary=%d passed %d failed sampled=%d denseFalse=%d compactP=%d compactE=%d\n",
+    printf("summary=%d passed %d failed sampled=%d denseFalse=%d compactP=%d compactE=%d markerLeaks=%d\n",
            g_pass, g_fail, sampled, denseFalsePositiveSamples,
-           compactProjectiles, compactExplosions);
+           compactProjectiles, compactExplosions, normalHudSensorMarkerLeaks);
     return g_fail == 0 ? 0 : 1;
 }

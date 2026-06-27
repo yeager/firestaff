@@ -10095,7 +10095,14 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
      * (DUNVIEW.C:5915-5933).  m11_draw_dm1_deferred_explosion_pass()
      * owns that after-all-cells layer. */
 
-    if (cell->summary.sensors > 0 || cell->summary.textStrings > 0) {
+    /* Sensors and text strings are control metadata unless a source-backed
+     * wall inscription/field path draws them.  ReDMCSB DUNVIEW.C F0115
+     * draws objects, creatures, projectiles, and explosions from the thing
+     * list; DEFS.H marks C127 sensors as trigger data.  Keep Firestaff's
+     * old sensor/text outline as a debug-HUD cue only so normal V1 does not
+     * leak a tan/orange square into Hall of Champions floor views. */
+    if (g_drawState && g_drawState->showDebugHUD &&
+        (cell->summary.sensors > 0 || cell->summary.textStrings > 0)) {
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       cx - 4, cy - 4, 9, 9, M11_COLOR_MAGENTA);
     }
