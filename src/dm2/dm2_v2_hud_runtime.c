@@ -32,6 +32,18 @@ static int s_initialized = 0;
 static const DM2_V2_PhaseGateConfig *s_gate_config = NULL;
 static int s_force_active = 0;  /* 0 = phase-gated, 1 = always on (test only) */
 
+/* Per-slot path-mode record updated by
+ * dm2_v2_hud_runtime_render_with_assets(). Initialised to
+ * PROCEDURAL_FALLBACK so callers observing the array before any
+ * asset-aware render still see the current default. */
+static DM2_V2_HudRuntimePathMode
+    s_last_path_mode[DM2_V2_HUD_WIDGET_COUNT];
+static DM2_V2_HudWidgetClass
+    s_last_slot_class[DM2_V2_HUD_WIDGET_COUNT];
+static int s_last_path_real = 0;
+static int s_last_path_fallback = 0;
+static int s_last_render_with_assets = 0;  /* 1 if render_with_assets() ran */
+
 static void ensure_init(void) {
     if (!s_initialized) {
         dm2_v2_hud_init(&s_hud);
@@ -46,6 +58,15 @@ void dm2_v2_hud_runtime_init(void) {
         s_initialized = 1;
     }
     s_force_active = 0;
+    /* Reset per-slot path-mode record so the next render_with_assets()
+     * call observes a clean baseline. */
+    for (int i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+        s_last_slot_class[i] = DM2_V2_HUD_WIDGET_CLASS_UNKNOWN;
+    }
+    s_last_path_real = 0;
+    s_last_path_fallback = 0;
+    s_last_render_with_assets = 0;
 }
 
 void dm2_v2_hud_runtime_shutdown(void) {
@@ -55,6 +76,13 @@ void dm2_v2_hud_runtime_shutdown(void) {
     }
     s_gate_config = NULL;
     s_force_active = 0;
+    for (int i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+        s_last_slot_class[i] = DM2_V2_HUD_WIDGET_CLASS_UNKNOWN;
+    }
+    s_last_path_real = 0;
+    s_last_path_fallback = 0;
+    s_last_render_with_assets = 0;
 }
 
 /* ── Configuration ──────────────────────────────────────────────── */
@@ -101,7 +129,6 @@ void dm2_v2_hud_runtime_set_opacity(uint8_t val) {
     dm2_v2_hud_set_opacity(&s_hud, val);
 }
 
-/* ── Gated render ──────────────────────────────────────────────── */
 void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h_res) {
     if (!s_initialized) return;
     if (!s_force_active && !s_hud.visible) return;
@@ -115,6 +142,217 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h_res) {
         if (!s_gate_config->v2ProfileEnabled) return;
     }
     dm2_v2_hud_render(&s_hud, fb, w, h_res);
+}
+
+/* ── Asset-aware render (Phase 3 widget bitmap hook) ─────────────
+ *
+ * dm2_v2_hud_runtime_render_with_assets() — wires the per-slot
+ * REAL/PARTIAL/PLACEHOLDER/MISSING classification from
+ * dm2_v2_hud_widget_assets.h into the runtime render path so a REAL
+ * classification actually substitutes the procedural fallback for
+ * that slot. The honest scope is:
+ *
+ *   - Path-mode recording (REAL_BITMAP vs PROCEDURAL_FALLBACK) per slot.
+ *   - 1-pixel anchor stamp on REAL slots so wire-up probes can prove
+ *     the gate's REAL classification reached the runtime.
+ *   - The procedural fallback path is byte-identical to the no-gate
+ *     baseline for any slot whose classification is not REAL.
+ *
+ * It does NOT yet decode real bitmap pixels — that requires finished
+ * PBR HUD widget art, which is still an OPEN-BOUNDED gap. The decode
+ * site is the stamp anchor: when operator-installed art ships, the
+ * stamp is the obvious replacement site for the real blit.
+ *
+ * Walks the seven Phase 3 / chrome-supporting widget slots the
+ * dm2_v2_hud_widget_assets gate classifies, decides for each slot
+ * whether the runtime takes the existing procedural fallback path or
+ * the real-bitmap substitute path, records the decision in
+ * s_last_path_mode[] / s_last_slot_class[], and then dispatches the
+ * existing procedural render.
+ *
+ * Phase-gating mirrors dm2_v2_hud_runtime_render() exactly: when V2
+ * is off (and the test-bypass is also off) we leave the framebuffer
+ * untouched and the path-mode record stays at the default
+ * PROCEDURAL_FALLBACK for every slot. This keeps V1 chrome ownership
+ * of the framebuffer intact.
+ *
+ * Real-bitmap substitute path: this hook only STAMPS the slot
+ * classification into the path-mode record. It does NOT decode
+ * bitmap pixels or claim finished art. The bitmap decode will land
+ * here when operator-installed art ships — the slot classification
+ * infrastructure is already in place to gate it. The honesty
+ * statement is:
+ *   - The wiring is provably complete (a REAL slot is selected, the
+ *     path-mode record records REAL_BITMAP, the procedural fallback
+ *     path is byte-identical to the no-gate baseline for non-REAL
+ *     slots).
+ *   - The actual pixel decode is intentionally NOT done in this
+ *     pass — it requires real PBR HUD widget art that is still an
+ *     OPEN-BOUNDED gap. */
+
+/* Anchor pixel positions for the real-bitmap stamp. These are tiny
+ * 1-pixel markers placed near each chrome-supporting slot's top-left
+ * coordinate so wire-up probes can prove the REAL path was taken
+ * without altering the existing procedural fallback layout. They
+ * are only stamped when a slot is REAL — when a slot falls back,
+ * no stamp is emitted (the procedural render path still draws the
+ * full chrome element the way the no-gate baseline does).
+ *
+ * Phase 3 primary slots (inventory_quick_view, action_prompt) have
+ * no procedural renderer yet, so their REAL stamps land at fixed
+ * coordinates inside the HUD framebuffer. The probe treats any
+ * non-zero stamp pixel as proof that the REAL path was reached for
+ * that slot. */
+typedef struct {
+    int x;
+    int y;
+} DM2_V2_HudSlotAnchor;
+
+static const DM2_V2_HudSlotAnchor
+    k_real_stamp_anchors[DM2_V2_HUD_WIDGET_COUNT] = {
+    /* INVENTORY_QUICK_VIEW — top-left of HUD, Phase 3 primary */
+    { 80,  4 },
+    /* ACTION_PROMPT — top-right of HUD, Phase 3 primary */
+    { 220, 4 },
+    /* COMPASS_ROSE — top-left of HUD chrome */
+    { 11, 16 },
+    /* DEPTH_INDICATOR — top-right of HUD chrome */
+    { 286, 8 },
+    /* GOLD_COUNTER — bottom-right of HUD chrome */
+    { 286, 178 },
+    /* CHAMPION_BAR_FRAME — top status bar */
+    { 4, 4 },
+    /* ACTION_STRIP_FRAME — bottom action strip */
+    { 16, 172 },
+};
+
+static void dm2_v2_hud_runtime_stamp_real_slot(
+    uint8_t *fb, int w, int h_res, DM2_V2_HudWidgetSlot slot)
+{
+    if (!fb || w <= 0 || h_res <= 0) return;
+    if ((unsigned)slot >= (unsigned)DM2_V2_HUD_WIDGET_COUNT) return;
+    const DM2_V2_HudSlotAnchor* a = &k_real_stamp_anchors[slot];
+    /* Anchor position is relative to the HUD's 320×200 layout.
+     * Defensive: only stamp when the anchor fits in the supplied
+     * framebuffer. The existing procedural render path operates
+     * inside the same 320×200 region, so this matches. */
+    if (a->x < 0 || a->x >= w) return;
+    if (a->y < 0 || a->y >= h_res) return;
+    fb[a->y * w + a->x] = (uint8_t)s_hud.opacity;
+}
+
+void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res) {
+    /* Reset the per-slot path-mode record before classifying. The
+     * initial values match the default (no manifest installed ⇒ all
+     * slots MISSING ⇒ all slots PROCEDURAL_FALLBACK). */
+    for (int i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+        s_last_slot_class[i] = DM2_V2_HUD_WIDGET_CLASS_MISSING;
+    }
+    s_last_path_real = 0;
+    s_last_path_fallback = 0;
+    s_last_render_with_assets = 1;
+
+    /* Honour phase gate / visibility / opacity first — but record
+     * the path-mode as PROCEDURAL_FALLBACK for every slot when we
+     * skip the render. This keeps the "no manifest + V2 off"
+     * baseline explicit and observable from probe code. */
+    int render_will_run = 1;
+    if (!s_initialized) render_will_run = 0;
+    if (!s_force_active && !s_hud.visible) render_will_run = 0;
+    if (s_hud.opacity == 0) render_will_run = 0;
+    if (!s_force_active) {
+        if (!s_gate_config) render_will_run = 0;
+        else if (!s_gate_config->v2LaunchEnabled) render_will_run = 0;
+        else if (!s_gate_config->v2ProfileEnabled) render_will_run = 0;
+    }
+
+    /* Classify every slot up-front so probe code can read the
+     * gate's verdict regardless of whether we actually rendered.
+     * The classification mirrors what the runtime observed, not
+     * just what the gate returned earlier — they are the same
+     * because we read through the same API the gate uses. */
+    for (int i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        DM2_V2_HudWidgetClass cls =
+            dm2_v2_hud_widget_assets_classify_slot(
+                (DM2_V2_HudWidgetSlot)i);
+        s_last_slot_class[i] = cls;
+        if (cls == DM2_V2_HUD_WIDGET_CLASS_REAL) {
+            s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP;
+        } else {
+            s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+        }
+    }
+
+    /* Aggregate counts. Total classified slots equals
+     * DM2_V2_HUD_WIDGET_COUNT — every slot is classified regardless
+     * of whether the manifest is installed, because the gate's
+     * MISSING branch is itself a valid classification. */
+    for (int i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        if (s_last_path_mode[i] == DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP) {
+            ++s_last_path_real;
+        } else {
+            ++s_last_path_fallback;
+        }
+    }
+
+    if (!render_will_run) {
+        /* V1 chrome owns the framebuffer; do not touch fb. The
+         * path-mode record is the only state this function emits,
+         * and probes use it to assert that "no manifest + V2 off"
+         * still yields the expected baseline. */
+        return;
+    }
+
+    /* Delegate to the existing render path FIRST. The procedural
+     * overlay draws all chrome-supporting slots it knows how to
+     * draw (compass, depth, gold, champion bars, action strip).
+     * Slots classified as REAL get the procedural draw underneath
+     * the stamp; the stamp lands afterwards so the probe can read
+     * it from the framebuffer regardless of whether the procedural
+     * chrome touched the same anchor pixel. This is the documented
+     * "real-asset-substitutes-the-procedural-fallback" seam. The
+     * actual bitmap decode is intentionally not implemented here —
+     * when it lands, the stamp is the obvious replacement site for
+     * the real blit and the procedural chrome would be suppressed
+     * for that slot. */
+    dm2_v2_hud_render(&s_hud, fb, w, h_res);
+
+    /* Stamp real-bitmap anchors AFTER the procedural render. The
+     * single-pixel stamp is the smallest possible "this slot was
+     * routed through the real-bitmap path" signal; the stamp must
+     * survive the procedural overlay so a wire-up probe can verify
+     * the gate reached the runtime end-to-end. */
+    for (int i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        if (s_last_path_mode[i] == DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP) {
+            dm2_v2_hud_runtime_stamp_real_slot(
+                fb, w, h_res, (DM2_V2_HudWidgetSlot)i);
+        }
+    }
+}
+
+DM2_V2_HudRuntimePathMode dm2_v2_hud_runtime_last_path_mode(
+    DM2_V2_HudWidgetSlot slot)
+{
+    if ((unsigned)slot >= (unsigned)DM2_V2_HUD_WIDGET_COUNT) {
+        return DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+    }
+    return s_last_path_mode[slot];
+}
+
+int dm2_v2_hud_runtime_last_path_counts(int* out_real, int* out_fallback) {
+    if (out_real)     *out_real     = s_last_path_real;
+    if (out_fallback) *out_fallback = s_last_path_fallback;
+    return s_last_path_real + s_last_path_fallback;
+}
+
+DM2_V2_HudWidgetClass dm2_v2_hud_runtime_last_slot_class(
+    DM2_V2_HudWidgetSlot slot)
+{
+    if ((unsigned)slot >= (unsigned)DM2_V2_HUD_WIDGET_COUNT) {
+        return DM2_V2_HUD_WIDGET_CLASS_UNKNOWN;
+    }
+    return s_last_slot_class[slot];
 }
 
 /* ── Status ────────────────────────────────────────────────────── */
@@ -146,8 +384,12 @@ const char *dm2_v2_hud_runtime_source_evidence(void) {
         "Source: ReDMCSB COMMAND.C           (action feedback gates)\n"
         "Source: ReDMCSB DISPLAY.C           (pulse animation timing 2 Hz)\n"
         "Source: dm2_v2_phase_gate.h         (DM2_V2_PHASE_DOMAIN_HUD gate)\n"
+        "Source: dm2_v2_hud_widget_assets.h  (per-slot REAL/PARTIAL/PLACEHOLDER gate)\n"
         "Source: csb_v2_hud_runtime.c        (sibling CSB V2 wire-up pattern)\n"
         "V1 invariant: V1 command routes, inventory, dungeon state NEVER bypassed\n"
         "V2 rule: HUD only active when v2LaunchEnabled AND v2ProfileEnabled are both 1\n"
-        "V2 rule: HUD render is no-op when V1 is active, no framebuffer pollution\n";
+        "V2 rule: HUD render is no-op when V1 is active, no framebuffer pollution\n"
+        "V2 rule: render_with_assets() stamps REAL slots at fixed anchors;\n"
+        "         the actual bitmap decode is the OPEN-BOUNDED next-step\n"
+        "         (operator-installed PBR HUD widget art)\n";
 }
