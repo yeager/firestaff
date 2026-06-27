@@ -34,7 +34,11 @@ from a broad user data root without claiming full Theron playability.
 - **CSB champion reincarnation has per-stat parity evidence**: a new
   data-free fixture pins the source-locked F0282 contract for HP/Mana/Stamina
   halving, non-Luck stat penalties, minimum clamps, skill clearing,
-  NEEDS_RENAME/DEAD flags, and resurrect-vs-reincarnate behavior.
+  NEEDS_RENAME/DEAD flags, and resurrect-vs-reincarnate behavior. A
+  companion data-free fixture now pins the deterministic `randomPoints` LCG
+  + `reincarnateStatPenalty` interaction with the seeded F0309 max-load
+  formula end-to-end, and the older `ChampionState_Compat` reincarnation
+  penalty shim is regression-gated through CTest again.
 - **Theron's Quest direct root startup is fast**: `--game theron --data-dir
   <root>` now tries canonical Theron child roots first (`theron/`,
   `theron/jp`, `theron/us`, `theron-extras/japan`, `theron-extras/usa`),
@@ -51,7 +55,9 @@ from a broad user data root without claiming full Theron playability.
   sibling viewport/occlusion gates, plus the HoC no-creature, floor, message,
   and artifact probes.
 - Focused local CSB verification covered the new champion per-stat parity
-  fixture and nearby character-import / phase-7 / save-boundary tests.
+  fixture, the new champion per-stat ↔ F0309 max-load interaction fixture,
+  the restored older `ChampionState_Compat` reincarnation penalty CTest
+  entry, and nearby character-import / phase-7 / save-boundary tests.
 - Focused local Theron verification covered the direct root startup path,
   the 36-test Theron CTest slice, runtime screenshot readiness, and the Tier
   1 strict boot probe.
