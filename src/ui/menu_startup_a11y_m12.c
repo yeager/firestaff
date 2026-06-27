@@ -374,7 +374,7 @@ static void emit_bestiary_view(const M12_StartupMenuState* state,
     for (i = 0; i < categoryCount; ++i) {
         AxRect base = { 122 + (i % 5) * 60, catTabY + (i / 5) * 22, 60, 18 };
         const char* name = M12_Bestiary_CategoryName((M12_BestiaryCategory)i);
-        int isSelected = (state->bestiary.categoryFilter == i);
+        int isSelected = ((int)state->bestiary.categoryFilter == i);
         const char* selValue = isSelected ? "selected" : NULL;
         if ((int)(sizeof(s_bestiary_cat_id) / sizeof(s_bestiary_cat_id[0])) <= i) {
             continue;
