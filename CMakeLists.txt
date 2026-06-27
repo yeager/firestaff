@@ -13865,6 +13865,35 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 DMDF/MNS multi-model bounds + cleanup probe. Headless and
+# skip-safe: a synthetic path proves the slot-pool + cap + cleanup
+# + failure-isolation invariants without any real assets; an optional
+# real-data path drives the documented 30-creature MNS subset through
+# nexus_v1_load_model against the operator's data root. Source-lock:
+#   src/nexus/nexus_v1_engine.c    (nexus_v1_load_model, _shutdown)
+#   src/nexus/nexus_v1_dmdf_model.c (nexus_v1_dmdf_load, _free, _is_valid)
+#   include/nexus_v1_engine.h       (NEXUS_MAX_MODELS = 64)
+#   docs/FIRESTAFF_GAP_LIST.md      (MNS creature subset + Track 1
+#                                    phase-launch follow-up (d))
+# Companion to the SCORPION.MNS-only Phase 4 launch path inside
+# firestaff_nexus_v1_track1_phase_launch_probe.c, but bound to a
+# different invariant (slot accumulation + cap + cleanup, not the
+# single-model launch smoke).
+add_executable(firestaff_nexus_v1_mns_multi_model_bounds_probe
+    probes/nexus/firestaff_nexus_v1_mns_multi_model_bounds_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_mns_multi_model_bounds_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_mns_multi_model_bounds_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_mns_multi_model_bounds_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_save_load_round_trip
@@ -13952,6 +13981,41 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_saturn_font_scr_sections PROPERTIES
         LABELS "tier4;nexus;font;scr_sections"
+    )
+
+    # Nexus V1 DMDF/MNS multi-model bounds + cleanup gate.
+    # Data-free by default; synthetic-only path establishes the slot
+    # pool + NEXUS_MAX_MODELS=64 cap + cleanup + failure-isolation
+    # floor. The two real-data tests below additionally exercise
+    # the live nexus_v1_load_model path against the operator's
+    # staged MNS subset. Source-lock:
+    #   docs/FIRESTAFF_GAP_LIST.md — Track 1 phase-launch row
+    #   (deepen DMDF MNS coverage follow-up (d))
+    #   docs/FIRESTAFF_GAP_LIST.md — MNS creature/spell rendering row
+    add_test(
+        NAME nexus_v1_mns_multi_model_bounds_synthetic
+        COMMAND firestaff_nexus_v1_mns_multi_model_bounds_probe
+    )
+    set_tests_properties(nexus_v1_mns_multi_model_bounds_synthetic PROPERTIES
+        LABELS "tier1;nexus;mns;multi_model;synthetic"
+    )
+
+    add_test(
+        NAME nexus_v1_mns_multi_model_bounds_real_corpus
+        COMMAND firestaff_nexus_v1_mns_multi_model_bounds_probe
+                "$ENV{HOME}/.firestaff/data/nexus"
+    )
+    set_tests_properties(nexus_v1_mns_multi_model_bounds_real_corpus PROPERTIES
+        LABELS "tier1;nexus;mns;multi_model;live;extracted;skip_safe"
+    )
+
+    add_test(
+        NAME nexus_v1_mns_multi_model_bounds_saturn_ja_iso
+        COMMAND firestaff_nexus_v1_mns_multi_model_bounds_probe
+                "$ENV{HOME}/.firestaff/data/nexus-extras/saturn-ja"
+    )
+    set_tests_properties(nexus_v1_mns_multi_model_bounds_saturn_ja_iso PROPERTIES
+        LABELS "tier1;nexus;mns;multi_model;live;iso;skip_safe"
     )
 endif()
 

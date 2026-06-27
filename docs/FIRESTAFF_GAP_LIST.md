@@ -287,7 +287,7 @@ Nexus locally verified files in `~/.firestaff/data/nexus/`.
 |---|---|
 | DMDF parser | PARTIAL |
 | DGN world loader | PARTIAL |
-| MNS creature/spell rendering | PARTIAL |
+| MNS creature/spell rendering | PARTIAL — 2026-06-27: `firestaff_nexus_v1_mns_multi_model_bounds_probe` is CTest-gated as `nexus_v1_mns_multi_model_bounds_{synthetic,real_corpus,saturn_ja_iso}` and PASS 3/3. Synthetic path locks slot-fill (1 + 8 models), `NEXUS_MAX_MODELS=64` cap, bad-magic / too-small-buffer failure-isolation across the slot pool, and `nexus_v1_shutdown` zeroing `model_count` + nulling every slot's heap allocations. Real-data path drives the documented 30-creature MNS subset (ANTMAN/BIGWORM/BORKETH/CHAOS/DRA_ZOM/D_GOLD/D_RED/D_SILVER/GHOST/GIGGLER/GOLEM/GRN_DRA/H_HOUND/LAS_MON/LORD_RIB/MINI_DRA/MUMMY/OBAKE/OITU/RAT/RED_DRA/ROCKPILE/SCORPION/SCREAMER/SN_FLOOR/SN_WALL/S_SHIELD/S_SWORD/VEXIRK/WORM) through `nexus_v1_load_model` and asserts monotonic index growth + per-slot DMDF magic + matching per-slot `name` + `model_count == loaded_count` + cap invariant + shutdown cleanup. Per-MNS geometry bounds, vertex/UV extents, and face-index validation stay with `firestaff_nexus_v1_model_frame_gate_probe`. Remaining: VDP1 BITMAP texture decode from real `.MNS`, runtime creature render against the parsed slot pool, and the render-time texture palette handoff that turns a parsed model into a visible creature. |
 | S2D font loader/renderer | PARTIAL — parser, bounded indexed-framebuffer renderer, and bounded real-on-disk SEGA SATURN SCR section-table parser (`nexus_v1_saturn_font_scr_sections`, 55/55 PASS) are CTest-gated; runtime text layout and real Nexus screen render capture remain open. |
 | TLINK/TAI/SAL/MAP runtime | PARTIAL |
 | Save/load (.sav) | PARTIAL |
