@@ -1531,6 +1531,36 @@ if(BUILD_TESTING)
     )
 endif()
 
+# DM2 V2.2 in-place modern-renderer probe (per-cell modern-art swap).
+# Headless: creates its own tiny cache + probe HOME. Verifies the
+# DM2 V22 swap renders indoor T560 dungeon cells (D0..D2 x L/C/R)
+# and outdoor T600 sky/horizon/ground cells without touching V1.
+# Source-lock: SKULL.ASM T520/T560/T600 + ReDMCSB DUNVIEW.C:2962-3070.
+add_executable(firestaff_dm2_v22_inplace_render_probe
+    probes/firestaff_dm2_v22_inplace_render_probe.c
+    src/dm2/dm2_v22_viewport_swap_pc34.c
+    src/dm2/dm2_v22_inplace_draw_pc34.c
+    src/dm2/dm2_v22_shape_cache_pc34.c
+    src/dm2/dm2_v22_modern_assets_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_dm2_v22_inplace_render_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_dm2_v22_inplace_render_probe
+    PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m12 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v22_inplace_render_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME dm2_v22_inplace_render_probe
+        COMMAND firestaff_dm2_v22_inplace_render_probe
+    )
+    set_tests_properties(dm2_v22_inplace_render_probe PROPERTIES
+        LABELS "tier2;dm2;v2.2;modern-art-swap;presentation-only")
+endif()
+
 # DM1 V2 actual-render screenshot / pixel-fixture probe. Headless: no game
 # data, host-agnostic (uses SDL_VIDEODRIVER=dummy). Drives the real V2
 # render pipeline for V1 / V2.0 / V2.1 / V2.2, writes a 24-bit BMP

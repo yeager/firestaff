@@ -79,6 +79,26 @@ const uint32_t* dm2_v22_inplace_get_cell_bitmap(int depth, int lateral,
  * a follow-up. */
 const char* dm2_v22_inplace_get_cell_asset_id(int depth, int lateral);
 
+/* dm2_v22_inplace_get_bitmap_by_id — direct category + asset_id
+ * hash lookup against the loaded RGBA cache. Returns the bitmap
+ * pointer + width + height on hit, NULL when the cache is not
+ * loaded or the (category, asset_id) tuple is unknown.
+ *
+ * The category strings are the manifest categories documented in
+ * include/dm2_v22_modern_assets_pc34.h: "wall_shapes",
+ * "floor_shapes", "creature_shapes", "ui_chrome",
+ * "champion_portraits", "door_shapes".
+ *
+ * The asset_id strings are the keys from the modern_asset_manifest.json
+ * entries (e.g. "wall_dm2_temple_01", "floor_dm2_outdoor_01",
+ * "creature_dm2_brigand_01", "sky_dm2_outdoor_01").
+ *
+ * The returned pointer is owned by the in-place cache and remains
+ * valid until dm2_v22_inplace_draw_shutdown(). */
+const uint32_t* dm2_v22_inplace_get_bitmap_by_id(const char* category,
+                                                  const char* asset_id,
+                                                  int* out_w, int* out_h);
+
 /* dm2_v22_inplace_render_pass — paints the cached V22 bitmaps into
  * the framebuffer at the DM2 4x3 cell rectangles (same coords as the
  * overlay pass: D1/D2/D3 × L/C/R). For each V22-active cell with a
