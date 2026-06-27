@@ -17,6 +17,7 @@
 #include "color_presets_m11.h"
 #include "ui_scale_m11.h"
 #include "ambient_layer_m11.h"
+#include "m11_high_contrast_overlay_pc34_compat.h"
 #include "fs_portable_compat.h"
 #include "manual_docs_m12.h"
 
@@ -1917,6 +1918,16 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     M11_UIScale_SetPercent(config.uiScale);
     M11_Ambient_SetEnabled(config.ambientEnabled);
     M11_Ambient_SetVolume(config.ambientVolume);
+    /* High-contrast in-game overlay gate. The same
+     * M12_Config.highContrast that drives g_m12_active_high_contrast
+     * for the launcher chrome (see m12_presented_color below) is
+     * pushed into the M11 gate so the in-game chrome uses the same
+     * restricted palette. Default off, so V1 launches stay
+     * bit-identical. The M11 gate deliberately does NOT remap raw
+     * 320x200 dungeon-viewport pixels; see the manifest string
+     * returned by M11_HighContrast_GetManifest() for the full
+     * coverage contract. */
+    M11_HighContrast_SetActive(config.highContrast ? 1 : 0);
     if (gameId && gameId[0] != '\0') {
         M12_AssetStatus_ScanGame(&state->assetStatus, config.dataDir, gameId);
     } else {
