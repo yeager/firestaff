@@ -4890,6 +4890,39 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_champion_per_stat_parity_pc34_compat
     )
 
+    # CSB V1 champion reincarnation penalty over the ChampionState_Compat
+    # surface (Champions GAP 2, CHANGE7_24).  Source-faithful port of
+    # ReDMCSB REVIVE.C lines 809-822 (MEDIA332 + MEDIA265
+    # CHANGE7_24_IMPROVEMENT) + Character.cpp:14 globals.  Pins the
+    # HP/Mana/Stamina halve (>>1) and the per-stat 1/statPenalty
+    # reduction (default 8 = 1/8th per Character.cpp:14) with both
+    # current and maximum set to the same result, clamped at 0.  Luck
+    # exemption is implicit because ChampionState_Compat.attributes[]
+    # holds only the six non-Luck stats (DEFS.H:745-750).  Data-free,
+    # no DM1/CSB assets required.  Companion to
+    # test_csb_v1_champion_per_stat_parity_pc34_compat (modern
+    # CSB_V1_Champion surface).  Source citation:
+    # ReDMCSB REVIVE.C lines 809-815 (per-stat loop) + 815-822
+    # (HP/Mana/Stamina halve); DEFS.H:744-750 (statistic indices);
+    # DEFS.H:338-339 (C160/C161 panel commands); Character.cpp:14
+    # (reincarnateAttributePenalty=2, reincarnateStatPenalty=8,
+    # randomPoints=3 defaults).
+    add_executable(test_csb_v1_reincarnation_penalty_pc34_compat
+        tests/test_csb_v1_reincarnation_penalty_pc34_compat.c
+        src/csb/csb_v1_reincarnation_penalty_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_reincarnation_penalty_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_reincarnation_penalty_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_reincarnation_penalty_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_reincarnation_penalty_pc34_compat
+        COMMAND test_csb_v1_reincarnation_penalty_pc34_compat
+    )
+
     # Bug C regression: csb_v1_save_game must self-heal the save
     # directory tree (and the parent of a custom save path) via
     # ensure_save_dir so a wiped save tree does not return
