@@ -1,4 +1,12 @@
 
+# Firestaff Unreleased
+
+- macOS builds now prefer the platform zlib target over pkg-config, so
+  ZIP/gzip inflate support is compiled into the launcher/runtime path without
+  pulling in a Homebrew zlib dylib. The main `firestaff` binary, Theron SRM
+  gzip probe, and asset-cache deflated ZIP materializer all build with
+  `FIRESTAFF_HAS_ZLIB=1` when platform zlib is available.
+
 # Firestaff v3.0.10
 
 Firestaff v3.0.10 packages the 2026-06-26 runtime-hardening work that
