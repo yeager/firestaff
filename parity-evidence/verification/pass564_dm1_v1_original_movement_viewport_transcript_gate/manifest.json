@@ -1,7 +1,7 @@
 {
-  "branch": "dm1v1-capture-gap-close-20260620",
+  "branch": "main",
   "decision": "Original DM1 V1 movement/viewport/wall capture remains blocked until one bounded canonical PC34 run records C254 slot decode, IO2 movement key, F0361 enqueue, F0380 pop, F0365/F0366 dispatch, party tuple mutation or intentional blocked-step proof, then F0128 draw and F0097 viewport present for the same route token.",
-  "head": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
+  "head": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
   "nonClaims": [
     "no DOSBox runtime transcript is fabricated by this gate",
     "no original screenshot or pixel parity is promoted without the required transcript",
@@ -186,5 +186,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING",
-  "timestampUtc": "2026-06-21T19:20:34.166075+00:00"
+  "timestampUtc": "2026-06-25T21:16:39.934929+00:00"
 }

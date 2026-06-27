@@ -20,4 +20,4 @@
 
 ## Verification runs
 
-- `/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/202606221508270004_q50_20260622_dm1_v1_champion_panel_shield_disabled_icon_gate/builds/nv1-build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat`: rc=0 passes=153 fails=0 assertions=153
+- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat`: rc=0 passes=153 fails=0 assertions=153

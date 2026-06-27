@@ -1,7 +1,7 @@
 {
-  "blocker": "missing prerequisite(s): dosbox-debug",
-  "branch": "dm1v1-capture-gap-close-20260620",
-  "head": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
+  "blocker": "no promotable original overlay/capture frame exists yet; exact command: python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
+  "branch": "main",
+  "head": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
   "liveAttempt": null,
   "nonClaims": [
     "no original frame promoted as parity evidence",
@@ -16,13 +16,11 @@
     "dmExeExists": true,
     "liveVerifier": "tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py",
     "liveVerifierExists": true,
-    "missing": [
-      "dosbox-debug"
-    ],
+    "missing": [],
     "originalStage": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
     "tools": {
       "Xvfb": "/opt/homebrew/bin/Xvfb",
-      "dosbox-debug": "",
+      "dosbox-debug": "/opt/homebrew/bin/dosbox-debug",
       "xdotool": "/opt/homebrew/bin/xdotool"
     }
   },
@@ -139,6 +137,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS548_MISSING_N2_PREREQUISITE",
-  "timestampUtc": "2026-06-21T19:20:34.289525+00:00"
+  "status": "BLOCKED_PASS548_NO_PROMOTABLE_ORIGINAL_CAPTURE",
+  "timestampUtc": "2026-06-25T21:16:14.454896+00:00"
 }

@@ -1,5 +1,5 @@
 {
-  "branch": "dm1v1-capture-gap-close-20260620",
+  "branch": "main",
   "decision": "pass514/pass556/pass557 evidence chain incomplete",
   "externalEvidence": {
     "pass550": {
@@ -15,7 +15,7 @@
       "present": false
     }
   },
-  "head": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
+  "head": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
   "nextBoundary": "DOSBox window/event queue -> guest keyboard IRQ/int09 -> IBMIO buffer -> IO2 presence/read",
   "nonClaims": [
     "no new original runtime capture",
@@ -24,10 +24,10 @@
     "no push"
   ],
   "pass514Manifest": "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
-  "pass514Status": "BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE",
+  "pass514Status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
   "proofPredicates": {
     "pass514F0380Reached": true,
-    "pass514InputDeliveredButEmptyF0380": false,
+    "pass514InputDeliveredButEmptyF0380": true,
     "pass514ManifestPresent": true,
     "pass514QueueCountWriteMissing": true,
     "pass514RouteInputAfterArmingSucceeded": true,
@@ -151,5 +151,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE",
-  "timestampUtc": "2026-06-21T19:20:33.914381+00:00"
+  "timestampUtc": "2026-06-25T21:16:21.598510+00:00"
 }

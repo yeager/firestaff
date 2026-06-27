@@ -1,5 +1,5 @@
 {
-  "branchAtVerification": "dm1v1-capture-gap-close-20260620",
+  "branchAtVerification": "main",
   "canonicalAssetsSha256": {
     "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
     "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
@@ -12,7 +12,7 @@
       "line": 2368
     }
   ],
-  "gitHeadAtVerification": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
+  "gitHeadAtVerification": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
   "schema": "firestaff.parity.pass607.level_change_autosave_absence.v1",
   "scope": "DM1 V1 ordinary stairs/pit/teleporter level-change autosave absence",
   "sourceAudit": {
@@ -103,6 +103,6 @@
     }
   },
   "status": "PASS607_DM1_V1_LEVEL_CHANGE_AUTOSAVE_ABSENCE_SOURCE_LOCKED",
-  "timestampUtc": "2026-06-21T19:20:22.285083+00:00",
+  "timestampUtc": "2026-06-25T21:17:00.372573+00:00",
   "worktree": "/Users/bosse/.openclaw/workspace-main"
 }

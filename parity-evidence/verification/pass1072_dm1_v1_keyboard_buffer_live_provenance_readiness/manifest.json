@@ -75,18 +75,18 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_ORIGINAL_I34E_KEYBOARD_BUFFER_LIVE_DEBUGGER_OBSERVATION_MISSING",
-  "timestampUtc": "2026-06-21T20:40:47.650477+00:00",
+  "timestampUtc": "2026-06-25T21:01:31.560603+00:00",
   "toolAudit": {
-    "allRequiredToolsAvailable": false,
+    "allRequiredToolsAvailable": true,
     "debuggerHarness": "tools/run_dosbox_debug_pty.py",
     "debuggerHarnessExists": true,
     "debuggerHarnessMissingNeedles": [],
     "debuggerHarnessOk": true,
     "requiredTools": [
       {
-        "available": false,
+        "available": true,
         "name": "dosbox-debug",
-        "path": null
+        "path": "/opt/homebrew/bin/dosbox-debug"
       },
       {
         "available": true,

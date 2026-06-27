@@ -1,6 +1,6 @@
 # Pass376 — DM1 V1 deferred-explosion completion credit
 
-Status: `PASS376_DM1_V1_DEFERRED_EXPLOSION_COMPLETION_CREDIT_PROVED`
+Status: `BLOCKED_PASS376_DM1_V1_DEFERRED_EXPLOSION_COMPLETION_CREDIT`
 
 ## ReDMCSB source audit first
 
@@ -21,9 +21,9 @@ The credit is narrow: it covers the source-locked layer boundary for viewport ex
 - `pass375_evidence_marker` ok=True
 - `pass375_evidence_marker` ok=True
 - `pass375_evidence_marker` ok=True
-- `completion_matrix_credit` ok=True
-- `completion_doc_credit` ok=True
+- `completion_matrix_credit` ok=False
+- `completion_doc_credit` ok=False
 - `firestaff_completion_matrix_verifier` ok=True
-- `firestaff_completion_status_cli` ok=True
+- `firestaff_completion_status_cli` ok=False
 
 Manifest: `parity-evidence/verification/pass376_dm1_v1_completion_deferred_explosion_credit/manifest.json`

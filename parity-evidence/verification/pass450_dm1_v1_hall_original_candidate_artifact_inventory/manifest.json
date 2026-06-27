@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-06-21T19:17:11.197987+00:00",
+  "timestampUtc": "2026-06-25T21:03:44.790659+00:00",
   "status": "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED",
   "repo": "/Users/bosse/.openclaw/workspace-main",
-  "branch": "dm1v1-capture-gap-close-20260620",
-  "head": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
+  "branch": "main",
+  "head": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
@@ -3708,7 +3708,7 @@
     "localHostCaptureReady": true,
     "platform": "Darwin",
     "machine": "arm64",
-    "path": "/Users/bosse/.cargo/bin:/Users/bosse/.local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/opt/homebrew/Cellar/node@22/22.22.2_2/bin:/opt/homebrew/opt/node@22/bin:/opt/homebrew/sbin:/Users/bosse/Library/pnpm:/Users/bosse/.bun/bin",
+    "path": "/Users/bosse/.local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/Users/bosse/.local/bin:/Users/bosse/openclaw/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/codex-path:/Users/bosse/.cargo/bin:/Users/bosse/.openclaw/agents/main/agent/codex-home/tmp/arg0/codex-arg0PrCYg4:/opt/homebrew/Cellar/node@22/22.22.2_2/bin:/opt/homebrew/opt/node@22/bin:/opt/homebrew/sbin:/Users/bosse/Library/pnpm:/Users/bosse/.bun/bin",
     "display": null,
     "dosboxCandidates": [
       {

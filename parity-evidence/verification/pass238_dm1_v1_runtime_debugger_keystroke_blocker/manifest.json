@@ -83,7 +83,7 @@
     "transcript": "/Users/bosse/.openclaw/workspace-main/parity-evidence/verification/pass238_dm1_v1_runtime_debugger_keystroke_blocker/stdin_bpint_attempt_sanitized.txt"
   },
   "tools": {
-    "dosbox-debug": null,
+    "dosbox-debug": "/opt/homebrew/bin/dosbox-debug",
     "dosbox-x": "/opt/homebrew/bin/dosbox-x"
   }
 }

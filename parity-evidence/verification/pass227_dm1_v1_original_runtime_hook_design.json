@@ -138,7 +138,7 @@
     ],
     "tools": {
       "dosbox": "/opt/homebrew/bin/dosbox",
-      "dosbox-debug": null,
+      "dosbox-debug": "/opt/homebrew/bin/dosbox-debug",
       "dosbox-x": "/opt/homebrew/bin/dosbox-x",
       "gdb": null,
       "objdump": "/usr/bin/objdump",

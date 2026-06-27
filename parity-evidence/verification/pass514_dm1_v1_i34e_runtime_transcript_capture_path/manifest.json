@@ -16,10 +16,10 @@
     "G0434_i_CommandQueueLastIndex": "2C23:1F08",
     "G2153_i_QueuedCommandsCount": "2C23:3E78"
   },
-  "blocker": "missing prerequisite: dosbox-debug",
-  "branch": "dm1v1-capture-gap-close-20260620",
+  "blocker": "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
+  "branch": "main",
   "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "head": "84c26f5a0ef1ef3177dd1736932f79561e9af80a",
+  "head": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
   "nonClaims": [
     "no movement behavior changed",
     "no pass513 scaffold promoted",
@@ -28,9 +28,7 @@
   "prerequisites": {
     "dmExeExists": true,
     "missingHelpers": [],
-    "missingTools": [
-      "dosbox-debug"
-    ],
+    "missingTools": [],
     "originalStage": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
     "originalStageExists": true,
     "runtimeHelpers": {
@@ -40,7 +38,7 @@
     },
     "tools": {
       "Xvfb": "/opt/homebrew/bin/Xvfb",
-      "dosbox-debug": null,
+      "dosbox-debug": "/opt/homebrew/bin/dosbox-debug",
       "xdotool": "/opt/homebrew/bin/xdotool"
     }
   },
@@ -88,7 +86,7 @@
     "f0380QueuePositiveBeforePop": false,
     "f0380ReachedInN2DebuggerPath": true,
     "keyboardProducerEntryHit": false,
-    "prerequisitesOk": false,
+    "prerequisitesOk": true,
     "queueCountWriteObserved": false,
     "routeControlReachedAfterArmingWithBreakpointsRetained": true,
     "routeInputAfterArmingSucceeded": true,
@@ -222,6 +220,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE",
-  "timestampUtc": "2026-06-21T19:20:33.797869+00:00"
+  "status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
+  "timestampUtc": "2026-06-25T21:15:59.111382+00:00"
 }
