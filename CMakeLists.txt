@@ -75,25 +75,46 @@ find_package(Python3 COMPONENTS Interpreter QUIET)
 
 # -- zlib discovery (optional, used by asset-scanner ZIP/gzip paths) --
 #
-# Prefer CMake's platform zlib lookup over pkg-config. On macOS this resolves
-# to the SDK/system libz target, avoiding Homebrew dylib dependencies in
-# packaged apps while still compiling the inflate code into Firestaff.
+# Default to Firestaff's bundled miniz provider so release binaries do not
+# gain a runtime dependency on a Homebrew/pkg-config zlib dylib.  System zlib
+# remains available for explicit platform builds and as a fallback if a packager
+# disables the bundled provider.
 option(FIRESTAFF_WITH_ZLIB "Enable zlib-backed ZIP/gzip inflate support" ON)
+option(FIRESTAFF_WITH_BUNDLED_ZLIB "Use bundled miniz for zlib-compatible inflate support" ON)
 set(FIRESTAFF_ZLIB_TARGET "")
+set(FIRESTAFF_ZLIB_PROVIDER "")
 if(FIRESTAFF_WITH_ZLIB)
-    find_package(ZLIB QUIET)
-    if(TARGET ZLIB::ZLIB)
-        set(FIRESTAFF_ZLIB_TARGET ZLIB::ZLIB)
+    if(FIRESTAFF_WITH_BUNDLED_ZLIB)
+        add_library(firestaff_zlib STATIC
+            third_party/miniz/miniz.c
+            third_party/miniz/miniz_tdef.c
+            third_party/miniz/miniz_tinfl.c
+        )
+        target_include_directories(firestaff_zlib PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}/third_party/miniz
+        )
+        if(NOT MSVC)
+            target_compile_options(firestaff_zlib PRIVATE -Wall -Wextra -O2)
+        endif()
+        set(FIRESTAFF_ZLIB_TARGET firestaff_zlib)
+        set(FIRESTAFF_ZLIB_PROVIDER "bundled miniz")
     else()
-        pkg_check_modules(FIRESTAFF_PKG_ZLIB QUIET IMPORTED_TARGET zlib)
-        if(TARGET PkgConfig::FIRESTAFF_PKG_ZLIB)
-            set(FIRESTAFF_ZLIB_TARGET PkgConfig::FIRESTAFF_PKG_ZLIB)
+        find_package(ZLIB QUIET)
+        if(TARGET ZLIB::ZLIB)
+            set(FIRESTAFF_ZLIB_TARGET ZLIB::ZLIB)
+            set(FIRESTAFF_ZLIB_PROVIDER "ZLIB::ZLIB")
+        else()
+            pkg_check_modules(FIRESTAFF_PKG_ZLIB QUIET IMPORTED_TARGET zlib)
+            if(TARGET PkgConfig::FIRESTAFF_PKG_ZLIB)
+                set(FIRESTAFF_ZLIB_TARGET PkgConfig::FIRESTAFF_PKG_ZLIB)
+                set(FIRESTAFF_ZLIB_PROVIDER "PkgConfig::FIRESTAFF_PKG_ZLIB")
+            endif()
         endif()
     endif()
 endif()
 if(FIRESTAFF_ZLIB_TARGET)
     set(FIRESTAFF_HAS_ZLIB 1 CACHE BOOL "Whether Firestaff is built with zlib for ZIP/gzip inflate" FORCE)
-    message(STATUS "Found zlib via ${FIRESTAFF_ZLIB_TARGET} - ZIP/gzip inflate paths enabled")
+    message(STATUS "Found zlib via ${FIRESTAFF_ZLIB_PROVIDER} - ZIP/gzip inflate paths enabled")
 else()
     set(FIRESTAFF_HAS_ZLIB 0 CACHE BOOL "Whether Firestaff is built with zlib for ZIP/gzip inflate" FORCE)
     message(STATUS "zlib not found - ZIP/gzip inflate paths fall back to stored/header-only handling")
