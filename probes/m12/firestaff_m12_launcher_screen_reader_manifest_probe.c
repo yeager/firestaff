@@ -84,7 +84,7 @@ static char* portable_mkdtemp(char* tmpl) {
 #include <windows.h>
 #else
 #include <unistd.h>
-static int portable_mkdir(const char* path) { return mkdir(path, 0700); }
+static int portable_mkdir(const char* path) { return mkdir(path, S_IRWXU); }
 static int portable_rmdir(const char* path) { return rmdir(path); }
 static int portable_remove(const char* path) { return remove(path); }
 static int portable_setenv(const char* name, const char* value) {
