@@ -4715,6 +4715,65 @@ if(BUILD_TESTING)
         target_compile_options(firestaff_dm2_v1_projectile_drain_probe PRIVATE -Wall -Wextra -O2)
     endif()
 
+    # ── DM2 V1 Phase 5+: Projectile drain runtime / M11 cache boundary ──
+    # Narrow source-faithful slice that closes the runtime/drain-cache
+    # boundary by applying the STEP_MISSILE energy-decay + despawn
+    # boundary (skproject/SKULLWIN/c_tim_proc.cpp:442-563 m_7CE0/m_7D2A)
+    # each V1 tick, then refreshing the M11 drain cache with the
+    # post-step survivors.  Source-locked against:
+    #   skproject/SKULLWIN/c_tim_proc.cpp:442-563   (DM2_STEP_MISSILE)
+    #   skproject/SKWIN/SkWinCore.cpp:60920-61116   (STEP_MISSILE wrapper)
+    #   ReDMCSB PROJEXPL.C:76-92                    (F0212 live +1 tick)
+    #   ReDMCSB PROJEXPL.C:689-690                  (F0219 C48 grace)
+    #   ReDMCSB GROUP.C:1695-1770                   (F0207 creature attack)
+    add_executable(test_dm2_v1_projectile_step_pc34_compat
+        tests/test_dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_projectile_step_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/memory
+    )
+    target_link_libraries(test_dm2_v1_projectile_step_pc34_compat PRIVATE firestaff_m10 m)
+    # Test-only override hooks (FIRESTAFF_DM2_PROJECTILE_TESTING) let the
+    # gate drive non-default kineticEnergy/stepEnergy values through
+    # dispatch's public API.  The dispatch .c is listed in the target
+    # above (compiled here with the flag) so the test-side symbols are
+    # resolved from this build, not from firestaff_m10.
+    target_compile_definitions(test_dm2_v1_projectile_step_pc34_compat PRIVATE
+        FIRESTAFF_DM2_PROJECTILE_TESTING=1
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_projectile_step_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_projectile_step_pc34_compat
+        COMMAND test_dm2_v1_projectile_step_pc34_compat
+    )
+
+    # Headless data-free sibling for the firestaff pool workers.
+    add_executable(firestaff_dm2_v1_projectile_step_probe
+        probes/dm2/firestaff_dm2_v1_projectile_step_probe.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+    )
+    target_include_directories(firestaff_dm2_v1_projectile_step_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/memory
+    )
+    target_link_libraries(firestaff_dm2_v1_projectile_step_probe PRIVATE firestaff_m10 m)
+    target_compile_definitions(firestaff_dm2_v1_projectile_step_probe PRIVATE
+        FIRESTAFF_DM2_PROJECTILE_TESTING=1
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_projectile_step_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_projectile_step_probe
+        COMMAND firestaff_dm2_v1_projectile_step_probe
+    )
+
     # ── DM2 V1 Phase 2 Probes: Dungeon/Object/World-State/Asset ──
 
     add_executable(probe_dm2_v1_dungeon_loader

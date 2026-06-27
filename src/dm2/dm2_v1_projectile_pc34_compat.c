@@ -324,12 +324,22 @@ int dm2_v1_projectile_drain_to_m11(DM2_V1_DrainedProjectile *out_list,
     if (!out_list || max_count <= 0) return 0;
     ensure_init();
     int drained = 0;
-    for (int i = 0; i < s_projectile_list.count
-                && i < PROJECTILE_LIST_CAPACITY
+    /* Phase 5+ extension: walk the full capacity range (not just
+     * s_projectile_list.count) because F0813 despawn leaves holes
+     * in the slot table.  The step helper (dm2_v1_projectile_step)
+     * despawns depleted slots via F0813, which clears reserved3 but
+     * may leave earlier slots still occupied.  We filter on
+     * reserved3 (the F0810 occupied sentinel) so holes are skipped
+     * and live slots anywhere in the table are drained.
+     *
+     * Source-lock: same F0810/F0813 contract.  This is a pure read-
+     * side fix; behavior on a freshly-dispatched list (no F0813
+     * holes) is unchanged. */
+    for (int i = 0; i < PROJECTILE_LIST_CAPACITY
                 && drained < max_count; i++) {
         const struct ProjectileInstance_Compat *p =
             &s_projectile_list.entries[i];
-        if (p->slotIndex < 0) continue;
+        if (p->reserved3 == 0) continue;  /* empty slot */
         DM2_V1_DrainedProjectile *out = &out_list[drained];
         out->slot_index = p->slotIndex;
         out->category = p->projectileCategory;
@@ -406,7 +416,11 @@ int dm2_v1_projectile_get_slot(int slot_index,
     if (slot_index < 0 || slot_index >= PROJECTILE_LIST_CAPACITY) return 0;
     ensure_init();
     const struct ProjectileInstance_Compat *p = &s_projectile_list.entries[slot_index];
-    if (p->slotIndex < 0) return 0;
+    /* Use the F0810 occupied sentinel (reserved3 == 1) rather than
+     * slotIndex, because F0813 only sets slotIndex = -1 (and the
+     * list's initial memset-zero state has slotIndex = 0).  Without
+     * this check, get_slot returns 1 for every entry in the cap. */
+    if (p->reserved3 == 0) return 0;
     out->slotIndex          = p->slotIndex;
     out->projectileCategory = p->projectileCategory;
     out->projectileSubtype  = p->projectileSubtype;
@@ -418,6 +432,68 @@ int dm2_v1_projectile_get_slot(int slot_index,
     out->cell               = p->cell;
     out->direction          = p->direction;
     out->attack             = p->attack;
+    /* Phase 5+ extension: expose energy fields needed by the per-tick
+     * missile step helper.  See header for source-lock anchors. */
+    out->kineticEnergy      = p->kineticEnergy;
+    out->stepEnergy         = p->stepEnergy;
+    out->firstMoveGraceFlag = p->firstMoveGraceFlag;
+    out->scheduledAtTick    = p->scheduledAtTick;
+    return 1;
+}
+
+/* ── Phase 5+ extension: per-tick step energy consumption ────────
+ *
+ * Apply the STEP_MISSILE energy-decay + despawn boundary to one slot.
+ * See header for full contract.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:442-563 m_7CE0/m_7D2A
+ *         (DM2_STEP_MISSILE: RG4L = kineticEnergy, RG1L = stepEnergy,
+ *          if RG4L <= RG1L → despawn; else RG4L -= RG1L).
+ *         ReDMCSB PROJEXPL.C:689-690 (F0219 first-move grace). */
+int dm2_v1_projectile_consume_step_energy(int slot_index,
+                                           int *out_post_energy,
+                                           int *out_was_graced) {
+    if (out_post_energy) *out_post_energy = 0;
+    if (out_was_graced)  *out_was_graced = 0;
+    if (slot_index < 0 || slot_index >= PROJECTILE_LIST_CAPACITY) return 0;
+    ensure_init();
+    struct ProjectileInstance_Compat *p = &s_projectile_list.entries[slot_index];
+    if (p->reserved3 == 0 || p->slotIndex < 0) return 0;
+
+    int ke = p->kineticEnergy;
+    int se = p->stepEnergy;
+    if (ke <= 0 || se <= 0) {
+        /* No energy or no step-cost: treat as depleted.  Mirrors the
+         * F0813 safety net for zero-energy entries that should have
+         * been cleaned up but slipped through. */
+        F0813_PROJECTILE_Despawn_Compat(&s_projectile_list, slot_index);
+        return 0;
+    }
+
+    /* Boundary rule from skproject m_7CE0: kineticEnergy <= stepEnergy
+     * → despawn (no partial step).  Uses <= not == so a slot that
+     * arrives with energy == step consumes itself this tick. */
+    if (ke <= se) {
+        F0813_PROJECTILE_Despawn_Compat(&s_projectile_list, slot_index);
+        return 0;
+    }
+
+    /* First-move grace (ReDMCSB PROJEXPL.C:689-690 F0219 C48):
+     * honor the grace flag on the very first step, then clear it so
+     * subsequent steps apply the real decrement. */
+    if (p->firstMoveGraceFlag) {
+        p->firstMoveGraceFlag = 0;
+        if (out_post_energy) *out_post_energy = ke;  /* unchanged */
+        if (out_was_graced)  *out_was_graced = 1;
+        return 1;
+    }
+
+    /* Real decrement.  Clamp at 0 for safety. */
+    int post = ke - se;
+    if (post < 0) post = 0;
+    p->kineticEnergy = post;
+    if (out_post_energy) *out_post_energy = post;
+    if (out_was_graced)  *out_was_graced = 0;
     return 1;
 }
 
@@ -429,6 +505,51 @@ int dm2_v1_projectile_despawn(int slot_index) {
     ensure_init();
     return F0813_PROJECTILE_Despawn_Compat(&s_projectile_list, slot_index);
 }
+
+/* ── Phase 5+ extension: test-only list accessor + slot-energy override ─
+ *
+ * Both helpers are gated on FIRESTAFF_DM2_PROJECTILE_TESTING=1 (the
+ * CMake target that compiles the step test defines this).  Production
+ * builds do not see these symbols; tests need them to drive the
+ * step helper with non-default kineticEnergy/stepEnergy values
+ * (the public dispatch API always sets ke=100, se=8 at F0810 time).
+ *
+ * Source: same F0810/F0813 contract as above.  These are pure test
+ * plumbing — they do not affect runtime behavior. */
+#ifdef FIRESTAFF_DM2_PROJECTILE_TESTING
+
+void *dm2_v1_projectile_list_handle_for_test(void) {
+    ensure_init();
+    return (void *)&s_projectile_list;
+}
+
+int dm2_v1_projectile_test_set_slot_energy(int slot_index,
+                                             int kinetic_energy,
+                                             int step_energy,
+                                             int first_grace) {
+    if (slot_index < 0 || slot_index >= PROJECTILE_LIST_CAPACITY) return 0;
+    ensure_init();
+    struct ProjectileInstance_Compat *p = &s_projectile_list.entries[slot_index];
+    if (p->reserved3 == 0 || p->slotIndex < 0) return 0;
+    p->kineticEnergy      = kinetic_energy;
+    p->stepEnergy         = step_energy;
+    p->firstMoveGraceFlag = first_grace ? 1 : 0;
+    return 1;
+}
+
+/* Test-only full-list reset.  Clears all entries (slots become
+ * empty via reserved3 = 0) and resets list count to 0.  Production
+ * builds do not see this symbol. */
+void dm2_v1_projectile_test_reset_list(void) {
+    ensure_init();
+    memset(&s_projectile_list, 0, sizeof(s_projectile_list));
+    s_initialized = 1;
+    s_dispatch_count = 0;
+    s_spell_count = 0;
+    s_bomb_count = 0;
+}
+
+#endif /* FIRESTAFF_DM2_PROJECTILE_TESTING */
 
 const char *dm2_v1_projectile_source_evidence(void) {
     return
