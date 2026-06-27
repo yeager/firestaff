@@ -224,6 +224,7 @@ set(M11_SOURCES
     src/engine/input_remap_m11.c
     src/engine/screenshot_m11.c
     src/engine/ui_scale_m11.c
+    src/engine/m11_high_contrast_overlay_pc34_compat.c
     src/audio/soundtrack_selector_m11.c
     src/audio/ambient_layer_m11.c
     src/shared/audio_sdl_m11.c
@@ -411,6 +412,18 @@ add_executable(firestaff_m11_phase_a_probe probes/m11/firestaff_m11_phase_a_prob
 target_link_libraries(firestaff_m11_phase_a_probe PRIVATE firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3)
 if(NOT MSVC)
     target_compile_options(firestaff_m11_phase_a_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
+# 2026-06-27 gapbug: in-game high-contrast overlay runtime probe.
+# Headless, data-free. Exercises the M11 high-contrast gate across
+# the full state machine (launcher config → M11 chrome → M11
+# viewport fence) without needing any game assets.
+add_executable(firestaff_m11_high_contrast_overlay_runtime_probe
+    probes/firestaff_m11_high_contrast_overlay_runtime_probe.c)
+target_link_libraries(firestaff_m11_high_contrast_overlay_runtime_probe
+    PRIVATE firestaff_m11 firestaff_m12 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_high_contrast_overlay_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
 # CSB V2 Phase 1 — Launch/Profile Separation Probe
@@ -7159,6 +7172,26 @@ if(BUILD_TESTING)
         COMMAND test_input_remap_keyboard_layout_pc34_compat
     )
 
+    # 2026-06-27 gapbug: in-game high-contrast overlay gate. Pins
+    # the M11 chrome-remap contract (default off → bit-identical
+    # V1, gate on → muted palette slots collapse to BLACK while
+    # YELLOW / WHITE / LIGHT_CYAN survive and the 320x200 dungeon
+    # viewport is fenced off via excludeMask). Data-free, runs in CI.
+    add_executable(test_m11_high_contrast_overlay_pc34_compat
+        tests/test_m11_high_contrast_overlay_pc34_compat.c
+    )
+    target_link_libraries(test_m11_high_contrast_overlay_pc34_compat PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_m11_high_contrast_overlay_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_high_contrast_overlay_pc34_compat
+        COMMAND test_m11_high_contrast_overlay_pc34_compat
+    )
+    set_tests_properties(m11_high_contrast_overlay_pc34_compat PROPERTIES
+        LABELS "tier2;m11;accessibility;high-contrast"
+    )
+
     # v2.8.x: source-lock verifier for the keyboard layout contract.
     # Pins the production code paths so a future refactor cannot
     # regress the arrow-strafe / Home-End-turn mapping without
@@ -9427,6 +9460,19 @@ if(BUILD_TESTING)
     set_tests_properties(m11_phase_a PROPERTIES
         ENVIRONMENT "SDL_VIDEODRIVER=dummy"
     )
+
+    # 2026-06-27 gapbug: in-game high-contrast overlay runtime probe
+    # (headless, no game data needed, exercises launcher→M11 chrome
+    # →viewport fence state machine).
+    if(TARGET firestaff_m11_high_contrast_overlay_runtime_probe)
+        add_test(
+            NAME m11_high_contrast_overlay_runtime_probe
+            COMMAND firestaff_m11_high_contrast_overlay_runtime_probe
+        )
+        set_tests_properties(m11_high_contrast_overlay_runtime_probe PROPERTIES
+            LABELS "tier2;m11;accessibility;high-contrast"
+        )
+    endif()
 
     # CSB V2 Phase 1 — Launch/Profile Separation Probe (headless, no game data)
     if(TARGET firestaff_csb_v2_phase1_launch_profile_separation_probe)

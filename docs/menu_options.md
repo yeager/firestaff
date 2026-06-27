@@ -73,6 +73,20 @@ M12_SETTINGS_TAB_CONTROLS  = input remapping, WASD, touch
 M12_SETTINGS_TAB_AUDIO     = master/music/SFX volume, mute
 M12_SETTINGS_TAB_ACCESSIBILITY = font scale, high contrast, colorblind mode
 
+The high-contrast row toggles both the launcher chrome (existing
+`m12_presented_color` in `src/ui/menu_startup_m12.c`) and the M11
+in-game chrome via the new `m11_high_contrast_overlay_pc34_compat`
+gate (`M11_HighContrast_SetActive()` is pushed from
+`m12_apply_loaded_config` next to the existing
+`M11_UIScale_SetPercent` push). The gate covers HUD text, dialog
+choice text, action-area / rune-strip text, combat-log text, hit-
+flash text, and the death / winner overlay. The 320x200 dungeon-
+viewport pixels and the HUD panel C040 / C017 backdrop blits are
+deliberately preserved bit-exact because they go through separate
+bitmap-blit paths, not through `m11_draw_text`. Default state is
+off so V1 launches stay pixel-identical with the original DM1 PC
+3.4 presentation.
+
 Settings rows include: language, window mode, integer scaling, VSYNC,
 viewport style, auto-pause, theme, background.
 

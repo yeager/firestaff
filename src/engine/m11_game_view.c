@@ -22,6 +22,7 @@
 #include "m11_v2_vertical_slice_assets.h"
 #include "m11_game_text_utf8_decoder_pc34_compat.h"
 #include "render_sdl_m11.h"
+#include "m11_high_contrast_overlay_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
@@ -617,6 +618,29 @@ static const M11_TextStyle g_text_small = {1, 1, M11_COLOR_WHITE, 0, 0, M11_COLO
 static const M11_TextStyle g_text_shadow = {1, 1, M11_COLOR_WHITE, 1, 1, M11_COLOR_BLACK};
 static const M11_TextStyle g_text_title = {2, 1, M11_COLOR_YELLOW, 1, 1, M11_COLOR_BLACK};
 
+/* High-contrast in-game overlay gate.  When M11_HighContrast_IsActive()
+ * is true the chrome text colour is run through the restricted
+ * palette from m11_high_contrast_overlay_pc34_compat.h so HUD /
+ * dialog / log / rune / hit-flash / death-overlay text stays
+ * readable on the indexed framebuffer.  When the gate is off
+ * (default — V1 fidelity path) this is the identity function so
+ * the renderer stays bit-identical with the original DM1 PC 3.4
+ * presentation.  The 320x200 dungeon-viewport pixel data is
+ * unaffected: those pixels are painted via separate blit paths
+ * (see src/engine/m11_game_view.c::m11_draw_viewport and the
+ * per-cell bitmap blit helpers), never via m11_draw_text. */
+static const M11_TextStyle* m11_chrome_remap_style(const M11_TextStyle* style,
+                                                   M11_TextStyle* scratch) {
+    const M11_TextStyle* src = style ? style : &g_text_small;
+    if (!M11_HighContrast_IsActive()) {
+        return src;
+    }
+    *scratch = *src;
+    scratch->color       = M11_HighContrast_RemapPresentedColor(src->color);
+    scratch->shadowColor = M11_HighContrast_RemapPresentedColor(src->shadowColor);
+    return scratch;
+}
+
 /* Thread-local-ish pointer to the original DM1 font for the current
  * render pass.  Set at the top of M11_GameView_Render and cleared
  * after.  Allows m11_draw_text to automatically use the original
@@ -859,14 +883,15 @@ static void m11_draw_text(unsigned char* framebuffer,
                           const M11_TextStyle* style) {
     int cursor = x;
     size_t i;
-    const M11_TextStyle* s = style ? style : &g_text_small;
+    M11_TextStyle chromeScratch;
+    const M11_TextStyle* s = m11_chrome_remap_style(style, &chromeScratch);
     if (!text) {
         return;
     }
     /* Use original DM1 font when available */
     if (g_activeOriginalFont && M11_Font_IsLoaded(g_activeOriginalFont)) {
         m11_draw_text_original(g_activeOriginalFont, framebuffer,
-            framebufferWidth, framebufferHeight, x, y, text, style);
+            framebufferWidth, framebufferHeight, x, y, text, s);
         return;
     }
     for (i = 0; text[i] != '\0'; /* i advances per UTF-8 codepoint */) {
@@ -1294,7 +1319,8 @@ static void m11_draw_text_original(
     const char* text,
     const M11_TextStyle* style)
 {
-    const M11_TextStyle* s = style ? style : &g_text_small;
+    M11_TextStyle chromeScratch;
+    const M11_TextStyle* s = m11_chrome_remap_style(style, &chromeScratch);
     if (!text) return;
     if (font && M11_Font_IsLoaded(font)) {
         /* Accessibility: apply fontScale override to original DM1 font */
@@ -1311,7 +1337,7 @@ static void m11_draw_text_original(
             framebufferHeight, x, y, text, s->color, -1, effective_scale);
     } else {
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      x, y, text, style);
+                      x, y, text, s);
     }
 }
 
