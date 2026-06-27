@@ -2382,7 +2382,8 @@ add_test(
 #         G2082_C5_CharacterPadding=5 (X_OFFSET = 8 - 5 = 3),
 #         G2087_C6_InscriptionCharacterWidth=6, G2083_C3=6 visible rows.
 add_executable(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe
-    probes/m11/firestaff_dm1_v1_dialog_choice_font_scale_fit_probe.c)
+    probes/m11/firestaff_dm1_v1_dialog_choice_font_scale_fit_probe.c
+    src/audio/ambient_layer_m11.c)
 target_link_libraries(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m11 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PRIVATE -Wall -Wextra -O2)
