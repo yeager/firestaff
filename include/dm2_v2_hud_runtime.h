@@ -2,6 +2,7 @@
 #define FIRESTAFF_DM2_V2_HUD_RUNTIME_H
 #include "dm2_v2_hud_overlay.h"
 #include "dm2_v2_phase_gate.h"
+#include "dm2_v2_hud_widget_assets.h"
 #include <stdbool.h>
 
 #ifdef __cplusplus
@@ -69,6 +70,70 @@ void dm2_v2_hud_runtime_set_opacity(uint8_t val);
  * If the HUD is not visible, this is a no-op.
  * Source-lock: SKULL.ASM T560 (DM2 HUD rendering). */
 void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h_res);
+
+/* ── Asset-aware render (Phase 3 widget bitmap hook) ───────────── */
+/* Per-slot path mode recorded by dm2_v2_hud_runtime_render_with_assets().
+ * Mirrors the asset gate classification but uses a render-perspective
+ * vocabulary (REAL_BITMAP = the slot's manifest classification is
+ * DM2_V2_HUD_WIDGET_CLASS_REAL and the runtime took the real-asset
+ * path; PROCEDURAL_FALLBACK = the slot was not REAL and the existing
+ * procedural rectangle/letter fallback drew the slot).
+ *
+ * The mapping is:
+ *   REAL classification  → DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP
+ *   PLACEHOLDER          → DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK
+ *   PARTIAL              → DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK
+ *   MISSING              → DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK
+ *   UNKNOWN              → DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK
+ *
+ * The runtime never claims a finished bitmap decode happened for any
+ * slot. The "real asset path" hook is the integration seam where
+ * real bitmap decode will land when operator-installed art ships;
+ * until then it stamps a small marker pixel and records the slot
+ * as REAL_BITMAP in the path-mode array so wire-up tests can prove
+ * the gate is reaching the runtime end-to-end. */
+typedef enum {
+    DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK = 0,
+    DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP         = 1
+} DM2_V2_HudRuntimePathMode;
+
+/* Asset-aware variant of dm2_v2_hud_runtime_render(). Walks the seven
+ * Phase 3 / chrome-supporting widget slots (see dm2_v2_hud_widget_assets),
+ * records the path-mode the runtime took per slot, and then renders the
+ * HUD the same way dm2_v2_hud_runtime_render() does.
+ *
+ * Phase-gated like the regular render: no-op when V2 launch/profile are
+ * both off, when the HUD is hidden, or when opacity is 0.
+ *
+ * The recorded path-mode for slot S is also exposed by
+ * dm2_v2_hud_runtime_last_path_mode(S) and the aggregate counts by
+ * dm2_v2_hud_runtime_last_path_counts(&real,&fallback).
+ *
+ * Source-lock: SKULL.ASM T560 (DM2 HUD rendering pipeline),
+ *              skproject/SKULLWIN/c_gui_vp.cpp (DM2 UI chrome layout),
+ *              ReDMCSB PANEL.C F0354 (champion status-box drawing),
+ *              include/dm2_v2_hud_widget_assets.h (slot gate). */
+void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res);
+
+/* Returns the path-mode the runtime recorded for slot S during the most
+ * recent dm2_v2_hud_runtime_render_with_assets() call. Returns
+ * DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK if no render has run yet,
+ * or if S is out of range. */
+DM2_V2_HudRuntimePathMode dm2_v2_hud_runtime_last_path_mode(
+    DM2_V2_HudWidgetSlot slot);
+
+/* Aggregate path counts from the most recent render_with_assets() call.
+ * Either out pointer may be NULL if the caller only needs the other count.
+ * Returns the total slots classified (real + fallback); if no render has
+ * run yet, both are 0 and the return is 0. */
+int dm2_v2_hud_runtime_last_path_counts(int* out_real, int* out_fallback);
+
+/* Returns the gate classification (REAL vs not-REAL) the runtime
+ * observed for slot S during the most recent render_with_assets() call.
+ * Returns DM2_V2_HUD_WIDGET_CLASS_UNKNOWN if no render has run yet or
+ * S is out of range. */
+DM2_V2_HudWidgetClass dm2_v2_hud_runtime_last_slot_class(
+    DM2_V2_HudWidgetSlot slot);
 
 /* ── Status ────────────────────────────────────────────────────── */
 /* Returns 1 if the HUD runtime is currently active (V2 enabled and

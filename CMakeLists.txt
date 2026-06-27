@@ -4748,6 +4748,29 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm2_v2_hud_widget_assets_probe
     )
 
+    # Phase 3 widget bitmap follow-up: runtime hook probe. Verifies that
+    # the dm2_v2_hud_runtime_render_with_assets() entry point correctly
+    # consults the dm2_v2_hud_widget_assets gate per slot, that a REAL
+    # classification routes the runtime through the real-bitmap
+    # substitute path (anchor stamp + path-mode record), that the
+    # placeholder fallback path is byte-stable when no manifest is
+    # installed or when slots classify as PLACEHOLDER/MISSING/PARTIAL,
+    # and that the V1 framebuffer invariant is preserved when V2 is
+    # off. Companion to firestaff_dm2_v2_hud_widget_assets_probe
+    # (gate) and firestaff_dm2_v2_hud_runtime_probe (no-gate baseline).
+    add_executable(firestaff_dm2_v2_hud_widget_runtime_hook_probe
+        probes/firestaff_dm2_v2_hud_widget_runtime_hook_probe.c
+    )
+    target_link_libraries(firestaff_dm2_v2_hud_widget_runtime_hook_probe
+        PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v2_hud_widget_runtime_hook_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm2_v2_hud_widget_runtime_hook_probe
+        COMMAND firestaff_dm2_v2_hud_widget_runtime_hook_probe
+    )
+
     add_executable(test_dm2_v22_inplace_draw_pc34
         tests/test_dm2_v22_inplace_draw_pc34.c
         src/dm2/dm2_v22_inplace_draw_pc34.c
