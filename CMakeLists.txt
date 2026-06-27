@@ -2340,6 +2340,31 @@ add_test(
         $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
 )
 
+# DM1 V1 dialog choice font-scale fit probe (gap "In-game overlays + UI-fit coverage").
+# Headless / data-free: pins M11_UIScale percent -> font scale step, M11_Font_DrawString
+# advance per scale step (8, 16, 24), the 192 px source dialog choice zones (C462/C463),
+# 4-choice split zones (C466/C467) at 86 px each, the V1 message area zone (C015)
+# geometry, and the production override that keeps the V1 message log at scale 1
+# even when state->fontScale is bumped to 2 or 3.
+# Source: ReDMCSB layout-696, M2092_MessageAreaWidth=320, M532_MESSAGE_AREA_ROW_COUNT=4,
+#         G2088_C7_TextLineHeight=7, G2089_C8_InscriptionCharacterWidth=8,
+#         G2082_C5_CharacterPadding=5 (X_OFFSET = 8 - 5 = 3),
+#         G2087_C6_InscriptionCharacterWidth=6, G2083_C3=6 visible rows.
+add_executable(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe
+    probes/m11/firestaff_dm1_v1_dialog_choice_font_scale_fit_probe.c)
+target_link_libraries(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m11 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_dm1_v1_dialog_choice_font_scale_fit_probe
+    COMMAND firestaff_dm1_v1_dialog_choice_font_scale_fit_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PROPERTIES
+    LABELS "tier2;m11;dm1;dialog;font;scale;ui-fit;accessibility"
+)
+
 add_executable(firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe
     probes/m11/firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe.c)
 target_link_libraries(firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
