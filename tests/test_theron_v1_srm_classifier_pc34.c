@@ -136,6 +136,71 @@ static const uint8_t g_valid_gzip_payload[] = {
     0x06, 0x10, 0x00, 0x00, 0x07, 0x10, 0x00, 0x00
 };
 
+#define TST_PARTY_PAYLOAD_BYTES (44u + 4u + (4u * 40u))
+
+static void wr32le(uint8_t *p, uint32_t v) {
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)((v >> 8) & 0xffu);
+    p[2] = (uint8_t)((v >> 16) & 0xffu);
+    p[3] = (uint8_t)((v >> 24) & 0xffu);
+}
+
+static void wr16le(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)((v >> 8) & 0xffu);
+}
+
+static void fill_body_record(uint8_t *record,
+                             const char *name,
+                             uint8_t cls,
+                             uint8_t hp,
+                             uint8_t stamina,
+                             uint8_t mana,
+                             uint8_t food,
+                             uint8_t water) {
+    memset(record, 0, 40u);
+    if (name) {
+        size_t n = strlen(name);
+        if (n > 15u) n = 15u;
+        memcpy(record, name, n);
+    }
+    record[16] = cls;
+    record[17] = 1u;
+    record[18] = hp;
+    record[19] = hp;
+    record[20] = stamina;
+    record[21] = stamina;
+    record[22] = mana;
+    record[23] = mana;
+    record[24] = (uint8_t)(18u + cls);
+    record[25] = (uint8_t)(17u + cls);
+    record[26] = (uint8_t)(16u + cls);
+    record[27] = (uint8_t)(15u + cls);
+    record[28] = 4u;
+    record[29] = 5u;
+    record[30 + cls] = 3u;
+    record[34] = 0u;
+    wr16le(record + 35u, 0u);
+    record[37] = food;
+    record[38] = water;
+}
+
+static void build_party_payload(uint8_t payload[TST_PARTY_PAYLOAD_BYTES]) {
+    static const uint8_t magic[8] = {'F', 'S', 'T', 'Q', 'P', 'T', 'Y', '1'};
+    memset(payload, 0, TST_PARTY_PAYLOAD_BYTES);
+    memcpy(payload, magic, sizeof(magic));
+    memcpy(payload + 8u, g_valid_gzip_payload + 8u, sizeof(g_valid_gzip_payload) - 8u);
+    wr32le(payload + 44u, 777u);
+    fill_body_record(payload + 48u, "Theron", THERON_CLASS_FIGHTER,
+                     82u, 76u, 24u, 60u, 61u);
+    fill_body_record(payload + 88u, "Ari", THERON_CLASS_NINJA,
+                     45u, 70u, 8u, 50u, 51u);
+    fill_body_record(payload + 128u, "Mira", THERON_CLASS_PRIEST,
+                     52u, 58u, 32u, 52u, 53u);
+    fill_body_record(payload + 168u, "Sol", THERON_CLASS_WIZARD,
+                     38u, 44u, 49u, 54u, 55u);
+}
+
 static int build_synthetic_gzip(uint8_t *out, size_t *out_size) {
     if (!out || !out_size) return 0;
     if (*out_size < sizeof(g_valid_gzip_srm)) return 0;
@@ -475,6 +540,73 @@ static void test_progression_payload_import(void) {
                 "progress import status unknown name");
 }
 
+static void test_progression_party_payload_import(void) {
+    uint8_t payload[TST_PARTY_PAYLOAD_BYTES];
+    Theron_DungeonProgression prog;
+    Theron_V1_Party party;
+    Theron_V1SrmPartyImportReceipt receipt;
+    Theron_V1SrmProgressImportStatus status;
+
+    build_party_payload(payload);
+    memset(&prog, 0xCD, sizeof(prog));
+    memset(&party, 0xCD, sizeof(party));
+    memset(&receipt, 0xCD, sizeof(receipt));
+
+    status = theron_v1_srm_decode_progression_party_payload(
+        payload,
+        sizeof(payload),
+        &prog,
+        &party,
+        &receipt);
+    expect_true(status == THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                "party payload imports");
+    expect_true(receipt.restored == 1, "party receipt restored");
+    expect_true(receipt.party_gold == 777u, "party gold receipt");
+    expect_true(receipt.imported_body_count == THERON_MAX_CHAMPIONS,
+                "party body count receipt");
+    expect_true(prog.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                "party import restores progression");
+    expect_true(party.champion_count == THERON_MAX_CHAMPIONS,
+                "party champion count restored");
+    expect_true(party.active_slot == THERON_CHAMPION_SLOT_THERON,
+                "party active slot restored");
+    expect_true(party.gold == 777u, "party gold restored");
+    expect_true(strcmp(party.champions[0].name, "Theron") == 0,
+                "Theron name restored");
+    expect_true(party.champions[0].health == 82 &&
+                party.champions[0].mana == 24,
+                "Theron body stats restored");
+    expect_true(party.champions[1].primary_class == THERON_CLASS_NINJA &&
+                strcmp(party.champions[1].name, "Ari") == 0,
+                "companion body restored");
+    expect_true(party.champions[0].inventory[0] == THERON_ITEM_NONE &&
+                party.champions[1].slots[0] == -1,
+                "party import leaves inventory/equipment empty");
+    expect_true(party.champions[0].max_load ==
+                    (int16_t)((party.champions[0].strength << 3) + 100),
+                "party import recalculates body load");
+
+    status = theron_v1_srm_decode_progression_party_payload(
+        (const uint8_t *)"THERON-SRM-PAYLOAD-v1",
+        21u,
+        &prog,
+        &party,
+        &receipt);
+    expect_true(status == THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY,
+                "unknown party/custom body stays unsupported");
+
+    build_party_payload(payload);
+    payload[48u + 16u] = 99u;
+    status = theron_v1_srm_decode_progression_party_payload(
+        payload,
+        sizeof(payload),
+        &prog,
+        &party,
+        &receipt);
+    expect_true(status == THERON_V1_SRM_PROGRESS_IMPORT_OUT_OF_RANGE,
+                "party invalid champion class rejected");
+}
+
 int main(void) {
     printf("\n=== Theron V1 SRM Classifier Unit Tests ===\n\n");
     test_default_root_resolution();
@@ -486,6 +618,7 @@ int main(void) {
     test_classify_mixed_fixtures();
     test_gzip_payload_probe();
     test_progression_payload_import();
+    test_progression_party_payload_import();
 
     printf("=====================================================\n");
     printf("Results: %d/%d passed (failures=%d)\n",
