@@ -73,15 +73,38 @@ endif()
 # ── Python discovery for source-shape/evidence gates ───────────────
 find_package(Python3 COMPONENTS Interpreter QUIET)
 
-# -- zlib discovery (optional, used by asset-scanner deflate paths) --
-pkg_check_modules(ZLIB QUIET IMPORTED_TARGET zlib)
-if(TARGET PkgConfig::ZLIB)
-    set(FIRESTAFF_HAS_ZLIB 1 CACHE BOOL "Whether Firestaff is built with zlib for ZIP inflate")
-    message(STATUS "Found zlib - asset-scanner ZIP deflate path enabled")
-else()
-    set(FIRESTAFF_HAS_ZLIB 0 CACHE BOOL "Whether Firestaff is built with zlib for ZIP inflate")
-    message(STATUS "zlib not found - asset-scanner ZIP deflate path falls back to stored entries only")
+# -- zlib discovery (optional, used by asset-scanner ZIP/gzip paths) --
+#
+# Prefer CMake's platform zlib lookup over pkg-config. On macOS this resolves
+# to the SDK/system libz target, avoiding Homebrew dylib dependencies in
+# packaged apps while still compiling the inflate code into Firestaff.
+option(FIRESTAFF_WITH_ZLIB "Enable zlib-backed ZIP/gzip inflate support" ON)
+set(FIRESTAFF_ZLIB_TARGET "")
+if(FIRESTAFF_WITH_ZLIB)
+    find_package(ZLIB QUIET)
+    if(TARGET ZLIB::ZLIB)
+        set(FIRESTAFF_ZLIB_TARGET ZLIB::ZLIB)
+    else()
+        pkg_check_modules(FIRESTAFF_PKG_ZLIB QUIET IMPORTED_TARGET zlib)
+        if(TARGET PkgConfig::FIRESTAFF_PKG_ZLIB)
+            set(FIRESTAFF_ZLIB_TARGET PkgConfig::FIRESTAFF_PKG_ZLIB)
+        endif()
+    endif()
 endif()
+if(FIRESTAFF_ZLIB_TARGET)
+    set(FIRESTAFF_HAS_ZLIB 1 CACHE BOOL "Whether Firestaff is built with zlib for ZIP/gzip inflate" FORCE)
+    message(STATUS "Found zlib via ${FIRESTAFF_ZLIB_TARGET} - ZIP/gzip inflate paths enabled")
+else()
+    set(FIRESTAFF_HAS_ZLIB 0 CACHE BOOL "Whether Firestaff is built with zlib for ZIP/gzip inflate" FORCE)
+    message(STATUS "zlib not found - ZIP/gzip inflate paths fall back to stored/header-only handling")
+endif()
+
+function(firestaff_link_zlib target visibility)
+    if(FIRESTAFF_HAS_ZLIB)
+        target_compile_definitions(${target} ${visibility} FIRESTAFF_HAS_ZLIB=1)
+        target_link_libraries(${target} ${visibility} ${FIRESTAFF_ZLIB_TARGET})
+    endif()
+endfunction()
 
 # ── M10 static library (frozen Turbo-C compat sources) ──────────────
 file(GLOB_RECURSE M10_SOURCES CONFIGURE_DEPENDS "src/*_pc34_compat.c")
@@ -166,12 +189,7 @@ file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/thero
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES})
     target_include_directories(firestaff_theron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(TARGET PkgConfig::ZLIB)
-        target_link_libraries(firestaff_theron PUBLIC PkgConfig::ZLIB)
-        target_compile_definitions(firestaff_theron PUBLIC FIRESTAFF_HAS_ZLIB=1)
-    else()
-        target_compile_definitions(firestaff_theron PUBLIC FIRESTAFF_HAS_ZLIB=0)
-    endif()
+    firestaff_link_zlib(firestaff_theron PUBLIC)
     if(NOT MSVC)
         target_compile_options(firestaff_theron PRIVATE -Wall -Wextra -O2 -fcommon)
     endif()
@@ -368,6 +386,7 @@ set(M12_SOURCES
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2)
+firestaff_link_zlib(firestaff_m12 PUBLIC)
 # Enable test-only M12 helpers (TestResetScanMetrics, TestSetTheronSyntheticHash, ...)
 # so the launcher scan-reuse and other Theron direct-launch tests can use them.
 target_compile_definitions(firestaff_m12 PUBLIC FIRESTAFF_ASSET_STATUS_TESTING=1)
@@ -999,12 +1018,7 @@ if(BUILD_TESTING)
         target_link_libraries(firestaff_data_dir_picker_platform_matrix_probe
             PRIVATE firestaff_m12)
     endif()
-    if(FIRESTAFF_HAS_ZLIB)
-        target_compile_definitions(firestaff_data_dir_picker_platform_matrix_probe
-            PRIVATE FIRESTAFF_HAS_ZLIB=1)
-        target_link_libraries(firestaff_data_dir_picker_platform_matrix_probe
-            PRIVATE PkgConfig::ZLIB)
-    endif()
+    firestaff_link_zlib(firestaff_data_dir_picker_platform_matrix_probe PRIVATE)
     if(NOT MSVC)
         target_compile_options(firestaff_data_dir_picker_platform_matrix_probe
             PRIVATE -Wall -Wextra -O2)
@@ -5158,14 +5172,7 @@ if(BUILD_TESTING)
     target_compile_definitions(test_asset_status_zip_cache_nested_deflate PRIVATE
         FIRESTAFF_ASSET_STATUS_TESTING=1
     )
-    if(FIRESTAFF_HAS_ZLIB)
-        target_compile_definitions(test_asset_status_zip_cache_nested_deflate PRIVATE
-            FIRESTAFF_HAS_ZLIB=1
-        )
-        target_link_libraries(test_asset_status_zip_cache_nested_deflate PRIVATE
-            PkgConfig::ZLIB
-        )
-    endif()
+    firestaff_link_zlib(test_asset_status_zip_cache_nested_deflate PRIVATE)
     if(NOT MSVC)
         target_compile_options(test_asset_status_zip_cache_nested_deflate PRIVATE -Wall -Wextra -O2)
     endif()
