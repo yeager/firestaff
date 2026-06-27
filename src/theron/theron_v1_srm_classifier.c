@@ -53,9 +53,17 @@
 #endif
 
 #define TSRM_PROGRESS_PAYLOAD_BYTES 44u
+#define TSRM_PARTY_BODY_BYTES 40u
+#define TSRM_PARTY_PAYLOAD_BYTES \
+    (TSRM_PROGRESS_PAYLOAD_BYTES + 4u + \
+     ((size_t)THERON_MAX_CHAMPIONS * TSRM_PARTY_BODY_BYTES))
 
 static const uint8_t g_progress_payload_magic[8] = {
     'F', 'S', 'T', 'Q', 'P', 'R', 'G', '1'
+};
+
+static const uint8_t g_party_payload_magic[8] = {
+    'F', 'S', 'T', 'Q', 'P', 'T', 'Y', '1'
 };
 
 /* ── Path helpers ────────────────────────────────────────────────── */
@@ -154,6 +162,10 @@ static uint32_t rd32le(const uint8_t *p) {
            ((uint32_t)p[1] << 8) |
            ((uint32_t)p[2] << 16) |
            ((uint32_t)p[3] << 24);
+}
+
+static uint16_t rd16le(const uint8_t *p) {
+    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
 /* Read up to `max_bytes` from `path` into a heap buffer.  Returns the
@@ -536,6 +548,150 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
     return THERON_V1_SRM_PROGRESS_IMPORT_OK;
 }
 
+static void copy_fixed_name(char out[24], const uint8_t *src, size_t src_size) {
+    size_t n = 0;
+    if (!out || !src) return;
+    memset(out, 0, 24u);
+    while (n < src_size && n < 23u && src[n] != 0u) {
+        out[n] = (char)src[n];
+        n++;
+    }
+}
+
+static int import_body_record(Theron_V1_Champion *champion,
+                              const uint8_t *record,
+                              int slot) {
+    Theron_ChampionClass cls;
+    uint16_t attrs;
+
+    if (!champion || !record) return 0;
+    if (record[16] >= (uint8_t)THERON_CLASS_COUNT) return 0;
+    if (record[17] > 1u) return 0;
+
+    cls = (Theron_ChampionClass)record[16];
+    attrs = rd16le(record + 35u);
+
+    copy_fixed_name(champion->name, record, 16u);
+    if (champion->name[0] == '\0') {
+        const char *fallback = slot == THERON_CHAMPION_SLOT_THERON
+            ? "Theron"
+            : "Companion";
+        copy_fixed_name(champion->name, (const uint8_t *)fallback, strlen(fallback));
+    }
+
+    champion->portrait_index = (uint8_t)slot;
+    champion->primary_class = cls;
+    champion->alive = record[17];
+
+    champion->health = (int16_t)record[18];
+    champion->max_health = (int16_t)record[19];
+    champion->stamina = (int16_t)record[20];
+    champion->max_stamina = (int16_t)record[21];
+    champion->mana = (int16_t)record[22];
+    champion->max_mana = (int16_t)record[23];
+
+    champion->strength = (int16_t)record[24];
+    champion->dexterity = (int16_t)record[25];
+    champion->wisdom = (int16_t)record[26];
+    champion->vitality = (int16_t)record[27];
+    champion->anti_magic = (int16_t)record[28];
+    champion->anti_fire = (int16_t)record[29];
+
+    champion->fighter_level = (int16_t)record[30];
+    champion->ninja_level = (int16_t)record[31];
+    champion->priest_level = (int16_t)record[32];
+    champion->wizard_level = (int16_t)record[33];
+    champion->wounds = record[34];
+    champion->attributes = attrs;
+    champion->food = (int16_t)record[37];
+    champion->water = (int16_t)record[38];
+    if (!champion->alive || champion->health <= 0) {
+        champion->alive = 0;
+        champion->health = 0;
+        champion->attributes |= THERON_ATTR_DEAD;
+    } else {
+        champion->attributes &= (uint16_t)~THERON_ATTR_DEAD;
+    }
+
+    /* Source: THQUEST.ASM T080/T800 plus
+     * docs/source-lock/tqr_v1_phase2_data_formats_H2339.md §5/§9.
+     * This readiness envelope imports body/state fields only.  It
+     * keeps inventory and equipment empty until the real Sphenx /
+     * Greatstone Save Disk body has been decoded. */
+    theron_v1_champion_reset_inventory(champion);
+    return 1;
+}
+
+Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_party_payload(
+    const uint8_t *payload,
+    size_t payload_size,
+    Theron_DungeonProgression *out_progression,
+    Theron_V1_Party *out_party,
+    Theron_V1SrmPartyImportReceipt *out_receipt) {
+
+    uint8_t progress_payload[TSRM_PROGRESS_PAYLOAD_BYTES];
+    Theron_DungeonProgression progression;
+    Theron_V1SrmProgressionReceipt progression_receipt;
+    Theron_V1_Party party;
+    Theron_V1SrmProgressImportStatus status;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!payload || !out_progression || !out_party) {
+        return THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+    }
+    if (payload_size < sizeof(g_party_payload_magic)) {
+        return THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+    }
+    if (memcmp(payload, g_party_payload_magic, sizeof(g_party_payload_magic)) != 0) {
+        return THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY;
+    }
+    if (payload_size < TSRM_PARTY_PAYLOAD_BYTES) {
+        return THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+    }
+
+    memcpy(progress_payload, g_progress_payload_magic, sizeof(g_progress_payload_magic));
+    memcpy(progress_payload + sizeof(g_progress_payload_magic),
+           payload + sizeof(g_party_payload_magic),
+           TSRM_PROGRESS_PAYLOAD_BYTES - sizeof(g_progress_payload_magic));
+
+    status = theron_v1_srm_decode_progression_payload(
+        progress_payload,
+        sizeof(progress_payload),
+        &progression,
+        &progression_receipt);
+    if (status != THERON_V1_SRM_PROGRESS_IMPORT_OK) {
+        return status;
+    }
+
+    theron_v1_party_init(&party, (int)progression.current_dungeon);
+    party.gold = rd32le(payload + TSRM_PROGRESS_PAYLOAD_BYTES);
+    party.champion_count = THERON_MAX_CHAMPIONS;
+    party.active_slot = THERON_CHAMPION_SLOT_THERON;
+
+    for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
+        const uint8_t *record = payload + TSRM_PROGRESS_PAYLOAD_BYTES + 4u +
+                                ((size_t)i * TSRM_PARTY_BODY_BYTES);
+        if (!import_body_record(&party.champions[i], record, i)) {
+            return THERON_V1_SRM_PROGRESS_IMPORT_OUT_OF_RANGE;
+        }
+    }
+    theron_v1_party_recalculate_loads(&party);
+
+    *out_progression = progression;
+    *out_party = party;
+    if (out_receipt) {
+        out_receipt->progression = progression_receipt;
+        out_receipt->party_gold = party.gold;
+        out_receipt->champion_count = THERON_MAX_CHAMPIONS;
+        out_receipt->active_slot = THERON_CHAMPION_SLOT_THERON;
+        out_receipt->imported_body_count = THERON_MAX_CHAMPIONS;
+        out_receipt->restored = 1;
+    }
+    return THERON_V1_SRM_PROGRESS_IMPORT_OK;
+}
+
 /* ── Status names + source evidence ──────────────────────────────── */
 
 const char *theron_v1_srm_slot_status_name(Theron_V1SrmSlotStatus status) {
@@ -618,6 +774,10 @@ const char *theron_v1_srm_source_evidence(void) {
         "    Firestaff readiness payload into Theron_DungeonProgression\n"
         "    with T080/T800 between-dungeon sequence validation.  Unknown\n"
         "    real Sphenx/Greatstone custom bodies return UNSUPPORTED_BODY.\n"
+        "  - Bounded party-envelope import maps a Firestaff readiness body\n"
+        "    into Theron_DungeonProgression plus Theron_V1_Party body fields\n"
+        "    only; inventory/equipment and real Sphenx body decoding remain\n"
+        "    explicitly unsupported.\n"
         "  - Default save-disk root: $HOME/.firestaff/data/theron/save.\n"
         "  - Override: env FIRESTAFF_THERON_SRM_DIR.\n"
         "  - No real .srm file is present in the local data root on this\n"
@@ -625,7 +785,8 @@ const char *theron_v1_srm_source_evidence(void) {
         "    on the default root.  This is the expected honest outcome and\n"
         "    is recorded as a SKIP, not a failure, by the probe and unit\n"
         "    test.\n"
-        "  - Interpreting the real inflated custom Theron save body and\n"
-        "    champion blocks remains out of scope and is tracked under\n"
+        "  - Interpreting the real inflated custom Theron save body,\n"
+        "    inventory/equipment bytes, and Sphenx champion byte mapping\n"
+        "    remains out of scope and is tracked under\n"
         "    docs/FIRESTAFF_GAP_LIST.md A3 'Savegame format (Theron .SRM)'.";
 }

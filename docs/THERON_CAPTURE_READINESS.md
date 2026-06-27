@@ -59,9 +59,12 @@ The strongest current proof is:
   models are different (Save Disk cartridge vs. in-game save
   format). See `include/theron_v1_srm_classifier.h` for the
   classifier contract and `docs/DMWEB_REFERENCE.md` §6 for the
-  format anchor. Real `.srm` payload decoding (gzipped Theron save
-  body) and cross-slot import to `Theron_DungeonProgression`/
-  champion blocks remain out of scope and are tracked under
+  format anchor. The bounded gzip probe can inflate synthetic
+  recognized payloads, and the Firestaff-only readiness envelopes can
+  restore `Theron_DungeonProgression` plus party/champion body fields
+  into `Theron_V1_Party`. Real Sphenx/TQ-RTC body layout decode,
+  inventory/equipment import, real `.srm` promotion, and launchable
+  save conversion remain out of scope and are tracked under
   `docs/FIRESTAFF_GAP_LIST.md` A3 `Savegame format (Theron .SRM)`.
 
 These are readiness receipts, not public screenshot assets. Do not add Theron

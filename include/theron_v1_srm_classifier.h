@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "theron_v1_champions.h"
 #include "theron_v1_dungeon_progression.h"
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -37,11 +38,16 @@
  *       * missing → ABSENT
  *   - Computes a 32-bit rolling checksum over the first 1 KiB of each
  *     file (or whole file if smaller) for receipt/manifest purposes.
+ *   - Inflates gzip-wrapped DEFLATE payloads when zlib is present.
+ *   - Imports Firestaff-only readiness envelopes into progression and
+ *     bounded champion body state for tests/probes.
  *
  * What this module does NOT do (kept honest):
- *   - It does not decode the gzipped payload, so it cannot synthesize
- *     a launchable Theron_DungeonProgression/Champion state. That
- *     conversion is a separate milestone (greatstone TQ-RTC work).
+ *   - It does not decode the real Sphenx/Greatstone custom save body.
+ *     Unknown payloads stay UNSUPPORTED_BODY and non-launchable.
+ *   - It does not import real inventory/equipment bytes; the party-body
+ *     readiness gate restores stats, condition fields, food/water, and
+ *     shared gold only.
  *   - It does not promote any public screenshot or claim playability.
  *   - It does not claim full Sphenx-format coverage. Unknown `.srm`
  *     files that lack the gzip magic stay UNRECOGNIZED.
@@ -122,6 +128,15 @@ typedef struct {
     int restored;
 } Theron_V1SrmProgressionReceipt;
 
+typedef struct {
+    Theron_V1SrmProgressionReceipt progression;
+    uint32_t party_gold;
+    uint8_t champion_count;
+    uint8_t active_slot;
+    uint8_t imported_body_count;
+    int restored;
+} Theron_V1SrmPartyImportReceipt;
+
 /* Resolve the default save-disk root: env override
  * `FIRESTAFF_THERON_SRM_DIR` first, then
  * `$HOME/.firestaff/data/theron/save`, then `./theron-save/`.
@@ -185,6 +200,21 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
     size_t payload_size,
     Theron_DungeonProgression *out_progression,
     Theron_V1SrmProgressionReceipt *out_receipt);
+
+/* Interpret one inflated SRM body as a Firestaff-only readiness envelope
+ * carrying both between-dungeon progression and bounded champion body state.
+ *
+ * Accepted magic: "FSTQPTY1".  This is not the Sphenx/Greatstone real-body
+ * layout.  Unknown real bodies still return UNSUPPORTED_BODY.  The imported
+ * champion body fields deliberately exclude inventory/equipment because the
+ * real Save Disk body is not decoded yet and THQUEST.ASM T080/T800 only lets
+ * this gate prove between-dungeon state restoration safely. */
+Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_party_payload(
+    const uint8_t *payload,
+    size_t payload_size,
+    Theron_DungeonProgression *out_progression,
+    Theron_V1_Party *out_party,
+    Theron_V1SrmPartyImportReceipt *out_receipt);
 
 /* Status-name helpers (stable string contract for receipts/manifests). */
 const char *theron_v1_srm_slot_status_name(Theron_V1SrmSlotStatus status);
