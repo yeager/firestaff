@@ -34,6 +34,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#ifndef FIRESTAFF_HAS_ZLIB
+#define FIRESTAFF_HAS_ZLIB 0
+#endif
+
 #if defined(_WIN32) || defined(_WIN64)
 #define PROBE_PATH_SEP '\\'
 #include <direct.h>
@@ -160,26 +164,25 @@ static int file_size(const char *path, uint64_t *out_size) {
     return 1;
 }
 
-/* Minimal synthetic gzip-DEFLATE wrapper for the PRESENT_AND_RECOGNIZED
- * fixture.  It writes the 10-byte gzip header (RFC 1952) with method=8
- * (DEFLATE), flags=0, mtime=0, xfl=0, os=0xFF (unknown), and an empty
- * DEFLATE block (a single stored block of size 0).  This is not a
- * valid Theron save body — it only proves the gzip magic + method
- * detection paths in the classifier.  No zlib dependency here. */
+/* Synthetic gzip-DEFLATE wrapper for the PRESENT_AND_RECOGNIZED fixture.
+ * It carries a tiny Firestaff-only payload, not a real Theron's Quest save
+ * body.  The classifier still proves gzip magic + method; the payload probe
+ * additionally inflates these bytes when zlib is available. */
+static const uint8_t g_valid_gzip_srm[] = {
+    0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff,
+    0x0b, 0xf1, 0x70, 0x0d, 0xf2, 0xf7, 0xd3, 0x0d, 0x0e, 0xf2,
+    0xd5, 0x0d, 0x70, 0x8c, 0xf4, 0xf1, 0x77, 0x74, 0xd1, 0x2d,
+    0x33, 0xe4, 0x2a, 0xce, 0xc9, 0x2f, 0xb1, 0x35, 0xe0, 0x02,
+    0x00, 0x28, 0x3c, 0x1d, 0xcd, 0x1d, 0x00, 0x00, 0x00
+};
+
+static const uint8_t g_valid_gzip_payload[] = "THERON-SRM-PAYLOAD-v1\nslot=0\n";
+
 static int build_synthetic_gzip_body(uint8_t *out, size_t *out_size) {
     if (!out || !out_size) return 0;
-    if (*out_size < 10) return 0;
-    out[0] = 0x1F;
-    out[1] = 0x8B;
-    out[2] = 0x08; /* CM = DEFLATE */
-    out[3] = 0x00; /* FLG = 0 */
-    out[4] = 0x00; /* MTIME[0] */
-    out[5] = 0x00;
-    out[6] = 0x00;
-    out[7] = 0x00; /* MTIME[3] */
-    out[8] = 0x00; /* XFL */
-    out[9] = 0xFF; /* OS = unknown */
-    *out_size = 10;
+    if (*out_size < sizeof(g_valid_gzip_srm)) return 0;
+    memcpy(out, g_valid_gzip_srm, sizeof(g_valid_gzip_srm));
+    *out_size = sizeof(g_valid_gzip_srm);
     return 1;
 }
 
@@ -306,7 +309,7 @@ static void probe_classify_mixed_fixtures(void) {
     }
 
     /* Slot 0: PRESENT_AND_RECOGNIZED — synthetic gzip-deflate body. */
-    uint8_t gzip_body[10];
+    uint8_t gzip_body[sizeof(g_valid_gzip_srm)];
     size_t gzip_size = sizeof(gzip_body);
     if (!build_synthetic_gzip_body(gzip_body, &gzip_size)) {
         printf("FAIL build_synthetic_gzip_body returned false\n");
@@ -442,12 +445,75 @@ static void probe_source_evidence(void) {
         ++g_fail;
         return;
     }
-    if (!strstr(ev, "2026-06-25")) {
+    if (!strstr(ev, "2026-06-27")) {
         printf("FAIL source evidence: missing commit-date marker\n");
         ++g_fail;
         return;
     }
+    if (!strstr(ev, "gzip-payload probe")) {
+        printf("FAIL source evidence: missing payload probe note\n");
+        ++g_fail;
+        return;
+    }
     ++g_pass;
+}
+
+static void probe_gzip_payload_receipt(void) {
+    uint8_t payload[128];
+    size_t payload_size = 0;
+    Theron_V1SrmPayloadProbeStatus status;
+
+    memset(payload, 0, sizeof(payload));
+    status = theron_v1_srm_probe_gzip_payload(
+        g_valid_gzip_srm,
+        sizeof(g_valid_gzip_srm),
+        payload,
+        sizeof(payload),
+        &payload_size);
+
+    printf("gzip payload probe: status=%s size=%zu zlib=%d\n",
+           theron_v1_srm_payload_probe_status_name(status),
+           payload_size,
+           FIRESTAFF_HAS_ZLIB);
+
+#if FIRESTAFF_HAS_ZLIB
+    check_int("gzip payload probe OK", status, THERON_V1_SRM_PAYLOAD_PROBE_OK);
+    check_size("gzip payload size",
+               payload_size,
+               sizeof(g_valid_gzip_payload) - 1u);
+    check_int("gzip payload bytes match",
+              memcmp(payload, g_valid_gzip_payload, payload_size) == 0,
+              1);
+#else
+    check_int("gzip payload probe zlib unavailable",
+              status,
+              THERON_V1_SRM_PAYLOAD_PROBE_ZLIB_UNAVAILABLE);
+#endif
+
+    payload_size = 0;
+    status = theron_v1_srm_probe_gzip_payload(
+        (const uint8_t *)"not gzip but long enough",
+        24u,
+        payload,
+        sizeof(payload),
+        &payload_size);
+    check_int("gzip payload non-gzip rejected",
+              status,
+              THERON_V1_SRM_PAYLOAD_PROBE_NOT_GZIP);
+
+    {
+        uint8_t bad_method[10] = {0x1F, 0x8B, 0x07, 0, 0, 0, 0, 0, 0, 0xFF};
+        payload_size = 0;
+        status = theron_v1_srm_probe_gzip_payload(
+            bad_method,
+            sizeof(bad_method),
+            payload,
+            sizeof(payload),
+            &payload_size);
+        check_int("gzip payload unsupported method rejected",
+                  status,
+                  THERON_V1_SRM_PAYLOAD_PROBE_UNSUPPORTED_METHOD);
+    }
 }
 
 int main(void) {
@@ -459,6 +525,7 @@ int main(void) {
     probe_slot_path_constructor();
     probe_default_root_absent_manifest();
     probe_classify_mixed_fixtures();
+    probe_gzip_payload_receipt();
     probe_status_names_stable();
     probe_source_evidence();
 

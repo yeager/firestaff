@@ -11,7 +11,7 @@
  *   - DMWeb community docs credit Sphenx with several custom TQ saves
  *     documented at greatstone; Sphenx is also a SKWIN co-author.
  *
- * Status (this commit, 2026-06-25):
+ * Status (this commit, 2026-06-27):
  *   - The classifier is data-free and runs anywhere.  It is the bounded
  *     real-artifact counterpart to the synthetic slot-N.tqsv in-game
  *     save format in theron_v1_save_load.c.
@@ -27,7 +27,7 @@
  *     the public API.
  *
  * Phases tracked separately (out of scope for this commit):
- *   - Real .srm payload decoding (gzipped Theron save body).
+ *   - Interpreting the inflated custom Theron save body.
  *   - Cross-slot import: real Sphenx .srm -> Theron_DungeonProgression
  *     and champion blocks.  This would close the greatstone section
  *     referenced in docs/DMWEB_REFERENCE.md §6.
@@ -41,6 +41,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
+#if FIRESTAFF_HAS_ZLIB
+#include <zlib.h>
+#endif
 
 #if defined(_WIN32) || defined(_WIN64)
 #define TSRM_PATH_SEP '\\'
@@ -306,6 +310,62 @@ int theron_v1_srm_classify_root(const char *root,
     return 1;
 }
 
+/* ── Bounded gzip-payload probe ──────────────────────────────────── */
+
+Theron_V1SrmPayloadProbeStatus theron_v1_srm_probe_gzip_payload(
+    const uint8_t *srm_bytes,
+    size_t srm_size,
+    uint8_t *out_payload,
+    size_t out_payload_capacity,
+    size_t *out_payload_size) {
+
+    if (out_payload_size) *out_payload_size = 0;
+    if (!srm_bytes || srm_size < 10 || !out_payload ||
+        out_payload_capacity == 0 || !out_payload_size) {
+        return THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT;
+    }
+    if (srm_bytes[0] != THERON_V1_SRM_GZIP_MAGIC_0 ||
+        srm_bytes[1] != THERON_V1_SRM_GZIP_MAGIC_1) {
+        return THERON_V1_SRM_PAYLOAD_PROBE_NOT_GZIP;
+    }
+    if (srm_bytes[2] != THERON_V1_SRM_GZIP_MAGIC_2_DEFLATE) {
+        return THERON_V1_SRM_PAYLOAD_PROBE_UNSUPPORTED_METHOD;
+    }
+
+#if FIRESTAFF_HAS_ZLIB
+    z_stream zs;
+    int ret;
+
+    memset(&zs, 0, sizeof(zs));
+    zs.next_in = (Bytef *)srm_bytes;
+    zs.avail_in = (uInt)srm_size;
+    zs.next_out = out_payload;
+    zs.avail_out = (uInt)out_payload_capacity;
+
+    ret = inflateInit2(&zs, 16 + MAX_WBITS); /* gzip wrapper + deflate */
+    if (ret != Z_OK) {
+        return THERON_V1_SRM_PAYLOAD_PROBE_INFLATE_FAILED;
+    }
+
+    ret = inflate(&zs, Z_FINISH);
+    if (ret == Z_STREAM_END) {
+        *out_payload_size = (size_t)zs.total_out;
+        inflateEnd(&zs);
+        return THERON_V1_SRM_PAYLOAD_PROBE_OK;
+    }
+
+    *out_payload_size = (size_t)zs.total_out;
+    inflateEnd(&zs);
+    return ret == Z_BUF_ERROR && *out_payload_size == out_payload_capacity
+        ? THERON_V1_SRM_PAYLOAD_PROBE_OUTPUT_TRUNCATED
+        : THERON_V1_SRM_PAYLOAD_PROBE_INFLATE_FAILED;
+#else
+    (void)out_payload;
+    (void)out_payload_capacity;
+    return THERON_V1_SRM_PAYLOAD_PROBE_ZLIB_UNAVAILABLE;
+#endif
+}
+
 /* ── Status names + source evidence ──────────────────────────────── */
 
 const char *theron_v1_srm_slot_status_name(Theron_V1SrmSlotStatus status) {
@@ -318,6 +378,26 @@ const char *theron_v1_srm_slot_status_name(Theron_V1SrmSlotStatus status) {
         return "MALFORMED";
     case THERON_V1_SRM_SLOT_PRESENT_AND_RECOGNIZED:
         return "PRESENT_AND_RECOGNIZED";
+    }
+    return "UNKNOWN";
+}
+
+const char *theron_v1_srm_payload_probe_status_name(Theron_V1SrmPayloadProbeStatus status) {
+    switch (status) {
+    case THERON_V1_SRM_PAYLOAD_PROBE_OK:
+        return "OK";
+    case THERON_V1_SRM_PAYLOAD_PROBE_ZLIB_UNAVAILABLE:
+        return "ZLIB_UNAVAILABLE";
+    case THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT:
+        return "BAD_INPUT";
+    case THERON_V1_SRM_PAYLOAD_PROBE_NOT_GZIP:
+        return "NOT_GZIP";
+    case THERON_V1_SRM_PAYLOAD_PROBE_UNSUPPORTED_METHOD:
+        return "UNSUPPORTED_METHOD";
+    case THERON_V1_SRM_PAYLOAD_PROBE_INFLATE_FAILED:
+        return "INFLATE_FAILED";
+    case THERON_V1_SRM_PAYLOAD_PROBE_OUTPUT_TRUNCATED:
+        return "OUTPUT_TRUNCATED";
     }
     return "UNKNOWN";
 }
@@ -339,10 +419,13 @@ const char *theron_v1_srm_source_evidence(void) {
         "  - THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon)\n"
         "  - THQUEST.ASM T800  — champion persistence between dungeons\n"
         "\n"
-        "Status (2026-06-25):\n"
+        "Status (2026-06-27):\n"
         "  - Data-free classifier with 5-slot disk manifest, gzip magic\n"
         "    detection (0x1F 0x8B 0x08), 1 KiB rolling prefix checksum,\n"
         "    present/recognized rollup, and stable string status names.\n"
+        "  - Bounded gzip-payload probe inflates a recognized .srm stream\n"
+        "    when Firestaff is built with zlib; without zlib it reports\n"
+        "    ZLIB_UNAVAILABLE after the cheap gzip/method checks.\n"
         "  - Default save-disk root: $HOME/.firestaff/data/theron/save.\n"
         "  - Override: env FIRESTAFF_THERON_SRM_DIR.\n"
         "  - No real .srm file is present in the local data root on this\n"
@@ -350,9 +433,8 @@ const char *theron_v1_srm_source_evidence(void) {
         "    on the default root.  This is the expected honest outcome and\n"
         "    is recorded as a SKIP, not a failure, by the probe and unit\n"
         "    test.\n"
-        "  - Real .srm payload decoding (gzipped Theron save body) and\n"
-        "    cross-slot import to Theron_DungeonProgression/champion\n"
-        "    blocks remain out of scope for this commit and are tracked\n"
-        "    under docs/FIRESTAFF_GAP_LIST.md A3 'Savegame format (Theron\n"
-        "    .SRM)'.";
+        "  - Interpreting the inflated custom Theron save body and\n"
+        "    cross-slot import to Theron_DungeonProgression/champion blocks\n"
+        "    remain out of scope and are tracked under docs/FIRESTAFF_GAP_LIST.md\n"
+        "    A3 'Savegame format (Theron .SRM)'.";
 }
