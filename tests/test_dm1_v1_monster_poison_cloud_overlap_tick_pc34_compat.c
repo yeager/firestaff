@@ -210,11 +210,81 @@ static void test_cloud_square_overlap_ignores_quarter_cell_mask(void)
              "off-cell cloud follow-up carries decayed attack");
 }
 
+static void test_final_low_attack_cloud_damages_before_expiry(void)
+{
+    struct ExplosionInstance_Compat cloud;
+    struct CellContentDigest_Compat digest;
+    struct ExplosionInstance_Compat next;
+    struct ExplosionTickResult_Compat tick;
+
+    memset(&cloud, 0, sizeof(cloud));
+    memset(&digest, 0, sizeof(digest));
+
+    cloud.slotIndex = 5;
+    cloud.explosionType = C007_EXPLOSION_POISON_CLOUD;
+    cloud.mapIndex = 0;
+    cloud.mapX = 16;
+    cloud.mapY = 4;
+    cloud.cell = EXPLOSION_CELL_CENTERED;
+    cloud.centered = 1;
+    cloud.attack = 5;
+    cloud.currentFrame = 12;
+    cloud.maxFrames = 30;
+    cloud.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    cloud.ownerIndex = 0;
+    cloud.creatorProjectileSlot = -1;
+
+    digest.destMapIndex = 0;
+    digest.destMapX = 16;
+    digest.destMapY = 4;
+    digest.destHasCreatureGroup = 1;
+    digest.destCreatureType = 15;
+    digest.destCreatureCellMask = 0x0F;
+
+    /* ReDMCSB source-lock:
+     * PROJEXPL.C F0220 lines 817-818 computes poison-cloud attack before
+     * the switch body. Lines 860-864 apply party or creature-group damage,
+     * and only then do lines 867-872 test Explosion->Attack >= 6 to decide
+     * whether to subtract 3 and schedule another C25 event. A final weak
+     * cloud therefore still damages a monster group before expiring.
+     */
+    CHECK_EQ(F0822_EXPLOSION_Advance_Compat(&cloud, &digest, 3000, NULL,
+                                            &next, &tick),
+             1, "advance final weak cloud on monster tile");
+    CHECK_EQ(tick.emittedCombatActionPartyCount, 0,
+             "final weak cloud emits no party action");
+    CHECK_EQ(tick.emittedCombatActionGroupCount, 1,
+             "final weak cloud still emits group action");
+    CHECK_EQ(tick.outActionGroup.kind, COMBAT_ACTION_APPLY_DAMAGE_GROUP,
+             "final weak cloud group damage action kind");
+    CHECK_EQ(tick.outActionGroup.targetMapX, 16,
+             "final weak cloud target x");
+    CHECK_EQ(tick.outActionGroup.targetMapY, 4,
+             "final weak cloud target y");
+    CHECK_EQ(tick.outActionGroup.targetCell, 0,
+             "final weak centered cloud targets centered group cell");
+    CHECK_EQ(tick.outActionGroup.defenderSlotOrCreatureIndex, 15,
+             "final weak cloud preserves creature type");
+    CHECK_EQ(tick.outActionGroup.rawAttackValue, 4,
+             "attack 5 -> base 1 -> F0192 for C15 (r=1): 1*8/2 = 4");
+    CHECK_EQ(tick.resultKind, EXPLOSION_RESULT_ONE_SHOT,
+             "final weak cloud expires after damage");
+    CHECK_EQ(tick.despawn, 1, "final weak cloud despawns");
+    CHECK_EQ(tick.newAttack, 0, "final weak cloud reports zero next attack");
+    CHECK_EQ(next.attack, 5,
+             "final weak cloud state is not decayed after expiry");
+    CHECK_EQ(tick.outNextTick.kind, 0,
+             "final weak cloud emits no follow-up event");
+    CHECK_EQ((int)tick.outNextTick.fireAtTick, 0,
+             "final weak cloud follow-up tick remains unset");
+}
+
 int main(void)
 {
     printf("DM1 V1 poison cloud monster overlap tick regression\n");
     test_single_monster_cloud_tick_boundary();
     test_cloud_square_overlap_ignores_quarter_cell_mask();
+    test_final_low_attack_cloud_damages_before_expiry();
     if (g_failures) {
         fprintf(stderr, "%d failure(s)\n", g_failures);
         return 1;
