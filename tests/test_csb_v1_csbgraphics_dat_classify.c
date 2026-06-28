@@ -12,6 +12,9 @@
  *     documented at CSBWin/Graphics.cpp:1918-1934.
  *   - Bounds: rejects too-small input, empty (count==0), oversized
  *     count, and total-compressed > available payload bytes.
+ *   - Payload-span handoff: one entry maps to a compressed byte
+ *     range via the same LocateNthGraphic(n) offset math, including
+ *     zero-length entries and little-endian-marker tables.
  *   - Diagnostic preservation: max_compressed / max_decompressed
  *     track the largest single entry across the file.
  *   - Source evidence + result-name strings are non-empty so the
@@ -100,6 +103,18 @@ static uint8_t *build_le_marker(size_t count,
     }
     *out_size = total;
     return buf;
+}
+
+static void write_be16(uint8_t *buf, size_t off, uint16_t value)
+{
+    buf[off] = (uint8_t)((value >> 8) & 0xffu);
+    buf[off + 1u] = (uint8_t)(value & 0xffu);
+}
+
+static void write_le16(uint8_t *buf, size_t off, uint16_t value)
+{
+    buf[off] = (uint8_t)(value & 0xffu);
+    buf[off + 1u] = (uint8_t)((value >> 8) & 0xffu);
 }
 
 /* ── Tests ──────────────────────────────────────────────────────── */
@@ -267,6 +282,119 @@ static int test_max_tracking(void)
     return 1;
 }
 
+static int test_big_endian_entry_spans(void)
+{
+    CSB_V1_CSBGraphicsEntrySpan span;
+    CSB_V1_CSBGraphicsIndex idx;
+    size_t size = 0u;
+    uint8_t *buf = build_big_endian(4u, 0x0001u, 0x0002u, &size);
+    int rc;
+    ASSERT_TRUE(buf != NULL);
+
+    /* Compressed sizes: [3, 0, 5, 2].
+     * Decompressed sizes: [30, 0, 50, 20]. */
+    write_be16(buf, 2u + 0u, 3u);
+    write_be16(buf, 2u + 2u, 0u);
+    write_be16(buf, 2u + 4u, 5u);
+    write_be16(buf, 2u + 6u, 2u);
+    write_be16(buf, 10u + 0u, 30u);
+    write_be16(buf, 10u + 2u, 0u);
+    write_be16(buf, 10u + 4u, 50u);
+    write_be16(buf, 10u + 6u, 20u);
+
+    rc = csb_v1_csbgraphics_dat_classify(buf, size, &idx);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    ASSERT_TRUE(idx.payload_offset == 18u);
+    ASSERT_TRUE(idx.total_compressed == 10u);
+
+    memset(&span, 0, sizeof(span));
+    rc = csb_v1_csbgraphics_dat_entry_span(buf, size, 0u, &span);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    ASSERT_TRUE(span.entry_index == 0u);
+    ASSERT_TRUE(span.payload_offset == 18u);
+    ASSERT_TRUE(span.compressed_size == 3u);
+    ASSERT_TRUE(span.decompressed_size == 30u);
+
+    rc = csb_v1_csbgraphics_dat_entry_span(buf, size, 1u, &span);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    ASSERT_TRUE(span.payload_offset == 21u);
+    ASSERT_TRUE(span.compressed_size == 0u);
+    ASSERT_TRUE(span.decompressed_size == 0u);
+
+    rc = csb_v1_csbgraphics_dat_entry_span(buf, size, 2u, &span);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    ASSERT_TRUE(span.payload_offset == 21u);
+    ASSERT_TRUE(span.compressed_size == 5u);
+    ASSERT_TRUE(span.decompressed_size == 50u);
+
+    rc = csb_v1_csbgraphics_dat_entry_span(buf, size, 3u, &span);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    ASSERT_TRUE(span.payload_offset == 26u);
+    ASSERT_TRUE(span.compressed_size == 2u);
+    ASSERT_TRUE(span.decompressed_size == 20u);
+
+    free(buf);
+    return 1;
+}
+
+static int test_le_marker_entry_spans(void)
+{
+    CSB_V1_CSBGraphicsEntrySpan span;
+    size_t size = 0u;
+    uint8_t *buf = build_le_marker(3u, 0x0001u, 0x0002u, &size);
+    int rc;
+    ASSERT_TRUE(buf != NULL);
+
+    /* Compressed sizes: [4, 6, 8].
+     * Decompressed sizes: [40, 60, 80]. */
+    write_le16(buf, 4u + 0u, 4u);
+    write_le16(buf, 4u + 2u, 6u);
+    write_le16(buf, 4u + 4u, 8u);
+    write_le16(buf, 10u + 0u, 40u);
+    write_le16(buf, 10u + 2u, 60u);
+    write_le16(buf, 10u + 4u, 80u);
+
+    rc = csb_v1_csbgraphics_dat_entry_span(buf, size, 2u, &span);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    /* payload_offset = 4 (marker+count) + 3*4 tables = 16.
+     * preceding compressed bytes before entry 2: 4 + 6 = 10. */
+    ASSERT_TRUE(span.entry_index == 2u);
+    ASSERT_TRUE(span.payload_offset == 26u);
+    ASSERT_TRUE(span.compressed_size == 8u);
+    ASSERT_TRUE(span.decompressed_size == 80u);
+
+    free(buf);
+    return 1;
+}
+
+static int test_entry_span_range_rejected(void)
+{
+    CSB_V1_CSBGraphicsEntrySpan span;
+    size_t size = 0u;
+    uint8_t *buf = build_big_endian(2u, 0x0004u, 0x0008u, &size);
+    int rc;
+    ASSERT_TRUE(buf != NULL);
+    rc = csb_v1_csbgraphics_dat_entry_span(buf, size, 2u, &span);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ENTRY_RANGE);
+    free(buf);
+    return 1;
+}
+
+static int test_entry_span_argument_rejected(void)
+{
+    size_t size = 0u;
+    uint8_t *buf = build_big_endian(1u, 0x0004u, 0x0008u, &size);
+    CSB_V1_CSBGraphicsEntrySpan span;
+    int rc;
+    ASSERT_TRUE(buf != NULL);
+    rc = csb_v1_csbgraphics_dat_entry_span(buf, size, 0u, NULL);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ARGUMENT);
+    rc = csb_v1_csbgraphics_dat_entry_span(NULL, size, 0u, &span);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ARGUMENT);
+    free(buf);
+    return 1;
+}
+
 static int test_result_and_evidence_strings(void)
 {
     const char *r;
@@ -277,6 +405,9 @@ static int test_result_and_evidence_strings(void)
     ASSERT_TRUE(strcmp(csb_v1_csbgraphics_dat_result_name(
                            CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OVERFLOW),
                        "overflow") == 0);
+    ASSERT_TRUE(strcmp(csb_v1_csbgraphics_dat_result_name(
+                           CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ENTRY_RANGE),
+                       "entry-range") == 0);
 
     ASSERT_TRUE(strcmp(
         csb_v1_csbgraphics_dat_byte_order_name(
@@ -313,6 +444,11 @@ struct { const char *name; test_fn fn; } tests[] = {
     { "truncated-tables-rejected",
       test_truncated_tables_rejected },
     { "max-tracking",             test_max_tracking },
+    { "big-endian-entry-spans",    test_big_endian_entry_spans },
+    { "le-marker-entry-spans",     test_le_marker_entry_spans },
+    { "entry-span-range-rejected", test_entry_span_range_rejected },
+    { "entry-span-argument-rejected",
+      test_entry_span_argument_rejected },
     { "result-and-evidence-strings",
       test_result_and_evidence_strings },
 };

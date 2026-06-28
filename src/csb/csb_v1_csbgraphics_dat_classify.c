@@ -173,6 +173,70 @@ int csb_v1_csbgraphics_dat_classify(
     return CSB_V1_CSBGRAPHICS_CLASSIFY_OK;
 }
 
+int csb_v1_csbgraphics_dat_entry_span(
+    const uint8_t *bytes, size_t size, uint32_t entry_index,
+    CSB_V1_CSBGraphicsEntrySpan *out_span)
+{
+    CSB_V1_CSBGraphicsIndex index;
+    size_t comp_off;
+    size_t deco_off;
+    uint64_t entry_payload_offset;
+    uint64_t preceding_compressed = 0u;
+    uint32_t i;
+    int rc;
+
+    if (!out_span) {
+        return CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ARGUMENT;
+    }
+    memset(out_span, 0, sizeof(*out_span));
+
+    rc = csb_v1_csbgraphics_dat_classify(bytes, size, &index);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK) {
+        return rc;
+    }
+    if (entry_index >= index.count) {
+        return CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ENTRY_RANGE;
+    }
+
+    comp_off = (index.byte_order == CSB_V1_CSBGRAPHICS_BYTE_ORDER_LITTLE_ENDIAN_MARKER)
+                   ? 4u
+                   : 2u;
+    deco_off = comp_off + (size_t)index.count * 2u;
+
+    /* CSBWin/Graphics.cpp:1643 LocateNthGraphic(n) walks the
+     * compressed-size table for all entries before n, then seeks
+     * to payload_base + that accumulated count. Keep this helper
+     * bounded and byte-span-only; the later LZW decode remains a
+     * separate gate. */
+    for (i = 0u; i < entry_index; ++i) {
+        uint16_t comp = (index.byte_order == CSB_V1_CSBGRAPHICS_BYTE_ORDER_LITTLE_ENDIAN_MARKER)
+                            ? read_le16(bytes, comp_off + (size_t)i * 2u)
+                            : read_be16(bytes, comp_off + (size_t)i * 2u);
+        preceding_compressed += (uint64_t)comp;
+    }
+
+    {
+        uint16_t comp = (index.byte_order == CSB_V1_CSBGRAPHICS_BYTE_ORDER_LITTLE_ENDIAN_MARKER)
+                            ? read_le16(bytes, comp_off + (size_t)entry_index * 2u)
+                            : read_be16(bytes, comp_off + (size_t)entry_index * 2u);
+        uint16_t deco = (index.byte_order == CSB_V1_CSBGRAPHICS_BYTE_ORDER_LITTLE_ENDIAN_MARKER)
+                            ? read_le16(bytes, deco_off + (size_t)entry_index * 2u)
+                            : read_be16(bytes, deco_off + (size_t)entry_index * 2u);
+        entry_payload_offset = index.payload_offset + preceding_compressed;
+        if (entry_payload_offset > (uint64_t)size ||
+            (uint64_t)comp > (uint64_t)size - entry_payload_offset) {
+            return CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OVERFLOW;
+        }
+
+        out_span->entry_index = entry_index;
+        out_span->payload_offset = entry_payload_offset;
+        out_span->compressed_size = (uint32_t)comp;
+        out_span->decompressed_size = (uint32_t)deco;
+    }
+
+    return CSB_V1_CSBGRAPHICS_CLASSIFY_OK;
+}
+
 const char *csb_v1_csbgraphics_dat_result_name(int result)
 {
     switch (result) {
@@ -182,6 +246,7 @@ const char *csb_v1_csbgraphics_dat_result_name(int result)
     case CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_COUNT: return "bad-count";
     case CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OVERFLOW: return "overflow";
     case CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_MARKER: return "bad-marker";
+    case CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ENTRY_RANGE: return "entry-range";
     default: return "unknown";
     }
 }
