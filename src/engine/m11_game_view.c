@@ -5656,6 +5656,121 @@ int M11_GameView_ClearSpell(M11_GameViewState* state) {
     return 1;
 }
 
+static int m11_nexus_light_runtime_ensure(M11_GameViewState* state) {
+    if (!state) return 0;
+    if (!state->nexusLightRuntime.initialized) {
+        nexus_v1_light_runtime_init(&state->nexusLightRuntime,
+                                    state->nexusLightRuntime.guard_rejects);
+    }
+    state->nexusLightRuntimeReady = state->nexusLightRuntime.initialized ? 1 : 0;
+    return state->nexusLightRuntimeReady;
+}
+
+static int m11_nexus_light_spell_from_runes(
+    const struct RuneSequence_Compat* seq,
+    Nexus_V1_LightKind* outKind,
+    int* outPowerSymbolOrdinal)
+{
+    int powerOrdinal;
+    if (!seq || !outKind || !outPowerSymbolOrdinal) return 0;
+    if (seq->runeCount < 2 || seq->runeCount > 4) return 0;
+    powerOrdinal = seq->runes[0] - 0x60;
+    if (powerOrdinal < 0 || powerOrdinal > 4) return 0;
+
+    /* ReDMCSB MENU.C:1926-1942 dispatches the OTHER spell types
+     * Light / Magic Torch / Darkness into the C70 light-event path.
+     * This M11 Nexus bridge recognizes the same source rune shapes
+     * in the shared spell panel and leaves every other Nexus spell
+     * guarded until a fuller Nexus spell table lands. */
+    if (seq->runeCount == 4 &&
+        seq->runes[1] == m11_encode_rune(1, 2) &&  /* OH */
+        seq->runes[2] == m11_encode_rune(2, 3) &&  /* IR */
+        seq->runes[3] == m11_encode_rune(3, 4)) {  /* RA */
+        *outKind = NEXUS_LIGHT_KIND_LIGHT;
+        *outPowerSymbolOrdinal = powerOrdinal;
+        return 1;
+    }
+    if (seq->runeCount == 2 &&
+        seq->runes[1] == m11_encode_rune(1, 3)) {  /* FUL */
+        *outKind = NEXUS_LIGHT_KIND_TORCH;
+        *outPowerSymbolOrdinal = powerOrdinal;
+        return 1;
+    }
+    if (seq->runeCount == 4 &&
+        seq->runes[1] == m11_encode_rune(1, 4) &&  /* DES */
+        seq->runes[2] == m11_encode_rune(2, 3) &&  /* IR */
+        seq->runes[3] == m11_encode_rune(3, 5)) {  /* SAR */
+        *outKind = NEXUS_LIGHT_KIND_DARKNESS;
+        *outPowerSymbolOrdinal = powerOrdinal;
+        return 1;
+    }
+    return 0;
+}
+
+static int m11_cast_nexus_light_spell(M11_GameViewState* state) {
+    Nexus_V1_LightKind kind;
+    int powerOrdinal;
+    int lightPower;
+    Nexus_V1_LightOverflowKind classification;
+    if (!state) return 0;
+    if (!m11_nexus_light_spell_from_runes(&state->spellBuffer,
+                                          &kind,
+                                          &powerOrdinal)) {
+        m11_log_event(state, M11_COLOR_LIGHT_RED,
+                      "T%u: NEXUS SPELL ROUTE NOT READY",
+                      (unsigned int)state->nexusState.tick_count);
+        m11_set_status(state, "CAST", "NEXUS SPELL NOT READY");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                 "NEXUS SPELL");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "ONLY LIGHT, TORCH, AND DARKNESS ROUTE THROUGH M11");
+        M11_GameView_ClearSpell(state);
+        state->spellPanelOpen = 0;
+        return 1;
+    }
+    if (!m11_nexus_light_runtime_ensure(state)) {
+        m11_set_status(state, "CAST", "NEXUS LIGHT RUNTIME MISSING");
+        return 0;
+    }
+
+    lightPower = nexus_v1_light_runtime_apply_cast(&state->nexusLightRuntime,
+                                                   kind,
+                                                   powerOrdinal);
+    classification = state->nexusLightRuntime.last_classification;
+    if (lightPower == 0 &&
+        classification == NEXUS_LIGHT_OVERFLOW_CAST_REJECTED) {
+        m11_log_event(state, M11_COLOR_YELLOW,
+                      "T%u: NEXUS %s CAST GUARDED",
+                      (unsigned int)state->nexusState.tick_count,
+                      nexus_v1_light_runtime_kind_name(kind));
+        m11_set_status(state, "CAST", "NEXUS LIGHT GUARDED");
+    } else if (lightPower == 0) {
+        m11_log_event(state, M11_COLOR_LIGHT_RED,
+                      "T%u: NEXUS %s CAST REJECTED",
+                      (unsigned int)state->nexusState.tick_count,
+                      nexus_v1_light_runtime_kind_name(kind));
+        m11_set_status(state, "CAST", "NEXUS LIGHT REJECTED");
+    } else {
+        m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                      "T%u: NEXUS %s LIGHTPOWER %d",
+                      (unsigned int)state->nexusState.tick_count,
+                      nexus_v1_light_runtime_kind_name(kind),
+                      lightPower);
+        m11_set_status(state, "CAST", "NEXUS LIGHT COMMITTED");
+    }
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+             "NEXUS %s", nexus_v1_light_runtime_kind_name(kind));
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "LIGHTPOWER %d, MAGICAL LIGHT %d, %s",
+             lightPower,
+             (int)nexus_v1_light_runtime_magical_light_amount(
+                 &state->nexusLightRuntime),
+             nexus_v1_light_runtime_overflow_kind_name(classification));
+    M11_GameView_ClearSpell(state);
+    state->spellPanelOpen = 0;
+    return 1;
+}
+
 int M11_GameView_CastSpell(M11_GameViewState* state) {
     struct ChampionState_Compat* champ;
     struct SpellCastRequest_Compat req;
@@ -5678,6 +5793,9 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
                       (unsigned int)state->world.gameTick);
         m11_set_status(state, "CAST", "NOT ENOUGH RUNES");
         return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+        return m11_cast_nexus_light_spell(state);
     }
     if (state->world.party.activeChampionIndex < 0 ||
         state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
@@ -7733,6 +7851,10 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         state->dm2BootProfile = NULL;
         state->dm2World = NULL;
     }
+    if (state->nexusLightRuntimeReady || state->nexusLightRuntime.initialized) {
+        nexus_v1_light_runtime_shutdown(&state->nexusLightRuntime);
+        state->nexusLightRuntimeReady = 0;
+    }
     if (state->assetsAvailable) {
         M11_AssetLoader_Shutdown(&state->assetLoader);
         state->assetsAvailable = 0;
@@ -8277,6 +8399,8 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     }
 
     state->nexusEngine = nexus_v1_launcher_get_engine();
+    nexus_v1_light_runtime_init(&state->nexusLightRuntime, /*guard_rejects=*/0);
+    state->nexusLightRuntimeReady = 1;
     if (state->nexusEngine) {
         state->nexusState.level_loaded = state->nexusEngine->level_loaded;
         state->nexusState.party_x = state->nexusEngine->game.party_x;
@@ -8839,6 +8963,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         nexus_v1_tick(state->nexusEngine);
+        (void)nexus_v1_light_runtime_tick(&state->nexusLightRuntime, 1);
         /* Sync nexusState mirror so external callers (render loop,
          * UI overlays, save/load) always read consistent data. */
         state->nexusState.tick_count   = state->nexusEngine->game.tick_count;

@@ -13,7 +13,7 @@
  *   1. Owns one timeline + one light state per active game (so the
  *      classification hook has somewhere to live).
  *   2. Exposes a single apply_cast() entry point the M11 spellcast
- *      dispatch can call from a Light/Torch/Darkness cast.
+ *      dispatch calls from a Light/Torch/Darkness cast.
  *   3. Lets the runtime or a debug HUD poll the live classification
  *      and decide between emulate (default — let BUG0_18 surface)
  *      and guard (clamp casts at the cap to avoid the documented
@@ -24,7 +24,7 @@
  *      correctness.
  *
  * This header is the data-free boundary between the upstream data
- * model (`nexus_v1_light_overflow.h`) and a future M11 frame-path
+ * model (`nexus_v1_light_overflow.h`) and the minimal M11 spellcast
  * integration. It does NOT touch any real Nexus asset, real Saturn
  * DM.BIN/FONT256.S2D/MNS, or a real `.sav` byte stream. The save
  * blob it produces is meant to be embedded as a typed sub-section

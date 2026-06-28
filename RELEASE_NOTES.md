@@ -309,6 +309,8 @@ need real-asset proof.
 
 - **Nexus DGN geometry readiness**: the Nexus DGN loader now exposes a bounded Structure1/Structure1B geometry summary with collision-reference counts and conservative mesh-readiness metadata. This is a parser gate only; full Structure1C/F mesh decode and real runtime screen capture remain open.
 
+- **Nexus V1 Light spell M11 dispatch hook**: the shared M11 spell panel now routes Nexus Light, Magic Torch, and Darkness rune casts into the `nexus_v1_light_runtime` path, preserving source-faithful emulate mode by default and the existing guard-mode `CAST_REJECTED` behavior for capped timelines. This is a data-free runtime hook only; real Nexus asset/screenshot and embedded `NGLT` load evidence remain separate follow-up work.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
