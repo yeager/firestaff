@@ -11504,6 +11504,26 @@ if(NOT TARGET test_m11_inventory_full_panel_runtime_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat)
+    # DM1 V1 chest-eye open-to-action-hand-switch runtime gate: while one
+    # action-hand chest is open, C071 eye on a separate leader-hand chest
+    # must close the old G0426 chest, open the leader-hand chest through the
+    # eye route, keep both hand slots stable, and clear stale description/
+    # scroll/stats panel state. Source-locked in the test against PANEL.C
+    # F0352/F0342, CHEST.C F0333/F0334, and COMMAND.C F0380.
+    add_executable(test_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat
+        tests/test_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat
+        COMMAND test_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_m11_inventory_mouth_visual_blit_pc34_compat)
     add_executable(test_m11_inventory_mouth_visual_blit_pc34_compat
         tests/test_m11_inventory_mouth_visual_blit_pc34_compat.c
