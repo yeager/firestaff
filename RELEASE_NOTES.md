@@ -1,15 +1,46 @@
 
 # Firestaff Unreleased
 
-- ZIP/gzip inflate support now builds through a bundled static miniz provider
-  by default. The launcher/runtime path, Theron SRM gzip probe, and deflated
-  ZIP asset-cache materializer compile with `FIRESTAFF_HAS_ZLIB=1` without
-  requiring an external zlib dylib at runtime; packagers can still opt into
-  platform zlib with `FIRESTAFF_WITH_BUNDLED_ZLIB=OFF`.
-- DM2 V2 HUD widget asset gating now has a safe synthetic example manifest
-  and CTest probe. The example uses `generator="synthetic_test"` plus tiny
-  procedural PNG fixtures to exercise `PARTIAL` and `COMPLETE` promotion
-  without shipping copyrighted or finished HUD art.
+# Firestaff v3.0.11
+
+Firestaff v3.0.11 packages the 2026-06-27/28 runtime-hardening work that
+landed after v3.0.10. It keeps the public completion claims conservative:
+DM1 V1 gets broader source-locked gates, the Custom presentation pipeline gets
+new bounded asset/runtime checks, and CSB, DM2, Nexus, and Theron's Quest gain
+more verified handoff and data-boundary coverage without claiming finished
+playability for those targets.
+
+## Highlights since v3.0.10
+
+- **ZIP/gzip support is self-contained by default**: the launcher/runtime ZIP
+  cache materializer, Theron SRM gzip probe, and deflated archive paths now
+  build through bundled static miniz with `FIRESTAFF_HAS_ZLIB=1`. Packagers can
+  still opt into platform zlib with `FIRESTAFF_WITH_BUNDLED_ZLIB=OFF`.
+- **DM1 V1 has wider gameplay-state gates**: new source-locked checks cover
+  champion-panel hand-slot refresh order and pixel slices, waterskin/fountain
+  fill-drink flow, food/water state, repeated-tick timeline determinism,
+  creature-group split sequencing, and the D3C back-wall item thing pass.
+- **Custom presentation work is more tightly bounded**: DM1 V2.2 finished-art
+  materials, DM2 V2.2 per-cell modern-art swaps, DM2 V2 HUD widget runtime
+  hooks, and a safe synthetic HUD widget manifest are now covered without
+  shipping copyrighted or finished replacement art.
+- **Cross-game handoff evidence expanded**: CSB graphics/save loader
+  boundaries, Nexus BPX/BPK archive surfaces, Nexus save/light runtime paths,
+  Theron SRM progression/party envelopes, Theron Track 02 handoff, and Theron
+  V2 HUD runtime overlay now have focused gates.
+- **Launcher and accessibility coverage improved**: screen-reader manifest
+  coverage extends across launcher extras, and the M11 high-contrast overlay
+  has a dedicated runtime gate.
+
+## Verification
+
+- 47 commits ship on top of `v3.0.10`, including this release-prep commit.
+- Local release verification rebuilt the CMake project from a fresh `build/`
+  directory, then ran Phase A, audio, focused CTest slices for the new gates,
+  and the pre-push checks before tagging.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the `v3.0.11`
+  release commit.
 
 # Firestaff v3.0.10
 
