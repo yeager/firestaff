@@ -18929,6 +18929,46 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/sck/firestaff_sck_asset_bridge_rea
     )
 endif()
 
+# Greatstone/SCK db/map corpus verifier: walks every *.map under a
+# corpus dir, parses with the bounded V1+V2 parsers, and reports
+# parseable rows + distinct type/attr preservation + sized /
+# unsized / oversized slice distribution + per-FORMAT aggregate.
+# Skip-safe real-corpus probe walks the bundled sck@1.5.1 corpus
+# when $FIRESTAFF_GREATSTONE_SCK_DIR or the home cache resolves.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_sck_mapfile_corpus_verifier.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/firestaff_sck_mapfile_corpus_verifier.c")
+    add_executable(test_firestaff_sck_mapfile_corpus_verifier
+        tests/test_firestaff_sck_mapfile_corpus_verifier.c
+        src/shared/firestaff_sck_mapfile_corpus_verifier.c
+        src/shared/firestaff_sck_mapfile.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_sck_mapfile_corpus_verifier PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_sck_mapfile_corpus_verifier
+        COMMAND test_firestaff_sck_mapfile_corpus_verifier
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/sck/firestaff_sck_mapfile_corpus_verifier_real_corpus_probe.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/firestaff_sck_mapfile_corpus_verifier.c")
+    add_executable(firestaff_sck_mapfile_corpus_verifier_real_corpus_probe
+        probes/sck/firestaff_sck_mapfile_corpus_verifier_real_corpus_probe.c
+        src/shared/firestaff_sck_mapfile_corpus_verifier.c
+        src/shared/firestaff_sck_mapfile.c
+    )
+    target_include_directories(firestaff_sck_mapfile_corpus_verifier_real_corpus_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_sck_mapfile_corpus_verifier_real_corpus_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_sck_mapfile_corpus_verifier_real_corpus_probe
+        COMMAND firestaff_sck_mapfile_corpus_verifier_real_corpus_probe
+    )
+endif()
+
 # M12 custom dungeon real-path scanner: disk-backed data/custom/<name>/DUNGEON.DAT
 # discovery with mixed-case community filenames and validation statuses.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_custom_dungeon_m12_real_path.c"
