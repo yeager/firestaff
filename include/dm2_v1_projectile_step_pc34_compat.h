@@ -17,12 +17,14 @@
  * In SKULL.ASM / skproject, between launch and draw, every V1 tick walks
  * the missile-step path (DM2_STEP_MISSILE in c_tim_proc.cpp:442-563,
  * STEP_MISSILE in SkWinCore.cpp:60920-61116).  That path:
- *   1. Reads the per-slot stepEnergy and current kineticEnergy.
- *   2. If kineticEnergy <= stepEnergy → despawn the projectile
+ *   1. Honors the first-move C48 grace event.
+ *   2. Checks party / creature impacts before the energy floor.
+ *   3. Reads the per-slot stepEnergy and current kineticEnergy.
+ *   4. If kineticEnergy <= stepEnergy → despawn the projectile
  *      (CUT_RECORD_FROM + DELETE_MISSILE_RECORD in skproject, F0813 in
  *      our M10 engine).
- *   3. Else → kineticEnergy -= stepEnergy (survivor continues).
- *   4. After the pass, only survivors should be visible to M11.
+ *   5. Else → kineticEnergy -= stepEnergy (survivor continues).
+ *   6. After the pass, only survivors should be visible to M11.
  *
  * The "drain" cache without this step is a snapshot of all live
  * projectiles; it never expires.  With this step, the cache reflects
@@ -30,14 +32,17 @@
  * what M11 should draw this frame.
  *
  * This module is intentionally narrow:
- *   - It does NOT build a CellContentDigest_Compat (that needs wall /
- *     door / creature / tile state and is a separate, larger slice).
+ *   - It wires only the creature impact gate already owned by
+ *     dm2_v1_projectile_creature_collision_pc34_compat.c.
+ *   - It does NOT build a full CellContentDigest_Compat (wall / door /
+ *     tile state remains a separate, larger slice).
  *   - It does NOT handle map-change / CHANGE_CURRENT_MAP_TO (the
  *     next larger slice would do that).
  *   - It does NOT handle teleporter rotation (F0228_GetDirectionsWhere
  *     DestinationIsVisibleFromSource is a separate slice).
- *   - It only implements the energy-decay + despawn boundary, which
- *     is the deterministic, source-lockable first half of STEP_MISSILE.
+ *   - It only implements the creature-impact + energy-decay / despawn
+ *     boundary, which is the deterministic, source-lockable first half
+ *     of STEP_MISSILE.
  *
  * That boundary is enough to prove the runtime/drain-cache handoff:
  * after dm2_v1_projectile_step_tick() runs, the next
@@ -58,6 +63,8 @@
  *       ^075F:1375: bp08->EnergyRemaining(bp08->EnergyRemaining() - stepEnergy)
  *
  *   ReDMCSB PROJEXPL.C:76-92                    (F0212: live +1 tick)
+ *   ReDMCSB PROJEXPL.C:515-539                  (F0217: creature impact)
+ *   ReDMCSB PROJEXPL.C:692-698                  (F0219: impact before energy)
  *   ReDMCSB GROUP.C:1695-1770                   (F0207 creature attack payload)
  *   memory_projectile_pc34_compat.h             (F0813 despawn + F0810 slot)
  *
@@ -86,10 +93,12 @@ extern "C" {
  * Mirrors what the drain cache should see after one tick's pass:
  *   - slots_alive_before: count of occupied slots before the step
  *   - slots_alive_after:  count of occupied slots after the step
- *   - slots_despawned:    count of slots that hit the energy floor
- *                         and were F0813-despawned this tick
+ *   - slots_despawned:    count of slots that were F0813-despawned
+ *                         by creature impact or the energy floor
  *   - slots_survived:     count of slots whose kineticEnergy was
  *                         decremented (kineticEnergy -= stepEnergy)
+ *   - slots_creature_collisions: accepted creature impact resolutions
+ *                         before energy decay
  *   - energy_total_before:sum of kineticEnergy across all live slots
  *                          before the step
  *   - energy_total_after: sum of kineticEnergy across survivors after
@@ -108,6 +117,7 @@ typedef struct {
     int slots_despawned;
     int slots_survived;
     int slots_graced;             /* firstMoveGraceFlag honored */
+    int slots_creature_collisions; /* creature impact checks accepted */
     int energy_total_before;
     int energy_total_after;
 } DM2_V1_ProjectileStepResult;
@@ -158,6 +168,7 @@ int dm2_v1_projectile_step_total(void);          /* total step ticks invoked */
 int dm2_v1_projectile_step_despawned_total(void); /* total slots despawned across all ticks */
 int dm2_v1_projectile_step_survived_total(void);  /* total slots that survived across all ticks */
 int dm2_v1_projectile_step_graced_total(void);    /* total slots whose firstMoveGraceFlag was honored */
+int dm2_v1_projectile_step_creature_collision_total(void); /* accepted creature impacts across ticks */
 
 /* ── Source evidence citation ──────────────────────────────────── */
 const char *dm2_v1_projectile_step_source_evidence(void);

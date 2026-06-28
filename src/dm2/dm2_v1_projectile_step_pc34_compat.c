@@ -4,12 +4,12 @@
  * Phase 5 narrow source-faithful slice — DM2 V1 per-tick missile-step
  * helper that closes the runtime/drain-cache boundary.
  *
- * The implementation applies only the energy-decay + despawn half of
- * STEP_MISSILE (skproject/SKULLWIN/c_tim_proc.cpp:442-563, the m_7CE0
- * branch and the post-despawn energy decrement at m_7D2A).  The map
- * change, teleporter rotation, and CellContentDigest-based collision
- * resolution are explicitly out of scope here — those belong to the
- * next larger slice.
+ * The implementation applies the bounded creature-impact gate before
+ * the energy-decay + despawn half of STEP_MISSILE
+ * (skproject/SKULLWIN/c_tim_proc.cpp:442-563, the m_7CE0 branch and
+ * the post-despawn energy decrement at m_7D2A).  The map change, wall /
+ * door collision, and teleporter rotation are explicitly out of scope
+ * here — those belong to the next larger slice.
  *
  * ── Module-private list accessor ─────────────────────────────────
  * The dispatch module (dm2_v1_projectile_pc34_compat.c) owns the
@@ -40,11 +40,14 @@
  *
  *   ReDMCSB PROJEXPL.C:76-92                    (F0212 live +1 tick)
  *   ReDMCSB PROJEXPL.C:689-690                  (F0219 C48 grace)
+ *   ReDMCSB PROJEXPL.C:692-698                  (F0219 creature impact before energy)
+ *   ReDMCSB PROJEXPL.C:515-539                  (F0217 creature damage/reaction)
  *   ReDMCSB GROUP.C:1695-1770                   (F0207 creature attack)
  *   memory_projectile_pc34_compat.h             (F0813 despawn + F0810 slot)
  */
 
 #include "dm2_v1_projectile_step_pc34_compat.h"
+#include "dm2_v1_projectile_creature_collision_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 #include <string.h>
@@ -60,6 +63,7 @@ static int s_step_total = 0;
 static int s_step_despawned_total = 0;
 static int s_step_survived_total = 0;
 static int s_step_graced_total = 0;
+static int s_step_creature_collision_total = 0;
 
 /* ── Step pass ─────────────────────────────────────────────────── */
 
@@ -75,6 +79,28 @@ DM2_V1_ProjectileStepResult dm2_v1_projectile_step_tick(void) {
         if (!dm2_v1_projectile_get_slot(i, &before)) continue;
         r.slots_alive_before++;
         r.energy_total_before += before.kineticEnergy;
+
+        if (!before.firstMoveGraceFlag) {
+            /* ReDMCSB PROJEXPL.C F0219 lines 692-698 checks champion /
+             * creature impacts before the m_7CE0 energy floor.  This
+             * bounded DM2 gate wires the creature side only; wall, door,
+             * party, teleporter, and map-change impacts remain outside
+             * this slice. */
+            DM2_V1_ProjectileCreatureCollisionResult hit =
+                dm2_v1_projectile_creature_collision_resolve(
+                    i, before.attack);
+            if (hit.accepted) {
+                r.slots_creature_collisions++;
+                if (hit.projectile_despawned) {
+                    r.slots_despawned++;
+                    continue;
+                }
+                if (!dm2_v1_projectile_get_slot(i, &before)) {
+                    r.slots_despawned++;
+                    continue;
+                }
+            }
+        }
 
         /* Apply the energy-decay boundary for this slot. */
         int post_energy = 0;
@@ -99,6 +125,7 @@ DM2_V1_ProjectileStepResult dm2_v1_projectile_step_tick(void) {
     s_step_despawned_total += r.slots_despawned;
     s_step_survived_total += r.slots_survived;
     s_step_graced_total += r.slots_graced;
+    s_step_creature_collision_total += r.slots_creature_collisions;
     return r;
 }
 
@@ -120,12 +147,14 @@ void dm2_v1_projectile_step_reset_counters(void) {
     s_step_despawned_total = 0;
     s_step_survived_total = 0;
     s_step_graced_total = 0;
+    s_step_creature_collision_total = 0;
 }
 
 int dm2_v1_projectile_step_total(void)           { return s_step_total; }
 int dm2_v1_projectile_step_despawned_total(void) { return s_step_despawned_total; }
 int dm2_v1_projectile_step_survived_total(void)  { return s_step_survived_total; }
 int dm2_v1_projectile_step_graced_total(void)    { return s_step_graced_total; }
+int dm2_v1_projectile_step_creature_collision_total(void) { return s_step_creature_collision_total; }
 
 /* ── Source evidence ───────────────────────────────────────────── */
 
@@ -140,6 +169,8 @@ const char *dm2_v1_projectile_step_source_evidence(void) {
         "        ^075F:1375:  bp08->EnergyRemaining(bp08->EnergyRemaining() - stepEnergy)\n"
         "Source: ReDMCSB PROJEXPL.C:76-92                    (F0212 live +1 tick)\n"
         "Source: ReDMCSB PROJEXPL.C:689-690                  (F0219 C48 first-move grace)\n"
+        "Source: ReDMCSB PROJEXPL.C:692-698                  (F0219 creature impact before energy)\n"
+        "Source: ReDMCSB PROJEXPL.C:515-539                  (F0217 creature impact damage/reaction)\n"
         "Source: ReDMCSB GROUP.C:1695-1770                   (F0207 creature attack)\n"
         "Source: memory_projectile_pc34_compat.h             (F0813 despawn + F0810 slot)\n"
         "Module role: closes the runtime/drain-cache boundary so the per-tick M11\n"
