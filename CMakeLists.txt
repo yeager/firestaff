@@ -5235,6 +5235,18 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_required_file_popup_gate
     )
 
+    add_executable(test_dm2_v1_missing_graphics_profile_gate
+        tests/test_dm2_v1_missing_graphics_profile_gate.c
+    )
+    target_link_libraries(test_dm2_v1_missing_graphics_profile_gate PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_missing_graphics_profile_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_missing_graphics_profile_gate
+        COMMAND test_dm2_v1_missing_graphics_profile_gate
+    )
+
     # M12 launch-res floor contract for CSB: V2.0/V2.1/V2.2 with
     # stored 320x200 must promote to 640x400 at launch time
     # (firestaff_m12_startup_menu_probe INV_M12_18 keeps the full

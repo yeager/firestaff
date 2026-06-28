@@ -54,6 +54,7 @@ static char g_m12TestCsbGraphicsMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestCsbDungeonMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestDm2GraphicsMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestDm2DungeonMd5[M12_ASSET_MD5_CAPACITY];
+static char g_m12TestDm2Pc98DemoGraphicsMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestNexusDataMd5[M12_ASSET_MD5_CAPACITY];
 static char g_m12TestTheronTrack02Md5[M12_ASSET_MD5_CAPACITY];
 
@@ -99,6 +100,13 @@ void M12_AssetStatus_TestSetDm2SyntheticHashes(const char* graphicsMd5,
              sizeof(g_m12TestDm2DungeonMd5),
              "%s",
              dungeonMd5 ? dungeonMd5 : "");
+}
+
+void M12_AssetStatus_TestSetDm2Pc98DemoSyntheticHash(const char* graphicsMd5) {
+    snprintf(g_m12TestDm2Pc98DemoGraphicsMd5,
+             sizeof(g_m12TestDm2Pc98DemoGraphicsMd5),
+             "%s",
+             graphicsMd5 ? graphicsMd5 : "");
 }
 
 void M12_AssetStatus_TestSetCsbSyntheticHashes(const char* graphicsMd5,
@@ -155,7 +163,8 @@ static const M12_VersionSpec g_csbVersions[] = {
 static const M12_VersionSpec g_dm2Versions[] = {
     {"dm2", "pc-en", "PC English", "PC EN", g_dm2GraphicsNames, "25247ede4dabb6a71e5dabdfbcd5907d"},
     {"dm2", "pc-fr", "PC French", "PC FR", g_dm2GraphicsNames, "b4d733576ea60c41737f79f212faf528"},
-    {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d"}
+    {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d"},
+    {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835"}
 };
 
 static const M12_VersionSpec g_nexusVersions[] = {
@@ -719,6 +728,11 @@ static const char* m12_effective_version_md5(const M12_VersionSpec* spec) {
         g_m12TestDm2GraphicsMd5[0] != '\0') {
         return g_m12TestDm2GraphicsMd5;
     }
+    if (spec && strcmp(spec->gameId, "dm2") == 0 &&
+        strcmp(spec->versionId, "pc98-ja-demo") == 0 &&
+        g_m12TestDm2Pc98DemoGraphicsMd5[0] != '\0') {
+        return g_m12TestDm2Pc98DemoGraphicsMd5;
+    }
     if (spec && strcmp(spec->gameId, "nexus") == 0 &&
         strcmp(spec->versionId, "nexus-saturn-jp") == 0 &&
         g_m12TestNexusDataMd5[0] != '\0') {
@@ -1077,6 +1091,40 @@ static const M12_AssetVersionStatus* m12_first_matched_version(const M12_AssetSt
     return NULL;
 }
 
+static int m12_version_can_satisfy_required_file(const M12_AssetVersionStatus* version,
+                                                 const M12_RequiredFileSpec* required) {
+    if (!version || !required) {
+        return 0;
+    }
+    if (strcmp(required->gameId, "dm2") == 0 &&
+        strcmp(required->roleId, "graphics") == 0 &&
+        version->versionId &&
+        strcmp(version->versionId, "pc98-ja-demo") == 0) {
+        return 0;
+    }
+    return 1;
+}
+
+static const M12_AssetVersionStatus* m12_first_matched_required_version(
+    const M12_AssetStatus* status,
+    int gameIndex,
+    const M12_RequiredFileSpec* required) {
+    const M12_GameVersionSpec* gameSpec;
+    size_t i;
+    if (!status || !required || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
+        return NULL;
+    }
+    gameSpec = &g_games[gameIndex];
+    for (i = 0U; i < gameSpec->versionCount; ++i) {
+        const M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+        if (version->matched &&
+            m12_version_can_satisfy_required_file(version, required)) {
+            return version;
+        }
+    }
+    return NULL;
+}
+
 static int m12_required_hash_matches_any_root(const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
                                               size_t rootCount,
                                               const char* md5,
@@ -1149,7 +1197,8 @@ static int m12_fill_required_files(M12_AssetStatus* status,
              * will load the asset from. The version match itself
              * (m12_fill_game_versions) is what gates availability
              * upstream — this just propagates the result down. */
-            const M12_AssetVersionStatus* version = m12_first_matched_version(status, gameIndex);
+            const M12_AssetVersionStatus* version =
+                m12_first_matched_required_version(status, gameIndex, spec);
             if (version) {
                 fileStatus->matched = 1;
                 m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), version->matchedPath);

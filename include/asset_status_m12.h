@@ -117,6 +117,7 @@ void M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(const char* graphics
                                                             const char* dungeonMd5);
 void M12_AssetStatus_TestSetDm2SyntheticHashes(const char* graphicsMd5,
                                                const char* dungeonMd5);
+void M12_AssetStatus_TestSetDm2Pc98DemoSyntheticHash(const char* graphicsMd5);
 void M12_AssetStatus_TestSetCsbSyntheticHashes(const char* graphicsMd5,
                                                const char* dungeonMd5);
 void M12_AssetStatus_TestSetNexusSyntheticHash(const char* dataMd5);

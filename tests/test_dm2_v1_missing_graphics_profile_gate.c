@@ -49,6 +49,8 @@ static const char kDm2DungeonPayload[] =
     "Firestaff synthetic DM2 missing-GRAPHICS profile gate DUNGEON fixture\n";
 static const char kDm2WrongGraphicsPayload[] =
     "Firestaff synthetic DM2 missing-GRAPHICS profile gate wrong GRAPHICS fixture\n";
+static const char kDm2Pc98DemoGraphicsPayload[] =
+    "Firestaff synthetic DM2 PC-9801 demo classification GRAPHICS fixture\n";
 
 static int make_dir_if_needed(const char* path) {
     return MKDIR(path) == 0;
@@ -135,6 +137,18 @@ static void write_wrong_graphics_fixture(const char* root) {
     CHECK(write_plain_file(dungeonPath, kDm2DungeonPayload));
 }
 
+static int write_pc98_demo_plus_pc_dungeon_fixture(
+    const char* root,
+    char demoGraphicsMd5[M12_ASSET_MD5_CAPACITY]) {
+    char graphicsPath[512];
+    char dungeonPath[512];
+    return join_path(graphicsPath, sizeof(graphicsPath), root, "GRAPHICS.DAT") &&
+           join_path(dungeonPath, sizeof(dungeonPath), root, "DUNGEON.DAT") &&
+           write_plain_file(graphicsPath, kDm2Pc98DemoGraphicsPayload) &&
+           write_plain_file(dungeonPath, kDm2DungeonPayload) &&
+           m12_file_md5_hex(graphicsPath, demoGraphicsMd5);
+}
+
 static void select_dm2_launch_row(M12_StartupMenuState* state) {
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
@@ -144,6 +158,51 @@ static void select_dm2_launch_row(M12_StartupMenuState* state) {
     state->gameOptions[DM2_GAME_INDEX].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->view = M12_MENU_VIEW_GAME_OPTIONS;
     state->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+}
+
+static void check_dm2_pc98_demo_classifies_without_satisfying_launch_graphics(
+    const char* demoRoot,
+    const char* demoGraphicsMd5,
+    const char* dungeonMd5) {
+    M12_AssetStatus status;
+    const M12_AssetVersionStatus* pcEnglish;
+    const M12_AssetVersionStatus* pc98Demo;
+    const M12_AssetRequiredFileStatus* graphics;
+    const M12_AssetRequiredFileStatus* dungeon;
+    int pc98Index = M12_AssetStatus_FindVersionIndex("dm2", "pc98-ja-demo");
+
+    M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, dungeonMd5);
+    M12_AssetStatus_TestSetDm2Pc98DemoSyntheticHash(demoGraphicsMd5);
+    M12_AssetStatus_Scan(&status, demoRoot);
+
+    pcEnglish = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    pc98Demo = pc98Index >= 0
+        ? M12_AssetStatus_GetVersion(&status, "dm2", (size_t)pc98Index)
+        : NULL;
+    graphics = required_file_by_role(&status, "graphics");
+    dungeon = required_file_by_role(&status, "dungeon");
+
+    CHECK(pc98Index == 3);
+    CHECK(M12_AssetStatus_GetVersionCount("dm2") == 4U);
+    CHECK(M12_AssetStatus_GameKnownHashCount("dm2") == 4U);
+    CHECK(M12_AssetStatus_GameRequiredFileCount("dm2") == 2U);
+    CHECK(M12_AssetStatus_GameAvailable(&status, "dm2") == 0);
+
+    CHECK(pcEnglish && pcEnglish->versionId &&
+          strcmp(pcEnglish->versionId, "pc-en") == 0);
+    CHECK(pcEnglish && pcEnglish->matched == 0);
+    CHECK(pc98Demo && pc98Demo->versionId &&
+          strcmp(pc98Demo->versionId, "pc98-ja-demo") == 0);
+    CHECK(pc98Demo && pc98Demo->label &&
+          strcmp(pc98Demo->label, "PC-9801 Japanese Demo") == 0);
+    CHECK(pc98Demo && pc98Demo->matched == 1);
+    CHECK(pc98Demo && strcmp(pc98Demo->matchedMd5, demoGraphicsMd5) == 0);
+    CHECK(pc98Demo && strstr(pc98Demo->matchedPath, "GRAPHICS.DAT") != NULL);
+
+    CHECK(graphics && graphics->matched == 0);
+    CHECK(graphics && graphics->matchedHash[0] == '\0');
+    CHECK(dungeon && dungeon->matched == 1);
+    CHECK(dungeon && strcmp(dungeon->matchedHash, dungeonMd5) == 0);
 }
 
 static void check_dm2_matched_dungeon_unmatched_graphics_scan_blocks_availability(
@@ -230,16 +289,20 @@ int main(void) {
     char hashRoot[512];
     char dungeonOnlyRoot[512];
     char wrongGraphicsRoot[512];
+    char pc98DemoRoot[512];
     char graphicsMd5[M12_ASSET_MD5_CAPACITY];
     char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+    char pc98DemoGraphicsMd5[M12_ASSET_MD5_CAPACITY];
 
     if (!make_isolated_home(home, sizeof(home)) ||
         !join_path(hashRoot, sizeof(hashRoot), home, "hash-source") ||
         !join_path(dungeonOnlyRoot, sizeof(dungeonOnlyRoot), home, "dungeon-only") ||
         !join_path(wrongGraphicsRoot, sizeof(wrongGraphicsRoot), home, "wrong-graphics") ||
+        !join_path(pc98DemoRoot, sizeof(pc98DemoRoot), home, "pc98-demo") ||
         !make_dir_if_needed(hashRoot) ||
         !make_dir_if_needed(dungeonOnlyRoot) ||
         !make_dir_if_needed(wrongGraphicsRoot) ||
+        !make_dir_if_needed(pc98DemoRoot) ||
         !test_setenv("HOME", home) ||
         !test_setenv("FIRESTAFF_DATA", "")) {
         fprintf(stderr, "fixture environment setup failed\n");
@@ -249,7 +312,14 @@ int main(void) {
     CHECK(scan_fixture_hashes(hashRoot, graphicsMd5, dungeonMd5));
     write_dungeon_only_fixture(dungeonOnlyRoot);
     write_wrong_graphics_fixture(wrongGraphicsRoot);
+    CHECK(write_pc98_demo_plus_pc_dungeon_fixture(pc98DemoRoot,
+                                                  pc98DemoGraphicsMd5));
 
+    check_dm2_pc98_demo_classifies_without_satisfying_launch_graphics(
+        pc98DemoRoot,
+        pc98DemoGraphicsMd5,
+        dungeonMd5);
+    M12_AssetStatus_TestSetDm2Pc98DemoSyntheticHash(NULL);
     check_dm2_matched_dungeon_unmatched_graphics_scan_blocks_availability(
         dungeonOnlyRoot,
         graphicsMd5,
@@ -268,6 +338,7 @@ int main(void) {
         dungeonMd5);
 
     M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
+    M12_AssetStatus_TestSetDm2Pc98DemoSyntheticHash(NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
 
     if (failures) {
