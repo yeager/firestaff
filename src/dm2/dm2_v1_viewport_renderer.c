@@ -1255,6 +1255,7 @@ const char *dm2_v1_viewport_source_evidence(void)
         "Source: ReDMCSB DUNVIEW.C:3940-4015 — F0108 DrawFloorOrnament, F0109 DrawDoorOrnament\n"
         "Source: ReDMCSB DUNVIEW.C:4119-4270 — F0110 DrawDoorButton, F0111 DrawDoor\n"
         "Source: ReDMCSB DUNVIEW.C:4351-4382 — F0112 DrawCeilingPit (outdoor ceiling)\n"
+        "Source: ReDMCSB DUNVIEW.C:4960-5039 — object depth scale and palette changes\n"
         "Source: ReDMCSB DUNVIEW.C:4567-4581 — creature/object/projectile layer specs\n"
         "Source: ReDMCSB DUNVIEW.C:5681-5883 — projectile occlusion specs\n"
         "Source: ReDMCSB DUNVIEW.C:361        — G0103_as_CurrentMapDoorOrnamentsInfo[17]\n"
