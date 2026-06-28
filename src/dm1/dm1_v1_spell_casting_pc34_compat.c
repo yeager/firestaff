@@ -140,6 +140,11 @@ static inline int boundedValue(int lo, int val, int hi) {
     return val;
 }
 
+static int powerSymbolIndex(char sym) {
+    int idx = (int)(unsigned char)sym - 96;
+    return (idx >= 0 && idx < DM1_SYMBOLS_PER_STEP) ? idx : -1;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
  * Core API implementation
  * ═══════════════════════════════════════════════════════════════════ */
@@ -184,8 +189,8 @@ int dm1_spell_addSymbol(DM1_SpellCastingState* s, int champIdx,
      * Contract: dm1_encodeSymbol(0, idx) MUST return 96..101. */
     if (step > 0) {
         /* Multiply by power symbol's multiplier, then >>3 */
-        unsigned int powerIdx = (unsigned char)inp->symbols[0] - 96;
-        if (powerIdx >= DM1_SYMBOLS_PER_STEP) return 0; /* invalid encoding */
+        int powerIdx = powerSymbolIndex(inp->symbols[0]);
+        if (powerIdx < 0) return 0; /* invalid encoding */
         manaCost = (manaCost * dm1_symbolManaCostMultiplier[powerIdx]) >> 3;
     }
 
@@ -247,6 +252,13 @@ const DM1_Spell* dm1_spell_lookup(const DM1_SpellCastingState* s, int champIdx) 
     /* Need at least power + one element symbol (MENU.C:1685/1690) */
     if (!syms[1]) return NULL;
 
+    /* ReDMCSB SYMBOL.C F0399:29 stores the first rune as 96 + power index,
+     * and MENU.C F0412 derives the power ordinal from Symbols[0] - '_'.
+     * F0409 compares normal DM1 spell definitions without the power byte
+     * (MENU.C:1704-1706), so the standalone API must reject corrupted
+     * power bytes before a malformed sequence can dispatch a real spell. */
+    if (powerSymbolIndex(syms[0]) < 0) return NULL;
+
     /* Pack symbols into int32_t, MSB-first (MENU.C:1693-1696) */
     int32_t packed = 0;
     int shift = 24;
@@ -284,8 +296,8 @@ int dm1_spell_symbolManaCost(const DM1_SpellCastingState* s, int champIdx, int s
     unsigned int cost = dm1_symbolBaseManaCost[step][symbolIdx];
 
     if (step > 0) {
-        unsigned int powerIdx = (unsigned char)inp->symbols[0] - 96;
-        if (powerIdx >= DM1_SYMBOLS_PER_STEP) return 0;
+        int powerIdx = powerSymbolIndex(inp->symbols[0]);
+        if (powerIdx < 0) return 0;
         cost = (cost * dm1_symbolManaCostMultiplier[powerIdx]) >> 3;
     }
 

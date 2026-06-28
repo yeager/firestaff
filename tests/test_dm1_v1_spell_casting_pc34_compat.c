@@ -407,6 +407,43 @@ static void test_malformed_symbol_step_rejected_without_mutation(void) {
     printf("    PASS\n");
 }
 
+static void test_malformed_power_rune_cannot_dispatch_spell(void) {
+    printf("  [12b] Malformed power rune cannot dispatch spell...\n");
+
+    DM1_SpellCastingState s;
+    dm1_spell_init(&s);
+    DM1_ChampionSpellStats stats = makeStats(77, 100, 50, 40);
+    int failure = -1;
+    int powerOrdinal = -1;
+    const DM1_Spell* outSpell = NULL;
+
+    stats.skillLevels[DM1_SKILL_FIRE] = 10;
+
+    /* ReDMCSB SYMBOL.C F0399:29 can only write power bytes 96..101.
+     * MENU.C F0409:1704-1706 ignores the power byte for ordinary DM1
+     * spell-table matches, and MENU.C F0412 later uses Symbols[0] - '_'
+     * as the power ordinal.  A standalone caller with corrupted state must
+     * not turn an invalid power byte plus a valid spell tail into a cast. */
+    s.input[0].symbolStep = 3;
+    s.input[0].symbols[0] = '!';
+    s.input[0].symbols[1] = dm1_encodeSymbol(1, DM1_ELEM_FUL);
+    s.input[0].symbols[2] = dm1_encodeSymbol(2, DM1_CLASS_IR);
+    s.input[0].symbols[3] = '\0';
+
+    assert(dm1_spell_lookup(&s, 0) == NULL);
+    assert(dm1_spell_cast(&s, 0, &stats, 0x0000,
+                          &outSpell, &powerOrdinal, &failure) ==
+           DM1_SPELL_CAST_FAILURE);
+    assert(outSpell == NULL);
+    assert(powerOrdinal == -1);
+    assert(failure == DM1_FAILURE_MEANINGLESS_SPELL);
+    assert(s.input[0].symbols[0] == '\0');
+    assert(s.input[0].symbolStep == 0);
+    assert(stats.currentMana == 77);
+
+    printf("    PASS\n");
+}
+
 /* ── Test 12: Spell cast — success ───────────────────────────────── */
 static void test_spell_cast_success(void) {
     printf("  [13] Spell cast — success...\n");
@@ -856,6 +893,7 @@ int main(void) {
     test_spell_lookup_meaningless();
     test_mana_cost();
     test_malformed_symbol_step_rejected_without_mutation();
+    test_malformed_power_rune_cannot_dispatch_spell();
     test_spell_cast_success();
     test_spell_cast_dead();
     test_spell_cast_meaningless();
@@ -873,6 +911,6 @@ int main(void) {
     test_spell_failure_feedback_metadata();
     test_spell_cast_click_cleanup_predicate();
 
-    printf("\nAll 28 tests PASSED.\n");
+    printf("\nAll 29 tests PASSED.\n");
     return 0;
 }
