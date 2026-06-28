@@ -39,10 +39,10 @@
  *
  *   PLANNED FUTURE COVERAGE (intentionally not in this gate):
  *     - A bounded in-place color remap for M11 chrome surfaces
- *       (inventory panel text, action strip glyph tint) when a
- *       future pass exposes them; for now the gate is a pure
- *       text-style remap so it is byte-stable and CTest-able
- *       without game data.
+ *       (inventory panel text, action strip glyph tint). The
+ *       rectangle-fenced apply helper below now gives those future
+ *       callers a direct way to skip the dungeon viewport while
+ *       remapping surrounding chrome, still without game data.
  */
 
 #include "m11_high_contrast_overlay_pc34_compat.h"
@@ -66,7 +66,8 @@ int M11_HighContrast_IsActive(void) {
 static const char kM11HighContrastManifest[] =
     "M11_HIGH_CONTRAST_OVERLAY_GATE_v1\n"
     "covers: hud_text,dialog_text,action_area_text,rune_strip_text,"
-    "combat_log_text,hit_flash_text,death_overlay_text,winner_overlay_text\n"
+    "combat_log_text,hit_flash_text,death_overlay_text,winner_overlay_text,"
+    "chrome_rect_remap_with_viewport_fence\n"
     "preserves: dungeon_viewport_320x200_pixels,wall_floor_door_creature_ornament_pixels,"
     "hud_panel_c040_blit_pixels,hud_panel_c017_backdrop_pixels\n"
     "default_state: off\n"
@@ -126,21 +127,31 @@ unsigned char M11_HighContrast_RemapPresentedColor(unsigned char color) {
 /* ── Region apply ──────────────────────────────────────────────────── */
 
 /*
- * Apply the chrome remap to a sub-rect of an indexed framebuffer,
- * preserving any pixel whose slot has its bit set in `excludeMask`.
+ * Apply the chrome remap to a sub-rect of an indexed framebuffer.
+ * Bits 0..15 of `excludeMask` map to palette indices 0..15; bit n
+ * corresponds to palette index n.
+ *
+ * `preserveX, preserveY, preserveWidth, preserveHeight` define an
+ * optional rectangle fence (typically the dungeon viewport) inside
+ * which no pixel is touched, even if its palette index is muted.
+ * A non-positive preserveWidth / preserveHeight disables the
+ * rectangle fence and leaves only excludeMask active.
  *
  * The typical caller is the M11 HUD chrome layer that wants to
  * remap the dialog text style but explicitly fence off the
- * dungeon viewport sub-rect (320x136, off-screen bottom for the
- * 320x200 logical buffer) so the original pixel data is left
- * untouched. Bits 0..15 of `excludeMask` map to palette indices
- * 0..15; bit n+1 corresponds to palette index n.
+ * dungeon viewport sub-rect (0,0,224,136, in the 320x200 logical
+ * buffer) so the original pixel data is left untouched.
  */
-int M11_HighContrast_ApplyActiveRGBA(unsigned char* framebuffer,
-                                     int framebufferWidth,
-                                     int framebufferHeight,
-                                     int x, int y, int width, int height,
-                                     unsigned int excludeMask) {
+static int m11_high_contrast_apply_active_region(unsigned char* framebuffer,
+                                                 int framebufferWidth,
+                                                 int framebufferHeight,
+                                                 int x, int y,
+                                                 int width, int height,
+                                                 int preserveX,
+                                                 int preserveY,
+                                                 int preserveWidth,
+                                                 int preserveHeight,
+                                                 unsigned int excludeMask) {
     int startX;
     int startY;
     int endX;
@@ -148,6 +159,7 @@ int M11_HighContrast_ApplyActiveRGBA(unsigned char* framebuffer,
     int row;
     int col;
     int remappedCount = 0;
+    int hasPreserveRect = (preserveWidth > 0 && preserveHeight > 0) ? 1 : 0;
 
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return 0;
@@ -185,6 +197,11 @@ int M11_HighContrast_ApplyActiveRGBA(unsigned char* framebuffer,
         for (col = startX; col < endX; ++col) {
             unsigned char idx = line[col];
             unsigned int bit = (1u << (idx & 0x0Fu));
+            if (hasPreserveRect
+             && col >= preserveX && col < preserveX + preserveWidth
+             && row >= preserveY && row < preserveY + preserveHeight) {
+                continue;
+            }
             if (excludeMask & bit) {
                 continue;
             }
@@ -196,4 +213,37 @@ int M11_HighContrast_ApplyActiveRGBA(unsigned char* framebuffer,
         }
     }
     return remappedCount > 0 ? 1 : 0;
+}
+
+int M11_HighContrast_ApplyActiveRGBA(unsigned char* framebuffer,
+                                     int framebufferWidth,
+                                     int framebufferHeight,
+                                     int x, int y, int width, int height,
+                                     unsigned int excludeMask) {
+    return m11_high_contrast_apply_active_region(framebuffer,
+                                                 framebufferWidth,
+                                                 framebufferHeight,
+                                                 x, y, width, height,
+                                                 0, 0, 0, 0,
+                                                 excludeMask);
+}
+
+int M11_HighContrast_ApplyActiveRGBAExceptRect(unsigned char* framebuffer,
+                                               int framebufferWidth,
+                                               int framebufferHeight,
+                                               int x, int y,
+                                               int width, int height,
+                                               int preserveX,
+                                               int preserveY,
+                                               int preserveWidth,
+                                               int preserveHeight,
+                                               unsigned int excludeMask) {
+    return m11_high_contrast_apply_active_region(framebuffer,
+                                                 framebufferWidth,
+                                                 framebufferHeight,
+                                                 x, y, width, height,
+                                                 preserveX, preserveY,
+                                                 preserveWidth,
+                                                 preserveHeight,
+                                                 excludeMask);
 }
