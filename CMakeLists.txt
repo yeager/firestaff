@@ -14019,6 +14019,48 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 light-overflow runtime wire-in probe. Headless and data-free:
+# implements the M11 wire-in layer declared in
+# include/nexus_v1_light_runtime.h. Drives the upstream BUG0_18
+# timeline-full + F0257 recursive-weaker event chain through one
+# bounded `Nexus_V1_LightRuntime` object, then round-trips its state
+# through an FNXS save + reload, and verifies that the classification
+# kind (NONE / TIMELINE_FULL_PERMANENT_LIGHT / LIGHT_BLEED_NEGATIVE /
+# CAST_REJECTED) survives the wire. Preserve-emulate-vs-guard mode
+# distinction is verified by rejecting mode-mismatched saves.
+# Source-lock:
+#   include/nexus_v1_light_runtime.h   (M11 wire-in API)
+#   src/nexus/nexus_v1_light_runtime.c (implementation)
+#   include/nexus_v1_light_overflow.h  (data model + classification)
+#   src/nexus/nexus_v1_light_overflow.c (BUG0_18 silent drop + F0257)
+#   include/nexus_v1_save.h            (FNXS save container)
+#   src/nexus/nexus_v1_save_load.c     (FNXS v2 round-trip)
+#   ReDMCSB TIMELINE.C F0238 line 487   (BUG0_18 silent drop)
+#   ReDMCSB TIMELINE.C F0257 line 1720  (recursive weaker chain)
+#   ReDMCSB MENU.C    :1926-1942        (Light/Torch/Darkness dispatch)
+#   ReDMCSB LOADSAVE.C:2041             (EventMaximumCount = 100)
+#   ReDMCSB CHAMPION.C:27               (MagicalLightAmount field)
+# Probe verifies: init/shutdown idempotency, emulate-mode cast,
+# guard-mode rejection at cap, BUG0_18 silent drops + permanent-light
+# classification, light-bleed-through-zero, save/load round-trip
+# (active_count + cast/decay/dropped counters + MagicalLightAmount +
+# state-hash), emulate-vs-guard mode flag preservation, FNXS embedding,
+# NULL safety, determinism.
+add_executable(firestaff_nexus_v1_light_runtime_probe
+    probes/nexus/firestaff_nexus_v1_light_runtime_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_light_runtime_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_light_runtime_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_light_runtime_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus V1 Saturn-font SCR section-table probe. Headless and data-free by
 # default: synthesizes a small SEGA SATURN SCR section-table fixture and
 # walks the 32-entry table in src/nexus/nexus_v1_saturn_font.c via
@@ -14117,6 +14159,14 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_light_overflow PROPERTIES
         LABELS "tier4;nexus;mechanics;light_overflow"
+    )
+
+    add_test(
+        NAME nexus_v1_light_runtime
+        COMMAND firestaff_nexus_v1_light_runtime_probe
+    )
+    set_tests_properties(nexus_v1_light_runtime PROPERTIES
+        LABELS "tier4;nexus;mechanics;light_overflow;runtime_wire_in"
     )
 
     # Track 1 phase-launch handoff gate. Data-free by default;
