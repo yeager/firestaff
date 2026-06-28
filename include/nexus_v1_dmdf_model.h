@@ -39,11 +39,22 @@ typedef struct {
     const char *name;
 } Nexus_V1_Model;
 
-/* ── DMDF embedded palette / string blocks ────────────────────────
+/* ── DMDF embedded BITMAP / palette / string blocks ───────────────
  * Source-lock: docs/nexus_v1_phase2_data_formats_H2321.md §6.5,
  *   §8.2 VDP1 BITMAP notes ("8bpp (palette) or 16bpp (direct color)
  *   may use 4-bit or 8-bit clut (color look-up table)").
  * Format proposed from the observed Saturn layout, big-endian:
+ *
+ *   BITM (bitmap block) — 32-byte header + packed pixels
+ *     0x00  uint32 magic   = 0x4249544D ("BITM")
+ *     0x04  uint32 size    = total block bytes including header
+ *     0x08  uint32 width   = texture width (power of two, 8..256)
+ *     0x0C  uint32 height  = texture height (power of two, 8..256)
+ *     0x10  uint32 bpp     = 4, 8, or 16
+ *     0x14  uint32 flags   = parser-visible metadata only
+ *     0x18  uint32 palette = palette slot / CLUT hint, if any
+ *     0x1C  uint32 reserved
+ *     0x20..size-1         = packed pixel payload
  *
  *   PLTB (palette block) — 16-byte header + N entries × entry_size
  *     0x00  uint32 magic   = 0x504C5442 ("PLTB")
@@ -61,10 +72,11 @@ typedef struct {
  *     then  char data concatenated
  *
  * These blocks are parser-only scaffolding: the bounds gate validates
- * the offsets/sizes/counts and refuses to read past the block boundary.
- * Decoding into real RGBA / final string storage is intentionally out of
- * scope for the V1 parser-level lane. */
+ * offsets/sizes/counts/dimensions and refuses to read past the block
+ * boundary. Decoding VDP1 pixels into RGBA or final string storage is
+ * intentionally out of scope for the V1 parser-level lane. */
 
+#define NEXUS_DMDF_BITMAP_BLOCK_MAGIC   0x4249544DU  /* "BITM" */
 #define NEXUS_DMDF_PALETTE_BLOCK_MAGIC  0x504C5442U  /* "PLTB" */
 #define NEXUS_DMDF_STRING_BLOCK_MAGIC   0x53545242U  /* "STRB" */
 
@@ -76,6 +88,20 @@ typedef struct {
 #define NEXUS_DMDF_MAX_PALETTE_ENTRY_SZ 4
 #define NEXUS_DMDF_MAX_STRING_RECORDS   256
 #define NEXUS_DMDF_MAX_STRING_BYTES     4096
+#define NEXUS_DMDF_MAX_BITMAP_DIM       256
+#define NEXUS_DMDF_MAX_BITMAP_BYTES     (256U * 256U * 2U)
+
+typedef struct {
+    uint32_t width;            /* parsed width (power of two, 8..256)    */
+    uint32_t height;           /* parsed height (power of two, 8..256)   */
+    uint32_t bpp;              /* parsed bits per pixel (4, 8, or 16)    */
+    uint32_t flags;            /* raw flags word for future callers      */
+    uint32_t palette_index;    /* raw palette / CLUT hint                */
+    uint32_t bytes_used;       /* total block bytes consumed             */
+    uint32_t payload_offset;   /* byte offset of first packed pixel      */
+    uint32_t payload_bytes;    /* packed pixel payload bytes             */
+    int      valid;            /* 1 if bounds checks all passed          */
+} Nexus_DMDFBitmapBlock;
 
 typedef struct {
     uint32_t entry_count;       /* parsed N (clamped to [0..256])        */
@@ -93,6 +119,24 @@ typedef struct {
     int      valid;             /* 1 if bounds checks all passed         */
 } Nexus_DMDFStringBlock;
 
+typedef struct {
+    uint32_t bitmap_block_count;
+    uint32_t palette_block_count;
+    uint32_t string_block_count;
+    uint32_t invalid_candidate_count;
+    uint32_t bytes_scanned;
+    uint32_t first_bitmap_offset;
+    uint32_t first_palette_offset;
+    uint32_t first_string_offset;
+    int      valid;
+} Nexus_DMDFEmbeddedScan;
+
+typedef struct {
+    uint32_t offset;
+    uint32_t bytes;
+    int      valid;
+} Nexus_DMDFRawTexturePayload;
+
 /* Parser-level bounds gates. Return 1 on success, 0 on any bounds
  * failure (offset past end, count overflow, payload past end, etc).
  * Output struct is always written, with valid=0 on failure so callers
@@ -101,9 +145,31 @@ int nexus_v1_dmdf_parse_palette_block(const uint8_t *data, int size,
                                       int offset,
                                       Nexus_DMDFPaletteBlock *out);
 
+int nexus_v1_dmdf_parse_bitmap_block(const uint8_t *data, int size,
+                                     int offset,
+                                     Nexus_DMDFBitmapBlock *out);
+
 int nexus_v1_dmdf_parse_string_block(const uint8_t *data, int size,
                                      int offset,
                                      Nexus_DMDFStringBlock *out);
+
+/* Walk a bounded byte range and count parser-recognized embedded BITM,
+ * PLTB, and STRB blocks. `offset` selects the first byte to inspect and
+ * `max_bytes` caps the search window; pass 0 for max_bytes to scan from
+ * offset to the end of the buffer. Recognized valid blocks advance by
+ * their declared size; malformed candidates advance by one byte and are
+ * counted in invalid_candidate_count. */
+int nexus_v1_dmdf_scan_embedded_blocks(const uint8_t *data, int size,
+                                       int offset, int max_bytes,
+                                       Nexus_DMDFEmbeddedScan *out);
+
+/* Estimate the raw texture payload after the currently implemented DMDF
+ * vertex/triangle face stream: data_offset + 8 + vertex_count*10 +
+ * face_count*6. This does not decode pixels; it only bounds the residual
+ * payload so real .MNS probes can report whether an embedded texture-like
+ * tail is present without dereferencing past EOF. */
+int nexus_v1_dmdf_estimate_raw_texture_payload(
+    const uint8_t *data, int size, Nexus_DMDFRawTexturePayload *out);
 
 /* Helper: read a single palette entry out of a parsed palette block.
  * Returns 1 on success and stores the entry value (up to 32 bits) in
@@ -127,4 +193,3 @@ void nexus_v1_dmdf_free(Nexus_V1_Model *model);
 int nexus_v1_dmdf_is_valid(const uint8_t *data, int size);
 
 #endif
-

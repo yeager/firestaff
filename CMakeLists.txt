@@ -15978,6 +15978,27 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_dmdf_palette_bounds
     )
 
+    # ── Nexus V1 DMDF embedded BITMAP / palette / string gate ──────
+    # Parser-level gate (no game data required). Verifies that a bounded
+    # DMDF texture tail carrying synthetic BITM + PLTB + STRB blocks can
+    # be discovered without decoding VDP1 pixels, that malformed embedded
+    # candidates are counted rather than over-read, and that an optional
+    # local .MNS receipt can be scanned skip-safely.
+    add_executable(test_nexus_v1_dmdf_embedded_blocks
+        tests/test_nexus_v1_dmdf_embedded_blocks.c
+        src/nexus/nexus_v1_dmdf_model.c
+    )
+    target_include_directories(test_nexus_v1_dmdf_embedded_blocks PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dmdf_embedded_blocks PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_dmdf_embedded_blocks
+        COMMAND test_nexus_v1_dmdf_embedded_blocks
+    )
+
     # ── Nexus V1 save slot round-trip (single field, manager-level API) ──
     # Exercises nexus_v1_save_full() -> nexus_v1_load_full() on slot 0 with a
     # deterministic synthetic world + champion pool, and verifies ONE world
