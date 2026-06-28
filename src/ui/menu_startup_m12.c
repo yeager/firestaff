@@ -20,6 +20,7 @@
 #include "m11_high_contrast_overlay_pc34_compat.h"
 #include "fs_portable_compat.h"
 #include "manual_docs_m12.h"
+#include "cloud_sync_m12.h"
 
 #include <SDL3/SDL_misc.h>
 #include <SDL3/SDL_dialog.h>
@@ -1928,6 +1929,11 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
      * returned by M11_HighContrast_GetManifest() for the full
      * coverage contract. */
     M11_HighContrast_SetActive(config.highContrast ? 1 : 0);
+    /* Cloud sync opt-in boundary: push the config flag + sync dir +
+     * policy into the cloud sync runtime. The runtime refuses to
+     * touch the sync root when the flag is off or the root is
+     * unusable; see cloud_sync_m12.h for the full contract. */
+    M12_CloudSync_ApplyConfig(&config);
     if (gameId && gameId[0] != '\0') {
         M12_AssetStatus_ScanGame(&state->assetStatus, config.dataDir, gameId);
     } else {

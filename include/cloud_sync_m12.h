@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "config_m12.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,11 +52,13 @@ enum {
 
 enum {
     M12_SYNC_OK                 = 0,
+    M12_SYNC_OK_DISABLED        = 1,  /* explicit no-op: opted out via config */
     M12_SYNC_ERR_NO_SYNC_DIR    = -1,
     M12_SYNC_ERR_MANIFEST_WRITE = -2,
     M12_SYNC_ERR_FILE_COPY      = -3,
     M12_SYNC_ERR_CONFLICT_UNRESOLVED = -4,
     M12_SYNC_ERR_SYNC_DIR_CREATE = -5,
+    M12_SYNC_ERR_UNSUPPORTED    = -6, /* sync root unusable / not allowed */
 };
 
 /* ── Per-file entry in manifest ──────────────────────────────────── */
@@ -115,9 +118,66 @@ void M12_CloudSync_SetPolicy(int policy);
  * and retry with a tighter policy. */
 int M12_CloudSync_Run(int direction, M12_SyncStats* stats);
 
+/* ── Opt-in / opt-out boundary ─────────────────────────────────────
+ *
+ * The launcher is the source of truth for whether cloud sync is
+ * enabled. We honour an explicit config flag (`enabled` must be 1)
+ * and refuse to touch the sync root if it is not writable or does
+ * not look like a directory. Callers that need a one-shot run that
+ * is conflict-safe and a strict no-op when disabled should use
+ * `M12_CloudSync_RunIfEnabled`, which never opens files unless
+ * the opt-in is on and the sync root is usable.
+ *
+ * M12_CloudSync_Run remains the raw, no-policy version for tooling
+ * and tests. */
+
+/* Set the explicit opt-in flag (0 = disabled, 1 = enabled).
+ * Independent of any M12_Config field; the launcher wires them
+ * together at startup. */
+void M12_CloudSync_SetEnabled(int enabled);
+
+/* Get the current opt-in flag. Defaults to 0 (off). */
+int M12_CloudSync_IsEnabled(void);
+
+/* Apply an M12_Config snapshot to the cloud sync runtime. Sets
+ * the opt-in flag, the configured sync dir, and the policy from
+ * the config struct in one call. This is the bounded wiring point
+ * the launcher uses at startup and after every settings change.
+ * Does not perform any sync; the sync root is not even validated
+ * here. */
+void M12_CloudSync_ApplyConfig(const M12_Config* config);
+
+/* Validate the configured sync root without writing anything.
+ * Returns 1 if a sync would be possible, 0 if the sync root is
+ * missing, unwritable, or otherwise unusable. */
+int M12_CloudSync_IsSyncRootUsable(void);
+
+/* Describe the current sync boundary as a short stable tag
+ * (e.g. "DISABLED", "ENABLED_OK", "ENABLED_NO_ROOT",
+ * "ENABLED_UNWRITABLE"). Buffer must be at least 32 bytes. */
+void M12_CloudSync_GetBoundaryTag(char* out, size_t outSize);
+
+/* Run a sync cycle, but only if explicitly enabled AND the sync
+ * root is usable. When disabled or unusable, returns
+ * M12_SYNC_OK_DISABLED (or M12_SYNC_ERR_UNSUPPORTED) and writes
+ * a zeroed stats struct; the manifest, sync dir, and tracked
+ * files are never touched. This is the safe entry point the
+ * launcher calls at startup / shutdown. */
+int M12_CloudSync_RunIfEnabled(int direction, M12_SyncStats* stats);
+
 /* Force a full re-scan of the sync manifest (re-hash all tracked files).
  * Useful after resolving conflicts manually. */
 int M12_CloudSync_RescanManifest(void);
+
+/* Walk a save directory and append any *.sav files as tracked
+ * manifest entries. Returns the number of new entries added.
+ * `relativePrefix` is the manifest-relative root (e.g. "saves/dm1");
+ * `absoluteDir` is the on-disk directory to scan (e.g. the user's
+ * ~/.firestaff/saves/dm1 path). This is a bounded directory walk:
+ * it inspects one level of files only, no recursion, and stops
+ * at M12_SYNC_MAX_ENTRIES total. */
+int M12_CloudSync_DiscoverSaveFiles(const char* relativePrefix,
+                                    const char* absoluteDir);
 
 /* Check whether a sync is needed (at least one tracked file differs).
  * Returns 1 if sync would do something, 0 if everything is in sync. */

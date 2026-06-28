@@ -6,6 +6,7 @@
  */
 
 #include "cloud_sync_m12.h"
+#include "config_m12.h"
 #include "fs_portable_compat.h"
 
 #include <ctype.h>
@@ -19,9 +20,11 @@
 #include <windows.h>
 #include <direct.h>   /* for _mkdir */
 #include <sys/stat.h> /* for _stat */
+#include <io.h>       /* for _access */
 #else
 #include <unistd.h>
 #include <sys/stat.h>
+#include <dirent.h>   /* for opendir / readdir */
 #endif
 
 /* ── CRC-32 (zlib variant) ──────────────────────────────────────── */
@@ -54,6 +57,7 @@ static uint32_t m12_crc32_update(uint32_t crc, const void* data, size_t size) {
 
 static char      g_syncDir[FSP_PATH_MAX]   = {0};
 static int       g_policy                 = M12_SYNC_POLICY_NEWER_WINS;
+static int       g_enabled                = 0;   /* explicit opt-in gate */
 static uint32_t  g_lastFullSync           = 0;
 
 enum { MAX_TRACKED = M12_SYNC_MAX_ENTRIES };
@@ -216,6 +220,111 @@ int M12_CloudSync_SetSyncDir(const char* path) {
 
 int M12_CloudSync_GetPolicy(void) { return g_policy; }
 void M12_CloudSync_SetPolicy(int policy) { g_policy = policy; }
+
+/* ── Opt-in / opt-out boundary ─────────────────────────────────── */
+
+void M12_CloudSync_ApplyConfig(const M12_Config* config) {
+    if (!config) {
+        /* Treat a NULL config as "off"; preserves the default. */
+        g_enabled = 0;
+        return;
+    }
+    g_enabled = config->cloudSyncEnabled ? 1 : 0;
+    if (config->cloudSyncDir[0]) {
+        snprintf(g_syncDir, sizeof(g_syncDir), "%s",
+                 config->cloudSyncDir);
+        /* Best-effort create; failure is reported later by
+         * IsSyncRootUsable / GetBoundaryTag. */
+        M12_CloudSync_EnsureDir(g_syncDir);
+    } else {
+        g_syncDir[0] = '\0';
+    }
+    g_policy = config->cloudSyncPolicy;
+}
+
+void M12_CloudSync_SetEnabled(int enabled) {
+    g_enabled = enabled ? 1 : 0;
+}
+
+int M12_CloudSync_IsEnabled(void) {
+    return g_enabled;
+}
+
+int M12_CloudSync_IsSyncRootUsable(void) {
+    if (!g_syncDir[0]) M12_CloudSync_GetSyncDir();
+    if (!g_syncDir[0] || g_syncDir[0] == '\0') return 0;
+    /* Reject bare relative paths: the sync root must be absolute to
+     * avoid accidentally creating a directory under cwd. */
+    if (g_syncDir[0] != '/' && g_syncDir[0] != '\\' &&
+        !((g_syncDir[0] >= 'A' && g_syncDir[0] <= 'Z') ||
+          (g_syncDir[0] >= 'a' && g_syncDir[0] <= 'z')) &&
+        !(g_syncDir[0] == '~')) {
+        return 0; /* relative path that is not a Windows drive */
+    }
+#if defined(_WIN32)
+    struct _stat st;
+    if (_stat(g_syncDir, &st) != 0) return 0;
+#else
+    struct stat st;
+    if (stat(g_syncDir, &st) != 0) return 0;
+#endif
+#if defined(_WIN32)
+    if (!(st.st_mode & S_IFDIR)) return 0;
+#else
+    if (!S_ISDIR(st.st_mode)) return 0;
+#endif
+    if (access(g_syncDir, W_OK) != 0) return 0;
+    return 1;
+}
+
+void M12_CloudSync_GetBoundaryTag(char* out, size_t outSize) {
+    if (!out || outSize == 0) return;
+    if (!g_enabled) {
+        snprintf(out, outSize, "DISABLED");
+        return;
+    }
+    if (!g_syncDir[0]) M12_CloudSync_GetSyncDir();
+    if (!g_syncDir[0] || g_syncDir[0] == '\0') {
+        snprintf(out, outSize, "ENABLED_NO_ROOT");
+        return;
+    }
+    /* The sync root may not exist yet; report ENABLED_NO_ROOT for
+     * that case so callers can distinguish "needs init" from
+     * "actually broken". */
+#if defined(_WIN32)
+    struct _stat st;
+    int statRc = _stat(g_syncDir, &st);
+#else
+    struct stat st;
+    int statRc = stat(g_syncDir, &st);
+#endif
+    if (statRc != 0) {
+        snprintf(out, outSize, "ENABLED_NO_ROOT");
+        return;
+    }
+    /* If the path exists but is not a directory, the sync root is
+     * unusable; this is the same surface as M12_SYNC_ERR_UNSUPPORTED. */
+#if defined(_WIN32)
+    if (!(st.st_mode & S_IFDIR)) {
+#else
+    if (!S_ISDIR(st.st_mode)) {
+#endif
+        snprintf(out, outSize, "ENABLED_NOT_A_DIR");
+        return;
+    }
+    if (access(g_syncDir, W_OK) != 0) {
+        snprintf(out, outSize, "ENABLED_UNWRITABLE");
+        return;
+    }
+    snprintf(out, outSize, "ENABLED_OK");
+}
+
+int M12_CloudSync_RunIfEnabled(int direction, M12_SyncStats* stats) {
+    if (stats) memset(stats, 0, sizeof(*stats));
+    if (!g_enabled) return M12_SYNC_OK_DISABLED;
+    if (!M12_CloudSync_IsSyncRootUsable()) return M12_SYNC_ERR_UNSUPPORTED;
+    return M12_CloudSync_Run(direction, stats);
+}
 
 /* ── Manifest I/O ───────────────────────────────────────────────── */
 
@@ -479,6 +588,103 @@ static int m12_sync_direction(const M12_SyncManifest* manifest,
 
 /* ── Auto-discover tracked files ────────────────────────────────── */
 
+/* Walk a save directory (one level, *.sav only) and add new
+ * entries to the manifest. This is the bounded per-game save
+ * discovery. Returns the number of new entries added. */
+int M12_CloudSync_DiscoverSaveFiles(const char* relativePrefix,
+                                    const char* absoluteDir) {
+    if (!relativePrefix || !absoluteDir) return 0;
+    /* Read or init the manifest. */
+    M12_SyncManifest m;
+    if (!M12_CloudSync_LoadManifest(&m)) memset(&m, 0, sizeof(m));
+
+    /* Build a set of already-tracked relative paths under this prefix. */
+    size_t prefixLen = strlen(relativePrefix);
+    int added = 0;
+
+#if defined(_WIN32)
+    /* Minimal Win32 directory scan using FindFirstFile/FindNextFile. */
+    char pattern[FSP_PATH_MAX];
+    snprintf(pattern, sizeof(pattern), "%s\\*.sav", absoluteDir);
+    WIN32_FIND_DATAA fd;
+    HANDLE h = FindFirstFileA(pattern, &fd);
+    if (h == INVALID_HANDLE_VALUE) {
+        /* Save dir does not exist; nothing to discover. */
+        return 0;
+    }
+    do {
+        if (m.entryCount >= M12_SYNC_MAX_ENTRIES) break;
+        const char* name = fd.cFileName;
+        size_t nameLen = strlen(name);
+        if (nameLen < 4) continue;
+        if (_stricmp(name + nameLen - 4, ".sav") != 0) continue;
+
+        /* Already tracked? Skip. */
+        char rel[FSP_PATH_MAX];
+        snprintf(rel, sizeof(rel), "%s/%s", relativePrefix, name);
+        int found = 0;
+        for (int i = 0; i < m.entryCount; ++i) {
+            if (strcmp(m.entries[i].relativePath, rel) == 0) { found = 1; break; }
+        }
+        if (found) continue;
+        /* Prefix must not exceed the entry buffer. */
+        if (prefixLen + 1 + nameLen >= sizeof(m.entries[0].relativePath)) continue;
+        snprintf(m.entries[m.entryCount].relativePath,
+                 sizeof(m.entries[0].relativePath), "%s", rel);
+        char local[FSP_PATH_MAX];
+        snprintf(local, sizeof(local), "%s/%s", absoluteDir, name);
+        m.entries[m.entryCount].localTimestamp = M12_CloudSync_FileModTime(local);
+        m.entries[m.entryCount].localCrc = m.entries[m.entryCount].localTimestamp
+            ? M12_CloudSync_FileCrc(local) : 0;
+        m.entries[m.entryCount].syncTimestamp = 0;
+        m.entries[m.entryCount].syncCrc = 0;
+        m.entries[m.entryCount].conflict = 0;
+        m.entryCount++;
+        added++;
+    } while (FindNextFileA(h, &fd) != 0);
+    FindClose(h);
+#else
+    DIR* dir = opendir(absoluteDir);
+    if (!dir) {
+        /* Save dir does not exist or cannot be read; nothing to discover. */
+        return 0;
+    }
+    struct dirent* ent;
+    while ((ent = readdir(dir)) != NULL) {
+        if (m.entryCount >= M12_SYNC_MAX_ENTRIES) break;
+        const char* name = ent->d_name;
+        size_t nameLen = strlen(name);
+        if (nameLen < 4) continue;
+        if (strcmp(name + nameLen - 4, ".sav") != 0) continue;
+
+        char rel[FSP_PATH_MAX];
+        snprintf(rel, sizeof(rel), "%s/%s", relativePrefix, name);
+        int found = 0;
+        for (int i = 0; i < m.entryCount; ++i) {
+            if (strcmp(m.entries[i].relativePath, rel) == 0) { found = 1; break; }
+        }
+        if (found) continue;
+        if (prefixLen + 1 + nameLen >= sizeof(m.entries[0].relativePath)) continue;
+        snprintf(m.entries[m.entryCount].relativePath,
+                 sizeof(m.entries[0].relativePath), "%s", rel);
+        char local[FSP_PATH_MAX];
+        snprintf(local, sizeof(local), "%s/%s", absoluteDir, name);
+        m.entries[m.entryCount].localTimestamp = M12_CloudSync_FileModTime(local);
+        m.entries[m.entryCount].localCrc = m.entries[m.entryCount].localTimestamp
+            ? M12_CloudSync_FileCrc(local) : 0;
+        m.entries[m.entryCount].syncTimestamp = 0;
+        m.entries[m.entryCount].syncCrc = 0;
+        m.entries[m.entryCount].conflict = 0;
+        m.entryCount++;
+        added++;
+    }
+    closedir(dir);
+#endif
+
+    if (added > 0) (void)M12_CloudSync_SaveManifest(&m);
+    return added;
+}
+
 static void m12_discover_tracked(M12_SyncManifest* m) {
     /* Always track launcher config files */
     const char* home = getenv("HOME") ? getenv("HOME") : ".";
@@ -501,11 +707,10 @@ static void m12_discover_tracked(M12_SyncManifest* m) {
     for (int g = 0; g < 5 && idx < M12_SYNC_MAX_ENTRIES; ++g) {
         char savesDir[FSP_PATH_MAX];
         snprintf(savesDir, sizeof(savesDir), "%s/.firestaff/saves/%s", home, games[g]);
-        /* Scan directory for *.sav files */
-        (void)savesDir; /* directory scanning deferred to runtime */
-        /* Track the saves directory itself as a marker (empty entry for now) */
-        /* Actual file discovery is done at sync time */
-        (void)idx; (void)g;
+        char relPrefix[64];
+        snprintf(relPrefix, sizeof(relPrefix), "saves/%s", games[g]);
+        int added = M12_CloudSync_DiscoverSaveFiles(relPrefix, savesDir);
+        idx += added;
     }
     m->entryCount = idx;
 }
