@@ -7165,6 +7165,12 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             theron_v2_settings_apply_to_runtime(&theronV2);
         }
     }
+    /* Seed the in-game session-timer runtime from the launcher's
+     * persisted setting.  This is the M11 side of the boundary: the
+     * M12 menu owns the limit preference; the M11 game view consumes
+     * it at launch so the runtime can tick + surface the reminder /
+     * forced-pause events during gameplay. */
+    M11_GameView_InitFromMenuSessionTimer(state, menuState);
     return M11_GameView_Start(state, &spec);
 }
 
@@ -7593,6 +7599,88 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     }
 
     return m11_game_view_load_quicksave_path(state, path);
+}
+
+/* ── Session timer runtime handoff boundary ─────────────────────────
+ * Source-lock: this is the M11 side of the launcher-owned Session Timer
+ * setting (see include/session_timer_runtime.h for the runtime state
+ * machine and src/shared/session_timer_runtime.c for the canonical
+ * implementation).  It mirrors the existing fontScale +
+ * M12_StartupMenu_*SettingsLaunch() pattern: the M12 menu owns the
+ * persisted preference, the M11 game view consumes it at launch.
+ * No original-game source-locked behavior is involved; this is a
+ * Firestaff UX boundary that has no analog in PC 3.4 DM/CSB/DM2 or
+ * in the Saturn/PCE CD originals.
+ */
+
+void M11_GameView_InitFromMenuSessionTimer(M11_GameViewState* state,
+                                           const M12_StartupMenuState* menu) {
+    int limitMinutes = 0;
+    if (!state) {
+        return;
+    }
+    if (menu) {
+        limitMinutes = M12_StartupMenu_SessionTimerLimitMinutes(menu);
+    }
+    SessionTimerRuntime_Init(&state->sessionTimerRuntime, limitMinutes);
+    state->sessionTimerForcedPauseDialogActive = 0;
+    state->sessionTimerReminderOverlayActive = 0;
+}
+
+SessionTimerRuntimeEvent M11_GameView_TickSessionTimer(
+    M11_GameViewState* state, int seconds) {
+    SessionTimerRuntimeEvent event = SESSION_TIMER_RUNTIME_EVENT_RUNNING;
+    if (!state) {
+        return SESSION_TIMER_RUNTIME_EVENT_RUNNING;
+    }
+    SessionTimerRuntime_Tick(&state->sessionTimerRuntime, seconds);
+    event = SessionTimerRuntime_Poll(&state->sessionTimerRuntime);
+    /* Update the M11-side latches that drive the dialog overlay
+     * branch in M11_GameView_Draw and the input gating in
+     * M11_GameView_HandleInput.  REMINDER_DUE takes precedence over
+     * FORCED_PAUSE only when FORCED_PAUSE has not latched yet; once
+     * the forced-pause latch fires, the confirm dialog wins until the
+     * user releases it. */
+    if (event == SESSION_TIMER_RUNTIME_EVENT_FORCED_PAUSE) {
+        state->sessionTimerForcedPauseDialogActive = 1;
+        state->sessionTimerReminderOverlayActive = 0;
+    } else if (event == SESSION_TIMER_RUNTIME_EVENT_REMINDER_DUE) {
+        state->sessionTimerReminderOverlayActive = 1;
+    }
+    return event;
+}
+
+void M11_GameView_AcknowledgeSessionTimerReminder(M11_GameViewState* state) {
+    if (!state) {
+        return;
+    }
+    SessionTimerRuntime_Acknowledge(&state->sessionTimerRuntime);
+    state->sessionTimerReminderOverlayActive = 0;
+}
+
+void M11_GameView_ClearSessionTimerForcedPause(M11_GameViewState* state) {
+    if (!state) {
+        return;
+    }
+    SessionTimerRuntime_ClearForcedPause(&state->sessionTimerRuntime);
+    state->sessionTimerForcedPauseDialogActive = 0;
+    state->sessionTimerReminderOverlayActive = 0;
+}
+
+int M11_GameView_GetSessionTimerForcedPauseDialogActive(
+    const M11_GameViewState* state) {
+    if (!state) {
+        return 0;
+    }
+    return state->sessionTimerForcedPauseDialogActive;
+}
+
+int M11_GameView_GetSessionTimerReminderOverlayActive(
+    const M11_GameViewState* state) {
+    if (!state) {
+        return 0;
+    }
+    return state->sessionTimerReminderOverlayActive;
 }
 
 int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled) {
@@ -8337,6 +8425,29 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
+    /* Session-timer forced-pause confirm dialog: ENTER returns to the
+     * launcher; BACK dismisses the dialog (the runtime keeps the
+     * FORCED_PAUSE latch so the next tick re-arms the dialog unless
+     * the user picks ENTER).  This sits ahead of the regular dialog
+     * and return-to-menu-confirm branches so it gets first refusal
+     * on input.  See include/session_timer_runtime.h +
+     * src/shared/session_timer_runtime.c + the corresponding
+     * M11_GameView_Draw overlay branch. */
+    if (state->sessionTimerForcedPauseDialogActive) {
+        if (input == M12_MENU_INPUT_ACCEPT ||
+            input == M12_MENU_INPUT_ACTION) {
+            M11_GameView_ClearSessionTimerForcedPause(state);
+            m11_set_status(state, "TIMER", "RETURN TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        if (input == M12_MENU_INPUT_BACK) {
+            M11_GameView_ClearSessionTimerForcedPause(state);
+            m11_set_status(state, "TIMER", "DISMISSED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
     /* Dialog overlay: text plaques dismiss; return-to-menu confirm requires an explicit choice. */
     if (state->dialogOverlayActive) {
         if (state->returnToMenuConfirmActive) {
@@ -8393,6 +8504,16 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* Session-timer reminder overlay: any non-NONE input clears the
+     * reminder banner so it does not block gameplay.  The runtime's
+     * re-arm window prevents the banner from re-firing on the next
+     * single tap. */
+    if (state->sessionTimerReminderOverlayActive &&
+        input != M12_MENU_INPUT_NONE) {
+        M11_GameView_AcknowledgeSessionTimerReminder(state);
+        return M11_GAME_INPUT_REDRAW;
     }
 
     if (m11_source_is_csb(state)) {
@@ -28216,6 +28337,62 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_dialog_choices_source(state, framebuffer,
                                            framebufferWidth, framebufferHeight);
         }
+    }
+
+    /* ── Session-timer runtime overlay (in-game UX boundary) ────────
+     * Draw the reminder banner + forced-pause confirm dialog on top of
+     * the gameplay viewport.  See include/session_timer_runtime.h +
+     * src/shared/session_timer_runtime.c + the M11_TickSessionTimer
+     * branch in src/engine/main_loop_m11.c for the runtime state
+     * machine that drives these latches. */
+    if (state->sessionTimerReminderOverlayActive &&
+        !state->sessionTimerForcedPauseDialogActive &&
+        !state->dialogOverlayActive) {
+        char remaining[SESSION_TIMER_RUNTIME_TEXT_CAPACITY];
+        char reminderLine[64];
+        M11_TextStyle remindStyle = g_text_small;
+        SessionTimerRuntime_FormatRemaining(&state->sessionTimerRuntime,
+                                            remaining,
+                                            sizeof(remaining));
+        snprintf(reminderLine, sizeof(reminderLine),
+                 "SESSION TIMER %s REMAINING", remaining);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      60, 8, 200, 14, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      60, 8, 200, 14, M11_COLOR_YELLOW);
+        remindStyle.color = M11_COLOR_YELLOW;
+        remindStyle.shadowColor = M11_COLOR_DARK_GRAY;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      68, 12, reminderLine, &remindStyle);
+    }
+    if (state->sessionTimerForcedPauseDialogActive &&
+        !state->dialogOverlayActive &&
+        !state->returnToMenuConfirmActive) {
+        char pauseLine[96];
+        char pauseRemaining[SESSION_TIMER_RUNTIME_TEXT_CAPACITY];
+        M11_TextStyle pauseStyle = g_text_small;
+        SessionTimerRuntime_FormatRemaining(&state->sessionTimerRuntime,
+                                            pauseRemaining,
+                                            sizeof(pauseRemaining));
+        snprintf(pauseLine, sizeof(pauseLine),
+                 "SESSION TIMER EXPIRED (%s) -- RETURN TO MENU",
+                 pauseRemaining);
+        m11_dim_rect(framebuffer, framebufferWidth, framebufferHeight,
+                     0, 0, framebufferWidth, framebufferHeight, 5);
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      40, 70, 240, 60, M11_COLOR_BLACK);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      40, 70, 240, 60, M11_COLOR_LIGHT_GRAY);
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      41, 71, 238, 58, M11_COLOR_DARK_GRAY);
+        pauseStyle.color = M11_COLOR_WHITE;
+        pauseStyle.shadowColor = M11_COLOR_DARK_GRAY;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      56, 86, pauseLine, &pauseStyle);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      64, 110, "PRESS ENTER TO RETURN TO MENU", &pauseStyle);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      64, 122, "ESC TO DISMISS", &pauseStyle);
     }
 
     /* Rest / death overlay */
