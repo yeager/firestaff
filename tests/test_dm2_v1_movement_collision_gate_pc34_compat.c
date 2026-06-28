@@ -6,6 +6,9 @@
  *  1. Wall / pit / lava / inaccessible square types block party movement.
  *  2. Ordinary traversable square types remain walkable.
  *  3. Out-of-bounds level/x/y lookups block movement and expose no tile.
+ *  4. Runtime blocked-step state preserves grid position, turns to the
+ *     attempted direction, suppresses the move callback, and applies
+ *     the same one-tick movement gate as a successful dungeon step.
  *
  * Source-lock:
  *  ReDMCSB DEFS.H:1001-1013 defines square type extraction and the
@@ -15,12 +18,26 @@
  */
 
 #include "dm2_v1_world_model.h"
+#include "dm2_v1_boot.h"
+#include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_game.h"
+#include "dm2_v1_runtime.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 static int tests_run = 0;
 static int tests_passed = 0;
+static int runtime_move_callbacks = 0;
+static int runtime_turn_callbacks = 0;
+static int runtime_last_turn_from = -1;
+static int runtime_last_turn_to = -1;
+
+enum {
+    DM2_SYNTHETIC_TILE_DATA_START = 44 + 28 * 16,
+    DM2_SYNTHETIC_RAW_SIZE = DM2_SYNTHETIC_TILE_DATA_START + 3 * 3 * 2
+};
 
 #define TEST(name_) do { \
     printf("  %-52s", #name_); \
@@ -56,6 +73,68 @@ static void build_synthetic_world(dm2_dungeon_world_t *world,
     tiles[6].type = DM2_SQUARE_STAIRS_UP;
     tiles[7].type = DM2_SQUARE_TELEPORTER;
     tiles[8].type = DM2_SQUARE_FAKE_WALL;
+}
+
+static void write_le16(uint8_t *p, uint16_t v)
+{
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)((v >> 8) & 0xffu);
+}
+
+static void write_synthetic_tile(uint8_t raw[DM2_SYNTHETIC_RAW_SIZE],
+                                 int x, int y, uint16_t tile)
+{
+    const int height = 3;
+    int offset = DM2_SYNTHETIC_TILE_DATA_START + ((x * height + y) << 1);
+    write_le16(raw + offset, tile);
+}
+
+static void build_synthetic_runtime(DM2_V1_BootProfile *profile,
+                                    DM2_V1_GameState *game,
+                                    DM2_V1_DungeonData *dungeon,
+                                    uint8_t raw[DM2_SYNTHETIC_RAW_SIZE])
+{
+    memset(profile, 0, sizeof(*profile));
+    memset(game, 0, sizeof(*game));
+    memset(dungeon, 0, sizeof(*dungeon));
+    memset(raw, 0, DM2_SYNTHETIC_RAW_SIZE);
+
+    raw[6] = 1; /* map_count */
+    write_le16(raw + 44 + 12, 3); /* map 0 width override */
+    write_le16(raw + 44 + 14, 3); /* map 0 height override */
+
+    /* ReDMCSB DEFS.H:1007-1009: C00_ELEMENT_WALL blocks,
+     * C01_ELEMENT_CORRIDOR is the ordinary traversable element.
+     * DUNGEON.C:1371-1391 supplies N/E/S/W step deltas used below. */
+    write_synthetic_tile(raw, 1, 0, 0); /* north target: C00 wall */
+    write_synthetic_tile(raw, 1, 1, 1); /* start: C01 corridor */
+    write_synthetic_tile(raw, 2, 1, 1); /* east target: C01 corridor */
+
+    (void)dm2_v1_dungeon_load(dungeon, raw, DM2_SYNTHETIC_RAW_SIZE);
+
+    game->party_x = 1;
+    game->party_y = 1;
+    game->party_dir = 1; /* East, so a blocked north step also turns. */
+    game->current_level = 0;
+
+    profile->dm2_state = game;
+    profile->dungeon_data = dungeon;
+}
+
+static void on_runtime_move(int from_x, int from_y, int to_x, int to_y)
+{
+    (void)from_x;
+    (void)from_y;
+    (void)to_x;
+    (void)to_y;
+    runtime_move_callbacks++;
+}
+
+static void on_runtime_turn(int from_dir, int to_dir)
+{
+    runtime_turn_callbacks++;
+    runtime_last_turn_from = from_dir;
+    runtime_last_turn_to = to_dir;
 }
 
 static int test_blocking_square_types(void)
@@ -123,6 +202,64 @@ static int test_source_evidence_mentions_collision_anchors(void)
         && strstr(evidence, "square type constants") != NULL;
 }
 
+static int test_runtime_blocked_step_turn_state(void)
+{
+    DM2_V1_BootProfile profile;
+    DM2_V1_GameState game;
+    DM2_V1_DungeonData dungeon;
+    uint8_t raw[DM2_SYNTHETIC_RAW_SIZE];
+    int ok;
+
+    build_synthetic_runtime(&profile, &game, &dungeon, raw);
+    if (dungeon.raw_data == NULL) {
+        return 0;
+    }
+
+    dm2_v1_runtime_init(&profile);
+    dm2_v1_runtime_set_outdoor(0);
+    runtime_move_callbacks = 0;
+    runtime_turn_callbacks = 0;
+    runtime_last_turn_from = -1;
+    runtime_last_turn_to = -1;
+    dm2_v1_runtime_set_move_callback(on_runtime_move);
+    dm2_v1_runtime_set_turn_callback(on_runtime_turn);
+
+    ok = dm2_v1_runtime_move(0) == -1
+        && dm2_v1_runtime_get_party_x() == 1
+        && dm2_v1_runtime_get_party_y() == 1
+        && dm2_v1_runtime_get_party_dir() == 0
+        && runtime_move_callbacks == 0
+        && runtime_turn_callbacks == 1
+        && runtime_last_turn_from == 1
+        && runtime_last_turn_to == 0
+        && dm2_v1_runtime_can_move() == 0;
+
+    ok = ok
+        && dm2_v1_runtime_move(1) == -1
+        && dm2_v1_runtime_get_party_x() == 1
+        && dm2_v1_runtime_get_party_y() == 1
+        && dm2_v1_runtime_get_party_dir() == 0
+        && runtime_move_callbacks == 0
+        && runtime_turn_callbacks == 1;
+
+    dm2_v1_runtime_tick();
+    ok = ok
+        && dm2_v1_runtime_can_move() == 1
+        && dm2_v1_runtime_move(1) == 0
+        && dm2_v1_runtime_get_party_x() == 2
+        && dm2_v1_runtime_get_party_y() == 1
+        && dm2_v1_runtime_get_party_dir() == 1
+        && runtime_move_callbacks == 1
+        && runtime_turn_callbacks == 2
+        && runtime_last_turn_from == 0
+        && runtime_last_turn_to == 1;
+
+    dm2_v1_runtime_set_move_callback(NULL);
+    dm2_v1_runtime_set_turn_callback(NULL);
+    dm2_v1_dungeon_free(&dungeon);
+    return ok;
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Movement Collision Gate ===\n\n");
@@ -132,6 +269,7 @@ int main(void)
     TEST(grid_bounds_block_movement);
     TEST(out_of_bounds_type_sentinel);
     TEST(source_evidence_mentions_collision_anchors);
+    TEST(runtime_blocked_step_turn_state);
 
     printf("\nDM2 V1 Movement Collision Gate: %d/%d passed\n",
            tests_passed, tests_run);
