@@ -60,6 +60,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
     dm2_v1_runtime_init(&profile);
     CHECK(dm2_v1_runtime_get_tick_count() == 0,
           "runtime tick counter starts at zero after handoff bind");
+    CHECK(dm2_v1_runtime_has_dungeon_data() == 1,
+          "runtime bind exposes the boot handoff dungeon data");
     CHECK(dm2_v1_runtime_get_party_x() == 15 &&
           dm2_v1_runtime_get_party_y() == 15 &&
           dm2_v1_runtime_get_party_dir() == 0,
