@@ -6186,6 +6186,26 @@ if(BUILD_TESTING)
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
+    # ── DM1 V1 HoC ordinal 4: RESTING original-capture scaffold probe ──
+    # Data-free source-lock contract for the future original-DOS capture row:
+    # screen/viewport/D1C geometry, LEIF ordinal-4 C026 atlas math, C145/C146
+    # rest/wake route points, and the Firestaff RESTING overlay rectangle.
+    # This probe does NOT claim original pixel parity.
+    add_executable(firestaff_dm1_v1_hoc_ordinal4_resting_original_capture_scaffold_probe
+        probes/m11/firestaff_dm1_v1_hoc_ordinal4_resting_original_capture_scaffold_probe.c
+    )
+    target_include_directories(firestaff_dm1_v1_hoc_ordinal4_resting_original_capture_scaffold_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hoc_ordinal4_resting_original_capture_scaffold_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hoc_ordinal4_resting_original_capture_scaffold_probe
+        COMMAND firestaff_dm1_v1_hoc_ordinal4_resting_original_capture_scaffold_probe
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
     # ── DM2 V1 lighting/palette runtime gate ──
     # Headless and data-free. Locks one source-faithful runtime rule:
     # object light falls off deterministically inside the radius and clips
