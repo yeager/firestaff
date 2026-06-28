@@ -295,6 +295,8 @@ need real-asset proof.
 
 - **CSB wall-text palette gate**: the D1C wall-text source-lock test is now CTest-backed and also verifies PC dungeon palette expansion, C10-transparent inscription-font pixels, RGBA conversion, and out-of-range palette-index rejection without claiming CSBgraphics.dat payload decode or runtime override support.
 
+- **DM2 original-overlay pair evidence now has a readiness gate**: the H2313 DM2 scaffold now defines the optional original-vs-Firestaff pair manifest contract. Missing paired evidence remains an explicit OPEN state, malformed tracked rows fail, and promotion requires same-state `dungeon_gameplay` original plus Firestaff 224x136 viewport SHA-256s. This adds no pixel-parity claim.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.

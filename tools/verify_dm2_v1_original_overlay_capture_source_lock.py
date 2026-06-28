@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -44,6 +45,26 @@ DEFAULT_SKULLWIN_SEARCH = (
 DEFAULT_CAPTURE_SCRIPT = REPO / "scripts/dosbox_dm2_original_overlay_capture.sh"
 DEFAULT_VERIFIER_PROBE = REPO / "build/firestaff_dm2_v1_original_overlay_capture_scaffold_probe"
 DEFAULT_EVIDENCE_DIR = REPO / "verification-screens/passH2313-dm2-original-overlays"
+DEFAULT_PAIR_MANIFEST = DEFAULT_EVIDENCE_DIR / "dm2_original_firestaff_pair_manifest.tsv"
+
+PAIR_MANIFEST_COLUMNS = [
+    "pair_id",
+    "state",
+    "classification",
+    "route_label",
+    "original_frame_sha256",
+    "original_viewport_sha256",
+    "original_viewport_width",
+    "original_viewport_height",
+    "firestaff_frame_sha256",
+    "firestaff_viewport_sha256",
+    "firestaff_viewport_width",
+    "firestaff_viewport_height",
+    "diff_sha256",
+    "status",
+]
+
+SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 
 # Each anchor pins a specific DM2 capture-pipeline fact against SKULLWIN source.
 SOURCE_CHECKS = [
@@ -285,12 +306,126 @@ def check_attempt(attempt_dir: Path) -> bool:
     return passed
 
 
+def _valid_sha256(value: str) -> bool:
+    return bool(SHA256_RE.fullmatch(value or ""))
+
+
+def check_pair_manifest(manifest: Path) -> tuple[bool, bool]:
+    """Validate the optional original-vs-Firestaff pair manifest.
+
+    Missing is an honest OPEN state, not a failure. Once a manifest is tracked,
+    malformed rows fail the readiness gate so placeholder hashes cannot promote
+    the DM2 original-overlay row. A pair-ready row must be a same-state
+    dungeon_gameplay pair with original and Firestaff 224x136 viewport hashes.
+    """
+    print("section=pair_manifest_gate")
+    print(f"pairManifest={display(manifest)}")
+    if not manifest.exists():
+        print("pairManifestStatus=missing_open")
+        print("pairReadyForOverlay=0")
+        print("pairManifestFormatOk=1")
+        print("pairManifestBoundary=OPEN_NO_PAIRED_HASHES")
+        return True, False
+
+    lines = [line.rstrip("\n") for line in manifest.read_text(encoding="utf-8").splitlines()
+             if line.strip() and not line.startswith("#")]
+    if not lines:
+        print("pairManifestStatus=empty")
+        print("pairReadyForOverlay=0")
+        print("pairManifestFormatOk=0")
+        return False, False
+
+    header = lines[0].split("\t")
+    if header != PAIR_MANIFEST_COLUMNS:
+        print("pairManifestStatus=bad_header")
+        print(f"pairManifestExpectedHeader={'|'.join(PAIR_MANIFEST_COLUMNS)}")
+        print(f"pairManifestActualHeader={'|'.join(header)}")
+        print("pairReadyForOverlay=0")
+        print("pairManifestFormatOk=0")
+        return False, False
+
+    format_ok = True
+    pair_ready = False
+    row_count = 0
+    ready_count = 0
+    for row_index, line in enumerate(lines[1:], start=2):
+        cells = line.split("\t")
+        if len(cells) != len(PAIR_MANIFEST_COLUMNS):
+            print(f"pairManifestProblem=row{row_index}:cell_count={len(cells)} expected={len(PAIR_MANIFEST_COLUMNS)}")
+            format_ok = False
+            continue
+        row = dict(zip(PAIR_MANIFEST_COLUMNS, cells))
+        row_count += 1
+        row_ok = True
+        for field in ("original_frame_sha256", "original_viewport_sha256",
+                      "firestaff_frame_sha256", "firestaff_viewport_sha256"):
+            if not _valid_sha256(row[field]):
+                print(f"pairManifestProblem=row{row_index}:{field}:not_sha256")
+                row_ok = False
+        if row["diff_sha256"] and not _valid_sha256(row["diff_sha256"]):
+            print(f"pairManifestProblem=row{row_index}:diff_sha256:not_sha256_or_blank")
+            row_ok = False
+        try:
+            original_w = int(row["original_viewport_width"])
+            original_h = int(row["original_viewport_height"])
+            firestaff_w = int(row["firestaff_viewport_width"])
+            firestaff_h = int(row["firestaff_viewport_height"])
+        except ValueError:
+            print(f"pairManifestProblem=row{row_index}:viewport_dimensions:not_integer")
+            row_ok = False
+            original_w = original_h = firestaff_w = firestaff_h = -1
+        if (original_w, original_h) != (224, 136):
+            print(f"pairManifestProblem=row{row_index}:original_viewport_geometry={original_w}x{original_h} expected=224x136")
+            row_ok = False
+        if (firestaff_w, firestaff_h) != (224, 136):
+            print(f"pairManifestProblem=row{row_index}:firestaff_viewport_geometry={firestaff_w}x{firestaff_h} expected=224x136")
+            row_ok = False
+        if row["classification"] not in {"SAME_STATE_PAIR", "MEASUREMENT_ONLY", "BLOCKED"}:
+            print(f"pairManifestProblem=row{row_index}:classification={row['classification']}:unknown")
+            row_ok = False
+        if row["status"] not in {"PAIR_READY", "MEASUREMENT_ONLY", "OPEN"}:
+            print(f"pairManifestProblem=row{row_index}:status={row['status']}:unknown")
+            row_ok = False
+
+        if row_ok:
+            same_state = (
+                row["state"] == "dungeon_gameplay" and
+                row["classification"] == "SAME_STATE_PAIR" and
+                row["status"] == "PAIR_READY" and
+                row["original_viewport_sha256"].lower() != row["firestaff_viewport_sha256"].lower()
+            )
+            # Equal hashes are allowed only if a future exact-match row still
+            # carries a diff receipt. This keeps placeholder duplicated hashes
+            # from silently promoting the row.
+            exact_match_with_diff = (
+                row["state"] == "dungeon_gameplay" and
+                row["classification"] == "SAME_STATE_PAIR" and
+                row["status"] == "PAIR_READY" and
+                row["original_viewport_sha256"].lower() == row["firestaff_viewport_sha256"].lower() and
+                _valid_sha256(row["diff_sha256"])
+            )
+            if same_state or exact_match_with_diff:
+                ready_count += 1
+                pair_ready = True
+        else:
+            format_ok = False
+
+    print(f"pairManifestStatus=present rows={row_count} readyRows={ready_count}")
+    print(f"pairReadyForOverlay={1 if pair_ready else 0}")
+    print(f"pairManifestFormatOk={1 if format_ok else 0}")
+    if not pair_ready:
+        print("pairManifestBoundary=OPEN_UNTIL_DUNGEON_GAMEPLAY_ORIGINAL_AND_FIRESTAFF_HASHES_EXIST")
+    return format_ok, pair_ready
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skullwin-source", type=Path, default=None,
                         help="SKULLWIN source root (defaults to search list).")
     parser.add_argument("--attempt-dir", type=Path, default=DEFAULT_EVIDENCE_DIR,
                         help="Capture attempt directory to evaluate.")
+    parser.add_argument("--pair-manifest", type=Path, default=DEFAULT_PAIR_MANIFEST,
+                        help="Optional original-vs-Firestaff pair manifest TSV.")
     parser.add_argument("--allow-missing-skullwin", action="store_true",
                         help="Return success even if SKULLWIN sources are not on this host. "
                              "Useful for CI smoke tests; will still fail on attempt semantic gate.")
@@ -304,16 +439,18 @@ def main() -> int:
     source_ok, source_state = check_sources(source_root)
     tool_ok = check_route_tools()
     attempt_ok = check_attempt(args.attempt_dir)
+    pair_manifest_ok, pair_ready = check_pair_manifest(args.pair_manifest)
 
-    print("honesty=source/tool lock only; semanticReadyForOverlay must be 1 before any original-vs-Firestaff DM2 pixel parity claims")
+    print("honesty=source/tool lock only; semanticReadyForOverlay and pairReadyForOverlay must both be 1 before any original-vs-Firestaff DM2 pixel parity claims")
     if args.allow_missing_skullwin and source_state == "missing":
         # Allow the structural pieces (capture script + verifier probe +
         # scaffold source locks via grep) to succeed even on a host without
         # SKULLWIN; never allow parity claims without the attempt semantic gate.
         source_ok = True
 
-    overall = source_ok and tool_ok
+    overall = source_ok and tool_ok and pair_manifest_ok
     print(f"overallReadyForOverlayScaffold={1 if overall else 0}")
+    print(f"overallReadyForPairPromotion={1 if (overall and attempt_ok and pair_ready) else 0}")
     return 0 if overall else 1
 
 
