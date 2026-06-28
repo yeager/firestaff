@@ -3894,6 +3894,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_cloud_sync_probe
     if(NOT MSVC)
         target_compile_options(firestaff_m12_cloud_sync_probe PRIVATE -Wall -Wextra -O2)
     endif()
+    add_test(
+        NAME m12_cloud_sync_boundary
+        COMMAND firestaff_m12_cloud_sync_probe
+    )
 endif()
 
 # M12 JSON export/import probe
