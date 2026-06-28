@@ -268,3 +268,106 @@ int nexus_v1_bpk_archive_mode_distribution(
     }
     return 0;
 }
+
+/* pass1083 — per-entry surface-class contract. Maps the four observed
+ * PRS3 pixel-mode tags (6/14/22/30) and the unique directory trailer
+ * (10) to a stable enum + bytes-per-pixel value. PRS3 decompression is
+ * still intentionally unsupported; this only describes the unpacked
+ * surface shape a future decoder would have to fill. */
+Nexus_V1_BpkSurfaceClass nexus_v1_bpk_mode_to_surface_class(uint8_t mode) {
+    switch (mode) {
+    case NEXUS_V1_BPK_MODE_8BPP:     return NEXUS_V1_BPK_SURFACE_INDEXED_8BPP;
+    case NEXUS_V1_BPK_MODE_16BPP:    return NEXUS_V1_BPK_SURFACE_RGB565;
+    case NEXUS_V1_BPK_MODE_24BPP:    return NEXUS_V1_BPK_SURFACE_RGB888;
+    case NEXUS_V1_BPK_MODE_32BPP:    return NEXUS_V1_BPK_SURFACE_RGBA8888;
+    case NEXUS_V1_BPK_MODE_TRAILER:  return NEXUS_V1_BPK_SURFACE_DIRECTORY_TRAILER;
+    default:                         return NEXUS_V1_BPK_SURFACE_UNKNOWN;
+    }
+}
+
+uint32_t nexus_v1_bpk_mode_to_bpp(uint8_t mode) {
+    switch (mode) {
+    case NEXUS_V1_BPK_MODE_8BPP:  return 1U;
+    case NEXUS_V1_BPK_MODE_16BPP: return 2U;
+    case NEXUS_V1_BPK_MODE_24BPP: return 3U;
+    case NEXUS_V1_BPK_MODE_32BPP: return 4U;
+    case NEXUS_V1_BPK_MODE_TRAILER:
+    default:                      return 0U;
+    }
+}
+
+int nexus_v1_bpk_archive_surface_estimate(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkSurfaceEntry *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkSurfaceEstimate *out_summary) {
+    uint32_t count;
+    uint32_t trailer_skip = 0U;
+    uint32_t unknown_skip = 0U;
+    uint32_t with_surface = 0U;
+    uint32_t used = 0U;
+    uint32_t truncated = 0U;
+    uint64_t total_bytes = 0U;
+
+    if (!out_summary) return -1;
+    memset(out_summary, 0, sizeof(*out_summary));
+    out_summary->capacity = entry_capacity;
+
+    if (read_header(data, data_size, &count) != 0) return -1;
+
+    for (uint32_t i = 0; i < count; ++i) {
+        Nexus_V1_BpkEntryPrefix prefix;
+        uint32_t bpp;
+        uint32_t rowstride;
+        uint32_t surface_bytes;
+
+        if (nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
+                                                  &prefix) != 0) {
+            return -1;
+        }
+        if (!prefix.prefix_complete) {
+            /* Skip partial entries; they have no usable surface layout. */
+            continue;
+        }
+        if (prefix.mode == NEXUS_V1_BPK_MODE_TRAILER) {
+            ++trailer_skip;
+            continue;
+        }
+        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        if (bpp == 0U) {
+            ++unknown_skip;
+            continue;
+        }
+        rowstride = (uint32_t)prefix.width * bpp;
+        surface_bytes = rowstride * (uint32_t)prefix.height;
+
+        if (out_entries && used < entry_capacity) {
+            Nexus_V1_BpkSurfaceEntry *row = &out_entries[used];
+            row->entry_index = i;
+            row->mode = prefix.mode;
+            row->width = prefix.width;
+            row->height = prefix.height;
+            row->pixel_count =
+                (uint32_t)prefix.width * (uint32_t)prefix.height;
+            row->layout.bpp = bpp;
+            row->layout.rowstride = rowstride;
+            row->layout.surface_bytes = surface_bytes;
+            row->layout.surface_class =
+                nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+        } else if (out_entries && used >= entry_capacity) {
+            truncated = 1U;
+        }
+        ++used;
+        ++with_surface;
+        total_bytes += surface_bytes;
+    }
+
+    out_summary->used = used;
+    out_summary->total_with_surface = with_surface;
+    out_summary->total_surface_bytes = total_bytes;
+    out_summary->trailer_skipped = trailer_skip;
+    out_summary->unknown_skipped = unknown_skip;
+    out_summary->truncated = (int)truncated;
+    return 0;
+}

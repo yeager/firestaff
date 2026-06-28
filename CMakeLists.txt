@@ -12810,6 +12810,29 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_bpk_archive
     )
 
+    # ── Nexus V1 BPK/BPX surface-class + directory-trailer contract ──
+    # pass1083 follow-up: exercises the new nexus_v1_bpk_mode_to_surface_class
+    # / _to_bpp lookup APIs, the per-entry surface_estimate walker, and the
+    # updated nexus_v1_bpx_prs3_parse() that recognises a synthetic BPX3
+    # directory-trailer entry (mode tag 10) without claiming PRS3
+    # decompression. Data-free synthetic BPK/BPX3 archives plus an
+    # optional local MENU.BPK receipt.
+    add_executable(test_nexus_v1_bpk_surface_class
+        tests/test_nexus_v1_bpk_surface_class.c
+        src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_bpx_bpk.c
+    )
+    target_include_directories(test_nexus_v1_bpk_surface_class PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_bpk_surface_class PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_bpk_surface_class
+        COMMAND test_nexus_v1_bpk_surface_class
+    )
+
     # ── Nexus V1 DGN actor slot bounds ────────────────────────────
     # Data-free regression: malformed Nexus DGN actor records must clamp
     # spatial fields into the 64x64 grid and normalize the 0..3 facing
@@ -14042,6 +14065,36 @@ add_test(
     COMMAND firestaff_nexus_v1_menumenu_bpk_inspect_probe
 )
 set_tests_properties(nexus_v1_menumenu_bpk_inspect PROPERTIES
+    LABELS "tier4;nexus;bpx_bpk;archive;skip_safe"
+)
+
+# Nexus V1 BPK/BPX surface-class + BPX3 directory-trailer probe
+# (pass1083). Data-free synthetic BPX3 + BPPK archive plus optional
+# real MENU.BPK receipt. Exercises the new
+# nexus_v1_bpk_mode_to_surface_class / _to_bpp lookup APIs, the
+# per-entry nexus_v1_bpk_archive_surface_estimate walker, and the
+# updated nexus_v1_bpx_prs3_parse() that recognises a directory-
+# trailer entry. Skip-safe: PRS3 decompression remains intentionally
+# unsupported.
+add_executable(firestaff_nexus_v1_bpk_surface_class_probe
+    probes/nexus/firestaff_nexus_v1_bpk_surface_class_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_bpk_surface_class_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_bpk_surface_class_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_bpk_surface_class_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_bpk_surface_class_probe
+    COMMAND firestaff_nexus_v1_bpk_surface_class_probe
+)
+set_tests_properties(nexus_v1_bpk_surface_class_probe PROPERTIES
     LABELS "tier4;nexus;bpx_bpk;archive;skip_safe"
 )
 
