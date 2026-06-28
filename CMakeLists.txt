@@ -3438,7 +3438,8 @@ endif()
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_03_double_click_stability_portrait_rect_position_075_gate_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_03_save_load_reopen_portrait_rect_position_219_gate_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_04_panel_chrome_preserve_portrait_rect_position_196_gate_probe.c"
-        "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_18_reincarnate_reselect_portrait_rect_position_258_gate_probe.c")
+        "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_18_reincarnate_reselect_portrait_rect_position_258_gate_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_portrait_05_south_return_rect_position_probe.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_pool_probe_src}")
         get_filename_component(_pool_probe_exe "${_pool_probe_src}" NAME_WE)
         add_executable(${_pool_probe_exe} ${_pool_probe_src})
