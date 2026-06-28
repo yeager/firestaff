@@ -13,6 +13,7 @@
  *  10. DB handle identity (make + resolve round-trip)
  *  11. Invalid slot-header rejection + backup recovery
  *  12. Stale session metadata mismatch (fixture guard)
+ *  13. Resume smoke gate: position/facing/map/leader/inventory continuity
  *
  * Source refs:
  *   docs/dm2_save_format.md — SUPPRESS codec, slot header layout
@@ -42,6 +43,16 @@
 #endif
 
 extern int dm2_suppress_self_verification(void);
+
+static void cleanup_one_slot_dir(const char *dir, uint8_t slot)
+{
+    char p[256];
+    snprintf(p, sizeof(p), "%s/SKSave%02u.dat", dir, (unsigned)slot);
+    (void)remove(p);
+    snprintf(p, sizeof(p), "%s/SKSave.bak", dir);
+    (void)remove(p);
+    FS_RMDIR(dir);
+}
 
 static void cleanup_slot_dir(const char *dir)
 {
@@ -499,6 +510,284 @@ static int test_stale_fixture_metadata_guard(void)
     return 1;
 }
 
+/* ── Test 13: DM2 V1 resume smoke gate ───────────────────────────
+ *
+ * Data-free continuity gate for the fields a real resume needs first:
+ * party position, facing, current map, leader, champion count, and a small
+ * champion inventory sample. The synthetic stream mirrors the documented
+ * order of the DM2 game-state block followed by champion persistence, so
+ * hosts without real DM2 data still exercise the save/load boundary.
+ */
+
+static int append_blob(uint8_t *dst, size_t cap, size_t *pos,
+                       const void *src, size_t n)
+{
+    if (!dst || !pos || !src || *pos > cap || n > cap - *pos) return 0;
+    memcpy(dst + *pos, src, n);
+    *pos += n;
+    return 1;
+}
+
+typedef union {
+    DM2_GameStateBlock block;
+    uint8_t raw[DM2_GAME_STATE_BLOCK_SIZE];
+} DM2_TestGameStateStorage;
+
+static int check_resume_state(
+    const char *label,
+    const DM2_GameStateBlock *expected,
+    const DM2_GameStateBlock *actual,
+    const uint32_t expected_inventory[DM2_CHAMPION_INVENTORY_SLOTS],
+    const uint32_t actual_inventory[DM2_CHAMPION_INVENTORY_SLOTS])
+{
+    if (actual->dwGameTick != (expected->dwGameTick & 0x7F7F7F7Fu)) {
+        printf("    FAIL %s: tick 0x%08X expected 0x%08X\n",
+               label, actual->dwGameTick, expected->dwGameTick & 0x7F7F7F7Fu);
+        return 0;
+    }
+    if (actual->wChampionsCount != expected->wChampionsCount ||
+        actual->wPlayerPosX != expected->wPlayerPosX ||
+        actual->wPlayerPosY != expected->wPlayerPosY ||
+        actual->wPlayerDir != expected->wPlayerDir ||
+        actual->wPlayerMap != expected->wPlayerMap ||
+        actual->wChampionLeader != expected->wChampionLeader) {
+        printf("    FAIL %s: resume tuple got champ=%u pos=(%u,%u) "
+               "dir=%u map=%u leader=%u\n",
+               label,
+               (unsigned)actual->wChampionsCount,
+               (unsigned)actual->wPlayerPosX,
+               (unsigned)actual->wPlayerPosY,
+               (unsigned)actual->wPlayerDir,
+               (unsigned)actual->wPlayerMap,
+               (unsigned)actual->wChampionLeader);
+        return 0;
+    }
+    const int watched_slots[] = { 0, 1, 2, 8 };
+    for (size_t s = 0; s < sizeof(watched_slots) / sizeof(watched_slots[0]); s++) {
+        int i = watched_slots[s];
+        if (actual_inventory[i] != expected_inventory[i]) {
+            printf("    FAIL %s: inventory[%d] 0x%08X expected 0x%08X\n",
+                   label, i, actual_inventory[i], expected_inventory[i]);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int build_resume_payload(const DM2_GameStateBlock *gs,
+                                const DM2_ChampionRecord *champ,
+                                uint8_t *payload,
+                                size_t payload_cap,
+                                size_t *payload_size,
+                                size_t *enc_gs_size,
+                                size_t *enc_champ_size)
+{
+    uint8_t enc_gs[DM2_GAME_STATE_BLOCK_SIZE];
+    uint8_t champ_mask[261];
+    uint8_t enc_champ[261];
+    int gs_n;
+    int champ_n;
+    size_t pos = 0;
+
+    if (!gs || !champ || !payload || !payload_size ||
+        !enc_gs_size || !enc_champ_size) {
+        return 0;
+    }
+
+    gs_n = dm2_suppress_encode_gamestate(gs, enc_gs, sizeof(enc_gs));
+    if (gs_n <= 0) return 0;
+
+    dm2_suppress_champion_mask(champ_mask);
+    champ_n = dm2_suppress_encode_champion(champ,
+                                           champ_mask,
+                                           enc_champ,
+                                           sizeof(enc_champ));
+    if (champ_n <= 0) return 0;
+
+    if (!append_blob(payload, payload_cap, &pos, "D2RS", 4)) return 0;
+    if (!append_blob(payload, payload_cap, &pos, &gs_n, sizeof(gs_n))) return 0;
+    if (!append_blob(payload, payload_cap, &pos, enc_gs, (size_t)gs_n)) return 0;
+    if (!append_blob(payload, payload_cap, &pos, &champ_n, sizeof(champ_n))) return 0;
+    if (!append_blob(payload, payload_cap, &pos, enc_champ, (size_t)champ_n)) return 0;
+
+    *payload_size = pos;
+    *enc_gs_size = (size_t)gs_n;
+    *enc_champ_size = (size_t)champ_n;
+    return 1;
+}
+
+static int read_resume_payload(const uint8_t *payload,
+                               size_t payload_size,
+                               DM2_GameStateBlock *gs,
+                               DM2_ChampionRecord *champ)
+{
+    uint8_t champ_mask[261];
+    int gs_n;
+    int champ_n;
+    size_t pos = 0;
+
+    if (!payload || !gs || !champ || payload_size < 4 + sizeof(int)) return 0;
+    if (memcmp(payload, "D2RS", 4) != 0) return 0;
+    pos += 4;
+
+    memcpy(&gs_n, payload + pos, sizeof(gs_n));
+    pos += sizeof(gs_n);
+    if (gs_n <= 0 || (size_t)gs_n > payload_size - pos) return 0;
+    if (dm2_suppress_decode_gamestate(payload + pos,
+                                      (size_t)gs_n,
+                                      gs,
+                                      0) != gs_n) {
+        return 0;
+    }
+    pos += (size_t)gs_n;
+
+    if (payload_size - pos < sizeof(champ_n)) return 0;
+    memcpy(&champ_n, payload + pos, sizeof(champ_n));
+    pos += sizeof(champ_n);
+    if (champ_n <= 0 || (size_t)champ_n > payload_size - pos) return 0;
+
+    dm2_suppress_champion_mask(champ_mask);
+    memset(champ, 0, sizeof(*champ));
+    if (dm2_suppress_decode_champion(payload + pos,
+                                     (size_t)champ_n,
+                                     champ_mask,
+                                     champ,
+                                     0) != champ_n) {
+        return 0;
+    }
+    pos += (size_t)champ_n;
+
+    return pos == payload_size;
+}
+
+static int test_resume_smoke_gate_position_facing_inventory(void)
+{
+    printf("  Resume smoke gate: position/facing/inventory continuity...\n");
+    char tmpdir[256];
+    uint8_t payload[768];
+    uint8_t loaded[768];
+    size_t payload_size = 0;
+    size_t loaded_size = 0;
+    size_t enc_gs_size = 0;
+    size_t enc_champ_size = 0;
+    DM2_TestGameStateStorage gs_store;
+    DM2_TestGameStateStorage resumed_store;
+    DM2_GameStateBlock *gs = &gs_store.block;
+    DM2_GameStateBlock *resumed = &resumed_store.block;
+    DM2_ChampionRecord champ;
+    DM2_ChampionRecord resumed_champ;
+    int r;
+
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_resume_%d", FS_GETPID());
+    FS_MKDIR(tmpdir);
+
+    memset(&gs_store, 0, sizeof(gs_store));
+    memset(&resumed_store, 0, sizeof(resumed_store));
+    gs->dwGameTick = 0x00123456u;
+    gs->dwRandomSeed = 0x00001234u;
+    gs->wChampionsCount = 1;
+    gs->wPlayerPosX = 17;
+    gs->wPlayerPosY = 9;
+    gs->wPlayerDir = 3;
+    gs->wPlayerMap = 2;
+    gs->wChampionLeader = 0;
+    gs->wTimersCount = 1;
+
+    memset(&champ, 0, sizeof(champ));
+    memcpy(champ.first_name, "TORHAM", 6);
+    champ.absolute_direction = gs->wPlayerDir;
+    champ.squad_position = 0;
+    champ.cur_hp = 88;
+    champ.max_hp = 99;
+    champ.inventory[0] = dm2_db_make_handle(4, 0x0012);
+    champ.inventory[1] = dm2_db_make_handle(5, 0x0034);
+    champ.inventory[2] = dm2_db_make_handle(6, 0x0056);
+
+    if (!build_resume_payload(gs, &champ, payload, sizeof(payload),
+                              &payload_size, &enc_gs_size, &enc_champ_size)) {
+        printf("    FAIL: could not build first resume payload\n");
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+
+    r = dm2_sl_save(tmpdir, 4, "ResumeSmoke", payload, payload_size);
+    if (r != 0) {
+        printf("    FAIL: save returned %d\n", r);
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+    if (!dm2_v1_save_has_valid_slot(tmpdir, 4)) {
+        printf("    FAIL: slot header not valid after save\n");
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+
+    memset(loaded, 0, sizeof(loaded));
+    r = dm2_sl_load(tmpdir, 4, loaded, sizeof(loaded), &loaded_size);
+    if (r != 0 || loaded_size != payload_size) {
+        printf("    FAIL: load returned %d size=%zu expected=%zu\n",
+               r, loaded_size, payload_size);
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+    memset(&resumed_store, 0, sizeof(resumed_store));
+    if (!read_resume_payload(loaded, loaded_size, resumed, &resumed_champ)) {
+        printf("    FAIL: could not decode first resume payload\n");
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+    if (!check_resume_state("first", gs, resumed,
+                            champ.inventory, resumed_champ.inventory)) {
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+
+    gs->dwGameTick = 0x00123500u;
+    gs->wPlayerPosX = 21;
+    gs->wPlayerPosY = 12;
+    gs->wPlayerDir = 1;
+    gs->wPlayerMap = 3;
+    champ.absolute_direction = gs->wPlayerDir;
+    champ.inventory[1] = 0;
+    champ.inventory[8] = dm2_db_make_handle(8, 0x0009);
+
+    if (!build_resume_payload(gs, &champ, payload, sizeof(payload),
+                              &payload_size, &enc_gs_size, &enc_champ_size)) {
+        printf("    FAIL: could not build overwritten resume payload\n");
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+    r = dm2_sl_save(tmpdir, 4, "ResumeMoved", payload, payload_size);
+    if (r != 0) {
+        printf("    FAIL: overwrite save returned %d\n", r);
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+
+    memset(loaded, 0, sizeof(loaded));
+    memset(&resumed_store, 0, sizeof(resumed_store));
+    r = dm2_sl_load(tmpdir, 4, loaded, sizeof(loaded), &loaded_size);
+    if (r != 0 || loaded_size != payload_size ||
+        !read_resume_payload(loaded, loaded_size, resumed, &resumed_champ)) {
+        printf("    FAIL: overwritten resume payload did not reload "
+               "(r=%d size=%zu)\n",
+               r, loaded_size);
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+    if (!check_resume_state("overwrite", gs, resumed,
+                            champ.inventory, resumed_champ.inventory)) {
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
+
+    printf("    PASS: resume tuple and inventory survived save/load + overwrite "
+           "(gs=%zuB champion=%zuB payload=%zuB)\n",
+           enc_gs_size, enc_champ_size, payload_size);
+    cleanup_one_slot_dir(tmpdir, 4);
+    return 1;
+}
+
 /* ════════════════════════════════════════════════════════════════ */
 
 int main(void)
@@ -524,6 +813,7 @@ int main(void)
     RUN(10, test_db_handle_roundtrip);
     RUN(11, test_invalid_slot_header_rejected);
     RUN(12, test_stale_fixture_metadata_guard);
+    RUN(13, test_resume_smoke_gate_position_facing_inventory);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);
