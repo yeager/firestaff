@@ -4220,6 +4220,18 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_launch_blocker_m12
     )
 
+    add_executable(test_dm1_v1_required_file_popup_gate
+        tests/test_dm1_v1_required_file_popup_gate.c
+    )
+    target_link_libraries(test_dm1_v1_required_file_popup_gate PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_required_file_popup_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_required_file_popup_gate
+        COMMAND test_dm1_v1_required_file_popup_gate
+    )
+
     add_executable(test_dm2_v1_required_file_popup_gate
         tests/test_dm2_v1_required_file_popup_gate.c
     )
