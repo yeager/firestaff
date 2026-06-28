@@ -97,25 +97,26 @@ int nexus_v1_bpx0_parse(const uint8_t *data,
                         size_t size,
                         Nexus_V1_BpxBpkArchive *out_archive);
 
-/* Synthetic PRS3 stream contract parser (pass1082). The byte layout is:
+/* Synthetic PRS3 stream contract parser (pass1082/pass1084). The 32-byte
+ * BPX3 table-record layout is:
  *   bytes  0..16 : entry name (zero-padded, no NUL terminator required)
- *   bytes 16..20 : width (BE uint16) and mode tag (byte 19)
- *   byte  20   : height (BE uint8)
- *   byte  21   : reserved (0x00 in observed MENU.BPK prefix)
- *   bytes 22..24 : reserved (0x00 in observed MENU.BPK prefix)
- *   bytes 24..28 : PRS3 magic
- *   bytes 28..32 : version (BE uint32, must be 0x00000001)
- *   bytes 32..36 : pixel count (BE uint32, must equal width * height)
- *   bytes 36..36+payload_size : compressed payload (unsupported)
+ *   bytes 16..18 : width (BE uint16)
+ *   byte  18    : mode tag (6/14/22/30, or trailer tag 10)
+ *   byte  19    : height (BE uint8)
+ *   bytes 20..24 : pixel count (BE uint32, must equal width * height)
+ *   bytes 24..28 : packed payload offset (BE uint32)
+ *   bytes 28..32 : packed payload size (BE uint32)
  *
  * Does NOT decompress the payload. Stores width/height/mode/pixel_count
  * on the entry so probe/UI code can show what shape it WOULD decode to
- * once a PRS3 implementation lands. */
+ * once a PRS3 implementation lands. Packed payload spans are bounds-
+ * checked and must not overlap in table order; decompression remains
+ * unsupported. */
 int nexus_v1_bpx_prs3_parse(const uint8_t *data,
                             size_t size,
                             Nexus_V1_BpxBpkArchive *out_archive);
 
-#define NEXUS_V1_BPX_PRS3_HEADER_BYTES 36U
+#define NEXUS_V1_BPX_PRS3_HEADER_BYTES NEXUS_V1_BPX0_ENTRY_SIZE
 
 const Nexus_V1_BpxBpkEntry *nexus_v1_bpx_bpk_find_entry(
     const Nexus_V1_BpxBpkArchive *archive,
