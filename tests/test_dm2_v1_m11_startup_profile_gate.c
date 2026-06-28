@@ -12,6 +12,7 @@
 
 #include "dm2_v1_boot.h"
 #include "dm2_v1_game.h"
+#include "dm2_v1_runtime.h"
 #include "m11_game_view.h"
 
 #include <stdio.h>
@@ -93,8 +94,19 @@ int main(void) {
                 "M11 stores the DM2 V1 world pointer");
     expect_true(view.dm2State.level_loaded == 1,
                 "M11 DM2 mirror state reports level loaded");
+    expect_true(view.dm2State.party_x == 15 && view.dm2State.party_y == 15 &&
+                view.dm2State.party_dir == 0,
+                "M11 DM2 mirror state reports the boot pose");
     expect_true(view.dm2State.tick_count == 0,
                 "M11 DM2 mirror state starts at tick zero");
+    expect_true(dm2_v1_runtime_has_dungeon_data() == 1,
+                "DM2 V1 runtime singleton has the boot profile");
+    expect_true(dm2_v1_runtime_get_party_x() == 15 &&
+                dm2_v1_runtime_get_party_y() == 15 &&
+                dm2_v1_runtime_get_party_dir() == 0,
+                "DM2 V1 runtime accessors report the boot pose");
+    expect_true(dm2_v1_runtime_get_tick_count() == 0,
+                "DM2 V1 runtime tick counter starts at zero");
 
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     world = (DM2_V1_GameState*)view.dm2World;
@@ -122,6 +134,12 @@ int main(void) {
                 "DM2 M11 idle tick dispatches through the DM2 boundary");
     expect_true(view.dm2State.tick_count == 1,
                 "DM2 M11 mirror tick advances once");
+    expect_true(dm2_v1_runtime_get_tick_count() == 1,
+                "DM2 V1 runtime tick advances once");
+    expect_true(view.dm2State.party_x == dm2_v1_runtime_get_party_x() &&
+                view.dm2State.party_y == dm2_v1_runtime_get_party_y() &&
+                view.dm2State.party_dir == dm2_v1_runtime_get_party_dir(),
+                "M11 DM2 mirror state stays aligned with runtime accessors");
 
     M11_GameView_Shutdown(&view);
     expect_true(view.dm2BootProfile == NULL && view.dm2World == NULL,
