@@ -4410,6 +4410,30 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_world_state_minimap_level_transition
     )
 
+    # -- DM2 V1 movement/collision boundary gate -----------------------
+    # Data-free synthetic world: wall/pit/lava/inaccessible cells block,
+    # ordinary square types remain walkable, and out-of-bounds map access
+    # is treated as blocked. Source-locks:
+    #   ReDMCSB DEFS.H:1001-1013 square type/element constants
+    #   ReDMCSB DUNGEON.C:1438-1475 out-of-bounds returns wall square
+    add_executable(test_dm2_v1_movement_collision_gate_pc34_compat
+        tests/test_dm2_v1_movement_collision_gate_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_movement_collision_gate_pc34_compat
+        COMMAND test_dm2_v1_movement_collision_gate_pc34_compat
+    )
+
     # ── DM2 V1 Weather Seed Regression (deterministic tick gate)
     # Source-locked: dm2_v1_weather.c LCG (0xBB40E62D, +11) + 182-tick
     # outdoor boundary. ReDMCSB BASE.C F0027/F0029.
