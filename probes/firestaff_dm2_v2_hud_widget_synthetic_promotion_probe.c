@@ -22,6 +22,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 #ifndef FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR
 #define FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR \
@@ -30,6 +33,14 @@
 
 static int s_pass = 0;
 static int s_fail = 0;
+
+static int portable_mkdir(const char* path) {
+#ifdef _WIN32
+    return _mkdir(path);
+#else
+    return mkdir(path, 0777);
+#endif
+}
 
 static void check(const char* name, int cond) {
     if (cond) {
@@ -53,11 +64,11 @@ static int ensure_dir(const char* path) {
     for (char* p = tmp + 1; *p; ++p) {
         if (*p == '/') {
             *p = '\0';
-            if (mkdir(tmp, 0777) != 0 && errno != EEXIST) return 0;
+            if (portable_mkdir(tmp) != 0 && errno != EEXIST) return 0;
             *p = '/';
         }
     }
-    if (mkdir(tmp, 0777) != 0 && errno != EEXIST) return 0;
+    if (portable_mkdir(tmp) != 0 && errno != EEXIST) return 0;
     return 1;
 }
 

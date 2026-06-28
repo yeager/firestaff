@@ -97,7 +97,7 @@ timing and inventory routes.
 
 ## Latest Release
 
-**Current version:** `3.0.11`.
+**Current version:** `3.0.12`.
 
 The latest release packages the 2026-06-27/28 runtime-hardening work after
 v3.0.10. It widens DM1 V1 source-locked gameplay gates, makes ZIP/gzip support
@@ -106,7 +106,7 @@ and data-handoff evidence across CSB, DM2, Nexus, and Theron's Quest. It does
 not claim finished parity for those targets beyond the runtime slices now
 covered by tests and probes.
 
-### v3.0.11 release highlights
+### v3.0.12 release highlights
 
 - **Bundled ZIP/gzip inflate**: default builds use bundled static miniz for
   ZIP cache materialization and Theron SRM gzip handling, avoiding an external
