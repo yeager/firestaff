@@ -13980,6 +13980,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         probes/dm1/firestaff_dm1_v1_d2c_front_alcove_pixel_gate.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     )
+    add_executable(firestaff_dm1_v1_d0_side_door_cell_pixel_gate
+        probes/dm1/firestaff_dm1_v1_d0_side_door_cell_pixel_gate.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
     add_executable(firestaff_dm1_v1_side_wall_pixel_clip_probe
         probes/dm1/firestaff_dm1_v1_side_wall_pixel_clip_probe.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -14003,6 +14007,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     target_link_libraries(firestaff_dm1_v1_stair_pit_occlusion_pixel_gate PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_d4_far_object_d3_wall_pixel_gate PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_d2c_front_alcove_pixel_gate PRIVATE firestaff_m10)
+    target_link_libraries(firestaff_dm1_v1_d0_side_door_cell_pixel_gate PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_side_wall_pixel_clip_probe PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_d0_side_wall_edge_pixel_probe PRIVATE firestaff_m10)
     target_link_libraries(firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe PRIVATE firestaff_m10)
@@ -14015,6 +14020,7 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
         target_compile_options(firestaff_dm1_v1_stair_pit_occlusion_pixel_gate PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_d4_far_object_d3_wall_pixel_gate PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_d2c_front_alcove_pixel_gate PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_dm1_v1_d0_side_door_cell_pixel_gate PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_side_wall_pixel_clip_probe PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_d0_side_wall_edge_pixel_probe PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe PRIVATE -Wall -Wextra -O2)
@@ -14043,6 +14049,10 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_test(
         NAME dm1_v1_d2c_front_alcove_pixel_gate
         COMMAND firestaff_dm1_v1_d2c_front_alcove_pixel_gate
+    )
+    add_test(
+        NAME dm1_v1_d0_side_door_cell_pixel_gate
+        COMMAND firestaff_dm1_v1_d0_side_door_cell_pixel_gate
     )
     add_test(
         NAME dm1_v1_side_wall_pixel_clip_probe
