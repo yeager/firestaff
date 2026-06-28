@@ -11,7 +11,7 @@
  *   - DMWeb community docs credit Sphenx with several custom TQ saves
  *     documented at greatstone; Sphenx is also a SKWIN co-author.
  *
- * Status (this commit, 2026-06-27):
+ * Status (this commit, 2026-06-27/28):
  *   - The classifier is data-free and runs anywhere.  It is the bounded
  *     real-artifact counterpart to the synthetic slot-N.tqsv in-game
  *     save format in theron_v1_save_load.c.
@@ -27,7 +27,10 @@
  *     the public API.
  *
  * Phases tracked separately (out of scope for this commit):
- *   - Interpreting the inflated custom Theron save body.
+ *   - Interpreting the real inflated custom Theron save body.  The
+ *     probe can now read a recognized slot, inflate its gzip body, and
+ *     decode one Firestaff-only progression/champion readiness block,
+ *     but Sphenx/Greatstone byte mapping remains unknown.
  *   - Cross-slot import: real Sphenx .srm -> Theron_DungeonProgression
  *     and champion blocks.  This would close the greatstone section
  *     referenced in docs/DMWEB_REFERENCE.md §6.
@@ -1002,13 +1005,16 @@ const char *theron_v1_srm_source_evidence(void) {
         "  - THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon)\n"
         "  - THQUEST.ASM T800  — champion persistence between dungeons\n"
         "\n"
-        "Status (2026-06-27):\n"
+        "Status (2026-06-27/28):\n"
         "  - Data-free classifier with 5-slot disk manifest, gzip magic\n"
         "    detection (0x1F 0x8B 0x08), 1 KiB rolling prefix checksum,\n"
         "    present/recognized rollup, and stable string status names.\n"
         "  - Bounded gzip-payload probe inflates a recognized .srm stream\n"
         "    when Firestaff is built with zlib; without zlib it reports\n"
         "    ZLIB_UNAVAILABLE after the cheap gzip/method checks.\n"
+        "  - Recognized-slot probe coverage now performs a bounded full-file\n"
+        "    read, inflates a gzipped synthetic `.srm` party body, and decodes\n"
+        "    one champion/body block through the readiness importer.\n"
         "  - Bounded progression-envelope import maps an inflated\n"
         "    Firestaff readiness payload into Theron_DungeonProgression\n"
         "    with T080/T800 between-dungeon sequence validation.  Unknown\n"

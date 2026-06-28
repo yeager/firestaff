@@ -120,6 +120,30 @@ static int write_bytes(const char *path, const uint8_t *buf, size_t size) {
     return fclose(fp) == 0;
 }
 
+static int read_file_bounded(const char *path,
+                             uint8_t *buf,
+                             size_t capacity,
+                             size_t *out_size) {
+    FILE *fp;
+    size_t n;
+    int extra;
+
+    if (out_size) *out_size = 0;
+    if (!path || !buf || capacity == 0u || !out_size) return 0;
+
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    n = fread(buf, 1, capacity, fp);
+    extra = fgetc(fp);
+    if (ferror(fp) || extra != EOF) {
+        fclose(fp);
+        return 0;
+    }
+    if (fclose(fp) != 0) return 0;
+    *out_size = n;
+    return 1;
+}
+
 static const uint8_t g_valid_gzip_srm[] = {
     0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff,
     0x73, 0x0b, 0x0e, 0x09, 0x0c, 0x08, 0x72, 0x37, 0x64, 0x64,
@@ -134,6 +158,23 @@ static const uint8_t g_valid_gzip_payload[] = {
     0x2c, 0x01, 0x00, 0x00, 0x01, 0x10, 0x00, 0x00, 0x02, 0x10, 0x00, 0x00,
     0x03, 0x10, 0x00, 0x00, 0x04, 0x10, 0x00, 0x00, 0x05, 0x10, 0x00, 0x00,
     0x06, 0x10, 0x00, 0x00, 0x07, 0x10, 0x00, 0x00
+};
+
+static const uint8_t g_valid_party_gzip_srm[] = {
+    0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x73, 0x0b,
+    0x0e, 0x09, 0x0c, 0x08, 0x89, 0x34, 0x64, 0x64, 0x66, 0x66, 0xd4, 0x61,
+    0x64, 0x60, 0x60, 0x14, 0x60, 0x60, 0x60, 0x02, 0x62, 0x66, 0x20, 0x66,
+    0x01, 0x62, 0x56, 0x20, 0x66, 0x03, 0x62, 0x76, 0x20, 0xe6, 0x64, 0x66,
+    0x60, 0x08, 0xc9, 0x48, 0x2d, 0xca, 0xcf, 0x63, 0x40, 0x00, 0xc6, 0xa0,
+    0x20, 0x1f, 0x1f, 0x09, 0x09, 0x21, 0x41, 0x01, 0x7e, 0x16, 0x56, 0x66,
+    0x88, 0x98, 0x8d, 0x2d, 0x83, 0x63, 0x51, 0x26, 0x03, 0x32, 0x60, 0x64,
+    0xd4, 0xd5, 0x75, 0x73, 0xe3, 0xe0, 0x10, 0x06, 0x2a, 0x64, 0x61, 0x65,
+    0x80, 0x28, 0x34, 0x32, 0x66, 0xf0, 0xcd, 0x2c, 0x4a, 0x44, 0x56, 0xc7,
+    0xc4, 0x68, 0x62, 0x62, 0x65, 0xa5, 0xa0, 0x20, 0x02, 0x54, 0x08, 0x54,
+    0x07, 0x51, 0x68, 0x62, 0xca, 0x10, 0x9c, 0x9f, 0x83, 0x62, 0x1e, 0x33,
+    0xa3, 0x9a, 0x9a, 0x8e, 0x8e, 0xa1, 0xa1, 0x28, 0x50, 0x21, 0x48, 0x1d,
+    0x58, 0xa1, 0x99, 0x39, 0x03, 0x00, 0x61, 0x93, 0xfd, 0x41, 0xd0, 0x00,
+    0x00, 0x00
 };
 
 #define TST_PARTY_PAYLOAD_BYTES (44u + 4u + (4u * 40u))
@@ -607,6 +648,76 @@ static void test_progression_party_payload_import(void) {
                 "party invalid champion class rejected");
 }
 
+static void test_gzip_slot_party_body_import(void) {
+    char root[THERON_V1_SRM_PATH_MAX];
+    char slot0[THERON_V1_SRM_PATH_MAX];
+    uint8_t srm_bytes[256];
+    uint8_t payload[256];
+    size_t srm_size = 0;
+    size_t payload_size = 0;
+    Theron_V1SrmManifest m;
+    Theron_DungeonProgression prog;
+    Theron_V1_Party party;
+    Theron_V1SrmPartyImportReceipt receipt;
+    Theron_V1SrmPayloadProbeStatus payload_status;
+    Theron_V1SrmProgressImportStatus import_status;
+
+    if (!make_temp_root(root)) {
+        printf("SKIP: mkdtemp failed\n");
+        return;
+    }
+
+    expect_true(theron_v1_srm_slot_path(root, 0, slot0) == 1,
+                "party slot 0 path");
+    expect_true(write_bytes(slot0, g_valid_party_gzip_srm,
+                            sizeof(g_valid_party_gzip_srm)) == 1,
+                "party gzip slot written");
+
+    memset(&m, 0, sizeof(m));
+    expect_true(theron_v1_srm_classify_root(root, &m) == 1,
+                "party gzip classify succeeds");
+    expect_true(m.recognized_count == 1, "party gzip recognized count");
+    expect_true(m.slots[0].status == THERON_V1_SRM_SLOT_PRESENT_AND_RECOGNIZED,
+                "party gzip slot recognized");
+
+    expect_true(read_file_bounded(m.slots[0].path, srm_bytes, sizeof(srm_bytes),
+                                  &srm_size) == 1,
+                "party gzip full slot read bounded");
+    expect_true(srm_size == sizeof(g_valid_party_gzip_srm),
+                "party gzip full slot size");
+
+    memset(payload, 0, sizeof(payload));
+    payload_status = theron_v1_srm_probe_gzip_payload(
+        srm_bytes, srm_size, payload, sizeof(payload), &payload_size);
+#if FIRESTAFF_HAS_ZLIB
+    expect_true(payload_status == THERON_V1_SRM_PAYLOAD_PROBE_OK,
+                "party gzip slot inflates");
+    expect_true(payload_size == TST_PARTY_PAYLOAD_BYTES,
+                "party gzip inflated body size");
+
+    memset(&prog, 0, sizeof(prog));
+    memset(&party, 0, sizeof(party));
+    memset(&receipt, 0, sizeof(receipt));
+    import_status = theron_v1_srm_decode_progression_party_payload(
+        payload, payload_size, &prog, &party, &receipt);
+    expect_true(import_status == THERON_V1_SRM_PROGRESS_IMPORT_OK,
+                "party gzip inflated body imports");
+    expect_true(receipt.imported_body_count == THERON_MAX_CHAMPIONS,
+                "party gzip imports champion bodies");
+    expect_true(strcmp(party.champions[0].name, "Theron") == 0 &&
+                party.champions[0].health == 82,
+                "party gzip decodes Theron body block");
+    expect_true(strcmp(party.champions[1].name, "Ari") == 0 &&
+                party.champions[1].primary_class == THERON_CLASS_NINJA,
+                "party gzip decodes companion body block");
+#else
+    expect_true(payload_status == THERON_V1_SRM_PAYLOAD_PROBE_ZLIB_UNAVAILABLE,
+                "party gzip reports zlib unavailable");
+#endif
+
+    cleanup_root(root);
+}
+
 int main(void) {
     printf("\n=== Theron V1 SRM Classifier Unit Tests ===\n\n");
     test_default_root_resolution();
@@ -619,6 +730,7 @@ int main(void) {
     test_gzip_payload_probe();
     test_progression_payload_import();
     test_progression_party_payload_import();
+    test_gzip_slot_party_body_import();
 
     printf("=====================================================\n");
     printf("Results: %d/%d passed (failures=%d)\n",
