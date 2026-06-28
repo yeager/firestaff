@@ -2352,6 +2352,36 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 Hint Oracle HCSB.HTC variant catalog + classifier probe.
+#
+# Bounded metadata layer that sits on top of:
+#   - csb_hint_oracle_htc            (format parser)
+#   - csb_hint_oracle_htc_real_scan  (real-asset scan + cache)
+#
+# The catalog carries the five documented dmweb Hint Oracle
+# Files variants (R1 EN / R2 EN / R3 EN / Amiga FR / Amiga GE)
+# with per-variant MD5 + size + location/hint/page counts. The
+# probe classifies the loaded cache through both the MD5 path
+# (preferred) and a parsed-content fallback. Skip-safe: hosts
+# without a known HCSB.HTC exit 0 with a SKIP message after
+# the catalog-identity checks have run.
+add_executable(firestaff_csb_v1_hint_oracle_htc_variant_probe
+    probes/csb/firestaff_csb_v1_hint_oracle_htc_variant_probe.c
+    src/csb/csb_hint_oracle_htc.c
+    src/csb/csb_hint_oracle_htc_real_scan.c
+    src/csb/csb_hint_oracle_htc_variant.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_hint_oracle_htc_variant_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_hint_oracle_htc_variant_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_hint_oracle_htc_variant_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Phase 2 — DSA Script Section Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: DSA section presence and scan feasibility after dungeon load;
@@ -13234,6 +13264,34 @@ if(BUILD_TESTING)
         COMMAND test_csb_hint_oracle_ui_runtime_binding
     )
 
+    # ── CSB Hint Oracle HCSB.HTC variant catalog ──────────────────
+    # Data-free contract tests for the variant catalog + classifier
+    # (md5 → variant, parsed-content → variant, cache → variant,
+    # drift detail, diagnostic-name stability). The catalog carries
+    # the 5 documented dmweb Hint Oracle Files variants
+    # (R1 EN / R2 EN / R3 EN / Amiga FR / Amiga GE) with per-
+    # variant MD5 + size + location/hint/page counts. Synthetic
+    # fixture only; no real asset is loaded.
+    add_executable(test_csb_hint_oracle_htc_variant
+        tests/test_csb_hint_oracle_htc_variant.c
+        src/csb/csb_hint_oracle_htc.c
+        src/csb/csb_hint_oracle_htc_real_scan.c
+        src/csb/csb_hint_oracle_htc_variant.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_hint_oracle_htc_variant PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_hint_oracle_htc_variant PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_hint_oracle_htc_variant_unit
+        COMMAND test_csb_hint_oracle_htc_variant
+    )
+
     # ── CSB V1 graphics hidden-item skip integration test ────────
     # Verifies the safe-load wrapper around the DM1 V1 graphics
     # loader honours the per-game hidden-code skip table for
@@ -13825,6 +13883,23 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe
         )
         set_tests_properties(csb_v1_hint_oracle_ui_runtime_binding PROPERTIES
+            LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 Hint Oracle HCSB.HTC variant catalog probe ctest entry
+    # Real-asset variant classification (MD5 + parsed-content fallback)
+    # for the 5 documented dmweb Hint Oracle Files variants (R1 EN /
+    # R2 EN / R3 EN / Amiga FR / Amiga GE). Skip-safe: hosts without
+    # a known HCSB.HTC exit 0 with a SKIP message after the
+    # catalog-identity checks have run.
+    if(TARGET firestaff_csb_v1_hint_oracle_htc_variant_probe)
+        add_test(
+            NAME csb_v1_hint_oracle_htc_variant
+            COMMAND firestaff_csb_v1_hint_oracle_htc_variant_probe
+        )
+        set_tests_properties(csb_v1_hint_oracle_htc_variant PROPERTIES
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
             TIMEOUT 120
         )
