@@ -6,6 +6,8 @@
  *   - Phase-gates translation: V2 off → rejected, V2 on → accepted
  *   - Translates each touch swipe / edge strafe / D-pad / left stick
  *     / right stick affordance to the right V1 command
+ *   - Rejects touch gestures that begin on V2 HUD chrome while allowing
+ *     controller affordances to bypass the framebuffer coordinate gate
  *   - Preserves V1 source-route handling (DM2_V1 pathway is unchanged)
  *   - Honors the force_active_for_test escape hatch
  *   - Increments the observability counter on each accepted translation
@@ -21,7 +23,7 @@
  *   ReDMCSB CLIKMENU.C:180 (F0366_COMMAND_ProcessTypes3To6_MoveParty)
  *   ReDMCSB GAMELOOP.C:164-219 (V1 input wait/command queue loop)
  *
- * Coverage (28 assertions):
+ * Coverage:
  *   1.  init/shutdown lifecycle
  *   2.  Shutdown re-init is idempotent
  *   3.  Translation rejected when V2 launch disabled (V1 parity guard)
@@ -51,6 +53,8 @@
  *  27.  Translation accepted even when v2PresentationEnabled=1 in route()
  *      (mirrors dm1_v2_movement_command_route_for_presentation semantics)
  *  28.  Shutdown resets the translation counter
+ *  29.  Touch-origin HUD chrome points are rejected
+ *  30.  Controller-origin affordances bypass the HUD coordinate gate
  */
 
 #include "dm2_v2_touch_runtime.h"
@@ -232,7 +236,7 @@ int main(void) {
         CHECK(dm2_v2_touch_runtime_is_active() == 1);
         struct Dm1V1QueuedCommandPc34Compat out = { 0, 0, 0 };
         int rc = dm2_v2_touch_runtime_translate_affordance(
-            DM2_V2_AFFORDANCE_TOUCH_SWIPE_UP, 0, 0, &out);
+            DM2_V2_AFFORDANCE_TOUCH_SWIPE_UP, 50, 60, &out);
         CHECK(rc == 1);
         CHECK(out.command == DM1_V1_COMMAND_MOVE_FORWARD);
         CHECK(dm2_v2_touch_runtime_translation_count() == 1);
@@ -266,9 +270,9 @@ int main(void) {
         dm2_v2_touch_runtime_set_gate_config(&gate);
         struct Dm1V1QueuedCommandPc34Compat out = { 0, 0, 0 };
         dm2_v2_touch_runtime_translate_affordance(
-            DM2_V2_AFFORDANCE_TOUCH_SWIPE_UP, 0, 0, &out);
+            DM2_V2_AFFORDANCE_TOUCH_SWIPE_UP, 50, 60, &out);
         dm2_v2_touch_runtime_translate_affordance(
-            DM2_V2_AFFORDANCE_TOUCH_SWIPE_LEFT, 0, 0, &out);
+            DM2_V2_AFFORDANCE_TOUCH_SWIPE_LEFT, 51, 60, &out);
         CHECK(dm2_v2_touch_runtime_translation_count() == 2);
         dm2_v2_touch_runtime_shutdown();
         dm2_v2_touch_runtime_init();  /* fresh start */
@@ -292,7 +296,42 @@ int main(void) {
         dm2_v2_touch_runtime_shutdown();
     }
 
-    /* 25. After shutdown, translation is rejected (no double-free risk) */
+    /* 25. Touch HUD chrome is excluded from movement gestures; controller
+     * affordances have no framebuffer origin and bypass the coordinate gate. */
+    {
+        DM2_V2_PhaseGateConfig gate = { 1, 1 };
+        dm2_v2_touch_runtime_init();
+        dm2_v2_touch_runtime_set_gate_config(&gate);
+
+        CHECK(dm2_v2_touch_runtime_point_in_hud_chrome(10, 8) == 1);
+        CHECK(dm2_v2_touch_runtime_point_in_hud_chrome(100, 60) == 0);
+        CHECK(dm2_v2_touch_runtime_point_in_hud_chrome(100, DM2_V2_TOUCH_FRAMEBUFFER_H - 1) == 1);
+        CHECK(dm2_v2_touch_runtime_point_in_hud_chrome(-1, 60) == 1);
+
+        struct Dm1V1QueuedCommandPc34Compat out = { 99, 99, 99 };
+        int rc = dm2_v2_touch_runtime_translate_affordance(
+            DM2_V2_AFFORDANCE_TOUCH_SWIPE_UP, 10, 8, &out);
+        CHECK(rc == 0);
+        CHECK(out.command == DM1_V1_COMMAND_NONE);
+        CHECK(dm2_v2_touch_runtime_translation_count() == 0);
+
+        out.command = 99;
+        rc = dm2_v2_touch_runtime_translate_affordance(
+            DM2_V2_AFFORDANCE_TOUCH_EDGE_STRAFE_RIGHT,
+            100, DM2_V2_TOUCH_FRAMEBUFFER_H - 1, &out);
+        CHECK(rc == 0);
+        CHECK(out.command == DM1_V1_COMMAND_NONE);
+
+        rc = dm2_v2_touch_runtime_translate_affordance(
+            DM2_V2_AFFORDANCE_CONTROLLER_DPAD_UP, 10, 8, &out);
+        CHECK(rc == 1);
+        CHECK(out.command == DM1_V1_COMMAND_MOVE_FORWARD);
+        CHECK(dm2_v2_touch_runtime_translation_count() == 1);
+
+        dm2_v2_touch_runtime_shutdown();
+    }
+
+    /* 26. After shutdown, translation is rejected (no double-free risk) */
     {
         DM2_V2_PhaseGateConfig gate = { 1, 1 };
         dm2_v2_touch_runtime_init();
