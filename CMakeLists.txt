@@ -307,6 +307,7 @@ set(M11_SOURCES
     src/engine/swsh_intro_pathfinder_m11.c
     src/engine/m11_game_input_mapping.c
     src/shared/session_timer_runtime.c
+    src/engine/runtime_gesture_navigation_gate.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -5563,6 +5564,25 @@ if(BUILD_TESTING)
     add_test(
         NAME pass491_touch_pointer_mouse_queue_runtime_gate
         COMMAND firestaff_m11_touch_mouse_queue_runtime_probe
+    )
+
+    # Runtime gesture navigation gate: headless cross-game probe that
+    # pins the four movement/turn swipes, two edge-strafes, the four
+    # reject paths, the 44 px touch-target floor, the source-viewport
+    # scale safety, V1 parity guard, 50-iteration determinism, and
+    # source-evidence citation in one PASS/FAIL row.
+    add_executable(firestaff_runtime_gesture_navigation_gate_probe
+        probes/m11/firestaff_runtime_gesture_navigation_gate_probe.c
+        src/engine/runtime_gesture_navigation_gate.c
+    )
+    target_include_directories(firestaff_runtime_gesture_navigation_gate_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(firestaff_runtime_gesture_navigation_gate_probe PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(firestaff_runtime_gesture_navigation_gate_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME runtime_gesture_navigation_gate_probe
+        COMMAND firestaff_runtime_gesture_navigation_gate_probe
     )
 
     add_executable(test_inventory_panel_slot_routes_pc34_compat_integration
@@ -19071,6 +19091,33 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_session_timer_runtime.c"
     add_test(
         NAME session_timer_runtime
         COMMAND test_session_timer_runtime
+    )
+endif()
+
+# Runtime gesture navigation gate: cross-game input translation +
+# touch-target safety contract for swipe + edge-strafe gestures behind
+# the existing touch/controller settings. Data-free deterministic
+# contract covering the four movement/turn swipes, two edge-strafes
+# (V2-only), tap-tolerance guard, threshold rejection, diagonal
+# ambiguity rejection, 44 px touch-target floor, source-viewport scale
+# safety, V1 parity guard, and decision-name source-locked citation.
+# Source: ReDMCSB COMMAND.C:2045-2155 F0380_COMMAND_ProcessQueue_CPSC
+# + CLIKMENU.C:142-174 F0365 turn + CLIKMENU.C:180-390 F0366 move +
+# GAMELOOP.C:164-219 V1 input + DEFS.H:238-243 C001..C006 movement
+# commands. See include/runtime_gesture_navigation_gate.h +
+# src/engine/runtime_gesture_navigation_gate.c.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runtime_gesture_navigation_gate.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/runtime_gesture_navigation_gate.c")
+    add_executable(test_runtime_gesture_navigation_gate
+        tests/test_runtime_gesture_navigation_gate.c
+        src/engine/runtime_gesture_navigation_gate.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_runtime_gesture_navigation_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME runtime_gesture_navigation_gate
+        COMMAND test_runtime_gesture_navigation_gate
     )
 endif()
 
