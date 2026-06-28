@@ -14,11 +14,16 @@
  *  11. Invalid slot-header rejection + backup recovery
  *  12. Stale session metadata mismatch (fixture guard)
  *  13. Resume smoke gate: position/facing/map/leader/inventory continuity
+ *  14. Champion death/permanence source-lock gate
  *
  * Source refs:
  *   docs/dm2_save_format.md — SUPPRESS codec, slot header layout
  *   docs/dm2_save_slots.md — 10 slots, 0xBEEF/0xDEAD magic
  *   docs/dm2_party_state.md — champion 261-byte format
+ *   ReDMCSB DEFS.H:680-681 — CurrentHealth/MaximumHealth persisted fields
+ *   ReDMCSB CHAMPION.C F0320:1727-1737 — damage reaching <=0 calls kill
+ *   ReDMCSB CHAMPION.C F0321:1835-1840/F0331:2333-2440 — zero HP blocks damage/regen
+ *   ReDMCSB LOADSAVE.C F0433:1519-1571/F0435:2728-2777 — party/champion block save/load
  */
 
 #include "dm2_v1_save_load.h"
@@ -788,6 +793,284 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
     return 1;
 }
 
+static int same_dead_champion_persistence_fields(const DM2_ChampionRecord *expected,
+                                                 const DM2_ChampionRecord *actual,
+                                                 const char *label)
+{
+    const int watched_slots[] = { 0, 1, 8, 29 };
+
+    if (!expected || !actual || !label) return 0;
+    if (strncmp(actual->first_name, expected->first_name,
+                DM2_CHAMPION_NAME_FIRST_LEN) != 0) {
+        printf("    FAIL %s: first name changed\n", label);
+        return 0;
+    }
+    if (actual->cur_hp != 0 || actual->cur_hp != expected->cur_hp ||
+        actual->max_hp != expected->max_hp) {
+        printf("    FAIL %s: HP cur=%u max=%u expected cur=%u max=%u\n",
+               label,
+               (unsigned)actual->cur_hp,
+               (unsigned)actual->max_hp,
+               (unsigned)expected->cur_hp,
+               (unsigned)expected->max_hp);
+        return 0;
+    }
+    if (actual->body_flag != expected->body_flag ||
+        actual->hero_flag != expected->hero_flag ||
+        actual->damage_suffered != expected->damage_suffered ||
+        actual->poison_value != expected->poison_value) {
+        printf("    FAIL %s: body/hero/damage/poison flags changed\n", label);
+        return 0;
+    }
+    if (actual->stamina != expected->stamina ||
+        actual->mana != expected->mana ||
+        actual->food != expected->food ||
+        actual->water != expected->water) {
+        printf("    FAIL %s: secondary champion state changed\n", label);
+        return 0;
+    }
+    for (size_t s = 0; s < sizeof(watched_slots) / sizeof(watched_slots[0]); s++) {
+        int slot = watched_slots[s];
+        if (actual->inventory[slot] != expected->inventory[slot]) {
+            printf("    FAIL %s: inventory[%d] 0x%08X expected 0x%08X\n",
+                   label,
+                   slot,
+                   actual->inventory[slot],
+                   expected->inventory[slot]);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void build_dead_champion_fixture(DM2_ChampionRecord *champ)
+{
+    if (!champ) return;
+
+    memset(champ, 0, sizeof(*champ));
+    memcpy(champ->first_name, "TORHAM", 6);
+    memcpy(champ->last_name, "FALLEN", 6);
+    champ->absolute_direction = 2;
+    champ->squad_position = 1;
+    champ->cur_hp = 0;
+    champ->max_hp = 87;
+    champ->stamina = 321;
+    champ->mana = 12;
+    champ->poison_value = 7;
+    champ->damage_suffered = 55;
+    champ->hero_flag = 1;
+    champ->body_flag = 1;
+    champ->food = -220;
+    champ->water = -111;
+    champ->inventory[0] = dm2_db_make_handle(4, 0x0101);
+    champ->inventory[1] = dm2_db_make_handle(5, 0x0102);
+    champ->inventory[8] = dm2_db_make_handle(6, 0x0103);
+    champ->inventory[29] = dm2_db_make_handle(7, 0x0104);
+}
+
+static void put_le16(uint8_t *buf, size_t offset, uint16_t value)
+{
+    buf[offset] = (uint8_t)(value & 0xFFu);
+    buf[offset + 1] = (uint8_t)((value >> 8) & 0xFFu);
+}
+
+static uint16_t get_le16(const uint8_t *buf, size_t offset)
+{
+    return (uint16_t)buf[offset] | ((uint16_t)buf[offset + 1] << 8);
+}
+
+static void put_le32(uint8_t *buf, size_t offset, uint32_t value)
+{
+    buf[offset] = (uint8_t)(value & 0xFFu);
+    buf[offset + 1] = (uint8_t)((value >> 8) & 0xFFu);
+    buf[offset + 2] = (uint8_t)((value >> 16) & 0xFFu);
+    buf[offset + 3] = (uint8_t)((value >> 24) & 0xFFu);
+}
+
+static uint32_t get_le32(const uint8_t *buf, size_t offset)
+{
+    return (uint32_t)buf[offset] |
+           ((uint32_t)buf[offset + 1] << 8) |
+           ((uint32_t)buf[offset + 2] << 16) |
+           ((uint32_t)buf[offset + 3] << 24);
+}
+
+static void build_raw_dead_champion_record(uint8_t raw[261],
+                                           const DM2_ChampionRecord *champ)
+{
+    memset(raw, 0, 261);
+    memcpy(raw + 0, champ->first_name, DM2_CHAMPION_NAME_FIRST_LEN);
+    memcpy(raw + 8, champ->last_name, DM2_CHAMPION_NAME_LAST_LEN);
+    put_le16(raw, 24, champ->absolute_direction);
+    raw[26] = champ->squad_position;
+    put_le16(raw, 27, champ->cur_hp);
+    put_le16(raw, 29, champ->max_hp);
+    put_le16(raw, 31, champ->stamina);
+    put_le16(raw, 33, champ->mana);
+    raw[35] = champ->poison_value;
+    raw[88] = champ->damage_suffered;
+    raw[89] = champ->hero_flag;
+    raw[90] = champ->body_flag;
+    put_le32(raw, 91 + 0 * 4, champ->inventory[0]);
+    put_le32(raw, 91 + 1 * 4, champ->inventory[1]);
+    put_le32(raw, 91 + 8 * 4, champ->inventory[8]);
+    put_le32(raw, 91 + 29 * 4, champ->inventory[29]);
+}
+
+static int same_raw_dead_champion_record(const uint8_t expected[261],
+                                         const uint8_t actual[261],
+                                         const char *label)
+{
+    const int watched_slots[] = { 0, 1, 8, 29 };
+
+    if (memcmp(actual, expected, DM2_CHAMPION_NAME_FIRST_LEN) != 0) {
+        printf("    FAIL %s: raw first name changed\n", label);
+        return 0;
+    }
+    if (get_le16(actual, 27) != 0 ||
+        get_le16(actual, 27) != get_le16(expected, 27) ||
+        get_le16(actual, 29) != get_le16(expected, 29)) {
+        printf("    FAIL %s: raw HP cur=%u max=%u expected cur=%u max=%u\n",
+               label,
+               (unsigned)get_le16(actual, 27),
+               (unsigned)get_le16(actual, 29),
+               (unsigned)get_le16(expected, 27),
+               (unsigned)get_le16(expected, 29));
+        return 0;
+    }
+    if (actual[35] != expected[35] ||
+        actual[88] != expected[88] ||
+        actual[89] != expected[89] ||
+        actual[90] != expected[90]) {
+        printf("    FAIL %s: raw poison/damage/hero/body flags changed\n",
+               label);
+        return 0;
+    }
+    for (size_t s = 0; s < sizeof(watched_slots) / sizeof(watched_slots[0]); s++) {
+        int slot = watched_slots[s];
+        size_t offset = 91 + (size_t)slot * 4;
+        if (get_le32(actual, offset) != get_le32(expected, offset)) {
+            printf("    FAIL %s: raw inventory[%d] 0x%08X expected 0x%08X\n",
+                   label,
+                   slot,
+                   get_le32(actual, offset),
+                   get_le32(expected, offset));
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int test_champion_death_permanence_source_lock(void)
+{
+    printf("  Champion death/permanence source-lock gate...\n");
+    char tmpdir[256];
+    uint8_t mask[261];
+    uint8_t encoded[261];
+    uint8_t raw_dead[261];
+    uint8_t raw_decoded[261];
+    uint8_t session_buf[2048];
+    DM2_ChampionRecord dead;
+    DM2_ChampionRecord raw_roundtrip;
+    DM2_ChampionRecord slot_roundtrip;
+    DM2_V1_SessionState session;
+    DM2_V1_SessionState restored;
+    int enc_n;
+    int session_n;
+    int r;
+
+    /*
+     * This is deliberately a persistence/readiness gate only. It does not
+     * borrow DM1 Vi-altar or CSB reincarnation rules for DM2. The source
+     * evidence used here is narrower: zero CurrentHealth is the dead state
+     * checked by ReDMCSB CHAMPION.C F0321:1835-1840 and skipped by the time
+     * effects/regeneration loop in F0331:2333-2440, while LOADSAVE.C
+     * F0433:1519-1571/F0435:2728-2777 copies the party champion block into
+     * and back out of the save part.
+     */
+    build_dead_champion_fixture(&dead);
+    build_raw_dead_champion_record(raw_dead, &dead);
+
+    dm2_suppress_champion_mask(mask);
+    enc_n = dm2_suppress_encode(raw_dead, mask, 261,
+                                encoded, sizeof(encoded));
+    if (enc_n <= 0) {
+        printf("    FAIL: could not encode raw dead champion fixture\n");
+        return 0;
+    }
+    memset(raw_decoded, 0xA5, sizeof(raw_decoded));
+    if (dm2_suppress_decode(encoded, (size_t)enc_n,
+                            mask, 261, raw_decoded, 0) != enc_n) {
+        printf("    FAIL: could not decode raw dead champion fixture\n");
+        return 0;
+    }
+    if (!same_raw_dead_champion_record(raw_dead, raw_decoded,
+                                       "champion-codec-raw")) {
+        return 0;
+    }
+
+    dm2_v1_session_new(&session);
+    session.champion_count = 1;
+    session.leader_index = 0;
+    memset(session.champion_data[0], 0, sizeof(session.champion_data[0]));
+    memcpy(session.champion_data[0], &dead, sizeof(dead));
+    if (!dm2_v1_session_validate(&session)) {
+        printf("    FAIL: session validation rejected zero-HP champion\n");
+        return 0;
+    }
+
+    memset(session_buf, 0, sizeof(session_buf));
+    session_n = dm2_v1_session_serialize(&session,
+                                         session_buf,
+                                         sizeof(session_buf));
+    if (session_n <= 0) {
+        printf("    FAIL: session serialize failed\n");
+        return 0;
+    }
+    memset(&restored, 0, sizeof(restored));
+    if (dm2_v1_session_deserialize(&restored,
+                                   session_buf,
+                                   (size_t)session_n) != 0) {
+        printf("    FAIL: session deserialize rejected zero-HP champion\n");
+        return 0;
+    }
+    memset(&raw_roundtrip, 0, sizeof(raw_roundtrip));
+    memcpy(&raw_roundtrip, restored.champion_data[0], sizeof(raw_roundtrip));
+    if (!same_dead_champion_persistence_fields(&dead, &raw_roundtrip,
+                                               "session-raw")) {
+        return 0;
+    }
+
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_dead_%d", FS_GETPID());
+    FS_MKDIR(tmpdir);
+    r = dm2_v1_session_save_slot(tmpdir, 7, "DeadPersist", &session);
+    if (r != 0) {
+        printf("    FAIL: session save slot returned %d\n", r);
+        cleanup_one_slot_dir(tmpdir, 7);
+        return 0;
+    }
+    memset(&restored, 0, sizeof(restored));
+    r = dm2_v1_session_load_slot(tmpdir, 7, &restored);
+    if (r != 0) {
+        printf("    FAIL: session load slot returned %d\n", r);
+        cleanup_one_slot_dir(tmpdir, 7);
+        return 0;
+    }
+    memset(&slot_roundtrip, 0, sizeof(slot_roundtrip));
+    memcpy(&slot_roundtrip, restored.champion_data[0], sizeof(slot_roundtrip));
+    if (!same_dead_champion_persistence_fields(&dead, &slot_roundtrip,
+                                               "session-slot")) {
+        cleanup_one_slot_dir(tmpdir, 7);
+        return 0;
+    }
+
+    printf("    PASS: zero-HP champion stayed zero-HP through codec, "
+           "session, and slot save/load (champion=%dB session=%dB)\n",
+           enc_n, session_n);
+    cleanup_one_slot_dir(tmpdir, 7);
+    return 1;
+}
+
 /* ════════════════════════════════════════════════════════════════ */
 
 int main(void)
@@ -814,6 +1097,7 @@ int main(void)
     RUN(11, test_invalid_slot_header_rejected);
     RUN(12, test_stale_fixture_metadata_guard);
     RUN(13, test_resume_smoke_gate_position_facing_inventory);
+    RUN(14, test_champion_death_permanence_source_lock);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);
