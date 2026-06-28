@@ -4967,13 +4967,18 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_movement_collision_gate_pc34_compat
         tests/test_dm2_v1_movement_collision_gate_pc34_compat.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
     )
     target_include_directories(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
-    target_link_libraries(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE m)
+    target_link_libraries(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
