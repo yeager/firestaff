@@ -388,6 +388,7 @@ set(M12_SOURCES
     src/engine/config_m12.c
     src/shared/asset_status_m12.c
     src/shared/asset_find_by_hash.c
+    src/nexus/nexus_v1_bpk_archive.c
     src/shared/firestaff_mapfile.c
     src/shared/card_art_m12.c
     src/shared/card_art_generated_m12.c
@@ -1164,6 +1165,7 @@ if(BUILD_TESTING)
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
     )
     target_link_libraries(firestaff_data_dir_picker_platform_matrix_probe
         PRIVATE firestaff_v2)
@@ -7116,6 +7118,7 @@ if(BUILD_TESTING)
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
     )
     target_link_libraries(test_asset_status_zip_cache_nested_deflate PRIVATE
         firestaff_v2
@@ -7164,6 +7167,7 @@ if(BUILD_TESTING)
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
     )
     target_link_libraries(test_dm1_pc34_multilanguage_required_gate PRIVATE
         firestaff_v2
@@ -7173,6 +7177,29 @@ if(BUILD_TESTING)
     )
     target_compile_definitions(test_dm1_pc34_multilanguage_required_gate PRIVATE
         FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    add_executable(test_asset_status_nexus_bpk_trailer_metadata
+        tests/test_asset_status_nexus_bpk_trailer_metadata.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
+    )
+    target_link_libraries(test_asset_status_nexus_bpk_trailer_metadata PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_asset_status_nexus_bpk_trailer_metadata PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_asset_status_nexus_bpk_trailer_metadata PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    if(NOT MSVC)
+        target_compile_options(test_asset_status_nexus_bpk_trailer_metadata PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_status_nexus_bpk_trailer_metadata
+        COMMAND test_asset_status_nexus_bpk_trailer_metadata
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_pc34_multilanguage_required_gate PRIVATE -Wall -Wextra -O2)
@@ -17376,6 +17403,7 @@ if(BUILD_TESTING)
         src/engine/firestaff_startup.c
         src/shared/asset_status_m12.c
         src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_boot.c
     )
@@ -18568,6 +18596,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
     )
     target_link_libraries(test_theron_v1_launcher_scan_reuse PRIVATE
         firestaff_theron
@@ -18650,6 +18679,7 @@ if(BUILD_TESTING)
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
     )
     target_link_libraries(test_asset_status_data_dir_change_cache_invalidation PRIVATE
         firestaff_v2
