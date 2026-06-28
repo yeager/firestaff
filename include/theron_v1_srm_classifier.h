@@ -41,6 +41,9 @@
  *   - Inflates gzip-wrapped DEFLATE payloads when zlib is present.
  *   - Imports Firestaff-only readiness envelopes into progression and
  *     bounded champion body state for tests/probes.
+ *   - Probes the recognized-slot path with bounded full-file reads so a
+ *     gzipped `.srm` body can reach one decoded champion block when the
+ *     body uses the Firestaff-only readiness envelope.
  *
  * What this module does NOT do (kept honest):
  *   - It does not decode the real Sphenx/Greatstone custom save body.
