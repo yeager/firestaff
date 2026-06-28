@@ -50,6 +50,10 @@ extern "C" {
  *   dm1_v1_input_command_queue_pc34_compat.c (V1 queue sink)
  * ================================================================ */
 
+#define DM2_V2_TOUCH_FRAMEBUFFER_W 320
+#define DM2_V2_TOUCH_FRAMEBUFFER_H 200
+#define DM2_V2_TOUCH_TOP_HUD_SAFE_H 32
+
 /* ── Lifecycle ─────────────────────────────────────────────────── */
 void dm2_v2_touch_runtime_init(void);
 void dm2_v2_touch_runtime_shutdown(void);
@@ -70,13 +74,20 @@ void dm2_v2_touch_runtime_set_gate_config(const DM2_V2_PhaseGateConfig *config);
  *   DM1_V1_COMMAND_MOVE_FORWARD (3), DM1_V1_COMMAND_MOVE_RIGHT (4),
  *   DM1_V1_COMMAND_MOVE_BACKWARD (5), DM1_V1_COMMAND_MOVE_LEFT (6)
  *
- * Coordinates (x, y) are passed through verbatim from the caller
- * (SDL touch position or analog stick value mapped to viewport
- * coordinates).  V1 input pipeline uses them for hit-testing only. */
+ * Accepted coordinates (x, y) are passed through verbatim from the caller.
+ * Touch-origin affordances that begin on V2 HUD chrome are rejected before
+ * movement translation so HUD/status/action-strip hits stay overlay-local.
+ * Controller affordances do not use the framebuffer coordinate gate. */
 int dm2_v2_touch_runtime_translate_affordance(
     DM2_V2_TouchControllerAffordance aff,
     int x, int y,
     struct Dm1V1QueuedCommandPc34Compat *out);
+
+/* Presentation-only safety gate for touch gestures.  Returns 1 when a
+ * 320x200 framebuffer point belongs to V2 HUD chrome instead of the
+ * dungeon gesture surface.  Controller affordances intentionally do not
+ * use this coordinate gate. */
+int dm2_v2_touch_runtime_point_in_hud_chrome(int x, int y);
 
 /* ── Status ────────────────────────────────────────────────────── */
 /* Returns 1 if the touch runtime is active (V2 enabled).  Returns

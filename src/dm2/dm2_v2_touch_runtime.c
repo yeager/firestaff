@@ -22,6 +22,7 @@
 
 #include "dm2_v2_touch_runtime.h"
 #include "dm2_v2_touch_controller_affordance.h"
+#include "dm2_v2_hud_overlay.h"
 #include "dm2_v2_phase_gate.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "dm1_v2_movement_command_adapter_pc34.h"
@@ -32,6 +33,22 @@ static int s_initialized = 0;
 static const DM2_V2_PhaseGateConfig *s_gate_config = NULL;
 static int s_force_active = 0;  /* 0 = phase-gated, 1 = always on (test only) */
 static int s_translation_count = 0;  /* observability counter for the wire-up probe */
+
+/* ── Presentation HUD touch safety ──────────────────────────────── */
+int dm2_v2_touch_runtime_point_in_hud_chrome(int x, int y) {
+    if (x < 0 || y < 0 ||
+        x >= DM2_V2_TOUCH_FRAMEBUFFER_W ||
+        y >= DM2_V2_TOUCH_FRAMEBUFFER_H) {
+        return 1;
+    }
+    if (y < DM2_V2_TOUCH_TOP_HUD_SAFE_H) {
+        return 1;
+    }
+    if (y >= DM2_ACTION_STRIP_Y) {
+        return 1;
+    }
+    return 0;
+}
 
 /* ── Lifecycle ──────────────────────────────────────────────────── */
 void dm2_v2_touch_runtime_init(void) {
@@ -74,6 +91,19 @@ int dm2_v2_touch_runtime_translate_affordance(
         if (!s_gate_config->v2ProfileEnabled) return 0;
     }
     if (!out) return 0;
+
+    /* Presentation-only overlay guard.  SKULL.ASM T560 is the DM2 HUD
+     * drawing anchor, while ReDMCSB COMMAND.C:1379/F0358 and
+     * COMMAND.C:1452/F0359 keep ordinary V1 click routing below this
+     * V2 layer.  Touch gestures that start on the V2 HUD chrome are
+     * rejected so action-strip/champion/status hits do not leak into
+     * movement.  Controller affordances have no framebuffer origin and
+     * therefore bypass this spatial gate. */
+    if (dm2_v2_touch_controller_affordance_input_kind(aff) ==
+            DM2_V2_AFFORDANCE_INPUT_TOUCH &&
+        dm2_v2_touch_runtime_point_in_hud_chrome(x, y)) {
+        return 0;
+    }
 
     /* Hand off to the affordance router.  The router maps the affordance
      * to a DM1_V2_MovementCommand and a route kind.  When the route is
@@ -142,7 +172,9 @@ const char *dm2_v2_touch_runtime_source_evidence(void) {
         "Source: dm2_v2_touch_controller_affordance.c (affordance classification)\n"
         "Source: dm1_v1_input_command_queue_pc34_compat.c (V1 queue sink)\n"
         "Source: dm2_v2_phase_gate.h         (DM2_V2_PHASE_DOMAIN_PROFILE gate)\n"
+        "Source: dm2_v2_hud_overlay.h        (V2 HUD chrome touch exclusion geometry)\n"
         "V1 invariant: V1 mouse/touch/click route matrix is the sole input path\n"
         "V2 invariant: touch/controller affordances are V2-only; V1 path takes V1-source routes\n"
+        "V2 invariant: touch HUD chrome is excluded from movement gesture translation\n"
         "V2 invariant: V2 affordances are NEVER injected when V1 is the active presentation\n";
 }
