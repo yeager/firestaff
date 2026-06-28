@@ -1,5 +1,11 @@
 # Nexus V1 Sensors — Floor/Wall Sensor Types vs DM1/DM2
 
+> Status note (2026-06-29): `docs/nexus_trigger_script_model_status.md`
+> supersedes the older `SDDRVS.TSK` sensor/trigger claims. `SDDRVS.TSK` is
+> currently classified as a 26,610-byte Saturn sound driver task, not a proven
+> trigger script file. `SLEV*.BIN` files are candidate per-level event data, but
+> Firestaff does not parse them yet.
+
 ## Source Files
 - `src/dm1/dm1_v1_sensor_trigger_pc34_compat.c` — DM1 sensor system (F0720–F0726)
 - `docs/dm1-v1-dungeon-audit/dungeon_sensors.md` — DM1 sensor struct (MEDIA016 layout)
@@ -110,10 +116,12 @@ See `docs/dm2_sensors.md` for full coverage. Key distinction:
 ## 4. Nexus V1 Sensor Model (vs DM1/DM2)
 
 Nexus does NOT use DM1-style sensor type constants or DM2-style actuator enums.
-Instead, sensors are defined in **SDDRVS.TSK** as condition clauses:
+The old draft claimed sensors are defined in `SDDRVS.TSK` condition clauses;
+that is not source-locked. Keep the following opcode sketch as a placeholder
+for possible future analysis, not as reversed fact:
 
 ```c
-// Hypothetical SDDRVS.TSK condition opcodes (reversed):
+// Hypothetical condition opcodes: not source-locked.
 COND_PARTY_ON_XY      = 0x20  // party at (mapX, mapY, cell)
 COND_PARTY_FACING     = 0x21  // party facing direction N
 COND_CHAMPION_HAS     = 0x22  // champion holds item type N
@@ -124,13 +132,15 @@ COND_TIME_ELAPSED     = 0x26  // tick counter >= N
 COND_EVENT_FLAG       = 0x27  // flag N is set
 ```
 
-**Floor sensor equivalent**: COND_PARTY_ON_XY at each relevant coordinate pair.
-**Wall sensor equivalent**: COND_PARTY_FACING + COND_SQUARE_TYPE combo.
-**Pressure plate**: COND_PARTY_ON_XY with no action side-effect (pure trigger).
+Possible equivalents, pending proof:
 
-Unlike DM1 (one type per square) and DM2 (one actuator per cell),
-Nexus SDDRVS.TSK can attach **multiple condition rules** to the same square —
-enabling complex multi-trigger choreography impossible in earlier engines.
+- Floor sensor equivalent: party-position or square-entry records.
+- Wall sensor equivalent: party-facing plus square/geometry metadata.
+- Pressure plate: party-position record with an attached effect.
+
+Unlike DM1 (one type per square) and DM2 (one actuator per cell), Nexus may
+support richer per-square event choreography, but the owning file and dispatch
+path are unresolved.
 
 ---
 
@@ -139,15 +149,15 @@ enabling complex multi-trigger choreography impossible in earlier engines.
 Current status in `src/nexus/nexus_v1_dungeon.c`:
 - Grid parsing only — `NexusDungeonGrid` struct with tile type array
 - No sensor data structure — sensor/script attachment is TODO
-- No SDDRVS.TSK parser — condition opcodes unreversed
+- No `SLEV*.BIN` or other trigger parser — condition/opcode ownership unresolved
 
 Missing for full sensor support:
-1. SDDRVS.TSK bytecode parser (reverse-engineer opcodes/operands)
+1. Identify the real trigger/event owner (`SLEV*.BIN`, DGN metadata, `DM.BIN`, or another task)
 2. Sensor attachment struct per dungeon tile
 3. Condition evaluator on tick
 4. Action dispatcher (teleport, spawn, sound, door control)
 
-The 5,448-byte SDDRVS.TSK file is the primary blocker. Suggested approach:
-- Hexdump the file and look for ASCII strings (action names, tile references)
+Suggested approach:
+- Hexdump `SLEV*.BIN` and `SDDRVS.TSK` separately; do not conflate their sizes
 - Look for repeating 8- or 16-byte patterns (rule entries)
-- Cross-reference with LEV##.DGN coordinates mentioned in the script
+- Cross-reference candidate records with `LEV##.DGN` coordinates and real runtime routes
