@@ -93,6 +93,9 @@ static int g_pass = 0;
 static int g_fail = 0;
 static int g_skip = 0;
 
+#define FNV1A64_OFFSET 1469598103934665603ULL
+#define FNV1A64_PRIME  1099511628211ULL
+
 #define CHECK(cond_, msg_) do {                                     \
     if (cond_) {                                                    \
         printf("  [PASS] %s\n", (msg_));                            \
@@ -212,6 +215,51 @@ static int build_synthetic_dmdf(uint8_t *out_buf, int out_cap,
     return total;
 }
 
+static void fnv64_bytes(uint64_t *h, const void *data, size_t n)
+{
+    const uint8_t *p = (const uint8_t *)data;
+    size_t i;
+    if (!h || !data) return;
+    for (i = 0; i < n; i++) {
+        *h ^= (uint64_t)p[i];
+        *h *= FNV1A64_PRIME;
+    }
+}
+
+static void fnv64_u32(uint64_t *h, uint32_t v)
+{
+    uint8_t b[4];
+    b[0] = (uint8_t)(v >> 24);
+    b[1] = (uint8_t)((v >> 16) & 0xFFu);
+    b[2] = (uint8_t)((v >> 8) & 0xFFu);
+    b[3] = (uint8_t)(v & 0xFFu);
+    fnv64_bytes(h, b, sizeof(b));
+}
+
+static void fnv64_string(uint64_t *h, const char *s)
+{
+    if (!h || !s) return;
+    fnv64_bytes(h, s, strlen(s));
+    fnv64_u32(h, 0u);
+}
+
+static void subset_hash_event(uint64_t *h, const char *name, int idx,
+                              int model_count, const Nexus_V1_Model *model)
+{
+    fnv64_string(h, name ? name : "");
+    fnv64_u32(h, (uint32_t)idx);
+    fnv64_u32(h, (uint32_t)model_count);
+    if (model) {
+        fnv64_u32(h, model->header.magic);
+        fnv64_u32(h, (uint32_t)model->vertex_count);
+        fnv64_u32(h, (uint32_t)model->face_count);
+    } else {
+        fnv64_u32(h, 0u);
+        fnv64_u32(h, 0u);
+        fnv64_u32(h, 0u);
+    }
+}
+
 /* ── Synthetic-only multi-model probe ──────────────────────────────
  *
  * Drives the engine through init → load_model × K → shutdown across
@@ -277,11 +325,11 @@ static void probe_synthetic_load_eight(void)
         return;
     }
 
-    char name[32];
+    char names[8][32];
     int i;
     for (i = 0; i < 8; i++) {
-        snprintf(name, sizeof(name), "SYNTH_%02d", i);
-        int r = nexus_v1_dmdf_load(&engine.models[i], dmdf, dmdf_sz, name);
+        snprintf(names[i], sizeof(names[i]), "SYNTH_%02d", i);
+        int r = nexus_v1_dmdf_load(&engine.models[i], dmdf, dmdf_sz, names[i]);
         if (r != 0) {
             printf("  [FAIL] dmdf_load(models[%d]) != 0\n", i);
             g_fail++;
@@ -297,9 +345,8 @@ static void probe_synthetic_load_eight(void)
     int all_verts_ok = 1;
     for (i = 0; i < 8; i++) {
         if (engine.models[i].header.magic != 0x444D4446u) all_magic_ok = 0;
-        snprintf(name, sizeof(name), "SYNTH_%02d", i);
         if (engine.models[i].name == NULL ||
-            strcmp(engine.models[i].name, name) != 0) all_names_ok = 0;
+            strcmp(engine.models[i].name, names[i]) != 0) all_names_ok = 0;
         if (engine.models[i].vertex_count != 4) all_verts_ok = 0;
     }
     CHECK(all_magic_ok, "all 8 models carry DMDF magic in header");
@@ -423,10 +470,11 @@ static void probe_synthetic_failure_isolation(void)
     }
 
     /* Load 3 valid models so we have a known-good baseline. */
+    char names[3][16];
     int i;
     for (i = 0; i < 3; i++) {
-        char n[16]; snprintf(n, sizeof(n), "ISO_%d", i);
-        if (nexus_v1_dmdf_load(&engine.models[i], good, good_sz, n) != 0) {
+        snprintf(names[i], sizeof(names[i]), "ISO_%d", i);
+        if (nexus_v1_dmdf_load(&engine.models[i], good, good_sz, names[i]) != 0) {
             printf("  [FAIL] baseline dmdf_load(models[%d]) != 0\n", i);
             g_fail++;
             return;
@@ -1040,6 +1088,7 @@ static void probe_real_data_subset(const char *data_dir)
     int fail_count = 0;
     int i;
     int prev_index = -1;
+    uint64_t first_hash = FNV1A64_OFFSET;
     for (i = 0; g_creature_mns_subset[i]; i++) {
         const char *name = g_creature_mns_subset[i];
         int before = engine.model_count;
@@ -1049,11 +1098,14 @@ static void probe_real_data_subset(const char *data_dir)
              * subset extracted from the disc). Treat absent = skip
              * for the deterministic-subset coverage metric, but log
              * the SKIP for visibility. */
+            subset_hash_event(&first_hash, name, -1, engine.model_count, NULL);
             skipped_count++;
             continue;
         }
 
         loaded_count++;
+        subset_hash_event(&first_hash, name, idx, engine.model_count,
+                          &engine.models[idx]);
         if (idx != engine.model_count - 1) {
             printf("  [FAIL] %s returned idx=%d but model_count advanced to %d\n",
                    name, idx, engine.model_count);
@@ -1122,6 +1174,67 @@ static void probe_real_data_subset(const char *data_dir)
      * the engine after this point. */
     nexus_v1_shutdown(&engine);
     CHECK(1, "engine shutdown did not crash after multi-model load");
+
+    /* Determinism contract: a fresh init + reload of the same documented
+     * subset must produce the same accepted/skip pattern, same monotonic
+     * slot indices, and same parsed vertex/face counts. The hash stays
+     * local to the probe so no user asset identity or path data is written
+     * to the repository. */
+    {
+        Nexus_V1_Engine engine2;
+        int r_init2;
+        int loaded2 = 0;
+        int skipped2 = 0;
+        int prev_index2 = -1;
+        uint64_t second_hash = FNV1A64_OFFSET;
+
+        memset(&engine2, 0, sizeof(engine2));
+        r_init2 = nexus_v1_init(&engine2, data_dir);
+        if (r_init2 != 0) {
+            printf("  [FAIL] second nexus_v1_init failed after first sweep succeeded\n");
+            g_fail++;
+            return;
+        }
+
+        for (i = 0; g_creature_mns_subset[i]; i++) {
+            const char *name = g_creature_mns_subset[i];
+            int idx = nexus_v1_load_model(&engine2, name);
+            if (idx < 0) {
+                subset_hash_event(&second_hash, name, -1,
+                                  engine2.model_count, NULL);
+                skipped2++;
+                continue;
+            }
+
+            loaded2++;
+            subset_hash_event(&second_hash, name, idx, engine2.model_count,
+                              &engine2.models[idx]);
+
+            if (idx <= prev_index2) {
+                printf("  [FAIL] second sweep %s returned non-monotonic idx=%d prev=%d\n",
+                       name, idx, prev_index2);
+                g_fail++;
+            }
+            if (engine2.models[idx].header.magic != 0x444D4446u) {
+                printf("  [FAIL] second sweep %s produced a non-DMDF slot\n",
+                       name);
+                g_fail++;
+            }
+            prev_index2 = idx;
+        }
+
+        CHECK(loaded2 == loaded_count,
+              "second subset sweep loaded the same number of MNS files");
+        CHECK(skipped2 == skipped_count,
+              "second subset sweep skipped the same number of MNS files");
+        CHECK(engine2.model_count == loaded2,
+              "second subset sweep model_count equals loaded count");
+        CHECK(second_hash == first_hash,
+              "second subset sweep hash matches first sweep");
+
+        nexus_v1_shutdown(&engine2);
+        CHECK(1, "engine shutdown did not crash after deterministic reload");
+    }
 }
 
 /* Real-data NEXUS_MAX_MODELS cap enforcement. This is the
