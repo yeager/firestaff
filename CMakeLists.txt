@@ -1898,6 +1898,27 @@ if(BUILD_TESTING)
     )
 endif()
 
+# DM1 V2 deterministic screenshot receipt route. Headless/data-free: renders
+# the canonical DM1 entry fixture through a V2.0 presentation selection,
+# writes a scratch BMP and JSON manifest, and pins stable receipt hashes
+# without making any DOSBox/original-pixel parity claim.
+add_executable(firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe
+    probes/dm1/firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe.c)
+target_include_directories(firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe
+    PRIVATE firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v2_deterministic_screenshot_receipt_route_probe
+        COMMAND firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe
+    )
+endif()
+
 # Theron V2.1 texture upscale probe. Headless: no game data.
 # See include/theron_v2_texture_upscale_pc34.h.
 add_executable(firestaff_theron_v2_texture_upscale_probe
@@ -4946,6 +4967,15 @@ if(BUILD_TESTING)
         )
         set_tests_properties(dm1_v2_side_by_side_presentation_seed_probe PROPERTIES
             LABELS "dm1;v2;presentation;readiness"
+        )
+    endif()
+    if(TARGET firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe)
+        firestaff_add_test_if_missing(
+            dm1_v2_deterministic_screenshot_receipt_route_probe
+            firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe
+        )
+        set_tests_properties(dm1_v2_deterministic_screenshot_receipt_route_probe PROPERTIES
+            LABELS "dm1;v2;screenshot;receipt;readiness"
         )
     endif()
     if(TARGET firestaff_dm1_v2_shape_runtime_probe)

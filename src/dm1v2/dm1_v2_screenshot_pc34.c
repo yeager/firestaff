@@ -1,5 +1,4 @@
 #include "dm1_v2_screenshot_pc34.h"
-extern int v2_screenshot_auto_path(char *buf, int bufsize, const char *prefix);
 extern int v2_screenshot_capture(uint8_t *fb, int w, int h, uint32_t *pal, int pal_size, const char *path);
 #include <stdio.h>
 #include <time.h>
@@ -18,6 +17,23 @@ void v2_screenshot_auto_name(char* buf, int bufsize) {
     time_t now = time(NULL);
     struct tm* tm_info = localtime(&now);
     strftime(buf, bufsize, "screenshot_%Y%m%d_%H%M%S.bmp", tm_info);
+}
+
+int v2_screenshot_auto_path(char* buf, int bufsize, const char* prefix) {
+    time_t now;
+    struct tm* tm_info;
+    char timestamp[32];
+    int written;
+    if (!buf || bufsize <= 0) return -1;
+    if (!prefix || !prefix[0]) prefix = "firestaff";
+    now = time(NULL);
+    tm_info = localtime(&now);
+    if (!tm_info) return -1;
+    if (strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", tm_info) == 0U) {
+        return -1;
+    }
+    written = snprintf(buf, (size_t)bufsize, "%s_%s.bmp", prefix, timestamp);
+    return (written > 0 && written < bufsize) ? 0 : -1;
 }
 
 int v2_screenshot_capture(uint8_t* fb, int w, int h, uint32_t* palette, int palette_size, const char* path) {
@@ -111,4 +127,3 @@ int v22_screenshot_process(const uint32_t *rgba, int w, int h,
 const char *v22_screenshot_last_path(void) {
     return g_screenshot_last_path[0] ? g_screenshot_last_path : NULL;
 }
-

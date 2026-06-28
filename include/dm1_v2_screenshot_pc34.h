@@ -10,6 +10,7 @@ extern "C" {
 void v2_screenshot_init(void);
 int v2_screenshot_capture(uint8_t* fb, int w, int h, uint32_t* palette, int palette_size, const char* path);
 void v2_screenshot_auto_name(char* buf, int bufsize);
+int v2_screenshot_auto_path(char* buf, int bufsize, const char* prefix);
 
 #ifdef __cplusplus
 }
