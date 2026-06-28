@@ -18,7 +18,9 @@
  *  12. RESET_COUNTERS            — reset clears all step counters.
  *  13. STEP_RESULT_INVARIANTS    — slots_alive_before == slots_alive_after + slots_despawned.
  *  14. ENERGY_INVARIANT          — energy_total_after <= energy_total_before.
- *  15. SOURCE_EVIDENCE           — source-evidence string contains key anchors.
+ *  15. CREATURE_COLLISION_BEFORE_ENERGY
+ *                                — creature impact resolves before m_7CE0 despawn.
+ *  16. SOURCE_EVIDENCE           — source-evidence string contains key anchors.
  *
  * Source: dm2_v1_projectile_step_pc34_compat.c (Phase 5 source-lock)
  *   skproject/SKULLWIN/c_tim_proc.cpp:442-563   (DM2_STEP_MISSILE)
@@ -27,10 +29,15 @@
  *   skproject/SKWIN/SkWinCore.cpp:60920-61116   (STEP_MISSILE)
  *   ReDMCSB PROJEXPL.C:76-92 (F0212)
  *   ReDMCSB PROJEXPL.C:689-690 (F0219 C48 grace)
+ *   ReDMCSB PROJEXPL.C:692-698 (F0219 creature impact before energy)
  *   ReDMCSB GROUP.C:1695-1770 (F0207 creature attack)
  *   memory_projectile_pc34_compat.h (F0813 despawn)
  */
 
+#define FIRESTAFF_DM2_CREATURE_TESTING 1
+
+#include "dm2_v1_creature.h"
+#include "dm2_v1_projectile_creature_collision_pc34_compat.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
@@ -57,6 +64,8 @@ static void reset_state(void) {
     /* Full-list reset (test-only) clears all entries + counters. */
     dm2_v1_projectile_test_reset_list();
     dm2_v1_projectile_step_reset_counters();
+    dm2_v1_projectile_creature_collision_reset_counters();
+    dm2_v1_creature_test_clear_ai_overrides();
 }
 
 /* Forward decl: test-only energy override. */
@@ -89,6 +98,17 @@ static int dispatch_with_energy_test(int category, int subtype,
         return -1;
     }
     return slot;
+}
+
+static void build_ai_spec(DM2_AIDefinition *out, uint16_t flags,
+                           uint8_t armor, uint16_t base_hp) {
+    memset(out, 0, sizeof(*out));
+    out->w0AIFlags = flags;
+    out->ArmorClass = armor;
+    out->BaseHP = base_hp;
+    out->AttackStrength = 5;
+    out->Defense = 100;
+    out->Weight = 100;
 }
 
 /* ── 1. EMPTY_LIST ───────────────────────────────────────────── */
@@ -392,7 +412,8 @@ static int test_reset_counters(void) {
     return dm2_v1_projectile_step_total() == 0
         && dm2_v1_projectile_step_despawned_total() == 0
         && dm2_v1_projectile_step_survived_total() == 0
-        && dm2_v1_projectile_step_graced_total() == 0;
+        && dm2_v1_projectile_step_graced_total() == 0
+        && dm2_v1_projectile_step_creature_collision_total() == 0;
 }
 
 /* ── 13. STEP_RESULT_INVARIANTS ─────────────────────────────────
@@ -448,7 +469,44 @@ static int test_energy_invariant(void) {
         && r.energy_total_after <= r.energy_total_before;
 }
 
-/* ── 15. SOURCE_EVIDENCE ──────────────────────────────────────── */
+/* ── 15. CREATURE_COLLISION_BEFORE_ENERGY ───────────────────────
+ *
+ * ReDMCSB PROJEXPL.C F0219 lines 692-699 checks creature impact
+ * before the m_7CE0 kineticEnergy <= stepEnergy floor.  A depleted
+ * projectile sitting on a creature square must therefore still resolve
+ * the creature hit before F0813 consumes the slot.
+ */
+static int test_creature_collision_before_energy(void) {
+    reset_state();
+
+    DM2_AIDefinition spec;
+    build_ai_spec(&spec, 0, 0, 20);
+    dm2_v1_creature_test_set_ai_spec(60, &spec);
+
+    int cid = dm2_v1_creature_spawn(60, 62, 62, 0, 0, 8);
+    if (cid < 0) return 0;
+
+    int slot = dispatch_with_energy_test(PROJECTILE_CATEGORY_KINETIC,
+                                           DM2_PROJ_SUBTYPE_KINETIC_ARROW,
+                                           62, 62, 0, 0,
+                                           1, 10, 0);
+    if (slot < 0) return 0;
+
+    DM2_V1_ProjectileStepResult r = dm2_v1_projectile_step_tick();
+
+    return r.slots_alive_before == 1
+        && r.slots_creature_collisions == 1
+        && r.slots_despawned == 1
+        && r.slots_survived == 0
+        && r.energy_total_before == 1
+        && r.energy_total_after == 0
+        && dm2_v1_projectile_step_creature_collision_total() == 1
+        && dm2_v1_projectile_creature_collision_count() == 1
+        && dm2_v1_projectile_active_count() == 0
+        && dm2_v1_creature_instance_hp(cid) == 10;
+}
+
+/* ── 16. SOURCE_EVIDENCE ──────────────────────────────────────── */
 
 static int test_source_evidence(void) {
     const char *e = dm2_v1_projectile_step_source_evidence();
@@ -456,7 +514,7 @@ static int test_source_evidence(void) {
         && strstr(e, "DM2_STEP_MISSILE") != NULL
         && strstr(e, "m_7CE0") != NULL
         && strstr(e, "F0813") != NULL
-        && strstr(e, "PROJEXPL.C") != NULL;
+        && strstr(e, "PROJEXPL.C:692-698") != NULL;
 }
 
 int main(void) {
@@ -480,6 +538,7 @@ int main(void) {
     TEST(reset_counters);
     TEST(step_result_invariants);
     TEST(energy_invariant);
+    TEST(creature_collision_before_energy);
     TEST(source_evidence);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);

@@ -12,12 +12,16 @@
  *   skproject/SKWIN/SkWinCore.cpp:60920-61116   (STEP_MISSILE wrapper)
  *   ReDMCSB PROJEXPL.C:76-92 (F0212)
  *   ReDMCSB PROJEXPL.C:689-690 (F0219 C48 grace)
+ *   ReDMCSB PROJEXPL.C:692-698 (F0219 creature impact before energy)
  *   ReDMCSB GROUP.C:1695-1770 (F0207)
  *   memory_projectile_pc34_compat.h (F0813 despawn)
  */
 
+#define FIRESTAFF_DM2_CREATURE_TESTING 1
 #define FIRESTAFF_DM2_PROJECTILE_TESTING 1
 
+#include "dm2_v1_creature.h"
+#include "dm2_v1_projectile_creature_collision_pc34_compat.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
@@ -50,6 +54,8 @@ extern void dm2_v1_projectile_test_reset_list(void);
 static void reset_all(void) {
     dm2_v1_projectile_test_reset_list();
     dm2_v1_projectile_step_reset_counters();
+    dm2_v1_projectile_creature_collision_reset_counters();
+    dm2_v1_creature_test_clear_ai_overrides();
 }
 
 /* Dispatch a synthetic projectile then override its energy fields.
@@ -68,6 +74,17 @@ static int dispatch_with_energy(int category, int subtype,
         return -1;
     }
     return slot;
+}
+
+static void build_ai(DM2_AIDefinition *out, uint16_t flags, uint8_t armor,
+                     uint16_t hp) {
+    memset(out, 0, sizeof(*out));
+    out->w0AIFlags = flags;
+    out->ArmorClass = armor;
+    out->BaseHP = hp;
+    out->AttackStrength = 5;
+    out->Defense = 100;
+    out->Weight = 100;
 }
 
 int main(int argc, char **argv) {
@@ -217,24 +234,54 @@ int main(int argc, char **argv) {
                      dm2_v1_projectile_step_survived_total());
     }
 
-    /* ── Invariant 8: source evidence ── */
+    /* ── Invariant 8: creature collision resolves before energy despawn ── */
+    {
+        reset_all();
+
+        DM2_AIDefinition spec;
+        build_ai(&spec, 0, 0, 20);
+        dm2_v1_creature_test_set_ai_spec(60, &spec);
+        int cid = dm2_v1_creature_spawn(60, 62, 62, 0, 0, 8);
+        int slot = dispatch_with_energy(PROJECTILE_CATEGORY_KINETIC,
+                                          DM2_PROJ_SUBTYPE_KINETIC_ARROW,
+                                          62, 62, 0, 0, 1, 10, 0);
+        PROBE_ASSERT(cid >= 0 && slot >= 0,
+                     "creature collision fixture spawned cid=%d slot=%d",
+                     cid, slot);
+        DM2_V1_ProjectileStepResult r = dm2_v1_projectile_step_tick();
+        PROBE_ASSERT(r.slots_creature_collisions == 1
+                  && r.slots_despawned == 1
+                  && r.slots_survived == 0
+                  && dm2_v1_creature_instance_hp(cid) == 10,
+                     "creature impact before energy (collisions=%d despawned=%d survived=%d hp=%d)",
+                     r.slots_creature_collisions, r.slots_despawned,
+                     r.slots_survived, dm2_v1_creature_instance_hp(cid));
+        PROBE_ASSERT(dm2_v1_projectile_step_creature_collision_total() == 1
+                  && dm2_v1_projectile_creature_collision_count() == 1,
+                     "creature collision counters step=%d resolver=%d",
+                     dm2_v1_projectile_step_creature_collision_total(),
+                     dm2_v1_projectile_creature_collision_count());
+    }
+
+    /* ── Invariant 9: source evidence ── */
     {
         const char *e = dm2_v1_projectile_step_source_evidence();
         PROBE_ASSERT(e != NULL
                   && strstr(e, "DM2_STEP_MISSILE") != NULL
                   && strstr(e, "m_7CE0") != NULL
-                  && strstr(e, "F0813") != NULL,
-                     "source evidence contains DM2_STEP_MISSILE + m_7CE0 + F0813");
+                  && strstr(e, "PROJEXPL.C:692-698") != NULL,
+                     "source evidence contains DM2_STEP_MISSILE + m_7CE0 + creature-impact ordering");
     }
 
     reset_all();
 
     fprintf(stderr, "\n=== Summary ===\n");
-    fprintf(stderr, "Step total: %d, despawned_total: %d, survived_total: %d, graced_total: %d\n",
+    fprintf(stderr, "Step total: %d, despawned_total: %d, survived_total: %d, graced_total: %d, creature_collisions=%d\n",
             dm2_v1_projectile_step_total(),
             dm2_v1_projectile_step_despawned_total(),
             dm2_v1_projectile_step_survived_total(),
-            dm2_v1_projectile_step_graced_total());
+            dm2_v1_projectile_step_graced_total(),
+            dm2_v1_projectile_step_creature_collision_total());
     fprintf(stderr, "\n%d/%d invariants PASS\n", passed, passed + errors);
     return (errors == 0) ? 0 : 1;
 }

@@ -6120,7 +6120,11 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_projectile_step_pc34_compat
         tests/test_dm2_v1_projectile_step_pc34_compat.c
         src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_drops.c
     )
     target_include_directories(test_dm2_v1_projectile_step_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -6133,6 +6137,7 @@ if(BUILD_TESTING)
     # above (compiled here with the flag) so the test-side symbols are
     # resolved from this build, not from firestaff_m10.
     target_compile_definitions(test_dm2_v1_projectile_step_pc34_compat PRIVATE
+        FIRESTAFF_DM2_CREATURE_TESTING=1
         FIRESTAFF_DM2_PROJECTILE_TESTING=1
     )
     if(NOT MSVC)
@@ -6147,7 +6152,11 @@ if(BUILD_TESTING)
     add_executable(firestaff_dm2_v1_projectile_step_probe
         probes/dm2/firestaff_dm2_v1_projectile_step_probe.c
         src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_drops.c
     )
     # Note: dispatch .c compiled in this target with FIRESTAFF_DM2_PROJECTILE_TESTING
     # so test-only symbols (dm2_v1_projectile_test_reset_list, etc.) resolve here.
@@ -6157,6 +6166,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(firestaff_dm2_v1_projectile_step_probe PRIVATE firestaff_m10 m)
     target_compile_definitions(firestaff_dm2_v1_projectile_step_probe PRIVATE
+        FIRESTAFF_DM2_CREATURE_TESTING=1
         FIRESTAFF_DM2_PROJECTILE_TESTING=1
     )
     if(NOT MSVC)
