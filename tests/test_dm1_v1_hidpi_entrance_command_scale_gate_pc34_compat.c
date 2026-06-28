@@ -129,6 +129,36 @@ static void expect_route_on_surface(const EntranceMouseRouteCompat* route,
            hit.zoneIndex, hit.commandId);
 }
 
+static void expect_route_after_sdl3_pixel_resize(const EntranceMouseRouteCompat* route) {
+    int windowW = -1;
+    int windowH = -1;
+    int renderW = -1;
+    int renderH = -1;
+
+    /* SDL3 reports mouse clicks in logical window coordinates while the
+     * WINDOW_PIXEL_SIZE_CHANGED event carries the Retina drawable size.
+     * ReDMCSB COMMAND.C:1379-1449 / 1641-1660 must still receive 320x200
+     * source coordinates for the entrance command route. */
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(3024,
+                                            1964,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            &windowW,
+                                            &windowH,
+                                            &renderW,
+                                            &renderH) == M11_RENDER_OK);
+    CHECK(windowW == 1512);
+    CHECK(windowH == 982);
+    CHECK(renderW == 3024);
+    CHECK(renderH == 1964);
+    expect_route_on_surface(route,
+                            windowW,
+                            windowH,
+                            "sdl3_pixel_resize_keeps_logical_mouse_1512x982");
+}
+
 static void expect_right_edge_misses(const EntranceMouseRouteCompat* route,
                                      int windowW,
                                      int windowH,
@@ -212,7 +242,6 @@ int main(void) {
     const char* evidence = ENTRANCE_Compat_GetMouseRouteEvidence();
     unsigned int i;
     unsigned int count;
-    EntranceMouseRouteCompat firstRoute;
 
     printf("probe=dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat\n");
     printf("routeEvidence=%s\n", evidence);
@@ -234,11 +263,10 @@ int main(void) {
         CHECK(ENTRANCE_Compat_GetMouseRoute(i, &route) == 1);
         expect_route_on_surface(&route, 1512, 982, "macbook_logical_1512x982");
         expect_route_on_surface(&route, 3024, 1964, "macbook_retina_drawable_3024x1964");
+        expect_route_after_sdl3_pixel_resize(&route);
+        expect_right_edge_misses(&route, 1512, 982, "macbook_logical_1512x982");
+        expect_right_edge_misses(&route, 3024, 1964, "macbook_retina_drawable_3024x1964");
     }
-
-    CHECK(ENTRANCE_Compat_GetMouseRoute(1u, &firstRoute) == 1);
-    expect_right_edge_misses(&firstRoute, 1512, 982, "macbook_logical_1512x982");
-    expect_right_edge_misses(&firstRoute, 3024, 1964, "macbook_retina_drawable_3024x1964");
 
     printf("result=%s\n", g_failures == 0 ? "PASS" : "FAIL");
     printf("summary=pass=%d fail=%d\n", g_passes, g_failures);
