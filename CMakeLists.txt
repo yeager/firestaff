@@ -16720,6 +16720,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_rename_champion_input_c
     )
 endif()
 
+# DM1 V1 resurrection rename UI gate - data-free F0281 input/render boundary.
+# Source-locked against REVIVE.C F0281/F0282, DATA.C G0051/G0052/G0053,
+# and DEFS.H C160/C161/C162/C165..C198/C027.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_resurrection_rename_ui_gate_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_resurrection_rename_ui_gate_pc34_compat.c")
+    add_executable(test_dm1_v1_resurrection_rename_ui_gate_pc34_compat
+        tests/test_dm1_v1_resurrection_rename_ui_gate_pc34_compat.c
+        src/dm1/dm1_v1_resurrection_rename_ui_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_resurrection_rename_ui_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_resurrection_rename_ui_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_resurrection_rename_ui_gate_pc34_compat
+        COMMAND test_dm1_v1_resurrection_rename_ui_gate_pc34_compat
+    )
+endif()
+
 # pass856 — DM1 V1 reincarnate special characters: G0027_aac_Graphic562_ReincarnateSpecialCharacters[5]
 # — 5 ASCII character codes for the reincarnate-screen (death/resurrect
 # portrait) special-character glyphs. Source-locked against
