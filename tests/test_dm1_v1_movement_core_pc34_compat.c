@@ -139,6 +139,55 @@ static int process_key_and_try_move(
         outMoveResult);
 }
 
+static int expect_door_state_dispatch_contract(
+    struct Dm1V1InputCommandQueuePc34Compat* queue,
+    const struct DungeonDatState_Compat* dungeon,
+    const struct PartyState_Compat* party,
+    unsigned char* squares,
+    int height)
+{
+    static const int doorStates[] = { 0, 1, 2, 3, 4, 5 };
+    int ok = 1;
+    size_t i;
+
+    /* ReDMCSB: CLIKMENU.C F0366 lines 282-284 allows door states
+     * C0 open, C1 closed-one-fourth, and C5 destroyed; states C2..C4
+     * block before MOVESENS.C F0267 mutates the party coordinates. */
+    for (i = 0; i < sizeof(doorStates) / sizeof(doorStates[0]); ++i) {
+        const int doorState = doorStates[i];
+        const int passable = (doorState == 0 || doorState == 1 || doorState == 5);
+        struct Dm1V1InputQueueProcessResultPc34Compat queueResult;
+        struct MovementResult_Compat moveResult;
+
+        set_square(squares, height, 2, 1,
+            square_type(DUNGEON_ELEMENT_DOOR, doorState));
+        DM1_V1_InputCommandQueue_InitPc34Compat(queue);
+        ok &= expect_int("door-state key dispatch",
+            process_key_and_try_move(queue, dungeon, party, 0xAB35, 0, 0, 0,
+                &queueResult, &moveResult), passable);
+        ok &= expect_int("door-state command dequeued", queueResult.dequeued, 1);
+        ok &= expect_int("door-state command dispatched", queueResult.dispatchedMove, 1);
+        if (passable) {
+            ok &= expect_int("door-state passable result code",
+                moveResult.resultCode, MOVE_OK);
+            ok &= expect_int("door-state passable target x", moveResult.newMapX, 2);
+            ok &= expect_int("door-state passable target y", moveResult.newMapY, 1);
+            ok &= expect_int("door-state passable keeps direction",
+                moveResult.newDirection, party->direction);
+        } else {
+            ok &= expect_int("door-state blocked result code",
+                moveResult.resultCode, MOVE_BLOCKED_DOOR);
+            ok &= expect_blocked_move_kept_party_state(
+                "door-state blocked skips accepted-move side effects",
+                party, &moveResult);
+        }
+    }
+
+    set_square(squares, height, 2, 1,
+        square_type(DUNGEON_ELEMENT_CORRIDOR, 0));
+    return ok;
+}
+
 int main(void)
 {
     struct DungeonDatState_Compat dungeon;
@@ -242,6 +291,9 @@ int main(void)
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_DOOR, 5));
     ok &= expect_int("destroyed door passable", F0706_MOVEMENT_IsSquarePassable_Compat(&dungeon, 0, 2, 1), 1);
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_CORRIDOR, 0));
+
+    ok &= expect_door_state_dispatch_contract(
+        &queue, &dungeon, &party, squares, 5);
 
     set_square(squares, 5, 2, 1, square_type(DUNGEON_ELEMENT_FAKEWALL, 0));
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
