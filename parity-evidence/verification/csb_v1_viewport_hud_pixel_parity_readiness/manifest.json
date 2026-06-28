@@ -1,0 +1,271 @@
+{
+  "broad_parity_status": "OPEN_UNPAIRED",
+  "fixture_count": 6,
+  "fixtures": [
+    {
+      "capture_region": "viewport_full",
+      "covers_hud": false,
+      "covers_viewport": true,
+      "current_pairing": {
+        "changed_pixels": null,
+        "diff_artifact": null,
+        "diff_sha256": null,
+        "firestaff_artifact": null,
+        "firestaff_sha256": null,
+        "mae": null,
+        "max_delta": null,
+        "original_artifact": null,
+        "original_sha256": null
+      },
+      "fixture_id": "csb_v1_prison_entrance_viewport_full",
+      "game_state_label": "csb_prison_entrance",
+      "geometry": {
+        "h": 200,
+        "w": 320,
+        "x": 0,
+        "y": 0
+      },
+      "promotion_fields_required": [
+        "original_artifact",
+        "original_sha256",
+        "firestaff_artifact",
+        "firestaff_sha256",
+        "diff_artifact",
+        "diff_sha256",
+        "changed_pixels",
+        "mae",
+        "max_delta"
+      ],
+      "ready_for_pairing": true
+    },
+    {
+      "capture_region": "viewport_center",
+      "covers_hud": false,
+      "covers_viewport": true,
+      "current_pairing": {
+        "changed_pixels": null,
+        "diff_artifact": null,
+        "diff_sha256": null,
+        "firestaff_artifact": null,
+        "firestaff_sha256": null,
+        "mae": null,
+        "max_delta": null,
+        "original_artifact": null,
+        "original_sha256": null
+      },
+      "fixture_id": "csb_v1_prison_entrance_viewport_center",
+      "game_state_label": "csb_prison_entrance",
+      "geometry": {
+        "h": 136,
+        "w": 224,
+        "x": 48,
+        "y": 28
+      },
+      "promotion_fields_required": [
+        "original_artifact",
+        "original_sha256",
+        "firestaff_artifact",
+        "firestaff_sha256",
+        "diff_artifact",
+        "diff_sha256",
+        "changed_pixels",
+        "mae",
+        "max_delta"
+      ],
+      "ready_for_pairing": true
+    },
+    {
+      "capture_region": "status_bar",
+      "covers_hud": true,
+      "covers_viewport": false,
+      "current_pairing": {
+        "changed_pixels": null,
+        "diff_artifact": null,
+        "diff_sha256": null,
+        "firestaff_artifact": null,
+        "firestaff_sha256": null,
+        "mae": null,
+        "max_delta": null,
+        "original_artifact": null,
+        "original_sha256": null
+      },
+      "fixture_id": "csb_v1_prison_entrance_status_bar",
+      "game_state_label": "csb_prison_entrance",
+      "geometry": {
+        "h": 28,
+        "w": 320,
+        "x": 0,
+        "y": 0
+      },
+      "promotion_fields_required": [
+        "original_artifact",
+        "original_sha256",
+        "firestaff_artifact",
+        "firestaff_sha256",
+        "diff_artifact",
+        "diff_sha256",
+        "changed_pixels",
+        "mae",
+        "max_delta"
+      ],
+      "ready_for_pairing": true
+    },
+    {
+      "capture_region": "chrome_bottom",
+      "covers_hud": true,
+      "covers_viewport": false,
+      "current_pairing": {
+        "changed_pixels": null,
+        "diff_artifact": null,
+        "diff_sha256": null,
+        "firestaff_artifact": null,
+        "firestaff_sha256": null,
+        "mae": null,
+        "max_delta": null,
+        "original_artifact": null,
+        "original_sha256": null
+      },
+      "fixture_id": "csb_v1_prison_entrance_chrome_bottom",
+      "game_state_label": "csb_prison_entrance",
+      "geometry": {
+        "h": 48,
+        "w": 320,
+        "x": 0,
+        "y": 152
+      },
+      "promotion_fields_required": [
+        "original_artifact",
+        "original_sha256",
+        "firestaff_artifact",
+        "firestaff_sha256",
+        "diff_artifact",
+        "diff_sha256",
+        "changed_pixels",
+        "mae",
+        "max_delta"
+      ],
+      "ready_for_pairing": true
+    },
+    {
+      "capture_region": "panel_right",
+      "covers_hud": true,
+      "covers_viewport": false,
+      "current_pairing": {
+        "changed_pixels": null,
+        "diff_artifact": null,
+        "diff_sha256": null,
+        "firestaff_artifact": null,
+        "firestaff_sha256": null,
+        "mae": null,
+        "max_delta": null,
+        "original_artifact": null,
+        "original_sha256": null
+      },
+      "fixture_id": "csb_v1_prison_entrance_panel_right",
+      "game_state_label": "csb_prison_entrance",
+      "geometry": {
+        "h": 172,
+        "w": 80,
+        "x": 240,
+        "y": 28
+      },
+      "promotion_fields_required": [
+        "original_artifact",
+        "original_sha256",
+        "firestaff_artifact",
+        "firestaff_sha256",
+        "diff_artifact",
+        "diff_sha256",
+        "changed_pixels",
+        "mae",
+        "max_delta"
+      ],
+      "ready_for_pairing": true
+    },
+    {
+      "capture_region": "viewport_full",
+      "covers_hud": false,
+      "covers_viewport": true,
+      "current_pairing": {
+        "changed_pixels": null,
+        "diff_artifact": null,
+        "diff_sha256": null,
+        "firestaff_artifact": null,
+        "firestaff_sha256": null,
+        "mae": null,
+        "max_delta": null,
+        "original_artifact": null,
+        "original_sha256": null
+      },
+      "fixture_id": "csb_v1_prison_forward_viewport_full",
+      "game_state_label": "csb_prison_forward",
+      "geometry": {
+        "h": 200,
+        "w": 320,
+        "x": 0,
+        "y": 0
+      },
+      "promotion_fields_required": [
+        "original_artifact",
+        "original_sha256",
+        "firestaff_artifact",
+        "firestaff_sha256",
+        "diff_artifact",
+        "diff_sha256",
+        "changed_pixels",
+        "mae",
+        "max_delta"
+      ],
+      "ready_for_pairing": true
+    }
+  ],
+  "future_promotion_rule": "Promote CSB viewport/HUD pixel parity only after every fixture has paired original and Firestaff artifacts, SHA256 values for both, a diff artifact/hash, and explicit changed_pixels/mae/max_delta metrics.",
+  "non_claims": [
+    "no original CSB frame is captured by this gate",
+    "no Firestaff runtime frame is captured by this gate",
+    "no original-vs-Firestaff pixel parity is promoted",
+    "broader CSB viewport/HUD parity remains OPEN_UNPAIRED until paired evidence lands",
+    "no user-supplied game data is committed"
+  ],
+  "problems": [],
+  "regions_required": {
+    "chrome_bottom": {
+      "h": 48,
+      "w": 320,
+      "x": 0,
+      "y": 152
+    },
+    "panel_right": {
+      "h": 172,
+      "w": 80,
+      "x": 240,
+      "y": 28
+    },
+    "status_bar": {
+      "h": 28,
+      "w": 320,
+      "x": 0,
+      "y": 0
+    },
+    "viewport_center": {
+      "h": 136,
+      "w": 224,
+      "x": 48,
+      "y": 28
+    },
+    "viewport_full": {
+      "h": 200,
+      "w": 320,
+      "x": 0,
+      "y": 0
+    }
+  },
+  "required_state_labels": [
+    "csb_prison_entrance",
+    "csb_prison_forward"
+  ],
+  "schema": "firestaff.parity.csb_v1_viewport_hud_pixel_parity_readiness.v1",
+  "source_manifest": "parity-evidence/verification/passH2248_csb_v1_viewport_pixel_gate.json",
+  "source_schema": "firestaff.csb_v1.viewport_pixel_gate.v1",
+  "status": "PASS_OPEN"
+}

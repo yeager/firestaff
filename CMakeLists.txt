@@ -5039,6 +5039,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_m11_runtime_capture_boundary.py
         )
         add_test(
+            NAME csb_v1_viewport_hud_pixel_parity_readiness
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v1_viewport_hud_pixel_parity_readiness.py
+        )
+        add_test(
             NAME pass547_csb_v1_runtime_readiness_backfill
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass547_csb_v1_runtime_readiness_backfill.py
         )
