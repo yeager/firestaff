@@ -221,6 +221,33 @@ int nexus_v1_bpx_prs3_parse(const uint8_t *data,
         width = rb16(record + 16);
         mode = record[18];
         height = record[19];
+
+        /* pass1083: a directory-trailer entry uses mode == MODE_TRAILER
+         * (10). It carries no PRS3 magic, no width/height/pixel_count,
+         * no payload offset. Real MENU.BPK entry[0] is the only observed
+         * trailer; bytes 0..4 / 4..8 hold BE uint32 file offsets into
+         * the last two picture entries. Synthetic BPX3 trailers store
+         * the same shape inside the 32-byte record so launcher/probe
+         * code can verify the contract without needing real assets. */
+        if (mode == NEXUS_V1_BPK_MODE_TRAILER) {
+            if (width != 0u || height != 0u) {
+                return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
+            }
+            if (!is_zero_reserved(record + 20, 12)) {
+                return NEXUS_V1_BPX_BPK_ERR_UNSUPPORTED;
+            }
+            entry->offset = 0U;
+            entry->packed_size = 0U;
+            entry->unpacked_size = 0U;
+            entry->method = NEXUS_V1_BPX_BPK_METHOD_DIRECTORY_TRAILER;
+            entry->width = 0U;
+            entry->height = 0U;
+            entry->mode = mode;
+            entry->pixel_count = 0U;
+            entry->has_prs3_magic = 0;
+            continue;
+        }
+
         if (mode != NEXUS_V1_BPK_MODE_8BPP &&
             mode != NEXUS_V1_BPK_MODE_16BPP &&
             mode != NEXUS_V1_BPK_MODE_24BPP &&

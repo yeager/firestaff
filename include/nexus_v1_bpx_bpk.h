@@ -56,7 +56,13 @@ typedef enum {
     /* Synthetic PRS3 stream contract (pass1082): the entry carries a
      * PRS3 magic + 0x00000001 version sub-header, but the actual
      * compression payload is still intentionally unsupported. */
-    NEXUS_V1_BPX_BPK_METHOD_PRS3_UNKNOWN = 2
+    NEXUS_V1_BPX_BPK_METHOD_PRS3_UNKNOWN = 2,
+    /* Synthetic directory-trailer entry (pass1083): a BPX3 entry whose
+     * mode tag equals NEXUS_V1_BPK_MODE_TRAILER (10) and whose first 8
+     * bytes are the BE uint32 offsets of the last two picture entries
+     * (matching entry[0] in the observed real MENU.BPK). No PRS3 magic,
+     * no payload, no decoded surface. */
+    NEXUS_V1_BPX_BPK_METHOD_DIRECTORY_TRAILER = 3
 } Nexus_V1_BpxBpkMethod;
 
 typedef struct {

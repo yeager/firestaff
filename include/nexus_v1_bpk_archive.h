@@ -98,6 +98,84 @@ typedef struct {
     int trailer_found;
 } Nexus_V1_BpkModeDistribution;
 
+/* Per-entry surface layout (pass1083). For every entry whose 20-byte
+ * prefix is complete AND whose prefix mode is one of the four PRS3
+ * pixel-mode tags (6/14/22/30), the surface-class helpers below compute
+ * the bytes-per-pixel, rowstride (no alignment padding), and expected
+ * unpacked surface byte count. For the unique directory trailer (mode
+ * 10) and any unknown mode, the helpers return 0 and the surface_estimate
+ * walker skips the entry. This is the strongest no-decode surface-class
+ * contract the engine can offer until a real PRS3 implementation lands.
+ */
+typedef enum {
+    NEXUS_V1_BPK_SURFACE_UNKNOWN = 0,
+    /* 8 bpp Saturn palette / indexed mode (1 byte per pixel). */
+    NEXUS_V1_BPK_SURFACE_INDEXED_8BPP = 1,
+    /* 16 bpp Saturn RGB565 mode (2 bytes per pixel). */
+    NEXUS_V1_BPK_SURFACE_RGB565 = 2,
+    /* 24 bpp RGB888 mode (3 bytes per pixel). */
+    NEXUS_V1_BPK_SURFACE_RGB888 = 3,
+    /* 32 bpp RGBA8888 mode (4 bytes per pixel). */
+    NEXUS_V1_BPK_SURFACE_RGBA8888 = 4,
+    /* Entry[0] directory trailer (mode 10). No decoded surface. */
+    NEXUS_V1_BPK_SURFACE_DIRECTORY_TRAILER = 5
+} Nexus_V1_BpkSurfaceClass;
+
+typedef struct {
+    uint32_t bpp;             /* bytes per pixel (0 for trailer / unknown) */
+    uint32_t rowstride;       /* width * bpp (0 for trailer / unknown) */
+    uint32_t surface_bytes;   /* width * height * bpp (0 for trailer) */
+    Nexus_V1_BpkSurfaceClass surface_class;
+} Nexus_V1_BpkSurfaceLayout;
+
+typedef struct {
+    uint32_t entry_index;
+    uint8_t mode;
+    uint16_t width;
+    uint8_t height;
+    uint32_t pixel_count;     /* width * height from the 20-byte prefix */
+    Nexus_V1_BpkSurfaceLayout layout;
+} Nexus_V1_BpkSurfaceEntry;
+
+typedef struct {
+    uint32_t total_with_surface;  /* entries with a non-zero surface layout */
+    uint64_t total_surface_bytes; /* sum of layout.surface_bytes */
+    uint32_t trailer_skipped;      /* entries skipped because mode == trailer */
+    uint32_t unknown_skipped;      /* entries skipped because mode != any known tag */
+    uint32_t capacity;             /* max entries the caller asked us to fill */
+    uint32_t used;                 /* number of Nexus_V1_BpkSurfaceEntry rows we wrote */
+    int truncated;                 /* 1 if any PRS3 entry was skipped because capacity was hit */
+} Nexus_V1_BpkSurfaceEstimate;
+
+/* Map a 20-byte prefix mode tag to a surface class. Returns
+ * NEXUS_V1_BPK_SURFACE_UNKNOWN for any byte value that is not one of the
+ * four observed pixel-mode tags (6/14/22/30) or the directory trailer
+ * (10). Pure lookup; does not touch an archive buffer. */
+Nexus_V1_BpkSurfaceClass nexus_v1_bpk_mode_to_surface_class(uint8_t mode);
+
+/* Bytes-per-pixel for a 20-byte prefix mode tag. Returns 1/2/3/4 for the
+ * four pixel-mode tags, 0 for the directory trailer, 0 for unknown modes.
+ * Mirrors the documented (tag + 2) / 8 mapping for the 4 pixel modes. */
+uint32_t nexus_v1_bpk_mode_to_bpp(uint8_t mode);
+
+/* Walk every entry whose 20-byte prefix is complete AND whose prefix
+ * mode is one of the four PRS3 pixel-mode tags. For each such entry,
+ * record (entry_index, mode, width, height, pixel_count, surface layout)
+ * into out_entries[0..out->used-1] up to entry_capacity rows. Returns 0
+ * on success, negative on bad args / malformed archive. The directory
+ * trailer (mode 10) and unknown mode tags are skipped and counted in
+ * out_summary->trailer_skipped / out_summary->unknown_skipped so callers
+ * can verify the 162 + 1 = 163 entry sum. If entry_capacity is hit, the
+ * remaining PRS3 entries are still counted toward total_with_surface and
+ * total_surface_bytes but NOT written to out_entries; out_summary->truncated
+ * is set to 1 to flag the overflow. */
+int nexus_v1_bpk_archive_surface_estimate(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_V1_BpkSurfaceEntry *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkSurfaceEstimate *out_summary);
+
 /*
  * Parse the DM Nexus MENU.BPK BPPK/BMPD directory shape.
  *
