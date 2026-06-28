@@ -215,6 +215,39 @@ unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourc
     return 50u;
 }
 
+V1_TitleFrontendRuntimeSourceDecision V1_TitleFrontend_SelectRuntimeSource(
+    int graphicsC001CandidateAvailable,
+    unsigned int graphicsC001Width,
+    unsigned int graphicsC001Height,
+    int titleDatFallbackAvailable) {
+    V1_TitleFrontendRuntimeSourceDecision decision;
+
+    memset(&decision, 0, sizeof(decision));
+    /* ReDMCSB TITLE.C F0437 PC/F20 source-lock:
+     *   TITLE.C:309-310 loads/decompresses C001_GRAPHIC_TITLE.
+     *   TITLE.C:319-324 blits PRESENTS from source y=137.
+     *   TITLE.C:333-340 prepares the 320x57 MASTER/STRIKES BACK strip from
+     *   source y=80, then TITLE.C:340-360 builds the 320x80 zoom bitmaps.
+     * Firestaff's decoded TITLE.DAT bank is a visible fallback only when the
+     * GRAPHICS.DAT C001 bitmap cannot satisfy those source blits. */
+    decision.graphicsC001Usable =
+        graphicsC001CandidateAvailable &&
+        graphicsC001Width >= 320u &&
+        graphicsC001Height >= 175u;
+    decision.titleDatFallbackUsable = titleDatFallbackAvailable ? 1 : 0;
+    decision.sourceLineEvidence =
+        "ReDMCSB TITLE.C F0437 lines 309-324,333-340,340-360,362-367,385-402";
+
+    if (decision.graphicsC001Usable) {
+        decision.source = V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001;
+    } else if (decision.titleDatFallbackUsable) {
+        decision.source = V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK;
+    } else {
+        decision.source = V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP;
+    }
+    return decision;
+}
+
 int V1_TitleFrontend_GetStepPalette(V1_TitleFrontendSourceEventKind kind,
                                     int* outSpecialPalette) {
     int palette;

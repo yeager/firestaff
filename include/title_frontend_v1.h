@@ -77,6 +77,19 @@ typedef struct V1_TitleFrontendSourceTiming {
     const char* evidenceNote;
 } V1_TitleFrontendSourceTiming;
 
+typedef enum V1_TitleFrontendRuntimeSource {
+    V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP = 0,
+    V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001 = 1,
+    V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK = 2
+} V1_TitleFrontendRuntimeSource;
+
+typedef struct V1_TitleFrontendRuntimeSourceDecision {
+    V1_TitleFrontendRuntimeSource source;
+    int graphicsC001Usable;
+    int titleDatFallbackUsable;
+    const char* sourceLineEvidence;
+} V1_TitleFrontendRuntimeSourceDecision;
+
 /*
  * Map a finite TITLE presentation step onto the source-backed TITLE frame bank.
  * Steps 1..53 render source frames 1..53.  Later steps hold frame 53 and mark
@@ -95,6 +108,20 @@ V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned in
 V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void);
 unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourceTiming* timing);
 unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontendSourceTiming* timing);
+
+/*
+ * Select the runtime source for the DM1 V1 TITLE animation.  The original
+ * ReDMCSB PC path loads GRAPHICS.DAT C001_GRAPHIC_TITLE in TITLE.C F0437
+ * before drawing PRESENTS / DUNGEON MASTER / STRIKES BACK.  Firestaff may use
+ * the decoded TITLE.DAT bank only as a last-resort visible fallback when C001
+ * is missing or too small for the source blits.  A usable C001 graphic always
+ * wins, even if TITLE.DAT is also present.
+ */
+V1_TitleFrontendRuntimeSourceDecision V1_TitleFrontend_SelectRuntimeSource(
+    int graphicsC001CandidateAvailable,
+    unsigned int graphicsC001Width,
+    unsigned int graphicsC001Height,
+    int titleDatFallbackAvailable);
 
 /*
  * ReDMCSB TITLE.C source animation event schedule for the PC/F20 path.

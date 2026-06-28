@@ -1035,8 +1035,16 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(M11_GameViewState* 
         return 0;
     }
     titleGraphic = M11_AssetLoader_Load(&gameView->assetLoader, 1U);
-    if (!titleGraphic || titleGraphic->width < 320U || titleGraphic->height < 175U) {
-        return 0;
+    {
+        V1_TitleFrontendRuntimeSourceDecision sourceDecision =
+            V1_TitleFrontend_SelectRuntimeSource(
+                titleGraphic != NULL,
+                titleGraphic ? titleGraphic->width : 0U,
+                titleGraphic ? titleGraphic->height : 0U,
+                0);
+        if (sourceDecision.source != V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
+            return 0;
+        }
     }
     framebuffer = M11_Render_GetFramebuffer();
     if (!framebuffer) {
