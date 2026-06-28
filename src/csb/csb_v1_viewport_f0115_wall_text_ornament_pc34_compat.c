@@ -24,6 +24,13 @@ enum {
     CSB_VIEWPORT_SENTINEL = 0xee
 };
 
+static const uint16_t s_pc_dungeon_palette[16] = {
+    0x000, 0x666, 0x888, 0x620,
+    0x0cc, 0x840, 0x080, 0x0c0,
+    0xf00, 0xfa0, 0xc86, 0xff0,
+    0x444, 0xaaa, 0x00f, 0xfff
+};
+
 static const char s_source_evidence[] =
     "Source-locked contract-only CSB V1 branch-A gate; synthetic framebuffer "
     "fixture only, no original DOS pixel parity claim and no CSB game-data "
@@ -32,16 +39,18 @@ static const char s_source_evidence[] =
     "F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF is called with "
     "M552_FRONT_WALL_ORNAMENT_ORDINAL and M587_VIEW_WALL_D1C_FRONT at 7842, "
     "and a true alcove result calls F0115 with M606_VIEW_SQUARE_D1C and "
-    "C0x0000_CELL_ORDER_ALCOVE at 7843. DUNVIEW.C:3502-3938 F0107 locks the "
+    "C0x0000_CELL_ORDER_ALCOVE at 7843. DUNVIEW.C:3571-3938 F0107 locks the "
     "wall-ornament ordinal path: 3571-3578 rejects ordinal zero, decrements "
     "to an ornament index and selects the coordinate set; 3589 records the "
-    "alcove flag; 3590-3717 draws inscription text for D1C front wall text; "
+    "alcove flag; 3590-3639 decodes and draws D1C front inscription text "
+    "with the M648 font and C10 transparent pixels; "
     "3907-3910 blits the wall ornament with C10 transparency; 3923-3928 "
     "updates the D1C clickable/portrait overlay path and 3932-3938 returns "
     "the alcove flag. DUNVIEW.C:4547-4581 F0115 defines the thing-pass order "
     "and states that first nibble zero is the wall-alcove object path. "
     "DUNVIEW.C:8318-8486 F0128 locks the frame setup and early far-square "
     "F0115 sequence before the D1 routes. DEFS.H:2088 anchors C10, "
+    "DATA.C:833-844 anchors the PC dungeon-view 16-color palette row, "
     "DEFS.H:2527 anchors C5_HEIGHT, DEFS.H:4139-4153 anchors the nearby "
     "zone family, and DEFS.H:5576 declares G0208 door-button coordinate-set "
     "storage used by adjacent wall control coordinates. CSB-lineage "
@@ -147,6 +156,132 @@ uint32_t csb_v1_viewport_f0115_wall_text_ornament_hash_pc34(
         hash *= 16777619u;
     }
     return hash;
+}
+
+int csb_v1_viewport_f0115_wall_text_ornament_palette_rgb_pc34(
+    int palette_index,
+    uint8_t *out_r,
+    uint8_t *out_g,
+    uint8_t *out_b)
+{
+    uint16_t rgb444;
+
+    if (!out_r || !out_g || !out_b) return -1;
+    if (palette_index < 0 || palette_index >= 16) return -1;
+
+    /* ReDMCSB: DATA.C lines 833-844 define the PC dungeon-view palette as
+     * 12-bit RGB nibbles. Expand each nibble to 8-bit by duplication. */
+    rgb444 = s_pc_dungeon_palette[palette_index];
+    *out_r = (uint8_t)((((rgb444 >> 8) & 0x0fu) << 4) |
+                       ((rgb444 >> 8) & 0x0fu));
+    *out_g = (uint8_t)((((rgb444 >> 4) & 0x0fu) << 4) |
+                       ((rgb444 >> 4) & 0x0fu));
+    *out_b = (uint8_t)(((rgb444 & 0x0fu) << 4) |
+                       (rgb444 & 0x0fu));
+    return 0;
+}
+
+int csb_v1_viewport_f0115_wall_text_ornament_font_pixel_pc34(
+    int destination_index,
+    int font_index)
+{
+    if (destination_index < 0 || destination_index >= 16) return -1;
+    if (font_index < 0 || font_index >= 16) return -1;
+
+    /* ReDMCSB: DUNVIEW.C F0107 lines 3631-3634 blit the M648 inscription
+     * font with C10_COLOR_FLESH as transparent; lines 3907-3910 use the
+     * same C10 transparent blit for the unreadable inscription ornament. */
+    if (font_index == CSB_C10_COLOR_FLESH) return destination_index;
+    return font_index;
+}
+
+static void hash_rgba(uint32_t *hash, uint8_t r, uint8_t g, uint8_t b,
+                      uint8_t a)
+{
+    const uint8_t values[4] = { r, g, b, a };
+    for (size_t i = 0; i < sizeof(values); ++i) {
+        *hash ^= values[i];
+        *hash *= 16777619u;
+    }
+}
+
+int csb_v1_viewport_f0115_wall_text_ornament_decode_rgba_pc34(
+    const uint8_t *indexed_framebuffer,
+    size_t indexed_framebuffer_size,
+    uint8_t *rgba_framebuffer,
+    size_t rgba_framebuffer_size,
+    CSB_V1_ViewportF0115WallTextPalettePc34Trace *out_trace)
+{
+    const size_t indexed_needed =
+        (size_t)CSB_V1_F0115_WALL_TEXT_ORNAMENT_FRAMEBUFFER_WIDTH_PC34 *
+        (size_t)CSB_V1_F0115_WALL_TEXT_ORNAMENT_FRAMEBUFFER_HEIGHT_PC34;
+    const size_t rgba_needed = indexed_needed * 4u;
+    CSB_V1_ViewportF0115WallTextPalettePc34Trace trace = {
+        0, 0, 0, 0, 0, 0, 0, 2166136261u, s_source_evidence
+    };
+
+    if (!indexed_framebuffer || !rgba_framebuffer || !out_trace ||
+        indexed_framebuffer_size < indexed_needed ||
+        rgba_framebuffer_size < rgba_needed) {
+        return -1;
+    }
+
+    for (int y = 0;
+         y < CSB_V1_F0115_WALL_TEXT_ORNAMENT_FRAMEBUFFER_HEIGHT_PC34;
+         ++y) {
+        for (int x = 0;
+             x < CSB_V1_F0115_WALL_TEXT_ORNAMENT_FRAMEBUFFER_WIDTH_PC34;
+             ++x) {
+            const size_t pixel = offset_for(x, y);
+            const size_t rgba = pixel * 4u;
+            const int inside_viewport =
+                x < CSB_V1_F0115_WALL_TEXT_ORNAMENT_VIEWPORT_WIDTH_PC34 &&
+                y < CSB_V1_F0115_WALL_TEXT_ORNAMENT_VIEWPORT_HEIGHT_PC34;
+            uint8_t r = 0u;
+            uint8_t g = 0u;
+            uint8_t b = 0u;
+            uint8_t a = 0u;
+
+            if (inside_viewport) {
+                const int palette_index = indexed_framebuffer[pixel];
+                ++trace.indexed_pixels;
+                if (palette_index < 0 || palette_index >= 16 ||
+                    csb_v1_viewport_f0115_wall_text_ornament_palette_rgb_pc34(
+                        palette_index, &r, &g, &b) != 0) {
+                    ++trace.out_of_range_pixels;
+                } else {
+                    a = 255u;
+                    ++trace.rgba_pixels;
+                    if (palette_index == CSB_WALL_COLOR) ++trace.wall_pixels;
+                    if (palette_index == CSB_TEXT_COLOR) ++trace.text_pixels;
+                }
+            } else {
+                ++trace.outside_viewport_transparent_pixels;
+            }
+
+            rgba_framebuffer[rgba + 0u] = r;
+            rgba_framebuffer[rgba + 1u] = g;
+            rgba_framebuffer[rgba + 2u] = b;
+            rgba_framebuffer[rgba + 3u] = a;
+            hash_rgba(&trace.rgba_hash, r, g, b, a);
+        }
+    }
+
+    trace.ok = trace.indexed_pixels ==
+                   CSB_V1_F0115_WALL_TEXT_ORNAMENT_VIEWPORT_WIDTH_PC34 *
+                   CSB_V1_F0115_WALL_TEXT_ORNAMENT_VIEWPORT_HEIGHT_PC34 &&
+               trace.rgba_pixels == trace.indexed_pixels &&
+               trace.wall_pixels > 0 &&
+               trace.text_pixels > 0 &&
+               trace.outside_viewport_transparent_pixels ==
+                   (CSB_V1_F0115_WALL_TEXT_ORNAMENT_FRAMEBUFFER_WIDTH_PC34 *
+                    CSB_V1_F0115_WALL_TEXT_ORNAMENT_FRAMEBUFFER_HEIGHT_PC34) -
+                   (CSB_V1_F0115_WALL_TEXT_ORNAMENT_VIEWPORT_WIDTH_PC34 *
+                    CSB_V1_F0115_WALL_TEXT_ORNAMENT_VIEWPORT_HEIGHT_PC34) &&
+               trace.out_of_range_pixels == 0;
+
+    *out_trace = trace;
+    return trace.ok ? 0 : 1;
 }
 
 int csb_v1_viewport_f0115_wall_text_ornament_pixel_pc34(
