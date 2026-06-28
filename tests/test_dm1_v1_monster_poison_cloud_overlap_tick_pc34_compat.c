@@ -140,10 +140,81 @@ static void test_single_monster_cloud_tick_boundary(void)
              "follow-up cloud is not due on same boundary");
 }
 
+static void test_cloud_square_overlap_ignores_quarter_cell_mask(void)
+{
+    struct ExplosionInstance_Compat cloud;
+    struct CellContentDigest_Compat digest;
+    struct ExplosionInstance_Compat next;
+    struct ExplosionTickResult_Compat tick;
+
+    memset(&cloud, 0, sizeof(cloud));
+    memset(&digest, 0, sizeof(digest));
+
+    cloud.slotIndex = 3;
+    cloud.explosionType = C007_EXPLOSION_POISON_CLOUD;
+    cloud.mapIndex = 0;
+    cloud.mapX = 12;
+    cloud.mapY = 9;
+    cloud.cell = 0;
+    cloud.centered = 0;
+    cloud.attack = 64;
+    cloud.currentFrame = 7;
+    cloud.maxFrames = 30;
+    cloud.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    cloud.ownerIndex = 1;
+    cloud.creatorProjectileSlot = -1;
+
+    digest.destMapIndex = 0;
+    digest.destMapX = 12;
+    digest.destMapY = 9;
+    digest.destHasCreatureGroup = 1;
+    digest.destCreatureType = 15;
+    digest.destCreatureCellMask = 0x04;
+
+    /* ReDMCSB source-lock:
+     * PROJEXPL.C F0220 lines 800-808 fetches the group with
+     * F0175_GROUP_GetThing(squareX, squareY), and lines 859-864 call
+     * F0191_GROUP_GetDamageAllCreaturesOutcome for that square-level
+     * group. It does not call F0176_GROUP_GetCreatureOrdinalInCell for
+     * poison clouds, so a cloud in cell 0 still damages a group whose
+     * quarter-cell mask only contains cell 2.
+     */
+    CHECK_EQ(F0822_EXPLOSION_Advance_Compat(&cloud, &digest, 2000, NULL,
+                                            &next, &tick),
+             1, "advance off-cell cloud on monster tile");
+    CHECK_EQ(tick.emittedCombatActionPartyCount, 0,
+             "off-cell cloud emits no party action");
+    CHECK_EQ(tick.emittedCombatActionGroupCount, 1,
+             "off-cell cloud still emits one group action");
+    CHECK_EQ(tick.outActionGroup.kind, COMBAT_ACTION_APPLY_DAMAGE_GROUP,
+             "off-cell cloud group damage action kind");
+    CHECK_EQ(tick.outActionGroup.targetMapX, 12, "off-cell cloud target x");
+    CHECK_EQ(tick.outActionGroup.targetMapY, 9, "off-cell cloud target y");
+    CHECK_EQ(tick.outActionGroup.targetCell, 0,
+             "off-cell cloud preserves explosion cell metadata");
+    CHECK_EQ(tick.outActionGroup.defenderSlotOrCreatureIndex, 15,
+             "off-cell cloud preserves creature type");
+    CHECK_EQ(tick.outActionGroup.rawAttackValue, 8,
+             "attack 64 -> base 2 -> F0192 for C15 (r=1): 2*8/2 = 8");
+    CHECK_EQ(tick.resultKind, EXPLOSION_RESULT_ADVANCED_FRAME,
+             "off-cell cloud advances one persistent frame");
+    CHECK_EQ(tick.despawn, 0, "off-cell cloud remains live");
+    CHECK_EQ(next.attack, 61, "off-cell cloud attack decays by 3");
+    CHECK_EQ(tick.outNextTick.kind, TIMELINE_EVENT_EXPLOSION_ADVANCE,
+             "off-cell cloud schedules follow-up");
+    CHECK_EQ((int)tick.outNextTick.fireAtTick, 2001,
+             "off-cell cloud follow-up tick+1");
+    CHECK_EQ(tick.outNextTick.aux0, 3,
+             "off-cell cloud follow-up carries same slot");
+    CHECK_EQ(tick.outNextTick.aux2, 61,
+             "off-cell cloud follow-up carries decayed attack");
+}
+
 int main(void)
 {
     printf("DM1 V1 poison cloud monster overlap tick regression\n");
     test_single_monster_cloud_tick_boundary();
+    test_cloud_square_overlap_ignores_quarter_cell_mask();
     if (g_failures) {
         fprintf(stderr, "%d failure(s)\n", g_failures);
         return 1;
