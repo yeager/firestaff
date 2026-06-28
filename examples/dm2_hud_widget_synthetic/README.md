@@ -54,6 +54,45 @@ sets the manifest path to the synthetic data dir, and asserts:
 The probe tears down its scratch dir at the end so the user's real
 `~/.firestaff/` data is never touched.
 
+## Fixture integrity guarantees
+
+The probe also locks three small, bounded content-integrity guarantees
+so the example cannot silently rot without the probe noticing:
+
+| Guarantee                            | How it is verified                                                    |
+|--------------------------------------|------------------------------------------------------------------------|
+| PNG signature                         | First 8 bytes of each fixture match `89 50 4E 47 0D 0A 1A 0A`         |
+| `synthetic-test-fixture` tEXt chunk   | Raw byte substring search in each fixture file                          |
+| Manifest slot dimensions populated    | Per-slot `info.width > 0 && info.height > 0` after COMPLETE promotion  |
+
+A future refactor that replaces a 1x1 PNG with arbitrary text (which
+would still contain the `synthetic-test-fixture` substring) would
+still pass the tEXt check but fail the PNG signature check. A future
+refactor that drops the manifest's `width` / `height` fields would
+fail the dimension sanity check.
+
+## Generator-agnostic behaviour
+
+The DM2 V2 HUD widget gate classifies a slot as REAL iff its
+`generator` string is not `"placeholder"` and the `source_file`
+resolves on disk. The gate is intentionally generator-string-agnostic
+— `"synthetic_test"`, `"pbr_hero"`, `"ai_upscale"`, or any future
+operator-installed marker must all promote the gate identically. As a
+guard against a future refactor that accidentally introduces
+per-generator allowlisting, the probe installs the example manifest
+after rewriting every `generator` entry from `"synthetic_test"` to
+`"pbr_hero"`, copies all seven fixtures, and verifies:
+
+- the rewritten manifest validates structurally;
+- the gate still promotes to COMPLETE;
+- every slot's recorded `generator` matches the rewritten marker
+  (not the source's `synthetic_test`);
+- the rewritten manifest no longer mentions `synthetic_test`.
+
+This is a documentation-grade regression guard, not a real pack
+shipment: the rewritten manifest is installed only inside the probe's
+`/tmp/scratch` directory and torn down at exit.
+
 ## How an operator would install a REAL pack
 
 The real install path is identical except for two things:
