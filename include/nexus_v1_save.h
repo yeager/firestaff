@@ -119,6 +119,19 @@ const Nexus_V1_SaveSlot *nexus_v1_save_get_slot(const Nexus_V1_SaveManager *mgr,
 /* Get the default save directory path (platform-specific). */
 void nexus_v1_save_default_dir(char *buf, size_t bufsz);
 
+/* Maximum serialized size of any champion pool / world state.
+ * These bound the buffer size needed to safely load any FNXS save
+ * without knowing the saved contents in advance. Computed from the
+ * documented field caps (NEXUS_MAX_CHAMPIONS, NEXUS_MAX_OBJECTS,
+ * NEXUS_MAX_EVENTS, NEXUS_MAX_TIMERS, NEXUS_SLOT_COUNT).
+ *
+ * Use these when allocating scratch buffers for load_full() /
+ * load_full_from_path() in environments where the destination's
+ * serialize_size() cannot be trusted to match the saved file
+ * (e.g. before the destination has been populated). */
+size_t nexus_v1_save_max_champion_pool_size(void);
+size_t nexus_v1_save_max_world_size(void);
+
 /* ── Full save ─────────────────────────────────────────────────────── */
 
 /* Save the entire engine+world+champion state to a slot.

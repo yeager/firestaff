@@ -391,13 +391,35 @@ static Nexus_SaveResult do_load(const char *path,
     return NEXUS_SAVE_OK;
 }
 
+/* ── Maximum serialized sizes ─────────────────────────────────────────── */
+
+/* Conservative upper bound for the champion-pool data section.
+ * Source-lock: derived from NEXUS_MAX_CHAMPIONS + NEXUS_SLOT_COUNT +
+ * champion_blob_size() = 270 bytes (matches the per-champion layout
+ * written by nexus_v1_champion_pool_serialize() in
+ * src/nexus/nexus_v1_champions.c). Header (24) + 24 * 270 +
+ * 4 * 4 (party slots) = 6520 bytes; we round up to 8 KiB for headroom
+ * so probe-then-load paths don't have to know the exact value. */
+size_t nexus_v1_save_max_champion_pool_size(void) {
+    return 8192;
+}
+
+/* Conservative upper bound for the world data section.
+ * Source-lock: derived from NEXUS_MAX_OBJECTS (256) * 26 +
+ * NEXUS_MAX_EVENTS (128) * 32 + NEXUS_MAX_TIMERS (32) * 24 +
+ * header(32) + footer(32) + 2 * 4-byte count prefixes = 11592 bytes;
+ * rounded up to 16 KiB for headroom. */
+size_t nexus_v1_save_max_world_size(void) {
+    return 16384;
+}
+
 /* ── Default save directory ─────────────────────────────────────────── */
 
 void nexus_v1_save_default_dir(char *buf, size_t bufsz) {
     const char *home = getenv("HOME");
     const char *appdata = getenv("APPDATA");
     const char *base = appdata ? appdata : (home ? home : ".");
-    const char *sub = 
+    const char *sub =
 #if defined(_WIN32) || defined(_WIN64)
         "Firestaff\\nexus\\saves\\";
 #else
@@ -614,9 +636,15 @@ Nexus_SaveResult nexus_v1_load_full(Nexus_V1_SaveManager *mgr, uint8_t slot,
     if (!mgr || !mgr->initialized) return NEXUS_SAVE_ERR_DATA_DIR;
     if (slot >= NEXUS_SAVE_MAX_SLOTS) return NEXUS_SAVE_ERR_SLOT_RANGE;
 
-    /* First load into temp buffers so we can get the exact sizes */
-    size_t champ_size_max = nexus_v1_champion_pool_serialize_size((const Nexus_V1_ChampionPool *)champion_pool);
-    size_t world_size_max = nexus_v1_world_serialize_size((const Nexus_V1_World *)world);
+    /* The destination pool/world have NOT been loaded yet at this
+     * point — they still reflect whatever the caller init'd them
+     * with (typically the empty/initial state from
+     * nexus_v1_champions_init / nexus_v1_world_init). Asking those
+     * fresh structures for their serialize_size would underestimate
+     * the saved buffer we actually need. Use the conservative max
+     * sizes so any FNXS save in the slot directory fits. */
+    size_t champ_size_max = nexus_v1_save_max_champion_pool_size();
+    size_t world_size_max = nexus_v1_save_max_world_size();
 
     uint8_t *champ_buf = (uint8_t *)malloc(champ_size_max);
     if (!champ_buf) return NEXUS_SAVE_ERR_READ;
@@ -690,8 +718,11 @@ Nexus_SaveResult nexus_v1_load_full_from_path(const char *path,
                                                 char *out_diagnostic, size_t diag_size) {
     if (!champion_pool || !world) return NEXUS_SAVE_ERR_NULL;
 
-    size_t champ_size_max = nexus_v1_champion_pool_serialize_size((const Nexus_V1_ChampionPool *)champion_pool);
-    size_t world_size_max = nexus_v1_world_serialize_size((const Nexus_V1_World *)world);
+    /* See nexus_v1_load_full() for the rationale: the destination
+     * pool/world have not been loaded yet, so use the conservative
+     * max-size helpers instead of the destinations' serialize_size. */
+    size_t champ_size_max = nexus_v1_save_max_champion_pool_size();
+    size_t world_size_max = nexus_v1_save_max_world_size();
 
     uint8_t *champ_buf = (uint8_t *)malloc(champ_size_max);
     if (!champ_buf) return NEXUS_SAVE_ERR_READ;
