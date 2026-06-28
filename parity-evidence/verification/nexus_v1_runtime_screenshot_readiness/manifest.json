@@ -1,0 +1,185 @@
+{
+  "cases": [
+    {
+      "command": {
+        "cmd": [
+          "<build-firestaff>",
+          "--game",
+          "nexus",
+          "--data-dir",
+          "<canonical_extracted_root-data-dir>",
+          "--duration",
+          "1500"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260629-011037.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260629-011037.bmp",
+        "stdout": "Nexus: using extracted files from <canonical_extracted_root-data-dir>\nNexus sound: initialized (stub \u2014 no actual audio playback)\nSaturn font: 256 chars, 16x16, 24964 bytes\nNexus V1 engine initialized (source: extracted)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>')\nNexus level 0: 64x64 Structure1B, payload=111864 bytes [DMWeb DGN]\nNexus: CD track 2 for level 0\nNexus launcher: loaded level 0"
+      },
+      "id": "canonical_extracted_root",
+      "label": "Nexus canonical extracted Track 1 root",
+      "marker_found": true,
+      "ok": true,
+      "present": true,
+      "presented_screenshots": [
+        {
+          "bit_count": 24,
+          "height": 540,
+          "name": "firestaff-presented-20260629-011037.bmp",
+          "non_black_pixels": 12660,
+          "sha256": "af018385cf2b70ae6a0e1cf0ccfc7243f3fcc16f14c68581a0104b1a9396e539",
+          "size": 1555254,
+          "valid": true,
+          "width": 960
+        }
+      ],
+      "probe": {
+        "active": 1,
+        "gameTick": 0,
+        "lastAction": "BOOT",
+        "lastOutcome": "NEXUS READY",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 0
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 0,
+          "command": 0,
+          "dequeued": 0,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 0,
+          "viewportDirty": 0
+        },
+        "presentation": {
+          "height": 200,
+          "mode": 0,
+          "width": 320
+        },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 0,
+          "inputRedrawDrawCount": 0,
+          "lastInputRedrawAfterViewportDirty": 0
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "nexus",
+        "title": "DUNGEON MASTER NEXUS"
+      },
+      "screenshots": [
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-20260629-011037.bmp",
+          "non_black_pixels": 16075,
+          "sha256": "11872689628d4e115539e5c90944c0a4ad348e151ad42d884aacf9da13201dde",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        }
+      ],
+      "status": "PASS",
+      "uses_extracted_source": true,
+      "uses_iso_source": false
+    },
+    {
+      "command": {
+        "cmd": [
+          "<build-firestaff>",
+          "--game",
+          "nexus",
+          "--data-dir",
+          "<saturn_ja_track1_iso-data-dir>",
+          "--duration",
+          "1500"
+        ],
+        "ok": true,
+        "returncode": 0,
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260629-011043.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260629-011043.bmp",
+        "stdout": "Nexus: opened ISO with 137 files\nNexus sound: initialized (stub \u2014 no actual audio playback)\nSaturn font: 256 chars, 16x16, 24964 bytes\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<saturn_ja_track1_iso-data-dir>')\nNexus level 0: 64x64 Structure1B, payload=111864 bytes [DMWeb DGN]\nNexus: CD track 2 for level 0\nNexus launcher: loaded level 0"
+      },
+      "id": "saturn_ja_track1_iso",
+      "label": "Nexus Saturn JA Track 1 ISO/CUE root",
+      "marker_found": true,
+      "ok": true,
+      "present": true,
+      "presented_screenshots": [
+        {
+          "bit_count": 24,
+          "height": 540,
+          "name": "firestaff-presented-20260629-011043.bmp",
+          "non_black_pixels": 12660,
+          "sha256": "af018385cf2b70ae6a0e1cf0ccfc7243f3fcc16f14c68581a0104b1a9396e539",
+          "size": 1555254,
+          "valid": true,
+          "width": 960
+        }
+      ],
+      "probe": {
+        "active": 1,
+        "gameTick": 0,
+        "lastAction": "BOOT",
+        "lastOutcome": "NEXUS READY",
+        "launchedEver": 1,
+        "party": {
+          "championCount": 0,
+          "direction": 0,
+          "mapIndex": 0,
+          "mapX": 0,
+          "mapY": 0
+        },
+        "pipeline": {
+          "anyMovementOccurred": 0,
+          "anyTurnOccurred": 0,
+          "command": 0,
+          "dequeued": 0,
+          "movementBlocked": 0,
+          "stepApplied": 0,
+          "turnApplied": 0,
+          "viewportDirty": 0
+        },
+        "presentation": {
+          "height": 200,
+          "mode": 0,
+          "width": 320
+        },
+        "redraw": {
+          "inputRedrawAfterViewportDirtyCount": 0,
+          "inputRedrawDrawCount": 0,
+          "lastInputRedrawAfterViewportDirty": 0
+        },
+        "schema": "firestaff_m11_autotest_runtime_probe.v1",
+        "sourceId": "nexus",
+        "title": "DUNGEON MASTER NEXUS"
+      },
+      "screenshots": [
+        {
+          "bit_count": 24,
+          "height": 200,
+          "name": "firestaff-20260629-011043.bmp",
+          "non_black_pixels": 16075,
+          "sha256": "11872689628d4e115539e5c90944c0a4ad348e151ad42d884aacf9da13201dde",
+          "size": 192054,
+          "valid": true,
+          "width": 320
+        }
+      ],
+      "status": "PASS",
+      "uses_extracted_source": false,
+      "uses_iso_source": true
+    }
+  ],
+  "firestaff": "build/firestaff",
+  "generated_at": "2026-06-28T23:10:18.403068+00:00",
+  "non_claims": [
+    "No public Nexus screenshot image is promoted.",
+    "No generated or mock image is used.",
+    "No claim of full Nexus runtime playability or final text/3D/BPK rendering parity."
+  ],
+  "schema": "firestaff.parity.nexus_v1_runtime_screenshot_readiness.v1",
+  "status": "PASS"
+}
