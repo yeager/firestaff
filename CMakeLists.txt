@@ -11445,6 +11445,41 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_save_load_slots
     )
 
+    # DM1 V1 original DMSAVE/DMGAME shape classifier.
+    # Header-only readiness gate: recognizes the ReDMCSB DM_SAVE_HEADER
+    # envelope but keeps import blocked until real bytes round-trip.
+    add_executable(test_dm1_v1_original_save_classifier_pc34
+        tests/test_dm1_v1_original_save_classifier_pc34.c
+        src/dm1/dm1_v1_original_save_classifier.c
+    )
+    target_link_libraries(test_dm1_v1_original_save_classifier_pc34 PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_original_save_classifier_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_original_save_classifier_pc34
+        COMMAND test_dm1_v1_original_save_classifier_pc34
+    )
+    set_tests_properties(dm1_v1_original_save_classifier_pc34 PROPERTIES
+        LABELS "tier2;dm1;save;interop;classifier"
+    )
+
+    add_executable(firestaff_dm1_v1_original_save_classifier_probe
+        probes/dm1/firestaff_dm1_v1_original_save_classifier_probe.c
+        src/dm1/dm1_v1_original_save_classifier.c
+    )
+    target_link_libraries(firestaff_dm1_v1_original_save_classifier_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_original_save_classifier_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_original_save_classifier_probe
+        COMMAND firestaff_dm1_v1_original_save_classifier_probe
+    )
+    set_tests_properties(dm1_v1_original_save_classifier_probe PROPERTIES
+        LABELS "tier2;dm1;save;interop;real_data;skip_safe"
+    )
+
     # DM1 V1 Combat & Damage System source-lock gate
     add_executable(test_dm1_v1_grp02_f0192_poison_resistance_source_lock_pc34_compat
         tests/test_dm1_v1_grp02_f0192_poison_resistance_source_lock_pc34_compat.c
