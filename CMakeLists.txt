@@ -14311,6 +14311,34 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 S2D runtime text-layout probe. Headless and data-free by
+# default: builds a bounded section→glyph-range map from a synthetic
+# 4-section SCR fixture, then drives the layout cursor over ASCII
+# strings and verifies glyph advance / '\n' / '\t' / clipping / max_chars
+# cap / out-of-coverage skip behavior plus a deterministic FNV-1a
+# framebuffer hash. An optional real FONT256.S2D path (skip-safe) feeds
+# the same layout over the verified 25,012-byte asset when the operator
+# has staged it. Source-lock:
+#   include/nexus_v1_s2d_text_layout.h  (new API: map + cursor + draw)
+#   src/nexus/nexus_v1_s2d_text_layout.c (new implementation)
+#   include/nexus_v1_saturn_font.h       (Nexus_V1_Font, Nexus_V1_FontSections)
+#   src/nexus/nexus_v1_saturn_font.c     (load_sections + draw_glyph_indexed)
+#   docs/FIRESTAFF_GAP_LIST.md           (S2D PARTIAL row, "bind text layout")
+add_executable(firestaff_nexus_v1_s2d_runtime_text_layout_probe
+    probes/nexus/firestaff_nexus_v1_s2d_runtime_text_layout_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_s2d_runtime_text_layout_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_s2d_runtime_text_layout_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_s2d_runtime_text_layout_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus V1 DMDF/MNS multi-model bounds + cleanup probe. Headless and
 # skip-safe: a synthetic path proves the slot-pool + cap + cleanup
 # + failure-isolation invariants without any real assets; an optional
@@ -14435,6 +14463,14 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_saturn_font_scr_sections PROPERTIES
         LABELS "tier4;nexus;font;scr_sections"
+    )
+
+    add_test(
+        NAME nexus_v1_s2d_runtime_text_layout
+        COMMAND firestaff_nexus_v1_s2d_runtime_text_layout_probe
+    )
+    set_tests_properties(nexus_v1_s2d_runtime_text_layout PROPERTIES
+        LABELS "tier4;nexus;font;layout;skip_safe"
     )
 
     # Nexus V1 DMDF/MNS multi-model bounds + cleanup gate.
