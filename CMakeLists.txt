@@ -7011,6 +7011,7 @@ if(BUILD_TESTING)
             "close_while_c045_pending"
             "double_open_close"
             "double_open_close_guard"
+            "first_interaction_focus"
             "full_chain"
             "icon_refresh"
             "inventory_full_swap"
