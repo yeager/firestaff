@@ -301,6 +301,8 @@ need real-asset proof.
 
 - **DM2 V2 HUD widget real-size slot receipt**: a new CTest probe generates a scratch-only 32x32 `compass_rose` PNG, installs it as a non-placeholder `hud_chrome` receipt, and verifies that one chrome slot classifies as `REAL` while the rest of the manifest remains procedural placeholder. This is classification evidence only; finished widget art and the runtime bitmap blit remain open.
 
+- **DM2 V1 startup/profile handoff gate**: the M11 DM2 startup regression now covers both sides of the boundary: incomplete required files and unverified GRAPHICS/DUNGEON pairs are blocked before M11 claims the DM2 boot runtime, while a hash-verified profile still reaches the DM2 V1 runtime handoff and one idle tick when local data is available. No DM2 playability or pixel-parity claim is added.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
