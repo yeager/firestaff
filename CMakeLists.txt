@@ -15932,6 +15932,26 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_dgn_actor_slot_bounds
     )
 
+    # ── Nexus V1 DGN geometry-readiness seed ──────────────────────
+    # Parser-level gate for the DMWeb 2048-byte-block DGN container:
+    # exposes the variable Structure1B offset, bounded Structure1
+    # post-grid geometry span, and Structure1B collision descriptor refs
+    # without claiming full Structure1C/F mesh decode or runtime capture.
+    add_executable(test_nexus_v1_dgn_geometry_readiness
+        tests/test_nexus_v1_dgn_geometry_readiness.c
+        src/nexus/nexus_v1_dungeon.c
+    )
+    target_include_directories(test_nexus_v1_dgn_geometry_readiness PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_geometry_readiness PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_geometry_readiness
+        COMMAND test_nexus_v1_dgn_geometry_readiness
+    )
+
     # ── Nexus V1 DMDF embedded palette / string block bounds gate ──
     # Parser-level gate (no game data required). Verifies the new
     # nexus_v1_dmdf_parse_palette_block / nexus_v1_dmdf_parse_string_block
