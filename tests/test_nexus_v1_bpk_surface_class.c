@@ -267,6 +267,7 @@ static void test_bpx3_trailer_entry(void) {
         r[19] = 15U;
         wr32_be(r + 20, 16U * 15U);
         wr32_be(r + 24, data_offset);
+        wr32_be(r + 28, (uint32_t)sizeof(payload));
     }
 
     memcpy(buf + data_offset, payload, sizeof(payload));
@@ -301,6 +302,10 @@ static void test_bpx3_trailer_entry(void) {
                picture->pixel_count == 16U * 15U &&
                picture->has_prs3_magic == 1,
            "picture entry preserves 16x15 14bpp / 240 pixels / PRS3 marker");
+    expect(picture->offset == data_offset &&
+               picture->packed_size == (uint32_t)sizeof(payload) &&
+               picture->unpacked_size == 16U * 15U * 2U,
+           "picture entry carries bounded packed span and 2-byte RGB565 surface size");
 }
 
 /* Trailer entries must reject width != 0 / height != 0 / nonzero tail. */
@@ -336,6 +341,58 @@ static void test_bpx3_trailer_rejections(void) {
     expect(nexus_v1_bpx_prs3_parse(buf, sizeof(buf), &archive) ==
                NEXUS_V1_BPX_BPK_ERR_UNSUPPORTED,
            "BPX3 rejects trailer with nonzero reserved bytes");
+}
+
+static void test_bpx3_prs3_span_rejections(void) {
+    uint8_t buf[160];
+    const uint32_t table_offset = NEXUS_V1_BPX0_HEADER_SIZE;
+    const uint32_t data_offset = NEXUS_V1_BPX0_HEADER_SIZE +
+        (2u * NEXUS_V1_BPX0_ENTRY_SIZE);
+    Nexus_V1_BpxBpkArchive archive;
+
+    memset(buf, 0, sizeof(buf));
+    memcpy(buf, "BPX3", 4);
+    wr16_be(buf + 4, 1);
+    wr16_be(buf + 6, 2);
+    wr32_be(buf + 8, table_offset);
+    wr32_be(buf + 12, data_offset);
+
+    /* Entry 0: 4x4 indexed picture at data_offset, 8 packed bytes. */
+    memcpy(buf + table_offset, "PIC0", 4);
+    wr16_be(buf + table_offset + 16, 4U);
+    buf[table_offset + 18] = NEXUS_V1_BPK_MODE_8BPP;
+    buf[table_offset + 19] = 4U;
+    wr32_be(buf + table_offset + 20, 16U);
+    wr32_be(buf + table_offset + 24, data_offset);
+    wr32_be(buf + table_offset + 28, 8U);
+
+    /* Entry 1: 4x4 indexed picture whose span overlaps entry 0. */
+    memcpy(buf + table_offset + NEXUS_V1_BPX0_ENTRY_SIZE, "PIC1", 4);
+    wr16_be(buf + table_offset + NEXUS_V1_BPX0_ENTRY_SIZE + 16, 4U);
+    buf[table_offset + NEXUS_V1_BPX0_ENTRY_SIZE + 18] =
+        NEXUS_V1_BPK_MODE_8BPP;
+    buf[table_offset + NEXUS_V1_BPX0_ENTRY_SIZE + 19] = 4U;
+    wr32_be(buf + table_offset + NEXUS_V1_BPX0_ENTRY_SIZE + 20, 16U);
+    wr32_be(buf + table_offset + NEXUS_V1_BPX0_ENTRY_SIZE + 24,
+            data_offset + 4U);
+    wr32_be(buf + table_offset + NEXUS_V1_BPX0_ENTRY_SIZE + 28, 8U);
+    expect(nexus_v1_bpx_prs3_parse(buf, sizeof(buf), &archive) ==
+               NEXUS_V1_BPX_BPK_ERR_BOUNDS,
+           "BPX3 rejects overlapping PRS3 packed payload spans");
+
+    /* Move entry 1 past entry 0, then make it run beyond EOF. */
+    wr32_be(buf + table_offset + NEXUS_V1_BPX0_ENTRY_SIZE + 24,
+            data_offset + 8U);
+    wr32_be(buf + table_offset + NEXUS_V1_BPX0_ENTRY_SIZE + 28, 4096U);
+    expect(nexus_v1_bpx_prs3_parse(buf, sizeof(buf), &archive) ==
+               NEXUS_V1_BPX_BPK_ERR_BOUNDS,
+           "BPX3 rejects PRS3 packed payload span past EOF");
+
+    /* Zero-size payloads are not a useful synthetic PRS3 contract. */
+    wr32_be(buf + table_offset + NEXUS_V1_BPX0_ENTRY_SIZE + 28, 0U);
+    expect(nexus_v1_bpx_prs3_parse(buf, sizeof(buf), &archive) ==
+               NEXUS_V1_BPX_BPK_ERR_BOUNDS,
+           "BPX3 rejects zero-size PRS3 packed payload span");
 }
 
 /* ---- Optional real MENU.BPK receipt ---- */
@@ -437,6 +494,7 @@ int main(void) {
     test_synthetic_surface_estimate();
     test_bpx3_trailer_entry();
     test_bpx3_trailer_rejections();
+    test_bpx3_prs3_span_rejections();
     test_optional_local_menu_bpk();
 
     if (g_failures) return 1;

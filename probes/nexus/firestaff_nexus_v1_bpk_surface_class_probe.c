@@ -103,6 +103,7 @@ static size_t make_synthetic_bpx3_with_trailer(uint8_t *buf, size_t cap) {
         r[19] = 15U;
         wb32(r + 20, 16U * 15U);
         wb32(r + 24, data_offset);
+        wb32(r + 28, (uint32_t)sizeof(payload));
     }
 
     memcpy(buf + data_offset, payload, sizeof(payload));
@@ -183,6 +184,10 @@ static void test_synthetic_bpx3_trailer(void) {
               picture->mode == NEXUS_V1_BPK_MODE_16BPP &&
               picture->pixel_count == 16U * 15U,
           "entry[1] preserves 16x15 14bpp / 240 pixels");
+    CHECK(picture->offset + picture->packed_size == (uint32_t)size &&
+              picture->packed_size == 16U &&
+              picture->unpacked_size == 16U * 15U * 2U,
+          "entry[1] has bounded packed span and RGB565 unpacked byte count");
 
     /* Reject a trailer with nonzero reserved (offset field must stay 0). */
     {
@@ -202,6 +207,26 @@ static void test_synthetic_bpx3_trailer(void) {
         rc = nexus_v1_bpx_prs3_parse(bad, bad_size, &archive);
         CHECK(rc == NEXUS_V1_BPX_BPK_ERR_BOUNDS,
               "BPX3 rejects trailer with nonzero width");
+    }
+
+    /* Reject a PRS3 picture with a packed span that runs past EOF. */
+    {
+        uint8_t bad[160];
+        size_t bad_size = make_synthetic_bpx3_with_trailer(bad, sizeof(bad));
+        wb32(bad + 16 + NEXUS_V1_BPX0_ENTRY_SIZE + 28, 4096U);
+        rc = nexus_v1_bpx_prs3_parse(bad, bad_size, &archive);
+        CHECK(rc == NEXUS_V1_BPX_BPK_ERR_BOUNDS,
+              "BPX3 rejects PRS3 packed payload span past EOF");
+    }
+
+    /* Reject a PRS3 picture with a zero packed span. */
+    {
+        uint8_t bad[160];
+        size_t bad_size = make_synthetic_bpx3_with_trailer(bad, sizeof(bad));
+        wb32(bad + 16 + NEXUS_V1_BPX0_ENTRY_SIZE + 28, 0U);
+        rc = nexus_v1_bpx_prs3_parse(bad, bad_size, &archive);
+        CHECK(rc == NEXUS_V1_BPX_BPK_ERR_BOUNDS,
+              "BPX3 rejects zero-size PRS3 packed payload span");
     }
 }
 

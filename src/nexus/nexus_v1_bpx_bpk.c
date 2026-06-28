@@ -156,6 +156,8 @@ int nexus_v1_bpx_prs3_parse(const uint8_t *data,
     uint32_t data_offset;
     size_t table_bytes;
     uint16_t i;
+    uint32_t last_payload_end = 0U;
+    int saw_payload = 0;
 
     if (!data || !out_archive) return NEXUS_V1_BPX_BPK_ERR_NULL;
     memset(out_archive, 0, sizeof(*out_archive));
@@ -197,6 +199,8 @@ int nexus_v1_bpx_prs3_parse(const uint8_t *data,
         uint8_t mode;
         uint8_t height;
         uint32_t offset;
+        uint32_t packed_size;
+        uint32_t bpp;
         uint32_t pixel_count;
 
         /* 32-byte synthetic PRS3 record layout (BPX3):
@@ -206,7 +210,7 @@ int nexus_v1_bpx_prs3_parse(const uint8_t *data,
          *   byte  19    : height (BE uint8) -- aligned to MENU.BPK byte 19
          *   bytes 20..24 : pixel count (BE uint32, must equal width*height)
          *   bytes 24..28 : payload offset (BE uint32)
-         *   bytes 28..32 : reserved (must be zero)
+         *   bytes 28..32 : packed payload size (BE uint32)
          *
          * The PRS3 magic ("PRS3") and version word (0x00000001) are
          * implicit and re-emitted by extract/printer helpers when needed.
@@ -257,6 +261,10 @@ int nexus_v1_bpx_prs3_parse(const uint8_t *data,
         if (width == 0u || height == 0u) {
             return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
         }
+        bpp = nexus_v1_bpk_mode_to_bpp(mode);
+        if (bpp == 0U) {
+            return NEXUS_V1_BPX_BPK_ERR_METHOD;
+        }
 
         pixel_count = rb32(record + 20);
         if (pixel_count != (uint32_t)width * (uint32_t)height) {
@@ -264,16 +272,25 @@ int nexus_v1_bpx_prs3_parse(const uint8_t *data,
         }
 
         offset = rb32(record + 24);
-        if (offset < data_offset || offset > size) {
+        packed_size = rb32(record + 28);
+        if (packed_size == 0U) {
             return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
         }
-        if (!is_zero_reserved(record + 28, 4)) {
-            return NEXUS_V1_BPX_BPK_ERR_UNSUPPORTED;
+        if (offset < data_offset || !range_fits(offset, packed_size, size)) {
+            return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
         }
+        if (offset > UINT32_MAX - packed_size) {
+            return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
+        }
+        if (saw_payload && offset < last_payload_end) {
+            return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
+        }
+        saw_payload = 1;
+        last_payload_end = offset + packed_size;
 
         entry->offset = offset;
-        entry->packed_size = (uint32_t)(size - offset);
-        entry->unpacked_size = pixel_count * (uint32_t)mode;
+        entry->packed_size = packed_size;
+        entry->unpacked_size = pixel_count * bpp;
         entry->method = NEXUS_V1_BPX_BPK_METHOD_PRS3_UNKNOWN;
         entry->width = width;
         entry->height = height;

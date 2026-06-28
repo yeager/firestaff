@@ -67,8 +67,9 @@ static void wb32(uint8_t *p, uint32_t v) {
 }
 
 /* Build a synthetic BPX3 archive that exercises the new MENU.BPK-shaped
- * PRS3 contract: each entry carries width/height/mode/pixel_count and
- * an implicit PRS3 magic + 0x00000001 version. */
+ * PRS3 contract: each entry carries width/height/mode/pixel_count, an
+ * exact packed payload span, and an implicit PRS3 magic + 0x00000001
+ * version. */
 static size_t make_synthetic_bpx3(uint8_t *buf, size_t cap) {
     const uint32_t table_offset = NEXUS_V1_BPX0_HEADER_SIZE;
     /* 3 entries of NEXUS_V1_BPX0_ENTRY_SIZE bytes each, so the table
@@ -102,6 +103,7 @@ static size_t make_synthetic_bpx3(uint8_t *buf, size_t cap) {
     r[19] = 15;                        /* height */
     wb32(r + 20, 16u * 15u);           /* pixel_count */
     wb32(r + 24, data_offset);         /* payload offset */
+    wb32(r + 28, (uint32_t)sizeof(blob0)); /* packed payload size */
 
     /* Entry 1: 54x31 6bpp, 1674 pixels. */
     r = buf + table_offset + NEXUS_V1_BPX0_ENTRY_SIZE;
@@ -112,6 +114,7 @@ static size_t make_synthetic_bpx3(uint8_t *buf, size_t cap) {
     r[19] = 31;
     wb32(r + 20, 54u * 31u);
     wb32(r + 24, (uint32_t)(data_offset + sizeof(blob0)));
+    wb32(r + 28, (uint32_t)sizeof(blob1));
 
     /* Entry 2: 8x8 32bpp, 64 pixels. */
     r = buf + table_offset + 2u * NEXUS_V1_BPX0_ENTRY_SIZE;
@@ -122,6 +125,7 @@ static size_t make_synthetic_bpx3(uint8_t *buf, size_t cap) {
     r[19] = 8;
     wb32(r + 20, 8u * 8u);
     wb32(r + 24, (uint32_t)(data_offset + sizeof(blob0) + sizeof(blob1)));
+    wb32(r + 28, (uint32_t)sizeof(blob2));
 
     /* Payloads (opaque, intentionally unsupported). */
     memcpy(buf + data_offset, blob0, sizeof(blob0));
@@ -183,9 +187,11 @@ static void test_synthetic_bpx3_contract(void) {
           entry->width == 16 && entry->height == 15 &&
           entry->mode == NEXUS_V1_BPK_MODE_16BPP &&
           entry->pixel_count == 16u * 15u &&
+          entry->packed_size == 16u &&
+          entry->unpacked_size == (16u * 15u * 2u) &&
           entry->has_prs3_magic == 1 &&
           entry->method == NEXUS_V1_BPX_BPK_METHOD_PRS3_UNKNOWN,
-          "MENU.A: width=16 height=15 mode=14 pixels=240 PRS3 marker set");
+          "MENU.A: 16x15 mode=14 pixels=240 packed=16 unpacked=480 PRS3");
 
     entry = nexus_v1_bpx_bpk_find_entry(&archive, "MENU.B");
     CHECK(entry != NULL &&
@@ -197,8 +203,10 @@ static void test_synthetic_bpx3_contract(void) {
     entry = nexus_v1_bpx_bpk_find_entry(&archive, "MENU.C");
     CHECK(entry != NULL &&
           entry->mode == NEXUS_V1_BPK_MODE_32BPP &&
-          entry->pixel_count == 64u,
-          "MENU.C: width=8 height=8 mode=30 pixels=64");
+          entry->pixel_count == 64u &&
+          entry->packed_size == 4u &&
+          entry->unpacked_size == 64u * 4u,
+          "MENU.C: width=8 height=8 mode=30 pixels=64 packed=4 unpacked=256");
 
     /* Reject bad magic. */
     buf[0] = 'X';
@@ -225,6 +233,26 @@ static void test_synthetic_bpx3_contract(void) {
         rc = nexus_v1_bpx_prs3_parse(bad, bad_size, &archive);
         CHECK(rc == NEXUS_V1_BPX_BPK_ERR_METHOD,
               "synthetic BPX3 rejects unknown mode tag");
+    }
+
+    /* Reject a zero-length PRS3 payload span. */
+    {
+        uint8_t bad[256];
+        size_t bad_size = make_synthetic_bpx3(bad, sizeof(bad));
+        wb32(bad + 16 + 28, 0u);
+        rc = nexus_v1_bpx_prs3_parse(bad, bad_size, &archive);
+        CHECK(rc == NEXUS_V1_BPX_BPK_ERR_BOUNDS,
+              "synthetic BPX3 rejects zero packed payload size");
+    }
+
+    /* Reject overlapping PRS3 payload spans in table order. */
+    {
+        uint8_t bad[256];
+        size_t bad_size = make_synthetic_bpx3(bad, sizeof(bad));
+        wb32(bad + 16 + 28, 20u); /* entry 0 now overlaps entry 1 */
+        rc = nexus_v1_bpx_prs3_parse(bad, bad_size, &archive);
+        CHECK(rc == NEXUS_V1_BPX_BPK_ERR_BOUNDS,
+              "synthetic BPX3 rejects overlapping packed payload spans");
     }
 }
 
