@@ -9550,6 +9550,34 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat
     )
 
+    # DM1 V1 champion-panel HAND-SLOT REFRESH walk-order gate.
+    # Source-locked against CHAMDRAW.C F0295:1153-1182 +
+    # CHAMDRAW.C F0296:1184-1262 (slotbox walk-order + leader-hand
+    # icon refresh precedence + G0299 candidate early-return at
+    # lines 1208-1210 + G0423 inventory-champion ordinal skip at
+    # lines 1217-1219 + F0077/F0078 mouse screen-update bracket) +
+    # OBJECT.C F0033/F0036/F0038 + MOUSE.C F0068/F0077/F0078 +
+    # DEFS.H C01/C195/C201/G0299/G0423/G0305/M070/M000/M001.
+    # Disjoint from dead_member_hand_refresh (F0296 walk with a
+    # dead member + F0292 dead-status-box branch), hand_slot_priority
+    # (CHAMPION.C F0302 input dispatch), portrait_box_redraw_states
+    # (F0291/F0292/F0296 portrait-box event matrix), mirror_candidate
+    # siblings, status_hand_rotation (F0284), and the per-state
+    # redraw + per-action-hand slot-box dispatch family. Contract-
+    # only; no real GRAPHICS.DAT / DUNGEON.DAT load.
+    add_executable(test_dm1_v1_champion_panel_hand_slot_refresh_pc34_compat
+        tests/test_dm1_v1_champion_panel_hand_slot_refresh_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hand_slot_refresh_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_hand_slot_refresh_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_hand_slot_refresh_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_hand_slot_refresh_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_hand_slot_refresh_pc34_compat
+    )
+
     # DM1 V1 champion-panel DISABLED/UNAVAILABLE ICON STATE gate.
     # Source-locked against CHAMPION.C F0330:2208-2255
     # (MASK0x8000_ACTION_HAND | MASK0x0008_DISABLE_ACTION) +
