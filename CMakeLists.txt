@@ -2974,6 +2974,30 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 Hint Oracle graphical overlay render probe.
+# Synthetic render always runs without game data; when a known
+# HCSB.HTC is staged, the probe decodes hint 0 through the existing
+# real cache and draws the resulting page into an 8-bit framebuffer.
+# Skip-safe by design.
+# Source: ReDMCSB HINTLOAD.C:11-18, HINTHTC.C:177-358,
+#         HINTLZW.C:122-212, dmweb Hint Oracle Files page.
+add_executable(firestaff_csb_v1_hint_oracle_graphical_overlay_probe
+    probes/csb/firestaff_csb_v1_hint_oracle_graphical_overlay_probe.c
+    src/csb/csb_hint_oracle_htc.c
+    src/csb/csb_hint_oracle_htc_real_scan.c
+    src/csb/csb_hint_oracle_graphical_overlay.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_hint_oracle_graphical_overlay_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_hint_oracle_graphical_overlay_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_hint_oracle_graphical_overlay_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Hint Oracle HCSB.HTC variant catalog + classifier probe.
 #
 # Bounded metadata layer that sits on top of:
@@ -16098,6 +16122,34 @@ if(BUILD_TESTING)
         COMMAND test_csb_hint_oracle_ui_runtime_binding
     )
 
+    # CSB Hint Oracle graphical overlay boundary.
+    # Data-free contract tests for turning staged decoded Hint Oracle
+    # text into a framed 8-bit framebuffer overlay. Synthetic fixture
+    # only; no real asset is loaded and variant classification remains
+    # covered by csb_hint_oracle_htc_variant.
+    add_executable(test_csb_hint_oracle_graphical_overlay
+        tests/test_csb_hint_oracle_graphical_overlay.c
+        src/csb/csb_hint_oracle_htc.c
+        src/csb/csb_hint_oracle_htc_real_scan.c
+        src/csb/csb_hint_oracle_graphical_overlay.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_hint_oracle_graphical_overlay PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_hint_oracle_graphical_overlay PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_hint_oracle_graphical_overlay_unit
+        COMMAND test_csb_hint_oracle_graphical_overlay
+    )
+    set_tests_properties(csb_hint_oracle_graphical_overlay_unit PROPERTIES
+        LABELS "tier2;csb;hint_oracle;data_free;render"
+    )
+
     # ── CSB Hint Oracle HCSB.HTC variant catalog ──────────────────
     # Data-free contract tests for the variant catalog + classifier
     # (md5 → variant, parsed-content → variant, cache → variant,
@@ -16802,6 +16854,21 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_hint_oracle_ui_runtime_binding PROPERTIES
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 Hint Oracle graphical overlay probe ctest entry
+    # Headless framebuffer render gate for staged decoded Hint Oracle
+    # pages. Synthetic path always runs; real HCSB.HTC render is
+    # skip-safe when no known file is staged.
+    if(TARGET firestaff_csb_v1_hint_oracle_graphical_overlay_probe)
+        add_test(
+            NAME csb_v1_hint_oracle_graphical_overlay
+            COMMAND firestaff_csb_v1_hint_oracle_graphical_overlay_probe
+        )
+        set_tests_properties(csb_v1_hint_oracle_graphical_overlay PROPERTIES
+            LABELS "tier2;csb;hint_oracle;real_data;skip_safe;render"
             TIMEOUT 120
         )
     endif()
