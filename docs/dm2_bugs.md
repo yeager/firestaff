@@ -27,6 +27,7 @@ Dungeon Master II is a relatively stable game for its era, but several bugs, qui
 - **Severity**: Low (design choice, not a bug)
 - **Description**: Edits to dungeon.dat only appear in new games. Once a game is saved, a `dmgame.dat` is created that locks in the dungeon state from that moment. Existing saves ignore subsequent dungeon.dat changes.
 - **Forum reference**: Dungeon Master Forum, DMDC2 Help thread (2014)
+- **Firestaff decision**: `dm2_v1_dungeon_dat_edits_new_game_only` is gated by `dm2_v1_quirk_decisions`. Firestaff preserves the original-compatible behavior: a changed `dungeon.dat` is consumed only by a fresh new-game/load-from-assets path, while an existing saved game treats the serialized dungeon snapshot in the save as authoritative. This is a compatibility decision record only; it does not claim original save-byte interoperability beyond the current DM2 save gates.
 
 ### Transparency Loss on Imported Graphics
 - **Severity**: Low
