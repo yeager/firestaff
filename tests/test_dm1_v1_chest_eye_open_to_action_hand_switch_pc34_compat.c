@@ -271,6 +271,21 @@ static void test_eye_routes_open_chest_a_to_leader_hand_chest_b(void)
     ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), chestB,
               "leader hand holds chest B before eye click");
 
+    /* Seed stale detail-panel state so the PANEL.C F0352 -> F0342
+     * container branch proves it replaces prior item descriptions and
+     * side panels instead of merely inheriting a zeroed M11 fixture. */
+    state.v1ObjectDescriptionPanelActive = 1;
+    state.v1ObjectDescriptionThing = make_weapon_thing(WEAPON_BASE_FOR_CHEST_A + 8);
+    state.v1ObjectDescriptionIconIndex = 31;
+    snprintf(state.v1ObjectDescriptionName,
+             sizeof(state.v1ObjectDescriptionName), "STALE DAGGER");
+    snprintf(state.v1ObjectDescriptionBody,
+             sizeof(state.v1ObjectDescriptionBody), "STALE DESCRIPTION");
+    state.v1ScrollPanelActive = 1;
+    state.v1ScrollPanelThing = make_weapon_thing(WEAPON_BASE_FOR_CHEST_B);
+    state.v1ChampionStatsPanelActive = 1;
+    state.v1FoodWaterPanelActive = 1;
+
     /* The C071 eye click on a leader-hand container routes through
      * PANEL.C F0352 -> F0342 -> F0333 with P0694_B_PressingEye = 1.
      * F0333 lines 35-38 first closes chest A through F0334, which
@@ -344,6 +359,10 @@ static void test_eye_routes_open_chest_a_to_leader_hand_chest_b(void)
               "container eye route clears object-description thing");
     ASSERT_EQ(state.v1ObjectDescriptionIconIndex, -1,
               "container eye route clears object-description icon");
+    ASSERT_EQ(state.v1ObjectDescriptionName[0], '\0',
+              "container eye route clears stale object-description name");
+    ASSERT_EQ(state.v1ObjectDescriptionBody[0], '\0',
+              "container eye route clears stale object-description body");
     ASSERT_EQ(state.v1ScrollPanelActive, 0,
               "container eye route clears scroll panel state");
     ASSERT_EQ(state.v1ScrollPanelThing, THING_NONE,
