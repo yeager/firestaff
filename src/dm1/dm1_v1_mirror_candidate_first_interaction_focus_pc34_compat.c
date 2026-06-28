@@ -124,45 +124,55 @@ int dm1_v1_mirror_candidate_first_interaction_focus_run_pc34(
 {
     DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 state;
 
-    if (!out) {
+    dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(&state);
+    return dm1_v1_mirror_candidate_first_interaction_focus_try_pc34(&state,
+                                                                    out);
+}
+
+int dm1_v1_mirror_candidate_first_interaction_focus_try_pc34(
+    DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 *state,
+    DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 *out)
+{
+    int candidatePublished;
+
+    if (!state || !out) {
         return 0;
     }
     memset(out, 0, sizeof(*out));
-    dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(&state);
+    out->partyCountBefore = state->partyChampionCount;
+    out->candidateOrdinalBefore = state->candidateChampionOrdinal;
+    out->leaderIndexBefore = state->leaderIndex;
+    out->inventoryOrdinalBefore = state->inventoryChampionOrdinal;
 
-    out->partyCountBefore = state.partyChampionCount;
-    out->candidateOrdinalBefore = state.candidateChampionOrdinal;
-    out->leaderIndexBefore = state.leaderIndex;
-    out->inventoryOrdinalBefore = state.inventoryChampionOrdinal;
-
-    if (!f0280_add_first_candidate(&state)) {
-        return 0;
+    candidatePublished = f0280_add_first_candidate(state);
+    if (candidatePublished) {
+        dispatch_guarded_input_focus_probe(state);
     }
-    dispatch_guarded_input_focus_probe(&state);
 
-    out->partyCountAfter = state.partyChampionCount;
-    out->candidateOrdinalAfter = state.candidateChampionOrdinal;
-    out->leaderIndexAfter = state.leaderIndex;
-    out->magicCasterChampionIndexAfter = state.magicCasterChampionIndex;
-    out->inventoryChampionOrdinalAfter = state.inventoryChampionOrdinal;
-    out->panelContentAfter = state.panelContent;
-    out->panelGraphicAfter = state.panelGraphic;
-    out->menusDisabledAfter = state.menusDisabled;
-    out->f0280CallCount = state.f0280CallCount;
-    out->f0355InventoryToggleCount = state.f0355InventoryToggleCount;
-    out->f0368SetLeaderCount = state.f0368SetLeaderCount;
-    out->f0394SetMagicCasterCount = state.f0394SetMagicCasterCount;
-    out->blockedStatusBoxCount = state.blockedStatusBoxCount;
-    out->blockedInventoryToggleCount = state.blockedInventoryToggleCount;
-    out->blockedSpellAreaCount = state.blockedSpellAreaCount;
-    out->blockedActionAreaCount = state.blockedActionAreaCount;
+    out->partyCountAfter = state->partyChampionCount;
+    out->candidateOrdinalAfter = state->candidateChampionOrdinal;
+    out->leaderIndexAfter = state->leaderIndex;
+    out->magicCasterChampionIndexAfter = state->magicCasterChampionIndex;
+    out->inventoryChampionOrdinalAfter = state->inventoryChampionOrdinal;
+    out->panelContentAfter = state->panelContent;
+    out->panelGraphicAfter = state->panelGraphic;
+    out->menusDisabledAfter = state->menusDisabled;
+    out->f0280CallCount = state->f0280CallCount;
+    out->f0355InventoryToggleCount = state->f0355InventoryToggleCount;
+    out->f0368SetLeaderCount = state->f0368SetLeaderCount;
+    out->f0394SetMagicCasterCount = state->f0394SetMagicCasterCount;
+    out->blockedStatusBoxCount = state->blockedStatusBoxCount;
+    out->blockedInventoryToggleCount = state->blockedInventoryToggleCount;
+    out->blockedSpellAreaCount = state->blockedSpellAreaCount;
+    out->blockedActionAreaCount = state->blockedActionAreaCount;
     out->focusOwnedByCandidate =
-        state.candidateChampionOrdinal == kFirstChampionOrdinal &&
-        state.inventoryChampionOrdinal == kFirstChampionOrdinal &&
-        state.panelContent == kPanelC040 &&
-        state.menusDisabled;
+        state->candidateChampionOrdinal == kFirstChampionOrdinal &&
+        state->inventoryChampionOrdinal == kFirstChampionOrdinal &&
+        state->panelContent == kPanelC040 &&
+        state->menusDisabled;
 
     out->accepted =
+        candidatePublished &&
         out->partyCountBefore == 0 &&
         out->candidateOrdinalBefore == 0 &&
         out->leaderIndexBefore == kNoChampion &&
@@ -184,6 +194,6 @@ int dm1_v1_mirror_candidate_first_interaction_focus_run_pc34(
         out->blockedSpellAreaCount == 1 &&
         out->blockedActionAreaCount == 1 &&
         out->focusOwnedByCandidate == 1;
-    out->assertionCount = 21;
+    out->assertionCount = out->accepted ? 21 : 0;
     return out->accepted;
 }

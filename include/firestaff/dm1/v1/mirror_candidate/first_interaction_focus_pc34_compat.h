@@ -89,6 +89,10 @@ dm1_v1_mirror_candidate_first_interaction_focus_source_evidence_pc34(void);
 void dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(
     DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 *state);
 
+int dm1_v1_mirror_candidate_first_interaction_focus_try_pc34(
+    DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 *state,
+    DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 *out);
+
 int dm1_v1_mirror_candidate_first_interaction_focus_run_pc34(
     DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 *out);
 

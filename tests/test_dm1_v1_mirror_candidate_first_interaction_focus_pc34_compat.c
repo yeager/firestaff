@@ -100,6 +100,47 @@ static void test_g0299_blocks_sibling_input_focus(void)
     CHECK(r.blockedActionAreaCount == 1);
 }
 
+static void test_f0280_publication_guards_reject_unpublishable_state(void)
+{
+    DM1_V1_MirrorCandidateFirstInteractionFocusStatePc34 state;
+    DM1_V1_MirrorCandidateFirstInteractionFocusResultPc34 r;
+    int ok;
+
+    dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(&state);
+    state.leaderHandEmpty = 0;
+    ok = dm1_v1_mirror_candidate_first_interaction_focus_try_pc34(&state,
+                                                                  &r);
+    CHECK(ok == 0);
+    CHECK(r.accepted == 0);
+    CHECK(r.partyCountBefore == 0);
+    CHECK(r.partyCountAfter == 0);
+    CHECK(r.candidateOrdinalAfter == 0);
+    CHECK(r.inventoryChampionOrdinalAfter == 0);
+    CHECK(r.panelContentAfter == 0);
+    CHECK(r.menusDisabledAfter == 0);
+    CHECK(r.f0280CallCount == 0);
+    CHECK(r.f0355InventoryToggleCount == 0);
+    CHECK(r.blockedStatusBoxCount == 0);
+    CHECK(r.focusOwnedByCandidate == 0);
+
+    dm1_v1_mirror_candidate_first_interaction_focus_init_pc34(&state);
+    state.partyChampionCount = 4;
+    ok = dm1_v1_mirror_candidate_first_interaction_focus_try_pc34(&state,
+                                                                  &r);
+    CHECK(ok == 0);
+    CHECK(r.accepted == 0);
+    CHECK(r.partyCountBefore == 4);
+    CHECK(r.partyCountAfter == 4);
+    CHECK(r.candidateOrdinalAfter == 0);
+    CHECK(r.inventoryChampionOrdinalAfter == 0);
+    CHECK(r.panelContentAfter == 0);
+    CHECK(r.menusDisabledAfter == 0);
+    CHECK(r.f0280CallCount == 0);
+    CHECK(r.f0355InventoryToggleCount == 0);
+    CHECK(r.blockedStatusBoxCount == 0);
+    CHECK(r.focusOwnedByCandidate == 0);
+}
+
 int main(void)
 {
     test_source_evidence_is_pinned();
@@ -107,6 +148,7 @@ int main(void)
     test_init_zero_party_focus_defaults();
     test_run_first_candidate_owns_focus();
     test_g0299_blocks_sibling_input_focus();
+    test_f0280_publication_guards_reject_unpublishable_state();
     printf("dm1_v1_mirror_candidate_first_interaction_focus: "
            "%d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
