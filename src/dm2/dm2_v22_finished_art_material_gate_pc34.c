@@ -1,0 +1,706 @@
+/*
+ * dm2_v22_finished_art_material_gate_pc34.c
+ *
+ * DM2 V2.2 finished-art / material screenshot pixel gate.
+ *
+ * Companion to include/dm2_v22_finished_art_material_gate_pc34.h.
+ *
+ * This module is the CI-runnable distinction between:
+ *   - SYNTHETIC_PLACEHOLDER (procedural / "placeholder" generator,
+ *     the current honest runtime default)
+ *   - FINISHED_REAL        (operator-installed hero PNGs with
+ *     generator != "placeholder" and source_file resolving on disk)
+ *
+ * It runs in CI without requiring real PBR art on disk by:
+ *   1. Reading the existing modern_asset_manifest.json (when present)
+ *      and classifying every tracked material slot.
+ *   2. Exercising the gate state machine via synthetic manifest
+ *      fixtures authored by the test/probe under a probe-only HOME.
+ *
+ * The manifest schema reuses the modern_asset_manifest.json format
+ * parsed by src/dm2/dm2_v22_modern_assets_pc34.c, with the
+ * addition of an optional `generator` field. When `generator` ==
+ * "placeholder", the slot is the procedural fallback. Any other
+ * value (e.g. "pbr_hero", "ai_upscale", "reviewed") is a non-
+ * placeholder marker that, combined with a disk-resolvable
+ * `source_file`, promotes the slot to REAL.
+ *
+ * Source-lock:
+ *   - SKULL.ASM T520/T560/T600 (DM2 viewport ticks)
+ *   - ReDMCSB DUNVIEW.C:2962-3070 (DM2 outdoor sky/ground composition)
+ *   - include/dm2_v22_modern_assets_pc34.h (modern asset manifest path)
+ *   - include/dm2_v22_inplace_draw_pc34.h (cell -> variant -> asset_id)
+ *   - include/dm2_v22_viewport_swap_pc34.h (T560/T600 shape -> asset_id)
+ *   - sibling dm2_v2_hud_widget_assets.c (placeholder-vs-real pattern)
+ *
+ * Honest boundary: this gate tracks manifest classification only.
+ * It does NOT claim finished PBR art has been reviewed or shipped.
+ * FINISHED_REAL is reachable only when an operator has dropped a
+ * non-placeholder manifest with source_file paths that resolve on
+ * disk; until then the gate stays in SYNTHETIC_PLACEHOLDER, which
+ * matches the honest current default.
+ */
+
+#include "dm2_v22_finished_art_material_gate_pc34.h"
+#include "fs_portable_compat.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* -- Slot table (stable, ordered) --------------------------------
+ *
+ * Each slot pairs:
+ *   - id           : manifest entry id. These are deliberately the
+ *                    dm2_v22_asset_id_for_shape() outputs used by the
+ *                    T560/T600 runtime swap.
+ *   - category     : modern_asset_manifest.json top-level category
+ *                    (drives source_file path resolution).
+ *   - asset_id_v22 : the synthetic / dm2_v22_inplace asset_id used
+ *                    by the in-place cache when no real hero pack is
+ *                    installed. Reported in the slot info record for
+ *                    honest gap tracking.
+ *
+ * Reordering / inserting slots must keep DM2_V22_FAMG_MATERIAL_COUNT
+ * in sync and add an entry here. */
+typedef struct {
+    DM2_V22_FamgSlot slot;
+    const char*      id;            /* modern_asset_manifest.json id */
+    const char*      category;      /* wall_shapes / creature_shapes / ... */
+    const char*      asset_id_v22;  /* dm2_v22_inplace asset_id when
+                                       procedural fallback is used */
+} DM2_V22_FamgSlotDesc;
+
+static const DM2_V22_FamgSlotDesc k_slot_table[DM2_V22_FAMG_MATERIAL_COUNT] = {
+    {
+        DM2_V22_FAMG_WALL_DUNGEON,
+        "wall_dm2_temple_01",
+        "wall_shapes",
+        "wall_dm2_temple_01"
+    },
+    {
+        DM2_V22_FAMG_WALL_OUTDOOR,
+        "wall_dm2_outdoor_01",
+        "wall_shapes",
+        "wall_dm2_outdoor_01"
+    },
+    {
+        DM2_V22_FAMG_FLOOR_PLAIN,
+        "floor_dm2_outdoor_01",
+        "floor_shapes",
+        "floor_dm2_outdoor_01"
+    },
+    {
+        DM2_V22_FAMG_FLOOR_PIT,
+        "floor_dm2_pit_01",
+        "floor_shapes",
+        "floor_dm2_pit_01"
+    },
+    {
+        DM2_V22_FAMG_FLOOR_STAIRS,
+        "floor_dm2_stairs_01",
+        "floor_shapes",
+        "floor_dm2_stairs_01"
+    },
+    {
+        DM2_V22_FAMG_CREATURE_BRIGAND,
+        "creature_dm2_brigand_01",
+        "creature_shapes",
+        "creature_dm2_brigand_01"
+    },
+    {
+        DM2_V22_FAMG_SKY,
+        "sky_dm2_outdoor_01",
+        "wall_shapes",
+        "sky_dm2_outdoor_01"
+    },
+    {
+        DM2_V22_FAMG_GROUND,
+        "ground_dm2_outdoor_01",
+        "floor_shapes",
+        "ground_dm2_outdoor_01"
+    },
+    {
+        DM2_V22_FAMG_GROUND_HORIZON,
+        "ground_dm2_horizon_01",
+        "floor_shapes",
+        "ground_dm2_horizon_01"
+    },
+    {
+        DM2_V22_FAMG_TREE,
+        "tree_dm2_outdoor_01",
+        "creature_shapes",
+        "tree_dm2_outdoor_01"
+    },
+    {
+        DM2_V22_FAMG_DOOR_WOOD,
+        "door_dm2_wood_01",
+        "door_shapes",
+        "door_dm2_wood_01"
+    }
+};
+
+/* -- Module state ------------------------------------------------ */
+static char               g_manifest_path[FSP_PATH_MAX] = {0};
+static int                g_installed = 0;     /* last gate: 1 if PARTIAL/FINISHED_REAL */
+static DM2_V22_FamgGate   g_last_gate = DM2_V22_FAMG_GATE_NOT_PROBED;
+
+/* -- Trimming / JSON helpers ------------------------------------- */
+static void dm2_v22_famg_trim(char* dst, const char* src, size_t dstSize) {
+    if (!dst || dstSize == 0U) return;
+    const char* start = src ? src : "";
+    while (*start == ' ' || *start == '\t' || *start == '\r' || *start == '\n') ++start;
+    size_t len = strlen(start);
+    const char* end = start + len;
+    while (len > 0U && (end[-1] == ' ' || end[-1] == '\t' ||
+                        end[-1] == '\r' || end[-1] == '\n')) {
+        --end; --len;
+    }
+    if (len >= dstSize) len = dstSize - 1U;
+    memcpy(dst, start, len);
+    dst[len] = '\0';
+}
+
+static int dm2_v22_famg_file_exists(const char* path) {
+    return (path && path[0] != '\0') ? FSP_FileExists(path) : 0;
+}
+
+static int dm2_v22_famg_file_starts_with_object(const char* path) {
+    FILE* fp;
+    int ch;
+    if (!path || path[0] == '\0') return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    do {
+        ch = fgetc(fp);
+    } while (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n');
+    fclose(fp);
+    return ch == '{';
+}
+
+/* Raw slot record populated by the manifest scan. */
+typedef struct {
+    char id[64];
+    char generator[64];
+    char source_file[256];
+    int  width;
+    int  height;
+    int  has_id;
+    int  has_generator;
+    int  has_source_file;
+    int  has_width;
+    int  has_height;
+} DM2_V22_FamgSlotRaw;
+
+static void dm2_v22_famg_slot_raw_init(DM2_V22_FamgSlotRaw* r) {
+    memset(r, 0, sizeof(*r));
+}
+
+/* -- Entry-content accumulator ----------------------------------
+ *
+ * The manifest can be single-line or pretty-printed. We accumulate
+ * each entry's raw JSON text as we walk braces/brackets, then run
+ * field extractors against the buffer when the entry closes. This
+ * handles all three layouts the dm2 sibling module supports:
+ *   1. Single-line JSON (entry spans one line).
+ *   2. Fields on the same line as the closing `}`.
+ *   3. Pretty-printed multi-line entries whose `{` and `}` are on
+ *      separate lines from the field lines. */
+static char g_entry_buf[16384];
+static int  g_entry_buf_len = 0;
+
+static void dm2_v22_famg_buf_reset(void) {
+    g_entry_buf_len = 0;
+    if (g_entry_buf_len < (int)sizeof(g_entry_buf)) {
+        g_entry_buf[g_entry_buf_len] = '\0';
+    }
+}
+
+static void dm2_v22_famg_buf_append_char(char c) {
+    if (g_entry_buf_len + 1 < (int)sizeof(g_entry_buf)) {
+        g_entry_buf[g_entry_buf_len++] = c;
+        g_entry_buf[g_entry_buf_len] = '\0';
+    }
+}
+
+static int dm2_v22_famg_extract_string(const char* line, const char* key,
+                                       char* out, size_t outSize) {
+    if (!line || !key || !out || outSize == 0U) return 0;
+    char pattern[64];
+    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+    const char* p = strstr(line, pattern);
+    if (!p) return 0;
+    p += strlen(pattern);
+    while (*p == ' ' || *p == ':' || *p == '\t') ++p;
+    if (*p != '"') return 0;
+    ++p;
+    size_t dst = 0U;
+    while (p[0] != '\0' && dst < outSize - 1U) {
+        if (p[0] == '\\' && p[1] != '\0') ++p;
+        if (p[0] == '"') break;
+        out[dst++] = p[0];
+        ++p;
+    }
+    out[dst] = '\0';
+    return dst > 0U ? 1 : 0;
+}
+
+static int dm2_v22_famg_extract_int(const char* line, const char* key,
+                                    int* out) {
+    if (!line || !key || !out) return 0;
+    char pattern[64];
+    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+    const char* p = strstr(line, pattern);
+    if (!p) return 0;
+    p += strlen(pattern);
+    while (*p == ' ' || *p == ':' || *p == '\t') ++p;
+    char* end = NULL;
+    long val = strtol(p, &end, 10);
+    if (end == p) return 0;
+    if (val < 0) val = 0;
+    *out = (int)val;
+    return 1;
+}
+
+static void dm2_v22_famg_extract_fields_from_buf(DM2_V22_FamgSlotRaw* out) {
+    char val[256];
+    if (dm2_v22_famg_extract_string(g_entry_buf, "id", val, sizeof(val))) {
+        dm2_v22_famg_trim(out->id, val, sizeof(out->id));
+        out->has_id = 1;
+    }
+    if (dm2_v22_famg_extract_string(g_entry_buf, "generator", val, sizeof(val))) {
+        dm2_v22_famg_trim(out->generator, val, sizeof(out->generator));
+        out->has_generator = 1;
+    }
+    if (dm2_v22_famg_extract_string(g_entry_buf, "source_file", val, sizeof(val))) {
+        dm2_v22_famg_trim(out->source_file, val, sizeof(out->source_file));
+        out->has_source_file = 1;
+    }
+    int w = 0, h = 0;
+    if (dm2_v22_famg_extract_int(g_entry_buf, "width", &w)) {
+        out->width = w;
+        out->has_width = 1;
+    }
+    if (dm2_v22_famg_extract_int(g_entry_buf, "height", &h)) {
+        out->height = h;
+        out->has_height = 1;
+    }
+}
+
+/* -- Path resolution --------------------------------------------- */
+void dm2_v22_famg_set_manifest_path(const char* dataDir) {
+    if (!dataDir || dataDir[0] == '\0') {
+        g_manifest_path[0] = '\0';
+        return;
+    }
+    /* ~/.firestaff/data/dm2 -> ~/.firestaff -> assets/dm2/modern/modern_asset_manifest.json.
+     * Walks two parents up from dataDir, same pattern as
+     * dm2_v22_set_manifest_path in dm2_v22_modern_assets_pc34.c. */
+    char parent1[FSP_PATH_MAX];
+    char parent2[FSP_PATH_MAX];
+    char assets_root[FSP_PATH_MAX];
+    char dm2_modern_dir[FSP_PATH_MAX];
+    if (!FSP_ParentDir(parent1, sizeof(parent1), dataDir) ||
+        !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
+        FSP_JoinPath(assets_root, sizeof(assets_root), dataDir, "assets");
+    } else {
+        FSP_JoinPath(assets_root, sizeof(assets_root), parent2, "assets");
+    }
+    FSP_JoinPath(dm2_modern_dir, sizeof(dm2_modern_dir), assets_root, "dm2");
+    FSP_JoinPath(dm2_modern_dir, sizeof(dm2_modern_dir), dm2_modern_dir, "modern");
+    FSP_JoinPath(g_manifest_path, sizeof(g_manifest_path),
+                 dm2_modern_dir, "modern_asset_manifest.json");
+}
+
+const char* dm2_v22_famg_get_manifest_path(void) {
+    return g_manifest_path;
+}
+
+/* -- Internal manifest scan -------------------------------------- */
+static int dm2_v22_famg_find_slot_in_manifest(const char* manifest_path,
+                                              const char* slot_id,
+                                              DM2_V22_FamgSlotRaw* out) {
+    if (!manifest_path || manifest_path[0] == '\0' || !slot_id || !out) return 0;
+    dm2_v22_famg_slot_raw_init(out);
+
+    FILE* fp = fopen(manifest_path, "rb");
+    if (!fp) return 0;
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    long size = ftell(fp);
+    if (size < 0 || size > 1024L * 1024L) {
+        fclose(fp);
+        return 0;
+    }
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return 0;
+    }
+
+    char* text = (char*)malloc((size_t)size + 1U);
+    if (!text) {
+        fclose(fp);
+        return 0;
+    }
+    if (fread(text, 1, (size_t)size, fp) != (size_t)size) {
+        free(text);
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    text[size] = '\0';
+
+    /* Object-based pass: modern_asset_manifest.json fixtures are often
+     * compact one-line JSON with multiple top-level categories. Rather
+     * than latching one category per physical line, scan every JSON
+     * object and extract its fields. The outer manifest object is also
+     * scanned but will not match later slot ids because extract_string()
+     * returns only the first id inside that outer object. */
+    const char* scan = text;
+    while ((scan = strchr(scan, '{')) != NULL) {
+        const char* end = scan;
+        int depth = 0;
+        while (*end) {
+            if (*end == '{') {
+                depth++;
+            } else if (*end == '}') {
+                depth--;
+                if (depth == 0) {
+                    break;
+                }
+            }
+            ++end;
+        }
+        if (*end != '}') break;
+
+        dm2_v22_famg_buf_reset();
+        {
+            const char* c = scan;
+            while (c <= end) {
+                dm2_v22_famg_buf_append_char(*c);
+                ++c;
+            }
+        }
+
+        DM2_V22_FamgSlotRaw raw;
+        dm2_v22_famg_slot_raw_init(&raw);
+        dm2_v22_famg_extract_fields_from_buf(&raw);
+        if (raw.has_id && strcmp(raw.id, slot_id) == 0) {
+            *out = raw;
+            free(text);
+            return 1;
+        }
+
+        scan++;
+    }
+
+    free(text);
+    return 0;
+}
+
+/* Resolve a manifest source_file (relative) against the manifest dir.
+ * Returns 1 if the resolved path exists on disk, 0 otherwise.
+ *
+ * For DM2 V2.2 materials the source_file is expected to live under
+ * <modern-dir>/<category>/<source_file>, e.g.:
+ *   ~/.firestaff/assets/dm2/modern/wall_shapes/wall_dm2_temple_01.png
+ */
+static int dm2_v22_famg_resolve_source_file(const char* manifest_path,
+                                            const char* category,
+                                            const char* source_file,
+                                            char* out, size_t outSize) {
+    if (!manifest_path || !category || !source_file ||
+        source_file[0] == '\0' || !out || outSize == 0U) {
+        if (out && outSize > 0U) out[0] = '\0';
+        return 0;
+    }
+
+    char manifest_dir[FSP_PATH_MAX];
+    const char* last_slash = strrchr(manifest_path, '/');
+    if (last_slash) {
+        size_t dir_len = (size_t)(last_slash - manifest_path);
+        if (dir_len >= sizeof(manifest_dir)) dir_len = sizeof(manifest_dir) - 1U;
+        memcpy(manifest_dir, manifest_path, dir_len);
+        manifest_dir[dir_len] = '\0';
+    } else {
+        manifest_dir[0] = '.';
+        manifest_dir[1] = '\0';
+    }
+
+    char joined[FSP_PATH_MAX];
+    FSP_JoinPath(joined, sizeof(joined), manifest_dir, category);
+    FSP_JoinPath(joined, sizeof(joined), joined, source_file);
+    if (strlen(joined) >= outSize) {
+        out[0] = '\0';
+        return 0;
+    }
+    snprintf(out, outSize, "%s", joined);
+    return dm2_v22_famg_file_exists(joined);
+}
+
+/* -- Validation -------------------------------------------------- */
+int dm2_v22_famg_validate_manifest(const char* manifest_path) {
+    const char* p = manifest_path ? manifest_path : g_manifest_path;
+    if (!p || p[0] == '\0') return -1;
+    if (!dm2_v22_famg_file_exists(p)) return -1;
+    if (!dm2_v22_famg_file_starts_with_object(p)) return -1;
+
+    /* Probe the first required slot. If it can be located AND has
+     * all required fields, the manifest is considered valid; a partial
+     * manifest (some required fields missing) returns 0. */
+    const char* first_id = k_slot_table[0].id;
+    DM2_V22_FamgSlotRaw raw;
+    if (!dm2_v22_famg_find_slot_in_manifest(p, first_id, &raw)) {
+        return 0; /* manifest readable but no slot declared */
+    }
+    int complete = raw.has_id && raw.has_generator &&
+                   raw.has_source_file && raw.has_width &&
+                   raw.has_height && raw.width > 0 && raw.height > 0;
+    return complete ? 1 : 0;
+}
+
+/* -- Slot classification ----------------------------------------- */
+DM2_V22_FamgClass dm2_v22_famg_classify_slot(DM2_V22_FamgSlot slot) {
+    if ((unsigned)slot >= (unsigned)DM2_V22_FAMG_MATERIAL_COUNT) {
+        return DM2_V22_FAMG_CLASS_UNKNOWN;
+    }
+    if (g_manifest_path[0] == '\0' ||
+        !dm2_v22_famg_file_exists(g_manifest_path)) {
+        return DM2_V22_FAMG_CLASS_MISSING;
+    }
+
+    DM2_V22_FamgSlotRaw raw;
+    if (!dm2_v22_famg_find_slot_in_manifest(g_manifest_path,
+                                            k_slot_table[slot].id, &raw)) {
+        return DM2_V22_FAMG_CLASS_MISSING;
+    }
+
+    int has_required = raw.has_id && raw.has_generator &&
+                       raw.has_source_file && raw.has_width &&
+                       raw.has_height && raw.width > 0 && raw.height > 0;
+    if (!has_required) {
+        return DM2_V22_FAMG_CLASS_PARTIAL;
+    }
+
+    /* generator == "placeholder" is the explicit fallback marker */
+    if (strcmp(raw.generator, "placeholder") == 0) {
+        return DM2_V22_FAMG_CLASS_PLACEHOLDER;
+    }
+
+    /* Real asset: required fields + non-placeholder generator +
+     * source_file resolves on disk. */
+    char resolved_path[FSP_PATH_MAX];
+    int exists = dm2_v22_famg_resolve_source_file(g_manifest_path,
+                                                  k_slot_table[slot].category,
+                                                  raw.source_file,
+                                                  resolved_path,
+                                                  sizeof(resolved_path));
+    return exists ? DM2_V22_FAMG_CLASS_REAL
+                  : DM2_V22_FAMG_CLASS_PARTIAL;
+}
+
+int dm2_v22_famg_get_slot_info(DM2_V22_FamgSlot slot,
+                                DM2_V22_FamgSlotInfo* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if ((unsigned)slot >= (unsigned)DM2_V22_FAMG_MATERIAL_COUNT) return 0;
+
+    out->slot = slot;
+    snprintf(out->id,       sizeof(out->id),       "%s", k_slot_table[slot].id);
+    snprintf(out->category, sizeof(out->category), "%s", k_slot_table[slot].category);
+    out->classification = dm2_v22_famg_classify_slot(slot);
+
+    if (g_manifest_path[0] == '\0' ||
+        !dm2_v22_famg_file_exists(g_manifest_path)) {
+        return 0;
+    }
+    DM2_V22_FamgSlotRaw raw;
+    if (!dm2_v22_famg_find_slot_in_manifest(g_manifest_path,
+                                            k_slot_table[slot].id, &raw)) {
+        return 0;
+    }
+    if (raw.has_generator) {
+        snprintf(out->generator, sizeof(out->generator), "%s", raw.generator);
+    }
+    if (raw.has_source_file) {
+        snprintf(out->source_file, sizeof(out->source_file), "%s", raw.source_file);
+    }
+    out->width  = raw.has_width  ? raw.width  : 0;
+    out->height = raw.has_height ? raw.height : 0;
+
+    if (raw.has_source_file && raw.source_file[0] != '\0') {
+        int exists = dm2_v22_famg_resolve_source_file(g_manifest_path,
+                                                      k_slot_table[slot].category,
+                                                      raw.source_file,
+                                                      out->resolved_path,
+                                                      sizeof(out->resolved_path));
+        out->file_exists = exists ? 1 : 0;
+    }
+    return 1;
+}
+
+/* -- Aggregate counts / gate ------------------------------------- */
+int dm2_v22_famg_real_count(int* out_total) {
+    int real = 0;
+    int total = 0;
+    if (g_manifest_path[0] != '\0' &&
+        dm2_v22_famg_file_exists(g_manifest_path)) {
+        for (size_t i = 0; i < DM2_V22_FAMG_MATERIAL_COUNT; ++i) {
+            DM2_V22_FamgClass cls =
+                dm2_v22_famg_classify_slot((DM2_V22_FamgSlot)i);
+            if (cls != DM2_V22_FAMG_CLASS_MISSING) {
+                ++total;
+                if (cls == DM2_V22_FAMG_CLASS_REAL) ++real;
+            }
+        }
+    }
+    if (out_total) *out_total = total;
+    return real;
+}
+
+DM2_V22_FamgGate dm2_v22_famg_gate(void) {
+    int total = 0;
+    int real  = dm2_v22_famg_real_count(&total);
+
+    if (g_manifest_path[0] == '\0' ||
+        !dm2_v22_famg_file_exists(g_manifest_path)) {
+        g_last_gate = DM2_V22_FAMG_GATE_NO_MANIFEST;
+        g_installed = 0;
+        return g_last_gate;
+    }
+
+    int manifest_valid = dm2_v22_famg_validate_manifest(NULL);
+    if (manifest_valid < 0) {
+        g_last_gate = DM2_V22_FAMG_GATE_NO_MANIFEST;
+        g_installed = 0;
+        return g_last_gate;
+    }
+
+    if (total == 0) {
+        /* Manifest present but no slot entries declared - still
+         * synthetic/placeholder-mode default. */
+        g_last_gate = DM2_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER;
+        g_installed = 0;
+        return g_last_gate;
+    }
+
+    if (real == (int)DM2_V22_FAMG_MATERIAL_COUNT) {
+        g_last_gate = DM2_V22_FAMG_GATE_FINISHED_REAL;
+        g_installed = 1;
+    } else if (real > 0) {
+        g_last_gate = DM2_V22_FAMG_GATE_PARTIAL;
+        g_installed = 1;
+    } else {
+        g_last_gate = DM2_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER;
+        g_installed = 0;
+    }
+    return g_last_gate;
+}
+
+/* -- Names ------------------------------------------------------- */
+const char* dm2_v22_famg_slot_name(DM2_V22_FamgSlot slot) {
+    if ((unsigned)slot >= (unsigned)DM2_V22_FAMG_MATERIAL_COUNT) return "UNKNOWN";
+    return k_slot_table[slot].id;
+}
+
+const char* dm2_v22_famg_slot_category(DM2_V22_FamgSlot slot) {
+    if ((unsigned)slot >= (unsigned)DM2_V22_FAMG_MATERIAL_COUNT) return "";
+    return k_slot_table[slot].category;
+}
+
+const char* dm2_v22_famg_slot_manifest_id(DM2_V22_FamgSlot slot) {
+    if ((unsigned)slot >= (unsigned)DM2_V22_FAMG_MATERIAL_COUNT) return "";
+    return k_slot_table[slot].id;
+}
+
+const char* dm2_v22_famg_class_name(DM2_V22_FamgClass cls) {
+    switch (cls) {
+        case DM2_V22_FAMG_CLASS_UNKNOWN:     return "UNKNOWN";
+        case DM2_V22_FAMG_CLASS_MISSING:     return "MISSING";
+        case DM2_V22_FAMG_CLASS_PLACEHOLDER: return "PLACEHOLDER";
+        case DM2_V22_FAMG_CLASS_PARTIAL:     return "PARTIAL";
+        case DM2_V22_FAMG_CLASS_REAL:        return "REAL";
+        default: return "INVALID";
+    }
+}
+
+const char* dm2_v22_famg_gate_name(DM2_V22_FamgGate gate) {
+    switch (gate) {
+        case DM2_V22_FAMG_GATE_NOT_PROBED:            return "NOT_PROBED";
+        case DM2_V22_FAMG_GATE_NO_MANIFEST:           return "NO_MANIFEST";
+        case DM2_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER: return "SYNTHETIC_PLACEHOLDER";
+        case DM2_V22_FAMG_GATE_PARTIAL:               return "PARTIAL";
+        case DM2_V22_FAMG_GATE_FINISHED_REAL:         return "FINISHED_REAL";
+        default: return "INVALID";
+    }
+}
+
+/* -- Installed flag / convenience queries ------------------------ */
+void dm2_v22_famg_set_installed(int installed) {
+    g_installed = installed ? 1 : 0;
+}
+
+int dm2_v22_famg_get_installed(void) {
+    return g_installed;
+}
+
+int dm2_v22_famg_uses_placeholder(DM2_V22_FamgSlot slot) {
+    DM2_V22_FamgClass cls = dm2_v22_famg_classify_slot(slot);
+    switch (cls) {
+        case DM2_V22_FAMG_CLASS_REAL:
+            return 0;
+        case DM2_V22_FAMG_CLASS_PLACEHOLDER:
+        case DM2_V22_FAMG_CLASS_PARTIAL:
+        case DM2_V22_FAMG_CLASS_MISSING:
+        case DM2_V22_FAMG_CLASS_UNKNOWN:
+        default:
+            return 1;
+    }
+}
+
+int dm2_v22_famg_is_finished_real(void) {
+    return dm2_v22_famg_gate() == DM2_V22_FAMG_GATE_FINISHED_REAL ? 1 : 0;
+}
+
+int dm2_v22_famg_is_synthetic_or_partial(void) {
+    DM2_V22_FamgGate g = dm2_v22_famg_gate();
+    return (g == DM2_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER ||
+            g == DM2_V22_FAMG_GATE_PARTIAL) ? 1 : 0;
+}
+
+const char* dm2_v22_famg_source_evidence(void) {
+    return
+        "DM2 V2.2 finished-art material gate - placeholder-vs-real classifier\n"
+        "Source: SKULL.ASM T520/T560/T600 (DM2 viewport ticks)\n"
+        "Source: ReDMCSB DUNVIEW.C:2962-3070 (outdoor sky/ground composition)\n"
+        "Source: ReDMCSB DUNVIEW.C:4351-4382 F0112 (ceiling pit / dungeon draw sibling)\n"
+        "Source: include/dm2_v22_modern_assets_pc34.h (modern asset manifest path)\n"
+        "Source: include/dm2_v22_inplace_draw_pc34.h (cell -> variant -> asset_id)\n"
+        "Source: include/dm2_v22_shape_cache_pc34.h (per-frame V22 shape cache)\n"
+        "Source: include/dm2_v22_viewport_swap_pc34.h (T560/T600 shape -> asset_id)\n"
+        "Source: src/dm2/dm2_v22_viewport_swap_pc34.c (slot id mapping)\n"
+        "Source: src/dm2/dm2_v22_modern_assets_pc34.c (manifest JSON scanner)\n"
+        "Source: sibling dm2_v2_hud_widget_assets.c (placeholder-vs-real pattern)\n"
+        "Source: docs/FIRESTAFF_GAP_LIST.md B3 V2 per-mode material row\n"
+        "Manifest path: ~/.firestaff/assets/dm2/modern/modern_asset_manifest.json\n"
+        "Tracked slots: wall_dm2_temple_01, wall_dm2_outdoor_01, floor_dm2_outdoor_01,\n"
+        "floor_dm2_pit_01, floor_dm2_stairs_01, creature_dm2_brigand_01,\n"
+        "sky_dm2_outdoor_01, ground_dm2_outdoor_01, ground_dm2_horizon_01,\n"
+        "tree_dm2_outdoor_01, door_dm2_wood_01\n"
+        "Schema: { id, generator, source_file, width, height } per slot entry\n"
+        "Generator 'placeholder' is the procedural fallback marker (synthetic)\n"
+        "Non-placeholder generator + source_file resolves on disk = REAL\n"
+        "Gate states: NOT_PROBED / NO_MANIFEST / SYNTHETIC_PLACEHOLDER / PARTIAL / FINISHED_REAL\n"
+        "FINISHED_REAL requires all eleven tracked slots to be REAL with non-placeholder generator\n"
+        "V1 invariant: V1 command routes, dungeon state, save/restore NEVER bypassed\n"
+        "V2 rule: finished-art material only activates when V2 launch+profile enabled\n"
+        "Honest boundary: this gate tracks manifest classification only.\n"
+        "It does NOT claim finished PBR art has been reviewed or shipped.\n"
+        "FINISHED_REAL promotion requires operator-installed hero PNGs at\n"
+        "~/.firestaff/assets/dm2/modern/<category>/<source_file> with\n"
+        "generator != 'placeholder' and a non-zero width/height, plus a\n"
+        "sibling gap-list update to mark the real-asset promotion gate green.\n";
+}

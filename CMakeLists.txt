@@ -1585,6 +1585,21 @@ if(BUILD_TESTING)
         LABELS "tier2;dm2;v2.2;modern-art-swap;presentation-only")
 endif()
 
+# DM2 V2.2 finished-art material gate probe. Synthetic, headless
+# placeholder-vs-real promotion gate for the T560/T600 modern-art ids.
+add_executable(firestaff_dm2_v22_finished_art_material_gate_probe
+    probes/firestaff_dm2_v22_finished_art_material_gate_probe.c
+    src/dm2/dm2_v22_finished_art_material_gate_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_dm2_v22_finished_art_material_gate_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_dm2_v22_finished_art_material_gate_probe
+    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v22_finished_art_material_gate_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V2 actual-render screenshot / pixel-fixture probe. Headless: no game
 # data, host-agnostic (uses SDL_VIDEODRIVER=dummy). Drives the real V2
 # render pipeline for V1 / V2.0 / V2.1 / V2.2, writes a 24-bit BMP
@@ -4960,6 +4975,35 @@ if(BUILD_TESTING)
         NAME dm2_v22_modern_assets_pc34
         COMMAND test_dm2_v22_modern_assets_pc34
     )
+
+    # DM2 V2.2 finished-art material gate. CI-runnable synthetic
+    # placeholder-vs-real classifier for the same T560/T600 asset ids
+    # exposed by dm2_v22_viewport_swap_pc34.c.
+    add_executable(test_dm2_v22_finished_art_material_gate_pc34
+        tests/test_dm2_v22_finished_art_material_gate_pc34.c
+        src/dm2/dm2_v22_finished_art_material_gate_pc34.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_dm2_v22_finished_art_material_gate_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v22_finished_art_material_gate_pc34
+        PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v22_finished_art_material_gate_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v22_finished_art_material_gate_pc34
+        COMMAND test_dm2_v22_finished_art_material_gate_pc34
+    )
+    if(TARGET firestaff_dm2_v22_finished_art_material_gate_probe)
+        add_test(
+            NAME dm2_v22_finished_art_material_gate_probe
+            COMMAND firestaff_dm2_v22_finished_art_material_gate_probe
+        )
+        set_tests_properties(dm2_v22_finished_art_material_gate_probe PROPERTIES
+            LABELS "tier2;dm2;v2.2;finished-art-material-gate;presentation-only")
+    endif()
 
     # ── DM2 V2 HUD Widget Asset Manifest + Gate ──────────────────
     # Phase 3 placeholder-vs-real asset gate. Companion to the dm2_v22
