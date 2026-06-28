@@ -5065,6 +5065,33 @@ if(BUILD_TESTING)
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
+    # ── DM2 V1 lighting/palette runtime gate ──
+    # Headless and data-free. Locks one source-faithful runtime rule:
+    # object light falls off deterministically inside the radius and clips
+    # to dark at distance >= radius.
+    # Source: ReDMCSB DUNVIEW.C:4960-5039 (object depth scale/palette changes)
+    #         ReDMCSB PANEL.C:418-428 (dungeon palette index selection)
+    add_executable(test_dm2_v1_lighting_falloff_boundary
+        tests/test_dm2_v1_lighting_falloff_boundary.c
+    )
+    target_include_directories(test_dm2_v1_lighting_falloff_boundary PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_lighting_falloff_boundary
+        PRIVATE firestaff_dm2 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_lighting_falloff_boundary
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_lighting_palette_runtime_gate
+        COMMAND test_dm2_v1_lighting_falloff_boundary
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+    set_tests_properties(dm2_v1_lighting_palette_runtime_gate PROPERTIES
+        LABELS "tier2;dm2;v1;lighting;palette;runtime")
+
     add_executable(test_dm2_v2_hud_overlay
         tests/test_dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_hud_overlay.c
