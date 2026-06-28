@@ -17635,6 +17635,33 @@ set_tests_properties(nexus_v1_bpk_surface_class_probe PROPERTIES
     LABELS "tier4;nexus;bpx_bpk;archive;skip_safe"
 )
 
+# Nexus V1 SAL/MAP/CD-DA audio receipt probe. Headless and data-free:
+# verifies the documented SNDLEV00-15.SAL / SNDLEV00-15.MAP size+hash
+# receipt table and the CD-DA layout contract (Track 1 data + audio
+# tracks 2-9). Skip-safe boundary only: no SAL decode, MAP parse,
+# CD sector read, or playback binding.
+add_executable(firestaff_nexus_v1_audio_receipt_probe
+    probes/nexus/firestaff_nexus_v1_audio_receipt_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_audio_receipt_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_audio_receipt_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_audio_receipt_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_audio_receipt
+    COMMAND firestaff_nexus_v1_audio_receipt_probe
+)
+set_tests_properties(nexus_v1_audio_receipt PROPERTIES
+    LABELS "tier4;nexus;audio;receipt;skip_safe"
+)
+
 # Nexus V1 light-overflow data-model + bug-classification probe.
 # Headless and data-free: implements the BUG0_18 timeline-full +
 # F0257 recursive-weaker event chain that DMWeb documents as the
