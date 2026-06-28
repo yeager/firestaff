@@ -19,6 +19,11 @@
  *     which the capture script labels explicitly in shot labels.
  *   - The DM2 dungeon viewport y range starts at 33, mirroring DM1's PC 3.4
  *     224x136 backbuffer composition (ReDMCSB COORD.C:1693-1698).
+ *   - The original HUD/right-panel band is the remaining 96px-wide area
+ *     beside the 224px viewport crop, and capture click routing must keep
+ *     viewport, HUD-panel, and lower chrome samples disjoint.
+ *   - Representative HUD/action labels fit inside the 96px panel using
+ *     SKULLWIN's 6px advance, 5px-high DM2 font metrics.
  *
  * All assertions are data-free: the probe compiles into a tiny CTest binary
  * that does not depend on GRAPHICS.DAT, DUNGEON.DAT, SKULL.EXE, or DOSBox.
@@ -26,9 +31,9 @@
  * and docs/FIRESTAFF_GAP_LIST.md (DM2 original-overlay evidence is OPEN-BOUNDED).
  *
  * Source: SKULLWIN/dm2global.h, c_gfx_main.cpp, c_gfx_main.h, c_tmouse.h,
- * c_tmouse.cpp, types.h, c_input.cpp, c_gui_draw.cpp. The probe constants
- * are derived directly from those SKULLWIN anchors; the verifier is the
- * companion source-lock check.
+ * c_tmouse.cpp, types.h, c_input.cpp, c_gui_draw.cpp, c_gfx_str.cpp. The
+ * probe constants are derived directly from those SKULLWIN anchors; the
+ * verifier is the companion source-lock check.
  *
  * Build:
  *   cmake --build build --target firestaff_dm2_v1_original_overlay_capture_scaffold_probe
@@ -40,7 +45,6 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 /* Source-locked geometry constants.
@@ -59,11 +63,20 @@
 #define DM2_BACKBUFFER_H              136    /* 0x88 */
 #define DM2_VIEWPORT_X                  0
 #define DM2_VIEWPORT_Y                 33
+#define DM2_RIGHT_PANEL_X             224
+#define DM2_RIGHT_PANEL_Y               0
+#define DM2_RIGHT_PANEL_W              96
+#define DM2_RIGHT_PANEL_H             200
 #define DM2_MOUSE_QUEUE_LENGTH         10
 #define DM2_COMMAND_QUEUE_LENGTH       10
 #define DM2_MOUSE_EVENT_B_FIELD         0
 #define DM2_MOUSE_EVENT_X_FIELD         1
 #define DM2_MOUSE_EVENT_Y_FIELD         2
+#define DM2_FONT_ADVANCE_PX             6
+#define DM2_FONT_TRAILING_GAP_PX        1
+#define DM2_FONT_GLYPH_H                6
+#define DM2_FONT_BASELINE_TRIM_PX       1
+#define DM2_STRONG_TEXT_PAD_PX          2
 
 /* DM2 right-panel enum (redeclared here so this probe does not pull in the
  * full SKULLWIN/DM2 globals; the SKULLWIN-owned enum is documented in
@@ -73,6 +86,20 @@
  * below is the integer Firestaff's DM2 HUD system uses to identify the
  * squad hands panel, derived from include/dm2_v2_hud_runtime.h. */
 #define DM2_RIGHT_PANEL_SQUAD_HANDS    0
+
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+} DM2_Rect;
+
+typedef enum {
+    DM2_CAPTURE_ROUTE_OUTSIDE = 0,
+    DM2_CAPTURE_ROUTE_VIEWPORT,
+    DM2_CAPTURE_ROUTE_RIGHT_PANEL,
+    DM2_CAPTURE_ROUTE_SCREEN_CHROME
+} DM2_CaptureRoute;
 
 static int g_pass = 0;
 static int g_fail = 0;
@@ -105,6 +132,52 @@ static int geometry_holds(void)
     return ok ? 1 : 0;
 }
 
+static int rect_contains(DM2_Rect r, int x, int y)
+{
+    return x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h;
+}
+
+static int rect_inside_screen(DM2_Rect r)
+{
+    return r.x >= 0 && r.y >= 0 &&
+           r.x + r.w <= DM2_ORIG_SCREEN_W &&
+           r.y + r.h <= DM2_ORIG_SCREEN_H;
+}
+
+static DM2_CaptureRoute classify_capture_click(int x, int y)
+{
+    DM2_Rect screen = {0, 0, DM2_ORIG_SCREEN_W, DM2_ORIG_SCREEN_H};
+    DM2_Rect viewport = {DM2_VIEWPORT_X, DM2_VIEWPORT_Y,
+                         DM2_BACKBUFFER_W, DM2_BACKBUFFER_H};
+    DM2_Rect right_panel = {DM2_RIGHT_PANEL_X, DM2_RIGHT_PANEL_Y,
+                            DM2_RIGHT_PANEL_W, DM2_RIGHT_PANEL_H};
+
+    if (!rect_contains(screen, x, y)) return DM2_CAPTURE_ROUTE_OUTSIDE;
+    if (rect_contains(viewport, x, y)) return DM2_CAPTURE_ROUTE_VIEWPORT;
+    if (rect_contains(right_panel, x, y)) return DM2_CAPTURE_ROUTE_RIGHT_PANEL;
+    return DM2_CAPTURE_ROUTE_SCREEN_CHROME;
+}
+
+static int right_panel_geometry_holds(void)
+{
+    DM2_Rect viewport = {DM2_VIEWPORT_X, DM2_VIEWPORT_Y,
+                         DM2_BACKBUFFER_W, DM2_BACKBUFFER_H};
+    DM2_Rect right_panel = {DM2_RIGHT_PANEL_X, DM2_RIGHT_PANEL_Y,
+                            DM2_RIGHT_PANEL_W, DM2_RIGHT_PANEL_H};
+    int ok = 1;
+
+    /* SKULLWIN/c_gfx_main.cpp fixes the dungeon backbuffer at 224px wide
+     * inside the 320px screen. The original HUD/right-panel capture band is
+     * the remaining 96px at x=224..319, kept outside the viewport crop. */
+    ok &= rect_inside_screen(right_panel);
+    ok &= (right_panel.x == viewport.x + viewport.w);
+    ok &= (right_panel.w == DM2_ORIG_SCREEN_W - DM2_BACKBUFFER_W);
+    ok &= (right_panel.h == DM2_ORIG_SCREEN_H);
+    ok &= !rect_contains(viewport, right_panel.x, DM2_VIEWPORT_Y);
+    ok &= !rect_contains(viewport, DM2_ORIG_SCREEN_W - 1, DM2_VIEWPORT_Y);
+    return ok ? 1 : 0;
+}
+
 static int queue_lengths_hold(void)
 {
     /* SKULLWIN/c_tmouse.h #define MOUSE_QUEUE_LENGTH (10) and COMMAND_QUEUE_LENGTH (10). */
@@ -127,6 +200,69 @@ static int backbuffer_byte_capacity_holds(void)
     long surface = (long)DM2_ORIG_SCREEN_W * (long)DM2_ORIG_SCREEN_H;
     long backbuffer = (long)DM2_BACKBUFFER_W * (long)DM2_BACKBUFFER_H;
     return (surface == 64000) && (backbuffer == 30464);
+}
+
+static int dm2_text_width_px(const char *text)
+{
+    if (!text || text[0] == '\0') return 0;
+    return (int)strlen(text) * DM2_FONT_ADVANCE_PX - DM2_FONT_TRAILING_GAP_PX;
+}
+
+static int hud_text_bounds_hold(void)
+{
+    /* SKULLWIN/c_gfx_str.cpp:20-37 initializes gfxstrw1=6, gfxstrw2=1,
+     * gfxstrw3=1, gfxstrw4=6; c_gfx_str.cpp:64-76 computes text width as
+     * -gfxstrw2 + charCount*gfxstrw4 and height as gfxstrw1-gfxstrw3.
+     * Strong text adds a 1px border on each side (c_gfx_str.cpp:141-160). */
+    static const char *labels[] = {
+        "SQUAD",
+        "ATTACK",
+        "CAST",
+        "USE",
+        "GOLD 9999",
+        NULL,
+    };
+    int i;
+    int ok = 1;
+    int text_h = DM2_FONT_GLYPH_H - DM2_FONT_BASELINE_TRIM_PX;
+
+    ok &= (DM2_FONT_ADVANCE_PX == 6);
+    ok &= (DM2_FONT_TRAILING_GAP_PX == 1);
+    ok &= (text_h == 5);
+    for (i = 0; labels[i] != NULL; i++) {
+        int strong_w = dm2_text_width_px(labels[i]) + DM2_STRONG_TEXT_PAD_PX;
+        int strong_h = text_h + DM2_STRONG_TEXT_PAD_PX;
+        ok &= (strong_w > 0);
+        ok &= (strong_w <= DM2_RIGHT_PANEL_W);
+        ok &= (strong_h <= DM2_RIGHT_PANEL_H);
+    }
+    return ok ? 1 : 0;
+}
+
+static int click_routing_bounds_hold(void)
+{
+    int ok = 1;
+
+    /* SKULLWIN/types.h c_evententry stores original-frame x/y directly, and
+     * c_events.cpp routes clicks with DM2_PT_IN_EXPANDED_RECT. These samples
+     * keep capture route labels disjoint before any real overlay is claimed. */
+    ok &= (classify_capture_click(DM2_VIEWPORT_X, DM2_VIEWPORT_Y) ==
+           DM2_CAPTURE_ROUTE_VIEWPORT);
+    ok &= (classify_capture_click(DM2_BACKBUFFER_W - 1,
+                                  DM2_VIEWPORT_Y + DM2_BACKBUFFER_H - 1) ==
+           DM2_CAPTURE_ROUTE_VIEWPORT);
+    ok &= (classify_capture_click(DM2_RIGHT_PANEL_X, DM2_VIEWPORT_Y) ==
+           DM2_CAPTURE_ROUTE_RIGHT_PANEL);
+    ok &= (classify_capture_click(DM2_ORIG_SCREEN_W - 1,
+                                  DM2_ORIG_SCREEN_H - 1) ==
+           DM2_CAPTURE_ROUTE_RIGHT_PANEL);
+    ok &= (classify_capture_click(100, 180) ==
+           DM2_CAPTURE_ROUTE_SCREEN_CHROME);
+    ok &= (classify_capture_click(-1, 100) ==
+           DM2_CAPTURE_ROUTE_OUTSIDE);
+    ok &= (classify_capture_click(DM2_ORIG_SCREEN_W, 100) ==
+           DM2_CAPTURE_ROUTE_OUTSIDE);
+    return ok ? 1 : 0;
 }
 
 static int shot_label_semantics_hold(void)
@@ -180,7 +316,7 @@ int main(void)
 
     printf("=== DM2 V1 Original-Overlay Capture Scaffold Probe ===\n");
     printf("Source: SKULLWIN/dm2global.h c_gfx_main.cpp c_gfx_main.h\n");
-    printf("        SKULLWIN/c_tmouse.h types.h c_input.cpp c_gui_draw.cpp\n");
+    printf("        SKULLWIN/c_tmouse.h types.h c_input.cpp c_gui_draw.cpp c_gfx_str.cpp\n");
     printf("Honest boundary: data-free source-lock contract only; no overlay parity claim.\n\n");
 
     record("viewport-screen-size",  geometry_holds(),
@@ -193,6 +329,12 @@ int main(void)
            "c_evententry { b, x, y } (types.h)");
     record("backbuffer-bytes",      backbuffer_byte_capacity_holds(),
            "surface=64000B backbuffer=30464B");
+    record("right-panel-geometry",  right_panel_geometry_holds(),
+           "right HUD panel occupies x=224..319 beside the 224px viewport crop");
+    record("hud-text-bounds",       hud_text_bounds_hold(),
+           "representative HUD labels fit 96px panel with 6px DM2 font advance");
+    record("click-routing-bounds",  click_routing_bounds_hold(),
+           "viewport, right-panel, and lower-chrome sample clicks are disjoint");
     record("shot-label-vocabulary", shot_label_semantics_hold(),
            "interplay_splash, press_any_key, main_menu, dungeon_entry, ...");
     record("route-token-inventory", route_token_inventory_holds(),
