@@ -116,6 +116,9 @@ static const DM1_V22_FamgSlotDesc k_slot_table[DM1_V22_FAMG_MATERIAL_COUNT] = {
     }
 };
 
+static const char* k_receipt_id =
+    "dm1_v22_real_screenshot_material_receipt_01";
+
 /* ── Module state ──────────────────────────────────────────────── */
 static char               g_manifest_path[FSP_PATH_MAX] = {0};
 static int                g_installed = 0;     /* last gate: 1 if PARTIAL/FINISHED_REAL */
@@ -217,11 +220,15 @@ typedef struct {
     char id[64];
     char generator[64];
     char source_file[256];
+    char frame_hash[128];
+    char material_gate[64];
     int  width;
     int  height;
     int  has_id;
     int  has_generator;
     int  has_source_file;
+    int  has_frame_hash;
+    int  has_material_gate;
     int  has_width;
     int  has_height;
 } DM1_V22_FamgSlotRaw;
@@ -309,6 +316,14 @@ static void dm1_v22_famg_extract_fields_from_buf(DM1_V22_FamgSlotRaw* out) {
     if (dm1_v22_famg_extract_string(g_entry_buf, "source_file", val, sizeof(val))) {
         dm1_v22_famg_trim(out->source_file, val, sizeof(out->source_file));
         out->has_source_file = 1;
+    }
+    if (dm1_v22_famg_extract_string(g_entry_buf, "frame_hash", val, sizeof(val))) {
+        dm1_v22_famg_trim(out->frame_hash, val, sizeof(out->frame_hash));
+        out->has_frame_hash = 1;
+    }
+    if (dm1_v22_famg_extract_string(g_entry_buf, "material_gate", val, sizeof(val))) {
+        dm1_v22_famg_trim(out->material_gate, val, sizeof(out->material_gate));
+        out->has_material_gate = 1;
     }
     int w = 0, h = 0;
     if (dm1_v22_famg_extract_int(g_entry_buf, "width", &w)) {
@@ -473,6 +488,23 @@ static int dm1_v22_famg_resolve_source_file(const char* manifest_path,
     }
     snprintf(out, outSize, "%s", joined);
     return dm1_v22_famg_file_exists(joined);
+}
+
+static int dm1_v22_famg_resolve_receipt_file(const char* manifest_path,
+                                             const char* source_file,
+                                             char* out, size_t outSize) {
+    return dm1_v22_famg_resolve_source_file(manifest_path,
+                                            "receipts",
+                                            source_file,
+                                            out,
+                                            outSize);
+}
+
+static int dm1_v22_famg_generator_is_synthetic(const char* generator) {
+    if (!generator || generator[0] == '\0') return 0;
+    return (strcmp(generator, "placeholder") == 0 ||
+            strcmp(generator, "synthetic") == 0 ||
+            strcmp(generator, "synthetic_test") == 0) ? 1 : 0;
 }
 
 /* ── Validation ────────────────────────────────────────────────── */
@@ -723,6 +755,111 @@ int dm1_v22_famg_is_synthetic_or_partial(void) {
             g == DM1_V22_FAMG_GATE_PARTIAL) ? 1 : 0;
 }
 
+const char* dm1_v22_famg_receipt_manifest_id(void) {
+    return k_receipt_id;
+}
+
+DM1_V22_FamgReceiptGate dm1_v22_famg_receipt_gate(void) {
+    if (g_manifest_path[0] == '\0' ||
+        !dm1_v22_famg_file_exists(g_manifest_path)) {
+        return DM1_V22_FAMG_RECEIPT_NO_RECEIPT;
+    }
+
+    DM1_V22_FamgSlotRaw raw;
+    if (!dm1_v22_famg_find_slot_in_manifest(g_manifest_path,
+                                            k_receipt_id,
+                                            &raw)) {
+        return DM1_V22_FAMG_RECEIPT_NO_RECEIPT;
+    }
+
+    if (!raw.has_id || !raw.has_generator ||
+        !raw.has_source_file || !raw.has_width || !raw.has_height ||
+        !raw.has_frame_hash || !raw.has_material_gate ||
+        raw.width <= 0 || raw.height <= 0) {
+        return DM1_V22_FAMG_RECEIPT_PARTIAL;
+    }
+
+    if (dm1_v22_famg_generator_is_synthetic(raw.generator)) {
+        return DM1_V22_FAMG_RECEIPT_SYNTHETIC_PLACEHOLDER;
+    }
+
+    if (strcmp(raw.material_gate, "FINISHED_REAL") != 0 ||
+        dm1_v22_famg_gate() != DM1_V22_FAMG_GATE_FINISHED_REAL) {
+        return DM1_V22_FAMG_RECEIPT_PARTIAL;
+    }
+
+    char resolved_path[FSP_PATH_MAX];
+    return dm1_v22_famg_resolve_receipt_file(g_manifest_path,
+                                             raw.source_file,
+                                             resolved_path,
+                                             sizeof(resolved_path))
+        ? DM1_V22_FAMG_RECEIPT_FINISHED_REAL
+        : DM1_V22_FAMG_RECEIPT_PARTIAL;
+}
+
+const char* dm1_v22_famg_receipt_gate_name(DM1_V22_FamgReceiptGate gate) {
+    switch (gate) {
+        case DM1_V22_FAMG_RECEIPT_NOT_PROBED:            return "NOT_PROBED";
+        case DM1_V22_FAMG_RECEIPT_NO_RECEIPT:            return "NO_RECEIPT";
+        case DM1_V22_FAMG_RECEIPT_SYNTHETIC_PLACEHOLDER: return "SYNTHETIC_PLACEHOLDER";
+        case DM1_V22_FAMG_RECEIPT_PARTIAL:               return "PARTIAL";
+        case DM1_V22_FAMG_RECEIPT_FINISHED_REAL:         return "FINISHED_REAL";
+        default: return "INVALID";
+    }
+}
+
+int dm1_v22_famg_get_receipt_info(DM1_V22_FamgReceiptInfo* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    snprintf(out->id, sizeof(out->id), "%s", k_receipt_id);
+    out->gate = dm1_v22_famg_receipt_gate();
+
+    if (g_manifest_path[0] == '\0' ||
+        !dm1_v22_famg_file_exists(g_manifest_path)) {
+        return 0;
+    }
+
+    DM1_V22_FamgSlotRaw raw;
+    if (!dm1_v22_famg_find_slot_in_manifest(g_manifest_path,
+                                            k_receipt_id,
+                                            &raw)) {
+        return 0;
+    }
+
+    if (raw.has_generator) {
+        snprintf(out->generator, sizeof(out->generator), "%s", raw.generator);
+    }
+    if (raw.has_source_file) {
+        snprintf(out->source_file, sizeof(out->source_file), "%s", raw.source_file);
+    }
+    if (raw.has_frame_hash) {
+        snprintf(out->frame_hash, sizeof(out->frame_hash), "%s", raw.frame_hash);
+    }
+    if (raw.has_material_gate) {
+        snprintf(out->material_gate, sizeof(out->material_gate), "%s", raw.material_gate);
+    }
+    out->width = raw.has_width ? raw.width : 0;
+    out->height = raw.has_height ? raw.height : 0;
+    if (raw.has_source_file && raw.source_file[0] != '\0') {
+        out->file_exists = dm1_v22_famg_resolve_receipt_file(g_manifest_path,
+                                                             raw.source_file,
+                                                             out->resolved_path,
+                                                             sizeof(out->resolved_path))
+            ? 1 : 0;
+    }
+    return 1;
+}
+
+int dm1_v22_famg_has_finished_real_receipt(void) {
+    return dm1_v22_famg_receipt_gate() ==
+        DM1_V22_FAMG_RECEIPT_FINISHED_REAL ? 1 : 0;
+}
+
+int dm1_v22_famg_has_synthetic_receipt(void) {
+    return dm1_v22_famg_receipt_gate() ==
+        DM1_V22_FAMG_RECEIPT_SYNTHETIC_PLACEHOLDER ? 1 : 0;
+}
+
 const char* dm1_v22_famg_source_evidence(void) {
     return
         "DM1 V2.2 finished-art material gate — placeholder-vs-real classifier\n"
@@ -742,6 +879,10 @@ const char* dm1_v22_famg_source_evidence(void) {
         "Non-placeholder generator + source_file resolves on disk + PNG IHDR dimensions match = REAL\n"
         "Gate states: NOT_PROBED / NO_MANIFEST / SYNTHETIC_PLACEHOLDER / PARTIAL / FINISHED_REAL\n"
         "FINISHED_REAL requires every tracked slot to be REAL with non-placeholder generator\n"
+        "Receipt id: dm1_v22_real_screenshot_material_receipt_01\n"
+        "Receipt schema: { id, generator, source_file, width, height, frame_hash, material_gate }\n"
+        "Receipt source_file resolves under ~/.firestaff/assets/dm1/modern/receipts/\n"
+        "Receipt FINISHED_REAL requires material gate FINISHED_REAL and non-synthetic generator\n"
         "V1 invariant: V1 command routes, dungeon state, save/restore NEVER bypassed\n"
         "V2 rule: finished-art material only activates when V2 launch+profile enabled\n"
         "Honest boundary: this gate tracks manifest classification only.\n"

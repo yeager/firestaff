@@ -61,9 +61,10 @@ This document specifies:
    `~/.firestaff/assets/dm1/modern/modern_asset_manifest.json`.
 3. The gate state machine: `NOT_PROBED` / `NO_MANIFEST` /
    `SYNTHETIC_PLACEHOLDER` / `PARTIAL` / `FINISHED_REAL`.
-4. How M12 launcher status and the Phase 7 verification suite read
+4. The optional runtime screenshot/material receipt state machine.
+5. How M12 launcher status and the Phase 7 verification suite read
    the gate.
-5. The honest boundary: this gate tracks manifest classification
+6. The honest boundary: this gate tracks manifest classification
    only. It does **NOT** claim finished PBR art has been reviewed
    or shipped.
 
@@ -181,7 +182,51 @@ query.
 
 ---
 
-## 4. M12 / Phase 7 Integration Points
+## 4. Runtime Screenshot/Material Receipt
+
+The material gate can now read one optional receipt entry from the
+same `modern_asset_manifest.json`:
+
+```json
+{
+  "id": "dm1_v22_real_screenshot_material_receipt_01",
+  "generator": "synthetic_test",
+  "source_file": "synthetic_frame.bmp",
+  "width": 320,
+  "height": 200,
+  "frame_hash": "sha256:...",
+  "material_gate": "FINISHED_REAL"
+}
+```
+
+The receipt source file resolves under
+`~/.firestaff/assets/dm1/modern/receipts/<source_file>`.
+This keeps proprietary or operator-generated runtime evidence out of
+the repository while giving operators a stable place to drop local
+proof metadata. The CI tests create temporary receipt files only under
+`/tmp/scratch`; they are not final runtime evidence.
+
+Receipt gate states:
+
+| Receipt state | Trigger |
+|---------------|---------|
+| `NO_RECEIPT` | Manifest missing, unreadable, or no receipt entry is present |
+| `SYNTHETIC_PLACEHOLDER` | Receipt entry exists but declares `generator` as `placeholder`, `synthetic`, or `synthetic_test` |
+| `PARTIAL` | Receipt metadata is incomplete, the receipt file is missing, `material_gate` is not `FINISHED_REAL`, or the six-slot material gate is not currently `FINISHED_REAL` |
+| `FINISHED_REAL` | The six-slot material gate is `FINISHED_REAL`, receipt `generator` is non-synthetic, `source_file` resolves under `receipts/`, and `width`/`height`/`frame_hash`/`material_gate` are present |
+
+This intentionally separates two claims:
+
+- `dm1_v22_famg_is_finished_real()` means the six tracked material
+  slots are real operator-installed files.
+- `dm1_v22_famg_has_finished_real_receipt()` means there is also an
+  operator-reviewed runtime screenshot/material receipt. This is the
+  state needed before public docs can talk about a real DM1 V2.2
+  screenshot proof instead of a synthetic CI fixture.
+
+---
+
+## 5. M12 / Phase 7 Integration Points
 
 The gate is read by:
 
@@ -204,7 +249,7 @@ The convenience helpers:
 
 ---
 
-## 5. Honest Boundary
+## 6. Honest Boundary
 
 This gate **does NOT** claim finished PBR art has been reviewed or
 shipped. `FINISHED_REAL` is reachable only when:
@@ -228,9 +273,15 @@ state. `PARTIAL` is a transient state during the operator's
 incremental install — it tells the M12 launcher that *some* hero
 slots are real while others still fall back to procedural.
 
+The screenshot/material receipt path is also metadata-only. It does
+not commit, generate, or promote any proprietary screenshot. A
+synthetic receipt is useful for CI, but public README/release evidence
+still requires an operator-reviewed receipt file outside the repo and
+an explicit docs/status promotion.
+
 ---
 
-## 6. V1 / V2 Invariants
+## 7. V1 / V2 Invariants
 
 - V1 command routes, dungeon state, save/restore, sensor processing
   are NEVER bypassed by this gate.
@@ -279,6 +330,17 @@ an `IHDR` chunk at the standard offset, and report the same width and
 height as the manifest. This keeps a placeholder text file renamed to
 `.png`, or a stale PNG with mismatched dimensions, in `PARTIAL`
 instead of promoting the finished-art gate.
+
+## Receipt Schema
+
+`{ id, generator, source_file, width, height, frame_hash, material_gate }`
+
+The receipt id is
+`dm1_v22_real_screenshot_material_receipt_01`. `source_file`
+resolves under `receipts/`. Synthetic generators (`placeholder`,
+`synthetic`, `synthetic_test`) never promote final evidence; a
+finished receipt requires `material_gate == "FINISHED_REAL"` and the
+six-slot material gate to be `FINISHED_REAL` at query time.
 
 ## Companion (SKIP-only) gate
 
