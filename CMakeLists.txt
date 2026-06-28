@@ -2202,6 +2202,56 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 first-viewport-frame startup probe (pass for
+# docs/FIRESTAFF_GAP_LIST.md C5 / TODO.md "first-frame M11/viewport
+# startup proof for CSB" follow-up).  The probe proves the full
+# boot -> runtime -> first-viewport-frame handoff chain:
+# csb_v1_boot_profile_init -> csb_v1_boot_scan_assets (or
+# hash-simulated synthetic boot profile) -> csb_v1_boot_enter_game
+# (RUNTIME_READY) -> csb_v1_runtime_tick (TITLE wait) ->
+# csb_v1_viewport_render_frame (one deterministic first frame) ->
+# csb_v1_boot_cleanup.  Verifies that the M11-shaped 320x200
+# framebuffer actually receives render output in the CSB-owned
+# 136-row viewport band without leaking into the M11 panel/action
+# rows below that band, that two
+# back-to-back renders are byte-identical (deterministic render
+# entry), and that viewport_pixels == NULL is a safe no-op (the
+# staged-integration guard the M11 wiring relies on).  Default
+# path is synthetic-data (writes a small CSB V1 DUNGEON.DAT +
+# stub GRAPHICS.DAT into /tmp) so CI stays deterministic;
+# real-asset path runs automatically when $FIRESTAFF_CSB_PC_DATA
+# or argv[1] points at a verified CSB V1 directory.
+#
+# Source-lock boundary:
+#   - ReDMCSB ENTRANCE.C F0806 lines 409-441 (CSB entrance).
+#   - ReDMCSB ENTRANCE.C F0806 lines 857-883 (TITLE wait + G0298_B_NewGame).
+#   - ReDMCSB LOADSAVE.C F0435 lines 1940-1944 (new-game map 0).
+#   - ReDMCSB DUNGEON.C F0237 (dungeon load entry).
+#   - ReDMCSB DUNGEON.C F0151 lines 1423-1475 (column-major square access).
+#   - ReDMCSB GAMELOOP.C F0002 lines 69-124 (V1 tick at game_time boundary).
+#   - ReDMCSB VIEWPORT.C M091_BITPLANE_SIZE(224, 136) viewport sub-region.
+#   - ReDMCSB DUNVIEW.C F0128 lines 8318-8542 (shared DM1/CSB draw core).
+#   - src/engine/firestaff_game_loop.c lines 125-192 (FS_GAME_CSB wiring).
+add_executable(firestaff_csb_v1_first_viewport_frame_probe
+    probes/csb/firestaff_csb_v1_first_viewport_frame_probe.c
+    src/csb/csb_v1_runtime_pc34_compat.c
+    src/csb/csb_v1_boot.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_viewport_pc34_compat.c
+    src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_first_viewport_frame_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_first_viewport_frame_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_first_viewport_frame_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 PC real-asset ornament blit probe (pass for
 # docs/FIRESTAFF_GAP_LIST.md C5 "live real-asset ornament blits,
 # broader viewport/HUD captures, and pixel parity evidence"). The
@@ -14351,6 +14401,27 @@ if(BUILD_TESTING)
         set_tests_properties(csb_v1_pc_real_asset_ornament_blit PROPERTIES
             LABELS "tier1;csb;real_data;skip_safe;viewport;ornament;f0108;f0115"
             TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 first-viewport-frame startup probe ctest entry ────
+    # Tier 1 / Skip-safe by default: the default path runs against a
+    # synthetic CSB V1 DUNGEON.DAT + stub GRAPHICS.DAT the probe
+    # stages into /tmp so CI is fully deterministic.  Hosts that DO
+    # have a verified CSB V1 directory under $FIRESTAFF_CSB_PC_DATA
+    # (or argv[1]) automatically exercise the real-asset path.  The
+    # probe proves boot -> runtime -> first-viewport-frame -> cleanup
+    # with a deterministic, byte-identical render entry in the
+    # CSB-owned 136-row viewport band without leaking into the M11
+    # panel/action rows below that band.
+    if(TARGET firestaff_csb_v1_first_viewport_frame_probe)
+        add_test(
+            NAME csb_v1_first_viewport_frame
+            COMMAND firestaff_csb_v1_first_viewport_frame_probe
+        )
+        set_tests_properties(csb_v1_first_viewport_frame PROPERTIES
+            LABELS "tier1;csb;skip_safe;launch;boot_handoff;viewport;m11_boundary"
+            TIMEOUT 60
         )
     endif()
 
