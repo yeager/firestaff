@@ -6932,8 +6932,14 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             free(profile);
             return 0;
         }
-        /* V2 runtimes — same init sequence as firestaff_game_loop.c.
-         * Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
+        /* V1/V2 runtimes — same init sequence as firestaff_game_loop.c.
+         * The V1 singleton must receive the verified boot profile before
+         * M11 idle ticks call dm2_v1_runtime_tick(); otherwise the M11
+         * hand-off owns a world pointer but the runtime accessors still see
+         * no booted DM2 state. Source: dm2_v1_runtime.c
+         * dm2_v1_runtime_init(), SKULL.ASM T520/T560 boot boundary. */
+        dm2_v1_runtime_init(profile);
+        /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
         dm2_v2_runtime_init(2);
         dm2_v2_hud_runtime_init();
         dm2_v2_touch_runtime_init();
@@ -6952,10 +6958,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->dm2BootProfile = profile;
         state->dm2World = profile->dm2_state;
         state->dm2State.level_loaded = 1;
-        state->dm2State.party_x = 0;
-        state->dm2State.party_y = 0;
-        state->dm2State.party_dir = 0;
-        state->dm2State.tick_count = 0;
+        state->dm2State.party_x = dm2_v1_runtime_get_party_x();
+        state->dm2State.party_y = dm2_v1_runtime_get_party_y();
+        state->dm2State.party_dir = dm2_v1_runtime_get_party_dir();
+        state->dm2State.tick_count = dm2_v1_runtime_get_tick_count();
         m11_set_status(state, "BOOT", "DM2 READY");
         m11_set_inspect_readout(state, "READY",
                                 "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE");
@@ -7743,7 +7749,10 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         dm2_v1_runtime_tick();
-        state->dm2State.tick_count++;
+        state->dm2State.party_x = dm2_v1_runtime_get_party_x();
+        state->dm2State.party_y = dm2_v1_runtime_get_party_y();
+        state->dm2State.party_dir = dm2_v1_runtime_get_party_dir();
+        state->dm2State.tick_count = dm2_v1_runtime_get_tick_count();
         return M11_GAME_INPUT_REDRAW;
     }
     /* Nexus V1: use the Nexus tick function instead of DM1's m11_apply_tick.
