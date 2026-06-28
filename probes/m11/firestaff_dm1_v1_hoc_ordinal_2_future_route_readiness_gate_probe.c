@@ -251,9 +251,14 @@ static int scan_corridor_for_ordinal_2(M11_GameViewState* state) {
  * `route_variant` is the human label the existing probes use;
  * `probe_basename` is the file basename under probes/m11/; the
  * probe source file must exist on disk.  `expected_wired` records
- * today's honest build-system state: most siblings are CTest-wired;
- * two older source-present siblings are deliberately still open until
- * their stale fixture expectations are repaired.
+ * today's honest build-system state: every known ordinal-2 sibling
+ * probe is now CTest-wired (the historical 2026-06-27 baseline had
+ * `west_negative` and `cancel_reopen` source-present but open; the
+ * 2026-06-28 sibling-promotion lane promoted both into the pool-probe
+ * foreach() block, so the matrix now expects wired=10/10, open=0).
+ * If a future build regresses one of these back to source-only, the
+ * `expected_wired` flag for that row should be flipped back to
+ * WIRE_OPEN so the gate keeps recording the real state.
  */
 typedef struct ProbeRecord {
     const char* route_variant;
@@ -276,7 +281,7 @@ static const ProbeRecord kSiblingProbes[] = {
     { "south_return",        "firestaff_dm1_v1_champion_mirror_ordinal_2_south_return_portrait_rect_position_runtime_probe.c",
       "(1,4) SOUTH/return (corridor scan SKIPs on live build)",         WIRE_EXPECTED, SENSOR_REAL    },
     { "west_negative",       "firestaff_dm1_v1_champion_mirror_ordinal_2_west_negative_portrait_rect_position_runtime_probe.c",
-      "x=1 west wall y=2..6 DIR_WEST (no ordinal-2 sensor on corridor)", WIRE_OPEN,     SENSOR_REAL    },
+      "x=1 west wall y=2..6 DIR_WEST (no ordinal-2 sensor on corridor)", WIRE_EXPECTED, SENSOR_REAL    },
     { "east_walkpath",       "firestaff_dm1_v1_hall_champion_portrait_02_east_walkpath_rect_position_runtime_probe.c",
       "synthetic-atlas-blit path through corridor east-bound",          WIRE_EXPECTED, SENSOR_SYNTHETIC },
     { "d2l_negative",        "firestaff_dm1_v1_champion_mirror_ordinal_2_d2l_negative_portrait_rect_position_runtime_probe.c",
@@ -285,7 +290,7 @@ static const ProbeRecord kSiblingProbes[] = {
     { "leave_and_reenter",   "firestaff_dm1_v1_hall_of_champions_portrait_02_leave_and_reenter_portrait_rect_position_runtime_probe.c",
       "(1,2) NORTH seeded via (1,1) C127 sensor",                       WIRE_EXPECTED, SENSOR_SYNTHETIC },
     { "cancel_reopen",       "firestaff_dm1_v1_hall_of_champions_portrait_02_cancel_reopen_portrait_rect_position_runtime_probe.c",
-      "(1,2) NORTH seeded via (1,1) C127 sensor",                       WIRE_OPEN,     SENSOR_SYNTHETIC },
+      "(1,2) NORTH seeded via (1,1) C127 sensor",                       WIRE_EXPECTED, SENSOR_SYNTHETIC },
     /* The state-machine slices. */
     { "wake_repaint",        "firestaff_dm1_v1_hoc_champion_portrait_02_wake_repaint_portrait_rect_position_050_gate_probe.c",
       "(1,2) NORTH seeded via (1,1) C127 sensor; C146 wake cycle",      WIRE_EXPECTED, SENSOR_SYNTHETIC },
@@ -650,7 +655,7 @@ int main(int argc, char** argv) {
                  totalCoveredWired, totalExpectedWired, totalOpenWiring);
         CHECK(totalSourcePresent == SIBLING_PROBE_COUNT &&
               totalCoveredWired == totalExpectedWired &&
-              totalOpenWiring == 2, msgCov);
+              totalOpenWiring == 0, msgCov);
     }
 
     if (cmakeListsBuf) free(cmakeListsBuf);
