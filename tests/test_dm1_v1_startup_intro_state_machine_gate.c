@@ -72,6 +72,27 @@ static void check_swsh_to_title_boundary(void) {
      */
     expect_u("SWSH source file is available", swshTiming.sourceFile != 0, 1u);
     expect_u("SWSH source function is available", swshTiming.sourceFunction != 0, 1u);
+    expect_u("SWSH palette command count",
+             swshTiming.paletteCommandCount,
+             SWSH_COMPAT_SOURCE_PALETTE_COMMAND_COUNT);
+    expect_u("SWSH palette color-set count",
+             swshTiming.paletteColorSetCount,
+             SWSH_COMPAT_SOURCE_PALETTE_COLOR_SET_COUNT);
+    expect_u("SWSH palette wait command count",
+             swshTiming.paletteWaitCommandCount,
+             SWSH_COMPAT_SOURCE_PALETTE_WAIT_COMMAND_COUNT);
+    expect_u("SWSH palette wait vblank count",
+             swshTiming.paletteWaitVblankCount,
+             SWSH_COMPAT_SOURCE_PALETTE_WAIT_VBLANK_COUNT);
+    expect_u("SWSH sound register write count",
+             swshTiming.soundRegisterWriteCount,
+             SWSH_COMPAT_SOURCE_SOUND_REGISTER_WRITE_COUNT);
+    expect_u("SWSH sound wait command count",
+             swshTiming.soundWaitCommandCount,
+             SWSH_COMPAT_SOURCE_SOUND_WAIT_COMMAND_COUNT);
+    expect_u("SWSH sound wait vblank count",
+             swshTiming.soundWaitVblankCount,
+             SWSH_COMPAT_SOURCE_SOUND_WAIT_VBLANK_COUNT);
     expect_u("SWSH source step count", SWSH_Compat_GetSourceAnimationStepCount(), 29u);
     expect_i("SWSH step zero rejected", SWSH_Compat_GetSourceAnimationStep(0u, &first), 0);
     expect_i("SWSH first step exists", SWSH_Compat_GetSourceAnimationStep(1u, &first), 1);
@@ -91,6 +112,7 @@ static void check_swsh_to_title_boundary(void) {
 
 static void check_title_to_menu_boundary(void) {
     V1_TitleFrontendSourceAnimationStep sourceStep;
+    V1_TitleFrontendSourceAnimationStep finalGuard;
     V1_TitleFrontendSourceTiming titleTiming = V1_TitleFrontend_GetSourceTimingEvidence();
     V1_TitleFrontendHandoffDecision firstTitle =
         V1_TitleFrontend_DecideTitleMenuHandoffStep(1u, 1);
@@ -102,6 +124,7 @@ static void check_title_to_menu_boundary(void) {
         V1_TitleFrontend_DecideTitleMenuHandoffStep(V1_TITLE_DAT_FRAME_MAX + 1u, 0);
 
     memset(&sourceStep, 0, sizeof(sourceStep));
+    memset(&finalGuard, 0, sizeof(finalGuard));
 
     /* ReDMCSB TITLE.C F0437 lines 319-324 draw PRESENTS, lines 385-387
      * run the title zoom blits, lines 395-409 complete the post-zoom,
@@ -109,12 +132,29 @@ static void check_title_to_menu_boundary(void) {
      * frame bank must not make the menu eligible before frame 53 is held.
      */
     expect_u("TITLE source step count", titleTiming.sourceAnimationStepCount, 23u);
+    expect_u("TITLE first menu-eligible step",
+             titleTiming.firstMenuEligibleStep,
+             V1_TITLE_DAT_FRAME_MAX + 1u);
     expect_i("TITLE source step 1 exists",
              V1_TitleFrontend_GetSourceAnimationStep(1u, &sourceStep),
              1);
     expect_u("TITLE source step 1 is PRESENTS",
              (unsigned int)sourceStep.kind,
              (unsigned int)V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS);
+    expect_i("TITLE final source guard exists",
+             V1_TitleFrontend_GetSourceAnimationStep(titleTiming.sourceAnimationStepCount,
+                                                     &finalGuard),
+             1);
+    expect_u("TITLE final source step is guard vblank",
+             (unsigned int)finalGuard.kind,
+             (unsigned int)V1_TITLE_FRONTEND_SOURCE_EVENT_FINAL_GUARD_VBLANK);
+    expect_u("TITLE final source guard waits one vblank",
+             finalGuard.vblankBeforeEvent,
+             1u);
+    expect_i("TITLE source step after guard is rejected",
+             V1_TitleFrontend_GetSourceAnimationStep(titleTiming.sourceAnimationStepCount + 1u,
+                                                     &sourceStep),
+             0);
 
     expect_u("TITLE first frame ordinal", firstTitle.title.renderFrameOrdinal, 1u);
     expect_u("TITLE first surface is title",
@@ -161,6 +201,9 @@ static void check_menu_to_entrance_wait_boundary(void) {
      */
     expect_i("interactive entrance does not auto-enter after title/menu handoff",
              M11_Entrance_ShouldAutoEnterForTimeout(0, 1200, 6000u),
+             0);
+    expect_i("headless entrance waits until explicit timeout",
+             M11_Entrance_ShouldAutoEnterForTimeout(1, 1200, 1199u),
              0);
     expect_i("headless entrance may auto-enter after explicit timeout",
              M11_Entrance_ShouldAutoEnterForTimeout(1, 1200, 1201u),
