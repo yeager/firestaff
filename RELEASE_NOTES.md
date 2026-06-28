@@ -307,6 +307,8 @@ need real-asset proof.
 
 - **DM2 V1 projectile creature collision gate**: the projectile step helper now runs the existing creature-collision resolver before the energy-floor despawn path for non-grace projectiles, matching the ReDMCSB `PROJEXPL.C` impact-before-energy order. The data-free unit/probe now pin a depleted projectile on a creature square so creature damage must land before `F0813` consumes the slot; wall, door, party, teleporter, and map-change impacts remain outside this bounded slice.
 
+- **Nexus DGN geometry readiness**: the Nexus DGN loader now exposes a bounded Structure1/Structure1B geometry summary with collision-reference counts and conservative mesh-readiness metadata. This is a parser gate only; full Structure1C/F mesh decode and real runtime screen capture remain open.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
