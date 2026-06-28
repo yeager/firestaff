@@ -458,6 +458,17 @@ static int expect_u16_eq(const char* label,
     return 1;
 }
 
+static int expect_bytes_eq(const char* label,
+                           const void* got,
+                           const void* want,
+                           size_t size) {
+    if (memcmp(got, want, size) != 0) {
+        printf("  FAIL: %s byte payload mismatch\n", label);
+        return 0;
+    }
+    return 1;
+}
+
 static void seed_party_state_gate_world(struct GameWorld_Compat* world) {
     struct TimelineEvent_Compat ev;
     int i;
@@ -627,6 +638,12 @@ static int test_party_state_save_resume_gate(void) {
     ok &= expect_int_eq("champion count", after.party.championCount, 2);
     ok &= expect_int_eq("champion0 present",
                         after.party.champions[0].present, 1);
+    ok &= expect_bytes_eq("champion0 name",
+                          after.party.champions[0].name,
+                          "HALK    ",
+                          CHAMPION_NAME_LENGTH);
+    ok &= expect_int_eq("champion0 portrait",
+                        after.party.champions[0].portraitIndex, 6);
     ok &= expect_u16_eq("champion0 ready hand",
                         after.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT],
                         0x1400u);
@@ -638,22 +655,58 @@ static int test_party_state_save_resume_gate(void) {
                         0x1C02u);
     ok &= expect_u16_eq("champion0 hp",
                         after.party.champions[0].hp.current, 91);
+    ok &= expect_u16_eq("champion0 max hp",
+                        after.party.champions[0].hp.maximum, 100);
+    ok &= expect_u16_eq("champion0 stamina",
+                        after.party.champions[0].stamina.current, 77);
+    ok &= expect_u16_eq("champion0 mana max",
+                        after.party.champions[0].mana.maximum, 20);
     ok &= expect_u16_eq("champion0 strength",
                         after.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH],
                         64);
+    ok &= expect_u32_eq("champion0 fighter xp",
+                        after.party.champions[0].skillExperience[CHAMPION_SKILL_FIGHTER],
+                        12345u);
     ok &= expect_u16_eq("champion0 load",
                         after.party.champions[0].load, 83);
+    ok &= expect_u16_eq("champion0 max load",
+                        after.party.champions[0].maxLoad, 612);
+    ok &= expect_int_eq("champion0 facing",
+                        after.party.champions[0].direction, DIR_NORTH);
 
     ok &= expect_int_eq("champion1 present",
                         after.party.champions[1].present, 1);
+    ok &= expect_bytes_eq("champion1 name",
+                          after.party.champions[1].name,
+                          "TIGGY   ",
+                          CHAMPION_NAME_LENGTH);
+    ok &= expect_int_eq("champion1 portrait",
+                        after.party.champions[1].portraitIndex, 9);
     ok &= expect_u16_eq("champion1 pouch",
                         after.party.champions[1].inventory[CHAMPION_SLOT_POUCH_1],
                         0x2003u);
+    ok &= expect_u16_eq("champion1 backpack",
+                        after.party.champions[1].inventory[CHAMPION_SLOT_BACKPACK_2],
+                        0x2404u);
     ok &= expect_u16_eq("champion1 wizard level",
                         after.party.champions[1].skillLevels[CHAMPION_SKILL_WIZARD],
                         4);
+    ok &= expect_u32_eq("champion1 wizard xp",
+                        after.party.champions[1].skillExperience[CHAMPION_SKILL_WIZARD],
+                        54321u);
     ok &= expect_u16_eq("champion1 mana",
                         after.party.champions[1].mana.current, 48);
+    ok &= expect_u16_eq("champion1 max mana",
+                        after.party.champions[1].mana.maximum, 55);
+    ok &= expect_u16_eq("champion1 wisdom",
+                        after.party.champions[1].attributes[CHAMPION_ATTR_WISDOM],
+                        72);
+    ok &= expect_u16_eq("champion1 load",
+                        after.party.champions[1].load, 37);
+    ok &= expect_u16_eq("champion1 max load",
+                        after.party.champions[1].maxLoad, 420);
+    ok &= expect_int_eq("champion1 facing",
+                        after.party.champions[1].direction, DIR_EAST);
     ok &= expect_u16_eq("champion2 empty action hand",
                         after.party.champions[2].inventory[CHAMPION_SLOT_HAND_RIGHT],
                         THING_NONE);
@@ -664,10 +717,26 @@ static int test_party_state_save_resume_gate(void) {
                         TIMELINE_EVENT_DOOR_ANIMATE);
     ok &= expect_int_eq("timeline first fire tick",
                         (int)after.timeline.events[0].fireAtTick, 3219);
+    ok &= expect_int_eq("timeline first map",
+                        after.timeline.events[0].mapIndex, 2);
+    ok &= expect_int_eq("timeline first x",
+                        after.timeline.events[0].mapX, 17);
+    ok &= expect_int_eq("timeline first y",
+                        after.timeline.events[0].mapY, 21);
+    ok &= expect_int_eq("timeline first cell",
+                        after.timeline.events[0].cell, 3);
+    ok &= expect_int_eq("timeline first aux0",
+                        after.timeline.events[0].aux0, 7);
+    ok &= expect_int_eq("timeline first aux1",
+                        after.timeline.events[0].aux1, 8);
     ok &= expect_int_eq("timeline second kind", after.timeline.events[1].kind,
                         TIMELINE_EVENT_HUNGER_THIRST);
     ok &= expect_int_eq("timeline second fire tick",
                         (int)after.timeline.events[1].fireAtTick, 3240);
+    ok &= expect_int_eq("timeline second map",
+                        after.timeline.events[1].mapIndex, 2);
+    ok &= expect_int_eq("timeline second aux0",
+                        after.timeline.events[1].aux0, 0x44);
 
     rc = DM1_SaveGameWithProfile(&after, path2, 0xD11D1D1Du, 1, 1,
                                  DM1_DefaultSaveProfileHash());
