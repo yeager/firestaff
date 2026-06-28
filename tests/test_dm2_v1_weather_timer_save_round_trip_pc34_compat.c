@@ -38,6 +38,16 @@ static int g_failed;
     } \
 } while (0)
 
+static uint16_t suppress7_u16(uint16_t value)
+{
+    return (uint16_t)(value & 0x7F7Fu);
+}
+
+static uint32_t suppress7_u32(uint32_t value)
+{
+    return value & 0x7F7F7F7Fu;
+}
+
 /* ── Test 1: DM2_GameStateBlock rain_state round-trip ────────────────── */
 
 static void test_gamestate_rain_state_round_trip(void)
@@ -221,7 +231,163 @@ static void test_timer_table_covers_all_timer_ids(void)
     CHECK(ok, "all 5 DM2_TIMER_* ids round-trip");
 }
 
-/* ── Test 4: weather seed + LCG advances preserved across the
+/* ── Test 4: source-owned gamestate + timer-table stream fixture ──────
+ *
+ * This keeps the scope one layer above the single-entry timer test: the
+ * skload_table_60 game state block owns wTimersCount, then the save stream
+ * immediately carries that many 10-byte timer records. The fixture verifies
+ * Firestaff can walk the concatenated SUPPRESS stream deterministically
+ * without a delimiter byte or real DM2 save file.
+ *
+ * Source anchors:
+ *   - docs/dm2_save_format.md § Save Sections: skload_table_60 followed by
+ *     "Timers table (10 bytes x wTimersCount, SUPPRESS)"
+ *   - ReDMCSB BASE.C F0027/F0029 lines 1688-1765: RNG seed advances via
+ *     state * 0xBB40E62D + 11, then weather uses the two low result bits.
+ */
+
+static void test_gamestate_timer_stream_fixture_round_trip(void)
+{
+    const uint32_t seed_in = 0x00123456u;
+    DM2_GameStateBlock gs_in;
+    DM2_GameStateBlock gs_out;
+    DM2_TimerEntry timers_in[4];
+    DM2_TimerEntry timers_out[4];
+    uint8_t stream[DM2_GAME_STATE_BLOCK_SIZE + (4 * DM2_TIMER_ENTRY_SIZE)];
+    int enc_n;
+    int dec_n;
+    size_t offsets[6];
+    size_t stream_n = 0;
+    int ok = 1;
+    int i;
+
+    memset(&gs_in, 0, sizeof(gs_in));
+    gs_in.dwGameTick = 0x00654321u;
+    gs_in.dwRandomSeed = seed_in;
+    gs_in.wChampionsCount = 4;
+    gs_in.wPlayerPosX = 12;
+    gs_in.wPlayerPosY = 9;
+    gs_in.wPlayerDir = 3;
+    gs_in.wPlayerMap = 5;
+    gs_in.wChampionLeader = 2;
+    gs_in.wTimersCount = 4;
+    gs_in.rain_state[0] = DM2_WEATHER_STORM;
+    gs_in.rain_state[1] = DM2_WEATHER_RAIN;
+    gs_in.rain_state[2] = DM2_WEATHER_FOG;
+    gs_in.rain_state[3] = DM2_WEATHER_CLEAR;
+    gs_in.rain_state[4] = 80;
+    gs_in.rain_state[5] = 40;
+    gs_in.rain_state[6] = 30;
+    gs_in.rain_state[7] = 0;
+
+    memset(timers_in, 0, sizeof(timers_in));
+    timers_in[0].timer_id = DM2_TIMER_TORCH;
+    timers_in[0].current_tick = 0x1234u;
+    timers_in[0].interval_ticks = 0x2345u;
+    timers_in[0].flags = 0x0001u;
+    timers_in[0].user_data = 0x0002u;
+
+    timers_in[1].timer_id = DM2_TIMER_TICK_GENERATOR;
+    timers_in[1].current_tick = 0x1235u;
+    timers_in[1].interval_ticks = 0x0001u;
+    timers_in[1].flags = 0x0002u;
+    timers_in[1].user_data = 0x0042u;
+
+    timers_in[2].timer_id = DM2_TIMER_ORNATE_ANIM;
+    timers_in[2].current_tick = 0x2346u;
+    timers_in[2].interval_ticks = 0x003Cu;
+    timers_in[2].flags = 0x0004u;
+    timers_in[2].user_data = 0x0018u;
+
+    timers_in[3].timer_id = DM2_TIMER_CREATURE_DEATH;
+    timers_in[3].current_tick = 0x3456u;
+    timers_in[3].interval_ticks = 0x0078u;
+    timers_in[3].flags = 0x0008u;
+    timers_in[3].user_data = 0x0033u;
+
+    offsets[0] = stream_n;
+    enc_n = dm2_suppress_encode_gamestate(&gs_in, stream + stream_n,
+                                           sizeof(stream) - stream_n);
+    CHECK(enc_n > 0, "stream fixture gamestate encodes first");
+    if (enc_n <= 0) {
+        return;
+    }
+    stream_n += (size_t)enc_n;
+    offsets[1] = stream_n;
+
+    for (i = 0; i < 4; i++) {
+        enc_n = dm2_suppress_encode_timer(&timers_in[i], stream + stream_n,
+                                          sizeof(stream) - stream_n);
+        if (enc_n <= 0) {
+            ok = 0;
+            break;
+        }
+        stream_n += (size_t)enc_n;
+        offsets[(size_t)i + 2u] = stream_n;
+    }
+    CHECK(ok, "stream fixture encodes four timer entries");
+    CHECK(stream_n > offsets[1], "timer table bytes follow gamestate bytes");
+
+    memset(&gs_out, 0xCC, sizeof(gs_out));
+    dec_n = dm2_suppress_decode_gamestate(stream, stream_n, &gs_out, 0);
+    CHECK(dec_n > 0, "stream fixture gamestate decodes");
+    CHECK((size_t)dec_n == offsets[1],
+          "gamestate decoder consumes exactly the first stream segment");
+    CHECK(suppress7_u32(gs_out.dwGameTick) == suppress7_u32(gs_in.dwGameTick),
+          "stream fixture game tick round-trips");
+    CHECK(suppress7_u32(gs_out.dwRandomSeed) == suppress7_u32(gs_in.dwRandomSeed),
+          "stream fixture random/weather seed round-trips");
+    CHECK(gs_out.wTimersCount == gs_in.wTimersCount,
+          "stream fixture timer count round-trips");
+    CHECK(gs_out.rain_state[0] == gs_in.rain_state[0] &&
+          gs_out.rain_state[4] == gs_in.rain_state[4],
+          "stream fixture active storm state/intensity round-trip");
+
+    stream_n = offsets[1];
+    memset(timers_out, 0xCC, sizeof(timers_out));
+    for (i = 0; i < (int)gs_out.wTimersCount; i++) {
+        dec_n = dm2_suppress_decode_timer(stream + stream_n,
+                                          offsets[(size_t)i + 2u] - stream_n,
+                                          &timers_out[i], 0);
+        if (dec_n <= 0 || stream_n + (size_t)dec_n != offsets[(size_t)i + 2u]) {
+            ok = 0;
+            break;
+        }
+        stream_n += (size_t)dec_n;
+    }
+    CHECK(ok, "stream fixture walks timer table by wTimersCount");
+    CHECK(stream_n == offsets[5], "stream fixture consumes every encoded byte");
+
+    ok = 1;
+    for (i = 0; i < 4; i++) {
+        if (suppress7_u16(timers_out[i].timer_id) !=
+                suppress7_u16(timers_in[i].timer_id) ||
+            suppress7_u16(timers_out[i].current_tick) !=
+                suppress7_u16(timers_in[i].current_tick) ||
+            suppress7_u16(timers_out[i].interval_ticks) !=
+                suppress7_u16(timers_in[i].interval_ticks) ||
+            suppress7_u16(timers_out[i].flags) !=
+                suppress7_u16(timers_in[i].flags) ||
+            suppress7_u16(timers_out[i].user_data) !=
+                suppress7_u16(timers_in[i].user_data)) {
+            ok = 0;
+            break;
+        }
+    }
+    CHECK(ok, "stream fixture preserves timer table order and fields");
+
+    {
+        DM2_V1_WeatherState replay;
+        uint32_t next_seed;
+        dm2_v1_weather_init(&replay);
+        dm2_v1_weather_set_seed(&replay, gs_out.dwRandomSeed);
+        next_seed = dm2_v1_weather_advance_seed(seed_in);
+        CHECK(dm2_v1_weather_next_state(&replay) == (int)((next_seed >> 8) & 0x3u),
+              "stream fixture replay weather state matches saved seed");
+    }
+}
+
+/* ── Test 5: weather seed + LCG advances preserved across the
  *    SUPPRESS gamestate round-trip when the seed is folded into
  *    dwRandomSeed. This is the save/load persistence contract for
  *    the outdoor weather state machine: a deterministic outdoor
@@ -280,7 +446,7 @@ static void test_weather_seed_persists_via_gamestate_round_trip(void)
           "weather byte in gamestate survives round-trip");
 }
 
-/* ── Test 5: source_evidence strings are non-empty and cite skload ──── */
+/* ── Test 6: source_evidence strings are non-empty and cite skload ──── */
 
 static void test_save_source_evidence_strings(void)
 {
@@ -320,6 +486,9 @@ int main(void)
 
     printf("\n--- test_timer_table_covers_all_timer_ids ---\n");
     test_timer_table_covers_all_timer_ids();
+
+    printf("\n--- test_gamestate_timer_stream_fixture_round_trip ---\n");
+    test_gamestate_timer_stream_fixture_round_trip();
 
     printf("\n--- test_weather_seed_persists_via_gamestate_round_trip ---\n");
     test_weather_seed_persists_via_gamestate_round_trip();
