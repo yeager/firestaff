@@ -5548,6 +5548,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_save_load
     )
 
+    add_executable(test_dm2_v1_quirk_decisions
+        tests/test_dm2_v1_quirk_decisions.c
+        src/dm2/dm2_v1_quirk_decisions.c
+    )
+    target_include_directories(test_dm2_v1_quirk_decisions PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_quirk_decisions PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_quirk_decisions
+        COMMAND test_dm2_v1_quirk_decisions
+    )
+
     # ── DM2 V1 minimap persistence across a level transition ──
     # The explored bitmap is keyed on level index, not on current_level,
     # so changing the level pointer must not wipe prior map reveals.
