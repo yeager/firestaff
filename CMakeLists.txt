@@ -8561,6 +8561,15 @@ if(BUILD_TESTING)
         tests/test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat PRIVATE firestaff_m11)
+    # DM1 V1 HiDPI entrance command scale gate: MacBook-style
+    # 1512x982 logical and 3024x1964 Retina drawable surfaces must
+    # map source 320x200 entrance button centers back to the intended
+    # ReDMCSB G0445 command/zone, while right-edge outside clicks
+    # remain non-hits and drawable presentation stays full-size.
+    add_executable(test_dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat
+        tests/test_dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat PRIVATE firestaff_m11)
     # DM1 V1 HiDPI champion portrait 11 mouse-rect gate: scaled
     # window coordinates must route to the source-locked D1C
     # champion portrait rect (96, 35, 32, 29) for the ordinal-11
@@ -8684,6 +8693,7 @@ if(BUILD_TESTING)
         target_compile_options(firestaff_dm1_v22_finished_art_material_gate_probe PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_ordinal_8_portrait_mouse_rect_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hall_champion_portrait_15_highdpi_mouse_rect_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -8996,6 +9006,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat
         COMMAND test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat
+    )
+    add_test(
+        NAME dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat
+        COMMAND test_dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat
     )
     add_test(
         NAME dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat
