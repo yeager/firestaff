@@ -4526,6 +4526,27 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_utility_import
     )
 
+    # -- DM2 V1 inventory/item panel gate (data-free) --
+    # Source-locked to the ReDMCSB slot indices and panel routes:
+    # DEFS.H:779-810, PANEL.C:1127-1200/1658-1692/2421-2423,
+    # CHAMPION.C:250-268/270-282, LOADSAVE.C:1535-1537/2744.
+    add_executable(test_dm2_v1_inventory_item_panel_gate
+        tests/test_dm2_v1_inventory_item_panel_gate.c
+        src/dm2/dm2_v1_inventory_panel.c
+        src/dm2/dm2_v1_save_load.c
+    )
+    target_include_directories(test_dm2_v1_inventory_item_panel_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_inventory_item_panel_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_inventory_item_panel_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_inventory_item_panel_gate
+        COMMAND test_dm2_v1_inventory_item_panel_gate
+    )
+
     # ── DM2 V1 Phase 5: Combat resolver (creature/combat parity) ──
     add_executable(test_dm2_v1_combat_pc34_compat
         tests/test_dm2_v1_combat_pc34_compat.c
