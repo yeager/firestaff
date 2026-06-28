@@ -69,6 +69,20 @@ static void print_scan_game(const M12_AssetStatus* status,
         }
         printf("\n");
     }
+    if (strcmp(gameId, "nexus") == 0) {
+        const M12_NexusBpkTrailerMetadata* bpk =
+            M12_AssetStatus_GetNexusBpkTrailerMetadata(status);
+        if (bpk && bpk->found && bpk->parsed && bpk->trailerFound) {
+            printf("  %-28s FOUND  entries=%u prs3=%u trailer[%u]=0x%08x,0x%08x  %s\n",
+                   "MENU.BPK trailer",
+                   bpk->entryCount,
+                   bpk->prs3PayloadCount,
+                   bpk->trailerIndex,
+                   bpk->trailerFirstOffset,
+                   bpk->trailerSecondOffset,
+                   bpk->matchedPath);
+        }
+    }
 }
 
 static int run_data_scan(const char* dataDir) {

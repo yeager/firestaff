@@ -2,6 +2,7 @@
 #define FIRESTAFF_ASSET_STATUS_M12_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +38,25 @@ typedef struct {
 } M12_AssetRequiredFileStatus;
 
 typedef struct {
+    int probed;
+    int found;
+    int parsed;
+    int trailerFound;
+    char matchedPath[M12_ASSET_DATA_DIR_CAPACITY];
+    uint32_t entryCount;
+    uint32_t prs3PayloadCount;
+    uint32_t rawPayloadCount;
+    uint32_t trailerIndex;
+    uint32_t mode8bppCount;
+    uint32_t mode16bppCount;
+    uint32_t mode24bppCount;
+    uint32_t mode32bppCount;
+    uint32_t trailerModeCount;
+    uint32_t trailerFirstOffset;
+    uint32_t trailerSecondOffset;
+} M12_NexusBpkTrailerMetadata;
+
+typedef struct {
     char dataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char legacyFallbackDir[M12_ASSET_DATA_DIR_CAPACITY];
     int dm1Available;
@@ -56,6 +76,7 @@ typedef struct {
     M12_AssetRequiredFileStatus requiredFiles[M12_ASSET_GAME_COUNT][M12_ASSET_MAX_REQUIRED_FILES_PER_GAME];
     size_t requiredFileCounts[M12_ASSET_GAME_COUNT];
     char runtimeDataDirs[M12_ASSET_GAME_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
+    M12_NexusBpkTrailerMetadata nexusBpkTrailer;
 } M12_AssetStatus;
 
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir);
@@ -84,6 +105,8 @@ size_t M12_AssetStatus_GetRequiredFileCount(const M12_AssetStatus* status,
 const M12_AssetRequiredFileStatus* M12_AssetStatus_GetRequiredFile(const M12_AssetStatus* status,
                                                                    const char* gameId,
                                                                    size_t index);
+const M12_NexusBpkTrailerMetadata* M12_AssetStatus_GetNexusBpkTrailerMetadata(
+    const M12_AssetStatus* status);
 int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId);
 
 /* Returns 1 if the V2.2 Modern Graphics asset pack is installed and

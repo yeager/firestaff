@@ -1,6 +1,7 @@
 #include "asset_status_m12.h"
 #include "asset_find_by_hash.h"
 #include "fs_portable_compat.h"
+#include "nexus_v1_bpk_archive.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -255,6 +256,7 @@ static const char* const g_originalCandidateNames[] = {
     "DM.BIN",                  /* Nexus Sega Saturn primary CD image */
     "SEGADATA.BIN",       /* Nexus Sega Saturn data track */
     "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip",
+    "MENU.BPK",
     "track02.bin",
     "track02.iso",
     "Theron's Quest (Japan) (Track 02).bin",
@@ -689,6 +691,140 @@ static int m12_root_has_original_candidate(const char* root) {
         }
     }
     return 0;
+}
+
+static uint32_t m12_rd32_be_local(const uint8_t* p) {
+    return ((uint32_t)p[0] << 24) |
+           ((uint32_t)p[1] << 16) |
+           ((uint32_t)p[2] << 8) |
+           (uint32_t)p[3];
+}
+
+static int m12_read_file_bytes(const char* path,
+                               unsigned char** outData,
+                               size_t* outSize) {
+    FILE* fp;
+    long end;
+    unsigned char* data;
+    size_t size;
+    if (!path || !outData || !outSize) {
+        return 0;
+    }
+    *outData = NULL;
+    *outSize = 0U;
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+    if (fseek(fp, 0L, SEEK_END) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    end = ftell(fp);
+    if (end <= 0L || end > (long)(16U * 1024U * 1024U)) {
+        fclose(fp);
+        return 0;
+    }
+    if (fseek(fp, 0L, SEEK_SET) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    size = (size_t)end;
+    data = (unsigned char*)malloc(size);
+    if (!data) {
+        fclose(fp);
+        return 0;
+    }
+    if (fread(data, 1U, size, fp) != size) {
+        free(data);
+        fclose(fp);
+        return 0;
+    }
+    if (fclose(fp) != 0) {
+        free(data);
+        return 0;
+    }
+    *outData = data;
+    *outSize = size;
+    return 1;
+}
+
+static int m12_find_nexus_menu_bpk(const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+                                   size_t rootCount,
+                                   char outPath[M12_ASSET_DATA_DIR_CAPACITY]) {
+    size_t rootIndex;
+    if (!outPath) {
+        return 0;
+    }
+    outPath[0] = '\0';
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        char nexusDir[M12_ASSET_DATA_DIR_CAPACITY];
+        char path[M12_ASSET_DATA_DIR_CAPACITY];
+        if (FSP_JoinPath(path, sizeof(path), roots[rootIndex], "MENU.BPK") &&
+            FSP_FileExists(path)) {
+            m12_copy_string(outPath, M12_ASSET_DATA_DIR_CAPACITY, path);
+            return 1;
+        }
+        if (FSP_JoinPath(nexusDir, sizeof(nexusDir), roots[rootIndex], "nexus") &&
+            FSP_JoinPath(path, sizeof(path), nexusDir, "MENU.BPK") &&
+            FSP_FileExists(path)) {
+            m12_copy_string(outPath, M12_ASSET_DATA_DIR_CAPACITY, path);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void m12_refresh_nexus_bpk_trailer_metadata(
+    M12_AssetStatus* status,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount) {
+    M12_NexusBpkTrailerMetadata* meta;
+    char path[M12_ASSET_DATA_DIR_CAPACITY];
+    unsigned char* data = NULL;
+    size_t dataSize = 0U;
+    Nexus_V1_BpkArchiveInfo info;
+    Nexus_V1_BpkModeDistribution dist;
+    Nexus_V1_BpkEntryPrefix trailer;
+    if (!status) {
+        return;
+    }
+    meta = &status->nexusBpkTrailer;
+    memset(meta, 0, sizeof(*meta));
+    meta->probed = 1;
+
+    if (!m12_find_nexus_menu_bpk(roots, rootCount, path)) {
+        return;
+    }
+    meta->found = 1;
+    m12_copy_string(meta->matchedPath, sizeof(meta->matchedPath), path);
+    if (!m12_read_file_bytes(path, &data, &dataSize)) {
+        return;
+    }
+
+    if (nexus_v1_bpk_archive_parse(data, dataSize, &info) == 0 &&
+        nexus_v1_bpk_archive_mode_distribution(data, dataSize, &dist) == 0) {
+        meta->parsed = 1;
+        meta->entryCount = info.entry_count_hint;
+        meta->prs3PayloadCount = info.prs3_payload_count;
+        meta->rawPayloadCount = info.raw_payload_count;
+        meta->trailerFound = dist.trailer_found;
+        meta->trailerIndex = dist.trailer_index;
+        meta->mode8bppCount = dist.mode_count[NEXUS_V1_BPK_MODE_8BPP];
+        meta->mode16bppCount = dist.mode_count[NEXUS_V1_BPK_MODE_16BPP];
+        meta->mode24bppCount = dist.mode_count[NEXUS_V1_BPK_MODE_24BPP];
+        meta->mode32bppCount = dist.mode_count[NEXUS_V1_BPK_MODE_32BPP];
+        meta->trailerModeCount = dist.mode_count[NEXUS_V1_BPK_MODE_TRAILER];
+        if (dist.trailer_found &&
+            nexus_v1_bpk_archive_get_entry_prefix(data, dataSize,
+                                                  dist.trailer_index,
+                                                  &trailer) == 0 &&
+            trailer.prefix_complete) {
+            meta->trailerFirstOffset = m12_rd32_be_local(trailer.raw + 0U);
+            meta->trailerSecondOffset = m12_rd32_be_local(trailer.raw + 4U);
+        }
+    }
+    free(data);
 }
 
 static void m12_scan_original_candidates(M12_AssetStatus* status,
@@ -1371,6 +1507,7 @@ static int m12_scan_direct_theron_request(M12_AssetStatus* status,
         }
     }
     m12_apply_required_game_availability(status, theronIndex, requiredMatched);
+    m12_refresh_nexus_bpk_trailer_metadata(status, NULL, 0U);
     m12_refresh_v22_modern_asset_status(status);
     return 1;
 }
@@ -1404,6 +1541,7 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
         m12_init_required_file_metadata(status, i);
     }
     status->originalFileCandidateFound = 1;
+    m12_refresh_nexus_bpk_trailer_metadata(status, NULL, 0U);
     m12_refresh_v22_modern_asset_status(status);
     return 1;
 }
@@ -1626,6 +1764,7 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
         m12_materialize_runtime_cache_for_game(status, i);
     }
 
+    m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     m12_refresh_v22_modern_asset_status(status);
 }
 
@@ -1777,6 +1916,11 @@ const M12_AssetRequiredFileStatus* M12_AssetStatus_GetRequiredFile(const M12_Ass
         return NULL;
     }
     return &status->requiredFiles[gameIndex][index];
+}
+
+const M12_NexusBpkTrailerMetadata* M12_AssetStatus_GetNexusBpkTrailerMetadata(
+    const M12_AssetStatus* status) {
+    return status ? &status->nexusBpkTrailer : NULL;
 }
 
 int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId) {
