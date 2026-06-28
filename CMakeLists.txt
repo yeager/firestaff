@@ -2682,6 +2682,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_champion_panel_action_cell_slotbox_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_panel_bar_graph_pixel_slice_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_panel_status_box_asset_slice_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_panel_status_box_live_dead_matrix_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_panel_pixels_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_panel_partial_party_pixel_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_panel_icon_direction_swap_runtime_probe.c"
