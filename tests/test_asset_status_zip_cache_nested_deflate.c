@@ -18,6 +18,9 @@
  *      the Firestaff asset cache
  *      (<userDataDir>/asset-cache/<gameId>/<label>), so the runtime no
  *      longer needs to understand virtual container paths.
+ *   4. The DM2 launch handoff path can open the materialized files via
+ *      <runtimeDataDir>/dm2/GRAPHICS.DAT and
+ *      <runtimeDataDir>/dm2/DUNGEON.DAT, matching the M11 DM2 scan root.
  *
  * The fixture packs two entries in one ZIP so DM2 (which has two
  * required-files rows, graphics + dungeon) can be reported available:
@@ -185,6 +188,29 @@ static int path_has_cache_leaf(const char* path,
                                const char* leaf) {
     return path && strstr(path, cacheRoot) && strstr(path, gameId) &&
            strstr(path, leaf) && !strstr(path, "::");
+}
+
+static int runtime_cache_file_matches_payload(
+    const M12_AssetStatus* status,
+    const char* gameId,
+    const char* leaf,
+    const unsigned char* payload,
+    size_t payloadSize) {
+    char gameLeaf[M12_ASSET_DATA_DIR_CAPACITY];
+    char runtimePath[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* runtimeRoot = M12_AssetStatus_GetRuntimeDataDir(status, gameId);
+    if (!runtimeRoot || runtimeRoot[0] == '\0' || !gameId || !leaf ||
+        !payload) {
+        return 0;
+    }
+    if (snprintf(gameLeaf, sizeof(gameLeaf), "%s/%s", gameId, leaf) >=
+        (int)sizeof(gameLeaf)) {
+        return 0;
+    }
+    if (!FSP_JoinPath(runtimePath, sizeof(runtimePath), runtimeRoot, gameLeaf)) {
+        return 0;
+    }
+    return file_matches_payload(runtimePath, payload, payloadSize);
 }
 
 /* Internal: deflate a payload into a freshly malloc()'d buffer and return
@@ -580,6 +606,23 @@ int main(void) {
                                    dungeonSize),
               "cached DUNGEON.DAT under asset-cache/dm2/ must be "
               "byte-identical to the original deflated entry payload");
+
+    /* M11's DM2 handoff probes <runtimeDataDir>/dm2 first (see
+     * m11_game_view.c M11_GameView_StartDm2), so this asserts the cache
+     * root returned by M12 is sufficient for ordinary fopen() based launch
+     * code without any virtual-path awareness. */
+    check_int(runtime_cache_file_matches_payload(&status, "dm2",
+                                                 "GRAPHICS.DAT",
+                                                 kGraphicsPayload,
+                                                 graphicsSize),
+              "DM2 launch lookup should open runtimeDataDir/dm2/GRAPHICS.DAT "
+              "as an ordinary materialized cache file");
+    check_int(runtime_cache_file_matches_payload(&status, "dm2",
+                                                 "DUNGEON.DAT",
+                                                 kDungeonPayload,
+                                                 dungeonSize),
+              "DM2 launch lookup should open runtimeDataDir/dm2/DUNGEON.DAT "
+              "as an ordinary materialized cache file");
 
     /* The cache leafs must NOT contain the virtual "::" separator after
      * materialization; the runtime expects to open them like any other
