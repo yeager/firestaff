@@ -217,7 +217,7 @@
 
 ### REV-01 — F0281 `CHAMPION_Rename` UI not ported
 - **ReDMCSB reference:** `REVIVE.C:F0281_CHAMPION_Rename:357-?` — handles the user renaming a resurrected/reincarnated champion. Calls `F0168_DUNGEON_DecodeText` for inscribed names.
-- **Firestaff state:** `src/dm1/dm1_v1_resurrection_pc34_compat.c:109` notes: *"F0281_CHAMPION_Rename(L0826_ps_Champion); — UI (not ported)"*. F0281 is not implemented in the new compat layer.
+- **Firestaff state:** `dm1_v1_resurrection_rename_ui_gate_pc34_compat` now source-locks the F0281 panel/input contract (C161-only entry, C027/G0032 panel handoff, name/title rules), but `src/dm1/dm1_v1_resurrection_pc34_compat.c:109` still notes: *"F0281_CHAMPION_Rename(L0826_ps_Champion); — UI (not ported)"*. F0281 is not implemented in the live M11 prompt path.
 - **Functional impact:** When a player resurrects or reincarnates a champion with a new name (via the Resurrect panel), Firestaff does not prompt the player for a new name. The default name from the candidate inscription is used.
 - **Severity:** Major (the rename UI is a documented player-facing feature; it is silently missing)
 
