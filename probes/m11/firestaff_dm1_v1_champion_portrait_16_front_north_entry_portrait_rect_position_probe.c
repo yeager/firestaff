@@ -83,20 +83,6 @@ static int g_fail = 0;
 #define PASS(label) do { printf("  PASS: %s\n", label); ++g_pass; } while (0)
 #define FAIL(label) do { printf("  FAIL: %s\n", label); ++g_fail; } while (0)
 
-/* Count non-black pixels in the 32x29 D1C portrait rectangle. */
-static int portrait_rect_nonzero(const unsigned char* fb) {
-    int x, y;
-    int count = 0;
-    for (y = PORTRAIT_RECT_Y; y < PORTRAIT_RECT_Y + PORTRAIT_H; ++y) {
-        for (x = PORTRAIT_RECT_X; x < PORTRAIT_RECT_X + PORTRAIT_W; ++x) {
-            if (M11_FB_DECODE_INDEX(fb[y * FB_W + x]) != 0x00) {
-                ++count;
-            }
-        }
-    }
-    return count;
-}
-
 /* Count warm-colored palette indices (ReDMCSB DUNVIEW.C:3913-3928
  * champion-portrait palette set) in the D1C portrait rectangle. */
 static int portrait_rect_warm_count(const unsigned char* fb) {
