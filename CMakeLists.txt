@@ -4434,6 +4434,31 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_weather_seed_regression
     )
 
+    # -- DM2 V1 Runtime Handoff Smoke Gate --------------------------
+    # Data-free gate: dm2_v1_boot_enter_game() -> dm2_v1_runtime_init()
+    # -> one dm2_v1_runtime_tick(), proving a concrete runtime state
+    # without claiming full real-asset playability.
+    add_executable(test_dm2_v1_runtime_handoff_smoke
+        tests/test_dm2_v1_runtime_handoff_smoke.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_dm2_v1_runtime_handoff_smoke PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_runtime_handoff_smoke PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_runtime_handoff_smoke PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_runtime_handoff_smoke
+        COMMAND test_dm2_v1_runtime_handoff_smoke
+    )
+
     # ── DM2 V1 Weather/Timer Save Round-Trip (weather persistence gate)
     # Source-locked: dm2_v1_save_load.c skload_table_60 +
     # SKULL.ASM skload_table_60 + PROCESS_TIMER_0C.
