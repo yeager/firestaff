@@ -22,6 +22,8 @@
  *   - The original HUD/right-panel band is the remaining 96px-wide area
  *     beside the 224px viewport crop, and capture click routing must keep
  *     viewport, HUD-panel, and lower chrome samples disjoint.
+ *   - Edge-adjacent click samples at x=223/224 and y=168/169 keep the
+ *     320x200 presentation route split exact instead of fuzzing boundaries.
  *   - Representative HUD/action labels fit inside the 96px panel using
  *     SKULLWIN's 6px advance, 5px-high DM2 font metrics.
  *
@@ -265,6 +267,41 @@ static int click_routing_bounds_hold(void)
     return ok ? 1 : 0;
 }
 
+static int click_edge_grid_holds(void)
+{
+    /* SKULLWIN/c_xrect.cpp:21-29 DM2_PT_IN_EXPANDED_RECT asks the queried
+     * rect's pt_in_rect with original-frame x/y; c_events.cpp:1318-1324 uses
+     * those exact mouse coordinates for panel routing. Keep the adjacent
+     * 320x200 boundary samples exact so future capture routes cannot smear
+     * the 224px viewport/HUD edge or the 33+136 viewport bottom edge. */
+    static const struct {
+        int x;
+        int y;
+        DM2_CaptureRoute route;
+    } samples[] = {
+        { 223,  33, DM2_CAPTURE_ROUTE_VIEWPORT },
+        { 224,  33, DM2_CAPTURE_ROUTE_RIGHT_PANEL },
+        { 223, 168, DM2_CAPTURE_ROUTE_VIEWPORT },
+        { 223, 169, DM2_CAPTURE_ROUTE_SCREEN_CHROME },
+        { 224, 169, DM2_CAPTURE_ROUTE_RIGHT_PANEL },
+        {   0,  32, DM2_CAPTURE_ROUTE_SCREEN_CHROME },
+        {   0,  33, DM2_CAPTURE_ROUTE_VIEWPORT },
+        { 223,  32, DM2_CAPTURE_ROUTE_SCREEN_CHROME },
+        { 224,   0, DM2_CAPTURE_ROUTE_RIGHT_PANEL },
+        { 319, 199, DM2_CAPTURE_ROUTE_RIGHT_PANEL },
+        { 320, 199, DM2_CAPTURE_ROUTE_OUTSIDE },
+        { 319, 200, DM2_CAPTURE_ROUTE_OUTSIDE },
+    };
+    int i;
+    int ok = 1;
+
+    for (i = 0; i < (int)(sizeof(samples) / sizeof(samples[0])); i++) {
+        ok &= (classify_capture_click(samples[i].x, samples[i].y) ==
+               samples[i].route);
+    }
+    return ok ? 1 : 0;
+}
+
 static int shot_label_semantics_hold(void)
 {
     /* The capture script labels at least the following DM2 states; this is
@@ -335,6 +372,8 @@ int main(void)
            "representative HUD labels fit 96px panel with 6px DM2 font advance");
     record("click-routing-bounds",  click_routing_bounds_hold(),
            "viewport, right-panel, and lower-chrome sample clicks are disjoint");
+    record("click-edge-grid",       click_edge_grid_holds(),
+           "x=223/224 and y=168/169 samples keep viewport/HUD/chrome edges exact");
     record("shot-label-vocabulary", shot_label_semantics_hold(),
            "interplay_splash, press_any_key, main_menu, dungeon_entry, ...");
     record("route-token-inventory", route_token_inventory_holds(),
