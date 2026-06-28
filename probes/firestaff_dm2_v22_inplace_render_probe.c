@@ -19,10 +19,14 @@
  *     representative shapes (wall/floor/creature/sky/ground/tree)
  *   - dm2_v22_viewport_swap_update(direction=0, raw_cells, 0) populates
  *     the cache for indoor T560 path
+ *   - DM2_V22_T560IndoorRoute exposes all 9 indoor route names,
+ *     raw-cell discriminators, category/asset ids, clipped rects,
+ *     V22-disabled no-op state, and invalid route rejection
  *   - dm2_v22_viewport_swap_render(...) with is_outdoor=0 paints up to
  *     9 cells (D0..D2 x L/C/R)
  *   - dm2_v22_viewport_swap_update(..., is_outdoor=1) populates the
  *     cache for outdoor T600 path
+ *   - indoor-vs-outdoor cache type mismatches are no-ops
  *   - dm2_v22_viewport_swap_render(...) with is_outdoor=1 paints the
  *     3 outdoor cells (sky / horizon / ground)
  *   - 4-direction sweep (each direction paints 9 cells)
@@ -255,6 +259,82 @@ static int dm2_outdoor_cell_centers_nonzero(const unsigned char* fb, int fbW) {
     return 1;
 }
 
+static int dm2_check_t560_route_table(const unsigned char raw_cells[3][3]) {
+    static const char* const kExpectedNames[3][3] = {
+        { "T560_D0_L", "T560_D0_C", "T560_D0_R" },
+        { "T560_D1_L", "T560_D1_C", "T560_D1_R" },
+        { "T560_D2_L", "T560_D2_C", "T560_D2_R" }
+    };
+    static const char* const kExpectedCategories[3][3] = {
+        { "wall_shapes",     "floor_shapes", "creature_shapes" },
+        { "floor_shapes",    "floor_shapes", "floor_shapes" },
+        { "floor_shapes",    "wall_shapes",  "floor_shapes" }
+    };
+    static const char* const kExpectedAssets[3][3] = {
+        { "wall_dm2_temple_01",   "floor_dm2_outdoor_01", "creature_dm2_brigand_01" },
+        { "floor_dm2_outdoor_01", "floor_dm2_pit_01",     "floor_dm2_outdoor_01" },
+        { "floor_dm2_stairs_01",  "wall_dm2_temple_01",   "floor_dm2_stairs_01" }
+    };
+    int d, l;
+    if (dm2_v22_t560_indoor_route_count() != 9) return 0;
+    if (dm2_v22_t560_indoor_route_name(-1, 0) != NULL) return 0;
+    if (dm2_v22_t560_indoor_route_name(0, -2) != NULL) return 0;
+
+    for (d = 0; d < 3; ++d) {
+        for (l = -1; l <= 1; ++l) {
+            int idx = l + 1;
+            DM2_V22_T560IndoorRoute route;
+            if (!dm2_v22_t560_indoor_route_for_cell(d, l, 1920, 1080, &route)) {
+                return 0;
+            }
+            if (!route.valid || route.depth != d || route.lateral != l ||
+                route.lateral_index != idx || route.direction != 0) {
+                return 0;
+            }
+            if (route.raw_cell_type != raw_cells[d][idx]) return 0;
+            if (!route.route_name || strcmp(route.route_name, kExpectedNames[d][idx]) != 0) {
+                return 0;
+            }
+            if (dm2_v22_t560_indoor_route_name(d, l) != route.route_name) return 0;
+            if (!route.category || strcmp(route.category, kExpectedCategories[d][idx]) != 0) {
+                return 0;
+            }
+            if (!route.asset_id || strcmp(route.asset_id, kExpectedAssets[d][idx]) != 0) {
+                return 0;
+            }
+            if (route.rect_w != 640 || route.rect_h != 360) return 0;
+            if (route.clipped_w <= 0 || route.clipped_h != 360) return 0;
+            if (idx == 2) {
+                if (route.clipped_w != 320) return 0;
+            } else if (route.clipped_w != 640) {
+                return 0;
+            }
+            if (!route.render_gate_active) return 0;
+        }
+    }
+    return 1;
+}
+
+static int dm2_check_t560_route_disabled_noop(unsigned char* fb, size_t fb_size) {
+    DM2_V22_T560IndoorRoute route;
+    int painted;
+    size_t i;
+    dm2_v22_set_installed(0);
+    memset(fb, 0x7Eu, fb_size);
+    if (!dm2_v22_t560_indoor_route_for_cell(0, -1, 1920, 1080, &route)) {
+        dm2_v22_set_installed(1);
+        return 0;
+    }
+    painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);
+    dm2_v22_set_installed(1);
+    if (route.render_gate_active) return 0;
+    if (painted != 0) return 0;
+    for (i = 0; i < fb_size; ++i) {
+        if (fb[i] != 0x7Eu) return 0;
+    }
+    return 1;
+}
+
 /* ── Main ─────────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -424,6 +504,31 @@ int main(void) {
                  dm2_v22_viewport_swap_active(),
                  "indoor T560 cache populated + swap active");
 
+    probe_record(&stats, "DM2_V22_T560_ROUTE_TABLE",
+                 dm2_check_t560_route_table((const unsigned char (*)[3])raw_cells),
+                 "all 9 indoor T560 cells expose bounded route/category/asset descriptors");
+
+    {
+        DM2_V22_T560IndoorRoute invalid_route;
+        probe_record(&stats, "DM2_V22_T560_ROUTE_INVALID_BOUNDS",
+                     !dm2_v22_t560_indoor_route_for_cell(3, 0, 1920, 1080,
+                                                         &invalid_route) &&
+                     !dm2_v22_t560_indoor_route_for_cell(0, 2, 1920, 1080,
+                                                         &invalid_route) &&
+                     !dm2_v22_t560_indoor_route_for_cell(0, 0, 1920, 1080,
+                                                         NULL),
+                     "invalid depth/lateral/NULL route descriptors are rejected");
+    }
+
+    probe_record(&stats, "DM2_V22_T560_DISABLED_NOOP",
+                 dm2_check_t560_route_disabled_noop(fb, sizeof(fb)),
+                 "T560 descriptor remains inspectable but render gate is inactive when V22 pack is disabled");
+
+    memset(fb, 0x00, sizeof(fb));
+    probe_record(&stats, "DM2_V22_INDOOR_CACHE_OUTDOOR_NOOP",
+                 dm2_v22_viewport_swap_render(fb, 1920, 1080, 1) == 0,
+                 "indoor T560 cache cannot be consumed by the outdoor T600 render path");
+
     memset(fb, 0x00, sizeof(fb));
     painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);
     changed = count_changed_pixels(fb, sizeof(fb));
@@ -447,6 +552,15 @@ int main(void) {
                  dm2_v22_viewport_swap_populated() &&
                  dm2_v22_viewport_swap_active(),
                  "outdoor T600 cache populated + swap active");
+
+    {
+        DM2_V22_T560IndoorRoute stale_indoor_route;
+        probe_record(&stats, "DM2_V22_ROUTE_TYPE_MISMATCH_NOOP",
+                     !dm2_v22_t560_indoor_route_for_cell(0, 0, 1920, 1080,
+                                                         &stale_indoor_route) &&
+                     dm2_v22_viewport_swap_render(fb, 1920, 1080, 0) == 0,
+                     "outdoor cache cannot be consumed by the indoor T560 route/render path");
+    }
 
     memset(fb, 0x00, sizeof(fb));
     painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 1);
