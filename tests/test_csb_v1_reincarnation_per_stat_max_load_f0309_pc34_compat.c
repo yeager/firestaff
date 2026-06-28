@@ -283,6 +283,20 @@ static void test_random_points_default_drive_max_load(void)
      * surface here. */
     CHECK_EQ(fc.seed, 207,
              "LCG seed for randomPoints=12 is 12*17+3 = 207 (locked to src constants)");
+    CHECK_EQ(fc.str_hits, 1,
+             "LCG randomPoints=12 hits STR exactly once");
+    CHECK_EQ(fc.dex_hits, 2,
+             "LCG randomPoints=12 hits DEX exactly twice");
+    CHECK_EQ(fc.wis_hits, 0,
+             "LCG randomPoints=12 never hits WIS");
+    CHECK_EQ(fc.vit_hits, 1,
+             "LCG randomPoints=12 hits VIT exactly once");
+    CHECK_EQ(fc.am_hits, 3,
+             "LCG randomPoints=12 hits ANTIMAGIC exactly three times");
+    CHECK_EQ(fc.af_hits, 4,
+             "LCG randomPoints=12 hits ANTIFIRE exactly four times");
+    CHECK_EQ(fc.luck_hits, 1,
+             "LCG randomPoints=12 hits Luck once but Luck remains boost-exempt");
 
     build_dead_champion_with_str(&c,
                                  100, 100,
@@ -445,6 +459,20 @@ static void test_random_points_spec_max_drives_max_load(void)
     fc = forecast_lcg(25);
     CHECK_EQ(fc.seed, 428,
              "LCG seed for randomPoints=25 is 25*17+3 = 428 (locked to src constants)");
+    CHECK_EQ(fc.str_hits, 5,
+             "LCG randomPoints=25 hits STR exactly five times");
+    CHECK_EQ(fc.dex_hits, 4,
+             "LCG randomPoints=25 hits DEX exactly four times");
+    CHECK_EQ(fc.wis_hits, 3,
+             "LCG randomPoints=25 hits WIS exactly three times");
+    CHECK_EQ(fc.vit_hits, 3,
+             "LCG randomPoints=25 hits VIT exactly three times");
+    CHECK_EQ(fc.am_hits, 3,
+             "LCG randomPoints=25 hits ANTIMAGIC exactly three times");
+    CHECK_EQ(fc.af_hits, 4,
+             "LCG randomPoints=25 hits ANTIFIRE exactly four times");
+    CHECK_EQ(fc.luck_hits, 3,
+             "LCG randomPoints=25 hits Luck three times but Luck remains boost-exempt");
 
     build_dead_champion_with_str(&c,
                                  100, 100,
