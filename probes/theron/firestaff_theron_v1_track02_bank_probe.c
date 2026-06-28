@@ -65,6 +65,22 @@ static const size_t g_jp_bin_span_offsets[THERON_TRACK02_MAX_BANK_ANCHORS] = {
     0x2d4ab0u, 0x47c710u, 0x711f10u
 };
 
+/* Real per-anchor audio-bank id words, observed locally in the
+ * hash-verified raw US/JP Track 02 BINs (see source_evidence()).
+ * Each value is a 4-byte little-endian word at offset
+ * (span_offsets[i] - 4) in the matching raw BIN.
+ *
+ * Receipt boundary: these values prove byte-level audio-bank marker
+ * presence only.  They do not prove ADPCM decode, CD-DA decode, or runtime
+ * playback. */
+static const uint32_t g_us_audio_bank_ids[THERON_TRACK02_MAX_BANK_ANCHORS] = {
+    0x01725800u, 0x01600801u, 0x01122401u
+};
+
+static const uint32_t g_jp_audio_bank_ids[THERON_TRACK02_MAX_BANK_ANCHORS] = {
+    0x01530301u, 0x01411301u, 0x01682801u
+};
+
 static void check_int(const char *label, int got, int want) {
     if (got != want) {
         printf("FAIL %s: got %d want %d\n", label, got, want);
@@ -193,6 +209,7 @@ static void check_raw_signal(const char *label,
                              Theron_Track02Variant variant,
                              const size_t descriptor_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
                              const size_t span_offsets[THERON_TRACK02_MAX_BANK_ANCHORS],
+                             const uint32_t audio_bank_ids[THERON_TRACK02_MAX_BANK_ANCHORS],
                              size_t first_descriptor_sector,
                              size_t first_span_sector) {
     size_t i;
@@ -226,6 +243,16 @@ static void check_raw_signal(const char *label,
         check_size(name, signal->descriptor_offsets[i], descriptor_offsets[i]);
         snprintf(name, sizeof(name), "%s span offset[%zu]", label, i);
         check_size(name, signal->post_boundary_span_offsets[i], span_offsets[i]);
+        snprintf(name, sizeof(name), "%s audio-bank recognized[%zu]", label, i);
+        check_int(name, signal->audio_bank_id_recognized[i], 1);
+        snprintf(name, sizeof(name), "%s audio-bank id[%zu]", label, i);
+        check_u32(name, signal->audio_bank_id[i], audio_bank_ids[i]);
+        snprintf(name, sizeof(name), "%s audio-bank id offset[%zu]", label, i);
+        check_size(name, signal->audio_bank_id_offsets[i], span_offsets[i] - 4u);
+        snprintf(name, sizeof(name), "%s audio-bank prefix offset[%zu]", label, i);
+        check_size(name,
+                   signal->audio_bank_prefix_offsets[i],
+                   span_offsets[i] - 4u - sizeof(g_audio_bank_prefix));
     }
 
     check_size("raw descriptor sector[0]",
@@ -334,6 +361,7 @@ static void probe_track(const char *label,
                              THERON_TRACK02_VARIANT_US_BIN,
                              g_us_bin_descriptor_offsets,
                              g_us_bin_span_offsets,
+                             g_us_audio_bank_ids,
                              3141u,
                              1263u);
         } else if (signal.variant == THERON_TRACK02_VARIANT_JP_BIN) {
@@ -342,6 +370,7 @@ static void probe_track(const char *label,
                              THERON_TRACK02_VARIANT_JP_BIN,
                              g_jp_bin_descriptor_offsets,
                              g_jp_bin_span_offsets,
+                             g_jp_audio_bank_ids,
                              3140u,
                              1262u);
         } else {
@@ -502,6 +531,7 @@ static void probe_raw_bin_positive_fixture(const char *label,
                      variant,
                      descriptor_offsets,
                      span_offsets,
+                     audio_bank_ids,
                      first_descriptor_sector,
                      first_span_sector);
     free(fixture);
@@ -721,18 +751,15 @@ static void probe_audio_bank_marker_unsupported_variant_fixture(void) {
 static void probe_audio_bank_marker_real_data(const char *md5_hex,
                                               const char *env_name,
                                               const char *default_file,
-                                              uint32_t expected_id,
-                                              size_t expected_id_offset) {
+                                              const uint32_t expected_ids[THERON_TRACK02_MAX_BANK_ANCHORS],
+                                              const size_t expected_span_offsets[THERON_TRACK02_MAX_BANK_ANCHORS]) {
     char path[512];
     const char *env_path = getenv(env_name);
     const char *path_to_read;
     uint8_t *data = NULL;
     size_t size = 0;
     char md5_hex_local[33] = {0};
-    uint32_t got_id = 0u;
-    size_t got_id_offset = 0u;
-    size_t got_prefix_offset = 0u;
-    Theron_Track02SignalStatus status;
+    size_t i;
 
     if (env_path && env_path[0]) {
         path_to_read = env_path;
@@ -766,48 +793,46 @@ static void probe_audio_bank_marker_real_data(const char *md5_hex,
         return;
     }
 
-    /* Narrow regression: lock the audio-bank id at anchor index 0 of
-     * the (US|JP) Track 02 BIN.  See theron_v1_track02_source_evidence(). */
-    status = theron_v1_track02_find_audio_bank_marker(data,
-                                                      size,
-                                                      md5_hex_local,
-                                                      0u,
-                                                      &got_id,
-                                                      &got_id_offset,
-                                                      &got_prefix_offset);
-    printf("audio-bank marker real-data: md5=%s anchor=0 status=%s id=0x%08x id_offset=0x%zx\n",
-           md5_hex_local,
-           theron_v1_track02_signal_status_name(status),
-           (unsigned)got_id,
-           got_id_offset);
-    check_int("real-data audio-bank marker status",
-              status,
-              THERON_TRACK02_SIGNAL_OK);
-    check_u32("real-data audio-bank id word",
-              got_id,
-              expected_id);
-    check_size("real-data audio-bank id offset",
-               got_id_offset,
-               expected_id_offset);
-    check_size("real-data audio-bank prefix offset",
-               got_prefix_offset,
-               expected_id_offset - sizeof(g_audio_bank_prefix));
+    /* Narrow receipt: lock all three audio-bank marker tuples in the
+     * (US|JP) raw Track 02 BIN.  See theron_v1_track02_source_evidence().
+     * This remains byte evidence only; no playback or ADPCM decode claim. */
+    for (i = 0; i < THERON_TRACK02_MAX_BANK_ANCHORS; ++i) {
+        uint32_t got_id = 0u;
+        size_t got_id_offset = 0u;
+        size_t got_prefix_offset = 0u;
+        char label[96];
+        const size_t expected_id_offset = expected_span_offsets[i] - 4u;
+        Theron_Track02SignalStatus status =
+            theron_v1_track02_find_audio_bank_marker(data,
+                                                     size,
+                                                     md5_hex_local,
+                                                     i,
+                                                     &got_id,
+                                                     &got_id_offset,
+                                                     &got_prefix_offset);
+
+        printf("audio-bank marker real-data: md5=%s anchor=%zu status=%s id=0x%08x id_offset=0x%zx\n",
+               md5_hex_local,
+               i,
+               theron_v1_track02_signal_status_name(status),
+               (unsigned)got_id,
+               got_id_offset);
+        snprintf(label, sizeof(label), "real-data audio-bank marker status[%zu]", i);
+        check_int(label, status, THERON_TRACK02_SIGNAL_OK);
+        snprintf(label, sizeof(label), "real-data audio-bank id word[%zu]", i);
+        check_u32(label, got_id, expected_ids[i]);
+        snprintf(label, sizeof(label), "real-data audio-bank id offset[%zu]", i);
+        check_size(label, got_id_offset, expected_id_offset);
+        snprintf(label, sizeof(label), "real-data audio-bank prefix offset[%zu]", i);
+        check_size(label,
+                   got_prefix_offset,
+                   expected_id_offset - sizeof(g_audio_bank_prefix));
+    }
 
     free(data);
 }
 
 int main(void) {
-    /* Real per-anchor audio-bank id words, observed locally in the
-     * hash-verified raw US/JP Track 02 BINs (see source_evidence()).
-     * Each value is a 4-byte little-endian word at offset
-     * (span_offsets[i] - 4) in the matching raw BIN. */
-    static const uint32_t g_us_audio_bank_ids[THERON_TRACK02_MAX_BANK_ANCHORS] = {
-        0x01725800u, 0x01600801u, 0x01122401u
-    };
-    static const uint32_t g_jp_audio_bank_ids[THERON_TRACK02_MAX_BANK_ANCHORS] = {
-        0x01530301u, 0x01411301u, 0x01682801u
-    };
-
     printf("=== Theron V1 Track 02 Bank Evidence Probe ===\n");
     printf("%s\n", theron_v1_track02_source_evidence());
 
@@ -820,13 +845,13 @@ int main(void) {
     probe_audio_bank_marker_real_data(THERON_TRACK02_MD5_US_BIN,
                                       "FIRESTAFF_THERON_TRACK02_US_BIN",
                                       "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin",
-                                      g_us_audio_bank_ids[0],
-                                      0x2d53dcu);
+                                      g_us_audio_bank_ids,
+                                      g_us_bin_span_offsets);
     probe_audio_bank_marker_real_data(THERON_TRACK02_MD5_JP_BIN,
                                       "FIRESTAFF_THERON_TRACK02_JP_BIN",
                                       "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
-                                      g_jp_audio_bank_ids[0],
-                                      0x2d4aacu);
+                                      g_jp_audio_bank_ids,
+                                      g_jp_bin_span_offsets);
     probe_raw_bin_positive_fixture("US raw BIN synthetic anchors",
                                    THERON_TRACK02_MD5_US_BIN,
                                    THERON_TRACK02_VARIANT_US_BIN,

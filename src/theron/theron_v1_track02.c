@@ -570,8 +570,12 @@ const char *theron_v1_track02_source_evidence(void) {
            "JP Rev 1 ISO dungeon-bank offset is claimed.  Audio-bank marker: "
            "raw US/JP BINs each carry a 12-byte `00 ff*10 00` sentinel "
            "immediately preceding the 4-byte little-endian audio-bank id word "
-           "at every post-boundary span anchor; US anchor 1 audio-bank id is "
-           "0x01725800 at offset 0x2d53dc.";
+           "at every post-boundary span anchor; US ids are 0x01725800, "
+           "0x01600801, 0x01122401 at offsets 0x2d53dc, 0x47d03c, "
+           "0x71283c; JP ids are 0x01530301, 0x01411301, 0x01682801 at "
+           "offsets 0x2d4aac, 0x47c70c, 0x711f0c.  This is a byte-level "
+           "audio-bank receipt only, not ADPCM decode, CD-DA decode, or "
+           "runtime playback proof.";
 }
 
 /* ── Semantic dungeon-descriptor table decoder ──────────────────── */
