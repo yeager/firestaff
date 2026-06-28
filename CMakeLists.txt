@@ -12649,6 +12649,35 @@ if(BUILD_TESTING)
         COMMAND test_swsh_frontend_pc34_compat_integration
     )
 
+    # -- DM1 V1 startup intro state-machine ordering gate -------------
+    # Data-free composition of the source-locked SWSH logo, TITLE handoff,
+    # and entrance wait helpers. Proves the intro can only order as
+    # SWSH -> TITLE -> MENU_ELIGIBLE -> ENTRANCE_WAIT without inventing
+    # assets or consuming real game data.
+    add_executable(test_dm1_v1_startup_intro_state_machine_gate
+        tests/test_dm1_v1_startup_intro_state_machine_gate.c
+        src/frontend/swsh_frontend_pc34_compat.c
+        src/shared/bitmap_call_pc34_compat.c
+        src/shared/image_expand_pc34_compat.c
+        src/shared/image_backend_pc34_compat.c
+    )
+    target_compile_definitions(test_dm1_v1_startup_intro_state_machine_gate PRIVATE
+        COMPILE_H
+        STATICFUNCTION=static
+        "SEPARATOR=,"
+        "FINAL_SEPARATOR=)"
+    )
+    target_link_libraries(test_dm1_v1_startup_intro_state_machine_gate PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_startup_intro_state_machine_gate PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_startup_intro_state_machine_gate
+        COMMAND test_dm1_v1_startup_intro_state_machine_gate
+    )
+
     # -- DM1 V1 FTL swoosh palette regression probe (pass841) ----------
     # Headless regression guard for the FTL swoosh intro animation. Loads
     # SWOOSH from FIRESTAFF_SWOOSH or a canonical path passed via
