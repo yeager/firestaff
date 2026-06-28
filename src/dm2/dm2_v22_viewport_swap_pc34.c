@@ -114,6 +114,7 @@ static const Dm2_V22_ShapeMapping kDm2V22MappingTable[] = {
  * every render pass. Repopulated by dm2_v22_viewport_swap_update(). */
 typedef struct {
     Dm2_V22_ShapeType shapes[3][3];   /* D0..D2 x L/C/R for indoor */
+    uint8_t           raw_cells[3][3];
     int               direction;
     int               is_outdoor;
     int               populated;
@@ -125,6 +126,14 @@ static Dm2_V22_SwapCellCache g_swap_cache;
  * reset on every update. */
 static int g_cells_painted_indoor = 0;
 static int g_cells_painted_outdoor = 0;
+
+static int clampi(int v, int lo, int hi);
+
+static const char* const kDm2V22T560RouteNames[3][3] = {
+    { "T560_D0_L", "T560_D0_C", "T560_D0_R" },
+    { "T560_D1_L", "T560_D1_C", "T560_D1_R" },
+    { "T560_D2_L", "T560_D2_C", "T560_D2_R" }
+};
 
 /* ── Discriminator ───────────────────────────────────────────────── */
 
@@ -302,6 +311,16 @@ const char* dm2_v22_asset_id_for_shape(Dm2_V22_ShapeType shape) {
     return NULL;
 }
 
+int dm2_v22_t560_indoor_route_count(void) {
+    return 9;
+}
+
+const char* dm2_v22_t560_indoor_route_name(int depth, int lateral) {
+    if (depth < 0 || depth > 2) return NULL;
+    if (lateral < -1 || lateral > 1) return NULL;
+    return kDm2V22T560RouteNames[depth][lateral + 1];
+}
+
 /* Internal helper: resolve (category, asset_id) for a shape. */
 static int resolve_shape_mapping(Dm2_V22_ShapeType shape,
                                   const char** out_category,
@@ -336,6 +355,7 @@ void dm2_v22_viewport_swap_update(int direction,
         for (d = 0; d < 3; ++d) {
             for (l = 0; l < 3; ++l) {
                 g_swap_cache.shapes[d][l] = DM2_V22_SHAPE_OUTDOOR_GROUND;
+                g_swap_cache.raw_cells[d][l] = 0;
             }
         }
     } else if (raw_cells) {
@@ -347,6 +367,7 @@ void dm2_v22_viewport_swap_update(int direction,
          * inside dm2_v22_shape_for_cell_pos(). */
         for (d = 0; d < 3; ++d) {
             for (l = 0; l < 3; ++l) {
+                g_swap_cache.raw_cells[d][l] = raw_cells[d][l];
                 g_swap_cache.shapes[d][l] =
                     dm2_v22_shape_for_cell_pos(raw_cells[d][l],
                                                 (uint8_t)direction,
@@ -359,6 +380,7 @@ void dm2_v22_viewport_swap_update(int direction,
         for (d = 0; d < 3; ++d) {
             for (l = 0; l < 3; ++l) {
                 g_swap_cache.shapes[d][l] = DM2_V22_SHAPE_NONE;
+                g_swap_cache.raw_cells[d][l] = 0;
             }
         }
     }
@@ -397,6 +419,60 @@ int dm2_v22_viewport_swap_cells_painted_indoor(void) {
 
 int dm2_v22_viewport_swap_cells_painted_outdoor(void) {
     return g_cells_painted_outdoor;
+}
+
+int dm2_v22_t560_indoor_route_for_cell(int depth, int lateral,
+                                        int fbW, int fbH,
+                                        DM2_V22_T560IndoorRoute* out) {
+    const DM2_V22_CellRect* rect;
+    const char* category = NULL;
+    const char* asset_id = NULL;
+    Dm2_V22_ShapeType shape;
+    int idx;
+    int dx, dy, dw, dh;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (depth < 0 || depth > 2) return 0;
+    if (lateral < -1 || lateral > 1) return 0;
+    if (!g_swap_cache.populated || g_swap_cache.is_outdoor) return 0;
+
+    idx = lateral + 1;
+    shape = g_swap_cache.shapes[depth][idx];
+    if (!resolve_shape_mapping(shape, &category, &asset_id)) return 0;
+    if (!category || !asset_id) return 0;
+
+    rect = &dm2_v22_kCellRects[depth][idx];
+    if (fbW > 0 && fbH > 0) {
+        dx = clampi(rect->x, 0, fbW);
+        dy = clampi(rect->y, 0, fbH);
+        dw = clampi(rect->x + rect->w, 0, fbW) - dx;
+        dh = clampi(rect->y + rect->h, 0, fbH) - dy;
+    } else {
+        dx = dy = dw = dh = 0;
+    }
+
+    out->valid = 1;
+    out->depth = depth;
+    out->lateral = lateral;
+    out->lateral_index = idx;
+    out->direction = g_swap_cache.direction;
+    out->raw_cell_type = g_swap_cache.raw_cells[depth][idx];
+    out->shape = shape;
+    out->category = category;
+    out->asset_id = asset_id;
+    out->route_name = kDm2V22T560RouteNames[depth][idx];
+    out->rect_x = rect->x;
+    out->rect_y = rect->y;
+    out->rect_w = rect->w;
+    out->rect_h = rect->h;
+    out->clipped_x = dx;
+    out->clipped_y = dy;
+    out->clipped_w = dw;
+    out->clipped_h = dh;
+    out->render_gate_active =
+        (dw > 0 && dh > 0 && dm2_v22_viewport_swap_active()) ? 1 : 0;
+    return 1;
 }
 
 /* ── Render ──────────────────────────────────────────────────────── */
@@ -464,6 +540,7 @@ int dm2_v22_viewport_swap_render(unsigned char* framebuffer,
     if (!dm2_v22_viewport_swap_populated()) return 0;
 
     if (is_outdoor) {
+        if (!g_swap_cache.is_outdoor) return 0;
         /* Outdoor T600: paint the 3 outdoor rects (sky, horizon, ground). */
         int i;
         static const Dm2_V22_ShapeType kOutdoorShapes[3] = {
@@ -489,6 +566,7 @@ int dm2_v22_viewport_swap_render(unsigned char* framebuffer,
     }
 
     /* Indoor T560: paint the 9 cells (D0..D2 x L/C/R). */
+    if (g_swap_cache.is_outdoor) return 0;
     {
         int depth, lateral;
         for (depth = 0; depth < 3; ++depth) {

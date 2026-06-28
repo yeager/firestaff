@@ -120,6 +120,26 @@ typedef struct {
     int x, y, w, h;
 } DM2_V22_OutdoorCellRect;
 
+/* Bounded T560 indoor route descriptor for one D0..D2 x L/C/R cell.
+ * This is a test/probe-facing contract around the modern-art route
+ * decision: which raw cell, discriminator, manifest category/asset,
+ * and clipped destination rect would be used by the render pass. */
+typedef struct {
+    int valid;
+    int depth;              /* 0..2 (D0..D2) */
+    int lateral;            /* -1=L, 0=C, 1=R */
+    int lateral_index;      /* 0..2 */
+    int direction;          /* party facing passed to update() */
+    uint8_t raw_cell_type;
+    Dm2_V22_ShapeType shape;
+    const char* category;
+    const char* asset_id;
+    const char* route_name; /* stable T560_Dx_[LCR] token */
+    int rect_x, rect_y, rect_w, rect_h;
+    int clipped_x, clipped_y, clipped_w, clipped_h;
+    int render_gate_active;
+} DM2_V22_T560IndoorRoute;
+
 /* 1920x1080 outdoor layout (matches dm2_v1_outdoor_renderer sky/ground
  * split). The exact pixel values match the V1 sky-half / ground-half
  * split in dm2_v1_viewport_render (DM2_VP_HEIGHT/2). */
@@ -179,6 +199,20 @@ Dm2_V22_ShapeType dm2_v22_shape_for_cell_pos(uint8_t raw_cell_type,
  * static asset_id table in dm2_v22_viewport_swap_pc34.c and
  * remains valid for the program lifetime. */
 const char* dm2_v22_asset_id_for_shape(Dm2_V22_ShapeType shape);
+
+/* Stable T560 indoor route count/name helpers. */
+int dm2_v22_t560_indoor_route_count(void);
+const char* dm2_v22_t560_indoor_route_name(int depth, int lateral);
+
+/* dm2_v22_t560_indoor_route_for_cell — describe the currently cached
+ * indoor T560 modern-art route for one cell. Returns 1 when the current
+ * cache is an indoor T560 cache and the requested cell has a valid
+ * shape mapping; returns 0 for invalid indices, no cache, outdoor cache,
+ * SHAPE_NONE, missing mapping, or NULL out. fbW/fbH are used only to
+ * compute the same clipped destination rect that render() will paint. */
+int dm2_v22_t560_indoor_route_for_cell(int depth, int lateral,
+                                        int fbW, int fbH,
+                                        DM2_V22_T560IndoorRoute* out);
 
 /* dm2_v22_viewport_swap_update — populate the bounded per-cell
  * cache from a 3x3 array of raw cell types (D0..D2, L/C/R order)
