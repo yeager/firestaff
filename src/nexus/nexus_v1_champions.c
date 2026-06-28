@@ -282,17 +282,24 @@ static const uint8_t *rd32(const uint8_t *p, uint32_t *out) {
 
 /* Calculate champion blob size.
  * Matches ReDMCSB CHAMPION.C F0309 save structure:
- *   name_ascii(32) + name_jp(64) + 23 int fields + inventory(30) + slots(9×4)
- *   = 32 + 64 + 23×4 + 30 + 36 = 268 bytes */
+ *   name_ascii(32) + name_jp(64) + 25 int fields + inventory(30) + slots(11×4)
+ *   = 32 + 64 + 25×4 + 30 + 44 = 270 bytes
+ * The 25 int fields are: primary_class, health, max_health, stamina,
+ * max_stamina, mana, max_mana, strength, dexterity, wisdom, vitality,
+ * anti_magic, anti_fire, fighter_level, ninja_level, priest_level,
+ * wizard_level, food, water, alive, portrait_index, load, max_load,
+ * wounds, attributes. */
 static size_t champion_blob_size(void) {
-    return 32 + 64 + (23 * 4) + 30 + (NEXUS_SLOT_COUNT * 4);
+    return 32 + 64 + (25 * 4) + 30 + (NEXUS_SLOT_COUNT * 4);
 }
 
 size_t nexus_v1_champion_pool_serialize_size(const Nexus_V1_ChampionPool *pool) {
     if (!pool) return 0;
-    /* Header: magic(4) + version(2) + champion_count(4) + party_count(4)
-     *         + leader_index(4) + leader_index_24(4) = 22 bytes */
-    size_t n = 4 + 2 + 4 + 4 + 4 + 4;
+    /* Header: magic(4) + version(4) + champion_count(4) + party_count(4)
+     *         + leader_index(4) + leader_index_24(4) = 24 bytes
+     * (version is stored as uint32_t by the serialize path; see the
+     * wr32 call sequence in nexus_v1_champion_pool_serialize.) */
+    size_t n = 4 + 4 + 4 + 4 + 4 + 4;
     n += (size_t)pool->champion_count * champion_blob_size();
     n += (size_t)NEXUS_MAX_PARTY * 4;  /* party slots */
     return n;

@@ -12825,6 +12825,43 @@ if(BUILD_TESTING)
         LABELS "tier4;nexus;save_load"
     )
 
+    # ── Nexus V1 save multi-slot + multi-field round-trip ───────────
+    # Companion / follow-up to test_nexus_v1_save_slot_roundtrip_pc34_compat
+    # which only exercises slot 0 and one world field (party_x). The
+    # TODO entry for this gap asks for "multi-slot coverage and broader
+    # world/champion object/event/timer round-trip proof" — this test
+    # drives 4 distinct slots through the manager-level API and
+    # verifies party/object/event/timer/transition/world_tick fields
+    # per slot, plus champion pool fields, slot cache + scan + isolation
+    # + deletion, CRC tamper rejection, and unknown-variant rejection.
+    # Source-lock: src/nexus/nexus_v1_save_load.c (NEXUS_SAVE_MAGIC =
+    # 'FNXS', CRC-32 over champion+world data sections) +
+    # src/nexus/nexus_v1_world.c (party + objects + events + active
+    # timers + transition + world_tick + state_hash) +
+    # src/nexus/nexus_v1_champions.c (CHPN magic, 268-byte champion blob)
+    # + ReDMCSB LOADSAVE.C F0433/F0434 save/load structure lineage.
+    add_executable(test_nexus_v1_save_multislot_roundtrip_pc34_compat
+        tests/test_nexus_v1_save_multislot_roundtrip_pc34_compat.c
+    )
+    target_link_libraries(test_nexus_v1_save_multislot_roundtrip_pc34_compat PRIVATE
+        firestaff_nexus firestaff_m10
+    )
+    target_include_directories(test_nexus_v1_save_multislot_roundtrip_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_save_multislot_roundtrip_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_save_multislot_roundtrip_pc34_compat
+        COMMAND test_nexus_v1_save_multislot_roundtrip_pc34_compat
+    )
+    set_tests_properties(nexus_v1_save_multislot_roundtrip_pc34_compat PROPERTIES
+        LABELS "tier4;nexus;save_load"
+    )
+
     # ── CSB / DM hidden-code skip table (Tier 2 from FIRESTAFF_GAP_LIST) ──
     # Skips Atari ST and Amiga item indices 558-562 which contain
     # 68k executable code left over from the original FTL port

@@ -483,13 +483,16 @@ static const uint8_t *rd64(const uint8_t *p, uint64_t *v) {
 }
 
 size_t nexus_v1_world_serialize_size(const Nexus_V1_World *world) {
-    /* Fixed header: magic(4)+ver(2)+pad(2)+all scalars */
+    /* Fixed header: magic(4)+ver(2)+pad(2)+all scalars.
+     * The header includes object_count; the object section that follows
+     * does NOT carry its own count prefix — the count is read once from
+     * the header by both serialize and deserialize. */
     size_t n = 4 + 2 + 2 + 4*6;
-    /* Objects */
-    n += 4 + world->object_count * (1+1+4+4+4+4+4+4);
-    /* Events */
+    /* Objects — no separate count prefix here. */
+    n += world->object_count * (1+1+4+4+4+4+4+4);
+    /* Events — prefixed with event_count (4 bytes). */
     n += 4 + world->event_count * (4+4+4+4+4+4+4+4);
-    /* Active timers */
+    /* Active timers — prefixed with active_timer_count (4 bytes). */
     {
         int tc = 0, i;
         for (i = 0; i < NEXUS_MAX_TIMERS; i++)
