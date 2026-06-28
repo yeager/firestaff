@@ -15494,6 +15494,18 @@ if(BUILD_TESTING)
         NAME title_frontend_runtime_cadence_source_lock
         COMMAND test_title_frontend_runtime_cadence_pc34_compat
     )
+    add_executable(test_title_frontend_c001_fallback_gate_pc34_compat
+        tests/test_title_frontend_c001_fallback_gate_pc34_compat.c
+        src/frontend/title_frontend_v1.c
+        src/frontend/title_dat_loader_v1.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_title_frontend_c001_fallback_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME title_frontend_c001_fallback_gate_pc34_compat
+        COMMAND test_title_frontend_c001_fallback_gate_pc34_compat
+    )
     if(Python3_EXECUTABLE)
         add_test(
             NAME pass457_dm1_v1_title_runtime_cadence_gate
