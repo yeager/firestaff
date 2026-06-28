@@ -157,6 +157,44 @@ static void join_path(char* out, size_t out_size,
     }
 }
 
+/* PNG 8-byte signature. The synthetic example fixtures are 1x1 RGBA PNGs
+ * (see examples/dm2_hud_widget_synthetic/README.md) tagged with a
+ * "synthetic-test-fixture" tEXt chunk. file_contains_text() alone does
+ * not prove the file is a structurally valid PNG: someone could replace
+ * the fixture with arbitrary text containing the marker. The PNG
+ * signature check is a small, bounded content-integrity guarantee that
+ * the fixture is at least shaped like a PNG so the runtime's eventual
+ * real-bitmap blit replacement site (see dm2_v2_hud_runtime.c) can call
+ * any standard PNG decoder on it without surprising the loader. */
+static const unsigned char k_png_signature[8] = {
+    0x89U, 0x50U, 0x4EU, 0x47U, 0x0DU, 0x0AU, 0x1AU, 0x0AU
+};
+
+static int file_has_png_signature(const char* path) {
+    unsigned char buf[8];
+    FILE* fp;
+    size_t n;
+
+    if (!path || path[0] == '\0') return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    n = fread(buf, 1, sizeof(buf), fp);
+    fclose(fp);
+    if (n != sizeof(buf)) return 0;
+    return memcmp(buf, k_png_signature, sizeof(buf)) == 0;
+}
+
+static int example_fixture_has_png_signature(const char* category,
+                                             const char* name) {
+    char src_dir[1024];
+    char src_path[1024];
+
+    join_path(src_dir, sizeof(src_dir),
+              FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR, category);
+    join_path(src_path, sizeof(src_path), src_dir, name);
+    return file_has_png_signature(src_path);
+}
+
 static int install_example_file(const char* manifest_dir,
                                 const char* category,
                                 const char* name) {
@@ -194,6 +232,82 @@ static int install_example_manifest(const char* manifest_path) {
               FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR,
               "hud_widget_manifest.json");
     return copy_file(src_manifest, manifest_path);
+}
+
+/* Install the example manifest into the scratch dir, rewriting every
+ * "generator": "synthetic_test" entry to use the supplied non-placeholder
+ * generator marker. Used by Scenario 4 to prove the gate is generator-
+ * string-agnostic for any non-placeholder value: an operator-installed
+ * real pack whose generator is "pbr_hero" or "ai_upscale" must promote
+ * the gate exactly the same way the synthetic pack does. The rewrite is
+ * bounded (only the scratch manifest file is touched) and never writes
+ * back to the example source on disk.
+ *
+ * The replacement is a literal substring swap ("synthetic_test" ->
+ * new_marker); both strings are short enough that we never have to
+ * worry about JSON-keyword collisions inside the comment field.
+ *
+ * Implementation: read the example manifest, write a rewritten copy to
+ * the scratch path directly. There is no rename(2) / POSIX-only step —
+ * every operation goes through stdio so MSVC builds work too. */
+static int install_example_manifest_with_generator(const char* manifest_path,
+                                                    const char* new_marker) {
+    FILE* in = NULL;
+    FILE* out = NULL;
+    char manifest_dir[1024];
+    char src_manifest[1024];
+    unsigned char buf[4096];
+    size_t n;
+    size_t old_len, new_len;
+
+    if (!manifest_path || manifest_path[0] == '\0') return 0;
+    if (!new_marker || new_marker[0] == '\0') return 0;
+    dirname_of(manifest_dir, sizeof(manifest_dir), manifest_path);
+    if (!ensure_dir(manifest_dir)) return 0;
+    join_path(src_manifest, sizeof(src_manifest),
+              FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR,
+              "hud_widget_manifest.json");
+    in = fopen(src_manifest, "rb");
+    if (!in) return 0;
+    out = fopen(manifest_path, "wb");
+    if (!out) { fclose(in); return 0; }
+    old_len = strlen("synthetic_test");
+    new_len = strlen(new_marker);
+    while ((n = fread(buf, 1, sizeof(buf), in)) > 0U) {
+        unsigned char out_buf[8192];
+        size_t out_n = 0U;
+        for (size_t i = 0U; i < n; ++i) {
+            if (i + old_len <= n &&
+                memcmp(buf + i, "synthetic_test", old_len) == 0) {
+                if (out_n + new_len > sizeof(out_buf)) {
+                    fclose(in); fclose(out);
+                    return 0;
+                }
+                memcpy(out_buf + out_n, new_marker, new_len);
+                out_n += new_len;
+                i += old_len - 1U;
+            } else {
+                if (out_n + 1U > sizeof(out_buf)) {
+                    fclose(in); fclose(out);
+                    return 0;
+                }
+                out_buf[out_n++] = buf[i];
+            }
+        }
+        if (fwrite(out_buf, 1, out_n, out) != out_n) {
+            fclose(in); fclose(out);
+            return 0;
+        }
+    }
+    if (ferror(in)) {
+        fclose(in); fclose(out);
+        return 0;
+    }
+    fclose(in);
+    if (fclose(out) != 0) {
+        return 0;
+    }
+    return 1;
 }
 
 static void reset_scratch(void) {
@@ -251,18 +365,36 @@ int main(void) {
                  "/hud_widget_manifest.json", F_OK) == 0);
     check("inventory_quick_view fixture tagged synthetic",
           example_fixture_has_marker("hud_widgets", "inventory_quick_view.png"));
+    check("inventory_quick_view fixture is structurally a PNG",
+          example_fixture_has_png_signature("hud_widgets",
+                                            "inventory_quick_view.png"));
     check("action_prompt fixture tagged synthetic",
           example_fixture_has_marker("hud_widgets", "action_prompt.png"));
+    check("action_prompt fixture is structurally a PNG",
+          example_fixture_has_png_signature("hud_widgets", "action_prompt.png"));
     check("compass_rose fixture tagged synthetic",
           example_fixture_has_marker("hud_chrome", "compass_rose.png"));
+    check("compass_rose fixture is structurally a PNG",
+          example_fixture_has_png_signature("hud_chrome", "compass_rose.png"));
     check("depth_indicator fixture tagged synthetic",
           example_fixture_has_marker("hud_chrome", "depth_indicator.png"));
+    check("depth_indicator fixture is structurally a PNG",
+          example_fixture_has_png_signature("hud_chrome",
+                                            "depth_indicator.png"));
     check("gold_counter fixture tagged synthetic",
           example_fixture_has_marker("hud_chrome", "gold_counter.png"));
+    check("gold_counter fixture is structurally a PNG",
+          example_fixture_has_png_signature("hud_chrome", "gold_counter.png"));
     check("champion_bar_frame fixture tagged synthetic",
           example_fixture_has_marker("hud_chrome", "champion_bar_frame.png"));
+    check("champion_bar_frame fixture is structurally a PNG",
+          example_fixture_has_png_signature("hud_chrome",
+                                            "champion_bar_frame.png"));
     check("action_strip_frame fixture tagged synthetic",
           example_fixture_has_marker("hud_chrome", "action_strip_frame.png"));
+    check("action_strip_frame fixture is structurally a PNG",
+          example_fixture_has_png_signature("hud_chrome",
+                                            "action_strip_frame.png"));
     check("no manifest -> NO_MANIFEST gate",
           dm2_v2_hud_widget_assets_gate() ==
               DM2_V2_HUD_WIDGET_GATE_NO_MANIFEST);
@@ -329,6 +461,10 @@ int main(void) {
                        info.file_exists == 1 &&
                        strcmp(info.generator, "synthetic_test") == 0 &&
                        info.resolved_path[0] != '\0');
+        snprintf(msg, sizeof(msg), "%s slot info dimensions>0",
+                 dm2_v2_hud_widget_assets_slot_name(slot));
+        check(msg, dm2_v2_hud_widget_assets_get_slot_info(slot, &info) == 1 &&
+                       info.width > 0 && info.height > 0);
     }
 
     printf("\n[ Scenario 3: citations and honest boundary ]\n");
@@ -343,6 +479,67 @@ int main(void) {
         check("source evidence keeps no finished-art claim",
               ev && strstr(ev, "does NOT") != NULL &&
                     strstr(ev, "finished PBR widget art") != NULL);
+    }
+
+    printf("\n[ Scenario 4: generator-agnostic COMPLETE via 'pbr_hero' marker ]\n");
+    /* The DM2 V2 HUD widget gate classifies a slot as REAL iff its
+     * generator string is not "placeholder" and the source_file resolves
+     * on disk via fopen(). It is intentionally generator-string-
+     * agnostic: the same gate code must accept "synthetic_test",
+     * "pbr_hero", "ai_upscale", or any future operator-installed marker
+     * without per-generator allowlisting. Scenario 4 rewrites the
+     * synthetic example manifest so every entry's generator becomes
+     * "pbr_hero", installs all seven 1x1 fixtures, and verifies the gate
+     * still promotes to COMPLETE while every slot's recorded generator
+     * matches the rewritten marker. This is a guard against a future
+     * refactor that accidentally introduces per-generator allowlisting
+     * (e.g. "synthetic_test" -> REAL, "pbr_hero" -> PLACEHOLDER), which
+     * would silently break any operator-installed real pack. */
+    reset_scratch();
+    snprintf(manifest_path, sizeof(manifest_path), "%s",
+             dm2_v2_hud_widget_assets_get_manifest_path());
+    dirname_of(manifest_dir, sizeof(manifest_dir), manifest_path);
+    check("rewrite synthetic manifest with generator='pbr_hero'",
+          install_example_manifest_with_generator(manifest_path, "pbr_hero") == 1);
+    install_all_real_fixtures(manifest_dir);
+    check("rewritten manifest validates structurally",
+          dm2_v2_hud_widget_assets_validate_manifest(NULL) == 1);
+    check("rewritten generator -> COMPLETE gate",
+          dm2_v2_hud_widget_assets_gate() ==
+              DM2_V2_HUD_WIDGET_GATE_COMPLETE);
+    check("rewritten generator -> installed=1",
+          dm2_v2_hud_widget_assets_get_installed() == 1);
+    {
+        int real_count = 0;
+        int total_count = 0;
+        DM2_V2_HudWidgetSlotInfo info;
+        real_count = dm2_v2_hud_widget_assets_real_count(&total_count);
+        check("rewritten generator real_count=7",
+              real_count == (int)DM2_V2_HUD_WIDGET_COUNT);
+        check("rewritten generator total=7",
+              total_count == (int)DM2_V2_HUD_WIDGET_COUNT);
+        /* Spot-check: the inventory_quick_view slot's recorded generator
+         * must match the rewrite marker (not the source's "synthetic_test"). */
+        check("inventory_quick_view slot info generator='pbr_hero'",
+              dm2_v2_hud_widget_assets_get_slot_info(
+                  DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW, &info) == 1 &&
+              strcmp(info.generator, "pbr_hero") == 0);
+        /* Spot-check: the action_strip_frame slot's recorded generator
+         * must also match the rewrite marker — covers a chrome slot, not
+         * just the first hud_widgets slot. */
+        check("action_strip_frame slot info generator='pbr_hero'",
+              dm2_v2_hud_widget_assets_get_slot_info(
+                  DM2_V2_HUD_WIDGET_ACTION_STRIP_FRAME, &info) == 1 &&
+              strcmp(info.generator, "pbr_hero") == 0);
+        /* Negative check: the rewrite must NOT have left any "synthetic_test"
+         * entry behind — if it did, a future per-generator refactor could
+         * silently misclassify operator-installed packs. */
+        check("rewritten manifest no longer mentions synthetic_test",
+              access(FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR
+                     "/hud_widget_manifest.json", F_OK) == 0 &&
+              dm2_v2_hud_widget_assets_get_slot_info(
+                  DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW, &info) == 1 &&
+              strcmp(info.generator, "synthetic_test") != 0);
     }
 
     reset_scratch();

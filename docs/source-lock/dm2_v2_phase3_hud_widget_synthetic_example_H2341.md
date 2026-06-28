@@ -36,6 +36,17 @@ the data dir to the scratch DM2 data path, and verifies:
 - `installed` mirrors `PARTIAL` and `COMPLETE`
 - every complete slot reports `generator == "synthetic_test"` and an
   on-disk `resolved_path`
+- every complete slot reports `width > 0 && height > 0` so a corrupt
+  manifest without declared dimensions cannot pass the gate
+- every fixture starts with the PNG 8-byte signature
+  (`89 50 4E 47 0D 0A 1A 0A`) so the fixture cannot silently rot into
+  arbitrary text without the probe noticing
+- a rewritten manifest (every `generator` swapped from
+  `"synthetic_test"` to `"pbr_hero"`) still promotes to COMPLETE, so
+  the gate's classification logic is generator-string-agnostic for any
+  non-placeholder marker — an operator-installed real pack whose
+  generator is `"pbr_hero"` or `"ai_upscale"` is treated identically
+  to the synthetic pack
 - source evidence cites the synthetic example and keeps the no-finished-
   art boundary visible
 
