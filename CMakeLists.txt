@@ -6462,6 +6462,24 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm2_v2_hud_widget_synthetic_promotion_probe
     )
 
+    # Real-size single-slot receipt. Generates a scratch-only 32x32
+    # compass_rose PNG with a non-placeholder generator and proves one
+    # hud_chrome slot can classify REAL without using the checked-in
+    # synthetic 1x1 fixtures or claiming finished shipped art.
+    add_executable(firestaff_dm2_v2_hud_widget_real_slot_receipt_probe
+        probes/firestaff_dm2_v2_hud_widget_real_slot_receipt_probe.c
+        src/dm2/dm2_v2_hud_widget_assets.c
+    )
+    target_link_libraries(firestaff_dm2_v2_hud_widget_real_slot_receipt_probe
+        PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v2_hud_widget_real_slot_receipt_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm2_v2_hud_widget_real_slot_receipt_probe
+        COMMAND firestaff_dm2_v2_hud_widget_real_slot_receipt_probe
+    )
+
     # Phase 3 widget bitmap follow-up: runtime hook probe. Verifies that
     # the dm2_v2_hud_runtime_render_with_assets() entry point correctly
     # consults the dm2_v2_hud_widget_assets gate per slot, that a REAL
