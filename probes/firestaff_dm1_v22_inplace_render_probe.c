@@ -50,6 +50,16 @@ static uint32_t fnv1a_hash(const char* s) {
     return h;
 }
 
+static uint32_t fnv1a_bytes(const void* data, size_t len) {
+    const unsigned char* p = (const unsigned char*)data;
+    uint32_t h = 2166136261u;
+    size_t i;
+    for (i = 0; i < len; ++i) {
+        h = (h ^ (uint32_t)p[i]) * 16777619u;
+    }
+    return h;
+}
+
 static void put_u32(unsigned char* p, uint32_t v) {
     memcpy(p, &v, sizeof(v));
 }
@@ -184,6 +194,15 @@ static int asset_id_equals(int depth, int lateral, const char* expected) {
     return actual != NULL && strcmp(actual, expected) == 0;
 }
 
+static int material_asset_routes_match_expected(void) {
+    const char* field_asset = m11_v22_inplace_get_cell_asset_id(2, 1);
+    return asset_id_equals(1, -1, "wall_d3_carved_01") &&
+           asset_id_equals(1, 0, "floor_plain_01") &&
+           asset_id_equals(1, 1, "floor_pit_01") &&
+           asset_id_equals(2, -1, "floor_stairs_down_01") &&
+           field_asset == NULL;
+}
+
 int main(void) {
     ProbeStats stats;
     char cache_path[FSP_PATH_MAX];
@@ -200,6 +219,10 @@ int main(void) {
     const uint32_t* bitmap;
     int direction;
     int sweep_painted = 0;
+    int sweep_routes_ok = 1;
+    int sweep_frame_sig_ok = 1;
+    uint32_t frame_sig = 0;
+    uint32_t repeat_frame_sig = 0;
     const char* asset_id;
 
     memset(&stats, 0, sizeof(stats));
@@ -249,6 +272,7 @@ int main(void) {
 
     memset(fb, 0x00, sizeof(fb));
     painted = m11_v22_inplace_render_pass(fb, 320, 200);
+    frame_sig = fnv1a_bytes(fb, sizeof(fb));
     changed = count_changed_pixels(fb, sizeof(fb));
     probe_record(&stats, "DM1_V22_RENDER_8_CELLS_FIELD_EMPTY",
                  painted == 8 && changed > 0 && !dm1_all_cell_centers_nonzero(fb, 320),
@@ -261,15 +285,36 @@ int main(void) {
                  dm1_cell_center_pixel(fb, 320, 2, 0) == 0x30 &&
                  dm1_cell_center_pixel(fb, 320, 2, 1) == 0x00,
                  "cell-center palette proves wall/floor/pit/stairs routing");
+    probe_record(&stats, "DM1_V22_RENDER_SIGNATURE_STABLE_BASELINE",
+                 frame_sig == 0x30894af5u,
+                 "material-pixel framebuffer signature pins the 8-cell receipt");
+
+    m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
+    memset(fb, 0x00, sizeof(fb));
+    painted = m11_v22_inplace_render_pass(fb, 320, 200);
+    repeat_frame_sig = fnv1a_bytes(fb, sizeof(fb));
+    probe_record(&stats, "DM1_V22_REPEAT_RENDER_DETERMINISTIC",
+                 painted == 8 && repeat_frame_sig == frame_sig &&
+                 material_asset_routes_match_expected(),
+                 "repeated cache update preserves wall/floor/pit/stairs/field selection and pixels");
 
     for (direction = 0; direction < 4; ++direction) {
         memset(fb, 0x00, sizeof(fb));
         m11_v22_shape_cache_update(direction, (const unsigned char (*)[3])raw_cells);
+        if (!material_asset_routes_match_expected()) {
+            sweep_routes_ok = 0;
+        }
         sweep_painted += m11_v22_inplace_render_pass(fb, 320, 200);
+        if (fnv1a_bytes(fb, sizeof(fb)) != frame_sig) {
+            sweep_frame_sig_ok = 0;
+        }
     }
     probe_record(&stats, "DM1_V22_DIRECTION_SWEEP_4X8",
                  sweep_painted == 32,
                  "all 4 directions paint 4x8 DM1 V22 material-backed cells");
+    probe_record(&stats, "DM1_V22_DIRECTION_SWEEP_DETERMINISTIC_SELECTION",
+                 sweep_routes_ok && sweep_frame_sig_ok,
+                 "wall/floor/pit/stairs stay deterministic and teleporter stays unpainted across directions");
 
     {
         const char* ev = m11_v22_inplace_draw_source_evidence();
