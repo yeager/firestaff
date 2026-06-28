@@ -2169,6 +2169,39 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 PC 3.4 quickplay/startup dungeon-handle probe.
+# Narrow runtime-boundary probe that proves the verified DUNGEON.DAT
+# handle survives boot handoff into the runtime AND is cleared on a
+# failed rescan.  PC-real-asset path when FIRESTAFF_CSB_PC_DATA (or
+# argv[1]) points at a hash-verified PC CSB pair; otherwise the probe
+# falls back to a synthetic-fixture path that still drives the
+# production csb_v1_boot_enter_game() / csb_v1_boot_scan_assets() /
+# csb_v1_boot_cleanup() code paths so CI stays deterministic on
+# hosts without user-supplied game data.
+#
+# Source-lock boundary:
+#   - ReDMCSB ENTRANCE.C F0806 lines 409-441 (CSB entrance).
+#   - ReDMCSB LOADSAVE.C F0435 lines 1936-1944 (new-game map 0).
+#   - ReDMCSB DUNGEON.C F0237 (dungeon load entry).
+#   - ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 (dungeon release).
+add_executable(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
+    probes/csb/firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe.c
+    src/csb/csb_v1_runtime_pc34_compat.c
+    src/csb/csb_v1_boot.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 PC real-asset ornament blit probe (pass for
 # docs/FIRESTAFF_GAP_LIST.md C5 "live real-asset ornament blits,
 # broader viewport/HUD captures, and pixel parity evidence"). The
@@ -14237,6 +14270,25 @@ if(BUILD_TESTING)
         set_tests_properties(csb_v1_pc_real_asset_launch PROPERTIES
             LABELS "tier1;csb;real_data;skip_safe;launch;boot_handoff"
             TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 PC 3.4 quickplay/startup dungeon-handle probe ─────
+    # Tier 1 / Skip-safe: hosts without user-supplied PC CSB data
+    # fall through to the synthetic-fixture path and still drive
+    # the production csb_v1_boot_enter_game() / csb_v1_boot_scan_assets()
+    # code paths so the handle-survival and rescan-clearing
+    # invariants are checked on CI hosts without game data. Hosts
+    # that DO have the hash-verified PC CSB pair exercise the full
+    # real-asset handle handoff end-to-end.
+    if(TARGET firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe)
+        add_test(
+            NAME csb_v1_pc34_quickplay_dungeon_handle
+            COMMAND firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
+        )
+        set_tests_properties(csb_v1_pc34_quickplay_dungeon_handle PROPERTIES
+            LABELS "tier1;csb;quickplay;boot_handoff;dungeon_handle;rescan;skip_safe"
+            TIMEOUT 60
         )
     endif()
 

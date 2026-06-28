@@ -138,6 +138,27 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     profile->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
     profile->variant_id = CSB_V1_VARIANT_UNKNOWN;
 
+    /* A successful csb_v1_boot_enter_game() hands the verified DUNGEON.DAT
+     * off to the runtime as profile->runtime.dungeon_handle and to the global
+     * singleton via csb_v1_dungeon_set_current().  A follow-up rescan
+     * (different data_dir, removed asset, launcher refresh) must not leave
+     * that handoff alive: the runtime-owned handle would still point at the
+     * previous heap allocation, the global singleton would still expose the
+     * previous dungeon through csb_v1_dungeon_get_current(), and the next
+     * enter_game() would either fail to replace the handle (when verification
+     * fails) or silently keep serving the previous dungeon through the new
+     * profile paths.  Release the handle and reset the singleton here, before
+     * the rescan-driven profile fields are populated.  The full runtime
+     * re-init still happens in csb_v1_boot_enter_game() on the next launch.
+     * Source: ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1936-1944 */
+    if (profile->runtime.dungeon_handle != NULL ||
+        csb_v1_dungeon_get_current() != NULL) {
+        csb_v1_dungeon_unload();
+        free(profile->runtime.dungeon_handle);
+        profile->runtime.dungeon_handle = NULL;
+    }
+
     profile->graphics_verified =
         asset_find_by_md5_list(root, g_csb_boot_graphics_hashes,
                                graphics_path, sizeof(graphics_path),
