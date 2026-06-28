@@ -7963,9 +7963,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             m11_set_status(state, "BOOT", "DM2 HASH UNKNOWN");
             m11_log_event(state, M11_COLOR_YELLOW,
                           "T0: DM2 ASSETS UNVERIFIED (NOT IN CATALOG)");
-            /* Continue anyway — the user may have a known-good build
-             * that we don't have a hash for yet. dm2_v1_boot_enter_game
-             * will allocate state; we just don't gate on hash match. */
+            /* Required DM2 files are launch-gated by hash.  Keep the
+             * diagnostic status visible here; dm2_v1_boot_enter_game()
+             * rejects unverified profiles before M11 can claim the DM2
+             * runtime boundary. */
         }
         dm2_v1_boot_set_save_root(profile, NULL);
         dm2_v1_boot_print_summary(profile);
