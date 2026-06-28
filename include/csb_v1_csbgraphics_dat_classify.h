@@ -14,12 +14,14 @@
  * file split across two uint32 signature words.
  *
  * This module is the bounded read-only classifier Firestaff uses
- * to discover, header-validate, and inventory a CSBgraphics.dat
- * without committing to a full LZW decoder or a runtime
- * override hook. It deliberately:
+ * to discover, header-validate, inventory, and locate compressed
+ * entry byte spans in a CSBgraphics.dat without committing to a
+ * full LZW decoder or a runtime override hook. It deliberately:
  *
  *   - reads only the on-disk count + size tables (no payload
  *     decompression, no overlay-graphics decode)
+ *   - can return one entry's compressed payload span using the
+ *     CSBWin LocateNthGraphic(n) offset rule
  *   - rejects truncated input, oversized counts, and table
  *     sums that overflow the file size
  *   - classifies the byte-order via the documented 0x8001
@@ -34,6 +36,7 @@
  *
  * Source references:
  *   - CSBWin/Graphics.cpp:1918 ReadGraphicsIndex (count + sizes)
+ *   - CSBWin/Graphics.cpp:1643 LocateNthGraphic (payload offset)
  *   - CSBWin/Graphics.cpp:1838 OpenCSBgraphicsFile (signature
  *     split into two uint32 words)
  *   - CSBWin/data.cpp:1936 Signature (MD5 file digest split as
@@ -67,7 +70,8 @@ typedef enum {
     CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_TOO_SMALL = -2,
     CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_COUNT = -3,
     CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OVERFLOW = -4,
-    CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_MARKER = -5
+    CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_MARKER = -5,
+    CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ENTRY_RANGE = -6
 } CSB_V1_CSBGraphicsClassifyResult;
 
 /* Hard caps. The original CSB graphics.dat caps at ~3000 graphics;
@@ -99,6 +103,19 @@ typedef struct {
     uint32_t max_decompressed;
 } CSB_V1_CSBGraphicsIndex;
 
+/* Bounded view of one compressed payload entry inside a
+ * CSBgraphics.dat. This is the handoff shape a future LZW decoder
+ * or M11 override hook can consume without re-deriving offsets.
+ * `payload_offset` points to the compressed byte span for
+ * `entry_index`; `compressed_size` may be zero for an empty
+ * override slot. */
+typedef struct {
+    uint32_t entry_index;
+    uint64_t payload_offset;
+    uint32_t compressed_size;
+    uint32_t decompressed_size;
+} CSB_V1_CSBGraphicsEntrySpan;
+
 /* Parse the on-disk count + parallel size tables from `bytes` of
  * `size` bytes. Returns CSB_V1_CSBGRAPHICS_CLASSIFY_OK on success.
  *
@@ -119,6 +136,16 @@ typedef struct {
 int csb_v1_csbgraphics_dat_classify(
     const uint8_t *bytes, size_t size,
     CSB_V1_CSBGraphicsIndex *out_index);
+
+/* Locate the compressed payload byte span for one entry. This
+ * mirrors CSBWin/Graphics.cpp LocateNthGraphic(n): payload base
+ * plus the sum of all preceding compressed-size entries. The
+ * helper does not decompress the entry and does not interpret the
+ * graphic payload; it only returns a bounds-checked span.
+ */
+int csb_v1_csbgraphics_dat_entry_span(
+    const uint8_t *bytes, size_t size, uint32_t entry_index,
+    CSB_V1_CSBGraphicsEntrySpan *out_span);
 
 /* Human-readable label for a result code. */
 const char *csb_v1_csbgraphics_dat_result_name(int result);
