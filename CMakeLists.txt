@@ -10907,6 +10907,22 @@ if(BUILD_TESTING)
         NAME dm1_v1_grp02_f0739_build_timeline_event
         COMMAND test_dm1_v1_grp02_f0739_build_timeline_event_pc34_compat
     )
+
+    # DM1 V1 Timeline Queue — repeated-tick-sequence determinism regression.
+    # Data-free; mirrors F0234 + F0652 contracts via the F0721..F0728
+    # primitives in src/memory/memory_timeline_pc34_compat.c.
+    add_executable(test_dm1_v1_timeline_repeated_tick_sequence_determinism_pc34_compat
+        tests/test_dm1_v1_timeline_repeated_tick_sequence_determinism_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_timeline_repeated_tick_sequence_determinism_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_timeline_repeated_tick_sequence_determinism_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_timeline_repeated_tick_sequence_determinism
+        COMMAND test_dm1_v1_timeline_repeated_tick_sequence_determinism_pc34_compat
+    )
+
     add_executable(test_dm1_v1_grp02_f0742_f0743_combat_result_serialize_pc34_compat
         tests/test_dm1_v1_grp02_f0742_f0743_combat_result_serialize_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
