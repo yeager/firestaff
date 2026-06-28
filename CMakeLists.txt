@@ -15425,6 +15425,27 @@ if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_
     )
 endif()
 
+# -- Apple Silicon DM V2.1 upscale readback receipt ------------------
+# Narrow companion receipt for the V21 EPX/RGBA path:
+#   V1 indexed framebuffer -> EPX 2x -> CPU RGBA sample bytes ->
+#   M11_Render_PresentRGBA -> SDL_RenderReadPixels sample match
+# Skips with PASS on non-Apple-Silicon hosts.
+if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_dm_v21_upscale_readback_receipt_silicon_probe.c")
+    add_executable(firestaff_v1_dm_v21_upscale_readback_receipt_silicon_probe
+        probes/v1/firestaff_v1_dm_v21_upscale_readback_receipt_silicon_probe.c
+    )
+    target_link_libraries(firestaff_v1_dm_v21_upscale_readback_receipt_silicon_probe PRIVATE
+        firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_v1_dm_v21_upscale_readback_receipt_silicon_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm_v21_upscale_readback_receipt_silicon
+        COMMAND firestaff_v1_dm_v21_upscale_readback_receipt_silicon_probe
+    )
+endif()
+
 # ── Apple Silicon DM V2.2 modern-renderer Metal-path probe ─────────
 # Companion to firestaff_v1_dm_title_palette_silicon_probe below.
 # Exercises the V22 modern-art render path end-to-end on the Apple
