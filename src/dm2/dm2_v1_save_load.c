@@ -16,6 +16,21 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stddef.h>
+
+/* docs/dm2_save_format.md § Game state block identifies skload_table_60 as
+ * a fixed 56-byte SUPPRESS block. Keep this wire-layout view byte-exact so
+ * the mask below cannot drift when compiled on hosts with stricter alignment. */
+_Static_assert(sizeof(DM2_GameStateBlock) == DM2_GAME_STATE_BLOCK_SIZE,
+               "DM2_GameStateBlock must match skload_table_60 size");
+_Static_assert(offsetof(DM2_GameStateBlock, wTimersCount) == 20,
+               "DM2_GameStateBlock wTimersCount offset must match skload_table_60");
+_Static_assert(offsetof(DM2_GameStateBlock, rain_state) == 22,
+               "DM2_GameStateBlock rain_state offset must match skload_table_60");
+_Static_assert(offsetof(DM2_GameStateBlock, _dw22) == 30,
+               "DM2_GameStateBlock _dw22 offset must match skload_table_60");
+_Static_assert(offsetof(DM2_GameStateBlock, _reserved42) == 42,
+               "DM2_GameStateBlock reserved tail must start at byte 42");
 
 /* ════════════════════════════════════════════════════════════════
  * SUPPRESS codec

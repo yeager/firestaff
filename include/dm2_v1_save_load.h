@@ -133,7 +133,16 @@ const char *dm2_v1_save_source_evidence(void);
 
 #define DM2_GAME_STATE_BLOCK_SIZE 56
 
-typedef struct {
+/* Packed wire-layout view of skload_table_60. The original DM2 save block is
+ * byte-addressed; do not let host uint32_t alignment move _dw22 from byte 30. */
+#if defined(_MSC_VER)
+#pragma pack(push, 1)
+#endif
+typedef struct
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((packed))
+#endif
+{
     uint32_t dwGameTick;
     uint32_t dwRandomSeed;
     uint16_t wChampionsCount;
@@ -148,7 +157,11 @@ typedef struct {
     uint32_t _dw26;
     uint16_t _w30;
     uint16_t _w34;
+    uint8_t  _reserved42[14];
 } DM2_GameStateBlock;
+#if defined(_MSC_VER)
+#pragma pack(pop)
+#endif
 
 int dm2_suppress_encode_gamestate(const DM2_GameStateBlock *gs,
                                    uint8_t *out, size_t out_sz);
