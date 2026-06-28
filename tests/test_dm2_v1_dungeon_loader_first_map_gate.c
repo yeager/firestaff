@@ -128,12 +128,27 @@ static void test_truncated_first_map_rejected(void)
           "loader rejects missing final byte of map-0 tile span");
 }
 
+static void test_shifted_first_map_offset_rejected(void)
+{
+    uint8_t dat[DM2_TEST_TILE_DATA_START + 12];
+    DM2_V1_DungeonData dungeon;
+    size_t size = build_first_map_fixture(dat, sizeof(dat));
+
+    CHECK(size == sizeof(dat), "offset fixture starts complete");
+    put16le(dat + DM2_TEST_HEADER_SIZE, 2);
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == -1,
+          "loader rejects map-0 raw offset that overruns tile data");
+    CHECK(dungeon.raw_data == NULL,
+          "rejected map-0 offset does not retain raw dungeon data");
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Dungeon Loader First-Map Gate ===\n\n");
 
     test_first_map_metadata_and_tiles();
     test_truncated_first_map_rejected();
+    test_shifted_first_map_offset_rejected();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
