@@ -1,0 +1,72 @@
+{
+  "manifestVersion": "1.0.0",
+  "packId": "dm2-v2-hud-widget-synthetic-example",
+  "generator_version": "synthetic_test-v1",
+  "comment": "Synthetic-test fixture. generator == 'synthetic_test' is a non-placeholder, non-real marker used to exercise the dm2_v2_hud_widget_assets PARTIAL/COMPLETE gate paths without shipping real PBR art. The 1x1 PNG tiles are NOT copyrighted DM2 artwork; they are tiny procedural tiles tagged synthetic-test-fixture via PNG tEXt chunk. This example exists ONLY so CTest can install the manifest into a scratch dir, observe the gate promote from PLACEHOLDER to PARTIAL/COMPLETE, and tear it down. It is NOT intended to be installed at the real ~/.firestaff/assets/dm2/hud/ location. The DM2 V2 HUD widget runtime contract is unchanged: real-art promotion requires operator-installed PBR art with a generator that is neither 'placeholder' nor 'synthetic_test', plus on-disk source_file entries. The runtime pixel decode for REAL slots is the documented replacement site for the 1-pixel anchor stamp (see dm2_v2_hud_runtime_render_with_assets).",
+
+  "hud_widgets": [
+    {
+      "id": "inventory_quick_view",
+      "category": "hud_widgets",
+      "generator": "synthetic_test",
+      "generator_note": "Synthetic 1x1 procedural tile, NOT copyrighted art. See PNG tEXt 'synthetic-test-fixture'.",
+      "source_file": "inventory_quick_view.png",
+      "width": 64,
+      "height": 32
+    },
+    {
+      "id": "action_prompt",
+      "category": "hud_widgets",
+      "generator": "synthetic_test",
+      "generator_note": "Synthetic 1x1 procedural tile, NOT copyrighted art. See PNG tEXt 'synthetic-test-fixture'.",
+      "source_file": "action_prompt.png",
+      "width": 48,
+      "height": 16
+    },
+    {
+      "id": "compass_rose",
+      "category": "hud_chrome",
+      "generator": "synthetic_test",
+      "generator_note": "Synthetic 1x1 procedural tile, NOT copyrighted art. See PNG tEXt 'synthetic-test-fixture'.",
+      "source_file": "compass_rose.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "id": "depth_indicator",
+      "category": "hud_chrome",
+      "generator": "synthetic_test",
+      "generator_note": "Synthetic 1x1 procedural tile, NOT copyrighted art. See PNG tEXt 'synthetic-test-fixture'.",
+      "source_file": "depth_indicator.png",
+      "width": 40,
+      "height": 16
+    },
+    {
+      "id": "gold_counter",
+      "category": "hud_chrome",
+      "generator": "synthetic_test",
+      "generator_note": "Synthetic 1x1 procedural tile, NOT copyrighted art. See PNG tEXt 'synthetic-test-fixture'.",
+      "source_file": "gold_counter.png",
+      "width": 56,
+      "height": 16
+    },
+    {
+      "id": "champion_bar_frame",
+      "category": "hud_chrome",
+      "generator": "synthetic_test",
+      "generator_note": "Synthetic 1x1 procedural tile, NOT copyrighted art. See PNG tEXt 'synthetic-test-fixture'.",
+      "source_file": "champion_bar_frame.png",
+      "width": 64,
+      "height": 8
+    },
+    {
+      "id": "action_strip_frame",
+      "category": "hud_chrome",
+      "generator": "synthetic_test",
+      "generator_note": "Synthetic 1x1 procedural tile, NOT copyrighted art. See PNG tEXt 'synthetic-test-fixture'.",
+      "source_file": "action_strip_frame.png",
+      "width": 28,
+      "height": 28
+    }
+  ]
+}

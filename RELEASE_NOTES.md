@@ -6,6 +6,10 @@
   ZIP asset-cache materializer compile with `FIRESTAFF_HAS_ZLIB=1` without
   requiring an external zlib dylib at runtime; packagers can still opt into
   platform zlib with `FIRESTAFF_WITH_BUNDLED_ZLIB=OFF`.
+- DM2 V2 HUD widget asset gating now has a safe synthetic example manifest
+  and CTest probe. The example uses `generator="synthetic_test"` plus tiny
+  procedural PNG fixtures to exercise `PARTIAL` and `COMPLETE` promotion
+  without shipping copyrighted or finished HUD art.
 
 # Firestaff v3.0.10
 
