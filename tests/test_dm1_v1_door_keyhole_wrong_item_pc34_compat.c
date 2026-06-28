@@ -123,11 +123,19 @@ int main(void)
     int baselineProjectileCount;
     int baselineTimelineCount;
     int baselineSoundIndex;
+    int baselineDoorButton;
+    int baselineDoorOrnamentOrdinal;
+    unsigned short baselineDoorNext;
+    unsigned short baselineFrontThing;
     int secondBaselineMessageCount;
     int secondBaselineProjectileCount;
     int secondBaselineTimelineCount;
     int secondBaselineSoundIndex;
     unsigned int secondBaselineWorldHash;
+    int secondBaselineDoorButton;
+    int secondBaselineDoorOrnamentOrdinal;
+    unsigned short secondBaselineDoorNext;
+    unsigned short secondBaselineFrontThing;
     char secondBaselineAction[sizeof(state.lastAction)];
     char secondBaselineOutcome[sizeof(state.lastOutcome)];
     char secondBaselineInspectTitle[sizeof(state.inspectTitle)];
@@ -176,6 +184,10 @@ int main(void)
     baselineMessageCount = M11_GameView_GetMessageLogCount(&state);
     baselineProjectileCount = state.world.projectiles.count;
     baselineTimelineCount = state.world.timeline.count;
+    baselineDoorButton = doors[0].button;
+    baselineDoorOrnamentOrdinal = doors[0].ornamentOrdinal;
+    baselineDoorNext = doors[0].next;
+    baselineFrontThing = squareFirstThings[1 * 3 + 1];
     state.audioState.lastSoundIndex = 77;
     baselineSoundIndex = state.audioState.lastSoundIndex;
 
@@ -194,6 +206,14 @@ int main(void)
     ok &= expect_int("door remains closed after wrong-item click",
                      squares[1 * 3 + 1],
                      square_type(DUNGEON_ELEMENT_DOOR, 0x10 | 4));
+    ok &= expect_int("wrong-item click preserves door button flag",
+                     doors[0].button, baselineDoorButton);
+    ok &= expect_int("wrong-item click preserves door ornament ordinal",
+                     doors[0].ornamentOrdinal, baselineDoorOrnamentOrdinal);
+    ok &= expect_int("wrong-item click preserves door next link",
+                     doors[0].next, baselineDoorNext);
+    ok &= expect_int("wrong-item click preserves front door thing",
+                     squareFirstThings[1 * 3 + 1], baselineFrontThing);
     ok &= expect_int("wrong-item click does not refresh world hash",
                      (int)state.lastWorldHash, (int)0xBADF00Du);
     ok &= expect_int("wrong-item click does not append a message",
@@ -234,6 +254,10 @@ int main(void)
     secondBaselineMessageCount = M11_GameView_GetMessageLogCount(&state);
     secondBaselineProjectileCount = state.world.projectiles.count;
     secondBaselineTimelineCount = state.world.timeline.count;
+    secondBaselineDoorButton = doors[0].button;
+    secondBaselineDoorOrnamentOrdinal = doors[0].ornamentOrdinal;
+    secondBaselineDoorNext = doors[0].next;
+    secondBaselineFrontThing = squareFirstThings[2 * 3 + 2];
     secondBaselineSoundIndex = state.audioState.lastSoundIndex;
 
     /* Same ReDMCSB F0377 branch after changing the active champion and
@@ -253,6 +277,14 @@ int main(void)
     ok &= expect_int("east-facing door remains closed after wrong-item click",
                      squares[2 * 3 + 2],
                      square_type(DUNGEON_ELEMENT_DOOR, 0x10 | 4));
+    ok &= expect_int("leader/facing wrong-item click preserves door button flag",
+                     doors[0].button, secondBaselineDoorButton);
+    ok &= expect_int("leader/facing wrong-item click preserves door ornament ordinal",
+                     doors[0].ornamentOrdinal, secondBaselineDoorOrnamentOrdinal);
+    ok &= expect_int("leader/facing wrong-item click preserves door next link",
+                     doors[0].next, secondBaselineDoorNext);
+    ok &= expect_int("leader/facing wrong-item click preserves front door thing",
+                     squareFirstThings[2 * 3 + 2], secondBaselineFrontThing);
     ok &= expect_int("leader/facing wrong-item click does not refresh world hash",
                      (int)state.lastWorldHash, (int)secondBaselineWorldHash);
     ok &= expect_int("leader/facing wrong-item click does not append a message",
