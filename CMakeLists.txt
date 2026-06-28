@@ -13049,6 +13049,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1055_dm1_v1_original_closed_door_collision_capture.py
         )
         add_test(
+            NAME todo100_dm1_v1_viewport_collision_report_repro_gate
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_todo100_dm1_v1_viewport_collision_report_repro_gate.py
+        )
+        add_test(
             NAME pass377_dm1_v1_paired_diff_artifact_blocker
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass377_dm1_v1_paired_diff_artifact_blocker.py
         )
