@@ -366,9 +366,50 @@ static void test_mana_cost(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 11: Spell cast — success ───────────────────────────────── */
+/* ── Test 11: Malformed rune-step boundary gate ─────────────────── */
+static void test_malformed_symbol_step_rejected_without_mutation(void) {
+    printf("  [12] Malformed SymbolStep is rejected without mutation...\n");
+
+    DM1_SpellCastingState s;
+    dm1_spell_init(&s);
+    DM1_ChampionSpellStats stats = makeStats(77, 100, 50, 40);
+    DM1_ChampionSpellInput beforeInput;
+    DM1_ChampionSpellStats beforeStats;
+
+    /* ReDMCSB SYMBOL.C F0399:17-32 indexes G0485[SymbolStep][SymbolIndex]
+     * under the invariant that SymbolStep is kept in 0..3 by F0399/F0400.
+     * The standalone compatibility API must fail deterministically if a
+     * caller hands it corrupted state instead of indexing outside G0485. */
+    s.input[0].symbolStep = 4;
+    s.input[0].symbols[0] = dm1_encodeSymbol(0, DM1_POWER_ON);
+    s.input[0].symbols[1] = '\0';
+    beforeInput = s.input[0];
+    beforeStats = stats;
+
+    assert(dm1_spell_symbolManaCost(&s, 0, DM1_ELEM_FUL) == 0);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL) == 0);
+    assert(memcmp(&s.input[0], &beforeInput, sizeof(beforeInput)) == 0);
+    assert(memcmp(&stats, &beforeStats, sizeof(beforeStats)) == 0);
+
+    /* Step > 0 also depends on Symbols[0] being a power rune byte 96..101
+     * before indexing G0486 (SYMBOL.C F0399:19-24). Reject a stale/null
+     * power slot without touching mana or the partial rune buffer. */
+    s.input[0].symbolStep = 1;
+    s.input[0].symbols[0] = '\0';
+    beforeInput = s.input[0];
+    beforeStats = stats;
+
+    assert(dm1_spell_symbolManaCost(&s, 0, DM1_ELEM_YA) == 0);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_YA) == 0);
+    assert(memcmp(&s.input[0], &beforeInput, sizeof(beforeInput)) == 0);
+    assert(memcmp(&stats, &beforeStats, sizeof(beforeStats)) == 0);
+
+    printf("    PASS\n");
+}
+
+/* ── Test 12: Spell cast — success ───────────────────────────────── */
 static void test_spell_cast_success(void) {
-    printf("  [12] Spell cast — success...\n");
+    printf("  [13] Spell cast — success...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -396,9 +437,9 @@ static void test_spell_cast_success(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 12: Spell cast — dead champion ─────────────────────────── */
+/* ── Test 13: Spell cast — dead champion ─────────────────────────── */
 static void test_spell_cast_dead(void) {
-    printf("  [13] Spell cast — dead champion...\n");
+    printf("  [14] Spell cast — dead champion...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -416,9 +457,9 @@ static void test_spell_cast_dead(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 13: Spell cast — meaningless ───────────────────────────── */
+/* ── Test 14: Spell cast — meaningless ───────────────────────────── */
 static void test_spell_cast_meaningless(void) {
-    printf("  [14] Spell cast — meaningless...\n");
+    printf("  [15] Spell cast — meaningless...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -438,9 +479,9 @@ static void test_spell_cast_meaningless(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 14: Spell cast — potion needs flask ────────────────────── */
+/* ── Test 15: Spell cast — potion needs flask ────────────────────── */
 static void test_spell_cast_potion(void) {
-    printf("  [15] Spell cast — potion needs flask...\n");
+    printf("  [16] Spell cast — potion needs flask...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -466,7 +507,7 @@ static void test_spell_cast_potion(void) {
 }
 
 static void test_spell_cast_potion_flask_inventory_mutation(void) {
-    printf("  [16] Spell cast — potion flask inventory mutation...\n");
+    printf("  [17] Spell cast — potion flask inventory mutation...\n");
 
     DM1_SpellCastingState s;
     DM1_ChampionSpellStats stats;
@@ -566,9 +607,9 @@ static void test_spell_cast_potion_flask_inventory_mutation(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 15: Projectile kinetic energy ──────────────────────────── */
+/* ── Test 16: Projectile kinetic energy ──────────────────────────── */
 static void test_projectile_kinetic_energy(void) {
-    printf("  [17] Projectile kinetic energy...\n");
+    printf("  [18] Projectile kinetic energy...\n");
 
     /* KE = bounded(21, (powerOrd+2)*(4+(skill<<1)), 255) */
     assert(dm1_spell_projectileKineticEnergy(3, 5, 0) == 70);
@@ -580,9 +621,9 @@ static void test_projectile_kinetic_energy(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 16: Projectile step energy ─────────────────────────────── */
+/* ── Test 17: Projectile step energy ─────────────────────────────── */
 static void test_projectile_step_energy(void) {
-    printf("  [18] Projectile step energy...\n");
+    printf("  [19] Projectile step energy...\n");
 
     /* stepEnergy = 10 - min(8, maxMana >> 3) */
     assert(dm1_spell_projectileStepEnergy(0) == 10);
@@ -593,9 +634,9 @@ static void test_projectile_step_energy(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 17: Experience calculation ─────────────────────────────── */
+/* ── Test 18: Experience calculation ─────────────────────────────── */
 static void test_experience(void) {
-    printf("  [19] Experience calculation...\n");
+    printf("  [20] Experience calculation...\n");
 
     /* exp = rng8 + (req<<4) + ((powerOrd-1)*baseReq<<3) + req*req
      * pow=3, base=3, rng=5: req=6, exp=5+96+48+36=185 */
@@ -606,9 +647,9 @@ static void test_experience(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 18: Spell table integrity ──────────────────────────────── */
+/* ── Test 19: Spell table integrity ──────────────────────────────── */
 static void test_spell_table(void) {
-    printf("  [20] Spell table integrity...\n");
+    printf("  [21] Spell table integrity...\n");
 
     /* Shield: Ya Ir = 0x00666F00 */
     assert(dm1_spells[0].symbols == 0x00666F00);
@@ -642,9 +683,9 @@ static void test_spell_table(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 19: Multiple champions independent ─────────────────────── */
+/* ── Test 20: Multiple champions independent ─────────────────────── */
 static void test_multiple_champions(void) {
-    printf("  [21] Multiple champions independent...\n");
+    printf("  [22] Multiple champions independent...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -667,9 +708,9 @@ static void test_multiple_champions(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 20: Zokathra full lookup ───────────────────────────────── */
+/* ── Test 21: Zokathra full lookup ───────────────────────────────── */
 static void test_zokathra(void) {
-    printf("  [22] Zokathra full lookup...\n");
+    printf("  [23] Zokathra full lookup...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -690,9 +731,9 @@ static void test_zokathra(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 21: Lightning Bolt lookup ──────────────────────────────── */
+/* ── Test 22: Lightning Bolt lookup ──────────────────────────────── */
 static void test_lightning_bolt(void) {
-    printf("  [23] Lightning Bolt lookup...\n");
+    printf("  [24] Lightning Bolt lookup...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -712,9 +753,9 @@ static void test_lightning_bolt(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 22: Only power symbol → no match ───────────────────────── */
+/* ── Test 23: Only power symbol → no match ───────────────────────── */
 static void test_power_only_no_match(void) {
-    printf("  [24] Power symbol only → no match...\n");
+    printf("  [25] Power symbol only → no match...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -729,9 +770,9 @@ static void test_power_only_no_match(void) {
 }
 
 
-/* ── Test 23: Spell cast failure feedback clears needs-practice ─────── */
+/* ── Test 24: Spell cast failure feedback clears needs-practice ─────── */
 static void test_spell_cast_needs_practice_feedback(void) {
-    printf("  [25] Spell cast failure feedback — needs practice...\n");
+    printf("  [26] Spell cast failure feedback — needs practice...\n");
 
     DM1_SpellCastingState s;
     dm1_spell_init(&s);
@@ -755,9 +796,9 @@ static void test_spell_cast_needs_practice_feedback(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 24: Spell failure feedback metadata ───────────────────────── */
+/* ── Test 25: Spell failure feedback metadata ───────────────────────── */
 static void test_spell_failure_feedback_metadata(void) {
-    printf("  [26] Spell failure feedback metadata...\n");
+    printf("  [27] Spell failure feedback metadata...\n");
 
     const DM1_SpellFailureFeedback* practice = dm1_spell_failureFeedback(DM1_FAILURE_NEEDS_MORE_PRACTICE);
     (void)practice;
@@ -787,9 +828,9 @@ static void test_spell_failure_feedback_metadata(void) {
     printf("    PASS\n");
 }
 
-/* ── Test 25: F0408 cast-click symbol cleanup predicate ─────────────── */
+/* ── Test 26: F0408 cast-click symbol cleanup predicate ─────────────── */
 static void test_spell_cast_click_cleanup_predicate(void) {
-    printf("  [27] Spell cast-click cleanup predicate...\n");
+    printf("  [28] Spell cast-click cleanup predicate...\n");
 
     assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_FAILURE) == 1);
     assert(dm1_spell_castClearsSymbolsForResult(DM1_SPELL_CAST_SUCCESS) == 1);
@@ -814,6 +855,7 @@ int main(void) {
     test_spell_lookup_open_door();
     test_spell_lookup_meaningless();
     test_mana_cost();
+    test_malformed_symbol_step_rejected_without_mutation();
     test_spell_cast_success();
     test_spell_cast_dead();
     test_spell_cast_meaningless();
@@ -831,6 +873,6 @@ int main(void) {
     test_spell_failure_feedback_metadata();
     test_spell_cast_click_cleanup_predicate();
 
-    printf("\nAll 27 tests PASSED.\n");
+    printf("\nAll 28 tests PASSED.\n");
     return 0;
 }

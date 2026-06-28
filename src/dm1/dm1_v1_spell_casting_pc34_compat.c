@@ -172,6 +172,11 @@ int dm1_spell_addSymbol(DM1_SpellCastingState* s, int champIdx,
     DM1_ChampionSpellInput* inp = &s->input[champIdx];
     unsigned int step = inp->symbolStep;
 
+    /* ReDMCSB SYMBOL.C F0399:17-32 relies on SymbolStep being kept in
+     * 0..3 by F0399:32 and F0400:95.  This standalone compatibility API
+     * rejects corrupted external state before indexing G0485. */
+    if (step >= DM1_SYMBOL_STEP_COUNT) return 0;
+
     /* Compute mana cost (SYMBOL.C F0399 lines 20-25) */
     unsigned int manaCost = dm1_symbolBaseManaCost[step][symbolIdx];
     /* BUG-007 fix: validate power symbol index before multiplier lookup.
@@ -274,10 +279,14 @@ int dm1_spell_symbolManaCost(const DM1_SpellCastingState* s, int champIdx, int s
 
     const DM1_ChampionSpellInput* inp = &s->input[champIdx];
     unsigned int step = inp->symbolStep;
+    if (step >= DM1_SYMBOL_STEP_COUNT) return 0;
+
     unsigned int cost = dm1_symbolBaseManaCost[step][symbolIdx];
 
     if (step > 0) {
-        cost = (cost * dm1_symbolManaCostMultiplier[(unsigned char)inp->symbols[0] - 96]) >> 3;
+        unsigned int powerIdx = (unsigned char)inp->symbols[0] - 96;
+        if (powerIdx >= DM1_SYMBOLS_PER_STEP) return 0;
+        cost = (cost * dm1_symbolManaCostMultiplier[powerIdx]) >> 3;
     }
 
     return (int)cost;
