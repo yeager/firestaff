@@ -76,6 +76,24 @@ static uint16_t rd16le(const uint8_t *p) {
 /* TILE DATA START = DUNGEON_HEADER(44) + MAP_DESCRIPTORS(28*16) = 492 */
 #define DM2_TILE_DATA_START       (DM2_DUNGEON_HEADER_SIZE + 28 * 16)
 
+static int dm2_v1_level_tiles_fit(const DM2_V1_DungeonData *d,
+                                  int level,
+                                  int raw_size) {
+    size_t offset;
+    size_t tile_bytes;
+
+    if (!d || level < 0 || level >= d->level_count || raw_size < 0)
+        return 0;
+    if (d->level_widths[level] <= 0 || d->level_heights[level] <= 0)
+        return 0;
+
+    offset = (size_t)DM2_TILE_DATA_START + (size_t)d->level_offsets[level];
+    tile_bytes = (size_t)d->level_widths[level] *
+                 (size_t)d->level_heights[level] * 2U;
+    return offset <= (size_t)raw_size &&
+           tile_bytes <= (size_t)raw_size - offset;
+}
+
 /* ── Public API ───────────────────────────────────────────────────── */
 
 int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
@@ -131,6 +149,12 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
 
     /* Level 0 is always OUTDOOR in DM2 PC English */
     out->level_types[0] = DM2_LEVEL_OUTDOOR;
+
+    /* ReDMCSB DEFS.H lines 989-998 define DUNGEON_HEADER.MapCount and
+     * lines 1049-1116 define each MAP.RawMapDataByteOffset; map 0 must
+     * have its complete column-major tile span available before launch. */
+    if (!dm2_v1_level_tiles_fit(out, 0, size))
+        return -1;
 
     /* Retain raw data reference for square type lookups */
     out->raw_data = (uint8_t *)malloc((size_t)size);
