@@ -40,6 +40,7 @@ is sufficient for `SOURCE_LOCKED` but NOT for `MATCHED` pixel/content parity.
 | Evidence Item | Status | Path | Issue |
 |---|---|---|---|
 | 4x original DOSBox turn-cycle frames | PARTIAL OK | `verification-screens/pass1052-dm1-original-route-24h-turncycle/` | Clean original DM1 PC 3.4 capture: 2 `dungeon_gameplay` + 2 `wall_closeup`, 0 duplicate raw hashes, pass80 PASS. pass1056 now gates the pass1054 Firestaff nearest-neighbor pairing artifacts, but full same-state viewport parity still needs a debugger-observed route pair. |
+| WUUF south_return original DOS route manifest | READY (NO CAPTURE) | `parity-evidence/todo100_dm1_v1_original_dos_capture_route_manifest.md` | Skip-safe operator route manifest for `hoc_start_south_1_3 -> hoc_forward_south_1_4 -> hoc_wuuf_south_return_1_5`, ending at `(map 0, x=1, y=5, SOUTH)` with ordinal-13 WUUF portrait metadata. It validates route labels/crop names/source anchors only; no original frames or pixel parity are promoted. |
 | 6x original DOSBox crops (224x136) | IMPAIRED EXISTS (impaired) | `firestaff-release-v0.3.28/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/` | Historical failed route. Frames 03-06 have duplicate SHA256 `701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c`; pass80 reclassifies frames 03-04 as `entrance_menu` and 05-06 as `wall_closeup`. |
 | 6x Firestaff V1 captures (VGA PPM) | OK EXISTS | `firestaff-v2-gap-manifest/verification-m11/lane3-inventory-followup-20260428-0914/` (selected files) | No paired original to compare against. |
 | Source-locked viewport probe | OK EXISTS | `probes/dm1/firestaff_dm1_v1_viewport_draw_order_probe.c` | Documents draw-order contract from ReDMCSB; no paired capture. |
@@ -49,8 +50,11 @@ is sufficient for `SOURCE_LOCKED` but NOT for `MATCHED` pixel/content parity.
 **Gap:** Pass1052 supersedes the broken pass94 route for initial viewport evidence by
 capturing two clean `dungeon_gameplay` frames. pass1054/pass1056 now provide a
 reproducible Firestaff nearest-neighbor pairing gate over those crops, including
-one exact wall row. Viewport content is still not `MATCHED` because the nonzero
-gameplay rows are scout candidates, not debugger-confirmed same-state pairs.
+one exact wall row. The TODO100 WUUF south_return manifest gives the next
+operator a deterministic three-shot route to a Firestaff-paired Hall viewport,
+but it has not captured original frames yet. Viewport content is still not
+`MATCHED` because the nonzero gameplay rows are scout candidates, not
+debugger-confirmed same-state pairs.
 
 **Minimum needed for `MATCHED`:**
 - At least 3 clean original `dungeon_gameplay` frames: (a) start-state 3x3 dungeon viewport,
