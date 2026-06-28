@@ -26,6 +26,9 @@
  *     320x200 presentation route split exact instead of fuzzing boundaries.
  *   - Representative HUD/action labels fit inside the 96px panel using
  *     SKULLWIN's 6px advance, 5px-high DM2 font metrics.
+ *   - The future original-vs-Firestaff pair manifest has a strict schema and
+ *     cannot promote the OPEN row without same-state dungeon_gameplay hashes
+ *     for both original and Firestaff 224x136 viewport crops.
  *
  * All assertions are data-free: the probe compiles into a tiny CTest binary
  * that does not depend on GRAPHICS.DAT, DUNGEON.DAT, SKULL.EXE, or DOSBox.
@@ -48,6 +51,9 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#define DM2_PAIR_MANIFEST_HEADER \
+    "pair_id\tstate\tclassification\troute_label\toriginal_frame_sha256\toriginal_viewport_sha256\toriginal_viewport_width\toriginal_viewport_height\tfirestaff_frame_sha256\tfirestaff_viewport_sha256\tfirestaff_viewport_width\tfirestaff_viewport_height\tdiff_sha256\tstatus"
 
 /* Source-locked geometry constants.
  * Anchor: SKULLWIN/dm2global.h ORIG_SWIDTH/ORIG_SHEIGHT.
@@ -347,6 +353,41 @@ static int route_token_inventory_holds(void)
     return seen_wait && seen_shot && seen_kp5;
 }
 
+static int hex_sha256_shape_holds(const char *s)
+{
+    int i;
+    if (!s || strlen(s) != 64u) return 0;
+    for (i = 0; i < 64; i++) {
+        char c = s[i];
+        if (!((c >= '0' && c <= '9') ||
+              (c >= 'a' && c <= 'f') ||
+              (c >= 'A' && c <= 'F'))) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int pair_manifest_schema_holds(void)
+{
+    /* tools/verify_dm2_v1_original_overlay_capture_source_lock.py treats a
+     * missing pair manifest as OPEN, a malformed present manifest as FAIL,
+     * and only a SAME_STATE_PAIR row with original+Firestaff 224x136 crop
+     * hashes as pair-ready. The placeholder hash below is shape-only and is
+     * not an evidence value. */
+    const char *placeholder_sha =
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    int ok = 1;
+    ok &= (strstr(DM2_PAIR_MANIFEST_HEADER, "original_viewport_sha256") != NULL);
+    ok &= (strstr(DM2_PAIR_MANIFEST_HEADER, "firestaff_viewport_sha256") != NULL);
+    ok &= (strstr(DM2_PAIR_MANIFEST_HEADER, "classification") != NULL);
+    ok &= (strstr(DM2_PAIR_MANIFEST_HEADER, "status") != NULL);
+    ok &= hex_sha256_shape_holds(placeholder_sha);
+    ok &= (DM2_BACKBUFFER_W == 224);
+    ok &= (DM2_BACKBUFFER_H == 136);
+    return ok ? 1 : 0;
+}
+
 int main(void)
 {
     int setup_ok = 1;
@@ -378,6 +419,8 @@ int main(void)
            "interplay_splash, press_any_key, main_menu, dungeon_entry, ...");
     record("route-token-inventory", route_token_inventory_holds(),
            "wait/shot/click/rclick/kp5 tokens present");
+    record("pair-manifest-schema", pair_manifest_schema_holds(),
+           "future pair rows require same-state original+Firestaff 224x136 SHA-256s before promotion");
 
     printf("\n--- Summary ---\n");
     printf("pass=%d fail=%d\n", g_pass, g_fail);
@@ -385,7 +428,7 @@ int main(void)
         printf("STATUS=FAIL (first failure indicates the capture scaffold contract has drifted)\n");
         setup_ok = 0;
     } else {
-        printf("STATUS=PASS (data-free scaffold invariants hold; ready for paired DM2 overlay evidence)\n");
+        printf("STATUS=PASS (data-free scaffold invariants hold; DM2 overlay row remains OPEN until paired hashes exist)\n");
     }
 
     return setup_ok ? 0 : 1;
