@@ -9,6 +9,7 @@
 #include "asset_loader_m11.h"
 #include "audio_sdl_m11.h"
 #include "font_m11.h"
+#include "nexus_v1_light_runtime.h"
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
@@ -457,6 +458,8 @@ typedef struct {
     /* Nexus V1 engine — active when sourceKind == M11_GAME_SOURCE_NEXUS_DGN.
      * Owned by nexus_v1_launcher.c (singleton). */
     struct Nexus_V1_Engine *nexusEngine;
+    Nexus_V1_LightRuntime nexusLightRuntime;
+    int nexusLightRuntimeReady;
     struct {
         int level_loaded;
         int party_x, party_y, party_dir;

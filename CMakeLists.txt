@@ -14077,6 +14077,20 @@ if(NOT TARGET test_m11_open_door_spell_runtime_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_m11_nexus_light_spell_dispatch)
+    add_executable(test_m11_nexus_light_spell_dispatch
+        tests/test_m11_nexus_light_spell_dispatch.c
+    )
+    target_link_libraries(test_m11_nexus_light_spell_dispatch PRIVATE firestaff_m12 firestaff_m11 firestaff_nexus firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+    if(NOT MSVC)
+        target_compile_options(test_m11_nexus_light_spell_dispatch PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_nexus_light_spell_dispatch
+        COMMAND test_m11_nexus_light_spell_dispatch
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_door_keyhole_wrong_item_pc34_compat)
     add_executable(test_dm1_v1_door_keyhole_wrong_item_pc34_compat
         tests/test_dm1_v1_door_keyhole_wrong_item_pc34_compat.c
