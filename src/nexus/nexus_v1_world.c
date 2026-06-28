@@ -482,6 +482,10 @@ static const uint8_t *rd64(const uint8_t *p, uint64_t *v) {
     return p + 8;
 }
 
+static int rd_has_bytes(const uint8_t *p, const uint8_t *end, size_t n) {
+    return p <= end && (size_t)(end - p) >= n;
+}
+
 size_t nexus_v1_world_serialize_size(const Nexus_V1_World *world) {
     /* Fixed header: magic(4)+ver(2)+pad(2)+all scalars.
      * The header includes object_count; the object section that follows
@@ -578,12 +582,13 @@ size_t nexus_v1_world_serialize(const Nexus_V1_World *world,
 int nexus_v1_world_deserialize(Nexus_V1_World *world,
                                const void *buf, size_t bufsize) {
     const uint8_t *p = (const uint8_t *)buf;
+    const uint8_t *end = p + bufsize;
     uint32_t magic;
     uint16_t version, pad16;
     uint32_t v32;
     (void)pad16; /* consumed via rd16 side-effect */
-    if (!world || !buf || bufsize < 4) return NEXUS_SAVE_ERR_NULL;
-
+    if (!world || !buf) return NEXUS_SAVE_ERR_NULL;
+    if (!rd_has_bytes(p, end, 8)) return NEXUS_SAVE_ERR_SIZE;
 
     p = rd32(p, &magic);
     if (magic != NEXUS_WORLD_SAVE_MAGIC) return NEXUS_SAVE_ERR_MAGIC;
@@ -591,17 +596,24 @@ int nexus_v1_world_deserialize(Nexus_V1_World *world,
     if (version != NEXUS_WORLD_SAVE_VERSION) return NEXUS_SAVE_ERR_VERSION;
     p = rd16(p, &pad16);
 
+#define REQUIRE_WORLD_BYTES(n) do { \
+        if (!rd_has_bytes(p, end, (n))) return NEXUS_SAVE_ERR_SIZE; \
+    } while (0)
+
+    REQUIRE_WORLD_BYTES(4 * 6);
     p = rd32(p, &v32); world->party_level  = (int)v32;
     p = rd32(p, &v32); world->party_x      = (int)v32;
     p = rd32(p, &v32); world->party_y      = (int)v32;
     p = rd32(p, &v32); world->party_dir    = (int)v32;
     p = rd32(p, &v32); world->party_foot_step = (int)v32;
     p = rd32(p, &v32); world->object_count = (int)v32;
-    if (world->object_count > NEXUS_MAX_OBJECTS) world->object_count = NEXUS_MAX_OBJECTS;
+    if (world->object_count < 0 || world->object_count > NEXUS_MAX_OBJECTS)
+        return NEXUS_SAVE_ERR_SIZE;
     {
         int i;
         for (i = 0; i < world->object_count; i++) {
             Nexus_V1_Object *o = &world->objects[i];
+            REQUIRE_WORLD_BYTES(1+1+4+4+4+4+4+4);
             p = rd8(p, &o->type);
             p = rd8(p, &o->state);
             p = rd32(p, &v32); o->x         = (int)v32;
@@ -612,13 +624,16 @@ int nexus_v1_world_deserialize(Nexus_V1_World *world,
             p = rd32(p, &o->flags);
         }
     }
+    REQUIRE_WORLD_BYTES(4);
     p = rd32(p, &v32); world->event_count = (int)v32;
-    if (world->event_count > NEXUS_MAX_EVENTS) world->event_count = NEXUS_MAX_EVENTS;
+    if (world->event_count < 0 || world->event_count > NEXUS_MAX_EVENTS)
+        return NEXUS_SAVE_ERR_SIZE;
     {
         int i;
         for (i = 0; i < world->event_count; i++) {
             Nexus_V1_EventRecord *e = &world->events[i];
             uint32_t u32;
+            REQUIRE_WORLD_BYTES(4+4+4+4+4+4+4+4);
             p = rd32(p, &u32); e->type   = (Nexus_V1_EventType)u32;
             p = rd32(p, &u32); e->level  = (int)u32;
             p = rd32(p, &u32); e->x      = (int)u32;
@@ -629,13 +644,16 @@ int nexus_v1_world_deserialize(Nexus_V1_World *world,
             p = rd32(p, &u32); e->repeat = (int)u32;
         }
     }
+    REQUIRE_WORLD_BYTES(4);
     p = rd32(p, &v32);
     {
         int i, tc = (int)v32;
+        if (tc < 0 || tc > NEXUS_MAX_TIMERS) return NEXUS_SAVE_ERR_SIZE;
         memset(world->timers, 0, sizeof(world->timers));
-        for (i = 0; i < tc && i < NEXUS_MAX_TIMERS; i++) {
+        for (i = 0; i < tc; i++) {
             Nexus_V1_Timer *t = &world->timers[i];
             uint32_t u32;
+            REQUIRE_WORLD_BYTES(4+4+4+4+4+4);
             p = rd32(p, &u32); t->id = (int)u32;
             p = rd32(p, &u32); t->kind = (Nexus_TimerKind)u32;
             p = rd32(p, &u32); t->level = (int)u32;
@@ -646,12 +664,14 @@ int nexus_v1_world_deserialize(Nexus_V1_World *world,
         /* Clear remainder slots */
         for (; i < NEXUS_MAX_TIMERS; i++) world->timers[i].flags &= ~NEXUS_TIMER_F_ACTIVE;
     }
+    REQUIRE_WORLD_BYTES(8+4+4+4+4+8);
     p = rd64(p, &world->world_tick);
     p = rd32(p, &v32); world->transition_pending = (int)v32;
     p = rd32(p, &v32); world->transition_target = (int)v32;
     p = rd32(p, &v32); world->transition_x = (int)v32;
     p = rd32(p, &v32); world->transition_y = (int)v32;
     p = rd64(p, &world->state_hash);
+#undef REQUIRE_WORLD_BYTES
     return NEXUS_SAVE_OK;
 }
 

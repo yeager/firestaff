@@ -38,6 +38,9 @@
  *     other slots still load their own data.
  *   - CRC integrity: flipping one byte in the data section of a saved
  *     slot causes nexus_v1_load_full() to return NEXUS_SAVE_ERR_CRC.
+ *   - Truncated FNXW world section: a syntactically valid FNXS container
+ *     with a CRC-valid but short world section is rejected by load_full()
+ *     instead of letting object/event/timer counts read past the section.
  *   - Unknown variant: a foreign-magic file is rejected by both probe
  *     and load_full() with a non-empty diagnostic and the
  *     NEXUS_SAVE_ERR_UNKNOWN_VARIANT code.
@@ -997,6 +1000,71 @@ int main(void) {
                 }
             }
         }
+    }
+
+    /* ── Truncated world section: write a valid FNXS container whose
+     *    FNXW section header says object_count > 0 but omits the
+     *    object payload. The container CRC is valid because the
+     *    save_to_path helper computes it over the short section, so
+     *    the failure must come from nexus_v1_world_deserialize() bounds
+     *    checking inside load_full_from_path().                       */
+    {
+        char trunc_path[512];
+        Nexus_V1_SaveHeader trunc_header;
+        Nexus_V1_World trunc_world;
+        Nexus_V1_ChampionPool trunc_pool;
+        char trunc_diag[256];
+        size_t champ_size = nexus_v1_champion_pool_serialize_size(&pool_before[0]);
+        size_t world_size = nexus_v1_world_serialize_size(&world_before[0]);
+        uint8_t *champ_buf = (uint8_t *)malloc(champ_size);
+        uint8_t *world_buf = (uint8_t *)malloc(world_size);
+        const size_t TRUNC_WORLD_SIZE = 4 + 2 + 2 + (4 * 6);
+
+        snprintf(trunc_path, sizeof(trunc_path), "%s/truncated_world.dat", save_dir);
+        if (!champ_buf || !world_buf) {
+            fprintf(stderr, "FAIL: could not allocate buffers for truncated-world test\n");
+            ++g_failures;
+        } else {
+            size_t wrote_champ = nexus_v1_champion_pool_serialize(&pool_before[0],
+                                                                  champ_buf, champ_size);
+            size_t wrote_world = nexus_v1_world_serialize(&world_before[0],
+                                                          world_buf, world_size);
+            expect(wrote_champ == champ_size,
+                   "truncated-world fixture champion section serializes");
+            expect(wrote_world == world_size,
+                   "truncated-world fixture full world section serializes");
+            expect(world_before[0].object_count > 0,
+                   "truncated-world fixture source has object records to omit");
+            expect(TRUNC_WORLD_SIZE < world_size,
+                   "truncated-world fixture size omits object/event/timer payload");
+
+            r = nexus_v1_save_to_path(trunc_path,
+                                      world_before[0].party_level,
+                                      world_before[0].party_x,
+                                      world_before[0].party_y,
+                                      world_before[0].party_dir,
+                                      (uint32_t)world_before[0].world_tick,
+                                      world_before[0].state_hash,
+                                      champ_buf, champ_size,
+                                      world_buf, TRUNC_WORLD_SIZE);
+            expect(r == NEXUS_SAVE_OK,
+                   "truncated-world FNXS container writes with a valid CRC");
+
+            nexus_v1_champions_init(&trunc_pool);
+            nexus_v1_world_init(&trunc_world);
+            memset(&trunc_header, 0, sizeof(trunc_header));
+            memset(trunc_diag, 0, sizeof(trunc_diag));
+            r = nexus_v1_load_full_from_path(trunc_path, &trunc_header,
+                                             &trunc_pool, &trunc_world,
+                                             trunc_diag, sizeof(trunc_diag));
+            expect(r == NEXUS_SAVE_ERR_READ,
+                   "load_full_from_path rejects a CRC-valid truncated FNXW world section");
+            expect(trunc_header.world_data_size == TRUNC_WORLD_SIZE,
+                   "truncated-world header records the short world section size");
+        }
+        free(champ_buf);
+        free(world_buf);
+        NSR_UNLINK(trunc_path);
     }
 
     /* ── Unknown variant: write a foreign-magic file and confirm both
