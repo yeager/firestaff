@@ -28,6 +28,11 @@
  *   4. Exposes M11_HighContrast_ApplyActiveRGBA() for callers that
  *      already hold a framebuffer pointer and want to remap chrome
  *      pixels only (NOT viewport pixels).
+ *   5. Exposes M11_HighContrast_ApplyActiveRGBAExceptRect() for
+ *      callers that need an explicit rectangle fence around the
+ *      dungeon viewport instead of relying only on palette-index
+ *      exclusions. This is the direct viewport-fence helper for
+ *      broad chrome-overlay passes.
  *
  * What this module does NOT do (kept honest in the manifest):
  *
@@ -108,6 +113,29 @@ int  M11_HighContrast_ApplyActiveRGBA(unsigned char* framebuffer,
                                       int framebufferHeight,
                                       int x, int y, int width, int height,
                                       unsigned int excludeMask);
+
+/* Same indexed-framebuffer remap as M11_HighContrast_ApplyActiveRGBA(),
+ * but skips every pixel inside the supplied preserve rectangle
+ * BEFORE consulting excludeMask. This is the direct viewport-fence
+ * helper for callers that draw one broad chrome overlay pass around
+ * the dungeon scene: (preserveX, preserveY, preserveWidth,
+ * preserveHeight) is never modified, even if its pixels use muted
+ * palette slots that would otherwise collapse to BLACK.
+ *
+ * A non-positive preserveWidth / preserveHeight disables the
+ * rectangle fence and leaves only excludeMask active. Returns 1 if
+ * any pixel outside the preserve rectangle was remapped, 0 otherwise.
+ * The function never writes pixels outside the supplied (x, y,
+ * width, height) rect. */
+int  M11_HighContrast_ApplyActiveRGBAExceptRect(unsigned char* framebuffer,
+                                                int framebufferWidth,
+                                                int framebufferHeight,
+                                                int x, int y, int width, int height,
+                                                int preserveX,
+                                                int preserveY,
+                                                int preserveWidth,
+                                                int preserveHeight,
+                                                unsigned int excludeMask);
 
 #ifdef __cplusplus
 }

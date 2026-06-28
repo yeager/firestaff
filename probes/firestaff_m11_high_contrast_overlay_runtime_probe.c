@@ -246,6 +246,97 @@ viewport_still_preserved_done:
     probe_record("chrome_remap_leaves_dungeon_scene_alone",
                  viewport_still_preserved_ok,
                  "dungeon viewport pixels stay bit-identical after chrome remap");
+
+    /* ── Rect-fence helper subtests ─────────────────────────────── */
+    /* Apply a single broad pass across the full 320x200 but fence
+     * off an explicit (0,0,224,136) dungeon viewport rectangle.
+     * The chrome strip is muted GRAY, so a broad remap MUST touch
+     * it and the dungeon scene MUST stay byte-identical. */
+    for (y = 0; y < FB_H; ++y) {
+        for (x = 0; x < FB_W; ++x) {
+            fb[y * FB_W + x] = 1; /* GRAY → collapses to BLACK */
+        }
+    }
+    M11_HighContrast_SetActive(1);
+    int rect_fence_remap = M11_HighContrast_ApplyActiveRGBAExceptRect(
+        fb, FB_W, FB_H, 0, 0, FB_W, FB_H,
+        /* preserve the dungeon viewport subrect */
+        0, 0, 224, 136,
+        /* no excludeMask needed because the fence handles it */
+        0);
+    probe_record("rect_fence_chrome_remap_engaged",
+                 rect_fence_remap == 1,
+                 "rect-fenced broad remap touches HUD chrome strip");
+    int rect_fence_viewport_ok = 1;
+    for (y = 0; y < 136; ++y) {
+        for (x = 0; x < 224; ++x) {
+            if (fb[y * FB_W + x] != 1) {
+                rect_fence_viewport_ok = 0;
+                goto rect_fence_viewport_done;
+            }
+        }
+    }
+rect_fence_viewport_done:
+    probe_record("rect_fence_viewport_byte_identical",
+                 rect_fence_viewport_ok,
+                 "rect-fenced broad remap preserves dungeon viewport pixels");
+    int rect_fence_chrome_ok = 1;
+    for (y = 136; y < FB_H; ++y) {
+        for (x = 0; x < FB_W; ++x) {
+            if (fb[y * FB_W + x] != 0) {
+                rect_fence_chrome_ok = 0;
+                goto rect_fence_chrome_done;
+            }
+        }
+    }
+rect_fence_chrome_done:
+    probe_record("rect_fence_chrome_collapsed_to_black",
+                 rect_fence_chrome_ok,
+                 "rect-fenced broad remap collapses chrome strip to BLACK");
+
+    /* Zero-area preserve rect disables the fence → fall back to
+     * excludeMask-only behaviour. */
+    for (y = 0; y < FB_H; ++y) {
+        for (x = 0; x < FB_W; ++x) {
+            fb[y * FB_W + x] = 1;
+        }
+    }
+    int zero_rect_remap = M11_HighContrast_ApplyActiveRGBAExceptRect(
+        fb, FB_W, FB_H, 0, 0, FB_W, FB_H,
+        0, 0, 0, 0,
+        (1u << 1));
+    probe_record("rect_fence_zero_area_disables_fence",
+                 zero_rect_remap == 0,
+                 "zero-area preserve rect disables the rectangle fence (falls back to excludeMask)");
+
+    /* The rect-fence helper with a checker-pattern buffer and no
+     * excludeMask still preserves the dungeon viewport (chrome
+     * strip outside the fence still gets remapped, which is by
+     * design — this is the explicit dungeon-viewport fence). */
+    for (y = 0; y < FB_H; ++y) {
+        for (x = 0; x < FB_W; ++x) {
+            fb[y * FB_W + x] = (unsigned char)(((x ^ y) & 1) ? 1 : 0);
+        }
+    }
+    int rect_checker_ok = 1;
+    M11_HighContrast_ApplyActiveRGBAExceptRect(
+        fb, FB_W, FB_H, 0, 0, FB_W, FB_H,
+        0, 0, 224, 136,
+        0);
+    for (y = 0; y < 136; ++y) {
+        for (x = 0; x < 224; ++x) {
+            unsigned char expected = (unsigned char)(((x ^ y) & 1) ? 1 : 0);
+            if (fb[y * FB_W + x] != expected) {
+                rect_checker_ok = 0;
+                goto rect_checker_done;
+            }
+        }
+    }
+rect_checker_done:
+    probe_record("rect_fence_viewport_checker_byte_identical",
+                 rect_checker_ok,
+                 "rect-fence helper preserves checker pattern inside the dungeon viewport");
+
     M11_HighContrast_SetActive(0);
 }
 
@@ -280,9 +371,10 @@ static void subtest_manifest_documents_gap_closure(void) {
           && (strstr(m, "M11_HIGH_CONTRAST_OVERLAY_GATE_v1") != NULL)
           && (strstr(m, "dungeon_viewport_320x200_pixels") != NULL)
           && (strstr(m, "v1_fidelity_contract: bit_identical_when_off") != NULL)
-          && (strstr(m, "m12_presented_color") != NULL);
+          && (strstr(m, "m12_presented_color") != NULL)
+          && (strstr(m, "chrome_rect_remap_with_viewport_fence") != NULL);
     probe_record("manifest_documents_gap_closure", ok,
-                 "manifest names the gap, the preserve set, and the m12 parity link");
+                 "manifest names the gap, the preserve set, the m12 parity link, and the rect fence");
 }
 
 int main(void) {

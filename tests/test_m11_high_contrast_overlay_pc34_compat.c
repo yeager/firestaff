@@ -199,6 +199,8 @@ static void subtest_manifest_contract(void) {
           "manifest: v1 fidelity contract is documented");
     check(strstr(m, "m12_presented_color") != NULL,
           "manifest: source-lock pointer mirrors m12_presented_color()");
+    check(strstr(m, "chrome_rect_remap_with_viewport_fence") != NULL,
+          "manifest: rectangle-fenced chrome remap is in the coverage list");
 }
 
 /* ── Subtest 5: region apply, gate off (no-op) ────────────────────── */
@@ -405,6 +407,92 @@ static void subtest_launcher_parity(void) {
     M11_HighContrast_SetActive(0);
 }
 
+/* ── Subtest 11: rectangle-fenced region apply ──────────────────── */
+
+static void subtest_region_apply_except_rect(void) {
+    enum { W = 8, H = 6 };
+    unsigned char fb[W * H];
+    unsigned char before[W * H];
+    int x;
+    int y;
+    int ok;
+
+    for (y = 0; y < H; ++y) {
+        for (x = 0; x < W; ++x) {
+            fb[y * W + x] = (unsigned char)((x + y) & 0x0F);
+        }
+    }
+    memcpy(before, fb, sizeof(fb));
+
+    M11_HighContrast_SetActive(1);
+    check(M11_HighContrast_ApplyActiveRGBAExceptRect(fb, W, H,
+                                                     0, 0, W, H,
+                                                     2, 1, 3, 4,
+                                                     0) == 1,
+          "apply_rect_fence: broad remap reports changed chrome pixels");
+
+    /* The preserve rect (2,1)-(5,5) must stay byte-identical. */
+    ok = 1;
+    for (y = 1; y < 5; ++y) {
+        for (x = 2; x < 5; ++x) {
+            if (fb[y * W + x] != before[y * W + x]) {
+                ok = 0;
+            }
+        }
+    }
+    check(ok, "apply_rect_fence: preserve rectangle stays byte-identical");
+
+    /* Chrome outside the rectangle must follow the remap table. */
+    ok = 1;
+    for (y = 0; y < H; ++y) {
+        for (x = 0; x < W; ++x) {
+            unsigned char expected;
+            if (x >= 2 && x < 5 && y >= 1 && y < 5) {
+                expected = before[y * W + x];
+            } else {
+                expected = M11_HighContrast_RemapPresentedColor(before[y * W + x]);
+            }
+            if (fb[y * W + x] != expected) {
+                ok = 0;
+            }
+        }
+    }
+    check(ok, "apply_rect_fence: chrome outside rectangle follows remap table");
+
+    /* A zero-area preserve rect disables the fence and leaves
+     * excludeMask active. */
+    fb[0] = 3;  /* BROWN would collapse to BLACK without excludeMask. */
+    check(M11_HighContrast_ApplyActiveRGBAExceptRect(fb, W, H,
+                                                     0, 0, 1, 1,
+                                                     0, 0, 0, 0,
+                                                     (1u << 3)) == 0,
+          "apply_rect_fence: zero-size preserve rect leaves excludeMask semantics active");
+    check(fb[0] == 3,
+          "apply_rect_fence: excludeMask still preserves palette slot outside fence");
+
+    /* A negative preserve dimension must also disable the fence
+     * (defensive against caller mistakes). */
+    fb[0] = 1;  /* GRAY collapses to BLACK under gate without fence. */
+    check(M11_HighContrast_ApplyActiveRGBAExceptRect(fb, W, H,
+                                                     0, 0, 1, 1,
+                                                     0, 0, -1, 4,
+                                                     0) == 1,
+          "apply_rect_fence: negative preserveWidth disables the rectangle fence");
+    check(fb[0] == 0,
+          "apply_rect_fence: negative preserve dimension lets remap collapse GRAY to BLACK");
+
+    /* Gate off → no remap, even with a real preserve rect. */
+    fb[1] = 1;
+    M11_HighContrast_SetActive(0);
+    check(M11_HighContrast_ApplyActiveRGBAExceptRect(fb, W, H,
+                                                     0, 0, W, H,
+                                                     2, 1, 3, 4,
+                                                     0) == 0,
+          "apply_rect_fence: gate off leaves every pixel alone even with preserve rect");
+    check(fb[1] == 1,
+          "apply_rect_fence: gate off + preserve rect leaves chrome byte-identical");
+}
+
 int main(void) {
     printf("  [1] default-off identity (V1 bit-identical)...\n");
     subtest_default_off_identity();
@@ -426,6 +514,8 @@ int main(void) {
     subtest_out_of_range_index_with_exclude();
     printf("  [10] launcher / game surfaces share one palette...\n");
     subtest_launcher_parity();
+    printf("  [11] rectangle-fenced region apply...\n");
+    subtest_region_apply_except_rect();
     printf("\n  m11_high_contrast_overlay_pc34_compat: %d passed, %d failed\n",
            g_passes, g_failures);
     return g_failures == 0 ? 0 : 1;
