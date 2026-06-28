@@ -33,7 +33,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#if !defined(_WIN32)
+#if defined(_WIN32)
+#include <direct.h>
+#else
 #include <unistd.h>
 #endif
 
