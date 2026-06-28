@@ -7,8 +7,12 @@
  *   3. Error string coverage
  *   4. Save menu state machine
  *   5. Save path generation
- *   6. Full save/load round-trip (requires GameWorld_Compat stubs)
- *   7. Save-file bug profile hash mismatch helper
+ *   6. NULL-arg rejection
+ *   7. Missing-save load rejection
+ *   8. Backup fallback path
+ *   9. Corrupt-save validation
+ *  10. Save-file bug profile hash mismatch helper
+ *  11. Party/champion/timeline save-resume state gate
  *
  * ReDMCSB source refs — validates against original save format semantics:
  *   DEFS.H     DM_SAVE_HEADER layout, GLOBAL_DATA fields
@@ -425,6 +429,278 @@ static int test_profile_hash_mismatch(void) {
     return 1;
 }
 
+/* ── Test 11: Party/champion/timeline save-resume state ───────── */
+
+static int expect_u32_eq(const char* label, uint32_t got, uint32_t want) {
+    if (got != want) {
+        printf("  FAIL: %s got 0x%08X expected 0x%08X\n", label, got, want);
+        return 0;
+    }
+    return 1;
+}
+
+static int expect_int_eq(const char* label, int got, int want) {
+    if (got != want) {
+        printf("  FAIL: %s got %d expected %d\n", label, got, want);
+        return 0;
+    }
+    return 1;
+}
+
+static int expect_u16_eq(const char* label,
+                         unsigned short got,
+                         unsigned short want) {
+    if (got != want) {
+        printf("  FAIL: %s got 0x%04X expected 0x%04X\n",
+               label, (unsigned)got, (unsigned)want);
+        return 0;
+    }
+    return 1;
+}
+
+static void seed_party_state_gate_world(struct GameWorld_Compat* world) {
+    struct TimelineEvent_Compat ev;
+    int i;
+
+    F0881_WORLD_InitDefault_Compat(world, 0x1D1D1D1Du);
+    world->gameTick = 3210u;
+    world->partyMapIndex = 2;
+    world->newPartyMapIndex = -1;
+    world->partyIsResting = 1;
+    world->disabledMovementTicks = 3;
+    world->projectileDisabledMovementTicks = 5;
+    world->lastProjectileDisabledMovementDirection = DIR_WEST;
+    world->dungeonFingerprint = 0x0D01CAFEu;
+
+    world->party.mapIndex = 2;
+    world->party.mapX = 17;
+    world->party.mapY = 22;
+    world->party.direction = DIR_WEST;
+    world->party.championCount = 2;
+    world->party.activeChampionIndex = 1;
+    world->party.eventFlags = 0x00A5u;
+    world->party.magicShieldTime = 44;
+    world->party.fireShieldTime = 55;
+
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&world->party.champions[i]);
+    }
+
+    world->party.champions[0].present = 1;
+    world->party.champions[0].portraitIndex = 6;
+    memcpy(world->party.champions[0].name, "HALK    ", CHAMPION_NAME_LENGTH);
+    world->party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 64;
+    world->party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 58;
+    world->party.champions[0].skillLevels[CHAMPION_SKILL_FIGHTER] = 3;
+    world->party.champions[0].skillExperience[CHAMPION_SKILL_FIGHTER] = 12345u;
+    world->party.champions[0].hp.current = 91;
+    world->party.champions[0].hp.maximum = 100;
+    world->party.champions[0].stamina.current = 77;
+    world->party.champions[0].stamina.maximum = 88;
+    world->party.champions[0].mana.current = 12;
+    world->party.champions[0].mana.maximum = 20;
+    world->party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = 0x1400u;
+    world->party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] = 0x1801u;
+    world->party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_1] = 0x1C02u;
+    world->party.champions[0].load = 83;
+    world->party.champions[0].maxLoad = 612;
+    world->party.champions[0].direction = DIR_NORTH;
+    world->party.champions[0].food = 1400;
+    world->party.champions[0].water = 1300;
+
+    world->party.champions[1].present = 1;
+    world->party.champions[1].portraitIndex = 9;
+    memcpy(world->party.champions[1].name, "TIGGY   ", CHAMPION_NAME_LENGTH);
+    world->party.champions[1].attributes[CHAMPION_ATTR_WISDOM] = 72;
+    world->party.champions[1].skillLevels[CHAMPION_SKILL_WIZARD] = 4;
+    world->party.champions[1].skillExperience[CHAMPION_SKILL_WIZARD] = 54321u;
+    world->party.champions[1].hp.current = 41;
+    world->party.champions[1].hp.maximum = 60;
+    world->party.champions[1].stamina.current = 63;
+    world->party.champions[1].stamina.maximum = 70;
+    world->party.champions[1].mana.current = 48;
+    world->party.champions[1].mana.maximum = 55;
+    world->party.champions[1].inventory[CHAMPION_SLOT_POUCH_1] = 0x2003u;
+    world->party.champions[1].inventory[CHAMPION_SLOT_BACKPACK_2] = 0x2404u;
+    world->party.champions[1].load = 37;
+    world->party.champions[1].maxLoad = 420;
+    world->party.champions[1].direction = DIR_EAST;
+    world->party.champions[1].food = 1200;
+    world->party.champions[1].water = 1100;
+
+    F0720_TIMELINE_Init_Compat(&world->timeline, world->gameTick);
+    memset(&ev, 0, sizeof(ev));
+    ev.kind = TIMELINE_EVENT_DOOR_ANIMATE;
+    ev.fireAtTick = world->gameTick + 9u;
+    ev.mapIndex = 2;
+    ev.mapX = 17;
+    ev.mapY = 21;
+    ev.cell = 3;
+    ev.aux0 = 7;
+    ev.aux1 = 8;
+    F0721_TIMELINE_Schedule_Compat(&world->timeline, &ev);
+    memset(&ev, 0, sizeof(ev));
+    ev.kind = TIMELINE_EVENT_HUNGER_THIRST;
+    ev.fireAtTick = world->gameTick + 30u;
+    ev.mapIndex = 2;
+    ev.aux0 = 0x44;
+    F0721_TIMELINE_Schedule_Compat(&world->timeline, &ev);
+}
+
+static int test_party_state_save_resume_gate(void) {
+    const char* path = "/tmp/dm1_party_state_gate.sav";
+    const char* path2 = "/tmp/dm1_party_state_gate_rerun.sav";
+    struct GameWorld_Compat before;
+    struct GameWorld_Compat after;
+    struct DM1SaveHeader hdr;
+    struct DM1SaveHeader hdr2;
+    uint32_t beforeHash = 0;
+    uint32_t afterHash = 0;
+    int rc;
+    int ok = 1;
+
+    /*
+     * ReDMCSB LOADSAVE.C F0433 writes GLOBAL_DATA, PARTY_INFO +
+     * CHAMPION[4], EVENT, and TIMELINE save parts; F0435 restores them
+     * before play resumes.  This gate keeps Firestaff's native body
+     * serializer honest for the same party-state continuity surface.
+     */
+    remove(path);
+    remove(path2);
+    remove("/tmp/dm1_party_state_gate.sav.bak");
+    remove("/tmp/dm1_party_state_gate_rerun.sav.bak");
+    memset(&before, 0, sizeof(before));
+    memset(&after, 0, sizeof(after));
+    memset(&hdr, 0, sizeof(hdr));
+    memset(&hdr2, 0, sizeof(hdr2));
+
+    seed_party_state_gate_world(&before);
+    if (!F0891_ORCH_WorldHash_Compat(&before, &beforeHash)) {
+        printf("  FAIL: pre-save world hash failed\n");
+        F0883_WORLD_Free_Compat(&before);
+        return 0;
+    }
+
+    rc = DM1_SaveGameWithProfile(&before, path, 0xD11D1D1Du, 1, 1,
+                                 DM1_DefaultSaveProfileHash());
+    if (rc != DM1_SAVE_OK) {
+        printf("  FAIL: SaveGame party-state gate returned %d (%s)\n",
+               rc, DM1_SaveLoadErrorString(rc));
+        F0883_WORLD_Free_Compat(&before);
+        return 0;
+    }
+
+    rc = DM1_LoadGame(path, &after, &hdr);
+    if (rc != DM1_SAVE_OK) {
+        printf("  FAIL: LoadGame party-state gate returned %d (%s)\n",
+               rc, DM1_SaveLoadErrorString(rc));
+        remove(path);
+        F0883_WORLD_Free_Compat(&before);
+        return 0;
+    }
+    if (!F0891_ORCH_WorldHash_Compat(&after, &afterHash)) {
+        printf("  FAIL: post-load world hash failed\n");
+        ok = 0;
+    }
+
+    ok &= expect_u32_eq("world hash survives save/load", afterHash, beforeHash);
+    ok &= expect_u32_eq("header game tick", hdr.gameTick, before.gameTick);
+    ok &= expect_u32_eq("header game id", hdr.gameID, 0xD11D1D1Du);
+    ok &= expect_int_eq("header party x", hdr.partyMapX, before.party.mapX);
+    ok &= expect_int_eq("header party y", hdr.partyMapY, before.party.mapY);
+    ok &= expect_int_eq("header facing", hdr.partyDirection,
+                        before.party.direction);
+    ok &= expect_int_eq("header map index", hdr.partyMapIndex,
+                        before.partyMapIndex);
+    ok &= expect_int_eq("header champion count", hdr.championCount,
+                        before.party.championCount);
+
+    ok &= expect_int_eq("party map index", after.party.mapIndex, 2);
+    ok &= expect_int_eq("party x", after.party.mapX, 17);
+    ok &= expect_int_eq("party y", after.party.mapY, 22);
+    ok &= expect_int_eq("party facing", after.party.direction, DIR_WEST);
+    ok &= expect_int_eq("active champion", after.party.activeChampionIndex, 1);
+    ok &= expect_int_eq("resting flag", after.partyIsResting, 1);
+    ok &= expect_int_eq("movement disable ticks",
+                        after.disabledMovementTicks, 3);
+
+    ok &= expect_int_eq("champion count", after.party.championCount, 2);
+    ok &= expect_int_eq("champion0 present",
+                        after.party.champions[0].present, 1);
+    ok &= expect_u16_eq("champion0 ready hand",
+                        after.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT],
+                        0x1400u);
+    ok &= expect_u16_eq("champion0 action hand",
+                        after.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT],
+                        0x1801u);
+    ok &= expect_u16_eq("champion0 backpack",
+                        after.party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_1],
+                        0x1C02u);
+    ok &= expect_u16_eq("champion0 hp",
+                        after.party.champions[0].hp.current, 91);
+    ok &= expect_u16_eq("champion0 strength",
+                        after.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH],
+                        64);
+    ok &= expect_u16_eq("champion0 load",
+                        after.party.champions[0].load, 83);
+
+    ok &= expect_int_eq("champion1 present",
+                        after.party.champions[1].present, 1);
+    ok &= expect_u16_eq("champion1 pouch",
+                        after.party.champions[1].inventory[CHAMPION_SLOT_POUCH_1],
+                        0x2003u);
+    ok &= expect_u16_eq("champion1 wizard level",
+                        after.party.champions[1].skillLevels[CHAMPION_SKILL_WIZARD],
+                        4);
+    ok &= expect_u16_eq("champion1 mana",
+                        after.party.champions[1].mana.current, 48);
+    ok &= expect_u16_eq("champion2 empty action hand",
+                        after.party.champions[2].inventory[CHAMPION_SLOT_HAND_RIGHT],
+                        THING_NONE);
+
+    ok &= expect_int_eq("timeline now", (int)after.timeline.nowTick, 3210);
+    ok &= expect_int_eq("timeline count", after.timeline.count, 2);
+    ok &= expect_int_eq("timeline first kind", after.timeline.events[0].kind,
+                        TIMELINE_EVENT_DOOR_ANIMATE);
+    ok &= expect_int_eq("timeline first fire tick",
+                        (int)after.timeline.events[0].fireAtTick, 3219);
+    ok &= expect_int_eq("timeline second kind", after.timeline.events[1].kind,
+                        TIMELINE_EVENT_HUNGER_THIRST);
+    ok &= expect_int_eq("timeline second fire tick",
+                        (int)after.timeline.events[1].fireAtTick, 3240);
+
+    rc = DM1_SaveGameWithProfile(&after, path2, 0xD11D1D1Du, 1, 1,
+                                 DM1_DefaultSaveProfileHash());
+    if (rc != DM1_SAVE_OK) {
+        printf("  FAIL: repeat SaveGame party-state gate returned %d (%s)\n",
+               rc, DM1_SaveLoadErrorString(rc));
+        ok = 0;
+    } else {
+        rc = DM1_ValidateSaveFile(path2, &hdr2);
+        if (rc != DM1_SAVE_OK) {
+            printf("  FAIL: repeat ValidateSaveFile returned %d (%s)\n",
+                   rc, DM1_SaveLoadErrorString(rc));
+            ok = 0;
+        } else {
+            ok &= expect_u32_eq("repeat body crc", hdr2.bodyCRC32,
+                                hdr.bodyCRC32);
+            ok &= expect_u32_eq("repeat total size", hdr2.totalFileSize,
+                                hdr.totalFileSize);
+        }
+    }
+
+    remove(path);
+    remove(path2);
+    remove("/tmp/dm1_party_state_gate.sav.bak");
+    remove("/tmp/dm1_party_state_gate_rerun.sav.bak");
+    F0883_WORLD_Free_Compat(&before);
+    F0883_WORLD_Free_Compat(&after);
+
+    if (!ok) return 0;
+    printf("  PASS: party/champion/timeline save-resume state gate\n");
+    return 1;
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -442,6 +718,7 @@ int main(void) {
     if (test_backup_fallback_path()) pass++; else fail++;
     if (test_validate_corrupt()) pass++; else fail++;
     if (test_profile_hash_mismatch()) pass++; else fail++;
+    if (test_party_state_save_resume_gate()) pass++; else fail++;
 
     printf("\n=== Results: %d passed, %d failed ===\n", pass, fail);
     return (fail > 0) ? 1 : 0;
