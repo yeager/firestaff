@@ -17,8 +17,9 @@
  *        The md5List is a small, source-cited set of known
  *        Utility-Disk / hard-disk HCSB.HTC blobs. Each entry is
  *        a 32-char hex MD5 of a CSB Utility Disk / Meynaf PP
- *        variant. The list is intentionally narrow: only hashes
- *        we can cite to a concrete local source path.
+ *        variant. The list covers the dmweb-documented English
+ *        R1/R2/R3, French R1, and German R1/R2 Hint Oracle
+ *        files without vendoring their contents.
  *     2. If the matched path is a virtual container path
  *        ("archive.zip::HCSB.HTC" or "disc.iso::HCSB.HTC"),
  *        materialize it into a local cache directory using
@@ -44,6 +45,9 @@
  *     id 13 file the parser expects.
  *   - dmweb Hint Oracle Files page describes the same big-endian
  *     HCSB.HTC table the parser already understands.
+ *   - dmweb "Hint Oracle Files" table documents all accepted
+ *     HCSB.HTC/HCSBF.HTC/HCSBG.HTC hashes, sizes, and table
+ *     counts: English R1/R2/R3, French R1, German R1/R2.
  *   - Local HCSB.HTC provenance: see
  *     ~/.firestaff/data/csb-atari-st-2x/HCSB.HTC
  *       (Atari ST 2.x PP 2009-02-22 hard-disk variant,
@@ -84,11 +88,14 @@ extern "C" {
  *         Chaos Strikes Back for Amiga v3.3 (French) Hacked by
  *         Meynaf/FTL_CSB_Utility/HCSBF.HTC
  *
- * Additional documented CSB Utility Disk releases (English R1/R2/R3,
- * French R1, German R1/R2) are not yet in the list because we have
- * not verified a local copy of the HCSB.HTC contents under their
- * canonical hashes. The list is meant to grow as more variants are
- * classified; see docs/FIRESTAFF_GAP_LIST.md row C2.
+ * The scan list intentionally accepts the dmweb-documented English
+ * R1/R2/R3, French R1, and German R1/R2 HTC hashes. German R1/R2
+ * currently share the same documented HCSBG.HTC hash/size/count row,
+ * so they are represented by one scan slot with an R1/R2 label.
+ * Only the two locally staged rows have SHA256 receipts in
+ * docs/VERIFIED_HASHES.md; the other rows are MD5/size-gated
+ * scanner slots and remain skip-safe until an operator stages the
+ * matching file under the data root.
  */
 typedef struct {
     const char *label;        /* human-readable provenance label */

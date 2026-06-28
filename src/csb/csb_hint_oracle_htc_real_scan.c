@@ -42,9 +42,24 @@ static const CSB_HintOracleHTC_RealKnownHash g_known_hashes[] = {
         66172u
     },
     {
+        "csb-amiga-3.x-en-R2-util-disk",
+        "334fc18cb98d1280a4c55a16566d5ef9",
+        68912u
+    },
+    {
+        "csb-amiga-3.x-en-R3-util-disk",
+        "c06862298f193b1fe479eaeff6acd57e",
+        69963u
+    },
+    {
         "csb-extras/legacy-amiga-dms/Meynaf-FR-v3.3-hard-disk",
         "803ede61136ccfc2bff8e266d8dc3935",
         75424u
+    },
+    {
+        "csb-amiga-3.x-ge-R1-R2-util-disk",
+        "5a7ab2c8387215c7b2abe772e2ddc689",
+        75504u
     }
 };
 

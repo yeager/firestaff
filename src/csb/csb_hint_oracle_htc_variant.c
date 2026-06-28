@@ -9,13 +9,13 @@
  *
  * The catalog below is intentionally narrow: only the five
  * variants the dmweb Hint Oracle Files page documents with a
- * known MD5 are listed. The two variants we locally stage
- * (Atari ST 2.x PP 2009-02-22 hard-disk and Amiga 3.3 FR
- * Meynaf hard-disk utility) carry an MD5; the remaining three
- * have a documented MD5 + size + counts but no locally
- * staged copy yet. As additional variants are classified and
- * locally verified, the catalog grows; the matching surface
- * stays MD5-first with parsed-content fallback.
+ * known MD5 are listed. The real scanner accepts each catalog
+ * MD5 so an operator-staged English R2/R3 or German HCSB.HTC
+ * can be found without another code change; only the Atari ST
+ * 2.x PP 2009-02-22 hard-disk and Amiga 3.3 FR Meynaf hard-disk
+ * utility rows currently have local SHA256 receipts in
+ * docs/VERIFIED_HASHES.md. The matching surface stays MD5-first
+ * with parsed-content fallback.
  */
 
 #include "csb_hint_oracle_htc_variant.h"
