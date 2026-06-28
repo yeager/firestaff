@@ -97,30 +97,29 @@ timing and inventory routes.
 
 ## Latest Release
 
-**Current version:** `3.0.10`.
+**Current version:** `3.0.11`.
 
-The latest release packages the 2026-06-26 runtime-hardening work after
-v3.0.9. It widens real-data DM1 V1 render coverage, tightens CSB champion
-rule evidence, and makes Theron's Quest direct startup practical from a
-broad user data root. It does not claim finished parity for CSB, DM2, Nexus,
-or Theron's Quest beyond the runtime slices now covered by tests and probes.
+The latest release packages the 2026-06-27/28 runtime-hardening work after
+v3.0.10. It widens DM1 V1 source-locked gameplay gates, makes ZIP/gzip support
+self-contained through bundled miniz by default, and adds bounded presentation
+and data-handoff evidence across CSB, DM2, Nexus, and Theron's Quest. It does
+not claim finished parity for those targets beyond the runtime slices now
+covered by tests and probes.
 
-### v3.0.10 release highlights
+### v3.0.11 release highlights
 
-- **DM1 all-map render proof**: the all-map M11 probe renders every non-wall
-  source cell across all 14 DM1 maps in all four directions and requires
-  visible items, groups, and sensor/text content to produce real viewport
-  pixel deltas against a no-things baseline.
-- **Hall of Champions hardening**: payload item chains no longer render as
-  loose floor artifacts, false creature AI on map 0 is blocked, and synthetic
-  creature telemetry stays out of the normal bottom message surface.
-- **CSB champion rules**: a new per-stat parity fixture pins the
-  source-locked reincarnate/resurrect contract for HP/Mana/Stamina, stat
-  penalties, skills, and panel-state flags.
-- **Theron direct startup**: `--game theron --data-dir <root>` now resolves
-  known Theron child roots before the broad launcher scan, so roots such as
-  `~/.firestaff/data` can reach `TQR level load` quickly when verified Track
-  02 data is present.
+- **Bundled ZIP/gzip inflate**: default builds use bundled static miniz for
+  ZIP cache materialization and Theron SRM gzip handling, avoiding an external
+  zlib runtime dependency.
+- **DM1 V1 gate expansion**: champion-panel refresh/pixel slices,
+  waterskin/fountain flow, food/water state, timeline determinism, creature
+  group splitting, and the D3C back-wall item pass are now source-locked.
+- **Custom presentation gates**: DM1 V2.2 material checks, DM2 V2.2 modern-art
+  swap coverage, and DM2 HUD widget runtime/synthetic-manifest gates tighten
+  the enhanced presentation path without shipping replacement game art.
+- **Cross-game handoff coverage**: CSB graphics/save boundaries, Nexus
+  BPX/BPK/save/light paths, and Theron SRM/Track 02/V2 HUD paths have new
+  focused verification.
 
 ## Download
 
