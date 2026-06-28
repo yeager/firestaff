@@ -18992,6 +18992,30 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/sck/firestaff_sck_mapfile_corpus_v
     )
 endif()
 
+# DM1 PC 3.4 Greatstone visual-item verifier: parses the SCK
+# dm_pc43_en_gd.map descriptor and loads every IMG3 row through M11's
+# real GRAPHICS.DAT asset loader, then checks palette-index bounds and
+# representative runtime placement anchors.  Skip-safe when either the
+# SCK corpus or local DM1 PC data is absent.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/sck/firestaff_dm1_pc34_greatstone_items_visual_probe.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/firestaff_sck_mapfile.c")
+    add_executable(firestaff_dm1_pc34_greatstone_items_visual_probe
+        probes/sck/firestaff_dm1_pc34_greatstone_items_visual_probe.c
+        src/shared/firestaff_sck_mapfile.c
+    )
+    target_include_directories(firestaff_dm1_pc34_greatstone_items_visual_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(firestaff_dm1_pc34_greatstone_items_visual_probe
+        PRIVATE firestaff_m11 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_pc34_greatstone_items_visual_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_pc34_greatstone_items_visual_probe
+        COMMAND firestaff_dm1_pc34_greatstone_items_visual_probe
+    )
+endif()
+
 # M12 custom dungeon real-path scanner: disk-backed data/custom/<name>/DUNGEON.DAT
 # discovery with mixed-case community filenames and validation statuses.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_custom_dungeon_m12_real_path.c"
