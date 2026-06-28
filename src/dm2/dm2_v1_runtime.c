@@ -122,6 +122,18 @@ void dm2_v1_runtime_tick(void) {
 }
 
 /*
+ * dm2_v1_runtime_get_tick_count — narrow probe accessor for the V1 tick
+ * boundary.  This exposes only the deterministic tick counter advanced by
+ * dm2_v1_runtime_tick(); it does not claim broader DM2 runtime parity.
+ *
+ * Source: SKULL.ASM T048/T560 tick/update boundary; ReDMCSB GAMELOOP.C
+ * lines 55-70 show the V1 loop advancing timeline work once per loop.
+ */
+int dm2_v1_runtime_get_tick_count(void) {
+    return g_dm2_runtime.tick_count;
+}
+
+/*
  * dm2_v1_runtime_get_projectile_drain — read-only access to the
  * per-tick projectile drain cache.  M11 game view calls this each
  * render frame to draw DM2 projectiles in the V1 viewport.
