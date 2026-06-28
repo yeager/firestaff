@@ -63,6 +63,18 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_ViewportF0115WallTextOrnamentPc34Trace;
 
+typedef struct {
+    int ok;
+    int indexed_pixels;
+    int rgba_pixels;
+    int wall_pixels;
+    int text_pixels;
+    int outside_viewport_transparent_pixels;
+    int out_of_range_pixels;
+    uint32_t rgba_hash;
+    const char *source_evidence;
+} CSB_V1_ViewportF0115WallTextPalettePc34Trace;
+
 const CSB_V1_ViewportF0115WallTextOrnamentPc34Spec *
 csb_v1_viewport_f0115_wall_text_ornament_pc34_spec(void);
 
@@ -88,6 +100,23 @@ int csb_v1_viewport_f0115_wall_text_ornament_pixel_pc34(
 uint32_t csb_v1_viewport_f0115_wall_text_ornament_hash_pc34(
     const uint8_t *framebuffer,
     size_t framebuffer_size);
+
+int csb_v1_viewport_f0115_wall_text_ornament_palette_rgb_pc34(
+    int palette_index,
+    uint8_t *out_r,
+    uint8_t *out_g,
+    uint8_t *out_b);
+
+int csb_v1_viewport_f0115_wall_text_ornament_font_pixel_pc34(
+    int destination_index,
+    int font_index);
+
+int csb_v1_viewport_f0115_wall_text_ornament_decode_rgba_pc34(
+    const uint8_t *indexed_framebuffer,
+    size_t indexed_framebuffer_size,
+    uint8_t *rgba_framebuffer,
+    size_t rgba_framebuffer_size,
+    CSB_V1_ViewportF0115WallTextPalettePc34Trace *out_trace);
 
 #ifdef __cplusplus
 }

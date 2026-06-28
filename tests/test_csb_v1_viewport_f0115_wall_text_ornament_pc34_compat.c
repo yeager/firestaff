@@ -16,6 +16,8 @@ static const char *A_F0128 =
     "ReDMCSB DUNVIEW.C:F0128:8318-8486";
 static const char *A_DEFS =
     "ReDMCSB DEFS.H:C10:2088 C5:2527 zones:4139-4153 G0208:5576";
+static const char *A_PALETTE =
+    "ReDMCSB DATA.C:833-844 PC dungeon-view palette";
 static const char *A_LINEAGE =
     "CSB-lineage Viewport.cpp:1192-1209,1903-1915,1930-1944";
 
@@ -255,6 +257,129 @@ static int test_render_rejections(void)
     return ok;
 }
 
+static int test_palette_decode_gate(void)
+{
+    int ok = 1;
+    uint8_t framebuffer[
+        CSB_V1_F0115_WALL_TEXT_ORNAMENT_FRAMEBUFFER_WIDTH_PC34 *
+        CSB_V1_F0115_WALL_TEXT_ORNAMENT_FRAMEBUFFER_HEIGHT_PC34];
+    uint8_t rgba[
+        CSB_V1_F0115_WALL_TEXT_ORNAMENT_FRAMEBUFFER_WIDTH_PC34 *
+        CSB_V1_F0115_WALL_TEXT_ORNAMENT_FRAMEBUFFER_HEIGHT_PC34 * 4];
+    CSB_V1_ViewportF0115WallTextOrnamentPc34Trace render_trace;
+    CSB_V1_ViewportF0115WallTextPalettePc34Trace palette_trace;
+    uint8_t r = 0u;
+    uint8_t g = 0u;
+    uint8_t b = 0u;
+    const size_t text_pixel = (size_t)48 * 320u + 88u;
+    const size_t wall_pixel = 0u;
+    const size_t outside_pixel = (size_t)199 * 320u + 319u;
+
+    memset(framebuffer, 0xee, sizeof(framebuffer));
+    memset(rgba, 0xcc, sizeof(rgba));
+    (void)csb_v1_viewport_f0115_wall_text_ornament_render_pc34(
+        framebuffer, sizeof(framebuffer), &render_trace);
+
+    ok &= expect_int("palette.index0.black",
+                     csb_v1_viewport_f0115_wall_text_ornament_palette_rgb_pc34(
+                         0, &r, &g, &b),
+                     0, A_PALETTE);
+    ok &= expect_int("palette.index0.r", r, 0x00, A_PALETTE);
+    ok &= expect_int("palette.index0.g", g, 0x00, A_PALETTE);
+    ok &= expect_int("palette.index0.b", b, 0x00, A_PALETTE);
+    ok &= expect_int("palette.wall.rgb",
+                     csb_v1_viewport_f0115_wall_text_ornament_palette_rgb_pc34(
+                         3, &r, &g, &b),
+                     0, A_PALETTE);
+    ok &= expect_int("palette.wall.r", r, 0x66, A_PALETTE);
+    ok &= expect_int("palette.wall.g", g, 0x22, A_PALETTE);
+    ok &= expect_int("palette.wall.b", b, 0x00, A_PALETTE);
+    ok &= expect_int("palette.text.rgb",
+                     csb_v1_viewport_f0115_wall_text_ornament_palette_rgb_pc34(
+                         15, &r, &g, &b),
+                     0, A_PALETTE);
+    ok &= expect_int("palette.text.r", r, 0xff, A_PALETTE);
+    ok &= expect_int("palette.text.g", g, 0xff, A_PALETTE);
+    ok &= expect_int("palette.text.b", b, 0xff, A_PALETTE);
+    ok &= expect_int("palette.reject.index16",
+                     csb_v1_viewport_f0115_wall_text_ornament_palette_rgb_pc34(
+                         16, &r, &g, &b),
+                     -1, A_PALETTE);
+    ok &= expect_int("palette.reject.null.r",
+                     csb_v1_viewport_f0115_wall_text_ornament_palette_rgb_pc34(
+                         0, NULL, &g, &b),
+                     -1, A_PALETTE);
+
+    ok &= expect_int("font.pixel.c10.transparent",
+                     csb_v1_viewport_f0115_wall_text_ornament_font_pixel_pc34(
+                         3, 10),
+                     3, A_DEFS);
+    ok &= expect_int("font.pixel.white.overwrites",
+                     csb_v1_viewport_f0115_wall_text_ornament_font_pixel_pc34(
+                         3, 15),
+                     15, A_F0107);
+    ok &= expect_int("font.pixel.reject.dst",
+                     csb_v1_viewport_f0115_wall_text_ornament_font_pixel_pc34(
+                         16, 15),
+                     -1, A_DEFS);
+    ok &= expect_int("font.pixel.reject.src",
+                     csb_v1_viewport_f0115_wall_text_ornament_font_pixel_pc34(
+                         3, -1),
+                     -1, A_DEFS);
+
+    ok &= expect_int("rgba.decode.result",
+                     csb_v1_viewport_f0115_wall_text_ornament_decode_rgba_pc34(
+                         framebuffer, sizeof(framebuffer),
+                         rgba, sizeof(rgba), &palette_trace),
+                     0, A_PALETTE);
+    ok &= expect_int("rgba.trace.ok", palette_trace.ok, 1, A_PALETTE);
+    ok &= expect_int("rgba.trace.indexed_pixels",
+                     palette_trace.indexed_pixels, 224 * 136, A_PALETTE);
+    ok &= expect_int("rgba.trace.rgba_pixels",
+                     palette_trace.rgba_pixels, 224 * 136, A_PALETTE);
+    ok &= expect_int("rgba.trace.wall_pixels",
+                     palette_trace.wall_pixels, (224 * 136) - 497,
+                     A_PALETTE);
+    ok &= expect_int("rgba.trace.text_pixels",
+                     palette_trace.text_pixels, 497, A_PALETTE);
+    ok &= expect_int("rgba.trace.outside_transparent",
+                     palette_trace.outside_viewport_transparent_pixels,
+                     (320 * 200) - (224 * 136), A_PALETTE);
+    ok &= expect_int("rgba.trace.out_of_range",
+                     palette_trace.out_of_range_pixels, 0, A_PALETTE);
+    ok &= expect_u32("rgba.trace.hash",
+                     palette_trace.rgba_hash, 2755404276u, A_PALETTE);
+    ok &= expect_int("rgba.wall.r", rgba[wall_pixel * 4u + 0u], 0x66, A_PALETTE);
+    ok &= expect_int("rgba.wall.g", rgba[wall_pixel * 4u + 1u], 0x22, A_PALETTE);
+    ok &= expect_int("rgba.wall.b", rgba[wall_pixel * 4u + 2u], 0x00, A_PALETTE);
+    ok &= expect_int("rgba.wall.a", rgba[wall_pixel * 4u + 3u], 0xff, A_PALETTE);
+    ok &= expect_int("rgba.text.r", rgba[text_pixel * 4u + 0u], 0xff, A_PALETTE);
+    ok &= expect_int("rgba.text.g", rgba[text_pixel * 4u + 1u], 0xff, A_PALETTE);
+    ok &= expect_int("rgba.text.b", rgba[text_pixel * 4u + 2u], 0xff, A_PALETTE);
+    ok &= expect_int("rgba.text.a", rgba[text_pixel * 4u + 3u], 0xff, A_PALETTE);
+    ok &= expect_int("rgba.outside.a", rgba[outside_pixel * 4u + 3u], 0x00,
+                     A_PALETTE);
+    ok &= expect_contains("rgba.trace.evidence", palette_trace.source_evidence,
+                          "DATA.C:833-844", A_PALETTE);
+
+    framebuffer[0] = 0x20u;
+    memset(&palette_trace, 0, sizeof(palette_trace));
+    ok &= expect_int("rgba.decode.out_of_range.result",
+                     csb_v1_viewport_f0115_wall_text_ornament_decode_rgba_pc34(
+                         framebuffer, sizeof(framebuffer),
+                         rgba, sizeof(rgba), &palette_trace),
+                     1, A_PALETTE);
+    ok &= expect_int("rgba.decode.out_of_range.count",
+                     palette_trace.out_of_range_pixels, 1, A_PALETTE);
+    ok &= expect_int("rgba.decode.reject.short.rgba",
+                     csb_v1_viewport_f0115_wall_text_ornament_decode_rgba_pc34(
+                         framebuffer, sizeof(framebuffer),
+                         rgba, sizeof(rgba) - 1u, &palette_trace),
+                     -1, A_PALETTE);
+
+    return ok;
+}
+
 static int test_evidence_strings(void)
 {
     int ok = 1;
@@ -292,6 +417,7 @@ static int test_evidence_strings(void)
     ok &= expect_contains("evidence.f0128", e,
                           "DUNVIEW.C:8318-8486", A_F0128);
     ok &= expect_contains("evidence.c10", e, "DEFS.H:2088 anchors C10", A_DEFS);
+    ok &= expect_contains("evidence.palette", e, "DATA.C:833-844", A_PALETTE);
     ok &= expect_contains("evidence.c5", e, "DEFS.H:2527 anchors C5_HEIGHT", A_DEFS);
     ok &= expect_contains("evidence.zones", e, "DEFS.H:4139-4153", A_DEFS);
     ok &= expect_contains("evidence.g0208", e, "G0208", A_DEFS);
@@ -318,9 +444,10 @@ int main(void)
     ok &= test_render_trace_and_hash();
     ok &= test_pixel_samples();
     ok &= test_render_rejections();
+    ok &= test_palette_decode_gate();
     ok &= test_evidence_strings();
-    ok &= expect_int("assertion_count_between_80_and_120",
-                     g_assertions >= 80 && g_assertions <= 120, 1, A_F0124);
+    ok &= expect_int("assertion_count_between_120_and_160",
+                     g_assertions >= 120 && g_assertions <= 160, 1, A_F0124);
 
     printf("assertions=%d failures=%d\n", g_assertions, g_failures);
     if (ok && g_failures == 0) {

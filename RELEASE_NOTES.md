@@ -293,6 +293,8 @@ need real-asset proof.
 
 - **DM1 save-byte export/import manifest gate**: M12 now has a versioned per-game save-byte manifest path for Firestaff-native DM1 saves. The new `save_byte_manifest_m12` CTest exports a real `FSDM1SV1` DM1 save payload with byte count and CRC metadata, imports it into a fresh save directory, validates it through the DM1 loader, and rejects duplicate or corrupted imports. Original DM1 save conversion and other game save formats remain separate follow-up work.
 
+- **CSB wall-text palette gate**: the D1C wall-text source-lock test is now CTest-backed and also verifies PC dungeon palette expansion, C10-transparent inscription-font pixels, RGBA conversion, and out-of-range palette-index rejection without claiming CSBgraphics.dat payload decode or runtime override support.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
