@@ -297,6 +297,8 @@ need real-asset proof.
 
 - **DM2 original-overlay pair evidence now has a readiness gate**: the H2313 DM2 scaffold now defines the optional original-vs-Firestaff pair manifest contract. Missing paired evidence remains an explicit OPEN state, malformed tracked rows fail, and promotion requires same-state `dungeon_gameplay` original plus Firestaff 224x136 viewport SHA-256s. This adds no pixel-parity claim.
 
+- **DM2 PC-9801 demo media classification stays launch-safe**: the M12 scanner now recognizes the DMII PC-9801 Japanese Demo `GRAPHICS.DAT` hash as a bounded DM2 version row, but the DM2 launch gate still requires a supported launch-compatible graphics hash plus the required dungeon hash. A synthetic regression proves PC-98 demo graphics plus the PC dungeon hash remains non-launchable.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
