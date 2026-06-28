@@ -64,6 +64,10 @@
  *       repetitions of the same draw script yield the same
  *       FNV-1a framebuffer hash and the same chars_drawn /
  *       chars_skipped / writes counters.
+ *  [21] Nexus runtime screen-text binding: the parsed section table
+ *       initializes a `Nexus_V1_ScreenTextRuntime`, draws into the
+ *       real Nexus 320x200 indexed framebuffer backing store, and
+ *       produces a stable receipt/hash across repeated draws.
  *
  * Non-claim:
  *   This probe does NOT prove full Saturn SCR text-layout parity.
@@ -85,6 +89,7 @@
 
 #include "nexus_v1_s2d_text_layout.h"
 #include "nexus_v1_saturn_font.h"
+#include "nexus_v1_text.h"
 
 static int g_pass = 0;
 static int g_fail = 0;
@@ -461,7 +466,7 @@ static void run_layout_only_gate(void) {
     Nexus_V1_S2D_SectionGlyphMap map;
     Nexus_V1_S2D_TextLayout layout;
     Nexus_V1_S2D_TextLayoutConfig cfg;
-    uint8_t fb[64 * 16];
+    uint8_t fb[64 * 32];
     int drawn;
     int rc;
 
@@ -621,6 +626,75 @@ static void run_layout_only_gate(void) {
         CHECK(layout.cursor.cursor_x == 3 * (16 + 1),
               "capped cursor_x = 3*(16+letter_spacing)");
         nexus_v1_s2d_text_layout_set_max_chars(&layout, 0);
+    }
+
+    /* [16b] Runtime screen-text binding: section parser -> glyph map
+     * -> layout cursor -> Nexus_Framebuffer.color_buffer. */
+    {
+        Nexus_V1_ScreenTextRuntime runtime;
+        Nexus_V1_ScreenTextReceipt receipt_a;
+        Nexus_V1_ScreenTextReceipt receipt_b;
+        const Nexus_V1_ScreenTextReceipt *last;
+        Nexus_Framebuffer screen_a;
+        Nexus_Framebuffer screen_b;
+
+        CHECK(nexus_v1_screen_text_init(NULL, &font, &sections, &cfg) == -1,
+              "screen_text_init(NULL runtime, ...) rejected");
+        CHECK(nexus_v1_screen_text_init(&runtime, NULL, &sections, &cfg) == -1,
+              "screen_text_init(NULL font, ...) rejected");
+        CHECK(nexus_v1_screen_text_init(&runtime, &font, NULL, &cfg) == -1,
+              "screen_text_init(NULL sections, ...) rejected");
+
+        rc = nexus_v1_screen_text_init(&runtime, &font, &sections, &cfg);
+        CHECK(rc == 0, "screen_text_init binds parsed sections to runtime");
+        CHECK(runtime.initialized == 1, "screen_text runtime initialized");
+        CHECK(runtime.glyph_map.char_count == 64,
+              "screen_text runtime map char_count == 64");
+        CHECK(runtime.glyph_map.range_count == 1,
+              "screen_text runtime map has one range");
+
+        nexus_fb_init(&screen_a);
+        nexus_fb_clear(&screen_a);
+        drawn = nexus_v1_screen_text_draw(
+            &runtime, &screen_a, 4, 5, "NEXUS", &receipt_a);
+        CHECK(drawn == 5, "screen_text_draw(\"NEXUS\") returns 5");
+        CHECK(receipt_a.glyphs_drawn == 5,
+              "screen_text receipt glyphs_drawn == 5");
+        CHECK(receipt_a.framebuffer_writes > 0,
+              "screen_text receipt reports framebuffer writes");
+        CHECK(receipt_a.chars_skipped == 0,
+              "screen_text receipt reports no skipped chars");
+        CHECK(receipt_a.map_char_count == 64,
+              "screen_text receipt carries map_char_count");
+        CHECK(receipt_a.final_cursor_x == 4 + 5 * (16 + 1),
+              "screen_text final cursor_x preserves x origin + advance");
+        CHECK(receipt_a.final_cursor_y == 5,
+              "screen_text final cursor_y preserves y origin");
+
+        nexus_fb_init(&screen_b);
+        nexus_fb_clear(&screen_b);
+        drawn = nexus_v1_screen_text_draw(
+            &runtime, &screen_b, 4, 5, "NEXUS", &receipt_b);
+        CHECK(drawn == 5, "screen_text_draw repeat returns 5");
+        CHECK(receipt_a.framebuffer_hash == receipt_b.framebuffer_hash,
+              "screen_text framebuffer hash deterministic across repeats");
+        CHECK(receipt_a.framebuffer_writes == receipt_b.framebuffer_writes,
+              "screen_text write count deterministic across repeats");
+        CHECK(memcmp(screen_a.color_buffer, screen_b.color_buffer,
+                     sizeof(screen_a.color_buffer)) == 0,
+              "screen_text framebuffer bytes deterministic across repeats");
+
+        last = nexus_v1_screen_text_last_receipt(&runtime);
+        CHECK(last && last->framebuffer_hash == receipt_b.framebuffer_hash,
+              "screen_text_last_receipt returns latest draw receipt");
+
+        nexus_v1_screen_text_reset(&runtime);
+        last = nexus_v1_screen_text_last_receipt(&runtime);
+        CHECK(last && last->glyphs_drawn == 0,
+              "screen_text_reset clears last receipt");
+        nexus_v1_screen_text_free(&runtime);
+        CHECK(nexus_v1_screen_text_last_receipt(&runtime) == NULL,
+              "screen_text_last_receipt NULL after free");
     }
 
     /* [17] Out-of-coverage: build a 16-glyph font and ask the
