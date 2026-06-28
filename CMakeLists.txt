@@ -15711,6 +15711,22 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_amg_sound
     )
 
+    # ── CSB V1 source-locked audio runtime/save boundary ────────
+    add_executable(test_csb_v1_audio_runtime_pc34_compat
+        tests/test_csb_v1_audio_runtime_pc34_compat.c
+        src/csb/csb_v1_audio_runtime_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_audio_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_audio_runtime_pc34_compat PRIVATE -std=c11 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_audio_runtime_pc34_compat
+        COMMAND test_csb_v1_audio_runtime_pc34_compat
+    )
+
     # ── Nexus Saturn BPPK/BMPD packed-menu archive directory ────
     # Directory gate only: validates the MENU.BPK BPPK/BMPD wrapper
     # and PRS3 payload markers without claiming PRS3 decompression yet.
