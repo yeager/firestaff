@@ -87,7 +87,7 @@ void nexus_v1_dmdf_free(Nexus_V1_Model *model) {
     free(model->texture_data); model->texture_data = NULL;
 }
 
-/* ── DMDF embedded palette / string block bounds gates ─────────────
+/* ── DMDF embedded BITMAP / palette / string block bounds gates ────
  * Source-lock: docs/nexus_v1_phase2_data_formats_H2321.md §6.5,
  *   §8.2 VDP1 BITMAP notes ("8bpp (palette) or 16bpp (direct color)
  *   may use 4-bit or 8-bit clut (color look-up table)").
@@ -98,9 +98,22 @@ void nexus_v1_dmdf_free(Nexus_V1_Model *model) {
  * caller-supplied (data, size) pair before any read happens.
  *
  * Intentionally parser-only: we expose raw values plus a `valid` flag
- * and do NOT allocate or decode. V1 runtime handoff for palette/string
- * blocks remains gated behind real-data evidence (see
+ * and do NOT allocate or decode. V1 runtime handoff for bitmap/palette/
+ * string blocks remains gated behind real-data evidence (see
  * docs/nexus_v1_phase2_data_formats_H2321.md status §6.10/§8.6). */
+
+static void init_bitmap_block(Nexus_DMDFBitmapBlock *out) {
+    if (!out) return;
+    out->width = 0;
+    out->height = 0;
+    out->bpp = 0;
+    out->flags = 0;
+    out->palette_index = 0;
+    out->bytes_used = 0;
+    out->payload_offset = 0;
+    out->payload_bytes = 0;
+    out->valid = 0;
+}
 
 static void init_palette_block(Nexus_DMDFPaletteBlock *out) {
     if (!out) return;
@@ -118,6 +131,62 @@ static void init_string_block(Nexus_DMDFStringBlock *out) {
     out->bytes_used = 0;
     out->payload_offset = 0;
     out->valid = 0;
+}
+
+static int is_pow2_dim(uint32_t v) {
+    return v >= 8U && v <= NEXUS_DMDF_MAX_BITMAP_DIM && (v & (v - 1U)) == 0U;
+}
+
+int nexus_v1_dmdf_parse_bitmap_block(const uint8_t *data, int size,
+                                     int offset,
+                                     Nexus_DMDFBitmapBlock *out)
+{
+    const int kHeader = 32;
+    uint32_t magic = 0, blk_size = 0, width = 0, height = 0, bpp = 0;
+    uint32_t flags = 0, palette_index = 0;
+    uint64_t pixels = 0, payload = 0;
+
+    if (!out) return 0;
+    init_bitmap_block(out);
+
+    if (!data || size <= 0) return 0;
+    if (offset < 0 || offset > size) return 0;
+    if (size - offset < kHeader) return 0;
+
+    magic = rb32(data + offset);
+    blk_size = rb32(data + offset + 4);
+    width = rb32(data + offset + 8);
+    height = rb32(data + offset + 12);
+    bpp = rb32(data + offset + 16);
+    flags = rb32(data + offset + 20);
+    palette_index = rb32(data + offset + 24);
+
+    if (magic != NEXUS_DMDF_BITMAP_BLOCK_MAGIC) return 0;
+    if (blk_size < (uint32_t)kHeader) return 0;
+    if ((uint32_t)offset + blk_size > (uint32_t)size) return 0;
+    if (!is_pow2_dim(width) || !is_pow2_dim(height)) return 0;
+    if (bpp != 4U && bpp != 8U && bpp != 16U) return 0;
+
+    pixels = (uint64_t)width * (uint64_t)height;
+    if (bpp == 4U) {
+        payload = (pixels + 1U) / 2U;
+    } else {
+        payload = pixels * (uint64_t)(bpp / 8U);
+    }
+    if (payload > NEXUS_DMDF_MAX_BITMAP_BYTES) return 0;
+    if ((uint64_t)kHeader + payload != (uint64_t)blk_size) return 0;
+    if ((uint64_t)offset + (uint64_t)kHeader + payload > (uint64_t)size) return 0;
+
+    out->width = width;
+    out->height = height;
+    out->bpp = bpp;
+    out->flags = flags;
+    out->palette_index = palette_index;
+    out->bytes_used = blk_size;
+    out->payload_offset = (uint32_t)(offset + kHeader);
+    out->payload_bytes = (uint32_t)payload;
+    out->valid = 1;
+    return 1;
 }
 
 int nexus_v1_dmdf_parse_palette_block(const uint8_t *data, int size,
@@ -272,3 +341,101 @@ int nexus_v1_dmdf_string_record(const uint8_t *data, int size,
     return 1;
 }
 
+int nexus_v1_dmdf_scan_embedded_blocks(const uint8_t *data, int size,
+                                       int offset, int max_bytes,
+                                       Nexus_DMDFEmbeddedScan *out)
+{
+    int end;
+    int pos;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+
+    if (!data || size <= 0) return 0;
+    if (offset < 0 || offset > size) return 0;
+    if (max_bytes < 0) return 0;
+
+    end = size;
+    if (max_bytes > 0 && max_bytes < size - offset) {
+        end = offset + max_bytes;
+    }
+    if (end < offset) return 0;
+
+    pos = offset;
+    while (pos + 4 <= end) {
+        uint32_t magic = rb32(data + pos);
+        if (magic == NEXUS_DMDF_BITMAP_BLOCK_MAGIC) {
+            Nexus_DMDFBitmapBlock blk;
+            if (nexus_v1_dmdf_parse_bitmap_block(data, end, pos, &blk)) {
+                if (out->bitmap_block_count == 0U) {
+                    out->first_bitmap_offset = (uint32_t)pos;
+                }
+                out->bitmap_block_count++;
+                pos += (int)blk.bytes_used;
+                continue;
+            }
+            out->invalid_candidate_count++;
+        } else if (magic == NEXUS_DMDF_PALETTE_BLOCK_MAGIC) {
+            Nexus_DMDFPaletteBlock blk;
+            if (nexus_v1_dmdf_parse_palette_block(data, end, pos, &blk)) {
+                if (out->palette_block_count == 0U) {
+                    out->first_palette_offset = (uint32_t)pos;
+                }
+                out->palette_block_count++;
+                pos += (int)blk.bytes_used;
+                continue;
+            }
+            out->invalid_candidate_count++;
+        } else if (magic == NEXUS_DMDF_STRING_BLOCK_MAGIC) {
+            Nexus_DMDFStringBlock blk;
+            if (nexus_v1_dmdf_parse_string_block(data, end, pos, &blk)) {
+                if (out->string_block_count == 0U) {
+                    out->first_string_offset = (uint32_t)pos;
+                }
+                out->string_block_count++;
+                pos += (int)blk.bytes_used;
+                continue;
+            }
+            out->invalid_candidate_count++;
+        }
+        pos++;
+    }
+
+    out->bytes_scanned = (uint32_t)(end - offset);
+    out->valid = 1;
+    return 1;
+}
+
+int nexus_v1_dmdf_estimate_raw_texture_payload(
+    const uint8_t *data, int size, Nexus_DMDFRawTexturePayload *out)
+{
+    uint32_t data_offset;
+    uint32_t vertex_count;
+    uint32_t face_count;
+    uint64_t texture_offset;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+
+    if (!data || size < 32) return 0;
+    if (!nexus_v1_dmdf_is_valid(data, size)) return 0;
+
+    data_offset = rb32(data + 28);
+    if (data_offset == 0U || data_offset > (uint32_t)size) return 0;
+    if ((uint64_t)data_offset + 8U > (uint64_t)size) return 0;
+
+    vertex_count = rb32(data + data_offset);
+    face_count = rb32(data + data_offset + 4U);
+    if (vertex_count >= 10000U || face_count >= 30000U) return 0;
+
+    texture_offset = (uint64_t)data_offset + 8U +
+                     (uint64_t)vertex_count * 10U +
+                     (uint64_t)face_count * 6U;
+    if (texture_offset > (uint64_t)size) return 0;
+    if ((uint64_t)size - texture_offset > UINT32_MAX) return 0;
+
+    out->offset = (uint32_t)texture_offset;
+    out->bytes = (uint32_t)((uint64_t)size - texture_offset);
+    out->valid = 1;
+    return 1;
+}
