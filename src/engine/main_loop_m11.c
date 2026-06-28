@@ -2721,9 +2721,23 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         now = SDL_GetTicks();
         if (gameView.active) {
-            idleAccumulatorMs += (uint32_t)(now - lastLoopTick);
+            uint32_t loopDeltaMs = (uint32_t)(now - lastLoopTick);
+            idleAccumulatorMs += loopDeltaMs;
             /* DM1 V1: feed elapsed time to VBlank simulation */
-            DM1_V1_VBlankTiming_Update(&gameView.vblankTiming, (uint32_t)(now - lastLoopTick));
+            DM1_V1_VBlankTiming_Update(&gameView.vblankTiming, loopDeltaMs);
+            /* Session timer runtime handoff: tick the in-game runtime
+             * once per ~1 second of active gameplay.  We round down
+             * to whole seconds so the tick boundary is deterministic
+             * across host framerates.  The runtime enforces its own
+             * Off-mode + post-limit no-op semantics, so this loop is
+             * safe even when the user has the Session Timer set to
+             * Off or when the FORCED_PAUSE latch is already set. */
+            if (loopDeltaMs >= 1000) {
+                SessionTimerRuntimeEvent stEvent =
+                    M11_GameView_TickSessionTimer(&gameView,
+                                                  (int)(loopDeltaMs / 1000));
+                (void)stEvent;
+            }
         } else {
             idleAccumulatorMs = 0;
         }

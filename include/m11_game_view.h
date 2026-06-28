@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "menu_startup_m12.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "session_timer_runtime.h"
 #include "memory_magic_pc34_compat.h"
 #include "asset_loader_m11.h"
 #include "audio_sdl_m11.h"
@@ -273,6 +274,27 @@ typedef struct {
      * Set to 1 via FIRESTAFF_DEBUG_HUD=1 environment variable. */
     int showDebugHUD;
 
+    /* Session timer runtime handoff.  Populated by
+     * M11_GameView_OpenSelectedMenuEntry() from the launcher's
+     * sessionTimerIndex setting (see include/session_timer_runtime.h
+     * + src/shared/session_timer_runtime.c).  The M11 main loop ticks
+     * this once per second of active gameplay, then consults
+     * SessionTimerRuntime_Poll() to decide whether to surface a
+     * reminder overlay (REMINDER_DUE) or a forced-pause confirm
+     * dialog (FORCED_PAUSE).  This is the in-game side of the
+     * M12-owned Session Timer setting; the launcher side persists the
+     * setting and exposes the limit/remaining-time helpers. */
+    SessionTimerRuntime sessionTimerRuntime;
+    /* Latched while the M11 main loop has surfaced a forced-pause
+     * confirm dialog and is awaiting user input.  Cleared once the
+     * user picks a confirm-dialog choice (Continue / Return to menu)
+     * via M11_GameView_ClearSessionTimerForcedPause(). */
+    int sessionTimerForcedPauseDialogActive;
+    /* Latched while a reminder overlay is on screen.  Cleared when
+     * the user dismisses the reminder or the forced-pause dialog
+     * takes precedence. */
+    int sessionTimerReminderOverlayActive;
+
     /* Source transient leader-hand object.  Mirrors DM1
      * G4055_s_LeaderHandObject at V1 presentation/runtime level: this
      * is the mouse-held object, distinct from any champion inventory
@@ -456,6 +478,23 @@ int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   size_t outSize);
 int M11_GameView_QuickSave(M11_GameViewState* state);
 int M11_GameView_QuickLoad(M11_GameViewState* state);
+/* Session timer runtime handoff boundary (see session_timer_runtime.h).
+ * M11_GameView_InitFromMenuSessionTimer seeds the in-game runtime from
+ * the launcher's M12_StartupMenu_SessionTimerLimitMinutes() value;
+ * M11_GameView_TickSessionTimer advances the runtime and reports the
+ * latest event; M11_GameView_AcknowledgeSessionTimerReminder clears a
+ * pending reminder overlay; M11_GameView_ClearSessionTimerForcedPause
+ * releases the forced-pause latch so the user can resume gameplay. */
+void M11_GameView_InitFromMenuSessionTimer(M11_GameViewState* state,
+                                           const M12_StartupMenuState* menu);
+SessionTimerRuntimeEvent M11_GameView_TickSessionTimer(
+    M11_GameViewState* state, int seconds);
+void M11_GameView_AcknowledgeSessionTimerReminder(M11_GameViewState* state);
+void M11_GameView_ClearSessionTimerForcedPause(M11_GameViewState* state);
+int M11_GameView_GetSessionTimerForcedPauseDialogActive(
+    const M11_GameViewState* state);
+int M11_GameView_GetSessionTimerReminderOverlayActive(
+    const M11_GameViewState* state);
 int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled);
 int M11_GameView_ToggleMusic(M11_GameViewState* state);
 int M11_GameView_GetMusicEnabled(const M11_GameViewState* state);

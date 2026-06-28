@@ -306,6 +306,7 @@ set(M11_SOURCES
     src/engine/firestaff_input.c
     src/engine/swsh_intro_pathfinder_m11.c
     src/engine/m11_game_input_mapping.c
+    src/shared/session_timer_runtime.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -851,6 +852,28 @@ endif()
 add_test(
     NAME nexus_v2_touch_runtime_probe
     COMMAND firestaff_nexus_v2_touch_runtime_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+# Session Timer Runtime probe -- M11/M12 hand-off smoke test.
+# Headless: no game assets, no SDL rendering required.  Verifies the
+# launcher's session-timer limit math (M12_StartupMenu_SessionTimer*),
+# the campaign timer (M12_CampaignSessionTimer_*), and the in-game
+# session-timer runtime (SessionTimerRuntime_*) round-trip together so
+# the M11 boundary contract is reproducible end-to-end.  See
+# probes/runtime/firestaff_session_timer_runtime_probe.c.
+add_executable(firestaff_session_timer_runtime_probe
+    probes/runtime/firestaff_session_timer_runtime_probe.c
+    src/shared/session_timer_runtime.c
+    src/shared/campaign_m12.c)
+target_link_libraries(firestaff_session_timer_runtime_probe
+    PRIVATE firestaff_m12 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_session_timer_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME session_timer_runtime_probe
+    COMMAND firestaff_session_timer_runtime_probe
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
@@ -19000,6 +19023,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_campaign_m12_session_timer.c"
     add_test(
         NAME campaign_m12_session_timer
         COMMAND test_campaign_m12_session_timer
+    )
+endif()
+
+# Session timer runtime: in-game handoff boundary for the launcher-owned
+# Session Timer setting.  Data-free deterministic state machine: Off mode,
+# Tick boundaries, REMINDER_DUE latch + Acknowledge re-arm, FORCED_PAUSE
+# latch + ClearForcedPause, FormatRemaining, null-pointer safety.  See
+# include/session_timer_runtime.h + src/shared/session_timer_runtime.c.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_session_timer_runtime.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/session_timer_runtime.c")
+    add_executable(test_session_timer_runtime
+        tests/test_session_timer_runtime.c
+        src/shared/session_timer_runtime.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_session_timer_runtime PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME session_timer_runtime
+        COMMAND test_session_timer_runtime
     )
 endif()
 
