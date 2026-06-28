@@ -7062,6 +7062,21 @@ if(BUILD_TESTING)
         COMMAND test_dm1_pc34_multilanguage_required_gate
     )
 
+    add_executable(test_m12_dm1_multilanguage_profile_smoke
+        tests/test_m12_dm1_multilanguage_profile_smoke.c
+    )
+    target_link_libraries(test_m12_dm1_multilanguage_profile_smoke PRIVATE
+        firestaff_m12
+        SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m12_dm1_multilanguage_profile_smoke PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_dm1_multilanguage_profile_smoke
+        COMMAND test_m12_dm1_multilanguage_profile_smoke
+    )
+
     add_executable(test_m12_dm1_v1_required_complete_launches
         tests/test_m12_dm1_v1_required_complete_launches.c
     )
