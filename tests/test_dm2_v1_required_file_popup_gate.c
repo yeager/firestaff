@@ -27,7 +27,7 @@ static int failures = 0;
  *
  * Synthetic, no copyrighted data required. This locks the M12 contract:
  * DM2 V1 launch requires exactly the verified GRAPHICS + DUNGEON rows,
- * the missing-data popup names only the unmatched required row, and
+ * the missing-data popup names all and only unmatched required rows, and
  * optional extras/marker files must not become launch blockers once
  * the required pair is matched.
  */
@@ -160,6 +160,29 @@ static void check_dm2_missing_required_popup(int graphicsMatched,
     CHECK(intent.versionId && strcmp(intent.versionId, kDm2VersionId) == 0);
 }
 
+static void check_dm2_all_required_missing_popup(void) {
+    M12_StartupMenuState state;
+    M12_LaunchIntent intent;
+
+    seed_dm2_required_state(&state, 0, 0, 1);
+
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, kDm2GameId) == 0);
+    CHECK(state.entries[kDm2GameIndex].available == 0);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.quickResumeLaunchRequested == 0);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 && strstr(state.messageLine1, "DM2") != NULL);
+    CHECK(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") != NULL);
+    CHECK(state.messageLine2 && strstr(state.messageLine2, "DUNGEON.DAT") != NULL);
+
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    CHECK(intent.valid == 0);
+    CHECK(intent.gameId && strcmp(intent.gameId, kDm2GameId) == 0);
+    CHECK(intent.versionId && strcmp(intent.versionId, kDm2VersionId) == 0);
+}
+
 static void check_dm2_required_complete_launches_without_optional_marker(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -216,6 +239,7 @@ static int isolate_home(void) {
 
 int main(void) {
     CHECK(isolate_home());
+    check_dm2_all_required_missing_popup();
     check_dm2_missing_required_popup(0, 1, "GRAPHICS.DAT", "DUNGEON.DAT");
     check_dm2_missing_required_popup(1, 0, "DUNGEON.DAT", "GRAPHICS.DAT");
     check_dm2_required_complete_launches_without_optional_marker();
