@@ -3611,6 +3611,33 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     )
 endif()
 
+# DM1 V1 champion-mirror ordinal-11 / south_return runtime probe.
+# Companion to the visual-capture probe above: locates the
+# (x,y,dir) triple in the Hall of Champions whose C127 sensor
+# carries ordinal 11, verifies the D1C portrait cutout matches
+# the C026 atlas cell at ordinal 11 (>= 90% pixel agreement),
+# walks back along the south_return corridor route and asserts
+# the portrait rectangle clears cleanly (no dominant stale match
+# from the prior ordinal), and turns left/right at the ordinal-11
+# cell to confirm the no-floating invariant on side walls.
+# Source: ReDMCSB DUNGEON.C:2573 + DUNGEON.C:2608-2612 +
+# DUNVIEW.C:3913-3928 + MOVESENS.C:1501-1503 + REVIVE.C F0280 +
+# DEFS.H:2186 / DEFS.H:821-826.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_11_south_return_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_ordinal_11_south_return_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_11_south_return_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_ordinal_11_south_return_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_ordinal_11_south_return_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_ordinal_11_south_return_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_ordinal_11_south_return_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
 # DM1 V1 Hall of Champions champion-portrait slice probe —
 # ordinal_1 south_return portrait_rect_position.  Source-locked to
 # ReDMCSB DUNGEON.C:2573 (C127 front-cell filter), DUNGEON.C:2608-2612
