@@ -564,6 +564,9 @@ int main(void) {
     check_int(M12_AssetStatus_GameAvailable(&status, "dm2"),
               "DM2 should be available when both required hashes are "
               "matched by ZIP-backed deflated entries");
+    check_int(M12_AssetStatus_GetRequiredFileCount(&status, "dm2") == 2U,
+              "DM2 should expose exactly the GRAPHICS.DAT and DUNGEON.DAT "
+              "required-file launch gate entries");
     version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
     check_int(version && version->matched &&
               path_has_virtual_entry(version->matchedPath, kZipName,
@@ -590,6 +593,9 @@ int main(void) {
                                   "dm2", "GRAPHICS.DAT"),
               "DM2 graphics required file should be materialized into the "
               "ordinary-file launch cache path under asset-cache/dm2/");
+    check_int(strcmp(required->matchedPath, cachedGraphics) == 0,
+              "DM2 graphics required-file path should exactly match the "
+              "runtimeDataDir/dm2/GRAPHICS.DAT launch path");
     check_int(file_matches_payload(cachedGraphics, kGraphicsPayload,
                                    graphicsSize),
               "cached GRAPHICS.DAT under asset-cache/dm2/ must be "
@@ -602,6 +608,9 @@ int main(void) {
                                   "dm2", "DUNGEON.DAT"),
               "DM2 dungeon required file should be materialized into the "
               "ordinary-file launch cache path under asset-cache/dm2/");
+    check_int(required && strcmp(required->matchedPath, cachedDungeon) == 0,
+              "DM2 dungeon required-file path should exactly match the "
+              "runtimeDataDir/dm2/DUNGEON.DAT launch path");
     check_int(file_matches_payload(cachedDungeon, kDungeonPayload,
                                    dungeonSize),
               "cached DUNGEON.DAT under asset-cache/dm2/ must be "
