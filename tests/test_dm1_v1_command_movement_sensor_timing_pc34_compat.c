@@ -250,7 +250,7 @@ int main(void)
     int ok = 1;
 
     printf("probe=dm1_v1_command_movement_sensor_timing_pc34_compat\n");
-    printf("sourceEvidence=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-179,180-347 including 237-255 pre-resolution stamina; DUNGEON.C:1371-1447; CHAMPION.C:1180-1215,2025-2048; MOVESENS.C:738-783,799-818,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724\n");
+    printf("sourceEvidence=COMMAND.C:396-405,2045-2156; CLIKMENU.C:142-179,180-347 including 237-255 pre-resolution stamina; DUNGEON.C:1371-1447; CHAMPION.C:1180-1215,2025-2048; MOVESENS.C:538-618,738-783,799-818,1553-1794; GAMELOOP.C:90,215-219; DRAWVIEW.C:709-724\n");
 
     ok &= expect_relative_step_delta_table();
 
@@ -290,6 +290,88 @@ int main(void)
     ok &= expect_int("successful step records scent", timing.scentRecorded, 1);
     ok &= expect_int("successful step scent delta", timing.scentDelayTicks, 10);
     ok &= expect_int("successful step updates last movement time", (int)timing.lastPartyMovementTime, 1000);
+
+    /* ReDMCSB: CLIKMENU.C F0366 lines 262-276 accepts a target pit square
+     * before calling MOVESENS.C F0267; MOVESENS.C F0267 lines 538-618 then
+     * follows an open, non-imaginary pit to the next level and applies 20
+     * fall damage to each living party champion. */
+    {
+        struct DungeonDatState_Compat pitDungeon;
+        struct DungeonMapDesc_Compat pitMaps[2];
+        struct DungeonMapTiles_Compat pitTiles[2];
+        struct DungeonThings_Compat pitThings;
+        struct PartyState_Compat pitParty;
+        struct PostMoveResolution_Compat pitPost;
+        unsigned char pitMap0[MAP_W * MAP_H];
+        unsigned char pitMap1[MAP_W * MAP_H];
+        int i;
+
+        memset(&pitDungeon, 0, sizeof(pitDungeon));
+        memset(pitMaps, 0, sizeof(pitMaps));
+        memset(pitTiles, 0, sizeof(pitTiles));
+        memset(&pitThings, 0, sizeof(pitThings));
+        memset(&pitParty, 0, sizeof(pitParty));
+        for (i = 0; i < MAP_W * MAP_H; ++i) {
+            pitMap0[i] = sqb(DUNGEON_ELEMENT_CORRIDOR, 0);
+            pitMap1[i] = sqb(DUNGEON_ELEMENT_CORRIDOR, 0);
+        }
+        pitMap0[1 * MAP_H + 0] = sqb(DUNGEON_ELEMENT_PIT, 0x08);
+
+        pitMaps[0].width = MAP_W;
+        pitMaps[0].height = MAP_H;
+        pitMaps[0].level = 0;
+        pitMaps[1].width = MAP_W;
+        pitMaps[1].height = MAP_H;
+        pitMaps[1].level = 1;
+        pitTiles[0].squareData = pitMap0;
+        pitTiles[0].squareCount = MAP_W * MAP_H;
+        pitTiles[1].squareData = pitMap1;
+        pitTiles[1].squareCount = MAP_W * MAP_H;
+        pitDungeon.header.mapCount = 2;
+        pitDungeon.maps = pitMaps;
+        pitDungeon.tiles = pitTiles;
+        pitDungeon.loaded = 1;
+        pitDungeon.tilesLoaded = 1;
+
+        pitParty.mapIndex = 0;
+        pitParty.mapX = 1;
+        pitParty.mapY = 1;
+        pitParty.direction = DIR_NORTH;
+        pitParty.championCount = 2;
+        pitParty.champions[0].present = 1;
+        pitParty.champions[0].hp.current = 25;
+        pitParty.champions[1].present = 1;
+        pitParty.champions[1].hp.current = 35;
+
+        DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+        ok &= expect_int("open pit forward key queued", DM1_V1_InputCommandQueue_EnqueueEventPc34Compat(&queue,
+            (struct Dm1V1InputEventPc34Compat){ DM1_V1_INPUT_KIND_KEY, 0xAB35, 0, 0, 0 }), 1);
+        queueResult = DM1_V1_InputCommandQueue_ProcessOnePc34Compat(&queue, pitParty.direction, 0, 0, 0);
+        ok &= expect_int("open pit command dequeued", queueResult.dequeued, 1);
+        ok &= expect_int("open pit command dispatched", queueResult.dispatchedMove, 1);
+        ok &= expect_int("open pit accepted by movement", F0702_MOVEMENT_TryMove_Compat(
+            &pitDungeon, &pitParty, command_to_move_action(queueResult.command), &moveResult), 1);
+        ok &= expect_int("open pit movement result", moveResult.resultCode, MOVE_OK);
+        ok &= expect_int("open pit target x", moveResult.newMapX, 1);
+        ok &= expect_int("open pit target y", moveResult.newMapY, 0);
+
+        pitParty.mapX = moveResult.newMapX;
+        pitParty.mapY = moveResult.newMapY;
+        ok &= expect_int("open pit post-move resolves", F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+            &pitDungeon, &pitThings, &pitParty, 1001u, &pitPost), 1);
+        ok &= expect_int("open pit transitions level", pitPost.transitioned, 1);
+        ok &= expect_int("open pit chain count", pitPost.chainCount, 1);
+        ok &= expect_int("open pit pit count", pitPost.pitCount, 1);
+        ok &= expect_int("open pit final map", pitPost.finalMapIndex, 1);
+        ok &= expect_int("open pit final x", pitPost.finalMapX, 1);
+        ok &= expect_int("open pit final y", pitPost.finalMapY, 0);
+        ok &= expect_int("open pit keeps direction", pitPost.finalDirection, DIR_NORTH);
+        ok &= expect_int("open pit champion0 fall damage", pitPost.championFallDamage[0], 20);
+        ok &= expect_int("open pit champion1 fall damage", pitPost.championFallDamage[1], 20);
+        ok &= expect_int("open pit champion0 survives", pitPost.championFallKilled[0], 0);
+        ok &= expect_int("open pit champion1 survives", pitPost.championFallKilled[1], 0);
+        ok &= expect_int("open pit party survives", pitPost.partyKilledByFall, 0);
+    }
 
     reset_fixture(&dungeon, &map, &tiles, &things, squares, squareFirstThings, sensors, &party);
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
