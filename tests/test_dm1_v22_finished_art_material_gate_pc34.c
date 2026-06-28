@@ -100,6 +100,57 @@ static int write_png_header_file(const char* path, unsigned width, unsigned heig
     return fclose(fp) == 0;
 }
 
+static int write_all_real_manifest_with_receipt(const char* path,
+                                                const char* receipt_generator,
+                                                const char* receipt_source,
+                                                const char* receipt_hash,
+                                                const char* receipt_material_gate) {
+    FILE* fp = fopen(path, "wb");
+    if (!fp) return 0;
+    fprintf(fp,
+        "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
+        "\"wall_shapes\":["
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"wall_d3_carved_hero_01.png\",\"width\":64,\"height\":64}"
+        "],"
+        "\"floor_shapes\":["
+        "{\"id\":\"floor_plain_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"floor_plain_hero_01.png\",\"width\":64,\"height\":64},"
+        "{\"id\":\"floor_pit_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"floor_pit_hero_01.png\",\"width\":64,\"height\":64}"
+        "],"
+        "\"creature_shapes\":["
+        "{\"id\":\"creature_demon_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"creature_demon_hero_01.png\",\"width\":48,\"height\":48}"
+        "],"
+        "\"champion_portraits\":["
+        "{\"id\":\"champion_warrior_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"champion_warrior_hero_01.png\","
+        "\"width\":48,\"height\":48}"
+        "],"
+        "\"door_shapes\":["
+        "{\"id\":\"door_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
+        "]");
+    if (receipt_generator) {
+        fprintf(fp,
+            ",\"runtime_screenshot_receipts\":["
+            "{\"id\":\"dm1_v22_real_screenshot_material_receipt_01\","
+            "\"generator\":\"%s\","
+            "\"source_file\":\"%s\","
+            "\"width\":320,\"height\":200,"
+            "\"frame_hash\":\"%s\","
+            "\"material_gate\":\"%s\"}"
+            "]",
+            receipt_generator,
+            receipt_source ? receipt_source : "",
+            receipt_hash ? receipt_hash : "",
+            receipt_material_gate ? receipt_material_gate : "");
+    }
+    fprintf(fp, "}");
+    return fclose(fp) == 0;
+}
+
 /* Helper: build the manifest path that the module resolves for a given
  * data dir. Mirrors dm1_v22_famg_set_manifest_path. */
 static void build_expected_manifest_path(char* out, size_t outSize,
@@ -779,6 +830,10 @@ static void test_source_evidence_citations(void) {
     CHECK(strstr(ev, "FIRESTAFF_GAP_LIST") != NULL, "mentions gap list");
     CHECK(strstr(ev, "Honest boundary") != NULL,
           "mentions honest boundary");
+    CHECK(strstr(ev, "dm1_v22_real_screenshot_material_receipt_01") != NULL,
+          "mentions screenshot receipt id");
+    CHECK(strstr(ev, "Receipt FINISHED_REAL") != NULL,
+          "mentions receipt promotion boundary");
 }
 
 static void test_installed_flag_round_trip(void) {
@@ -799,7 +854,9 @@ static void test_validate_manifest_three_branches(void) {
     char manifest_path[FSP_PATH_MAX];
     char pdir[FSP_PATH_MAX];
     build_expected_manifest_path(manifest_path, sizeof(manifest_path), dataDir);
-    snprintf(pdir, sizeof(pdir), "%s/../../assets/dm1/modern", dataDir);
+    snprintf(pdir, sizeof(pdir), "%s", manifest_path);
+    char* slash = strrchr(pdir, '/');
+    if (slash) *slash = '\0';
     char mkdir_cmd[1200];
     snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", pdir);
     system(mkdir_cmd);
@@ -847,6 +904,145 @@ static void test_uses_placeholder_known_gates(void) {
     }
 }
 
+static void test_real_screenshot_receipt_gate(void) {
+    clean_scratch();
+    const char* dataDir = "/tmp/scratch/dm1-famg-data/data/dm1";
+    char manifest_path[FSP_PATH_MAX];
+    char assets_root[FSP_PATH_MAX];
+    char mkdir_cmd[1200];
+    build_expected_manifest_path(manifest_path, sizeof(manifest_path), dataDir);
+    snprintf(assets_root, sizeof(assets_root),
+             "%s/../../assets/dm1/modern", dataDir);
+    snprintf(mkdir_cmd, sizeof(mkdir_cmd),
+             "mkdir -p '%s/wall_shapes' '%s/floor_shapes' '%s/creature_shapes' "
+             "'%s/champion_portraits' '%s/door_shapes' '%s/receipts'",
+             assets_root, assets_root, assets_root, assets_root,
+             assets_root, assets_root);
+    CHECK(system(mkdir_cmd) == 0, "mkdir category dirs plus receipts");
+
+    const char* files[DM1_V22_FAMG_MATERIAL_COUNT] = {
+        "wall_d3_carved_hero_01.png",
+        "floor_plain_hero_01.png",
+        "floor_pit_hero_01.png",
+        "creature_demon_hero_01.png",
+        "champion_warrior_hero_01.png",
+        "door_hero_01.png"
+    };
+    for (size_t i = 0; i < DM1_V22_FAMG_MATERIAL_COUNT; ++i) {
+        char fpath[FSP_PATH_MAX];
+        snprintf(fpath, sizeof(fpath), "%s/%s/%s",
+                 assets_root,
+                 dm1_v22_famg_slot_category((DM1_V22_FamgSlot)i),
+                 files[i]);
+        CHECK(write_file(fpath, "fake-png-bytes-for-test"),
+              "wrote material file for receipt gate");
+    }
+
+    dm1_v22_famg_set_manifest_path(dataDir);
+    CHECK(write_all_real_manifest_with_receipt(manifest_path, NULL, NULL, NULL, NULL),
+          "wrote all-real manifest without receipt");
+    CHECK(dm1_v22_famg_gate() == DM1_V22_FAMG_GATE_FINISHED_REAL,
+          "all-real materials still promote without receipt");
+    CHECK(dm1_v22_famg_receipt_gate() == DM1_V22_FAMG_RECEIPT_NO_RECEIPT,
+          "no receipt entry -> NO_RECEIPT");
+    CHECK(dm1_v22_famg_has_finished_real_receipt() == 0,
+          "no receipt is not final runtime evidence");
+
+    char receipt_path[FSP_PATH_MAX];
+    snprintf(receipt_path, sizeof(receipt_path), "%s/receipts/synthetic_frame.bmp",
+             assets_root);
+    CHECK(write_file(receipt_path, "synthetic-bmp-receipt"),
+          "wrote synthetic receipt fixture");
+    CHECK(write_all_real_manifest_with_receipt(
+              manifest_path,
+              "synthetic_test",
+              "synthetic_frame.bmp",
+              "sha256:synthetic",
+              "FINISHED_REAL"),
+          "wrote synthetic receipt manifest");
+    CHECK(dm1_v22_famg_receipt_gate() ==
+              DM1_V22_FAMG_RECEIPT_SYNTHETIC_PLACEHOLDER,
+          "synthetic receipt stays SYNTHETIC_PLACEHOLDER");
+    CHECK(dm1_v22_famg_has_synthetic_receipt() == 1,
+          "synthetic receipt predicate true");
+    CHECK(dm1_v22_famg_has_finished_real_receipt() == 0,
+          "synthetic receipt cannot promote final proof");
+
+    DM1_V22_FamgReceiptInfo info;
+    CHECK(dm1_v22_famg_get_receipt_info(&info) == 1,
+          "receipt info populated");
+    CHECK(strcmp(info.id, dm1_v22_famg_receipt_manifest_id()) == 0,
+          "receipt info id stable");
+    CHECK(strcmp(info.generator, "synthetic_test") == 0,
+          "receipt info generator stored");
+    CHECK(strcmp(info.frame_hash, "sha256:synthetic") == 0,
+          "receipt info frame hash stored");
+    CHECK(info.width == 320 && info.height == 200,
+          "receipt dimensions stored");
+    CHECK(info.file_exists == 1,
+          "synthetic receipt file resolves under receipts/");
+
+    CHECK(write_all_real_manifest_with_receipt(
+              manifest_path,
+              "operator_reviewed",
+              "missing_reviewed_frame.bmp",
+              "sha256:reviewed",
+              "FINISHED_REAL"),
+          "wrote reviewed receipt manifest with missing file");
+    CHECK(dm1_v22_famg_receipt_gate() == DM1_V22_FAMG_RECEIPT_PARTIAL,
+          "reviewed receipt with missing file -> PARTIAL");
+
+    snprintf(receipt_path, sizeof(receipt_path), "%s/receipts/reviewed_frame.bmp",
+             assets_root);
+    CHECK(write_file(receipt_path, "reviewed-runtime-bmp-receipt"),
+          "wrote reviewed receipt fixture");
+    CHECK(write_all_real_manifest_with_receipt(
+              manifest_path,
+              "operator_reviewed",
+              "reviewed_frame.bmp",
+              "sha256:reviewed",
+              "PARTIAL"),
+          "wrote reviewed receipt manifest with wrong material gate");
+    CHECK(dm1_v22_famg_receipt_gate() == DM1_V22_FAMG_RECEIPT_PARTIAL,
+          "reviewed receipt requires material_gate FINISHED_REAL");
+
+    CHECK(write_all_real_manifest_with_receipt(
+              manifest_path,
+              "operator_reviewed",
+              "reviewed_frame.bmp",
+              "sha256:reviewed",
+              "FINISHED_REAL"),
+          "wrote final reviewed receipt manifest");
+    CHECK(dm1_v22_famg_receipt_gate() == DM1_V22_FAMG_RECEIPT_FINISHED_REAL,
+          "reviewed receipt + finished material gate -> FINISHED_REAL");
+    CHECK(dm1_v22_famg_has_finished_real_receipt() == 1,
+          "finished receipt predicate true");
+    CHECK(strcmp(dm1_v22_famg_receipt_gate_name(
+            DM1_V22_FAMG_RECEIPT_FINISHED_REAL), "FINISHED_REAL") == 0,
+          "receipt gate name FINISHED_REAL");
+
+    const char* placeholder_content =
+        "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
+        "\"wall_shapes\":["
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"placeholder_wall.png\",\"width\":64,\"height\":64}"
+        "],"
+        "\"runtime_screenshot_receipts\":["
+        "{\"id\":\"dm1_v22_real_screenshot_material_receipt_01\","
+        "\"generator\":\"operator_reviewed\","
+        "\"source_file\":\"reviewed_frame.bmp\","
+        "\"width\":320,\"height\":200,"
+        "\"frame_hash\":\"sha256:reviewed\","
+        "\"material_gate\":\"FINISHED_REAL\"}"
+        "]}";
+    CHECK(write_file(manifest_path, placeholder_content),
+          "wrote placeholder-material receipt manifest");
+    CHECK(dm1_v22_famg_gate() == DM1_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER,
+          "placeholder materials remain synthetic");
+    CHECK(dm1_v22_famg_receipt_gate() == DM1_V22_FAMG_RECEIPT_PARTIAL,
+          "reviewed receipt cannot finish while materials are placeholder");
+}
+
 /* ── Main ───────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -868,6 +1064,7 @@ int main(void) {
     test_installed_flag_round_trip();
     test_validate_manifest_three_branches();
     test_uses_placeholder_known_gates();
+    test_real_screenshot_receipt_gate();
 
     printf("\nSummary: %d passed, %d failed\n", s_pass, s_fail);
     return s_fail == 0 ? 0 : 1;

@@ -96,6 +96,57 @@ static int write_png_header_file(const char* path,
     return fclose(fp) == 0;
 }
 
+static int write_all_real_manifest_with_receipt(const char* path,
+                                                const char* receipt_generator,
+                                                const char* receipt_source,
+                                                const char* receipt_hash,
+                                                const char* receipt_material_gate) {
+    FILE* fp = fopen(path, "wb");
+    if (!fp) return 0;
+    fprintf(fp,
+        "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-probe\","
+        "\"wall_shapes\":["
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"wall_d3_carved_hero_01.png\",\"width\":64,\"height\":64}"
+        "],"
+        "\"floor_shapes\":["
+        "{\"id\":\"floor_plain_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"floor_plain_hero_01.png\",\"width\":64,\"height\":64},"
+        "{\"id\":\"floor_pit_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"floor_pit_hero_01.png\",\"width\":64,\"height\":64}"
+        "],"
+        "\"creature_shapes\":["
+        "{\"id\":\"creature_demon_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"creature_demon_hero_01.png\",\"width\":48,\"height\":48}"
+        "],"
+        "\"champion_portraits\":["
+        "{\"id\":\"champion_warrior_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"champion_warrior_hero_01.png\","
+        "\"width\":48,\"height\":48}"
+        "],"
+        "\"door_shapes\":["
+        "{\"id\":\"door_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
+        "]");
+    if (receipt_generator) {
+        fprintf(fp,
+            ",\"runtime_screenshot_receipts\":["
+            "{\"id\":\"dm1_v22_real_screenshot_material_receipt_01\","
+            "\"generator\":\"%s\","
+            "\"source_file\":\"%s\","
+            "\"width\":320,\"height\":200,"
+            "\"frame_hash\":\"%s\","
+            "\"material_gate\":\"%s\"}"
+            "]",
+            receipt_generator,
+            receipt_source ? receipt_source : "",
+            receipt_hash ? receipt_hash : "",
+            receipt_material_gate ? receipt_material_gate : "");
+    }
+    fprintf(fp, "}");
+    return fclose(fp) == 0;
+}
+
 /* Helper: build expected manifest path. */
 static void expected_manifest_path(char* out, size_t outSize,
                                     const char* dataDir) {
@@ -412,6 +463,77 @@ int main(void) {
                   (DM1_V22_FamgSlot)i) == 0);
     }
 
+    /* ── Scenario 6b: runtime screenshot receipt classification ───── */
+    printf("\n[ Scenario 6b: runtime screenshot/material receipt gate ]\n");
+    check("finished materials without receipt -> NO_RECEIPT",
+          dm1_v22_famg_receipt_gate() ==
+              DM1_V22_FAMG_RECEIPT_NO_RECEIPT);
+    check("no receipt -> has_finished_real_receipt=0",
+          dm1_v22_famg_has_finished_real_receipt() == 0);
+
+    char receipt_dir[1024];
+    snprintf(receipt_dir, sizeof(receipt_dir), "%s/receipts", resolved_mdir);
+    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", receipt_dir);
+    system(mkdir_cmd);
+    char receipt_file[1024];
+    snprintf(receipt_file, sizeof(receipt_file),
+             "%s/synthetic_frame.bmp", receipt_dir);
+    write_file(receipt_file, "synthetic-runtime-bmp");
+    check("wrote synthetic receipt manifest",
+          write_all_real_manifest_with_receipt(
+              manifest_file,
+              "synthetic_test",
+              "synthetic_frame.bmp",
+              "sha256:synthetic",
+              "FINISHED_REAL"));
+    check("synthetic receipt -> SYNTHETIC_PLACEHOLDER",
+          dm1_v22_famg_receipt_gate() ==
+              DM1_V22_FAMG_RECEIPT_SYNTHETIC_PLACEHOLDER);
+    check("synthetic receipt predicate true",
+          dm1_v22_famg_has_synthetic_receipt() == 1);
+    check("synthetic receipt still not final proof",
+          dm1_v22_famg_has_finished_real_receipt() == 0);
+
+    DM1_V22_FamgReceiptInfo receipt_info;
+    check("receipt info available",
+          dm1_v22_famg_get_receipt_info(&receipt_info) == 1);
+    check("receipt info id stable",
+          strcmp(receipt_info.id, dm1_v22_famg_receipt_manifest_id()) == 0);
+    check("receipt info file exists",
+          receipt_info.file_exists == 1);
+    check("receipt info hash retained",
+          strcmp(receipt_info.frame_hash, "sha256:synthetic") == 0);
+
+    check("wrote reviewed missing-file receipt manifest",
+          write_all_real_manifest_with_receipt(
+              manifest_file,
+              "operator_reviewed",
+              "missing_reviewed_frame.bmp",
+              "sha256:reviewed",
+              "FINISHED_REAL"));
+    check("reviewed receipt missing file -> PARTIAL",
+          dm1_v22_famg_receipt_gate() ==
+              DM1_V22_FAMG_RECEIPT_PARTIAL);
+
+    snprintf(receipt_file, sizeof(receipt_file),
+             "%s/reviewed_frame.bmp", receipt_dir);
+    write_file(receipt_file, "reviewed-runtime-bmp");
+    check("wrote reviewed complete receipt manifest",
+          write_all_real_manifest_with_receipt(
+              manifest_file,
+              "operator_reviewed",
+              "reviewed_frame.bmp",
+              "sha256:reviewed",
+              "FINISHED_REAL"));
+    check("reviewed receipt + finished materials -> FINISHED_REAL",
+          dm1_v22_famg_receipt_gate() ==
+              DM1_V22_FAMG_RECEIPT_FINISHED_REAL);
+    check("finished receipt predicate true",
+          dm1_v22_famg_has_finished_real_receipt() == 1);
+    check("receipt gate FINISHED_REAL name",
+          strcmp(dm1_v22_famg_receipt_gate_name(
+              DM1_V22_FAMG_RECEIPT_FINISHED_REAL), "FINISHED_REAL") == 0);
+
     /* ── Scenario 7: PARTIAL via missing source_file ─────────────── */
     printf("\n[ Scenario 7: PARTIAL via missing source_file ]\n");
     /* Remove one of the real files. wall_d3_carved is in wall_shapes/.
@@ -533,6 +655,11 @@ int main(void) {
           ev != NULL && strstr(ev, "FIRESTAFF_GAP_LIST") != NULL);
     check("source_evidence cites Honest boundary",
           ev != NULL && strstr(ev, "Honest boundary") != NULL);
+    check("source_evidence cites receipt id",
+          ev != NULL &&
+          strstr(ev, "dm1_v22_real_screenshot_material_receipt_01") != NULL);
+    check("source_evidence cites receipt FINISHED_REAL boundary",
+          ev != NULL && strstr(ev, "Receipt FINISHED_REAL") != NULL);
 
     /* ── Clean up ──────────────────────────────────────────────────── */
     system("rm -rf /tmp/scratch/dm1-famg-probe");

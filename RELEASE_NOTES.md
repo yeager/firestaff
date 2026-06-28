@@ -29,6 +29,16 @@
   manifest before they can promote to `REAL`. This hardens readiness checks
   without claiming that finished DM1 V2.2 art or screenshot receipts ship yet.
 
+- **DM1 V2.2 real screenshot/material receipt path**: the
+  `dm1_v22_finished_art_material_gate_pc34` classifier now separates
+  material-pack provenance from runtime screenshot evidence. Optional
+  `dm1_v22_real_screenshot_material_receipt_01` metadata can classify
+  `NO_RECEIPT`, `SYNTHETIC_PLACEHOLDER`, `PARTIAL`, or
+  `FINISHED_REAL`; synthetic receipts stay non-final, and final proof
+  requires an operator-reviewed receipt file outside the repo plus a
+  finished six-slot material gate. No proprietary or generated
+  screenshot proof is shipped.
+
 - **X68000 HDM receipt classification tightened**: the DM1/CSB X68000 media
   classifier now reports a conservative receipt class for blank save disks,
   live `HPR-0007` protection-sector captures, nonblank/no-sentinel media, FTL

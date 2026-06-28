@@ -129,6 +129,33 @@ typedef enum {
     DM1_V22_FAMG_GATE_FINISHED_REAL         = 4
 } DM1_V22_FamgGate;
 
+/* ── Runtime screenshot/material receipt gate ───────────────────
+ *
+ * Optional receipt entry stored in the same modern_asset_manifest.json:
+ *
+ * {
+ *   "id": "dm1_v22_real_screenshot_material_receipt_01",
+ *   "generator": "synthetic_test" | "placeholder" | "operator_reviewed",
+ *   "source_file": "reviewed_frame.bmp",
+ *   "width": 320,
+ *   "height": 200,
+ *   "frame_hash": "sha256:...",
+ *   "material_gate": "FINISHED_REAL"
+ * }
+ *
+ * The receipt is evidence metadata only. A FINISHED_REAL material pack
+ * does not become final runtime evidence until this receipt gate also
+ * reaches FINISHED_REAL. Synthetic/placeholder receipts remain useful
+ * CI fixtures but are deliberately not promoted as final proof.
+ */
+typedef enum {
+    DM1_V22_FAMG_RECEIPT_NOT_PROBED            = 0,
+    DM1_V22_FAMG_RECEIPT_NO_RECEIPT            = 1,
+    DM1_V22_FAMG_RECEIPT_SYNTHETIC_PLACEHOLDER = 2,
+    DM1_V22_FAMG_RECEIPT_PARTIAL               = 3,
+    DM1_V22_FAMG_RECEIPT_FINISHED_REAL         = 4
+} DM1_V22_FamgReceiptGate;
+
 /* ── Slot record (read-only view) ────────────────────────────────
  *
  * Strings are stored inline. The struct lifetime is the caller's; do
@@ -150,6 +177,19 @@ typedef struct {
     int             png_height;        /* decoded IHDR height, or 0 */
     DM1_V22_FamgClass classification;
 } DM1_V22_FamgSlotInfo;
+
+typedef struct {
+    char id[64];             /* receipt manifest id */
+    char generator[32];      /* placeholder / synthetic_test / reviewed */
+    char source_file[256];   /* receipt source_file or "" */
+    char resolved_path[1024];/* full path or "" */
+    char frame_hash[128];    /* hash string from receipt metadata */
+    char material_gate[32];  /* expected to be FINISHED_REAL for final proof */
+    int  width;
+    int  height;
+    int  file_exists;
+    DM1_V22_FamgReceiptGate gate;
+} DM1_V22_FamgReceiptInfo;
 
 /* ── Public API ─────────────────────────────────────────────────── */
 
@@ -243,6 +283,21 @@ int dm1_v22_famg_is_finished_real(void);
  * i.e. at least one slot is declared but not fully REAL. This is the
  * "placeholder/synthetic art" state. */
 int dm1_v22_famg_is_synthetic_or_partial(void);
+
+/* Runtime screenshot/material receipt helpers. These read the optional
+ * `dm1_v22_real_screenshot_material_receipt_01` entry from the stored
+ * manifest. FINISHED_REAL requires:
+ *   - material gate == FINISHED_REAL across all six tracked slots
+ *   - receipt generator is not placeholder/synthetic_test
+ *   - receipt source_file resolves under <manifest_dir>/receipts/
+ *   - width, height, frame_hash, and material_gate are present
+ */
+const char* dm1_v22_famg_receipt_manifest_id(void);
+DM1_V22_FamgReceiptGate dm1_v22_famg_receipt_gate(void);
+const char* dm1_v22_famg_receipt_gate_name(DM1_V22_FamgReceiptGate gate);
+int dm1_v22_famg_get_receipt_info(DM1_V22_FamgReceiptInfo* out);
+int dm1_v22_famg_has_finished_real_receipt(void);
+int dm1_v22_famg_has_synthetic_receipt(void);
 
 /* Source evidence citation for source-lock tests. */
 const char* dm1_v22_famg_source_evidence(void);
