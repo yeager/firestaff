@@ -3652,6 +3652,31 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     )
 endif()
 
+# DM1 V1 Hall of Champions ordinal 13 (WUUF) south_return 180-turn
+# PPM capture/readiness gate.  This is the generated-artifact sibling
+# of the ordinal-13 portrait_rect_position probe: it drives
+# (1,5,SOUTH) -> TURN_LEFT -> EAST -> TURN_LEFT -> NORTH through the
+# live M11 input path, writes full-frame + viewport-crop PPMs to a
+# build-local CTest directory, and verifies the south frame shows
+# ordinal 13 while the final north frame clears stale ordinal-13
+# pixels and shows ordinal 10.  Firestaff runtime evidence only; no
+# original DOS pixel-parity claim.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hoc_ordinal_13_south_return_180_turn_capture_ppm_probe.c")
+    add_executable(firestaff_dm1_v1_hoc_ordinal_13_south_return_180_turn_capture_ppm_probe
+        probes/m11/firestaff_dm1_v1_hoc_ordinal_13_south_return_180_turn_capture_ppm_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hoc_ordinal_13_south_return_180_turn_capture_ppm_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hoc_ordinal_13_south_return_180_turn_capture_ppm_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_hoc_ordinal_13_south_return_180_turn_capture_ppm_probe
+        COMMAND firestaff_dm1_v1_hoc_ordinal_13_south_return_180_turn_capture_ppm_probe
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+            "${CMAKE_CURRENT_BINARY_DIR}/dm1_v1_hoc_ordinal_13_south_return_180_turn_capture_ppm_ctest"
+    )
+endif()
+
 # DM1 V1 champion-mirror ordinal 4 (LEIF) sealed-chamber ->
 # portrait_rect_position runtime probe.  Originally authored as an
 # east_walkpath drive to (2,1,SOUTH) via (2,3)-(2,2)-(2,1), but the
