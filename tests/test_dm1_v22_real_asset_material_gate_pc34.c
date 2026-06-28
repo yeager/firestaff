@@ -1,5 +1,6 @@
 #include "dm1_v2_asset_pipeline_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
+#include "dm1_v22_finished_art_material_gate_pc34.h"
 #include "fs_portable_compat.h"
 #include "m11_v22_inplace_draw_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
@@ -8,8 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define SKIP_RETURN_CODE 77
 
 static int failures = 0;
 
@@ -37,6 +36,18 @@ static uint32_t fnv1a_bytes(const void* data, size_t len) {
         h = (h ^ (uint32_t)p[i]) * 16777619u;
     }
     return h;
+}
+
+static uint32_t fnv1a_string(const char* s) {
+    uint32_t h = 2166136261u;
+    while (*s) {
+        h = (h ^ (uint32_t)(uint8_t)*s++) * 16777619u;
+    }
+    return h;
+}
+
+static void put_u32(unsigned char* p, uint32_t v) {
+    memcpy(p, &v, sizeof(v));
 }
 
 static char* read_text_file(const char* path, size_t* out_len) {
@@ -134,6 +145,194 @@ static int nonzero_pixel_count(const unsigned char* fb, size_t len) {
     return count;
 }
 
+typedef struct SyntheticCacheEntry {
+    const char* category;
+    const char* asset_id;
+    uint32_t rgba[4];
+} SyntheticCacheEntry;
+
+static void put_cache_entry(unsigned char* entry,
+                            const SyntheticCacheEntry* fixture,
+                            uint32_t rgba_offset) {
+    memset(entry, 0, 32);
+    put_u32(entry + 0, fnv1a_string(fixture->category));
+    put_u32(entry + 4, fnv1a_string(fixture->asset_id));
+    put_u32(entry + 8, 2u);
+    put_u32(entry + 12, 2u);
+    put_u32(entry + 16, 4u * (uint32_t)sizeof(uint32_t));
+    put_u32(entry + 20, rgba_offset);
+}
+
+static int write_text_file(const char* path, const char* content) {
+    FILE* fp;
+    size_t len;
+    if (!path || !content) return 0;
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    len = strlen(content);
+    if (fwrite(content, 1, len, fp) != len) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
+static int write_minimal_dm1_v22_cache(const char* cache_path) {
+    FILE* fp;
+    unsigned char header[32];
+    unsigned char entries[4][32];
+    const SyntheticCacheEntry fixtures[4] = {
+        {
+            "wall_shapes",
+            "wall_d3_carved_01",
+            { 0x00ff0000u, 0x00ff0000u, 0x00ff0000u, 0x00ff0000u }
+        },
+        {
+            "floor_shapes",
+            "floor_plain_01",
+            { 0x0000ff00u, 0x0000ff00u, 0x0000ff00u, 0x0000ff00u }
+        },
+        {
+            "floor_shapes",
+            "floor_pit_01",
+            { 0x000000ffu, 0x000000ffu, 0x000000ffu, 0x000000ffu }
+        },
+        {
+            "floor_shapes",
+            "floor_stairs_down_01",
+            { 0x00ffff00u, 0x00ffff00u, 0x00ffff00u, 0x00ffff00u }
+        }
+    };
+    size_t i;
+    uint32_t data_offset;
+
+    memset(header, 0, sizeof(header));
+    memset(entries, 0, sizeof(entries));
+    memcpy(header, "FSV22C\0\0", 8);
+    put_u32(header + 8, 1u);
+    put_u32(header + 12, (uint32_t)(sizeof(fixtures) / sizeof(fixtures[0])));
+    data_offset = (uint32_t)(sizeof(header) + sizeof(entries));
+    for (i = 0; i < sizeof(fixtures) / sizeof(fixtures[0]); ++i) {
+        put_cache_entry(entries[i],
+                        &fixtures[i],
+                        data_offset + (uint32_t)(i * sizeof(fixtures[i].rgba)));
+    }
+
+    fp = fopen(cache_path, "wb");
+    if (!fp) return 0;
+    if (fwrite(header, 1, sizeof(header), fp) != sizeof(header) ||
+        fwrite(entries, 1, sizeof(entries), fp) != sizeof(entries)) {
+        fclose(fp);
+        return 0;
+    }
+    for (i = 0; i < sizeof(fixtures) / sizeof(fixtures[0]); ++i) {
+        if (fwrite(fixtures[i].rgba, 1, sizeof(fixtures[i].rgba), fp) !=
+            sizeof(fixtures[i].rgba)) {
+            fclose(fp);
+            return 0;
+        }
+    }
+    return fclose(fp) == 0;
+}
+
+static int write_synthetic_placeholder_manifest(const char* manifest_path) {
+    const char* content =
+        "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-synthetic-ci\","
+        "\"wall_shapes\":["
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"synthetic_wall.png\",\"width\":64,\"height\":64}"
+        "],"
+        "\"floor_shapes\":["
+        "{\"id\":\"floor_plain_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"synthetic_floor.png\",\"width\":64,\"height\":64},"
+        "{\"id\":\"floor_pit_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"synthetic_pit.png\",\"width\":64,\"height\":64}"
+        "],"
+        "\"creature_shapes\":["
+        "{\"id\":\"creature_demon_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"synthetic_demon.png\",\"width\":48,\"height\":48}"
+        "],"
+        "\"champion_portraits\":["
+        "{\"id\":\"champion_warrior_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"synthetic_champion.png\",\"width\":48,\"height\":48}"
+        "],"
+        "\"door_shapes\":["
+        "{\"id\":\"door_hero_01\",\"generator\":\"placeholder\","
+        "\"source_file\":\"synthetic_door.png\",\"width\":32,\"height\":48}"
+        "]}";
+    return write_text_file(manifest_path, content);
+}
+
+static int run_synthetic_fallback_gate(void) {
+    const char* root = "/tmp/scratch/dm1_v22_real_asset_material_ci";
+    const char* home = "/tmp/scratch/dm1_v22_real_asset_material_ci/home";
+    const char* data_dir = "/tmp/scratch/dm1_v22_real_asset_material_ci/home/.firestaff/data/dm1";
+    const char* modern_dir = "/tmp/scratch/dm1_v22_real_asset_material_ci/home/.firestaff/assets/dm1/modern";
+    char manifest_path[FSP_PATH_MAX];
+    char cache_path[FSP_PATH_MAX];
+    unsigned char raw_cells[3][3] = {
+        { 0x00, 0x20, 0x40 },
+        { 0x68, 0x80, 0xA0 },
+        { 0x00, 0x20, 0x40 }
+    };
+    unsigned char fb[320 * 200];
+    uint32_t frame_sig;
+    int frame_nonzero;
+    int painted;
+
+    {
+        char remove_cmd[FSP_PATH_MAX + 32];
+        snprintf(remove_cmd, sizeof(remove_cmd), "rm -rf '%s'", root);
+        (void)system(remove_cmd);
+    }
+    CHECK(FSP_CreateDirectoryRecursive(data_dir));
+    CHECK(FSP_CreateDirectoryRecursive(modern_dir));
+    CHECK(FSP_SetEnv("HOME", home, 1) == 0);
+    CHECK(build_path(manifest_path, sizeof(manifest_path), modern_dir,
+                     "modern_asset_manifest.json"));
+    CHECK(build_path(cache_path, sizeof(cache_path), modern_dir,
+                     "v22_inplace_cache.bin"));
+    CHECK(write_synthetic_placeholder_manifest(manifest_path));
+    CHECK(write_minimal_dm1_v22_cache(cache_path));
+    if (failures) return 1;
+
+    dm1_v22_famg_set_manifest_path(data_dir);
+    CHECK(dm1_v22_famg_gate() ==
+          DM1_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER);
+    CHECK(dm1_v22_famg_is_finished_real() == 0);
+    CHECK(dm1_v22_famg_uses_placeholder(DM1_V22_FAMG_WALL_D3_CARVED) == 1);
+
+    dm1_v2_presentation_mode_reset();
+    dm1_v2_presentation_mode_set_modern_pack_available(1);
+    dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+    CHECK(dm1_v2_presentation_mode_is_v22() == 1);
+
+    m11_v22_inplace_draw_shutdown();
+    CHECK(m11_v22_inplace_draw_init() == 1);
+    CHECK(m11_v22_inplace_draw_active() == 1);
+    m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
+
+    memset(fb, 0, sizeof(fb));
+    painted = m11_v22_inplace_render_pass(fb, 320, 200);
+    frame_sig = fnv1a_bytes(fb, sizeof(fb));
+    frame_nonzero = nonzero_pixel_count(fb, sizeof(fb));
+    CHECK(painted == 8);
+    CHECK(frame_sig == 0x30894af5u);
+    CHECK(frame_nonzero > 0);
+
+    m11_v22_inplace_draw_shutdown();
+    if (failures) {
+        fprintf(stderr, "dm1_v22_real_asset_material_gate_pc34: synthetic "
+                "fallback failed; manifest=%s cache=%s\n",
+                manifest_path, cache_path);
+        return 1;
+    }
+    printf("dm1_v22_real_asset_material_gate_pc34: synthetic placeholder "
+           "fallback receipt frame=0x%08x nonzero=%d painted=%d\n",
+           (unsigned)frame_sig, frame_nonzero, painted);
+    return 0;
+}
+
 int main(void) {
     const char* home = getenv("HOME");
     char modern_dir[FSP_PATH_MAX];
@@ -162,9 +361,9 @@ int main(void) {
     int frame_nonzero;
 
     if (!home || home[0] == '\0') {
-        puts("SKIP dm1_v22_real_asset_material_gate_pc34: HOME unset; "
-             "requires ~/.firestaff/assets/dm1/modern/");
-        return SKIP_RETURN_CODE;
+        puts("dm1_v22_real_asset_material_gate_pc34: HOME unset; "
+             "running synthetic placeholder fallback");
+        return run_synthetic_fallback_gate();
     }
 
     CHECK(build_home_path(modern_dir, sizeof(modern_dir), home,
@@ -178,10 +377,11 @@ int main(void) {
     if (failures) return 1;
 
     if (!file_exists(manifest_path) || !file_exists(cache_path)) {
-        printf("SKIP dm1_v22_real_asset_material_gate_pc34: missing real "
-               "DM1 V2.2 material inputs; required files are %s and %s\n",
+        printf("dm1_v22_real_asset_material_gate_pc34: missing real "
+               "DM1 V2.2 material inputs; running synthetic fallback "
+               "(required real files are %s and %s)\n",
                manifest_path, cache_path);
-        return SKIP_RETURN_CODE;
+        return run_synthetic_fallback_gate();
     }
 
     manifest = read_text_file(manifest_path, &manifest_len);

@@ -8365,10 +8365,39 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_presentation_mode_pc34.c
         src/dm1v2/dm1_v22_shapes.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/dm1v2/dm1_v2_texture_upscale_pc34.c
         src/shared/fs_portable_compat.c
     )
+    # DM1 V2.2 finished-art / material screenshot pixel gate (synthetic).
+    # Companion to test_dm1_v22_real_asset_material_gate_pc34, whose
+    # real-art branch promotes only when a full hero manifest is on
+    # disk and whose synthetic fallback records a CI pixel receipt.
+    # This CTest exercises the placeholder-vs-real state machine via
+    # synthetic modern_asset_manifest.json fixtures.
+    # Source-locked against ReDMCSB DUNVIEW.C:6697-6816 + DUNGEON.C:2238-2246
+    # + PANEL.C F0354 + sibling dm2_v2_hud_widget_assets.c pattern.
+    add_executable(test_dm1_v22_finished_art_material_gate_pc34
+        tests/test_dm1_v22_finished_art_material_gate_pc34.c
+        src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_dm1_v22_finished_art_material_gate_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v22_finished_art_material_gate_pc34
+        PRIVATE firestaff_v2 firestaff_m10 m)
+    add_executable(firestaff_dm1_v22_finished_art_material_gate_probe
+        probes/firestaff_dm1_v22_finished_art_material_gate_probe.c
+        src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(firestaff_dm1_v22_finished_art_material_gate_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm1_v22_finished_art_material_gate_probe
+        PRIVATE firestaff_v2 firestaff_m10 m)
     add_executable(test_m11_display_aspect_present_rect
         tests/test_m11_display_aspect_present_rect.c
     )
@@ -8501,6 +8530,8 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v2_viewport_materials_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_per_mode_material_signatures_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v22_real_asset_material_gate_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v22_finished_art_material_gate_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_dm1_v22_finished_art_material_gate_probe PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -8848,8 +8879,14 @@ if(BUILD_TESTING)
         NAME dm1_v22_real_asset_material_gate_pc34
         COMMAND test_dm1_v22_real_asset_material_gate_pc34
     )
-    set_tests_properties(dm1_v22_real_asset_material_gate_pc34
-        PROPERTIES SKIP_RETURN_CODE 77)
+    add_test(
+        NAME dm1_v22_finished_art_material_gate_pc34
+        COMMAND test_dm1_v22_finished_art_material_gate_pc34
+    )
+    add_test(
+        NAME firestaff_dm1_v22_finished_art_material_gate_probe
+        COMMAND firestaff_dm1_v22_finished_art_material_gate_probe
+    )
     add_test(
         NAME dm1_v22_m11_inplace_handoff_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v22_m11_inplace_handoff_source_lock.py
