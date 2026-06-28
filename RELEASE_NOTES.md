@@ -609,6 +609,10 @@ claiming new finished-game parity.
   FTL-handoff gates, FTL `HUNK_CODE` plus corrected `HUNK_DATA` zero-run
   decoding, and CSB `HCSB.HTC` Hint Oracle scanning all have bounded
   evidence without vendoring original game data.
+- **CSB Hint Oracle scanner slots are broader**: the skip-safe
+  `HCSB.HTC` real scanner now accepts the dmweb-documented English
+  R1/R2/R3, French R1, and German R1/R2 HTC hashes while keeping the
+  graphical overlay and real screen proof as open follow-ups.
 - **Cross-game runtime gates widened**: DM2 overlay/HUD asset gates,
   Nexus Track 1/font/light probes, and Theron Track 02/SRM evidence were
   added or hardened while keeping remaining real-asset handoff gaps

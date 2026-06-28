@@ -32,6 +32,10 @@
  *   - Diagnostic names: variant_name / release_name /
  *     language round-trip and stay stable so callers can
  *     rely on them as string keys.
+ *   - Scanner hash slots: every catalog MD5 is also present
+ *     in csb_hint_oracle_htc_real_scan so operator-staged
+ *     English R1/R2/R3, French R1, and German R1/R2 HTC files
+ *     are accepted by the skip-safe scanner.
  *
  * Non-claims:
  *   - No real Utility Disk asset is loaded (synthetic
@@ -256,6 +260,77 @@ static int test_md5_classify(void)
               "00000000000000000000000000000000") ==
               CSB_HINT_ORACLE_HTC_VARIANT_UNKNOWN,
           "32-char off-list MD5 returns UNKNOWN");
+    return 1;
+}
+
+/* ── Real-scan hash slot coverage ───────────────────────────────── */
+
+static int test_real_scan_hash_slots(void)
+{
+    size_t cat_count = 0u;
+    size_t known_count = 0u;
+    const CSB_HintOracleHTC_VariantCatalog *cat;
+    const CSB_HintOracleHTC_RealKnownHash *known;
+    size_t i;
+    size_t j;
+
+    printf("=== real_scan_hash_slots ===\n");
+
+    cat = csb_hint_oracle_htc_variant_catalog(&cat_count);
+    known = csb_hint_oracle_htc_real_known_hashes(&known_count);
+    printf("  catalog_count=%zu known_hash_slots=%zu\n",
+           cat_count, known_count);
+    CHECK(known_count == cat_count,
+          "real scanner carries one MD5 slot per documented catalog variant");
+
+    for (i = 0u; i < cat_count; ++i) {
+        int found = 0;
+        int duplicate = 0;
+        size_t found_index = 0u;
+        for (j = 0u; j < known_count; ++j) {
+            if (known[j].md5 && cat[i].md5 &&
+                strcmp(known[j].md5, cat[i].md5) == 0) {
+                if (found) {
+                    duplicate = 1;
+                }
+                found = 1;
+                found_index = j;
+            }
+        }
+        CHECK(found,
+              "catalog MD5 is registered in the real-scan known-hash table");
+        CHECK(!duplicate,
+              "catalog MD5 appears once in the real-scan known-hash table");
+        if (found) {
+            printf("  slot[%zu] variant=%s label='%s' md5=%s size=%zu\n",
+                   found_index,
+                   csb_hint_oracle_htc_variant_name(cat[i].variant),
+                   known[found_index].label ? known[found_index].label : "",
+                   known[found_index].md5 ? known[found_index].md5 : "",
+                   known[found_index].size_bytes);
+            CHECK(known[found_index].size_bytes == cat[i].expected_size,
+                  "real-scan hash slot size matches the catalog contract");
+            CHECK(known[found_index].label &&
+                  known[found_index].label[0] != '\0',
+                  "real-scan hash slot has a non-empty label");
+            CHECK(csb_hint_oracle_htc_variant_from_md5(
+                      known[found_index].md5) == cat[i].variant,
+                  "real-scan hash slot MD5 round-trips through variant lookup");
+        }
+    }
+
+    CHECK(csb_hint_oracle_htc_variant_from_md5(
+              "334fc18cb98d1280a4c55a16566d5ef9") ==
+              CSB_HINT_ORACLE_HTC_VARIANT_RELEASE_2_EN,
+          "English R2 scanner slot resolves through the catalog");
+    CHECK(csb_hint_oracle_htc_variant_from_md5(
+              "c06862298f193b1fe479eaeff6acd57e") ==
+              CSB_HINT_ORACLE_HTC_VARIANT_RELEASE_3_EN,
+          "English R3 scanner slot resolves through the catalog");
+    CHECK(csb_hint_oracle_htc_variant_from_md5(
+              "5a7ab2c8387215c7b2abe772e2ddc689") ==
+              CSB_HINT_ORACLE_HTC_VARIANT_AMIGA_GE,
+          "German R1/R2 scanner slot resolves through the catalog");
     return 1;
 }
 
@@ -546,6 +621,7 @@ int main(void)
 
     (void)test_catalog_identity();
     (void)test_md5_classify();
+    (void)test_real_scan_hash_slots();
     (void)test_parsed_classify();
     (void)test_cache_classify();
     (void)test_drift();
