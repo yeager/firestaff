@@ -6719,6 +6719,12 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         free(state->theronBootProfile);
         state->theronBootProfile = NULL;
     }
+    if (state->dm2BootProfile) {
+        dm2_v1_boot_cleanup((DM2_V1_BootProfile*)state->dm2BootProfile);
+        free(state->dm2BootProfile);
+        state->dm2BootProfile = NULL;
+        state->dm2World = NULL;
+    }
     if (state->assetsAvailable) {
         M11_AssetLoader_Shutdown(&state->assetLoader);
         state->assetsAvailable = 0;
