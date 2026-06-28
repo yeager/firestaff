@@ -1039,8 +1039,32 @@ RESOLVE:
     /* Any hit (except door pass-through inside F0820) consumes the
      * projectile. F0820 handles DOOR_HIT + passes=1 by setting
      * despawn=0 + resultKind=FLEW. */
-    F0820_PROJECTILE_ResolveCollision_Compat(
-        in, digest, dispatch, currentTick, rng, outResult);
+    {
+        struct ProjectileInstance_Compat resolveState;
+        const struct ProjectileInstance_Compat* resolveIn = in;
+
+        /* ReDMCSB PROJEXPL.C:F0219 lines 729-740 applies the cell parity
+         * step before F0267 commits an unblocked cross-square projectile
+         * move. F0217 lines 509-558 then receives the impact cell for
+         * champion damage; preserve wall/door blocker behavior by only
+         * forwarding the parity-adjusted cell for champion/creature hits. */
+        if ((dispatch == PROJECTILE_RESULT_HIT_CHAMPION
+             || dispatch == PROJECTILE_RESULT_HIT_CREATURE)
+            && (outNewState->cell != in->cell
+                || outNewState->mapIndex != in->mapIndex
+                || outNewState->mapX != in->mapX
+                || outNewState->mapY != in->mapY)) {
+            resolveState = *in;
+            resolveState.cell     = outNewState->cell;
+            resolveState.mapIndex = outNewState->mapIndex;
+            resolveState.mapX     = outNewState->mapX;
+            resolveState.mapY     = outNewState->mapY;
+            resolveIn = &resolveState;
+        }
+
+        F0820_PROJECTILE_ResolveCollision_Compat(
+            resolveIn, digest, dispatch, currentTick, rng, outResult);
+    }
     /* ReDMCSB PROJEXPL.C:F0219 lines 717-755 resolves wall/door
      * impacts before the destination-square move is committed. Keep
      * the public tick result in sync with outNewState so regression
