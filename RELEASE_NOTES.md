@@ -1,9 +1,9 @@
 
 # Firestaff Unreleased
 
-# Firestaff v3.0.11
+# Firestaff v3.0.12
 
-Firestaff v3.0.11 packages the 2026-06-27/28 runtime-hardening work that
+Firestaff v3.0.12 packages the 2026-06-27/28 runtime-hardening work that
 landed after v3.0.10. It keeps the public completion claims conservative:
 DM1 V1 gets broader source-locked gates, the Custom presentation pipeline gets
 new bounded asset/runtime checks, and CSB, DM2, Nexus, and Theron's Quest gain
@@ -34,12 +34,12 @@ playability for those targets.
 
 ## Verification
 
-- 47 commits ship on top of `v3.0.10`, including this release-prep commit.
+- 48 commits ship on top of `v3.0.10`, including this release-prep commit.
 - Local release verification rebuilt the CMake project from a fresh `build/`
   directory, then ran Phase A, audio, focused CTest slices for the new gates,
   and the pre-push checks before tagging.
 - The release workflow rebuilds and packages macOS arm64, macOS x86_64,
-  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the `v3.0.11`
+  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the `v3.0.12`
   release commit.
 
 # Firestaff v3.0.10

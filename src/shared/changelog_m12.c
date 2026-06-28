@@ -9,12 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
-    "V3.0.11  (2026-06-28)",
+    "V3.0.12  (2026-06-28)",
     "  - ZIP/gzip inflate support now builds through bundled static miniz by default, so launcher/runtime ZIP cache materialization and Theron SRM gzip handling no longer depend on an external zlib dylib.",
     "  - DM1 V1 source-lock coverage widened for champion-panel hand-slot refresh and pixel slices, waterskin/fountain fill-drink flow, food/water state, repeated-tick timeline determinism, creature-group splitting, and the D3C back-wall item thing pass.",
     "  - DM1 V2.2 and DM2 V2 evidence advanced with finished-art material gating, bounded per-cell modern-art swap coverage, a runtime HUD widget hook, and a safe synthetic HUD widget manifest example.",
     "  - CSB, Nexus, and Theron received tighter bounded gates for CSB graphics/save boundaries, Nexus BPX/BPK and save/light runtime paths, Theron SRM progression/party envelopes, and Theron V2 HUD runtime handoff.",
-    "  - Release verification: based on 47 commits after v3.0.10 with local CMake build, Phase A/audio probes, focused CTest slices, and pre-push checks before tagging.",
+    "  - Release verification: based on 48 commits after v3.0.10 with local CMake build, Phase A/audio probes, focused CTest slices, and pre-push checks before tagging.",
     "",
     "V3.0.10  (2026-06-26)",
     "  - DM1 Hall of Champions runtime hardening continues: map-0 payload artifacts, false creature AI, and creature telemetry leakage are now blocked with focused runtime probes.",
@@ -323,5 +323,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.11";
+    return "3.0.12";
 }
