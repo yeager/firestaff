@@ -5819,6 +5819,30 @@ if(BUILD_TESTING)
         COMMAND test_asset_status_zip_cache_nested_deflate
     )
 
+    add_executable(test_dm1_pc34_archive_media_receipt
+        tests/test_dm1_pc34_archive_media_receipt.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_dm1_pc34_archive_media_receipt PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_dm1_pc34_archive_media_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_dm1_pc34_archive_media_receipt PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    firestaff_link_zlib(test_dm1_pc34_archive_media_receipt PRIVATE)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_pc34_archive_media_receipt PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_pc34_archive_media_receipt
+        COMMAND test_dm1_pc34_archive_media_receipt
+    )
+
     add_executable(test_dm1_pc34_multilanguage_required_gate
         tests/test_dm1_pc34_multilanguage_required_gate.c
         src/shared/asset_status_m12.c

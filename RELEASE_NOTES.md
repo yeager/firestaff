@@ -1,6 +1,11 @@
 
 # Unreleased
 
+- **DM1 PC 3.4 archive receipts are pinned more tightly**: a new data-free
+  gate proves renamed archive entries can satisfy DM1 PC 3.4 English
+  `GRAPHICS.DAT` and `DUNGEON.DAT` requirements by hash, then materialize
+  into ordinary runtime cache files before launch.
+
 - DM1 V2 deterministic screenshot coverage now includes a source-command-owned
   V2.2 route receipt in the headless actual-render probe, with repeat-stable
   BMP hashes and explicit non-claims for DOSBox parity and finished-art pixels.
