@@ -1,5 +1,13 @@
 # Nexus V1 Triggers vs DM1/DM2 — Trigger System Architecture
 
+> Status note (2026-06-29): the Nexus `SDDRVS.TSK` trigger-VM claims below
+> were reconciled in `docs/nexus_trigger_script_model_status.md`.
+> `SDDRVS.TSK` is verified at 26,610 bytes and currently classified as a
+> Saturn sound driver task. Treat any condition/action opcode examples in older
+> text as hypotheses, not reversed facts. Nexus trigger ownership remains
+> unresolved; `SLEV*.BIN` files are candidate per-level event data but are not
+> parsed by Firestaff.
+
 ## Source Files
 - `src/nexus/nexus_v1_engine.c` — engine init, level load, tick (Firestaff)
 - `src/dm1/dm1_v1_sensor_trigger_pc34_compat.c` — DM1 trigger/sensor compat layer
@@ -62,22 +70,25 @@ interactive logic is fully data-driven via actuators.
 
 ---
 
-## 3. Nexus V1 Trigger Model: SDDRVS.TSK Script VM
+## 3. Nexus V1 Trigger Model: Unresolved
 
-Nexus (Saturn) replaces the tile-type + sensor approach entirely with a **script VM**.
+Older drafts described Nexus as replacing the tile-type + sensor approach with
+a `SDDRVS.TSK` script VM. That is not currently proven.
 
-**SDDRVS.TSK** (5,448 bytes) — Saturn Dungeon Design / Dungeon Run / VS script file:
+Current evidence:
 
-```
-Header: version + entry point count
-Entries: [WHEN condition] THEN [action]
-```
+- `SDDRVS.TSK` is verified at 26,610 bytes and classified as a Saturn sound
+  driver task.
+- The 5,448-byte file in the verified Nexus catalog is `RHIFIX.BIN`, not
+  `SDDRVS.TSK`.
+- `SLEV00.BIN` through `SLEV15.BIN` are real per-level supplementary files and
+  remain plausible trigger/event data, but their format is not parsed.
+- Firestaff's `nexus_v1_script_vm` module is stub scaffolding only.
 
-Unlike DM1 (compile-time fixed types) and DM2 (data-driven but still type-enum-bound),
-Nexus scripts are **declarative rules** processed at runtime by the script VM:
+The following shape is therefore only a possible future model, not source-lock:
 
 ```c
-// Hypothetical SDDRVS.TSK opcodes (reversed from 5,448-byte size):
+// Hypothetical event opcodes: not source-locked.
 OP_WHEN_PARTY_ON_XY   = 0x01  // condition: party steps on (x,y)
 OP_WHEN_CHAMPION_HAS  = 0x02  // condition: champion carries item N
 OP_WHEN_LEVEL_LOADED  = 0x03  // condition: current level == N
@@ -95,15 +106,15 @@ OP_AWARD_XP           = 0x16  // action: add XP to champion
 
 | Aspect | DM1 | DM2 | Nexus V1 |
 |--------|-----|-----|----------|
-| Trigger storage | Square type byte | Actuator records | SDDRVS.TSK script |
-| Trigger logic | Hardwired in EXE | Data-driven enum dispatch | Script VM |
-| Multiple events/sq | No | No (one actuator/sq) | Yes (multiple rules) |
-| Conditional logic | No | Limited (flag tests) | Full condition expressions |
-| Cross-map events | No | Yes (ACTUATOR_TYPE_CROSS_MAP) | Yes (script action) |
-| Designer iteration | Recompile EXE | Edit dungeon data file | Edit .TSK script file |
-| Level scripts | None | None (level-specific actuators) | SDDRVS.TSK per-level |
-| Creature spawn | Hardwired level data | CREATURE_GENERATOR actuator | SPAWN action in script |
-| Teleporter | Types 9-10 hardwired | PLACED_ITEM_TELEPORTER | TELEPORT script action |
+| Trigger storage | Square type byte | Actuator records | Unresolved; likely DGN/SLEV/DM.BIN-owned |
+| Trigger logic | Hardwired in EXE | Data-driven enum dispatch | Not source-locked |
+| Multiple events/sq | No | No (one actuator/sq) | Not source-locked |
+| Conditional logic | No | Limited (flag tests) | Not source-locked |
+| Cross-map events | No | Yes (ACTUATOR_TYPE_CROSS_MAP) | Not source-locked |
+| Designer iteration | Recompile EXE | Edit dungeon data file | Unknown; likely data/executable reverse-engineering |
+| Level scripts | None | None (level-specific actuators) | `SLEV*.BIN` candidate; unparsed |
+| Creature spawn | Hardwired level data | CREATURE_GENERATOR actuator | Not source-locked |
+| Teleporter | Types 9-10 hardwired | PLACED_ITEM_TELEPORTER | Not source-locked |
 
 ### Firestaff Implementation Gap
 
@@ -114,8 +125,9 @@ OP_AWARD_XP           = 0x16  // action: add XP to champion
 - Basic font loading
 - `nexus_v1_tick()` — stub with comment "FUTURE: full game logic integration"
 
-**Missing**: SDDRVS.TSK parser, condition evaluator, action dispatcher.
-The script VM is the main gap in Nexus trigger support.
+**Missing**: a proven Nexus trigger/event model, a parser for any owning data
+(`SLEV*.BIN`, DGN records, or executable tables), and at least one real-asset
+runtime route proving dispatch.
 
 ---
 
@@ -144,20 +156,20 @@ Nexus LEV files are denser binary grids optimized for Saturn hardware.
 |------|-----------|-----------------|
 | DM1 | 55ms / 18.2 Hz | Immediate (sensor fire = instant effect) |
 | DM2 | ~18.2 Hz (same) | DM2_INVOKE_ACTUATOR with future tick queue |
-| Nexus | ~18.2 Hz (DM1-compatible tick) | Script VM evaluates on tick; delay via script condition |
+| Nexus | ~18.2 Hz target | Trigger/event scheduler unresolved |
 
-Nexus `nexus_v1_tick()` currently does nothing beyond printing a comment.
-Full integration would route SDDRVS.TSK events through the tick scheduler.
+Nexus `nexus_v1_tick()` currently does not execute a source-locked trigger
+model. Future integration may route per-level event records through a tick
+scheduler once the owning file and record shape are proven.
 
 ---
 
 ## Summary: Nexus Position in Trigger Evolution
 
 ```
-DM1: Tile-type hardwired → DM2: Generic actuator data-driven → Nexus: Script VM declarative
+DM1: Tile-type hardwired -> DM2: Generic actuator data-driven -> Nexus: unresolved Saturn model
 ```
 
-Nexus V1 moves the design constraint from **type enumeration** to **script rules**,
-enabling complex event choreography without recompilation. The tradeoff is
-reverse-engineering the SDDRVS.TSK bytecode format — currently the largest gap
-in Nexus game-logic implementation.
+Nexus V1 may move the design constraint beyond DM1/DM2's fixed trigger models,
+but Firestaff should not claim that until real data proves where trigger rules
+live and how they dispatch.
