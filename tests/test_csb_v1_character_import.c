@@ -11,7 +11,8 @@
  *   7. csb_v1_character_import_dm1_save — 4-champ synthetic save round-trips
  *   8. csb_v1_character_import_dm1_buffer — same as above, in-memory
  *   9. utility disk check on non-existent path returns -1
- *  10. source_evidence() cites CEDTINC7.C, CEDTDATA.C, CHAMPION.C
+ *  10. imported champions retain CSB reincarnation control defaults
+ *  11. source_evidence() cites CEDTINC7.C, CEDTDATA.C, CHAMPION.C
  *
  * Source references:
  *   ReDMCSB CEDTINC7.C  — utility disk prompt flow
@@ -42,6 +43,21 @@ static int failed;
         failed++; printf("  FAIL: %s got=%" fmt " want=%" fmt "\n", label, (got), (want)); \
     } \
 } while (0)
+
+/* CSBWin Character.cpp:14 / 682-687 carries these champion-side
+ * reincarnation controls, and ReDMCSB REVIVE.C F0282 lines 806-822
+ * consumes the stat divisor + random-point path after import.  The
+ * DM1 champion-record parser must not accidentally zero them while
+ * copying the DM1 save fields into the CSB champion shape. */
+static void check_reincarnation_control_defaults(const CSB_V1_Champion *c)
+{
+    CHECK_EQ(c->reincarnateAttributePenalty, 2,
+             "import preserves reincarnateAttributePenalty default 2", "d");
+    CHECK_EQ(c->reincarnateStatPenalty, 8,
+             "import preserves reincarnateStatPenalty default 8", "d");
+    CHECK_EQ(c->randomPoints, 12,
+             "import preserves randomPoints default 12", "d");
+}
 
 /* ── Test 1: default party ───────────────────────────────────────── */
 static void test_party_defaults(void)
@@ -139,6 +155,8 @@ static void test_import_one_living_champion(void)
     /* Empty slots = 0xFFFF */
     CHECK(c->Slots[0] == 0xFFFFu, "empty slot 0 is 0xFFFF");
     CHECK(c->Slots[29] == 0xFFFFu, "empty slot 29 is 0xFFFF");
+
+    check_reincarnation_control_defaults(c);
 }
 
 static void test_import_clears_carried_objects(void)
@@ -387,6 +405,7 @@ static void test_import_buffer(void)
     CHECK(party.ImportedFromDM1 == 1, "ImportedFromDM1 set after buffer import");
     CHECK_EQ(party.Champions[2].CurrentHealth, 70,
              "champ 2 health is 70", "d");
+    check_reincarnation_control_defaults(&party.Champions[2]);
 }
 
 /* ── Test 9: utility disk check ──────────────────────────────────── */
