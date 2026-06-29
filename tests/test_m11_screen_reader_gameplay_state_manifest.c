@@ -42,6 +42,31 @@
  *      comma / trailing-comma / double-comma artifacts) across
  *      every state, even when a value field is non-NULL.
  *  11. NULL state is a no-op (returns 0, writes nothing).
+ *  12. Inventory chest panel - when inventoryPanelActive +
+ *      v1OpenChestThing != THING_NONE, the manifest emits the
+ *      CHEST_PANEL region + 8 CHEST_SLOT_* zones + the
+ *      CHEST_ARROW_OR_EYE button (with arrow vs. eye label per
+ *      v1OpenChestOpenedByEye). No chest zones when v1OpenChestThing
+ *      is 0.
+ *  13. Acting champion zone - ACTING_CHAMPION appears only for
+ *      actingChampionOrdinal 1..4 and carries "ordinal=N" in the
+ *      value field; ordinal 0 (idle) and ordinal > 4 (out of range)
+ *      emit no ACTING_CHAMPION element.
+ *  14. Bounds invariant - every emitted element's x/y/w/h must
+ *      stay inside the framebuffer bounds the caller passed to
+ *      m11_screen_reader_update_ex. The M11 a11y emitter uses
+ *      source-locked 320x200 pixel coordinates, so even when the
+ *      caller passes a modern 1920x1080 framebuffer, no zone may
+ *      exceed those coords (only the gameplay_root envelope scales).
+ *      Zero / negative framebuffer dims fall back to 320x200.
+ *  15. Deterministic zone order - two emissions of the same state
+ *      produce byte-identical output, the canonical element order
+ *      (gameplay_root -> VIEWPORT -> MOVE_FWD -> MOVE_BACK ->
+ *      TURN_LEFT -> TURN_RIGHT -> SPELL_AREA -> HUD_PANEL ->
+ *      CONTROL_STRIP) is preserved across runs, and a re-emission
+ *      of the original state after an intermediate inventory emission
+ *      still matches the first emission byte-for-byte (no leftover
+ *      global state).
  *
  * Test isolation: redirects HOME to a per-run temp dir so the manifest
  * never touches the real user ~/.firestaff.  The test uses
@@ -626,6 +651,497 @@ static void subtest_null_state_is_noop(void) {
                  "null-state: no .tmp residue");
 }
 
+/* -- Subtest 12: inventory chest panel --------------------------- */
+
+/* Helper: extract a "{ ... }" JSON object substring starting at
+ * the first '{' after `p` and ending at the matching closing
+ * brace. Returns the length written to out (0 if not found). */
+static int m11_ax_extract_object(const char* p, char* out, size_t outSize) {
+    int depth = 0;
+    size_t i = 0;
+    int started = 0;
+    if (!p || !out || outSize == 0) return 0;
+    while (*p) {
+        if (*p == '{') {
+            ++depth;
+            started = 1;
+        } else if (*p == '}') {
+            --depth;
+            if (started && depth == 0) {
+                if (i < outSize - 1) out[i++] = *p;
+                out[i] = '\0';
+                return (int)i;
+            }
+        }
+        if (started && i < outSize - 1) out[i++] = *p;
+        ++p;
+    }
+    return 0;
+}
+
+/* Helper: parse "bounds":{"x":N,"y":N,"w":N,"h":N} out of an object
+ * substring. Returns 1 on success, 0 on parse failure. */
+static int m11_ax_parse_bounds(const char* obj,
+                               int* x, int* y, int* w, int* h) {
+    const char* b;
+    if (!obj) return 0;
+    b = strstr(obj, "\"bounds\":{");
+    if (!b) return 0;
+    return sscanf(b, "\"bounds\":{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d}",
+                  x, y, w, h) == 4 ? 1 : 0;
+}
+
+static void subtest_inventory_chest_panel(void) {
+    M11_GameViewState state;
+    char buf[16384];
+    int n;
+    int chestOrdinal;
+
+    /* (a) No chest open - inventory panel still emits the panel +
+     * 13 equipment + 16 backpack zones, but no CHEST_* or
+     * CHEST_ARROW_OR_EYE elements.
+     *
+     * v1OpenChestThing is an unsigned short; the a11y emitter
+     * guards on `state->v1OpenChestThing != THING_NONE` where
+     * THING_NONE = 0xFFFF (include/memory_dungeon_dat_pc34_compat.h).
+     * A freshly zeroed state has v1OpenChestThing == 0, which IS
+     * != 0xFFFF, so chest zones would be emitted. We must set
+     * v1OpenChestThing = THING_NONE explicitly to test the
+     * "no chest open" path. */
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.inventoryPanelActive = 1;
+    state.world.party.activeChampionIndex = 0;
+    state.v1OpenChestThing = THING_NONE;
+    state.v1OpenChestOpenedByEye = 0;
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1,
+                     "chest[a]: update returns 1 with no chest open");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "chest[a]: file is non-empty");
+    if (n > 0) {
+        m11_ax_check(strstr(buf, "\"id\":\"CHEST_PANEL\"") == NULL,
+                     "chest[a]: no CHEST_PANEL when v1OpenChestThing is 0");
+        m11_ax_check(strstr(buf, "\"id\":\"CHEST_SLOT_0\"") == NULL,
+                     "chest[a]: no CHEST_SLOT_0 when no chest open");
+        m11_ax_check(strstr(buf, "\"id\":\"CHEST_ARROW_OR_EYE\"") == NULL,
+                     "chest[a]: no CHEST_ARROW_OR_EYE when no chest open");
+    }
+
+    /* (b) Chest open via Arrow/Take-All. */
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.inventoryPanelActive = 1;
+    state.world.party.activeChampionIndex = 1;
+    state.v1OpenChestThing = 0x1234u;
+    state.v1OpenChestOpenedByEye = 0;
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1,
+                     "chest[b]: update returns 1 with chest open (arrow)");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "chest[b]: file is non-empty");
+    if (n > 0) {
+        m11_ax_check(strstr(buf, "\"id\":\"CHEST_PANEL\"") != NULL,
+                     "chest[b]: CHEST_PANEL region present");
+        /* All 8 chest slots must appear (CHEST.C F0333 C537..C544). */
+        for (chestOrdinal = 0; chestOrdinal < 8; ++chestOrdinal) {
+            char want[64];
+            char msg[96];
+            snprintf(want, sizeof(want), "\"id\":\"CHEST_SLOT_%d\"",
+                     chestOrdinal);
+            snprintf(msg, sizeof(msg),
+                     "chest[b]: CHEST_SLOT_%d present (0..7)", chestOrdinal);
+            m11_ax_check(strstr(buf, want) != NULL, msg);
+        }
+        m11_ax_check(strstr(buf, "\"id\":\"CHEST_ARROW_OR_EYE\"") != NULL,
+                     "chest[b]: CHEST_ARROW_OR_EYE button present");
+        m11_ax_check(strstr(buf, "Arrow (Take All)") != NULL,
+                     "chest[b]: arrow label is \"Arrow (Take All)\"");
+    }
+
+    /* (c) Chest open via Eye/Reincarnate. */
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.inventoryPanelActive = 1;
+    state.v1OpenChestThing = 0xABCDu;
+    state.v1OpenChestOpenedByEye = 1;
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1,
+                     "chest[c]: update returns 1 with chest open (eye)");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "chest[c]: file is non-empty");
+    if (n > 0) {
+        m11_ax_check(strstr(buf, "Eye (Reincarnate)") != NULL,
+                     "chest[c]: eye label is \"Eye (Reincarnate)\"");
+        /* Chest slots still appear in the eye case. */
+        m11_ax_check(strstr(buf, "\"id\":\"CHEST_SLOT_0\"") != NULL &&
+                     strstr(buf, "\"id\":\"CHEST_SLOT_7\"") != NULL,
+                     "chest[c]: 8 chest slots also appear in eye mode");
+    }
+}
+
+/* -- Subtest 13: ACTING_CHAMPION zone ----------------------------- */
+
+static void subtest_acting_champion_zone(void) {
+    M11_GameViewState state;
+    char buf[16384];
+    int n;
+    unsigned int ordinal;
+
+    /* (a) ordinal == 0 means "no champion is acting" — the action
+     * area is in idle mode (F0387 icon-mode branch). The screen
+     * reader must NOT emit an ACTING_CHAMPION zone. */
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.inventoryPanelActive = 1;
+    state.actingChampionOrdinal = 0u;
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1,
+                     "acting[a]: update returns 1 (ordinal 0)");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "acting[a]: file is non-empty");
+    if (n > 0) {
+        m11_ax_check(strstr(buf, "\"id\":\"ACTING_CHAMPION\"") == NULL,
+                     "acting[a]: no ACTING_CHAMPION when ordinal is 0");
+    }
+
+    /* (b) ordinals 1..4 each emit a value field carrying
+     * "ordinal=N" so a screen reader can announce which champion
+     * is acting. */
+    for (ordinal = 1u; ordinal <= 4u; ++ordinal) {
+        char want[64];
+        char msg[96];
+        m11_ax_clean_artifacts();
+        fs_ax_set_enabled(1);
+        memset(&state, 0, sizeof(state));
+        state.active = 1;
+        state.inventoryPanelActive = 1;
+        state.actingChampionOrdinal = ordinal;
+        {
+            int rc = m11_screen_reader_update_ex(&state, 320, 200);
+            snprintf(msg, sizeof(msg),
+                     "acting[b]: update returns 1 (ordinal %u)", ordinal);
+            m11_ax_check(rc == 1, msg);
+        }
+        n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+        if (n <= 0) continue;
+        m11_ax_check(strstr(buf, "\"id\":\"ACTING_CHAMPION\"") != NULL,
+                     "acting[b]: ACTING_CHAMPION present for valid ordinal");
+        snprintf(want, sizeof(want), "ordinal=%u", ordinal);
+        snprintf(msg, sizeof(msg),
+                 "acting[b]: value field carries \"%s\"", want);
+        m11_ax_check(strstr(buf, want) != NULL, msg);
+    }
+
+    /* (c) ordinal > 4 is out of range — the F0387 source only
+     * models 1..4 (matches G0506_ui_ActingChampionOrdinal clamp).
+     * The screen reader must NOT emit ACTING_CHAMPION. */
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.inventoryPanelActive = 1;
+    state.actingChampionOrdinal = 5u;
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1,
+                     "acting[c]: update returns 1 (ordinal 5)");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "acting[c]: file is non-empty");
+    if (n > 0) {
+        m11_ax_check(strstr(buf, "\"id\":\"ACTING_CHAMPION\"") == NULL,
+                     "acting[c]: no ACTING_CHAMPION when ordinal > 4");
+    }
+}
+
+/* -- Subtest 14: bounds invariant at modern framebuffer ------------ */
+
+/* Iterate every "{" ... "}" object in `buf`, parse out the
+ * "id" string and "bounds" rectangle, and assert that
+ *   0 <= x && x+w <= fbW && 0 <= y && y+h <= fbH
+ * for each element. Stops at the first out-of-bounds element
+ * and records which one it was. */
+static void m11_ax_check_bounds_inside(const char* buf,
+                                       int fbW, int fbH,
+                                       const char* label) {
+    const char* p;
+    char msg[160];
+    int checked = 0;
+    p = buf;
+    while ((p = strstr(p, "{")) != NULL) {
+        char obj[512];
+        char idBuf[64];
+        int x = 0, y = 0, w = 0, h = 0;
+        int objLen;
+        const char* idStart;
+        const char* idEnd;
+        objLen = m11_ax_extract_object(p, obj, sizeof(obj));
+        if (objLen <= 0) break;
+        /* Skip the outer envelope { ... }: it has "version" / "app"
+         * but no "bounds". */
+        idStart = strstr(obj, "\"id\":\"");
+        if (!idStart) {
+            p += 1;
+            continue;
+        }
+        idStart += 6;
+        idEnd = strchr(idStart, '"');
+        if (!idEnd) break;
+        if ((size_t)(idEnd - idStart) >= sizeof(idBuf)) {
+            p += 1;
+            continue;
+        }
+        memcpy(idBuf, idStart, idEnd - idStart);
+        idBuf[idEnd - idStart] = '\0';
+        if (!m11_ax_parse_bounds(obj, &x, &y, &w, &h)) {
+            p += 1;
+            continue;
+        }
+        ++checked;
+        snprintf(msg, sizeof(msg),
+                 "bounds[%s]: element '%s' bounds inside framebuffer",
+                 label, idBuf);
+        m11_ax_check(x >= 0 && y >= 0 &&
+                     x + w <= fbW && y + h <= fbH, msg);
+        p += objLen;
+    }
+    snprintf(msg, sizeof(msg),
+             "bounds[%s]: scanned %d bounded elements (sanity floor)",
+             label, checked);
+    m11_ax_check(checked >= 6, msg);
+}
+
+static void subtest_bounds_invariant(void) {
+    M11_GameViewState state;
+    char buf[16384];
+    int n;
+
+    /* (a) Source-faithful 320x200: every zone must stay inside. */
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1, "bounds[a]: update returns 1 (320x200)");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "bounds[a]: file is non-empty");
+    if (n > 0) {
+        m11_ax_check_bounds_inside(buf, 320, 200, "src");
+    }
+
+    /* (b) Modern 1920x1080 framebuffer — the gameplay-side manifest
+     * keeps source-locked 320x200 pixel coords (ReDMCSB layout-696 /
+     * PANEL.C / ENDGAME.C). The larger framebuffer only widens the
+     * gameplay_root envelope; no source zone may exceed 1920x1080. */
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    {
+        int rc = m11_screen_reader_update_ex(&state, 1920, 1080);
+        m11_ax_check(rc == 1, "bounds[b]: update returns 1 (1920x1080)");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "bounds[b]: file is non-empty");
+    if (n > 0) {
+        /* gameplay_root envelope scales with framebuffer. */
+        m11_ax_check(strstr(buf, "\"width\":1920") != NULL &&
+                     strstr(buf, "\"height\":1080") != NULL,
+                     "bounds[b]: envelope framebuffer reflects 1920x1080");
+        /* The source-locked zones still report 320x200-pixel bounds
+         * and stay well inside the modern framebuffer. */
+        m11_ax_check_bounds_inside(buf, 1920, 1080, "modern");
+    }
+
+    /* (c) Zero/negative framebuffer dimensions fall back to 320x200
+     * (see m11_screen_reader_update_ex default). The manifest must
+     * still be well-formed and the zones must stay inside. */
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    {
+        int rc = m11_screen_reader_update_ex(&state, 0, 0);
+        m11_ax_check(rc == 1,
+                     "bounds[c]: update returns 1 (zero fb dims)");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "bounds[c]: file is non-empty");
+    if (n > 0) {
+        m11_ax_check(strstr(buf, "\"width\":320") != NULL &&
+                     strstr(buf, "\"height\":200") != NULL,
+                     "bounds[c]: zero fb dims fall back to 320x200");
+        m11_ax_check_bounds_inside(buf, 320, 200, "zero_fallback");
+    }
+}
+
+/* -- Subtest 15: deterministic zone order -------------------------- */
+
+static void subtest_deterministic_zone_order(void) {
+    M11_GameViewState state;
+    char buf1[16384];
+    char buf2[16384];
+    int n1, n2;
+    const char* p_viewport;
+    const char* p_move_fwd;
+    const char* p_spell;
+    const char* p_hud;
+    const char* p_strip;
+    const char* p_root;
+    const char* q_root;
+    const char* q_viewport;
+    const char* q_spell;
+    const char* q_hud;
+    const char* q_strip;
+
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.world.partyMapIndex = 3;
+
+    /* First emission. */
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1, "order[1]: first update returns 1");
+    }
+    n1 = m11_ax_read_all(g_json_path, buf1, sizeof(buf1));
+    m11_ax_check(n1 > 0, "order[1]: first file is non-empty");
+    if (n1 <= 0) return;
+
+    /* Second emission with the same state. */
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1, "order[1]: second update returns 1");
+    }
+    n2 = m11_ax_read_all(g_json_path, buf2, sizeof(buf2));
+    m11_ax_check(n2 > 0, "order[1]: second file is non-empty");
+    if (n2 <= 0) return;
+
+    /* Byte-identical output across two emissions of the same state
+     * (no timestamps, no race windows). */
+    m11_ax_check(n1 == n2,
+                 "order[1]: two emissions have identical length");
+    m11_ax_check(strcmp(buf1, buf2) == 0,
+                 "order[1]: two emissions are byte-identical");
+
+    /* Stable canonical order: gameplay_root -> VIEWPORT ->
+     * movement arrows -> SPELL_AREA -> HUD_PANEL -> CONTROL_STRIP.
+     * The M11 a11y emitter walks each emit-function in a fixed
+     * sequence so a screen reader / replay tool can rely on the
+     * element list being deterministic. */
+    p_root = strstr(buf1, "\"id\":\"gameplay_root\"");
+    p_viewport = strstr(buf1, "\"id\":\"VIEWPORT\"");
+    p_move_fwd = strstr(buf1, "\"id\":\"MOVE_FWD\"");
+    p_spell = strstr(buf1, "\"id\":\"SPELL_AREA\"");
+    p_hud = strstr(buf1, "\"id\":\"HUD_PANEL\"");
+    p_strip = strstr(buf1, "\"id\":\"CONTROL_STRIP\"");
+
+    m11_ax_check(p_root != NULL, "order[1]: gameplay_root present");
+    m11_ax_check(p_viewport != NULL, "order[1]: VIEWPORT present");
+    m11_ax_check(p_move_fwd != NULL, "order[1]: MOVE_FWD present");
+    m11_ax_check(p_spell != NULL, "order[1]: SPELL_AREA present");
+    m11_ax_check(p_hud != NULL, "order[1]: HUD_PANEL present");
+    m11_ax_check(p_strip != NULL, "order[1]: CONTROL_STRIP present");
+
+    if (p_root && p_viewport && p_move_fwd && p_spell && p_hud && p_strip) {
+        m11_ax_check(p_root < p_viewport,
+                     "order[1]: gameplay_root before VIEWPORT");
+        m11_ax_check(p_viewport < p_move_fwd,
+                     "order[1]: VIEWPORT before MOVE_FWD");
+        m11_ax_check(p_move_fwd < p_spell,
+                     "order[1]: MOVE_FWD before SPELL_AREA");
+        m11_ax_check(p_spell < p_hud,
+                     "order[1]: SPELL_AREA before HUD_PANEL");
+        m11_ax_check(p_hud < p_strip,
+                     "order[1]: HUD_PANEL before CONTROL_STRIP");
+    }
+
+    /* Movement-arrow canonical ordering (F/B before TURN_*). */
+    {
+        const char* p_back = strstr(buf1, "\"id\":\"MOVE_BACK\"");
+        const char* p_left = strstr(buf1, "\"id\":\"TURN_LEFT\"");
+        const char* p_right = strstr(buf1, "\"id\":\"TURN_RIGHT\"");
+        if (p_move_fwd && p_back && p_left && p_right) {
+            m11_ax_check(p_move_fwd < p_back &&
+                         p_back < p_left &&
+                         p_left < p_right,
+                         "order[1]: FWD < BACK < TURN_LEFT < TURN_RIGHT");
+        }
+    }
+
+    /* Cross-run determinism — emit a third time with a different
+     * (still canonical) state, then re-emit the original state.
+     * The re-emission must match the first emission byte-for-byte
+     * (no leftover global state from the intermediate emission). */
+    {
+        M11_GameViewState altState;
+        char buf3[16384];
+        int n3;
+        memset(&altState, 0, sizeof(altState));
+        altState.active = 1;
+        altState.inventoryPanelActive = 1;
+        altState.world.party.activeChampionIndex = 2;
+        {
+            int rc = m11_screen_reader_update_ex(&altState, 320, 200);
+            m11_ax_check(rc == 1,
+                         "order[2]: intermediate inventory update returns 1");
+        }
+        n3 = m11_ax_read_all(g_json_path, buf3, sizeof(buf3));
+        m11_ax_check(n3 > 0, "order[2]: intermediate file is non-empty");
+        if (n3 > 0) {
+            m11_ax_check(strstr(buf3, "\"id\":\"INVENTORY_PANEL\"") != NULL,
+                         "order[2]: inventory manifest present");
+        }
+        /* Re-emit the original state and compare to the first emission. */
+        {
+            int rc = m11_screen_reader_update_ex(&state, 320, 200);
+            m11_ax_check(rc == 1, "order[2]: re-emit original returns 1");
+        }
+        {
+            char buf4[16384];
+            int n4 = m11_ax_read_all(g_json_path, buf4, sizeof(buf4));
+            m11_ax_check(n4 == n1,
+                         "order[2]: re-emit length matches original");
+            m11_ax_check(strcmp(buf4, buf1) == 0,
+                         "order[2]: re-emit byte-identical to original");
+        }
+    }
+
+    /* Sanity: gameplay_root envelope precedes every other element. */
+    q_root = strstr(buf2, "\"id\":\"gameplay_root\"");
+    q_viewport = strstr(buf2, "\"id\":\"VIEWPORT\"");
+    q_spell = strstr(buf2, "\"id\":\"SPELL_AREA\"");
+    q_hud = strstr(buf2, "\"id\":\"HUD_PANEL\"");
+    q_strip = strstr(buf2, "\"id\":\"CONTROL_STRIP\"");
+    if (q_root && q_viewport && q_spell && q_hud && q_strip) {
+        m11_ax_check(q_root < q_viewport &&
+                     q_viewport < q_spell &&
+                     q_spell < q_hud &&
+                     q_hud < q_strip,
+                     "order[3]: canonical order preserved across runs");
+    }
+}
+
 /* -- main --------------------------------------------------------- */
 
 int main(void) {
@@ -671,6 +1187,18 @@ int main(void) {
 
     printf("  [11] NULL state is a no-op...\n");
     subtest_null_state_is_noop();
+
+    printf("  [12] inventory chest panel...\n");
+    subtest_inventory_chest_panel();
+
+    printf("  [13] acting champion zone...\n");
+    subtest_acting_champion_zone();
+
+    printf("  [14] bounds invariant at modern framebuffer...\n");
+    subtest_bounds_invariant();
+
+    printf("  [15] deterministic zone order...\n");
+    subtest_deterministic_zone_order();
 
     m11_ax_teardown_temp_home();
 
