@@ -11612,6 +11612,25 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_hand_slot_refresh_pc34_compat
     )
 
+    # DM1 V1 champion-panel HAND-SLOT REFRESH M11 geometry bridge.
+    # Data-free Firestaff-side probe that cross-checks the source-locked
+    # F0296 odd action-hand slotbox walk (1, 3, 5, 7) against the M11
+    # compact status-panel hand-zone helpers. This closes the bounded
+    # geometry handoff only; real GRAPHICS.DAT pixel parity and paired
+    # original screenshots remain separate capture work.
+    add_executable(firestaff_dm1_v1_champion_panel_hand_slot_refresh_m11_bridge_probe
+        probes/m11/firestaff_dm1_v1_champion_panel_hand_slot_refresh_m11_bridge_probe.c
+        src/dm1/dm1_v1_champion_panel_hand_slot_refresh_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_panel_hand_slot_refresh_m11_bridge_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_panel_hand_slot_refresh_m11_bridge_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_panel_hand_slot_refresh_m11_bridge_probe
+        COMMAND firestaff_dm1_v1_champion_panel_hand_slot_refresh_m11_bridge_probe
+    )
+
     # DM1 V1 champion-panel INVENTORY/CHEST redraw walk gate.
     # Source-locked against CHAMDRAW.C F0296:1233-1259 (the second
     # half of F0296: the inventory-owner walk over slot indices
