@@ -148,6 +148,7 @@ static int cpdfd_allocate_event_index(
 
 static int cpdfd_add_pending_event(
     DM1_V1_ChampionPanelDamageFlashDecayStatePc34Compat *state,
+    int event_index,
     int event_type,
     int map_index,
     int64_t fire_time,
@@ -158,6 +159,8 @@ static int cpdfd_add_pending_event(
               sizeof(state->timeline_events[0]))) {
         return 0;
     }
+    state->timeline_events[state->pending_timeline_event_count].event_index =
+        event_index;
     state->timeline_events[state->pending_timeline_event_count].event_type =
         event_type;
     state->timeline_events[state->pending_timeline_event_count].map_index =
@@ -253,6 +256,7 @@ int DM1_V1_ChampionPanelDamageFlashDecay_TickPc34Compat(
         /* New event branch: F0238_TIMELINE_AddEvent_GetEventIndex_CPSE */
         scheduled_event_index = cpdfd_allocate_event_index(state);
         cpdfd_add_pending_event(state,
+                                scheduled_event_index,
                                 DM1_V1_CPDFD_EVENT_HIDE_DAMAGE_RECEIVED_PC34,
                                 state->party_champion_count /* map sentinel */,
                                 scheduled_fire_time,
@@ -263,14 +267,22 @@ int DM1_V1_ChampionPanelDamageFlashDecay_TickPc34Compat(
         /*
          * Reschedule branch: F0235_TIMELINE_GetIndex +
          * F0236_TIMELINE_FixPlacement; in the synthetic model this
-         * just rewrites the fire_time of the existing C12 event.
+         * rewrites the fire_time of the exact stored event index, not
+         * merely the first C12 row with the same champion priority.
          */
         int i;
         for (i = 0; i < state->pending_timeline_event_count; ++i) {
-            if (state->timeline_events[i].champion_priority ==
-                    champion_index_with_pending_damage &&
+            if (state->timeline_events[i].event_index ==
+                    champion->hide_damage_received_event_index &&
                 state->timeline_events[i].event_type ==
                     DM1_V1_CPDFD_EVENT_HIDE_DAMAGE_RECEIVED_PC34) {
+                /*
+                 * ReDMCSB CHAMPION.C F0320:1791-1793 rewrites
+                 * G0370_ps_Events[AL0969_i_EventIndex].Map_Time and
+                 * calls F0236_TIMELINE_FixPlacement(F0235_TIMELINE_GetIndex(
+                 * AL0969_i_EventIndex)); TIMELINE.C F0235:273-292 is the
+                 * event-index lookup in the live timeline.
+                 */
                 state->timeline_events[i].fire_time = scheduled_fire_time;
                 break;
             }

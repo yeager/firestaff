@@ -107,6 +107,7 @@ typedef struct DM1_V1_ChampionPanelDamageFlashDecayChampionPc34Compat {
 } DM1_V1_ChampionPanelDamageFlashDecayChampionPc34Compat;
 
 typedef struct DM1_V1_ChampionPanelDamageFlashDecayTimelineEventPc34Compat {
+    int event_index;
     int event_type;
     int map_index;
     int64_t fire_time;
