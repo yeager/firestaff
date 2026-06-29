@@ -11,9 +11,9 @@
  *
  * ReDMCSB CHAMDRAW.C F0292:757-815 first gates all nine dirty bits, resolves
  * the C151+championIndex 67x29 status-box zone, fills live boxes with C12,
- * dispatches F0354 only for the inventory champion, and arms the
- * NAME_TITLE|STATISTICS|WOUNDS|ACTION_HAND continuation for non-inventory
- * champions.
+ * dispatches F0354 only for the inventory champion, arms only STATISTICS for
+ * that owner, and arms NAME_TITLE|STATISTICS|WOUNDS|ACTION_HAND for
+ * non-inventory champions.
  *
  * ReDMCSB CHAMDRAW.C F0292:843-895 performs the name-color cascade after a
  * leader change. For the PC34-compatible route this fixture pins C11 for the
@@ -42,8 +42,9 @@ static const char s_source_evidence[] =
     "maps inventory/status slots and draws C033/C034/C035 hand-slot chrome; "
     "CHAMDRAW.C F0292:757-815 gates the 67x29 C151..C154 status-box branch, "
     "fills live boxes with C12, calls F0354 only for the inventory champion, "
-    "and arms NAME_TITLE|STATISTICS|WOUNDS|ACTION_HAND for non-inventory "
-    "champions; CHAMDRAW.C F0292:843-895 pins the PC34 C11 leader/C09 "
+    "then arms only STATISTICS for that owner; non-inventory champions arm "
+    "NAME_TITLE|STATISTICS|WOUNDS|ACTION_HAND; CHAMDRAW.C F0292:843-895 pins "
+    "the PC34 C11 leader/C09 "
     "nonleader name-color cascade; CHAMDRAW.C F0292:898-935 recomputes "
     "statistics and C033/C034 mouth/eye chrome; CHAMDRAW.C F0292:1080-1110 "
     "redraws the action hand through F0291 and clears all nine dirty bits; "
@@ -107,6 +108,7 @@ static uint32_t hash_model(const dm1_v1_cppbrs_model_pc34_compat_t *model)
         hash = mix_u32(hash, row->calls_f0354 ? 1u : 0u);
         hash = mix_u32(hash, row->f0296_chrome_transition ? 1u : 0u);
         hash = mix_u32(hash, row->f0296_suppressed_by_candidate ? 1u : 0u);
+        hash = mix_u32(hash, row->inventory_owner_status_box_path ? 1u : 0u);
         hash = mix_u32(hash, (uint32_t)row->operation_count);
         for (j = 0; j < row->operation_count; ++j) {
             hash = mix_u32(hash, (uint32_t)row->operations[j]);
@@ -203,6 +205,12 @@ bool dm1_v1_cppbrs_build_model_pc34(
         DM1_V1_CPPBRS_OP_F0292_STATISTICS_CHROME_PC34,
         DM1_V1_CPPBRS_OP_F0291_DRAW_SLOT_PC34,
         DM1_V1_CPPBRS_OP_F0292_ACTION_HAND_PC34,
+        DM1_V1_CPPBRS_OP_F0292_CLEAR_MASK_PC34
+    };
+    static const dm1_v1_cppbrs_op_pc34_compat_t inventory_status_ops[] = {
+        DM1_V1_CPPBRS_OP_F0292_STATUS_FILL_PC34,
+        DM1_V1_CPPBRS_OP_F0354_PORTRAIT_BLIT_PC34,
+        DM1_V1_CPPBRS_OP_F0292_STATISTICS_CHROME_PC34,
         DM1_V1_CPPBRS_OP_F0292_CLEAR_MASK_PC34
     };
     static const dm1_v1_cppbrs_op_pc34_compat_t chest_ops[] = {
@@ -321,6 +329,21 @@ bool dm1_v1_cppbrs_build_model_pc34(
     out->rows[6].candidate_pick_path = true;
     set_name_colors(&out->rows[6], out->rows[6].leader_after);
     fill_ops(&out->rows[6], status_box_ops, 6);
+
+    fill_row(&out->rows[7],
+             DM1_V1_CPPBRS_EVENT_INVENTORY_OWNER_STATUS_BOX_PC34,
+             "inventory-owner status box");
+    out->rows[7].owner_before = 2;
+    out->rows[7].owner_after = 2;
+    out->rows[7].redraw_champion = 1;
+    out->rows[7].input_mask = DM1_V1_CPPBRS_MASK_STATUS_BOX_PC34;
+    out->rows[7].continuation_mask = DM1_V1_CPPBRS_MASK_STATISTICS_PC34;
+    out->rows[7].calls_f0292 = true;
+    out->rows[7].fills_status_box = true;
+    out->rows[7].calls_f0354 = true;
+    out->rows[7].statistics_chrome = true;
+    out->rows[7].inventory_owner_status_box_path = true;
+    fill_ops(&out->rows[7], inventory_status_ops, 4);
 
     out->deterministic_hash = hash_model(out);
     return true;

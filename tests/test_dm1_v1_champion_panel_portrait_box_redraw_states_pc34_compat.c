@@ -82,6 +82,9 @@ static void test_source_and_contract(void)
                     "F0291 slot-box mapping");
     expect_contains("source.f0292.status", source, "CHAMDRAW.C F0292:757-815",
                     "F0292 status branch");
+    expect_contains("source.f0292.inventory", source,
+                    "arms only STATISTICS for that owner",
+                    "F0292:810-812 inventory-owner continuation");
     expect_contains("source.f0292.name", source, "CHAMDRAW.C F0292:843-895",
                     "F0292 name-color cascade");
     expect_contains("source.f0292.stats", source, "CHAMDRAW.C F0292:898-935",
@@ -251,6 +254,44 @@ static void test_event_matrix(void)
     expect_int("pick.redraw", row->redraw_champion, 3,
                "candidate index");
 
+    row = require_row(&model,
+                      DM1_V1_CPPBRS_EVENT_INVENTORY_OWNER_STATUS_BOX_PC34);
+    expect_bool("inventory.path", row->inventory_owner_status_box_path, true,
+                "CHAMDRAW.C F0292:810 inventory owner branch");
+    expect_int("inventory.owner.before", row->owner_before, 2,
+               "M001 inventory owner ordinal");
+    expect_int("inventory.owner.after", row->owner_after, 2,
+               "F0292 does not switch owner");
+    expect_int("inventory.redraw", row->redraw_champion, 1,
+               "M001 ordinal 2 -> champion index 1");
+    expect_bool("inventory.status.fill", row->fills_status_box, true,
+                "CHAMDRAW.C F0292:757-809");
+    expect_bool("inventory.f0354", row->calls_f0354, true,
+                "CHAMDRAW.C F0292:810-811");
+    expect_bool("inventory.statistics", row->statistics_chrome, true,
+                "CHAMDRAW.C F0292:812 then 898-935");
+    expect_bool("inventory.name", row->name_color_cascade, false,
+                "F0292:812 does not set NAME_TITLE");
+    expect_bool("inventory.action", row->action_hand_redraw, false,
+                "F0292:812 does not set ACTION_HAND");
+    expect_int("inventory.continuation", row->continuation_mask,
+               DM1_V1_CPPBRS_MASK_STATISTICS_PC34,
+               "CHAMDRAW.C F0292:812 statistics-only continuation");
+    expect_int("inventory.ops.count", row->operation_count, 4,
+               "status fill -> F0354 -> statistics -> clear");
+    expect_int("inventory.ops.0", row->operations[0],
+               DM1_V1_CPPBRS_OP_F0292_STATUS_FILL_PC34,
+               "CHAMDRAW.C F0292:757-809");
+    expect_int("inventory.ops.1", row->operations[1],
+               DM1_V1_CPPBRS_OP_F0354_PORTRAIT_BLIT_PC34,
+               "CHAMDRAW.C F0292:810-811");
+    expect_int("inventory.ops.2", row->operations[2],
+               DM1_V1_CPPBRS_OP_F0292_STATISTICS_CHROME_PC34,
+               "CHAMDRAW.C F0292:898-935");
+    expect_int("inventory.ops.3", row->operations[3],
+               DM1_V1_CPPBRS_OP_F0292_CLEAR_MASK_PC34,
+               "CHAMDRAW.C F0292:1110");
+
     for (i = 0; i < DM1_V1_CPPBRS_EVENT_COUNT_PC34; ++i) {
         char id[64];
         const dm1_v1_cppbrs_event_row_pc34_compat_t *r = &model.rows[i];
@@ -288,7 +329,7 @@ int main(void)
     test_geometry();
     test_event_matrix();
     (void)dm1_v1_cppbrs_build_model_pc34(&model);
-    expect_u32("deterministic.hash", model.deterministic_hash, 0x7D4CD150u,
+    expect_u32("deterministic.hash", model.deterministic_hash, 0xE75CC4C6u,
                "pass766plus hash");
 
     printf("Assertions: %d\n", g_assertions);
