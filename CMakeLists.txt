@@ -22809,8 +22809,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_sck_mapfile.c"
 endif()
 
 # SCK mapfile -> Firestaff asset-loader bridge: bounded `_mapping.xml`
-# index parser, MD5+file lookup, and sized asset-slice selector for one
-# concrete resource.  Keeps the non-SIZE formats out of scope.
+# index parser, MD5+file lookup, sized asset-slice selectors, and RAW
+# identity decoder handoff coverage for one concrete resource.  Keeps
+# non-SIZE formats and unsupported PAL/SND/FTL decoders out of scope.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_sck_asset_bridge.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/firestaff_sck_asset_bridge.c")
     add_executable(test_firestaff_sck_asset_bridge

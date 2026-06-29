@@ -22,8 +22,8 @@
  *   - Item formats without `SIZE=` attributes are recognized
  *     but never selected as runtime slices.
  *   - Item types that lack a Firestaff-side decoder (anything
- *     other than RAW / IMG family with SIZE) are filtered out
- *     by the selector helpers.
+ *     other than the IMG family's existing backend and the RAW
+ *     identity handoff below) are filtered out by selector helpers.
  *   - No real network/Greatstone download happens inside this
  *     module; callers pass already-fetched text in.
  *
@@ -76,7 +76,8 @@ typedef enum FirestaffSckBridgeResult {
     FIRESTAFF_SCK_BRIDGE_ERR_NOT_FOUND,
     FIRESTAFF_SCK_BRIDGE_ERR_MAPFILE_PARSE,
     FIRESTAFF_SCK_BRIDGE_ERR_SLICE_OUT_OF_BOUNDS,
-    FIRESTAFF_SCK_BRIDGE_ERR_NOT_SIZED
+    FIRESTAFF_SCK_BRIDGE_ERR_NOT_SIZED,
+    FIRESTAFF_SCK_BRIDGE_ERR_UNSUPPORTED_DECODER
 } FirestaffSckBridgeResult;
 
 /* Parse a Greatstone/SCK `_mapping.xml` text blob into rows.
@@ -110,6 +111,22 @@ typedef struct FirestaffSckBridgeSelection {
     int hasNumericNumber;
     int hasSizeBytes;
 } FirestaffSckBridgeSelection;
+
+/* RAW asset handoff result.  RAW rows in the Greatstone/SCK corpus are
+ * intentionally an identity decoder: the bridge validates that the selected
+ * RAW slice is bounded inside the caller-owned asset bytes and returns a
+ * borrowed view into that buffer.  This lets selector-visible RAW items enter
+ * a Firestaff-side decoder surface without persisting or transforming
+ * copyrighted corpus bytes. */
+typedef struct FirestaffSckBridgeRawHandoff {
+    const uint8_t* bytes;
+    uint32_t byteCount;
+    uint32_t offset;
+    uint32_t checksum32;
+    char itemNumber[16];
+    char itemType[FIRESTAFF_SCK_MAPFILE_TYPE_BYTES];
+    char itemDescription[FIRESTAFF_SCK_MAPFILE_DESC_BYTES];
+} FirestaffSckBridgeRawHandoff;
 
 /* Select the SCK item identified by `itemNumber` from `mapfileText`
  * and validate the resulting slice against a target file of
@@ -145,6 +162,21 @@ FirestaffSckBridgeResult FirestaffSckBridge_SelectSliceByDescription(
     const char* acceptTypePrefix,
     uint32_t targetFileBytes,
     FirestaffSckBridgeSelection* outSelection,
+    char* errMsg,
+    size_t errMsgBytes);
+
+/* Decode a selected RAW slice from `assetBytes`.
+ *
+ * The selected item must have a type prefix of RAW (RAW1, RAW2, ...).
+ * Returns OK with `outRaw` as a borrowed view into `assetBytes` when the
+ * selected offset/size fits inside `assetByteCount`.  Unsupported types
+ * return UNSUPPORTED_DECODER, so PAL/SND/FTL rows stay visible to selectors
+ * but cannot accidentally masquerade as decoded bytes. */
+FirestaffSckBridgeResult FirestaffSckBridge_DecodeRawSelection(
+    const uint8_t* assetBytes,
+    uint32_t assetByteCount,
+    const FirestaffSckBridgeSelection* selection,
+    FirestaffSckBridgeRawHandoff* outRaw,
     char* errMsg,
     size_t errMsgBytes);
 

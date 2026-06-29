@@ -315,6 +315,8 @@ need real-asset proof.
 
 - **DM1 HoC ordinal-2 readiness status narrowed**: the existing future-route readiness gate now records the current sibling matrix as 10/10 source-present and CTest-wired, while keeping the real-data boundary explicit: live PC 3.4 still exposes zero real ordinal-2 corridor-sensor poses, so no per-route visual capture or DOS pixel parity claim is promoted yet.
 
+- **SCK RAW asset bridge handoff**: `firestaff_sck_asset_bridge` now has a bounded RAW identity decoder surface for selector-chosen `RAW*` mapfile slices. Synthetic CTest coverage verifies RAW slice handoff and keeps PAL/SND rows visible but unsupported until their decoders land.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
