@@ -259,6 +259,54 @@ static void test_reschedule_second_hit_within_window(void)
               "latest damage text overwrites");
 }
 
+static void test_reschedule_uses_event_index_not_priority(void)
+{
+    DM1_V1_ChampionPanelDamageFlashDecayStatePc34Compat state;
+    DM1_V1_ChampionPanelDamageFlashDecayStepResultPc34Compat step;
+
+    DM1_V1_ChampionPanelDamageFlashDecay_InitStatePc34Compat(&state);
+    state.game_time = 20;
+    state.champions[2].hide_damage_received_event_index = 99;
+
+    state.timeline_events[0].event_index = 55;
+    state.timeline_events[0].event_type =
+        DM1_V1_CPDFD_EVENT_HIDE_DAMAGE_RECEIVED_PC34;
+    state.timeline_events[0].map_index = 0;
+    state.timeline_events[0].fire_time = 12;
+    state.timeline_events[0].scheduled_time = 12;
+    state.timeline_events[0].champion_priority = 2;
+    state.timeline_events[0].slot = 0;
+
+    state.timeline_events[1].event_index = 99;
+    state.timeline_events[1].event_type =
+        DM1_V1_CPDFD_EVENT_HIDE_DAMAGE_RECEIVED_PC34;
+    state.timeline_events[1].map_index = 0;
+    state.timeline_events[1].fire_time = 13;
+    state.timeline_events[1].scheduled_time = 13;
+    state.timeline_events[1].champion_priority = 2;
+    state.timeline_events[1].slot = 0;
+    state.pending_timeline_event_count = 2;
+
+    check_int("resched_index.build_return",
+              DM1_V1_ChampionPanelDamageFlashDecay_TickPc34Compat(
+                  &state, 2, 4, &step),
+              1, "CHAMPION.C F0320:1791-1793 exact event-index reschedule");
+    check_true("resched_index.rescheduled",
+               step.rescheduled_existing_event,
+               "F0235_TIMELINE_GetIndex uses HideDamageReceivedEventIndex");
+    check_false("resched_index.scheduled_new", step.scheduled_new_event,
+                "stale C12 is moved instead of adding another event");
+    check_int("resched_index.first_event_unchanged",
+              (int)state.timeline_events[0].fire_time, 12,
+              "TIMELINE.C F0235:273-292 must not match by champion priority");
+    check_int("resched_index.second_event_moved",
+              (int)state.timeline_events[1].fire_time, 25,
+              "CHAMPION.C F0320:1791 writes GameTime + 5 on event index 99");
+    check_int("resched_index.pending_count",
+              state.pending_timeline_event_count, 2,
+              "F0236_TIMELINE_FixPlacement reorders timeline, not event pool");
+}
+
 static void test_advance_timeline_fires_c12_at_t_plus_5(void)
 {
     DM1_V1_ChampionPanelDamageFlashDecayStatePc34Compat state;
@@ -618,6 +666,7 @@ int main(void)
     test_tick_basic_flash_and_schedule();
     test_tick_non_inventory_uses_small_graphic();
     test_reschedule_second_hit_within_window();
+    test_reschedule_uses_event_index_not_priority();
     test_advance_timeline_fires_c12_at_t_plus_5();
     test_advance_timeline_non_inventory_branch();
     test_advance_timeline_multiple_champions();
