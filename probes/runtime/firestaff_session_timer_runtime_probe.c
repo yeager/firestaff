@@ -17,6 +17,9 @@
  *     campaign slot records elapsed play time).
  *   - The reminder can be acknowledged, the latch cleared, and the
  *     forced-pause released; further ticks behave as expected.
+ *   - Uneven/coarse M11 tick deltas still cross the reminder and
+ *     forced-pause boundaries deterministically without surfacing a
+ *     stale reminder before FORCED_PAUSE.
  *
  * The probe is data-free: no SDL, no real assets, no graphics.  It
  * only consults the public M12 / session_timer_runtime APIs and the
@@ -257,6 +260,32 @@ int main(void) {
                  SessionTimerRuntime_DefaultReminderSeconds() == 300 &&
                      SessionTimerRuntime_DefaultReminderWindowSeconds() == 300,
                  "default reminder + re-arm window = 300s (5 min)");
+
+    /* ── Probe 12: uneven/coarse M11 tick deltas cross boundaries. ─── */
+    SessionTimerRuntime_Init(&rt, 60);
+    SessionTimerRuntime_Tick(&rt, 3299);
+    SessionTimerRuntime_Tick(&rt, 2);
+    probe_record(&tally,
+                 "SESSION_RUNTIME_11A",
+                 rt.elapsedSeconds == 3301 &&
+                     SessionTimerRuntime_RemainingSeconds(&rt) == 299 &&
+                     SessionTimerRuntime_Poll(&rt) ==
+                         SESSION_TIMER_RUNTIME_EVENT_REMINDER_DUE,
+                 "uneven 3299+2s ticks cross the 300s reminder threshold");
+
+    SessionTimerRuntime_Init(&rt, 60);
+    SessionTimerRuntime_Tick(&rt, 3700);
+    SessionTimerRuntime_FormatRemaining(&rt, buf, sizeof(buf));
+    probe_record(&tally,
+                 "SESSION_RUNTIME_11B",
+                 rt.elapsedSeconds == 3600 &&
+                     rt.remainingSeconds == 0 &&
+                     rt.reminderPending == 0 &&
+                     rt.forcedPauseLatched == 1 &&
+                     SessionTimerRuntime_Poll(&rt) ==
+                         SESSION_TIMER_RUNTIME_EVENT_FORCED_PAUSE &&
+                     strcmp(buf, "00:00:00") == 0,
+                 "single coarse tick clamps at limit and reports FORCED_PAUSE only");
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;
