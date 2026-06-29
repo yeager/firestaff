@@ -82,6 +82,9 @@ Keypad-8 Keypad-4 Keypad-8 Keypad-8 Keypad-8 Keypad-4
 
 The door probe then tried `Enter`, `Space`, high click `(112,70)`, low click
 `(112,120)`, and `Keypad-8`; all stayed on the same door frame hash.
+The pass1058 verifier now checks the two raw-only tail frames for the low-click
+and forward-key attempts as part of the same stable-door hash, so those final
+no-change observations are no longer only prose-backed.
 
 This sequence preserves the old pass1058 start-pose route. The newer
 `dosbox_capture_session.py --post-dungeon-route` hook starts after the pass1073

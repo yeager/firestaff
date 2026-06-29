@@ -227,15 +227,37 @@ def check_door_probe() -> dict[str, Any]:
         f"unexpected door probe labels: {labs}",
     )
     require(
+        len(labs) == 6,
+        "door probe must keep the six labeled viewport crops that were promoted",
+    )
+    require(
         len(set(hashes[2:])) == 1,
         "door probe actions after the door frame must all leave the raw frame unchanged",
+    )
+    require(
+        hashes[6] == hashes[2] and hashes[7] == hashes[2],
+        "the two raw-only door-probe tail frames must remain on the inert door hash",
     )
 
     return {
         "labels": labs,
         "raw_sha256": hashes,
         "stable_door_sha256": hashes[2],
-        "unchecked_extra_raw_rows": len(rows) - len(labs),
+        "raw_only_tail_row_count": len(rows) - len(labs),
+        "raw_only_tail_rows": [
+            {
+                "raw_index": rows[6]["index"],
+                "expected_action": "click:112,120",
+                "sha256": hashes[6],
+                "matches_stable_door": hashes[6] == hashes[2],
+            },
+            {
+                "raw_index": rows[7]["index"],
+                "expected_action": "Keypad-8",
+                "sha256": hashes[7],
+                "matches_stable_door": hashes[7] == hashes[2],
+            },
+        ],
         "conclusion": "enter/space/two clicks/forward do not open this first target door",
         "ok": True,
     }
