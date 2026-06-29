@@ -21,6 +21,11 @@
  *   4. The DM2 launch handoff path can open the materialized files via
  *      <runtimeDataDir>/dm2/GRAPHICS.DAT and
  *      <runtimeDataDir>/dm2/DUNGEON.DAT, matching the M11 DM2 scan root.
+ *   5. A later scan that still finds the version/GRAPHICS entry but loses
+ *      the required DUNGEON hash must clear the launchable/cache contract:
+ *      DM2 is unavailable, runtimeDataDir returns to the configured root,
+ *      and the matched GRAPHICS row remains the original virtual path
+ *      rather than a stale materialized cache leaf from the prior scan.
  *
  * The fixture packs two entries in one ZIP so DM2 (which has two
  * required-files rows, graphics + dungeon) can be reported available:
@@ -648,6 +653,49 @@ int main(void) {
                   "materialized DUNGEON cache leaf must not retain the "
                   "virtual container separator");
     }
+
+    /* Layer 4: stale-cache invalidation on a partial required-file scan.
+     * Keep the graphics/version hash registered but swap the DUNGEON
+     * required hash to one that is not present in the ZIP. M12 should
+     * report the version/graphics match honestly while refusing launch
+     * and clearing the cache-root handoff from the previous complete scan.
+     */
+    M12_AssetStatus_TestSetDm2SyntheticHashes(
+        graphicsMd5, "00000000000000000000000000000000");
+    M12_AssetStatus_Scan(&status, dataRoot);
+
+    check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
+              "partial ZIP-backed DM2 scan must clear launch availability "
+              "when the required dungeon hash is missing");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
+                     dataRoot) == 0,
+              "partial DM2 scan must not retain the stale asset-cache "
+              "runtime root from the previous complete scan");
+
+    version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    check_int(version && version->matched &&
+              path_has_virtual_entry(version->matchedPath, kZipName,
+                                     kGraphicsEntry),
+              "partial scan should still report the version's original "
+              "virtual GRAPHICS match");
+
+    required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
+    check_int(required && required->matched &&
+              path_has_virtual_entry(required->matchedPath, kZipName,
+                                     kGraphicsEntry),
+              "partial scan should keep the GRAPHICS required row as a "
+              "virtual path, not a stale cache leaf");
+    check_int(required && !path_has_cache_leaf(required->matchedPath,
+                                              cacheRoot, "dm2",
+                                              "GRAPHICS.DAT"),
+              "partial scan GRAPHICS row must not retain stale "
+              "asset-cache/dm2/GRAPHICS.DAT");
+
+    required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 1U);
+    check_int(required && !required->matched &&
+              required->matchedPath[0] == '\0' &&
+              required->matchedHash[0] == '\0',
+              "partial scan should clear the missing DUNGEON required row");
 
     M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
