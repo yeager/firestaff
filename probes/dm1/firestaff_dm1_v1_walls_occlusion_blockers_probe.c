@@ -33,6 +33,8 @@ struct MapFixture {
     unsigned char squares[MAP_W * MAP_H];
 };
 
+static unsigned char redmcsb_f0151_boundary_square(const struct MapFixture* fixture, int map_x, int map_y);
+
 static int expect_int(const char* label, int got, int want)
 {
     if (got != want) {
@@ -97,6 +99,11 @@ static unsigned char redmcsb_f0151_boundary_square(const struct MapFixture* fixt
     }
 
     return sqb(DM1_ELEMENT_WALL, 0);
+}
+
+static unsigned char read_square_for_view_with_boundary(int map_x, int map_y, void* user_data)
+{
+    return redmcsb_f0151_boundary_square((const struct MapFixture*)user_data, map_x, map_y);
 }
 
 static void reset_fixture(struct MapFixture* fixture,
@@ -322,6 +329,68 @@ static int verify_draw_order(struct MapFixture* fixture)
     return ok;
 }
 
+static int verify_random_ornament_wall_occlusion(struct MapFixture* fixture)
+{
+    static const unsigned char wall_flags[] = {
+        DM1_WALL_WEST_RANDOM_ORN,
+        DM1_WALL_SOUTH_RANDOM_ORN,
+        DM1_WALL_EAST_RANDOM_ORN,
+        DM1_WALL_NORTH_RANDOM_ORN,
+        DM1_WALL_WEST_RANDOM_ORN | DM1_WALL_SOUTH_RANDOM_ORN |
+            DM1_WALL_EAST_RANDOM_ORN | DM1_WALL_NORTH_RANDOM_ORN
+    };
+    dm1_viewport_state_t vp;
+    int visible[DM1_VIEWPORT_SQUARE_COUNT];
+    int ok = 1;
+
+    printf("randomOrnamentWallOcclusion source=DUNGEON.C:1423-1475,2522-2523 DUNVIEW.C:8490-8542 flags=");
+    for (size_t i = 0; i < sizeof(wall_flags) / sizeof(wall_flags[0]); ++i) {
+        unsigned char raw = sqb(DM1_ELEMENT_WALL, wall_flags[i]);
+        int count;
+
+        if (i) printf(",");
+        printf("0x%02x", raw);
+
+        reset_fixture(fixture, &(struct DungeonDatState_Compat){0}, &(struct DungeonMapDesc_Compat){0}, &(struct DungeonMapTiles_Compat){0}, &(struct PartyState_Compat){0});
+        set_square(fixture->squares, 2, 1, raw);
+        dm1_build_viewport(2, 2, DIR_NORTH, 0, read_square_for_view, fixture, &vp);
+        count = dm1_get_visible_squares(&vp, visible);
+        ok &= expect_int("ornamented D1C wall remains wall", vp.squares[6].aspect[DM1_SQA_ELEMENT], DM1_ELEMENT_WALL);
+        ok &= expect_int("ornamented D1C wall blocks movement", dm1_square_blocks_movement(raw) ? 1 : 0, 1);
+        ok &= expect_int("ornamented D1C wall sets front flag", dm1_is_front_wall_at_depth(&vp, 1) ? 1 : 0, 1);
+        ok &= expect_int("ornamented D1C wall occludes D2/D3 rows", count, 6);
+
+        reset_fixture(fixture, &(struct DungeonDatState_Compat){0}, &(struct DungeonMapDesc_Compat){0}, &(struct DungeonMapTiles_Compat){0}, &(struct PartyState_Compat){0});
+        set_square(fixture->squares, 2, 0, raw);
+        dm1_build_viewport(2, 2, DIR_NORTH, 0, read_square_for_view, fixture, &vp);
+        count = dm1_get_visible_squares(&vp, visible);
+        ok &= expect_int("ornamented D2C wall remains wall", vp.squares[3].aspect[DM1_SQA_ELEMENT], DM1_ELEMENT_WALL);
+        ok &= expect_int("ornamented D2C wall sets front flag", dm1_is_front_wall_at_depth(&vp, 2) ? 1 : 0, 1);
+        ok &= expect_int("ornamented D2C wall occludes D3 row only", count, 9);
+
+        reset_fixture(fixture, &(struct DungeonDatState_Compat){0}, &(struct DungeonMapDesc_Compat){0}, &(struct DungeonMapTiles_Compat){0}, &(struct PartyState_Compat){0});
+        set_square(fixture->squares, 1, 1, raw);
+        dm1_build_viewport(2, 2, DIR_NORTH, 0, read_square_for_view, fixture, &vp);
+        count = dm1_get_visible_squares(&vp, visible);
+        ok &= expect_int("ornamented D1L side wall remains wall", vp.squares[7].aspect[DM1_SQA_ELEMENT], DM1_ELEMENT_WALL);
+        ok &= expect_int("ornamented D1L side wall has side mask", dm1_compute_wall_visibility(&vp.squares[7], DIR_NORTH), (1 << DM1_VW_D1L_RIGHT));
+        ok &= expect_int("ornamented D1L side wall does not center-occlude", dm1_is_front_wall_at_depth(&vp, 1) ? 1 : 0, 0);
+        ok &= expect_int("ornamented D1L side wall leaves all rows visible", count, DM1_VIEWPORT_SQUARE_COUNT);
+    }
+    printf("\n");
+
+    reset_fixture(fixture, &(struct DungeonDatState_Compat){0}, &(struct DungeonMapDesc_Compat){0}, &(struct DungeonMapTiles_Compat){0}, &(struct PartyState_Compat){0});
+    dm1_build_viewport(2, 1, DIR_NORTH, 0, read_square_for_view_with_boundary, fixture, &vp);
+    ok &= expect_int("F0151 north boundary random-ornament wall is D2C wall",
+        vp.squares[3].aspect[DM1_SQA_ELEMENT], DM1_ELEMENT_WALL);
+    ok &= expect_int("F0151 north boundary random-ornament wall front flag",
+        dm1_is_front_wall_at_depth(&vp, 2) ? 1 : 0, 1);
+    ok &= expect_int("F0151 north boundary random-ornament wall occludes D3 row",
+        dm1_get_visible_squares(&vp, visible), 9);
+
+    return ok;
+}
+
 int main(void)
 {
     struct MapFixture fixture;
@@ -364,6 +433,7 @@ int main(void)
 
     reset_fixture(&fixture, &dungeon, &map, &tiles, &party);
     ok &= verify_draw_order(&fixture);
+    ok &= verify_random_ornament_wall_occlusion(&fixture);
     ok &= verify_parity_flip();
 
     if (!ok) {
