@@ -20,18 +20,26 @@ No new attack types, no new weapons, no new armor.
 
 ## GAP 1: Projectile Speed Normalization (CHANGE7_20)
 
+**Status:** BOUNDED GATE IN PLACE. `csb_v1_projectile_speed_pc34_compat`
+now runs as a CTest-backed source-lock fixture for ReDMCSB `PROJEXPL.C`
+`F0219` lines 755-760. It proves the shared projectile scheduler keeps the
+DM1 branch at `+1` on the party map and `+3` on non-party maps, while the CSB
+normalization flag forces `+1` on every map and preserves the rescheduled
+`PROJECTILE_MOVE` event payload. This is deterministic data-layer coverage
+only; it does not claim real CSB dungeon runtime proof or full playability.
+
 **What source-lock says:**
 - PROJEXPL.C CHANGE7_20_IMPROVEMENT
 - DM1 bug: Projectiles moved slower on maps other than the party map
 - CSB fix: Projectiles now move at full speed on ALL maps
 
-**Implementation gap:**
-Firestaff projectile system uses per-map speed. Need to verify:
+**Original implementation gap:**
+Firestaff projectile system uses per-map speed. Verified:
 1. If currentMapId == projectile.targetMapId: full speed (DM1 and CSB agree)
 2. If currentMapId != projectile.targetMapId:
    - DM1 behavior: slower speed (BUGGY)
    - CSB behavior: full speed (CORRECTED)
-3. Add GameVariant flag:
+3. GameVariant flag:
    - DM1: apply slowdown factor on non-party maps
    - CSB: apply full speed regardless of map
 
@@ -125,7 +133,7 @@ Combat state serialization needs CSB-format support:
 
 | Gap | Severity | Description |
 |-----|----------|-------------|
-| Projectile speed normalization | HIGH | Full speed on all maps (CHANGE7_20) |
+| Projectile speed normalization | GATED | Full speed on all maps (CHANGE7_20); CTest-backed scheduler fixture, no real-runtime claim |
 | Grey Lord (0x1a) combat | HIGH | New C5_ATTACK_MAGIC creature; attack byte sequences |
 | Group teleporter fix (BUG0_69) | MEDIUM | Lord Chaos/Grey Lord map access for teleporters |
 | Dungeon square event fixes | MEDIUM | BUG0_09, BUG0_10 - group spawn/trigger |

@@ -1,9 +1,9 @@
 # CSB V1 — GAP: Dungeon Implementation Gaps
 
-**File:** 
+**File:**
 **Audit:** Firestaff CSB V1 Audit Runner
 **Date:** 2026-05-25
-**Reference:** 
+**Reference:**
 
 ---
 
@@ -101,11 +101,18 @@ Firestaff reads uncompressed dungeon data. Need:
 
 ## GAP 5: Projectile Speed Normalization (Dungeon Context)
 
+**Status:** BOUNDED GATE IN PLACE. The `csb_v1_projectile_speed_pc34_compat`
+CTest source-locks the shared `F0825_PROJECTILE_ScheduleNextMove_Compat`
+scheduler against ReDMCSB `PROJEXPL.C` `F0219` lines 755-760: DM1 remains
+`+1` on the party map and `+3` elsewhere, while CSB normalization is `+1`
+on all maps. This is a data-layer scheduling gate only; real CSB dungeon
+runtime traversal proof remains separate.
+
 **What source-lock says (cross-ref from csb_combat.md):**
 - PROJEXPL.C CHANGE7_20: DM1 bug — projectiles slower on non-party maps
 - CSB fix: Full speed on all maps
 
-**Implementation gap:**
+**Original implementation gap:**
 Firestaff projectile system needs per-map speed normalization:
 - Track currentMapId vs projectile.targetMapId
 - If different: apply normalized full speed (not DM1 buggy slower rate)
@@ -140,7 +147,7 @@ CSB teleporter fixes:
 | End Game Sensor type 18 | HIGH | New sensor calling F0666_endgame(); needs UI zones |
 | Version Checker Sensor | MEDIUM | Engine version gate; new sensor type/handler |
 | Compressed dungeon support | HIGH | DECOMPDU.C; new file format, decompression needed |
-| Projectile speed normalization | MEDIUM | Sub-system of combat; per-map speed fix |
+| Projectile speed normalization | GATED | Sub-system of combat; CTest-backed per-map speed fix, no real-runtime claim |
 | Teleporter/Grey Lord access | MEDIUM | BUG0_69 ensures Grey Lord can use teleporters |
 
 ---
