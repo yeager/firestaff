@@ -2558,7 +2558,9 @@ set_tests_properties(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PROPERT
 # shrinks as scale grows) plus the end-to-end draw path that the
 # forced-pause dialog actually renders at each scale.
 add_executable(firestaff_dm1_v1_forced_pause_font_scale_fit_probe
-    probes/m11/firestaff_dm1_v1_forced_pause_font_scale_fit_probe.c)
+    probes/m11/firestaff_dm1_v1_forced_pause_font_scale_fit_probe.c
+    src/engine/ui_scale_m11.c
+    src/audio/ambient_layer_m11.c)
 target_link_libraries(firestaff_dm1_v1_forced_pause_font_scale_fit_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m11 firestaff_m10 m)
 if(NOT MSVC)
     target_compile_options(firestaff_dm1_v1_forced_pause_font_scale_fit_probe PRIVATE -Wall -Wextra -O2)
