@@ -80,6 +80,62 @@ static int write_pc34_native_dm1_save(const char* path) {
     return rc == SAVEGAME_PC34_OK && write_blob(path, buf, written);
 }
 
+static int strip_pc34_manifest(unsigned char* buf, int len) {
+    struct PC34SaveHeaderCopy {
+        unsigned char noise[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE / 2];
+        unsigned char meta[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE / 2];
+    } hdr;
+    unsigned char* metaHalf;
+    uint16_t key;
+
+    if (!buf || len < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE) return 0;
+    memcpy(&hdr, buf, sizeof(hdr));
+    key = (uint16_t)((unsigned)hdr.noise
+                       [SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2]
+                     | ((unsigned)hdr.noise
+                       [SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2 + 1]
+                        << 8));
+    metaHalf = hdr.meta;
+    (void)F0798_SAVEGAME_PC34CPSCObfuscate_Compat(
+        (uint16_t*)metaHalf,
+        SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS, key);
+    memset(metaHalf + SAVEGAME_PC34_MANIFEST_OFFSET * 2, 0,
+           SAVEGAME_PC34_MANIFEST_SIZE);
+    (void)F0798_SAVEGAME_PC34CPSCObfuscate_Compat(
+        (uint16_t*)metaHalf,
+        SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS, key);
+    memcpy(buf, &hdr, sizeof(hdr));
+    return F0799_SAVEGAME_PC34PeekManifest_Compat(
+               buf, len, NULL, NULL, NULL) ==
+           SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT;
+}
+
+static int write_pc34_vanilla_dm1_save(const char* path) {
+    struct SaveGame_Compat state;
+    struct PartyState_Compat party;
+    unsigned char buf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    int rc;
+
+    memset(&state, 0, sizeof(state));
+    memset(&party, 0, sizeof(party));
+    party.championCount = 1;
+    party.mapIndex = 6;
+    party.mapX = 11;
+    party.mapY = 13;
+    party.direction = 1;
+    party.activeChampionIndex = 0;
+    party.champions[0].present = 1;
+    memcpy(party.champions[0].name, "LEGACY  ", 8);
+    state.party = &party;
+
+    rc = F0795_SAVEGAME_ExportPC34_Compat(
+        &state, 0x56414E31u, buf, (int)sizeof(buf), &written);
+    return rc == SAVEGAME_PC34_OK &&
+           strip_pc34_manifest(buf, written) &&
+           write_blob(path, buf, written);
+}
+
 static int read_bytes(const char* path, char* out, size_t outBytes) {
     FILE* fp = fopen(path, "rb");
     size_t n;
@@ -95,6 +151,8 @@ static void cleanup(const char* root) {
     snprintf(path, sizeof(path), "%s/data/firestaff-dm1-slot.sav", root);
     unlink(path);
     snprintf(path, sizeof(path), "%s/data/firestaff-dm1.sav", root);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/data/firestaff-dm1-quicksave.sav", root);
     unlink(path);
     snprintf(path, sizeof(path), "%s/data/firestaff-csb.sav", root);
     unlink(path);
@@ -169,16 +227,21 @@ int main(void) {
     check(unlink(savePath) == 0, "removed restored save before manifest scan");
     snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1.sav", dataDir);
     check(write_pc34_native_dm1_save(savePath), "wrote DM1 PC34 native manifest fixture");
+    snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-quicksave.sav", dataDir);
+    check(write_pc34_vanilla_dm1_save(savePath), "wrote DM1 PC34 vanilla fixture");
     snprintf(savePath, sizeof(savePath), "%s/firestaff-csb.sav", dataDir);
     check(write_pc34_native_dm1_save(savePath), "wrote wrong-game PC34 native manifest fixture");
-    check(M12_SaveBrowser_Scan(&state, dataDir) == 2,
+    check(M12_SaveBrowser_Scan(&state, dataDir) == 3,
           "scan finds native manifest fixtures");
     {
         const M12_SaveBrowserEntry* dm1 =
             find_entry(&state, "firestaff-dm1.sav");
+        const M12_SaveBrowserEntry* vanilla =
+            find_entry(&state, "firestaff-dm1-quicksave.sav");
         const M12_SaveBrowserEntry* csb =
             find_entry(&state, "firestaff-csb.sav");
         check(dm1 != NULL, "DM1 native manifest entry present");
+        check(vanilla != NULL, "DM1 vanilla PC34 entry present");
         check(csb != NULL, "CSB wrong-game manifest entry present");
         if (dm1) {
             check(dm1->expectedGameCode == SAVEGAME_PC34_GAME_CODE_DM1,
@@ -193,6 +256,23 @@ int main(void) {
             state.selectedIndex = (int)(dm1 - state.entries);
             check(M12_SaveBrowser_HandleInput(&state, 5) == 1,
                   "DM1 native manifest can request load handoff");
+        }
+        if (vanilla) {
+            check(vanilla->expectedGameCode == SAVEGAME_PC34_GAME_CODE_DM1,
+                  "DM1 vanilla filename maps to DM1 game code");
+            check(vanilla->manifestGameCode == 0,
+                  "DM1 vanilla PC34 save has no manifest game code");
+            check(vanilla->manifestStatus == SAVE_BROWSER_MANIFEST_NOT_PRESENT,
+                  "DM1 vanilla PC34 save reports manifest-not-present");
+            check(vanilla->valid == 1,
+                  "DM1 vanilla PC34 save remains load-browser valid");
+            check(vanilla->mapLevel == 6,
+                  "DM1 vanilla PC34 save imports map level via native importer");
+            check(strstr(vanilla->label, "vanilla PC34 save") != NULL,
+                  "DM1 vanilla PC34 label names legacy interop path");
+            state.selectedIndex = (int)(vanilla - state.entries);
+            check(M12_SaveBrowser_HandleInput(&state, 5) == 1,
+                  "DM1 vanilla PC34 save can request load handoff");
         }
         if (csb) {
             check(csb->expectedGameCode == SAVEGAME_PC34_GAME_CODE_CSB,
