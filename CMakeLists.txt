@@ -8884,6 +8884,38 @@ if(BUILD_TESTING)
     )
     target_link_libraries(firestaff_dm1_v22_finished_art_material_gate_probe
         PRIVATE firestaff_v2 firestaff_m10 m)
+    # DM1 V2.2 finished-pack reviewer-receipt promotion gate.
+    # Companion to the finished-art material gate above. Operator drops
+    # finish_receipt.json under ~/.firestaff/assets/dm1/modern/ to
+    # record sign-off; the receipt state stays NOT_INSTALLED when no
+    # file is present, so the CI baseline (synthetic SYNTHETIC_PLACEHOLDER)
+    # is preserved. Cross-checks manifest content hash (FNV-1a),
+    # reviewer slot coverage, and the sibling material gate's
+    # FINISHED_REAL state before promoting to MATCH_FINISHED_REAL.
+    # Source-locked against ReDMCSB DUNVIEW.C:6697-6816 + DUNGEON.C:2238-2246
+    # + the sibling material gate pattern.
+    add_executable(test_dm1_v22_finished_pack_receipt_pc34
+        tests/test_dm1_v22_finished_pack_receipt_pc34.c
+        src/dm1v2/dm1_v22_finished_pack_receipt_pc34.c
+        src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_dm1_v22_finished_pack_receipt_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v22_finished_pack_receipt_pc34
+        PRIVATE firestaff_v2 firestaff_m10 m)
+    add_executable(firestaff_dm1_v22_finished_pack_receipt_probe
+        probes/firestaff_dm1_v22_finished_pack_receipt_probe.c
+        src/dm1v2/dm1_v22_finished_pack_receipt_pc34.c
+        src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(firestaff_dm1_v22_finished_pack_receipt_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm1_v22_finished_pack_receipt_probe
+        PRIVATE firestaff_v2 firestaff_m10 m)
     add_executable(test_m11_display_aspect_present_rect
         tests/test_m11_display_aspect_present_rect.c
     )
@@ -9027,6 +9059,8 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v22_real_asset_material_gate_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v22_finished_art_material_gate_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v22_finished_art_material_gate_probe PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v22_finished_pack_receipt_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_dm1_v22_finished_pack_receipt_probe PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -9386,6 +9420,14 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_dm1_v22_finished_art_material_gate_probe
         COMMAND firestaff_dm1_v22_finished_art_material_gate_probe
+    )
+    add_test(
+        NAME dm1_v22_finished_pack_receipt_pc34
+        COMMAND test_dm1_v22_finished_pack_receipt_pc34
+    )
+    add_test(
+        NAME firestaff_dm1_v22_finished_pack_receipt_probe
+        COMMAND firestaff_dm1_v22_finished_pack_receipt_probe
     )
     add_test(
         NAME dm1_v22_m11_inplace_handoff_source_lock
