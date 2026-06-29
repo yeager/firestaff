@@ -64,12 +64,15 @@ so the example cannot silently rot without the probe noticing:
 | PNG signature                         | First 8 bytes of each fixture match `89 50 4E 47 0D 0A 1A 0A`         |
 | `synthetic-test-fixture` tEXt chunk   | Raw byte substring search in each fixture file                          |
 | Manifest slot dimensions populated    | Per-slot `info.width > 0 && info.height > 0` after COMPLETE promotion  |
+| Manifest path sync                    | Per-slot `source_file == <slot_id>.png` and resolved category path      |
 
 A future refactor that replaces a 1x1 PNG with arbitrary text (which
 would still contain the `synthetic-test-fixture` substring) would
 still pass the tEXt check but fail the PNG signature check. A future
 refactor that drops the manifest's `width` / `height` fields would
-fail the dimension sanity check.
+fail the dimension sanity check. A future manifest edit that leaves the
+gate promotable but drifts away from the documented install layout would
+fail the path-sync check.
 
 ## Generator-agnostic behaviour
 
