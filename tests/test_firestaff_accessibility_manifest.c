@@ -20,6 +20,9 @@
  *   5. Element field round-trip — id/label/type/bounds/enabled/value render
  *      correctly; NULL value renders as JSON null; non-NULL value renders as
  *      a JSON string; embedded " \n \t \ are JSON-escaped (not raw).
+ *   6. Every public FS_AX_ElementType renders its stable JSON type string.
+ *   7. The public FS_AX_MAX_ELEMENTS budget is honored: exactly the budgeted
+ *      elements flush, overflow additions are dropped, and JSON stays valid.
  */
 
 #include "firestaff_accessibility.h"
@@ -90,6 +93,19 @@ static int fs_ax_read_all(const char* path, char* out, size_t outSize) {
     fclose(fp);
     out[n] = '\0';
     return (int)n;
+}
+
+static int fs_ax_count_substr(const char* haystack, const char* needle) {
+    int count = 0;
+    const char* p = haystack;
+    size_t needleLen;
+    if (!haystack || !needle || !*needle) return 0;
+    needleLen = strlen(needle);
+    while ((p = strstr(p, needle)) != NULL) {
+        ++count;
+        p += needleLen;
+    }
+    return count;
 }
 
 static void fs_ax_recompute_paths(void) {
@@ -348,6 +364,137 @@ static void subtest_element_round_trip_and_escape(void) {
                 "elements: no double-escaped \\\" in output");
 }
 
+/* ── Subtest 6: all element type strings are stable ─────────────── */
+
+static void subtest_all_element_types_render_stable_strings(void) {
+    static const struct {
+        FS_AX_ElementType type;
+        const char* id;
+        const char* jsonType;
+    } cases[] = {
+        { FS_AX_BUTTON, "TYPE_BUTTON", "button" },
+        { FS_AX_REGION, "TYPE_REGION", "region" },
+        { FS_AX_TEXT, "TYPE_TEXT", "text" },
+        { FS_AX_SLOT, "TYPE_SLOT", "slot" },
+        { FS_AX_PORTRAIT, "TYPE_PORTRAIT", "portrait" },
+        { FS_AX_MOVEMENT, "TYPE_MOVEMENT", "movement" },
+        { FS_AX_DIALOG_CHOICE, "TYPE_DIALOG_CHOICE", "dialog_choice" },
+        { FS_AX_CHAMPION_MIRROR, "TYPE_CHAMPION_MIRROR", "champion_mirror" },
+        { FS_AX_LAUNCHER_CARD, "TYPE_LAUNCHER_CARD", "launcher_card" },
+        { FS_AX_LAUNCHER_TAB, "TYPE_LAUNCHER_TAB", "launcher_tab" },
+        { FS_AX_LAUNCHER_ROW, "TYPE_LAUNCHER_ROW", "launcher_row" },
+        { FS_AX_POPUP, "TYPE_POPUP", "popup" },
+        { FS_AX_POPUP_OK, "TYPE_POPUP_OK", "popup_ok" },
+        { FS_AX_CATEGORY_TAB, "TYPE_CATEGORY_TAB", "category_tab" },
+        { FS_AX_BESTIARY_ROW, "TYPE_BESTIARY_ROW", "bestiary_row" },
+        { FS_AX_ITEM_ENCYCLOPEDIA_ROW, "TYPE_ITEM_ROW", "item_encyclopedia_row" },
+        { FS_AX_SCREENSHOT_THUMB, "TYPE_SCREENSHOT_THUMB", "screenshot_thumb" },
+        { FS_AX_MUSEUM_CATEGORY, "TYPE_MUSEUM_CATEGORY", "museum_category" },
+        { FS_AX_MUSEUM_BULLET, "TYPE_MUSEUM_BULLET", "museum_bullet" }
+    };
+    char buf[32768];
+    int n;
+    int i;
+
+    fs_ax_shutdown();
+    FS_AX_REMOVE(g_json_path);
+    FS_AX_REMOVE(g_tmp_path);
+
+    fs_ax_set_enabled(1);
+    fs_ax_begin_frame(320, 200, "type_catalog");
+
+    for (i = 0; i < (int)(sizeof(cases) / sizeof(cases[0])); ++i) {
+        FS_AX_Element element;
+        memset(&element, 0, sizeof(element));
+        element.id = cases[i].id;
+        element.label = cases[i].id;
+        element.type = cases[i].type;
+        element.x = i;
+        element.y = i + 1;
+        element.w = 2;
+        element.h = 3;
+        element.enabled = 1;
+        fs_ax_add_element(&element);
+    }
+
+    fs_ax_flush();
+
+    n = fs_ax_read_all(g_json_path, buf, sizeof(buf));
+    fs_ax_check(n > 0, "types: file is written");
+    if (n <= 0) return;
+
+    for (i = 0; i < (int)(sizeof(cases) / sizeof(cases[0])); ++i) {
+        char idNeedle[96];
+        char typeNeedle[96];
+        snprintf(idNeedle, sizeof(idNeedle), "\"id\":\"%s\"", cases[i].id);
+        snprintf(typeNeedle, sizeof(typeNeedle), "\"type\":\"%s\"",
+                 cases[i].jsonType);
+        fs_ax_check(strstr(buf, idNeedle) != NULL,
+                    "types: element id is present");
+        fs_ax_check(strstr(buf, typeNeedle) != NULL,
+                    "types: stable type string is present");
+    }
+    fs_ax_check(strstr(buf, "\"type\":\"unknown\"") == NULL,
+                "types: no public element type renders as unknown");
+}
+
+/* ── Subtest 7: public element budget clamps overflow ───────────── */
+
+static void subtest_element_budget_clamps_without_malformed_json(void) {
+    char buf[65536];
+    char ids[FS_AX_MAX_ELEMENTS + 2][32];
+    FS_AX_Element elements[FS_AX_MAX_ELEMENTS + 2];
+    int n;
+    int i;
+
+    fs_ax_shutdown();
+    FS_AX_REMOVE(g_json_path);
+    FS_AX_REMOVE(g_tmp_path);
+
+    fs_ax_set_enabled(1);
+    fs_ax_begin_frame(320, 200, "budget");
+
+    for (i = 0; i < FS_AX_MAX_ELEMENTS + 2; ++i) {
+        snprintf(ids[i], sizeof(ids[i]), "BUDGET_%03d", i);
+        memset(&elements[i], 0, sizeof(elements[i]));
+        elements[i].id = ids[i];
+        elements[i].label = "Budget Element";
+        elements[i].type = FS_AX_BUTTON;
+        elements[i].x = i;
+        elements[i].y = i;
+        elements[i].w = 1;
+        elements[i].h = 1;
+        elements[i].enabled = 1;
+        fs_ax_add_element(&elements[i]);
+    }
+
+    fs_ax_flush();
+
+    n = fs_ax_read_all(g_json_path, buf, sizeof(buf));
+    fs_ax_check(n > 0, "budget: file is written");
+    if (n <= 0) return;
+
+    fs_ax_check(FS_AX_MAX_ELEMENTS == 128,
+                "budget: public FS_AX_MAX_ELEMENTS remains 128");
+    fs_ax_check(strstr(buf, "\"id\":\"BUDGET_000\"") != NULL,
+                "budget: first element is present");
+    fs_ax_check(strstr(buf, "\"id\":\"BUDGET_127\"") != NULL,
+                "budget: last in-budget element is present");
+    fs_ax_check(strstr(buf, "\"id\":\"BUDGET_128\"") == NULL &&
+                strstr(buf, "\"id\":\"BUDGET_129\"") == NULL,
+                "budget: overflow elements are dropped");
+    fs_ax_check(fs_ax_count_substr(buf, "\"id\":\"BUDGET_") == FS_AX_MAX_ELEMENTS,
+                "budget: exactly FS_AX_MAX_ELEMENTS budget IDs emitted");
+    fs_ax_check(strstr(buf, "[,") == NULL,
+                "budget: no leading-comma artifact in elements");
+    fs_ax_check(strstr(buf, ",]") == NULL,
+                "budget: no trailing-comma artifact in elements");
+    fs_ax_check(strstr(buf, ",,") == NULL,
+                "budget: no double-comma artifact anywhere in manifest");
+    fs_ax_check(!fs_ax_file_exists(g_tmp_path),
+                "budget: overflow flush leaves no .tmp residue");
+}
+
 /* ── main ───────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -357,7 +504,7 @@ int main(void) {
     if (!fs_ax_setup_temp_home()) {
         fprintf(stderr,
                 "could not redirect HOME to a temp dir; "
-                "subtests 2-5 skipped\n");
+                "subtests 2-7 skipped\n");
         printf("\n  firestaff_accessibility_manifest: %d passed, %d failed "
                "(isolation failed)\n",
                g_passes, g_failures);
@@ -375,6 +522,12 @@ int main(void) {
 
     printf("  [5] element field round-trip + escape behavior...\n");
     subtest_element_round_trip_and_escape();
+
+    printf("  [6] all element type strings are stable...\n");
+    subtest_all_element_types_render_stable_strings();
+
+    printf("  [7] element budget clamps overflow without malformed JSON...\n");
+    subtest_element_budget_clamps_without_malformed_json();
 
     fs_ax_teardown_temp_home();
 

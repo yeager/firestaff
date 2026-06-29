@@ -20,7 +20,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-#define MAX_ELEMENTS 128
 #define MAX_STRING_LEN 256
 #define HOME_DIR_NAME ".firestaff"
 #define JSON_FILENAME "accessibility.json"
@@ -38,7 +37,7 @@ static int g_frame_w = 0;
 static int g_frame_h = 0;
 static char g_game_state[MAX_STRING_LEN];
 
-static FS_AX_Element g_elements[MAX_ELEMENTS];
+static FS_AX_Element g_elements[FS_AX_MAX_ELEMENTS];
 static int g_element_count = 0;
 
 /* ── JSON string escaping ─────────────────────────────────────────── */
@@ -220,7 +219,7 @@ void fs_ax_add_element(const FS_AX_Element* element)
 {
     if (!g_ax_enabled) return;
     if (!element) return;
-    if (g_element_count >= MAX_ELEMENTS) return;
+    if (g_element_count >= FS_AX_MAX_ELEMENTS) return;
 
     g_elements[g_element_count++] = *element;
 }

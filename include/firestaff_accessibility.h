@@ -13,6 +13,8 @@
 
 #include <stdint.h>
 
+#define FS_AX_MAX_ELEMENTS 128
+
 #ifdef __cplusplus
 extern "C" {
 #endif
