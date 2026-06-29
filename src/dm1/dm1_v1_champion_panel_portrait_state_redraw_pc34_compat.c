@@ -6,8 +6,9 @@
  * CHAMDRAW.C F0293:1134-1138 dispatches active champions to F0292 in index
  * order. F0292:771-839 redraws the status box, F0292:898-935 uses C033/C034
  * for normal/warning overlays, and F0291:595-655 selects C033/C034/C035 for
- * hand slot box state. DUNVIEW.C:3913-3928 anchors the viewport-local portrait
- * base at (96,35). DATA.C:264-272 anchors top-row hand slot origins.
+ * hand slot box state. F0292:771-839 and DEFS.H:3783-3795 anchor the
+ * champion-panel status-box zones; DATA.C:264-272 anchors top-row hand slot
+ * origins.
  */
 
 static const char s_source_evidence[] =
@@ -20,21 +21,33 @@ static const char s_source_evidence[] =
     "F0292:1080-1091 redraws the action-hand slot, CHAMDRAW.C F0293:"
     "1117-1143 calls F0292 for every active champion in index order, and "
     "CHAMDRAW.C F0296:1249-1257 scans changed object icons before F0292. "
-    "DUNVIEW.C:3913-3928 anchors "
-    "the 32x29 champion portrait at viewport-local base (96,35). DEFS.H:"
-    "779-781,1873-1878,2188-2195 and DATA.C:264-272 anchor the hand slots, "
-    "C033/C034/C035 cascade, and championIndex*69+{4,24}, y=10 hand boxes.";
+    "DEFS.H:3783-3795 anchors C151..C154 status-box zones, C159..C162 "
+    "name zones, C163..C166 text zones, C175..C178 status-box portrait "
+    "zones, C187..C190 bar-graph zones, and C113..C116 champion-icon zones. "
+    "DEFS.H:779-781,1873-1878,2188-2195 and DATA.C:264-272 anchor the "
+    "hand slots, C033/C034/C035 cascade, and championIndex*69+{4,24}, "
+    "y=10 hand boxes.";
 
 #define ENTRY(CHAMPION, STATE, ORDER) \
     { \
         (CHAMPION), \
         (STATE), \
         (ORDER), \
-        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_PORTRAIT_BASE_X_PC34 + \
-            ((CHAMPION) * DM1_V1_CHAMPION_PANEL_STATE_REDRAW_PORTRAIT_STRIDE_X_PC34), \
-        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_PORTRAIT_BASE_Y_PC34, \
-        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_PORTRAIT_WIDTH_PC34, \
-        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_PORTRAIT_HEIGHT_PC34, \
+        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_ZONE_BASE_PC34 + \
+            (CHAMPION), \
+        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_LEFT_PC34 + \
+            ((CHAMPION) * DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_STRIDE_X_PC34), \
+        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_TOP_PC34, \
+        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_LEFT_PC34 + \
+            ((CHAMPION) * DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_STRIDE_X_PC34) + \
+            DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_WIDTH_PC34 - 1, \
+        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_TOP_PC34 + \
+            DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_HEIGHT_PC34 - 1, \
+        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_NAME_ZONE_BASE_PC34 + (CHAMPION), \
+        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_TEXT_ZONE_BASE_PC34 + (CHAMPION), \
+        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_PORTRAIT_ZONE_BASE_PC34 + (CHAMPION), \
+        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_BAR_ZONE_BASE_PC34 + (CHAMPION), \
+        DM1_V1_CHAMPION_PANEL_STATE_REDRAW_ICON_ZONE_BASE_PC34 + (CHAMPION), \
         ((CHAMPION) * DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_STRIDE_X_PC34) + \
             DM1_V1_CHAMPION_PANEL_STATE_REDRAW_READY_HAND_LOCAL_X_PC34, \
         ((CHAMPION) * DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_STRIDE_X_PC34) + \
