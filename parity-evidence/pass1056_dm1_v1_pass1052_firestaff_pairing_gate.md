@@ -19,6 +19,8 @@ match. Nonzero rows stay scout-only and are not same-state parity claims.
 - Pair rows: `4`
 - Exact match count: `1`
 - Expected exact wall match present: `True`
+- Pass1054 scout-only status pinned: `True`
+- Non-exact rows remain nonzero scout rows: `True`
 - Pair artifact hashes match manifest: `True`
 
 | Original crop | Best Firestaff crop | MAE | Changed pixels | Status |
