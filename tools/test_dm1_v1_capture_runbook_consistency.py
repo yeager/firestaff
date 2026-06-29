@@ -79,6 +79,8 @@ LIVE_ROW_GATE = REPO_ROOT / "tools" / "verify_dm1_v1_original_capture_live_row_g
 ORIGINAL_VIEWPORT_CAPTURE = (
     REPO_ROOT / "scripts" / "dosbox_dm1_original_viewport_reference_capture.sh"
 )
+POST_DUNGEON_TARGET_SELECTOR = TOOLS_DIR / "dm1_v1_post_dungeon_pairing_target_selector.py"
+POST_DUNGEON_TARGET_CONTRACT = TOOLS_DIR.parent / "DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json"
 
 STATUS = "PASS632_DM1_V1_CAPTURE_ROUTE_RUNBOOK_CONSISTENCY"
 
@@ -1033,6 +1035,233 @@ def check_original_viewport_capture_single_row_mode() -> list[str]:
     return failures
 
 
+def check_post_dungeon_target_selector_selftest_passes() -> list[str]:
+    """The on-disk reviewed-target selector
+    (``docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py``)
+    must keep passing its hermetic self-test, and the contract it
+    ships against must match the selector's pinned kind list.
+
+    This is the regression guard for the Step 5b.1 target-selection
+    accountability gate: a future operator who hand-types a
+    post-dungeon route without first running the selector cannot
+    silently ship a receipt whose pairing target was never reviewed.
+    The runbook-consistency probe is the CI companion to the CTest
+    ``dm1_v1_post_dungeon_pairing_target_selector`` so the regression
+    is caught on the first runbook-touching commit, not at the next
+    live attempt.
+    """
+    failures: list[str] = []
+    if not POST_DUNGEON_TARGET_SELECTOR.exists():
+        return [
+            f"{POST_DUNGEON_TARGET_SELECTOR.relative_to(REPO_ROOT)}: "
+            "selector not found; the reviewed-target gate must ship "
+            "alongside the runbook"
+        ]
+    if not POST_DUNGEON_TARGET_CONTRACT.exists():
+        return [
+            f"{POST_DUNGEON_TARGET_CONTRACT.relative_to(REPO_ROOT)}: "
+            "contract not found; the reviewed-target gate cannot "
+            "validate any selection without a contract"
+        ]
+    proc = subprocess.run(
+        [sys.executable, str(POST_DUNGEON_TARGET_SELECTOR), "--self-test"],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if proc.returncode != 0:
+        failures.append(
+            f"{POST_DUNGEON_TARGET_SELECTOR.relative_to(REPO_ROOT)} "
+            f"--self-test failed: "
+            f"stderr={proc.stderr.strip()!r} "
+            f"stdout_tail={proc.stdout.strip().splitlines()[-3:] if proc.stdout.strip() else []!r}"
+        )
+    elif "PASS post-dungeon pairing target selector self-test" not in proc.stdout:
+        failures.append(
+            f"{POST_DUNGEON_TARGET_SELECTOR.relative_to(REPO_ROOT)} "
+            "did not report the post-dungeon pairing target selector "
+            "PASS marker"
+        )
+
+    # Cross-check that the selector's pinned kind list matches the
+    # contract's supported kinds; a future operator who edits one
+    # without the other is caught here.
+    selector_proc = subprocess.run(
+        [
+            sys.executable, "-c",
+            "import sys, json; "
+            f"sys.path.insert(0, {str(TOOLS_DIR)!r}); "
+            "import dm1_v1_post_dungeon_pairing_target_selector as sel; "
+            "import json; "
+            "print(json.dumps({"
+            "  'contract_kinds': sorted(sel._load_contract()['supportedTargetKinds']),"
+            "  'selector_keys': sorted(sel.SUPPORTED_ROUTE_KEYS),"
+            "  'classifier_states': sorted(sel.KNOWN_CLASSIFIER_STATES),"
+            "  'baseline_non_claims': list(sel.BASELINE_NON_CLAIMS),"
+            "}))",
+        ],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if selector_proc.returncode != 0:
+        failures.append(
+            "selector pin introspection failed: "
+            f"{selector_proc.stderr.strip() or selector_proc.stdout.strip()}"
+        )
+        return failures
+    try:
+        pin_summary = json.loads(selector_proc.stdout.strip().splitlines()[-1])
+    except (json.JSONDecodeError, IndexError) as exc:
+        failures.append(
+            f"selector pin introspection produced unparseable output: "
+            f"{exc}: {selector_proc.stdout.strip()!r}"
+        )
+        return failures
+
+    contract = json.loads(
+        POST_DUNGEON_TARGET_CONTRACT.read_text(encoding="utf-8")
+    )
+    expected_kinds = sorted(contract["supportedTargetKinds"])
+    if pin_summary["contract_kinds"] != expected_kinds:
+        failures.append(
+            "selector's loaded contract kinds "
+            f"{pin_summary['contract_kinds']!r} disagree with the "
+            f"on-disk contract supportedTargetKinds={expected_kinds!r}"
+        )
+    expected_keys = sorted({
+        "Keypad-2", "Keypad-4", "Keypad-5", "Keypad-6", "Keypad-8"
+    })
+    if pin_summary["selector_keys"] != expected_keys:
+        failures.append(
+            "selector's SUPPORTED_ROUTE_KEYS "
+            f"{pin_summary['selector_keys']!r} diverge from the "
+            f"dosbox_capture_session.py KEY_MAP keypad set "
+            f"{expected_keys!r}"
+        )
+    if not all(
+        claim in pin_summary["baseline_non_claims"]
+        for claim in (
+            "pixel parity not promoted",
+            "proprietary frame bytes stay operator-local",
+            "selector is accountability, not promotion",
+        )
+    ):
+        failures.append(
+            "selector's BASELINE_NON_CLAIMS dropped one of the "
+            "three contract-required baseline entries"
+        )
+
+    # Negative path: a synthetic selection with an unknown
+    # ``reviewer_pass_id`` must fail through the CLI, mirroring the
+    # self-test's negative case so a future refactor that breaks
+    # the CLI binding is caught here.
+    with tempfile.TemporaryDirectory(prefix="dm1-post-dungeon-selector-") as tmp:
+        sel_path = Path(tmp) / "target_selection.json"
+        good_path = Path(tmp) / "good.receipt.json"
+        bad_path = Path(tmp) / "bad.receipt.json"
+        sys.path.insert(0, str(TOOLS_DIR))
+        try:
+            import dm1_v1_post_dungeon_pairing_target_selector as _selector  # type: ignore
+        except Exception as exc:
+            failures.append(
+                "could not import selector module for negative CLI "
+                f"binding: {exc}"
+            )
+            return failures
+        try:
+            contract_doc = _selector._load_contract()
+            good_selection = _selector._build_valid_selection(
+                target_kind="creature_chain", contract=contract_doc,
+            )
+            bad_selection = dict(good_selection)
+            bad_selection["reviewer_pass_id"] = "pass9999"
+            sel_path.write_text(json.dumps(bad_selection), encoding="utf-8")
+        finally:
+            sys.path.pop(0)
+        cli_proc = subprocess.run(
+            [
+                sys.executable,
+                str(POST_DUNGEON_TARGET_SELECTOR),
+                "--selection", str(sel_path),
+                "--out", str(bad_path),
+                "--no-preflight-pin",
+            ],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if cli_proc.returncode == 0:
+            failures.append(
+                "post-dungeon selector CLI accepted an unknown "
+                "reviewer_pass_id; the negative binding check failed"
+            )
+        elif "reviewer_pass_id" not in (cli_proc.stderr + cli_proc.stdout):
+            failures.append(
+                "post-dungeon selector CLI did not surface the "
+                f"reviewer_pass_id failure: "
+                f"stderr={cli_proc.stderr.strip()!r} "
+                f"stdout={cli_proc.stdout.strip()!r}"
+            )
+
+        # Build a passing CLI selection and confirm the receipt
+        # lands; this is the positive binding check.
+        with tempfile.TemporaryDirectory(prefix="dm1-post-dungeon-good-") as inner:
+            inner_sel = Path(inner) / "target_selection.json"
+            inner_out = Path(inner) / "good.receipt.json"
+            sys.path.insert(0, str(TOOLS_DIR))
+            try:
+                good_inner = _selector._build_valid_selection(
+                    target_kind="creature_chain", contract=contract_doc,
+                )
+                inner_sel.write_text(
+                    json.dumps(good_inner), encoding="utf-8"
+                )
+            finally:
+                sys.path.pop(0)
+            good_proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(POST_DUNGEON_TARGET_SELECTOR),
+                    "--selection", str(inner_sel),
+                    "--out", str(inner_out),
+                    "--no-preflight-pin",
+                ],
+                cwd=str(REPO_ROOT),
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if good_proc.returncode != 0:
+                failures.append(
+                    "post-dungeon selector CLI refused a contract-"
+                    f"passing selection: exit={good_proc.returncode} "
+                    f"stderr={good_proc.stderr.strip()!r}"
+                )
+            elif not inner_out.exists():
+                failures.append(
+                    "post-dungeon selector CLI did not write its "
+                    "target-selection receipt even with a passing selection"
+                )
+            else:
+                receipt_doc = json.loads(
+                    inner_out.read_text(encoding="utf-8")
+                )
+                if receipt_doc.get("schema") != (
+                    "firestaff.dm1_v1.post_dungeon_pairing_target_selection.v1"
+                ):
+                    failures.append(
+                        "post-dungeon selector CLI wrote a receipt "
+                        "with the wrong schema "
+                        f"{receipt_doc.get('schema')!r}"
+                    )
+
+    return failures
+
+
 # ---------------------------------------------------------------------------
 # Driver.
 # ---------------------------------------------------------------------------
@@ -1081,6 +1310,7 @@ def main() -> int:
         ("capture_session_focus_recovery_dry_run", check_capture_session_focus_recovery_dry_run, []),
         ("capture_session_post_dungeon_route_parser", check_capture_session_post_dungeon_route_parser, []),
         ("original_viewport_capture_single_row_mode", check_original_viewport_capture_single_row_mode, []),
+        ("post_dungeon_target_selector_selftest", check_post_dungeon_target_selector_selftest_passes, []),
     ]
     for name, fn, args in tool_checks:
         total += 1

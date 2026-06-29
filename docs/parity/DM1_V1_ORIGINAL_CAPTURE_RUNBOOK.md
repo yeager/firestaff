@@ -520,7 +520,7 @@ catches regressions in the writer itself.
 
 ---
 
-## Step 5b.1: Optional post-dungeon route receipt
+## Step 5b.1: Post-dungeon route receipt (now requires reviewed-target selection)
 
 When the live runner has reached `dungeon_gameplay`, operators can append a
 bounded route after the first movement proof without editing Python. Use this
@@ -544,6 +544,78 @@ source-locked keypad movement keys (`Keypad-2`, `Keypad-4`, `Keypad-5`,
 frame hashes, classifier states, route keys, and local frame paths. It does not
 promote parity: proprietary frames remain operator-local until a separate,
 reviewed manifest/pairing pass decides what can be tracked.
+
+### Step 5b.1.a: Reviewed target-selection gate (required before any live post-dungeon route)
+
+The 2026-06-29 reviewed-target-selection hardness pass adds an accountability
+gate before any live post-dungeon route is dispatched: the operator must first
+commit a `target_selection.json` describing which of the five documented
+pairing target categories the route is intended to advance
+(`creature_chain` / `champion_panel` / `wall_door_fakewall` / `viewport` /
+`collision`), and route it through the selector at
+`docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py`. The
+selector refuses to write `target_selection.receipt.json` until:
+
+* `target_kind` is one of the contract's five supported kinds (see
+  `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` §
+  `supportedTargetKinds`);
+* a `reviewer_name` + `reviewer_run_id` + `reviewer_pass_id` is set
+  (the PASS_ID the live attempt is meant to advance — one of `pass1052`,
+  `pass1054`, `pass1055`, `pass1056`, `pass1057`, `pass1058`, `pass1059`,
+  `pass1060`, `pass1071`, `pass1072`);
+* the route step list is at least as long as the kind contract's
+  `minimumRouteSteps`, and every key is one of the source-locked
+  post-dungeon keypad keys the live runner accepts (`Keypad-2` / `Keypad-4`
+  / `Keypad-5` / `Keypad-6` / `Keypad-8`);
+* the kind contract's `requiredSelectionFields` are all present and
+  non-empty (`selected_creature_type` + `selected_creature_name` +
+  `expected_view_square` + `expected_line_of_sight` for `creature_chain`;
+  `selected_panel_kind` + `panel_trigger_source` for `champion_panel`;
+  `selected_boundary_kind` for `wall_door_fakewall`;
+  `locked_party_tuple` for `viewport`; `selected_block_kind` +
+  `expected_block_response` for `collision`);
+* a `non_claims` list is supplied with at least the three baseline entries
+  (`pixel parity not promoted`, `proprietary frame bytes stay
+  operator-local`, `selector is accountability, not promotion`);
+* the asset set is unmodified against the contract's reference SHA256s
+  (`d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` /
+  `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`);
+* the cited preflight receipt exists at the path supplied in
+  `preflight_receipt_path`, has the asset-SHA pin checks all PASS, and
+  has a non-empty `pin_checks` list with every `status: PASS` (the
+  on-disk preflight self-test produces a receipt whose `pin_checks` are
+  all PASS).
+
+Build the selection JSON (the operator hand-writes the route steps +
+required fields; the selector enforces the rest):
+
+```bash
+python3 docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py \
+    --selection target_selection.json \
+    --out target_selection.receipt.json
+```
+
+Then dispatch the live runner with the same route string. The receipt
+is the audit trail: later pairing work cites both
+`target_selection.receipt.json` (what the operator committed to do) and
+`dosbox_capture.post_dungeon_route.json` (what the live session actually
+produced); parity is only promoted when the live frames satisfy the
+`semantic_checks` the selection committed to. The receipt does **not**
+promote any parity row on its own.
+
+The selector's hermetic self-test exercises the matching case for every
+supported kind plus 11 negative cases (unknown kind, empty reviewer,
+unknown PASS_ID, too-short route, unsupported key, missing required
+field, baseline non_claim missing, asset-set mismatch, preflight receipt
+missing, preflight pin violation, expected terminal classifier state
+mismatch). The CTest gate
+`dm1_v1_post_dungeon_pairing_target_selector` is wired in `CMakeLists.txt`
+and the runbook-consistency probe at
+`tools/test_dm1_v1_capture_runbook_consistency.py` runs the same selftest
+under `post_dungeon_target_selector_selftest` plus a route-key map pin
+that catches the case where a future operator edits the selector's
+`SUPPORTED_ROUTE_KEYS` set without also updating the live runner's
+`KEY_MAP`.
 
 The syntax gate is hermetic:
 
