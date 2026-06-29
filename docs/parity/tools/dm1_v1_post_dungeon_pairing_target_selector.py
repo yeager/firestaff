@@ -43,7 +43,8 @@ This tool refuses to emit a ``target_selection.receipt.json`` until:
 The tool ships a hermetic ``--self-test`` that exercises the matching
 case for every supported ``target_kind``, the unknown-kind case, the
 empty-reviewer case, the unknown-pass-id case, the too-short-route case,
-the unsupported-key case, the missing-required-field case, the
+the rationale/pass-id mismatch case, the unsupported-key case,
+the missing-required-field case, the
 missing-non_claims-entry case, the asset-set-mismatch case, the
 preflight-receipt-missing case, and the
 preflight-pin-violation case against synthetic fixtures.  The
@@ -306,6 +307,17 @@ def _validate_selection(
         or not selection_rationale.strip()
     ):
         failures.append("selection.selection_rationale must be a non-empty string")
+    elif (
+        isinstance(reviewer_pass_id, str)
+        and reviewer_pass_id in contract.get("knownPassIds", [])
+        and reviewer_pass_id not in selection_rationale
+    ):
+        failures.append(
+            "selection.selection_rationale must cite "
+            f"selection.reviewer_pass_id={reviewer_pass_id!r} so the "
+            "reviewed target is bound to the parity row it is meant to "
+            "advance"
+        )
 
     # Required selection fields.  The contract's requiredSelectionFields
     # for the chosen kind are the binding contract; the selector refuses
@@ -885,6 +897,13 @@ def self_test() -> int:
     bogus = dict(valid_creature)
     bogus["reviewer_pass_id"] = "pass9999"
     _expect_failure("unknown_pass_id", selection=bogus)
+
+    # Negative: rationale does not cite the known reviewer pass_id.
+    bogus = dict(valid_creature)
+    bogus["selection_rationale"] = (
+        "synthetic creature-chain selection with no pass id anchor"
+    )
+    _expect_failure("rationale_missing_pass_id", selection=bogus)
 
     # Negative: route too short for creature_chain (min 3).
     bogus = dict(valid_creature)
