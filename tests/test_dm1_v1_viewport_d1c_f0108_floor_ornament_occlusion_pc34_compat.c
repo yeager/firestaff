@@ -272,6 +272,35 @@ static void test_context_occlusion(void)
                dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
                    DM1_V1_D1C_F0108_FOCCL_CONTEXT_OPEN_PIT_PC34, 0x800fu) ? 1 : 0,
                1, "fp-only ordinal still occludes via T0108005 recursion");
+
+    expect_int("bug0_64.corridor_not_open_surface",
+               dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_has_bug0_64_pc34(
+                   DM1_V1_D1C_F0108_FOCCL_CONTEXT_CORRIDOR_PC34, 5u) ? 1 : 0,
+               0, "DUNVIEW.C:7926 corridor draws F0108 but is not BUG0_64");
+    expect_int("bug0_64.open_pit",
+               dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_has_bug0_64_pc34(
+                   DM1_V1_D1C_F0108_FOCCL_CONTEXT_OPEN_PIT_PC34, 5u) ? 1 : 0,
+               1, "DUNVIEW.C:7912-7937 pit reaches BUG0_64 F0108 tail");
+    expect_int("bug0_64.teleporter",
+               dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_has_bug0_64_pc34(
+                   DM1_V1_D1C_F0108_FOCCL_CONTEXT_TELEPORTER_PC34, 5u) ? 1 : 0,
+               1, "DUNVIEW.C:7922-7937 teleporter reaches BUG0_64 F0108 tail");
+    expect_int("bug0_64.stairs_front",
+               dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_has_bug0_64_pc34(
+                   DM1_V1_D1C_F0108_FOCCL_CONTEXT_STAIRS_FRONT_PC34, 5u) ? 1 : 0,
+               1, "DUNVIEW.C:7753-7868 stairs-front goto T0124017");
+    expect_int("bug0_64.door_front_not_open_surface",
+               dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_has_bug0_64_pc34(
+                   DM1_V1_D1C_F0108_FOCCL_CONTEXT_DOOR_FRONT_PC34, 5u) ? 1 : 0,
+               0, "DUNVIEW.C:7873-7875 door-front has separate F0108/F0115 path");
+    expect_int("bug0_64.zero_ordinal",
+               dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_has_bug0_64_pc34(
+                   DM1_V1_D1C_F0108_FOCCL_CONTEXT_OPEN_PIT_PC34, 0u) ? 1 : 0,
+               0, "DUNVIEW.C:3951 zero ordinal skips F0108 blit");
+    expect_int("bug0_64.fp_only_keeps_bug0_64",
+               dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_has_bug0_64_pc34(
+                   DM1_V1_D1C_F0108_FOCCL_CONTEXT_OPEN_PIT_PC34, 0x800fu) ? 1 : 0,
+               1, "DUNVIEW.C:4008 T0108005 footprint recursion stays on BUG0_64 tail");
 }
 
 static void test_blend_and_zone(void)
