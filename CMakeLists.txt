@@ -8081,6 +8081,19 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_walls_occlusion_blockers_probe
     )
 
+    add_executable(firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe
+        probes/dm1/firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe.c
+        src/dm1/dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat.c
+    )
+    target_link_libraries(firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe
+        COMMAND firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe
+    )
+
     add_executable(firestaff_dm1_v1_viewport_d3c_back_wall_item_gate_probe
         probes/dm1/firestaff_dm1_v1_viewport_d3c_back_wall_item_gate_probe.c
         src/dm1/dm1_v1_viewport_d3c_back_wall_item_pc34_compat.c
