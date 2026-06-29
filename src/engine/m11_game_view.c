@@ -1122,6 +1122,215 @@ static void m11_format_session_timer_reminder_line(
     }
 }
 
+/* Firestaff-specific forced-pause dialog layout.  This is not a
+ * ReDMCSB-driven surface; the dialog title/body/box sizing is
+ * Firestaff's session-timer escalation policy and must therefore be
+ * fit-tested at every supported fontScale (1..3).  The same font
+ * (M11_Font_DrawString) is what m11_draw_text_original feeds when
+ * state->fontScale > 0 (see m11_game_view.c:1300), so the per-char
+ * pixel advance verified by
+ * firestaff_dm1_v1_dialog_choice_font_scale_fit_probe applies here
+ * too: cell advance = 8 * scale.  Visible glyph height = 6 * scale.
+ *
+ * The layout shrinks/widens as scale grows so every line stays inside
+ * the dialog box, which in turn stays inside the 320x200 framebuffer.
+ * Source: ReDMCSB M11_GameView_Draw sessionTimerForcedPauseDialogActive
+ * block (file-scope coordinates), font constants from
+ * G2089_C8_InscriptionCharacterWidth=8 / G2083_C3=6 visible rows. */
+static void m11_forced_pause_dialog_clamp_box(
+    M11_ForcedPauseDialogLayout* layout,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    int margin;
+    int maxW;
+    if (!layout || framebufferWidth <= 0 || framebufferHeight <= 0) {
+        return;
+    }
+    margin = layout->scale >= 3 ? 2 : 4;
+    if (layout->boxX < margin) layout->boxX = margin;
+    if (layout->boxY < margin) layout->boxY = margin;
+    maxW = framebufferWidth - (2 * margin);
+    if (layout->boxW > maxW) layout->boxW = maxW;
+    if (layout->boxW < 64) layout->boxW = 64;
+    if (layout->boxH < 36) layout->boxH = 36;
+    if (layout->boxX + layout->boxW > framebufferWidth - margin) {
+        layout->boxX = framebufferWidth - margin - layout->boxW;
+        if (layout->boxX < margin) layout->boxX = margin;
+    }
+    if (layout->boxY + layout->boxH > framebufferHeight - margin) {
+        layout->boxY = framebufferHeight - margin - layout->boxH;
+        if (layout->boxY < margin) layout->boxY = margin;
+    }
+    /* Vertically centre on y=100 unless the clamped box already
+     * touches the bottom edge. */
+    if (layout->boxY + layout->boxH < framebufferHeight - margin &&
+        layout->boxH <= framebufferHeight - (2 * margin)) {
+        int centredY = ((framebufferHeight - layout->boxH) / 2);
+        if (centredY < margin) centredY = margin;
+        if (centredY + layout->boxH <= framebufferHeight - margin) {
+            layout->boxY = centredY;
+        }
+    }
+}
+
+static void m11_forced_pause_dialog_layout_for(
+    const M11_GameViewState* state,
+    int framebufferWidth,
+    int framebufferHeight,
+    M11_ForcedPauseDialogLayout* outLayout)
+{
+    char remaining[SESSION_TIMER_RUNTIME_TEXT_CAPACITY];
+    int scale;
+    int titleX;
+    int line1X;
+    int line2X;
+    int lineStep;
+    int titleY;
+    int line1Y;
+    int line2Y;
+    int boxW;
+    int boxH;
+    int boxX;
+    int boxY;
+    int innerX;
+    int innerW;
+    int titleLen;
+    int line1Len;
+    int line2Len;
+    int titleAdvance;
+    int line1Advance;
+    int line2Advance;
+    int glyphH;
+    int requiredH;
+    if (!outLayout) {
+        return;
+    }
+    memset(outLayout, 0, sizeof(*outLayout));
+    scale = state ? state->fontScale : 1;
+    if (scale < 1) scale = 1;
+    if (scale > 3) scale = 3;
+    outLayout->scale = scale;
+
+    SessionTimerRuntime_FormatRemaining(
+        state ? &state->sessionTimerRuntime : NULL,
+        remaining,
+        sizeof(remaining));
+
+    /* Title/body wordings shrink as scale grows so the visible
+     * text stays inside the chosen box.  At scale 1 we keep the
+     * source-faithful wording (the same one the previous commit
+     * shipped) so the unchanged-defaults contract still holds. */
+    if (scale >= 3) {
+        snprintf(outLayout->title, sizeof(outLayout->title), "EXPIRED");
+        snprintf(outLayout->line1, sizeof(outLayout->line1), "ENTER MENU");
+        snprintf(outLayout->line2, sizeof(outLayout->line2), "ESC DISMISS");
+    } else if (scale == 2) {
+        snprintf(outLayout->title, sizeof(outLayout->title),
+                 "EXPIRED %s", remaining);
+        snprintf(outLayout->line1, sizeof(outLayout->line1), "ENTER: MENU");
+        snprintf(outLayout->line2, sizeof(outLayout->line2), "ESC: DISMISS");
+    } else {
+        snprintf(outLayout->title, sizeof(outLayout->title),
+                 "SESSION TIMER EXPIRED (%s) -- RETURN TO MENU",
+                 remaining);
+        snprintf(outLayout->line1, sizeof(outLayout->line1),
+                 "PRESS ENTER TO RETURN TO MENU");
+        snprintf(outLayout->line2, sizeof(outLayout->line2), "ESC TO DISMISS");
+    }
+
+    titleLen = (int)strlen(outLayout->title);
+    line1Len = (int)strlen(outLayout->line1);
+    line2Len = (int)strlen(outLayout->line2);
+    titleAdvance = titleLen * M11_FONT_CHAR_CELL_WIDTH * scale;
+    line1Advance = line1Len * M11_FONT_CHAR_CELL_WIDTH * scale;
+    line2Advance = line2Len * M11_FONT_CHAR_CELL_WIDTH * scale;
+    glyphH = M11_FONT_CHAR_VISIBLE_H * scale;
+    lineStep = scale * 12;
+
+    /* Per-scale box geometry.  At scale 1 we keep the source
+     * (40,70,240,60) so unchanged visuals when fontScale is unset.
+     * At scale 2/3 we widen the box to the maximum width that
+     * still leaves a 4-px margin on each side, and grow the box
+     * height enough to fit three lines of (glyphH + lineStep) plus
+     * the per-scale top/bottom inset. */
+    if (scale == 1) {
+        boxX = 40;
+        boxW = 240;
+        boxH = 60;
+    } else {
+        boxW = M11_FB_WIDTH - 8;
+        if (boxW < 240) boxW = 240;
+        if (boxW > 312) boxW = 312;
+        boxX = (M11_FB_WIDTH - boxW) / 2;
+        if (boxX < 4) boxX = 4;
+        /* Required height = top inset (scale*10) + 3 lines of
+         * (glyphH + lineStep) - lineStep + bottom inset (scale*4). */
+        requiredH = (scale * 10) + (3 * (glyphH + lineStep)) +
+                        (scale * 4);
+        boxH = requiredH;
+        if (boxH < 60) boxH = 60;
+        if (boxH > 144) boxH = 144;
+    }
+    boxY = 70;
+    outLayout->boxX = boxX;
+    outLayout->boxY = boxY;
+    outLayout->boxW = boxW;
+    outLayout->boxH = boxH;
+
+    /* Inner text margins track the box scale so the shadow pass
+     * never clips the box border. */
+    innerX = boxX + (scale * 4);
+    innerW = boxW - (2 * scale * 4);
+    if (innerW < scale * 8) innerW = scale * 8;
+    titleY = boxY + (scale * 10);
+    line1Y = titleY + lineStep;
+    line2Y = line1Y + lineStep;
+
+    /* Centre every line inside the inner rect.  When the chosen
+     * wording is wider than innerW (only at scale 1, where the
+     * source-faithful title overflows the 240 px box on purpose),
+     * pin titleX/line1X/line2X to innerX so the raster starts at
+     * the box left edge instead of running off the framebuffer. */
+    titleX = innerX + ((innerW - titleAdvance) / 2);
+    line1X = innerX + ((innerW - line1Advance) / 2);
+    line2X = innerX + ((innerW - line2Advance) / 2);
+    if (titleAdvance > innerW) titleX = innerX;
+    if (line1Advance > innerW) line1X = innerX;
+    if (line2Advance > innerW) line2X = innerX;
+    if (titleX < innerX) titleX = innerX;
+    if (line1X < innerX) line1X = innerX;
+    if (line2X < innerX) line2X = innerX;
+    outLayout->titleX = titleX;
+    outLayout->titleY = titleY;
+    outLayout->line1X = line1X;
+    outLayout->line1Y = line1Y;
+    outLayout->line2X = line2X;
+    outLayout->line2Y = line2Y;
+
+    m11_forced_pause_dialog_clamp_box(outLayout, framebufferWidth,
+                                      framebufferHeight);
+}
+
+static int m11_forced_pause_dialog_max_text_pixel_width(
+    const M11_ForcedPauseDialogLayout* layout)
+{
+    int titleLen;
+    int line1Len;
+    int line2Len;
+    int scale;
+    int max;
+    if (!layout) return 0;
+    scale = layout->scale < 1 ? 1 : layout->scale;
+    titleLen = (int)strlen(layout->title);
+    line1Len = (int)strlen(layout->line1);
+    line2Len = (int)strlen(layout->line2);
+    max = titleLen;
+    if (line1Len > max) max = line1Len;
+    if (line2Len > max) max = line2Len;
+    return max * M11_FONT_CHAR_CELL_WIDTH * scale;
+}
+
 static int m11_dialog_source_c469_text_y_for_lines(int lineCount) {
     enum {
         SOURCE_TEXT_HEIGHT = 6,
@@ -1316,6 +1525,25 @@ int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
     if (outW) *outW = w;
     if (outH) *outH = 17;
     return 1;
+}
+
+void M11_GameView_GetForcedPauseDialogLayout(
+    const M11_GameViewState* state,
+    int framebufferWidth,
+    int framebufferHeight,
+    M11_ForcedPauseDialogLayout* outLayout)
+{
+    if (!outLayout) {
+        return;
+    }
+    m11_forced_pause_dialog_layout_for(state, framebufferWidth,
+                                       framebufferHeight, outLayout);
+}
+
+int M11_GameView_ForcedPauseDialogLayoutMaxTextPixelWidth(
+    const M11_ForcedPauseDialogLayout* layout)
+{
+    return m11_forced_pause_dialog_max_text_pixel_width(layout);
 }
 
 static int m11_dialog_source_message_width_for_choices(int choiceCount) {
@@ -28450,31 +28678,37 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     if (state->sessionTimerForcedPauseDialogActive &&
         !state->dialogOverlayActive &&
         !state->returnToMenuConfirmActive) {
-        char pauseLine[96];
-        char pauseRemaining[SESSION_TIMER_RUNTIME_TEXT_CAPACITY];
+        M11_ForcedPauseDialogLayout pauseLayout;
         M11_TextStyle pauseStyle = g_text_small;
-        SessionTimerRuntime_FormatRemaining(&state->sessionTimerRuntime,
-                                            pauseRemaining,
-                                            sizeof(pauseRemaining));
-        snprintf(pauseLine, sizeof(pauseLine),
-                 "SESSION TIMER EXPIRED (%s) -- RETURN TO MENU",
-                 pauseRemaining);
+        m11_forced_pause_dialog_layout_for(state, framebufferWidth,
+                                           framebufferHeight, &pauseLayout);
         m11_dim_rect(framebuffer, framebufferWidth, framebufferHeight,
                      0, 0, framebufferWidth, framebufferHeight, 5);
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      40, 70, 240, 60, M11_COLOR_BLACK);
+                      pauseLayout.boxX, pauseLayout.boxY,
+                      pauseLayout.boxW, pauseLayout.boxH,
+                      M11_COLOR_BLACK);
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      40, 70, 240, 60, M11_COLOR_LIGHT_GRAY);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      41, 71, 238, 58, M11_COLOR_DARK_GRAY);
+                      pauseLayout.boxX, pauseLayout.boxY,
+                      pauseLayout.boxW, pauseLayout.boxH,
+                      M11_COLOR_LIGHT_GRAY);
+        if (pauseLayout.boxW >= 4 && pauseLayout.boxH >= 4) {
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          pauseLayout.boxX + 1, pauseLayout.boxY + 1,
+                          pauseLayout.boxW - 2, pauseLayout.boxH - 2,
+                          M11_COLOR_DARK_GRAY);
+        }
         pauseStyle.color = M11_COLOR_WHITE;
         pauseStyle.shadowColor = M11_COLOR_DARK_GRAY;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      56, 86, pauseLine, &pauseStyle);
+                      pauseLayout.titleX, pauseLayout.titleY,
+                      pauseLayout.title, &pauseStyle);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      64, 110, "PRESS ENTER TO RETURN TO MENU", &pauseStyle);
+                      pauseLayout.line1X, pauseLayout.line1Y,
+                      pauseLayout.line1, &pauseStyle);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      64, 122, "ESC TO DISMISS", &pauseStyle);
+                      pauseLayout.line2X, pauseLayout.line2Y,
+                      pauseLayout.line2, &pauseStyle);
     }
 
     /* Rest / death overlay */

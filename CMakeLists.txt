@@ -2500,6 +2500,28 @@ set_tests_properties(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PROPERT
     LABELS "tier2;m11;dm1;dialog;font;scale;ui-fit;accessibility;session-timer"
 )
 
+# DM1 V1 forced-pause dialog font-scale fit probe
+# (gap "In-game overlays + UI-fit coverage" — forced-pause branch).
+# Headless / data-free: pins the M11_ForcedPauseDialogLayout contract
+# for fontScale 1..3 (box inside the 320x200 framebuffer, draw origins
+# inside the inner rect, max text width <= inner width, text wording
+# shrinks as scale grows) plus the end-to-end draw path that the
+# forced-pause dialog actually renders at each scale.
+add_executable(firestaff_dm1_v1_forced_pause_font_scale_fit_probe
+    probes/m11/firestaff_dm1_v1_forced_pause_font_scale_fit_probe.c)
+target_link_libraries(firestaff_dm1_v1_forced_pause_font_scale_fit_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m11 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_forced_pause_font_scale_fit_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_dm1_v1_forced_pause_font_scale_fit_probe
+    COMMAND firestaff_dm1_v1_forced_pause_font_scale_fit_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(firestaff_dm1_v1_forced_pause_font_scale_fit_probe PROPERTIES
+    LABELS "tier2;m11;dm1;font;scale;ui-fit;accessibility;session-timer;forced-pause"
+)
+
 add_executable(firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe
     probes/m11/firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe.c)
 target_link_libraries(firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
