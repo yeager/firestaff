@@ -10,6 +10,7 @@
 
 #include "save_browser_m12.h"
 #include "memory_savegame_pc34_compat.h"
+#include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 
 #include <stdio.h>
@@ -99,6 +100,71 @@ static void extract_game_id(const char* filename, char* outId, int outSize) {
     outId[len] = '\0';
 }
 
+static uint16_t expected_game_code_for_id(const char* gameId) {
+    if (!gameId) return 0;
+    if (strcmp(gameId, "dm1") == 0) return SAVEGAME_PC34_GAME_CODE_DM1;
+    if (strcmp(gameId, "csb") == 0) return SAVEGAME_PC34_GAME_CODE_CSB;
+    if (strcmp(gameId, "dm2") == 0) return SAVEGAME_PC34_GAME_CODE_DM2;
+    if (strcmp(gameId, "nexus") == 0) return SAVEGAME_PC34_GAME_CODE_NEXUS;
+    if (strcmp(gameId, "theron") == 0) return SAVEGAME_PC34_GAME_CODE_THERON;
+    return 0;
+}
+
+static void classify_pc34_manifest(M12_SaveBrowserEntry* entry) {
+    FILE* fp;
+    unsigned char* buf;
+    size_t n;
+    int rc;
+    uint16_t version = 0;
+    uint16_t gameCode = 0;
+
+    entry->expectedGameCode = expected_game_code_for_id(entry->gameId);
+    entry->manifestGameCode = 0;
+    entry->manifestStatus = SAVE_BROWSER_MANIFEST_UNKNOWN;
+
+    if (entry->fileSize <= 0 ||
+        entry->fileSize > (long)SAVEGAME_PC34_MAX_FILE_SIZE) {
+        return;
+    }
+    fp = fopen(entry->fullPath, "rb");
+    if (!fp) return;
+    buf = (unsigned char*)malloc((size_t)entry->fileSize);
+    if (!buf) {
+        fclose(fp);
+        return;
+    }
+    n = fread(buf, 1, (size_t)entry->fileSize, fp);
+    fclose(fp);
+    if (n != (size_t)entry->fileSize) {
+        free(buf);
+        return;
+    }
+
+    /* LSV-02 lives in the PC 3.4 DM_SAVE_HEADER AdditionalData
+     * area; F0799/F0800 own the ReDMCSB header obfuscation details. */
+    rc = F0799_SAVEGAME_PC34PeekManifest_Compat(
+        buf, (int)n, &version, &gameCode, NULL);
+    if (rc == SAVEGAME_PC34_MANIFEST_OK) {
+        entry->manifestGameCode = gameCode;
+        entry->manifestStatus = SAVE_BROWSER_MANIFEST_PRESENT;
+        if (entry->expectedGameCode != 0) {
+            rc = F0800_SAVEGAME_PC34ValidateGameCode_Compat(
+                buf, (int)n, entry->expectedGameCode, 1);
+            entry->manifestStatus =
+                (rc == SAVEGAME_PC34_MANIFEST_OK)
+                    ? SAVE_BROWSER_MANIFEST_MATCH
+                    : SAVE_BROWSER_MANIFEST_WRONG_GAME;
+        }
+    } else if (rc == SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT) {
+        entry->manifestStatus = SAVE_BROWSER_MANIFEST_NOT_PRESENT;
+    } else if (rc == SAVEGAME_PC34_MANIFEST_ERR_BAD_VERSION ||
+               rc == SAVEGAME_PC34_MANIFEST_ERR_BODY_TRUNCATED) {
+        entry->manifestStatus = SAVE_BROWSER_MANIFEST_UNSUPPORTED;
+    }
+    (void)version;
+    free(buf);
+}
+
 /* Format a champion name from packed 8-byte field (may lack NUL). */
 static void format_champion_name(const unsigned char packed[8],
                                  char* out, int outSize) {
@@ -126,9 +192,42 @@ static int parse_save_entry(M12_SaveBrowserEntry* entry) {
     char nameBuf[16];
     int offset;
 
+    classify_pc34_manifest(entry);
+
     memset(&sg, 0, sizeof(sg));
     rc = F0786_SAVEGAME_LoadFromFile_Compat(entry->fullPath, &sg);
     if (rc != SAVEGAME_OK) {
+        if (entry->manifestStatus == SAVE_BROWSER_MANIFEST_MATCH) {
+            entry->valid = 1;
+            entry->mapLevel = -1;
+            entry->championCount = 0;
+            entry->champions[0] = '\0';
+            snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                     "%s (PC34 %s save)", entry->gameId,
+                     F0801_SAVEGAME_PC34GameCodeName_Compat(
+                         entry->manifestGameCode));
+            return 1;
+        }
+        if (entry->manifestStatus == SAVE_BROWSER_MANIFEST_WRONG_GAME) {
+            entry->valid = 0;
+            entry->mapLevel = -1;
+            entry->championCount = 0;
+            entry->champions[0] = '\0';
+            snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                     "%s (wrong-game save is %s)", entry->gameId,
+                     F0801_SAVEGAME_PC34GameCodeName_Compat(
+                         entry->manifestGameCode));
+            return 0;
+        }
+        if (entry->manifestStatus == SAVE_BROWSER_MANIFEST_UNSUPPORTED) {
+            entry->valid = 0;
+            entry->mapLevel = -1;
+            entry->championCount = 0;
+            entry->champions[0] = '\0';
+            snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                     "%s (unsupported save manifest)", entry->gameId);
+            return 0;
+        }
         entry->valid = 0;
         entry->mapLevel = -1;
         entry->championCount = 0;
@@ -296,7 +395,7 @@ int M12_SaveBrowser_HandleInput(M12_SaveBrowserState* state, int input) {
             state->confirmDelete = 0;
             return 0;
         }
-        return 1; /* Signal: load requested */
+        return state->entries[state->selectedIndex].valid ? 1 : 0;
 
     case 7: /* ACTION — initiate delete */
         state->confirmDelete = 1;

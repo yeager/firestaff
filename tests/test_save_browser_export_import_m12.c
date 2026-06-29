@@ -1,4 +1,6 @@
 #include "save_browser_m12.h"
+#include "memory_savegame_pc34_native_export_pc34_compat.h"
+#include "memory_champion_state_pc34_compat.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -41,6 +43,43 @@ static int write_bytes(const char* path, const char* bytes) {
     return 1;
 }
 
+static int write_blob(const char* path, const unsigned char* bytes, int len) {
+    FILE* fp;
+    if (!path || !bytes || len <= 0) return 0;
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(bytes, 1, (size_t)len, fp) != (size_t)len) {
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    return 1;
+}
+
+static int write_pc34_native_dm1_save(const char* path) {
+    struct SaveGame_Compat state;
+    struct PartyState_Compat party;
+    unsigned char buf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    int rc;
+
+    memset(&state, 0, sizeof(state));
+    memset(&party, 0, sizeof(party));
+    party.championCount = 1;
+    party.mapIndex = 4;
+    party.mapX = 7;
+    party.mapY = 9;
+    party.direction = 2;
+    party.activeChampionIndex = 0;
+    party.champions[0].present = 1;
+    memcpy(party.champions[0].name, "TEST    ", 8);
+    state.party = &party;
+
+    rc = F0795_SAVEGAME_ExportPC34_Compat(
+        &state, 0x44534D31u, buf, (int)sizeof(buf), &written);
+    return rc == SAVEGAME_PC34_OK && write_blob(path, buf, written);
+}
+
 static int read_bytes(const char* path, char* out, size_t outBytes) {
     FILE* fp = fopen(path, "rb");
     size_t n;
@@ -55,6 +94,10 @@ static void cleanup(const char* root) {
     char path[512];
     snprintf(path, sizeof(path), "%s/data/firestaff-dm1-slot.sav", root);
     unlink(path);
+    snprintf(path, sizeof(path), "%s/data/firestaff-dm1.sav", root);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/data/firestaff-csb.sav", root);
+    unlink(path);
     snprintf(path, sizeof(path), "%s/backup/firestaff-dm1-slot.sav", root);
     unlink(path);
     snprintf(path, sizeof(path), "%s/backup/not-a-save.dat", root);
@@ -64,6 +107,17 @@ static void cleanup(const char* root) {
     snprintf(path, sizeof(path), "%s/backup", root);
     rmdir(path);
     rmdir(root);
+}
+
+static const M12_SaveBrowserEntry* find_entry(
+    const M12_SaveBrowserState* state, const char* filename) {
+    int i;
+    for (i = 0; i < state->entryCount; ++i) {
+        if (strcmp(state->entries[i].filename, filename) == 0) {
+            return &state->entries[i];
+        }
+    }
+    return NULL;
 }
 
 int main(void) {
@@ -111,6 +165,50 @@ int main(void) {
           "non firestaff save filename rejected");
     check(M12_SaveBrowser_ExportSelected(NULL, backupDir, outPath, (int)sizeof(outPath)) == -1,
           "NULL export state rejected");
+
+    check(unlink(savePath) == 0, "removed restored save before manifest scan");
+    snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1.sav", dataDir);
+    check(write_pc34_native_dm1_save(savePath), "wrote DM1 PC34 native manifest fixture");
+    snprintf(savePath, sizeof(savePath), "%s/firestaff-csb.sav", dataDir);
+    check(write_pc34_native_dm1_save(savePath), "wrote wrong-game PC34 native manifest fixture");
+    check(M12_SaveBrowser_Scan(&state, dataDir) == 2,
+          "scan finds native manifest fixtures");
+    {
+        const M12_SaveBrowserEntry* dm1 =
+            find_entry(&state, "firestaff-dm1.sav");
+        const M12_SaveBrowserEntry* csb =
+            find_entry(&state, "firestaff-csb.sav");
+        check(dm1 != NULL, "DM1 native manifest entry present");
+        check(csb != NULL, "CSB wrong-game manifest entry present");
+        if (dm1) {
+            check(dm1->expectedGameCode == SAVEGAME_PC34_GAME_CODE_DM1,
+                  "DM1 filename maps to DM1 game code");
+            check(dm1->manifestGameCode == SAVEGAME_PC34_GAME_CODE_DM1,
+                  "DM1 native manifest reports DM1 game code");
+            check(dm1->manifestStatus == SAVE_BROWSER_MANIFEST_MATCH,
+                  "DM1 native manifest matches selected game");
+            check(dm1->valid == 1, "DM1 native manifest is load-browser valid");
+            check(strstr(dm1->label, "PC34 DM1 save") != NULL,
+                  "DM1 native manifest label is specific");
+            state.selectedIndex = (int)(dm1 - state.entries);
+            check(M12_SaveBrowser_HandleInput(&state, 5) == 1,
+                  "DM1 native manifest can request load handoff");
+        }
+        if (csb) {
+            check(csb->expectedGameCode == SAVEGAME_PC34_GAME_CODE_CSB,
+                  "CSB filename maps to CSB game code");
+            check(csb->manifestGameCode == SAVEGAME_PC34_GAME_CODE_DM1,
+                  "CSB wrong-game fixture still reports DM1 manifest");
+            check(csb->manifestStatus == SAVE_BROWSER_MANIFEST_WRONG_GAME,
+                  "CSB wrong-game manifest is rejected before launch");
+            check(csb->valid == 0, "CSB wrong-game manifest is not valid");
+            check(strstr(csb->label, "wrong-game save is DM1") != NULL,
+                  "CSB wrong-game manifest label names actual game");
+            state.selectedIndex = (int)(csb - state.entries);
+            check(M12_SaveBrowser_HandleInput(&state, 5) == 0,
+                  "CSB wrong-game manifest cannot request load handoff");
+        }
+    }
 
     cleanup(root);
     if (failures) {

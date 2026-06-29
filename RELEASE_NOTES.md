@@ -1,6 +1,10 @@
 
 # Unreleased
 
+- The M12 save browser now surfaces Firestaff PC 3.4 native save
+  manifests, marking matching DM1 saves distinctly and rejecting
+  wrong-game manifests before launch handoff.
+
 - Release packaging now treats Steam Deck as SteamOS on x86_64/AMD hardware
   and publishes a pacman-compatible `.pkg.tar.zst` artifact from the Linux
   x86_64 release job. Steam Deck is no longer grouped with Linux ARM64 in
