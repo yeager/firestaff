@@ -19916,6 +19916,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_savegame_pc34_native_ex
     )
 endif()
 
+# F0417 SaveUtil minimal-port regression: byte-level XOR obfuscation
+# + per-section key derivation exposed by memory_savegame_pc34_compat.h.
+# Source-locked against ReDMCSB SAVEHEAD.C:44,97,104 +
+# F0417_SAVEUTIL_GetChecksumAndObfuscate (READWRIT.C). Sibling of the
+# LSV-01/LSV-02 test above; covers the helpers the LSV-01 test cites
+# but never directly exercises.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_memory_savegame_pc34_f0417_saveutil_port_pc34_compat.c")
+    add_executable(test_memory_savegame_pc34_f0417_saveutil_port_pc34_compat
+        tests/test_memory_savegame_pc34_f0417_saveutil_port_pc34_compat.c
+    )
+    target_link_libraries(test_memory_savegame_pc34_f0417_saveutil_port_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_memory_savegame_pc34_f0417_saveutil_port_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME memory_savegame_pc34_f0417_saveutil_port_pc34_compat
+        COMMAND test_memory_savegame_pc34_f0417_saveutil_port_pc34_compat
+    )
+endif()
+
 # M12 polished UI flow: public startup-menu state-machine coverage for
 # main, unavailable-game messages, museum, changelog, settings, and launch.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_polished_ui_flow.c")
