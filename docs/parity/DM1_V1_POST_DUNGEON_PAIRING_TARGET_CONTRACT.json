@@ -102,15 +102,21 @@
       "sourceAnchors": [
         {
           "file": "CLIKMENU.C",
-          "function": "F0366_CLIKMENU_TickMoveThing",
-          "lines": "clikmenu_tick_move_thing",
+          "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+          "lines": "279-288",
           "claim": "wall/door/fakewall movement-blocks before F0267 commits"
         },
         {
           "file": "CLIKVIEW.C",
-          "function": "F0377_CLIKVIEW_ProcessViewportClick",
-          "lines": "clikview_process_viewport_click",
+          "function": "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+          "lines": "356-389,404-445",
           "claim": "DOOR->Button path before wall/front-sensor fallthrough"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "function": "F0124_DUNGEONVIEW_DrawSquareD1C",
+          "lines": "7873-7910",
+          "claim": "D1C door/front frame, button, and door panel draw order"
         }
       ],
       "minimumRouteSteps": 2,
@@ -118,10 +124,14 @@
       "expectedTerminalClassifierState": "dungeon_gameplay",
       "expectedTerminalSensorFamily": "wall_or_door_or_fakewall",
       "requiredSelectionFields": [
-        "selected_boundary_kind"
+        "selected_boundary_kind",
+        "expected_view_square",
+        "expected_visual_edge"
       ],
       "minimumSemanticChecks": [
         "selected_boundary_kind in {wall_closeup, alcove_front_left, alcove_front_right, closed_door, fakewall, runtime_open_door, button_door}",
+        "expected_view_square is one of D0C|D1C|D2C|D3C|D1L|D1R|D2L|D2R|D3L|D3R",
+        "expected_visual_edge matches the selected_boundary_kind edge family",
         "reviewer_pass_id matches the live route's PASS_ID"
       ]
     },
