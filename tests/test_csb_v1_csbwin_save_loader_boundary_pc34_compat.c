@@ -239,6 +239,125 @@ int main(void)
               "match() recognises header-only CSB v2.0 magic+version");
     }
 
+    /* ── Discovery/classification gate for staged filenames ── */
+    {
+        CSB_V1_CSBWinSaveDiscoveryResult disc;
+        uint8_t scratch[1024];
+        size_t s;
+        int rc;
+
+        CHECK(csb_v1_csbwin_save_loader_boundary_file_kind(
+                  "/tmp/Custom/CSBGAME.DAT") ==
+              CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT,
+              "file_kind recognises uppercase CSBGAME.DAT basename");
+        CHECK(csb_v1_csbwin_save_loader_boundary_file_kind(
+                  "C:\\CSB\\DMSAVE.BAK") ==
+              CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_BAK,
+              "file_kind recognises backslash DMSAVE.BAK basename");
+        CHECK(csb_v1_csbwin_save_loader_boundary_file_kind(
+                  "/tmp/not_a_save.bin") ==
+              CSB_V1_CSBWIN_SAVE_FILE_NONE,
+              "file_kind rejects unrelated basename");
+
+        s = csb_v1_csbwin_save_loader_boundary_build_fixture(
+            CSB_V1_CSBWIN_SHAPE_CSBGAME_V20, scratch, sizeof(scratch));
+        rc = csb_v1_csbwin_save_loader_boundary_classify(
+            "/tmp/CSBGAME.DAT", scratch, s, &disc);
+        CHECK(rc > 0, "classify CSBGAME.DAT v2.0 returns loader accept");
+        CHECK(disc.filename_candidate == 1,
+              "classify CSBGAME.DAT marks filename candidate");
+        CHECK(disc.shape == CSB_V1_CSBWIN_SHAPE_CSBGAME_V20,
+              "classify CSBGAME.DAT v2.0 shape");
+        CHECK(disc.should_attempt_import == 1,
+              "classify CSBGAME.DAT v2.0 is import-ready");
+        CHECK(strcmp(disc.decision_label, "accept_loader_ready") == 0,
+              "classify CSBGAME.DAT v2.0 decision label");
+
+        rc = csb_v1_csbwin_save_loader_boundary_classify(
+            "/tmp/csbgame.bak", scratch, s, &disc);
+        CHECK(rc > 0, "classify csbgame.bak v2.0 returns loader accept");
+        CHECK(disc.shape == CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_BAK_PAYLOAD,
+              "classify .bak v2.0 maps to bak payload shape");
+        CHECK(disc.should_attempt_import == 1,
+              "classify .bak v2.0 is import-ready");
+
+        s = csb_v1_csbwin_save_loader_boundary_build_fixture(
+            CSB_V1_CSBWIN_SHAPE_CSBGAME_V21, scratch, sizeof(scratch));
+        rc = csb_v1_csbwin_save_loader_boundary_classify(
+            "/tmp/DMSAVE.DAT", scratch, s, &disc);
+        CHECK(rc > 0, "classify DMSAVE.DAT v2.1 returns loader accept");
+        CHECK(disc.shape == CSB_V1_CSBWIN_SHAPE_CSBGAME_V21,
+              "classify DMSAVE.DAT v2.1 shape");
+        CHECK(disc.should_attempt_import == 1,
+              "classify DMSAVE.DAT v2.1 is import-ready");
+
+        s = csb_v1_csbwin_save_loader_boundary_build_fixture(
+            CSB_V1_CSBWIN_SHAPE_DM1_RAW_RDMCSB15, scratch, sizeof(scratch));
+        rc = csb_v1_csbwin_save_loader_boundary_classify(
+            "/tmp/dmsave.dat", scratch, s, &disc);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_BAD_MAGIC,
+              "classify dmsave.dat RDMCSB15 returns BAD_MAGIC");
+        CHECK(disc.shape == CSB_V1_CSBWIN_SHAPE_DM1_RAW_RDMCSB15,
+              "classify dmsave.dat RDMCSB15 shape");
+        CHECK(disc.should_attempt_import == 0,
+              "classify dmsave.dat RDMCSB15 is not import-ready");
+        CHECK(strcmp(disc.decision_label,
+                     "reject_dm1_raw_needs_conversion") == 0,
+              "classify dmsave.dat RDMCSB15 decision label");
+
+        s = csb_v1_csbwin_save_loader_boundary_build_fixture(
+            CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CSB1, scratch, sizeof(scratch));
+        rc = csb_v1_csbwin_save_loader_boundary_classify(
+            "C:\\CSB\\DMSAVE.BAK", scratch, s, &disc);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_BAD_MAGIC,
+              "classify DMSAVE.BAK CSBWin 512 returns BAD_MAGIC");
+        CHECK(disc.file_kind == CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_BAK,
+              "classify DMSAVE.BAK preserves filename kind");
+        CHECK(disc.shape == CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CSB1,
+              "classify DMSAVE.BAK CSBWin 512 shape");
+        CHECK(strcmp(disc.decision_label,
+                     "reject_csbwin_512_needs_decoder") == 0,
+              "classify DMSAVE.BAK CSBWin 512 decision label");
+
+        s = csb_v1_csbwin_save_loader_boundary_build_fixture(
+            CSB_V1_CSBWIN_SHAPE_CSBGAME_V20, scratch, sizeof(scratch));
+        rc = csb_v1_csbwin_save_loader_boundary_classify(
+            "/tmp/not_a_save.bin", scratch, s, &disc);
+        CHECK(rc > 0,
+              "classify valid CSBGAME bytes under unrelated name still runs loader");
+        CHECK(disc.filename_candidate == 0,
+              "classify unrelated name is not a filename candidate");
+        CHECK(disc.should_attempt_import == 0,
+              "classify unrelated name is not import-ready");
+        CHECK(strcmp(disc.decision_label,
+                     "reject_non_csbwin_save_filename") == 0,
+              "classify unrelated name decision label");
+
+        memcpy(scratch, "CSBGAME\0", 8);
+        rc = csb_v1_csbwin_save_loader_boundary_classify(
+            "/tmp/csbgame.dat", scratch, 8u, &disc);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_TRUNCATED,
+              "classify short CSBGAME header returns TRUNCATED");
+        CHECK(disc.shape == CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_TRUNCATED_RECORDS,
+              "classify short CSBGAME header shape");
+        CHECK(strcmp(disc.decision_label, "reject_truncated") == 0,
+              "classify short CSBGAME header decision label");
+
+        rc = csb_v1_csbwin_save_loader_boundary_classify(
+            "/tmp/csbgame.dat", NULL, 0u, &disc);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_NULL,
+              "classify NULL bytes returns ERR_NULL");
+        CHECK(disc.shape == CSB_V1_CSBWIN_SHAPE_COUNT,
+              "classify NULL bytes shape_count");
+        CHECK(strcmp(disc.decision_label, "reject_no_bytes") == 0,
+              "classify NULL bytes decision label");
+
+        rc = csb_v1_csbwin_save_loader_boundary_classify(
+            "/tmp/csbgame.dat", scratch, s, NULL);
+        CHECK(rc == CSB_SAVE_IMPORT_ERR_NULL,
+              "classify NULL out returns ERR_NULL");
+    }
+
     /* ── Source-evidence citation chain ── */
     {
         const char *ev = csb_v1_csbwin_save_loader_boundary_source_evidence();

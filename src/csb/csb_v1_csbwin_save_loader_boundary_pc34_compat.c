@@ -108,6 +108,129 @@ static const CSB_V1_CSBWinSaveShapeContract k_contract_table[] = {
         "CSBWin CSBCode.cpp:422 csbgame.bak literal — .bak suffix is a launcher-side flag only")
 };
 
+/* ── Small classification helpers ────────────────────────────────────── */
+
+static int ascii_tolower_int(int c)
+{
+    return (c >= 'A' && c <= 'Z') ? (c - 'A' + 'a') : c;
+}
+
+static int ascii_ieq(const char *a, const char *b)
+{
+    if (!a || !b) return 0;
+    while (*a && *b) {
+        if (ascii_tolower_int((unsigned char)*a) !=
+            ascii_tolower_int((unsigned char)*b)) {
+            return 0;
+        }
+        ++a;
+        ++b;
+    }
+    return *a == '\0' && *b == '\0';
+}
+
+static const char *basename_hint(const char *path)
+{
+    const char *base = path;
+    const char *p;
+    if (!path) return "";
+    for (p = path; *p; ++p) {
+        if (*p == '/' || *p == '\\') {
+            base = p + 1;
+        }
+    }
+    return base;
+}
+
+static unsigned int read_le32_at(const uint8_t *bytes, size_t size, size_t off)
+{
+    if (!bytes || size < off + 4u) return 0u;
+    return (unsigned int)bytes[off]
+         | ((unsigned int)bytes[off + 1u] << 8)
+         | ((unsigned int)bytes[off + 2u] << 16)
+         | ((unsigned int)bytes[off + 3u] << 24);
+}
+
+static CSB_V1_CSBWinSaveShape classify_bytes_shape(
+    const uint8_t *bytes,
+    size_t size)
+{
+    static const unsigned char kCsbGameMagic[CSB_SAVE_MAGIC_LEN] = {
+        'C','S','B','G','A','M','E','\0'
+    };
+    unsigned int version;
+    unsigned int champion_count;
+    size_t need;
+
+    if (!bytes) return CSB_V1_CSBWIN_SHAPE_COUNT;
+    if (size < CSB_SAVE_MAGIC_LEN) {
+        return CSB_V1_CSBWIN_SHAPE_TOO_SMALL_UNDER_8;
+    }
+    if (memcmp(bytes, "RDMCSB15", CSB_SAVE_MAGIC_LEN) == 0) {
+        return CSB_V1_CSBWIN_SHAPE_DM1_RAW_RDMCSB15;
+    }
+    if (size >= 4u &&
+        bytes[0] == (uint8_t)'C' &&
+        bytes[1] == (uint8_t)'S' &&
+        bytes[2] == (uint8_t)'B' &&
+        bytes[3] == 0x01u) {
+        return CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CSB1;
+    }
+    if (size >= 4u &&
+        bytes[0] == (uint8_t)'D' &&
+        bytes[1] == (uint8_t)'M' &&
+        bytes[2] == 0x00u &&
+        bytes[3] == 0x01u) {
+        return CSB_V1_CSBWIN_SHAPE_CSBWIN_512_DM01;
+    }
+    if (size >= 4u &&
+        bytes[0] == (uint8_t)'C' &&
+        bytes[1] == (uint8_t)'E' &&
+        bytes[2] == (uint8_t)'D' &&
+        bytes[3] == (uint8_t)'T') {
+        return CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CEDT;
+    }
+    if (memcmp(bytes, kCsbGameMagic, CSB_SAVE_MAGIC_LEN) != 0) {
+        return CSB_V1_CSBWIN_SHAPE_NO_MAGIC_8_PLUS;
+    }
+    if (size < (size_t)CSB_SAVE_HEADER_SIZE) {
+        return CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_TRUNCATED_RECORDS;
+    }
+
+    /* CSBWin SaveGame.cpp writes an optional CDSA marker into the
+     * CSBGAME header; today Firestaff records that shape as a
+     * bounded loader rejection instead of attempting DSA decode. */
+    if (size >= (size_t)(CSB_SAVE_HDR_OFF_CHAMP_COUNT + 4u) &&
+        bytes[CSB_SAVE_HDR_OFF_CHAMP_COUNT] == (uint8_t)'C' &&
+        bytes[CSB_SAVE_HDR_OFF_CHAMP_COUNT + 1u] == (uint8_t)'D' &&
+        bytes[CSB_SAVE_HDR_OFF_CHAMP_COUNT + 2u] == (uint8_t)'S' &&
+        bytes[CSB_SAVE_HDR_OFF_CHAMP_COUNT + 3u] == (uint8_t)'A') {
+        return CSB_V1_CSBWIN_SHAPE_CSBGAME_CDSA;
+    }
+
+    version = read_le32_at(bytes, size, CSB_SAVE_HDR_OFF_VERSION);
+    if (version != CSB_SAVE_VERSION_V20 && version != CSB_SAVE_VERSION_V21) {
+        return CSB_V1_CSBWIN_SHAPE_CSBGAME_BAD_VERSION;
+    }
+    champion_count = (size > (size_t)CSB_SAVE_HDR_OFF_CHAMP_COUNT)
+        ? (unsigned int)bytes[CSB_SAVE_HDR_OFF_CHAMP_COUNT]
+        : 0u;
+    if (champion_count == 0u) {
+        return CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_CHAMP_COUNT_0;
+    }
+    if (champion_count > (unsigned int)CSB_V1_MAX_CHAMPIONS) {
+        return CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_CHAMP_COUNT_5;
+    }
+    need = (size_t)CSB_SAVE_HEADER_SIZE
+         + (size_t)champion_count * (size_t)CSB_SAVE_CHAMP_SIZE;
+    if (size < need) {
+        return CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_TRUNCATED_RECORDS;
+    }
+    return (version == CSB_SAVE_VERSION_V21)
+        ? CSB_V1_CSBWIN_SHAPE_CSBGAME_V21
+        : CSB_V1_CSBWIN_SHAPE_CSBGAME_V20;
+}
+
 const CSB_V1_CSBWinSaveShapeContract *
 csb_v1_csbwin_save_loader_boundary_contract(size_t *out_count)
 {
@@ -490,6 +613,78 @@ CSB_V1_CSBWinSaveShape csb_v1_csbwin_save_loader_boundary_match(
     return CSB_V1_CSBWIN_SHAPE_COUNT;
 }
 
+CSB_V1_CSBWinSaveFileKind
+csb_v1_csbwin_save_loader_boundary_file_kind(const char *path_hint)
+{
+    const char *base = basename_hint(path_hint);
+    if (ascii_ieq(base, "csbgame.dat")) {
+        return CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT;
+    }
+    if (ascii_ieq(base, "csbgame.bak")) {
+        return CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_BAK;
+    }
+    if (ascii_ieq(base, "dmsave.dat")) {
+        return CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_DAT;
+    }
+    if (ascii_ieq(base, "dmsave.bak")) {
+        return CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_BAK;
+    }
+    return CSB_V1_CSBWIN_SAVE_FILE_NONE;
+}
+
+int csb_v1_csbwin_save_loader_boundary_classify(
+    const char *path_hint,
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinSaveDiscoveryResult *out)
+{
+    CSB_V1_CSBWinSaveShape shape;
+    CSB_V1_CSBWinSaveFileKind kind;
+    int rc;
+
+    if (!out) {
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+    memset(out, 0, sizeof(*out));
+
+    kind = csb_v1_csbwin_save_loader_boundary_file_kind(path_hint);
+    shape = classify_bytes_shape(bytes, size);
+    if ((kind == CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_BAK ||
+         kind == CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_BAK) &&
+        shape == CSB_V1_CSBWIN_SHAPE_CSBGAME_V20) {
+        shape = CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_BAK_PAYLOAD;
+    }
+
+    out->file_kind = kind;
+    out->filename_candidate = (kind != CSB_V1_CSBWIN_SAVE_FILE_NONE) ? 1 : 0;
+    out->shape = shape;
+    out->file_kind_label =
+        csb_v1_csbwin_save_loader_boundary_file_kind_name(kind);
+
+    if (shape == CSB_V1_CSBWIN_SHAPE_COUNT) {
+        out->loader.shape = shape;
+        out->loader.shape_label =
+            csb_v1_csbwin_save_loader_boundary_shape_name(shape);
+        out->loader.loader_code = CSB_SAVE_IMPORT_ERR_NULL;
+        out->loader.expected_code = CSB_SAVE_IMPORT_ERR_NULL;
+        out->loader.contract_match = 0;
+        out->should_attempt_import = 0;
+        out->decision_label =
+            csb_v1_csbwin_save_loader_boundary_decision_name(out);
+        return CSB_SAVE_IMPORT_ERR_NULL;
+    }
+
+    rc = csb_v1_csbwin_save_loader_boundary_check(bytes, size, shape,
+                                                  &out->loader);
+    out->should_attempt_import =
+        (out->filename_candidate &&
+         out->loader.contract_match &&
+         out->loader.loader_code > 0) ? 1 : 0;
+    out->decision_label =
+        csb_v1_csbwin_save_loader_boundary_decision_name(out);
+    return rc;
+}
+
 const char *csb_v1_csbwin_save_loader_boundary_shape_name(
     CSB_V1_CSBWinSaveShape shape)
 {
@@ -510,6 +705,58 @@ const char *csb_v1_csbwin_save_loader_boundary_shape_name(
     case CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_BAK_PAYLOAD:     return "csbgame_v20_bak_payload";
     case CSB_V1_CSBWIN_SHAPE_COUNT:                       return "shape_count";
     default:                                              return "unknown";
+    }
+}
+
+const char *csb_v1_csbwin_save_loader_boundary_file_kind_name(
+    CSB_V1_CSBWinSaveFileKind kind)
+{
+    switch (kind) {
+    case CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT: return "csbgame.dat";
+    case CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_BAK: return "csbgame.bak";
+    case CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_DAT:  return "dmsave.dat";
+    case CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_BAK:  return "dmsave.bak";
+    case CSB_V1_CSBWIN_SAVE_FILE_NONE:
+    default:                                  return "none";
+    }
+}
+
+const char *csb_v1_csbwin_save_loader_boundary_decision_name(
+    const CSB_V1_CSBWinSaveDiscoveryResult *result)
+{
+    if (!result) return "reject_null_result";
+    if (!result->filename_candidate) {
+        return "reject_non_csbwin_save_filename";
+    }
+    if (result->should_attempt_import) {
+        return "accept_loader_ready";
+    }
+    switch (result->shape) {
+    case CSB_V1_CSBWIN_SHAPE_DM1_RAW_RDMCSB15:
+        return "reject_dm1_raw_needs_conversion";
+    case CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CSB1:
+    case CSB_V1_CSBWIN_SHAPE_CSBWIN_512_DM01:
+    case CSB_V1_CSBWIN_SHAPE_CSBWIN_512_CEDT:
+        return "reject_csbwin_512_needs_decoder";
+    case CSB_V1_CSBWIN_SHAPE_CSBGAME_CDSA:
+        return "reject_cdsa_needs_dsa_section_decoder";
+    case CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_CHAMP_COUNT_0:
+    case CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_CHAMP_COUNT_5:
+        return "reject_champion_count";
+    case CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_TRUNCATED_RECORDS:
+    case CSB_V1_CSBWIN_SHAPE_TOO_SMALL_UNDER_8:
+        return "reject_truncated";
+    case CSB_V1_CSBWIN_SHAPE_CSBGAME_BAD_VERSION:
+        return "reject_bad_version";
+    case CSB_V1_CSBWIN_SHAPE_NO_MAGIC_8_PLUS:
+        return "reject_bad_magic";
+    case CSB_V1_CSBWIN_SHAPE_COUNT:
+        return "reject_no_bytes";
+    case CSB_V1_CSBWIN_SHAPE_CSBGAME_V20:
+    case CSB_V1_CSBWIN_SHAPE_CSBGAME_V21:
+    case CSB_V1_CSBWIN_SHAPE_CSBGAME_V20_BAK_PAYLOAD:
+    default:
+        return "reject_loader_contract_mismatch";
     }
 }
 
