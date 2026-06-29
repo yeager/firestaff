@@ -111,6 +111,8 @@ extern "C" {
 #define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_G2116_D0C_LOADER_PC34 0
 #define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_M075_BYTE_COUNT_PC34 32
 #define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_M075_HEIGHT_PC34 123
+#define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TEMPORARY_COPY_BYTE_WIDTH_PC34 32
+#define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TEMPORARY_COPY_HEIGHT_PC34 123
 #define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_C048_BYTE_WIDTH_PC34 48
 #define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_C016_BYTE_WIDTH_PC34 16
 #define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_THIEVES_EYE_HEIGHT_PC34 95
@@ -144,7 +146,7 @@ extern "C" {
 #define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_C19_STAIRS_FRONT_PC34 19
 #define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_C02_PIT_PC34 2
 #define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_C05_TELEPORTER_PC34 5
-#define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_HASH_PC34 0x65918ae1u
+#define DM1_V1_D0C_DOOR_EDGE_ORNAMENT_HASH_PC34 0xfbe15fb3u
 
 typedef enum {
     DM1_V1_D0C_DOOR_EDGE_ORNAMENT_NO_THIEVES_EYE_LEGACY_PC34 = 0,
@@ -195,6 +197,14 @@ typedef struct {
     int post_frame_f0113_field_blit_present;
     int c10_transparent_blit;
     int c09_gold_hole_blit;
+    int thieves_eye_hole_blit_present;
+    int no_thieves_eye_draws_frame_direct;
+    int legacy_thieves_eye_copies_g0709_to_temporary;
+    int legacy_thieves_eye_draws_temporary_via_f0100;
+    int modern_thieves_eye_copies_g2116_to_temporary;
+    int modern_thieves_eye_draws_temporary_via_f0656;
+    int temporary_bitmap_byte_width;
+    int temporary_bitmap_height;
     int half_clip_first_byte_width;
     int half_clip_second_byte_width;
     int half_clip_first_height;
@@ -223,6 +233,7 @@ typedef struct {
     int g2116_zone_checks;
     int thieves_eye_zone_checks;
     int transparency_color_checks;
+    int thieves_eye_branch_gating_checks;
     int post_frame_f0112_checks;
     int post_frame_f0115_checks;
     int post_frame_f0113_checks;

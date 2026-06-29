@@ -40,11 +40,13 @@ static const char s_source_evidence[] =
     "Atari/Amiga clipped blit. Modern I34E uses M711_NEGGRAPHIC_HOLE_IN_WALL "
     "with C736_ZONE_THIEVES_EYE_HOLE_IN_DOOR_FRAME and C09_COLOR_GOLD "
     "transparency; F20E P20J uses C732_ZONE_THIEVES_EYE_HOLE_IN_DOOR_FRAME. "
-    "DUNVIEW.C:8197 (thieves-eye path) and 8221 (no-thieves-eye) draw the "
-    "door-edge-ornament via F0100_DUNGEONVIEW_DrawWallSetBitmap at the "
-    "G0172 stride. DUNVIEW.C:8213/8216 (modern I34E/F20E) use "
-    "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap with "
-    "C728_ZONE_DOOR_FRAME_D0C / C724_ZONE_DOOR_FRAME_D0C. "
+    "DUNVIEW.C:8197 (legacy thieves-eye path) draws the temporary "
+    "G0074 frame via F0100_DUNGEONVIEW_DrawWallSetBitmap at the G0172 "
+    "stride; DUNVIEW.C:8213/8216 (modern thieves-eye path) draw the "
+    "temporary G0074 frame via F0656_BlitBitmapToViewportZoneIndexWithTransparency. "
+    "DUNVIEW.C:8218-8235 is the no-thieves-eye branch: it skips the C09 "
+    "hole blit and draws the door-frame directly via F0100 or F0104 using "
+    "C724_ZONE_DOOR_FRAME_D0C / C728_ZONE_DOOR_FRAME_D0C. "
     "DUNVIEW.C:8290-8296 (post-frame F0112 ceiling-pit) is reached only "
     "after the door-side case breaks; the post-frame F0112/C069/C871 "
     "ceiling-pit, F0115/M609/C0x0021 thing-pass, and F0113/C715/C713 "
@@ -238,7 +240,33 @@ int dm1_v1_viewport_d0c_door_edge_ornament_trace_pc34(
     out_trace->post_frame_f0115_thing_pass_present = 1;
     out_trace->post_frame_f0113_field_blit_present = 1;
     out_trace->c10_transparent_blit = 1;
-    out_trace->c09_gold_hole_blit = 1;
+    out_trace->c09_gold_hole_blit = has_thieves_eye ? 1 : 0;
+    out_trace->thieves_eye_hole_blit_present = has_thieves_eye ? 1 : 0;
+    out_trace->no_thieves_eye_draws_frame_direct =
+        has_thieves_eye ? 0 : 1;
+    out_trace->legacy_thieves_eye_copies_g0709_to_temporary =
+        (has_thieves_eye &&
+         target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_LEGACY)
+            ? 1
+            : 0;
+    out_trace->legacy_thieves_eye_draws_temporary_via_f0100 =
+        out_trace->legacy_thieves_eye_copies_g0709_to_temporary;
+    out_trace->modern_thieves_eye_copies_g2116_to_temporary =
+        (has_thieves_eye &&
+         (target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_F20E ||
+          target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_I34E))
+            ? 1
+            : 0;
+    out_trace->modern_thieves_eye_draws_temporary_via_f0656 =
+        out_trace->modern_thieves_eye_copies_g2116_to_temporary;
+    out_trace->temporary_bitmap_byte_width =
+        out_trace->legacy_thieves_eye_copies_g0709_to_temporary
+            ? DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TEMPORARY_COPY_BYTE_WIDTH_PC34
+            : 0;
+    out_trace->temporary_bitmap_height =
+        out_trace->legacy_thieves_eye_copies_g0709_to_temporary
+            ? DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TEMPORARY_COPY_HEIGHT_PC34
+            : 0;
     out_trace->half_clip_first_byte_width =
         DM1_V1_D0C_DOOR_EDGE_ORNAMENT_C048_BYTE_WIDTH_PC34;
     out_trace->half_clip_second_byte_width =
@@ -340,7 +368,53 @@ static void check_branch(int has_thieves_eye, int target_media, int expected_bra
                thieves_eye_hole_native_bitmap_for_target(target_media));
     assert_int("thieves_eye.color", trace.thieves_eye_color,
                DM1_V1_D0C_DOOR_EDGE_ORNAMENT_C09_COLOR_GOLD_PC34);
-    assert_int("c09.gold.hole.blit", trace.c09_gold_hole_blit, 1);
+    assert_int("c09.gold.hole.blit", trace.c09_gold_hole_blit,
+               has_thieves_eye ? 1 : 0);
+    assert_int("thieves.eye.hole.blit.present",
+               trace.thieves_eye_hole_blit_present,
+               has_thieves_eye ? 1 : 0);
+    assert_int("no.thieves.eye.draws.frame.direct",
+               trace.no_thieves_eye_draws_frame_direct,
+               has_thieves_eye ? 0 : 1);
+    assert_int("legacy.thieves.eye.copies.g0709",
+               trace.legacy_thieves_eye_copies_g0709_to_temporary,
+               (has_thieves_eye &&
+                target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_LEGACY)
+                   ? 1
+                   : 0);
+    assert_int("legacy.thieves.eye.draws.temporary.f0100",
+               trace.legacy_thieves_eye_draws_temporary_via_f0100,
+               (has_thieves_eye &&
+                target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_LEGACY)
+                   ? 1
+                   : 0);
+    assert_int("modern.thieves.eye.copies.g2116",
+               trace.modern_thieves_eye_copies_g2116_to_temporary,
+               (has_thieves_eye &&
+                (target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_F20E ||
+                 target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_I34E))
+                   ? 1
+                   : 0);
+    assert_int("modern.thieves.eye.draws.temporary.f0656",
+               trace.modern_thieves_eye_draws_temporary_via_f0656,
+               (has_thieves_eye &&
+                (target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_F20E ||
+                 target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_I34E))
+                   ? 1
+                   : 0);
+    assert_int("temporary.bitmap.byte.width",
+               trace.temporary_bitmap_byte_width,
+               (has_thieves_eye &&
+                target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_LEGACY)
+                   ? DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TEMPORARY_COPY_BYTE_WIDTH_PC34
+                   : 0);
+    assert_int("temporary.bitmap.height",
+               trace.temporary_bitmap_height,
+               (has_thieves_eye &&
+                target_media == DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TARGET_LEGACY)
+                   ? DM1_V1_D0C_DOOR_EDGE_ORNAMENT_TEMPORARY_COPY_HEIGHT_PC34
+                   : 0);
+    ++s_last.thieves_eye_branch_gating_checks;
 
     /* Frame transparency is C10_COLOR_FLESH. */
     assert_int("frame.transparency.color", trace.frame_transparency_color,
@@ -455,6 +529,12 @@ int run_dm1_v1_viewport_d0c_door_edge_ornament_self_test(void)
                     "C041_GRAPHIC_HOLE_IN_WALL");
     assert_contains("source.m711", s_source_evidence,
                     "M711_NEGGRAPHIC_HOLE_IN_WALL");
+    assert_contains("source.no_thieves_eye_branch", s_source_evidence,
+                    "DUNVIEW.C:8218-8235 is the no-thieves-eye branch");
+    assert_contains("source.hole_blit_gated", s_source_evidence,
+                    "skips the C09 hole blit");
+    assert_contains("source.f0656", s_source_evidence,
+                    "F0656_BlitBitmapToViewportZoneIndexWithTransparency");
     assert_contains("source.c728", s_source_evidence,
                     "C728_ZONE_DOOR_FRAME_D0C");
     assert_contains("source.c724", s_source_evidence,
@@ -532,6 +612,8 @@ int run_dm1_v1_viewport_d0c_door_edge_ornament_self_test(void)
     assert_int("g2116.zone.checks", s_last.g2116_zone_checks, 6);
     assert_int("thieves.eye.zone.checks", s_last.thieves_eye_zone_checks, 6);
     assert_int("transparency.color.checks", s_last.transparency_color_checks, 6);
+    assert_int("thieves.eye.branch.gating.checks",
+               s_last.thieves_eye_branch_gating_checks, 6);
     assert_int("post.frame.f0112.checks", s_last.post_frame_f0112_checks, 6);
     assert_int("post.frame.f0115.checks", s_last.post_frame_f0115_checks, 6);
     assert_int("post.frame.f0113.checks", s_last.post_frame_f0113_checks, 6);
