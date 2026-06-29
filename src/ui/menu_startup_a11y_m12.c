@@ -9,6 +9,8 @@
  * docs/FIRESTAFF_GAP_LIST.md for "Screen reader launcher state
  * manifest"):
  *   - Main view (game cards)             → FS_AX_LAUNCHER_CARD per entry
+ *                                           + a pinned data-availability value
+ *                                             ("ready" | "data missing" | "selected | …")
  *   - Settings tabs                      → FS_AX_LAUNCHER_TAB per tab
  *   - Settings rows                      → FS_AX_LAUNCHER_ROW per visible row
  *   - Missing-data popup                 → FS_AX_POPUP + FS_AX_POPUP_OK
@@ -483,7 +485,42 @@ static int settings_first_visible_row(const M12_StartupMenuState* state,
 
 /* ── Per-view emitters ────────────────────────────────────────────── */
 
-/* Main view: emit one card element per state->entries[i]. */
+/* Main view: emit one card element per state->entries[i]. For game
+ * cards we also surface a data-availability reason on the element's
+ * value so a screen reader can announce why a card is disabled
+ * (e.g. "data missing" vs "ready") without the user having to look
+ * at the launcher chrome. The labels below are pinned ASCII
+ * (`data missing`, `ready`) so the manifest is safe to grep /
+ * assert in tests and the screen-reader output stays deterministic
+ * across runs.
+ *
+ * Privacy: the value text never embeds filesystem paths, MD5
+ * hashes, or other fingerprints. The data-dir row in the settings
+ * view is the only place that ever surfaces the absolute data
+ * directory, and only when the caller passes includePaths=1.
+ *
+ * The "not supported" branch is intentionally not surfaced: every
+ * entry in the static g_entryTemplate catalog is supported, so
+ * `available == 0` on a catalogued game always means the data is
+ * missing from the configured data dir. If a future pass adds an
+ * unsupported-but-catalogued entry, the natural extension here is
+ * to add a static m12_is_catalog_supported() lookup or expose the
+ * existing m12_game_supported() helper. */
+static const char* main_view_game_value(const M12_MenuEntry* entry, int selected)
+{
+    if (!entry || entry->kind != M12_MENU_ENTRY_GAME) {
+        return selected ? "selected" : NULL;
+    }
+    if (selected) {
+        return entry->available ? "selected | ready"
+                                : "selected | data missing";
+    }
+    if (!entry->available) {
+        return "data missing";
+    }
+    return NULL;
+}
+
 static void emit_main_view(const M12_StartupMenuState* state,
                            int fbW, int fbH)
 {
@@ -495,6 +532,8 @@ static void emit_main_view(const M12_StartupMenuState* state,
         const char* label;
         const char* gameId;
         int enabled;
+        const char* value;
+        int selected;
         /* Card row Y at 76, +24 per row. See m12_draw_main_view. */
         AxRect base = { 130, 76 + (i * 24), 168, 24 };
 
@@ -520,16 +559,11 @@ static void emit_main_view(const M12_StartupMenuState* state,
             enabled = entry->available ? 1 : 0;
         }
 
-        /* selectedIndex marks the focused card; surface it via the
-         * element's value so the screen reader can announce "selected". */
-        if (state->selectedIndex == i) {
-            add_element_rect(fbW, fbH, id, label,
-                             FS_AX_LAUNCHER_CARD, base, enabled,
-                             "selected");
-        } else {
-            add_element_rect(fbW, fbH, id, label,
-                             FS_AX_LAUNCHER_CARD, base, enabled, NULL);
-        }
+        selected = (state->selectedIndex == i);
+        value = main_view_game_value(entry, selected);
+        add_element_rect(fbW, fbH, id, label,
+                         FS_AX_LAUNCHER_CARD, base, enabled,
+                         value);
     }
 }
 

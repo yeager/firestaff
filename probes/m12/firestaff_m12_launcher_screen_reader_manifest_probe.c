@@ -149,6 +149,39 @@ static int read_all(const char* path, char* out, size_t outSize)
     return (int)n;
 }
 
+/* Find the trailing value field of the elements[] entry whose
+ * "id" matches id. The element schema is:
+ *   {"id":"<id>","type":"...","label":"...","bounds":{...},
+ *    "enabled":...,"value":<value>}
+ * Returns a pointer to the start of the value field ("null" or
+ * "\"<string>\"") when matched, or NULL otherwise. Useful for
+ * proving that a specific element's value field is the exact
+ * expected token without leaking adjacent elements.
+ *
+ * Note: we anchor the end of the element on the literal
+ * `"value":` field that always appears last, since the bounds
+ * object also has a closing `}` that would otherwise confuse a
+ * naive `},"` scan. */
+static const char* find_element_value_for_id(const char* json,
+                                             const char* id,
+                                             const char* expectedValue)
+{
+    char needle[128];
+    const char* elementStart;
+    const char* valueField;
+    size_t valueSpan;
+    if (!json || !id || !expectedValue) return NULL;
+    snprintf(needle, sizeof(needle), "\"id\":\"%s\"", id);
+    elementStart = strstr(json, needle);
+    if (!elementStart) return NULL;
+    valueField = strstr(elementStart, "\"value\":");
+    if (!valueField) return NULL;
+    valueField += strlen("\"value\":");
+    valueSpan = strlen(expectedValue);
+    if (strncmp(valueField, expectedValue, valueSpan) != 0) return NULL;
+    return valueField;
+}
+
 /* ── Test fixtures ────────────────────────────────────────────────── */
 
 static char g_home_path[640];
@@ -294,11 +327,44 @@ static void subtest_main_view_cards(void)
                  strstr(buf, "\"type\":\"launcher_card\"") != NULL,
                  "main: element type is launcher_card");
 
-    /* The DM2 card should be the one marked selected. */
+    /* The DM2 card should be the focused one. The temp data root has
+     * no game data, so the manifest now exposes a "selected | data
+     * missing" value so a screen reader announces both the focus
+     * state and the availability reason. */
     probe_record("INV_LAX_18_main_selected_value",
                  strstr(buf, "\"id\":\"GAME_CARD_DM2\",\"type\":\"launcher_card\",\"label\":\"DUNGEON MASTER II\",\"bounds\":{\"x\":") != NULL
-                     && strstr(buf, ", \"value\":\"selected\"}") != NULL,
-                 "main: DM2 card carries the \"selected\" value");
+                     && strstr(buf, ", \"value\":\"selected | data missing\"}") != NULL,
+                 "main: DM2 card carries the \"selected | data missing\" value");
+    probe_record("INV_LAX_19_main_unfocused_unavailable_value",
+                 /* The probe pre-selects DM2 (index 2), so DM1 is the
+                  * first non-focused game card. With no game data on
+                  * the temp data root, the manifest must surface
+                  * "data missing" on that card so a screen reader
+                  * announces why it is disabled. */
+                 strstr(buf, "\"id\":\"GAME_CARD_DM1\",\"type\":\"launcher_card\",\"label\":\"DUNGEON MASTER\",\"bounds\":{\"x\":130,\"y\":76,\"w\":168,\"h\":24},") != NULL
+                     && strstr(buf, ", \"value\":\"data missing\"}") != NULL,
+                 "main: unfocused unavailable card carries \"data missing\" value");
+    probe_record("INV_LAX_20_main_unfocused_available_value_omitted",
+                 /* The probe does not control which game is available,
+                  * but the manifest contract guarantees the value is
+                  * omitted (NULL) for an available unfocused card. We
+                  * check the contract by ensuring no game card carries
+                  * a stray "selected | ready" value when the probe did
+                  * not pre-select an available card. */
+                 strstr(buf, "\"value\":\"selected | ready\"}") == NULL,
+                 "main: unfocused available cards do not leak a value when focus is on DM2");
+    probe_record("INV_LAX_21_main_settings_museum_unfocused_value",
+                 /* The settings and museum cards are non-game entries
+                  * and the new helper leaves their value NULL unless
+                  * they are focused. The probe selected DM2 so neither
+                  * MENU_SETTINGS nor MENU_MUSEUM should carry a
+                  * value. The fs_ax_flush() JSON serializer writes
+                  * "value":null for empty values, so we look up the
+                  * element by id and assert the trailing value field
+                  * is exactly "null" — never a string. */
+                 find_element_value_for_id(buf, "MENU_SETTINGS", "null") != NULL
+                     && find_element_value_for_id(buf, "MENU_MUSEUM", "null") != NULL,
+                 "main: non-game unfocused entries do not leak a data-availability value");
 }
 
 /* Subtest C: settings view emits launcher_tab and the visible
