@@ -51,7 +51,9 @@ self-test is regression-gated in CI by the
 ``dm1_v1_post_dungeon_pairing_target_selector`` CTest entry and
 re-pinned in the runbook-consistency probe at
 ``tools/test_dm1_v1_capture_runbook_consistency.py`` under
-``post_dungeon_target_selector_selftest``.
+``post_dungeon_target_selector_selftest``.  The negative cases include the
+expected-terminal classifier mismatch that keeps a reviewed viewport target
+from being routed through the wrong semantic detector.
 
 Calibration provenance
 ----------------------
@@ -928,6 +930,14 @@ def self_test() -> int:
     bogus["asset_set"] = dict(bogus["asset_set"])
     bogus["asset_set"]["DUNGEON.DAT"] = "0" * 64
     _expect_failure("asset_set_mismatch", selection=bogus)
+
+    # Negative: classifier-state mismatch.  This is the post-dungeon
+    # handoff edge the runbook calls out: a reviewed target must not
+    # dispatch a live route whose expected terminal classifier belongs
+    # to a different capture family.
+    bogus = dict(valid_creature)
+    bogus["expected_terminal_classifier_state"] = "wall_closeup"
+    _expect_failure("classifier_state_mismatch", selection=bogus)
 
     # Negative: preflight receipt requirement fails when
     # require_preflight_pin is set and the path is missing.
