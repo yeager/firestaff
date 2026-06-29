@@ -192,6 +192,10 @@ bool dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
     DM1_V1_D1CF0108FloorOrnamentOcclusionContextPc34 context,
     unsigned int floor_ornament_ordinal);
 
+bool dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_has_bug0_64_pc34(
+    DM1_V1_D1CF0108FloorOrnamentOcclusionContextPc34 context,
+    unsigned int floor_ornament_ordinal);
+
 unsigned int dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_decode_ordinal_pc34(
     unsigned int floor_ornament_ordinal,
     bool *footprint_flag_set,

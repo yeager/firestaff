@@ -255,6 +255,32 @@ bool dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
     return false;
 }
 
+bool dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_has_bug0_64_pc34(
+    DM1_V1_D1CF0108FloorOrnamentOcclusionContextPc34 context,
+    unsigned int floor_ornament_ordinal)
+{
+    if (!dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
+            context, floor_ornament_ordinal)) {
+        return false;
+    }
+
+    switch (context) {
+    case DM1_V1_D1C_F0108_FOCCL_CONTEXT_OPEN_PIT_PC34:
+    case DM1_V1_D1C_F0108_FOCCL_CONTEXT_TELEPORTER_PC34:
+    case DM1_V1_D1C_F0108_FOCCL_CONTEXT_STAIRS_FRONT_PC34:
+        /* ReDMCSB: DUNVIEW.C F0124 lines 7912-7937.  C02 pit,
+         * C05 teleporter, and C19 stairs-front reach T0124017, where
+         * F0108 is called with the BUG0_64 no-occlusion-guard comment.
+         * C01 corridor and C17 door-front also draw floor ornaments, but
+         * they are not the open-surface BUG0_64 case. */
+        return true;
+    case DM1_V1_D1C_F0108_FOCCL_CONTEXT_CORRIDOR_PC34:
+    case DM1_V1_D1C_F0108_FOCCL_CONTEXT_DOOR_FRONT_PC34:
+        return false;
+    }
+    return false;
+}
+
 int dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_zone_d1c_pc34(
     int coordinate_set,
     int view_floor)
