@@ -14545,6 +14545,12 @@ firestaff_add_dm1_v1_viewport_contract_test(
     dm1_v1_viewport_d0c_stairs_pit_dispatch_pc34_compat
 )
 firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_d0c_f0108_floor_ornament_occlusion_pc34_compat
+    tests/test_dm1_v1_viewport_d0c_f0108_floor_ornament_occlusion_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0c_f0108_floor_ornament_occlusion_pc34_compat.c
+    dm1_v1_viewport_d0c_f0108_floor_ornament_occlusion_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat
     tests/test_dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat.c
     src/dm1/dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat.c

@@ -1,0 +1,6 @@
+#ifndef FIRESTAFF_DM1_V1_VIEWPORT_D0C_F0108_FLOOR_ORNAMENT_OCCLUSION_PC34_COMPAT_H
+#define FIRESTAFF_DM1_V1_VIEWPORT_D0C_F0108_FLOOR_ORNAMENT_OCCLUSION_PC34_COMPAT_H
+
+#include "firestaff/dm1/v1/viewport/dm1_v1_viewport_d0c_f0108_floor_ornament_occlusion_pc34_compat.h"
+
+#endif
