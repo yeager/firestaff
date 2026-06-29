@@ -317,6 +317,8 @@ need real-asset proof.
 
 - **SCK RAW asset bridge handoff**: `firestaff_sck_asset_bridge` now has a bounded RAW identity decoder surface for selector-chosen `RAW*` mapfile slices. Synthetic CTest coverage verifies RAW slice handoff and keeps PAL/SND rows visible but unsupported until their decoders land.
 
+- **FTL HUNK_CODE checksum/decode bridge**: `firestaff_ftl_decode_unit` now cross-checks a synthetic compressed 0x5223 CODE hunk through both the container checksum verifier and the public decoder, pins the decoded byte stream/checksum, and proves compressed-CODE payload mutation is detected. This is a bounded tooling gate only: no real game payloads, mapfile extraction, or runtime loading claim.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.

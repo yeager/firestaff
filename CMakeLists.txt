@@ -16478,10 +16478,10 @@ if(BUILD_TESTING)
     # ── FTL container parser/checksum verifier ───────────────────
     # Verifies the greatstone d_ftl.html common header, 12-byte
     # hunk headers, BSS/DATA/CODE hunk discovery, and documented
-    # common/BSS/DATA/uncompressed-CODE checksum algorithms. This
-    # deliberately does not claim HUNK_DATA/HUNK_CODE decompression
-    # or runtime loading; compressed 0x5223 CODE checksums are
-    # reported as unsupported until decompression is owned here.
+    # common/BSS/DATA/CODE checksum algorithms. This deliberately
+    # does not claim HUNK_DATA/HUNK_CODE decompression or runtime
+    # loading; the separate firestaff_ftl_decode_unit owns the
+    # bounded HUNK_DATA + 0x5223 HUNK_CODE decode bridge.
     add_executable(test_firestaff_ftl_container
         tests/test_firestaff_ftl_container.c
         src/shared/firestaff_ftl_container.c
@@ -16645,6 +16645,7 @@ if(BUILD_TESTING)
         tests/test_firestaff_ftl_decode.c
         src/shared/firestaff_ftl_decode.c
         src/shared/firestaff_ftl_hunk_data_zero_run.c
+        src/shared/firestaff_ftl_container.c
     )
     target_include_directories(test_firestaff_ftl_decode PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
