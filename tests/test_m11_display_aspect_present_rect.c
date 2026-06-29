@@ -42,6 +42,114 @@ static int scaled_window_coord(int rectStart, int rectSize, int logical, int log
     return rectStart + ((logical * rectSize) + (rectSize / 2)) / logicalSize;
 }
 
+static void check_map_edges(int windowW,
+                            int windowH,
+                            int scaleMode,
+                            int integerScaling,
+                            int aspectMode) {
+    int rectX = -1;
+    int rectY = -1;
+    int rectW = -1;
+    int rectH = -1;
+    int fbX = -1;
+    int fbY = -1;
+
+    CHECK(M11_Render_ComputePresentationRect(windowW,
+                                             windowH,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             scaleMode,
+                                             integerScaling,
+                                             aspectMode,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_OK);
+    CHECK(rectW >= M11_FB_WIDTH);
+    CHECK(rectH >= M11_FB_HEIGHT);
+
+    CHECK(M11_Render_MapPointToFramebuffer(rectX,
+                                           rectY,
+                                           windowW,
+                                           windowH,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           scaleMode,
+                                           integerScaling,
+                                           aspectMode,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 0);
+    CHECK(fbY == 0);
+
+    CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW - 1,
+                                           rectY + rectH - 1,
+                                           windowW,
+                                           windowH,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           scaleMode,
+                                           integerScaling,
+                                           aspectMode,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == M11_FB_WIDTH - 1);
+    CHECK(fbY == M11_FB_HEIGHT - 1);
+
+    if (rectX > 0) {
+        CHECK(M11_Render_MapPointToFramebuffer(rectX - 1,
+                                               rectY + rectH / 2,
+                                               windowW,
+                                               windowH,
+                                               M11_FB_WIDTH,
+                                               M11_FB_HEIGHT,
+                                               scaleMode,
+                                               integerScaling,
+                                               aspectMode,
+                                               &fbX,
+                                               &fbY) == 0);
+    }
+    if (rectY > 0) {
+        CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW / 2,
+                                               rectY - 1,
+                                               windowW,
+                                               windowH,
+                                               M11_FB_WIDTH,
+                                               M11_FB_HEIGHT,
+                                               scaleMode,
+                                               integerScaling,
+                                               aspectMode,
+                                               &fbX,
+                                               &fbY) == 0);
+    }
+    if (rectX + rectW < windowW) {
+        CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW,
+                                               rectY + rectH / 2,
+                                               windowW,
+                                               windowH,
+                                               M11_FB_WIDTH,
+                                               M11_FB_HEIGHT,
+                                               scaleMode,
+                                               integerScaling,
+                                               aspectMode,
+                                               &fbX,
+                                               &fbY) == 0);
+    }
+    if (rectY + rectH < windowH) {
+        CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW / 2,
+                                               rectY + rectH,
+                                               windowW,
+                                               windowH,
+                                               M11_FB_WIDTH,
+                                               M11_FB_HEIGHT,
+                                               scaleMode,
+                                               integerScaling,
+                                               aspectMode,
+                                               &fbX,
+                                               &fbY) == 0);
+    }
+}
+
 static void check_scaled_dm1_command(int logicalX,
                                      int logicalY,
                                      int expectedCommand,
@@ -266,6 +374,10 @@ int main(void) {
                126, 0, 3347, 2092);
     check_scaled_dm1_command(264, 126, 3, 70);
     check_scaled_letterbox_rejection();
+    check_map_edges(1512, 982, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
+    check_map_edges(3024, 1964, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
+    check_map_edges(3600, 2092, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
+    check_map_edges(1920, 1080, M11_SCALE_FIT, 1, M11_DISPLAY_ASPECT_4_3);
     check_macbook_retina_drawable_rect_regression();
     check_sdl3_pixel_size_event_keeps_logical_mouse_space();
 
