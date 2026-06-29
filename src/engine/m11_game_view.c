@@ -18,6 +18,7 @@
 #include "asset_find_by_hash.h"
 #include "config_m12.h"
 #include "firestaff_accessibility.h"
+#include "m11_game_view_a11y.h"  /* m11_screen_reader_update_ex gameplay manifest */
 #include "fs_portable_compat.h"
 #include "m11_v2_vertical_slice_assets.h"
 #include "m11_game_text_utf8_decoder_pc34_compat.h"
@@ -28825,32 +28826,18 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_draw_inventory_panel(state, framebuffer, framebufferWidth, framebufferHeight);
     }
 
-    /* Accessibility manifest: emit UI zones for Peekaboo / automation tools */
-    if (fs_ax_is_enabled()) {
-        const char *axState = "gameplay";
-        if (state->dialogOverlayActive) axState = "dialog";
-        else if (state->candidateMirrorPanelActive) axState = "entrance";
-        else if (state->gameWon) axState = "endgame";
-        fs_ax_begin_frame(framebufferWidth, framebufferHeight, axState);
-        {
-            int active = state->active && !state->dialogOverlayActive;
-            FS_AX_Element viewport = {"VIEWPORT", "Dungeon View", FS_AX_REGION, 0, 0, 224, 136, 1, NULL};
-            FS_AX_Element moveFwd  = {"MOVE_FWD", "Forward", FS_AX_MOVEMENT, 144, 137, 32, 20, active, NULL};
-            FS_AX_Element moveBack = {"MOVE_BACK", "Back", FS_AX_MOVEMENT, 144, 173, 32, 20, active, NULL};
-            FS_AX_Element turnL    = {"TURN_LEFT", "Turn Left", FS_AX_MOVEMENT, 112, 155, 32, 18, active, NULL};
-            FS_AX_Element turnR    = {"TURN_RIGHT", "Turn Right", FS_AX_MOVEMENT, 176, 155, 32, 18, active, NULL};
-            FS_AX_Element spellA   = {"SPELL_AREA", "Spell Area", FS_AX_REGION, 233, 0, 87, 66, active, NULL};
-            FS_AX_Element hud      = {"HUD_PANEL", "HUD Panel", FS_AX_REGION, 0, 136, 320, 64, 1, NULL};
-            fs_ax_add_element(&viewport);
-            fs_ax_add_element(&moveFwd);
-            fs_ax_add_element(&moveBack);
-            fs_ax_add_element(&turnL);
-            fs_ax_add_element(&turnR);
-            fs_ax_add_element(&spellA);
-            fs_ax_add_element(&hud);
-        }
-        fs_ax_flush();
-    }
+    /* Accessibility manifest: emit UI zones for Peekaboo / automation
+     * tools.  Routed through m11_screen_reader_update_ex() so the
+     * gameplay-side and launcher-side manifests share one writer
+     * (fs_ax_*) and one config knob (FS_ACCESSIBILITY=1).  The full
+     * zone set: always-on viewport / movement / spell / HUD /
+     * control strip plus per-overlay inventory / map / dialog /
+     * candidate mirror / endgame zones lives in
+     * src/engine/m11_game_view_a11y.c.
+     *
+     * Source-lock: see m11_game_view_a11y.c header for the
+     * ReDMCSB layout-696 / PANEL.C / ENDGAME.C citations. */
+    m11_screen_reader_update_ex(state, framebufferWidth, framebufferHeight);
 
     g_drawState = NULL;
     g_activeOriginalFont = NULL;
