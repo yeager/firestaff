@@ -2991,6 +2991,13 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
 endif()
 
+add_executable(firestaff_dm1_v1_inventory_damage_indicator_zone_probe
+    probes/m11/firestaff_dm1_v1_inventory_damage_indicator_zone_probe.c)
+target_link_libraries(firestaff_dm1_v1_inventory_damage_indicator_zone_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_inventory_damage_indicator_zone_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 add_executable(firestaff_dm1_v1_message_log_bottom_row_runtime_probe
     probes/m11/firestaff_dm1_v1_message_log_bottom_row_runtime_probe.c)
 target_link_libraries(firestaff_dm1_v1_message_log_bottom_row_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
@@ -12244,6 +12251,11 @@ if(BUILD_TESTING)
     )
     set_tests_properties(m11_game_view PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+    )
+
+    add_test(
+        NAME dm1_v1_inventory_damage_indicator_zone
+        COMMAND firestaff_dm1_v1_inventory_damage_indicator_zone_probe
     )
 
     add_test(
