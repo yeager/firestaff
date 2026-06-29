@@ -117,6 +117,15 @@ const char* m11_screen_reader_view_name(const M11_GameViewState* state);
  *   - candidate mirror: panel + reincarnate / cancel zones
  *   - endgame: champion portrait grid (4 zones)
  *
+ * Always-on sticky overlays (may appear on top of any state) also
+ * emit when their flag is latched:
+ *   - session timer reminder: top-strip reminder banner with the
+ *     remaining-time text (Firestaff-specific session-timer UX
+ *     layer that runs alongside DM1's source-locked gameplay)
+ *   - session timer forced pause: centered confirm dialog with
+ *     title + body lines, derived from the source-locked
+ *     M11_GameView_GetForcedPauseDialogLayout geometry
+ *
  * Routes through fs_ax_begin_frame / fs_ax_add_element /
  * fs_ax_flush so the JSON is rewritten atomically each frame.
  * No-op when fs_ax_is_enabled() returns 0 - a normal run with

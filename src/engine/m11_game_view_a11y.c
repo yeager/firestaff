@@ -44,8 +44,10 @@
 
 #include "m11_game_view.h"
 #include "firestaff_accessibility.h"
+#include "session_timer_runtime.h"
 
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 /* -- Stable state-name table --------------------------------------- */
@@ -134,7 +136,10 @@ const char* m11_screen_reader_view_name(const M11_GameViewState* state) {
  *   1 candidate mirror panel + 1 reincarnate + 1 resurrect + 1 cancel
  *   4 endgame champion mirrors + 4 endgame portraits
  *   1 endgame "THE END" plaque
- * = comfortably < 64.
+ *   1 session-timer reminder banner + 1 reminder text
+ *   1 session-timer forced-pause dialog box + 1 title + 2 lines
+ * = comfortably < 80 (leaves room for future Firestaff-specific
+ *   sticky overlays layered on top of normal gameplay).
  */
 
 #define M11_AX_ID_LEN     64
@@ -148,7 +153,7 @@ typedef struct {
     char valueBuf[M11_AX_VALUE_LEN];
 } M11_AX_Record;
 
-#define M11_AX_MAX_RECORDS 64
+#define M11_AX_MAX_RECORDS 80
 
 static M11_AX_Record g_m11_ax_records[M11_AX_MAX_RECORDS];
 static int g_m11_ax_record_count = 0;
@@ -288,6 +293,164 @@ static void m11_ax_emit_always_on_zones(const M11_GameViewState* state) {
     if (e) {
         snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "CONTROL_STRIP");
         snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN, "Control Strip");
+    }
+}
+
+/* -- Firestaff-specific sticky overlay zones ----------------------- */
+
+static void m11_ax_format_session_timer_reminder_line(
+    const M11_GameViewState* state,
+    char* out,
+    size_t outSize)
+{
+    char remaining[SESSION_TIMER_RUNTIME_TEXT_CAPACITY];
+    int scale;
+    int seconds;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    out[0] = '\0';
+    scale = state ? state->fontScale : 1;
+    if (scale < 1) scale = 1;
+    if (scale > 3) scale = 3;
+    if (scale >= 3) {
+        seconds = SessionTimerRuntime_RemainingSeconds(
+            state ? &state->sessionTimerRuntime : NULL);
+        if (seconds < 0) {
+            snprintf(out, outSize, "OFF");
+        } else if (seconds >= 3600) {
+            snprintf(out, outSize, "%dH LEFT", (seconds + 3599) / 3600);
+        } else if (seconds >= 60) {
+            snprintf(out, outSize, "%dM LEFT", (seconds + 59) / 60);
+        } else {
+            snprintf(out, outSize, "%dS LEFT", seconds);
+        }
+        return;
+    }
+    SessionTimerRuntime_FormatRemaining(
+        state ? &state->sessionTimerRuntime : NULL,
+        remaining,
+        sizeof(remaining));
+    if (scale == 2) {
+        snprintf(out, outSize, "%s LEFT", remaining);
+    } else {
+        snprintf(out, outSize, "SESSION TIMER %s REMAINING", remaining);
+    }
+}
+
+static void m11_ax_emit_session_timer_overlay_zones(
+    const M11_GameViewState* state,
+    int fbW,
+    int fbH)
+{
+    FS_AX_Element* e;
+
+    if (!state) return;
+
+    /* The session timer is Firestaff UI, not ReDMCSB game logic.
+     * Match the M11_GameView_Draw visibility fences exactly:
+     * reminder is hidden by dialog / forced pause, forced pause is
+     * hidden by dialog / return-to-menu confirmation. */
+    if (state->sessionTimerReminderOverlayActive &&
+        !state->sessionTimerForcedPauseDialogActive &&
+        !state->dialogOverlayActive) {
+        char line[64];
+        enum {
+            TIMER_REMINDER_X = 4,
+            TIMER_REMINDER_Y = 4,
+            TIMER_REMINDER_W = 312,
+            TIMER_REMINDER_H = 28,
+            TIMER_REMINDER_TEXT_INSET = 8,
+            TIMER_REMINDER_TEXT_Y = 8
+        };
+
+        m11_ax_format_session_timer_reminder_line(
+            state, line, sizeof(line));
+
+        e = m11_ax_begin(FS_AX_REGION,
+                         TIMER_REMINDER_X, TIMER_REMINDER_Y,
+                         TIMER_REMINDER_W, TIMER_REMINDER_H, 1);
+        if (e) {
+            snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "SESSION_TIMER_REMINDER");
+            snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
+                     "Session Timer Reminder");
+            snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
+                     "remaining=%d",
+                     SessionTimerRuntime_RemainingSeconds(
+                         &state->sessionTimerRuntime));
+        }
+
+        e = m11_ax_begin(FS_AX_TEXT,
+                         TIMER_REMINDER_X + TIMER_REMINDER_TEXT_INSET,
+                         TIMER_REMINDER_TEXT_Y,
+                         TIMER_REMINDER_W - (2 * TIMER_REMINDER_TEXT_INSET),
+                         TIMER_REMINDER_H - TIMER_REMINDER_TEXT_INSET,
+                         1);
+        if (e) {
+            snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
+                     "SESSION_TIMER_REMINDER_TEXT");
+            snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
+                     "Reminder Text");
+            snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN, "%s", line);
+        }
+    }
+
+    if (state->sessionTimerForcedPauseDialogActive &&
+        !state->dialogOverlayActive &&
+        !state->returnToMenuConfirmActive) {
+        M11_ForcedPauseDialogLayout layout;
+        M11_GameView_GetForcedPauseDialogLayout(state, fbW, fbH, &layout);
+
+        e = m11_ax_begin(FS_AX_POPUP,
+                         layout.boxX, layout.boxY,
+                         layout.boxW, layout.boxH, 1);
+        if (e) {
+            snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
+                     "SESSION_TIMER_FORCED_PAUSE");
+            snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
+                     "Session Timer Forced Pause");
+            snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
+                     "scale=%d;remaining=%d",
+                     layout.scale,
+                     SessionTimerRuntime_RemainingSeconds(
+                         &state->sessionTimerRuntime));
+        }
+
+        e = m11_ax_begin(FS_AX_TEXT,
+                         layout.titleX, layout.titleY,
+                         layout.boxW, 10 * layout.scale, 1);
+        if (e) {
+            snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
+                     "SESSION_TIMER_FORCED_PAUSE_TITLE");
+            snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
+                     "Forced Pause Title");
+            snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
+                     "%s", layout.title);
+        }
+
+        e = m11_ax_begin(FS_AX_TEXT,
+                         layout.line1X, layout.line1Y,
+                         layout.boxW, 10 * layout.scale, 1);
+        if (e) {
+            snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
+                     "SESSION_TIMER_FORCED_PAUSE_LINE1");
+            snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
+                     "Forced Pause Line 1");
+            snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
+                     "%s", layout.line1);
+        }
+
+        e = m11_ax_begin(FS_AX_TEXT,
+                         layout.line2X, layout.line2Y,
+                         layout.boxW, 10 * layout.scale, 1);
+        if (e) {
+            snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
+                     "SESSION_TIMER_FORCED_PAUSE_LINE2");
+            snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
+                     "Forced Pause Line 2");
+            snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
+                     "%s", layout.line2);
+        }
     }
 }
 
@@ -751,6 +914,8 @@ int m11_screen_reader_update_ex(const M11_GameViewState* state,
              * state. */
             break;
     }
+
+    m11_ax_emit_session_timer_overlay_zones(state, fbW, fbH);
 
     m11_ax_finalize();
     for (i = 0; i < g_m11_ax_record_count; ++i) {
