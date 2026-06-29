@@ -50,10 +50,11 @@
  *
  *  3. DM1_V1_ChampionPanelDamageFlashDecay_OverdrawStatusBoxPc34Compat
  *     simulates the CHAMPION.C:1574 / F0292 MASK0x1000_STATUS_BOX
- *     side-effect: when ANY champion has its MASK0x1000_STATUS_BOX
- *     bit set, the next F0292 redraws the C151..C182 status box zone
- *     (F0292:792-815) and erases the C167..C173 / C179..C185 damage
- *     graphic for that champion without waiting for the C12 event.
+ *     side-effect: when a champion has its MASK0x1000_STATUS_BOX bit set,
+ *     the next F0292(P0615_ui_ChampionIndex) redraws that champion's
+ *     C151..C182 status box zone (F0292:792-815) and erases only that
+ *     champion's C167..C173 / C179..C185 damage graphic without waiting
+ *     for the C12 event.
  *
  *  4. DM1_V1_ChampionPanelDamageFlashDecay_FlushRemainingPc34Compat
  *     drains any remaining C12 events at GameTime + 5 (used for the
@@ -430,17 +431,19 @@ int DM1_V1_ChampionPanelDamageFlashDecay_AdvanceTimelinePc34Compat(
         (void)events_drained_this_tick;
 
         /*
-         * Status-box overdraw side-effect: if any champion has its
-         * MASK0x1000_STATUS_BOX bit set, the next F0292 redraws
-         * the C151..C182 status-box zone (CHAMDRAW.C:792-815) and
-         * incidentally erases the C167..C173 / C179..C185 damage
-         * graphic for that champion.
+         * Status-box overdraw side-effect: if a champion has its
+         * MASK0x1000_STATUS_BOX bit set, the next
+         * F0292_CHAMPION_DrawState(P0615_ui_ChampionIndex) redraws
+         * that champion's C151..C182 status-box zone
+         * (CHAMDRAW.C:771,792-815) and incidentally erases only that
+         * champion's C167..C173 / C179..C185 damage graphic.
          */
         if (state->mask0x1000_status_box_dirty) {
             for (int ci = 0;
                  ci < DM1_V1_CPDFD_CHAMPION_COUNT_PC34;
                  ++ci) {
-                if (state->champions[ci].damage_visible > 0) {
+                if (state->mask0x1000_status_box_dirty_for_champion[ci] &&
+                    state->champions[ci].damage_visible > 0) {
                     state->champions[ci].damage_visible = 0;
                     out_run->total_status_box_overdraws++;
                     if (out_run->trace_count <
@@ -457,6 +460,7 @@ int DM1_V1_ChampionPanelDamageFlashDecay_AdvanceTimelinePc34Compat(
                         out_run->trace_count++;
                     }
                 }
+                state->mask0x1000_status_box_dirty_for_champion[ci] = false;
             }
             state->mask0x1000_status_box_dirty = false;
         }
@@ -478,14 +482,18 @@ int DM1_V1_ChampionPanelDamageFlashDecay_OverdrawStatusBoxPc34Compat(
     /*
      * Simulates the F0319_CHAMPION_Kill MASK0x1000_STATUS_BOX set
      * (CHAMPION.C:1574) and any other path that sets the bit on
-     * the given champion. The next F0293 (DrawAllChampionStates)
-     * pass erases the damage graphic.
+     * the given champion. The next F0292 draw-state pass for that
+     * champion erases that champion's damage graphic.
      */
-    (void)champion_index;
     if (!state) {
         return 0;
     }
+    if (champion_index < 0 ||
+        champion_index >= DM1_V1_CPDFD_CHAMPION_COUNT_PC34) {
+        return 0;
+    }
     state->mask0x1000_status_box_dirty = true;
+    state->mask0x1000_status_box_dirty_for_champion[champion_index] = true;
     return 1;
 }
 

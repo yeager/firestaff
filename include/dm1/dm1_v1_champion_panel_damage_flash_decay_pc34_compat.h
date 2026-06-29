@@ -21,12 +21,12 @@ extern "C" {
  * and Toolchains/Common/Source/CHAMDRAW.C F0292:771,792-815 (the
  * MASK0x1000_STATUS_BOX / C151..C182 status-box zone overdraw that
  * incidentally erases the C167..C173 / C179..C185 damage graphic when
- * the next tick fires F0292 on any champion with that bit set).
+ * the next tick fires F0292 for the flagged champion).
  *
  * Companion to test_dm1_v1_champion_panel_damage_indicator_pc34_compat
  * (which pins the per-tick F0623 flash) — the present gate pins the
  * temporal decay (flash on tick T, erased on tick T+5 by the C12 event,
- * or earlier if MASK0x1000_STATUS_BOX is set on any other champion).
+ * or earlier if MASK0x1000_STATUS_BOX is set on that champion).
  *
  * The flash decay is a 5-tick window:
  *   tick T   : F0320 sees G0409[i] != 0, applies damage. If the
@@ -121,6 +121,7 @@ typedef struct DM1_V1_ChampionPanelDamageFlashDecayStatePc34Compat {
     int inventory_champion_ordinal;
     bool inventory_open;
     bool mask0x1000_status_box_dirty;
+    bool mask0x1000_status_box_dirty_for_champion[DM1_V1_CPDFD_CHAMPION_COUNT_PC34];
     DM1_V1_ChampionPanelDamageFlashDecayChampionPc34Compat
         champions[DM1_V1_CPDFD_CHAMPION_COUNT_PC34];
     /* synthetic timeline backing store for the C12 hide-damage event */

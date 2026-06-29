@@ -423,25 +423,38 @@ static void test_status_box_overdraw_erases_damage(void)
               "champion 0 damage visible");
     check_int("sb.damage_visible[1]", state.champions[1].damage_visible, 4,
               "champion 1 damage visible");
-    /* Simulate F0319_CHAMPION_Kill setting MASK0x1000_STATUS_BOX */
-    DM1_V1_ChampionPanelDamageFlashDecay_OverdrawStatusBoxPc34Compat(
-        &state, 0);
+    /* Simulate F0319_CHAMPION_Kill setting MASK0x1000_STATUS_BOX for
+     * champion 0 only. CHAMDRAW.C F0292 receives P0615_ui_ChampionIndex,
+     * so the overdraw is slot-scoped, not a global panel erase. */
+    check_int("sb.mark_return",
+              DM1_V1_ChampionPanelDamageFlashDecay_OverdrawStatusBoxPc34Compat(
+                  &state, 0),
+              1, "CHAMPION.C:1574 sets MASK0x1000_STATUS_BOX on champion 0");
     /* advance one tick — the dirty bit should trigger the C151..C182
-     * status-box overdraw that erases the damage graphics */
+     * status-box overdraw that erases champion 0's damage graphic only */
     DM1_V1_ChampionPanelDamageFlashDecay_AdvanceTimelinePc34Compat(
         &state, 1, &run);
-    check_int("sb.total_overdraws", run.total_status_box_overdraws, 2,
-              "CHAMDRAW.C F0292:771,792-815 status-box overdraw erases "
-              "BOTH C167..C173 and C179..C185 damage graphics in one pass");
+    check_int("sb.total_overdraws", run.total_status_box_overdraws, 1,
+              "CHAMDRAW.C F0292:771,792-815 status-box overdraw is scoped "
+              "to P0615_ui_ChampionIndex");
     check_int("sb.damage_visible[0]", state.champions[0].damage_visible, 0,
               "champion 0 damage erased by status-box overdraw");
-    check_int("sb.damage_visible[1]", state.champions[1].damage_visible, 0,
-              "champion 1 damage erased by status-box overdraw");
+    check_int("sb.damage_visible[1]", state.champions[1].damage_visible, 4,
+              "champion 1 damage remains visible until its own C12/status draw");
     /* C12 events should still be pending (the status-box overdraw does
      * not cancel them) */
     check_int("sb.c12_pending", state.pending_timeline_event_count, 2,
               "F0292 status-box overdraw does NOT consume C12 events; "
               "they will still fire at GameTime+5");
+
+    check_int("sb.invalid_neg_return",
+              DM1_V1_ChampionPanelDamageFlashDecay_OverdrawStatusBoxPc34Compat(
+                  &state, -1),
+              0, "synthetic guard on negative status-box champion index");
+    check_int("sb.invalid_high_return",
+              DM1_V1_ChampionPanelDamageFlashDecay_OverdrawStatusBoxPc34Compat(
+                  &state, DM1_V1_CPDFD_CHAMPION_COUNT_PC34),
+              0, "synthetic guard on high status-box champion index");
 }
 
 static void test_advance_negative_ticks_is_rejected(void)
