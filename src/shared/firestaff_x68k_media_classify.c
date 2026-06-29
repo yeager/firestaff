@@ -166,22 +166,30 @@ void FirestaffX68kMedia_Classify(const uint8_t* data,
     }
 
     /* 4) HPR-0007 sentinel scan.
-     *    DMWeb places the sentinel at Track 1 Side 1 Sector 9
-     *    in the flux-level view. In a linear byte dump it
-     *    would sit at offset X68K_SENTINEL_OFFSET_LINEAR
-     *    (647168). Public DMFiles HDMs do not contain it;
-     *    we still scan for it so future real-asset dumps can
-     *    be classified. We allow a small window of nearby
-     *    offsets (sector alignment + a few neighbouring
-     *    sectors) to catch padded / headered variants. */
-    if (data_size >= X68K_SENTINEL_OFFSET_LINEAR +
-                      FIRESTAFF_X68K_PROTECTION_SENTINEL_LEN) {
-        const uint8_t* sentinel_pos = data + X68K_SENTINEL_OFFSET_LINEAR;
-        if (memcmp(sentinel_pos,
-                   FIRESTAFF_X68K_PROTECTION_SENTINEL,
-                   FIRESTAFF_X68K_PROTECTION_SENTINEL_LEN) == 0) {
-            out->flags |= FIRESTAFF_X68K_SCAN_FLAG_SENTINEL_PRESENT;
-            out->sentinel_offset = X68K_SENTINEL_OFFSET_LINEAR;
+     *    DMWeb places the operational sentinel at Track 1 Side
+     *    1 Sector 9. We count every HPR-0007 string in the
+     *    image, but only the exact linear sector offset sets
+     *    SENTINEL_PRESENT. This prevents off-axis strings such
+     *    as backup labels from being promoted to protected-media
+     *    evidence. */
+    if (data_size >= FIRESTAFF_X68K_PROTECTION_SENTINEL_LEN) {
+        size_t last = data_size - FIRESTAFF_X68K_PROTECTION_SENTINEL_LEN;
+        for (size_t i = 0u; i <= last; ++i) {
+            if (memcmp(data + i,
+                       FIRESTAFF_X68K_PROTECTION_SENTINEL,
+                       FIRESTAFF_X68K_PROTECTION_SENTINEL_LEN) != 0) {
+                continue;
+            }
+            ++out->protection_sentinel_count;
+            if ((uint64_t)i == X68K_SENTINEL_OFFSET_LINEAR) {
+                out->flags |= FIRESTAFF_X68K_SCAN_FLAG_SENTINEL_PRESENT;
+                out->sentinel_offset = X68K_SENTINEL_OFFSET_LINEAR;
+            } else {
+                ++out->protection_sentinel_offaxis_count;
+                if (out->first_offaxis_sentinel_offset == 0u) {
+                    out->first_offaxis_sentinel_offset = (uint64_t)i;
+                }
+            }
         }
     }
 
@@ -237,6 +245,34 @@ void FirestaffX68kMedia_Classify(const uint8_t* data,
             out->flags |= FIRESTAFF_X68K_SCAN_FLAG_BLANK_SAVE_DISK;
         }
     }
+
+    /* 7) Receipt boundary. This is a provenance/readiness
+     * class, not an authenticity judgement. The ordering is
+     * deliberate: FTL payloads are not disk imports; blank
+     * save disks must stay separate from nonblank public or
+     * cracked HDMs; a live sector sentinel outranks off-axis
+     * label strings. */
+    if ((out->flags & FIRESTAFF_X68K_SCAN_FLAG_FTL_PRESENT) != 0u) {
+        out->receipt_class = FIRESTAFF_X68K_RECEIPT_FTL_PAYLOAD;
+    } else if (out->media_class == FIRESTAFF_X68K_MEDIA_FULL_DISK) {
+        if ((out->flags & FIRESTAFF_X68K_SCAN_FLAG_BLANK_SAVE_DISK) != 0u) {
+            out->receipt_class = FIRESTAFF_X68K_RECEIPT_BLANK_SAVE_DISK;
+        } else if ((out->flags &
+                    FIRESTAFF_X68K_SCAN_FLAG_SENTINEL_PRESENT) != 0u) {
+            out->receipt_class =
+                FIRESTAFF_X68K_RECEIPT_PROTECTED_SENTINEL_AT_SECTOR;
+        } else if (out->protection_sentinel_offaxis_count > 0u) {
+            out->receipt_class =
+                FIRESTAFF_X68K_RECEIPT_OFF_AXIS_SENTINEL_ONLY;
+        } else {
+            out->receipt_class =
+                FIRESTAFF_X68K_RECEIPT_NONBLANK_NO_SENTINEL;
+        }
+    } else if (out->media_class == FIRESTAFF_X68K_MEDIA_SINGLE_SIDE) {
+        out->receipt_class = FIRESTAFF_X68K_RECEIPT_PARTIAL_SIDE;
+    } else {
+        out->receipt_class = FIRESTAFF_X68K_RECEIPT_NOT_X68K_MEDIA;
+    }
 }
 
 int FirestaffX68kMedia_IsFTLPayload(uint32_t flags,
@@ -262,6 +298,28 @@ int FirestaffX68kMedia_IsUnprotectedDisk(uint32_t flags,
      * runtime "real disk required" behaviour is handled at
      * the runtime-emulator boundary, not by our parser. */
     return (flags & FIRESTAFF_X68K_SCAN_FLAG_PROTECTION_AREA_BLANK) ? 1 : 0;
+}
+
+const char* FirestaffX68kMedia_ReceiptClassName(uint32_t receipt_class) {
+    switch (receipt_class) {
+        case FIRESTAFF_X68K_RECEIPT_NOT_X68K_MEDIA:
+            return "not_x68k_media";
+        case FIRESTAFF_X68K_RECEIPT_FTL_PAYLOAD:
+            return "ftl_payload";
+        case FIRESTAFF_X68K_RECEIPT_BLANK_SAVE_DISK:
+            return "blank_save_disk";
+        case FIRESTAFF_X68K_RECEIPT_PROTECTED_SENTINEL_AT_SECTOR:
+            return "protected_sentinel_at_sector";
+        case FIRESTAFF_X68K_RECEIPT_OFF_AXIS_SENTINEL_ONLY:
+            return "off_axis_sentinel_only";
+        case FIRESTAFF_X68K_RECEIPT_NONBLANK_NO_SENTINEL:
+            return "nonblank_no_sentinel";
+        case FIRESTAFF_X68K_RECEIPT_PARTIAL_SIDE:
+            return "partial_side";
+        case FIRESTAFF_X68K_RECEIPT_UNKNOWN:
+        default:
+            return "unknown";
+    }
 }
 
 int FirestaffX68kMedia_FTLHandoffFits(
@@ -341,6 +399,8 @@ static int test_empty_input(void) {
     ST_ASSERT(r.flags == 0u, "empty flags");
     ST_ASSERT(r.has_ftl_magic == 0, "no magic");
     ST_ASSERT(r.ftl_magic_candidate_count == 0u, "no candidates");
+    ST_ASSERT(r.receipt_class == FIRESTAFF_X68K_RECEIPT_UNKNOWN,
+              "empty receipt remains unknown");
     return 1;
 }
 
@@ -353,6 +413,9 @@ static int test_too_small_input(void) {
               "too small class");
     ST_ASSERT(r.has_ftl_magic == 0, "no magic");
     ST_ASSERT(r.flags == 0u, "no flags");
+    ST_ASSERT(r.receipt_class ==
+                  FIRESTAFF_X68K_RECEIPT_NOT_X68K_MEDIA,
+              "too small receipt");
     return 1;
 }
 
@@ -365,6 +428,8 @@ static int test_single_side_size(void) {
     ST_ASSERT(r.media_class == FIRESTAFF_X68K_MEDIA_SINGLE_SIDE,
               "single-side class");
     ST_ASSERT(r.bytes_per_sector == 1024u, "sector size");
+    ST_ASSERT(r.receipt_class == FIRESTAFF_X68K_RECEIPT_PARTIAL_SIDE,
+              "single-side receipt");
     free(buf);
     return 1;
 }
@@ -385,6 +450,9 @@ static int test_full_disk_blank_save(void) {
     ST_ASSERT((r.flags &
                FIRESTAFF_X68K_SCAN_FLAG_SENTINEL_PRESENT) == 0u,
               "no sentinel on a blank image");
+    ST_ASSERT(r.receipt_class ==
+                  FIRESTAFF_X68K_RECEIPT_BLANK_SAVE_DISK,
+              "blank save receipt");
     free(buf);
     return 1;
 }
@@ -429,12 +497,75 @@ static int test_full_disk_with_sentinel(void) {
               "sentinel present");
     ST_ASSERT(r.sentinel_offset == X68K_SENTINEL_OFFSET_LINEAR,
               "sentinel offset");
+    ST_ASSERT(r.protection_sentinel_count == 1u,
+              "one sentinel counted");
+    ST_ASSERT(r.protection_sentinel_offaxis_count == 0u,
+              "no off-axis sentinel");
+    ST_ASSERT(r.receipt_class ==
+                  FIRESTAFF_X68K_RECEIPT_PROTECTED_SENTINEL_AT_SECTOR,
+              "protected sector receipt");
     ST_ASSERT((r.flags &
                FIRESTAFF_X68K_SCAN_FLAG_BLANK_SAVE_DISK) == 0u,
               "not a blank save disk");
     ST_ASSERT((r.flags &
                FIRESTAFF_X68K_SCAN_FLAG_PROTECTION_AREA_BLANK) == 0u,
               "protection area not blank");
+    free(buf);
+    return 1;
+}
+
+static int test_full_disk_with_off_axis_sentinel_only(void) {
+    uint8_t* buf = (uint8_t*)malloc(FIRESTAFF_X68K_BYTES_PER_DISK);
+    ST_ASSERT(buf != NULL, "malloc off-axis");
+    memset(buf, 0x44, FIRESTAFF_X68K_BYTES_PER_DISK);
+    /* Simulate the public-media receipt hazard: a backup label
+     * carries HPR-0007, but the DMWeb live sector does not. */
+    {
+        size_t off = 123456u;
+        memcpy(buf + off,
+               FIRESTAFF_X68K_PROTECTION_SENTINEL,
+               FIRESTAFF_X68K_PROTECTION_SENTINEL_LEN);
+    }
+
+    FirestaffX68kMediaClassifyResult r;
+    FirestaffX68kMedia_Classify(buf, FIRESTAFF_X68K_BYTES_PER_DISK, &r);
+    ST_ASSERT(r.media_class == FIRESTAFF_X68K_MEDIA_FULL_DISK,
+              "full disk class");
+    ST_ASSERT((r.flags &
+               FIRESTAFF_X68K_SCAN_FLAG_SENTINEL_PRESENT) == 0u,
+              "off-axis string does not set live sentinel flag");
+    ST_ASSERT(r.protection_sentinel_count == 1u,
+              "one sentinel counted");
+    ST_ASSERT(r.protection_sentinel_offaxis_count == 1u,
+              "one off-axis sentinel");
+    ST_ASSERT(r.first_offaxis_sentinel_offset == 123456u,
+              "first off-axis offset");
+    ST_ASSERT(r.receipt_class ==
+                  FIRESTAFF_X68K_RECEIPT_OFF_AXIS_SENTINEL_ONLY,
+              "off-axis receipt");
+    ST_ASSERT(strcmp(FirestaffX68kMedia_ReceiptClassName(r.receipt_class),
+                     "off_axis_sentinel_only") == 0,
+              "off-axis receipt name");
+    free(buf);
+    return 1;
+}
+
+static int test_full_disk_nonblank_no_sentinel(void) {
+    uint8_t* buf = (uint8_t*)malloc(FIRESTAFF_X68K_BYTES_PER_DISK);
+    ST_ASSERT(buf != NULL, "malloc nonblank");
+    memset(buf, 0x31, FIRESTAFF_X68K_BYTES_PER_DISK);
+    FirestaffX68kMediaClassifyResult r;
+    FirestaffX68kMedia_Classify(buf, FIRESTAFF_X68K_BYTES_PER_DISK, &r);
+    ST_ASSERT(r.media_class == FIRESTAFF_X68K_MEDIA_FULL_DISK,
+              "full disk class");
+    ST_ASSERT(r.protection_sentinel_count == 0u,
+              "no sentinel counted");
+    ST_ASSERT(r.receipt_class ==
+                  FIRESTAFF_X68K_RECEIPT_NONBLANK_NO_SENTINEL,
+              "nonblank no-sentinel receipt");
+    ST_ASSERT(strcmp(FirestaffX68kMedia_ReceiptClassName(r.receipt_class),
+                     "nonblank_no_sentinel") == 0,
+              "nonblank receipt name");
     free(buf);
     return 1;
 }
@@ -449,6 +580,9 @@ static int test_oversize_input(void) {
     ST_ASSERT(r.media_class == FIRESTAFF_X68K_MEDIA_OVERSIZE,
               "oversize class");
     ST_ASSERT(r.has_ftl_magic == 0, "no magic at offset 0");
+    ST_ASSERT(r.receipt_class ==
+                  FIRESTAFF_X68K_RECEIPT_NOT_X68K_MEDIA,
+              "oversize receipt");
     free(buf);
     return 1;
 }
@@ -477,6 +611,9 @@ static int test_ftl_payload_detected(void) {
               "FTL magic candidate count >= 1");
     ST_ASSERT(FirestaffX68kMedia_IsFTLPayload(r.flags, r.media_class) == 1,
               "IsFTLPayload true");
+    ST_ASSERT(r.receipt_class ==
+                  FIRESTAFF_X68K_RECEIPT_FTL_PAYLOAD,
+              "FTL receipt class");
     return 1;
 }
 
@@ -566,6 +703,9 @@ static int test_helpers_handle_null(void) {
      * (refuses the size check) rather than crashing. */
     ST_ASSERT(FirestaffX68kMedia_FTLHandoffFits(NULL, 1024u) == 0,
               "NULL media rejected");
+    ST_ASSERT(strcmp(FirestaffX68kMedia_ReceiptClassName(9999u),
+                     "unknown") == 0,
+              "unknown receipt name");
     return 1;
 }
 
@@ -579,6 +719,8 @@ int FirestaffX68kMedia_SelfTest(void) {
     RUN(test_single_side_size);
     RUN(test_full_disk_blank_save);
     RUN(test_full_disk_with_sentinel);
+    RUN(test_full_disk_with_off_axis_sentinel_only);
+    RUN(test_full_disk_nonblank_no_sentinel);
     RUN(test_oversize_input);
     RUN(test_ftl_payload_detected);
     RUN(test_ftl_handoff_fits_full_disk);

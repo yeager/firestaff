@@ -29,6 +29,13 @@
   manifest before they can promote to `REAL`. This hardens readiness checks
   without claiming that finished DM1 V2.2 art or screenshot receipts ship yet.
 
+- **X68000 HDM receipt classification tightened**: the DM1/CSB X68000 media
+  classifier now reports a conservative receipt class for blank save disks,
+  live `HPR-0007` protection-sector captures, nonblank/no-sentinel media, FTL
+  payloads, and off-axis `HPR-0007` label strings. The real DM1 X68000 HDM
+  receipt probe now verifies the public DMFiles image as `off_axis_sentinel_only`
+  without promoting it to protected-media evidence.
+
 # Firestaff v3.0.13
 
 Firestaff v3.0.13 packages the 2026-06-28/29 runtime-hardening work that

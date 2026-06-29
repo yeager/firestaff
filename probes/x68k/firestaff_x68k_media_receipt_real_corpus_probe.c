@@ -40,6 +40,9 @@
  *     that no HPR-0007 sentinel sits at the DMWeb sector 9
  *     offset so any future re-issue that does put one there
  *     flips this gate to FAIL with a clear diff).
+ *   - Off-axis `HPR-0007` strings elsewhere in the image are
+ *     classified as label/backup evidence only, not as proof
+ *     that the operational protection sector was captured.
  *
  * Why a separate probe rather than another case inside the
  * existing units:
@@ -313,6 +316,12 @@ int main(void) {
     FirestaffX68kMediaClassifyResult r;
     memset(&r, 0, sizeof(r));
     FirestaffX68kMedia_Classify(hdm, hdm_size, &r);
+    printf("  NOTE: receipt_class=%s total_hpr=%u off_axis_hpr=%u "
+           "first_off_axis=%llu\n",
+           FirestaffX68kMedia_ReceiptClassName(r.receipt_class),
+           (unsigned)r.protection_sentinel_count,
+           (unsigned)r.protection_sentinel_offaxis_count,
+           (unsigned long long)r.first_offaxis_sentinel_offset);
     if (r.media_class == FIRESTAFF_X68K_MEDIA_FULL_DISK) {
         pass("INV_X68K_HDM_RECEIPT_02",
              "classifier reports MEDIA_FULL_DISK");
@@ -498,6 +507,37 @@ int main(void) {
     } else {
         fail("INV_X68K_HDM_RECEIPT_10",
              "IsFTLPayload == 1 (unexpected for a public DMFiles HDM)");
+    }
+
+    /* Receipt #11: full-buffer HPR-0007 accounting. The public
+     * DMFiles HDM is known to contain an off-axis HPR-0007
+     * string in backup/label metadata rather than at the live
+     * protection-sector offset. This invariant prevents that
+     * string from ever satisfying the protected-media boundary. */
+    if (r.protection_sentinel_count >= 1u &&
+        r.protection_sentinel_offaxis_count >= 1u &&
+        (r.flags & FIRESTAFF_X68K_SCAN_FLAG_SENTINEL_PRESENT) == 0u) {
+        pass("INV_X68K_HDM_RECEIPT_11",
+             "off-axis HPR-0007 string counted without live-sector "
+             "sentinel flag");
+    } else {
+        fail("INV_X68K_HDM_RECEIPT_11",
+             "off-axis HPR-0007 accounting did not match the "
+             "public-DMFiles receipt");
+    }
+
+    /* Receipt #12: conservative receipt class. Public DMFiles
+     * media with an off-axis sentinel and no live-sector
+     * sentinel must classify as OFF_AXIS_SENTINEL_ONLY, not
+     * PROTECTED_SENTINEL_AT_SECTOR and not BLANK_SAVE_DISK. */
+    if (r.receipt_class ==
+        FIRESTAFF_X68K_RECEIPT_OFF_AXIS_SENTINEL_ONLY) {
+        pass("INV_X68K_HDM_RECEIPT_12",
+             "receipt class is OFF_AXIS_SENTINEL_ONLY");
+    } else {
+        fail("INV_X68K_HDM_RECEIPT_12",
+             "receipt class is not OFF_AXIS_SENTINEL_ONLY for "
+             "public-DMFiles HDM");
     }
 
     printf("# summary: %d/%d invariants passed\n",

@@ -21,6 +21,9 @@
  *     - The "HPR-0007" 8-byte protection-sentinel that DMWeb
  *       identifies as the only operational copy-protection check
  *       on the X68000 port (Track 1 Side 1 Sector 9)
+ *     - A receipt-safe distinction between a live sentinel at
+ *       that sector, a blank save disk, and off-axis sentinel
+ *       strings embedded in labels/backups
  *     - Cross-checks against the FTL container parser
  *       (firestaff_ftl_container.h): the in-memory area_1 size
  *       declared by HUNK_BSS must not exceed the on-disk HDM
@@ -208,6 +211,52 @@ typedef enum {
     FIRESTAFF_X68K_SCAN_FLAG_FTL_PRESENT       = (1u << 3)
 } FirestaffX68kScanFlag;
 
+/* Conservative receipt class layered on top of the size class
+ * and scan flags. This is intentionally not an authenticity
+ * verdict: DMWeb documents that the public DMFiles "original"
+ * HDMs lack the operational protection sector, and cracked
+ * media can bypass the check in code. The class only says what
+ * this byte stream proves at the import boundary. */
+typedef enum {
+    FIRESTAFF_X68K_RECEIPT_UNKNOWN = 0,
+
+    /* The buffer is not a bounded X68000 HDM/floppy receipt
+     * candidate (empty, too small, or oversized). */
+    FIRESTAFF_X68K_RECEIPT_NOT_X68K_MEDIA = 1,
+
+    /* The buffer starts with FTL common-header magic 0x6160
+     * and should be handed to the FTL parser, not the HDM
+     * media importer. */
+    FIRESTAFF_X68K_RECEIPT_FTL_PAYLOAD = 2,
+
+    /* Standard full-disk geometry and all/near-all zero bytes:
+     * matches the DMWeb-listed blank save-disk boundary. */
+    FIRESTAFF_X68K_RECEIPT_BLANK_SAVE_DISK = 3,
+
+    /* `HPR-0007` is present at the DMWeb-documented Track 1
+     * Side 1 Sector 9 linear offset. This proves the byte
+     * stream captured the documented live sentinel location;
+     * it does not prove legal provenance or original media. */
+    FIRESTAFF_X68K_RECEIPT_PROTECTED_SENTINEL_AT_SECTOR = 4,
+
+    /* `HPR-0007` exists somewhere else in the image, but not
+     * at the live protection-sector offset. This is the public
+     * DMFiles DM1 X68000 receipt shape: useful provenance, but
+     * not evidence that the operational sector was captured. */
+    FIRESTAFF_X68K_RECEIPT_OFF_AXIS_SENTINEL_ONLY = 5,
+
+    /* Full-disk, nonblank media with neither a live sentinel
+     * nor an off-axis sentinel string. This can be a cracked
+     * disk, an original public dump with no label copy, or a
+     * different nonblank HDM; keep it for human review. */
+    FIRESTAFF_X68K_RECEIPT_NONBLANK_NO_SENTINEL = 6,
+
+    /* Exact one-side geometry. Useful preservation artifact,
+     * but not enough for a complete DM1/CSB X68000 import
+     * receipt by itself. */
+    FIRESTAFF_X68K_RECEIPT_PARTIAL_SIDE = 7
+} FirestaffX68kReceiptClass;
+
 /* Result of classifying an HDM-sized buffer. */
 typedef struct {
     /* Coarse size class (one of the FIRESTAFF_X68K_MEDIA_*
@@ -227,6 +276,14 @@ typedef struct {
      * FIRESTAFF_X68K_SCAN_FLAG_SENTINEL_PRESENT is set. */
     uint64_t sentinel_offset;
 
+    /* Total number of `HPR-0007` strings found in the entire
+     * buffer, and the subset that are NOT at sentinel_offset.
+     * This keeps backup-label strings such as "DMGame.bak"
+     * from being mistaken for the live protection sector. */
+    uint32_t protection_sentinel_count;
+    uint32_t protection_sentinel_offaxis_count;
+    uint64_t first_offaxis_sentinel_offset;
+
     /* Non-zero iff a 0x6160 big-endian magic was detected at
      * offset 0 (FTL container header, see greatstone
      * d_ftl.html "20-byte common header"). Reported for the
@@ -238,6 +295,9 @@ typedef struct {
      * first 32 KiB of the input. Zero on every non-FTL HDM;
      * small on a single-resource .FTL payload. */
     uint32_t ftl_magic_candidate_count;
+
+    /* One of FirestaffX68kReceiptClass. */
+    uint32_t receipt_class;
 } FirestaffX68kMediaClassifyResult;
 
 /* Classify a buffer as an X68000 HDM media candidate.
@@ -268,6 +328,10 @@ int FirestaffX68kMedia_IsFTLPayload(uint32_t flags,
  * protection-sector sentinel. */
 int FirestaffX68kMedia_IsUnprotectedDisk(uint32_t flags,
                                           uint32_t media_class);
+
+/* Stable diagnostic name for FirestaffX68kReceiptClass values.
+ * Returns "unknown" for unrecognized values. */
+const char* FirestaffX68kMedia_ReceiptClassName(uint32_t receipt_class);
 
 /* FTL handoff check: does the in-memory area_1 size declared by
  * HUNK_BSS in a parsed FTL container fit within the on-disk
