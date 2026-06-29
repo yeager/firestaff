@@ -12092,6 +12092,25 @@ if(BUILD_TESTING)
         )
     endif()
 
+    # DM1 V1 champion-panel PORTRAIT-BOX REDRAW STATE matrix.
+    # Source-locked against CHAMDRAW.C F0291:498-677, F0292:757-815
+    # (inventory-owner F0354 branch at 810-812 vs non-inventory continuation
+    # at 813-814), F0292:898-935, F0292:1080-1110, F0293:1117-1143,
+    # F0295/F0296:1153-1260, and CHAMPION.C F0302:662-714. Contract-only;
+    # no real GRAPHICS.DAT / DUNGEON.DAT load and no pixel-parity claim.
+    add_executable(test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat
+        tests/test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat
+    )
+
     add_executable(test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat
         tests/test_dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat.c

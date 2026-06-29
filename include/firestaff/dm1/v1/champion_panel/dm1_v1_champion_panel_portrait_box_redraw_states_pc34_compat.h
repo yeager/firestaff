@@ -13,8 +13,9 @@
  * - CHAMDRAW.C F0291:498-677 maps champion/inventory slot boxes and draws
  *   C033/C034/C035 hand-slot chrome before object icons.
  * - CHAMDRAW.C F0292:757-815 gates the status-box branch, fills the 67x29
- *   status box, calls F0354 only for the inventory champion, or arms the
- *   non-inventory NAME_TITLE|STATISTICS|WOUNDS|ACTION_HAND continuation.
+ *   status box, calls F0354 only for the inventory champion, then arms only
+ *   STATISTICS for that owner; non-inventory champions arm
+ *   NAME_TITLE|STATISTICS|WOUNDS|ACTION_HAND instead.
  * - CHAMDRAW.C F0292:843-895 applies the PC34 C11 leader / C09 nonleader
  *   name-color cascade after leader changes.
  * - CHAMDRAW.C F0292:898-935 recomputes statistics and C033/C034 mouth/eye
@@ -39,7 +40,7 @@ extern "C" {
 #endif
 
 #define DM1_V1_CPPBRS_CHAMPION_COUNT_PC34 4
-#define DM1_V1_CPPBRS_EVENT_COUNT_PC34 7
+#define DM1_V1_CPPBRS_EVENT_COUNT_PC34 8
 #define DM1_V1_CPPBRS_MAX_OPS_PC34 8
 
 #define DM1_V1_CPPBRS_STATUS_BOX_WIDTH_PC34 67
@@ -99,7 +100,8 @@ typedef enum {
     DM1_V1_CPPBRS_EVENT_MIRROR_CANDIDATE_OPEN_CLOSE_PC34 = 3,
     DM1_V1_CPPBRS_EVENT_CHEST_OPEN_CLOSE_PC34 = 4,
     DM1_V1_CPPBRS_EVENT_RESURRECT_PENDING_PC34 = 5,
-    DM1_V1_CPPBRS_EVENT_CANDIDATE_PICK_PC34 = 6
+    DM1_V1_CPPBRS_EVENT_CANDIDATE_PICK_PC34 = 6,
+    DM1_V1_CPPBRS_EVENT_INVENTORY_OWNER_STATUS_BOX_PC34 = 7
 } dm1_v1_cppbrs_event_pc34_compat_t;
 
 typedef enum {
@@ -159,6 +161,7 @@ typedef struct {
     bool mirror_candidate_path;
     bool resurrect_pending_path;
     bool candidate_pick_path;
+    bool inventory_owner_status_box_path;
     int operation_count;
     dm1_v1_cppbrs_op_pc34_compat_t operations[DM1_V1_CPPBRS_MAX_OPS_PC34];
     int leader_name_color[DM1_V1_CPPBRS_CHAMPION_COUNT_PC34];
