@@ -1054,6 +1054,60 @@ int main(void) {
     check_macbook_retina_drawable_rect_regression();
     check_sdl3_pixel_size_event_keeps_logical_mouse_space();
 
+    /* Wire the dead-code check_integer_scaled_movement_arrows_at_resolution
+     * helper into main() so the M11_SCALE_FIT + integerScaling +
+     * M11_DISPLAY_ASPECT_CONTENT movement-arrow round-trip is locked at
+     * every common 16:9 + ultrawide + MacBook Retina surface. The helper
+     * asserts the integer-scaled rect, then round-trips all six ReDMCSB
+     * COMMAND.C G0448 movement arrows (C068 turn_left / C069 turn_right /
+     * C070 forward / C071 right / C072 backward / C073 left), then the
+     * four letterbox-edge rejection points, then the source corner sample
+     * for that surface. The expected rect math is sourced from the
+     * integer-scaling branch in M11_Render_ComputePresentationRect
+     * (src/engine/render_sdl_m11.c:340-360): ratioW=320 / ratioH=200
+     * (content-aspect), factor = min(windowW/320, windowH/200), fitW =
+     * 320*factor, fitH = 200*factor, x = (windowW-fitW)/2, y =
+     * (windowH-fitH)/2. 1920x1080 -> (160,40,1600,1000) is already
+     * covered by check_integer_scaled_content_input_gate above; the four
+     * resolutions here pin additional surfaces (1024p 5:4 monitor,
+     * ultrawide 3600x2092, MacBook logical 1512x982, MacBook drawable
+     * 3024x1964) without duplicating prior coverage. */
+    check_integer_scaled_movement_arrows_at_resolution(1280,
+                                                       1024,
+                                                       0,
+                                                       112,
+                                                       1280,
+                                                       800,
+                                                       "desktop_5x4_1024p");
+    check_integer_scaled_movement_arrows_at_resolution(1920,
+                                                       1080,
+                                                       160,
+                                                       40,
+                                                       1600,
+                                                       1000,
+                                                       "desktop_16x9_1080p");
+    check_integer_scaled_movement_arrows_at_resolution(3600,
+                                                       2092,
+                                                       200,
+                                                       46,
+                                                       3200,
+                                                       2000,
+                                                       "ultrawide_3600x2092");
+    check_integer_scaled_movement_arrows_at_resolution(1512,
+                                                       982,
+                                                       116,
+                                                       91,
+                                                       1280,
+                                                       800,
+                                                       "macbook_logical_1512x982");
+    check_integer_scaled_movement_arrows_at_resolution(3024,
+                                                       1964,
+                                                       72,
+                                                       82,
+                                                       2880,
+                                                       1800,
+                                                       "macbook_drawable_3024x1964");
+
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
         return 1;
