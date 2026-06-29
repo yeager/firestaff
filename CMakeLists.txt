@@ -394,6 +394,7 @@ set(M12_SOURCES
     src/shared/animated_bg_m12.c
     src/shared/input_remap_m12.c
     src/shared/save_browser_m12.c
+    src/shared/save_byte_manifest_m12.c
     src/shared/custom_dungeon_m12.c
     src/shared/item_encyclopedia_m12.c
     src/shared/campaign_m12.c
@@ -20110,6 +20111,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_memory_savegame_pc34_f0417_sav
     add_test(
         NAME memory_savegame_pc34_f0417_saveutil_port_pc34_compat
         COMMAND test_memory_savegame_pc34_f0417_saveutil_port_pc34_compat
+    )
+endif()
+
+# M12 per-game save-byte export/import manifest: content-aware wrapper for
+# actual runtime save payloads. The first gate supports Firestaff-native DM1
+# saves (`FSDM1SV1`) with byte count + CRC verification before import.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_byte_manifest_m12.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/save_byte_manifest_m12.c")
+    add_executable(test_save_byte_manifest_m12
+        tests/test_save_byte_manifest_m12.c
+        src/shared/save_byte_manifest_m12.c
+        src/dm1/dm1_v1_save_load.c
+    )
+    target_link_libraries(test_save_byte_manifest_m12 PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_save_byte_manifest_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME save_byte_manifest_m12
+        COMMAND test_save_byte_manifest_m12
     )
 endif()
 
