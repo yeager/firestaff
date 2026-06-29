@@ -20,11 +20,9 @@
  *         schedule occurs (F0320:1725-1727 early-continues on
  *         CurrentHealth == 0).
  *       - Subtracts the damage from current_health; if the result
- *         would drop to <= 0 the champion is marked dead and
- *         damage_visible is left at the requested value (F0319_Kill
- *         draws the dead status box on the next F0292 — separate
- *         handle below; this gate does not call F0319 because the
- *         flash-decay contract is only about visible decay).
+ *         would drop to <= 0, F0320 takes the F0319_Kill branch before
+ *         the F0623/C12 block, so no damage flash or hide event is
+ *         created and the status-box redraw path owns the visible erase.
  *       - Picks the C015/C016 graphic + C167/C179 zone by the
  *         inventory-champion comparison (M000_INDEX_TO_ORDINAL ==
  *         G0423_i_InventoryChampionOrdinal) and records the chosen
@@ -226,13 +224,20 @@ int DM1_V1_ChampionPanelDamageFlashDecay_TickPc34Compat(
     champion->current_health -= pending_damage;
     if (champion->current_health <= 0) {
         /*
-         * CHAMPION.C F0320:1729-1737 (F0319_CHAMPION_Kill branch).
-         * The synthetic gate does not call F0319 (kill is a separate
-         * contract); we just mark dead and proceed with the
-         * flash-decay bookkeeping for the damage that was applied.
+         * ReDMCSB: CHAMPION.C F0320 lines 1728-1737 enter the
+         * F0319_CHAMPION_Kill branch, and the F0623/C12 schedule block is
+         * only in the nonlethal else branch at lines 1736-1794.
          */
         champion->current_health = 0;
         champion->alive = false;
+        champion->damage_visible = 0;
+        state->mask0x1000_status_box_dirty = true;
+        out_step->applied_pending_damage = true;
+        out_step->scheduled_new_event = false;
+        out_step->rescheduled_existing_event = false;
+        out_step->damage_visible_after = champion->damage_visible;
+        out_step->next_game_time = state->game_time;
+        return 1;
     }
 
     /* F0623_DrawDamageToChampion_F0320_sub(ChampionIndex, PendingDamage) */

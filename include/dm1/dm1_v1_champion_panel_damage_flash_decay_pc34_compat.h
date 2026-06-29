@@ -29,13 +29,17 @@ extern "C" {
  * or earlier if MASK0x1000_STATUS_BOX is set on any other champion).
  *
  * The flash decay is a 5-tick window:
- *   tick T   : F0320 sees G0409[i] != 0, applies damage, calls
- *              F0623 to draw the C015/C016 graphic at C167..C173 (small,
- *              non-inventory) or C179..C185 (big, inventory) zone, then
- *              schedules a C12_EVENT_HIDE_DAMAGE_RECEIVED event with
+ *   tick T   : F0320 sees G0409[i] != 0, applies damage. If the
+ *              resulting CurrentHealth is > 0, F0320 calls F0623 to draw
+ *              the C015/C016 graphic at C167..C173 (small, non-inventory)
+ *              or C179..C185 (big, inventory) zone, then schedules a
+ *              C12_EVENT_HIDE_DAMAGE_RECEIVED event with
  *              Map_Time.G0313_ul_GameTime = GameTime + 5 and
  *              A.A.Priority = championIndex, storing the event index
  *              in champion->HideDamageReceivedEventIndex.
+ *              If the damage is lethal, F0320 takes the F0319 kill branch
+ *              before F0623/C12, so no damage graphic or C12 event is
+ *              created for that hit.
  *   tick T+1..T+4 : damage graphic visible, G0409[i] is 0.
  *   tick T+5   : F0261 case C12 fires F0254 (championIndex) which
  *              erases the damage by drawing the inventory portrait
@@ -49,10 +53,10 @@ extern "C" {
  * it fixes the placement of the existing event to the new GameTime+5
  * via F0235_TIMELINE_GetIndex + F0236_TIMELINE_FixPlacement.
  *
- * Dead-champion edge: F0254 early-returns at line 1624 when
- * champion->CurrentHealth == 0 without drawing anything; the damage
- * graphic is then erased by the F0319_CHAMPION_Kill status-box redraw
- * (CHAMPION.C:1574 M008_SET MASK0x1000_STATUS_BOX).
+ * Dead-champion edge: F0254 early-returns at line 1624 when a previously
+ * staged C12 targets a champion whose CurrentHealth is now 0. Lethal damage
+ * itself does not stage that C12; F0319_CHAMPION_Kill instead marks the
+ * status-box redraw path (CHAMPION.C:1574 M008_SET MASK0x1000_STATUS_BOX).
  *
  * No real-asset / original-DOS pixel parity claim. Contract-only.
  */
