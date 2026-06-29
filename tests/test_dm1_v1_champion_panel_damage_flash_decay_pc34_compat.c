@@ -179,6 +179,33 @@ static void test_tick_zero_pending_is_noop(void)
               "G0370_ps_Events still empty after noop");
 }
 
+static void test_tick_negative_pending_is_rejected(void)
+{
+    DM1_V1_ChampionPanelDamageFlashDecayStatePc34Compat state;
+    DM1_V1_ChampionPanelDamageFlashDecayStepResultPc34Compat step;
+
+    DM1_V1_ChampionPanelDamageFlashDecay_InitStatePc34Compat(&state);
+    state.game_time = 321;
+    check_int("negative_pending.build_return",
+              DM1_V1_ChampionPanelDamageFlashDecay_TickPc34Compat(
+                  &state, 0, -7, &step),
+              0, "CHAMPION.C:1712 L0968_ui_PendingDamage is unsigned");
+    check_false("negative_pending.applied", step.applied_pending_damage,
+                "negative synthetic damage is outside the F0320 source domain");
+    check_false("negative_pending.scheduled_new", step.scheduled_new_event,
+                "CHAMPION.C F0320:1780-1784 C12 is not scheduled");
+    check_int("negative_pending.health", state.champions[0].current_health, 100,
+              "CurrentHealth unchanged on rejected negative pending damage");
+    check_int("negative_pending.damage_visible",
+              state.champions[0].damage_visible, 0,
+              "C015/C016 damage graphic remains hidden on rejection");
+    check_int("negative_pending.pending_count",
+              state.pending_timeline_event_count, 0,
+              "G0370_ps_Events unchanged on rejected negative pending damage");
+    check_int("negative_pending.game_time", (int)state.game_time, 321,
+              "G0313_ul_GameTime unchanged on rejected call");
+}
+
 static void test_tick_basic_flash_and_schedule(void)
 {
     DM1_V1_ChampionPanelDamageFlashDecayStatePc34Compat state;
@@ -663,6 +690,7 @@ int main(void)
     test_constants();
     test_init_state_defaults();
     test_tick_zero_pending_is_noop();
+    test_tick_negative_pending_is_rejected();
     test_tick_basic_flash_and_schedule();
     test_tick_non_inventory_uses_small_graphic();
     test_reschedule_second_hit_within_window();

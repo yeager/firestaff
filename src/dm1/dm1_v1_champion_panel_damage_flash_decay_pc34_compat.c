@@ -203,6 +203,19 @@ int DM1_V1_ChampionPanelDamageFlashDecay_TickPc34Compat(
 
     champion = &state->champions[champion_index_with_pending_damage];
 
+    if (pending_damage < 0) {
+        /*
+         * ReDMCSB CHAMPION.C:1712 declares L0968_ui_PendingDamage as an
+         * unsigned int16_t and F0320:1724 only enters the damage-flash path
+         * when that pending-damage slot is non-zero. Negative synthetic
+         * inputs are therefore outside the source domain and must not heal
+         * the champion or schedule a C12 hide-damage event.
+         */
+        out_step->damage_visible_after = champion->damage_visible;
+        out_step->next_game_time = state->game_time;
+        return 0;
+    }
+
     if (pending_damage == 0) {
         /*
          * CHAMPION.C F0320:1724-1725:
