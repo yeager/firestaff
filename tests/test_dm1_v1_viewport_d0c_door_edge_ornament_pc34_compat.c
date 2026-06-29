@@ -28,7 +28,7 @@ int main(void)
            "no_thieves_eye_legacy=%d no_thieves_eye_f20e=%d "
            "no_thieves_eye_i34e=%d thieves_eye_legacy=%d "
            "thieves_eye_f20e=%d thieves_eye_i34e=%d invalid=%d "
-           "g0172=%d g2116=%d thieve=%d transpar=%d "
+           "g0172=%d g2116=%d thieve=%d transpar=%d gating=%d "
            "f0112=%d f0115=%d f0113=%d nonoverlap=%d strip=%d "
            "hash=0x%08X expected=0x%08X\n",
            rc == 0 && result && result->failures == 0 ? "PASS" : "FAIL",
@@ -45,6 +45,7 @@ int main(void)
            result ? result->g2116_zone_checks : 0,
            result ? result->thieves_eye_zone_checks : 0,
            result ? result->transparency_color_checks : 0,
+           result ? result->thieves_eye_branch_gating_checks : 0,
            result ? result->post_frame_f0112_checks : 0,
            result ? result->post_frame_f0115_checks : 0,
            result ? result->post_frame_f0113_checks : 0,
