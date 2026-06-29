@@ -19651,6 +19651,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12
     )
 endif()
 
+# DM1 V1 PC 3.4 native save exporter/importer regression (LSV-01) +
+# LSV-02 per-game versioned manifest gate. Source-locked against
+# ReDMCSB LOADSAVE.C + SAVEHEAD.C + READWRIT.C; per-game gate lives
+# in AdditionalData[0..15] of the PC 3.4 header (a region the
+# original ReDMCSB engine never inspects, so the gate is byte-safe
+# for vanilla DM 3.4 PC interop).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_savegame_pc34_native_export_pc34_compat.c")
+    add_executable(test_dm1_v1_savegame_pc34_native_export_pc34_compat
+        tests/test_dm1_v1_savegame_pc34_native_export_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_savegame_pc34_native_export_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_savegame_pc34_native_export_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_savegame_pc34_native_export_pc34_compat
+        COMMAND test_dm1_v1_savegame_pc34_native_export_pc34_compat
+    )
+endif()
+
 # M12 polished UI flow: public startup-menu state-machine coverage for
 # main, unavailable-game messages, museum, changelog, settings, and launch.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_polished_ui_flow.c")

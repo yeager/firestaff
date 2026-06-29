@@ -247,6 +247,75 @@ static int pc34_read_part(const unsigned char* src, int srcAvail,
 }
 
 /* ==========================================================
+ *  LSV-02 versioned manifest gate helpers.
+ *
+ *  The 16-byte manifest lives in the obfuscated meta half of
+ *  the PC 3.4 header at meta[41..48] (= AdditionalData[0..15]
+ *  on disk). The original ReDMCSB engine never reads
+ *  AdditionalData, so writing the manifest there is byte-safe
+ *  for vanilla DM 3.4 PC interop. The Firestaff importer reads
+ *  the meta half *after* deobfuscation, so it sees the manifest
+ *  bytes in plaintext.
+ * ========================================================== */
+
+static void pc34_write_manifest(struct PC34SaveHeader* hdr, uint16_t gameCode) {
+    int i;
+    /* Magic "LSV01RDM" at AdditionalData[0..7]. Reads as
+     * "LSV 01 RDM" (LSV envelope v1, ReDMCSB provenance).
+     * Each uint16_t word carries 2 ASCII bytes little-endian
+     * (low byte = lower ASCII), so the deobfuscated bytes read
+     * as ASCII in the order the manifest is written. */
+    static const unsigned char kMagic[8] = { 'L','S','V','0','1','R','D','M' };
+    for (i = 0; i < 4; ++i) {
+        unsigned char lo = kMagic[i * 2 + 0];
+        unsigned char hi = kMagic[i * 2 + 1];
+        hdr->meta[SAVEGAME_PC34_MANIFEST_OFFSET + i] =
+            (uint16_t)(((unsigned)hi << 8) | (unsigned)lo);
+    }
+    /* formatVersion, gameCode, dungeonCode, flags. */
+    hdr->meta[SAVEGAME_PC34_MANIFEST_OFFSET + 4] =
+        (uint16_t)(SAVEGAME_PC34_MANIFEST_VERSION & 0xFFFFu);
+    hdr->meta[SAVEGAME_PC34_MANIFEST_OFFSET + 5] = gameCode;
+    /* dungeonCode echoes meta[40] (which pc34_write_header has
+     * already set to SAVEGAME_PC34_DUNGEON_ID_DM). Re-stamp it
+     * defensively so the manifest is self-contained even if a
+     * future header re-layout splits them. */
+    hdr->meta[SAVEGAME_PC34_MANIFEST_OFFSET + 6] =
+        read_u16_le((const unsigned char*)&hdr->meta[40]);
+    hdr->meta[SAVEGAME_PC34_MANIFEST_OFFSET + 7] = 0u;  /* flags */
+}
+
+static int pc34_read_manifest(const struct PC34SaveHeader* hdr,
+                              uint16_t* outVersion,
+                              uint16_t* outGameCode)
+{
+    unsigned char bytes[SAVEGAME_PC34_MANIFEST_SIZE];
+    int i;
+    /* Pull the manifest out of the deobfuscated meta half. The
+     * exporter writes each uint16_t word as (hi<<8)|lo where lo
+     * is the first byte of the magic, so the deobfuscated bytes
+     * read in ASCII order from offset 0. */
+    for (i = 0; i < SAVEGAME_PC34_MANIFEST_SIZE / 2; ++i) {
+        uint16_t w = hdr->meta[SAVEGAME_PC34_MANIFEST_OFFSET + i];
+        bytes[i * 2 + 0] = (unsigned char)(w & 0xFFu);
+        bytes[i * 2 + 1] = (unsigned char)((w >> 8) & 0xFFu);
+    }
+    if (memcmp(bytes, "LSV01RDM", 8) != 0) {
+        return SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT;
+    }
+    if (outVersion != 0) {
+        *outVersion = read_u16_le(bytes + 8);
+    }
+    if (outGameCode != 0) {
+        *outGameCode = read_u16_le(bytes + 10);
+    }
+    if (read_u16_le(bytes + 8) > SAVEGAME_PC34_MANIFEST_VERSION) {
+        return SAVEGAME_PC34_MANIFEST_ERR_BAD_VERSION;
+    }
+    return SAVEGAME_PC34_MANIFEST_OK;
+}
+
+/* ==========================================================
  *  Header: write 512-byte PC 3.4 save header.
  *
  *  F0430_STARTEND_IsWriteObfuscatedSaveHeaderSuccessful mirror:
@@ -277,7 +346,8 @@ static void pc34_write_header(unsigned char* dst, int dstAvail,
                               uint32_t gameID,
                               uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT],
                               uint16_t checksums[SAVEGAME_PC34_DM_CHECKSUMS_COUNT],
-                              uint32_t prngSeed)
+                              uint32_t prngSeed,
+                              uint16_t gameCode)
 {
     struct PC34SaveHeader* hdr;
     int i;
@@ -304,7 +374,8 @@ static void pc34_write_header(unsigned char* dst, int dstAvail,
      *   meta[23..38] = Checksums[16]      (46..77)
      *   meta[39]     = Platform (2)       (78..79)
      *   meta[40]     = DungeonID (2)      (80..81)
-     *   meta[41..107]= AdditionalData[134] (82..255)
+     *   meta[41..48] = LSV-02 manifest    (82..97)
+     *   meta[49..107]= AdditionalData remainder (98..255)
      * Total = 128 words. */
     hdr->meta[0] = (uint16_t)((1u << 0)               /* Useless = 1 */
                               | (SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC << 8));
@@ -319,7 +390,11 @@ static void pc34_write_header(unsigned char* dst, int dstAvail,
     }
     write_u16_le((unsigned char*)&hdr->meta[39], SAVEGAME_PC34_PLATFORM_PC);
     write_u16_le((unsigned char*)&hdr->meta[40], SAVEGAME_PC34_DUNGEON_ID_DM);
-    /* AdditionalData[134] is already zero. */
+    /* LSV-02 manifest: lives in AdditionalData[0..15] (offset 82
+     * within the meta half, 0 within AdditionalData). The
+     * ReDMCSB engine never inspects AdditionalData, so the
+     * manifest is byte-safe for vanilla DM 3.4 PC interop. */
+    pc34_write_manifest(hdr, gameCode);
 
     /* Obfuscate the second half with Noise[10] (F0430 / F0417). */
     (void)F0798_SAVEGAME_PC34CPSCObfuscate_Compat(
@@ -332,13 +407,17 @@ static int pc34_read_header(const unsigned char* src, int srcAvail,
                             uint16_t checksums[SAVEGAME_PC34_DM_CHECKSUMS_COUNT],
                             uint16_t* outFormatID,
                             uint16_t* outPlatform,
-                            uint16_t* outDungeonID)
+                            uint16_t* outDungeonID,
+                            uint16_t* outManifestVersion,
+                            uint16_t* outManifestGameCode,
+                            int* outManifestPresent)
 {
     struct PC34SaveHeader hdr;
     uint16_t key;
     uint16_t halfChecksum;
     int i;
     uint16_t sum;
+    int manifestRc;
     if (srcAvail < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE) return -1;
     memcpy(&hdr, src, SAVEGAME_PC34_DM_SAVE_HEADER_SIZE);
     key = hdr.noise[SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX];
@@ -357,10 +436,6 @@ static int pc34_read_header(const unsigned char* src, int srcAvail,
     for (i = 0; i < SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS; ++i) {
         halfChecksum = (uint16_t)(halfChecksum + hdr.meta[i]);
     }
-    /* Note: halfChecksum in the F0429 sense is "the 16-bit sum
-     * of the *unobfuscated* second half, which is what the
-     * original computes by reading the live in-memory buffer
-     * after deobfuscation. We just report it for the test. */
 
     *outGameID = read_u32_le((const unsigned char*)&hdr.meta[5]);
     for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
@@ -372,6 +447,22 @@ static int pc34_read_header(const unsigned char* src, int srcAvail,
     *outFormatID = (uint16_t)((hdr.meta[0] >> 8) & 0xFFu);
     *outPlatform = read_u16_le((const unsigned char*)&hdr.meta[39]);
     *outDungeonID = read_u16_le((const unsigned char*)&hdr.meta[40]);
+
+    /* Manifest peek (LSV-02). The deobfuscated meta half is
+     * already populated at this point, so we can read the
+     * AdditionalData[0..15] region directly. We swallow the
+     * "bad version" verdict for the legacy import path so a
+     * newer-than-supported manifest is still readable as a
+     * header; the F0800 strict gate makes the verdict. */
+    if (outManifestPresent != 0) *outManifestPresent = 0;
+    if (outManifestVersion != 0) *outManifestVersion = 0;
+    if (outManifestGameCode != 0) *outManifestGameCode = 0;
+    manifestRc = pc34_read_manifest(&hdr,
+                                    outManifestVersion,
+                                    outManifestGameCode);
+    if (manifestRc == SAVEGAME_PC34_MANIFEST_OK) {
+        if (outManifestPresent != 0) *outManifestPresent = 1;
+    }
 
     /* sum suppress unused-warning. */
     sum = halfChecksum;
@@ -610,9 +701,15 @@ int F0795_SAVEGAME_ExportPC34_Compat(
             keys[SAVEGAME_PC34_PART_TIMELINE]);
     cursor += 2 + SAVEGAME_PC34_TIMELINE_BYTE_COUNT;
 
-    /* Header. */
+    /* Header. The LSV-02 manifest is stamped into
+     * AdditionalData[0..15] by pc34_write_header so the
+     * exported file is per-game-tagged as DM1 by default
+     * (callers can override gameCode via the new
+     * F0795_SAVEGAME_ExportPC34_Compat_For_Game variant;
+     * this entry point is the DM1 path). */
     pc34_write_header(p, SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
-                      gameID, keys, checksums, prngSeed);
+                      gameID, keys, checksums, prngSeed,
+                      SAVEGAME_PC34_GAME_CODE_DM1);
 
     if (outBytesWritten != 0) *outBytesWritten = cursor;
     return SAVEGAME_PC34_OK;
@@ -634,6 +731,9 @@ int F0796_SAVEGAME_ImportPC34_Compat(
     uint16_t platform = 0;
     uint16_t dungeonID = 0;
     uint32_t gameID = 0;
+    uint16_t manifestVersion = 0;
+    uint16_t manifestGameCode = 0;
+    int manifestPresent = 0;
     int cursor;
     unsigned char partBuf[SAVEGAME_PC34_TIMELINE_BYTE_COUNT];
     int partLen;
@@ -646,12 +746,21 @@ int F0796_SAVEGAME_ImportPC34_Compat(
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
 
     if (pc34_read_header(buf, bufSize, &gameID, keys, checksums,
-                         &formatID, &platform, &dungeonID) != 0) {
+                         &formatID, &platform, &dungeonID,
+                         &manifestVersion, &manifestGameCode,
+                         &manifestPresent) != 0) {
         return SAVEGAME_PC34_ERROR_BAD_MAGIC;
     }
     if (formatID != SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC &&
         formatID != 0x01 /* tolerate the Atari ST 1.x format too */) {
         return SAVEGAME_PC34_ERROR_UNSUPPORTED;
+    }
+    /* LSV-02 per-game gate: if a manifest is present and the
+     * file claims to be a different game, refuse to import.
+     * (Vanilla PC 3.4 files without a manifest are still
+     * accepted; F0800 is the strict per-game gate.) */
+    if (manifestPresent && manifestGameCode != SAVEGAME_PC34_GAME_CODE_DM1) {
+        return SAVEGAME_PC34_ERROR_BAD_MAGIC;
     }
 
     cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
@@ -707,12 +816,115 @@ int F0796_SAVEGAME_ImportPC34_Compat(
      * present in the header struct, so no null check is needed. */
     write_u32_le(outState->header.reserved +
                  SAVEGAME_HEADER_RESERVED_GAME_ID_OFFSET, gameID);
+    /* LSV-02: also stamp the manifest-derived gameCode into the
+     * reserved area (next to gameID) so a M12 launcher can quote
+     * it without re-parsing the PC 3.4 header. We use byte 5 of
+     * reserved[36] to avoid clashing with the existing
+     * MusicOn slot at byte 4. */
+    if (manifestPresent) {
+        outState->header.reserved[5] = (unsigned char)(manifestGameCode & 0xFFu);
+        outState->header.reserved[6] = (unsigned char)((manifestGameCode >> 8) & 0xFFu);
+    }
     /* Suppress unused-warnings for now. */
     (void)checksums;
     (void)platform;
     (void)dungeonID;
+    (void)manifestVersion;
     (void)i;
     return SAVEGAME_PC34_OK;
+}
+
+/* ==========================================================
+ *  LSV-02 public API: F0799/F0800/F0801
+ * ========================================================== */
+
+int F0799_SAVEGAME_PC34PeekManifest_Compat(
+    const unsigned char* buf,
+    int bufSize,
+    uint16_t* outVersion,
+    uint16_t* outGameCode,
+    int* outBodySize)
+{
+    struct PC34SaveHeader hdr;
+    uint16_t key;
+    int manifestRc;
+    if (buf == 0) return SAVEGAME_PC34_MANIFEST_ERR_BAD_MAGIC;
+    if (bufSize < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE) {
+        /* Too small to even carry a header; treat as not present
+         * so callers can distinguish "not a PC 3.4 file" from
+         * "PC 3.4 file with a manifest we don't recognise". */
+        if (outVersion != 0) *outVersion = 0;
+        if (outGameCode != 0) *outGameCode = 0;
+        if (outBodySize != 0) *outBodySize = 0;
+        return SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT;
+    }
+    memcpy(&hdr, buf, SAVEGAME_PC34_DM_SAVE_HEADER_SIZE);
+    key = hdr.noise[SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX];
+    (void)F0798_SAVEGAME_PC34CPSCObfuscate_Compat(
+        hdr.meta, SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS, key);
+    manifestRc = pc34_read_manifest(&hdr, outVersion, outGameCode);
+    if (outBodySize != 0) {
+        *outBodySize = bufSize;
+    }
+    return manifestRc;
+}
+
+int F0800_SAVEGAME_PC34ValidateGameCode_Compat(
+    const unsigned char* buf,
+    int bufSize,
+    uint16_t expectedGameCode,
+    int requireManifest)
+{
+    int bodySize = 0;
+    int rc;
+    if (buf == 0) return SAVEGAME_PC34_MANIFEST_ERR_BAD_MAGIC;
+    if (bufSize < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE) {
+        /* Not a header at all. If a manifest is required, the
+         * caller gets a clear "not present" verdict; if not,
+         * the file is acceptable as a vanilla PC 3.4 import. */
+        return requireManifest
+                   ? SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT
+                   : SAVEGAME_PC34_MANIFEST_OK;
+    }
+    rc = F0799_SAVEGAME_PC34PeekManifest_Compat(
+        buf, bufSize, 0, 0, &bodySize);
+    if (rc == SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT) {
+        return requireManifest
+                   ? SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT
+                   : SAVEGAME_PC34_MANIFEST_OK;
+    }
+    if (rc != SAVEGAME_PC34_MANIFEST_OK) {
+        return rc;
+    }
+    /* Manifest present + valid version. Peek the gameCode and
+     * check against the expected value. */
+    {
+        uint16_t actual = 0;
+        (void)F0799_SAVEGAME_PC34PeekManifest_Compat(
+            buf, bufSize, 0, &actual, 0);
+        if (actual != expectedGameCode) {
+            return SAVEGAME_PC34_MANIFEST_ERR_WRONG_GAME;
+        }
+    }
+    if (bodySize < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE) {
+        return SAVEGAME_PC34_MANIFEST_ERR_BODY_TRUNCATED;
+    }
+    return SAVEGAME_PC34_MANIFEST_OK;
+}
+
+const char* F0801_SAVEGAME_PC34GameCodeName_Compat(uint16_t gameCode) {
+    switch (gameCode) {
+    case SAVEGAME_PC34_GAME_CODE_DM1:    return "DM1";
+    case SAVEGAME_PC34_GAME_CODE_CSB:    return "CSB";
+    case SAVEGAME_PC34_GAME_CODE_DM2:    return "DM2";
+    case SAVEGAME_PC34_GAME_CODE_NEXUS:  return "NEXUS";
+    case SAVEGAME_PC34_GAME_CODE_THERON: return "THERON";
+    default:
+        /* Reserved / unknown. We still return a stable string so
+         * log lines do not stutter on the unknown code. */
+        if (gameCode == 0u) return "UNSET";
+        return "UNKNOWN";
+    }
 }
 
 /* ==========================================================
@@ -730,6 +942,12 @@ const char* F0797_SAVEGAME_PC34ErrorToString_Compat(int code) {
     case SAVEGAME_PC34_ERROR_BAD_CHECKSUM:     return "bad checksum";
     case SAVEGAME_PC34_ERROR_UNSUPPORTED:      return "unsupported format";
     case SAVEGAME_PC34_ERROR_INTERNAL:         return "internal error";
+    case SAVEGAME_PC34_MANIFEST_OK:            return "manifest ok";
+    case SAVEGAME_PC34_MANIFEST_ERR_BAD_MAGIC: return "manifest bad magic";
+    case SAVEGAME_PC34_MANIFEST_ERR_BAD_VERSION:return "manifest bad version";
+    case SAVEGAME_PC34_MANIFEST_ERR_WRONG_GAME: return "manifest wrong game";
+    case SAVEGAME_PC34_MANIFEST_ERR_BODY_TRUNCATED: return "manifest body truncated";
+    case SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT: return "manifest not present";
     default:                                    return "unknown";
     }
 }
