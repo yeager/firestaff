@@ -165,6 +165,69 @@ static void classify_pc34_manifest(M12_SaveBrowserEntry* entry) {
     free(buf);
 }
 
+static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
+    FILE* fp;
+    unsigned char* buf;
+    size_t n;
+    int rc;
+    struct SaveGame_Compat sg;
+    struct PartyState_Compat party;
+
+    if (!entry ||
+        entry->manifestStatus != SAVE_BROWSER_MANIFEST_NOT_PRESENT ||
+        entry->expectedGameCode != SAVEGAME_PC34_GAME_CODE_DM1 ||
+        entry->fileSize <= 0 ||
+        entry->fileSize > (long)SAVEGAME_PC34_MAX_FILE_SIZE) {
+        return 0;
+    }
+
+    fp = fopen(entry->fullPath, "rb");
+    if (!fp) return 0;
+    buf = (unsigned char*)malloc((size_t)entry->fileSize);
+    if (!buf) {
+        fclose(fp);
+        return 0;
+    }
+    n = fread(buf, 1, (size_t)entry->fileSize, fp);
+    fclose(fp);
+    if (n != (size_t)entry->fileSize) {
+        free(buf);
+        return 0;
+    }
+
+    rc = F0800_SAVEGAME_PC34ValidateGameCode_Compat(
+        buf, (int)n, SAVEGAME_PC34_GAME_CODE_DM1,
+        /* requireManifest = */ 0);
+    if (rc != SAVEGAME_PC34_MANIFEST_OK) {
+        free(buf);
+        return 0;
+    }
+
+    memset(&sg, 0, sizeof(sg));
+    memset(&party, 0, sizeof(party));
+    sg.party = &party;
+    rc = F0796_SAVEGAME_ImportPC34_Compat(buf, (int)n, &sg,
+                                          /* strictChecksums = */ 0);
+    free(buf);
+    if (rc != SAVEGAME_PC34_OK) {
+        return 0;
+    }
+
+    entry->valid = 1;
+    entry->mapLevel = sg.party ? sg.party->mapIndex : -1;
+    entry->championCount = sg.party ? sg.party->championCount : 0;
+    entry->champions[0] = '\0';
+    if (entry->mapLevel >= 0) {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s  L%d  (vanilla PC34 save)",
+                 entry->gameId, entry->mapLevel);
+    } else {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s (vanilla PC34 save)", entry->gameId);
+    }
+    return 1;
+}
+
 /* Format a champion name from packed 8-byte field (may lack NUL). */
 static void format_champion_name(const unsigned char packed[8],
                                  char* out, int outSize) {
@@ -197,6 +260,9 @@ static int parse_save_entry(M12_SaveBrowserEntry* entry) {
     memset(&sg, 0, sizeof(sg));
     rc = F0786_SAVEGAME_LoadFromFile_Compat(entry->fullPath, &sg);
     if (rc != SAVEGAME_OK) {
+        if (try_parse_dm1_pc34_vanilla_entry(entry)) {
+            return 1;
+        }
         if (entry->manifestStatus == SAVE_BROWSER_MANIFEST_MATCH) {
             entry->valid = 1;
             entry->mapLevel = -1;
