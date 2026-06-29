@@ -687,6 +687,83 @@ static int write_capture_manifest(const char *data_dir,
     return 1;
 }
 
+static int file_contains_all(const char *path,
+                             const char *const *needles,
+                             size_t needle_count)
+{
+    FILE *fp;
+    long sz;
+    char *buf;
+    size_t got;
+    size_t i;
+    int ok = 1;
+
+    if (!path || !needles) return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    sz = ftell(fp);
+    if (sz <= 0) {
+        fclose(fp);
+        return 0;
+    }
+    rewind(fp);
+    buf = (char *)malloc((size_t)sz + 1u);
+    if (!buf) {
+        fclose(fp);
+        return 0;
+    }
+    got = fread(buf, 1u, (size_t)sz, fp);
+    fclose(fp);
+    if (got != (size_t)sz) {
+        free(buf);
+        return 0;
+    }
+    buf[got] = '\0';
+    for (i = 0u; i < needle_count; ++i) {
+        if (needles[i] && needles[i][0] != '\0' &&
+            strstr(buf, needles[i]) == NULL) {
+            ok = 0;
+            break;
+        }
+    }
+    free(buf);
+    return ok;
+}
+
+static int verify_capture_manifest_contents(const char *graphics_md5,
+                                            const char capture_sha[65])
+{
+    char md5_needle[96];
+    char sha_needle[128];
+    const char *needles[] = {
+        "\"schema\": \"firestaff.csb.v1.real_asset_ornament_capture.v1\"",
+        "\"probe\": \"firestaff_csb_v1_pc_real_asset_ornament_blit_probe\"",
+        md5_needle,
+        sha_needle,
+        "\"bitmap_payload_size\"",
+        "\"bitmap_data_offset\"",
+        "\"capture_d1c_floor_band_y\": 100",
+        "\"capture_d1c_floor_band_rows\": 9",
+        "ReDMCSB DUNVIEW.C F0108:3940-4011",
+        "ReDMCSB DUNVIEW.C F0115:4547-4581",
+        "\"zones_checked\": 99",
+        "\"f0115_decoded_orders\": 4",
+        "\"no original DOS pixel parity claim\"",
+        "\"no game data committed\""
+    };
+
+    snprintf(md5_needle, sizeof(md5_needle),
+             "\"graphics_md5\": \"%s\"", graphics_md5 ? graphics_md5 : "");
+    snprintf(sha_needle, sizeof(sha_needle),
+             "\"capture_sha256\": \"%s\"", capture_sha ? capture_sha : "");
+    return file_contains_all(CAPTURE_MANIFEST_PATH, needles,
+                             sizeof(needles) / sizeof(needles[0]));
+}
+
 /* ── Boot handoff + scan sanity ──────────────────────────────── */
 
 static int run_boot_handoff(const char *dir)
@@ -835,6 +912,9 @@ static int run_real_asset_ornament_blit(const char *data_dir,
                                  ornament_data_offset, &tally, capture_sha),
           "provenance manifest written to "
           "/tmp/csb_pc_real_ornament_capture_manifest.json");
+    CHECK(verify_capture_manifest_contents(graphics_md5, capture_sha),
+          "provenance manifest read-back contains schema, MD5, SHA256, "
+          "source anchors, tally fields, and non-claims");
 
     free(data);
     return 0;
