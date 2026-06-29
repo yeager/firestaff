@@ -729,6 +729,303 @@ static void check_sdl3_pixel_size_event_keeps_logical_mouse_space(void) {
     CHECK(renderH == 800);
 }
 
+static void check_arg_validation_invariants(void) {
+    int rectX = -1;
+    int rectY = -1;
+    int rectW = -1;
+    int rectH = -1;
+    int windowW = -1;
+    int windowH = -1;
+    int renderW = -1;
+    int renderH = -1;
+
+    /* Guard 1: a zero/negative content size is a hard validation
+     * failure for M11_Render_ComputePresentationRect. SDL3 callers
+     * fed with an uninitialised content rect (e.g. the V2 modern-
+     * asset path before any modern bitmap declares its canvas size)
+     * would otherwise compute fitW = (windowW * contentH) / contentW
+     * and divide by zero. Source-lock: src/engine/render_sdl_m11.c
+     * M11_Render_ComputePresentationRect INVALID_ARG branch for
+     * contentW <= 0 || contentH <= 0 (return at the top of the
+     * function body, before x/y/w/h are touched). */
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             0,
+                                             200,
+                                             M11_SCALE_FIT,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             320,
+                                             0,
+                                             M11_SCALE_FIT,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             -1,
+                                             -1,
+                                             M11_SCALE_FIT,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_ERR_INVALID_ARG);
+
+    /* Guard 2: an unknown scale mode and an unknown display-aspect
+     * mode are both hard validation failures. Source-lock:
+     * m11_validate_scale + m11_validate_display_aspect in
+     * src/engine/render_sdl_m11.c (the second guard at the top of
+     * M11_Render_ComputePresentationRect). */
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_STRETCH + 1,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             -7,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_FIT,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT + 1,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_FIT,
+                                             0,
+                                             -1,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_ERR_INVALID_ARG);
+
+    /* Guard 3: when the resolver rejects input via the content/scale/
+     * aspect guards, the four out slots must remain at their caller-
+     * supplied sentinel values (locked here to -1, mirroring the
+     * sentinel wiring used throughout the other subtests). The
+     * contentW <= 0 path returns before x/y/w/h are populated, so
+     * the sentinel value must survive.  The invalid-scale and
+     * invalid-aspect paths also return before the out-write block,
+     * preserving the caller's sentinel.  A regression that wrote to
+     * the out slots before the validation block would silently
+     * corrupt the caller-side "did this resolve change anything?"
+     * reasoning that the M11 launch handler relies on, so the
+     * sentinel preservation is locked down here.  Source-lock: the
+     * two early-return INVALID_ARG paths in M11_Render_ComputePresentationRect
+     * which both sit above the `if (outX) *outX = x;` write block. */
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             0,
+                                             200,
+                                             M11_SCALE_FIT,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(rectX == -1);
+    CHECK(rectY == -1);
+    CHECK(rectW == -1);
+    CHECK(rectH == -1);
+
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_STRETCH + 1,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(rectX == -1);
+    CHECK(rectY == -1);
+    CHECK(rectW == -1);
+    CHECK(rectH == -1);
+
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_FIT,
+                                             0,
+                                             M11_DISPLAY_ASPECT_CONTENT + 1,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(rectX == -1);
+    CHECK(rectY == -1);
+    CHECK(rectW == -1);
+    CHECK(rectH == -1);
+
+    /* Guard 4: the NULL-pointer rule applies to all four out slots
+     * of M11_Render_ResolveSdl3ResizeEvent. SDL3 fires
+     * SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED both for legitimate user
+     * resizes and during fullscreen transitions where the cached
+     * liveRenderW/H is stale; a refactor that flattened the resize
+     * resolver into M11_Render_ComputePresentationRect without
+     * preserving the explicit NULL out-pointer check would crash on
+     * the macOS fullscreen toggle path. Source-lock: the explicit
+     * `!outWindowW || !outWindowH || !outRenderW || !outRenderH`
+     * guard at the top of M11_Render_ResolveSdl3ResizeEvent in
+     * src/engine/render_sdl_m11.c. */
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(3024,
+                                            1964,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            NULL,
+                                            &windowH,
+                                            &renderW,
+                                            &renderH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(3024,
+                                            1964,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            &windowW,
+                                            NULL,
+                                            &renderW,
+                                            &renderH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(3024,
+                                            1964,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            &windowW,
+                                            &windowH,
+                                            NULL,
+                                            &renderH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(3024,
+                                            1964,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            &windowW,
+                                            &windowH,
+                                            &renderW,
+                                            NULL) == M11_RENDER_ERR_INVALID_ARG);
+
+    /* Guard 5: non-positive event dimensions in M11_Render_ResolveSdl3ResizeEvent
+     * are also a hard validation failure. A zero or negative
+     * SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED pair is documented as
+     * "window not yet realised" by SDL3; the resolver must surface
+     * INVALID_ARG so the caller can fall back to the cached window
+     * size rather than propagating (0,0) into the presentation rect.
+     * Source-lock: the `eventW <= 0 || eventH <= 0` guard at the
+     * top of M11_Render_ResolveSdl3ResizeEvent. */
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(0,
+                                            1964,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            &windowW,
+                                            &windowH,
+                                            &renderW,
+                                            &renderH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(3024,
+                                            0,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            &windowW,
+                                            &windowH,
+                                            &renderW,
+                                            &renderH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(-1,
+                                            -1,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            &windowW,
+                                            &windowH,
+                                            &renderW,
+                                            &renderH) == M11_RENDER_ERR_INVALID_ARG);
+
+    /* Guard 6: when M11_Render_ResolveSdl3ResizeEvent rejects input,
+     * the four out slots must remain at their caller-supplied sentinel
+     * values (locked here to -1). A regression where the resolver
+     * zeroed or partially populated the out slots on the error path
+     * would silently break the caller-side "did this resolve change
+     * anything?" reasoning that the M11 launch handler relies on.
+     * Source-lock: M11_Render_ResolveSdl3ResizeEvent returns the
+     * INVALID_ARG code BEFORE any *outX = ... assignment executes,
+     * so the caller's sentinel must survive both the NULL out-pointer
+     * and the non-positive event-dimension guards. */
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(3024,
+                                            1964,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            NULL,
+                                            &windowH,
+                                            &renderW,
+                                            &renderH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(windowW == -1);
+    CHECK(windowH == -1);
+    CHECK(renderW == -1);
+    CHECK(renderH == -1);
+
+    CHECK(M11_Render_ResolveSdl3ResizeEvent(0,
+                                            1964,
+                                            1512,
+                                            982,
+                                            3024,
+                                            1964,
+                                            &windowW,
+                                            &windowH,
+                                            &renderW,
+                                            &renderH) == M11_RENDER_ERR_INVALID_ARG);
+    CHECK(windowW == -1);
+    CHECK(windowH == -1);
+    CHECK(renderW == -1);
+    CHECK(renderH == -1);
+}
+
 int main(void) {
     check_rect(1920, 1080, M11_SCALE_STRETCH, 0, M11_DISPLAY_ASPECT_16_9,
                0, 0, 1920, 1080);
@@ -753,6 +1050,7 @@ int main(void) {
     check_map_edges(3600, 2092, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
     check_map_edges(1920, 1080, M11_SCALE_FIT, 1, M11_DISPLAY_ASPECT_4_3);
     check_integer_scaled_content_input_gate();
+    check_arg_validation_invariants();
     check_macbook_retina_drawable_rect_regression();
     check_sdl3_pixel_size_event_keeps_logical_mouse_space();
 
