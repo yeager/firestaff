@@ -4594,6 +4594,28 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_pending_
     )
 endif()
 
+# DM1 V1 champion-panel HUD damage attribute-cascade pc34_compat contract test
+# (CHAMPION.C F0320 → CHAMDRAW.C F0292 attribute bitfield cascade:
+#  F0320:1738 MASK0x0100_STATISTICS + F0320:1740 MASK0x2000_WOUNDS →
+#  F0292:757 nine-bit short-circuit predicate →
+#  F0292:898 STATISTICS redraw + F0292:937 WOUNDS redraw →
+#  F0292:1110 M009_CLEAR nine-bit Attributes).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat
+        tests/test_dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat
+    )
+endif()
+
 # pass791 — DM1 V1 champion-panel ammunition-compatibility
 # (F0294 weapon<->ammo compatibility check for ranged weapons).
 # Source-locked against CHAMPION.C F0294:400-450 (G0303 ammo type
