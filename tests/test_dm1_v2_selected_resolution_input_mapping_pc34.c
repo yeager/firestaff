@@ -123,10 +123,88 @@ static void expect_non_selected_resolution_modes(void) {
     CHECK(y == 199);
 }
 
+static void expect_boundary_clamps_and_failures(void) {
+    int x;
+    int y;
+
+    x = -1;
+    y = -1;
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+              M12_PRESENTATION_V20_FILTERED,
+              640,
+              400,
+              &x,
+              &y) == 1);
+    CHECK(x == 0);
+    CHECK(y == 0);
+
+    x = -3840;
+    y = -2160;
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+              M12_PRESENTATION_V21_UPSCALED,
+              3840,
+              2160,
+              &x,
+              &y) == 1);
+    CHECK(x == 0);
+    CHECK(y == 0);
+
+    x = 3840 * 2;
+    y = 2160 * 2;
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+              M12_PRESENTATION_V22_MODERN,
+              3840,
+              2160,
+              &x,
+              &y) == 1);
+    CHECK(x == 319);
+    CHECK(y == 199);
+
+    x = 12;
+    y = 34;
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+              M12_PRESENTATION_V21_UPSCALED,
+              0,
+              2160,
+              &x,
+              &y) == 0);
+    CHECK(x == 12);
+    CHECK(y == 34);
+
+    x = 12;
+    y = 34;
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+              M12_PRESENTATION_V22_MODERN,
+              3840,
+              0,
+              &x,
+              &y) == 0);
+    CHECK(x == 12);
+    CHECK(y == 34);
+
+    x = 12;
+    y = 34;
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+              M12_PRESENTATION_V21_UPSCALED,
+              3840,
+              2160,
+              NULL,
+              &y) == 0);
+    CHECK(y == 34);
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+              M12_PRESENTATION_V21_UPSCALED,
+              3840,
+              2160,
+              &x,
+              NULL) == 0);
+    CHECK(x == 12);
+}
+
 int main(void) {
     expect_mode_matrix(M12_PRESENTATION_V21_UPSCALED);
     expect_mode_matrix(M12_PRESENTATION_V22_MODERN);
     expect_non_selected_resolution_modes();
+    expect_boundary_clamps_and_failures();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
