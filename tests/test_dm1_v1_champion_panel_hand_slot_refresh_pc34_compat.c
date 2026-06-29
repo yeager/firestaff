@@ -347,6 +347,90 @@ static void test_f0295_sense_and_f0386_dispatch(void)
                  "F0296:1218 only when leader-hand icon changed");
 }
 
+static void test_f0295_mutable_icon_range_boundaries(void)
+{
+    Dm1V1ChampionPanelHandSlotRefreshStatePc34 state;
+    Dm1V1ChampionPanelHandSlotRefreshResultPc34 result;
+
+    memset(&state, 0, sizeof(state));
+    dm1_v1_champion_panel_hand_slot_refresh_init_pc34(&state);
+
+    /*
+     * ReDMCSB CHAMDRAW.C F0295:1153-1182 treats three icon families as
+     * mutable enough to redraw: junk C000..C031, potions C148..C163, and
+     * C195 empty flask. The baseline test already exercises the junk range;
+     * this boundary fixture covers the potion endpoints and C195 without
+     * leaning on the leader-hand refresh path for any dispatch count.
+     */
+    state.leaderHandIcon = 201; /* C201 empty hand is not in F0295's mutable set. */
+    state.champions[0].slotBoxCurrentIcon = 148;
+    state.champions[0].actionHandIconIndex = 149;
+    state.champions[1].slotBoxCurrentIcon = 163;
+    state.champions[1].actionHandIconIndex = 164;
+    state.champions[2].slotBoxCurrentIcon = 195;
+    state.champions[2].actionHandIconIndex = 196;
+    state.champions[3].slotBoxCurrentIcon = 147;
+    state.champions[3].actionHandIconIndex = 148;
+
+    check_int_eq(dm1_v1_champion_panel_hand_slot_refresh_run_pc34(
+                     &state, &result),
+                 1, "run returns success (mutable icon boundaries)",
+                 "F0295:1153-1182 mutable ranges");
+    check_int_eq(result.f0295HasIconChangedCount, 3,
+                 "mutable boundary changed count = 3",
+                 "C148, C163, and C195 all redraw when changed");
+    check_int_eq(result.f0295SameIconCount, 1,
+                 "nonmutable neighbor sense count = 1",
+                 "C147 is below the potion mutable range");
+    check_int_eq(result.f0038DrawIconInSlotBoxCount, 3,
+                 "mutable boundary F0038 count = 3",
+                 "F0295:1175-1182 draw on mutable icon mismatch");
+    check_int_eq(result.f0386DispatchedForChangedActionHand, 3,
+                 "mutable boundary F0386 count = 3",
+                 "F0296:1231 dispatch after F0295 C1_TRUE");
+    check_int_eq(result.leaderHandIconRefreshCount, 0,
+                 "leader-hand refresh disabled for boundary fixture",
+                 "C201 empty hand is outside F0295 mutable icon set");
+    check_int_eq(result.mouseScreenUpdateBalancedPerF0296, 1,
+                 "mutable boundary mouse update remains balanced",
+                 "no leader-hand refresh means no F0077/F0078 bracket");
+    check_int_eq(result.f0295NoChangeSkipsF0386, 1,
+                 "nonmutable neighbor skips F0386",
+                 "F0295 C0_FALSE return skips F0386");
+
+    memset(&state, 0, sizeof(state));
+    dm1_v1_champion_panel_hand_slot_refresh_init_pc34(&state);
+    state.leaderHandIcon = 201;
+    state.champions[0].slotBoxCurrentIcon = 147;
+    state.champions[0].actionHandIconIndex = 148;
+    state.champions[1].slotBoxCurrentIcon = 164;
+    state.champions[1].actionHandIconIndex = 165;
+    state.champions[2].slotBoxCurrentIcon = 196;
+    state.champions[2].actionHandIconIndex = 197;
+    state.champions[3].slotBoxCurrentIcon = 201;
+    state.champions[3].actionHandIconIndex = 202;
+
+    check_int_eq(dm1_v1_champion_panel_hand_slot_refresh_run_pc34(
+                     &state, &result),
+                 1, "run returns success (nonmutable neighbors)",
+                 "F0295 nonmutable neighbor guard");
+    check_int_eq(result.f0295HasIconChangedCount, 0,
+                 "nonmutable neighbors never redraw",
+                 "C147/C164/C196/C201 are outside mutable icon set");
+    check_int_eq(result.f0295SameIconCount, 4,
+                 "nonmutable neighbors still sensed",
+                 "F0295 reads all four action-hand slotboxes");
+    check_int_eq(result.f0038DrawIconInSlotBoxCount, 0,
+                 "nonmutable neighbors F0038 count = 0",
+                 "F0295 rejects changed but nonmutable current icons");
+    check_int_eq(result.f0386DispatchedForChangedActionHand, 0,
+                 "nonmutable neighbors F0386 count = 0",
+                 "F0296 dispatch requires F0295 C1_TRUE");
+    check_int_eq(result.mouseScreenUpdateBalancedPerF0296, 1,
+                 "nonmutable neighbors mouse update balanced",
+                 "no icon-refresh bracket raised");
+}
+
 static void test_inventory_champion_ordinal_skip(void)
 {
     Dm1V1ChampionPanelHandSlotRefreshStatePc34 state;
@@ -637,6 +721,7 @@ int main(void)
     test_walk_order_fully_alive();
     test_leader_hand_refresh_precedes_walk();
     test_f0295_sense_and_f0386_dispatch();
+    test_f0295_mutable_icon_range_boundaries();
     test_inventory_champion_ordinal_skip();
     test_candidate_early_return();
     test_candidate_masked_by_inventory_owner_gate();
