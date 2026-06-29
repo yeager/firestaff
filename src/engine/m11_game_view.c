@@ -1071,6 +1071,57 @@ static void m11_draw_text_centered_in_rect(unsigned char* framebuffer,
                   drawX, y, text, style);
 }
 
+static void m11_format_session_timer_compact_remaining(
+    const SessionTimerRuntime* runtime,
+    char* out,
+    size_t outSize)
+{
+    int remaining;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    remaining = SessionTimerRuntime_RemainingSeconds(runtime);
+    if (remaining < 0) {
+        snprintf(out, outSize, "OFF");
+    } else if (remaining >= 3600) {
+        snprintf(out, outSize, "%dH LEFT", (remaining + 3599) / 3600);
+    } else if (remaining >= 60) {
+        snprintf(out, outSize, "%dM LEFT", (remaining + 59) / 60);
+    } else {
+        snprintf(out, outSize, "%dS LEFT", remaining);
+    }
+}
+
+static void m11_format_session_timer_reminder_line(
+    const M11_GameViewState* state,
+    char* out,
+    size_t outSize)
+{
+    char remaining[SESSION_TIMER_RUNTIME_TEXT_CAPACITY];
+    int scale;
+    if (!out || outSize == 0U) {
+        return;
+    }
+    out[0] = '\0';
+    scale = state ? state->fontScale : 1;
+    if (scale < 1) scale = 1;
+    if (scale > 3) scale = 3;
+    if (scale >= 3) {
+        m11_format_session_timer_compact_remaining(
+            state ? &state->sessionTimerRuntime : NULL, out, outSize);
+        return;
+    }
+    SessionTimerRuntime_FormatRemaining(
+        state ? &state->sessionTimerRuntime : NULL,
+        remaining,
+        sizeof(remaining));
+    if (scale == 2) {
+        snprintf(out, outSize, "%s LEFT", remaining);
+    } else {
+        snprintf(out, outSize, "SESSION TIMER %s REMAINING", remaining);
+    }
+}
+
 static int m11_dialog_source_c469_text_y_for_lines(int lineCount) {
     enum {
         SOURCE_TEXT_HEIGHT = 6,
@@ -28363,22 +28414,38 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     if (state->sessionTimerReminderOverlayActive &&
         !state->sessionTimerForcedPauseDialogActive &&
         !state->dialogOverlayActive) {
-        char remaining[SESSION_TIMER_RUNTIME_TEXT_CAPACITY];
         char reminderLine[64];
         M11_TextStyle remindStyle = g_text_small;
-        SessionTimerRuntime_FormatRemaining(&state->sessionTimerRuntime,
-                                            remaining,
-                                            sizeof(remaining));
-        snprintf(reminderLine, sizeof(reminderLine),
-                 "SESSION TIMER %s REMAINING", remaining);
+        enum {
+            TIMER_REMINDER_X = 4,
+            TIMER_REMINDER_Y = 4,
+            TIMER_REMINDER_W = 312,
+            TIMER_REMINDER_H = 28,
+            TIMER_REMINDER_TEXT_INSET = 8,
+            TIMER_REMINDER_TEXT_Y = 8
+        };
+        m11_format_session_timer_reminder_line(
+            state, reminderLine, sizeof(reminderLine));
+        /* Firestaff-specific overlay: keep all reminder pixels in the
+         * y=4..31 top strip so the source-owned DM1 dungeon viewport
+         * at y=33..168 remains untouched even when fontScale is 3. */
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      60, 8, 200, 14, M11_COLOR_BLACK);
+                      TIMER_REMINDER_X, TIMER_REMINDER_Y,
+                      TIMER_REMINDER_W, TIMER_REMINDER_H,
+                      M11_COLOR_BLACK);
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      60, 8, 200, 14, M11_COLOR_YELLOW);
+                      TIMER_REMINDER_X, TIMER_REMINDER_Y,
+                      TIMER_REMINDER_W, TIMER_REMINDER_H,
+                      M11_COLOR_YELLOW);
         remindStyle.color = M11_COLOR_YELLOW;
         remindStyle.shadowColor = M11_COLOR_DARK_GRAY;
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      68, 12, reminderLine, &remindStyle);
+        m11_draw_text_centered_in_rect(
+            framebuffer, framebufferWidth, framebufferHeight,
+            TIMER_REMINDER_X + TIMER_REMINDER_TEXT_INSET,
+            TIMER_REMINDER_TEXT_Y,
+            TIMER_REMINDER_W - (2 * TIMER_REMINDER_TEXT_INSET),
+            reminderLine,
+            &remindStyle);
     }
     if (state->sessionTimerForcedPauseDialogActive &&
         !state->dialogOverlayActive &&

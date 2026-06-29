@@ -1,6 +1,8 @@
 
 # Firestaff Unreleased
 
+- **M11 font-scale overlay fit coverage**: the in-game session-timer reminder banner now uses scale-aware copy and a top-strip layout that stays clear of the DM1 V1 dungeon viewport at fontScale 1/2/3. The focused M11 probe now renders actual game-view output with a synthetic original-font bitmap and verifies changed pixels stay inside the reminder banner rectangle.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM2 V2 HUD widget synthetic-example integrity + generator-agnostic strengthening**: `firestaff_dm2_v2_hud_widget_synthetic_promotion_probe` is now 81/81 PASS (was 51/51) with three additions: (a) PNG 8-byte signature check on every one of the seven 1x1 fixtures so a future fixture that silently rots into arbitrary text cannot pass the `synthetic-test-fixture` substring check alone, (b) per-slot `width > 0 && height > 0` sanity check on every COMPLETE slot so a corrupt manifest without declared dimensions cannot promote the gate, and (c) a generator-agnostic COMPLETE scenario that rewrites every `generator` entry from `"synthetic_test"` to `"pbr_hero"` and verifies the gate still promotes to COMPLETE — guarding against a future refactor that accidentally introduces per-generator allowlisting. No finished-art, real-bitmap-blit, or visual-verification claim is added; the no-finished-art boundary stays explicit.
