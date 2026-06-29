@@ -68,6 +68,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RUNBOOK = REPO_ROOT / "docs" / "parity" / "DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md"
+CAPTURE_GAP_EVIDENCE = REPO_ROOT / "docs" / "parity" / "DM1_V1_CAPTURE_GAP_EVIDENCE.md"
 TOOLS_DIR = REPO_ROOT / "docs" / "parity" / "tools"
 PREFLIGHT = TOOLS_DIR / "dosbox_capture_preflight.py"
 COMPARE = TOOLS_DIR / "compare_captures.py"
@@ -504,6 +505,74 @@ def check_focus_recovery_failure_mode(runbook_text: str) -> list[str]:
             "no longer names the gate that triggers the rawshot "
             "fallback"
         )
+    return failures
+
+
+def check_capture_gap_promotion_boundary(runbook_text: str) -> list[str]:
+    """The runbook is an operator procedure, not the parity ledger.
+
+    The current evidence ledger still labels the five original-capture
+    areas as scout/partial/blocked rather than globally ``MATCHED``.
+    A previous runbook draft over-promoted the helper script as having
+    "closed all 5 capture-gap pairs", which contradicts
+    ``DM1_V1_CAPTURE_GAP_EVIDENCE.md`` and can cause a future operator
+    to ship local original frames as parity without Firestaff pairing
+    artifacts and reviewed diffs.  Keep this as a prose-level guard so
+    the active CTest-backed runbook consistency lane catches that
+    regression before the next live capture attempt.
+    """
+    failures: list[str] = []
+    if not CAPTURE_GAP_EVIDENCE.exists():
+        return [
+            f"{CAPTURE_GAP_EVIDENCE.relative_to(REPO_ROOT)}: capture-gap "
+            "evidence ledger missing; runbook cannot be checked against "
+            "the authoritative parity labels"
+        ]
+
+    evidence_text = CAPTURE_GAP_EVIDENCE.read_text(encoding="utf-8")
+    partial_labels = (
+        "SCOUT_PAIRING_AVAILABLE",
+        "PARTIAL_MATCH",
+        "PARTIAL_PAIR",
+        "BLOCKED_ON_REFERENCE",
+        "PARTIAL_REFERENCE_CAPTURED",
+    )
+    evidence_is_still_partial = any(label in evidence_text for label in partial_labels)
+
+    overpromoted_patterns = [
+        r"closed\s+all\s+5\s+capture-gap\s+pairs",
+        r"closed\s+all\s+five\s+capture-gap\s+pairs",
+        r"all\s+5\s+capture-gap\s+pairs\s+(?:are\s+)?closed",
+        r"all\s+five\s+capture-gap\s+pairs\s+(?:are\s+)?closed",
+    ]
+    if evidence_is_still_partial:
+        for pattern in overpromoted_patterns:
+            if re.search(pattern, runbook_text, flags=re.IGNORECASE):
+                failures.append(
+                    "Capture-gap promotion boundary: runbook claims all "
+                    "five capture-gap pairs are closed while "
+                    f"{CAPTURE_GAP_EVIDENCE.relative_to(REPO_ROOT)} still "
+                    "labels the rows as scout/partial/blocked"
+                )
+                break
+
+    required_boundary = (
+        "do not by themselves promote original-vs-Firestaff pixel parity"
+    )
+    if evidence_is_still_partial and required_boundary not in runbook_text:
+        failures.append(
+            "Capture-gap promotion boundary: runbook no longer states "
+            "that capture drivers do not by themselves promote "
+            "original-vs-Firestaff pixel parity"
+        )
+
+    if str(CAPTURE_GAP_EVIDENCE.relative_to(REPO_ROOT)) not in runbook_text:
+        failures.append(
+            "Capture-gap promotion boundary: runbook does not point "
+            "operators at docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md "
+            "for the authoritative open/partial labels"
+        )
+
     return failures
 
 
@@ -1289,6 +1358,7 @@ def main() -> int:
         ("transcript_points_at_writer",  check_transcript_writer_points_at_writer, [runbook_text]),
         ("events_row_builder_points_at_writer", check_events_row_builder_points_at_writer, [runbook_text]),
         ("focus_recovery_failure_mode",  check_focus_recovery_failure_mode,      [runbook_text]),
+        ("capture_gap_promotion_boundary", check_capture_gap_promotion_boundary, [runbook_text]),
     ]
     for name, fn, args in prose_checks:
         total += 1
