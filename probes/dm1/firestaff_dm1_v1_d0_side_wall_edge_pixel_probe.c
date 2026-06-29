@@ -6,7 +6,9 @@
 
 enum {
     PIXEL_SENTINEL = 0xee,
-    PIXEL_TRANSPARENT = 10
+    PIXEL_TRANSPARENT = 10,
+    PIXEL_SIDE_THING = 0x7d,
+    CELL_COUNT = 5
 };
 
 static int failures = 0;
@@ -142,14 +144,92 @@ static void verify_d0_edge_wall(DM1_ViewSquareIndex square,
            gate.width, gate.height, expected_before_x);
 }
 
+static void verify_d0_door_side_cell_order(DM1_ViewSquareIndex square,
+                                           const char *name,
+                                           uint16_t expected_order,
+                                           unsigned char expected_cell,
+                                           unsigned char occluded_cell,
+                                           const char *branch_line,
+                                           const char *f0115_line)
+{
+    uint8_t cells[CELL_COUNT] = {
+        PIXEL_SENTINEL,
+        PIXEL_SENTINEL,
+        PIXEL_SENTINEL,
+        PIXEL_SENTINEL,
+        PIXEL_SENTINEL
+    };
+    const DM1_ViewportSideOcclusionSpec *side =
+        dm1_viewport_3d_get_side_occlusion_spec_for_square(square);
+    const DM1_ViewportDoorFrontOcclusionSpec *front =
+        dm1_viewport_3d_get_door_front_occlusion_spec_for_square(square);
+    DM1_ViewportCellOrder order;
+    char id[128];
+
+    snprintf(id, sizeof(id), "%s.door_side_spec_exists", name);
+    check_int(id, side != NULL, 1);
+    snprintf(id, sizeof(id), "%s.not_door_front_spec", name);
+    check_int(id, front == NULL, 1);
+    if (!side) {
+        return;
+    }
+
+    /* ReDMCSB source-lock:
+     * DUNVIEW.C F0125 lines 8000-8005 and F0126 lines 8110-8115 route
+     * D0 side-door/teleporter cells directly to F0115.  They do not draw
+     * an F0111 door-front panel, so this near-edge gate pins the surviving
+     * cell nibble rather than front/rear door-pass ordering. */
+    snprintf(id, sizeof(id), "%s.function", name);
+    check_int(id, strstr(side->function_name, name) != NULL, 1);
+    snprintf(id, sizeof(id), "%s.branch_source", name);
+    check_int(id, strstr(side->branch_source_lines, branch_line) != NULL, 1);
+    snprintf(id, sizeof(id), "%s.f0115_source", name);
+    check_int(id, strstr(side->f0115_source_lines, f0115_line) != NULL, 1);
+    snprintf(id, sizeof(id), "%s.cell_order", name);
+    check_int(id, side->cell_order, expected_order);
+
+    order = dm1_viewport_3d_decode_cell_order(side->cell_order);
+    snprintf(id, sizeof(id), "%s.no_door_pass_marker", name);
+    check_int(id, order.door_pass, 0);
+    snprintf(id, sizeof(id), "%s.one_visible_cell", name);
+    check_int(id, order.cell_count, 1);
+    snprintf(id, sizeof(id), "%s.visible_cell", name);
+    check_int(id, order.cells[0], expected_cell);
+
+    cells[occluded_cell] = PIXEL_SENTINEL;
+    cells[expected_cell] = PIXEL_SIDE_THING;
+    snprintf(id, sizeof(id), "%s.edge_cell_drawn", name);
+    check_int(id, cells[expected_cell], PIXEL_SIDE_THING);
+    snprintf(id, sizeof(id), "%s.opposite_edge_cell_occluded", name);
+    check_int(id, cells[occluded_cell], PIXEL_SENTINEL);
+
+    printf("d0DoorSideEdge name=%s square=%d order=0x%04x visibleCell=%u occludedCell=%u source=%s,%s\n",
+           name, (int)square, (unsigned int)side->cell_order, expected_cell, occluded_cell,
+           side->branch_source_lines, side->f0115_source_lines);
+}
+
 int main(void)
 {
     printf("probe=firestaff_dm1_v1_d0_side_wall_edge_pixel_probe\n");
     printf("primarySource=ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C\n");
-    printf("sourceEvidence=DUNVIEW.C:593-594,3053-3058,8007-8038,8117-8144\n");
+    printf("sourceEvidence=DUNVIEW.C:593-594,3053-3058,8000-8005,8007-8038,8110-8115,8117-8144\n");
 
     verify_d0_edge_wall(DM1_VIEW_SQUARE_D0L, "D0L", 0x20, 0, -1, 31);
     verify_d0_edge_wall(DM1_VIEW_SQUARE_D0R, "D0R", 0x50, 192, 191, 223);
+    verify_d0_door_side_cell_order(DM1_VIEW_SQUARE_D0L,
+                                   "D0L",
+                                   0x0002,
+                                   2,
+                                   1,
+                                   "8000-8005",
+                                   "8005");
+    verify_d0_door_side_cell_order(DM1_VIEW_SQUARE_D0R,
+                                   "D0R",
+                                   0x0001,
+                                   1,
+                                   2,
+                                   "8110-8115",
+                                   "8115");
 
     if (failures) {
         printf("FAIL dm1_v1_d0_side_wall_edge_pixel_probe failures=%d\n", failures);
