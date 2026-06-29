@@ -16438,6 +16438,49 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_action_h
     )
 endif()
 
+# pass764 — DM1 V1 champion-panel second-leader hand-slot priority
+# (F0302 slot-box click dispatcher with leader=champion-1, slot-box 3 →
+# champion 1 action hand with M070 before inventory routing; F0302 helper
+# order F0077/F0298/F0300/F0297/F0301/F0292/F0078; F0292 HUD cascade for
+# C152/C160/C164 status-box + C196 HP bar + C114 champion-icon + C214
+# action-hand zone at champion 1's stride).
+# Source-locked against CHAMPION.C F0302:677-684 + 688-712 +
+# CHAMPION.C F0297/F0298:243-298 + F0300:511-515 + F0301:606-614 +
+# CHAMDRAW.C F0287:307-342 + F0291:632-651 + F0292:771-815 + 843-895 +
+# 1019-1051 + DEFS.H:780-817,1878,2178-2199,3779-3807,5700-5881.
+# Disjoint from action_hand_slot_priority (general F0302 helper order
+# on slot-box click, no leader=champion-1 specialization),
+# hand_slot_priority (F0302 input dispatch on slot-boxes 0..7,
+# champion-0 default), hand_slot_refresh (F0296 walk-order + leader-
+# hand icon refresh precedence, not F0302 dispatch), and the broader
+# champion-panel status-box / portrait / chest siblings. Contract-only;
+# no real GRAPHICS.DAT / DUNGEON.DAT load.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat
+        tests/test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat
+    )
+    if(Python3_EXECUTABLE)
+        add_test(
+            NAME pass764_dm1_v1_champion_panel_second_leader_hand_slot_priority
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass764_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat.py
+        )
+        set_tests_properties(pass764_dm1_v1_champion_panel_second_leader_hand_slot_priority PROPERTIES DEPENDS dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat)
+    endif()
+endif()
+
 # pass794 — DM1 V1 champion-panel all-states redraw dispatcher
 # (CHAMDRAW.C F0293:1117-1143 all-champion redraw with dirty-mask OR,
 # F0292 call order, G2149_ clear after the loop on PC34).
