@@ -21,6 +21,7 @@
  *  15.  DiscoverSaveFiles picks up *.sav from a real directory
  *  15a. ApplyConfig(NULL) leaves cloud sync disabled
  *  15b. ApplyConfig routes M12_Config.cloudSyncEnabled + dir + policy
+ *  15c. Relative sync roots and unsafe manifest paths are rejected
  *  16.  Cloud sync module links into firestaff_m12 library
  */
 
@@ -35,12 +36,14 @@
 
 #if defined(_WIN32)
 #include <direct.h>
+#include <process.h>
 #else
 #include <unistd.h>
 #endif
 
 static int g_pass = 0;
 static int g_fail = 0;
+static int g_unique_counter = 0;
 
 #define CHECK(cond, msg) do { \
     if (cond) { \
@@ -78,6 +81,24 @@ static int m12_make_dir(const char* path) {
 #endif
 }
 
+static int m12_probe_pid(void) {
+#if defined(_WIN32)
+    return _getpid();
+#else
+    return (int)getpid();
+#endif
+}
+
+static void m12_temp_abs(char* out, size_t outSize, const char* prefix) {
+    snprintf(out, outSize, "/tmp/%s-%ld-%d-%d",
+             prefix, (long)time(NULL), m12_probe_pid(), ++g_unique_counter);
+}
+
+static void m12_temp_rel(char* out, size_t outSize, const char* prefix) {
+    snprintf(out, outSize, "%s-%ld-%d-%d",
+             prefix, (long)time(NULL), m12_probe_pid(), ++g_unique_counter);
+}
+
 int main(void) {
     printf("\n=== firestaff_m12_cloud_sync_probe ===\n\n");
 
@@ -96,7 +117,7 @@ int main(void) {
     /* 2. SetSyncDir / GetSyncDir round-trip */
     {
         char testDir[256];
-        snprintf(testDir, sizeof(testDir), "/tmp/firestaff-sync-test-%d", (int)time(NULL));
+        m12_temp_abs(testDir, sizeof(testDir), "firestaff-sync-test");
         int ok = M12_CloudSync_SetSyncDir(testDir);
         CHECK(ok == 1, "SetSyncDir returns 1 on success");
         const char* retrieved = M12_CloudSync_GetSyncDir();
@@ -228,8 +249,7 @@ int main(void) {
     /* 12. Enable + sync dir that is actually a regular file + RunIfEnabled = UNSUPPORTED. */
     {
         char regularFile[256];
-        snprintf(regularFile, sizeof(regularFile),
-                 "/tmp/firestaff-not-a-dir-%d", (int)time(NULL));
+        m12_temp_abs(regularFile, sizeof(regularFile), "firestaff-not-a-dir");
         FILE* fp = fopen(regularFile, "wb");
         if (fp) { fwrite("not a dir", 1, 9, fp); fclose(fp); }
 
@@ -254,6 +274,39 @@ int main(void) {
         (void)remove(regularFile);
     }
 
+    /* 12c. Enable + bare relative sync root must stay unsupported
+     * and must not create a directory under the current working dir. */
+    {
+        char relativeRoot[256];
+        m12_temp_rel(relativeRoot, sizeof(relativeRoot),
+                     "firestaff-relative-sync-root");
+
+        M12_CloudSync_SetSyncDir(relativeRoot);
+        M12_CloudSync_SetEnabled(1);
+
+        char tag[64];
+        M12_CloudSync_GetBoundaryTag(tag, sizeof(tag));
+        CHECK(strcmp(tag, "ENABLED_RELATIVE_ROOT") == 0,
+              "Boundary tag is ENABLED_RELATIVE_ROOT for a bare relative sync path");
+
+        M12_SyncStats stats;
+        memset(&stats, 0, sizeof(stats));
+        stats.pushedCount = 77;
+        stats.pulledCount = 77;
+        int rc = M12_CloudSync_RunIfEnabled(M12_SYNC_DIRECTION_BOTH, &stats);
+        CHECK(rc == M12_SYNC_ERR_UNSUPPORTED,
+              "RunIfEnabled rejects a bare relative sync root");
+        CHECK(stats.pushedCount == 0 && stats.pulledCount == 0 &&
+              stats.conflictCount == 0 && stats.errorCount == 0,
+              "Relative-root rejection zeroes stats without touching files");
+        CHECK(M12_CloudSync_Run(M12_SYNC_DIRECTION_BOTH, NULL) == M12_SYNC_ERR_UNSUPPORTED,
+              "Raw Run rejects a bare relative sync root");
+
+        struct stat st;
+        CHECK(stat(relativeRoot, &st) != 0,
+              "Relative-root rejection does not create a cwd sync directory");
+    }
+
     /* 12b. Boundary reports ENABLED_NO_ROOT when the configured sync
      * dir no longer exists at call time. We set a valid sync dir
      * (which auto-creates it), then remove the directory on disk.
@@ -264,8 +317,7 @@ int main(void) {
      * have to recursively remove everything first. */
     {
         char noRootDir[256];
-        snprintf(noRootDir, sizeof(noRootDir),
-                 "/tmp/firestaff-no-root-%d", (int)time(NULL));
+        m12_temp_abs(noRootDir, sizeof(noRootDir), "firestaff-no-root");
         M12_CloudSync_SetSyncDir(noRootDir);   /* creates it (and saves subtree) */
         M12_CloudSync_SetEnabled(1);
         /* Recursively remove the entire tree to simulate "root missing
@@ -308,8 +360,7 @@ int main(void) {
     /* 14. GetBoundaryTag reports ENABLED_OK with a valid dir. */
     {
         char goodDir[256];
-        snprintf(goodDir, sizeof(goodDir),
-                 "/tmp/firestaff-good-sync-%d", (int)time(NULL));
+        m12_temp_abs(goodDir, sizeof(goodDir), "firestaff-good-sync");
         M12_CloudSync_SetSyncDir(goodDir);
         M12_CloudSync_SetEnabled(1);
 
@@ -322,8 +373,7 @@ int main(void) {
     /* 11. Enable + valid dir + RunIfEnabled = OK. */
     {
         char goodDir[256];
-        snprintf(goodDir, sizeof(goodDir),
-                 "/tmp/firestaff-good-sync-%d", (int)time(NULL));
+        m12_temp_abs(goodDir, sizeof(goodDir), "firestaff-good-sync");
         M12_CloudSync_SetSyncDir(goodDir);
         M12_CloudSync_SetEnabled(1);
 
@@ -344,8 +394,7 @@ int main(void) {
     /* 15b. ApplyConfig: enabled flag + sync dir + policy from M12_Config. */
     {
         char configDir[256];
-        snprintf(configDir, sizeof(configDir),
-                 "/tmp/firestaff-applyconfig-%d", (int)time(NULL));
+        m12_temp_abs(configDir, sizeof(configDir), "firestaff-applyconfig");
 
         M12_Config cfg;
         M12_Config_SetDefaults(&cfg);
@@ -376,11 +425,62 @@ int main(void) {
               "ApplyConfig respects a re-disabled flag at next boundary check");
     }
 
+    /* 15c. Manifest-relative paths are sandboxed. */
+    {
+        char syncDir[256];
+        m12_temp_abs(syncDir, sizeof(syncDir), "firestaff-path-sandbox-sync");
+        M12_CloudSync_SetSyncDir(syncDir);
+        M12_CloudSync_SetEnabled(1);
+
+        CHECK(M12_CloudSync_TrackPath("../escape.sav", 1) == 0,
+              "TrackPath rejects parent-relative escape entries");
+        CHECK(M12_CloudSync_TrackPath("/tmp/escape.sav", 1) == 0,
+              "TrackPath rejects absolute entries");
+        CHECK(M12_CloudSync_TrackPath("saves\\dm1\\bad.sav", 1) == 0,
+              "TrackPath rejects backslash-separated entries");
+        CHECK(M12_CloudSync_TrackPath("saves/dm1/./bad.sav", 1) == 0,
+              "TrackPath rejects dot-segment entries");
+        CHECK(M12_CloudSync_TrackPath("saves/dm1/ok.sav", 1) == 1,
+              "TrackPath accepts a sandboxed save path");
+
+        M12_SyncManifest bad;
+        memset(&bad, 0, sizeof(bad));
+        bad.entryCount = 1;
+        snprintf(bad.entries[0].relativePath, sizeof(bad.entries[0].relativePath),
+                 "../escape.sav");
+        CHECK(M12_CloudSync_SaveManifest(&bad) == 0,
+              "SaveManifest rejects unsafe manifest-relative paths");
+
+        char manifestPath[512];
+        snprintf(manifestPath, sizeof(manifestPath), "%s/manifest.json", syncDir);
+        FILE* fp = fopen(manifestPath, "wb");
+        if (fp) {
+            fputs("{\n  \"lastFullSync\": 1,\n  \"entryCount\": 2,\n  \"entries\": [\n", fp);
+            fputs("    {\n      \"relativePath\": \"../escape.sav\",\n", fp);
+            fputs("      \"localTimestamp\": 1,\n      \"syncTimestamp\": 1,\n", fp);
+            fputs("      \"localCrc\": 1,\n      \"syncCrc\": 1,\n      \"conflict\": 0\n    },\n", fp);
+            fputs("    {\n      \"relativePath\": \"saves/dm1/loaded.sav\",\n", fp);
+            fputs("      \"localTimestamp\": 2,\n      \"syncTimestamp\": 2,\n", fp);
+            fputs("      \"localCrc\": 2,\n      \"syncCrc\": 2,\n      \"conflict\": 0\n    }\n", fp);
+            fputs("  ]\n}\n", fp);
+            fclose(fp);
+        }
+        CHECK(fp != NULL, "Test setup: write manifest with mixed safe/unsafe entries");
+
+        M12_SyncManifest loaded;
+        memset(&loaded, 0, sizeof(loaded));
+        CHECK(M12_CloudSync_LoadManifest(&loaded) == 1,
+              "LoadManifest accepts a mixed manifest file");
+        CHECK(loaded.entryCount == 1 &&
+              strcmp(loaded.entries[0].relativePath, "saves/dm1/loaded.sav") == 0,
+              "LoadManifest skips unsafe entries and preserves safe entries");
+    }
+
     /* 15. DiscoverSaveFiles picks up *.sav from a real directory. */
     {
         /* Build a temp saves tree with two *.sav files and one non-sav. */
         char root[256];
-        snprintf(root, sizeof(root), "/tmp/firestaff-discover-%d", (int)time(NULL));
+        m12_temp_abs(root, sizeof(root), "firestaff-discover");
         char gameDir[512];
         snprintf(gameDir, sizeof(gameDir), "%s/saves/dm1", root);
         CHECK(m12_make_dir(gameDir), "Test setup: create saves dir");
@@ -395,8 +495,7 @@ int main(void) {
 
         /* Point cloud sync at a fresh sync dir to keep state isolated. */
         char syncDir[256];
-        snprintf(syncDir, sizeof(syncDir),
-                 "/tmp/firestaff-discover-sync-%d", (int)time(NULL));
+        m12_temp_abs(syncDir, sizeof(syncDir), "firestaff-discover-sync");
         M12_CloudSync_SetSyncDir(syncDir);
         M12_CloudSync_SetEnabled(1);
 
