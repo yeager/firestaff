@@ -9,6 +9,7 @@
  * presents a navigable list with load/delete actions.
  */
 
+#include <stdint.h>
 #include <time.h>
 
 #ifdef __cplusplus
@@ -19,12 +20,22 @@ extern "C" {
 #define SAVE_BROWSER_FILENAME_MAX 256
 #define SAVE_BROWSER_LABEL_MAX    128
 
+#define SAVE_BROWSER_MANIFEST_UNKNOWN      0
+#define SAVE_BROWSER_MANIFEST_NOT_PRESENT  1
+#define SAVE_BROWSER_MANIFEST_PRESENT      2
+#define SAVE_BROWSER_MANIFEST_MATCH        3
+#define SAVE_BROWSER_MANIFEST_WRONG_GAME   4
+#define SAVE_BROWSER_MANIFEST_UNSUPPORTED  5
+
 typedef struct {
     char filename[SAVE_BROWSER_FILENAME_MAX];   /* basename only          */
     char fullPath[SAVE_BROWSER_FILENAME_MAX];   /* absolute path          */
     char gameId[32];                            /* extracted from filename */
     char label[SAVE_BROWSER_LABEL_MAX];         /* display label          */
     char champions[128];                        /* comma-separated names  */
+    uint16_t expectedGameCode;                  /* SAVEGAME_PC34_GAME_CODE_* if known */
+    uint16_t manifestGameCode;                  /* LSV-02 code, or 0      */
+    int  manifestStatus;                        /* SAVE_BROWSER_MANIFEST_* */
     int  mapLevel;                              /* dungeon level (-1=unknown) */
     int  championCount;                         /* 0-4                    */
     int  valid;                                 /* header parsed OK       */
