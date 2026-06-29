@@ -289,6 +289,8 @@ need real-asset proof.
 
 ## Highlights since v3.0.12
 
+- **DM1 V1 HoC ordinal-2 cancel/reopen repair**: the source-present `firestaff_dm1_v1_hall_of_champions_portrait_02_cancel_reopen_portrait_rect_position_runtime_probe` and `firestaff_dm1_v1_champion_mirror_ordinal_2_west_negative_portrait_rect_position_runtime_probe` siblings are now verified as CTest-backed runtime gates alongside the ordinal-2 future-route readiness check (focused CTest 3/3 PASS: 52/52 + 14/14 + 29/29 on local DM1 V1 PC 3.4 assets). The status docs no longer list `cancel_reopen` or `west_negative` as source-present-but-open; remaining ordinal-2 work is future visual capture only if real DM1 data ever exposes an ordinal-2 corridor sensor.
+
 - **M11 font-scale overlay fit coverage**: the in-game session-timer reminder banner now uses scale-aware copy and a top-strip layout that stays clear of the DM1 V1 dungeon viewport at fontScale 1/2/3. The focused M11 probe now renders actual game-view output with a synthetic original-font bitmap and verifies changed pixels stay inside the reminder banner rectangle.
 
 - **DM1 save-byte export/import manifest gate**: M12 now has a versioned per-game save-byte manifest path for Firestaff-native DM1 saves. The new `save_byte_manifest_m12` CTest exports a real `FSDM1SV1` DM1 save payload with byte count and CRC metadata, imports it into a fresh save directory, validates it through the DM1 loader, and rejects duplicate or corrupted imports. Original DM1 save conversion and other game save formats remain separate follow-up work.
