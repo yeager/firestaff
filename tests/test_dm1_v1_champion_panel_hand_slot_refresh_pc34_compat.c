@@ -606,6 +606,236 @@ static void test_candidate_masked_by_inventory_owner_gate(void)
                  "F0296:1219 + F0296 tail");
 }
 
+static void test_inventory_champion_ordinal_leader_skip(void)
+{
+    Dm1V1ChampionPanelHandSlotRefreshStatePc34 state;
+    Dm1V1ChampionPanelHandSlotRefreshResultPc34 result;
+
+    memset(&state, 0, sizeof(state));
+    dm1_v1_champion_panel_hand_slot_refresh_init_pc34(&state);
+
+    /*
+     * ReDMCSB CHAMDRAW.C F0296:1217-1219 inventory-champion ordinal
+     * skip is symmetric: any champion (including the leader at
+     * champion_index 0, ordinal M000_INDEX_TO_ORDINAL(0) == 1) whose
+     * ordinal matches G0423_i_InventoryChampionOrdinal has its
+     * action-hand slotbox walked-but-skipped. Open the inventory on
+     * the leader so the very first walk step (slotbox 1, walk_step
+     * 0) is the skip step. The leader-hand refresh at
+     * F0296:1213-1220 fires BEFORE the slotbox walk and is therefore
+     * unaffected by the leader being the inventory owner.
+     */
+    state.candidateChampionOrdinal = 0;
+    state.inventoryChampionOrdinal = 1;
+    state.inventoryChampionIndex = 0;
+
+    check_int_eq(dm1_v1_champion_panel_hand_slot_refresh_run_pc34(
+                     &state, &result),
+                 1, "run returns success (leader-as-inventory)",
+                 "F0296:1217-1219 leader matches M000_INDEX_TO_ORDINAL(0)");
+
+    check_int_eq(result.path,
+                 DM1_V1_DMHSR_PATH_INVENTORY_CHAMPION_SKIP_PC34,
+                 "path = INVENTORY_CHAMPION_SKIP (leader)",
+                 "G0423 != 0 with slotbox walk on leader");
+    check_int_eq(result.candidateEarlyReturnBeforeWalk, 1,
+                 "candidate early-return suppressed on leader skip",
+                 "G0299 = 0 — walk always entered");
+    check_int_eq(result.f0296InvocationCount, 1,
+                 "F0296 invocation count = 1",
+                 "F0296 walk is entered");
+    check_int_eq(result.leaderHandSlotBoxesWalked, 4,
+                 "all four action-hand slotboxes walked",
+                 "F0296:1226 partyChampionCount << 1 walk covers all");
+    check_int_eq(result.slotBoxWalkInventorySkip, 1,
+                 "one inventory owner slotbox skipped (the leader)",
+                 "F0296:1217-1219 skip on walk_step 0");
+
+    /*
+     * The leader is the inventory owner, so slotbox 1 (walk_step 0,
+     * the very first slotbox walked) is the one skipped. All other
+     * action-hand slotboxes continue past the skip and run the
+     * normal F0295 + F0386 path.
+     */
+    check_int_eq(state.slotBoxWalkIndex[0], 1,
+                 "walk_step 0 slotbox = 1 (leader action hand)",
+                 "skip applies to the first action-hand slotbox");
+    check_int_eq(state.slotBoxWalkChampionIndex[0], 0,
+                 "walk_step 0 champion = 0 (leader)",
+                 "M001_ORDINAL_TO_INDEX(1) == 0");
+    check_int_eq(state.slotBoxWalkInventorySkip[0], 1,
+                 "walk_step 0 inventory-skip = 1",
+                 "F0296:1217-1219 leader matches G0423");
+    check_int_eq(state.slotBoxWalkF0295Dispatched[0], 0,
+                 "walk_step 0 F0295 suppressed",
+                 "F0296:1217-1219 continue before F0295");
+    check_int_eq(state.slotBoxWalkF0386Dispatched[0], 0,
+                 "walk_step 0 F0386 suppressed",
+                 "F0296:1217-1219 continue before F0386");
+
+    check_int_eq(state.slotBoxWalkIndex[1], 3,
+                 "walk_step 1 slotbox = 3 (champion 1 action hand)",
+                 "walk continues past the leader skip");
+    check_int_eq(state.slotBoxWalkChampionIndex[1], 1,
+                 "walk_step 1 champion = 1",
+                 "slotBoxIndex >> 1 = 1");
+    check_int_eq(state.slotBoxWalkF0295Dispatched[1], 1,
+                 "walk_step 1 F0295 dispatched (champion 1 changed)",
+                 "F0295 mutable + icon differ");
+    check_int_eq(state.slotBoxWalkF0386Dispatched[1], 1,
+                 "walk_step 1 F0386 dispatched",
+                 "F0296:1230-1231 dispatch after F0295");
+
+    check_int_eq(state.slotBoxWalkIndex[2], 5,
+                 "walk_step 2 slotbox = 5 (champion 2 action hand)",
+                 "walk continues past the leader skip");
+    check_int_eq(state.slotBoxWalkF0295Dispatched[2], 1,
+                 "walk_step 2 F0295 dispatched (champion 2 changed)",
+                 "F0295 mutable + icon differ");
+    check_int_eq(state.slotBoxWalkF0386Dispatched[2], 1,
+                 "walk_step 2 F0386 dispatched",
+                 "F0296:1230-1231 dispatch after F0295");
+
+    check_int_eq(state.slotBoxWalkIndex[3], 7,
+                 "walk_step 3 slotbox = 7 (champion 3 action hand)",
+                 "walk continues past the leader skip");
+    check_int_eq(state.slotBoxWalkF0295Dispatched[3], 0,
+                 "walk_step 3 F0295 returns 0 (champion 3 same icon)",
+                 "F0295 mutable but icon matches");
+    check_int_eq(state.slotBoxWalkF0386Dispatched[3], 0,
+                 "walk_step 3 F0386 not dispatched",
+                 "F0295 returned 0");
+
+    /*
+     * Champion flag invariants: only champion 0's inventoryChampion
+     * SkipHit fires.
+     */
+    check_int_eq(state.champions[0].inventoryChampionSkipHit, 1,
+                 "champion 0 inventory-champion skip hit = 1",
+                 "F0296:1217-1219 skip applies to the leader");
+    check_int_eq(state.champions[0].walkOrder, 0,
+                 "champion 0 walkOrder = 0",
+                 "F0296 walk-step 0 is the leader skip");
+    check_int_eq(state.champions[1].inventoryChampionSkipHit, 0,
+                 "champion 1 inventory-champion skip hit = 0",
+                 "F0296:1217-1219 skip does not apply to champion 1");
+    check_int_eq(state.champions[2].inventoryChampionSkipHit, 0,
+                 "champion 2 inventory-champion skip hit = 0",
+                 "F0296:1217-1219 skip does not apply to champion 2");
+    check_int_eq(state.champions[3].inventoryChampionSkipHit, 0,
+                 "champion 3 inventory-champion skip hit = 0",
+                 "F0296:1217-1219 skip does not apply to champion 3");
+
+    /*
+     * F0295 + F0386 counts: champions 1 and 2 are mutable + changed
+     * so they each fire F0295 + F0386; champion 3 is mutable but
+     * matches so it only contributes to the same-icon count.
+     */
+    check_int_eq(result.f0295HasIconChangedCount, 2,
+                 "F0295 has-icon-changed count = 2",
+                 "champions 1/2 changed; champion 0 skipped; champion 3 same");
+    check_int_eq(result.f0295SameIconCount, 1,
+                 "F0295 same-icon count = 1",
+                 "champion 3 mutable + matching icon");
+    check_int_eq(result.f0386DispatchedForChangedActionHand, 2,
+                 "F0386 dispatched count = 2",
+                 "F0296:1230-1231 F0386 only for champions 1/2");
+    check_int_eq(result.f0296WalksExactlyN2Slotboxes, 1,
+                 "F0296 walks exactly N*2 slotboxes (counted as 4 walked)",
+                 "F0296:1226 partyChampionCount << 1 walk");
+
+    /*
+     * Leader-hand refresh: G4055_s_LeaderHandObject.IconIndex is
+     * mutable and changes during F0296, so the F0077 + F0036 +
+     * F0068 + F0034 sequence fires BEFORE the slotbox walk. The
+     * leader being the inventory owner does not suppress the
+     * leader-hand refresh because it lives at F0296:1213-1220, above
+     * the F0296:1217-1219 inventory-skip in the source.
+     */
+    check_int_eq(result.leaderHandIconRefreshCount, 1,
+                 "leader-hand refresh count = 1 (leader-as-inventory)",
+                 "F0296:1213-1220 leader-hand refresh still fires");
+    check_int_eq(result.leaderHandPrecedesWalk, 1,
+                 "leader-hand refresh precedes the slotbox walk",
+                 "F0296:1213-1220 precedes F0296:1217-1219 walk");
+    check_int_eq(result.leaderHandIconRefreshOncePerF0296, 1,
+                 "leader-hand refresh fires exactly once per F0296",
+                 "F0296:1213-1220 once-per-invocation contract");
+    check_int_eq(result.leaderHandF0036F0068F0034Sequence, 1,
+                 "leader-hand F0036 + F0068 + F0034 sequence is balanced",
+                 "F0296:1218-1220 paired calls");
+    check_int_eq(state.f0077MouseEnableCount, 1,
+                 "F0077 mouse enable count = 1 (leader-as-inventory)",
+                 "F0296:1218 leader-hand refresh still fires");
+    check_int_eq(state.f0078MouseDisableCount, 1,
+                 "F0078 mouse disable count = 1 (leader-as-inventory)",
+                 "F0296:1248-1251 tail still fires");
+    check_int_eq(result.mouseScreenUpdateBalancedPerF0296, 1,
+                 "mouse screen update balanced on leader-as-inventory walk",
+                 "F0296:1219 + F0296:1248-1251 balanced pair");
+
+    /*
+     * Trace invariants: trace[0] = kTraceInit, trace[1] =
+     * kTraceF0296Enter (or kTraceLeaderHandRefresh on a refresh
+     * firing — see below), and trace[2] is the very first walk step.
+     * When the leader-hand refresh fires, the slotbox-walk function
+     * writes trace[trace_step + 1] = kTraceLeaderHandRefresh (where
+     * trace_step = f0296InvocationCount - 1 = 0), so trace[1] is the
+     * leader-hand marker. The walk then writes trace[2 + walk_step]
+     * = trace[2] = kTraceInventoryChampionSkip at walk_step 0.
+     */
+    check_int_eq(state.f0296Trace[0], 1,
+                 "trace[0] = kTraceF0296Enter (init overwritten on walk)",
+                 "F0296:1184 trace[0] = kTraceF0296Enter on entry");
+    check_int_eq(state.f0296Trace[1], 2,
+                 "trace[1] = kTraceLeaderHandRefresh",
+                 "F0296:1218 leader-hand refresh fires before walk");
+    check_int_eq(state.f0296Trace[2], 4,
+                 "trace[2] = kTraceInventoryChampionSkip on leader skip",
+                 "F0296:1217-1219 leader matches G0423 at walk_step 0");
+    check_int_eq(state.f0296Trace[3], 6,
+                 "trace[3] = kTraceF0386Dispatch (champion 1)",
+                 "F0296:1230-1231 dispatch after F0295 on champion 1");
+    check_int_eq(state.f0296Trace[4], 6,
+                 "trace[4] = kTraceF0386Dispatch (champion 2)",
+                 "F0296:1230-1231 dispatch after F0295 on champion 2");
+    check_int_eq(state.f0296Trace[5], 3,
+                 "trace[5] = kTraceSlotboxWalk (champion 3 same-icon)",
+                 "F0295 same-icon does not upgrade to F0386Dispatch");
+
+    /*
+     * Walk-order contract on a leader-as-inventory walk still has
+     * the action-hand indices in ascending order 1, 3, 5, 7.
+     */
+    check_int_eq(result.walkOrderChampionIndexAscending, 1,
+                 "walk order champion index ascending",
+                 "F0296:1221-1231 strict ascending walk");
+    check_int_eq(result.walkOrderActionHandIndicesOdd, 1,
+                 "walk order action-hand indices odd",
+                 "M070_HAND_SLOT_INDEX = 1 on action-hand slotbox");
+    check_int_eq(result.walkOrderChampionIndexPerSlotbox, 1,
+                 "walk order champion index per slotbox",
+                 "L0885_i_ChampionIndex = slotBoxIndex >> 1");
+    /*
+     * f0295SenseContractOnMutableIcon is intentionally not asserted
+     * on the inventory-skip path: the F0296 walk skips the leader's
+     * slotbox, so F0295 is not invoked for the skipped champion even
+     * though leaderHandSlotBoxesWalked counts every walked slotbox.
+     */
+    check_int_eq(result.f0295NoChangeSkipsF0386, 1,
+                 "F0295 no-change skips F0386",
+                 "F0296:1230-1231 guarded by F0295");
+    check_int_eq(result.inventoryChampionSkipAppliedPerSlotbox, 1,
+                 "inventory-champion skip applied per slotbox",
+                 "F0296:1217-1219 leader matches G0423");
+    check_int_eq(result.sourceAnchorsPresent, 1,
+                 "source anchors present on leader-as-inventory walk",
+                 "source_anchors_present()");
+    check_int_eq(result.fullyAliveRecognized, 1,
+                 "fully-alive recognized on leader-as-inventory walk",
+                 "aliveMembers == partyChampionCount");
+}
+
 static void test_rejects(void)
 {
     Dm1V1ChampionPanelHandSlotRefreshStatePc34 base;
@@ -739,6 +969,7 @@ int main(void)
     test_inventory_champion_ordinal_skip();
     test_candidate_early_return();
     test_candidate_masked_by_inventory_owner_gate();
+    test_inventory_champion_ordinal_leader_skip();
     test_rejects();
     test_guards_match_expectations();
     test_baseline_deterministic_hash();
