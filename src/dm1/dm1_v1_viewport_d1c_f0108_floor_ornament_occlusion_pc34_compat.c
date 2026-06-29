@@ -160,6 +160,8 @@ s_steps[DM1_V1_D1C_F0108_FOCCL_STEP_BUG0_64_OCCLUSION_GUARD_PC34 + 1] = {
     }
 };
 
+static DM1_V1_D1CF0108FloorOrnamentOcclusionSelfTestResultPc34 s_last_self_test;
+
 static uint32_t fnv1a_u32(uint32_t hash, uint32_t value)
 {
     hash ^= value & 0xffu;
@@ -420,4 +422,213 @@ const char *
 dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_disjointness_note_pc34(void)
 {
     return s_disjointness_note;
+}
+
+static void self_check(
+    int condition,
+    DM1_V1_D1CF0108FloorOrnamentOcclusionSelfTestResultPc34 *result)
+{
+    ++result->assertions;
+    if (!condition) ++result->failures;
+}
+
+int dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_self_test_pc34(void)
+{
+    DM1_V1_D1CF0108FloorOrnamentOcclusionModelPc34 built;
+    const DM1_V1_D1CF0108FloorOrnamentOcclusionModelPc34 *model;
+    bool fp_set;
+    unsigned int cleared;
+    bool primary_draws;
+    bool recurse_fp;
+    int primary_index;
+    int recurse_index;
+    unsigned int n;
+    unsigned int i;
+    int bug0_64_count = 0;
+
+    memset(&s_last_self_test, 0, sizeof(s_last_self_test));
+    s_last_self_test.deterministic_hash = 2166136261u;
+
+    s_last_self_test.model_builder_ok =
+        dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_default_model_builder_pc34(
+            &built) ? 1 : 0;
+    model = dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_default_model_pc34();
+    self_check(s_last_self_test.model_builder_ok == 1, &s_last_self_test);
+    self_check(model != NULL, &s_last_self_test);
+    self_check(
+        dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_default_model_builder_pc34(
+            NULL) == 0,
+        &s_last_self_test);
+    self_check(
+        dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_hash_model_pc34(
+            NULL) == 0u,
+        &s_last_self_test);
+    if (model) {
+        s_last_self_test.hash_stable =
+            built.deterministic_hash == model->deterministic_hash &&
+            dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_hash_model_pc34(
+                model) == model->deterministic_hash &&
+            dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_deterministic_hash_pc34() ==
+                model->deterministic_hash;
+        self_check(s_last_self_test.hash_stable == 1, &s_last_self_test);
+        self_check(model->view_square_d1c == DM1_D1C_VIEW_SQUARE, &s_last_self_test);
+        self_check(model->view_floor_d1c == DM1_D1C_VIEW_FLOOR, &s_last_self_test);
+        self_check(model->view_wall_d1c_front == DM1_D1C_VIEW_WALL_FRONT,
+                   &s_last_self_test);
+        self_check(model->wall_zone_d1c == DM1_D1C_WALL_ZONE, &s_last_self_test);
+        self_check(model->c10_transparent_color == DM1_C10_COLOR_FLESH,
+                   &s_last_self_test);
+        self_check(model->f0108_zone_d1c == DM1_D1C_FLOOR_ZONE, &s_last_self_test);
+        self_check(model->bug0_64_occlusion_guard == 0, &s_last_self_test);
+        self_check(model->no_graphics_dat_reads == 1, &s_last_self_test);
+        self_check(model->source_locked_contract_only == 1, &s_last_self_test);
+        self_check(model->no_real_asset_bitmap_parity == 1, &s_last_self_test);
+        s_last_self_test.deterministic_hash =
+            fnv1a_u32(s_last_self_test.deterministic_hash,
+                      model->deterministic_hash);
+    }
+
+    fp_set = false;
+    cleared = 0u;
+    primary_draws = false;
+    recurse_fp = false;
+    primary_index = -1;
+    recurse_index = -1;
+    dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_decode_ordinal_pc34(
+        7u, &fp_set, &cleared, &primary_draws, &primary_index, &recurse_fp,
+        &recurse_index);
+    s_last_self_test.decode_simple_primary =
+        !fp_set && cleared == 7u && primary_draws && primary_index == 6 &&
+        !recurse_fp && recurse_index == -1;
+    self_check(s_last_self_test.decode_simple_primary == 1, &s_last_self_test);
+
+    fp_set = false;
+    cleared = 0xffffffffu;
+    primary_draws = true;
+    recurse_fp = false;
+    primary_index = -1;
+    recurse_index = -1;
+    dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_decode_ordinal_pc34(
+        0x8000u, &fp_set, &cleared, &primary_draws, &primary_index, &recurse_fp,
+        &recurse_index);
+    s_last_self_test.decode_fp_only_recurses =
+        fp_set && cleared == 0u && !primary_draws && primary_index == -1 &&
+        recurse_fp && recurse_index == DM1_FLOOR_ORNAMENT_FOOTPRINTS;
+    self_check(s_last_self_test.decode_fp_only_recurses == 1, &s_last_self_test);
+
+    fp_set = false;
+    cleared = 0u;
+    primary_draws = false;
+    recurse_fp = true;
+    primary_index = -1;
+    recurse_index = -1;
+    dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_decode_ordinal_pc34(
+        0x8007u, &fp_set, &cleared, &primary_draws, &primary_index, &recurse_fp,
+        &recurse_index);
+    s_last_self_test.decode_fp_with_primary_both =
+        fp_set && cleared == 7u && primary_draws && primary_index == 6 &&
+        !recurse_fp && recurse_index == -1;
+    self_check(s_last_self_test.decode_fp_with_primary_both == 1,
+               &s_last_self_test);
+
+    fp_set = true;
+    cleared = 0xffffffffu;
+    primary_draws = true;
+    dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_decode_ordinal_pc34(
+        0u, &fp_set, &cleared, &primary_draws, NULL, NULL, NULL);
+    s_last_self_test.decode_zero_skips_blit =
+        !fp_set && cleared == 0u && !primary_draws;
+    self_check(s_last_self_test.decode_zero_skips_blit == 1, &s_last_self_test);
+
+    s_last_self_test.context_occlusion_paths =
+        (dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
+             DM1_V1_D1C_F0108_FOCCL_CONTEXT_CORRIDOR_PC34, 5u) ? 1 : 0) +
+        (dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
+             DM1_V1_D1C_F0108_FOCCL_CONTEXT_OPEN_PIT_PC34, 5u) ? 1 : 0) +
+        (dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
+             DM1_V1_D1C_F0108_FOCCL_CONTEXT_TELEPORTER_PC34, 5u) ? 1 : 0) +
+        (dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
+             DM1_V1_D1C_F0108_FOCCL_CONTEXT_STAIRS_FRONT_PC34, 5u) ? 1 : 0) +
+        (dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
+             DM1_V1_D1C_F0108_FOCCL_CONTEXT_DOOR_FRONT_PC34, 5u) ? 1 : 0);
+    self_check(s_last_self_test.context_occlusion_paths == 5, &s_last_self_test);
+    s_last_self_test.context_zero_ordinal_no_occlusion =
+        !dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
+            DM1_V1_D1C_F0108_FOCCL_CONTEXT_OPEN_PIT_PC34, 0u);
+    self_check(s_last_self_test.context_zero_ordinal_no_occlusion == 1,
+               &s_last_self_test);
+    self_check(
+        !dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_occludes_pc34(
+            (DM1_V1_D1CF0108FloorOrnamentOcclusionContextPc34)99, 5u),
+        &s_last_self_test);
+
+    s_last_self_test.blend_c10_preserves_destination =
+        dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_blend_c10_pc34(
+            0xaau, 10u) == 0xaau;
+    self_check(s_last_self_test.blend_c10_preserves_destination == 1,
+               &s_last_self_test);
+    s_last_self_test.blend_opaque_writes_source =
+        dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_blend_c10_pc34(
+            0xaau, 0x52u) == 0x52u;
+    self_check(s_last_self_test.blend_opaque_writes_source == 1,
+               &s_last_self_test);
+    s_last_self_test.zone_d1c_stride_11 =
+        dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_zone_d1c_pc34(
+            1, 7) == DM1_D1C_FLOOR_ZONE &&
+        dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_zone_d1c_pc34(
+            2, 7) == DM1_D1C_FLOOR_ZONE_BASE + 2 * DM1_D1C_FLOOR_ZONE_STRIDE_PC34 + 7 &&
+        dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_zone_d1c_pc34(
+            -1, -1) == DM1_D1C_FLOOR_ZONE_BASE;
+    self_check(s_last_self_test.zone_d1c_stride_11 == 1, &s_last_self_test);
+
+    n = dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_context_count_pc34();
+    s_last_self_test.step_count_eight = (n == sizeof(s_steps) / sizeof(s_steps[0]) &&
+                                         n == 8u);
+    self_check(s_last_self_test.step_count_eight == 1, &s_last_self_test);
+    self_check(
+        dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_step_at_pc34(n) == NULL,
+        &s_last_self_test);
+    for (i = 0; i < n; ++i) {
+        const DM1_V1_D1CF0108FloorOrnamentOcclusionStepPc34 *step =
+            dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_step_at_pc34(i);
+        self_check(step != NULL, &s_last_self_test);
+        if (!step) continue;
+        self_check(step->order_index == (int)i, &s_last_self_test);
+        self_check(step->redmcsb_anchor &&
+                       strstr(step->redmcsb_anchor, "DUNVIEW.C") != NULL,
+                   &s_last_self_test);
+        if (step->bug0_64_occlusion_present) ++bug0_64_count;
+        s_last_self_test.deterministic_hash =
+            fnv1a_u32(s_last_self_test.deterministic_hash,
+                      (uint32_t)step->expected_cell_order);
+    }
+    s_last_self_test.bug0_64_marker_count = bug0_64_count;
+    self_check(s_last_self_test.bug0_64_marker_count == 5, &s_last_self_test);
+
+    s_last_self_test.source_evidence_present =
+        strstr(s_source_evidence, "F0108:3940-4011") != NULL &&
+        strstr(s_source_evidence, "F0124:7727-7924") != NULL &&
+        strstr(s_source_evidence, "BUG0_64") != NULL &&
+        strstr(s_source_evidence, "C1500") != NULL &&
+        strstr(s_source_evidence, "C10_COLOR_FLESH") != NULL;
+    self_check(s_last_self_test.source_evidence_present == 1, &s_last_self_test);
+    s_last_self_test.disjointness_note_present =
+        strstr(s_disjointness_note, "D1C F0108") != NULL &&
+        strstr(s_disjointness_note, "D0C F0108") != NULL &&
+        strstr(s_disjointness_note, "GRAPHICS.DAT") != NULL &&
+        strstr(s_disjointness_note, "CSB/Nexus/Theron/DM2") != NULL;
+    self_check(s_last_self_test.disjointness_note_present == 1,
+               &s_last_self_test);
+    self_check(s_last_self_test.assertions >= 40, &s_last_self_test);
+    self_check(s_last_self_test.deterministic_hash != 2166136261u,
+               &s_last_self_test);
+
+    s_last_self_test.ok = s_last_self_test.failures == 0;
+    return s_last_self_test.ok;
+}
+
+const DM1_V1_D1CF0108FloorOrnamentOcclusionSelfTestResultPc34 *
+dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_last_self_test_result_pc34(void)
+{
+    return &s_last_self_test;
 }

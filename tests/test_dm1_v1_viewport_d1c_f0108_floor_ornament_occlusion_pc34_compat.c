@@ -425,6 +425,57 @@ static void test_source_evidence_and_disjointness(void)
                     "BUG0_64 source anchor");
 }
 
+static void test_module_self_test(void)
+{
+    const DM1_V1_D1CF0108FloorOrnamentOcclusionSelfTestResultPc34 *result;
+
+    expect_int("self_test.ok",
+               dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_self_test_pc34(),
+               1, "module-level reusable self-test");
+    result =
+        dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_last_self_test_result_pc34();
+    expect_int("self_test.result.present", result != NULL, 1,
+               "self-test result accessor");
+    if (!result) return;
+    expect_int("self_test.result.ok", result->ok, 1, "self-test ok flag");
+    expect_int("self_test.failures", result->failures, 0, "self-test failures");
+    expect_int("self_test.model_builder_ok", result->model_builder_ok, 1,
+               "builder path covered");
+    expect_int("self_test.hash_stable", result->hash_stable, 1,
+               "hash stability covered");
+    expect_int("self_test.decode_simple", result->decode_simple_primary, 1,
+               "simple ordinal decode covered");
+    expect_int("self_test.decode_fp_only", result->decode_fp_only_recurses, 1,
+               "footprint-only recursion covered");
+    expect_int("self_test.decode_fp_primary", result->decode_fp_with_primary_both, 1,
+               "footprint plus primary covered");
+    expect_int("self_test.decode_zero", result->decode_zero_skips_blit, 1,
+               "zero ordinal skip covered");
+    expect_int("self_test.occlusion_paths", result->context_occlusion_paths, 5,
+               "five supported D1C contexts covered");
+    expect_int("self_test.zero_no_occlusion",
+               result->context_zero_ordinal_no_occlusion, 1,
+               "zero ordinal occlusion rejection covered");
+    expect_int("self_test.blend_c10", result->blend_c10_preserves_destination, 1,
+               "C10 transparency covered");
+    expect_int("self_test.blend_opaque", result->blend_opaque_writes_source, 1,
+               "opaque blit covered");
+    expect_int("self_test.zone_stride", result->zone_d1c_stride_11, 1,
+               "D1C zone stride covered");
+    expect_int("self_test.step_count", result->step_count_eight, 1,
+               "eight-step trace covered");
+    expect_int("self_test.bug0_64_count", result->bug0_64_marker_count, 5,
+               "BUG0_64 markers covered");
+    expect_int("self_test.evidence", result->source_evidence_present, 1,
+               "source evidence covered");
+    expect_int("self_test.disjointness", result->disjointness_note_present, 1,
+               "disjointness note covered");
+    expect_int("self_test.assertions_floor", result->assertions >= 40, 1,
+               "self-test assertion floor");
+    expect_int("self_test.hash_nonzero", result->deterministic_hash != 0u, 1,
+               "self-test deterministic hash");
+}
+
 int main(void)
 {
     test_model_core();
@@ -433,6 +484,7 @@ int main(void)
     test_blend_and_zone();
     test_steps();
     test_source_evidence_and_disjointness();
+    test_module_self_test();
 
     if (g_failures) {
         printf("FAIL DM1_V1_VIEWPORT_D1C_F0108_FLOOR_ORNAMENT_OCCLUSION_PC34_COMPAT "

@@ -148,6 +148,28 @@ typedef struct {
     const char *disjointness_note;
 } DM1_V1_D1CF0108FloorOrnamentOcclusionModelPc34;
 
+typedef struct {
+    int ok;
+    int assertions;
+    int failures;
+    int model_builder_ok;
+    int hash_stable;
+    int decode_simple_primary;
+    int decode_fp_only_recurses;
+    int decode_fp_with_primary_both;
+    int decode_zero_skips_blit;
+    int context_occlusion_paths;
+    int context_zero_ordinal_no_occlusion;
+    int blend_c10_preserves_destination;
+    int blend_opaque_writes_source;
+    int zone_d1c_stride_11;
+    int step_count_eight;
+    int bug0_64_marker_count;
+    int source_evidence_present;
+    int disjointness_note_present;
+    uint32_t deterministic_hash;
+} DM1_V1_D1CF0108FloorOrnamentOcclusionSelfTestResultPc34;
+
 bool dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_default_model_builder_pc34(
     DM1_V1_D1CF0108FloorOrnamentOcclusionModelPc34 *out_model);
 
@@ -188,6 +210,11 @@ int dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_zone_d1c_pc34(
 const char *dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_source_evidence_pc34(void);
 
 const char *dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_disjointness_note_pc34(void);
+
+int dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_self_test_pc34(void);
+
+const DM1_V1_D1CF0108FloorOrnamentOcclusionSelfTestResultPc34 *
+dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_last_self_test_result_pc34(void);
 
 #ifdef __cplusplus
 }
