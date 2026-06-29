@@ -152,6 +152,14 @@ static int m11_high_contrast_apply_active_region(unsigned char* framebuffer,
                                                  int preserveWidth,
                                                  int preserveHeight,
                                                  unsigned int excludeMask) {
+    long long startX64;
+    long long startY64;
+    long long endX64;
+    long long endY64;
+    long long preserveStartX64;
+    long long preserveStartY64;
+    long long preserveEndX64;
+    long long preserveEndY64;
     int startX;
     int startY;
     int endX;
@@ -173,24 +181,28 @@ static int m11_high_contrast_apply_active_region(unsigned char* framebuffer,
         return 0;
     }
 
-    /* Clip to framebuffer bounds. */
-    if (x < 0) {
-        startX = 0;
-    } else {
-        startX = x;
-    }
-    if (y < 0) {
-        startY = 0;
-    } else {
-        startY = y;
-    }
-    endX = x + width;
-    endY = y + height;
-    if (endX > framebufferWidth) endX = framebufferWidth;
-    if (endY > framebufferHeight) endY = framebufferHeight;
-    if (startX >= endX || startY >= endY) {
+    /* Clip to framebuffer bounds without signed-int overflow when
+     * a caller hands us a huge synthetic rectangle. Normal M11
+     * callers use 320x200 logical coordinates, but the public gate
+     * should remain defined for probe/tooling inputs too. */
+    startX64 = (x < 0) ? 0LL : (long long)x;
+    startY64 = (y < 0) ? 0LL : (long long)y;
+    endX64 = (long long)x + (long long)width;
+    endY64 = (long long)y + (long long)height;
+    if (endX64 > (long long)framebufferWidth) endX64 = (long long)framebufferWidth;
+    if (endY64 > (long long)framebufferHeight) endY64 = (long long)framebufferHeight;
+    if (startX64 >= endX64 || startY64 >= endY64) {
         return 0;
     }
+    startX = (int)startX64;
+    startY = (int)startY64;
+    endX = (int)endX64;
+    endY = (int)endY64;
+
+    preserveStartX64 = (long long)preserveX;
+    preserveStartY64 = (long long)preserveY;
+    preserveEndX64 = (long long)preserveX + (long long)preserveWidth;
+    preserveEndY64 = (long long)preserveY + (long long)preserveHeight;
 
     for (row = startY; row < endY; ++row) {
         unsigned char* line = framebuffer + (size_t)row * (size_t)framebufferWidth;
@@ -198,8 +210,8 @@ static int m11_high_contrast_apply_active_region(unsigned char* framebuffer,
             unsigned char idx = line[col];
             unsigned int bit = (1u << (idx & 0x0Fu));
             if (hasPreserveRect
-             && col >= preserveX && col < preserveX + preserveWidth
-             && row >= preserveY && row < preserveY + preserveHeight) {
+             && (long long)col >= preserveStartX64 && (long long)col < preserveEndX64
+             && (long long)row >= preserveStartY64 && (long long)row < preserveEndY64) {
                 continue;
             }
             if (excludeMask & bit) {
