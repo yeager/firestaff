@@ -335,6 +335,266 @@ static void check_integer_scaled_content_input_gate(void) {
                                            &fbY) == 0);
 }
 
+/* Forward declare: see below for the helper that round-trips a single
+ * movement-arrow click through any window-sized M11_SCALE_FIT + integer
+ * scaling + content-aspect presentation path. */
+static void check_integer_scaled_movement_arrow(int windowW,
+                                                int windowH,
+                                                int expectedRectX,
+                                                int expectedRectY,
+                                                int expectedRectW,
+                                                int expectedRectH,
+                                                int sourceX,
+                                                int sourceY,
+                                                int expectedCommand,
+                                                int expectedZone);
+
+static void check_integer_scaled_movement_arrows_at_resolution(int windowW,
+                                                              int windowH,
+                                                              int expectedRectX,
+                                                              int expectedRectY,
+                                                              int expectedRectW,
+                                                              int expectedRectH,
+                                                              const char* surfaceName) {
+    int rectX = -1;
+    int rectY = -1;
+    int rectW = -1;
+    int rectH = -1;
+    int fbX = -1;
+    int fbY = -1;
+    int windowX;
+    int windowY;
+
+    /* The integer-scaling branch in M11_Render_ComputePresentationRect only
+     * fires when (contentW * ratioH) == (contentH * ratioW); for
+     * M11_DISPLAY_ASPECT_CONTENT with the 320x200 framebuffer, ratioW=320
+     * and ratioH=200, so the predicate holds (320*200 == 200*320).  Lock
+     * that the integer-scaled rect we expect is exactly what the function
+     * returns, so a future regression that swaps to a fractional fit would
+     * show up as a CHECK failure here instead of silently changing the
+     * input-mapping surface. */
+    CHECK(M11_Render_ComputePresentationRect(windowW,
+                                             windowH,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_FIT,
+                                             1,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_OK);
+    CHECK(rectX == expectedRectX);
+    CHECK(rectY == expectedRectY);
+    CHECK(rectW == expectedRectW);
+    CHECK(rectH == expectedRectH);
+
+    printf("integer_scaled_movement_arrow_surface=%s window=%dx%d rect=(%d,%d,%d,%d)\n",
+           surfaceName, windowW, windowH, rectX, rectY, rectW, rectH);
+
+    /* Lock all six ReDMCSB COMMAND.C G0448 movement arrows at this
+     * resolution so a future regression that hard-codes one arrow (or
+     * accidentally maps the right column to the turn_right zone) cannot
+     * pass while the other five silently drift.  Each click is forwarded
+     * through the same scaled-window-coord helper used by the existing
+     * scaled DM1 command path so the round-trip math stays consistent
+     * with check_integer_scaled_content_input_gate above. */
+    check_integer_scaled_movement_arrow(windowW,
+                                        windowH,
+                                        rectX,
+                                        rectY,
+                                        rectW,
+                                        rectH,
+                                        248,
+                                        135,
+                                        1,
+                                        70u - 2u); /* turn_left -> C068 */
+    check_integer_scaled_movement_arrow(windowW,
+                                        windowH,
+                                        rectX,
+                                        rectY,
+                                        rectW,
+                                        rectH,
+                                        276,
+                                        135,
+                                        3,
+                                        70u); /* forward -> C070 */
+    check_integer_scaled_movement_arrow(windowW,
+                                        windowH,
+                                        rectX,
+                                        rectY,
+                                        rectW,
+                                        rectH,
+                                        305,
+                                        135,
+                                        2,
+                                        70u - 1u); /* turn_right -> C069 */
+    check_integer_scaled_movement_arrow(windowW,
+                                        windowH,
+                                        rectX,
+                                        rectY,
+                                        rectW,
+                                        rectH,
+                                        248,
+                                        157,
+                                        6,
+                                        70u + 3u); /* left -> C073 */
+    check_integer_scaled_movement_arrow(windowW,
+                                        windowH,
+                                        rectX,
+                                        rectY,
+                                        rectW,
+                                        rectH,
+                                        276,
+                                        157,
+                                        5,
+                                        70u + 2u); /* backward -> C072 */
+    check_integer_scaled_movement_arrow(windowW,
+                                        windowH,
+                                        rectX,
+                                        rectY,
+                                        rectW,
+                                        rectH,
+                                        305,
+                                        157,
+                                        4,
+                                        70u + 1u); /* right -> C071 */
+
+    /* Letterbox edges must still be rejected at the integer-scaled rect,
+     * even when the source framebuffer content (320x200) does not fill
+     * the window.  Use the same one-pixel-off-the-edge sample points the
+     * existing check_map_edges uses for the 4_3 integer-scaled path. */
+    CHECK(M11_Render_MapPointToFramebuffer(rectX - 1,
+                                           rectY + rectH / 2,
+                                           windowW,
+                                           windowH,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW,
+                                           rectY + rectH / 2,
+                                           windowW,
+                                           windowH,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW / 2,
+                                           rectY - 1,
+                                           windowW,
+                                           windowH,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW / 2,
+                                           rectY + rectH,
+                                           windowW,
+                                           windowH,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+
+    /* Source corner samples still hit the bottom-right source cell so a
+     * regression in the integer-scaled branch cannot silently flip the
+     * last visible cell into an out-of-bounds coordinate. */
+    windowX = scaled_window_coord(rectX, rectW, M11_FB_WIDTH - 1, M11_FB_WIDTH);
+    windowY = scaled_window_coord(rectY, rectH, M11_FB_HEIGHT - 1, M11_FB_HEIGHT);
+    CHECK(M11_Render_MapPointToFramebuffer(windowX,
+                                           windowY,
+                                           windowW,
+                                           windowH,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == M11_FB_WIDTH - 1);
+    CHECK(fbY == M11_FB_HEIGHT - 1);
+}
+
+static void check_integer_scaled_movement_arrow(int windowW,
+                                                int windowH,
+                                                int expectedRectX,
+                                                int expectedRectY,
+                                                int expectedRectW,
+                                                int expectedRectH,
+                                                int sourceX,
+                                                int sourceY,
+                                                int expectedCommand,
+                                                int expectedZone) {
+    int rectX = -1;
+    int rectY = -1;
+    int rectW = -1;
+    int rectH = -1;
+    int windowX;
+    int windowY;
+    int fbX = -1;
+    int fbY = -1;
+    TouchClickZonePc34Compat hit;
+
+    /* Verify the helper is fed the actual integer-scaled rect for this
+     * surface, so the source-to-window mapping below uses the same rect
+     * a real M11_Render_MapPointToFramebuffer call would observe. */
+    CHECK(M11_Render_ComputePresentationRect(windowW,
+                                             windowH,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_FIT,
+                                             1,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_OK);
+    CHECK(rectX == expectedRectX);
+    CHECK(rectY == expectedRectY);
+    CHECK(rectW == expectedRectW);
+    CHECK(rectH == expectedRectH);
+
+    windowX = scaled_window_coord(rectX, rectW, sourceX, M11_FB_WIDTH);
+    windowY = scaled_window_coord(rectY, rectH, sourceY, M11_FB_HEIGHT);
+
+    CHECK(M11_Render_MapPointToFramebuffer(windowX,
+                                           windowY,
+                                           windowW,
+                                           windowH,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == sourceX);
+    CHECK(fbY == sourceY);
+
+    /* Source route: ReDMCSB COMMAND.C G0448 movement arrow table. */
+    CHECK(TOUCHCLICK_Compat_HitTestWithButton(fbX,
+                                              fbY,
+                                              TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                                              &hit) == 1);
+    CHECK(hit.commandId == (unsigned int)expectedCommand);
+    CHECK(hit.zoneIndex == (unsigned int)expectedZone);
+    CHECK(hit.coordMode == TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT);
+}
+
 static void check_macbook_retina_drawable_rect_regression(void) {
     int logicalX = -1;
     int logicalY = -1;
