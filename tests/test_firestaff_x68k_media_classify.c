@@ -7,8 +7,10 @@
  * every internal case: geometry constants, empty input,
  * too-small input, single-side / full-disk / oversize size
  * classes, blank save-disk detection, HPR-0007 sentinel
- * detection, FTL-payload magic detection, FTL handoff fits /
- * overflow, unprotected-disk flag, NULL safety. This file is
+ * detection, off-axis HPR-0007 label classification,
+ * nonblank/no-sentinel classification, FTL-payload magic
+ * detection, FTL handoff fits / overflow, unprotected-disk
+ * flag, NULL safety. This file is
  * a thin main() that calls SelfTest and reports PASS / FAIL.
  *
  * Source of truth for the cases:

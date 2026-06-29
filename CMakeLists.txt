@@ -14101,8 +14101,9 @@ if(BUILD_TESTING)
     # -- X68000 HDM/floppy media classifier (DMWeb copy-prot) --
     # Bounded classifier for the DM1 / CSB X68000 import gap:
     # 2DHD geometry, the documented HPR-0007 protection sentinel,
-    # and FTL magic handoff detection. This is a media boundary
-    # check only, not MFM/flux parsing or runtime asset loading.
+    # off-axis label-string classification, and FTL magic handoff
+    # detection. This is a media boundary check only, not MFM/flux
+    # parsing or runtime asset loading.
     add_executable(test_firestaff_x68k_media_classify
         tests/test_firestaff_x68k_media_classify.c
         src/shared/firestaff_x68k_media_classify.c
@@ -14145,7 +14146,8 @@ if(BUILD_TESTING)
     # MEDIA_FULL_DISK class, no FTL magic at offset 0, no
     # HPR-0007 sentinel at the DMWeb-documented Track 1 Side 1
     # Sector 9 offset (public release lacks the protection
-    # sector), MFM-fill sector-9 region. Skip-safe: hosts
+    # sector), MFM-fill sector-9 region, and any off-axis
+    # HPR-0007 label strings. Skip-safe: hosts
     # without a known HDM exit 0 with SKIP. Does not vendor
     # any game data; reads operator-supplied HDM only.
     add_executable(firestaff_x68k_media_receipt_real_corpus_probe
