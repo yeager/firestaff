@@ -29,6 +29,10 @@ This tool refuses to emit a ``target_selection.receipt.json`` until:
     (``Keypad-2`` / ``Keypad-4`` / ``Keypad-5`` / ``Keypad-6`` /
     ``Keypad-8``);
   * the kind contract's ``requiredSelectionFields`` are all present;
+  * wall-door-fakewall selections name the source-locked boundary
+    kind, view square, and visual edge family that the capture is meant
+    to expose, so a later receipt cannot claim a generic wall/door row
+    without the DUNVIEW / CLIKMENU / CLIKVIEW edge it targeted;
   * a non_claims list is supplied with at least the three baseline
     entries (pixel parity not promoted, proprietary frame bytes stay
     operator-local, selector is accountability not promotion);
@@ -108,6 +112,73 @@ KNOWN_CLASSIFIER_STATES: frozenset[str] = frozenset({
     "wall_closeup",
     "unclassified",
 })
+
+# Source-locked wall/door/fakewall target pinning.  These names map
+# to ReDMCSB CLIKMENU.C:279-288 (wall / door / fakewall movement
+# blocker split), CLIKVIEW.C:356-389 + 404-445 (door button and
+# closed-imaginary-fakewall click routes), and DUNVIEW.C:7873-7910
+# (D1C door/front frame + button + panel draw order).  The selector
+# only validates the operator's target-selection receipt; it does not
+# claim parity or inspect frame bytes.
+WALL_DOOR_FAKEWALL_BOUNDARY_KINDS: frozenset[str] = frozenset({
+    "wall_closeup",
+    "alcove_front_left",
+    "alcove_front_right",
+    "closed_door",
+    "fakewall",
+    "runtime_open_door",
+    "button_door",
+})
+
+WALL_DOOR_FAKEWALL_VIEW_SQUARES: frozenset[str] = frozenset({
+    "D0C",
+    "D1C",
+    "D2C",
+    "D3C",
+    "D1L",
+    "D1R",
+    "D2L",
+    "D2R",
+    "D3L",
+    "D3R",
+})
+
+WALL_DOOR_FAKEWALL_VISUAL_EDGES: dict[str, frozenset[str]] = {
+    "wall_closeup": frozenset({
+        "front_wall_face",
+        "left_wall_edge",
+        "right_wall_edge",
+    }),
+    "alcove_front_left": frozenset({
+        "front_wall_face",
+        "alcove_left",
+    }),
+    "alcove_front_right": frozenset({
+        "front_wall_face",
+        "alcove_right",
+    }),
+    "closed_door": frozenset({
+        "door_frame_left",
+        "door_frame_right",
+        "door_panel",
+        "door_button_zone",
+    }),
+    "fakewall": frozenset({
+        "fakewall_front",
+        "front_wall_face",
+    }),
+    "runtime_open_door": frozenset({
+        "door_frame_left",
+        "door_frame_right",
+        "open_door_passage",
+    }),
+    "button_door": frozenset({
+        "door_frame_left",
+        "door_frame_right",
+        "door_panel",
+        "door_button_zone",
+    }),
+}
 
 # The three baseline non_claims entries the contract requires.  This
 # is the canonical wording from the contract ``globalRules.nonClaims``
@@ -253,6 +324,9 @@ def _validate_selection(
                 f"selection.{field_name} is required for "
                 f"target_kind={target_kind!r} and must be non-empty"
             )
+
+    if target_kind == "wall_door_fakewall":
+        _validate_wall_door_fakewall_selection(selection, failures)
 
     # semantic_checks is the explicit-after-capture list the operator
     # is committing to run.  We require at least the contract minimum
@@ -444,6 +518,36 @@ def _preflight_pins_pass(receipt: dict, contract: dict) -> bool:
     return True
 
 
+def _validate_wall_door_fakewall_selection(
+        selection: dict, failures: list[str]) -> None:
+    """Validate source-locked wall/door/fakewall target detail fields."""
+    boundary_kind = selection.get("selected_boundary_kind")
+    if boundary_kind not in WALL_DOOR_FAKEWALL_BOUNDARY_KINDS:
+        failures.append(
+            "selection.selected_boundary_kind must be one of "
+            f"{sorted(WALL_DOOR_FAKEWALL_BOUNDARY_KINDS)}; "
+            f"got {boundary_kind!r}"
+        )
+        return
+
+    view_square = selection.get("expected_view_square")
+    if view_square not in WALL_DOOR_FAKEWALL_VIEW_SQUARES:
+        failures.append(
+            "selection.expected_view_square must be one of "
+            f"{sorted(WALL_DOOR_FAKEWALL_VIEW_SQUARES)}; "
+            f"got {view_square!r}"
+        )
+
+    visual_edge = selection.get("expected_visual_edge")
+    allowed_edges = WALL_DOOR_FAKEWALL_VISUAL_EDGES[boundary_kind]
+    if visual_edge not in allowed_edges:
+        failures.append(
+            "selection.expected_visual_edge must match "
+            f"selected_boundary_kind={boundary_kind!r}; allowed edges are "
+            f"{sorted(allowed_edges)}, got {visual_edge!r}"
+        )
+
+
 def _render_receipt(
         selection: dict,
         contract: dict,
@@ -459,6 +563,10 @@ def _render_receipt(
                     kc.get("requiredSelectionFields", [])
                 )
                 break
+    required_selection_values = {
+        field_name: selection.get(field_name)
+        for field_name in kind_contract_required
+    }
     return {
         "schema": schema,
         "selector_version": contract.get("selectorVersion", 1),
@@ -476,6 +584,7 @@ def _render_receipt(
             "kind_contract_required_selection_fields": (
                 kind_contract_required
             ),
+            "required_selection_values": required_selection_values,
             "route_steps": selection.get("route_steps", []),
             "expected_terminal_classifier_state": selection.get(
                 "expected_terminal_classifier_state"
@@ -568,7 +677,11 @@ def _build_valid_selection(
                 "panel_trigger_source": "mouse_capture then Keypad-5 party_rotate",
             }.get(field_name, "synthetic")
         elif target_kind == "wall_door_fakewall":
-            required_fields[field_name] = "wall_closeup"
+            required_fields[field_name] = {
+                "selected_boundary_kind": "closed_door",
+                "expected_view_square": "D1C",
+                "expected_visual_edge": "door_frame_left",
+            }.get(field_name, "synthetic")
         elif target_kind == "viewport":
             required_fields[field_name] = "0/1/3/2"
         elif target_kind == "collision":
@@ -726,6 +839,20 @@ def self_test() -> int:
                 f"matching {kind!r} receipt missing expected pin labels: "
                 f"missing={sorted(expected_pin_labels - pin_labels)}"
             )
+        required_values = receipt["selection"].get("required_selection_values")
+        if not isinstance(required_values, dict):
+            failures.append(
+                f"matching {kind!r} receipt did not preserve "
+                "required_selection_values"
+            )
+        else:
+            for field_name in _kind_contract(
+                    contract, kind).get("requiredSelectionFields", []):
+                if field_name not in required_values:
+                    failures.append(
+                        f"matching {kind!r} receipt dropped "
+                        f"required field value {field_name!r}"
+                    )
 
     # Helper for negative-case wording.
     def _expect_failure(label: str, *, selection: dict) -> None:
@@ -775,6 +902,21 @@ def self_test() -> int:
     bogus = dict(valid_creature)
     bogus.pop("selected_creature_type", None)
     _expect_failure("missing_required_field", selection=bogus)
+
+    # Negative: wall/door/fakewall edge must match the selected
+    # boundary family, otherwise a generic wall-door route can no
+    # longer masquerade as a reviewed edge target.
+    bogus = _build_valid_selection(
+        target_kind="wall_door_fakewall", contract=contract,
+    )
+    bogus["expected_visual_edge"] = "open_door_passage"
+    _expect_failure("wall_door_fakewall_edge_mismatch", selection=bogus)
+
+    # Negative: expected terminal classifier state must stay matched
+    # to the contract for the selected kind.
+    bogus = dict(valid_creature)
+    bogus["expected_terminal_classifier_state"] = "wall_closeup"
+    _expect_failure("expected_terminal_classifier_state_mismatch", selection=bogus)
 
     # Negative: baseline non_claims missing.
     bogus = dict(valid_creature)
@@ -835,7 +977,7 @@ def self_test() -> int:
     print(
         "PASS post-dungeon pairing target selector self-test: "
         f"{len(contract['supportedTargetKinds'])} supported kinds, "
-        "11 negative cases"
+        "12 negative cases"
     )
     return 0
 

@@ -571,9 +571,15 @@ selector refuses to write `target_selection.receipt.json` until:
   non-empty (`selected_creature_type` + `selected_creature_name` +
   `expected_view_square` + `expected_line_of_sight` for `creature_chain`;
   `selected_panel_kind` + `panel_trigger_source` for `champion_panel`;
-  `selected_boundary_kind` for `wall_door_fakewall`;
+  `selected_boundary_kind` + `expected_view_square` +
+  `expected_visual_edge` for `wall_door_fakewall`;
   `locked_party_tuple` for `viewport`; `selected_block_kind` +
   `expected_block_response` for `collision`);
+* `wall_door_fakewall` selections use the ReDMCSB-pinned boundary/edge
+  vocabulary from `CLIKMENU.C:279-288`, `CLIKVIEW.C:356-389,404-445`,
+  and `DUNVIEW.C:7873-7910`, so a reviewed route must say whether it is
+  targeting a front wall face, side edge, door frame/panel/button, open
+  passage, fakewall face, or alcove edge before the live route is run;
 * a `non_claims` list is supplied with at least the three baseline entries
   (`pixel parity not promoted`, `proprietary frame bytes stay
   operator-local`, `selector is accountability, not promotion`);
@@ -604,11 +610,11 @@ produced); parity is only promoted when the live frames satisfy the
 promote any parity row on its own.
 
 The selector's hermetic self-test exercises the matching case for every
-supported kind plus 11 negative cases (unknown kind, empty reviewer,
+supported kind plus 12 negative cases (unknown kind, empty reviewer,
 unknown PASS_ID, too-short route, unsupported key, missing required
-field, baseline non_claim missing, asset-set mismatch, preflight receipt
-missing, preflight pin violation, expected terminal classifier state
-mismatch). The CTest gate
+field, wall-door-fakewall edge mismatch, expected terminal classifier
+state mismatch, baseline non_claim missing, asset-set mismatch, preflight
+receipt missing, preflight pin violation). The CTest gate
 `dm1_v1_post_dungeon_pairing_target_selector` is wired in `CMakeLists.txt`
 and the runbook-consistency probe at
 `tools/test_dm1_v1_capture_runbook_consistency.py` runs the same selftest
