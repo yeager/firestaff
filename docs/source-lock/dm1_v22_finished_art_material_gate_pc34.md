@@ -1,6 +1,7 @@
 # DM1 V2.2 Finished-Art Material Gate
 
-**Status:** ✅ COMPLETE — initial seed landed 2026-06-28
+**Status:** ✅ COMPLETE — initial seed landed 2026-06-28; PNG IHDR
+provenance hardening landed 2026-06-29
 **CTest names:**
 - `dm1_v22_finished_art_material_gate_pc34` (CI-runnable synthetic
   gate — every branch exercised via synthetic manifest fixtures)
@@ -45,7 +46,8 @@ CI-runnable distinction between:
 - **reviewed finished-art** — the operator-installed state. An
   operator has dropped a `modern_asset_manifest.json` with every
   required slot declaring `generator != "placeholder"` and a
-  `source_file` that resolves on disk.
+  `source_file` that resolves on disk as a PNG whose IHDR dimensions
+  match the manifest.
 
 The sibling SKIP-only gate (`dm1_v22_real_asset_material_gate_pc34`)
 runs only when the real-art pack is present and rejects the build
@@ -113,14 +115,17 @@ Reuses the existing `modern_asset_manifest.json` format defined for
   `"reviewed"`) is a non-placeholder marker.
 - `source_file` — required. The on-disk filename relative to
   `<manifest_dir>/<category>/`.
-- `width`, `height` — required, must be `> 0`.
+- `width`, `height` — required, must be `> 0` and must match the
+  on-disk PNG IHDR dimensions for non-placeholder entries.
 
 Path resolution: the manifest is read from
 `~/.firestaff/assets/dm1/modern/modern_asset_manifest.json`. Each
 entry's `source_file` is resolved against
 `<manifest_dir>/<category>/<source_file>`. If the file exists on
-disk the slot is `REAL`; otherwise it is `PARTIAL` (real metadata,
-missing file).
+disk, starts with the PNG 8-byte signature, has an `IHDR` chunk, and
+the IHDR width/height matches the manifest dimensions, the slot is
+`REAL`; otherwise it is `PARTIAL` (real metadata, missing file or bad
+PNG provenance).
 
 The gate walks two parents up from the `dataDir` argument to find
 `~/.firestaff`, then descends into `assets/dm1/modern/`. This
@@ -148,7 +153,7 @@ SYNTHETIC_PLACEHOLDER ◀──────────────────�
 SYNTHETIC_PLACEHOLDER ◀───────────────────────────────┤ │
    │                                                  │ │
    ▼  declared slots with non-placeholder generator   │ │
-      and source_file NOT on disk                     │ │
+      and source_file missing / bad PNG provenance    │ │
 SYNTHETIC_PLACEHOLDER ◀───────────────────────────────┤ │
    │                                                  │ │
    ▼  at least one slot REAL, others not REAL         │ │
@@ -167,7 +172,7 @@ FINISHED_REAL                                          │ │
 | `NO_MANIFEST`           | Path unset OR file unreadable                            | Drop a valid `modern_asset_manifest.json` under `~/.firestaff/assets/dm1/modern/` |
 | `SYNTHETIC_PLACEHOLDER` | Manifest valid, every declared slot uses `placeholder` generator (the honest CI default) | Add a non-placeholder slot to promote to `PARTIAL`; complete all six for `FINISHED_REAL` |
 | `PARTIAL`               | At least one REAL, at least one non-REAL                  | Replace remaining placeholders with disk-resolved real PNGs to move toward `FINISHED_REAL` |
-| `FINISHED_REAL`         | Every required slot REAL with non-placeholder generator + on-disk `source_file` | Promotion requires an explicit sibling gap-list update |
+| `FINISHED_REAL`         | Every required slot REAL with non-placeholder generator + on-disk PNG whose IHDR dimensions match the manifest | Promotion requires an explicit sibling gap-list update |
 
 The gate is recomputed on every call. There is no caching; the
 manifest file is re-read on each `gate()` call so an operator can
@@ -209,7 +214,9 @@ shipped. `FINISHED_REAL` is reachable only when:
    declaring `generator != "placeholder"`.
 2. Each slot's `source_file` resolves on disk under
    `<manifest_dir>/<category>/<source_file>`.
-3. Width and height are `> 0`.
+3. Each resolved file starts with the PNG 8-byte signature and has an
+   `IHDR` width/height matching the manifest dimensions.
+4. Width and height are `> 0`.
 
 Until then, the gate reports `SYNTHETIC_PLACEHOLDER` (the honest
 current default matching the procedural bitmaps the V2.2 modern-asset
@@ -265,6 +272,13 @@ docs/source-lock/theron_v2_phase3_hud_widget_assets_H2340.md — sibling gate do
 Any other value is a non-placeholder marker.
 
 `width` and `height` must both be positive integers.
+
+For non-placeholder entries, existence alone is not enough: the file
+must begin with the PNG signature `89 50 4E 47 0D 0A 1A 0A`, contain
+an `IHDR` chunk at the standard offset, and report the same width and
+height as the manifest. This keeps a placeholder text file renamed to
+`.png`, or a stale PNG with mismatched dimensions, in `PARTIAL`
+instead of promoting the finished-art gate.
 
 ## Companion (SKIP-only) gate
 

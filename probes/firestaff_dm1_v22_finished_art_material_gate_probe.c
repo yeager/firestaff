@@ -17,14 +17,16 @@
  *   Scenario 7: PARTIAL via missing source_file    -> PARTIAL
  *                                                       (declared slots
  *                                                        PARTIAL-only)
- *   Scenario 8: garbage manifest                   -> NO_MANIFEST
+ *   Scenario 8: bad PNG provenance                 -> PARTIAL
+ *               (text file named .png, or IHDR dimensions mismatched)
+ *   Scenario 9: garbage manifest                   -> NO_MANIFEST
  *                                                       (parser rejects)
- *   Scenario 9: per-slot invariant suite
+ *   Scenario 10: per-slot invariant suite
  *               - 6 slots tracked
  *               - slot names match hero_01 ids from the sibling
  *                 SKIP-only real-asset test
  *               - source_evidence cites DUNVIEW.C / DUNGEON.C / PANEL.C
- *                 / FIRESTAFF_GAP_LIST / Honest boundary
+ *                 / PNG IHDR / FIRESTAFF_GAP_LIST / Honest boundary
  *
  * Source:
  *   - ReDMCSB DUNVIEW.C:6697-6816 (DM1 viewport composition order)
@@ -63,6 +65,35 @@ static int write_file(const char* path, const char* content) {
     size_t w = fwrite(content, 1, strlen(content), fp);
     fclose(fp);
     return w == strlen(content);
+}
+
+static void put_be32(unsigned char* p, unsigned v) {
+    p[0] = (unsigned char)((v >> 24) & 0xffU);
+    p[1] = (unsigned char)((v >> 16) & 0xffU);
+    p[2] = (unsigned char)((v >> 8) & 0xffU);
+    p[3] = (unsigned char)(v & 0xffU);
+}
+
+static int write_png_header_file(const char* path,
+                                 unsigned width,
+                                 unsigned height) {
+    static const unsigned char sig[8] = {
+        0x89u, 0x50u, 0x4eu, 0x47u, 0x0du, 0x0au, 0x1au, 0x0au
+    };
+    unsigned char hdr[24];
+    FILE* fp;
+    memcpy(hdr, sig, sizeof(sig));
+    hdr[8] = 0x00u; hdr[9] = 0x00u; hdr[10] = 0x00u; hdr[11] = 0x0du;
+    memcpy(hdr + 12, "IHDR", 4);
+    put_be32(hdr + 16, width);
+    put_be32(hdr + 20, height);
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(hdr, 1, sizeof(hdr), fp) != sizeof(hdr)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
 }
 
 /* Helper: build expected manifest path. */
@@ -239,7 +270,7 @@ int main(void) {
     char real_file[1024];
     snprintf(real_file, sizeof(real_file),
              "%s/wall_d3_carved_hero_01.png", wall_dir);
-    write_file(real_file, "fake-png-bytes");
+    write_png_header_file(real_file, 64U, 64U);
 
     const char* partial_content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-probe\","
@@ -322,7 +353,13 @@ int main(void) {
                  resolved_mdir,
                  dm1_v22_famg_slot_category((DM1_V22_FamgSlot)i),
                  files[i]);
-        write_file(fpath, "fake-png-bytes");
+        write_png_header_file(fpath,
+                              (i == DM1_V22_FAMG_DOOR_FRONT) ? 32U :
+                              (i == DM1_V22_FAMG_CREATURE_DEMON ||
+                               i == DM1_V22_FAMG_CHAMPION_WARRIOR) ? 48U : 64U,
+                              (i == DM1_V22_FAMG_DOOR_FRONT) ? 48U :
+                              (i == DM1_V22_FAMG_CREATURE_DEMON ||
+                               i == DM1_V22_FAMG_CHAMPION_WARRIOR) ? 48U : 64U);
     }
 
     const char* finished_content =
@@ -389,16 +426,42 @@ int main(void) {
               DM1_V22_FAMG_WALL_D3_CARVED) ==
               DM1_V22_FAMG_CLASS_PARTIAL);
     /* Recreate for subsequent scenarios */
-    write_file(real_file, "fake-png-bytes");
+    write_png_header_file(real_file, 64U, 64U);
 
-    /* ── Scenario 8: garbage manifest -> NO_MANIFEST ────────────── */
-    printf("\n[ Scenario 8: garbage manifest ]\n");
+    /* ── Scenario 8: bad PNG provenance -> PARTIAL ──────────────── */
+    printf("\n[ Scenario 8: bad PNG provenance ]\n");
+    write_file(real_file, "fake-png-bytes");
+    check("text file with .png suffix -> wall_d3_carved=PARTIAL",
+          dm1_v22_famg_classify_slot(
+              DM1_V22_FAMG_WALL_D3_CARVED) ==
+              DM1_V22_FAMG_CLASS_PARTIAL);
+    DM1_V22_FamgSlotInfo info;
+    check("text file with .png suffix -> png_header_valid=0",
+          dm1_v22_famg_get_slot_info(
+              DM1_V22_FAMG_WALL_D3_CARVED, &info) == 1 &&
+          info.file_exists == 1 &&
+          info.png_header_valid == 0);
+    write_png_header_file(real_file, 32U, 64U);
+    check("PNG IHDR dimension mismatch -> wall_d3_carved=PARTIAL",
+          dm1_v22_famg_classify_slot(
+              DM1_V22_FAMG_WALL_D3_CARVED) ==
+              DM1_V22_FAMG_CLASS_PARTIAL);
+    check("PNG IHDR dimension mismatch reports actual width",
+          dm1_v22_famg_get_slot_info(
+              DM1_V22_FAMG_WALL_D3_CARVED, &info) == 1 &&
+          info.png_width == 32 &&
+          info.png_height == 64 &&
+          info.png_header_valid == 0);
+    write_png_header_file(real_file, 64U, 64U);
+
+    /* ── Scenario 9: garbage manifest -> NO_MANIFEST ────────────── */
+    printf("\n[ Scenario 9: garbage manifest ]\n");
     write_file(manifest_file, "this is not json { [");
     check("garbage manifest -> NO_MANIFEST gate",
           dm1_v22_famg_gate() == DM1_V22_FAMG_GATE_NO_MANIFEST);
 
-    /* ── Scenario 9: per-slot invariants + names + evidence ───────── */
-    printf("\n[ Scenario 9: invariants + names + evidence ]\n");
+    /* ── Scenario 10: per-slot invariants + names + evidence ─────── */
+    printf("\n[ Scenario 10: invariants + names + evidence ]\n");
     check("DM1_V22_FAMG_MATERIAL_COUNT=6",
           DM1_V22_FAMG_MATERIAL_COUNT == 6);
     check("slot[0] = wall_d3_carved_hero_01",
@@ -464,6 +527,8 @@ int main(void) {
           ev != NULL && strstr(ev, "m11_v22_inplace_draw") != NULL);
     check("source_evidence cites modern_asset_manifest.json",
           ev != NULL && strstr(ev, "modern_asset_manifest.json") != NULL);
+    check("source_evidence cites PNG IHDR provenance",
+          ev != NULL && strstr(ev, "PNG IHDR") != NULL);
     check("source_evidence cites FIRESTAFF_GAP_LIST",
           ev != NULL && strstr(ev, "FIRESTAFF_GAP_LIST") != NULL);
     check("source_evidence cites Honest boundary",

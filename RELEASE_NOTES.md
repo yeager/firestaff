@@ -15,6 +15,11 @@
   x86_64 release job. Steam Deck is no longer grouped with Linux ARM64 in
   release copy.
 
+- DM1 V2.2 finished-art material gating now requires non-placeholder hero
+  material files to have a PNG signature and IHDR dimensions matching the
+  manifest before they can promote to `REAL`. This hardens readiness checks
+  without claiming that finished DM1 V2.2 art or screenshot receipts ship yet.
+
 # Firestaff v3.0.13
 
 Firestaff v3.0.13 packages the 2026-06-28/29 runtime-hardening work that

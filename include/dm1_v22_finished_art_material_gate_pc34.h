@@ -11,7 +11,8 @@
  *
  *   generator    != "placeholder"  (e.g. "pbr_hero" | "ai_upscale")
  *   source_file  resolves on disk under the modern asset root
- *   width,height match the on-disk PNG header
+ *   file bytes   start with the PNG signature
+ *   width,height match the on-disk PNG IHDR header
  *
  * This module is the CI-runnable distinction. It reads the manifest,
  * classifies each material slot into one of:
@@ -23,8 +24,9 @@
  *   PARTIAL            — at least one slot is REAL, at least one is
  *                          PLACEHOLDER / MISSING / UNKNOWN
  *   FINISHED_REAL      — every required material slot is REAL with
- *                          generator != "placeholder" and source_file
- *                          resolving on disk
+ *                          generator != "placeholder", source_file
+ *                          resolving on disk, and PNG IHDR matching
+ *                          the declared dimensions
  *
  * Companion to the existing real-asset SKIP-only gate
  * (test_dm1_v22_real_asset_material_gate_pc34). The sibling SKIP gate
@@ -143,6 +145,9 @@ typedef struct {
     int             width;
     int             height;
     int             file_exists;       /* 1 if resolved_path exists */
+    int             png_header_valid;  /* 1 if PNG sig + IHDR dimensions match */
+    int             png_width;         /* decoded IHDR width, or 0 */
+    int             png_height;        /* decoded IHDR height, or 0 */
     DM1_V22_FamgClass classification;
 } DM1_V22_FamgSlotInfo;
 
@@ -228,9 +233,10 @@ int  dm1_v22_famg_get_installed(void);
 int dm1_v22_famg_uses_placeholder(DM1_V22_FamgSlot slot);
 
 /* Returns 1 if the gate is FINISHED_REAL — i.e. every required slot
- * is REAL with a non-placeholder generator and a source_file path that
- * resolves on disk. This is the "real reviewed finished-art pack"
- * state the gap-list row asks the gate to distinguish. */
+ * is REAL with a non-placeholder generator, a source_file path that
+ * resolves on disk, and a PNG IHDR header matching the manifest
+ * dimensions. This is the "real reviewed finished-art pack" state the
+ * gap-list row asks the gate to distinguish. */
 int dm1_v22_famg_is_finished_real(void);
 
 /* Returns 1 if the gate is in SYNTHETIC_PLACEHOLDER or PARTIAL —
