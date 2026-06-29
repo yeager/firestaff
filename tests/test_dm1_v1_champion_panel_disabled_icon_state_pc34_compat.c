@@ -688,6 +688,63 @@ static void test_boundary_clamps(void)
 }
 
 /*
+ * ReDMCSB CHAMDRAW.C F0293:1134-1138 and F0296:1226-1231 walk
+ * packed champion indices from 0 to G0305_ui_PartyChampionCount-1.
+ * There is no source-side "absent champion" hole inside that
+ * active-count window.  The helper therefore rejects a synthetic
+ * fixture with present=false inside the active count and keeps the
+ * result rows aligned by champion index so later shield-border checks
+ * cannot drift onto the wrong row.
+ */
+static void test_party_hole_rejected_without_row_drift(void)
+{
+    DM1_V1_ChampionPanelDisabledIconStatePc34Compat state;
+    DM1_V1_ChampionPanelDisabledIconResolveResultPc34Compat r;
+
+    DM1_V1_ChampionPanelDisabledIconState_InitStatePc34Compat(&state, 4);
+    for (int i = 0; i < 4; ++i) {
+        state.champions[i].action_hand_empty = false;
+    }
+    state.champions[1].present = false;
+    state.champions[2].party_shield_defense = 4;
+    state.champions[3].fire_shield_defense = 4;
+
+    expect_int("party_hole.resolve.rc",
+               DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(
+                   &state, &r),
+               0, "CHAMDRAW.C F0293:1134-1138 packed party count");
+    expect_bool("party_hole.accepted", r.accepted, false,
+                "invalid synthetic absent-in-active-count shape rejected");
+    expect_int("party_hole.processed", r.champions_processed, 4,
+               "one result row remains present for each active count index");
+    expect_int("party_hole.state1",
+               (int)r.champion_results[1].state,
+               (int)DM1_V1_CPDIS_STATE_PARTY_INCOMPLETE_PC34,
+               "CHAMDRAW.C F0293 has no absent hole inside G0305");
+    expect_contains("party_hole.anchor1", r.champion_results[1].anchor,
+                    "F0293:1134-1138",
+                    "packed party-loop rejection anchor");
+    expect_int("party_hole.count",
+               r.per_state_count[DM1_V1_CPDIS_STATE_PARTY_INCOMPLETE_PC34],
+               1, "exactly one invalid party-hole row");
+    expect_int("party_hole.row2.index", r.champion_results[2].index, 2,
+               "row alignment preserved after rejected hole");
+    expect_int("party_hole.row2.shield_count",
+               r.champion_results[2].shield_border_count, 1,
+               "shield data stays on champion 2 after rejected hole");
+    expect_int("party_hole.row2.shield_gfx",
+               r.champion_results[2].shield_border_graphics[0],
+               (int)DM1_V1_CPDIS_GRAPHIC_PARTY_SHIELD_PC34,
+               "champion 2 party shield remains row 2");
+    expect_int("party_hole.row3.index", r.champion_results[3].index, 3,
+               "row 3 alignment preserved");
+    expect_int("party_hole.row3.shield_gfx",
+               r.champion_results[3].shield_border_graphics[0],
+               (int)DM1_V1_CPDIS_GRAPHIC_FIRE_SHIELD_PC34,
+               "champion 3 fire shield remains row 3");
+}
+
+/*
  * Name-table for the state enum — the per-state name string is
  * part of the public contract (callers want stable strings for
  * log lines and parity-evidence reports).
@@ -736,6 +793,7 @@ int main(void)
     test_shield_border_disabled_state();
     test_per_champion_priority_over_global();
     test_boundary_clamps();
+    test_party_hole_rejected_without_row_drift();
     test_state_name_strings();
 
     printf("Assertions: %d\n", g_assertions);

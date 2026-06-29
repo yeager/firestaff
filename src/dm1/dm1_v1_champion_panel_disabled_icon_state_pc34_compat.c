@@ -373,9 +373,21 @@ int DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(
         r->anchor = "ACTIDRAW.C F0386:201-296";
 
         if (!row->present) {
-            /* Skip absent slots entirely — F0292 walks the present
-             * champions via the party count, so absent slots don't
-             * appear in the F0386 draw stack. */
+            /* ReDMCSB CHAMDRAW.C F0293:1134-1138 and F0296:1226-1231
+             * walk packed champion indices from 0 up to
+             * G0305_ui_PartyChampionCount-1.  There is no source-side
+             * "absent hole" bit inside that count, so reject this
+             * synthetic fixture shape instead of silently skipping a row
+             * and misaligning later shield-border results. */
+            r->state = DM1_V1_CPDIS_STATE_PARTY_INCOMPLETE_PC34;
+            r->should_hatch_cell = false;
+            r->anchor =
+                "CHAMDRAW.C F0293:1134-1138 packed G0305 party loop";
+            out_result->any_unavailable = true;
+            ++out_result->per_state_count[
+                DM1_V1_CPDIS_STATE_PARTY_INCOMPLETE_PC34];
+            ++out_result->champions_processed;
+            accepted = 0;
             continue;
         }
         if (row->current_health == 0) {

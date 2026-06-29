@@ -65,17 +65,17 @@
     }
   ],
   "status": "PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED",
-  "timestampUtc": "2026-06-25T21:01:34.595971+00:00",
+  "timestampUtc": "2026-06-29T13:24:04.175818+00:00",
   "verificationRuns": [
     {
-      "assertions": 153,
+      "assertions": 164,
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
+        "build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
       ],
       "fails": 0,
       "finalMarker": "DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_PC34_COMPAT_OK",
       "passed": true,
-      "passes": 153,
+      "passes": 164,
       "returncode": 0
     }
   ]
