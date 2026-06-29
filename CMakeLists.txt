@@ -7845,6 +7845,33 @@ if(BUILD_TESTING)
         LABELS "tier2;m11;ui-scale;accessibility"
     )
 
+    # M11 colorblind daltonization gate. Pins the 3x3 fixed-point
+    # matrix contract for the four modes (Off / Deuteranopia /
+    # Protanopia / Tritanopia), the OFF-mode short-circuit, the
+    # NULL / out-of-range / negative-mode no-op paths, byte-range
+    # edge colors, the alpha-channel preservation in
+    # M11_Colorblind_ApplyRGBA, and the per-pixel numeric alignment
+    # between the single-pixel RemapRGB helper and the multi-pixel
+    # ApplyRGBA entry point. Data-free, runs in CI.
+    add_executable(test_m11_colorblind_m11
+        tests/test_m11_colorblind_m11.c
+        src/engine/colorblind_m11.c
+    )
+    target_include_directories(test_m11_colorblind_m11 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_colorblind_m11 PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME m11_colorblind_m11
+        COMMAND test_m11_colorblind_m11
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    set_tests_properties(m11_colorblind_m11 PROPERTIES
+        LABELS "tier2;m11;accessibility;colorblind"
+    )
+
     # v2.8.x: keyboard layout contract regression.  Pins the new
     # arrow-key mapping (arrows strafe, Home/End/Q/E turn, WASD
     # mirrors arrows) so the production code cannot silently drift
