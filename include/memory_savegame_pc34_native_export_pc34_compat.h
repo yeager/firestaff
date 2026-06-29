@@ -109,6 +109,68 @@
  * SAVEGAME_MAX_FILE_SIZE in the Firestaff-native path. */
 #define SAVEGAME_PC34_MAX_FILE_SIZE  (1u << 20)
 
+/* -------- LSV-02 versioned manifest gate (DM1) --------
+ *
+ * The PC 3.4 DM_SAVE_HEADER carries an AdditionalData[134] region
+ * (meta[41..107] in the obfuscated second half) that the original
+ * ReDMCSB engine never reads. We use the first 16 bytes of that
+ * region as a Firestaff-only versioned manifest slot so that
+ *   - the exported file is still loadable by vanilla DM 3.4 PC
+ *     (the engine ignores AdditionalData; only FormatID/Platform/
+ *     DungeonID gate loading)
+ *   - the Firestaff importer can detect, version-check, and
+ *     per-game gate the export at load time, so a wrong-game
+ *     save (e.g. a CSB-native file fed into a DM1 runtime)
+ *     is rejected before any GLOBAL_DATA is unpacked.
+ *
+ * The 16-byte manifest layout (LE, embedded in the obfuscated
+ * header meta half, so a casual hex-dump of AdditionalData
+ * yields the magic exactly as written):
+ *
+ *   off  size  field
+ *    0    8    magic         ASCII "RDMCSB_LSV" (no NUL)
+ *    8    2    formatVersion uint16 (currently 1)
+ *   10    2    gameCode      uint16 (SAVEGAME_PC34_GAME_CODE_*)
+ *   12    2    dungeonCode   uint16 (echoes meta[40] DungeonID)
+ *   14    2    flags         uint16 (reserved; must be 0)
+ *
+ * Source-locked: per ReDMCSB DEFS.H:468-480 the DM_SAVE_HEADER
+ * exposes AdditionalData[134] as opaque scratch bytes the
+ * runtime never inspects. We treat it as our per-export tag.
+ * Vanilla DM 3.4 PC loads the file as before; Firestaff's
+ * importer uses it as the per-game compatibility gate.
+ */
+#define SAVEGAME_PC34_MANIFEST_SIZE            16
+#define SAVEGAME_PC34_MANIFEST_OFFSET          41   /* meta[] index 41 == AdditionalData[0] */
+
+/* Per-game codes (LSV-02). The DM1 value mirrors the
+ * C10_DUNGEON_DM constant 0x0A split with the I34E
+ * L1348_s_GlobalData.GameID namespace. */
+#define SAVEGAME_PC34_GAME_CODE_DM1            0x00D1u
+#define SAVEGAME_PC34_GAME_CODE_CSB            0x00C5u
+#define SAVEGAME_PC34_GAME_CODE_DM2            0x00D2u
+#define SAVEGAME_PC34_GAME_CODE_NEXUS          0x00D9u
+#define SAVEGAME_PC34_GAME_CODE_THERON         0x00D4u
+
+#define SAVEGAME_PC34_MANIFEST_VERSION         1u
+
+/* Magic as a 64-bit literal so callers can use it in
+ * comparisons without including string.h. */
+#define SAVEGAME_PC34_MANIFEST_MAGIC_U64 \
+    ((uint64_t)0x4C535F4253434D44ull)  /* "RDMCSB_LSV" little-endian */
+
+/* LSV-02 result codes (extend SAVEGAME_PC34_*). Kept distinct
+ * from the existing SAVEGAME_PC34_ERROR_* values so a single
+ * import call can return a single verdict and a future
+ * F0797_SAVEGAME_PC34ErrorToString_Compat lookup can dispatch
+ * the manifest codes through the same switch. */
+#define SAVEGAME_PC34_MANIFEST_OK                    1
+#define SAVEGAME_PC34_MANIFEST_ERR_BAD_MAGIC        -10
+#define SAVEGAME_PC34_MANIFEST_ERR_BAD_VERSION      -11
+#define SAVEGAME_PC34_MANIFEST_ERR_WRONG_GAME       -12
+#define SAVEGAME_PC34_MANIFEST_ERR_BODY_TRUNCATED   -13
+#define SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT      -14
+
 /* LSV-01 export / import API.
  *
  * Export:
@@ -157,5 +219,75 @@ uint16_t F0798_SAVEGAME_PC34CPSCObfuscate_Compat(
     uint16_t* buf,
     int wordCount,
     uint16_t key);
+
+/* ==========================================================
+ *  LSV-02 versioned manifest gate (DM1 per-game)
+ * ==========================================================
+ *
+ * F0799_SAVEGAME_PC34PeekManifest_Compat
+ *   Quick check whether a buffer starts with the Firestaff
+ *   versioned manifest. Returns one of the
+ *   SAVEGAME_PC34_MANIFEST_* codes:
+ *     MANIFEST_OK              — manifest is present, version
+ *                                and gameCode are valid;
+ *                                outGameCode/outVersion filled.
+ *     MANIFEST_ERR_NOT_PRESENT — vanilla PC 3.4 file (no
+ *                                manifest, no Firestaff gating);
+ *                                caller may still call
+ *                                F0796 (legacy import path).
+ *     MANIFEST_ERR_BAD_MAGIC   — first 8 bytes do not match
+ *                                "RDMCSB_LSV" — caller should
+ *                                reject outright.
+ *     MANIFEST_ERR_BAD_VERSION — manifest version above the
+ *                                supported envelope; caller
+ *                                should reject and refuse to
+ *                                interpret the file.
+ *   `outBodySize` returns the byte count of the embedded PC 3.4
+ *   body that follows the 512-byte header (header + parts,
+ *   minus the manifest slot which lives inside the header).
+ *   Pass NULL for outGameCode/outVersion/outBodySize if not
+ *   needed.
+ */
+int F0799_SAVEGAME_PC34PeekManifest_Compat(
+    const unsigned char* buf,
+    int bufSize,
+    uint16_t* outVersion,
+    uint16_t* outGameCode,
+    int* outBodySize);
+
+/* F0800_SAVEGAME_PC34ValidateGameCode_Compat
+ *   Pins the importer to a per-game code. Pass the
+ *   SAVEGAME_PC34_GAME_CODE_* value matching the runtime
+ *   currently trying to load. Returns:
+ *     MANIFEST_OK               — manifest, version, and
+ *                                 gameCode all match.
+ *     MANIFEST_ERR_NOT_PRESENT  — vanilla PC 3.4 file; caller
+ *                                 decides whether to allow
+ *                                 (legacy ReDMCSB interop)
+ *                                 or reject (strict per-game
+ *                                 import).
+ *     MANIFEST_ERR_WRONG_GAME   — manifest present but
+ *                                 gameCode does not match.
+ *     MANIFEST_ERR_BAD_VERSION  — manifest present but
+ *                                 version above envelope.
+ *     MANIFEST_ERR_BODY_TRUNCATED — manifest present but
+ *                                 file is shorter than the
+ *                                 body size the manifest
+ *                                 claims.
+ *   The expected body size is taken from the buffer / bufSize
+ *   pair (not from the manifest), so a malformed file that
+ *   claims a 1 GiB body but ships 1 KiB is caught here.
+ */
+int F0800_SAVEGAME_PC34ValidateGameCode_Compat(
+    const unsigned char* buf,
+    int bufSize,
+    uint16_t expectedGameCode,
+    int requireManifest);
+
+/* F0801_SAVEGAME_PC34GameCodeName_Compat
+ *   Human-readable, stable per-game code name. Returns a
+ *   static string ("DM1" / "CSB" / "DM2" / "NEXUS" / "THERON"
+ *   / "UNKNOWN" / "RESERVED"). */
+const char* F0801_SAVEGAME_PC34GameCodeName_Compat(uint16_t gameCode);
 
 #endif /* REDMCSB_MEMORY_SAVEGAME_PC34_NATIVE_EXPORT_PC34_COMPAT_H */
