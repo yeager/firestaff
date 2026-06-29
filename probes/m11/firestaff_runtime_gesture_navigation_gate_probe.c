@@ -240,11 +240,20 @@ static void probe_source_viewport_scale(void) {
               320, 200, 320, 200) == 1,
           "F3 320x200 -> 320x200 (1x) safe");
     check(FirestaffRuntimeGestureNav_SourceViewportSafe(
+              320, 200, 70, 44) == 0,
+          "F4 320x200 -> 70x44 fits as 70x43 unsafe");
+    check(FirestaffRuntimeGestureNav_SourceViewportSafe(
+              320, 200, 71, 44) == 1,
+          "F5 320x200 -> 71x44 fits as 71x44 safe");
+    check(FirestaffRuntimeGestureNav_SourceViewportSafe(
+              320, 200, 43, 43) == 0,
+          "F6 320x200 -> 43x43 unsafe");
+    check(FirestaffRuntimeGestureNav_SourceViewportSafe(
               0, 200, 1280, 720) == 0,
-          "F4 zero source -> unsafe");
+          "F7 zero source -> unsafe");
     check(FirestaffRuntimeGestureNav_SourceViewportSafe(
               320, 200, 0, 720) == 0,
-          "F5 zero surface -> unsafe");
+          "F8 zero surface -> unsafe");
 }
 
 /* Group G: 50-iteration determinism - every probe-state evaluation

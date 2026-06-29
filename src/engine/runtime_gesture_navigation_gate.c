@@ -236,33 +236,28 @@ int FirestaffRuntimeGestureNav_TouchTargetSafe(int widthPx, int heightPx) {
 
 int FirestaffRuntimeGestureNav_SourceViewportSafe(
     int sourceW, int sourceH, int surfaceW, int surfaceH) {
-    int sx, sy;
+    int fitW;
+    int fitH;
 
     if (sourceW <= 0 || sourceH <= 0) return 0;
     if (surfaceW <= 0 || surfaceH <= 0) return 0;
 
-    /* Compute the integer-nearest scale factor for the shortest
-     * framebuffer axis, mirroring the M11 letterbox math used by
-     * m11_letterbox_render_pc34_compat (smallest integer scale that
-     * fits the surface). */
-    sx = surfaceW / sourceW;
-    sy = surfaceH / sourceH;
-    if (sx <= 0) sx = 1;
-    if (sy <= 0) sy = 1;
-
-    /* Safe = the source framebuffer's shortest axis scales to >= MIN_TARGET_PX. */
-    if (sourceW < sourceH) {
-        /* sourceW is the shortest axis */
-        if (sx >= 1) {
-            return sourceW * sx >= RUNTIME_GESTURE_NAV_MIN_TARGET_PX;
-        }
-        return sourceW >= RUNTIME_GESTURE_NAV_MIN_TARGET_PX;
-    } else {
-        if (sy >= 1) {
-            return sourceH * sy >= RUNTIME_GESTURE_NAV_MIN_TARGET_PX;
-        }
-        return sourceH >= RUNTIME_GESTURE_NAV_MIN_TARGET_PX;
+    /* Mirror M11's fit-with-letterbox rect: start width-bound, then
+     * height-bound if that overflows. Do not coerce sub-1x surfaces to a
+     * fake 1x scale; a 43 px-tall fitted viewport must stay unsafe under
+     * the 44 px touch-target floor. */
+    fitW = surfaceW;
+    fitH = (int)(((long long)fitW * (long long)sourceH) / (long long)sourceW);
+    if (fitH > surfaceH) {
+        fitH = surfaceH;
+        fitW = (int)(((long long)fitH * (long long)sourceW) / (long long)sourceH);
     }
+    if (fitW < 1) fitW = 1;
+    if (fitH < 1) fitH = 1;
+
+    if (fitW < RUNTIME_GESTURE_NAV_MIN_TARGET_PX) return 0;
+    if (fitH < RUNTIME_GESTURE_NAV_MIN_TARGET_PX) return 0;
+    return 1;
 }
 
 const char* FirestaffRuntimeGestureNav_GetSourceEvidence(void) {
