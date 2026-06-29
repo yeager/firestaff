@@ -223,6 +223,118 @@ static void check_scaled_letterbox_rejection(void) {
                                            &fbY) == 0);
 }
 
+static void check_integer_scaled_content_input_gate(void) {
+    int rectX = -1;
+    int rectY = -1;
+    int rectW = -1;
+    int rectH = -1;
+    int windowX = -1;
+    int windowY = -1;
+    int fbX = -1;
+    int fbY = -1;
+    TouchClickZonePc34Compat hit;
+
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_FIT,
+                                             1,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_OK);
+    CHECK(rectX == 160);
+    CHECK(rectY == 40);
+    CHECK(rectW == 1600);
+    CHECK(rectH == 1000);
+
+    windowX = scaled_window_coord(rectX, rectW, 264, M11_FB_WIDTH);
+    windowY = scaled_window_coord(rectY, rectH, 126, M11_FB_HEIGHT);
+    CHECK(M11_Render_MapPointToFramebuffer(windowX,
+                                           windowY,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 264);
+    CHECK(fbY == 126);
+    /* Source route: ReDMCSB COMMAND.C G0448 movement arrow table. */
+    CHECK(TOUCHCLICK_Compat_HitTestWithButton(fbX,
+                                              fbY,
+                                              TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                                              &hit) == 1);
+    CHECK(hit.commandId == 3u);
+    CHECK(hit.zoneIndex == 70u);
+
+    windowX = scaled_window_coord(rectX, rectW, 319, M11_FB_WIDTH);
+    windowY = scaled_window_coord(rectY, rectH, 199, M11_FB_HEIGHT);
+    CHECK(M11_Render_MapPointToFramebuffer(windowX,
+                                           windowY,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 319);
+    CHECK(fbY == 199);
+
+    CHECK(M11_Render_MapPointToFramebuffer(rectX - 1,
+                                           rectY + rectH / 2,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW,
+                                           rectY + rectH / 2,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW / 2,
+                                           rectY - 1,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW / 2,
+                                           rectY + rectH,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+}
+
 static void check_macbook_retina_drawable_rect_regression(void) {
     int logicalX = -1;
     int logicalY = -1;
@@ -372,12 +484,15 @@ int main(void) {
                240, 0, 1440, 1080);
     check_rect(3600, 2092, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT,
                126, 0, 3347, 2092);
+    check_rect(1920, 1080, M11_SCALE_FIT, 1, M11_DISPLAY_ASPECT_CONTENT,
+               160, 40, 1600, 1000);
     check_scaled_dm1_command(264, 126, 3, 70);
     check_scaled_letterbox_rejection();
     check_map_edges(1512, 982, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
     check_map_edges(3024, 1964, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
     check_map_edges(3600, 2092, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
     check_map_edges(1920, 1080, M11_SCALE_FIT, 1, M11_DISPLAY_ASPECT_4_3);
+    check_integer_scaled_content_input_gate();
     check_macbook_retina_drawable_rect_regression();
     check_sdl3_pixel_size_event_keeps_logical_mouse_space();
 
