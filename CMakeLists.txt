@@ -10010,6 +10010,70 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat
     )
 
+    # DM1 V1 champion-panel portrait-state redraw: CHAMPION.C F0297:243-298 +
+    # F0298:270-298 trigger F0292 after leader-hand load changes; CHAMDRAW.C
+    # F0291:595-655 selects C033 normal / C034 wounded / C035 acting-hand
+    # slot boxes; CHAMDRAW.C F0292:771-839 redraws the status box,
+    # F0292:898-935 selects C033/C034 mouth/eye overlays, F0292:1080-1091
+    # redraws the action-hand slot; CHAMDRAW.C F0293:1117-1143 calls F0292
+    # for every active champion in index order; CHAMDRAW.C F0296:1249-1257
+    # scans changed object icons before F0292; DUNVIEW.C:3913-3928 anchors
+    # the 32x29 portrait at viewport-local base (96,35); DEFS.H:779-781,
+    # 1873-1878, 2188-2195 + DATA.C:264-272 anchor hand slots, C033/C034/
+    # C035 cascade, and championIndex*69+{4,24} y=10 hand boxes. Contract
+    # only: no M11 frame-path handoff, no real GRAPHICS.DAT or DUNGEON.DAT
+    # load, no original DOS pixel parity claim. Disjoint from the sibling
+    # F0296 hand_slot_refresh (CHAMPION.C F0297-F0302 walk), F0292 dead-
+    # member hand refresh, F0302 hand_slot_priority, F0296 portrait_box_
+    # redraw_states (event matrix below), portrait_box_blit_gate (F0354
+    # inventory blit), and HUD/status_hand_rotation gates.
+    add_executable(test_dm1_v1_champion_panel_portrait_state_redraw_pc34_compat
+        tests/test_dm1_v1_champion_panel_portrait_state_redraw_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_portrait_state_redraw_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_portrait_state_redraw_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_portrait_state_redraw_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_portrait_state_redraw_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_portrait_state_redraw_pc34_compat
+    )
+
+    # DM1 V1 champion-panel portrait-box redraw-state event matrix:
+    # CHAMDRAW.C F0291:498-677 inventory/status slot-box mapping and C033/
+    # C034/C035 hand-slot chrome; CHAMDRAW.C F0292:757-815 67x29 C151..C154
+    # status-box branch with C12 fill, F0354 only-for-inventory owner, and
+    # the NAME_TITLE|STATISTICS|WOUNDS|ACTION_HAND continuation for the
+    # non-inventory champions; CHAMDRAW.C F0292:843-895 C11 leader / C09
+    # nonleader name-color cascade; CHAMDRAW.C F0292:898-935 statistics
+    # recompute and C033/C034 mouth/eye chrome; CHAMDRAW.C F0292:1080-1110
+    # action-hand redraw + all-nine dirty-bit clear; CHAMDRAW.C F0293:1117-
+    # 1143 party-index order; CHAMDRAW.C F0295/F0296:1153-1260 changed-
+    # icon scan with MASK0x4000_VIEWPORT and inventory-owner F0292 handoff
+    # plus G0299 candidate/no-inventory early-return suppression; CHAMPION.C
+    # F0302:662-714 hand-slot pointer resolution. Contract only: synthetic
+    # 7-event matrix (party leader rotation / hand-slot swap / status-hand
+    # rotation / mirror candidate open-close / chest open-close / resurrect
+    # pending / candidate pick), 4-champion geometry, deterministic FNV-1a
+    # hash 0x7D4CD150, no M11 frame-path handoff, no GRAPHICS.DAT or
+    # DUNGEON.DAT load, no original DOS pixel parity claim. Disjoint from
+    # the pass673 portrait_state_redraw gate (above), pass683 name-color
+    # pixel tests, pass764 / pass765 slot-priority / status-hand rotation,
+    # and the portrait_box_blit_gate inventory F0354 slice.
+    add_executable(test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat
+        tests/test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat
+    )
+
     add_executable(test_dm1_v1_champion_panel_name_box_clip_pc34_compat
         tests/test_dm1_v1_champion_panel_name_box_clip_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_name_box_clip_pc34_compat.c
