@@ -52,10 +52,14 @@
  *      → BLACK, YELLOW → YELLOW, LIGHT_CYAN/CYAN → LIGHT_CYAN,
  *      default → WHITE). This locks the launcher / game surfaces
  *      onto one shared restricted palette.
+ *  12. Region apply: extreme public-helper rectangles are clipped
+ *      using overflow-safe arithmetic, including huge positive
+ *      widths/heights and preserve rectangles near INT_MAX.
  */
 
 #include "m11_high_contrast_overlay_pc34_compat.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -493,6 +497,74 @@ static void subtest_region_apply_except_rect(void) {
           "apply_rect_fence: gate off + preserve rect leaves chrome byte-identical");
 }
 
+/* ── Subtest 12: overflow-safe clipping for extreme rectangles ───── */
+
+static void subtest_region_apply_extreme_rectangles(void) {
+    unsigned char fb[9]; /* 3x3 */
+    int i;
+
+    M11_HighContrast_SetActive(1);
+
+    for (i = 0; i < 9; ++i) fb[i] = 1; /* GRAY -> BLACK if touched */
+    check(M11_HighContrast_ApplyActiveRGBA(fb, 3, 3,
+                                           INT_MAX - 4, 0,
+                                           INT_MAX, 3,
+                                           0) == 0,
+          "apply_extreme: huge off-right rect is clipped to no visible pixels");
+    for (i = 0; i < 9; ++i) {
+        check(fb[i] == 1,
+              "apply_extreme: huge off-right rect leaves every pixel untouched");
+    }
+
+    for (i = 0; i < 9; ++i) fb[i] = 1;
+    check(M11_HighContrast_ApplyActiveRGBA(fb, 3, 3,
+                                           1, 1,
+                                           INT_MAX, INT_MAX,
+                                           0) == 1,
+          "apply_extreme: huge width/height clips to framebuffer edge and remaps visible tail");
+    check(fb[0] == 1 && fb[1] == 1 && fb[3] == 1,
+          "apply_extreme: pixels before clipped huge rect stay untouched");
+    check(fb[4] == 0 && fb[5] == 0 && fb[7] == 0 && fb[8] == 0,
+          "apply_extreme: visible tail of huge rect remaps to BLACK");
+
+    for (i = 0; i < 9; ++i) fb[i] = 1;
+    check(M11_HighContrast_ApplyActiveRGBA(fb, 3, 3,
+                                           INT_MIN, INT_MIN,
+                                           INT_MAX, INT_MAX,
+                                           0) == 0,
+          "apply_extreme: huge negative rect ending before framebuffer is a no-op");
+    for (i = 0; i < 9; ++i) {
+        check(fb[i] == 1,
+              "apply_extreme: huge negative rect leaves every pixel untouched");
+    }
+
+    for (i = 0; i < 9; ++i) fb[i] = 1;
+    check(M11_HighContrast_ApplyActiveRGBAExceptRect(fb, 3, 3,
+                                                     0, 0, 3, 3,
+                                                     INT_MAX - 4, 0,
+                                                     INT_MAX, 3,
+                                                     0) == 1,
+          "apply_extreme: huge off-right preserve rect does not fence visible chrome");
+    for (i = 0; i < 9; ++i) {
+        check(fb[i] == 0,
+              "apply_extreme: off-right preserve rect lets visible chrome remap");
+    }
+
+    for (i = 0; i < 9; ++i) fb[i] = 1;
+    check(M11_HighContrast_ApplyActiveRGBAExceptRect(fb, 3, 3,
+                                                     0, 0, 3, 3,
+                                                     INT_MIN, INT_MIN,
+                                                     INT_MAX, INT_MAX,
+                                                     0) == 1,
+          "apply_extreme: huge negative preserve rect ending before framebuffer is ignored");
+    for (i = 0; i < 9; ++i) {
+        check(fb[i] == 0,
+              "apply_extreme: ignored negative preserve rect lets visible chrome remap");
+    }
+
+    M11_HighContrast_SetActive(0);
+}
+
 int main(void) {
     printf("  [1] default-off identity (V1 bit-identical)...\n");
     subtest_default_off_identity();
@@ -516,6 +588,8 @@ int main(void) {
     subtest_launcher_parity();
     printf("  [11] rectangle-fenced region apply...\n");
     subtest_region_apply_except_rect();
+    printf("  [12] extreme rectangle clipping safety...\n");
+    subtest_region_apply_extreme_rectangles();
     printf("\n  m11_high_contrast_overlay_pc34_compat: %d passed, %d failed\n",
            g_passes, g_failures);
     return g_failures == 0 ? 0 : 1;
