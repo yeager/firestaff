@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.13  (2026-06-29)",
+    "  - DM1 V1 post-dungeon capture planning now has a reviewed-target-selection contract and validator before live routes are dispatched.",
+    "  - New CTest coverage gates the selector self-test and pins the selector keypad map against the live DOSBox capture runner.",
+    "  - Runtime hardening since v3.0.12 includes M11 font-scale banner fit, DM1 required-data popup coverage, DM2 HUD widget manifest strengthening, and CSB real-asset ornament provenance.",
+    "  - Release verification: focused selector/runbook probes plus local CMake build, Phase A, audio, and release-prep checks before tagging.",
+    "",
     "V3.0.12  (2026-06-28)",
     "  - ZIP/gzip inflate support now builds through bundled static miniz by default, so launcher/runtime ZIP cache materialization and Theron SRM gzip handling no longer depend on an external zlib dylib.",
     "  - DM1 V1 source-lock coverage widened for champion-panel hand-slot refresh and pixel slices, waterskin/fountain fill-drink flow, food/water state, repeated-tick timeline determinism, creature-group splitting, and the D3C back-wall item thing pass.",
@@ -323,5 +329,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.12";
+    return "3.0.13";
 }

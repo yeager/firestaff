@@ -97,29 +97,28 @@ timing and inventory routes.
 
 ## Latest Release
 
-**Current version:** `3.0.12`.
+**Current version:** `3.0.13`.
 
-The latest release packages the 2026-06-27/28 runtime-hardening work after
-v3.0.10. It widens DM1 V1 source-locked gameplay gates, makes ZIP/gzip support
-self-contained through bundled miniz by default, and adds bounded presentation
-and data-handoff evidence across CSB, DM2, Nexus, and Theron's Quest. It does
-not claim finished parity for those targets beyond the runtime slices now
-covered by tests and probes.
+The latest release packages the 2026-06-28/29 runtime-hardening work after
+v3.0.12. It keeps DM1 V1 capture work accountable with a reviewed
+post-dungeon target-selection gate, tightens several launcher/runtime probes,
+and adds bounded presentation and data-handoff evidence without claiming
+finished parity for targets still being hardened.
 
-### v3.0.12 release highlights
+### v3.0.13 release highlights
 
-- **Bundled ZIP/gzip inflate**: default builds use bundled static miniz for
-  ZIP cache materialization and Theron SRM gzip handling, avoiding an external
-  zlib runtime dependency.
-- **DM1 V1 gate expansion**: champion-panel refresh/pixel slices,
-  waterskin/fountain flow, food/water state, timeline determinism, creature
-  group splitting, and the D3C back-wall item pass are now source-locked.
-- **Custom presentation gates**: DM1 V2.2 material checks, DM2 V2.2 modern-art
-  swap coverage, and DM2 HUD widget runtime/synthetic-manifest gates tighten
-  the enhanced presentation path without shipping replacement game art.
-- **Cross-game handoff coverage**: CSB graphics/save boundaries, Nexus
-  BPX/BPK/save/light paths, and Theron SRM/Track 02/V2 HUD paths have new
-  focused verification.
+- **DM1 V1 capture accountability**: the post-dungeon live-route runbook now
+  requires a reviewed target-selection receipt before dispatching routes for
+  creature-chain, champion-panel, wall/door/fakewall, viewport, or collision
+  pairing work.
+- **Selector regression coverage**: a new hermetic selector self-test and
+  runbook-consistency check pin target kinds, keypad route keys, required
+  fields, baseline non-claims, and asset/preflight hashes.
+- **Runtime and launcher probes**: M11 font-scale banner fit, DM1 required-data
+  popup behavior, DM2 HUD widget manifest integrity, and CSB real-asset
+  ornament provenance all have tighter gates.
+- **Conservative release claims**: no proprietary frames are shipped, and the
+  new capture tooling is an accountability gate rather than a parity promotion.
 
 ## Download
 
