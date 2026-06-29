@@ -333,6 +333,8 @@ need real-asset proof.
 
 - **Theron V2 touch/controller seed**: new data-free Phase 6 gates map Theron V2 touch/controller affordances to source-locked C001-C006 movement commands and reject touch starts on V2 HUD chrome. This is a deterministic presentation-input contract only; live SDL-event wire-up and real Track 02 runtime proof remain open.
 
+- **M12 cloud-sync settings schema boundary**: settings JSON import now round-trips the launcher cloud-sync root (`cloud_sync_dir`) together with the opt-in flag and policy, with probe coverage. This remains a launcher/settings boundary only, not real provider integration.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.

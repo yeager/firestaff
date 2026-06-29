@@ -1523,6 +1523,7 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         SET_BOOL("streamer_mode", streamerMode)
         SET_BOOL("cloud_sync_enabled", cloudSyncEnabled)
         SET_INT("cloud_sync_policy", cloudSyncPolicy)
+        SET_STRING("cloud_sync_dir", cloudSyncDir, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_STRING("custom_music_path", customMusicPath, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_STRING("custom_dungeon_path", customDungeonPath, M12_CONFIG_DATA_DIR_CAPACITY)
         SET_STRING("screenshot_path", screenshotPath, M12_CONFIG_DATA_DIR_CAPACITY)
