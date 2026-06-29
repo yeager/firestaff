@@ -2986,6 +2986,7 @@ add_executable(firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe
     probes/csb/firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe.c
     src/csb/csb_hint_oracle_htc.c
     src/csb/csb_hint_oracle_htc_real_scan.c
+    src/csb/csb_hint_oracle_htc_variant.c
     src/csb/csb_hint_oracle_ui_runtime_binding.c
     src/shared/asset_find_by_hash.c
     src/shared/fs_portable_compat.c
@@ -16307,6 +16308,7 @@ if(BUILD_TESTING)
         tests/test_csb_hint_oracle_ui_runtime_binding.c
         src/csb/csb_hint_oracle_htc.c
         src/csb/csb_hint_oracle_htc_real_scan.c
+        src/csb/csb_hint_oracle_htc_variant.c
         src/csb/csb_hint_oracle_ui_runtime_binding.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c

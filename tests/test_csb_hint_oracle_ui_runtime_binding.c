@@ -13,6 +13,7 @@
  *     HCSB.HTC (the same fixture the data-free parser test
  *     uses), the binding surface produces a non-empty report
  *     that contains the loaded matched-md5/label + the
+ *     off-list variant metadata (`variant=unknown`) + the
  *     hint 0 name + first-page decoded text + the wildcard
  *     (level=0, x=255, y=255) resolve.
  *   - Truncation: a small output buffer triggers the
@@ -281,6 +282,12 @@ static int test_report_contains_binding_smoke(void)
      * parser agreed on. */
     ASSERT_TRUE(strstr(report, "format_word=2") != NULL);
     ASSERT_TRUE(strstr(report, "dungeon_id=13") != NULL);
+    /* The synthetic fixture is deliberately not one of the
+     * accepted Utility Disk variants; variant classification
+     * remains separate from the binding surface and reports
+     * UNKNOWN instead of inventing a language/release tag. */
+    ASSERT_TRUE(strstr(report, "variant=unknown") != NULL);
+    ASSERT_TRUE(strstr(report, "variant_drift=unknown") != NULL);
     /* The hint 0 binding smoke must include the parsed hint
      * name from the fixture. */
     ASSERT_TRUE(strstr(report, "PROVE YOU ARE WIZARD") != NULL);
