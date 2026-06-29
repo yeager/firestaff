@@ -228,6 +228,8 @@ static void check_integer_scaled_content_input_gate(void) {
     int rectY = -1;
     int rectW = -1;
     int rectH = -1;
+    int cellW = -1;
+    int cellH = -1;
     int windowX = -1;
     int windowY = -1;
     int fbX = -1;
@@ -249,6 +251,12 @@ static void check_integer_scaled_content_input_gate(void) {
     CHECK(rectY == 40);
     CHECK(rectW == 1600);
     CHECK(rectH == 1000);
+    CHECK((rectW % M11_FB_WIDTH) == 0);
+    CHECK((rectH % M11_FB_HEIGHT) == 0);
+    cellW = rectW / M11_FB_WIDTH;
+    cellH = rectH / M11_FB_HEIGHT;
+    CHECK(cellW == 5);
+    CHECK(cellH == 5);
 
     windowX = scaled_window_coord(rectX, rectW, 264, M11_FB_WIDTH);
     windowY = scaled_window_coord(rectY, rectH, 126, M11_FB_HEIGHT);
@@ -272,6 +280,143 @@ static void check_integer_scaled_content_input_gate(void) {
                                               &hit) == 1);
     CHECK(hit.commandId == 3u);
     CHECK(hit.zoneIndex == 70u);
+
+    /* Integer scaling must give every physical pixel in a source cell the
+     * same source coordinate before the ReDMCSB COMMAND.C G0448 hit-test.
+     * This catches off-by-one regressions at movement-arrow boundaries. */
+    windowX = rectX + (263 * cellW);
+    windowY = rectY + (125 * cellH);
+    CHECK(M11_Render_MapPointToFramebuffer(windowX,
+                                           windowY,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 263);
+    CHECK(fbY == 125);
+    CHECK(TOUCHCLICK_Compat_HitTestWithButton(fbX,
+                                              fbY,
+                                              TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                                              &hit) == 1);
+    CHECK(hit.commandId == 3u);
+    CHECK(hit.zoneIndex == 70u);
+
+    CHECK(M11_Render_MapPointToFramebuffer(windowX + cellW - 1,
+                                           windowY + cellH - 1,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 263);
+    CHECK(fbY == 125);
+
+    CHECK(M11_Render_MapPointToFramebuffer(windowX - cellW,
+                                           windowY,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 262);
+    CHECK(fbY == 125);
+    CHECK((TOUCHCLICK_Compat_HitTestWithButton(fbX,
+                                               fbY,
+                                               TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                                               &hit) == 0) ||
+          hit.zoneIndex != 70u);
+
+    CHECK(M11_Render_MapPointToFramebuffer(windowX,
+                                           windowY - cellH,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 263);
+    CHECK(fbY == 124);
+    CHECK((TOUCHCLICK_Compat_HitTestWithButton(fbX,
+                                               fbY,
+                                               TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                                               &hit) == 0) ||
+          hit.zoneIndex != 70u);
+
+    windowX = rectX + (289 * cellW);
+    windowY = rectY + (145 * cellH);
+    CHECK(M11_Render_MapPointToFramebuffer(windowX + cellW - 1,
+                                           windowY + cellH - 1,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 289);
+    CHECK(fbY == 145);
+    CHECK(TOUCHCLICK_Compat_HitTestWithButton(fbX,
+                                              fbY,
+                                              TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                                              &hit) == 1);
+    CHECK(hit.commandId == 3u);
+    CHECK(hit.zoneIndex == 70u);
+
+    CHECK(M11_Render_MapPointToFramebuffer(windowX + cellW,
+                                           windowY,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 290);
+    CHECK(fbY == 145);
+    CHECK((TOUCHCLICK_Compat_HitTestWithButton(fbX,
+                                               fbY,
+                                               TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                                               &hit) == 0) ||
+          hit.zoneIndex != 70u);
+
+    CHECK(M11_Render_MapPointToFramebuffer(windowX,
+                                           windowY + cellH,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 1);
+    CHECK(fbX == 289);
+    CHECK(fbY == 146);
+    CHECK((TOUCHCLICK_Compat_HitTestWithButton(fbX,
+                                               fbY,
+                                               TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,
+                                               &hit) == 0) ||
+          hit.zoneIndex != 70u);
 
     windowX = scaled_window_coord(rectX, rectW, 319, M11_FB_WIDTH);
     windowY = scaled_window_coord(rectY, rectH, 199, M11_FB_HEIGHT);
