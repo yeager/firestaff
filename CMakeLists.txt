@@ -17986,6 +17986,33 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 S2D screen-text surface probe. Headless and data-free by
+# default: binds an already-loaded Nexus_V1_Font + parsed SCR section
+# table through nexus_v1_screen_text_draw_indexed(), paints "NEXUS" into
+# a caller-owned indexed framebuffer at a requested screen origin, and
+# verifies receipt counters + deterministic framebuffer hash. Optional
+# real FONT256.S2D path drives nexus_v1_screen_text_draw_s2d_bytes().
+# Source-lock:
+#   include/nexus_v1_screen_text.h       (runtime-facing wrapper)
+#   src/nexus/nexus_v1_screen_text.c     (implementation)
+#   include/nexus_v1_s2d_text_layout.h   (section-bound layout cursor)
+#   src/nexus/nexus_v1_s2d_text_layout.c
+#   src/nexus/nexus_v1_saturn_font.c     (load_sections + glyph draw)
+add_executable(firestaff_nexus_v1_screen_text_surface_probe
+    probes/nexus/firestaff_nexus_v1_screen_text_surface_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_screen_text_surface_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_screen_text_surface_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_screen_text_surface_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus V1 DMDF/MNS multi-model bounds + cleanup probe. Headless and
 # skip-safe: a synthetic path proves the slot-pool + cap + cleanup
 # + failure-isolation invariants without any real assets; an optional
@@ -18176,6 +18203,14 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_s2d_runtime_text_layout PROPERTIES
         LABELS "tier4;nexus;font;layout;skip_safe"
+    )
+
+    add_test(
+        NAME nexus_v1_screen_text_surface
+        COMMAND firestaff_nexus_v1_screen_text_surface_probe
+    )
+    set_tests_properties(nexus_v1_screen_text_surface PROPERTIES
+        LABELS "tier4;nexus;font;layout;screen_text;skip_safe"
     )
 
     # Nexus V1 DMDF/MNS multi-model bounds + cleanup gate.

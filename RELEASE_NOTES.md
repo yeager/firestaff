@@ -244,6 +244,10 @@ targets to finished parity.
   and publishes a pacman-compatible `.pkg.tar.zst` artifact from the Linux
   x86_64 release job. Steam Deck is no longer grouped with Linux ARM64 in
   release copy.
+- Nexus S2D font work now has a bounded screen-text surface bridge: parsed
+  FONT256.S2D section data can drive an ASCII text run into a deterministic
+  indexed framebuffer receipt. Full Shift-JIS layout and real Nexus screen
+  capture remain open.
 
 - DM1 V2.2 finished-art material gating now requires non-placeholder hero
   material files to have a PNG signature and IHDR dimensions matching the
