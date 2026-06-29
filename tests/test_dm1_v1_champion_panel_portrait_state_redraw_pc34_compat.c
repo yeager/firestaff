@@ -216,11 +216,11 @@ static void test_geometry(void)
                    1, DM1_V1_CHAMPION_PANEL_STATE_OK_PC34, &champ1_ok),
                true,
                "CHAMDRAW.C F0293:1134 second champion");
-    CHECK_BOOL("portrait.origins.disjoint",
-               champ0_ok->portrait_x != champ1_ok->portrait_x ||
-                   champ0_ok->portrait_y != champ1_ok->portrait_y,
+    CHECK_BOOL("status.origins.disjoint",
+               champ0_ok->status_box_left != champ1_ok->status_box_left ||
+                   champ0_ok->status_box_top != champ1_ok->status_box_top,
                true,
-               "DUNVIEW.C:3913-3928 base (96,35) plus champion-index stride");
+               "CHAMDRAW.C F0292 status boxes stride by champion index");
     CHECK_INT("slot.champ0.ready_x", champ0_ok->ready_hand_x, 4,
               "DATA.C:264-272 champion 0 ready hand origin");
     CHECK_INT("slot.champ0.action_x", champ0_ok->action_hand_x, 24,
@@ -234,6 +234,9 @@ static void test_geometry(void)
          champion < DM1_V1_CHAMPION_PANEL_STATE_REDRAW_CHAMPION_COUNT_PC34;
          ++champion) {
         const dm1_v1_champion_panel_state_redraw_entry_pc34_compat_t *entry;
+        const int left =
+            champion *
+            DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_STRIDE_X_PC34;
         char id[64];
 
         CHECK_BOOL("geometry.lookup",
@@ -241,25 +244,45 @@ static void test_geometry(void)
                        champion, DM1_V1_CHAMPION_PANEL_STATE_OK_PC34, &entry),
                    true,
                    "CHAMDRAW.C F0293:1134-1138 champion-index lookup");
-        snprintf(id, sizeof(id), "portrait.%d.x", champion);
-        CHECK_INT(id, entry->portrait_x,
-                  DM1_V1_CHAMPION_PANEL_STATE_REDRAW_PORTRAIT_BASE_X_PC34 +
-                      champion *
-                          DM1_V1_CHAMPION_PANEL_STATE_REDRAW_PORTRAIT_STRIDE_X_PC34,
-                  "DUNVIEW.C:3913-3928 viewport-local portrait x");
-        snprintf(id, sizeof(id), "portrait.%d.y", champion);
-        CHECK_INT(id, entry->portrait_y,
-                  DM1_V1_CHAMPION_PANEL_STATE_REDRAW_PORTRAIT_BASE_Y_PC34,
-                  "DUNVIEW.C:3913-3928 viewport-local portrait y");
-        snprintf(id, sizeof(id), "portrait.%d.in_viewport", champion);
-        CHECK_BOOL(id,
-                   entry->portrait_x >= 0 && entry->portrait_y >= 0 &&
-                       entry->portrait_x + entry->portrait_w <=
-                           DM1_V1_CHAMPION_PANEL_STATE_REDRAW_VIEWPORT_WIDTH_PC34 &&
-                       entry->portrait_y + entry->portrait_h <=
-                           DM1_V1_CHAMPION_PANEL_STATE_REDRAW_VIEWPORT_HEIGHT_PC34,
-                   true,
-                   "DUNVIEW.C:3913-3928 32x29 inside 224x136 viewport");
+        snprintf(id, sizeof(id), "status.%d.zone", champion);
+        CHECK_INT(id, entry->status_box_zone,
+                  DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_ZONE_BASE_PC34 +
+                      champion,
+                  "DEFS.H:3783-3786 C151..C154 status-box zones");
+        snprintf(id, sizeof(id), "status.%d.left", champion);
+        CHECK_INT(id, entry->status_box_left, left,
+                  "CHAMDRAW.C F0292 status-box x = championIndex*69");
+        snprintf(id, sizeof(id), "status.%d.right", champion);
+        CHECK_INT(id, entry->status_box_right, left + 66,
+                  "CHAMDRAW.C F0292 status-box right = left+66");
+        snprintf(id, sizeof(id), "status.%d.bottom", champion);
+        CHECK_INT(id, entry->status_box_bottom, 28,
+                  "CHAMDRAW.C F0292 status-box bottom = 28");
+        snprintf(id, sizeof(id), "zone.%d.name", champion);
+        CHECK_INT(id, entry->name_zone,
+                  DM1_V1_CHAMPION_PANEL_STATE_REDRAW_NAME_ZONE_BASE_PC34 +
+                      champion,
+                  "DEFS.H:3787-3790 C159..C162 name zones");
+        snprintf(id, sizeof(id), "zone.%d.text", champion);
+        CHECK_INT(id, entry->text_zone,
+                  DM1_V1_CHAMPION_PANEL_STATE_REDRAW_TEXT_ZONE_BASE_PC34 +
+                      champion,
+                  "DEFS.H:3791 C163 first champion name zone");
+        snprintf(id, sizeof(id), "zone.%d.portrait", champion);
+        CHECK_INT(id, entry->portrait_zone,
+                  DM1_V1_CHAMPION_PANEL_STATE_REDRAW_PORTRAIT_ZONE_BASE_PC34 +
+                      champion,
+                  "DEFS.H:3793 C175 first champion status-box portrait zone");
+        snprintf(id, sizeof(id), "zone.%d.bar", champion);
+        CHECK_INT(id, entry->bar_graph_zone,
+                  DM1_V1_CHAMPION_PANEL_STATE_REDRAW_BAR_ZONE_BASE_PC34 +
+                      champion,
+                  "DEFS.H:3795-3798 C187..C190 bar-graph zones");
+        snprintf(id, sizeof(id), "zone.%d.icon", champion);
+        CHECK_INT(id, entry->champion_icon_zone,
+                  DM1_V1_CHAMPION_PANEL_STATE_REDRAW_ICON_ZONE_BASE_PC34 +
+                      champion,
+                  "DEFS.H:3779-3782 C113..C116 champion-icon zones");
     }
 }
 
@@ -278,8 +301,8 @@ static void test_source_evidence(void)
                    "all-state dispatch anchor");
     check_contains("evidence.f0296", evidence, "CHAMDRAW.C F0296:1249-1257",
                    "changed-object icon anchor");
-    check_contains("evidence.dunview", evidence, "DUNVIEW.C:3913-3928",
-                   "viewport portrait anchor");
+    check_contains("evidence.zones", evidence, "DEFS.H:3783-3795",
+                   "status-box zone anchors");
     check_contains("evidence.defs", evidence, "DEFS.H:779-781",
                    "slot constant anchor");
     check_contains("evidence.data", evidence, "DATA.C:264-272",
