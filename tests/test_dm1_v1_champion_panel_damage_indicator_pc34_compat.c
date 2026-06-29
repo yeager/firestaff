@@ -269,6 +269,43 @@ static void test_zone_stride_for_all_champions(void)
     }
 }
 
+static void test_stale_inventory_ordinals_stay_small(void)
+{
+    static const int stale_ordinals[] = { -1, 5, 99 };
+    unsigned i;
+
+    for (i = 0; i < sizeof(stale_ordinals) / sizeof(stale_ordinals[0]); ++i) {
+        DM1_V1_ChampionPanelDamageIndicatorInputPc34Compat input = {
+            1,
+            stale_ordinals[i],
+            17
+        };
+        DM1_V1_ChampionPanelDamageIndicatorResultPc34Compat result;
+        char id[96];
+
+        snprintf(id, sizeof(id), "stale_inventory_%d.build",
+                 stale_ordinals[i]);
+        expect_int(id,
+                   DM1_V1_ChampionPanelDamageIndicator_BuildPc34Compat(
+                       &input, &result),
+                   1, "CHAMDRAW.C F0623:688 equality-only G0423 branch");
+        snprintf(id, sizeof(id), "stale_inventory_%d.is_inventory",
+                 stale_ordinals[i]);
+        expect_bool(id, result.is_inventory_champion, false,
+                    "CHAMDRAW.C F0623:688 only matching ordinal uses C016");
+        snprintf(id, sizeof(id), "stale_inventory_%d.graphic",
+                 stale_ordinals[i]);
+        expect_int(id, result.graphic_index,
+                   DM1_V1_CPDI_GFX_DAMAGE_SMALL_PC34,
+                   "CHAMDRAW.C F0623:691-693 stale G0423 stays C015");
+        snprintf(id, sizeof(id), "stale_inventory_%d.zone",
+                 stale_ordinals[i]);
+        expect_int(id, result.zone_index,
+                   DM1_V1_CPDI_ZONE_DAMAGE_SMALL_FIRST_PC34 + 1,
+                   "CHAMDRAW.C F0623:696 C167 + championIndex");
+    }
+}
+
 static void test_damage_text_edges(void)
 {
     static const struct {
@@ -395,6 +432,7 @@ int main(void)
     test_constants();
     test_small_and_big_routes();
     test_zone_stride_for_all_champions();
+    test_stale_inventory_ordinals_stay_small();
     test_damage_text_edges();
     test_invalid_inputs_and_defaults();
 
