@@ -139,6 +139,13 @@ def run_test(build_dir):
     return proc, None
 
 
+def repo_relative_command(path):
+    try:
+        return str(path.resolve().relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def parse_output(text):
     passes = text.count("PASS ")
     fails = text.count("FAIL ")
@@ -248,6 +255,7 @@ def main():
             "test_shield_border_disabled_state",
             "test_per_champion_priority_over_global",
             "test_boundary_clamps",
+            "test_party_hole_rejected_without_row_drift",
             "test_state_name_strings",
             "DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_PC34_COMPAT_OK",
         ]),
@@ -257,7 +265,7 @@ def main():
     proc, err = run_test(build_dir)
     if proc is None:
         runs = [{
-            "command": [str(build_dir / BINARY_NAME)],
+            "command": [repo_relative_command(build_dir / BINARY_NAME)],
             "returncode": -1,
             "passed": False,
             "passes": 0,
@@ -270,7 +278,7 @@ def main():
             proc.stdout + proc.stderr
         )
         runs = [{
-            "command": [str(build_dir / BINARY_NAME)],
+            "command": [repo_relative_command(build_dir / BINARY_NAME)],
             "returncode": proc.returncode,
             "passed": proc.returncode == 0 and fails == 0,
             "passes": passes,

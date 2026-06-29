@@ -20,4 +20,4 @@
 
 ## Verification runs
 
-- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat`: rc=0 passes=153 fails=0 assertions=153
+- `build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat`: rc=0 passes=164 fails=0 assertions=164
