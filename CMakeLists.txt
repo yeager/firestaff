@@ -3213,6 +3213,26 @@ add_test(
     COMMAND firestaff_dm1_v1_chest_action_hand_close_runtime_probe "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
 )
 
+# DM1 V1 champion-panel status-hand owner gate runtime probe.
+# Source-locked against CLIKCHAM.C F0367 line 32 (C020..C027 status
+# hand dispatch), CHAMPION.C F0302:662-710 (slotBoxIndex >> 1 owner,
+# open-inventory-owner rejection at 679-680, dead-member rejection at
+# 681, M070 hand-slot selection before the 695-708 swap), CHAMDRAW.C
+# F0292:543-549 (status row ready/action hand binding), and DEFS.H
+# M070_HAND_SLOT_INDEX:1878.  Live M11 pointer route + framebuffer
+# smoke only; no original DOS pixel parity claim.
+add_executable(firestaff_dm1_v1_champion_panel_status_hand_owner_gate_runtime_probe
+    probes/m11/firestaff_dm1_v1_champion_panel_status_hand_owner_gate_runtime_probe.c
+)
+target_link_libraries(firestaff_dm1_v1_champion_panel_status_hand_owner_gate_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_champion_panel_status_hand_owner_gate_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_dm1_v1_champion_panel_status_hand_owner_gate_runtime_probe
+    COMMAND firestaff_dm1_v1_champion_panel_status_hand_owner_gate_runtime_probe "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+)
+
 # DM1 V1 champion-panel runtime pixel/pose evidence probes. 9 orphaned
 # probes + 1 pc34_compat test that the legacy pool referenced but were
 # never registered in cmake. Re-promote them to first-class ctest members
