@@ -20,13 +20,15 @@
  *   - Screenshot Gallery view            → FS_AX_SCREENSHOT_THUMB per visible entry
  *   - Museum of Lore view                → FS_AX_MUSEUM_CATEGORY per section
  *                                           + FS_AX_MUSEUM_BULLET per lore bullet on the active page
+ *   - Manual / Docs view                 → FS_AX_LAUNCHER_ROW per public docs entry
+ *   - Changelog view                     → FS_AX_LAUNCHER_ROW per visible changelog line
  *
  * Out of scope (kept for follow-up passes):
  *   - Quick-resume "CONTINUE" virtual entry on the main view
  *     (rendered inline in m12_draw_main_view, not in state->entries).
- *   - Manual / docs / changelog / data-validator / theme / save-browser
- *     / input-remap / custom-dungeon / campaign / spell-reference /
- *     map-viewer / touch-layout / presentation-preview views.
+ *   - Data-validator / theme / save-browser / input-remap /
+ *     custom-dungeon / campaign / spell-reference / map-viewer /
+ *     touch-layout / presentation-preview views.
  *     Those still fall through to the main-view emission as a
  *     navigation anchor.
  *
@@ -50,7 +52,9 @@
 #include "menu_startup_a11y_m12.h"
 #include "firestaff_accessibility.h"
 #include "bestiary_m12.h"
+#include "changelog_m12.h"
 #include "firestaff_item_encyclopedia.h"
+#include "manual_docs_m12.h"
 #include "screenshot_gallery_m12.h"
 
 #include <stdio.h>
@@ -636,6 +640,83 @@ static void emit_museum_view(const M12_StartupMenuState* state,
     }
 }
 
+/* Manual / Docs view: expose the public docs entry table instead of
+ * duplicating renderer-local labels. The repoPath values are project
+ * relative and safe for manifests; no local absolute path is emitted. */
+static void emit_manual_docs_view(int fbW, int fbH)
+{
+    int margin = 480 / 30;
+    int heroH = 270 / 4;
+    int contentY;
+    int i;
+    int count = M12_ManualDocs_EntryCount();
+    static char s_manual_doc_id[12][32];
+    static char s_manual_doc_value[12][160];
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+    if (count > (int)(sizeof(s_manual_doc_id) / sizeof(s_manual_doc_id[0]))) {
+        count = (int)(sizeof(s_manual_doc_id) / sizeof(s_manual_doc_id[0]));
+    }
+
+    for (i = 0; i < count; ++i) {
+        const M12_ManualDocsEntry* entry = M12_ManualDocs_GetEntry(i);
+        AxRect base = { 34, contentY + 34 + (i * 22), 400, 22 };
+        if (!entry) {
+            continue;
+        }
+        snprintf(s_manual_doc_id[i], sizeof(s_manual_doc_id[i]),
+                 "MANUAL_DOC_%d", i);
+        snprintf(s_manual_doc_value[i], sizeof(s_manual_doc_value[i]),
+                 "%s | %s",
+                 entry->repoPath ? entry->repoPath : "",
+                 entry->summary ? entry->summary : "");
+        add_element_rect(fbW, fbH, s_manual_doc_id[i],
+                         entry->title ? entry->title : "",
+                         FS_AX_LAUNCHER_ROW, base, 1,
+                         s_manual_doc_value[i]);
+    }
+}
+
+/* Changelog view: mirror the visible window from
+ * m12_draw_changelog_view_modern, including scrollOffset. */
+static void emit_changelog_view(const M12_StartupMenuState* state,
+                                int fbW, int fbH)
+{
+    int margin = 480 / 30;
+    int heroH = 270 / 4;
+    int contentY;
+    int scrollOff = state ? state->changelog.scrollOffset : 0;
+    int lineCount = M12_Changelog_LineCount();
+    int visible = M12_CHANGELOG_VISIBLE_LINES;
+    int i;
+    static char s_changelog_id[M12_CHANGELOG_VISIBLE_LINES][32];
+
+    if (margin < 12) margin = 12;
+    if (heroH < 64) heroH = 64;
+    contentY = margin + heroH + 10;
+    if (scrollOff < 0) scrollOff = 0;
+    if (scrollOff > lineCount) scrollOff = lineCount;
+    if (visible > lineCount - scrollOff) {
+        visible = lineCount - scrollOff;
+    }
+    if (visible < 0) visible = 0;
+
+    for (i = 0; i < visible; ++i) {
+        const char* line = M12_Changelog_GetLine(scrollOff + i);
+        AxRect base = { margin + 14, contentY + 14 + (i * 20), 420, 20 };
+        if (!line) {
+            continue;
+        }
+        snprintf(s_changelog_id[i], sizeof(s_changelog_id[i]),
+                 "CHANGELOG_LINE_%d", scrollOff + i);
+        add_element_rect(fbW, fbH, s_changelog_id[i],
+                         line,
+                         FS_AX_LAUNCHER_ROW, base, 1, NULL);
+    }
+}
+
 /* Message view (used for missing-data popup, data-dir result,
  * quick-resume missing, and the general "OK" confirmation). The popup
  * rect comes from m12_draw_message_view at x=118 y=74 w=188 h=88 in
@@ -722,9 +803,13 @@ void m12_launcher_a11y_emit(const M12_StartupMenuState* state,
     case M12_MENU_VIEW_MUSEUM:
         emit_museum_view(state, framebufferWidth, framebufferHeight);
         break;
-    case M12_MENU_VIEW_MAIN:
     case M12_MENU_VIEW_MANUAL_DOCS:
+        emit_manual_docs_view(framebufferWidth, framebufferHeight);
+        break;
     case M12_MENU_VIEW_CHANGELOG:
+        emit_changelog_view(state, framebufferWidth, framebufferHeight);
+        break;
+    case M12_MENU_VIEW_MAIN:
     case M12_MENU_VIEW_DATA_VALIDATOR:
     case M12_MENU_VIEW_AUDIO_SETTINGS:
     case M12_MENU_VIEW_ACCESSIBILITY:
