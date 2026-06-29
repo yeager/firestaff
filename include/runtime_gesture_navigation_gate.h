@@ -156,10 +156,11 @@ int FirestaffRuntimeGestureNav_Evaluate(
 int FirestaffRuntimeGestureNav_TouchTargetSafe(int widthPx, int heightPx);
 
 /* Touch-target safety on the source viewport (320x200): returns 1 when
- * the framebuffer itself, scaled to the running presentation surface,
- * exposes at least RUNTIME_GESTURE_NAV_MIN_TARGET_PX for the shortest
- * touch-zone dimension.  Used to gate V2 launch when the surface
- * would shrink the touch targets below safe limits. */
+ * the framebuffer itself, fitted into the running presentation surface
+ * with M11-style letterboxing, exposes at least
+ * RUNTIME_GESTURE_NAV_MIN_TARGET_PX on both fitted axes. Used to gate
+ * V2 launch when the surface would shrink touch targets below safe
+ * limits. */
 int FirestaffRuntimeGestureNav_SourceViewportSafe(
     int sourceW, int sourceH, int surfaceW, int surfaceH);
 

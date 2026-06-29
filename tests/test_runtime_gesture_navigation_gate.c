@@ -341,18 +341,28 @@ static void test_source_viewport_scale_safety(void) {
                FirestaffRuntimeGestureNav_SourceViewportSafe(
                    320, 200, 320, 200) == 1);
 
-    /* Pathological 1x1 surface -> unsafe (sx=0 -> sx=1, but sourceH=200
-     * still safe so we accept). This documents the conservative boundary:
-     * the function only consults the SOURCE framebuffer and the SURFACE
-     * dimensions to compute the scale; the actual runtime viewport will
-     * never see a surface smaller than the source because the letterbox
-     * path keeps the source 1:1 minimum. */
+    /* H4/H5: pin the actual M11 fit-with-letterbox boundary. 70x44
+     * fits the 320:200 source as 70x43 after integer truncation, so it
+     * is still below the 44 px floor. 71x44 fits as 71x44 and is the
+     * first safe 320:200 surface at that height. */
+    check_pass("H4 320x200 -> 70x44 fitted height 43 unsafe",
+               FirestaffRuntimeGestureNav_SourceViewportSafe(
+                   320, 200, 70, 44) == 0);
+    check_pass("H5 320x200 -> 71x44 fitted height 44 safe",
+               FirestaffRuntimeGestureNav_SourceViewportSafe(
+                   320, 200, 71, 44) == 1);
+
+    /* H6: pathological tiny surfaces must not be promoted to a fake
+     * 1x source scale. */
+    check_pass("H6 320x200 -> 43x43 unsafe",
+               FirestaffRuntimeGestureNav_SourceViewportSafe(
+                   320, 200, 43, 43) == 0);
 
     /* Negative or zero dimensions -> unsafe */
-    check_pass("H4 zero source -> unsafe",
+    check_pass("H7 zero source -> unsafe",
                FirestaffRuntimeGestureNav_SourceViewportSafe(
                    0, 200, 1280, 720) == 0);
-    check_pass("H5 zero surface -> unsafe",
+    check_pass("H8 zero surface -> unsafe",
                FirestaffRuntimeGestureNav_SourceViewportSafe(
                    320, 200, 0, 720) == 0);
 }
