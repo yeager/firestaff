@@ -33,6 +33,11 @@
  *   - V2.0 with the filter chain enabled produces a BMP that differs
  *     from the V2.0 with filters disabled baseline (proves the filter
  *     chain reaches the presented pixels, not just the config).
+ *   - A second, source-command-owned route seed (entry state plus C001..C006
+ *     movement commands) captures through the V2.2 presentation path twice
+ *     with identical hashes and emits a stable receipt TSV. This broadens
+ *     the fixture beyond the original synthetic smoke pattern without
+ *     claiming original DOSBox parity or finished-art material proof.
  *
  * Headless / data-free / host-agnostic:
  *   - Uses SDL_VIDEODRIVER=dummy so the probe runs on Apple Silicon,
@@ -229,6 +234,20 @@ static uint32_t fnv1a_file(const char* path) {
     return h;
 }
 
+static uint64_t fnv1a64_byte(uint64_t hash, uint8_t value) {
+    hash ^= (uint64_t)value;
+    hash *= 1099511628211ULL;
+    return hash;
+}
+
+static uint64_t fnv1a64_u32(uint64_t hash, uint32_t value) {
+    int byteIndex;
+    for (byteIndex = 0; byteIndex < 4; ++byteIndex) {
+        hash = fnv1a64_byte(hash, (uint8_t)((value >> (byteIndex * 8)) & 0xFFu));
+    }
+    return hash;
+}
+
 /* ---------- Synthetic V1 framebuffer ---------- */
 
 /* A sparse, deterministic V1 indexed pattern that covers the 320x200
@@ -253,6 +272,137 @@ static void fill_synthetic_v1_pattern(unsigned char* fb) {
         y = 30 + (x / 2);
         if (y < M11_FB_HEIGHT) {
             fb[y * M11_FB_WIDTH + (180 + x)] = M11_FB_ENCODE(12, 3);
+        }
+    }
+}
+
+typedef struct SourceRouteReceipt {
+    const char* id;
+    int start_x;
+    int start_y;
+    int start_dir;
+    int final_x;
+    int final_y;
+    int final_dir;
+    int accepted_count;
+    uint64_t route_hash;
+} SourceRouteReceipt;
+
+static int apply_source_route_command(SourceRouteReceipt* route, int command) {
+    static const int directionToStepEast[4] = {0, 1, 0, -1};
+    static const int directionToStepNorth[4] = {-1, 0, 1, 0};
+    static const int movementForward[4] = {1, 0, -1, 0};
+    static const int movementRight[4] = {0, 1, 0, -1};
+    int movementIndex;
+    int rightDirection;
+
+    if (!route) return 0;
+    switch (command) {
+        case 1: /* C001 TURN_LEFT, ReDMCSB DEFS.H:238 / CLIKMENU.C F0365. */
+            route->final_dir = (route->final_dir + 3) & 3;
+            route->accepted_count += 1;
+            return 1;
+        case 2: /* C002 TURN_RIGHT, ReDMCSB DEFS.H:239 / CLIKMENU.C F0365. */
+            route->final_dir = (route->final_dir + 1) & 3;
+            route->accepted_count += 1;
+            return 1;
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+            /* C003..C006 movement rows mirror the deterministic source-command
+             * seed used by test_dm1_v2_source_route_state_hash_pc34, anchored
+             * to ReDMCSB CLIKMENU.C F0366 movement and COMMAND.C F0359 queue
+             * dispatch. This is a route/receipt seed, not a dungeon-collision
+             * or original-DOS pixel claim. */
+            movementIndex = command - 3;
+            rightDirection = (route->final_dir + 1) & 3;
+            route->final_x += directionToStepEast[route->final_dir] * movementForward[movementIndex];
+            route->final_y += directionToStepNorth[route->final_dir] * movementForward[movementIndex];
+            route->final_x += directionToStepEast[rightDirection] * movementRight[movementIndex];
+            route->final_y += directionToStepNorth[rightDirection] * movementRight[movementIndex];
+            route->accepted_count += 1;
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static void build_entry_turncycle_route(SourceRouteReceipt* route) {
+    static const int script[] = {3, 2, 3, 1, 4, 6, 3, 5, 2, 3};
+    size_t i;
+    uint64_t hash = 14695981039346656037ULL;
+
+    if (!route) return;
+    memset(route, 0, sizeof(*route));
+    route->id = "entry_c001_c006_turncycle";
+    route->start_x = 1;
+    route->start_y = 3;
+    route->start_dir = 2;
+    route->final_x = route->start_x;
+    route->final_y = route->start_y;
+    route->final_dir = route->start_dir;
+    hash = fnv1a64_u32(hash, (uint32_t)route->start_x);
+    hash = fnv1a64_u32(hash, (uint32_t)route->start_y);
+    hash = fnv1a64_u32(hash, (uint32_t)route->start_dir);
+
+    for (i = 0; i < sizeof(script) / sizeof(script[0]); ++i) {
+        (void)apply_source_route_command(route, script[i]);
+        hash = fnv1a64_u32(hash, (uint32_t)script[i]);
+        hash = fnv1a64_u32(hash, (uint32_t)route->final_x);
+        hash = fnv1a64_u32(hash, (uint32_t)route->final_y);
+        hash = fnv1a64_u32(hash, (uint32_t)route->final_dir);
+    }
+    route->route_hash = hash;
+}
+
+static void fill_route_owned_v1_pattern(unsigned char* fb,
+                                        const SourceRouteReceipt* route) {
+    int x;
+    int y;
+    uint8_t seed;
+    int marker_x;
+    int marker_y;
+
+    if (!fb || !route) return;
+    memset(fb, 0x00, M11_FB_BYTES);
+    seed = (uint8_t)(route->route_hash & 0xFFu);
+
+    /* Source-owned viewport receipt field: deterministic 224x136 indexed
+     * pixels derived from the accepted C001..C006 route state. V2 may present
+     * this field, but it must not own the command truth that creates it. */
+    for (y = 0; y < 136; ++y) {
+        for (x = 0; x < 224; ++x) {
+            uint8_t color = (uint8_t)((x * 3 + y * 5 + route->final_x * 7 +
+                                       route->final_y * 11 + route->final_dir * 13 +
+                                       seed) & 0x0Fu);
+            fb[y * M11_FB_WIDTH + x] = M11_FB_ENCODE(color, (x + y) & 3);
+        }
+    }
+
+    for (x = 0; x < 224; ++x) {
+        fb[x] = M11_FB_ENCODE(15, 0);
+        fb[135 * M11_FB_WIDTH + x] = M11_FB_ENCODE(15, 0);
+    }
+    for (y = 0; y < 136; ++y) {
+        fb[y * M11_FB_WIDTH] = M11_FB_ENCODE(15, 0);
+        fb[y * M11_FB_WIDTH + 223] = M11_FB_ENCODE(15, 0);
+    }
+
+    marker_x = 16 + ((route->final_x % 16 + 16) % 16) * 8;
+    marker_y = 16 + ((route->final_y % 12 + 12) % 12) * 8;
+    for (y = marker_y - 3; y <= marker_y + 3; ++y) {
+        for (x = marker_x - 3; x <= marker_x + 3; ++x) {
+            if (x >= 1 && x < 223 && y >= 1 && y < 135) {
+                fb[y * M11_FB_WIDTH + x] = M11_FB_ENCODE(14, 0);
+            }
+        }
+    }
+
+    for (x = 240; x < 304; ++x) {
+        for (y = 148; y < 180; ++y) {
+            fb[y * M11_FB_WIDTH + x] =
+                M11_FB_ENCODE((uint8_t)((route->accepted_count + x + y) & 0x0Fu), 0);
         }
     }
 }
@@ -382,6 +532,38 @@ static int run_mode_capture(ModeCapture* cap,
     return 1;
 }
 
+static int write_route_receipt(const char* out_dir,
+                               const SourceRouteReceipt* route,
+                               const ModeCapture* first,
+                               const ModeCapture* repeat) {
+    char path[512];
+    FILE* f;
+    if (!out_dir || !route || !first || !repeat) return 0;
+    snprintf(path, sizeof(path), "%s/source_route_v22_receipts.tsv", out_dir);
+    f = fopen(path, "wb");
+    if (!f) return 0;
+    fprintf(f, "schema\tfirestaff.dm1_v2.actual_render.route_receipts.v1\n");
+    fprintf(f, "route_id\t%s\n", route->id);
+    fprintf(f, "source_anchors\tReDMCSB DEFS.H:238-243; COMMAND.C F0359; CLIKMENU.C F0365/F0366\n");
+    fprintf(f, "start_state\tmap0_x%d_y%d_dir%d\n",
+            route->start_x, route->start_y, route->start_dir);
+    fprintf(f, "final_state\tx%d_y%d_dir%d_accepted%d\n",
+            route->final_x, route->final_y, route->final_dir, route->accepted_count);
+    fprintf(f, "route_hash\t0x%016llx\n", (unsigned long long)route->route_hash);
+    fprintf(f, "presentation_mode\tV2.2 modern placeholder overlay\n");
+    fprintf(f, "pixel_parity_claim\tfalse\n");
+    fprintf(f, "finished_art_claim\tfalse\n");
+    fprintf(f, "capture_id\tbmp\twidth\theight\tsize\tfnv1a32\n");
+    fprintf(f, "%s\t%s\t%d\t%d\t%ld\t0x%08x\n",
+            first->id, first->bmp_path, first->bmp_w, first->bmp_h,
+            first->bmp_size, first->bmp_hash);
+    fprintf(f, "%s\t%s\t%d\t%d\t%ld\t0x%08x\n",
+            repeat->id, repeat->bmp_path, repeat->bmp_w, repeat->bmp_h,
+            repeat->bmp_size, repeat->bmp_hash);
+    fclose(f);
+    return 1;
+}
+
 /* ---------- Main ---------- */
 
 int main(void) {
@@ -394,6 +576,9 @@ int main(void) {
     ModeCapture v20_filtered_cap;
     ModeCapture v21_cap;
     ModeCapture v22_cap;
+    ModeCapture route_v22_cap;
+    ModeCapture route_v22_repeat_cap;
+    SourceRouteReceipt route_receipt;
     int rc;
     int dist_v1_v20 = 0;
     int dist_v1_v21 = 0;
@@ -410,6 +595,9 @@ int main(void) {
     memset(&v20_filtered_cap, 0, sizeof(v20_filtered_cap));
     memset(&v21_cap, 0, sizeof(v21_cap));
     memset(&v22_cap, 0, sizeof(v22_cap));
+    memset(&route_v22_cap, 0, sizeof(route_v22_cap));
+    memset(&route_v22_repeat_cap, 0, sizeof(route_v22_repeat_cap));
+    memset(&route_receipt, 0, sizeof(route_receipt));
 
     /* Probe-controlled temp dir under HOME so we never touch the user-
      * facing screenshotPath. */
@@ -583,6 +771,69 @@ int main(void) {
         probe_record(&stats, "DM1V2_SCREENSHOT_V22_FILE", 0,
                      "V2.2 modern capture failed");
     }
+
+    /* ---------- Source-route-owned V2.2 receipt ----------
+     * This is the route-broadened screenshot fixture requested by the
+     * deterministic screenshot/pixel lane: the seed begins at the DM1 PC34
+     * entry state and advances through C001..C006 source commands, then the
+     * resulting indexed framebuffer is presented through one V2 mode. */
+    build_entry_turncycle_route(&route_receipt);
+    fill_route_owned_v1_pattern(framebuffer, &route_receipt);
+
+    route_v22_cap.id = "ROUTE_V22";
+    route_v22_cap.label = "route-owned V2.2 modern";
+    route_v22_cap.expected_w = 320;
+    route_v22_cap.expected_h = 200;
+    route_v22_cap.present_via_rgba = 0;
+    route_v22_cap.v22_overlay_active = 1;
+    snprintf(route_v22_cap.bmp_path, sizeof(route_v22_cap.bmp_path),
+             "%s/route_entry_turncycle_v22_modern.bmp", out_dir);
+
+    if (run_mode_capture(&route_v22_cap, framebuffer, v1_shadow)) {
+        char note[260];
+        snprintf(note, sizeof(note),
+                 "%s: route_hash=0x%016llx final=(%d,%d,%d) fnv1a=0x%08x",
+                 route_v22_cap.label, (unsigned long long)route_receipt.route_hash,
+                 route_receipt.final_x, route_receipt.final_y, route_receipt.final_dir,
+                 route_v22_cap.bmp_hash);
+        probe_record(&stats, "DM1V2_SCREENSHOT_ROUTE_V22_FILE",
+                     route_v22_cap.bmp_size >= 54 + 320 * 200 * 3,
+                     note);
+    } else {
+        probe_record(&stats, "DM1V2_SCREENSHOT_ROUTE_V22_FILE", 0,
+                     "route-owned V2.2 capture failed");
+    }
+
+    fill_route_owned_v1_pattern(framebuffer, &route_receipt);
+    route_v22_repeat_cap = route_v22_cap;
+    route_v22_repeat_cap.id = "ROUTE_V22_REPEAT";
+    route_v22_repeat_cap.label = "route-owned V2.2 modern repeat";
+    snprintf(route_v22_repeat_cap.bmp_path, sizeof(route_v22_repeat_cap.bmp_path),
+             "%s/route_entry_turncycle_v22_modern_repeat.bmp", out_dir);
+    if (run_mode_capture(&route_v22_repeat_cap, framebuffer, v1_shadow)) {
+        char note[260];
+        snprintf(note, sizeof(note),
+                 "first=0x%08x repeat=0x%08x route_hash=0x%016llx",
+                 route_v22_cap.bmp_hash, route_v22_repeat_cap.bmp_hash,
+                 (unsigned long long)route_receipt.route_hash);
+        probe_record(&stats, "DM1V2_SCREENSHOT_ROUTE_V22_REPEAT_STABLE",
+                     route_v22_cap.bmp_hash == route_v22_repeat_cap.bmp_hash &&
+                     route_v22_cap.bmp_size == route_v22_repeat_cap.bmp_size &&
+                     route_v22_cap.bmp_w == route_v22_repeat_cap.bmp_w &&
+                     route_v22_cap.bmp_h == route_v22_repeat_cap.bmp_h,
+                     note);
+    } else {
+        probe_record(&stats, "DM1V2_SCREENSHOT_ROUTE_V22_REPEAT_STABLE", 0,
+                     "route-owned V2.2 repeat capture failed");
+    }
+
+    probe_record(&stats, "DM1V2_SCREENSHOT_ROUTE_V22_DISTINCT_FROM_SYNTHETIC",
+                 route_v22_cap.bmp_hash != v22_cap.bmp_hash,
+                 "route-owned V2.2 receipt differs from the synthetic V2.2 smoke BMP");
+    probe_record(&stats, "DM1V2_SCREENSHOT_ROUTE_RECEIPT_WRITTEN",
+                 write_route_receipt(out_dir, &route_receipt,
+                                     &route_v22_cap, &route_v22_repeat_cap),
+                 "source_route_v22_receipts.tsv written with no DOSBox or finished-art claim");
 
     /* ---------- Cross-mode distinctness ----------
      * Note: V2.0 unfiltered MUST equal V1 (V2.0 with no filter chain

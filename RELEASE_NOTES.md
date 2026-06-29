@@ -1,6 +1,10 @@
 
 # Unreleased
 
+- DM1 V2 deterministic screenshot coverage now includes a source-command-owned
+  V2.2 route receipt in the headless actual-render probe, with repeat-stable
+  BMP hashes and explicit non-claims for DOSBox parity and finished-art pixels.
+
 - The M12 save browser now surfaces Firestaff PC 3.4 native save
   manifests, marking matching DM1 saves distinctly and rejecting
   wrong-game manifests before launch handoff.

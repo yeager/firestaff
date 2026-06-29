@@ -1637,12 +1637,6 @@ target_link_libraries(firestaff_dm1_v2_actual_render_screenshot_probe
 if(NOT MSVC)
     target_compile_options(firestaff_dm1_v2_actual_render_screenshot_probe PRIVATE -Wall -Wextra -O2)
 endif()
-if(BUILD_TESTING)
-    add_test(
-        NAME dm1_v2_actual_render_screenshot_probe
-        COMMAND firestaff_dm1_v2_actual_render_screenshot_probe
-    )
-endif()
 
 # DM1 V2 side-by-side presentation-disabled seed probe. Headless: no game data.
 add_executable(firestaff_dm1_v2_side_by_side_presentation_seed_probe
@@ -4146,6 +4140,15 @@ if(BUILD_TESTING)
         )
         set_tests_properties(dm1_v22_inplace_render_probe PROPERTIES
             LABELS "dm1;v2;render;readiness"
+        )
+    endif()
+    if(TARGET firestaff_dm1_v2_actual_render_screenshot_probe)
+        firestaff_add_test_if_missing(
+            dm1_v2_actual_render_screenshot_probe
+            firestaff_dm1_v2_actual_render_screenshot_probe
+        )
+        set_tests_properties(dm1_v2_actual_render_screenshot_probe PROPERTIES
+            LABELS "dm1;v2;screenshot;presentation;headless"
         )
     endif()
     if(TARGET firestaff_dm1_v2_side_by_side_presentation_seed_probe)
