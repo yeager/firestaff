@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pass852 DM1 V1 mandatory-graphic-indices contract."""
+"""pass931 DM1 V1 medium damage action-area box contract."""
 from __future__ import annotations
 
 import json
@@ -20,14 +20,15 @@ REPORT = ROOT / 'parity-evidence' / f'{PASS}.md'
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 ANCHORS = [
-    "MENU.C:39/465",
-    "MENU.C F0452 action/spell init",
+    "MENU.C:38/498",
+    "ACTIDRAW.C:136",
 ]
 
 LOCAL_NEEDLES = [
     "G0502_ai_Graphic560_Box_ActionAreaMediumDamage",
-    "MENU.C:39",
-    "MENU.C:465",
+    "MENU.C:38",
+    "MENU.C:498",
+    "ACTIDRAW.C:136",
     "Disjoint from pass784-790",
 ]
 
@@ -39,12 +40,12 @@ CMAKE_NEEDLES = [
 ]
 
 REDMCSB_WINDOWS = {
-    "DATA.C": [
-        (422, "G4013_auc_PaletteChanges_CursorMask"),
+    "MENU.C": [
+        (38, "G0502_ai_Graphic560_Box_ActionAreaMediumDamage"),
+        (498, "{ 242, 305, 81, 117 }"),
     ],
-    "IO.C": [
-        (2151, "G4013_auc_PaletteChanges_CursorMask"),
-        (2453, "G4013_auc_PaletteChanges_CursorMask"),
+    "ACTIDRAW.C": [
+        (136, "G0502_ai_Graphic560_Box_ActionAreaMediumDamage"),
     ],
 }
 
@@ -91,12 +92,12 @@ def check_redmcsb_windows():
     return checks
 
 
-def run(cmd):
+def run(cmd, display_cmd=None):
     proc = subprocess.run(cmd, cwd=ROOT, text=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, timeout=180)
     return {
-        "command": cmd,
+        "command": display_cmd or cmd,
         "returncode": proc.returncode,
         "passed": proc.returncode == 0,
         "outputTail": "\n".join(proc.stdout.strip().splitlines()[-20:]),
@@ -145,7 +146,7 @@ def write_outputs(local_checks, redmcsb_checks, runs):
     rl.append("## Verification")
     for r in runs:
         rl.append(f"- `{ ' '.join(r['command']) }`: rc={r['returncode']}")
-    REPORT.write_text("\n".join(rl))
+    REPORT.write_text("\n".join(rl) + "\n")
 
 
 def main():
@@ -164,7 +165,8 @@ def main():
     redmcsb_checks = check_redmcsb_windows()
     binary = CMAKE_NEEDLES[0]
     build_dir = resolve_build_dir(binary)
-    runs = [run([str(build_dir / binary)])]
+    runs = [run([str(build_dir / binary)],
+                [str((build_dir / binary).relative_to(ROOT))])]
     write_outputs(local_checks, redmcsb_checks, runs)
     ok = all(r["status"] == "PASS" for r in local_checks) and all(r["passed"] for r in runs)
     print(f"{PASS}: {'PASS' if ok else 'FAIL'}")

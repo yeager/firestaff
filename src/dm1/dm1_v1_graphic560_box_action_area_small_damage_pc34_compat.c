@@ -4,15 +4,15 @@
 
 /*
  * ReDMCSB source-lock map for this gate (G0503):
- * G0503_ai_Graphic560_Box_ActionAreaSmallDamage — see DATA.C reference
- * - MENU.C:40 - declaration of G0503_ai_Graphic560_Box_[...]
- * - MENU.C:466 - PC 3.4 EN init { 251, 292, 81, 117 }
- * - MENU.C F0452/F0456 - action-area box usage
+ * G0503_ai_Graphic560_Box_ActionAreaSmallDamage; see MENU.C reference
+ * - MENU.C:39 - declaration of G0503_ai_Graphic560_Box_[...]
+ * - MENU.C:499 - PC 3.4 EN init { 251, 292, 81, 117 }
+ * - ACTIDRAW.C:147 - small damage action-area box selected for blit
  *
  * Disjoint from pass784+ non-mirror-candidate contract gates.
  * Disjoint from pass784-790.
- * - MENU.C F0452 action/spell init — action/spell dispatch
- * - MENU.C:40/466 — declaration + PC 3.4 EN init
+ * - MENU.C F0452 action/spell init; action/spell dispatch
+ * - MENU.C:39/499; declaration + PC 3.4 EN init
  */
 
 enum {
