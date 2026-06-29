@@ -13,13 +13,12 @@
  * X68000 v3.0 HDM image. The public DMFiles HDM embeds the
  * X68000 graphics / SWSH / palette FTL resources as
  * concatenated `.FTL` blobs at known offsets in the disk
- * image (this is documented by greatstone d_mapfile.html's
- * `dm_atari_demo.map` shape: per-resource `IMG1` / `FTL`
- * pointers into the disk image). The probe locates the FTL
- * magic (0x6160 big-endian, greatstone d_ftl.html "20-byte
- * common header") inside the real HDM, parses the smallest
- * embeddable FTL we find, and verifies the FTL-declared
- * area_1 in-memory size fits the on-disk media class.
+ * image. The probe locates the FTL magic (0x6160 big-endian,
+ * greatstone d_ftl.html "20-byte common header") inside the
+ * real HDM using the classifier's explicit windowed scanner,
+ * parses the smallest embeddable FTL we find, and verifies
+ * the FTL-declared area_1 in-memory size fits the on-disk
+ * media class.
  *
  * Source of truth:
  *   - greatstone d_ftl.html "20-byte common header" magic
@@ -298,18 +297,15 @@ int main(void) {
      * so we expect at least one parseable FTL container.
      *
      * NOTE: the classifier's ftl_magic_candidate_count field
-     * is documented in firestaff_x68k_media_classify.h as
-     * "FTL-size sentinel-class hits found in the first 32
-     * KiB of the input", so it only sees the boot-block /
-     * early-file area. The real DMFiles X68000 v3.0 HDM
-     * embeds its FTL resources at offsets > 32 KiB (per
-     * greatstone d_mapfile.html, per-resource IMG1 / FTL
-     * pointers live deeper in the MFM image). The receipt
-     * therefore does NOT assert a relationship between the
-     * classifier's 32-KiB-window count and the full-HDM
-     * parseable count; that would be a false-positive
-     * guarantee. Instead we surface both numbers as notes
-     * and check the parseable-count invariant on its own. */
+     * is documented in firestaff_x68k_media_classify.h as a
+     * first-32-KiB single-resource sniff window, so it only
+     * sees the boot-block / early-file area. The real DMFiles
+     * X68000 v3.0 HDM embeds its FTL resources at offsets >
+     * 32 KiB. The explicit windowed scanner now covers the
+     * full HDM so this receipt can assert the raw full-window
+     * magic surface separately from parseable-container proof. */
+    uint32_t full_window_magic = FirestaffX68kMedia_CountFTLMagicCandidates(
+        hdm, hdm_size, 0u, hdm_size);
     uint32_t first_area1 = 0u;
     size_t first_ftl_off = 0u;
     size_t parseable = scan_ftl_candidates(
@@ -318,11 +314,20 @@ int main(void) {
         &first_area1, &first_ftl_off);
 
     printf("  NOTE: classifier ftl_magic_candidate_count "
-           "(first 32 KiB) = %u; full-HDM parseable FTL count = "
-           "%zu\n",
-           media.ftl_magic_candidate_count, parseable);
-    pass("INV_X68K_FTL_HANDOFF_REAL_03",
-         "scanned real HDM for parseable FTL resources");
+           "(first 32 KiB) = %u; explicit full-HDM magic count = "
+           "%u; full-HDM parseable FTL count = %zu\n",
+           media.ftl_magic_candidate_count,
+           full_window_magic,
+           parseable);
+    if (full_window_magic >= parseable && full_window_magic > 0u) {
+        pass("INV_X68K_FTL_HANDOFF_REAL_03",
+             "explicit full-HDM FTL magic scan covers embedded "
+             "resource candidates");
+    } else {
+        fail("INV_X68K_FTL_HANDOFF_REAL_03",
+             "explicit full-HDM FTL magic scan did not cover "
+             "parseable embedded resources");
+    }
 
 
     /* Handoff #04: the real DMFiles X68000 HDM must yield at

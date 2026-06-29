@@ -148,21 +148,18 @@ void FirestaffX68kMedia_Classify(const uint8_t* data,
      *    Useful for HDM images that embed several FTL
      *    resources at known offsets (X68000 graphics assets
      *    packaged as .FTL files, e.g. KAOS.FTL for in-game
-     *    palettes per greatstone d_mapfile.html). */
+     *    palettes per greatstone d_mapfile.html). The field is
+     *    kept as a legacy single-resource sniff window; use
+     *    FirestaffX68kMedia_CountFTLMagicCandidates() when a
+     *    receipt must scan a full HDM or another explicit
+     *    window. */
     {
         size_t scan_limit = data_size < (32u * 1024u)
                                 ? data_size
                                 : (32u * 1024u);
-        if (scan_limit >= 2u) {
-            size_t last = scan_limit - 2u;
-            uint32_t candidates = 0u;
-            for (size_t i = 0u; i <= last; ++i) {
-                uint16_t m = (uint16_t)(((uint16_t)data[i] << 8) |
-                                         (uint16_t)data[i + 1u]);
-                if (m == X68K_FTL_MAGIC_BE) ++candidates;
-            }
-            out->ftl_magic_candidate_count = candidates;
-        }
+        out->ftl_magic_candidate_count =
+            FirestaffX68kMedia_CountFTLMagicCandidates(
+                data, data_size, 0u, scan_limit);
     }
 
     /* 4) HPR-0007 sentinel scan.
@@ -273,6 +270,30 @@ void FirestaffX68kMedia_Classify(const uint8_t* data,
     } else {
         out->receipt_class = FIRESTAFF_X68K_RECEIPT_NOT_X68K_MEDIA;
     }
+}
+
+uint32_t FirestaffX68kMedia_CountFTLMagicCandidates(
+    const uint8_t* data,
+    size_t data_size,
+    size_t offset,
+    size_t length) {
+    uint32_t candidates = 0u;
+    if (!data || data_size < 2u || length < 2u) return 0u;
+    if (offset >= data_size) return 0u;
+
+    size_t available = data_size - offset;
+    size_t scan_len = length < available ? length : available;
+    if (scan_len < 2u) return 0u;
+
+    size_t last = offset + scan_len - 2u;
+    for (size_t i = offset; i <= last; ++i) {
+        uint16_t m = (uint16_t)(((uint16_t)data[i] << 8) |
+                                 (uint16_t)data[i + 1u]);
+        if (m == X68K_FTL_MAGIC_BE) {
+            if (candidates != UINT32_MAX) ++candidates;
+        }
+    }
+    return candidates;
 }
 
 int FirestaffX68kMedia_IsFTLPayload(uint32_t flags,
@@ -617,6 +638,34 @@ static int test_ftl_payload_detected(void) {
     return 1;
 }
 
+static int test_ftl_magic_window_scan(void) {
+    uint8_t* buf = (uint8_t*)calloc(1, 64u * 1024u);
+    ST_ASSERT(buf != NULL, "calloc window scan");
+    buf[0] = 0x61u;
+    buf[1] = 0x60u;
+    buf[40u * 1024u] = 0x61u;
+    buf[40u * 1024u + 1u] = 0x60u;
+
+    FirestaffX68kMediaClassifyResult r;
+    FirestaffX68kMedia_Classify(buf, 64u * 1024u, &r);
+    ST_ASSERT(r.ftl_magic_candidate_count == 1u,
+              "legacy first-32KiB sniff sees only the early magic");
+    ST_ASSERT(FirestaffX68kMedia_CountFTLMagicCandidates(
+                  buf, 64u * 1024u, 0u, 64u * 1024u) == 2u,
+              "full explicit window sees both magic candidates");
+    ST_ASSERT(FirestaffX68kMedia_CountFTLMagicCandidates(
+                  buf, 64u * 1024u, 32u * 1024u, 32u * 1024u) == 1u,
+              "late explicit window sees embedded magic candidate");
+    ST_ASSERT(FirestaffX68kMedia_CountFTLMagicCandidates(
+                  NULL, 64u * 1024u, 0u, 64u * 1024u) == 0u,
+              "NULL window returns zero");
+    ST_ASSERT(FirestaffX68kMedia_CountFTLMagicCandidates(
+                  buf, 64u * 1024u, 64u * 1024u, 8u) == 0u,
+              "out-of-range window returns zero");
+    free(buf);
+    return 1;
+}
+
 static int test_ftl_handoff_fits_full_disk(void) {
     uint8_t* buf = (uint8_t*)calloc(1, FIRESTAFF_X68K_BYTES_PER_DISK);
     ST_ASSERT(buf != NULL, "calloc full-disk handoff");
@@ -723,6 +772,7 @@ int FirestaffX68kMedia_SelfTest(void) {
     RUN(test_full_disk_nonblank_no_sentinel);
     RUN(test_oversize_input);
     RUN(test_ftl_payload_detected);
+    RUN(test_ftl_magic_window_scan);
     RUN(test_ftl_handoff_fits_full_disk);
     RUN(test_ftl_handoff_overflow_too_small);
     RUN(test_unprotected_disk_flag);

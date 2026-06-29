@@ -9,9 +9,10 @@
  * classes, blank save-disk detection, HPR-0007 sentinel
  * detection, off-axis HPR-0007 label classification,
  * nonblank/no-sentinel classification, FTL-payload magic
- * detection, FTL handoff fits / overflow, unprotected-disk
- * flag, NULL safety. This file is
- * a thin main() that calls SelfTest and reports PASS / FAIL.
+ * detection, explicit-window FTL candidate counting,
+ * FTL handoff fits / overflow, unprotected-disk flag,
+ * NULL safety. This file is a thin
+ * main() that calls SelfTest and reports PASS / FAIL.
  *
  * Source of truth for the cases:
  *   - dmweb-free.fr/community/documentation/copy-protection,

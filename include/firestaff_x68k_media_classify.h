@@ -28,6 +28,9 @@
  *       (firestaff_ftl_container.h): the in-memory area_1 size
  *       declared by HUNK_BSS must not exceed the on-disk HDM
  *       size class
+ *     - Windowed FTL-magic receipt scans so probes can check
+ *       embedded X68000 `.FTL` payloads beyond the legacy
+ *       first-32-KiB single-resource sniff window
  *     - X68000 / PC-9801 / FM-Towns endianness pin (BIG DMCSB2
  *       for X68000, per dmweb data-files.html)
  *
@@ -292,8 +295,11 @@ typedef struct {
     int has_ftl_magic;
 
     /* Number of FTL-size sentinel-class hits found in the
-     * first 32 KiB of the input. Zero on every non-FTL HDM;
-     * small on a single-resource .FTL payload. */
+     * first 32 KiB of the input. This legacy field is for
+     * single-resource .FTL payload sniffing and intentionally
+     * does not claim full-HDM embedded resource coverage. Use
+     * FirestaffX68kMedia_CountFTLMagicCandidates() with an
+     * explicit window when a receipt must scan deeper media. */
     uint32_t ftl_magic_candidate_count;
 
     /* One of FirestaffX68kReceiptClass. */
@@ -315,6 +321,23 @@ typedef struct {
 void FirestaffX68kMedia_Classify(const uint8_t* data,
                                   size_t data_size,
                                   FirestaffX68kMediaClassifyResult* out);
+
+/* Count raw FTL common-header magic candidates (0x6160
+ * big-endian, greatstone d_ftl.html "20-byte common header")
+ * in an explicit byte window. The helper is deliberately raw:
+ * it does not parse the candidate as an FTL container and will
+ * include coincidental 0x6160 opcode/data collisions. Pair it
+ * with FirestaffFtlContainer_Parse when a probe needs a
+ * parseable-container receipt.
+ *
+ * Returns 0 for NULL input, empty windows, windows outside the
+ * input, or windows shorter than two bytes. If offset + length
+ * extends past data_size, the scan is truncated to data_size. */
+uint32_t FirestaffX68kMedia_CountFTLMagicCandidates(
+    const uint8_t* data,
+    size_t data_size,
+    size_t offset,
+    size_t length);
 
 /* Convenience helper: true iff the FIRESTAFF_X68K_SCAN_FLAG_*
  * flag set reported by FirestaffX68kMedia_Classify is
