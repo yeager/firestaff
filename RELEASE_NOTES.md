@@ -281,6 +281,11 @@ targets to finished parity.
   Windows x86_64, Linux x86_64, Linux arm64, and Steam Deck x86_64 artifacts
   from the `v3.0.14` release tag.
 
+- Nexus V1 Track 1 now has a skip-safe screen-capture readiness probe that
+  verifies the combined `DM.BIN` / `FONT256.S2D` / `LEV00.DGN` /
+  `SCORPION.MNS` handoff and writes local JSON/PPM receipts for operator
+  review. This does not promote a public Nexus screenshot or parity claim.
+
 # Firestaff v3.0.13
 
 Firestaff v3.0.13 packages the 2026-06-28/29 runtime-hardening work that
