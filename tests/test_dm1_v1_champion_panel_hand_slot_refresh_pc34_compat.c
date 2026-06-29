@@ -666,6 +666,20 @@ static void test_rejects(void)
                    &probe, &result) == 0;
     check_int_eq(rejected, 1, "reject: inventory ordinal out of range",
                  "G0423 = 99 (out of [1..partyChampionCount])");
+
+    /*
+     * Reject 7: inventory champion ordinal/index mismatch. F0296
+     * derives the inventory owner with M001_ORDINAL_TO_INDEX(G0423),
+     * so the synthetic model must not accept a stale side-channel
+     * inventoryChampionIndex for an otherwise in-range ordinal.
+     */
+    probe = base;
+    probe.inventoryChampionOrdinal = 3;
+    probe.inventoryChampionIndex = 1;
+    rejected = dm1_v1_champion_panel_hand_slot_refresh_run_pc34(
+                   &probe, &result) == 0;
+    check_int_eq(rejected, 1, "reject: inventory ordinal/index mismatch",
+                 "DEFS.H:7209 M001_ORDINAL_TO_INDEX(ordinal)");
 }
 
 static void test_guards_match_expectations(void)
