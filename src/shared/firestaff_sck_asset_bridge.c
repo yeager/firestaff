@@ -78,6 +78,19 @@ static int str_starts_with_i(const char* s, const char* prefix) {
     return 1;
 }
 
+static uint32_t checksum32_fnv1a(const uint8_t* bytes, uint32_t byteCount) {
+    uint32_t h = 2166136261u;
+    uint32_t i;
+    if (!bytes) {
+        return 0u;
+    }
+    for (i = 0u; i < byteCount; ++i) {
+        h ^= (uint32_t)bytes[i];
+        h *= 16777619u;
+    }
+    return h;
+}
+
 /* Copy up to `cap-1` bytes from `src` (start at `start`, max `maxLen`
  * bytes) into `dst`, trimming leading/trailing ASCII whitespace. */
 static void copy_trim(char* dst, size_t cap, const char* start, size_t maxLen) {
@@ -454,6 +467,7 @@ static FirestaffSckBridgeResult select_slice_internal(
     FirestaffSckMapfileV2 map;
     unsigned int i;
     int foundIndex = -1;
+    int foundUnsizedMatch = 0;
 
     if (!mapfileText || !outSelection) {
         set_err(errMsg, errMsgBytes, "null selection argument");
@@ -469,9 +483,6 @@ static FirestaffSckBridgeResult select_slice_internal(
     for (i = 0u; i < map.itemCount; ++i) {
         const FirestaffSckMapfileV2Item* item = &map.items[i];
         int matches = 0;
-        if (!item->hasNumericNumber || !item->hasSizeBytes) {
-            continue;
-        }
         if (itemNumber != NULL && itemNumber[0] != '\0') {
             if (strcmp(item->number, itemNumber) == 0) {
                 matches = 1;
@@ -491,29 +502,18 @@ static FirestaffSckBridgeResult select_slice_internal(
             !str_starts_with_i(item->type, acceptTypePrefix)) {
             continue;
         }
+        if (!item->hasNumericNumber || !item->hasSizeBytes) {
+            foundUnsizedMatch = 1;
+            continue;
+        }
         foundIndex = (int)i;
         break;
     }
     if (foundIndex < 0) {
         /* Distinguish "not found" from "not sized". */
-        unsigned int j;
-        for (j = 0u; j < map.itemCount; ++j) {
-            const FirestaffSckMapfileV2Item* item = &map.items[j];
-            int matches = 0;
-            if (itemNumber != NULL && itemNumber[0] != '\0') {
-                if (strcmp(item->number, itemNumber) == 0) {
-                    matches = 1;
-                }
-            } else if (descriptionSubstr != NULL && descriptionSubstr[0] != '\0') {
-                if (strstr(item->description, descriptionSubstr) != NULL ||
-                    strstr(item->longDescription, descriptionSubstr) != NULL) {
-                    matches = 1;
-                }
-            }
-            if (matches) {
-                set_err(errMsg, errMsgBytes, "matched SCK item has no SIZE attribute");
-                return FIRESTAFF_SCK_BRIDGE_ERR_NOT_SIZED;
-            }
+        if (foundUnsizedMatch) {
+            set_err(errMsg, errMsgBytes, "matched SCK item has no SIZE attribute");
+            return FIRESTAFF_SCK_BRIDGE_ERR_NOT_SIZED;
         }
         if (itemNumber && itemNumber[0]) {
             set_err(errMsg, errMsgBytes, "no sized SCK item matched the requested number");
@@ -589,6 +589,49 @@ FirestaffSckBridgeResult FirestaffSckBridge_SelectSliceByDescription(
                                  errMsgBytes);
 }
 
+FirestaffSckBridgeResult FirestaffSckBridge_DecodeRawSelection(
+    const uint8_t* assetBytes,
+    uint32_t assetByteCount,
+    const FirestaffSckBridgeSelection* selection,
+    FirestaffSckBridgeRawHandoff* outRaw,
+    char* errMsg,
+    size_t errMsgBytes) {
+    uint32_t offset;
+    uint32_t size;
+
+    if (!assetBytes || !selection || !outRaw) {
+        set_err(errMsg, errMsgBytes, "null RAW decoder argument");
+        return FIRESTAFF_SCK_BRIDGE_ERR_NULL_ARG;
+    }
+    memset(outRaw, 0, sizeof(*outRaw));
+    if (!str_starts_with_i(selection->itemType, "RAW")) {
+        set_err(errMsg, errMsgBytes, "selected SCK item is not a RAW decoder row");
+        return FIRESTAFF_SCK_BRIDGE_ERR_UNSUPPORTED_DECODER;
+    }
+    if (!selection->hasNumericNumber || !selection->hasSizeBytes) {
+        set_err(errMsg, errMsgBytes, "selected RAW item has no bounded SIZE slice");
+        return FIRESTAFF_SCK_BRIDGE_ERR_NOT_SIZED;
+    }
+
+    offset = selection->slice.offset;
+    size = selection->slice.size;
+    if (offset > assetByteCount || size > assetByteCount - offset) {
+        set_err(errMsg, errMsgBytes, "selected RAW slice exceeds asset bytes");
+        return FIRESTAFF_SCK_BRIDGE_ERR_SLICE_OUT_OF_BOUNDS;
+    }
+
+    outRaw->bytes = assetBytes + offset;
+    outRaw->byteCount = size;
+    outRaw->offset = offset;
+    outRaw->checksum32 = checksum32_fnv1a(outRaw->bytes, outRaw->byteCount);
+    copy_bounded(outRaw->itemNumber, sizeof(outRaw->itemNumber), selection->itemNumber);
+    copy_bounded(outRaw->itemType, sizeof(outRaw->itemType), selection->itemType);
+    copy_bounded(outRaw->itemDescription,
+                 sizeof(outRaw->itemDescription),
+                 selection->itemDescription);
+    return FIRESTAFF_SCK_BRIDGE_OK;
+}
+
 const char* FirestaffSckBridge_ResultString(FirestaffSckBridgeResult result) {
     switch (result) {
     case FIRESTAFF_SCK_BRIDGE_OK:
@@ -611,6 +654,8 @@ const char* FirestaffSckBridge_ResultString(FirestaffSckBridgeResult result) {
         return "slice exceeds target file size";
     case FIRESTAFF_SCK_BRIDGE_ERR_NOT_SIZED:
         return "item has no SIZE attribute";
+    case FIRESTAFF_SCK_BRIDGE_ERR_UNSUPPORTED_DECODER:
+        return "unsupported asset decoder";
     }
     return "unknown";
 }

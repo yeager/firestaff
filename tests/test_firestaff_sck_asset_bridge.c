@@ -8,6 +8,7 @@
  *   - Lookup by MD5 only, by file only, and by both.
  *   - Selecting a single asset slice by item number with a type
  *     prefix filter (IMG).
+ *   - RAW selector visibility plus bounded RAW identity decoder handoff.
  *   - Selecting by description substring.
  *   - Bounded rejection paths: unknown MD5, oversized slice,
  *     missing SIZE attribute, malformed mapfile.
@@ -20,6 +21,7 @@
 #include "firestaff_sck_asset_bridge.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 static int g_failures = 0;
@@ -244,6 +246,139 @@ static void test_select_slice_by_number(void) {
                                        err,
                                        sizeof(err));
     CHECK(r == FIRESTAFF_SCK_BRIDGE_ERR_NOT_FOUND);
+
+    /* A sized item with the wrong type prefix is a clean miss, not
+     * NOT_SIZED.  This keeps RAW/PAL/SND decoder gates from accepting
+     * an IMG row by number alone. */
+    r = FirestaffSckBridge_SelectSlice(kAtariDemoMap,
+                                       "012288",
+                                       "RAW",
+                                       200000u,
+                                       &sel,
+                                       err,
+                                       sizeof(err));
+    CHECK(r == FIRESTAFF_SCK_BRIDGE_ERR_NOT_FOUND);
+}
+
+static uint32_t test_checksum32_fnv1a(const uint8_t* bytes, uint32_t byteCount) {
+    uint32_t h = 2166136261u;
+    uint32_t i;
+    for (i = 0u; i < byteCount; ++i) {
+        h ^= (uint32_t)bytes[i];
+        h *= 16777619u;
+    }
+    return h;
+}
+
+static void test_raw_decoder_handoff(void) {
+    FirestaffSckBridgeSelection sel;
+    FirestaffSckBridgeRawHandoff raw;
+    uint8_t asset[256];
+    char err[128];
+    FirestaffSckBridgeResult r;
+    unsigned int i;
+
+    for (i = 0u; i < sizeof(asset); ++i) {
+        asset[i] = (uint8_t)((i * 17u + 3u) & 0xffu);
+    }
+
+    memset(&sel, 0, sizeof(sel));
+    memset(&raw, 0, sizeof(raw));
+    memset(err, 0, sizeof(err));
+    r = FirestaffSckBridge_SelectSlice(kAtariDemoMap,
+                                       "000000",
+                                       "RAW",
+                                       200000u,
+                                       &sel,
+                                       err,
+                                       sizeof(err));
+    CHECK(r == FIRESTAFF_SCK_BRIDGE_OK);
+    CHECK_STR_EQ(sel.itemNumber, "000000");
+    CHECK_STR_EQ(sel.itemType, "RAW1");
+    CHECK(sel.slice.offset == 0u);
+    CHECK(sel.slice.size == 12288u);
+
+    /* Use a compact second map to prove the handoff without allocating
+     * corpus-scale bytes or storing any Greatstone/original payload. */
+    {
+        static const char* kTinyRawMap =
+            "MAPFORMATVERSION=2.0,MAPVERSION=1.0,FORMAT=EXE,ENDIAN=BIG\n"
+            "000016,RAW1,SIZE=32,Header,Identity bytes,\n"
+            "000064,PAL1,SIZE=48,Palette,Unsupported here,\n"
+            "000096,SND2,SIZE=24,Sound,Unsupported here,\n";
+        memset(&sel, 0, sizeof(sel));
+        memset(&raw, 0, sizeof(raw));
+        memset(err, 0, sizeof(err));
+        r = FirestaffSckBridge_SelectSlice(kTinyRawMap,
+                                           "000016",
+                                           "RAW",
+                                           (uint32_t)sizeof(asset),
+                                           &sel,
+                                           err,
+                                           sizeof(err));
+        CHECK(r == FIRESTAFF_SCK_BRIDGE_OK);
+        CHECK_STR_EQ(sel.itemType, "RAW1");
+        CHECK(sel.slice.offset == 16u);
+        CHECK(sel.slice.size == 32u);
+
+        r = FirestaffSckBridge_DecodeRawSelection(asset,
+                                                  (uint32_t)sizeof(asset),
+                                                  &sel,
+                                                  &raw,
+                                                  err,
+                                                  sizeof(err));
+        CHECK(r == FIRESTAFF_SCK_BRIDGE_OK);
+        CHECK(raw.bytes == asset + 16u);
+        CHECK(raw.byteCount == 32u);
+        CHECK(raw.offset == 16u);
+        CHECK(raw.bytes[0] == asset[16]);
+        CHECK(raw.bytes[31] == asset[47]);
+        CHECK(raw.checksum32 == test_checksum32_fnv1a(asset + 16u, 32u));
+        CHECK_STR_EQ(raw.itemNumber, "000016");
+        CHECK_STR_EQ(raw.itemType, "RAW1");
+        CHECK_STR_EQ(raw.itemDescription, "Header");
+
+        r = FirestaffSckBridge_SelectSlice(kTinyRawMap,
+                                           "000064",
+                                           "PAL",
+                                           (uint32_t)sizeof(asset),
+                                           &sel,
+                                           err,
+                                           sizeof(err));
+        CHECK(r == FIRESTAFF_SCK_BRIDGE_OK);
+        r = FirestaffSckBridge_DecodeRawSelection(asset,
+                                                  (uint32_t)sizeof(asset),
+                                                  &sel,
+                                                  &raw,
+                                                  err,
+                                                  sizeof(err));
+        CHECK(r == FIRESTAFF_SCK_BRIDGE_ERR_UNSUPPORTED_DECODER);
+
+        r = FirestaffSckBridge_SelectSlice(kTinyRawMap,
+                                           "000096",
+                                           "SND",
+                                           (uint32_t)sizeof(asset),
+                                           &sel,
+                                           err,
+                                           sizeof(err));
+        CHECK(r == FIRESTAFF_SCK_BRIDGE_OK);
+        r = FirestaffSckBridge_DecodeRawSelection(asset,
+                                                  (uint32_t)sizeof(asset),
+                                                  &sel,
+                                                  &raw,
+                                                  err,
+                                                  sizeof(err));
+        CHECK(r == FIRESTAFF_SCK_BRIDGE_ERR_UNSUPPORTED_DECODER);
+
+        r = FirestaffSckBridge_SelectSlice(kTinyRawMap,
+                                           "000016",
+                                           "RAW",
+                                           32u,
+                                           &sel,
+                                           err,
+                                           sizeof(err));
+        CHECK(r == FIRESTAFF_SCK_BRIDGE_ERR_SLICE_OUT_OF_BOUNDS);
+    }
 }
 
 static void test_select_slice_by_description(void) {
@@ -328,6 +463,8 @@ static void test_result_string_contract(void) {
                  "item has no SIZE attribute") == 0);
     CHECK(strcmp(FirestaffSckBridge_ResultString(FIRESTAFF_SCK_BRIDGE_ERR_SLICE_OUT_OF_BOUNDS),
                  "slice exceeds target file size") == 0);
+    CHECK(strcmp(FirestaffSckBridge_ResultString(FIRESTAFF_SCK_BRIDGE_ERR_UNSUPPORTED_DECODER),
+                 "unsupported asset decoder") == 0);
 }
 
 int main(void) {
@@ -335,6 +472,7 @@ int main(void) {
     test_mapping_xml_rejections();
     test_lookup_combinations();
     test_select_slice_by_number();
+    test_raw_decoder_handoff();
     test_select_slice_by_description();
     test_select_slice_against_pc34_map();
     test_select_slice_null_argument();
