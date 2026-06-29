@@ -170,6 +170,28 @@ typedef struct {
     const char           *shape_label;     /* short human label of the tested shape */
 } CSB_V1_CSBWinLoaderBoundaryResult;
 
+/* Filename-side discovery tags for user-staged CSBWin save files.
+ * Matching is ASCII case-insensitive and basename-only so community
+ * archives that preserve DOS uppercase names still classify. */
+typedef enum {
+    CSB_V1_CSBWIN_SAVE_FILE_NONE = 0,
+    CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT,
+    CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_BAK,
+    CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_DAT,
+    CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_BAK
+} CSB_V1_CSBWinSaveFileKind;
+
+/* Discovery + loader-readiness verdict for one staged file. */
+typedef struct {
+    CSB_V1_CSBWinSaveFileKind file_kind;   /* filename hint, if recognised */
+    int                       filename_candidate; /* 1 for csbgame/dmsave names */
+    CSB_V1_CSBWinSaveShape    shape;       /* byte-shape classifier verdict */
+    int                       should_attempt_import; /* 1 only for recognised name + accepted loader contract */
+    CSB_V1_CSBWinLoaderBoundaryResult loader; /* bounded importer verdict */
+    const char               *file_kind_label;
+    const char               *decision_label;
+} CSB_V1_CSBWinSaveDiscoveryResult;
+
 /* ── Public API ──────────────────────────────────────────────────────── */
 
 /* Build a synthetic byte buffer for the given shape into `out_buf`
@@ -229,10 +251,32 @@ CSB_V1_CSBWinSaveShape csb_v1_csbwin_save_loader_boundary_match(
     const uint8_t *bytes,
     size_t         size);
 
+/* Classify the staged filename hint. `path_hint` may be a full path
+ * using either '/' or '\\' separators. */
+CSB_V1_CSBWinSaveFileKind
+csb_v1_csbwin_save_loader_boundary_file_kind(const char *path_hint);
+
+/* Bounded discovery/classification gate for a staged CSBWin save. It
+ * combines basename discovery (`csbgame.dat`, `csbgame.bak`,
+ * `dmsave.dat`, `dmsave.bak`) with the byte-shape classifier and the
+ * existing loader-boundary verdict. It does not allocate, decode the
+ * CSBWin 512-byte obfuscation header, or import into a persistent party. */
+int csb_v1_csbwin_save_loader_boundary_classify(
+    const char *path_hint,
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWinSaveDiscoveryResult *out);
+
 /* ── Lookup helpers (used by tests + probe + docs) ───────────────────── */
 
 const char *csb_v1_csbwin_save_loader_boundary_shape_name(
     CSB_V1_CSBWinSaveShape shape);
+
+const char *csb_v1_csbwin_save_loader_boundary_file_kind_name(
+    CSB_V1_CSBWinSaveFileKind kind);
+
+const char *csb_v1_csbwin_save_loader_boundary_decision_name(
+    const CSB_V1_CSBWinSaveDiscoveryResult *result);
 
 /* Source-evidence string for tests + docs. */
 const char *csb_v1_csbwin_save_loader_boundary_source_evidence(void);
