@@ -29,12 +29,12 @@
  *      heights[count] BE) into a stable in-memory table. The header
  *      totals must equal the file-data section exactly so the parser is
  *      proven on real bytes.
- *   3. Selecting a real PC CSB ornament bitmap (bitmap[313] — the D1C
- *      D2L/D2R 16x19 floor-ornament candidate carried in DMCSB1 16x19
- *      rows, matching the ReDMCSB DUNVIEW.C F0108 1500-1509 zone math
- *      and the CSB-lineage Viewport.cpp:6924-6927 first-CSB-backdrop
- *      anchor) and loading its inline BE width/height header + the
- *      DMCSB1 nibble-coded compressed payload.
+ *   3. Selecting a real PC CSB ornament-sized bitmap by matching the
+ *      DMCSB1 table entry to its inline BE width/height header (the
+ *      canonical PC 3.4 pair currently selects bitmap[6], 80x14),
+ *      matching the ReDMCSB DUNVIEW.C F0108 1500-1509 zone math and
+ *      the CSB-lineage Viewport.cpp:6924-6927 first-CSB-backdrop
+ *      anchor, then loading the DMCSB1 nibble-coded compressed payload.
  *   4. Driving the source-locked ornament blit math against those real
  *      bytes:
  *        - `csb_v1_viewport_d1c_f0108_zone_for_coordinate_set_pc34`
@@ -87,10 +87,13 @@
 #define CANONICAL_PC_CSB_GRAPHICS_MD5  "61fbfd56887c94adc26888a9491c6611"
 #define CAPTURE_PATH                   "/tmp/csb_pc_real_ornament_capture.ppm"
 #define CAPTURE_HASH_PATH              "/tmp/csb_pc_real_ornament_capture.sha256"
+#define CAPTURE_MANIFEST_PATH          "/tmp/csb_pc_real_ornament_capture_manifest.json"
 
 #define DMCSB1_NEW_FORMAT_BE_SIG       0x8001u
 #define FRAMEBUFFER_W                  320
 #define FRAMEBUFFER_H                  200
+#define CAPTURE_D1C_FLOOR_BAND_Y       100
+#define CAPTURE_D1C_FLOOR_BAND_ROWS    9
 #define DMCSB1_MAX_GRAPHICS            4096u
 #define DMCSB1_HEADER_MAX              8u * 1024u
 
@@ -497,12 +500,16 @@ static int write_capture_ppm(const uint8_t* bitmap_bytes,
 
     memset(framebuffer, 0x05, sizeof(framebuffer));
 
-    /* Seed the D1C floor-band rows (100..108) with real bitmap bytes. */
+    /* Seed the D1C floor-band rows (100..108) with real bitmap bytes.
+     * ReDMCSB: DUNVIEW.C F0108:3989-4004 routes the source bitmap
+     * through the C1500 + CoordinateSet*11 + ViewFloor zone blit; the
+     * manifest sidecar below records this bounded capture band so the
+     * real-asset proof remains auditable without committing game data. */
     if (bitmap_bytes && bitmap_w > 0 && bitmap_h > 0) {
         int bytes_per_row = (bitmap_w + 1) / 2;
         if (bytes_per_row > FRAMEBUFFER_W / 2) bytes_per_row = FRAMEBUFFER_W / 2;
-        for (int row = 0; row < bitmap_h && row < 9; ++row) {
-            int fb_row = 100 + row;
+        for (int row = 0; row < bitmap_h && row < CAPTURE_D1C_FLOOR_BAND_ROWS; ++row) {
+            int fb_row = CAPTURE_D1C_FLOOR_BAND_Y + row;
             if (fb_row >= FRAMEBUFFER_H) break;
             int copy = bytes_per_row;
             if (copy > FRAMEBUFFER_W / 2) copy = FRAMEBUFFER_W / 2;
@@ -589,6 +596,97 @@ static int write_capture_ppm(const uint8_t* bitmap_bytes,
     return 1;
 }
 
+static void json_string(FILE *f, const char *s)
+{
+    fputc('"', f);
+    if (s) {
+        const unsigned char *p = (const unsigned char *)s;
+        while (*p) {
+            unsigned char c = *p++;
+            switch (c) {
+            case '"': fputs("\\\"", f); break;
+            case '\\': fputs("\\\\", f); break;
+            case '\b': fputs("\\b", f); break;
+            case '\f': fputs("\\f", f); break;
+            case '\n': fputs("\\n", f); break;
+            case '\r': fputs("\\r", f); break;
+            case '\t': fputs("\\t", f); break;
+            default:
+                if (c < 0x20) {
+                    fprintf(f, "\\u%04x", (unsigned)c);
+                } else {
+                    fputc((int)c, f);
+                }
+                break;
+            }
+        }
+    }
+    fputc('"', f);
+}
+
+static int write_capture_manifest(const char *data_dir,
+                                  const char *graphics_path,
+                                  const char *graphics_md5,
+                                  int ornament_idx,
+                                  int ornament_w,
+                                  int ornament_h,
+                                  int ornament_payload_size,
+                                  uint32_t ornament_data_offset,
+                                  const ornament_blit_tally_t *tally,
+                                  const char capture_sha[65])
+{
+    FILE *mf = fopen(CAPTURE_MANIFEST_PATH, "wb");
+    if (!mf) return 0;
+
+    fputs("{\n", mf);
+    fputs("  \"schema\": \"firestaff.csb.v1.real_asset_ornament_capture.v1\",\n", mf);
+    fputs("  \"game\": \"csb\",\n", mf);
+    fputs("  \"variant\": \"pc34_en\",\n", mf);
+    fputs("  \"probe\": \"firestaff_csb_v1_pc_real_asset_ornament_blit_probe\",\n", mf);
+    fputs("  \"data_dir\": ", mf); json_string(mf, data_dir); fputs(",\n", mf);
+    fputs("  \"graphics_path\": ", mf); json_string(mf, graphics_path); fputs(",\n", mf);
+    fputs("  \"graphics_md5\": ", mf); json_string(mf, graphics_md5); fputs(",\n", mf);
+    fprintf(mf, "  \"bitmap_index\": %d,\n", ornament_idx);
+    fprintf(mf, "  \"bitmap_inline_width\": %d,\n", ornament_w);
+    fprintf(mf, "  \"bitmap_inline_height\": %d,\n", ornament_h);
+    fprintf(mf, "  \"bitmap_payload_size\": %d,\n", ornament_payload_size);
+    fprintf(mf, "  \"bitmap_data_offset\": %u,\n", (unsigned)ornament_data_offset);
+    fprintf(mf, "  \"framebuffer_width\": %d,\n", FRAMEBUFFER_W);
+    fprintf(mf, "  \"framebuffer_height\": %d,\n", FRAMEBUFFER_H);
+    fprintf(mf, "  \"capture_d1c_floor_band_y\": %d,\n", CAPTURE_D1C_FLOOR_BAND_Y);
+    fprintf(mf, "  \"capture_d1c_floor_band_rows\": %d,\n", CAPTURE_D1C_FLOOR_BAND_ROWS);
+    fputs("  \"capture_path\": ", mf); json_string(mf, CAPTURE_PATH); fputs(",\n", mf);
+    fputs("  \"capture_sha256\": ", mf); json_string(mf, capture_sha); fputs(",\n", mf);
+    fputs("  \"source_lock\": [\n", mf);
+    fputs("    \"ReDMCSB DUNVIEW.C F0108:3940-4011 floor ornament C10 blit and C1500 zone math\",\n", mf);
+    fputs("    \"ReDMCSB DUNVIEW.C F0115:4547-4581 thing-pass ordered cell nibbles\",\n", mf);
+    fputs("    \"ReDMCSB DEFS.H:2088 C10_COLOR_FLESH and 4223 C1500_ZONE_FLOOR_ORNAMENT\"\n", mf);
+    fputs("  ],\n", mf);
+    fputs("  \"tally\": {\n", mf);
+    fprintf(mf, "    \"zones_checked\": %d,\n", tally ? tally->zones_checked : 0);
+    fprintf(mf, "    \"zones_inside_band\": %d,\n", tally ? tally->zones_inside_band : 0);
+    fprintf(mf, "    \"zones_match_redmcsb_formula\": %d,\n",
+            tally ? tally->zones_match_redmcsb_formula : 0);
+    fprintf(mf, "    \"c10_blend_total\": %d,\n", tally ? tally->c10_blend_total : 0);
+    fprintf(mf, "    \"c10_blend_kept_destination\": %d,\n",
+            tally ? tally->c10_blend_kept_destination : 0);
+    fprintf(mf, "    \"c10_blend_passthrough\": %d,\n",
+            tally ? tally->c10_blend_passthrough : 0);
+    fprintf(mf, "    \"f0115_decoded_orders\": %d,\n",
+            tally ? tally->f0115_decoded_orders : 0);
+    fprintf(mf, "    \"f0115_stops_at_zero\": %d\n",
+            tally ? tally->f0115_stops_at_zero : 0);
+    fputs("  },\n", mf);
+    fputs("  \"non_claims\": [\n", mf);
+    fputs("    \"no original DOS pixel parity claim\",\n", mf);
+    fputs("    \"no game data committed\",\n", mf);
+    fputs("    \"bounded D1C ornament/HUD-readiness capture only\"\n", mf);
+    fputs("  ]\n", mf);
+    fputs("}\n", mf);
+    fclose(mf);
+    return 1;
+}
+
 /* ── Boot handoff + scan sanity ──────────────────────────────── */
 
 static int run_boot_handoff(const char *dir)
@@ -627,7 +725,9 @@ static int run_boot_handoff(const char *dir)
 
 /* ── DMCSB1 parser + ornament math + capture ─────────────────── */
 
-static int run_real_asset_ornament_blit(const char *graphics_path)
+static int run_real_asset_ornament_blit(const char *data_dir,
+                                        const char *graphics_path,
+                                        const char *graphics_md5)
 {
     FILE* f;
     uint8_t* data;
@@ -674,6 +774,8 @@ static int run_real_asset_ornament_blit(const char *graphics_path)
     CHECK(table.total_compressed == table.data_section_size,
           "DMCSB1 comp[] sum == data section size "
           "(the decomp[] == comp[] PC CSB invariant holds)");
+    CHECK(strcmp(graphics_md5, CANONICAL_PC_CSB_GRAPHICS_MD5) == 0,
+          "manifest graphics MD5 is the canonical PC CSB GRAPHICS.DAT MD5");
 
     /* Find a real ornament bitmap (small floor-ornament patch). */
     ornament_idx = find_verified_ornament_bitmap(
@@ -694,6 +796,9 @@ static int run_real_asset_ornament_blit(const char *graphics_path)
                ornament_payload_size,
                (unsigned)table.widths[ornament_idx],
                (unsigned)table.heights[ornament_idx]);
+        CHECK((uint64_t)ornament_data_offset + (uint64_t)ornament_payload_size <=
+              (uint64_t)(size_t)size,
+              "selected real ornament bitmap payload stays inside GRAPHICS.DAT");
     }
 
     /* Run the source-locked ornament blit math against the real bytes. */
@@ -724,6 +829,12 @@ static int run_real_asset_ornament_blit(const char *graphics_path)
         CHECK(capture_sha[0] != '\0',
               "capture SHA256 is non-empty (deterministic fingerprint)");
     }
+    CHECK(write_capture_manifest(data_dir, graphics_path, graphics_md5,
+                                 ornament_idx, ornament_w, ornament_h,
+                                 ornament_payload_size,
+                                 ornament_data_offset, &tally, capture_sha),
+          "provenance manifest written to "
+          "/tmp/csb_pc_real_ornament_capture_manifest.json");
 
     free(data);
     return 0;
@@ -750,6 +861,7 @@ int main(int argc, char **argv)
                                       sizeof(default_dir));
     CSB_V1_BootProfile profile;
     char graphics_path[1024];
+    char graphics_md5[33];
 
     printf("=== CSB V1 PC real-asset ornament blit probe ===\n\n");
     printf("data_dir=%s\n", dir ? dir : "(none)");
@@ -770,13 +882,15 @@ int main(int argc, char **argv)
           "PC CSB assets scan by hash (second pass)");
     snprintf(graphics_path, sizeof(graphics_path), "%s",
              profile.graphics_path);
+    snprintf(graphics_md5, sizeof(graphics_md5), "%s",
+             profile.graphics_md5);
     csb_v1_boot_cleanup(&profile);
 
     /* Run self-tests for the source-locked ornament view modules. */
     run_self_tests();
 
     /* Run the real-asset DMCSB1 BE parser + ornament blit math + capture. */
-    run_real_asset_ornament_blit(graphics_path);
+    run_real_asset_ornament_blit(dir, graphics_path, graphics_md5);
 
     printf("\nchecks=%d failures=%d\n", checks, failures);
     return failures == 0 ? 0 : 1;

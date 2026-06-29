@@ -7,6 +7,8 @@
 
 - **DM2 V2 HUD widget synthetic-example integrity + generator-agnostic strengthening**: `firestaff_dm2_v2_hud_widget_synthetic_promotion_probe` is now 81/81 PASS (was 51/51) with three additions: (a) PNG 8-byte signature check on every one of the seven 1x1 fixtures so a future fixture that silently rots into arbitrary text cannot pass the `synthetic-test-fixture` substring check alone, (b) per-slot `width > 0 && height > 0` sanity check on every COMPLETE slot so a corrupt manifest without declared dimensions cannot promote the gate, and (c) a generator-agnostic COMPLETE scenario that rewrites every `generator` entry from `"synthetic_test"` to `"pbr_hero"` and verifies the gate still promotes to COMPLETE — guarding against a future refactor that accidentally introduces per-generator allowlisting. No finished-art, real-bitmap-blit, or visual-verification claim is added; the no-finished-art boundary stays explicit.
 
+- **CSB V1 real-asset ornament capture provenance**: `firestaff_csb_v1_pc_real_asset_ornament_blit_probe` now records a JSON manifest beside its deterministic PPM/SHA capture, including the verified PC 3.4 GRAPHICS.DAT MD5, selected bitmap index/dimensions/span, D1C floor-band rows, F0108/F0115 source anchors, and tally counts. The gate remains skip-safe and does not claim original pixel parity.
+
 # Firestaff v3.0.12
 
 Firestaff v3.0.12 packages the 2026-06-27/28 runtime-hardening work that
