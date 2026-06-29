@@ -278,16 +278,19 @@ jobs:
             runner: ubuntu-24.04
             deb_arch: amd64
             rpm_arch: x86_64
+            steamdeck_package: true
           - arch: arm64
             runner: ubuntu-24.04-arm
             deb_arch: arm64
             rpm_arch: aarch64
+            steamdeck_package: false
     env:
       FIRESTAFF_VERSION: ${{ needs.preflight.outputs.version }}
       FIRESTAFF_RELEASE_NOTES: ${{ needs.preflight.outputs.release_notes }}
       FIRESTAFF_ARCH: ${{ matrix.arch }}
       DEB_ARCH: ${{ matrix.deb_arch }}
       RPM_ARCH: ${{ matrix.rpm_arch }}
+      STEAMDECK_PACKAGE: ${{ matrix.steamdeck_package }}
     steps:
       - uses: actions/checkout@v4
 
@@ -296,6 +299,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build rpm dpkg-dev git pkg-config \
+            zstd \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
             libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
           git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
@@ -351,9 +355,21 @@ jobs:
           ./scripts/package_linux_preview.sh
 
           cd release
-          sha256sum \
+          checksum_inputs=(
             "firestaff_${FIRESTAFF_VERSION}_${DEB_ARCH}.deb" \
             "firestaff-${FIRESTAFF_VERSION}.${RPM_ARCH}.rpm" \
+          )
+
+          if [[ "$STEAMDECK_PACKAGE" == "true" ]]; then
+            cd "$GITHUB_WORKSPACE"
+            VERSION="$FIRESTAFF_VERSION" \
+            RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
+            ./scripts/package_steamdeck_preview.sh
+            cd release
+            checksum_inputs+=("Firestaff-${FIRESTAFF_VERSION}-steamdeck-x86_64.pkg.tar.zst")
+          fi
+
+          sha256sum "${checksum_inputs[@]}" \
             > "Firestaff-${FIRESTAFF_VERSION}-linux-${FIRESTAFF_ARCH}.sha256"
 
       - uses: actions/upload-artifact@v4
@@ -362,6 +378,7 @@ jobs:
           path: |
             release/firestaff_${{ env.FIRESTAFF_VERSION }}_${{ matrix.deb_arch }}.deb
             release/firestaff-${{ env.FIRESTAFF_VERSION }}.${{ matrix.rpm_arch }}.rpm
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-steamdeck-*.pkg.tar.zst
             release/Firestaff-${{ env.FIRESTAFF_VERSION }}-linux-${{ matrix.arch }}.sha256
           if-no-files-found: error
 
@@ -399,7 +416,7 @@ jobs:
             echo ""
             echo "## Release assets"
             echo ""
-            echo "This release includes macOS arm64, macOS x86_64, Windows x86_64, Linux x86_64, and Linux arm64 packages. Original Dungeon Master game data is not included."
+            echo "This release includes macOS arm64, macOS x86_64, Windows x86_64, Linux x86_64, Linux arm64, and Steam Deck x86_64 packages. Steam Deck uses the x86_64/SteamOS pacman package, not the Linux ARM64 artifact. Original Dungeon Master game data is not included."
             echo ""
             if [[ -n "$previous_tag" ]]; then
               echo "Full changelog: https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${FIRESTAFF_TAG}"
