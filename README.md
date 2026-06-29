@@ -129,7 +129,8 @@ Get the latest build from [GitHub Releases](https://github.com/yeager/firestaff/
 | macOS | DMG and ZIP |
 | Windows | Installer and ZIP |
 | Linux x86_64 | DEB and RPM |
-| Linux ARM64 / Steam Deck | DEB and RPM |
+| Steam Deck (x86_64 / SteamOS) | pacman `.pkg.tar.zst` |
+| Linux ARM64 | DEB and RPM |
 
 All game data is user-supplied. Firestaff does not include copyrighted game
 assets.

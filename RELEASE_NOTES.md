@@ -1,4 +1,11 @@
 
+# Unreleased
+
+- Release packaging now treats Steam Deck as SteamOS on x86_64/AMD hardware
+  and publishes a pacman-compatible `.pkg.tar.zst` artifact from the Linux
+  x86_64 release job. Steam Deck is no longer grouped with Linux ARM64 in
+  release copy.
+
 # Firestaff v3.0.13
 
 Firestaff v3.0.13 packages the 2026-06-28/29 runtime-hardening work that
