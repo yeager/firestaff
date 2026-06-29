@@ -28699,6 +28699,40 @@ int M11_GameView_GetV1DamageIndicatorZone(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1InventoryDamageIndicatorZoneId(int championSlot) {
+    if (championSlot < 0 || championSlot >= CHAMPION_MAX_PARTY) return 0;
+    return 179 + championSlot;
+}
+
+int M11_GameView_GetV1InventoryDamageIndicatorZone(int championSlot,
+                                                   int indicatorW,
+                                                   int indicatorH,
+                                                   int* outX,
+                                                   int* outY,
+                                                   int* outW,
+                                                   int* outH) {
+    int boxX, boxY, boxW, boxH;
+    int zoneId = M11_GameView_GetV1InventoryDamageIndicatorZoneId(championSlot);
+    if (indicatorW <= 0 || indicatorH <= 0 || zoneId == 0) return 0;
+    /* ReDMCSB CHAMDRAW.C F0623:688-696 selects C179..C182 for the
+     * inventory champion's big C016 damage graphic, then adds the
+     * champion index before F0660_ blits with C10 transparency.  The
+     * layout is the 32x29 portrait lane at x=(slot*69)+7, y=0 inside
+     * the same C151..C154 status-box row that F0292 owns. */
+    championSlot = zoneId - 179;
+    if (!M11_GameView_GetV1StatusBoxZone(championSlot,
+                                         &boxX, &boxY, &boxW, &boxH)) {
+        return 0;
+    }
+    (void)boxW;
+    (void)boxH;
+    if (outX) *outX = boxX + 7;
+    if (outY) *outY = boxY;
+    if (outW) *outW = indicatorW;
+    if (outH) *outH = indicatorH;
+    return 1;
+}
+
 int M11_GameView_GetV1DamageNumberOrigin(int championSlot,
                                          int* outX,
                                          int* outY) {
@@ -30236,19 +30270,32 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 }
             }
 
-            /* GRAPHICS.DAT-backed damage indicator (45×7, graphic 15).
-             * Overlaid on the status box when the champion just took
-             * damage (timer > 0).  The damage number is drawn on top.
-             * Ref: ReDMCSB CHAMPION.C F0291. */
+            /* GRAPHICS.DAT-backed damage indicator.  ReDMCSB CHAMDRAW.C
+             * F0623:688-699 uses C016/C179..C182 for the inventory
+             * champion and C015/C167..C170 for the other status boxes,
+             * then prints the centered damage number in the same zone. */
             if (state->championDamageTimer[slot] > 0) {
+                int useBigDamage =
+                    (!useV2PartyHud &&
+                     state->inventoryPanelActive &&
+                     slot == state->world.party.activeChampionIndex);
                 if (state->assetsAvailable) {
                     const M11_AssetSlot* dmgAsset = M11_AssetLoader_Load(
                         (M11_AssetLoader*)&state->assetLoader,
-                        (unsigned int)M11_GameView_GetV1ChampionSmallDamageGraphicId());
-                    if (dmgAsset && dmgAsset->width == 45 &&
-                        dmgAsset->height == 7) {
+                        (unsigned int)(useBigDamage
+                            ? M11_GameView_GetV1ChampionBigDamageGraphicId()
+                            : M11_GameView_GetV1ChampionSmallDamageGraphicId()));
+                    if (dmgAsset &&
+                        ((!useBigDamage && dmgAsset->width == 45 &&
+                          dmgAsset->height == 7) ||
+                         (useBigDamage && dmgAsset->width == 32 &&
+                          dmgAsset->height == 29))) {
                         int dmgX, dmgY, dmgW, dmgH;
-                        if (!useV2PartyHud) {
+                        if (useBigDamage) {
+                            (void)M11_GameView_GetV1InventoryDamageIndicatorZone(
+                                slot, (int)dmgAsset->width, (int)dmgAsset->height,
+                                &dmgX, &dmgY, &dmgW, &dmgH);
+                        } else if (!useV2PartyHud) {
                             (void)M11_GameView_GetV1DamageIndicatorZone(
                                 slot, (int)dmgAsset->width, (int)dmgAsset->height,
                                 &dmgX, &dmgY, &dmgW, &dmgH);
@@ -30268,8 +30315,9 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 }
                 /* Always draw the damage number (even without assets).
                  * Source F0623/F0320 uses F0650_PrintCenteredTextToScreenZone
-                 * on C167..C170, so center the formatted amount inside the
-                 * 45x7 C015 banner instead of using a fixed two-digit bias. */
+                 * on C167..C170 or C179..C182, so center the formatted
+                 * amount inside the selected damage zone instead of using
+                 * a fixed two-digit bias. */
                 {
                     char dmgNum[8];
                     M11_TextStyle dmgStyle = g_text_small;
@@ -30280,7 +30328,14 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     dmgStyle.color = M11_COLOR_WHITE;
                     snprintf(dmgNum, sizeof(dmgNum), "%d",
                              state->championDamageAmount[slot]);
-                    if (!useV2PartyHud &&
+                    if (useBigDamage &&
+                        M11_GameView_GetV1InventoryDamageIndicatorZone(
+                            slot, 32, 29,
+                            &dmgNumX, &dmgNumY, &dmgNumW, &dmgNumH)) {
+                        m11_draw_text_centered_in_rect(
+                            framebuffer, framebufferWidth, framebufferHeight,
+                            dmgNumX, dmgNumY + 14, dmgNumW, dmgNum, &dmgStyle);
+                    } else if (!useV2PartyHud &&
                         M11_GameView_GetV1DamageIndicatorZone(
                             slot, 45, 7,
                             &dmgNumX, &dmgNumY, &dmgNumW, &dmgNumH)) {

@@ -2637,6 +2637,28 @@ int main(int argc, char** argv) {
     }
 
     {
+        int damageX0, damageY0, damageW0, damageH0;
+        int damageX3, damageY3, damageW3, damageH3;
+        probe_record(&tally,
+                     "INV_GV_15S_BIG",
+                     M11_GameView_GetV1InventoryDamageIndicatorZoneId(0) == 179 &&
+                         M11_GameView_GetV1InventoryDamageIndicatorZoneId(3) == 182 &&
+                         M11_GameView_GetV1InventoryDamageIndicatorZoneId(-1) == 0 &&
+                         M11_GameView_GetV1InventoryDamageIndicatorZoneId(4) == 0 &&
+                         M11_GameView_GetV1InventoryDamageIndicatorZone(
+                             0, 32, 29,
+                             &damageX0, &damageY0, &damageW0, &damageH0) &&
+                         M11_GameView_GetV1InventoryDamageIndicatorZone(
+                             3, 32, 29,
+                             &damageX3, &damageY3, &damageW3, &damageH3) &&
+                         damageX0 == 7 && damageY0 == PROBE_PARTY_PANEL_Y &&
+                         damageW0 == 32 && damageH0 == 29 &&
+                         damageX3 == 214 && damageY3 == PROBE_PARTY_PANEL_Y &&
+                         damageW3 == 32 && damageH3 == 29,
+                     "V1 inventory-champion damage zones expose C179-C182 ids and pin C016 to the portrait lane");
+    }
+
+    {
         int damageNumX0, damageNumY0;
         int damageNumX3, damageNumY3;
         probe_record(&tally,
