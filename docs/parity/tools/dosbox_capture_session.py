@@ -957,12 +957,121 @@ def dry_run(plan: list[PlanStep],
                 failures.append("movement receipt: action key mismatch")
             if not movement_receipt.get("viewport_rgb_changed"):
                 failures.append("movement receipt: viewport change flag missing")
+            if not movement_receipt.get("movement_changed_reported"):
+                failures.append("movement receipt: reported movement flag missing")
+            if not movement_receipt.get("viewport_rgb_changed_consistent"):
+                failures.append("movement receipt: change consistency flag missing")
             attempts = movement_receipt.get("action_attempts", [])
             if len(attempts) != 2:
                 failures.append("movement receipt: action attempts missing")
             coord = movement_receipt.get("screen_coord_320x200", {})
             if coord.get("x") != 276 or coord.get("y") != 135:
                 failures.append("movement receipt: source-zone coordinate mismatch")
+        blocked_before = FrameQuality(
+            label="capture_01_ingame_start",
+            state="dungeon_gameplay",
+            width=320,
+            height=200,
+            full_nonblack=0.5,
+            viewport_nonblack=0.9,
+            rightcol_nonblack=0.1,
+            champion_nonblack=0.6,
+            blackout=False,
+            capture_backend="fixture",
+            normalized_rgb_sha256="e" * 64,
+        )
+        blocked_after = FrameQuality(
+            label="capture_02_ingame_step_forward_0006",
+            state="dungeon_gameplay",
+            width=320,
+            height=200,
+            full_nonblack=0.5,
+            viewport_nonblack=0.9,
+            rightcol_nonblack=0.1,
+            champion_nonblack=0.6,
+            blackout=False,
+            capture_backend="fixture",
+            normalized_rgb_sha256="e" * 64,
+        )
+        blocked_receipt_path = _write_live_movement_receipt(
+            capture_root,
+            before_quality=blocked_before,
+            after_quality=blocked_after,
+            before_viewport_sha256="f" * 64,
+            after_viewport_sha256="f" * 64,
+            before_path=capture_root / "original" / "01_ingame_start.png",
+            after_path=capture_root / "original" / "02_ingame_step_forward.png",
+            movement_changed=False,
+            action_key=DUNGEON_MOVE_FORWARD_CLICK_KEY,
+            input_method="absolute_mouse_click_with_mouse_capture_onclick",
+            source_anchor=DUNGEON_MOVE_FORWARD_SOURCE,
+            action_attempts=[
+                {
+                    "action_key": DUNGEON_MOVE_FORWARD_CLICK_KEY,
+                    "input_method": "absolute_mouse_click_with_mouse_capture_onclick",
+                    "viewport_rgb_changed": False,
+                },
+            ],
+        )
+        try:
+            blocked_receipt = json.loads(
+                blocked_receipt_path.read_text(encoding="utf-8")
+            )
+        except Exception as exc:
+            failures.append(f"blocked movement receipt: could not parse JSON: {exc}")
+        else:
+            if blocked_receipt.get("viewport_rgb_changed"):
+                failures.append(
+                    "blocked movement receipt: changed viewport flag despite equal hashes"
+                )
+            if blocked_receipt.get("normalized_rgb_changed"):
+                failures.append(
+                    "blocked movement receipt: changed normalized RGB despite equal frame hashes"
+                )
+            if blocked_receipt.get("movement_changed_reported"):
+                failures.append("blocked movement receipt: reported movement flag was not false")
+            if not blocked_receipt.get("viewport_rgb_changed_consistent"):
+                failures.append(
+                    "blocked movement receipt: equal-hash consistency flag was not true"
+                )
+            blocked_attempts = blocked_receipt.get("action_attempts", [])
+            if (
+                len(blocked_attempts) != 1
+                or blocked_attempts[0].get("action_key") != DUNGEON_MOVE_FORWARD_CLICK_KEY
+                or blocked_attempts[0].get("viewport_rgb_changed") is not False
+            ):
+                failures.append(
+                    "blocked movement receipt: did not preserve the failed input attempt"
+                )
+        inconsistent_receipt_path = _write_live_movement_receipt(
+            capture_root,
+            before_quality=blocked_before,
+            after_quality=blocked_after,
+            before_viewport_sha256="1" * 64,
+            after_viewport_sha256="2" * 64,
+            before_path=capture_root / "original" / "01_ingame_start.png",
+            after_path=capture_root / "original" / "02_ingame_step_forward.png",
+            movement_changed=False,
+            action_key=DUNGEON_MOVE_FORWARD_KEYBOARD_KEY,
+            input_method="keyboard_key_code_keypad_5",
+            source_anchor=DUNGEON_MOVE_FORWARD_KEYBOARD_SOURCE,
+            action_attempts=[],
+        )
+        try:
+            inconsistent_receipt = json.loads(
+                inconsistent_receipt_path.read_text(encoding="utf-8")
+            )
+        except Exception as exc:
+            failures.append(f"inconsistent movement receipt: could not parse JSON: {exc}")
+        else:
+            if not inconsistent_receipt.get("viewport_rgb_changed"):
+                failures.append(
+                    "inconsistent movement receipt: viewport change was not derived from hashes"
+                )
+            if inconsistent_receipt.get("viewport_rgb_changed_consistent"):
+                failures.append(
+                    "inconsistent movement receipt: mismatch between report and hashes not surfaced"
+                )
         abort_quality = FrameQuality(
             label="entrance_menu_0006",
             state="title_screen",
@@ -2511,6 +2620,8 @@ def _write_live_movement_receipt(
     """Write the local hash/density proof for the in-dungeon movement action."""
     capture_root.mkdir(parents=True, exist_ok=True)
     key_dispatch = _last_key_dispatch_from_log(capture_root)
+    viewport_hash_changed = before_viewport_sha256 != after_viewport_sha256
+    reported_movement_changed = bool(movement_changed)
     receipt = {
         "schema": LIVE_MOVEMENT_RECEIPT_SCHEMA,
         "capture_root": str(capture_root),
@@ -2538,7 +2649,11 @@ def _write_live_movement_receipt(
             before_quality.normalized_rgb_sha256
             != after_quality.normalized_rgb_sha256
         ),
-        "viewport_rgb_changed": movement_changed,
+        "viewport_rgb_changed": viewport_hash_changed,
+        "movement_changed_reported": reported_movement_changed,
+        "viewport_rgb_changed_consistent": (
+            reported_movement_changed == viewport_hash_changed
+        ),
         "last_key_dispatch": asdict(key_dispatch) if key_dispatch is not None else None,
         "non_claims": [
             "This is original-DOS movement-capture evidence, not a pixel-parity promotion.",
