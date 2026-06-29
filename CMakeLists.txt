@@ -19707,6 +19707,36 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runtime_gesture_navigation_gat
     )
 endif()
 
+# M11 FS_InputQueue ring buffer + SDL scancode -> FS_Command
+# translation contract gate (firestaff_input.c). This is the bridge
+# between the SDL event stream + firestaff_touch.c gesture path and
+# the V1 command queue that firestaff_game_loop.c drains each tick
+# (the F0380_COMMAND_ProcessQueue_CPSC-style consumer). The test
+# pins the documented FS_INPUT_QUEUE_SIZE=32 ringbuffer invariants
+# (FIFO order, capacity drop, head/tail wraparound, empty pop,
+# NULL safety, parameter round-trip), the always-on arrow key +
+# Escape/Space/Tab mapping, the WASD gated mapping, and a
+# deterministic 32-event full-cycle stress with FNV-1a
+# cross-run snapshot stability. Data-free; no real game data, no
+# SDL window. Source: firestaff_input.h + firestaff_input.c +
+# firestaff_touch.c fs_input_queue_push() consumer +
+# firestaff_game_loop.c fs_input_queue_pop() consumer + ReDMCSB
+# DEFS.H:238-243 C001..C006 movement command IDs.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_queue_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/firestaff_input.c")
+    add_executable(test_m11_input_queue_pc34_compat
+        tests/test_m11_input_queue_pc34_compat.c
+        src/engine/firestaff_input.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_input_queue_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_input_queue_pc34_compat
+        COMMAND test_m11_input_queue_pc34_compat
+    )
+endif()
+
 # M12 save browser export/import: file-copy backup and restore path for
 # firestaff-*.sav entries without overwriting existing imported saves.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12.c"
