@@ -14,7 +14,7 @@
 - Preflight gate (`dosbox_capture_preflight.py`) verifies canonical SHA256s and writes the hardened `dosbox_capture.conf` with the runbook's required settings (machine=svga_s3, memsize=16, cpu core=dynamic, cpu_cycles=max).  Run it before any live attempt so the next session cannot reproduce the pass94 conf shape.
 - Selector sequence corrected for DM1 PC 3.4 (GRAPHICS=0 → SOUND=0 → ENTER four times)
 - Creature-chain capture is now pinned by `docs/parity/DM1_V1_CREATURE_CHAIN_ORIGINAL_CAPTURE_CONTRACT.json`: the live session must produce `creature_chain_d2c_trolin_front` and `creature_chain_d1c_trolin_front` rows before creature-chain pixel parity can be promoted.
-- **2026-06-20 update:** Host-mouse click is REQUIRED after FIRES loads (see "Host-mouse click required for KP5/KP6" section below).  This was the missing piece that prevented pass94 from progressing past the entrance wall.  The new `scripts/dm1_v1_original_capture.py` driver implements the corrected selector + host-mouse click and closed all 5 capture-gap pairs on macOS / DOSBox Staging 0.82.2.
+- **2026-06-20 update:** Host-mouse click is REQUIRED after FIRES loads (see "Host-mouse click required for KP5/KP6" section below).  This was the missing piece that prevented pass94 from progressing past the entrance wall.  The newer capture drivers implement the corrected selector + host-mouse click and can collect operator-local rows on macOS / DOSBox Staging 0.82.2, but they do not by themselves promote original-vs-Firestaff pixel parity.  The authoritative open/partial labels remain in `docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md`.
 
 ---
 
@@ -1097,9 +1097,11 @@ image, which gives the correct `dungeon_gameplay` verdict for in-game frames.
 
 ## `scripts/dm1_v1_original_capture.py` (added 2026-06-20)
 
-The deterministic driver that closed all 5 capture-gap pairs on macOS /
+The deterministic driver for collecting the five capture-gap rows on macOS /
 DOSBox Staging 0.82.2.  It is a self-contained Python script (no external
-test-runner) that:
+test-runner) that can produce operator-local original frames and reports, but
+paired Firestaff artifacts and reviewed pixel diffs are still required before
+any row can move to `MATCHED`:
 
 1. Launches DOSBox Staging with the canonical DM1 PC 3.4 runtime
    (`/Users/bosse/.firestaff/data/dm1-extras/dmfiles-dos-en-v34/`).
