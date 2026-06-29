@@ -23,6 +23,11 @@
  *   6. Every public FS_AX_ElementType renders its stable JSON type string.
  *   7. The public FS_AX_MAX_ELEMENTS budget is honored: exactly the budgeted
  *      elements flush, overflow additions are dropped, and JSON stays valid.
+ *   8. fs_ax_set_output_dir() / fs_ax_get_output_path() redirect the writer
+ *      into a caller-chosen sandbox without mutating HOME, leave the HOME
+ *      default path intact when handed NULL or "", keep the atomic-rename
+ *      invariant, and are honored by fs_ax_shutdown() (the manifest at the
+ *      override directory is deleted on shutdown).
  */
 
 #include "firestaff_accessibility.h"
@@ -159,6 +164,57 @@ static void fs_ax_teardown_temp_home(void) {
         FS_AX_RMDIR(g_home_path);
     }
     (void)fs_ax_unsetenv("HOME");
+}
+
+/* ── Helpers for the output-dir subtest ─────────────────────────── */
+
+/* Build a fresh sandbox directory under the temp HOME so we can hand
+ * it to fs_ax_set_output_dir() and verify the writer drops
+ * accessibility.json (and its .tmp) into the override directory
+ * instead of ~/.firestaff/. Returns 1 on success, 0 on failure. */
+static char g_sandbox_dir[1024];
+
+static int fs_ax_create_sandbox_dir(void) {
+#if defined(_WIN32)
+    char tmpl[96];
+    unsigned int seed = (unsigned int)(_getpid() ^ 0xA53F9E2DU);
+    int attempt;
+    g_sandbox_dir[0] = '\0';
+    for (attempt = 0; attempt < 32; ++attempt) {
+        seed = seed * 1103515245U + 12345U;
+        snprintf(tmpl, sizeof(tmpl), "%s\\firestaff-ax-sandbox_%x",
+                 g_home_path, seed & 0xFFFFFFU);
+        if (FS_AX_MKDIR(tmpl) == 0) {
+            snprintf(g_sandbox_dir, sizeof(g_sandbox_dir), "%s", tmpl);
+            return 1;
+        }
+    }
+    return 0;
+#else
+    char tmpl[1024];
+    snprintf(tmpl, sizeof(tmpl),
+             "%s/firestaff-ax-sandbox-XXXXXX", g_home_path);
+    if (mkdtemp(tmpl) == NULL) {
+        g_sandbox_dir[0] = '\0';
+        return 0;
+    }
+    snprintf(g_sandbox_dir, sizeof(g_sandbox_dir), "%s", tmpl);
+    return 1;
+#endif
+}
+
+static void fs_ax_remove_sandbox_dir(void) {
+    char sandbox_json[1280];
+    char sandbox_tmp[1280];
+    if (g_sandbox_dir[0] == '\0') return;
+    snprintf(sandbox_json, sizeof(sandbox_json),
+             "%s/accessibility.json", g_sandbox_dir);
+    snprintf(sandbox_tmp, sizeof(sandbox_tmp),
+             "%s/accessibility.json.tmp", g_sandbox_dir);
+    FS_AX_REMOVE(sandbox_json);
+    FS_AX_REMOVE(sandbox_tmp);
+    FS_AX_RMDIR(g_sandbox_dir);
+    g_sandbox_dir[0] = '\0';
 }
 
 /* ── Subtest 1: disabled state writes nothing ───────────────────── */
