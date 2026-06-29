@@ -41,6 +41,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#define FIRESTAFF_ASSET_STATUS_TESTING 1
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
 
@@ -53,7 +54,12 @@
 #ifdef _WIN32
 #include <direct.h>
 #include <process.h>
+#include <sys/stat.h>
 #define MKDIR(path) _mkdir(path)
+static int test_dir_exists(const char* path) {
+    struct _stat st;
+    return path && _stat(path, &st) == 0 && (st.st_mode & _S_IFDIR) != 0;
+}
 static int test_setenv(const char* name, const char* value) {
     return _putenv_s(name, value) == 0;
 }
@@ -71,6 +77,10 @@ static char* test_mkdtemp(char* templ) {
 #include <sys/stat.h>
 #include <unistd.h>
 #define MKDIR(path) mkdir((path), 0700)
+static int test_dir_exists(const char* path) {
+    struct stat st;
+    return path && stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
 static int test_setenv(const char* name, const char* value) {
     return setenv(name, value, 1) == 0;
 }
@@ -163,6 +173,65 @@ static int make_child_dir(const char* parent,
                           char out[M12_ASSET_DATA_DIR_CAPACITY]) {
     snprintf(out, M12_ASSET_DATA_DIR_CAPACITY, "%s/%s", parent, leaf);
     return MKDIR(out) == 0;
+}
+
+static int ensure_nested_dir(const char* root, const char* rel) {
+    char partial[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* cursor;
+
+    if (!root || !rel) return 0;
+    snprintf(partial, sizeof(partial), "%s", root);
+    cursor = rel;
+    while (*cursor) {
+        const char* slash = strchr(cursor, '/');
+        size_t segmentLen = slash ? (size_t)(slash - cursor) : strlen(cursor);
+        if (segmentLen > 0U) {
+            size_t len = strlen(partial);
+            if (len + 1U + segmentLen >= sizeof(partial)) {
+                return 0;
+            }
+            partial[len++] = '/';
+            memcpy(partial + len, cursor, segmentLen);
+            partial[len + segmentLen] = '\0';
+            if (MKDIR(partial) != 0 && !test_dir_exists(partial)) {
+                return 0;
+            }
+        }
+        if (!slash) break;
+        cursor = slash + 1;
+    }
+    return test_dir_exists(partial);
+}
+
+static int write_payload_with_md5(const char* root,
+                                  const char* rel,
+                                  const char* payload,
+                                  char outMd5[M12_ASSET_MD5_CAPACITY]) {
+    char path[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* slash;
+    FILE* fp;
+    size_t len;
+
+    if (!root || !rel || !payload || !outMd5) return 0;
+    slash = strrchr(rel, '/');
+    if (slash) {
+        char dirRel[M12_ASSET_DATA_DIR_CAPACITY];
+        size_t dirLen = (size_t)(slash - rel);
+        if (dirLen >= sizeof(dirRel)) return 0;
+        memcpy(dirRel, rel, dirLen);
+        dirRel[dirLen] = '\0';
+        if (!ensure_nested_dir(root, dirRel)) return 0;
+    }
+    snprintf(path, sizeof(path), "%s/%s", root, rel);
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    len = strlen(payload);
+    if (fwrite(payload, 1U, len, fp) != len) {
+        fclose(fp);
+        return 0;
+    }
+    if (fclose(fp) != 0) return 0;
+    return m12_file_md5_hex(path, outMd5) != 0;
 }
 
 static int isolate_home_and_data_root(char dataRoot[M12_ASSET_DATA_DIR_CAPACITY]) {
@@ -528,6 +597,116 @@ static void check_quick_resume_unavailable_shows_missing_popup_once(void) {
     CHECK(popup_lines_are_cleared(&state));
 }
 
+/* ------------------------------------------------------------------------- */
+/* Scenario 8: changing the configured data root from a complete synthetic
+ * recursive layout to a partial layout must clear stale availability for
+ * multiple games and route each game card through the centralized required
+ * file popup. This keeps the folder-picker/config path tied to
+ * M12_AssetStatus_Scan rather than filename or prior-state shortcuts. */
+
+static void check_data_root_switch_partial_required_pairs_for_dm1_dm2(void) {
+    M12_StartupMenuState state;
+    char homeRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char fullRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char partialRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char dm1GraphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dm1DungeonMd5[M12_ASSET_MD5_CAPACITY];
+    char dm2GraphicsMd5[M12_ASSET_MD5_CAPACITY];
+    char dm2DungeonMd5[M12_ASSET_MD5_CAPACITY];
+    const M12_MenuEntry* dm1Entry;
+    const M12_MenuEntry* dm2Entry;
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(homeRoot));
+    if (failures) return;
+    CHECK(make_child_dir(homeRoot, "complete-recursive-root", fullRoot));
+    CHECK(make_child_dir(homeRoot, "partial-recursive-root", partialRoot));
+    if (failures) return;
+
+    CHECK(write_payload_with_md5(fullRoot,
+                                 "loose/deep/dm1/odd-name-gfx.bin",
+                                 "m12 popup gate DM1 graphics complete\n",
+                                 dm1GraphicsMd5));
+    CHECK(write_payload_with_md5(fullRoot,
+                                 "elsewhere/dm1/odd-name-dungeon.bin",
+                                 "m12 popup gate DM1 dungeon complete\n",
+                                 dm1DungeonMd5));
+    CHECK(write_payload_with_md5(fullRoot,
+                                 "dm2/deep/not-graphics.dat",
+                                 "m12 popup gate DM2 graphics complete\n",
+                                 dm2GraphicsMd5));
+    CHECK(write_payload_with_md5(fullRoot,
+                                 "dm2/other/not-dungeon.dat",
+                                 "m12 popup gate DM2 dungeon complete\n",
+                                 dm2DungeonMd5));
+    if (failures) return;
+
+    /* Partial root deliberately crosses the missing role per game:
+     * DM1 has graphics only, DM2 has dungeon only. The files keep
+     * non-canonical names and nested locations so recursive hash
+     * scanning remains the only way to find them. */
+    CHECK(write_payload_with_md5(partialRoot,
+                                 "partial/dm1/graphics-only.bin",
+                                 "m12 popup gate DM1 graphics complete\n",
+                                 dm1GraphicsMd5));
+    CHECK(write_payload_with_md5(partialRoot,
+                                 "partial/dm2/dungeon-only.bin",
+                                 "m12 popup gate DM2 dungeon complete\n",
+                                 dm2DungeonMd5));
+    if (failures) return;
+
+    M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(dm1GraphicsMd5,
+                                                           dm1DungeonMd5);
+    M12_AssetStatus_TestSetDm2SyntheticHashes(dm2GraphicsMd5, dm2DungeonMd5);
+
+    M12_StartupMenu_InitWithDataDir(&state, fullRoot, NULL);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), fullRoot) == 0);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 1);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm2") == 1);
+    dm1Entry = M12_StartupMenu_GetEntry(&state, 0);
+    dm2Entry = M12_StartupMenu_GetEntry(&state, 2);
+    CHECK(dm1Entry && dm1Entry->available == 1);
+    CHECK(dm2Entry && dm2Entry->available == 1);
+
+    CHECK(M12_StartupMenu_SetDataDirectory(&state, partialRoot) == 1);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "DATA DIRECTORY UPDATED") == 0);
+    CHECK(state.messageLine2 && strcmp(state.messageLine2, "FILES FOUND") == 0);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), partialRoot) == 0);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm2") == 0);
+    dm1Entry = M12_StartupMenu_GetEntry(&state, 0);
+    dm2Entry = M12_StartupMenu_GetEntry(&state, 2);
+    CHECK(dm1Entry && dm1Entry->available == 0);
+    CHECK(dm2Entry && dm2Entry->available == 0);
+    dismiss_message(&state);
+    CHECK(launcher_has_clean_main_view(&state));
+
+    state.selectedIndex = 0;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.messageLine1 && has_text_prefix(state.messageLine1, "DM1"));
+    CHECK(state.messageLine2 && strstr(state.messageLine2, "DUNGEON.DAT") != NULL);
+    CHECK(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") == NULL);
+    dismiss_message(&state);
+    CHECK(launcher_has_clean_main_view(&state));
+
+    state.selectedIndex = 2;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.messageLine1 && has_text_prefix(state.messageLine1, "DM2"));
+    CHECK(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") != NULL);
+    CHECK(state.messageLine2 && strstr(state.messageLine2, "DUNGEON.DAT") == NULL);
+    dismiss_message(&state);
+    CHECK(launcher_has_clean_main_view(&state));
+
+    M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(NULL, NULL);
+    M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
+}
+
 int main(void) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
 
@@ -536,6 +715,7 @@ int main(void) {
     check_data_dir_picker_cancel_does_not_re_show_no_data();
     check_rescan_with_empty_dir_shows_no_data_result_once();
     check_quick_resume_unavailable_shows_missing_popup_once();
+    check_data_root_switch_partial_required_pairs_for_dm1_dm2();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

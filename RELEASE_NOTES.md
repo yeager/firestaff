@@ -311,6 +311,8 @@ need real-asset proof.
 
 - **Nexus V1 Light spell M11 dispatch hook**: the shared M11 spell panel now routes Nexus Light, Magic Torch, and Darkness rune casts into the `nexus_v1_light_runtime` path, preserving source-faithful emulate mode by default and the existing guard-mode `CAST_REJECTED` behavior for capped timelines. This is a data-free runtime hook only; real Nexus asset/screenshot and embedded `NGLT` load evidence remain separate follow-up work.
 
+- **M12 data-root switch popup hardening**: the launcher popup-once gate now covers a real configured data-root switch across both DM1 and DM2 using synthetic recursive hash-scanned files. Switching from a complete root to a partial root clears stale availability and shows per-game missing-required-file popups that name only the unmatched GRAPHICS/DUNGEON role.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
