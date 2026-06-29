@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-25T20:27:48.640131+00:00",
+  "generated_at": "2026-06-29T13:32:45.551099+00:00",
   "original_crops": [
     {
       "dims": [
@@ -7,10 +7,12 @@
         136
       ],
       "exists": true,
+      "expected_sha256": "0f71683d923b015831c6e230952226fc4dadaf681ad510b319803973188ad212",
       "name": "01_party_hud_original_viewport_224x136.png",
       "ok": true,
       "path": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/01_party_hud_original_viewport_224x136.png",
-      "sha256": "0f71683d923b015831c6e230952226fc4dadaf681ad510b319803973188ad212"
+      "sha256": "0f71683d923b015831c6e230952226fc4dadaf681ad510b319803973188ad212",
+      "sha256_matches_expected": true
     },
     {
       "dims": [
@@ -18,10 +20,12 @@
         136
       ],
       "exists": true,
+      "expected_sha256": "8d5d9bd870d9aab74907fcd2051ae71547dd27583b2b81758ebebf32cfa2161c",
       "name": "02_left_1_wall_original_viewport_224x136.png",
       "ok": true,
       "path": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/02_left_1_wall_original_viewport_224x136.png",
-      "sha256": "8d5d9bd870d9aab74907fcd2051ae71547dd27583b2b81758ebebf32cfa2161c"
+      "sha256": "8d5d9bd870d9aab74907fcd2051ae71547dd27583b2b81758ebebf32cfa2161c",
+      "sha256_matches_expected": true
     },
     {
       "dims": [
@@ -29,10 +33,12 @@
         136
       ],
       "exists": true,
+      "expected_sha256": "96bd18e5d98be4d36d3d990698d4bfc39ddac5505ce308ccf37ac9ed450c854f",
       "name": "03_left_2_view_original_viewport_224x136.png",
       "ok": true,
       "path": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/03_left_2_view_original_viewport_224x136.png",
-      "sha256": "96bd18e5d98be4d36d3d990698d4bfc39ddac5505ce308ccf37ac9ed450c854f"
+      "sha256": "96bd18e5d98be4d36d3d990698d4bfc39ddac5505ce308ccf37ac9ed450c854f",
+      "sha256_matches_expected": true
     },
     {
       "dims": [
@@ -40,10 +46,12 @@
         136
       ],
       "exists": true,
+      "expected_sha256": "1cb139bdb0b1fab1d970d80913f3f4e2f0763af8338324d67939361be6c765ed",
       "name": "04_left_3_view_original_viewport_224x136.png",
       "ok": true,
       "path": "verification-screens/pass1052-dm1-original-route-24h-turncycle/viewport_224x136/04_left_3_view_original_viewport_224x136.png",
-      "sha256": "1cb139bdb0b1fab1d970d80913f3f4e2f0763af8338324d67939361be6c765ed"
+      "sha256": "1cb139bdb0b1fab1d970d80913f3f4e2f0763af8338324d67939361be6c765ed",
+      "sha256_matches_expected": true
     }
   ],
   "original_crops_ok": true,
@@ -52,8 +60,18 @@
     "all_pair_hashes_match": true,
     "exact_match_count": 1,
     "exists": true,
+    "expected_schema": "pass1054_dm1_v1_original_firestaff_viewport_wall_diff.v1",
+    "expected_scout_only_originals": [
+      "01_party_hud_original_viewport_224x136.png",
+      "03_left_2_view_original_viewport_224x136.png",
+      "04_left_3_view_original_viewport_224x136.png"
+    ],
+    "expected_status": "PASS1054_ONE_WALL_CROP_EXACT_MATCH_REST_SCOUT_ONLY",
     "has_expected_exact_wall_match": true,
     "honesty": "Nearest-neighbor visual pairing over the 24-pose Firestaff Hall capture. Only rows with exact_pixel_match=true are promoted as pixel-equal evidence; nonzero rows are scout data, not same-state parity claims.",
+    "manifest_honesty_ok": true,
+    "manifest_schema_ok": true,
+    "manifest_status_ok": true,
     "ok": true,
     "row_count": 4,
     "rows": [
@@ -119,6 +137,13 @@
       }
     ],
     "schema": "pass1054_dm1_v1_original_firestaff_viewport_wall_diff.v1",
+    "scout_only_contract_ok": true,
+    "scout_only_originals": [
+      "01_party_hud_original_viewport_224x136.png",
+      "03_left_2_view_original_viewport_224x136.png",
+      "04_left_3_view_original_viewport_224x136.png"
+    ],
+    "scout_rows_nonzero": true,
     "status": "PASS1054_ONE_WALL_CROP_EXACT_MATCH_REST_SCOUT_ONLY"
   },
   "schema": "firestaff.parity.pass1056_dm1_v1_pass1052_firestaff_pairing_gate.v1",
