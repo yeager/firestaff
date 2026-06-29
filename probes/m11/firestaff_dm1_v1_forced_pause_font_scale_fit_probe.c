@@ -41,6 +41,10 @@
  *      prompts to single tokens; scale 3 collapses the title to
  *      "TIMER EXPIRED" so the cell advance at 8*3 = 24 px/char
  *      still fits the inner width.
+ *   7. The M11 runtime latch bridge gives FORCED_PAUSE precedence
+ *      over a still-pending reminder, and the public accessors mirror
+ *      the draw/input latches that M11_GameView_Draw and
+ *      M11_GameView_HandleInput consume.
  *
  * Source: ReDMCSB M11_GameView_Draw sessionTimerForcedPauseDialogActive
  * block (file-scope coordinates), font constants from
@@ -640,6 +644,86 @@ static void test_forced_pause_layout_text_raster_inside_box(void) {
     }
 }
 
+static void test_forced_pause_runtime_latch_precedence(void) {
+    /* M11_GameView_TickSessionTimer is the bridge between the
+     * data-free SessionTimerRuntime and the draw/input latches in
+     * M11_GameViewState.  This locks the fragile boundary where a
+     * pending reminder must be cleared when FORCED_PAUSE wins, so
+     * the forced-pause confirm dialog gets first refusal in
+     * M11_GameView_HandleInput and M11_GameView_Draw. */
+    M11_GameViewState state;
+    SessionTimerRuntimeEvent event;
+
+    check_int("forced-pause accessor NULL safe",
+              M11_GameView_GetSessionTimerForcedPauseDialogActive(NULL), 0);
+    check_int("reminder accessor NULL safe",
+              M11_GameView_GetSessionTimerReminderOverlayActive(NULL), 0);
+    check_int("tick NULL returns RUNNING",
+              M11_GameView_TickSessionTimer(NULL, 1),
+              SESSION_TIMER_RUNTIME_EVENT_RUNNING);
+    M11_GameView_AcknowledgeSessionTimerReminder(NULL);
+    M11_GameView_ClearSessionTimerForcedPause(NULL);
+
+    M11_GameView_Init(&state);
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 10);
+    check_int("runtime latch init forced inactive",
+              M11_GameView_GetSessionTimerForcedPauseDialogActive(&state), 0);
+    check_int("runtime latch init reminder inactive",
+              M11_GameView_GetSessionTimerReminderOverlayActive(&state), 0);
+
+    event = M11_GameView_TickSessionTimer(&state, 299);
+    check_int("runtime latch 299s event running",
+              event, SESSION_TIMER_RUNTIME_EVENT_RUNNING);
+    check_int("runtime latch 299s reminder inactive",
+              M11_GameView_GetSessionTimerReminderOverlayActive(&state), 0);
+    check_int("runtime latch 299s forced inactive",
+              M11_GameView_GetSessionTimerForcedPauseDialogActive(&state), 0);
+
+    event = M11_GameView_TickSessionTimer(&state, 1);
+    check_int("runtime latch reminder event",
+              event, SESSION_TIMER_RUNTIME_EVENT_REMINDER_DUE);
+    check_int("runtime latch reminder active",
+              M11_GameView_GetSessionTimerReminderOverlayActive(&state), 1);
+    check_int("runtime latch forced still inactive",
+              M11_GameView_GetSessionTimerForcedPauseDialogActive(&state), 0);
+
+    event = M11_GameView_TickSessionTimer(&state, 300);
+    check_int("runtime latch forced event",
+              event, SESSION_TIMER_RUNTIME_EVENT_FORCED_PAUSE);
+    check_int("runtime latch forced active",
+              M11_GameView_GetSessionTimerForcedPauseDialogActive(&state), 1);
+    check_int("runtime latch forced clears reminder",
+              M11_GameView_GetSessionTimerReminderOverlayActive(&state), 0);
+
+    M11_GameView_ClearSessionTimerForcedPause(&state);
+    check_int("runtime latch clear forced inactive",
+              M11_GameView_GetSessionTimerForcedPauseDialogActive(&state), 0);
+    check_int("runtime latch clear reminder inactive",
+              M11_GameView_GetSessionTimerReminderOverlayActive(&state), 0);
+    event = M11_GameView_TickSessionTimer(&state, 0);
+    check_int("runtime latch zero tick after clear stays running",
+              event, SESSION_TIMER_RUNTIME_EVENT_RUNNING);
+    event = M11_GameView_TickSessionTimer(&state, 1);
+    check_int("runtime latch post-clear positive tick re-forces",
+              event, SESSION_TIMER_RUNTIME_EVENT_FORCED_PAUSE);
+    check_int("runtime latch post-clear forced active",
+              M11_GameView_GetSessionTimerForcedPauseDialogActive(&state), 1);
+
+    M11_GameView_Init(&state);
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 10);
+    event = M11_GameView_TickSessionTimer(&state, 300);
+    check_int("runtime latch ack setup reminder",
+              event, SESSION_TIMER_RUNTIME_EVENT_REMINDER_DUE);
+    M11_GameView_AcknowledgeSessionTimerReminder(&state);
+    check_int("runtime latch ack clears reminder active",
+              M11_GameView_GetSessionTimerReminderOverlayActive(&state), 0);
+    event = M11_GameView_TickSessionTimer(&state, 60);
+    check_int("runtime latch ack window stays running",
+              event, SESSION_TIMER_RUNTIME_EVENT_RUNNING);
+    check_int("runtime latch ack window reminder inactive",
+              M11_GameView_GetSessionTimerReminderOverlayActive(&state), 0);
+}
+
 int main(void) {
     printf("=== DM1 V1 forced-pause font-scale fit probe ===\n");
     printf("Source: Firestaff session-timer escalation policy;\n");
@@ -652,6 +736,7 @@ int main(void) {
     test_forced_pause_layout_clamps_to_framebuffer();
     test_forced_pause_layout_forced_pause_draw_path();
     test_forced_pause_layout_text_raster_inside_box();
+    test_forced_pause_runtime_latch_precedence();
 
     printf("\nsummary passes=%d failures=%d\n", g_passes, g_failures);
     if (g_failures) {
