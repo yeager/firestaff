@@ -19,7 +19,9 @@ extern "C" {
  *   F0108 floor-ornament call targets M595_VIEW_FLOOR_D1C.
  * - DUNVIEW.C F0108:3940-4011 floor-ornament ordinal, MASK0x8000_FOOTPRINTS
  *   recursion at T0108005, C10_COLOR_FLESH transparency, and PC 3.4
- *   C1500_ZONE_FLOOR_ORNAMENT + CoordinateSet * 11 + ViewFloor zone math.
+ *   I34E MEDIA709 C1500_ZONE_FLOOR_ORNAMENT + CoordinateSet * 11 +
+ *   ViewFloor zone math. The neighboring MEDIA458/MEDIA506 * 9 branches
+ *   are not the PC 3.4 path this gate source-locks.
  * - DUNVIEW.C F0124:7874 C17_ELEMENT_DOOR_FRONT: F0108 fires once before
  *   the F0115 thing pass with C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT.
  *   The C17 path is the *only* D1C path that does not exhibit the BUG0_64
