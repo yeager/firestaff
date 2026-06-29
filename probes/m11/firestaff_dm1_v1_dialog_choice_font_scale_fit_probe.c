@@ -1,7 +1,8 @@
 /*
  * firestaff_dm1_v1_dialog_choice_font_scale_fit_probe.c
  *
- * In-game overlay fit/layout test for the M11 dialog choice text surface.
+ * In-game overlay fit/layout test for the M11 dialog choice text surface
+ * plus the Firestaff-specific session-timer reminder banner.
  *
  * Source evidence (ReDMCSB layout-696):
  *   - C462_ZONE_CHOICE_TEXT_AT_192W  = (16, 110, 192, 7) — bottom choice
@@ -33,6 +34,9 @@
  *   4. The V1 message area zone (C015) is 320x27 at y=173 and stays
  *      inside the 320x200 framebuffer at every scale (the production
  *      V1 chrome override clamps the scale to 1 for that surface).
+ *   5. The in-game session-timer reminder banner fits actual M11 draw
+ *      output at fontScale 1/2/3 and changes no pixels outside the
+ *      top-strip overlay rectangle, preserving V1 viewport ownership.
  */
 
 #include "font_m11.h"
@@ -123,6 +127,38 @@ static int find_fg_bbox(const unsigned char* fb,
     if (outMinY) *outMinY = minY;
     if (outMaxY) *outMaxY = maxY;
     return (maxX >= 0);
+}
+
+static int count_changed_outside_rect(const unsigned char* before,
+                                      const unsigned char* after,
+                                      int fbW,
+                                      int fbH,
+                                      int rx,
+                                      int ry,
+                                      int rw,
+                                      int rh,
+                                      int* outChanged)
+{
+    int x;
+    int y;
+    int changed = 0;
+    int outside = 0;
+    for (y = 0; y < fbH; ++y) {
+        for (x = 0; x < fbW; ++x) {
+            int idx = y * fbW + x;
+            if (before[idx] == after[idx]) {
+                continue;
+            }
+            ++changed;
+            if (x < rx || x >= rx + rw || y < ry || y >= ry + rh) {
+                ++outside;
+            }
+        }
+    }
+    if (outChanged) {
+        *outChanged = changed;
+    }
+    return outside;
 }
 
 /* Visible bbox width for N chars at scale S using a fully-lit bitmap:
@@ -442,6 +478,68 @@ static void test_v1_message_log_font_scale_stays_source_faithful(void) {
     }
 }
 
+static void setup_session_timer_banner_state(M11_GameViewState* state,
+                                             int scale,
+                                             int overlayActive) {
+    M11_GameView_Init(state);
+    state->active = 1;
+    state->fontScale = scale;
+    state->originalFontAvailable = 1;
+    build_block_font_bitmap(&state->originalFont);
+    SessionTimerRuntime_Init(&state->sessionTimerRuntime, 10);
+    SessionTimerRuntime_Tick(&state->sessionTimerRuntime, 5 * 60);
+    state->sessionTimerReminderOverlayActive = overlayActive;
+}
+
+static void test_session_timer_reminder_banner_fit_and_ownership(void) {
+    /* The session timer is Firestaff-specific, not ReDMCSB behavior.
+     * Its reminder banner must therefore stay within its own top-strip
+     * overlay rect and leave the source-owned V1 dungeon viewport
+     * (0,33,224,136) untouched while honoring fontScale 1..3.  This
+     * exercises actual M11_GameView_Draw output with the original-font
+     * path hot through a synthetic full-cell M11_FontState. */
+    enum {
+        BANNER_X = 4,
+        BANNER_Y = 4,
+        BANNER_W = 312,
+        BANNER_H = 28
+    };
+    unsigned char baseline[M11_FB_WIDTH * M11_FB_HEIGHT];
+    unsigned char overlay[M11_FB_WIDTH * M11_FB_HEIGHT];
+    int scale;
+
+    check_true("session reminder banner bottom stays above viewport",
+               BANNER_Y + BANNER_H <= PROBE_DM1_VIEWPORT_Y);
+    check_true("session reminder banner right edge stays in framebuffer",
+               BANNER_X + BANNER_W <= M11_FB_WIDTH);
+
+    for (scale = 1; scale <= 3; ++scale) {
+        M11_GameViewState baseState;
+        M11_GameViewState overlayState;
+        int changed = 0;
+        int outside;
+        char label[192];
+        setup_session_timer_banner_state(&baseState, scale, 0);
+        setup_session_timer_banner_state(&overlayState, scale, 1);
+        memset(baseline, 0xEE, sizeof(baseline));
+        memset(overlay, 0xEE, sizeof(overlay));
+        M11_GameView_Draw(&baseState, baseline, M11_FB_WIDTH, M11_FB_HEIGHT);
+        M11_GameView_Draw(&overlayState, overlay, M11_FB_WIDTH, M11_FB_HEIGHT);
+        outside = count_changed_outside_rect(baseline, overlay,
+                                             M11_FB_WIDTH, M11_FB_HEIGHT,
+                                             BANNER_X, BANNER_Y,
+                                             BANNER_W, BANNER_H,
+                                             &changed);
+        snprintf(label, sizeof(label),
+                 "session reminder scale=%d changes pixels", scale);
+        check_true(label, changed > 0);
+        snprintf(label, sizeof(label),
+                 "session reminder scale=%d changed pixels stay inside banner",
+                 scale);
+        check_int(label, outside, 0);
+    }
+}
+
 int main(void) {
     printf("=== DM1 V1 dialog choice font-scale fit probe ===\n");
     printf("Source: ReDMCSB layout-696 C462/C463/C466/C467, M2092,\n");
@@ -454,6 +552,7 @@ int main(void) {
     test_dialog_choice_overflow_at_scale_2_3();
     test_v1_message_area_zone_source_lock();
     test_v1_message_log_font_scale_stays_source_faithful();
+    test_session_timer_reminder_banner_fit_and_ownership();
 
     printf("\nsummary passes=%d failures=%d\n", g_passes, g_failures);
     if (g_failures) {

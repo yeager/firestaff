@@ -2477,8 +2477,9 @@ add_test(
 # Headless / data-free: pins M11_UIScale percent -> font scale step, M11_Font_DrawString
 # advance per scale step (8, 16, 24), the 192 px source dialog choice zones (C462/C463),
 # 4-choice split zones (C466/C467) at 86 px each, the V1 message area zone (C015)
-# geometry, and the production override that keeps the V1 message log at scale 1
-# even when state->fontScale is bumped to 2 or 3.
+# geometry, the production override that keeps the V1 message log at scale 1
+# even when state->fontScale is bumped to 2 or 3, and the session-timer
+# reminder banner's top-strip fit / V1 viewport ownership at fontScale 1..3.
 # Source: ReDMCSB layout-696, M2092_MessageAreaWidth=320, M532_MESSAGE_AREA_ROW_COUNT=4,
 #         G2088_C7_TextLineHeight=7, G2089_C8_InscriptionCharacterWidth=8,
 #         G2082_C5_CharacterPadding=5 (X_OFFSET = 8 - 5 = 3),
@@ -2496,7 +2497,7 @@ add_test(
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 set_tests_properties(firestaff_dm1_v1_dialog_choice_font_scale_fit_probe PROPERTIES
-    LABELS "tier2;m11;dm1;dialog;font;scale;ui-fit;accessibility"
+    LABELS "tier2;m11;dm1;dialog;font;scale;ui-fit;accessibility;session-timer"
 )
 
 add_executable(firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe
