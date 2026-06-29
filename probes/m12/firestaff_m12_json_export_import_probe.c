@@ -167,6 +167,9 @@ int main(void) {
     strcpy(cfg_write.customDungeonPath, "/dungeons/community");
     strcpy(cfg_write.screenshotPath, "/screenshots");
     cfg_write.streamerMode          = 1;
+    cfg_write.cloudSyncEnabled      = 1;
+    cfg_write.cloudSyncPolicy       = 2;
+    strcpy(cfg_write.cloudSyncDir, "/sync/firestaff-cloud-boundary");
 
     /* Per-game options */
     {
@@ -209,6 +212,9 @@ int main(void) {
     rec(&t, "JSON_08B",
         files_equal_str(exportPath, "\"last_save_path\": \"/saves/firestaff-dm1-quicksave.sav\""),
         "exported JSON contains last_save_path");
+    rec(&t, "JSON_08C",
+        files_equal_str(exportPath, "\"cloud_sync_dir\": \"/sync/firestaff-cloud-boundary\""),
+        "exported JSON contains cloud_sync_dir");
 
     /* ── Import into fresh config ────────────────────────────────── */
     M12_Config cfg_read;
@@ -247,6 +253,11 @@ int main(void) {
     rec(&t, "JSON_35", cfg_read.streamerMode == 1, "streamerMode survives");
     rec(&t, "JSON_36", cfg_read.dm1V2MotionBlurEnabled == 1, "dm1V2MotionBlurEnabled survives");
     rec(&t, "JSON_37", cfg_read.dm1V2MotionBlurStrength == 55, "dm1V2MotionBlurStrength survives");
+    rec(&t, "JSON_37B",
+        cfg_read.cloudSyncEnabled == 1 &&
+            cfg_read.cloudSyncPolicy == 2 &&
+            strcmp(cfg_read.cloudSyncDir, "/sync/firestaff-cloud-boundary") == 0,
+        "cloud sync settings survive settings JSON round-trip");
 
     /* Per-game options */
     rec(&t, "JSON_38",
