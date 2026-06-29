@@ -2,7 +2,7 @@
   "schema": "pass110_v1_hud_type7_bar_value_resolver.v1",
   "honesty": "Resolves layout-696 type=7 champion HUD bar value records to rectangles and sample fills; does not claim original-runtime screenshot parity.",
   "sources": {
-    "zones": "zones_h_reconstruction.json",
+    "zones": "data/zones_h_reconstruction.json",
     "pass83_overlay_stats": "parity-evidence/overlays/pass83/pass83_champion_hud_zone_overlay_stats.json"
   },
   "algorithm": {

@@ -10174,6 +10174,27 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_hand_slot_refresh_pc34_compat
     )
 
+    # DM1 V1 champion-panel HUD/status top-row source-lock gate.
+    # Re-uses the data-free zone contract from
+    # tools/verify_v1_hud_status_source_lock.py: top-row C113..C218
+    # status-box/icon/name/bar/hand zones in
+    # data/zones_h_reconstruction.json (layout 696) and ReDMCSB
+    # DEFS.H:3779-3803 + CHAMDRAW.C F0287 (307-346) +
+    # CHAMDRAW.C F0292 (771-815, 833-905) +
+    # CHAMDRAW.C F0292 (1038-1052) +
+    # CHAMDRAW.C F0293 (1117-1139) + TIMELINE.C F0260 (1817-1830)
+    # must match the M11_V1_PARTY_SLOT_* / M11_V1_BAR_* /
+    # M11_V1_STATUS_* constants + M11_GameView_GetV1Status* accessors
+    # in src/engine/m11_game_view.c. This is the wire-up of the gate
+    # authored in pass 1915f606b and the CTest sibling of
+    # dm1_v1_inventory_status_hand_slot_route_source_lock; it is
+    # source-contract only (no real GRAPHICS.DAT / DUNGEON.DAT load,
+    # no live renderer handoff, no original-vs-Firestaff pixel claim).
+    add_test(
+        NAME dm1_v1_champion_panel_hud_status_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_hud_status_source_lock.py
+    )
+
     # DM1 V1 champion-panel DISABLED/UNAVAILABLE ICON STATE gate.
     # Source-locked against CHAMPION.C F0330:2208-2255
     # (MASK0x8000_ACTION_HAND | MASK0x0008_DISABLE_ACTION) +

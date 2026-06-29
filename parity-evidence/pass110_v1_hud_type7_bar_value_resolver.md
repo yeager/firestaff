@@ -7,7 +7,7 @@ This pass closes the Pass 107 honesty gap by independently resolving the layout-
 ## Result
 
 - resolver JSON: `parity-evidence/overlays/pass110_v1_hud_type7_bar_value_resolver.json`
-- source zones: `zones_h_reconstruction.json`
+- source zones: `data/zones_h_reconstruction.json`
 - overlay checked: `parity-evidence/overlays/pass83/pass83_champion_hud_zone_overlay_stats.json`
 - resolved bars: `12`
 - pass: `True`

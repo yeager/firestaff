@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parent.parent
-ZONES = REPO / "zones_h_reconstruction.json"
+ZONES = REPO / "data/zones_h_reconstruction.json"
 PASS83 = REPO / "parity-evidence" / "overlays" / "pass83" / "pass83_champion_hud_zone_overlay_stats.json"
 OUT_JSON = REPO / "parity-evidence" / "overlays" / "pass107_v1_hud_status_source_chain_audit.json"
 OUT_MD = REPO / "parity-evidence" / "pass107_v1_hud_status_source_chain_audit.md"

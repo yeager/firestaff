@@ -1,7 +1,7 @@
 {
   "schema": "pass107_v1_hud_status_source_chain_audit.v1",
   "honesty": "Source-chain audit only. It ties pass83 HUD/status overlay zones to layout-696 records; it does not promote original-runtime pixel parity.",
-  "source": "zones_h_reconstruction.json",
+  "source": "data/zones_h_reconstruction.json",
   "pass83_stats": "parity-evidence/overlays/pass83/pass83_champion_hud_zone_overlay_stats.json",
   "checked": {
     "layout_provenance": {

@@ -7,7 +7,7 @@ This pass adds a bounded source-chain audit between `zones_h_reconstruction.json
 ## Result
 
 - audit JSON: `parity-evidence/overlays/pass107_v1_hud_status_source_chain_audit.json`
-- source: `zones_h_reconstruction.json`
+- source: `data/zones_h_reconstruction.json`
 - pass83 stats: `parity-evidence/overlays/pass83/pass83_champion_hud_zone_overlay_stats.json`
 - pass: `True`
 - problems: `0`
