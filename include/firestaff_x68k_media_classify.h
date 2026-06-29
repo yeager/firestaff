@@ -211,7 +211,29 @@ typedef enum {
      * presence of the magic means this is NOT a disk-image
      * import candidate; it should be handed to the FTL
      * container parser instead. */
-    FIRESTAFF_X68K_SCAN_FLAG_FTL_PRESENT       = (1u << 3)
+    FIRESTAFF_X68K_SCAN_FLAG_FTL_PRESENT       = (1u << 3),
+
+    /* At least one 0x6160 big-endian FTL magic hit was
+     * found inside the FTL-magic scan window (default 32 KiB
+     * for FirestaffX68kMedia_Classify, or whatever
+     * scan_window_bytes the caller passed to
+     * FirestaffX68kMedia_ClassifyEx). On its own this is not
+     * a strong signal: 0x6160 BE can also appear as ordinary
+     * 68000 instruction/data words. Combined with the FTL
+     * container parser (greatstone d_ftl.html), it lets
+     * receipt gates count parseable FTL resources.
+     *
+     * Receipt-gate rationale: the public DMFiles DM1 X68000
+     * v3.0 HDM embeds FTL resources at offsets > 32 KiB
+     * (greatstone d_mapfile.html "per-resource IMG1/FTL
+     * pointers"), so the default 32 KiB scan reports 0
+     * candidates while a full-disk scan reports the
+     * documented count of 2 parseable FTL containers. The
+     * receipt gates explicitly contrast the two windows
+     * using this flag plus ftl_magic_candidate_count and
+     * scan_window_full_disk rather than asserting a single
+     * number. */
+    FIRESTAFF_X68K_SCAN_FLAG_FTL_CANDIDATE_IN_WINDOW = (1u << 4)
 } FirestaffX68kScanFlag;
 
 /* Conservative receipt class layered on top of the size class
@@ -295,18 +317,61 @@ typedef struct {
     int has_ftl_magic;
 
     /* Number of FTL-size sentinel-class hits found in the
-     * first 32 KiB of the input. This legacy field is for
-     * single-resource .FTL payload sniffing and intentionally
-     * does not claim full-HDM embedded resource coverage. Use
-     * FirestaffX68kMedia_CountFTLMagicCandidates() with an
-     * explicit window when a receipt must scan deeper media. */
+     * first 32 KiB of the input (default Classify call) or in
+     * the caller-requested scan window (ClassifyEx). Zero on
+     * every non-FTL HDM; small on a single-resource .FTL
+     * payload. Use FirestaffX68kMedia_CountFTLMagicCandidates()
+     * with an explicit offset/length when a receipt must scan a
+     * deeper subwindow without reclassifying the whole buffer. */
     uint32_t ftl_magic_candidate_count;
+
+    /* Byte count the FTL-magic scan actually walked, after
+     * clamping the requested scan_window_bytes to data_size.
+     * Always equal to out->scan_window_used_bytes after a
+     * FirestaffX68kMedia_ClassifyEx call. The legacy
+     * FirestaffX68kMedia_Classify wrapper writes
+     * min(FIRESTAFF_X68K_SCAN_WINDOW_DEFAULT_BYTES, data_size)
+     * here. */
+    uint64_t scan_window_used_bytes;
+
+    /* Non-zero iff the caller passed
+     * FIRESTAFF_X68K_SCAN_WINDOW_FULL and the classifier
+     * walked the entire input (i.e. the scan cap clamped at
+     * data_size rather than at the requested window). This
+     * is the receipt-gate flag for "we asked for a full-disk
+     * scan and we got one"; a 0 means the scan was capped by
+     * the caller's window even when the input is larger. */
+    int scan_window_full_disk;
 
     /* One of FirestaffX68kReceiptClass. */
     uint32_t receipt_class;
 } FirestaffX68kMediaClassifyResult;
 
-/* Classify a buffer as an X68000 HDM media candidate.
+/* Default FTL-magic scan window, in bytes. The legacy
+ * classifier surface uses this small early-file window so a
+ * single-resource `.FTL` payload (magic at offset 0,
+ * greatstone d_ftl.html "20-byte common header") is still
+ * detected without turning every HDM classification into a
+ * full-disk byte walk. The real DMFiles DM1 X68000 v3.0 HDM
+ * embeds FTL resources at offsets > 32 KiB (73,728 / 0x12000
+ * and 460,800 / 0x70800 per greatstone d_mapfile.html
+ * "per-resource IMG1/FTL pointers into the disk image"), so
+ * consumers that need to enumerate embedded FTLs inside a
+ * real HDM should pass `FIRESTAFF_X68K_SCAN_WINDOW_FULL` (or
+ * any explicit byte cap >= on-disk size) via
+ * FirestaffX68kMedia_ClassifyEx(). */
+#define FIRESTAFF_X68K_SCAN_WINDOW_DEFAULT_BYTES (32u * 1024u)
+
+/* Sentinel for "scan the entire input" rather than capping
+ * at FIRESTAFF_X68K_SCAN_WINDOW_DEFAULT_BYTES. We expose this
+ * as the documented way for callers to ask for a full-HDM
+ * FTL-magic scan without needing to pre-compute the on-disk
+ * size. Implementations clamp at data_size, so passing this
+ * on a 1.2 MiB HDM really does walk every byte. */
+#define FIRESTAFF_X68K_SCAN_WINDOW_FULL ((uint64_t)0xFFFFFFFFFFFFFFFFu)
+
+/* Classify a buffer as an X68000 HDM media candidate using
+ * the default 32 KiB FTL-magic scan window.
  *
  *   data         pointer to the input bytes (HDM dump, .FTL
  *                payload, save disk image, etc.). May be NULL
@@ -317,10 +382,57 @@ typedef struct {
  * The classifier does not allocate and does not mutate the
  * input. It always returns a media_class; an unknown / too
  * small / too large image is reported as such, never silently
- * classified as something else. */
+ * classified as something else.
+ *
+ * This is a thin wrapper around FirestaffX68kMedia_ClassifyEx
+ * pinned to FIRESTAFF_X68K_SCAN_WINDOW_DEFAULT_BYTES. Real-HDM
+ * callers that need to enumerate embedded FTL resources
+ * should call FirestaffX68kMedia_ClassifyEx directly with an
+ * explicit scan_window_bytes value. */
 void FirestaffX68kMedia_Classify(const uint8_t* data,
                                   size_t data_size,
                                   FirestaffX68kMediaClassifyResult* out);
+
+/* Classify a buffer as an X68000 HDM media candidate with a
+ * caller-configurable FTL-magic scan window.
+ *
+ *   data              same contract as FirestaffX68kMedia_Classify.
+ *   data_size         same contract as FirestaffX68kMedia_Classify.
+ *   scan_window_bytes upper bound on the FTL-magic byte scan,
+ *                     counted from offset 0 of the input. Pass
+ *                     FIRESTAFF_X68K_SCAN_WINDOW_DEFAULT_BYTES
+ *                     for the documented single-resource `.FTL`
+ *                     window, FIRESTAFF_X68K_SCAN_WINDOW_FULL
+ *                     to walk the entire input, or any explicit
+ *                     byte cap up to data_size. A value of 0
+ *                     disables the FTL-magic scan entirely
+ *                     (ftl_magic_candidate_count stays 0 and
+ *                     has_ftl_magic is still set iff the magic
+ *                     sits at offset 0; the offset-0 magic check
+ *                     is independent of the windowed
+ *                     candidate-count scan).
+ *   out               caller-owned result struct; always written.
+ *
+ * Result invariants on top of FirestaffX68kMedia_Classify:
+ *   - out->scan_window_used_bytes always reflects the byte
+ *     cap the classifier actually walked (after clamping to
+ *     data_size and to scan_window_bytes).
+ *   - out->scan_window_full_disk is non-zero iff the caller
+ *     asked for a full-disk scan AND the cap was clamped to
+ *     data_size rather than to the requested window. This
+ *     lets downstream receipt gates tell "I asked for
+ *     full-disk and got a real answer" from "I asked for
+ *     32 KiB and the input was smaller, so my scan was
+ *     automatically clamped below 32 KiB".
+ *   - The 0x6160 offset-0 magic check (has_ftl_magic) is
+ *     independent of the scan window: it fires regardless of
+ *     scan_window_bytes. The window only affects
+ *     ftl_magic_candidate_count and the
+ *     FIRESTAFF_X68K_SCAN_FLAG_FTL_CANDIDATE_IN_WINDOW flag. */
+void FirestaffX68kMedia_ClassifyEx(const uint8_t* data,
+                                    size_t data_size,
+                                    uint64_t scan_window_bytes,
+                                    FirestaffX68kMediaClassifyResult* out);
 
 /* Count raw FTL common-header magic candidates (0x6160
  * big-endian, greatstone d_ftl.html "20-byte common header")
@@ -385,6 +497,9 @@ int FirestaffX68kMedia_FTLHandoffFits(
  *     for sector 9 of the last track on side 1)
  *   - oversized input
  *   - FTL magic at offset 0 (single-resource .FTL payload)
+ *   - configurable FTL-magic scan window: default 32 KiB,
+ *     zero-byte skip, explicit bounded window, full-input
+ *     scan
  *   - FTL handoff: declared area_1 fits / overflows the HDM
  *
  * Returns 0 on success and writes a short PASS / FAIL summary

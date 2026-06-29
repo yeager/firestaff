@@ -75,10 +75,10 @@
 /* Maximum number of FTL magic candidates the probe will
  * inspect per HDM. The real DMFiles X68000 HDM has 8 raw
  * 0x6160 hits but only 2 parseable FTL containers; the rest
- * are MIPS-68K opcodes that happen to encode 0x6160. We scan
- * every candidate up to this cap so future real media that
- * genuinely embeds more FTL resources can be classified
- * without bumping the cap. */
+ * are ordinary instruction/data words that happen to encode
+ * 0x6160. We scan every candidate up to this cap so future
+ * real media that genuinely embeds more FTL resources can be
+ * classified without bumping the cap. */
 #define X68K_HDM_MAX_FTL_CANDIDATES 64u
 
 static int g_pass = 0;
@@ -270,6 +270,10 @@ int main(void) {
     FirestaffX68kMediaClassifyResult media;
     memset(&media, 0, sizeof(media));
     FirestaffX68kMedia_Classify(hdm, hdm_size, &media);
+    FirestaffX68kMediaClassifyResult full_media;
+    memset(&full_media, 0, sizeof(full_media));
+    FirestaffX68kMedia_ClassifyEx(
+        hdm, hdm_size, FIRESTAFF_X68K_SCAN_WINDOW_FULL, &full_media);
     if (media.media_class == FIRESTAFF_X68K_MEDIA_FULL_DISK) {
         pass("INV_X68K_FTL_HANDOFF_REAL_01",
              "real HDM classifies as MEDIA_FULL_DISK");
@@ -291,21 +295,51 @@ int main(void) {
              "real HDM unexpectedly reports FTL magic at offset 0");
     }
 
-    /* Handoff #03: scan the real HDM for embedded FTL
-     * resources. The DMFiles X68000 HDM embeds the X68000
-     * graphics / SWSH / palette FTL blobs at known offsets,
-     * so we expect at least one parseable FTL container.
-     *
-     * NOTE: the classifier's ftl_magic_candidate_count field
-     * is documented in firestaff_x68k_media_classify.h as a
-     * first-32-KiB single-resource sniff window, so it only
-     * sees the boot-block / early-file area. The real DMFiles
-     * X68000 v3.0 HDM embeds its FTL resources at offsets >
-     * 32 KiB. The explicit windowed scanner now covers the
-     * full HDM so this receipt can assert the raw full-window
-     * magic surface separately from parseable-container proof. */
+    /* Handoff #03: compare the default 32 KiB FTL-magic
+     * scan window with an explicit full-HDM scan. The real
+     * DMFiles X68000 v3.0 HDM embeds FTL resources at
+     * offsets > 32 KiB (per greatstone d_mapfile.html,
+     * per-resource IMG1 / FTL pointers live deeper in the
+     * MFM image), so the legacy default scan should stay at
+     * 0 raw candidates while a full-HDM ClassifyEx scan
+     * should see later raw 0x6160 hits. The HDM still must
+     * NOT become an FTL payload: FIRESTAFF_X68K_SCAN_FLAG_FTL_PRESENT
+     * is tied to offset 0 and remains clear for Hudson Soft
+     * boot-block disks. */
     uint32_t full_window_magic = FirestaffX68kMedia_CountFTLMagicCandidates(
         hdm, hdm_size, 0u, hdm_size);
+    if (media.scan_window_used_bytes ==
+            FIRESTAFF_X68K_SCAN_WINDOW_DEFAULT_BYTES &&
+        media.ftl_magic_candidate_count == 0u &&
+        full_media.scan_window_full_disk == 1 &&
+        full_media.scan_window_used_bytes == (uint64_t)hdm_size &&
+        full_media.ftl_magic_candidate_count > 0u &&
+        full_window_magic == full_media.ftl_magic_candidate_count &&
+        FirestaffX68kMedia_IsFTLPayload(
+            full_media.flags, full_media.media_class) == 0) {
+        pass("INV_X68K_FTL_HANDOFF_REAL_03",
+             "32 KiB scan stays empty; full-HDM scan sees raw "
+             "FTL magic without classifying the HDM as FTL");
+    } else {
+        fail("INV_X68K_FTL_HANDOFF_REAL_03",
+             "default/full FTL scan-window receipt changed");
+    }
+    printf("  NOTE: default scan window=%llu bytes, candidates=%u; "
+           "full scan window=%llu bytes, candidates=%u, "
+           "IsFTLPayload=%d\n",
+           (unsigned long long)media.scan_window_used_bytes,
+           media.ftl_magic_candidate_count,
+           (unsigned long long)full_media.scan_window_used_bytes,
+           full_media.ftl_magic_candidate_count,
+           FirestaffX68kMedia_IsFTLPayload(
+               full_media.flags, full_media.media_class));
+
+    /* Handoff #04: scan the real HDM for parseable embedded
+     * FTL resources. The raw 0x6160 full-HDM count is only a
+     * receipt that the window reached the embedded-resource
+     * area; the FTL parser is still the authoritative filter
+     * because 0x6160 BE can also appear as ordinary 68000
+     * instruction/data words. */
     uint32_t first_area1 = 0u;
     size_t first_ftl_off = 0u;
     size_t parseable = scan_ftl_candidates(
@@ -313,24 +347,20 @@ int main(void) {
         X68K_HDM_MAX_FTL_CANDIDATES,
         &first_area1, &first_ftl_off);
 
-    printf("  NOTE: classifier ftl_magic_candidate_count "
-           "(first 32 KiB) = %u; explicit full-HDM magic count = "
-           "%u; full-HDM parseable FTL count = %zu\n",
-           media.ftl_magic_candidate_count,
-           full_window_magic,
-           parseable);
     if (full_window_magic >= parseable && full_window_magic > 0u) {
-        pass("INV_X68K_FTL_HANDOFF_REAL_03",
+        pass("INV_X68K_FTL_HANDOFF_REAL_04",
              "explicit full-HDM FTL magic scan covers embedded "
              "resource candidates");
     } else {
-        fail("INV_X68K_FTL_HANDOFF_REAL_03",
+        fail("INV_X68K_FTL_HANDOFF_REAL_04",
              "explicit full-HDM FTL magic scan did not cover "
              "parseable embedded resources");
     }
+    printf("  NOTE: full-HDM raw magic candidates = %u; "
+           "parseable FTL count = %zu\n",
+           full_media.ftl_magic_candidate_count, parseable);
 
-
-    /* Handoff #04: the real DMFiles X68000 HDM must yield at
+    /* Handoff #05: the real DMFiles X68000 HDM must yield at
      * least one parseable FTL container. The exact count
      * depends on the MFM bit stream; the public DMFiles
      * X68000 v3.0 HDM yields 2 parseable FTL containers per
@@ -338,7 +368,7 @@ int main(void) {
      * shape (graphics + SWSH). We accept >= 1 as the
      * "FTL resources embedded" receipt. */
     if (parseable >= 1u) {
-        pass("INV_X68K_FTL_HANDOFF_REAL_04",
+        pass("INV_X68K_FTL_HANDOFF_REAL_05",
              "real HDM embeds >= 1 parseable FTL container");
         printf("  NOTE: %zu parseable FTL container(s); "
                "first at offset %zu (0x%zx); "
@@ -346,15 +376,15 @@ int main(void) {
                parseable, first_ftl_off, first_ftl_off,
                (unsigned)first_area1);
     } else {
-        fail("INV_X68K_FTL_HANDOFF_REAL_04",
+        fail("INV_X68K_FTL_HANDOFF_REAL_05",
              "real HDM has no parseable FTL container");
-        printf("  NOTE: raw magic-byte hits = %u (MIPS-68K "
-               "opcode collisions on 0x6160 BE are expected "
-               "but do not parse as FTL)\n",
+        printf("  NOTE: raw magic-byte hits = %u (ordinary "
+               "instruction/data collisions on 0x6160 BE are "
+               "expected but do not parse as FTL)\n",
                media.ftl_magic_candidate_count);
     }
 
-    /* Handoff #05: cross-module handoff verdict. The FTL
+    /* Handoff #06: cross-module handoff verdict. The FTL
      * parser's parsed BSS metadata reports an in-memory
      * area_1 size; the X68000 classifier must accept that
      * size as fitting the on-disk HDM media class. For the
@@ -366,13 +396,13 @@ int main(void) {
         int fits = FirestaffX68kMedia_FTLHandoffFits(
             &media, first_area1);
         if (fits == 1) {
-            pass("INV_X68K_FTL_HANDOFF_REAL_05",
+            pass("INV_X68K_FTL_HANDOFF_REAL_06",
                  "first parsed FTL BSS area_1 fits the HDM");
             printf("  NOTE: area_1=%u bytes; HDM=%zu bytes; "
                    "fits=%d\n",
                    (unsigned)first_area1, hdm_size, fits);
         } else {
-            fail("INV_X68K_FTL_HANDOFF_REAL_05",
+            fail("INV_X68K_FTL_HANDOFF_REAL_06",
                  "first parsed FTL BSS area_1 does NOT fit "
                  "the HDM (handoff reject)");
         }
@@ -381,53 +411,53 @@ int main(void) {
          * BSS metadata; the handoff verdict is undefined
          * for that case (FirestaffX68kMedia_FTLHandoffFits
          * treats size 0 as "size unknown" -> fits). */
-        pass("INV_X68K_FTL_HANDOFF_REAL_05",
+        pass("INV_X68K_FTL_HANDOFF_REAL_06",
              "no BSS metadata in first FTL; handoff undefined, "
              "treated as size-unknown FITS");
     } else {
-        skip("INV_X68K_FTL_HANDOFF_REAL_05",
+        skip("INV_X68K_FTL_HANDOFF_REAL_06",
              "no parseable FTL in real HDM; handoff undefined");
     }
 
-    /* Handoff #06: the real DMFiles X68000 HDM must NOT
+    /* Handoff #07: the real DMFiles X68000 HDM must NOT
      * accept an over-disk area_1 size. We cross-check the
      * FTLHandoffFits helper by feeding it a deliberately
      * over-disk value and confirming the verdict is 0. */
     int fits_overflow = FirestaffX68kMedia_FTLHandoffFits(
         &media, (uint32_t)hdm_size + 1u);
     if (fits_overflow == 0) {
-        pass("INV_X68K_FTL_HANDOFF_REAL_06",
+        pass("INV_X68K_FTL_HANDOFF_REAL_07",
              "FTLHandoffFits rejects over-disk area_1 (size+1)");
     } else {
-        fail("INV_X68K_FTL_HANDOFF_REAL_06",
+        fail("INV_X68K_FTL_HANDOFF_REAL_07",
              "FTLHandoffFits unexpectedly accepted over-disk "
              "area_1");
     }
 
-    /* Handoff #07: zero-area_1 size must be treated as
+    /* Handoff #08: zero-area_1 size must be treated as
      * "size unknown" and accept (matches the synthetic
      * unit's documented contract). */
     int fits_zero = FirestaffX68kMedia_FTLHandoffFits(
         &media, 0u);
     if (fits_zero == 1) {
-        pass("INV_X68K_FTL_HANDOFF_REAL_07",
+        pass("INV_X68K_FTL_HANDOFF_REAL_08",
              "FTLHandoffFits accepts area_1 == 0 as size-unknown");
     } else {
-        fail("INV_X68K_FTL_HANDOFF_REAL_07",
+        fail("INV_X68K_FTL_HANDOFF_REAL_08",
              "FTLHandoffFits unexpectedly rejected area_1 == 0");
     }
 
-    /* Handoff #08: handoff size-limit sanity. The full-disk
+    /* Handoff #09: handoff size-limit sanity. The full-disk
      * FTLHandoffFits contract accepts any area_1 <=
      * disk_bytes; we cross-check that boundary by feeding
      * exactly disk_bytes and confirming the verdict is 1. */
     int fits_exact = FirestaffX68kMedia_FTLHandoffFits(
         &media, (uint32_t)hdm_size);
     if (fits_exact == 1) {
-        pass("INV_X68K_FTL_HANDOFF_REAL_08",
+        pass("INV_X68K_FTL_HANDOFF_REAL_09",
              "FTLHandoffFits accepts area_1 == disk_bytes");
     } else {
-        fail("INV_X68K_FTL_HANDOFF_REAL_08",
+        fail("INV_X68K_FTL_HANDOFF_REAL_09",
              "FTLHandoffFits unexpectedly rejected "
              "area_1 == disk_bytes");
     }

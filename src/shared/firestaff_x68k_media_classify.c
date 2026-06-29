@@ -52,6 +52,20 @@
  * it as big-endian to match the FTL container parser. */
 #define X68K_FTL_MAGIC_BE 0x6160u
 
+/* Default FTL-magic scan window for the legacy
+ * FirestaffX68kMedia_Classify() wrapper. Mirrors
+ * FIRESTAFF_X68K_SCAN_WINDOW_DEFAULT_BYTES in the public
+ * header; defined here as a uint64_t so we can use it in
+ * uint64_t math without an explicit cast at every call site.
+ */
+#define X68K_FTL_SCAN_WINDOW_DEFAULT_BYTES \
+    ((uint64_t)FIRESTAFF_X68K_SCAN_WINDOW_DEFAULT_BYTES)
+
+/* Sentinel value meaning "scan the entire input". Mirrors
+ * FIRESTAFF_X68K_SCAN_WINDOW_FULL in the public header. */
+#define X68K_FTL_SCAN_WINDOW_FULL \
+    ((uint64_t)FIRESTAFF_X68K_SCAN_WINDOW_FULL)
+
 /* Build-time geometry sanity: the four geometry constants
  * must multiply to 1261568. We use a typedef trick that works
  * under both C99 and C11; -Werror catches the failure. */
@@ -81,11 +95,28 @@ typedef char FirestaffX68kMedia_GeometryCheck
 void FirestaffX68kMedia_Classify(const uint8_t* data,
                                  size_t data_size,
                                  FirestaffX68kMediaClassifyResult* out) {
+    /* Backwards-compatible wrapper around ClassifyEx pinned
+     * to the documented 32 KiB default scan window. The
+     * receipt gates that need to enumerate embedded FTL
+     * resources inside a real HDM call ClassifyEx directly
+     * with FIRESTAFF_X68K_SCAN_WINDOW_FULL or an explicit
+     * byte cap. */
+    FirestaffX68kMedia_ClassifyEx(
+        data, data_size,
+        X68K_FTL_SCAN_WINDOW_DEFAULT_BYTES,
+        out);
+}
+
+void FirestaffX68kMedia_ClassifyEx(const uint8_t* data,
+                                   size_t data_size,
+                                   uint64_t scan_window_bytes,
+                                   FirestaffX68kMediaClassifyResult* out) {
     if (!out) return;
     memset(out, 0, sizeof(*out));
     out->media_class = FIRESTAFF_X68K_MEDIA_EMPTY;
 
     if (data_size == 0u) {
+        out->scan_window_used_bytes = 0u;
         return;
     }
     if (!data) {
@@ -93,8 +124,39 @@ void FirestaffX68kMedia_Classify(const uint8_t* data,
          * already passed a non-zero size with NULL data,
          * which is a usage error, but we don't want to crash
          * the M12 scan loop on a malformed input. */
+        out->scan_window_used_bytes = 0u;
         return;
     }
+
+    /* Resolve the effective scan window up front so we can
+     * record scan_window_used_bytes / scan_window_full_disk
+     * honestly in the result. A value of 0 means "skip the
+     * candidate scan entirely" (offset-0 magic check still
+     * runs because it is independent of the window). */
+    uint64_t effective_window;
+    int is_full_window;
+    if (scan_window_bytes == X68K_FTL_SCAN_WINDOW_FULL) {
+        effective_window = (uint64_t)data_size;
+        is_full_window = 1;
+    } else if (scan_window_bytes == 0u) {
+        effective_window = 0u;
+        is_full_window = 0;
+    } else if (scan_window_bytes >= (uint64_t)data_size) {
+        effective_window = (uint64_t)data_size;
+        /* The caller did not ask for the FULL sentinel, so
+         * the clamp was driven by data_size, not by the
+         * caller's request. We only set
+         * scan_window_full_disk when the caller asked for
+         * full + we got it; a small input that happens to
+         * be smaller than the caller's window is not
+         * "full-disk". */
+        is_full_window = 0;
+    } else {
+        effective_window = scan_window_bytes;
+        is_full_window = 0;
+    }
+    out->scan_window_used_bytes = effective_window;
+    out->scan_window_full_disk = is_full_window;
 
     /* 1) Size class.
      *    Note the strict ordering: empty < too-small <
@@ -144,22 +206,37 @@ void FirestaffX68kMedia_Classify(const uint8_t* data,
         }
     }
 
-    /* 3) FTL magic candidate scan over the first 32 KiB.
-     *    Useful for HDM images that embed several FTL
+    /* 3) FTL magic candidate scan over the configured scan
+     *    window. Useful for HDM images that embed several FTL
      *    resources at known offsets (X68000 graphics assets
      *    packaged as .FTL files, e.g. KAOS.FTL for in-game
-     *    palettes per greatstone d_mapfile.html). The field is
-     *    kept as a legacy single-resource sniff window; use
-     *    FirestaffX68kMedia_CountFTLMagicCandidates() when a
-     *    receipt must scan a full HDM or another explicit
-     *    window. */
-    {
-        size_t scan_limit = data_size < (32u * 1024u)
-                                ? data_size
-                                : (32u * 1024u);
-        out->ftl_magic_candidate_count =
-            FirestaffX68kMedia_CountFTLMagicCandidates(
-                data, data_size, 0u, scan_limit);
+     *    palettes per greatstone d_mapfile.html).
+     *
+     *    The legacy FirestaffX68kMedia_Classify() wrapper
+     *    uses a 32 KiB early-file window so offset-0
+     *    single-resource .FTL payloads stay cheap to detect.
+     *    Real-HDM callers that need to enumerate embedded FTL
+     *    resources should pass FIRESTAFF_X68K_SCAN_WINDOW_FULL
+     *    (or any explicit byte cap >= on-disk size) via
+     *    ClassifyEx().
+     *
+     *    0x6160 BE can also appear as ordinary 68000
+     *    instruction/data words, so raw candidate counts on a
+     *    real DMFiles X68000 HDM are noisy; the FTL container
+     *    parser (firestaff_ftl_container.h) is the
+     *    authoritative filter. We surface the
+     *    FIRESTAFF_X68K_SCAN_FLAG_FTL_CANDIDATE_IN_WINDOW flag
+     *    here so receipt gates can compare the 32 KiB
+     *    default-window result against the full-HDM result
+     *    without conflating the two scans. */
+    if (effective_window >= 2u) {
+        uint32_t candidates = FirestaffX68kMedia_CountFTLMagicCandidates(
+            data, data_size, 0u, (size_t)effective_window);
+        out->ftl_magic_candidate_count = candidates;
+        if (candidates > 0u) {
+            out->flags |=
+                FIRESTAFF_X68K_SCAN_FLAG_FTL_CANDIDATE_IN_WINDOW;
+        }
     }
 
     /* 4) HPR-0007 sentinel scan.
@@ -630,6 +707,13 @@ static int test_ftl_payload_detected(void) {
               "FTL flag set");
     ST_ASSERT(r.ftl_magic_candidate_count >= 1u,
               "FTL magic candidate count >= 1");
+    ST_ASSERT(r.flags &
+                  FIRESTAFF_X68K_SCAN_FLAG_FTL_CANDIDATE_IN_WINDOW,
+              "FTL candidate window flag set");
+    ST_ASSERT(r.scan_window_used_bytes == sizeof(buf),
+              "default scan window clamps to tiny payload");
+    ST_ASSERT(r.scan_window_full_disk == 0,
+              "tiny payload is not a full-disk scan");
     ST_ASSERT(FirestaffX68kMedia_IsFTLPayload(r.flags, r.media_class) == 1,
               "IsFTLPayload true");
     ST_ASSERT(r.receipt_class ==
@@ -662,6 +746,77 @@ static int test_ftl_magic_window_scan(void) {
     ST_ASSERT(FirestaffX68kMedia_CountFTLMagicCandidates(
                   buf, 64u * 1024u, 64u * 1024u, 8u) == 0u,
               "out-of-range window returns zero");
+    free(buf);
+    return 1;
+}
+
+static int test_ftl_magic_scan_window_configurable(void) {
+    const size_t off = (size_t)40u * 1024u;
+    uint8_t* buf = (uint8_t*)calloc(1, FIRESTAFF_X68K_BYTES_PER_DISK);
+    ST_ASSERT(buf != NULL, "calloc scan-window disk");
+    buf[off] = 0x61u;
+    buf[off + 1u] = 0x60u;
+
+    FirestaffX68kMediaClassifyResult def;
+    FirestaffX68kMedia_Classify(buf, FIRESTAFF_X68K_BYTES_PER_DISK, &def);
+    ST_ASSERT(def.media_class == FIRESTAFF_X68K_MEDIA_FULL_DISK,
+              "default scan full-disk class");
+    ST_ASSERT(def.has_ftl_magic == 0,
+              "offset-0 FTL magic still absent");
+    ST_ASSERT(def.ftl_magic_candidate_count == 0u,
+              "default 32 KiB window misses 40 KiB FTL magic");
+    ST_ASSERT((def.flags &
+               FIRESTAFF_X68K_SCAN_FLAG_FTL_CANDIDATE_IN_WINDOW) == 0u,
+              "default window has no candidate flag");
+    ST_ASSERT(def.scan_window_used_bytes ==
+                  FIRESTAFF_X68K_SCAN_WINDOW_DEFAULT_BYTES,
+              "default scan uses 32 KiB");
+    ST_ASSERT(def.scan_window_full_disk == 0,
+              "default scan is capped, not full-disk");
+
+    FirestaffX68kMediaClassifyResult skip;
+    FirestaffX68kMedia_ClassifyEx(
+        buf, FIRESTAFF_X68K_BYTES_PER_DISK, 0u, &skip);
+    ST_ASSERT(skip.ftl_magic_candidate_count == 0u,
+              "zero scan window skips candidates");
+    ST_ASSERT(skip.scan_window_used_bytes == 0u,
+              "zero scan window records zero bytes");
+    ST_ASSERT((skip.flags &
+               FIRESTAFF_X68K_SCAN_FLAG_FTL_CANDIDATE_IN_WINDOW) == 0u,
+              "zero scan window has no candidate flag");
+
+    FirestaffX68kMediaClassifyResult bounded;
+    FirestaffX68kMedia_ClassifyEx(
+        buf, FIRESTAFF_X68K_BYTES_PER_DISK, (uint64_t)64u * 1024u,
+        &bounded);
+    ST_ASSERT(bounded.ftl_magic_candidate_count == 1u,
+              "64 KiB window finds the planted FTL magic");
+    ST_ASSERT(bounded.flags &
+                  FIRESTAFF_X68K_SCAN_FLAG_FTL_CANDIDATE_IN_WINDOW,
+              "64 KiB window sets candidate flag");
+    ST_ASSERT(bounded.scan_window_used_bytes == (uint64_t)64u * 1024u,
+              "64 KiB window records requested bytes");
+    ST_ASSERT(bounded.scan_window_full_disk == 0,
+              "bounded scan is not full-disk");
+    ST_ASSERT(FirestaffX68kMedia_IsFTLPayload(
+                  bounded.flags, bounded.media_class) == 0,
+              "embedded FTL magic does not make HDM an FTL payload");
+
+    FirestaffX68kMediaClassifyResult full;
+    FirestaffX68kMedia_ClassifyEx(
+        buf, FIRESTAFF_X68K_BYTES_PER_DISK,
+        FIRESTAFF_X68K_SCAN_WINDOW_FULL, &full);
+    ST_ASSERT(full.ftl_magic_candidate_count == 1u,
+              "full scan finds the planted FTL magic");
+    ST_ASSERT(full.flags &
+                  FIRESTAFF_X68K_SCAN_FLAG_FTL_CANDIDATE_IN_WINDOW,
+              "full scan sets candidate flag");
+    ST_ASSERT(full.scan_window_used_bytes ==
+                  (uint64_t)FIRESTAFF_X68K_BYTES_PER_DISK,
+              "full scan records disk bytes");
+    ST_ASSERT(full.scan_window_full_disk == 1,
+              "full scan records full-disk flag");
+
     free(buf);
     return 1;
 }
@@ -773,6 +928,7 @@ int FirestaffX68kMedia_SelfTest(void) {
     RUN(test_oversize_input);
     RUN(test_ftl_payload_detected);
     RUN(test_ftl_magic_window_scan);
+    RUN(test_ftl_magic_scan_window_configurable);
     RUN(test_ftl_handoff_fits_full_disk);
     RUN(test_ftl_handoff_overflow_too_small);
     RUN(test_unprotected_disk_flag);
