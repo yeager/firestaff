@@ -9519,6 +9519,35 @@ if(BUILD_TESTING)
         LABELS "tier2;m11;accessibility;high-contrast"
     )
 
+    # 2026-06-29 m10/m11 refill: data-free M11 daltonization helper gate.
+    # Pins the launcher/M11 colorblindMode contract (0=Off, 1=Deuteranopia,
+    # 2=Protanopia, 3=Tritanopia): GetLabel/IsIdentity lookup semantics,
+    # RemapRGB off-mode + out-of-range + NULL-safety short-circuits,
+    # RemapRGB per-mode daltonization invariants (red/green stay
+    # distinguishable, white/black stay fixed), arithmetic clamp on the
+    # 950/1000 tritanopia row-0 coefficient, and ApplyRGBA off-mode + NULL
+    # buffer + alpha-preservation invariants. Default Off must leave V1
+    # launches bit-identical, so the non-Off mode expected values are
+    # pinned against explicit Off baselines. Data-free, runs in CI.
+    add_executable(test_m11_colorblind_modes
+        tests/test_m11_colorblind_modes.c
+    )
+    target_include_directories(test_m11_colorblind_modes PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_m11_colorblind_modes PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_m11_colorblind_modes PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_colorblind_modes
+        COMMAND test_m11_colorblind_modes
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    set_tests_properties(m11_colorblind_modes PROPERTIES
+        LABELS "tier2;m11;accessibility;colorblind"
+    )
+
     # v2.8.x: source-lock verifier for the keyboard layout contract.
     # Pins the production code paths so a future refactor cannot
     # regress the arrow-strafe / Home-End-turn mapping without
