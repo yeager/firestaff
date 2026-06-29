@@ -15,12 +15,16 @@
  *     the HCSB.HTC location/hint/page tables mean;
  *   - ReDMCSB HINTLZW.C:122-212 is the source of truth for the
  *     LZW decompression that produces printable hint text;
+ *   - csb_hint_oracle_htc_variant.h owns release/language
+ *     metadata so English/French/German variant expansion stays
+ *     separate from this runtime-facing text surface;
  *   - dmweb's "Hint Oracle Files" page describes the same shape.
  *
  * What this module does:
  *   - Format a multi-line diagnostic/oracle report (matched MD5,
- *     label, location/hint/page counts, file size, resolved
- *     path) that any M12/M13 popup or status panel can show.
+ *     label, variant metadata, location/hint/page counts, file
+ *     size, resolved path) that any M12/M13 popup or status
+ *     panel can show.
  *   - Format a single hint's name + first-page decoded text into
  *     a fixed bounded buffer (the "hint page slice" the task asks
  *     for).
@@ -84,11 +88,12 @@ typedef enum {
  *   - If `cache->loaded == 0`, the report writes "(not loaded)"
  *     and returns OK with one line written.
  *   - If `cache` is loaded, the report contains: header line,
- *     matched MD5, matched label, file size, resolved path,
- *     original virtual path, location/hint/page counts,
- *     format word, dungeon id, and the first wildcard lookup
- *     result (the (level, x, y) tuple and the first matching
- *     hint name + first-page text excerpt).
+ *     matched MD5, matched label, variant/release/language
+ *     metadata from the separate variant classifier, file size,
+ *     resolved path, original virtual path, location/hint/page
+ *     counts, format word, dungeon id, and the first wildcard
+ *     lookup result (the (level, x, y) tuple and the first
+ *     matching hint name + first-page text excerpt).
  *
  * The first-page text is the same surface a Firestaff Hint
  * Oracle overlay would render, so seeing it in the report is

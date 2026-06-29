@@ -19,6 +19,7 @@
  */
 
 #include "csb_hint_oracle_ui_runtime_binding.h"
+#include "csb_hint_oracle_htc_variant.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -342,7 +343,10 @@ int csb_hint_oracle_ui_binding_format_report(
     size_t written = 0u;
     int full = 1;
     size_t level0_hint_index = 0u;
+    CSB_HintOracleHTC_Variant variant;
+    CSB_HintOracleHTC_VariantDrift drift;
     int resolve_rc;
+    int drift_rc;
     int n;
 
     if (out_was_truncated) {
@@ -374,6 +378,29 @@ int csb_hint_oracle_ui_binding_format_report(
     full &= append_format(buf, buf_size, &written,
                           "matched_label=%s\n",
                           cache->matched_label[0] ? cache->matched_label : "(unknown)");
+    variant = csb_hint_oracle_htc_variant_from_cache(cache);
+    drift_rc = csb_hint_oracle_htc_variant_drift(
+        variant, &cache->htc, cache->file_size, &drift);
+    full &= append_format(buf, buf_size, &written,
+                          "variant=%s release=%s language=%s\n",
+                          csb_hint_oracle_htc_variant_name(variant),
+                          csb_hint_oracle_htc_variant_release_name(variant),
+                          csb_hint_oracle_htc_variant_language(variant));
+    if (drift_rc == 1) {
+        full &= append_format(buf, buf_size, &written,
+                              "variant_drift=%s expected_size=%zu "
+                              "expected_location_count=%zu "
+                              "expected_hint_count=%zu "
+                              "expected_page_count=%zu\n",
+                              drift.matches ? "match" : "drift",
+                              drift.expected_size,
+                              drift.expected_location_count,
+                              drift.expected_hint_count,
+                              drift.expected_page_count);
+    } else {
+        full &= append_str(buf, buf_size, &written,
+                           "variant_drift=unknown\n");
+    }
     full &= append_format(buf, buf_size, &written,
                           "file_size=%zu\n", cache->file_size);
     full &= append_format(buf, buf_size, &written,

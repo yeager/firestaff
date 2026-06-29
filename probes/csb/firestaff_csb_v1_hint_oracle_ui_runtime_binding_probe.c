@@ -20,9 +20,10 @@
  *     text/buffer that the launcher or M11 view can render).
  *   - The binding surface produces a non-empty diagnostic
  *     report that contains: matched MD5 + label, format
- *     word + dungeon id, location/hint/page counts, the
- *     hint 0 first-page decoded text, and the wildcard
- *     (level=0, x=255, y=255) resolve.
+ *     word + dungeon id, documented variant/release/language
+ *     metadata, location/hint/page counts, the hint 0
+ *     first-page decoded text, and the wildcard (level=0,
+ *     x=255, y=255) resolve.
  *   - The binding surface produces a non-empty
  *     hint-formatted text that contains: hint name + first
  *     page decoded text (rounded out with the same
@@ -41,6 +42,7 @@
 
 #include "csb_hint_oracle_htc.h"
 #include "csb_hint_oracle_htc_real_scan.h"
+#include "csb_hint_oracle_htc_variant.h"
 #include "csb_hint_oracle_ui_runtime_binding.h"
 
 #include <stdio.h>
@@ -135,6 +137,7 @@ int main(int argc, char **argv)
     int hint_truncated = 0;
     int saw_real_load = 0;
     size_t wildcard_hint_index = 0u;
+    CSB_HintOracleHTC_Variant variant;
 
     printf("=== CSB V1 Hint Oracle UI/runtime binding probe ===\n\n");
 
@@ -174,6 +177,11 @@ int main(int argc, char **argv)
     printf("matched_md5=%s\n", cache.matched_md5);
     printf("matched_label=%s\n", cache.matched_label);
     printf("file_size=%zu\n", cache.file_size);
+    variant = csb_hint_oracle_htc_variant_from_cache(&cache);
+    printf("variant=%s release=%s language=%s\n",
+           csb_hint_oracle_htc_variant_name(variant),
+           csb_hint_oracle_htc_variant_release_name(variant),
+           csb_hint_oracle_htc_variant_language(variant));
 
     /* ── Diagnostic / oracle report ────────────────────────────── */
     memset(report, 0, sizeof(report));
@@ -193,6 +201,16 @@ int main(int argc, char **argv)
           "binding report surfaces the format word");
     CHECK(strstr(report, "dungeon_id=13") != NULL,
           "binding report surfaces the dungeon id");
+    CHECK(variant != CSB_HINT_ORACLE_HTC_VARIANT_UNKNOWN,
+          "loaded verified HCSB.HTC classifies to a documented variant");
+    CHECK(strstr(report, "variant=") != NULL &&
+          strstr(report, csb_hint_oracle_htc_variant_name(variant)) != NULL,
+          "binding report surfaces the documented variant name");
+    CHECK(strstr(report, "variant_drift=match") != NULL,
+          "binding report surfaces exact variant count/size drift match");
+    CHECK(strstr(report, "language=") != NULL &&
+          strstr(report, csb_hint_oracle_htc_variant_language(variant)) != NULL,
+          "binding report surfaces the variant language tag");
     CHECK(strstr(report, "location_count=") != NULL &&
           strstr(report, "hint_count=") != NULL &&
           strstr(report, "page_count=") != NULL,
