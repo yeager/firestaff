@@ -1,13 +1,35 @@
 
-# Firestaff Unreleased
+# Firestaff v3.0.13
+
+Firestaff v3.0.13 packages the 2026-06-28/29 runtime-hardening work that
+landed after v3.0.12. The headline change is a stricter DM1 V1
+post-dungeon capture workflow: operators must now produce a reviewed target
+selection receipt before dispatching live post-dungeon routes for pairing
+evidence. This release also keeps polishing bounded runtime, launcher, and
+presentation probes without claiming finished parity for targets that still
+need real-asset proof.
+
+## Highlights since v3.0.12
 
 - **M11 font-scale overlay fit coverage**: the in-game session-timer reminder banner now uses scale-aware copy and a top-strip layout that stays clear of the DM1 V1 dungeon viewport at fontScale 1/2/3. The focused M11 probe now renders actual game-view output with a synthetic original-font bitmap and verifies changed pixels stay inside the reminder banner rectangle.
 
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
+- **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
+
 - **DM2 V2 HUD widget synthetic-example integrity + generator-agnostic strengthening**: `firestaff_dm2_v2_hud_widget_synthetic_promotion_probe` is now 81/81 PASS (was 51/51) with three additions: (a) PNG 8-byte signature check on every one of the seven 1x1 fixtures so a future fixture that silently rots into arbitrary text cannot pass the `synthetic-test-fixture` substring check alone, (b) per-slot `width > 0 && height > 0` sanity check on every COMPLETE slot so a corrupt manifest without declared dimensions cannot promote the gate, and (c) a generator-agnostic COMPLETE scenario that rewrites every `generator` entry from `"synthetic_test"` to `"pbr_hero"` and verifies the gate still promotes to COMPLETE — guarding against a future refactor that accidentally introduces per-generator allowlisting. No finished-art, real-bitmap-blit, or visual-verification claim is added; the no-finished-art boundary stays explicit.
 
 - **CSB V1 real-asset ornament capture provenance**: `firestaff_csb_v1_pc_real_asset_ornament_blit_probe` now records a JSON manifest beside its deterministic PPM/SHA capture, including the verified PC 3.4 GRAPHICS.DAT MD5, selected bitmap index/dimensions/span, D1C floor-band rows, F0108/F0115 source anchors, and tally counts. The gate remains skip-safe and does not claim original pixel parity.
+
+## Verification
+
+- 55 commits ship on top of `v3.0.12`, including this release-prep commit.
+- Local release verification ran the post-dungeon selector self-test, the
+  DM1 V1 capture runbook-consistency probe, CMake configure/build, Phase A,
+  audio, and focused CTest release checks before tagging.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, and Linux arm64 artifacts from the `v3.0.13`
+  release commit.
 
 # Firestaff v3.0.12
 
