@@ -5,6 +5,11 @@
   manifests, marking matching DM1 saves distinctly and rejecting
   wrong-game manifests before launch handoff.
 
+- M11 gameplay accessibility manifests now keep endgame plaque, mirror,
+  and portrait bounds aligned with the rendered 320x200 victory overlay,
+  with a new headless probe covering gameplay, inventory, map, dialog,
+  candidate mirror, endgame, and open-chest surfaces.
+
 - Release packaging now treats Steam Deck as SteamOS on x86_64/AMD hardware
   and publishes a pacman-compatible `.pkg.tar.zst` artifact from the Linux
   x86_64 release job. Steam Deck is no longer grouped with Linux ARM64 in

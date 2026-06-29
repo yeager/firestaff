@@ -469,6 +469,25 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_high_contrast_overlay_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# M11 gameplay screen-reader manifest probe.
+# Headless, data-free. Exercises m11_screen_reader_update_ex()
+# across all six gameplay surface variants (gameplay / inventory /
+# automap / dialog / candidate-mirror / endgame) plus the chest-open
+# surface (CHEST_PANEL + 8 chest slots + arrow/eye toggle), the
+# state classifier precedence, the bounds-inside-framebuffer
+# invariant, the atomic-write / comma-discipline / no-launcher-leak
+# invariants, and the redraw-is-idempotent invariant. No real DM1
+# game data or SDL required; the probe uses an in-memory
+# M11_GameViewState and the public fs_ax_* writer redirected to a
+# per-run temp dir via fs_ax_set_output_dir().
+add_executable(firestaff_m11_gameplay_screen_reader_manifest_probe
+    probes/m11/firestaff_m11_gameplay_screen_reader_manifest_probe.c)
+target_link_libraries(firestaff_m11_gameplay_screen_reader_manifest_probe
+    PRIVATE firestaff_m11 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_gameplay_screen_reader_manifest_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2 Phase 1 — Launch/Profile Separation Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies CSB_V2_PHASE_DOMAIN_LAUNCH and CSB_V2_PHASE_DOMAIN_PROFILE compile gates,
@@ -10503,6 +10522,22 @@ if(BUILD_TESTING)
         )
         set_tests_properties(m11_high_contrast_overlay_runtime_probe PROPERTIES
             LABELS "tier2;m11;accessibility;high-contrast"
+        )
+    endif()
+
+    # M11 gameplay screen-reader manifest probe (headless, no game
+    # data needed, exercises m11_screen_reader_update_ex() across
+    # all six gameplay surface variants plus the chest-open surface,
+    # the classifier precedence, the bounds-inside-framebuffer
+    # invariant, the atomic-write / comma-discipline / no-launcher-leak
+    # invariants, and the redraw-is-idempotent invariant).
+    if(TARGET firestaff_m11_gameplay_screen_reader_manifest_probe)
+        add_test(
+            NAME m11_gameplay_screen_reader_manifest_probe
+            COMMAND firestaff_m11_gameplay_screen_reader_manifest_probe
+        )
+        set_tests_properties(m11_gameplay_screen_reader_manifest_probe PROPERTIES
+            LABELS "tier2;m11;accessibility;screen-reader"
         )
     endif()
 

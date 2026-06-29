@@ -787,14 +787,17 @@ static void m11_ax_emit_endgame_zones(const M11_GameViewState* state) {
 
     /* Endgame "THE END" plaque - ReDMCSB ENDGAME.C:455-456
      * G0012_ai_Graphic562_Box_Endgame_TheEnd = (120,199,95,108).
-     * Layout-696 zone C415_Box_Endgame_TheEnd. */
+     * Layout-696 zone C415_Box_Endgame_TheEnd.
+     *
+     * The endgame helpers return screen/framebuffer coordinates used
+     * directly by m11_game_view.c's victory overlay draw path; unlike
+     * inventory/map panel child zones, these must not be offset by the
+     * dungeon viewport origin or the fourth mirror/portrait extends
+     * below the 320x200 frame. */
     {
         int ex = 0, ey = 0, ew = 0, eh = 0;
         if (M11_GameView_GetV1EndgameTheEndZone(&ex, &ey, &ew, &eh)) {
-            e = m11_ax_begin(FS_AX_TEXT,
-                             M11_AX_VIEWPORT_X + ex,
-                             M11_AX_VIEWPORT_Y + ey,
-                             ew, eh, 1);
+            e = m11_ax_begin(FS_AX_TEXT, ex, ey, ew, eh, 1);
             if (e) {
                 snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "ENDGAME_THE_END");
                 snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN, "The End");
@@ -810,10 +813,7 @@ static void m11_ax_emit_endgame_zones(const M11_GameViewState* state) {
                                                         &mx, &my, &mw, &mh)) {
             continue;
         }
-        e = m11_ax_begin(FS_AX_CHAMPION_MIRROR,
-                         M11_AX_VIEWPORT_X + mx,
-                         M11_AX_VIEWPORT_Y + my,
-                         mw, mh, 1);
+        e = m11_ax_begin(FS_AX_CHAMPION_MIRROR, mx, my, mw, mh, 1);
         if (e) {
             snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "ENDGAME_MIRROR_%d", slot);
             snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN, "Champion Mirror %d",
@@ -826,10 +826,7 @@ static void m11_ax_emit_endgame_zones(const M11_GameViewState* state) {
                                                               &pw, &ph)) {
                 continue;
             }
-            e = m11_ax_begin(FS_AX_PORTRAIT,
-                             M11_AX_VIEWPORT_X + px,
-                             M11_AX_VIEWPORT_Y + py,
-                             pw, ph, 1);
+            e = m11_ax_begin(FS_AX_PORTRAIT, px, py, pw, ph, 1);
             if (e) {
                 snprintf(M11_AX_ID(e), M11_AX_ID_LEN, "ENDGAME_PORTRAIT_%d", slot);
                 snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
