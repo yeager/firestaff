@@ -11820,6 +11820,7 @@ if(BUILD_TESTING)
     add_executable(firestaff_dm1_v1_champion_panel_pixel_slice_probe
         probes/dm1/firestaff_dm1_v1_champion_panel_pixel_slice_probe.c
         src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hand_slot_refresh_pc34_compat.c
     )
     target_link_libraries(firestaff_dm1_v1_champion_panel_pixel_slice_probe PRIVATE firestaff_m10)
     if(NOT MSVC)

@@ -46,6 +46,7 @@
  */
 
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
+#include "firestaff/dm1/v1/champion_panel/hand_slot_refresh_pc34_compat.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -69,7 +70,8 @@ enum {
     PIXEL_MANA_FILL = 0x23,
     PIXEL_PORTRAIT_BORDER = 0x33,
     PIXEL_SLOT_BORDER = 0x44,
-    PIXEL_NAME_BG = 0x55
+    PIXEL_NAME_BG = 0x55,
+    PIXEL_F0296_REFRESH = 0x66
 };
 
 static int g_failures = 0;
@@ -470,6 +472,106 @@ static void verify_hand_slot_pixel_slice(uint8_t *fb)
     }
 }
 
+static void verify_f0296_hand_slot_refresh_pixel_projection(void)
+{
+    /*
+     * Bridge the CHAMDRAW.C F0296 hand-slot refresh walk-order gate to
+     * the fixed C211..C218 HUD rectangles. This is still a source-locked
+     * pixel-slice projection, not a real M11 renderer handoff: the F0296
+     * model tells us which action-hand slotboxes repaint or skip, and the
+     * HUD helper must map those slotbox owners to the same screen
+     * rectangles that verify_hand_slot_pixel_slice() pins above.
+     */
+    uint8_t local[DM1_PANEL_FRAME_WIDTH * DM1_PANEL_FRAME_HEIGHT];
+    Dm1V1ChampionPanelHandSlotRefreshStatePc34 state;
+    Dm1V1ChampionPanelHandSlotRefreshResultPc34 result;
+
+    memset(local, PIXEL_SENTINEL, sizeof(local));
+    for (int c = 0; c < DM1_CHAMPION_COUNT; ++c) {
+        paint_status_box(local, c, PIXEL_FILL_GRAY);
+    }
+
+    memset(&state, 0, sizeof(state));
+    dm1_v1_champion_panel_hand_slot_refresh_init_pc34(&state);
+    state.candidateChampionOrdinal = 2;
+    state.inventoryChampionOrdinal = 3;
+    state.inventoryChampionIndex = 2;
+
+    check_int("f0296_projection.run",
+              dm1_v1_champion_panel_hand_slot_refresh_run_pc34(&state, &result),
+              1);
+    check_int("f0296_projection.path",
+              result.path,
+              DM1_V1_DMHSR_PATH_INVENTORY_CHAMPION_SKIP_PC34);
+    check_int("f0296_projection.candidate_masked",
+              result.candidateEarlyReturnBeforeWalk,
+              1);
+    check_int("f0296_projection.inventory_skip_count",
+              result.slotBoxWalkInventorySkip,
+              1);
+
+    for (int step = 0; step < DM1_CHAMPION_COUNT; ++step) {
+        int champion = state.slotBoxWalkChampionIndex[step];
+        int slotbox = state.slotBoxWalkIndex[step];
+        int x = -1;
+        int y = -1;
+        char id[96];
+
+        snprintf(id, sizeof(id), "f0296_projection.slotbox_index.step%d", step);
+        check_int(id, slotbox, champion * 2 + DM1_SLOT_ACTION_HAND);
+        snprintf(id, sizeof(id), "f0296_projection.champion_index.step%d", step);
+        check_int(id, champion, step);
+
+        DM1_ChampionPanel_StatusHandSlotXY(champion, DM1_SLOT_ACTION_HAND,
+                                           &x, &y);
+        snprintf(id, sizeof(id), "f0296_projection.action_x.step%d", step);
+        check_int(id, x, champion * DM1_STATUS_BOX_SPACING + 24);
+        snprintf(id, sizeof(id), "f0296_projection.action_y.step%d", step);
+        check_int(id, y, 10);
+
+        if (state.slotBoxWalkF0386Dispatched[step]) {
+            fill_rect(local, x, y + DM1_PANEL_ROW_TOP_Y,
+                      DM1_SLOT_BOX_SIZE, DM1_SLOT_BOX_SIZE,
+                      PIXEL_F0296_REFRESH);
+        }
+    }
+
+    check_int("f0296_projection.dispatch_count",
+              result.f0386DispatchedForChangedActionHand,
+              2);
+    check_int("f0296_projection.skip_champion2",
+              state.slotBoxWalkInventorySkip[2],
+              1);
+    check_int("f0296_projection.same_icon_champion3_no_dispatch",
+              state.slotBoxWalkF0386Dispatched[3],
+              0);
+
+    for (int c = 0; c < DM1_CHAMPION_COUNT; ++c) {
+        int ready_x = -1;
+        int ready_y = -1;
+        int action_x = -1;
+        int action_y = -1;
+        char id[96];
+
+        DM1_ChampionPanel_StatusHandSlotXY(c, DM1_SLOT_READY_HAND,
+                                           &ready_x, &ready_y);
+        snprintf(id, sizeof(id), "f0296_projection.ready_untouched.c%d", c);
+        check_pixel(id, local, ready_x, ready_y + DM1_PANEL_ROW_TOP_Y,
+                    PIXEL_FILL_GRAY);
+
+        DM1_ChampionPanel_StatusHandSlotXY(c, DM1_SLOT_ACTION_HAND,
+                                           &action_x, &action_y);
+        snprintf(id, sizeof(id), "f0296_projection.action_top_left.c%d", c);
+        check_pixel(id, local, action_x, action_y + DM1_PANEL_ROW_TOP_Y,
+                    (c == 0 || c == 1) ? PIXEL_F0296_REFRESH : PIXEL_FILL_GRAY);
+        snprintf(id, sizeof(id), "f0296_projection.action_bottom_right.c%d", c);
+        check_pixel(id, local,
+                    action_x + DM1_SLOT_BOX_SIZE - 1,
+                    action_y + DM1_PANEL_ROW_TOP_Y + DM1_SLOT_BOX_SIZE - 1,
+                    (c == 0 || c == 1) ? PIXEL_F0296_REFRESH : PIXEL_FILL_GRAY);
+    }
+}
+
 static void verify_portrait_pixel_slice(uint8_t *fb)
 {
     /* Portrait box: 32x29 at (champIdx*69 + 7, 170) frame coordinates.
@@ -655,6 +757,9 @@ int main(void)
 
     printf("\n[hand_slot_pixel_slice]\n");
     verify_hand_slot_pixel_slice(frame);
+
+    printf("\n[f0296_hand_slot_refresh_pixel_projection]\n");
+    verify_f0296_hand_slot_refresh_pixel_projection();
 
     printf("\n[portrait_pixel_slice]\n");
     verify_portrait_pixel_slice(frame);
