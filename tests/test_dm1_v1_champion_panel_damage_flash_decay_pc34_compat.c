@@ -494,15 +494,19 @@ static void test_lethal_damage_marks_champion_dead(void)
               "CurrentHealth pinned to 0 by F0319_CHAMPION_Kill path");
     check_false("lethal.alive", state.champions[2].alive,
                 "M516_CHAMPIONS[ci].alive = false after kill");
-    /* The flash + schedule still fire so the dead champion's last
-     * damage graphic is visible until the C12 / F0319 status-box
-     * overdraw erases it. */
+    /* F0320's F0319 kill branch is before the F0623/C12 block. */
     check_int("lethal.damage_visible",
-              state.champions[2].damage_visible, 150,
-              "CHAMDRAW.C F0623 still flashes the lethal damage");
-    check_int("lethal.pending_count", state.pending_timeline_event_count, 1,
-              "F0320:1758 still schedules the C12 event for the dead "
-              "champion; F0254:1624 will early-return at fire time");
+              state.champions[2].damage_visible, 0,
+              "CHAMPION.C F0320:1729-1737 kill branch skips F0623 flash");
+    check_false("lethal.scheduled_new", step.scheduled_new_event,
+                "CHAMPION.C F0320:1729-1737 kill branch skips C12 add");
+    check_false("lethal.rescheduled", step.rescheduled_existing_event,
+                "CHAMPION.C F0320:1729-1737 kill branch skips C12 fix");
+    check_int("lethal.pending_count", state.pending_timeline_event_count, 0,
+              "CHAMPION.C F0320:1736-1794 schedules only in nonlethal else");
+    check_true("lethal.status_box_dirty",
+               state.mask0x1000_status_box_dirty,
+               "CHAMPION.C:1574 F0319 marks MASK0x1000_STATUS_BOX");
 }
 
 static void test_build_result_reflects_state(void)
