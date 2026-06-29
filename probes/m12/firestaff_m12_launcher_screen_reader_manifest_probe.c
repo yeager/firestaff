@@ -15,7 +15,8 @@
  *      MENU_SETTINGS, MENU_MUSEUM) and a "selected" value on the
  *      focused card.
  *   3. Settings view emits launcher_tab rows for the tab strip
- *      plus launcher_row rows for the accessibility tab settings.
+ *      plus the same visible launcher_row window the settings view
+ *      draws, including selected-row and value text.
  *   4. Message / popup view emits a popup element plus a popup_ok
  *      confirmation button, with the popup lines surfaced so a
  *      screen reader can announce them.
@@ -29,6 +30,8 @@
  *   8. Read-only extras — manual/docs and changelog views emit
  *      state-driven launcher_row elements instead of falling through
  *      to main-view game cards.
+ *   9. Settings data-directory rows honor the includePaths privacy
+ *      gate: hidden by default, explicit only when requested.
  *
  * Privacy/safety: the probe redirects HOME to a temp dir under
  * $TMPDIR (or /tmp on POSIX) so the manifest never touches the real
@@ -152,6 +155,11 @@ static char g_home_path[640];
 static char g_a11y_dir[640];
 static char g_json_path[1024];
 static char g_tmp_path[1024];
+
+enum {
+    PROBE_SETTINGS_ROW_DATA_DIR = 15,
+    PROBE_SETTINGS_ROW_FONT_SCALE = 23
+};
 
 static int setup_a11y_home(void)
 {
@@ -293,7 +301,8 @@ static void subtest_main_view_cards(void)
                  "main: DM2 card carries the \"selected\" value");
 }
 
-/* Subtest C: settings view emits launcher_tab and launcher_row rows. */
+/* Subtest C: settings view emits launcher_tab and the visible
+ * settings-row window centered on state->settingsSelectedIndex. */
 static void subtest_settings_view(void)
 {
     char buf[16384];
@@ -308,6 +317,7 @@ static void subtest_settings_view(void)
     M12_StartupMenu_Init(&state);
     state.view = M12_MENU_VIEW_SETTINGS;
     state.settingsTabIndex = 4; /* Accessibility tab */
+    state.settingsSelectedIndex = PROBE_SETTINGS_ROW_FONT_SCALE;
 
     fs_ax_begin_frame(480, 270, "launcher_settings");
     m12_launcher_a11y_emit(&state, 480, 270, 0);
@@ -327,16 +337,23 @@ static void subtest_settings_view(void)
                  "settings: tab type is launcher_tab");
     probe_record("INV_LAX_23_settings_row_font_scale",
                  strstr(buf, "\"id\":\"ROW_FONT_SCALE\"") != NULL,
-                 "settings: ROW_FONT_SCALE row emitted");
-    probe_record("INV_LAX_24_settings_row_screen_reader",
-                 strstr(buf, "\"id\":\"ROW_SCREEN_READER\"") != NULL,
-                 "settings: ROW_SCREEN_READER row emitted");
+                 "settings: ROW_FONT_SCALE row emitted from visible settings window");
+    probe_record("INV_LAX_24_settings_row_high_contrast",
+                 strstr(buf, "\"id\":\"ROW_HIGH_CONTRAST\"") != NULL,
+                 "settings: ROW_HIGH_CONTRAST row emitted from visible settings window");
     probe_record("INV_LAX_25_settings_row_type",
                  strstr(buf, "\"type\":\"launcher_row\"") != NULL,
                  "settings: row type is launcher_row");
     probe_record("INV_LAX_26_settings_selected_tab_value",
                  strstr(buf, ", \"value\":\"selected\"}") != NULL,
                  "settings: the focused tab carries \"selected\" value");
+    probe_record("INV_LAX_27_settings_selected_row_value",
+                 strstr(buf, "\"id\":\"ROW_FONT_SCALE\"") != NULL
+                     && strstr(buf, "\"value\":\"selected | ") != NULL,
+                 "settings: focused row carries selected marker plus value text");
+    probe_record("INV_LAX_28_settings_window_excludes_main_cards",
+                 strstr(buf, "\"id\":\"GAME_CARD_DM1\"") == NULL,
+                 "settings: view does not fall through to main game cards");
 }
 
 /* Subtest D: message view emits popup + popup_ok and surfaces the
@@ -975,6 +992,72 @@ static void subtest_changelog_view(void)
                  "changelog: scrolled view excludes offscreen line 0");
 }
 
+/* Subtest N: settings data-directory row suppresses the absolute path
+ * by default and emits it only when includePaths=1. */
+static void subtest_settings_data_dir_privacy(void)
+{
+    char buf[16384];
+    char dataRoot[1024];
+    int n;
+    M12_StartupMenuState state;
+
+    snprintf(dataRoot, sizeof(dataRoot), "%s/data-root", g_home_path);
+    (void)portable_mkdir(dataRoot);
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    M12_AssetStatus_Scan(&state.assetStatus, dataRoot);
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsSelectedIndex = PROBE_SETTINGS_ROW_DATA_DIR;
+
+    fs_ax_begin_frame(480, 270, "launcher_settings_data_dir_private");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+
+    probe_record("INV_LAX_130_settings_data_dir_row_present",
+                 strstr(buf, "\"id\":\"ROW_DATA_DIR\"") != NULL,
+                 "settings privacy: ROW_DATA_DIR is emitted in the visible row window");
+    probe_record("INV_LAX_131_settings_data_dir_hidden_by_default",
+                 strstr(buf, "\"id\":\"ROW_DATA_DIR\"") != NULL
+                     && strstr(buf, "\"value\":\"selected | hidden\"") != NULL,
+                 "settings privacy: data directory value is hidden when includePaths=0");
+    probe_record("INV_LAX_132_settings_data_dir_no_home_leak",
+                 strstr(buf, g_home_path) == NULL,
+                 "settings privacy: temp HOME path is not present when includePaths=0");
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    M12_AssetStatus_Scan(&state.assetStatus, dataRoot);
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsSelectedIndex = PROBE_SETTINGS_ROW_DATA_DIR;
+
+    fs_ax_begin_frame(480, 270, "launcher_settings_data_dir_public");
+    m12_launcher_a11y_emit(&state, 480, 270, 1);
+    fs_ax_flush();
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+
+    probe_record("INV_LAX_133_settings_data_dir_included_on_request",
+                 strstr(buf, dataRoot) != NULL,
+                 "settings privacy: data directory path is emitted when includePaths=1");
+    probe_record("INV_LAX_134_settings_data_status_neighbor",
+                 strstr(buf, "\"id\":\"ROW_DATA_STATUS\"") != NULL,
+                 "settings privacy: neighboring data-status row remains visible");
+
+    portable_rmdir(dataRoot);
+}
+
 /* ── main ─────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -1026,6 +1109,9 @@ int main(void)
 
     printf("\n[M] changelog view: visible scrolled rows\n");
     subtest_changelog_view();
+
+    printf("\n[N] settings view: data-directory privacy gate\n");
+    subtest_settings_data_dir_privacy();
 
     teardown_a11y_home();
     fs_ax_shutdown();

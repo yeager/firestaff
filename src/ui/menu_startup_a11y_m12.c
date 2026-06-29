@@ -10,7 +10,7 @@
  * manifest"):
  *   - Main view (game cards)             → FS_AX_LAUNCHER_CARD per entry
  *   - Settings tabs                      → FS_AX_LAUNCHER_TAB per tab
- *   - Settings rows                      → FS_AX_LAUNCHER_ROW per row
+ *   - Settings rows                      → FS_AX_LAUNCHER_ROW per visible row
  *   - Missing-data popup                 → FS_AX_POPUP + FS_AX_POPUP_OK
  *   - General message view               → FS_AX_POPUP + FS_AX_POPUP_OK
  *   - Bestiary view                      → FS_AX_CATEGORY_TAB per category
@@ -191,6 +191,296 @@ static void add_element_rect(int fbW, int fbH,
     fs_ax_add_element(&e);
 }
 
+static void add_element_bounds(const char* id, const char* label,
+                               FS_AX_ElementType type,
+                               int x, int y, int w, int h,
+                               int enabled, const char* value)
+{
+    FS_AX_Element e;
+    memset(&e, 0, sizeof(e));
+    e.id = id;
+    e.label = label ? label : "";
+    e.type = type;
+    e.x = x;
+    e.y = y;
+    e.w = w > 0 ? w : 1;
+    e.h = h > 0 ? h : 1;
+    e.enabled = enabled ? 1 : 0;
+    e.value = value;
+    fs_ax_add_element(&e);
+}
+
+/* Keep this table ordinal-aligned with the private
+ * M12_SETTINGS_ROW_* enum in menu_startup_m12.c. The enum is local
+ * to that translation unit, so the manifest keeps a small mirrored
+ * table here and the probe locks the rows most likely to drift. */
+typedef struct {
+    const char* id;
+    const char* label;
+} SettingsRowSpec;
+
+static const SettingsRowSpec kSettingsRows[] = {
+    { "ROW_LANGUAGE",          "Language" },
+    { "ROW_PRESENTATION_MODE", "Presentation Mode" },
+    { "ROW_RENDERER_BACKEND",  "Renderer Backend" },
+    { "ROW_WINDOW_MODE",       "Window Mode" },
+    { "ROW_SCALE_MODE",        "Scale" },
+    { "ROW_DISPLAY_ASPECT",    "Display Format" },
+    { "ROW_INTEGER_SCALING",   "Pixel Snap" },
+    { "ROW_SCALING_FILTER",    "Filter" },
+    { "ROW_VSYNC",             "VSync" },
+    { "ROW_VIEWPORT_STYLE",    "Viewport Style" },
+    { "ROW_INPUT_MODE",        "Input Mode" },
+    { NULL,                    NULL }, /* reserved WASD row */
+    { "ROW_TOUCH_CONTROLS",    "Touch Controls" },
+    { "ROW_MOVEMENT_MODE",     "Movement Mode" },
+    { "ROW_SMOOTH_TURN_PAN",   "Smooth Turn Pan" },
+    { "ROW_DATA_DIR",          "Data Directory" },
+    { "ROW_DATA_STATUS",       "Original Data" },
+    { "ROW_DEBUG_OVERLAY",     "Debug Overlay" },
+    { "ROW_DEVELOPER_GATES",   "Developer Gates" },
+    { "ROW_AUDIO_MASTER",      "Master Volume" },
+    { "ROW_AUDIO_MUSIC",       "Music Volume" },
+    { "ROW_AUDIO_SFX",         "SFX Volume" },
+    { "ROW_AUDIO_MUTED",       "Mute Audio" },
+    { "ROW_FONT_SCALE",        "Font Scale" },
+    { "ROW_HIGH_CONTRAST",     "High Contrast" },
+    { "ROW_COLORBLIND_MODE",   "Colorblind Mode" },
+    { "ROW_AUTO_PAUSE",        "Auto Pause" },
+    { "ROW_THEME",             "Theme" },
+    { "ROW_BACKGROUND",        "Background" },
+    { "ROW_QUICK_RESUME",      "Quick Resume" },
+    { "ROW_SESSION_TIMER",     "Session Timer" },
+    { "ROW_MINIMAP",           "Minimap" },
+    { "ROW_AUTOMAP",           "Automap" },
+    { "ROW_COMBAT_LOG",        "Combat Log" },
+    { "ROW_SOUNDTRACK",        "Soundtrack" },
+    { "ROW_AMBIENT",           "Ambient Sound" },
+    { "ROW_AMBIENT_VOLUME",    "Ambient Volume" },
+    { "ROW_UI_SCALE",          "UI Scale" },
+    { "ROW_CUSTOM_MUSIC",      "Custom Music" },
+    { "ROW_CUSTOM_DUNGEON",    "Custom Dungeons" },
+    { "ROW_SCREENSHOTS",       "Screenshots" },
+    { "ROW_STREAMER_MODE",     "Streamer Mode" },
+    { "ROW_EXPORT_SAVE",       "Export Save Manifest" },
+    { "ROW_IMPORT_SAVE",       "Import Save Manifest" },
+    { "ROW_SYNC_NOW",          "Sync Now" },
+    { "ROW_SYNC_STATUS",       "Sync Status" }
+};
+
+enum {
+    M12_A11Y_SETTINGS_ROW_RESERVED_WAS = 11,
+    M12_A11Y_SETTINGS_ROW_DATA_DIR = 15,
+    M12_A11Y_SETTINGS_ROW_DATA_STATUS = 16,
+    M12_A11Y_SETTINGS_ROW_FONT_SCALE = 23,
+    M12_A11Y_SETTINGS_ROW_COUNT =
+        (int)(sizeof(kSettingsRows) / sizeof(kSettingsRows[0]))
+};
+
+static const char* on_off(int enabled)
+{
+    return enabled ? "ON" : "OFF";
+}
+
+static const char* set_default(const char* path)
+{
+    return (path && path[0] != '\0') ? "SET" : "DEFAULT";
+}
+
+static const char* setting_row_value(const M12_StartupMenuState* state,
+                                     int row,
+                                     int includePaths,
+                                     char* out,
+                                     size_t outSize)
+{
+    const M12_MenuSettingsState* s = state ? &state->settings : NULL;
+    if (!out || outSize == 0) {
+        return NULL;
+    }
+    out[0] = '\0';
+    switch (row) {
+    case 0:
+        snprintf(out, outSize, "INDEX %d", s ? s->languageIndex : 0);
+        break;
+    case 1:
+        snprintf(out, outSize, "%s",
+                 M12_StartupMenu_GetPresentationModeLabel(state));
+        break;
+    case 2:
+        snprintf(out, outSize, "%s | %s",
+                 M12_StartupMenu_GetRendererBackendLabel(state),
+                 M12_StartupMenu_GetRendererBackendStatusLabel(state));
+        break;
+    case 3:
+        snprintf(out, outSize, "INDEX %d", s ? s->windowModeIndex : 0);
+        break;
+    case 4:
+        snprintf(out, outSize, "INDEX %d", s ? s->scaleModeIndex : 0);
+        break;
+    case 5:
+        snprintf(out, outSize, "INDEX %d", s ? s->displayAspectMode : 0);
+        break;
+    case 6:
+        snprintf(out, outSize, "%s", on_off(s ? s->integerScaling : 0));
+        break;
+    case 7:
+        snprintf(out, outSize, "INDEX %d", s ? s->scalingFilterIndex : 0);
+        break;
+    case 8:
+        snprintf(out, outSize, "%s", on_off(s ? s->vsyncIndex : 0));
+        break;
+    case 9:
+        snprintf(out, outSize, "INDEX %d", s ? s->viewportStyleIndex : 0);
+        break;
+    case 10:
+        snprintf(out, outSize, "INDEX %d", s ? s->inputModeIndex : 0);
+        break;
+    case 12:
+        snprintf(out, outSize, "%s", on_off(s ? s->touchControlsIndex : 0));
+        break;
+    case 13:
+        snprintf(out, outSize, "INDEX %d", s ? s->movementModeIndex : 0);
+        break;
+    case 14:
+        snprintf(out, outSize, "%s", on_off(s ? s->dm1V2SmoothTurnPanEnabled : 0));
+        break;
+    case M12_A11Y_SETTINGS_ROW_DATA_DIR:
+        snprintf(out, outSize, "%s",
+                 includePaths ? M12_StartupMenu_GetVisibleDataDir(state) : "hidden");
+        break;
+    case M12_A11Y_SETTINGS_ROW_DATA_STATUS:
+        snprintf(out, outSize, "%s", M12_StartupMenu_GetDataStatusValue(state));
+        break;
+    case 17:
+        snprintf(out, outSize, "INDEX %d", s ? s->debugOverlayIndex : 0);
+        break;
+    case 18:
+        snprintf(out, outSize, "INDEX %d", s ? s->developerGatesIndex : 0);
+        break;
+    case 19:
+        snprintf(out, outSize, "%d%%", s ? s->audioMasterVolume : 0);
+        break;
+    case 20:
+        snprintf(out, outSize, "%d%%", s ? s->audioMusicVolume : 0);
+        break;
+    case 21:
+        snprintf(out, outSize, "%d%%", s ? s->audioSfxVolume : 0);
+        break;
+    case 22:
+        snprintf(out, outSize, "%s", on_off(s ? s->audioMuted : 0));
+        break;
+    case M12_A11Y_SETTINGS_ROW_FONT_SCALE:
+        snprintf(out, outSize, "%dx", s ? s->fontScale : 1);
+        break;
+    case 24:
+        snprintf(out, outSize, "%s", on_off(s ? s->highContrast : 0));
+        break;
+    case 25:
+        snprintf(out, outSize, "INDEX %d", s ? s->colorblindMode : 0);
+        break;
+    case 26:
+        snprintf(out, outSize, "%s", on_off(s ? s->autoPause : 0));
+        break;
+    case 27:
+        snprintf(out, outSize, "INDEX %d", s ? s->themeIndex : 0);
+        break;
+    case 28:
+        snprintf(out, outSize, "INDEX %d", s ? s->bgAnimationPreset : 0);
+        break;
+    case 29:
+        snprintf(out, outSize, "%s", on_off(s ? s->quickResumeEnabled : 0));
+        break;
+    case 30:
+        snprintf(out, outSize, "INDEX %d", s ? s->sessionTimerIndex : 0);
+        break;
+    case 31:
+        snprintf(out, outSize, "%s", on_off(s ? s->minimapEnabled : 0));
+        break;
+    case 32:
+        snprintf(out, outSize, "%s", on_off(s ? s->autoMapEnabled : 0));
+        break;
+    case 33:
+        snprintf(out, outSize, "%s", on_off(s ? s->combatLogEnabled : 0));
+        break;
+    case 34:
+        snprintf(out, outSize, "INDEX %d", s ? s->soundtrackMode : 0);
+        break;
+    case 35:
+        snprintf(out, outSize, "%s", on_off(s ? s->ambientEnabled : 0));
+        break;
+    case 36:
+        snprintf(out, outSize, "%d%%", s ? s->ambientVolume : 0);
+        break;
+    case 37:
+        snprintf(out, outSize, "%d%%", s ? s->uiScale : 100);
+        break;
+    case 38:
+        snprintf(out, outSize, "%s", set_default(s ? s->customMusicPath : NULL));
+        break;
+    case 39:
+        snprintf(out, outSize, "%s", set_default(s ? s->customDungeonPath : NULL));
+        break;
+    case 40:
+        snprintf(out, outSize, "%s", set_default(s ? s->screenshotPath : NULL));
+        break;
+    case 41:
+        snprintf(out, outSize, "%s", on_off(s ? s->streamerMode : 0));
+        break;
+    case 42:
+        snprintf(out, outSize, "WRITE");
+        break;
+    case 43:
+        snprintf(out, outSize, "READ");
+        break;
+    case 44:
+        snprintf(out, outSize, "NOT CONFIGURED");
+        break;
+    case 45:
+        snprintf(out, outSize, "LOCAL ONLY");
+        break;
+    default:
+        break;
+    }
+    return out[0] ? out : NULL;
+}
+
+static int settings_visible_rows(int fbW, int fbH)
+{
+    if (fbW <= 480 && fbH <= 270) {
+        return 6;
+    }
+    {
+        int margin = fbW / 30;
+        int heroH = fbH / 3;
+        int contentY;
+        int availableH;
+        int visibleRows;
+        if (margin < 12) margin = 12;
+        if (heroH < 82) heroH = 82;
+        contentY = margin + heroH + 10;
+        availableH = fbH - contentY - 92;
+        visibleRows = availableH / 34;
+        if (visibleRows < 4) visibleRows = 4;
+        if (visibleRows > M12_A11Y_SETTINGS_ROW_COUNT) {
+            visibleRows = M12_A11Y_SETTINGS_ROW_COUNT;
+        }
+        return visibleRows;
+    }
+}
+
+static int settings_first_visible_row(const M12_StartupMenuState* state,
+                                      int visibleRows)
+{
+    int selected = state ? state->settingsSelectedIndex : 0;
+    int firstRow = selected - (visibleRows / 2);
+    if (firstRow < 0) firstRow = 0;
+    if (firstRow > M12_A11Y_SETTINGS_ROW_COUNT - visibleRows) {
+        firstRow = M12_A11Y_SETTINGS_ROW_COUNT - visibleRows;
+    }
+    if (firstRow < 0) firstRow = 0;
+    return firstRow;
+}
+
 /* ── Per-view emitters ────────────────────────────────────────────── */
 
 /* Main view: emit one card element per state->entries[i]. */
@@ -246,7 +536,8 @@ static void emit_main_view(const M12_StartupMenuState* state,
 /* Settings view: tabs first, then rows. Row labels mirror the strings
  * used by m12_draw_settings_view / m12_draw_settings_view_modern. */
 static void emit_settings_view(const M12_StartupMenuState* state,
-                               int fbW, int fbH)
+                               int fbW, int fbH,
+                               int includePaths)
 {
     const TabSpec* tabs;
     int tabCount = 0;
@@ -266,30 +557,75 @@ static void emit_settings_view(const M12_StartupMenuState* state,
                          isSelected ? "selected" : NULL);
     }
 
-    /* Settings rows. For simplicity emit only a generic row locator;
-     * the precise row list lives in m12_accessibility_settings[] in
-     * menu_startup_m12.c and we mirror the most-frequent settings. */
+    /* Settings rows: mirror the visible window from
+     * m12_draw_settings_view / m12_draw_settings_view_modern using
+     * the same selected-row centering and reserved-row skip. */
     {
-        static const struct {
-            const char* id;
-            const char* label;
-        } rows[] = {
-            { "ROW_FONT_SCALE",       "Font Scale" },
-            { "ROW_HIGH_CONTRAST",    "High Contrast" },
-            { "ROW_COLORBLIND_MODE",  "Colorblind Mode" },
-            { "ROW_SCREEN_READER",    "Screen Reader" },
-            { "ROW_LARGE_CURSOR",     "Large Cursor" },
-            { "ROW_REDUCED_MOTION",   "Reduced Motion" },
-            { "ROW_BUTTON_HOLD_TIME", "Button Hold Time" },
-            { "ROW_AUDIO_CUES",       "Audio Cues" },
-            { NULL, NULL }
-        };
-        int rowY = 76;
-        for (i = 0; rows[i].id != NULL; ++i) {
-            AxRect base = { 122, rowY, 180, 24 };
-            add_element_rect(fbW, fbH, rows[i].id, rows[i].label,
-                             FS_AX_LAUNCHER_ROW, base, 1, NULL);
-            rowY += 24;
+        int visibleRows = settings_visible_rows(fbW, fbH);
+        int firstRow = settings_first_visible_row(state, visibleRows);
+        int rowSlot = 0;
+        int row;
+        int x;
+        int y;
+        int w;
+        int h;
+        int rowStep;
+        static char s_setting_values[M12_A11Y_SETTINGS_ROW_COUNT][128];
+
+        if (fbW <= 480 && fbH <= 270) {
+            x = 122;
+            y = 70;
+            w = 228;
+            h = 18;
+            rowStep = 18;
+        } else {
+            int margin = fbW / 30;
+            int heroH = fbH / 3;
+            int contentY;
+            int leftW;
+            int panelX;
+            if (margin < 12) margin = 12;
+            if (heroH < 82) heroH = 82;
+            contentY = margin + heroH + 10;
+            leftW = (fbW * 38) / 100;
+            panelX = margin + leftW + 12;
+            x = panelX + 10;
+            y = contentY + 36;
+            w = fbW - margin - panelX - 20;
+            h = 34;
+            rowStep = 34;
+        }
+
+        for (row = firstRow;
+             row < M12_A11Y_SETTINGS_ROW_COUNT && row < firstRow + visibleRows;
+             ++row) {
+            const SettingsRowSpec* spec = &kSettingsRows[row];
+            const char* value;
+            if (row == M12_A11Y_SETTINGS_ROW_RESERVED_WAS || !spec->id) {
+                continue;
+            }
+            value = setting_row_value(state, row, includePaths,
+                                      s_setting_values[row],
+                                      sizeof(s_setting_values[row]));
+            if (state && state->settingsSelectedIndex == row) {
+                if (value && value[0]) {
+                    char existing[128];
+                    snprintf(existing, sizeof(existing), "%s", value);
+                    snprintf(s_setting_values[row],
+                             sizeof(s_setting_values[row]),
+                             "selected | %s", existing);
+                } else {
+                    snprintf(s_setting_values[row],
+                             sizeof(s_setting_values[row]),
+                             "selected");
+                }
+                value = s_setting_values[row];
+            }
+            add_element_bounds(spec->id, spec->label,
+                               FS_AX_LAUNCHER_ROW,
+                               x, y + (rowSlot * rowStep), w, h,
+                               1, value);
+            ++rowSlot;
         }
     }
 }
@@ -786,7 +1122,7 @@ void m12_launcher_a11y_emit(const M12_StartupMenuState* state,
         emit_message_view(state, framebufferWidth, framebufferHeight, includePaths);
         break;
     case M12_MENU_VIEW_SETTINGS:
-        emit_settings_view(state, framebufferWidth, framebufferHeight);
+        emit_settings_view(state, framebufferWidth, framebufferHeight, includePaths);
         break;
     case M12_MENU_VIEW_GAME_OPTIONS:
         emit_game_options_view(state, framebufferWidth, framebufferHeight);
