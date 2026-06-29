@@ -3,13 +3,16 @@
  *
  * DM2 V2.2 modern-renderer headless probe (per-cell modern-art swap).
  *
- * Builds a minimal temporary v22_inplace_cache.bin under a probe-only
- * HOME, activates DM2 V2.2 presentation, populates the per-cell swap
- * cache for both the indoor T560 dungeon view (D0..D2 x L/C/R) and
- * the outdoor T600 sky/ground split, and verifies that
- * dm2_v22_viewport_swap_render() paints the expected cells.
+ * Builds a minimal temporary modern_asset_manifest.json +
+ * v22_inplace_cache.bin under a probe-only HOME, activates DM2 V2.2
+ * presentation, populates the per-cell swap cache for both the indoor
+ * T560 dungeon view (D0..D2 x L/C/R) and the outdoor T600 sky/ground
+ * split, and verifies that dm2_v22_viewport_swap_render() paints the
+ * expected cells.
  *
  * Coverage:
+ *   - synthetic manifest validates without proprietary art
+ *   - representative indoor/outdoor shape paths resolve through the manifest
  *   - init / shutdown lifecycle
  *   - dm2_v22_inplace_draw_active() reflects cache load
  *   - dm2_v22_viewport_swap_active() reflects presentation_mode + install
@@ -32,6 +35,7 @@
  *   - 4-direction sweep (each direction paints 9 cells)
  *   - per-cell mapping proves each shape picks the expected asset_id
  *   - source evidence citation
+ *   - missing single cache bitmap leaves its V1 framebuffer cell untouched
  *
  * Source-lock:
  *   SKULL.ASM T520/T560/T600  (DM2 viewport ticks: indoor T560 + outdoor T600)
@@ -85,6 +89,147 @@ static void put_u32(unsigned char* p, uint32_t v) {
     memcpy(p, &v, sizeof(v));
 }
 
+typedef struct SyntheticDm2V22Asset {
+    const char* category;
+    const char* asset_id;
+    const char* file_name;
+    uint32_t rgba;
+} SyntheticDm2V22Asset;
+
+static const SyntheticDm2V22Asset kSyntheticAssets[] = {
+    /* Indoor walls (T560) */
+    { "wall_shapes",  "wall_dm2_temple_01",      "wall_dm2_temple_01.synthetic",      0xFFFF0000u },
+    { "wall_shapes",  "wall_dm2_alcove_01",      "wall_dm2_alcove_01.synthetic",      0xFF00FF00u },
+    { "wall_shapes",  "wall_dm2_doorway_01",     "wall_dm2_doorway_01.synthetic",     0xFF0000FFu },
+    { "wall_shapes",  "wall_dm2_inscription_01", "wall_dm2_inscription_01.synthetic", 0xFFFFFF00u },
+    /* Indoor floors */
+    { "floor_shapes", "floor_dm2_outdoor_01",    "floor_dm2_outdoor_01.synthetic",    0xFF00FFFFu },
+    { "floor_shapes", "floor_dm2_pit_01",        "floor_dm2_pit_01.synthetic",        0xFFFF00FFu },
+    { "floor_shapes", "floor_dm2_stairs_01",     "floor_dm2_stairs_01.synthetic",     0xFF808000u },
+    { "floor_shapes", "ceiling_dm2_plain_01",    "ceiling_dm2_plain_01.synthetic",    0xFF008080u },
+    /* Creatures */
+    { "creature_shapes", "creature_dm2_brigand_01", "creature_dm2_brigand_01.synthetic", 0xFF800080u },
+    { "creature_shapes", "tree_dm2_outdoor_01",     "tree_dm2_outdoor_01.synthetic",     0xFF808040u },
+    /* Doors / fields */
+    { "door_shapes",  "door_dm2_wood_01",        "door_dm2_wood_01.synthetic",        0xFFC0C0C0u },
+    { "wall_shapes",  "field_dm2_teleporter_01", "field_dm2_teleporter_01.synthetic", 0xFF404040u },
+    { "wall_shapes",  "field_dm2_opening_01",    "field_dm2_opening_01.synthetic",    0xFF606060u },
+    /* Outdoor (T600) */
+    { "wall_shapes",  "sky_dm2_outdoor_01",      "sky_dm2_outdoor_01.synthetic",      0xFFB0B0B0u },
+    { "floor_shapes", "ground_dm2_outdoor_01",   "ground_dm2_outdoor_01.synthetic",   0xFFD0D0D0u },
+    { "floor_shapes", "ground_dm2_horizon_01",   "ground_dm2_horizon_01.synthetic",   0xFFE0E0E0u },
+    { "wall_shapes",  "wall_dm2_outdoor_01",     "wall_dm2_outdoor_01.synthetic",     0xFFF0F0F0u },
+    /* Required manifest categories not consumed by this viewport gate. */
+    { "ui_chrome", "ui_dm2_v22_synthetic_probe", "ui_dm2_v22_synthetic_probe.synthetic", 0xFF202020u },
+    { "champion_portraits", "champion_dm2_v22_synthetic_probe", "champion_dm2_v22_synthetic_probe.synthetic", 0xFF303030u }
+};
+
+static int synthetic_asset_count(void) {
+    return (int)(sizeof(kSyntheticAssets) / sizeof(kSyntheticAssets[0]));
+}
+
+static int write_text_file(const char* path, const char* text) {
+    size_t len;
+    FILE* fp;
+    if (!path || !text) return 0;
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    len = strlen(text);
+    if (fwrite(text, 1, len, fp) != len) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
+static int write_synthetic_asset_file(const char* modern_dir,
+                                      const SyntheticDm2V22Asset* asset) {
+    char category_dir[FSP_PATH_MAX];
+    char asset_path[FSP_PATH_MAX];
+    int n;
+    static const char kMarker[] =
+        "firestaff-dm2-v22-synthetic-manifest-asset\n";
+    if (!modern_dir || !asset) return 0;
+    FSP_JoinPath(category_dir, sizeof(category_dir), modern_dir, asset->category);
+    if (!FSP_CreateDirectoryRecursive(category_dir)) return 0;
+    FSP_JoinPath(asset_path, sizeof(asset_path), category_dir, asset->file_name);
+    n = (int)strlen(kMarker);
+    (void)n;
+    return write_text_file(asset_path, kMarker);
+}
+
+static int manifest_category_written(const char* category, char* out, size_t out_size) {
+    int i;
+    int wrote = 0;
+    size_t used = strlen(out);
+    int n = snprintf(out + used, out_size - used, "\"%s\": [\n", category);
+    if (n <= 0 || (size_t)n >= out_size - used) return 0;
+    used += (size_t)n;
+    for (i = 0; i < synthetic_asset_count(); ++i) {
+        const SyntheticDm2V22Asset* a = &kSyntheticAssets[i];
+        if (strcmp(a->category, category) != 0) continue;
+        n = snprintf(out + used, out_size - used,
+                     "%s{\"id\":\"%s\",\"source_file\":\"%s\",\"width\":4,\"height\":4\n"
+                     "}",
+                     wrote ? ",\n" : "",
+                     a->asset_id,
+                     a->file_name);
+        if (n <= 0 || (size_t)n >= out_size - used) return 0;
+        used += (size_t)n;
+        wrote = 1;
+    }
+    n = snprintf(out + used, out_size - used, "\n]");
+    if (n <= 0 || (size_t)n >= out_size - used) return 0;
+    return wrote ? 1 : 0;
+}
+
+static int write_synthetic_manifest_and_assets(const char* modern_dir,
+                                               const char* manifest_path) {
+    static const char* const kCategories[] = {
+        "wall_shapes",
+        "floor_shapes",
+        "creature_shapes",
+        "door_shapes",
+        "ui_chrome",
+        "champion_portraits",
+        NULL
+    };
+    char manifest[8192];
+    size_t used;
+    int i;
+    int n;
+
+    if (!modern_dir || !manifest_path) return 0;
+    for (i = 0; i < synthetic_asset_count(); ++i) {
+        if (!write_synthetic_asset_file(modern_dir, &kSyntheticAssets[i])) {
+            return 0;
+        }
+    }
+
+    memset(manifest, 0, sizeof(manifest));
+    n = snprintf(manifest, sizeof(manifest),
+                 "{\n"
+                 "\"manifestVersion\":\"1.0.0\",\n"
+                 "\"packId\":\"dm2-v22-synthetic-probe\",\n"
+                 "\"generator\":\"synthetic_test\",\n");
+    if (n <= 0 || (size_t)n >= sizeof(manifest)) return 0;
+    used = (size_t)n;
+    for (i = 0; kCategories[i] != NULL; ++i) {
+        if (i > 0) {
+            n = snprintf(manifest + used, sizeof(manifest) - used, ",\n");
+            if (n <= 0 || (size_t)n >= sizeof(manifest) - used) return 0;
+            used += (size_t)n;
+        }
+        if (!manifest_category_written(kCategories[i], manifest, sizeof(manifest))) {
+            return 0;
+        }
+        used = strlen(manifest);
+    }
+    n = snprintf(manifest + used, sizeof(manifest) - used, "\n}\n");
+    if (n <= 0 || (size_t)n >= sizeof(manifest) - used) return 0;
+    return write_text_file(manifest_path, manifest);
+}
+
 /* Build a minimal v22_inplace_cache.bin with the asset_ids the
  * per-cell swap needs. Each entry is a single-color 4x4 RGBA bitmap
  * keyed by (category, asset_id). The bitmap colors are picked so
@@ -95,40 +240,13 @@ static void put_u32(unsigned char* p, uint32_t v) {
  * (2 bits per channel) via (c * 3 + 127) / 255 quantization. Dark
  * values (c <= 84) all map to 0 (black) — pick colors >= 128 so
  * each entry gets a distinct non-zero EGA index in the framebuffer. */
-static int write_minimal_dm2_v22_cache(const char* cache_path) {
-    static const struct {
-        const char* category;
-        const char* asset_id;
-        uint32_t rgba;   /* single-pixel color (4x4 same color) */
-    } kEntries[] = {
-        /* Indoor walls (T560) */
-        { "wall_shapes",  "wall_dm2_temple_01",     0xFFFF0000u },
-        { "wall_shapes",  "wall_dm2_alcove_01",     0xFF00FF00u },
-        { "wall_shapes",  "wall_dm2_doorway_01",    0xFF0000FFu },
-        { "wall_shapes",  "wall_dm2_inscription_01", 0xFFFFFF00u },
-        /* Indoor floors */
-        { "floor_shapes", "floor_dm2_outdoor_01",   0xFF00FFFFu },
-        { "floor_shapes", "floor_dm2_pit_01",       0xFFFF00FFu },
-        { "floor_shapes", "floor_dm2_stairs_01",    0xFF808000u },
-        { "floor_shapes", "ceiling_dm2_plain_01",   0xFF008080u },
-        /* Creatures */
-        { "creature_shapes", "creature_dm2_brigand_01", 0xFF800080u },
-        { "creature_shapes", "tree_dm2_outdoor_01",      0xFF808040u },
-        /* Doors / fields */
-        { "door_shapes",  "door_dm2_wood_01",       0xFFC0C0C0u },
-        { "wall_shapes",  "field_dm2_teleporter_01", 0xFF404040u },
-        { "wall_shapes",  "field_dm2_opening_01",    0xFF606060u },
-        /* Outdoor (T600) */
-        { "wall_shapes",  "sky_dm2_outdoor_01",      0xFFB0B0B0u },
-        { "floor_shapes", "ground_dm2_outdoor_01",   0xFFD0D0D0u },
-        { "floor_shapes", "ground_dm2_horizon_01",   0xFFE0E0E0u },
-        { "wall_shapes",  "wall_dm2_outdoor_01",     0xFFF0F0F0u },
-    };
-    const int kEntryCount = (int)(sizeof(kEntries) / sizeof(kEntries[0]));
+static int write_minimal_dm2_v22_cache_filtered(const char* cache_path,
+                                                const char* omitted_asset_id) {
     const uint32_t kHdrSize = 32;
     const uint32_t kEntSize = 32;
     const uint32_t kPixW = 4, kPixH = 4;
     const uint32_t kPixSize = kPixW * kPixH * 4;
+    int kEntryCount = 0;
 
     FILE* fp = NULL;
     unsigned char* header = NULL;
@@ -138,7 +256,18 @@ static int write_minimal_dm2_v22_cache(const char* cache_path) {
     int i;
     int ok = 0;
 
-    if (kEntryCount > 256) return 0;
+    for (i = 0; i < synthetic_asset_count(); ++i) {
+        const SyntheticDm2V22Asset* a = &kSyntheticAssets[i];
+        if (strcmp(a->category, "ui_chrome") == 0 ||
+            strcmp(a->category, "champion_portraits") == 0) {
+            continue;
+        }
+        if (omitted_asset_id && strcmp(a->asset_id, omitted_asset_id) == 0) {
+            continue;
+        }
+        kEntryCount++;
+    }
+    if (kEntryCount <= 0 || kEntryCount > 256) return 0;
 
     header = (unsigned char*)calloc(kHdrSize, 1);
     entries = (unsigned char*)calloc((size_t)kEntSize * (size_t)kEntryCount, 1);
@@ -150,18 +279,32 @@ static int write_minimal_dm2_v22_cache(const char* cache_path) {
     put_u32(header + 12, (uint32_t)kEntryCount);    /* count */
 
     data_off = kHdrSize + (uint32_t)kEntSize * (uint32_t)kEntryCount;
-    for (i = 0; i < kEntryCount; ++i) {
-        unsigned char* ent = entries + (size_t)i * kEntSize;
-        unsigned char* px  = pixels + (size_t)i * kPixSize;
-        int j;
-        put_u32(ent + 0, fnv1a_hash(kEntries[i].category));
-        put_u32(ent + 4, fnv1a_hash(kEntries[i].asset_id));
-        put_u32(ent + 8,  kPixW);
-        put_u32(ent + 12, kPixH);
-        put_u32(ent + 16, kPixSize);
-        put_u32(ent + 20, data_off + (uint32_t)i * kPixSize);
-        for (j = 0; j < (int)kPixW * (int)kPixH; ++j) {
-            memcpy(px + j * 4, &kEntries[i].rgba, 4);
+    {
+        int out_i = 0;
+        for (i = 0; i < synthetic_asset_count(); ++i) {
+            const SyntheticDm2V22Asset* a = &kSyntheticAssets[i];
+            unsigned char* ent;
+            unsigned char* px;
+            int j;
+            if (strcmp(a->category, "ui_chrome") == 0 ||
+                strcmp(a->category, "champion_portraits") == 0) {
+                continue;
+            }
+            if (omitted_asset_id && strcmp(a->asset_id, omitted_asset_id) == 0) {
+                continue;
+            }
+            ent = entries + (size_t)out_i * kEntSize;
+            px  = pixels + (size_t)out_i * kPixSize;
+            put_u32(ent + 0, fnv1a_hash(a->category));
+            put_u32(ent + 4, fnv1a_hash(a->asset_id));
+            put_u32(ent + 8,  kPixW);
+            put_u32(ent + 12, kPixH);
+            put_u32(ent + 16, kPixSize);
+            put_u32(ent + 20, data_off + (uint32_t)out_i * kPixSize);
+            for (j = 0; j < (int)kPixW * (int)kPixH; ++j) {
+                memcpy(px + j * 4, &a->rgba, 4);
+            }
+            out_i++;
         }
     }
 
@@ -183,9 +326,15 @@ cleanup:
     return ok;
 }
 
+static int write_minimal_dm2_v22_cache(const char* cache_path) {
+    return write_minimal_dm2_v22_cache_filtered(cache_path, NULL);
+}
+
 /* ── Probe home setup ────────────────────────────────────────────── */
 
-static int setup_probe_home(char* out_cache_path, size_t out_size) {
+static int setup_probe_home(char* out_cache_path, size_t out_size,
+                            char* out_manifest_path, size_t manifest_size,
+                            char* out_data_dir, size_t data_dir_size) {
     char modern_dir[FSP_PATH_MAX];
     int n;
 
@@ -193,10 +342,18 @@ static int setup_probe_home(char* out_cache_path, size_t out_size) {
                  "firestaff-dm2-v22-probe-home/.firestaff/assets/dm2/modern");
     if (n <= 0 || (size_t)n >= sizeof(modern_dir)) return 0;
     if (!FSP_CreateDirectoryRecursive(modern_dir)) return 0;
+    n = snprintf(out_data_dir, data_dir_size,
+                 "firestaff-dm2-v22-probe-home/.firestaff/data/dm2");
+    if (n <= 0 || (size_t)n >= data_dir_size) return 0;
+    if (!FSP_CreateDirectoryRecursive(out_data_dir)) return 0;
     if (FSP_SetEnv("HOME", "firestaff-dm2-v22-probe-home", 1) != 0) return 0;
 
     n = snprintf(out_cache_path, out_size, "%s/v22_inplace_cache.bin", modern_dir);
-    return n > 0 && (size_t)n < out_size;
+    if (n <= 0 || (size_t)n >= out_size) return 0;
+    n = snprintf(out_manifest_path, manifest_size,
+                 "%s/modern_asset_manifest.json", modern_dir);
+    if (n <= 0 || (size_t)n >= manifest_size) return 0;
+    return write_synthetic_manifest_and_assets(modern_dir, out_manifest_path);
 }
 
 /* ── Helpers: framebuffer introspection ──────────────────────────── */
@@ -340,6 +497,9 @@ static int dm2_check_t560_route_disabled_noop(unsigned char* fb, size_t fb_size)
 int main(void) {
     ProbeStats stats;
     char cache_path[FSP_PATH_MAX];
+    char manifest_path[FSP_PATH_MAX];
+    char data_dir[FSP_PATH_MAX];
+    char resolved_path[FSP_PATH_MAX];
     unsigned char raw_cells[3][3];
     unsigned char fb[1920 * 1080];
     int painted;
@@ -350,13 +510,34 @@ int main(void) {
 
     memset(&stats, 0, sizeof(stats));
     memset(cache_path, 0, sizeof(cache_path));
+    memset(manifest_path, 0, sizeof(manifest_path));
+    memset(data_dir, 0, sizeof(data_dir));
+    memset(resolved_path, 0, sizeof(resolved_path));
     memset(fb, 0x00, sizeof(fb));
 
-    /* 1. Write synthetic cache + probe HOME */
-    ok = setup_probe_home(cache_path, sizeof(cache_path)) &&
+    /* 1. Write synthetic manifest/assets + cache + probe HOME */
+    ok = setup_probe_home(cache_path, sizeof(cache_path),
+                          manifest_path, sizeof(manifest_path),
+                          data_dir, sizeof(data_dir)) &&
          write_minimal_dm2_v22_cache(cache_path);
     probe_record(&stats, "DM2_V22_CACHE_FIXTURE", ok,
-                 "temporary DM2 v22_inplace_cache.bin written");
+                 "temporary DM2 manifest/assets + v22_inplace_cache.bin written");
+
+    dm2_v22_set_manifest_path(data_dir);
+    probe_record(&stats, "DM2_V22_SYNTHETIC_MANIFEST_COMPLETE",
+                 dm2_v22_validate_manifest(manifest_path) == 1 &&
+                 dm2_v22_modern_assets_available() == 1,
+                 "synthetic manifest validates complete and is available");
+    probe_record(&stats, "DM2_V22_MANIFEST_RESOLVES_T560",
+                 dm2_v22_get_shape_path("floor_shapes", "floor_dm2_pit_01",
+                                        resolved_path, sizeof(resolved_path)) &&
+                 strstr(resolved_path, "floor_dm2_pit_01.synthetic") != NULL,
+                 "T560 indoor pit asset resolves through synthetic manifest");
+    probe_record(&stats, "DM2_V22_MANIFEST_RESOLVES_T600",
+                 dm2_v22_get_shape_path("wall_shapes", "sky_dm2_outdoor_01",
+                                        resolved_path, sizeof(resolved_path)) &&
+                 strstr(resolved_path, "sky_dm2_outdoor_01.synthetic") != NULL,
+                 "T600 outdoor sky asset resolves through synthetic manifest");
 
     /* 2. Activate V22 presentation mode (so the swap is "active") */
     dm2_v22_set_installed(1);
@@ -592,13 +773,31 @@ int main(void) {
                  sweep_painted == 36,
                  "all 4 directions paint 4x9 DM2 V22 indoor cells");
 
-    /* 11. Idempotent shutdown */
+    /* 11. Missing one synthetic cache bitmap: the renderer must skip
+     * only that cell and leave the already-drawn V1 framebuffer byte
+     * intact. This is the bounded V1-ownership guard for partial packs. */
+    dm2_v22_inplace_draw_shutdown();
+    ok = write_minimal_dm2_v22_cache_filtered(cache_path, "floor_dm2_pit_01") &&
+         dm2_v22_inplace_draw_init() &&
+         dm2_v22_inplace_draw_active();
+    probe_record(&stats, "DM2_V22_PARTIAL_CACHE_REINIT", ok,
+                 "cache reloads with one synthetic bitmap omitted");
+    dm2_v22_viewport_swap_update(0, (const unsigned char (*)[3])raw_cells, 0);
+    memset(fb, 0xA5, sizeof(fb));
+    painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);
+    probe_record(&stats, "DM2_V22_MISSING_CELL_PRESERVES_V1",
+                 painted == 8 &&
+                 fb[540 * 1920 + 1280] == 0xA5 &&
+                 fb[900 * 1920 + 640] != 0xA5,
+                 "missing T560 pit bitmap skips that cell and preserves V1 pixels");
+
+    /* 12. Idempotent shutdown */
     dm2_v22_inplace_draw_shutdown();
     probe_record(&stats, "DM2_V22_INPLACE_SHUTDOWN",
                  !dm2_v22_inplace_draw_active(),
                  "shutdown clears in-place cache");
 
-    /* 12. Source evidence */
+    /* 13. Source evidence */
     {
         const char* ev = dm2_v22_viewport_swap_source_evidence();
         probe_record(&stats, "DM2_V22_SOURCE_EVIDENCE",
