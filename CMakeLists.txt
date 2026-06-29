@@ -18042,6 +18042,28 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 Track 1 real-screen capture readiness probe. Skip-safe by
+# default: writes an operator-local JSON manifest with SKIP when no
+# original assets are staged. With a real data root it verifies DM.BIN,
+# FONT256.S2D, LEV00.DGN, SCORPION.MNS, renders one 320x200 runtime
+# viewport, stamps a real font glyph into the framebuffer, and writes a
+# local PPM receipt. This is readiness/provenance only, not a public
+# parity screenshot promotion.
+add_executable(firestaff_nexus_v1_track1_screen_capture_readiness_probe
+    probes/nexus/firestaff_nexus_v1_track1_screen_capture_readiness_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_track1_screen_capture_readiness_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_track1_screen_capture_readiness_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_track1_screen_capture_readiness_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_save_load_round_trip
@@ -18246,6 +18268,32 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_mns_multi_model_bounds_saturn_ja_iso PROPERTIES
         LABELS "tier1;nexus;mns;multi_model;live;iso;skip_safe"
+    )
+
+    add_test(
+        NAME nexus_v1_track1_screen_capture_readiness
+        COMMAND firestaff_nexus_v1_track1_screen_capture_readiness_probe
+    )
+    set_tests_properties(nexus_v1_track1_screen_capture_readiness PROPERTIES
+        LABELS "tier1;nexus;track1;screen_capture;readiness;skip_safe"
+    )
+
+    add_test(
+        NAME nexus_v1_track1_screen_capture_readiness_extracted_root
+        COMMAND firestaff_nexus_v1_track1_screen_capture_readiness_probe
+                "$ENV{HOME}/.firestaff/data/nexus"
+    )
+    set_tests_properties(nexus_v1_track1_screen_capture_readiness_extracted_root PROPERTIES
+        LABELS "tier1;nexus;track1;screen_capture;readiness;live;extracted;skip_safe"
+    )
+
+    add_test(
+        NAME nexus_v1_track1_screen_capture_readiness_saturn_ja_iso
+        COMMAND firestaff_nexus_v1_track1_screen_capture_readiness_probe
+                "$ENV{HOME}/.firestaff/data/nexus-extras/saturn-ja"
+    )
+    set_tests_properties(nexus_v1_track1_screen_capture_readiness_saturn_ja_iso PROPERTIES
+        LABELS "tier1;nexus;track1;screen_capture;readiness;live;iso;skip_safe"
     )
 endif()
 
