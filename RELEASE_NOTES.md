@@ -313,6 +313,8 @@ need real-asset proof.
 
 - **M12 data-root switch popup hardening**: the launcher popup-once gate now covers a real configured data-root switch across both DM1 and DM2 using synthetic recursive hash-scanned files. Switching from a complete root to a partial root clears stale availability and shows per-game missing-required-file popups that name only the unmatched GRAPHICS/DUNGEON role.
 
+- **DM1 HoC ordinal-2 readiness status narrowed**: the existing future-route readiness gate now records the current sibling matrix as 10/10 source-present and CTest-wired, while keeping the real-data boundary explicit: live PC 3.4 still exposes zero real ordinal-2 corridor-sensor poses, so no per-route visual capture or DOS pixel parity claim is promoted yet.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
