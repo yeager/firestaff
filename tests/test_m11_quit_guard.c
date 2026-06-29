@@ -3,7 +3,9 @@
  * Verifies that ESC (M12_MENU_INPUT_BACK) surfaces the "GAME NOT SAVED"
  * prompt instead of the plain "RETURN TO START MENU?" confirm when the
  * dungeon tick has advanced more than 100 ticks past both lastSaveTick
- * and loadGameTick.
+ * and loadGameTick.  This is a data-free M11 dialog-path gate: it seeds the
+ * minimal active game-view state directly instead of starting the DM1 asset
+ * loader, because the quit guard only depends on the tick anchors.
  *
  * Mirrors the ReDMCSB compound condition:
  *     (G0313_ul_GameTime > (G0319_ul_LoadGameTime + 100)) &&
@@ -13,9 +15,7 @@
 #include "m11_game_view.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
@@ -29,86 +29,129 @@ static void expect(int cond, const char* msg) {
     }
 }
 
+static void seed_active_view(M11_GameViewState* view,
+                             uint32_t gameTick,
+                             uint32_t lastSaveTick,
+                             uint32_t loadGameTick) {
+    M11_GameView_Init(view);
+    view->active = 1;
+    snprintf(view->sourceId, sizeof(view->sourceId), "dm1");
+    view->sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+    view->world.gameTick = gameTick;
+    view->lastSaveTick = lastSaveTick;
+    view->loadGameTick = loadGameTick;
+    view->dialogOverlayActive = 0;
+    view->returnToMenuConfirmActive = 0;
+    view->quitGuardActive = 0;
+}
+
+static void expect_plain_confirm(const M11_GameViewState* view,
+                                 const char* label) {
+    char msg[160];
+    snprintf(msg, sizeof(msg), "%s: dialog active", label);
+    expect(view->dialogOverlayActive == 1, msg);
+    snprintf(msg, sizeof(msg), "%s: confirm flag set", label);
+    expect(view->returnToMenuConfirmActive == 1, msg);
+    snprintf(msg, sizeof(msg), "%s: quit-guard not active", label);
+    expect(view->quitGuardActive == 0, msg);
+    snprintf(msg, sizeof(msg), "%s: plain confirm text", label);
+    expect(strstr(view->dialogOverlayText, "RETURN TO START MENU") != NULL, msg);
+    snprintf(msg, sizeof(msg), "%s: YES choice", label);
+    expect(strcmp(view->dialogChoices[0], "YES") == 0, msg);
+    snprintf(msg, sizeof(msg), "%s: NO choice", label);
+    expect(strcmp(view->dialogChoices[1], "NO") == 0, msg);
+}
+
+static void expect_unsaved_confirm(const M11_GameViewState* view,
+                                   const char* label) {
+    char msg[160];
+    snprintf(msg, sizeof(msg), "%s: dialog active", label);
+    expect(view->dialogOverlayActive == 1, msg);
+    snprintf(msg, sizeof(msg), "%s: confirm flag set", label);
+    expect(view->returnToMenuConfirmActive == 1, msg);
+    snprintf(msg, sizeof(msg), "%s: quit-guard active", label);
+    expect(view->quitGuardActive == 1, msg);
+    snprintf(msg, sizeof(msg), "%s: unsaved prompt text", label);
+    expect(strstr(view->dialogOverlayText, "GAME NOT SAVED") != NULL, msg);
+    snprintf(msg, sizeof(msg), "%s: SAVE AND QUIT choice", label);
+    expect(strcmp(view->dialogChoices[0], "SAVE AND QUIT") == 0, msg);
+    snprintf(msg, sizeof(msg), "%s: CANCEL choice", label);
+    expect(strcmp(view->dialogChoices[1], "CANCEL") == 0, msg);
+}
+
 int main(void) {
-    const char* dataDir = getenv("FIRESTAFF_DM1_CANONICAL_DIR");
     M11_GameViewState view;
-    M11_GameLaunchSpec spec;
+    M11_GameInputResult result;
 
-    if (!dataDir || dataDir[0] == '\0') {
-        dataDir = "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1";
-    }
-    if (access(dataDir, R_OK) != 0) {
-        printf("skip: DM1 canonical dir not available: %s\n", dataDir);
-        return 0;
-    }
-
-    memset(&spec, 0, sizeof(spec));
-    spec.title = "DUNGEON MASTER";
-    spec.gameId = "dm1";
-    spec.dataDir = dataDir;
-    spec.sourceId = "dm1";
-    spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
-    spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
-
-    M11_GameView_Init(&view);
-    expect(M11_GameView_Start(&view, &spec), "DM1 start should succeed");
-
-    /* Case A: fresh game, no progress beyond initial tick.  ESC should
+    /* Case A: fresh game, no progress beyond initial tick. BACK should
      * show the plain RETURN TO START MENU? confirm (quitGuardActive == 0). */
-    view.world.gameTick = 10;
-    view.lastSaveTick = 0;
-    view.loadGameTick = 0;
-    view.dialogOverlayActive = 0;
-    view.returnToMenuConfirmActive = 0;
-    view.quitGuardActive = 0;
-    M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
-    expect(view.dialogOverlayActive == 1, "case A: dialog active");
-    expect(view.returnToMenuConfirmActive == 1, "case A: confirm flag set");
-    expect(view.quitGuardActive == 0, "case A: quit-guard NOT active (tick<=100)");
+    seed_active_view(&view, 10, 0, 0);
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
+    expect(result == M11_GAME_INPUT_REDRAW, "case A: BACK redraws");
+    expect_plain_confirm(&view, "case A");
+    M11_GameView_Shutdown(&view);
 
     /* Case B: tick advanced 200 ticks past both save anchors -> quit guard. */
-    M11_GameView_DismissDialogOverlay(&view);
-    view.world.gameTick = 200;
-    view.lastSaveTick = 0;
-    view.loadGameTick = 0;
-    view.dialogOverlayActive = 0;
-    view.returnToMenuConfirmActive = 0;
-    view.quitGuardActive = 0;
-    M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
-    expect(view.dialogOverlayActive == 1, "case B: dialog active");
-    expect(view.returnToMenuConfirmActive == 1, "case B: confirm flag set");
-    expect(view.quitGuardActive == 1, "case B: quit-guard ACTIVE");
+    seed_active_view(&view, 200, 0, 0);
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
+    expect(result == M11_GAME_INPUT_REDRAW, "case B: BACK redraws");
+    expect_unsaved_confirm(&view, "case B");
+    M11_GameView_Shutdown(&view);
 
     /* Case C: tick just past lastSaveTick but within 100 of loadGameTick
      * -> the compound AND must keep quitGuardActive == 0. */
-    M11_GameView_DismissDialogOverlay(&view);
-    view.world.gameTick = 250;
-    view.lastSaveTick = 0;     /* 250 > 100 -> true */
-    view.loadGameTick = 200;   /* 250 > 300 -> false */
-    view.dialogOverlayActive = 0;
-    view.returnToMenuConfirmActive = 0;
-    view.quitGuardActive = 0;
-    M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
-    expect(view.quitGuardActive == 0, "case C: quit-guard NOT active (compound AND fails)");
+    seed_active_view(&view, 250, 0, 200); /* 250 > 100, but 250 <= 300. */
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
+    expect(result == M11_GAME_INPUT_REDRAW, "case C: BACK redraws");
+    expect_plain_confirm(&view, "case C");
+    M11_GameView_Shutdown(&view);
 
-    /* Case D: cancel from quit-guard dialog clears the flag. */
-    M11_GameView_DismissDialogOverlay(&view);
-    view.world.gameTick = 500;
-    view.lastSaveTick = 0;
-    view.loadGameTick = 0;
-    view.dialogOverlayActive = 0;
-    view.returnToMenuConfirmActive = 0;
-    view.quitGuardActive = 0;
-    M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
-    expect(view.quitGuardActive == 1, "case D: enter quit-guard");
-    M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK); /* cancel */
-    expect(view.quitGuardActive == 0, "case D: cancel clears guard");
-    expect(view.dialogOverlayActive == 0, "case D: dialog dismissed");
+    /* Case D: exactly +100 from both anchors is still source-safe; the
+     * ReDMCSB condition is strict >, not >=. */
+    seed_active_view(&view, 200, 100, 100);
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
+    expect(result == M11_GAME_INPUT_REDRAW, "case D: BACK redraws");
+    expect_plain_confirm(&view, "case D");
+    M11_GameView_Shutdown(&view);
 
+    /* Case E: +101 from both anchors enters the unsaved prompt. */
+    seed_active_view(&view, 201, 100, 100);
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
+    expect(result == M11_GAME_INPUT_REDRAW, "case E: BACK redraws");
+    expect_unsaved_confirm(&view, "case E");
+    M11_GameView_Shutdown(&view);
+
+    /* Case F: map/inventory overlays get first refusal on BACK.  A later BACK
+     * opens the quit modal and clears the remaining spell panel first. */
+    seed_active_view(&view, 201, 100, 100);
+    view.inventoryPanelActive = 1;
+    view.mapOverlayActive = 1;
+    view.spellPanelOpen = 1;
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
+    expect(result == M11_GAME_INPUT_REDRAW, "case F: overlay BACK redraws");
+    expect(view.dialogOverlayActive == 0, "case F: first BACK does not open modal");
+    expect(view.inventoryPanelActive == 0, "case F: inventory overlay cleared first");
+    expect(view.mapOverlayActive == 0, "case F: map overlay cleared first");
+    expect(view.spellPanelOpen == 1, "case F: spell panel waits for modal BACK");
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
+    expect(result == M11_GAME_INPUT_REDRAW, "case F: modal BACK redraws");
+    expect_unsaved_confirm(&view, "case F modal");
+    expect(view.spellPanelOpen == 0, "case F: spell panel cleared before modal");
+    M11_GameView_Shutdown(&view);
+
+    /* Case G: cancel from quit-guard dialog clears the flag and dismisses. */
+    seed_active_view(&view, 500, 0, 0);
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
+    expect(result == M11_GAME_INPUT_REDRAW, "case G: enter redraws");
+    expect_unsaved_confirm(&view, "case G enter");
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK); /* cancel */
+    expect(result == M11_GAME_INPUT_REDRAW, "case G: cancel redraws");
+    expect(view.quitGuardActive == 0, "case G: cancel clears guard");
+    expect(view.dialogOverlayActive == 0, "case G: dialog dismissed");
     M11_GameView_Shutdown(&view);
 
     if (fails == 0) {
-        puts("ok: G2018 quit-guard surfaces UNSAVED prompt on advanced tick");
+        puts("ok: data-free G2018 quit-guard prompt and boundary checks");
         return 0;
     }
     return 1;
