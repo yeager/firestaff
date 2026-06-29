@@ -1466,6 +1466,40 @@ int M11_GameView_GetV1DialogChoiceHitZone(int choiceCount,
                                            int* outY,
                                            int* outW,
                                            int* outH);
+
+/* ── Forced-pause dialog fit/layout (Firestaff session timer) ───────
+ * Not driven by ReDMCSB; this surface is the session-timer escalation
+ * overlay that pops when the limit hits zero.  The layout shrinks or
+ * widens its box and rewrites its text per state->fontScale (1..3) so
+ * the title and prompt lines never overflow the 320x200 framebuffer.
+ * Source-locked contract documented in
+ * firestaff_dm1_v1_forced_pause_font_scale_fit_probe.c. */
+typedef struct M11_ForcedPauseDialogLayout {
+    int scale;             /* 1..3 (clamped) */
+    int boxX;
+    int boxY;
+    int boxW;
+    int boxH;
+    int titleX;
+    int titleY;
+    int line1X;
+    int line1Y;
+    int line2X;
+    int line2Y;
+    char title[64];
+    char line1[32];
+    char line2[32];
+} M11_ForcedPauseDialogLayout;
+
+void M11_GameView_GetForcedPauseDialogLayout(
+    const M11_GameViewState* state,
+    int framebufferWidth,
+    int framebufferHeight,
+    M11_ForcedPauseDialogLayout* outLayout);
+
+int M11_GameView_ForcedPauseDialogLayoutMaxTextPixelWidth(
+    const M11_ForcedPauseDialogLayout* layout);
+
 int M11_GameView_GetV1FoodLabelGraphicId(void);
 int M11_GameView_GetV1WaterLabelGraphicId(void);
 int M11_GameView_GetV1FoodBarZoneId(void);
