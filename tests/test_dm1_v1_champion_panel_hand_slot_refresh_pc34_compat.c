@@ -453,6 +453,75 @@ static void test_candidate_early_return(void)
                  "F0296:1248-1251 tail not entered");
 }
 
+static void test_candidate_masked_by_inventory_owner_gate(void)
+{
+    Dm1V1ChampionPanelHandSlotRefreshStatePc34 state;
+    Dm1V1ChampionPanelHandSlotRefreshResultPc34 result;
+
+    memset(&state, 0, sizeof(state));
+    dm1_v1_champion_panel_hand_slot_refresh_init_pc34(&state);
+
+    /*
+     * ReDMCSB CHAMDRAW.C F0296:1210-1212 returns early only when
+     * G0299_ui_CandidateChampionOrdinal is non-zero and
+     * G0423_i_InventoryChampionOrdinal is zero. With both ordinals
+     * set, the inventory owner gates the candidate panel away and
+     * the normal F0296 walk proceeds, including the G0423 slotbox
+     * skip for the inventory champion.
+     */
+    state.candidateChampionOrdinal = 2;
+    state.inventoryChampionOrdinal = 3;
+    state.inventoryChampionIndex = 2;
+
+    check_int_eq(dm1_v1_champion_panel_hand_slot_refresh_run_pc34(
+                     &state, &result),
+                 1, "run returns success (candidate masked by inventory)",
+                 "F0296:1210-1212 G0299 && G0423 does not early-return");
+
+    check_int_eq(result.path, DM1_V1_DMHSR_PATH_INVENTORY_CHAMPION_SKIP_PC34,
+                 "path = INVENTORY_CHAMPION_SKIP (candidate masked)",
+                 "F0296:1226-1229 G0423 inventory skip still applies");
+    check_int_eq(result.candidateEarlyReturnBeforeWalk, 1,
+                 "candidate early-return suppressed by inventory owner",
+                 "F0296:1210-1212 !L0883 condition is false");
+    check_int_eq(result.f0296InvocationCount, 1,
+                 "F0296 invocation count = 1 (candidate masked)",
+                 "F0296 walk is entered");
+    check_int_eq(result.leaderHandSlotBoxesWalked, 4,
+                 "slotbox walk still covers all four action hands",
+                 "F0296:1226 partyChampionCount << 1 walk");
+    check_int_eq(result.slotBoxWalkInventorySkip, 1,
+                 "one inventory owner slotbox skipped",
+                 "F0296:1228-1229 inventory owner continue");
+    check_int_eq(state.slotBoxWalkInventorySkip[2], 1,
+                 "champion 2 action hand is inventory-owner skip",
+                 "G0423 ordinal 3 == M000_INDEX_TO_ORDINAL(2)");
+    check_int_eq(state.slotBoxWalkF0295Dispatched[2], 0,
+                 "inventory-owner skip suppresses F0295",
+                 "F0296:1228-1229 continue before F0295");
+    check_int_eq(state.slotBoxWalkF0386Dispatched[2], 0,
+                 "inventory-owner skip suppresses F0386",
+                 "F0296:1228-1229 continue before F0386");
+    check_int_eq(result.f0295HasIconChangedCount, 2,
+                 "F0295 changed count excludes masked inventory owner",
+                 "champions 0/1 changed, champion 2 skipped, champion 3 same");
+    check_int_eq(result.f0295SameIconCount, 1,
+                 "F0295 same count still includes champion 3",
+                 "champion 3 mutable + matching icon");
+    check_int_eq(result.f0386DispatchedForChangedActionHand, 2,
+                 "F0386 dispatch count excludes masked inventory owner",
+                 "F0296:1230-1231 dispatch after F0295 only");
+    check_int_eq(state.f0296Trace[4], 4,
+                 "trace[4] preserves inventory-owner skip marker",
+                 "kTraceInventoryChampionSkip at the skipped champion's walk step");
+    check_int_eq(state.f0296Trace[5], 3,
+                 "trace[5] remains champion 3 slotbox walk marker",
+                 "skip trace is not overwritten by the following slotbox");
+    check_int_eq(result.mouseScreenUpdateBalancedPerF0296, 1,
+                 "mouse screen update balanced on masked-candidate walk",
+                 "F0296:1219 + F0296 tail");
+}
+
 static void test_rejects(void)
 {
     Dm1V1ChampionPanelHandSlotRefreshStatePc34 base;
@@ -505,16 +574,7 @@ static void test_rejects(void)
                    &probe, NULL) == 0;
     check_int_eq(rejected, 1, "reject: NULL result", "NULL result guard");
 
-    /* Reject 6: candidate + inventory both non-zero. */
-    probe = base;
-    probe.candidateChampionOrdinal = 2;
-    probe.inventoryChampionOrdinal = 3;
-    rejected = dm1_v1_champion_panel_hand_slot_refresh_run_pc34(
-                   &probe, &result) == 0;
-    check_int_eq(rejected, 1, "reject: candidate + inventory both non-zero",
-                 "G0299 + G0423 both non-zero");
-
-    /* Reject 7: inventory champion ordinal out of range. */
+    /* Reject 6: inventory champion ordinal out of range. */
     probe = base;
     probe.inventoryChampionOrdinal = 99;
     probe.inventoryChampionIndex = 98;
@@ -579,6 +639,7 @@ int main(void)
     test_f0295_sense_and_f0386_dispatch();
     test_inventory_champion_ordinal_skip();
     test_candidate_early_return();
+    test_candidate_masked_by_inventory_owner_gate();
     test_rejects();
     test_guards_match_expectations();
     test_baseline_deterministic_hash();

@@ -433,17 +433,13 @@ static int state_valid(
         state->inventoryChampionOrdinal < 0) {
         return 0;
     }
-    if (state->candidateChampionOrdinal != 0 &&
-        state->inventoryChampionOrdinal != 0) {
-        /*
-         * The PC 3.4 source contract says the F0296 candidate
-         * early-return fires only when the inventory panel is
-         * closed. When both G0299 and G0423 are non-zero the
-         * candidate panel is hidden by the inventory panel, so the
-         * F0296 walk proceeds normally.
-         */
-        return 0;
-    }
+    /*
+     * ReDMCSB CHAMDRAW.C F0296 lines 1210-1212 only returns early
+     * when G0299 is non-zero and G0423 has no inventory owner. When
+     * both ordinals are non-zero, the inventory owner masks the
+     * candidate-panel early-return and the F0296 walk proceeds with
+     * the normal inventory-champion slotbox skip.
+     */
     if (state->inventoryChampionOrdinal != 0) {
         if (state->inventoryChampionOrdinal < 1 ||
             state->inventoryChampionOrdinal >
@@ -575,9 +571,9 @@ static void slotbox_walk(
             state->slotBoxWalkInventorySkip[walk_step] = 1;
             state->champions[champion_index].inventoryChampionSkipHit = 1;
             state->champions[champion_index].walkOrder = walk_step;
+            state->f0296Trace[2 + walk_step] = kTraceInventoryChampionSkip;
             ++walk_step;
             ++walked;
-            state->f0296Trace[2 + walk_step] = kTraceInventoryChampionSkip;
             continue;
         }
         sense = f0295_sense(state, champion_index);
