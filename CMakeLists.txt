@@ -2071,6 +2071,31 @@ if(NOT MSVC)
     target_compile_options(firestaff_theron_v2_smooth_movement_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Theron V2 Phase 6 touch/controller runtime probe. Headless: no game data.
+# Verifies V2-gated translation, Theron HUD chrome touch exclusion, controller
+# bypass of framebuffer coordinate gates, and deterministic command mapping.
+add_executable(firestaff_theron_v2_touch_runtime_probe
+    probes/firestaff_theron_v2_touch_runtime_probe.c
+    src/theron/theron_v2_touch_runtime.c
+    src/theron/theron_v2_touch_controller_affordance.c
+    src/theron/theron_v2_phase_gate_pc34.c)
+target_include_directories(firestaff_theron_v2_touch_runtime_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v2_touch_runtime_probe
+    PRIVATE firestaff_theron firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v2_touch_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v2_touch_runtime_probe
+    COMMAND firestaff_theron_v2_touch_runtime_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v2_touch_runtime_probe PROPERTIES
+    LABELS "tier2;theron;v2;phase6;touch;controller;presentation-only"
+)
+
 # Theron V2 Phase 3 HUD Overlay probe (initial seed). Headless: no game data.
 # See include/theron_v2_hud_overlay_pc34.h. Verifies phase-gate + presentation
 # mode contract (V1 stays source-locked, V2 modes paint into the PC Engine
@@ -10394,6 +10419,17 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
     target_link_libraries(test_theron_v2_smooth_movement_pc34 PRIVATE firestaff_m10 m)
+    add_executable(test_theron_v2_touch_controller_affordance
+        tests/test_theron_v2_touch_controller_affordance.c
+        src/theron/theron_v2_touch_runtime.c
+        src/theron/theron_v2_touch_controller_affordance.c
+        src/theron/theron_v2_phase_gate_pc34.c
+    )
+    target_include_directories(test_theron_v2_touch_controller_affordance PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    target_link_libraries(test_theron_v2_touch_controller_affordance PRIVATE firestaff_m10 m)
     add_executable(test_dm1_v2_shape_runtime_pc34
         tests/test_dm1_v2_shape_runtime_pc34.c
         src/dm1v2/dm1_v2_shape_runtime_pc34.c
@@ -10703,6 +10739,7 @@ if(BUILD_TESTING)
         target_compile_options(test_csb_v2_filter_sharpen_rgba_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v2_filter_config_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_theron_v2_smooth_movement_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v2_touch_controller_affordance PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_presentation_profile_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_presentation_mode_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_csb_v2_presentation_mode_pc34 PRIVATE -Wall -Wextra -O2)
@@ -11023,6 +11060,13 @@ if(BUILD_TESTING)
     add_test(
         NAME theron_v2_smooth_movement_pc34
         COMMAND test_theron_v2_smooth_movement_pc34
+    )
+    add_test(
+        NAME theron_v2_touch_controller_affordance
+        COMMAND test_theron_v2_touch_controller_affordance
+    )
+    set_tests_properties(theron_v2_touch_controller_affordance PROPERTIES
+        LABELS "tier2;theron;v2;phase6;touch;controller;presentation-only"
     )
     add_test(
         NAME dm1_v2_shape_runtime_pc34

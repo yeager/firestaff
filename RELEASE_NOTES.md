@@ -331,6 +331,8 @@ need real-asset proof.
 
 - **Nexus V1 FNXS direct-path save wrapper coverage**: the existing multi-slot FNXS save gate now also round-trips the rich synthetic slot-3 state through `nexus_v1_save_full_to_path()` / `nexus_v1_load_full_from_path()`, probes the direct file, and asserts FNXS v2 header/data-size coherence. This remains Firestaff-native save coverage only; no original Saturn memory-card compatibility claim is added.
 
+- **Theron V2 touch/controller seed**: new data-free Phase 6 gates map Theron V2 touch/controller affordances to source-locked C001-C006 movement commands and reject touch starts on V2 HUD chrome. This is a deterministic presentation-input contract only; live SDL-event wire-up and real Track 02 runtime proof remain open.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
