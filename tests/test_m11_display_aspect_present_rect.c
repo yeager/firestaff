@@ -1026,6 +1026,130 @@ static void check_arg_validation_invariants(void) {
     CHECK(renderH == -1);
 }
 
+static void check_map_point_rejection_invariants(void) {
+    int fbX = -123;
+    int fbY = -456;
+    int rectX = -1;
+    int rectY = -1;
+    int rectW = -1;
+    int rectH = -1;
+
+    /* M11_Render_MapPointToFramebuffer is the public M11 input-scale
+     * boundary used before ReDMCSB COMMAND.C F0358/F0359 style hit-tests
+     * see a 320x200 source coordinate.  Its reject paths must be pure
+     * failures: return 0 and leave the caller's output slots untouched so
+     * stale click coordinates cannot leak into a later command dispatch. */
+    CHECK(M11_Render_MapPointToFramebuffer(100,
+                                           100,
+                                           1920,
+                                           1080,
+                                           0,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(fbX == -123);
+    CHECK(fbY == -456);
+
+    CHECK(M11_Render_MapPointToFramebuffer(100,
+                                           100,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           -1,
+                                           M11_SCALE_FIT,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(fbX == -123);
+    CHECK(fbY == -456);
+
+    CHECK(M11_Render_MapPointToFramebuffer(100,
+                                           100,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_STRETCH + 1,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(fbX == -123);
+    CHECK(fbY == -456);
+
+    CHECK(M11_Render_MapPointToFramebuffer(100,
+                                           100,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT + 1,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(fbX == -123);
+    CHECK(fbY == -456);
+
+    CHECK(M11_Render_MapPointToFramebuffer(100,
+                                           100,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           NULL,
+                                           &fbY) == 0);
+    CHECK(fbY == -456);
+    CHECK(M11_Render_MapPointToFramebuffer(100,
+                                           100,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           NULL) == 0);
+    CHECK(fbX == -123);
+
+    CHECK(M11_Render_ComputePresentationRect(1920,
+                                             1080,
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT,
+                                             M11_SCALE_FIT,
+                                             1,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX,
+                                             &rectY,
+                                             &rectW,
+                                             &rectH) == M11_RENDER_OK);
+    CHECK(rectX == 160);
+    CHECK(rectY == 40);
+    CHECK(rectW == 1600);
+    CHECK(rectH == 1000);
+    CHECK(M11_Render_MapPointToFramebuffer(rectX - 1,
+                                           rectY + rectH / 2,
+                                           1920,
+                                           1080,
+                                           M11_FB_WIDTH,
+                                           M11_FB_HEIGHT,
+                                           M11_SCALE_FIT,
+                                           1,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &fbX,
+                                           &fbY) == 0);
+    CHECK(fbX == -123);
+    CHECK(fbY == -456);
+}
+
 int main(void) {
     check_rect(1920, 1080, M11_SCALE_STRETCH, 0, M11_DISPLAY_ASPECT_16_9,
                0, 0, 1920, 1080);
@@ -1050,7 +1174,29 @@ int main(void) {
     check_map_edges(3600, 2092, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
     check_map_edges(1920, 1080, M11_SCALE_FIT, 1, M11_DISPLAY_ASPECT_4_3);
     check_integer_scaled_content_input_gate();
+    check_integer_scaled_movement_arrows_at_resolution(1280,
+                                                       720,
+                                                       160,
+                                                       60,
+                                                       960,
+                                                       600,
+                                                       "hd-720p");
+    check_integer_scaled_movement_arrows_at_resolution(1920,
+                                                       1080,
+                                                       160,
+                                                       40,
+                                                       1600,
+                                                       1000,
+                                                       "full-hd-1080p");
+    check_integer_scaled_movement_arrows_at_resolution(2560,
+                                                       1440,
+                                                       160,
+                                                       20,
+                                                       2240,
+                                                       1400,
+                                                       "qhd-1440p");
     check_arg_validation_invariants();
+    check_map_point_rejection_invariants();
     check_macbook_retina_drawable_rect_regression();
     check_sdl3_pixel_size_event_keeps_logical_mouse_space();
 
