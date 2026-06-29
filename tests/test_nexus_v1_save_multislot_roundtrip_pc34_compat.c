@@ -36,6 +36,10 @@
  *   - Slot isolation: saving slot N leaves slot M (N != M) untouched.
  *   - Slot deletion: delete one slot, scan reflects it as empty,
  *     other slots still load their own data.
+ *   - Slot-free high-level path wrappers: the same multi-field slot-3
+ *     synthetic state round-trips through nexus_v1_save_full_to_path()
+ *     and nexus_v1_load_full_from_path(), and probe() sees a coherent
+ *     FNXS v2 header/data-size envelope.
  *   - CRC integrity: flipping one byte in the data section of a saved
  *     slot causes nexus_v1_load_full() to return NEXUS_SAVE_ERR_CRC.
  *   - Truncated FNXW world section: a syntactically valid FNXS container
@@ -839,9 +843,84 @@ int main(void) {
                "loaded save header.champion_data_size reflects the serialized section");
         expect(out_headers[slot].world_data_size > 0,
                "loaded save header.world_data_size reflects the serialized section");
+        expect(out_headers[slot].data_size
+               == out_headers[slot].champion_data_size + out_headers[slot].world_data_size,
+               "loaded save header.data_size equals champion+world section sizes");
+        expect(out_headers[slot].game_time == (uint32_t)world_before[slot].world_tick,
+               "loaded save header.game_time matches the saved world_tick");
 
         verify_world_roundtrip(&world_before[slot], &world_after[slot], slot);
         verify_pool_roundtrip (&pool_before[slot],  &pool_after[slot],  slot);
+    }
+
+    /* ── Slot-free high-level path wrappers: reuse the richer slot-3
+     *    synthetic state to prove the *_full_to_path/from_path wrappers
+     *    share the same max-buffer load safety as the manager API.     */
+    {
+        enum { PATH_SLOT = 3 };
+        char direct_path[512];
+        Nexus_V1_World direct_world;
+        Nexus_V1_ChampionPool direct_pool;
+        Nexus_V1_SaveHeader direct_header;
+        Nexus_V1_SaveHeader probed_header;
+        size_t direct_file_size = 0;
+        char direct_diag[256];
+        const char *probe_reason;
+
+        snprintf(direct_path, sizeof(direct_path),
+                 "%s/direct_full_path_fnxs.dat", save_dir);
+        r = nexus_v1_save_full_to_path(direct_path,
+                                       world_before[PATH_SLOT].party_level,
+                                       world_before[PATH_SLOT].party_x,
+                                       world_before[PATH_SLOT].party_y,
+                                       world_before[PATH_SLOT].party_dir,
+                                       (uint32_t)world_before[PATH_SLOT].world_tick,
+                                       world_before[PATH_SLOT].state_hash,
+                                       &pool_before[PATH_SLOT],
+                                       &world_before[PATH_SLOT]);
+        expect(r == NEXUS_SAVE_OK,
+               "nexus_v1_save_full_to_path returns NEXUS_SAVE_OK for a rich synthetic state");
+
+        memset(&probed_header, 0, sizeof(probed_header));
+        probe_reason = nexus_v1_save_probe(direct_path, &probed_header,
+                                           &direct_file_size);
+        expect(probe_reason != NULL && probe_reason[0] == '\0',
+               "probe accepts the slot-free FNXS full-save file");
+        expect(probed_header.magic == NEXUS_SAVE_MAGIC,
+               "slot-free probed header carries the 'FNXS' magic");
+        expect(probed_header.version == NEXUS_SAVE_VERSION,
+               "slot-free probed header.version matches NEXUS_SAVE_VERSION");
+        expect(probed_header.party_x == kExpectedParty[PATH_SLOT][1],
+               "slot-free probed header.party_x matches the source world");
+        expect(probed_header.current_level == kExpectedParty[PATH_SLOT][0],
+               "slot-free probed header.current_level matches the source world");
+        expect(probed_header.data_size
+               == probed_header.champion_data_size + probed_header.world_data_size,
+               "slot-free probed header.data_size equals champion+world section sizes");
+        expect(direct_file_size == sizeof(Nexus_V1_SaveHeader) + probed_header.data_size,
+               "slot-free file size equals header plus FNXS data section");
+
+        nexus_v1_champions_init(&direct_pool);
+        nexus_v1_world_init(&direct_world);
+        memset(&direct_header, 0, sizeof(direct_header));
+        memset(direct_diag, 0, sizeof(direct_diag));
+        r = nexus_v1_load_full_from_path(direct_path, &direct_header,
+                                         &direct_pool, &direct_world,
+                                         direct_diag, sizeof(direct_diag));
+        if (r != NEXUS_SAVE_OK) {
+            fprintf(stderr,
+                    "FAIL: slot-free load_full_from_path returns OK "
+                    "(got %s, diagnostic: %s)\n",
+                    nexus_v1_save_strerror(r), direct_diag);
+            ++g_failures;
+        } else {
+            expect(direct_header.data_size
+                   == direct_header.champion_data_size + direct_header.world_data_size,
+                   "slot-free loaded header.data_size equals champion+world section sizes");
+            verify_world_roundtrip(&world_before[PATH_SLOT], &direct_world, PATH_SLOT);
+            verify_pool_roundtrip (&pool_before[PATH_SLOT],  &direct_pool,  PATH_SLOT);
+        }
+        NSR_UNLINK(direct_path);
     }
 
     /* ── Slot isolation on reload: re-load slot 0 should NOT change
@@ -1125,6 +1204,6 @@ int main(void) {
                 g_failures);
         return 1;
     }
-    puts("ok: nexus_v1_save_full/load_full round-trips 4 slots across party/objects/events/timers/transition/world_tick + champion pool");
+    puts("ok: nexus_v1_save_full/load_full round-trips 4 slots plus slot-free full-path wrappers across party/objects/events/timers/transition/world_tick + champion pool");
     return 0;
 }
