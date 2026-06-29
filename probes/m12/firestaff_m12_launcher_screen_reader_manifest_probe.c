@@ -26,6 +26,9 @@
  *   7. Extras views — the bestiary, item encyclopedia, screenshot
  *      gallery, and museum of lore each emit per-cell rows with
  *      stable element IDs and a "selected" value on the focused cell.
+ *   8. Read-only extras — manual/docs and changelog views emit
+ *      state-driven launcher_row elements instead of falling through
+ *      to main-view game cards.
  *
  * Privacy/safety: the probe redirects HOME to a temp dir under
  * $TMPDIR (or /tmp on POSIX) so the manifest never touches the real
@@ -869,6 +872,109 @@ static void subtest_museum_view(void)
                  "museum: page 2 bullet content reflects PRESERVATION NOTES");
 }
 
+/* Subtest L: manual/docs view emits public docs rows from the
+ * M12_ManualDocs table. Paths are project-relative, not absolute
+ * local filesystem paths. */
+static void subtest_manual_docs_view(void)
+{
+    char buf[16384];
+    int n;
+    M12_StartupMenuState state;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_MANUAL_DOCS;
+
+    fs_ax_begin_frame(480, 270, "launcher_manual_docs");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+
+    probe_record("INV_LAX_110_manual_doc_row_type",
+                 strstr(buf, "\"type\":\"launcher_row\"") != NULL,
+                 "manual/docs: launcher_row elements emitted");
+    probe_record("INV_LAX_111_manual_doc_first_id",
+                 strstr(buf, "\"id\":\"MANUAL_DOC_0\"") != NULL,
+                 "manual/docs: MANUAL_DOC_0 id is emitted");
+    probe_record("INV_LAX_112_manual_doc_label",
+                 strstr(buf, "\"label\":\"Firestaff Manual\"") != NULL,
+                 "manual/docs: first row label comes from M12_ManualDocs");
+    probe_record("INV_LAX_113_manual_doc_repo_path",
+                 strstr(buf, "README.md") != NULL,
+                 "manual/docs: first row value includes project-relative README.md");
+    probe_record("INV_LAX_114_manual_doc_not_main_fallback",
+                 strstr(buf, "\"id\":\"GAME_CARD_DM1\"") == NULL,
+                 "manual/docs: view no longer falls through to main game-card emission");
+    probe_record("INV_LAX_115_manual_doc_no_absolute_home_path",
+                 strstr(buf, g_home_path) == NULL,
+                 "manual/docs: manifest does not leak the temp HOME path");
+}
+
+/* Subtest M: changelog view emits only the visible window and honors
+ * the state's scrollOffset. */
+static void subtest_changelog_view(void)
+{
+    char buf[16384];
+    int n;
+    M12_StartupMenuState state;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_CHANGELOG;
+    state.changelog.scrollOffset = 0;
+
+    fs_ax_begin_frame(480, 270, "launcher_changelog");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+
+    probe_record("INV_LAX_120_changelog_row_type",
+                 strstr(buf, "\"type\":\"launcher_row\"") != NULL,
+                 "changelog: launcher_row elements emitted");
+    probe_record("INV_LAX_121_changelog_first_line_id",
+                 strstr(buf, "\"id\":\"CHANGELOG_LINE_0\"") != NULL,
+                 "changelog: first visible line id is emitted");
+    probe_record("INV_LAX_122_changelog_first_line_label",
+                 strstr(buf, "\"label\":\"FIRESTAFF CHANGELOG\"") != NULL,
+                 "changelog: first visible line label is announced");
+    probe_record("INV_LAX_123_changelog_not_main_fallback",
+                 strstr(buf, "\"id\":\"GAME_CARD_DM1\"") == NULL,
+                 "changelog: view no longer falls through to main game-card emission");
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_CHANGELOG;
+    state.changelog.scrollOffset = 3;
+    fs_ax_begin_frame(480, 270, "launcher_changelog_scrolled");
+    m12_launcher_a11y_emit(&state, 480, 270, 0);
+    fs_ax_flush();
+    n = read_all(g_json_path, buf, sizeof(buf));
+    (void)n;
+
+    probe_record("INV_LAX_124_changelog_scroll_offset_line_id",
+                 strstr(buf, "\"id\":\"CHANGELOG_LINE_3\"") != NULL,
+                 "changelog: scrolled view starts at CHANGELOG_LINE_3");
+    probe_record("INV_LAX_125_changelog_scroll_window_excludes_line0",
+                 strstr(buf, "\"id\":\"CHANGELOG_LINE_0\"") == NULL,
+                 "changelog: scrolled view excludes offscreen line 0");
+}
+
 /* ── main ─────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -914,6 +1020,12 @@ int main(void)
 
     printf("\n[K] museum of lore view: sections + lore bullets\n");
     subtest_museum_view();
+
+    printf("\n[L] manual/docs view: public docs rows\n");
+    subtest_manual_docs_view();
+
+    printf("\n[M] changelog view: visible scrolled rows\n");
+    subtest_changelog_view();
 
     teardown_a11y_home();
     fs_ax_shutdown();
