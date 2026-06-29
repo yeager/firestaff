@@ -1,7 +1,8 @@
 /*
  * ReDMCSB anchors: DUNVIEW.C F0124:7727-7924 D1C dispatch body, F0108:3940-4011
  * floor-ornament ordinal / MASK0x8000_FOOTPRINTS recursion / C10 transparent
- * blit / C1500 + CoordinateSet*11 + ViewFloor zone math, F0128:8318-8542
+ * blit / PC 3.4 I34E MEDIA709 C1500 + CoordinateSet*11 + ViewFloor zone
+ * math, F0128:8318-8542
  * D1L/D1R/D1C/D0L/D0R/D0C dispatch order, F0112 ceiling-pit, F0115 thing pass
  * with C0x0218_DOORPASS1 / C0x3421_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT
  * cell orders, F0104 floor-pit/stairs bitmap (C0x0218 door-front, C0x3421
@@ -30,7 +31,6 @@ enum {
     DM1_D1C_F0128_DISPATCH_ORDER = 14,
     DM1_D1C_FLOOR_ZONE_BASE = 1500,
     DM1_D1C_FLOOR_ZONE_STRIDE_PC34 = 11,
-    DM1_D1C_FLOOR_ZONE_STRIDE_LEGACY = 9,
     DM1_D1C_FLOOR_COORDINATE_SET = 1,
     DM1_D1C_FLOOR_ZONE = 1518,
     DM1_D1C_CEILING_PIT_GRAPHIC = 67,
@@ -57,8 +57,10 @@ static const char s_source_evidence[] =
     "F0115 with C0x3421_CELL_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT at "
     "7937. DUNVIEW.C F0108:3940-4011 anchors the "
     "M558_FLOOR_ORNAMENT_ORDINAL handler, MASK0x8000_FOOTPRINTS recursion at "
-    "T0108005, C10_COLOR_FLESH transparency, and PC 3.4 zone math "
-    "C1500 + CoordinateSet*11 + ViewFloor. The D1C column-center square "
+    "T0108005, C10_COLOR_FLESH transparency, and PC 3.4 I34E MEDIA709 "
+    "zone math C1500 + CoordinateSet*11 + ViewFloor. The neighboring "
+    "MEDIA458/MEDIA506 C1500 + CoordinateSet*9 branches are not the PC "
+    "3.4 path pinned by this gate. The D1C column-center square "
     "is M595_VIEW_FLOOR_D1C=7, M606_VIEW_SQUARE_D1C=3, and the D1C front "
     "wall is M587_VIEW_WALL_D1C_FRONT=14. F0128:8318-8542 dispatches D1C "
     "after D1L (8526) and D1R (8531) and before D0L (8541) at line 8536. "
@@ -300,7 +302,7 @@ static void fill_model(DM1_V1_D1CF0108FloorOrnamentOcclusionModelPc34 *m)
     m->f0108_blit_uses_c10_transparent = 1;
     m->f0108_d1c_in_horizontal_flip_branch = 1;
     m->f0108_d1c_zone_uses_11_stride = 1;
-    m->f0108_d1c_zone_uses_9_stride = 1;
+    m->f0108_d1c_zone_uses_9_stride = 0;
     m->f0108_zone_d1c = DM1_D1C_FLOOR_ZONE;
     m->bug0_64_occlusion_guard = 0;
     m->f0112_ceiling_pit_graphic = DM1_D1C_CEILING_PIT_GRAPHIC;

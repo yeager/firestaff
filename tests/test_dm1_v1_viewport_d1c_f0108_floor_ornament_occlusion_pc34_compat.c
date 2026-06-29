@@ -134,8 +134,8 @@ static void test_model_core(void)
                "DUNVIEW.C:3967/3977/3980 M595 in flip branch");
     expect_int("f0108.zone_11_stride", model->f0108_d1c_zone_uses_11_stride, 1,
                "DUNVIEW.C:3989/3991 CoordinateSet * 11 + ViewFloor");
-    expect_int("f0108.zone_9_stride", model->f0108_d1c_zone_uses_9_stride, 1,
-               "DUNVIEW.C:3984 CoordinateSet * 9 (older build)");
+    expect_int("f0108.zone_9_stride_rejected", model->f0108_d1c_zone_uses_9_stride,
+               0, "DUNVIEW.C:3997-3998 MEDIA709 PC34 excludes *9 branches");
     expect_int("f0108.zone_d1c", model->f0108_zone_d1c, 1518,
                "C1500 + 1*11 + 7 PC 3.4 zone");
     expect_int("bug0_64.guard_absent", model->bug0_64_occlusion_guard, 0,
@@ -287,9 +287,10 @@ static void test_blend_and_zone(void)
     expect_int("zone.d1c_11_stride",
                dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_zone_d1c_pc34(1, 7),
                1518, "C1500 + 1*11 + 7 = 1518");
-    expect_int("zone.d1c_9_stride",
-               dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_zone_d1c_pc34(0, 9),
-               1500 + 9, "older build CoordinateSet*9 path still synthetic");
+    expect_int("zone.d1c_not_9_stride",
+               dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_zone_d1c_pc34(1, 7) !=
+                   1500 + 1 * 9 + 7,
+               1, "DUNVIEW.C:3997-3998 PC34 uses CoordinateSet*11, not *9");
     expect_int("zone.d1c_alt",
                dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_zone_d1c_pc34(2, 7),
                1500 + 2 * 11 + 7, "stride 11 for second coordinate set");
@@ -381,6 +382,10 @@ static void test_source_evidence_and_disjointness(void)
                     "door-front cell order");
     expect_contains("evidence.c10", e, "DEFS.H:2088", "C10 transparency");
     expect_contains("evidence.c1500", e, "C1500", "floor-ornament zone base");
+    expect_contains("evidence.media709", e, "MEDIA709",
+                    "PC 3.4 I34E floor-ornament zone branch");
+    expect_contains("evidence.rejects_9_stride", e, "MEDIA458/MEDIA506",
+                    "non-PC34 9-stride floor-ornament branches");
     expect_contains("evidence.footprint", e, "MASK0x8000_FOOTPRINTS",
                     "footprint recursion mask");
     expect_contains("evidence.t0108005", e, "T0108005", "F0108 self-recursion label");
