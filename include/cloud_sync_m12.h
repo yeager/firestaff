@@ -175,7 +175,9 @@ int M12_CloudSync_RescanManifest(void);
  * `absoluteDir` is the on-disk directory to scan (e.g. the user's
  * ~/.firestaff/saves/dm1 path). This is a bounded directory walk:
  * it inspects one level of files only, no recursion, and stops
- * at M12_SYNC_MAX_ENTRIES total. */
+ * at M12_SYNC_MAX_ENTRIES total. Manifest-relative paths are
+ * sandboxed: absolute paths, drive-qualified paths, backslashes,
+ * "." segments, and ".." segments are rejected. */
 int M12_CloudSync_DiscoverSaveFiles(const char* relativePrefix,
                                     const char* absoluteDir);
 
@@ -192,7 +194,9 @@ int M12_CloudSync_LoadManifest(M12_SyncManifest* outManifest);
 int M12_CloudSync_SaveManifest(const M12_SyncManifest* manifest);
 
 /* Explicitly add/remove tracked paths from the manifest.
- * path: relative to sync root.
+ * path: relative to sync root. Absolute paths, drive-qualified paths,
+ * backslashes, "." segments, and ".." segments are rejected so sync
+ * entries cannot escape the launcher-owned sync/local roots.
  * action: 1 = add, 0 = remove.
  * Returns 1 on success. */
 int M12_CloudSync_TrackPath(const char* relativePath, int add);

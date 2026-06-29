@@ -58,7 +58,6 @@ static uint32_t m12_crc32_update(uint32_t crc, const void* data, size_t size) {
 static char      g_syncDir[FSP_PATH_MAX]   = {0};
 static int       g_policy                 = M12_SYNC_POLICY_NEWER_WINS;
 static int       g_enabled                = 0;   /* explicit opt-in gate */
-static uint32_t  g_lastFullSync           = 0;
 
 enum { MAX_TRACKED = M12_SYNC_MAX_ENTRIES };
 
@@ -73,6 +72,43 @@ typedef struct {
 
 static void m12_sync_get_manifest_path(char* out, size_t outSize) {
     snprintf(out, outSize, "%s/manifest.json", g_syncDir);
+}
+
+static int m12_sync_root_path_is_supported(const char* path) {
+    if (!path || !path[0]) return 0;
+#if defined(_WIN32)
+    if (path[0] == '/' || path[0] == '\\') return 1; /* drive-root or UNC */
+    if (isalpha((unsigned char)path[0]) && path[1] == ':' &&
+        (path[2] == '/' || path[2] == '\\')) {
+        return 1;
+    }
+    return 0;
+#else
+    return path[0] == '/';
+#endif
+}
+
+static int m12_sync_relative_path_is_safe(const char* path) {
+    if (!path || !path[0]) return 0;
+    if (strlen(path) >= sizeof(((M12_SyncEntry*)0)->relativePath)) return 0;
+    if (path[0] == '/' || path[0] == '\\' || path[0] == '~') return 0;
+    if (isalpha((unsigned char)path[0]) && path[1] == ':') return 0;
+
+    const char* segment = path;
+    for (const char* p = path;; ++p) {
+        unsigned char ch = (unsigned char)*p;
+        if (ch == '\0' || ch == '/') {
+            size_t len = (size_t)(p - segment);
+            if (len == 0) return 0;
+            if (len == 1 && segment[0] == '.') return 0;
+            if (len == 2 && segment[0] == '.' && segment[1] == '.') return 0;
+            if (ch == '\0') break;
+            segment = p + 1;
+            continue;
+        }
+        if (ch == '\\' || ch < 32 || ch == 127) return 0;
+    }
+    return 1;
 }
 
 static void __attribute__((unused)) m12_sync_get_local_config_path (char* out, size_t outSize) {
@@ -206,6 +242,7 @@ int M12_CloudSync_SetSyncDir(const char* path) {
     } else {
         snprintf(g_syncDir, sizeof(g_syncDir), "%s", path);
     }
+    if (!m12_sync_root_path_is_supported(g_syncDir)) return 1;
     M12_CloudSync_EnsureDir(g_syncDir);
     /* Also ensure saves/ subdirectory tree */
     {
@@ -235,7 +272,9 @@ void M12_CloudSync_ApplyConfig(const M12_Config* config) {
                  config->cloudSyncDir);
         /* Best-effort create; failure is reported later by
          * IsSyncRootUsable / GetBoundaryTag. */
-        M12_CloudSync_EnsureDir(g_syncDir);
+        if (m12_sync_root_path_is_supported(g_syncDir)) {
+            M12_CloudSync_EnsureDir(g_syncDir);
+        }
     } else {
         g_syncDir[0] = '\0';
     }
@@ -253,14 +292,9 @@ int M12_CloudSync_IsEnabled(void) {
 int M12_CloudSync_IsSyncRootUsable(void) {
     if (!g_syncDir[0]) M12_CloudSync_GetSyncDir();
     if (!g_syncDir[0] || g_syncDir[0] == '\0') return 0;
-    /* Reject bare relative paths: the sync root must be absolute to
-     * avoid accidentally creating a directory under cwd. */
-    if (g_syncDir[0] != '/' && g_syncDir[0] != '\\' &&
-        !((g_syncDir[0] >= 'A' && g_syncDir[0] <= 'Z') ||
-          (g_syncDir[0] >= 'a' && g_syncDir[0] <= 'z')) &&
-        !(g_syncDir[0] == '~')) {
-        return 0; /* relative path that is not a Windows drive */
-    }
+    /* The sync root must be absolute so a launcher opt-in cannot
+     * accidentally create or sync files under an arbitrary cwd. */
+    if (!m12_sync_root_path_is_supported(g_syncDir)) return 0;
 #if defined(_WIN32)
     struct _stat st;
     if (_stat(g_syncDir, &st) != 0) return 0;
@@ -286,6 +320,10 @@ void M12_CloudSync_GetBoundaryTag(char* out, size_t outSize) {
     if (!g_syncDir[0]) M12_CloudSync_GetSyncDir();
     if (!g_syncDir[0] || g_syncDir[0] == '\0') {
         snprintf(out, outSize, "ENABLED_NO_ROOT");
+        return;
+    }
+    if (!m12_sync_root_path_is_supported(g_syncDir)) {
+        snprintf(out, outSize, "ENABLED_RELATIVE_ROOT");
         return;
     }
     /* The sync root may not exist yet; report ENABLED_NO_ROOT for
@@ -347,6 +385,10 @@ static void m12_json_escape(FILE* fp, const char* s) {
 }
 
 static int m12_write_manifest(const char* path, const M12_SyncManifest* m) {
+    if (!m || m->entryCount < 0 || m->entryCount > M12_SYNC_MAX_ENTRIES) return 0;
+    for (int i = 0; i < m->entryCount; ++i) {
+        if (!m12_sync_relative_path_is_safe(m->entries[i].relativePath)) return 0;
+    }
     FILE* fp = fopen(path, "w");
     if (!fp) return 0;
     fprintf(fp, "{\n  \"lastFullSync\": %u,\n  \"entryCount\": %d,\n  \"entries\": [\n",
@@ -430,7 +472,11 @@ static int m12_read_manifest(const char* path, M12_SyncManifest* m) {
             }
             /* Detect end of entry object */
             if (strstr(s, "}") != NULL) {
-                m->entryCount++;
+                if (m12_sync_relative_path_is_safe(m->entries[m->entryCount].relativePath)) {
+                    m->entryCount++;
+                } else {
+                    memset(&m->entries[m->entryCount], 0, sizeof(m->entries[m->entryCount]));
+                }
             }
         }
     }
@@ -507,10 +553,13 @@ static int m12_sync_direction(const M12_SyncManifest* manifest,
     int conflicts = 0;
     char localPath[FSP_PATH_MAX];
     char syncPath[FSP_PATH_MAX];
-    const char* home = getenv("HOME") ? getenv("HOME") : ".";
 
     for (int i = 0; i < manifest->entryCount; ++i) {
         const M12_SyncEntry* e = &manifest->entries[i];
+        if (!m12_sync_relative_path_is_safe(e->relativePath)) {
+            if (stats) stats->errorCount++;
+            continue;
+        }
         /* Detect gameId for saves */
         int gameId = -1;
         if (strncmp(e->relativePath, "saves/", 6) == 0) {
@@ -530,7 +579,6 @@ static int m12_sync_direction(const M12_SyncManifest* manifest,
         uint32_t localMtime = M12_CloudSync_FileModTime(localPath);
         uint32_t syncMtime  = M12_CloudSync_FileModTime(syncPath);
         uint32_t localCrc   = localMtime ? M12_CloudSync_FileCrc(localPath) : 0;
-        uint32_t syncCrc    = syncMtime  ? M12_CloudSync_FileCrc(syncPath)  : 0;
 
         int localExists = localMtime != 0;
         int syncExists  = syncMtime  != 0;
@@ -594,6 +642,9 @@ static int m12_sync_direction(const M12_SyncManifest* manifest,
 int M12_CloudSync_DiscoverSaveFiles(const char* relativePrefix,
                                     const char* absoluteDir) {
     if (!relativePrefix || !absoluteDir) return 0;
+    if (!m12_sync_relative_path_is_safe(relativePrefix)) return 0;
+    if (!g_syncDir[0]) M12_CloudSync_GetSyncDir();
+    if (!m12_sync_root_path_is_supported(g_syncDir)) return 0;
     /* Read or init the manifest. */
     M12_SyncManifest m;
     if (!M12_CloudSync_LoadManifest(&m)) memset(&m, 0, sizeof(m));
@@ -622,6 +673,7 @@ int M12_CloudSync_DiscoverSaveFiles(const char* relativePrefix,
         /* Already tracked? Skip. */
         char rel[FSP_PATH_MAX];
         snprintf(rel, sizeof(rel), "%s/%s", relativePrefix, name);
+        if (!m12_sync_relative_path_is_safe(rel)) continue;
         int found = 0;
         for (int i = 0; i < m.entryCount; ++i) {
             if (strcmp(m.entries[i].relativePath, rel) == 0) { found = 1; break; }
@@ -659,6 +711,7 @@ int M12_CloudSync_DiscoverSaveFiles(const char* relativePrefix,
 
         char rel[FSP_PATH_MAX];
         snprintf(rel, sizeof(rel), "%s/%s", relativePrefix, name);
+        if (!m12_sync_relative_path_is_safe(rel)) continue;
         int found = 0;
         for (int i = 0; i < m.entryCount; ++i) {
             if (strcmp(m.entries[i].relativePath, rel) == 0) { found = 1; break; }
@@ -688,8 +741,6 @@ int M12_CloudSync_DiscoverSaveFiles(const char* relativePrefix,
 static void m12_discover_tracked(M12_SyncManifest* m) {
     /* Always track launcher config files */
     const char* home = getenv("HOME") ? getenv("HOME") : ".";
-    const char* cfgDir = getenv("XDG_CONFIG_HOME") ? getenv("XDG_CONFIG_HOME")
-                            : (getenv("HOME") ? getenv("HOME") : ".");
 
     int idx = m->entryCount;
     if (idx < M12_SYNC_MAX_ENTRIES) {
@@ -718,19 +769,26 @@ static void m12_discover_tracked(M12_SyncManifest* m) {
 /* ── Public API ──────────────────────────────────────────────────── */
 
 int M12_CloudSync_LoadManifest(M12_SyncManifest* outManifest) {
+    if (!outManifest) return 0;
+    if (!g_syncDir[0]) M12_CloudSync_GetSyncDir();
+    if (!m12_sync_root_path_is_supported(g_syncDir)) return 0;
     char path[FSP_PATH_MAX];
     m12_sync_get_manifest_path(path, sizeof(path));
     return m12_read_manifest(path, outManifest);
 }
 
 int M12_CloudSync_SaveManifest(const M12_SyncManifest* manifest) {
+    if (!manifest) return 0;
+    if (!g_syncDir[0]) M12_CloudSync_GetSyncDir();
     char path[FSP_PATH_MAX];
     m12_sync_get_manifest_path(path, sizeof(path));
+    if (!m12_sync_root_path_is_supported(g_syncDir)) return 0;
     M12_CloudSync_EnsureDir(g_syncDir);
     return m12_write_manifest(path, manifest);
 }
 
 int M12_CloudSync_TrackPath(const char* relativePath, int add) {
+    if (!m12_sync_relative_path_is_safe(relativePath)) return 0;
     M12_SyncManifest m;
     if (!M12_CloudSync_LoadManifest(&m)) memset(&m, 0, sizeof(m));
     if (add) {
@@ -761,6 +819,7 @@ int M12_CloudSync_TrackPath(const char* relativePath, int add) {
 }
 
 uint32_t M12_CloudSync_GetLastSyncTime(const char* relativePath) {
+    if (!m12_sync_relative_path_is_safe(relativePath)) return 0;
     M12_SyncManifest m;
     if (!M12_CloudSync_LoadManifest(&m)) return 0;
     for (int i = 0; i < m.entryCount; ++i) {
@@ -772,9 +831,11 @@ uint32_t M12_CloudSync_GetLastSyncTime(const char* relativePath) {
 
 int M12_CloudSync_NeedsSync(void) {
     if (!g_syncDir[0]) M12_CloudSync_GetSyncDir();
+    if (!m12_sync_root_path_is_supported(g_syncDir)) return 0;
     M12_SyncManifest m;
     if (!M12_CloudSync_LoadManifest(&m)) return 1; /* no manifest = needs sync */
     for (int i = 0; i < m.entryCount; ++i) {
+        if (!m12_sync_relative_path_is_safe(m.entries[i].relativePath)) return 1;
         char lp[FSP_PATH_MAX], sp[FSP_PATH_MAX];
         m12_resolve_path(lp, sizeof(lp), sp, sizeof(sp),
                          m.entries[i].relativePath, -1);
@@ -787,9 +848,12 @@ int M12_CloudSync_NeedsSync(void) {
 }
 
 int M12_CloudSync_RescanManifest(void) {
+    if (!g_syncDir[0]) M12_CloudSync_GetSyncDir();
+    if (!m12_sync_root_path_is_supported(g_syncDir)) return 0;
     M12_SyncManifest m;
     if (!M12_CloudSync_LoadManifest(&m)) memset(&m, 0, sizeof(m));
     for (int i = 0; i < m.entryCount; ++i) {
+        if (!m12_sync_relative_path_is_safe(m.entries[i].relativePath)) continue;
         char lp[FSP_PATH_MAX], sp[FSP_PATH_MAX];
         m12_resolve_path(lp, sizeof(lp), sp, sizeof(sp),
                          m.entries[i].relativePath, -1);
@@ -807,6 +871,8 @@ int M12_CloudSync_Run(int direction, M12_SyncStats* stats) {
     if (!g_syncDir[0]) M12_CloudSync_GetSyncDir();
     if (!g_syncDir[0] || g_syncDir[0] == '\0')
         return M12_SYNC_ERR_NO_SYNC_DIR;
+    if (!m12_sync_root_path_is_supported(g_syncDir))
+        return M12_SYNC_ERR_UNSUPPORTED;
 
     /* Ensure sync root exists */
     if (!M12_CloudSync_EnsureDir(g_syncDir))
@@ -835,6 +901,7 @@ int M12_CloudSync_Run(int direction, M12_SyncStats* stats) {
 
     /* Update manifest timestamps and CRCs */
     for (int i = 0; i < manifest.entryCount; ++i) {
+        if (!m12_sync_relative_path_is_safe(manifest.entries[i].relativePath)) continue;
         char lp[FSP_PATH_MAX], sp[FSP_PATH_MAX];
         m12_resolve_path(lp, sizeof(lp), sp, sizeof(sp),
                          manifest.entries[i].relativePath, -1);
