@@ -395,8 +395,14 @@ static int guard_rejects(
         probe.c040PanelOpen = 0;
     } else if (kind == 3) {
         probe.c045AcceptPathActive = 0;
-    } else {
+    } else if (kind == 4) {
         probe.acceptCommand = 999;
+    } else if (kind == 5) {
+        probe.leaderHandThing = 0x0001u;
+    } else if (kind == 6) {
+        probe.leaderHandEmpty = 0;
+    } else {
+        probe.champions[kLeaderIndex].handThing = 0x0001u;
     }
     return dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
                &probe, &result) == 0;
@@ -499,6 +505,10 @@ int dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
     result->guardRejectsNoC040Panel = guard_rejects(&base, 2);
     result->guardRejectsNoC045Path = guard_rejects(&base, 3);
     result->guardRejectsNoAcceptCommand = guard_rejects(&base, 4);
+    result->guardRejectsGlobalLeaderHandThing = guard_rejects(&base, 5);
+    result->guardRejectsLeaderHandEmptyFlagMismatch = guard_rejects(&base, 6);
+    result->guardRejectsChampionHandThingOwnerMismatch =
+        guard_rejects(&base, 7);
     result->leaderBefore = state->leaderIndex;
     result->leaderAfter = state->leaderIndex;
     result->leaderHandThingBefore =
@@ -545,7 +555,11 @@ int dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
         result->guardRejectsAliveOwner &&
         result->guardRejectsNullCandidate &&
         result->guardRejectsNoC040Panel && result->guardRejectsNoC045Path &&
-        result->guardRejectsNoAcceptCommand && queued && accepted && settled &&
+        result->guardRejectsNoAcceptCommand &&
+        result->guardRejectsGlobalLeaderHandThing &&
+        result->guardRejectsLeaderHandEmptyFlagMismatch &&
+        result->guardRejectsChampionHandThingOwnerMismatch && queued &&
+        accepted && settled &&
         state->afterAcceptHash != 0u &&
         state->afterLeaderSettleHash != 0u &&
         state->afterAcceptHash != state->afterLeaderSettleHash;

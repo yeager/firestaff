@@ -161,6 +161,9 @@ typedef struct {
     int guardRejectsNoC040Panel;
     int guardRejectsNoC045Path;
     int guardRejectsNoAcceptCommand;
+    int guardRejectsGlobalLeaderHandThing;
+    int guardRejectsLeaderHandEmptyFlagMismatch;
+    int guardRejectsChampionHandThingOwnerMismatch;
     int leaderBefore;
     int leaderAfter;
     uint16_t leaderHandThingBefore;

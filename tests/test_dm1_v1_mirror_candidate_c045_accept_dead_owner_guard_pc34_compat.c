@@ -314,6 +314,15 @@ static uint32_t test_run(void)
                  "PANEL.C F0347");
     check_int_eq(result.guardRejectsNoAcceptCommand, 1,
                  "guard rejects no accept command", "C160");
+    check_int_eq(result.guardRejectsGlobalLeaderHandThing, 1,
+                 "guard rejects occupied global leader hand thing",
+                 "CHAMPION.C F0297/F0298");
+    check_int_eq(result.guardRejectsLeaderHandEmptyFlagMismatch, 1,
+                 "guard rejects leader hand empty flag mismatch",
+                 "CHAMPION.C F0297/F0298");
+    check_int_eq(result.guardRejectsChampionHandThingOwnerMismatch, 1,
+                 "guard rejects occupied champion hand thing",
+                 "CHAMPION.C F0297/F0298");
     check_int_eq(result.leaderBefore, 0, "leader before", "F0368");
     check_int_eq(result.leaderAfter, 0, "leader after", "F0368");
     check_u16_eq(result.leaderHandThingBefore, 0xffffu,
@@ -469,12 +478,25 @@ static void test_rejects(void)
         0, "non-accept command rejected", "C160");
     dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
     state.leaderHandThing = 0x0001u;
+    check_int_eq(
+        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+            &state, &result),
+        0, "global leader hand thing rejected independently",
+        "CHAMPION.C F0297/F0298");
+    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
     state.leaderHandEmpty = 0;
+    check_int_eq(
+        dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
+            &state, &result),
+        0, "leader hand empty flag mismatch rejected independently",
+        "CHAMPION.C F0297/F0298");
+    dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_init_pc34(&state);
     state.champions[0].handThing = 0x0001u;
     check_int_eq(
         dm1_v1_mirror_candidate_c045_accept_dead_owner_guard_run_pc34(
             &state, &result),
-        0, "non-empty leader hand rejected", "CHAMPION.C F0297");
+        0, "champion hand thing rejected independently",
+        "CHAMPION.C F0297/F0298");
 }
 
 int main(void)
@@ -488,7 +510,7 @@ int main(void)
     test_initial_state();
     hash = test_run();
     test_rejects();
-    if (g_failures || g_assertions < 130) {
+    if (g_failures || g_assertions < 136) {
         printf("FAIL assertions=%d failures=%d hash=0x%08X\n", g_assertions,
                g_failures, hash);
         return 1;
