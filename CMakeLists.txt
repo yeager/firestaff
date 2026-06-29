@@ -11631,6 +11631,27 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm1_v1_champion_panel_hand_slot_refresh_m11_bridge_probe
     )
 
+    # DM1 V1 champion-panel F0296 INVENTORY-OWNER TAIL gate.
+    # Source-locked against CHAMDRAW.C F0296:1233-1247 (inventory
+    # slotbox scan C08..C37, open-chest scan C38..C45, F0386 only
+    # for the inventory action hand, MASK0x4000_VIEWPORT + F0292
+    # cascade when any tail slot changed) + F0295:1153-1182 +
+    # DEFS.H C01/C08/C30/C38/M569/MASK0x4000. Contract-only; no
+    # GRAPHICS.DAT/DUNGEON.DAT load and disjoint from the top-row
+    # hand_slot_refresh owner gate.
+    add_executable(test_dm1_v1_champion_panel_inventory_tail_pc34_compat
+        tests/test_dm1_v1_champion_panel_inventory_tail_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_inventory_tail_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_inventory_tail_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_inventory_tail_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_inventory_tail_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_inventory_tail_pc34_compat
+    )
+
     # DM1 V1 champion-panel INVENTORY/CHEST redraw walk gate.
     # Source-locked against CHAMDRAW.C F0296:1233-1259 (the second
     # half of F0296: the inventory-owner walk over slot indices
