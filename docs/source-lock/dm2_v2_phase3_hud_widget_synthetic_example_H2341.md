@@ -1,6 +1,6 @@
 # DM2 V2 Phase 3 - HUD Widget Synthetic Manifest Example
 
-**Status:** COMPLETE - synthetic non-placeholder example landed 2026-06-28
+**Status:** COMPLETE - synthetic non-placeholder example landed 2026-06-28; manifest path sync guard strengthened 2026-06-29
 **CTest name:** `firestaff_dm2_v2_hud_widget_synthetic_promotion_probe`
 **Example path:** `examples/dm2_hud_widget_synthetic/`
 
@@ -38,6 +38,11 @@ the data dir to the scratch DM2 data path, and verifies:
   on-disk `resolved_path`
 - every complete slot reports `width > 0 && height > 0` so a corrupt
   manifest without declared dimensions cannot pass the gate
+- every complete slot's `source_file` remains the canonical
+  `<slot_id>.png`
+- every complete slot resolves through the expected install category
+  (`hud_widgets/` for the two primary widgets, `hud_chrome/` for the
+  five supporting chrome slots)
 - every fixture starts with the PNG 8-byte signature
   (`89 50 4E 47 0D 0A 1A 0A`) so the fixture cannot silently rot into
   arbitrary text without the probe noticing

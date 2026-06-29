@@ -222,6 +222,41 @@ static int example_fixture_has_marker(const char* category, const char* name) {
     return file_contains_text(src_path, "synthetic-test-fixture");
 }
 
+static const char* expected_category_for_slot(DM2_V2_HudWidgetSlot slot) {
+    switch (slot) {
+    case DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW:
+    case DM2_V2_HUD_WIDGET_ACTION_PROMPT:
+        return "hud_widgets";
+    case DM2_V2_HUD_WIDGET_COMPASS_ROSE:
+    case DM2_V2_HUD_WIDGET_DEPTH_INDICATOR:
+    case DM2_V2_HUD_WIDGET_GOLD_COUNTER:
+    case DM2_V2_HUD_WIDGET_CHAMPION_BAR_FRAME:
+    case DM2_V2_HUD_WIDGET_ACTION_STRIP_FRAME:
+        return "hud_chrome";
+    default:
+        return "";
+    }
+}
+
+static void expected_file_for_slot(DM2_V2_HudWidgetSlot slot,
+                                   char* out,
+                                   size_t out_size) {
+    const char* id = dm2_v2_hud_widget_assets_slot_name(slot);
+    if (!out || out_size == 0U) return;
+    if (!id || id[0] == '\0') {
+        out[0] = '\0';
+        return;
+    }
+    snprintf(out, out_size, "%s.png", id);
+}
+
+static int path_uses_category(const char* path, const char* category) {
+    char needle[96];
+    if (!path || !category || category[0] == '\0') return 0;
+    snprintf(needle, sizeof(needle), "/%s/", category);
+    return strstr(path, needle) != NULL;
+}
+
 static int install_example_manifest(const char* manifest_path) {
     char manifest_dir[1024];
     char src_manifest[1024];
@@ -465,6 +500,20 @@ int main(void) {
                  dm2_v2_hud_widget_assets_slot_name(slot));
         check(msg, dm2_v2_hud_widget_assets_get_slot_info(slot, &info) == 1 &&
                        info.width > 0 && info.height > 0);
+        {
+            char expected_file[96];
+            expected_file_for_slot(slot, expected_file, sizeof(expected_file));
+            snprintf(msg, sizeof(msg), "%s source_file matches slot id",
+                     dm2_v2_hud_widget_assets_slot_name(slot));
+            check(msg, dm2_v2_hud_widget_assets_get_slot_info(slot, &info) == 1 &&
+                           strcmp(info.source_file, expected_file) == 0);
+        }
+        snprintf(msg, sizeof(msg), "%s resolved path uses category",
+                 dm2_v2_hud_widget_assets_slot_name(slot));
+        check(msg, dm2_v2_hud_widget_assets_get_slot_info(slot, &info) == 1 &&
+                       strcmp(info.category, expected_category_for_slot(slot)) == 0 &&
+                       path_uses_category(info.resolved_path,
+                                          expected_category_for_slot(slot)));
     }
 
     printf("\n[ Scenario 3: citations and honest boundary ]\n");

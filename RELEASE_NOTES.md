@@ -323,6 +323,12 @@ need real-asset proof.
 
 - **CSB projectile speed normalization gate**: `csb_v1_projectile_speed_pc34_compat` is now CTest-backed and expanded to pin ReDMCSB `PROJEXPL.C` `CHANGE7_20`: DM1 keeps the non-party-map slowdown, while CSB schedules projectiles at full speed on every map. This is data-layer verification only, not a full CSB runtime/playability claim.
 
+- **DM2 V2 HUD widget synthetic-example manifest sync guard**: the synthetic
+  promotion probe now also verifies every COMPLETE slot keeps its canonical
+  `<slot_id>.png` `source_file` and resolves through the expected
+  `hud_widgets/` or `hud_chrome/` directory, raising the gate to 95/95 PASS
+  while keeping the no-finished-art boundary unchanged.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.
