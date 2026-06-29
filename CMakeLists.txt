@@ -250,6 +250,7 @@ set(M11_SOURCES
     src/engine/main_loop_m11.c
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
+    src/engine/m11_game_view_a11y.c
     src/engine/m11_qol_runtime.c
     src/dm1/dm1_v1_minimap_pc34_compat.c
     src/dm1/dm1_v1_automap_pc34_compat.c
@@ -19776,6 +19777,32 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_no_data_popup_once_gate.c"
     add_test(
         NAME m12_no_data_popup_once_gate
         COMMAND test_m12_no_data_popup_once_gate
+    )
+endif()
+
+# M11 gameplay-side screen reader / accessibility state manifest
+# regression. Pins the new m11_screen_reader_update_ex() surface
+# (include/m11_game_view_a11y.h + src/engine/m11_game_view_a11y.c)
+# which extends the always-on viewport / movement / spell / HUD /
+# control-strip zones with per-overlay coverage: inventory panel
+# (portrait + name + 13 equipment slots + 16 backpack slots + open
+# chest sub-panel), full-screen automap, dialog overlay (text + up
+# to 4 choice buttons), candidate mirror / hall of champions
+# entrance panel (resurrect / reincarnate / cancel), and endgame
+# (THE END plaque + 4 champion mirrors + 4 champion portraits).
+# Mirrors the existing firestaff_accessibility_manifest (writer
+# itself) and the launcher-side m12_screen_reader_launcher_state_manifest.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_screen_reader_gameplay_state_manifest.c")
+    add_executable(test_m11_screen_reader_gameplay_state_manifest
+        tests/test_m11_screen_reader_gameplay_state_manifest.c
+    )
+    target_link_libraries(test_m11_screen_reader_gameplay_state_manifest PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_m11_screen_reader_gameplay_state_manifest PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_screen_reader_gameplay_state_manifest
+        COMMAND test_m11_screen_reader_gameplay_state_manifest
     )
 endif()
 
