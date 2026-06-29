@@ -38,7 +38,10 @@
  *   9. Endgame state manifest adds the THE END plaque + 4
  *      champion mirrors + 4 champion portraits with
  *      gameState="endgame".
- *  10. Deterministic guards - JSON is well-formed (no leading-
+ *  10. Session timer overlay manifest adds the visible reminder
+ *      banner or forced-pause dialog zones and mirrors the renderer's
+ *      suppression fences for dialog / return-to-menu confirmation.
+ *  11. Deterministic guards - JSON is well-formed (no leading-
  *      comma / trailing-comma / double-comma artifacts) across
  *      every state, even when a value field is non-NULL.
  *  11. NULL state is a no-op (returns 0, writes nothing).
@@ -76,6 +79,7 @@
 #include "firestaff_accessibility.h"
 #include "m11_game_view_a11y.h"
 #include "m11_game_view.h"
+#include "session_timer_runtime.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -559,6 +563,116 @@ static void subtest_endgame_manifest(void) {
 
 /* -- Subtest 10: JSON well-formedness across all states ----------- */
 
+static void subtest_session_timer_overlay_manifest(void) {
+    M11_GameViewState state;
+    char buf[16384];
+    int n;
+
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.fontScale = 1;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 30);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 25 * 60);
+    state.sessionTimerReminderOverlayActive = 1;
+
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1, "timer-reminder: update returns 1");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "timer-reminder: file is non-empty");
+    if (n <= 0) return;
+
+    m11_ax_check(strstr(buf, "\"gameState\":\"gameplay\"") != NULL,
+                 "timer-reminder: gameplay state is preserved");
+    m11_ax_check(strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER\"") != NULL,
+                 "timer-reminder: banner region present");
+    m11_ax_check(strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER_TEXT\"") != NULL,
+                 "timer-reminder: banner text present");
+    m11_ax_check(strstr(buf, "SESSION TIMER 00:05:00 REMAINING") != NULL,
+                 "timer-reminder: visible scale-1 text is mirrored");
+    m11_ax_check(strstr(buf, "remaining=300") != NULL,
+                 "timer-reminder: remaining seconds carried in value");
+
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.fontScale = 3;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 1);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 60);
+    state.sessionTimerForcedPauseDialogActive = 1;
+
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1, "timer-forced: update returns 1");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "timer-forced: file is non-empty");
+    if (n <= 0) return;
+
+    m11_ax_check(strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE\"") != NULL,
+                 "timer-forced: popup region present");
+    m11_ax_check(strstr(buf, "\"type\":\"popup\"") != NULL,
+                 "timer-forced: popup element type is used");
+    m11_ax_check(strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_TITLE\"") != NULL &&
+                 strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_LINE1\"") != NULL &&
+                 strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_LINE2\"") != NULL,
+                 "timer-forced: title and body line text zones present");
+    m11_ax_check(strstr(buf, "scale=3;remaining=0") != NULL,
+                 "timer-forced: scale and remaining seconds carried in value");
+    m11_ax_check(strstr(buf, "EXPIRED") != NULL &&
+                 strstr(buf, "ENTER MENU") != NULL &&
+                 strstr(buf, "ESC DISMISS") != NULL,
+                 "timer-forced: scale-3 visible text is mirrored");
+
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 30);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 25 * 60);
+    state.sessionTimerReminderOverlayActive = 1;
+    state.dialogOverlayActive = 1;
+
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1, "timer-hidden-dialog: update returns 1");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "timer-hidden-dialog: file is non-empty");
+    if (n <= 0) return;
+    m11_ax_check(strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER\"") == NULL,
+                 "timer-hidden-dialog: dialog suppresses reminder banner");
+
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 1);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 60);
+    state.sessionTimerForcedPauseDialogActive = 1;
+    state.returnToMenuConfirmActive = 1;
+
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1, "timer-hidden-return-menu: update returns 1");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "timer-hidden-return-menu: file is non-empty");
+    if (n <= 0) return;
+    m11_ax_check(strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE\"") == NULL,
+                 "timer-hidden-return-menu: return-menu confirm suppresses forced pause");
+}
+
+/* -- Subtest 11: JSON well-formedness across all states ----------- */
+
 static void subtest_json_well_formed_across_all_states(void) {
     static const struct {
         const char* name;
@@ -571,7 +685,9 @@ static void subtest_json_well_formed_across_all_states(void) {
         { "map",             NULL },
         { "dialog",          NULL },
         { "entrance_mirror", NULL },
-        { "endgame",         NULL }
+        { "endgame",         NULL },
+        { "timer_reminder",  NULL },
+        { "timer_forced",    NULL }
     };
     int i;
     for (i = 0; i < (int)(sizeof(cases) / sizeof(cases[0])); ++i) {
@@ -597,6 +713,14 @@ static void subtest_json_well_formed_across_all_states(void) {
             state.candidateMirrorPanelActive = 1;
         } else if (strcmp(cases[i].name, "endgame") == 0) {
             state.gameWon = 1;
+        } else if (strcmp(cases[i].name, "timer_reminder") == 0) {
+            SessionTimerRuntime_Init(&state.sessionTimerRuntime, 30);
+            SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 25 * 60);
+            state.sessionTimerReminderOverlayActive = 1;
+        } else if (strcmp(cases[i].name, "timer_forced") == 0) {
+            SessionTimerRuntime_Init(&state.sessionTimerRuntime, 1);
+            SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 60);
+            state.sessionTimerForcedPauseDialogActive = 1;
         }
 
         {
@@ -634,7 +758,7 @@ static void subtest_json_well_formed_across_all_states(void) {
     }
 }
 
-/* -- Subtest 11: NULL state is a no-op ---------------------------- */
+/* -- Subtest 12: NULL state is a no-op ---------------------------- */
 
 static void subtest_null_state_is_noop(void) {
     m11_ax_clean_artifacts();
@@ -1182,10 +1306,13 @@ int main(void) {
     printf("  [9] endgame manifest...\n");
     subtest_endgame_manifest();
 
-    printf("  [10] JSON well-formedness across all states...\n");
+    printf("  [10] session timer overlay manifest...\n");
+    subtest_session_timer_overlay_manifest();
+
+    printf("  [11] JSON well-formedness across all states...\n");
     subtest_json_well_formed_across_all_states();
 
-    printf("  [11] NULL state is a no-op...\n");
+    printf("  [12] NULL state is a no-op...\n");
     subtest_null_state_is_noop();
 
     printf("  [12] inventory chest panel...\n");
