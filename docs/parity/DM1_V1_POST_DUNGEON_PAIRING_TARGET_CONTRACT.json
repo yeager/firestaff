@@ -1,0 +1,225 @@
+{
+  "schema": "firestaff.dm1_v1.post_dungeon_pairing_target_contract.v1",
+  "status": "TARGET_SELECTION_HARDENING",
+  "purpose": "Reviewed target-selection contract for the DM1 PC 3.4 post-dungeon capture route. Every post-dungeon route receipt that aims at a creature-chain / champion-panel / wall-door-fakewall / viewport / collision pairing target must be backed by a target_selection.json that this contract validates. The contract does not promote parity; it pins the selection step so the operator cannot ship an unreviewed target into the next DOSBox live attempt.",
+  "assetSet": {
+    "game": "Dungeon Master PC DOS English v3.4",
+    "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+  },
+  "selectorKind": "post_dungeon_reviewed_pairing_target",
+  "selectorVersion": 1,
+  "supportedTargetKinds": [
+    "creature_chain",
+    "champion_panel",
+    "wall_door_fakewall",
+    "viewport",
+    "collision"
+  ],
+  "globalRules": {
+    "routeStyle": "The post-dungeon route grammar is the same comma-separated Keypad-N[:label] list the live runner accepts at --post-dungeon-route (see docs/parity/tools/dosbox_capture_session.py --self-test-post-dungeon-route).",
+    "passagePin": "Every selection must reference at least one PASS_ID the live attempt is meant to advance (e.g. pass1058, pass1059, pass1071). The selector rejects selection_rationale that does not cite a known PASS_ID.",
+    "preconditions": [
+      "runbook step 5b.1 requires the live runner to have produced original/<NN>_<label>.png frames + dosbox_capture.post_dungeon_route.json before a target selection is retroactively considered reviewed; the reviewed-selection receipt is the gate, not the route receipt",
+      "the canonical preflight receipt (docs/parity/tools/dosbox_capture_preflight.py) must be reachable on disk for the selector to emit its reviewed-selection receipt"
+    ],
+    "nonClaims": [
+      "This contract does not promote original-vs-Firestaff pixel parity.",
+      "Selecting a reviewed target does not authorize promoting a parity row; pairing rows in docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md remain partial until the original frame bytes are paired against an indexed Firestaff fixture.",
+      "The selector does not launch DOSBox or read live frames; the validator runs hermetically against the selection JSON + the contract.",
+      "Reviewed target selection is an accountability gate; it does not make a partial capture into a full one."
+    ]
+  },
+  "kindContracts": [
+    {
+      "kind": "creature_chain",
+      "summary": "Step into (or near) a level-1 group line-of-sight so a Trolin or similar documented creature shows up in D2C and possibly D1C of the original viewport.",
+      "sourceAnchors": [
+        {
+          "file": "DUNVIEW.C",
+          "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+          "lines": "4547,5201-5586",
+          "claim": "creature draw, pose, flip, depth palette, and viewport compositing route"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "symbol": "G0219_as_Graphic558_CreatureAspects",
+          "lines": "1656-1685",
+          "claim": "I34E creature aspect table; Trolin is type 16"
+        }
+      ],
+      "minimumRouteSteps": 3,
+      "forbiddenRouteKeys": [],
+      "expectedTerminalClassifierState": "dungeon_gameplay",
+      "expectedTerminalSensorFamily": "viewport_creature_visible_or_imminent",
+      "requiredSelectionFields": [
+        "selected_creature_type",
+        "selected_creature_name",
+        "expected_view_square",
+        "expected_line_of_sight"
+      ],
+      "minimumSemanticChecks": [
+        "selected_creature_type resolves through G0219",
+        "expected_view_square is one of D2C|D1C|D3C|D3L|D3R",
+        "expected_line_of_sight == 'open' or 'turn_then_open'",
+        "reviewer_pass_id matches the live route's PASS_ID"
+      ]
+    },
+    {
+      "kind": "champion_panel",
+      "summary": "Trigger a champion-candidate or champion-mirror panel so a 4-champion HUD or single-champion status-box frame is reachable without leaving dungeon_gameplay.",
+      "sourceAnchors": [
+        {
+          "file": "CHAMDRAW.C",
+          "function": "F0296_DRAWCHAMPION_ChampionStatusBoxes_CPSE",
+          "lines": "1184-1262",
+          "claim": "champion status-box + portrait + bar-graph draw order"
+        },
+        {
+          "file": "OBJECT.C",
+          "function": "F0038_OBJECT_DrawIconInSlotBox",
+          "lines": "object_draw_icon_in_slot_box",
+          "claim": "inventory slot-box / hand-slot draw path that pass1061 / pass1062 gate against"
+        }
+      ],
+      "minimumRouteSteps": 2,
+      "forbiddenRouteKeys": [],
+      "expectedTerminalClassifierState": "dungeon_gameplay",
+      "expectedTerminalSensorFamily": "champion_panel_or_inventory_hand",
+      "requiredSelectionFields": [
+        "selected_panel_kind",
+        "panel_trigger_source"
+      ],
+      "minimumSemanticChecks": [
+        "selected_panel_kind in {four_champion_hud, single_champion_status, candidate_panel, mirror_panel, inventory_hand_slot}",
+        "panel_trigger_source describes a source-locked command sequence (C094 click, slot click, mouse_capture + Keypad-5, etc.)",
+        "reviewer_pass_id matches the live route's PASS_ID"
+      ]
+    },
+    {
+      "kind": "wall_door_fakewall",
+      "summary": "Step forward so the camera rests on a wall, an alcove, a closed door, a fakewall, or an open/fakewall-toggle boundary to expose one of the documented wall/door states to viewport-pixel pairing.",
+      "sourceAnchors": [
+        {
+          "file": "CLIKMENU.C",
+          "function": "F0366_CLIKMENU_TickMoveThing",
+          "lines": "clikmenu_tick_move_thing",
+          "claim": "wall/door/fakewall movement-blocks before F0267 commits"
+        },
+        {
+          "file": "CLIKVIEW.C",
+          "function": "F0377_CLIKVIEW_ProcessViewportClick",
+          "lines": "clikview_process_viewport_click",
+          "claim": "DOOR->Button path before wall/front-sensor fallthrough"
+        }
+      ],
+      "minimumRouteSteps": 2,
+      "forbiddenRouteKeys": [],
+      "expectedTerminalClassifierState": "dungeon_gameplay",
+      "expectedTerminalSensorFamily": "wall_or_door_or_fakewall",
+      "requiredSelectionFields": [
+        "selected_boundary_kind"
+      ],
+      "minimumSemanticChecks": [
+        "selected_boundary_kind in {wall_closeup, alcove_front_left, alcove_front_right, closed_door, fakewall, runtime_open_door, button_door}",
+        "reviewer_pass_id matches the live route's PASS_ID"
+      ]
+    },
+    {
+      "kind": "viewport",
+      "summary": "Capture a deterministic 3x3 viewport neighborhood without rotating or stepping so the original-vs-Firestaff overlay remains comparable to a Firestaff fixture row.",
+      "sourceAnchors": [
+        {
+          "file": "DUNVIEW.C",
+          "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+          "lines": "dungeonview_draw",
+          "claim": "viewport redraw on tick, consuming map/X/Y/direction tuple"
+        },
+        {
+          "file": "DUNVIEW.C",
+          "function": "F0097_DUNGEONVIEW_DrawViewport",
+          "lines": "dungeonview_draw_viewport",
+          "claim": "VIDRV_09_BlitViewPort present boundary for the 224x136 viewport crop"
+        }
+      ],
+      "minimumRouteSteps": 1,
+      "forbiddenRouteKeys": [],
+      "expectedTerminalClassifierState": "dungeon_gameplay",
+      "expectedTerminalSensorFamily": "viewport_neighborhood_locked",
+      "requiredSelectionFields": [
+        "locked_party_tuple"
+      ],
+      "minimumSemanticChecks": [
+        "locked_party_tuple is a 4-tuple map_index/x/y/direction with direction in 0..3",
+        "reviewer_pass_id matches the live route's PASS_ID"
+      ]
+    },
+    {
+      "kind": "collision",
+      "summary": "Drive party/tile collisions (wall, closed door, fakewall, open door, button door, party-occupied, diagonal) into a deterministic stasis so the same path on Firestaff replays the same collision response.",
+      "sourceAnchors": [
+        {
+          "file": "MOVESENS.C",
+          "function": "F0267_MOVEMENT_PerformMove_CPSC",
+          "lines": "movement_perform_move",
+          "claim": "movement commits G0306/G0307 only when no blocker blocked the move"
+        },
+        {
+          "file": "CLIKMENU.C",
+          "function": "F0366_CLIKMENU_TickMoveThing",
+          "lines": "clikmenu_tick_move_thing",
+          "claim": "wall/door/fakewall blocker detection"
+        }
+      ],
+      "minimumRouteSteps": 2,
+      "forbiddenRouteKeys": [],
+      "expectedTerminalClassifierState": "dungeon_gameplay",
+      "expectedTerminalSensorFamily": "collision_blocked_or_released",
+      "requiredSelectionFields": [
+        "selected_block_kind",
+        "expected_block_response"
+      ],
+      "minimumSemanticChecks": [
+        "selected_block_kind in {wall, closed_door, fakewall, party_occupied, diagonal_blocked}",
+        "expected_block_response in {blocked, door_state_changed, party_rotated, fakewall_toggled}",
+        "reviewer_pass_id matches the live route's PASS_ID"
+      ]
+    }
+  ],
+  "knownPassIds": [
+    "pass1052",
+    "pass1054",
+    "pass1055",
+    "pass1056",
+    "pass1057",
+    "pass1058",
+    "pass1059",
+    "pass1060",
+    "pass1071",
+    "pass1072"
+  ],
+  "forbiddenSelectionPatterns": [
+    {
+      "name": "short_route_no_anchor",
+      "description": "Routes that do not pin a pass_id plus a kind contract minimum step count together cannot be reviewed. The selector refuses if routeSteps.length < kindContract.minimumRouteSteps OR reviewer_pass_id is unset."
+    },
+    {
+      "name": "reviewer_unset",
+      "description": "Reviewed target selection must list a reviewer name + reviewer_run_id. The selector refuses if either is empty."
+    },
+    {
+      "name": "non_claims_missing",
+      "description": "The selector requires a non_claims list with at least the three baseline entries: 'pixel parity not promoted', 'proprietary frame bytes stay operator-local', 'selector is accountability, not promotion'."
+    },
+    {
+      "name": "preflight_pin_required",
+      "description": "The selector refuses if the cited preflight receipt path is missing or has not been written by an on-disk preflight invocation. The selector pre-flight reads the receipt and refuses if the SHA pin checks are not all PASS."
+    }
+  ],
+  "nonClaims": [
+    "No original-vs-Firestaff pixel parity is promoted by this contract.",
+    "No proprietary game frames are tracked, paired, or promoted.",
+    "No new tool changes any DM1 V1 / ReDMCSB source-locked behavior; this contract governs the operator's reviewed-target-selection step only.",
+    "Selecting a reviewed target does not retire any B1 / B3 capture-gap row. The pairing rows in docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md keep their existing labels until paired artifacts exist."
+  ]
+}

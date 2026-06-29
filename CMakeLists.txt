@@ -12700,6 +12700,22 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_dm1_v1_capture_runbook_consistency.py
     )
     set_tests_properties(dm1_v1_capture_runbook_consistency PROPERTIES TIMEOUT 360)
+
+    # -- DM1 V1 post-dungeon pairing-target selector hermetic selftest --
+    # The selector pins the reviewed-target-selection step the runbook
+    # Step 5b.1 requires before a live route is dispatched. Its
+    # self-test exercises the matching case for every supported kind
+    # and 11 negative cases against synthetic fixtures, with no DOSBox
+    # and no preflight receipt required. The runbook-consistency
+    # probe at tools/test_dm1_v1_capture_runbook_consistency.py runs
+    # the same selftest under post_dungeon_target_selector_selftest
+    # plus a route-key map pin; this CTest gate is the dedicated
+    # regression guard for the selector itself.
+    add_test(
+        NAME dm1_v1_post_dungeon_pairing_target_selector
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py --self-test
+    )
+    set_tests_properties(dm1_v1_post_dungeon_pairing_target_selector PROPERTIES TIMEOUT 60)
 endif()
 
 # -- DM1 V1 original capture route preflight gate -------------------
