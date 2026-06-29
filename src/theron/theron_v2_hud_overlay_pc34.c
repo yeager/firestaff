@@ -529,6 +529,108 @@ void theron_v2_hud_set_opacity(Theron_V2_HudOverlay *h, uint8_t val)
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+ * V1→V2 presentation snapshot seed gate
+ *
+ * This is the data-free handoff contract used by M11.  It reads the
+ * source-locked Theron V1 world and produces an optional V2 presentation
+ * overlay without mutating dungeon, party, champion, save, or Track 02
+ * bank state.  Source-lock anchors: THQUEST.ASM T520/T600/T800/T900;
+ * sibling pattern: dm2_v2_hud_runtime.c.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+static int theron_v2_hud_percent(int current, int maximum)
+{
+    if (maximum <= 0) {
+        return current > 0 ? 100 : 0;
+    }
+    if (current <= 0) {
+        return 0;
+    }
+    if (current >= maximum) {
+        return 100;
+    }
+    return (current * 100) / maximum;
+}
+
+static int theron_v2_hud_count_bits7(uint8_t mask)
+{
+    int count = 0;
+    mask &= 0x7Fu;
+    while (mask) {
+        count += (mask & 1u) ? 1 : 0;
+        mask >>= 1;
+    }
+    return count;
+}
+
+Theron_V2_HudSeedGate theron_v2_hud_seed_from_v1_world(
+    Theron_V2_HudOverlay *out,
+    const Theron_V1_World *world,
+    int v2PresentationEnabled)
+{
+    int questBits;
+
+    if (!out || !world) {
+        return THERON_V2_HUD_SEED_INVALID;
+    }
+
+    theron_v2_hud_init(out);
+
+    if (!v2PresentationEnabled) {
+        out->visible = false;
+        out->opacity = 0;
+        out->top_bar_visible = false;
+        out->stats_bar_visible = false;
+        out->action_strip.visible = false;
+        return THERON_V2_HUD_SEED_V1_SKIPPED;
+    }
+
+    theron_v2_hud_set_direction(out, world->party.leader_dir);
+    theron_v2_hud_set_dungeon_progress(
+        out,
+        world->progression.current_dungeon > 0
+            ? (int)world->progression.current_dungeon
+            : world->current_dungeon,
+        THERON_DUNGEON_COUNT);
+
+    questBits = theron_v2_hud_count_bits7(world->progression.quest_items_collected);
+    theron_v2_hud_set_quest_items(out,
+                                  world->progression.quest_items_in_current_dungeon,
+                                  world->quest_items_in_dungeon);
+    theron_v2_hud_set_relics(out, questBits, THERON_QUEST_ITEM_COUNT);
+    theron_v2_hud_set_rune_indicator(out, false, false, -1);
+    theron_v2_hud_set_action_active(out, THERON_V2_ACTION_MOVE);
+
+    for (int i = 0; i < THERON_MAX_CHAMPIONS; ++i) {
+        const Theron_V1_Champion *c = &world->party.champions[i];
+        if (i >= world->party.champion_count) {
+            theron_v2_hud_set_champion_bar(out, i, 0, 0, 0, i == 0, false);
+            continue;
+        }
+        theron_v2_hud_set_champion_bar(
+            out,
+            i,
+            theron_v2_hud_percent(c->health, c->max_health),
+            theron_v2_hud_percent(c->stamina, c->max_stamina),
+            theron_v2_hud_percent(c->mana, c->max_mana),
+            i == world->party.active_slot,
+            c->alive && c->mana > 0);
+    }
+
+    return THERON_V2_HUD_SEED_V2_READY;
+}
+
+const char *theron_v2_hud_seed_gate_name(Theron_V2_HudSeedGate gate)
+{
+    switch (gate) {
+    case THERON_V2_HUD_SEED_INVALID:    return "INVALID";
+    case THERON_V2_HUD_SEED_V1_SKIPPED: return "V1_SKIPPED";
+    case THERON_V2_HUD_SEED_V2_READY:   return "V2_READY";
+    default:                            return "UNKNOWN";
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
  * Main render entry
  *
  * Source-lock: THQUEST.ASM T600 (UI overlay zones) for the top-bar

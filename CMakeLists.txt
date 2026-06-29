@@ -2107,6 +2107,29 @@ set_tests_properties(theron_v2_phase3_hud_overlay_probe PROPERTIES
     LABELS "tier2;theron;v2;phase3;hud;presentation-only"
 )
 
+# Theron V2 HUD overlay seed gate. Headless: no game data.
+# Proves the V1->V2 presentation snapshot can be built from a const
+# Theron V1 world without mutating V1 runtime bytes, and that V1
+# original mode returns a hidden overlay that paints no pixels.
+add_executable(firestaff_theron_v2_overlay_seed_gate_probe
+    probes/firestaff_theron_v2_overlay_seed_gate_probe.c
+    src/theron/theron_v2_hud_overlay_pc34.c)
+target_include_directories(firestaff_theron_v2_overlay_seed_gate_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/theron)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v2_overlay_seed_gate_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_theron_v2_overlay_seed_gate_probe
+    COMMAND firestaff_theron_v2_overlay_seed_gate_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(firestaff_theron_v2_overlay_seed_gate_probe PROPERTIES
+    LABELS "tier2;theron;v2;phase3;hud;presentation-only;seed-gate"
+)
+
 # Theron V2 HUD widget asset manifest probe. Headless: no game data.
 # See include/theron_v2_hud_widget_assets_pc34.h. Mirrors the DM2 V2
 # widget-assets gate pattern (dm2_v2_hud_widget_assets_pc34) but for
