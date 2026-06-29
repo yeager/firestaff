@@ -22,8 +22,8 @@
  * addition of an optional `generator` field. When `generator` ==
  * "placeholder", the slot is the procedural fallback. Any other
  * value (e.g. "pbr_hero", "ai_upscale", "reviewed") is a non-
- * placeholder marker that, combined with a disk-resolvable
- * `source_file`, promotes the slot to REAL.
+ * placeholder marker that, combined with a disk-resolvable PNG whose
+ * IHDR dimensions match the manifest, promotes the slot to REAL.
  *
  * Source-lock:
  *   - ReDMCSB DUNVIEW.C:6697-6816 (DM1 viewport composition order)
@@ -142,6 +142,61 @@ static int dm1_v22_famg_file_exists(const char* path) {
     FILE* fp = fopen(path, "rb");
     if (fp) { fclose(fp); return 1; }
     return 0;
+}
+
+static uint32_t dm1_v22_famg_read_be32(const unsigned char* p) {
+    return ((uint32_t)p[0] << 24) |
+           ((uint32_t)p[1] << 16) |
+           ((uint32_t)p[2] << 8)  |
+           (uint32_t)p[3];
+}
+
+static int dm1_v22_famg_png_header(const char* path,
+                                   int* out_width,
+                                   int* out_height) {
+    static const unsigned char k_png_sig[8] = {
+        0x89u, 0x50u, 0x4eu, 0x47u, 0x0du, 0x0au, 0x1au, 0x0au
+    };
+    unsigned char header[24];
+    FILE* fp;
+    size_t got;
+    if (out_width) *out_width = 0;
+    if (out_height) *out_height = 0;
+    if (!path || path[0] == '\0') return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    got = fread(header, 1, sizeof(header), fp);
+    fclose(fp);
+    if (got != sizeof(header)) return 0;
+    if (memcmp(header, k_png_sig, sizeof(k_png_sig)) != 0) return 0;
+    if (header[8] != 0x00u || header[9] != 0x00u ||
+        header[10] != 0x00u || header[11] != 0x0du) {
+        return 0;
+    }
+    if (memcmp(header + 12, "IHDR", 4) != 0) return 0;
+    uint32_t w = dm1_v22_famg_read_be32(header + 16);
+    uint32_t h = dm1_v22_famg_read_be32(header + 20);
+    if (w == 0U || h == 0U || w > 32768U || h > 32768U) return 0;
+    if (out_width) *out_width = (int)w;
+    if (out_height) *out_height = (int)h;
+    return 1;
+}
+
+static int dm1_v22_famg_png_header_matches(const char* path,
+                                           int expected_width,
+                                           int expected_height,
+                                           int* out_width,
+                                           int* out_height) {
+    int actual_width = 0;
+    int actual_height = 0;
+    if (!dm1_v22_famg_png_header(path, &actual_width, &actual_height)) {
+        if (out_width) *out_width = actual_width;
+        if (out_height) *out_height = actual_height;
+        return 0;
+    }
+    if (out_width) *out_width = actual_width;
+    if (out_height) *out_height = actual_height;
+    return actual_width == expected_width && actual_height == expected_height;
 }
 
 static int dm1_v22_famg_file_starts_with_object(const char* path) {
@@ -470,15 +525,25 @@ DM1_V22_FamgClass dm1_v22_famg_classify_slot(DM1_V22_FamgSlot slot) {
     }
 
     /* Real asset: required fields + non-placeholder generator +
-     * source_file resolves on disk. */
+     * source_file resolves on disk + PNG IHDR dimensions match the
+     * manifest. This keeps text files renamed to .png from promoting
+     * the finished-art gate. */
     char resolved_path[FSP_PATH_MAX];
     int exists = dm1_v22_famg_resolve_source_file(g_manifest_path,
                                                   k_slot_table[slot].category,
                                                   raw.source_file,
                                                   resolved_path,
                                                   sizeof(resolved_path));
-    return exists ? DM1_V22_FAMG_CLASS_REAL
-                  : DM1_V22_FAMG_CLASS_PARTIAL;
+    if (!exists) {
+        return DM1_V22_FAMG_CLASS_PARTIAL;
+    }
+    return dm1_v22_famg_png_header_matches(resolved_path,
+                                           raw.width,
+                                           raw.height,
+                                           NULL,
+                                           NULL)
+               ? DM1_V22_FAMG_CLASS_REAL
+               : DM1_V22_FAMG_CLASS_PARTIAL;
 }
 
 int dm1_v22_famg_get_slot_info(DM1_V22_FamgSlot slot,
@@ -517,6 +582,14 @@ int dm1_v22_famg_get_slot_info(DM1_V22_FamgSlot slot,
                                                       out->resolved_path,
                                                       sizeof(out->resolved_path));
         out->file_exists = exists ? 1 : 0;
+        if (exists) {
+            out->png_header_valid =
+                dm1_v22_famg_png_header_matches(out->resolved_path,
+                                                out->width,
+                                                out->height,
+                                                &out->png_width,
+                                                &out->png_height);
+        }
     }
     return 1;
 }
@@ -566,7 +639,7 @@ DM1_V22_FamgGate dm1_v22_famg_gate(void) {
         return g_last_gate;
     }
 
-    if (real == total) {
+    if (real == (int)DM1_V22_FAMG_MATERIAL_COUNT) {
         g_last_gate = DM1_V22_FAMG_GATE_FINISHED_REAL;
         g_installed = 1;
     } else if (real > 0) {
@@ -666,7 +739,7 @@ const char* dm1_v22_famg_source_evidence(void) {
         "Manifest path: ~/.firestaff/assets/dm1/modern/modern_asset_manifest.json\n"
         "Schema: { id, generator, source_file, width, height } per slot entry\n"
         "Generator 'placeholder' is the procedural fallback marker (synthetic)\n"
-        "Non-placeholder generator + source_file resolves on disk = REAL\n"
+        "Non-placeholder generator + source_file resolves on disk + PNG IHDR dimensions match = REAL\n"
         "Gate states: NOT_PROBED / NO_MANIFEST / SYNTHETIC_PLACEHOLDER / PARTIAL / FINISHED_REAL\n"
         "FINISHED_REAL requires every tracked slot to be REAL with non-placeholder generator\n"
         "V1 invariant: V1 command routes, dungeon state, save/restore NEVER bypassed\n"
@@ -675,6 +748,7 @@ const char* dm1_v22_famg_source_evidence(void) {
         "It does NOT claim finished PBR art has been reviewed or shipped.\n"
         "FINISHED_REAL promotion requires operator-installed hero PNGs at\n"
         "~/.firestaff/assets/dm1/modern/<category>/<source_file> with\n"
-        "generator != 'placeholder' and a non-zero width/height, plus a\n"
+        "generator != 'placeholder', PNG signature + IHDR dimensions matching\n"
+        "the manifest width/height, plus a\n"
         "sibling gap-list update to mark the real-asset promotion gate green.\n";
 }

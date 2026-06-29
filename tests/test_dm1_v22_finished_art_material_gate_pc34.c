@@ -28,6 +28,8 @@
  *  16. is_finished_real() / is_synthetic_or_partial() mirror gate state
  *  17. NULL / out-of-range inputs are safe
  *  18. Source-evidence citation contains the documented anchors
+ *  19. Non-placeholder entries require PNG signature + matching IHDR
+ *      dimensions before promoting to REAL
  *
  * Source-locked against the module under test
  * include/dm1_v22_finished_art_material_gate_pc34.h. Sibling gate
@@ -66,6 +68,36 @@ static int write_file(const char* path, const char* content) {
     size_t written = fwrite(content, 1, len, fp);
     fclose(fp);
     return (written == len);
+}
+
+static void put_be32(unsigned char* p, unsigned v) {
+    p[0] = (unsigned char)((v >> 24) & 0xffU);
+    p[1] = (unsigned char)((v >> 16) & 0xffU);
+    p[2] = (unsigned char)((v >> 8) & 0xffU);
+    p[3] = (unsigned char)(v & 0xffU);
+}
+
+/* Header-only PNG fixture: enough for signature + IHDR provenance gates.
+ * CRC/pixel chunks are intentionally omitted because this gate does not
+ * decode image pixels. */
+static int write_png_header_file(const char* path, unsigned width, unsigned height) {
+    static const unsigned char sig[8] = {
+        0x89u, 0x50u, 0x4eu, 0x47u, 0x0du, 0x0au, 0x1au, 0x0au
+    };
+    unsigned char hdr[24];
+    FILE* fp;
+    memcpy(hdr, sig, sizeof(sig));
+    hdr[8] = 0x00u; hdr[9] = 0x00u; hdr[10] = 0x00u; hdr[11] = 0x0du;
+    memcpy(hdr + 12, "IHDR", 4);
+    put_be32(hdr + 16, width);
+    put_be32(hdr + 20, height);
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(hdr, 1, sizeof(hdr), fp) != sizeof(hdr)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
 }
 
 /* Helper: build the manifest path that the module resolves for a given
@@ -344,8 +376,14 @@ static void test_real_slot_classifies_as_real(void) {
                  dm1_v22_famg_slot_category((DM1_V22_FamgSlot)i),
                  files[i]);
         if (access(fpath, F_OK) != 0) {
-            CHECK(write_file(fpath, "fake-png-bytes-for-test"),
-                  "wrote on-disk file for slot");
+            CHECK(write_png_header_file(fpath,
+                                        (i == DM1_V22_FAMG_DOOR_FRONT) ? 32U :
+                                        (i == DM1_V22_FAMG_CREATURE_DEMON ||
+                                         i == DM1_V22_FAMG_CHAMPION_WARRIOR) ? 48U : 64U,
+                                        (i == DM1_V22_FAMG_DOOR_FRONT) ? 48U :
+                                        (i == DM1_V22_FAMG_CREATURE_DEMON ||
+                                         i == DM1_V22_FAMG_CHAMPION_WARRIOR) ? 48U : 64U),
+                  "wrote PNG-header fixture for slot");
         }
     }
 
@@ -399,8 +437,8 @@ static void test_partial_when_some_real(void) {
     char real_file[FSP_PATH_MAX];
     snprintf(real_file, sizeof(real_file),
              "%s/wall_shapes/wall_d3_carved_hero_01.png", assets_root);
-    CHECK(write_file(real_file, "fake-png-bytes-for-test"),
-          "wrote real asset file");
+    CHECK(write_png_header_file(real_file, 64U, 64U),
+          "wrote PNG-header real asset file");
 
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
@@ -496,6 +534,64 @@ static void test_partial_when_real_but_missing_source_file(void) {
           "PARTIAL-only slots -> SYNTHETIC_PLACEHOLDER gate");
 }
 
+static void test_real_metadata_requires_png_header_match(void) {
+    clean_scratch();
+    const char* dataDir = "/tmp/scratch/dm1-famg-data/data/dm1";
+    char manifest_path[FSP_PATH_MAX];
+    char assets_root[FSP_PATH_MAX];
+    build_expected_manifest_path(manifest_path, sizeof(manifest_path), dataDir);
+    snprintf(assets_root, sizeof(assets_root),
+             "%s/../../assets/dm1/modern", dataDir);
+    char mkdir_cmd[1200];
+    snprintf(mkdir_cmd, sizeof(mkdir_cmd),
+             "mkdir -p '%s/wall_shapes'", assets_root);
+    system(mkdir_cmd);
+
+    const char* content =
+        "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
+        "\"wall_shapes\":["
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"wall_d3_carved_hero_01.png\","
+        "\"width\":64,\"height\":64}"
+        "]}";
+    CHECK(write_file(manifest_path, content),
+          "wrote manifest for PNG-header negative tests");
+
+    char real_file[FSP_PATH_MAX];
+    snprintf(real_file, sizeof(real_file),
+             "%s/wall_shapes/wall_d3_carved_hero_01.png", assets_root);
+
+    CHECK(write_file(real_file, "fake-png-bytes-for-test"),
+          "wrote text file with .png suffix");
+    dm1_v22_famg_set_manifest_path(dataDir);
+    DM1_V22_FamgClass cls = dm1_v22_famg_classify_slot(
+        DM1_V22_FAMG_WALL_D3_CARVED);
+    CHECK(cls == DM1_V22_FAMG_CLASS_PARTIAL,
+          "non-placeholder .png text file -> PARTIAL, not REAL");
+    DM1_V22_FamgSlotInfo info;
+    CHECK(dm1_v22_famg_get_slot_info(
+              DM1_V22_FAMG_WALL_D3_CARVED, &info) == 1,
+          "slot info available for bad PNG");
+    CHECK(info.file_exists == 1, "bad PNG file still exists");
+    CHECK(info.png_header_valid == 0,
+          "bad PNG does not pass png_header_valid");
+    CHECK(info.classification == DM1_V22_FAMG_CLASS_PARTIAL,
+          "bad PNG slot info classification=PARTIAL");
+
+    CHECK(write_png_header_file(real_file, 32U, 64U),
+          "wrote mismatched PNG-header fixture");
+    cls = dm1_v22_famg_classify_slot(DM1_V22_FAMG_WALL_D3_CARVED);
+    CHECK(cls == DM1_V22_FAMG_CLASS_PARTIAL,
+          "PNG IHDR dimension mismatch -> PARTIAL, not REAL");
+    CHECK(dm1_v22_famg_get_slot_info(
+              DM1_V22_FAMG_WALL_D3_CARVED, &info) == 1,
+          "slot info available for mismatched PNG");
+    CHECK(info.png_width == 32, "mismatch reports actual png_width=32");
+    CHECK(info.png_height == 64, "mismatch reports actual png_height=64");
+    CHECK(info.png_header_valid == 0,
+          "dimension mismatch does not pass png_header_valid");
+}
+
 static void test_partial_when_fields_missing(void) {
     clean_scratch();
     const char* dataDir = "/tmp/scratch/dm1-famg-data/data/dm1";
@@ -542,7 +638,7 @@ static void test_get_slot_info_populates_fields(void) {
     char real_file[FSP_PATH_MAX];
     snprintf(real_file, sizeof(real_file),
              "%s/wall_shapes/wall_d3_carved_hero_01.png", assets_root);
-    write_file(real_file, "fake-png-bytes-for-test");
+    write_png_header_file(real_file, 64U, 64U);
 
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
@@ -569,9 +665,14 @@ static void test_get_slot_info_populates_fields(void) {
     CHECK(info.width == 64, "slot info width=64");
     CHECK(info.height == 64, "slot info height=64");
     CHECK(info.file_exists == 1, "slot info file_exists=1");
+    CHECK(info.png_header_valid == 1, "slot info png_header_valid=1");
+    CHECK(info.png_width == 64, "slot info png_width=64");
+    CHECK(info.png_height == 64, "slot info png_height=64");
     CHECK(info.classification == DM1_V22_FAMG_CLASS_REAL,
           "slot info classification=REAL");
     CHECK(info.resolved_path[0] != '\0', "resolved_path populated");
+    CHECK(dm1_v22_famg_gate() == DM1_V22_FAMG_GATE_PARTIAL,
+          "one REAL slot with five omitted required slots -> PARTIAL gate");
 
     /* NULL out is safe */
     dm1_v22_famg_get_slot_info(
@@ -673,6 +774,8 @@ static void test_source_evidence_citations(void) {
           "mentions m11_v22_inplace_draw");
     CHECK(strstr(ev, "modern_asset_manifest.json") != NULL,
           "mentions manifest filename");
+    CHECK(strstr(ev, "PNG IHDR") != NULL,
+          "mentions PNG IHDR provenance");
     CHECK(strstr(ev, "FIRESTAFF_GAP_LIST") != NULL, "mentions gap list");
     CHECK(strstr(ev, "Honest boundary") != NULL,
           "mentions honest boundary");
@@ -756,6 +859,7 @@ int main(void) {
     test_real_slot_classifies_as_real();
     test_partial_when_some_real();
     test_partial_when_real_but_missing_source_file();
+    test_real_metadata_requires_png_header_match();
     test_partial_when_fields_missing();
     test_get_slot_info_populates_fields();
     test_slot_count_is_six();
