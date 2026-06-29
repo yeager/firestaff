@@ -73,6 +73,8 @@ need real-asset proof.
 
 - **CSB V1 real-asset ornament capture provenance**: `firestaff_csb_v1_pc_real_asset_ornament_blit_probe` now records a JSON manifest beside its deterministic PPM/SHA capture, including the verified PC 3.4 GRAPHICS.DAT MD5, selected bitmap index/dimensions/span, D1C floor-band rows, F0108/F0115 source anchors, and tally counts. The gate remains skip-safe and does not claim original pixel parity.
 
+- **X68000 HDM FTL handoff receipt hardening**: the X68000 media classifier now exposes an explicit windowed FTL magic counter, and the skip-safe real-HDM handoff probe uses it to distinguish the legacy first-32KiB sniff from full-disk embedded `.FTL` payload evidence.
+
 ## Verification
 
 - 55 commits ship on top of `v3.0.12`, including this release-prep commit.
