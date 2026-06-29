@@ -2,6 +2,7 @@
 #define FIRESTAFF_THERON_V2_HUD_OVERLAY_PC34_H
 #include <stdint.h>
 #include <stdbool.h>
+#include "theron_v1_world.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -174,6 +175,14 @@ typedef struct
     uint8_t hit_flash_timer; /* decrements each render */
 } Theron_V2_HudOverlay;
 
+/* ── V1→V2 presentation snapshot seed gate ────────────────────────── */
+typedef enum
+{
+    THERON_V2_HUD_SEED_INVALID    = 0, /* NULL input / unusable snapshot */
+    THERON_V2_HUD_SEED_V1_SKIPPED = 1, /* V1 original path: overlay hidden */
+    THERON_V2_HUD_SEED_V2_READY   = 2  /* V2 presentation path: overlay ready */
+} Theron_V2_HudSeedGate;
+
 /* ── Lifecycle ─────────────────────────────────────────────────────── */
 void theron_v2_hud_init(Theron_V2_HudOverlay *h);
 void theron_v2_hud_reset(Theron_V2_HudOverlay *h);
@@ -192,6 +201,18 @@ void theron_v2_hud_set_action_active(Theron_V2_HudOverlay *h, Theron_V2_ActionIc
 void theron_v2_hud_trigger_hit_flash(Theron_V2_HudOverlay *h);
 void theron_v2_hud_toggle(Theron_V2_HudOverlay *h);
 void theron_v2_hud_set_opacity(Theron_V2_HudOverlay *h, uint8_t val);
+
+/* Seed the presentation overlay from a read-only Theron V1 world.
+ * v2PresentationEnabled=0 deliberately returns V1_SKIPPED and leaves
+ * the overlay hidden, so an accidental render call still writes no
+ * pixels. This helper never mutates world state; it only builds the
+ * presentation snapshot used by M11 before calling theron_v2_hud_render. */
+Theron_V2_HudSeedGate theron_v2_hud_seed_from_v1_world(
+    Theron_V2_HudOverlay *out,
+    const Theron_V1_World *world,
+    int v2PresentationEnabled);
+
+const char *theron_v2_hud_seed_gate_name(Theron_V2_HudSeedGate gate);
 
 /* ── Geometry constants (also used by hit-test in sibling modules) ─── */
 /* Top-bar zone (y=0..23) - V2 chrome overlays the V1 top-bar

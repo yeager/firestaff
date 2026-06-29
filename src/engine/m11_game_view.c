@@ -90,42 +90,14 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
  * helpers access to the current game state for asset-backed rendering. */
 static const M11_GameViewState* g_drawState = NULL;
 
-static int m11_theron_percent(int current, int maximum)
-{
-    if (maximum <= 0) {
-        return current > 0 ? 100 : 0;
-    }
-    if (current <= 0) {
-        return 0;
-    }
-    if (current >= maximum) {
-        return 100;
-    }
-    return (current * 100) / maximum;
-}
-
-static int m11_theron_count_bits7(uint8_t mask)
-{
-    int count = 0;
-    mask &= 0x7Fu;
-    while (mask) {
-        count += (mask & 1u) ? 1 : 0;
-        mask >>= 1;
-    }
-    return count;
-}
-
 static void m11_theron_render_v2_hud(const M11_GameViewState* state,
                                      const Theron_V1_World* world,
                                      Theron_V1_Viewport* viewport)
 {
     Theron_V2_HudOverlay hud;
-    int questBits;
+    Theron_V2_HudSeedGate gate;
 
     if (!state || !world || !viewport || !viewport->fb.data) {
-        return;
-    }
-    if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
         return;
     }
     if (viewport->fb.w <= 0 || viewport->fb.h <= 0) {
@@ -142,38 +114,12 @@ static void m11_theron_render_v2_hud(const M11_GameViewState* state,
         return;
     }
 
-    theron_v2_hud_init(&hud);
-    theron_v2_hud_set_direction(&hud, world->party.leader_dir);
-    theron_v2_hud_set_dungeon_progress(
+    gate = theron_v2_hud_seed_from_v1_world(
         &hud,
-        world->progression.current_dungeon > 0
-            ? (int)world->progression.current_dungeon
-            : world->current_dungeon,
-        THERON_DUNGEON_COUNT);
-
-    questBits = m11_theron_count_bits7(world->progression.quest_items_collected);
-    theron_v2_hud_set_quest_items(&hud,
-                                  world->progression.quest_items_in_current_dungeon,
-                                  world->quest_items_in_dungeon);
-    theron_v2_hud_set_relics(&hud, questBits, THERON_QUEST_ITEM_COUNT);
-    theron_v2_hud_set_rune_indicator(&hud, false, false, -1);
-    theron_v2_hud_set_action_active(&hud, THERON_V2_ACTION_MOVE);
-
-    for (int i = 0; i < THERON_MAX_CHAMPIONS; ++i) {
-        const Theron_V1_Champion* c =
-            theron_v1_party_getChampion_c(&world->party, i);
-        if (!c || i >= world->party.champion_count) {
-            theron_v2_hud_set_champion_bar(&hud, i, 0, 0, 0, i == 0, false);
-            continue;
-        }
-        theron_v2_hud_set_champion_bar(
-            &hud,
-            i,
-            m11_theron_percent(c->health, c->max_health),
-            m11_theron_percent(c->stamina, c->max_stamina),
-            m11_theron_percent(c->mana, c->max_mana),
-            i == world->party.active_slot,
-            c->alive && c->mana > 0);
+        world,
+        state->presentationMode != M12_PRESENTATION_V1_ORIGINAL);
+    if (gate != THERON_V2_HUD_SEED_V2_READY) {
+        return;
     }
 
     /* Theron V2 Phase 3 is presentation-only: the V1 Track 02 world,
