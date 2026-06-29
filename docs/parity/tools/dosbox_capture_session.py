@@ -964,6 +964,26 @@ def dry_run(plan: list[PlanStep],
             attempts = movement_receipt.get("action_attempts", [])
             if len(attempts) != 2:
                 failures.append("movement receipt: action attempts missing")
+            elif not all(isinstance(attempt, dict) for attempt in attempts):
+                failures.append("movement receipt: action attempts are not objects")
+            else:
+                mouse_attempt = attempts[0]
+                keyboard_attempt = attempts[1]
+                if mouse_attempt.get("action_key") != DUNGEON_MOVE_FORWARD_CLICK_KEY:
+                    failures.append("movement receipt: C070 mouse attempt missing")
+                if mouse_attempt.get("source_anchor") != DUNGEON_MOVE_FORWARD_SOURCE:
+                    failures.append("movement receipt: C070 source anchor missing")
+                mouse_coord = mouse_attempt.get("screen_coord_320x200", {})
+                if (not isinstance(mouse_coord, dict) or
+                        mouse_coord.get("x") != 276 or
+                        mouse_coord.get("y") != 135):
+                    failures.append("movement receipt: C070 source coordinate missing")
+                if keyboard_attempt.get("action_key") != DUNGEON_MOVE_FORWARD_KEYBOARD_KEY:
+                    failures.append("movement receipt: keyboard fallback attempt missing")
+                if keyboard_attempt.get("source_anchor") != DUNGEON_MOVE_FORWARD_KEYBOARD_SOURCE:
+                    failures.append("movement receipt: keyboard source anchor missing")
+                if keyboard_attempt.get("keyboard_key") != DUNGEON_MOVE_FORWARD_KEYBOARD_KEY:
+                    failures.append("movement receipt: keyboard key metadata missing")
             coord = movement_receipt.get("screen_coord_320x200", {})
             if coord.get("x") != 276 or coord.get("y") != 135:
                 failures.append("movement receipt: source-zone coordinate mismatch")
@@ -2604,6 +2624,37 @@ def _write_live_abort_receipt(
     return out
 
 
+def _movement_action_attempts_with_source_anchors(
+        action_attempts: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Return movement attempts annotated with their source route anchors.
+
+    The live route first tries the source C070 mouse zone and then falls
+    back to Keypad-5 if DOSBox ignores the mouse path.  Keeping each
+    attempt's source anchor inside the receipt prevents downstream
+    pairing tools from mistaking a keyboard fallback for proof of the
+    mouse-zone path, or vice versa.
+    """
+    annotated: list[dict[str, object]] = []
+    for attempt in action_attempts:
+        row = dict(attempt)
+        action_key = str(row.get("action_key", ""))
+        if action_key == DUNGEON_MOVE_FORWARD_CLICK_KEY:
+            row.setdefault("source_anchor", DUNGEON_MOVE_FORWARD_SOURCE)
+            row.setdefault("screen_coord_320x200", {
+                "x": DUNGEON_MOVE_FORWARD_CLICK_SCREEN_COORD[0],
+                "y": DUNGEON_MOVE_FORWARD_CLICK_SCREEN_COORD[1],
+            })
+            row.setdefault("framebuffer_fraction", {
+                "x": DUNGEON_MOVE_FORWARD_CLICK_FRAC[0],
+                "y": DUNGEON_MOVE_FORWARD_CLICK_FRAC[1],
+            })
+        elif action_key == DUNGEON_MOVE_FORWARD_KEYBOARD_KEY:
+            row.setdefault("source_anchor", DUNGEON_MOVE_FORWARD_KEYBOARD_SOURCE)
+            row.setdefault("keyboard_key", DUNGEON_MOVE_FORWARD_KEYBOARD_KEY)
+        annotated.append(row)
+    return annotated
+
+
 def _write_live_movement_receipt(
         capture_root: Path,
         before_quality: FrameQuality,
@@ -2638,7 +2689,7 @@ def _write_live_movement_receipt(
         },
         "keyboard_key": DUNGEON_MOVE_FORWARD_KEYBOARD_KEY,
         "keyboard_source_anchor": DUNGEON_MOVE_FORWARD_KEYBOARD_SOURCE,
-        "action_attempts": action_attempts,
+        "action_attempts": _movement_action_attempts_with_source_anchors(action_attempts),
         "before_frame": str(before_path),
         "after_frame": str(after_path),
         "before_quality": asdict(before_quality),
