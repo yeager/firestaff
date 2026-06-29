@@ -23504,6 +23504,29 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12
     )
 endif()
 
+# M12 save browser input dispatch + delete + scroll-window contract.
+# Pins the launcher-side navigation and on-disk delete path of
+# src/shared/save_browser_m12.c (M12_SaveBrowser_HandleInput + Scan
+# mtime-desc qsort + M12_SaveBrowser_DeleteSelected + GetSelected
+# NULL/bounds rejection) that decides which save the M12 -> M11 game
+# view handoff will read. Data-free deterministic gate, no real
+# Firestaff save bytes, no SDL window, no M11 tick.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_input_delete_m12.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/save_browser_m12.c")
+    add_executable(test_save_browser_input_delete_m12
+        tests/test_save_browser_input_delete_m12.c
+        src/shared/save_browser_m12.c
+    )
+    target_link_libraries(test_save_browser_input_delete_m12 PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_save_browser_input_delete_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME save_browser_input_delete_m12
+        COMMAND test_save_browser_input_delete_m12
+    )
+endif()
+
 # DM1 V1 PC 3.4 native save exporter/importer regression (LSV-01) +
 # LSV-02 per-game versioned manifest gate. Source-locked against
 # ReDMCSB LOADSAVE.C + SAVEHEAD.C + READWRIT.C; per-game gate lives
