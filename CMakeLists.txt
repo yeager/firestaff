@@ -13038,6 +13038,10 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     )
     set_tests_properties(dm1_v1_original_capture_live_row_gate PROPERTIES TIMEOUT 300)
     add_test(
+        NAME pass1075_dm1_v1_original_transcript_live_debugger_row_gate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1075_dm1_v1_original_transcript_live_debugger_row_gate.py
+    )
+    add_test(
         NAME dm1_v1_capture_runbook_consistency
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_dm1_v1_capture_runbook_consistency.py
     )
