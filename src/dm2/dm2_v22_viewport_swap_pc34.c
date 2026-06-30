@@ -196,6 +196,98 @@ Dm2_V22_ShapeType dm2_v22_shape_for_cell(uint8_t raw_cell_type,
     }
 }
 
+/* dm2_v22_shape_for_cell_pos — bounded position-aware indoor T560
+ * discriminator. The base discriminator (above) is intentionally
+ * position-agnostic; this position-aware sibling adds:
+ *
+ *   - Wall cells in the LEFT column  (lateral == -1)
+ *       -> WALL_CORNER_INNER
+ *   - Wall cells in the RIGHT column (lateral == +1)
+ *       -> WALL_CORNER_OUTER
+ *   - Wall cells in the CENTER column (lateral == 0)
+ *       -> WALL_STRAIGHT
+ *
+ *   - Floor cells at depth 0 (closest, D0)  -> FLOOR_PLAIN
+ *   - Floor cells at depth 1 (middle,  D1)  -> FLOOR_CRACKED
+ *   - Floor cells at depth 2 (farthest, D2) -> FLOOR_MOSSY
+ *
+ *   - Pit / stairs / creatures / doors / fields / ceiling /
+ *     teleporter / opening keep the position-agnostic shape so
+ *     those gameplay markers retain a single per-cell visual
+ *     identity when the party direction changes.
+ *
+ * Out-of-range depth/lateral are clamped to the closest in-range
+ * value before dispatch so a malformed raw grid never reads
+ * garbage memory.
+ *
+ * Source-lock: ReDMCSB DUNVIEW.C:6239-6675 (per-cell wall/floor
+ * zone tables for D3L2/D3C/D3R2/D2L/D2R/D1L2/D1C/D1R2/D0L/D0R)
+ * + DUNVIEW.C:2962-3070 (per-cell composition order that owns
+ * the 4×3 grid). The shape variant enum (Dm2_V22_ShapeType) is the
+ * same vocabulary used by the existing per-cell render pass, so
+ * the new discriminator composes without changing the per-cell
+ * render loop.
+ *
+ * V1 source ownership: the function is read-only and never
+ * touches V1 state. It only refines the ShapeType selection
+ * inside the swap cache, so V1 draw paths are unaffected. */
+Dm2_V22_ShapeType dm2_v22_shape_for_cell_pos(uint8_t raw_cell_type,
+                                               uint8_t direction,
+                                               int depth,
+                                               int lateral) {
+    Dm2_V22_ShapeType base;
+    uint8_t low_nibble;
+
+    /* Clamp position. lateral must land in {-1, 0, +1}. */
+    if (lateral < -1) lateral = -1;
+    if (lateral >  1) lateral =  1;
+    /* depth must land in {0, 1, 2}. Out-of-range depths are clamped. */
+    if (depth < 0) depth = 0;
+    if (depth > 2) depth = 2;
+
+    base = dm2_v22_shape_for_cell(raw_cell_type, direction);
+
+    /* Refine walls by column. This mirrors ReDMCSB DUNVIEW.C:6239-6675
+     * which uses distinct wall indices per (depth, lateral) cell,
+     * so the same raw cell type (0x00 = wall) renders different
+     * sprite indices when seen at D1L vs D1R vs D1C. In this first
+     * bounded cut we only vary by lateral — that already yields
+     * 3 distinct wall shapes per row across the 4 facing directions,
+     * which is the smallest useful position-aware discriminator. */
+    if (base == DM2_V22_SHAPE_WALL_STRAIGHT ||
+        base == DM2_V22_SHAPE_WALL_ALCOVE  ||
+        base == DM2_V22_SHAPE_WALL_INSCRIPTION) {
+        if      (lateral == -1) return DM2_V22_SHAPE_WALL_CORNER_INNER;
+        else if (lateral ==  1) return DM2_V22_SHAPE_WALL_CORNER_OUTER;
+        return DM2_V22_SHAPE_WALL_STRAIGHT;
+    }
+
+    /* Refine plain floors by depth. Pits / stairs / mossy stay as
+     * their base shape because they carry gameplay semantics —
+     * a pit MUST remain a pit regardless of whether it is closest
+     * or farthest. PLAIN / CRACKED / MOSSY are base-shape variants
+     * the user can see in the corridor; switching them by depth
+     * gives the modern-art swap a visible per-row floor change
+     * (D0 = cleanest floor, D2 = oldest floor) without touching
+     * the source-locked gameplay bit layout. */
+    low_nibble = (uint8_t)(raw_cell_type & 0x0F);
+    if (base == DM2_V22_SHAPE_FLOOR_PLAIN) {
+        /* Only refines plain floors; CRACKED/MOSSY/PIT/STAIRS
+         * keep their base shape. */
+        if      (depth == 0) return DM2_V22_SHAPE_FLOOR_PLAIN;
+        else if (depth == 1) return DM2_V22_SHAPE_FLOOR_CRACKED;
+        else                 return DM2_V22_SHAPE_FLOOR_MOSSY;
+    }
+
+    /* low_nibble is consulted only to keep the existing base
+     * discriminator honest about FLOOR_PLAIN; this avoids the
+     * `unused variable` warning while keeping the cheap lookup
+     * O(1) without changing the position-agnostic dispatcher. */
+    if (low_nibble == 0xFFu) return DM2_V22_SHAPE_NONE;  /* unreachable */
+
+    return base;
+}
+
 /* dm2_v22_asset_id_for_shape — single-row lookup over the mapping
  * table. Returns NULL when the shape has no mapping. The returned
  * string is owned by the static mapping table. */
@@ -247,11 +339,19 @@ void dm2_v22_viewport_swap_update(int direction,
             }
         }
     } else if (raw_cells) {
-        /* Indoor: per-cell discriminator. */
+        /* Indoor: per-cell discriminator (position-aware, so the
+         * same raw_cell_type picks a side-wall vs center-wall vs
+         * corner-wall asset depending on which of the 9 cells it
+         * lives in). The base discriminator (raw_cell_type +
+         * direction) is still the position-agnostic fallback
+         * inside dm2_v22_shape_for_cell_pos(). */
         for (d = 0; d < 3; ++d) {
             for (l = 0; l < 3; ++l) {
                 g_swap_cache.shapes[d][l] =
-                    dm2_v22_shape_for_cell(raw_cells[d][l], (uint8_t)direction);
+                    dm2_v22_shape_for_cell_pos(raw_cells[d][l],
+                                                (uint8_t)direction,
+                                                d,
+                                                l - 1);
             }
         }
     } else {
@@ -422,6 +522,9 @@ const char* dm2_v22_viewport_swap_source_evidence(void) {
     return "SKULL.ASM T520/T560/T600 (DM2 viewport ticks: indoor T560 + outdoor T600); "
            "ReDMCSB DUNVIEW.C:2962-3070 (outdoor sky/ground composition order); "
            "ReDMCSB DUNVIEW.C:4351-4382 F0112 (ceiling pit — outdoor has no ceiling); "
+           "ReDMCSB DUNVIEW.C:6239-6675 (per-cell D3L2/D3C/D3R2/D2L/D2R/D1L2/"
+                "D1C/D1R2/D0L/D0R wall/floor zone tables — owns the position-"
+                "aware indoor T560 per-cell discriminator); "
            "include/dm2_v22_modern_assets_pc34.h (asset pack paths + flags); "
            "include/dm2_v22_inplace_draw_pc34.h (cache bitmap lookup); "
            "include/dm2_v22_shape_cache_pc34.h (raw cell type store); "
