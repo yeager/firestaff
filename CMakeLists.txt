@@ -20170,6 +20170,39 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_queue_pc34_compat.c"
     )
 endif()
 
+# M11 input scale boundary contract: pins
+# M11_MapPresentedGamePointToSourceForPresentation() (the single
+# source of truth that converts a presented SDL mouse/window point
+# on the *presented* game surface back to the source-locked 320x200
+# DM1 framebuffer) across all four presentation modes
+# (V1_ORIGINAL / V20_FILTERED / V21_UPSCALED / V22_MODERN), 10
+# V21/V22 user-selected resolutions, 4K aspect mismatch, and
+# boundary input coordinates (negative, top-row, bottom-row, exact
+# extent, 2x extent overflow). The existing
+# test_dm1_v2_selected_resolution_input_mapping_pc34 covers the
+# V21/V22 happy-path round-trip and the V1 no-op; this gate
+# closes the boundary cases production runtime callers actually
+# hit. Source-locked against ReDMCSB COMMAND.C:1379-1449 F0358
+# mouse-row scan, COMMAND.C:1641-1660 F0359 primary click
+# dispatch, COORD.C:1903-1920 inclusive source zone expansion, and
+# src/engine/m11_game_input_mapping.c
+# M11_MapPresentedGamePointToSourceForPresentation. Data-free; no
+# real game data, no SDL window.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_scale_boundary_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/m11_game_input_mapping.c")
+    add_executable(test_m11_input_scale_boundary_pc34_compat
+        tests/test_m11_input_scale_boundary_pc34_compat.c
+        src/engine/m11_game_input_mapping.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_input_scale_boundary_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_input_scale_boundary_pc34_compat
+        COMMAND test_m11_input_scale_boundary_pc34_compat
+    )
+endif()
+
 # M11 asset-loader blit helper contract. The test uses a synthetic
 # M11_AssetSlot so it covers clipping, nearest scaling, mirroring,
 # transparent pixels, replacement colors, and the champion-portrait-style
