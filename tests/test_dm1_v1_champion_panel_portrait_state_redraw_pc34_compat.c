@@ -286,6 +286,74 @@ static void test_geometry(void)
     }
 }
 
+/*
+ * New gate: every table entry's hand-slot origin must match
+ * championIndex*69 + {4 (ready), 24 (action)} and y=10 across all 32
+ * champion x state rows. The previous test only spot-checked champion 0
+ * and champion 1 and never asserted on hand_y at all, so a refactor that
+ * changed the per-champion hand-slot offset or the F0291 y=10 contract
+ * would have slipped past the gate on a real DM1 PC 3.4 layout.
+ *
+ * Source anchors:
+ * - CHAMDRAW.C F0291:551-552 reads L0851_T_Thing for the slot.
+ * - CHAMDRAW.C F0291:595-655 selects the C033 / C034 / C035 slot box.
+ * - CHAMDRAW.C F0292:1080-1091 redraws the action-hand slot via
+ *   F0291_CHAMPION_DrawSlot at the same {x = championIndex*69+24, y=10}
+ *   origin after a status-box redraw.
+ * - DATA.C:264-272 anchors the four 18x18 ready/action hand slot-box
+ *   origins at y=10, x = championIndex*69 + {4, 24}.
+ * - DEFS.H:2188-2195 anchors the C033/C034/C035 cascade used by both
+ *   F0291:595-655 and the F0292:1080-1091 action-hand redraw.
+ */
+static void test_hand_slot_geometry_full(void)
+{
+    int i;
+    int champion;
+
+    /* (A) per-champion hand-slot x origins for all 4 champions.
+     * The previous test only locked champion 0 + champion 1. Champions
+     * 2 and 3 share the same F0291 stride-69 + {4, 24} pattern. */
+    for (champion = 0;
+         champion < DM1_V1_CHAMPION_PANEL_STATE_REDRAW_CHAMPION_COUNT_PC34;
+         ++champion) {
+        char id[64];
+        const int base =
+            champion *
+            DM1_V1_CHAMPION_PANEL_STATE_REDRAW_STATUS_BOX_STRIDE_X_PC34;
+        const dm1_v1_champion_panel_state_redraw_entry_pc34_compat_t *entry;
+
+        CHECK_BOOL("hand.lookup",
+                   dm1_v1_champion_panel_state_redraw_entry(
+                       champion, DM1_V1_CHAMPION_PANEL_STATE_OK_PC34, &entry),
+                   true,
+                   "CHAMDRAW.C F0293:1134-1138 champion-index lookup");
+        snprintf(id, sizeof(id), "hand.%d.ready_x", champion);
+        CHECK_INT(id, entry->ready_hand_x, base + 4,
+                  "DATA.C:264-272 champion ready hand origin x");
+        snprintf(id, sizeof(id), "hand.%d.action_x", champion);
+        CHECK_INT(id, entry->action_hand_x, base + 24,
+                  "DATA.C:264-272 champion action hand origin x");
+    }
+
+    /* (B) F0292:1080-1091 action-hand redraw y-origin must be 10 for
+     * every champion x state row, and the hand slot must sit inside
+     * the 67x29 status box top..bottom. */
+    for (i = 0; i < DM1_V1_CHAMPION_PANEL_STATE_REDRAW_TABLE_COUNT_PC34; ++i) {
+        const dm1_v1_champion_panel_state_redraw_entry_pc34_compat_t *entry =
+            &dm1_v1_champion_panel_state_redraw_table[i];
+        char id[64];
+
+        snprintf(id, sizeof(id), "hand.table.%d.y", i);
+        CHECK_INT(id, entry->hand_y,
+                  DM1_V1_CHAMPION_PANEL_STATE_REDRAW_HAND_LOCAL_Y_PC34,
+                  "CHAMDRAW.C F0292:1080-1091 action-hand redraw y=10");
+        CHECK_BOOL("hand.table.in_box", entry->hand_y >= entry->status_box_top &&
+                                            entry->hand_y < entry->status_box_bottom,
+                   true,
+                   "CHAMDRAW.C F0292:1080-1091 hand slot inside status box");
+    }
+}
+
 static void test_source_evidence(void)
 {
     const char *evidence =
@@ -295,8 +363,12 @@ static void test_source_evidence(void)
                    "leader-hand redraw anchor");
     check_contains("evidence.f0291", evidence, "CHAMDRAW.C F0291:551-552",
                    "slot read anchor");
+    check_contains("evidence.f0291.select", evidence,
+                   "CHAMDRAW.C F0291:595-655", "F0291 C033/C034/C035 select");
     check_contains("evidence.f0292", evidence, "CHAMDRAW.C F0292:771-839",
                    "state redraw anchor");
+    check_contains("evidence.f0292.action", evidence,
+                   "CHAMDRAW.C F0292:1080-1091", "F0292 action-hand redraw");
     check_contains("evidence.f0293", evidence, "CHAMDRAW.C F0293:1117-1143",
                    "all-state dispatch anchor");
     check_contains("evidence.f0296", evidence, "CHAMDRAW.C F0296:1249-1257",
@@ -307,6 +379,8 @@ static void test_source_evidence(void)
                    "slot constant anchor");
     check_contains("evidence.data", evidence, "DATA.C:264-272",
                    "slot box origin anchor");
+    check_contains("evidence.cascade", evidence, "DEFS.H:2188-2195",
+                   "C033/C034/C035 cascade");
 }
 
 int main(void)
@@ -316,6 +390,7 @@ int main(void)
     test_terminal_order_and_null_safety();
     test_table_cartesian_product();
     test_geometry();
+    test_hand_slot_geometry_full();
     test_source_evidence();
 
     if (g_failures) {
