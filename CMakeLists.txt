@@ -4526,6 +4526,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_i
     )
 endif()
 
+# DM1 V1 champion-panel pending-damage apply pc34_compat contract test
+# (CHAMPION.C F0320 pre-damage Wounds/CurrentHealth/Attributes mutation).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_pending_damage_apply_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_pending_damage_apply_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_pending_damage_apply_pc34_compat
+        tests/test_dm1_v1_champion_panel_pending_damage_apply_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_pending_damage_apply_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_pending_damage_apply_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_pending_damage_apply_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_pending_damage_apply_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_pending_damage_apply_pc34_compat
+    )
+endif()
+
 # DM1 V1 champion-panel damage-flash-decay pc34_compat runtime test
 # (companion of the pool's 9 probes; same M11/M12 stack).
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c"
