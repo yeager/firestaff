@@ -23431,6 +23431,36 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_scale_integer_fixed_
     )
 endif()
 
+# M11 launcher->game presentation geometry helper contract. Covers
+# M11_GameView_PresentationIndexedScale / M11_GameView_PresentationTarget
+# in src/engine/main_loop_m11.c. These two helpers drive the three-way
+# choice in m11_present_game_frame() (PresentScaledIndexed for V20,
+# PresentIndexedToResolution for V21/V22 with valid extents, default
+# Present otherwise). Disjoint from test_m11_input_scale_boundary which
+# pins the *input*-side M11_MapPresentedGamePointToSourceForPresentation
+# helper, and from test_m11_display_aspect_present_rect which pins the
+# SDL-side M11_Render_ComputePresentationRect + M11_Render_MapPointTo
+# Framebuffer. Source-locked against ReDMCSB COMMAND.C:1379-1449 F0358
+# / 1641-1660 F0359 mouse-row + primary-click dispatch against a 320x200
+# source zone, src/ui/menu_startup_m12.c
+# M12_PresentationMode_AllowsResolutionChoice, and the
+# m11_present_game_frame() callers in main_loop_m11.c. Data-free; no
+# real game data, no SDL window, no screenshot, no original-DOS pixel
+# parity claim.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_game_presentation_target_pc34_compat.c")
+    add_executable(test_m11_game_presentation_target_pc34_compat
+        tests/test_m11_game_presentation_target_pc34_compat.c
+    )
+    target_link_libraries(test_m11_game_presentation_target_pc34_compat PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_m11_game_presentation_target_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_game_presentation_target_pc34_compat
+        COMMAND test_m11_game_presentation_target_pc34_compat
+    )
+endif()
+
 # M11 asset-loader blit helper contract. The test uses a synthetic
 # M11_AssetSlot so it covers clipping, nearest scaling, mirroring,
 # transparent pixels, replacement colors, and the champion-portrait-style
