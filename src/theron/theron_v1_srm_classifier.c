@@ -692,6 +692,231 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_party_payload(
     return THERON_V1_SRM_PROGRESS_IMPORT_OK;
 }
 
+/* ── Body-decode envelope surface ──────────────────────────────────
+ *
+ * The envelope decoder takes a raw .srm buffer (or a slot file at
+ * `path`) and runs the bounded (gzip magic check → inflate →
+ * envelope magic check → decode) chain in one call, returning a typed
+ * `Theron_V1SrmEnvelopeKind`.  It exists for the gap's
+ * "Theron_DungeonProgression or champion-block decode fixture"
+ * requirement: a synthetic gzipped FSTQPRG1 body inflates and
+ * produces a restored `Theron_DungeonProgression`, while a real
+ * Sphenx/Greatstone custom body returns ENVELOPE_KIND_UNSUPPORTED
+ * and stays non-launchable.
+ *
+ * The implementation is intentionally minimal: it reuses
+ * theron_v1_srm_probe_gzip_payload + the existing
+ * theron_v1_srm_decode_progression_payload +
+ * theron_v1_srm_decode_progression_party_payload pair, so envelope
+ * semantics stay exactly the same as the documented lower-level
+ * decoders.  The work budget is the same
+ * THERON_V1_SRM_BODY_DECODE_MAX_BYTES bound that the header
+ * declares; bodies that exceed it return OUTPUT_TRUNCATED at inflate
+ * time, which the envelope surfaces as a typed kind + decode_status.
+ */
+
+Theron_V1SrmEnvelopeKind theron_v1_srm_decode_envelope(
+    const uint8_t *srm_bytes,
+    size_t srm_size,
+    uint8_t *scratch,
+    size_t scratch_capacity,
+    Theron_V1SrmEnvelopeReceipt *out_envelope) {
+
+    Theron_V1SrmPayloadProbeStatus inflate_status;
+    size_t payload_size = 0;
+
+    if (!out_envelope) {
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+    memset(out_envelope, 0, sizeof(*out_envelope));
+    out_envelope->inflate_status = THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT;
+    out_envelope->decode_status = THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+    out_envelope->slot_index = -1;
+
+    if (!srm_bytes || srm_size == 0 || !scratch ||
+        scratch_capacity == 0) {
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+
+    /* Cap the work budget at the documented body-decode ceiling so
+     * neither the inflate nor the decode path can silently grow the
+     * heap.  The previous lower-level functions already capped their
+     * own inflation at `scratch_capacity`; this ceiling is the one
+     * call-site-visible bound. */
+    if (scratch_capacity > THERON_V1_SRM_BODY_DECODE_MAX_BYTES) {
+        scratch_capacity = THERON_V1_SRM_BODY_DECODE_MAX_BYTES;
+    }
+
+    inflate_status = theron_v1_srm_probe_gzip_payload(
+        srm_bytes,
+        srm_size,
+        scratch,
+        scratch_capacity,
+        &payload_size);
+    out_envelope->inflate_status = inflate_status;
+    out_envelope->inflate_payload_size = payload_size;
+
+    if (inflate_status != THERON_V1_SRM_PAYLOAD_PROBE_OK) {
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+
+    /* First try the progression+party envelope (the larger of the
+     * two).  If the magic does not match, drop to the
+     * progression-only envelope.  Both reject unknown magic with
+     * UNSUPPORTED_BODY so the envelope surface stays honest. */
+    {
+        Theron_DungeonProgression progression;
+        Theron_V1_Party party;
+        Theron_V1SrmPartyImportReceipt party_receipt;
+        Theron_V1SrmProgressImportStatus party_status =
+            theron_v1_srm_decode_progression_party_payload(
+                scratch,
+                payload_size,
+                &progression,
+                &party,
+                &party_receipt);
+        if (party_status == THERON_V1_SRM_PROGRESS_IMPORT_OK) {
+            out_envelope->kind = THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY;
+            out_envelope->decode_status = THERON_V1_SRM_PROGRESS_IMPORT_OK;
+            out_envelope->progression = party_receipt.progression;
+            out_envelope->party = party_receipt;
+            return THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY;
+        }
+
+        Theron_V1SrmProgressionReceipt progress_receipt;
+        Theron_V1SrmProgressImportStatus prog_status =
+            theron_v1_srm_decode_progression_payload(
+                scratch,
+                payload_size,
+                &progression,
+                &progress_receipt);
+        out_envelope->decode_status = prog_status;
+        if (prog_status == THERON_V1_SRM_PROGRESS_IMPORT_OK) {
+            out_envelope->kind = THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION;
+            out_envelope->progression = progress_receipt;
+            return THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION;
+        }
+
+        /* Distinguish "the bytes inflated fine but the body is a real
+         * Sphenx/Greatstone custom format we don't decode yet" from "the
+         * body was corrupt" by checking how the party decoder treated
+         * the same bytes.  UNSUPPORTED_BODY on either decoder is a real
+         * (unknown) body; the other statuses are body-shape problems. */
+        if (party_status == THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY ||
+            prog_status == THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY) {
+            out_envelope->decode_status =
+                THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY;
+            out_envelope->kind = THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED;
+            return THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED;
+        }
+    }
+
+    return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+}
+
+Theron_V1SrmEnvelopeKind theron_v1_srm_decode_path(
+    const char *path,
+    int slot_index,
+    uint8_t *scratch,
+    size_t scratch_capacity,
+    Theron_V1SrmEnvelopeReceipt *out_envelope) {
+
+    struct stat st;
+    uint8_t *srm_buf = NULL;
+    size_t srm_size = 0;
+    Theron_V1SrmEnvelopeKind kind = THERON_V1_SRM_ENVELOPE_KIND_NONE;
+
+    if (!out_envelope) {
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+    memset(out_envelope, 0, sizeof(*out_envelope));
+    out_envelope->slot_index = slot_index;
+    out_envelope->inflate_status = THERON_V1_SRM_PAYLOAD_PROBE_BAD_INPUT;
+    out_envelope->decode_status = THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
+
+    if (!path || !path[0]) {
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+    if (stat(path, &st) != 0 || !S_ISREG(st.st_mode)) {
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+
+    if (scratch_capacity > THERON_V1_SRM_BODY_DECODE_MAX_BYTES) {
+        scratch_capacity = THERON_V1_SRM_BODY_DECODE_MAX_BYTES;
+    }
+
+    srm_size = (size_t)st.st_size;
+    if (srm_size == 0 || srm_size > scratch_capacity) {
+        /* The .srm file is too large to inflate safely inside our
+         * work budget; honor the bound and report BAD_INPUT rather
+         * than try to truncate or re-allocate.  This is honest and
+         * matches the documented "bounded" envelope contract. */
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+
+    srm_buf = (uint8_t *)malloc(srm_size);
+    if (!srm_buf) {
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+
+    {
+        FILE *fp = fopen(path, "rb");
+        if (!fp) {
+            free(srm_buf);
+            return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+        }
+        size_t got = fread(srm_buf, 1, srm_size, fp);
+        fclose(fp);
+        if (got != srm_size) {
+            free(srm_buf);
+            return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+        }
+    }
+
+    /* Once we have read the file, the envelope owns the file path in
+     * the receipt; route through the buffer decoder for the actual
+     * inflate + magic + decode chain. */
+    kind = theron_v1_srm_decode_envelope(srm_buf, srm_size,
+                                          scratch, scratch_capacity,
+                                          out_envelope);
+    {
+        size_t n = strlen(path);
+        if (n >= THERON_V1_SRM_PATH_MAX) n = THERON_V1_SRM_PATH_MAX - 1;
+        memcpy(out_envelope->source_path, path, n);
+        out_envelope->source_path[n] = '\0';
+    }
+    out_envelope->slot_index = slot_index;
+    out_envelope->file_size = (uint64_t)srm_size;
+    free(srm_buf);
+    return kind;
+}
+
+Theron_V1SrmEnvelopeKind theron_v1_srm_probe_slot0_envelope(
+    Theron_V1SrmEnvelopeReceipt *out_envelope) {
+
+    char root[THERON_V1_SRM_PATH_MAX] = {0};
+    char path[THERON_V1_SRM_PATH_MAX] = {0};
+    uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
+    struct stat st;
+
+    /* Stat the file first so we can report SKIP for "save-disk root
+     * present, slot0 absent" as cleanly as "save-disk root absent".
+     * Both are honest skip-clean outcomes: the gate only emits a
+     * typed envelope kind when an actual .srm file was staged. */
+    if (!theron_v1_srm_default_root(root)) {
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+    if (!theron_v1_srm_slot_path(root, 0, path)) {
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+    if (stat(path, &st) != 0 || !S_ISREG(st.st_mode)) {
+        return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+    }
+
+    return theron_v1_srm_decode_path(path, 0, scratch,
+                                     sizeof(scratch), out_envelope);
+}
+
 /* ── Status names + source evidence ──────────────────────────────── */
 
 const char *theron_v1_srm_slot_status_name(Theron_V1SrmSlotStatus status) {
@@ -724,6 +949,20 @@ const char *theron_v1_srm_payload_probe_status_name(Theron_V1SrmPayloadProbeStat
         return "INFLATE_FAILED";
     case THERON_V1_SRM_PAYLOAD_PROBE_OUTPUT_TRUNCATED:
         return "OUTPUT_TRUNCATED";
+    }
+    return "UNKNOWN";
+}
+
+const char *theron_v1_srm_envelope_kind_name(Theron_V1SrmEnvelopeKind kind) {
+    switch (kind) {
+    case THERON_V1_SRM_ENVELOPE_KIND_NONE:
+        return "NONE";
+    case THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION:
+        return "PROGRESSION";
+    case THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY:
+        return "PROGRESSION_PARTY";
+    case THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED:
+        return "UNSUPPORTED";
     }
     return "UNKNOWN";
 }
@@ -778,6 +1017,16 @@ const char *theron_v1_srm_source_evidence(void) {
         "    into Theron_DungeonProgression plus Theron_V1_Party body fields\n"
         "    only; inventory/equipment and real Sphenx body decoding remain\n"
         "    explicitly unsupported.\n"
+        "  - 2026-06-30 body-decode envelope surface landed: a single\n"
+        "    theron_v1_srm_decode_envelope() + theron_v1_srm_decode_path()\n"
+        "    pair run the bounded (gzip magic -> inflate -> envelope\n"
+        "    magic -> decode) chain end-to-end, returning a typed\n"
+        "    Theron_V1SrmEnvelopeKind receipt that carries the restored\n"
+        "    Theron_DungeonProgression plus the optional party body.\n"
+        "    theron_v1_srm_probe_slot0_envelope() is the skip-clean\n"
+        "    real-artifact entry point; when no .srm is staged it\n"
+        "    returns ENVELOPE_KIND_NONE without disturbing the\n"
+        "    caller's envelope buffer.\n"
         "  - Default save-disk root: $HOME/.firestaff/data/theron/save.\n"
         "  - Override: env FIRESTAFF_THERON_SRM_DIR.\n"
         "  - No real .srm file is present in the local data root on this\n"

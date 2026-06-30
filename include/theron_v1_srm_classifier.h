@@ -68,6 +68,15 @@
 #define THERON_V1_SRM_GZIP_MAGIC_1       0x8B
 #define THERON_V1_SRM_GZIP_MAGIC_2_DEFLATE 0x08
 
+/* Maximum inflated Theron save body to materialize in a single bounded
+ * inflate.  This is the work budget for the body-decode fixture; it is
+ * deliberately modest so probe/process memory stays bounded, and it is
+ * independent of the per-champion record table inside
+ * theron_v1_srm_decode_progression_party_payload.  Real bodies that
+ * exceed this budget return THERON_V1_SRM_PAYLOAD_PROBE_OUTPUT_TRUNCATED
+ * rather than silently growing the heap. */
+#define THERON_V1_SRM_BODY_DECODE_MAX_BYTES 4096u
+
 /* Per-slot classification.  Order is stable; integer values are part of
  * the public manifest contract for downstream receipt tooling. */
 typedef enum {
@@ -176,6 +185,98 @@ Theron_V1SrmPayloadProbeStatus theron_v1_srm_probe_gzip_payload(
     uint8_t *out_payload,
     size_t out_payload_capacity,
     size_t *out_payload_size);
+
+/* ── Body-decode envelope surface ──────────────────────────────────
+ *
+ * The body-decode envelope is the single-call convenience for "take a
+ * raw .srm byte stream and produce a typed envelope receipt".  It is
+ * the natural completion of the (inflate → decode) chain so that
+ * tests and probes can exercise one full end-to-end happy path
+ * instead of stitching the inflate, decode-progression, and decode-
+ * party payloads together by hand.
+ *
+ * The envelope deliberately recognizes the same Firestaff readiness
+ * envelopes (FSTQPRG1 for progression-only, FSTQPTY1 for progression
+ * + party body) that the lower-level decoders do, and returns
+ * UNSUPPORTED_BODY for unknown real Sphenx/Greatstone custom bodies.
+ */
+
+typedef enum {
+    THERON_V1_SRM_ENVELOPE_KIND_NONE = 0,
+    THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION = 1,
+    THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY = 2,
+    THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED = 3
+} Theron_V1SrmEnvelopeKind;
+
+typedef struct {
+    Theron_V1SrmEnvelopeKind kind;
+    Theron_V1SrmPayloadProbeStatus inflate_status;
+    Theron_V1SrmProgressImportStatus decode_status;
+    size_t inflate_payload_size;
+    int slot_index;                /* -1 when envelope is built from a raw
+                                    *   buffer (no slot file was read) */
+    uint64_t file_size;             /* 0 when envelope is built from a raw
+                                    *    buffer */
+    char source_path[THERON_V1_SRM_PATH_MAX]; /* "" when envelope is
+                                               * built from a raw buffer */
+    Theron_V1SrmProgressionReceipt progression; /* restored==0 when kind
+                                                * is UNSUPPORTED/NONE */
+    Theron_V1SrmPartyImportReceipt party;       /* restored==0 when kind
+                                                * is not PROG_PARTY */
+} Theron_V1SrmEnvelopeReceipt;
+
+/* Decode one raw .srm buffer (a gzip-wrapped deflate stream with the
+ * Firestaff readiness envelope) and write a single envelope receipt.
+ *
+ * This is the Theron_DungeonProgression + champion-block decode
+ * fixture's natural entry point: when synthetic bytes inflate and the
+ * decoded envelope populates `out_envelope`, the receipt carries the
+ * restored progression and (optionally) party body.  The function
+ * tolerates and reports every failure mode of the (inflate, magic,
+ * range, monotonic) chain through the receipt's `inflate_status` and
+ * `decode_status` fields, so call-sites can branch on the most
+ * informative error without re-running the chain. */
+Theron_V1SrmEnvelopeKind theron_v1_srm_decode_envelope(
+    const uint8_t *srm_bytes,
+    size_t srm_size,
+    uint8_t *scratch,
+    size_t scratch_capacity,
+    Theron_V1SrmEnvelopeReceipt *out_envelope);
+
+/* Slot-file convenience: read `path`, inflate the gzip-wrapped body,
+ * decode the envelope, and fill `out_envelope`.  Skips cleanly when
+ * the path is NULL, empty, or the file does not exist (returns
+ * ENVELOPE_KIND_NONE with inflate_status=BAD_INPUT, decode_status=
+ * BAD_INPUT, and source_path="").  Honors the SAME bounds as
+ * theron_v1_srm_decode_envelope, including the work budget of
+ * THERON_V1_SRM_BODY_DECODE_MAX_BYTES.
+ *
+ * When `path` exists and is recognized, this is the path the gap uses
+ * to advance a real operator-staged Sphenx-format or other real .srm
+ * artifact without claiming Sphenx body semantics. */
+Theron_V1SrmEnvelopeKind theron_v1_srm_decode_path(
+    const char *path,
+    int slot_index,
+    uint8_t *scratch,
+    size_t scratch_capacity,
+    Theron_V1SrmEnvelopeReceipt *out_envelope);
+
+/* Probe-side helper: scan the configured save-disk root for slot0,
+ * attempt a Theron_DungeonProgression decode via
+ * theron_v1_srm_decode_path, and return the resulting envelope kind.
+ *
+ * The function is skip-clean: when no save-disk root or slot0 file
+ * exists, it returns ENVELOPE_KIND_NONE without touching the
+ * caller's envelope pointer.  This is the bounded real-asset
+ * counterpart to the synthetic fixture path: real artifacts advance
+ * the gate, absences stay honest and non-fatal. */
+Theron_V1SrmEnvelopeKind theron_v1_srm_probe_slot0_envelope(
+    Theron_V1SrmEnvelopeReceipt *out_envelope);
+
+/* Status name + kind label helpers, used by tests, probes, and
+ * receipts.  The strings are part of the public surface; adding new
+ * kinds requires updating both the enum and these accessors. */
+const char *theron_v1_srm_envelope_kind_name(Theron_V1SrmEnvelopeKind kind);
 
 /* Interpret one inflated SRM body as a between-dungeon progression
  * checkpoint, when the body carries Firestaff's bounded readiness
