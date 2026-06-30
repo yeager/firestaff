@@ -15750,6 +15750,33 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
 endif()
 
+# ── Theron V1 SRM body-decode envelope unit test ────────────────────
+# Synthetic-fixture counterpart to firestaff_theron_v1_srm_body_decode_probe:
+# builds a gzip-wrapped FSTQPRG1 progression envelope in memory, runs
+# theron_v1_srm_decode_envelope() + theron_v1_srm_decode_path() +
+# theron_v1_srm_probe_slot0_envelope() to lock the bounded
+# (gzip magic -> inflate -> envelope magic -> decode) chain end-to-end.
+# Skip-clean for hosts where no real .srm is staged.
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_srm_body_decode_pc34
+        tests/test_theron_v1_srm_body_decode_pc34.c
+    )
+    target_link_libraries(test_theron_v1_srm_body_decode_pc34 PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_srm_body_decode_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    firestaff_link_zlib(test_theron_v1_srm_body_decode_pc34 PRIVATE)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_srm_body_decode_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_srm_body_decode
+        COMMAND test_theron_v1_srm_body_decode_pc34
+    )
+endif()
+
 # ── Theron V1 Phase 5 — Shop Price Table Test ──────────────────────
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_shop_price_table
@@ -16025,6 +16052,27 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_srm_classifier_probe
         COMMAND firestaff_theron_v1_srm_classifier_probe
+    )
+
+    # ── Theron V1 SRM body-decode envelope probe ───────────────────────
+    # Synthetic fixture plus skip-clean real-slot path for bounded
+    # gzip-body inflate into progression/party envelope receipts.
+    add_executable(firestaff_theron_v1_srm_body_decode_probe
+        probes/theron/firestaff_theron_v1_srm_body_decode_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_srm_body_decode_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_srm_body_decode_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    firestaff_link_zlib(firestaff_theron_v1_srm_body_decode_probe PRIVATE)
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_srm_body_decode_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_srm_body_decode_probe
+        COMMAND firestaff_theron_v1_srm_body_decode_probe
     )
 
     if(Python3_Interpreter_FOUND)
