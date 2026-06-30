@@ -353,6 +353,59 @@ int main(void) {
                  dm2_v22_asset_id_for_shape(DM2_V22_SHAPE_NONE) == NULL,
                  "SHAPE_NONE -> NULL asset_id");
 
+    /* 6b. Position-aware indoor T560 discriminator
+     *     (dm2_v22_shape_for_cell_pos). The position-aware sibling
+     *     must vary walls by column (lat != 0 -> corner) and floors
+     *     by depth (D0/D1/D2 -> plain/cracked/mossy) while keeping
+     *     pits/stairs/creatures/doors/fields direction-agnostic. */
+    probe_record(&stats, "DM2_V22_POS_WALL_L",
+                 dm2_v22_shape_for_cell_pos(0x00, 0, 0, -1) ==
+                     DM2_V22_SHAPE_WALL_CORNER_INNER,
+                 "wall raw 0x00 at D0 L -> WALL_CORNER_INNER");
+    probe_record(&stats, "DM2_V22_POS_WALL_C",
+                 dm2_v22_shape_for_cell_pos(0x00, 0, 0,  0) ==
+                     DM2_V22_SHAPE_WALL_STRAIGHT,
+                 "wall raw 0x00 at D0 C -> WALL_STRAIGHT");
+    probe_record(&stats, "DM2_V22_POS_WALL_R",
+                 dm2_v22_shape_for_cell_pos(0x00, 0, 0, +1) ==
+                     DM2_V22_SHAPE_WALL_CORNER_OUTER,
+                 "wall raw 0x00 at D0 R -> WALL_CORNER_OUTER");
+    probe_record(&stats, "DM2_V22_POS_FLOOR_D0",
+                 dm2_v22_shape_for_cell_pos(0x04, 0, 0,  0) ==
+                     DM2_V22_SHAPE_FLOOR_PLAIN,
+                 "floor raw 0x04 at D0 -> FLOOR_PLAIN");
+    probe_record(&stats, "DM2_V22_POS_FLOOR_D1",
+                 dm2_v22_shape_for_cell_pos(0x04, 0, 1,  0) ==
+                     DM2_V22_SHAPE_FLOOR_CRACKED,
+                 "floor raw 0x04 at D1 -> FLOOR_CRACKED");
+    probe_record(&stats, "DM2_V22_POS_FLOOR_D2",
+                 dm2_v22_shape_for_cell_pos(0x04, 0, 2,  0) ==
+                     DM2_V22_SHAPE_FLOOR_MOSSY,
+                 "floor raw 0x04 at D2 -> FLOOR_MOSSY");
+    /* Pit / stairs / creature / door keep their position-agnostic
+     * shape (they carry gameplay semantics). */
+    probe_record(&stats, "DM2_V22_POS_PIT_INVARIANT",
+                 dm2_v22_shape_for_cell_pos(0x40, 0, 0, -1) ==
+                     dm2_v22_shape_for_cell_pos(0x40, 0, 2, +1),
+                 "pit raw 0x40 shape invariant under (depth, lateral)");
+    probe_record(&stats, "DM2_V22_POS_CREATURE_INVARIANT",
+                 dm2_v22_shape_for_cell_pos(0x80, 0, 1, -1) ==
+                     dm2_v22_shape_for_cell_pos(0x80, 0, 1, +1),
+                 "creature raw 0x80 shape invariant under lateral only");
+    /* Out-of-range depth/lateral are clamped. */
+    probe_record(&stats, "DM2_V22_POS_CLAMP_LATERAL_HI",
+                 dm2_v22_shape_for_cell_pos(0x00, 0, 0, +9) ==
+                     DM2_V22_SHAPE_WALL_CORNER_OUTER,
+                 "wall at lateral=+9 clamps to +1 -> WALL_CORNER_OUTER");
+    probe_record(&stats, "DM2_V22_POS_CLAMP_LATERAL_LO",
+                 dm2_v22_shape_for_cell_pos(0x00, 0, 0, -9) ==
+                     DM2_V22_SHAPE_WALL_CORNER_INNER,
+                 "wall at lateral=-9 clamps to -1 -> WALL_CORNER_INNER");
+    probe_record(&stats, "DM2_V22_POS_CLAMP_DEPTH_HI",
+                 dm2_v22_shape_for_cell_pos(0x04, 0, 99, 0) ==
+                     DM2_V22_SHAPE_FLOOR_MOSSY,
+                 "floor at depth=99 clamps to 2 -> FLOOR_MOSSY");
+
     /* 7. Indoor T560 path — populate per-cell cache with mixed shapes
      *    and verify the swap renders up to 9 cells. */
     memset(raw_cells, 0x00, sizeof(raw_cells));

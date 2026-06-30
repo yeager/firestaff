@@ -130,9 +130,49 @@ extern const DM2_V22_OutdoorCellRect dm2_v22_kOutdoorCellRects[3];
  * a Dm2_V22_ShapeType. The mapping is intentionally coarse in this
  * first cut: walls, plain/cracked/mossy/pit/stairs floors, and
  * creatures. Sub-cell variant decoding (e.g. corner vs straight
- * wall) is a follow-up once a real DM2 V22 shape book lands. */
+ * wall) is a follow-up once a real DM2 V22 shape book lands.
+ *
+ * This discriminator is intentionally POSITION-AGNOSTIC: it does
+ * not look at depth/lateral. The position-aware sibling
+ * (dm2_v22_shape_for_cell_pos) does that. Both are kept because
+ * some callers (debug inspectors, future offline mappers) want a
+ * per-raw_cell_type shape only. */
 Dm2_V22_ShapeType dm2_v22_shape_for_cell(uint8_t raw_cell_type,
                                           uint8_t direction);
+
+/* dm2_v22_shape_for_cell_pos — bounded position-aware indoor T560
+ * discriminator. Maps (raw_cell_type, direction, depth, lateral)
+ * into a Dm2_V22_ShapeType.
+ *
+ * depth is the DM2 4×3 depth index: 0 = D0 (closest), 1 = D1 (middle),
+ * 2 = D2 (farthest). lateral is the column index: -1 = left, 0 = center,
+ * +1 = right. direction is the party facing (0..3) and is preserved
+ * for future per-direction shape book usage; the bounded first cut
+ * uses it only to remember the facing but does not flip variants on
+ * facing because DUNVIEW.C's per-cell variant is governed by which
+ * of the 9 cells the party is looking at (D{n}L{R} / D{n}C), not by
+ * the party facing itself.
+ *
+ * Refinements vs dm2_v22_shape_for_cell:
+ *   - Walls in the LEFT column (lateral == -1)  -> WALL_CORNER_INNER
+ *   - Walls in the RIGHT column (lateral == +1) -> WALL_CORNER_OUTER
+ *   - Walls in the CENTER column (lateral == 0) -> WALL_STRAIGHT
+ *   - Floors in D0 (closest depth)  -> FLOOR_PLAIN
+ *   - Floors in D1 (middle depth)   -> FLOOR_CRACKED
+ *   - Floors in D2 (farthest depth) -> FLOOR_MOSSY
+ *   - Pit / stairs / creatures / doors / fields keep the
+ *     position-agnostic discriminator so the dungeon feel of those
+ *     gameplay markers is not lost when direction changes.
+ *
+ * Source-lock: ReDMCSB DUNVIEW.C:6239-6675 (per-cell D3L2/D3C/D3R2/
+ * D2L/D2R/D1L2/D1C/D1R2/D0L/D0R wall/floor zone tables) + DUNVIEW.C:
+ * 2962-3070 (the per-cell composition order that owns the 4×3 grid).
+ *
+ * This function is read-only — it never touches V1 state. */
+Dm2_V22_ShapeType dm2_v22_shape_for_cell_pos(uint8_t raw_cell_type,
+                                               uint8_t direction,
+                                               int depth,
+                                               int lateral);
 
 /* Per-cell asset_id string for a given shape type. Returns NULL
  * for DM2_V22_SHAPE_NONE. The returned string is owned by the
