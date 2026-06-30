@@ -221,35 +221,3 @@ dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_last_self_test_result_pc34(vo
 #endif
 
 #endif
-
-typedef struct {
-    int ok;
-    int model_builder_ok;
-    int hash_stable;
-    int decode_simple_primary;
-    int decode_fp_only_recurses;
-    int decode_fp_with_primary_both;
-    int decode_zero_skips_blit;
-    int context_corridor_occludes;
-    int context_open_pit_occludes;
-    int context_teleporter_occludes;
-    int context_stairs_front_occludes;
-    int context_door_front_occludes;
-    int context_zero_ordinal_no_occlusion;
-    int blend_c10_preserves_destination;
-    int blend_opaque_writes_source;
-    int zone_11_stride_correct;
-    int zone_9_stride_correct;
-    int bug0_64_guard_absent;
-    int step_count_eight;
-    int step_bug0_64_marker;
-    int deterministic_hash_set;
-    int assertions;
-    int failures;
-    uint32_t deterministic_hash;
-} DM1_V1_D1CF0108FloorOrnamentOcclusionSelfTestResultPc34;
-
-int dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_self_test_pc34(void);
-
-const DM1_V1_D1CF0108FloorOrnamentOcclusionSelfTestResultPc34 *
-dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_last_self_test_result_pc34(void);
