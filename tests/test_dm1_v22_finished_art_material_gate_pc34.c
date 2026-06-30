@@ -928,13 +928,19 @@ static void test_real_screenshot_receipt_gate(void) {
         "champion_warrior_hero_01.png",
         "door_hero_01.png"
     };
+    const unsigned widths[DM1_V22_FAMG_MATERIAL_COUNT] = {
+        64U, 64U, 64U, 48U, 48U, 32U
+    };
+    const unsigned heights[DM1_V22_FAMG_MATERIAL_COUNT] = {
+        64U, 64U, 64U, 48U, 48U, 48U
+    };
     for (size_t i = 0; i < DM1_V22_FAMG_MATERIAL_COUNT; ++i) {
         char fpath[FSP_PATH_MAX];
         snprintf(fpath, sizeof(fpath), "%s/%s/%s",
                  assets_root,
                  dm1_v22_famg_slot_category((DM1_V22_FamgSlot)i),
                  files[i]);
-        CHECK(write_file(fpath, "fake-png-bytes-for-test"),
+        CHECK(write_png_header_file(fpath, widths[i], heights[i]),
               "wrote material file for receipt gate");
     }
 

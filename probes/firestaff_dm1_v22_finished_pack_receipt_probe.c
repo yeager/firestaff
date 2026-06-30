@@ -69,6 +69,35 @@ static int write_file(const char* path, const char* content) {
     return w == strlen(content);
 }
 
+static void put_be32(unsigned char* p, unsigned v) {
+    p[0] = (unsigned char)((v >> 24) & 0xffU);
+    p[1] = (unsigned char)((v >> 16) & 0xffU);
+    p[2] = (unsigned char)((v >> 8) & 0xffU);
+    p[3] = (unsigned char)(v & 0xffU);
+}
+
+static int write_png_header_file(const char* path,
+                                 unsigned width,
+                                 unsigned height) {
+    static const unsigned char sig[8] = {
+        0x89u, 0x50u, 0x4eu, 0x47u, 0x0du, 0x0au, 0x1au, 0x0au
+    };
+    unsigned char hdr[24];
+    FILE* fp;
+    memcpy(hdr, sig, sizeof(sig));
+    hdr[8] = 0x00u; hdr[9] = 0x00u; hdr[10] = 0x00u; hdr[11] = 0x0du;
+    memcpy(hdr + 12, "IHDR", 4);
+    put_be32(hdr + 16, width);
+    put_be32(hdr + 20, height);
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(hdr, 1, sizeof(hdr), fp) != sizeof(hdr)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 /* ── Shared paths & fixtures ────────────────────────────────────── */
 
 static const char* k_data    = "/tmp/scratch/dm1_fpr_probe_data/data/dm1";
@@ -143,13 +172,19 @@ static void lay_down_finish_real_files(void) {
         "champion_warrior_hero_01.png",
         "door_hero_01.png"
     };
+    const unsigned widths[DM1_V22_FAMG_MATERIAL_COUNT] = {
+        64U, 64U, 64U, 48U, 48U, 32U
+    };
+    const unsigned heights[DM1_V22_FAMG_MATERIAL_COUNT] = {
+        64U, 64U, 64U, 48U, 48U, 48U
+    };
     for (size_t i = 0; i < DM1_V22_FAMG_MATERIAL_COUNT; ++i) {
         char fpath[FSP_PATH_MAX];
         snprintf(fpath, sizeof(fpath), "%s/%s/%s",
                  k_modern,
                  dm1_v22_famg_slot_category((DM1_V22_FamgSlot)i),
                  files[i]);
-        write_file(fpath, "fake-png-bytes");
+        write_png_header_file(fpath, widths[i], heights[i]);
     }
 }
 
