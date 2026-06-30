@@ -28,6 +28,7 @@
  *   INV_A15  Stretch-mode present rect fills the whole window
  *   INV_A16  Window-to-framebuffer mapping ignores letterboxed margins
  *   INV_A17  Window-to-framebuffer mapping lands inside framebuffer bounds
+ *   INV_A19  Shutdown/re-init clears mutated render state and stale outputs
  *
  * Exit code: 0 if every invariant PASSes, 1 otherwise.
  *
@@ -303,6 +304,52 @@ int main(int argc, char** argv) {
     record(&t, "INV_A18",
            modernFitOk,
            "integer FIT downscales the 1920x1080 launcher into 960x540 and 1280x720 windows without clipping");
+
+    /* ---------- INV_A19: re-init starts from clean render state ------ */
+    (void)M11_Render_SetPaletteLevel(5);
+    (void)M11_Render_SetScaleMode(M11_SCALE_STRETCH);
+    (void)M11_Render_SetDisplayAspectMode(M11_DISPLAY_ASPECT_16_9);
+    (void)M11_Render_SetIntegerScaling(1);
+    (void)M11_Render_ClearFramebuffer(9);
+    M11_Render_Shutdown();
+    int stalePresentedW = -1;
+    int stalePresentedH = -1;
+    const unsigned char* stalePresented =
+        M11_Render_GetPresentedRGBA(&stalePresentedW, &stalePresentedH);
+    int shutdownClearedOk =
+        M11_Render_IsInitialized() == 0 &&
+        M11_Render_GetFramebuffer() == NULL &&
+        stalePresented == NULL &&
+        stalePresentedW == 0 &&
+        stalePresentedH == 0;
+
+    rc = M11_Render_Init(640, 400, M11_SCALE_2X);
+    fb = M11_Render_GetFramebuffer();
+    fbSize = M11_Render_GetFramebufferSize();
+    int framebufferZeroOk = (fb != NULL && fbSize == 64000U);
+    for (size_t i = 0; i < fbSize && framebufferZeroOk; ++i) {
+        if (fb[i] != 0) {
+            framebufferZeroOk = 0;
+        }
+    }
+    int freshPresentedW = -1;
+    int freshPresentedH = -1;
+    const unsigned char* freshPresented =
+        M11_Render_GetPresentedRGBA(&freshPresentedW, &freshPresentedH);
+    record(&t, "INV_A19",
+           shutdownClearedOk &&
+               rc == M11_RENDER_OK &&
+               M11_Render_IsInitialized() == 1 &&
+               M11_Render_GetScaleMode() == M11_SCALE_2X &&
+               M11_Render_GetPaletteLevel() == 0 &&
+               M11_Render_GetDisplayAspectMode() == M11_DISPLAY_ASPECT_CONTENT &&
+               M11_Render_GetIntegerScaling() == 0 &&
+               M11_Render_GetWindowMode() == M11_WINDOW_MODE_MAXIMIZED &&
+               framebufferZeroOk &&
+               freshPresented == NULL &&
+               freshPresentedW == 0 &&
+               freshPresentedH == 0,
+           "shutdown/re-init clears mutated palette, scale, aspect, framebuffer, and presented-output state");
 
     /* ---------- INV_A12 (part 2): double-shutdown is idempotent ------ */
     M11_Render_Shutdown();
