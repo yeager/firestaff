@@ -23401,6 +23401,36 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_scale_inverse_safety
     )
 endif()
 
+# M11 integer fixed scale-mode rect + click-mapping contract. The
+# sibling `m11_input_scale_boundary_pc34_compat` covers the V20/V21/V22
+# presentation-mode input mapping boundary via
+# `M11_MapPresentedGamePointToSourceForPresentation`, and
+# `m11_display_aspect_present_rect` covers M11_SCALE_FIT +
+# M11_SCALE_STRETCH rect math + arg validation + SDL3 resize event.
+# Neither sibling gate covers the M11_SCALE_1X..M11_SCALE_4X integer
+# fixed-scale branch in `M11_Render_ComputePresentationRect`, which
+# sets `w = contentW * factor; h = contentH * factor;` and never
+# clamps the centered rect back into the window. This new gate pins
+# the integer fixed-scale rect math, the negative-origin overflow
+# case, the centered-rect click routing at corners, the deterministic
+# remap contract, and the out-of-rect / NULL / invalid-scale rejection
+# paths for those four modes. Source-locked against
+# `src/engine/render_sdl_m11.c:330-340` (1X..4X branch) +
+# `:362-364` (centered origin) + `:2027-2072` (MapPointToFramebuffer).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_scale_integer_fixed_mode_pc34_compat.c")
+    add_executable(test_m11_input_scale_integer_fixed_mode_pc34_compat
+        tests/test_m11_input_scale_integer_fixed_mode_pc34_compat.c
+    )
+    target_link_libraries(test_m11_input_scale_integer_fixed_mode_pc34_compat PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_m11_input_scale_integer_fixed_mode_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_input_scale_integer_fixed_mode_pc34_compat
+        COMMAND test_m11_input_scale_integer_fixed_mode_pc34_compat
+    )
+endif()
+
 # M11 asset-loader blit helper contract. The test uses a synthetic
 # M11_AssetSlot so it covers clipping, nearest scaling, mirroring,
 # transparent pixels, replacement colors, and the champion-portrait-style
