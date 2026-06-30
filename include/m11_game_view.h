@@ -1500,6 +1500,43 @@ void M11_GameView_GetForcedPauseDialogLayout(
 int M11_GameView_ForcedPauseDialogLayoutMaxTextPixelWidth(
     const M11_ForcedPauseDialogLayout* layout);
 
+/* ── Session-timer reminder banner fit/layout ────────────────────
+ * Sibling to M11_ForcedPauseDialogLayout.  Same contract: the
+ * reminder banner is a Firestaff-specific, non-ReDMCSB overlay
+ * surface whose box dimensions, insets, and text wording shrink or
+ * widen so they fit the 320x200 framebuffer at every supported
+ * fontScale (1..3).  Unlike the forced-pause dialog (which is a
+ * centred modal), the reminder banner is a top-strip overlay that
+ * must never paint into the source-owned DM1 dungeon viewport at
+ * y=33..168; the fit gate pins bannerY+boxH <= the viewport top
+ * (33) so the banner stays in its own bottom-padded rectangle
+ * (y=4..31 by default) regardless of fontScale.
+ *
+ * Source-locked contract documented in
+ * firestaff_dm1_v1_reminder_banner_font_scale_fit_probe.c. */
+typedef struct M11_ReminderBannerLayout {
+    int scale;             /* 1..3 (clamped) */
+    int boxX;
+    int boxY;
+    int boxW;
+    int boxH;
+    int textX;             /* draw origin for m11_draw_text_centered_in_rect */
+    int textY;
+    int innerX;            /* text-drawing rect.left */
+    int innerY;
+    int innerW;            /* text-drawing rect width */
+    char line[64];         /* wording that m11_format_session_timer_reminder_line computes */
+} M11_ReminderBannerLayout;
+
+void M11_GameView_GetReminderBannerLayout(
+    const M11_GameViewState* state,
+    int framebufferWidth,
+    int framebufferHeight,
+    M11_ReminderBannerLayout* outLayout);
+
+int M11_GameView_ReminderBannerLayoutMaxTextPixelWidth(
+    const M11_ReminderBannerLayout* layout);
+
 int M11_GameView_GetV1FoodLabelGraphicId(void);
 int M11_GameView_GetV1WaterLabelGraphicId(void);
 int M11_GameView_GetV1FoodBarZoneId(void);

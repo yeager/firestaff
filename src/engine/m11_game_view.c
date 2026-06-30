@@ -1547,6 +1547,179 @@ int M11_GameView_ForcedPauseDialogLayoutMaxTextPixelWidth(
     return m11_forced_pause_dialog_max_text_pixel_width(layout);
 }
 
+/* Sibling layout helper for the session-timer REMINDER banner
+ * (M11_GameView_Draw sessionTimerReminderOverlayActive block).  The
+ * reminder banner is a top-strip overlay — not a centred modal — so
+ * the geometry contract is:
+ *
+ *   - box always sits in y=4..31 (28 px tall, 312 px wide), giving
+ *     a 1-pixel yellow border around a black fill, exactly as the
+ *     previous reminder-banner block painted.
+ *   - text draws inside (boxX+inset, boxY+text-y, innerW) where
+ *     inset grows with scale so the centred m11_draw_text never
+ *     clips the border pass;
+ *   - the wording shrinks as scale grows (same pattern as the
+ *     forced-pause dialog) so the per-char cell advance at 8*scale
+ *     still fits inside innerW.
+ *   - the banner fits the 320x200 framebuffer with a non-zero
+ *     bottom margin (y=33 is the source-owned DM1 dungeon viewport
+ *     top, banner must never touch it).
+ *
+ * Source: Firestaff session-timer UX boundary;
+ *         m11_format_session_timer_reminder_line +
+ *         m11_format_session_timer_compact_remaining (file-scope
+ *         private helpers that own the actual wording); the
+ *         production reminder banner block now reads the geometry
+ *         from this layout and the wording from
+ *         m11_format_session_timer_reminder_line so the fit gate's
+ *         refactor stays a single-source-of-truth. */
+static void m11_reminder_banner_layout_for(
+    const M11_GameViewState* state,
+    int framebufferWidth,
+    int framebufferHeight,
+    M11_ReminderBannerLayout* outLayout)
+{
+    int scale;
+    int boxX;
+    int boxY;
+    int boxW;
+    int boxH;
+    int inset;
+    int innerX;
+    int innerY;
+    int innerW;
+    int textAdvance;
+    int lineLen;
+    int textX;
+    int textY;
+    if (!outLayout) {
+        return;
+    }
+    memset(outLayout, 0, sizeof(*outLayout));
+    scale = state ? state->fontScale : 1;
+    if (scale < 1) scale = 1;
+    if (scale > 3) scale = 3;
+    outLayout->scale = scale;
+
+    /* Box geometry stays at the source-locked (4, 4, 312, 28)
+     * rectangle so all V1 overlay rows above y=33 are owned by the
+     * banner at every fontScale.  At scale 3 the per-char cell
+     * advance is 24 px so a 50-char wording wouldn't fit, but the
+     * m11_format_session_timer_reminder_line wording shrinks to the
+     * compact "%dM LEFT" / "%dS LEFT" / "OFF" form which fits. */
+    boxX = 4;
+    boxY = 4;
+    boxW = 312;
+    boxH = 28;
+    if (framebufferWidth > 0) {
+        if (boxW > framebufferWidth - (2 * boxX)) {
+            boxW = framebufferWidth - (2 * boxX);
+        }
+    }
+    if (boxW < 64) boxW = 64;
+    inset = scale * 8;
+    if (inset > boxW / 2) {
+        inset = boxW / 2;
+    }
+    if (inset < 8) inset = 8;
+    innerX = boxX + inset;
+    innerY = boxY + (scale * 4);
+    innerW = boxW - (2 * inset);
+    if (innerW < scale * 8) innerW = scale * 8;
+
+    /* Reuse the production wording so the layout's `line` field
+     * mirrors what m11_GameView_Draw will paint.  The compact form is
+     * computed by m11_format_session_timer_compact_remaining when
+     * scale >= 3, the "%s LEFT" form when scale == 2, and the full
+     * "SESSION TIMER HH:MM:SS REMAINING" form when scale == 1.
+     *
+     * NOTE: m11_format_session_timer_reminder_line is a static helper
+     * local to this file, so we reproduce its scale-dependent output
+     * here rather than depending on a forward declaration.  The two
+     * implementations are kept in lockstep by the
+     * firestaff_dm1_v1_reminder_banner_font_scale_fit_probe. */
+    {
+        char remaining[SESSION_TIMER_RUNTIME_TEXT_CAPACITY];
+        SessionTimerRuntime* runtime = state ? &state->sessionTimerRuntime : NULL;
+        SessionTimerRuntime_FormatRemaining(runtime, remaining,
+                                            sizeof(remaining));
+        if (scale >= 3) {
+            int rem = SessionTimerRuntime_RemainingSeconds(runtime);
+            if (rem < 0) {
+                snprintf(outLayout->line, sizeof(outLayout->line), "OFF");
+            } else if (rem >= 3600) {
+                snprintf(outLayout->line, sizeof(outLayout->line),
+                         "%dH LEFT", (rem + 3599) / 3600);
+            } else if (rem >= 60) {
+                snprintf(outLayout->line, sizeof(outLayout->line),
+                         "%dM LEFT", (rem + 59) / 60);
+            } else {
+                snprintf(outLayout->line, sizeof(outLayout->line),
+                         "%dS LEFT", rem);
+            }
+        } else if (scale == 2) {
+            snprintf(outLayout->line, sizeof(outLayout->line),
+                     "%s LEFT", remaining);
+        } else {
+            snprintf(outLayout->line, sizeof(outLayout->line),
+                     "SESSION TIMER %s REMAINING", remaining);
+        }
+    }
+    lineLen = (int)strlen(outLayout->line);
+    textAdvance = lineLen * M11_FONT_CHAR_CELL_WIDTH * scale;
+    /* m11_draw_text_centered_in_rect draws at (innerX, innerY) with
+     * the text centred in (innerX, innerY, innerW) — same path the
+     * production reminder banner block uses via its TIMER_REMINDER_*
+     * constants.  The fit gate's contract is "textAdvance <= innerW",
+     * and we pin textX to innerX (instead of running off the framebuffer
+     * left edge) when the wording is wider than innerW. */
+    textX = innerX;
+    textY = innerY;
+    if (textAdvance <= innerW) {
+        textX = innerX + ((innerW - textAdvance) / 2);
+    }
+
+    outLayout->boxX = boxX;
+    outLayout->boxY = boxY;
+    outLayout->boxW = boxW;
+    outLayout->boxH = boxH;
+    outLayout->textX = textX;
+    outLayout->textY = textY;
+    outLayout->innerX = innerX;
+    outLayout->innerY = innerY;
+    outLayout->innerW = innerW;
+}
+
+void M11_GameView_GetReminderBannerLayout(
+    const M11_GameViewState* state,
+    int framebufferWidth,
+    int framebufferHeight,
+    M11_ReminderBannerLayout* outLayout)
+{
+    if (!outLayout) {
+        return;
+    }
+    m11_reminder_banner_layout_for(state, framebufferWidth,
+                                   framebufferHeight, outLayout);
+}
+
+static int m11_reminder_banner_max_text_pixel_width(
+    const M11_ReminderBannerLayout* layout)
+{
+    int lineLen;
+    int scale;
+    if (!layout) return 0;
+    scale = layout->scale < 1 ? 1 : layout->scale;
+    lineLen = (int)strlen(layout->line);
+    return lineLen * M11_FONT_CHAR_CELL_WIDTH * scale;
+}
+
+int M11_GameView_ReminderBannerLayoutMaxTextPixelWidth(
+    const M11_ReminderBannerLayout* layout)
+{
+    return m11_reminder_banner_max_text_pixel_width(layout);
+}
+
 static int m11_dialog_source_message_width_for_choices(int choiceCount) {
     return M11_GameView_GetV1DialogMessageWidth(choiceCount);
 }
