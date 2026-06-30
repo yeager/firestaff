@@ -149,6 +149,22 @@ static int m11_ax_read_all(const char* path, char* out, size_t outSize) {
     return (int)n;
 }
 
+static int m11_ax_count_id_substrings(const char* json, const char* id) {
+    int count = 0;
+    char needle[128];
+    const char* cursor;
+    size_t needleLen;
+    if (!json || !id) return 0;
+    snprintf(needle, sizeof(needle), "\"id\":\"%s\"", id);
+    needleLen = strlen(needle);
+    cursor = json;
+    while ((cursor = strstr(cursor, needle)) != NULL) {
+        ++count;
+        cursor += needleLen;
+    }
+    return count;
+}
+
 static void m11_ax_recompute_paths(void) {
     snprintf(g_subdir_path, sizeof(g_subdir_path),
              "%s/.firestaff", g_home_path);
@@ -623,6 +639,14 @@ static void subtest_session_timer_overlay_manifest(void) {
                  strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_LINE1\"") != NULL &&
                  strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_LINE2\"") != NULL,
                  "timer-forced: title and body line text zones present");
+    m11_ax_check(m11_ax_count_id_substrings(buf, "SESSION_TIMER_FORCED_PAUSE") == 1,
+                 "timer-forced: popup region appears exactly once");
+    m11_ax_check(m11_ax_count_id_substrings(buf, "SESSION_TIMER_FORCED_PAUSE_TITLE") == 1,
+                 "timer-forced: title text zone appears exactly once");
+    m11_ax_check(m11_ax_count_id_substrings(buf, "SESSION_TIMER_FORCED_PAUSE_LINE1") == 1,
+                 "timer-forced: line1 text zone appears exactly once");
+    m11_ax_check(m11_ax_count_id_substrings(buf, "SESSION_TIMER_FORCED_PAUSE_LINE2") == 1,
+                 "timer-forced: line2 text zone appears exactly once");
     m11_ax_check(strstr(buf, "scale=3;remaining=0") != NULL,
                  "timer-forced: scale and remaining seconds carried in value");
     m11_ax_check(strstr(buf, "EXPIRED") != NULL &&

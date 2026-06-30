@@ -416,17 +416,6 @@ static void m11_ax_emit_session_timer_overlay_zones(
                          &state->sessionTimerRuntime));
         }
 
-        e = m11_ax_begin(FS_AX_TEXT,
-                         layout.titleX, layout.titleY,
-                         layout.boxW, 10 * layout.scale, 1);
-        if (e) {
-            snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
-                     "SESSION_TIMER_FORCED_PAUSE_TITLE");
-            snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
-                     "Forced Pause Title");
-            snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
-                     "%s", layout.title);
-        }
         /* Clamp the title/line text bounds to fit inside the
          * framebuffer so the screen-reader manifest never claims
          * a region past the visible UI edge. The renderer centres

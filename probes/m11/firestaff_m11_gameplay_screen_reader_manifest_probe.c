@@ -1750,6 +1750,16 @@ static void subtest_session_timer_forced_pause_overlay(void)
                      strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_LINE1\"") != NULL &&
                      strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_LINE2\"") != NULL,
                  "timer-forced: title and line1/line2 text zones all emitted");
+    probe_record("M11_AX_Q06b_forced_popup_id_once",
+                 count_id_substrings(buf, "SESSION_TIMER_FORCED_PAUSE") == 1,
+                 "timer-forced: popup region id appears exactly once per frame");
+    probe_record("M11_AX_Q06c_forced_title_id_once",
+                 count_id_substrings(buf, "SESSION_TIMER_FORCED_PAUSE_TITLE") == 1,
+                 "timer-forced: title id appears exactly once per frame");
+    probe_record("M11_AX_Q06d_forced_line_ids_once",
+                 count_id_substrings(buf, "SESSION_TIMER_FORCED_PAUSE_LINE1") == 1 &&
+                     count_id_substrings(buf, "SESSION_TIMER_FORCED_PAUSE_LINE2") == 1,
+                 "timer-forced: line1/line2 ids appear exactly once per frame");
     probe_record("M11_AX_Q07_forced_scale_remaining_value",
                  strstr(buf, "scale=3;remaining=0") != NULL,
                  "timer-forced: popup value carries \"scale=3;remaining=0\"");
