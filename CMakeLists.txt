@@ -11211,6 +11211,50 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass110_v1_hud_type7_bar_value_resolver.py
     )
 
+    # DM1 V1 champion-panel HUD/status top-row source-chain audit.
+    # Re-uses the data-free source-chain wiring authored in
+    # tools/pass107_v1_hud_status_source_chain_audit.py against
+    # data/zones_h_reconstruction.json (layout 696) and the
+    # pass83 champion HUD overlay stats. Pins the C150..C218
+    # status-template / name / bar-graph / hand-zone chain that
+    # the dm1_v1_champion_panel_hud_status_source_lock test
+    # assumes is present. The script was made runnable on this
+    # worktree by 5db1695f1 (the 0a1d4cfdc path fix); this
+    # registration runs it as part of every CI sweep. Source
+    # evidence is purely contractual: no real GRAPHICS.DAT /
+    # DUNGEON.DAT load, no live renderer handoff, no
+    # original-vs-Firestaff pixel claim.
+    add_test(
+        NAME pass107_dm1_v1_hud_status_source_chain_audit
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass107_v1_hud_status_source_chain_audit.py
+    )
+    set_tests_properties(pass107_dm1_v1_hud_status_source_chain_audit PROPERTIES
+        DEPENDS dm1_v1_champion_panel_hud_status_source_lock
+    )
+
+    # DM1 V1 champion-panel HUD/status top-row type-7 bar value
+    # resolver. Re-uses the data-free bar-value wiring authored
+    # in tools/pass110_v1_hud_type7_bar_value_resolver.py
+    # against data/zones_h_reconstruction.json (layout 696) and
+    # the pass83 overlay stats. Pins the C183..C206 / C195..C206
+    # type=7 HP/stamina/mana bar chain that the
+    # dm1_v1_champion_panel_hud_status_source_lock test assumes
+    # is present, and independently recomputes the bar
+    # rectangles + sample fills instead of trusting the overlay
+    # JSON alone. The script was made runnable on this worktree
+    # by 5db1695f1 (the 0a1d4cfdc path fix); this registration
+    # runs it as part of every CI sweep. Source evidence is
+    # purely contractual: no real GRAPHICS.DAT / DUNGEON.DAT
+    # load, no live renderer handoff, no original-vs-Firestaff
+    # pixel claim.
+    add_test(
+        NAME pass110_dm1_v1_hud_type7_bar_value_resolver
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass110_v1_hud_type7_bar_value_resolver.py
+    )
+    set_tests_properties(pass110_dm1_v1_hud_type7_bar_value_resolver PROPERTIES
+        DEPENDS pass107_dm1_v1_hud_status_source_chain_audit
+    )
+
     # DM1 V1 champion-panel DISABLED/UNAVAILABLE ICON STATE gate.
     # Source-locked against CHAMPION.C F0330:2208-2255
     # (MASK0x8000_ACTION_HAND | MASK0x0008_DISABLE_ACTION) +
