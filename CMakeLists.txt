@@ -19984,6 +19984,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_asset_loader_blit_pc34_com
     )
 endif()
 
+# M11 V2.0/V2.1 filter chain clamp contract. Pins the V2 visual
+# extras setter/getter clamp surface without requiring a window or
+# user-supplied game data.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_v2_filter_chain_clamp_pc34_compat.c")
+    add_executable(test_m11_v2_filter_chain_clamp_pc34_compat
+        tests/test_m11_v2_filter_chain_clamp_pc34_compat.c
+    )
+    target_link_libraries(test_m11_v2_filter_chain_clamp_pc34_compat PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_m11_v2_filter_chain_clamp_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_v2_filter_chain_clamp_pc34_compat
+        COMMAND test_m11_v2_filter_chain_clamp_pc34_compat
+    )
+endif()
+
 # M12 save browser export/import: file-copy backup and restore path for
 # firestaff-*.sav entries without overwriting existing imported saves.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12.c"
