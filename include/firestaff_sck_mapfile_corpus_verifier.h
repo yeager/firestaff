@@ -60,6 +60,14 @@ extern "C" {
 #define FIRESTAFF_SCK_CORPUS_FORMAT_BYTES 32u
 #define FIRESTAFF_SCK_CORPUS_DISTINCT_TYPES 32u
 #define FIRESTAFF_SCK_CORPUS_DISTINCT_ATTRS 32u
+/* Header-level property keys (ENDIAN/FORMAT/MAPVERSION/CLOCKMODE/
+ * SNDS.SPR/etc) come from the per-file comma-separated header
+ * line and are a small, bounded set.  Capturing them alongside
+ * the item-level attribute prefixes lets the corpus walk surface
+ * header-only descriptors (animation / dungeon / cmp / savegame
+ * / FTL/HTC entries) without forcing those files to invent
+ * synthetic items. */
+#define FIRESTAFF_SCK_CORPUS_DISTINCT_HEADER_ATTRS 32u
 #define FIRESTAFF_SCK_CORPUS_PER_FORMAT 16u
 
 typedef struct FirestaffSckCorpusFileStats {
@@ -82,6 +90,14 @@ typedef struct FirestaffSckCorpusFileStats {
     unsigned int distinctAttrPrefixCount;
     char distinctAttrs[FIRESTAFF_SCK_CORPUS_DISTINCT_ATTRS]
                       [FIRESTAFF_SCK_CORPUS_TYPE_BYTES];
+    /* Header-level property keys parsed from the comma-separated
+     * SCK 2.x header line.  Populated for every V2 file even when
+     * the file is header-only (animation / dungeon / cmp /
+     * savegame descriptors), so the corpus walk can still report
+     * which header key shapes the corpus carries. */
+    unsigned int distinctHeaderAttrCount;
+    char distinctHeaderAttrs[FIRESTAFF_SCK_CORPUS_DISTINCT_HEADER_ATTRS]
+                            [FIRESTAFF_SCK_CORPUS_TYPE_BYTES];
 } FirestaffSckCorpusFileStats;
 
 typedef struct FirestaffSckCorpusFormatStats {
@@ -112,6 +128,10 @@ typedef struct FirestaffSckCorpusSummary {
     unsigned int distinctAttrPrefixCount;
     char distinctAttrPrefixes[FIRESTAFF_SCK_CORPUS_DISTINCT_ATTRS]
                              [FIRESTAFF_SCK_CORPUS_TYPE_BYTES];
+    unsigned int distinctHeaderAttrPrefixCount;
+    char distinctHeaderAttrPrefixes
+        [FIRESTAFF_SCK_CORPUS_DISTINCT_HEADER_ATTRS]
+        [FIRESTAFF_SCK_CORPUS_TYPE_BYTES];
     unsigned int formatCount;
     FirestaffSckCorpusFormatStats formats[FIRESTAFF_SCK_CORPUS_PER_FORMAT];
     unsigned int fileCount;

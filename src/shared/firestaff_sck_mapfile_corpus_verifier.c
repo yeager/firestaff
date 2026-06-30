@@ -274,6 +274,50 @@ static void collect_attr_prefixes(const char* attrs,
     }
 }
 
+/* Same shape as collect_attr_prefixes but the separator is the
+ * SCK header `,` and the terminator is the end-of-line.  Used to
+ * pull distinct KEY names out of the comma-separated header blob
+ * ("ENDIAN=BIG,FORMAT=ANIMATION,SNDS.SPR=22050,SND4.SPR=7812")
+ * that every V2 file carries as its first non-blank line. */
+static void collect_header_attr_prefixes(const char* header,
+                                         char distinct[][FIRESTAFF_SCK_CORPUS_TYPE_BYTES],
+                                         unsigned int max,
+                                         unsigned int* count) {
+    const char* p = header;
+    if (!header || !*header) {
+        return;
+    }
+    while (p && *p) {
+        const char* eq;
+        const char* comma;
+        const char* sep;
+        size_t keyLen;
+        /* Trim leading whitespace between header keys so
+         * ",FORMAT=ANIMATION" still resolves to "FORMAT". */
+        while (*p == ' ' || *p == '\t' || *p == '\r') {
+            ++p;
+        }
+        if (!*p || *p == '\n' || *p == '\r') {
+            break;
+        }
+        eq = strchr(p, '=');
+        comma = strchr(p, ',');
+        if (!eq) {
+            break;
+        }
+        /* Key ends at the first '=' or ',', whichever comes
+         * first.  The `,` separator keeps us on the same KEY
+         * for value blobs that happen to contain `=` (none of
+         * the documented SCK 2.x header values do). */
+        sep = (comma && comma < eq) ? comma : eq;
+        keyLen = (size_t)(sep - p);
+        if (keyLen > 0u && keyLen < FIRESTAFF_SCK_CORPUS_TYPE_BYTES) {
+            (void)contains_distinct(distinct, max, count, p, keyLen);
+        }
+        p = comma ? comma + 1 : NULL;
+    }
+}
+
 static void reset_file_stats(FirestaffSckCorpusFileStats* stats) {
     memset(stats, 0, sizeof(*stats));
 }
@@ -313,6 +357,19 @@ FirestaffSckCorpusFileResult FirestaffSckCorpus_VerifyText(
                    v2map.format, strlen(v2map.format));
         copy_field(stats->endian, sizeof(stats->endian),
                    v2map.endian, strlen(v2map.endian));
+        /* Capture header-level property keys regardless of
+         * whether the parser accepted the file.  The underlying
+         * SCK 2.x parser populates headerProperties before
+         * item-level validation, so this still works for the
+         * header-only descriptors (animation / dungeon / cmp /
+         * savegame / singleitem entries) that the bounded
+         * item-required parser rejects. */
+        if (v2map.headerProperties[0] != '\0') {
+            collect_header_attr_prefixes(v2map.headerProperties,
+                                          stats->distinctHeaderAttrs,
+                                          FIRESTAFF_SCK_CORPUS_DISTINCT_HEADER_ATTRS,
+                                          &stats->distinctHeaderAttrCount);
+        }
         if (parseRc == 1) {
             stats->parseOk = 1u;
             stats->v2Rows = v2map.itemCount;
@@ -563,6 +620,11 @@ FirestaffSckCorpusResult FirestaffSckCorpus_VerifyDirectory(
                        &summary->distinctAttrPrefixCount,
                        stats.distinctAttrs,
                        stats.distinctAttrPrefixCount);
+        merge_distinct(summary->distinctHeaderAttrPrefixes,
+                       FIRESTAFF_SCK_CORPUS_DISTINCT_HEADER_ATTRS,
+                       &summary->distinctHeaderAttrPrefixCount,
+                       stats.distinctHeaderAttrs,
+                       stats.distinctHeaderAttrCount);
     }
 
     return FIRESTAFF_SCK_CORPUS_OK;
