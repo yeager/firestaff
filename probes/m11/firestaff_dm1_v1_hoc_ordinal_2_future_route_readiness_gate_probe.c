@@ -39,8 +39,9 @@
  *   Group C — sibling ordinal-2 route coverage matrix
  *     Walks the bounded list of ordinal-2 sibling probes known to
  *     this build and asserts each probe source file exists.  It also
- *     locks today's CMake wiring state so the build records which
- *     siblings are live CTest gates and which remain open.
+ *     locks today's CMake wiring state by checking the exact
+ *     `probes/m11/<basename>` CMake pool item, so a comment-only
+ *     mention of a basename cannot satisfy the readiness matrix.
  *     The list is the same list the TODO row (b) explicitly calls
  *     out: south_return, west_negative, east_walkpath, d2l_negative,
  *     leave_and_reenter, palette_match_rect, after_party_shuffle,
@@ -48,6 +49,14 @@
  *     at (1,2) NORTH), door_nearby_no_float, cancel_reopen.  For
  *     each entry the gate prints `covered`, `open (source present)`,
  *     or a true gap such as missing source or unexpected CMake wiring.
+ *     The matrix also asserts the 10-row bounded list has 10 unique
+ *     route labels and 10 unique basenames, that every basename ends
+ *     in `.c`, and that the strategy split is 2 real-route rows
+ *     (`south_return`, `west_negative`) plus 8 synthetic-mutation
+ *     rows (the other 8).  The 2026-06-27 baseline had `west_negative`
+ *     and `cancel_reopen` source-present but open; the 2026-06-28
+ *     sibling-promotion lane closed those two, so the matrix now
+ *     expects wired=10/10, open=0 on the current build.
  *
  * Source-locked to:
  *   ReDMCSB DUNGEON.C:2573        visibleWallCell = (partyDirection + 2) & 3
@@ -306,12 +315,64 @@ static const ProbeRecord kSiblingProbes[] = {
 #define SIBLING_PROBE_COUNT \
     (int)(sizeof(kSiblingProbes) / sizeof(kSiblingProbes[0]))
 
-/* Returns 1 if `needle` substring appears in `haystack`.  Used to
- * check that the probe basename is referenced from the pool-probe
- * foreach() block in CMakeLists.txt. */
-static int cmake_contains(const char* haystack, const char* needle) {
-    if (!haystack || !needle) return 0;
-    return strstr(haystack, needle) != NULL;
+/* Returns 1 if the exact `probes/m11/<basename>` CMake pool item
+ * appears in CMakeLists.txt.  A bare basename in a comment, a
+ * README mention, or a sibling-probe doc string is not enough to pass
+ * the sibling-route wiring gate — only the actual `probes/m11/...`
+ * pool reference counts.  This protects the readiness matrix from
+ * comment-only or doc-only mentions that would otherwise satisfy a
+ * loose strstr match. */
+static int cmake_contains_probe_path(const char* haystack, const char* basename) {
+    char pathNeedle[512];
+    if (!haystack || !basename) return 0;
+    snprintf(pathNeedle, sizeof(pathNeedle), "probes/m11/%s", basename);
+    return strstr(haystack, pathNeedle) != NULL;
+}
+
+/* Returns 1 if `path` ends in `.c` — the C-source shape every
+ * sibling probe basename must keep.  A future refactor that drops
+ * the `.c` suffix (or accidentally appends `.cpp` / `.h`) cannot
+ * silently satisfy the matrix. */
+static int has_c_suffix(const char* path) {
+    size_t n;
+    if (!path) return 0;
+    n = strlen(path);
+    return n > 2 && path[n - 2] == '.' && path[n - 1] == 'c';
+}
+
+/* Returns 1 if the sibling-probe matrix has two rows with the same
+ * `route_variant` label.  Guards against future edits that collapse
+ * or split a row and produce a hidden duplicate. */
+static int sibling_matrix_has_duplicate_route(void) {
+    int i;
+    int j;
+    for (i = 0; i < SIBLING_PROBE_COUNT; ++i) {
+        for (j = i + 1; j < SIBLING_PROBE_COUNT; ++j) {
+            if (strcmp(kSiblingProbes[i].route_variant,
+                       kSiblingProbes[j].route_variant) == 0) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+/* Returns 1 if the sibling-probe matrix has two rows with the same
+ * `probe_basename`.  A duplicate basename would mean two different
+ * route labels accidentally point at the same source file — the
+ * probe inventory should stay one-to-one. */
+static int sibling_matrix_has_duplicate_basename(void) {
+    int i;
+    int j;
+    for (i = 0; i < SIBLING_PROBE_COUNT; ++i) {
+        for (j = i + 1; j < SIBLING_PROBE_COUNT; ++j) {
+            if (strcmp(kSiblingProbes[i].probe_basename,
+                       kSiblingProbes[j].probe_basename) == 0) {
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 /* Read CMakeLists.txt once for the Group C coverage check.  Returns
@@ -448,6 +509,8 @@ int main(int argc, char** argv) {
     int totalExpectedWired = 0;
     int totalOpenWiring = 0;
     int totalSourcePresent = 0;
+    int totalRealSensorRoutes = 0;
+    int totalSyntheticSensorRoutes = 0;
 
     if (argc > 1) dataDir = argv[1];
     else          dataDir = getenv("FIRESTAFF_DATA");
@@ -581,6 +644,12 @@ int main(int argc, char** argv) {
     }
 
     printf("\n[Group C] Sibling ordinal-2 route coverage matrix:\n");
+    CHECK(SIBLING_PROBE_COUNT == 10,
+          "Group C: ordinal-2 sibling matrix has the expected 10 route rows");
+    CHECK(!sibling_matrix_has_duplicate_route(),
+          "Group C: ordinal-2 sibling matrix route labels are unique");
+    CHECK(!sibling_matrix_has_duplicate_basename(),
+          "Group C: ordinal-2 sibling matrix source basenames are unique");
     printf("  %-22s %-10s %-50s %-7s %-7s %s\n",
            "ROUTE_VARIANT", "STRATEGY", "BASENAME", "SOURCE", "WIRED", "STATUS");
     for (i = 0; i < SIBLING_PROBE_COUNT; ++i) {
@@ -592,13 +661,19 @@ int main(int argc, char** argv) {
         const char* sourceStatus;
         const char* wiredStatus;
         const char* rowStatus;
+        int basenameShapeOk;
         /* The probe source lives in probes/m11/ relative to the
          * resolved source root (project root). */
         snprintf(pathBuf, sizeof(pathBuf), "%s/probes/m11/%s",
                  sourceRoot, r->probe_basename);
+        if (r->sensor_strategy == SENSOR_REAL) ++totalRealSensorRoutes;
+        if (r->sensor_strategy == SENSOR_SYNTHETIC) ++totalSyntheticSensorRoutes;
+        basenameShapeOk = has_c_suffix(r->probe_basename);
         present = file_exists(pathBuf);
         if (cmakeListsBuf) {
-            wired = cmake_contains(cmakeListsBuf, r->probe_basename);
+            /* exact `probes/m11/<basename>` reference required, not a
+             * loose strstr match against the basename alone. */
+            wired = cmake_contains_probe_path(cmakeListsBuf, r->probe_basename);
         }
         if (r->expected_wired) {
             ++totalExpectedWired;
@@ -637,9 +712,13 @@ int main(int argc, char** argv) {
                      "Group C: route '%s' source file exists",
                      r->route_variant);
             CHECK(present, msgSrc);
+            snprintf(msgSrc, sizeof(msgSrc),
+                     "Group C: route '%s' basename is a C source file",
+                     r->route_variant);
+            CHECK(basenameShapeOk, msgSrc);
             if (cmakeListsBuf) {
                 snprintf(msgWire, sizeof(msgWire),
-                         "Group C: route '%s' CMake wiring matches expected state (%s)",
+                         "Group C: route '%s' exact CMake probes/m11 path wiring matches expected state (%s)",
                          r->route_variant,
                          r->expected_wired ? "wired" : "known open");
                 CHECK(wired == r->expected_wired, msgWire);
@@ -656,6 +735,14 @@ int main(int argc, char** argv) {
         CHECK(totalSourcePresent == SIBLING_PROBE_COUNT &&
               totalCoveredWired == totalExpectedWired &&
               totalOpenWiring == 0, msgCov);
+    }
+    {
+        char msgStrategy[200];
+        snprintf(msgStrategy, sizeof(msgStrategy),
+                 "Group C: ordinal-2 route strategy inventory remains 2 real-route rows and 8 synthetic-mutation rows (got real=%d synthetic=%d)",
+                 totalRealSensorRoutes, totalSyntheticSensorRoutes);
+        CHECK(totalRealSensorRoutes == 2 && totalSyntheticSensorRoutes == 8,
+              msgStrategy);
     }
 
     if (cmakeListsBuf) free(cmakeListsBuf);
