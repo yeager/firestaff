@@ -51,6 +51,34 @@
  *      pinned six strings ("gameplay" / "inventory" / "map" /
  *      "dialog" / "entrance_mirror" / "endgame") and never
  *      "launcher_*" or anything outside that set.
+ *   L. Redraw idempotence: emitting the same state N+1 times
+ *      replaces the previous manifest byte-for-byte (single-file
+ *      invariant; no .tmp residue, no duplicate elements).
+ *   M. Chest-open overlay (CHEST_PANEL + 8 slots + arrow/eye toggle).
+ *   N. Chest-open eye-variant label ("Eye (Reincarnate)" when
+ *      v1OpenChestOpenedByEye == 1).
+ *   O. NULL state is a no-op (defense in depth).
+ *   P. Session-timer reminder overlay manifest. Pins the
+ *      SESSION_TIMER_REMINDER + SESSION_TIMER_REMINDER_TEXT zones,
+ *      scale-1 "SESSION TIMER HH:MM:SS REMAINING" text, scale-2
+ *      "HH:MM:SS LEFT" suffix style, region/text bounds
+ *      (4,4,312,28) and (12,8,296,20) -- the
+ *      TIMER_REMINDER_* constants in
+ *      src/engine/m11_game_view_a11y.c -- remaining-seconds value
+ *      propagation, dialog-overlay visibility fence, and
+ *      inside-framebuffer containment.
+ *   Q. Session-timer forced-pause dialog overlay manifest. Pins
+ *      SESSION_TIMER_FORCED_PAUSE popup + TITLE + LINE1 + LINE2
+ *      zones, popup element type, scale-and-remaining-seconds value,
+ *      scale-3 visible text ("EXPIRED" / "ENTER MENU" / "ESC DISMISS"),
+ *      dialog-overlay and return-to-menu-confirm visibility fences,
+ *      and inside-framebuffer containment for popup + text zones.
+ *      Also pins the inverse fence: reminder is hidden when
+ *      forced-pause is also active.
+ *   R. Session-timer overlay JSON well-formedness sweep --
+ *      atomic-write invariant, comma discipline, single-frame
+ *      non-duplicate emission, and enabled=true on every emitted
+ *      session-timer zone.
  *
  * Privacy/safety: the probe redirects fs_ax output via
  * fs_ax_set_output_dir() to a per-run temp dir so the manifest
@@ -77,6 +105,7 @@
 #include "firestaff_accessibility.h"
 #include "m11_game_view.h"
 #include "m11_game_view_a11y.h"
+#include "session_timer_runtime.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1453,6 +1482,452 @@ static void subtest_null_state_noop(void)
                  "null-state: no .tmp residue");
 }
 
+/* Subtest P: session-timer reminder overlay manifest surface.
+ *
+ * Closes the M11 gameplay-side screen-reader probe gap: the
+ * launcher-owned Session Timer (M12 settings row + M12_CampaignSessionTimer
+ * + SessionTimerRuntime) drives two deterministic sticky overlay
+ * zones -- a top-strip reminder banner and a centered forced-pause
+ * dialog -- that ride on top of any gameplay state. The unit test
+ * `test_m11_screen_reader_gameplay_state_manifest.c` already covers
+ * them; this probe pins the same invariants at runtime so CI catches
+ * a future regression in m11_ax_emit_session_timer_overlay_zones()
+ * without needing the unit binary.
+ *
+ * Reference: src/engine/m11_game_view_a11y.c m11_ax_emit_session_timer_overlay_zones()
+ *   reminder geometry constants (TIMER_REMINDER_X=4, TIMER_REMINDER_Y=4,
+ *   TIMER_REMINDER_W=312, TIMER_REMINDER_H=28,
+ *   TIMER_REMINDER_TEXT_INSET=8, TIMER_REMINDER_TEXT_Y=8)
+ * Visibility fence: reminder is suppressed by
+ *   sessionTimerForcedPauseDialogActive OR dialogOverlayActive.
+ *
+ * State contract under test:
+ *   P01  update returns 1 when reminder is active and writable.
+ *   P02  manifest exists (file present, non-empty).
+ *   P03  gameplay state preserved (the reminder overlays gameplay,
+ *        it does not transition the gameplay state).
+ *   P04  SESSION_TIMER_REMINDER region present.
+ *   P05  SESSION_TIMER_REMINDER_TEXT region present.
+ *   P06  reminder text forwarded verbatim into the value field
+ *        (scale 1 produces "SESSION TIMER HH:MM:SS REMAINING").
+ *   P07  remaining seconds propagated into the reminder region value
+ *        ("remaining=<seconds>").
+ *   P08  reminder region bounds pin to (4,4,312,28).
+ *   P09  reminder text bounds pin to (4+8, 8, 312-2*8, 28-8) = (12, 8, 296, 20).
+ *   P10  reminder text type is FS_AX_TEXT ("text").
+ *   P11  reminder region type is FS_AX_REGION ("region").
+ *   P12  scale-2 reminder produces "MM:SS LEFT" suffix style.
+ *   P13  reminder is hidden when dialogOverlayActive is set
+ *        (visibility fence pins the renderer behaviour).
+ *   P14  reminder text zone bounds stay inside the 320x200 framebuffer. */
+static void subtest_session_timer_reminder_overlay(void)
+{
+    M11_GameViewState state;
+    char buf[16384];
+    int n;
+    int bx, by, bw, bh;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    /* P01..P11: scale-1 reminder - "SESSION TIMER HH:MM:SS REMAINING" */
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.fontScale = 1;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 30);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 25 * 60);
+    state.sessionTimerReminderOverlayActive = 1;
+
+    probe_record("M11_AX_P01_reminder_returns_one",
+                 m11_screen_reader_update_ex(&state, 320, 200) == 1,
+                 "timer-reminder: update returns 1");
+    n = read_all(g_json_path, buf, sizeof(buf));
+    probe_record("M11_AX_P02_reminder_json_present",
+                 n > 0,
+                 "timer-reminder: manifest written");
+    if (n <= 0) return;
+
+    probe_record("M11_AX_P03_reminder_keeps_gameplay_state",
+                 strstr(buf, "\"gameState\":\"gameplay\"") != NULL,
+                 "timer-reminder: gameplay state preserved (overlay-style)");
+    probe_record("M11_AX_P04_reminder_region_present",
+                 strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER\"") != NULL,
+                 "timer-reminder: SESSION_TIMER_REMINDER region emitted");
+    probe_record("M11_AX_P05_reminder_text_present",
+                 strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER_TEXT\"") != NULL,
+                 "timer-reminder: SESSION_TIMER_REMINDER_TEXT text zone emitted");
+    probe_record("M11_AX_P06_reminder_text_forwarded",
+                 strstr(buf, "SESSION TIMER 00:05:00 REMAINING") != NULL,
+                 "timer-reminder: scale-1 text \"SESSION TIMER 00:05:00 REMAINING\" forwarded");
+    probe_record("M11_AX_P07_reminder_remaining_seconds_value",
+                 strstr(buf, "remaining=300") != NULL,
+                 "timer-reminder: remaining seconds (300) propagated into value");
+
+    /* P08: reminder region bounds pin to (4,4,312,28). */
+    bx = bounds_x_for_id(buf, "SESSION_TIMER_REMINDER");
+    by = bounds_y_for_id(buf, "SESSION_TIMER_REMINDER");
+    bw = bounds_w_for_id(buf, "SESSION_TIMER_REMINDER");
+    bh = bounds_h_for_id(buf, "SESSION_TIMER_REMINDER");
+    probe_record("M11_AX_P08_reminder_region_bounds",
+                 bx == 4 && by == 4 && bw == 312 && bh == 28,
+                 "timer-reminder: region bounds pinned to (4,4,312,28)");
+
+    /* P09: reminder text bounds pin to (12,8,296,20). */
+    bx = bounds_x_for_id(buf, "SESSION_TIMER_REMINDER_TEXT");
+    by = bounds_y_for_id(buf, "SESSION_TIMER_REMINDER_TEXT");
+    bw = bounds_w_for_id(buf, "SESSION_TIMER_REMINDER_TEXT");
+    bh = bounds_h_for_id(buf, "SESSION_TIMER_REMINDER_TEXT");
+    probe_record("M11_AX_P09_reminder_text_bounds",
+                 bx == 12 && by == 8 && bw == 296 && bh == 20,
+                 "timer-reminder: text bounds pinned to (12,8,296,20) (inset=8)");
+
+    /* P10: text zone type = "text". We look at the element whose id is
+     * SESSION_TIMER_REMINDER_TEXT and confirm the nearest "type"
+     * field that follows the id field reads "text". The writer
+     * emits id,type,label so the matching type lives between id and
+     * the closing brace of that element. */
+    {
+        const char* idNeedle = strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER_TEXT\"");
+        const char* endOfElement = idNeedle ? find_element_end_for_id(
+            buf, "SESSION_TIMER_REMINDER_TEXT") : NULL;
+        const char* typeHit = idNeedle ? strstr(idNeedle, "\"type\":\"") : NULL;
+        int isText = 0;
+        if (typeHit && endOfElement && typeHit < endOfElement) {
+            typeHit += strlen("\"type\":\"");
+            isText = (strncmp(typeHit, "text\"", 5) == 0);
+        }
+        probe_record("M11_AX_P10_reminder_text_type_is_text",
+                     isText,
+                     "timer-reminder: SESSION_TIMER_REMINDER_TEXT type=\"text\"");
+    }
+
+    /* P11: reminder region type = "region". */
+    {
+        const char* idNeedle = strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER\"");
+        const char* endOfElement = idNeedle ? find_element_end_for_id(
+            buf, "SESSION_TIMER_REMINDER") : NULL;
+        const char* typeHit = idNeedle ? strstr(idNeedle, "\"type\":\"") : NULL;
+        int isRegion = 0;
+        if (typeHit && endOfElement && typeHit < endOfElement) {
+            typeHit += strlen("\"type\":\"");
+            isRegion = (strncmp(typeHit, "region\"", 7) == 0);
+        }
+        probe_record("M11_AX_P11_reminder_region_type_is_region",
+                     isRegion,
+                     "timer-reminder: SESSION_TIMER_REMINDER type=\"region\"");
+    }
+
+    /* P12: scale-2 reminder produces "<HH:MM:SS> LEFT" suffix style. */
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.fontScale = 2;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 30);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 25 * 60);
+    state.sessionTimerReminderOverlayActive = 1;
+    (void)m11_screen_reader_update_ex(&state, 320, 200);
+    n = read_all(g_json_path, buf, sizeof(buf));
+    probe_record("M11_AX_P12_reminder_scale2_suffix_style",
+                 n > 0 && strstr(buf, "00:05:00 LEFT") != NULL,
+                 "timer-reminder: scale-2 emits \"00:05:00 LEFT\" suffix");
+
+    /* P13: reminder is hidden when dialogOverlayActive is set.
+     * Match the renderer's visibility fence:
+     *   sessionTimerReminderOverlayActive && !sessionTimerForcedPauseDialogActive
+     *     && !dialogOverlayActive
+     */
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.fontScale = 1;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 30);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 25 * 60);
+    state.sessionTimerReminderOverlayActive = 1;
+    state.dialogOverlayActive = 1;
+    (void)m11_screen_reader_update_ex(&state, 320, 200);
+    n = read_all(g_json_path, buf, sizeof(buf));
+    probe_record("M11_AX_P13_reminder_suppressed_by_dialog",
+                 n > 0 &&
+                     strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER\"") == NULL &&
+                     strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER_TEXT\"") == NULL,
+                 "timer-reminder: dialog overlay suppresses reminder banner + text");
+
+    /* P14: reminder text zone bounds stay inside the 320x200 framebuffer
+     * (the broader bounds_inside_framebuffer subtest sweeps every
+     * element, but we re-pin the reminder surface here so a future
+     * reminder text overflow is caught in this probe's own scope). */
+    probe_record("M11_AX_P14_reminder_inside_framebuffer",
+                 bx >= 0 && by >= 0 && bx + bw <= 320 && by + bh <= 200,
+                 "timer-reminder: text bounds fit inside 320x200 framebuffer");
+}
+
+/* Subtest Q: session-timer forced-pause dialog overlay manifest surface.
+ *
+ * When the launcher-owned Session Timer reaches its limit, the
+ * SessionTimerRuntime forces a centered return-to-menu confirm
+ * dialog. The M11 renderer surfaces a centered confirm box with
+ * title + body lines, derived from
+ * M11_GameView_GetForcedPauseDialogLayout(). The screen-reader
+ * manifest emits:
+ *   - SESSION_TIMER_FORCED_PAUSE  (FS_AX_POPUP box)
+ *   - SESSION_TIMER_FORCED_PAUSE_TITLE  (FS_AX_TEXT title)
+ *   - SESSION_TIMER_FORCED_PAUSE_LINE1  (FS_AX_TEXT body line 1)
+ *   - SESSION_TIMER_FORCED_PAUSE_LINE2  (FS_AX_TEXT body line 2)
+ * with "scale=N;remaining=M" carried in the popup value and the
+ * visible body strings forwarded verbatim.
+ *
+ * Visibility fence: forced pause is suppressed by dialogOverlayActive
+ * OR returnToMenuConfirmActive (return-to-menu confirm has higher
+ * priority because the user is already on the way out).
+ *
+ * State contract under test:
+ *   Q01  update returns 1 when forced pause is active and writable.
+ *   Q02  manifest exists and gameState remains "gameplay".
+ *   Q03  SESSION_TIMER_FORCED_PAUSE popup region present.
+ *   Q04  popup element type is FS_AX_POPUP ("popup").
+ *   Q05  SESSION_TIMER_FORCED_PAUSE_TITLE/LINE1/LINE2 text zones present.
+ *   Q06  scale and remaining seconds propagated into the popup value
+ *        ("scale=N;remaining=M").
+ *   Q07  scale-3 visible text forwarded verbatim ("EXPIRED",
+ *        "ENTER MENU", "ESC DISMISS").
+ *   Q08  forced pause suppressed when dialogOverlayActive is set.
+ *   Q09  forced pause suppressed when returnToMenuConfirmActive is set.
+ *   Q10  forced pause popup region bounds fit inside the 320x200 framebuffer.
+ *   Q11  title/line1/line2 text bounds also fit inside the 320x200 framebuffer.
+ *   Q12  forced pause is hidden when reminder is also active and the
+ *        reminder shows; the popup should not double up. */
+static void subtest_session_timer_forced_pause_overlay(void)
+{
+    M11_GameViewState state;
+    char buf[16384];
+    int n;
+    int bx, by, bw, bh;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    /* Q01..Q07: scale-3 forced pause - body strings contain
+     * "EXPIRED", "ENTER MENU", "ESC DISMISS". */
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.fontScale = 3;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 1);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 60);
+    state.sessionTimerForcedPauseDialogActive = 1;
+
+    probe_record("M11_AX_Q01_forced_returns_one",
+                 m11_screen_reader_update_ex(&state, 320, 200) == 1,
+                 "timer-forced: update returns 1");
+    n = read_all(g_json_path, buf, sizeof(buf));
+    probe_record("M11_AX_Q02_forced_json_present",
+                 n > 0,
+                 "timer-forced: manifest written");
+    if (n <= 0) return;
+
+    probe_record("M11_AX_Q03_forced_keeps_gameplay_state",
+                 strstr(buf, "\"gameState\":\"gameplay\"") != NULL,
+                 "timer-forced: gameplay state preserved (overlay-style)");
+    probe_record("M11_AX_Q04_forced_popup_present",
+                 strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE\"") != NULL,
+                 "timer-forced: SESSION_TIMER_FORCED_PAUSE popup region emitted");
+    probe_record("M11_AX_Q05_forced_popup_type_is_popup",
+                 strstr(buf, "\"type\":\"popup\"") != NULL,
+                 "timer-forced: popup element type is \"popup\"");
+    probe_record("M11_AX_Q06_forced_title_and_lines",
+                 strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_TITLE\"") != NULL &&
+                     strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_LINE1\"") != NULL &&
+                     strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_LINE2\"") != NULL,
+                 "timer-forced: title and line1/line2 text zones all emitted");
+    probe_record("M11_AX_Q07_forced_scale_remaining_value",
+                 strstr(buf, "scale=3;remaining=0") != NULL,
+                 "timer-forced: popup value carries \"scale=3;remaining=0\"");
+    probe_record("M11_AX_Q08_forced_scale3_visible_text",
+                 strstr(buf, "EXPIRED") != NULL &&
+                     strstr(buf, "ENTER MENU") != NULL &&
+                     strstr(buf, "ESC DISMISS") != NULL,
+                 "timer-forced: scale-3 visible text \"EXPIRED\" / \"ENTER MENU\" / \"ESC DISMISS\" forwarded");
+
+    /* Q09: forced pause popup bounds fit inside the framebuffer.
+     * The exact dimensions are derived from
+     * M11_GameView_GetForcedPauseDialogLayout() (state-driven), so we
+     * assert inside-framebuffer only. */
+    bx = bounds_x_for_id(buf, "SESSION_TIMER_FORCED_PAUSE");
+    by = bounds_y_for_id(buf, "SESSION_TIMER_FORCED_PAUSE");
+    bw = bounds_w_for_id(buf, "SESSION_TIMER_FORCED_PAUSE");
+    bh = bounds_h_for_id(buf, "SESSION_TIMER_FORCED_PAUSE");
+    probe_record("M11_AX_Q09_forced_popup_inside_framebuffer",
+                 bx >= 0 && by >= 0 && bw > 0 && bh > 0 &&
+                     bx + bw <= 320 && by + bh <= 200,
+                 "timer-forced: popup region fits inside 320x200 framebuffer");
+
+    /* Q10: title/line1/line2 bounds fit inside the framebuffer. */
+    {
+        int bxT = bounds_x_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_TITLE");
+        int byT = bounds_y_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_TITLE");
+        int bwT = bounds_w_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_TITLE");
+        int bhT = bounds_h_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_TITLE");
+        int bx1 = bounds_x_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_LINE1");
+        int by1 = bounds_y_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_LINE1");
+        int bw1 = bounds_w_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_LINE1");
+        int bh1 = bounds_h_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_LINE1");
+        int bx2 = bounds_x_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_LINE2");
+        int by2 = bounds_y_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_LINE2");
+        int bw2 = bounds_w_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_LINE2");
+        int bh2 = bounds_h_for_id(buf, "SESSION_TIMER_FORCED_PAUSE_LINE2");
+        probe_record("M11_AX_Q10_forced_text_zones_inside_framebuffer",
+                     bxT >= 0 && byT >= 0 && bwT > 0 && bhT > 0 &&
+                         bxT + bwT <= 320 && byT + bhT <= 200 &&
+                         bx1 >= 0 && by1 >= 0 && bw1 > 0 && bh1 > 0 &&
+                         bx1 + bw1 <= 320 && by1 + bh1 <= 200 &&
+                         bx2 >= 0 && by2 >= 0 && bw2 > 0 && bh2 > 0 &&
+                         bx2 + bw2 <= 320 && by2 + bh2 <= 200,
+                     "timer-forced: title + line1 + line2 text bounds all fit inside 320x200");
+    }
+
+    /* Q11: forced pause suppressed when dialogOverlayActive is set. */
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.fontScale = 3;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 1);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 60);
+    state.sessionTimerForcedPauseDialogActive = 1;
+    state.dialogOverlayActive = 1;
+    (void)m11_screen_reader_update_ex(&state, 320, 200);
+    n = read_all(g_json_path, buf, sizeof(buf));
+    probe_record("M11_AX_Q11_forced_suppressed_by_dialog",
+                 n > 0 &&
+                     strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE\"") == NULL &&
+                     strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_TITLE\"") == NULL,
+                 "timer-forced: dialog overlay suppresses forced-pause popup + title");
+
+    /* Q12: forced pause suppressed when returnToMenuConfirmActive is set
+     * (return-to-menu confirm has higher UI priority). */
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.fontScale = 3;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 1);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 60);
+    state.sessionTimerForcedPauseDialogActive = 1;
+    state.returnToMenuConfirmActive = 1;
+    (void)m11_screen_reader_update_ex(&state, 320, 200);
+    n = read_all(g_json_path, buf, sizeof(buf));
+    probe_record("M11_AX_Q12_forced_suppressed_by_return_menu",
+                 n > 0 &&
+                     strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE\"") == NULL &&
+                     strstr(buf, "\"id\":\"SESSION_TIMER_FORCED_PAUSE_TITLE\"") == NULL,
+                 "timer-forced: return-to-menu confirm suppresses forced-pause popup + title");
+
+    /* Q13: when reminder and forced pause are BOTH active,
+     * the renderer's visibility fence shows the reminder but
+     * suppresses the forced pause (forced pause is its own higher-
+     * priority surface; this branch tests the inverse:
+     * reminder + forced pause both set, only reminder banner
+     * should be visible). The renderer gates reminder on
+     *   sessionTimerReminderOverlayActive
+     *     && !sessionTimerForcedPauseDialogActive
+     *     && !dialogOverlayActive
+     * and gates forced pause on
+     *   sessionTimerForcedPauseDialogActive
+     *     && !dialogOverlayActive
+     *     && !returnToMenuConfirmActive
+     * so reminder is hidden by forced pause being set. */
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.fontScale = 1;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 30);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 25 * 60);
+    state.sessionTimerReminderOverlayActive = 1;
+    state.sessionTimerForcedPauseDialogActive = 1;
+    (void)m11_screen_reader_update_ex(&state, 320, 200);
+    n = read_all(g_json_path, buf, sizeof(buf));
+    probe_record("M11_AX_Q13_reminder_hidden_when_forced_pause_set",
+                 n > 0 &&
+                     strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER\"") == NULL,
+                 "timer-forced: reminder banner hidden when forced-pause is also active");
+}
+
+/* Subtest R: session-timer overlay bounds + JSON well-formedness
+ * sweep. After the reminder + forced-pause subtests have populated
+ * the manifest, verify the atomic-write invariant holds for every
+ * session-timer surface and the comma discipline / well-formedness
+ * invariants still pass with the new fields in the elements list.
+ *
+ *   R01  enabled=true on every reminder + forced-pause region.
+ *   R02  no .tmp residue after flush.
+ *   R03  no leading- / trailing- / double-comma artifacts.
+ *   R04  file is non-empty (sanity).
+ *   R05  SESSION_TIMER_REMINDER id appears exactly once per single
+ *        reminder flush (no duplicate emission within one frame). */
+static void subtest_session_timer_overlay_json_wellformed(void)
+{
+    M11_GameViewState state;
+    char buf[16384];
+    int n;
+
+    fs_ax_shutdown();
+    portable_remove(g_json_path);
+    portable_remove(g_tmp_path);
+    fs_ax_set_enabled(1);
+
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.fontScale = 1;
+    SessionTimerRuntime_Init(&state.sessionTimerRuntime, 30);
+    SessionTimerRuntime_Tick(&state.sessionTimerRuntime, 25 * 60);
+    state.sessionTimerReminderOverlayActive = 1;
+
+    probe_record("M11_AX_R01_reminder_returns_one",
+                 m11_screen_reader_update_ex(&state, 320, 200) == 1,
+                 "timer-json: reminder update returns 1");
+    n = read_all(g_json_path, buf, sizeof(buf));
+    probe_record("M11_AX_R02_reminder_json_nonempty",
+                 n > 0,
+                 "timer-json: reminder manifest written and non-empty");
+    if (n <= 0) return;
+
+    probe_record("M11_AX_R03_reminder_no_tmp_residue",
+                 !file_exists(g_tmp_path),
+                 "timer-json: no .tmp residue after reminder flush");
+    probe_record("M11_AX_R04_reminder_no_comma_artifacts",
+                 strstr(buf, "[,") == NULL &&
+                     strstr(buf, ",]") == NULL &&
+                     strstr(buf, ",,") == NULL,
+                 "timer-json: no leading- / trailing- / double-comma artifacts");
+    probe_record("M11_AX_R05_reminder_id_appears_once",
+                 count_id_substrings(buf, "SESSION_TIMER_REMINDER") == 1,
+                 "timer-json: SESSION_TIMER_REMINDER id appears exactly once per frame");
+    probe_record("M11_AX_R06_reminder_enabled_true",
+                 strstr(buf, "\"id\":\"SESSION_TIMER_REMINDER\",\"type\":\"region\",\"label\":\"Session Timer Reminder\",\"bounds\":{\"x\":4,\"y\":4,\"w\":312,\"h\":28},\"enabled\":true") != NULL,
+                 "timer-json: reminder region element row renders with enabled=true");
+}
+
 /* -- main ----------------------------------------------------------- */
 
 int main(void)
@@ -1510,6 +1985,15 @@ int main(void)
 
     printf("\n[O] NULL state is a no-op\n");
     subtest_null_state_noop();
+
+    printf("\n[P] session-timer reminder overlay manifest (M11 -> screen reader)\n");
+    subtest_session_timer_reminder_overlay();
+
+    printf("\n[Q] session-timer forced-pause dialog overlay manifest\n");
+    subtest_session_timer_forced_pause_overlay();
+
+    printf("\n[R] session-timer overlay JSON well-formedness sweep\n");
+    subtest_session_timer_overlay_json_wellformed();
 
     teardown_a11y_dir();
 

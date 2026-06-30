@@ -427,29 +427,76 @@ static void m11_ax_emit_session_timer_overlay_zones(
             snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
                      "%s", layout.title);
         }
-
-        e = m11_ax_begin(FS_AX_TEXT,
-                         layout.line1X, layout.line1Y,
-                         layout.boxW, 10 * layout.scale, 1);
-        if (e) {
-            snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
-                     "SESSION_TIMER_FORCED_PAUSE_LINE1");
-            snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
-                     "Forced Pause Line 1");
-            snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
-                     "%s", layout.line1);
-        }
-
-        e = m11_ax_begin(FS_AX_TEXT,
-                         layout.line2X, layout.line2Y,
-                         layout.boxW, 10 * layout.scale, 1);
-        if (e) {
-            snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
-                     "SESSION_TIMER_FORCED_PAUSE_LINE2");
-            snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
-                     "Forced Pause Line 2");
-            snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
-                     "%s", layout.line2);
+        /* Clamp the title/line text bounds to fit inside the
+         * framebuffer so the screen-reader manifest never claims
+         * a region past the visible UI edge. The renderer centres
+         * text inside the dialog box (layout.boxW can exceed
+         * framebufferWidth - layout.titleX at scale 2/3) so the
+         * raw box width would otherwise overflow. */
+        {
+            int titleW = layout.boxW;
+            int line1W = layout.boxW;
+            int line2W = layout.boxW;
+            int titleH = 10 * layout.scale;
+            int line1H = 10 * layout.scale;
+            int line2H = 10 * layout.scale;
+            if (titleW > fbW - layout.titleX) {
+                titleW = fbW - layout.titleX;
+            }
+            if (titleW < 1) titleW = 1;
+            if (titleH > fbH - layout.titleY) {
+                titleH = fbH - layout.titleY;
+            }
+            if (titleH < 1) titleH = 1;
+            if (line1W > fbW - layout.line1X) {
+                line1W = fbW - layout.line1X;
+            }
+            if (line1W < 1) line1W = 1;
+            if (line1H > fbH - layout.line1Y) {
+                line1H = fbH - layout.line1Y;
+            }
+            if (line1H < 1) line1H = 1;
+            if (line2W > fbW - layout.line2X) {
+                line2W = fbW - layout.line2X;
+            }
+            if (line2W < 1) line2W = 1;
+            if (line2H > fbH - layout.line2Y) {
+                line2H = fbH - layout.line2Y;
+            }
+            if (line2H < 1) line2H = 1;
+            e = m11_ax_begin(FS_AX_TEXT,
+                             layout.titleX, layout.titleY,
+                             titleW, titleH, 1);
+            if (e) {
+                snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
+                         "SESSION_TIMER_FORCED_PAUSE_TITLE");
+                snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
+                         "Forced Pause Title");
+                snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
+                         "%s", layout.title);
+            }
+            e = m11_ax_begin(FS_AX_TEXT,
+                             layout.line1X, layout.line1Y,
+                             line1W, line1H, 1);
+            if (e) {
+                snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
+                         "SESSION_TIMER_FORCED_PAUSE_LINE1");
+                snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
+                         "Forced Pause Line 1");
+                snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
+                         "%s", layout.line1);
+            }
+            e = m11_ax_begin(FS_AX_TEXT,
+                             layout.line2X, layout.line2Y,
+                             line2W, line2H, 1);
+            if (e) {
+                snprintf(M11_AX_ID(e), M11_AX_ID_LEN,
+                         "SESSION_TIMER_FORCED_PAUSE_LINE2");
+                snprintf(M11_AX_LABEL(e), M11_AX_LABEL_LEN,
+                         "Forced Pause Line 2");
+                snprintf(M11_AX_VALUE(e), M11_AX_VALUE_LEN,
+                         "%s", layout.line2);
+            }
         }
     }
 }
