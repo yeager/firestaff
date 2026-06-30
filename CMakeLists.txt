@@ -11255,6 +11255,49 @@ if(BUILD_TESTING)
         DEPENDS pass107_dm1_v1_hud_status_source_chain_audit
     )
 
+    # DM1 V1 champion-panel HUD/status SOURCE-CHAIN AUDIT gate.
+    # Sibling of dm1_v1_champion_panel_hud_status_source_lock that
+    # proves the pass83 top-row overlay is still backed by the
+    # layout-696 source records in data/zones_h_reconstruction.json.
+    # Pins the full chain: C150 status-box template (67x29) +
+    # C151..C154 status-slot placement at x 0/69/138/207 +
+    # C155..C166 name clear/text chain (with the source +1 x offset)
+    # + C183..C206 bar-graph/value chain (C195..C206 type=7 HP /
+    # stamina / mana) + C207..C218 ready/action hand source chain,
+    # against the active pass83_champion_hud_zone_overlay_probe.v3
+    # overlay schema. Independent of the 7-source-range / 53-zone
+    # source-lock CTest above (that gate pins ReDMCSB ranges to M11
+    # accessors; this gate pins layout-696 records to the live
+    # overlay schema). Data-free; no real GRAPHICS.DAT / DUNGEON.DAT
+    # load, no live renderer handoff, no original-vs-Firestaff
+    # pixel claim.
+    add_test(
+        NAME pass107_v1_hud_status_source_chain_audit
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass107_v1_hud_status_source_chain_audit.py
+    )
+
+    # DM1 V1 champion-panel HUD/status TYPE-7 BAR VALUE RESOLVER gate.
+    # Sibling of dm1_v1_champion_panel_hud_status_source_lock and
+    # pass107_v1_hud_status_source_chain_audit that independently
+    # resolves the layout-696 type=7 HP / stamina / mana value
+    # zones (C195, C199, C203) into the same 4x25 bottom-flush
+    # rectangles used by the active champion HUD overlay, instead
+    # of trusting the overlay JSON alone. Locks the slot origins
+    # 0/69/138/207 from C151..C154, the bar-region chain
+    # C183..C186 -> C187..C190 -> C191..C194, the C195..C206
+    # per-stat value zones at the 46/53/60 x offsets within each
+    # 67x29 status box, and the sample fill math (full HP = 25px,
+    # half stamina = 12px, min-1px mana for non-zero values).
+    # Independent of the sibling gates above (this gate recomputes
+    # the geometry from zones_h_reconstruction.json instead of
+    # reading the pass83 overlay). Data-free; no real
+    # GRAPHICS.DAT / DUNGEON.DAT load, no live renderer handoff,
+    # no original-vs-Firestaff pixel claim.
+    add_test(
+        NAME pass110_v1_hud_type7_bar_value_resolver
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass110_v1_hud_type7_bar_value_resolver.py
+    )
+
     # DM1 V1 champion-panel DISABLED/UNAVAILABLE ICON STATE gate.
     # Source-locked against CHAMPION.C F0330:2208-2255
     # (MASK0x8000_ACTION_HAND | MASK0x0008_DISABLE_ACTION) +
