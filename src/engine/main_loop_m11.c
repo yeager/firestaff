@@ -137,25 +137,25 @@ static int m11_present_launcher(unsigned char* launcherFramebuffer,
                                      M11_LAUNCHER_FB_HEIGHT);
 }
 
-static int m11_game_indexed_presentation_scale(const M11_GameViewState* gameView) {
-    return (gameView &&
-            gameView->presentationMode == M12_PRESENTATION_V20_FILTERED) ? 2 : 1;
+int M11_GameView_PresentationIndexedScale(int presentationMode) {
+    return presentationMode == M12_PRESENTATION_V20_FILTERED ? 2 : 1;
 }
 
-static int m11_game_presentation_target(const M11_GameViewState* gameView,
-                                        int* outW,
-                                        int* outH) {
+int M11_GameView_PresentationTarget(int presentationMode,
+                                    int presentationWidth,
+                                    int presentationHeight,
+                                    int* outW,
+                                    int* outH) {
     int targetW = M11_FB_WIDTH;
     int targetH = M11_FB_HEIGHT;
-    if (gameView && gameView->presentationMode == M12_PRESENTATION_V20_FILTERED) {
+    if (presentationMode == M12_PRESENTATION_V20_FILTERED) {
         targetW = M11_FB_WIDTH * 2;
         targetH = M11_FB_HEIGHT * 2;
-    } else if (gameView &&
-               M12_PresentationMode_AllowsResolutionChoice(gameView->presentationMode) &&
-               gameView->presentationWidth > 0 &&
-               gameView->presentationHeight > 0) {
-        targetW = gameView->presentationWidth;
-        targetH = gameView->presentationHeight;
+    } else if (M12_PresentationMode_AllowsResolutionChoice(presentationMode) &&
+               presentationWidth > 0 &&
+               presentationHeight > 0) {
+        targetW = presentationWidth;
+        targetH = presentationHeight;
     }
     if (outW) {
         *outW = targetW;
@@ -192,7 +192,8 @@ static void m11_map_presented_game_point_to_source(const M11_GameViewState* game
 }
 
 static int m11_present_game_frame(const M11_GameViewState* gameView) {
-    int scale = m11_game_indexed_presentation_scale(gameView);
+    int scale = M11_GameView_PresentationIndexedScale(
+        gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL);
     int targetW = M11_FB_WIDTH;
     int targetH = M11_FB_HEIGHT;
     int requestedFilter = M11_Render_GetScaleFilter();
@@ -221,7 +222,11 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         }
         return result;
     }
-    if (m11_game_presentation_target(gameView, &targetW, &targetH)) {
+    if (M11_GameView_PresentationTarget(gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL,
+                                         gameView ? gameView->presentationWidth : 0,
+                                         gameView ? gameView->presentationHeight : 0,
+                                         &targetW,
+                                         &targetH)) {
         result = M11_Render_PresentIndexedToResolution(M11_Render_GetFramebuffer(),
                                                        M11_FB_WIDTH,
                                                        M11_FB_HEIGHT,

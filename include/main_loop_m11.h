@@ -73,6 +73,52 @@ int M11_MapSourcePointToPresentedForPresentation(int presentationMode,
 int M11_ResolveGameScaleFilterForPresentation(int presentationMode,
                                               int requestedScaleFilter);
 
+/* Source-locked game presentation geometry: drives the three-way choice in
+   m11_present_game_frame() between PresentScaledIndexed (V20_FILTERED),
+   PresentIndexedToResolution (V21_UPSCALED / V22_MODERN with valid extents),
+   and Present (V1_ORIGINAL or V21/V22 without user-selected extents).
+
+   The two helpers are promoted from static so the launcher→game handoff
+   contract is regression-testable without an SDL window, and they take
+   raw mode + extents (matching the existing M11_MapPresentedGamePointTo
+   SourceForPresentation contract) so they can be linked from
+   input-mapping tests/probes without dragging m11_game_view.h into
+   main_loop_m11.h.
+
+   ReDMCSB: COMMAND.C:1379-1449 F0358 / 1641-1660 F0359 mouse-row + primary
+            click dispatch against a 320x200 source zone;
+            src/engine/main_loop_m11.c (m11_game_indexed_presentation_scale +
+            m11_game_presentation_target);
+            src/ui/menu_startup_m12.c M12_PresentationMode_AllowsResolutionChoice.
+
+   Returns the integer nearest-source-framebuffer scale factor the present
+   path should use (1 for V1/V21/V22, 2 for V20_FILTERED).
+   presentationMode is one of M12_PRESENTATION_V*.  Any unknown mode is
+   treated as V1 (scale 1). */
+int M11_GameView_PresentationIndexedScale(int presentationMode);
+
+/* Returns 1 when the resolved presentation target differs from the
+   default 320x200 source framebuffer (i.e. the caller should hand off to
+   PresentIndexedToResolution with the user-selected presentationWidth /
+   presentationHeight); returns 0 when the default Present path applies.
+
+   V20_FILTERED always resolves to (640x400) here even though it returns 0,
+   because the present loop short-circuits V20 via the indexed-scale
+   contract above.  V21_UPSCALED / V22_MODERN require
+   presentationWidth > 0 AND presentationHeight > 0 to be considered "user
+   picked a non-default resolution"; when either is non-positive the
+   helpers resolve to (320x200) and return 0 (default Present path).
+
+   V1_ORIGINAL and unknown modes always resolve to (320x200) and return 0.
+
+   outW/outH receive the resolved target (320x200, 640x400, or the
+   user-selected resolution) — NULL outW/outH is safe. */
+int M11_GameView_PresentationTarget(int presentationMode,
+                                    int presentationWidth,
+                                    int presentationHeight,
+                                    int* outW,
+                                    int* outH);
+
 /* Source-locked entrance wait policy: interactive builds must not auto-enter
    after launcher handoff; only headless/autotest runs may use a timeout. */
 int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
