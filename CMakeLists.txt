@@ -20349,14 +20349,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_memory_savegame_pc34_f0417_sav
 endif()
 
 # M12 per-game save-byte export/import manifest: content-aware wrapper for
-# actual runtime save payloads. The first gate supports Firestaff-native DM1
-# saves (`FSDM1SV1`) with byte count + CRC verification before import.
+# actual runtime save payloads. The DM1 path wraps `FSDM1SV1` saves with a
+# versioned manifest, byte count, and body CRC. The CSB path wraps the
+# 512-byte `CSB_V1_SaveHeader` (magic `CSB\1` / `DM\0\1`) plus its
+# F0429 obfuscated-block checksum. fs_portable_compat.c is added because
+# csb_v1_save_load_pc34_compat.c references FSP_ParentDir and is in the
+# M10 static library without a private copy of fs_portable_compat.c.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_byte_manifest_m12.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/save_byte_manifest_m12.c")
     add_executable(test_save_byte_manifest_m12
         tests/test_save_byte_manifest_m12.c
         src/shared/save_byte_manifest_m12.c
         src/dm1/dm1_v1_save_load.c
+        src/shared/fs_portable_compat.c
     )
     target_link_libraries(test_save_byte_manifest_m12 PRIVATE firestaff_m10)
     if(NOT MSVC)

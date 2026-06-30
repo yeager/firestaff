@@ -24,8 +24,9 @@ typedef struct {
 } M12_SaveByteManifest;
 
 /* Export a verified per-game save byte payload plus a versioned manifest.
- * Currently supports Firestaff-native DM1 V1 saves (`gameId = "dm1"`).
- * Returns 0 on success. */
+ * Currently supports Firestaff-native DM1 V1 saves (`gameId = "dm1"`) and
+ * CSB V1 native saves (`gameId = "csb"`, format ids `CSBSAV01` for a fresh
+ * CSB save or `DMSAV01` for a CSB-merged DM1 save). Returns 0 on success. */
 int M12_SaveByteManifest_ExportGameSave(const char* gameId,
                                         const char* savePath,
                                         const char* exportDir,

@@ -10,9 +10,21 @@
  * small `FSDM1SV1` header (see include/dm1_v1_save_load.h). This gate checks
  * that header, declared byte count, and body CRC before a DM1 payload can
  * cross an export/import boundary.
+ *
+ * CSB V1 source-lock anchor: CSB native saves carry a 512-byte
+ * `CSB_V1_SaveHeader` (see include/csb_v1_save_load_pc34_compat.h) whose
+ * first uint32_t is the magic `CSB_V1_SAVE_MAGIC_CSB = 0x43534201u`
+ * ('CSB\1') or `CSB_V1_SAVE_MAGIC_DM = 0x444D0001u` ('DM\0\1'). ReDMCSB
+ * F0429_STARTEND_IsReadSaveHeaderSuccessful / F0430_...Write...Successful
+ * verify the obfuscated block checksum. Firestaff's CSB loader path
+ * (`csb_v1_save_header_verify` in src/csb/csb_v1_save_load_pc34_compat.c)
+ * reuses that contract; this gate classifies the file, parses the header,
+ * and uses `csb_v1_save_header_verify` to confirm integrity before any
+ * payload bytes leave the export boundary.
  */
 
 #include "save_byte_manifest_m12.h"
+#include "csb_v1_save_load_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -23,6 +35,9 @@
 #define DM1_NATIVE_MAGIC "FSDM1SV1"
 #define DM1_NATIVE_HEADER_SIZE 64u
 #define DM1_NATIVE_FORMAT_VERSION 1u
+
+#define CSB_V1_NATIVE_HEADER_SIZE 512u
+#define CSB_V1_NATIVE_FORMAT_VERSION 1u
 
 typedef struct {
     char gameId[M12_SAVE_BYTE_MANIFEST_ID_MAX];
@@ -172,6 +187,57 @@ static int classify_dm1_save_m12(const unsigned char* bytes, size_t size,
     return 1;
 }
 
+/* classify_csb_v1_save_m12: recognize a CSB V1 native save file.
+ *
+ * CSB native saves start with a 512-byte `CSB_V1_SaveHeader`. The first
+ * uint32_t is the magic; valid values are CSB_V1_SAVE_MAGIC_CSB ('CSB\1')
+ * for Firestaff-native CSB saves and CSB_V1_SAVE_MAGIC_DM ('DM\0\1') for
+ * CSB-merged DM1 saves. CEDT (0x43454454, "CEDT") and any other magic are
+ * refused at the gate so a CSB manifest can never accept a champion export
+ * blob or a CSBWin .dmsave wrapper.
+ *
+ * Integrity contract: we delegate the per-file header verification to
+ * `csb_v1_save_header_verify` so the gate honors ReDMCSB F0429's
+ * obfuscated-block checksum (the same check `csb_v1_load_game` performs
+ * before any runtime state is read).
+ */
+static int classify_csb_v1_save_m12(const unsigned char* bytes, size_t size,
+                                    SavePayloadInfo* out) {
+    uint32_t magic;
+
+    if (!bytes || !out || size < CSB_V1_NATIVE_HEADER_SIZE) return 0;
+    magic = read_u32_le_m12(bytes);
+    if (magic != CSB_V1_SAVE_MAGIC_CSB &&
+        magic != CSB_V1_SAVE_MAGIC_DM) {
+        return 0;
+    }
+
+    /* Replay F0429's obfuscated-block checksum through the same helper
+     * the runtime CSB loader uses. Cast through volatile to keep the byte
+     * pointer aliasing contract intact (raw_512 is the raw file bytes,
+     * which csb_v1_save_header_verify treats as a 512-byte view). */
+    {
+        CSB_V1_SaveHeader hdr;
+        memset(&hdr, 0, sizeof(hdr));
+        memcpy(&hdr, bytes, sizeof(hdr));
+        if (csb_v1_save_header_verify(&hdr, bytes) != 0) {
+            return 0;
+        }
+    }
+
+    memset(out, 0, sizeof(*out));
+    snprintf(out->gameId, sizeof(out->gameId), "csb");
+    snprintf(out->formatId, sizeof(out->formatId),
+             magic == CSB_V1_SAVE_MAGIC_CSB ? "CSBSAV01" : "DMSAV01");
+    snprintf(out->compatibility, sizeof(out->compatibility),
+             magic == CSB_V1_SAVE_MAGIC_CSB
+                 ? "firestaff-csb-v1-native"
+                 : "firestaff-csb-v1-merged-dm");
+    out->byteCount = (uint32_t)size;
+    out->crc32 = crc32_update_m12(0, bytes, size);
+    return 1;
+}
+
 static int classify_save_payload_m12(const char* path,
                                      SavePayloadInfo* out) {
     unsigned char* bytes = NULL;
@@ -179,7 +245,8 @@ static int classify_save_payload_m12(const char* path,
     int ok = 0;
 
     if (!read_file_bytes_m12(path, &bytes, &size)) return 0;
-    if (classify_dm1_save_m12(bytes, size, out)) ok = 1;
+    if (!ok && classify_dm1_save_m12(bytes, size, out)) ok = 1;
+    if (!ok && classify_csb_v1_save_m12(bytes, size, out)) ok = 1;
     free(bytes);
     return ok;
 }
@@ -385,7 +452,7 @@ int M12_SaveByteManifest_ExportGameSave(const char* gameId,
     if (outManifestPath && outManifestPathSize > 0) outManifestPath[0] = '\0';
     if (outPayloadPath && outPayloadPathSize > 0) outPayloadPath[0] = '\0';
     if (!gameId || !savePath || !exportDir || !*exportDir) return -1;
-    if (strcmp(gameId, "dm1") != 0) return -1;
+    if (strcmp(gameId, "dm1") != 0 && strcmp(gameId, "csb") != 0) return -1;
     if (!classify_save_payload_m12(savePath, &info)) return -1;
     if (strcmp(info.gameId, gameId) != 0) return -1;
 
