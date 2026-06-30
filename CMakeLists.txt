@@ -11734,6 +11734,37 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_inventory_walk_pc34_compat
     )
 
+    # DM1 V1 champion-panel hand-slot inventory-viewport walk gate.
+    # Sibling of dm1_v1_champion_panel_hand_slot_refresh_pc34_compat
+    # which owns the F0296:1184-1262 top-row status walk + leader-
+    # hand + candidate early-return + inventory-champion skip. This
+    # gate owns the *second* half of F0296: the inventory-viewport
+    # sub-walk + chest sub-walk + inventory-owner F0292_CHAMPION_
+    # DrawState tail on a single inventory-owner + 4-champion party.
+    # Source-locked against ReDMCSB CHAMDRAW.C F0296:1234-1242
+    # (inventory-viewport walk over [C00..C29], slotbox = slot + C08,
+    # F0295 sense + F0386 on action-hand) +
+    # CHAMDRAW.C F0296:1244-1253 (chest sub-walk over G0425_aT_ChestSlots
+    # [0..7] gated on G0424_i_PanelContent == M569_PANEL_CHEST, slotbox
+    # = chestIndex + C38) + CHAMDRAW.C F0296:1254-1257 (F0292_CHAMPION_
+    # DrawState tail + M008_SET Attributes, MASK0x4000_VIEWPORT when
+    # AL0884_B_DrawViewport != 0) + DEFS.H:780/781/810/1874/1876/
+    # 1878/3001/5700/5876/5877/5878/731 + COMPILE.H:1039.
+    # Contract-only: no real M11 graphics, no GRAPHICS.DAT/DUNGEON.DAT
+    # load, no real-asset bitmap parity claim.
+    add_executable(test_dm1_v1_champion_panel_hand_slot_inventory_viewport_walk_pc34_compat
+        tests/test_dm1_v1_champion_panel_hand_slot_inventory_viewport_walk_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hand_slot_inventory_viewport_walk_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_hand_slot_inventory_viewport_walk_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_hand_slot_inventory_viewport_walk_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_hand_slot_inventory_viewport_walk_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_hand_slot_inventory_viewport_walk_pc34_compat
+    )
+
     # DM1 V1 champion-panel HUD/status top-row source-lock gate.
     # Re-uses the data-free zone contract from
     # tools/verify_v1_hud_status_source_lock.py: top-row C113..C218
