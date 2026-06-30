@@ -73,9 +73,13 @@ static const char* kLegacyMapfile =
     "IMG5 image01 0x100 32\n"
     "PAL palette00 288 16\n";
 
-/* Single-property V2 file (header-only descriptor shape). */
+/* Single-property V2 file (header-only descriptor shape).
+ * Carries multiple header keys (ENDIAN / FORMAT / SNDS.SPR /
+ * SND4.SPR / SND3.SPR / SND2.SPR) so the header-attribute
+ * collection path can be exercised even when no items exist. */
 static const char* kHeaderOnlyMapfile =
-    "ENDIAN=BIG,FORMAT=ANIMATION,SNDS.SPR=22050\n";
+    "ENDIAN=BIG,FORMAT=ANIMATION,SNDS.SPR=22050,SND4.SPR=7812,"
+    "SND3.SPR=6000,SND2.SPR=5500,ANMSPEED=26000\n";
 
 /* Truly empty file. */
 static const char* kEmptyMapfile = "";
@@ -246,6 +250,31 @@ static void test_header_only_mapfile(void) {
     CHECK(stats.v1Rows == 0u);
     CHECK(stats.v2Rows == 0u);
     CHECK_STR_EQ(stats.format, "ANIMATION");
+    /* The header-level property keys (ENDIAN, FORMAT, SNDS.SPR,
+     * SND4.SPR, SND3.SPR, SND2.SPR, ANMSPEED) are still preserved
+     * even though the file holds no items. */
+    CHECK(stats.distinctHeaderAttrCount >= 6u);
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "ENDIAN"));
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "FORMAT"));
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "SNDS.SPR"));
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "SND4.SPR"));
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "SND3.SPR"));
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "SND2.SPR"));
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "ANMSPEED"));
 }
 
 static void test_dungeon_single_property(void) {
@@ -256,6 +285,47 @@ static void test_dungeon_single_property(void) {
     r = FirestaffSckCorpus_VerifyText("dungeon.map", kDungeonHeaderMapfile, 1024u, &stats);
     CHECK(r != FIRESTAFF_SCK_CORPUS_FILE_OK);
     CHECK_STR_EQ(stats.format, "DUNGEON");
+    /* FORMAT key is still captured as a header-level prefix. */
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "FORMAT"));
+}
+
+/* The DM2 Amiga gd.map shape from the real corpus has a header
+ * line `ENDIAN=BIG,FORMAT=DMII,IGNORE_POSTPAL=1,IMG8.CP=IMCP,
+ * ALL.ENT=ENT` -- exercise the comma separator + dot key path
+ * so a future refactor of collect_header_attr_prefixes cannot
+ * regress on either. */
+static void test_dm2_header_with_dotted_keys(void) {
+    static const char* kDm2Header =
+        "ENDIAN=BIG,FORMAT=DMII,IGNORE_POSTPAL=1,IMG8.CP=IMCP,ALL.ENT=ENT\n"
+        "0001,DUNGEON,NULL,Dungeon,,\n";
+    FirestaffSckCorpusFileStats stats;
+    FirestaffSckCorpusFileResult r;
+
+    memset(&stats, 0, sizeof(stats));
+    r = FirestaffSckCorpus_VerifyText("dm2.map", kDm2Header, 1024u, &stats);
+    CHECK(r == FIRESTAFF_SCK_CORPUS_FILE_OK);
+    CHECK_STR_EQ(stats.format, "DMII");
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "ENDIAN"));
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "FORMAT"));
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "IGNORE_POSTPAL"));
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "IMG8.CP"));
+    CHECK(distinct_contains(stats.distinctHeaderAttrs,
+                            stats.distinctHeaderAttrCount,
+                            "ALL.ENT"));
+    /* Distinct header attrs remain de-duplicated against item-level
+     * attrs even when a key name happens to collide (e.g. PAL
+     * could exist as both a header key and an item attr key). */
+    CHECK(stats.distinctHeaderAttrCount >= 5u);
 }
 
 static void test_empty_mapfile(void) {
@@ -429,6 +499,25 @@ static void test_directory_walk_per_format(void) {
                             summary.distinctAttrPrefixCount,
                             "SIZE"));
 
+    /* Header-level attribute prefixes preserved per-file are
+     * merged into the summary.  All four synthetic files are
+     * V2-shape, so FORMAT/ENDIAN should both be present. */
+    CHECK(summary.distinctHeaderAttrPrefixCount >= 2u);
+    CHECK(distinct_contains(summary.distinctHeaderAttrPrefixes,
+                            summary.distinctHeaderAttrPrefixCount,
+                            "FORMAT"));
+    CHECK(distinct_contains(summary.distinctHeaderAttrPrefixes,
+                            summary.distinctHeaderAttrPrefixCount,
+                            "ENDIAN"));
+    /* The header-only ANIMATION file contributes the four SND*.SPR
+     * keys, which would never appear from item-level parsing. */
+    CHECK(distinct_contains(summary.distinctHeaderAttrPrefixes,
+                            summary.distinctHeaderAttrPrefixCount,
+                            "SNDS.SPR"));
+    CHECK(distinct_contains(summary.distinctHeaderAttrPrefixes,
+                            summary.distinctHeaderAttrPrefixCount,
+                            "SND4.SPR"));
+
     remove_temp_file(dir, "a.map");
     remove_temp_file(dir, "b.map");
     remove_temp_file(dir, "c.map");
@@ -485,6 +574,7 @@ int main(void) {
     test_v1_legacy_mapfile();
     test_header_only_mapfile();
     test_dungeon_single_property();
+    test_dm2_header_with_dotted_keys();
     test_empty_mapfile();
     test_garbage_mapfile();
     test_null_args();
