@@ -32,6 +32,13 @@
  *      to main-view game cards.
  *   9. Settings data-directory rows honor the includePaths privacy
  *      gate: hidden by default, explicit only when requested.
+ *  10. Fallthrough launcher views (data-validator / audio-settings /
+ *      accessibility / theme / save-browser / input-remap /
+ *      custom-dungeon / campaign / spell-reference / map-viewer /
+ *      touch-layout / presentation-preview) emit the main-view
+ *      game-card list as a navigation anchor, do not leak any
+ *      view-specific markers from a *different* view, and honor
+ *      the gameState prefix the caller passes to fs_ax_begin_frame.
  *
  * Privacy/safety: the probe redirects HOME to a temp dir under
  * $TMPDIR (or /tmp on POSIX) so the manifest never touches the real
@@ -1058,7 +1065,174 @@ static void subtest_changelog_view(void)
                  "changelog: scrolled view excludes offscreen line 0");
 }
 
-/* Subtest N: settings data-directory row suppresses the absolute path
+/* Subtest N: views that fall through to main-view emission must surface
+ * the navigation anchor (game cards + menu entries), must NOT leak any
+ * view-specific element id from a *different* view (settings rows,
+ * changelog lines, manual docs, popup buttons, settings tabs), and
+ * must honor the gameState prefix the caller passes to
+ * fs_ax_begin_frame so a screen reader can announce "launcher theme"
+ * when the user is on the theme view (not "launcher main").
+ *
+ * These views are the explicit "out of scope" follow-up list in
+ * menu_startup_a11y_m12.c: data-validator / audio-settings /
+ * accessibility / theme / save-browser / input-remap / custom-dungeon
+ * / campaign / spell-reference / map-viewer / touch-layout /
+ * presentation-preview. The gap text in TODO.md and
+ * docs/FIRESTAFF_GAP_LIST.md names them, so a regression in the
+ * fallthrough contract would silently hide a real navigation surface
+ * from the screen reader. This subtest pins the contract so a future
+ * dedicated emitter for one of these views only needs to assert that
+ * the new view-specific markers appear AND the fallthrough markers
+ * disappear. */
+typedef struct {
+    M12_MenuView view;
+    const char*  viewName;   /* used as the gameState suffix */
+    const char*  invariantPrefix; /* INV_LAX_###_<viewName>_* */
+} FallthroughViewSpec;
+
+static const FallthroughViewSpec kFallthroughViews[] = {
+    { M12_MENU_VIEW_DATA_VALIDATOR,        "data_validator",       "dtval" },
+    { M12_MENU_VIEW_AUDIO_SETTINGS,        "audio_settings",       "audset" },
+    { M12_MENU_VIEW_ACCESSIBILITY,         "accessibility",        "access" },
+    { M12_MENU_VIEW_THEME,                 "theme",                "theme" },
+    { M12_MENU_VIEW_SAVE_BROWSER,          "save_browser",         "savebr" },
+    { M12_MENU_VIEW_INPUT_REMAP,           "input_remap",          "inprep" },
+    { M12_MENU_VIEW_CUSTOM_DUNGEON,        "custom_dungeon",       "custdm" },
+    { M12_MENU_VIEW_CAMPAIGN,              "campaign",             "camp" },
+    { M12_MENU_VIEW_SPELL_REFERENCE,       "spell_reference",      "splref" },
+    { M12_MENU_VIEW_MAP_VIEWER,            "map_viewer",           "mapvw" },
+    { M12_MENU_VIEW_TOUCH_LAYOUT,          "touch_layout",         "tchlay" },
+    { M12_MENU_VIEW_PRESENTATION_PREVIEW,  "presentation_preview", "prvprv" }
+};
+
+enum {
+    FALLTHROUGH_VIEW_COUNT =
+        (int)(sizeof(kFallthroughViews) / sizeof(kFallthroughViews[0]))
+};
+
+/* A view-specific marker from a different launcher view that must
+ * NOT appear in the fallthrough manifest. Together they prove the
+ * fallthrough doesn't accidentally pick up a different view's
+ * emission. */
+static const char* kForbiddenMarkers[] = {
+    "\"id\":\"ROW_",                  /* settings row */
+    "\"id\":\"TAB_",                  /* settings tab */
+    "\"id\":\"CHANGELOG_LINE_",       /* changelog line */
+    "\"id\":\"MANUAL_DOC_",           /* manual/docs row */
+    "\"id\":\"BESTIARY_CAT_",         /* bestiary category tab */
+    "\"id\":\"BESTIARY_ROW_",         /* bestiary row */
+    "\"id\":\"ITEM_CAT_",             /* item encyclopedia category tab */
+    "\"id\":\"ITEM_ROW_",             /* item encyclopedia row */
+    "\"id\":\"SCREENSHOT_ROW_",       /* screenshot gallery thumb */
+    "\"id\":\"MUSEUM_CATEGORY_",      /* museum category */
+    "\"id\":\"MUSEUM_BULLET_",        /* museum bullet */
+    "\"id\":\"POPUP_MESSAGE\"",       /* popup panel */
+    "\"id\":\"POPUP_OK\"",            /* popup OK button */
+    "\"id\":\"POPUP_LINE",            /* popup text lines 1/2/3 */
+    NULL
+};
+
+static void subtest_fallthrough_views_navigation_anchor(void)
+{
+    int v;
+    for (v = 0; v < FALLTHROUGH_VIEW_COUNT; ++v) {
+        const FallthroughViewSpec* spec = &kFallthroughViews[v];
+        char buf[16384];
+        int n;
+        M12_StartupMenuState state;
+        char expectedState[64];
+        char id1[96], id2[96], id3[96], id4[96], id5[96], id6[96];
+        char id7[96];
+        int m;
+        const char* noLeakNote = NULL;
+
+        fs_ax_shutdown();
+        portable_remove(g_json_path);
+        portable_remove(g_tmp_path);
+        fs_ax_set_enabled(1);
+
+        M12_StartupMenu_Init(&state);
+        state.view = spec->view;
+        /* selectedIndex = 0 picks the first game card so the navigation
+         * anchor is actually marked "selected" in the value field —
+         * this matches what the main-view subtest B already locks. */
+        state.selectedIndex = 0;
+
+        snprintf(expectedState, sizeof(expectedState),
+                 "launcher_%s", spec->viewName);
+        fs_ax_begin_frame(480, 270, expectedState);
+        m12_launcher_a11y_emit(&state, 480, 270, 0);
+        fs_ax_flush();
+
+        n = read_all(g_json_path, buf, sizeof(buf));
+        (void)n;
+
+        snprintf(id1, sizeof(id1),
+                 "INV_LAX_140_%s_envelope_gamestate", spec->invariantPrefix);
+        snprintf(id2, sizeof(id2),
+                 "INV_LAX_141_%s_anchor_dm1", spec->invariantPrefix);
+        snprintf(id3, sizeof(id3),
+                 "INV_LAX_142_%s_anchor_settings", spec->invariantPrefix);
+        snprintf(id4, sizeof(id4),
+                 "INV_LAX_143_%s_anchor_museum", spec->invariantPrefix);
+        snprintf(id5, sizeof(id5),
+                 "INV_LAX_144_%s_anchor_theron", spec->invariantPrefix);
+        snprintf(id6, sizeof(id6),
+                 "INV_LAX_145_%s_envelope_width", spec->invariantPrefix);
+        snprintf(id7, sizeof(id7),
+                 "INV_LAX_146_%s_no_other_view_leak", spec->invariantPrefix);
+
+        probe_record(id1,
+                     strstr(buf, "\"gameState\":\"") != NULL
+                         && strstr(buf, expectedState) != NULL,
+                     "fallthrough: envelope gameState matches the active view");
+
+        probe_record(id2,
+                     strstr(buf, "\"id\":\"GAME_CARD_DM1\"") != NULL,
+                     "fallthrough: GAME_CARD_DM1 navigation anchor is emitted");
+
+        probe_record(id3,
+                     strstr(buf, "\"id\":\"MENU_SETTINGS\"") != NULL,
+                     "fallthrough: MENU_SETTINGS navigation anchor is emitted");
+
+        probe_record(id4,
+                     strstr(buf, "\"id\":\"MENU_MUSEUM\"") != NULL,
+                     "fallthrough: MENU_MUSEUM navigation anchor is emitted");
+
+        probe_record(id5,
+                     strstr(buf, "\"id\":\"GAME_CARD_THERON\"") != NULL,
+                     "fallthrough: GAME_CARD_THERON navigation anchor is emitted");
+
+        probe_record(id6,
+                     strstr(buf, "\"framebuffer\":{\"width\":480,\"height\":270}") != NULL,
+                     "fallthrough: framebuffer dims stay pinned to 480x270");
+
+        /* Walk the forbidden-marker table — if any appear, fail
+         * with the specific marker so a regression report tells the
+         * operator exactly which view leaked through. */
+        noLeakNote = NULL;
+        for (m = 0; kForbiddenMarkers[m] != NULL; ++m) {
+            if (strstr(buf, kForbiddenMarkers[m]) != NULL) {
+                noLeakNote = kForbiddenMarkers[m];
+                break;
+            }
+        }
+        probe_record(id7,
+                     noLeakNote == NULL,
+                     noLeakNote
+                         ? "fallthrough: leaked foreign view marker (see probe log)"
+                         : "fallthrough: no other view's markers leak through");
+
+        /* If we DID detect a leak, log the offending marker so the
+         * probe line tells the operator which view-family leaked. */
+        if (noLeakNote != NULL) {
+            printf("    note: %s leaked into fallthrough view %s\n",
+                   noLeakNote, spec->viewName);
+        }
+    }
+}
+
+/* Subtest O: settings data-directory row suppresses the absolute path
  * by default and emits it only when includePaths=1. */
 static void subtest_settings_data_dir_privacy(void)
 {
@@ -1176,7 +1350,10 @@ int main(void)
     printf("\n[M] changelog view: visible scrolled rows\n");
     subtest_changelog_view();
 
-    printf("\n[N] settings view: data-directory privacy gate\n");
+    printf("\n[N] fallthrough views: navigation-anchor contract\n");
+    subtest_fallthrough_views_navigation_anchor();
+
+    printf("\n[O] settings view: data-directory privacy gate\n");
     subtest_settings_data_dir_privacy();
 
     teardown_a11y_home();
