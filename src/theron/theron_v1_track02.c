@@ -907,3 +907,205 @@ const char *theron_v1_track02_descriptor_window_kind_name(
         return "unknown";
     }
 }
+
+/* ── Semantic dungeon-descriptor binding ─────────────────────────── */
+
+/* Documented working hypothesis (see header source-locks section):
+ *   entry 0 -> DUNGEON_SEED_TABLE
+ *   entry 5 -> DESCRIPTOR_TABLE  (already classified structurally;
+ *                                  semantic role is a re-statement of
+ *                                  the existing contains_descriptor_table
+ *                                  flag for the middle entry)
+ *   every other entry -> UNKNOWN
+ *
+ * This is one bound entry per the lane task.  Other entries keep their
+ * structural classification but no semantic role until real Track 02
+ * decoding promotes them. */
+Theron_Track02SemanticRole theron_v1_track02_semantic_role_for_entry(
+    size_t entry_index) {
+    if (entry_index == 0u) return THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE;
+    if (entry_index == (size_t)TQR_US_ISO_BANK_STRIDE_WINDOW_WITH_DESCRIPTOR) {
+        return THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE;
+    }
+    return THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN;
+}
+
+const char *theron_v1_track02_semantic_role_name(
+    Theron_Track02SemanticRole role) {
+    switch (role) {
+    case THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE:
+        return "dungeon-seed-table";
+    case THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE:
+        return "descriptor-table";
+    case THERON_TRACK02_SEMANTIC_OBJECT_TABLE:
+        return "object-table";
+    case THERON_TRACK02_SEMANTIC_LEVEL_GRID_TABLE:
+        return "level-grid-table";
+    case THERON_TRACK02_SEMANTIC_TEXT_TABLE:
+        return "text-table";
+    case THERON_TRACK02_SEMANTIC_PALETTE_TABLE:
+        return "palette-table";
+    case THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN:
+    default:
+        return "unknown";
+    }
+}
+
+const char *theron_v1_track02_semantic_binding_status_name(
+    Theron_Track02SemanticBindingStatus status) {
+    switch (status) {
+    case THERON_TRACK02_SEMANTIC_BINDING_OK:
+        return "ok";
+    case THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND:
+        return "not-bound";
+    case THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT:
+        return "bad-input";
+    case THERON_TRACK02_SEMANTIC_BINDING_WINDOW_TOO_SMALL:
+        return "window-too-small";
+    case THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE:
+        return "bad-shape";
+    case THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL:
+        return "zero-fill";
+    default:
+        return "unknown";
+    }
+}
+
+Theron_Track02SemanticBindingStatus theron_v1_track02_read_dungeon_seed_table(
+    const uint8_t *seed_bytes,
+    size_t seed_size,
+    Theron_Track02DungeonSeedTable *out_table) {
+    size_t i;
+    int shape_ok;
+
+    if (out_table) {
+        memset(out_table, 0, sizeof(*out_table));
+    }
+    if (!seed_bytes || !out_table) {
+        return THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+    }
+    if (seed_size < THERON_TRACK02_DUNGEON_SEED_TABLE_BYTES) {
+        return THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+    }
+
+    for (i = 0; i < THERON_TRACK02_DUNGEON_COUNT; ++i) {
+        out_table->seeds[i] = rd32le(seed_bytes + (i * THERON_TRACK02_DUNGEON_SEED_BYTES_PER_ENTRY));
+    }
+
+    /* Strictly nonzero: every seed must be non-zero.  This rejects an
+     * uninitialized/zero-filled window even if it otherwise fits. */
+    shape_ok = 1;
+    for (i = 0; i < THERON_TRACK02_DUNGEON_COUNT; ++i) {
+        if (out_table->seeds[i] == 0u) {
+            shape_ok = 0;
+            break;
+        }
+    }
+
+    /* Non-decreasing: seeds[i+1] >= seeds[i].  This mirrors the documented
+     * working-hypothesis placeholder list (313/414/527/632/749/856/967,
+     * strictly ascending in the current build) while still accepting equal
+     * adjacent seeds, which would be the natural shape if two dungeons
+     * shared a starting seed. */
+    if (shape_ok) {
+        for (i = 0; i + 1u < THERON_TRACK02_DUNGEON_COUNT; ++i) {
+            if (out_table->seeds[i + 1u] < out_table->seeds[i]) {
+                shape_ok = 0;
+                break;
+            }
+        }
+    }
+
+    out_table->shape_ok = shape_ok;
+    return shape_ok ? THERON_TRACK02_SEMANTIC_BINDING_OK
+                    : THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
+}
+
+Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    size_t entry_index,
+    Theron_Track02SemanticBinding *out_binding) {
+
+    Theron_Track02DescriptorTable table;
+    Theron_Track02DescriptorWindowBinding binding;
+    const Theron_Track02DescriptorWindow *window;
+    Theron_Track02TableDecodeStatus table_status;
+    Theron_Track02SemanticBindingStatus status = THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+
+    if (out_binding) {
+        memset(out_binding, 0, sizeof(*out_binding));
+    }
+    if (!track02_data || track02_size == 0 || !out_binding) {
+        return THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+    }
+    if (entry_index >= THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES) {
+        return THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+    }
+    if (descriptor_offset > track02_size ||
+        TQR_US_ISO_BANK_STRIDE_BYTES > track02_size - descriptor_offset) {
+        return THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+    }
+
+    out_binding->entry_index = entry_index;
+    out_binding->role = theron_v1_track02_semantic_role_for_entry(entry_index);
+    if (out_binding->role == THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN) {
+        out_binding->status = THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND;
+        return THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND;
+    }
+
+    /* Decode the table once so the entry window absolute offsets can be
+     * derived from a verified-shape descriptor. */
+    table_status = theron_v1_track02_decode_descriptor_table(
+        track02_data + descriptor_offset,
+        TQR_US_ISO_BANK_STRIDE_BYTES,
+        TQR_US_ISO_BANK_STRIDE_STEP,
+        &table);
+    if (table_status != THERON_TRACK02_TABLE_DECODE_OK) {
+        out_binding->status = THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+        return THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+    }
+
+    table_status = theron_v1_track02_bind_descriptor_windows(
+        track02_data,
+        track02_size,
+        descriptor_offset,
+        &table,
+        &binding);
+    if (table_status != THERON_TRACK02_TABLE_DECODE_OK) {
+        out_binding->status = THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+        return THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT;
+    }
+
+    window = &binding.windows[entry_index];
+    out_binding->absolute_offset = window->absolute_offset;
+    out_binding->byte_count = window->byte_count;
+    out_binding->window_kind = window->kind;
+
+    /* Role-specific decode.  Today this only covers DUNGEON_SEED_TABLE;
+     * every other bound role (DESCRIPTOR_TABLE) returns NOT_BOUND at the
+     * role-classification step above and never reaches here.  When new
+     * roles are added, they get a dedicated branch. */
+    if (out_binding->role == THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE) {
+        if (window->kind == THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL) {
+            status = THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL;
+        } else if (window->byte_count <
+                   THERON_TRACK02_DUNGEON_SEED_TABLE_BYTES) {
+            status = THERON_TRACK02_SEMANTIC_BINDING_WINDOW_TOO_SMALL;
+        } else {
+            status = theron_v1_track02_read_dungeon_seed_table(
+                track02_data + window->absolute_offset,
+                window->byte_count,
+                &out_binding->dungeon_seed_table);
+        }
+    } else {
+        /* DESCRIPTOR_TABLE role reaches here only by explicit future
+         * extension; for now classify as not-bound so callers don't get a
+         * silent OK on a role we have not yet given semantic content. */
+        status = THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND;
+    }
+
+    out_binding->status = status;
+    return status;
+}

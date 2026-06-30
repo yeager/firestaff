@@ -283,4 +283,156 @@ const char *theron_v1_track02_table_decode_status_name(
 const char *theron_v1_track02_descriptor_window_kind_name(
     Theron_Track02DescriptorWindowKind kind);
 
+/* Semantic dungeon-descriptor binding.
+ *
+ * The 0x1584 descriptor table and its three replicated raw-BIN anchors
+ * enumerate 9 windows of stride 0x0400.  Each window is structurally
+ * classified as zero-fill / data / descriptor-table, but a *semantic*
+ * role needs the working hypothesis that one specific entry maps to a
+ * named in-game concept.
+ *
+ * This release binds ONE descriptor entry to ONE semantic role: the
+ * first entry (descriptor.entry_index == 0, window relative offset
+ * 0x0020) is bound to the role THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE,
+ * which reads the documented 7 × uint32 little-endian dungeon_seeds from
+ * tqr_v1_phase2_data_formats_H2339.md §9.1 (a.k.a. the THQUEST.ASM T560
+ * `dungeon_seed` table, sourced from theron_v1_boot.c:318-345 /
+ * theron_v1_dungeon_progression.c:38-110).  No other entry has a semantic
+ * role yet; it remains UNKNOWN.  Real-data promotion is still no-claim
+ * until the Track 02 dungeon block offset is verified.
+ *
+ * Source-locks:
+ *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md §9.1
+ *     `Offset 10-37: dungeon_seeds (7 × 4 bytes = 28 bytes, uint32 LE)`.
+ *   src/theron/theron_v1_dungeon_progression.c:38-110 (in-game default
+ *     seeds 313/414/527/632/749/856/967 for the 7 mini-dungeons).
+ *   src/theron/theron_v1_boot.c:318-345 (boot-time seed extraction).
+ *   THQUEST.ASM T560 (header parsing + dungeon_seed extraction).
+ *   docs/source-lock/tqr_v1_track02_bank_signal_2026-06-03.md (descriptor
+ *     region offsets and the 0x1584 / raw-BIN anchor byte anchors). */
+
+#define THERON_TRACK02_DUNGEON_COUNT 7u
+#define THERON_TRACK02_DUNGEON_SEED_BYTES_PER_ENTRY 4u
+#define THERON_TRACK02_DUNGEON_SEED_TABLE_BYTES \
+    (THERON_TRACK02_DUNGEON_COUNT * THERON_TRACK02_DUNGEON_SEED_BYTES_PER_ENTRY)
+
+/* Default seeds documented in theron_v1_dungeon_progression.c:38-110.
+ * Used as the value-driven hash fingerprint for the synthetic semantic
+ * binding probe.  Real-data promotion uses these values only as a
+ * reference list, never as a decoder input. */
+typedef struct {
+    uint32_t seeds[THERON_TRACK02_DUNGEON_COUNT];
+    /* Set to 1 when the decoder finds 7 strictly nonzero, non-decreasing,
+     * 32-bit-aligned seeds within the bound window.  Otherwise 0.  This is
+     * a shape gate only; it does NOT validate that the real Track 02
+     * seed values match the working-hypothesis list. */
+    int shape_ok;
+} Theron_Track02DungeonSeedTable;
+
+typedef enum {
+    THERON_TRACK02_SEMANTIC_ROLE_UNKNOWN = 0,
+    THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE,
+    THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE,
+    THERON_TRACK02_SEMANTIC_OBJECT_TABLE,
+    THERON_TRACK02_SEMANTIC_LEVEL_GRID_TABLE,
+    THERON_TRACK02_SEMANTIC_TEXT_TABLE,
+    THERON_TRACK02_SEMANTIC_PALETTE_TABLE
+} Theron_Track02SemanticRole;
+
+typedef enum {
+    THERON_TRACK02_SEMANTIC_BINDING_OK = 1,
+    THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND = 0,
+    THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT = -1,
+    THERON_TRACK02_SEMANTIC_BINDING_WINDOW_TOO_SMALL = -2,
+    THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE = -3,
+    THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL = -4
+} Theron_Track02SemanticBindingStatus;
+
+typedef struct {
+    size_t entry_index;
+    Theron_Track02SemanticRole role;
+    size_t absolute_offset;
+    size_t byte_count;
+    Theron_Track02DescriptorWindowKind window_kind;
+    /* Populated when role == DUNGEON_SEED_TABLE.  shape_ok mirrors the
+     * decoder gate; seeds[] is byte-faithful regardless of shape_ok. */
+    Theron_Track02DungeonSeedTable dungeon_seed_table;
+    Theron_Track02SemanticBindingStatus status;
+} Theron_Track02SemanticBinding;
+
+/* Map a descriptor entry index to a semantic role.
+ *
+ * The mapping is the documented working hypothesis from this header's
+ * source-locks section: entry 0 is the dungeon_seed table, entry 5 is
+ * the descriptor-table-bearing window (already classified structurally),
+ * every other entry is UNKNOWN.  Returning UNKNOWN is not an error; it
+ * simply means no semantic role is currently bound. */
+Theron_Track02SemanticRole theron_v1_track02_semantic_role_for_entry(
+    size_t entry_index);
+
+/* String name for a semantic role.  Always returns a non-NULL string. */
+const char *theron_v1_track02_semantic_role_name(
+    Theron_Track02SemanticRole role);
+
+/* Bind one descriptor entry to its semantic role.
+ *
+ * `track02_data` / `track02_size` describe the full Track 02 image
+ * (or a synthetic fixture); `descriptor_offset` is the byte offset
+ * of the 18-byte descriptor table within that buffer; `entry_index`
+ * selects one of the 9 descriptor entries.  The function decodes the
+ * table, binds all 9 windows, and classifies the requested entry
+ * according to its semantic role.
+ *
+ * Status codes:
+ *   OK                 -> role == DUNGEON_SEED_TABLE and shape_ok == 1
+ *   NOT_BOUND          -> role == UNKNOWN for this entry_index
+ *   BAD_INPUT          -> NULL/zero-size/invalid entry_index
+ *   WINDOW_TOO_SMALL   -> window byte_count < dungeon_seed_table bytes
+ *   BAD_SHAPE          -> dungeon_seed_table byte shape fails the gate
+ *                         (e.g. seeds not strictly nonzero, not
+ *                         non-decreasing, or out of 32-bit range)
+ *   ZERO_FILL          -> window is all zero bytes (kind ==
+ *                         THERON_TRACK02_DESCRIPTOR_WINDOW_ZERO_FILL),
+ *                         which is an honest signal that the seeded
+ *                         region is not present on this image
+ *
+ * Real Track 02 data MUST be allowed to return ZERO_FILL or NOT_BOUND
+ * honestly.  Only synthetic Track 02 fixtures (and the documented US ISO
+ * at descriptor_offset 0x1584 if and when its dungeon_seed window is
+ * identified) are expected to return OK today. */
+Theron_Track02SemanticBindingStatus theron_v1_track02_bind_semantic_descriptor(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    size_t entry_index,
+    Theron_Track02SemanticBinding *out_binding);
+
+/* Lower-level: read a 7 × uint32 little-endian dungeon_seed table from
+ * `seed_bytes`.  Used both by theron_v1_track02_bind_semantic_descriptor
+ * (when entry 0 is requested) and by the synthetic probe (so the probe
+ * can pin the shape contract without depending on a full descriptor
+ * decode).
+ *
+ * Shape gate:
+ *   - seed_bytes != NULL && seed_size >= 28 (THERON_TRACK02_DUNGEON_SEED_TABLE_BYTES)
+ *   - seeds are read byte-faithfully regardless of shape_ok
+ *   - shape_ok == 1 requires every seed != 0, and seeds are non-decreasing
+ *     (seeds[i+1] >= seeds[i]).  The non-decreasing rule mirrors the
+ *     placeholder seed list 313/414/527/632/749/856/967 (strictly
+ *     ascending in this build) but accepts equal-adjacent seeds too,
+ *     because real Track 02 seeds may be tied.
+ *   - shape_ok == 0 leaves the caller's out_table populated with the
+ *     byte-faithful seeds[], so callers can inspect the actual values.
+ *
+ * Returns THERON_TRACK02_SEMANTIC_BINDING_OK on shape_ok == 1,
+ * THERON_TRACK02_SEMANTIC_BINDING_BAD_INPUT on NULL/short input,
+ * THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE on shape failure. */
+Theron_Track02SemanticBindingStatus theron_v1_track02_read_dungeon_seed_table(
+    const uint8_t *seed_bytes,
+    size_t seed_size,
+    Theron_Track02DungeonSeedTable *out_table);
+
+const char *theron_v1_track02_semantic_binding_status_name(
+    Theron_Track02SemanticBindingStatus status);
+
 #endif /* THERON_V1_TRACK02_H */
