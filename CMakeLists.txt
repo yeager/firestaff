@@ -9543,6 +9543,10 @@ if(BUILD_TESTING)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_theron_v1_runtime_screenshot_promotion_gate.py
     )
     add_test(
+        NAME theron_v1_runtime_screenshot_promotion_checklist
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_theron_v1_runtime_screenshot_promotion_checklist.py
+    )
+    add_test(
         NAME dm1_v2_entry_bitmap_materialization_blocker_gate
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_entry_bitmap_materialization_blocker.py
     )
