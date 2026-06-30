@@ -39,6 +39,19 @@ The strongest current proof is:
   valid 320x200 presented BMP) and locks the non-promotion state until at
   least one row is `README_ELIGIBLE` AND a human reviewer promotes it from
   tracked evidence.
+- `theron_v1_runtime_screenshot_promotion_checklist`: a bounded companion
+  to the promotion gate that surfaces the explicit per-row review
+  checklist a human reviewer must work through before any single row may
+  be promoted into `verification-screens/` or `docs/compare/`, and folds
+  an optional operator-local reviewer sign-off file into the audit. The
+  checklist reuses the upstream promotion-gate manifest as a contract
+  source-of-truth, so a contract drift in the gate fails this gate as
+  well, and locks the non-promotion state until BOTH the machine
+  contract AND an explicit reviewer sign-off for at least one row are
+  present. Default verdict today is `REVIEW_CHECKLIST_NO_ROW_PROMOTED`:
+  every readiness row still uses deterministic fallback assets and shows
+  no semantic Track 02 loader evidence, so no Theron capture may yet be
+  promoted into the README even if a reviewer has signed off.
 - `theron_24h_readiness`: the daily readiness rollup ties the Track 02 bank,
   save/load, cross-route mechanics, runtime screenshot, dungeon progression,
   cross-slot, and M11 launch gates into one PASS/FAIL manifest so later
@@ -96,6 +109,7 @@ Run the promotion-provenance check with:
 
 ```bash
 ctest --test-dir build -R '^theron_v1_runtime_screenshot_promotion_gate$' --output-on-failure
+ctest --test-dir build -R '^theron_v1_runtime_screenshot_promotion_checklist$' --output-on-failure
 ```
 
 The generated reports live at:
@@ -105,3 +119,6 @@ The generated reports live at:
 - `parity-evidence/theron_v1_runtime_screenshot_promotion_gate.md` — row
   classification against the eligibility contract and the current
   `NO_README_PROMOTION_PERMITTED` lock.
+- `parity-evidence/theron_v1_runtime_screenshot_promotion_checklist.md` —
+  per-row reviewer checklist with machine + reviewer sign-off verdicts
+  and the current `REVIEW_CHECKLIST_NO_ROW_PROMOTED` lock.
