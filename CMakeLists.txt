@@ -10839,6 +10839,50 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_status_recompute_pc34_compat
     )
 
+    # DM1 V1 champion-panel status-hand rotation gate: contract-only
+    # pass760 source-lock covering CHAMPION.C F0297:243-298/F0298:270-298/
+    # F0300:511-515/F0301:606-614/F0302:662-714 + CHAMDRAW.C F0291:632-673/
+    # F0292:771-895 + DEFS.H:2088 C30/C033/C034/C035/M070/M516. Disjoint
+    # from hand_slot_priority (CHAMPION.C F0302 input dispatch) and
+    # second_leader_hand_slot_priority (F0302 second-leader swap branch).
+    add_executable(test_dm1_v1_champion_panel_status_hand_rotation_pc34_compat
+        tests/test_dm1_v1_champion_panel_status_hand_rotation_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_status_hand_rotation_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_champion_panel_status_hand_rotation_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_status_hand_rotation_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_status_hand_rotation_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_status_hand_rotation_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_status_hand_rotation_pc34_compat
+    )
+
+    # DM1 V1 champion-panel status-hand slot-box pixel slice: CHAMDRAW.C
+    # F0291:632-646 body slots 0..5 + F0291:648-651 acting-hand override
+    # + DEFS.H:2186-2188 C033/C034/C035 + (champIdx*69 + 4/24, 10) 18x18
+    # layout-696 anchors. Disjoint from status_hand_rotation
+    # (CHAMPION.C F0297-F0302 leader-switch), portrait_box_blit_gate
+    # (CHAMDRAW.C F0293 portrait strip), hand_slot_refresh (F0296 walk),
+    # and the existing status-states pixel probe (M11 draw stack).
+    add_executable(test_dm1_v1_champion_panel_status_hand_slot_pixels_pc34_compat
+        tests/test_dm1_v1_champion_panel_status_hand_slot_pixels_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_status_hand_slot_pixels_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_status_hand_slot_pixels_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_status_hand_slot_pixels_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_status_hand_slot_pixels_pc34_compat
+    )
+
     add_executable(test_dm1_v1_champion_panel_mana_bar_repaint_pc34_compat
         tests/test_dm1_v1_champion_panel_mana_bar_repaint_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_mana_bar_repaint_pc34_compat.c
