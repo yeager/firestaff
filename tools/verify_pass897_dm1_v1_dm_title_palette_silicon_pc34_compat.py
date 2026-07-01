@@ -18,6 +18,7 @@ pair that was rendered.
 from __future__ import annotations
 
 import json
+import os
 import platform
 import subprocess
 from datetime import datetime, timezone
@@ -112,16 +113,44 @@ def run(cmd, cwd):
     }
 
 
+def candidate_build_dirs():
+    seen = set()
+    candidates = []
+
+    def add(path_text):
+        if not path_text:
+            return
+        path = Path(path_text).expanduser()
+        if not path.is_absolute():
+            path = ROOT / path
+        key = str(path)
+        if key not in seen:
+            seen.add(key)
+            candidates.append(path)
+
+    for env_name in ("FIRESTAFF_BUILD_DIR", "CTEST_BINARY_DIRECTORY"):
+        add(os.environ.get(env_name))
+    add(ROOT / "build")
+    add(ROOT / "builds" / "nv1-build")
+    add(ROOT / "builds" / "n2-build")
+    for parent in (Path("/Volumes/Extern-disk/firestaff-builds"),
+                   Path("/Volumes/Extern-disk/Firestaff/builds")):
+        if parent.exists():
+            for child in sorted(parent.glob("*")):
+                if child.is_dir():
+                    add(child)
+    return candidates
+
+
 def resolve_build_dir():
-    candidates = [ROOT / "build", ROOT / "builds" / "nv1-build",
-                  ROOT / "builds" / "n2-build"]
+    candidates = candidate_build_dirs()
     for c in candidates:
         if (c / "CMakeCache.txt").exists() and (c / BINARY_NAME).exists():
             return c
     for c in candidates:
         if (c / "CMakeCache.txt").exists():
             return c
-    return candidates[0]
+    return candidates[0] if candidates else ROOT / "build"
 
 
 def write_outputs(local_checks, runs, host_check):
@@ -156,7 +185,7 @@ def write_outputs(local_checks, runs, host_check):
     for r in runs:
         rl.append(f"- `{' '.join(r['command'])}`: rc={r['returncode']} "
                   f"({'PASS' if r['passed'] else 'FAIL'})")
-    REPORT.write_text("\n".join(rl))
+    REPORT.write_text("\n".join(rl) + "\n")
 
 
 def main():
