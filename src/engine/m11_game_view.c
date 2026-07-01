@@ -8659,6 +8659,13 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     if (!state || !state->active) {
         return 0;
     }
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB COMMAND.C F0380 keeps normal command surfaces out while
+         * G0299_ui_CandidateChampionOrdinal owns the C040 panel.  QuickSave
+         * is intentionally allowed to persist live C040 state, but direct
+         * QuickLoad must not replace the world behind that active panel. */
+        return 0;
+    }
     if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
         m11_set_status(state, "LOAD", "SAVE PATH TOO LONG");
         return 0;
