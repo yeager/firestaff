@@ -13,6 +13,7 @@
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 
 #include <assert.h>
@@ -392,6 +393,24 @@ static void test_orch_f0312_skill_bonus_uses_live_f0303_values(void) {
         &world, 0, DM1_SKILL_IDX_THROW) == 2);
     assert(F0888_ORCH_GetChampionF0312SkillBonus_Compat(
         &world, 0, 2) == 4);
+}
+
+static void test_combat_f0313_wound_defense_final_shift_and_clamp(void) {
+    struct CombatantChampionSnapshot_Compat champ;
+    int defense = -1;
+
+    memset(&champ, 0, sizeof(champ));
+    champ.woundDefense[CHAMPION_SLOT_TORSO] = 65;
+    assert(F0733_COMBAT_GetChampionWoundDefense_Compat(
+        &champ, CHAMPION_SLOT_TORSO, 0, &defense) == 1);
+    /* ReDMCSB CHAMPION.C F0313 lines 1375-1382 halves the accumulated
+     * defense before bounding it to 0..100. */
+    assert(defense == 32);
+
+    champ.woundDefense[CHAMPION_SLOT_TORSO] = 260;
+    assert(F0733_COMBAT_GetChampionWoundDefense_Compat(
+        &champ, CHAMPION_SLOT_TORSO, 0, &defense) == 1);
+    assert(defense == 100);
 }
 
 static void test_orch_turn_rotates_champion_cell_and_direction(void) {
@@ -1944,10 +1963,11 @@ static void test_orch_projectile_champion_hit_uses_lifecycle_shield_defense(void
     memset(&result, 0, sizeof(result));
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
     assert(world.projectiles.count == 0);
-    /* ReDMCSB CHAMPION.C F0313 lines 1353-1355 adds Champion.ShieldDefense
-     * before F0321 scales physical damage.  With defense 100 over HEAD|TORSO,
-     * raw 30 blunt impact becomes (30 * (130 - 100)) >> 6 == 14. */
-    assert(world.party.champions[1].hp.current == 86);
+    /* ReDMCSB CHAMPION.C F0313 lines 1353-1382 adds Champion.ShieldDefense
+     * then halves/bounds the slot defense before F0321 scales physical
+     * damage.  Defense 100 becomes 50 over HEAD|TORSO, so raw 30 blunt impact
+     * becomes (30 * (130 - 50)) >> 6 == 37. */
+    assert(world.party.champions[1].hp.current == 63);
 }
 
 static void test_orch_projectile_champion_hit_uses_equipped_armour_defense(void) {
@@ -2032,10 +2052,10 @@ static void test_orch_projectile_champion_hit_uses_equipped_armour_defense(void)
     memset(&result, 0, sizeof(result));
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
     assert(world.projectiles.count == 0);
-    /* F0217 applies HEAD|TORSO.  G0239 torso-plate defense 65 is averaged
-     * with the unarmoured head slot before F0321 scales the blunt impact:
-     * avgDefense=(0+65)/2, damage=(30*(130-32))>>6 == 45. */
-    assert(world.party.champions[1].hp.current == 55);
+    /* F0217 applies HEAD|TORSO.  G0239 torso-plate defense 65 is halved by
+     * F0313 before it is averaged with the unarmoured head slot for F0321:
+     * avgDefense=(0+(65>>1))/2 == 16, damage=(30*(130-16))>>6 == 53. */
+    assert(world.party.champions[1].hp.current == 47);
 }
 
 static void test_orch_projectile_champion_hit_uses_hand_shield_strength(void) {
@@ -2124,11 +2144,12 @@ static void test_orch_projectile_champion_hit_uses_hand_shield_strength(void) {
     memset(&result, 0, sizeof(result));
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
     assert(world.projectiles.count == 0);
-    /* ReDMCSB CHAMPION.C F0313 lines 1336-1346 adds F0312 hand strength
+    /* ReDMCSB CHAMPION.C F0313 lines 1336-1382 adds F0312 hand strength
      * to shield armour defense.  Deterministic F0312 baseline for this hand
-     * is 54; Shield of Darc defense 100 gives HEAD 24 and TORSO 19 defense,
-     * so F0321 scales raw 30 blunt impact to 51 HP damage. */
-    assert(world.party.champions[1].hp.current == 49);
+     * is 54; Shield of Darc defense 100 gives pre-tail HEAD 24 and TORSO 19,
+     * then F0313 halves them to 12 and 9 before F0321 scales raw 30 blunt
+     * impact to 56 HP damage. */
+    assert(world.party.champions[1].hp.current == 44);
 }
 
 static void test_orch_projectile_champion_hit_applies_poison(void) {
@@ -5434,6 +5455,7 @@ int main(void) {
     test_orch_zokathra_spell_materializes_in_ready_hand();
     test_orch_zokathra_spell_falls_back_to_party_square();
     test_orch_f0312_skill_bonus_uses_live_f0303_values();
+    test_combat_f0313_wound_defense_final_shift_and_clamp();
     test_orch_turn_rotates_champion_cell_and_direction();
     test_orch_projectile_create_preserves_associated_thing();
     test_orch_projectile_move_event_advances_and_reschedules();
