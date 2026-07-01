@@ -659,10 +659,194 @@ static void test_source_evidence_citation(void) {
     CHECK(strstr(ev, "ReDMCSB PANEL.C") != NULL, "cites ReDMCSB PANEL.C");
     CHECK(strstr(ev, "dm2_v2_hud_widget_assets") != NULL,
           "cites dm2_v2_hud_widget_assets (Phase 3 hook)");
+    CHECK(strstr(ev, "dm2_v2_hud_widget_bitmap_blit") != NULL,
+          "cites dm2_v2_hud_widget_bitmap_blit (Phase 3 follow-up)");
     CHECK(strstr(ev, "V1 invariant") != NULL,
           "mentions V1 invariant");
     CHECK(strstr(ev, "OPEN-BOUNDED") != NULL,
           "mentions OPEN-BOUNDED honesty for finished bitmap art");
+}
+
+/* ── Scenario: bounded blit path (Phase 3 follow-up) ──────────────
+ *
+ * Drops the checked-in synthetic 1x1 RGBA PNG fixtures into the
+ * scratch asset root and asserts the runtime hook routes the REAL
+ * slot through dm2_v2_hud_widget_bitmap_blit_render_slot(). The
+ * synthetic fixtures have distinct R values per slot, so the
+ * framebuffer pixel at each anchor must equal that R value
+ * (i.e. not the legacy stamp's opacity byte, but the actual
+ * decoded PNG pixel).
+ *
+ * This is the runtime-side proof that the blit path is wired
+ * end-to-end. The companion bitmap blit probe covers the lower
+ * level (decode + bounded write + bounds + fallback). */
+
+#include "dm2_v2_hud_widget_bitmap_blit.h"
+
+#ifndef FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR
+#define FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR \
+    "examples/dm2_hud_widget_synthetic"
+#endif
+
+/* Helper: copy `name.png` from the example pack (hud_widgets/ first,
+ * then hud_chrome/) to `dst`. Creates the destination's parent
+ * directory tree if needed. */
+static int copy_synthetic_fixture(const char* dst, const char* name) {
+    char src[1024];
+    snprintf(src, sizeof(src),
+             "%s/hud_widgets/%s", FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR, name);
+    FILE* in = fopen(src, "rb");
+    if (!in) {
+        snprintf(src, sizeof(src),
+                 "%s/hud_chrome/%s", FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR, name);
+        in = fopen(src, "rb");
+    }
+    if (!in) return 0;
+    /* Create parent directory. */
+    char dst_copy[1024];
+    snprintf(dst_copy, sizeof(dst_copy), "%s", dst);
+    char* last_slash = strrchr(dst_copy, '/');
+    if (last_slash) {
+        *last_slash = '\0';
+        char mkdir_cmd[1100];
+        snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", dst_copy);
+        if (system(mkdir_cmd) != 0) { fclose(in); return 0; }
+    }
+    FILE* out = fopen(dst, "wb");
+    if (!out) { fclose(in); return 0; }
+    unsigned char buf[4096];
+    size_t n;
+    int ok = 1;
+    while ((n = fread(buf, 1, sizeof(buf), in)) > 0) {
+        if (fwrite(buf, 1, n, out) != n) { ok = 0; break; }
+    }
+    fclose(in);
+    fclose(out);
+    return ok;
+}
+
+static void test_bounded_blit_end_to_end(void) {
+    printf("\n[ Scenario 10: bounded blit path end-to-end ]\n");
+    clean_scratch();
+    const char* dataDir = "/tmp/scratch/firestaff-data/dm2";
+    char manifest_path[1024];
+    build_expected_manifest_path(manifest_path, sizeof(manifest_path), dataDir);
+    char pdir[1024];
+    snprintf(pdir, sizeof(pdir), "%s", manifest_path);
+    char* slash = strrchr(pdir, '/');
+    if (slash) *slash = '\0';
+    char mkdir_cmd[1100];
+    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", pdir);
+    CHECK(system(mkdir_cmd) == 0, "mkdir hud dir");
+
+    char widgets_dir[1024], chrome_dir[1024];
+    snprintf(widgets_dir, sizeof(widgets_dir),
+             "%s/../../assets/dm2/hud/hud_widgets", dataDir);
+    snprintf(chrome_dir,  sizeof(chrome_dir),
+             "%s/../../assets/dm2/hud/hud_chrome", dataDir);
+    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s' '%s'",
+             widgets_dir, chrome_dir);
+    CHECK(system(mkdir_cmd) == 0, "mkdir widget+chrome dirs");
+
+    /* Copy the real synthetic PNGs from the example pack into the
+     * manifest's category dirs. The copy helper now creates the
+     * destination's parent directory tree, so the call lands the
+     * file at widgets_dir/inventory_quick_view.png directly. */
+    char iqv_dst[1024], ap_dst[1024];
+    snprintf(iqv_dst, sizeof(iqv_dst), "%s/inventory_quick_view.png", widgets_dir);
+    snprintf(ap_dst,  sizeof(ap_dst),  "%s/action_prompt.png",         widgets_dir);
+    CHECK(copy_synthetic_fixture(iqv_dst, "inventory_quick_view.png"),
+          "copied inventory_quick_view.png into manifest dir");
+    CHECK(copy_synthetic_fixture(ap_dst,  "action_prompt.png"),
+          "copied action_prompt.png into manifest dir");
+
+    /* Re-derive the expected R from the now-installed fixtures (so
+     * the test is robust to fixture-colour changes; the runtime
+     * only cares that the framebuffer pixel matches whatever the
+     * decoded fixture produces). */
+    DM2_V2_HudWidgetBlitPixel px_iqv, px_ap;
+    CHECK(dm2_v2_hud_widget_bitmap_blit_read_pixel(iqv_dst, &px_iqv) == 1,
+          "decoded installed inventory_quick_view.png");
+    CHECK(dm2_v2_hud_widget_bitmap_blit_read_pixel(ap_dst,  &px_ap)  == 1,
+          "decoded installed action_prompt.png");
+
+    /* Manifest with both Phase 3 primary slots as REAL, source_file
+     * pointing at the actual synthetic PNGs. */
+    const char* content =
+        "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm2-hwa-hook-probe\","
+        "\"hud_widgets\":["
+        "{\"id\":\"inventory_quick_view\",\"generator\":\"synthetic_test\","
+        "\"source_file\":\"inventory_quick_view.png\",\"width\":64,\"height\":32},"
+        "{\"id\":\"action_prompt\",\"generator\":\"synthetic_test\","
+        "\"source_file\":\"action_prompt.png\",\"width\":48,\"height\":16}"
+        "]}";
+    CHECK(write_file(manifest_path, content), "wrote synthetic manifest");
+
+    dm2_v2_hud_runtime_init();
+    dm2_v2_hud_widget_assets_set_manifest_path(dataDir);
+    /* Both declared slots are REAL with disk-resolvable source_file,
+     * so the gate is COMPLETE (real==total). The blit path is the
+     * same regardless of whether the gate is PARTIAL or COMPLETE —
+     * it routes through the bitmap blit for every REAL slot. */
+    CHECK(dm2_v2_hud_widget_assets_gate() ==
+          DM2_V2_HUD_WIDGET_GATE_COMPLETE,
+          "synthetic manifest (all-declared REAL) → COMPLETE gate");
+
+    DM2_V2_PhaseGateConfig gate = { 1, 1 };
+    dm2_v2_hud_runtime_set_gate_config(&gate);
+    uint8_t fb[320 * 200];
+    memset(fb, 0, sizeof(fb));
+    dm2_v2_hud_runtime_render_with_assets(fb, 320, 200);
+
+    /* The blit path is preferred over the legacy stamp when the
+     * PNG is decodable. The framebuffer pixel at each REAL slot's
+     * anchor must equal the synthetic fixture's R value, NOT the
+     * legacy stamp's opacity byte. */
+    CHECK(dm2_v2_hud_runtime_last_path_mode(
+              DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW) ==
+              DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP,
+          "inventory_quick_view routed to REAL_BITMAP (blit path)");
+    CHECK(dm2_v2_hud_runtime_last_path_mode(
+              DM2_V2_HUD_WIDGET_ACTION_PROMPT) ==
+              DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP,
+          "action_prompt routed to REAL_BITMAP (blit path)");
+
+    /* Anchor (80, 4) for inventory_quick_view is inside the top
+     * status bar where the procedural champion-bar 0 is drawn.
+     * With default HP=0/stamina=0/mana=0, the bar segments are
+     * zero-width and only the leader star could touch that area.
+     * Since leader defaults to false, the procedural render does
+     * not write to (80, 4); the blit value is preserved. */
+    CHECK(fb[k_anchors[0].y * 320 + k_anchors[0].x] == px_iqv.r,
+          "inventory_quick_view anchor holds decoded R from synthetic PNG");
+
+    /* Anchor (220, 4) for action_prompt is inside the top status
+     * bar where the procedural champion-bar 3 is drawn. With all
+     * default values, the procedural render writes nothing to that
+     * pixel; the blit value is preserved. */
+    CHECK(fb[k_anchors[1].y * 320 + k_anchors[1].x] == px_ap.r,
+          "action_prompt anchor holds decoded R from synthetic PNG");
+
+    /* The action_prompt fixture's R value (0x33) is distinct from
+     * the legacy 1-pixel stamp's opacity byte (0xFF), which proves
+     * the blit path actually ran end-to-end through the runtime
+     * rather than the stamp fallback. The check is on px_ap.r
+     * itself, not on the framebuffer, so it holds even if the
+     * framebuffer pixel were ever overwritten by a future chrome
+     * change. */
+    CHECK(px_ap.r != 0xFF,
+          "action_prompt R is distinct from stamp opacity (blit ran, not stamp)");
+
+    /* All other slots are MISSING or PLACEHOLDER; path-mode is
+     * procedural fallback for those. */
+    for (size_t i = 2; i < DM2_V2_HUD_WIDGET_COUNT; ++i) {
+        CHECK(dm2_v2_hud_runtime_last_path_mode(
+                  (DM2_V2_HudWidgetSlot)i) ==
+                  DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK,
+                  "non-REAL slot path = PROCEDURAL_FALLBACK");
+    }
+    dm2_v2_hud_runtime_shutdown();
+    clean_scratch();
 }
 
 /* ── Main ──────────────────────────────────────────────────────── */
@@ -681,6 +865,7 @@ int main(void) {
     test_phase_gate_blocks_stamps();
     test_out_of_range_queries_are_safe();
     test_source_evidence_citation();
+    test_bounded_blit_end_to_end();
 
     clean_scratch();
 

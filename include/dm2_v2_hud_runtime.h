@@ -88,10 +88,12 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h_res);
  *
  * The runtime never claims a finished bitmap decode happened for any
  * slot. The "real asset path" hook is the integration seam where
- * real bitmap decode will land when operator-installed art ships;
- * until then it stamps a small marker pixel and records the slot
- * as REAL_BITMAP in the path-mode array so wire-up tests can prove
- * the gate is reaching the runtime end-to-end. */
+ * real bitmap decode will land when operator-installed art ships.
+ * Currently it routes through dm2_v2_hud_widget_bitmap_blit_render_slot()
+ * for synthetic 1x1 RGBA PNG fixtures (Phase 3 follow-up), and falls
+ * back to a 1-pixel anchor stamp when the bounded blit cannot run.
+ * The path-mode array records REAL_BITMAP in both cases so wire-up
+ * tests can prove the gate is reaching the runtime end-to-end. */
 typedef enum {
     DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK = 0,
     DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP         = 1
