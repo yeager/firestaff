@@ -401,6 +401,35 @@ static void test_candidate_panel_blocks_direct_object_helpers(void)
                                 "C040 direct object helpers do not tick");
 }
 
+static void test_candidate_panel_blocks_direct_quickload_only(void)
+{
+    M11_GameViewState state;
+    uint32_t tick;
+    int direction;
+
+    seed_active_view(&state);
+    tick = state.world.gameTick;
+    direction = state.world.party.direction;
+    state.candidateMirrorOrdinal = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+    state.inventoryPanelActive = 1;
+    snprintf(state.inspectTitle, sizeof(state.inspectTitle), "KEEP");
+    snprintf(state.inspectDetail, sizeof(state.inspectDetail), "UNCHANGED");
+
+    ASSERT_EQ(M11_GameView_QuickLoad(&state), 0,
+              "C040 candidate blocks direct quickload helper");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "blocked quickload keeps C040 live");
+    ASSERT_EQ(state.inventoryPanelActive, 1,
+              "blocked quickload preserves candidate inventory panel");
+    ASSERT_EQ(state.inspectTitle[0] == 'K' && state.inspectDetail[0] == 'U',
+              1,
+              "blocked quickload returns before path/status mutation");
+    assert_no_pipeline_activity(&state, tick, direction,
+                                "C040 direct quickload helper does not tick");
+}
+
 static void test_keyboard_positive_control_dispatches_without_overlay(void)
 {
     /* v2.8.x: arrow Left/Right now mean strafe-left/strafe-right
@@ -506,6 +535,7 @@ int main(void)
     test_candidate_panel_blocks_direct_inventory_toggle();
     test_candidate_panel_blocks_direct_map_toggle();
     test_candidate_panel_blocks_direct_object_helpers();
+    test_candidate_panel_blocks_direct_quickload_only();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();
