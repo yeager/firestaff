@@ -951,8 +951,8 @@ static void test_blow_horn_frightens_front_group_with_f0401_values(void) {
               "BLOW HORN sets source DelayFleeingFromTarget");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
-              20,
-              "BLOW HORN awards full Influence XP on fright success");
+              21,
+              "BLOW HORN awards F0401 Influence XP plus G0497 table XP");
 }
 
 static void test_calm_frightens_front_group_with_f0401_values(void) {
@@ -1025,8 +1025,8 @@ static void test_calm_frightens_front_group_with_f0401_values(void) {
               "CALM sets source DelayFleeingFromTarget");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
-              35,
-              "CALM awards full Influence XP on fright success");
+              36,
+              "CALM awards F0401 Influence XP plus G0497 table XP");
 }
 
 static void test_brandish_frightens_front_group_with_f0401_values(void) {
@@ -1099,8 +1099,8 @@ static void test_brandish_frightens_front_group_with_f0401_values(void) {
               "BRANDISH sets source DelayFleeingFromTarget");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
-              30,
-              "BRANDISH awards full Influence XP on fright success");
+              33,
+              "BRANDISH awards F0401 Influence XP plus G0497 table XP");
 }
 
 static void test_confuse_decrements_charges_and_frightens_front_group(void) {
@@ -1333,8 +1333,8 @@ static void test_blow_horn_immune_halves_xp_without_flee(void) {
               "fear-immune BLOW HORN leaves DelayFleeingFromTarget unchanged");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
-              10,
-              "fear-immune BLOW HORN awards half Influence XP");
+              11,
+              "fear-immune BLOW HORN awards half F0401 XP plus G0497 XP");
 }
 
 static void test_blow_horn_uses_f0304_influence_xp_semantics(void) {
@@ -1408,19 +1408,19 @@ static void test_blow_horn_uses_f0304_influence_xp_semantics(void) {
               "BLOW HORN frightens front group before F0304 XP award");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
-              20,
-              "F0401 awards BLOW HORN XP to hidden Influence skill");
+              21,
+              "F0401 and F0407 award BLOW HORN XP to hidden Influence skill");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].temporaryExperience,
-              2,
+              3,
               "F0304 adds bounded temporary XP to Influence");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_PRIEST].experience,
-              510,
+              511,
               "F0304 propagates Influence XP to Priest base skill");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_PRIEST].temporaryExperience,
-              2,
+              3,
               "F0304 adds bounded temporary XP to Priest base skill");
     ASSERT_EQ(state.world.party.champions[0]
                   .skillLevels[DM1_SKILL_IDX_PRIEST],
@@ -3919,6 +3919,7 @@ static void test_heal_action_uses_hidden_heal_skill(void) {
 
 static void test_heal_no_effect_still_runs_f0407_tail(void) {
     M11_GameViewState state;
+    DM1_ActionXpRoute route;
 
     seed_state(&state, 100, 60);
     state.world.party.champions[0].hp.current = 100;
@@ -3929,6 +3930,10 @@ static void test_heal_no_effect_still_runs_f0407_tail(void) {
         .skills20[DM1_SKILL_IDX_HEAL].experience = 10000;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
 
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_HEAL, &route), 1,
+              "HEAL has a source G0496/G0497 route");
+    ASSERT_EQ(route.experienceGain, 5,
+              "PC34 EN/I34E G0497 keeps no-effect HEAL table XP");
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_HEAL),
               1,
@@ -3942,8 +3947,12 @@ static void test_heal_no_effect_still_runs_f0407_tail(void) {
               "no-effect HEAL keeps the common F0407 action-disabled tail");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_HEAL].experience,
-              10000,
-              "no-effect HEAL awards no case-local healing-loop XP");
+              10000 + route.experienceGain,
+              "no-effect HEAL awards the common G0497 table XP to Heal");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_PRIEST].experience,
+              route.experienceGain,
+              "no-effect HEAL propagates common G0497 XP to Priest");
 }
 
 static void test_window_action_schedules_thieves_eye_and_decrements_charges(void) {

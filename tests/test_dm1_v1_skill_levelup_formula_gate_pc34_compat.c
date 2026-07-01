@@ -329,7 +329,7 @@ static int test_action_route_neighbors(void) {
     /* Lock three more deterministic entries to catch silent table drift:
      *   - PARRY (idx 17)    → 17 XP, sub 7 → base 0 FIGHTER
      *   - SWING (idx 13)    → 6 XP,  sub 4 → base 0 FIGHTER
-     *   - HEAL  (idx 36)    → 0 XP (PC 3.4 inherits "v1.2 and above" 0)
+     *   - HEAL  (idx 36)    -> 5 XP (PC 3.4 EN/I34E MEDIA728 branch)
      */
     DM1_ActionXpRoute r;
 
@@ -346,7 +346,16 @@ static int test_action_route_neighbors(void) {
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_HEAL, &r), 1);
     ASSERT_EQ(r.skillIndex, DM1_SKILL_IDX_HEAL);
     ASSERT_EQ(r.baseSkillIndex, DM1_SKILL_IDX_PRIEST);
-    ASSERT_EQ(r.experienceGain, 0);
+    ASSERT_EQ(r.experienceGain, 5);
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_BLOW_HORN, &r), 1);
+    ASSERT_EQ(r.experienceGain, 1);
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CALM, &r), 1);
+    ASSERT_EQ(r.experienceGain, 1);
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_BRANDISH, &r), 1);
+    ASSERT_EQ(r.experienceGain, 3);
 
     PASS();
     return 0;
@@ -356,7 +365,7 @@ static int test_action_route_neighbors(void) {
 int main(void) {
     printf("=== DM1 V1 Practice-Based Level-Up Formula Gate (PC 3.4) ===\n");
     printf("Fixture: War Cry (action 8) -> PARRY (skill 7) + INFLUENCE (skill 14)\n");
-    printf("Sources: ReDMCSB CHAMPION.C F0303/F0304, MENU.C G0496/G0497 (PC 3.4 = Atari ST 1.2+)\n\n");
+    printf("Sources: ReDMCSB CHAMPION.C F0303/F0304, MENU.C G0496/G0497 (PC 3.4 EN/I34E)\n\n");
 
     int rc = 0;
     rc |= test_war_cry_route_from_graphic560();

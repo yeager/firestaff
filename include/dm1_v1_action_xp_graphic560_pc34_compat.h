@@ -15,11 +15,12 @@
  *   - CHAMPION.C:823 F0304_CHAMPION_AddSkillExperience (XP gain math)
  *   - CHAMPION.C:715 F0303_CHAMPION_GetSkillLevel (XP→level formula)
  *
- * PC 3.4 inherits the GRAPHIC 560 action tables from the Atari ST 1.2
- * branch (see MENU.C:397 "WAR CRY Atari ST Versions 1.0 1987-12-08
- * 1987-12-11 1.1: 14" — v1.2+ routed WAR CRY to C07_SKILL_PARRY at 7 XP).
+ * PC 3.4 EN uses the I34E/MEDIA728 G0497 branch for action XP. G0496 keeps
+ * the v1.2+ WAR CRY route to C07_SKILL_PARRY; the old Atari ST 1.0/1.1
+ * alternate route to C14_SKILL_INFLUENCE is the excluded branch documented
+ * near MENU.C:397.
  *
- * Scope: this fixture is a SOURCE-LOCKED COPY of the data tables so a
+ * Scope: this fixture routes through the SOURCE-LOCKED G0496/G0497 modules so a
  * focused regression can route practice XP through the existing
  * dm1_skill_add_experience API without depending on the live menu loop.
  * It is read-only data; balance and difficulty values are not interpreted
@@ -101,8 +102,8 @@ typedef struct {
  * Look up the (skill index, base skill, XP gain) for an action.
  * Returns 1 on success, 0 if actionIndex is out of [0,44).
  *
- * Source: MENU.C:382 (skill) and MENU.C:427 (XP) for PC 3.4 / Atari ST
- * 1.2+ data. Base skill mapping follows CHAMPION.C F0304 line ~874
+ * Source: MENU.C:382 (G0496 skill) and MENU.C:427-487 (G0497 XP) for
+ * PC 3.4 EN/I34E. Base skill mapping follows CHAMPION.C F0304 line ~874
  * (skill-4)>>2 for hidden skills and identity for base skills 0..3.
  */
 int dm1_v1_action_xp_route(int actionIndex, DM1_ActionXpRoute* out);

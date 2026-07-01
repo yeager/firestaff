@@ -23847,7 +23847,8 @@ static int m11_perform_climb_down_f0407(M11_GameViewState* state);
 static int m11_perform_non_melee_action(M11_GameViewState* state,
                                         int championIndex,
                                         unsigned char chosen,
-                                        const char* champName) {
+                                        const char* champName,
+                                        int* outActionExperienceGain) {
     struct ChampionState_Compat* champ;
     if (!state) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
@@ -23887,9 +23888,10 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             int cycleCount = 0;
             if (champ->hp.current >= champ->hp.maximum) {
                 /* ReDMCSB MENU.C F0407 lines 1275 and 1524-1539 leaves
-                 * ActionPerformed TRUE when HEAL has no missing health; PC34's
-                 * G0497 HEAL entry is zero, so the common tail still disables
-                 * the action and spends stamina but awards no table XP. */
+                 * ActionPerformed TRUE when HEAL has no missing health; the
+                 * PC34 EN/I34E G0497 HEAL entry remains active, so the common
+                 * tail still disables the action, spends stamina, and awards
+                 * table XP. */
                 m11_log_event(state, M11_COLOR_YELLOW,
                               "T%u: %s IS ALREADY AT FULL HEALTH",
                               (unsigned int)state->world.gameTick,
@@ -23898,7 +23900,8 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             }
             if (champ->mana.current == 0) {
                 /* Same F0407 no-effect branch as full health: HEAL remains a
-                 * performed action but does not enter the healing loop. */
+                 * performed action but does not enter the healing loop, so the
+                 * common G0497 tail supplies the action XP. */
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: %s HAS NO MANA TO HEAL",
                               (unsigned int)state->world.gameTick,
@@ -23932,8 +23935,9 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                 /* ReDMCSB MENU.C F0407 lines 1524-1531 overrides the G0497
                  * table value for HEAL with 2 + 2 per healing cycle, then the
                  * common F0304 tail awards it to C13_SKILL_HEAL. */
-                m11_award_action_xp_f0407(
-                    state, championIndex, DM1_ACTION_HEAL, 2 + (cycleCount * 2));
+                if (outActionExperienceGain) {
+                    *outActionExperienceGain = 2 + (cycleCount * 2);
+                }
                 m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                               "T%u: %s HEALED %d HP",
                               (unsigned int)state->world.gameTick,
@@ -24654,7 +24658,8 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
          * identical to DM1: the player picks an action, the
          * world advances one tick, the menu closes. */
         performed = m11_perform_non_melee_action(state, championIndex,
-                                                 chosen, champName);
+                                                 chosen, champName,
+                                                 &actionExperienceGain);
         (void)m11_apply_tick(state, CMD_NONE, "ACTION");
         if (m11_action_is_party_shield(chosen) && !performed) {
             /* ReDMCSB MENU.C F0407 lines 1456-1461 quarters G0497 XP
@@ -24753,7 +24758,8 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     }
     performed = m11_perform_non_melee_action(state, championIndex,
                                              (unsigned char)actionIndex,
-                                             champName);
+                                             champName,
+                                             &actionExperienceGain);
     (void)m11_apply_tick(state, CMD_NONE, "ACTION");
     {
         unsigned char disabledTicks =

@@ -13116,6 +13116,8 @@ if(NOT TARGET test_dm1_v1_skill_levelup_formula_gate_pc34_compat)
         tests/test_dm1_v1_skill_levelup_formula_gate_pc34_compat.c
         src/dm1/dm1_v1_skill_experience_pc34_compat.c
         src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c
+        src/dm1/dm1_v1_graphic560_action_skill_index_pc34_compat.c
+        src/dm1/dm1_v1_g0497_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_skill_levelup_formula_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
