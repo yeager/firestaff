@@ -53,6 +53,19 @@ int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,
                                                      int* x,
                                                      int* y);
 
+/* Map a point from the source-locked 320x200 DM1 framebuffer out to
+   the active presented game surface. The inverse of
+   M11_MapPresentedGamePointToSourceForPresentation(), used by touch
+   overlay hit-tests, HUD button bounds, and mouse cursor positions
+   that need to land on the *presented* surface (V2.0 = 640x400,
+   V2.1/V2.2 = user-selected 320x200..3840x2160). V1 original mode is
+   a pass-through; V2.1/V2.2 require positive extents. */
+int M11_MapSourcePointToPresentedForPresentation(int presentationMode,
+                                                 int presentationWidth,
+                                                 int presentationHeight,
+                                                 int* x,
+                                                 int* y);
+
 /* V1 original is a 320x200 source-locked surface.  Enhanced modes may use the
    user's scaling filter, but V1 must stay nearest-neighbor so small original
    glyphs such as DM1 wall inscriptions remain readable when the window is
