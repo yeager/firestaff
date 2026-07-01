@@ -3493,6 +3493,20 @@ static void m11_disable_champion_action_after_action_ticks(
     state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
 }
 
+static void m11_disable_champion_action_f0328_throw(
+        M11_GameViewState* state,
+        int championIndex) {
+    if (!state) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    /* ReDMCSB: CHAMPION.C F0328 line 2168 calls F0330 with 4 ticks.
+     * F0330 initializes the enable-action event SlotOrdinal to 0; F0407
+     * may later overwrite it with C01_SLOT_ACTION_HAND for action-row
+     * THROW after F0328 succeeds. */
+    state->actionDisabledTicks[championIndex] = 4u;
+    state->actionDisabledIndex[championIndex] = 0xFFu;
+    state->actionEnableSlotOrdinal[championIndex] = 0u;
+}
+
 /* ── Apply sensor effects from movement pipeline ──
  * Called after movement pipeline processes a tick.
  * Reads leaveEffects and enterEffects from the pipeline result
@@ -21204,6 +21218,7 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
     m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
     (void)m11_apply_champion_stamina_cost_f0325(state, championIndex,
                                                 staminaCost);
+    m11_disable_champion_action_f0328_throw(state, championIndex);
     m11_dm1_award_throw_xp(state, championIndex, throwExperience);
     skillThrow = m11_dm1_throw_skill_level(state, championIndex);
     throwKineticEnergy = m11_dm1_f0328_throw_kinetic_energy(
@@ -24957,8 +24972,11 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
             disabledTicks >>= 1;
             actionExperienceGain >>= 1;
         }
-        m11_disable_champion_action_after_action_ticks(
-            state, championIndex, chosen, disabledTicks);
+        if (!(chosen == DM1_ACTION_THROW && performed &&
+              disabledTicks == 0u)) {
+            m11_disable_champion_action_after_action_ticks(
+                state, championIndex, chosen, disabledTicks);
+        }
     } else {
         unsigned char disabledTicks = m11_action_disabled_ticks_f0407(chosen);
         /* Non-melee: apply bounded effect (if any), then advance
@@ -25123,8 +25141,12 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
             actionExperienceGain >>= 1;
             disabledTicks >>= 1;
         }
-        m11_disable_champion_action_after_action_ticks(
-            state, championIndex, (unsigned char)actionIndex, disabledTicks);
+        if (!(actionIndex == DM1_ACTION_THROW && performed &&
+              disabledTicks == 0u)) {
+            m11_disable_champion_action_after_action_ticks(
+                state, championIndex, (unsigned char)actionIndex,
+                disabledTicks);
+        }
         if (actionIndex == DM1_ACTION_THROW && performed) {
             /* ReDMCSB: MENU.C F0407 lines 1613-1617 stores
              * C01_SLOT_ACTION_HAND in the champion enable-action event

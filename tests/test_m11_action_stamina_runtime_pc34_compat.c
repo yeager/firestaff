@@ -1625,6 +1625,10 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW records source projectile movement-disable direction");
     ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_COMBAT,
               "THROW requests the F0328 M563 combat sound");
+    ASSERT_EQ(state.actionDisabledTicks[0], 3,
+              "THROW keeps the inner F0328/F0330 disable after the action tick decrements it");
+    ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
+              "THROW has no F0407 disabled-action index when G0491 is zero");
     ASSERT_EQ(state.actionEnableSlotOrdinal[0], CHAMPION_SLOT_ACTION_HAND,
               "THROW stores C01 action-hand slot ordinal on the enable-action event");
 }
@@ -3714,6 +3718,12 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
               "leader-hand throw records source movement-disable direction");
     ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_COMBAT,
               "leader-hand throw requests the F0328 M563 combat sound");
+    ASSERT_EQ(state.actionDisabledTicks[0], 4,
+              "leader-hand throw applies F0328/F0330 four-tick action disable");
+    ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
+              "leader-hand throw has no F0407 action index override");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0,
+              "leader-hand throw keeps F0330's zero enable-action slot ordinal");
 }
 
 static void test_leader_hand_throw_waterskin_uses_f0140_charge_weight(void) {
