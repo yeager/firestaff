@@ -24656,9 +24656,13 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             if (skillLevel < 0) skillLevel = 0;
             manaCost = 7 - (skillLevel > 6 ? 6 : skillLevel);
             if (manaCost < 1) manaCost = 1;
-            roll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 6);
+            /* ReDMCSB: MENU.C F0407 lines 1480-1482 draws
+             * M003_RANDOM(128)+100 before the M002_RANDOM(6) projectile
+             * family switch.  Preserve that RNG order so INVOKE stays
+             * deterministic against the source command stream. */
             energyRoll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 128);
             kinetic = energyRoll + 100;
+            roll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 6);
             switch (roll) {
                 case 0:
                     subtype = PROJECTILE_SUBTYPE_POISON_BOLT;

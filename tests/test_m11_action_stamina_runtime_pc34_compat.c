@@ -4813,8 +4813,12 @@ static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
     DM1_ActionXpRoute route;
+    struct RngState_Compat expectedRng;
     int invokeSkillLevel;
     int expectedManaCost;
+    int expectedEnergy;
+    int expectedRoll;
+    int expectedSubtype;
 
     seed_state(&state, 100, 51);
     memset(&things, 0, sizeof(things));
@@ -4835,6 +4839,25 @@ static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
         .skills20[DM1_SKILL_IDX_WIZARD].experience = 10000;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
     (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 7u);
+    (void)F0730_COMBAT_RngInit_Compat(&expectedRng, 7u);
+    /* ReDMCSB: MENU.C F0407 lines 1480-1482 draws RANDOM(128)+100 before
+     * the RANDOM(6) projectile family switch. */
+    expectedEnergy = F0732_COMBAT_RngRandom_Compat(&expectedRng, 128) + 100;
+    expectedRoll = F0732_COMBAT_RngRandom_Compat(&expectedRng, 6);
+    switch (expectedRoll) {
+        case 0:
+            expectedSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+            break;
+        case 1:
+            expectedSubtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
+            break;
+        case 2:
+            expectedSubtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+            break;
+        default:
+            expectedSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+            break;
+    }
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_INVOKE, &route), 1,
               "INVOKE has a source G0496/G0497 route");
     ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_WIZARD,
@@ -4858,6 +4881,12 @@ static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
               "INVOKE mirrors F0406 champion direction to party direction");
     ASSERT_EQ(state.world.projectiles.count, 1,
               "INVOKE creates one projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy,
+              expectedEnergy,
+              "INVOKE draws source RNG energy before projectile family");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
+              expectedSubtype,
+              "INVOKE draws source RNG family after kinetic energy");
     ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy >= 100, 1,
               "INVOKE kinetic energy has source lower bound RANDOM(128)+100");
     ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy <= 227, 1,
@@ -4877,8 +4906,11 @@ static void test_invoke_low_mana_scales_random_kinetic_before_f0327(void) {
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
     DM1_ActionXpRoute route;
+    struct RngState_Compat expectedRng;
     int wizardSkillLevel;
     int requiredMana;
+    int expectedFullEnergy;
+    int expectedScaledEnergy;
     int scaledMinimum;
     int scaledMaximum;
     int subtype;
@@ -4901,6 +4933,9 @@ static void test_invoke_low_mana_scales_random_kinetic_before_f0327(void) {
     state.world.party.champions[0].direction = 3;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
     (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 7u);
+    (void)F0730_COMBAT_RngInit_Compat(&expectedRng, 7u);
+    expectedFullEnergy =
+        F0732_COMBAT_RngRandom_Compat(&expectedRng, 128) + 100;
 
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_INVOKE, &route), 1,
               "INVOKE has a source G0496/G0497 route");
@@ -4915,6 +4950,8 @@ static void test_invoke_low_mana_scales_random_kinetic_before_f0327(void) {
     if (scaledMinimum < 2) scaledMinimum = 2;
     scaledMaximum = 3 * 227 / requiredMana;
     if (scaledMaximum < 2) scaledMaximum = 2;
+    expectedScaledEnergy = 3 * expectedFullEnergy / requiredMana;
+    if (expectedScaledEnergy < 2) expectedScaledEnergy = 2;
 
     ASSERT_EQ(requiredMana > 3, 1,
               "fixture forces the INVOKE CurrentMana < RequiredMana branch");
@@ -4946,7 +4983,11 @@ static void test_invoke_low_mana_scales_random_kinetic_before_f0327(void) {
     ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy <= scaledMaximum,
               1,
               "low-mana INVOKE kinetic energy stays below scaled source maximum");
-    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy < 100, 1,
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy,
+              expectedScaledEnergy,
+              "low-mana INVOKE scales the source RNG energy after drawing it");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy < expectedFullEnergy,
+              1,
               "low-mana INVOKE does not keep full RANDOM(128)+100 kinetic energy");
     ASSERT_EQ(state.world.projectiles.entries[0].attack, 90,
               "low-mana INVOKE still uses F0327 attack 90");
