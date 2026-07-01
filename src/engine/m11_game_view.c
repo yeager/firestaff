@@ -49,6 +49,7 @@
 #include "dm1_v1_inscription_font_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
+#include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "firestaff/dm1/v1/G0494_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
@@ -20665,42 +20666,19 @@ static int m11_count_source_action_menu_rows(const unsigned char actions[3]) {
     return 3;
 }
 
-/* DM1 melee-style action flags.  When an action-name index appears
- * in this table it represents a damaging melee-contact strike that
- * classic DM resolves against the creature in the party's front
- * cell.  The original F0391 -> F0407 chain dispatches every action
- * through a larger G0492_ac_Graphic560_ActionDamage table and the
- * per-skill logic in F0407_MENUS_IsActionPerformed; for the bounded
- * V1 slice we only need to know which names are melee-contact so
- * the click fires a CMD_ATTACK tick and the creature in front takes
- * damage via the existing orchestrator path.
+/* DM1 F0407 melee-contact action gate.  ReDMCSB dispatches the F0402/F0231
+ * melee block for actions with G0492 damage factors, except BLOCK: BLOCK has
+ * G0492=15 but no F0402 case and only runs the common F0407 tail.  PARRY does
+ * enter F0402 and can fail/halve its common tail on an empty front square.
  *
- * Non-melee actions (WAR CRY, BLOCK, BLOW HORN, PARRY, LIGHT, HEAL,
- * CALM, CLIMB DOWN, FIREBALL, LIGHTNING, SHOOT, THROW, etc.) still
- * emit the DM1 "CHAMPION: ACTION" log line and clear the acting
- * champion; they simply do not advance the tick as a contact
- * strike.  This keeps the visible recognisability honest — the
- * player sees the expected feedback — without fabricating effects
- * we don't yet model.
- *
- * Ref: ReDMCSB MENU.C G0492_ac_Graphic560_ActionDamage (non-zero
- * entries) cross-referenced against the ActionSet tables. */
+ * Source anchors: ReDMCSB MENU.C G0492 lines 202-245 and F0407 lines
+ * 1308-1342. */
 static int m11_action_is_melee_contact(unsigned char actionIndex) {
-    switch (actionIndex) {
-        /* CHOP=2, PUNCH=6, KICK=7, STAB=9 or 14, HIT=12,
-         * SWING=13, THRUST=15, JAB=16, HACK=18, BERZERK=19,
-         * DISRUPT=24, MELEE=25, SLASH=28, CLEAVE=29, BASH=30,
-         * STUN=31.  ReDMCSB MENU.C F0407 lines 1045-1053 keeps
-         * DISRUPT in the F0402/F0231 melee block after its
-         * material-creature rejection. */
-        case 2:  case 6:  case 7:  case 9:  case 12:
-        case 13: case 14: case 15: case 16: case 18:
-        case 19: case 24: case 25: case 28: case 29:
-        case 30: case 31:
-            return 1;
-        default:
-            return 0;
-    }
+    int damageFactor;
+    if (actionIndex == DM1_ACTION_BLOCK) return 0;
+    damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
+        (int)actionIndex);
+    return damageFactor > 0;
 }
 
 static int m11_action_is_party_shield(unsigned char actionIndex) {
@@ -24728,10 +24706,14 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     if (!champ->present || champ->hp.current == 0) return 0;
     if (actionIndex < 0 || actionIndex >= 44) return 0;
     if (state->actionDisabledTicks[championIndex] > 0) return 0;
-    /* Melee-contact actions are handled through the CMD_ATTACK
-     * path via M11_GameView_TriggerActionRow; refusing them here
-     * keeps this helper scoped to the bounded non-melee slice. */
-    if (m11_action_is_melee_contact((unsigned char)actionIndex)) return 0;
+    /* Melee-contact actions are handled through the CMD_ATTACK path via
+     * M11_GameView_TriggerActionRow.  PARRY is the direct-helper exception:
+     * ReDMCSB F0407 routes it through F0402, but the bounded helper needs the
+     * empty-front failure tail for source-lock regression coverage. */
+    if (m11_action_is_melee_contact((unsigned char)actionIndex) &&
+        actionIndex != DM1_ACTION_PARRY) {
+        return 0;
+    }
 
     actionName = M11_GameView_GetActionName((unsigned char)actionIndex);
     if (!actionName) actionName = "";
