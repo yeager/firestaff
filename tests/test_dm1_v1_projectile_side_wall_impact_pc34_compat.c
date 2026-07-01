@@ -778,6 +778,44 @@ static void test_f0820_lightning_zero_adjusted_wall_impact_skips_explosion_and_s
                "wall impact has no door side effect");
 }
 
+static void test_f0820_poison_bolt_zero_adjusted_wall_impact_skips_explosion_and_sound(void)
+{
+    struct ProjectileInstance_Compat p;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0820_poison_bolt_zero_adjusted_wall_impact_skips_explosion_and_sound\n");
+
+    make_magical_fireball(&p, 0 /* N */, 0, 5, 5);
+    p.projectileSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+    p.kineticEnergy = 3;
+    p.attack = 3;
+    make_wall_digest(&d, 5, 5, 5, 4);
+
+    memset(&r, 0, sizeof(r));
+    expect_int("f0820.poison_bolt_zero.rc",
+               F0820_PROJECTILE_ResolveCollision_Compat(
+                   &p, &d, PROJECTILE_RESULT_HIT_WALL, 302u, NULL, &r),
+               1,
+               "ReDMCSB PROJEXPL.C:F0217 lines 574-576 jumps to T0217044 when Poison Bolt / 4 is zero");
+    expect_int("f0820.poison_bolt_zero.kind", r.resultKind,
+               PROJECTILE_RESULT_HIT_WALL,
+               "zero-adjusted poison bolt still resolves as a wall impact");
+    expect_int("f0820.poison_bolt_zero.despawn", r.despawn, 1,
+               "F0217 deletes the projectile after the T0217044 no-explosion branch");
+    expect_int("f0820.poison_bolt_zero.explosion", r.emittedExplosion, 0,
+               "zero-adjusted poison bolt creates no poison-cloud explosion");
+    expect_int("f0820.poison_bolt_zero.sound_request", r.emittedSoundRequest, 0,
+               "T0217044 skips the fallback spell-sound impact branch");
+    expect_int("f0820.poison_bolt_zero.sound", r.emittedSoundCode, 0,
+               "zero-adjusted poison bolt emits no spell sound or thud");
+    expect_int("f0820.poison_bolt_zero.combat", r.emittedCombatAction, 0,
+               "wall impact has no combat target");
+    expect_int("f0820.poison_bolt_zero.door_event",
+               r.emittedDoorDestructionEvent || r.emittedDoorToggleEvent, 0,
+               "wall impact has no door side effect");
+}
+
 /* ---- Test 5b: F0217 thrown potion wall-impact explosion -------- */
 static void test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud(void)
 {
@@ -1105,6 +1143,7 @@ int main(void)
     test_f0810_f0811_first_move_grace_thrown_item_side_cell_blockers();
     test_f0811_magical_fireball_wall_impact_creates_explosion();
     test_f0820_lightning_zero_adjusted_wall_impact_skips_explosion_and_sound();
+    test_f0820_poison_bolt_zero_adjusted_wall_impact_skips_explosion_and_sound();
     test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud();
     test_f0820_wall_impact_kinetic_dispatch();
     test_f0811_open_door_wall_impact_emits_wooden_thud();
