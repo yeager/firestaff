@@ -23012,6 +23012,21 @@ static int m11_projectile_impact_source_sound_index(
         }
     }
 
+    /* ReDMCSB PROJEXPL.C F0217 lines 574-584 jumps directly to the
+     * projectile-delete tail when Lightning / 2 or Poison Bolt / 4 becomes
+     * zero.  That skips both explosion creation and the non-explosion thud
+     * branch, so M11 must not synthesize a fallback impact sound here. */
+    if (p->projectileCategory == PROJECTILE_CATEGORY_MAGICAL) {
+        if (p->projectileSubtype == PROJECTILE_SUBTYPE_LIGHTNING_BOLT &&
+            (p->kineticEnergy >> 1) == 0) {
+            return -1;
+        }
+        if (p->projectileSubtype == PROJECTILE_SUBTYPE_POISON_BOLT &&
+            (p->kineticEnergy >> 2) == 0) {
+            return -1;
+        }
+    }
+
     if (p->projectileSubtype == PROJECTILE_SUBTYPE_POISON_BOLT) {
         return 16;
     }
