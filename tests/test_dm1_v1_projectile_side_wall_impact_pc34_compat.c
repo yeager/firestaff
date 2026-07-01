@@ -872,6 +872,44 @@ static void test_f0820_harm_non_material_wall_impact_creates_cell_explosion(void
                "wall impact has no door side effect");
 }
 
+static void test_f0820_slime_wall_impact_emits_wooden_thud_without_explosion(void)
+{
+    struct ProjectileInstance_Compat p;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0820_slime_wall_impact_emits_wooden_thud_without_explosion\n");
+
+    make_magical_fireball(&p, 0 /* N */, 0, 5, 5);
+    p.projectileSubtype = PROJECTILE_SUBTYPE_SLIME;
+    p.kineticEnergy = 31;
+    p.attack = 31;
+    make_wall_digest(&d, 5, 5, 5, 4);
+
+    memset(&r, 0, sizeof(r));
+    expect_int("f0820.slime.rc",
+               F0820_PROJECTILE_ResolveCollision_Compat(
+                   &p, &d, PROJECTILE_RESULT_HIT_WALL, 306u, NULL, &r),
+               1,
+               "ReDMCSB PROJEXPL.C:F0217 line 459 excludes Slime from CreateExplosionOnImpact");
+    expect_int("f0820.slime.kind", r.resultKind,
+               PROJECTILE_RESULT_HIT_WALL,
+               "Slime resolves as a wall impact");
+    expect_int("f0820.slime.despawn", r.despawn, 1,
+               "F0217 deletes the projectile after the non-explosion branch");
+    expect_int("f0820.slime.explosion", r.emittedExplosion, 0,
+               "Slime impact does not create C001 slime explosion");
+    expect_int("f0820.slime.sound_request", r.emittedSoundRequest, 1,
+               "Slime falls through to the non-explosion impact sound branch");
+    expect_int("f0820.slime.sound", r.emittedSoundCode, 4,
+               "ReDMCSB PROJEXPL.C:F0217 lines 587-600 selects wooden thud for non-weapon impacts");
+    expect_int("f0820.slime.combat", r.emittedCombatAction, 0,
+               "wall impact has no combat target");
+    expect_int("f0820.slime.door_event",
+               r.emittedDoorDestructionEvent || r.emittedDoorToggleEvent, 0,
+               "wall impact has no door side effect");
+}
+
 static void test_f0820_poison_bolt_zero_adjusted_wall_impact_skips_explosion_and_sound(void)
 {
     struct ProjectileInstance_Compat p;
@@ -1287,6 +1325,7 @@ int main(void)
     test_f0820_lightning_zero_adjusted_wall_impact_skips_explosion_and_sound();
     test_f0820_lightning_wall_impact_creates_cell_explosion();
     test_f0820_harm_non_material_wall_impact_creates_cell_explosion();
+    test_f0820_slime_wall_impact_emits_wooden_thud_without_explosion();
     test_f0820_poison_bolt_zero_adjusted_wall_impact_skips_explosion_and_sound();
     test_f0820_poison_bolt_wall_impact_creates_centered_cloud();
     test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud();
