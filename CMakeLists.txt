@@ -22533,6 +22533,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_save_export_manifest
     add_executable(test_firestaff_save_export_manifest
         tests/test_firestaff_save_export_manifest.c
         src/shared/firestaff_save_export_manifest.c
+        src/shared/fs_portable_compat.c
     )
     target_link_libraries(test_firestaff_save_export_manifest PRIVATE firestaff_m10)
     if(NOT MSVC)
