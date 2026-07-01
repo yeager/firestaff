@@ -20761,9 +20761,10 @@ static int m11_apply_action_stamina_cost(M11_GameViewState* state,
     if (championIndex >= state->world.party.championCount) return 0;
 
     base = m11_action_stamina_base_f0407(actionIndex);
-    if (base <= 0) return 0;
+    if (base < 0) return 0;
     cost = base + (int)((state->world.gameTick + (uint32_t)championIndex +
                          (uint32_t)actionIndex) & 1u);
+    if (cost <= 0) return 0;
     return m11_apply_champion_stamina_cost_f0325(state, championIndex, cost);
 }
 
