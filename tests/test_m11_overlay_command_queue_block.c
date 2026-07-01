@@ -430,6 +430,47 @@ static void test_candidate_panel_blocks_direct_quickload_only(void)
                                 "C040 direct quickload helper does not tick");
 }
 
+static void test_candidate_panel_blocks_rest_and_source_save_commands(void)
+{
+    M11_GameViewState state;
+    M11_GameInputResult result;
+    uint32_t tick;
+    int direction;
+
+    seed_active_view(&state);
+    tick = state.world.gameTick;
+    direction = state.world.party.direction;
+    state.candidateMirrorOrdinal = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+    state.inventoryPanelActive = 1;
+
+    /* ReDMCSB COMMAND.C F0380 lines 2340-2372 / BUG0_53:
+     * C145 REST and C140 SAVE are ignored while
+     * G0299_ui_CandidateChampionOrdinal owns the C040 candidate panel. */
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_REST_TOGGLE);
+    ASSERT_EQ(result, M11_GAME_INPUT_IGNORED,
+              "C040 candidate blocks source REST command");
+    ASSERT_EQ(state.resting, 0,
+              "blocked C145 REST does not enter party-resting state");
+    ASSERT_EQ(state.world.partyIsResting, 0,
+              "blocked C145 REST leaves source party-resting mirror clear");
+    ASSERT_EQ(state.world.lifecycle.rest.isResting, 0,
+              "blocked C145 REST leaves lifecycle rest state clear");
+
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_SAVE_GAME);
+    ASSERT_EQ(result, M11_GAME_INPUT_IGNORED,
+              "C040 candidate blocks source save command");
+    ASSERT_EQ(state.lastSaveTick, 0,
+              "blocked C140 SAVE does not mutate last-save tick");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "blocked rest/save keep C040 live");
+    ASSERT_EQ(state.inventoryPanelActive, 1,
+              "blocked rest/save preserve candidate inventory panel");
+    assert_no_pipeline_activity(&state, tick, direction,
+                                "C040 rest/save commands do not tick");
+}
+
 static void test_keyboard_positive_control_dispatches_without_overlay(void)
 {
     /* v2.8.x: arrow Left/Right now mean strafe-left/strafe-right
@@ -587,6 +628,7 @@ int main(void)
     test_candidate_panel_blocks_direct_map_toggle();
     test_candidate_panel_blocks_direct_object_helpers();
     test_candidate_panel_blocks_direct_quickload_only();
+    test_candidate_panel_blocks_rest_and_source_save_commands();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();
