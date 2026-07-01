@@ -229,6 +229,11 @@ static uint16_t deobfusc_and_checksum(uint16_t *data, int word_count,
     return (uint16_t)(sum & 0xFFFF);
 }
 
+static uint16_t read_u16_le_save_header(const uint8_t *p)
+{
+    return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+}
+
 /* ── Key index lookup ────────────────────────────────────────────────── */
 int csb_v1_save_header_get_key_index(uint32_t magic)
 {
@@ -336,15 +341,29 @@ uint16_t csb_v1_save_header_compute_checksum(const uint8_t *raw_512)
 int csb_v1_save_header_verify(const CSB_V1_SaveHeader *hdr,
                                 const uint8_t *raw_512)
 {
-    uint16_t stored, computed;
-    (void)hdr;
-    if (!raw_512) return -1;
-    stored = csb_v1_save_header_compute_checksum(raw_512);
-    (void)stored;
-    (void)computed;
-    /* Basic validation: magic must be valid */
+    uint16_t stored;
+    uint16_t computed;
+    uint16_t key_index;
+    int i;
+    if (!hdr || !raw_512) return -1;
     if (hdr->Magic != CSB_V1_SAVE_MAGIC_DM &&
         hdr->Magic != CSB_V1_SAVE_MAGIC_CSB) {
+        return -1;
+    }
+    /* ReDMCSB SAVEHEAD.C F0429 lines ~13-95 validates the second
+     * 256-byte save-header block by deobfuscating words 0..126 with the
+     * game-specific key and comparing their sum against word 127. */
+    key_index = (uint16_t)csb_v1_save_header_get_key_index(hdr->Magic);
+    computed = 0;
+    for (i = 0; i < OBFUSC_WORD_COUNT - 1; ++i) {
+        uint16_t word = read_u16_le_save_header(raw_512 + 256 + (i * 2));
+        computed = (uint16_t)(computed +
+            (uint16_t)(word ^
+                       g_obfuscation_keys[((int)key_index + i) & 0x1F]));
+    }
+    stored = read_u16_le_save_header(raw_512 + 256 +
+                                     ((OBFUSC_WORD_COUNT - 1) * 2));
+    if (computed != stored) {
         return -1;
     }
     return 0;
