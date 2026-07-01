@@ -2650,6 +2650,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int useModern = 0;
     int quitRequested = 0;
     uint32_t idleAccumulatorMs = 0;
+    M12_MenuInput pendingDm1V1MotionInput = M12_MENU_INPUT_NONE;
 
     int rc = M11_Render_Init(o->windowWidth, o->windowHeight, o->scaleMode);
     if (rc != M11_RENDER_OK) {
@@ -2854,7 +2855,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             pointerResult == M11_GAME_INPUT_IGNORED &&
             m11_game_view_is_dm1(&gameView) &&
             M11_GameView_Dm1V1SourceTickReadyForInput(&gameView)) {
-            input = m11_held_motion_input_from_keyboard();
+            if (pendingDm1V1MotionInput != M12_MENU_INPUT_NONE) {
+                input = pendingDm1V1MotionInput;
+                pendingDm1V1MotionInput = M12_MENU_INPUT_NONE;
+            } else {
+                input = m11_held_motion_input_from_keyboard();
+            }
         }
         if (input != M12_MENU_INPUT_NONE) {
             tickBeforeInput = gameView.world.gameTick;
@@ -2862,9 +2868,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 M11_GameInputResult result = M11_GAME_INPUT_IGNORED;
                 if (M11_GameView_InputConsumesDm1V1SourceTick(&gameView, input) &&
                     !M11_GameView_Dm1V1SourceTickReadyForInput(&gameView)) {
+                    /* ReDMCSB COMMAND.C F0359/F0361 queues key commands while
+                     * GAMELOOP.C waits for G0321.  Keep one pending motion
+                     * token so a short Q/E/Home/End/keypad turn tap just
+                     * before the vblank gate opens is not discarded. */
+                    pendingDm1V1MotionInput = input;
                     input = M12_MENU_INPUT_NONE;
                 } else {
                     result = M11_GameView_HandleInput(&gameView, input);
+                    if (result != M11_GAME_INPUT_IGNORED) {
+                        pendingDm1V1MotionInput = M12_MENU_INPUT_NONE;
+                    }
                 }
                 if (result == M11_GAME_INPUT_RETURN_TO_MENU) {
                     M11_GameView_Shutdown(&gameView);
