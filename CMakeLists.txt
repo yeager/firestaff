@@ -2572,6 +2572,37 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 CSBgraphics.dat shape + inventory walker probe
+# Real-asset CSBgraphics.dat -> on-disk shape classifier +
+# inventory walker. The probe first runs an off-target contract
+# pass (RDMCSB15 / CSBGAME\0 / CSB\1 / DM\0\1 / CEDT / too-small
+# shape verdicts), then optionally probes a user-staged
+# CSBgraphics.dat discovered via the existing real-scan module
+# and exercises the inventory walker against the cached bytes.
+# Skip-safe by design: hosts without a registered known-MD5 entry
+# exit 0 with a SKIP message after the off-target contract pass
+# has already proven the shape classifier.
+# Source: CSBWin/Graphics.cpp:1838/1918/1643 + Data.h:590 +
+#         SaveGame.cpp:927/1711/2111 + data.cpp:1936 +
+#         ReDMCSB F0200_DMMISC_ReadCompressedGraphic +
+#         greatstone d_items.html "Graphics.dat file format".
+add_executable(firestaff_csb_v1_csbgraphics_dat_inventory_pc34_compat_probe
+    probes/csb/firestaff_csb_v1_csbgraphics_dat_inventory_pc34_compat_probe.c
+    src/csb/csb_v1_csbgraphics_dat_inventory_pc34_compat.c
+    src/csb/csb_v1_csbgraphics_dat_classify.c
+    src/csb/csb_v1_csbgraphics_dat_real_scan.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_csbgraphics_dat_inventory_pc34_compat_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_csbgraphics_dat_inventory_pc34_compat_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_csbgraphics_dat_inventory_pc34_compat_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 CSBWin save loader-boundary probe
 # Real-asset CSBWin save -> csb_v1_import_csb_save_buffer()
 # loader-verdict gate. The probe first runs the data-free
@@ -15037,6 +15068,36 @@ if(BUILD_TESTING)
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 
+    # CSB V1 CSBgraphics.dat shape + inventory walker — data-free
+    # contract tests for the on-disk shape classifier and the
+    # inventory walker. Shape classifier distinguishes CSBgraphics
+    # from DM1 raw saves (RDMCSB15), CSB v2.0/v2.1 saves
+    # (CSBGAME\0), CSBWin 512-byte XOR pad headers (CSB\1,
+    # DM\0\1, CEDT), too-small input, and unknown shapes.
+    # Inventory walker locks the sparse / dense / zero-length /
+    # identical counts, payload tail arithmetic, and end-aligned
+    # invariant. No real CSBgraphics.dat is loaded; the matching
+    # skip-safe real-asset probe lives next to it.
+    add_executable(test_csb_v1_csbgraphics_dat_inventory_pc34_compat
+        tests/test_csb_v1_csbgraphics_dat_inventory_pc34_compat.c
+        src/csb/csb_v1_csbgraphics_dat_inventory_pc34_compat.c
+        src/csb/csb_v1_csbgraphics_dat_classify.c
+    )
+    target_include_directories(test_csb_v1_csbgraphics_dat_inventory_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbgraphics_dat_inventory_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbgraphics_dat_inventory_pc34_compat_unit
+        COMMAND test_csb_v1_csbgraphics_dat_inventory_pc34_compat
+    )
+    set_tests_properties(csb_v1_csbgraphics_dat_inventory_pc34_compat_unit PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;data_free"
+    )
+
     # CSB V1 CSBWin save loader-boundary contract — data-free
     # contract tests for csb_v1_import_csb_save_buffer()'s
     # accept/reject verdict against every documented CSBWin /
@@ -15799,6 +15860,29 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_csbgraphics_dat_real_scan_probe
         )
         set_tests_properties(csb_v1_csbgraphics_dat_real_scan PROPERTIES
+            LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 CSBgraphics.dat shape + inventory walker probe ──
+    # Runs the off-target shape contract pass (RDMCSB15 / CSBGAME\0
+    # / CSB\1 / DM\0\1 / CEDT / too-small / unknown shape verdicts)
+    # and then optionally probes a user-staged CSBgraphics.dat
+    # discovered via the existing real-scan module to exercise the
+    # inventory walker against the cached bytes. Skip-safe: hosts
+    # without a registered known-MD5 entry exit 0 with a SKIP
+    # message after the off-target contract pass has already
+    # proven the shape classifier. Complements
+    # csb_v1_csbgraphics_dat_real_scan (file-level cache handoff)
+    # and csb_v1_csbgraphics_dat_classify (header parse) by adding
+    # a per-file inventory diagnostic + off-target shape detector.
+    if(TARGET firestaff_csb_v1_csbgraphics_dat_inventory_pc34_compat_probe)
+        add_test(
+            NAME csb_v1_csbgraphics_dat_inventory_pc34_compat
+            COMMAND firestaff_csb_v1_csbgraphics_dat_inventory_pc34_compat_probe
+        )
+        set_tests_properties(csb_v1_csbgraphics_dat_inventory_pc34_compat PROPERTIES
             LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
             TIMEOUT 120
         )
