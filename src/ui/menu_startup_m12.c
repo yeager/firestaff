@@ -835,6 +835,29 @@ const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,
     return &state->entries[index];
 }
 
+/* Language cycle accessors.  g_languages[] / g_languageNames[] are
+ * file-local to this module; these getters expose just the count
+ * and the per-index strings so probes can drive the 19-language
+ * cycle from the production source of truth without hardcoding 19
+ * (or the locale codes) inline. */
+int M12_StartupMenu_GetLanguageCount(void) {
+    return M12_UI_LANGUAGE_COUNT;
+}
+
+const char* M12_StartupMenu_GetLanguageCode(int index) {
+    if (index < 0 || index >= M12_UI_LANGUAGE_COUNT) {
+        return NULL;
+    }
+    return g_languages[index];
+}
+
+const char* M12_StartupMenu_GetLanguageName(int index) {
+    if (index < 0 || index >= M12_UI_LANGUAGE_COUNT) {
+        return NULL;
+    }
+    return g_languageNames[index];
+}
+
 static int m12_cycle_index(int value, int delta, int count) {
     if (count <= 0) {
         return 0;

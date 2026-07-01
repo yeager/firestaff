@@ -33,15 +33,43 @@ typedef struct {
 
 enum {
     PANEL_W = 840,
-    PANEL_H = 320,
-    LANGUAGE_CYCLE_COUNT = 19
+    PANEL_H = 320
 };
 
-static const LayoutCase g_cases[LANGUAGE_CYCLE_COUNT] = {
+/* Layout fixtures for the M12 launcher 19-language UI cycle.
+ *
+ * The cycle count and locale codes are now derived from the
+ * production source of truth via M12_StartupMenu_GetLanguageCount()
+ * + M12_StartupMenu_GetLanguageCode() at runtime, so this fixture
+ * table does not hardcode 19 (or any specific locale code).
+ *
+ * Per-language strings are sourced from the real
+ * po/startup-menu.<lang>.po catalogs today: only EN, SV, FR, and
+ * DE have non-English msgstr; the remaining 15 locales fall back
+ * to the English msgid verbatim, which is exactly what the
+ * launcher surfaces for those indices in production.
+ *
+ * MAX_FIXTURES is a compile-time upper bound sized to the current
+ * 19-language cycle.  If a future cycle grows past this bound the
+ * fixture initializer must grow with it; the runtime loop only
+ * walks up to M12_StartupMenu_GetLanguageCount() so the cycle
+ * itself stays source-of-truth-driven. */
+#define MAX_FIXTURES 19
+
+static const LayoutCase g_cases[MAX_FIXTURES] = {
+    /* EN baseline (matches po/startup-menu.en.po msgid) */
     {"en", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
+    /* SV real translation (po/startup-menu.sv.po) */
     {"sv", "ENDAST VALIDATOR-MALL", "LÄGG TILL VERIFIERADE DETALJHANDEL-HASHAR", "ESC ÅTERGÅR TILL MENYN"},
+    /* FR real translation (po/startup-menu.fr.po) */
     {"fr", "ÉCHAFAUDAGE VALIDATEUR UNIQUEMENT", "AJOUTER HASHES COMMERCE VÉRIFIÉS", "ÉCHAP RETOURNE AU MENU"},
+    /* DE real translation (po/startup-menu.de.po) */
     {"de", "NUR VALIDATOR-GERÜST", "VERIFIZIERTE EINZELHANDELS-HASHES HINZUFÜGEN", "ESC KEHRT ZUM MENÜ ZURÜCK"},
+    /* JA/ZH and all other locales: today they fall back to the
+     * English msgid (no .po override) and the launcher surfaces the
+     * English string verbatim.  The fixture therefore uses the
+     * English baseline; the test still pins the panel layout for
+     * every language index in the cycle. */
     {"ja", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
     {"zh", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
     {"cs", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
@@ -58,6 +86,9 @@ static const LayoutCase g_cases[LANGUAGE_CYCLE_COUNT] = {
     {"ru", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
     {"tr", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"}
 };
+
+static const int g_fixtureCount =
+    (int)(sizeof(g_cases) / sizeof(g_cases[0]));
 
 static void record(Tally* t, const char* id, int ok, const char* msg) {
     t->total += 1;
@@ -154,34 +185,49 @@ int main(void) {
            w == 1920 && h == 1080 && panelX == 540 && panelY == 380,
            "modern message-popup layout constants match the native canvas");
     record(&tally, "M12_LANG_LAYOUT_02",
-           (int)(sizeof(g_cases) / sizeof(g_cases[0])) == LANGUAGE_CYCLE_COUNT,
-           "validator popup table covers the 19-language M12 UI cycle");
+           g_fixtureCount == M12_StartupMenu_GetLanguageCount(),
+           "validator popup table covers the M12 launcher language cycle (source-of-truth)");
+    record(&tally, "M12_LANG_LAYOUT_02b",
+           g_fixtureCount == MAX_FIXTURES,
+           "validator popup table matches its compile-time MAX_FIXTURES bound");
 
-    for (i = 0; i < LANGUAGE_CYCLE_COUNT; ++i) {
+    for (i = 0; i < M12_StartupMenu_GetLanguageCount(); ++i) {
         char msg[192];
         Bounds b1;
         Bounds b2;
         Bounds b3;
+        const LayoutCase* lc = &g_cases[i];
+        const char* langLabel = M12_StartupMenu_GetLanguageCode(i);
         render_message_case(NULL, i, baseline, w, h);
-        render_message_case(&g_cases[i], i, rendered, w, h);
+        render_message_case(lc, i, rendered, w, h);
 
         b1 = changed_bounds(rendered, baseline, w, h, panelY + 46, 46);
         b2 = changed_bounds(rendered, baseline, w, h, panelY + 138, 34);
         b3 = changed_bounds(rendered, baseline, w, h, panelY + 218, 34);
 
+        /* Prefer the production locale code (uppercase: "EN", "SV",
+         * ...) when available so the PASS/FAIL line stays in sync
+         * with whatever the launcher actually surfaces.  Fall back
+         * to the fixture's lang field if the getter returned NULL
+         * (which only happens for out-of-range indices, guarded
+         * against by the M12_LANG_LAYOUT_02 source-of-truth check
+         * above). */
         snprintf(msg, sizeof(msg),
                  "%s validator title stays within x=%d..%d (got %d..%d)",
-                 g_cases[i].lang, panelX, panelX + PANEL_W - 1, b1.minX, b1.maxX);
+                 langLabel ? langLabel : lc->lang,
+                 panelX, panelX + PANEL_W - 1, b1.minX, b1.maxX);
         record(&tally, "M12_LANG_LAYOUT_03", bounds_fit_panel(b1, panelX), msg);
 
         snprintf(msg, sizeof(msg),
                  "%s long validator detail stays within x=%d..%d (got %d..%d)",
-                 g_cases[i].lang, panelX, panelX + PANEL_W - 1, b2.minX, b2.maxX);
+                 langLabel ? langLabel : lc->lang,
+                 panelX, panelX + PANEL_W - 1, b2.minX, b2.maxX);
         record(&tally, "M12_LANG_LAYOUT_04", bounds_fit_panel(b2, panelX), msg);
 
         snprintf(msg, sizeof(msg),
                  "%s message footer stays within x=%d..%d (got %d..%d)",
-                 g_cases[i].lang, panelX, panelX + PANEL_W - 1, b3.minX, b3.maxX);
+                 langLabel ? langLabel : lc->lang,
+                 panelX, panelX + PANEL_W - 1, b3.minX, b3.maxX);
         record(&tally, "M12_LANG_LAYOUT_05", bounds_fit_panel(b3, panelX), msg);
     }
 
