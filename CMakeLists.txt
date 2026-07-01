@@ -2374,6 +2374,25 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 combat bug-fix helper probe.
+# Headless/data-free companion to test_csb_v1_combat_bugfix_helpers_pc34_compat;
+# emits source-evidence lines plus a deterministic invariant hash for
+# CHANGE7_17_FIX / BUG0_09, CHANGE7_18_FIX / BUG0_10, and CHANGE7_19_FIX /
+# BUG0_69.  No GRAPHICS.DAT / DUNGEON.DAT dependency.
+add_executable(firestaff_csb_v1_combat_bugfix_helpers_probe
+    probes/csb/firestaff_csb_v1_combat_bugfix_helpers_probe.c
+    src/csb/csb_v1_dungeon_world_pc34_compat.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+)
+target_include_directories(firestaff_csb_v1_combat_bugfix_helpers_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_combat_bugfix_helpers_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_combat_bugfix_helpers_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Champion-stat determinism probe (Tier 4 #17 polish).
 # Headless: no game data, no SDL rendering required. Verifies the
 # source-locked champion-stat helpers (F0306 stamina adjustment +
@@ -6067,6 +6086,32 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_dsa_trigger_single_step_pc34_compat
         COMMAND test_csb_v1_dsa_trigger_single_step_pc34_compat
+    )
+
+    # CSB V1 combat bug-fix helper gate (csb_gap_combat GAP 3/4).
+    # Data-free source-lock fixture for CHANGE7_17_FIX / BUG0_09
+    # sensor-square discard, CHANGE7_18_FIX / BUG0_10 bit-15
+    # thing-type masking, and CHANGE7_19_FIX / BUG0_69 Lord Chaos
+    # teleport direction initialization.  No real CSB assets or
+    # full-playability claim.
+    add_executable(test_csb_v1_combat_bugfix_helpers_pc34_compat
+        tests/test_csb_v1_combat_bugfix_helpers_pc34_compat.c
+        src/csb/csb_v1_dungeon_world_pc34_compat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_combat_bugfix_helpers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_combat_bugfix_helpers_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_combat_bugfix_helpers_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_combat_bugfix_helpers_pc34_compat
+        COMMAND test_csb_v1_combat_bugfix_helpers_pc34_compat
+    )
+    set_tests_properties(csb_v1_combat_bugfix_helpers_pc34_compat PROPERTIES
+        LABELS "tier2;csb;combat;bugfix;data_free"
     )
 
     add_executable(test_csb_v1_phase7_verification
@@ -15164,6 +15209,20 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_champion_stat_determinism PROPERTIES
             LABELS "tier4;csb;champion;determinism"
+        )
+    endif()
+
+    # CSB V1 combat bug-fix helper probe ctest entry.
+    # Data-free headless coverage for csb_gap_combat GAP 3/4:
+    # BUG0_09 sensor-square discard, BUG0_10 bit-15 type masking,
+    # and BUG0_69 Lord Chaos/Grey Lord teleport direction init.
+    if(TARGET firestaff_csb_v1_combat_bugfix_helpers_probe)
+        add_test(
+            NAME csb_v1_combat_bugfix_helpers_probe
+            COMMAND firestaff_csb_v1_combat_bugfix_helpers_probe
+        )
+        set_tests_properties(csb_v1_combat_bugfix_helpers_probe PROPERTIES
+            LABELS "tier2;csb;combat;bugfix;data_free;headless"
         )
     endif()
 
