@@ -5501,6 +5501,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_projectile_step_pc34_compat.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
     )
+    # Note: dispatch .c compiled in this target with FIRESTAFF_DM2_PROJECTILE_TESTING
+    # so test-only symbols (dm2_v1_projectile_test_reset_list, etc.) resolve here.
     target_include_directories(firestaff_dm2_v1_projectile_step_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/memory
