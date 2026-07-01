@@ -1540,8 +1540,9 @@ static void test_throw_action_removes_action_hand_object(void) {
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
     unsigned short thrownThing;
+    int expectedCommonStaminaCost;
 
-    seed_state(&state, 100, 100);
+    seed_state(&state, 100, 99);
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
     weapons[0].type = 8; /* Dagger: weight 5, class 2, kinetic 19. */
@@ -1555,7 +1556,12 @@ static void test_throw_action_removes_action_hand_object(void) {
     state.world.party.champions[0].direction = 3;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
     state.world.party.champions[0].maxLoad = 420;
+    state.world.party.champions[0].food = 0;
+    state.world.party.champions[0].water = 0;
     (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    expectedCommonStaminaCost =
+        dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_THROW) +
+        (int)((state.world.gameTick + (uint32_t)DM1_ACTION_THROW) & 1u);
     thrownThing = make_thing(THING_TYPE_WEAPON, 0);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         thrownThing;
@@ -1568,8 +1574,11 @@ static void test_throw_action_removes_action_hand_object(void) {
                   .inventory[CHAMPION_SLOT_ACTION_HAND],
               THING_NONE,
               "THROW removes object from action hand after projectile spawn");
-    ASSERT_EQ(state.world.party.champions[0].stamina.current, 98,
-              "THROW spends F0305 object-weight stamina without G0494 zero-cost jitter");
+    ASSERT_EQ(expectedCommonStaminaCost, 1,
+              "THROW fixture forces the G0494 zero-base F0407 jitter tail");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current,
+              100 - 2 - expectedCommonStaminaCost,
+              "THROW spends F0305 object-weight stamina plus F0407 jitter");
     ASSERT_EQ(state.world.party.champions[0].direction, 1,
               "THROW mirrors F0406 champion direction to party direction");
     ASSERT_EQ(state.world.lifecycle.champions[0]
