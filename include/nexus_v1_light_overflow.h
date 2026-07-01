@@ -246,6 +246,226 @@ int nexus_v1_light_overflow_should_guard(
  * to mirror the documented `LightPowerToLightAmount[0] == 0`. */
 int16_t nexus_v1_light_amount_for_power(int light_power);
 
+/* ═══════════════════════════════════════════════════════════════════
+ * Runtime cast-path wire-in (M11 / M12 hook)
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * The Nexus_V1_LightState + Nexus_V1_LightTimeline pair above is a
+ * pure data model. The M11 runtime or any caller that wants to
+ * apply Light / Torch / Darkness casts in a way that participates
+ * in the BUG0_18 overflow classification needs a small bundle that
+ * owns the state, the timeline, the emulate/guard policy, and a
+ * way to ask "given what just happened, what kind of overflow is
+ * this?".
+ *
+ * Nexus_V1_LightCastPath is that bundle. It is data-free (no real
+ * Saturn assets required) and small enough to be embedded directly
+ * in Nexus_MechanicsState, Nexus_V1_Engine, or any test fixture.
+ *
+ * Source-locked against:
+ *   - ReDMCSB MENU.C:1926-1942 (Light / Torch / Darkness dispatch)
+ *   - ReDMCSB TIMELINE.C F0238 lines 487-555 (BUG0_18 silent drop)
+ *   - ReDMCSB TIMELINE.C F0257 lines 1720-1767 (F0257 decay chain)
+ *   - DMWeb Dungeon Master Nexus (Saturn) edition page
+ *     (http://dmweb.free.fr/games/dungeon-master-nexus/editions/
+ *     sega-saturn/) — user-visible overflow symptoms
+ *   - DMWeb Nexus Cheats/Hacks page — BUG0_18 permanent-spell-effect
+ *     exploitation
+ *
+ * What "runtime cast path" means here
+ * ------------------------------------
+ * When the M11 engine receives a Light / Torch / Darkness cast from
+ * the input pipeline, it should call
+ *   nexus_v1_light_cast_path_cast(&path, kind, power_symbol_ordinal)
+ * which:
+ *   1. Routes through the existing Nexus_V1_LightTimeline
+ *      (preserving the BUG0_18 silent-drop semantics + the
+ *      recursive F0257 decay chain).
+ *   2. Updates the bounded MagicalLightAmount field on
+ *      Nexus_V1_LightState exactly the way MENU.C:1936 / 1941 do.
+ *   3. Classifies the result so the caller can react (HUD warning,
+ *      guard rejection, replay capture flag, etc.).
+ *
+ * Emulate vs guard mode distinction is preserved through the
+ * `mode` field. The bounded `Nexus_V1_LightCastMode` enum keeps
+ * the distinction explicit at every call site so a future reader
+ * cannot accidentally flip into "guard everything" mode without
+ * noticing.
+ */
+
+/* Cast-path mode — matches the gap-row promise that the engine
+ * can either EMULATE the documented behavior (source-faithful V1
+ * path that reproduces the dmweb-documented "permanent Light" /
+ * "dungeon into darkness" symptoms) or GUARD against it (suitable
+ * for replay/capture contexts that want a clean light total). */
+typedef enum {
+    NEXUS_LIGHT_CAST_MODE_EMULATE = 0,  /* source-faithful: let BUG0_18 surface */
+    NEXUS_LIGHT_CAST_MODE_GUARD   = 1   /* reject casts at the cap; preserve light */
+} Nexus_V1_LightCastMode;
+
+/* Result of one cast applied through the cast path. Distinct from
+ * Nexus_V1_LightOverflowKind (which classifies the *current*
+ * state) so a single cast can return TIMELINE_FULL_PERMANENT_LIGHT
+ * (overflow detected) while a follow-up call returns NONE (the
+ * timeline drained enough). */
+typedef struct {
+    /* The kind returned by the classification hook on the new state
+     * AFTER this cast. Callers can compare against
+     * NEXUS_LIGHT_OVERFLOW_NONE to detect "no bug surface" casts. */
+    Nexus_V1_LightOverflowKind classification;
+    /* The LightPower that was applied (negative on cast-time
+     * consumption, 0 if the cast was dropped/rejected). Mirrors
+     * the return contract of nexus_v1_light_timeline_cast(). */
+    int applied_light_power;
+    /* 1 if the cast was rejected (guard mode + cap hit), 0 otherwise.
+     * Independent of the classification hook so a debug overlay can
+     * show "guard reject" without first asking classify(). */
+    int was_rejected;
+    /* The MagicalLightAmount value AFTER the cast was applied.
+     * Lets a debug overlay draw the post-cast light total without
+     * having to re-read the LightState struct. */
+    int32_t magical_light_amount_after;
+} Nexus_V1_LightCastResult;
+
+/* Engine-side bundle. Holds the bounded data model + the policy.
+ * The 1.5 KB total footprint (state 4 B + 100-slot timeline ~1.5 KB
+ * + 16 B counters) is small enough to embed directly in
+ * Nexus_MechanicsState when the engine wants to wire it in. */
+typedef struct {
+    Nexus_V1_LightState    state;
+    Nexus_V1_LightTimeline timeline;
+    Nexus_V1_LightCastMode mode;
+} Nexus_V1_LightCastPath;
+
+/* Init the cast path. `mode` selects emulate (source-faithful) vs
+ * guard. Safe to call with NULL (no-op). The `magic` field on the
+ * save/load proof is a sentinel for buffer-overrun detection —
+ * a future caller that tries to round-trip a heap-allocated
+ * Nexus_V1_LightCastPath will catch an out-of-sync version. */
+void nexus_v1_light_cast_path_init(Nexus_V1_LightCastPath *path,
+                                    Nexus_V1_LightCastMode mode);
+
+/* Reset to a fresh cast-path state with the same mode. Useful when
+ * the M11 engine wants to start a new dungeon run without
+ * re-allocating the bundle. */
+void nexus_v1_light_cast_path_reset(Nexus_V1_LightCastPath *path);
+
+/* Apply a cast through the cast path. Returns a populated
+ * Nexus_V1_LightCastResult. The function is the "live M11 wire-in
+ * to apply the cast hook per champion/mana check" called out in
+ * the gap row: callers (M11, M12, or a debug overlay) feed it the
+ * same kind + power_symbol_ordinal the menu would have and get
+ * back the bounded classification + the post-cast light total.
+ *
+ * The function does NOT touch champion mana or skills; the
+ * M11 caller is expected to gate the call behind the existing
+ * nexus_v1_cast_spell() mana/skill check so a probe or test that
+ * just wants the light-side behavior can drive the cast path
+ * directly. */
+Nexus_V1_LightCastResult
+nexus_v1_light_cast_path_cast(Nexus_V1_LightCastPath *path,
+                              Nexus_V1_LightKind kind,
+                              int power_symbol_ordinal);
+
+/* Tick the cast path by 1 V1 tick (55 ms / 18.2 Hz). Returns the
+ * number of decay events that fired. */
+size_t nexus_v1_light_cast_path_tick(Nexus_V1_LightCastPath *path);
+
+/* Run N ticks at once (deterministic for tests / replay capture). */
+size_t nexus_v1_light_cast_path_advance(Nexus_V1_LightCastPath *path,
+                                        size_t n_ticks);
+
+/* Query the current overflow kind without mutating state. */
+Nexus_V1_LightOverflowKind
+nexus_v1_light_cast_path_classify(const Nexus_V1_LightCastPath *path);
+
+/* Should the next cast be rejected? Mirrors
+ * nexus_v1_light_overflow_should_guard() but goes through the
+ * cast-path mode flag so the emulate/guard distinction stays
+ * explicit at the call site. Returns 1 to reject, 0 to allow. */
+int nexus_v1_light_cast_path_should_guard(const Nexus_V1_LightCastPath *path);
+
+/* Flip the emulate/guard mode at runtime. M11 can call this when
+ * the user toggles a setting; the next cast will pick up the new
+ * mode. */
+void nexus_v1_light_cast_path_set_mode(Nexus_V1_LightCastPath *path,
+                                        Nexus_V1_LightCastMode mode);
+Nexus_V1_LightCastMode
+nexus_v1_light_cast_path_get_mode(const Nexus_V1_LightCastPath *path);
+
+/* Direct accessors for HUD / debug overlays that need the
+ * underlying counters without re-classifying. */
+int32_t nexus_v1_light_cast_path_light_amount(
+    const Nexus_V1_LightCastPath *path);
+uint32_t nexus_v1_light_cast_path_cast_count(
+    const Nexus_V1_LightCastPath *path);
+uint32_t nexus_v1_light_cast_path_decay_count(
+    const Nexus_V1_LightCastPath *path);
+uint32_t nexus_v1_light_cast_path_dropped_count(
+    const Nexus_V1_LightCastPath *path);
+size_t nexus_v1_light_cast_path_active_count(
+    const Nexus_V1_LightCastPath *path);
+
+/* ── Save/load proof for the cast-path state ────────────────────────
+ *
+ * The Firestaff-native `FNXL` (Firestaff Nexus Light) binary format
+ * is dedicated to the cast-path state. It does NOT touch the
+ * Firestaff `FNXS` world save format from nexus_v1_save.h because:
+ *   - The world save is built around a slot manager + atomic
+ *     file rename; the cast-path state is ~1.5 KB and lives
+ *     inside a single engine struct.
+ *   - Adding the cast path to the world save would require
+ *     bumping NEXUS_WORLD_SAVE_VERSION and re-locking the format.
+ *     A dedicated FNXL format keeps the change strictly additive.
+ *
+ * FNXL format (little-endian):
+ *   uint32_t magic   = 'FNXL' = 0x4C584E46
+ *   uint16_t version = 1
+ *   uint16_t mode    = 0 (emulate) | 1 (guard)
+ *   int32_t  magical_light_amount
+ *   uint32_t current_tick
+ *   uint32_t cast_counter
+ *   uint32_t decay_counter
+ *   uint32_t dropped_counter
+ *   uint32_t active_count
+ *   uint32_t crc32    = zlib CRC-32 of all preceding bytes
+ *   [for i = 0..active_count-1:]
+ *     uint8_t  type
+ *     int16_t  light_power
+ *     uint32_t fire_at_tick
+ *
+ * The format is intentionally narrow: it only persists the cast-path
+ * state, not the world or champion pool. Callers that want the full
+ * dungeon state should pair FNXL with the existing FNXS world save.
+ */
+
+/* FNXL magic: 'F' + ('N'<<8) + ('X'<<16) + ('L'<<24) = 0x4C584E46 */
+#define NEXUS_LIGHT_CAST_PATH_SAVE_MAGIC   0x4C584E46U
+#define NEXUS_LIGHT_CAST_PATH_SAVE_VERSION 1
+
+/* Return the number of bytes required to serialize the cast path
+ * to a buffer. Returns 0 on NULL path. */
+size_t nexus_v1_light_cast_path_save_size(const Nexus_V1_LightCastPath *path);
+
+/* Serialize the cast path into `buf`. Returns bytes written, or
+ * 0 on error (NULL, buffer too small). The format is described
+ * above; a successful round-trip guarantees every state field
+ * plus the in-use timeline slots are recovered. */
+size_t nexus_v1_light_cast_path_save(const Nexus_V1_LightCastPath *path,
+                                      void *buf, size_t bufsize);
+
+/* Deserialize the cast path from `buf` into `path`. Returns
+ * NEXUS_SAVE_OK on success, or a negative NEXUS_SAVE_ERR_*
+ * code on magic/version/CRC/size failure. On error, `path`
+ * is left in a fresh init state so the caller cannot accidentally
+ * continue with a partially-populated bundle. */
+int nexus_v1_light_cast_path_load(Nexus_V1_LightCastPath *path,
+                                    const void *buf, size_t bufsize);
+
+/* Convenience wrapper: returns 1 if a buffer looks like a valid
+ * FNXL payload, 0 otherwise. Never reads past the first 4 bytes. */
+int nexus_v1_light_cast_path_probe(const void *buf, size_t bufsize);
+
 #ifdef __cplusplus
 }
 #endif

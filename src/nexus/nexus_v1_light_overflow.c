@@ -44,6 +44,7 @@
  */
 
 #include "nexus_v1_light_overflow.h"
+#include "nexus_v1_save.h"  /* NEXUS_SAVE_OK + NEXUS_SAVE_ERR_* */
 #include <string.h>
 
 /* ReDMCSB DATA.C:359 — verified against both data tables defined
@@ -397,4 +398,363 @@ int nexus_v1_light_overflow_should_guard(
     if (tl->active_count >= NEXUS_V1_LIGHT_TIMELINE_BASE_CAP) return 1;
     (void)state;
     return 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * Runtime cast-path wire-in (M11 / M12 hook)
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * These helpers wrap the data-only Nexus_V1_LightState +
+ * Nexus_V1_LightTimeline pair into a single bundle that the
+ * future M11 cast dispatch (or a debug overlay / replay capture)
+ * can call. The cast-path helpers preserve the emulate-vs-guard
+ * mode distinction by carrying the `mode` flag alongside the
+ * timeline's own `guard_rejects` flag, so a caller can flip
+ * modes at runtime without rebuilding the cast-path struct.
+ *
+ * ReDMCSB anchors (cross-referenced with the data model above):
+ *   - MENU.C:1926-1942  (Light / Torch / Darkness dispatch)
+ *   - TIMELINE.C F0238  (BUG0_18 silent drop)
+ *   - TIMELINE.C F0257  (recursive weaker decay at GameTime+4)
+ *   - CHAMPION.C:27     (MagicalLightAmount state)
+ *   - LOADSAVE.C:2041   (EventMaximumCount = 100 base cap)
+ *
+ * Source-locked field-by-field for every accessor below.
+ */
+
+void nexus_v1_light_cast_path_init(Nexus_V1_LightCastPath *path,
+                                    Nexus_V1_LightCastMode mode)
+{
+    if (!path) return;
+    memset(path, 0, sizeof(*path));
+    nexus_v1_light_state_init(&path->state);
+    /* guard_rejects mirrors the cast-path mode. The cast-path
+     * helpers below consult the mode flag for the public API,
+     * but nexus_v1_light_timeline_cast() reads guard_rejects
+     * directly so we keep them in sync. */
+    nexus_v1_light_timeline_init(&path->timeline, (mode == NEXUS_LIGHT_CAST_MODE_GUARD) ? 1 : 0);
+    path->mode = mode;
+}
+
+void nexus_v1_light_cast_path_reset(Nexus_V1_LightCastPath *path)
+{
+    if (!path) return;
+    Nexus_V1_LightCastMode saved_mode = path->mode;
+    nexus_v1_light_cast_path_init(path, saved_mode);
+}
+
+Nexus_V1_LightCastResult
+nexus_v1_light_cast_path_cast(Nexus_V1_LightCastPath *path,
+                              Nexus_V1_LightKind kind,
+                              int power_symbol_ordinal)
+{
+    Nexus_V1_LightCastResult r;
+    memset(&r, 0, sizeof(r));
+    if (!path) {
+        /* Even the "no path" case returns a populated result so a
+         * caller can treat NULL as a soft no-op without a separate
+         * branch. */
+        r.classification = NEXUS_LIGHT_OVERFLOW_NONE;
+        r.applied_light_power = 0;
+        r.was_rejected = 1;
+        r.magical_light_amount_after = 0;
+        return r;
+    }
+
+    /* Sync the timeline's guard flag with the cast-path mode so
+     * the underlying cast helper sees the same policy the public
+     * accessor advertises. This is the only place where the two
+     * flags diverge. */
+    path->timeline.guard_rejects =
+        (path->mode == NEXUS_LIGHT_CAST_MODE_GUARD) ? 1 : 0;
+
+    /* Track pre-cast light so we can detect a guard reject (the
+     * timeline will not have changed MagicalLightAmount in that
+     * case). */
+    int32_t pre_light = path->state.magical_light_amount;
+
+    /* Forward to the data-model cast helper. Returns the LightPower
+     * that was applied, or 0 if dropped/rejected. The cast-path
+     * helper routes through this so the BUG0_18 silent drop and
+     * the F0257 recursive weaker chain are preserved verbatim. */
+    int applied = nexus_v1_light_timeline_cast(&path->timeline,
+                                                &path->state,
+                                                kind,
+                                                power_symbol_ordinal);
+
+    r.applied_light_power = applied;
+    /* Guard mode rejects return 0 AND leave MagicalLightAmount
+     * untouched. Detect that combination explicitly. */
+    r.was_rejected = (applied == 0) ? 1 : 0;
+    /* If the cast helper returned 0 because the input was invalid
+     * (e.g. an out-of-range power_symbol_ordinal), the timeline
+     * is also unchanged. Distinguish "rejected by guard" from
+     * "rejected by validation" by also checking the pre-state. */
+    if (r.was_rejected &&
+        path->state.magical_light_amount != pre_light)
+    {
+        /* Sanity guard: if the data-model helper mutated state,
+         * the rejection must have been a validation error, not
+         * a guard reject. */
+        r.was_rejected = 0;
+    }
+
+    r.magical_light_amount_after = path->state.magical_light_amount;
+    r.classification = nexus_v1_light_overflow_classify(&path->timeline,
+                                                        &path->state);
+    return r;
+}
+
+size_t nexus_v1_light_cast_path_tick(Nexus_V1_LightCastPath *path) {
+    if (!path) return 0;
+    return nexus_v1_light_timeline_tick(&path->timeline, &path->state);
+}
+
+size_t nexus_v1_light_cast_path_advance(Nexus_V1_LightCastPath *path,
+                                        size_t n_ticks) {
+    if (!path) return 0;
+    return nexus_v1_light_timeline_advance(&path->timeline, &path->state, n_ticks);
+}
+
+Nexus_V1_LightOverflowKind
+nexus_v1_light_cast_path_classify(const Nexus_V1_LightCastPath *path) {
+    if (!path) return NEXUS_LIGHT_OVERFLOW_NONE;
+    return nexus_v1_light_overflow_classify(&path->timeline, &path->state);
+}
+
+int nexus_v1_light_cast_path_should_guard(const Nexus_V1_LightCastPath *path) {
+    if (!path) return 0;
+    if (path->mode != NEXUS_LIGHT_CAST_MODE_GUARD) return 0;
+    /* Match the data-model helper so a probe / test that drives
+     * the cast path and the underlying timeline sees the same
+     * guard verdict. */
+    return nexus_v1_light_overflow_should_guard(&path->timeline, &path->state);
+}
+
+void nexus_v1_light_cast_path_set_mode(Nexus_V1_LightCastPath *path,
+                                        Nexus_V1_LightCastMode mode) {
+    if (!path) return;
+    path->mode = mode;
+    path->timeline.guard_rejects = (mode == NEXUS_LIGHT_CAST_MODE_GUARD) ? 1 : 0;
+}
+
+Nexus_V1_LightCastMode
+nexus_v1_light_cast_path_get_mode(const Nexus_V1_LightCastPath *path) {
+    if (!path) return NEXUS_LIGHT_CAST_MODE_EMULATE;
+    return path->mode;
+}
+
+int32_t nexus_v1_light_cast_path_light_amount(
+    const Nexus_V1_LightCastPath *path) {
+    if (!path) return 0;
+    return path->state.magical_light_amount;
+}
+
+uint32_t nexus_v1_light_cast_path_cast_count(
+    const Nexus_V1_LightCastPath *path) {
+    if (!path) return 0;
+    return path->timeline.cast_counter;
+}
+
+uint32_t nexus_v1_light_cast_path_decay_count(
+    const Nexus_V1_LightCastPath *path) {
+    if (!path) return 0;
+    return path->timeline.decay_counter;
+}
+
+uint32_t nexus_v1_light_cast_path_dropped_count(
+    const Nexus_V1_LightCastPath *path) {
+    if (!path) return 0;
+    return path->timeline.dropped_counter;
+}
+
+size_t nexus_v1_light_cast_path_active_count(
+    const Nexus_V1_LightCastPath *path) {
+    if (!path) return 0;
+    return path->timeline.active_count;
+}
+
+/* ── Save/load proof for the cast-path state (FNXL format) ───────── */
+
+size_t nexus_v1_light_cast_path_save_size(const Nexus_V1_LightCastPath *path) {
+    if (!path) return 0;
+    /* Magic + version + mode + scalars + crc + per-active-slot
+     * payload. See header for the format. */
+    return 4u + 2u + 2u + 4u + 4u + 4u + 4u + 4u + 4u + 4u
+           + (size_t)path->timeline.active_count *
+             (1u + 2u + 4u);
+}
+
+static uint32_t fnxl_crc32(const uint8_t *data, size_t len) {
+    /* Same zlib polynomial the FNXS save loader uses
+     * (crc32_init in src/nexus/nexus_v1_save_load.c). We re-init
+     * the table here so the cast-path module stays standalone
+     * (it should be callable from a probe without the world
+     * save loader present). */
+    static uint32_t table[256];
+    static int table_ready = 0;
+    if (!table_ready) {
+        uint32_t poly = 0xEDB88320U;
+        int i, j;
+        for (i = 0; i < 256; i++) {
+            uint32_t c = (uint32_t)i;
+            for (j = 0; j < 8; j++) c = (c >> 1) ^ ((c & 1) ? poly : 0);
+            table[i] = c;
+        }
+        table_ready = 1;
+    }
+    uint32_t crc = 0xFFFFFFFFU;
+    size_t i;
+    for (i = 0; i < len; i++) {
+        crc = table[(crc ^ data[i]) & 0xFFu] ^ (crc >> 8);
+    }
+    return crc ^ 0xFFFFFFFFU;
+}
+
+static uint8_t *cp_wr8(uint8_t *p, uint8_t v)  { *p++ = v;  return p; }
+static uint8_t *cp_wr16(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)(v);      p[1] = (uint8_t)(v >> 8);
+    return p + 2;
+}
+static uint8_t *cp_wr32(uint8_t *p, uint32_t v) {
+    p[0] = (uint8_t)(v);      p[1] = (uint8_t)(v >> 8);
+    p[2] = (uint8_t)(v >> 16); p[3] = (uint8_t)(v >> 24);
+    return p + 4;
+}
+static const uint8_t *cp_rd8(const uint8_t *p, uint8_t *v)  { *v = *p++; return p; }
+static const uint8_t *cp_rd16(const uint8_t *p, uint16_t *v) {
+    *v = (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+    return p + 2;
+}
+static const uint8_t *cp_rd32(const uint8_t *p, uint32_t *v) {
+    *v = (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
+         ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+    return p + 4;
+}
+
+size_t nexus_v1_light_cast_path_save(const Nexus_V1_LightCastPath *path,
+                                      void *buf, size_t bufsize)
+{
+    if (!path || !buf) return 0;
+    size_t needed = nexus_v1_light_cast_path_save_size(path);
+    if (bufsize < needed) return 0;
+
+    uint8_t *p = (uint8_t *)buf;
+    const uint8_t *crc_start = p;
+    p = cp_wr32(p, NEXUS_LIGHT_CAST_PATH_SAVE_MAGIC);
+    p = cp_wr16(p, NEXUS_LIGHT_CAST_PATH_SAVE_VERSION);
+    p = cp_wr16(p, (uint16_t)path->mode);
+    p = cp_wr32(p, (uint32_t)path->state.magical_light_amount);
+    p = cp_wr32(p, path->timeline.current_tick);
+    p = cp_wr32(p, path->timeline.cast_counter);
+    p = cp_wr32(p, path->timeline.decay_counter);
+    p = cp_wr32(p, path->timeline.dropped_counter);
+    p = cp_wr32(p, (uint32_t)path->timeline.active_count);
+    /* CRC over everything written so far (excluding the CRC field
+     * itself). We retro-fit: write a placeholder, compute CRC over
+     * [crc_start, p), then overwrite. */
+    uint8_t *crc_pos = p;
+    p = cp_wr32(p, 0xDEADBEEFu);
+    /* Now write the active slots in declared order. */
+    for (size_t i = 0; i < NEXUS_V1_LIGHT_TIMELINE_BASE_CAP; ++i) {
+        const Nexus_V1_LightEvent *e = &path->timeline.slots[i];
+        if (!e->in_use) continue;
+        p = cp_wr8(p, e->type);
+        p = cp_wr16(p, (uint16_t)e->light_power);
+        p = cp_wr32(p, e->fire_at_tick);
+    }
+    /* Replace the placeholder with the actual CRC. */
+    uint32_t crc = fnxl_crc32(crc_start, (size_t)(crc_pos - crc_start));
+    cp_wr32(crc_pos, crc);
+    return (size_t)(p - (uint8_t *)buf);
+}
+
+int nexus_v1_light_cast_path_load(Nexus_V1_LightCastPath *path,
+                                    const void *buf, size_t bufsize)
+{
+    if (!path || !buf) return NEXUS_SAVE_ERR_NULL;
+
+    /* Always reset on entry so a failed load leaves the path in
+     * a known state. We do not require the caller to pre-init. */
+    nexus_v1_light_cast_path_init(path, NEXUS_LIGHT_CAST_MODE_EMULATE);
+
+    /* Minimum header is 4 (magic) + 2 (version) + 2 (mode) +
+     * 5 * 4 (scalars) + 4 (active_count) + 4 (crc) = 36 bytes. */
+    if (bufsize < 36u) return NEXUS_SAVE_ERR_READ;
+
+    const uint8_t *p = (const uint8_t *)buf;
+    uint32_t magic, v32;
+    uint16_t version, mode_u16;
+    p = cp_rd32(p, &magic);
+    if (magic != NEXUS_LIGHT_CAST_PATH_SAVE_MAGIC) return NEXUS_SAVE_ERR_MAGIC;
+    p = cp_rd16(p, &version);
+    if (version != NEXUS_LIGHT_CAST_PATH_SAVE_VERSION) return NEXUS_SAVE_ERR_VERSION;
+    p = cp_rd16(p, &mode_u16);
+
+    /* CRC check: cover everything from the start of the buffer up
+     * to (but not including) the CRC field. */
+    size_t crc_offset = 4u + 2u + 2u + 4u + 4u + 4u + 4u + 4u + 4u;
+    if (bufsize < crc_offset + 4u) return NEXUS_SAVE_ERR_READ;
+    uint32_t stored_crc;
+    const uint8_t *crc_pos = p + (crc_offset - 4u);
+    /* The CRC field is the last 4 bytes of the fixed header. */
+    (void)crc_pos;
+    {
+        const uint8_t *tmp = (const uint8_t *)buf + crc_offset;
+        cp_rd32(tmp, &stored_crc);
+    }
+    uint32_t computed = fnxl_crc32((const uint8_t *)buf, crc_offset);
+    if (stored_crc != computed) return NEXUS_SAVE_ERR_CRC;
+
+    p = cp_rd32(p, &v32); path->state.magical_light_amount = (int32_t)v32;
+    p = cp_rd32(p, &path->timeline.current_tick);
+    p = cp_rd32(p, &path->timeline.cast_counter);
+    p = cp_rd32(p, &path->timeline.decay_counter);
+    p = cp_rd32(p, &path->timeline.dropped_counter);
+    p = cp_rd32(p, &v32);
+    uint32_t active_count = v32;
+    if (active_count > NEXUS_V1_LIGHT_TIMELINE_BASE_CAP) {
+        return NEXUS_SAVE_ERR_READ;
+    }
+    /* Skip past the CRC field. */
+    p = cp_rd32(p, &stored_crc);
+
+    /* Clear all slots, then populate in declared order so the
+     * round-trip is deterministic. */
+    memset(path->timeline.slots, 0, sizeof(path->timeline.slots));
+    path->timeline.active_count = 0;
+    for (uint32_t i = 0; i < active_count; ++i) {
+        if ((size_t)(p - (const uint8_t *)buf) + 7u > bufsize) {
+            /* Truncated payload. Roll back to fresh init. */
+            nexus_v1_light_cast_path_init(path, NEXUS_LIGHT_CAST_MODE_EMULATE);
+            return NEXUS_SAVE_ERR_READ;
+        }
+        uint8_t  type;
+        uint16_t power_u16;
+        uint32_t fire;
+        p = cp_rd8(p, &type);
+        p = cp_rd16(p, &power_u16);
+        p = cp_rd32(p, &fire);
+        path->timeline.slots[i].type          = type;
+        path->timeline.slots[i].light_power   = (int16_t)power_u16;
+        path->timeline.slots[i].fire_at_tick  = fire;
+        path->timeline.slots[i].in_use        = 1;
+        path->timeline.active_count++;
+    }
+
+    /* Mode goes in last so the cast-path state matches the
+     * saved mode flag exactly. */
+    path->mode = (mode_u16 == (uint16_t)NEXUS_LIGHT_CAST_MODE_GUARD)
+                 ? NEXUS_LIGHT_CAST_MODE_GUARD
+                 : NEXUS_LIGHT_CAST_MODE_EMULATE;
+    path->timeline.guard_rejects = (path->mode == NEXUS_LIGHT_CAST_MODE_GUARD) ? 1 : 0;
+    return NEXUS_SAVE_OK;
+}
+
+int nexus_v1_light_cast_path_probe(const void *buf, size_t bufsize) {
+    if (!buf || bufsize < 4u) return 0;
+    const uint8_t *p = (const uint8_t *)buf;
+    uint32_t magic = (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
+                     ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+    return (magic == NEXUS_LIGHT_CAST_PATH_SAVE_MAGIC) ? 1 : 0;
 }
