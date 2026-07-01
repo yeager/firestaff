@@ -1783,6 +1783,18 @@ static M12_MenuInput m11_menu_input_for_m11_action(int action) {
     }
 }
 
+static int m11_dm1_v1_input_is_immediate_turn(M12_MenuInput input) {
+    /* ReDMCSB: CLIKMENU.C F0365 lines 142-180 sets G0321 true as soon
+     * as C001/C002 turn is dispatched; COMMAND.C F0380 lines 2095-2100
+     * only holds C003..C006 movement while G0310/G0311 cooldowns are
+     * active.  Keep Q/E/Home/End/KP turn taps out of the delayed VBlank
+     * pending queue so single taps rotate immediately like the source. */
+    return input == M12_MENU_INPUT_TURN_LEFT ||
+           input == M12_MENU_INPUT_TURN_RIGHT ||
+           input == M12_MENU_INPUT_LEFT ||
+           input == M12_MENU_INPUT_RIGHT;
+}
+
 static M12_MenuInput m11_motion_input_from_scancode(SDL_Scancode scancode) {
     int action = M11_Input_ActionForScancode(scancode);
     if (!m11_input_action_is_motion(action)) {
@@ -2872,6 +2884,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (gameView.active) {
                 M11_GameInputResult result = M11_GAME_INPUT_IGNORED;
                 if (M11_GameView_InputConsumesDm1V1SourceTick(&gameView, input) &&
+                    !m11_dm1_v1_input_is_immediate_turn(input) &&
                     !M11_GameView_Dm1V1SourceTickReadyForInput(&gameView)) {
                     /* ReDMCSB COMMAND.C F0359/F0361 queues key commands while
                      * GAMELOOP.C waits for G0321.  COMMAND.C F0361 lines
