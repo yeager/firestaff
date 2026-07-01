@@ -4267,6 +4267,9 @@ static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
+    int invokeSkillLevel;
+    int expectedManaCost;
 
     seed_state(&state, 100, 51);
     memset(&things, 0, sizeof(things));
@@ -4287,13 +4290,23 @@ static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
         .skills20[DM1_SKILL_IDX_WIZARD].experience = 10000;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
     (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 7u);
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_INVOKE, &route), 1,
+              "INVOKE has a source G0496/G0497 route");
+    ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_WIZARD,
+              "INVOKE required mana uses G0496 Wizard skill");
+    invokeSkillLevel = M11_GameView_GetSkillLevel(&state, 0,
+                                                  route.skillIndex);
+    if (invokeSkillLevel < 0) invokeSkillLevel = 0;
+    expectedManaCost = 7 - (invokeSkillLevel > 6 ? 6 : invokeSkillLevel);
+    if (expectedManaCost < 1) expectedManaCost = 1;
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_INVOKE),
               1,
               "INVOKE action performs F0407 randomized projectile route");
-    ASSERT_EQ(state.world.party.champions[0].mana.current, 8,
-              "INVOKE spends 7 - min(6, Wizard skill) mana");
+    ASSERT_EQ(state.world.party.champions[0].mana.current,
+              9 - expectedManaCost,
+              "INVOKE spends 7 - min(6, G0496 Wizard skill) mana");
     ASSERT_EQ(weapons[0].chargeCount, 1,
               "INVOKE decrements action-hand charges through F0405");
     ASSERT_EQ(state.world.party.champions[0].direction, 1,

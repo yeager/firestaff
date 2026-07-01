@@ -24316,21 +24316,24 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              *   2 -> HARM_NON_MATERIAL
              *   default (3..5) -> FIREBALL
              * Each routes through the projectile-spell path with
-             * the same mana/skill machinery as FIREBALL et al. */
+             * the same mana/skill machinery as FIREBALL et al.
+             * ReDMCSB MENU.C F0407 lines 1272-1277 reads G0496 before
+             * the INVOKE case at lines 1480-1493. */
             int subtype;
             int attackType;
             int roll;
             int energyRoll;
             int kinetic;
             int manaCost;
-            int skillWiz = M11_GameView_GetSkillLevel(state, championIndex,
-                                                     CHAMPION_SKILL_WIZARD);
+            int skillIndex = m11_action_projectile_skill_index(chosen);
+            int skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
+                                                        skillIndex);
             int actualEnergy;
             int stepEnergy;
             int spawned;
             const char* subtypeName;
-            if (skillWiz < 0) skillWiz = 0;
-            manaCost = 7 - (skillWiz > 6 ? 6 : skillWiz);
+            if (skillLevel < 0) skillLevel = 0;
+            manaCost = 7 - (skillLevel > 6 ? 6 : skillLevel);
             if (manaCost < 1) manaCost = 1;
             roll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 6);
             energyRoll = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 128);
