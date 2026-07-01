@@ -11288,6 +11288,32 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_resurrection_pc34_compat
     )
 
+    # 2026-06-29 DM1 V1 resurrection rename UI OK-with-party-unique
+    # follow-up to dm1_v1_resurrection_rename_ui_gate_pc34_compat:
+    # data-free gate for ReDMCSB REVIVE.C F0281:425-465 C166 OK
+    # handler (F20/F20J/X30J/P20J/P20JB/P31J path) plus the MEDIA009
+    # mouse path's (197..215, 147..155) OK button. Covers title-empty
+    # rejection, trailing-space trim, party-wide unique-name loop
+    # boundary `< G0305 - 1`, duplicate keep-alive with name +
+    # character_index restore, and unique-name commit. Disjoint from
+    # the basic panel-command + character-whitelist gate (different
+    # concern), the F0867 candidate-panel finalize, and the F0868 Vi
+    # altar full-cycle.
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_resurrection_rename_ui_ok_party_unique_gate_pc34_compat.c"
+            AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_resurrection_rename_ui_ok_party_unique_gate_pc34_compat.c")
+        add_executable(test_dm1_v1_resurrection_rename_ui_ok_party_unique_gate_pc34_compat
+            tests/test_dm1_v1_resurrection_rename_ui_ok_party_unique_gate_pc34_compat.c
+            src/dm1/dm1_v1_resurrection_rename_ui_ok_party_unique_gate_pc34_compat.c
+        )
+        if(NOT MSVC)
+            target_compile_options(test_dm1_v1_resurrection_rename_ui_ok_party_unique_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME dm1_v1_resurrection_rename_ui_ok_party_unique_gate
+            COMMAND test_dm1_v1_resurrection_rename_ui_ok_party_unique_gate_pc34_compat
+        )
+    endif()
+
     add_executable(test_dm1_v1_rev03_f0863_rebirth_health_source_lock_pc34_compat
         tests/test_dm1_v1_rev03_f0863_rebirth_health_source_lock_pc34_compat.c
         src/dm1/dm1_v1_resurrection_pc34_compat.c
