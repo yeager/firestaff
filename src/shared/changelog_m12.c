@@ -9,12 +9,18 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
-    "V3.0.15  (2026-07-01)",
-    "  - DM1 V1 runtime coverage expands across action routing, projectile impacts, endgame handoffs, and source-locked combat edge cases.",
+    "V3.0.16  (2026-07-01)",
     "  - Q/E/Home/End/keypad turns now bypass the delayed vblank motion queue while movement inputs remain cooldown-gated.",
     "  - Current-main Hall of Champions and DM title palette probes pass for the MacBook Pro release-smoke regression class.",
     "  - Thrown zero-power Ven/Ful potions, zero-coordinate projectile impacts, and zero-Luck combat RNG accounting are pinned by focused gates.",
-    "  - Release verification: focused DM1 title/HoC/turn CTest gates pass on the v3.0.15 release candidate before tagging.",
+    "  - The launcher changelog/version gate is now CTest-registered so future release drift is caught before tagging.",
+    "  - Release verification: focused DM1 title/HoC/turn CTest gates pass on the v3.0.16 release candidate before tagging.",
+    "",
+    "V3.0.15  (2026-07-01)",
+    "  - DM1 V1 runtime coverage expands across action routing, projectile impacts, endgame handoffs, and source-locked combat edge cases.",
+    "  - M11 presentation and input hardening expands around bounded turn queues, smooth turns, HoC artifact hiding, and release-smoke triage.",
+    "  - Salvaged cross-game gates add focused CSB, Nexus, DM2, Theron, accessibility, save-boundary, and asset-receipt checks.",
+    "  - Release verification: based on green main CI before release prep plus local CMake, Phase A, and audio smoke probes.",
     "",
     "V3.0.13  (2026-06-29)",
     "  - DM1 V1 post-dungeon capture planning now has a reviewed-target-selection contract and validator before live routes are dispatched.",
@@ -336,5 +342,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.15";
+    return "3.0.16";
 }
