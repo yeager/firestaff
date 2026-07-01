@@ -1549,6 +1549,8 @@ static void test_throw_ven_potion_launches_removepotion_projectile(void) {
     ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
               PROJECTILE_SUBTYPE_POISON_CLOUD,
               "THROW Ven potion stores poison-cloud impact subtype");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 43,
+              "THROW Ven potion includes F0140 potion weight in F0312 throw strength");
     ASSERT_EQ(state.world.projectiles.entries[0].associatedPotionPower, 77,
               "THROW Ven potion carries potion power to projectile");
     ASSERT_EQ(state.world.projectiles.entries[0].poisonAttack, 77,

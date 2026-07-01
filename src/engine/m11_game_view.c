@@ -20766,6 +20766,39 @@ static int m11_dm1_f0305_throwing_stamina_cost_from_weight(int objectWeight) {
     return cost;
 }
 
+static int m11_dm1_f0140_object_weight_for_throw(
+    const M11_GameViewState* state,
+    unsigned short thing) {
+    DM1_WeaponInfo weaponInfo;
+    int thingType;
+    int thingIndex;
+
+    if (!state) return 0;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    thingType = THING_GET_TYPE(thing);
+    thingIndex = THING_GET_INDEX(thing);
+
+    if (thingType == THING_TYPE_WEAPON &&
+        m11_dm1_thing_weapon_info(state, thing, &weaponInfo)) {
+        return weaponInfo.weight;
+    }
+    if (thingType == THING_TYPE_POTION &&
+        state->world.things && state->world.things->potions &&
+        thingIndex >= 0 && thingIndex < state->world.things->potionCount) {
+        /* ReDMCSB DUNGEON.C F0140 lines 1123-1128: empty flasks
+         * weigh 1, every other potion weighs 3.  F0328 uses this
+         * same F0140 value through F0305 and F0312. */
+        return state->world.things->potions[thingIndex].type ==
+                   M11_POTION_EMPTY_FLASK
+               ? 1
+               : 3;
+    }
+    if (thingType == THING_TYPE_SCROLL) {
+        return 1;
+    }
+    return 0;
+}
+
 static int m11_dm1_f0328_throw_xp_for_thing(const M11_GameViewState* state,
                                             unsigned short thing,
                                             const DM1_WeaponInfo* info) {
@@ -20868,9 +20901,9 @@ static int m11_dm1_f0312_action_hand_strength_for_throw(
         int championIndex,
         const struct ChampionState_Compat* champ,
         const DM1_WeaponInfo* weaponInfo,
-        int hasWeaponInfo) {
+        int hasWeaponInfo,
+        int objectWeight) {
     int strength;
-    int objectWeight;
     int oneSixteenthMaximumLoad;
     int loadThreshold;
     int maxLoad;
@@ -20884,7 +20917,6 @@ static int m11_dm1_f0312_action_hand_strength_for_throw(
      * then weapon strength/class skill, stamina, wound, and final clamp. */
     strength = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16) +
         (int)champ->attributes[CHAMPION_ATTR_STRENGTH];
-    objectWeight = (hasWeaponInfo && weaponInfo) ? weaponInfo->weight : 0;
     maxLoad = (int)champ->maxLoad;
     if (maxLoad <= 0) {
         maxLoad = ((int)champ->attributes[CHAMPION_ATTR_STRENGTH] << 3) + 100;
@@ -21010,15 +21042,15 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
     if (thrownThing == THING_NONE || thrownThing == THING_ENDOFLIST) return 0;
 
     hasWeaponInfo = m11_dm1_thing_weapon_info(state, thrownThing, &weaponInfo);
-    staminaCost = hasWeaponInfo
-        ? m11_dm1_f0305_throwing_stamina_cost_from_weight(weaponInfo.weight)
-        : 1;
+    staminaCost = m11_dm1_f0305_throwing_stamina_cost_from_weight(
+        m11_dm1_f0140_object_weight_for_throw(state, thrownThing));
     throwExperience = m11_dm1_f0328_throw_xp_for_thing(
         state, thrownThing, hasWeaponInfo ? &weaponInfo : 0);
     skillThrow = m11_dm1_throw_skill_level(state, championIndex);
     throwStrength = m11_dm1_f0312_action_hand_strength_for_throw(
         state, championIndex, champ,
-        hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo);
+        hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo,
+        m11_dm1_f0140_object_weight_for_throw(state, thrownThing));
     /* ReDMCSB CHAMPION.C F0328 lines 2181-2194: F0312 strength,
      * F0303(THROW), object kinetic and bounded attack/step energy feed
      * F0212_PROJECTILE_Create; accepted throws then apply F0305 stamina,
