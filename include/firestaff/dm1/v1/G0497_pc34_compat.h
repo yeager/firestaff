@@ -7,9 +7,9 @@
  *
  * G0497 is the 44-entry action experience gain table (per action index).
  * Each entry is the experience points gained when the action is used
- * successfully. PC 3.4 EN uses the MEDIA728 branch values for BLOW HORN (1),
- * HEAL (5), CALM (1), BRANDISH (3) — the MEDIA359 branch (PC 3.4 default)
- * uses 0 for these.
+ * successfully. PC 3.4 EN maps to I34E/MEDIA728 and uses branch values for
+ * BLOW HORN (1), HEAL (5), CALM (1), BRANDISH (3). The separate MEDIA359
+ * branch uses 0 for those entries.
  *
  * Read sites: MENU.C F0452 + F0412.
  *
