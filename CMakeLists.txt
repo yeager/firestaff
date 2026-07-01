@@ -15783,6 +15783,34 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_fmtowns_cd_classify
     )
 
+    # ── FM Towns CD-audio track receipt gate ──────────────────
+    # Companion to firestaff_fmtowns_cd_classify: per-track CD-DA
+    # Red Book validation (2352 byte sectors + 16-bit stereo PCM
+    # at 44100 Hz) plus cross-referencing with the DMWeb-documented
+    # FM Towns CD-audio track tables for DM1 (tracks 02..20, with
+    # 04/07 unused and 20 silent for 20s), CSB (tracks 02..31, with
+    # three unused water-drop-like tracks), and DM2 (tracks 02..06
+    # + silent track 8). Builds synthetic CD-DA sectors only; does
+    # NOT extract ISO 9660 files, decode IMG2, or launch any FM
+    # Towns emulator. Source of truth: docs/DMWEB_REFERENCE.md
+    # lines 37, 44, 51.
+    add_executable(test_firestaff_fmtowns_cd_audio_track_receipt
+        tests/test_firestaff_fmtowns_cd_audio_track_receipt.c
+        src/shared/firestaff_fmtowns_cd_audio_track_receipt.c
+        src/shared/firestaff_fmtowns_cd_classify.c
+    )
+    target_include_directories(test_firestaff_fmtowns_cd_audio_track_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_fmtowns_cd_audio_track_receipt PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_fmtowns_cd_audio_track_receipt_unit
+        COMMAND test_firestaff_fmtowns_cd_audio_track_receipt
+    )
+
     # ── CSB V1 CMP import glue (Utility Disk Champion Editor flow) ──
     # Wires the existing firestaff_cmp_decode.c decoder to the
     # CSB_V1_Champion / CSB_V1_PartyState runtime data structures.
