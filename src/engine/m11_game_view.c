@@ -5478,6 +5478,13 @@ int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
 
 int M11_GameView_CloseSpellPanel(M11_GameViewState* state) {
     if (!state) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB COMMAND.C lines 2302-2306 guards C100 spell-area
+         * dispatch with !G0299_ui_CandidateChampionOrdinal.  Closing the
+         * direct Firestaff spell panel must preserve the same live C040
+         * boundary as open/rune/recant/cast. */
+        return 0;
+    }
     state->spellPanelOpen = 0;
     state->spellRuneRow = 0;
     memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));

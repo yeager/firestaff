@@ -293,6 +293,16 @@ static void test_candidate_panel_blocks_direct_spell_helpers(void)
               "C040 candidate blocks direct recant clear");
     ASSERT_EQ(state.spellBuffer.runeCount, 1,
               "blocked recant preserves rune count");
+    ASSERT_EQ(M11_GameView_CloseSpellPanel(&state), 0,
+              "C040 candidate blocks direct spell-panel close");
+    ASSERT_EQ(state.spellPanelOpen, 1,
+              "blocked spell close leaves panel open");
+    ASSERT_EQ(state.spellRuneRow, 1,
+              "blocked spell close preserves rune row");
+    ASSERT_EQ(state.spellBuffer.runeCount, 1,
+              "blocked spell close preserves rune count");
+    ASSERT_EQ(state.spellBuffer.runes[0], 0x60,
+              "blocked spell close preserves existing rune");
     ASSERT_EQ(M11_GameView_CastSpell(&state), 0,
               "C040 candidate blocks direct spell cast");
     ASSERT_EQ(state.world.party.champions[0].mana.current, 50,
