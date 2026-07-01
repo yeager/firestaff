@@ -21954,6 +21954,20 @@ static void m11_remove_fluxcages_on_square_f0446(M11_GameViewState* state,
     }
 }
 
+static void m11_spawn_fuse_fireball_burst_f0446(M11_GameViewState* state,
+                                                int mapIndex,
+                                                int mapX,
+                                                int mapY) {
+    int attack;
+    if (!state) return;
+    /* ReDMCSB: ENDGAME.C F0446 lines 890-893 creates the opening
+     * fuse-sequence fireball burst at attacks 55,95,135,175,215,255. */
+    for (attack = 55; attack <= 255; attack += 40) {
+        (void)m11_spawn_centered_explosion(state, C000_EXPLOSION_FIREBALL,
+                                           attack, mapIndex, mapX, mapY);
+    }
+}
+
 static int m11_find_lord_chaos_escape_square_f0225(
     M11_GameViewState* state,
     int mapIndex,
@@ -22148,6 +22162,7 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
                                          state->world.party.mapX,
                                          state->world.party.mapY);
     m11_remove_fluxcages_on_square_f0446(state, mapIndex, mapX, mapY);
+    m11_spawn_fuse_fireball_burst_f0446(state, mapIndex, mapX, mapY);
     m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                  DM1_CREATURE_GREY_LORD_ID,
                                  state->world.party.direction);
@@ -24701,7 +24716,12 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         performed = m11_perform_non_melee_action(state, championIndex,
                                                  chosen, champName,
                                                  &actionExperienceGain);
-        (void)m11_apply_tick(state, CMD_NONE, "ACTION");
+        /* ReDMCSB ENDGAME.C F0446 lines 890-910 runs its own fuse-sequence
+         * update loop after setting game-won.  Do not run the normal ACTION
+         * tick over the completed M11 endgame state in the same dispatch. */
+        if (!state->gameWon) {
+            (void)m11_apply_tick(state, CMD_NONE, "ACTION");
+        }
         if (m11_action_is_party_shield(chosen) && !performed) {
             /* ReDMCSB MENU.C F0407 lines 1456-1461 quarters G0497 XP
              * and halves disabled ticks when F0403 returns false. */
@@ -24806,7 +24826,11 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
                                              (unsigned char)actionIndex,
                                              champName,
                                              &actionExperienceGain);
-    (void)m11_apply_tick(state, CMD_NONE, "ACTION");
+    /* ReDMCSB ENDGAME.C F0446 lines 890-910 owns the fuse-sequence updates
+     * after game-won; the direct helper mirrors the action-row boundary. */
+    if (!state->gameWon) {
+        (void)m11_apply_tick(state, CMD_NONE, "ACTION");
+    }
     {
         unsigned char disabledTicks =
             m11_action_disabled_ticks_f0407((unsigned char)actionIndex);
