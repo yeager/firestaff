@@ -30,6 +30,9 @@
 #define CHAMPION_TITLE_LENGTH 20 /* Packed title, 20 chars max (no NUL in original) */
 #define CHAMPION_MIRROR_FIELD_LENGTH 16 /* Packed source mirror stat/skill text field */
 #define CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH 32 /* Packed source mirror inventory text */
+#define CHAMPION_PORTRAIT_BITMAP_WIDTH 32
+#define CHAMPION_PORTRAIT_BITMAP_HEIGHT 29
+#define CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT 464
 
 /* ---- Attribute indices (CHAMPION.C ordering) ---- */
 #define CHAMPION_ATTR_STRENGTH   0
@@ -129,7 +132,9 @@ struct ChampionState_Compat {
     unsigned short load;
     unsigned short maxLoad;
 
-    /* Direction the champion faces within the party cell [RUNTIME] */
+    /* Cell and direction within the party square [RUNTIME].
+     * ReDMCSB CHAMPION.C F0284 rotates both by the party-direction delta. */
+    unsigned char  cell;
     unsigned char  direction;
 
     /* Status flags [RUNTIME] */
@@ -137,6 +142,10 @@ struct ChampionState_Compat {
     unsigned short poisonDose;  /* accumulated poison */
     int16_t        food;        /* food level: -1024..2048 (ReDMCSB CHAMPION.C) */
     int16_t        water;       /* water level: -1024..2048 (ReDMCSB CHAMPION.C) */
+    int            actionDefense; /* ReDMCSB Champion.ActionDefense [RUNTIME] */
+    unsigned char  actionIndex;   /* Last action index, 0xFF = ACTION_NONE */
+    unsigned char  portraitBitmap[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+    int            portraitBitmapValid;
 };
 
 /*
@@ -203,7 +212,10 @@ int F0601_CHAMPION_InitPartyFromDungeon_Compat(
  * Returns number of bytes written, or -1 if buffer too small.
  * Buffer must be at least CHAMPION_SERIALIZED_SIZE bytes.
  */
-#define CHAMPION_SERIALIZED_SIZE 256
+#define CHAMPION_SERIALIZED_V1_SIZE 256
+#define CHAMPION_SERIALIZED_V2_PORTRAIT_SIZE \
+    (CHAMPION_SERIALIZED_V1_SIZE + CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT + 4)
+#define CHAMPION_SERIALIZED_SIZE CHAMPION_SERIALIZED_V2_PORTRAIT_SIZE
 
 int F0602_CHAMPION_Serialize_Compat(
     const struct ChampionState_Compat* champ,
@@ -223,6 +235,10 @@ int F0603_CHAMPION_Deserialize_Compat(
  * Serialise entire party state.
  * Returns bytes written, or -1 if buffer too small.
  */
+#define PARTY_SERIALIZED_V1_SIZE \
+    (32 + CHAMPION_MAX_PARTY * CHAMPION_SERIALIZED_V1_SIZE)
+#define PARTY_SERIALIZED_V2_PORTRAIT_SIZE \
+    (32 + CHAMPION_MAX_PARTY * CHAMPION_SERIALIZED_V2_PORTRAIT_SIZE)
 #define PARTY_SERIALIZED_SIZE (32 + CHAMPION_MAX_PARTY * CHAMPION_SERIALIZED_SIZE)
 
 int F0604_PARTY_Serialize_Compat(

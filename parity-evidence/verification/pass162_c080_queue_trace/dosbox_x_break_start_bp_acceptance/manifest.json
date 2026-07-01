@@ -1,0 +1,168 @@
+{
+  "non_claims": [
+    "does not prove F0359/F0380/F0377/F0275/F0280 are reached",
+    "does not promote pass435 semantic original-route readiness",
+    "does not replace a live stock-original transcript"
+  ],
+  "ok": true,
+  "runtime": {
+    "accepted_bp": [
+      "1782:0031",
+      "1859:1405",
+      "1E44:02FE",
+      "22F4:030D",
+      "22F4:0699"
+    ],
+    "accepted_bpm": [
+      "2C20:1F08",
+      "2C20:1F0A",
+      "2C20:3C92",
+      "2C20:3C94",
+      "2C20:3CE0",
+      "2C20:3D52",
+      "2C20:3E7A",
+      "2C20:3EC6",
+      "2C20:3EC8"
+    ],
+    "bp_ok": true,
+    "bpm_ok": true,
+    "command_log": [
+      {
+        "cmd": "BPDEL *",
+        "excerpt": "...\nB_...\nP_...\nD_...\nE_...L_... _...*_LOG: DEBUG: Breakpoints deleted.\n...\n_       "
+      },
+      {
+        "cmd": "BP 22F4:030D",
+        "excerpt": "...\nB_...\nP_...\n _...\n2_...2_...F_...4_...:_...0_...3_...0_...D_LOG: DEBUG: Set breakpoint at 22F4:030D\n...\n_"
+      },
+      {
+        "cmd": "BP 22F4:0699",
+        "excerpt": "...\nB_...\nP_...\n _...\n2_...2_...F_...4_...:_...0_...6_...9_...9_LOG: DEBUG: Set breakpoint at 22F4:0699\n...\n_"
+      },
+      {
+        "cmd": "BP 1E44:02FE",
+        "excerpt": "...\nB_...\nP_...\n _...\n1_...E_...4_...4_...:_...0_...2_...F_...E_LOG: DEBUG: Set breakpoint at 1E44:02FE\n...\n_"
+      },
+      {
+        "cmd": "BP 1859:1405",
+        "excerpt": "...\nB_...\nP_...\n _...\n1_...8_...5_...9_...:_...1_...4_...0_...5_LOG: DEBUG: Set breakpoint at 1859:1405\n...\n_"
+      },
+      {
+        "cmd": "BP 1782:0031",
+        "excerpt": "...\nB_...\nP_...\n _...\n1_...7_...8_...2_...:_...0_...0_...3_...1_LOG: DEBUG: Set breakpoint at 1782:0031\n...\n_"
+      },
+      {
+        "cmd": "BPM 2C20:3E7A",
+        "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...E_...7_...A_LOG: DEBUG: Set memory breakpoint at 2C20:3E7A\n...\n_"
+      },
+      {
+        "cmd": "BPM 2C20:3EC8",
+        "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...E_...C_...8_LOG: DEBUG: Set memory breakpoint at 2C20:3EC8\n...\n_"
+      },
+      {
+        "cmd": "BPM 2C20:1F08",
+        "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...1_...F_...0_...8_LOG: DEBUG: Set memory breakpoint at 2C20:1F08\n...\n_"
+      },
+      {
+        "cmd": "BPM 2C20:1F0A",
+        "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...1_...F_...0_...A_LOG: DEBUG: Set memory breakpoint at 2C20:1F0A\n...\n_"
+      },
+      {
+        "cmd": "BPM 2C20:3EC6",
+        "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...E_...C_...6_LOG: DEBUG: Set memory breakpoint at 2C20:3EC6\n...\n_"
+      },
+      {
+        "cmd": "BPM 2C20:3C94",
+        "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...C_...9_...4_LOG: DEBUG: Set memory breakpoint at 2C20:3C94\n...\n_"
+      },
+      {
+        "cmd": "BPM 2C20:3CE0",
+        "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...C_...E_...0_LOG: DEBUG: Set memory breakpoint at 2C20:3CE0\n...\n_"
+      },
+      {
+        "cmd": "BPM 2C20:3C92",
+        "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...C_...9_...2_LOG: DEBUG: Set memory breakpoint at 2C20:3C92\n...\n_"
+      },
+      {
+        "cmd": "BPM 2C20:3D52",
+        "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...D_...5_...2_LOG: DEBUG: Set memory breakpoint at 2C20:3D52\n...\n_"
+      },
+      {
+        "cmd": "BPLIST",
+        "excerpt": "_...S_...T_LOG: Breakpoint list:\nLOG: -------------------------------------------------------------------------\nLOG: 00. BPMEM 2C20:3D52 (00)\nLOG: 01. BPMEM 2C20:3C92 (00)\nLOG: 02. BPMEM 2C20:3CE0 (00)\nLOG: 03. BPMEM 2C20:3C94 (00)\nLOG: 04. BPMEM 2C20:3EC6 (00)\nLOG: 05. BPMEM 2C20:1F0A (00)\nLOG: 06. BPMEM 2C20:1F08 (00)\nLOG: 07. BPMEM 2C20:3EC8 (00)\nLOG: 08. BPMEM 2C20:3E7A (00)\nLOG: 09. BP 1782:0031\nLOG: 0A. BP 1859:1405\nLOG: 0B. BP 1E44:02FE\nLOG: 0C. BP 22F4:0699\nLOG: 0D. BP 22F4:030D\n\n_      "
+      },
+      {
+        "cmd": "CPU",
+        "excerpt": "...\nC_...\nP_...\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00000002 [vm=0 iopl=0 nt=0]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=00000000 limit=00000000*1\nLOG: LDT selector=0000, base=00000000 limit=00000000*1\n\n_   "
+      }
+    ],
+    "commands": [
+      "BPDEL *",
+      "BP 22F4:030D",
+      "BP 22F4:0699",
+      "BP 1E44:02FE",
+      "BP 1859:1405",
+      "BP 1782:0031",
+      "BPM 2C20:3E7A",
+      "BPM 2C20:3EC8",
+      "BPM 2C20:1F08",
+      "BPM 2C20:1F0A",
+      "BPM 2C20:3EC6",
+      "BPM 2C20:3C94",
+      "BPM 2C20:3CE0",
+      "BPM 2C20:3C92",
+      "BPM 2C20:3D52",
+      "BPLIST",
+      "CPU"
+    ],
+    "display": ":88",
+    "expected_bp": [
+      "1782:0031",
+      "1859:1405",
+      "1E44:02FE",
+      "22F4:030D",
+      "22F4:0699"
+    ],
+    "expected_bpm": [
+      "2C20:1F08",
+      "2C20:1F0A",
+      "2C20:3C92",
+      "2C20:3C94",
+      "2C20:3CE0",
+      "2C20:3D52",
+      "2C20:3E7A",
+      "2C20:3EC6",
+      "2C20:3EC8"
+    ],
+    "listed_bp": [
+      "1782:0031"
+    ],
+    "listed_bpm": [],
+    "method": "owned PTY + Xvfb + dosbox-debug -debug -break-start; empty autoexec; no original binaries mounted or executed",
+    "prompt_seen": true,
+    "ran": true,
+    "set_bp": [
+      "1782:0031",
+      "1859:1405",
+      "1E44:02FE",
+      "22F4:030D",
+      "22F4:0699"
+    ],
+    "set_bpm": [
+      "2C20:1F08",
+      "2C20:1F0A",
+      "2C20:3C92",
+      "2C20:3C94",
+      "2C20:3CE0",
+      "2C20:3D52",
+      "2C20:3E7A",
+      "2C20:3EC6",
+      "2C20:3EC8"
+    ],
+    "transcript": "parity-evidence/verification/pass162_c080_queue_trace/dosbox_x_break_start_bp_acceptance/dosbox_x_break_start_bp_acceptance.clean.txt"
+  },
+  "schema": "pass162_c080_dosbox_x_break_start_bp_acceptance.v1",
+  "scope": "debugger command acceptance only; no Dungeon Master binary execution and no runtime hit claim",
+  "status": "PASS162_DOSBOX_X_BREAK_START_BP_BPM_ACCEPTED",
+  "timestamp_utc": "2026-06-30T14:53:29.752659+00:00"
+}

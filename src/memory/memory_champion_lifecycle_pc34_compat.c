@@ -412,13 +412,15 @@ int F0835_LIFECYCLE_HandleStatusExpiry_Compat(
         rc = F0836_LIFECYCLE_HandlePoisonTick_Compat(
             champ, expired->aux1, expired->fireAtTick,
             &damage, &newAttack, outRescheduled);
+        if (rc > 0) {
+            outRescheduled->aux3 = damage;
+            outRescheduled->aux4 = championIndex;
+        }
         if (rc == 1) {
             outRescheduled->mapIndex = expired->mapIndex;
             outRescheduled->mapX = expired->mapX;
             outRescheduled->mapY = expired->mapY;
             outRescheduled->cell = expired->cell;
-            outRescheduled->aux2 = championIndex;
-            outRescheduled->aux3 = damage;
         }
         return rc > 0 ? 1 : 0;
     }

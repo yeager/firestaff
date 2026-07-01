@@ -130,6 +130,170 @@ static void test_map_overlay_blocks_mouse_command(void)
                                 "map overlay blocks mouse gameplay queue");
 }
 
+static void test_c161_reincarnate_opens_rename_modal(void)
+{
+    M11_GameViewState state;
+    M11_GameInputResult result;
+    uint32_t tick;
+    int direction;
+
+    seed_active_view(&state);
+    tick = state.world.gameTick;
+    direction = state.world.party.direction;
+    state.candidateMirrorOrdinal = 0;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+    state.inventoryPanelActive = 1;
+    memcpy(state.world.party.champions[0].name, "OLD", 4U);
+    memcpy(state.world.party.champions[0].title, "TITLE", 6U);
+
+    result = M11_GameView_HandlePointer(&state, 180, 115, 1);
+
+    ASSERT_EQ(result, M11_GAME_INPUT_REDRAW,
+              "C161 click opens reincarnate rename modal");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "candidate panel remains live while F0281 rename is active");
+    ASSERT_EQ(state.candidateMirrorRenameActive, 1,
+              "F0281 rename state is active after C161");
+    ASSERT_EQ(state.candidateMirrorRename.fieldMode,
+              DM1_V1_RESURRECTION_RENAME_UI_FIELD_NAME_PC34_COMPAT,
+              "rename starts in name field");
+    ASSERT_EQ(state.world.party.champions[0].name[0], '\0',
+              "C161 F0281 clears champion name before input");
+    ASSERT_EQ(state.world.party.champions[0].title[0], '\0',
+              "C161 F0281 clears champion title before input");
+    assert_no_pipeline_activity(&state, tick, direction,
+                                "rename modal blocks gameplay queue");
+}
+
+static void test_c161_rename_accept_finishes_reincarnation(void)
+{
+    M11_GameViewState state;
+    M11_GameInputResult result;
+
+    seed_active_view(&state);
+    state.candidateMirrorOrdinal = 0;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+    state.inventoryPanelActive = 1;
+    state.world.party.champions[0].hp.current = 80;
+    state.world.party.champions[0].hp.maximum = 80;
+    state.world.party.champions[0].stamina.current = 60;
+    state.world.party.champions[0].stamina.maximum = 60;
+    state.world.party.champions[0].mana.current = 40;
+    state.world.party.champions[0].mana.maximum = 40;
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 180, 115, 1),
+              M11_GAME_INPUT_REDRAW,
+              "C161 opens rename before accepting reincarnation");
+    ASSERT_EQ(M11_GameView_HandleMirrorCandidateRenameClick(&state, 108, 116),
+              1, "rename character-grid click enters A");
+    ASSERT_EQ(M11_GameView_ApplyMirrorCandidateRenameAscii(&state, '\r'),
+              1, "rename return moves from name to title");
+    result = M11_GameView_HandleMirrorCandidateRenameClick(&state, 205, 150);
+
+    ASSERT_EQ(result, 1, "rename OK click accepted");
+    ASSERT_EQ(state.candidateMirrorRenameActive, 0,
+              "rename state clears after OK");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 0,
+              "candidate panel closes after accepted rename");
+    ASSERT_EQ(state.inventoryPanelActive, 0,
+              "inventory panel closes after accepted reincarnation");
+    ASSERT_EQ(state.world.party.champions[0].name[0] == 'A' &&
+              state.world.party.champions[0].name[1] == '\0', 1,
+              "accepted rename copies name to champion");
+    ASSERT_EQ(state.world.party.champions[0].hp.maximum < 80, 1,
+              "accepted rename then applies reincarnation vitals");
+}
+
+static void test_c161_rename_duplicate_name_keeps_modal_open(void)
+{
+    M11_GameViewState state;
+    M11_GameInputResult result;
+
+    seed_active_view(&state);
+    state.world.party.championCount = 2;
+    state.world.party.champions[1].present = 1;
+    state.world.party.champions[1].hp.current = 80;
+    state.world.party.champions[1].hp.maximum = 80;
+    state.world.party.champions[1].stamina.current = 60;
+    state.world.party.champions[1].stamina.maximum = 60;
+    state.world.party.champions[1].mana.current = 40;
+    state.world.party.champions[1].mana.maximum = 40;
+    memcpy(state.world.party.champions[0].name, "A", 2U);
+    state.candidateMirrorOrdinal = 1;
+    state.candidateMirrorPartyIndex = 1;
+    state.candidateMirrorPanelActive = 1;
+    state.inventoryPanelActive = 1;
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 180, 115, 1),
+              M11_GAME_INPUT_REDRAW,
+              "C161 opens duplicate-name rename modal");
+    ASSERT_EQ(M11_GameView_ApplyMirrorCandidateRenameAscii(&state, 'A'),
+              1, "duplicate-name test enters A");
+    result = M11_GameView_HandleMirrorCandidateRenameClick(&state, 205, 150);
+
+    ASSERT_EQ(result, 1, "duplicate-name OK redraws feedback");
+    ASSERT_EQ(state.candidateMirrorRenameActive, 1,
+              "duplicate name keeps rename state active");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "duplicate name keeps candidate panel active");
+    ASSERT_EQ(state.candidateMirrorRename.okAccepted, 0,
+              "duplicate name clears pending OK acceptance");
+    ASSERT_EQ(state.candidateMirrorRename.duplicateNameRejectedCount, 1,
+              "duplicate name rejection is counted");
+    ASSERT_EQ(state.world.party.champions[1].name[0], '\0',
+              "duplicate name is not copied to candidate");
+    ASSERT_EQ(state.world.party.champions[1].hp.maximum, 80,
+              "duplicate name does not apply reincarnation vitals");
+}
+
+static void test_candidate_panel_blocks_direct_spell_helpers(void)
+{
+    M11_GameViewState state;
+    uint32_t tick;
+    int direction;
+
+    seed_active_view(&state);
+    tick = state.world.gameTick;
+    direction = state.world.party.direction;
+    state.candidateMirrorOrdinal = 0;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+    state.inventoryPanelActive = 1;
+
+    ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 0,
+              "C040 candidate blocks direct spell-panel open");
+    ASSERT_EQ(state.spellPanelOpen, 0,
+              "blocked spell open leaves panel closed");
+
+    state.spellPanelOpen = 1;
+    state.spellRuneRow = 1;
+    state.spellBuffer.runeCount = 1;
+    state.spellBuffer.runes[0] = 0x60;
+    state.world.party.champions[0].mana.current = 50;
+    state.world.party.champions[0].mana.maximum = 50;
+
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 5), 0,
+              "C040 candidate blocks direct rune entry");
+    ASSERT_EQ(state.spellBuffer.runeCount, 1,
+              "blocked rune entry preserves rune count");
+    ASSERT_EQ(state.spellBuffer.runes[0], 0x60,
+              "blocked rune entry preserves existing rune");
+    ASSERT_EQ(M11_GameView_ClearSpell(&state), 0,
+              "C040 candidate blocks direct recant clear");
+    ASSERT_EQ(state.spellBuffer.runeCount, 1,
+              "blocked recant preserves rune count");
+    ASSERT_EQ(M11_GameView_CastSpell(&state), 0,
+              "C040 candidate blocks direct spell cast");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 50,
+              "blocked cast preserves mana");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "blocked spell helpers keep candidate panel live");
+    assert_no_pipeline_activity(&state, tick, direction,
+                                "C040 direct spell helpers do not tick");
+}
+
 static void test_keyboard_positive_control_dispatches_without_overlay(void)
 {
     /* v2.8.x: arrow Left/Right now mean strafe-left/strafe-right
@@ -228,6 +392,10 @@ int main(void)
     test_dialog_overlay_blocks_keyboard_command();
     test_inventory_overlay_blocks_keyboard_command();
     test_map_overlay_blocks_mouse_command();
+    test_c161_reincarnate_opens_rename_modal();
+    test_c161_rename_accept_finishes_reincarnation();
+    test_c161_rename_duplicate_name_keeps_modal_open();
+    test_candidate_panel_blocks_direct_spell_helpers();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();

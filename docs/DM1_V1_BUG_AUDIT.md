@@ -275,7 +275,7 @@ Regression gate: `tests/test_dm1_v1_f0128_viewport_pc34_compat.c`
 4. **BUG-117** (Minor) — Test infrastructure build path
 5. **BUG-107** (Minor) — Thieves Eye duration
 6. **BUG-115** (Cosmetic) — F0306 compiler order hazard alignment
-7. **BUG-101** follow-up — verify creature damage flow end-to-end
+7. **BUG-101** follow-up — **DONE 2026-06-30** via `dm1_v1_orch_pending_damage_flow`
 
 ---
 
@@ -308,6 +308,15 @@ Added creature melee poison application:
 
 Added `tools/firestaff_build_dir.py` shared helper with
 `find_build_dir()` / `resolve_build_dir()`.  Lookup order:
+
+### BUG-101 FOLLOW-UP FIXED — Pending Damage Flow Now CTest-Gated
+
+Added data-free CTest `dm1_v1_orch_pending_damage_flow` around
+`F0889_ORCH_ApplyPendingDamage_Compat`. The gate verifies the M10
+handoff from `GameWorld_Compat.pendingCombat` into champion HP, wound
+bits, pending-combat clear, `EMIT_CHAMPION_DOWN`, and `partyDead`.
+This proves the end-to-end data-layer damage flow without relying on
+M11 rendering, real assets, or original-DOS capture.
   1. `FIRESTAFF_BUILD_DIR` env var (already supported by
      some scripts; now standardised).
   2. `<root>/build` (in-tree single-config).

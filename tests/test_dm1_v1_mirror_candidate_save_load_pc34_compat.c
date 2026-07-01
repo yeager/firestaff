@@ -40,6 +40,48 @@ static int expect(int condition, const char* message) {
     return 1;
 }
 
+static int expect_recruited_portrait_matches_c026(M11_GameViewState* view,
+                                                  int championIndex,
+                                                  int mirrorOrdinal,
+                                                  const char* context) {
+    unsigned char expected[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+    const M11_AssetSlot* portraits;
+    const struct ChampionState_Compat* champ;
+    int srcX;
+    int srcY;
+    int y;
+
+    if (!expect(view != NULL, "view must exist for C026 portrait check")) return 0;
+    if (!expect(championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY,
+                "champion index must be valid for C026 portrait check")) return 0;
+    champ = &view->world.party.champions[championIndex];
+    if (!expect(champ->portraitBitmapValid == 1, context)) return 0;
+
+    portraits = M11_AssetLoader_Load(&view->assetLoader, 26u);
+    if (!expect(portraits && portraits->loaded && portraits->pixels,
+                "C026 portrait atlas should load from GRAPHICS.DAT")) return 0;
+    if (!expect(portraits->width >= CHAMPION_PORTRAIT_BITMAP_WIDTH * 8 &&
+                portraits->height >= CHAMPION_PORTRAIT_BITMAP_HEIGHT * 3,
+                "C026 portrait atlas should have the 8x3 PC34 layout")) return 0;
+
+    memset(expected, 0, sizeof(expected));
+    srcX = (mirrorOrdinal & 7) * CHAMPION_PORTRAIT_BITMAP_WIDTH;
+    srcY = (mirrorOrdinal >> 3) * CHAMPION_PORTRAIT_BITMAP_HEIGHT;
+    for (y = 0; y < CHAMPION_PORTRAIT_BITMAP_HEIGHT; ++y) {
+        int x;
+        unsigned char* dst =
+            expected + y * (CHAMPION_PORTRAIT_BITMAP_WIDTH / 2);
+        const unsigned char* src =
+            portraits->pixels + (srcY + y) * (int)portraits->width + srcX;
+        for (x = 0; x < CHAMPION_PORTRAIT_BITMAP_WIDTH; x += 2) {
+            dst[x / 2] = (unsigned char)(((src[x] & 0x0F) << 4) |
+                                         (src[x + 1] & 0x0F));
+        }
+    }
+    return expect(memcmp(champ->portraitBitmap, expected, sizeof(expected)) == 0,
+                  "recruited champion portrait bytes should match packed C026 atlas cell");
+}
+
 int main(void) {
     const char* dataDir = getenv("FIRESTAFF_DM1_CANONICAL_DIR");
     char saveTemplate[] = "/tmp/firestaff-dm1-c040-save-XXXXXX";
@@ -47,9 +89,12 @@ int main(void) {
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     M11_GameViewState resumed;
+    M11_GameViewState nameRecruitView;
     int previousPartyCount;
     int candidateIndex;
     int mirrorOrdinal = 0;
+    int nameMirrorOrdinal = 1;
+    char mirrorName[CHAMPION_NAME_TEXT_CAPACITY];
     int mapIndex = 2;
     int mapX = 11;
     int mapY = 7;
@@ -93,6 +138,11 @@ int main(void) {
     if (!expect(M11_GameView_RecruitChampionByMirrorOrdinal(&view, mirrorOrdinal) == 1,
                 "fixture should append the mirror candidate")) return 1;
     candidateIndex = previousPartyCount;
+    if (!expect_recruited_portrait_matches_c026(
+            &view, candidateIndex, mirrorOrdinal,
+            "F0280 candidate should receive a valid C026 portrait bitmap")) {
+        return 1;
+    }
 
     /* This mirrors the post-F0280 live panel state without dismissing C040:
      * the candidate is appended, G0299-equivalent panel state is active,
@@ -133,6 +183,11 @@ int main(void) {
                 "candidate should remain appended to the party")) return 1;
     if (!expect(resumed.world.party.champions[candidateIndex].present,
                 "candidate slot should still be populated")) return 1;
+    if (!expect_recruited_portrait_matches_c026(
+            &resumed, candidateIndex, mirrorOrdinal,
+            "quick-resumed candidate should keep the C026 portrait bitmap")) {
+        return 1;
+    }
     if (!expect(resumed.world.party.activeChampionIndex == candidateIndex,
                 "candidate panel active champion index should survive load")) return 1;
     if (!expect(resumed.world.party.mapIndex == mapIndex &&
@@ -146,6 +201,29 @@ int main(void) {
                 "open chest route flag should survive load")) return 1;
 
     M11_GameView_Shutdown(&resumed);
+
+    spec.savePath = NULL;
+    M11_GameView_Init(&nameRecruitView);
+    if (!expect(M11_GameView_Start(&nameRecruitView, &spec),
+                "fresh DM1 start for name recruitment should succeed")) return 1;
+    if (!expect(M11_GameView_GetMirrorNameByOrdinal(
+                    &nameRecruitView, nameMirrorOrdinal,
+                    mirrorName, sizeof(mirrorName)) > 0,
+                "fixture should expose a named mirror candidate")) {
+        return 1;
+    }
+    previousPartyCount = nameRecruitView.world.party.championCount;
+    if (!expect(M11_GameView_RecruitChampionByMirrorName(
+                    &nameRecruitView, mirrorName) == 1,
+                "name recruitment should append the mirror candidate")) {
+        return 1;
+    }
+    if (!expect_recruited_portrait_matches_c026(
+            &nameRecruitView, previousPartyCount, nameMirrorOrdinal,
+            "name recruitment should receive a valid C026 portrait bitmap")) {
+        return 1;
+    }
+    M11_GameView_Shutdown(&nameRecruitView);
 
     puts("ok: DM1 V1 live C040 mirror candidate and open chest survive quicksave/load");
     return 0;

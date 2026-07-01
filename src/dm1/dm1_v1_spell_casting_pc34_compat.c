@@ -145,6 +145,16 @@ static int powerSymbolIndex(char sym) {
     return (idx >= 0 && idx < DM1_SYMBOLS_PER_STEP) ? idx : -1;
 }
 
+static int championSpellSkillLevel(const DM1_ChampionSpellStats* stats,
+                                   int skillIndex) {
+    if (!stats || skillIndex < 0 || skillIndex >= 20) return 0;
+    if (stats->liveSkillLevelOverrideValid &&
+        stats->liveSkillLevelOverrideIndex == (uint8_t)skillIndex) {
+        return stats->liveSkillLevelOverrideValue;
+    }
+    return stats->skillLevels[skillIndex];
+}
+
 /* ═══════════════════════════════════════════════════════════════════
  * Core API implementation
  * ═══════════════════════════════════════════════════════════════════ */
@@ -401,7 +411,7 @@ int dm1_spell_cast(DM1_SpellCastingState* s, int champIdx,
     int requiredSkillLevel = spell->baseRequiredSkillLevel + powerOrdinal;
 
     /* Skill check (MENU.C F0412 lines: AL1267 = F0303...; if < required: random failure) */
-    int champSkillLevel = stats->skillLevels[spell->skillIndex];
+    int champSkillLevel = championSpellSkillLevel(stats, spell->skillIndex);
 
     if (champSkillLevel < requiredSkillLevel) {
         int missingLevels = requiredSkillLevel - champSkillLevel;

@@ -5,12 +5,18 @@
  * DEFS.H (skill indices), PANEL.C (skill level names).
  */
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "memory_champion_state_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 static int g_tests_run = 0;
 static int g_tests_passed = 0;
+
+static unsigned short test_make_thing(int type, int index) {
+    return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
+}
 
 #define TEST(name) do { \
     g_tests_run++; \
@@ -251,6 +257,212 @@ static int test_temporary_experience(void) {
     /* Without temp (IGNORE_TEMP flag): 400 < 500 → level 1 */
     ASSERT_EQ(dm1_skill_get_level(&state, DM1_SKILL_IDX_FIGHTER,
               DM1_SKILL_FLAG_IGNORE_TEMP), 1);
+
+    PASS();
+    return 0;
+}
+
+/* ── Test: Live F0303 query flags and object modifiers ─────────────── */
+static int test_live_skill_level_query_modifiers(void) {
+    TEST(live_skill_level_query_modifiers);
+
+    DM1_ChampionSkillState state;
+    DM1_SkillLevelQuery query;
+    dm1_skill_state_init(&state);
+    memset(&query, 0, sizeof(query));
+    query.actionHandIconIndex = DM1_SKILL_ICON_NONE;
+    query.neckIconIndex = DM1_SKILL_ICON_NONE;
+
+    state.skills[DM1_SKILL_IDX_WIZARD].experience = 500;
+    state.skills[DM1_SKILL_IDX_WIZARD].temporaryExperience = 500;
+
+    /* ReDMCSB CHAMPION.C F0303 lines 746-747: resting ignores XP and
+     * object state and returns level 1 immediately. */
+    query.partyIsResting = 1;
+    query.actionHandIconIndex = DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF_COMPLETE;
+    query.neckIconIndex = DM1_SKILL_ICON_JUNK_PENDANT_FERAL;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_WIZARD, 0, &query), 1);
+
+    /* Temporary XP flag keeps the old MASK0x8000 behavior in the live query. */
+    query.partyIsResting = 0;
+    query.actionHandIconIndex = DM1_SKILL_ICON_NONE;
+    query.neckIconIndex = DM1_SKILL_ICON_NONE;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_WIZARD, 0, &query), 3);
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_WIZARD,
+              DM1_SKILL_FLAG_IGNORE_TEMP, &query), 2);
+
+    /* ReDMCSB CHAMPION.C F0303 lines 770-780: Firestaff adds +1, Complete
+     * Firestaff adds +2, and PC34 keeps these cumulative with necklaces. */
+    state.skills[DM1_SKILL_IDX_WIZARD].temporaryExperience = 0;
+    query.actionHandIconIndex = DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF;
+    query.neckIconIndex = DM1_SKILL_ICON_NONE;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_WIZARD, 0, &query), 3);
+    query.actionHandIconIndex = DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF_COMPLETE;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_WIZARD, 0, &query), 4);
+    query.neckIconIndex = DM1_SKILL_ICON_JUNK_PENDANT_FERAL;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_WIZARD, 0, &query), 5);
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_WIZARD,
+              DM1_SKILL_FLAG_IGNORE_OBJECTS, &query), 2);
+
+    PASS();
+    return 0;
+}
+
+static int test_live_skill_level_specific_item_modifiers(void) {
+    TEST(live_skill_level_specific_item_modifiers);
+
+    DM1_ChampionSkillState state;
+    DM1_SkillLevelQuery query;
+    dm1_skill_state_init(&state);
+    memset(&query, 0, sizeof(query));
+    query.actionHandIconIndex = DM1_SKILL_ICON_NONE;
+    query.neckIconIndex = DM1_SKILL_ICON_NONE;
+
+    state.skills[DM1_SKILL_IDX_PRIEST].experience = 500;
+    state.skills[DM1_SKILL_IDX_HEAL].experience = 500;
+    state.skills[DM1_SKILL_IDX_DEFEND].experience = 500;
+    state.skills[DM1_SKILL_IDX_INFLUENCE].experience = 500;
+
+    /* Base level: 500 XP -> level 2 for all four checked lanes. */
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_HEAL, 0, &query), 2);
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_DEFEND, 0, &query), 2);
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_INFLUENCE, 0, &query), 2);
+
+    /* CHAMPION.C F0303 lines 790-812: Ekkhard Cross affects DEFEND only. */
+    query.neckIconIndex = DM1_SKILL_ICON_JUNK_EKKHARD_CROSS;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_DEFEND, 0, &query), 3);
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_HEAL, 0, &query), 2);
+
+    /* Gem of Ages and Sceptre of Lyf affect HEAL, but are not cumulative
+     * with each other in the source condition. */
+    query.neckIconIndex = DM1_SKILL_ICON_JUNK_GEM_OF_AGES;
+    query.actionHandIconIndex = DM1_SKILL_ICON_NONE;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_HEAL, 0, &query), 3);
+    query.neckIconIndex = DM1_SKILL_ICON_NONE;
+    query.actionHandIconIndex = DM1_SKILL_ICON_WEAPON_SCEPTRE_OF_LYF;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_HEAL, 0, &query), 3);
+    query.neckIconIndex = DM1_SKILL_ICON_JUNK_GEM_OF_AGES;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_HEAL, 0, &query), 3);
+
+    query.actionHandIconIndex = DM1_SKILL_ICON_NONE;
+    query.neckIconIndex = DM1_SKILL_ICON_JUNK_MOONSTONE;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_INFLUENCE, 0, &query), 3);
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_DEFEND, 0, &query), 2);
+
+    PASS();
+    return 0;
+}
+
+static int test_live_skill_query_from_inventory(void) {
+    TEST(live_skill_query_from_inventory);
+
+    struct ChampionState_Compat champion;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    DM1_ChampionSkillState state;
+    DM1_SkillLevelQuery query;
+
+    memset(&champion, 0, sizeof(champion));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(junks, 0, sizeof(junks));
+    dm1_skill_state_init(&state);
+
+    for (int i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
+        champion.inventory[i] = THING_NONE;
+    }
+
+    weapons[0].type = DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF_COMPLETE;
+    weapons[1].type = DM1_SKILL_ICON_WEAPON_SCEPTRE_OF_LYF;
+    junks[0].type = DM1_SKILL_ICON_JUNK_PENDANT_FERAL;
+    junks[1].type = DM1_SKILL_ICON_JUNK_GEM_OF_AGES;
+    things.weapons = weapons;
+    things.weaponCount = 2;
+    things.junks = junks;
+    things.junkCount = 2;
+
+    champion.inventory[CHAMPION_SLOT_ACTION_HAND] =
+        test_make_thing(THING_TYPE_WEAPON, 0);
+    champion.inventory[CHAMPION_SLOT_NECK] =
+        test_make_thing(THING_TYPE_JUNK, 0);
+
+    ASSERT_EQ(dm1_skill_build_query_from_champion_inventory(
+        &champion, &things, 1, &query), 1);
+    ASSERT_EQ(query.partyIsResting, 1);
+    ASSERT_EQ(query.actionHandIconIndex,
+              DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF_COMPLETE);
+    ASSERT_EQ(query.neckIconIndex, DM1_SKILL_ICON_JUNK_PENDANT_FERAL);
+
+    /* Query built from inventory feeds the already source-locked F0303
+     * modifier path: base wizard level 2 + complete Firestaff 2 +
+     * Pendant Feral 1 = 5. */
+    query.partyIsResting = 0;
+    state.skills[DM1_SKILL_IDX_WIZARD].experience = 500;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_WIZARD, 0, &query), 5);
+
+    champion.inventory[CHAMPION_SLOT_ACTION_HAND] =
+        test_make_thing(THING_TYPE_WEAPON, 1);
+    champion.inventory[CHAMPION_SLOT_NECK] =
+        test_make_thing(THING_TYPE_JUNK, 1);
+    ASSERT_EQ(dm1_skill_build_query_from_champion_inventory(
+        &champion, &things, 0, &query), 1);
+    ASSERT_EQ(query.actionHandIconIndex, DM1_SKILL_ICON_WEAPON_SCEPTRE_OF_LYF);
+    ASSERT_EQ(query.neckIconIndex, DM1_SKILL_ICON_JUNK_GEM_OF_AGES);
+    state.skills[DM1_SKILL_IDX_PRIEST].experience = 500;
+    state.skills[DM1_SKILL_IDX_HEAL].experience = 500;
+    ASSERT_EQ(dm1_skill_get_level_ex(&state, DM1_SKILL_IDX_HEAL, 0, &query), 3);
+
+    PASS();
+    return 0;
+}
+
+static int test_live_skill_query_inventory_bounds(void) {
+    TEST(live_skill_query_inventory_bounds);
+
+    struct ChampionState_Compat champion;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    DM1_SkillLevelQuery query;
+
+    memset(&champion, 0, sizeof(champion));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(&query, 0x7f, sizeof(query));
+
+    for (int i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
+        champion.inventory[i] = THING_NONE;
+    }
+
+    weapons[0].type = DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+
+    ASSERT_EQ(dm1_skill_icon_index_for_thing(&things, THING_NONE),
+              DM1_SKILL_ICON_NONE);
+    ASSERT_EQ(dm1_skill_icon_index_for_thing(&things, THING_ENDOFLIST),
+              DM1_SKILL_ICON_NONE);
+    ASSERT_EQ(dm1_skill_icon_index_for_thing(0, test_make_thing(THING_TYPE_WEAPON, 0)),
+              DM1_SKILL_ICON_NONE);
+    ASSERT_EQ(dm1_skill_icon_index_for_thing(&things,
+              test_make_thing(THING_TYPE_WEAPON, 8)), DM1_SKILL_ICON_NONE);
+    ASSERT_EQ(dm1_skill_icon_index_for_thing(&things,
+              test_make_thing(THING_TYPE_ARMOUR, 0)), DM1_SKILL_ICON_NONE);
+    ASSERT_EQ(dm1_skill_icon_index_for_thing(&things,
+              test_make_thing(THING_TYPE_WEAPON, 0)),
+              DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF);
+
+    champion.inventory[CHAMPION_SLOT_ACTION_HAND] =
+        test_make_thing(THING_TYPE_WEAPON, 0);
+    champion.inventory[CHAMPION_SLOT_NECK] = THING_NONE;
+    ASSERT_EQ(dm1_skill_build_query_from_champion_inventory(
+        &champion, 0, 0, &query), 1);
+    ASSERT_EQ(query.actionHandIconIndex, DM1_SKILL_ICON_NONE);
+    ASSERT_EQ(query.neckIconIndex, DM1_SKILL_ICON_NONE);
+    ASSERT_EQ(dm1_skill_build_query_from_champion_inventory(
+        0, &things, 0, &query), 0);
+    ASSERT_EQ(dm1_skill_build_query_from_champion_inventory(
+        &champion, &things, 0, 0), 0);
 
     PASS();
     return 0;
@@ -566,6 +778,10 @@ int main(void) {
     rc |= test_level_thresholds();
     rc |= test_subskill_level_averaging();
     rc |= test_temporary_experience();
+    rc |= test_live_skill_level_query_modifiers();
+    rc |= test_live_skill_level_specific_item_modifiers();
+    rc |= test_live_skill_query_from_inventory();
+    rc |= test_live_skill_query_inventory_bounds();
     rc |= test_skill_level_names();
     rc |= test_skill_index_names();
     rc |= test_add_experience_levelup();

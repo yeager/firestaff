@@ -1,6 +1,6 @@
 set pagination off
 set confirm off
-file <firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE
+file /Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE
 break F0359_COMMAND_ProcessClick_CPSC
 break F0380_COMMAND_ProcessQueue_CPSC
 break F0377_COMMAND_ProcessType80_ClickInDungeonView

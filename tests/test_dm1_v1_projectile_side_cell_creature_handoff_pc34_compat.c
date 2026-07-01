@@ -151,8 +151,8 @@ static void test_side_cell_creature_damage_handoff(void)
                createIn.ownerIndex,
                "F0817 records the projectile owner index");
     expect_int("combat.raw_attack", result.outAction.rawAttackValue,
-               createIn.attack,
-               "F0815 impact attack carries the thrown item's attack value");
+               8,
+               "F0217 scales creature impact attack by CreatureInfo.Defense");
     expect_int("explosion.emitted", result.emittedExplosion, 0,
                "Kinetic thrown-item creature hit does not emit an explosion");
     expect_int("reschedule", result.outNextTick.kind == TIMELINE_EVENT_PROJECTILE_MOVE,

@@ -1,0 +1,430 @@
+{
+  "expected_order": [
+    "F0359_COMMAND_ProcessClick_CPSC",
+    "F0380_COMMAND_ProcessQueue_CPSC",
+    "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+    "F0275_SENSOR_IsTriggeredByClickOnWall",
+    "F0280_CHAMPION_AddCandidateChampionToParty"
+  ],
+  "non_claims": [
+    "does not promote pass435 unless F0280 is reached and later semantic screenshots are captured",
+    "does not claim pixel parity",
+    "does not use Firestaff renderer output"
+  ],
+  "route_label": "movement_cliclick_control",
+  "runtime": {
+    "bounded_seconds": 180,
+    "bplist_ok": true,
+    "command_log": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/command_log.json",
+    "dosbox_log": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/dosbox_runtime.log",
+    "dosbox_mouse_config": {
+      "autolock": "true",
+      "clip_mouse_button": "none",
+      "mouse_emulation": "always",
+      "mouse_log": "debug",
+      "usesystemcursor": "false"
+    },
+    "duration_seconds": 195.814,
+    "engine_ready_seen": true,
+    "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
+    "memory_stop_count": 34,
+    "method": "DOSBox-X/dosbox-debug -debug -break-start with owned PTY and platform route driver",
+    "mouse_post_mode": "cliclick",
+    "mouse_warp": "true",
+    "observed_symbols": [],
+    "ordered_prefix": [],
+    "ran": true,
+    "reached_f0280": false,
+    "route": "wait:9000 enter wait:2500 click:276,135 wait:600 click:276,135 wait:1000",
+    "route_control_ok": true,
+    "route_driver": "swift-cgevent",
+    "route_label": "movement_cliclick_control",
+    "route_log": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/route_log.json",
+    "route_window_found": true,
+    "runtime_ready_seen": true,
+    "stops": [
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "izeMemory(seg=0x0a49) blocks=0x0349\nLOG:    3869789       EXEC:Execute swoosh 0\nLOG:    3869789       FILES:file open command 0 file swoosh\nLOG:    3869789 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x0d93-0x0ddb\nLOG:    3869789 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x9222) = 0x0ddd-0x9ffe\nLOG:    4048170 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0b08\nLOG:    7899124       EXEC:Execute anim 0\nLOG:    7899124       FILES:file open command 0 file anim\nLOG:    7899124 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x0d93-0x0ddb\nLOG:    7899124 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x9222) = 0x0ddd-0x9ffe\nLOG:    7965965 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x033d\nLOG:    7967491       FILES:file open command 2 file title\nLOG:    7968195 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0340\nLOG:    7968353 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0640\nLOG:    7968578 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0e00\nLOG:   18849279 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0640\nLOG:   18849427 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0340\nLOG:   18849987       EXEC:Execute selector 0\nLOG:   18849987       FILES:file open command 0 file selector\nLOG:   18849987 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x0d93-0x0ddb\nLOG:   18849987 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x9222) = 0x0ddd-0x9ffe\nLOG:   19020476 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x06ee\nLOG:   19026798       FILES:file open command 2 file data\\song.dat\nLOG:   19027540 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0700\nLOG:   19029482 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x08c0\nLOG:   19029742 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0980\nLOG:   19244859 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x08c0\nLOG:   19245089 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0fc0\nLOG:   19245349 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x13c0\nLOG:   20264648 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0fc0\nLOG:   20264878 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x1240\nLOG:   20265138 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x1380\nLOG:   20608625 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x1240\nLOG:   20608855 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x1b80\nLOG:   20609115 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2280\nLOG: DEBUG: Memory breakpoint : 2C20:3D52 - 00 -> 24\nFD 00 ED 0D 0E 00 7E 00 7E 00 7p...p...pE 00 70 00 54 FF 00 F0 60 CA 00 F0 60 CA 00 F0  ..p.T...`...`91 0E EE 0A 8A 00 EE 0A 55 FF 00 F0 80 CE 00 FU80 CE 00 F0 80 CE 00 F0 E0 CC 00 F0 0E 00 7pEEC0 20 CB 00 F0 40 CB 00 F0 E0 CE 00 F ...@80 CB 00 F0 A0 CB 00 F0 40 CF 00 F0 C0 CB 00 F@CD 00 F0 60 CC 00 F0 E0 CB 00 F0 40 D1 00 F`@CC 00 F0 58 C9 00 F0 02 00 94 FC 00 05 00 CXCA40 90        nopCA41 90  nopCA42 90nopCA43 90  nopCA44 90nopCA45 90  nop\n\nI-> _    3FD54  DS=293414CB13CA5CA40  C1 Z0 S1 O1171D5FA634F98206092118569.318333333 ",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843946.434931
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3C92 - 00 -> C8\n\n\nI-> _    12\n9",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843948.112072
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3CE0 - 00 -> 80\n\n\nI-> _    23\n20",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843949.791919
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3C94 - 00 -> 81\n\n\nI-> _    34\n1",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843951.4320781
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3EC6 - 00 -> 8F\n\n\nI-> _    45\n2",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843953.0520809
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:1F0A - 00 -> 8F\n\nF000:0000CA46 90nop\n\nI-> _    56\n3",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843954.696018
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:1F08 - 00 -> 9E\n\nF000:0000CA47 90nop\n\nI-> _    67\n4",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843956.30366
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3EC8 - 00 -> F7\n\nF000:0000CA48 90nop\n\nI-> _    78\n5",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843957.92961
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3E7A - 00 -> 98\n\nF000:0000CA49 90nop\n\nI-> _    89\n6",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843959.556261
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG:   22064037 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x1b80\nLOG:   22064267 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2600\nLOG:   22064527 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2e40\nLOG: DEBUG: Memory breakpoint : 2C20:1F08 - 9E -> 7B\n\n\n\n0E82:00002878 8846F9mov  [bp-07],alss:[0F9F]=047F\n\n0E82:0000287B 46inc  si\n\n0E82:0000287C 3BF7cmp  si,di\n\n0E82:0000287E 7303jnc  00002883 ($+3)(down)\n\n0E82:00002880 E91BFFjmp  0000279E ($-e5)(up)\n\n0E82:00002883 8BC6mov  ax,si\n\nI-> _    007B4DC2  DS=119D29346AA2B  CS=0E822878  C0 Z0 S0 O0 A0 P12704\n37FAA281879\n9313.145",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843961.8598762
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:1F0A - 8F -> 67\n\n\nB72   \n\nI-> _    6741 P00B900\n80000000 ",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843963.493181
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3C92 - C8 -> 64\n\n\nF357no jmp)\n\n\n\nI-> _    46B4C1053F33126098\n416.580333333 ",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843965.159071
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3CE0 - 80 -> 8C\n\n\n07C   \n\nI-> _    8C9A1 O10956\n7.750000000 ",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843966.8162189
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3D52 - 24 -> 81\n\n\nF80   \n\nI-> _    1C0C0 A1 P1534450\n9.396",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843968.4484491
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3E7A - 98 -> 79\n\n\n78   \n\nI-> _    79D340054747612\n23.832",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843970.078034
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3EC6 - 8F -> 67\n\n\n1279down)  \n\n\n\nI-> _    6780001250913\n4.945",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843971.700213
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3EC8 - F7 -> 59\n\n\nFF58no jmp)\n\n\n\nI-> _    59211 P19A89\n71333333 ",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843973.343866
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG:   23733711 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2600\nLOG:   23733941 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x27c0\nLOG:   23734201 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x28c0\nLOG:   23970473 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x27c0\nLOG:   23970703 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2800\nLOG:   23989478 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3180\nLOG:   23989738 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3980\nLOG:   25525843 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3180\nLOG:   25526073 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3cc0\nLOG:   25526333 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4600\nLOG:   27348259 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3cc0\nLOG:   27348851       FILES:file open command 2 file data\\graphics.dat\nLOG:   27349606 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3d00\nLOG:   27350427 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3d80\nLOG:   27351249 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3e00\nLOG:   27352588 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3ec0\nLOG:   27366423 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x46c0\nLOG:   27366668 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x48c0\nLOG:   28273249 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x46c0\nLOG:   28273510 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x48c0\nLOG:   28273755 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4940\nLOG:   28591479 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x48c0\nLOG:   28591740 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4b40\nLOG:   28591985 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4bc0\nLOG:   28873627 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4b40\nLOG:   28900359 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4bc0\nLOG:   31309299 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4c00\nLOG:   31563393 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5080\nLOG:   31574813 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5440\nLOG:   31575071 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5800\nLOG:   32491559 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5440\nLOG:   32491774 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5900\nLOG:   39811698 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5440\nLOG:   39813540       EXEC:Execute FIRES 0\nLOG:   39813540       FILES:file open command 0 file FIRES\nLOG:   39813540 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x0d93-0x0ddb\nLOG:   39813540 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x9222) = 0x0ddd-0x9ffe\nLOG: DEBUG: Memory breakpoint : 2C20:3EC8 - 59 -> 8A\n59 0AY\n\n\n3700054 F3A5  repe movsw\n\n3700056 09EDor   bp,bp\n\n3700058 75D8jne  00000032 ($-28)(up)\n\n370005A FC  cld\n\n370005B 8EC2  mov  es,dx\n\n370005D 8EDBds,bx\n\nI-> _    FFFE90A645270237BF270290A6  CS=37000541 O0 A0 P0 D1485665145207E3981809215714.425666667\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843981.083421
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3EC6 - 67 -> 83\n\n\nI-> _    4\n433\n27000000\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843982.7339551
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3E7A - 79 -> 08\n\n\nI-> _    52\n522A104\n45\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843984.37078
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3D52 - 81 -> 0E\n\n\nI-> _    8F2E\n8F2E79842\n507666667\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843986.000041
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3CE0 - 8C -> 11\n\n\nI-> _    EBC\nEBC5F57\n32\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843987.632826
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3C92 - 64 -> 2A\n\n\nI-> _    70\n703968\n50000000\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843989.2535622
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3C94 - 81 -> 0D\n\n\nI-> _    6E\n6E89\n51333333\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843990.873305
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:1F0A - 67 -> 0B\n\n\nI-> _    70E6\n70E638749126\n6.148\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843992.486905
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:1F08 - 7B -> F4\n\n\nI-> _    4\n437\n49666667\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843994.124446
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:1F08 - F4 -> FF\nBF E2FAloop 000000BB ($-6)C1 EBA6jmp  short 00000069 ($-5a)  (up)C3 AC  lodsbC4 08C0or   al,alC6 7434je   000000FC ($+34)(no jmp)C8 3C01cmp  al,01\n\nI-> _    02FF132F  DS=31BD9EDFF94239BF  C0 Z0 S01 D0000200600044078543\n6104.592333333\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843996.073878
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:1F0A - 0B -> 06\n\n\nI-> _    0631E60B041263\n602666667\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843997.6997151
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3C92 - 2A -> 00\n\n\nI-> _    000C00FF5FC392B55A10823660\n20.275000000\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782843999.33836
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3C94 - 0D -> 00\n\n\nI-> _    506\n78333333\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782844000.971634
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3CE0 - 11 -> 00\n\n\nI-> _    601144894\n380\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782844002.618515
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3D52 - 0E -> 00\n\n\nI-> _    D\n831E200074339\n570000000\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782844004.210471
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3E7A - 08 -> D1\n\n\nI-> _    3D11EECE11AB06DFC5353\n1.011\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782844005.8558788
+      },
+      {
+        "bplist_text_after_running": false,
+        "post_running_code_lines": [],
+        "post_running_excerpt": "LOG: DEBUG: Memory breakpoint : 2C20:3EC6 - 83 -> 73\n\n\nI-> _    17346EAAF7104D7804\n19\n\n",
+        "prompt_reappeared_after_running": true,
+        "running_marker_seen": true,
+        "stop_code_addr_after_running": null,
+        "symbol": null,
+        "t": 1782844007.493618
+      }
+    ],
+    "transcript": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/live_movement_cliclick_control_break_start.clean.txt"
+  },
+  "schema": "pass162_c080_live_break_start_probe.v2",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "symbol": "F0359_COMMAND_ProcessClick_CPSC"
+    },
+    {
+      "file": "COMMAND.C",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "symbol": "F0380_COMMAND_ProcessQueue_CPSC"
+    },
+    {
+      "file": "CLIKVIEW.C",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "symbol": "F0377/F0372"
+    },
+    {
+      "file": "MOVESENS.C",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "symbol": "F0275/C127"
+    },
+    {
+      "file": "REVIVE.C",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "symbol": "F0280"
+    }
+  ],
+  "status": "BLOCKED_PASS162_LIVE_MOVEMENT_CLICLICK_CONTROL_NO_C080_STOPS",
+  "summary": "Debugger accepted the pass162 BP/BPM packet, but the bounded movement cliclick control route produced no C080-chain stops.",
+  "timestamp_utc": "2026-06-30T18:28:38.492516+00:00"
+}

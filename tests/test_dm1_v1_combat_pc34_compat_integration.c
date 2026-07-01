@@ -22,6 +22,9 @@ static int g_fail = 0;
 
 /* Forward declarations for tests defined after main(). */
 static void test_champion_is_lucky(void);
+static void test_f0735_lucky_hit_enters_damage_path(void);
+static void test_f0735_non_material_gate_skips_luck(void);
+static void test_f0735_dexterity_255_skips_hit_branch(void);
 static void test_ordered_cells_to_attack_priority(void);
 static void test_f0192_per_creature_resistance(void);
 static void test_f0801b_archenemy_double_move(void);
@@ -94,6 +97,70 @@ static void test_stat_adjusted_attack(void) {
     /* stat=155+: factor<16, return attack>>3=12 */
     int r3 = dm1_stat_adjusted_attack(&ch, 155, 100);
     CHECK(r3 == 12, "stat=155: should be 100>>3=12");
+
+    PASS();
+}
+
+/* -- Test: F0312 weapon-class skill routing -------------------------- */
+static void test_weapon_info_class_table_source_lock(void) {
+    TEST(weapon_info_class_table_source_lock);
+    DM1_WeaponInfo info;
+
+    CHECK(dm1_weapon_info_pc34(8, &info) == 1,
+          "weapon type 8 DAGGER should resolve to a full info row");
+    CHECK(info.weight == 5 && info.weaponClass == 2 &&
+          info.strength == 10 && info.kineticEnergy == 19 &&
+          info.attributes == 0x0200,
+          "DUNGEON.C weapon type 8 DAGGER row should match Weight/Class/Strength/Kinetic/Attributes");
+    CHECK(dm1_weapon_info_pc34(25, &info) == 1,
+          "weapon type 25 BOW should resolve to a full info row");
+    CHECK(info.weight == 10 && info.weaponClass == 20 &&
+          info.strength == 1 && info.kineticEnergy == 50 &&
+          info.attributes == 0x2032,
+          "DUNGEON.C weapon type 25 BOW row should match Weight/Class/Strength/Kinetic/Attributes");
+    CHECK(dm1_weapon_info_pc34(45, &info) == 1,
+          "weapon type 45 complete Firestaff should resolve to a full info row");
+    CHECK(info.weight == 36 && info.weaponClass == 255 &&
+          info.strength == 100 && info.kineticEnergy == 50 &&
+          info.attributes == 0x20FF,
+          "DUNGEON.C weapon type 45 complete Firestaff row should match");
+    CHECK(dm1_weapon_info_class_pc34(8) == 2,
+          "DUNGEON.C weapon type 8 DAGGER should have class 2");
+    CHECK(dm1_weapon_info_class_pc34(18) == 2,
+          "DUNGEON.C weapon type 18 AXE should have class 2");
+    CHECK(dm1_weapon_info_class_pc34(25) == 20,
+          "DUNGEON.C weapon type 25 BOW should have class 20");
+    CHECK(dm1_weapon_info_class_pc34(26) == 30,
+          "DUNGEON.C weapon type 26 CROSSBOW should have class 30");
+    CHECK(dm1_weapon_info_class_pc34(29) == 39,
+          "DUNGEON.C weapon type 29 SLING should have class 39");
+    CHECK(dm1_weapon_info_class_pc34(30) == DM1_WEAPON_CLASS_SLING_AMMUNITION,
+          "DUNGEON.C weapon type 30 ROCK should have sling ammunition class");
+    CHECK(dm1_weapon_info_class_pc34(45) == 255,
+          "DUNGEON.C weapon type 45 complete Firestaff should have class 255");
+    CHECK(dm1_weapon_info_class_pc34(-1) == -1,
+          "negative weapon type should be rejected");
+    CHECK(dm1_weapon_info_class_pc34(46) == -1,
+          "out-of-range weapon type should be rejected");
+    CHECK(dm1_weapon_info_pc34(46, &info) == -1 && info.weaponClass == -1,
+          "out-of-range full weapon info should be rejected with class -1");
+
+    PASS();
+}
+
+static void test_f0312_skill_level_bonus_uses_source_class_rules(void) {
+    TEST(f0312_skill_level_bonus_uses_source_class_rules);
+
+    CHECK(dm1_champion_f0312_skill_level_bonus_pc34(0, 3, 5, 7) == 3,
+          "swing class 0 should use F0303(SWING)");
+    CHECK(dm1_champion_f0312_skill_level_bonus_pc34(2, 3, 5, 7) == 8,
+          "dagger/axe class 2 should add F0303(SWING) and F0303(THROW)");
+    CHECK(dm1_champion_f0312_skill_level_bonus_pc34(1, 3, 5, 7) == 5,
+          "throw class below first bow should use F0303(THROW)");
+    CHECK(dm1_champion_f0312_skill_level_bonus_pc34(20, 3, 5, 7) == 7,
+          "bow class should use F0303(SHOOT)");
+    CHECK(dm1_champion_f0312_skill_level_bonus_pc34(112, 3, 5, 7) == 0,
+          "magic weapon class should not receive F0312 weapon skill bonus");
 
     PASS();
 }
@@ -760,6 +827,8 @@ int main(void) {
     test_armor_defense();
     test_stamina_adjusted();
     test_stat_adjusted_attack();
+    test_weapon_info_class_table_source_lock();
+    test_f0312_skill_level_bonus_uses_source_class_rules();
     test_creature_damage();
     test_creature_damage_multi();
     test_creature_damage_group_split_compacts_state();
@@ -784,6 +853,9 @@ int main(void) {
     test_ranged_shoot_no_bow_ammunition();
     test_ranged_shoot_sling_ammunition();
     test_champion_is_lucky();
+    test_f0735_lucky_hit_enters_damage_path();
+    test_f0735_non_material_gate_skips_luck();
+    test_f0735_dexterity_255_skips_hit_branch();
     test_ordered_cells_to_attack_priority();
     test_f0192_per_creature_resistance();
     test_f0801b_archenemy_double_move();
@@ -856,6 +928,169 @@ static void test_champion_is_lucky(void) {
         dm1_combat_seed_rng(seed);
         (void)dm1_champion_is_lucky(&ch, 60, 30);
         CHECK(ch.luck >= 0, "luck must never go below 0");
+    }
+
+    PASS();
+}
+
+/* -- Test: F0231 luck hit enters the damage path --------------------- */
+static void test_f0735_lucky_hit_enters_damage_path(void) {
+    TEST(f0735_lucky_hit_enters_damage_path);
+
+    for (uint32_t seed = 1; seed < 2048; ++seed) {
+        struct CombatantChampionSnapshot_Compat attacker;
+        struct CombatantCreatureSnapshot_Compat defender;
+        struct WeaponProfile_Compat weapon;
+        struct CombatResult_Compat out;
+        struct RngState_Compat rng;
+
+        memset(&attacker, 0, sizeof(attacker));
+        memset(&defender, 0, sizeof(defender));
+        memset(&weapon, 0, sizeof(weapon));
+        memset(&out, 0, sizeof(out));
+        CHECK(F0730_COMBAT_RngInit_Compat(&rng, seed) == 1,
+              "rng init should accept seed");
+
+        attacker.championIndex = 0;
+        attacker.currentHealth = 100;
+        attacker.dexterity = 0;
+        attacker.strengthActionHand = 100;
+        attacker.skillLevelAction = 0;
+        attacker.statisticLuck = 80;
+        attacker.statisticLuckMax = 100;
+        attacker.statisticLuckMin = 0;
+
+        defender.creatureType = CREATURE_TYPE_GIANT_SCORPION;
+        defender.defense = 0;
+        defender.dexterity = 80;
+        defender.attributes = 0;
+        defender.doubledMapDifficulty = 30;
+        defender.healthBefore = 200;
+
+        weapon.hitProbability = 0;
+        weapon.damageFactor = 32;
+
+        CHECK(F0735_COMBAT_ResolveChampionMelee_Compat(
+                  &attacker, &weapon, &defender, &rng, &out) == 1,
+              "F0735 should resolve bounded lucky-hit fixture");
+        if (out.luckyHit) {
+            CHECK(out.hitLanded == 1,
+                  "ReDMCSB F0231 lucky hit must enter hit/damage branch");
+            CHECK(out.outcome == COMBAT_OUTCOME_HIT_DAMAGE ||
+                      out.outcome == COMBAT_OUTCOME_HIT_NO_DAMAGE,
+                  "lucky hit should not stay a miss");
+            CHECK(out.damageApplied >= 0,
+                  "lucky hit should produce bounded damage result");
+            PASS();
+            return;
+        }
+    }
+
+    FAIL("no deterministic seed reached the F0308 lucky-hit branch");
+}
+
+/* -- Test: F0231 non-material gate short-circuits F0308 -------------- */
+static void test_f0735_non_material_gate_skips_luck(void) {
+    TEST(f0735_non_material_gate_skips_luck);
+
+    for (uint32_t seed = 1; seed < 64; ++seed) {
+        struct CombatantChampionSnapshot_Compat attacker;
+        struct CombatantCreatureSnapshot_Compat defender;
+        struct WeaponProfile_Compat weapon;
+        struct CombatResult_Compat out;
+        struct RngState_Compat rng;
+
+        memset(&attacker, 0, sizeof(attacker));
+        memset(&defender, 0, sizeof(defender));
+        memset(&weapon, 0, sizeof(weapon));
+        memset(&out, 0, sizeof(out));
+        CHECK(F0730_COMBAT_RngInit_Compat(&rng, seed) == 1,
+              "rng init should accept seed");
+
+        attacker.championIndex = 0;
+        attacker.currentHealth = 100;
+        attacker.dexterity = 0;
+        attacker.strengthActionHand = 100;
+        attacker.skillLevelAction = 0;
+        attacker.statisticLuck = 80;
+        attacker.statisticLuckMax = 100;
+        attacker.statisticLuckMin = 0;
+
+        defender.creatureType = CREATURE_TYPE_GHOST;
+        defender.defense = 0;
+        defender.dexterity = 80;
+        defender.attributes = CREATURE_ATTR_MASK_NON_MATERIAL;
+        defender.doubledMapDifficulty = 30;
+        defender.healthBefore = 200;
+
+        weapon.hitProbability = 0;
+        weapon.damageFactor = 32;
+
+        CHECK(F0735_COMBAT_ResolveChampionMelee_Compat(
+                  &attacker, &weapon, &defender, &rng, &out) == 1,
+              "F0735 should resolve bounded non-material fixture");
+        CHECK(out.luckyHit == 0,
+              "ordinary attack against non-material target must not call F0308");
+        CHECK(out.rngCallCount == 0,
+              "non-material short-circuit must not consume F0231 hit RNG");
+        CHECK(attacker.statisticLuck == 80,
+              "non-material short-circuit should leave luck unchanged");
+        CHECK(out.hitLanded == 0 && out.outcome == COMBAT_OUTCOME_MISS,
+              "non-material short-circuit should remain a miss");
+    }
+
+    PASS();
+}
+
+/* -- Test: F0231 dexterity 255 skips the hit branch ------------------ */
+static void test_f0735_dexterity_255_skips_hit_branch(void) {
+    TEST(f0735_dexterity_255_skips_hit_branch);
+
+    for (uint32_t seed = 1; seed < 64; ++seed) {
+        struct CombatantChampionSnapshot_Compat attacker;
+        struct CombatantCreatureSnapshot_Compat defender;
+        struct WeaponProfile_Compat weapon;
+        struct CombatResult_Compat out;
+        struct RngState_Compat rng;
+
+        memset(&attacker, 0, sizeof(attacker));
+        memset(&defender, 0, sizeof(defender));
+        memset(&weapon, 0, sizeof(weapon));
+        memset(&out, 0, sizeof(out));
+        CHECK(F0730_COMBAT_RngInit_Compat(&rng, seed) == 1,
+              "rng init should accept seed");
+
+        attacker.championIndex = 0;
+        attacker.currentHealth = 100;
+        attacker.dexterity = 255;
+        attacker.strengthActionHand = 100;
+        attacker.skillLevelAction = 12;
+        attacker.statisticLuck = 80;
+        attacker.statisticLuckMax = 100;
+        attacker.statisticLuckMin = 0;
+
+        defender.creatureType = CREATURE_TYPE_GIANT_SCORPION;
+        defender.defense = 0;
+        defender.dexterity = 255;
+        defender.attributes = 0;
+        defender.doubledMapDifficulty = 0;
+        defender.healthBefore = 200;
+
+        weapon.hitProbability = 0x80FF;
+        weapon.damageFactor = 32;
+
+        CHECK(F0735_COMBAT_ResolveChampionMelee_Compat(
+                  &attacker, &weapon, &defender, &rng, &out) == 1,
+              "F0735 should resolve bounded dexterity-255 fixture");
+        CHECK(out.rngCallCount == 0,
+              "CreatureInfo->Dexterity 255 should skip F0231 hit RNG");
+        CHECK(out.luckyHit == 0,
+              "CreatureInfo->Dexterity 255 should skip F0308");
+        CHECK(attacker.statisticLuck == 80,
+              "CreatureInfo->Dexterity 255 should leave luck unchanged");
+        CHECK(out.hitLanded == 0 && out.damageApplied == 0 &&
+                  out.outcome == COMBAT_OUTCOME_MISS,
+              "CreatureInfo->Dexterity 255 should fall through as a miss");
     }
 
     PASS();

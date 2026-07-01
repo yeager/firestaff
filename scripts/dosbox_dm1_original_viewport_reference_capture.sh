@@ -23,6 +23,7 @@ WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM1_ORIGINAL_ROUTE_EVENTS:-}"
 EXPECTED_SHOTS="${DM1_ORIGINAL_EXPECTED_SHOTS:-6}"
+SCREENSHOT_HOTKEY="${DM1_DOSBOX_SCREENSHOT_HOTKEY:-cmd-f5}"
 case "${EXPECTED_SHOTS}" in
     single|single-row|single-transcript-row|pass625|pass626) EXPECTED_SHOTS_COUNT=1 ;;
     ''|*[!0-9]*)
@@ -48,6 +49,7 @@ KEY_LOG="${OUT_DIR}/original-viewpoint-route-keys.log"
 SHOT_LABEL_MANIFEST="${OUT_DIR}/original_viewport_shot_labels.tsv"
 RAW_MANIFEST="${OUT_DIR}/raw_manifest.tsv"
 RAW_HEALTH_MANIFEST="${OUT_DIR}/raw_frame_health.json"
+ROUTE_PLAN_MANIFEST="${OUT_DIR}/original_viewport_route_plan.json"
 CROP_MANIFEST="${OUT_DIR}/original_viewport_224x136_manifest.tsv"
 CROP_DIR="${OUT_DIR}/viewport_224x136"
 SIZE_LOG="${OUT_DIR}/artifact-sizes.txt"
@@ -55,7 +57,7 @@ PASS513_SCAFFOLD="${OUT_DIR}/pass513_i34e_route_key_transcript_scaffold.json"
 
 usage() {
     cat <<EOF
-Usage: scripts/dosbox_dm1_original_viewport_reference_capture.sh [--prepare|--dry-run|--preflight-route|--run|--normalize-only|--print-pass94-diagnostic]
+Usage: scripts/dosbox_dm1_original_viewport_reference_capture.sh [--prepare|--dry-run|--preflight-route|--run|--normalize-only|--print-pass94-diagnostic|--print-pass435-hoc-route]
 
 Modes:
   --prepare                  write DOSBox config and Swift key helper only (default)
@@ -64,6 +66,7 @@ Modes:
   --run                      launch DOSBox, post an explicit route, capture raw frames, normalize crops
   --normalize-only           crop/hash existing image*.png raw screenshots in OUT_DIR
   --print-pass94-diagnostic  print the pass94 entrance-click diagnostic command and audit expectations
+  --print-pass435-hoc-route  print the current pass435 Hall-of-Champions route candidate
 
 Required for --run:
   DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot:party_hud right wait:300 shot up wait:300 shot:spell_panel ...'
@@ -107,6 +110,10 @@ Optional environment:
                     for the legacy pass70 overlay route; this matches the
                     raw_manifest health gate and the pass84 classifier
                     nonDuplicate expectation.
+  DM1_DOSBOX_SCREENSHOT_HOTKEY=cmd-f5
+                    macOS Swift route injector screenshot accelerator. Use
+                    ctrl-f5 for CLI DOSBox Staging builds whose mapper does not
+                    respond to Cmd+F5. Linux/xdotool uses Ctrl+F5.
   click:<x>,<y>    posts one serialized left-click in original 320x200 game
                     coordinates. Use waits around clicks; ReDMCSB BUG0_73 shows
                     mixed mouse/keyboard commands can be lost when packed tightly.
@@ -139,6 +146,7 @@ while [[ $# -gt 0 ]]; do
         --run) mode="run"; shift ;;
         --normalize-only) mode="normalize-only"; shift ;;
         --print-pass94-diagnostic) mode="print-pass94-diagnostic"; shift ;;
+        --print-pass435-hoc-route) mode="print-pass435-hoc-route"; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "unknown arg: $1" >&2; usage >&2; exit 2 ;;
     esac
@@ -176,6 +184,41 @@ python3 tools/pass80_original_frame_classifier.py \\
 # Failure signal to preserve as a blocker, not promote:
 #   after_enter_click == entrance_menu means click:260,50 did not leave the menu.
 #   wall_closeup/title_or_menu/non_graphics_blocker in shots 04-06 means the movement probe is not usable gameplay evidence.
+EOF
+}
+
+print_pass435_hoc_route() {
+    cat <<EOF
+# Pass435 DM1 original Hall-of-Champions route candidate.
+# This route is now a reproducible diagnostic, not a current promotion route.
+# Local 2026-06-30 runs captured clean frames but did not prove party control;
+# next work should instrument C080/F0377/F0372/F0280 before more overlay shots.
+# Source-lock route: entrance -> C127/F0280 portrait click -> C160 resurrect
+# -> confirm -> party/spell/inventory six-shot route.
+
+OUT_DIR=\$PWD/verification-screens/pass376-original-route \\
+DM1_ORIGINAL_STAGE_DIR=\$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \\
+DOSBOX=/usr/bin/dosbox \\
+DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\
+DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\
+WAIT_BEFORE_INPUT_MS=3000 \\
+NEW_FILE_TIMEOUT_MS=6000 \\
+DM1_ORIGINAL_EXPECTED_SHOTS=6 \\
+DM1_ORIGINAL_ROUTE_EVENTS='wait:9000 enter wait:2500 click:111,82 wait:1400 click:130,115 wait:1200 enter wait:2200 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel' \\
+xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
+
+python3 tools/pass86_original_viewport_crop_manifest.py \\
+  verification-screens/pass376-original-route \\
+  --out-dir verification-screens/pass376-original-dm1-viewports
+python3 tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py
+
+# Expected pass435 raw classes:
+#   dungeon_gameplay, dungeon_gameplay, dungeon_gameplay,
+#   spell_panel, dungeon_gameplay, inventory
+#
+# If this still collapses to 48ed3743ab6a/no-party frames, the next fix is not
+# a new six-shot overlay route. Instrument the C080/F0377/F0280 gate from
+# parity-evidence/verification/pass162_c080_queue_trace/ first.
 EOF
 }
 
@@ -270,6 +313,70 @@ if diagnostic_hits:
 PY
 }
 
+write_route_plan_manifest() {
+    local injector="${1:-unknown}"
+    if [[ -z "${ROUTE_EVENTS}" ]]; then
+        return 0
+    fi
+    mkdir -p "${OUT_DIR}"
+    python3 - "${ROUTE_EVENTS}" "${EXPECTED_SHOTS}" "${injector}" "${SCREENSHOT_HOTKEY}" "${ROUTE_PLAN_MANIFEST}" <<'PY'
+from __future__ import annotations
+import json
+import re
+import sys
+from pathlib import Path
+
+route = sys.argv[1].split()
+expected_raw = sys.argv[2].strip().lower()
+expected = 1 if expected_raw in {"single", "single-row", "single-transcript-row", "pass625", "pass626"} else int(expected_raw)
+injector = sys.argv[3]
+screenshot_hotkey = sys.argv[4]
+out = Path(sys.argv[5])
+
+rows = []
+total_wait_ms = 0
+shot_labels = []
+for idx, token in enumerate(route, 1):
+    low = token.lower()
+    kind = "key"
+    detail = low
+    if low in {"shot", "capture", "screenshot"}:
+        kind = "shot"
+        detail = ""
+        shot_labels.append("")
+    elif low.startswith("shot:"):
+        kind = "shot"
+        detail = low.split(":", 1)[1]
+        shot_labels.append(detail)
+    elif low.startswith("wait:"):
+        kind = "wait"
+        detail = low.split(":", 1)[1]
+        total_wait_ms += int(detail)
+    elif low.startswith("click:") or low.startswith("rclick:"):
+        kind = "click"
+    rows.append({"index": idx, "token": token, "kind": kind, "detail": detail})
+
+payload = {
+    "schema": "dm1_original_route_plan.v1",
+    "honesty": "Route injector plan only. This does not launch DOSBox or claim runtime semantics.",
+    "injector": injector,
+    "screenshotHotkey": screenshot_hotkey,
+    "tokenCount": len(route),
+    "expectedShots": expected,
+    "shotCount": len(shot_labels),
+    "shotLabels": shot_labels,
+    "totalWaitMs": total_wait_ms,
+    "tokens": rows,
+    "pass": len(shot_labels) == expected and all(
+        (label == "" or re.fullmatch(r"[a-z0-9][a-z0-9_-]*", label))
+        for label in shot_labels
+    ),
+}
+out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+print(f"[pass-70] wrote route plan: {out}")
+PY
+}
+
 select_route_injector() {
     local uname_s
     local swift_path
@@ -284,6 +391,23 @@ select_route_injector() {
         return 0
     fi
     return 1
+}
+
+focus_dosbox_for_route() {
+    local pid="${1:-}"
+    if [[ "$(uname -s 2>/dev/null || true)" != "Darwin" ]]; then
+        return 0
+    fi
+    if ! command -v osascript >/dev/null 2>&1; then
+        return 0
+    fi
+
+    # Best-effort focus only. The evidence gate remains the raw screenshot
+    # count/health check below, not the fact that macOS accepted activation.
+    osascript -e 'tell application "DOSBox Staging" to activate' >/dev/null 2>&1 || true
+    if [[ -n "${pid}" ]]; then
+        osascript -e 'tell application "System Events" to set frontmost of first process whose unix id is '"${pid}"' to true' >/dev/null 2>&1 || true
+    fi
 }
 
 preflight_route() {
@@ -305,6 +429,7 @@ preflight_route() {
     fi
 
     echo "[pass-70] selected route injector: ${injector}"
+    write_route_plan_manifest "${injector}"
     echo "[pass-70] route preflight OK"
 }
 
@@ -363,6 +488,7 @@ guard let pid = pid_t(CommandLine.arguments[1]) else {
 let route = CommandLine.arguments[2].split(separator: " ").map(String.init)
 let skipStartupSelector = CommandLine.arguments[3] == "1"
 let source = CGEventSource(stateID: .hidSystemState)
+let screenshotHotkey = ProcessInfo.processInfo.environment["DM1_DOSBOX_SCREENSHOT_HOTKEY"]?.lowercased() ?? "cmd-f5"
 
 let keycodes: [String: CGKeyCode] = [
     "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9,
@@ -390,13 +516,23 @@ func tap(_ key: CGKeyCode, _ delayUs: useconds_t = 120_000) {
     usleep(delayUs)
 }
 func cmdF5() {
-    post(55, true, flags: .maskCommand)   // Command
+    let modifierKey: CGKeyCode
+    let modifierFlags: CGEventFlags
+    if screenshotHotkey == "ctrl-f5" || screenshotHotkey == "control-f5" {
+        modifierKey = 59                    // Control
+        modifierFlags = .maskControl
+    } else {
+        modifierKey = 55                    // Command
+        modifierFlags = .maskCommand
+    }
+    print("screenshot-hotkey \(screenshotHotkey)")
+    post(modifierKey, true, flags: modifierFlags)
     usleep(20_000)
-    post(96, true, flags: .maskCommand)   // F5
+    post(96, true, flags: modifierFlags)   // F5
     usleep(20_000)
-    post(96, false, flags: .maskCommand)
+    post(96, false, flags: modifierFlags)
     usleep(20_000)
-    post(55, false)
+    post(modifierKey, false)
     usleep(180_000)
 }
 
@@ -463,7 +599,8 @@ if !skipStartupSelector {
 
 for token in route {
     let lowerToken = token.lowercased()
-    print("route-token \(token)")
+    let started = Date().timeIntervalSince1970
+    print("route-token-start \(token) \(started)")
     if lowerToken == "shot" || lowerToken == "capture" || lowerToken == "screenshot" || lowerToken.hasPrefix("shot:") {
         cmdF5()
     } else if lowerToken.hasPrefix("wait:") {
@@ -488,7 +625,10 @@ for token in route {
         fputs("unknown route token: \(token)\n", stderr)
         exit(2)
     }
+    let finished = Date().timeIntervalSince1970
+    print("route-token-done \(token) \(finished)")
 }
+print("route-complete \(Date().timeIntervalSince1970)")
 SWIFT
     cat > "${KEY_HELPER_XDOTOOL}" <<'SH'
 #!/usr/bin/env bash
@@ -606,7 +746,11 @@ fi
 
 for token in $route_events; do
     low="${token,,}"
-    echo "route-token $token"
+    echo "route-token-start $token $(python3 - <<'PY'
+import time
+print(f"{time.time():.6f}")
+PY
+)"
     case "$low" in
         shot|capture|screenshot|shot:*) shot ;;
         wait:*) sleep "$(python3 - "$low" <<'PY'
@@ -629,7 +773,17 @@ PY
             tap_key "$key"
             ;;
     esac
+    echo "route-token-done $token $(python3 - <<'PY'
+import time
+print(f"{time.time():.6f}")
+PY
+)"
 done
+echo "route-complete $(python3 - <<'PY'
+import time
+print(f"{time.time():.6f}")
+PY
+)"
 SH
     chmod +x "${KEY_HELPER_XDOTOOL}"
     echo "[pass-70] wrote ${CONF}"
@@ -934,6 +1088,10 @@ case "$mode" in
         print_pass94_diagnostic
         exit 0
         ;;
+    print-pass435-hoc-route)
+        print_pass435_hoc_route
+        exit 0
+        ;;
     prepare)
         need_stage
         write_helpers
@@ -950,6 +1108,7 @@ case "$mode" in
         else
             echo "[pass-70] route events: ${ROUTE_EVENTS}"
             validate_route_shape
+            write_route_plan_manifest "dry-run"
         fi
         echo "[pass-70] normalize command after raw screenshots exist: scripts/dosbox_dm1_original_viewport_reference_capture.sh --normalize-only"
         echo "[pass-70] normalize-only now writes ${RAW_HEALTH_MANIFEST} and fails black/blank rawshots before cropping"
@@ -989,6 +1148,7 @@ case "$mode" in
             echo "ERROR: no supported route injector found; install Swift on macOS or xdotool on X11/Linux" >&2
             exit 6
         fi
+        write_route_plan_manifest "$injector"
         rm -f "${LOG}" "${PID_FILE}" "${KEY_LOG}" "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" "${CROP_MANIFEST}" "${SIZE_LOG}"
         # DOSBox 0.74 names screenshots after the active program/window
         # (selector_NNN.png, fires_NNN.png) instead of imageNNNN.png.  Remove
@@ -998,6 +1158,7 @@ case "$mode" in
         "$DOSBOX" -conf "$CONF" >"$LOG" 2>&1 &
         pid=$!
         echo "$pid" > "$PID_FILE"
+        focus_dosbox_for_route "$pid"
         cleanup() {
             osascript -e 'tell application "DOSBox Staging" to quit' >/dev/null 2>&1 || true
             kill "$pid" >/dev/null 2>&1 || true
@@ -1007,15 +1168,24 @@ case "$mode" in
 print(${WAIT_BEFORE_INPUT_MS}/1000)
 PY
 )"
-        "${route_injector[@]}" "$pid" "$ROUTE_EVENTS" "$SKIP_STARTUP_SELECTOR" >"$KEY_LOG" 2>&1
-        python3 - "$OUT_DIR" "$NEW_FILE_TIMEOUT_MS" <<'PY'
+        focus_dosbox_for_route "$pid"
+        if ! "${route_injector[@]}" "$pid" "$ROUTE_EVENTS" "$SKIP_STARTUP_SELECTOR" >"$KEY_LOG" 2>&1; then
+            echo "ERROR: route injector failed; see ${KEY_LOG}" >&2
+            tail -40 "$KEY_LOG" >&2 || true
+            exit 8
+        fi
+        python3 - "$OUT_DIR" "$NEW_FILE_TIMEOUT_MS" "$EXPECTED_SHOTS" <<'PY'
 from pathlib import Path
 import sys, time
 out = Path(sys.argv[1])
 timeout = int(sys.argv[2]) / 1000.0
+expected_raw = sys.argv[3].strip().lower()
+expected = 1 if expected_raw in {"single", "single-row", "single-transcript-row", "pass625", "pass626"} else int(expected_raw)
 start = time.monotonic()
 while time.monotonic() - start < timeout:
-    if len(list(out.glob("image*.png"))) >= 6:
+    image_count = len(list(out.glob("image*.png")))
+    fallback_count = len([p for p in out.glob("*.png") if p.parent == out and not p.name.startswith("image")])
+    if image_count >= expected or fallback_count >= expected:
         break
     time.sleep(0.025)
 PY

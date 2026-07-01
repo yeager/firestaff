@@ -5,7 +5,7 @@
   "criteria": [
     {
       "id": "reference_inventory",
-      "score": 8,
+      "score": 9,
       "status": "SOURCE_LOCKED_PARTIAL"
     },
     {
@@ -20,23 +20,23 @@
     },
     {
       "id": "core_input_movement",
-      "score": 0,
-      "status": "BLOCKED_RUNTIME"
+      "score": 5,
+      "status": "RUNTIME_SLICE_VERIFIED_PARTIAL"
     },
     {
       "id": "viewport_ui_render",
-      "score": 0,
-      "status": "BLOCKED_CAPTURE"
+      "score": 7,
+      "status": "SOURCE_SLICE_VERIFIED_PARTIAL"
     },
     {
       "id": "gameplay_systems",
-      "score": 0,
-      "status": "BLOCKED_RUNTIME"
+      "score": 4,
+      "status": "RUNTIME_SLICE_VERIFIED_PARTIAL"
     },
     {
       "id": "audio_timing",
-      "score": 0,
-      "status": "BLOCKED_RUNTIME"
+      "score": 2,
+      "status": "DATA_DECODE_VERIFIED_PARTIAL"
     },
     {
       "id": "original_overlay_regression",
@@ -44,6 +44,32 @@
       "status": "BLOCKED_CAPTURE"
     }
   ],
+  "runtime_spine": {
+    "cmake_targets": [
+      "firestaff_csb_v1_pc_real_asset_launch_probe",
+      "firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe",
+      "firestaff_csb_v1_first_viewport_frame_probe",
+      "test_csb_v1_boot_runtime_handoff",
+      "test_csb_v1_runtime_route_first_frame_movement_utility_gate"
+    ],
+    "ctest_names": [
+      "csb_v1_pc_real_asset_launch",
+      "csb_v1_pc34_quickplay_dungeon_handle",
+      "csb_v1_first_viewport_frame",
+      "csb_v1_boot_runtime_handoff",
+      "csb_v1_runtime_route_first_frame_movement_utility_gate"
+    ],
+    "test_paths": [
+      "tests/test_csb_v1_boot_runtime_handoff.c",
+      "tests/test_csb_v1_runtime_route_first_frame_movement_utility_gate.c"
+    ],
+    "pass": true,
+    "missing_cmake_needles": [],
+    "forbidden_cmake_needles": [],
+    "missing_test_needles": [],
+    "missing_route_test_needles": [],
+    "non_claim": "Fast PC/synthetic boot/runtime/viewport/one-move route gate plus bounded save-prefix roundtrip only; not full CSB playability, original capture, full save compatibility, or pixel parity."
+  },
   "source_anchors": [
     {
       "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
@@ -343,7 +369,15 @@
     "target": "CSB V1",
     "current_percent": 43,
     "launch_smoke_score": 6,
-    "launch_smoke_status": "RUNTIME_BOUNDARY_VERIFIED_PARTIAL"
+    "launch_smoke_status": "RUNTIME_BOUNDARY_VERIFIED_PARTIAL",
+    "core_input_movement_score": 5,
+    "core_input_movement_status": "RUNTIME_SLICE_VERIFIED_PARTIAL",
+    "gameplay_systems_score": 4,
+    "gameplay_systems_status": "RUNTIME_SLICE_VERIFIED_PARTIAL",
+    "viewport_ui_render_score": 7,
+    "viewport_ui_render_status": "SOURCE_SLICE_VERIFIED_PARTIAL",
+    "audio_timing_score": 2,
+    "audio_timing_status": "DATA_DECODE_VERIFIED_PARTIAL"
   },
   "non_claims": [
     "No full CSB runtime, render, gameplay, save compatibility, or pixel parity is claimed by this matrix.",

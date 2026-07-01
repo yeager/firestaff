@@ -1,0 +1,712 @@
+[
+  {
+    "executable": "/var/folders/wj/49wt6tlx6tv03465_pt82dmr0000gn/T/firestaff-pass162-live-hoc-e2jzn2m8/pass162_route_cgevent",
+    "output": "",
+    "returncode": 0,
+    "t": 1782841915.779264,
+    "tool": "swiftc"
+  },
+  {
+    "cmd": "BPDEL *",
+    "excerpt": "...\nB_...\nP_...\nD_...\nE_...L_... _...*_LOG: DEBUG: Breakpoints deleted.\n...\n_       ",
+    "t": 1782841920.065184
+  },
+  {
+    "cmd": "BP 22F4:030D",
+    "excerpt": "...\nB_...\nP_...\n _...\n2_...2_...F_...4_...:_...0_...3_...0_...D_LOG: DEBUG: Set breakpoint at 22F4:030D\n...\n_",
+    "t": 1782841920.719448
+  },
+  {
+    "cmd": "BP 22F4:0699",
+    "excerpt": "...\nB_...\nP_...\n _...\n2_...2_...F_...4_...:_...0_...6_...9_...9_LOG: DEBUG: Set breakpoint at 22F4:0699\n...\n_",
+    "t": 1782841921.372361
+  },
+  {
+    "cmd": "BP 1E44:02FE",
+    "excerpt": "...\nB_...\nP_...\n _...\n1_...E_...4_...4_...:_...0_...2_...F_...E_LOG: DEBUG: Set breakpoint at 1E44:02FE\n...\n_",
+    "t": 1782841922.0157812
+  },
+  {
+    "cmd": "BP 1859:1405",
+    "excerpt": "...\nB_...\nP_...\n _...\n1_...8_...5_...9_...:_...1_...4_...0_...5_LOG: DEBUG: Set breakpoint at 1859:1405\n...\n_",
+    "t": 1782841922.625803
+  },
+  {
+    "cmd": "BP 1782:0031",
+    "excerpt": "...\nB_...\nP_...\n _...\n1_...7_...8_...2_...:_...0_...0_...3_...1_LOG: DEBUG: Set breakpoint at 1782:0031\n...\n_",
+    "t": 1782841923.230305
+  },
+  {
+    "cmd": "BPM 2C20:3E7A",
+    "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...E_...7_...A_LOG: DEBUG: Set memory breakpoint at 2C20:3E7A\n...\n_",
+    "t": 1782841923.872111
+  },
+  {
+    "cmd": "BPM 2C20:3EC8",
+    "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...E_...C_...8_LOG: DEBUG: Set memory breakpoint at 2C20:3EC8\n...\n_",
+    "t": 1782841924.4749491
+  },
+  {
+    "cmd": "BPM 2C20:1F08",
+    "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...1_...F_...0_...8_LOG: DEBUG: Set memory breakpoint at 2C20:1F08\n...\n_",
+    "t": 1782841925.078689
+  },
+  {
+    "cmd": "BPM 2C20:1F0A",
+    "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...1_...F_...0_...A_LOG: DEBUG: Set memory breakpoint at 2C20:1F0A\n...\n_",
+    "t": 1782841925.7302132
+  },
+  {
+    "cmd": "BPM 2C20:3EC6",
+    "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...E_...C_...6_LOG: DEBUG: Set memory breakpoint at 2C20:3EC6\n...\n_",
+    "t": 1782841926.336659
+  },
+  {
+    "cmd": "BPM 2C20:3C94",
+    "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...C_...9_...4_LOG: DEBUG: Set memory breakpoint at 2C20:3C94\n...\n_",
+    "t": 1782841926.9940321
+  },
+  {
+    "cmd": "BPM 2C20:3CE0",
+    "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...C_...E_...0_LOG: DEBUG: Set memory breakpoint at 2C20:3CE0\n...\n_",
+    "t": 1782841927.646776
+  },
+  {
+    "cmd": "BPM 2C20:3C92",
+    "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...C_...9_...2_LOG: DEBUG: Set memory breakpoint at 2C20:3C92\n...\n_",
+    "t": 1782841928.2914371
+  },
+  {
+    "cmd": "BPM 2C20:3D52",
+    "excerpt": "...\nB_...\nP_...\nM_...\n _...2_...C_...2_...0_...:_...3_...D_...5_...2_LOG: DEBUG: Set memory breakpoint at 2C20:3D52\n...\n_",
+    "t": 1782841928.8978078
+  },
+  {
+    "cmd": "BPLIST",
+    "excerpt": "...\nB_...\nP_...\nL_...\nI_...S_...T_LOG: Breakpoint list:\nLOG: -------------------------------------------------------------------------\nLOG: 00. BPMEM 2C20:3D52 (00)\nLOG: 01. BPMEM 2C20:3C92 (00)\nLOG: 02. BPMEM 2C20:3CE0 (00)\nLOG: 03. BPMEM 2C20:3C94 (00)\nLOG: 04. BPMEM 2C20:3EC6 (00)\nLOG: 05. BPMEM 2C20:1F0A (00)\nLOG: 06. BPMEM 2C20:1F08 (00)\nLOG: 07. BPMEM 2C20:3EC8 (00)\nLOG: 08. BPMEM 2C20:3E7A (00)\nLOG: 09. BP 1782:0031\nLOG: 0A. BP 1859:1405\nLOG: 0B. BP 1E44:02FE\nLOG: 0C. BP 22F4:0699\nLOG: 0D. BP 22F4:030D\n\n_      ",
+    "t": 1782841929.540639
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "...\nC_...\nP_...\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00000002 [vm=0 iopl=0 nt=0]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=00000000 limit=00000000*1\nLOG: LDT selector=0000, base=00000000 limit=00000000*1\n\n_   ",
+    "t": 1782841930.173524
+  },
+  {
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "run after arming pass162 C080 BP/BPM packet",
+    "t": 1782841930.224106
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007A83 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841939.773366
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841940.3811781
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841940.4355478
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007A83 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841941.390493
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841942.001558
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841942.056649
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007A83 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841943.014388
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841943.669591
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841943.7226298
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007A83 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841944.6844
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841945.299021
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841945.351457
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007A83 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841946.316555
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841946.973221
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841947.028318
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007A83 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841948.001753
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841948.623638
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841948.678806
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007A83 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841949.636307
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841950.2478578
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841950.298236
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007A83 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841951.2611399
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841951.8645241
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841951.919487
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007A83 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841952.878876
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841953.493346
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841953.544136
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007206 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841955.128756
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841955.7758532
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841955.831071
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007212 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841956.790058
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841957.392641
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841957.44743
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007203 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841958.390081
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841958.997735
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841959.0500631
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007A83 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841960.016167
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841960.6316988
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841960.682935
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007297 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841961.638769
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841962.250068
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841962.305163
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007213 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841963.273418
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841963.884562
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841963.939046
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007202 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841964.885074
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841965.507286
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841965.562391
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\nP_\nU_LOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007217 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0DED limit=000000FD*1\nLOG: LDT selector=0000, base=000E0DED limit=000000FD*1\n\n_   ",
+    "t": 1782841966.51958
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\nE_\nM_\nD_U_M_P_ _2_C_2_0_:_3_E_7_A_ _9_6_LOG: DEBUG: Memory dump success.\n\n_",
+    "t": 1782841967.133465
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841967.185788
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007683 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841974.256804
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841974.879274
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841974.930809
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007683 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841975.880822
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841976.491013
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841976.543027
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007683 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841977.497018
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841978.1059468
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841978.160723
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007683 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841979.1194298
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841979.7282171
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841979.783285
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007683 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841980.740164
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841981.343233
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841981.394411
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007683 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841982.365132
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841982.987572
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841983.0427039
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007683 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841983.9931881
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841984.6151419
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841984.6702259
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007683 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841985.6470442
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841986.256854
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841986.3119411
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007683 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841987.287262
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841987.9040189
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841987.958963
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007206 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841989.258467
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841989.9142761
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841989.966582
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007202 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841990.930017
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841991.5542212
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841991.607816
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007202 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841992.5710459
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841993.1772301
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841993.232448
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007202 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841994.190123
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841994.8073668
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841994.859591
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007202 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841995.8331058
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841996.460861
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841996.5155132
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007206 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841997.475584
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841998.088427
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841998.143594
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007206 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782841999.1105988
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782841999.7168279
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782841999.7708921
+  },
+  {
+    "cmd": "CPU",
+    "excerpt": "\nC_\n\nP_\n\nU_\nLOG: cr0:00000010 cr2:00000000 cr3:00000000  cpl=0\nLOG: eflags:00007206 [vm=0 iopl=3 nt=1]\nLOG: GDT base=00000000 limit=0000FFFF\nLOG: IDT base=00000000 limit=000003FF\nLOG: TR selector=0000, base=000E0A59 limit=000000FD*1\nLOG: LDT selector=0000, base=000E0A59 limit=000000FD*1\n\n_   \n",
+    "t": 1782842000.737322
+  },
+  {
+    "cmd": "MEMDUMP 2C20:3E7A 96",
+    "excerpt": "\nM_\n\nE_\n\nM_\n\nD_\nU_\nM_\nP_\n _\n2_\nC_\n2_\n0_\n:_\n3_\nE_\n7_\nA_\n _\n9_\n6_\nLOG: DEBUG: Memory dump success.\n\n_\n",
+    "t": 1782842001.353757
+  },
+  {
+    "addr": null,
+    "bytes": "ESC O t",
+    "control": "F5",
+    "purpose": "continue after stop",
+    "symbol": null,
+    "t": 1782842001.4057732
+  }
+]

@@ -31,7 +31,8 @@ extern "C" {
 /* ── Save file magic / format constants ────────────────────────── */
 
 #define DM1_SAVE_MAGIC              "FSDM1SV1"   /* 8-byte file magic  */
-#define DM1_SAVE_FORMAT_VERSION     1
+#define DM1_SAVE_FORMAT_VERSION     2
+#define DM1_SAVE_FORMAT_VERSION_MIN 1
 #define DM1_SAVE_HEADER_SIZE        64
 #define DM1_SAVE_MAX_FILE_SIZE      (2 << 20)     /* 2 MiB hard cap     */
 
@@ -65,7 +66,7 @@ enum DM1SaveLoadError {
  *
  * Layout:
  *   [0..7]    magic         "FSDM1SV1"
- *   [8..11]   formatVersion 1
+ *   [8..11]   formatVersion 2
  *   [12..15]  totalFileSize header + world blob
  *   [16..19]  bodyCRC32     CRC32 of bytes [64..EOF)
  *   [20..23]  gameTick      GameWorld.gameTick (= original GameTime)
@@ -154,6 +155,15 @@ int DM1_SaveGameWithProfile(const struct GameWorld_Compat* world,
                             int saveAndPlay,
                             int musicOn,
                             uint32_t bugProfileHash);
+
+/*
+ * Write a ReDMCSB/DM 3.4 PC-shaped save file from the current Firestaff
+ * world. This is the explicit original-format export path; DM1_SaveGame()
+ * remains the Firestaff-native save format used by quicksave/resume.
+ */
+int DM1_SaveGamePC34(const struct GameWorld_Compat* world,
+                     const char* path,
+                     uint32_t gameID);
 
 /*
  * Load game world from file.

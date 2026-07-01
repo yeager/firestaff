@@ -158,8 +158,9 @@ dm1_v1_bitmap_arrow_pointer_run_pc34(
     out->tableMatchesDeclaration = table_matches_declaration;
 
     /* Phase 6: plane0 and plane1 byte-identical length (both 66 bytes). */
-    if (kPlaneBytes != kPlaneBytes) {
-        planes_byte_identical = 0;  /* tautology: both planes have kPlaneBytes bytes. */
+    if (sizeof(s_g0042[0]) != (size_t)kPlaneBytes ||
+        sizeof(s_g0042[1]) != (size_t)kPlaneBytes) {
+        planes_byte_identical = 0;
     } else {
         planes_byte_identical = 1;
     }

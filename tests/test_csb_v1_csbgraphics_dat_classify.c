@@ -15,6 +15,9 @@
  *   - Payload-span handoff: one entry maps to a compressed byte
  *     range via the same LocateNthGraphic(n) offset math, including
  *     zero-length entries and little-endian-marker tables.
+ *   - Bounded payload decode: one entry can be decompressed through
+ *     the existing ReDMCSB-compatible DM1 graphics LZW decoder when
+ *     the declared output size and caller capacity match.
  *   - Diagnostic preservation: max_compressed / max_decompressed
  *     track the largest single entry across the file.
  *   - Source evidence + result-name strings are non-empty so the
@@ -22,13 +25,14 @@
  *
  * Non-claims:
  *   - No real CSBWin "CSBgraphics.dat" is loaded.
- *   - No LZW decompression, no payload decode, no runtime override.
+ *   - No bitmap interpretation, no overlay blit, no runtime override.
  *   - We do not bind the classifier into M11/M12; that remains a
  *     separate CSBWin custom-resource gap (FIRESTAFF_GAP_LIST.md
  *     row C3 / A3, OPEN-LARGE).
  */
 
 #include "csb_v1_csbgraphics_dat_classify.h"
+#include "dm1_v1_graphics_loader_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -115,6 +119,157 @@ static void write_le16(uint8_t *buf, size_t off, uint16_t value)
 {
     buf[off] = (uint8_t)(value & 0xffu);
     buf[off + 1u] = (uint8_t)((value >> 8) & 0xffu);
+}
+
+/* ── Test-side LZW encoder ──────────────────────────────────────── */
+
+typedef struct {
+    uint8_t *buf;
+    size_t cap;
+    size_t bit_pos;
+} BitWriter;
+
+static void bw_init(BitWriter *bw)
+{
+    bw->cap = 1024u;
+    bw->buf = (uint8_t *)calloc(1u, bw->cap);
+    bw->bit_pos = 0u;
+}
+
+static int bw_grow(BitWriter *bw)
+{
+    size_t old_cap = bw->cap;
+    size_t new_cap = bw->cap * 2u;
+    uint8_t *new_buf = (uint8_t *)realloc(bw->buf, new_cap);
+    if (!new_buf) {
+        free(bw->buf);
+        bw->buf = NULL;
+        bw->cap = 0u;
+        return 0;
+    }
+    memset(new_buf + old_cap, 0, new_cap - old_cap);
+    bw->buf = new_buf;
+    bw->cap = new_cap;
+    return 1;
+}
+
+static int bw_write_bits(BitWriter *bw, uint32_t value, int n_bits)
+{
+    int i;
+    for (i = 0; i < n_bits; ++i) {
+        size_t bp = bw->bit_pos++;
+        size_t byte_idx;
+        int bit_in_byte;
+        if ((bp >> 3) >= bw->cap && !bw_grow(bw)) {
+            return 0;
+        }
+        byte_idx = bp >> 3;
+        bit_in_byte = (int)(bp & 7u);
+        if (value & (1u << (uint32_t)i)) {
+            bw->buf[byte_idx] |= (uint8_t)(1u << (uint32_t)bit_in_byte);
+        }
+    }
+    return 1;
+}
+
+typedef struct {
+    uint8_t dict_first[4096];
+    uint16_t dict_prefix[4096];
+    int dict_count;
+    int code_bits;
+} RefLZW;
+
+static void ref_lzw_init(RefLZW *e)
+{
+    int i;
+    e->dict_count = DM1_GFX_LZW_FIRST_CODE;
+    e->code_bits = 9;
+    for (i = 0; i < 256; ++i) {
+        e->dict_first[i] = (uint8_t)i;
+        e->dict_prefix[i] = 0xffffu;
+    }
+}
+
+static int ref_lzw_find_or_add(RefLZW *e, uint16_t prefix, uint8_t append)
+{
+    int i;
+    for (i = DM1_GFX_LZW_FIRST_CODE; i < e->dict_count; ++i) {
+        if (e->dict_prefix[i] == prefix && e->dict_first[i] == append) {
+            return i;
+        }
+    }
+    if (e->dict_count >= DM1_GFX_LZW_MAX_CODE) {
+        return -1;
+    }
+    e->dict_prefix[e->dict_count] = prefix;
+    e->dict_first[e->dict_count] = append;
+    ++e->dict_count;
+    return -1;
+}
+
+static void ref_lzw_maybe_grow(RefLZW *e)
+{
+    if (e->dict_count > ((1 << e->code_bits) - 1) && e->code_bits < 12) {
+        ++e->code_bits;
+    }
+}
+
+static int ref_lzw_encode(const uint8_t *input, size_t in_size,
+                          uint8_t **out_buf, size_t *out_size)
+{
+    BitWriter bw;
+    RefLZW e;
+    uint16_t prefix_code;
+    size_t i;
+
+    if (!input || !out_buf || !out_size) {
+        return -1;
+    }
+    *out_buf = NULL;
+    *out_size = 0u;
+
+    bw_init(&bw);
+    if (!bw.buf) {
+        return -1;
+    }
+    ref_lzw_init(&e);
+
+    if (!bw_write_bits(&bw, DM1_GFX_LZW_CLEAR_CODE, e.code_bits)) {
+        return -1;
+    }
+    if (in_size == 0u) {
+        if (!bw_write_bits(&bw, DM1_GFX_LZW_END_CODE, e.code_bits)) {
+            return -1;
+        }
+        *out_buf = bw.buf;
+        *out_size = (bw.bit_pos + 7u) / 8u;
+        return 0;
+    }
+
+    prefix_code = input[0];
+    for (i = 1u; i < in_size; ++i) {
+        uint8_t next_byte = input[i];
+        int existing = ref_lzw_find_or_add(&e, prefix_code, next_byte);
+        if (existing >= 0) {
+            prefix_code = (uint16_t)existing;
+        } else {
+            if (!bw_write_bits(&bw, prefix_code, e.code_bits)) {
+                return -1;
+            }
+            ref_lzw_maybe_grow(&e);
+            prefix_code = next_byte;
+        }
+    }
+    if (!bw_write_bits(&bw, prefix_code, e.code_bits)) {
+        return -1;
+    }
+    if (!bw_write_bits(&bw, DM1_GFX_LZW_END_CODE, e.code_bits)) {
+        return -1;
+    }
+
+    *out_buf = bw.buf;
+    *out_size = (bw.bit_pos + 7u) / 8u;
+    return 0;
 }
 
 /* ── Tests ──────────────────────────────────────────────────────── */
@@ -395,6 +550,119 @@ static int test_entry_span_argument_rejected(void)
     return 1;
 }
 
+static int test_decode_entry_big_endian_lzw_round_trip(void)
+{
+    static const uint8_t input[] = "CSBGRAPHICS_PAYLOAD";
+    uint8_t *compressed = NULL;
+    size_t compressed_size = 0u;
+    size_t size = 0u;
+    uint8_t *buf;
+    CSB_V1_CSBGraphicsIndex idx;
+    uint8_t out[64];
+    size_t written = 999u;
+    int rc;
+
+    rc = ref_lzw_encode(input, sizeof(input) - 1u,
+                        &compressed, &compressed_size);
+    ASSERT_TRUE(rc == 0);
+    ASSERT_TRUE(compressed != NULL);
+    ASSERT_TRUE(compressed_size > 0u);
+    ASSERT_TRUE(compressed_size <= 0xffffu);
+
+    buf = build_big_endian(3u, 0u, 0u, &size);
+    ASSERT_TRUE(buf != NULL);
+    write_be16(buf, 2u + 2u, (uint16_t)compressed_size);
+    write_be16(buf, 8u + 2u, (uint16_t)(sizeof(input) - 1u));
+
+    memset(&idx, 0, sizeof(idx));
+    rc = csb_v1_csbgraphics_dat_classify(buf, size, &idx);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    memcpy(buf + (size_t)idx.payload_offset, compressed, compressed_size);
+
+    memset(out, 0, sizeof(out));
+    rc = csb_v1_csbgraphics_dat_decode_entry(buf, size, 1u,
+                                             out, sizeof(out), &written);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    ASSERT_TRUE(written == sizeof(input) - 1u);
+    ASSERT_TRUE(memcmp(out, input, sizeof(input) - 1u) == 0);
+
+    free(compressed);
+    free(buf);
+    return 1;
+}
+
+static int test_decode_entry_output_too_small(void)
+{
+    static const uint8_t input[] = "CSB_OUT";
+    uint8_t *compressed = NULL;
+    size_t compressed_size = 0u;
+    size_t size = 0u;
+    uint8_t *buf;
+    CSB_V1_CSBGraphicsIndex idx;
+    uint8_t out[4];
+    size_t written = 999u;
+    int rc;
+
+    rc = ref_lzw_encode(input, sizeof(input) - 1u,
+                        &compressed, &compressed_size);
+    ASSERT_TRUE(rc == 0);
+    ASSERT_TRUE(compressed != NULL);
+
+    buf = build_big_endian(1u, 0u, 0u, &size);
+    ASSERT_TRUE(buf != NULL);
+    write_be16(buf, 2u, (uint16_t)compressed_size);
+    write_be16(buf, 4u, (uint16_t)(sizeof(input) - 1u));
+    rc = csb_v1_csbgraphics_dat_classify(buf, size, &idx);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    memcpy(buf + (size_t)idx.payload_offset, compressed, compressed_size);
+
+    rc = csb_v1_csbgraphics_dat_decode_entry(buf, size, 0u,
+                                             out, sizeof(out), &written);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OUTPUT_TOO_SMALL);
+    ASSERT_TRUE(written == 0u);
+
+    free(compressed);
+    free(buf);
+    return 1;
+}
+
+static int test_decode_empty_entry(void)
+{
+    size_t size = 0u;
+    uint8_t *buf = build_big_endian(1u, 0u, 0u, &size);
+    size_t written = 777u;
+    int rc;
+    ASSERT_TRUE(buf != NULL);
+    rc = csb_v1_csbgraphics_dat_decode_entry(buf, size, 0u,
+                                             NULL, 0u, &written);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    ASSERT_TRUE(written == 0u);
+    free(buf);
+    return 1;
+}
+
+static int test_decode_bad_lzw_rejected(void)
+{
+    size_t size = 0u;
+    uint8_t *buf = build_big_endian(1u, 0u, 0u, &size);
+    CSB_V1_CSBGraphicsIndex idx;
+    uint8_t out[16];
+    size_t written = 777u;
+    int rc;
+    ASSERT_TRUE(buf != NULL);
+    write_be16(buf, 2u, 3u);
+    write_be16(buf, 4u, 8u);
+    rc = csb_v1_csbgraphics_dat_classify(buf, size, &idx);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_OK);
+    memset(buf + (size_t)idx.payload_offset, 0xff, 3u);
+    rc = csb_v1_csbgraphics_dat_decode_entry(buf, size, 0u,
+                                             out, sizeof(out), &written);
+    ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_LZW);
+    ASSERT_TRUE(written == 0u);
+    free(buf);
+    return 1;
+}
+
 static int test_result_and_evidence_strings(void)
 {
     const char *r;
@@ -408,6 +676,12 @@ static int test_result_and_evidence_strings(void)
     ASSERT_TRUE(strcmp(csb_v1_csbgraphics_dat_result_name(
                            CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ENTRY_RANGE),
                        "entry-range") == 0);
+    ASSERT_TRUE(strcmp(csb_v1_csbgraphics_dat_result_name(
+                           CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OUTPUT_TOO_SMALL),
+                       "output-too-small") == 0);
+    ASSERT_TRUE(strcmp(csb_v1_csbgraphics_dat_result_name(
+                           CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_LZW),
+                       "bad-lzw") == 0);
 
     ASSERT_TRUE(strcmp(
         csb_v1_csbgraphics_dat_byte_order_name(
@@ -422,6 +696,7 @@ static int test_result_and_evidence_strings(void)
     ASSERT_TRUE(r != NULL);
     /* Must mention CSBWin Graphics.cpp at minimum. */
     ASSERT_TRUE(strstr(r, "CSBWin/Graphics.cpp") != NULL);
+    ASSERT_TRUE(strstr(r, "LZW.C") != NULL);
     ASSERT_TRUE(strstr(r, "ReadGraphicsIndex") != NULL ||
                 strstr(r, "LocateNthGraphic") != NULL);
     return 1;
@@ -449,6 +724,12 @@ struct { const char *name; test_fn fn; } tests[] = {
     { "entry-span-range-rejected", test_entry_span_range_rejected },
     { "entry-span-argument-rejected",
       test_entry_span_argument_rejected },
+    { "decode-entry-big-endian-lzw-round-trip",
+      test_decode_entry_big_endian_lzw_round_trip },
+    { "decode-entry-output-too-small",
+      test_decode_entry_output_too_small },
+    { "decode-empty-entry",        test_decode_empty_entry },
+    { "decode-bad-lzw-rejected",   test_decode_bad_lzw_rejected },
     { "result-and-evidence-strings",
       test_result_and_evidence_strings },
 };

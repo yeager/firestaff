@@ -128,6 +128,7 @@
 #define CREATURE_ATTR_MASK_ATTACK_ANY_CHAMPION 0x0010
 #define CREATURE_ATTR_MASK_LEVITATION      0x0020
 #define CREATURE_ATTR_MASK_NON_MATERIAL    0x0040
+#define CREATURE_ATTR_MASK_KEEP_THROWN_SHARP_WEAPONS 0x0400
 #define CREATURE_ATTR_MASK_SEE_INVISIBLE   0x0800
 #define CREATURE_ATTR_MASK_NIGHT_VISION    0x1000
 #define CREATURE_ATTR_MASK_ARCHENEMY       0x2000
@@ -273,7 +274,7 @@ struct CreatureBehaviorProfile_Compat {
     int attributes;              /* raw 16-bit attribute mask */
     int aggressionBias;          /* 0..100 */
     int implementationTier;      /* 0 stub, 1 full */
-    int reserved0;
+    int properties;              /* ReDMCSB DUNGEON.C G0243 Properties */
 };
 
 /* ==========================================================

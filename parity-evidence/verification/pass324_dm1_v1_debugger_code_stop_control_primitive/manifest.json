@@ -11,38 +11,36 @@
     "command_log": [
       {
         "cmd": "BPDEL *",
-        "excerpt": "\n-> B_  P_  D_  E_  L_   _  *_  \nDEBUG: Breakpoints deleted.\n\n-> _       ",
-        "t": 1778163388.8084373
+        "excerpt": "inal=720x400\n\nLOG: DOS keyboard layout loaded with main language code US for layout us\n\nLOG: XMS: 50 handles allocated for use by the DOS environment\n\nLOG: EMS page frame at 0xe000-0xefff\n\nLOG: COMMAND.COM env size:             720 bytes\n\nLOG: COMMAND.COM environment block:    0x0701 sz=0x002d\n\nLOG: COMMAND.COM main body (PSP):      0x072f sz=0x009a\n\nLOG: COMMAND.COM stack:                0x0749\n\n",
+        "t": 1782831118.2248409
       },
       {
         "cmd": "BP 0499:0020",
-        "excerpt": "\n-> B_  P_   _  0_  4_  9_  9_  :_  0_  0_  2_  0_  \nDEBUG: Set breakpoint at 0499:0020\n\n-> _            ",
-        "t": 1778163389.5635371
+        "excerpt": "",
+        "t": 1782831119.035778
       },
       {
         "cmd": "BPLIST",
-        "excerpt": "\n-> B_  P_  L_  I_  S_  T_  \nBreakpoint list:\n78\n-------------------------------------------------------------------------\n78\n00. BP 0499:0020\n\n-> _      ",
-        "t": 1778163390.3166952
+        "excerpt": "",
+        "t": 1782831119.831309
       },
       {
         "bytes": "ESC O t",
         "control": "F5",
-        "t": 1778163390.3670394
+        "t": 1782831119.8915122
       }
     ],
     "method": "direct pexpect PTY + Xvfb, no tmux capture-pane",
     "ran": true,
-    "transcript_path": "/home/trv2/work/firestaff-worktrees/pass324-debugger-control-primitive-20260507140940/parity-evidence/verification/pass324_dm1_v1_debugger_code_stop_control_primitive/dosbox_debug_pty.clean.txt",
+    "transcript_path": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass324_dm1_v1_debugger_code_stop_control_primitive/dosbox_debug_pty.clean.txt",
     "transition": {
-      "before_had_prompt": true,
+      "before_had_prompt": false,
       "bplist_text_after_running": false,
-      "post_running_code_lines": [
-        "0499:0022  FDstd"
-      ],
-      "prompt_reappeared_after_running": true,
-      "running_marker_seen": true,
-      "separable_from_bplist": true,
-      "stop_code_addr_after_running": "0499:0022",
+      "post_running_code_lines": [],
+      "prompt_reappeared_after_running": false,
+      "running_marker_seen": false,
+      "separable_from_bplist": false,
+      "stop_code_addr_after_running": null,
       "target_breakpoint": "0499:0020"
     }
   },
@@ -56,7 +54,7 @@
       "file": "DUNVIEW.C",
       "id": "F0128_DUNGEONVIEW_Draw_CPSF",
       "ok": true,
-      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "anchors": {
@@ -66,7 +64,7 @@
       "file": "DRAWVIEW.C",
       "id": "F0097_DUNGEONVIEW_DrawViewport",
       "ok": true,
-      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     },
     {
       "anchors": {
@@ -77,14 +75,14 @@
       "file": "COMMAND.C",
       "id": "F0380_COMMAND_ProcessQueue_CPSC",
       "ok": true,
-      "source_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     }
   ],
-  "status": "PASS_DEBUGGER_CODE_STOP_CONTROL_PRIMITIVE_FOUND",
+  "status": "BLOCKED_DEBUGGER_CONTROL_PRIMITIVE_NOT_EXPOSED",
   "tested_methods": [
     "direct pexpect PTY: primitive found",
     "script(1)-style PTY capture is equivalent in principle but pexpect is preferable because it preserves command/control ownership and timing",
     "tmux capture-pane: rejected as primary primitive because command echoes and BPLIST/setup text contaminated prior pass318/pass320 stop detection"
   ],
-  "timestamp_utc": "2026-05-07T14:16:36.635476+00:00"
+  "timestamp_utc": "2026-06-30T14:52:06.713960+00:00"
 }

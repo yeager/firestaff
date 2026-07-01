@@ -1,6 +1,6 @@
 # Firestaff Completion Matrix
 
-Last updated: 2026-06-23
+Last updated: 2026-06-30
 
 This is a conservative 100-point parity-completion model. A point is counted only when the repo has source, runtime, or CI evidence for that criterion. `completionPercent` is therefore a verified evidence score, not optimism, effort spent, or pass count.
 
@@ -23,7 +23,7 @@ Public wording should stay honest: these numbers describe verified Firestaff evi
 
 | Target | completionPercent | Points | Status | Primary blockers |
 |---|---:|---:|---|---|
-| DM1 V1 | 78% | 78/100 | `playable_verified_partial` | Representative original-vs-Firestaff overlay parity remains incomplete. Original I34E keyboard-buffer live debugger observation still needs a host with `dosbox-debug`, `Xvfb`, and `xdotool`. |
+| DM1 V1 | 78% | 78/100 | `playable_verified_partial` | Representative original-vs-Firestaff overlay parity remains incomplete. Current DM1 blocker is the pass162 stock-original C080/F0377/F0275/F0280 live transcript gate: FIRES.MAP provides candidate addresses, DOSBox-debug break-start accepts the BP/BPM packet, and the HoC, movement-click, movement double-click, autolock, keyboard-capture, external `cliclick`, System Events, and direct `postToPid` live probes now record FIRES startup, DATA\DUNGEON.DAT load, mapped native macOS input, and 34 stock-original memory stops each, but no C080-chain code breakpoint fires. Pre-move, cursor-warp, first-click focus/capture, DOSBox-X autolock/mouse_emulation defaults, Ctrl-F10 capture toggling, replacing the Swift/CGEvent helper with `cliclick`, macOS Accessibility/System Events clicking, and direct CGEvent `postToPid` are now insufficient explanations. The mouse=debug logs show MOUSE/INT33 initialization but no route-click motion/button event, so next work is DOSBox-X SDL/Cocoa event ingestion or debugger event-pump work before pass435 six-shot promotion can continue. |
 | DM1 V2 | 51% | 51/100 | `runtime_presentation_verified_partial` | V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open. |
 | CSB V1 | 43% | 43/100 | `runtime_boundary_verified_partial` | CSB has launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates, but end-to-end gameplay/render capture proof is still being hardened. |
 | CSB V2 | 31% | 31/100 | `presentation_verified_partial` | CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open. |

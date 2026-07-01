@@ -15,6 +15,7 @@ static void check(int cond, const char *expr, const char *file, int line)
     }
 }
 
+
 #define CHECK(c) check((c), #c, __FILE__, __LINE__)
 
 static void test_plane_pointers(void)

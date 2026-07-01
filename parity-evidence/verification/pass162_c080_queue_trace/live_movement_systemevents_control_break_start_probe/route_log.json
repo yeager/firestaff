@@ -1,0 +1,158 @@
+[
+  {
+    "event": "macos_focus",
+    "output": "",
+    "pid": 26791,
+    "returncode": 0,
+    "t": 1782844588.0388858
+  },
+  {
+    "event": "swift_route_start",
+    "helper": "/var/folders/wj/49wt6tlx6tv03465_pt82dmr0000gn/T/firestaff-pass162-live-hoc-lhxneaqn/pass162_route_cgevent",
+    "pid": 26791,
+    "t": 1782844588.038899
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:9000",
+    "t": 1782844588.038903
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 9.0,
+    "route_item": "wait:9000",
+    "t": 1782844588.038908
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:9000",
+    "t": 1782844599.759456
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "enter",
+    "t": 1782844599.759466
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "key",
+    "output": "key enter",
+    "returncode": 0,
+    "route_item": "enter",
+    "t": 1782844601.642056
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:2500",
+    "t": 1782844601.847122
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 2.5,
+    "route_item": "wait:2500",
+    "t": 1782844601.84715
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:2500",
+    "t": 1782844611.8757792
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "click:276,135",
+    "t": 1782844611.87579
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_runtime_ready",
+    "t": 1782844613.202081
+  },
+  {
+    "event": "engine_ready_signal",
+    "source": "EXEC_FIRES",
+    "t": 1782844631.0249841
+  },
+  {
+    "event": "runtime_ready_signal",
+    "source": "DATA_DUNGEON_DAT",
+    "t": 1782844660.0194979
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_runtime_ready",
+    "t": 1782844660.031101
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "click",
+    "output": "window DOSBox-X 2026.06.02: FIRES - 3000 cycles/ms of application process dosbox-debug\nleft-click-mapped 276,135 -> 1193,570 window=640x432 mouse-post=systemevents pre-move=false cursor-warp=true system-events=true",
+    "returncode": 0,
+    "route_item": "click:276,135",
+    "t": 1782844660.6422908
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:600",
+    "t": 1782844660.844251
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 0.6,
+    "route_item": "wait:600",
+    "t": 1782844660.844332
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:600",
+    "t": 1782844661.53249
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "click:276,135",
+    "t": 1782844661.5325062
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "click",
+    "output": "window DOSBox-X 2026.06.02: FIRES - 3000 cycles/ms of application process dosbox-debug\nleft-click-mapped 276,135 -> 1193,570 window=640x432 mouse-post=systemevents pre-move=false cursor-warp=true system-events=true",
+    "returncode": 0,
+    "route_item": "click:276,135",
+    "t": 1782844662.1019242
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:1000",
+    "t": 1782844662.3031218
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 1.0,
+    "route_item": "wait:1000",
+    "t": 1782844662.303207
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:1000",
+    "t": 1782844663.3752902
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_done",
+    "t": 1782844663.375304
+  }
+]

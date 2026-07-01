@@ -14,13 +14,34 @@
 #include <ctype.h>
 
 #include "memory_door_action_pc34_compat.h"  /* Pass 38 — door animation stepper */
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_skill_experience_pc34_compat.h"
+#include "firestaff/dm1/v1/G0492_pc34_compat.h"
+#include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"        /* DM1_SND_BUZZ for C006 generator audio */
 
 enum {
     ORCH_CREATURE_BLACK_FLAME_PC34 = 11,
+    ORCH_CMD_ATTACK_ACTION_DISRUPT_PC34 = 24,
+    ORCH_SOUND_WOODEN_THUD_PC34 = 4,
+    ORCH_POTION_EMPTY_FLASK_PC34 = 20,
+    ORCH_JUNK_ZOKATHRA_PC34 = 51,
     ORCH_BLACK_FLAME_MAX_HEALTH_PC34 = 1000
 };
+
+static const unsigned char s_orch_thing_data_byte_count[16] = {
+    4, 4, 6, 0, 8, 16, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
+};
+
+static unsigned short orch_make_thing_ref_compat(int type, int index);
+static int orch_square_first_thing_list_index_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY);
 
 /* ================================================================
  *  Local LE helpers
@@ -95,6 +116,7 @@ static void set_party_direction_redmcsb_compat(struct PartyState_Compat* party, 
     if (delta < 0) delta += 4;
     for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
         if (party->champions[i].present) {
+            party->champions[i].cell = (unsigned char)((party->champions[i].cell + delta) & 3);
             party->champions[i].direction = (unsigned char)((party->champions[i].direction + delta) & 3);
         }
     }
@@ -576,7 +598,8 @@ int F0898_WORLD_Deserialize_Compat(
 
     /* 3. Party */
     if (!read_section_hdr(buf, bufSize, &off, SEC_TAG_PARTY, &sz)) return 0;
-    if ((int)sz != party_size()) return 0;
+    if ((int)sz != party_size() && (int)sz != PARTY_SERIALIZED_V1_SIZE)
+        return 0;
     if (F0605_PARTY_Deserialize_Compat(&world->party, buf + off, sz) <= 0) return 0;
     off += sz;
 
@@ -1022,6 +1045,1202 @@ static unsigned short orch_next_thing_compat(
     }
 }
 
+static void orch_set_thing_next_compat(
+    struct DungeonThings_Compat* things,
+    unsigned short thing,
+    unsigned short next)
+{
+    int type;
+    int index;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) return;
+    type = THING_GET_TYPE(thing);
+    index = THING_GET_INDEX(thing);
+    if (index < 0) return;
+    switch (type) {
+    case THING_TYPE_DOOR:
+        if (things->doors && index < things->doorCount) things->doors[index].next = next;
+        break;
+    case THING_TYPE_TELEPORTER:
+        if (things->teleporters && index < things->teleporterCount) things->teleporters[index].next = next;
+        break;
+    case THING_TYPE_TEXTSTRING:
+        if (things->textStrings && index < things->textStringCount) things->textStrings[index].next = next;
+        break;
+    case THING_TYPE_SENSOR:
+        if (things->sensors && index < things->sensorCount) things->sensors[index].next = next;
+        break;
+    case THING_TYPE_GROUP:
+        if (things->groups && index < things->groupCount) things->groups[index].next = next;
+        break;
+    case THING_TYPE_WEAPON:
+        if (things->weapons && index < things->weaponCount) things->weapons[index].next = next;
+        break;
+    case THING_TYPE_ARMOUR:
+        if (things->armours && index < things->armourCount) things->armours[index].next = next;
+        break;
+    case THING_TYPE_SCROLL:
+        if (things->scrolls && index < things->scrollCount) things->scrolls[index].next = next;
+        break;
+    case THING_TYPE_POTION:
+        if (things->potions && index < things->potionCount) things->potions[index].next = next;
+        break;
+    case THING_TYPE_CONTAINER:
+        if (things->containers && index < things->containerCount) things->containers[index].next = next;
+        break;
+    case THING_TYPE_JUNK:
+        if (things->junks && index < things->junkCount) things->junks[index].next = next;
+        break;
+    case THING_TYPE_PROJECTILE:
+        if (things->projectiles && index < things->projectileCount) things->projectiles[index].next = next;
+        break;
+    case THING_TYPE_EXPLOSION:
+        if (things->explosions && index < things->explosionCount) things->explosions[index].next = next;
+        break;
+    default:
+        break;
+    }
+}
+
+static void orch_write_raw_next_compat(
+    struct DungeonThings_Compat* things,
+    unsigned short thing)
+{
+    int type;
+    int index;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) return;
+    type = THING_GET_TYPE(thing);
+    index = THING_GET_INDEX(thing);
+    if (type < 0 || type >= 16 || index < 0 ||
+        index >= things->thingCounts[type] || !things->rawThingData[type] ||
+        s_orch_thing_data_byte_count[type] < 2) {
+        return;
+    }
+    w_u16(things->rawThingData[type] +
+          (index * s_orch_thing_data_byte_count[type]),
+          orch_next_thing_compat(things, thing));
+}
+
+static void orch_write_raw_junk_compat(
+    struct DungeonThings_Compat* things,
+    int junkIndex)
+{
+    struct DungeonJunk_Compat* junk;
+    unsigned char* raw;
+    uint16_t bitfield;
+    if (!things || !things->junks || junkIndex < 0 ||
+        junkIndex >= things->junkCount ||
+        junkIndex >= things->thingCounts[THING_TYPE_JUNK] ||
+        !things->rawThingData[THING_TYPE_JUNK]) {
+        return;
+    }
+    junk = &things->junks[junkIndex];
+    raw = things->rawThingData[THING_TYPE_JUNK] + (junkIndex * 4);
+    bitfield = (uint16_t)(((uint16_t)(junk->type & 0x7Fu)) |
+                          ((uint16_t)(junk->doNotDiscard & 0x01u) << 7) |
+                          ((uint16_t)(junk->cursed & 0x01u) << 8) |
+                          ((uint16_t)(junk->chargeCount & 0x03u) << 14));
+    w_u16(raw + 0, junk->next);
+    w_u16(raw + 2, bitfield);
+}
+
+static int orch_thing_is_in_champion_inventory_compat(
+    const struct GameWorld_Compat* world,
+    unsigned short thing)
+{
+    int championIndex;
+    int slotIndex;
+    if (!world || thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    for (championIndex = 0; championIndex < CHAMPION_MAX_PARTY; ++championIndex) {
+        const struct ChampionState_Compat* champion =
+            &world->party.champions[championIndex];
+        if (!champion->present) continue;
+        for (slotIndex = 0; slotIndex < CHAMPION_SLOT_COUNT; ++slotIndex) {
+            if (champion->inventory[slotIndex] == thing) return 1;
+        }
+    }
+    return 0;
+}
+
+static int orch_thing_is_in_square_lists_compat(
+    const struct DungeonThings_Compat* things,
+    unsigned short needle)
+{
+    int listIndex;
+    if (!things || !things->squareFirstThings ||
+        needle == THING_NONE || needle == THING_ENDOFLIST) {
+        return 0;
+    }
+    for (listIndex = 0; listIndex < things->squareFirstThingCount; ++listIndex) {
+        unsigned short thing = things->squareFirstThings[listIndex];
+        int safety = 0;
+        while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+            if (thing == needle) return 1;
+            thing = orch_next_thing_compat(things, thing);
+        }
+    }
+    return 0;
+}
+
+static int orch_find_unused_junk_slot_f0166_compat(
+    struct GameWorld_Compat* world,
+    unsigned short* outThing)
+{
+    int i;
+    if (!world || !world->things || !world->things->junks ||
+        world->things->junkCount <= 0 || !outThing) {
+        return 0;
+    }
+    for (i = 0; i < world->things->junkCount; ++i) {
+        unsigned short thing = orch_make_thing_ref_compat(THING_TYPE_JUNK, i);
+        unsigned short next = world->things->junks[i].next;
+        if (next != THING_NONE && next != THING_ENDOFLIST) continue;
+        if (orch_thing_is_in_champion_inventory_compat(world, thing)) continue;
+        if (orch_thing_is_in_square_lists_compat(world->things, thing)) continue;
+        *outThing = thing;
+        return 1;
+    }
+    return 0;
+}
+
+static int orch_cmd_cast_spell_empty_flask_slot_compat(
+    const struct TickInput_Compat* input)
+{
+    if (!input ||
+        (input->reserved2 & CMD_CAST_SPELL_RESERVED2_HAS_EMPTY_FLASK) == 0u) {
+        return -1;
+    }
+    return (int)((input->reserved2 &
+                  CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_MASK) >>
+                 CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_SHIFT);
+}
+
+static int orch_cmd_cast_spell_mutate_empty_flask_f0411_compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    int slotIndex,
+    int potionType,
+    int potionPower)
+{
+    struct ChampionState_Compat* champion;
+    struct DungeonPotion_Compat* potion;
+    unsigned short thing;
+    int potionIndex;
+
+    if (!world || !world->things || !world->things->potions) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (slotIndex < 0 || slotIndex >= CHAMPION_SLOT_COUNT) return 0;
+    champion = &world->party.champions[championIndex];
+    if (!champion->present) return 0;
+
+    thing = champion->inventory[slotIndex];
+    if (thing == THING_NONE || THING_GET_TYPE(thing) != THING_TYPE_POTION) {
+        return 0;
+    }
+    potionIndex = (int)THING_GET_INDEX(thing);
+    if (potionIndex < 0 || potionIndex >= world->things->potionCount) {
+        return 0;
+    }
+    potion = &world->things->potions[potionIndex];
+    if ((int)potion->type != ORCH_POTION_EMPTY_FLASK_PC34) {
+        return 0;
+    }
+
+    /* ReDMCSB MENU.C F0411/F0412 lines 1721-1749 and 1845-1855:
+     * potion spells mutate the empty-flask POTION object in hand. */
+    potion->type = (unsigned char)(potionType & 0x7F);
+    potion->power = (unsigned char)(potionPower & 0xFF);
+    if (world->things->rawThingData[THING_TYPE_POTION] &&
+        potionIndex < world->things->thingCounts[THING_TYPE_POTION]) {
+        unsigned char* raw =
+            world->things->rawThingData[THING_TYPE_POTION] + (potionIndex * 4);
+        raw[2] = potion->power;
+        raw[3] = (unsigned char)((potion->type & 0x7Fu) |
+                                 (potion->doNotDiscard ? 0x80u : 0u));
+    }
+    return 1;
+}
+
+static int orch_link_thing_to_party_square_compat(
+    struct GameWorld_Compat* world,
+    unsigned short thing)
+{
+    int sftIndex;
+    unsigned short current;
+    int safety = 0;
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->squareFirstThings) {
+        return 0;
+    }
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, world->party.mapIndex, world->party.mapX,
+        world->party.mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+    current = world->things->squareFirstThings[sftIndex];
+    if (current == THING_NONE || current == THING_ENDOFLIST) {
+        world->things->squareFirstThings[sftIndex] = thing;
+        orch_set_thing_next_compat(world->things, thing, THING_ENDOFLIST);
+        orch_write_raw_next_compat(world->things, thing);
+        return 1;
+    }
+    while (current != THING_NONE && current != THING_ENDOFLIST && safety++ < 64) {
+        unsigned short next = orch_next_thing_compat(world->things, current);
+        if (next == THING_NONE || next == THING_ENDOFLIST) {
+            orch_set_thing_next_compat(world->things, current, thing);
+            orch_set_thing_next_compat(world->things, thing, THING_ENDOFLIST);
+            orch_write_raw_next_compat(world->things, current);
+            orch_write_raw_next_compat(world->things, thing);
+            return 1;
+        }
+        current = next;
+    }
+    return 0;
+}
+
+static int orch_cmd_cast_spell_materialize_zokathra_f0412_compat(
+    struct GameWorld_Compat* world,
+    int championIndex)
+{
+    struct ChampionState_Compat* champion;
+    struct DungeonJunk_Compat* junk;
+    unsigned short thing;
+    int junkIndex;
+    int slotIndex = -1;
+
+    if (!world || !world->things || !world->things->junks) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champion = &world->party.champions[championIndex];
+    if (!champion->present) return 0;
+    if (!orch_find_unused_junk_slot_f0166_compat(world, &thing)) return 0;
+
+    junkIndex = (int)THING_GET_INDEX(thing);
+    if (junkIndex < 0 || junkIndex >= world->things->junkCount) return 0;
+    junk = &world->things->junks[junkIndex];
+
+    /* ReDMCSB MENU.C F0412 lines 1994-2025: Zokathra allocates an
+     * unused JUNK thing, sets Type=C51_JUNK_ZOKATHRA, then tries ready
+     * hand, action hand, and finally moves the object to the party square. */
+    junk->next = THING_ENDOFLIST;
+    junk->type = ORCH_JUNK_ZOKATHRA_PC34;
+    junk->doNotDiscard = 0;
+    junk->cursed = 0;
+    junk->chargeCount = 0;
+    orch_write_raw_junk_compat(world->things, junkIndex);
+
+    if (champion->inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE) {
+        slotIndex = CHAMPION_SLOT_HAND_LEFT;
+    } else if (champion->inventory[CHAMPION_SLOT_ACTION_HAND] == THING_NONE) {
+        slotIndex = CHAMPION_SLOT_ACTION_HAND;
+    }
+
+    if (slotIndex >= 0) {
+        champion->inventory[slotIndex] = thing;
+        return 1;
+    }
+
+    return orch_link_thing_to_party_square_compat(world, thing);
+}
+
+int F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+    const struct GameWorld_Compat* world,
+    int championIndex,
+    int skillIndex)
+{
+    const struct ChampionState_Compat* champion;
+    const struct ChampionLifecycleState_Compat* lifecycleChampion;
+    DM1_ChampionSkillState skillState;
+    DM1_SkillLevelQuery query;
+    int partyIsResting;
+    int i;
+
+    if (!world) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (skillIndex < 0 || skillIndex >= DM1_TOTAL_SKILL_COUNT) return 0;
+
+    champion = &world->party.champions[championIndex];
+    if (!champion->present) return 0;
+
+    lifecycleChampion = &world->lifecycle.champions[championIndex];
+    memset(&skillState, 0, sizeof(skillState));
+    for (i = 0; i < DM1_TOTAL_SKILL_COUNT && i < LIFECYCLE_SKILL_COUNT; ++i) {
+        skillState.skills[i].experience = lifecycleChampion->skills20[i].experience;
+        skillState.skills[i].temporaryExperience =
+            lifecycleChampion->skills20[i].temporaryExperience;
+    }
+
+    partyIsResting = world->partyIsResting || world->lifecycle.rest.isResting;
+    if (!dm1_skill_build_query_from_champion_inventory(
+            champion, world->things, partyIsResting, &query)) {
+        return F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+            lifecycleChampion, skillIndex, 0);
+    }
+
+    /* ReDMCSB: COMMAND/MENU spell/action execution queries live levels via
+     * CHAMPION.C F0303, which includes temporary XP, resting and equipped
+     * action-hand/neck object modifiers. */
+    return dm1_skill_get_level_ex(&skillState, skillIndex, 0, &query);
+}
+
+int F0888_ORCH_GetChampionF0312SkillBonus_Compat(
+    const struct GameWorld_Compat* world,
+    int championIndex,
+    int weaponClass)
+{
+    int swingLevel;
+    int throwLevel;
+    int shootLevel;
+    if (!world) return 0;
+    /* ReDMCSB CHAMPION.C F0312 lines 1285-1296 asks F0303 for the
+     * weapon-class-specific Swing/Throw/Shoot levels before adding
+     * skillLevel << 1 to strength.  Keep the class rule in the DM1 combat
+     * helper and make the orchestrator own the live F0303 lookup. */
+    swingLevel = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+        world, championIndex, DM1_SKILL_IDX_SWING);
+    throwLevel = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+        world, championIndex, DM1_SKILL_IDX_THROW);
+    shootLevel = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+        world, championIndex, DM1_SKILL_IDX_SHOOT);
+    return dm1_champion_f0312_skill_level_bonus_pc34(
+        weaponClass, swingLevel, throwLevel, shootLevel);
+}
+
+int F0888_ORCH_GetChampionActionHandWeaponClass_Compat(
+    const struct GameWorld_Compat* world,
+    int championIndex)
+{
+    DM1_WeaponInfo info;
+    if (F0888_ORCH_GetChampionActionHandWeaponInfo_Compat(
+            world, championIndex, &info) <= 0) {
+        return -1;
+    }
+    return info.weaponClass;
+}
+
+int F0888_ORCH_GetChampionActionHandWeaponInfo_Compat(
+    const struct GameWorld_Compat* world,
+    int championIndex,
+    DM1_WeaponInfo* outInfo)
+{
+    const struct ChampionState_Compat* champion;
+    unsigned short thing;
+    int index;
+
+    if (outInfo) {
+        memset(outInfo, 0, sizeof(*outInfo));
+        outInfo->weaponClass = -1;
+    }
+    if (!outInfo || !world || !world->things) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champion = &world->party.champions[championIndex];
+    if (!champion->present) return 0;
+
+    thing = champion->inventory[CHAMPION_SLOT_ACTION_HAND];
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    if (THING_GET_TYPE(thing) != THING_TYPE_WEAPON) return 0;
+    index = (int)THING_GET_INDEX(thing);
+    if (index < 0 || index >= world->things->weaponCount || !world->things->weapons) {
+        return 0;
+    }
+
+    /* ReDMCSB: CHAMPION.C F0312 line 1282 asks F0158_DUNGEON_GetWeaponInfo
+     * for the live action-hand WEAPON.Type, then consumes WEAPON_INFO fields. */
+    return dm1_weapon_info_pc34(world->things->weapons[index].type, outInfo) > 0;
+}
+
+int F0888_ORCH_GetCreatureSnapshot_Compat(
+    const struct GameWorld_Compat* world,
+    int groupIndex,
+    int creatureIndex,
+    int doubledMapDifficulty,
+    struct CombatantCreatureSnapshot_Compat* outSnapshot)
+{
+    const struct DungeonGroup_Compat* group;
+    const struct CreatureBehaviorProfile_Compat* profile;
+
+    if (outSnapshot) {
+        memset(outSnapshot, 0, sizeof(*outSnapshot));
+        outSnapshot->creatureType = -1;
+        outSnapshot->creatureIndex = -1;
+    }
+    if (!outSnapshot || !world || !world->things || !world->things->groups) return 0;
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+    if (creatureIndex < 0 || creatureIndex > 3) return 0;
+
+    group = &world->things->groups[groupIndex];
+    if (creatureIndex > (int)group->count) return 0;
+    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    if (!profile) return 0;
+
+    /* ReDMCSB: live group health comes from the active DUNGEON.C group slot,
+     * while immutable creature stats come from the G0243-style creature
+     * profile table already mirrored by memory_creature_ai_pc34_compat. */
+    outSnapshot->creatureType = group->creatureType;
+    outSnapshot->attack = profile->baseAttack;
+    outSnapshot->defense = profile->baseDefense;
+    outSnapshot->dexterity = profile->dexterity;
+    outSnapshot->baseHealth = profile->baseHealth;
+    outSnapshot->poisonAttack = profile->poisonAttack;
+    outSnapshot->attackType = profile->attackType;
+    outSnapshot->attributes = profile->attributes;
+    outSnapshot->woundProbabilities = profile->woundProbabilities;
+    outSnapshot->properties = profile->properties;
+    outSnapshot->doubledMapDifficulty = doubledMapDifficulty;
+    outSnapshot->creatureIndex = creatureIndex;
+    outSnapshot->healthBefore = group->health[creatureIndex];
+    outSnapshot->isCandidateInvulnerable =
+        world->candidateAttackInvulnerableEnabled &&
+        world->candidateAttackInvulnerableGroupIndex == groupIndex &&
+        world->candidateAttackInvulnerableCreatureIndex == creatureIndex;
+    return 1;
+}
+
+static int orch_f0312_stamina_adjusted_value_compat(
+    const struct ChampionState_Compat* champion,
+    int value)
+{
+    int currentStamina;
+    int halfMaximumStamina;
+    int halfValue;
+
+    if (!champion) return value;
+    currentStamina = (int)champion->stamina.current;
+    halfMaximumStamina = (int)champion->stamina.maximum >> 1;
+    if (halfMaximumStamina > 0 && currentStamina < halfMaximumStamina) {
+        /* ReDMCSB CHAMPION.C F0306 lines 1094-1095: the first operand
+         * halves P0641 before the second operand reuses that halved value. */
+        halfValue = value >> 1;
+        value = halfValue + (int)(((long)halfValue * (long)currentStamina) /
+                                  (long)halfMaximumStamina);
+    }
+    return value;
+}
+
+static int orch_cmd_attack_f0312_strength_action_hand_compat(
+    struct GameWorld_Compat* world,
+    const struct ChampionState_Compat* champion,
+    int championIndex,
+    const DM1_WeaponInfo* weaponInfo,
+    int hasActionHandWeapon)
+{
+    int strength;
+    int objectWeight;
+    int oneSixteenthMaximumLoad;
+    int loadThreshold;
+    int maxLoad;
+
+    if (!world || !champion || !weaponInfo) return 0;
+
+    /* ReDMCSB CHAMPION.C F0312 lines 1264-1299: action-hand melee strength
+     * starts with RANDOM(16)+Strength, applies object-weight/load pressure,
+     * then weapon strength, class skill bonus, stamina adjustment, wound
+     * penalty and final bounded (strength >> 1). */
+    strength = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 16) +
+        (int)champion->attributes[CHAMPION_ATTR_STRENGTH];
+    objectWeight = hasActionHandWeapon ? weaponInfo->weight : 0;
+    maxLoad = (int)champion->maxLoad;
+    if (maxLoad <= 0) {
+        maxLoad = ((int)champion->attributes[CHAMPION_ATTR_STRENGTH] << 3) + 100;
+    }
+    oneSixteenthMaximumLoad = maxLoad >> 4;
+    if (objectWeight <= oneSixteenthMaximumLoad) {
+        strength += objectWeight - 12;
+    } else {
+        loadThreshold = oneSixteenthMaximumLoad +
+            ((oneSixteenthMaximumLoad - 12) >> 1);
+        if (objectWeight <= loadThreshold) {
+            strength += (objectWeight - oneSixteenthMaximumLoad) >> 1;
+        } else {
+            strength -= (objectWeight - loadThreshold) << 1;
+        }
+    }
+
+    if (hasActionHandWeapon) {
+        strength += weaponInfo->strength;
+        strength += F0888_ORCH_GetChampionF0312SkillBonus_Compat(
+            world, championIndex, weaponInfo->weaponClass) << 1;
+    }
+
+    strength = orch_f0312_stamina_adjusted_value_compat(champion, strength);
+    if ((champion->wounds & COMBAT_WOUND_ACTION_HAND) != 0) {
+        strength >>= 1;
+    }
+    strength >>= 1;
+    if (strength < 0) strength = 0;
+    if (strength > 100) strength = 100;
+    return strength;
+}
+
+static int orch_build_cmd_attack_champion_snapshot_compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    const DM1_WeaponInfo* weaponInfo,
+    int weaponType,
+    int hasActionHandWeapon,
+    int actionSkillIndex,
+    struct CombatantChampionSnapshot_Compat* outChampion)
+{
+    const struct ChampionState_Compat* champion;
+
+    if (!outChampion || !world || !weaponInfo) return 0;
+    memset(outChampion, 0, sizeof(*outChampion));
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champion = &world->party.champions[championIndex];
+    if (!champion->present || champion->hp.current == 0) return 0;
+
+    if (actionSkillIndex < 0 || actionSkillIndex >= DM1_TOTAL_SKILL_COUNT) {
+        if (weaponInfo->weaponClass >= DM1_WEAPON_CLASS_FIRST_BOW &&
+            weaponInfo->weaponClass < DM1_WEAPON_CLASS_FIRST_MAGIC_WEAPON) {
+            actionSkillIndex = DM1_SKILL_IDX_SHOOT;
+        } else if (weaponInfo->weaponClass == 0) {
+            actionSkillIndex = DM1_SKILL_IDX_SWING;
+        } else {
+            actionSkillIndex = DM1_SKILL_IDX_THROW;
+        }
+    }
+
+    outChampion->championIndex = championIndex;
+    outChampion->currentHealth = champion->hp.current;
+    outChampion->dexterity = champion->attributes[CHAMPION_ATTR_DEXTERITY];
+    outChampion->strengthActionHand =
+        orch_cmd_attack_f0312_strength_action_hand_compat(
+            world, champion, championIndex, weaponInfo, hasActionHandWeapon);
+    outChampion->skillLevelParry = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+        world, championIndex, DM1_SKILL_IDX_PARRY);
+    outChampion->skillLevelAction = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+        world, championIndex, actionSkillIndex);
+    outChampion->statisticVitality = champion->attributes[CHAMPION_ATTR_VITALITY];
+    outChampion->statisticAntifire = champion->attributes[CHAMPION_ATTR_ANTIFIRE];
+    outChampion->statisticAntimagic = champion->attributes[CHAMPION_ATTR_ANTIMAGIC];
+    outChampion->statisticWisdom = champion->attributes[CHAMPION_ATTR_WISDOM];
+    outChampion->statisticLuck = (int)world->lifecycle.champions[championIndex]
+        .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_CURRENT];
+    outChampion->statisticLuckMax = (int)world->lifecycle.champions[championIndex]
+        .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_MAXIMUM];
+    outChampion->statisticLuckMin = (int)world->lifecycle.champions[championIndex]
+        .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_MINIMUM];
+    outChampion->actionHandIcon = weaponType;
+    outChampion->wounds = champion->wounds;
+    outChampion->isResting = world->partyIsResting || world->lifecycle.rest.isResting;
+    outChampion->partyShieldDefense = champion->actionDefense;
+    return 1;
+}
+
+static void orch_writeback_cmd_attack_luck_compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    const struct CombatantChampionSnapshot_Compat* championSnapshot)
+{
+    int luck;
+    if (!world || !championSnapshot) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    luck = championSnapshot->statisticLuck;
+    if (luck < 0) luck = 0;
+    if (luck > 255) luck = 255;
+    world->lifecycle.champions[championIndex]
+        .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_CURRENT] =
+            (uint8_t)luck;
+}
+
+static void orch_build_cmd_attack_weapon_profile_compat(
+    const DM1_WeaponInfo* weaponInfo,
+    int weaponType,
+    int actionIndex,
+    int actionSkillIndex,
+    struct WeaponProfile_Compat* outWeapon)
+{
+    int hitProbability = dm1_v1_graphic560_action_hit_probability_get_pc34(
+        actionIndex);
+    int damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
+        actionIndex);
+
+    if (hitProbability < 0 || damageFactor < 0) {
+        actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+        hitProbability = dm1_v1_graphic560_action_hit_probability_get_pc34(
+            actionIndex);
+        damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
+            actionIndex);
+    }
+
+    memset(outWeapon, 0, sizeof(*outWeapon));
+    outWeapon->weaponType = weaponType;
+    outWeapon->weaponClass = weaponInfo->weaponClass;
+    outWeapon->weaponStrength = weaponInfo->strength;
+    outWeapon->kineticEnergy = weaponInfo->kineticEnergy;
+    outWeapon->hitProbability = hitProbability;
+    if (weaponType == COMBAT_ICON_VORPAL_BLADE || actionIndex == 24) {
+        outWeapon->hitProbability |= 0x8000;
+    }
+    outWeapon->damageFactor = damageFactor;
+    outWeapon->skillIndex = actionSkillIndex;
+    outWeapon->attributes = weaponInfo->attributes;
+}
+
+static int orch_cmd_attack_action_index_compat(const struct TickInput_Compat* input)
+{
+    int actionIndex;
+    if (!input) return CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+    if ((input->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) == 0u) {
+        return CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+    }
+    actionIndex = (int)(input->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK);
+    if (dm1_v1_graphic560_action_damage_factor_get_pc34(actionIndex) < 0 ||
+        dm1_v1_graphic560_action_hit_probability_get_pc34(actionIndex) < 0) {
+        return CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+    }
+    return actionIndex;
+}
+
+static int orch_cmd_attack_has_live_action_index_compat(
+    const struct TickInput_Compat* input)
+{
+    return input &&
+        ((input->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) != 0u);
+}
+
+static int orch_cmd_attack_has_live_group_table_compat(
+    const struct GameWorld_Compat* world)
+{
+    return world && world->things && world->things->groups &&
+        world->things->groupCount > 0;
+}
+
+static int orch_cmd_attack_has_legacy_marker_compat(
+    const struct TickInput_Compat* input)
+{
+    return input &&
+        ((input->reserved2 & CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID) != 0u);
+}
+
+static int orch_cmd_attack_action_hand_is_empty_compat(
+    const struct GameWorld_Compat* world,
+    int championIndex)
+{
+    unsigned short thing;
+    if (!world) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (!world->party.champions[championIndex].present) return 0;
+    thing = world->party.champions[championIndex]
+        .inventory[CHAMPION_SLOT_ACTION_HAND];
+    return thing == THING_NONE || thing == THING_ENDOFLIST;
+}
+
+static void orch_cmd_attack_empty_hand_weapon_info_compat(
+    DM1_WeaponInfo* outInfo)
+{
+    if (!outInfo) return;
+    memset(outInfo, 0, sizeof(*outInfo));
+    outInfo->weaponClass = 255;
+}
+
+static int orch_cmd_attack_action_skill_index_compat(int actionIndex)
+{
+    DM1_ActionXpRoute route;
+    if (!dm1_v1_action_xp_route(actionIndex, &route) || !route.valid) {
+        if (!dm1_v1_action_xp_route(
+                CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34, &route) ||
+            !route.valid) {
+            return -1;
+        }
+    }
+    return route.skillIndex;
+}
+
+static int orch_cmd_attack_map_difficulty_compat(
+    const struct GameWorld_Compat* world)
+{
+    int mapIndex;
+    if (!world || !world->dungeon || !world->dungeon->maps) return 0;
+
+    mapIndex = world->party.mapIndex;
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        mapIndex = world->partyMapIndex;
+    }
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+
+    return (int)world->dungeon->maps[mapIndex].difficulty;
+}
+
+static int orch_cmd_attack_doubled_map_difficulty_compat(
+    const struct GameWorld_Compat* world)
+{
+    int difficulty = orch_cmd_attack_map_difficulty_compat(world);
+    if (difficulty <= 0) return 0;
+
+    /* ReDMCSB: PROJEXPL.C F0231 lines 1477-1491 builds
+     * L0567_i_DoubledMapDifficulty as CurrentMap.Difficulty << 1 before
+     * applying creature dexterity/defense in champion melee resolution. */
+    return difficulty << 1;
+}
+
+static int orch_cmd_attack_creature_experience_compat(
+    const struct CombatantCreatureSnapshot_Compat* creature)
+{
+    if (!creature) return 0;
+    return (creature->properties >> 8) & 0x000F;
+}
+
+static int orch_unlink_thing_from_square_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short thingToUnlink);
+
+static void orch_remove_active_group_state_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex);
+
+static unsigned short orch_make_thing_ref_compat(int type, int index);
+
+static int orch_group_creature_cell_compat(
+    const struct DungeonGroup_Compat* group,
+    int creatureIndex);
+static int orch_ai_state_to_dm1_behavior_compat(int stateKind);
+
+static void orch_cmd_attack_apply_f0231_side_effects_compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    int actionSkillIndex,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int damageApplied)
+{
+    struct ChampionState_Compat* champion;
+    int staminaCost;
+    int pendingDamage;
+    int16_t currentStamina;
+
+    if (!world) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    champion = &world->party.champions[championIndex];
+    if (!champion->present || champion->hp.current <= 0) return;
+
+    if (damageApplied > 0) {
+        int creatureExperience = orch_cmd_attack_creature_experience_compat(creature);
+        int experience = ((damageApplied * creatureExperience) >> 4) + 3;
+        if (actionSkillIndex >= 0) {
+            /* ReDMCSB: PROJEXPL.C F0231 lines ~1512-1514 awards
+             * F0304 skill XP after damage, using M058_EXPERIENCE(Properties).
+             * F0304 owns map difficulty and recent-combat modifiers. */
+            (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+                &world->lifecycle.champions[championIndex],
+                actionSkillIndex,
+                experience,
+                orch_cmd_attack_map_difficulty_compat(world),
+                world->gameTick,
+                world->lifecycle.lastCreatureAttackTime,
+                0,
+                0);
+        }
+        staminaCost = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 4) + 4;
+    } else {
+        staminaCost = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2) + 2;
+    }
+
+    currentStamina = (int16_t)champion->stamina.current;
+    pendingDamage = dm1_needs_decrement_stamina(
+        &currentStamina,
+        champion->stamina.maximum,
+        (int16_t)staminaCost);
+    champion->stamina.current = (unsigned short)currentStamina;
+    if (pendingDamage > 0) {
+        int hp = (int)champion->hp.current - pendingDamage;
+        champion->hp.current = (int16_t)((hp > 0) ? hp : 0);
+    }
+}
+
+static void orch_cmd_attack_target_square_compat(
+    const struct GameWorld_Compat* world,
+    int* outMapIndex,
+    int* outMapX,
+    int* outMapY)
+{
+    int mapIndex = 0;
+    int mapX = 0;
+    int mapY = 0;
+    if (world) {
+        mapIndex = world->party.mapIndex;
+        mapX = world->party.mapX;
+        mapY = world->party.mapY;
+        switch (world->party.direction & 3) {
+            case DIR_NORTH: mapY--; break;
+            case DIR_EAST:  mapX++; break;
+            case DIR_SOUTH: mapY++; break;
+            case DIR_WEST:  mapX--; break;
+        }
+    }
+    if (outMapIndex) *outMapIndex = mapIndex;
+    if (outMapX) *outMapX = mapX;
+    if (outMapY) *outMapY = mapY;
+}
+
+static void orch_cmd_attack_schedule_f0231_reaction_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int outcome)
+{
+    struct TimelineEvent_Compat reaction;
+    int mapIndex;
+    int mapX;
+    int mapY;
+
+    if (!world || groupIndex < 0) return;
+    if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) return;
+
+    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    memset(&reaction, 0, sizeof(reaction));
+    reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    reaction.fireAtTick = world->gameTick + 1u;
+    reaction.mapIndex = mapIndex;
+    reaction.mapX = mapX;
+    reaction.mapY = mapY;
+    reaction.aux0 = groupIndex;
+    reaction.aux1 = creature ? creature->creatureType : -1;
+    reaction.aux2 = DM1_EVENT_REACTION_PARTY_IS_ADJACENT;
+    (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &reaction);
+}
+
+static void orch_cmd_attack_apply_group_kill_side_effects_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    int outcome)
+{
+    int mapIndex;
+    int mapX;
+    int mapY;
+
+    if (!world || !world->things || groupIndex < 0) return;
+    if (outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) return;
+
+    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    (void)orch_unlink_thing_from_square_compat(
+        world, mapIndex, mapX, mapY,
+        orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
+    if (groupIndex < world->things->groupCount && world->things->groups) {
+        world->things->groups[groupIndex].next = THING_NONE;
+    }
+    orch_remove_active_group_state_compat(world, groupIndex);
+}
+
+static int orch_cmd_attack_f0190_smoke_attack_compat(
+    const struct CombatantCreatureSnapshot_Compat* creature)
+{
+    int size;
+    if (!creature) return 110;
+    size = creature->attributes & DM1_ATTR_SIZE_MASK;
+    if (size == DM1_SIZE_FULL_SQUARE) return 255;
+    if (size == DM1_SIZE_HALF_SQUARE) return 190;
+    return 110;
+}
+
+static void orch_cmd_attack_create_f0190_death_smoke_compat(
+    struct GameWorld_Compat* world,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int killedCell,
+    int outcome)
+{
+    struct ExplosionCreateInput_Compat create;
+    struct TimelineEvent_Compat advance;
+    int slotIndex = -1;
+    int mapIndex;
+    int mapX;
+    int mapY;
+
+    if (!world) return;
+    if (outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES &&
+        outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+        return;
+    }
+
+    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    memset(&create, 0, sizeof(create));
+    create.explosionType = C040_EXPLOSION_SMOKE;
+    create.attack = orch_cmd_attack_f0190_smoke_attack_compat(creature);
+    create.mapIndex = mapIndex;
+    create.mapX = mapX;
+    create.mapY = mapY;
+    create.cell = (killedCell == EXPLOSION_CELL_CENTERED)
+        ? EXPLOSION_CELL_CENTERED : (killedCell & 3);
+    create.centered = (create.cell == EXPLOSION_CELL_CENTERED) ? 1 : 0;
+    create.currentTick = (int)world->gameTick;
+    create.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    create.ownerIndex = -1;
+    create.creatorProjectileSlot = -1;
+
+    /* ReDMCSB: GROUP.C F0190 lines ~897-909 creates
+     * C0xFFA8_THING_EXPLOSION_SMOKE with attack 110/190/255 from the
+     * killed creature size, then PROJEXPL.C F0213 schedules its advance. */
+    if (F0821_EXPLOSION_Create_Compat(
+            &create, &world->explosions, &slotIndex, &advance)) {
+        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &advance);
+    }
+}
+
+static void orch_create_f0190_death_smoke_at_square_compat(
+    struct GameWorld_Compat* world,
+    int creatureType,
+    int killedCell,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct CreatureBehaviorProfile_Compat* profile;
+    struct CombatantCreatureSnapshot_Compat creature;
+    struct ExplosionCreateInput_Compat create;
+    struct TimelineEvent_Compat advance;
+    int slotIndex = -1;
+
+    if (!world) return;
+    profile = CREATURE_GetProfile_Compat(creatureType);
+    memset(&creature, 0, sizeof(creature));
+    creature.creatureType = creatureType;
+    creature.attributes = profile ? profile->attributes : 0;
+
+    memset(&create, 0, sizeof(create));
+    create.explosionType = C040_EXPLOSION_SMOKE;
+    create.attack = orch_cmd_attack_f0190_smoke_attack_compat(&creature);
+    create.mapIndex = mapIndex;
+    create.mapX = mapX;
+    create.mapY = mapY;
+    create.cell = (killedCell == EXPLOSION_CELL_CENTERED)
+        ? EXPLOSION_CELL_CENTERED : (killedCell & 3);
+    create.centered = (create.cell == EXPLOSION_CELL_CENTERED) ? 1 : 0;
+    create.currentTick = (int)world->gameTick;
+    create.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    create.ownerIndex = -1;
+    create.creatorProjectileSlot = -1;
+
+    if (F0821_EXPLOSION_Create_Compat(
+            &create, &world->explosions, &slotIndex, &advance)) {
+        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &advance);
+    }
+}
+
+static int orch_square_first_thing_list_index_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
+static int orch_cmd_attack_find_group_on_square_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outGroupIndex)
+{
+    int sftIndex;
+    unsigned short thing;
+    int safety = 0;
+
+    if (outGroupIndex) *outGroupIndex = -1;
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->squareFirstThings) {
+        return 0;
+    }
+
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    /* ReDMCSB: GROUP.C F0177 lines 123-147 starts from the group thing
+     * on the target map square before selecting the creature ordinal. */
+    thing = world->things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        if (type == THING_TYPE_GROUP &&
+            index >= 0 && index < world->things->groupCount) {
+            if (outGroupIndex) *outGroupIndex = index;
+            return 1;
+        }
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    return 0;
+}
+
+static int orch_cmd_attack_first_living_creature_compat(
+    const struct DungeonGroup_Compat* group)
+{
+    int i;
+    if (!group) return -1;
+    for (i = 0; i <= (int)group->count && i < 4; ++i) {
+        if (group->health[i] > 0) return i;
+    }
+    return -1;
+}
+
+static int orch_cmd_attack_f0177_creature_slot_compat(
+    const struct GameWorld_Compat* world,
+    int championIndex,
+    int groupIndex)
+{
+    const struct DungeonGroup_Compat* group;
+    DM1_CreatureGroup combatGroup;
+    int i;
+
+    if (!world || !world->things || !world->things->groups) return -1;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return -1;
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount) return -1;
+
+    group = &world->things->groups[groupIndex];
+    if (group->cells == 0xFFu) {
+        return orch_cmd_attack_first_living_creature_compat(group);
+    }
+
+    dm1_combat_init_group(&combatGroup);
+    combatGroup.count = (int)group->count;
+    if (combatGroup.count < 0) combatGroup.count = 0;
+    if (combatGroup.count >= DM1_MAX_CREATURES_IN_GROUP) {
+        combatGroup.count = DM1_MAX_CREATURES_IN_GROUP - 1;
+    }
+    for (i = 0; i <= combatGroup.count; ++i) {
+        combatGroup.creatures[i].health = (int)group->health[i];
+        combatGroup.creatures[i].cell = (int)((group->cells >> (i << 1)) & 0x03u);
+        combatGroup.creatures[i].direction = (int)group->direction;
+    }
+
+    /* ReDMCSB: MENU.C F0402 lines 1024-1026 calls GROUP.C F0177 with the
+     * champion Cell; F0177 then calls PROJEXPL.C F0229 for ordered cells. */
+    return dm1_get_melee_target(
+        &combatGroup,
+        (int)(world->party.champions[championIndex].cell & 3),
+        world->party.direction,
+        (int)group->direction);
+}
+
+static int orch_cmd_attack_champion_reach_blocked_f0407_compat(
+    const struct GameWorld_Compat* world,
+    int championIndex)
+{
+    const struct ChampionState_Compat* champion;
+    int relativeCell;
+    int blockingCell = -1;
+    int i;
+
+    if (!world) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champion = &world->party.champions[championIndex];
+    if (!champion->present || champion->hp.current == 0) return 0;
+
+    relativeCell = ((int)(champion->cell & 3) + 4 -
+                    (int)(world->party.direction & 3)) & 3;
+    if (relativeCell == 2) {
+        blockingCell = ((int)(champion->cell & 3) + 3) & 3;
+    } else if (relativeCell == 3) {
+        blockingCell = ((int)(champion->cell & 3) + 1) & 3;
+    } else {
+        return 0;
+    }
+
+    /* ReDMCSB: MENU.C F0407 lines 1032-1041 rejects a back-row melee
+     * action when another champion occupies the source front cell. */
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        const struct ChampionState_Compat* other = &world->party.champions[i];
+        if (i == championIndex) continue;
+        if (other->present && other->hp.current > 0 &&
+            ((int)(other->cell & 3) == blockingCell)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int orch_cmd_attack_disrupt_material_blocked_f0407_compat(
+    const struct GameWorld_Compat* world,
+    int actionIndex,
+    int groupIndex)
+{
+    const struct CreatureBehaviorProfile_Compat* profile;
+    int creatureType;
+
+    if (!world || !world->things) return 0;
+    if (actionIndex != ORCH_CMD_ATTACK_ACTION_DISRUPT_PC34) return 0;
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+
+    creatureType = world->things->groups[groupIndex].creatureType;
+    profile = CREATURE_GetProfile_Compat(creatureType);
+    if (!profile) return 0;
+
+    /* ReDMCSB: MENU.C F0407 lines 1042-1043 rejects DISRUPT before F0231
+     * unless the target creature carries MASK0x0040_NON_MATERIAL. */
+    return (profile->attributes & CREATURE_ATTR_MASK_NON_MATERIAL) == 0;
+}
+
+static int orch_cmd_attack_action_can_hit_door_f0407_compat(int actionIndex)
+{
+    switch (actionIndex) {
+    case 2:  /* C002_ACTION_CHOP */
+    case 7:  /* C007_ACTION_KICK */
+    case 13: /* C013_ACTION_SWING */
+    case 18: /* C018_ACTION_HACK */
+    case 19: /* C019_ACTION_BERZERK */
+    case 30: /* C030_ACTION_BASH */
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static int orch_cmd_attack_resolve_target_compat(
+    const struct GameWorld_Compat* world,
+    const struct TickInput_Compat* input,
+    int* outGroupIndex,
+    int* outCreatureIndex)
+{
+    int groupIndex;
+    int creatureIndex;
+
+    if (outGroupIndex) *outGroupIndex = -1;
+    if (outCreatureIndex) *outCreatureIndex = -1;
+    if (!world || !input || !world->things) return 0;
+
+    groupIndex = (int)input->commandArg2;
+    creatureIndex = (int)input->reserved;
+    if (input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34) {
+        int dx = 0;
+        int dy = 0;
+        int targetMapX;
+        int targetMapY;
+        F0701_MOVEMENT_GetStepDelta_Compat(
+            world->party.direction, MOVE_FORWARD, &dx, &dy);
+        targetMapX = world->party.mapX + dx;
+        targetMapY = world->party.mapY + dy;
+        if (!orch_cmd_attack_find_group_on_square_compat(
+                world, world->party.mapIndex, targetMapX, targetMapY,
+                &groupIndex)) {
+            return 0;
+        }
+    }
+
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount ||
+        !world->things->groups) {
+        return 0;
+    }
+    if (input->reserved == CMD_ATTACK_CREATURE_AUTO_PC34) {
+        creatureIndex = orch_cmd_attack_f0177_creature_slot_compat(
+            world, (int)input->commandArg1, groupIndex);
+        if (creatureIndex < 0 ||
+            creatureIndex > (int)world->things->groups[groupIndex].count) {
+            creatureIndex = orch_cmd_attack_first_living_creature_compat(
+                &world->things->groups[groupIndex]);
+        }
+    } else if (
+        creatureIndex < 0 || creatureIndex > (int)world->things->groups[groupIndex].count) {
+        return 0;
+    }
+    if (creatureIndex < 0) return 0;
+
+    if (outGroupIndex) *outGroupIndex = groupIndex;
+    if (outCreatureIndex) *outCreatureIndex = creatureIndex;
+    return 1;
+}
+
 static int orch_square_first_thing_list_index_compat(
     const struct DungeonDatState_Compat* dungeon,
     int mapIndex,
@@ -1053,6 +2272,246 @@ static int orch_square_first_thing_list_index_compat(
         }
     }
     return sftIndex;
+}
+
+static void orch_projectile_step_compat(int direction, int* dx, int* dy)
+{
+    if (!dx || !dy) return;
+    switch (direction & 3) {
+        case 0: *dx = 0;  *dy = -1; break;
+        case 1: *dx = 1;  *dy = 0;  break;
+        case 2: *dx = 0;  *dy = 1;  break;
+        case 3: *dx = -1; *dy = 0;  break;
+        default: *dx = 0; *dy = 0;  break;
+    }
+}
+
+static int orch_read_square_byte_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned char* outSquare)
+{
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    if (outSquare) *outSquare = 0;
+    if (!dungeon || !dungeon->tilesLoaded || !dungeon->maps || !dungeon->tiles) return 0;
+    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) return 0;
+    map = &dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= (int)map->width ||
+        mapY < 0 || mapY >= (int)map->height) return 0;
+    tiles = &dungeon->tiles[mapIndex];
+    if (!tiles->squareData) return 0;
+    if (outSquare) {
+        *outSquare = tiles->squareData[(mapX * (int)map->height) + mapY];
+    }
+    return 1;
+}
+
+static int orch_cmd_attack_find_door_on_square_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outDoorIndex)
+{
+    int sftIndex;
+    unsigned short thing;
+    int safety = 0;
+
+    if (outDoorIndex) *outDoorIndex = -1;
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->squareFirstThings || !world->things->doors) {
+        return 0;
+    }
+
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    thing = world->things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        if (type == THING_TYPE_DOOR &&
+            index >= 0 && index < world->things->doorCount) {
+            if (outDoorIndex) *outDoorIndex = index;
+            return 1;
+        }
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    return 0;
+}
+
+static int orch_cmd_attack_door_defense_pc34_compat(
+    const struct GameWorld_Compat* world,
+    const struct DungeonDoor_Compat* door)
+{
+    int doorSet;
+    int doorInfoIndex;
+    static const unsigned char s_i34_door_defense[4] = {
+        110, 42, 230, 255
+    };
+
+    if (!door || !world || !world->dungeon || !world->dungeon->maps) {
+        return 255;
+    }
+    if (world->party.mapIndex < 0 ||
+        world->party.mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 255;
+    }
+    doorSet = door->type ? world->dungeon->maps[world->party.mapIndex].doorSet1
+                         : world->dungeon->maps[world->party.mapIndex].doorSet0;
+    doorInfoIndex = doorSet & 3;
+    /* ReDMCSB DUNGEON.C G0254_as_Graphic559_DoorInfo lines 560-566:
+     * portcullis=110, wooden=42, iron=230, Ra=255.  F0174 copies the
+     * active map's two door sets into G0275 before F0232 compares Defense. */
+    return (int)s_i34_door_defense[doorInfoIndex];
+}
+
+static int orch_set_door_state_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int doorState)
+{
+    const struct DungeonMapDesc_Compat* map;
+    struct DungeonMapTiles_Compat* tiles;
+    int squareIndex;
+    int squareByte;
+
+    if (!world || !world->dungeon || !world->dungeon->maps ||
+        !world->dungeon->tiles) {
+        return 0;
+    }
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= (int)map->width ||
+        mapY < 0 || mapY >= (int)map->height) {
+        return 0;
+    }
+    tiles = &world->dungeon->tiles[mapIndex];
+    if (!tiles->squareData) return 0;
+
+    squareIndex = (mapX * (int)map->height) + mapY;
+    squareByte = (int)tiles->squareData[squareIndex];
+    if (((squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
+        DUNGEON_ELEMENT_DOOR) {
+        return 0;
+    }
+    tiles->squareData[squareIndex] =
+        (unsigned char)((squareByte & ~0x07) | (doorState & 0x07));
+    return 1;
+}
+
+static int orch_cmd_attack_f0407_closed_door_compat(
+    struct GameWorld_Compat* world,
+    const struct TickInput_Compat* input,
+    const DM1_WeaponInfo* weaponInfo,
+    int hasActionHandWeapon,
+    int actionIndex,
+    struct TickResult_Compat* result)
+{
+    const struct DungeonMapDesc_Compat* map;
+    struct DungeonMapTiles_Compat* tiles;
+    struct DungeonDoor_Compat* door;
+    const struct ChampionState_Compat* champion;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int squareIndex;
+    int squareByte;
+    int doorIndex = -1;
+    int attack;
+
+    if (!world || !input || !weaponInfo || !world->dungeon ||
+        !world->dungeon->tiles || !world->dungeon->maps) {
+        return 0;
+    }
+    if (!orch_cmd_attack_action_can_hit_door_f0407_compat(actionIndex)) {
+        return 0;
+    }
+
+    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= (int)map->width ||
+        mapY < 0 || mapY >= (int)map->height) {
+        return 0;
+    }
+    tiles = &world->dungeon->tiles[mapIndex];
+    if (!tiles->squareData) return 0;
+
+    squareIndex = (mapX * (int)map->height) + mapY;
+    squareByte = (int)tiles->squareData[squareIndex];
+    if (((squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
+        DUNGEON_ELEMENT_DOOR) {
+        return 0;
+    }
+    if ((squareByte & 0x07) != 4) {
+        return 0;
+    }
+    if (!orch_cmd_attack_find_door_on_square_compat(
+            world, mapIndex, mapX, mapY, &doorIndex)) {
+        return 1;
+    }
+    door = &world->things->doors[doorIndex];
+    if ((int)input->commandArg1 < 0 ||
+        (int)input->commandArg1 >= CHAMPION_MAX_PARTY) {
+        return 1;
+    }
+    champion = &world->party.champions[(int)input->commandArg1];
+    if (!champion->present || champion->hp.current == 0) {
+        return 1;
+    }
+
+    /* ReDMCSB MENU.C F0407 lines 1268-1275 handles closed-door melee
+     * before F0402/F0231 creature melee.  It calls F0312(action hand) and
+     * GROUP.C/PROJEXPL.C F0232, then requests C04 wooden-thud one tick
+     * later even when F0232 does not destroy the door. */
+    {
+        struct TimelineEvent_Compat thud;
+        memset(&thud, 0, sizeof(thud));
+        thud.kind = TIMELINE_EVENT_PLAY_SOUND;
+        thud.fireAtTick = world->gameTick + 1u;
+        thud.mapIndex = mapIndex;
+        thud.mapX = mapX;
+        thud.mapY = mapY;
+        thud.aux0 = ORCH_SOUND_WOODEN_THUD_PC34;
+        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &thud);
+    }
+
+    if (!door->meleeDestructible) {
+        return 1;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0232 lines 1569-1593 destroys only a closed
+     * melee-destructible door whose attack reaches the active door-set
+     * defense. */
+    attack = orch_cmd_attack_f0312_strength_action_hand_compat(
+        world, champion, (int)input->commandArg1, weaponInfo,
+        hasActionHandWeapon);
+    if (attack >= orch_cmd_attack_door_defense_pc34_compat(world, door)) {
+        struct TimelineEvent_Compat destruction;
+        memset(&destruction, 0, sizeof(destruction));
+        destruction.kind = TIMELINE_EVENT_DOOR_DESTRUCTION;
+        destruction.fireAtTick = world->gameTick + 2u;
+        destruction.mapIndex = mapIndex;
+        destruction.mapX = mapX;
+        destruction.mapY = mapY;
+        destruction.aux0 = 5;
+        (void)F0721_TIMELINE_Schedule_Compat(
+            &world->timeline, &destruction);
+    }
+    return 1;
 }
 
 static int orch_reenable_generator_sensor_on_square_compat(
@@ -1468,17 +2927,21 @@ static void orch_remove_active_group_state_compat(
 {
     int i;
     int writeIndex = 0;
+    int oldCount;
+    int retainedCount;
     if (!world || groupIndex < 0) return;
-    for (i = 0; i < world->creatureAICount; ++i) {
+    oldCount = world->creatureAICount;
+    for (i = 0; i < oldCount; ++i) {
         if (world->creatureAI[i].reserved0 == groupIndex) continue;
         if (writeIndex != i) world->creatureAI[writeIndex] = world->creatureAI[i];
         ++writeIndex;
     }
-    while (writeIndex < world->creatureAICount) {
+    retainedCount = writeIndex;
+    while (writeIndex < oldCount) {
         memset(&world->creatureAI[writeIndex], 0, sizeof(world->creatureAI[writeIndex]));
         ++writeIndex;
     }
-    world->creatureAICount = writeIndex;
+    world->creatureAICount = retainedCount;
 }
 
 static int orch_group_creature_cell_compat(
@@ -1690,6 +3153,842 @@ static int orch_apply_f0266_group_projectile_precheck_compat(
                 intermediaryOrdinalInCell, outKilledGroup)) {
             return 0;
         }
+    }
+    return 1;
+}
+
+static int orch_build_projectile_digest_compat(
+    const struct GameWorld_Compat* world,
+    const struct ProjectileInstance_Compat* projectile,
+    int projectileIndex,
+    struct CellContentDigest_Compat* out)
+{
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char sourceSquare = 0;
+    unsigned char destSquare = 0;
+    int dx = 0;
+    int dy = 0;
+    int destX;
+    int destY;
+    int i;
+
+    if (!world || !projectile || !out || !world->dungeon) return 0;
+    if (projectile->mapIndex < 0 ||
+        projectile->mapIndex >= (int)world->dungeon->header.mapCount) return 0;
+    if (!orch_read_square_byte_compat(world->dungeon, projectile->mapIndex,
+                                      projectile->mapX, projectile->mapY,
+                                      &sourceSquare)) {
+        return 0;
+    }
+
+    map = &world->dungeon->maps[projectile->mapIndex];
+    orch_projectile_step_compat(projectile->direction, &dx, &dy);
+    destX = projectile->mapX + dx;
+    destY = projectile->mapY + dy;
+
+    memset(out, 0, sizeof(*out));
+    out->sourceMapIndex = projectile->mapIndex;
+    out->sourceMapX = projectile->mapX;
+    out->sourceMapY = projectile->mapY;
+    out->sourceSquareType = (sourceSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    out->destTeleporterNewDirection = -1;
+
+    for (i = 0; i < world->projectiles.count &&
+                i < PROJECTILE_LIST_CAPACITY; ++i) {
+        const struct ProjectileInstance_Compat* other =
+            &world->projectiles.entries[i];
+        if (i == projectileIndex || other->slotIndex < 0) continue;
+        if (other->mapIndex == projectile->mapIndex &&
+            other->mapX == projectile->mapX &&
+            other->mapY == projectile->mapY) {
+            out->sourceHasOtherProjectile = 1;
+            break;
+        }
+    }
+
+    out->destMapIndex = projectile->mapIndex;
+    out->destMapX = destX;
+    out->destMapY = destY;
+    if (destX < 0 || destY < 0 ||
+        destX >= (int)map->width || destY >= (int)map->height ||
+        !orch_read_square_byte_compat(world->dungeon, projectile->mapIndex,
+                                      destX, destY, &destSquare)) {
+        out->destIsMapBoundary = 1;
+        out->destSquareType = PROJECTILE_ELEMENT_WALL;
+        out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+        return 1;
+    }
+
+    out->destSquareType = (destSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    if (out->destSquareType == PROJECTILE_ELEMENT_DOOR) {
+        int doorState = destSquare & 0x07;
+        if (doorState == 0) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_OPEN;
+        } else if (doorState <= 4) {
+            out->destDoorState = doorState;
+        } else if (doorState == 5) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_DESTROYED;
+        } else {
+            out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+        }
+        {
+            int doorIndex = -1;
+            if (orch_cmd_attack_find_door_on_square_compat(
+                    world, projectile->mapIndex, destX, destY, &doorIndex) &&
+                world->things && world->things->doors &&
+                doorIndex >= 0 && doorIndex < world->things->doorCount) {
+                /* ReDMCSB PROJEXPL.C:F0217 lines 485-488 only lets an
+                 * Open Door projectile schedule C10/C02 when Door->Button
+                 * is set on the impacted door thing. */
+                out->destDoorHasButton =
+                    world->things->doors[doorIndex].button ? 1 : 0;
+            }
+        }
+    } else {
+        out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+    }
+
+    if (world->party.mapIndex == projectile->mapIndex &&
+        world->party.mapX == destX && world->party.mapY == destY) {
+        out->destHasChampion = 1;
+        out->destPartyDirection = world->party.direction & 3;
+        out->destChampionCellMask = 0x0F;
+    }
+
+    for (i = 0; i < world->creatureAICount &&
+                i < GAMEWORLD_CREATURE_AI_CAPACITY; ++i) {
+        const struct CreatureAIState_Compat* ai = &world->creatureAI[i];
+        if (ai->groupMapIndex == projectile->mapIndex &&
+            ai->groupMapX == destX && ai->groupMapY == destY) {
+            const struct CreatureBehaviorProfile_Compat* profile =
+                CREATURE_GetProfile_Compat(ai->creatureType);
+            out->destHasCreatureGroup = 1;
+            out->destCreatureType = ai->creatureType;
+            out->destCreatureCellMask = 0x0F;
+            out->destCreatureIsNonMaterial =
+                profile &&
+                ((profile->attributes & CREATURE_ATTR_MASK_NON_MATERIAL) != 0);
+            break;
+        }
+    }
+
+    for (i = 0; i < world->projectiles.count &&
+                i < PROJECTILE_LIST_CAPACITY; ++i) {
+        const struct ProjectileInstance_Compat* other =
+            &world->projectiles.entries[i];
+        if (i == projectileIndex || other->slotIndex < 0) continue;
+        if (other->mapIndex == projectile->mapIndex &&
+            other->mapX == destX && other->mapY == destY) {
+            out->destHasOtherProjectile = 1;
+            break;
+        }
+    }
+    return 1;
+}
+
+static int orch_apply_projectile_champion_action_compat(
+    struct GameWorld_Compat* world,
+    const struct CombatAction_Compat* action,
+    const struct ProjectileInstance_Compat* projectile,
+    struct TickResult_Compat* result);
+static int orch_apply_projectile_group_action_compat(
+    struct GameWorld_Compat* world,
+    const struct CombatAction_Compat* action,
+    const struct ProjectileInstance_Compat* projectile,
+    struct TickResult_Compat* result);
+static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct ProjectileInstance_Compat* projectile,
+    int damageOutcome);
+static void orch_schedule_projectile_hit_group_reaction_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    const struct CombatAction_Compat* action);
+static int orch_drop_group_fixed_possessions_compat(
+    struct GameWorld_Compat* world,
+    const struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY);
+static int orch_drop_creature_fixed_possessions_compat(
+    struct GameWorld_Compat* world,
+    int creatureType,
+    int cell,
+    int mapIndex,
+    int mapX,
+    int mapY);
+static int orch_drop_group_slot_possessions_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY);
+static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int killedCreatureIndex);
+static int orch_cmd_attack_apply_f0190_fear_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int groupIndex,
+    int originalGroupCount,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
+static int orch_handle_projectile_move_event_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* event,
+    struct TickResult_Compat* result)
+{
+    struct ProjectileInstance_Compat* projectile;
+    struct ProjectileInstance_Compat newState;
+    struct ProjectileTickResult_Compat tickResult;
+    struct CellContentDigest_Compat digest;
+    int projectileIndex;
+
+    if (!world || !event) return 0;
+    projectileIndex = event->aux0;
+    if (projectileIndex < 0 || projectileIndex >= PROJECTILE_LIST_CAPACITY) return 0;
+    projectile = &world->projectiles.entries[projectileIndex];
+    if (projectile->slotIndex < 0 || projectile->reserved3 == 0) return 1;
+    if (!orch_build_projectile_digest_compat(
+            world, projectile, projectileIndex, &digest)) {
+        return 0;
+    }
+
+    if (!F0811_PROJECTILE_Advance_Compat(
+            projectile, &digest, world->gameTick, &world->masterRng,
+            &newState, &tickResult)) {
+        F0813_PROJECTILE_Despawn_Compat(&world->projectiles, projectileIndex);
+        return 1;
+    }
+
+    if (tickResult.despawn) {
+        if (tickResult.emittedCombatAction &&
+            tickResult.outAction.kind == COMBAT_ACTION_APPLY_DAMAGE_CHAMPION) {
+            (void)orch_apply_projectile_champion_action_compat(
+                world, &tickResult.outAction, projectile, result);
+        }
+        if (tickResult.emittedCombatAction &&
+            tickResult.outAction.kind == COMBAT_ACTION_APPLY_DAMAGE_GROUP) {
+            (void)orch_apply_projectile_group_action_compat(
+                world, &tickResult.outAction, projectile, result);
+        }
+        if (tickResult.emittedExplosion) {
+            struct ExplosionCreateInput_Compat explosionIn;
+            struct TimelineEvent_Compat firstExplosionAdvance;
+            int explosionSlot = -1;
+            memset(&explosionIn, 0, sizeof(explosionIn));
+            explosionIn.explosionType =
+                tickResult.outExplosion.explosionType;
+            explosionIn.attack = tickResult.outExplosion.attack;
+            explosionIn.mapIndex = tickResult.outExplosion.mapIndex;
+            explosionIn.mapX = tickResult.outExplosion.mapX;
+            explosionIn.mapY = tickResult.outExplosion.mapY;
+            explosionIn.cell = tickResult.outExplosion.cell;
+            explosionIn.centered = tickResult.outExplosion.centered;
+            explosionIn.poisonAttack = tickResult.outExplosion.poisonAttack;
+            explosionIn.currentTick = (int)world->gameTick;
+            explosionIn.ownerKind = tickResult.outExplosion.ownerKind;
+            explosionIn.ownerIndex = tickResult.outExplosion.ownerIndex;
+            explosionIn.creatorProjectileSlot =
+                tickResult.outExplosion.creatorProjectileSlot;
+            if (F0821_EXPLOSION_Create_Compat(
+                    &explosionIn, &world->explosions, &explosionSlot,
+                    &firstExplosionAdvance)) {
+                (void)F0721_TIMELINE_Schedule_Compat(
+                    &world->timeline, &firstExplosionAdvance);
+            }
+        }
+        if (tickResult.emittedDoorDestructionEvent ||
+            tickResult.emittedDoorToggleEvent) {
+            /* ReDMCSB PROJEXPL.C:F0217 lines 506-508 calls F0232 to
+             * schedule C02 door destruction from projectile impact. */
+            (void)F0721_TIMELINE_Schedule_Compat(
+                    &world->timeline, &tickResult.outNextTick);
+        }
+        if (tickResult.resultKind == PROJECTILE_RESULT_HIT_WALL &&
+            tickResult.emittedSoundRequest) {
+            /* ReDMCSB PROJEXPL.C:F0217 lines 587-600 requests the
+             * non-explosion impact thud at the projectile source square.
+             * Metallic thud is sound index 0, so resultKind/explosion is
+             * the validity gate rather than the sound value. */
+            emit(result, EMIT_SOUND_REQUEST, tickResult.emittedSoundCode,
+                 projectile->mapX, projectile->mapY, projectile->mapIndex);
+        }
+        if (tickResult.resultKind == PROJECTILE_RESULT_HIT_DOOR &&
+            tickResult.emittedSoundRequest) {
+            /* ReDMCSB PROJEXPL.C:F0217 lines 485-508 handle Open Door and
+             * door attack side effects, then lines 587-600 request the
+             * non-explosion impact thud before deleting the projectile. */
+            emit(result, EMIT_SOUND_REQUEST, tickResult.emittedSoundCode,
+                 projectile->mapX, projectile->mapY, projectile->mapIndex);
+        }
+        F0813_PROJECTILE_Despawn_Compat(&world->projectiles, projectileIndex);
+        return 1;
+    }
+
+    *projectile = newState;
+    projectile->scheduledAtTick = (int)tickResult.outNextTick.fireAtTick;
+    (void)F0721_TIMELINE_Schedule_Compat(&world->timeline,
+                                         &tickResult.outNextTick);
+    return 1;
+}
+
+static int orch_apply_projectile_champion_action_compat(
+    struct GameWorld_Compat* world,
+    const struct CombatAction_Compat* action,
+    const struct ProjectileInstance_Compat* projectile,
+    struct TickResult_Compat* result)
+{
+    struct CombatResult_Compat damage;
+    struct ChampionState_Compat* champion;
+    int championIndex;
+    int killed = 0;
+
+    if (!world || !action) return 0;
+    if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_CHAMPION) return 0;
+    if (action->rawAttackValue <= 0) return 0;
+    championIndex = action->defenderSlotOrCreatureIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champion = &world->party.champions[championIndex];
+    if (!champion->present || champion->hp.current == 0) return 0;
+
+    memset(&damage, 0, sizeof(damage));
+    damage.damageApplied = action->rawAttackValue;
+    damage.woundMaskAdded = action->allowedWounds;
+
+    /* ReDMCSB PROJEXPL.C:F0217 lines 513-558 computes champion
+     * projectile impact damage, adds HEAD|TORSO pending wounds through
+     * F0321, then deletes the projectile. */
+    if (!F0737_COMBAT_ApplyDamageToChampion_Compat(
+            &damage, champion, &killed)) {
+        return 0;
+    }
+    if (killed) {
+        emit(result, EMIT_CHAMPION_DOWN, championIndex, 0, 0, 0);
+    }
+    /* ReDMCSB PROJEXPL.C:F0217 lines 557-558 gates projectile poison
+     * through F0322 only after champion damage was applied, poison attack
+     * exists, and RANDOM(2) passes.  CHAMPION.C:F0322 lines 1949-1960
+     * applies immediate max(1, attack >> 6) damage and schedules C75. */
+    if (!killed && projectile && projectile->poisonAttack > 0 &&
+        F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2) != 0) {
+        int poisonDamage = projectile->poisonAttack >> 6;
+        int nextAttack;
+        unsigned int dose;
+        struct TimelineEvent_Compat poisonEvent;
+
+        if (poisonDamage < 1) poisonDamage = 1;
+        if (poisonDamage > (int)champion->hp.current) {
+            poisonDamage = (int)champion->hp.current;
+        }
+        champion->hp.current =
+            (unsigned short)((int)champion->hp.current - poisonDamage);
+
+        dose = (unsigned int)champion->poisonDose +
+               (unsigned int)projectile->poisonAttack;
+        if (dose > 0xFFFFu) dose = 0xFFFFu;
+        champion->poisonDose = (unsigned short)dose;
+
+        nextAttack = projectile->poisonAttack - 1;
+        if (nextAttack > 0) {
+            memset(&poisonEvent, 0, sizeof(poisonEvent));
+            poisonEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+            poisonEvent.fireAtTick = world->gameTick +
+                (uint32_t)LIFECYCLE_POISON_RESCHEDULE_TICKS;
+            poisonEvent.mapIndex = world->partyMapIndex;
+            poisonEvent.mapX = world->party.mapX;
+            poisonEvent.mapY = world->party.mapY;
+            poisonEvent.aux0 = LIFECYCLE_STATUS_POISON;
+            poisonEvent.aux1 = nextAttack;
+            poisonEvent.aux4 = championIndex;
+            (void)F0721_TIMELINE_Schedule_Compat(
+                &world->timeline, &poisonEvent);
+            if (world->lifecycle.champions[championIndex].poisonEventCount <
+                255) {
+                world->lifecycle.champions[championIndex].poisonEventCount++;
+            }
+        }
+        if (champion->hp.current == 0) {
+            emit(result, EMIT_CHAMPION_DOWN, championIndex, 0, 0, 0);
+        }
+    }
+    return 1;
+}
+
+static int orch_find_group_creature_index_for_cell_compat(
+    const struct DungeonGroup_Compat* group,
+    int targetCell)
+{
+    int i;
+
+    if (!group) return -1;
+    if (group->cells == 0xFFu) {
+        return group->health[0] ? 0 : -1;
+    }
+    for (i = 0; i <= (int)group->count && i < 4; ++i) {
+        if (group->health[i] == 0) continue;
+        if (orch_group_creature_cell_compat(group, i) == (targetCell & 3)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static int orch_projectile_weapon_type_is_kept_sharp_compat(int weaponType)
+{
+    return weaponType == 8  ||  /* C08_WEAPON_DAGGER */
+           weaponType == 27 ||  /* C27_WEAPON_ARROW */
+           weaponType == 28 ||  /* C28_WEAPON_SLAYER */
+           weaponType == 31 ||  /* C31_WEAPON_POISON_DART */
+           weaponType == 32;    /* C32_WEAPON_THROWING_STAR */
+}
+
+static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct ProjectileInstance_Compat* projectile,
+    int damageOutcome)
+{
+    const struct CreatureBehaviorProfile_Compat* profile;
+    unsigned short associatedThing;
+    int weaponIndex;
+    int weaponType;
+
+    if (!world || !group || !projectile || !world->things) return 0;
+    if (damageOutcome != COMBAT_OUTCOME_KILLED_NO_CREATURES) return 0;
+    if ((projectile->flags & PROJECTILE_FLAG_CREATES_EXPLOSION) != 0) return 0;
+
+    associatedThing = (unsigned short)projectile->reserved1;
+    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) return 0;
+    if (THING_GET_TYPE(associatedThing) != THING_TYPE_WEAPON) return 0;
+
+    profile = CREATURE_GetProfile_Compat((int)group->creatureType);
+    if (!profile ||
+        ((profile->attributes & CREATURE_ATTR_MASK_KEEP_THROWN_SHARP_WEAPONS) == 0)) {
+        return 0;
+    }
+
+    weaponIndex = THING_GET_INDEX(associatedThing);
+    if (!world->things->weapons ||
+        weaponIndex < 0 ||
+        weaponIndex >= world->things->weaponCount) {
+        return 0;
+    }
+    weaponType = (int)world->things->weapons[weaponIndex].type;
+    if (!orch_projectile_weapon_type_is_kept_sharp_compat(weaponType)) {
+        return 0;
+    }
+
+    /* ReDMCSB PROJEXPL.C:F0217 lines 540-553 selects GROUP.Slot as the
+     * projectile-delete target for non-exploding sharp weapon projectiles
+     * that survive impact against KEEP_THROWN_SHARP_WEAPONS creatures. */
+    if (!orch_set_next_thing_compat(world->things, associatedThing, group->slot)) {
+        return 0;
+    }
+    group->slot = associatedThing;
+    return 1;
+}
+
+static int orch_apply_projectile_group_action_compat(
+    struct GameWorld_Compat* world,
+    const struct CombatAction_Compat* action,
+    const struct ProjectileInstance_Compat* projectile,
+    struct TickResult_Compat* result)
+{
+    struct DungeonGroup_Compat* group;
+    struct CombatResult_Compat damage;
+    struct CombatantCreatureSnapshot_Compat creatureSnapshot;
+    int groupIndex = -1;
+    int creatureIndex;
+    int killedCell;
+    int originalCreatureType;
+    int originalGroupCount;
+    int creatureSnapshotReady;
+    int outcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+
+    if (!world || !action || !world->things || !world->things->groups) return 0;
+    if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP) return 0;
+    if (action->rawAttackValue <= 0) return 0;
+    if (!orch_cmd_attack_find_group_on_square_compat(
+            world, action->targetMapIndex, action->targetMapX,
+            action->targetMapY, &groupIndex)) {
+        return 0;
+    }
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+    group = &world->things->groups[groupIndex];
+    creatureIndex = orch_find_group_creature_index_for_cell_compat(
+        group, action->targetCell);
+    if (creatureIndex < 0) return 0;
+    killedCell = orch_group_creature_cell_compat(group, creatureIndex);
+    originalCreatureType = (int)group->creatureType;
+    originalGroupCount = (int)group->count;
+    creatureSnapshotReady = F0888_ORCH_GetCreatureSnapshot_Compat(
+        world, groupIndex, creatureIndex, 0, &creatureSnapshot);
+
+    memset(&damage, 0, sizeof(damage));
+    damage.damageApplied = action->rawAttackValue;
+
+    /* ReDMCSB PROJEXPL.C:F0217 lines 515-537 resolves a concrete
+     * creature ordinal in the impact cell, scales attack by creature
+     * defense, adds F0192 poison adjustment, and applies the result
+     * through GROUP.C F0190.  F0811 has already produced the bounded
+     * scaled action payload, so the dispatcher only mutates the live
+     * group through F0738. */
+    if (!F0738_COMBAT_ApplyDamageToGroup_Compat(
+            &damage, group, creatureIndex, &outcome)) {
+        return 0;
+    }
+    if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+        /* ReDMCSB PROJEXPL.C:F0217 lines 535-539 receives the F0190
+         * damage outcome; GROUP.C:F0190 lines 907-917 creates death
+         * smoke, and all-kill removes the group from the square. */
+        orch_create_f0190_death_smoke_at_square_compat(
+            world, originalCreatureType, killedCell,
+            action->targetMapIndex, action->targetMapX, action->targetMapY);
+        (void)orch_drop_group_fixed_possessions_compat(
+            world, group, action->targetMapIndex,
+            action->targetMapX, action->targetMapY);
+        (void)orch_drop_group_slot_possessions_compat(
+            world, group, action->targetMapIndex,
+            action->targetMapX, action->targetMapY);
+        (void)orch_unlink_thing_from_square_compat(
+            world, action->targetMapIndex, action->targetMapX,
+            action->targetMapY,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
+        group->next = THING_NONE;
+        orch_remove_active_group_state_compat(world, groupIndex);
+        emit(result, EMIT_KILL_NOTIFY, groupIndex, creatureIndex,
+             outcome, originalCreatureType);
+    } else {
+        if (outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+            /* ReDMCSB GROUP.C:F0190 lines 842-917 drops fixed possessions
+             * for the killed member, cleans per-creature events, may frighten
+             * the surviving group, compacts the group, and creates death smoke.
+             * F0738 already compacted the live group; the orchestrator owns the
+             * surrounding map/timeline side effects. */
+            if (creatureSnapshotReady &&
+                (creatureSnapshot.attributes & DM1_ATTR_DROP_FIXED_POSS)) {
+                (void)orch_drop_creature_fixed_possessions_compat(
+                    world, originalCreatureType, killedCell,
+                    action->targetMapIndex, action->targetMapX,
+                    action->targetMapY);
+            }
+            if (creatureSnapshotReady && group->behavior == DM1_BEHAVIOR_ATTACK) {
+                orch_cmd_attack_cleanup_f0190_creature_events_compat(
+                    world, action->targetMapIndex, action->targetMapX,
+                    action->targetMapY, creatureIndex);
+                (void)orch_cmd_attack_apply_f0190_fear_compat(
+                    world, group, &creatureSnapshot, groupIndex,
+                    originalGroupCount, action->targetMapIndex,
+                    action->targetMapX, action->targetMapY);
+            }
+            orch_create_f0190_death_smoke_at_square_compat(
+                world, originalCreatureType, killedCell,
+                action->targetMapIndex, action->targetMapX, action->targetMapY);
+            emit(result, EMIT_KILL_NOTIFY, groupIndex, creatureIndex,
+                 outcome, originalCreatureType);
+        } else {
+            (void)orch_maybe_attach_projectile_weapon_to_group_slot_compat(
+                world, group, projectile, outcome);
+        }
+        orch_schedule_projectile_hit_group_reaction_compat(
+            world, groupIndex, group, action);
+    }
+    return 1;
+}
+
+static void orch_schedule_projectile_hit_group_reaction_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    const struct CombatAction_Compat* action)
+{
+    int activeIndex;
+    int ticksSinceLastMove = 0;
+    const struct CreatureBehaviorProfile_Compat* profile;
+    struct DM1GroupBehaviorContext_Compat ctx;
+    struct DM1ActiveGroup_Compat activeGroup;
+    struct DM1BehaviorResult_Compat behavior;
+    struct TimelineEvent_Compat reaction;
+
+    if (!world || !group || !action || groupIndex < 0) return;
+
+    activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+    profile = CREATURE_GetProfile_Compat((int)group->creatureType);
+
+    memset(&ctx, 0, sizeof(ctx));
+    memset(&activeGroup, 0, sizeof(activeGroup));
+    memset(&behavior, 0, sizeof(behavior));
+
+    ctx.currentMapIndex = action->targetMapIndex;
+    ctx.currentGroupMapX = action->targetMapX;
+    ctx.currentGroupMapY = action->targetMapY;
+    ctx.partyMapIndex = world->party.mapIndex;
+    ctx.partyMapX = world->party.mapX;
+    ctx.partyMapY = world->party.mapY;
+    ctx.partyChampionCount = world->party.championCount;
+    ctx.creatureType = (int)group->creatureType;
+    ctx.groupBehavior = (activeIndex >= 0)
+        ? orch_ai_state_to_dm1_behavior_compat(world->creatureAI[activeIndex].stateKind)
+        : (int)group->behavior;
+    ctx.creatureCount = group->count;
+    ctx.movementTicks = profile ? profile->movementTicks : 1;
+    if (ctx.movementTicks < 1) ctx.movementTicks = 1;
+    if (activeIndex >= 0 && world->creatureAI[activeIndex].lastSeenPartyTick >= 0) {
+        ticksSinceLastMove = (int)world->gameTick -
+            world->creatureAI[activeIndex].lastSeenPartyTick;
+        if (ticksSinceLastMove < 0) ticksSinceLastMove = 0;
+    }
+    ctx.ticksSinceLastMove = ticksSinceLastMove;
+    ctx.currentTickLow = (int)world->gameTick;
+    ctx.eventType = DM1_CM2_REACTION_HIT_BY_PROJECTILE;
+    ctx.eventTicks = (int)world->gameTick;
+
+    activeGroup.groupThingIndex = groupIndex;
+    activeGroup.cells = group->cells;
+    activeGroup.directions = group->direction;
+    activeGroup.lastMoveTime = (activeIndex >= 0)
+        ? world->creatureAI[activeIndex].lastSeenPartyTick : 0;
+    activeGroup.priorMapX = action->targetMapX;
+    activeGroup.priorMapY = action->targetMapY;
+
+    /* ReDMCSB PROJEXPL.C:F0217 lines 536-537 schedules
+     * F0209 CM2_EVENT_CREATE_REACTION_EVENT_30_HIT_BY_PROJECTILE
+     * after non-all-kill projectile creature damage.  Let the bounded
+     * F0209 port compute the concrete C30 event and source delay. */
+    if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
+            &ctx, &activeGroup, &world->masterRng, &behavior)) {
+        return;
+    }
+    if (behavior.nextEventDelayTicks <= 0 || behavior.nextEventType <= 0) {
+        return;
+    }
+
+    memset(&reaction, 0, sizeof(reaction));
+    reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    reaction.fireAtTick = world->gameTick +
+        (uint32_t)behavior.nextEventDelayTicks;
+    reaction.mapIndex = action->targetMapIndex;
+    reaction.mapX = action->targetMapX;
+    reaction.mapY = action->targetMapY;
+    reaction.aux0 = groupIndex;
+    reaction.aux1 = (int)group->creatureType;
+    reaction.aux2 = behavior.nextEventType;
+    (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &reaction);
+}
+
+static int orch_build_explosion_digest_compat(
+    const struct GameWorld_Compat* world,
+    const struct ExplosionInstance_Compat* explosion,
+    struct CellContentDigest_Compat* out)
+{
+    unsigned char square = 0;
+    int hasSquare;
+    int i;
+
+    if (!world || !explosion || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->sourceMapIndex = explosion->mapIndex;
+    out->sourceMapX = explosion->mapX;
+    out->sourceMapY = explosion->mapY;
+    out->destMapIndex = explosion->mapIndex;
+    out->destMapX = explosion->mapX;
+    out->destMapY = explosion->mapY;
+    out->destTeleporterNewDirection = -1;
+
+    hasSquare = orch_read_square_byte_compat(
+        world->dungeon, explosion->mapIndex, explosion->mapX,
+        explosion->mapY, &square);
+    if (!hasSquare) {
+        out->sourceSquareType = PROJECTILE_ELEMENT_WALL;
+        out->destSquareType = PROJECTILE_ELEMENT_WALL;
+        out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+        out->destIsMapBoundary = 1;
+        return 1;
+    }
+
+    out->sourceSquareType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    out->destSquareType = out->sourceSquareType;
+    if (out->destSquareType == PROJECTILE_ELEMENT_DOOR) {
+        int doorState = square & 0x07;
+        if (doorState == 0) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_OPEN;
+        } else if (doorState <= 4) {
+            out->destDoorState = doorState;
+        } else if (doorState == 5) {
+            out->destDoorState = PROJECTILE_DOOR_STATE_DESTROYED;
+        } else {
+            out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+        }
+    } else {
+        out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
+    }
+
+    if (world->party.mapIndex == explosion->mapIndex &&
+        world->party.mapX == explosion->mapX &&
+        world->party.mapY == explosion->mapY) {
+        out->destHasChampion = 1;
+        out->destPartyDirection = world->party.direction & 3;
+        out->destChampionCellMask = 0x0F;
+    }
+
+    for (i = 0; i < world->creatureAICount &&
+                i < GAMEWORLD_CREATURE_AI_CAPACITY; ++i) {
+        const struct CreatureAIState_Compat* ai = &world->creatureAI[i];
+        if (ai->groupMapIndex == explosion->mapIndex &&
+            ai->groupMapX == explosion->mapX &&
+            ai->groupMapY == explosion->mapY) {
+            const struct CreatureBehaviorProfile_Compat* profile =
+                CREATURE_GetProfile_Compat(ai->creatureType);
+            out->destHasCreatureGroup = 1;
+            out->destCreatureType = ai->creatureType;
+            out->destCreatureCellMask = 0x0F;
+            out->destCreatureIsNonMaterial =
+                profile &&
+                ((profile->attributes & CREATURE_ATTR_MASK_NON_MATERIAL) != 0);
+            break;
+        }
+    }
+    return 1;
+}
+
+static int orch_apply_explosion_group_action_compat(
+    struct GameWorld_Compat* world,
+    const struct CombatAction_Compat* action);
+
+static int orch_apply_explosion_party_action_compat(
+    struct GameWorld_Compat* world,
+    const struct CombatAction_Compat* action,
+    struct TickResult_Compat* result);
+
+static int orch_handle_explosion_advance_event_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* event,
+    struct TickResult_Compat* result)
+{
+    struct ExplosionInstance_Compat* explosion;
+    struct ExplosionInstance_Compat newState;
+    struct ExplosionTickResult_Compat tickResult;
+    struct CellContentDigest_Compat digest;
+    int explosionSlot;
+
+    if (!world || !event) return 0;
+    explosionSlot = event->aux0;
+    if (explosionSlot < 0 || explosionSlot >= EXPLOSION_LIST_CAPACITY) return 0;
+    explosion = &world->explosions.entries[explosionSlot];
+    if (explosion->slotIndex < 0 || explosion->reserved0 == 0) return 1;
+    if (!orch_build_explosion_digest_compat(world, explosion, &digest)) {
+        return 0;
+    }
+    if (!F0822_EXPLOSION_Advance_Compat(
+            explosion, &digest, world->gameTick, &world->masterRng,
+            &newState, &tickResult)) {
+        F0824_EXPLOSION_Despawn_Compat(&world->explosions, explosionSlot);
+        return 1;
+    }
+
+    if (tickResult.emittedCombatActionPartyCount > 0) {
+        (void)orch_apply_explosion_party_action_compat(
+            world, &tickResult.outActionParty, result);
+    }
+    if (tickResult.emittedCombatActionGroupCount > 0) {
+        (void)orch_apply_explosion_group_action_compat(
+            world, &tickResult.outActionGroup);
+    }
+
+    if (tickResult.emittedDoorDestructionEvent) {
+        (void)F0721_TIMELINE_Schedule_Compat(
+            &world->timeline, &tickResult.outNextTick);
+    }
+
+    if (tickResult.despawn) {
+        F0824_EXPLOSION_Despawn_Compat(&world->explosions, explosionSlot);
+        return 1;
+    }
+
+    *explosion = newState;
+    if (tickResult.outNextTick.kind != TIMELINE_EVENT_INVALID &&
+        tickResult.outNextTick.kind != 0) {
+        explosion->scheduledAtTick = (int)tickResult.outNextTick.fireAtTick;
+        (void)F0721_TIMELINE_Schedule_Compat(
+            &world->timeline, &tickResult.outNextTick);
+    }
+    return 1;
+}
+
+static int orch_apply_explosion_party_action_compat(
+    struct GameWorld_Compat* world,
+    const struct CombatAction_Compat* action,
+    struct TickResult_Compat* result)
+{
+    struct CombatResult_Compat damage;
+    int i;
+    int applied = 0;
+
+    if (!world || !action) return 0;
+    if (action->rawAttackValue <= 0) return 0;
+    memset(&damage, 0, sizeof(damage));
+    damage.damageApplied = action->rawAttackValue;
+    damage.woundMaskAdded = action->allowedWounds;
+
+    /* ReDMCSB PROJEXPL.C:F0220 lines 860-861 calls
+     * F0324_CHAMPION_DamageAll_GetDamagedChampionCount for poison clouds
+     * on the party square.  Fireball/lightning F0213/F0822 uses the same
+     * party-square action surface in Firestaff, so apply the returned
+     * damage to every living present champion in the party. */
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        int killed = 0;
+        struct ChampionState_Compat* champion = &world->party.champions[i];
+        if (!champion->present || champion->hp.current == 0) continue;
+        if (F0737_COMBAT_ApplyDamageToChampion_Compat(
+                &damage, champion, &killed)) {
+            applied++;
+            if (killed) emit(result, EMIT_CHAMPION_DOWN, i, 0, 0, 0);
+        }
+    }
+    return applied > 0;
+}
+
+static int orch_apply_explosion_group_action_compat(
+    struct GameWorld_Compat* world,
+    const struct CombatAction_Compat* action)
+{
+    struct DungeonGroup_Compat* group;
+    struct CombatResult_Compat damage;
+    int groupIndex = -1;
+    int creatureIndex = 0;
+    int outcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+
+    if (!world || !action || !world->things || !world->things->groups) return 0;
+    if (!orch_cmd_attack_find_group_on_square_compat(
+            world, action->targetMapIndex, action->targetMapX,
+            action->targetMapY, &groupIndex)) {
+        return 0;
+    }
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+    group = &world->things->groups[groupIndex];
+
+    memset(&damage, 0, sizeof(damage));
+    damage.damageApplied = action->rawAttackValue;
+    if (damage.damageApplied <= 0) return 0;
+
+    while (creatureIndex <= (int)group->count && creatureIndex < 4) {
+        if (group->health[creatureIndex] == 0) {
+            ++creatureIndex;
+            continue;
+        }
+        (void)F0738_COMBAT_ApplyDamageToGroup_Compat(
+            &damage, group, creatureIndex, &outcome);
+        if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) break;
+        if (outcome == COMBAT_OUTCOME_KILLED_NO_CREATURES) ++creatureIndex;
     }
     return 1;
 }
@@ -1984,6 +4283,174 @@ static int orch_drop_group_slot_possessions_compat(
     }
     group->slot = THING_ENDOFLIST;
     return safety < 64;
+}
+
+static void orch_cmd_attack_apply_f0190_possession_drops_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int killedCell,
+    int outcome)
+{
+    int mapIndex;
+    int mapX;
+    int mapY;
+
+    if (!world || !group || !creature) return;
+    if (outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES &&
+        outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+        return;
+    }
+
+    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+        /* ReDMCSB: GROUP.C F0190 lines ~824-829 calls F0188 before
+         * F0189 for a not-moving single-creature group. F0188 drops
+         * fixed possessions first, then the group's Slot chain. */
+        (void)orch_drop_group_fixed_possessions_compat(
+            world, group, mapIndex, mapX, mapY);
+        (void)orch_drop_group_slot_possessions_compat(
+            world, group, mapIndex, mapX, mapY);
+        return;
+    }
+
+    if (creature->attributes & DM1_ATTR_DROP_FIXED_POSS) {
+        /* ReDMCSB: GROUP.C F0190 lines ~831-847 drops the killed
+         * creature's fixed possessions immediately when the damaged group
+         * is not moving; moving groups record the cell for F0187 instead. */
+        (void)orch_drop_creature_fixed_possessions_compat(
+            world, creature->creatureType, killedCell, mapIndex, mapX, mapY);
+    }
+}
+
+static int orch_cmd_attack_f0190_event_creature_index_compat(int eventType)
+{
+    if (eventType >= DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
+        eventType < DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
+        return eventType - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+    }
+    if (eventType >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+        eventType <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        return eventType - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    }
+    return -1;
+}
+
+static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int killedCreatureIndex)
+{
+    int readIndex;
+    int writeIndex = 0;
+    int oldCount;
+    int compactedCount;
+
+    if (!world) return;
+    if (killedCreatureIndex < 0 || killedCreatureIndex > 3) return;
+    oldCount = world->timeline.count;
+
+    /* ReDMCSB: GROUP.C F0190 lines ~848-872 deletes pending C33-C36 /
+     * C38-C41 events for the killed creature and decrements the event type
+     * for creatures that shift down during group compaction. */
+    for (readIndex = 0; readIndex < oldCount; ++readIndex) {
+        struct TimelineEvent_Compat ev = world->timeline.events[readIndex];
+        if (ev.kind == TIMELINE_EVENT_CREATURE_REACTION &&
+            ev.mapIndex == mapIndex && ev.mapX == mapX && ev.mapY == mapY) {
+            int eventCreatureIndex =
+                orch_cmd_attack_f0190_event_creature_index_compat(ev.aux2);
+            if (eventCreatureIndex == killedCreatureIndex) {
+                continue;
+            }
+            if (eventCreatureIndex > killedCreatureIndex) {
+                ev.aux2--;
+            }
+        }
+        world->timeline.events[writeIndex++] = ev;
+    }
+    compactedCount = writeIndex;
+    while (writeIndex < oldCount) {
+        memset(&world->timeline.events[writeIndex], 0,
+               sizeof(world->timeline.events[writeIndex]));
+        ++writeIndex;
+    }
+    world->timeline.count = compactedCount;
+}
+
+static int orch_cmd_attack_apply_f0190_fear_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int groupIndex,
+    int originalGroupCount,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    struct DM1GroupBehaviorContext_Compat ctx;
+    int activeIndex;
+    int shouldFlee = 0;
+    int fleeDelay = 0;
+
+    if (!world || !group || !creature) return 0;
+    if (group->behavior != DM1_BEHAVIOR_ATTACK) return 0;
+    if (mapIndex != world->partyMapIndex) return 0;
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.currentMapIndex = mapIndex;
+    ctx.currentGroupMapX = mapX;
+    ctx.currentGroupMapY = mapY;
+    ctx.partyMapIndex = world->party.mapIndex;
+    ctx.partyMapX = world->party.mapX;
+    ctx.partyMapY = world->party.mapY;
+    ctx.creatureType = creature->creatureType;
+    ctx.creatureInfo.properties = creature->properties;
+    ctx.groupBehavior = group->behavior;
+    ctx.creatureCount = originalGroupCount;
+
+    if (!F0821_DM1_GROUP_ShouldFrighten_Compat(
+            &ctx, originalGroupCount, &world->masterRng,
+            &shouldFlee, &fleeDelay)) {
+        return 0;
+    }
+    if (!shouldFlee) return 0;
+
+    group->behavior = DM1_BEHAVIOR_FLEE;
+    activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+    if (activeIndex >= 0) {
+        world->creatureAI[activeIndex].stateKind = AI_STATE_FLEE;
+        world->creatureAI[activeIndex].fearCounter = fleeDelay;
+    }
+    return 1;
+}
+
+static int orch_cmd_attack_apply_f0190_killed_some_state_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* creature,
+    int groupIndex,
+    int killedCreatureIndex,
+    int originalGroupCount,
+    int outcome)
+{
+    int mapIndex;
+    int mapX;
+    int mapY;
+
+    if (!world || !group || !creature) return 0;
+    if (outcome != COMBAT_OUTCOME_KILLED_SOME_CREATURES) return 0;
+
+    orch_cmd_attack_target_square_compat(world, &mapIndex, &mapX, &mapY);
+    if (group->behavior == DM1_BEHAVIOR_ATTACK) {
+        orch_cmd_attack_cleanup_f0190_creature_events_compat(
+            world, mapIndex, mapX, mapY, killedCreatureIndex);
+        return orch_cmd_attack_apply_f0190_fear_compat(
+            world, group, creature, groupIndex, originalGroupCount,
+            mapIndex, mapX, mapY);
+    }
+    return 0;
 }
 
 static int orch_resolve_group_f0267_pit_destination_compat(
@@ -2543,6 +5010,124 @@ static int orch_handle_creature_tick_group_move_compat(
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &nextEvent);
 }
 
+static int orch_ai_state_to_dm1_behavior_compat(int stateKind)
+{
+    switch (stateKind) {
+        case AI_STATE_ATTACK: return DM1_BEHAVIOR_ATTACK;
+        case AI_STATE_APPROACH: return DM1_BEHAVIOR_APPROACH;
+        case AI_STATE_FLEE: return DM1_BEHAVIOR_FLEE;
+        case AI_STATE_WANDER:
+        case AI_STATE_IDLE:
+        default:
+            return DM1_BEHAVIOR_WANDER;
+    }
+}
+
+static int orch_dm1_behavior_to_ai_state_compat(int behavior)
+{
+    switch (behavior) {
+        case DM1_BEHAVIOR_ATTACK: return AI_STATE_ATTACK;
+        case DM1_BEHAVIOR_APPROACH: return AI_STATE_APPROACH;
+        case DM1_BEHAVIOR_FLEE: return AI_STATE_FLEE;
+        case DM1_BEHAVIOR_WANDER:
+        default:
+            return AI_STATE_WANDER;
+    }
+}
+
+static int orch_handle_creature_reaction_event_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
+{
+    int groupIndex;
+    int activeIndex;
+    struct DungeonGroup_Compat* group;
+    struct CreatureAIState_Compat* ai;
+    struct DM1GroupBehaviorContext_Compat ctx;
+    struct DM1ActiveGroup_Compat activeGroup;
+    struct DM1BehaviorResult_Compat behavior;
+    struct TimelineEvent_Compat next;
+
+    (void)result;
+    if (!world || !ev || !world->things || !world->things->groups) return 0;
+    groupIndex = ev->aux0;
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+    group = &world->things->groups[groupIndex];
+    if (group->next == THING_NONE) return 1;
+
+    activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+    if (activeIndex < 0) {
+        (void)orch_add_generated_group_active_state_compat(
+            world, groupIndex, group, ev->mapIndex, ev->mapX, ev->mapY);
+        activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+    }
+    if (activeIndex < 0) return 1;
+
+    ai = &world->creatureAI[activeIndex];
+    memset(&ctx, 0, sizeof(ctx));
+    memset(&activeGroup, 0, sizeof(activeGroup));
+    memset(&behavior, 0, sizeof(behavior));
+
+    ctx.currentGroupMapX = ev->mapX;
+    ctx.currentGroupMapY = ev->mapY;
+    ctx.partyMapX = world->party.mapX;
+    ctx.partyMapY = world->party.mapY;
+    ctx.partyMapIndex = world->party.mapIndex;
+    ctx.currentMapIndex = ev->mapIndex;
+    ctx.partyChampionCount = world->party.championCount;
+    ctx.creatureType = group->creatureType;
+    ctx.groupBehavior = orch_ai_state_to_dm1_behavior_compat(ai->stateKind);
+    ctx.creatureCount = group->count;
+    ctx.movementTicks = 1;
+    ctx.currentTickLow = (int)world->gameTick;
+    ctx.eventType = ev->aux2;
+    ctx.eventTicks = (int)ev->fireAtTick;
+
+    activeGroup.groupThingIndex = groupIndex;
+    activeGroup.cells = group->cells;
+    activeGroup.directions = group->direction;
+    activeGroup.lastMoveTime = ai->lastSeenPartyTick;
+    activeGroup.targetMapX = ai->lastSeenPartyMapX;
+    activeGroup.targetMapY = ai->lastSeenPartyMapY;
+    activeGroup.priorMapX = ai->groupMapX;
+    activeGroup.priorMapY = ai->groupMapY;
+
+    /* ReDMCSB: PROJEXPL.C F0231 calls GROUP.C F0209 with
+     * CM1_EVENT_CREATE_REACTION_EVENT_31_PARTY_IS_ADJACENT unless the
+     * whole group died.  The scheduler has already converted CM1 into the
+     * concrete C31 reaction event; this dispatch applies F0209's C31 branch
+     * to the active-group analogue. */
+    if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
+            &ctx, &activeGroup, &world->masterRng, &behavior)) {
+        return 0;
+    }
+
+    ai->stateKind = orch_dm1_behavior_to_ai_state_compat(behavior.newBehavior);
+    ai->groupMapIndex = ev->mapIndex;
+    ai->groupMapX = ev->mapX;
+    ai->groupMapY = ev->mapY;
+    ai->groupCells = group->cells;
+    ai->lastSeenPartyMapX = activeGroup.targetMapX;
+    ai->lastSeenPartyMapY = activeGroup.targetMapY;
+    ai->lastSeenPartyTick = (int)world->gameTick;
+    group->behavior = (unsigned char)(behavior.newBehavior & 0xFF);
+
+    if (behavior.nextEventDelayTicks > 0 && behavior.nextEventType > 0) {
+        memset(&next, 0, sizeof(next));
+        next.kind = TIMELINE_EVENT_CREATURE_REACTION;
+        next.fireAtTick = world->gameTick + (uint32_t)behavior.nextEventDelayTicks;
+        next.mapIndex = ev->mapIndex;
+        next.mapX = ev->mapX;
+        next.mapY = ev->mapY;
+        next.aux0 = groupIndex;
+        next.aux1 = group->creatureType;
+        next.aux2 = behavior.nextEventType;
+        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &next);
+    }
+    return 1;
+}
+
 static int orch_handle_group_generator_trigger_runtime_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -2925,14 +5510,223 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         }
     }
     case CMD_ATTACK: {
-        /* Minimal v1: emit EMIT_DAMAGE_DEALT marker + advance RNG once so
-         * the tick is not a no-op. Fontanel's full combat pipeline is
-         * reachable via F0735 given proper combatant snapshots — wired in
-         * Phase 20 v2 when the party builds snapshots from live state. */
-        uint32_t r = F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
-        emit(result, EMIT_DAMAGE_DEALT,
-             input->commandArg1, input->commandArg2, (int32_t)(r & 0x7FFF), 0);
-        return 1;
+        /* commandArg1 = champion index.  With live target data:
+         * commandArg2 = group index or CMD_ATTACK_TARGET_AUTO_GROUP_PC34,
+         * reserved = creature slot or CMD_ATTACK_CREATURE_AUTO_PC34.  If the
+         * target snapshot is absent, the older marker-only fallback is kept
+         * only for explicit legacy-marker callers without live group-table
+         * data. */
+        DM1_WeaponInfo weaponInfo;
+        int weaponClass;
+        int hasWeaponInfo = F0888_ORCH_GetChampionActionHandWeaponInfo_Compat(
+            world, (int)input->commandArg1, &weaponInfo) > 0;
+        int emptyHandLiveAction =
+            !hasWeaponInfo &&
+            orch_cmd_attack_has_live_action_index_compat(input) &&
+            orch_cmd_attack_action_hand_is_empty_compat(
+                world, (int)input->commandArg1);
+        if (emptyHandLiveAction) {
+            /* ReDMCSB MENU.C F0389 lines 717-718 opens action set 2
+             * (PUNCH/KICK/WAR CRY) when the action hand is empty.  F0231
+             * still uses F0312 champion strength for C01_SLOT_ACTION_HAND,
+             * but there is no WEAPON_INFO strength/class addition. */
+            orch_cmd_attack_empty_hand_weapon_info_compat(&weaponInfo);
+        }
+        if (hasWeaponInfo || emptyHandLiveAction) {
+            struct CombatantChampionSnapshot_Compat championSnapshot;
+            struct CombatantCreatureSnapshot_Compat creatureSnapshot;
+            struct WeaponProfile_Compat weaponProfile;
+            struct CombatResult_Compat combatResult;
+            int groupIndex = -1;
+            int creatureIndex = -1;
+            int applyOutcome = COMBAT_OUTCOME_INVALID;
+            int weaponType = -1;
+            int actionIndex = orch_cmd_attack_action_index_compat(input);
+            int actionSkillIndex =
+                orch_cmd_attack_action_skill_index_compat(actionIndex);
+            int killedCell = EXPLOSION_CELL_CENTERED;
+            int originalGroupCount = -1;
+            int fearTriggered = 0;
+            int targetResolved;
+            int championSnapshotReady = 0;
+            int creatureSnapshotReady = 0;
+            if (hasWeaponInfo) {
+                int weaponThingIndex = THING_GET_INDEX(
+                    world->party.champions[(int)input->commandArg1]
+                        .inventory[CHAMPION_SLOT_ACTION_HAND]);
+                weaponType = world->things->weapons[weaponThingIndex].type;
+            }
+            weaponClass = weaponInfo.weaponClass;
+            if (orch_cmd_attack_f0407_closed_door_compat(
+                    world, input, &weaponInfo, hasWeaponInfo, actionIndex,
+                    result)) {
+                return 1;
+            }
+            targetResolved = orch_cmd_attack_resolve_target_compat(
+                world, input, &groupIndex, &creatureIndex);
+            if (!targetResolved &&
+                input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34) {
+                /* ReDMCSB MENU.C F0402 lines 1021-1057 returns false before
+                 * F0231 when no melee target creature ordinal exists.  Keep
+                 * legacy direct group-index callers on the marker fallback,
+                 * but do not synthesize random damage for live auto-target
+                 * attacks against an empty front square. */
+                return 1;
+            }
+            if (!targetResolved &&
+                orch_cmd_attack_has_live_action_index_compat(input)) {
+                /* ReDMCSB MENU.C F0402 lines 1021-1057 only reaches F0231
+                 * after a concrete G0517 action-target group and melee
+                 * creature ordinal exist.  A direct compatibility call that
+                 * already carries an F0407 action index is live melee data,
+                 * not the older weapon-class marker path. */
+                return 1;
+            }
+            if (!targetResolved &&
+                orch_cmd_attack_has_live_group_table_compat(world)) {
+                /* Direct group-index callers against a live THING group table
+                 * are runtime melee data too: if the group/creature cannot be
+                 * resolved, mirror F0402's early false return instead of
+                 * reinterpreting commandArg2 as the legacy weapon-class marker. */
+                return 1;
+            }
+            if (targetResolved &&
+                orch_cmd_attack_champion_reach_blocked_f0407_compat(
+                    world, (int)input->commandArg1)) {
+                emit(result, EMIT_DAMAGE_DEALT,
+                     input->commandArg1, groupIndex, 0, COMBAT_OUTCOME_INVALID);
+                return 1;
+            }
+            if (targetResolved &&
+                orch_cmd_attack_disrupt_material_blocked_f0407_compat(
+                    world, actionIndex, groupIndex)) {
+                emit(result, EMIT_DAMAGE_DEALT,
+                     input->commandArg1, groupIndex, 0, COMBAT_OUTCOME_INVALID);
+                return 1;
+            }
+            if (targetResolved) {
+                creatureSnapshotReady =
+                    F0888_ORCH_GetCreatureSnapshot_Compat(
+                        world, groupIndex, creatureIndex,
+                        orch_cmd_attack_doubled_map_difficulty_compat(world),
+                        &creatureSnapshot);
+                if (creatureSnapshotReady &&
+                    creatureSnapshot.isCandidateInvulnerable) {
+                    /* Candidate-panel attacks must remain true NO_ACTION:
+                     * reject before F0312 consumes RANDOM(16). */
+                    return 1;
+                }
+                championSnapshotReady =
+                    orch_build_cmd_attack_champion_snapshot_compat(
+                        world, (int)input->commandArg1, &weaponInfo, weaponType,
+                        hasWeaponInfo, actionSkillIndex, &championSnapshot);
+            }
+            if (targetResolved && (!championSnapshotReady || !creatureSnapshotReady)) {
+                /* ReDMCSB MENU.C F0402 enters F0231 only after a concrete
+                 * target creature ordinal exists, and PROJEXPL.C F0231
+                 * returns before damage when the champion is invalid/dead.
+                 * Do not let a resolved live target fall through to the
+                 * compatibility marker path when either live snapshot is
+                 * unavailable. */
+                return 1;
+            }
+            if (targetResolved && championSnapshotReady && creatureSnapshotReady) {
+                orch_build_cmd_attack_weapon_profile_compat(
+                    &weaponInfo, weaponType, actionIndex, actionSkillIndex,
+                    &weaponProfile);
+                if (F0735_COMBAT_ResolveChampionMelee_Compat(
+                        &championSnapshot, &weaponProfile, &creatureSnapshot,
+                        &world->masterRng, &combatResult)) {
+                    if (combatResult.outcome == COMBAT_OUTCOME_NO_ACTION) {
+                        /* ReDMCSB CLIKCHAM.C F0368 lines 69-71 keeps the
+                         * live candidate champion panel from being redrawn
+                         * as a normal champion state.  Firestaff carries
+                         * the same "candidate is panel-owned" boundary into
+                         * F0735 as NO_ACTION; it must not become a F0231 miss
+                         * with stamina, reaction, or damage emissions. */
+                        return 1;
+                    }
+                    orch_writeback_cmd_attack_luck_compat(
+                        world, (int)input->commandArg1, &championSnapshot);
+                    orch_cmd_attack_apply_f0231_side_effects_compat(
+                        world, (int)input->commandArg1, actionSkillIndex,
+                        &creatureSnapshot, combatResult.damageApplied);
+                    if (combatResult.damageApplied > 0 &&
+                        groupIndex >= 0 && groupIndex < world->things->groupCount) {
+                        originalGroupCount =
+                            (int)world->things->groups[groupIndex].count;
+                        killedCell = orch_group_creature_cell_compat(
+                            &world->things->groups[groupIndex], creatureIndex);
+                        (void)F0738_COMBAT_ApplyDamageToGroup_Compat(
+                            &combatResult, &world->things->groups[groupIndex],
+                            creatureIndex, &applyOutcome);
+                        orch_cmd_attack_apply_f0190_possession_drops_compat(
+                            world, &world->things->groups[groupIndex],
+                            &creatureSnapshot, killedCell, applyOutcome);
+                        orch_cmd_attack_create_f0190_death_smoke_compat(
+                            world, &creatureSnapshot, killedCell, applyOutcome);
+                        fearTriggered =
+                            orch_cmd_attack_apply_f0190_killed_some_state_compat(
+                                world, &world->things->groups[groupIndex],
+                                &creatureSnapshot, groupIndex, creatureIndex,
+                                originalGroupCount, applyOutcome);
+                        orch_cmd_attack_apply_group_kill_side_effects_compat(
+                            world, groupIndex, applyOutcome);
+                    }
+                    if (applyOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES ||
+                        applyOutcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+                        emit(result, EMIT_KILL_NOTIFY,
+                             groupIndex, creatureIndex,
+                             applyOutcome, creatureSnapshot.creatureType);
+                    }
+                    if (!fearTriggered) {
+                        orch_cmd_attack_schedule_f0231_reaction_compat(
+                            world, groupIndex, &creatureSnapshot,
+                            (applyOutcome != COMBAT_OUTCOME_INVALID)
+                                ? applyOutcome
+                                : combatResult.outcome);
+                    }
+                    emit(result, EMIT_DAMAGE_DEALT,
+                         input->commandArg1, groupIndex,
+                         combatResult.damageApplied,
+                         (applyOutcome != COMBAT_OUTCOME_INVALID)
+                             ? applyOutcome
+                             : combatResult.outcome);
+                    return 1;
+                }
+            }
+        } else {
+            if (input->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34) {
+                /* ReDMCSB PROJEXPL.C F0231 lines 1464-1468 rejects invalid
+                 * champion ordinals and champions with no current health
+                 * before damage/stamina side effects.  Live auto-target
+                 * calls must not turn that rejection into legacy marker
+                 * damage when no action-hand snapshot can be built. */
+                return 1;
+            }
+            if (orch_cmd_attack_has_live_group_table_compat(world)) {
+                /* With live group data present, an unresolved direct target is
+                 * a source no-op, not a synthetic marker-damage request. */
+                return 1;
+            }
+            weaponClass = (int)input->commandArg2;
+        }
+        if (!orch_cmd_attack_has_legacy_marker_compat(input)) {
+            /* Marker damage is a synthetic M10 compatibility snapshot, not a
+             * ReDMCSB F0402/F0231 live melee path.  Require an explicit marker
+             * so unresolved or partially populated runtime calls cannot
+             * accidentally manufacture damage. */
+            return 1;
+        }
+        {
+            uint32_t r = F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
+            int skillBonus = F0888_ORCH_GetChampionF0312SkillBonus_Compat(
+                world, (int)input->commandArg1, weaponClass);
+            emit(result, EMIT_DAMAGE_DEALT,
+                 input->commandArg1, weaponClass,
+                 (int32_t)(r & 0x7FFF), skillBonus);
+            return 1;
+        }
     }
     case CMD_CAST_SPELL: {
         /* Full spell effect application.
@@ -2945,6 +5739,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         int tableIdx = (int)input->commandArg2;
         int champIdx = (int)input->commandArg1;
         int powerOrd = (int)input->reserved;
+        int emptyFlaskSlot = orch_cmd_cast_spell_empty_flask_slot_compat(input);
 
         (void)F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
         emit(result, EMIT_SOUND_REQUEST, tableIdx,
@@ -2960,12 +5755,8 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
 
         switch (spell.kind) {
         case C2_SPELL_KIND_PROJECTILE_COMPAT: {
-            int skillLvl = 0;
-            if (champIdx >= 0 && champIdx < CHAMPION_MAX_PARTY &&
-                world->party.champions[champIdx].present &&
-                spell.skillIndex >= 0 && spell.skillIndex < CHAMPION_SKILL_COUNT) {
-                skillLvl = world->party.champions[champIdx].skillLevels[spell.skillIndex];
-            }
+            int skillLvl = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+                world, champIdx, spell.skillIndex);
             F0756_MAGIC_ProduceProjectileEffect_Compat(
                 &spell, powerOrd, skillLvl, &world->masterRng, &effect);
             break;
@@ -2976,7 +5767,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             break;
         case C1_SPELL_KIND_POTION_COMPAT:
             F0758_MAGIC_ProducePotionEffect_Compat(
-                &spell, powerOrd, 0 /* hasEmptyFlaskInHand: UI checked */, &world->masterRng, &effect);
+                &spell, powerOrd, emptyFlaskSlot >= 0, &world->masterRng, &effect);
             break;
         default:
             /* Unknown kind (e.g. magic map) — no effect. */
@@ -2984,6 +5775,16 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         }
 
         if (effect.castResult == SPELL_CAST_SUCCESS) {
+            if (effect.spellKind == C1_SPELL_KIND_POTION_COMPAT) {
+                (void)orch_cmd_cast_spell_mutate_empty_flask_f0411_compat(
+                    world, champIdx, emptyFlaskSlot,
+                    effect.spellType, effect.kineticEnergy);
+            } else if (effect.spellKind == C3_SPELL_KIND_OTHER_COMPAT &&
+                       effect.spellType == C7_SPELL_TYPE_OTHER_ZOKATHRA_COMPAT) {
+                (void)orch_cmd_cast_spell_materialize_zokathra_f0412_compat(
+                    world, champIdx);
+            }
+
             /* Apply magic state deltas (light, shields, footprints, etc.) */
             F0760_MAGIC_ApplyStateDelta_Compat(&effect, &world->magic);
 
@@ -2992,7 +5793,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 effect.durationTicks > 0) {
                 struct TimelineEvent_Compat tlEv;
                 if (F0763_MAGIC_BuildTimelineEvent_Compat(
-                        &effect, world->partyMapIndex,
+                        &effect, world->party.mapIndex,
                         world->party.mapX, world->party.mapY,
                         0 /* partyCell */, world->gameTick, &tlEv)) {
                     F0721_TIMELINE_Schedule_Compat(&world->timeline, &tlEv);
@@ -3189,7 +5990,12 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             break;
         }
         case TIMELINE_EVENT_DOOR_DESTRUCTION:
-            emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY, ev.aux0, ev.mapIndex);
+            /* ReDMCSB PROJEXPL.C F0232 lines 1578-1589 schedules C02
+             * when Ticks is non-zero; TIMELINE later applies
+             * C5_DOOR_STATE_DESTROYED to the map square. */
+            (void)orch_set_door_state_compat(
+                world, ev.mapIndex, ev.mapX, ev.mapY, 5);
+            emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY, 5, ev.mapIndex);
             break;
         case TIMELINE_EVENT_PLAY_SOUND:
             emit(result, EMIT_SOUND_REQUEST, ev.aux0, ev.mapX, ev.mapY, ev.mapIndex);
@@ -3225,8 +6031,52 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         case TIMELINE_EVENT_STATUS_TIMEOUT: {
             struct TimelineEvent_Compat resched;
             memset(&resched, 0, sizeof(resched));
-            F0835_LIFECYCLE_HandleStatusExpiry_Compat(
-                &world->lifecycle, &ev, ev.aux1, &resched);
+            if (ev.aux0 == LIFECYCLE_STATUS_POISON) {
+                int championIndex = ev.aux4;
+                if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
+                    if (F0835_LIFECYCLE_HandleStatusExpiry_Compat(
+                            &world->lifecycle, &ev, championIndex,
+                            &resched)) {
+                        int damage = resched.aux3;
+                        struct ChampionState_Compat* champ =
+                            &world->party.champions[championIndex];
+                        if (champ->present && champ->hp.current > 0) {
+                            if (damage < 0) damage = 0;
+                            if (damage > (int)champ->hp.current) {
+                                damage = (int)champ->hp.current;
+                            }
+                            champ->hp.current =
+                                (unsigned short)((int)champ->hp.current - damage);
+                            if (resched.kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                                    resched.aux0 == LIFECYCLE_STATUS_POISON &&
+                                    resched.aux1 > 0) {
+                                champ->poisonDose = (unsigned short)resched.aux1;
+                            } else {
+                                champ->poisonDose = 0;
+                            }
+                        }
+                        if (resched.kind != TIMELINE_EVENT_INVALID) {
+                            (void)F0721_TIMELINE_Schedule_Compat(
+                                &world->timeline, &resched);
+                        }
+                    }
+                }
+            } else if (ev.aux0 == LIFECYCLE_STATUS_SPELL_SHIELD) {
+                /* ReDMCSB TIMELINE.C C77 lines 1985-1986 subtracts the
+                 * event defense from G0407_s_Party.SpellShieldDefense. */
+                world->magic.spellShieldDefense -= ev.aux1;
+                F0835_LIFECYCLE_HandleStatusExpiry_Compat(
+                    &world->lifecycle, &ev, ev.aux1, &resched);
+            } else if (ev.aux0 == LIFECYCLE_STATUS_FIRE_SHIELD) {
+                /* ReDMCSB TIMELINE.C C78 lines 1988-1989 subtracts the
+                 * event defense from G0407_s_Party.FireShieldDefense. */
+                world->magic.fireShieldDefense -= ev.aux1;
+                F0835_LIFECYCLE_HandleStatusExpiry_Compat(
+                    &world->lifecycle, &ev, ev.aux1, &resched);
+            } else {
+                F0835_LIFECYCLE_HandleStatusExpiry_Compat(
+                    &world->lifecycle, &ev, ev.aux1, &resched);
+            }
             break;
         }
         case TIMELINE_EVENT_REMOVE_FLUXCAGE: {
@@ -3256,15 +6106,47 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             (void)orch_handle_deferred_group_move_event_compat(world, &ev, result);
             break;
         case TIMELINE_EVENT_SQUARE_STATE:
-        case TIMELINE_EVENT_SENSOR_DELAYED:
         case TIMELINE_EVENT_MOVE_TIMER:
         case TIMELINE_EVENT_SPELL_TICK:
+            break;
+        case TIMELINE_EVENT_SENSOR_DELAYED:
+            if (ev.aux0 == 10 && ev.aux1 == DOOR_EFFECT_TOGGLE) {
+                int resolvedEffect = -1;
+                struct TimelineEvent_Compat animEvent;
+                /* ReDMCSB PROJEXPL.C:F0217 lines 485-488 schedules
+                 * C10_EVENT_DOOR/C02_EFFECT_TOGGLE for Open Door projectile
+                 * impacts on button doors; TIMELINE.C:F0241 then resolves
+                 * that toggle into the door animation effect. */
+                if (F0714_DOOR_ResolveAnimationEffect_Compat(
+                        world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
+                        DOOR_EFFECT_TOGGLE, &resolvedEffect, NULL) &&
+                    F0713_DOOR_BuildAnimationEvent_Compat(
+                        ev.mapIndex, ev.mapX, ev.mapY, resolvedEffect,
+                        ev.fireAtTick, &animEvent)) {
+                    (void)F0721_TIMELINE_Schedule_Compat(
+                        &world->timeline, &animEvent);
+                }
+            }
             break;
         case TIMELINE_EVENT_CREATURE_TICK:
             (void)orch_handle_creature_tick_group_move_compat(world, &ev, result);
             break;
+        case TIMELINE_EVENT_CREATURE_REACTION:
+            (void)orch_handle_creature_reaction_event_compat(world, &ev, result);
+            break;
         case TIMELINE_EVENT_PROJECTILE_MOVE:
+            /* ReDMCSB PROJEXPL.C F0219: C48/C49 events advance one
+             * projectile, update its cell/square/energy, then schedule the
+             * next move if it still exists.  Full impact side effects remain
+             * in the dedicated projectile/M11 paths; this dispatcher closes
+             * the old no-op gap for live flight/reschedule. */
+            (void)orch_handle_projectile_move_event_compat(world, &ev, result);
+            break;
         case TIMELINE_EVENT_EXPLOSION_ADVANCE:
+            /* ReDMCSB PROJEXPL.C F0220: event 25 advances or removes one
+             * explosion and reschedules persistent clouds/smoke. */
+            (void)orch_handle_explosion_advance_event_compat(world, &ev, result);
+            break;
         default:
             /* v1 accepts these events as a no-op state-advance: the
              * event was popped (queue shrinks) but we do not yet run

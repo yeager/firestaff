@@ -16,12 +16,13 @@
  * This module is the bounded read-only classifier Firestaff uses
  * to discover, header-validate, inventory, and locate compressed
  * entry byte spans in a CSBgraphics.dat without committing to a
- * full LZW decoder or a runtime override hook. It deliberately:
+ * full runtime override hook. It deliberately:
  *
- *   - reads only the on-disk count + size tables (no payload
- *     decompression, no overlay-graphics decode)
+ *   - reads the on-disk count + size tables
  *   - can return one entry's compressed payload span using the
  *     CSBWin LocateNthGraphic(n) offset rule
+ *   - can decompress one entry's LZW payload through the existing
+ *     ReDMCSB-compatible graphics LZW decoder
  *   - rejects truncated input, oversized counts, and table
  *     sums that overflow the file size
  *   - classifies the byte-order via the documented 0x8001
@@ -46,8 +47,8 @@
  *     dmweb "Data Files" page.
  *
  * Non-claims:
- *   - No LZW decompression. No payload decode.
  *   - No runtime override. No M11 / M12 wiring.
+ *   - No overlay bitmap interpretation beyond LZW bytes.
  *   - No full CSBWin custom-dungeon support — that remains
  *     tracked under docs/FIRESTAFF_GAP_LIST.md row C3 / A3
  *     "CSBWin custom resource handling" (OPEN-LARGE).
@@ -71,7 +72,9 @@ typedef enum {
     CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_COUNT = -3,
     CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OVERFLOW = -4,
     CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_MARKER = -5,
-    CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ENTRY_RANGE = -6
+    CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ENTRY_RANGE = -6,
+    CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OUTPUT_TOO_SMALL = -7,
+    CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_LZW = -8
 } CSB_V1_CSBGraphicsClassifyResult;
 
 /* Hard caps. The original CSB graphics.dat caps at ~3000 graphics;
@@ -119,12 +122,12 @@ typedef struct {
 /* Parse the on-disk count + parallel size tables from `bytes` of
  * `size` bytes. Returns CSB_V1_CSBGRAPHICS_CLASSIFY_OK on success.
  *
- * The parser is read-only: it never owns the input buffer and
- * never tries to decompress a payload. Callers that want to
- * actually consume individual graphics should hand the parsed
- * `payload_offset` / per-entry sizes to their own decoder, or
- * pass the original file to CSBWin's documented signature path
- * (CSBWin/data.cpp:1936 Signature).
+ * The parser is read-only: it never owns the input buffer and the
+ * classifier itself does not decompress a payload. Callers that
+ * want bounded raw bytes for a single entry can use
+ * csb_v1_csbgraphics_dat_decode_entry(); callers that need bitmap
+ * interpretation or runtime override behavior still need the later
+ * CSBgraphics.dat importer path.
  *
  * Bounds:
  *   - rejects size < CSB_V1_CSBGRAPHICS_FILE_MIN_BYTES
@@ -146,6 +149,20 @@ int csb_v1_csbgraphics_dat_classify(
 int csb_v1_csbgraphics_dat_entry_span(
     const uint8_t *bytes, size_t size, uint32_t entry_index,
     CSB_V1_CSBGraphicsEntrySpan *out_span);
+
+/* Decode one CSBgraphics.dat entry into caller-owned memory. The
+ * helper first uses csb_v1_csbgraphics_dat_entry_span(), then feeds
+ * exactly that compressed byte range to m11_gfx_lzw_decompress().
+ *
+ * Returns OK only when the decoded byte count exactly matches the
+ * entry's declared decompressed size. Empty entries (compressed=0,
+ * decompressed=0) are accepted and write 0 bytes. The output buffer
+ * must be at least entry.decompressed_size bytes for non-empty entries.
+ */
+int csb_v1_csbgraphics_dat_decode_entry(
+    const uint8_t *bytes, size_t size, uint32_t entry_index,
+    uint8_t *out_bytes, size_t out_capacity,
+    size_t *out_written);
 
 /* Human-readable label for a result code. */
 const char *csb_v1_csbgraphics_dat_result_name(int result);

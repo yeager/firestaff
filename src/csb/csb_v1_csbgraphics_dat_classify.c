@@ -20,13 +20,15 @@
  *     - returns (NumGraphic * 4 + 2) + sum(compressed_size[0..n-1])
  *
  *   The classifier below mirrors that layout byte-for-byte. It
- *   never tries to decompress a payload, never overrides a
- *   graphics entry, and never binds into the CSB runtime; those
- *   remain separate concerns tracked under
+ *   can decompress one bounded payload entry through the existing
+ *   ReDMCSB-compatible graphics LZW decoder, but it never
+ *   interprets or overrides a graphics entry and never binds into
+ *   the CSB runtime; those remain separate concerns tracked under
  *   docs/FIRESTAFF_GAP_LIST.md row C3 / A3.
  */
 
 #include "csb_v1_csbgraphics_dat_classify.h"
+#include "dm1_v1_graphics_loader_pc34_compat.h"
 
 #include <string.h>
 
@@ -237,6 +239,60 @@ int csb_v1_csbgraphics_dat_entry_span(
     return CSB_V1_CSBGRAPHICS_CLASSIFY_OK;
 }
 
+int csb_v1_csbgraphics_dat_decode_entry(
+    const uint8_t *bytes, size_t size, uint32_t entry_index,
+    uint8_t *out_bytes, size_t out_capacity,
+    size_t *out_written)
+{
+    CSB_V1_CSBGraphicsEntrySpan span;
+    M11_GFX_LZWState lzw;
+    int rc;
+
+    if (out_written) {
+        *out_written = 0u;
+    }
+
+    rc = csb_v1_csbgraphics_dat_entry_span(bytes, size, entry_index, &span);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK) {
+        return rc;
+    }
+
+    if (span.decompressed_size == 0u) {
+        if (span.compressed_size != 0u) {
+            return CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_LZW;
+        }
+        return CSB_V1_CSBGRAPHICS_CLASSIFY_OK;
+    }
+
+    if (!out_bytes) {
+        return CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ARGUMENT;
+    }
+    if (out_capacity < (size_t)span.decompressed_size) {
+        return CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OUTPUT_TOO_SMALL;
+    }
+    if (span.compressed_size == 0u) {
+        return CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_LZW;
+    }
+    if (span.payload_offset > (uint64_t)size ||
+        (uint64_t)span.compressed_size > (uint64_t)size - span.payload_offset) {
+        return CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OVERFLOW;
+    }
+
+    memset(&lzw, 0, sizeof(lzw));
+    rc = m11_gfx_lzw_decompress(&lzw,
+                                bytes + (size_t)span.payload_offset,
+                                (size_t)span.compressed_size,
+                                out_bytes,
+                                (size_t)span.decompressed_size);
+    if (rc != (int)span.decompressed_size) {
+        return CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_LZW;
+    }
+    if (out_written) {
+        *out_written = (size_t)rc;
+    }
+    return CSB_V1_CSBGRAPHICS_CLASSIFY_OK;
+}
+
 const char *csb_v1_csbgraphics_dat_result_name(int result)
 {
     switch (result) {
@@ -247,6 +303,8 @@ const char *csb_v1_csbgraphics_dat_result_name(int result)
     case CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OVERFLOW: return "overflow";
     case CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_MARKER: return "bad-marker";
     case CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_ENTRY_RANGE: return "entry-range";
+    case CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_OUTPUT_TOO_SMALL: return "output-too-small";
+    case CSB_V1_CSBGRAPHICS_CLASSIFY_ERR_BAD_LZW: return "bad-lzw";
     default: return "unknown";
     }
 }
@@ -270,6 +328,7 @@ const char *csb_v1_csbgraphics_dat_source_evidence(void)
         "CSBWin/Graphics.cpp:1918 ReadGraphicsIndex\n"
         "CSBWin/Graphics.cpp:1643 LocateNthGraphic\n"
         "CSBWin/Graphics.cpp:1717 ReadGraphic\n"
+        "ReDMCSB LZW.C F0495_LZW_GetNextInputCode / F0497_LZW_Decompress\n"
         "CSBWin/Graphics.cpp:1838 OpenCSBgraphicsFile\n"
         "CSBWin/Graphics.cpp:1851 OPEN(\"CSBgraphics.dat\",\"rb\")\n"
         "CSBWin/data.cpp:1936 Signature file MD5 split as uint32 words\n"

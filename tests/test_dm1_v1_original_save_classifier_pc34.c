@@ -232,6 +232,27 @@ static void test_original_dm1_big_endian(void) {
     check_u32("BE game id", r.game_id, 0x89abcdefu);
 }
 
+static void test_original_dm1_pc34_importer_candidate(void) {
+    uint8_t bytes[800];
+    DM1OriginalSaveClassifyResult r;
+    memset(bytes, 0x33, sizeof(bytes));
+    build_original_header(bytes, 5u, 0, 0x34345043u);
+
+    check_int("PC34 original classify",
+              dm1_v1_original_save_classify_bytes(bytes, sizeof(bytes), &r), 1);
+    check_int("PC34 original shape",
+              r.shape, DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34);
+    check_int("PC34 readiness",
+              r.readiness, DM1_ORIGINAL_SAVE_READY_CLASSIFIED_HEADER_ONLY);
+    check_int("PC34 checksum ok", r.header_checksum_ok, 1);
+    check_int("PC34 importer candidate", r.pc34_importer_candidate, 1);
+    check_int("PC34 still blocked until real roundtrip",
+              r.import_blocked_until_roundtrip, 1);
+    check_u16("PC34 format id", r.format_id, 5u);
+    check_u16("PC34 platform", r.platform, 9u);
+    check_u16("PC34 dungeon", r.dungeon_id, 10u);
+}
+
 static void test_rejects_mutated_header(void) {
     uint8_t bytes[800];
     DM1OriginalSaveClassifyResult r;
@@ -249,12 +270,13 @@ static void test_compat_family_and_unknown_format(void) {
     uint8_t bytes[800];
     DM1OriginalSaveClassifyResult r;
     memset(bytes, 0, sizeof(bytes));
-    build_original_header(bytes, 5u, 0, 0x01010101u);
+    build_original_header(bytes, 2u, 0, 0x01010101u);
     check_int("compat family classify",
               dm1_v1_original_save_classify_bytes(bytes, sizeof(bytes), &r), 1);
     check_int("compat family shape", r.shape, DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_COMPAT_FAMILY);
     check_int("compat family still header-only",
               r.readiness, DM1_ORIGINAL_SAVE_READY_CLASSIFIED_HEADER_ONLY);
+    check_int("compat family not PC34 candidate", r.pc34_importer_candidate, 0);
 
     build_original_header(bytes, 99u, 0, 0x02020202u);
     check_int("unknown format classify",
@@ -315,7 +337,7 @@ static void test_root_manifest(void) {
     }
 
     memset(bytes, 0, sizeof(bytes));
-    build_original_header(bytes, 1u, 0, 0x0badc0deu);
+    build_original_header(bytes, 5u, 0, 0x0badc0deu);
     check_int("candidate path 0",
               dm1_v1_original_save_candidate_path(root, 0, path), 1);
     check_int("write DMSAVE.DAT", write_file(path, bytes, sizeof(bytes)), 1);
@@ -333,6 +355,10 @@ static void test_root_manifest(void) {
     check_int("manifest present count", manifest.present_count, 2);
     check_int("manifest classified count", manifest.classified_count, 1);
     check_int("manifest original dm1 count", manifest.original_dm1_count, 1);
+    check_int("manifest original dm1 pc34 count",
+              manifest.original_dm1_pc34_count, 1);
+    check_int("manifest pc34 importer candidate count",
+              manifest.pc34_importer_candidate_count, 1);
     check_int("manifest Firestaff native count", manifest.firestaff_native_count, 1);
 
     cleanup_root(root);
@@ -351,6 +377,8 @@ static void test_helpers(void) {
               dm1_v1_original_save_candidate_path("/tmp/dm1", 99, path), 0);
     check_str_nonempty("shape name",
                        dm1_v1_original_save_shape_name(DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1));
+    check_str_nonempty("pc34 shape name",
+                       dm1_v1_original_save_shape_name(DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34));
     check_str_nonempty("readiness name",
                        dm1_v1_original_save_readiness_name(DM1_ORIGINAL_SAVE_READY_CLASSIFIED_HEADER_ONLY));
     check_str_nonempty("source evidence",
@@ -362,6 +390,7 @@ int main(void) {
     test_firestaff_native_rejected_as_original();
     test_original_dm1_little_endian();
     test_original_dm1_big_endian();
+    test_original_dm1_pc34_importer_candidate();
     test_rejects_mutated_header();
     test_compat_family_and_unknown_format();
     test_root_manifest();

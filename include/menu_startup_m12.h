@@ -8,6 +8,7 @@
 #include "screenshot_gallery_m12.h"
 #include "config_m12.h"
 #include "changelog_m12.h"
+#include "save_browser_m12.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -404,6 +405,7 @@ typedef struct M12_StartupMenuState {
     /* Screenshot Gallery: we own the full M12_ScreenshotGalleryState
      * so we can call M12_ScreenshotGallery_Scan / Draw directly. */
     M12_ScreenshotGalleryState screenshotGallery;
+    M12_SaveBrowserState saveBrowser;
     /* Monotonically-increasing animation tick consumed by the modern
      * renderer. Incremented by the runtime once per present. Safe to
      * leave at zero in headless probes (no visible change). */
@@ -461,6 +463,13 @@ const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state)
 const char* M12_StartupMenu_GetDataStatusValue(const M12_StartupMenuState* state);
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir);
+int M12_StartupMenu_ExportQuickResumeDM1PC34(M12_StartupMenuState* state,
+                                             char* outPath,
+                                             int outPathSize);
+int M12_StartupMenu_OpenSaveBrowser(M12_StartupMenuState* state);
+int M12_StartupMenu_ExportSelectedSaveBrowserDM1PC34(M12_StartupMenuState* state,
+                                                     char* outPath,
+                                                     int outPathSize);
 M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* state);
 void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
 

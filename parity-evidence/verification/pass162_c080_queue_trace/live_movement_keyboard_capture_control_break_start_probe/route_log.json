@@ -1,0 +1,191 @@
+[
+  {
+    "event": "macos_focus",
+    "output": "",
+    "pid": 96556,
+    "returncode": 0,
+    "t": 1782843522.821633
+  },
+  {
+    "event": "swift_route_start",
+    "helper": "/var/folders/wj/49wt6tlx6tv03465_pt82dmr0000gn/T/firestaff-pass162-live-hoc-_d58yq18/pass162_route_cgevent",
+    "pid": 96556,
+    "t": 1782843522.821662
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:9000",
+    "t": 1782843522.821665
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 9.0,
+    "route_item": "wait:9000",
+    "t": 1782843522.82168
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:9000",
+    "t": 1782843534.595377
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "enter",
+    "t": 1782843534.595386
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "key",
+    "output": "key enter",
+    "returncode": 0,
+    "route_item": "enter",
+    "t": 1782843535.078614
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:2500",
+    "t": 1782843535.283656
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 2.5,
+    "route_item": "wait:2500",
+    "t": 1782843535.283674
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:2500",
+    "t": 1782843546.690071
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "ctrl-f10",
+    "t": 1782843546.6900811
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "key",
+    "output": "key ctrl-f10",
+    "returncode": 0,
+    "route_item": "ctrl-f10",
+    "t": 1782843547.014281
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:800",
+    "t": 1782843547.218712
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 0.8,
+    "route_item": "wait:800",
+    "t": 1782843547.218729
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:800",
+    "t": 1782843551.726269
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "click:276,135",
+    "t": 1782843551.726279
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_runtime_ready",
+    "t": 1782843551.726298
+  },
+  {
+    "event": "engine_ready_signal",
+    "source": "EXEC_FIRES",
+    "t": 1782843566.115049
+  },
+  {
+    "event": "runtime_ready_signal",
+    "source": "DATA_DUNGEON_DAT",
+    "t": 1782843595.136445
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_runtime_ready",
+    "t": 1782843595.189557
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "click",
+    "output": "left-click-mapped 276,135 -> 1193,570 window=640x432 mouse-post=hid pre-move=true cursor-warp=true",
+    "returncode": 0,
+    "route_item": "click:276,135",
+    "t": 1782843595.672676
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:600",
+    "t": 1782843595.87424
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 0.6,
+    "route_item": "wait:600",
+    "t": 1782843595.8742661
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:600",
+    "t": 1782843596.577193
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "click:276,135",
+    "t": 1782843596.577204
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "click",
+    "output": "left-click-mapped 276,135 -> 1193,570 window=640x432 mouse-post=hid pre-move=true cursor-warp=true",
+    "returncode": 0,
+    "route_item": "click:276,135",
+    "t": 1782843597.0569978
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:1000",
+    "t": 1782843597.257621
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 1.0,
+    "route_item": "wait:1000",
+    "t": 1782843597.257649
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:1000",
+    "t": 1782843598.334419
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_done",
+    "t": 1782843598.334425
+  }
+]

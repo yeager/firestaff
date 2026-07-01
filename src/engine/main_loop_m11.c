@@ -1339,23 +1339,12 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                 char savePath[512];
                 const char* sid = (gameView->sourceId[0] != '\0')
                                   ? gameView->sourceId : "dm1";
-                struct DM1SaveHeader saveHeader;
                 int usedBackup = 0;
                 int rc = snprintf(savePath, sizeof(savePath),
                                   "firestaff-%s-dm1save.sav", sid);
                 if (rc > 0 && rc < (int)sizeof(savePath) &&
-                    DM1_LoadGameWithBackup(savePath, &gameView->world,
-                                           &saveHeader, &usedBackup) == DM1_SAVE_OK) {
-                    if (!DM1_SaveProfileMatches(&saveHeader,
-                                                DM1_DefaultSaveProfileHash())) {
-                        fprintf(stderr,
-                                "RESUME WARNING: save profile mismatch "
-                                "(save=0x%08X current=0x%08X)\n",
-                                (unsigned)saveHeader.bugProfileHash,
-                                (unsigned)DM1_DefaultSaveProfileHash());
-                    }
+                    M11_GameView_LoadDm1SavePath(gameView, savePath, &usedBackup)) {
                     gameView->active = 1;
-                    (void)M11_GameView_SetMusicEnabled(gameView, saveHeader.musicOn);
                     fprintf(stderr, "RESUME: loaded save from %s%s\n", savePath,
                             usedBackup ? " backup" : "");
                 } else {
@@ -1913,6 +1902,80 @@ static int m11_map_window_to_launcher(int wx, int wy,
     return 1;
 }
 
+static int m11_dm1_rename_text_input_active(const M11_GameViewState* gameView) {
+    return gameView && gameView->active &&
+           gameView->candidateMirrorPanelActive &&
+           gameView->candidateMirrorRenameActive;
+}
+
+static M11_GameInputResult
+m11_dm1_rename_apply_ascii(M11_GameViewState* gameView, int ch) {
+    if (!m11_dm1_rename_text_input_active(gameView)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    /* ReDMCSB REVIVE.C F0281:515-529 appends the selected A-Z/space/
+     * punctuation character; the Firestaff gate keeps the same accepted
+     * ASCII set and rejects other text-input bytes. */
+    return M11_GameView_ApplyMirrorCandidateRenameAscii(gameView, ch)
+               ? M11_GAME_INPUT_REDRAW
+               : M11_GAME_INPUT_IGNORED;
+}
+
+static int m11_dm1_rename_consume_text_input(M11_GameViewState* gameView,
+                                             const char* text,
+                                             M11_GameInputResult* outResult) {
+    int changed = 0;
+    const unsigned char* p = (const unsigned char*)text;
+    if (!m11_dm1_rename_text_input_active(gameView)) {
+        return 0;
+    }
+    while (p && *p) {
+        unsigned char ch = *p++;
+        if (ch < 0x80U &&
+            m11_dm1_rename_apply_ascii(gameView, (int)ch) ==
+                M11_GAME_INPUT_REDRAW) {
+            changed = 1;
+        }
+    }
+    if (changed && outResult) {
+        *outResult = M11_GAME_INPUT_REDRAW;
+    }
+    return 1;
+}
+
+static M11_GameInputResult
+m11_dm1_rename_handle_keydown(M11_GameViewState* gameView,
+                              int key,
+                              int keypadEnterKey) {
+    if (!m11_dm1_rename_text_input_active(gameView)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    /* ReDMCSB REVIVE.C F0281:535-545 uses Return to move from name to
+     * title, F0281:549-567 uses backspace within the active field, and
+     * F0282:806-808 enters F0281 from C161.  Consume all other keydown
+     * events here so SDL_TEXTINPUT, not the movement/shortcut mapper,
+     * owns printable rename characters while the panel is active. */
+    if (key == SDLK_BACKSPACE || key == SDLK_ESCAPE) {
+        return M11_GameView_ApplyMirrorCandidateRenameCommand(
+                   gameView,
+                   DM1_V1_RESURRECTION_RENAME_UI_COMMAND_BACKSPACE_PC34_COMPAT)
+                   ? M11_GAME_INPUT_REDRAW
+                   : M11_GAME_INPUT_IGNORED;
+    }
+    if (key == SDLK_RETURN || key == keypadEnterKey) {
+        if (gameView->candidateMirrorRename.fieldMode ==
+            DM1_V1_RESURRECTION_RENAME_UI_FIELD_NAME_PC34_COMPAT) {
+            return m11_dm1_rename_apply_ascii(gameView, '\r');
+        }
+        return M11_GameView_ApplyMirrorCandidateRenameCommand(
+                   gameView,
+                   DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT)
+                   ? M11_GAME_INPUT_REDRAW
+                   : M11_GAME_INPUT_IGNORED;
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
 static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                          M12_StartupMenuState* menuState,
                                          int useModernLauncher,
@@ -1992,7 +2055,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             continue;
         }
+        if (ev.type == SDL_EVENT_TEXT_INPUT &&
+            m11_dm1_rename_consume_text_input(gameView,
+                                              ev.text.text,
+                                              gameViewResult)) {
+            return M12_MENU_INPUT_NONE;
+        }
         if (ev.type == SDL_EVENT_KEY_DOWN) {
+            if (m11_dm1_rename_text_input_active(gameView)) {
+                M11_GameInputResult renameResult =
+                    m11_dm1_rename_handle_keydown(gameView,
+                                                  (int)ev.key.key,
+                                                  SDLK_KP_ENTER);
+                if (gameViewResult) {
+                    *gameViewResult = renameResult;
+                }
+                return M12_MENU_INPUT_NONE;
+            }
             if (m11_game_view_is_csb(gameView)) {
                 M12_MenuInput csbInput = M12_MENU_INPUT_NONE;
                 if (m11_csb_sdl_key_to_menu_input((int)ev.key.key,
@@ -2119,29 +2198,12 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                          ? gameView->sourceId : "dm1";
                         snprintf(savePath, sizeof(savePath),
                                 "firestaff-%s-dm1save.sav", sid);
-                        struct DM1SaveHeader saveHeader;
-                        F0883_WORLD_Free_Compat(&gameView->world);
                         int usedBackup = 0;
-                        int loadResult = DM1_LoadGameWithBackup(savePath,
-                                                               &gameView->world,
-                                                               &saveHeader,
-                                                               &usedBackup);
-                        if (loadResult == DM1_SAVE_OK) {
+                        if (M11_GameView_LoadDm1SavePath(gameView,
+                                                         savePath,
+                                                         &usedBackup)) {
                             fprintf(stderr, "LOAD: loaded from %s%s\n",
                                     savePath, usedBackup ? " (backup)" : "");
-                            memset(&gameView->lastTickResult, 0,
-                                   sizeof(gameView->lastTickResult));
-                            (void)F0891_ORCH_WorldHash_Compat(
-                                &gameView->world, &gameView->lastWorldHash);
-                            {
-                                unsigned int cell = (unsigned int)
-                                    (gameView->world.party.mapX * 32 +
-                                     gameView->world.party.mapY);
-                                if (cell < 1024U) {
-                                    gameView->exploredBits[cell / 32U] |=
-                                        (1U << (cell % 32U));
-                                }
-                            }
                             if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                         } else {
                             fprintf(stderr, "LOAD FAILED: no save found at %s\n",
@@ -2323,7 +2385,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             continue;
         }
+        if (ev.type == SDL_TEXTINPUT &&
+            m11_dm1_rename_consume_text_input(gameView,
+                                              ev.text.text,
+                                              gameViewResult)) {
+            return M12_MENU_INPUT_NONE;
+        }
         if (ev.type == SDL_KEYDOWN) {
+            if (m11_dm1_rename_text_input_active(gameView)) {
+                M11_GameInputResult renameResult =
+                    m11_dm1_rename_handle_keydown(gameView,
+                                                  (int)ev.key.keysym.sym,
+                                                  SDLK_KP_ENTER);
+                if (gameViewResult) {
+                    *gameViewResult = renameResult;
+                }
+                return M12_MENU_INPUT_NONE;
+            }
             if (m11_game_view_is_csb(gameView)) {
                 M12_MenuInput csbInput = M12_MENU_INPUT_NONE;
                 if (m11_csb_sdl_key_to_menu_input((int)ev.key.keysym.sym,
@@ -2443,29 +2521,12 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                          ? gameView->sourceId : "dm1";
                         snprintf(savePath, sizeof(savePath),
                                 "firestaff-%s-dm1save.sav", sid);
-                        struct DM1SaveHeader saveHeader;
-                        F0883_WORLD_Free_Compat(&gameView->world);
                         int usedBackup = 0;
-                        int loadResult = DM1_LoadGameWithBackup(savePath,
-                                                               &gameView->world,
-                                                               &saveHeader,
-                                                               &usedBackup);
-                        if (loadResult == DM1_SAVE_OK) {
+                        if (M11_GameView_LoadDm1SavePath(gameView,
+                                                         savePath,
+                                                         &usedBackup)) {
                             fprintf(stderr, "LOAD: loaded from %s%s\n",
                                     savePath, usedBackup ? " (backup)" : "");
-                            memset(&gameView->lastTickResult, 0,
-                                   sizeof(gameView->lastTickResult));
-                            (void)F0891_ORCH_WorldHash_Compat(
-                                &gameView->world, &gameView->lastWorldHash);
-                            {
-                                unsigned int cell = (unsigned int)
-                                    (gameView->world.party.mapX * 32 +
-                                     gameView->world.party.mapY);
-                                if (cell < 1024U) {
-                                    gameView->exploredBits[cell / 32U] |=
-                                        (1U << (cell % 32U));
-                                }
-                            }
                             if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
                         } else {
                             fprintf(stderr, "LOAD FAILED: no save found at %s\n",

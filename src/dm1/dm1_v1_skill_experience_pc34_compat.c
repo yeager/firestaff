@@ -5,6 +5,8 @@
  * See header for full provenance.
  */
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "memory_champion_state_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include <string.h>
 
 /* ── Skill level names (PANEL.C lines 25-40) ───────────────────────── */
@@ -100,10 +102,110 @@ int dm1_skill_get_base_index(int skillIndex) {
     return (skillIndex - DM1_SUB_SKILL_FIRST) >> 2;
 }
 
-int dm1_skill_get_level(const DM1_ChampionSkillState* state,
-                        int skillIndex, int flags) {
+static int dm1_skill_query_icon(int iconIndex) {
+    return iconIndex < 0 ? DM1_SKILL_ICON_NONE : iconIndex;
+}
+
+int dm1_skill_icon_index_for_thing(const struct DungeonThings_Compat* things,
+                                   unsigned short thing) {
+    int type;
+    int index;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return DM1_SKILL_ICON_NONE;
+    }
+
+    type = (int)THING_GET_TYPE(thing);
+    index = (int)THING_GET_INDEX(thing);
+
+    /* ReDMCSB: CHAMPION.C F0303 only consumes object icon indices for
+     * weapon/junk equipment modifiers in action hand and neck. */
+    if (type == THING_TYPE_WEAPON) {
+        if (!things->weapons || index >= things->weaponCount) {
+            return DM1_SKILL_ICON_NONE;
+        }
+        return (int)things->weapons[index].type;
+    }
+    if (type == THING_TYPE_JUNK) {
+        if (!things->junks || index >= things->junkCount) {
+            return DM1_SKILL_ICON_NONE;
+        }
+        return (int)things->junks[index].type;
+    }
+
+    return DM1_SKILL_ICON_NONE;
+}
+
+int dm1_skill_build_query_from_champion_inventory(
+    const struct ChampionState_Compat* champion,
+    const struct DungeonThings_Compat* things,
+    int partyIsResting,
+    DM1_SkillLevelQuery* outQuery) {
+    if (!champion || !outQuery) return 0;
+
+    outQuery->partyIsResting = partyIsResting ? 1 : 0;
+    outQuery->actionHandIconIndex = dm1_skill_icon_index_for_thing(
+        things, champion->inventory[CHAMPION_SLOT_ACTION_HAND]);
+    outQuery->neckIconIndex = dm1_skill_icon_index_for_thing(
+        things, champion->inventory[CHAMPION_SLOT_NECK]);
+    return 1;
+}
+
+static int dm1_skill_apply_object_modifiers(int level,
+                                            int skillIndex,
+                                            const DM1_SkillLevelQuery* query) {
+    int actionIcon;
+    int neckIcon;
+    if (!query) return level;
+
+    actionIcon = dm1_skill_query_icon(query->actionHandIconIndex);
+    neckIcon = dm1_skill_query_icon(query->neckIconIndex);
+
+    /* ReDMCSB: CHAMPION.C F0303 lines 770-819.
+     * PC 3.4 uses the CHANGE3_09_FIX path, so Firestaff skill bonuses are
+     * cumulative with the neck/action-hand per-skill modifiers. */
+    if (actionIcon == DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF) {
+        level += 1;
+    } else if (actionIcon == DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF_COMPLETE) {
+        level += 2;
+    }
+
+    switch (skillIndex) {
+        case DM1_SKILL_IDX_WIZARD:
+            if (neckIcon == DM1_SKILL_ICON_JUNK_PENDANT_FERAL) {
+                level += 1;
+            }
+            break;
+        case DM1_SKILL_IDX_DEFEND:
+            if (neckIcon == DM1_SKILL_ICON_JUNK_EKKHARD_CROSS) {
+                level += 1;
+            }
+            break;
+        case DM1_SKILL_IDX_HEAL:
+            if (neckIcon == DM1_SKILL_ICON_JUNK_GEM_OF_AGES ||
+                actionIcon == DM1_SKILL_ICON_WEAPON_SCEPTRE_OF_LYF) {
+                level += 1;
+            }
+            break;
+        case DM1_SKILL_IDX_INFLUENCE:
+            if (neckIcon == DM1_SKILL_ICON_JUNK_MOONSTONE) {
+                level += 1;
+            }
+            break;
+        default:
+            break;
+    }
+    return level;
+}
+
+int dm1_skill_get_level_ex(const DM1_ChampionSkillState* state,
+                           int skillIndex,
+                           int flags,
+                           const DM1_SkillLevelQuery* query) {
     if (!state) return 1;
     if (skillIndex < 0 || skillIndex >= DM1_TOTAL_SKILL_COUNT) return 1;
+
+    /* ReDMCSB: CHAMPION.C F0303 lines 746-747 returns C01 when resting. */
+    if (query && query->partyIsResting) return 1;
 
     /* ReDMCSB: CHAMPION.C F0303 lines 752-770 */
     int ignoreTemp = (flags & DM1_SKILL_FLAG_IGNORE_TEMP);
@@ -138,12 +240,17 @@ int dm1_skill_get_level(const DM1_ChampionSkillState* state,
         level++;
     }
 
-    /* Object modifiers would be applied here (Firestaff, necklaces).
-     * We skip those as they depend on inventory state not modeled here.
-     * DM1_SKILL_FLAG_IGNORE_OBJECTS is reserved for future use. */
+    if ((flags & DM1_SKILL_FLAG_IGNORE_OBJECTS) == 0) {
+        level = dm1_skill_apply_object_modifiers(level, skillIndex, query);
+    }
 
     if (level > DM1_MAX_SKILL_LEVEL) level = DM1_MAX_SKILL_LEVEL;
     return level;
+}
+
+int dm1_skill_get_level(const DM1_ChampionSkillState* state,
+                        int skillIndex, int flags) {
+    return dm1_skill_get_level_ex(state, skillIndex, flags, 0);
 }
 
 int32_t dm1_skill_get_experience(const DM1_ChampionSkillState* state,
@@ -386,4 +493,3 @@ const char *dm1_skill_pass601_skill_source_evidence(void)
         "CHAMPION.C:883 recent combat bonus: > GameTime-25 -> 1.5x\n"
         "CHAMPION.C:905-945 stamina regen on levelup by skill class\n";
 }
-

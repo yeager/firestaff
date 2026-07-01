@@ -13,6 +13,7 @@
  *   9. Corrupt-save validation
  *  10. Save-file bug profile hash mismatch helper
  *  11. Party/champion/timeline save-resume state gate
+ *  12. Explicit original-PC34 write-back path
  *
  * ReDMCSB source refs — validates against original save format semantics:
  *   DEFS.H     DM_SAVE_HEADER layout, GLOBAL_DATA fields
@@ -22,12 +23,235 @@
  */
 
 #include "dm1_v1_save_load.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
+#include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+
+#define ORIGINAL_PC34_CHAMPION_BYTES 319
+#define ORIGINAL_PC34_PARTY_INFO_BYTES 128
+#define ORIGINAL_PC34_PARTY_BYTES \
+    ((ORIGINAL_PC34_CHAMPION_BYTES * CHAMPION_MAX_PARTY) + \
+     ORIGINAL_PC34_PARTY_INFO_BYTES)
+#define ORIGINAL_PC34_EVENT_BYTES 10
+
+static void wr16le(unsigned char* p, uint16_t v) {
+    p[0] = (unsigned char)(v & 0xffu);
+    p[1] = (unsigned char)((v >> 8) & 0xffu);
+}
+
+static void wr32le(unsigned char* p, uint32_t v) {
+    wr16le(p, (uint16_t)(v & 0xffffu));
+    wr16le(p + 2, (uint16_t)((v >> 16) & 0xffffu));
+}
+
+static uint16_t rd16le(const unsigned char* p) {
+    return (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+}
+
+static uint16_t original_first_half_checksum(const unsigned char* header) {
+    uint16_t acc = 0;
+    size_t i;
+    for (i = 0; i < 32u; ++i) {
+        acc = (uint16_t)(acc + rd16le(header + (i * 8u) + 0u));
+        acc = (uint16_t)(acc ^ rd16le(header + (i * 8u) + 2u));
+        acc = (uint16_t)(acc - rd16le(header + (i * 8u) + 4u));
+        acc = (uint16_t)(acc ^ rd16le(header + (i * 8u) + 6u));
+    }
+    return acc;
+}
+
+static uint16_t original_second_half_plain_checksum(const unsigned char* header) {
+    uint16_t sum = 0;
+    size_t i;
+    for (i = 128u; i < 256u; ++i) {
+        sum = (uint16_t)(sum + rd16le(header + (i * 2u)));
+    }
+    return sum;
+}
+
+static void xor_original_second_half(unsigned char* header, uint16_t key) {
+    uint16_t rollingKey = key;
+    size_t i;
+    for (i = 128u; i < 256u; ++i) {
+        unsigned char* word = header + (i * 2u);
+        wr16le(word, (uint16_t)(rd16le(word) ^ rollingKey));
+        rollingKey = (uint16_t)(rollingKey + 128u);
+    }
+}
+
+static uint16_t checksum_and_xor_original_words(unsigned char* bytes,
+                                                size_t wordCount,
+                                                uint16_t key) {
+    uint16_t rollingKey = key;
+    uint16_t checksum = key;
+    size_t i;
+    for (i = 0u; i < wordCount; ++i) {
+        unsigned char* word = bytes + i * 2u;
+        uint16_t v = rd16le(word);
+        checksum = (uint16_t)(checksum + v);
+        v = (uint16_t)(v ^ rollingKey);
+        wr16le(word, v);
+        checksum = (uint16_t)(checksum + v);
+        rollingKey = (uint16_t)(rollingKey + (uint16_t)wordCount);
+    }
+    return checksum;
+}
+
+static int write_original_part(unsigned char* dst,
+                               int dstCap,
+                               const unsigned char* plain,
+                               int byteCount,
+                               uint16_t key,
+                               uint16_t* outChecksum) {
+    if (dstCap < 2 + byteCount || (byteCount & 1) != 0) return -1;
+    wr16le(dst, (uint16_t)byteCount);
+    if (byteCount > 0 && plain) {
+        memcpy(dst + 2, plain, (size_t)byteCount);
+    }
+    *outChecksum = checksum_and_xor_original_words(
+        dst + 2, (size_t)byteCount / 2u, key);
+    return 2 + byteCount;
+}
+
+static void write_original_champion(unsigned char* dst) {
+    memset(dst, 0, ORIGINAL_PC34_CHAMPION_BYTES);
+    memset(dst + 0, ' ', 8u);
+    memset(dst + 8, ' ', 20u);
+    memcpy(dst + 0, "TIGGY", 5u);
+    memcpy(dst + 8, "APPRENTICE", 10u);
+    dst[28] = DIR_EAST;
+    wr16le(dst + 52, 44u);
+    wr16le(dst + 54, 55u);
+    wr16le(dst + 56, 66u);
+    wr16le(dst + 58, 77u);
+    wr16le(dst + 60, 8u);
+    wr16le(dst + 62, 9u);
+    wr16le(dst + 66, 1500u);
+    wr16le(dst + 68, 1200u);
+    wr16le(dst + 70 + 3u, 33u);
+    wr32le(dst + 91 + 2u, 1000u);
+    wr16le(dst + 211 + (size_t)CHAMPION_SLOT_HAND_RIGHT * 2u, 0x1555u);
+    wr16le(dst + 271, 345u);
+}
+
+static int test_file_exists(const char* path) {
+    FILE* file = fopen(path, "rb");
+    if (!file) return 0;
+    fclose(file);
+    return 1;
+}
+
+static int write_original_pc34_dm1_save_file(const char* path) {
+    unsigned char buf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
+    unsigned char global[SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT];
+    unsigned char party[ORIGINAL_PC34_PARTY_BYTES];
+    unsigned char event[ORIGINAL_PC34_EVENT_BYTES];
+    unsigned char timeline[2];
+    uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
+    uint16_t checksums[SAVEGAME_PC34_DM_CHECKSUMS_COUNT];
+    int cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    int n;
+    int i;
+    FILE* file;
+
+    memset(buf, 0, sizeof(buf));
+    memset(header, 0, sizeof(header));
+    memset(global, 0, sizeof(global));
+    memset(party, 0, sizeof(party));
+    memset(event, 0, sizeof(event));
+    memset(timeline, 0, sizeof(timeline));
+    memset(checksums, 0, sizeof(checksums));
+
+    for (i = 0; i < 127; ++i) {
+        wr16le(header + (size_t)i * 2u,
+               (uint16_t)(0x5151u + (uint16_t)(i * 11u)));
+    }
+    wr16le(header + 10u * 2u, 0x2468u);
+    header[298] = 1u;
+    header[299] = SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC;
+    wr32le(header + 306u, 0x50433334u);
+    for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
+        keys[i] = (uint16_t)(0x3000u + (uint16_t)(i * 0x77u));
+    }
+
+    wr32le(global + 0u, 7777u);
+    wr16le(global + 10u, 1u);
+    wr16le(global + 12u, 9u);
+    wr16le(global + 14u, 10u);
+    wr16le(global + 16u, DIR_EAST);
+    wr16le(global + 18u, 4u);
+    wr16le(global + 20u, 0u);
+    wr16le(global + 24u, 0u);
+    wr16le(global + 26u, 0u);
+    wr16le(global + 28u, 1u);
+    wr16le(global + 30u, 0u);
+    wr16le(global + 46u, 0u);
+    write_original_champion(party);
+
+    n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
+                            global, (int)sizeof(global),
+                            keys[SAVEGAME_PC34_PART_GLOBAL_DATA],
+                            &checksums[SAVEGAME_PC34_PART_GLOBAL_DATA]);
+    if (n < 0) return 0;
+    cursor += n;
+    n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
+                            NULL, 0,
+                            keys[SAVEGAME_PC34_PART_ACTIVE_GROUP],
+                            &checksums[SAVEGAME_PC34_PART_ACTIVE_GROUP]);
+    if (n < 0) return 0;
+    cursor += n;
+    n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
+                            party, (int)sizeof(party),
+                            keys[SAVEGAME_PC34_PART_PARTY],
+                            &checksums[SAVEGAME_PC34_PART_PARTY]);
+    if (n < 0) return 0;
+    cursor += n;
+    n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
+                            event, (int)sizeof(event),
+                            keys[SAVEGAME_PC34_PART_EVENTS],
+                            &checksums[SAVEGAME_PC34_PART_EVENTS]);
+    if (n < 0) return 0;
+    cursor += n;
+    n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
+                            timeline, (int)sizeof(timeline),
+                            keys[SAVEGAME_PC34_PART_TIMELINE],
+                            &checksums[SAVEGAME_PC34_PART_TIMELINE]);
+    if (n < 0) return 0;
+    cursor += n;
+
+    for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
+        wr16le(header + 310u + (size_t)i * 2u, keys[i]);
+        wr16le(header + 342u + (size_t)i * 2u, checksums[i]);
+    }
+    wr16le(header + 374u, SAVEGAME_PC34_PLATFORM_PC);
+    wr16le(header + 376u, SAVEGAME_PC34_DUNGEON_ID_DM);
+    {
+        uint16_t secondSum = original_second_half_plain_checksum(header);
+        uint16_t firstBeforeLast = original_first_half_checksum(header);
+        uint16_t last = (uint16_t)(rd16le(header + 254u) ^
+                                   firstBeforeLast ^
+                                   secondSum);
+        wr16le(header + 254u, last);
+    }
+    xor_original_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    memcpy(buf, header, sizeof(header));
+
+    file = fopen(path, "wb");
+    if (!file) return 0;
+    if (fwrite(buf, 1u, (size_t)cursor, file) != (size_t)cursor) {
+        fclose(file);
+        return 0;
+    }
+    return fclose(file) == 0;
+}
 
 /* ── Test 1: CRC32 known vectors ──────────────────────────────── */
 
@@ -353,6 +577,121 @@ static int test_backup_fallback_path(void) {
     }
 
     printf("  PASS: backup fallback path\n");
+    return 1;
+}
+
+static int expect_u32_eq(const char* label, uint32_t got, uint32_t want);
+static int expect_int_eq(const char* label, int got, int want);
+static int expect_u16_eq(const char* label, unsigned short got, unsigned short want);
+static int expect_bytes_eq(const char* label,
+                           const void* got,
+                           const void* want,
+                           size_t size);
+
+static void seed_pc34_writeback_active_group(struct GameWorld_Compat* world) {
+    world->creatureAICount = 1;
+    memset(&world->creatureAI[0], 0, sizeof(world->creatureAI[0]));
+    world->creatureAI[0].stateKind = AI_STATE_WANDER;
+    world->creatureAI[0].creatureType = CREATURE_TYPE_SKELETON;
+    world->creatureAI[0].groupMapIndex = world->partyMapIndex;
+    world->creatureAI[0].groupMapX = 13;
+    world->creatureAI[0].groupMapY = 14;
+    world->creatureAI[0].groupCells = 0xa5;
+    world->creatureAI[0].groupDirection = DIR_SOUTH;
+    world->creatureAI[0].lastSeenPartyMapX = world->party.mapX;
+    world->creatureAI[0].lastSeenPartyMapY = world->party.mapY;
+    world->creatureAI[0].lastSeenPartyTick = 42;
+    world->creatureAI[0].fearCounter = 6;
+    world->creatureAI[0].reserved0 = 7;
+}
+
+static int test_original_pc34_runtime_load_fallback(void) {
+    const char* path = "/tmp/dm1_original_pc34_runtime_fallback.sav";
+    const char* primary = "/tmp/dm1_original_pc34_runtime_primary_missing.sav";
+    char backup[512];
+    struct GameWorld_Compat world;
+    struct DM1SaveHeader hdr;
+    int usedBackup = 7;
+    int rc;
+    int ok = 1;
+
+    remove(path);
+    remove(primary);
+    if (!DM1_GetBackupSavePath(primary, backup, (int)sizeof(backup))) {
+        printf("  FAIL: backup path helper rejected original PC34 path\n");
+        return 0;
+    }
+    remove(backup);
+
+    if (!write_original_pc34_dm1_save_file(path)) {
+        printf("  FAIL: could not write original PC34 fixture\n");
+        return 0;
+    }
+
+    memset(&world, 0, sizeof(world));
+    memset(&hdr, 0, sizeof(hdr));
+    rc = DM1_LoadGame(path, &world, &hdr);
+    if (rc != DM1_SAVE_OK) {
+        printf("  FAIL: LoadGame original PC34 fallback returned %d (%s)\n",
+               rc, DM1_SaveLoadErrorString(rc));
+        remove(path);
+        return 0;
+    }
+
+    ok &= expect_u32_eq("original PC34 header tick", hdr.gameTick, 7777u);
+    ok &= expect_int_eq("original PC34 header map", hdr.partyMapIndex, 4);
+    ok &= expect_int_eq("original PC34 header champions", hdr.championCount, 1);
+    ok &= expect_int_eq("original PC34 world tick", (int)world.gameTick, 7777);
+    ok &= expect_int_eq("original PC34 world timeline tick",
+                        (int)world.timeline.nowTick, 7777);
+    ok &= expect_int_eq("original PC34 party map index", world.partyMapIndex, 4);
+    ok &= expect_int_eq("original PC34 party x", world.party.mapX, 9);
+    ok &= expect_int_eq("original PC34 party y", world.party.mapY, 10);
+    ok &= expect_int_eq("original PC34 party direction",
+                        world.party.direction, DIR_EAST);
+    ok &= expect_int_eq("original PC34 champion count",
+                        world.party.championCount, 1);
+    ok &= expect_bytes_eq("original PC34 champion name",
+                          world.party.champions[0].name,
+                          "TIGGY   ",
+                          CHAMPION_NAME_LENGTH);
+    ok &= expect_u16_eq("original PC34 champion hp",
+                        world.party.champions[0].hp.current, 44);
+    ok &= expect_u16_eq("original PC34 champion hand",
+                        world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT],
+                        0x1555u);
+
+    F0883_WORLD_Free_Compat(&world);
+
+    if (!write_original_pc34_dm1_save_file(backup)) {
+        printf("  FAIL: could not write original PC34 backup fixture\n");
+        remove(path);
+        return 0;
+    }
+    memset(&world, 0, sizeof(world));
+    memset(&hdr, 0, sizeof(hdr));
+    rc = DM1_LoadGameWithBackup(primary, &world, &hdr, &usedBackup);
+    if (rc != DM1_SAVE_OK) {
+        printf("  FAIL: LoadGameWithBackup original PC34 returned %d (%s)\n",
+               rc, DM1_SaveLoadErrorString(rc));
+        ok = 0;
+    } else {
+        ok &= expect_int_eq("original PC34 backup used flag", usedBackup, 1);
+        ok &= expect_int_eq("original PC34 backup promoted",
+                            test_file_exists(primary), 1);
+        ok &= expect_int_eq("original PC34 backup removed",
+                            test_file_exists(backup), 0);
+        ok &= expect_int_eq("original PC34 backup world map",
+                            world.partyMapIndex, 4);
+    }
+    F0883_WORLD_Free_Compat(&world);
+
+    remove(path);
+    remove(primary);
+    remove(backup);
+
+    if (!ok) return 0;
+    printf("  PASS: original PC34 runtime load fallback\n");
     return 1;
 }
 
@@ -770,6 +1109,121 @@ static int test_party_state_save_resume_gate(void) {
     return 1;
 }
 
+static int test_pc34_writeback_path(void) {
+    const char* path = "/tmp/dm1_pc34_writeback_gate.sav";
+    struct GameWorld_Compat before;
+    struct GameWorld_Compat loaded;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat importedParty;
+    struct TimelineQueue_Compat importedTimeline;
+    struct DM1SaveHeader hdr;
+    DM1OriginalSavePC34HandoffReport report;
+    int rc;
+    int ok = 1;
+
+    remove(path);
+    remove("/tmp/dm1_pc34_writeback_gate.sav.bak");
+    memset(&before, 0, sizeof(before));
+    memset(&loaded, 0, sizeof(loaded));
+    memset(&imported, 0, sizeof(imported));
+    memset(&importedParty, 0, sizeof(importedParty));
+    memset(&importedTimeline, 0, sizeof(importedTimeline));
+    memset(&hdr, 0, sizeof(hdr));
+    memset(&report, 0, sizeof(report));
+
+    seed_party_state_gate_world(&before);
+    seed_pc34_writeback_active_group(&before);
+
+    rc = DM1_SaveGamePC34(&before, path, 0x33445566u);
+    if (rc != DM1_SAVE_OK) {
+        printf("  FAIL: SaveGamePC34 returned %d (%s)\n",
+               rc, DM1_SaveLoadErrorString(rc));
+        F0883_WORLD_Free_Compat(&before);
+        return 0;
+    }
+
+    imported.party = &importedParty;
+    imported.timeline = &importedTimeline;
+    rc = dm1_v1_original_save_pc34_handoff_file(path, &imported, &report);
+    if (rc != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        printf("  FAIL: original handoff rejected SaveGamePC34 file rc=%d\n",
+               rc);
+        remove(path);
+        F0883_WORLD_Free_Compat(&before);
+        return 0;
+    }
+
+    ok &= expect_int_eq("pc34 writeback champion count",
+                        importedParty.championCount, 2);
+    ok &= expect_int_eq("pc34 writeback party map index",
+                        importedParty.mapIndex, before.party.mapIndex);
+    ok &= expect_int_eq("pc34 writeback party x",
+                        importedParty.mapX, before.party.mapX);
+    ok &= expect_int_eq("pc34 writeback party y",
+                        importedParty.mapY, before.party.mapY);
+    ok &= expect_bytes_eq("pc34 writeback champion0 name",
+                          importedParty.champions[0].name,
+                          before.party.champions[0].name,
+                          CHAMPION_NAME_LENGTH);
+    ok &= expect_u16_eq("pc34 writeback champion0 hp",
+                        importedParty.champions[0].hp.current,
+                        before.party.champions[0].hp.current);
+    ok &= expect_u16_eq("pc34 writeback champion1 mana",
+                        importedParty.champions[1].mana.current,
+                        before.party.champions[1].mana.current);
+
+    ok &= expect_int_eq("pc34 writeback active-group part bytes",
+                        (int)report.part_byte_counts[SAVEGAME_PC34_PART_ACTIVE_GROUP],
+                        16);
+    ok &= expect_int_eq("pc34 writeback active-group current",
+                        report.original_current_active_group_count, 1);
+    ok &= expect_int_eq("pc34 writeback active-group maximum",
+                        report.original_maximum_active_group_count, 1);
+    ok &= expect_int_eq("pc34 writeback active-group thing",
+                        report.active_groups[0].group_thing_index, 0x1007);
+    ok &= expect_int_eq("pc34 writeback active-group cells",
+                        report.active_groups[0].cells, 0xa5);
+    ok &= expect_int_eq("pc34 writeback active-group x",
+                        report.active_groups[0].prior_map_x, 13);
+    ok &= expect_int_eq("pc34 writeback active-group y",
+                        report.active_groups[0].prior_map_y, 14);
+
+    ok &= expect_int_eq("pc34 writeback event count",
+                        report.original_event_count, 1);
+    ok &= expect_int_eq("pc34 writeback event part bytes",
+                        (int)report.part_byte_counts[SAVEGAME_PC34_PART_EVENTS],
+                        ORIGINAL_PC34_EVENT_BYTES);
+    ok &= expect_int_eq("pc34 writeback timeline part bytes",
+                        (int)report.part_byte_counts[SAVEGAME_PC34_PART_TIMELINE],
+                        2);
+    ok &= expect_int_eq("pc34 writeback original game tick",
+                        (int)report.original_game_time,
+                        (int)before.gameTick);
+
+    rc = DM1_LoadGame(path, &loaded, &hdr);
+    if (rc != DM1_SAVE_OK) {
+        printf("  FAIL: LoadGame rejected SaveGamePC34 file rc=%d (%s)\n",
+               rc, DM1_SaveLoadErrorString(rc));
+        ok = 0;
+    } else {
+        ok &= expect_int_eq("pc34 writeback load tick",
+                            (int)loaded.gameTick, (int)before.gameTick);
+        ok &= expect_int_eq("pc34 writeback load active groups",
+                            loaded.creatureAICount, 1);
+        ok &= expect_int_eq("pc34 writeback load active group cells",
+                            loaded.creatureAI[0].groupCells, 0xa5);
+    }
+
+    remove(path);
+    remove("/tmp/dm1_pc34_writeback_gate.sav.bak");
+    F0883_WORLD_Free_Compat(&before);
+    F0883_WORLD_Free_Compat(&loaded);
+
+    if (!ok) return 0;
+    printf("  PASS: explicit original-PC34 write-back path\n");
+    return 1;
+}
+
 /* ── Main ─────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -785,9 +1239,11 @@ int main(void) {
     if (test_null_args())       pass++; else fail++;
     if (test_load_nonexistent()) pass++; else fail++;
     if (test_backup_fallback_path()) pass++; else fail++;
+    if (test_original_pc34_runtime_load_fallback()) pass++; else fail++;
     if (test_validate_corrupt()) pass++; else fail++;
     if (test_profile_hash_mismatch()) pass++; else fail++;
     if (test_party_state_save_resume_gate()) pass++; else fail++;
+    if (test_pc34_writeback_path()) pass++; else fail++;
 
     printf("\n=== Results: %d passed, %d failed ===\n", pass, fail);
     return (fail > 0) ? 1 : 0;

@@ -299,9 +299,9 @@ struct ProjectileTickResult_Compat {
     int emittedExplosion;
     int emittedDoorDestructionEvent;
     int emittedDoorToggleEvent;
+    int emittedSoundRequest;
     int emittedSoundCode;
     int rngCallCount;
-    int reserved1;
 
     struct CombatAction_Compat      outAction;     /* 48 B */
     struct ExplosionInstance_Compat outExplosion;  /* 64 B */
@@ -345,11 +345,13 @@ struct ProjectileCreateInput_Compat {
     int direction;                /* 0..3 */
     int kineticEnergy;
     int attack;
+    int launcherStrength;          /* PROJEXPL.C:F0217 kinetic pass-through attack threshold */
     int stepEnergy;
     int currentTick;
     int poisonAttack;
     int attackTypeCode;
     int potionPower;
+    int associatedThing;            /* ReDMCSB F0212 Projectile.Slot Thing */
     int firstMoveGraceFlag;
 };
 

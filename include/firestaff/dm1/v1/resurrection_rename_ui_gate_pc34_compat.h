@@ -45,6 +45,7 @@ typedef struct DM1_V1_ResurrectionRenameUiGatePc34Compat {
     int rejectedLeadingSpaceCount;
     int rejectedFullTitleCount;
     int ignoredBackspaceAtEmptyNameCount;
+    int duplicateNameRejectedCount;
     char name[DM1_V1_RESURRECTION_RENAME_UI_NAME_MAX_PC34_COMPAT + 1];
     char title[DM1_V1_RESURRECTION_RENAME_UI_TITLE_MAX_PC34_COMPAT + 1];
 } DM1_V1_ResurrectionRenameUiGatePc34Compat;

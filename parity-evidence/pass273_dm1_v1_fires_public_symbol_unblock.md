@@ -1,25 +1,28 @@
 # pass273 — DM1 V1 FIRES public-symbol unblock
 
 Date: 2026-05-06
-Worktree: `firestaff`
+Worktree: `Firestaff`
 Status: `UNBLOCKED_PUBLIC_SYMBOLS_FOUND_NO_RUNTIME_HOOK`
 
 ## ReDMCSB source audit first
 
-Primary source root: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Primary source root: `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `COMMAND.C:1-16` ok=True missing=[]
 - `COMMAND.C:1734-1812` ok=True missing=[]
 - `COMMAND.C:2045-2156` ok=True missing=[]
+- `CLIKVIEW.C:311-439` ok=True missing=[]
 - `CLIKMENU.C:142-328` ok=True missing=[]
 - `GAMELOOP.C:55-91` ok=True missing=[]
 - `MOVESENS.C:316-556` ok=True missing=[]
+- `MOVESENS.C:1392-1503` ok=True missing=[]
+- `REVIVE.C:63-88` ok=True missing=[]
 - `DUNVIEW.C:8318-8611` ok=True missing=[]
 
 ## Public map inputs found on N2
 
-- FIRES.MAP: `<firestaff-data>/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP` (104565 bytes, sha256 `eb85fee47611b4368bc218f0768937174ceab98e4bec2fa860059429288bd8c0`)
-- DM.MAP: `<firestaff-data>/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/BUILD/I34E/DM.MAP` (26161 bytes, sha256 `c438a75e4c29c88a744621aeacac49aca4f414a83b3f6aeb39159bf40fd80cc8`)
+- FIRES.MAP: `/Users/bosse/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP` (104565 bytes, sha256 `eb85fee47611b4368bc218f0768937174ceab98e4bec2fa860059429288bd8c0`)
+- DM.MAP: `/Users/bosse/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/BUILD/I34E/DM.MAP` (not present on this host; not required for FIRES runtime addresses)
 - Binary policy: no original/decompressed executable copied or committed; this pass records map paths, hashes, and derived addresses only.
 
 ## Global address bindings from FIRES.MAP + PC.H aliases
@@ -51,6 +54,9 @@ Load segment used from pass246 lineage: `0733`.
 | --- | --- | --- | --- |
 | F0359_COMMAND_ProcessClick_CPSC | 1BC1:030D | 22F4:030D | COMMAND.C mouse/click queue writer |
 | F0380_COMMAND_ProcessQueue_CPSC | 1BC1:0699 | 22F4:0699 | COMMAND.C command dequeue/dispatch |
+| F0377_COMMAND_ProcessType80_ClickInDungeonView | 1711:02FE | 1E44:02FE | CLIKVIEW.C C080 dungeon-view click handler |
+| F0275_SENSOR_IsTriggeredByClickOnWall | 1126:1405 | 1859:1405 | MOVESENS.C wall sensor dispatcher reached from static F0372 |
+| F0280_CHAMPION_AddCandidateChampionToParty | 104F:0031 | 1782:0031 | REVIVE.C candidate champion entry after C127 portrait sensor |
 | F0365_COMMAND_ProcessTypes1To2_TurnParty | 1771:010D | 1EA4:010D | CLIKMENU.C turn handler |
 | F0366_COMMAND_ProcessTypes3To6_MoveParty | 1771:01AA | 1EA4:01AA | CLIKMENU.C move handler |
 | F0284_CHAMPION_SetPartyDirection | 0D06:000D | 1439:000D | CHAMPION.C direction write |
@@ -64,6 +70,6 @@ The preserved `FIRES.MAP` shows `F0267` at `1126:0516`, `F0365` at `1771:010D`, 
 
 ## Blocker status / exact next step
 
-The public-symbol route is now unblocked: use the runtime addresses above for the next stock DOS debugger run. This pass still does **not** claim a runtime hook. The required next proof is a dosbox-debug transcript showing controlled `kp5`/`kp4`/`kp6` input writing `G0432`, dequeuing via `F0380`, mutating `G0308` or `G0306/G0307`, and then consuming that tuple in `F0128`.
+The public-symbol route is now unblocked: use the runtime addresses above for the next stock DOS debugger run. This pass still does **not** claim a runtime hook. For the DM1 HoC/C080 blocker, the required next proof is a dosbox-debug transcript showing the portrait click entering `F0359`, dequeuing through `F0380`, dispatching to `F0377`, reaching addressable wall-sensor proxy `F0275` after static `F0372`, and then reaching `F0280`. For movement/key rows, the required next proof is still a transcript showing controlled `kp5`/`kp4`/`kp6` input writing `G0432`, dequeuing via `F0380`, mutating `G0308` or `G0306/G0307`, and then consuming that tuple in `F0128`.
 
 Manifest: `parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json`

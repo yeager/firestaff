@@ -13,6 +13,7 @@
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
+#include "firestaff/dm1/v1/resurrection_rename_ui_gate_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -145,6 +146,8 @@ typedef struct {
     int candidateMirrorOrdinal;
     int candidateMirrorPartyIndex;
     int candidateMirrorPanelActive;
+    int candidateMirrorRenameActive;
+    DM1_V1_ResurrectionRenameUiGatePc34Compat candidateMirrorRename;
     uint32_t lastPartyMovementTick;
     M11_MessageLog messageLog;
     int resting;
@@ -333,6 +336,14 @@ typedef struct {
      *      F0388_MENUS_ClearActingChampion,
      *      ACTIDRAW.C F0387_MENUS_DrawActionArea menu-mode branch. */
     unsigned int actingChampionOrdinal;
+    /* ReDMCSB MENU.C G0491 + F0407 / TIMELINE.C F0253 bounded
+     * action-lock mirror.  DM1 disables a champion's action icon
+     * after most F0407 actions and re-enables it when the action
+     * timer expires.  M11 keeps the visible lockout as transient state;
+     * the paired ChampionState_Compat actionDefense/actionIndex fields carry
+     * the ReDMCSB F0391/F0253 defense modifier across runtime/save paths. */
+    unsigned char actionDisabledTicks[CHAMPION_MAX_PARTY];
+    unsigned char actionDisabledIndex[CHAMPION_MAX_PARTY];
 
     /* DM1 V1 VBlank-based timing state.
      * Simulates the PAL 50Hz VBlank interrupt handler (VBLANK.C:F0577)
@@ -476,6 +487,11 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
 int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   char* out,
                                   size_t outSize);
+int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
+                                 const char* path,
+                                 int* outUsedBackup);
+int M11_GameView_ExportQuickSaveAsDM1PC34(const char* quickSavePath,
+                                          const char* exportPath);
 int M11_GameView_QuickSave(M11_GameViewState* state);
 int M11_GameView_QuickLoad(M11_GameViewState* state);
 /* Session timer runtime handoff boundary (see session_timer_runtime.h).
@@ -551,6 +567,30 @@ int M11_GameView_CheckPostMoveTransitions(M11_GameViewState* state);
 int M11_GameView_GetSkillLevel(const M11_GameViewState* state,
                                int championIndex,
                                int skillIndex);
+
+int M11_GameView_ProbeF0230ParryAdjustedAttack(
+    const M11_GameViewState* state,
+    int championIndex,
+    int random16,
+    int creatureBaseAttack,
+    int doubledMapDifficulty);
+int M11_GameView_ProbeF0352PotionEyeDescription(
+    const M11_GameViewState* state,
+    int championIndex,
+    unsigned int thingType,
+    unsigned int iconIndex,
+    unsigned int potionPower,
+    const char* objectName,
+    char* outText,
+    size_t outTextSize);
+int M11_GameView_ProbeF0407ShootAttack(
+    const M11_GameViewState* state,
+    int championIndex,
+    int weaponShootAttack);
+int M11_GameView_ProbeF0328ThrowAttack(
+    const M11_GameViewState* state,
+    int championIndex,
+    int baseAttack);
 
 /* Use the item in the active champion's hand slot (potions, flasks).
  * Returns 1 if an item was consumed/used. */
@@ -1057,6 +1097,14 @@ int M11_GameView_GetDm1WallOrnamentZone(int coordSet,
 int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state);
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate);
+int M11_GameView_BeginMirrorCandidateReincarnateRename(M11_GameViewState* state);
+int M11_GameView_ApplyMirrorCandidateRenameAscii(M11_GameViewState* state,
+                                                 int ch);
+int M11_GameView_ApplyMirrorCandidateRenameCommand(M11_GameViewState* state,
+                                                   int command);
+int M11_GameView_HandleMirrorCandidateRenameClick(M11_GameViewState* state,
+                                                  int x,
+                                                  int y);
 int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state);
 int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
                                       int championSlot);

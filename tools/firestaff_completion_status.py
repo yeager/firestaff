@@ -73,6 +73,17 @@ def validate_matrix(data: dict[str, Any]) -> list[dict[str, Any]]:
     return ordered
 
 
+def primary_blocker_text(value: Any) -> str:
+    if isinstance(value, str):
+        return value.strip() or "none"
+    if isinstance(value, list):
+        for item in value:
+            if isinstance(item, str) and item.strip():
+                return item.strip()
+        return "none"
+    return "none"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=ROOT, help="accepted for compatibility; must be this checkout")
@@ -87,8 +98,7 @@ def main() -> int:
         print(json.dumps(data, indent=2, ensure_ascii=False))
         return 0
     for row in rows:
-        blockers = row.get("primaryBlockers") or []
-        blocker = blockers[0] if blockers else "none"
+        blocker = primary_blocker_text(row.get("primaryBlockers"))
         print(
             f"{row['target']} | completionPercent={row['completionPercent']}% "
             f"| points={row['points']}/100 | status={row['status']} | primaryBlocker={blocker}"

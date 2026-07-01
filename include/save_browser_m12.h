@@ -69,6 +69,15 @@ int M12_SaveBrowser_ExportSelected(const M12_SaveBrowserState* state,
                                    char* outPath,
                                    int outPathSize);
 
+/* Export the selected DM1 save as an original PC 3.4-shaped save file.
+ * The source may be a Firestaff-native DM1 save or a loadable PC34 DM1 save.
+ * Returns 0 on success and optionally writes the destination path. */
+int M12_SaveBrowser_ExportSelectedAsDM1PC34(
+    const M12_SaveBrowserState* state,
+    const char* exportDir,
+    char* outPath,
+    int outPathSize);
+
 /* Import a firestaff-*.sav file into dataDir. Existing destination files
  * are preserved. Returns 0 on success and optionally writes the target path. */
 int M12_SaveBrowser_ImportFile(const char* dataDir,

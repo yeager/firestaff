@@ -59,6 +59,8 @@
 
 #include "memory_savegame_pc34_compat.h"
 
+struct GameWorld_Compat;
+
 /* -------- PC 3.4 native constants (DEFS.H mirror) -------- */
 
 #define SAVEGAME_PC34_DM_SAVE_HEADER_SIZE       512
@@ -87,8 +89,13 @@
  * count fixed for stable round-trip; the importer tolerates other
  * sizes via the LENGTH prefix. */
 #define SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT    128
-#define SAVEGAME_PC34_ACTIVE_GROUP_BYTE_COUNT   32    /* 4-byte header + aspect block */
-#define SAVEGAME_PC34_EVENTS_BYTE_COUNT         128   /* small per-Part buffer */
+#define SAVEGAME_PC34_ACTIVE_GROUP_BYTE_COUNT   32    /* legacy scratch cap */
+#define SAVEGAME_PC34_CHAMPION_BYTE_COUNT       319   /* CHAMPION_EXCLUDING_PORTRAIT */
+#define SAVEGAME_PC34_PARTY_INFO_BYTE_COUNT     128   /* G0407_s_Party trailing block */
+#define SAVEGAME_PC34_PARTY_PART_BYTE_COUNT \
+    ((SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4) + \
+     SAVEGAME_PC34_PARTY_INFO_BYTE_COUNT)
+#define SAVEGAME_PC34_EVENTS_BYTE_COUNT         128   /* legacy scratch cap */
 #define SAVEGAME_PC34_TIMELINE_BYTE_COUNT       4096  /* generous cut for v1 */
 
 /* Result codes for the exporter / importer. Match the F078x
@@ -195,6 +202,17 @@
  */
 int F0795_SAVEGAME_ExportPC34_Compat(
     const struct SaveGame_Compat* state,
+    uint32_t gameID,
+    unsigned char* outBuf,
+    int outBufSize,
+    int* outBytesWritten);
+
+/* World-aware PC 3.4 export. Same byte format as F0795, but can
+ * also export the ReDMCSB ACTIVE_GROUP part from
+ * GameWorld_Compat.creatureAI[] because that live state is outside
+ * SaveGame_Compat. */
+int F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+    const struct GameWorld_Compat* world,
     uint32_t gameID,
     unsigned char* outBuf,
     int outBufSize,

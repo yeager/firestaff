@@ -1,0 +1,67 @@
+LOG: Early LOG Init complete
+LOG: CONFIG: Loaded config file: /var/folders/wj/49wt6tlx6tv03465_pt82dmr0000gn/
+T/firestaff-pass247-dosbox-debug-zbs59zts/dosbox-debug.conf
+LOG: DOSBox-X's working directory: /Users/bosse/Documents/Firestaff
+LOG: Logging init: beginning logging proper. This is the end of the early init l
+ogging
+LOG: Logging: No logfile was given. All further logging will be discarded.
+LOG: DOSBox-X version 2026.06.02 Commit d75a57c (macOS ARM SDL2 64-bit)
+LOG: macOS EXE path: /opt/homebrew/bin/dosbox-debug
+LOG: macOS Resource path:
+LOG: macOS: NSTouchBar support detected in system
+LOG: Prevent capture: 0
+LOG: SDL: version 2.32.70, Video cocoa, Audio coreaudio
+LOG: Host keyboard layout is now us (US English)
+LOG: Mapper keyboard layout is now us (US English)
+LOG: SDL2 reports desktop display mode 1920 x 1080
+LOG: OpenGL Version : 2.1 Metal - 90.5
+LOG: Configured windowposition: -
+LOG: SDL: Current window pixel format: SDL_PIXELFORMAT_ARGB8888
+LOG: Releasing keyboard
+LOG: Screen report: Method 'CoreGraphics' (1920.000 x 1080.000 pixels) at (0.000
+ x 0.000) (451.556 x 254.000 mm) (17.778 x 10.000 in) (108.000 x 108.000 DPI)
+LOG: ISA BCLK: 8333333.333Hz (25000000/3)
+LOG: monopal: green,
+LOG: Active save slot: 1 [Empty]
+LOG: USING AVI+ZMBV
+LOG: Pentium CMPXCHG8B emulation is enabled
+LOG: Max 1073741824 sz 4096
+LOG: Final 4096
+LOG: Final arrangement: Below 4GB = 4096KB, Above 4GB = 0KB
+LOG: MIDI:Opened device:coreaudio
+LOG: VOODOO LFB now at d0000000
+LOG: Serial1: BASE 3f8h
+LOG: Serial2: BASE 2f8h
+LOG: Parallel1: BASE 378h
+LOG: MPU-401 Registering I/O ports as if IBM PC MPU-401 at base 330h
+LOG: Memory I/O complexity optimization enabled aka option 'memory io optimizati
+on 1'. If the game or demo is unable to draw to the screen properly, set the opt
+ion to false.
+LOG: The 'scanline render on demand' option is available and may provide a modes
+t boost in video render performance if set to true.
+LOG: Allocated APM BIOS pm entry point at f000:ce40
+LOG: Writing code to fce40
+LOG: Writing code to fce60
+LOG: ISA Plug & Play BIOS enabled
+LOG: VGA ROM BIOS init callback
+LOG: pixratio 1.000, dw false, dh false
+LOG: Aspect ratio: 640 x 480  xToY=1.333 yToX=0.750
+LOG: surface consider=640x480 final=640x480
+LOG: WARNING: No translation support (to host) for code page 0
+LOG: DOS keyboard layout loaded with main language code US for layout us
+LOG: XMS: 50 handles allocated for use by the DOS environment
+LOG: EMS page frame at 0xe000-0xefff
+LOG: COMMAND.COM env size:             720 bytes
+LOG: COMMAND.COM environment block:    0x0701 sz=0x002d
+LOG: COMMAND.COM main body (PSP):      0x072f sz=0x009a
+LOG: COMMAND.COM stack:                0x0749
+LOG: pixratio 1.350, dw false, dh false
+LOG: Aspect ratio: 720 x 540  xToY=1.333 yToX=0.750
+LOG: surface consider=720x400 final=720x400
+HELP
+BP 22F4:030D
+BP 22F4:0699
+BP 1E44:02FE
+BP 1859:1405
+BP 1782:0031
+BPLIST

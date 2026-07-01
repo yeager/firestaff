@@ -212,6 +212,12 @@ int dm1_armor_defense(const DM1_ArmorPiece* armor, int useSharpDefense);
 int dm1_wound_defense(const DM1_CombatState* s, int champIdx, int woundIdx, int useSharpDefense);
 
 /* ── Champion attributes ──────────────────────────────────────────── */
+int dm1_weapon_info_pc34(int weaponType, DM1_WeaponInfo* outInfo);
+int dm1_weapon_info_class_pc34(int weaponType);
+int dm1_champion_f0312_skill_level_bonus_pc34(int weaponClass,
+                                              int f0303SwingLevel,
+                                              int f0303ThrowLevel,
+                                              int f0303ShootLevel);
 int dm1_champion_strength(const DM1_ChampionCombat* ch);
 int dm1_champion_dexterity(const DM1_ChampionCombat* ch);
 int dm1_stamina_adjusted(const DM1_ChampionCombat* ch, int value);

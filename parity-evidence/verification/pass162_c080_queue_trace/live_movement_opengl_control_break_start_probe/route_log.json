@@ -1,0 +1,88 @@
+[
+  {
+    "event": "macos_focus",
+    "output": "",
+    "pid": 53325,
+    "returncode": 0,
+    "t": 1782845418.6859572
+  },
+  {
+    "event": "swift_route_start",
+    "helper": "/var/folders/wj/49wt6tlx6tv03465_pt82dmr0000gn/T/firestaff-pass162-live-hoc-x38l4u6s/pass162_route_cgevent",
+    "pid": 53325,
+    "t": 1782845418.685976
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:9000",
+    "t": 1782845418.6859798
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 9.0,
+    "route_item": "wait:9000",
+    "t": 1782845418.6859882
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:9000",
+    "t": 1782845429.121452
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "enter",
+    "t": 1782845429.12146
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "key",
+    "output": "key enter",
+    "returncode": 0,
+    "route_item": "enter",
+    "t": 1782845429.688092
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "wait:2500",
+    "t": 1782845429.8931332
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_start",
+    "remaining_seconds": 2.5,
+    "route_item": "wait:2500",
+    "t": 1782845429.893162
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_done",
+    "route_item": "wait:2500",
+    "t": 1782845432.470881
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_step",
+    "route_item": "click:276,135",
+    "t": 1782845432.470897
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_wait_runtime_ready",
+    "t": 1782845432.470939
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_runtime_ready_timeout",
+    "t": 1782845598.5820339
+  },
+  {
+    "driver": "swift-cgevent",
+    "event": "route_done",
+    "t": 1782845598.582079
+  }
+]

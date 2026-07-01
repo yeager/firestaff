@@ -34,7 +34,9 @@ void F0600_CHAMPION_InitEmpty_Compat(struct ChampionState_Compat* champ) {
     memset(champ, 0, sizeof(*champ));
     champ->present = 0;
     champ->portraitIndex = -1;
+    champ->cell = 0;
     champ->direction = DIR_NORTH;
+    champ->actionIndex = 0xFFu;
     /* Fill inventory with THING_NONE */
     {
         int i;
@@ -353,6 +355,7 @@ int F0610_PARTY_AddChampionFromMirrorTextString_Compat(
     memcpy(&party->champions[slot], &parsed, sizeof(parsed));
     party->champions[slot].present = 1;
     party->champions[slot].portraitIndex = textStringIndex;
+    party->champions[slot].cell = (unsigned char)(slot & 3);
     party->champions[slot].direction = (unsigned char)party->direction;
     /* CSB V1 CHANGE7_24: when the reincarnation-mode toggle is set,
      * apply the reincarnation penalty (HP/MP/STA halved, other
@@ -876,6 +879,7 @@ static int catalog_recruit_record(const struct ChampionMirrorRecord_Compat* reco
     memcpy(&party->champions[slot], &record->champion, sizeof(record->champion));
     party->champions[slot].present = 1;
     party->champions[slot].portraitIndex = record->textStringIndex;
+    party->champions[slot].cell = (unsigned char)(slot & 3);
     party->champions[slot].direction = (unsigned char)party->direction;
     party->championCount = F0638_PARTY_CountOccupiedChampionSlots_Compat(party);
     if (party->activeChampionIndex < 0) party->activeChampionIndex = slot;
@@ -1130,14 +1134,14 @@ int F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
 /*
  * Serialisation layout (little-endian):
  *
- * Champion (CHAMPION_SERIALIZED_SIZE = 256 bytes):
+ * Champion v1 (CHAMPION_SERIALIZED_V1_SIZE = 256 bytes):
  *   [0]     present (u8)
  *   [1]     portraitIndex (s8)
  *   [2..9]  name[8]
  *   [10]    direction (u8)
  *   [11]    food (u8)
  *   [12]    water (u8)
- *   [13]    pad
+ *   [13]    cell (u8; v1 reserved byte, zero for older blobs)
  *   [14..25]  attributes[6] current row (u16 LE each)
  *   [26..33]  skillLevels[4] (u16 LE each)
  *   [34..49]  skillExperience[4] (u32 LE each)
@@ -1156,6 +1160,14 @@ int F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
  *   [189..220] mirrorInventoryText[32]
  *   [221..232] attributeMaximums[6] maximum row (u16 LE each)
  *   [233..255] reserved (zero)
+ *
+ * Champion v2 adds ReDMCSB external portrait payload preservation:
+ *   [256..719]  portraitBitmap[464], matching DEFS.H
+ *               CHAMPION_INCLUDING_PORTRAIT.Portrait and
+ *               LOADSAVE.C F0433/F0435 external portrait bytes
+ *   [720]       portraitBitmapValid (u8)
+ *   [721]       ActionIndex (u8, 0xFF = C0xFF_ACTION_NONE)
+ *   [722..723]  ActionDefense (i16 LE)
  */
 
 int F0602_CHAMPION_Serialize_Compat(
@@ -1173,6 +1185,7 @@ int F0602_CHAMPION_Serialize_Compat(
     buf[10] = champ->direction;
     buf[11] = champ->food;
     buf[12] = champ->water;
+    buf[13] = champ->cell;
 
     off = 14;
     for (i = 0; i < CHAMPION_ATTR_COUNT; i++) {
@@ -1223,6 +1236,18 @@ int F0602_CHAMPION_Serialize_Compat(
         off += 2;
     }
 
+    memcpy(&buf[CHAMPION_SERIALIZED_V1_SIZE],
+           champ->portraitBitmap,
+           CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
+    buf[CHAMPION_SERIALIZED_V1_SIZE +
+        CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT] =
+        (unsigned char)(champ->portraitBitmapValid ? 1 : 0);
+    buf[CHAMPION_SERIALIZED_V1_SIZE +
+        CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT + 1] = champ->actionIndex;
+    write_u16_le(&buf[CHAMPION_SERIALIZED_V1_SIZE +
+                      CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT + 2],
+                 (unsigned short)(short)champ->actionDefense);
+
     return CHAMPION_SERIALIZED_SIZE;
 }
 
@@ -1232,15 +1257,17 @@ int F0603_CHAMPION_Deserialize_Compat(
     int bufSize)
 {
     int i, off;
-    if (bufSize < CHAMPION_SERIALIZED_SIZE) return -1;
+    if (bufSize < CHAMPION_SERIALIZED_V1_SIZE) return -1;
 
     memset(champ, 0, sizeof(*champ));
+    champ->actionIndex = 0xFFu;
     champ->present = buf[0];
     champ->portraitIndex = (signed char)buf[1];
     memcpy(champ->name, &buf[2], CHAMPION_NAME_LENGTH);
     champ->direction = buf[10];
     champ->food = buf[11];
     champ->water = buf[12];
+    champ->cell = (unsigned char)(buf[13] & 3);
 
     off = 14;
     for (i = 0; i < CHAMPION_ATTR_COUNT; i++) {
@@ -1288,7 +1315,31 @@ int F0603_CHAMPION_Deserialize_Compat(
         off += 2;
     }
 
-    return CHAMPION_SERIALIZED_SIZE;
+    if (bufSize >= CHAMPION_SERIALIZED_V2_PORTRAIT_SIZE) {
+        memcpy(champ->portraitBitmap,
+               &buf[CHAMPION_SERIALIZED_V1_SIZE],
+               CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
+        champ->portraitBitmapValid =
+            buf[CHAMPION_SERIALIZED_V1_SIZE +
+                CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT] ? 1 : 0;
+        champ->actionIndex =
+            buf[CHAMPION_SERIALIZED_V1_SIZE +
+                CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT + 1];
+        champ->actionDefense =
+            (short)read_u16_le(
+                &buf[CHAMPION_SERIALIZED_V1_SIZE +
+                     CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT + 2]);
+        if (champ->actionIndex == 0 && champ->actionDefense == 0) {
+            champ->actionIndex = 0xFFu;
+        }
+        return CHAMPION_SERIALIZED_SIZE;
+    }
+
+    champ->portraitBitmapValid = 0;
+    memset(champ->portraitBitmap, 0, sizeof(champ->portraitBitmap));
+    champ->actionDefense = 0;
+    champ->actionIndex = 0xFFu;
+    return CHAMPION_SERIALIZED_V1_SIZE;
 }
 
 int F0604_PARTY_Serialize_Compat(
@@ -1328,7 +1379,7 @@ int F0605_PARTY_Deserialize_Compat(
     int bufSize)
 {
     int i, off;
-    if (bufSize < PARTY_SERIALIZED_SIZE) return -1;
+    if (bufSize < PARTY_SERIALIZED_V1_SIZE) return -1;
 
     memset(party, 0, sizeof(*party));
     party->championCount       = (int)read_u16_le(&buf[0]);
@@ -1343,9 +1394,16 @@ int F0605_PARTY_Deserialize_Compat(
 
     off = 32;
     for (i = 0; i < CHAMPION_MAX_PARTY; i++) {
-        int rc = F0603_CHAMPION_Deserialize_Compat(&party->champions[i], &buf[off], CHAMPION_SERIALIZED_SIZE);
+        int championSize =
+            (bufSize >= PARTY_SERIALIZED_SIZE)
+                ? CHAMPION_SERIALIZED_SIZE
+                : ((bufSize >= PARTY_SERIALIZED_V2_PORTRAIT_SIZE)
+                       ? CHAMPION_SERIALIZED_V2_PORTRAIT_SIZE
+                       : CHAMPION_SERIALIZED_V1_SIZE);
+        int rc = F0603_CHAMPION_Deserialize_Compat(
+            &party->champions[i], &buf[off], championSize);
         if (rc < 0) return -1;
-        off += CHAMPION_SERIALIZED_SIZE;
+        off += championSize;
     }
 
     return off;

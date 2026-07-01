@@ -23,6 +23,10 @@ static int read_u16_le(FILE* file, unsigned short* outValue) {
         return 1;
 }
 
+static unsigned short read_u16_le_mem(const unsigned char* p) {
+        return (unsigned short)(p[0] | ((unsigned short)p[1] << 8));
+}
+
 /* ---- bitfield decode (PC/Watcom LSB-first packing) ---- */
 
 static void decode_map_bitfield_a(unsigned short raw,
@@ -821,6 +825,310 @@ static void decode_explosion(const unsigned char* raw, struct DungeonExplosion_C
         e->type     = (unsigned char)(bf & 0x7Fu);
         e->centered = (unsigned char)((bf >> 7) & 0x01u);
         e->attack   = (unsigned char)((bf >> 8) & 0xFFu);
+}
+
+static unsigned short dungeon_tail_checksum(const unsigned char* bytes,
+                                            int byteCount)
+{
+        unsigned short checksum = 0;
+        int i;
+        for (i = 0; i < byteCount; ++i) {
+                checksum = (unsigned short)(checksum + bytes[i]);
+        }
+        return checksum;
+}
+
+int F0504_DUNGEON_LoadTailBuffer_Compat(
+        const unsigned char* bytes,
+        int byteCount,
+        struct DungeonDatState_Compat* state,
+        struct DungeonThings_Compat* things)
+{
+        int off;
+        int mapIndex;
+        int totalColumns = 0;
+        int type;
+        int textDataOffset;
+        int thingDataOffset;
+        int rawMapOffset;
+        int rawMapByteCount;
+        unsigned short expectedChecksum;
+        unsigned short actualChecksum;
+
+        if (!bytes || byteCount < DUNGEON_HEADER_SIZE + 2 || !state || !things) {
+                return 0;
+        }
+        memset(state, 0, sizeof(*state));
+        memset(things, 0, sizeof(*things));
+
+        expectedChecksum = read_u16_le_mem(bytes + byteCount - 2);
+        actualChecksum = dungeon_tail_checksum(bytes, byteCount - 2);
+        if (expectedChecksum != actualChecksum) {
+                return 0;
+        }
+
+        state->header.ornamentRandomSeed = read_u16_le_mem(bytes + 0);
+        state->header.rawMapDataByteCount = read_u16_le_mem(bytes + 2);
+        state->header.mapCount = bytes[4];
+        state->header.unreferenced = bytes[5];
+        state->header.textDataWordCount = read_u16_le_mem(bytes + 6);
+        state->header.initialPartyLocation = read_u16_le_mem(bytes + 8);
+        state->header.squareFirstThingCount = read_u16_le_mem(bytes + 10);
+        for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
+                state->header.thingCounts[type] =
+                        read_u16_le_mem(bytes + 12 + type * 2);
+        }
+        if (state->header.mapCount == 0 ||
+            state->header.mapCount > DUNGEON_MAX_MAPS) {
+                goto fail;
+        }
+
+        off = DUNGEON_HEADER_SIZE;
+        if (off + (int)state->header.mapCount * DUNGEON_MAP_DESC_SIZE + 2 >
+            byteCount) {
+                goto fail;
+        }
+        state->maps = (struct DungeonMapDesc_Compat*)calloc(
+                state->header.mapCount, sizeof(struct DungeonMapDesc_Compat));
+        if (!state->maps) goto fail;
+
+        for (mapIndex = 0; mapIndex < (int)state->header.mapCount; ++mapIndex) {
+                struct DungeonMapDesc_Compat* m = &state->maps[mapIndex];
+                unsigned short rawBitA;
+                const unsigned char* p =
+                        bytes + off + mapIndex * DUNGEON_MAP_DESC_SIZE;
+                m->rawMapDataByteOffset = read_u16_le_mem(p + 0);
+                m->aUnreferenced = read_u16_le_mem(p + 2);
+                m->bUnreferenced = read_u16_le_mem(p + 4);
+                m->offsetMapX = p[6];
+                m->offsetMapY = p[7];
+                rawBitA = read_u16_le_mem(p + 8);
+                decode_map_bitfield_a(rawBitA, &m->level, &m->width, &m->height);
+                m->rawBitfieldB = read_u16_le_mem(p + 10);
+                m->rawBitfieldC = read_u16_le_mem(p + 12);
+                m->rawBitfieldD = read_u16_le_mem(p + 14);
+                decode_map_bitfield_b(m->rawBitfieldB, m);
+                decode_map_bitfield_c(m->rawBitfieldC, m);
+                decode_map_bitfield_d(m->rawBitfieldD, m);
+                if (m->width == 0 || m->height == 0 ||
+                    m->creatureTypeCount > sizeof(m->allowedCreatureTypes)) {
+                        goto fail;
+                }
+                totalColumns += (int)m->width;
+        }
+        off += (int)state->header.mapCount * DUNGEON_MAP_DESC_SIZE;
+        if (off + totalColumns * 2 + 2 > byteCount) goto fail;
+        off += totalColumns * 2;
+
+        things->squareFirstThingCount =
+                (int)state->header.squareFirstThingCount;
+        if (off + things->squareFirstThingCount * 2 + 2 > byteCount) goto fail;
+        if (things->squareFirstThingCount > 0) {
+                things->squareFirstThings = (unsigned short*)calloc(
+                        things->squareFirstThingCount, sizeof(unsigned short));
+                if (!things->squareFirstThings) goto fail;
+                for (mapIndex = 0; mapIndex < things->squareFirstThingCount;
+                     ++mapIndex) {
+                        things->squareFirstThings[mapIndex] =
+                                read_u16_le_mem(bytes + off + mapIndex * 2);
+                }
+        }
+        off += things->squareFirstThingCount * 2;
+
+        textDataOffset = off;
+        things->textDataWordCount = (int)state->header.textDataWordCount;
+        if (off + things->textDataWordCount * 2 + 2 > byteCount) goto fail;
+        if (things->textDataWordCount > 0) {
+                things->textData = (unsigned short*)calloc(
+                        things->textDataWordCount, sizeof(unsigned short));
+                if (!things->textData) goto fail;
+                for (mapIndex = 0; mapIndex < things->textDataWordCount;
+                     ++mapIndex) {
+                        things->textData[mapIndex] =
+                                read_u16_le_mem(bytes + textDataOffset +
+                                                mapIndex * 2);
+                }
+        }
+        off += things->textDataWordCount * 2;
+        thingDataOffset = off;
+
+        for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
+                int count = (int)state->header.thingCounts[type];
+                int dataBytes = count * (int)s_thingDataByteCount[type];
+                things->thingCounts[type] = count;
+                if (count < 0 || dataBytes < 0 ||
+                    off + dataBytes + 2 > byteCount) {
+                        goto fail;
+                }
+                if (dataBytes > 0) {
+                        things->rawThingData[type] =
+                                (unsigned char*)malloc((size_t)dataBytes);
+                        if (!things->rawThingData[type]) goto fail;
+                        memcpy(things->rawThingData[type], bytes + off,
+                               (size_t)dataBytes);
+                }
+                off += dataBytes;
+        }
+        (void)thingDataOffset;
+
+        rawMapOffset = off;
+        rawMapByteCount = (int)state->header.rawMapDataByteCount;
+        if (rawMapByteCount < 0 || off + rawMapByteCount + 2 != byteCount) {
+                goto fail;
+        }
+
+        state->tiles = (struct DungeonMapTiles_Compat*)calloc(
+                state->header.mapCount, sizeof(struct DungeonMapTiles_Compat));
+        if (!state->tiles) goto fail;
+        for (mapIndex = 0; mapIndex < (int)state->header.mapCount; ++mapIndex) {
+                struct DungeonMapDesc_Compat* m = &state->maps[mapIndex];
+                struct DungeonMapTiles_Compat* t = &state->tiles[mapIndex];
+                int squareCount = (int)m->width * (int)m->height;
+                int mapOff = rawMapOffset + (int)m->rawMapDataByteOffset;
+                if (squareCount <= 0 ||
+                    mapOff < rawMapOffset ||
+                    mapOff + squareCount + (int)m->creatureTypeCount >
+                        rawMapOffset + rawMapByteCount) {
+                        goto fail;
+                }
+                t->squareData = (unsigned char*)malloc((size_t)squareCount);
+                if (!t->squareData) goto fail;
+                memcpy(t->squareData, bytes + mapOff, (size_t)squareCount);
+                t->squareCount = squareCount;
+                if (m->creatureTypeCount > 0) {
+                        memcpy(m->allowedCreatureTypes,
+                               bytes + mapOff + squareCount,
+                               (size_t)m->creatureTypeCount);
+                }
+        }
+
+        things->doorCount = things->thingCounts[THING_TYPE_DOOR];
+        if (things->doorCount > 0 && things->rawThingData[THING_TYPE_DOOR]) {
+                things->doors = (struct DungeonDoor_Compat*)calloc(
+                        things->doorCount, sizeof(struct DungeonDoor_Compat));
+                if (!things->doors) goto fail;
+                for (mapIndex = 0; mapIndex < things->doorCount; ++mapIndex)
+                        decode_door(things->rawThingData[THING_TYPE_DOOR] + mapIndex * 4, &things->doors[mapIndex]);
+        }
+        things->textStringCount = things->thingCounts[THING_TYPE_TEXTSTRING];
+        if (things->textStringCount > 0 &&
+            things->rawThingData[THING_TYPE_TEXTSTRING]) {
+                things->textStrings = (struct DungeonTextString_Compat*)calloc(
+                        things->textStringCount,
+                        sizeof(struct DungeonTextString_Compat));
+                if (!things->textStrings) goto fail;
+                for (mapIndex = 0; mapIndex < things->textStringCount; ++mapIndex)
+                        decode_textstring(things->rawThingData[THING_TYPE_TEXTSTRING] + mapIndex * 4, &things->textStrings[mapIndex]);
+        }
+        things->teleporterCount = things->thingCounts[THING_TYPE_TELEPORTER];
+        if (things->teleporterCount > 0 &&
+            things->rawThingData[THING_TYPE_TELEPORTER]) {
+                things->teleporters = (struct DungeonTeleporter_Compat*)calloc(
+                        things->teleporterCount,
+                        sizeof(struct DungeonTeleporter_Compat));
+                if (!things->teleporters) goto fail;
+                for (mapIndex = 0; mapIndex < things->teleporterCount; ++mapIndex)
+                        decode_teleporter(things->rawThingData[THING_TYPE_TELEPORTER] + mapIndex * 6, &things->teleporters[mapIndex]);
+        }
+        things->sensorCount = things->thingCounts[THING_TYPE_SENSOR];
+        if (things->sensorCount > 0 && things->rawThingData[THING_TYPE_SENSOR]) {
+                things->sensors = (struct DungeonSensor_Compat*)calloc(
+                        things->sensorCount, sizeof(struct DungeonSensor_Compat));
+                if (!things->sensors) goto fail;
+                for (mapIndex = 0; mapIndex < things->sensorCount; ++mapIndex)
+                        decode_sensor(things->rawThingData[THING_TYPE_SENSOR] + mapIndex * 8, &things->sensors[mapIndex]);
+        }
+        things->groupCount = things->thingCounts[THING_TYPE_GROUP];
+        if (things->groupCount > 0 && things->rawThingData[THING_TYPE_GROUP]) {
+                things->groups = (struct DungeonGroup_Compat*)calloc(
+                        things->groupCount, sizeof(struct DungeonGroup_Compat));
+                if (!things->groups) goto fail;
+                for (mapIndex = 0; mapIndex < things->groupCount; ++mapIndex)
+                        decode_group(things->rawThingData[THING_TYPE_GROUP] + mapIndex * 16, &things->groups[mapIndex]);
+        }
+        things->weaponCount = things->thingCounts[THING_TYPE_WEAPON];
+        if (things->weaponCount > 0 && things->rawThingData[THING_TYPE_WEAPON]) {
+                things->weapons = (struct DungeonWeapon_Compat*)calloc(
+                        things->weaponCount, sizeof(struct DungeonWeapon_Compat));
+                if (!things->weapons) goto fail;
+                for (mapIndex = 0; mapIndex < things->weaponCount; ++mapIndex)
+                        decode_weapon(things->rawThingData[THING_TYPE_WEAPON] + mapIndex * 4, &things->weapons[mapIndex]);
+        }
+        things->armourCount = things->thingCounts[THING_TYPE_ARMOUR];
+        if (things->armourCount > 0 && things->rawThingData[THING_TYPE_ARMOUR]) {
+                things->armours = (struct DungeonArmour_Compat*)calloc(
+                        things->armourCount, sizeof(struct DungeonArmour_Compat));
+                if (!things->armours) goto fail;
+                for (mapIndex = 0; mapIndex < things->armourCount; ++mapIndex)
+                        decode_armour(things->rawThingData[THING_TYPE_ARMOUR] + mapIndex * 4, &things->armours[mapIndex]);
+        }
+        things->scrollCount = things->thingCounts[THING_TYPE_SCROLL];
+        if (things->scrollCount > 0 && things->rawThingData[THING_TYPE_SCROLL]) {
+                things->scrolls = (struct DungeonScroll_Compat*)calloc(
+                        things->scrollCount, sizeof(struct DungeonScroll_Compat));
+                if (!things->scrolls) goto fail;
+                for (mapIndex = 0; mapIndex < things->scrollCount; ++mapIndex)
+                        decode_scroll(things->rawThingData[THING_TYPE_SCROLL] + mapIndex * 4, &things->scrolls[mapIndex]);
+        }
+        things->potionCount = things->thingCounts[THING_TYPE_POTION];
+        if (things->potionCount > 0 && things->rawThingData[THING_TYPE_POTION]) {
+                things->potions = (struct DungeonPotion_Compat*)calloc(
+                        things->potionCount, sizeof(struct DungeonPotion_Compat));
+                if (!things->potions) goto fail;
+                for (mapIndex = 0; mapIndex < things->potionCount; ++mapIndex)
+                        decode_potion(things->rawThingData[THING_TYPE_POTION] + mapIndex * 4, &things->potions[mapIndex]);
+        }
+        things->containerCount = things->thingCounts[THING_TYPE_CONTAINER];
+        if (things->containerCount > 0 &&
+            things->rawThingData[THING_TYPE_CONTAINER]) {
+                things->containers = (struct DungeonContainer_Compat*)calloc(
+                        things->containerCount,
+                        sizeof(struct DungeonContainer_Compat));
+                if (!things->containers) goto fail;
+                for (mapIndex = 0; mapIndex < things->containerCount; ++mapIndex)
+                        decode_container(things->rawThingData[THING_TYPE_CONTAINER] + mapIndex * 8, &things->containers[mapIndex]);
+        }
+        things->junkCount = things->thingCounts[THING_TYPE_JUNK];
+        if (things->junkCount > 0 && things->rawThingData[THING_TYPE_JUNK]) {
+                things->junks = (struct DungeonJunk_Compat*)calloc(
+                        things->junkCount, sizeof(struct DungeonJunk_Compat));
+                if (!things->junks) goto fail;
+                for (mapIndex = 0; mapIndex < things->junkCount; ++mapIndex)
+                        decode_junk(things->rawThingData[THING_TYPE_JUNK] + mapIndex * 4, &things->junks[mapIndex]);
+        }
+        things->projectileCount = things->thingCounts[THING_TYPE_PROJECTILE];
+        if (things->projectileCount > 0 &&
+            things->rawThingData[THING_TYPE_PROJECTILE]) {
+                things->projectiles = (struct DungeonProjectile_Compat*)calloc(
+                        things->projectileCount,
+                        sizeof(struct DungeonProjectile_Compat));
+                if (!things->projectiles) goto fail;
+                for (mapIndex = 0; mapIndex < things->projectileCount; ++mapIndex)
+                        decode_projectile(things->rawThingData[THING_TYPE_PROJECTILE] + mapIndex * 8, &things->projectiles[mapIndex]);
+        }
+        things->explosionCount = things->thingCounts[THING_TYPE_EXPLOSION];
+        if (things->explosionCount > 0 &&
+            things->rawThingData[THING_TYPE_EXPLOSION]) {
+                things->explosions = (struct DungeonExplosion_Compat*)calloc(
+                        things->explosionCount,
+                        sizeof(struct DungeonExplosion_Compat));
+                if (!things->explosions) goto fail;
+                for (mapIndex = 0; mapIndex < things->explosionCount; ++mapIndex)
+                        decode_explosion(things->rawThingData[THING_TYPE_EXPLOSION] + mapIndex * 4, &things->explosions[mapIndex]);
+        }
+
+        state->fileSize = byteCount;
+        state->loaded = 1;
+        state->tilesLoaded = 1;
+        things->loaded = 1;
+        return 1;
+
+fail:
+        F0504_DUNGEON_FreeThingData_Compat(things);
+        F0500_DUNGEON_FreeDatHeader_Compat(state);
+        memset(state, 0, sizeof(*state));
+        memset(things, 0, sizeof(*things));
+        return 0;
 }
 
 int F0504_DUNGEON_LoadThingData_Compat(

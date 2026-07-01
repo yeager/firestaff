@@ -65,6 +65,7 @@
 
 #include "m11_game_view.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
+#include "dm1_v1_skill_experience_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -2519,6 +2520,8 @@ static void test_eye_panel_potion_power_prefix_runtime(void) {
     potions[2].power = 0;
 
     state.world.party.champions[0].skillLevels[CHAMPION_SKILL_PRIEST] = 2;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_PRIEST].experience = 500;
     ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, rosPotionThing), 1,
               "leader hand accepts source ROS potion thing");
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
@@ -2532,6 +2535,8 @@ static void test_eye_panel_potion_power_prefix_runtime(void) {
               "dismiss ROS potion eye-panel overlay");
 
     state.world.party.champions[0].skillLevels[CHAMPION_SKILL_PRIEST] = 4;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_PRIEST].experience = 2000;
     ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, waterFlaskThing), 1,
               "leader hand accepts source water flask thing");
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
@@ -2562,6 +2567,10 @@ static void test_champion_statistic_maximum_row_runtime_state(void) {
     champ.attributes[CHAMPION_ATTR_STRENGTH] = 41;
     champ.attributeMaximums[CHAMPION_ATTR_STRENGTH] = 50;
     champ.attributes[CHAMPION_ATTR_DEXTERITY] = 42;
+    for (int i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
+        champ.portraitBitmap[i] = (unsigned char)((i * 5 + 3) & 0xff);
+    }
+    champ.portraitBitmapValid = 1;
 
     ASSERT_EQ(F0677_CHAMPION_GetAttributeStatisticRow_Compat(
                   &champ, CHAMPION_ATTR_STRENGTH, &current, &maximum),
@@ -2589,6 +2598,12 @@ static void test_champion_statistic_maximum_row_runtime_state(void) {
               "champion statistic round-trip row helper accepts strength");
     ASSERT_EQ(current, 41, "champion statistic round-trip current value");
     ASSERT_EQ(maximum, 50, "champion statistic round-trip maximum value");
+    ASSERT_EQ(roundTrip.portraitBitmapValid, 1,
+              "champion portrait bitmap validity round-trips");
+    ASSERT_EQ(memcmp(roundTrip.portraitBitmap, champ.portraitBitmap,
+                     CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT),
+              0,
+              "champion portrait bitmap bytes round-trip");
 }
 
 static void test_open_chest_all_eight_slot_mouse_routes_and_pickup(void) {

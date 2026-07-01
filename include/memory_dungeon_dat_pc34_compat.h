@@ -460,6 +460,21 @@ int F0504_DUNGEON_LoadThingData_Compat(
     struct DungeonThings_Compat* things);
 
 /*
+ * Load a ReDMCSB save-game dungeon tail from memory.
+ *
+ * Tail layout matches LOADSAVE.C F0433/F0435:
+ * DUNGEON_HEADER, MAP[], column cumulative SFT counts, SquareFirstThings,
+ * text data, thing data for all 16 types, raw map data, checksum.
+ * Allocated fields are owned by `state`/`things` and must be freed with
+ * F0500_DUNGEON_FreeDatHeader_Compat and F0504_DUNGEON_FreeThingData_Compat.
+ */
+int F0504_DUNGEON_LoadTailBuffer_Compat(
+    const unsigned char* bytes,
+    int byteCount,
+    struct DungeonDatState_Compat* state,
+    struct DungeonThings_Compat* things);
+
+/*
  * Free thing data.
  */
 void F0504_DUNGEON_FreeThingData_Compat(

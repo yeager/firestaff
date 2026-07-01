@@ -178,6 +178,9 @@ typedef struct {
     int16_t currentHealth;
     uint8_t wisdom;         /* Statistics[C3_STATISTIC_WISDOM][C1_CURRENT] */
     uint8_t skillLevels[20]; /* Indexed by DM1_SKILL_* constants */
+    uint8_t liveSkillLevelOverrideValid;
+    uint8_t liveSkillLevelOverrideIndex;
+    uint8_t liveSkillLevelOverrideValue;
 } DM1_ChampionSpellStats;
 
 typedef struct {

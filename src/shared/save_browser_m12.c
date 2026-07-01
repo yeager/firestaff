@@ -9,9 +9,12 @@
  */
 
 #include "save_browser_m12.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
+#include "dm1_v1_save_load.h"
 #include "memory_savegame_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,6 +64,25 @@ static int copy_file_bytes(const char* srcPath, const char* dstPath) {
     return ok;
 }
 
+static void build_pc34_export_basename(const char* srcName,
+                                       char* out,
+                                       int outSize) {
+    size_t len;
+    if (!out || outSize <= 0) return;
+    out[0] = '\0';
+    if (!srcName || !*srcName) {
+        snprintf(out, (size_t)outSize, "firestaff-dm1-pc34.sav");
+        return;
+    }
+    len = strlen(srcName);
+    if (len > 4u && strcmp(srcName + len - 4u, ".sav") == 0) {
+        snprintf(out, (size_t)outSize, "%.*s-pc34.sav",
+                 (int)(len - 4u), srcName);
+    } else {
+        snprintf(out, (size_t)outSize, "%s-pc34.sav", srcName);
+    }
+}
+
 /* ------------------------------------------------------------------ */
 /*  Internal helpers                                                   */
 /* ------------------------------------------------------------------ */
@@ -86,6 +108,22 @@ static void extract_game_id(const char* filename, char* outId, int outSize) {
     outId[0] = '\0';
     if (strncmp(filename, "firestaff-", 10) != 0) return;
     start = filename + 10;
+
+    if (strncmp(start, "dm1-", 4) == 0 ||
+        strncmp(start, "dm1.sav", 7) == 0) {
+        snprintf(outId, (size_t)outSize, "dm1");
+        return;
+    }
+    if (strncmp(start, "csb-", 4) == 0 ||
+        strncmp(start, "csb.sav", 7) == 0) {
+        snprintf(outId, (size_t)outSize, "csb");
+        return;
+    }
+    if (strncmp(start, "dm2-", 4) == 0 ||
+        strncmp(start, "dm2.sav", 7) == 0) {
+        snprintf(outId, (size_t)outSize, "dm2");
+        return;
+    }
 
     /* Try stripping -quicksave.sav first, then .sav */
     end = strstr(start, "-quicksave.sav");
@@ -165,6 +203,9 @@ static void classify_pc34_manifest(M12_SaveBrowserEntry* entry) {
     free(buf);
 }
 
+static void format_champion_name(const unsigned char packed[8],
+                                 char* out, int outSize);
+
 static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
     FILE* fp;
     unsigned char* buf;
@@ -172,6 +213,10 @@ static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
     int rc;
     struct SaveGame_Compat sg;
     struct PartyState_Compat party;
+    DM1OriginalSavePC34HandoffReport originalReport;
+    char nameBuf[16];
+    int offset;
+    int i;
 
     if (!entry ||
         entry->manifestStatus != SAVE_BROWSER_MANIFEST_NOT_PRESENT ||
@@ -179,6 +224,47 @@ static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
         entry->fileSize <= 0 ||
         entry->fileSize > (long)SAVEGAME_PC34_MAX_FILE_SIZE) {
         return 0;
+    }
+
+    memset(&sg, 0, sizeof(sg));
+    memset(&party, 0, sizeof(party));
+    sg.party = &party;
+    rc = dm1_v1_original_save_pc34_handoff_file(
+        entry->fullPath, &sg, &originalReport);
+    if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        entry->valid = 1;
+        entry->mapLevel = sg.party ? sg.party->mapIndex : -1;
+        entry->championCount = sg.party ? sg.party->championCount : 0;
+        entry->champions[0] = '\0';
+        offset = 0;
+        for (i = 0; sg.party && i < sg.party->championCount &&
+                    i < CHAMPION_MAX_PARTY; ++i) {
+            if (!sg.party->champions[i].present) continue;
+            format_champion_name(sg.party->champions[i].name,
+                                 nameBuf, (int)sizeof(nameBuf));
+            if (nameBuf[0] == '\0') continue;
+            if (offset > 0) {
+                offset += snprintf(entry->champions + offset,
+                                   sizeof(entry->champions) - (size_t)offset,
+                                   ", ");
+            }
+            offset += snprintf(entry->champions + offset,
+                               sizeof(entry->champions) - (size_t)offset,
+                               "%s", nameBuf);
+        }
+        if (entry->mapLevel >= 0 && entry->championCount > 0) {
+            snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                     "%s  L%d  [%s]  (original PC34 save)",
+                     entry->gameId, entry->mapLevel, entry->champions);
+        } else if (entry->mapLevel >= 0) {
+            snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                     "%s  L%d  (original PC34 save)",
+                     entry->gameId, entry->mapLevel);
+        } else {
+            snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                     "%s (original PC34 save)", entry->gameId);
+        }
+        return 1;
     }
 
     fp = fopen(entry->fullPath, "rb");
@@ -228,6 +314,75 @@ static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
     return 1;
 }
 
+static int try_parse_dm1_native_entry(M12_SaveBrowserEntry* entry) {
+    struct GameWorld_Compat world;
+    struct DM1SaveHeader hdr;
+    FILE* fp;
+    unsigned char magic[8];
+    int rc;
+    int i;
+    int offset;
+    char nameBuf[16];
+
+    if (!entry || entry->expectedGameCode != SAVEGAME_PC34_GAME_CODE_DM1) {
+        return 0;
+    }
+    fp = fopen(entry->fullPath, "rb");
+    if (!fp) return 0;
+    if (fread(magic, 1, sizeof(magic), fp) != sizeof(magic)) {
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    if (memcmp(magic, DM1_SAVE_MAGIC, sizeof(magic)) != 0) {
+        return 0;
+    }
+
+    memset(&world, 0, sizeof(world));
+    memset(&hdr, 0, sizeof(hdr));
+    rc = DM1_LoadGame(entry->fullPath, &world, &hdr);
+    if (rc != DM1_SAVE_OK) {
+        return 0;
+    }
+
+    entry->valid = 1;
+    entry->mapLevel = world.party.mapIndex;
+    entry->championCount = world.party.championCount;
+    entry->champions[0] = '\0';
+    offset = 0;
+    for (i = 0; i < world.party.championCount &&
+                i < CHAMPION_MAX_PARTY; ++i) {
+        if (!world.party.champions[i].present) continue;
+        format_champion_name(world.party.champions[i].name,
+                             nameBuf, (int)sizeof(nameBuf));
+        if (nameBuf[0] == '\0') continue;
+        if (offset > 0) {
+            offset += snprintf(entry->champions + offset,
+                               sizeof(entry->champions) - (size_t)offset,
+                               ", ");
+        }
+        offset += snprintf(entry->champions + offset,
+                           sizeof(entry->champions) - (size_t)offset,
+                           "%s", nameBuf);
+    }
+
+    if (entry->championCount > 0 && entry->mapLevel >= 0) {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s  L%d  [%s]  (Firestaff native save)",
+                 entry->gameId, entry->mapLevel, entry->champions);
+    } else if (entry->mapLevel >= 0) {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s  L%d  (Firestaff native save)",
+                 entry->gameId, entry->mapLevel);
+    } else {
+        snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
+                 "%s (Firestaff native save)", entry->gameId);
+    }
+    F0883_WORLD_Free_Compat(&world);
+    (void)hdr;
+    return 1;
+}
+
 /* Format a champion name from packed 8-byte field (may lack NUL). */
 static void format_champion_name(const unsigned char packed[8],
                                  char* out, int outSize) {
@@ -260,6 +415,9 @@ static int parse_save_entry(M12_SaveBrowserEntry* entry) {
     memset(&sg, 0, sizeof(sg));
     rc = F0786_SAVEGAME_LoadFromFile_Compat(entry->fullPath, &sg);
     if (rc != SAVEGAME_OK) {
+        if (try_parse_dm1_native_entry(entry)) {
+            return 1;
+        }
         if (try_parse_dm1_pc34_vanilla_entry(entry)) {
             return 1;
         }
@@ -518,6 +676,62 @@ int M12_SaveBrowser_ExportSelected(const M12_SaveBrowserState* state,
     if (copy_file_bytes(entry->fullPath, dst) != 0) {
         return -1;
     }
+    if (outPath && outPathSize > 0) {
+        snprintf(outPath, (size_t)outPathSize, "%s", dst);
+    }
+    return 0;
+}
+
+int M12_SaveBrowser_ExportSelectedAsDM1PC34(
+    const M12_SaveBrowserState* state,
+    const char* exportDir,
+    char* outPath,
+    int outPathSize) {
+    const M12_SaveBrowserEntry* entry;
+    struct GameWorld_Compat world;
+    struct DM1SaveHeader hdr;
+    char base[SAVE_BROWSER_FILENAME_MAX];
+    char dst[512];
+    uint32_t gameID;
+    int rc;
+
+    if (outPath && outPathSize > 0) outPath[0] = '\0';
+    entry = M12_SaveBrowser_GetSelected(state);
+    if (!entry || !exportDir || !*exportDir || !file_exists(entry->fullPath)) {
+        return -1;
+    }
+    if (strcmp(entry->gameId, "dm1") != 0 || !entry->valid) {
+        return -1;
+    }
+
+    memset(&world, 0, sizeof(world));
+    memset(&hdr, 0, sizeof(hdr));
+    rc = DM1_LoadGame(entry->fullPath, &world, &hdr);
+    if (rc != DM1_SAVE_OK) {
+        return -1;
+    }
+
+    build_pc34_export_basename(entry->filename, base, (int)sizeof(base));
+    snprintf(dst, sizeof(dst), "%s/%s", exportDir, base);
+    if (file_exists(dst)) {
+        F0883_WORLD_Free_Compat(&world);
+        return -1;
+    }
+
+    /*
+     * ReDMCSB LOADSAVE.C F0433 writes the original GLOBAL_DATA,
+     * ACTIVE_GROUP, PARTY, EVENTS, and TIMELINE save parts; F0435 reads
+     * the same parts back. DM1_SaveGamePC34 owns that PC 3.4-shaped
+     * write-back from Firestaff's bounded GameWorld_Compat state.
+     */
+    gameID = hdr.gameID != 0u ? hdr.gameID : 0x44534D31u;
+    rc = DM1_SaveGamePC34(&world, dst, gameID);
+    F0883_WORLD_Free_Compat(&world);
+    if (rc != DM1_SAVE_OK) {
+        remove(dst);
+        return -1;
+    }
+
     if (outPath && outPathSize > 0) {
         snprintf(outPath, (size_t)outPathSize, "%s", dst);
     }

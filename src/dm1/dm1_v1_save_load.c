@@ -38,6 +38,8 @@
  */
 
 #include "dm1_v1_save_load.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
+#include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <stdio.h>
@@ -135,6 +137,58 @@ static int dm1_deserialize_header(const unsigned char buf[DM1_SAVE_HEADER_SIZE],
     hdr->bugProfileHash = dm1_read_u32_le(buf + 41);
     memcpy(hdr->reserved, buf + 45, 19);
     return 1;
+}
+
+static void dm1_fill_header_from_original_pc34(
+    const struct GameWorld_Compat* world,
+    const DM1OriginalSavePC34HandoffReport* report,
+    struct DM1SaveHeader* outHeader)
+{
+    if (!world || !outHeader) return;
+    memset(outHeader, 0, sizeof(*outHeader));
+    memcpy(outHeader->magic, "DM1PC34", 7);
+    outHeader->formatVersion = DM1_SAVE_FORMAT_VERSION;
+    outHeader->gameTick = world->gameTick;
+    outHeader->partyMapX = (uint16_t)world->party.mapX;
+    outHeader->partyMapY = (uint16_t)world->party.mapY;
+    outHeader->partyDirection = (uint16_t)world->party.direction;
+    outHeader->partyMapIndex = (uint16_t)world->partyMapIndex;
+    outHeader->championCount = (uint16_t)world->party.championCount;
+    outHeader->formatID = 5; /* ReDMCSB C5 PC/DM envelope */
+    outHeader->bugProfileHash = DM1_SAVE_PROFILE_UNSPECIFIED;
+    if (report) {
+        outHeader->totalFileSize =
+            SAVEGAME_PC34_DM_SAVE_HEADER_SIZE +
+            report->part_byte_counts[0] +
+            report->part_byte_counts[1] +
+            report->part_byte_counts[2] +
+            report->part_byte_counts[3] +
+            report->part_byte_counts[4] +
+            (uint32_t)(2u * SAVEGAME_PC34_PART_COUNT);
+    }
+}
+
+static int dm1_try_load_original_pc34_game(
+    const char* path,
+    struct GameWorld_Compat* outWorld,
+    struct DM1SaveHeader* outHeader)
+{
+    DM1OriginalSavePC34HandoffReport report;
+    int rc;
+
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_file(
+        path, outWorld, NULL, &report);
+    if (rc != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE) {
+            return DM1_SAVE_ERROR_FILE_READ;
+        }
+        if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34) {
+            return DM1_SAVE_ERROR_BAD_MAGIC;
+        }
+        return DM1_SAVE_ERROR_DESERIALIZE;
+    }
+    dm1_fill_header_from_original_pc34(outWorld, &report, outHeader);
+    return DM1_SAVE_OK;
 }
 
 /* ── Save game ────────────────────────────────────────────────── */
@@ -261,6 +315,69 @@ int DM1_SaveGameWithProfile(const struct GameWorld_Compat* world,
     return DM1_SAVE_OK;
 }
 
+int DM1_SaveGamePC34(const struct GameWorld_Compat* world,
+                     const char* path,
+                     uint32_t gameID) {
+    unsigned char* pc34 = NULL;
+    int bytesWritten = 0;
+    int exportRc;
+    FILE* file = NULL;
+    char backupPath[512];
+    int backupRc;
+
+    if (!world || !path) return DM1_SAVE_ERROR_NULL_ARG;
+
+    pc34 = (unsigned char*)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
+    if (!pc34) return DM1_SAVE_ERROR_OUT_OF_MEMORY;
+
+    exportRc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        world, gameID, pc34, (int)SAVEGAME_PC34_MAX_FILE_SIZE,
+        &bytesWritten);
+    if (exportRc != SAVEGAME_PC34_OK || bytesWritten <= 0) {
+        free(pc34);
+        if (exportRc == SAVEGAME_PC34_ERROR_NULL_ARG) {
+            return DM1_SAVE_ERROR_NULL_ARG;
+        }
+        if (exportRc == SAVEGAME_PC34_ERROR_BUFFER_TOO_SMALL ||
+            exportRc == SAVEGAME_PC34_ERROR_BAD_SIZE) {
+            return DM1_SAVE_ERROR_BAD_SIZE;
+        }
+        return DM1_SAVE_ERROR_SERIALIZE;
+    }
+
+    backupRc = snprintf(backupPath, sizeof(backupPath), "%s.bak", path);
+    if (backupRc > 0 && backupRc < (int)sizeof(backupPath)) {
+        remove(backupPath);
+        rename(path, backupPath);
+    }
+
+    file = fopen(path, "wb");
+    if (!file) {
+        free(pc34);
+        if (backupRc > 0 && backupRc < (int)sizeof(backupPath)) {
+            rename(backupPath, path);
+        }
+        return DM1_SAVE_ERROR_FILE_OPEN;
+    }
+    if (fwrite(pc34, 1, (size_t)bytesWritten, file) !=
+        (size_t)bytesWritten) {
+        fclose(file);
+        free(pc34);
+        remove(path);
+        if (backupRc > 0 && backupRc < (int)sizeof(backupPath)) {
+            rename(backupPath, path);
+        }
+        return DM1_SAVE_ERROR_FILE_WRITE;
+    }
+    if (fclose(file) != 0) {
+        free(pc34);
+        return DM1_SAVE_ERROR_FILE_WRITE;
+    }
+
+    free(pc34);
+    return DM1_SAVE_OK;
+}
+
 /* ── Load game ────────────────────────────────────────────────── */
 
 /*
@@ -323,11 +440,14 @@ int DM1_LoadGame(const char* path,
     /* Validate magic */
     if (memcmp(hdr.magic, DM1_SAVE_MAGIC, 8) != 0) {
         fclose(file);
-        return DM1_SAVE_ERROR_BAD_MAGIC;
+        return dm1_try_load_original_pc34_game(path, outWorld, outHeader);
     }
 
-    /* Validate version */
-    if (hdr.formatVersion != DM1_SAVE_FORMAT_VERSION) {
+    /* Validate version. Version 2 adds ChampionState_Compat external
+     * portrait bitmap bytes; F0898 still accepts v1 party sections and
+     * marks portraitBitmapValid=0 for those legacy saves. */
+    if (hdr.formatVersion < DM1_SAVE_FORMAT_VERSION_MIN ||
+        hdr.formatVersion > DM1_SAVE_FORMAT_VERSION) {
         fclose(file);
         return DM1_SAVE_ERROR_BAD_VERSION;
     }
@@ -439,7 +559,11 @@ int DM1_ValidateSaveFile(const char* path,
     dm1_deserialize_header(headerBuf, &hdr);
 
     if (memcmp(hdr.magic, DM1_SAVE_MAGIC, 8) != 0) { fclose(file); return DM1_SAVE_ERROR_BAD_MAGIC; }
-    if (hdr.formatVersion != DM1_SAVE_FORMAT_VERSION) { fclose(file); return DM1_SAVE_ERROR_BAD_VERSION; }
+    if (hdr.formatVersion < DM1_SAVE_FORMAT_VERSION_MIN ||
+        hdr.formatVersion > DM1_SAVE_FORMAT_VERSION) {
+        fclose(file);
+        return DM1_SAVE_ERROR_BAD_VERSION;
+    }
     if ((long)hdr.totalFileSize != fileSize) { fclose(file); return DM1_SAVE_ERROR_BAD_SIZE; }
 
     /* Read body for CRC check */
