@@ -20686,7 +20686,10 @@ static int m11_action_is_party_shield(unsigned char actionIndex) {
            actionIndex == DM1_ACTION_FIRESHIELD;
 }
 
-static int m11_action_is_projectile_spell_f0407(unsigned char actionIndex) {
+static int m11_action_uses_f0327_failure_xp_halving(unsigned char actionIndex) {
+    /* ReDMCSB MENU.C F0407 lines 1280-1305 route FIREBALL, DISPELL,
+     * LIGHTNING, and SPIT through F0327 and halve G0497 XP when it returns
+     * false.  INVOKE joins the same T0407014 path from lines 1480-1493. */
     switch (actionIndex) {
         case DM1_ACTION_FIREBALL:
         case DM1_ACTION_DISPELL:
@@ -24644,7 +24647,8 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
              * and halves disabled ticks when F0403 returns false. */
             actionExperienceGain >>= 2;
             disabledTicks >>= 1;
-        } else if (m11_action_is_projectile_spell_f0407(chosen) && !performed) {
+        } else if (m11_action_uses_f0327_failure_xp_halving(chosen) &&
+                   !performed) {
             /* ReDMCSB MENU.C F0407 lines 1300-1303 halves G0497 XP when
              * F0327_CHAMPION_IsProjectileSpellCast returns false. */
             actionExperienceGain >>= 1;
@@ -24752,7 +24756,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
              * and halves disabled ticks when F0403 returns false. */
             actionExperienceGain >>= 2;
             disabledTicks >>= 1;
-        } else if (m11_action_is_projectile_spell_f0407(
+        } else if (m11_action_uses_f0327_failure_xp_halving(
                        (unsigned char)actionIndex) && !performed) {
             /* ReDMCSB MENU.C F0407 lines 1300-1303 halves G0497 XP when
              * F0327_CHAMPION_IsProjectileSpellCast returns false. */

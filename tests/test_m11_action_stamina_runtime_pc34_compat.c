@@ -4327,6 +4327,64 @@ static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
               "INVOKE has no ReDMCSB action-time source sound");
 }
 
+static void test_invoke_projectile_create_failure_halves_action_xp(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
+    int expectedXp;
+
+    seed_state(&state, 100, 53);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 2;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].mana.current = 9;
+    state.world.party.champions[0].mana.maximum = 64;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].direction = 3;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_WIZARD].experience = 10000;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.projectiles.count = PROJECTILE_LIST_CAPACITY;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 7u);
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_INVOKE, &route), 1,
+              "INVOKE has a source G0496/G0497 route");
+    if (!route.valid) return;
+    expectedXp = route.experienceGain >> 1;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_INVOKE),
+              0,
+              "full projectile list makes INVOKE F0327 create fail");
+    ASSERT_EQ(weapons[0].chargeCount, 1,
+              "failed INVOKE still decrements charges through F0405");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 8,
+              "failed INVOKE still spends G0496 Wizard mana through F0327");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "failed INVOKE still mirrors F0406 champion direction");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_INVOKE),
+              "failed INVOKE keeps full source disabled ticks");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              10000 + expectedXp,
+              "failed INVOKE halves G0497 action XP on the action skill");
+    if (route.baseSkillIndex != route.skillIndex) {
+        ASSERT_EQ(state.world.lifecycle.champions[0]
+                      .skills20[route.baseSkillIndex].experience,
+                  expectedXp,
+                  "failed INVOKE propagates halved action XP to base skill");
+    }
+}
+
 static void test_cast_potion_spell_mutates_empty_flask(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -5764,6 +5822,7 @@ int main(void) {
     test_fireball_action_uses_f0327_and_decrements_charges();
     test_fireball_projectile_create_failure_halves_action_xp();
     test_invoke_action_uses_f0327_and_decrements_charges();
+    test_invoke_projectile_create_failure_halves_action_xp();
     test_cast_potion_spell_mutates_empty_flask();
     test_cast_zokathra_spell_materializes_ready_hand_junk();
     test_spellshield_low_mana_halves_disable_and_quarters_xp();
