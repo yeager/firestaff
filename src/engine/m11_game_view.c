@@ -22140,6 +22140,33 @@ static void m11_spawn_fuse_final_explosions_f0446(M11_GameViewState* state,
         state, C003_EXPLOSION_HARM_NON_MATERIAL, 255, mapIndex, mapX, mapY);
 }
 
+static void m11_run_fuse_chaos_order_cycle_f0446(M11_GameViewState* state,
+                                                 int mapIndex,
+                                                 int mapX,
+                                                 int mapY) {
+    int cycleCount;
+    if (!state) return;
+    /* ReDMCSB: ENDGAME.C F0446 lines 900-906 runs
+     * for (cycle=4; --cycle;) and for (switch=5; --switch;), requesting
+     * M560_SOUND_BUZZ and setting Lord Order on odd switch counts, Lord
+     * Chaos on even switch counts.  Each switch then performs `cycle`
+     * F0445 updates before the final explosions. */
+    for (cycleCount = 4; --cycleCount; ) {
+        int switchCount;
+        for (switchCount = 5; --switchCount; ) {
+            int creatureType = DM1_Endgame_GetCycleCreatureType(switchCount);
+            m11_audio_emit_source_sound(state, DM1_SND_BUZZ,
+                                        M11_AUDIO_MARKER_CREATURE);
+            state->endgameBuzzRequestCount += 1;
+            state->endgameChaosOrderSwitchCount += 1;
+            state->endgameFuseSequenceUpdateTicks += cycleCount;
+            m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
+                                         creatureType,
+                                         state->world.party.direction);
+        }
+    }
+}
+
 static int m11_find_lord_chaos_escape_square_f0225(
     M11_GameViewState* state,
     int mapIndex,
@@ -22357,10 +22384,12 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
     m11_remove_fluxcages_on_square_f0446(state, mapIndex, mapX, mapY);
     m11_spawn_fuse_fireball_burst_f0446(state, mapIndex, mapX, mapY);
     m11_audio_emit_source_sound(state, DM1_SND_BUZZ, M11_AUDIO_MARKER_CREATURE);
+    state->endgameBuzzRequestCount += 1;
     m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                  DM1_CREATURE_LORD_ORDER_ID,
                                  state->world.party.direction);
     m11_spawn_fuse_harm_burst_f0446(state, mapIndex, mapX, mapY);
+    m11_run_fuse_chaos_order_cycle_f0446(state, mapIndex, mapX, mapY);
     m11_spawn_fuse_final_explosions_f0446(state, mapIndex, mapX, mapY);
     m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                  DM1_CREATURE_GREY_LORD_ID,
