@@ -2423,6 +2423,68 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 PC real-asset D2C F0107 wall ornament + F0111 door front blit
+# probe (2026-06-27 sibling of the 2026-06-26 D1C F0108+F0115
+# ornament probe). The probe closes the D2C half of
+# docs/FIRESTAFF_GAP_LIST.md C5 "live real-asset ornament blits,
+# broader viewport/HUD captures, and pixel parity evidence" and the
+# TODO.md "Phase 3 - Rendering parity hardening" follow-up by:
+#   - re-discovering the canonical PC CSB GRAPHICS.DAT via the same
+#     csb_v1_boot_scan_assets path the launcher uses;
+#   - reusing the DMCSB1 BE header parser (sig 0x8001, count BE,
+#     comp/decomp/w/h BE) to enumerate real PC CSB bitmaps;
+#   - selecting the first real D2C F0111 64x61 door bitmap and the
+#     first real D2C F0107 16x19 wall ornament bitmap (both are the
+#     source-locked native sizes per ReDMCSB G0694 + CSB-lineage
+#     Viewport.cpp:1016-1024 + DUNVIEW.C F0107:3502-3938);
+#   - driving the source-locked csb_v1_viewport_d2c_f0107_wall_
+#     ornament_with_f0111_door_front_spec_pc34 contract against the
+#     real bytes (draw order f0107 < f0111, transparent C10, door
+#     closed state 4, door zone 3760, cell orders 0x0000 / 0x0218 /
+#     0x0349, ornament band x=8..103 + door x=24..87);
+#   - capturing the resulting 112x61 PPM + SHA256 sidecar to
+#     /tmp/csb_pc_real_d2c_f0107_f0111_capture.ppm so the run is
+#     CTest-stable and human-viewable.
+# Skip-safe on hosts without user-supplied PC CSB game data (exits 0
+# with SKIP).
+#
+# Source-lock boundary:
+#   - ReDMCSB DUNVIEW.C F0107:3502-3938
+#     F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF
+#     (alcove flag, C10_COLOR_FLESH transparent ornament blit).
+#   - ReDMCSB DUNVIEW.C F0111:4218-4339
+#     F0111_DUNGEONVIEW_DrawDoor
+#     (closed/destroyed blit 4297-4299, PC34 zone draw with
+#     C10_COLOR_FLESH at 4334).
+#   - ReDMCSB DUNVIEW.C F0121:7244-7342
+#     F0121_DUNGEONVIEW_DrawSquareD2C
+#     (wall 7289-7312, door 7313-7341, cell orders 0x0000/0x0218/
+#     0x0349).
+#   - ReDMCSB DEFS.H:2088 (C10_COLOR_FLESH), 2537-2539, 2581,
+#     2657-2677, 2688-2690, 4030-4049, 4238-4257 (square aspect, D2C
+#     view, cell orders, wall zones, door zone M628 = 3760).
+#   - CSB-lineage Viewport.cpp:1016-1024 (F2 stone Alcove/JumpZ
+#     helper), 1865-1879 (F2 door-facing helper), 2596-2616
+#     (StdDrawDoor), 2949-2955 (StdDrawWallDecoration).
+add_executable(firestaff_csb_v1_pc_real_asset_d2c_f0107_f0111_probe
+    probes/csb/firestaff_csb_v1_pc_real_asset_d2c_f0107_f0111_probe.c
+    src/csb/csb_v1_runtime_pc34_compat.c
+    src/csb/csb_v1_boot.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/csb/csb_v1_viewport_d2c_f0107_wall_ornament_with_f0111_door_front_pc34_compat.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_pc_real_asset_d2c_f0107_f0111_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_pc_real_asset_d2c_f0107_f0111_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_pc_real_asset_d2c_f0107_f0111_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Champion-stat determinism probe (Tier 4 #17 polish).
 # Headless: no game data, no SDL rendering required. Verifies the
 # source-locked champion-stat helpers (F0306 stamina adjustment +
@@ -15854,6 +15916,29 @@ if(BUILD_TESTING)
         set_tests_properties(csb_v1_first_viewport_frame PROPERTIES
             LABELS "tier1;csb;skip_safe;launch;boot_handoff;viewport;m11_boundary"
             TIMEOUT 60
+        )
+    endif()
+
+    # CSB V1 PC real-asset D2C F0107 wall ornament + F0111 door front
+    # blit gate (2026-06-27 sibling of csb_v1_pc_real_asset_ornament_blit).
+    # The probe parses the DMCSB1 BE GRAPHICS.DAT header from the
+    # verified PC CSB pair, selects the first real D2C F0111 64x61
+    # door bitmap + the first real D2C F0107 16x19 wall ornament
+    # bitmap, drives the source-locked
+    # csb_v1_viewport_d2c_f0107_wall_ornament_with_f0111_door_front
+    # spec against those bytes (draw order, transparency, door state,
+    # door zone, cell orders, ornament band, door column), and writes
+    # the deterministic 112x61 PPM + SHA256 sidecar to
+    # /tmp/csb_pc_real_d2c_f0107_f0111_capture.ppm. Skip-safe on
+    # hosts without user-supplied PC CSB game data.
+    if(TARGET firestaff_csb_v1_pc_real_asset_d2c_f0107_f0111_probe)
+        add_test(
+            NAME csb_v1_pc_real_asset_d2c_f0107_f0111
+            COMMAND firestaff_csb_v1_pc_real_asset_d2c_f0107_f0111_probe
+        )
+        set_tests_properties(csb_v1_pc_real_asset_d2c_f0107_f0111 PROPERTIES
+            LABELS "tier1;csb;real_data;skip_safe;viewport;ornament;f0107;f0111;d2c"
+            TIMEOUT 120
         )
     endif()
 
