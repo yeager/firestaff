@@ -79,6 +79,22 @@ static int projectile_open_door_spell_impacts_door(
         && !projectile_digest_door_is_destroyed(digest);
 }
 
+static int projectile_create_removes_potion_on_impact(
+    const struct ProjectileCreateInput_Compat* in)
+{
+    unsigned int thing;
+    if (!in) return 0;
+    if (in->potionPower != 0) return 1;
+    thing = (unsigned int)in->associatedThing;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    if (THING_GET_TYPE(thing) != THING_TYPE_POTION) return 0;
+    /* ReDMCSB: PROJEXPL.C F0217 lines 444-455 sets RemovePotion for
+     * Ven and Ful Bomb by potion type, then uses potion Power only as
+     * the explosion attack. A zero-power potion is still consumed. */
+    return in->subtype == PROJECTILE_SUBTYPE_POISON_CLOUD ||
+           in->subtype == PROJECTILE_SUBTYPE_FIREBALL;
+}
+
 enum {
     PHASE17_SOUND_METALLIC_THUD = 0, /* C00_SOUND_METALLIC_THUD */
     PHASE17_SOUND_WOODEN_THUD = 4 /* C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM */
@@ -321,7 +337,8 @@ int F0810_PROJECTILE_Create_Compat(
     list->entries[slot].poisonAttack          = in->poisonAttack;
     list->entries[slot].attackTypeCode        = in->attackTypeCode;
     list->entries[slot].flags =
-        ((in->potionPower != 0) ? PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT : 0) |
+        (projectile_create_removes_potion_on_impact(in)
+             ? PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT : 0) |
         (createsExplosion ? PROJECTILE_FLAG_CREATES_EXPLOSION : 0) |
         PROJECTILE_FLAG_IGNORE_DOOR_PASS_THROUGH;
     list->entries[slot].reserved0 = 0;

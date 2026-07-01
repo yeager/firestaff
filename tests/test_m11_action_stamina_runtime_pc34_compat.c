@@ -1812,7 +1812,7 @@ static void test_throw_ven_potion_launches_removepotion_projectile(void) {
     memset(&things, 0, sizeof(things));
     memset(potions, 0, sizeof(potions));
     potions[0].next = THING_ENDOFLIST;
-    potions[0].power = 77;
+    potions[0].power = 0;
     potions[0].type = 3; /* ReDMCSB C03_POTION_VEN_POTION. */
     things.loaded = 1;
     things.potions = potions;
@@ -1844,14 +1844,14 @@ static void test_throw_ven_potion_launches_removepotion_projectile(void) {
               "THROW Ven potion stores poison-cloud impact subtype");
     ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 43,
               "THROW Ven potion includes F0140 potion weight in F0312 throw strength");
-    ASSERT_EQ(state.world.projectiles.entries[0].associatedPotionPower, 77,
-              "THROW Ven potion carries potion power to projectile");
-    ASSERT_EQ(state.world.projectiles.entries[0].poisonAttack, 77,
-              "THROW Ven potion carries potion power as poison payload");
+    ASSERT_EQ(state.world.projectiles.entries[0].associatedPotionPower, 0,
+              "THROW zero-power Ven potion carries source potion power");
+    ASSERT_EQ(state.world.projectiles.entries[0].poisonAttack, 0,
+              "THROW zero-power Ven potion carries zero poison payload");
     ASSERT_EQ(state.world.projectiles.entries[0].flags
                   & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT,
               PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT,
-              "THROW Ven potion sets RemovePotion impact flag");
+              "THROW zero-power Ven potion still sets RemovePotion impact flag");
     ASSERT_EQ(state.world.projectiles.entries[0].reserved1, thrownThing,
               "THROW Ven potion preserves removed potion Thing identity");
 }

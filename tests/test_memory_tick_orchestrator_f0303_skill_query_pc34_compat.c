@@ -1511,10 +1511,13 @@ static void run_orch_thrown_potion_door_impact_case(
     createIn.attack = 10;
     createIn.stepEnergy = 2;
     createIn.potionPower = potionPower;
+    createIn.associatedThing = make_thing(THING_TYPE_POTION, 0);
     createIn.currentTick = 100;
     createIn.firstMoveGraceFlag = 1;
     assert(F0810_PROJECTILE_Create_Compat(
         &createIn, &world.projectiles, &slot, &firstMove) == 1);
+    assert((world.projectiles.entries[slot].flags &
+            PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) != 0);
     assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove) == 1);
 
     memset(&input, 0, sizeof(input));
@@ -1557,6 +1560,9 @@ static void test_orch_thrown_potion_door_impact_uses_potion_power(void) {
         EXPLOSION_CELL_CENTERED);
     run_orch_thrown_potion_door_impact_case(
         PROJECTILE_SUBTYPE_FIREBALL, 96, C000_EXPLOSION_FIREBALL, 2);
+    run_orch_thrown_potion_door_impact_case(
+        PROJECTILE_SUBTYPE_POISON_CLOUD, 0, C007_EXPLOSION_POISON_CLOUD,
+        EXPLOSION_CELL_CENTERED);
 }
 
 static void test_orch_open_door_projectile_toggles_button_door(void) {
