@@ -21634,6 +21634,19 @@ static int m11_perform_fluxcage_action(M11_GameViewState* state,
     return 1;
 }
 
+static void m11_mark_game_won_from_fuse_f0446(M11_GameViewState* state) {
+    if (!state) return;
+
+    /* ReDMCSB: PROJEXPL.C F0225 lines 1122-1123 calls
+     * ENDGAME.C F0446, where lines 805 and 810 set
+     * G0302_B_GameWon = C1_TRUE and MagicalLightAmount = 200. */
+    state->world.gameWon = 1;
+    if (!state->gameWon) {
+        state->gameWon = 1;
+        state->gameWonTick = state->world.gameTick;
+    }
+}
+
 static int m11_perform_fuse_action(M11_GameViewState* state,
                                    const char* champName) {
     int mapIndex, mapX, mapY;
@@ -21688,7 +21701,7 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
     m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                  DM1_CREATURE_GREY_LORD_ID);
     state->world.magic.magicalLightAmount = 200;
-    state->world.gameWon = 1;
+    m11_mark_game_won_from_fuse_f0446(state);
     m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                   "T%u: %s FUSES CHAOS AND ORDER",
                   (unsigned int)state->world.gameTick, champName);
