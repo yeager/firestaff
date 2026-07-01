@@ -1485,6 +1485,56 @@ static void test_block_action_spends_source_stamina(void) {
               "normal action stamina drain does not damage HP");
 }
 
+static void test_flip_action_prints_source_message_and_keeps_common_tail(void) {
+    M11_GameViewState state;
+    DM1_ActionXpRoute route;
+    const char* message;
+    int expectedStaminaCost;
+
+    seed_state(&state, 100, 62);
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 3u);
+    expectedStaminaCost =
+        dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_FLIP) +
+        (int)((state.world.gameTick + (uint32_t)DM1_ACTION_FLIP) & 1u);
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_FLIP, &route), 1,
+              "FLIP has a source G0496/G0497 route");
+    if (!route.valid) return;
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FLIP),
+              1,
+              "FLIP performs the ReDMCSB F0407 coin-message branch");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "FLIP does not create a projectile");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current,
+              100 - expectedStaminaCost,
+              "FLIP spends the common G0494 stamina tail");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_FLIP),
+              "FLIP keeps the common G0491 disabled-tick tail");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_FLIP,
+              "FLIP records the source action index while disabled");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              route.experienceGain,
+              "FLIP awards G0497 action XP to its action skill");
+    if (route.baseSkillIndex != route.skillIndex) {
+        ASSERT_EQ(state.world.lifecycle.champions[0]
+                      .skills20[route.baseSkillIndex].experience,
+                  route.experienceGain,
+                  "FLIP propagates G0497 XP to the base skill");
+    }
+    ASSERT_EQ(M11_GameView_GetMessageLogCount(&state) >= 2, 1,
+              "FLIP writes the action cue plus source coin message");
+    message = M11_GameView_GetMessageLogEntry(&state, 0);
+    ASSERT_EQ(message != NULL &&
+                  (strstr(message, "IT COMES UP HEADS.") != NULL ||
+                   strstr(message, "IT COMES UP TAILS.") != NULL),
+              1,
+              "FLIP prints the ReDMCSB heads/tails message");
+}
+
 static void test_throw_action_removes_action_hand_object(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -6348,6 +6398,7 @@ int main(void) {
     test_melee_contact_gate_reads_g0492_with_block_exception();
     test_projectile_action_required_mana_uses_g0496_route();
     test_block_action_spends_source_stamina();
+    test_flip_action_prints_source_message_and_keeps_common_tail();
     test_throw_action_removes_action_hand_object();
     test_direct_throw_empty_action_hand_keeps_f0407_tail();
     test_throw_ven_potion_launches_removepotion_projectile();
