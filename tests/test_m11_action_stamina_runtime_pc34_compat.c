@@ -6691,6 +6691,12 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     }
     ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_BUZZ,
               "FUSE complete requests F0446 buzz sound");
+    ASSERT_EQ(state.endgameBuzzRequestCount, 13,
+              "FUSE complete requests initial plus Chaos/Order buzz sounds");
+    ASSERT_EQ(state.endgameChaosOrderSwitchCount, 12,
+              "FUSE complete records F0446 nested Chaos/Order switch count");
+    ASSERT_EQ(state.endgameFuseSequenceUpdateTicks, 24,
+              "FUSE complete records F0446 nested fuse-update cadence");
     ASSERT_EQ(state.audioState.lastMusicTrackId,
               DM1_Endgame_GetEndingParams()->victoryMusicId,
               "FUSE complete requests F0446 game-won music track");

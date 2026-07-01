@@ -267,6 +267,9 @@ typedef struct {
     int endgameFinalDelayTicks;
     int endgameRestartAllowed;
     int endgameCalledWithTrue;
+    int endgameChaosOrderSwitchCount;
+    int endgameFuseSequenceUpdateTicks;
+    int endgameBuzzRequestCount;
 
     /* Dialog box overlay for text-plaque inspection.
      * When dialogOverlayActive is 1, a styled dialog panel is rendered
