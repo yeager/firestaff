@@ -6416,7 +6416,7 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     unsigned char squareData[25];
     unsigned short squareFirstThings[25];
     struct DungeonThings_Compat things;
-    struct DungeonGroup_Compat groups[1];
+    struct DungeonGroup_Compat groups[2];
     int partyFluxcageCount = -1;
     int chaosFluxcageCount = -1;
     int fireballAttackSeen[6] = {0, 0, 0, 0, 0, 0};
@@ -6454,6 +6454,7 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     tiles[0].squareData = squareData;
     tiles[0].squareCount = 25;
     squareFirstThings[(2 * 5) + 1] = make_thing(THING_TYPE_GROUP, 0);
+    squareFirstThings[(4 * 5) + 4] = make_thing(THING_TYPE_GROUP, 1);
     state.world.dungeon = &dungeon;
     state.world.party.mapIndex = 0;
     state.world.partyMapIndex = 0;
@@ -6467,13 +6468,19 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     groups[0].health[0] = 10000;
     groups[0].cells = 0x12;
     groups[0].direction = 1;
+    groups[1].next = THING_ENDOFLIST;
+    groups[1].creatureType = DM1_CREATURE_TYPE_SCREAMER;
+    groups[1].count = 0;
+    groups[1].health[0] = 37;
+    groups[1].cells = 0xFF;
+    groups[1].direction = 3;
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 25;
     things.groups = groups;
-    things.groupCount = 1;
+    things.groupCount = 2;
     state.world.things = &things;
-    state.world.creatureAICount = 1;
+    state.world.creatureAICount = 2;
     state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
     state.world.creatureAI[0].groupMapIndex = 0;
     state.world.creatureAI[0].groupMapX = 2;
@@ -6482,6 +6489,14 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     state.world.creatureAI[0].groupCells = 0x12;
     state.world.creatureAI[0].groupDirection = 1;
     state.world.creatureAI[0].reserved0 = 0;
+    state.world.creatureAI[1].stateKind = AI_STATE_WANDER;
+    state.world.creatureAI[1].groupMapIndex = 0;
+    state.world.creatureAI[1].groupMapX = 4;
+    state.world.creatureAI[1].groupMapY = 4;
+    state.world.creatureAI[1].creatureType = DM1_CREATURE_TYPE_SCREAMER;
+    state.world.creatureAI[1].groupCells = 0xFF;
+    state.world.creatureAI[1].groupDirection = 3;
+    state.world.creatureAI[1].reserved0 = 1;
 
     state.world.explosions.count = 5;
     state.world.explosions.entries[0].reserved0 = 1;
@@ -6544,6 +6559,12 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete updates active AI group-cell mirror");
     ASSERT_EQ(state.world.creatureAI[0].groupDirection, 2,
               "FUSE complete updates active AI group-direction mirror");
+    ASSERT_EQ(squareFirstThings[(2 * 5) + 1], make_thing(THING_TYPE_GROUP, 0),
+              "FUSE complete keeps the Grey Lord group on its square");
+    ASSERT_EQ(squareFirstThings[(4 * 5) + 4], THING_ENDOFLIST,
+              "FUSE complete deletes non-Grey-Lord groups from the map");
+    ASSERT_EQ(state.world.creatureAICount, 1,
+              "FUSE complete removes active AI entries for deleted groups");
     ASSERT_EQ(state.world.magic.magicalLightAmount, 200,
               "FUSE complete applies F0446 magical light amount");
     ASSERT_EQ(state.world.magic.fireShieldDefense, 100,

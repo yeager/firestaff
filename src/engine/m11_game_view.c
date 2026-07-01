@@ -21941,6 +21941,62 @@ static void m11_set_group_type_on_square(M11_GameViewState* state,
     }
 }
 
+static void m11_remove_creature_ai_for_group_f0446(M11_GameViewState* state,
+                                                   int groupIndex) {
+    int i;
+    int writeIndex = 0;
+    int oldCount;
+    int retainedCount;
+    if (!state || groupIndex < 0) return;
+    oldCount = state->world.creatureAICount;
+    for (i = 0; i < oldCount; ++i) {
+        if (state->world.creatureAI[i].reserved0 == groupIndex) continue;
+        if (writeIndex != i) {
+            state->world.creatureAI[writeIndex] = state->world.creatureAI[i];
+        }
+        ++writeIndex;
+    }
+    retainedCount = writeIndex;
+    while (writeIndex < oldCount) {
+        memset(&state->world.creatureAI[writeIndex], 0,
+               sizeof(state->world.creatureAI[writeIndex]));
+        ++writeIndex;
+    }
+    state->world.creatureAICount = retainedCount;
+}
+
+static void m11_delete_other_groups_for_endgame_f0446(M11_GameViewState* state,
+                                                      int mapIndex,
+                                                      int greyLordX,
+                                                      int greyLordY) {
+    const struct DungeonMapDesc_Compat* map;
+    int x;
+    int y;
+    if (!state || !state->world.dungeon || !state->world.things) return;
+    if (mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) return;
+    map = &state->world.dungeon->maps[mapIndex];
+    for (x = 0; x < (int)map->width; ++x) {
+        for (y = 0; y < (int)map->height; ++y) {
+            unsigned short groupThing;
+            int groupIndex;
+            if (x == greyLordX && y == greyLordY) continue;
+            groupThing = m11_find_group_on_square(&state->world, mapIndex, x, y);
+            if (groupThing == THING_NONE || groupThing == THING_ENDOFLIST ||
+                THING_GET_TYPE(groupThing) != THING_TYPE_GROUP) {
+                continue;
+            }
+            groupIndex = (int)THING_GET_INDEX(groupThing);
+            if (m11_unlink_thing_from_square(&state->world, mapIndex, x, y,
+                                             groupThing)) {
+                /* ReDMCSB: ENDGAME.C F0446 lines 915-922 deletes every
+                 * group except the Grey Lord square after setting
+                 * G0077_B_DoNotDrawFluxcagesDuringEndgame. */
+                m11_remove_creature_ai_for_group_f0446(state, groupIndex);
+            }
+        }
+    }
+}
+
 static int m11_count_fluxcages_around_square(M11_GameViewState* state,
                                              int mapIndex,
                                              int mapX,
@@ -22243,6 +22299,7 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
      * endgame cleanup.  Keep the live C50 entries for timing/accounting,
      * but suppress them from M11 viewport sampling from this point on. */
     state->endgameDoNotDrawFluxcages = 1;
+    m11_delete_other_groups_for_endgame_f0446(state, mapIndex, mapX, mapY);
     m11_mark_game_won_from_fuse_f0446(state);
     m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                   "T%u: %s FUSES CHAOS AND ORDER",
