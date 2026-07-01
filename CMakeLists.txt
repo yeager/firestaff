@@ -3475,6 +3475,81 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirr
     )
 endif()
 
+# DM1 V1 Hall of Champions mirror ordinal introspector —
+# diagnostic helper (not a CTest target).  Brute-force scans the
+# Hall of Champions cell map for every reachable front-cell mirror
+# ordinal so per-ordinal slice gates (front_north_entry,
+# east_walkpath, south_return, west_negative, ...) can pin the
+# exact (x, y, dir) pose per ordinal.
+#
+# Manual run:
+#   ./build/firestaff_dm1_v1_hall_mirror_ordinal_introspect_probe
+#       ~/.firestaff/data
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_mirror_ordinal_introspect_probe.c")
+    add_executable(firestaff_dm1_v1_hall_mirror_ordinal_introspect_probe
+        probes/m11/firestaff_dm1_v1_hall_mirror_ordinal_introspect_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_mirror_ordinal_introspect_probe
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_mirror_ordinal_introspect_probe
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
+# DM1 V1 Hall of Champions champion mirror ordinal 6 (SYRA) pose
+# regression — slice dm1_v1_hoc_champion_portrait_06_front_north_entry.
+#
+# Pins the (2,4) EAST front-cell mirror ordinal to 6 (SYRA,
+# "CHILD OF NATURE"), the D1C portrait rectangle (96,35)-(128,64)
+# to the C026 ordinal-6 sprite, the C346 wall-mirror backing at
+# (96,36)-(128,64) to visible, and the resurrect round-trip to a
+# surviving SYRA champion.  Also asserts no ordinal-6 warm pixels
+# leak over the corridor side walls (no floating portrait).
+#
+# The slice label says "front_north_entry" but ordinal 6 has no
+# NORTH-facing front-cell mirror pose in canonical DM1 V1
+# (DUNGEON.DAT SHA256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85);
+# the only ordinal 6 front-cell route is (2,4) EAST.  We advance the
+# slice to the actual pose and document the route correction in the
+# commit message.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_6_syra_pose_probe.c")
+    add_executable(firestaff_dm1_v1_champion_mirror_ordinal_6_syra_pose_probe
+        probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_6_syra_pose_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_champion_mirror_ordinal_6_syra_pose_probe
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_mirror_ordinal_6_syra_pose_probe
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_dm1_v1_champion_mirror_ordinal_6_syra_pose_probe
+        COMMAND firestaff_dm1_v1_champion_mirror_ordinal_6_syra_pose_probe
+            $<IF:$<TARGET_EXISTS:WORKSPACE_DATA_DIR>,$<TARGET_PROPERTY:WORKSPACE_DATA_DIR,VALUE>,$ENV{HOME}/.firestaff/data>
+    )
+endif()
+
+# DM1 V1 Hall of Champions ordinal -> champion name lookup helper.
+# Diagnostic helper (not a CTest target).  Prints the decoded
+# mirror-text champion identity for every ordinal 0..23 so slice
+# gates can document which champion is at which ordinal.
+#
+# Manual run:
+#   ./build/firestaff_dm1_v1_hall_mirror_ordinal_champion_name_probe
+#       ~/.firestaff/data
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_hall_mirror_ordinal_champion_name_probe.c")
+    add_executable(firestaff_dm1_v1_hall_mirror_ordinal_champion_name_probe
+        probes/m11/firestaff_dm1_v1_hall_mirror_ordinal_champion_name_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_hall_mirror_ordinal_champion_name_probe
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_hall_mirror_ordinal_champion_name_probe
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
 # DM1 V1 viewport wall visual capture probe — takes DATA_DIR OUT_DIR.
 # Sibling to the champion-mirror capture probe; addresses the
 # 'missing or incorrect viewport walls' P1 visual bug ticket by
