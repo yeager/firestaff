@@ -15730,6 +15730,50 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 light-overflow cast-path wire-in + FNXL save/load proof.
+# Headless and data-free (no Saturn disc image, FONT256.S2D, MNS
+# model, or DGN file). Wires the bounded data-model + bug-
+# classification API into a small engine-side bundle (the
+# Nexus_V1_LightCastPath) the M11 cast dispatch / a debug overlay /
+# a replay capture can drive for every Light / Torch / Darkness
+# cast. Preserves the emulate-vs-guard mode distinction via the
+# NEXUS_LIGHT_CAST_MODE_EMULATE / NEXUS_LIGHT_CAST_MODE_GUARD
+# enum and exposes a per-cast Nexus_V1_LightCastResult so the
+# caller can react (HUD warning, cast rejection, replay flag).
+# Source-lock: ReDMCSB WIP20210206 Toolchains/Common/Source/
+#   MENU.C:1926-1942 — Light / Torch / Darkness dispatch
+#   TIMELINE.C:487-555 — F0238_AddEvent (BUG0_18 silent drop)
+#   TIMELINE.C:1720-1767 — F0257_ProcessEvent70_Light
+#   LOADSAVE.C:2041 — EventMaximumCount = 100 base cap
+#   CHAMPION.C:27 — MagicalLightAmount field
+# The FNXL save/load proof is a small dedicated binary format
+# for the cast-path state (magic 'FNXL', CRC-32 integrity, 36-byte
+# fixed header + per-active-slot payload). Distinct from the
+# world-save FNXS format in src/nexus/nexus_v1_save_load.c so the
+# world format version stays untouched.
+# Probe verifies: cast-path init/reset, single Light cast
+# classification, cast+tick convergence, BUG0_18 silent drop in
+# emulate mode, cast rejection in guard mode, runtime mode flip,
+# FNXL round-trip (every state field + every in-use slot
+# preserved bit-exact), corruption + truncation rejection,
+# 5-run determinism, NULL safety on every entry point, and the
+# skip-real-assets contract (the probe links and runs without any
+# Saturn asset on disk).
+add_executable(firestaff_nexus_v1_light_cast_path_probe
+    probes/nexus/firestaff_nexus_v1_light_cast_path_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_light_cast_path_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_light_cast_path_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_light_cast_path_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus V1 Saturn-font SCR section-table probe. Headless and data-free by
 # default: synthesizes a small SEGA SATURN SCR section-table fixture and
 # walks the 32-entry table in src/nexus/nexus_v1_saturn_font.c via
