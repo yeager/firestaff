@@ -78,6 +78,7 @@
 #include "memory_projectile_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 
 /* ================================================================
@@ -107,7 +108,7 @@
 #define CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID 0x80000000u
 #define CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID 0x40000000u
 #define CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK  0x000000FFu
-#define CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34    25
+#define CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34    DM1_ACTION_MELEE
 #define CMD_ATTACK_TARGET_AUTO_GROUP_PC34       0xFFu
 #define CMD_ATTACK_CREATURE_AUTO_PC34           0xFFu
 
