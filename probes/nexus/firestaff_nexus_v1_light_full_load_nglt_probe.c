@@ -81,6 +81,12 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#if defined(_WIN32)
+#include <direct.h>
+#define PROBE_MKDIR(path) _mkdir(path)
+#else
+#define PROBE_MKDIR(path) mkdir((path), 0755)
+#endif
 
 #include "nexus_v1_save.h"
 #include "nexus_v1_light_runtime.h"
@@ -143,7 +149,7 @@ static int make_tmp_slot(char *tmpdir_out, size_t tmpdir_size,
      * dir already exists... no, it returns EEXIST. We use access() to
      * gate that. */
     if (access(tmpdir_out, 0) != 0) {
-        if (mkdir(tmpdir_out, 0755) != 0) return 0;
+        if (PROBE_MKDIR(tmpdir_out) != 0) return 0;
     }
     snprintf(slot_out, slot_size,
              "%s/save.dat", tmpdir_out);
