@@ -4160,6 +4160,10 @@ static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
               "INVOKE uses F0327 fixed projectile attack 90");
     ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 2,
               "INVOKE uses F0327 step energy from maximum mana");
+    ASSERT_EQ(state.audioState.lastMarker, M11_AUDIO_MARKER_NONE,
+              "INVOKE has no ReDMCSB action-time audio marker");
+    ASSERT_EQ(state.audioState.lastSoundIndex, -1,
+              "INVOKE has no ReDMCSB action-time source sound");
 }
 
 static void test_cast_potion_spell_mutates_empty_flask(void) {

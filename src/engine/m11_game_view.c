@@ -24369,8 +24369,9 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                           "T%u: %s INVOKES %s",
                           (unsigned int)state->world.gameTick,
                           champName, subtypeName);
-            (void)M11_Audio_EmitMarker(&state->audioState,
-                                       M11_AUDIO_MARKER_COMBAT);
+            /* ReDMCSB MENU.C F0407 lines 1445-1454 routes INVOKE through
+             * the same F0327 projectile-spell path as FIREBALL/DISPELL/
+             * LIGHTNING, with no F0064 action-time sound request. */
             return spawned;
         }
         case 42: { /* THROW */
