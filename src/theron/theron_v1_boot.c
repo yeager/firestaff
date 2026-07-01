@@ -358,6 +358,45 @@ static int theron_md5_is_known(const char *md5) {
 }
 
 /*
+ * theron_v1_boot_verified_path_is_stale -- decide whether a
+ * previously verified Track 02 path/MD5 pair still matches the
+ * bytes on disk.  Mirrors src/shared/asset_status_m12.c
+ * ::m12_theron_tracked_path_is_stale so the boot profile and the M12
+ * reuse gate agree on what counts as "stale".
+ *
+ *   1 -- path is missing, no longer a regular file, or its on-disk
+ *        MD5 no longer matches expected_md5.  The cached verified
+ *        entry is unsafe to trust; callers should fall through to a
+ *        full scan.
+ *   0 -- path exists as a regular file and its current MD5 matches.
+ *
+ * Counts one stat() in g_theron_rescan_count so callers can assert
+ * the helper does no work beyond the existence / hash check.
+ */
+int theron_v1_boot_verified_path_is_stale(const char *track02_path,
+                                           const char *expected_md5) {
+    char fresh_md5[33];
+    if (!track02_path || !track02_path[0]) return 1;
+    if (!expected_md5 || !expected_md5[0]) return 1;
+    if (!file_exists(track02_path)) {
+        return 1;
+    }
+    /* Re-hash the file: same-size-different-content swaps pass an
+     * mtime/size check but must not pass the verified-launch contract.
+     * Using the same m12_file_md5_hex helper that the M12 reuse gate
+     * uses keeps both sides byte-comparable.  Expected cost on a real
+     * Track 02 BIN is one full MD5 over a few-MB payload; this is the
+     * correct price for "reuse safely" rather than "reuse blindly". */
+    if (!m12_file_md5_hex(track02_path, fresh_md5)) {
+        return 1;
+    }
+    if (strcmp(fresh_md5, expected_md5) != 0) {
+        return 1;
+    }
+    return 0;
+}
+
+/*
  * theron_v1_boot_load_verified_path — fill a boot profile from an
  * already-hash-verified Track 02 path.  Skips the data-dir fallback
  * search that theron_v1_boot_scan_assets() performs.
@@ -369,9 +408,17 @@ static int theron_md5_is_known(const char *md5) {
  *   - The caller owns the verification step (M12 asset catalog, or
  *     the upstream m12_try_match_direct_theron_request() helper).
  *
- * This function performs ZERO stat() calls in the success path —
- * callers can read theron_v1_boot_rescan_call_count() before and after
- * to assert the optimisation.
+ * Stale-path guard: refuses (-1) if track02_path no longer exists
+ * as a regular file.  This is a one-shot stat() check (counted in
+ * theron_v1_boot_rescan_call_count()) so direct launch cannot
+ * silently accept a path whose file has been deleted/moved between
+ * the previous catalog scan and the current launch.
+ *
+ * The success path performs ZERO additional stat() calls — the data
+ * fields stay empty, the deterministic defaults are reset, and the
+ * caller can rely on assets_verified == 1 + the exact MD5 it passed
+ * in.  Callers can read theron_v1_boot_rescan_call_count() before
+ * and after to assert the optimisation.
  *
  * Source: THQUEST.ASM T400 — once the verified data track is located
  * the runtime does not re-walk the data root. */
@@ -387,6 +434,19 @@ int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
     if (!profile || !track02_path || !track02_path[0]) return -1;
     if (!expected_md5 || !expected_md5[0]) return -1;
     if (!theron_md5_is_known(expected_md5)) return -1;
+
+    /* Stale-path guard: refuse if the previously verified file is no
+     * longer on disk as a regular file.  Without this, the boot
+     * profile would happily report assets_verified = 1 with a path
+     * that points at nothing, and the downstream M11_Theron_Load
+     * would fail at asset-load time with a less actionable error.
+     * One stat() per direct-launch call; the rescan counter is the
+     * way tests prove the rest of the function still skips the data
+     * root.  Bumping the counter via file_exists() (rather than open-
+     * coding stat()) keeps the count consistent with the scan path. */
+    if (!file_exists(track02_path)) {
+        return -1;
+    }
 
     /* Re-initialise to defaults, then fill in only the fields a direct
      * launch needs.  Avoids the fallback chain + MD5 stat call. */

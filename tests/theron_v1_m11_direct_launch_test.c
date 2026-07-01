@@ -117,8 +117,19 @@ int main(void) {
                 "M11 Theron verified-path start succeeds");
     rescans_after = theron_v1_boot_rescan_call_count();
 
-    expect_true(rescans_after == rescans_before,
-                "M11 verified-path start skips Theron scan probes");
+    /* The verified-path boot adds a single stat() to confirm the
+     * cached Track 02 is still on disk (stale-path guard added in
+     * the 2026-06-28 Theron direct-launch reuse-gate pass).  What
+     * this assertion proves is that M11_GameView_Start does NOT
+     * re-walk the data root — the count delta is bounded by the
+     * one-shot stale guard on the supplied path, not by the
+     * g_theron_track02_candidates chain in theron_v1_boot_scan_
+     * assets().  The exact bound is rescans_after == rescans_before
+     * + 1 (the file_exists() call); other M11 probes would push it
+     * higher. */
+    expect_true(rescans_after == rescans_before + 1UL,
+                "M11 verified-path start runs only the stale-path guard "
+                "(no data-root fallback walk)");
     expect_true(view.active == 1, "M11 view is active");
     expect_true(view.sourceKind == M11_GAME_SOURCE_THERON_TRACK02,
                 "M11 source kind is Theron Track 02");

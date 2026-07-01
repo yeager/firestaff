@@ -184,6 +184,14 @@ int theron_v1_boot_probe_available(const char *data_dir);
  *
  * Filename heuristic (same as scan) sets platform / version_id.
  *
+ * Stale-path guard: refuses (-1) if track02_path is empty, NULL, or
+ * no longer exists as a regular file on disk.  This makes "reuse
+ * safely" mean "the verified Track 02 is still where you said it
+ * was" — a deleted or moved file is treated as bad input, not a
+ * successful profile fill.  The check is one stat() per call (no MD5
+ * re-hash), counted in theron_v1_boot_rescan_call_count() so tests
+ * can prove direct launch stays out of the data-dir fallback walk.
+ *
  * Returns 0 on success, -1 on any input or stat failure.
  *
  * Source: THQUEST.ASM T400 (Track 02 data-track loading) — when
@@ -193,6 +201,29 @@ int theron_v1_boot_probe_available(const char *data_dir);
 int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
                                        const char *track02_path,
                                        const char *expected_md5);
+
+/* theron_v1_boot_verified_path_is_stale — decide whether a previously
+ * verified Track 02 path/MD5 pair still matches the bytes on disk.
+ * Used by the launcher to reject stale reuse entries (deleted /
+ * moved / replaced file) before the runtime tries to load them.
+ *
+ * Returns:
+ *   1  -- track02_path is missing, empty, no longer a regular file,
+ *         or its current MD5 no longer equals expected_md5 (stale;
+ *         do not trust the cached verified entry).
+ *   0  -- path exists as a regular file and its on-disk MD5 matches.
+ *
+ * This helper exists separately from the direct-launch path so
+ * tests can assert the contract in isolation, and so the M12 reuse
+ * gate can mirror the same check before deciding to bypass a
+ * re-scan.
+ *
+ * Note: re-hashing the file is the source of truth for "still the
+ * same bytes".  A same-size-but-different-content swap is the
+ * dangerous case the helper catches; mtime/size alone are not
+ * enough. */
+int theron_v1_boot_verified_path_is_stale(const char *track02_path,
+                                           const char *expected_md5);
 
 /* theron_v1_boot_rescan_call_count — number of stat() / fopen() probes
  * performed across the most recent scan-style call (probe / scan /
