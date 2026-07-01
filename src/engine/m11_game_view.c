@@ -5812,6 +5812,17 @@ static void m11_apply_rest_recovery(M11_GameViewState* state) {
     }
 }
 
+static void m11_wake_party_from_rest(M11_GameViewState* state) {
+    if (!state) return;
+    /* ReDMCSB: PROJEXPL.C F0230 lines 1346-1352 wakes the party through
+     * CHAMPION.C F0314 before the hit/parry cascade continues.  Clear every
+     * M11/M10 rest mirror so later F0303 skill queries in the same attack
+     * read active champion levels instead of the resting/neophyte contract. */
+    state->resting = 0;
+    state->world.partyIsResting = 0;
+    state->world.lifecycle.rest.isResting = 0;
+}
+
 static void m11_check_party_death(M11_GameViewState* state) {
     int i;
     int anyAlive = 0;
@@ -6228,7 +6239,7 @@ static void m11_creature_attack_party(
     creatureCount = (int)group->count + 1;  /* count field is 0-based */
 
     if (state->resting) {
-        state->resting = 0;
+        m11_wake_party_from_rest(state);
         m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
                       (unsigned int)state->world.gameTick);
     }
@@ -9975,7 +9986,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (state->resting) {
         if (input == M12_MENU_INPUT_REST_TOGGLE ||
             input == M12_MENU_INPUT_ACCEPT) {
-            state->resting = 0;
+            m11_wake_party_from_rest(state);
             m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
                           (unsigned int)state->world.gameTick);
             m11_set_status(state, "REST", "PARTY AWAKE");
