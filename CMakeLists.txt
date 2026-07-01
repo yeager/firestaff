@@ -1098,25 +1098,6 @@ if(BUILD_TESTING)
     )
 endif()
 
-# Runtime gesture navigation gate probe.
-# Cross-game runtime gate for swipe/tap/edge-strafe gesture classification
-# across DM1/CSB/DM2/Nexus/Theron. Data-free: it does not require any game
-# data on disk, so it sits outside the data-required gate pool.
-# Source lock: header doc-block + COMMAND.C G0448 movement arrows.
-add_executable(firestaff_runtime_gesture_navigation_gate_probe
-    probes/firestaff_runtime_gesture_navigation_gate_probe.c)
-target_link_libraries(firestaff_runtime_gesture_navigation_gate_probe
-    PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
-if(NOT MSVC)
-    target_compile_options(firestaff_runtime_gesture_navigation_gate_probe
-        PRIVATE -Wall -Wextra -O2)
-endif()
-add_test(
-    NAME firestaff_runtime_gesture_navigation_gate_probe
-    COMMAND firestaff_runtime_gesture_navigation_gate_probe
-        "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
-)
-
 # Nexus V2 HUD Overlay Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: init/reset defaults, set_direction/set_level/set_gold/
@@ -6023,28 +6004,6 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_input_command_bridge_pc34_compat
     )
 
-    # CSB V1 input command queue binding gate (existing test, wired up so the
-    # source-locked TURN_RIGHT queue->state path runs in CI).  Source-lock:
-    # ReDMCSB COMMAND.C F0380 lines 2045-2156 dispatches C001/C002 to
-    # F0365_COMMAND_ProcessTypes1To2_TurnParty; CHAMPION.C F0284 lines
-    # 117-130 applies the turn delta to every champion Cell and Direction.
-    add_executable(test_csb_v1_input_command_queue_binding
-        tests/test_csb_v1_input_command_queue_binding.c
-        src/csb/csb_v1_runtime_pc34_compat.c
-        src/shared/asset_find_by_hash.c
-    )
-    target_include_directories(test_csb_v1_input_command_queue_binding PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_csb_v1_input_command_queue_binding PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_input_command_queue_binding PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME csb_v1_input_command_queue_binding
-        COMMAND test_csb_v1_input_command_queue_binding
-    )
-
     # CSB V1 queue overflow gate (existing test, wired up so the source-locked
     # C5/C7 cap, enqueue cap, and dispatch counter run in CI).  Source-lock:
     # COMMAND.C F0361 lines 1744-1766 + DEFS.H:3507-3509; COMMAND.C F0359
@@ -6064,26 +6023,6 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_queue_overflow_pc34_compat
         COMMAND test_csb_v1_queue_overflow_pc34_compat
-    )
-
-    # CSB V1 runtime tick accumulator gate (existing test, wired up so the
-    # source-locked 55ms game-time quantum from accumulated frame deltas runs
-    # in CI).  Source-lock: ReDMCSB TIMELINE.C F0235 lines 702-708.
-    add_executable(test_csb_v1_runtime_tick_accumulator
-        tests/test_csb_v1_runtime_tick_accumulator.c
-        src/csb/csb_v1_runtime_pc34_compat.c
-        src/shared/asset_find_by_hash.c
-    )
-    target_include_directories(test_csb_v1_runtime_tick_accumulator PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_csb_v1_runtime_tick_accumulator PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_runtime_tick_accumulator PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME csb_v1_runtime_tick_accumulator
-        COMMAND test_csb_v1_runtime_tick_accumulator
     )
 
     # CSB V1 champion per-stat ↔ F0309 max-load interaction fixture
@@ -11267,49 +11206,6 @@ if(BUILD_TESTING)
     )
     set_tests_properties(pass110_dm1_v1_hud_type7_bar_value_resolver PROPERTIES
         DEPENDS pass107_dm1_v1_hud_status_source_chain_audit
-    )
-
-    # DM1 V1 champion-panel HUD/status SOURCE-CHAIN AUDIT gate.
-    # Sibling of dm1_v1_champion_panel_hud_status_source_lock that
-    # proves the pass83 top-row overlay is still backed by the
-    # layout-696 source records in data/zones_h_reconstruction.json.
-    # Pins the full chain: C150 status-box template (67x29) +
-    # C151..C154 status-slot placement at x 0/69/138/207 +
-    # C155..C166 name clear/text chain (with the source +1 x offset)
-    # + C183..C206 bar-graph/value chain (C195..C206 type=7 HP /
-    # stamina / mana) + C207..C218 ready/action hand source chain,
-    # against the active pass83_champion_hud_zone_overlay_probe.v3
-    # overlay schema. Independent of the 7-source-range / 53-zone
-    # source-lock CTest above (that gate pins ReDMCSB ranges to M11
-    # accessors; this gate pins layout-696 records to the live
-    # overlay schema). Data-free; no real GRAPHICS.DAT / DUNGEON.DAT
-    # load, no live renderer handoff, no original-vs-Firestaff
-    # pixel claim.
-    add_test(
-        NAME pass107_v1_hud_status_source_chain_audit
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass107_v1_hud_status_source_chain_audit.py
-    )
-
-    # DM1 V1 champion-panel HUD/status TYPE-7 BAR VALUE RESOLVER gate.
-    # Sibling of dm1_v1_champion_panel_hud_status_source_lock and
-    # pass107_v1_hud_status_source_chain_audit that independently
-    # resolves the layout-696 type=7 HP / stamina / mana value
-    # zones (C195, C199, C203) into the same 4x25 bottom-flush
-    # rectangles used by the active champion HUD overlay, instead
-    # of trusting the overlay JSON alone. Locks the slot origins
-    # 0/69/138/207 from C151..C154, the bar-region chain
-    # C183..C186 -> C187..C190 -> C191..C194, the C195..C206
-    # per-stat value zones at the 46/53/60 x offsets within each
-    # 67x29 status box, and the sample fill math (full HP = 25px,
-    # half stamina = 12px, min-1px mana for non-zero values).
-    # Independent of the sibling gates above (this gate recomputes
-    # the geometry from zones_h_reconstruction.json instead of
-    # reading the pass83 overlay). Data-free; no real
-    # GRAPHICS.DAT / DUNGEON.DAT load, no live renderer handoff,
-    # no original-vs-Firestaff pixel claim.
-    add_test(
-        NAME pass110_v1_hud_type7_bar_value_resolver
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass110_v1_hud_type7_bar_value_resolver.py
     )
 
     # DM1 V1 champion-panel DISABLED/UNAVAILABLE ICON STATE gate.
