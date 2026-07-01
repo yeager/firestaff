@@ -117,9 +117,26 @@ ship a transcript the pass608 verifier still rejects):
     has drifted away from the canonical fixtures, and the
     next live DOSBox attempt would discover the drift at
     row-builder time instead of at the gate.
+  * C9 - Events TSV row-count exact match + row-uniqueness
+    + byte-determinism re-run.  Re-build the events TSV
+    from the same sandbox with the same row builder
+    invocation and assert that (a) the rebuilt events TSV
+    has exactly ``1 + len(LIVE_BINDING_TABLE)`` lines
+    (the older ``>=`` check silently let duplicate rows
+    pass through, which would corrupt downstream
+    transcript SHA256s); (b) no two rows share the same
+    ``(label, raw_sha256, crop_sha256)`` triple (a
+    duplicated binding would otherwise silently double-
+    count the same capture); and (c) the rebuilt events
+    TSV is byte-identical to the first build (a
+    regression that introduces a non-deterministic
+    source — current time, random, ``uuid.uuid4`` — into
+    the row builder's stdout would otherwise only be
+    caught when a downstream consumer's hash drifted).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -236,6 +253,17 @@ def write_png(path: Path, width: int, height: int, rgb: tuple[int, int, int]) ->
     path.write_bytes(
         sig + _chunk(b"IHDR", ihdr) + _chunk(b"IDAT", idat) + _chunk(b"IEND", b"")
     )
+
+
+def _sha256_of_file(path: Path) -> str:
+    """Return the lowercase hex SHA256 of the bytes on disk at
+    ``path``.  Used by C9 to compare two builds of the events
+    TSV emitted by the row builder."""
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -615,14 +643,18 @@ def _check_c4_c6_live_binding_flips(sandbox: Path) -> tuple[int, list[str]]:
         return 0, [f"row-builder did not produce {events_tsv}"]
     with events_tsv.open("r", encoding="utf-8") as fh:
         lines = [line.rstrip("\n") for line in fh if line.rstrip("\n")]
-    if len(lines) < 1 + len(LIVE_BINDING_TABLE):
+    expected_total_lines = 1 + len(LIVE_BINDING_TABLE)
+    if len(lines) != expected_total_lines:
         return 0, [
             f"events TSV has {len(lines)} non-empty lines, expected "
-            f">= 1 (header) + {len(LIVE_BINDING_TABLE)} (one per binding)"
+            f"== 1 (header) + {len(LIVE_BINDING_TABLE)} (one per binding) = "
+            f"{expected_total_lines} (the older >= check silently let duplicate "
+            f"rows pass through, which would corrupt downstream transcript SHA256s)"
         ]
     header_cells = lines[0].split("\t")
     if len(header_cells) != 41:
         return 0, [f"events TSV header has {len(header_cells)} columns, expected 41"]
+    seen_row_keys: set[tuple[str, str, str]] = set()
     for idx, binding in enumerate(LIVE_BINDING_TABLE):
         row_cells = lines[1 + idx].split("\t")
         if len(row_cells) != 41:
@@ -643,6 +675,21 @@ def _check_c4_c6_live_binding_flips(sandbox: Path) -> tuple[int, list[str]]:
                 f"events TSV row {idx} width/height={row_cells[6]}x{row_cells[7]}, "
                 f"expected 320x200"
             ]
+        # Per-row uniqueness: a duplicate (label, raw_sha256,
+        # crop_sha256) triple would silently double-count the
+        # same capture and corrupt the pass608 promotable-row
+        # count.  The row builder does not dedupe today; the
+        # LIVE_BINDING_TABLE constant is the only thing that
+        # keeps the rows unique, so we assert it here.
+        row_key = (row_cells[1], row_cells[3], row_cells[5])
+        if row_key in seen_row_keys:
+            return 0, [
+                f"events TSV row {idx} ({binding['live_filename']}) "
+                f"label/raw_sha/crop_sha triple {row_key!r} duplicates an "
+                f"earlier row; LIVE_BINDING_TABLE must not bind the same "
+                f"capture to multiple pass623 labels"
+            ]
+        seen_row_keys.add(row_key)
 
     # C5 - transcript writer renders a promotable transcript.
     matched, fails = _run_transcript_writer(
@@ -858,6 +905,127 @@ def _check_c8_binding_table_anchored_to_real_fixture() -> tuple[bool, str]:
     )
 
 
+def _check_c9_events_tsv_determinism_rerun(sandbox: Path) -> tuple[int, list[str]]:
+    """C9: the events TSV the row builder emits must be
+    byte-deterministic for the same inputs.
+
+    Re-runs the on-disk row builder against the same
+    synthetic fixtures the C4 positive-path used (same
+    sandbox, same preflight receipt, same pass623, same
+    raw/crop bytes) and asserts the rebuilt events TSV
+    is byte-identical to the first build.  A regression
+    that introduces a non-deterministic source into the
+    row builder's stdout (current time, ``uuid.uuid4``,
+    ``random.*``, an environment variable, a hash of an
+    undeclared file, etc.) would otherwise only be caught
+    when a downstream consumer's hash drifted between
+    two CI runs; the gate catches it here.
+
+    The transcript writer at
+    ``docs/parity/tools/dosbox_capture_transcript_writer.py``
+    intentionally stamps ``capturedUtc`` with
+    ``datetime.now()`` so its output is non-deterministic
+    across runs — that is fine for live receipts and is
+    documented in the writer's source.  This check is
+    scoped to the events TSV the row builder emits, which
+    is the layer the live-binding handoff promotes.
+    """
+    failures: list[str] = []
+
+    # Locate the events TSV the C4 positive path built.
+    first_events_tsv = sandbox / "events.tsv"
+    if not first_events_tsv.is_file():
+        return 0, [f"first-build events TSV missing: {first_events_tsv}"]
+    first_sha = _sha256_of_file(first_events_tsv)
+
+    # Rebuild the events TSV from scratch in a sibling
+    # sandbox so the row builder's stdout is captured
+    # only for the second build.  We deliberately do NOT
+    # reuse the C4 events.tsv — the determinism check is
+    # "the same inputs produce the same bytes", not
+    # "the gate writes the same bytes twice".
+    rerun_sandbox = sandbox / "rerun"
+    rerun_sandbox.mkdir(parents=True, exist_ok=True)
+    receipt_path    = rerun_sandbox / "preflight_receipt.json"
+    pass623_path    = rerun_sandbox / "pass623.json"
+    manifest_path   = rerun_sandbox / "capture_manifest.tsv"
+    captures_dir    = rerun_sandbox / "original"
+
+    _write_synth_receipt(receipt_path)
+    _write_synth_pass623(pass623_path)
+    _write_synth_capture_manifest(manifest_path)
+    captures_dir.mkdir(parents=True, exist_ok=True)
+    rgb_per_index = [(40, 40, 40), (50, 50, 50), (60, 60, 60)]
+    for idx, binding in enumerate(LIVE_BINDING_TABLE):
+        rgb = rgb_per_index[idx % len(rgb_per_index)]
+        raw_path  = captures_dir / binding["live_filename"]
+        crop_path = captures_dir / binding["live_filename"].replace(".png", "_viewport.png")
+        write_png(raw_path,  320, 200, rgb)
+        write_png(crop_path, 224, 136, rgb)
+
+    events_tsv_rerun = rerun_sandbox / "events.tsv"
+    for idx, binding in enumerate(LIVE_BINDING_TABLE):
+        raw_path  = captures_dir / binding["live_filename"]
+        crop_path = captures_dir / binding["live_filename"].replace(".png", "_viewport.png")
+        matched, fails, path = _run_row_builder_for_binding(
+            sandbox=rerun_sandbox,
+            binding=binding,
+            raw_path=raw_path,
+            crop_path=crop_path,
+            receipt_path=receipt_path,
+            pass623_path=pass623_path,
+            run_id="live_row_gate_run_001",
+            write_header=(idx == 0),
+        )
+        if matched != 1 or fails or path is None:
+            return 0, [
+                f"events-tsv-determinism: rerun row-builder failed for "
+                f"{binding['live_filename']}: matched={matched} fails={fails}"
+            ]
+
+    if not events_tsv_rerun.is_file():
+        return 0, [f"events-tsv-determinism: rerun did not produce {events_tsv_rerun}"]
+    rerun_sha = _sha256_of_file(events_tsv_rerun)
+
+    if first_sha != rerun_sha:
+        # Compute a per-line diff so the failure message
+        # is self-describing — point at the first line
+        # that differs instead of just reporting the SHA
+        # mismatch.
+        first_lines = first_events_tsv.read_text(encoding="utf-8").splitlines()
+        rerun_lines = events_tsv_rerun.read_text(encoding="utf-8").splitlines()
+        diff_index = -1
+        for idx in range(min(len(first_lines), len(rerun_lines))):
+            if first_lines[idx] != rerun_lines[idx]:
+                diff_index = idx
+                break
+        first_tail = first_lines[diff_index][:160] if diff_index >= 0 else "<all lines equal>"
+        rerun_tail = rerun_lines[diff_index][:160] if diff_index >= 0 else "<all lines equal>"
+        return 0, [
+            f"events-tsv-determinism: first-build sha256={first_sha} != "
+            f"rerun sha256={rerun_sha}; first divergent line "
+            f"index={diff_index} (len first={len(first_lines)}, len rerun={len(rerun_lines)}); "
+            f"first={first_tail!r} rerun={rerun_tail!r}"
+        ]
+
+    # Spot-check: the rebuilt events TSV must also have
+    # exactly 1 + len(LIVE_BINDING_TABLE) non-empty lines
+    # (the row count exact-match guard from C4 applied to
+    # the second build, so a row builder regression that
+    # drops the header on the second invocation but keeps
+    # it on the first is caught here too).
+    with events_tsv_rerun.open("r", encoding="utf-8") as fh:
+        rerun_lines = [line for line in fh if line.rstrip("\n")]
+    expected_total = 1 + len(LIVE_BINDING_TABLE)
+    if len(rerun_lines) != expected_total:
+        return 0, [
+            f"events-tsv-determinism: rerun events TSV has {len(rerun_lines)} "
+            f"non-empty lines, expected {expected_total}"
+        ]
+
+    return 1, []
+
+
 # ---------------------------------------------------------------------------
 # Main: drive all checks and report.
 # ---------------------------------------------------------------------------
@@ -865,7 +1033,7 @@ def _check_c8_binding_table_anchored_to_real_fixture() -> tuple[bool, str]:
 def main() -> int:
     failures: list[str] = []
     matched = 0
-    total = 8
+    total = 9
 
     sandbox = Path(tempfile.mkdtemp(prefix="live-row-gate-"))
     try:
@@ -914,6 +1082,18 @@ def main() -> int:
             print("c4_row_builder: row builder renders 41-column row per live binding  PASS")
             print("c5_transcript_writer: transcript.promotable is True  PASS")
             print("c6_pass608_promoted: pass608 status flipped to PROMOTED  PASS")
+
+        # C9 - run after C4-C6 so the positive-path events.tsv
+        # is in place, but before C7 so a non-determinism
+        # regression in the row builder surfaces here (where
+        # it is documented as C9) instead of being masked by
+        # C7's hash patch.
+        m, fails = _check_c9_events_tsv_determinism_rerun(sandbox)
+        if m != 1 or fails:
+            failures.append(f"c9_events_tsv_determinism_rerun: matched={m} fails={fails}")
+        else:
+            matched += 1
+            print("c9_events_tsv_determinism_rerun: events TSV byte-identical across rerun  PASS")
 
         # C7
         m, fails = _check_c7_negative_path(sandbox)
