@@ -4513,6 +4513,36 @@ static unsigned short m11_get_raw_next_thing(const struct DungeonThings_Compat* 
     return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
 }
 
+static unsigned short m11_get_decoded_next_thing(
+    const struct DungeonThings_Compat* things,
+    unsigned short thingId) {
+    int type;
+    int index;
+    if (!things || thingId == THING_NONE || thingId == THING_ENDOFLIST) {
+        return THING_ENDOFLIST;
+    }
+    type = THING_GET_TYPE(thingId);
+    index = THING_GET_INDEX(thingId);
+    if (index < 0) return THING_ENDOFLIST;
+    switch (type) {
+        case THING_TYPE_GROUP:
+            return (things->groups && index < things->groupCount)
+                ? things->groups[index].next : THING_ENDOFLIST;
+        case THING_TYPE_WEAPON:
+            return (things->weapons && index < things->weaponCount)
+                ? things->weapons[index].next : THING_ENDOFLIST;
+        case THING_TYPE_ARMOUR:
+            return (things->armours && index < things->armourCount)
+                ? things->armours[index].next : THING_ENDOFLIST;
+        case THING_TYPE_JUNK:
+            return (things->junks && index < things->junkCount)
+                ? things->junks[index].next : THING_ENDOFLIST;
+        default:
+            break;
+    }
+    return THING_ENDOFLIST;
+}
+
 static void m11_set_raw_next_thing(struct DungeonThings_Compat* things,
                                    unsigned short thingId,
                                    unsigned short newNext) {
@@ -4875,6 +4905,9 @@ static int m11_link_fixed_possession_thing_to_square(
                safety++ < 64) {
             unsigned short next = m11_get_raw_next_thing(world->things, current);
             if (next == THING_ENDOFLIST || next == THING_NONE) {
+                next = m11_get_decoded_next_thing(world->things, current);
+            }
+            if (next == THING_ENDOFLIST || next == THING_NONE) {
                 int currentType = THING_GET_TYPE(current);
                 if (currentType == THING_TYPE_WEAPON ||
                     currentType == THING_TYPE_ARMOUR ||
@@ -4882,6 +4915,7 @@ static int m11_link_fixed_possession_thing_to_square(
                     m11_set_object_drop_next(world->things, current, thing);
                 } else {
                     m11_set_raw_next_thing(world->things, current, thing);
+                    m11_set_decoded_next_thing(world->things, current, thing);
                 }
                 break;
             }
@@ -22768,6 +22802,21 @@ static void m11_projectile_apply_impact(
                                 : ((originalCells >> (slotI * 2)) & 0x03);
                         F0738_COMBAT_ApplyDamageToGroup_Compat(
                             &res, g, slotI, &outcome);
+                        if (outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+                            const struct CreatureBehaviorProfile_Compat* profile =
+                                CREATURE_GetProfile_Compat(originalCreatureType);
+                            if (profile &&
+                                (profile->attributes & DM1_ATTR_DROP_FIXED_POSS)) {
+                                /* ReDMCSB GROUP.C F0190 lines 842-847 calls
+                                 * F0186 for the killed member before group
+                                 * compaction side effects finish.  F0738 has
+                                 * already compacted the M11 group, so use the
+                                 * saved original cell. */
+                                (void)m11_materialize_creature_fixed_possession_drops(
+                                    state, originalCreatureType, killedCell,
+                                    impactMap, impactX, impactY);
+                            }
+                        }
                         if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES ||
                             outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
                             (void)m11_spawn_f0190_death_smoke(

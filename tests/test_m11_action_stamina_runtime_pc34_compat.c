@@ -50,6 +50,33 @@ static unsigned char square_for_test(int elementType, int attributes) {
     return (unsigned char)(((elementType & 0x07) << 5) | (attributes & 0x1f));
 }
 
+static void mark_raw_object_slots_unused_for_test(unsigned char* raw, int count) {
+    int i;
+    for (i = 0; i < count; ++i) {
+        raw[i * 4 + 0] = 0xFFu;
+        raw[i * 4 + 1] = 0xFFu;
+        raw[i * 4 + 2] = 0;
+        raw[i * 4 + 3] = 0;
+    }
+}
+
+static unsigned short object_next_for_test(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing) {
+    int type = THING_GET_TYPE(thing);
+    int index = THING_GET_INDEX(thing);
+    switch (type) {
+        case THING_TYPE_WEAPON:
+            return things->weapons[index].next;
+        case THING_TYPE_ARMOUR:
+            return things->armours[index].next;
+        case THING_TYPE_JUNK:
+            return things->junks[index].next;
+        default:
+            return THING_ENDOFLIST;
+    }
+}
+
 static int is_melee_action_index(unsigned char actionIndex) {
     switch (actionIndex) {
         case 2:  case 6:  case 7:  case 9:  case 12:
@@ -2082,6 +2109,181 @@ static void test_projectile_creature_kill_spawns_f0190_death_smoke(void) {
     ASSERT_EQ(state.world.timeline.events[0].kind,
               TIMELINE_EVENT_EXPLOSION_ADVANCE,
               "killing creature projectile schedules C040 advance event");
+}
+
+static void test_projectile_creature_killed_some_drops_fixed_possessions(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    unsigned short squareFirstThings[12];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct DungeonWeapon_Compat weapons[8];
+    struct DungeonArmour_Compat armours[8];
+    struct DungeonJunk_Compat junks[4];
+    unsigned char weaponRaw[8][4];
+    unsigned char armourRaw[8][4];
+    unsigned char junkRaw[4][4];
+    struct ProjectileInstance_Compat* projectile;
+    unsigned short firstDrop;
+    int sawWeaponDrop = 0;
+    int sawArmourDrop = 0;
+    int dropCount = 0;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    memset(weapons, 0, sizeof(weapons));
+    memset(armours, 0, sizeof(armours));
+    memset(junks, 0, sizeof(junks));
+    memset(weaponRaw, 0, sizeof(weaponRaw));
+    memset(armourRaw, 0, sizeof(armourRaw));
+    memset(junkRaw, 0, sizeof(junkRaw));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+    for (i = 0; i < 8; ++i) {
+        weapons[i].next = THING_NONE;
+        armours[i].next = THING_NONE;
+    }
+    for (i = 0; i < 4; ++i) {
+        junks[i].next = THING_NONE;
+    }
+    mark_raw_object_slots_unused_for_test(&weaponRaw[0][0], 8);
+    mark_raw_object_slots_unused_for_test(&armourRaw[0][0], 8);
+    mark_raw_object_slots_unused_for_test(&junkRaw[0][0], 4);
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    squareData[(2 * 3) + 1] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[(2 * 3) + 1] = make_thing(THING_TYPE_GROUP, 0);
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = DM1_CREATURE_TYPE_ANIMATED_ARMOUR;
+    groups[0].cells = 0x09u;
+    groups[0].count = 1;
+    groups[0].health[0] = 1;
+    groups[0].health[1] = 200;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 12;
+    things.groups = groups;
+    things.groupCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 8;
+    things.armours = armours;
+    things.armourCount = 8;
+    things.junks = junks;
+    things.junkCount = 4;
+    things.rawThingData[THING_TYPE_WEAPON] = &weaponRaw[0][0];
+    things.rawThingData[THING_TYPE_ARMOUR] = &armourRaw[0][0];
+    things.rawThingData[THING_TYPE_JUNK] = &junkRaw[0][0];
+    things.thingCounts[THING_TYPE_WEAPON] = 8;
+    things.thingCounts[THING_TYPE_ARMOUR] = 8;
+    things.thingCounts[THING_TYPE_JUNK] = 4;
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].lastSeenPartyTick = 99;
+    state.world.gameTick = 100;
+    state.audioState.initialized = 1;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 3;
+    projectile->mapY = 1;
+    projectile->cell = 0;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 80;
+    projectile->stepEnergy = 5;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = make_thing(THING_TYPE_WEAPON, 7);
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "killed-some projectile despawns projectile");
+    ASSERT_EQ(groups[0].count, 0,
+              "killed-some projectile compacts group count");
+    ASSERT_EQ(groups[0].health[0], 200,
+              "killed-some projectile preserves surviving creature health");
+    ASSERT_EQ(squareFirstThings[(2 * 3) + 1], make_thing(THING_TYPE_GROUP, 0),
+              "killed-some projectile keeps surviving group on square");
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 2, 1), 1,
+              "killed-some projectile still creates F0190 smoke");
+    ASSERT_EQ(state.world.explosions.entries[0].explosionType,
+              C040_EXPLOSION_SMOKE,
+              "killed-some projectile smoke uses C040");
+    ASSERT_EQ(state.world.explosions.entries[0].cell, 1,
+              "killed-some projectile smoke uses killed cell");
+
+    firstDrop = groups[0].next;
+    while (firstDrop != THING_ENDOFLIST && firstDrop != THING_NONE &&
+           dropCount < 16) {
+        int type = THING_GET_TYPE(firstDrop);
+        int index = THING_GET_INDEX(firstDrop);
+        if (type == THING_TYPE_ARMOUR) {
+            sawArmourDrop = 1;
+            ASSERT_EQ(armours[index].cursed, 1,
+                      "Animated Armour fixed armour drop is cursed");
+        }
+        if (type == THING_TYPE_WEAPON) {
+            sawWeaponDrop = 1;
+            ASSERT_EQ(weapons[index].cursed, 1,
+                      "Animated Armour fixed weapon drop is cursed");
+        }
+        ++dropCount;
+        firstDrop = object_next_for_test(&things, firstDrop);
+    }
+    ASSERT_EQ(dropCount, 6,
+              "killed-some projectile materializes six fixed possessions");
+    ASSERT_EQ(sawArmourDrop, 1,
+              "killed-some projectile materializes an armour drop");
+    ASSERT_EQ(sawWeaponDrop, 1,
+              "killed-some projectile materializes a weapon drop");
+    ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_METALLIC_THUD,
+              "killed-some fixed possessions emit source metallic thud");
 }
 
 static void test_projectile_creature_zero_scaled_attack_skips_poison_and_reaction(void) {
@@ -4955,6 +5157,7 @@ int main(void) {
     test_throw_projectile_advances_after_scheduled_tick();
     test_projectile_creature_impact_at_zero_zero_applies_damage();
     test_projectile_creature_kill_spawns_f0190_death_smoke();
+    test_projectile_creature_killed_some_drops_fixed_possessions();
     test_projectile_creature_zero_scaled_attack_skips_poison_and_reaction();
     test_projectile_non_material_creature_passes_through_without_impact();
     test_projectile_harm_non_material_hits_non_material_creature();
