@@ -11103,6 +11103,42 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_hand_slot_refresh_pc34_compat
     )
 
+    # DM1 V1 champion-panel INVENTORY/CHEST redraw walk gate.
+    # Source-locked against CHAMDRAW.C F0296:1233-1259 (the second
+    # half of F0296: the inventory-owner walk over slot indices
+    # 0..29 with the C08 offset + the chest-slot walk when
+    # G0424_i_PanelContent == M569_PANEL_CHEST (v1.x/v2.x = 4,
+    # v3.x = 6) over the 8 G0425_aT_ChestSlots entries with the
+    # C38 offset + the F0292_CHAMPION_DrawState dispatch + the
+    # MASK0x4000_VIEWPORT attribute set when AL0884_B_DrawViewport
+    # is C1_TRUE) + F0295_CHAMPION_HasObjectIconInSlotBoxChanged +
+    # F0386_MENUS_DrawActionIcon + DEFS.H C00/C01/C30/C08/C38/
+    # MASK0x4000_VIEWPORT/M569_PANEL_CHEST/G0424/G0425/M516/M008.
+    # Disjoint from hand_slot_refresh (F0296:1184-1231 leader-hand
+    # + action-hand slotbox walk-order + candidate early-return +
+    # inventory-champion skip on the matched action-hand slotbox;
+    # this new sibling starts where that slice ends), dead_member_
+    # hand_refresh, hand_slot_priority, portrait_box_redraw_states,
+    # portrait_state_redraw, mirror_candidate_icon_refresh,
+    # mirror_candidate_c040 family, spell_area_overlay,
+    # status_hand_rotation, second_leader_hand_slot_priority, the
+    # F0107/F0108/chest-scroll-wheel/viewport/integrated family,
+    # and the per-state redraw + per-action-hand slot-box dispatch
+    # family. Contract-only; no real GRAPHICS.DAT / DUNGEON.DAT
+    # load.
+    add_executable(test_dm1_v1_champion_panel_inventory_walk_pc34_compat
+        tests/test_dm1_v1_champion_panel_inventory_walk_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_inventory_walk_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_inventory_walk_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_inventory_walk_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_inventory_walk_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_inventory_walk_pc34_compat
+    )
+
     # DM1 V1 champion-panel HUD/status top-row source-lock gate.
     # Re-uses the data-free zone contract from
     # tools/verify_v1_hud_status_source_lock.py: top-row C113..C218
