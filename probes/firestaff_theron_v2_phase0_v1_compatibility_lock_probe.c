@@ -10,7 +10,7 @@
  *
  *   1. theron_v2_phase_gate_defaults() initialises to V1-only behaviour
  *
- *   2. Domain classification: 12 V1-source-locked + 4 V2-eligible = 16
+ *   2. Domain classification: 12 V1-source-locked + 5 V2-eligible = 17
  *
  *   3. V1-source-locked domains (12):
  *      TRACK02_BANK, BOOT_PROFILE, CHAMPION_PARTY, DUNGEON_PROGRESSION,
@@ -142,12 +142,13 @@ static void check_v2_eligible_count(void)
         THERON_V2_PHASE_DOMAIN_PRESENTATION_MODE,
         THERON_V2_PHASE_DOMAIN_TEXTURE_UPSCALE,
         THERON_V2_PHASE_DOMAIN_FILTER_CONFIG,
-        THERON_V2_PHASE_DOMAIN_MODERN_SHAPES
+        THERON_V2_PHASE_DOMAIN_MODERN_SHAPES,
+        THERON_V2_PHASE_DOMAIN_HUD_LAUNCH_MODE
     };
     int n = (int)(sizeof(v2Eligible) / sizeof(v2Eligible[0]));
-    check(n == 4, "V2-eligible domain count = 4");
+    check(n == 5, "V2-eligible domain count = 5");
     check(n + 12 == (int)THERON_V2_PHASE_DOMAIN_COUNT,
-          "12 V1-locked + 4 V2-eligible = 16 (THERON_V2_PHASE_DOMAIN_COUNT)");
+          "12 V1-locked + 5 V2-eligible = 17 (THERON_V2_PHASE_DOMAIN_COUNT)");
 }
 
 static void check_v1_locked_with_v2_off(void)

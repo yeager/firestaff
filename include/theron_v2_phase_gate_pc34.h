@@ -133,6 +133,16 @@ typedef enum {
         /* theron_v22_shapes.c - V2.2 modern shape book (9-square
          * viewport + panel). */
 
+    THERON_V2_PHASE_DOMAIN_HUD_LAUNCH_MODE = 16,
+        /* theron_v2_hud_launch_mode_pc34.c - M11 HUD launch-mode
+         * gate (OFF / OVERLAY / TOUCH / CONTROLLER). Presentation-
+         * only contract: never alters V1 input / champion / world /
+         * save / Track 02 bank state. TOUCH and CONTROLLER modes
+         * additionally require v2ConfigPersistenceEnabled=1
+         * because per-zone hit-test state persists into M12
+         * settings; OVERLAY does not. See
+         * theron_v2_hud_launch_mode_pc34.c resolution table. */
+
     THERON_V2_PHASE_DOMAIN_COUNT
 } THERON_V2_PhaseDomain;
 

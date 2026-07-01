@@ -80,6 +80,7 @@ int theron_v2_phase_gate_is_gameplay_domain(THERON_V2_PhaseDomain domain)
         case THERON_V2_PHASE_DOMAIN_TEXTURE_UPSCALE:
         case THERON_V2_PHASE_DOMAIN_FILTER_CONFIG:
         case THERON_V2_PHASE_DOMAIN_MODERN_SHAPES:
+        case THERON_V2_PHASE_DOMAIN_HUD_LAUNCH_MODE:
             return 0;
 
         default:
@@ -112,6 +113,7 @@ const char *theron_v2_phase_gate_domain_name(THERON_V2_PhaseDomain domain)
         case THERON_V2_PHASE_DOMAIN_TEXTURE_UPSCALE:      return "TEXTURE_UPSCALE";
         case THERON_V2_PHASE_DOMAIN_FILTER_CONFIG:        return "FILTER_CONFIG";
         case THERON_V2_PHASE_DOMAIN_MODERN_SHAPES:        return "MODERN_SHAPES";
+        case THERON_V2_PHASE_DOMAIN_HUD_LAUNCH_MODE:      return "HUD_LAUNCH_MODE";
         default:                                          return "UNKNOWN";
     }
 }
@@ -131,6 +133,7 @@ const char *theron_v2_phase_gate_source_evidence(void)
         "theron_v1_world.c (world model, map loading, party placement); "
         "theron_v1_palette.c (PC Engine 16-color palette); "
         "theron_v1_ui_chrome.c (UI chrome: boxes, fonts, icons); "
+        "theron_v2_hud_launch_mode_pc34.c (OFF/OVERLAY/TOUCH/CONTROLLER gate); "
         "THQUEST.ASM T080 (between-dungeon save/load); "
         "THQUEST.ASM T400 (dungeon bank loading); "
         "THQUEST.ASM T520 (party placement / start position); "
@@ -290,6 +293,22 @@ THERON_V2_PhaseGateDecision theron_v2_phase_gate_decide(
                 "theron_v22_shapes.c (V2.2 modern shape book, 9-square viewport + panel)",
                 "V2.2 modern shape book is presentation-only; never "
                 "alters V1 game state");
+
+        case THERON_V2_PHASE_DOMAIN_HUD_LAUNCH_MODE:
+            /* HUD launch-mode selector (OFF / OVERLAY / TOUCH /
+             * CONTROLLER). Presentation-only by construction. We
+             * expose it via v2PresentationEnabled=1; the selector
+             * itself internally gates TOUCH and CONTROLLER on
+             * v2ConfigPersistenceEnabled because per-zone hit-test
+             * state persists into M12 settings. */
+            return make_decision(
+                0, v2Active,
+                "theron_v2_hud_launch_mode_pc34.c (OFF/OVERLAY/TOUCH/CONTROLLER gate)",
+                "V2 HUD launch-mode selector is presentation-only; never "
+                "alters V1 input / champion / world / save / Track 02 "
+                "bank state. TOUCH and CONTROLLER additionally require "
+                "v2ConfigPersistenceEnabled=1; OVERLAY does not. See "
+                "theron_v2_hud_launch_mode_pc34.c resolution table.");
 
         default:
             /* Unknown domains default to V1-locked. */

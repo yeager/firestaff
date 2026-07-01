@@ -1934,6 +1934,55 @@ set_tests_properties(firestaff_theron_v2_hud_widget_assets_probe PROPERTIES
     RESOURCE_LOCK "theron_v2_hud_widget_assets_manifest"
 )
 
+# Theron V2 HUD launch-mode gate probe (presentation-only).
+# See include/theron_v2_hud_launch_mode_pc34.h. Headless: no game
+# data, no SDL. Verifies:
+#   - new THERON_V2_PHASE_DOMAIN_HUD_LAUNCH_MODE exists + is V2-eligible
+#   - reset() defaults to OFF (V1 chrome preserved)
+#   - resolution table (V1_FAITHFUL, V2-off, persist-off, pack-missing)
+#   - live state transitions, M11 int mapping
+#   - touch hit-test geometry (top-bar / champion bars / action strip)
+#   - controller glyph rail (cardinal / action flags)
+#   - V1 source-locked contract survives V2-on
+#   - source evidence citations + null safety
+add_executable(firestaff_theron_v2_hud_launch_mode_probe
+    probes/firestaff_theron_v2_hud_launch_mode_probe.c
+    src/theron/theron_v2_hud_launch_mode_pc34.c
+    src/theron/theron_v2_phase_gate_pc34.c
+    src/theron/theron_v2_presentation_mode_pc34.c
+    src/theron/theron_v2_hud_overlay_pc34.c
+    src/theron/theron_v1_track02.c
+    src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_palette.c
+    src/theron/theron_v1_world.c
+    src/theron/theron_v1_champions.c
+    src/dm1v2/dm1_v2_presentation_mode_pc34.c
+    src/csb/csb_v2_presentation_mode_pc34.c
+    src/csb/csb_v22_shapes.c
+    src/csb/csb_v2_texture_upscale_pc34.c
+    src/dm1v2/dm1_v22_shapes.c
+    src/dm1v2/dm1_v2_modern_assets_pc34.c
+    src/dm1v2/dm1_v2_asset_pipeline_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_theron_v2_hud_launch_mode_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/theron)
+target_link_libraries(firestaff_theron_v2_hud_launch_mode_probe
+    PRIVATE firestaff_theron firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v2_hud_launch_mode_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v2_hud_launch_mode_probe
+    COMMAND firestaff_theron_v2_hud_launch_mode_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v2_hud_launch_mode_probe PROPERTIES
+    LABELS "tier2;theron;v2;phase3;hud;launch-mode;presentation-only"
+)
+
 # DM1 V2.2 shape runtime dispatch probe. Headless: no game data.
 # See include/dm1_v2_shape_runtime_pc34.h.
 add_executable(firestaff_dm1_v2_shape_runtime_probe
@@ -9229,6 +9278,32 @@ if(BUILD_TESTING)
     add_test(
         NAME theron_v2_hud_overlay_pc34
         COMMAND test_theron_v2_hud_overlay_pc34
+    )
+
+    # ── Theron V2 HUD launch-mode gate (presentation-only) ──────
+    # Source-lock: src/theron/theron_v2_hud_launch_mode_pc34.c
+    # Verifies the resolution table (V1_FAITHFUL, V2-off, persist-off,
+    # pack-missing downgrades), live state transitions, M11 int
+    # mapping, touch hit-test geometry (top-bar / champion bars /
+    # action strip / rune / dungeon progress / relic counter),
+    # controller glyph rail, source evidence citations, and null
+    # safety.  Data-free + headless + skip-safe.
+    add_executable(test_theron_v2_hud_launch_mode_pc34
+        tests/test_theron_v2_hud_launch_mode_pc34.c
+        src/theron/theron_v2_hud_launch_mode_pc34.c
+        src/theron/theron_v2_phase_gate_pc34.c
+    )
+    target_include_directories(test_theron_v2_hud_launch_mode_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    target_link_libraries(test_theron_v2_hud_launch_mode_pc34 PRIVATE firestaff_theron m)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v2_hud_launch_mode_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v2_hud_launch_mode_pc34
+        COMMAND test_theron_v2_hud_launch_mode_pc34
     )
 
     # ── Theron V2 HUD widget asset manifest gate ────────────────

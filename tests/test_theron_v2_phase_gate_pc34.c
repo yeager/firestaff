@@ -129,16 +129,17 @@ static void check_v2_eligible_domains(void)
         THERON_V2_PHASE_DOMAIN_PRESENTATION_MODE,
         THERON_V2_PHASE_DOMAIN_TEXTURE_UPSCALE,
         THERON_V2_PHASE_DOMAIN_FILTER_CONFIG,
-        THERON_V2_PHASE_DOMAIN_MODERN_SHAPES
+        THERON_V2_PHASE_DOMAIN_MODERN_SHAPES,
+        THERON_V2_PHASE_DOMAIN_HUD_LAUNCH_MODE
     };
     THERON_V2_PhaseGateConfig cfg;
     THERON_V2_PhaseGateDecision d;
     size_t i;
     int n = (int)(sizeof(v2Eligible) / sizeof(v2Eligible[0]));
 
-    check_int("v2_eligible.count", n, 4);
+    check_int("v2_eligible.count", n, 5);
     check_int("total", n + 12, (int)THERON_V2_PHASE_DOMAIN_COUNT);
-    check_int("domain_count", (int)THERON_V2_PHASE_DOMAIN_COUNT, 16);
+    check_int("domain_count", (int)THERON_V2_PHASE_DOMAIN_COUNT, 17);
 
     theron_v2_phase_gate_defaults(&cfg);
     for (i = 0; i < (size_t)n; ++i) {

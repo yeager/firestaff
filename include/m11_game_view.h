@@ -60,6 +60,16 @@ typedef struct {
     int presentationWidth;
     int presentationHeight;
     int fontScale;        /* Accessibility: font size scale (1..3), 0 = use default */
+    int hudLaunchMode;    /* Theron V2 HUD launch-mode selector (M11-side).
+                           * Maps onto Theron_V2_HudLaunchMode via
+                           * theron_v2_hud_launch_mode_from_m11().
+                           * 0=OFF (V1 chrome), 1=OVERLAY, 2=TOUCH,
+                           * 3=CONTROLLER. Only consulted when gameId
+                           * is "theron"; ignored for DM1/CSB/DM2/Nexus.
+                           * Source-lock: see
+                           * include/theron_v2_hud_launch_mode_pc34.h
+                           * resolution table; presentation-only
+                           * contract, never mutates V1 state. */
     M11_GameSourceKind sourceKind;
 } M11_GameLaunchSpec;
 
@@ -105,6 +115,15 @@ typedef struct {
     int presentationMode;
     int presentationWidth;
     int presentationHeight;
+    int hudLaunchMode;    /* Theron V2 HUD launch-mode selector (M11-side,
+                           * 0=OFF / 1=OVERLAY / 2=TOUCH / 3=CONTROLLER).
+                           * Stored from spec->hudLaunchMode on launch;
+                           * consulted by m11_theron_render_v2_hud() so
+                           * the HUD overlay obeys the launcher's
+                           * launch-mode intent. Presentation-only
+                           * contract; never mutates V1 input / champion
+                           * / world / save state. See
+                           * include/theron_v2_hud_launch_mode_pc34.h. */
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     char lastAction[32];
     char lastOutcome[64];
