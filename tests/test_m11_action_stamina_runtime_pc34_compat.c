@@ -116,6 +116,31 @@ static void test_melee_contact_gate_reads_g0492_with_block_exception(void) {
               "SHOOT remains a bounded non-melee F0407 action");
 }
 
+static void test_projectile_action_required_mana_uses_g0496_route(void) {
+    DM1_ActionXpRoute route;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_FIREBALL, &route), 1,
+              "FIREBALL has a source G0496 route");
+    ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_FIRE,
+              "FIREBALL required mana uses G0496 Fire skill");
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_SPIT, &route), 1,
+              "SPIT has a source G0496 route");
+    ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_FIRE,
+              "SPIT required mana uses G0496 Fire skill");
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_DISPELL, &route), 1,
+              "DISPELL has a source G0496 route");
+    ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_AIR,
+              "DISPELL required mana uses G0496 Air skill");
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_LIGHTNING, &route), 1,
+              "LIGHTNING has a source G0496 route");
+    ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_AIR,
+              "LIGHTNING required mana uses G0496 Air skill");
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_INVOKE, &route), 1,
+              "INVOKE has a source G0496 route");
+    ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_WIZARD,
+              "INVOKE required mana uses G0496 Wizard skill");
+}
+
 static void seed_state(M11_GameViewState* state,
                        unsigned short stamina,
                        unsigned int tick) {
@@ -5690,6 +5715,7 @@ int main(void) {
     printf("ReDMCSB: MENU.C G0494/F0407 and CHAMPION.C F0325\n\n");
 
     test_melee_contact_gate_reads_g0492_with_block_exception();
+    test_projectile_action_required_mana_uses_g0496_route();
     test_block_action_spends_source_stamina();
     test_throw_action_removes_action_hand_object();
     test_throw_ven_potion_launches_removepotion_projectile();
