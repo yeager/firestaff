@@ -21314,6 +21314,50 @@ static int m11_spawn_centered_explosion(M11_GameViewState* state,
                                          &slot, &eFirst);
 }
 
+static int m11_spawn_fluxcage_f0224(M11_GameViewState* state,
+                                    int mapIndex,
+                                    int mapX,
+                                    int mapY) {
+    struct ExplosionCreateInput_Compat eIn;
+    struct TimelineEvent_Compat eFirst;
+    struct TimelineEvent_Compat removeEvent;
+    int slot = -1;
+    if (!state) return 0;
+    memset(&eIn, 0, sizeof(eIn));
+    eIn.explosionType = C050_EXPLOSION_FLUXCAGE;
+    eIn.attack = 255;
+    eIn.mapIndex = mapIndex;
+    eIn.mapX = mapX;
+    eIn.mapY = mapY;
+    eIn.cell = EXPLOSION_CELL_CENTERED;
+    eIn.centered = 1;
+    eIn.currentTick = (int)state->world.gameTick;
+    eIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    eIn.ownerIndex = state->world.party.activeChampionIndex;
+    eIn.creatorProjectileSlot = -1;
+    if (!F0821_EXPLOSION_Create_Compat(&eIn, &state->world.explosions,
+                                       &slot, &eFirst)) {
+        return 0;
+    }
+
+    memset(&removeEvent, 0, sizeof(removeEvent));
+    removeEvent.kind = TIMELINE_EVENT_REMOVE_FLUXCAGE;
+    /* ReDMCSB: PROJEXPL.C F0224 lines 987-994 schedules C24
+     * EVENT_REMOVE_FLUXCAGE for GameTime + 100 with the explosion slot. */
+    removeEvent.fireAtTick = state->world.gameTick + 100U;
+    removeEvent.mapIndex = mapIndex;
+    removeEvent.mapX = mapX;
+    removeEvent.mapY = mapY;
+    removeEvent.cell = EXPLOSION_CELL_CENTERED;
+    removeEvent.aux0 = slot;
+    removeEvent.aux1 = C050_EXPLOSION_FLUXCAGE;
+    if (!F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &removeEvent)) {
+        (void)F0824_EXPLOSION_Despawn_Compat(&state->world.explosions, slot);
+        return 0;
+    }
+    return 1;
+}
+
 static int m11_find_creature_ai_on_square(const M11_GameViewState* state,
                                           int mapIndex,
                                           int mapX,
@@ -21485,8 +21529,7 @@ static int m11_perform_fluxcage_action(M11_GameViewState* state,
                                        const char* champName) {
     int mapIndex, mapX, mapY;
     if (!m11_party_front_square(state, &mapIndex, &mapX, &mapY)) return 0;
-    if (!m11_spawn_centered_explosion(state, C050_EXPLOSION_FLUXCAGE, 255,
-                                      mapIndex, mapX, mapY)) {
+    if (!m11_spawn_fluxcage_f0224(state, mapIndex, mapX, mapY)) {
         m11_log_event(state, M11_COLOR_LIGHT_RED,
                       "T%u: FLUXCAGE FIZZLES",
                       (unsigned int)state->world.gameTick);

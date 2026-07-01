@@ -4150,6 +4150,67 @@ static void test_action_stamina_underflow_clamps_and_damages(void) {
               "underflow action stamina applies F0325-style HP damage");
 }
 
+static void test_fluxcage_schedules_f0224_remove_event(void) {
+    M11_GameViewState state;
+    int removeIndex = -1;
+    int slot = -1;
+    int guard;
+    int i;
+
+    seed_state(&state, 100, 41);
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 2;
+    state.world.party.mapY = 2;
+    state.world.party.direction = 0; /* north: target is (2,1). */
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FLUXCAGE),
+              1,
+              "FLUXCAGE creates the F0224 fluxcage explosion");
+    ASSERT_EQ(state.world.explosions.count, 1,
+              "FLUXCAGE leaves one live explosion instance");
+
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind ==
+            TIMELINE_EVENT_REMOVE_FLUXCAGE) {
+            removeIndex = i;
+            break;
+        }
+    }
+    ASSERT_EQ(removeIndex >= 0, 1,
+              "FLUXCAGE schedules C24 remove-fluxcage event");
+    if (removeIndex < 0) return;
+
+    slot = state.world.timeline.events[removeIndex].aux0;
+    ASSERT_EQ((int)state.world.timeline.events[removeIndex].fireAtTick, 141,
+              "FLUXCAGE remove event fires at GameTime + 100");
+    ASSERT_EQ(state.world.timeline.events[removeIndex].mapIndex, 0,
+              "FLUXCAGE remove event stores map index");
+    ASSERT_EQ(state.world.timeline.events[removeIndex].mapX, 2,
+              "FLUXCAGE remove event stores target x");
+    ASSERT_EQ(state.world.timeline.events[removeIndex].mapY, 1,
+              "FLUXCAGE remove event stores target y");
+    ASSERT_EQ(slot >= 0, 1,
+              "FLUXCAGE remove event stores explosion slot");
+    ASSERT_EQ(state.world.explosions.entries[slot].explosionType,
+              C050_EXPLOSION_FLUXCAGE,
+              "FLUXCAGE explosion uses source explosion type");
+    ASSERT_EQ(state.world.explosions.entries[slot].attack, 255,
+              "FLUXCAGE explosion uses source attack strength");
+    ASSERT_EQ(state.world.explosions.entries[slot].mapX, 2,
+              "FLUXCAGE explosion stores target x");
+    ASSERT_EQ(state.world.explosions.entries[slot].mapY, 1,
+              "FLUXCAGE explosion stores target y");
+
+    guard = 0;
+    while (state.world.gameTick <= 141U && guard++ < 128) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.world.explosions.count, 0,
+              "C24 remove-fluxcage event despawns the fluxcage");
+}
+
 static void test_fuse_incomplete_fluxcage_moves_lord_chaos_escape(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -4300,6 +4361,7 @@ int main(void) {
     test_climb_down_group_over_pit_blocks_move_but_keeps_bug79_tail();
     test_action_defense_serializes_outside_v1_champion_blob();
     test_action_stamina_underflow_clamps_and_damages();
+    test_fluxcage_schedules_f0224_remove_event();
     test_fuse_incomplete_fluxcage_moves_lord_chaos_escape();
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_halves_disable_ticks_when_f0402_fails();
