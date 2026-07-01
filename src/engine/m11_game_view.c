@@ -1616,6 +1616,7 @@ static void m11_reminder_banner_layout_for(
     if (!outLayout) {
         return;
     }
+    (void)framebufferHeight;
     memset(outLayout, 0, sizeof(*outLayout));
     scale = state ? state->fontScale : 1;
     if (scale < 1) scale = 1;
@@ -1661,7 +1662,8 @@ static void m11_reminder_banner_layout_for(
      * firestaff_dm1_v1_reminder_banner_font_scale_fit_probe. */
     {
         char remaining[SESSION_TIMER_RUNTIME_TEXT_CAPACITY];
-        SessionTimerRuntime* runtime = state ? &state->sessionTimerRuntime : NULL;
+        const SessionTimerRuntime* runtime =
+            state ? &state->sessionTimerRuntime : NULL;
         SessionTimerRuntime_FormatRemaining(runtime, remaining,
                                             sizeof(remaining));
         if (scale >= 3) {
