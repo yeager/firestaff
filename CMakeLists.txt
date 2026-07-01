@@ -20290,6 +20290,43 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_scale_boundary_pc34_
     )
 endif()
 
+# M11 input scale boundary contract for the source-to-screen
+# direction. Pins the inverse helper
+# `M11_MapSourcePointToPresentedForPresentation()` (new in this
+# commit, defined next to its existing sibling in
+# `src/engine/m11_game_input_mapping.c`, declared in
+# `include/main_loop_m11.h`) used by touch overlay hit-tests,
+# HUD button bounds, and mouse cursor positions on the presented
+# surface. Covers V20=640x400 invariant, V21/V22 zero-extent
+# rejection, V1_ORIGINAL passthrough, symmetry round-trip
+# MapPresentedToSource ∘ MapSourceToPresented within ±1 pixel
+# across 10 user-selected resolutions and all four presentation
+# modes, negative / overflow source clamping, determinism over
+# 10 repeated calls, NULL output pointer safety, and explicit
+# canaries at 1280x800, 1920x1080, and 3840x2160. Disjoint from
+# the existing `test_m11_input_scale_boundary_pc34_compat` which
+# only covers the screen-to-framebuffer direction. Source-locked
+# against ReDMCSB COMMAND.C:1379-1449 F0358 mouse-row scan,
+# COMMAND.C:1641-1660 F0359 primary click dispatch,
+# COORD.C:1903-1920 inclusive source zone expansion, and
+# src/engine/main_loop_m11.c m11_game_presentation_target (line
+# 145, the V20=640x400 / V21=selected / V22=selected routing used
+# here). Data-free; no real game data, no SDL window.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_scale_boundary_source_to_screen_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/m11_game_input_mapping.c")
+    add_executable(test_m11_input_scale_boundary_source_to_screen_pc34_compat
+        tests/test_m11_input_scale_boundary_source_to_screen_pc34_compat.c
+        src/engine/m11_game_input_mapping.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_input_scale_boundary_source_to_screen_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_input_scale_boundary_source_to_screen_pc34_compat
+        COMMAND test_m11_input_scale_boundary_source_to_screen_pc34_compat
+    )
+endif()
+
 # M11 asset-loader blit helper contract. The test uses a synthetic
 # M11_AssetSlot so it covers clipping, nearest scaling, mirroring,
 # transparent pixels, replacement colors, and the champion-portrait-style
