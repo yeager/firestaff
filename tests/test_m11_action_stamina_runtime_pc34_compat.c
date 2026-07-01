@@ -3492,6 +3492,92 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
               "leader-hand throw records source movement-disable direction");
 }
 
+static void test_leader_hand_throw_waterskin_uses_f0140_charge_weight(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
+    unsigned short thrownThing;
+
+    seed_state(&state, 100, 100);
+    memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+    junks[0].next = THING_ENDOFLIST;
+    junks[0].type = 1; /* ReDMCSB C01_JUNK_WATERSKIN. */
+    junks[0].chargeCount = 3;
+    things.loaded = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = 50;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 0;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    thrownThing = make_thing(THING_TYPE_JUNK, 0);
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, thrownThing), 1,
+              "leader hand accepts waterskin throw object");
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 120, 53, 1),
+              M11_GAME_INPUT_REDRAW,
+              "leader-hand waterskin click throws through F0329/F0328");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "leader-hand waterskin throw creates one live projectile");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 96,
+              "leader-hand waterskin throw spends F0305 from F0140 base+charge weight");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 48,
+              "leader-hand waterskin throw includes F0140 charge weight in F0312 strength");
+    ASSERT_EQ(state.world.projectiles.entries[0].reserved1, thrownThing,
+              "leader-hand waterskin throw preserves Thing identity on projectile");
+}
+
+static void test_leader_hand_throw_container_uses_f0140_recursive_weight(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonContainer_Compat containers[1];
+    struct DungeonJunk_Compat junks[1];
+    unsigned short chestThing;
+    unsigned short waterskinThing;
+
+    seed_state(&state, 100, 100);
+    memset(&things, 0, sizeof(things));
+    memset(containers, 0, sizeof(containers));
+    memset(junks, 0, sizeof(junks));
+    waterskinThing = make_thing(THING_TYPE_JUNK, 0);
+    chestThing = make_thing(THING_TYPE_CONTAINER, 0);
+    junks[0].next = THING_ENDOFLIST;
+    junks[0].type = 1; /* ReDMCSB C01_JUNK_WATERSKIN. */
+    junks[0].chargeCount = 3;
+    containers[0].next = THING_ENDOFLIST;
+    containers[0].slot = waterskinThing;
+    things.loaded = 1;
+    things.containers = containers;
+    things.containerCount = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = 50;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 0;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, chestThing), 1,
+              "leader hand accepts container throw object");
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 120, 53, 1),
+              M11_GAME_INPUT_REDRAW,
+              "leader-hand container click throws through F0329/F0328");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "leader-hand container throw creates one live projectile");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 77,
+              "leader-hand container throw spends F0305 from recursive F0140 weight");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 16,
+              "leader-hand container throw includes recursive F0140 weight in F0312 strength");
+    ASSERT_EQ(state.world.projectiles.entries[0].reserved1, chestThing,
+              "leader-hand container throw preserves Thing identity on projectile");
+}
+
 static void test_block_action_disables_champion_for_source_ticks(void) {
     M11_GameViewState state;
     DM1_ActionXpRoute route;
@@ -5347,6 +5433,8 @@ int main(void) {
     test_projectile_champion_hit_can_kill_party();
     test_thrown_potion_wall_impact_consumes_potion_thing();
     test_leader_hand_throw_uses_f0328_temporary_action_hand();
+    test_leader_hand_throw_waterskin_uses_f0140_charge_weight();
+    test_leader_hand_throw_container_uses_f0140_recursive_weight();
     test_block_action_disables_champion_for_source_ticks();
     test_freeze_life_common_branch_decrements_charges();
     test_freeze_life_blue_box_consumes_action_hand();

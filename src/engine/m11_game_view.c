@@ -4546,6 +4546,15 @@ static unsigned short m11_get_decoded_next_thing(
         case THING_TYPE_ARMOUR:
             return (things->armours && index < things->armourCount)
                 ? things->armours[index].next : THING_ENDOFLIST;
+        case THING_TYPE_SCROLL:
+            return (things->scrolls && index < things->scrollCount)
+                ? things->scrolls[index].next : THING_ENDOFLIST;
+        case THING_TYPE_POTION:
+            return (things->potions && index < things->potionCount)
+                ? things->potions[index].next : THING_ENDOFLIST;
+        case THING_TYPE_CONTAINER:
+            return (things->containers && index < things->containerCount)
+                ? things->containers[index].next : THING_ENDOFLIST;
         case THING_TYPE_JUNK:
             return (things->junks && index < things->junkCount)
                 ? things->junks[index].next : THING_ENDOFLIST;
@@ -20766,15 +20775,35 @@ static int m11_dm1_f0305_throwing_stamina_cost_from_weight(int objectWeight) {
     return cost;
 }
 
-static int m11_dm1_f0140_object_weight_for_throw(
+static const unsigned char M11_DM1_ARMOUR_WEIGHT_F0140[58] = {
+      3,   4,   3,   6,  16,   4,   4,   3,   3,   4,
+      2,   4,   5,   3,   3,   4,   6,   8,  14,   6,
+      5,   5,   5,   4,   6,  11,  14,  15,  11,  10,
+     14,  21,  65,  53,  52,  41,  16,  16,  19, 120,
+     80,  28,  34,  17, 108,  72,  24,  30,  35, 141,
+     90,  31,  40,  14,  57,  81,   3,   2
+};
+
+static const unsigned char M11_DM1_JUNK_WEIGHT_F0140[53] = {
+      1,   3,   2,   2,   4,  15,   1,   1,   1,   2,
+      1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+      1,   1,   1,   1,   1,  81,   2,   3,   2,   4,
+      4,   3,   8,   5,  11,   4,   6,   2,   3,   2,
+      2,   2,   6,   9,   3,  10,   1,   0,   1,   1,
+      2,   0,   8
+};
+
+static int m11_dm1_f0140_object_weight_for_throw_depth(
     const M11_GameViewState* state,
-    unsigned short thing) {
+    unsigned short thing,
+    int depth) {
     DM1_WeaponInfo weaponInfo;
     int thingType;
     int thingIndex;
 
     if (!state) return 0;
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    if (depth > 8) return 0;
     thingType = THING_GET_TYPE(thing);
     thingIndex = THING_GET_INDEX(thing);
 
@@ -20782,12 +20811,55 @@ static int m11_dm1_f0140_object_weight_for_throw(
         m11_dm1_thing_weapon_info(state, thing, &weaponInfo)) {
         return weaponInfo.weight;
     }
+    if (thingType == THING_TYPE_ARMOUR &&
+        state->world.things && state->world.things->armours &&
+        thingIndex >= 0 && thingIndex < state->world.things->armourCount) {
+        int armourType = (int)state->world.things->armours[thingIndex].type;
+        if (armourType >= 0 &&
+            armourType < (int)(sizeof(M11_DM1_ARMOUR_WEIGHT_F0140) /
+                               sizeof(M11_DM1_ARMOUR_WEIGHT_F0140[0]))) {
+            return (int)M11_DM1_ARMOUR_WEIGHT_F0140[armourType];
+        }
+    }
+    if (thingType == THING_TYPE_JUNK &&
+        state->world.things && state->world.things->junks &&
+        thingIndex >= 0 && thingIndex < state->world.things->junkCount) {
+        int junkType = (int)state->world.things->junks[thingIndex].type;
+        if (junkType >= 0 &&
+            junkType < (int)(sizeof(M11_DM1_JUNK_WEIGHT_F0140) /
+                             sizeof(M11_DM1_JUNK_WEIGHT_F0140[0]))) {
+            int weight = (int)M11_DM1_JUNK_WEIGHT_F0140[junkType];
+            if (junkType == 1) { /* ReDMCSB C01_JUNK_WATERSKIN. */
+                weight += ((int)state->world.things->junks[thingIndex]
+                               .chargeCount) << 1;
+            }
+            return weight;
+        }
+    }
+    if (thingType == THING_TYPE_CONTAINER &&
+        state->world.things && state->world.things->containers &&
+        thingIndex >= 0 && thingIndex < state->world.things->containerCount) {
+        unsigned short contained =
+            state->world.things->containers[thingIndex].slot;
+        int weight = 50;
+        int guard = 0;
+        while (contained != THING_NONE && contained != THING_ENDOFLIST &&
+               guard++ < 128) {
+            unsigned short next = m11_get_raw_next_thing(state->world.things,
+                                                         contained);
+            if (next == THING_ENDOFLIST) {
+                next = m11_get_decoded_next_thing(state->world.things,
+                                                  contained);
+            }
+            weight += m11_dm1_f0140_object_weight_for_throw_depth(
+                state, contained, depth + 1);
+            contained = next;
+        }
+        return weight;
+    }
     if (thingType == THING_TYPE_POTION &&
         state->world.things && state->world.things->potions &&
         thingIndex >= 0 && thingIndex < state->world.things->potionCount) {
-        /* ReDMCSB DUNGEON.C F0140 lines 1123-1128: empty flasks
-         * weigh 1, every other potion weighs 3.  F0328 uses this
-         * same F0140 value through F0305 and F0312. */
         return state->world.things->potions[thingIndex].type ==
                    M11_POTION_EMPTY_FLASK
                ? 1
@@ -20797,6 +20869,15 @@ static int m11_dm1_f0140_object_weight_for_throw(
         return 1;
     }
     return 0;
+}
+
+static int m11_dm1_f0140_object_weight_for_throw(
+    const M11_GameViewState* state,
+    unsigned short thing) {
+    /* ReDMCSB DUNGEON.C F0140 lines 1103-1130: F0328 reaches this
+     * weight through both CHAMPION.C F0305 lines 1061-1074 and
+     * CHAMPION.C F0312 lines 1268-1274. */
+    return m11_dm1_f0140_object_weight_for_throw_depth(state, thing, 0);
 }
 
 static int m11_dm1_f0328_throw_xp_for_thing(const M11_GameViewState* state,
@@ -21033,6 +21114,7 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
     int throwKineticEnergy;
     int throwAttack;
     int throwStepEnergy;
+    int objectWeight;
     int projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
     int potionPower = 0;
     int spawned;
@@ -21042,15 +21124,16 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
     if (thrownThing == THING_NONE || thrownThing == THING_ENDOFLIST) return 0;
 
     hasWeaponInfo = m11_dm1_thing_weapon_info(state, thrownThing, &weaponInfo);
+    objectWeight = m11_dm1_f0140_object_weight_for_throw(state, thrownThing);
     staminaCost = m11_dm1_f0305_throwing_stamina_cost_from_weight(
-        m11_dm1_f0140_object_weight_for_throw(state, thrownThing));
+        objectWeight);
     throwExperience = m11_dm1_f0328_throw_xp_for_thing(
         state, thrownThing, hasWeaponInfo ? &weaponInfo : 0);
     skillThrow = m11_dm1_throw_skill_level(state, championIndex);
     throwStrength = m11_dm1_f0312_action_hand_strength_for_throw(
         state, championIndex, champ,
         hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo,
-        m11_dm1_f0140_object_weight_for_throw(state, thrownThing));
+        objectWeight);
     /* ReDMCSB CHAMPION.C F0328 lines 2181-2194: F0312 strength,
      * F0303(THROW), object kinetic and bounded attack/step energy feed
      * F0212_PROJECTILE_Create; accepted throws then apply F0305 stamina,
