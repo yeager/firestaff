@@ -50,6 +50,7 @@
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
+#include "firestaff/dm1/v1/G0494_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
 #include "firestaff_po_loader.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
@@ -20720,16 +20721,14 @@ static int m11_action_is_projectile_spell_f0407(unsigned char actionIndex) {
     }
 }
 
-/* ReDMCSB MENU.C G0494_auc_Graphic560_ActionStamina.  F0407 adds
- * M005_RANDOM(2) before the common tail calls F0325.  M11 does not
- * carry the original global PRNG, so the bounded runtime uses a
- * deterministic 0/1 jitter from the current tick/champion/action while
- * preserving the source table and the F0325 clamp/underflow semantics. */
-static const unsigned char M11_ACTION_STAMINA_BASE[44] = {
-    0, 4, 10, 0, 1, 0, 1, 3, 1, 3, 40, 3, 3, 2, 4, 17,
-    3, 1, 6, 40, 5, 2, 2, 4, 5, 25, 1, 2, 2, 10, 9, 2,
-    3, 1, 2, 6, 1, 1, 3, 2, 3, 2, 0, 2
-};
+static int m11_action_stamina_base_f0407(unsigned char actionIndex) {
+    /* ReDMCSB MENU.C G0494 lines 292-337.  F0407 adds M005_RANDOM(2)
+     * before its common F0325 stamina tail; M11 preserves the source table
+     * through the shared PC34 accessor and keeps its deterministic jitter
+     * model below. */
+    int base = dm1_v1_graphic560_action_stamina_get_pc34(actionIndex);
+    return base < 0 ? 0 : base;
+}
 
 static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
                                                  int championIndex,
@@ -20775,7 +20774,7 @@ static int m11_apply_action_stamina_cost(M11_GameViewState* state,
     if (actionIndex >= 44) return 0;
     if (championIndex >= state->world.party.championCount) return 0;
 
-    base = (int)M11_ACTION_STAMINA_BASE[actionIndex];
+    base = m11_action_stamina_base_f0407(actionIndex);
     if (base <= 0) return 0;
     cost = base + (int)((state->world.gameTick + (uint32_t)championIndex +
                          (uint32_t)actionIndex) & 1u);
