@@ -21467,20 +21467,17 @@ int M11_GameView_ProbeF0328ThrowAttack(
  *   FIREBALL:  kineticEnergy=150, explosion=FIREBALL
  *   SPIT:      kineticEnergy=250, explosion=FIREBALL
  *
- * Skill comes from G0496 for required mana. F0327 then launches
- * these action projectiles with attack 90 and step-energy derived
+ * Skill comes from the shared G0496 route for required mana. F0327 then
+ * launches these action projectiles with attack 90 and step-energy derived
  * from MaximumMana. Spell-panel casts use the separate F0756 path. */
 static int m11_action_projectile_skill_index(unsigned char actionIndex) {
-    switch (actionIndex) {
-        case 20: /* FIREBALL */
-        case 40: /* SPIT */
-            return DM1_SKILL_IDX_FIRE;
-        case 21: /* DISPELL */
-        case 23: /* LIGHTNING */
-            return DM1_SKILL_IDX_AIR;
-        default:
-            return DM1_SKILL_IDX_WIZARD;
+    DM1_ActionXpRoute route;
+    /* ReDMCSB MENU.C F0407 lines 1272-1277 reads
+     * G0496_auc_Graphic560_ActionSkillIndex before computing required mana. */
+    if (dm1_v1_action_xp_route((int)actionIndex, &route) && route.valid) {
+        return route.skillIndex;
     }
+    return DM1_SKILL_IDX_WIZARD;
 }
 
 static int m11_f0327_projectile_step_energy(const struct ChampionState_Compat* champ,
