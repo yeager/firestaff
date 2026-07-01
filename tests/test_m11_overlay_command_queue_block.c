@@ -294,6 +294,33 @@ static void test_candidate_panel_blocks_direct_spell_helpers(void)
                                 "C040 direct spell helpers do not tick");
 }
 
+static void test_candidate_panel_blocks_direct_inventory_toggle(void)
+{
+    M11_GameViewState state;
+    uint32_t tick;
+    int direction;
+
+    seed_active_view(&state);
+    tick = state.world.gameTick;
+    direction = state.world.party.direction;
+    state.candidateMirrorOrdinal = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+    state.inventoryPanelActive = 1;
+    state.inventorySelectedSlot = 7;
+
+    ASSERT_EQ(M11_GameView_ToggleInventoryPanel(&state), 0,
+              "C040 candidate blocks direct inventory toggle");
+    ASSERT_EQ(state.inventoryPanelActive, 1,
+              "blocked direct inventory toggle keeps panel open");
+    ASSERT_EQ(state.inventorySelectedSlot, 7,
+              "blocked direct inventory toggle preserves selection");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "blocked direct inventory toggle keeps C040 live");
+    assert_no_pipeline_activity(&state, tick, direction,
+                                "C040 direct inventory helper does not tick");
+}
+
 static void test_keyboard_positive_control_dispatches_without_overlay(void)
 {
     /* v2.8.x: arrow Left/Right now mean strafe-left/strafe-right
@@ -396,6 +423,7 @@ int main(void)
     test_c161_rename_accept_finishes_reincarnation();
     test_c161_rename_duplicate_name_keeps_modal_open();
     test_candidate_panel_blocks_direct_spell_helpers();
+    test_candidate_panel_blocks_direct_inventory_toggle();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();
