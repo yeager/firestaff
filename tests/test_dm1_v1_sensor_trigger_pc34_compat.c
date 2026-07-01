@@ -12,6 +12,8 @@
 
 static int g_pass = 0, g_fail = 0;
 
+#define TEST_ICON_CONTAINER_CHEST_CLOSED 144
+
 #define CHECK(cond, msg) do { \
     if (cond) { g_pass++; } \
     else { g_fail++; printf("FAIL: %s (line %d)\n", msg, __LINE__); } \
@@ -509,7 +511,7 @@ static void test_f0274_possession_scan_closed_chest(void) {
     struct DungeonJunk_Compat junks[1];
 
     memset(&containers, 0, sizeof(containers));
-    containers[0].type = F0274_ICON_CONTAINER_CHEST_CLOSED;
+    containers[0].type = TEST_ICON_CONTAINER_CHEST_CLOSED;
     containers[0].slot = torch;
     containers[0].next = THING_ENDOFLIST;
     memset(&junks, 0, sizeof(junks));
@@ -792,11 +794,6 @@ static void test_pressure_plate_carry_then_drop_weight_and_actuator(void) {
           "Pickup stage: retriggered effect is TOGGLE_REMOTE (door toggles again)");
 }
 
-/* ----------------------------------------------------------------
- *  Test F0722: Floor sensor -- party on stairs
- *  Source: MOVESENS.C F0276 case C005 at lines 1695-1702.
- * ---------------------------------------------------------------- */
-static void test_floor_party_on_stairs(void) {
 static void test_pressure_plate_actuator_dispatch_per_square_type(void) {
     struct DungeonSensor_Compat sensor;
     struct SensorTriggerResult_Compat result;
@@ -867,6 +864,12 @@ static void test_pressure_plate_actuator_dispatch_per_square_type(void) {
     CHECK(dispatch.valid == 0,
           "Dispatch: untriggered result is invalid");
 }
+
+/* ----------------------------------------------------------------
+ *  Test F0722: Floor sensor -- party on stairs
+ *  Source: MOVESENS.C F0276 case C005 at lines 1695-1702.
+ * ---------------------------------------------------------------- */
+static void test_floor_party_on_stairs(void) {
     struct DungeonSensor_Compat sensor;
     struct FloorSensorContext_Compat ctx;
     struct SensorTriggerResult_Compat result;
@@ -2060,12 +2063,17 @@ int main(void) {
     test_floor_once_only();
     test_floor_revert_effect();
     test_floor_local_effect();
+    test_f0274_possession_scan_inventory_slot();
+    test_f0274_possession_scan_closed_chest();
+    test_f0274_possession_scan_mixed_categories();
     test_floor_party_possession();
+    test_pressure_plate_carry_then_drop_weight_and_actuator();
     test_floor_party_on_stairs();
     test_floor_party_on_stairs_runtime_gate();
     test_floor_pressure_plate_runtime_party_object_weight_gate();
     test_floor_pressure_plate_runtime_multi_item_weight_gate();
     test_floor_party_plate_runtime_door_event_gate();
+    test_pressure_plate_actuator_dispatch_per_square_type();
     test_wall_ornament_click();
     test_wall_click_specific_object();
     test_wall_click_specific_object_removed();

@@ -79,7 +79,7 @@
  *     0x12C (300); C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX = 29.
  *   - ReDMCSB DEFS.H:469 DM_SAVE_HEADER Noise[149] + FormatID at
  *     0x12A (298); C10_DM_SAVE_HEADER_DECRYPTION_KEY_INDEX = 10.
- *   - ReDMCSB DEFS.H:483 "CSB_SAVE_HEADER SaveHeader /* 512 bytes */"
+ *   - ReDMCSB DEFS.H:483 CSB_SAVE_HEADER SaveHeader, 512-byte comment.
  *   - ReDMCSB DEFS.H:500/501 C10/C29 key index macros.
  *   - docs/FIRESTAFF_GAP_LIST.md row C3 / A3 "CSBWin custom
  *     resource handling (csbgraphics.dat + dmsave + csbgame)".
@@ -89,7 +89,7 @@
  *   - No scramble/unscramble of anything beyond the documented
  *     GAMEBLOCK1 second-half XOR-stream (128 uint16 words).
  *   - No body-section decoding (Block 2 / items / characters /
- *     timers — those remain separate gates).
+ *     timers - those remain separate gates).
  *   - No M11/M12 wiring. Callers (a future launcher import
  *     button) decide what to do with the verdict.
  */
