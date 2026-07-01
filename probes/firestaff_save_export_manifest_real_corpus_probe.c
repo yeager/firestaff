@@ -12,7 +12,7 @@
  * This probe locks the same manifest contract down
  * against any real, operator-staged Firestaff-format save
  * the user has placed under
- *   $HOME/.firestaff/data/<game>/save/*.sav
+ *   $HOME/.firestaff/data/<game>/save/<save-file>.sav
  * or the per-game FIRESTAFF_<GAME>_SAVE_DIR override.
  *
  * What "receipt" means here:
@@ -102,13 +102,6 @@ static void note_fail(const char* name, const char* detail) {
            detail ? detail : "");
     ++g_fail;
 }
-static void note_skip(const char* name, const char* detail) {
-    printf("  SKIP: %s%s%s\n", name,
-           detail && detail[0] ? " — " : "",
-           detail ? detail : "");
-    ++g_skip;
-}
-
 static int mkdir_one(const char* path) {
 #ifdef _WIN32
     if (_mkdir(path) == 0 || errno == EEXIST) return 1;

@@ -15499,6 +15499,7 @@ if(BUILD_TESTING)
         tests/test_csb_v1_csbgraphics_dat_inventory_pc34_compat.c
         src/csb/csb_v1_csbgraphics_dat_inventory_pc34_compat.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     )
     target_include_directories(test_csb_v1_csbgraphics_dat_inventory_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -22551,6 +22552,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_save_export_manifest
         add_executable(firestaff_save_export_manifest_real_corpus_probe
             probes/firestaff_save_export_manifest_real_corpus_probe.c
             src/shared/firestaff_save_export_manifest.c
+            src/shared/fs_portable_compat.c
         )
         target_include_directories(firestaff_save_export_manifest_real_corpus_probe PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
