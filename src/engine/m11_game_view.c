@@ -21330,6 +21330,50 @@ static int m11_spawn_centered_explosion(M11_GameViewState* state,
                                          &slot, &eFirst);
 }
 
+static int m11_f0190_smoke_attack_for_creature(int creatureType) {
+    const struct CreatureBehaviorProfile_Compat* profile =
+        CREATURE_GetProfile_Compat(creatureType);
+    int size = 0;
+    if (profile) {
+        size = profile->attributes & DM1_ATTR_SIZE_MASK;
+    }
+    if (size == 0) return 110;
+    if (size == 1) return 190;
+    return 255;
+}
+
+static int m11_spawn_f0190_death_smoke(
+    M11_GameViewState* state,
+    int creatureType,
+    int killedCell,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    struct ExplosionCreateInput_Compat eIn;
+    struct TimelineEvent_Compat eFirst;
+    int slot = -1;
+    if (!state) return 0;
+    memset(&eIn, 0, sizeof(eIn));
+    /* ReDMCSB GROUP.C F0190 lines 907-917 creates C040 smoke at the
+     * killed creature cell, with attack 110/190/255 by creature size. */
+    eIn.explosionType = C040_EXPLOSION_SMOKE;
+    eIn.attack = m11_f0190_smoke_attack_for_creature(creatureType);
+    eIn.mapIndex = mapIndex;
+    eIn.mapX = mapX;
+    eIn.mapY = mapY;
+    eIn.cell = killedCell;
+    eIn.centered = (killedCell == EXPLOSION_CELL_CENTERED) ? 1 : 0;
+    eIn.currentTick = (int)state->world.gameTick;
+    eIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    eIn.ownerIndex = state->world.party.activeChampionIndex;
+    eIn.creatorProjectileSlot = -1;
+    if (!F0821_EXPLOSION_Create_Compat(&eIn, &state->world.explosions,
+                                       &slot, &eFirst)) {
+        return 0;
+    }
+    return F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &eFirst);
+}
+
 static void m11_schedule_creature_reaction_f0209(
     M11_GameViewState* state,
     int groupIndex,
@@ -22716,8 +22760,20 @@ static void m11_projectile_apply_impact(
                 res.damageApplied = r->outAction.rawAttackValue;
                 for (slotI = 0; slotI < 4; ++slotI) {
                     if (g->health[slotI] > 0) {
+                        int originalCreatureType = (int)g->creatureType;
+                        int originalCells = (int)g->cells;
+                        int killedCell =
+                            (originalCells == DM1_SINGLE_CENTERED_CREATURE_CELL)
+                                ? EXPLOSION_CELL_CENTERED
+                                : ((originalCells >> (slotI * 2)) & 0x03);
                         F0738_COMBAT_ApplyDamageToGroup_Compat(
                             &res, g, slotI, &outcome);
+                        if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES ||
+                            outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+                            (void)m11_spawn_f0190_death_smoke(
+                                state, originalCreatureType, killedCell,
+                                impactMap, impactX, impactY);
+                        }
                         if (res.damageApplied > 0 &&
                             outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
                             m11_schedule_projectile_hit_creature_reaction(
