@@ -2823,8 +2823,79 @@ static void test_orch_explosion_advance_applies_party_damage(void) {
     assert(world.party.champions[0].hp.current < 100);
     assert(world.party.champions[0].hp.current > 0);
     assert((world.party.champions[0].wounds &
-            (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO)) ==
-           (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO));
+            (COMBAT_WOUND_READY_HAND | COMBAT_WOUND_ACTION_HAND |
+             COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO |
+             COMBAT_WOUND_LEGS | COMBAT_WOUND_FEET)) ==
+           (COMBAT_WOUND_READY_HAND | COMBAT_WOUND_ACTION_HAND |
+            COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO |
+            COMBAT_WOUND_LEGS | COMBAT_WOUND_FEET));
+}
+
+static void test_orch_explosion_advance_fire_shield_blocks_party_damage(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    struct ExplosionCreateInput_Compat explosionIn;
+    struct TimelineEvent_Compat firstAdvance;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int slot = -1;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    for (i = 0; i < 9; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    world.dungeon = &dungeon;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 1;
+    world.party.mapY = 1;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].wounds = 0;
+    world.magic.fireShieldDefense = 255;
+
+    memset(&explosionIn, 0, sizeof(explosionIn));
+    explosionIn.explosionType = C000_EXPLOSION_FIREBALL;
+    explosionIn.attack = 40;
+    explosionIn.mapIndex = 0;
+    explosionIn.mapX = 1;
+    explosionIn.mapY = 1;
+    explosionIn.cell = 2;
+    explosionIn.currentTick = 100;
+    explosionIn.creatorProjectileSlot = -1;
+    assert(F0821_EXPLOSION_Create_Compat(
+        &explosionIn, &world.explosions, &slot, &firstAdvance) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstAdvance) == 1);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    assert(world.explosions.count == 0);
+    assert(world.timeline.count == 0);
+    assert(world.party.champions[0].hp.current == 100);
+    assert(world.party.champions[0].wounds == 0);
 }
 
 static void test_orch_explosion_advance_emits_party_champion_down(void) {
@@ -5127,6 +5198,7 @@ int main(void) {
     test_orch_projectile_group_hit_keeps_thrown_sharp_weapon();
     test_orch_explosion_advance_applies_group_damage();
     test_orch_explosion_advance_applies_party_damage();
+    test_orch_explosion_advance_fire_shield_blocks_party_damage();
     test_orch_explosion_advance_emits_party_champion_down();
     test_champion_cell_serializes_through_reserved_v1_byte();
     test_orch_cmd_attack_emits_live_f0312_skill_bonus_snapshot();
