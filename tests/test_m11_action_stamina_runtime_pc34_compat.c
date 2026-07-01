@@ -3793,6 +3793,65 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
               "leader-hand throw keeps F0330's zero enable-action slot ordinal");
 }
 
+static void test_leader_hand_throw_full_projectile_list_accepts_f0328(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned short thrownThing;
+    unsigned short actionHandThing;
+
+    seed_state(&state, 100, 100);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    weapons[0].type = 8; /* Dagger: weight 5, class 2, kinetic 19. */
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = 50;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 0;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    state.world.projectiles.count = PROJECTILE_LIST_CAPACITY;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    thrownThing = make_thing(THING_TYPE_WEAPON, 0);
+    actionHandThing = make_thing(THING_TYPE_JUNK, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        actionHandThing;
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, thrownThing), 1,
+              "leader hand accepts full-list throw object");
+
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 120, 53, 1),
+              M11_GAME_INPUT_REDRAW,
+              "full-list leader-hand C080 click still accepts F0329/F0328");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state),
+              PROJECTILE_LIST_CAPACITY,
+              "full-list leader-hand throw does not allocate past PJE-05 cap");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
+              "accepted full-list leader-hand throw clears leader hand");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_ACTION_HAND],
+              actionHandThing,
+              "full-list leader-hand throw restores existing action hand");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 98,
+              "full-list leader-hand throw spends F0305 object-weight stamina");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[LIFECYCLE_SKILL_THROW].experience,
+              16,
+              "full-list leader-hand throw awards F0328 Throw XP");
+    ASSERT_EQ(state.world.projectileDisabledMovementTicks, 0,
+              "dropped full-list leader-hand throw creates no movement lockout");
+    ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_COMBAT,
+              "full-list leader-hand throw still requests F0328 M563 sound");
+    ASSERT_EQ(state.actionDisabledTicks[0], 4,
+              "full-list leader-hand throw applies F0328/F0330 disable");
+    ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
+              "full-list leader-hand throw has no F0407 action index override");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0,
+              "full-list leader-hand throw keeps F0330's zero enable slot");
+}
+
 static void test_leader_hand_throw_waterskin_uses_f0140_charge_weight(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -6923,6 +6982,7 @@ int main(void) {
     test_projectile_champion_hit_can_kill_party();
     test_thrown_potion_wall_impact_consumes_potion_thing();
     test_leader_hand_throw_uses_f0328_temporary_action_hand();
+    test_leader_hand_throw_full_projectile_list_accepts_f0328();
     test_leader_hand_throw_waterskin_uses_f0140_charge_weight();
     test_leader_hand_throw_container_uses_f0140_recursive_weight();
     test_block_action_disables_champion_for_source_ticks();
