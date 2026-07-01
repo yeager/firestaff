@@ -287,6 +287,118 @@ int    theron_v1_world_deserialize(Theron_V1_World *world,
 /* ── Source citation ───────────────────────────────────────────────── */
 const char *theron_v1_world_source_evidence(void);
 
+/* ── First-room synthetic fixtures (Phase 4 startup proof) ─────────── */
+/*
+ * theron_v1_first_room_default_width / height
+ *   Canonical first-room dimensions for the Theron's Quest V1 startup
+ *   probe.  Matches the documented TQR mini-dungeon size used in
+ *   docs/source-lock/tqr_v1_phase1_boot_H2338.md and the existing
+ *   theron_v1_level_load header contract.
+ *
+ *   The default 20x20 grid + 12-byte header = 412-byte fixture buffer
+ *   total, which is small enough to allocate on the stack of a
+ *   headless probe and large enough to prove movement, wall-block,
+ *   and party placement.
+ */
+#define THERON_V1_FIRST_ROOM_DEFAULT_WIDTH  20
+#define THERON_V1_FIRST_ROOM_DEFAULT_HEIGHT 20
+#define THERON_V1_FIRST_ROOM_HEADER_BYTES   12
+#define THERON_V1_FIRST_ROOM_DEFAULT_SIZE   \
+    (THERON_V1_FIRST_ROOM_HEADER_BYTES + \
+     THERON_V1_FIRST_ROOM_DEFAULT_WIDTH * \
+     THERON_V1_FIRST_ROOM_DEFAULT_HEIGHT)
+
+/*
+ * theron_v1_first_room_buffer_size — bytes required to hold a synthetic
+ *   first-room fixture of the given dimensions.  Returns
+ *   THERON_V1_FIRST_ROOM_HEADER_BYTES + width * height.
+ */
+size_t theron_v1_first_room_buffer_size(int width, int height);
+
+/*
+ * theron_v1_first_room_synthesize — fill `out_buf` with a deterministic
+ *   first-room fixture using the documented 12-byte header contract.
+ *
+ * The header layout matches theron_v1_level_load() in
+ * src/theron/theron_v1_world.c:
+ *   bytes 0-1:  width  (big-endian uint16_t, LE on disk)
+ *   bytes 2-3:  height (big-endian uint16_t, LE on disk)
+ *   bytes 4-7:  dungeon_seed (uint32_t BE)
+ *   bytes 8-9:  level_index (uint16_t BE)
+ *   bytes 10-11: reserved (0)
+ *
+ * The grid is a fully walled room with a single floor tile at
+ * (start_x, start_y), one floor tile to the east (so the probe can
+ * also verify a successful forward step), and an exit/stairs tile
+ * down-and-to-the-east so wall-block and forward-step directions
+ * are unambiguous.
+ *
+ * On success, out_level->start_x / start_y are written to the
+ * entrance coordinates.  Returns the total byte count written, or
+ * 0 on invalid inputs (NULL / out of range / size too small).
+ *
+ * Source-lock: THQUEST.ASM T520 (party placement) and
+ *   THQUEST.ASM T560 (dungeon loading, 12-byte header) — see
+ *   docs/source-lock/tqr_v1_phase1_boot_H2338.md.
+ *
+ * Negative fixtures:
+ *   - NULL out_buf or level -> 0
+ *   - width or height <= 0 or > THERON_MAX_MAP_SIZE -> 0
+ *   - buf_size < THERON_V1_FIRST_ROOM_HEADER_BYTES + width*height -> 0
+ */
+size_t theron_v1_first_room_synthesize(uint8_t *out_buf,
+                                        size_t buf_size,
+                                        int width,
+                                        int height,
+                                        int level_index,
+                                        uint32_t dungeon_seed,
+                                        Theron_V1_Level *out_level);
+
+/* ── Startup runtime readiness (skip-safe) ──────────────────────────── */
+
+typedef enum {
+    THERON_RUNTIME_READINESS_OK              =  0, /* Track 02 staged + boot path viable */
+    THERON_RUNTIME_READINESS_NO_DATA_ROOT    = -1, /* data_dir is NULL or empty */
+    THERON_RUNTIME_READINESS_NO_TRACK02      = -2, /* no known Track 02 file found */
+    THERON_RUNTIME_READINESS_NOT_VERIFIED    = -3, /* file found but MD5 not on the four-MD5 list */
+    THERON_RUNTIME_READINESS_BAD_INPUT       = -4  /* NULL scan_out / mismatch */
+} Theron_RuntimeReadinessStatus;
+
+/*
+ * theron_v1_runtime_readiness — skip-safe gate used by the V1 startup
+ *   probe before exercising the real-Track-02 path.
+ *
+ * Walks `data_root` looking for one of the documented Track 02
+ * filenames (jp/us, bin/iso).  When a candidate exists, it
+ * independently hashes the file with libcs md5-style fallback and
+ * compares the result against the four locked-in Track 02 MD5s:
+ *
+ *     JP Track 02 BIN: b7afb338ad31be1025b53f9aff12d73a
+ *     US Track 02 BIN: f23601102138f87c33025877767ebf76
+ *     JP Rev 1 ISO:    397039af02d50d15c70b74088eb8a1cb
+ *     US ISO:          3d8b78571dcd0e6eb8eb4b01eeb7fbba
+ *
+ * On success (THERON_RUNTIME_READINESS_OK) scan_out is filled with
+ * the resolved path and matching MD5.  When the data root is empty
+ * or the file is not hash-verified, the function returns one of the
+ * NO_* statuses and writes empty strings into scan_out.  This lets
+ * probes report SKIP without lying about full playability.
+ *
+ * libcs dependency: stdio + string only.  No crypto dependency.
+ *
+ * Source-lock: src/shared/asset_status_m12.c hash-verified catalog.
+ */
+Theron_RuntimeReadinessStatus theron_v1_runtime_readiness(
+    const char *data_root,
+    char *scan_out,
+    size_t scan_out_size,
+    char *md5_out,
+    size_t md5_out_size);
+
+/* Human-readable name for a readiness status. */
+const char *theron_v1_runtime_readiness_status_name(
+    Theron_RuntimeReadinessStatus status);
+
 #ifdef __cplusplus
 }
 #endif

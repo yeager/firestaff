@@ -727,3 +727,373 @@ const char *theron_v1_world_source_evidence(void) {
     return "THQUEST.ASM T400/T520/T560/T600/T700/T800/T900  "
            "+ tqr_v1_phase0_provenance_gate_H2339.md";
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * First-room synthetic fixture + readiness gate
+ *
+ * Source-lock: THQUEST.ASM T520 (party placement) and
+ *   THQUEST.ASM T560 (dungeon loading, 12-byte header).  See
+ *   docs/source-lock/tqr_v1_phase1_boot_H2338.md.
+ *
+ * These helpers exist so the V1 startup probe can exercise the
+ * real theron_v1_level_load() path end-to-end without staging the
+ * proprietary Track 02 BIN/ISO in CI.  They emit a buffer that
+ * matches the documented 12-byte header + grid layout, with a
+ * deterministic floor-and-wall pattern that lets the probe assert
+ * party placement, wall-block, and forward-move results.
+ *
+ * The readiness gate lets the same probe take a real-Track-02 path
+ * when a user has staged the asset (skip-safe: returns a status
+ * instead of pretending the asset exists).  No original game data
+ * is ever synthesized by these helpers.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+size_t theron_v1_first_room_buffer_size(int width, int height) {
+    if (width <= 0 || height <= 0) return 0;
+    if (width > THERON_MAX_MAP_SIZE || height > THERON_MAX_MAP_SIZE) return 0;
+    return (size_t)THERON_V1_FIRST_ROOM_HEADER_BYTES +
+           (size_t)width * (size_t)height;
+}
+
+size_t theron_v1_first_room_synthesize(uint8_t *out_buf,
+                                        size_t buf_size,
+                                        int width,
+                                        int height,
+                                        int level_index,
+                                        uint32_t dungeon_seed,
+                                        Theron_V1_Level *out_level) {
+    if (!out_buf || !out_level) return 0;
+    if (width <= 0 || height <= 0) return 0;
+    if (width > THERON_MAX_MAP_SIZE || height > THERON_MAX_MAP_SIZE) return 0;
+
+    size_t needed = (size_t)THERON_V1_FIRST_ROOM_HEADER_BYTES +
+                     (size_t)width * (size_t)height;
+    if (buf_size < needed) return 0;
+
+    /* Header is big-endian on disk for width/height/level_index (matches
+     * theron_v1_level_load() in this file, which uses rb16/rb32 helpers
+     * that read big-endian uint16/uint32). */
+    out_buf[0] = (uint8_t)((width  >> 8) & 0xFFu);
+    out_buf[1] = (uint8_t)( width        & 0xFFu);
+    out_buf[2] = (uint8_t)((height >> 8) & 0xFFu);
+    out_buf[3] = (uint8_t)( height       & 0xFFu);
+    out_buf[4] = (uint8_t)((dungeon_seed >> 24) & 0xFFu);
+    out_buf[5] = (uint8_t)((dungeon_seed >> 16) & 0xFFu);
+    out_buf[6] = (uint8_t)((dungeon_seed >>  8) & 0xFFu);
+    out_buf[7] = (uint8_t)( dungeon_seed        & 0xFFu);
+    out_buf[8]  = (uint8_t)((level_index >> 8) & 0xFFu);
+    out_buf[9]  = (uint8_t)( level_index       & 0xFFu);
+    out_buf[10] = 0u;
+    out_buf[11] = 0u;
+
+    uint8_t *grid = out_buf + THERON_V1_FIRST_ROOM_HEADER_BYTES;
+    /* Fill with walls, then carve the documented first-room pattern:
+     *   - (1,1)            : entrance floor
+     *   - (2,1)            : forward-step floor
+     *   - (3,1)            : forward-step floor (lets probe do 2 moves)
+     *   - (4,1)            : STAIRS_DOWN tile (forward-step special)
+     *   - (1,2)            : floor for sideways / backwards movement
+     */
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            grid[y * width + x] = THERON_SQUARE_WALL;
+        }
+    }
+    if (width  >= 5) grid[1 * width + 1] = THERON_SQUARE_FLOOR;
+    if (width  >= 5) grid[1 * width + 2] = THERON_SQUARE_FLOOR;
+    if (width  >= 5) grid[1 * width + 3] = THERON_SQUARE_FLOOR;
+    if (width  >= 5) grid[1 * width + 4] = THERON_SQUARE_STAIRS_DOWN;
+    if (height >= 3) grid[2 * width + 1] = THERON_SQUARE_FLOOR;
+
+    /* Mirror the layout into the level preview so callers can assert
+     * party placement directly without re-running level_load().  This
+     * is a probe-time convenience: theron_v1_level_load() will rebuild
+     * the same squares on the real Track 02 path. */
+    memset(out_level, 0, sizeof(*out_level));
+    out_level->level_index = level_index;
+    out_level->width       = width;
+    out_level->height      = height;
+    out_level->start_x     = 1;
+    out_level->start_y     = 1;
+    /* 1 = EAST (matches THERON_DIR_EAST in theron_v1_mechanics.h).
+     * Inlined here so this module stays free of the mechanics
+     * header dependency. */
+    out_level->start_dir   = 1;
+    out_level->thing_count = 0;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            out_level->squares[y][x] = grid[y * width + x];
+        }
+    }
+
+    return needed;
+}
+
+/* ── libcs-only MD5 (RFC 1321) ──────────────────────────────────────
+ * We bundle a tiny MD5 implementation here so the readiness gate can
+ * hash staged Track 02 files without depending on OpenSSL.  It is
+ * local to theron_v1_world.c and not exported.  Source: RFC 1321
+ * reference, public-domain reference implementation.
+ */
+typedef struct {
+    uint32_t state[4];
+    uint64_t count;
+    uint8_t  buffer[64];
+} Theron_LocalMd5;
+
+static void md5_init(Theron_LocalMd5 *ctx) {
+    ctx->state[0] = 0x67452301u;
+    ctx->state[1] = 0xEFCDAB89u;
+    ctx->state[2] = 0x98BADCFEu;
+    ctx->state[3] = 0x10325476u;
+    ctx->count    = 0u;
+}
+
+#define F1(x, y, z) ((z) ^ ((x) & ((y) ^ (z))))
+#define F2(x, y, z) F1((z), (x), (y))
+#define F3(x, y, z) ((x) ^ (y) ^ (z))
+#define F4(x, y, z) ((y) ^ ((x) | ~(z)))
+
+#define STEP(f, a, b, c, d, x, t, s) \
+    (a) += f((b), (c), (d)) + (x) + (t); \
+    (a) = ((a) << (s)) | ((a) >> (32 - (s))); \
+    (a) += (b);
+
+static void md5_transform(Theron_LocalMd5 *ctx, const uint8_t block[64]) {
+    uint32_t a, b, c, d, x[16];
+    for (int i = 0; i < 16; i++) {
+        x[i] = ((uint32_t)block[i*4])         |
+               ((uint32_t)block[i*4 + 1] << 8) |
+               ((uint32_t)block[i*4 + 2] << 16) |
+               ((uint32_t)block[i*4 + 3] << 24);
+    }
+    a = ctx->state[0]; b = ctx->state[1];
+    c = ctx->state[2]; d = ctx->state[3];
+
+    STEP(F1, a, b, c, d, x[ 0], 0xD76AA478u,  7)
+    STEP(F1, d, a, b, c, x[ 1], 0xE8C7B756u, 12)
+    STEP(F1, c, d, a, b, x[ 2], 0x242070DBu, 17)
+    STEP(F1, b, c, d, a, x[ 3], 0xC1BDCEEEu, 22)
+    STEP(F1, a, b, c, d, x[ 4], 0xF57C0FAFu,  7)
+    STEP(F1, d, a, b, c, x[ 5], 0x4787C62Au, 12)
+    STEP(F1, c, d, a, b, x[ 6], 0xA8304613u, 17)
+    STEP(F1, b, c, d, a, x[ 7], 0xFD469501u, 22)
+    STEP(F1, a, b, c, d, x[ 8], 0x698098D8u,  7)
+    STEP(F1, d, a, b, c, x[ 9], 0x8B44F7AFu, 12)
+    STEP(F1, c, d, a, b, x[10], 0xFFFF5BB1u, 17)
+    STEP(F1, b, c, d, a, x[11], 0x895CD7BEu, 22)
+    STEP(F1, a, b, c, d, x[12], 0x6B901122u,  7)
+    STEP(F1, d, a, b, c, x[13], 0xFD987193u, 12)
+    STEP(F1, c, d, a, b, x[14], 0xA679438Eu, 17)
+    STEP(F1, b, c, d, a, x[15], 0x49B40821u, 22)
+
+    STEP(F2, a, b, c, d, x[ 1], 0xF61E2562u,  5)
+    STEP(F2, d, a, b, c, x[ 6], 0xC040B340u,  9)
+    STEP(F2, c, d, a, b, x[11], 0x265E5A51u, 14)
+    STEP(F2, b, c, d, a, x[ 0], 0xE9B6C7AAu, 20)
+    STEP(F2, a, b, c, d, x[ 5], 0xD62F105Du,  5)
+    STEP(F2, d, a, b, c, x[10], 0x02441453u,  9)
+    STEP(F2, c, d, a, b, x[15], 0xD8A1E681u, 14)
+    STEP(F2, b, c, d, a, x[ 4], 0xE7D3FBC8u, 20)
+    STEP(F2, a, b, c, d, x[ 9], 0x21E1CDE6u,  5)
+    STEP(F2, d, a, b, c, x[14], 0xC33707D6u,  9)
+    STEP(F2, c, d, a, b, x[ 3], 0xF4D50D87u, 14)
+    STEP(F2, b, c, d, a, x[ 8], 0x455A14EDu, 20)
+    STEP(F2, a, b, c, d, x[13], 0xA9E3E905u,  5)
+    STEP(F2, d, a, b, c, x[ 2], 0xFCEFA3F8u,  9)
+    STEP(F2, c, d, a, b, x[ 7], 0x676F02D9u, 14)
+    STEP(F2, b, c, d, a, x[12], 0x8D2A4C8Au, 20)
+
+    STEP(F3, a, b, c, d, x[ 5], 0xFFFA3942u,  4)
+    STEP(F3, d, a, b, c, x[ 8], 0x8771F681u, 11)
+    STEP(F3, c, d, a, b, x[11], 0x6D9D6122u, 16)
+    STEP(F3, b, c, d, a, x[14], 0xFDE5380Cu, 23)
+    STEP(F3, a, b, c, d, x[ 1], 0xA4BEEA44u,  4)
+    STEP(F3, d, a, b, c, x[ 4], 0x4BDECFA9u, 11)
+    STEP(F3, c, d, a, b, x[ 7], 0xF6BB4B60u, 16)
+    STEP(F3, b, c, d, a, x[10], 0xBEBFBC70u, 23)
+    STEP(F3, a, b, c, d, x[13], 0x289B7EC6u,  4)
+    STEP(F3, d, a, b, c, x[ 0], 0xEAA127FAu, 11)
+    STEP(F3, c, d, a, b, x[ 3], 0xD4EF3085u, 16)
+    STEP(F3, b, c, d, a, x[ 6], 0x04881D05u, 23)
+    STEP(F3, a, b, c, d, x[ 9], 0xD9D4D039u,  4)
+    STEP(F3, d, a, b, c, x[12], 0xE6DB99E5u, 11)
+    STEP(F3, c, d, a, b, x[15], 0x1FA27CF8u, 16)
+    STEP(F3, b, c, d, a, x[ 2], 0xC4AC5665u, 23)
+
+    STEP(F4, a, b, c, d, x[ 0], 0xF4292244u,  6)
+    STEP(F4, d, a, b, c, x[ 7], 0x432AFF97u, 10)
+    STEP(F4, c, d, a, b, x[14], 0xAB9423A7u, 15)
+    STEP(F4, b, c, d, a, x[ 5], 0xFC93A039u, 21)
+    STEP(F4, a, b, c, d, x[12], 0x655B59C3u,  6)
+    STEP(F4, d, a, b, c, x[ 3], 0x8F0CCC92u, 10)
+    STEP(F4, c, d, a, b, x[10], 0xFFEFF47Du, 15)
+    STEP(F4, b, c, d, a, x[ 1], 0x85845DD1u, 21)
+    STEP(F4, a, b, c, d, x[ 8], 0x6FA87E4Fu,  6)
+    STEP(F4, d, a, b, c, x[15], 0xFE2CE6E0u, 10)
+    STEP(F4, c, d, a, b, x[ 6], 0xA3014314u, 15)
+    STEP(F4, b, c, d, a, x[13], 0x4E0811A1u, 21)
+    STEP(F4, a, b, c, d, x[ 4], 0xF7537E82u,  6)
+    STEP(F4, d, a, b, c, x[11], 0xBD3AF235u, 10)
+    STEP(F4, c, d, a, b, x[ 2], 0x2AD7D2BBu, 15)
+    STEP(F4, b, c, d, a, x[ 9], 0xEB86D391u, 21)
+
+    ctx->state[0] += a;
+    ctx->state[1] += b;
+    ctx->state[2] += c;
+    ctx->state[3] += d;
+}
+
+static void md5_update(Theron_LocalMd5 *ctx, const uint8_t *data, size_t len) {
+    size_t left = (size_t)(ctx->count & 0x3F);
+    size_t fill = 64u - left;
+    ctx->count += len;
+
+    if (left && len >= fill) {
+        memcpy(ctx->buffer + left, data, fill);
+        md5_transform(ctx, ctx->buffer);
+        data += fill;
+        len  -= fill;
+        left  = 0u;
+    }
+    while (len >= 64u) {
+        md5_transform(ctx, data);
+        data += 64u;
+        len  -= 64u;
+    }
+    if (len) memcpy(ctx->buffer + left, data, len);
+}
+
+static void md5_final(Theron_LocalMd5 *ctx, uint8_t out[16]) {
+    static const uint8_t pad[64] = { 0x80u };
+    uint8_t bitlen[8];
+    uint64_t bits = ctx->count * 8u;
+    for (int i = 0; i < 8; i++) {
+        bitlen[i] = (uint8_t)(bits >> (8 * i));
+    }
+    size_t left = (size_t)(ctx->count & 0x3F);
+    size_t padlen = (left < 56u) ? (56u - left) : (120u - left);
+    md5_update(ctx, pad, padlen);
+    md5_update(ctx, bitlen, 8u);
+
+    for (int i = 0; i < 4; i++) {
+        out[i*4    ] = (uint8_t)( ctx->state[i]        & 0xFFu);
+        out[i*4 + 1] = (uint8_t)((ctx->state[i] >>  8) & 0xFFu);
+        out[i*4 + 2] = (uint8_t)((ctx->state[i] >> 16) & 0xFFu);
+        out[i*4 + 3] = (uint8_t)((ctx->state[i] >> 24) & 0xFFu);
+    }
+}
+
+static int md5_file(const char *path, char hex_out[33]) {
+    FILE *fp = fopen(path, "rb");
+    if (!fp) return -1;
+    Theron_LocalMd5 ctx;
+    md5_init(&ctx);
+    uint8_t buf[4096];
+    size_t got;
+    while ((got = fread(buf, 1, sizeof(buf), fp)) > 0) {
+        md5_update(&ctx, buf, got);
+    }
+    fclose(fp);
+    uint8_t digest[16];
+    md5_final(&ctx, digest);
+    static const char hex[] = "0123456789abcdef";
+    for (int i = 0; i < 16; i++) {
+        hex_out[i*2    ] = hex[(digest[i] >> 4) & 0x0Fu];
+        hex_out[i*2 + 1] = hex[ digest[i]       & 0x0Fu];
+    }
+    hex_out[32] = '\0';
+    return 0;
+}
+
+/* ── Readiness gate ───────────────────────────────────────────────── */
+
+static const char *g_known_track02_md5s[4] = {
+    "b7afb338ad31be1025b53f9aff12d73a", /* JP Track 02 BIN */
+    "f23601102138f87c33025877767ebf76", /* US Track 02 BIN */
+    "397039af02d50d15c70b74088eb8a1cb", /* JP Rev 1 ISO */
+    "3d8b78571dcd0e6eb8eb4b01eeb7fbba"  /* US ISO */
+};
+
+static const char *g_track02_candidate_names[4] = {
+    "Theron's Quest (Japan) (Track 02).bin",
+    "Theron's Quest (US) (Track 02).bin",
+    "TQJP02End.iso",
+    "TQUS02End.iso"
+};
+
+/* Compose "<root>/<file>" into `out` (size-bounded).  Returns 1 on
+ * success, 0 on overflow. */
+static int join_path(char *out, size_t out_size, const char *root, const char *file) {
+    if (!out || out_size == 0 || !root || !file) return 0;
+    size_t rl = strlen(root);
+    int needs_sep = (rl > 0 && root[rl - 1] != '/' && root[rl - 1] != '\\');
+    int n = snprintf(out, out_size, "%s%s%s",
+                     root, needs_sep ? "/" : "", file);
+    return (n > 0 && (size_t)n < out_size);
+}
+
+Theron_RuntimeReadinessStatus theron_v1_runtime_readiness(
+    const char *data_root,
+    char *scan_out,
+    size_t scan_out_size,
+    char *md5_out,
+    size_t md5_out_size) {
+    if (!scan_out || scan_out_size == 0 || !md5_out || md5_out_size < 33) {
+        return THERON_RUNTIME_READINESS_BAD_INPUT;
+    }
+    scan_out[0] = '\0';
+    md5_out[0]  = '\0';
+
+    if (!data_root || !data_root[0]) {
+        return THERON_RUNTIME_READINESS_NO_DATA_ROOT;
+    }
+
+    /* Probe each candidate filename.  First hit wins for the path,
+     * then we independently hash and compare against the locked-in
+     * Track 02 MD5 catalog. */
+    for (int i = 0; i < 4; i++) {
+        char candidate[1024];
+        if (!join_path(candidate, sizeof(candidate), data_root,
+                       g_track02_candidate_names[i])) continue;
+
+        FILE *probe = fopen(candidate, "rb");
+        if (!probe) continue;
+        fclose(probe);
+
+        char hex[33];
+        if (md5_file(candidate, hex) != 0) continue;
+
+        int known = 0;
+        for (int j = 0; j < 4; j++) {
+            if (strcmp(hex, g_known_track02_md5s[j]) == 0) {
+                known = 1;
+                break;
+            }
+        }
+
+        /* Copy the path (size-bounded).  We use snprintf to avoid
+         * relying on strncpy semantics. */
+        snprintf(scan_out, scan_out_size, "%s", candidate);
+        snprintf(md5_out,  md5_out_size,  "%s", hex);
+
+        if (!known) {
+            return THERON_RUNTIME_READINESS_NOT_VERIFIED;
+        }
+        return THERON_RUNTIME_READINESS_OK;
+    }
+
+    return THERON_RUNTIME_READINESS_NO_TRACK02;
+}
+
+const char *theron_v1_runtime_readiness_status_name(
+    Theron_RuntimeReadinessStatus status) {
+    switch (status) {
+    case THERON_RUNTIME_READINESS_OK:           return "ok";
+    case THERON_RUNTIME_READINESS_NO_DATA_ROOT: return "no-data-root";
+    case THERON_RUNTIME_READINESS_NO_TRACK02:   return "no-track02";
+    case THERON_RUNTIME_READINESS_NOT_VERIFIED: return "not-verified";
+    case THERON_RUNTIME_READINESS_BAD_INPUT:    return "bad-input";
+    default:                                    return "unknown";
+    }
+}

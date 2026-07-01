@@ -2097,6 +2097,36 @@ if(NOT MSVC)
     target_compile_options(firestaff_theron_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Theron V1 first-room startup/runtime probe. Headless: no game data
+# needed in CI; the probe ships a synthetic first-room fixture and a
+# skip-safe readiness gate that activates a real-Track-02 path when
+# a user stages one of the four locked-in Track 02 files via
+# --data-root <dir>.  Source-lock: THQUEST.ASM T080/T400/T520/T560/T700,
+# docs/source-lock/tqr_v1_phase1_boot_H2338.md,
+# docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md.
+add_executable(firestaff_theron_v1_first_room_runtime_probe
+    probes/firestaff_theron_v1_first_room_runtime_probe.c
+    src/theron/theron_v1_world.c
+    src/theron/theron_v1_track02.c
+    src/theron/theron_v1_mechanics.c
+    src/theron/theron_v1_champions.c
+    src/theron/theron_v1_compat.c
+    src/theron/theron_v1_dungeon_progression.c
+    src/theron/theron_v1_palette.c
+    src/theron/theron_v1_tile_renderer.c
+    src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_asset_loader.c
+    src/theron/theron_v1_save_load.c
+    src/theron/theron_v1_shop.c)
+target_include_directories(firestaff_theron_v1_first_room_runtime_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v1_first_room_runtime_probe
+    PRIVATE firestaff_theron firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_first_room_runtime_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V2 settings bridge probe. Headless: no game data.
 # See include/csb_v2_settings_pc34.h.
 add_executable(firestaff_csb_v2_settings_probe
@@ -9449,6 +9479,16 @@ if(BUILD_TESTING)
         add_test(
             NAME theron_v2_phase1_launch_profile_separation
             COMMAND firestaff_theron_v2_phase1_launch_profile_separation_probe
+        )
+    endif()
+
+    # ── Theron V1 first-room startup/runtime probe ctest entry ────
+    # Skip-safe: returns 0 even when no Track 02 is staged, so CI
+    # stays deterministic without original game data.
+    if(TARGET firestaff_theron_v1_first_room_runtime_probe)
+        add_test(
+            NAME theron_v1_first_room_runtime
+            COMMAND firestaff_theron_v1_first_room_runtime_probe
         )
     endif()
 
