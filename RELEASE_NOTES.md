@@ -1,6 +1,47 @@
 
 # Unreleased
 
+# Firestaff v3.0.16
+
+Firestaff v3.0.16 is a focused follow-up to v3.0.15 for the DM1 V1 MacBook Pro
+release-smoke regressions reported on 2026-07-01. It packages the current-main
+fixes and gates for the wrong DM1 intro/title palette, slow or retried
+Q/E/Home/End/keypad turning, and false Hall of Champions flying/floor
+artifacts.
+
+## Highlights since v3.0.15
+
+- **Immediate DM1 turn input**: Q/E/Home/End/keypad turn taps now bypass the
+  delayed DM1 V1 vblank pending queue, while movement inputs remain
+  cooldown-gated.
+
+- **DM1 title and HoC smoke gates are green on current main**: focused probes
+  cover title palette regression, Apple Silicon title palette readback, title
+  swoosh palette handoff, false HoC projectile artifacts, and false HoC floor
+  items.
+
+- **Late DM1 combat/projectile fixes are included**: the tag includes focused
+  gates for F0735/F0308 zero-Luck RNG accounting, F0328/F0811/F0217 zero-power
+  thrown Ven/Ful potion handling, and M10 F0811/F0217 creature projectile
+  impacts at map coordinate `(0,0)`.
+
+- **Release drift is now gated**: the existing
+  `test_m12_version_changelog_consistency` source is registered in CMake so the
+  embedded launcher changelog must include the project version before release.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  launcher changelog, and `include/firestaff_version.h`.
+- Local release-candidate verification on `/Volumes/Extern-disk` passed focused
+  CTest coverage for `m12_version_changelog_consistency`,
+  title-palette/Apple-Silicon/title-swoosh palette gates, HoC false
+  projectile/floor artifact gates, turn-step timing, M11 input queue, and
+  overlay command queue behavior.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64, and Steam Deck x86_64 artifacts
+  from the `v3.0.16` release tag.
+
 # Firestaff v3.0.15
 
 Firestaff v3.0.15 packages the runtime-hardening work that landed after
@@ -26,14 +67,7 @@ gain focused verification without being presented as complete parity targets.
 - **M11 presentation and input hardening expanded**: the runtime now has
   stronger evidence around bounded turn input queues, smooth turns, Hall of
   Champions artifact hiding, action-row disruption, throw/invoke audio
-  ordering, zero-adjusted projectile audio, and release-smoke triage. The
-  final release candidate also includes the immediate-turn input fix for
-  Q/E/Home/End/keypad turn taps reported against v3.0.14.
-
-- **Late DM1 combat/projectile fixes are included in the tag**: the release
-  candidate adds focused gates for F0735/F0308 zero-Luck RNG accounting,
-  F0328/F0811/F0217 zero-power thrown Ven/Ful potion handling, and M10
-  F0811/F0217 creature projectile impacts at map coordinate `(0,0)`.
+  ordering, zero-adjusted projectile audio, and release-smoke triage.
 
 - **Salvaged cross-game gates were integrated and cleaned up**: applicable
   worktree slices added focused tests/probes for CSB V22 in-place rendering,
@@ -56,10 +90,6 @@ gain focused verification without being presented as complete parity targets.
   A/audio probes, Pages, and cross-platform determinism.
 - Local release-prep verification covered CMake configure/build plus the
   headless Phase A and audio smoke probes before tagging.
-- Final local DM1 release-smoke verification on current `main` passed focused
-  CTest coverage for title palette regression, Apple Silicon title palette,
-  title swoosh palette handoff, HoC false projectile artifacts, HoC false floor
-  items, turn-step timing, M11 input queue, and overlay command queue behavior.
 - The release workflow rebuilds and packages macOS arm64, macOS x86_64,
   Windows x86_64, Linux x86_64, Linux arm64, and Steam Deck x86_64 artifacts
   from the `v3.0.15` release tag.
