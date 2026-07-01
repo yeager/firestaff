@@ -245,12 +245,29 @@ static int champion_index_from_cell(
 static int projectile_non_explosion_impact_sound_code(
     const struct ProjectileInstance_Compat* in)
 {
+    unsigned int associatedThing;
     /* ReDMCSB PROJEXPL.C:F0217 lines 587-600 selects
      * C00_SOUND_METALLIC_THUD only when the projectile associated thing
      * is C05_THING_TYPE_WEAPON; all other non-explosion impacts request
-     * C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM.  Phase17's
-     * compact projectile subtype has no full associated-thing record, so
-     * the kinetic arrow subtype is the only local weapon-backed analogue. */
+     * C04_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM. */
+    if (in) {
+        associatedThing = (unsigned int)in->reserved1;
+        if (associatedThing != 0 &&
+            associatedThing != THING_NONE &&
+            associatedThing != THING_ENDOFLIST &&
+            THING_GET_TYPE(associatedThing) == THING_TYPE_WEAPON) {
+            return PHASE17_SOUND_METALLIC_THUD;
+        }
+        if (associatedThing != 0 &&
+            associatedThing != THING_NONE &&
+            associatedThing != THING_ENDOFLIST) {
+            return PHASE17_SOUND_WOODEN_THUD;
+        }
+    }
+    /* Legacy synthetic fixtures created before Projectile.Slot was carried
+     * through reserved1 used the kinetic-arrow subtype as the local
+     * weapon-backed analogue. Keep that narrow fallback for old save/test
+     * blobs that still lack the associated Thing. */
     if (in && in->projectileCategory == PROJECTILE_CATEGORY_KINETIC
         && in->projectileSubtype == PROJECTILE_SUBTYPE_KINETIC_ARROW) {
         return PHASE17_SOUND_METALLIC_THUD;
