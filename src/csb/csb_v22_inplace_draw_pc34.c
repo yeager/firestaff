@@ -256,6 +256,24 @@ const char* csb_v22_inplace_get_cell_asset_id(int depth, int lateral) {
     return v22_inplace_get_cell_asset_id(depth, lateral);
 }
 
+const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,
+                                                  const char* asset_id,
+                                                  int* out_w, int* out_h) {
+    if (out_w) *out_w = 0;
+    if (out_h) *out_h = 0;
+    if (!g_v22_inplace_active) return NULL;
+    if (!category || !asset_id || !asset_id[0]) return NULL;
+    {
+        uint32_t cat_hash = fnv1a_hash(category);
+        uint32_t aid_hash = fnv1a_hash(asset_id);
+        int idx = v22_find_bitmap(cat_hash, aid_hash);
+        if (idx < 0) return NULL;
+        if (out_w) *out_w = (int)g_v22_bitmaps[idx].entry.width;
+        if (out_h) *out_h = (int)g_v22_bitmaps[idx].entry.height;
+        return (const uint32_t*)g_v22_bitmaps[idx].rgba;
+    }
+}
+
 /* ── In-place bitmap blit ──────────────────────────────────────── */
 
 /* CSB 3x3 cell rect coordinates (depth x lateral). Must match
