@@ -1971,6 +1971,119 @@ static void test_projectile_creature_impact_at_zero_zero_applies_damage(void) {
               "projectile creature hit reaction stores C30 event type");
 }
 
+static void test_projectile_creature_kill_spawns_f0190_death_smoke(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    unsigned short squareFirstThings[6];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    squareData[0] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_GIANT_SCORPION;
+    groups[0].cells = 0x0F;
+    groups[0].count = 0;
+    groups[0].health[0] = 50;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 6;
+    things.groups = groups;
+    things.groupCount = 1;
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 0;
+    state.world.creatureAI[0].groupMapY = 0;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].lastSeenPartyTick = 99;
+    state.world.creatureAI[0].reserved0 = 0;
+    state.world.gameTick = 100;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 3;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 40;
+    projectile->stepEnergy = 10;
+    projectile->poisonAttack = 3;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = make_thing(THING_TYPE_WEAPON, 0);
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "killing creature projectile despawns projectile");
+    ASSERT_EQ(groups[0].health[0], 0,
+              "killing creature projectile zeroes group health");
+    ASSERT_EQ(squareFirstThings[0] != make_thing(THING_TYPE_GROUP, 0), 1,
+              "killing creature projectile removes dead group from square");
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 0, 0), 1,
+              "killing creature projectile creates F0190 death smoke");
+    ASSERT_EQ(state.world.explosions.entries[0].explosionType,
+              C040_EXPLOSION_SMOKE,
+              "killing creature projectile uses C040 death smoke");
+    ASSERT_EQ(state.world.explosions.entries[0].attack, 110,
+              "C00 quarter-square death smoke uses F0190 attack 110");
+    ASSERT_EQ(state.world.explosions.entries[0].cell,
+              3,
+              "creature death smoke uses killed creature cell");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "killing creature projectile schedules only smoke advance");
+    ASSERT_EQ(state.world.timeline.events[0].kind,
+              TIMELINE_EVENT_EXPLOSION_ADVANCE,
+              "killing creature projectile schedules C040 advance event");
+}
+
 static void test_projectile_creature_zero_scaled_attack_skips_poison_and_reaction(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -4841,6 +4954,7 @@ int main(void) {
     test_throw_ful_bomb_advances_to_wall_impact_and_consumes();
     test_throw_projectile_advances_after_scheduled_tick();
     test_projectile_creature_impact_at_zero_zero_applies_damage();
+    test_projectile_creature_kill_spawns_f0190_death_smoke();
     test_projectile_creature_zero_scaled_attack_skips_poison_and_reaction();
     test_projectile_non_material_creature_passes_through_without_impact();
     test_projectile_harm_non_material_hits_non_material_creature();
