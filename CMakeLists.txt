@@ -2940,6 +2940,7 @@ foreach(_pool_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_23_palette_match_rect_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_02_palette_match_rect_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_ordinal_2_future_route_readiness_gate_probe.c"
+        "probes/m11/firestaff_dm1_v1_hoc_ordinal_2_sibling_promotion_audit_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_05_palette_match_rect_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hoc_champion_portrait_09_palette_match_rect_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_6_d2l_negative_portrait_rect_position_runtime_probe.c"
