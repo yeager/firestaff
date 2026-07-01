@@ -82,6 +82,7 @@
 #include <unistd.h>
 #ifdef _WIN32
 #include <direct.h>
+#include <windows.h>
 #else
 #include <dirent.h>
 #endif
@@ -136,6 +137,65 @@ static int read_full(const char* path, unsigned char* out, size_t outSize,
     fclose(fp);
     if (outRead) *outRead = n;
     return 1;
+}
+
+static int save_name_has_supported_ext(const char* name) {
+    size_t nameLen = strlen(name);
+    if (nameLen > 4 && strcmp(name + nameLen - 4, ".sav") == 0) return 1;
+    if (nameLen > 5 && strcmp(name + nameLen - 5, ".tqsv") == 0) return 1;
+    return 0;
+}
+
+static int scan_default_dir_for_save(const char* defaultDir,
+                                     char* outPath, size_t outPathSize,
+                                     FirestaffSaveExportKind* outKind,
+                                     char* outMagic, size_t outMagicSize,
+                                     uint32_t* outVersion) {
+#ifdef _WIN32
+    char pattern[PROBE_PATH_MAX];
+    WIN32_FIND_DATAA data;
+    HANDLE find;
+
+    snprintf(pattern, sizeof(pattern), "%s/*", defaultDir);
+    find = FindFirstFileA(pattern, &data);
+    if (find == INVALID_HANDLE_VALUE) return 0;
+    do {
+        const char* name = data.cFileName;
+        if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) continue;
+        if (!save_name_has_supported_ext(name)) continue;
+        snprintf(outPath, outPathSize, "%s/%s", defaultDir, name);
+        {
+            FirestaffSaveExportKind k = FirestaffSaveExport_DetectKindFromFile(
+                outPath, outMagic, outMagicSize, outVersion, NULL, 0);
+            if (k != FIRESTAFF_SAVE_EXPORT_KIND_UNKNOWN) {
+                if (outKind) *outKind = k;
+                FindClose(find);
+                return 1;
+            }
+        }
+    } while (FindNextFileA(find, &data) != 0);
+    FindClose(find);
+#else
+    DIR* d = opendir(defaultDir);
+    struct dirent* ent;
+    if (!d) return 0;
+    while ((ent = readdir(d)) != NULL) {
+        const char* name = ent->d_name;
+        if (!save_name_has_supported_ext(name)) continue;
+        snprintf(outPath, outPathSize, "%s/%s", defaultDir, name);
+        {
+            FirestaffSaveExportKind k = FirestaffSaveExport_DetectKindFromFile(
+                outPath, outMagic, outMagicSize, outVersion, NULL, 0);
+            if (k != FIRESTAFF_SAVE_EXPORT_KIND_UNKNOWN) {
+                if (outKind) *outKind = k;
+                closedir(d);
+                return 1;
+            }
+        }
+    }
+    closedir(d);
+#endif
+    return 0;
 }
 
 /* Look for a real Firestaff-format save under a small set
@@ -212,28 +272,11 @@ static int find_real_save(char* outPath, size_t outPathSize,
          * small and platform-agnostic. The launcher save
          * browser covers the recursive scan path. We just
          * enumerate the immediate *.sav entries. */
-        DIR* d = opendir(defaultDir);
-        struct dirent* ent;
-        if (!d) continue;
-        while ((ent = readdir(d)) != NULL) {
-            const char* name = ent->d_name;
-            size_t nameLen = strlen(name);
-            int isSaveExt = 0;
-            if (nameLen > 4 && strcmp(name + nameLen - 4, ".sav") == 0) isSaveExt = 1;
-            if (nameLen > 5 && strcmp(name + nameLen - 5, ".tqsv") == 0) isSaveExt = 1;
-            if (!isSaveExt) continue;
-            snprintf(outPath, outPathSize, "%s/%s", defaultDir, name);
-            {
-                FirestaffSaveExportKind k = FirestaffSaveExport_DetectKindFromFile(
-                    outPath, outMagic, outMagicSize, outVersion, NULL, 0);
-                if (k != FIRESTAFF_SAVE_EXPORT_KIND_UNKNOWN) {
-                    if (outKind) *outKind = k;
-                    closedir(d);
-                    return 1;
-                }
-            }
+        if (scan_default_dir_for_save(defaultDir, outPath, outPathSize,
+                                      outKind, outMagic, outMagicSize,
+                                      outVersion)) {
+            return 1;
         }
-        closedir(d);
     }
 
     return 0;
