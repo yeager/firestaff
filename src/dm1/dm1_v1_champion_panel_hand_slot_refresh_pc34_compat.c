@@ -141,16 +141,51 @@ enum {
  *       returns C1_TRUE AND M070_HAND_SLOT_INDEX(slotBoxIndex)
  *       equals C01_SLOT_ACTION_HAND.
  *
- *   (f) lines 1248-1251: at the end of F0296, when
+ *   (g) lines 1242-1262: inventory-owner secondary walk. The block
+ *       fires when L0883_ui_InventoryChampionOrdinal is non-zero and
+ *       the walk has not early-returned. The block walks the
+ *       inventory champion's internal slots C00..C29 (READY_HAND..
+ *       C29_SLOT_BACKPACK_LINE1_9) and for each `internalSlot`
+ *       computes the inventory slotbox index as
+ *       `internalSlot + C08_SLOT_BOX_INVENTORY_FIRST_SLOT` (= C08..
+ *       C37). Each iteration dispatches F0295 on
+ *       `(inventoryChampion.Slots[internalSlot])` and OR-accumulated
+ *       the F0295 return into AL0884_B_DrawViewport. F0386 is
+ *       dispatched only when internalSlot == C01_SLOT_ACTION_HAND
+ *       AND F0295 returns C1_TRUE.
+ *
+ *   (h) lines 1248-1254: when the panel content is the chest panel
+ *       (G2008_i_PanelContent == M569_PANEL_CHEST = 6 on PC 3.4 /
+ *       MEDIA720 / I34E), F0296 walks the 8 chest slots
+ *       G0425_aT_ChestSlots[0..7] and dispatches F0295 on
+ *       `(chestSlot + C38_SLOT_BOX_CHEST_FIRST_SLOT)`. Each
+ *       iteration OR-accumulated the F0295 return into
+ *       AL0884_B_DrawViewport.
+ *
+ *   (i) lines 1256-1259: when AL0884_B_DrawViewport is C1_TRUE,
+ *       M008_SET sets MASK0x4000_VIEWPORT on the inventory champion's
+ *       Attributes and F0292_CHAMPION_DrawState is dispatched for
+ *       the inventory champion (M001_ORDINAL_TO_INDEX of the owner
+ *       ordinal). When AL0884_B_DrawViewport is C0_FALSE, neither
+ *       the attribute-set nor F0292 fires.
+ *
+ *   (j) lines 1264-1267: at the end of F0296, when
  *       G0420_B_MousePointerHiddenToDrawChangedObjectIconOnScreen
  *       is C1_TRUE (some change during this walk raised it),
  *       F0078_MOUSE_DisableScreenUpdate is called exactly once.
  *
- * DEFS.H:781 C01_SLOT_ACTION_HAND, 1878 M070_HAND_SLOT_INDEX
- * (returns slotboxIndex & 0x0001), 1950 C195_ICON_POTION_EMPTY_FLASK
- * and 1952 C201_ICON_ACTION_ICON_EMPTY_HAND are the mutable-icon
- * anchors. DEFS.H:7208-7209 M000_INDEX_TO_ORDINAL/M001_ORDINAL_TO_INDEX
- * pin the ordinal<->index conversion.
+ * DEFS.H:780 C00_SLOT_READY_HAND, 781 C01_SLOT_ACTION_HAND, 810
+ * C30_SLOT_CHEST_1, 1874 C08_SLOT_BOX_INVENTORY_FIRST_SLOT, 1876
+ * C38_SLOT_BOX_CHEST_FIRST_SLOT, 1878 M070_HAND_SLOT_INDEX
+ * (returns slotboxIndex & 0x0001), 1950 C195_ICON_POTION_EMPTY_FLASK,
+ * 1952 C201_ICON_ACTION_ICON_EMPTY_HAND, 2995/3007 M569_PANEL_CHEST,
+ * 5316 G0420_B_MousePointerHiddenToDrawChangedObjectIconOnScreen,
+ * 5320 G0423_i_InventoryChampionOrdinal, 5322 G0305_ui_PartyChampion-
+ * Count, 5694 G0299_ui_CandidateChampionOrdinal, 5877 G0424_i_Panel-
+ * Content, 5878 G0425_aT_ChestSlots[8], 6317 G2008_i_PanelContent,
+ * 7208 M000_INDEX_TO_ORDINAL(index) == (index + 1), 7209
+ * M001_ORDINAL_TO_INDEX(ordinal) == (ordinal - 1), 7895
+ * F0292_CHAMPION_DrawState pin the constants.
  */
 static const char s_source_evidence[] =
     "contract_only=1; no real-asset bitmap parity claim; no GRAPHICS.DAT or "
@@ -161,7 +196,7 @@ static const char s_source_evidence[] =
     "current icon is in a mutable range (junk C000..C031, potions C148..C163, "
     "or the C195 empty flask), F0295 calls F0038_OBJECT_DrawIconInSlotBox to "
     "repaint the slotbox and returns C1_TRUE. CHAMDRAW.C F0296_CHAMPION_"
-    "DrawChangedObjectIcons:1184-1262 has the following contract: (a) lines "
+    "DrawChangedObjectIcons:1184-1267 has the following contract: (a) lines "
     "1208-1210 candidate early-return when G0299_ui_CandidateChampionOrdinal "
     "is non-zero and G0423_i_InventoryChampionOrdinal is zero F0296 returns "
     "immediately; (b) line 1212 G0420_B_MousePointerHiddenToDrawChangedObject-"
@@ -174,28 +209,49 @@ static const char s_source_evidence[] =
     "champion ordinal skip when L0883_ui_InventoryChampionOrdinal equals "
     "M000_INDEX_TO_ORDINAL(L0885_i_ChampionIndex); (e) line 1231 F0386 is "
     "dispatched only when F0295 returns C1_TRUE AND M070_HAND_SLOT_INDEX("
-    "slotBoxIndex) equals C01_SLOT_ACTION_HAND; (f) lines 1248-1251 "
-    "F0078_MOUSE_DisableScreenUpdate is called exactly once at the end of "
-    "F0296 when G0420_B_MousePointerHiddenToDrawChangedObjectIconOnScreen is "
-    "still C1_TRUE. DEFS.H:781 C01_SLOT_ACTION_HAND, 1878 M070_HAND_SLOT_INDEX, "
-    "1950 C195_ICON_POTION_EMPTY_FLASK, 1952 C201_ICON_ACTION_ICON_EMPTY_HAND, "
-    "5320 G0423_i_InventoryChampionOrdinal, 5322 G0305_ui_PartyChampionCount, "
-    "5694 G0299_ui_CandidateChampionOrdinal, 7208 M000_INDEX_TO_ORDINAL(index) "
-    "== (index + 1), 7209 M001_ORDINAL_TO_INDEX(ordinal) == (ordinal - 1).";
+    "slotBoxIndex) equals C01_SLOT_ACTION_HAND; (g) lines 1242-1247 the "
+    "inventory-owner secondary walk fires iff L0883_ui_InventoryChampionOrdinal "
+    "!= 0 AND the candidate early-return did NOT fire; the walk visits the "
+    "inventory champion's internal slots C00..C29 (READY_HAND.."
+    "C29_SLOT_BACKPACK_LINE1_9) with inventory slotbox index "
+    "internalSlot + C08_SLOT_BOX_INVENTORY_FIRST_SLOT, dispatches F0295 on "
+    "each internal slot's thing, and OR-accumulated the return into "
+    "AL0884_B_DrawViewport; F0386 is dispatched only on internal slot C01 ("
+    "C01_SLOT_ACTION_HAND) AND only when F0295 returned C1_TRUE; (h) lines "
+    "1248-1254 chest-panel secondary walk fires iff G2008_i_PanelContent "
+    "(PC 3.4 MEDIA720 PC 3.4 I34E) == M569_PANEL_CHEST = 6, the walk visits "
+    "G0425_aT_ChestSlots[0..7] with slotbox index chestSlot + "
+    "C38_SLOT_BOX_CHEST_FIRST_SLOT, and OR-accumulated the F0295 return into "
+    "AL0884_B_DrawViewport; (i) lines 1256-1259 when AL0884_B_DrawViewport is "
+    "C1_TRUE, M008_SET sets MASK0x4000_VIEWPORT on the inventory champion's "
+    "Attributes and F0292_CHAMPION_DrawState is dispatched for the inventory "
+    "champion (M001_ORDINAL_TO_INDEX of the owner ordinal); (j) lines "
+    "1264-1267 F0078_MOUSE_DisableScreenUpdate is called exactly once at the "
+    "end of F0296 when G0420_B_MousePointerHiddenToDrawChangedObjectIconOnScreen "
+    "is still C1_TRUE. DEFS.H:780 C00_SLOT_READY_HAND, 781 C01_SLOT_ACTION_HAND, "
+    "810 C30_SLOT_CHEST_1, 1874 C08_SLOT_BOX_INVENTORY_FIRST_SLOT, 1876 "
+    "C38_SLOT_BOX_CHEST_FIRST_SLOT, 1878 M070_HAND_SLOT_INDEX, 1950 "
+    "C195_ICON_POTION_EMPTY_FLASK, 1952 C201_ICON_ACTION_ICON_EMPTY_HAND, "
+    "2995/3007 M569_PANEL_CHEST, 5320 G0423_i_InventoryChampionOrdinal, 5322 "
+    "G0305_ui_PartyChampionCount, 5694 G0299_ui_CandidateChampionOrdinal, "
+    "5877 G0424_i_PanelContent, 5878 G0425_aT_ChestSlots[8], 6317 "
+    "G2008_i_PanelContent, 7208 M000_INDEX_TO_ORDINAL(index) == (index + 1), "
+    "7209 M001_ORDINAL_TO_INDEX(ordinal) == (ordinal - 1), 7895 "
+    "F0292_CHAMPION_DrawState.";
 
 static const Dm1V1ChampionPanelHandSlotRefreshEvidencePc34 s_evidence = {
     "ReDMCSB CHAMDRAW.C F0295_CHAMPION_HasObjectIconInSlotBoxChanged:1153-1182",
-    "ReDMCSB CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1262",
+    "ReDMCSB CHAMDRAW.C F0296_CHAMPION_DrawChangedObjectIcons:1184-1267",
     "ReDMCSB OBJECT.C F0033_OBJECT_GetIconIndex(thing) for slot thing -> icon",
     "ReDMCSB OBJECT.C F0038_OBJECT_DrawIconInSlotBox(slotBoxIndex, iconIndex)",
     "ReDMCSB CHAMDRAW.C F0296:1213-1220 G4055_s_LeaderHandObject.F0036_OBJECT_ExtractIconFromBitmap + F0068_MOUSE_SetPointerToObject + F0034_OBJECT_DrawLeaderHandObjectName sequence precedes the slotbox walk",
     "ReDMCSB CHAMDRAW.C F0296:1208-1210 G0299_ui_CandidateChampionOrdinal early-return",
     "ReDMCSB CHAMDRAW.C F0296:1217-1219 G0423_i_InventoryChampionOrdinal skip on the matched slotbox",
-    "ReDMCSB CHAMDRAW.C F0296:1212 G0420_B_MousePointerHiddenToDrawChangedObjectIconOnScreen reset + F0296:1248-1251 F0078_MOUSE_DisableScreenUpdate tail",
-    "ReDMCSB DEFS.H:781 C01_SLOT_ACTION_HAND, 1878 M070_HAND_SLOT_INDEX, 1950 C195_ICON_POTION_EMPTY_FLASK, 1952 C201_ICON_ACTION_ICON_EMPTY_HAND, 5320 G0423_i_InventoryChampionOrdinal, 5322 G0305_ui_PartyChampionCount, 5694 G0299_ui_CandidateChampionOrdinal, 7208 M000_INDEX_TO_ORDINAL, 7209 M001_ORDINAL_TO_INDEX",
-    "contract-only F0296 walk-order + leader-hand icon refresh precedence + candidate early-return + inventory-champion skip on a fully-alive 4-champion party; no real M11 graphics, no real bitmaps, no asset load",
+    "ReDMCSB CHAMDRAW.C F0296:1212 G0420_B_MousePointerHiddenToDrawChangedObjectIconOnScreen reset + F0296:1248-1254 inventory-owner secondary walk (30 internal slots + 8 chest-panel slots) + F0296:1256-1259 MASK0x4000_VIEWPORT set + F0292 dispatch + F0296:1264-1267 F0078_MOUSE_DisableScreenUpdate tail",
+    "ReDMCSB DEFS.H:780 C00_SLOT_READY_HAND, 781 C01_SLOT_ACTION_HAND, 810 C30_SLOT_CHEST_1, 1874 C08_SLOT_BOX_INVENTORY_FIRST_SLOT, 1876 C38_SLOT_BOX_CHEST_FIRST_SLOT, 1878 M070_HAND_SLOT_INDEX, 1950 C195_ICON_POTION_EMPTY_FLASK, 1952 C201_ICON_ACTION_ICON_EMPTY_HAND, 2995/3007 M569_PANEL_CHEST, 5320 G0423_i_InventoryChampionOrdinal, 5322 G0305_ui_PartyChampionCount, 5694 G0299_ui_CandidateChampionOrdinal, 5877 G0424_i_PanelContent, 5878 G0425_aT_ChestSlots[8], 6317 G2008_i_PanelContent, 7208 M000_INDEX_TO_ORDINAL, 7209 M001_ORDINAL_TO_INDEX, 7895 F0292_CHAMPION_DrawState",
+    "contract-only F0296 walk-order + leader-hand icon refresh precedence + candidate early-return + inventory-champion skip on a fully-alive 4-champion party + F0296:1242-1262 inventory-owner secondary walk contract (30 internal slots + 8 chest-panel slots + AL0884_B_DrawViewport accumulation + MASK0x4000_VIEWPORT set + F0292 dispatch); no real M11 graphics, no real bitmaps, no asset load",
     "no GRAPHICS.DAT, no DUNGEON.DAT, no real-asset bitmap parity claim",
-    "Non-overlap marker: pass champion_panel_hand_slot_refresh covers the F0296 walk-order (action-hand slotbox indices 1, 3, 5, 7 in champion-index order 0, 1, 2, 3), the F0296 candidate-champion ordinal early-return, the F0296 inventory-champion ordinal skip on the matched slotbox, the F0296 leader-hand icon refresh precedence (F0077 + F0036 + F0068 + F0034), the F0295 per-slotbox sense-and-dispatch contract on a fully-alive 4-champion party, and the F0077/F0078 mouse-screen-update balance on a fully-alive party; disjoint from champion_panel_dead_member_hand_refresh (F0296/F0295/F0386 walk with a dead member present + F0292 dead-status-box branch), champion_panel_hand_slot_priority (CHAMPION.C F0302 input dispatch, not the F0296 redraw walk), champion_panel_portrait_box_redraw_states (F0291/F0292/F0296 event matrix for the portrait-box branch + status-box cascade, not the F0296 hand-slot walk-order), champion_panel_portrait_state_redraw (F0292 state-redraw cascade, not the F0296 hand-slot walk-order), mirror_candidate_icon_refresh (F0296 leader-hand icon refresh interaction with the candidate ordinal, no walk-order coverage), mirror_candidate_c040 sibling family (candidate-panel state machine, no F0296 walk-order), champion_panel_spell_area_overlay (F0394 dead-champion reject for spell area, not the F0296 hand-slot walk-order), champion_panel_status_hand_rotation (F0284 leader rotation, not the F0296 hand-slot walk-order), champion_panel_second_leader_hand_slot_priority (the 2nd leader's hand-slot priority path, not the F0296 walk-order), the F0107/F0108/chest-scroll-wheel/viewport/integrated family, and the per-state redraw + per-action-hand slot-box dispatch family."
+    "Non-overlap marker: pass champion_panel_hand_slot_refresh covers the F0296 walk-order (action-hand slotbox indices 1, 3, 5, 7 in champion-index order 0, 1, 2, 3), the F0296 candidate-champion ordinal early-return, the F0296 inventory-champion ordinal skip on the matched slotbox, the F0296 leader-hand icon refresh precedence (F0077 + F0036 + F0068 + F0034), the F0295 per-slotbox sense-and-dispatch contract on a fully-alive 4-champion party, the F0296:1242-1262 inventory-owner secondary walk contract (30 internal slots walked; F0386 dispatch only on C01_SLOT_ACTION_HAND when changed; per-slot AL0884_B_DrawViewport accumulation; chest-panel 8-slot secondary walk when G2008_i_PanelContent == M569_PANEL_CHEST; MASK0x4000_VIEWPORT set + F0292 dispatch when AL0884_B_DrawViewport is C1_TRUE), and the F0077/F0078 mouse-screen-update balance on a fully-alive party; disjoint from champion_panel_dead_member_hand_refresh (F0296/F0295/F0386 walk with a dead member present + F0292 dead-status-box branch), champion_panel_hand_slot_priority (CHAMPION.C F0302 input dispatch, not the F0296 redraw walk), champion_panel_portrait_box_redraw_states (F0291/F0292/F0296 event matrix for the portrait-box branch + status-box cascade, not the F0296 hand-slot walk-order), champion_panel_portrait_state_redraw (F0292 state-redraw cascade, not the F0296 hand-slot walk-order), mirror_candidate_icon_refresh (F0296 leader-hand icon refresh interaction with the candidate ordinal, no walk-order coverage), mirror_candidate_c040 sibling family (candidate-panel state machine, no F0296 walk-order), champion_panel_spell_area_overlay (F0394 dead-champion reject for spell area, not the F0296 hand-slot walk-order), champion_panel_status_hand_rotation (F0284 leader rotation, not the F0296 hand-slot walk-order), champion_panel_second_leader_hand_slot_priority (the 2nd leader's hand-slot priority path, not the F0296 walk-order), the F0107/F0108/chest-scroll-wheel/viewport/integrated family, and the per-state redraw + per-action-hand slot-box dispatch family."
 };
 
 static uint32_t hash_step(uint32_t hash, unsigned int value)
@@ -237,6 +293,31 @@ static uint32_t hash_state(
     hash = hash_step(hash, (unsigned int)state->leaderHandIcon);
     hash = hash_step(hash, (unsigned int)state->leaderHandThingThing);
     hash = hash_step(hash, (unsigned int)state->leaderHandIconRefreshCount);
+    /*
+     * F0296:1242-1262 inventory-owner secondary walk contract fields.
+     * The hash includes the inventory-owner internal walk counts, the
+     * per-internal-slot iconChanged trace, the chest-panel state +
+     * per-chest-slot iconChanged trace, and the final drawViewport /
+     * MASK0x4000_VIEWPORT / F0292 dispatch flags.
+     */
+    hash = hash_step(hash, (unsigned int)state->internalSlotWalkCount);
+    hash = hash_step(hash, (unsigned int)state->internalSlotF0295Dispatched);
+    hash = hash_step(hash, (unsigned int)state->internalSlotF0386ActionHandDispatched);
+    for (i = 0;
+         i < DM1_V1_DMHSR_INVENTORY_INTERNAL_SLOT_COUNT_PC34;
+         ++i) {
+        hash = hash_step(hash, (unsigned int)state->internalSlotIconChanged[i]);
+    }
+    hash = hash_step(hash, (unsigned int)state->chestPanelContentId);
+    hash = hash_step(hash, (unsigned int)state->chestSlotWalkActive);
+    hash = hash_step(hash, (unsigned int)state->chestSlotWalkCount);
+    hash = hash_step(hash, (unsigned int)state->chestSlotF0295Dispatched);
+    for (i = 0; i < DM1_V1_DMHSR_CHEST_SLOT_COUNT_PC34; ++i) {
+        hash = hash_step(hash, (unsigned int)state->chestSlotIconChanged[i]);
+    }
+    hash = hash_step(hash, (unsigned int)state->drawViewportAccumulated);
+    hash = hash_step(hash, (unsigned int)state->attributesMask0x4000ViewportSet);
+    hash = hash_step(hash, (unsigned int)state->f0292DrawStateDispatched);
     for (i = 0; i < DM1_V1_DMHSR_PARTY_COUNT_PC34; ++i) {
         hash = hash_step(hash, (unsigned int)state->slotBoxWalkIndex[i]);
         hash = hash_step(hash, (unsigned int)state->slotBoxWalkChampionIndex[i]);
