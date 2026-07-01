@@ -6454,7 +6454,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     groups[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
     groups[0].count = 0;
     groups[0].health[0] = 10000;
-    groups[0].cells = 0xFF;
+    groups[0].cells = 0x12;
+    groups[0].direction = 1;
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 25;
@@ -6467,6 +6468,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     state.world.creatureAI[0].groupMapX = 2;
     state.world.creatureAI[0].groupMapY = 1;
     state.world.creatureAI[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
+    state.world.creatureAI[0].groupCells = 0x12;
+    state.world.creatureAI[0].groupDirection = 1;
     state.world.creatureAI[0].reserved0 = 0;
 
     state.world.explosions.count = 5;
@@ -6502,8 +6505,18 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE with complete Fluxcage triggers the fuse ending");
     ASSERT_EQ(groups[0].creatureType, DM1_CREATURE_GREY_LORD_ID,
               "FUSE complete turns Lord Chaos into the Grey Lord");
+    ASSERT_EQ(groups[0].health[0], 10000,
+              "FUSE complete heals Grey Lord per F0446");
+    ASSERT_EQ(groups[0].cells, 0xFF,
+              "FUSE complete centers Grey Lord per F0446");
+    ASSERT_EQ(groups[0].direction, 2,
+              "FUSE complete faces Grey Lord opposite the party");
     ASSERT_EQ(state.world.creatureAI[0].creatureType, DM1_CREATURE_GREY_LORD_ID,
               "FUSE complete updates active AI creature type mirror");
+    ASSERT_EQ(state.world.creatureAI[0].groupCells, 0xFF,
+              "FUSE complete updates active AI group-cell mirror");
+    ASSERT_EQ(state.world.creatureAI[0].groupDirection, 2,
+              "FUSE complete updates active AI group-direction mirror");
     ASSERT_EQ(state.world.magic.magicalLightAmount, 200,
               "FUSE complete applies F0446 magical light amount");
     ASSERT_EQ(F0871_RUNTIME_CountFluxcagesOnSquare_Compat(
