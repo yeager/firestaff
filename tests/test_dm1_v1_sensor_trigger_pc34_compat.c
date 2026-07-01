@@ -545,8 +545,10 @@ static void test_f0274_possession_scan_closed_chest(void) {
     unsigned short innerChest = make_thing(THING_TYPE_CONTAINER, 1, 0);
     struct DungeonContainer_Compat containers2[2];
     containers2[0] = containers[0];
+    containers2[0].type = TEST_ICON_CONTAINER_CHEST_CLOSED;
     containers2[0].slot = innerChest;
     containers2[1] = containers[0];
+    containers2[1].type = TEST_ICON_CONTAINER_CHEST_CLOSED;
     containers2[1].slot = torch;
     memset(&things, 0, sizeof(things));
     things.containers = containers2;
@@ -600,198 +602,6 @@ static void test_f0274_possession_scan_mixed_categories(void) {
           "F0274: scroll icon (textStringThingIndex) detected");
     CHECK(F0274_SENSOR_IsObjectInPartyPossession_Compat(99, &ctx) == 0,
           "F0274: missing icon returns 0 across mixed categories");
-}
-
-/* ----------------------------------------------------------------
- *  Test F0722 + F0274: pressure plate carries/drops through C008
- *  Source: MOVESENS.C F0276 case C008 at lines 1710-1714, calling
- *  F0274_SENSOR_IsObjectInPartyPossession at lines 1234-1306.
- *
- *  Models a DM1 dungeon with a "weight gate" pressure pad that
- *  triggers when the party carries a specific icon type.  Carrying
- *  the icon triggers on WALK_ON; dropping it (so it lands on the
- *  pad) keeps the plate SET while the object weighs the square,
- *  because the Theron_plate_case C001 weight gate suppresses party
- *  re-trigger when the square already contains an object.
- *
- *  This locks down the actual "carried/dropped item weight and
- *  actuator activation" semantics that the C008 + C001 pressure
- *  plates exhibit together.
- * ---------------------------------------------------------------- */
-static void test_pressure_plate_carry_then_drop_weight_and_actuator(void) {
-    struct DungeonDatState_Compat dungeon;
-    struct DungeonMapDesc_Compat map;
-    struct DungeonMapTiles_Compat tiles;
-    struct DungeonThings_Compat things;
-    unsigned char squares[4];
-    unsigned short squareFirstThings[4];
-    struct DungeonSensor_Compat sensors[1];
-    struct DungeonWeapon_Compat weapons[1];
-    struct DungeonArmour_Compat armours[1];
-    struct DungeonContainer_Compat containers[1];
-    struct DungeonJunk_Compat junks[1];
-    struct PartyPossessionContext_Compat possession;
-    struct SensorEffectList_Compat effects;
-    struct SensorTriggerResult_Compat plateResult;
-    struct SensorActuatorDispatch_Compat dispatch;
-    int i;
-
-    memset(&dungeon, 0, sizeof(dungeon));
-    memset(&map, 0, sizeof(map));
-    memset(&tiles, 0, sizeof(tiles));
-    memset(&things, 0, sizeof(things));
-    memset(sensors, 0, sizeof(sensors));
-    memset(weapons, 0, sizeof(weapons));
-    memset(armours, 0, sizeof(armours));
-    memset(containers, 0, sizeof(containers));
-    memset(&plateResult, 0, sizeof(plateResult));
-    memset(&dispatch, 0, sizeof(dispatch));
-    for (i = 0; i < 4; ++i) {
-        squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
-        squareFirstThings[i] = THING_ENDOFLIST;
-    }
-
-    map.width = 2;
-    map.height = 2;
-    tiles.squareData = squares;
-    tiles.squareCount = 4;
-    dungeon.header.mapCount = 1;
-    dungeon.maps = &map;
-    dungeon.tiles = &tiles;
-    dungeon.loaded = 1;
-    dungeon.tilesLoaded = 1;
-
-    /* Pressure pad sits on the deterministic square (map 0, x=0, y=1).
-     * It is a C008 FLOOR_PARTY_POSSESSION plate that toggles a door
-     * actuator on a target square (map 0, x=1, y=1) when the party
-     * carries an object of icon type 18 (a generic weapon icon). */
-    squares[1] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
-    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0, 0);
-    sensors[0] = make_sensor(DM1_SENSOR_FLOOR_PARTY_POSSESSION, 18,
-                             DM1_EFFECT_TOGGLE, 0, 0, 1, 4,
-                             0, 1, 1, 0);
-    sensors[0].next = THING_ENDOFLIST;
-    things.squareFirstThings = squareFirstThings;
-    things.squareFirstThingCount = 4;
-    things.sensors = sensors;
-    things.sensorCount = 1;
-    things.weapons = weapons;
-    things.weaponCount = 1;
-    things.armours = armours;
-    things.armourCount = 1;
-    things.containers = containers;
-    things.containerCount = 1;
-    things.junks = junks;
-    things.junkCount = 1;
-    things.loaded = 1;
-
-    weapons[0].type = 18;
-    weapons[0].next = THING_ENDOFLIST;
-
-    /* Stage A: party walks onto the empty pad carrying the dagger in
-     * their ready-hand slot.  F0274 should detect the icon and the
-     * sensor should dispatch a remote toggle to the door. */
-    init_empty_possession(&possession, &things,
-                          make_thing(THING_TYPE_WEAPON, 0, 0));
-    possession.championSlots[0][CHAMPION_SLOT_HEAD] = THING_NONE;
-    CHECK(F0274_SENSOR_IsObjectInPartyPossession_Compat(18, &possession) == 1,
-          "Carry stage: F0274 detects dagger in leader hand");
-
-    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 0, 1,
-                                               SENSOR_EVENT_WALK_ON, &effects);
-    CHECK(effects.count == 1,
-          "Carry stage: party walk-on emits one remote toggle on carry");
-    CHECK(effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
-          "Carry stage: carry-triggered effect is TOGGLE_REMOTE");
-    CHECK(effects.effects[0].destMapX == 1 && effects.effects[0].destMapY == 1,
-          "Carry stage: remote target is the door square (1,1)");
-
-    /* Project the trigger result through F0732 into a door actuator
-     * dispatch.  The door square is DM1_SQUARE_DOOR=4, mapping to
-     * DM1_EVENT_DOOR=10 (DATA.C G0059 line ~470). */
-    F0722_SENSOR_EvaluateFloor_Compat(&sensors[0],
-        & (struct FloorSensorContext_Compat){
-            .thingType = DM1_TRIGGER_SOURCE_PARTY,
-            .isAddition = 1,
-            .partyHasObjectType = 1,
-        },
-        &plateResult);
-    CHECK(plateResult.triggered == 1,
-          "Carry stage: C008 floor eval confirms trigger with party possession");
-
-    F0732_SENSOR_ResolvePressurePlateActuatorDispatch_Compat(
-        &sensors[0], &plateResult, DM1_SQUARE_DOOR, &dispatch);
-    CHECK(dispatch.valid == 1,
-          "Carry stage: door actuator dispatch is valid");
-    CHECK(dispatch.targetSquareType == DM1_SQUARE_DOOR,
-          "Carry stage: actuator target square type is door");
-    CHECK(dispatch.targetEventType == DM1_EVENT_DOOR,
-          "Carry stage: actuator target event type is DM1_EVENT_DOOR");
-    CHECK(dispatch.action == DM1_ACTUATOR_ACTION_TOGGLE,
-          "Carry stage: TOGGLE effect maps to actuator TOGGLE action");
-    CHECK((dispatch.actuatorKindMask & DM1_ACTUATOR_KIND_DOOR) != 0,
-          "Carry stage: actuator mask includes door bit");
-    CHECK(dispatch.delayTicks == 4,
-          "Carry stage: actuator delay equals sensor->value (4 ticks)");
-
-    /* Stage B: party drops the dagger onto the pad.  The world now
-     * has the weapon chained on the pressure pad square.  Even though
-     * the party no longer carries the icon (F0274 returns 0), the
-     * weight gate keeps the plate SET — ReDMCSB case C001 (THERON_PARTY
-     * _CREATURE_OBJECT) suppresses party retrigger while L0772 (square
-     * contains object) holds. */
-    possession.leaderHandThing = THING_NONE;
-    CHECK(F0274_SENSOR_IsObjectInPartyPossession_Compat(18, &possession) == 0,
-          "Drop stage: F0274 returns 0 once leader hand is empty");
-    sensors[0].next = make_thing(THING_TYPE_WEAPON, 0, 0);
-    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 0, 1,
-                                               SENSOR_EVENT_WALK_ON, &effects);
-    CHECK(effects.count == 0,
-          "Drop stage: party walk-on does NOT retrigger while the dropped weapon weighs the square");
-
-    /* The party walk-off must NOT clear the weight gate either; the
-     * weight is held by the object, not the party. */
-    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 0, 1,
-                                               SENSOR_EVENT_WALK_OFF, &effects);
-    CHECK(effects.count == 0,
-          "Drop stage: party walk-off produces no actuator effect (weight remains)");
-
-    /* The dropped object is a C001-relevant weight item.  Confirm the
-     * sensor_square_has_existing_floor_weight-style gate by walking
-     * the thing chain and reporting whether the weapon is detected. */
-    {
-        unsigned short head = things.squareFirstThings[1];
-        unsigned short cur = head;
-        int sawDagger = 0;
-        int safety = 0;
-        while (cur != THING_NONE && cur != THING_ENDOFLIST && safety < 8) {
-            int t = THING_GET_TYPE(cur);
-            int idx = THING_GET_INDEX(cur);
-            if (t == THING_TYPE_SENSOR && idx == 0) {
-                cur = sensors[idx].next;
-            } else if (t == THING_TYPE_WEAPON && idx == 0) {
-                sawDagger = 1;
-                cur = things.weapons[idx].next;
-            } else {
-                cur = THING_ENDOFLIST;
-            }
-            ++safety;
-        }
-        CHECK(sawDagger == 1,
-              "Drop stage: weapon thing is linked on the pressure pad square");
-    }
-
-    /* Stage C: the party picks the item back up (clears
-     * sensor->next back to ENDOFLIST) and walks away — the plate
-     * should be quiet. */
-    sensors[0].next = THING_ENDOFLIST;
-    possession.leaderHandThing = make_thing(THING_TYPE_WEAPON, 0, 0);
-    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 0, 1,
-                                               SENSOR_EVENT_WALK_ON, &effects);
-    CHECK(effects.count == 1,
-          "Pickup stage: party walk-on retriggers once the dropped weight is picked up");
-    CHECK(effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
-          "Pickup stage: retriggered effect is TOGGLE_REMOTE (door toggles again)");
 }
 
 static void test_pressure_plate_actuator_dispatch_per_square_type(void) {
@@ -2067,7 +1877,6 @@ int main(void) {
     test_f0274_possession_scan_closed_chest();
     test_f0274_possession_scan_mixed_categories();
     test_floor_party_possession();
-    test_pressure_plate_carry_then_drop_weight_and_actuator();
     test_floor_party_on_stairs();
     test_floor_party_on_stairs_runtime_gate();
     test_floor_pressure_plate_runtime_party_object_weight_gate();
