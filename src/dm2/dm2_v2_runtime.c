@@ -50,6 +50,8 @@
 #include "dm2_v2_hud_overlay.h"
 #include "dm2_v2_phase_gate.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v22_viewport_swap_pc34.h"
+#include "dm2_v22_modern_assets_pc34.h"
 #include <string.h>
 
 /* ── Global V2 Viewport State ─────────────────────────────────────── */
@@ -463,6 +465,53 @@ int dm2_v2_runtime_render_frame(int party_dir,
                                               framebuffer, fb_stride,
                                               view_w, view_h);
     if (result != 0) return result;
+
+    /* Step 4.5: V2.2 per-cell modern-art swap (T560 indoor / T600 outdoor).
+     *
+     * This is the wire-up seam the DM2 V2 Phase 2 gap-list 2026-06-27
+     * entry asked for: dm2_v22_viewport_swap_render() is invoked AFTER
+     * V1 has populated the framebuffer but BEFORE the smooth pan step
+     * so the swap paints on top of V1 and the smooth pan (Step 5) can
+     * still shift everything in unison. The cell rects in
+     * dm2_v22_kCellRects[3][3] (indoor) and dm2_v22_kOutdoorCellRects[3]
+     * (outdoor) are sized for the 1920x1080 modern canvas; the render
+     * pass clamps every cell rect to the supplied framebuffer bounds,
+     * so calling it against the V1 320x200 framebuffer is safe (every
+     * cell rect lands outside the visible bounds and paints nothing,
+     * matching DM1's m11_game_view.c behavior).
+     *
+     * The render pass is internally gated on:
+     *   - dm2_v22_viewport_swap_active(): pack installed, presentation
+     *     mode == V22_MODERN, cache file loaded, swap populated.
+     * When ANY of those gates fail, the swap returns 0 cells painted
+     * and the V1 framebuffer is preserved unchanged - V1 source
+     * ownership is preserved by construction.
+     *
+     * Source: include/dm2_v22_viewport_swap_pc34.h (per-cell swap API);
+     *         src/dm2/dm2_v22_viewport_swap_pc34.c (sibling shader);
+     *         SKULL.ASM T520 (party/movement tick - is_outdoor reads);
+     *         SKULL.ASM T560 (dungeon viewport rendering - indoor path);
+     *         SKULL.ASM T600 (outdoor viewport rendering - outdoor path);
+     *         ReDMCSB DUNVIEW.C:2962-3070 (outdoor sky/ground order);
+     *         src/engine/m11_game_view.c:25613 (DM1 V22 in-place mirror);
+     *         docs/source-lock/dm2_v22_per_cell_modern_art_swap_H2340.md. */
+    {
+        int is_outdoor = s_vp.is_outdoor;
+        int v22_painted;
+        /* fb_stride is bytes per row of the contiguous indexed fb -
+         * for the V1 320x200 fb used by this entry point the stride
+         * equals the buffer width (FS_FB_W=320). Future DM2 V2.2 modern
+         * canvases that take a 1920x1080 RGBA-indexed fb will pass a
+         * larger stride through the same seam. The swap module handles
+         * both by clamping each cell rect into the supplied fb bounds. */
+        v22_painted = dm2_v22_viewport_swap_render(
+            (unsigned char*)framebuffer, fb_stride, view_h, is_outdoor);
+        /* v22_painted is the indoor/outdoor cell counter. 0 means the
+         * swap was a no-op (V1 stays in charge). The pixel loop only
+         * writes to the supplied framebuffer; no V1 state is touched.
+         * Suppress unused-variable warning in -Werror builds. */
+        (void)v22_painted;
+    }
 
     /* Step 5: If smooth animation is active, apply smooth camera offset.
      *
