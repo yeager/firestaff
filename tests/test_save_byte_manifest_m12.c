@@ -1,4 +1,5 @@
 #include "save_byte_manifest_m12.h"
+#include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 
@@ -35,13 +36,23 @@ static void cleanup(const char* root) {
     char path[512];
     snprintf(path, sizeof(path), "%s/data/firestaff-dm1-slot.sav", root);
     unlink(path);
+    snprintf(path, sizeof(path), "%s/data/firestaff-csb-slot.fsav", root);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/data/firestaff-csb-slot-bad.fsav", root);
+    unlink(path);
     snprintf(path, sizeof(path), "%s/data/firestaff-dm1-slot.sav.bak", root);
     unlink(path);
     snprintf(path, sizeof(path), "%s/export/firestaff-dm1-slot.sav", root);
     unlink(path);
     snprintf(path, sizeof(path), "%s/export/firestaff-dm1-slot.sav.manifest.json", root);
     unlink(path);
+    snprintf(path, sizeof(path), "%s/export/firestaff-csb-slot.fsav", root);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/export/firestaff-csb-slot.fsav.manifest.json", root);
+    unlink(path);
     snprintf(path, sizeof(path), "%s/import/firestaff-dm1-slot.sav", root);
+    unlink(path);
+    snprintf(path, sizeof(path), "%s/import/firestaff-csb-slot.fsav", root);
     unlink(path);
     snprintf(path, sizeof(path), "%s/data", root);
     rmdir(path);
@@ -108,6 +119,28 @@ static int flip_payload_byte(const char* path) {
     return 1;
 }
 
+static int flip_file_byte_at(const char* path, long offset, int mask) {
+    FILE* fp = fopen(path, "r+b");
+    int c;
+    if (!fp) return 0;
+    if (fseek(fp, offset, SEEK_SET) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    c = fgetc(fp);
+    if (c == EOF) {
+        fclose(fp);
+        return 0;
+    }
+    if (fseek(fp, offset, SEEK_SET) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    fputc(c ^ mask, fp);
+    fclose(fp);
+    return 1;
+}
+
 static void seed_dm1_world(struct GameWorld_Compat* world) {
     int i;
     F0881_WORLD_InitDefault_Compat(world, 0xA5A50123u);
@@ -133,12 +166,30 @@ static void seed_dm1_world(struct GameWorld_Compat* world) {
     world->party.champions[0].mana.maximum = 45;
 }
 
+static int write_csb_save(const char* path, unsigned char salt) {
+    CSB_V1_SaveHeader hdr;
+    unsigned char state[48];
+    size_t i;
+    if (csb_v1_save_header_build(&hdr, CSB_V1_SAVE_MAGIC_CSB, 0x4321u,
+                                 0x2468ACE0u, 5, 6, 0, 2, 2,
+                                 0x01020304u, 60000u) != 0) {
+        return 0;
+    }
+    for (i = 0; i < sizeof(state); ++i) {
+        state[i] = (unsigned char)((i * 13u + salt) & 0xffu);
+    }
+    return csb_v1_save_game(path, state, (int)sizeof(state), &hdr) ==
+           CSB_V1_SAVE_OK;
+}
+
 int main(void) {
     char root[256];
     char dataDir[512];
     char exportDir[512];
     char importDir[512];
     char savePath[512];
+    char csbSavePath[512];
+    char csbBadPath[512];
     char manifestPath[512];
     char payloadPath[512];
     char importedPath[512];
@@ -224,7 +275,44 @@ int main(void) {
     check(file_size(importedPath) < 0, "corrupt payload did not create import");
     check(M12_SaveByteManifest_ExportGameSave("csb", savePath, exportDir,
                                               NULL, 0, NULL, 0) == -1,
-          "unsupported game id rejected until per-game gate exists");
+          "mismatched CSB game id rejects DM1 payload");
+
+    snprintf(csbSavePath, sizeof(csbSavePath), "%s/firestaff-csb-slot.fsav",
+             dataDir);
+    snprintf(csbBadPath, sizeof(csbBadPath), "%s/firestaff-csb-slot-bad.fsav",
+             dataDir);
+    check(write_csb_save(csbSavePath, 0x31u),
+          "created native CSB save bytes");
+    check(M12_SaveByteManifest_ExportGameSave("csb", csbSavePath, exportDir,
+                                              manifestPath,
+                                              (int)sizeof(manifestPath),
+                                              payloadPath,
+                                              (int)sizeof(payloadPath)) == 0,
+          "exported CSB save bytes plus manifest");
+    check(M12_SaveByteManifest_Read(manifestPath, &manifest) == 0,
+          "CSB manifest parses");
+    check(strcmp(manifest.gameId, "csb") == 0,
+          "CSB manifest game_id is csb");
+    check(strcmp(manifest.formatId, "CSBSAV01") == 0,
+          "CSB manifest format_id is native CSB save");
+    check(strcmp(manifest.compatibility, "firestaff-csb-v1-native") == 0,
+          "CSB manifest compatibility names native CSB");
+    check(M12_SaveByteManifest_VerifyPayload(manifestPath, &manifest) == 0,
+          "CSB manifest verifies payload before import");
+    check(M12_SaveByteManifest_ImportGameSave(importDir, manifestPath,
+                                              importedPath,
+                                              (int)sizeof(importedPath)) == 0,
+          "CSB manifest import copies verified payload");
+    check(files_equal(csbSavePath, importedPath),
+          "CSB import preserves save bytes");
+
+    check(write_csb_save(csbBadPath, 0x57u),
+          "created CSB save for checksum corruption");
+    check(flip_file_byte_at(csbBadPath, 300L, 0x20),
+          "corrupted CSB obfuscated checksum block");
+    check(M12_SaveByteManifest_ExportGameSave("csb", csbBadPath, exportDir,
+                                              NULL, 0, NULL, 0) == -1,
+          "CSB manifest export rejects corrupted checksum block");
 
     F0883_WORLD_Free_Compat(&world);
     cleanup(root);
