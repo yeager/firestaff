@@ -3867,6 +3867,43 @@ static void test_heal_action_uses_hidden_heal_skill(void) {
               "F0407 HEAL uses hidden Heal skill capacity, not base Priest");
     ASSERT_EQ(state.world.party.champions[0].mana.current, 2,
               "F0407 HEAL spends two mana per source healing cycle");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_HEAL].experience,
+              10010,
+              "F0407 HEAL awards 2 plus 2 XP per healing cycle");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_PRIEST].experience,
+              10,
+              "F0407 HEAL propagates healing-loop XP to base Priest");
+}
+
+static void test_heal_no_effect_still_runs_f0407_tail(void) {
+    M11_GameViewState state;
+
+    seed_state(&state, 100, 60);
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].mana.current = 10;
+    state.world.party.champions[0].mana.maximum = 20;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_HEAL].experience = 10000;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_HEAL),
+              1,
+              "no-effect HEAL still returns F0407 ActionPerformed true");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 100,
+              "no-effect HEAL leaves full health unchanged");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 10,
+              "no-effect HEAL does not enter the mana-spending heal loop");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_HEAL),
+              "no-effect HEAL keeps the common F0407 action-disabled tail");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_HEAL].experience,
+              10000,
+              "no-effect HEAL awards no case-local healing-loop XP");
 }
 
 static void test_window_action_schedules_thieves_eye_and_decrements_charges(void) {
@@ -5495,6 +5532,7 @@ int main(void) {
     test_freeze_life_green_box_consumes_action_hand_and_caps();
     test_light_decrements_action_hand_charges();
     test_heal_action_uses_hidden_heal_skill();
+    test_heal_no_effect_still_runs_f0407_tail();
     test_window_action_schedules_thieves_eye_and_decrements_charges();
     test_spit_action_launches_f0327_fireball_and_decrements_charges();
     test_fireball_action_uses_f0327_and_decrements_charges();

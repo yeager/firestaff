@@ -23883,19 +23883,26 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             int healCap;
             int skillLevel;
             int healedTotal = 0;
+            int cycleCount = 0;
             if (champ->hp.current >= champ->hp.maximum) {
+                /* ReDMCSB MENU.C F0407 lines 1275 and 1524-1539 leaves
+                 * ActionPerformed TRUE when HEAL has no missing health; PC34's
+                 * G0497 HEAL entry is zero, so the common tail still disables
+                 * the action and spends stamina but awards no table XP. */
                 m11_log_event(state, M11_COLOR_YELLOW,
                               "T%u: %s IS ALREADY AT FULL HEALTH",
                               (unsigned int)state->world.gameTick,
                               champName);
-                return 0;
+                return 1;
             }
             if (champ->mana.current == 0) {
+                /* Same F0407 no-effect branch as full health: HEAL remains a
+                 * performed action but does not enter the healing loop. */
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: %s HAS NO MANA TO HEAL",
                               (unsigned int)state->world.gameTick,
                               champName);
-                return 0;
+                return 1;
             }
             /* ReDMCSB MENU.C F0407 C036_ACTION_HEAL lines 1502-1517
              * queries CHAMPION.C F0303 with C13_SKILL_HEAL, not the
@@ -23911,6 +23918,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                 int amount = (missing < healCap) ? missing : healCap;
                 champ->hp.current = (unsigned short)(champ->hp.current + amount);
                 healedTotal += amount;
+                cycleCount++;
                 missing -= amount;
                 if (champ->mana.current >= 2) {
                     champ->mana.current = (unsigned short)(champ->mana.current - 2);
@@ -23920,6 +23928,11 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                 }
             }
             if (healedTotal > 0) {
+                /* ReDMCSB MENU.C F0407 lines 1524-1531 overrides the G0497
+                 * table value for HEAL with 2 + 2 per healing cycle, then the
+                 * common F0304 tail awards it to C13_SKILL_HEAL. */
+                m11_award_action_xp_f0407(
+                    state, championIndex, DM1_ACTION_HEAL, 2 + (cycleCount * 2));
                 m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                               "T%u: %s HEALED %d HP",
                               (unsigned int)state->world.gameTick,
