@@ -1623,6 +1623,8 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW sets source projectile movement-disable ticks before the action tick decrements them");
     ASSERT_EQ(state.world.lastProjectileDisabledMovementDirection, 1,
               "THROW records source projectile movement-disable direction");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], CHAMPION_SLOT_ACTION_HAND,
+              "THROW stores C01 action-hand slot ordinal on the enable-action event");
 }
 
 static void test_direct_throw_empty_action_hand_keeps_f0407_tail(void) {
@@ -1679,6 +1681,8 @@ static void test_direct_throw_empty_action_hand_keeps_f0407_tail(void) {
               "empty action-hand THROW still propagates common G0497 XP");
     ASSERT_EQ(state.world.projectileDisabledMovementTicks, 0,
               "empty action-hand THROW does not set F0328 movement-disable ticks");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0xFF,
+              "empty action-hand THROW does not store an enable-action slot ordinal");
 }
 
 static void test_throw_ven_potion_launches_removepotion_projectile(void) {
