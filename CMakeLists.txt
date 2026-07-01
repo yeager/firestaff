@@ -7920,6 +7920,41 @@ if(BUILD_TESTING)
         LABELS "tier2;m11;accessibility;colorblind"
     )
 
+    # M11 color grading preset LUT gate. Pins the V2.0 visual
+    # extras RGBA preset contract on src/engine/color_presets_m11.c
+    # (include/color_presets_m11.h): the seven-curve enum, the
+    # ORIGINAL short-circuit, the NULL / non-positive-dimensions /
+    # out-of-range-preset no-op paths, the byte-range edge colors,
+    # the round-to-nearest clamp_byte_f() math for the five
+    # straight per-channel curves (ATARI_ST_WARM / AMIGA_GOLD /
+    # VGA_CLEAN / HIGH_CONTRAST / COOL_BLUE), the standard sepia
+    # cross-channel matrix for SEPIA, the alpha-channel
+    # preservation in M11_ColorPreset_ApplyRGBA, the
+    # preset-by-preset idempotence of the lazy LUT cache, and the
+    # cross-run determinism on independent buffers. Disjoint from
+    # the daltonization 3x3 matrix test above (different math),
+    # the renderer setter-clamp chain (different surface), and
+    # the high-contrast overlay (in-game chrome remap, not V2.0
+    # LUT presets). Data-free, runs in CI.
+    add_executable(test_m11_color_presets_m11
+        tests/test_m11_color_presets_m11.c
+        src/engine/color_presets_m11.c
+    )
+    target_include_directories(test_m11_color_presets_m11 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_color_presets_m11 PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME m11_color_presets_m11
+        COMMAND test_m11_color_presets_m11
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    set_tests_properties(m11_color_presets_m11 PROPERTIES
+        LABELS "tier2;m11;accessibility;color-presets"
+    )
+
     # v2.8.x: keyboard layout contract regression.  Pins the new
     # arrow-key mapping (arrows strafe, Home/End/Q/E turn, WASD
     # mirrors arrows) so the production code cannot silently drift
