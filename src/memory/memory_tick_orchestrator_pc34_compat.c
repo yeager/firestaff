@@ -3596,6 +3596,12 @@ static int orch_drop_group_slot_possessions_compat(
     int mapIndex,
     int mapX,
     int mapY);
+static int orch_link_thing_to_square_tail_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short thing);
 static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
     struct GameWorld_Compat* world,
     int mapIndex,
@@ -3612,6 +3618,39 @@ static int orch_cmd_attack_apply_f0190_fear_compat(
     int mapX,
     int mapY);
 
+static int orch_materialize_projectile_associated_thing_compat(
+    struct GameWorld_Compat* world,
+    const struct ProjectileInstance_Compat* projectile,
+    int associatedThingMovedToGroup)
+{
+    unsigned short associatedThing;
+    unsigned short droppedThing;
+
+    if (!world || !projectile || associatedThingMovedToGroup) return 1;
+    if (!world->things || !world->dungeon) return 1;
+    if ((projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) != 0) {
+        return 1;
+    }
+    associatedThing = (unsigned short)projectile->reserved1;
+    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) {
+        return 1;
+    }
+    if (THING_GET_TYPE(associatedThing) == THING_TYPE_EXPLOSION) {
+        return 1;
+    }
+
+    /* ReDMCSB PROJEXPL.C:F0215 lines 248-259 moves Projectile.Slot to
+     * the projectile map square when F0217 does not pass a GROUP.Slot
+     * pointer for KEEP_THROWN_SHARP_WEAPONS.  F0219 lines 717-725 call
+     * wall impacts before committing the destination move, so use the
+     * projectile's stored square and cell here. */
+    droppedThing = orch_thing_with_cell_compat(
+        associatedThing, projectile->cell & 3);
+    return orch_link_thing_to_square_tail_compat(
+        world, projectile->mapIndex, projectile->mapX,
+        projectile->mapY, droppedThing);
+}
+
 static int orch_handle_projectile_move_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* event,
@@ -3622,6 +3661,7 @@ static int orch_handle_projectile_move_event_compat(
     struct ProjectileTickResult_Compat tickResult;
     struct CellContentDigest_Compat digest;
     int projectileIndex;
+    int associatedThingMovedToGroup = 0;
 
     if (!world || !event) return 0;
     projectileIndex = event->aux0;
@@ -3648,8 +3688,11 @@ static int orch_handle_projectile_move_event_compat(
         }
         if (tickResult.emittedCombatAction &&
             tickResult.outAction.kind == COMBAT_ACTION_APPLY_DAMAGE_GROUP) {
-            (void)orch_apply_projectile_group_action_compat(
+            int groupApplyResult = orch_apply_projectile_group_action_compat(
                 world, &tickResult.outAction, projectile, result);
+            if (groupApplyResult == 2) {
+                associatedThingMovedToGroup = 1;
+            }
         }
         if (tickResult.emittedExplosion) {
             struct ExplosionCreateInput_Compat explosionIn;
@@ -3701,6 +3744,8 @@ static int orch_handle_projectile_move_event_compat(
             emit(result, EMIT_SOUND_REQUEST, tickResult.emittedSoundCode,
                  projectile->mapX, projectile->mapY, projectile->mapIndex);
         }
+        (void)orch_materialize_projectile_associated_thing_compat(
+            world, projectile, associatedThingMovedToGroup);
         F0813_PROJECTILE_Despawn_Compat(&world->projectiles, projectileIndex);
         return 1;
     }
@@ -3901,6 +3946,7 @@ static int orch_apply_projectile_group_action_compat(
     int originalGroupCount;
     int creatureSnapshotReady;
     int outcome = COMBAT_OUTCOME_KILLED_NO_CREATURES;
+    int associatedThingMovedToGroup = 0;
 
     if (!world || !action || !world->things || !world->things->groups) return 0;
     if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP) return 0;
@@ -3984,13 +4030,15 @@ static int orch_apply_projectile_group_action_compat(
             emit(result, EMIT_KILL_NOTIFY, groupIndex, creatureIndex,
                  outcome, originalCreatureType);
         } else {
-            (void)orch_maybe_attach_projectile_weapon_to_group_slot_compat(
-                world, group, projectile, outcome);
+            if (orch_maybe_attach_projectile_weapon_to_group_slot_compat(
+                    world, group, projectile, outcome)) {
+                associatedThingMovedToGroup = 1;
+            }
         }
         orch_schedule_projectile_hit_group_reaction_compat(
             world, groupIndex, group, action);
     }
-    return 1;
+    return associatedThingMovedToGroup ? 2 : 1;
 }
 
 static void orch_schedule_projectile_hit_group_reaction_compat(
