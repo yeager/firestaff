@@ -14590,6 +14590,28 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_bpk_surface_class
     )
 
+    # ── Nexus V1 PRS3 payload-evidence walker unit test (pass1084) ──
+    # Data-free BPPK synthetic receipts plus optional real MENU.BPK
+    # receipt. Verifies per-entry leading 4-byte BE u32 receipts, the
+    # first-8-bytes verbatim copy, the saturated header_minus_payload
+    # arithmetic, the bounded frequency-tally behaviour, the capacity
+    # exhaustion flag, and the NULL / bad-magic rejections — without
+    # claiming any PRS3 decompression.
+    add_executable(test_nexus_v1_bpk_prs3_payload_evidence
+        tests/test_nexus_v1_bpk_prs3_payload_evidence.c
+        src/nexus/nexus_v1_bpk_archive.c
+    )
+    target_include_directories(test_nexus_v1_bpk_prs3_payload_evidence PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_bpk_prs3_payload_evidence PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_bpk_prs3_payload_evidence
+        COMMAND test_nexus_v1_bpk_prs3_payload_evidence
+    )
+
     # ── Nexus V1 DGN actor slot bounds ────────────────────────────
     # Data-free regression: malformed Nexus DGN actor records must clamp
     # spatial fields into the 64x64 grid and normalize the 0..3 facing
@@ -15958,6 +15980,35 @@ add_test(
     COMMAND firestaff_nexus_v1_menumenu_bpk_inspect_probe
 )
 set_tests_properties(nexus_v1_menumenu_bpk_inspect PROPERTIES
+    LABELS "tier4;nexus;bpx_bpk;archive;skip_safe"
+)
+
+# Nexus V1 PRS3 payload-evidence probe (pass1084). Bounded, source-locked
+# walker that surfaces per-entry structural receipts for the (still
+# unknown) PRS3 compression stream — leading 4-byte BE u32, first 8 bytes
+# verbatim, byte-frequency histogram over the first `sample_size` payload
+# bytes (capped at 4 KiB), per-mode compression-ratio distributions —
+# WITHOUT claiming decompression. Includes a synthetic BPPK archive for
+# data-free CI plus an optional real MENU.BPK receipt when present.
+add_executable(firestaff_nexus_v1_bpk_prs3_payload_evidence_probe
+    probes/nexus/firestaff_nexus_v1_bpk_prs3_payload_evidence_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_bpk_prs3_payload_evidence_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_bpk_prs3_payload_evidence_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_bpk_prs3_payload_evidence_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_bpk_prs3_payload_evidence_probe
+    COMMAND firestaff_nexus_v1_bpk_prs3_payload_evidence_probe
+)
+set_tests_properties(nexus_v1_bpk_prs3_payload_evidence_probe PROPERTIES
     LABELS "tier4;nexus;bpx_bpk;archive;skip_safe"
 )
 
