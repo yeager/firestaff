@@ -660,6 +660,7 @@ int M11_Audio_Init(M11_AudioState* state) {
     state->titleMusicEnabled = 1;
     state->lastMarker   = M11_AUDIO_MARKER_NONE;
     state->lastSoundIndex = -1;
+    state->lastMusicTrackId = -1;
     state->sdlStream    = NULL;
 
     /* Pre-generate procedural sounds regardless of backend */
@@ -768,6 +769,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->originalSongPartCount = 0;
     state->originalSongSequenceWordCount = 0;
     state->originalSongPlayablePartCount = 0;
+    state->lastMusicTrackId = -1;
     state->originalSongLoopTargetPart = 0;
     state->titleMusicQueuedCount = 0;
     state->titleMusicEnabled = 0;
@@ -932,6 +934,12 @@ int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex) {
     return M11_Audio_EmitSoundIndex(state,
                                     soundIndex,
                                     M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
+}
+
+int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {
+    if (!state || !state->initialized) return 0;
+    state->lastMusicTrackId = musicTrackId;
+    return 1;
 }
 
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled) {

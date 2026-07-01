@@ -49,6 +49,7 @@ typedef struct {
     int queuedSampleCount;    /* total samples queued to device */
     M11_AudioMarker lastMarker;
     int lastSoundIndex;       /* DM PC v3.4 sound event index, or -1 */
+    int lastMusicTrackId;     /* DM PC v3.4 music track request, or -1 */
 
     /* Original V1 SND3 bank: loaded from GRAPHICS.DAT when available. */
     int originalSnd3Available;
@@ -97,6 +98,7 @@ int  M11_Audio_EmitMarker(M11_AudioState* state, M11_AudioMarker marker);
 M11_AudioMarker M11_Audio_FallbackMarkerForSoundIndex(int soundIndex);
 int  M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMarker fallbackMarker);
 int  M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex);
+int  M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
 int  M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled);
 int  M11_Audio_TitleMusicEnabled(const M11_AudioState* state);
 int  M11_Audio_PlayTitleMusic(M11_AudioState* state);

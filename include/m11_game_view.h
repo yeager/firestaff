@@ -264,6 +264,9 @@ typedef struct {
     int gameWon;
     uint32_t gameWonTick;  /* tick when victory was detected */
     int endgameDoNotDrawFluxcages;
+    int endgameFinalDelayTicks;
+    int endgameRestartAllowed;
+    int endgameCalledWithTrue;
 
     /* Dialog box overlay for text-plaque inspection.
      * When dialogOverlayActive is 1, a styled dialog panel is rendered

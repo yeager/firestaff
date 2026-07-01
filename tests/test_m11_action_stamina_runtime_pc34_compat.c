@@ -6691,6 +6691,18 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     }
     ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_BUZZ,
               "FUSE complete requests F0446 buzz sound");
+    ASSERT_EQ(state.audioState.lastMusicTrackId,
+              DM1_Endgame_GetEndingParams()->victoryMusicId,
+              "FUSE complete requests F0446 game-won music track");
+    ASSERT_EQ(state.endgameFinalDelayTicks,
+              DM1_Endgame_GetEndingParams()->finalDelayTicks,
+              "FUSE complete records F0446 final delay ticks");
+    ASSERT_EQ(state.endgameRestartAllowed,
+              DM1_Endgame_GetEndingParams()->restartAllowedAfterWin,
+              "FUSE complete records F0446 restart disallow gate");
+    ASSERT_EQ(state.endgameCalledWithTrue,
+              DM1_Endgame_GetEndingParams()->endgameCalledWithTrue,
+              "FUSE complete records F0444 Endgame(TRUE) handoff");
     ASSERT_EQ(state.world.explosions.count, 18,
               "FUSE complete keeps cages, fuse effect, bursts, and final pair");
     ASSERT_EQ(state.world.gameWon, 1,
