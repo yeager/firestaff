@@ -20,6 +20,32 @@
  * actually hold glyphs. Without that, the S2D gap-list row
  * "bind the section parser to runtime text layout" stays open.
  *
+ * Shift-JIS lead-byte skip gate (2026-06-29)
+ * ------------------------------------------
+ * The S2D gap-list row explicitly calls out "support real Shift-JIS
+ * double-byte characters" as the next step. The flat 1bpp loader and
+ * the section→glyph-range map are still indexed by glyph ordinal, so
+ * they cannot render a real SJIS pair without a separate glyph-index
+ * decoder that is out of scope for the bounded layout layer. This
+ * module instead offers a deterministic Shift-JIS LEAD-BYTE SKIP
+ * gate: when the byte stream contains a Shift-JIS lead
+ * (0x81..0x9F, 0xE0..0xFC), the layout consumes it (and a valid
+ * trail byte, if present) without drawing or advancing the cursor,
+ * bumps `cursor.sjis_leads_seen` + `cursor.sjis_leads_skipped`, and
+ * stamps the skip into a per-reason histogram. The framebuffer hash
+ * stays bit-identical across two runs that include the same
+ * embedded Shift-JIS bytes — the deterministic receipt the
+ * probe locks.
+ *
+ * This is not a Shift-JIS RENDERER. It is the gate the gap-list
+ * row asks for: a deterministic, hash-stable input filter so that
+ * real Shift-JIS byte streams flowing through the same
+ * parser→map→layout chain do not corrupt the per-line receipt. A
+ * future SJIS-glyph decoder would consume the SJIS pair *before*
+ * this gate (indexing the corresponding glyph directly via the
+ * SCR section/glyph-range map) and skip the byte-level trail
+ * consumed here.
+ *
  * What this module does
  * ---------------------
  * 1. Computes a bounded glyph-range map from the parsed SCR section
@@ -50,9 +76,11 @@
  *   module layers layout on top of those APIs and never re-decodes
  *   a glyph.
  * - It does NOT claim full Saturn SCR font parity. Real Shift-JIS
- *   double-byte characters, vertical text, or proportional advance
- *   widths are NOT supported; the layout API is ASCII-only and uses
- *   a fixed advance width derived from `Nexus_V1_Font.char_width`.
+ *   double-byte characters are not RENDERED; they are skipped via
+ *   a deterministic lead-byte gate (see "Shift-JIS lead-byte skip
+ *   gate" above). Vertical text and proportional advance widths
+ *   are still NOT supported; the layout API advances by a fixed
+ *   width derived from `Nexus_V1_Font.char_width`.
  * - It does NOT touch a real Nexus screen or render against a real
  *   DGN framebuffer. The probe renders into a synthetic indexed
  *   framebuffer that lives entirely in test memory; the optional
@@ -143,6 +171,43 @@ int nexus_v1_s2d_glyph_range_lookup(
     const Nexus_V1_S2D_SectionGlyphMap *map,
     int char_index);
 
+/* ── Shift-JIS lead-byte skip gate ────────────────────────────────────
+ *
+ * Why: real (and synthetic) FONT256.S2D byte streams may carry
+ * Shift-JIS double-byte characters whose byte ranges
+ * (lead 0x81..0x9F, lead 0xE0..0xFC, trail 0x40..0x7E or
+ * 0x80..0xFC) overlap the printable ASCII range that the layout
+ * cursor walks one byte at a time. Until a real Shift-JIS glyph
+ * decoder is wired into the SCR section→glyph-range map, the
+ * layout layer has to filter those bytes deterministically
+ * without corrupting the framebuffer hash. The classifier below
+ * is the deterministic gate; the cursor's
+ * `sjis_leads_seen`/`sjis_leads_skipped` counters and the
+ * `skip_reasons` histogram let the probe prove the
+ * hash-stability invariant.
+ *
+ * Encoding reference (Shift-JIS):
+ *   lead  byte ∈ { 0x81..0x9F } ∪ { 0xE0..0xFC }
+ *   trail byte ∈ { 0x40..0x7E } ∪ { 0x80..0xFC }
+ * Source-lock notes:
+ *   - The trail range excludes 0x7F (DEL) and the byte region
+ *     past 0xFC; both gaps are standard Shift-JIS overhead.
+ *   - This module intentionally does NOT compute a glyph index
+ *     for the (lead, trail) pair — that is a separate decoder
+ *     step that the existing 1bpp loader still owns.
+ */
+
+/* Returns 1 when `c` is a Shift-JIS lead byte (lead range only;
+ * the trail-range check is exposed inline below). Returns 0
+ * otherwise (and unconditionally for `c == 0`). */
+int nexus_v1_s2d_shift_jis_lead_p(unsigned char c);
+
+/* Returns 1 when `c` is a valid Shift-JIS trail byte. Trailing
+ * DEL (0x7F) and bytes past 0xFC are not part of Shift-JIS and
+ * return 0. `c == 0` returns 0 because the layout cursor uses
+ * the NUL terminator as a sentinel. */
+int nexus_v1_s2d_shift_jis_trail_p(unsigned char c);
+
 /* Sum of `char_count` across all populated ranges. Returns 0 when
  * `map` is NULL. */
 int nexus_v1_s2d_glyph_map_total_chars(
@@ -161,6 +226,20 @@ typedef struct {
     uint32_t bytes_per_glyph;    /* 0 = NEXUS_V1_S2D_TEXT_LAYOUT_DEFAULT_BYTES_PER_GLYPH */
 } Nexus_V1_S2D_TextLayoutConfig;
 
+/* Per-reason skip bucket. Used both for the legacy ASCII path
+ * (NON_PRINTABLE / OUT_OF_RANGE / MAX_CHARS) and the Shift-JIS
+ * gate (SHIFT_JIS_LEAD / SHIFT_JIS_PAIR). The probe reads the
+ * histogram to lock the deterministic-input-receipt invariant. */
+typedef enum {
+    NEXUS_V1_S2D_SKIP_NONE = 0,        /* placeholder so the enum starts at 0 */
+    NEXUS_V1_S2D_SKIP_NON_PRINTABLE,    /* control bytes and ASCII beyond 0x7E that are NOT a SJIS lead */
+    NEXUS_V1_S2D_SKIP_OUT_OF_RANGE,     /* printable ASCII whose glyph index falls outside map coverage */
+    NEXUS_V1_S2D_SKIP_SHIFT_JIS_LEAD,   /* lone SJIS lead (no valid trail) — lead byte only */
+    NEXUS_V1_S2D_SKIP_SHIFT_JIS_PAIR,   /* SJIS lead + valid trail pair skipped together */
+    NEXUS_V1_S2D_SKIP_MAX_CHARS,        /* max_chars cap stopped the run mid-string */
+    NEXUS_V1_S2D_SKIP_REASON_COUNT
+} Nexus_V1_S2D_SkipReason;
+
 /* Live cursor state. `char_count_drawn` and `writes` are monotonic
  * counters callers can read for a deterministic per-line receipt. */
 typedef struct {
@@ -174,6 +253,16 @@ typedef struct {
     int chars_clipped;           /* chars drawn but pixels clipped */
     long writes;                 /* total framebuffer writes */
     int max_chars;               /* hard cap; <= 0 = no cap */
+
+    /* Shift-JIS gate counters (2026-06-29). `sjis_leads_seen` is
+     * every lead byte the layout peeked; `sjis_leads_skipped`
+     * counts leads that were dropped (drawn=0). A lead+trail pair
+     * bumps both by 1 because only one lead byte was seen. */
+    int sjis_leads_seen;
+    int sjis_leads_skipped;
+
+    /* Per-reason histogram. Index by `Nexus_V1_S2D_SkipReason`. */
+    int skip_reasons[NEXUS_V1_S2D_SKIP_REASON_COUNT];
 } Nexus_V1_S2D_TextCursor;
 
 /* Owned by the caller; the layout layer keeps borrowed pointers
@@ -216,6 +305,23 @@ int nexus_v1_s2d_text_layout_draw_string(
     int fb_height,
     int fb_stride,
     const char *text);
+
+/* Total SJIS leads seen since the last cursor reset (or init).
+ * Returns 0 when `layout` is NULL. */
+int nexus_v1_s2d_text_layout_sjis_leads_seen(
+    const Nexus_V1_S2D_TextLayout *layout);
+
+/* Total SJIS leads skipped since the last cursor reset (or init).
+ * Returns 0 when `layout` is NULL. */
+int nexus_v1_s2d_text_layout_sjis_leads_skipped(
+    const Nexus_V1_S2D_TextLayout *layout);
+
+/* Number of bytes the layout observed that fell into a given
+ * skip reason bucket since the last cursor reset (or init).
+ * Returns 0 when `layout` is NULL or `reason` is out of range. */
+int nexus_v1_s2d_text_layout_skip_reason_count(
+    const Nexus_V1_S2D_TextLayout *layout,
+    int reason);
 
 /* Hard cap the cursor's `max_chars` so a long string stops drawing
  * at the cap. Use 0 (or negative) to disable the cap. */
