@@ -40,6 +40,19 @@
  *  [18] Out-of-coverage characters (e.g. a synthetic fixture whose
  *       header char_count is smaller than the input string length)
  *       increment chars_skipped and never paint.
+ *  [18a] Shift-JIS lead-byte skip gate (2026-06-29):
+ *       a standalone ASCII classifier recognises the Shift-JIS
+ *       lead-byte range { 0x81..0x9F, 0xE0..0xFC } and trail byte
+ *       range { 0x40..0x7E, 0x80..0xFC }. The draw_string hot
+ *       path consumes a lone lead as a SHIFT_JIS_LEAD skip and a
+ *       lead+trail pair as a SHIFT_JIS_PAIR skip; both bump
+ *       sjis_leads_seen + sjis_leads_skipped and stamp the
+ *       per-reason skip_reasons histogram; both leave the cursor
+ *       advanced exactly as if the lead byte had been a control
+ *       byte. The FNV-1a framebuffer hash stays bit-identical
+ *       across two runs that share the same embedded Shift-JIS
+ *       bytes, both for the synthetic fixture and the optional
+ *       real FONT256.S2D asset.
  *  [19] Real FONT256.S2D optional path: when the operator has
  *       staged the verified 25,012-byte asset, the probe builds a
  *       section→glyph-range map from the real parser output and
@@ -782,6 +795,424 @@ static void run_optional_real_asset_gate(void) {
     free(data);
 }
 
+/* Real FONT256.S2D Shift-JIS skip gate. Mirrors the synthetic
+ * [18a] path but drives the real parser→map→layout chain with an
+ * embedded Shift-JIS script. Verifies the deterministic
+ * framebuffer hash invariant survives the SJIS skip gate on the
+ * real asset, so a future M11 runtime that feeds SJIS-laden
+ * Japanese text into the layout can rely on bit-identical
+ * framebuffer receipts. Skip-safe: returns SKIP when no
+ * FONT256.S2D asset is staged. */
+static void run_optional_real_asset_shift_jis_gate(void) {
+    char path_buf[1024];
+    const char *path = default_real_font_path(path_buf, sizeof(path_buf));
+    long size = 0;
+    uint8_t *data;
+    int rc;
+
+    fprintf(stderr,
+            "\n-- optional real FONT256.S2D Shift-JIS skip gate --\n");
+
+    data = read_entire_file(path, &size);
+    if (!data) {
+        fprintf(stderr, "  SKIP: no local FONT256.S2D at %s\n",
+                path ? path : "(unset)");
+        return;
+    }
+
+    {
+        Nexus_V1_Font font;
+        Nexus_V1_FontSections sections;
+        Nexus_V1_S2D_SectionGlyphMap map;
+        Nexus_V1_S2D_TextLayout layout;
+        Nexus_V1_S2D_TextLayoutConfig cfg;
+        /* A 256x64 indexed framebuffer gives four lines of
+         * headroom for the SJIS-laden script without changing
+         * the hash arithmetic. */
+        uint8_t fb_a[256 * 64];
+        uint8_t fb_b[256 * 64];
+        char script[64];
+        int script_len = 0;
+        int drawn;
+
+        rc = nexus_v1_font_load(&font, data, (int)size);
+        if (rc <= 0) {
+            fprintf(stderr,
+                    "  SKIP: real FONT256.S2D fails to load into flat font\n");
+            free(data);
+            return;
+        }
+
+        rc = nexus_v1_font_load_sections(data, (int)size, &sections);
+        if (rc != 0) {
+            fprintf(stderr,
+                    "  SKIP: real FONT256.S2D section table fails to parse\n");
+            nexus_v1_font_free(&font);
+            free(data);
+            return;
+        }
+
+        rc = nexus_v1_s2d_section_glyph_map(&sections, 32, &map);
+        CHECK(rc == 0, "real-asset SJIS gate: section→glyph-range map builds");
+
+        memset(&cfg, 0, sizeof(cfg));
+        cfg.fg_index = 1;
+        cfg.bg_index = -1;
+        cfg.letter_spacing_x = 0;
+        cfg.line_height = 0;
+        cfg.tab_stop = 0;
+        cfg.bytes_per_glyph = 32;
+        rc = nexus_v1_s2d_text_layout_init(&layout, &font, &map, &cfg);
+        CHECK(rc == 0, "real-asset SJIS gate: layout inits on real FONT256.S2D");
+
+        /* Embed "NEXUS" with a Shift-JIS pair injected between
+         * the N and E bytes so a future operator who replaces
+         * "NEXUS" with Japanese sample text inherits the same
+         * gate invariants without re-deriving the hash math. */
+        script[script_len++] = 'N';
+        script[script_len++] = 'E';
+        script[script_len++] = (char)0x82; /* SJIS lead */
+        script[script_len++] = (char)0xC2; /* SJIS trail */
+        script[script_len++] = 'X';
+        script[script_len++] = 'U';
+        script[script_len++] = 'S';
+        script[script_len++] = (char)0x88; /* lone lead at end */
+        script[script_len] = '\0';
+
+        memset(fb_a, 0, sizeof(fb_a));
+        nexus_v1_s2d_text_layout_reset_cursor(&layout);
+        drawn = nexus_v1_s2d_text_layout_draw_string(
+            &layout, fb_a, 256, 64, 256, script);
+
+        /* The script is "NE\x82\xC2XUS\x88": printable ASCII
+         * bytes are 'N','E','X','U','S' (5); the embedded SJIS
+         * pair ('\x82\xC2') and the lone trailing lead ('\x88')
+         * are SKIPPED, not drawn. */
+        CHECK(drawn == 5,
+              "real-asset SJIS gate: drawn == 5 (N,E,X,U,S printable ASCII only)");
+        CHECK(layout.cursor.chars_drawn == 5,
+              "real-asset SJIS gate: chars_drawn == 5");
+        CHECK(layout.cursor.sjis_leads_seen == 2,
+              "real-asset SJIS gate: sjis_leads_seen == 2 (1 pair + 1 lone)");
+        CHECK(layout.cursor.sjis_leads_skipped == 2,
+              "real-asset SJIS gate: sjis_leads_skipped == 2");
+        CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_SHIFT_JIS_PAIR] == 1,
+              "real-asset SJIS gate: skip_reasons[SHIFT_JIS_PAIR] == 1");
+        CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_SHIFT_JIS_LEAD] == 1,
+              "real-asset SJIS gate: skip_reasons[SHIFT_JIS_LEAD] == 1 (lone trailing)");
+        CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_NON_PRINTABLE] == 0,
+              "real-asset SJIS gate: skip_reasons[NON_PRINTABLE] == 0");
+
+        {
+            uint64_t hash_a, hash_b;
+            memset(fb_b, 0, sizeof(fb_b));
+            nexus_v1_s2d_text_layout_reset_cursor(&layout);
+            nexus_v1_s2d_text_layout_draw_string(
+                &layout, fb_b, 256, 64, 256, script);
+            hash_a = fnv1a64(fb_a, sizeof(fb_a));
+            hash_b = fnv1a64(fb_b, sizeof(fb_b));
+            CHECK(hash_a == hash_b,
+                  "real-asset SJIS gate: FNV-1a framebuffer hash deterministic across two runs on real FONT256.S2D");
+            CHECK(hash_a != UINT64_C(0xcbf29ce484222325),
+                  "real-asset SJIS gate: hash differs from FNV-1a iv (draws actually painted)");
+        }
+
+        nexus_v1_s2d_text_layout_free(&layout);
+        nexus_v1_font_free(&font);
+    }
+
+    free(data);
+}
+
+/* Shift-JIS classifier assertions — kept in their own static so
+ * the gate can run without loading any font or framebuffer. */
+static void run_shift_jis_classifier_only_gate(void) {
+    fprintf(stderr, "\n-- Shift-JIS classifier gate --\n");
+
+    /* Lead range: 0x81..0x9F, 0xE0..0xFC. */
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0x80) == 0,
+          "0x80 is NOT a Shift-JIS lead");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0x81) == 1,
+          "0x81 IS a Shift-JIS lead");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0x9F) == 1,
+          "0x9F IS a Shift-JIS lead (top of first lead range)");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0xA0) == 0,
+          "0xA0 is NOT a Shift-JIS lead (gap between ranges)");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0xDF) == 0,
+          "0xDF is NOT a Shift-JIS lead (gap before second range)");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0xE0) == 1,
+          "0xE0 IS a Shift-JIS lead (bottom of second range)");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0xFC) == 1,
+          "0xFC IS a Shift-JIS lead (top of second range)");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0xFD) == 0,
+          "0xFD is NOT a Shift-JIS lead (past 0xFC)");
+
+    /* Printable ASCII must NOT be classified as a SJIS lead,
+     * even though 0x41 ('A'), 0x40 ('@'), 0x5A ('Z'), etc.
+     * fall inside bytes the SJIS gate would skip anyway. */
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0x20) == 0,
+          "0x20 (space) is NOT a Shift-JIS lead");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0x40) == 0,
+          "0x40 ('@') is NOT a Shift-JIS lead");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0x7E) == 0,
+          "0x7E ('~') is NOT a Shift-JIS lead");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0x7F) == 0,
+          "0x7F (DEL) is NOT a Shift-JIS lead");
+    CHECK(nexus_v1_s2d_shift_jis_lead_p(0x00) == 0,
+          "NUL is NOT a Shift-JIS lead (sentinel for cursor loop)");
+
+    /* Trail range: 0x40..0x7E, 0x80..0xFC; 0x7F and >0xFC are NOT. */
+    CHECK(nexus_v1_s2d_shift_jis_trail_p(0x3F) == 0,
+          "0x3F is NOT a Shift-JIS trail");
+    CHECK(nexus_v1_s2d_shift_jis_trail_p(0x40) == 1,
+          "0x40 IS a Shift-JIS trail (bottom of first range)");
+    CHECK(nexus_v1_s2d_shift_jis_trail_p(0x7E) == 1,
+          "0x7E IS a Shift-JIS trail (top of first range)");
+    CHECK(nexus_v1_s2d_shift_jis_trail_p(0x7F) == 0,
+          "0x7F is NOT a Shift-JIS trail (DEL gap)");
+    CHECK(nexus_v1_s2d_shift_jis_trail_p(0x80) == 1,
+          "0x80 IS a Shift-JIS trail (bottom of second range)");
+    CHECK(nexus_v1_s2d_shift_jis_trail_p(0xFC) == 1,
+          "0xFC IS a Shift-JIS trail (top of second range)");
+    CHECK(nexus_v1_s2d_shift_jis_trail_p(0xFD) == 0,
+          "0xFD is NOT a Shift-JIS trail (past 0xFC)");
+    CHECK(nexus_v1_s2d_shift_jis_trail_p(0x00) == 0,
+          "NUL is NOT a Shift-JIS trail (sentinel for cursor loop)");
+}
+
+/* Synthetic-font Shift-JIS skip gate. Builds a 16x16 1bpp font
+ * covering all 256 glyphs and runs a deterministic script with
+ * embedded Shift-JIS bytes through the layout cursor. Verifies
+ * that the SJIS bytes are skipped (no draw, no cursor advance),
+ * that the per-reason histogram matches the input, and that two
+ * runs of the same script yield bit-identical FNV-1a framebuffer
+ * hashes. Mirrors the [15] deterministic-hash invariant from the
+ * ASCII-only path. */
+static void run_shift_jis_skip_gate(void) {
+    int scr_size = 0;
+    uint8_t *font_scr;
+    Nexus_V1_Font font;
+    Nexus_V1_FontSections sections;
+    Nexus_V1_S2D_SectionGlyphMap map;
+    Nexus_V1_S2D_TextLayout layout;
+    Nexus_V1_S2D_TextLayoutConfig cfg;
+    /* Scratch string buffer. We mix ASCII printable bytes with
+     * Shift-JIS (lead, trail) pairs and a trailing lone lead to
+     * exercise every skip-reason bucket: NON_PRINTABLE,
+     * SHIFT_JIS_PAIR, SHIFT_JIS_LEAD. */
+    char script[64];
+    int script_len = 0;
+    uint8_t fb_a[64 * 16];
+    uint8_t fb_b[64 * 16];
+    int drawn;
+    int rc;
+
+    fprintf(stderr, "\n-- Shift-JIS skip gate (synthetic 256-glyph font) --\n");
+
+    font_scr = make_synthetic_4section_font(256, &scr_size);
+    rc = nexus_v1_font_load(&font, font_scr, scr_size);
+    CHECK(rc > 0, "shift-jis gate: 256-glyph synthetic font loads");
+
+    {
+        uint32_t offsets[32] = {0};
+        uint32_t sizes[32]   = {0};
+        uint8_t *scr2;
+        int ss2 = 0;
+        offsets[0] = 0x120;
+        sizes[0] = (uint32_t)(256 * 32);
+        scr2 = build_scr(offsets, sizes, 256, &ss2);
+        rc = nexus_v1_font_load_sections(scr2, ss2, &sections);
+        CHECK(rc == 0, "shift-jis gate: single-section SCR parses for layout");
+        rc = nexus_v1_s2d_section_glyph_map(&sections, 32, &map);
+        CHECK(rc == 0, "shift-jis gate: section→glyph-range map builds");
+        free(scr2);
+    }
+
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.fg_index = 7;
+    cfg.bg_index = -1;
+    cfg.letter_spacing_x = 1;
+    cfg.line_height = 0;
+    cfg.tab_stop = 0;
+    cfg.bytes_per_glyph = 32;
+    rc = nexus_v1_s2d_text_layout_init(&layout, &font, &map, &cfg);
+    CHECK(rc == 0, "shift-jis gate: layout inits");
+    CHECK(layout.initialized == 1,
+          "shift-jis gate: layout.initialized == 1 after init");
+
+    /* Compose the test script. Pure ASCII (in coverage, 0x20..0x7E
+     * maps to glyph 0..94 of the 256-glyph font) is interleaved
+     * with SJIS pairs from both lead ranges and a lone trailing
+     * lead. The control byte '\r' (0x0D) and the byte 0x80
+     * (ASCII non-printable, NOT a SJIS lead) round out the
+     * NON_PRINTABLE bucket. */
+    {
+        const char ascii[]  = "AB";
+        const unsigned char sjis_pair_1[] = { 0x82, 0xC2 }; /* valid pair */
+        const unsigned char sjis_extended[] = { 0xE0, 0x80 };
+        const unsigned char lone_lead = 0x88;
+        const char ascii_tail[] = "CD";
+        const unsigned char non_printable = 0x80; /* 0x80 is NOT a SJIS lead */
+        const unsigned char ctrl_cr = 0x0D;
+        const unsigned char sjis_pair_2[] = { 0x9F, 0xFC };
+
+        script[script_len++] = ascii[0];  /* 'A' */
+        script[script_len++] = ascii[1];  /* 'B' */
+        script[script_len++] = (char)sjis_pair_1[0]; /* 0x82 */
+        script[script_len++] = (char)sjis_pair_1[1]; /* 0xC2 */
+        script[script_len++] = ascii_tail[0]; /* 'C' */
+        script[script_len++] = non_printable; /* 0x80 → NON_PRINTABLE */
+        script[script_len++] = ascii_tail[1]; /* 'D' */
+        script[script_len++] = ctrl_cr; /* 0x0D → NON_PRINTABLE */
+        script[script_len++] = (char)sjis_extended[0]; /* 0xE0 */
+        script[script_len++] = (char)sjis_extended[1]; /* 0x80 */
+        script[script_len++] = (char)sjis_pair_2[0]; /* 0x9F */
+        script[script_len++] = (char)sjis_pair_2[1]; /* 0xFC */
+        script[script_len++] = lone_lead; /* 0x88 → SHIFT_JIS_LEAD (no trail) */
+        script[script_len] = '\0';
+    }
+
+    /* Run #1. */
+    memset(fb_a, 0, sizeof(fb_a));
+    nexus_v1_s2d_text_layout_reset_cursor(&layout);
+    drawn = nexus_v1_s2d_text_layout_draw_string(
+        &layout, fb_a, 64, 16, 64, script);
+
+    CHECK(drawn == 4, "shift-jis gate: drawn == 4 (A,B,C,D only)");
+    CHECK(layout.cursor.chars_drawn == 4,
+          "shift-jis gate: chars_drawn == 4");
+    CHECK(layout.cursor.chars_skipped == 0,
+          "shift-jis gate: chars_skipped == 0 (all printable ASCII in coverage)");
+    CHECK(layout.cursor.sjis_leads_seen == 4,
+          "shift-jis gate: sjis_leads_seen == 4 (3 pairs + 1 lone)");
+    CHECK(layout.cursor.sjis_leads_skipped == 4,
+          "shift-jis gate: sjis_leads_skipped == 4 (every SJIS lead dropped)");
+    CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_SHIFT_JIS_PAIR] == 3,
+          "shift-jis gate: skip_reasons[SHIFT_JIS_PAIR] == 3");
+    CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_SHIFT_JIS_LEAD] == 1,
+          "shift-jis gate: skip_reasons[SHIFT_JIS_LEAD] == 1 (lone trailing lead)");
+    CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_NON_PRINTABLE] == 2,
+          "shift-jis gate: skip_reasons[NON_PRINTABLE] == 2 (0x80 + 0x0D)");
+    CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_OUT_OF_RANGE] == 0,
+          "shift-jis gate: skip_reasons[OUT_OF_RANGE] == 0 (all in coverage)");
+    CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_MAX_CHARS] == 0,
+          "shift-jis gate: skip_reasons[MAX_CHARS] == 0 (no cap)");
+    /* Cursor advanced exactly 4 ASCII glyphs. The SJIS bytes do
+     * NOT advance cursor_x because the layout does not claim to
+     * render them. */
+    CHECK(layout.cursor.cursor_x == 4 * (16 + 1),
+          "shift-jis gate: cursor_x == 4*(16+letter_spacing) (only ASCII advances)");
+    CHECK(layout.cursor.cursor_y == 0,
+          "shift-jis gate: cursor_y == 0 (no newlines)");
+    CHECK(layout.cursor.writes > 0,
+          "shift-jis gate: writes > 0 (the A/B/C/D ASCII glyphs painted pixels)");
+    /* The accessor functions must agree with the cursor fields. */
+    CHECK(nexus_v1_s2d_text_layout_sjis_leads_seen(&layout) == 4,
+          "shift-jis gate: layout_sjis_leads_seen accessor == 4");
+    CHECK(nexus_v1_s2d_text_layout_sjis_leads_skipped(&layout) == 4,
+          "shift-jis gate: layout_sjis_leads_skipped accessor == 4");
+    CHECK(nexus_v1_s2d_text_layout_skip_reason_count(
+              &layout, NEXUS_V1_S2D_SKIP_SHIFT_JIS_PAIR) == 3,
+          "shift-jis gate: skip_reason_count accessor == 3 for SHIFT_JIS_PAIR");
+
+    /* Run #2: same script, same layout, fresh framebuffer. The
+     * FNV-1a framebuffer hash must be bit-identical. */
+    {
+        uint64_t hash_a, hash_b;
+        memset(fb_b, 0, sizeof(fb_b));
+        nexus_v1_s2d_text_layout_reset_cursor(&layout);
+        nexus_v1_s2d_text_layout_draw_string(
+            &layout, fb_b, 64, 16, 64, script);
+        hash_a = fnv1a64(fb_a, sizeof(fb_a));
+        hash_b = fnv1a64(fb_b, sizeof(fb_b));
+        CHECK(hash_a == hash_b,
+              "shift-jis gate: FNV-1a framebuffer hash is deterministic across two runs");
+        CHECK(hash_a != UINT64_C(0xcbf29ce484222325),
+              "shift-jis gate: hash differs from FNV-1a iv (draws actually painted)");
+    }
+
+    /* Run #3: drop the SJIS bytes from the script and confirm
+     * that the SJIS skip gate is what kept the run-1/run-2 hashes
+     * identical to a fresh "ASCII only" hash. */
+    {
+        const char ascii_only[] = "ABCD";
+        uint8_t fb_ascii[64 * 16];
+        uint64_t ascii_hash;
+        memset(fb_ascii, 0, sizeof(fb_ascii));
+        nexus_v1_s2d_text_layout_reset_cursor(&layout);
+        nexus_v1_s2d_text_layout_draw_string(
+            &layout, fb_ascii, 64, 16, 64, ascii_only);
+        ascii_hash = fnv1a64(fb_ascii, sizeof(fb_ascii));
+        CHECK(ascii_hash == fnv1a64(fb_a, sizeof(fb_a)),
+              "shift-jis gate: SJIS bytes contribute zero pixels (hash matches ASCII-only run)");
+    }
+
+    /* Reset clears the SJIS counters and skip_reasons. */
+    nexus_v1_s2d_text_layout_reset_cursor(&layout);
+    CHECK(layout.cursor.sjis_leads_seen == 0,
+          "shift-jis gate: reset_cursor clears sjis_leads_seen");
+    CHECK(layout.cursor.sjis_leads_skipped == 0,
+          "shift-jis gate: reset_cursor clears sjis_leads_skipped");
+    {
+        int i;
+        int sum = 0;
+        for (i = 0; i < NEXUS_V1_S2D_SKIP_REASON_COUNT; ++i) {
+            sum += layout.cursor.skip_reasons[i];
+        }
+        CHECK(sum == 0,
+              "shift-jis gate: reset_cursor clears skip_reasons histogram");
+    }
+
+    /* max_chars cap interleaved with SJIS bytes still
+     * reports exactly one MAX_CHARS bucket hit even if the
+     * skip-reason overflow spans multiple bytes. */
+    {
+        char cap_script[64];
+        int cap_len = 0;
+        /* "ABCDE" then a SJIS pair then "FGH" — cap at 3 so the
+         * loop bails before drawing 'D'/'E' *and* before
+         * consuming the SJIS pair. */
+        cap_script[cap_len++] = 'A';
+        cap_script[cap_len++] = 'B';
+        cap_script[cap_len++] = 'C';
+        cap_script[cap_len++] = 'D';
+        cap_script[cap_len++] = 'E';
+        cap_script[cap_len++] = (char)0x82;
+        cap_script[cap_len++] = (char)0xC2;
+        cap_script[cap_len++] = 'F';
+        cap_script[cap_len++] = 'G';
+        cap_script[cap_len++] = 'H';
+        cap_script[cap_len] = '\0';
+        nexus_v1_s2d_text_layout_reset_cursor(&layout);
+        nexus_v1_s2d_text_layout_set_max_chars(&layout, 3);
+        drawn = nexus_v1_s2d_text_layout_draw_string(
+            &layout, fb_a, 64, 16, 64, cap_script);
+        CHECK(drawn == 3, "shift-jis gate: max_chars cap applied before SJIS bytes");
+        CHECK(layout.cursor.sjis_leads_seen == 0,
+              "shift-jis gate: SJIS leads not consumed once max_chars fires");
+        CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_MAX_CHARS] == 1,
+              "shift-jis gate: skip_reasons[MAX_CHARS] == 1 (single stop event)");
+        nexus_v1_s2d_text_layout_set_max_chars(&layout, 0);
+    }
+
+    /* NULL-safety on the new accessor functions. */
+    CHECK(nexus_v1_s2d_text_layout_sjis_leads_seen(NULL) == 0,
+          "shift-jis gate: sjis_leads_seen(NULL) == 0");
+    CHECK(nexus_v1_s2d_text_layout_sjis_leads_skipped(NULL) == 0,
+          "shift-jis gate: sjis_leads_skipped(NULL) == 0");
+    CHECK(nexus_v1_s2d_text_layout_skip_reason_count(NULL, 0) == 0,
+          "shift-jis gate: skip_reason_count(NULL, ...) == 0");
+    CHECK(nexus_v1_s2d_text_layout_skip_reason_count(&layout, -1) == 0,
+          "shift-jis gate: skip_reason_count(layout, -1) == 0");
+    CHECK(nexus_v1_s2d_text_layout_skip_reason_count(
+              &layout, NEXUS_V1_S2D_SKIP_REASON_COUNT) == 0,
+          "shift-jis gate: skip_reason_count(layout, REASON_COUNT) == 0 (out of range)");
+
+    nexus_v1_s2d_text_layout_free(&layout);
+    nexus_v1_font_free(&font);
+    free(font_scr);
+}
+
 int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
@@ -790,6 +1221,9 @@ int main(void) {
     run_map_only_gate();
     run_layout_only_gate();
     run_optional_real_asset_gate();
+    run_shift_jis_classifier_only_gate();
+    run_shift_jis_skip_gate();
+    run_optional_real_asset_shift_jis_gate();
 
     fprintf(stderr, "\n# summary: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
