@@ -22607,6 +22607,35 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/firestaff_m11_input_scale_boundary
     )
 endif()
 
+# M11 input scale inverse / null / degenerate-safety contract. The
+# companion to the boundary test above; covers the NULL pointer
+# guard, monotonicity of the reverse mapping across
+# V20_FILTERED/V21_UPSCALED/V22_MODERN at 3-4 realistic extents each,
+# source-cell identity on the inverse direction (presented center
+# -> source cell in [-1, +1] of the original sx/sy), and
+# degenerate 1-pixel-extent edge cases. Disjoint from
+# m11_input_scale_boundary_pc34_compat (which pins V20 extents are
+# ignored, V21/V22 zero-or-negative extents are refused, top/bottom
+# round-trip, and the return-value matrix). Source-locked against
+# ReDMCSB COMMAND.C:1379-1449 F0358 mouse-row scan, COMMAND.C:1641-
+# 1660 F0359 primary click dispatch, and
+# src/engine/m11_game_input_mapping.c
+# M11_MapPresentedGamePointToSourceForPresentation.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_scale_inverse_safety_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/m11_game_input_mapping.c")
+    add_executable(test_m11_input_scale_inverse_safety_pc34_compat
+        tests/test_m11_input_scale_inverse_safety_pc34_compat.c
+        src/engine/m11_game_input_mapping.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_input_scale_inverse_safety_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_input_scale_inverse_safety_pc34_compat
+        COMMAND test_m11_input_scale_inverse_safety_pc34_compat
+    )
+endif()
+
 # M11 asset-loader blit helper contract. The test uses a synthetic
 # M11_AssetSlot so it covers clipping, nearest scaling, mirroring,
 # transparent pixels, replacement colors, and the champion-portrait-style
