@@ -13234,8 +13234,9 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
          * 2196-2208: a leader-hand throw temporarily places the leader
          * object in the champion action hand for F0312 strength, then
          * restores the original action hand before F0212 creates the
-         * projectile.  Firestaff clears the leader hand only after a
-         * projectile slot is accepted, preserving inventory on failure. */
+         * projectile.  Firestaff clears the leader hand only after F0328
+         * accepts the throw, preserving inventory on pre-F0328 failure;
+         * PJE-05 full-list overflow is an accepted throw with no new slot. */
         champ->inventory[CHAMPION_SLOT_ACTION_HAND] = throwThing;
         spawned = m11_dm1_f0328_spawn_thrown_thing(state, championIndex,
                                                    champ, throwThing,
