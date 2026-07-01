@@ -6420,7 +6420,9 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     int partyFluxcageCount = -1;
     int chaosFluxcageCount = -1;
     int fireballAttackSeen[6] = {0, 0, 0, 0, 0, 0};
+    int harmAttackSeen[6] = {0, 0, 0, 0, 0, 0};
     int fireballBurstCount = 0;
+    int harmBurstCount = 0;
     int i;
 
     seed_state(&state, 100, 41);
@@ -6546,14 +6548,38 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
         }
         fireballBurstCount++;
     }
-    ASSERT_EQ(fireballBurstCount, 6,
-              "FUSE complete creates the F0446 opening fireball burst");
+    ASSERT_EQ(fireballBurstCount, 7,
+              "FUSE complete creates the F0446 opening fireball burst plus final fireball");
     for (i = 0; i < 6; ++i) {
-        ASSERT_EQ(fireballAttackSeen[i], 1,
-                  "FUSE complete creates each source fireball attack once");
+        int expected = (i == 5) ? 2 : 1;
+        ASSERT_EQ(fireballAttackSeen[i], expected,
+                  "FUSE complete creates source fireball attacks and final 255");
     }
-    ASSERT_EQ(state.world.explosions.count, 10,
-              "FUSE complete keeps cages, HNM fuse effect, and fireball burst");
+    fireballBurstCount = 0;
+    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
+        const struct ExplosionInstance_Compat* e =
+            &state.world.explosions.entries[i];
+        if (e->reserved0 == 0) continue;
+        if (e->explosionType != C003_EXPLOSION_HARM_NON_MATERIAL) continue;
+        if (e->mapIndex != 0 || e->mapX != 2 || e->mapY != 1) continue;
+        if (e->cell != EXPLOSION_CELL_CENTERED) continue;
+        if (e->attack >= 55 && e->attack <= 255 &&
+            ((e->attack - 55) % 40) == 0) {
+            harmAttackSeen[(e->attack - 55) / 40] += 1;
+        }
+        harmBurstCount++;
+    }
+    ASSERT_EQ(harmBurstCount, 8,
+              "FUSE complete keeps fuse HNM plus F0446 HNM burst and final HNM");
+    for (i = 0; i < 6; ++i) {
+        int expected = (i == 5) ? 3 : 1;
+        ASSERT_EQ(harmAttackSeen[i], expected,
+                  "FUSE complete creates source HNM attacks and final 255s");
+    }
+    ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_BUZZ,
+              "FUSE complete requests F0446 buzz sound");
+    ASSERT_EQ(state.world.explosions.count, 18,
+              "FUSE complete keeps cages, fuse effect, bursts, and final pair");
     ASSERT_EQ(state.world.gameWon, 1,
               "FUSE complete sets M10 world game-won state");
     ASSERT_EQ(M11_GameView_IsGameWon(&state), 1,
