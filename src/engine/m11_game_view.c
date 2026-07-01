@@ -3446,6 +3446,7 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
                     state->world.party.champions[i].actionIndex = 0xFFu;
                 }
                 state->actionDisabledIndex[i] = 0xFFu;
+                state->actionEnableSlotOrdinal[i] = 0xFFu;
             }
         }
     }
@@ -3476,6 +3477,7 @@ static void m11_disable_champion_action_after_action(
     state->actionDisabledTicks[championIndex] = ticks;
     state->actionDisabledIndex[championIndex] =
         state->actionDisabledTicks[championIndex] ? actionIndex : 0xFFu;
+    state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
 }
 
 static void m11_disable_champion_action_after_action_ticks(
@@ -3488,6 +3490,7 @@ static void m11_disable_champion_action_after_action_ticks(
     if (actionIndex >= 44) return;
     state->actionDisabledTicks[championIndex] = ticks;
     state->actionDisabledIndex[championIndex] = ticks ? actionIndex : 0xFFu;
+    state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
 }
 
 /* ── Apply sensor effects from movement pipeline ──
@@ -7689,6 +7692,13 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->v1ObjectDescriptionThing = THING_NONE;
     state->v1ObjectDescriptionIconIndex = -1;
     state->v1FoodWaterPanelActive = 0;
+    {
+        int i;
+        for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+            state->actionDisabledIndex[i] = 0xFFu;
+            state->actionEnableSlotOrdinal[i] = 0xFFu;
+        }
+    }
     m11_set_status(state, "BOOT", "GAME VIEW NOT STARTED");
     m11_set_inspect_readout(state, "NO FOCUS", "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL");
 
@@ -24994,6 +25004,13 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         }
         m11_disable_champion_action_after_action_ticks(
             state, championIndex, chosen, disabledTicks);
+        if (chosen == DM1_ACTION_THROW && performed) {
+            /* ReDMCSB: MENU.C F0407 lines 1613-1617 stores
+             * C01_SLOT_ACTION_HAND in the champion enable-action event
+             * when F0328 accepts the thrown object. */
+            state->actionEnableSlotOrdinal[championIndex] =
+                CHAMPION_SLOT_ACTION_HAND;
+        }
     }
     m11_award_action_xp_f0407(
         state, championIndex, chosen, actionExperienceGain);
@@ -25110,6 +25127,13 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
         }
         m11_disable_champion_action_after_action_ticks(
             state, championIndex, (unsigned char)actionIndex, disabledTicks);
+        if (actionIndex == DM1_ACTION_THROW && performed) {
+            /* ReDMCSB: MENU.C F0407 lines 1613-1617 stores
+             * C01_SLOT_ACTION_HAND in the champion enable-action event
+             * when F0328 accepts the thrown object. */
+            state->actionEnableSlotOrdinal[championIndex] =
+                CHAMPION_SLOT_ACTION_HAND;
+        }
     }
     m11_award_action_xp_f0407(
         state, championIndex, (unsigned char)actionIndex, actionExperienceGain);
