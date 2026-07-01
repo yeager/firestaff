@@ -49,6 +49,7 @@
 #include "dm1_v1_inscription_font_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
+#include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
 #include "firestaff_po_loader.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
@@ -3405,14 +3406,13 @@ static int m11_start_v1_mouth_animation(M11_GameViewState* state,
                                         const DM1ConsumableResultPc34* result);
 static int m11_tick_v1_mouth_animation(M11_GameViewState* state);
 
-/* ReDMCSB MENU.C G0491_auc_Graphic560_ActionDisabledTicks lines 157-201.
- * F0407 disables the acting champion after the action tail; TIMELINE.C F0253
- * later clears that disabled-action state. */
-static const unsigned char M11_ACTION_DISABLED_TICKS[44] = {
-    0, 6, 8, 0, 6, 3, 1, 5, 3, 5, 35, 20, 4, 6, 10, 16,
-    2, 18, 8, 30, 42, 31, 10, 38, 9, 20, 10, 16, 4, 12, 20, 7,
-    14, 30, 35, 2, 19, 9, 10, 15, 22, 10, 0, 2
-};
+static unsigned char m11_action_disabled_ticks_f0407(unsigned char actionIndex) {
+    int ticks;
+    /* ReDMCSB MENU.C G0491 lines 157-201.  Use the shared DM1 PC34
+     * source-lock table instead of keeping a second runtime copy. */
+    ticks = dm1_v1_graphic560_action_disabled_ticks_get_pc34(actionIndex);
+    return ticks < 0 ? 0u : (unsigned char)ticks;
+}
 
 static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
     int i;
@@ -3455,7 +3455,7 @@ static void m11_disable_champion_action_after_action(
     if (!state) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
     if (actionIndex >= 44) return;
-    ticks = M11_ACTION_DISABLED_TICKS[actionIndex];
+    ticks = m11_action_disabled_ticks_f0407(actionIndex);
     state->actionDisabledTicks[championIndex] = ticks;
     state->actionDisabledIndex[championIndex] =
         state->actionDisabledTicks[championIndex] ? actionIndex : 0xFFu;
@@ -24627,7 +24627,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         actionExperienceGain = actionXpRoute.experienceGain;
     }
     if (m11_action_is_melee_contact(chosen)) {
-        unsigned char disabledTicks = M11_ACTION_DISABLED_TICKS[chosen];
+        unsigned char disabledTicks = m11_action_disabled_ticks_f0407(chosen);
         /* Advance one tick with CMD_ATTACK while preserving F0391's chosen
          * F0407 action index.  M10 owns front-square group/creature
          * selection through its ReDMCSB F0177/F0229 auto-target bridge. */
@@ -24644,7 +24644,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         m11_disable_champion_action_after_action_ticks(
             state, championIndex, chosen, disabledTicks);
     } else {
-        unsigned char disabledTicks = M11_ACTION_DISABLED_TICKS[chosen];
+        unsigned char disabledTicks = m11_action_disabled_ticks_f0407(chosen);
         /* Non-melee: apply bounded effect (if any), then advance
          * a CMD_NONE tick so "time passes" semantics hold —
          * action stamina has drained, action-disabled ticks roll forward,
@@ -24756,7 +24756,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     (void)m11_apply_tick(state, CMD_NONE, "ACTION");
     {
         unsigned char disabledTicks =
-            M11_ACTION_DISABLED_TICKS[(unsigned char)actionIndex];
+            m11_action_disabled_ticks_f0407((unsigned char)actionIndex);
         if (m11_action_is_party_shield((unsigned char)actionIndex) &&
             !performed) {
             /* ReDMCSB MENU.C F0407 lines 1456-1461 quarters G0497 XP
