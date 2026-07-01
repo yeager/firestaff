@@ -2393,6 +2393,39 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 save real-artifact boundary probe.
+# Drives a real binary DUNGEON.DAT + a deterministic CSB_V1_PartyState
+# through the live F0435 STARTEND_LoadGame-shaped save/load round-trip
+# via csb_v1_save_real_artifact_boundary_pc34_compat. Closes the
+# real-save-compatibility-artifact slice of the 2026-06-22 CSB V1
+# save runtime boundary follow-up.
+#
+# Skip-safe by design: hosts without user-staged PC CSB DUNGEON.DAT
+# exit 0 with a SKIP message after the synthetic-fixture pass has
+# already proven the gate's verdict contract. The dungeon buffer is
+# heap-allocated (16 MB cap) to avoid stack overflow on hosts with a
+# small default stack (8 MB on macOS arm64).
+#
+# Source-locked against ReDMCSB LOADSAVE.C F0435 + SAVEHEAD.C F0429/
+# F0430 + SAVEUTIL.C F0417 + DEFS.H C29 + DUNGEON.C F0148/F0151/
+# F0156/F0161 + DECOMPDU.C F0455.
+add_executable(firestaff_csb_v1_save_real_artifact_boundary_probe
+    probes/csb/firestaff_csb_v1_save_real_artifact_boundary_probe.c
+    src/csb/csb_v1_save_real_artifact_boundary_pc34_compat.c
+    src/csb/csb_v1_save_load_pc34_compat.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_save_real_artifact_boundary_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_save_real_artifact_boundary_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_save_real_artifact_boundary_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 PC 3.4 quickplay/startup dungeon-handle probe.
 # Narrow runtime-boundary probe that proves the verified DUNGEON.DAT
 # handle survives boot handoff into the runtime AND is cleared on a
@@ -16059,6 +16092,26 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_csbwin_save_loader_boundary PROPERTIES
             LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 save real-artifact boundary probe ctest entry ──────
+    # Tier 2 / Skip-safe: hosts without user-staged PC CSB
+    # DUNGEON.DAT exit 0 with a SKIP message after the
+    # synthetic-fixture portion has already proven the gate's
+    # verdict contract. This is the real-bytes counterpart to
+    # the data-free csb_v1_save_runtime_boundary_pc34_compat
+    # CTest and advances the 2026-06-22 CSB V1 save runtime
+    # boundary follow-up's "real save compatibility artifacts"
+    # slice.
+    if(TARGET firestaff_csb_v1_save_real_artifact_boundary_probe)
+        add_test(
+            NAME csb_v1_save_real_artifact_boundary
+            COMMAND firestaff_csb_v1_save_real_artifact_boundary_probe
+        )
+        set_tests_properties(csb_v1_save_real_artifact_boundary PROPERTIES
+            LABELS "tier2;csb;save_runtime;real_data;skip_safe"
             TIMEOUT 120
         )
     endif()
