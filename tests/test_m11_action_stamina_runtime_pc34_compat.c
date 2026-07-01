@@ -6301,6 +6301,63 @@ static void test_fuse_incomplete_fluxcage_moves_lord_chaos_escape(void) {
               "FUSE escape does not trigger the completed fuse ending");
 }
 
+static void test_fuse_without_lord_chaos_keeps_action_performed_tail(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[25];
+    unsigned short squareFirstThings[25];
+    struct DungeonThings_Compat things;
+    int i;
+
+    seed_state(&state, 100, 41);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    for (i = 0; i < 25; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 5;
+    maps[0].height = 5;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 25;
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 2;
+    state.world.party.mapY = 2;
+    state.world.party.direction = 0; /* north: target is (2,1). */
+    state.world.party.champions[0].direction = 3;
+    state.world.party.champions[0].food = 0;
+    state.world.party.champions[0].water = 0;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 25;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FUSE),
+              1,
+              "FUSE without Lord Chaos keeps F0407 ActionPerformed true");
+    ASSERT_EQ(state.world.party.champions[0].direction, 0,
+              "FUSE without Lord Chaos mirrors F0406 champion direction");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_FUSE),
+              "FUSE without Lord Chaos keeps the common G0491 tail");
+    ASSERT_EQ(state.world.gameWon, 0,
+              "FUSE without Lord Chaos does not trigger the ending");
+}
+
 static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -6470,6 +6527,7 @@ int main(void) {
     test_fluxcage_schedules_f0224_remove_event();
     test_fluxcage_third_cage_schedules_lord_chaos_danger();
     test_fuse_incomplete_fluxcage_moves_lord_chaos_escape();
+    test_fuse_without_lord_chaos_keeps_action_performed_tail();
     test_fuse_complete_fluxcage_sets_m11_game_won_gate();
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_halves_disable_ticks_when_f0402_fails();
