@@ -23,6 +23,7 @@ static int g_fail = 0;
 /* Forward declarations for tests defined after main(). */
 static void test_champion_is_lucky(void);
 static void test_f0735_lucky_hit_enters_damage_path(void);
+static void test_f0735_zero_luck_f0308_uses_pc34_rng_count(void);
 static void test_f0735_non_material_gate_skips_luck(void);
 static void test_f0735_dexterity_255_skips_hit_branch(void);
 static void test_ordered_cells_to_attack_priority(void);
@@ -854,6 +855,7 @@ int main(void) {
     test_ranged_shoot_sling_ammunition();
     test_champion_is_lucky();
     test_f0735_lucky_hit_enters_damage_path();
+    test_f0735_zero_luck_f0308_uses_pc34_rng_count();
     test_f0735_non_material_gate_skips_luck();
     test_f0735_dexterity_255_skips_hit_branch();
     test_ordered_cells_to_attack_priority();
@@ -987,6 +989,76 @@ static void test_f0735_lucky_hit_enters_damage_path(void) {
     }
 
     FAIL("no deterministic seed reached the F0308 lucky-hit branch");
+}
+
+/* -- Test: F0231 zero-Luck F0308 branch uses PC34 RNG count ----------- */
+static void test_f0735_zero_luck_f0308_uses_pc34_rng_count(void) {
+    TEST(f0735_zero_luck_f0308_uses_pc34_rng_count);
+
+    for (uint32_t seed = 1; seed < 4096; ++seed) {
+        struct RngState_Compat probeRng;
+        int rand1;
+        int rand2;
+        int randShort;
+        int dexOk;
+
+        CHECK(F0730_COMBAT_RngInit_Compat(&probeRng, seed) == 1,
+              "probe rng init should accept seed");
+        rand1 = F0732_COMBAT_RngRandom_Compat(&probeRng, 32);
+        rand2 = F0732_COMBAT_RngRandom_Compat(&probeRng, 4);
+        randShort = F0732_COMBAT_RngRandom_Compat(&probeRng, 2);
+        dexOk = (0 > (rand1 + 80 + 30 - 16));
+
+        if (!dexOk && rand2 != 0 && randShort == 0) {
+            struct CombatantChampionSnapshot_Compat attacker;
+            struct CombatantCreatureSnapshot_Compat defender;
+            struct WeaponProfile_Compat weapon;
+            struct CombatResult_Compat out;
+            struct RngState_Compat rng;
+
+            memset(&attacker, 0, sizeof(attacker));
+            memset(&defender, 0, sizeof(defender));
+            memset(&weapon, 0, sizeof(weapon));
+            memset(&out, 0, sizeof(out));
+            CHECK(F0730_COMBAT_RngInit_Compat(&rng, seed) == 1,
+                  "resolver rng init should accept selected seed");
+
+            attacker.championIndex = 0;
+            attacker.currentHealth = 100;
+            attacker.dexterity = 0;
+            attacker.strengthActionHand = 100;
+            attacker.skillLevelAction = 0;
+            attacker.statisticLuck = 0;
+            attacker.statisticLuckMax = 30;
+            attacker.statisticLuckMin = 0;
+
+            defender.creatureType = CREATURE_TYPE_GIANT_SCORPION;
+            defender.defense = 0;
+            defender.dexterity = 80;
+            defender.attributes = 0;
+            defender.doubledMapDifficulty = 30;
+            defender.healthBefore = 200;
+
+            weapon.hitProbability = 0;
+            weapon.damageFactor = 32;
+
+            CHECK(F0735_COMBAT_ResolveChampionMelee_Compat(
+                      &attacker, &weapon, &defender, &rng, &out) == 1,
+                  "F0735 should resolve zero-Luck F0308 fixture");
+            CHECK(out.hitLanded == 0,
+                  "zero-Luck F0308 fixture should remain a miss");
+            CHECK(out.luckyHit == 0,
+                  "PC34 Luck <= 0 branch cannot produce lucky hit");
+            CHECK(out.rngCallCount == 3,
+                  "PC34 Luck <= 0 branch consumes rand32, rand4, rand2 only");
+            CHECK(attacker.statisticLuck == 2,
+                  "PC34 Luck <= 0 non-lucky branch still applies +2 bounded Luck");
+            PASS();
+            return;
+        }
+    }
+
+    FAIL("no deterministic seed reached the zero-Luck F0308 branch");
 }
 
 /* -- Test: F0231 non-material gate short-circuits F0308 -------------- */

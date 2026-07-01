@@ -218,12 +218,10 @@ int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
  * (M005_RANDOM(2)) that bypasses the luck check entirely; on the
  * non-short-circuit path the luck statistic is doubled and rolled
  * against the per-attack percentage, then luck itself is bumped
- * by ±2 and clamped to [min, max].  The negative-luck path is the
- * BUG0_38 cursed-items exploit (CHAMPION.C:1130) — if luck <= 0
- * the "lucky" outcome is forced to 0.  Re-implemented here so the
- * v1 combat path can wire it in.  RNG state flows through the
- * caller-owned F0732 (Phase 13) so the test suite stays
- * reproducible.
+ * by ±2 and clamped to [min, max].  PC 3.4 / I34E uses the later
+ * MEDIA722 branch: if luck <= 0 the "lucky" outcome is forced to 0
+ * and no random(luck * 2) call is made.  RNG state flows through the
+ * caller-owned F0732 (Phase 13) so the test suite stays reproducible.
  *
  * Returns:
  *   1 = champion is lucky
@@ -232,7 +230,8 @@ int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
 static int combat_champion_is_lucky(
     struct CombatantChampionSnapshot_Compat* champ,
     struct RngState_Compat* rng,
-    int percentage)
+    int percentage,
+    int* outRngCalls)
 {
     unsigned int randShort;
     unsigned int randPct;
@@ -243,12 +242,16 @@ static int combat_champion_is_lucky(
     int luckNew;
 
     if (champ == 0 || rng == 0) {
+        if (outRngCalls) *outRngCalls = 0;
         return 0;
     }
+    if (outRngCalls) *outRngCalls = 0;
     /* 50% short-circuit (CHAMPION.C:1138). */
     randShort = F0732_COMBAT_RngRandom_Compat(rng, 2);
+    if (outRngCalls) *outRngCalls += 1;
     if (randShort != 0) {
         randPct = F0732_COMBAT_RngRandom_Compat(rng, 100);
+        if (outRngCalls) *outRngCalls += 1;
         if (randPct > (unsigned int)percentage) {
             isLucky = 1;
         } else {
@@ -259,11 +262,13 @@ static int combat_champion_is_lucky(
         luckMin = champ->statisticLuckMin;
         luckMax = champ->statisticLuckMax;
         if (luckCur <= 0) {
-            /* BUG0_38 cursed-items exploit: negative luck forces
-             * the non-lucky outcome. */
+            /* ReDMCSB: CHAMPION.C F0308 lines 1146-1151, PC/I34E
+             * MEDIA722 branch.  Luck <= 0 forces the non-lucky outcome
+             * without drawing random(luck * 2). */
             isLucky = 0;
         } else {
             unsigned int r = F0732_COMBAT_RngRandom_Compat(rng, luckCur << 1);
+            if (outRngCalls) *outRngCalls += 1;
             isLucky = (r > (unsigned int)percentage) ? 1 : 0;
         }
         /* CHAMPION.C:1138: ±2 with F0026_MAIN_GetBoundedValue clamp. */
@@ -526,9 +531,11 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
      * expression short-circuits the non-material gate before any RNG in the
      * hit branch. */
     if (!dexOk && !rand2IsZero) {
+        int luckyRngCalls = 0;
         int lucky = combat_champion_is_lucky(
-            attacker, rng, 75 - (weapon->hitProbability & 0x00FF));
-        out->rngCallCount += 2; /* combat_champion_is_lucky: short-circuit + pct (or luck×2) */
+            attacker, rng, 75 - (weapon->hitProbability & 0x00FF),
+            &luckyRngCalls);
+        out->rngCallCount += luckyRngCalls;
         if (lucky) {
             luckyHit = 1;
             out->luckyHit = 1;
