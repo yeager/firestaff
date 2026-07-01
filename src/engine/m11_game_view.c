@@ -21314,6 +21314,98 @@ static int m11_spawn_centered_explosion(M11_GameViewState* state,
                                          &slot, &eFirst);
 }
 
+static void m11_schedule_creature_reaction_f0209(
+    M11_GameViewState* state,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int reactionType);
+
+static int m11_fluxcage_present_on_square_f0224(M11_GameViewState* state,
+                                                int mapIndex,
+                                                int mapX,
+                                                int mapY) {
+    int count = 0;
+    if (!state) return 0;
+    (void)F0871_RUNTIME_CountFluxcagesOnSquare_Compat(&state->world.explosions,
+                                                      mapIndex, mapX, mapY,
+                                                      &count);
+    return (count > 0) ? 1 : 0;
+}
+
+static int m11_lord_chaos_group_on_square_f0224(
+    M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outGroupIndex,
+    const struct DungeonGroup_Compat** outGroup) {
+    unsigned short groupThing;
+    int groupIndex;
+    if (!state || !state->world.things || !outGroupIndex || !outGroup) return 0;
+    groupThing = m11_find_group_on_square(&state->world, mapIndex, mapX, mapY);
+    if (groupThing == THING_NONE || groupThing == THING_ENDOFLIST ||
+        THING_GET_TYPE(groupThing) != THING_TYPE_GROUP) {
+        return 0;
+    }
+    groupIndex = (int)THING_GET_INDEX(groupThing);
+    if (groupIndex < 0 || groupIndex >= state->world.things->groupCount) {
+        return 0;
+    }
+    if (state->world.things->groups[groupIndex].creatureType !=
+        DM1_CREATURE_LORD_CHAOS_ID) {
+        return 0;
+    }
+    *outGroupIndex = groupIndex;
+    *outGroup = &state->world.things->groups[groupIndex];
+    return 1;
+}
+
+static void m11_schedule_fluxcage_danger_reaction_f0224(
+    M11_GameViewState* state,
+    int mapIndex,
+    int cageX,
+    int cageY) {
+    static const int chaosDx[4] = {0, -1, +1, 0};
+    static const int chaosDy[4] = {-1, 0, 0, +1};
+    static const int fluxDx[4] = {-1, +1, 0, 0};
+    static const int fluxDy[4] = {0, 0, -1, +1};
+    int i;
+    if (!state) return;
+    for (i = 0; i < 4; ++i) {
+        int chaosX = cageX + chaosDx[i];
+        int chaosY = cageY + chaosDy[i];
+        int groupIndex = -1;
+        const struct DungeonGroup_Compat* group = NULL;
+        int otherFluxcages = 0;
+        int j;
+        if (!m11_lord_chaos_group_on_square_f0224(state, mapIndex,
+                                                  chaosX, chaosY,
+                                                  &groupIndex, &group)) {
+            continue;
+        }
+        /* ReDMCSB PROJEXPL.C F0224 lines 995-1033 checks the first
+         * adjacent Lord Chaos in north/west/east/south order.  It counts
+         * the three other cardinal fluxcage squares around Lord Chaos; the
+         * just-created cage is implicit.  Count 2 creates C29 danger. */
+        for (j = 0; j < 4; ++j) {
+            int fx = chaosX + fluxDx[j];
+            int fy = chaosY + fluxDy[j];
+            if (fx == cageX && fy == cageY) continue;
+            otherFluxcages +=
+                m11_fluxcage_present_on_square_f0224(state, mapIndex, fx, fy);
+        }
+        if (otherFluxcages == 2) {
+            m11_schedule_creature_reaction_f0209(
+                state, groupIndex, group, mapIndex, chaosX, chaosY,
+                DM1_CM3_REACTION_DANGER_ON_SQUARE);
+        }
+        return;
+    }
+}
+
 static int m11_spawn_fluxcage_f0224(M11_GameViewState* state,
                                     int mapIndex,
                                     int mapX,
@@ -21355,6 +21447,7 @@ static int m11_spawn_fluxcage_f0224(M11_GameViewState* state,
         (void)F0824_EXPLOSION_Despawn_Compat(&state->world.explosions, slot);
         return 0;
     }
+    m11_schedule_fluxcage_danger_reaction_f0224(state, mapIndex, mapX, mapY);
     return 1;
 }
 
@@ -22371,13 +22464,14 @@ static int m11_dm1_behavior_from_ai_state(int stateKind)
     }
 }
 
-static void m11_schedule_projectile_hit_creature_reaction(
+static void m11_schedule_creature_reaction_f0209(
     M11_GameViewState* state,
     int groupIndex,
     const struct DungeonGroup_Compat* group,
     int mapIndex,
     int mapX,
-    int mapY)
+    int mapY,
+    int reactionType)
 {
     int aiIndex;
     int ticksSinceLastMove = 0;
@@ -22415,7 +22509,7 @@ static void m11_schedule_projectile_hit_creature_reaction(
     }
     ctx.ticksSinceLastMove = ticksSinceLastMove;
     ctx.currentTickLow = (int)state->world.gameTick;
-    ctx.eventType = DM1_CM2_REACTION_HIT_BY_PROJECTILE;
+    ctx.eventType = reactionType;
     ctx.eventTicks = (int)state->world.gameTick;
 
     activeGroup.groupThingIndex = groupIndex;
@@ -22445,6 +22539,19 @@ static void m11_schedule_projectile_hit_creature_reaction(
     reaction.aux1 = (int)group->creatureType;
     reaction.aux2 = behavior.nextEventType;
     (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &reaction);
+}
+
+static void m11_schedule_projectile_hit_creature_reaction(
+    M11_GameViewState* state,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    m11_schedule_creature_reaction_f0209(state, groupIndex, group,
+                                         mapIndex, mapX, mapY,
+                                         DM1_CM2_REACTION_HIT_BY_PROJECTILE);
 }
 
 static int m11_maybe_apply_projectile_poison_to_champion(

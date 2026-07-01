@@ -4211,6 +4211,118 @@ static void test_fluxcage_schedules_f0224_remove_event(void) {
               "C24 remove-fluxcage event despawns the fluxcage");
 }
 
+static void test_fluxcage_third_cage_schedules_lord_chaos_danger(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[25];
+    unsigned short squareFirstThings[25];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    int dangerIndex = -1;
+    int removeIndex = -1;
+    int i;
+
+    seed_state(&state, 100, 41);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    for (i = 0; i < 25; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 5;
+    maps[0].height = 5;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 25;
+    squareFirstThings[(2 * 5) + 1] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 2;
+    state.world.party.mapY = 3;
+    state.world.party.direction = 0; /* north: new cage at (2,2). */
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
+    groups[0].count = 0;
+    groups[0].health[0] = 10000;
+    groups[0].cells = 0xFF;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 25;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
+    state.world.creatureAI[0].lastSeenPartyTick = 41;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    state.world.explosions.count = 2;
+    state.world.explosions.entries[0].reserved0 = 1;
+    state.world.explosions.entries[0].explosionType = C050_EXPLOSION_FLUXCAGE;
+    state.world.explosions.entries[0].mapIndex = 0;
+    state.world.explosions.entries[0].mapX = 1;
+    state.world.explosions.entries[0].mapY = 1;
+    state.world.explosions.entries[1].reserved0 = 1;
+    state.world.explosions.entries[1].explosionType = C050_EXPLOSION_FLUXCAGE;
+    state.world.explosions.entries[1].mapIndex = 0;
+    state.world.explosions.entries[1].mapX = 2;
+    state.world.explosions.entries[1].mapY = 0;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FLUXCAGE),
+              1,
+              "third FLUXCAGE near Lord Chaos performs F0224 reaction check");
+
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind ==
+            TIMELINE_EVENT_CREATURE_REACTION) {
+            dangerIndex = i;
+        }
+        if (state.world.timeline.events[i].kind ==
+            TIMELINE_EVENT_REMOVE_FLUXCAGE) {
+            removeIndex = i;
+        }
+    }
+    ASSERT_EQ(dangerIndex >= 0, 1,
+              "third FLUXCAGE schedules C29 Lord Chaos danger reaction");
+    ASSERT_EQ(removeIndex >= 0, 1,
+              "third FLUXCAGE still schedules C24 remove event");
+    if (dangerIndex < 0) return;
+    ASSERT_EQ((int)state.world.timeline.events[dangerIndex].fireAtTick, 44,
+              "C29 danger reaction uses F0209 CM3 movement delay");
+    ASSERT_EQ(state.world.timeline.events[dangerIndex].mapIndex, 0,
+              "C29 danger reaction stores Lord Chaos map");
+    ASSERT_EQ(state.world.timeline.events[dangerIndex].mapX, 2,
+              "C29 danger reaction stores Lord Chaos x");
+    ASSERT_EQ(state.world.timeline.events[dangerIndex].mapY, 1,
+              "C29 danger reaction stores Lord Chaos y");
+    ASSERT_EQ(state.world.timeline.events[dangerIndex].aux0, 0,
+              "C29 danger reaction stores Lord Chaos group index");
+    ASSERT_EQ(state.world.timeline.events[dangerIndex].aux1,
+              DM1_CREATURE_LORD_CHAOS_ID,
+              "C29 danger reaction stores Lord Chaos creature type");
+    ASSERT_EQ(state.world.timeline.events[dangerIndex].aux2,
+              DM1_EVENT_REACTION_DANGER_ON_SQUARE,
+              "C29 danger reaction stores danger-on-square event type");
+}
+
 static void test_fuse_incomplete_fluxcage_moves_lord_chaos_escape(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -4362,6 +4474,7 @@ int main(void) {
     test_action_defense_serializes_outside_v1_champion_blob();
     test_action_stamina_underflow_clamps_and_damages();
     test_fluxcage_schedules_f0224_remove_event();
+    test_fluxcage_third_cage_schedules_lord_chaos_danger();
     test_fuse_incomplete_fluxcage_moves_lord_chaos_escape();
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_halves_disable_ticks_when_f0402_fails();
