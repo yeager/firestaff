@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.14
+
+Firestaff v3.0.14 packages the runtime-hardening work that landed after
+v3.0.13. This release keeps the public claims conservative: it broadens
+data-free and skip-safe evidence around DM1 V1/V2, launcher save and
+accessibility surfaces, Steam Deck packaging, X68000 media receipt
+classification, and cross-game runtime boundaries without promoting unfinished
+targets to finished parity.
+
+## Highlights since v3.0.13
+
 - **DM1 PC 3.4 archive receipts are pinned more tightly**: a new data-free
   gate proves renamed archive entries can satisfy DM1 PC 3.4 English
   `GRAPHICS.DAT` and `DUNGEON.DAT` requirements by hash, then materialize
@@ -45,6 +56,16 @@
   payloads, and off-axis `HPR-0007` label strings. The real DM1 X68000 HDM
   receipt probe now verifies the public DMFiles image as `off_axis_sentinel_only`
   without promoting it to protected-media evidence.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  changelog, and `include/firestaff_version.h`.
+- Local release-prep verification covered CMake configure/build plus the
+  headless Phase A and audio smoke probes before tagging.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64, and Steam Deck x86_64 artifacts
+  from the `v3.0.14` release tag.
 
 # Firestaff v3.0.13
 
