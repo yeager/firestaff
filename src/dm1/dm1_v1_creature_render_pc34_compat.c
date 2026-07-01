@@ -8,6 +8,29 @@
  *   G0219_as_Graphic558_CreatureAspects[27]           — line 1656 (I34E block)
  *   G0221_auc_Graphic558_PaletteChanges_Creature_D3   — line 1821
  *   G0222_auc_Graphic558_PaletteChanges_Creature_D2   — line 1822
+ *   F0115 native bitmap selection (front/side/back/attack) — lines 5354-5379
+ *
+ * ReDMCSB GROUP.C:
+ *   F0179_GROUP_GetCreatureAspectUpdateTime            — lines 187-308
+ *     (aspect frame cycling, horizontal/vertical offset via M052/M053 +
+ *      M024/M025, FLIP_BITMAP/IS_ATTACKING via M008/M009/M010)
+ *   F0185 single/multi-creature group placement        — lines 524-560
+ *     (C0xFF_SINGLE_CENTERED_CREATURE single, packed 2-bit cells)
+ *
+ * Pass 1090 additions:
+ *   - dm1_creature_max_horizontal_offset (M052)
+ *   - dm1_creature_max_vertical_offset   (M053)
+ *   - dm1_creature_aspect_horizontal_offset / dm1_creature_aspect_vertical_offset
+ *     (M022 / M023)
+ *   - dm1_creature_place_group_cells    (F0185 packed-cells builder)
+ *   - dm1_creature_cycle_aspect_frame extended with the F0179 horizontal /
+ *     vertical offset randomization that the Mummy (GraphicInfo 0x1480)
+ *     and the Ghost (0x5864) actually need
+ *   - dm1_creature_native_bitmap_index fixed so BACK/ATTACK poses fall
+ *     back to the FRONT bitmap when the corresponding MASK_* flag is
+ *     unset (previously offset=1 was applied unconditionally for BACK /
+ *     ATTACK which referenced non-existent bitmaps for creatures
+ *     without SIDE / BACK / ATTACK bitmaps).
  *   F0115 creature draw section                       — lines 5201-5520
  *
  * ReDMCSB DEFS.H:
@@ -112,10 +135,24 @@ int dm1_creature_transparent_color(int creatureType) {
  * Aspect frame cycling — ReDMCSB GROUP.C F0179 lines 222-305.
  *
  * The original does not increment a linear sprite-frame number. Instead it
- * rewrites the active-group Aspect bits. Bits 0-5 hold per-update offsets;
- * this bounded helper implements only the frame-selection bits used by
- * DUNVIEW.C F0115: MASK0x0040_FLIP_BITMAP and MASK0x0080_IS_ATTACKING.
+ * rewrites the active-group Aspect bits. The mask at the top of F0179
+ * keeps only the FLIP_BITMAP and IS_ATTACKING bits from the previous
+ * Aspect (lines 224-225), then sets the per-update horizontal/vertical
+ * offset bits via M052/M053 + M024/M025 before deciding the flip state.
  * The caller supplies randomBit as the source-locked M005_RANDOM(2) result.
+ *
+ * For maximum offset = 0 (e.g. Giant Scorpion 0x0482) the if-conditions in
+ * F0179 are skipped, so the offset bits remain cleared by the opening
+ * mask. For maximum offset >= 1 the offset is set to a sign-magnitude
+ * 3-bit value computed as (-M002_RANDOM(max)) & 0x0007 when randomBit is
+ * set, else +M002_RANDOM(max). Note that M002_RANDOM(max) returns
+ * [0, max), so for max = 1 the magnitude is always 0 and only the sign
+ * bit (0x04) can flip.
+ *
+ * randomValue must be an unsigned value of at least 16 bits. The function
+ * only consumes its low two bits (M002_RANDOM uses the low bits; the high
+ * bit picks the sign via M005_RANDOM(2)). For backward compatibility with
+ * the existing M11 caller, randomValue == (randomBit | (randomOffset << 1)).
  */
 uint8_t dm1_creature_cycle_aspect_frame(int creatureType,
                                         uint8_t previousAspect,
@@ -123,14 +160,45 @@ uint8_t dm1_creature_cycle_aspect_frame(int creatureType,
     uint16_t gi;
     uint8_t aspect;
     int randomSet;
+    int maxH, maxV;
+    int hOffset, vOffset;
 
     if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0;
 
     gi = s_aspects[creatureType].graphicInfo;
+    /* ReDMCSB GROUP.C line 224:
+     *   AL0326_ui_Aspect = ...->Aspect[i] & (MASK0x0080_IS_ATTACKING |
+     *                                       MASK0x0040_FLIP_BITMAP);
+     * The horizontal/vertical offset bits (0x07, 0x38) are implicitly
+     * cleared by this mask and re-set below via M024/M025. */
     aspect = (uint8_t)(previousAspect &
                        (DM1_CREATURE_ASPECT_IS_ATTACKING |
                         DM1_CREATURE_ASPECT_FLIP_BITMAP));
     randomSet = randomBit & 1;
+
+    /* ReDMCSB GROUP.C F0179 lines 226-243 — horizontal/vertical offset
+     * randomization. M052 / M053 macros read bits 12..15 of GraphicInfo.
+     * When the max is 0 the body of the if-statement is skipped and the
+     * aspect's offset bits stay cleared. The "(-r) & 0x0007" sign flip
+     * produces the 3-bit sign-magnitude value that DUNVIEW.C F0115
+     * line 5407 consumes as a signed [-maxH..+maxH] pixel offset. */
+    maxH = (int)((gi >> 12) & 0x0003);
+    maxV = (int)((gi >> 14) & 0x0003);
+    hOffset = 0;
+    vOffset = 0;
+    if (maxH > 0) {
+        int r = (randomBit >> 1) & ((1 << 12) - 1);
+        hOffset = r % maxH;
+        if (randomSet) hOffset = (-hOffset) & DM1_CREATURE_ASPECT_HMASK;
+    }
+    if (maxV > 0) {
+        int r = (randomBit >> 5) & ((1 << 12) - 1);
+        vOffset = r % maxV;
+        if (randomSet) vOffset = (-vOffset) & 0x07;
+    }
+    aspect |= (uint8_t)(hOffset & DM1_CREATURE_ASPECT_HMASK);
+    aspect |= (uint8_t)((vOffset << DM1_CREATURE_ASPECT_VSHIFT) &
+                        DM1_CREATURE_ASPECT_VMASK);
 
     if (attacking) {
         if (gi & DM1_GI_MASK_FLIP_ATTACK) {
@@ -175,6 +243,76 @@ int dm1_creature_next_aspect_update_delay(int animationTicks, int attacking, int
     int base = attacking ? DM1_NEXT_ATTACK_ASPECT_UPDATE_TICKS(animationTicks)
                          : DM1_NEXT_NON_ATTACK_ASPECT_UPDATE_TICKS(animationTicks);
     return base + (randomBit & 1);
+}
+
+/* ── Aspect offset accessors — ReDMCSB DEFS.H M022/M023 ── */
+int dm1_creature_max_horizontal_offset(uint16_t graphicInfo) {
+    return (int)((graphicInfo >> 12) & 0x0003);
+}
+
+int dm1_creature_max_vertical_offset(uint16_t graphicInfo) {
+    return (int)((graphicInfo >> 14) & 0x0003);
+}
+
+int dm1_creature_aspect_horizontal_offset(uint8_t aspectBits) {
+    return (int)(aspectBits & DM1_CREATURE_ASPECT_HMASK);
+}
+
+int dm1_creature_aspect_vertical_offset(uint8_t aspectBits) {
+    return (int)((aspectBits & DM1_CREATURE_ASPECT_VMASK) >>
+                 DM1_CREATURE_ASPECT_VSHIFT);
+}
+
+/* ── Group placement helper — ReDMCSB GROUP.C F0185 lines 521-560 ──
+ * Single creature  → DM1_GROUP_CELL_SINGLE_CENTERED (0xFF, equivalent to
+ *                     C0xFF_SINGLE_CENTERED_CREATURE) so the active-group
+ *                     code resolves the cell to the center of the tile.
+ * Multiple creatures → pack 2 bits per slot; the source increments
+ *                     L0351_ui_Cell once per slot via F0178's
+ *                     post-increment, then a second time only for
+ *                     half-square creatures (C1_SIZE_HALF_SQUARE):
+ *
+ *                        do { cells |= cell++ << (slot*2);
+ *                              if (size == HALF_SQUARE) cell++;
+ *                              cell &= 3; } while (slot--);
+ *
+ *                     Quarter- and full-square creatures therefore
+ *                     advance by one cell per slot, half-square by two.
+ *
+ * rng must return an int in [0, range) and must accept range > 0.
+ * Passing NULL is treated as "no randomness available" and returns the
+ * deterministic slot ordering cells = startCell, startCell+1, ... (used
+ * by tests for regression reproducibility). */
+int dm1_creature_place_group_cells(int creatureCount, int creatureSize,
+                                   int (*rng)(void* user, int range),
+                                   void* rngUser) {
+    unsigned cells;
+    int slot;
+    int cell;
+
+    if (creatureCount <= 0) return DM1_GROUP_CELL_SINGLE_CENTERED;
+
+    cells = 0;
+    cell = (rng != NULL) ? (rng(rngUser, 4) & 3) : 0;
+
+    for (slot = 0; slot < creatureCount; ++slot) {
+        unsigned packed = ((unsigned)(cell & 3)) << (slot * 2);
+        cells |= packed;
+        /* F0185: post-increment the cell, then +1 for half-square only. */
+        cell = (cell + 1) & 3;
+        if (creatureSize == DM1_CREATURE_SIZE_HALF) {
+            cell = (cell + 1) & 3;
+        }
+        /* Re-randomise the next slot's start cell the same way F0185
+         * does for non-quarter-square creatures.  With rng == NULL we
+         * fall back to the deterministic successor so tests can pin
+         * exact cells values. */
+        if (rng != NULL && creatureSize != DM1_CREATURE_SIZE_QUARTER) {
+            cell = rng(rngUser, 4) & 3;
+        }
+    }
+
+    return (int)(cells & 0xFF);
 }
 
 /*
@@ -236,24 +374,34 @@ unsigned int dm1_creature_native_bitmap_index(int creatureType, int pose) {
     if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0;
     a = &s_aspects[creatureType];
     gi = a->graphicInfo;
-    offset = 0; /* Start at front bitmap */
+    offset = 0; /* Start at front bitmap (DUNVIEW.C line 5354) */
 
     switch (pose) {
     case DM1_CREATURE_POSE_FRONT:
         break;
     case DM1_CREATURE_POSE_SIDE:
         if (gi & DM1_GI_MASK_SIDE) {
-            offset = 1; /* Side follows front */
+            offset = 1; /* Side follows front (line 5361) */
         }
         break;
     case DM1_CREATURE_POSE_BACK:
-        offset = 1; /* Skip front */
-        if (gi & DM1_GI_MASK_SIDE) offset++; /* Skip side if present */
+        /* DUNVIEW.C lines 5371-5379: only advance past the front bitmap
+         * if MASK_BACK is actually set.  When BACK is unset (e.g. the
+         * Mummy's GraphicInfo 0x1480) the front bitmap is reused. */
+        if (gi & DM1_GI_MASK_BACK) {
+            offset = 1; /* Skip front */
+            if (gi & DM1_GI_MASK_SIDE) offset++; /* Skip side if present */
+        }
         break;
     case DM1_CREATURE_POSE_ATTACK:
-        offset = 1; /* Skip front */
-        if (gi & DM1_GI_MASK_SIDE) offset++;
-        if (gi & DM1_GI_MASK_BACK) offset++;
+        /* DUNVIEW.C lines 5339-5360: only advance if MASK_ATTACK is
+         * actually set.  When ATTACK is unset the front bitmap is
+         * reused for the attack pose too. */
+        if (gi & DM1_GI_MASK_ATTACK) {
+            offset = 1; /* Skip front */
+            if (gi & DM1_GI_MASK_SIDE) offset++;
+            if (gi & DM1_GI_MASK_BACK) offset++;
+        }
         break;
     default:
         break;

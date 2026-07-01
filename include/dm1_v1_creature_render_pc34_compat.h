@@ -99,6 +99,22 @@ enum {
 #define DM1_CREATURE_ASPECT_FLIP_BITMAP  0x40u
 #define DM1_CREATURE_ASPECT_IS_ATTACKING 0x80u
 
+/* Active-group Aspect frame offset bits — ReDMCSB DEFS.H lines 591-600,
+ * 603-604. M022/M023 read masks, M024/M025 set masks.
+ *   M022_HORIZONTAL_OFFSET(aspect) = (aspect) & 0x07      bits 0..2
+ *   M023_VERTICAL_OFFSET(aspect)   = ((aspect) >> 3) & 7  bits 3..5
+ *   M024_SET_HORIZONTAL_OFFSET(a,o)  a |= (o & 7)
+ *   M025_SET_VERTICAL_OFFSET(a,o)    a |= (o & 7) << 3
+ * The horizontal offset uses sign-magnitude 3-bit encoding:
+ *   bit 2 of the 3-bit field is the sign; magnitude is bits 0..1.
+ * F0179_GROUP_GetCreatureAspectUpdateTime writes (-r) & 0x0007 to flip
+ * the sign bit on a random subset of updates. */
+#define DM1_CREATURE_ASPECT_HMASK  0x07u
+#define DM1_CREATURE_ASPECT_VMASK  0x38u
+#define DM1_CREATURE_ASPECT_HSHIFT 0u
+#define DM1_CREATURE_ASPECT_VSHIFT 3u
+#define DM1_CREATURE_ASPECT_HSIGN  0x04u
+
 /* ── Creature aspect — matches ReDMCSB CREATURE_ASPECT typedef ── */
 typedef struct {
     int16_t firstNativeBitmapRelativeIndex;
@@ -157,6 +173,37 @@ uint8_t dm1_creature_cycle_aspect_frame(int creatureType,
                                         uint8_t previousAspect,
                                         int attacking, int randomBit);
 int dm1_creature_next_aspect_update_delay(int animationTicks, int attacking, int randomBit);
+
+/* ── Aspect offset accessors — ReDMCSB DEFS.H M022/M023 ──
+ * dm1_creature_max_horizontal_offset:  M052_MAXIMUM_HORIZONTAL_OFFSET(graphicInfo)
+ *                                     = ((graphicInfo) >> 12) & 0x0003
+ * dm1_creature_max_vertical_offset:    M053_MAXIMUM_VERTICAL_OFFSET(graphicInfo)
+ *                                     = ((graphicInfo) >> 14) & 0x0003
+ * Returns 0..3 inclusive. A return of 0 means the creature does not
+ * randomize that axis when F0179 cycles the active-group Aspect bits. */
+int dm1_creature_max_horizontal_offset(uint16_t graphicInfo);
+int dm1_creature_max_vertical_offset(uint16_t graphicInfo);
+
+/* Sign-magnitude helpers — ReDMCSB DEFS.H M022/M023 + F0179 sign convention.
+ * The high bit of the 3-bit magnitude is treated as the sign when the
+ * offset is consumed by DUNVIEW.C F0115 line 5407. */
+int dm1_creature_aspect_horizontal_offset(uint8_t aspectBits);
+int dm1_creature_aspect_vertical_offset(uint8_t aspectBits);
+
+/* Source-locked single-creature / multi-creature group placement.
+ * ReDMCSB GROUP.C F0185_GROUP_GetUnusedGroupThing lines 510-560.
+ *
+ *   - count == 0 → return DM1_GROUP_CELL_SINGLE_CENTERED (0xFF)
+ *   - count >= 1 → return packed 2-bit-per-creature cells value where
+ *     each slot is a random cell in [0..3] except quarter-square creatures
+ *     (MASK0x0003_SIZE == 0) skip one cell per slot so two quarter-square
+ *     creatures can share a tile.
+ *
+ * rng must return non-negative ints in [0, range). Pure, no globals. */
+#define DM1_GROUP_CELL_SINGLE_CENTERED 0xFFu
+int dm1_creature_place_group_cells(int creatureCount, int creatureSize,
+                                   int (*rng)(void* user, int range),
+                                   void* rngUser);
 int dm1_creature_coordinate_set(int creatureType);
 int dm1_creature_transparent_color(int creatureType);
 const unsigned char* dm1_creature_palette_d3(void);
