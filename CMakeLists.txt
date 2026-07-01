@@ -7939,6 +7939,42 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_mid_close_hand_swap_pc34_compat
     )
 
+    # DM1 V1 auto-mechanics sleep/tick poison gate:
+    # the per-tick auto-mechanics chain of C75_EVENT_POISON_CHAMPION
+    # driven by dm1_combat_start_poison_pc34 (ReDMCSB CHAMPION.C
+    # F0322:1926-1962) and dm1_combat_tick_poison (CHAMPION.C
+    # F0322 + TIMELINE.C:1991-1993 C75 dispatch). Pins chain
+    # exhaustion (CHAMPION.C:1961 early-out when --attack == 0),
+    # stacking (CHAMPION.C:1956-1961 consume + add net-zero
+    # PoisonEventCount invariant), dead-champion skip (F0322 alive
+    # guard at TIMELINE.C:1991-1993 + F0323:1965-1990 sweep),
+    # F0759 poison-cloud wake-from-rest entry point handing the
+    # chain to the auto-mechanics layer, zero/negative attack
+    # no-op (CHAMPION.C:1945 T0321024), and chain-end at attack=1
+    # (the final F0322(1) lands dmg=1 with no reschedule and drops
+    # PoisonEventCount to 0). Source-locked against CHAMPION.C
+    # F0322:1926-1962, F0323:1965-1990; TIMELINE.C:1991-1993;
+    # MAGIC.C F0759 wakeFromRest + poisonAttackPending handoff;
+    # PANEL.C:1601-1606 poisoned-label gate that reads
+    # PoisonEventCount. Disjoint from
+    # test_dm1_v1_combat_pc34_compat_integration.c
+    # (single-step + 50% gate), the unwired
+    # test_dm1_v1_sleep_wake_poison_gate_pc34_compat.c (F0759
+    # wake + F0230/F0321 melee fixtures), and
+    # test_dm1_v1_monster_poison_cloud_overlap_tick_pc34_compat.c
+    # (F0220 explosion cloud).
+    add_executable(test_dm1_v1_auto_mechanics_sleep_tick_poison_gate_pc34_compat
+        tests/test_dm1_v1_auto_mechanics_sleep_tick_poison_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_auto_mechanics_sleep_tick_poison_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_auto_mechanics_sleep_tick_poison_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_auto_mechanics_sleep_tick_poison_gate_pc34_compat
+        COMMAND test_dm1_v1_auto_mechanics_sleep_tick_poison_gate_pc34_compat
+    )
+
     # pass797 — auto chest action-hand swap during close gate:
     # press-eye F0333 auto-close (P0694_B_PressingEye = TRUE) plus the
     # C09 action hand (DM1_PC34_SLOT_ACTION_HAND) swap into a not-yet
