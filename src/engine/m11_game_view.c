@@ -21448,6 +21448,51 @@ static void m11_decrement_action_hand_charges_f0405(M11_GameViewState* state,
     }
 }
 
+enum {
+    M11_JUNK_MAGICAL_BOX_BLUE_F0407 = 42,
+    M11_JUNK_MAGICAL_BOX_GREEN_F0407 = 43
+};
+
+static int m11_action_hand_junk_type_f0407(
+    const M11_GameViewState* state,
+    const struct ChampionState_Compat* champion)
+{
+    unsigned short thing;
+    int thingIndex;
+
+    if (!state || !champion || !state->world.things ||
+        !state->world.things->junks) {
+        return -1;
+    }
+    thing = champion->inventory[CHAMPION_SLOT_ACTION_HAND];
+    if (thing == THING_NONE || thing == THING_ENDOFLIST ||
+        THING_GET_TYPE(thing) != THING_TYPE_JUNK) {
+        return -1;
+    }
+    thingIndex = (int)THING_GET_INDEX(thing);
+    if (thingIndex < 0 || thingIndex >= state->world.things->junkCount) {
+        return -1;
+    }
+    return (int)state->world.things->junks[thingIndex].type;
+}
+
+static void m11_remove_action_hand_object_f0300(
+    M11_GameViewState* state,
+    struct ChampionState_Compat* champion)
+{
+    unsigned short thing;
+
+    if (!state || !champion) {
+        return;
+    }
+    thing = champion->inventory[CHAMPION_SLOT_ACTION_HAND];
+    champion->inventory[CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
+    /* ReDMCSB MENU.C F0407 lines 1590-1597 calls
+     * F0300_CHAMPION_GetObjectRemovedFromSlot() and then sets the
+     * removed magical box Thing->Next to C0xFFFF_THING_NONE. */
+    m11_set_object_drop_next(state->world.things, thing, THING_NONE);
+}
+
 static int m11_apply_party_shield_f0403(M11_GameViewState* state,
                                         int championIndex,
                                         int spellShield,
@@ -23163,20 +23208,34 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
         }
         case 11: {
             /* FREEZE LIFE (F0407 C011_ACTION_FREEZE_LIFE):
-             * advance G0407_s_Party.FreezeLifeTicks by 70 for the
-             * common weapon case (blue=30, green=125 branches
-             * require junk-box typing we do not currently model
-             * per-thing).  The common branch then falls through to
-             * T0407076 and decrements action-hand charges through
+             * ReDMCSB MENU.C F0407 lines 1586-1605:
+             * blue magical box adds 30 ticks and is consumed, green
+             * magical box adds 125 ticks and is consumed, otherwise the
+             * common branch adds 70 ticks and decrements charges through
              * F0405.  Capped at 200 as in F0407. */
             int32_t prev = state->world.freezeLifeTicks;
-            int32_t next = prev + 70;
+            int junkType = m11_action_hand_junk_type_f0407(state, champ);
+            int addTicks = 70;
+            int consumesBox = 0;
+            int32_t next;
+            if (junkType == M11_JUNK_MAGICAL_BOX_BLUE_F0407) {
+                addTicks = 30;
+                consumesBox = 1;
+            } else if (junkType == M11_JUNK_MAGICAL_BOX_GREEN_F0407) {
+                addTicks = 125;
+                consumesBox = 1;
+            }
+            next = prev + addTicks;
             if (next > 200) next = 200;
             state->world.freezeLifeTicks = next;
             /* Mirror into MagicState.freezeLifeTicks so the light
              * / creature-ai sides observe the freeze consistently. */
             state->world.magic.freezeLifeTicks = next;
-            m11_decrement_action_hand_charges_f0405(state, championIndex);
+            if (consumesBox) {
+                m11_remove_action_hand_object_f0300(state, champ);
+            } else {
+                m11_decrement_action_hand_charges_f0405(state, championIndex);
+            }
             m11_log_event(state, M11_COLOR_LIGHT_BLUE,
                           "T%u: %s FREEZES TIME (%d TICKS)",
                           (unsigned int)state->world.gameTick,

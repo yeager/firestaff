@@ -2784,6 +2784,98 @@ static void test_freeze_life_common_branch_decrements_charges(void) {
               "FREEZE LIFE leaves a live freeze-life tick budget");
 }
 
+static void test_freeze_life_blue_box_consumes_action_hand(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
+    unsigned char rawJunkData[4];
+
+    seed_state(&state, 100, 32);
+    memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+    memset(rawJunkData, 0, sizeof(rawJunkData));
+    things.loaded = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    things.rawThingData[THING_TYPE_JUNK] = rawJunkData;
+    things.thingCounts[THING_TYPE_JUNK] = 1;
+    junks[0].type = 42;
+    junks[0].chargeCount = 7;
+    junks[0].next = THING_ENDOFLIST;
+    rawJunkData[0] = 0xFEu;
+    rawJunkData[1] = 0xFFu;
+    rawJunkData[2] = 42u;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_JUNK, 0);
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FREEZE_LIFE),
+              1,
+              "FREEZE LIFE blue magical box performs F0407 effect");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_ACTION_HAND],
+              THING_NONE,
+              "FREEZE LIFE blue magical box removes action-hand object");
+    ASSERT_EQ(junks[0].next, THING_NONE,
+              "FREEZE LIFE blue magical box unlinks removed Thing");
+    ASSERT_EQ(junks[0].chargeCount, 7,
+              "FREEZE LIFE blue magical box is consumed without F0405 charges");
+    ASSERT_EQ(state.world.freezeLifeTicks, 29,
+              "FREEZE LIFE blue magical box adds 30 ticks before CMD_NONE");
+    ASSERT_EQ(rawJunkData[0], 0xFFu,
+              "FREEZE LIFE blue magical box raw next low byte is none");
+    ASSERT_EQ(rawJunkData[1], 0xFFu,
+              "FREEZE LIFE blue magical box raw next high byte is none");
+}
+
+static void test_freeze_life_green_box_consumes_action_hand_and_caps(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
+    unsigned char rawJunkData[4];
+
+    seed_state(&state, 100, 34);
+    memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+    memset(rawJunkData, 0, sizeof(rawJunkData));
+    things.loaded = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    things.rawThingData[THING_TYPE_JUNK] = rawJunkData;
+    things.thingCounts[THING_TYPE_JUNK] = 1;
+    junks[0].type = 43;
+    junks[0].chargeCount = 9;
+    junks[0].next = THING_ENDOFLIST;
+    rawJunkData[0] = 0xFEu;
+    rawJunkData[1] = 0xFFu;
+    rawJunkData[2] = 43u;
+    state.world.things = &things;
+    state.world.freezeLifeTicks = 100;
+    state.world.magic.freezeLifeTicks = 100;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_JUNK, 0);
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FREEZE_LIFE),
+              1,
+              "FREEZE LIFE green magical box performs F0407 effect");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_ACTION_HAND],
+              THING_NONE,
+              "FREEZE LIFE green magical box removes action-hand object");
+    ASSERT_EQ(junks[0].next, THING_NONE,
+              "FREEZE LIFE green magical box unlinks removed Thing");
+    ASSERT_EQ(junks[0].chargeCount, 9,
+              "FREEZE LIFE green magical box is consumed without F0405 charges");
+    ASSERT_EQ(state.world.freezeLifeTicks, 199,
+              "FREEZE LIFE green magical box caps at 200 before CMD_NONE");
+    ASSERT_EQ(rawJunkData[0], 0xFFu,
+              "FREEZE LIFE green magical box raw next low byte is none");
+    ASSERT_EQ(rawJunkData[1], 0xFFu,
+              "FREEZE LIFE green magical box raw next high byte is none");
+}
+
 static void test_light_decrements_action_hand_charges(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -4079,6 +4171,8 @@ int main(void) {
     test_leader_hand_throw_uses_f0328_temporary_action_hand();
     test_block_action_disables_champion_for_source_ticks();
     test_freeze_life_common_branch_decrements_charges();
+    test_freeze_life_blue_box_consumes_action_hand();
+    test_freeze_life_green_box_consumes_action_hand_and_caps();
     test_light_decrements_action_hand_charges();
     test_heal_action_uses_hidden_heal_skill();
     test_window_action_schedules_thieves_eye_and_decrements_charges();
