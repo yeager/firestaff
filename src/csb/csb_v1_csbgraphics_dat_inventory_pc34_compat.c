@@ -156,11 +156,15 @@ int csb_v1_csbgraphics_dat_inventory_from_bytes(
         return CSB_V1_CSBGRAPHICS_INVENTORY_ERR_ARGUMENT;
     }
     memset(out_index, 0, sizeof(*out_index));
-    memset(out_inventory, 0, sizeof(*out_inventory));
 
     rc = csb_v1_csbgraphics_dat_classify(bytes, size, &index);
     if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK) {
         return CSB_V1_CSBGRAPHICS_INVENTORY_ERR_CLASSIFY;
+    }
+
+    rc = csb_v1_csbgraphics_dat_inventory(&index, out_inventory);
+    if (rc != CSB_V1_CSBGRAPHICS_INVENTORY_OK) {
+        return rc;
     }
 
     /* Walk the size tables once to populate sparse / dense /
@@ -204,7 +208,7 @@ int csb_v1_csbgraphics_dat_inventory_from_bytes(
     }
 
     *out_index = index;
-    return csb_v1_csbgraphics_dat_inventory(&index, out_inventory);
+    return CSB_V1_CSBGRAPHICS_INVENTORY_OK;
 }
 
 const char *csb_v1_csbgraphics_dat_inventory_source_evidence(void)

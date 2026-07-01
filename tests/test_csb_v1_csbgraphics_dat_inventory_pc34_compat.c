@@ -310,13 +310,13 @@ static int test_inventory_mixed(void)
     CSB_V1_CSBGraphicsInventory inv;
     int rc;
     ASSERT_TRUE(buf != NULL);
-    /* Mutate the size tables directly. */
-    write_be16(buf, 2u +  0u, 0u);  write_be16(buf, 10u +  0u, 0u);
-    write_be16(buf, 2u +  2u, 0u);  write_be16(buf, 10u +  2u, 10u);
-    write_be16(buf, 2u +  4u, 5u);  write_be16(buf, 10u +  4u, 50u);
-    write_be16(buf, 2u +  6u, 10u); write_be16(buf, 10u +  6u, 10u);
-    write_be16(buf, 2u +  8u, 5u);  write_be16(buf, 10u +  8u, 0u);
-    write_be16(buf, 2u + 10u, 8u);  write_be16(buf, 10u + 10u, 8u);
+    /* Mutate the parallel size tables directly. */
+    write_be16(buf, 2u +  0u, 0u);  write_be16(buf, 14u +  0u, 0u);
+    write_be16(buf, 2u +  2u, 0u);  write_be16(buf, 14u +  2u, 10u);
+    write_be16(buf, 2u +  4u, 5u);  write_be16(buf, 14u +  4u, 50u);
+    write_be16(buf, 2u +  6u, 10u); write_be16(buf, 14u +  6u, 10u);
+    write_be16(buf, 2u +  8u, 5u);  write_be16(buf, 14u +  8u, 0u);
+    write_be16(buf, 2u + 10u, 8u);  write_be16(buf, 14u + 10u, 8u);
     rc = csb_v1_csbgraphics_dat_inventory_from_bytes(
         buf, size, &index, &inv);
     ASSERT_TRUE(rc == CSB_V1_CSBGRAPHICS_INVENTORY_OK);
