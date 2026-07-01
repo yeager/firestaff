@@ -31897,6 +31897,14 @@ int M11_GameView_IsMapOverlayActive(const M11_GameViewState* state) {
 
 int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state) {
     if (!state) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB COMMAND.C lines 2177-2183 gates C007..C011
+         * inventory toggles with !G0299_ui_CandidateChampionOrdinal while
+         * the C040 resurrect/reincarnate panel owns input.  Keep the direct
+         * M11 inventory helper on the same boundary as keyboard/pointer
+         * routing so callers cannot bypass the source command contract. */
+        return 0;
+    }
     state->inventoryPanelActive = !state->inventoryPanelActive;
     m11_clear_v1_mouth_visual(state);
     state->v1FoodWaterPanelActive = 0;
