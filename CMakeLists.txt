@@ -3010,6 +3010,31 @@ set_tests_properties(firestaff_dm1_v1_forced_pause_font_scale_fit_probe PROPERTI
     LABELS "tier2;m11;dm1;font;scale;ui-fit;accessibility;session-timer;forced-pause"
 )
 
+# M11 forced-pause input-gating probe — companion to the forced-pause
+# font-scale fit probe above.  Drives M11_GameView_HandleInput while
+# state->sessionTimerForcedPauseDialogActive is set and pins the
+# ACCEPT/ACTION -> RETURN_TO_MENU, BACK -> REDRAW, and every-other-input
+# -> IGNORED contract from src/engine/m11_game_view.c:8728-8746.  Pure
+# data-free, no SDL, no assets.  See
+# probes/m11/firestaff_m11_session_timer_forced_pause_input_gating_probe.c
+# for the full invariant list.
+add_executable(firestaff_m11_session_timer_forced_pause_input_gating_probe
+    probes/m11/firestaff_m11_session_timer_forced_pause_input_gating_probe.c)
+target_link_libraries(firestaff_m11_session_timer_forced_pause_input_gating_probe
+    PRIVATE firestaff_m12 firestaff_m11 firestaff_m11 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_m11_session_timer_forced_pause_input_gating_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_m11_session_timer_forced_pause_input_gating_probe
+    COMMAND firestaff_m11_session_timer_forced_pause_input_gating_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(firestaff_m11_session_timer_forced_pause_input_gating_probe
+    PROPERTIES LABELS "tier2;m11;dm1;input;ui-fit;accessibility;session-timer;forced-pause"
+)
+
 add_executable(firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe
     probes/m11/firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe.c)
 target_link_libraries(firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
