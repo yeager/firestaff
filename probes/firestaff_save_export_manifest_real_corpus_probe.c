@@ -164,6 +164,8 @@ static int find_real_save(char* outPath, size_t outPathSize,
           FIRESTAFF_SAVE_EXPORT_KIND_THERON_V1 }
     };
     int i;
+    int nCand = (int)(sizeof(candidates) / sizeof(candidates[0]));
+#ifndef _WIN32
     const char* home = getenv("HOME");
     char defaultDir[PROBE_PATH_MAX];
     static const char* const defaultDirs[] = {
@@ -173,7 +175,7 @@ static int find_real_save(char* outPath, size_t outPathSize,
         ".firestaff/data/theron/save"
     };
     int di;
-    int nCand = (int)(sizeof(candidates) / sizeof(candidates[0]));
+#endif
 
     /* 1. Honour explicit per-game env overrides first. */
     for (i = 0; i < nCand; ++i) {
@@ -196,6 +198,12 @@ static int find_real_save(char* outPath, size_t outPathSize,
      *    layout requires a more careful scan that the
      *    operator's data directory may not have (the
      *    Firestaff M2 runtime does not yet ship). */
+#ifdef _WIN32
+    /* Windows CI builds this probe but does not stage real save data.
+     * Keep explicit FIRESTAFF_*_SAVE_PATH receipts above available there;
+     * the default HOME/.firestaff scan uses POSIX dirent APIs. */
+    return 0;
+#else
     if (!home) home = ".";
     for (di = 0; di < (int)(sizeof(defaultDirs) / sizeof(defaultDirs[0])); ++di) {
         snprintf(defaultDir, sizeof(defaultDir),
@@ -229,6 +237,7 @@ static int find_real_save(char* outPath, size_t outPathSize,
     }
 
     return 0;
+#endif
 }
 
 /* ── Round-trip driver ─────────────────────────────────── */
