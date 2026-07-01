@@ -4649,6 +4649,52 @@ static void test_shoot_no_ammunition_clears_action_xp_but_keeps_tail(void) {
               "F0391 clears acting champion after SHOOT failure");
 }
 
+static void test_direct_shoot_no_ammunition_clears_action_xp(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
+
+    seed_state(&state, 80, 24);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    weapons[0].type = 25; /* Bow: ObjectInfo ActionSet 27 -> SHOOT. */
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
+        THING_NONE;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_SHOOT, &route), 1,
+              "direct SHOOT fixture has a source G0496/G0497 route");
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_SHOOT),
+              0,
+              "direct SHOOT without ammunition returns F0407 failure");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "direct SHOOT without ammunition creates no projectile");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_SHOOT),
+              "direct SHOOT failure keeps the common disabled-tick tail");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_SHOOT,
+              "direct SHOOT failure records SHOOT as disabled action");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              0,
+              "direct F0407 no-ammunition SHOOT clears G0497 Shoot XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              0,
+              "direct F0407 no-ammunition SHOOT clears propagated Ninja XP");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "direct SHOOT failure clears acting champion");
+}
+
 static void test_shoot_action_uses_champion_cell_for_f0326_launch(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -4780,6 +4826,73 @@ static void test_climb_down_failure_cancels_disable_but_keeps_xp(void) {
               "failed CLIMB DOWN XP propagates through F0304");
     ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
               "F0391 clears acting champion after CLIMB DOWN failure");
+}
+
+static void test_direct_climb_down_failure_cancels_disable_but_keeps_xp(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
+    DM1_ActionXpRoute route;
+    int expectedXp;
+
+    seed_state(&state, 80, 32);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData; /* front square is corridor, not pit. */
+    tiles[0].squareCount = 9;
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+
+    junks[0].type = 45; /* Rope: ObjectInfo ActionSet 39 -> CLIMB DOWN. */
+    things.loaded = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_JUNK, 0);
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
+              "direct CLIMB DOWN fixture has a source G0496/G0497 route");
+    expectedXp = route.experienceGain * 2;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_CLIMB_DOWN),
+              0,
+              "direct CLIMB DOWN in front of corridor returns F0407 failure");
+    ASSERT_EQ(state.actionDisabledTicks[0], 0,
+              "direct failed CLIMB DOWN cancels action-disabled ticks");
+    ASSERT_EQ(state.actionDisabledIndex[0], 255,
+              "direct failed CLIMB DOWN clears disabled action index");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedXp,
+              "direct BUG0_79 failed CLIMB DOWN still awards G0497 XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedXp,
+              "direct failed CLIMB DOWN XP propagates through F0304");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "direct CLIMB DOWN failure clears acting champion");
 }
 
 static void test_climb_down_open_pit_moves_party_and_keeps_tail(void) {
@@ -5545,8 +5658,10 @@ int main(void) {
     test_fireshield_success_schedules_c78_and_expires();
     test_spellshield_high_defense_quarters_new_event_defense();
     test_shoot_no_ammunition_clears_action_xp_but_keeps_tail();
+    test_direct_shoot_no_ammunition_clears_action_xp();
     test_shoot_action_uses_champion_cell_for_f0326_launch();
     test_climb_down_failure_cancels_disable_but_keeps_xp();
+    test_direct_climb_down_failure_cancels_disable_but_keeps_xp();
     test_climb_down_open_pit_moves_party_and_keeps_tail();
     test_climb_down_closed_pit_moves_forward_without_fall();
     test_climb_down_group_over_pit_blocks_move_but_keeps_bug79_tail();
