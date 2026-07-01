@@ -3,10 +3,11 @@ PASS P55_DIRECT_AUDIO_AUDIT_01 map contains sound event 18 M620_SOUND_BLOW_HORN
 PASS P55_DIRECT_AUDIO_AUDIT_01 map contains sound event 13 M563_SOUND_COMBAT_ATTACK
 PASS P55_DIRECT_AUDIO_AUDIT_02 war cry action emits event 17
 PASS P55_DIRECT_AUDIO_AUDIT_02 blow horn action emits event 18
-PASS P55_DIRECT_AUDIO_AUDIT_03 shoot and throw emit source-backed event 13
+PASS P55_DIRECT_AUDIO_AUDIT_03 shoot and F0328 throw emit source-backed event 13
 PASS P55_DIRECT_AUDIO_AUDIT_04A calm/brandish/confuse stay source-silent
 PASS P55_DIRECT_AUDIO_AUDIT_04B fireball/dispell/lightning action cast stays source-silent
-PASS P55_DIRECT_AUDIO_AUDIT_04 remaining direct marker calls are documented TODO buckets {'generic_non_sound_request_emission': 1, 'invoke_action_fallback': 1}
+PASS P55_DIRECT_AUDIO_AUDIT_04C invoke action stays source-silent
+PASS P55_DIRECT_AUDIO_AUDIT_04 remaining direct marker calls are documented TODO buckets {'generic_non_sound_request_emission': 1}
 PASS P55_DIRECT_AUDIO_AUDIT_05 converted action near T%u: %s SHOOTS
-PASS P55_DIRECT_AUDIO_AUDIT_05 converted action near T%u: %s THROWS
+PASS P55_DIRECT_AUDIO_AUDIT_05 converted F0328 throw helper
 PASS P55_DIRECT_AUDIO_AUDIT_SUMMARY 0 failures

@@ -726,10 +726,10 @@ first, then visual parity, then typography / honesty.
     `parity-evidence/pass55_m11_direct_audio_marker_audit.txt`, verifies the
     converted event-index paths and locks the remaining direct-marker TODO
     buckets.
-  - Remaining direct marker buckets are explicit, not claimed faithful:
-    generic non-`EMIT_SOUND_REQUEST` tick emissions; `CALM` / `BRANDISH` /
-    `CONFUSE`; `FIREBALL` / `DISPELL` / `LIGHTNING` cast-action cue; and
-    `INVOKE` action cue.
+  - Remaining direct marker bucket is explicit, not claimed faithful:
+    generic non-`EMIT_SOUND_REQUEST` tick emissions. `CALM` / `BRANDISH` /
+    `CONFUSE`, `FIREBALL` / `DISPELL` / `LIGHTNING`, and `INVOKE` are now
+    audited as source-silent at action time.
   - Full landing log and evidence pointers in `PASS55_AUDIO_FINDINGS.md`.
 - **Pass 125 (candidate, 2026-04-26):**
   - Tightened the fallback/no-audio runtime seam for future queue/order probes:
@@ -966,8 +966,9 @@ first, then visual parity, then typography / honesty.
   1. Original capture/proof of SFX/title-music cadence, prioritization,
      continuous-loop timing, and overlap.
   2. Source-backed title frontend start/stop timing for the new queue API.
-  3. Resolve the four documented remaining direct-marker TODO buckets, either
-     by source-backed event-index conversion or original runtime capture.
+  3. Resolve the remaining generic non-`EMIT_SOUND_REQUEST` direct-marker
+     fallback by source-backed event-index conversion or original runtime
+     capture.
   4. Bug-faithful playback quirks/cataloging when relevant.
 - **Remaining gaps before V1 TITLE animation can be called original-faithful:**
   1. Capture or source-prove original frame timing/cadence, palette application
