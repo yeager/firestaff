@@ -5937,6 +5937,98 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_champion_per_stat_parity_pc34_compat
     )
 
+    # CSB V1 startup-adjacent input-command bridge gate.
+    # Source-lock: ReDMCSB COMMAND.C:677-684 I34E/PC-34 movement keyboard
+    # scancode rows (0xAB34..0xAB36, 0xAB31..0xAB33, 0xAB32); COMMAND.C:729-812
+    # F0361 keyboard enqueue (C5 cap of DEFS.H:3507-3509); COMMAND.C:2045-2156
+    # F0380 dispatcher; CLIKMENU.C:142-174 F0365_CLIKMENU_ProcessTurn;
+    # CHAMPION.C F0284 lines 117-130 CHAMPION_SetPartyDirection;
+    # DEFS.H:223-226 C001..C006.  Proves one M12 menu input
+    # (M12_MENU_INPUT_TURN_RIGHT, M12_MENU_INPUT_UP, ...) reaches the CSB
+    # V1 runtime input command queue + F0284 party state transition.  Data-free,
+    # no DM1/CSB assets required.  Companion to test_csb_v1_input_command_queue_binding
+    # (which exercises the same queue helper without the M12 bridge translation).
+    add_executable(test_csb_v1_input_command_bridge_pc34_compat
+        tests/test_csb_v1_input_command_bridge_pc34_compat.c
+        src/csb/csb_v1_input_command_bridge_pc34_compat.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_input_command_bridge_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_input_command_bridge_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_input_command_bridge_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_input_command_bridge_pc34_compat
+        COMMAND test_csb_v1_input_command_bridge_pc34_compat
+    )
+
+    # CSB V1 input command queue binding gate (existing test, wired up so the
+    # source-locked TURN_RIGHT queue->state path runs in CI).  Source-lock:
+    # ReDMCSB COMMAND.C F0380 lines 2045-2156 dispatches C001/C002 to
+    # F0365_COMMAND_ProcessTypes1To2_TurnParty; CHAMPION.C F0284 lines
+    # 117-130 applies the turn delta to every champion Cell and Direction.
+    add_executable(test_csb_v1_input_command_queue_binding
+        tests/test_csb_v1_input_command_queue_binding.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_input_command_queue_binding PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_input_command_queue_binding PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_input_command_queue_binding PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_input_command_queue_binding
+        COMMAND test_csb_v1_input_command_queue_binding
+    )
+
+    # CSB V1 queue overflow gate (existing test, wired up so the source-locked
+    # C5/C7 cap, enqueue cap, and dispatch counter run in CI).  Source-lock:
+    # COMMAND.C F0361 lines 1744-1766 + DEFS.H:3507-3509; COMMAND.C F0359
+    # lines 1506-1514; COMMAND.C F0380 lines 2075-2126.
+    add_executable(test_csb_v1_queue_overflow_pc34_compat
+        tests/test_csb_v1_queue_overflow_pc34_compat.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_queue_overflow_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_queue_overflow_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_queue_overflow_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_queue_overflow_pc34_compat
+        COMMAND test_csb_v1_queue_overflow_pc34_compat
+    )
+
+    # CSB V1 runtime tick accumulator gate (existing test, wired up so the
+    # source-locked 55ms game-time quantum from accumulated frame deltas runs
+    # in CI).  Source-lock: ReDMCSB TIMELINE.C F0235 lines 702-708.
+    add_executable(test_csb_v1_runtime_tick_accumulator
+        tests/test_csb_v1_runtime_tick_accumulator.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_runtime_tick_accumulator PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_runtime_tick_accumulator PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_runtime_tick_accumulator PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_runtime_tick_accumulator
+        COMMAND test_csb_v1_runtime_tick_accumulator
+    )
+
     # CSB V1 champion per-stat ↔ F0309 max-load interaction fixture
     # (Champions GAP 2 follow-up slice).  Pins the deterministic
     # relationship between the per-champion `randomPoints` LCG and
