@@ -22077,10 +22077,15 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
                                    creatureType, flux, escapeAvailable,
                                    &result);
     if (!result.lordChaosPresent) {
+        /* ReDMCSB MENU.C F0407 lines 1499-1505 calls F0225 and leaves
+         * AL1245_B_ActionPerformed TRUE.  PROJEXPL.C F0225 lines 1077-1083
+         * has already created the Harm Non Material fuse explosion before it
+         * discovers that Lord Chaos is absent, so the common F0407 tail still
+         * runs and the action reports performed. */
         m11_log_event(state, M11_COLOR_LIGHT_RED,
                       "T%u: %s FUSES NOTHING",
                       (unsigned int)state->world.gameTick, champName);
-        return 0;
+        return 1;
     }
     if (result.lordChaosEscaped) {
         /* ReDMCSB PROJEXPL.C F0225 lines 1115-1119 moves Lord Chaos to
