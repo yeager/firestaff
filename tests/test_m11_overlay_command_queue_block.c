@@ -330,6 +330,32 @@ static void test_candidate_panel_blocks_direct_inventory_toggle(void)
                                 "C040 direct inventory helper does not tick");
 }
 
+static void test_candidate_panel_blocks_direct_map_toggle(void)
+{
+    M11_GameViewState state;
+    uint32_t tick;
+    int direction;
+
+    seed_active_view(&state);
+    tick = state.world.gameTick;
+    direction = state.world.party.direction;
+    state.candidateMirrorOrdinal = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+    state.inventoryPanelActive = 1;
+
+    ASSERT_EQ(M11_GameView_ToggleMapOverlay(&state), 0,
+              "C040 candidate blocks direct map toggle");
+    ASSERT_EQ(state.mapOverlayActive, 0,
+              "blocked direct map toggle keeps map closed");
+    ASSERT_EQ(state.inventoryPanelActive, 1,
+              "blocked direct map toggle preserves candidate inventory panel");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "blocked direct map toggle keeps C040 live");
+    assert_no_pipeline_activity(&state, tick, direction,
+                                "C040 direct map helper does not tick");
+}
+
 static void test_candidate_panel_blocks_direct_object_helpers(void)
 {
     M11_GameViewState state;
@@ -468,6 +494,7 @@ int main(void)
     test_c161_rename_duplicate_name_keeps_modal_open();
     test_candidate_panel_blocks_direct_spell_helpers();
     test_candidate_panel_blocks_direct_inventory_toggle();
+    test_candidate_panel_blocks_direct_map_toggle();
     test_candidate_panel_blocks_direct_object_helpers();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();

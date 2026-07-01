@@ -31907,6 +31907,14 @@ int M11_GameView_GetAttackCueCreatureType(const M11_GameViewState* state) {
 
 int M11_GameView_ToggleMapOverlay(M11_GameViewState* state) {
     if (!state) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB: COMMAND.C F0380 gates the normal command surfaces
+         * around G0299_ui_CandidateChampionOrdinal while the C040
+         * resurrect/reincarnate panel owns input.  The Firestaff map
+         * overlay is not a source DM1 surface, so the direct helper must
+         * not make it active behind that panel. */
+        return 0;
+    }
     state->mapOverlayActive = !state->mapOverlayActive;
     return state->mapOverlayActive;
 }
