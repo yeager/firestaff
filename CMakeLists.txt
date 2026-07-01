@@ -12644,6 +12644,22 @@ if(NOT TARGET test_dm1_v1_stairs_inventory_state_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_stairs_inventory_state_gate_pc34_compat)
+    add_executable(test_dm1_v1_stairs_inventory_state_gate_pc34_compat
+        tests/test_dm1_v1_stairs_inventory_state_gate_pc34_compat.c
+        src/dm1/dm1_v1_inventory_pc34_compat.c
+        src/dm1/dm1_v1_stairs_level_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_stairs_inventory_state_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_stairs_inventory_state_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_stairs_inventory_state_gate
+        COMMAND test_dm1_v1_stairs_inventory_state_gate_pc34_compat
+    )
+endif()
+
 if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat)
     add_executable(test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat
         tests/dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat.c
