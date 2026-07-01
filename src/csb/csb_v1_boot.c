@@ -3,6 +3,7 @@
 #include "asset_find_by_hash.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -349,6 +350,156 @@ void csb_v1_boot_print_summary(const CSB_V1_BootProfile *profile)
            profile->assets_verified ? "READY" : "missing",
            profile->dungeon_verified ? "ok" : "missing",
            profile->graphics_verified ? "ok" : "missing");
+}
+
+/* ── CSB V1 boot profile -> M11 entry guard ─────────────────────
+ *
+ * The canonical CSB V1 media hash registry below mirrors the four
+ * graphics md5s and the one dungeon md5 the launcher scans for.
+ * The gate hashes here MUST stay in sync with g_csb_boot_graphics_hashes
+ * and g_csb_boot_dungeon_hashes above; the registry is the source of
+ * truth that the M11 dispatch consults before activating a CSB launch.
+ *
+ * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441 (CSB media class
+ *   detection by hash, not by filename/path).
+ * Source: ReDMCSB LOADSAVE.C F0435 lines 1936-1944 (new-game dungeon
+ *   load is gated on a hash-known dungeon header). */
+static const char *const g_csb_m11_entry_graphics_hashes[] = {
+    "61fbfd56887c94adc26888a9491c6611", /* PC DOS 3.4 English         MEDIA278 */
+    "ebf6a57af3f27782e358c0490bfd2f2e", /* Atari ST 2.0/2.1 English   MEDIA332 */
+    "291e1bc6803e3dc4b974c60117ca5d68", /* Amiga 3.5 English          MEDIA529 */
+    "cefaddfdf5651df2c91f61b5611a8362", /* Amiga 3.5 Multilanguage    MEDIA529 */
+    NULL
+};
+
+static const char *const g_csb_m11_entry_dungeon_hashes[] = {
+    "6695d2acebce49f95db1d8f3a5c733de", /* shared CSB V1 DUNGEON.DAT  MEDIA278/332/529 */
+    NULL
+};
+
+static int csb_v1_md5_is_canonical_graphics(const char *md5)
+{
+    size_t i;
+    if (!md5 || md5[0] == '\0') return 0;
+    for (i = 0U; g_csb_m11_entry_graphics_hashes[i] != NULL; ++i) {
+        if (strcmp(md5, g_csb_m11_entry_graphics_hashes[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int csb_v1_md5_is_canonical_dungeon(const char *md5)
+{
+    size_t i;
+    if (!md5 || md5[0] == '\0') return 0;
+    for (i = 0U; g_csb_m11_entry_dungeon_hashes[i] != NULL; ++i) {
+        if (strcmp(md5, g_csb_m11_entry_dungeon_hashes[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void csb_v1_boot_gate_set_reason(char *reason,
+                                        size_t reason_size,
+                                        const char *fmt,
+                                        ...)
+{
+    if (!reason || reason_size == 0U) return;
+    {
+        va_list args;
+        va_start(args, fmt);
+        vsnprintf(reason, reason_size, fmt, args);
+        va_end(args);
+        reason[reason_size - 1U] = '\0';
+    }
+}
+
+int csb_v1_boot_graphics_dungeon_m11_entry_gate(const char *graphics_md5,
+                                                const char *dungeon_md5,
+                                                char *reason,
+                                                size_t reason_size)
+{
+    if (!graphics_md5 || graphics_md5[0] == '\0') {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: GRAPHICS md5 is empty "
+            "(scanner did not record a matched graphics hash)");
+        return 0;
+    }
+    if (!dungeon_md5 || dungeon_md5[0] == '\0') {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: DUNGEON md5 is empty "
+            "(scanner did not record a matched dungeon hash)");
+        return 0;
+    }
+    if (!csb_v1_md5_is_canonical_graphics(graphics_md5)) {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: GRAPHICS md5 %s is not in the canonical "
+            "CSB V1 media registry (PC3.4EN / Atari ST 2.x / Amiga 3.x)",
+            graphics_md5);
+        return 0;
+    }
+    if (!csb_v1_md5_is_canonical_dungeon(dungeon_md5)) {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: DUNGEON md5 %s is not in the canonical "
+            "CSB V1 media registry",
+            dungeon_md5);
+        return 0;
+    }
+    csb_v1_boot_gate_set_reason(reason, reason_size,
+        "CSB M11 entry guard: GRAPHICS=%s DUNGEON=%s accepted",
+        graphics_md5, dungeon_md5);
+    return 1;
+}
+
+int csb_v1_boot_profile_m11_entry_gate(const CSB_V1_BootProfile *profile,
+                                       char *reason,
+                                       size_t reason_size)
+{
+    if (!profile) {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: NULL boot profile "
+            "(launcher did not initialize a CSB profile before dispatch)");
+        return 0;
+    }
+    if (strcmp(profile->game_id, CSB_V1_BOOT_GAME_ID) != 0) {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: profile game_id=%s != %s "
+            "(foreign game reached the CSB entry path)",
+            profile->game_id[0] ? profile->game_id : "(empty)",
+            CSB_V1_BOOT_GAME_ID);
+        return 0;
+    }
+    if (profile->state < CSB_V1_BOOT_STATE_ASSETS_READY) {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: boot state=%d below ASSETS_READY "
+            "(scanner did not record both required assets)",
+            (int)profile->state);
+        return 0;
+    }
+    if (!profile->assets_verified ||
+        !profile->graphics_verified ||
+        !profile->dungeon_verified) {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: assets_verified=%d graphics_verified=%d "
+            "dungeon_verified=%d (one or more required files missing)",
+            profile->assets_verified,
+            profile->graphics_verified,
+            profile->dungeon_verified);
+        return 0;
+    }
+    if (profile->graphics_path[0] == '\0' ||
+        profile->dungeon_path[0] == '\0') {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: empty asset path "
+            "(graphics_path=%s dungeon_path=%s)",
+            profile->graphics_path[0] ? profile->graphics_path : "(empty)",
+            profile->dungeon_path[0] ? profile->dungeon_path : "(empty)");
+        return 0;
+    }
+    return csb_v1_boot_graphics_dungeon_m11_entry_gate(
+        profile->graphics_md5, profile->dungeon_md5, reason, reason_size);
 }
 
 const char *csb_v1_boot_source_evidence(void)
