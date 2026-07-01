@@ -24,6 +24,7 @@
 #include "dm1_v1_sound_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
+#include "firestaff/dm1/v1/G0491_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -90,13 +91,8 @@ static int is_melee_action_index(unsigned char actionIndex) {
 }
 
 static unsigned char action_disabled_ticks_for_test(unsigned char actionIndex) {
-    static const unsigned char ticks[44] = {
-        0, 6, 8, 0, 6, 3, 1, 5, 3, 5, 35, 20, 4, 6, 10, 16,
-        2, 18, 8, 30, 42, 31, 10, 38, 9, 20, 10, 16, 4, 12, 20, 7,
-        14, 30, 35, 2, 19, 9, 10, 15, 22, 10, 0, 2
-    };
-    if (actionIndex >= 44) return 0;
-    return ticks[actionIndex];
+    int ticks = dm1_v1_graphic560_action_disabled_ticks_get_pc34(actionIndex);
+    return ticks < 0 ? 0u : (unsigned char)ticks;
 }
 
 static void seed_state(M11_GameViewState* state,
@@ -5288,6 +5284,9 @@ static void test_fluxcage_schedules_f0224_remove_event(void) {
               "FLUXCAGE creates the F0224 fluxcage explosion");
     ASSERT_EQ(state.world.party.champions[0].direction, 0,
               "FLUXCAGE mirrors F0406 champion direction to party direction");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_FLUXCAGE),
+              "FLUXCAGE runtime action-disable tail reads source G0491");
     ASSERT_EQ(state.world.explosions.count, 1,
               "FLUXCAGE leaves one live explosion instance");
 
