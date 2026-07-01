@@ -28,8 +28,8 @@
  *     cleared as part of the dialog dismiss path (the next
  *     M11_GameView_TickSessionTimer call must re-arm FORCED_PAUSE
  *     if elapsedSeconds >= limitSeconds, per the runtime contract).
- *   - Every other input (UP/DOWN/LEFT/RIGHT/STRAFE_*/TURN_*/VALUE_*,
- *     REST_TOGGLE/USE_STAIRS/PICKUP/DROP/SPELL_*/USE_ITEM/INVENTORY/
+ *   - Every other input (UP/DOWN/LEFT/RIGHT/STRAFE/TURN/VALUE variants,
+ *     REST_TOGGLE/USE_STAIRS/PICKUP/DROP/SPELL/USE_ITEM/INVENTORY/
  *     MAP/CYCLE_CHAMPION/...) must return M11_GAME_INPUT_IGNORED
  *     and must NOT clear the dialog latch.  This is the "first
  *     refusal on input" branch — gameplay movement, inventory, and
