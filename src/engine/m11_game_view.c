@@ -21922,6 +21922,27 @@ static int m11_count_fluxcages_around_square(M11_GameViewState* state,
     return count;
 }
 
+static void m11_remove_fluxcages_on_square_f0446(M11_GameViewState* state,
+                                                 int mapIndex,
+                                                 int mapX,
+                                                 int mapY) {
+    int i;
+    if (!state) return;
+    /* ReDMCSB: ENDGAME.C F0446 lines 853-875 removes C050 Fluxcage
+     * explosion things from both the party square and Lord Chaos square
+     * before the fuse-sequence fireball burst is created. */
+    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
+        const struct ExplosionInstance_Compat* e =
+            &state->world.explosions.entries[i];
+        if (e->reserved0 == 0) continue;
+        if (e->explosionType != C050_EXPLOSION_FLUXCAGE) continue;
+        if (e->mapIndex != mapIndex || e->mapX != mapX || e->mapY != mapY) {
+            continue;
+        }
+        (void)F0824_EXPLOSION_Despawn_Compat(&state->world.explosions, i);
+    }
+}
+
 static int m11_find_lord_chaos_escape_square_f0225(
     M11_GameViewState* state,
     int mapIndex,
@@ -22112,6 +22133,10 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
     }
     if (!result.fuseSequenceTriggered) return 0;
 
+    m11_remove_fluxcages_on_square_f0446(state, mapIndex,
+                                         state->world.party.mapX,
+                                         state->world.party.mapY);
+    m11_remove_fluxcages_on_square_f0446(state, mapIndex, mapX, mapY);
     m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                  DM1_CREATURE_GREY_LORD_ID);
     state->world.magic.magicalLightAmount = 200;
