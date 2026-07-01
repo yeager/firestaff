@@ -53,8 +53,8 @@ static int is_melee_action_index(unsigned char actionIndex) {
     switch (actionIndex) {
         case 2:  case 6:  case 7:  case 9:  case 12:
         case 13: case 14: case 15: case 16: case 18:
-        case 19: case 25: case 28: case 29: case 30:
-        case 31:
+        case 19: case 24: case 25: case 28: case 29:
+        case 30: case 31:
             return 1;
         default:
             return 0;
@@ -305,7 +305,7 @@ static void test_melee_action_row_respects_live_candidate_no_action(void) {
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
     unsigned char squareData[9];
-    unsigned short squareFirstThings[9];
+    unsigned short squareFirstThings[1];
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
     struct DungeonGroup_Compat groups[1];
@@ -333,7 +333,7 @@ static void test_melee_action_row_respects_live_candidate_no_action(void) {
     tiles[0].squareData = squareData;
     tiles[0].squareCount = 9;
     squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
-    squareFirstThings[(2 * 3) + 1] = make_thing(THING_TYPE_GROUP, 0);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
     state.world.dungeon = &dungeon;
     state.world.party.mapIndex = 0;
     state.world.partyMapIndex = 0;
@@ -401,6 +401,222 @@ static void test_melee_action_row_respects_live_candidate_no_action(void) {
               "candidate-panel melee row clears acting champion");
     ASSERT_EQ(state.world.candidateAttackInvulnerableEnabled, 0,
               "candidate marker is not left set when action row is rejected");
+}
+
+static void test_disrupt_action_row_rejects_material_creature(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonGroup_Compat groups[1];
+    unsigned char actions[3];
+    int disruptRow = -1;
+    int damageEmission = -1;
+    int i;
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    weapons[0].type = 16; /* ActionSet 18: JAB, CLEAVE, DISRUPT. */
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIGHTER].experience = 500;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_SWING].experience = 500;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_GIANT_SCORPION;
+    groups[0].count = 0;
+    groups[0].health[0] = 200;
+    groups[0].cells = 0xFF;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "DISRUPT material fixture opens action menu");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "DISRUPT material fixture resolves source action rows");
+    for (i = 0; i < 3; ++i) {
+        if (actions[i] == DM1_ACTION_DISRUPT) {
+            disruptRow = i;
+            break;
+        }
+    }
+    ASSERT_EQ(disruptRow >= 0, 1,
+              "ActionSet 18 exposes DISRUPT as an action row");
+    if (disruptRow < 0) return;
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, disruptRow), 0,
+              "DISRUPT against material creature is rejected before F0231");
+
+    for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
+        if (state.lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
+            damageEmission = i;
+            break;
+        }
+    }
+    ASSERT_EQ(damageEmission >= 0, 1,
+              "material DISRUPT emits invalid melee result through CMD_ATTACK");
+    if (damageEmission >= 0) {
+        ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[2], 0,
+                  "material DISRUPT damage payload is zero");
+        ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[3],
+                  COMBAT_OUTCOME_INVALID,
+                  "material DISRUPT reports invalid outcome");
+    }
+    ASSERT_EQ(groups[0].health[0], 200,
+              "material DISRUPT leaves group HP unchanged");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_DISRUPT) >> 1,
+              "material DISRUPT halves disabled ticks after F0402 failure");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_DISRUPT,
+              "material DISRUPT stores disabled action index");
+}
+
+static void test_disrupt_action_row_hits_non_material_creature(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonGroup_Compat groups[1];
+    unsigned char actions[3];
+    int disruptRow = -1;
+    int damageEmission = -1;
+    int i;
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    weapons[0].type = 16; /* ActionSet 18: JAB, CLEAVE, DISRUPT. */
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 200;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 200;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 200;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIGHTER].experience = 5000;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_SWING].experience = 5000;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_GHOST;
+    groups[0].count = 0;
+    groups[0].health[0] = 200;
+    groups[0].cells = 0xFF;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "DISRUPT ghost fixture opens action menu");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "DISRUPT ghost fixture resolves source action rows");
+    for (i = 0; i < 3; ++i) {
+        if (actions[i] == DM1_ACTION_DISRUPT) {
+            disruptRow = i;
+            break;
+        }
+    }
+    ASSERT_EQ(disruptRow >= 0, 1,
+              "ActionSet 18 exposes DISRUPT for ghost fixture");
+    if (disruptRow < 0) return;
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, disruptRow), 1,
+              "DISRUPT against non-material creature routes through F0231");
+
+    for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
+        if (state.lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
+            damageEmission = i;
+            break;
+        }
+    }
+    ASSERT_EQ(damageEmission >= 0, 1,
+              "ghost DISRUPT emits melee damage result");
+    if (damageEmission >= 0) {
+        ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[1], 0,
+                  "ghost DISRUPT targets front-square group");
+        ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[2] > 0,
+                  1,
+                  "ghost DISRUPT deals positive damage");
+    }
+    ASSERT_EQ(groups[0].health[0] < 200, 1,
+              "ghost DISRUPT reduces non-material group HP");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_DISRUPT),
+              "successful DISRUPT keeps full disabled ticks");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_DISRUPT,
+              "successful DISRUPT stores disabled action index");
 }
 
 static void test_candidate_panel_blocks_action_menu_open(void) {
@@ -4579,6 +4795,8 @@ int main(void) {
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_halves_disable_ticks_when_f0402_fails();
     test_melee_action_row_respects_live_candidate_no_action();
+    test_disrupt_action_row_rejects_material_creature();
+    test_disrupt_action_row_hits_non_material_creature();
     test_candidate_panel_blocks_action_menu_open();
     test_direct_non_melee_respects_candidate_panel_gate();
     test_empty_hand_punch_action_row_uses_live_melee();
