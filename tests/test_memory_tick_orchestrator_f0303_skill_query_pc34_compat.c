@@ -811,6 +811,87 @@ static void test_orch_projectile_wall_impact_emits_non_explosion_sound(void) {
     assert(sawSound == 1);
 }
 
+static void test_orch_slime_wall_impact_emits_wooden_thud_without_explosion(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    struct ProjectileCreateInput_Compat createIn;
+    struct TimelineEvent_Compat firstMove;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int slot = -1;
+    int sawSound = 0;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    squareData[(2 * 3) + 1] = square_for_test(DUNGEON_ELEMENT_WALL, 0);
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    world.dungeon = &dungeon;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.party.champions[0].hp.current = 100;
+
+    memset(&createIn, 0, sizeof(createIn));
+    createIn.category = PROJECTILE_CATEGORY_MAGICAL;
+    createIn.subtype = PROJECTILE_SUBTYPE_SLIME;
+    createIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    createIn.ownerIndex = 0;
+    createIn.mapIndex = 0;
+    createIn.mapX = 1;
+    createIn.mapY = 1;
+    createIn.cell = 2;
+    createIn.direction = 1;
+    createIn.kineticEnergy = 80;
+    createIn.attack = 40;
+    createIn.stepEnergy = 10;
+    createIn.currentTick = 100;
+    createIn.firstMoveGraceFlag = 1;
+    assert(F0810_PROJECTILE_Create_Compat(
+        &createIn, &world.projectiles, &slot, &firstMove) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove) == 1);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
+    assert(world.projectiles.count == 0);
+    assert(world.explosions.count == 0);
+    assert(world.timeline.count == 0);
+    for (i = 0; i < result.emissionCount; ++i) {
+        if (result.emissions[i].kind == EMIT_SOUND_REQUEST &&
+            result.emissions[i].payload[0] == DM1_SND_WOODEN_THUD &&
+            result.emissions[i].payload[1] == 1 &&
+            result.emissions[i].payload[2] == 1 &&
+            result.emissions[i].payload[3] == 0) {
+            sawSound = 1;
+        }
+    }
+    assert(sawSound == 1);
+}
+
 static void test_orch_projectile_closed_door_impact_destroys_door(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -4708,6 +4789,7 @@ int main(void) {
     test_orch_projectile_wall_impact_creates_explosion();
     test_orch_magical_wall_impact_zero_adjusted_explosion_skips_spawn_and_sound();
     test_orch_projectile_wall_impact_emits_non_explosion_sound();
+    test_orch_slime_wall_impact_emits_wooden_thud_without_explosion();
     test_orch_projectile_closed_door_impact_destroys_door();
     test_orch_non_weapon_door_impact_emits_wooden_thud();
     test_orch_magical_door_impact_schedules_explosion_and_door_attack();
