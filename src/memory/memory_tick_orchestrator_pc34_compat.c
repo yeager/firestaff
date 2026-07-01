@@ -25,7 +25,6 @@
 
 enum {
     ORCH_CREATURE_BLACK_FLAME_PC34 = 11,
-    ORCH_CMD_ATTACK_ACTION_DISRUPT_PC34 = 24,
     ORCH_SOUND_WOODEN_THUD_PC34 = 4,
     ORCH_POTION_EMPTY_FLASK_PC34 = 20,
     ORCH_JUNK_ZOKATHRA_PC34 = 51,
@@ -1668,7 +1667,8 @@ static void orch_build_cmd_attack_weapon_profile_compat(
     outWeapon->weaponStrength = weaponInfo->strength;
     outWeapon->kineticEnergy = weaponInfo->kineticEnergy;
     outWeapon->hitProbability = hitProbability;
-    if (weaponType == COMBAT_ICON_VORPAL_BLADE || actionIndex == 24) {
+    if (weaponType == COMBAT_ICON_VORPAL_BLADE ||
+        actionIndex == DM1_ACTION_DISRUPT) {
         outWeapon->hitProbability |= 0x8000;
     }
     outWeapon->damageFactor = damageFactor;
@@ -2160,7 +2160,7 @@ static int orch_cmd_attack_disrupt_material_blocked_f0407_compat(
     int creatureType;
 
     if (!world || !world->things) return 0;
-    if (actionIndex != ORCH_CMD_ATTACK_ACTION_DISRUPT_PC34) return 0;
+    if (actionIndex != DM1_ACTION_DISRUPT) return 0;
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
 
     creatureType = world->things->groups[groupIndex].creatureType;
@@ -2175,12 +2175,12 @@ static int orch_cmd_attack_disrupt_material_blocked_f0407_compat(
 static int orch_cmd_attack_action_can_hit_door_f0407_compat(int actionIndex)
 {
     switch (actionIndex) {
-    case 2:  /* C002_ACTION_CHOP */
-    case 7:  /* C007_ACTION_KICK */
-    case 13: /* C013_ACTION_SWING */
-    case 18: /* C018_ACTION_HACK */
-    case 19: /* C019_ACTION_BERZERK */
-    case 30: /* C030_ACTION_BASH */
+    case DM1_ACTION_CHOP:
+    case DM1_ACTION_KICK:
+    case DM1_ACTION_SWING:
+    case DM1_ACTION_HACK:
+    case DM1_ACTION_BERZERK:
+    case DM1_ACTION_BASH:
         return 1;
     default:
         return 0;
