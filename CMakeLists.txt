@@ -2508,6 +2508,39 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 CSBWin 512-byte XOR-pad save-header classifier probe
+# Real-asset CSBWin / DM1 save -> csb_v1_csbwin_512_xor_pad_classify
+# verdict gate. The probe runs the data-free synthetic-fixture
+# unit test (csb_v1_csbwin_512_xor_pad_classify_unit) and then
+# optionally probes a user-staged csbgame.dat / csbgame.bak /
+# dmsave.dat / dmsave.bak under data_dir. Skip-safe by design:
+# hosts without a known CSBWin save exit 0 with a SKIP message
+# after the unit-test portion has already proven the contract.
+# Source: CSBWin/Chaos.cpp:1341 UnscrambleBlock1 +
+#         CSBWin/CSBCode.cpp:9038 Unscramble +
+#         ReDMCSB DEFS.H:469-501 (CSB_SAVE_HEADER / DM_SAVE_HEADER
+#         Noise arrays + C10/C29 key-index macros).
+add_executable(firestaff_csb_v1_csbwin_512_xor_pad_classify_probe
+    probes/csb/firestaff_csb_v1_csbwin_512_xor_pad_classify_probe.c
+    src/csb/csb_v1_csbwin_512_xor_pad_classify.c
+)
+target_include_directories(firestaff_csb_v1_csbwin_512_xor_pad_classify_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_csbwin_512_xor_pad_classify_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_csbwin_512_xor_pad_classify_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME csb_v1_csbwin_512_xor_pad_classify
+    COMMAND firestaff_csb_v1_csbwin_512_xor_pad_classify_probe
+)
+set_tests_properties(csb_v1_csbwin_512_xor_pad_classify PROPERTIES
+    LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
+    TIMEOUT 120
+)
+
 # CSB V1 Hint Oracle UI/runtime binding probe
 # Real-asset HCSB.HTC → Firestaff-facing oracle/hint binding
 # surface. The probe exercises the diagnostic/oracle report,
@@ -14594,6 +14627,39 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_csbwin_save_loader_boundary_pc34_compat
     )
     set_tests_properties(csb_v1_csbwin_save_loader_boundary_pc34_compat_unit PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;data_free"
+    )
+
+    # CSB V1 CSBWin 512-byte XOR-pad save-header classifier —
+    # data-free contract tests for the read-only classifier that
+    # recognises the CSBWin 512-byte XOR-pad-obfuscated save
+    # header (CSB key 29 / DM key 10). Synthetic fixtures cover
+    # argument/too-small rejection, junk-key probe rejection,
+    # all-zero degenerate case, both-keys-fail flipped-checksum
+    # case, CSB-key synthetic accept with public-field readback,
+    # DM-key synthetic accept with public-field readback,
+    # CSB-first fallback ordering, caller's buffer is never
+    # mutated, and source-evidence citation. No real CSBWin
+    # save bytes are vendored; the matching skip-safe real-
+    # asset probe lives next to it.
+    # Source: CSBWin/Chaos.cpp:1341 UnscrambleBlock1 +
+    #         ReDMCSB DEFS.H:469-501 + CSBWin/CSBCode.cpp:9038.
+    add_executable(test_csb_v1_csbwin_512_xor_pad_classify
+        tests/test_csb_v1_csbwin_512_xor_pad_classify.c
+        src/csb/csb_v1_csbwin_512_xor_pad_classify.c
+    )
+    target_include_directories(test_csb_v1_csbwin_512_xor_pad_classify PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_512_xor_pad_classify PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_512_xor_pad_classify_unit
+        COMMAND test_csb_v1_csbwin_512_xor_pad_classify
+    )
+    set_tests_properties(csb_v1_csbwin_512_xor_pad_classify_unit PROPERTIES
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 
