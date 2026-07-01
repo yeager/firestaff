@@ -25,6 +25,7 @@
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
+#include "firestaff/dm1/v1/G0494_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -3581,6 +3582,7 @@ static void test_block_action_disables_champion_for_source_ticks(void) {
     M11_GameViewState state;
     DM1_ActionXpRoute route;
     int expectedActionXp;
+    int expectedStaminaCost;
     int i;
     seed_state(&state, 30, 1);
 
@@ -3589,11 +3591,16 @@ static void test_block_action_disables_champion_for_source_ticks(void) {
     if (!route.valid) return;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
     expectedActionXp = route.experienceGain * 2;
+    expectedStaminaCost =
+        dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_BLOCK);
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_BLOCK),
               1,
               "direct BLOCK returns F0407 ActionPerformed true");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current,
+              30 - expectedStaminaCost,
+              "BLOCK spends source G0494 action stamina before F0325 tail");
     ASSERT_EQ(state.actionDisabledTicks[0], 6,
               "BLOCK applies G0491 six-tick action disable");
     ASSERT_EQ(state.actionDisabledIndex[0], 1,
