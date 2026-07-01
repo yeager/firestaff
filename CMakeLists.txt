@@ -11542,6 +11542,10 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_original_overlay_capture_source_lock.py
         )
         add_test(
+            NAME dm2_v1_original_overlay_pair_readiness
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_original_overlay_pair_readiness.py
+        )
+        add_test(
             NAME pass512_dm1_v1_original_dungeon_packet_boundary
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass512_dm1_v1_original_dungeon_packet_boundary.py
         )
