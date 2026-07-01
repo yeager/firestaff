@@ -49,6 +49,26 @@ int M11_Screenshot_CaptureCurrent(const char* outputDir,
 int M11_Screenshot_CapturePresentedRGBA(const char* outputDir,
                                         char* outPath, int outPathCap);
 
+/* Capture a 24-bit BMP from a caller-supplied 32-bit RGBA buffer (0xAARRGGBG
+ * layout, byte order R,G,B,A in memory).
+ *
+ *   rgba        : width*height*4 bytes; the alpha channel is dropped on write.
+ *   width/height: positive image dimensions.
+ *   outputDir   : directory to write into (created if missing).  NULL =>
+ *                 ~/.firestaff/screenshots/.
+ *
+ * Returns 1 on success, 0 on any error.  On success, writes the full
+ * output path into `outPath` (if non-NULL, with capacity outPathCap).
+ *
+ * Used by non-DM1 capture paths (Nexus V1 viewport, future raw framebuffer
+ * pipelines) that already produced RGBA without going through the M11
+ * presentation buffer.
+ */
+int M11_Screenshot_CaptureRGBA(const unsigned char* rgba,
+                               int width, int height,
+                               const char* outputDir,
+                               char* outPath, int outPathCap);
+
 /* Resolve the default output directory (~/.firestaff/screenshots).  The
  * directory is created if missing.  Returns a static buffer. */
 const char* M11_Screenshot_DefaultDir(void);

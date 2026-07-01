@@ -16201,6 +16201,30 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 Track 1 real-screen-capture readiness probe.
+#
+# Closes the "real runtime screen capture" sub-row of the E1 Track 1
+# phase-launch gap by driving nexus_viewport_render + nexus_viewport_to_rgba
+# against real DM.BIN/FONT256.S2D/MNS state and writing a 24-bit BMP via
+# M11_Screenshot_CaptureRGBA. Data-free synth path proves the
+# viewport → RGBA → BMP contract; real-data path proves the DM.BIN /
+# FONT256.S2D / SCORPION.MNS handoff reaches a deterministic on-disk BMP.
+# Readiness receipt only — no image is promoted.
+add_executable(firestaff_nexus_v1_track1_real_screen_capture_readiness_probe
+    probes/nexus_v1_track1_real_screen_capture_readiness_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_track1_real_screen_capture_readiness_probe PRIVATE
+    firestaff_nexus firestaff_m11 firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_track1_real_screen_capture_readiness_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_track1_real_screen_capture_readiness_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus V1 BPX/BPK archive-boundary probe. Headless and data-free:
 # recognizes the verified MENU.BPK marker, keeps real unknown .BPK/.BPX
 # streams unsupported, and locks a synthetic BPX0 parser/extraction
@@ -16592,6 +16616,51 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_track1_phase_launch_saturn_ja_iso PROPERTIES
         LABELS "tier1;nexus;track1;phase_launch;live;iso"
+    )
+
+    # Track 1 real-screen-capture readiness gate. Drives the synth
+    # viewport → RGBA → BMP contract (data-free) and, when real data
+    # roots are present, additionally drives the live DM.BIN /
+    # FONT256.S2D / SCORPION.MNS handoff through nexus_viewport_render
+    # and writes a deterministic 24-bit BMP. The Python sibling below
+    # (nexus_v1_track1_real_screen_capture_readiness) runs two
+    # consecutive probes per case and audits the resulting BMPs.
+    add_test(
+        NAME nexus_v1_track1_real_screen_capture_readiness_synthetic
+        COMMAND firestaff_nexus_v1_track1_real_screen_capture_readiness_probe
+    )
+    set_tests_properties(nexus_v1_track1_real_screen_capture_readiness_synthetic PROPERTIES
+        LABELS "tier1;nexus;track1;screen_capture;synthetic"
+    )
+
+    add_test(
+        NAME nexus_v1_track1_real_screen_capture_readiness_extracted_root
+        COMMAND firestaff_nexus_v1_track1_real_screen_capture_readiness_probe
+                "$ENV{HOME}/.firestaff/data/nexus"
+                "${CMAKE_BINARY_DIR}/nexus_v1_track1_real_screen_capture_readiness_extracted_root"
+    )
+    set_tests_properties(nexus_v1_track1_real_screen_capture_readiness_extracted_root PROPERTIES
+        LABELS "tier1;nexus;track1;screen_capture;live;extracted"
+    )
+
+    add_test(
+        NAME nexus_v1_track1_real_screen_capture_readiness_saturn_ja
+        COMMAND firestaff_nexus_v1_track1_real_screen_capture_readiness_probe
+                "$ENV{HOME}/.firestaff/data/nexus-extras/saturn-ja"
+                "${CMAKE_BINARY_DIR}/nexus_v1_track1_real_screen_capture_readiness_saturn_ja"
+    )
+    set_tests_properties(nexus_v1_track1_real_screen_capture_readiness_saturn_ja PROPERTIES
+        LABELS "tier1;nexus;track1;screen_capture;live;iso"
+    )
+
+    add_test(
+        NAME nexus_v1_track1_real_screen_capture_readiness
+        COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_nexus_v1_track1_real_screen_capture_readiness.py
+                --build-dir ${CMAKE_BINARY_DIR}
+    )
+    set_tests_properties(nexus_v1_track1_real_screen_capture_readiness PROPERTIES
+        LABELS "tier1;nexus;track1;screen_capture;python_gate"
     )
 
     add_test(
