@@ -1397,7 +1397,16 @@ static void build_explosion_champion_action(
                           ? 0 : (in->cell & 3);
     memset(out, 0, sizeof(*out));
     out->kind                        = COMBAT_ACTION_APPLY_DAMAGE_CHAMPION;
-    out->allowedWounds               = COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO;
+    /* ReDMCSB PROJEXPL.C:F0213 line 173 routes fireball/lightning
+     * party-square explosions through F0324 with every champion wound
+     * slot allowed.  Poison clouds override this to WOUND_NONE in the
+     * caller after this generic party action is built. */
+    out->allowedWounds               = COMBAT_WOUND_READY_HAND |
+                                       COMBAT_WOUND_ACTION_HAND |
+                                       COMBAT_WOUND_HEAD |
+                                       COMBAT_WOUND_TORSO |
+                                       COMBAT_WOUND_LEGS |
+                                       COMBAT_WOUND_FEET;
     out->attackTypeCode              = attackTypeCode;
     out->rawAttackValue              = attackApplied;
     out->targetMapIndex              = digest->destMapIndex;

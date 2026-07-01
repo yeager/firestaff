@@ -1641,7 +1641,7 @@ static void orch_writeback_cmd_attack_luck_compat(
             (uint8_t)luck;
 }
 
-static int orch_build_projectile_defender_champion_snapshot_compat(
+static int orch_build_defender_champion_snapshot_compat(
     const struct GameWorld_Compat* world,
     int championIndex,
     int attackType,
@@ -3504,7 +3504,7 @@ static int orch_apply_projectile_champion_action_compat(
     if (!champion->present || champion->hp.current == 0) return 0;
 
     memset(&damage, 0, sizeof(damage));
-    if (!orch_build_projectile_defender_champion_snapshot_compat(
+    if (!orch_build_defender_champion_snapshot_compat(
             world, championIndex, action->attackTypeCode, &defender) ||
         !F0739_COMBAT_ScaleChampionDamageF0321_Compat(
             action->attackTypeCode,
@@ -3985,25 +3985,47 @@ static int orch_apply_explosion_party_action_compat(
     const struct CombatAction_Compat* action,
     struct TickResult_Compat* result)
 {
-    struct CombatResult_Compat damage;
     int i;
     int applied = 0;
+    int randomWindow;
+    int baseAttack;
 
     if (!world || !action) return 0;
     if (action->rawAttackValue <= 0) return 0;
-    memset(&damage, 0, sizeof(damage));
-    damage.damageApplied = action->rawAttackValue;
-    damage.woundMaskAdded = action->allowedWounds;
+    randomWindow = (action->rawAttackValue >> 3) + 1;
+    baseAttack = action->rawAttackValue - randomWindow;
+    randomWindow <<= 1;
 
-    /* ReDMCSB PROJEXPL.C:F0220 lines 860-861 calls
-     * F0324_CHAMPION_DamageAll_GetDamagedChampionCount for poison clouds
-     * on the party square.  Fireball/lightning F0213/F0822 uses the same
-     * party-square action surface in Firestaff, so apply the returned
-     * damage to every living present champion in the party. */
+    /* ReDMCSB PROJEXPL.C:F0213 line 173 and F0220 line 861 route
+     * party-square fireball/lightning and poison-cloud explosions through
+     * CHAMPION.C:F0324.  F0324 randomizes attack per champion by +/- 1/8
+     * and then calls F0321, which applies fire/magic shields, defense, and
+     * wound handling before reporting nonzero damage. */
     for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        struct CombatResult_Compat damage;
+        struct CombatantChampionSnapshot_Compat defender;
         int killed = 0;
+        int randomizedAttack;
+        int scaledAttack = 0;
         struct ChampionState_Compat* champion = &world->party.champions[i];
         if (!champion->present || champion->hp.current == 0) continue;
+
+        randomizedAttack = baseAttack +
+                           F0732_COMBAT_RngRandom_Compat(&world->masterRng,
+                                                         randomWindow);
+        if (randomizedAttack < 1) randomizedAttack = 1;
+        if (!orch_build_defender_champion_snapshot_compat(
+                world, i, action->attackTypeCode, &defender) ||
+            !F0739_COMBAT_ScaleChampionDamageF0321_Compat(
+                action->attackTypeCode, randomizedAttack,
+                action->allowedWounds, &defender, &scaledAttack) ||
+            scaledAttack <= 0) {
+            continue;
+        }
+
+        memset(&damage, 0, sizeof(damage));
+        damage.damageApplied = scaledAttack;
+        damage.woundMaskAdded = action->allowedWounds;
         if (F0737_COMBAT_ApplyDamageToChampion_Compat(
                 &damage, champion, &killed)) {
             applied++;
