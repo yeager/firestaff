@@ -1515,6 +1515,159 @@ static int orch_f0312_stamina_adjusted_value_compat(
     return value;
 }
 
+struct OrchArmourInfoPc34 {
+    unsigned char defense;
+    unsigned char attributes;
+};
+
+static const struct OrchArmourInfoPc34 s_orch_dm1_armour_info_pc34[58] = {
+    /* ReDMCSB DUNGEON.C G0239 lines 309-369: { Weight, Defense,
+     * Attributes, Unreferenced }.  M10 F0313 only needs Defense plus
+     * shield/sharp bits from Attributes. */
+    {   5, 0x01 }, {  10, 0x01 }, {   4, 0x01 }, {   5, 0x02 },
+    {  25, 0x04 }, {   5, 0x00 }, {   5, 0x00 }, {   7, 0x01 },
+    {   7, 0x01 }, {   6, 0x01 }, {   4, 0x00 }, {   5, 0x01 },
+    {   7, 0x01 }, {  11, 0x02 }, {  13, 0x02 }, {  13, 0x02 },
+    {  17, 0x03 }, {  20, 0x03 }, {  20, 0x03 }, {  12, 0x02 },
+    {   9, 0x01 }, {   8, 0x01 }, {   9, 0x01 }, {   1, 0x04 },
+    {   5, 0x04 }, {  12, 0x05 }, {  17, 0x05 }, {  20, 0x05 },
+    {  22, 0x85 }, {  16, 0x82 }, {  20, 0x83 }, {  35, 0x84 },
+    {  35, 0x05 }, {  35, 0x05 }, {  70, 0x07 }, {  55, 0x07 },
+    {  25, 0x06 }, {  30, 0x06 }, {  40, 0x07 }, {  65, 0x04 },
+    {  56, 0x04 }, {  37, 0x05 }, {  56, 0x84 }, {  62, 0x05 },
+    { 125, 0x04 }, {  90, 0x04 }, {  50, 0x05 }, {  85, 0x84 },
+    {  76, 0x04 }, { 160, 0x04 }, { 101, 0x04 }, {  60, 0x05 },
+    { 100, 0x84 }, {  54, 0x06 }, {  60, 0x07 }, {  88, 0x04 },
+    {  16, 0x02 }, {   3, 0x03 }
+};
+
+static int orch_dm1_armour_defense_f0143_compat(int armourType,
+                                                 int useSharpDefense,
+                                                 int* outDefense,
+                                                 int* outIsShield)
+{
+    int defense;
+    int attributes;
+    if (!outDefense) return 0;
+    *outDefense = 0;
+    if (outIsShield) *outIsShield = 0;
+    if (armourType < 0 ||
+        armourType >= (int)(sizeof(s_orch_dm1_armour_info_pc34) /
+                            sizeof(s_orch_dm1_armour_info_pc34[0]))) {
+        return 0;
+    }
+    defense = (int)s_orch_dm1_armour_info_pc34[armourType].defense;
+    attributes = (int)s_orch_dm1_armour_info_pc34[armourType].attributes;
+    if (useSharpDefense) {
+        /* ReDMCSB DUNGEON.C F0143 lines 1240-1244:
+         * F0030_MAIN_GetScaledProduct(Defense, 3, sharp + 4). */
+        defense = (defense * ((attributes & 0x07) + 4)) >> 3;
+    }
+    *outDefense = defense;
+    if (outIsShield) *outIsShield = (attributes & 0x80) ? 1 : 0;
+    return 1;
+}
+
+static int orch_defender_inventory_slot_for_wound_index_compat(int woundIndex)
+{
+    switch (woundIndex) {
+    case 0: return CHAMPION_SLOT_HAND_LEFT;    /* COMBAT_WOUND_READY_HAND */
+    case 1: return CHAMPION_SLOT_HEAD;         /* COMBAT_WOUND_HEAD */
+    case 2: return CHAMPION_SLOT_TORSO;        /* COMBAT_WOUND_TORSO */
+    case 3: return CHAMPION_SLOT_ACTION_HAND;  /* COMBAT_WOUND_ACTION_HAND */
+    case 4: return CHAMPION_SLOT_LEGS;         /* COMBAT_WOUND_LEGS */
+    case 5: return CHAMPION_SLOT_FEET;         /* COMBAT_WOUND_FEET */
+    default: return -1;
+    }
+}
+
+static int orch_defender_armour_defense_for_thing_compat(
+    const struct GameWorld_Compat* world,
+    unsigned short thing,
+    int useSharpDefense,
+    int* outDefense,
+    int* outIsShield)
+{
+    int thingIndex;
+    int armourType;
+
+    if (outDefense) *outDefense = 0;
+    if (outIsShield) *outIsShield = 0;
+    if (!world || !world->things || !world->things->armours ||
+        !outDefense) {
+        return 0;
+    }
+    if (thing == THING_NONE || thing == THING_ENDOFLIST ||
+        THING_GET_TYPE(thing) != THING_TYPE_ARMOUR) {
+        return 0;
+    }
+    thingIndex = (int)THING_GET_INDEX(thing);
+    if (thingIndex < 0 || thingIndex >= world->things->armourCount) {
+        return 0;
+    }
+    armourType = (int)world->things->armours[thingIndex].type;
+    return orch_dm1_armour_defense_f0143_compat(
+        armourType, useSharpDefense, outDefense, outIsShield);
+}
+
+static void orch_fill_defender_wound_defense_baseline_compat(
+    const struct GameWorld_Compat* world,
+    const struct ChampionState_Compat* champion,
+    int useSharpDefense,
+    struct CombatantChampionSnapshot_Compat* outChampion)
+{
+    static const int s_woundDefenseFactor[6] = { 5, 5, 4, 6, 3, 1 };
+    int woundIndex;
+
+    if (!world || !champion || !outChampion) return;
+
+    for (woundIndex = 0; woundIndex < 6; ++woundIndex) {
+        int inventorySlot;
+        int bodyDefense = 0;
+        int ignoredShield = 0;
+        int baseline = 0;
+
+        /* ReDMCSB CHAMPION.C F0313 lines 1336-1346: shields in
+         * ready/action hands contribute armour defense, weighted by the
+         * target wound slot.  The original also adds F0312 hand strength;
+         * M10 snapshots remain deterministic here and only cache the
+         * equipped armour-defense catalogue baseline. */
+        {
+            static const int s_handSlots[2] = {
+                CHAMPION_SLOT_HAND_LEFT,
+                CHAMPION_SLOT_ACTION_HAND
+            };
+            static const int s_handWoundIndexes[2] = { 0, 3 };
+            int hand;
+            for (hand = 0; hand < 2; ++hand) {
+                int shieldDefense = 0;
+                int isShield = 0;
+                if (orch_defender_armour_defense_for_thing_compat(
+                        world, champion->inventory[s_handSlots[hand]],
+                        useSharpDefense,
+                        &shieldDefense, &isShield) &&
+                    isShield) {
+                    baseline += (shieldDefense * s_woundDefenseFactor[woundIndex]) >>
+                        ((s_handWoundIndexes[hand] == woundIndex) ? 4 : 5);
+                }
+            }
+        }
+
+        inventorySlot =
+            orch_defender_inventory_slot_for_wound_index_compat(woundIndex);
+        if (inventorySlot >= 0 && inventorySlot < CHAMPION_SLOT_COUNT &&
+            woundIndex != 0 && woundIndex != 3 &&
+            orch_defender_armour_defense_for_thing_compat(
+                world, champion->inventory[inventorySlot], useSharpDefense,
+                &bodyDefense, &ignoredShield)) {
+            /* ReDMCSB CHAMPION.C F0313 lines 1355-1361 adds body-slot
+             * armour defense for wound slots past the two hand slots. */
+            baseline += bodyDefense;
+        }
+        outChampion->woundDefense[woundIndex] = baseline;
+    }
+}
+
 static int orch_cmd_attack_f0312_strength_action_hand_compat(
     struct GameWorld_Compat* world,
     const struct ChampionState_Compat* champion,
@@ -1663,6 +1816,8 @@ static int orch_build_defender_champion_snapshot_compat(
     outChampion->statisticAntimagic = champion->attributes[CHAMPION_ATTR_ANTIMAGIC];
     outChampion->statisticWisdom = champion->attributes[CHAMPION_ATTR_WISDOM];
     outChampion->wounds = champion->wounds;
+    orch_fill_defender_wound_defense_baseline_compat(
+        world, champion, attackType == COMBAT_ATTACK_SHARP, outChampion);
     outChampion->isResting =
         world->partyIsResting || world->lifecycle.rest.isResting;
 
