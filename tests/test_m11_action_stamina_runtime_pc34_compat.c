@@ -4428,6 +4428,105 @@ static void test_fuse_incomplete_fluxcage_moves_lord_chaos_escape(void) {
               "FUSE escape does not trigger the completed fuse ending");
 }
 
+static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[25];
+    unsigned short squareFirstThings[25];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    int i;
+
+    seed_state(&state, 100, 41);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    for (i = 0; i < 25; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 5;
+    maps[0].height = 5;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 25;
+    squareFirstThings[(2 * 5) + 1] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 2;
+    state.world.party.mapY = 2;
+    state.world.party.direction = 0; /* north: target is (2,1). */
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
+    groups[0].count = 0;
+    groups[0].health[0] = 10000;
+    groups[0].cells = 0xFF;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 25;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    state.world.explosions.count = 4;
+    state.world.explosions.entries[0].reserved0 = 1;
+    state.world.explosions.entries[0].explosionType = C050_EXPLOSION_FLUXCAGE;
+    state.world.explosions.entries[0].mapIndex = 0;
+    state.world.explosions.entries[0].mapX = 1;
+    state.world.explosions.entries[0].mapY = 1;
+    state.world.explosions.entries[1].reserved0 = 1;
+    state.world.explosions.entries[1].explosionType = C050_EXPLOSION_FLUXCAGE;
+    state.world.explosions.entries[1].mapIndex = 0;
+    state.world.explosions.entries[1].mapX = 2;
+    state.world.explosions.entries[1].mapY = 0;
+    state.world.explosions.entries[2].reserved0 = 1;
+    state.world.explosions.entries[2].explosionType = C050_EXPLOSION_FLUXCAGE;
+    state.world.explosions.entries[2].mapIndex = 0;
+    state.world.explosions.entries[2].mapX = 2;
+    state.world.explosions.entries[2].mapY = 2;
+    state.world.explosions.entries[3].reserved0 = 1;
+    state.world.explosions.entries[3].explosionType = C050_EXPLOSION_FLUXCAGE;
+    state.world.explosions.entries[3].mapIndex = 0;
+    state.world.explosions.entries[3].mapX = 3;
+    state.world.explosions.entries[3].mapY = 1;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FUSE),
+              1,
+              "FUSE with complete Fluxcage triggers the fuse ending");
+    ASSERT_EQ(groups[0].creatureType, DM1_CREATURE_GREY_LORD_ID,
+              "FUSE complete turns Lord Chaos into the Grey Lord");
+    ASSERT_EQ(state.world.creatureAI[0].creatureType, DM1_CREATURE_GREY_LORD_ID,
+              "FUSE complete updates active AI creature type mirror");
+    ASSERT_EQ(state.world.magic.magicalLightAmount, 200,
+              "FUSE complete applies F0446 magical light amount");
+    ASSERT_EQ(state.world.gameWon, 1,
+              "FUSE complete sets M10 world game-won state");
+    ASSERT_EQ(M11_GameView_IsGameWon(&state), 1,
+              "FUSE complete sets M11 input/render game-won gate");
+    ASSERT_EQ((int)M11_GameView_GetGameWonTick(&state), 41,
+              "FUSE complete stores current game tick as game-won tick");
+}
+
 int main(void) {
     printf("=== M11 Action Stamina Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: MENU.C G0494/F0407 and CHAMPION.C F0325\n\n");
@@ -4476,6 +4575,7 @@ int main(void) {
     test_fluxcage_schedules_f0224_remove_event();
     test_fluxcage_third_cage_schedules_lord_chaos_danger();
     test_fuse_incomplete_fluxcage_moves_lord_chaos_escape();
+    test_fuse_complete_fluxcage_sets_m11_game_won_gate();
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_halves_disable_ticks_when_f0402_fails();
     test_melee_action_row_respects_live_candidate_no_action();
