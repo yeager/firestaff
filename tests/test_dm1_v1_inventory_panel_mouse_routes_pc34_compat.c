@@ -72,6 +72,7 @@
 #include "inventory_slotbox_pc34_compat.h"
 #include "panel_chest_mouse_routes_pc34_compat.h"
 #include "champion_status_slotbox_pc34_compat.h"
+#include "dm1_v1_skill_experience_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -448,8 +449,10 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonContainer_Compat containers[1];
+    struct DungeonPotion_Compat potions[1];
     struct DungeonScroll_Compat scrolls[1];
     unsigned short weaponThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    unsigned short potionThing = (unsigned short)((THING_TYPE_POTION << 10) | 0);
     unsigned short scrollThing = (unsigned short)((THING_TYPE_SCROLL << 10) | 0);
     int space = M11_DM1_MOUSE_SPACE_NONE;
     int zoneId = 0;
@@ -554,6 +557,60 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
                     "object-description body records source weapon charge count");
     ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 1,
               "dismiss weapon eye overlay before the scroll eye route");
+
+    /* ReDMCSB PANEL.C F0352 lines 1182-1191 uses the inventory
+     * champion's F0303 Priest level when deciding whether to prefix a
+     * non-water potion with '_' + Power/40.  Exercise the real C071
+     * runtime route, not just M11_GameView_ProbeF0352PotionEyeDescription. */
+    memset(potions, 0, sizeof(potions));
+    potions[0].next = THING_ENDOFLIST;
+    potions[0].type = 6;  /* ROS POTION */
+    potions[0].power = 80; /* '_' + 2 == 'a' */
+    things.potions = potions;
+    things.potionCount = 1;
+    state.v1ObjectDescriptionPanelActive = 0;
+    state.v1ObjectDescriptionThing = THING_NONE;
+    state.v1ObjectDescriptionIconIndex = -1;
+    state.v1ObjectDescriptionName[0] = '\0';
+    state.v1ObjectDescriptionBody[0] = '\0';
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_PRIEST].experience = 0;
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, potionThing), 1,
+              "leader hand accepts the ROS potion inspected by the eye route");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, eyeScreenX, eyeScreenY, 1),
+              M11_GAME_INPUT_REDRAW,
+              "eye press with low-Priest potion redraws object-description panel");
+    ASSERT_EQ(strcmp(state.v1ObjectDescriptionName, "ROS POTION"), 0,
+              "low-Priest potion eye route shows plain potion name");
+    ASSERT_CONTAINS(state.inspectTitle, "POTION: ROS POTION",
+                    "low-Priest potion eye title has no power prefix");
+    ASSERT_CONTAINS(state.inspectDetail, "POTION  ICON",
+                    "low-Priest potion eye detail records potion panel");
+    ASSERT_CONTAINS(state.inspectDetail, "PANEL ROS POTION",
+                    "low-Priest potion eye detail uses plain panel text");
+    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 1,
+              "dismiss low-Priest potion eye overlay");
+
+    state.v1ObjectDescriptionPanelActive = 0;
+    state.v1ObjectDescriptionThing = THING_NONE;
+    state.v1ObjectDescriptionIconIndex = -1;
+    state.v1ObjectDescriptionName[0] = '\0';
+    state.v1ObjectDescriptionBody[0] = '\0';
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_PRIEST].experience = 500;
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, potionThing), 1,
+              "leader hand accepts the ROS potion for high-Priest eye route");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, eyeScreenX, eyeScreenY, 1),
+              M11_GAME_INPUT_REDRAW,
+              "eye press with high-Priest potion redraws object-description panel");
+    ASSERT_EQ(strcmp(state.v1ObjectDescriptionName, "a ROS POTION"), 0,
+              "high-Priest potion eye route prefixes power symbol through F0303");
+    ASSERT_CONTAINS(state.inspectTitle, "POTION: a ROS POTION",
+                    "high-Priest potion eye title records F0352 power prefix");
+    ASSERT_CONTAINS(state.inspectDetail, "PANEL a ROS POTION",
+                    "high-Priest potion eye detail records prefixed panel text");
+    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 1,
+              "dismiss high-Priest potion eye overlay before the scroll eye route");
 
     /* Eye-clicking a scroll follows the PANEL.C F0352 -> F0342 scroll-text
      * route instead of the generic object-description route.  Keep stale

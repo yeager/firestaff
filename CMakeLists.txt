@@ -20868,3 +20868,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0224_pc34_compat.c"
         COMMAND test_dm1_v1_g0224_pc34_compat
     )
 endif()
+
+# DM1 V1 inventory panel runtime mouse routes: C070/C071 mouth/eye,
+# panel chest slots, status-hand zones, same-chest eye reopen, keyhole
+# no-op, and F0352 potion-eye Priest display through the real M11 route.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_inventory_panel_mouse_routes_pc34_compat.c")
+    add_executable(test_dm1_v1_inventory_panel_mouse_routes_pc34_compat
+        tests/test_dm1_v1_inventory_panel_mouse_routes_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_inventory_panel_mouse_routes_pc34_compat
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_inventory_panel_mouse_routes_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inventory_panel_mouse_routes_pc34_compat
+        COMMAND test_dm1_v1_inventory_panel_mouse_routes_pc34_compat
+    )
+endif()
