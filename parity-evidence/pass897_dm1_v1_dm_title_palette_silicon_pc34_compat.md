@@ -14,4 +14,4 @@
 - VGA_PALETTE_PC34_SPECIAL_CREDITS
 
 ## Verification
-- `/Users/bosse/.openclaw/workspace-main/build/firestaff_v1_dm_title_palette_silicon_probe`: rc=0 (PASS)
+- `/Volumes/Extern-disk/firestaff-builds/build-dm1-c040-object-helpers/firestaff_v1_dm_title_palette_silicon_probe`: rc=0 (PASS)
