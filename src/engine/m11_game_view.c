@@ -8947,7 +8947,8 @@ static int m11_last_attack_tick_emitted_damage(const M11_GameViewState* state) {
     if (!state) return 0;
     for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
         if (state->lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
-            return 1;
+            return state->lastTickResult.emissions[i].payload[3] !=
+                   COMBAT_OUTCOME_INVALID;
         }
     }
     return 0;
@@ -20546,11 +20547,14 @@ static int m11_action_is_melee_contact(unsigned char actionIndex) {
     switch (actionIndex) {
         /* CHOP=2, PUNCH=6, KICK=7, STAB=9 or 14, HIT=12,
          * SWING=13, THRUST=15, JAB=16, HACK=18, BERZERK=19,
-         * MELEE=25, SLASH=28, CLEAVE=29, BASH=30, STUN=31. */
+         * DISRUPT=24, MELEE=25, SLASH=28, CLEAVE=29, BASH=30,
+         * STUN=31.  ReDMCSB MENU.C F0407 lines 1045-1053 keeps
+         * DISRUPT in the F0402/F0231 melee block after its
+         * material-creature rejection. */
         case 2:  case 6:  case 7:  case 9:  case 12:
         case 13: case 14: case 15: case 16: case 18:
-        case 19: case 25: case 28: case 29: case 30:
-        case 31:
+        case 19: case 24: case 25: case 28: case 29:
+        case 30: case 31:
             return 1;
         default:
             return 0;
