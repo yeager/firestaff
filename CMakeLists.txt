@@ -4521,6 +4521,31 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_f
     )
 endif()
 
+# DM1 V1 champion-panel pending-wounds tick pc34_compat contract test.
+# CHAMPION.C F0320:1721-1724 wound OR-in + G0410 reset ALWAYS run, even
+# when G0409_ai_ChampionPendingDamage[idx] == 0 (the early-continue
+# skips only the damage-draw / kill / health-subtract branches, not
+# the wound application). Disjoint from the damage-indicator gate
+# (which pins only the F0623 dispatch on the damage>0 path) and the
+# damage-flash-decay gate (which pins only the C12 hide-damage
+# timeline on the post-damage path). Source-locked against CHAMPION.C
+# F0320:1720-1727 + DEFS.H:679/5866/5867 + COMPILE.H:1042 M008_SET.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_pending_wounds_tick_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_pending_wounds_tick_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_pending_wounds_tick_pc34_compat
+        tests/test_dm1_v1_champion_panel_pending_wounds_tick_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_pending_wounds_tick_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_pending_wounds_tick_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_pending_wounds_tick_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_pending_wounds_tick_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_pending_wounds_tick_pc34_compat
+    )
+endif()
+
 # pass791 — DM1 V1 champion-panel ammunition-compatibility
 # (F0294 weapon<->ammo compatibility check for ranged weapons).
 # Source-locked against CHAMPION.C F0294:400-450 (G0303 ammo type
