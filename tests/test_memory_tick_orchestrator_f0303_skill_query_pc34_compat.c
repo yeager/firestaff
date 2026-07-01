@@ -2380,6 +2380,89 @@ static void test_orch_projectile_champion_hit_uses_f0321_magic_scale(void) {
            (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO));
 }
 
+static void test_orch_projectile_champion_hit_uses_f0313_rng_scale(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    struct ProjectileCreateInput_Compat createIn;
+    struct TimelineEvent_Compat firstMove;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int slot = -1;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    world.dungeon = &dungeon;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.party.direction = 1;
+    world.party.championCount = 2;
+    world.party.champions[1].present = 1;
+    world.party.champions[1].hp.current = 100;
+    world.party.champions[1].hp.maximum = 100;
+    world.party.champions[1].cell = 1;
+    world.party.champions[1].attributes[CHAMPION_ATTR_VITALITY] = 64;
+    assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u) == 1);
+
+    memset(&createIn, 0, sizeof(createIn));
+    createIn.category = PROJECTILE_CATEGORY_KINETIC;
+    createIn.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    createIn.ownerKind = PROJECTILE_OWNER_CREATURE;
+    createIn.ownerIndex = 0;
+    createIn.mapIndex = 0;
+    createIn.mapX = 1;
+    createIn.mapY = 0;
+    createIn.cell = 0;
+    createIn.direction = 3;
+    createIn.kineticEnergy = 32;
+    createIn.attack = 32;
+    createIn.stepEnergy = 10;
+    createIn.attackTypeCode = COMBAT_ATTACK_BLUNT;
+    createIn.currentTick = 100;
+    createIn.firstMoveGraceFlag = 0;
+    assert(F0810_PROJECTILE_Create_Compat(
+        &createIn, &world.projectiles, &slot, &firstMove) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove) == 1);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
+    assert(world.projectiles.count == 0);
+    /* ReDMCSB CHAMPION.C F0321 calls F0313 for HEAD and TORSO.  With
+     * seed 1 and vitality 64, Firestaff's deterministic RNG draws 8 then 7
+     * for RANDOM((64 >> 3) + 1), leaving the champion at 37 HP. */
+    assert(world.party.champions[1].hp.current == 37);
+    assert(world.masterRng.seed == 0x967eb0e7u);
+    assert((world.party.champions[1].wounds &
+            (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO)) ==
+           (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO));
+}
+
 static void test_orch_projectile_group_hit_applies_damage(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -5523,6 +5606,7 @@ int main(void) {
     test_orch_projectile_champion_hit_uses_hand_shield_strength();
     test_orch_projectile_champion_hit_applies_poison();
     test_orch_projectile_champion_hit_uses_f0321_magic_scale();
+    test_orch_projectile_champion_hit_uses_f0313_rng_scale();
     test_orch_projectile_group_hit_applies_damage();
     test_orch_projectile_group_hit_at_zero_coordinate();
     test_orch_projectile_group_hit_all_kill_cleans_up_group();

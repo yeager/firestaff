@@ -611,6 +611,42 @@ int F0739_COMBAT_ScaleChampionDamageF0321_Compat(
     return 1;
 }
 
+int F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
+    int attackType,
+    int rawAttack,
+    int allowedWounds,
+    const struct CombatantChampionSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    int* outDamage,
+    int* outRngCallCount)
+{
+    int atk;
+    int rngCalls = 0;
+
+    if (outDamage == 0 || defender == 0 || rng == 0) return 0;
+    if (rawAttack <= 0) {
+        *outDamage = 0;
+        if (outRngCallCount) *outRngCallCount = 0;
+        return 1;
+    }
+
+    /* ReDMCSB CHAMPION.C F0321 lines 1842-1900 applies the attack-type
+     * statistic adjustment first, then calls F0313 per allowed wound slot.
+     * This RNG-bearing variant is for live projectile/explosion paths where
+     * F0313 must consume the original vitality and wounded-slot random terms. */
+    atk = combat_apply_defender_statistic_adjustment(
+        attackType, defender, rawAttack);
+    atk = combat_apply_f0321_armor_defense_scale_rng(
+        attackType, atk, allowedWounds, defender, rng, &rngCalls);
+    if (atk < 0) atk = 0;
+
+    *outDamage = atk;
+    if (outRngCallCount) {
+        *outRngCallCount = rngCalls;
+    }
+    return 1;
+}
+
 /* ==========================================================
  *  Group C — Resolvers (F0735 champion→creature, F0736 creature→champion)
  * ========================================================== */

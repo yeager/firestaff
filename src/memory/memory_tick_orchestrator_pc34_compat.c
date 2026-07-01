@@ -3716,12 +3716,14 @@ static int orch_apply_projectile_champion_action_compat(
     memset(&damage, 0, sizeof(damage));
     if (!orch_build_defender_champion_snapshot_compat(
             world, championIndex, action->attackTypeCode, &defender) ||
-        !F0739_COMBAT_ScaleChampionDamageF0321_Compat(
+        !F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
             action->attackTypeCode,
             action->rawAttackValue,
             action->allowedWounds,
             &defender,
-            &scaledAttack)) {
+            &world->masterRng,
+            &scaledAttack,
+            NULL)) {
         return 0;
     }
     if (scaledAttack <= 0) {
@@ -4226,9 +4228,10 @@ static int orch_apply_explosion_party_action_compat(
         if (randomizedAttack < 1) randomizedAttack = 1;
         if (!orch_build_defender_champion_snapshot_compat(
                 world, i, action->attackTypeCode, &defender) ||
-            !F0739_COMBAT_ScaleChampionDamageF0321_Compat(
+            !F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
                 action->attackTypeCode, randomizedAttack,
-                action->allowedWounds, &defender, &scaledAttack) ||
+                action->allowedWounds, &defender, &world->masterRng,
+                &scaledAttack, NULL) ||
             scaledAttack <= 0) {
             continue;
         }
