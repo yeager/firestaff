@@ -1750,6 +1750,50 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm2_v22_finished_art_material_gate_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM2 V2.2 per-cell modern-art swap WIRE-UP probe. Headless synthetic probe
+# that stages a minimal v22_inplace_cache.bin, installs the V22 modern pack
+# presentation flag, wires a synthetic DM2 V1 boot profile to defeat the
+# runtime headless early exit, populates the per-cell swap cache (indoor
+# T560 + outdoor T600), and verifies that dm2_v2_runtime_render_frame()
+# (the same M11 entry point firestaff_game_loop.c drives per V1 tick)
+# now reaches the swap render pass.
+#
+# Failure mode this probe catches: future refactors that remove or
+# guard-out the dm2_v22_viewport_swap_render() call inside
+# dm2_v2_runtime_render_frame(). The runtime-mediated overwrite count
+# would drop to 0 and the per-viewport counters invariant would flip.
+#
+# Source-lock: SKULL.ASM T520/T560/T600 + ReDMCSB DUNVIEW.C:2962-3070 +
+# include/dm2_v22_viewport_swap_pc34.h + src/dm2/dm2_v2_runtime.c.
+add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
+    probes/firestaff_dm2_v22_viewport_swap_wireup_probe.c
+    src/dm2/dm2_v22_viewport_swap_pc34.c
+    src/dm2/dm2_v22_inplace_draw_pc34.c
+    src/dm2/dm2_v22_shape_cache_pc34.c
+    src/dm2/dm2_v22_modern_assets_pc34.c
+    src/dm2/dm2_v2_runtime.c
+    src/dm2/dm2_v2_viewport_renderer.c
+    src/dm2/dm2_v2_smooth_movement.c
+    src/dm2/dm2_v1_runtime.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_dm2_v22_viewport_swap_wireup_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_dm2_v22_viewport_swap_wireup_probe
+    PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m12 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v22_viewport_swap_wireup_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME dm2_v22_viewport_swap_wireup_probe
+        COMMAND firestaff_dm2_v22_viewport_swap_wireup_probe
+    )
+    set_tests_properties(dm2_v22_viewport_swap_wireup_probe PROPERTIES
+        LABELS "tier2;dm2;v2.2;modern-art-swap;wireup;presentation-only")
+endif()
+
 # DM1 V2 actual-render screenshot / pixel-fixture probe. Headless: no game
 # data, host-agnostic (uses SDL_VIDEODRIVER=dummy). Drives the real V2
 # render pipeline for V1 / V2.0 / V2.1 / V2.2, writes a 24-bit BMP
@@ -6013,6 +6057,30 @@ if(BUILD_TESTING)
         set_tests_properties(dm2_v22_finished_art_material_gate_probe PROPERTIES
             LABELS "tier2;dm2;v2.2;finished-art-material-gate;presentation-only")
     endif()
+
+    # DM2 V2.2 per-cell modern-art swap WIRE-UP smoke test.
+    # Read-only verification of the runtime seam
+    # (dm2_v2_runtime_render_frame now invokes
+    # dm2_v22_viewport_swap_render) and the swap's source-lock
+    # citation. Companion to the heavier synthetic probe
+    # firestaff_dm2_v22_viewport_swap_wireup_probe.
+    add_executable(test_dm2_v22_viewport_swap_wireup_pc34
+        tests/test_dm2_v22_viewport_swap_wireup_pc34.c
+    )
+    target_include_directories(test_dm2_v22_viewport_swap_wireup_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v22_viewport_swap_wireup_pc34
+        PRIVATE firestaff_dm2_v2 firestaff_v2 firestaff_m12 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v22_viewport_swap_wireup_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v22_viewport_swap_wireup_pc34
+        COMMAND test_dm2_v22_viewport_swap_wireup_pc34
+    )
+    set_tests_properties(dm2_v22_viewport_swap_wireup_pc34 PROPERTIES
+        LABELS "tier2;dm2;v2.2;modern-art-swap;wireup;smoke-test")
 
     # ── DM2 V2 HUD Widget Asset Manifest + Gate ──────────────────
     # Phase 3 placeholder-vs-real asset gate. Companion to the dm2_v22
