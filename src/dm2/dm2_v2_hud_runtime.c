@@ -24,6 +24,7 @@
  */
 
 #include "dm2_v2_hud_runtime.h"
+#include "dm2_v2_hud_widget_bitmap_blit.h"
 #include <string.h>
 
 /* ── Module state ──────────────────────────────────────────────── */
@@ -153,15 +154,26 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h_res) {
  * that slot. The honest scope is:
  *
  *   - Path-mode recording (REAL_BITMAP vs PROCEDURAL_FALLBACK) per slot.
- *   - 1-pixel anchor stamp on REAL slots so wire-up probes can prove
- *     the gate's REAL classification reached the runtime.
+ *   - Bounded real-bitmap blit on REAL slots using synthetic 1x1 RGBA
+ *     PNG fixtures from examples/dm2_hud_widget_synthetic/ (Phase 3
+ *     follow-up). When a slot is REAL and its source_file resolves on
+ *     disk, the runtime reads the synthetic fixture and writes its
+ *     red channel as a palette index at the slot's anchor pixel.
+ *   - 1-pixel anchor stamp fallback when the blit cannot run (file
+ *     missing, unsupported format, decompression failure, destination
+ *     out of bounds, zlib disabled at build time). The stamp value is
+ *     the HUD opacity so a probe can still detect that the gate
+ *     reached the runtime end-to-end.
  *   - The procedural fallback path is byte-identical to the no-gate
  *     baseline for any slot whose classification is not REAL.
  *
- * It does NOT yet decode real bitmap pixels — that requires finished
- * PBR HUD widget art, which is still an OPEN-BOUNDED gap. The decode
- * site is the stamp anchor: when operator-installed art ships, the
- * stamp is the obvious replacement site for the real blit.
+ * It does NOT decode multi-pixel PNGs — that requires finished
+ * PBR HUD widget art, which is still an OPEN-BOUNDED gap. The blit
+ * site is the synthetic envelope: when operator-installed multi-pixel
+ * art ships, dm2_v2_hud_widget_bitmap_blit_render_slot() is the
+ * obvious replacement site for the full decode path. The current
+ * bounded envelope (1x1 8-bit RGBA) is enforced explicitly so the
+ * runtime cannot silently fall into a multi-pixel decode.
  *
  * Walks the seven Phase 3 / chrome-supporting widget slots the
  * dm2_v2_hud_widget_assets gate classifies, decides for each slot
@@ -238,6 +250,27 @@ static void dm2_v2_hud_runtime_stamp_real_slot(
      * inside the same 320×200 region, so this matches. */
     if (a->x < 0 || a->x >= w) return;
     if (a->y < 0 || a->y >= h_res) return;
+
+    /* Bounded-blit first: when the slot is REAL, look up its
+     * resolved manifest source_file and try to read + bounded-blit
+     * the synthetic 1x1 RGBA pixel. This is the runtime hook's
+     * real-bitmap substitute path (Phase 3 follow-up). */
+    DM2_V2_HudWidgetSlotInfo info;
+    memset(&info, 0, sizeof(info));
+    if (dm2_v2_hud_widget_assets_get_slot_info(slot, &info) &&
+        info.classification == DM2_V2_HUD_WIDGET_CLASS_REAL &&
+        info.resolved_path[0] != '\0' &&
+        dm2_v2_hud_widget_bitmap_blit_render_slot(
+            &info, fb, w, h_res, a->x, a->y)) {
+        return; /* bounded blit succeeded — preserve procedural fallback elsewhere */
+    }
+
+    /* Fallback: 1-pixel anchor stamp. Preserves the no-gate baseline
+     * for any slot whose blit cannot run (unsupported format, missing
+     * file, decompression failure, destination out of bounds, zlib
+     * not compiled in). The stamp value is the HUD opacity so a probe
+     * can still detect "the gate reached the runtime" via a non-zero
+     * pixel at the anchor, matching the documented seam contract. */
     fb[a->y * w + a->x] = (uint8_t)s_hud.opacity;
 }
 
@@ -385,11 +418,14 @@ const char *dm2_v2_hud_runtime_source_evidence(void) {
         "Source: ReDMCSB DISPLAY.C           (pulse animation timing 2 Hz)\n"
         "Source: dm2_v2_phase_gate.h         (DM2_V2_PHASE_DOMAIN_HUD gate)\n"
         "Source: dm2_v2_hud_widget_assets.h  (per-slot REAL/PARTIAL/PLACEHOLDER gate)\n"
+        "Source: dm2_v2_hud_widget_bitmap_blit.h (bounded 1x1 RGBA blit, Phase 3 follow-up)\n"
         "Source: csb_v2_hud_runtime.c        (sibling CSB V2 wire-up pattern)\n"
         "V1 invariant: V1 command routes, inventory, dungeon state NEVER bypassed\n"
         "V2 rule: HUD only active when v2LaunchEnabled AND v2ProfileEnabled are both 1\n"
         "V2 rule: HUD render is no-op when V1 is active, no framebuffer pollution\n"
-        "V2 rule: render_with_assets() stamps REAL slots at fixed anchors;\n"
-        "         the actual bitmap decode is the OPEN-BOUNDED next-step\n"
+        "V2 rule: render_with_assets() prefers dm2_v2_hud_widget_bitmap_blit_render_slot()\n"
+        "         for REAL slots whose manifest source_file resolves on disk, and falls\n"
+        "         back to the 1-pixel anchor stamp when the bounded blit cannot run.\n"
+        "V2 rule: the multi-pixel bitmap decode is the OPEN-BOUNDED next-step\n"
         "         (operator-installed PBR HUD widget art)\n";
 }
