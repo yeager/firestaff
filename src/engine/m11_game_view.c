@@ -3154,10 +3154,8 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                 ++summary.groups;
                 break;
             case THING_TYPE_PROJECTILE:
-                ++summary.projectiles;
                 break;
             case THING_TYPE_EXPLOSION:
-                ++summary.explosions;
                 break;
             default:
                 if (m11_thing_is_item(thingType)) {
@@ -3168,7 +3166,14 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
         thing = m11_raw_next_thing(world->things, thing);
     }
 
-    /* V1 projectile-cycle visibility: runtime-only projectiles and
+    /* V1 projectile-cycle visibility: projectile/explosion sprites are
+     * driven by the active runtime lists, not by static dungeon thing-list
+     * payloads.  ReDMCSB DUNGEON.C/DUNVIEW.C scans active projectiles for
+     * visible missiles; treating THING_TYPE_PROJECTILE/EXPLOSION entries in
+     * SquareFirstThings as visible viewport effects leaks compact Hall of
+     * Champions payloads as false fireballs/explosions.
+     *
+     * Runtime-only projectiles and
      * explosions spawned via F0810 / F0821 (action-menu projectile
      * rows) are not in the dungeon-thing linked list.  The viewport
      * renderer and side-pane code gate their sprites on
