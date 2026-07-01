@@ -3392,6 +3392,93 @@ static void test_projectile_door_hit_schedules_and_dispatches_destruction(void) 
               "projectile door destruction event is consumed after dispatch");
 }
 
+static void run_projectile_magical_door_zero_adjusted_no_sound_case(
+    int projectileSubtype,
+    int kineticEnergy,
+    const char* label)
+{
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    squareData[(2 * 3) + 1] =
+        square_for_test(DUNGEON_ELEMENT_DOOR,
+                        PROJECTILE_DOOR_STATE_CLOSED_FULL);
+
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 0;
+    state.world.party.mapY = 0;
+    state.world.party.direction = 1;
+    state.world.gameTick = 100;
+    state.audioState.lastSoundIndex = -1;
+    state.audioState.lastMarker = M11_AUDIO_MARKER_NONE;
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+    projectile->projectileSubtype = projectileSubtype;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 1;
+    projectile->cell = 2;
+    projectile->direction = 1;
+    projectile->kineticEnergy = kineticEnergy;
+    projectile->attack = 40;
+    projectile->stepEnergy = 10;
+    projectile->firstMoveGraceFlag = 1;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = THING_NONE;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              label);
+    ASSERT_EQ(state.world.explosions.count, 0,
+              "zero-adjusted magical door impact creates no explosion");
+    ASSERT_EQ(state.audioState.lastSoundIndex, -1,
+              "zero-adjusted magical door impact skips M11 fallback sound");
+    ASSERT_EQ(state.audioState.lastMarker, M11_AUDIO_MARKER_NONE,
+              "zero-adjusted magical door impact leaves audio marker clear");
+}
+
+static void test_projectile_magical_door_zero_adjusted_skips_sound(void) {
+    run_projectile_magical_door_zero_adjusted_no_sound_case(
+        PROJECTILE_SUBTYPE_LIGHTNING_BOLT, 1,
+        "zero-adjusted Lightning Bolt door impact despawns projectile");
+    run_projectile_magical_door_zero_adjusted_no_sound_case(
+        PROJECTILE_SUBTYPE_POISON_BOLT, 3,
+        "zero-adjusted Poison Bolt door impact despawns projectile");
+}
+
 static void test_projectile_champion_hit_applies_poison_dose(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -6978,6 +7065,7 @@ int main(void) {
     test_projectile_fireball_heals_black_flame_without_explosion();
     test_projectile_creature_impact_keeps_thrown_sharp_weapon();
     test_projectile_door_hit_schedules_and_dispatches_destruction();
+    test_projectile_magical_door_zero_adjusted_skips_sound();
     test_projectile_champion_hit_applies_poison_dose();
     test_projectile_champion_hit_can_kill_party();
     test_thrown_potion_wall_impact_consumes_potion_thing();
