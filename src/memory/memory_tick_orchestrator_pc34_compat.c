@@ -1677,7 +1677,9 @@ static int orch_build_defender_champion_snapshot_compat(
         outChampion->partyShieldDefense = world->magic.fireShieldDefense;
     } else {
         outChampion->partyShieldDefense =
-            champion->actionDefense + world->magic.partyShieldDefense;
+            champion->actionDefense +
+            world->lifecycle.champions[championIndex].shieldDefense +
+            world->magic.partyShieldDefense;
     }
     return 1;
 }
