@@ -434,7 +434,7 @@ static int test_dm1_round_trip(void) {
     char errBuf[256];
     FirestaffSaveExportResult rc;
     int i;
-    unsigned char importedBody[256];
+    unsigned char importedBytes[320];
     size_t importedRead;
     long sizeBefore, sizeAfter;
 
@@ -515,11 +515,13 @@ static int test_dm1_round_trip(void) {
     }
     check(file_size(targetPath) == 64L + (long)sizeof(body),
           "imported target size = header + body");
-    check(read_bytes(targetPath, importedBody, sizeof(importedBody), &importedRead),
+    check(read_bytes(targetPath, importedBytes, sizeof(importedBytes), &importedRead),
           "read imported target");
-    check(memcmp(importedBody, "FSDM1SV1", 8) == 0,
+    check(memcmp(importedBytes, "FSDM1SV1", 8) == 0,
           "imported target magic preserved");
-    check(memcmp(importedBody + 64, body, sizeof(body)) == 0,
+    check(importedRead == 64u + sizeof(body),
+          "read imported target full byte count");
+    check(memcmp(importedBytes + 64, body, sizeof(body)) == 0,
           "imported target body bytes preserved");
 
     /* Magic + version probe on the imported target. */
@@ -549,14 +551,15 @@ static int test_multi_kind_round_trip(void) {
         const char* magic;
         uint32_t version;
         const char* basename;
+        size_t headerSize;
         int (*write_fixture)(const char*, unsigned char*, size_t,
                               uint32_t, uint32_t);
     } cases[] = {
-        { FIRESTAFF_SAVE_EXPORT_KIND_DM1_V1,    "FSDM1SV1", 1u, "firestaff-dm1", write_dm1_save_fixture },
-        { FIRESTAFF_SAVE_EXPORT_KIND_CSB_V1,    "RDMCSB20", 1u, "firestaff-csb", write_csb_save_fixture },
-        { FIRESTAFF_SAVE_EXPORT_KIND_DM2_V1,    "BEEF\0DEAD", 1u, "firestaff-dm2", write_dm2_save_fixture },
-        { FIRESTAFF_SAVE_EXPORT_KIND_NEXUS_V1,  "FNXS",     2u, "firestaff-nexus", write_nexus_save_fixture },
-        { FIRESTAFF_SAVE_EXPORT_KIND_THERON_V1, "TQR ",     1u, "firestaff-theron", write_theron_save_fixture },
+        { FIRESTAFF_SAVE_EXPORT_KIND_DM1_V1,    "FSDM1SV1", 1u, "firestaff-dm1",    64u, write_dm1_save_fixture },
+        { FIRESTAFF_SAVE_EXPORT_KIND_CSB_V1,    "RDMCSB20", 1u, "firestaff-csb",    64u, write_csb_save_fixture },
+        { FIRESTAFF_SAVE_EXPORT_KIND_DM2_V1,    "BEEF\0DEAD", 1u, "firestaff-dm2",  16u, write_dm2_save_fixture },
+        { FIRESTAFF_SAVE_EXPORT_KIND_NEXUS_V1,  "FNXS",     2u, "firestaff-nexus",  64u, write_nexus_save_fixture },
+        { FIRESTAFF_SAVE_EXPORT_KIND_THERON_V1, "TQR ",     1u, "firestaff-theron", 32u, write_theron_save_fixture },
     };
     int nCases = (int)(sizeof(cases) / sizeof(cases[0]));
     int ci;
@@ -575,18 +578,20 @@ static int test_multi_kind_round_trip(void) {
         char exportDir[1024];
         char importDir[1024];
         char targetPath[1024];
+        char exportBase[256];
         unsigned char body[128];
         int i;
         char binPath[1024];
         char manifestPath[1024];
         char errBuf[256];
         FirestaffSaveExportResult rc;
-        unsigned char importedBody[128];
+        unsigned char importedBytes[256];
         size_t importedRead;
 
         for (i = 0; i < (int)sizeof(body); ++i) body[i] = (unsigned char)(i ^ (ci * 13));
         snprintf(subDir, sizeof(subDir), "%s/case%d", root, ci);
         snprintf(srcPath, sizeof(srcPath), "%s/%s-slot.sav", subDir, cases[ci].basename);
+        snprintf(exportBase, sizeof(exportBase), "%s-slot", cases[ci].basename);
         snprintf(exportDir, sizeof(exportDir), "%s/export", subDir);
         snprintf(importDir, sizeof(importDir), "%s/import", subDir);
         snprintf(targetPath, sizeof(targetPath), "%s/%s-imported.sav",
@@ -612,7 +617,7 @@ static int test_multi_kind_round_trip(void) {
 
         errBuf[0] = '\0';
         rc = FirestaffSaveExport_ImportFile(
-                exportDir, cases[ci].basename,
+                exportDir, exportBase,
                 cases[ci].kind,
                 magic, version,
                 targetPath,
@@ -624,13 +629,12 @@ static int test_multi_kind_round_trip(void) {
         check(rc == FIRESTAFF_SAVE_EXPORT_OK, "case import OK");
         check(file_size(targetPath) == file_size(srcPath),
               "case target size == source size");
-        check(read_bytes(targetPath, importedBody, sizeof(importedBody), &importedRead),
+        check(read_bytes(targetPath, importedBytes, sizeof(importedBytes), &importedRead),
               "read imported target");
-        /* Compare body bytes only — DM2 slot-magic has a
-         * different header layout but the body bytes must
-         * round-trip identically. */
-        check(memcmp(importedBody + 16, body, sizeof(body) - 16) == 0,
-              "case body bytes preserved (after 16-byte head)");
+        check(importedRead == cases[ci].headerSize + sizeof(body),
+              "read imported target full byte count");
+        check(memcmp(importedBytes + cases[ci].headerSize, body, sizeof(body)) == 0,
+              "case body bytes preserved after per-kind header");
     }
 
     rmrf(root);
