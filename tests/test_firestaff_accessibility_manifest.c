@@ -551,6 +551,95 @@ static void subtest_element_budget_clamps_without_malformed_json(void) {
                 "budget: overflow flush leaves no .tmp residue");
 }
 
+/* ── Subtest 8: output-dir override + revert ────────────────────── */
+
+static void subtest_output_dir_override_revert_and_shutdown(void) {
+    char buf[8192];
+    char sandbox_json[1280];
+    char sandbox_tmp[1280];
+    const char* output_path;
+    int n;
+
+    fs_ax_shutdown();
+    FS_AX_REMOVE(g_json_path);
+    FS_AX_REMOVE(g_tmp_path);
+
+    if (!fs_ax_create_sandbox_dir()) {
+        fs_ax_check(0, "output-dir: sandbox directory can be created");
+        return;
+    }
+
+    snprintf(sandbox_json, sizeof(sandbox_json),
+             "%s/accessibility.json", g_sandbox_dir);
+    snprintf(sandbox_tmp, sizeof(sandbox_tmp),
+             "%s/accessibility.json.tmp", g_sandbox_dir);
+    FS_AX_REMOVE(sandbox_json);
+    FS_AX_REMOVE(sandbox_tmp);
+
+    fs_ax_set_output_dir(g_sandbox_dir);
+    fs_ax_set_enabled(1);
+    output_path = fs_ax_get_output_path();
+    fs_ax_check(output_path && strcmp(output_path, sandbox_json) == 0,
+                "output-dir: get_output_path reports override manifest path");
+
+    fs_ax_begin_frame(800, 600, "override_dir");
+    fs_ax_flush();
+
+    fs_ax_check(fs_ax_file_exists(sandbox_json),
+                "output-dir: override manifest is written");
+    fs_ax_check(!fs_ax_file_exists(sandbox_tmp),
+                "output-dir: override atomic tmp is gone after flush");
+    fs_ax_check(!fs_ax_file_exists(g_json_path),
+                "output-dir: HOME default manifest is not written while overridden");
+
+    n = fs_ax_read_all(sandbox_json, buf, sizeof(buf));
+    fs_ax_check(n > 0, "output-dir: override manifest can be read");
+    if (n > 0) {
+        fs_ax_check(strstr(buf, "\"gameState\":\"override_dir\"") != NULL,
+                    "output-dir: override manifest carries frame state");
+        fs_ax_check(strstr(buf,
+                           "\"framebuffer\":{\"width\":800,\"height\":600}") != NULL,
+                    "output-dir: override manifest carries framebuffer dims");
+    }
+
+    fs_ax_shutdown();
+    fs_ax_check(!fs_ax_file_exists(sandbox_json),
+                "output-dir: shutdown deletes the override manifest");
+
+    fs_ax_set_output_dir(NULL);
+    fs_ax_set_enabled(1);
+    output_path = fs_ax_get_output_path();
+    fs_ax_check(output_path && strcmp(output_path, g_json_path) == 0,
+                "output-dir: NULL revert restores HOME default path");
+    fs_ax_begin_frame(320, 200, "default_after_null");
+    fs_ax_flush();
+    fs_ax_check(fs_ax_file_exists(g_json_path),
+                "output-dir: HOME default manifest is written after NULL revert");
+    fs_ax_check(!fs_ax_file_exists(sandbox_json),
+                "output-dir: override manifest stays absent after NULL revert");
+
+    FS_AX_REMOVE(g_json_path);
+    FS_AX_REMOVE(g_tmp_path);
+    fs_ax_set_output_dir(g_sandbox_dir);
+    output_path = fs_ax_get_output_path();
+    fs_ax_check(output_path && strcmp(output_path, sandbox_json) == 0,
+                "output-dir: override can be selected while already enabled");
+    fs_ax_set_output_dir("");
+    output_path = fs_ax_get_output_path();
+    fs_ax_check(output_path && strcmp(output_path, g_json_path) == 0,
+                "output-dir: empty-string revert restores HOME default while enabled");
+    fs_ax_begin_frame(320, 200, "default_after_empty");
+    fs_ax_flush();
+    fs_ax_check(fs_ax_file_exists(g_json_path),
+                "output-dir: HOME default manifest is written after empty-string revert");
+    fs_ax_check(!fs_ax_file_exists(sandbox_json),
+                "output-dir: override manifest stays absent after empty-string revert");
+
+    fs_ax_shutdown();
+    fs_ax_set_output_dir(NULL);
+    fs_ax_remove_sandbox_dir();
+}
+
 /* ── main ───────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -560,7 +649,7 @@ int main(void) {
     if (!fs_ax_setup_temp_home()) {
         fprintf(stderr,
                 "could not redirect HOME to a temp dir; "
-                "subtests 2-7 skipped\n");
+                "subtests 2-8 skipped\n");
         printf("\n  firestaff_accessibility_manifest: %d passed, %d failed "
                "(isolation failed)\n",
                g_passes, g_failures);
@@ -584,6 +673,9 @@ int main(void) {
 
     printf("  [7] element budget clamps overflow without malformed JSON...\n");
     subtest_element_budget_clamps_without_malformed_json();
+
+    printf("  [8] output-dir override, revert, and shutdown cleanup...\n");
+    subtest_output_dir_override_revert_and_shutdown();
 
     fs_ax_teardown_temp_home();
 

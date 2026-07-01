@@ -40,6 +40,59 @@ static char g_game_state[MAX_STRING_LEN];
 static FS_AX_Element g_elements[FS_AX_MAX_ELEMENTS];
 static int g_element_count = 0;
 
+/* ── Output path helpers ─────────────────────────────────────────── */
+
+static void clear_output_paths(void)
+{
+    g_home_dir[0] = '\0';
+    g_json_path[0] = '\0';
+    g_tmp_path[0] = '\0';
+}
+
+static void set_output_paths_for_dir(const char* dir)
+{
+    size_t dir_len;
+    size_t json_len;
+    size_t tmp_len;
+
+    if (!dir) {
+        clear_output_paths();
+        return;
+    }
+
+    dir_len = strlen(dir);
+    json_len = strlen(JSON_FILENAME);
+    tmp_len = strlen(TMP_SUFFIX);
+    if (dir_len >= MAX_STRING_LEN ||
+        dir_len + 1U + json_len >= MAX_STRING_LEN ||
+        dir_len + 1U + json_len + tmp_len >= MAX_STRING_LEN) {
+        clear_output_paths();
+        return;
+    }
+
+    snprintf(g_home_dir, sizeof(g_home_dir), "%s", dir);
+    snprintf(g_json_path, sizeof(g_json_path),
+             "%s/%s", g_home_dir, JSON_FILENAME);
+    snprintf(g_tmp_path, sizeof(g_tmp_path),
+             "%s%s", g_json_path, TMP_SUFFIX);
+}
+
+static void set_default_output_paths(void)
+{
+    const char* home = getenv("HOME");
+    char dir[MAX_STRING_LEN];
+
+    if (!home) home = "";
+
+    if (strlen(home) + 1U + strlen(HOME_DIR_NAME) >= sizeof(dir)) {
+        clear_output_paths();
+        return;
+    }
+
+    snprintf(dir, sizeof(dir), "%s/%s", home, HOME_DIR_NAME);
+    set_output_paths_for_dir(dir);
+}
+
 /* ── JSON string escaping ─────────────────────────────────────────── */
 
 const char* fs_ax_json_escape(const char* str)
@@ -144,27 +197,11 @@ void fs_ax_set_enabled(int enabled)
      * that and skip the HOME-derived default. */
     if (g_ax_enabled) {
         if (g_ax_dir_overridden && g_home_dir[0] != '\0') {
-            snprintf(g_json_path, sizeof(g_json_path),
-                     "%s/%s", g_home_dir, JSON_FILENAME);
-            snprintf(g_tmp_path, sizeof(g_tmp_path),
-                     "%s%s", g_json_path, TMP_SUFFIX);
+            char current_dir[MAX_STRING_LEN];
+            snprintf(current_dir, sizeof(current_dir), "%s", g_home_dir);
+            set_output_paths_for_dir(current_dir);
         } else {
-            const char* home = getenv("HOME");
-            if (!home) home = "";
-
-            int dlen = (int)strlen(home);
-            int nlen = (int)strlen(HOME_DIR_NAME);
-            int tlen = dlen + 1 + nlen;
-            (void)tlen;
-
-            if (dlen + 1 + nlen < MAX_STRING_LEN) {
-                snprintf(g_home_dir, sizeof(g_home_dir),
-                         "%s/%s", home, HOME_DIR_NAME);
-                snprintf(g_json_path, sizeof(g_json_path),
-                         "%s/%s", g_home_dir, JSON_FILENAME);
-                snprintf(g_tmp_path, sizeof(g_tmp_path),
-                         "%s%s", g_json_path, TMP_SUFFIX);
-            }
+            set_default_output_paths();
         }
     }
 }
@@ -173,20 +210,11 @@ void fs_ax_set_output_dir(const char* dir)
 {
     if (!dir || !*dir) {
         g_ax_dir_overridden = 0;
-        g_home_dir[0] = '\0';
+        set_default_output_paths();
         return;
     }
     g_ax_dir_overridden = 1;
-    snprintf(g_home_dir, sizeof(g_home_dir), "%s", dir);
-    g_json_path[0] = '\0';
-    g_tmp_path[0] = '\0';
-    /* If we are already enabled, rebuild the trailing paths now. */
-    if (g_ax_enabled) {
-        snprintf(g_json_path, sizeof(g_json_path),
-                 "%s/%s", g_home_dir, JSON_FILENAME);
-        snprintf(g_tmp_path, sizeof(g_tmp_path),
-                 "%s%s", g_json_path, TMP_SUFFIX);
-    }
+    set_output_paths_for_dir(dir);
 }
 
 const char* fs_ax_get_output_path(void)
