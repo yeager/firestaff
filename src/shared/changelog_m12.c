@@ -9,6 +9,13 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.14  (2026-07-01)",
+    "  - DM1 archive receipts, save-browser manifests, and M11 accessibility bounds are pinned more tightly with data-free/headless gates.",
+    "  - Release packaging now publishes the Steam Deck x86_64 pacman package separately from Linux ARM64 packages.",
+    "  - DM1 V2.2 material and screenshot-receipt gates now distinguish synthetic placeholders from operator-reviewed finished real evidence.",
+    "  - X68000 HDM receipt classification now separates blank, protected-sentinel, off-axis sentinel, FTL payload, and nonblank/no-sentinel cases conservatively.",
+    "  - Release verification: based on green main CI before release prep, with local CMake configure/build plus Phase A and audio smoke probes before tagging.",
+    "",
     "V3.0.13  (2026-06-29)",
     "  - DM1 V1 post-dungeon capture planning now has a reviewed-target-selection contract and validator before live routes are dispatched.",
     "  - New CTest coverage gates the selector self-test and pins the selector keypad map against the live DOSBox capture runner.",
@@ -329,5 +336,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.13";
+    return "3.0.14";
 }
