@@ -71,25 +71,32 @@ def main() -> int:
         else:
             failures += fail(f"P55_DIRECT_AUDIO_AUDIT_02 missing {label}")
 
-    shoot_block_start = game.find("case 32: { /* SHOOT */")
-    action_block_end = game.find("int M11_GameView_TriggerActionRow")
-    action_block = game[shoot_block_start:action_block_end]
-    combat_event_13_count = action_block.count("m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT)")
-    if shoot_block_start >= 0 and action_block_end >= 0 and combat_event_13_count == 2:
-        pass_line("P55_DIRECT_AUDIO_AUDIT_03 shoot and throw emit source-backed event 13")
+    shoot_pos = game.find("T%u: %s SHOOTS")
+    throw_helper_pos = game.find("m11_dm1_f0328_spawn_thrown_thing")
+    throw_sound_pos = game.find("m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT)",
+                                throw_helper_pos)
+    if shoot_pos >= 0:
+        shoot_ctx = context_window(game, shoot_pos, before=120, after=700)
+    else:
+        shoot_ctx = ""
+    if (
+        shoot_pos >= 0
+        and throw_helper_pos >= 0
+        and throw_sound_pos >= 0
+        and "m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT)" in shoot_ctx
+    ):
+        pass_line("P55_DIRECT_AUDIO_AUDIT_03 shoot and F0328 throw emit source-backed event 13")
     else:
         failures += fail(
-            f"P55_DIRECT_AUDIO_AUDIT_03 expected 2 shoot/throw event-13 action emissions, found {combat_event_13_count}"
+            "P55_DIRECT_AUDIO_AUDIT_03 missing source-backed event-13 shoot or F0328 throw emission"
         )
 
-    # 3. Remaining direct marker calls are allowed only in explicitly documented buckets:
-    #    generic non-EMIT tick emissions plus INVOKE action cues whose exact
-    #    original request timing/index is not source-backed here. CALM / BRANDISH /
-    #    CONFUSE are source-silent in PC34 MENU.C and must not use marker fallback.
+    # 3. Remaining direct marker calls are allowed only in explicitly documented
+    #    buckets: generic non-EMIT tick emissions. CALM / BRANDISH / CONFUSE and
+    #    INVOKE are source-silent in PC34 MENU.C and must not use marker fallback.
     calls = direct_marker_calls(game)
     allowed_labels = {
         "generic_non_sound_request_emission": 0,
-        "invoke_action_fallback": 0,
     }
     unexpected: list[tuple[int, str]] = []
     spell_block_start = game.find("case 20:   /* FIREBALL */")
@@ -101,14 +108,11 @@ def main() -> int:
         line = line_for_offset(game, offset)
         if "emission->kind == EMIT_SOUND_REQUEST" in ctx and "else" in ctx:
             allowed_labels["generic_non_sound_request_emission"] += 1
-        elif invoke_block_start <= offset < throw_block_start:
-            allowed_labels["invoke_action_fallback"] += 1
         else:
             unexpected.append((line, " ".join(ctx.split()[:32])))
 
     expected_counts = {
         "generic_non_sound_request_emission": 1,
-        "invoke_action_fallback": 1,
     }
 
     social_block_start = game.find("case 37: /* CALM */")
@@ -133,6 +137,18 @@ def main() -> int:
     else:
         failures += fail("P55_DIRECT_AUDIO_AUDIT_04B spell projectile action block still has marker fallback or lost source anchors")
 
+    invoke_block = game[invoke_block_start:throw_block_start]
+    if invoke_block_start < 0 or throw_block_start < 0:
+        failures += fail("P55_DIRECT_AUDIO_AUDIT_04C missing invoke action block")
+    elif (
+        "M11_Audio_EmitMarker" not in invoke_block
+        and "m11_audio_emit_source_sound" not in invoke_block
+        and "INVOKE case at lines 1480-1493" in invoke_block
+    ):
+        pass_line("P55_DIRECT_AUDIO_AUDIT_04C invoke action stays source-silent")
+    else:
+        failures += fail("P55_DIRECT_AUDIO_AUDIT_04C invoke block has action-time audio fallback or lost source anchors")
+
     if not unexpected and allowed_labels == expected_counts:
         pass_line(
             "P55_DIRECT_AUDIO_AUDIT_04 remaining direct marker calls are documented TODO buckets "
@@ -145,19 +161,23 @@ def main() -> int:
         )
 
     # 4. Guard against accidental regression to direct marker calls in converted actions.
-    for forbidden in [
-        "T%u: %s SHOOTS",
-        "T%u: %s THROWS",
-    ]:
-        pos = game.find(forbidden)
-        if pos < 0:
-            failures += fail(f"P55_DIRECT_AUDIO_AUDIT_05 missing action log {forbidden}")
-            continue
-        ctx = context_window(game, pos, before=120, after=700)
-        if "M11_Audio_EmitMarker" not in ctx and "m11_audio_emit_source_sound" in ctx:
-            pass_line(f"P55_DIRECT_AUDIO_AUDIT_05 converted action near {forbidden}")
+    if shoot_pos < 0:
+        failures += fail("P55_DIRECT_AUDIO_AUDIT_05 missing action log T%u: %s SHOOTS")
+    elif "M11_Audio_EmitMarker" not in shoot_ctx and "m11_audio_emit_source_sound" in shoot_ctx:
+        pass_line("P55_DIRECT_AUDIO_AUDIT_05 converted action near T%u: %s SHOOTS")
+    else:
+        failures += fail("P55_DIRECT_AUDIO_AUDIT_05 direct marker remains near T%u: %s SHOOTS")
+
+    throw_helper_end = game.find("static int m11_dm1_f0328_throw_attack_probe_legacy",
+                                 throw_helper_pos)
+    if throw_helper_pos < 0 or throw_helper_end < 0:
+        failures += fail("P55_DIRECT_AUDIO_AUDIT_05 missing F0328 throw helper")
+    else:
+        throw_ctx = game[throw_helper_pos:throw_helper_end]
+        if "M11_Audio_EmitMarker" not in throw_ctx and "m11_audio_emit_source_sound" in throw_ctx:
+            pass_line("P55_DIRECT_AUDIO_AUDIT_05 converted F0328 throw helper")
         else:
-            failures += fail(f"P55_DIRECT_AUDIO_AUDIT_05 direct marker remains near {forbidden}")
+            failures += fail("P55_DIRECT_AUDIO_AUDIT_05 direct marker remains in F0328 throw helper")
 
     if failures:
         return 1
