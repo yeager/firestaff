@@ -4568,9 +4568,14 @@ static void test_orch_cmd_attack_uses_reserved2_action_skill_index(void) {
     int sawSkillBoost = 0;
     int swingDamage = 0;
     int stunDamage = 0;
+    int defaultDamage = 0;
+    int invalidDamage = 0;
     unsigned int seed;
 
     assert(CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34 == DM1_ACTION_MELEE);
+    assert(dm1_v1_action_xp_route(DM1_GRAPHIC560_ACTION_COUNT, &route) == 0);
+    assert(route.valid == 0);
+
     assert(dm1_v1_action_xp_route(DM1_ACTION_SWING, &route) == 1);
     assert(route.valid == 1);
     assert(route.skillIndex == DM1_SKILL_IDX_SWING);
@@ -4598,6 +4603,16 @@ static void test_orch_cmd_attack_uses_reserved2_action_skill_index(void) {
     }
 
     assert(sawSkillBoost == 1);
+
+    for (seed = 1; seed <= 16; ++seed) {
+        int defaultHit = run_live_cmd_attack_skill_route_attempt(
+            seed, CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34, 500000,
+            &defaultDamage);
+        int invalidHit = run_live_cmd_attack_skill_route_attempt(
+            seed, DM1_GRAPHIC560_ACTION_COUNT, 500000, &invalidDamage);
+        assert(defaultHit == invalidHit);
+        assert(defaultDamage == invalidDamage);
+    }
 }
 
 static int run_live_cmd_attack_luck_attempt(unsigned int seed,
