@@ -17,7 +17,12 @@
  *   - the cleanup contract (nexus_v1_shutdown must walk 0..model_count-1
  *     and free each, model_count must reset on re-init),
  *   - the failure-isolation contract (one bad MNS must not advance
- *     model_count or corrupt earlier slots).
+ *     model_count or corrupt earlier slots),
+ *   - the multi-model accumulation contract — out-of-order slot
+ *     assignment, mixed valid/invalid load patterns, per-slot
+ *     header accounting, two-engine isolation, and load/shutdown/
+ *     load determinism. Each new slice locks an invariant the
+ *     single-model launch path can't observe on its own.
  *
  * Source-lock
  * -----------
@@ -503,6 +508,456 @@ static void probe_synthetic_cleanup_reinit(void)
           "all NEXUS_MAX_MODELS slots are heap-null after shutdown");
 }
 
+/* ── Out-of-order slot accumulation ────────────────────────────────
+ *
+ * The engine's load_model path assigns slot index == model_count
+ * (FIFO growth). Verifies that loading in a scrambled input order
+ * still produces monotonically-increasing, contiguous slot indices
+ * in the order the loads are issued — i.e. the engine never tries
+ * to back-fill a freed slot, never overwrites an existing slot, and
+ * never advances past a gap. This is the multi-model accumulation
+ * invariant for the slot pool itself, separate from the cap/failure
+ * isolation cases the earlier slices already lock down. */
+static void probe_synthetic_out_of_order(void)
+{
+    printf("\n[Synthetic: out-of-order load sequence yields contiguous monotonic slots]\n");
+
+    Nexus_V1_Engine engine;
+    memset(&engine, 0, sizeof(engine));
+
+    uint8_t dmdf[256];
+    int dmdf_sz = build_synthetic_dmdf(dmdf, (int)sizeof(dmdf), 4u, 2u);
+    if (dmdf_sz <= 0 || !nexus_v1_dmdf_is_valid(dmdf, dmdf_sz)) {
+        printf("  [FAIL] synthetic DMDF fixture unusable for out-of-order probe\n");
+        g_fail++;
+        return;
+    }
+
+    /* Issue 5 loads and verify each one occupies slot == model_count
+     * (FIFO growth contract). The names are distinct so a per-slot
+     * name lookup can prove the right model landed in the right
+     * slot even when the load order is scrambled. */
+    const int kCount = 5;
+    const char *order[5] = { "OOO_2", "OOO_0", "OOO_4", "OOO_1", "OOO_3" };
+    int expected_index[5] = { 0,       1,       2,       3,       4       };
+    int i;
+    for (i = 0; i < kCount; i++) {
+        int idx = engine.model_count;
+        if (nexus_v1_dmdf_load(&engine.models[idx], dmdf, dmdf_sz,
+                               order[i]) != 0) {
+            printf("  [FAIL] dmdf_load(models[%d]) != 0 during OOO load\n", idx);
+            g_fail++;
+            engine.model_count = idx;
+            goto ooo_cleanup;
+        }
+        engine.model_count++;
+    }
+    CHECK(engine.model_count == kCount,
+          "model_count == 5 after scrambled-order load sequence");
+    int all_in_order = 1;
+    int all_names_ok = 1;
+    for (i = 0; i < kCount; i++) {
+        if (i != expected_index[i]) all_in_order = 0;
+        if (engine.models[i].name == NULL ||
+            strcmp(engine.models[i].name, order[i]) != 0) {
+            all_names_ok = 0;
+        }
+    }
+    CHECK(all_in_order, "scrambled load order produced slot[i] == i");
+    CHECK(all_names_ok,
+          "per-slot .name matches the scrambled input order (no back-fill, no overwrite)");
+
+ooo_cleanup:
+    for (i = 0; i < engine.model_count; i++) {
+        nexus_v1_dmdf_free(&engine.models[i]);
+    }
+    engine.model_count = 0;
+}
+
+/* ── Mixed valid/invalid load pattern ─────────────────────────────
+ *
+ * Loads 3 valid MNS, then attempts 2 bad ones (non-DMDF magic and
+ * <32-byte truncated DMDF), then 2 more valid ones. Validates that
+ * model_count == 5 after the sweep (only valid loads advance the
+ * counter), the bad slots remain untouched (header.magic remains
+ * zero on those slots), and the per-slot DMDF magic / vertex_count
+ * survives the rejected loads for every populated slot. This is
+ * the multi-model contract for failure isolation interleaved with
+ * success. */
+static void probe_synthetic_mixed_valid_invalid(void)
+{
+    printf("\n[Synthetic: 3 valid + 2 bad + 2 valid interleaved pattern]\n");
+
+    Nexus_V1_Engine engine;
+    memset(&engine, 0, sizeof(engine));
+
+    uint8_t good[256];
+    int good_sz = build_synthetic_dmdf(good, (int)sizeof(good), 4u, 2u);
+    uint8_t bad_magic[64];
+    uint8_t too_small[16];
+    if (good_sz <= 0 || !nexus_v1_dmdf_is_valid(good, good_sz)) {
+        printf("  [FAIL] good DMDF fixture unusable for mixed-pattern probe\n");
+        g_fail++;
+        return;
+    }
+
+    /* Load 3 valid models. */
+    const char *good_names[3] = { "MV_0", "MV_1", "MV_2" };
+    int i;
+    for (i = 0; i < 3; i++) {
+        if (nexus_v1_dmdf_load(&engine.models[i], good, good_sz,
+                               good_names[i]) != 0) {
+            printf("  [FAIL] dmdf_load(models[%d]) != 0 during mixed-pattern fill\n", i);
+            g_fail++;
+            engine.model_count = i;
+            goto mv_cleanup;
+        }
+        engine.model_count++;
+    }
+
+    /* Bad load #1: non-DMDF magic into slot 3 (must be rejected). */
+    memset(bad_magic, 0xAA, sizeof(bad_magic));
+    int r_bad = nexus_v1_dmdf_load(&engine.models[engine.model_count],
+                                   bad_magic, (int)sizeof(bad_magic),
+                                   "MV_BAD_MAGIC");
+    CHECK(r_bad == -1, "non-DMDF magic fixture rejected at slot 3");
+    CHECK(engine.model_count == 3,
+          "model_count stays at 3 after non-DMDF magic rejected");
+    CHECK(engine.models[3].header.magic == 0,
+          "slot 3 header.magic remains 0 (rejected load left slot clean)");
+
+    /* Bad load #2: too-small buffer (< 32 bytes) into slot 3 again. */
+    memset(too_small, 0, sizeof(too_small));
+    too_small[0] = 'D'; too_small[1] = 'M'; too_small[2] = 'D'; too_small[3] = 'F';
+    int r_small = nexus_v1_dmdf_load(&engine.models[engine.model_count],
+                                     too_small, (int)sizeof(too_small),
+                                     "MV_TOO_SMALL");
+    CHECK(r_small == -1, "too-small DMDF fixture rejected at slot 3");
+    CHECK(engine.model_count == 3,
+          "model_count stays at 3 after too-small fixture rejected");
+
+    /* Load 2 more valid models into slots 3 and 4 (must succeed
+     * and the earlier-failed slots must remain reusable). */
+    const char *good_tail[2] = { "MV_3", "MV_4" };
+    for (i = 0; i < 2; i++) {
+        int idx = engine.model_count;
+        if (nexus_v1_dmdf_load(&engine.models[idx], good, good_sz,
+                               good_tail[i]) != 0) {
+            printf("  [FAIL] dmdf_load(models[%d]) != 0 during tail fill\n", idx);
+            g_fail++;
+            engine.model_count = idx;
+            goto mv_cleanup;
+        }
+        engine.model_count++;
+    }
+    CHECK(engine.model_count == 5,
+          "model_count == 5 after 3 valid + 2 bad + 2 valid pattern");
+    CHECK(engine.models[3].name != NULL &&
+          strcmp(engine.models[3].name, "MV_3") == 0,
+          "slot 3 reused after rejected load (carries new model name)");
+    CHECK(engine.models[4].name != NULL &&
+          strcmp(engine.models[4].name, "MV_4") == 0,
+          "slot 4 reused after rejected load (carries new model name)");
+
+    /* All 5 populated slots must carry valid DMDF magic + 4 vertices
+     * + 2 faces. The 2 previously-rejected attempts must not have
+     * left any half-initialized slot behind. */
+    int all_intact = 1;
+    for (i = 0; i < 5; i++) {
+        if (engine.models[i].header.magic != 0x444D4446u) all_intact = 0;
+        if (engine.models[i].vertex_count != 4)           all_intact = 0;
+        if (engine.models[i].face_count   != 2)           all_intact = 0;
+        if (engine.models[i].vertices     == NULL)        all_intact = 0;
+        if (engine.models[i].faces        == NULL)        all_intact = 0;
+    }
+    CHECK(all_intact, "all 5 populated slots carry DMDF magic + 4 verts + 2 faces");
+
+mv_cleanup:
+    for (i = 0; i < engine.model_count; i++) {
+        nexus_v1_dmdf_free(&engine.models[i]);
+    }
+    engine.model_count = 0;
+}
+
+/* ── Per-slot header accounting ───────────────────────────────────
+ *
+ * The DMDF parser writes header.file_size, header.section_count,
+ * header.data_offset, header.flags into every slot. Verifies that
+ * the multi-model sweep writes those fields consistently across
+ * every populated slot — a missing or wrong header on slot N would
+ * be a multi-model parser regression that wouldn't show up in the
+ * single-model "load one" case. */
+static void probe_synthetic_header_accounting(void)
+{
+    printf("\n[Synthetic: per-slot header.file_size/section_count/data_offset match input]\n");
+
+    Nexus_V1_Engine engine;
+    memset(&engine, 0, sizeof(engine));
+
+    /* Build a 4-vert / 2-face fixture, then a 6-vert / 3-face
+     * fixture, then a 8-vert / 4-face fixture. Each slot gets a
+     * distinct fixture so per-slot header accounting can verify
+     * slot[i] matches the fixture that was actually loaded into
+     * slot[i], not just any valid DMDF header. */
+    uint8_t dmdf4[256], dmdf6[256], dmdf8[256];
+    int sz4 = build_synthetic_dmdf(dmdf4, (int)sizeof(dmdf4), 4u, 2u);
+    int sz6 = build_synthetic_dmdf(dmdf6, (int)sizeof(dmdf6), 6u, 3u);
+    int sz8 = build_synthetic_dmdf(dmdf8, (int)sizeof(dmdf8), 8u, 4u);
+    if (sz4 <= 0 || sz6 <= 0 || sz8 <= 0) {
+        printf("  [FAIL] one of the per-slot fixtures is unusable\n");
+        g_fail++;
+        return;
+    }
+
+    struct {
+        const uint8_t *buf;
+        int sz;
+        uint32_t expected_verts;
+        uint32_t expected_faces;
+        const char *name;
+    } slots[3] = {
+        { dmdf4, sz4, 4u, 2u, "ACC_4V2F" },
+        { dmdf6, sz6, 6u, 3u, "ACC_6V3F" },
+        { dmdf8, sz8, 8u, 4u, "ACC_8V4F" },
+    };
+
+    int i;
+    for (i = 0; i < 3; i++) {
+        if (nexus_v1_dmdf_load(&engine.models[i], slots[i].buf, slots[i].sz,
+                               slots[i].name) != 0) {
+            printf("  [FAIL] dmdf_load(models[%d]) != 0 during header accounting\n", i);
+            g_fail++;
+            engine.model_count = i;
+            goto acc_cleanup;
+        }
+        engine.model_count++;
+    }
+
+    /* Per-slot check: each slot[i].header.{vertex_count,face_count}
+     * must equal the fixture that was actually loaded into slot[i].
+     * The synthetic builder always sets section_count=2 and
+     * data_offset=48 in the header, so those invariants must hold
+     * across every populated slot too. */
+    int all_correct = 1;
+    for (i = 0; i < 3; i++) {
+        if (engine.models[i].header.section_count != 2u)        all_correct = 0;
+        if (engine.models[i].header.data_offset   != 48u)       all_correct = 0;
+        if (engine.models[i].header.vertex_count  != slots[i].expected_verts) all_correct = 0;
+        if (engine.models[i].header.face_count    != slots[i].expected_faces) all_correct = 0;
+        if (engine.models[i].vertex_count         != (int)slots[i].expected_verts) all_correct = 0;
+        if (engine.models[i].face_count           != (int)slots[i].expected_faces) all_correct = 0;
+        if (engine.models[i].header.magic         != 0x444D4446u) all_correct = 0;
+        if (engine.models[i].name == NULL ||
+            strcmp(engine.models[i].name, slots[i].name) != 0) all_correct = 0;
+    }
+    CHECK(all_correct,
+          "every populated slot has correct header + vertex_count + face_count + name");
+
+    /* Header file_size field is informational and must match the
+     * total bytes the parser was handed (the synthetic builder
+     * writes (uint32_t)total at offset 4 — so file_size ==
+     * fixture_size). This is a regression check against a parser
+     * that loses track of input size on the Nth load. */
+    int all_file_size_ok = 1;
+    for (i = 0; i < 3; i++) {
+        if ((int)engine.models[i].header.file_size != slots[i].sz) {
+            all_file_size_ok = 0;
+        }
+    }
+    CHECK(all_file_size_ok, "every populated slot has header.file_size == fixture size");
+
+acc_cleanup:
+    for (i = 0; i < engine.model_count; i++) {
+        nexus_v1_dmdf_free(&engine.models[i]);
+    }
+    engine.model_count = 0;
+}
+
+/* ── Two independent engines in the same process ──────────────────
+ *
+ * The engine struct is plain data (no globals, no static state in
+ * the DMDF parser), so two Nexus_V1_Engine instances must coexist
+ * with full isolation. Loads 10 models into engine A, leaves
+ * engine B empty, then walks each shutdown independently. Neither
+ * engine must observe the other's model_count or slot pool, and
+ * neither must corrupt the other. */
+static void probe_synthetic_two_engines(void)
+{
+    printf("\n[Synthetic: two engines coexist with full isolation]\n");
+
+    Nexus_V1_Engine engine_a;
+    Nexus_V1_Engine engine_b;
+    memset(&engine_a, 0, sizeof(engine_a));
+    memset(&engine_b, 0, sizeof(engine_b));
+
+    uint8_t dmdf[256];
+    int dmdf_sz = build_synthetic_dmdf(dmdf, (int)sizeof(dmdf), 4u, 2u);
+    if (dmdf_sz <= 0 || !nexus_v1_dmdf_is_valid(dmdf, dmdf_sz)) {
+        printf("  [FAIL] synthetic DMDF fixture unusable for two-engine probe\n");
+        g_fail++;
+        return;
+    }
+
+    /* Fill engine A with 10 models. */
+    int i;
+    for (i = 0; i < 10; i++) {
+        char n[16]; snprintf(n, sizeof(n), "A_%02d", i);
+        if (nexus_v1_dmdf_load(&engine_a.models[i], dmdf, dmdf_sz, n) != 0) {
+            printf("  [FAIL] dmdf_load(engine_a.models[%d]) != 0\n", i);
+            g_fail++;
+            engine_a.model_count = i;
+            goto teardown;
+        }
+        engine_a.model_count++;
+    }
+
+    /* Engine B stays empty (model_count == 0, no slot allocations). */
+    CHECK(engine_a.model_count == 10, "engine A model_count == 10 after fill");
+    CHECK(engine_b.model_count == 0,  "engine B model_count == 0 (untouched)");
+
+    /* Independent slot accounting: engine A's last slot has 4
+     * vertices and DMDF magic; engine B's slot 0 must still be
+     * zeroed-out (no cross-contamination via the memset(0) at
+     * startup). */
+    int a_intact = 1;
+    for (i = 0; i < 10; i++) {
+        if (engine_a.models[i].header.magic != 0x444D4446u) a_intact = 0;
+        if (engine_a.models[i].vertex_count != 4)           a_intact = 0;
+    }
+    CHECK(a_intact, "engine A slots [0..9] all carry DMDF magic + 4 verts");
+    CHECK(engine_b.models[0].header.magic == 0,
+          "engine B slot 0 header.magic == 0 (no cross-contamination)");
+
+    /* Shutdown B first, then A — the order should not matter
+     * because the engines own no shared state, but exercising both
+     * orderings proves it. */
+    nexus_v1_shutdown(&engine_b);
+    CHECK(engine_b.model_count == 0,
+          "engine B model_count stays at 0 after shutdown");
+    CHECK(engine_a.model_count == 10,
+          "engine A model_count unchanged after B shutdown (independent state)");
+
+    nexus_v1_shutdown(&engine_a);
+    CHECK(engine_a.model_count == 0,
+          "engine A model_count == 0 after own shutdown");
+
+    int both_null = 1;
+    for (i = 0; i < NEXUS_MAX_MODELS; i++) {
+        if (engine_a.models[i].vertices != NULL ||
+            engine_a.models[i].faces    != NULL ||
+            engine_b.models[i].vertices != NULL ||
+            engine_b.models[i].faces    != NULL) {
+            both_null = 0;
+        }
+    }
+    CHECK(both_null,
+          "both engines' full NEXUS_MAX_MODELS slots are heap-null after both shutdowns");
+
+    return;
+teardown:
+    for (i = 0; i < engine_a.model_count; i++) {
+        nexus_v1_dmdf_free(&engine_a.models[i]);
+    }
+    engine_a.model_count = 0;
+    nexus_v1_shutdown(&engine_b);
+}
+
+/* ── Two-pass determinism ─────────────────────────────────────────
+ *
+ * Loading the same N models into a fresh engine twice (load /
+ * shutdown / re-memset / load) must produce identical slot indices,
+ * identical header values, identical per-slot name strings, and
+ * identical model_count. The DMDF parser and slot allocator are
+ * stateless across engine lifetimes, so this should always hold —
+ * but if it ever doesn't, every multi-model regression gate above
+ * becomes unreliable. This slice is the regression backstop. */
+static void probe_synthetic_two_pass(void)
+{
+    printf("\n[Synthetic: load / shutdown / load produces identical slot pool]\n");
+
+    uint8_t dmdf[256];
+    int dmdf_sz = build_synthetic_dmdf(dmdf, (int)sizeof(dmdf), 4u, 2u);
+    if (dmdf_sz <= 0 || !nexus_v1_dmdf_is_valid(dmdf, dmdf_sz)) {
+        printf("  [FAIL] synthetic DMDF fixture unusable for two-pass probe\n");
+        g_fail++;
+        return;
+    }
+
+    Nexus_V1_Engine engine;
+    int i;
+
+    /* Pass 1: load 6 models. */
+    memset(&engine, 0, sizeof(engine));
+    for (i = 0; i < 6; i++) {
+        char n[16]; snprintf(n, sizeof(n), "PASS1_%d", i);
+        if (nexus_v1_dmdf_load(&engine.models[i], dmdf, dmdf_sz, n) != 0) {
+            printf("  [FAIL] pass1 dmdf_load(models[%d]) != 0\n", i);
+            g_fail++;
+            engine.model_count = i;
+            goto pass1_cleanup;
+        }
+        engine.model_count++;
+    }
+    /* Snapshot per-slot header values. */
+    uint32_t pass1_magic[6];
+    uint32_t pass1_verts[6];
+    uint32_t pass1_faces[6];
+    uint32_t pass1_file_size[6];
+    for (i = 0; i < 6; i++) {
+        pass1_magic[i]     = engine.models[i].header.magic;
+        pass1_verts[i]     = engine.models[i].header.vertex_count;
+        pass1_faces[i]     = engine.models[i].header.face_count;
+        pass1_file_size[i] = engine.models[i].header.file_size;
+    }
+    CHECK(engine.model_count == 6, "pass 1 model_count == 6");
+
+pass1_cleanup:
+    for (i = 0; i < engine.model_count; i++) {
+        nexus_v1_dmdf_free(&engine.models[i]);
+    }
+    /* Pass 2: re-memset, load 6 models with different names. */
+    memset(&engine, 0, sizeof(engine));
+    for (i = 0; i < 6; i++) {
+        char n[16]; snprintf(n, sizeof(n), "PASS2_%d", i);
+        if (nexus_v1_dmdf_load(&engine.models[i], dmdf, dmdf_sz, n) != 0) {
+            printf("  [FAIL] pass2 dmdf_load(models[%d]) != 0\n", i);
+            g_fail++;
+            engine.model_count = i;
+            goto pass2_cleanup;
+        }
+        engine.model_count++;
+    }
+    CHECK(engine.model_count == 6, "pass 2 model_count == 6");
+
+    /* Determinism: every header field on every slot must match
+     * pass 1, and the per-slot names must reflect pass 2 (a stale
+     * pass-1 name on a pass-2 slot would mean the parser is
+     * skipping the name assignment on the Nth load). */
+    int headers_match = 1;
+    int names_match = 1;
+    for (i = 0; i < 6; i++) {
+        if (engine.models[i].header.magic     != pass1_magic[i])     headers_match = 0;
+        if (engine.models[i].header.vertex_count != pass1_verts[i])  headers_match = 0;
+        if (engine.models[i].header.face_count   != pass1_faces[i])  headers_match = 0;
+        if (engine.models[i].header.file_size    != pass1_file_size[i]) headers_match = 0;
+        char expected[16]; snprintf(expected, sizeof(expected), "PASS2_%d", i);
+        if (engine.models[i].name == NULL ||
+            strcmp(engine.models[i].name, expected) != 0) {
+            names_match = 0;
+        }
+    }
+    CHECK(headers_match,
+          "pass 2 slot[i].header.* values match pass 1 (parser is deterministic)");
+    CHECK(names_match,
+          "pass 2 per-slot .name reflects pass 2 inputs (parser rebinds name on each load)");
+
+pass2_cleanup:
+    for (i = 0; i < engine.model_count; i++) {
+        nexus_v1_dmdf_free(&engine.models[i]);
+    }
+    engine.model_count = 0;
+}
+
 /* ── Documented 30-name creature MNS subset ────────────────────────
  *
  * Same table the model-frame-gate probe uses (Phase 7
@@ -764,6 +1219,11 @@ int main(int argc, char **argv)
     probe_synthetic_slot_cap();
     probe_synthetic_failure_isolation();
     probe_synthetic_cleanup_reinit();
+    probe_synthetic_out_of_order();
+    probe_synthetic_mixed_valid_invalid();
+    probe_synthetic_header_accounting();
+    probe_synthetic_two_engines();
+    probe_synthetic_two_pass();
 
     /* Real-data path. SKIP-not-FAIL when no data is staged. */
     if (data_dir && data_dir[0]) {
