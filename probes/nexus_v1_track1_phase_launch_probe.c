@@ -31,6 +31,17 @@
  *    parser-detected dimensions and rejects NULL/bounds queries.
  *  - Phase 7 (determinism): the synthetic DGN parse is deterministic
  *    over a small repetition count.
+ *  - Phase 8 (FNXS save/load round-trip): the Firestaff-native
+ *    NEXUS_SAVE_MAGIC='FNXS' high-level save/load round-trips a
+ *    deterministic world + empty champion pool through the manager
+ *    API on a temporary file; rejects unknown magic; the loaded
+ *    header agrees with the saved header on party_x/party_y/
+ *    current_level/state_hash/game_time. This is the "save/load
+ *    round-trip evidence" follow-up from docs/FIRESTAFF_GAP_LIST.md
+ *    E1 Track 1 phase-launch row (item c). The original 8 KB Saturn
+ *    memory-card format is intentionally NOT exercised here — that
+ *    format is proprietary/undocumented and out of scope per the
+ *    header in include/nexus_v1_save.h.
  *
  * Real-data path (when a data dir is supplied)
  * ---------------------------------------------
@@ -81,6 +92,14 @@
  *   include/nexus_v1_dmdf_model.h          (DMDF magic 0x444D4446)
  *   include/nexus_v1_bpk_archive.h         (BPPK magic 0x4250504B)
  *   include/nexus_v1_saturn_font.h         (font dimensions / sizes)
+ *   include/nexus_v1_save.h                (FNXS magic 0x53584E46,
+ *                                           NEXUS_SAVE_VERSION=2,
+ *                                           save_full/load_full)
+ *   include/nexus_v1_world.h               (NEXUS_WORLD_SAVE_MAGIC
+ *                                           0x57584E46, party_x
+ *                                           round-trip field)
+ *   include/nexus_v1_champions.h           (champion_pool_serialize
+ *                                           size/serialize/deserialize)
  *   docs/NEXUS_FILE_CLASSIFICATION.md      (137 Track 1 asset list)
  *   docs/FIRESTAFF_GAP_LIST.md             (E1 Track 1 phase-launch row)
  *   docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md
@@ -110,6 +129,9 @@
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_saturn_font.h"
 #include "nexus_v1_iso_reader.h"
+#include "nexus_v1_save.h"
+#include "nexus_v1_world.h"
+#include "nexus_v1_champions.h"
 
 /* ── CHECK macro ───────────────────────────────────────────────────── */
 
