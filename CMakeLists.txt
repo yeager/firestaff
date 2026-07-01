@@ -2870,6 +2870,37 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 Hint Oracle graphical overlay SHAPE / LAYOUT gate.
+# Real-asset probe for the variant-aware panel + title + body
+# + cell-size + ASCII sketch surface. The probe classifies the
+# loaded cache, derives a shape for a sample of hints, asserts
+# the cell size matches the variant, and confirms the shape
+# fits a 320x200 framebuffer. Skip-safe: hosts without a known
+# HCSB.HTC exit 0 with a SKIP message.
+#
+# Source: dmweb Hint Oracle Files page (per-variant cell-size
+# split), ReDMCSB HINTHTC.C:177-358 (format contract), and
+# ReDMCSB HINTLZW.C:122-212 (page decode that produces the
+# text length the shape consumes).
+add_executable(firestaff_csb_v1_hint_oracle_graphical_overlay_shape_probe
+    probes/csb/firestaff_csb_v1_hint_oracle_graphical_overlay_shape_probe.c
+    src/csb/csb_hint_oracle_htc.c
+    src/csb/csb_hint_oracle_htc_real_scan.c
+    src/csb/csb_hint_oracle_htc_variant.c
+    src/csb/csb_hint_oracle_graphical_overlay_shape.c
+    src/csb/csb_hint_oracle_ui_runtime_binding.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_hint_oracle_graphical_overlay_shape_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_hint_oracle_graphical_overlay_shape_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_hint_oracle_graphical_overlay_shape_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Phase 2 — DSA Script Section Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: DSA section presence and scan feasibility after dungeon load;
@@ -15403,6 +15434,46 @@ if(BUILD_TESTING)
         COMMAND test_csb_hint_oracle_htc_variant
     )
 
+    # CSB Hint Oracle graphical overlay SHAPE / LAYOUT gate —
+    # data-free contract tests for the variant-aware panel
+    # rectangle + title row + body row + cell-size + ASCII
+    # sketch + framebuffer-fit verdict. The shape module
+    # consumes the variant catalog (narrow 8x8 cell for R1 EN
+    # / R2 EN / UNKNOWN; wide 8x16 cell for R3 EN / FR / GE)
+    # plus a caller-supplied hint name + decoded text length
+    # and produces a deterministic shape struct + sketch. No
+    # real asset is loaded; the matching skip-safe real-asset
+    # probe lives next to it.
+    #
+    # Source: dmweb Hint Oracle Files page (per-variant cell
+    # width/height split), ReDMCSB HINTHTC.C:177-358 (format
+    # contract the variant catalog wraps), ReDMCSB HINTLZW.C:
+    # 122-212 (page decode that produces the text length the
+    # shape consumes).
+    add_executable(test_csb_hint_oracle_graphical_overlay_shape
+        tests/test_csb_hint_oracle_graphical_overlay_shape.c
+        src/csb/csb_hint_oracle_graphical_overlay_shape.c
+        src/csb/csb_hint_oracle_htc.c
+        src/csb/csb_hint_oracle_htc_real_scan.c
+        src/csb/csb_hint_oracle_htc_variant.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_hint_oracle_graphical_overlay_shape PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_hint_oracle_graphical_overlay_shape PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_hint_oracle_graphical_overlay_shape_unit
+        COMMAND test_csb_hint_oracle_graphical_overlay_shape
+    )
+    set_tests_properties(csb_hint_oracle_graphical_overlay_shape_unit PROPERTIES
+        LABELS "tier2;csb;hint_oracle;graphical_overlay;data_free"
+    )
+
     # ── CSB V1 graphics hidden-item skip integration test ────────
     # Verifies the safe-load wrapper around the DM1 V1 graphics
     # loader honours the per-game hidden-code skip table for
@@ -16028,6 +16099,24 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_hint_oracle_htc_variant PROPERTIES
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 Hint Oracle graphical overlay SHAPE probe ctest entry
+    # Real-asset variant-aware shape gate: classify the loaded
+    # HCSB.HTC, derive a shape for a sample of hints, assert the
+    # cell size matches the variant (narrow 8x8 for R1 EN, wide
+    # 8x16 for R3 EN + FR + GE), and confirm the shape fits a
+    # 320x200 framebuffer. Skip-safe: hosts without a known
+    # HCSB.HTC exit 0 with a SKIP message.
+    if(TARGET firestaff_csb_v1_hint_oracle_graphical_overlay_shape_probe)
+        add_test(
+            NAME csb_v1_hint_oracle_graphical_overlay_shape
+            COMMAND firestaff_csb_v1_hint_oracle_graphical_overlay_shape_probe
+        )
+        set_tests_properties(csb_v1_hint_oracle_graphical_overlay_shape PROPERTIES
+            LABELS "tier2;csb;hint_oracle;graphical_overlay;real_data;skip_safe"
             TIMEOUT 120
         )
     endif()
