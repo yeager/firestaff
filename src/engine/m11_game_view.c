@@ -22061,6 +22061,18 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
         return 0;
     }
     map = &state->world.dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= (int)map->width ||
+        mapY < 0 || mapY >= (int)map->height) {
+        /* ReDMCSB MENU.C F0407 lines 1499-1505 leaves the FUSE action
+         * performed after calling F0225.  PC34 PROJEXPL.C F0225 lines
+         * 1074-1077 guards the Harm Non Material explosion and Chaos handling
+         * behind an in-bounds coordinate check, so a boundary-facing FUSE has
+         * no F0225 side effect but still reaches the common F0407 tail. */
+        m11_log_event(state, M11_COLOR_LIGHT_RED,
+                      "T%u: %s FUSES BEYOND THE WALL",
+                      (unsigned int)state->world.gameTick, champName);
+        return 1;
+    }
     (void)m11_spawn_centered_explosion(state, C003_EXPLOSION_HARM_NON_MATERIAL, 255,
                                        mapIndex, mapX, mapY);
     creatureType = m11_creature_type_on_square(state, mapIndex, mapX, mapY);
