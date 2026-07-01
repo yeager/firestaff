@@ -1629,6 +1629,50 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW stores C01 action-hand slot ordinal on the enable-action event");
 }
 
+static void test_throw_uses_post_f0304_throw_level_for_projectile(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
+    unsigned short thrownThing;
+
+    seed_state(&state, 100, 70);
+    memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+    junks[0].next = THING_ENDOFLIST;
+    junks[0].type = 0; /* ReDMCSB C00_JUNK_COMPASS, weight 1. */
+    things.loaded = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime =
+        state.world.gameTick + 1;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    state.world.lifecycle.champions[0]
+        .skills20[LIFECYCLE_SKILL_NINJA].experience = 491;
+    state.world.lifecycle.champions[0]
+        .skills20[LIFECYCLE_SKILL_THROW].experience = 491;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    thrownThing = make_thing(THING_TYPE_JUNK, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        thrownThing;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_THROW),
+              1,
+              "THROW level-up fixture creates a projectile");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "THROW level-up fixture has one live projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 9,
+              "F0328 uses post-F0304 F0303(THROW) level for same-throw step energy");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[LIFECYCLE_SKILL_THROW].experience >= 500,
+              1,
+              "F0328 Throw XP crosses the first hidden-skill threshold");
+}
+
 static void test_direct_throw_empty_action_hand_keeps_f0407_tail(void) {
     M11_GameViewState state;
     DM1_ActionXpRoute route;
@@ -6781,6 +6825,7 @@ int main(void) {
     test_block_action_spends_source_stamina();
     test_flip_action_prints_source_message_and_keeps_common_tail();
     test_throw_action_removes_action_hand_object();
+    test_throw_uses_post_f0304_throw_level_for_projectile();
     test_direct_throw_empty_action_hand_keeps_f0407_tail();
     test_throw_ven_potion_launches_removepotion_projectile();
     test_throw_ven_potion_advances_to_wall_impact_and_consumes();
