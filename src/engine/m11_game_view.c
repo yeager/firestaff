@@ -21193,7 +21193,6 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
         objectWeight);
     throwExperience = m11_dm1_f0328_throw_xp_for_thing(
         state, thrownThing, hasWeaponInfo ? &weaponInfo : 0);
-    skillThrow = m11_dm1_throw_skill_level(state, championIndex);
     throwStrength = m11_dm1_f0312_action_hand_strength_for_throw(
         state, championIndex, champ,
         hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo,
@@ -21202,6 +21201,11 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
      * request M563 combat sound, apply F0305 stamina and F0304 Throw
      * XP, then feed F0312 strength, F0303(THROW), object kinetic and
      * bounded attack/step energy to F0212_PROJECTILE_Create. */
+    m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
+    (void)m11_apply_champion_stamina_cost_f0325(state, championIndex,
+                                                staminaCost);
+    m11_dm1_award_throw_xp(state, championIndex, throwExperience);
+    skillThrow = m11_dm1_throw_skill_level(state, championIndex);
     throwKineticEnergy = m11_dm1_f0328_throw_kinetic_energy(
         state, throwStrength, skillThrow,
         hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo);
@@ -21223,10 +21227,6 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
         potionPower);
     if (!spawned) return 0;
 
-    m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
-    (void)m11_apply_champion_stamina_cost_f0325(state, championIndex,
-                                                staminaCost);
-    m11_dm1_award_throw_xp(state, championIndex, throwExperience);
     state->world.projectileDisabledMovementTicks = 4;
     state->world.lastProjectileDisabledMovementDirection =
         state->world.party.direction;
