@@ -79,6 +79,12 @@ const uint32_t* csb_v22_inplace_get_cell_bitmap(int depth, int lateral,
  * a follow-up. */
 const char* csb_v22_inplace_get_cell_asset_id(int depth, int lateral);
 
+/* Direct manifest category + asset_id lookup against the loaded RGBA cache.
+ * Returns NULL if the in-place cache is inactive or the tuple is unknown. */
+const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,
+                                                  const char* asset_id,
+                                                  int* out_w, int* out_h);
+
 /* csb_v22_inplace_render_pass — paints the cached V22 bitmaps into
  * the framebuffer at the CSB 3x3 cell rectangles (D0/D1/D2 × L/C/R).
  * For each V22-active cell with a
