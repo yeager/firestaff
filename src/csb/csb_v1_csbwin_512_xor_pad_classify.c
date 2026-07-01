@@ -192,7 +192,7 @@ static int try_key(const uint8_t *bytes, int key_index,
     uint16_t d5;
     size_t p2_off;
 
-    if (key_index < 0 || key_index > 0xFFFFu) {
+    if (key_index < 0 || key_index > 65535) {
         return 0;
     }
     /* CSBWin reads the initial hash from word[P2] of the *raw*
