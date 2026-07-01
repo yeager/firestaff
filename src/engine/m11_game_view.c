@@ -3218,6 +3218,14 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
     }
 }
 
+static int m11_runtime_fluxcage_visible_in_viewport(
+    const M11_GameViewState* state,
+    const struct ExplosionInstance_Compat* explosion) {
+    if (!explosion) return 0;
+    if (explosion->explosionType != C050_EXPLOSION_FLUXCAGE) return 1;
+    return (!state || !state->endgameDoNotDrawFluxcages) ? 1 : 0;
+}
+
 /* Pass 42: V1-chrome-mode reroute.  In the original DM1 PC 3.4
  * presentation, short status strings are surfaced via the TEXT.C
  * message log, not via a dedicated "status lozenge" or "inspect
@@ -12335,6 +12343,27 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                                 mapX,
                                 mapY,
                                 &cell.summary);
+    if (state->endgameDoNotDrawFluxcages && cell.summary.explosions > 0) {
+        int hiddenFluxcages = 0;
+        int ei;
+        for (ei = 0; ei < state->world.explosions.count &&
+                    ei < EXPLOSION_LIST_CAPACITY; ++ei) {
+            const struct ExplosionInstance_Compat* re =
+                &state->world.explosions.entries[ei];
+            if (re->slotIndex < 0) continue;
+            if (re->mapIndex != state->world.party.mapIndex) continue;
+            if (re->mapX != mapX || re->mapY != mapY) continue;
+            if (!m11_runtime_fluxcage_visible_in_viewport(state, re)) {
+                ++hiddenFluxcages;
+            }
+        }
+        if (hiddenFluxcages > 0) {
+            cell.summary.explosions -= hiddenFluxcages;
+            cell.summary.total -= hiddenFluxcages;
+            if (cell.summary.explosions < 0) cell.summary.explosions = 0;
+            if (cell.summary.total < 0) cell.summary.total = 0;
+        }
+    }
 
     if (cell.elementType == DUNGEON_ELEMENT_DOOR) {
         cell.doorState = square & 0x07;
@@ -12844,6 +12873,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             const struct ExplosionInstance_Compat* re =
                 &state->world.explosions.entries[ei];
             if (re->slotIndex < 0) continue;
+            if (!m11_runtime_fluxcage_visible_in_viewport(state, re)) continue;
             if (re->mapIndex != state->world.party.mapIndex) continue;
             if (re->mapX != mapX || re->mapY != mapY) continue;
             cell.firstExplosionType      = re->explosionType;
@@ -22208,6 +22238,11 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
     state->world.magic.fireShieldDefense = 100;
     state->world.magic.spellShieldDefense = 100;
     state->world.magic.partyShieldDefense = 100;
+    /* ReDMCSB: ENDGAME.C F0446 lines 912-914 sets
+     * G0077_B_DoNotDrawFluxcagesDuringEndgame before continuing the
+     * endgame cleanup.  Keep the live C50 entries for timing/accounting,
+     * but suppress them from M11 viewport sampling from this point on. */
+    state->endgameDoNotDrawFluxcages = 1;
     m11_mark_game_won_from_fuse_f0446(state);
     m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                   "T%u: %s FUSES CHAOS AND ORDER",
@@ -32183,6 +32218,10 @@ int M11_GameView_IsGameWon(const M11_GameViewState* state) {
 
 uint32_t M11_GameView_GetGameWonTick(const M11_GameViewState* state) {
     return state ? state->gameWonTick : 0;
+}
+
+int M11_GameView_GetEndgameDoNotDrawFluxcages(const M11_GameViewState* state) {
+    return state ? state->endgameDoNotDrawFluxcages : 0;
 }
 
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state) {

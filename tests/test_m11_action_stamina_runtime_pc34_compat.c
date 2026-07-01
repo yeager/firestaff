@@ -6423,6 +6423,13 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     int harmAttackSeen[6] = {0, 0, 0, 0, 0, 0};
     int fireballBurstCount = 0;
     int harmBurstCount = 0;
+    int artifactMapX = -1;
+    int artifactMapY = -1;
+    int artifactElement = -1;
+    int artifactProjectiles = -1;
+    int artifactExplosions = -1;
+    int artifactProjectileGfx = -1;
+    int artifactExplosionType = -1;
     int i;
 
     seed_state(&state, 100, 41);
@@ -6503,6 +6510,22 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     state.world.explosions.entries[4].mapX = 2;
     state.world.explosions.entries[4].mapY = 1;
 
+    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
+                  &state, 1, -1, &artifactMapX, &artifactMapY,
+                  &artifactElement, &artifactProjectiles,
+                  &artifactExplosions, &artifactProjectileGfx,
+                  &artifactExplosionType),
+              1,
+              "FUSE complete fixture can sample the left-front fluxcage square");
+    ASSERT_EQ(artifactMapX, 1,
+              "FUSE complete fixture left-front sample uses fluxcage x");
+    ASSERT_EQ(artifactMapY, 1,
+              "FUSE complete fixture left-front sample uses fluxcage y");
+    ASSERT_EQ(artifactExplosions, 1,
+              "FUSE complete fixture sees the live fluxcage before endgame hide gate");
+    ASSERT_EQ(artifactExplosionType, C050_EXPLOSION_FLUXCAGE,
+              "FUSE complete fixture exposes the fluxcage type before F0446 hide gate");
+
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_FUSE),
               1,
@@ -6529,6 +6552,26 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete applies F0446 spell shield defense");
     ASSERT_EQ(state.world.magic.partyShieldDefense, 100,
               "FUSE complete applies F0446 party shield defense");
+    ASSERT_EQ(M11_GameView_GetEndgameDoNotDrawFluxcages(&state), 1,
+              "FUSE complete sets F0446 do-not-draw-fluxcages gate");
+    artifactMapX = artifactMapY = artifactElement = -1;
+    artifactProjectiles = artifactExplosions = -1;
+    artifactProjectileGfx = artifactExplosionType = -1;
+    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
+                  &state, 1, -1, &artifactMapX, &artifactMapY,
+                  &artifactElement, &artifactProjectiles,
+                  &artifactExplosions, &artifactProjectileGfx,
+                  &artifactExplosionType),
+              1,
+              "FUSE complete samples the left-front square after F0446 hide gate");
+    ASSERT_EQ(artifactMapX, 1,
+              "FUSE complete post-hide sample keeps fluxcage square x");
+    ASSERT_EQ(artifactMapY, 1,
+              "FUSE complete post-hide sample keeps fluxcage square y");
+    ASSERT_EQ(artifactExplosions, 0,
+              "FUSE complete hides surviving fluxcages from viewport sampling");
+    ASSERT_EQ(artifactExplosionType, -1,
+              "FUSE complete hides surviving fluxcage explosion type from viewport sampling");
     ASSERT_EQ(F0871_RUNTIME_CountFluxcagesOnSquare_Compat(
                   &state.world.explosions, 0, 2, 2, &partyFluxcageCount),
               1,
