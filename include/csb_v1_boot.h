@@ -58,6 +58,50 @@ int csb_v1_boot_probe_available(const char *data_dir);
 void csb_v1_boot_set_save_root(CSB_V1_BootProfile *profile, const char *save_dir);
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party);
+
+/* ── Launch→runtime assumption gate ─────────────────────────────────────
+ *
+ * csb_v1_boot_assume_no_dm1_runtime() rejects boot profiles that look
+ * like they were constructed from DM1 defaults.  It is the explicit
+ * launch-to-runtime boundary gate: every CSB handoff must clear these
+ * assertions before csb_v1_boot_enter_game() rebuilds the runtime.
+ *
+ * What it rejects (return -1):
+ *   - profile->game_id != "csb"                  (defensive: defends against
+ *                                                 misrouted DM1/DM2 profiles)
+ *   - profile->variant_id outside CSB_V1_VARIANT_* range
+ *                                               (catches raw enum leakage)
+ *   - profile->default_party_x/y == DM1 HoC     (catches (11,29) leakage)
+ *   - profile->tick_ms != CSB_V1_TICK_MS_NOMINAL (catches non-CSB tick quantum)
+ *   - profile->entrance_map_index != 255U       (C255_MAP_INDEX_ENTRANCE only)
+ *   - profile->start_map_index != 0U            (LOADSAVE.C F0435 new-game map)
+ *
+ * What it does NOT reject (returns 0):
+ *   - graphics_path/dungeon_path fields       (verified in csb_v1_boot_enter_game)
+ *   - assets_verified bit                    (verified in csb_v1_boot_enter_game)
+ *   - DM1 dungeon hash on the wire           (verified in csb_v1_boot_scan_assets)
+ *
+ * The scan + enter_game path calls this gate automatically so callers
+ * don't have to thread it manually.  The probe + tests call it directly
+ * to surface which assertion a DM1-shape profile trips.
+ *
+ * Returns 0 if the profile is a clean CSB shape, -1 otherwise.  The
+ * failure reason is reported through csb_v1_boot_last_assumption_reason()
+ * so a regression can pinpoint which CSB-only invariant leaked.
+ *
+ * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441 (CSB entrance/C28_ENTRANCE_CSB)
+ * Source: ReDMCSB LOADSAVE.C F0435 lines 1940-1944 (new-game map 0)
+ * Source: ReDMCSB BASE.C line 36-39 (G0298_B_NewGame mode storage)
+ * Source: csb_v1_runtime_pc34_compat.h CSB_V1_TICK_MS_NOMINAL (55ms) */
+int csb_v1_boot_assume_no_dm1_runtime(const CSB_V1_BootProfile *profile);
+
+/* Returns a short human-readable reason string for the last failed
+ * csb_v1_boot_assume_no_dm1_runtime() call.  The pointer is owned by
+ * the boot module and remains valid for the lifetime of the process
+ * (it is overwritten by every call).  Useful for diagnostics and CI
+ * logs that need to attribute the failure to a specific CSB invariant. */
+const char *csb_v1_boot_last_assumption_reason(void);
+
 int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile);
 void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile);
 size_t csb_v1_boot_diagnostic_report(const CSB_V1_BootProfile *profile,

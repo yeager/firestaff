@@ -37,6 +37,102 @@ static const char *const g_csb_boot_dungeon_hashes[] = {
     NULL
 };
 
+/* ── DM1-assumption rejection strings ────────────────────────────────────
+ *
+ * Each csb_v1_boot_assume_no_dm1_runtime() failure has a stable reason
+ * string.  The probe and any future diagnostics depend on these exact
+ * phrases, so do not rename them without updating
+ * probes/firestaff_csb_v1_no_dm1_runtime_assumption_gate_probe.c.
+ *
+ *   "csb_boot/assume_no_dm1_runtime: game_id is not 'csb'"
+ *       Rejects profiles routed from DM1/DM2 launchers.
+ *   "csb_boot/assume_no_dm1_runtime: variant_id outside CSB range"
+ *       Catches raw enum values that escape the CSB_V1_VARIANT_* enum.
+ *   "csb_boot/assume_no_dm1_runtime: party default matches DM1 HoC (11,29)"
+ *       Catches (11,29) DM1 Hall of Champions defaults leaking into CSB.
+ *   "csb_boot/assume_no_dm1_runtime: tick_ms is not CSB nominal (55)"
+ *       Catches non-CSB tick quantum (DM1 is also 55; this makes CSB origin explicit).
+ *   "csb_boot/assume_no_dm1_runtime: entrance_map_index != 255"
+ *       ReDMCSB ENTRANCE.C F0806 selects C255_MAP_INDEX_ENTRANCE for CSB.
+ *   "csb_boot/assume_no_dm1_runtime: start_map_index != 0"
+ *       ReDMCSB LOADSAVE.C F0435 line 1940-1944 sets map 0 for new games. */
+static const char *g_csb_assume_last_reason = "csb_boot/assume_no_dm1_runtime: ok";
+
+const char *csb_v1_boot_last_assumption_reason(void)
+{
+    return g_csb_assume_last_reason;
+}
+
+static void csb_v1_boot_assume_fail(const char *reason)
+{
+    g_csb_assume_last_reason = reason ? reason : "csb_boot/assume_no_dm1_runtime: (null)";
+}
+
+int csb_v1_boot_assume_no_dm1_runtime(const CSB_V1_BootProfile *profile)
+{
+    if (!profile) {
+        csb_v1_boot_assume_fail(
+            "csb_boot/assume_no_dm1_runtime: NULL profile");
+        return -1;
+    }
+    /* game_id must be the CSB literal.  ReDMCSB ENTRANCE.C F0806 selects
+     * C28_ENTRANCE_CSB and the loader branches on game_id; a DM1 or DM2
+     * profile routed here would otherwise inherit the CSB runtime
+     * structure but keep DM1 start defaults. */
+    if (strcmp(profile->game_id, CSB_V1_BOOT_GAME_ID) != 0) {
+        csb_v1_boot_assume_fail(
+            "csb_boot/assume_no_dm1_runtime: game_id is not 'csb'");
+        return -1;
+    }
+    /* variant_id must stay inside the CSB enum.  A raw integer from a
+     * DM1 or DM2 catalog that happens to land in this range would
+     * otherwise resolve to a CSB variant silently.  We use a strict
+     * inclusive check: variant_id >= 0 && variant_id < CSB_V1_VARIANT_COUNT. */
+    if (profile->variant_id < 0 ||
+        (unsigned)profile->variant_id >= (unsigned)CSB_V1_VARIANT_COUNT) {
+        csb_v1_boot_assume_fail(
+            "csb_boot/assume_no_dm1_runtime: variant_id outside CSB range");
+        return -1;
+    }
+    /* DM1 Hall of Champions default is (11,29) facing North.  CSB's
+     * Hall of Champions is (5,5) facing North.  These are disjoint
+     * source-locked defaults — a profile carrying (11,29) almost
+     * certainly came from a DM1 launcher side-effect.
+     * Source: ReDMCSB ENTRANCE.C (DM1) line ~430 vs (CSB) line ~430
+     * Source: csb_v1_runtime_pc34_compat.h CSB_V1_START_PARTY_{X,Y} */
+    if (profile->default_party_x == 11U &&
+        profile->default_party_y == 29U) {
+        csb_v1_boot_assume_fail(
+            "csb_boot/assume_no_dm1_runtime: party default matches DM1 HoC (11,29)");
+        return -1;
+    }
+    /* CSB V1 tick is 55ms nominal (shared with DM1, but the assertion
+     * makes CSB origin explicit; the runtime must use CSB_V1_TICK_MS_NOMINAL
+     * exactly, not a DM2 or Nexus tick quantum). */
+    if (profile->tick_ms != CSB_V1_TICK_MS_NOMINAL) {
+        csb_v1_boot_assume_fail(
+            "csb_boot/assume_no_dm1_runtime: tick_ms is not CSB nominal (55)");
+        return -1;
+    }
+    /* entrance_map_index is 255 (C255_MAP_INDEX_ENTRANCE) for CSB.
+     * Rejecting any other value catches DM1 maps 0..14 or future variants
+     * that escape the source-locked entrance selection. */
+    if (profile->entrance_map_index != 255U) {
+        csb_v1_boot_assume_fail(
+            "csb_boot/assume_no_dm1_runtime: entrance_map_index != 255");
+        return -1;
+    }
+    /* start_map_index is 0 for new games.  Anything else implies DM1-style
+     * dungeon-of-doom selection or a corrupted scan. */
+    if (profile->start_map_index != 0U) {
+        csb_v1_boot_assume_fail(
+            "csb_boot/assume_no_dm1_runtime: start_map_index != 0");
+        return -1;
+    }
+    csb_v1_boot_assume_fail("csb_boot/assume_no_dm1_runtime: ok");
+    return 0;
+}
+
 static void csb_v1_boot_copy(char *dst, size_t dst_size, const char *src)
 {
     if (!dst || dst_size == 0U) return;
@@ -227,6 +323,17 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
         !profile->dungeon_verified ||
         profile->graphics_path[0] == '\0' ||
         profile->dungeon_path[0] == '\0') {
+        return -1;
+    }
+    /* Explicit launch-to-runtime assumption gate.  This is the source-locked
+     * boundary that catches DM1-shape defaults leaking into the CSB profile
+     * (e.g. (11,29) HoC start, raw DM1 variant ordinal, non-CSB tick quantum).
+     * The reason string is exposed via csb_v1_boot_last_assumption_reason()
+     * so a misrouted profile can be attributed to a specific CSB invariant.
+     * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441
+     * Source: ReDMCSB LOADSAVE.C F0435 lines 1940-1944
+     * Source: csb_v1_runtime_pc34_compat.h CSB_V1_TICK_MS_NOMINAL */
+    if (csb_v1_boot_assume_no_dm1_runtime(profile) != 0) {
         return -1;
     }
     /* Re-entering the CSB profile replaces the live dungeon context just as
