@@ -21354,10 +21354,18 @@ static int m11_spawn_action_projectile_ex(M11_GameViewState* state,
     input.launcherStrength   = launcherStrength;
     input.stepEnergy         = stepEnergy > 0 ? stepEnergy : 1;
     input.currentTick        = (int)state->world.gameTick;
-    input.poisonAttack       = (subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
-                                subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
-                               ? (potionPower > 0 ? potionPower : impactAttack)
-                               : 0;
+    if (subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
+        subtype == PROJECTILE_SUBTYPE_POISON_CLOUD) {
+        if (carriedThing != THING_NONE &&
+            carriedThing != THING_ENDOFLIST &&
+            THING_GET_TYPE(carriedThing) == THING_TYPE_POTION) {
+            input.poisonAttack = potionPower;
+        } else {
+            input.poisonAttack = impactAttack;
+        }
+    } else {
+        input.poisonAttack = 0;
+    }
     input.attackTypeCode     = attackTypeCode;
     input.potionPower        = potionPower;
     input.associatedThing    = (carriedThing != THING_NONE &&
