@@ -25,6 +25,7 @@
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
+#include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0494_pc34_compat.h"
 
 #include <stdio.h>
@@ -80,20 +81,39 @@ static unsigned short object_next_for_test(
 }
 
 static int is_melee_action_index(unsigned char actionIndex) {
-    switch (actionIndex) {
-        case 2:  case 6:  case 7:  case 9:  case 12:
-        case 13: case 14: case 15: case 16: case 18:
-        case 19: case 24: case 25: case 28: case 29:
-        case 30: case 31:
-            return 1;
-        default:
-            return 0;
-    }
+    int damageFactor;
+    if (actionIndex == DM1_ACTION_BLOCK) return 0;
+    damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
+        (int)actionIndex);
+    return damageFactor > 0;
 }
 
 static unsigned char action_disabled_ticks_for_test(unsigned char actionIndex) {
     int ticks = dm1_v1_graphic560_action_disabled_ticks_get_pc34(actionIndex);
     return ticks < 0 ? 0u : (unsigned char)ticks;
+}
+
+static void test_melee_contact_gate_reads_g0492_with_block_exception(void) {
+    ASSERT_EQ(dm1_v1_graphic560_action_damage_factor_get_pc34(DM1_ACTION_BLOCK),
+              15,
+              "source G0492 gives BLOCK a damage factor");
+    ASSERT_EQ(is_melee_action_index(DM1_ACTION_BLOCK), 0,
+              "BLOCK is excluded from F0402 melee-contact routing");
+    ASSERT_EQ(dm1_v1_graphic560_action_damage_factor_get_pc34(DM1_ACTION_PARRY),
+              8,
+              "source G0492 gives PARRY a damage factor");
+    ASSERT_EQ(is_melee_action_index(DM1_ACTION_PARRY), 1,
+              "PARRY remains in the F0402 melee-contact routing");
+    ASSERT_EQ(dm1_v1_graphic560_action_damage_factor_get_pc34(DM1_ACTION_DISRUPT),
+              55,
+              "source G0492 gives DISRUPT a damage factor");
+    ASSERT_EQ(is_melee_action_index(DM1_ACTION_DISRUPT), 1,
+              "DISRUPT remains in the F0402 melee-contact routing");
+    ASSERT_EQ(dm1_v1_graphic560_action_damage_factor_get_pc34(DM1_ACTION_SHOOT),
+              0,
+              "source G0492 keeps SHOOT outside melee-contact routing");
+    ASSERT_EQ(is_melee_action_index(DM1_ACTION_SHOOT), 0,
+              "SHOOT remains a bounded non-melee F0407 action");
 }
 
 static void seed_state(M11_GameViewState* state,
@@ -5669,6 +5689,7 @@ int main(void) {
     printf("=== M11 Action Stamina Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: MENU.C G0494/F0407 and CHAMPION.C F0325\n\n");
 
+    test_melee_contact_gate_reads_g0492_with_block_exception();
     test_block_action_spends_source_stamina();
     test_throw_action_removes_action_hand_object();
     test_throw_ven_potion_launches_removepotion_projectile();
