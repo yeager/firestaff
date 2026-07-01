@@ -199,20 +199,20 @@ static void test_closed_door_bash_chain_six_actions(void)
         expect_bool("closed.magic_diverge",
                     out.magic_attack_disabled_ticks_diverge, true,
                     "Non-magic path → no divergence");
-        expect_bool("closed.destruction_delay_aligned",
-                    out.destruction_delay_aligned, true,
+        expect_bool("closed.destruction_delay_aligned_on_destroy",
+                    out.destruction_delay_aligned_on_destroy, true,
                     "MENU.C:1317 + PROJEXPL.C:1554-1600 both halves report 2");
         expect_bool("closed.bash_strength_arg_in_cap",
                     out.bash_strength_arg_in_cap, true,
                     "CHAMPION.C:1302 F0026 clip ≤ 100");
-        expect_bool("closed.melee_capped_flags_aligned",
-                    out.melee_capped_flags_aligned, true,
-                    "Both halves report same melee_capped_to_100 flag");
+        expect_bool("closed.melee_capped_flag_known_divergence",
+                    out.melee_capped_flag_known_divergence, true,
+                    "No cap divergence when the stamina cap is not reached");
         expect_bool("closed.bash_stamina_fired",
                     out.bash_stamina_fired_when_closed_bash, true,
                     "MENU.C:1272 + CHAMPION.C:2025 F0325 fires");
-        expect_bool("closed.bash_feedback_outcome_for_melee",
-                    out.bash_feedback_outcome_for_melee, true,
+        expect_bool("closed.bash_feedback_outcome_for_melee_closed",
+                    out.bash_feedback_outcome_for_melee_closed, true,
                     "PROJEXPL.C:1584-1600 melee outcome bucket");
         expect_bool("closed.bash_feedback_outcome_for_not_door",
                     out.bash_feedback_outcome_for_not_door, true,
@@ -292,12 +292,13 @@ static void test_closed_door_wooden_bounce_chain(void)
     expect_u8("bounce.destruction_delay_zero",
               out.feedback.destruction_delay_ticks, 0,
               "PROJEXPL.C:1583-1599 no destruction event on bounce");
-    expect_u8("bounce.stamina_destruction_delay_zero",
-              out.stamina.destruction_delay_ticks, 0,
-              "Stamina half mirrors destruction_delay = 0");
-    expect_bool("bounce.destruction_delay_aligned",
-                out.destruction_delay_aligned, true,
-                "Both halves agree destruction_delay == 0 on bounce");
+    expect_u8("bounce.stamina_destruction_delay",
+              out.stamina.destruction_delay_ticks,
+              DM1_V1_DOOR_BASH_STAMINA_FEEDBACK_CHAIN_DESTRUCTION_DELAY_TICKS_PC34,
+              "Stamina half reports the bash destruction delay for any bash action");
+    expect_bool("bounce.destruction_delay_bounce_divergence",
+                out.destruction_delay_bounce_divergence, true,
+                "Feedback has no destruction event while stamina reports delay 2");
     /* Stamina decrement still applies (cost 9). */
     expect_i16("bounce.stamina_after",
                out.stamina.current_stamina_after,
@@ -348,15 +349,15 @@ static void test_closed_door_iron_reject_chain(void)
                out.stamina.current_stamina_after,
                (int16_t)(50 - 9),
                "CHAMPION.C:2025 F0325 fires on iron reject");
-    expect_bool("iron.melee_capped_to_100",
-                out.feedback.melee_capped_to_100, true,
-                "DUNGEON.C:561 melee cap 100 reached");
+    expect_bool("iron.feedback_melee_capped_after_chain",
+                out.feedback.melee_capped_to_100, false,
+                "Feedback receives the already-capped F0026 strength");
     expect_bool("iron.stamina_melee_capped",
                 out.stamina.bash_strength_was_capped_to_100, true,
                 "CHAMPION.C:1302 F0026 clip at 100");
-    expect_bool("iron.melee_capped_flags_aligned",
-                out.melee_capped_flags_aligned, true,
-                "Both halves report same melee_capped_to_100 flag");
+    expect_bool("iron.melee_capped_flag_known_divergence",
+                out.melee_capped_flag_known_divergence, true,
+                "Stamina records the cap while feedback sees the capped value");
     expect_i16("iron.bash_arg_in_cap",
                out.stamina.bash_strength_arg_to_f0232,
                DM1_V1_DOOR_MELEE_ATTACK_CAP_PC34,
@@ -400,8 +401,8 @@ static void test_closed_door_portcullis_bounce_chain(void)
                 out.stamina.bash_strength_was_capped_to_100, false,
                 "CHAMPION.C:1302 F0026 clip not reached");
     expect_bool("port.bounce.melee_capped_aligned",
-                out.melee_capped_flags_aligned, true,
-                "Both halves report same melee_capped_to_100 flag");
+                out.melee_capped_flag_known_divergence, true,
+                "No cap divergence when the stamina cap is not reached");
 }
 
 /*
@@ -447,14 +448,17 @@ static void test_open_door_no_closed_branch_chain(void)
                out.stamina.current_stamina_after,
                (int16_t)(50 - 9),
                "CHAMPION.C:2025 F0325 fires regardless of closed state");
-    expect_u8("open.stamina_disabled_ticks_zero",
-              out.stamina.action_disabled_ticks, 0,
-              "MENU.C:1620-1622 F0330 disabled_ticks = 0 when not closed");
-    /* Stamina destruction_delay = 0 (mirrors feedback). */
-    expect_u8("open.destruction_delay_aligned",
+    expect_u8("open.stamina_disabled_ticks",
+              out.stamina.action_disabled_ticks,
+              DM1_V1_DOOR_BASH_STAMINA_FEEDBACK_CHAIN_DISABLED_TICKS_PC34,
+              "MENU.C:1620-1622 F0330 disabled_ticks = 6 for bash actions");
+    expect_bool("open.disabled_ticks_diverge",
+                out.open_door_disabled_ticks_diverge, true,
+                "Open door keeps feedback disabled_ticks=0 while stamina reports 6");
+    expect_u8("open.stamina_destruction_delay",
               out.stamina.destruction_delay_ticks,
-              out.feedback.destruction_delay_ticks,
-              "Stamina destruction_delay mirrors feedback destruction_delay");
+              DM1_V1_DOOR_BASH_STAMINA_FEEDBACK_CHAIN_DESTRUCTION_DELAY_TICKS_PC34,
+              "Stamina reports bash destruction delay even when feedback has no event");
     expect_bool("open.not_closed_outcome",
                 out.bash_feedback_outcome_for_not_closed, true,
                 "Not-closed → NOT_CLOSED bucket");
@@ -543,10 +547,10 @@ static void test_non_bash_action_chain(void)
                "MENU.C:1311-1316 non-bash → NOT_BASH bucket");
     expect_int("nonbash.feedback_outcome",
                (int)out.feedback.outcome,
-               (int)DM1_V1_DOOR_BASH_OUTCOME_NO_DOOR_PC34,
-               "Bash feedback reports NO_DOOR for non-bash action");
+               (int)DM1_V1_DOOR_BASH_OUTCOME_WOODEN_BOUNCE_PC34,
+               "Bash feedback still evaluates the door target; chain maps action to NOT_BASH");
     expect_bool("nonbash.short_circuits",
-                out.non_bash_short_circuits, true,
+                out.bash_stamina_skips_for_non_bash, true,
                 "MENU.C:1311-1316 short-circuit invariant");
     /* Stamina's `action_stamina_table_cost` is 0 because the bash family
      * table does not include C020 FIREBALL. */
@@ -637,8 +641,8 @@ static void test_f0306_strength_collapse_chain(void)
                18,
                "CHAMPION.C:1302 F0026 clip 0..100");
     expect_bool("collapse.feedback_capped_aligned",
-                out.melee_capped_flags_aligned, true,
-                "Both halves report same melee_capped_to_100 flag");
+                out.melee_capped_flag_known_divergence, true,
+                "No cap divergence when the stamina cap is not reached");
     /* 18 < wooden defense 42 → WOODEN_BOUNCE bucket. */
     expect_int("collapse.outcome",
                (int)out.outcome,
@@ -780,15 +784,15 @@ static void test_deterministic_hash_stable(void)
                     hash1 = fnv1a_u8(hash1, out.action_ordinal_match ? 1u : 0u);
                     hash1 = fnv1a_u8(hash1, out.closed_door_bash_disabled_ticks_aligned ? 1u : 0u);
                     hash1 = fnv1a_u8(hash1, out.magic_attack_disabled_ticks_diverge ? 1u : 0u);
-                    hash1 = fnv1a_u8(hash1, out.destruction_delay_aligned ? 1u : 0u);
+                    hash1 = fnv1a_u8(hash1, out.destruction_delay_aligned_on_destroy ? 1u : 0u);
                     hash1 = fnv1a_u8(hash1, out.bash_strength_arg_in_cap ? 1u : 0u);
-                    hash1 = fnv1a_u8(hash1, out.melee_capped_flags_aligned ? 1u : 0u);
+                    hash1 = fnv1a_u8(hash1, out.melee_capped_flag_known_divergence ? 1u : 0u);
                     hash1 = fnv1a_u8(hash1, out.bash_stamina_fired_when_closed_bash ? 1u : 0u);
-                    hash1 = fnv1a_u8(hash1, out.bash_feedback_outcome_for_melee ? 1u : 0u);
-                    hash1 = fnv1a_u8(hash1, out.bash_feedback_outcome_for_magic ? 1u : 0u);
+                    hash1 = fnv1a_u8(hash1, out.bash_feedback_outcome_for_melee_closed ? 1u : 0u);
+                    hash1 = fnv1a_u8(hash1, out.bash_feedback_outcome_for_magic_closed ? 1u : 0u);
                     hash1 = fnv1a_u8(hash1, out.bash_feedback_outcome_for_not_door ? 1u : 0u);
                     hash1 = fnv1a_u8(hash1, out.bash_feedback_outcome_for_not_closed ? 1u : 0u);
-                    hash1 = fnv1a_u8(hash1, out.non_bash_short_circuits ? 1u : 0u);
+                    hash1 = fnv1a_u8(hash1, out.bash_stamina_skips_for_non_bash ? 1u : 0u);
                     hash1 = fnv1a_u8(hash1, (uint8_t)out.outcome);
                     hash1 = fnv1a_u8(hash1, out.feedback.disabled_ticks);
                     hash1 = fnv1a_u8(hash1, out.feedback.destruction_delay_ticks);
@@ -823,15 +827,15 @@ static void test_deterministic_hash_stable(void)
                     hash2 = fnv1a_u8(hash2, out.action_ordinal_match ? 1u : 0u);
                     hash2 = fnv1a_u8(hash2, out.closed_door_bash_disabled_ticks_aligned ? 1u : 0u);
                     hash2 = fnv1a_u8(hash2, out.magic_attack_disabled_ticks_diverge ? 1u : 0u);
-                    hash2 = fnv1a_u8(hash2, out.destruction_delay_aligned ? 1u : 0u);
+                    hash2 = fnv1a_u8(hash2, out.destruction_delay_aligned_on_destroy ? 1u : 0u);
                     hash2 = fnv1a_u8(hash2, out.bash_strength_arg_in_cap ? 1u : 0u);
-                    hash2 = fnv1a_u8(hash2, out.melee_capped_flags_aligned ? 1u : 0u);
+                    hash2 = fnv1a_u8(hash2, out.melee_capped_flag_known_divergence ? 1u : 0u);
                     hash2 = fnv1a_u8(hash2, out.bash_stamina_fired_when_closed_bash ? 1u : 0u);
-                    hash2 = fnv1a_u8(hash2, out.bash_feedback_outcome_for_melee ? 1u : 0u);
-                    hash2 = fnv1a_u8(hash2, out.bash_feedback_outcome_for_magic ? 1u : 0u);
+                    hash2 = fnv1a_u8(hash2, out.bash_feedback_outcome_for_melee_closed ? 1u : 0u);
+                    hash2 = fnv1a_u8(hash2, out.bash_feedback_outcome_for_magic_closed ? 1u : 0u);
                     hash2 = fnv1a_u8(hash2, out.bash_feedback_outcome_for_not_door ? 1u : 0u);
                     hash2 = fnv1a_u8(hash2, out.bash_feedback_outcome_for_not_closed ? 1u : 0u);
-                    hash2 = fnv1a_u8(hash2, out.non_bash_short_circuits ? 1u : 0u);
+                    hash2 = fnv1a_u8(hash2, out.bash_stamina_skips_for_non_bash ? 1u : 0u);
                     hash2 = fnv1a_u8(hash2, (uint8_t)out.outcome);
                     hash2 = fnv1a_u8(hash2, out.feedback.disabled_ticks);
                     hash2 = fnv1a_u8(hash2, out.feedback.destruction_delay_ticks);

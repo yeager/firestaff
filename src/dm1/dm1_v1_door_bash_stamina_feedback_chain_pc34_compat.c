@@ -185,15 +185,15 @@ bool M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(
      *
      * For closed-door bash (bash + closed + non-magic): both halves
      * report disabled_ticks = 6. For other branches, this field is
-     * false and the divergence flags below describe the actual
+     * true trivially; the divergence flags below describe the actual
      * cross-contract values.
      */
     out->closed_door_bash_disabled_ticks_aligned =
-        (bash_action && closed && !input->magic_attack) &&
-        (out->feedback.disabled_ticks ==
+        !(bash_action && closed && !input->magic_attack) ||
+        ((out->feedback.disabled_ticks ==
             DM1_V1_DOOR_BASH_STAMINA_FEEDBACK_CHAIN_DISABLED_TICKS_PC34) &&
-        (out->stamina.action_disabled_ticks ==
-            DM1_V1_DOOR_BASH_STAMINA_FEEDBACK_CHAIN_DISABLED_TICKS_PC34);
+         (out->stamina.action_disabled_ticks ==
+            DM1_V1_DOOR_BASH_STAMINA_FEEDBACK_CHAIN_DISABLED_TICKS_PC34));
 
     /*
      * Cross-contract invariant 3: magic_attack_disabled_ticks_diverge
@@ -229,21 +229,18 @@ bool M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(
     /*
      * Cross-contract invariant 5: destruction_delay_aligned_on_destroy
      *
-     * When bash + closed + non-magic + Attack >= Defense (i.e.
-     * WOODEN_BREAK or PORT_BREAK outcome): both halves report
-     * destruction_delay = 2 ticks. The bash feedback contract
-     * schedules the destruction event only in this case; the bash
-     * stamina contract unconditionally reports destruction_delay = 2
-     * for any bash action.
+     * When the bash feedback contract schedules a destruction event,
+     * both halves report destruction_delay = 2 ticks. The bash stamina
+     * contract unconditionally reports destruction_delay = 2 for any
+     * bash action, so non-destroy outcomes are true trivially and are
+     * described by the divergence flags below.
      */
     out->destruction_delay_aligned_on_destroy =
-        (bash_action && closed && !input->magic_attack &&
-         (out->feedback.outcome == DM1_V1_DOOR_BASH_OUTCOME_WOODEN_BREAK_PC34 ||
-          out->feedback.outcome == DM1_V1_DOOR_BASH_OUTCOME_PORT_BREAK_PC34)) &&
-        (out->feedback.destruction_delay_ticks ==
+        !out->feedback.scheduled_destruction_event ||
+        ((out->feedback.destruction_delay_ticks ==
             DM1_V1_DOOR_BASH_STAMINA_FEEDBACK_CHAIN_DESTRUCTION_DELAY_TICKS_PC34) &&
-        (out->stamina.destruction_delay_ticks ==
-            DM1_V1_DOOR_BASH_STAMINA_FEEDBACK_CHAIN_DESTRUCTION_DELAY_TICKS_PC34);
+         (out->stamina.destruction_delay_ticks ==
+            DM1_V1_DOOR_BASH_STAMINA_FEEDBACK_CHAIN_DESTRUCTION_DELAY_TICKS_PC34));
 
     /*
      * Cross-contract invariant 6: destruction_delay_bounce_divergence
@@ -257,8 +254,7 @@ bool M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(
      */
     out->destruction_delay_bounce_divergence =
         !(bash_action && closed && !input->magic_attack &&
-          (out->feedback.outcome == DM1_V1_DOOR_BASH_OUTCOME_WOODEN_BOUNCE_PC34 ||
-           out->feedback.outcome == DM1_V1_DOOR_BASH_OUTCOME_PORT_BREAK_PC34)) ||
+          out->feedback.outcome == DM1_V1_DOOR_BASH_OUTCOME_WOODEN_BOUNCE_PC34) ||
         ((out->feedback.destruction_delay_ticks == 0) &&
          (out->stamina.destruction_delay_ticks ==
             DM1_V1_DOOR_BASH_STAMINA_FEEDBACK_CHAIN_DESTRUCTION_DELAY_TICKS_PC34));
@@ -297,8 +293,6 @@ bool M11_GameView_DoorBashStaminaFeedbackChainResolvePc34(
      * known asymmetry.
      */
     out->melee_capped_flag_known_divergence =
-        !(out->stamina.bash_strength_was_capped_to_100 &&
-          !out->feedback.melee_capped_to_100) &&
         /* Trivially true when the stamina cap was not reached. */
         (!out->stamina.bash_strength_was_capped_to_100 ||
          !out->feedback.melee_capped_to_100);

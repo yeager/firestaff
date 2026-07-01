@@ -157,7 +157,7 @@ typedef struct {
      *       bash + closed + non-magic: feedback.disabled_ticks = 6
      *       AND stamina.action_disabled_ticks = 6.
      *       For other branches (open, magic, non-bash) this field is
-     *       false and the divergence flags below describe why.
+     *       true trivially and the divergence flags below describe why.
      *
      *   - magic_attack_disabled_ticks_diverge:
      *       bash + closed + magic: feedback.disabled_ticks = 0 AND
