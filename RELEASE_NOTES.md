@@ -1,6 +1,58 @@
 
 # Unreleased
 
+# Firestaff v3.0.15
+
+Firestaff v3.0.15 packages the runtime-hardening work that landed after
+v3.0.14. The release keeps the project status conservative: DM1 V1 gets the
+largest gameplay and M11 runtime coverage increase, while CSB, DM2, Nexus,
+Theron's Quest, accessibility, input, save-boundary, and asset-receipt gates
+gain focused verification without being presented as complete parity targets.
+
+## Highlights since v3.0.14
+
+- **DM1 V1 action/runtime coverage is much wider**: new source-locked gates
+  cover M10/M11 attack action IDs, stamina costs, action disable ticks,
+  melee/contact results, parry/block/heal/invoke failure tails, ready-hand and
+  object-helper routes, quickload/spell/map close helpers, and leader-hand
+  throw boundaries.
+
+- **DM1 V1 magic and projectile behavior is more tightly pinned**: gates now
+  cover invoke mana/skill routing, low-mana projectile failures, projectile
+  direction and zero-impact cases, lightning/poison/slime/harm wall impacts,
+  magical wall/cloud boundaries, killed-some/drop/fear paths, and endgame/fuse
+  cleanup ordering.
+
+- **M11 presentation and input hardening expanded**: the runtime now has
+  stronger evidence around bounded turn input queues, smooth turns, Hall of
+  Champions artifact hiding, action-row disruption, throw/invoke audio
+  ordering, zero-adjusted projectile audio, and release-smoke triage.
+
+- **Salvaged cross-game gates were integrated and cleaned up**: applicable
+  worktree slices added focused tests/probes for CSB V22 in-place rendering,
+  CSBWin 512-byte save-header classification, gesture navigation, session
+  timer/accessibility/screen-reader manifests, Nexus/DM2/Theron boundaries,
+  and several DM1 champion-panel/sensor/Hall of Champions surfaces. Conflicted
+  or junk-only salvage was left out.
+
+- **Source-lock and asset-boundary checks remain conservative**: the new gates
+  are data-free or skip-safe where appropriate, avoid shipping original game
+  payloads, and keep unfinished real-asset parity claims out of public release
+  copy.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  changelog, and `include/firestaff_version.h`.
+- GitHub Actions was green on `26fa194f7` before release prep: M10 verify,
+  strict warnings, asset hygiene, CMake builds on macOS/Windows/Linux, Phase
+  A/audio probes, Pages, and cross-platform determinism.
+- Local release-prep verification covered CMake configure/build plus the
+  headless Phase A and audio smoke probes before tagging.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64, and Steam Deck x86_64 artifacts
+  from the `v3.0.15` release tag.
+
 # Firestaff v3.0.14
 
 Firestaff v3.0.14 packages the runtime-hardening work that landed after
