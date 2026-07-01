@@ -167,6 +167,17 @@ int F0733_COMBAT_GetChampionWoundDefense_Compat(
         adjusted = adjusted + (WoundDefenseFactor[woundSlotIndex] >> 1);
     }
 
+    /* ReDMCSB CHAMPION.C F0313 lines 1375-1382 applies wound/rest penalties,
+     * halves the accumulated defense, then calls F0026_MAIN_GetBoundedValue
+     * with bounds 0..100.  Wound/rest penalties remain snapshot follow-ups;
+     * the final half-scale and clamp are source-locked here. */
+    adjusted = adjusted >> 1;
+    if (adjusted < 0) {
+        adjusted = 0;
+    } else if (adjusted > 100) {
+        adjusted = 100;
+    }
+
     *outDefense = adjusted;
     return 1;
 }
