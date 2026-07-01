@@ -461,6 +461,45 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_phase_a_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# 2026-06-28 gapbug: Theron V1 startup-adjacent input/movement wall-block gate.
+# Headless: no game assets, no Track 02 data, no SDL rendering required.
+# Exercises the same M11 game-view input dispatcher
+# (M11_GameView_HandleInput) the live M11_GameView_StartTheron() handoff
+# would route through once Track 02 data is verified, against the
+# deterministic 8x8 starter room produced by
+# m11_theron_load_initial_level(). Locks the wall-block boundary in all
+# four directions: dispatch returns M11_GAME_INPUT_IGNORED, status =
+# "MOVE"/"BLOCKED", party coords + FNV-1a state_hash unchanged.
+# Source-locked against THQUEST.ASM T520/T600/T700, ReDMCSB
+# CLIKMENU.C:270-314 F0366_COMMAND_ProcessTypes3To6_MoveParty, and
+# ReDMCSB MOVESENS.C F0267. Disjoint from
+# firestaff_theron_v1_mechanics_hardening_probe (which tests
+# theron_v1_move_party directly) and from
+# firestaff_theron_v1_cross_route_mechanics_probe (which tests the
+# cross-route door/pool/alarm/trigger chain).
+add_executable(firestaff_theron_v1_startup_wall_block_gate_probe
+    probes/m11/firestaff_theron_v1_startup_wall_block_gate_probe.c)
+target_include_directories(firestaff_theron_v1_startup_wall_block_gate_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+# firestaff_m11 already pulls firestaff_theron transitively, and the
+# probe touches both M11 input dispatch and the Theron world model, so
+# linking firestaff_m11 (plus SDL3 for the dummy-video env) is the
+# minimal linker set that mirrors the live startup handoff.
+target_link_libraries(firestaff_theron_v1_startup_wall_block_gate_probe
+    PRIVATE firestaff_m11 firestaff_theron firestaff_m10 SDL3::SDL3 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_startup_wall_block_gate_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v1_startup_wall_block_gate
+    COMMAND firestaff_theron_v1_startup_wall_block_gate_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v1_startup_wall_block_gate PROPERTIES
+    LABELS "tier4;theron;startup;m11;movement;wall_block;gate"
+)
+
 # 2026-06-27 gapbug: in-game high-contrast overlay runtime probe.
 # Headless, data-free. Exercises the M11 high-contrast gate across
 # the full state machine (launcher config → M11 chrome → M11
