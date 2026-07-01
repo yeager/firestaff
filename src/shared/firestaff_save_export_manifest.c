@@ -1102,7 +1102,7 @@ FirestaffSaveExportResult FirestaffSaveExport_ImportFile(
         return FIRESTAFF_SAVE_EXPORT_FILE_OPEN;
     }
 
-    if (bodyCrc >= 0 && (long long)computedCrc != (unsigned long)bodyCrc) {
+    if (bodyCrc >= 0 && (unsigned long long)computedCrc != (unsigned long long)bodyCrc) {
         if (outError && outErrorSize > 0)
             snprintf(outError, outErrorSize,
                      "body_crc32 mismatch (manifest=%lld, actual=%lu)",
