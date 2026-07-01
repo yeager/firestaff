@@ -4210,6 +4210,82 @@ static void test_fireball_action_uses_f0327_and_decrements_charges(void) {
               "FIREBALL launch direction follows party/champion direction");
 }
 
+static void run_air_projectile_action_uses_f0327_and_direction_case(
+    int actionIndex,
+    int expectedSubtype,
+    int expectedKineticEnergy,
+    int expectedAttackType,
+    const char* actionName)
+{
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+
+    seed_state(&state, 100, 52);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 2;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].mana.current = 9;
+    state.world.party.champions[0].mana.maximum = 64;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].direction = 3;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_AIR].experience = 10000;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, actionIndex),
+              1,
+              actionName);
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 7,
+              "Air projectile action spends 7 - min(6, Air skill) mana");
+    ASSERT_EQ(weapons[0].chargeCount, 1,
+              "Air projectile action decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "Air projectile action mirrors F0406 champion direction");
+    ASSERT_EQ(state.world.projectiles.count, 1,
+              "Air projectile action creates one projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileCategory,
+              PROJECTILE_CATEGORY_MAGICAL,
+              "Air projectile action creates a magical projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
+              expectedSubtype,
+              "Air projectile action uses source projectile subtype");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy,
+              expectedKineticEnergy,
+              "Air projectile action uses source kinetic energy");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 90,
+              "Air projectile action uses F0327 fixed projectile attack 90");
+    ASSERT_EQ(state.world.projectiles.entries[0].attackTypeCode,
+              expectedAttackType,
+              "Air projectile action uses source attack type");
+    ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 2,
+              "Air projectile action uses F0327 step energy from maximum mana");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "Air projectile launch cell follows F0326 champion Cell formula");
+    ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
+              "Air projectile launch direction follows party/champion direction");
+}
+
+static void test_air_projectile_actions_use_f0327_and_f0406_direction(void) {
+    run_air_projectile_action_uses_f0327_and_direction_case(
+        DM1_ACTION_DISPELL, PROJECTILE_SUBTYPE_HARM_NON_MATERIAL, 150,
+        COMBAT_ATTACK_MAGIC,
+        "DISPELL action performs F0407/F0327 projectile route");
+    run_air_projectile_action_uses_f0327_and_direction_case(
+        DM1_ACTION_LIGHTNING, PROJECTILE_SUBTYPE_LIGHTNING_BOLT, 180,
+        COMBAT_ATTACK_LIGHTNING,
+        "LIGHTNING action performs F0407/F0327 projectile route");
+}
+
 static void test_fireball_projectile_create_failure_halves_action_xp(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -5820,6 +5896,7 @@ int main(void) {
     test_window_action_schedules_thieves_eye_and_decrements_charges();
     test_spit_action_launches_f0327_fireball_and_decrements_charges();
     test_fireball_action_uses_f0327_and_decrements_charges();
+    test_air_projectile_actions_use_f0327_and_f0406_direction();
     test_fireball_projectile_create_failure_halves_action_xp();
     test_invoke_action_uses_f0327_and_decrements_charges();
     test_invoke_projectile_create_failure_halves_action_xp();
