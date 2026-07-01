@@ -21240,7 +21240,14 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
         throwAttack,
         thrownThing,
         potionPower);
-    if (!spawned) return 0;
+    if (!spawned) {
+        /* ReDMCSB CHAMPION.C F0328 lines 2189-2193 does not check
+         * F0212_PROJECTILE_Create before returning TRUE.  Firestaff's
+         * PJE-05 projectile-list cap drops overflow instead of emulating
+         * BUG0_16 overfill/crash, but the F0328 throw was accepted after
+         * stamina, sound, action-disable and Throw XP side effects. */
+        return 1;
+    }
 
     state->world.projectileDisabledMovementTicks = 4;
     state->world.lastProjectileDisabledMovementDirection =
