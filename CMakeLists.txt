@@ -10076,6 +10076,23 @@ if(BUILD_TESTING)
         tests/test_m11_display_aspect_present_rect.c
     )
     target_link_libraries(test_m11_display_aspect_present_rect PRIVATE firestaff_m11)
+    # M11 integer-multiple scale-mode (M11_SCALE_1X..M11_SCALE_4X)
+    # input-map probe.  Companion to test_m11_display_aspect_present_rect
+    # which locks FIT (with/without integerScaling) and STRETCH.  This
+    # probe locks the integer-multiple branch: rect math (320x200 /
+    # 640x400 / 960x600 / 1280x800 centered), off-rect rejection with
+    # caller-sentinel preservation, rect-corner round-trip through
+    # MapPointToFramebuffer, 2X movement-arrow hit-test round-trip
+    # (ReDMCSB COMMAND.C G0448), 1X identity at 320x200, and the
+    # cross-aspect-mode + cross-integerScaling invariants that prove
+    # the 1X..4X branch ignores both flags.  Headless / data-free,
+    # no game data required.
+    add_executable(firestaff_m11_integer_scale_input_map_probe
+        probes/firestaff_m11_integer_scale_input_map_probe.c
+    )
+    target_include_directories(firestaff_m11_integer_scale_input_map_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(firestaff_m11_integer_scale_input_map_probe PRIVATE firestaff_m11)
     # DM1 V1 HiDPI chest slot hit-zone gate: scaled window
     # coordinates must route to the same C537..C544 chest slot box
     # as the source-locked 320x200 coordinates. Locks the touch
@@ -10218,6 +10235,7 @@ if(BUILD_TESTING)
         target_compile_options(test_dm1_v22_finished_pack_receipt_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(firestaff_dm1_v22_finished_pack_receipt_probe PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_m11_display_aspect_present_rect PRIVATE -Wall -Wextra -O2)
+        target_compile_options(firestaff_m11_integer_scale_input_map_probe PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_entrance_command_scale_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v1_hidpi_champion_portrait_11_mouse_rect_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -10535,6 +10553,13 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_display_aspect_present_rect
         COMMAND test_m11_display_aspect_present_rect
+    )
+    add_test(
+        NAME m11_integer_scale_input_map_probe
+        COMMAND firestaff_m11_integer_scale_input_map_probe
+    )
+    set_tests_properties(m11_integer_scale_input_map_probe PROPERTIES
+        LABELS "tier2;m11;input-scale;presentation;integer-multiple"
     )
     add_test(
         NAME dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat
