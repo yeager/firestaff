@@ -378,6 +378,141 @@ static int decode_hunk_code(const uint8_t* in, size_t in_size,
     return 0;
 }
 
+/*
+ * Bounded diagnostic helper: validate the front-half of a 0x5223
+ * HUNK_CODE payload (header size, magic, word-count sanity) and
+ * report the consumed-vs-streamed byte distance, without
+ * allocating a decoded buffer.  Operators can use this to probe a
+ * real FTL HUNK_CODE payload before deciding to fully decode it,
+ * or to surface a "stream ends with N pad bytes" gate that
+ * downstream consumers can react to.
+ *
+ * The pad-byte count is computed by simulating the nibble stream
+ * position after exactly DecompressedDataWordCount iterations.
+ * Each iteration consumes a fixed count of nibbles:
+ *   - short-dict (nibble 0..7):  2 nibbles
+ *   - long-dict (nibble 8..E):   3 nibbles
+ *   - literal (nibble F):        5 nibbles
+ * The total bits consumed by the loop is therefore
+ *   consumed_bits = 4 * sum(per-iteration nibble count)
+ * which depends on the stream content.  Because nibbles are
+ * 4-bit aligned, the consumed_bits value is always a multiple
+ * of 4.  The count of consumed bytes is ceil(consumed_bits / 8),
+ * and the count of *untouched* bytes after the last consumed
+ * nibble is stream_byte_size - consumed_bytes.
+ *
+ * Important caveat documented for operators: nibble consumption
+ * is bitwise (not 16-bit word-wise), so the consumed_bytes value
+ * can sit 0..7 bits before a byte boundary, leaving 0..3 unused
+ * bits in the last partially-consumed byte.  In practice these
+ * bits are zero-filled trailer bytes added by the encoder for
+ * byte alignment, and the ReDMCSB DECOMPCO.C 68k reader absorbs
+ * them silently via its `swap D2` / `clr.w D2` rotation.  We do
+ * NOT hide this; the trailing_pad_bits field exposes 0..3 unused
+ * bits in the last byte of the stream for callers that need to
+ * round the consumed stream to a full byte.
+ *
+ * Side effects:  none — does not allocate.
+ *
+ * Returns 1 if the header/table-validity checks passed (status is
+ * OK or OK_WITH_PAD), 0 otherwise (status holds the failure
+ * reason and out is still zero-initialized).
+ */
+int FirestaffFtl_HunkCodeDiagnose(const uint8_t* payload,
+                                  size_t payload_size,
+                                  FirestaffFtlHunkCodeDiagnostics* out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+
+    if (!payload || payload_size < 3848u) {
+        if (out) out->status = FIRESTAFF_HUNK_CODE_TOO_SMALL;
+        return 0;
+    }
+
+    if (rd16_be(payload + 0) != 0x5223u) {
+        if (out) out->status = FIRESTAFF_HUNK_CODE_BAD_MAGIC;
+        return 0;
+    }
+
+    uint32_t word_count = rd32_be(payload + 4);
+    if (word_count > 0x08000000u) {
+        if (out) out->status = FIRESTAFF_HUNK_CODE_WORD_COUNT_OOR;
+        return 0;
+    }
+
+    out->declared_word_count = word_count;
+    out->stream_byte_size    = payload_size - 3848u;
+
+    /* word_count == 0 is a valid (empty) stream: nothing
+     * consumed, the entire stream is padding. */
+    if (word_count == 0u) {
+        out->status            = FIRESTAFF_HUNK_CODE_OK;
+        out->consumed_bits     = 0u;
+        out->trailing_pad_bits = 0u;
+        out->pad_byte_count    = out->stream_byte_size;
+        return 1;
+    }
+
+    /* Walk the same stream the decoder would, tracking the bit
+     * position.  We do not write to any output buffer: every
+     * branch is followed only to advance bit_pos accurately. */
+    FtlNibbleStream ns;
+    ns.data     = payload + 3848u;
+    ns.size     = payload_size - 3848u;
+    ns.bit_pos  = 0u;
+
+    int parse_ok = 1;
+    for (uint32_t i = 0; i < word_count; ++i) {
+        uint8_t nib;
+        if (fns_read_nibble(&ns, &nib) != 0) { parse_ok = 0; break; }
+
+        if (nib == 0x0Fu) {
+            uint8_t n1, n2, n3, n4;
+            if (fns_read_nibble(&ns, &n1) != 0 ||
+                fns_read_nibble(&ns, &n2) != 0 ||
+                fns_read_nibble(&ns, &n3) != 0 ||
+                fns_read_nibble(&ns, &n4) != 0) { parse_ok = 0; break; }
+            /* (decode unused): uint16_t word = (n1<<12)|(n2<<8)|(n3<<4)|n4; */
+        } else if (nib >= 0x08u) {
+            uint8_t n1, n2;
+            if (fns_read_nibble(&ns, &n1) != 0 ||
+                fns_read_nibble(&ns, &n2) != 0) { parse_ok = 0; break; }
+            /* (decode unused): uint32_t v = ((nib<<8)|(n1<<4)|n2) - 1920; */
+        } else {
+            uint8_t n1;
+            if (fns_read_nibble(&ns, &n1) != 0) { parse_ok = 0; break; }
+        }
+    }
+
+    if (!parse_ok) {
+        out->status = FIRESTAFF_HUNK_CODE_TOO_SMALL; /* truncated mid-stream */
+        return 0;
+    }
+
+    out->consumed_bits = ns.bit_pos;
+    /* consumed_bytes is the smallest byte index touched by the
+     * stream.  Because nibbles are 4-bit aligned we round up. */
+    size_t consumed_bytes = (out->consumed_bits + 7u) >> 3;
+    /* Anything past consumed_bytes is untouched stream bytes. */
+    if (consumed_bytes <= out->stream_byte_size) {
+        out->pad_byte_count = out->stream_byte_size - consumed_bytes;
+    } else {
+        out->pad_byte_count = 0u;
+    }
+    /* Bits in the last touched byte that are unused: because each
+     * nibble is 4 bits, the unused tail is always a multiple of 4
+     * (0 or 4) right now, so callers should read this as a sentinel
+     * rather than assume a fractional count.  We still expose it
+     * so a future grammar change to bit-level coding surfaces
+     * immediately. */
+    out->trailing_pad_bits = (size_t)(out->consumed_bits & 3u);
+
+    out->status = (out->pad_byte_count == 0u)
+                      ? FIRESTAFF_HUNK_CODE_OK
+                      : FIRESTAFF_HUNK_CODE_OK_WITH_PAD;
+    return 1;
+}
+
 /* ── Public Decode/Free entry points ──────────────────── */
 
 int FirestaffFtl_Decode(FirestaffFtl* ftl) {
@@ -977,6 +1112,241 @@ static int test_decode_hunk_data_odd_input(void) {
     return 1;
 }
 
+/*
+ * 16-word mixed round-trip test: exercises every nibble-command
+ * class and verifies the decoder scales beyond a 1-3 word smoke
+ * test.  The synthetic frequency table maps index i to bytes
+ * ((i>>4) & 0xFF), ((i & 0x0F) | 0x80), so every word output
+ * is predictable.
+ */
+static int test_decode_hunk_code_long_mixed_round_trip(void) {
+    FtlTestBitWriter code; ftl_tbw_init(&code, 4096);
+    /* 16 words, chosen so each nibble-command class appears and
+     * every chosen index has the expected output word. */
+    /* short-dict idx 7 -> (0x00, 0x87) */
+    ftl_tbw_write_nibble(&code, 0x0); ftl_tbw_write_nibble(&code, 0x7);
+    /* short-dict idx 90 -> (0x05, 0x8A) */
+    ftl_tbw_write_nibble(&code, 0x5); ftl_tbw_write_nibble(&code, 0xA);
+    /* literal 0xCAFE -> (0xCA, 0xFE) */
+    ftl_tbw_write_nibble(&code, 0xF);
+    ftl_tbw_write_nibble(&code, 0xC);
+    ftl_tbw_write_nibble(&code, 0xA);
+    ftl_tbw_write_nibble(&code, 0xF);
+    ftl_tbw_write_nibble(&code, 0xE);
+    /* long-dict idx 128 -> (0x08, 0x80) */
+    ftl_tbw_write_nibble(&code, 0x8);
+    ftl_tbw_write_nibble(&code, 0x0);
+    ftl_tbw_write_nibble(&code, 0x0);
+    /* long-dict idx 1150 -> (0x47, 0x8E) */
+    ftl_tbw_write_nibble(&code, 0xB);
+    ftl_tbw_write_nibble(&code, 0xF);
+    ftl_tbw_write_nibble(&code, 0xE);
+    /* literal 0xDEAD -> (0xDE, 0xAD) */
+    ftl_tbw_write_nibble(&code, 0xF);
+    ftl_tbw_write_nibble(&code, 0xD);
+    ftl_tbw_write_nibble(&code, 0xE);
+    ftl_tbw_write_nibble(&code, 0xA);
+    ftl_tbw_write_nibble(&code, 0xD);
+    /* short-dict idx 0 -> (0x00, 0x80) */
+    ftl_tbw_write_nibble(&code, 0x0); ftl_tbw_write_nibble(&code, 0x0);
+    /* short-dict idx 127 -> (0x07, 0xFF) */
+    ftl_tbw_write_nibble(&code, 0x7); ftl_tbw_write_nibble(&code, 0xF);
+    /* long-dict idx 1919 -> (0x77, 0x8F); v=3839=0xEFF */
+    ftl_tbw_write_nibble(&code, 0xE);
+    ftl_tbw_write_nibble(&code, 0xF);
+    ftl_tbw_write_nibble(&code, 0xF);
+    /* literal 0x600D -> (0x60, 0x0D) */
+    ftl_tbw_write_nibble(&code, 0xF);
+    ftl_tbw_write_nibble(&code, 0x6);
+    ftl_tbw_write_nibble(&code, 0x0);
+    ftl_tbw_write_nibble(&code, 0x0);
+    ftl_tbw_write_nibble(&code, 0xD);
+    /* short-dict idx 42 -> (0x02, 0xAA) */
+    ftl_tbw_write_nibble(&code, 0x2); ftl_tbw_write_nibble(&code, 0xA);
+    /* short-dict idx 99 -> (0x06, 0xA3) */
+    ftl_tbw_write_nibble(&code, 0x6); ftl_tbw_write_nibble(&code, 0x3);
+    /* long-dict idx 1500 -> table[1500]=(0x5B,0x8C); v=3420=0xD5C */
+    ftl_tbw_write_nibble(&code, 0xD);
+    ftl_tbw_write_nibble(&code, 0x5);
+    ftl_tbw_write_nibble(&code, 0xC);
+    /* literal 0xBEEF -> (0xBE, 0xEF) */
+    ftl_tbw_write_nibble(&code, 0xF);
+    ftl_tbw_write_nibble(&code, 0xB);
+    ftl_tbw_write_nibble(&code, 0xE);
+    ftl_tbw_write_nibble(&code, 0xE);
+    ftl_tbw_write_nibble(&code, 0xF);
+    /* short-dict idx 64 -> (0x04, 0xC0) */
+    ftl_tbw_write_nibble(&code, 0x4); ftl_tbw_write_nibble(&code, 0x0);
+    /* short-dict idx 12 -> (0x00, 0x8C) */
+    ftl_tbw_write_nibble(&code, 0x0); ftl_tbw_write_nibble(&code, 0xC);
+
+    /* Build a synthetic FTL container, then decode the
+     * HUNK_CODE segment through the public path.  Word count
+     * here is exactly 16 (we counted the comments above). */
+    static const uint8_t expected[32] = {
+        0x00u, 0x87u,             /* short-dict idx 7 */
+        0x05u, 0x8Au,             /* short-dict idx 90 */
+        0xCAu, 0xFEu,             /* literal 0xCAFE */
+        0x08u, 0x80u,             /* long-dict idx 128 */
+        0x47u, 0x8Eu,             /* long-dict idx 1150 */
+        0xDEu, 0xADu,             /* literal 0xDEAD */
+        0x00u, 0x80u,             /* short-dict idx 0 */
+        0x07u, 0xFFu,             /* short-dict idx 127 */
+        0x77u, 0x8Fu,             /* long-dict idx 1919 */
+        0x60u, 0x0Du,             /* literal 0x600D */
+        0x02u, 0xAAu,             /* short-dict idx 42 */
+        0x06u, 0xA3u,             /* short-dict idx 99 */
+        0x5Bu, 0x8Cu,             /* long-dict idx 1500 */
+        0xBEu, 0xEFu,             /* literal 0xBEEF */
+        0x04u, 0xC0u,             /* short-dict idx 64 */
+        0x00u, 0x8Cu              /* short-dict idx 12 */
+    };
+
+    /* 16 distinct 2-byte words = 32 bytes of CODE.  The
+     * total CODE payload size must accommodate the 8-byte
+     * header + 3840-byte table + nibble stream ceiling. */
+    uint8_t buf[8192];
+    size_t buf_size = 0;
+    int rc = build_ftl_synthetic(&code, buf, sizeof(buf), &buf_size, 16);
+    if (rc != 0) ST_FAIL("build");
+
+    FirestaffFtl ftl;
+    rc = FirestaffFtl_Parse(buf, buf_size, &ftl);
+    if (rc != 0) ST_FAIL("Parse");
+
+    /* Locate the HUNK_CODE segment and decode it via the
+     * parser-wired offset/size, mirroring the other
+     * decoder tests. */
+    const FirestaffFtlSegmentHeader* seg = NULL;
+    for (uint16_t i = 0; i < ftl.segment_count_parsed; ++i) {
+        if (ftl.segments[i].type == FIRESTAFF_HUNK_CODE) {
+            seg = &ftl.segments[i];
+            break;
+        }
+    }
+    ST_ASSERT(seg != NULL, "code segment located");
+    ST_ASSERT(seg->size >= 3848u, "CODE segment >= 3848 bytes");
+
+    uint8_t* decoded = NULL;
+    size_t   decoded_size = 0;
+    rc = decode_hunk_code(buf + seg->offset, seg->size,
+                          &decoded, &decoded_size);
+    if (rc != 0) ST_FAIL("decode_hunk_code");
+    ST_ASSERT(decoded_size == 32u, "32 bytes decoded");
+    ST_ASSERT(memcmp(decoded, expected, 32u) == 0, "decoded bytes match");
+    free(decoded);
+    free(code.buf);
+    return 1;
+}
+
+/*
+ * Diagnostic helper: an exactly-on-boundary stream reports
+ * OK with pad_byte_count = 0.  16 short-dict refs = 32 nibbles
+ * = 16 bytes, no padding trailer.
+ */
+static int test_diagnose_clean_stream(void) {
+    FtlTestBitWriter code; ftl_tbw_init(&code, 4096);
+    for (int i = 0; i < 16; ++i) {
+        ftl_tbw_write_nibble(&code, 0x5); /* short-dict idx 5x */
+        ftl_tbw_write_nibble(&code, 0xA);
+    }
+    uint8_t buf[8192];
+    size_t buf_size = 0;
+    int rc = build_ftl_synthetic(&code, buf, sizeof(buf), &buf_size, 16);
+    if (rc != 0) ST_FAIL("build");
+
+    FirestaffFtlHunkCodeDiagnostics d;
+    int ok = FirestaffFtl_HunkCodeDiagnose(buf + 0x50u, 3848u + 16u, &d);
+    ST_ASSERT(ok == 1, "diagnose succeeded");
+    ST_ASSERT(d.status == FIRESTAFF_HUNK_CODE_OK, "OK status");
+    ST_ASSERT(d.declared_word_count == 16u, "word count");
+    ST_ASSERT(d.stream_byte_size == 16u, "stream byte size");
+    ST_ASSERT(d.consumed_bits == 128u, "consumed 32 nibbles = 128 bits");
+    ST_ASSERT(d.pad_byte_count == 0u, "no trailer");
+    free(code.buf);
+    return 1;
+}
+
+/*
+ * Diagnostic helper: a stream whose content lands inside a
+ * byte (not on a byte boundary) reports OK_WITH_PAD with
+ * pad_byte_count > 0.  Builds an 8-word stream of literal
+ * escapes (= 5 nibbles each = 40 nibbles = 5 bytes; the
+ * 4-byte alignment means exactly 0 leftover bits but 0
+ * pad bytes), then re-runs with a 1-byte pad trailer to
+ * force pad_byte_count > 0.
+ */
+static int test_diagnose_padded_stream(void) {
+    FtlTestBitWriter code; ftl_tbw_init(&code, 4096);
+    /* 8 literal 0xC0DE commands -> 40 nibbles = 20 bytes. */
+    for (int i = 0; i < 8; ++i) {
+        ftl_tbw_write_nibble(&code, 0xF);
+        ftl_tbw_write_nibble(&code, 0xC);
+        ftl_tbw_write_nibble(&code, 0x0);
+        ftl_tbw_write_nibble(&code, 0xD);
+        ftl_tbw_write_nibble(&code, 0xE);
+    }
+    /* Append a 1-byte pad trailer to the stream. */
+    ftl_tbw_write_nibble(&code, 0x0); /* nibble in a partial byte */
+    ftl_tbw_write_nibble(&code, 0x0);
+
+    uint8_t buf[8192];
+    size_t buf_size = 0;
+    int rc = build_ftl_synthetic(&code, buf, sizeof(buf), &buf_size, 8);
+    if (rc != 0) ST_FAIL("build");
+
+    /* The build helper rounds the code up to ceil(nibbles/2)
+     * bytes (one nibble per bit) so the stream is the
+     * original 42 nibbles / 4 = 10.5 -> 11 bytes.  The
+     * payload is therefore 3848 + 11 = 3859 bytes.  The
+     * decoder only needs 40 nibbles for 8 words, leaving
+     * 2 unused nibbles = 1 byte of padding. */
+    FirestaffFtlHunkCodeDiagnostics d;
+    int ok = FirestaffFtl_HunkCodeDiagnose(buf + 0x50u, 3869u, &d);
+    ST_ASSERT(ok == 1, "diagnose succeeded");
+    ST_ASSERT(d.status == FIRESTAFF_HUNK_CODE_OK_WITH_PAD,
+              "OK_WITH_PAD");
+    ST_ASSERT(d.stream_byte_size == 21u, "21 stream bytes");
+    ST_ASSERT(d.consumed_bits == 160u, "8 literals = 40 nibbles = 160 bits");
+    ST_ASSERT(d.pad_byte_count >= 1u, ">=1 pad byte");
+    free(code.buf);
+    return 1;
+}
+
+/*
+ * Diagnostic helper: a too-small payload is reported as
+ * TOO_SMALL without attempting to read the table or stream.
+ */
+static int test_diagnose_too_small(void) {
+    FirestaffFtlHunkCodeDiagnostics d;
+    /* 3847-byte payload: 1 byte short of the 8-byte header +
+     * 3840-byte table minimum. */
+    uint8_t tiny[3847];
+    memset(tiny, 0, sizeof(tiny));
+    int ok = FirestaffFtl_HunkCodeDiagnose(tiny, sizeof(tiny), &d);
+    ST_ASSERT(ok == 0, "too-small rejected");
+    ST_ASSERT(d.status == FIRESTAFF_HUNK_CODE_TOO_SMALL,
+              "TOO_SMALL status");
+    return 1;
+}
+
+/*
+ * Diagnostic helper: a payload whose first word is not
+ * 0x5223 is reported as BAD_MAGIC without trying to read
+ * the word count or stream.
+ */
+static int test_diagnose_bad_magic(void) {
+    uint8_t buf[3848 + 4];
+    memset(buf, 0, sizeof(buf));
+    /* Bad magic: 0x0000 instead of 0x5223. */
+    FirestaffFtlHunkCodeDiagnostics d;
+    int ok = FirestaffFtl_HunkCodeDiagnose(buf, sizeof(buf), &d);
+    ST_ASSERT(ok == 0, "bad-magic rejected");
+    ST_ASSERT(d.status == FIRESTAFF_HUNK_CODE_BAD_MAGIC,
+              "BAD_MAGIC status");
+    return 1;
+}
+
 int FirestaffFtl_SelfTest(void) {
     int total = 0, passed = 0;
 #define RUN(name) do { total++; if (name()) passed++; } while (0)
@@ -993,6 +1363,11 @@ int FirestaffFtl_SelfTest(void) {
     RUN(test_decode_hunk_code_truncated);
     RUN(test_decode_hunk_code_zero_word_count);
     RUN(test_decode_hunk_code_mixed_round_trip);
+    RUN(test_decode_hunk_code_long_mixed_round_trip);
+    RUN(test_diagnose_clean_stream);
+    RUN(test_diagnose_padded_stream);
+    RUN(test_diagnose_too_small);
+    RUN(test_diagnose_bad_magic);
     RUN(test_decode_hunk_data_literal);
     RUN(test_decode_hunk_data_zero_run);
     RUN(test_decode_hunk_data_empty);

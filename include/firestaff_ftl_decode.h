@@ -164,6 +164,50 @@ int FirestaffFtl_Decode(FirestaffFtl* ftl);
 /* Free decoded buffers allocated by FirestaffFtl_Decode. */
 void FirestaffFtl_Free(FirestaffFtl* ftl);
 
+/* Decode status for FirestaffFtl_HunkCodeDiagnose().  HUNK_CODE
+ * payloads use the ReDMCSB DECOMPCO.C 68k grammar, which iterates
+ * exactly DecompressedDataWordCount times and terminates the loop
+ * before reading the stream past the last completed iteration.  That
+ * means real-world payloads frequently trail a few unused bits in
+ * the last nibble-group byte; this enum keeps that diagnostic
+ * bounded and machine-checkable. */
+typedef enum {
+    FIRESTAFF_HUNK_CODE_OK              = 0, /* decode + checksum + pad-bits both OK */
+    FIRESTAFF_HUNK_CODE_OK_WITH_PAD     = 1, /* decode OK; some trailing pad bits present */
+    FIRESTAFF_HUNK_CODE_TOO_SMALL       = 2, /* payload < 3848 bytes (header+table) */
+    FIRESTAFF_HUNK_CODE_BAD_MAGIC       = 3, /* first word != 0x5223 */
+    FIRESTAFF_HUNK_CODE_WORD_COUNT_OOR  = 4  /* DecompressedDataWordCount > 0x08000000 */
+} FirestaffHunkCodeStatus;
+
+typedef struct {
+    FirestaffHunkCodeStatus status;
+    size_t   trailing_pad_bits;  /* 0..3 unused bits in the last stream byte after the last iteration (sentinel — see source for why this is always 0 or 4 today) */
+    size_t   consumed_bits;      /* bits actually read from the stream (= 4 * sum(per-iteration nibble count)) */
+    size_t   stream_byte_size;   /* bytes in the stream (from offset 3848 to payload end) */
+    size_t   pad_byte_count;     /* bytes between the last nibble touched and end-of-stream */
+    uint32_t declared_word_count;/* DecompressedDataWordCount from offset 4..7 */
+} FirestaffFtlHunkCodeDiagnostics;
+
+/* Bounded diagnostic helper for FTL HUNK_CODE 0x5223 payloads.
+ *
+ * Runs the same front-half validation as decode_hunk_code (header size,
+ * 0x5223 magic, word-count sanity) without allocating an output buffer,
+ * so callers can probe a payload before deciding whether to fully
+ * decode it.  trailing_pad_bits is reported for successful payloads:
+ * because each iteration consumes a fixed count of nibbles (2 / 3 /
+ * 5 depending on the command) and the stream ends at an arbitrary
+ * byte boundary, the last byte may carry 0..3 unused trailing bits.
+ * A value of 0 means the stream ended exactly on an iteration
+ * boundary; a nonzero value is documented as valid per the ReDMCSB
+ * DECOMPCO.C behaviour and reported through status = OK_WITH_PAD.
+ *
+ * Returns 1 if the payload front-half parsed cleanly (regardless of
+ * whether trailing pad bits are present), 0 otherwise.  *out is always
+ * zero-initialized on entry. */
+int FirestaffFtl_HunkCodeDiagnose(const uint8_t* payload,
+                                  size_t payload_size,
+                                  FirestaffFtlHunkCodeDiagnostics* out);
+
 /* Self-test using synthetic FTL containers. Always returns 0. */
 int FirestaffFtl_SelfTest(void);
 
