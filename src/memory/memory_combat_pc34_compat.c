@@ -167,10 +167,20 @@ int F0733_COMBAT_GetChampionWoundDefense_Compat(
         adjusted = adjusted + (WoundDefenseFactor[woundSlotIndex] >> 1);
     }
 
-    /* ReDMCSB CHAMPION.C F0313 lines 1375-1382 applies wound/rest penalties,
-     * halves the accumulated defense, then calls F0026_MAIN_GetBoundedValue
-     * with bounds 0..100.  Wound/rest penalties remain snapshot follow-ups;
-     * the final half-scale and clamp are source-locked here. */
+    /* ReDMCSB CHAMPION.C F0313 lines 1375-1377 subtracts
+     * `8 + M004_RANDOM(4)` when the target slot is already wounded.  F0733 is
+     * the deterministic snapshot helper, so it applies the fixed source base
+     * penalty here and leaves the random4 term to the future RNG-bearing path. */
+    if ((champ->wounds & (1 << woundSlotIndex)) != 0) {
+        adjusted = adjusted - 8;
+    }
+
+    /* ReDMCSB CHAMPION.C F0313 lines 1378-1382 halves resting defense, halves
+     * the accumulated defense again, then calls F0026_MAIN_GetBoundedValue
+     * with bounds 0..100. */
+    if (champ->isResting) {
+        adjusted = adjusted >> 1;
+    }
     adjusted = adjusted >> 1;
     if (adjusted < 0) {
         adjusted = 0;

@@ -411,6 +411,25 @@ static void test_combat_f0313_wound_defense_final_shift_and_clamp(void) {
     assert(F0733_COMBAT_GetChampionWoundDefense_Compat(
         &champ, CHAMPION_SLOT_TORSO, 0, &defense) == 1);
     assert(defense == 100);
+
+    memset(&champ, 0, sizeof(champ));
+    champ.woundDefense[CHAMPION_SLOT_TORSO] = 64;
+    champ.isResting = 1;
+    assert(F0733_COMBAT_GetChampionWoundDefense_Compat(
+        &champ, CHAMPION_SLOT_TORSO, 0, &defense) == 1);
+    /* ReDMCSB F0313 line 1378 halves defense while the party is resting,
+     * then line 1382 applies the final half-scale: (64 >> 1) >> 1. */
+    assert(defense == 16);
+
+    memset(&champ, 0, sizeof(champ));
+    champ.woundDefense[CHAMPION_SLOT_TORSO] = 64;
+    champ.wounds = 1 << CHAMPION_SLOT_TORSO;
+    assert(F0733_COMBAT_GetChampionWoundDefense_Compat(
+        &champ, CHAMPION_SLOT_TORSO, 0, &defense) == 1);
+    /* ReDMCSB F0313 lines 1375-1377 subtracts 8 + RANDOM(4) for an
+     * already-wounded slot.  F0733 is deterministic, so this locks the fixed
+     * source penalty before the final half-scale: (64 - 8) >> 1. */
+    assert(defense == 28);
 }
 
 static void test_orch_turn_rotates_champion_cell_and_direction(void) {
