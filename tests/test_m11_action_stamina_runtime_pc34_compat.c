@@ -6523,6 +6523,12 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete updates active AI group-direction mirror");
     ASSERT_EQ(state.world.magic.magicalLightAmount, 200,
               "FUSE complete applies F0446 magical light amount");
+    ASSERT_EQ(state.world.magic.fireShieldDefense, 100,
+              "FUSE complete applies F0446 fire shield defense");
+    ASSERT_EQ(state.world.magic.spellShieldDefense, 100,
+              "FUSE complete applies F0446 spell shield defense");
+    ASSERT_EQ(state.world.magic.partyShieldDefense, 100,
+              "FUSE complete applies F0446 party shield defense");
     ASSERT_EQ(F0871_RUNTIME_CountFluxcagesOnSquare_Compat(
                   &state.world.explosions, 0, 2, 2, &partyFluxcageCount),
               1,
