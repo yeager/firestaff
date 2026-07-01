@@ -10,6 +10,8 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "firestaff/dm1/v1/G0492_pc34_compat.h"
+#include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 
 #include <assert.h>
@@ -3606,6 +3608,16 @@ static void test_orch_cmd_attack_uses_reserved2_action_damage_factor(void) {
     int meleeBefore = 0;
     int meleeAfter = 0;
     unsigned int seed;
+
+    /* ReDMCSB MENU.C F0407/F0402 feeds F0231 through the Graphic560
+     * action tables.  The live CMD_ATTACK bridge must keep reading the
+     * shared G0492/G0493 source-lock accessors, not a private action table. */
+    assert(dm1_v1_graphic560_action_hit_probability_get_pc34(13) == 32);
+    assert(dm1_v1_graphic560_action_damage_factor_get_pc34(13) == 16);
+    assert(dm1_v1_graphic560_action_hit_probability_get_pc34(
+               CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34) == 64);
+    assert(dm1_v1_graphic560_action_damage_factor_get_pc34(
+               CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34) == 60);
 
     for (seed = 1; seed <= 128 && !sawDifferentDamage; ++seed) {
         int swingMutated = run_live_cmd_attack_damage_attempt(
