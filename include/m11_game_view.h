@@ -263,6 +263,7 @@ typedef struct {
      * gameplay input; only ESC (return to menu) is accepted. */
     int gameWon;
     uint32_t gameWonTick;  /* tick when victory was detected */
+    int endgameDoNotDrawFluxcages;
 
     /* Dialog box overlay for text-plaque inspection.
      * When dialogOverlayActive is 1, a styled dialog panel is rendered
@@ -691,6 +692,9 @@ int M11_GameView_IsGameWon(const M11_GameViewState* state);
 
 /* Return the tick at which the game was won (0 if not won). */
 uint32_t M11_GameView_GetGameWonTick(const M11_GameViewState* state);
+
+/* Return 1 when F0446 has reached the source endgame fluxcage-hide gate. */
+int M11_GameView_GetEndgameDoNotDrawFluxcages(const M11_GameViewState* state);
 
 /* Return 1 if a dialog overlay is currently displayed. */
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state);
