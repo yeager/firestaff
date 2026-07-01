@@ -18,6 +18,11 @@ unsigned char* G2160_puc_Bitmap_Destination;
 static int g_pass = 0;
 static int g_fail = 0;
 
+static unsigned short make_thing(int type, int index)
+{
+    return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
+}
+
 #define ASSERT_EQ(actual, expected, msg) do { \
     int a_ = (int)(actual); \
     int e_ = (int)(expected); \
@@ -28,6 +33,7 @@ static int g_fail = 0;
 static void seed_active_view(M11_GameViewState* state)
 {
     struct ChampionState_Compat* champion;
+    int i;
 
     memset(state, 0, sizeof(*state));
     M11_GameView_Init(state);
@@ -50,6 +56,9 @@ static void seed_active_view(M11_GameViewState* state)
     champion->stamina.maximum = 100;
     champion->food = 1500;
     champion->water = 1500;
+    for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
+        champion->inventory[i] = THING_NONE;
+    }
 }
 
 static void assert_no_pipeline_activity(const M11_GameViewState* state,
@@ -321,6 +330,41 @@ static void test_candidate_panel_blocks_direct_inventory_toggle(void)
                                 "C040 direct inventory helper does not tick");
 }
 
+static void test_candidate_panel_blocks_direct_object_helpers(void)
+{
+    M11_GameViewState state;
+    struct ChampionState_Compat* champion;
+    unsigned short handItem;
+    uint32_t tick;
+    int direction;
+
+    seed_active_view(&state);
+    champion = &state.world.party.champions[0];
+    handItem = make_thing(THING_TYPE_JUNK, 0);
+    champion->inventory[CHAMPION_SLOT_HAND_RIGHT] = handItem;
+    tick = state.world.gameTick;
+    direction = state.world.party.direction;
+    state.candidateMirrorOrdinal = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+    state.inventoryPanelActive = 1;
+
+    ASSERT_EQ(M11_GameView_PickupItem(&state), 0,
+              "C040 candidate blocks direct pickup helper");
+    ASSERT_EQ(M11_GameView_DropItem(&state), 0,
+              "C040 candidate blocks direct drop helper");
+    ASSERT_EQ(M11_GameView_UseItem(&state), 0,
+              "C040 candidate blocks direct use helper");
+    ASSERT_EQ(champion->inventory[CHAMPION_SLOT_HAND_RIGHT], handItem,
+              "blocked object helpers preserve hand item");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "blocked object helpers keep C040 live");
+    ASSERT_EQ(state.inventoryPanelActive, 1,
+              "blocked object helpers keep inventory panel open");
+    assert_no_pipeline_activity(&state, tick, direction,
+                                "C040 direct object helpers do not tick");
+}
+
 static void test_keyboard_positive_control_dispatches_without_overlay(void)
 {
     /* v2.8.x: arrow Left/Right now mean strafe-left/strafe-right
@@ -424,6 +468,7 @@ int main(void)
     test_c161_rename_duplicate_name_keeps_modal_open();
     test_candidate_panel_blocks_direct_spell_helpers();
     test_candidate_panel_blocks_direct_inventory_toggle();
+    test_candidate_panel_blocks_direct_object_helpers();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();

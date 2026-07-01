@@ -5174,6 +5174,15 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
     if (!state || !state->active || state->partyDead) {
         return 0;
     }
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB: COMMAND.C F0380 lines 2159, 2180, 2303,
+         * 2309, 2338, and 2367 route normal status, inventory,
+         * spell, action, rest, and save commands around
+         * G0299_ui_CandidateChampionOrdinal while C040 owns input.
+         * Keep Firestaff's direct object convenience API from
+         * mutating floor/inventory state behind that live panel. */
+        return 0;
+    }
     if (state->world.party.activeChampionIndex < 0 ||
         state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
         m11_set_status(state, "PICKUP", "NO ACTIVE CHAMPION");
@@ -5243,6 +5252,13 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
     char champName[16];
 
     if (!state || !state->active || state->partyDead) {
+        return 0;
+    }
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB: COMMAND.C F0380 lines 2159, 2180, 2303,
+         * 2309, 2338, and 2367 keep the C040 candidate panel
+         * as the active command surface through
+         * G0299_ui_CandidateChampionOrdinal. */
         return 0;
     }
     if (state->world.party.activeChampionIndex < 0 ||
@@ -7209,6 +7225,12 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
     char champName[16];
 
     if (!state || !state->active || state->partyDead) {
+        return 0;
+    }
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB: COMMAND.C F0380 lines 2159, 2180, 2303,
+         * 2309, 2338, and 2367 keep C040 candidate-panel input
+         * isolated from normal inventory/object command effects. */
         return 0;
     }
     if (state->world.party.activeChampionIndex < 0 ||
