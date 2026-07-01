@@ -8042,6 +8042,38 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_chest_nested_container_weight_gate_pc34_compat
     )
 
+    # pass1091 — chest nested-tail reopen-after-drop gate: an open
+    # chest (G0426 live) carries a 9-linked outer payload where slot 2
+    # is an inner CONTAINER (DEFS.H C09_THING_TYPE_CONTAINER, inner
+    # Slot chain A/B/C) and the ninth link is the hidden tail that the
+    # F0333:53-76 L1019_i_ThingCount > 8 break (CHANGE8_08_FIX)
+    # truncates out of the visible C537..C544 panel.  The leader hand
+    # is loaded BEFORE the open (the "drop" the lane name references -
+    # F0297 has already run), the chest auto-closes via the press-eye
+    # path (F0334 with P0694_B_PressingEye=TRUE), and the chest is
+    # REOPENED to verify the visible slot order, the inner Slot chain
+    # head + item types + weights, AND the hidden-tail item all
+    # resurface byte-stable.  F0334 must NOT touch the leader hand
+    # on the press-eye close path; F0163 must be called exactly
+    # eight times (the hidden tail was never in G0425 so it is NOT
+    # relinked).  Source-locked against CHEST.C F0333:30-67 +
+    # F0333:53-76 + F0333:32 P0694_B_PressingEye + CHEST.C F0334:79-130
+    # + CHAMPION.C F0297:243-268 + F0298:270-298 + F0302:662-714 +
+    # DUNGEON.C F0140:1082-1133 + F0159:1664-1681 + F0163:1769-1838 +
+    # DEFS.H CONTAINER struct lines 1485-1499 + C09_THING_TYPE_CONTAINER.
+    add_executable(test_dm1_v1_chest_nested_tail_reopen_after_drop_gate_pc34_compat
+        tests/test_dm1_v1_chest_nested_tail_reopen_after_drop_gate_pc34_compat.c
+        src/dm1/dm1_v1_chest_nested_tail_reopen_after_drop_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_chest_nested_tail_reopen_after_drop_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_chest_nested_tail_reopen_after_drop_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_chest_nested_tail_reopen_after_drop_gate_pc34_compat
+        COMMAND test_dm1_v1_chest_nested_tail_reopen_after_drop_gate_pc34_compat
+    )
+
     # pass803 — chest auto-close on leader death: F0319 (kill) clears
     # CurrentHealth + G0333 (mouth) + G0331 (eye), dispatches F0355
     # with C04_CHAMPION_CLOSE_INVENTORY which calls F0334 to clear
