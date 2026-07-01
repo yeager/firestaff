@@ -1550,6 +1550,44 @@ if(BUILD_TESTING)
         NAME csb_v22_inplace_render_probe
         COMMAND firestaff_csb_v22_inplace_render_probe
     )
+    set_tests_properties(csb_v22_inplace_render_probe PROPERTIES
+        LABELS "tier2;csb;v2.2;modern-shapes;presentation-only"
+    )
+endif()
+
+# CSB V2.2 per-cell modern-art swap / material-routing gate probe.
+# Headless: builds a synthetic per-depth + per-cell-type v22_inplace_cache.bin
+# under a probe-only HOME, walks uniform-wall / pit+stairs / field
+# no-asset / CSB-narrative scenes, and asserts the in-place draw
+# pass routes per-cell (depth + lateral + cell type) instead of by
+# shape type alone. See include/csb_v22_inplace_route_pc34.h and
+# src/csb/csb_v22_inplace_route_pc34.c.
+add_executable(firestaff_csb_v22_per_cell_route_probe
+    probes/firestaff_csb_v22_per_cell_route_probe.c
+    src/csb/csb_v22_inplace_draw_pc34.c
+    src/csb/csb_v22_inplace_route_pc34.c
+    src/csb/csb_v22_shape_cache_pc34.c
+    src/csb/csb_v22_shapes.c
+    src/csb/csb_v2_presentation_mode_pc34.c
+    src/csb/csb_v2_texture_upscale_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_csb_v22_per_cell_route_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_csb_v22_per_cell_route_probe
+    PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v22_per_cell_route_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME csb_v22_per_cell_route_probe
+        COMMAND firestaff_csb_v22_per_cell_route_probe
+    )
+    set_tests_properties(csb_v22_per_cell_route_probe PROPERTIES
+        LABELS "tier2;csb;v2.2;modern-shapes;per-cell-route;presentation-only"
+    )
 endif()
 
 # DM1 V2.2 in-place modern-renderer probe. Headless: creates its own tiny cache.
@@ -9117,6 +9155,12 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_csb_v22_inplace_draw_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
+    add_executable(test_csb_v22_inplace_route_pc34
+        tests/test_csb_v22_inplace_route_pc34.c
+        src/csb/csb_v22_inplace_route_pc34.c
+        src/csb/csb_v22_shapes.c
+    )
+    target_link_libraries(test_csb_v22_inplace_route_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
     add_executable(test_csb_v22_modern_assets_pc34
         tests/test_csb_v22_modern_assets_pc34.c
         src/csb/csb_v22_modern_assets_pc34.c
@@ -9739,6 +9783,13 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v22_inplace_draw_pc34
         COMMAND test_csb_v22_inplace_draw_pc34
+    )
+    add_test(
+        NAME csb_v22_inplace_route_pc34
+        COMMAND test_csb_v22_inplace_route_pc34
+    )
+    set_tests_properties(csb_v22_inplace_route_pc34 PROPERTIES
+        LABELS "tier2;csb;v2.2;modern-shapes;per-cell-route;presentation-only"
     )
     add_test(
         NAME theron_v2_texture_upscale_pc34

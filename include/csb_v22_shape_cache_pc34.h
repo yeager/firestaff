@@ -58,6 +58,16 @@ int csb_v22_shape_cache_active(int depth, int lateral);
 /* True if at least one cache_update has been called. */
 int csb_v22_shape_cache_populated(void);
 
+/* Read the raw M034 cell type that was last supplied to
+ * csb_v22_shape_cache_update for the given (depth, lateral) cell.
+ * Returns -1 if the cache has not been populated yet or the
+ * coords are out of range. The per-cell modern-art routing gate
+ * (csb_v22_inplace_route_cell) re-decodes this raw cell type to
+ * its shape type internally; the route gate's contract is
+ * "give me a raw cell type" so callers do not need to consult
+ * the shape book first. */
+int csb_v22_shape_cache_get_raw_cell(int depth, int lateral);
+
 /* Source evidence for tests/probes. */
 const char* csb_v22_shape_cache_source_evidence(void);
 

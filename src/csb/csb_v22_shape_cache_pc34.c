@@ -12,6 +12,7 @@
 #include <string.h>
 
 static CSB_V22_ShapeRuntimeResult g_csb_cache[3][3];
+static int g_csb_cache_raw[3][3];
 static int g_csb_cache_populated = 0;
 
 /* 9-cell rect table (D0..D2 x L/C/R). At 1920x1080, each cell is
@@ -44,6 +45,7 @@ void csb_v22_shape_cache_update(int direction,
     for (d = 0; d < 3; ++d) {
         for (l = -1; l <= 1; ++l) {
             int idx = l + 1;
+            g_csb_cache_raw[d][idx] = (int)raw_cells[d][idx];
             if (!v22_active) {
                 memset(&g_csb_cache[d][idx], 0, sizeof(g_csb_cache[d][idx]));
                 continue;
@@ -73,6 +75,13 @@ int csb_v22_shape_cache_active(int depth, int lateral) {
 
 int csb_v22_shape_cache_populated(void) {
     return g_csb_cache_populated;
+}
+
+int csb_v22_shape_cache_get_raw_cell(int depth, int lateral) {
+    if (depth < 0 || depth > 2) return -1;
+    if (lateral < -1 || lateral > 1) return -1;
+    if (!g_csb_cache_populated) return -1;
+    return g_csb_cache_raw[depth][lateral + 1];
 }
 
 const char* csb_v22_shape_cache_source_evidence(void) {
