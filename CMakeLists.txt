@@ -21635,6 +21635,51 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_byte_manifest_m12.c"
     )
 endif()
 
+# Per-game save export/import manifest: portable sidecar JSON manifest +
+# byte-preserving copy for the Firestaff-native save formats (DM1 FSDM1SV1,
+# CSB RDMCSB20, DM2 0xBEEF slot-magic, Nexus FNXS, Theron TQR / .tqsv).
+# Companion to M12's launcher-level save-manifest export/import (which
+# records only quick-resume paths). Skips safely on hosts without real
+# Firestaff saves staged; real-asset probe is skip-safe too.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_save_export_manifest.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/firestaff_save_export_manifest.c")
+    add_executable(test_firestaff_save_export_manifest
+        tests/test_firestaff_save_export_manifest.c
+        src/shared/firestaff_save_export_manifest.c
+    )
+    target_link_libraries(test_firestaff_save_export_manifest PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_save_export_manifest PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_save_export_manifest
+        COMMAND test_firestaff_save_export_manifest
+    )
+    set_tests_properties(firestaff_save_export_manifest PROPERTIES LABELS "save_export_manifest;data_free")
+
+    # Skip-safe real-corpus receipt probe: round-trips a real staged
+    # Firestaff save through the per-game manifest layer and asserts
+    # magic + version + body CRC32 + byte-exact preservation. Exits 0
+    # with SKIP if no real save is staged.
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/firestaff_save_export_manifest_real_corpus_probe.c")
+        add_executable(firestaff_save_export_manifest_real_corpus_probe
+            probes/firestaff_save_export_manifest_real_corpus_probe.c
+            src/shared/firestaff_save_export_manifest.c
+        )
+        target_include_directories(firestaff_save_export_manifest_real_corpus_probe PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        if(NOT MSVC)
+            target_compile_options(firestaff_save_export_manifest_real_corpus_probe PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+        endif()
+        add_test(
+            NAME firestaff_save_export_manifest_real_corpus
+            COMMAND firestaff_save_export_manifest_real_corpus_probe
+        )
+        set_tests_properties(firestaff_save_export_manifest_real_corpus PROPERTIES LABELS "save_export_manifest;real_corpus;skip_safe")
+    endif()
+endif()
+
 # M12 polished UI flow: public startup-menu state-machine coverage for
 # main, unavailable-game messages, museum, changelog, settings, and launch.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_polished_ui_flow.c")
