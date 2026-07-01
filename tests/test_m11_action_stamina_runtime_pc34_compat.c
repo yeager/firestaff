@@ -1554,6 +1554,62 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW records source projectile movement-disable direction");
 }
 
+static void test_direct_throw_empty_action_hand_keeps_f0407_tail(void) {
+    M11_GameViewState state;
+    DM1_ActionXpRoute route;
+    int expectedActionXp;
+    int expectedStaminaCost;
+    int expectedDisabledTicks;
+
+    seed_state(&state, 100, 58);
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].direction = 3;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        THING_NONE;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_THROW, &route), 1,
+              "empty-hand THROW has a source G0496/G0497 route");
+    if (!route.valid) return;
+    expectedActionXp = route.experienceGain * 2;
+    expectedStaminaCost =
+        dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_THROW);
+    expectedDisabledTicks = action_disabled_ticks_for_test(DM1_ACTION_THROW);
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_THROW),
+              0,
+              "empty action-hand THROW returns F0328/F0407 failure");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "empty action-hand THROW creates no projectile");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_ACTION_HAND],
+              THING_NONE,
+              "empty action-hand THROW leaves the action hand empty");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "empty action-hand THROW still mirrors F0406 direction");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              expectedDisabledTicks,
+              "empty action-hand THROW keeps the common G0491 disabled tail");
+    ASSERT_EQ(state.actionDisabledIndex[0],
+              expectedDisabledTicks ? DM1_ACTION_THROW : 255,
+              "empty action-hand THROW records disabled action only when G0491 is nonzero");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current,
+              100 - expectedStaminaCost,
+              "empty action-hand THROW still spends common G0494 stamina");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedActionXp,
+              "empty action-hand THROW still awards common G0497 XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedActionXp,
+              "empty action-hand THROW still propagates common G0497 XP");
+    ASSERT_EQ(state.world.projectileDisabledMovementTicks, 0,
+              "empty action-hand THROW does not set F0328 movement-disable ticks");
+}
+
 static void test_throw_ven_potion_launches_removepotion_projectile(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -6169,6 +6225,7 @@ int main(void) {
     test_projectile_action_required_mana_uses_g0496_route();
     test_block_action_spends_source_stamina();
     test_throw_action_removes_action_hand_object();
+    test_direct_throw_empty_action_hand_keeps_f0407_tail();
     test_throw_ven_potion_launches_removepotion_projectile();
     test_throw_ven_potion_advances_to_wall_impact_and_consumes();
     test_throw_ful_bomb_advances_to_wall_impact_and_consumes();
