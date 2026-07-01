@@ -6974,6 +6974,20 @@ if(BUILD_TESTING)
         NAME dm1_v1_inventory_equip_slots_pc34_compat
         COMMAND test_dm1_v1_inventory_equip_slots_pc34_compat
     )
+
+    add_executable(test_dm1_v1_inventory_slot_placement_pc34_compat
+        tests/test_dm1_v1_inventory_slot_placement_pc34_compat.c
+        src/dm1/dm1_v1_inventory_slot_placement_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_inventory_slot_placement_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_inventory_slot_placement_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inventory_slot_placement_pc34_compat
+        COMMAND test_dm1_v1_inventory_slot_placement_pc34_compat
+    )
+
     add_test(
         NAME dm1_v1_inventory_status_hand_slot_route_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_inventory_status_hand_slot_route_source_lock.py
@@ -18414,6 +18428,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass863_dm1_v1_slot_drop_order_pc34_compat.py
         )
         set_tests_properties(pass863_dm1_v1_slot_drop_order PROPERTIES DEPENDS dm1_v1_slot_drop_order_pc34_compat)
+        add_test(
+            NAME pass1091_dm1_v1_inventory_slot_placement
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1091_dm1_v1_inventory_slot_placement_pc34_compat.py
+        )
+        set_tests_properties(pass1091_dm1_v1_inventory_slot_placement PROPERTIES DEPENDS dm1_v1_inventory_slot_placement_pc34_compat)
         add_test(
             NAME pass864_dm1_v1_box_screen_top
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass864_dm1_v1_box_screen_top_pc34_compat.py
