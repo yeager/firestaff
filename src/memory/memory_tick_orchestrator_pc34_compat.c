@@ -1641,6 +1641,47 @@ static void orch_writeback_cmd_attack_luck_compat(
             (uint8_t)luck;
 }
 
+static int orch_build_projectile_defender_champion_snapshot_compat(
+    const struct GameWorld_Compat* world,
+    int championIndex,
+    int attackType,
+    struct CombatantChampionSnapshot_Compat* outChampion)
+{
+    const struct ChampionState_Compat* champion;
+
+    if (!world || !outChampion) return 0;
+    memset(outChampion, 0, sizeof(*outChampion));
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champion = &world->party.champions[championIndex];
+    if (!champion->present || champion->hp.current == 0) return 0;
+
+    outChampion->championIndex = championIndex;
+    outChampion->currentHealth = champion->hp.current;
+    outChampion->dexterity = champion->attributes[CHAMPION_ATTR_DEXTERITY];
+    outChampion->statisticVitality = champion->attributes[CHAMPION_ATTR_VITALITY];
+    outChampion->statisticAntifire = champion->attributes[CHAMPION_ATTR_ANTIFIRE];
+    outChampion->statisticAntimagic = champion->attributes[CHAMPION_ATTR_ANTIMAGIC];
+    outChampion->statisticWisdom = champion->attributes[CHAMPION_ATTR_WISDOM];
+    outChampion->wounds = champion->wounds;
+    outChampion->isResting =
+        world->partyIsResting || world->lifecycle.rest.isResting;
+
+    /* ReDMCSB CHAMPION.C F0321 lines 1878-1888 subtracts the
+     * attack-specific party spell/fire shield before the common
+     * F0313 body-defense scale.  For physical/lightning projectile
+     * paths, fold the champion action defense and party shield into
+     * the deterministic F0313 snapshot field. */
+    if (attackType == COMBAT_ATTACK_MAGIC) {
+        outChampion->partyShieldDefense = world->magic.spellShieldDefense;
+    } else if (attackType == COMBAT_ATTACK_FIRE) {
+        outChampion->partyShieldDefense = world->magic.fireShieldDefense;
+    } else {
+        outChampion->partyShieldDefense =
+            champion->actionDefense + world->magic.partyShieldDefense;
+    }
+    return 1;
+}
+
 static void orch_build_cmd_attack_weapon_profile_compat(
     const DM1_WeaponInfo* weaponInfo,
     int weaponType,
@@ -3448,8 +3489,10 @@ static int orch_apply_projectile_champion_action_compat(
     struct TickResult_Compat* result)
 {
     struct CombatResult_Compat damage;
+    struct CombatantChampionSnapshot_Compat defender;
     struct ChampionState_Compat* champion;
     int championIndex;
+    int scaledAttack = 0;
     int killed = 0;
 
     if (!world || !action) return 0;
@@ -3461,7 +3504,20 @@ static int orch_apply_projectile_champion_action_compat(
     if (!champion->present || champion->hp.current == 0) return 0;
 
     memset(&damage, 0, sizeof(damage));
-    damage.damageApplied = action->rawAttackValue;
+    if (!orch_build_projectile_defender_champion_snapshot_compat(
+            world, championIndex, action->attackTypeCode, &defender) ||
+        !F0739_COMBAT_ScaleChampionDamageF0321_Compat(
+            action->attackTypeCode,
+            action->rawAttackValue,
+            action->allowedWounds,
+            &defender,
+            &scaledAttack)) {
+        return 0;
+    }
+    if (scaledAttack <= 0) {
+        return 1;
+    }
+    damage.damageApplied = scaledAttack;
     damage.woundMaskAdded = action->allowedWounds;
 
     /* ReDMCSB PROJEXPL.C:F0217 lines 513-558 computes champion
