@@ -13,6 +13,7 @@
  */
 
 #include "m11_game_view.h"
+#include "dm1_v1_skill_experience_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -71,6 +72,7 @@ static void seed_resting_attack_state(M11_GameViewState* state,
     state->world.partyMapIndex = 1;
     state->world.newPartyMapIndex = 1;
     state->world.partyIsResting = 1;
+    state->world.lifecycle.rest.isResting = 1;
     state->world.party.mapIndex = 1;
     state->world.party.mapX = 0;
     state->world.party.mapY = 0;
@@ -102,9 +104,61 @@ static void test_creature_attack_wakes_resting_party(void) {
     }
     ASSERT_EQ(sawRedraw, 1, "idle ticks with adjacent creature redraw");
     ASSERT_EQ(state.resting, 0, "creature attack clears resting flag");
+    ASSERT_EQ(state.world.partyIsResting, 0,
+              "creature attack clears world resting mirror");
+    ASSERT_EQ(state.world.lifecycle.rest.isResting, 0,
+              "creature attack clears lifecycle resting mirror");
     ASSERT_EQ(state.damageFlashTimer > 0, 1, "creature attack damage cue fires");
     ASSERT_EQ(state.world.party.champions[0].hp.current < 100, 1,
               "creature attack applies damage");
+}
+
+static int run_awake_creature_attack_fixture_with_parry_xp(int32_t fighterXp,
+                                                           int32_t parryXp) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[2];
+    int i;
+    int startHp;
+
+    seed_resting_attack_state(&state, &dungeon, maps, &things, groups,
+                              squareFirstThings);
+    state.resting = 0;
+    state.world.partyIsResting = 0;
+    state.world.lifecycle.rest.isResting = 0;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIGHTER].experience = fighterXp;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_PARRY].experience = parryXp;
+    startHp = (int)state.world.party.champions[0].hp.current;
+
+    for (i = 0; i < 24; ++i) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+
+    return startHp - (int)state.world.party.champions[0].hp.current;
+}
+
+static void test_creature_attack_runtime_uses_f0230_parry_skill(void) {
+    int noParryDamage;
+    int parryDamage;
+
+    /*
+     * ReDMCSB PROJEXPL.C F0230:1390-1395 subtracts
+     * (F0303_CHAMPION_GetSkillLevel(C07_SKILL_PARRY) << 1) before the
+     * creature-hit damage cascade.  This keeps the M11 runtime tick path
+     * pinned, not only the public F0230 probe helper.
+     */
+    noParryDamage = run_awake_creature_attack_fixture_with_parry_xp(0, 0);
+    parryDamage = run_awake_creature_attack_fixture_with_parry_xp(8192, 8192);
+
+    ASSERT_EQ(noParryDamage > 0, 1,
+              "F0230 control fixture takes creature damage");
+    ASSERT_EQ(parryDamage < noParryDamage, 1,
+              "F0230 runtime parry skill lowers creature damage");
 }
 
 static void seed_rest_recovery_boundary_state(M11_GameViewState* state) {
@@ -173,6 +227,7 @@ int main(void) {
     printf("ReDMCSB: COMMAND.C F0380 rest/wake, CHAMPION.C F0314 wake, PROJEXPL.C F0230 attack wake\n\n");
 
     test_creature_attack_wakes_resting_party();
+    test_creature_attack_runtime_uses_f0230_parry_skill();
     test_wake_input_does_not_spend_recovery_tick();
     test_resting_idle_tick_recovers_at_boundary();
 
