@@ -5848,6 +5848,7 @@ static void m11_check_party_death(M11_GameViewState* state) {
     }
     if (!anyAlive && state->world.party.championCount > 0) {
         state->partyDead = 1;
+        state->world.partyDead = 1;
         m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: ALL CHAMPIONS HAVE FALLEN",
                       (unsigned int)state->world.gameTick);
         m11_set_status(state, "DEATH", "PARTY WIPED");
@@ -22595,6 +22596,7 @@ static int m11_maybe_apply_projectile_poison_to_champion(
     if (!state || !champion || !projectile) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     if (appliedDamage <= 0 || projectile->poisonAttack <= 0) return 0;
+    if (champion->hp.current == 0) return 0;
     /* ReDMCSB PROJEXPL.C F0217 lines 557-558 gates projectile poison
      * through F0322 only when the champion-damage call applied damage,
      * the projectile carries poison, and RANDOM(2) passes.  CHAMPION.C
@@ -22754,8 +22756,16 @@ static void m11_projectile_apply_impact(
             if (dmg > hp) dmg = hp;
             state->world.party.champions[ci].hp.current =
                 (unsigned short)(hp - dmg);
+            /* ReDMCSB PROJEXPL.C F0217 lines 513-558 routes champion
+             * projectile impact through F0321.  CHAMPION.C lines
+             * 1659-1667 sets G0303_B_PartyDead when the final party
+             * champion reaches zero HP; mirror that M11 gate here for
+             * direct F0811 projectile advances that bypass F0884. */
             (void)m11_maybe_apply_projectile_poison_to_champion(
                 state, ci, &state->world.party.champions[ci], p, dmg);
+            if (state->world.party.champions[ci].hp.current == 0) {
+                m11_check_party_death(state);
+            }
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s HITS PARTY FOR %d",
                           (unsigned int)state->world.gameTick, name, dmg);

@@ -2739,6 +2739,86 @@ static void test_projectile_champion_hit_applies_poison_dose(void) {
               "poison projectile C75 dispatch keeps one active poison event");
 }
 
+static void test_projectile_champion_hit_can_kill_party(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 0;
+    state.world.party.mapY = 0;
+    state.world.party.direction = 1;
+    state.world.party.championCount = 2;
+    state.world.party.champions[0].present = 0;
+    state.world.party.champions[0].hp.current = 0;
+    state.world.party.champions[1].present = 1;
+    state.world.party.champions[1].hp.current = 20;
+    state.world.party.champions[1].hp.maximum = 20;
+    state.world.party.champions[1].cell = 1;
+    state.world.party.champions[1].name[0] = 'S';
+    state.world.party.champions[1].name[1] = 'O';
+    state.world.party.champions[1].name[2] = 'N';
+    state.world.party.champions[1].name[3] = 'J';
+    state.world.gameTick = 100;
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CREATURE;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 0;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 60;
+    projectile->attack = 30;
+    projectile->stepEnergy = 5;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = make_thing(THING_TYPE_WEAPON, 0);
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "lethal projectile champion impact despawns projectile");
+    ASSERT_EQ(state.world.party.champions[1].hp.current, 0,
+              "lethal projectile champion impact clamps champion HP to zero");
+    ASSERT_EQ(state.partyDead, 1,
+              "lethal projectile champion impact sets M11 party-dead gate");
+    ASSERT_EQ(state.world.partyDead, 1,
+              "lethal projectile champion impact mirrors M10 party-dead flag");
+}
+
 static void test_thrown_potion_wall_impact_consumes_potion_thing(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -4768,6 +4848,7 @@ int main(void) {
     test_projectile_creature_impact_keeps_thrown_sharp_weapon();
     test_projectile_door_hit_schedules_and_dispatches_destruction();
     test_projectile_champion_hit_applies_poison_dose();
+    test_projectile_champion_hit_can_kill_party();
     test_thrown_potion_wall_impact_consumes_potion_thing();
     test_leader_hand_throw_uses_f0328_temporary_action_hand();
     test_block_action_disables_champion_for_source_ticks();
