@@ -4533,6 +4533,75 @@ static void m11_set_raw_next_thing(struct DungeonThings_Compat* things,
     raw[1] = (unsigned char)((newNext >> 8) & 0xFFu);
 }
 
+static void m11_set_decoded_next_thing(struct DungeonThings_Compat* things,
+                                       unsigned short thingId,
+                                       unsigned short newNext) {
+    int type;
+    int index;
+    if (!things || thingId == THING_NONE || thingId == THING_ENDOFLIST) {
+        return;
+    }
+    type = THING_GET_TYPE(thingId);
+    index = THING_GET_INDEX(thingId);
+    if (index < 0) return;
+    switch (type) {
+    case THING_TYPE_GROUP:
+        if (things->groups && index < things->groupCount) {
+            things->groups[index].next = newNext;
+        }
+        break;
+    case THING_TYPE_TELEPORTER:
+        if (things->teleporters && index < things->teleporterCount) {
+            things->teleporters[index].next = newNext;
+        }
+        break;
+    case THING_TYPE_SENSOR:
+        if (things->sensors && index < things->sensorCount) {
+            things->sensors[index].next = newNext;
+        }
+        break;
+    case THING_TYPE_WEAPON:
+        if (things->weapons && index < things->weaponCount) {
+            things->weapons[index].next = newNext;
+        }
+        break;
+    case THING_TYPE_ARMOUR:
+        if (things->armours && index < things->armourCount) {
+            things->armours[index].next = newNext;
+        }
+        break;
+    case THING_TYPE_SCROLL:
+        if (things->scrolls && index < things->scrollCount) {
+            things->scrolls[index].next = newNext;
+        }
+        break;
+    case THING_TYPE_POTION:
+        if (things->potions && index < things->potionCount) {
+            things->potions[index].next = newNext;
+        }
+        break;
+    case THING_TYPE_CONTAINER:
+        if (things->containers && index < things->containerCount) {
+            things->containers[index].next = newNext;
+        }
+        break;
+    case THING_TYPE_JUNK:
+        if (things->junks && index < things->junkCount) {
+            things->junks[index].next = newNext;
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+static void m11_set_next_thing(struct DungeonThings_Compat* things,
+                               unsigned short thingId,
+                               unsigned short newNext) {
+    m11_set_decoded_next_thing(things, thingId, newNext);
+    m11_set_raw_next_thing(things, thingId, newNext);
+}
+
 /* Remove a specific thing from a square's chain. Returns 1 if removed. */
 static int m11_unlink_thing_from_square(struct GameWorld_Compat* world,
                                         int mapIndex,
@@ -4574,9 +4643,9 @@ static int m11_unlink_thing_from_square(struct GameWorld_Compat* world,
             if (prev == THING_ENDOFLIST) {
                 world->things->squareFirstThings[squareIndex] = next;
             } else {
-                m11_set_raw_next_thing(world->things, prev, next);
+                m11_set_next_thing(world->things, prev, next);
             }
-            m11_set_raw_next_thing(world->things, current, THING_ENDOFLIST);
+            m11_set_next_thing(world->things, current, THING_ENDOFLIST);
             return 1;
         }
         prev = current;
@@ -4617,7 +4686,7 @@ static int m11_prepend_thing_to_square(struct GameWorld_Compat* world,
     }
 
     oldFirst = world->things->squareFirstThings[squareIndex];
-    m11_set_raw_next_thing(world->things, thingId, oldFirst);
+    m11_set_next_thing(world->things, thingId, oldFirst);
     world->things->squareFirstThings[squareIndex] = thingId;
     return 1;
 }
@@ -21319,23 +21388,97 @@ static int m11_count_fluxcages_around_square(M11_GameViewState* state,
     return count;
 }
 
-static int m11_lord_chaos_has_escape_square(M11_GameViewState* state,
-                                            int mapIndex,
-                                            int mapX,
-                                            int mapY,
-                                            const int present[4]) {
+static int m11_find_lord_chaos_escape_square_f0225(
+    M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    const int present[4],
+    int* outX,
+    int* outY) {
     static const int dx[4] = {-1, +1, 0, 0};
     static const int dy[4] = {0, 0, -1, +1};
-    int i;
-    if (!state || !present) return 0;
-    for (i = 0; i < 4; ++i) {
-        if (present[i]) continue;
-        if (m11_square_walkable_for_creature(&state->world, mapIndex,
-                                            mapX + dx[i], mapY + dy[i])) {
+    int start;
+    int step;
+
+    if (!state || !present || !outX || !outY) return 0;
+    /* ReDMCSB PROJEXPL.C F0225 lines 1087-1118 starts at
+     * M004_RANDOM(4), then scans the four cardinal fluxcage slots with
+     * M017_NEXT until it finds an unblocked, allowed square. */
+    start = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 4);
+    for (step = 0; step < 4; ++step) {
+        int slot = (start + step) & 3;
+        int tx;
+        int ty;
+        if (present[slot]) continue;
+        tx = mapX + dx[slot];
+        ty = mapY + dy[slot];
+        if (m11_square_walkable_for_creature(&state->world, mapIndex, tx, ty)) {
+            *outX = tx;
+            *outY = ty;
             return 1;
         }
     }
     return 0;
+}
+
+static void m11_update_group_ai_position(M11_GameViewState* state,
+                                         int groupIndex,
+                                         int mapIndex,
+                                         int oldX,
+                                         int oldY,
+                                         int newX,
+                                         int newY) {
+    int i;
+    if (!state) return;
+    for (i = 0; i < state->world.creatureAICount; ++i) {
+        struct CreatureAIState_Compat* ai = &state->world.creatureAI[i];
+        if ((ai->reserved0 == groupIndex) ||
+            (ai->groupMapIndex == mapIndex &&
+             ai->groupMapX == oldX &&
+             ai->groupMapY == oldY)) {
+            ai->groupMapIndex = mapIndex;
+            ai->groupMapX = newX;
+            ai->groupMapY = newY;
+            if (state->world.things && state->world.things->groups &&
+                groupIndex >= 0 && groupIndex < state->world.things->groupCount) {
+                ai->creatureType =
+                    state->world.things->groups[groupIndex].creatureType;
+            }
+        }
+    }
+}
+
+static int m11_move_group_thing_f0225(M11_GameViewState* state,
+                                      int mapIndex,
+                                      int oldX,
+                                      int oldY,
+                                      int newX,
+                                      int newY,
+                                      unsigned short groupThing) {
+    int groupIndex;
+    if (!state || !state->world.things ||
+        groupThing == THING_NONE || groupThing == THING_ENDOFLIST ||
+        THING_GET_TYPE(groupThing) != THING_TYPE_GROUP) {
+        return 0;
+    }
+    groupIndex = (int)THING_GET_INDEX(groupThing);
+    if (groupIndex < 0 || groupIndex >= state->world.things->groupCount) {
+        return 0;
+    }
+    if (!m11_unlink_thing_from_square(&state->world, mapIndex, oldX, oldY,
+                                      groupThing)) {
+        return 0;
+    }
+    if (!m11_prepend_thing_to_square(&state->world, mapIndex, newX, newY,
+                                     groupThing)) {
+        (void)m11_prepend_thing_to_square(&state->world, mapIndex, oldX, oldY,
+                                          groupThing);
+        return 0;
+    }
+    m11_update_group_ai_position(state, groupIndex, mapIndex, oldX, oldY,
+                                 newX, newY);
+    return 1;
 }
 
 static int m11_perform_fluxcage_action(M11_GameViewState* state,
@@ -21358,18 +21501,33 @@ static int m11_perform_fluxcage_action(M11_GameViewState* state,
 static int m11_perform_fuse_action(M11_GameViewState* state,
                                    const char* champName) {
     int mapIndex, mapX, mapY;
+    const struct DungeonMapDesc_Compat* map;
     int flux[4] = {0, 0, 0, 0};
     int creatureType;
     int escapeAvailable;
+    int escapeX = -1;
+    int escapeY = -1;
+    unsigned short chaosThing;
     DM1EndgameFuseActionResult result;
     if (!m11_party_front_square(state, &mapIndex, &mapX, &mapY)) return 0;
+    if (!state || !state->world.dungeon ||
+        mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[mapIndex];
     (void)m11_spawn_centered_explosion(state, C003_EXPLOSION_HARM_NON_MATERIAL, 255,
                                        mapIndex, mapX, mapY);
     creatureType = m11_creature_type_on_square(state, mapIndex, mapX, mapY);
     (void)m11_count_fluxcages_around_square(state, mapIndex, mapX, mapY, flux);
-    escapeAvailable = m11_lord_chaos_has_escape_square(state, mapIndex, mapX, mapY, flux);
+    escapeAvailable = 0;
+    if (creatureType == DM1_CREATURE_LORD_CHAOS_ID) {
+        escapeAvailable = m11_find_lord_chaos_escape_square_f0225(
+            state, mapIndex, mapX, mapY, flux, &escapeX, &escapeY);
+    }
     memset(&result, 0, sizeof(result));
-    DM1_Endgame_EvaluateFuseAction(mapX, mapY, 9999, 9999,
+    DM1_Endgame_EvaluateFuseAction(mapX, mapY,
+                                   (int32_t)map->width,
+                                   (int32_t)map->height,
                                    creatureType, flux, escapeAvailable,
                                    &result);
     if (!result.lordChaosPresent) {
@@ -21379,6 +21537,11 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
         return 0;
     }
     if (result.lordChaosEscaped) {
+        /* ReDMCSB PROJEXPL.C F0225 lines 1115-1119 moves Lord Chaos to
+         * the selected allowed gap when the four Fluxcages are incomplete. */
+        chaosThing = m11_find_group_on_square(&state->world, mapIndex, mapX, mapY);
+        (void)m11_move_group_thing_f0225(state, mapIndex, mapX, mapY,
+                                         escapeX, escapeY, chaosThing);
         m11_log_event(state, M11_COLOR_YELLOW,
                       "T%u: LORD CHAOS SLIPS THE FLUXCAGE",
                       (unsigned int)state->world.gameTick);
