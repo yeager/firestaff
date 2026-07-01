@@ -3081,6 +3081,116 @@ static void test_orch_projectile_group_hit_keeps_thrown_sharp_weapon(void) {
     assert(world.timeline.events[0].aux1 == CREATURE_TYPE_WIZARD_EYE);
 }
 
+static void test_orch_f0266_group_move_precheck_keeps_thrown_sharp_weapon(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonProjectile_Compat dungeonProjectiles[1];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[3];
+    unsigned short squareFirstThings[2];
+    struct DungeonGroup_Compat groups[1];
+    struct TimelineEvent_Compat creatureTick;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(groups, 0, sizeof(groups));
+    memset(dungeonProjectiles, 0, sizeof(dungeonProjectiles));
+    for (i = 0; i < 3; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    squareData[0] =
+        square_for_test(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareData[1] =
+        square_for_test(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    squareFirstThings[1] = make_thing(THING_TYPE_PROJECTILE, 0);
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 1;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 3;
+    world.dungeon = &dungeon;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 2;
+    world.party.mapY = 0;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 2;
+    things.groups = groups;
+    things.groupCount = 1;
+    things.projectiles = dungeonProjectiles;
+    things.projectileCount = 1;
+    weapons[0].type = 27; /* ReDMCSB C27_WEAPON_ARROW. */
+    weapons[0].next = THING_ENDOFLIST;
+    junks[0].next = THING_ENDOFLIST;
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].slot = make_thing(THING_TYPE_JUNK, 0);
+    groups[0].creatureType = CREATURE_TYPE_WIZARD_EYE;
+    groups[0].count = 0;
+    groups[0].health[0] = 100;
+    groups[0].cells = 0xFFu;
+    dungeonProjectiles[0].next = THING_ENDOFLIST;
+    dungeonProjectiles[0].slot = make_thing(THING_TYPE_WEAPON, 0);
+    dungeonProjectiles[0].kineticEnergy = 10;
+    dungeonProjectiles[0].attack = 10;
+    dungeonProjectiles[0].eventIndex = 0;
+
+    world.creatureAICount = 1;
+    world.creatureAI[0].stateKind = AI_STATE_WANDER;
+    world.creatureAI[0].creatureType = groups[0].creatureType;
+    world.creatureAI[0].groupMapIndex = 0;
+    world.creatureAI[0].groupMapX = 0;
+    world.creatureAI[0].groupMapY = 0;
+    world.creatureAI[0].groupDirection = DIR_EAST;
+    world.creatureAI[0].groupCells = groups[0].cells;
+    world.creatureAI[0].lastSeenPartyTick = 100;
+    world.creatureAI[0].reserved0 = 0;
+
+    memset(&creatureTick, 0, sizeof(creatureTick));
+    creatureTick.kind = TIMELINE_EVENT_CREATURE_TICK;
+    creatureTick.fireAtTick = 101;
+    creatureTick.mapIndex = 0;
+    creatureTick.mapX = 0;
+    creatureTick.mapY = 0;
+    creatureTick.aux0 = 0;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &creatureTick) == 1);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
+    assert(groups[0].health[0] > 0);
+    assert(groups[0].health[0] < 100);
+    assert(groups[0].slot == make_thing(THING_TYPE_WEAPON, 0));
+    assert(weapons[0].next == make_thing(THING_TYPE_JUNK, 0));
+    assert(junks[0].next == THING_ENDOFLIST);
+    assert(dungeonProjectiles[0].next == THING_NONE);
+    assert(dungeonProjectiles[0].eventIndex == 0xFFFFu);
+    assert(squareFirstThings[0] == THING_ENDOFLIST);
+    assert(squareFirstThings[1] == make_thing(THING_TYPE_GROUP, 0));
+    assert(world.creatureAI[0].groupMapX == 1);
+    assert(world.creatureAI[0].groupMapY == 0);
+}
+
 static void test_orch_explosion_advance_applies_group_damage(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -5612,6 +5722,7 @@ int main(void) {
     test_orch_projectile_group_hit_all_kill_cleans_up_group();
     test_orch_projectile_group_hit_killed_some_applies_f0190_side_effects();
     test_orch_projectile_group_hit_keeps_thrown_sharp_weapon();
+    test_orch_f0266_group_move_precheck_keeps_thrown_sharp_weapon();
     test_orch_explosion_advance_applies_group_damage();
     test_orch_explosion_advance_applies_party_damage();
     test_orch_explosion_advance_fire_shield_blocks_party_damage();

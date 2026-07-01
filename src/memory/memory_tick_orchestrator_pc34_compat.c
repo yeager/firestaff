@@ -3234,6 +3234,12 @@ static void orch_build_group_projectile_impact_cells_compat(
     }
 }
 
+static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const struct ProjectileInstance_Compat* projectile,
+    int damageOutcome);
+
 int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     struct DungeonGroup_Compat* group,
     int creatureIndex,
@@ -3292,20 +3298,20 @@ int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     return 1;
 }
 
-static int orch_damage_group_by_projectile_compat(
-    struct DungeonGroup_Compat* group,
-    int creatureIndex,
-    const struct DungeonProjectile_Compat* projectile)
+static void orch_build_precheck_projectile_instance_compat(
+    const struct DungeonProjectile_Compat* projectile,
+    int projectileIndex,
+    struct ProjectileInstance_Compat* out)
 {
-    struct ProjectileInstance_Compat compatProjectile;
-
-    if (!projectile) return 0;
-    memset(&compatProjectile, 0, sizeof(compatProjectile));
-    compatProjectile.projectileSubtype = projectile->slot & 0x00FFu;
-    compatProjectile.kineticEnergy = projectile->kineticEnergy;
-    compatProjectile.attack = projectile->attack;
-    return F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
-        group, creatureIndex, &compatProjectile);
+    if (!out) return;
+    memset(out, 0, sizeof(*out));
+    out->slotIndex = projectileIndex;
+    if (!projectile) return;
+    out->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    out->projectileSubtype = projectile->slot & 0x00FFu;
+    out->kineticEnergy = projectile->kineticEnergy;
+    out->attack = projectile->attack;
+    out->reserved1 = projectile->slot;
 }
 
 static int orch_process_group_projectile_impacts_on_square_compat(
@@ -3337,9 +3343,13 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                 index < world->things->projectileCount && world->things->projectiles &&
                 ordinalInCell[cell]) {
                 struct DungeonProjectile_Compat* projectile = &world->things->projectiles[index];
+                struct ProjectileInstance_Compat compatProjectile;
                 int creatureIndex = (int)ordinalInCell[cell] - 1;
                 int outcome;
+                int combatOutcome;
 
+                orch_build_precheck_projectile_instance_compat(
+                    projectile, index, &compatProjectile);
                 /* MOVESENS.C:F0266:292-301 calls F0217 on matching projectile
                  * cells, then F0214 deletes the projectile event and F0217/
                  * PROJEXPL.C:607-608 unlinks/deletes the projectile thing.
@@ -3348,7 +3358,17 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                 (void)orch_unlink_thing_from_square_compat(world, mapIndex, mapX, mapY, thing);
                 projectile->next = THING_NONE;
                 projectile->eventIndex = 0xFFFFu;
-                outcome = orch_damage_group_by_projectile_compat(group, creatureIndex, projectile);
+                outcome = F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
+                    group, creatureIndex, &compatProjectile);
+                combatOutcome = (outcome == 2) ? COMBAT_OUTCOME_KILLED_ALL_CREATURES :
+                    ((outcome == 1) ? COMBAT_OUTCOME_KILLED_SOME_CREATURES :
+                                      COMBAT_OUTCOME_KILLED_NO_CREATURES);
+                /* ReDMCSB PROJEXPL.C:F0217 lines 540-553 can pass
+                 * GROUP.Slot to F0215 so F0266 source/destination
+                 * projectile prechecks preserve thrown sharp weapons as
+                 * group possessions when no creature is killed. */
+                (void)orch_maybe_attach_projectile_weapon_to_group_slot_compat(
+                    world, group, &compatProjectile, combatOutcome);
                 if (outcome == 2) {
                     if (outKilledGroup) *outKilledGroup = 1;
                     return 1;
