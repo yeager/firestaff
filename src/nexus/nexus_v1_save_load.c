@@ -31,6 +31,7 @@
 #include "nexus_v1_engine.h"
 #include "nexus_v1_champions.h"
 #include "nexus_v1_world.h"
+#include "nexus_v1_light_runtime.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -752,6 +753,303 @@ Nexus_SaveResult nexus_v1_load_full_from_path(const char *path,
         free(champ_buf);
         free(world_buf);
         return NEXUS_SAVE_ERR_READ;
+    }
+
+    free(champ_buf);
+    free(world_buf);
+    return NEXUS_SAVE_OK;
+}
+
+/* ── NGLT (Nexus_V1_LightRuntime) blob recognition ────────────────────
+ *
+ * Companion to include/nexus_v1_light_runtime.h. The NGLT blob lives
+ * at the tail of the FNXS data section (champion_data + world_data +
+ * NGLT_blob) — this is the documented embedded layout that
+ * firestaff_nexus_v1_light_runtime_probe [8] uses for its synthetic
+ * round-trip. The blob itself is opaque to the FNXS header; it is
+ * only recognized by:
+ *
+ *   1. magic == 'NGLT' (NEXUS_V1_LIGHT_RUNTIME_MAGIC, little-endian)
+ *   2. size  == NEXUS_V1_LIGHT_RUNTIME_BLOB_SIZE (1640 bytes)
+ *
+ * Both rules must hold. Anything else is treated as absent (the
+ * loader falls back to the non-NGLT path; the loader NEVER throws
+ * away champion/world data because of an unexpected tail).
+ *
+ * Source-lock:
+ *   include/nexus_v1_light_runtime.h:49-83 (NGLT magic, slot layout)
+ *   TODO.md 2026-06-29 entry (NGLT recognition follow-up).
+ */
+
+int nexus_v1_save_data_section_has_nglt(const void *buf, size_t buf_size) {
+    if (!buf) return 0;
+    /* The blob is at most buf_size bytes; need exactly the canonical
+     * blob size at the end, and the first 4 bytes must be 'NGLT'. */
+    if (buf_size < NEXUS_V1_LIGHT_RUNTIME_BLOB_SIZE) return 0;
+    const uint8_t *bytes = (const uint8_t *)buf;
+    size_t offset = buf_size - NEXUS_V1_LIGHT_RUNTIME_BLOB_SIZE;
+    /* NEXUS_V1_LIGHT_RUNTIME_MAGIC = 0x544C474E ('NGLT' little-endian
+     * on a little-endian host). The probe is byte-pattern based so
+     * the helper is portable. */
+    static const uint8_t kNGLT[4] = { 'N', 'G', 'L', 'T' };
+    if (memcmp(bytes + offset, kNGLT, 4) != 0) return 0;
+    /* The 5th uint32 holds the slot_count. We require it to match the
+     * documented EventMaximumCount base cap so a foreign blob (e.g.
+     * future layout with extra fields) is rejected cleanly. */
+    const uint8_t *slot_count_p = bytes + offset + 4 * 9;  /* 9 uint32s
+                                                            * precede it */
+    uint32_t slot_count = (uint32_t)slot_count_p[0]
+                        | ((uint32_t)slot_count_p[1] << 8)
+                        | ((uint32_t)slot_count_p[2] << 16)
+                        | ((uint32_t)slot_count_p[3] << 24);
+    return slot_count == (uint32_t)NEXUS_V1_LIGHT_TIMELINE_BASE_CAP;
+}
+
+Nexus_SaveResult nexus_v1_save_full_to_path_with_runtime(
+    const char *path,
+    int32_t current_level,
+    int32_t party_x, int32_t party_y, int32_t party_dir,
+    uint32_t game_time,
+    uint64_t state_hash,
+    const void *champion_pool,
+    const void *world,
+    const Nexus_V1_LightRuntime *runtime,
+    size_t *out_data_size) {
+    if (out_data_size) *out_data_size = 0;
+    if (!champion_pool || !world) return NEXUS_SAVE_ERR_NULL;
+
+    /* crc32_init() is idempotent (guarded by a static flag) but we
+     * still need to call it here because the function might be the
+     * first save path the process takes; without it the CRC table
+     * is zero-initialized and every CRC collapses to 0xFFFFFFFF. */
+    crc32_init();
+
+    size_t champ_size = nexus_v1_champion_pool_serialize_size((const Nexus_V1_ChampionPool *)champion_pool);
+    uint8_t *champ_buf = (uint8_t *)malloc(champ_size > 0 ? champ_size : 1);
+    if (!champ_buf) return NEXUS_SAVE_ERR_WRITE;
+    if (champ_size > 0) {
+        nexus_v1_champion_pool_serialize((const Nexus_V1_ChampionPool *)champion_pool, champ_buf, champ_size);
+    }
+
+    size_t world_size = nexus_v1_world_serialize_size((const Nexus_V1_World *)world);
+    uint8_t *world_buf = (uint8_t *)malloc(world_size > 0 ? world_size : 1);
+    if (!world_buf) { free(champ_buf); return NEXUS_SAVE_ERR_WRITE; }
+    if (world_size > 0) {
+        nexus_v1_world_serialize((const Nexus_V1_World *)world, world_buf, world_size);
+    }
+
+    /* Optional NGLT tail. The runtime may be NULL (no tail) or non-NULL
+     * but uninitialized (treated as no tail — we don't want a partial
+     * blob to corrupt the FNXS layout). */
+    size_t nglt_size = 0;
+    uint8_t *nglt_buf = NULL;
+    if (runtime && runtime->initialized) {
+        nglt_size = nexus_v1_light_runtime_blob_size();
+        nglt_buf = (uint8_t *)malloc(nglt_size);
+        if (!nglt_buf) {
+            free(champ_buf);
+            free(world_buf);
+            return NEXUS_SAVE_ERR_WRITE;
+        }
+        size_t written = nexus_v1_light_runtime_serialize(runtime, nglt_buf, nglt_size);
+        if (written != nglt_size) {
+            free(nglt_buf);
+            free(champ_buf);
+            free(world_buf);
+            return NEXUS_SAVE_ERR_WRITE;
+        }
+    }
+
+    /* Build the FNXS header using the existing header_make helper so
+     * the format stays byte-compatible with the rest of the writer.
+     * The header advertises the documented champion + world split,
+     * and the data section size covers ONLY champion + world (not
+     * the trailing NGLT). The NGLT blob is appended after the world
+     * data and the loader learns about it by re-reading past the
+     * champion + world regions. This keeps the FNXS v2 header
+     * invariant intact so legacy loaders (do_load / do_save) still
+     * work on the champion + world section. */
+    Nexus_V1_SaveHeader hdr;
+    header_make(&hdr, current_level, party_x, party_y, party_dir,
+                game_time, state_hash, "Nexus V1 save");
+    hdr.data_size = (uint32_t)(champ_size + world_size);
+    hdr.champion_data_size = (uint32_t)champ_size;
+    hdr.world_data_size = (uint32_t)world_size;
+    /* CRC covers only the champion + world data sections (the
+     * documented v2 contract). The NGLT tail has its own magic
+     * + length and is integrity-checked by the runtime's deserialize
+     * path. */
+    uint32_t crc = crc32_update(0, (const uint8_t *)champ_buf, champ_size);
+    crc = crc32_update(crc, (const uint8_t *)world_buf, world_size);
+    hdr.crc32 = crc32_final(crc);
+
+    /* Write the file. We can't use nexus_v1_save_to_path() because
+     * the existing writer would only emit champion + world; we need
+     * to also append the NGLT tail. Use a temp file + rename for
+     * atomicity, mirroring do_save(). */
+    char tmp_path[512];
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", path);
+    FILE *f = fopen(tmp_path, "wb");
+    if (!f) {
+        char dir[512];
+        strncpy(dir, path, sizeof(dir)-1);
+        dir[sizeof(dir)-1] = '\0';
+        { char *p = strrchr(dir, '/'); if (p) *p = '\0'; }
+        make_dirs(dir);
+        f = fopen(tmp_path, "wb");
+        if (!f) {
+            free(champ_buf);
+            free(world_buf);
+            free(nglt_buf);
+            return NEXUS_SAVE_ERR_OPEN;
+        }
+    }
+    int write_ok = 1;
+    if (fwrite(&hdr, sizeof(hdr), 1, f) != 1) write_ok = 0;
+    if (write_ok && champ_size > 0) {
+        if (fwrite(champ_buf, 1, champ_size, f) != champ_size) write_ok = 0;
+    }
+    if (write_ok && world_size > 0) {
+        if (fwrite(world_buf, 1, world_size, f) != world_size) write_ok = 0;
+    }
+    if (write_ok && nglt_size > 0) {
+        if (fwrite(nglt_buf, 1, nglt_size, f) != nglt_size) write_ok = 0;
+    }
+    fclose(f);
+    free(champ_buf);
+    free(world_buf);
+    free(nglt_buf);
+    if (!write_ok) {
+        remove(tmp_path);
+        return NEXUS_SAVE_ERR_WRITE;
+    }
+    remove(path);
+    if (rename(tmp_path, path) != 0) return NEXUS_SAVE_ERR_WRITE;
+
+    if (out_data_size) *out_data_size = champ_size + world_size + nglt_size;
+    return NEXUS_SAVE_OK;
+}
+
+Nexus_SaveResult nexus_v1_load_full_from_path_with_runtime(
+    const char *path,
+    Nexus_V1_SaveHeader *out_header,
+    void *champion_pool,
+    void *world,
+    Nexus_V1_LightRuntime *runtime,
+    int *out_nglt_decoded,
+    char *out_nglt_diagnostic, size_t nglt_diag_size,
+    char *out_diagnostic, size_t diag_size) {
+    /* Note: out_nglt_decoded and out_nglt_diagnostic are only
+     * touched when runtime != NULL. When runtime == NULL the
+     * NGLT branch is skipped entirely (the loader behaves like
+     * the legacy non-runtime path), so caller-supplied sentinels
+     * stay intact. */
+    if (!champion_pool || !world) return NEXUS_SAVE_ERR_NULL;
+
+    /* See nexus_v1_load_full_from_path() for the rationale: the
+     * destination pool/world have not been loaded yet, so use the
+     * conservative max-size helpers. */
+    size_t champ_size_max = nexus_v1_save_max_champion_pool_size();
+    size_t world_size_max = nexus_v1_save_max_world_size();
+
+    /* Use the standard two-field read path first. It validates the
+     * FNXS header + CRC, reads champion + world, and reports
+     * per-section sizes. After it succeeds, the file pointer is
+     * already past the champion + world data; any trailing bytes
+     * are a candidate NGLT blob. We then re-open the file to read
+     * the trailing region. */
+    uint8_t *champ_buf = (uint8_t *)malloc(champ_size_max);
+    if (!champ_buf) return NEXUS_SAVE_ERR_READ;
+    uint8_t *world_buf = (uint8_t *)malloc(world_size_max);
+    if (!world_buf) { free(champ_buf); return NEXUS_SAVE_ERR_READ; }
+
+    size_t champ_read = 0, world_read = 0;
+    Nexus_SaveResult r = nexus_v1_load_from_path(path, out_header,
+                                                  champ_buf, champ_size_max, &champ_read,
+                                                  world_buf, world_size_max, &world_read,
+                                                  out_diagnostic, diag_size);
+    if (r != NEXUS_SAVE_OK) {
+        free(champ_buf);
+        free(world_buf);
+        return r;
+    }
+
+    int ok = nexus_v1_champion_pool_deserialize((Nexus_V1_ChampionPool *)champion_pool,
+                                                 champ_buf, champ_read);
+    if (ok != 0) {
+        free(champ_buf);
+        free(world_buf);
+        return NEXUS_SAVE_ERR_READ;
+    }
+    ok = nexus_v1_world_deserialize((Nexus_V1_World *)world, world_buf, world_read);
+    if (ok != 0) {
+        free(champ_buf);
+        free(world_buf);
+        return NEXUS_SAVE_ERR_READ;
+    }
+
+    /* NGLT recognition is opt-in via runtime != NULL. After the
+     * standard read, the file pointer sits just past the world
+     * section. Any remaining bytes are a candidate NGLT tail. We
+     * re-open the file to read the tail (the original FILE* was
+     * closed by the standard read path) and validate via the
+     * documented predicate. The NGLT blob total size is fixed
+     * (NEXUS_V1_LIGHT_RUNTIME_BLOB_SIZE). */
+    if (runtime) {
+        /* We entered the NGLT branch — initialize the output
+         * parameters to their no-NGLT / no-error defaults so the
+         * caller sees a clean verdict even if we hit a sub-error. */
+        if (out_nglt_decoded) *out_nglt_decoded = 0;
+        if (out_nglt_diagnostic && nglt_diag_size > 0)
+            out_nglt_diagnostic[0] = '\0';
+        if (!runtime->initialized) {
+            if (out_nglt_diagnostic && nglt_diag_size > 0) {
+                snprintf(out_nglt_diagnostic, nglt_diag_size,
+                         "runtime not init()'d; cannot decode embedded NGLT");
+            }
+        } else {
+            /* The NGLT tail (when present) sits at the end of the
+             * file, right after the world data. We need to seek to
+             * the start of the tail before reading. */
+            FILE *fp = fopen(path, "rb");
+            if (fp) {
+                uint8_t nglt_buf[NEXUS_V1_LIGHT_RUNTIME_BLOB_SIZE];
+                /* Seek past the header + champion + world. */
+                long tail_off = (long)(sizeof(Nexus_V1_SaveHeader)
+                                     + champ_read + world_read);
+                if (fseek(fp, tail_off, SEEK_SET) == 0) {
+                    size_t got = fread(nglt_buf, 1, sizeof(nglt_buf), fp);
+                    if (got == NEXUS_V1_LIGHT_RUNTIME_BLOB_SIZE
+                        && nexus_v1_save_data_section_has_nglt(
+                               nglt_buf, NEXUS_V1_LIGHT_RUNTIME_BLOB_SIZE)) {
+                    int drok = nexus_v1_light_runtime_deserialize(
+                        runtime, nglt_buf, sizeof(nglt_buf));
+                    if (drok == 1) {
+                        if (out_nglt_decoded) *out_nglt_decoded = 1;
+                    } else {
+                        if (out_nglt_diagnostic && nglt_diag_size > 0) {
+                            snprintf(out_nglt_diagnostic, nglt_diag_size,
+                                     "embedded NGLT detected but decode failed "
+                                     "(mode mismatch / corrupt tail)");
+                        }
+                    }
+                } else if (got == NEXUS_V1_LIGHT_RUNTIME_BLOB_SIZE) {
+                    /* Trailing bytes are present but don't match the
+                     * NGLT predicate — surface a clean diagnostic
+                     * so the caller knows there was tail content. */
+                    if (out_nglt_diagnostic && nglt_diag_size > 0) {
+                        snprintf(out_nglt_diagnostic, nglt_diag_size,
+                                 "data tail %zu bytes is not a recognizable NGLT blob",
+                                 got);
+                    }
+                }
+                /* If got < NEXUS_V1_LIGHT_RUNTIME_BLOB_SIZE the file
+                 * has no NGLT tail — the file is a clean non-NGLT
+                 * save. The runtime stays at its caller-supplied
+                 * init state. */
+                }
+            }
+        }
     }
 
     free(champ_buf);
