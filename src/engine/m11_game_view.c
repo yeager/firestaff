@@ -22200,7 +22200,14 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
     m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                  DM1_CREATURE_GREY_LORD_ID,
                                  state->world.party.direction);
+    /* ReDMCSB: ENDGAME.C F0446 lines 805-812 marks the game won, sets
+     * MagicalLightAmount to 200, then sets FireShieldDefense,
+     * SpellShieldDefense, and ShieldDefense to 100 before the fuse
+     * sequence proceeds. */
     state->world.magic.magicalLightAmount = 200;
+    state->world.magic.fireShieldDefense = 100;
+    state->world.magic.spellShieldDefense = 100;
+    state->world.magic.partyShieldDefense = 100;
     m11_mark_game_won_from_fuse_f0446(state);
     m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                   "T%u: %s FUSES CHAOS AND ORDER",
