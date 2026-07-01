@@ -8,6 +8,7 @@
  */
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
@@ -4520,10 +4521,26 @@ static int run_live_cmd_attack_skill_route_attempt(unsigned int seed,
 }
 
 static void test_orch_cmd_attack_uses_reserved2_action_skill_index(void) {
+    DM1_ActionXpRoute route;
     int sawSkillBoost = 0;
     int swingDamage = 0;
     int stunDamage = 0;
     unsigned int seed;
+
+    assert(dm1_v1_action_xp_route(DM1_ACTION_SWING, &route) == 1);
+    assert(route.valid == 1);
+    assert(route.skillIndex == DM1_SKILL_IDX_SWING);
+    assert(route.baseSkillIndex == DM1_SKILL_IDX_FIGHTER);
+
+    assert(dm1_v1_action_xp_route(DM1_ACTION_STUN, &route) == 1);
+    assert(route.valid == 1);
+    assert(route.skillIndex == DM1_SKILL_IDX_CLUB);
+    assert(route.baseSkillIndex == DM1_SKILL_IDX_FIGHTER);
+
+    assert(dm1_v1_action_xp_route(DM1_ACTION_MELEE, &route) == 1);
+    assert(route.valid == 1);
+    assert(route.skillIndex == DM1_SKILL_IDX_CLUB);
+    assert(route.baseSkillIndex == DM1_SKILL_IDX_FIGHTER);
 
     for (seed = 1; seed <= 512 && !sawSkillBoost; ++seed) {
         int swingHit = run_live_cmd_attack_skill_route_attempt(
