@@ -398,6 +398,8 @@ static void test_orch_f0312_skill_bonus_uses_live_f0303_values(void) {
 static void test_combat_f0313_wound_defense_final_shift_and_clamp(void) {
     struct CombatantChampionSnapshot_Compat champ;
     int defense = -1;
+    int rngCalls = -1;
+    struct RngState_Compat rng;
 
     memset(&champ, 0, sizeof(champ));
     champ.woundDefense[CHAMPION_SLOT_TORSO] = 65;
@@ -430,6 +432,30 @@ static void test_combat_f0313_wound_defense_final_shift_and_clamp(void) {
      * already-wounded slot.  F0733 is deterministic, so this locks the fixed
      * source penalty before the final half-scale: (64 - 8) >> 1. */
     assert(defense == 28);
+
+    memset(&champ, 0, sizeof(champ));
+    champ.woundDefense[CHAMPION_SLOT_TORSO] = 64;
+    champ.statisticVitality = 64;
+    champ.wounds = 1 << CHAMPION_SLOT_TORSO;
+    assert(F0730_COMBAT_RngInit_Compat(&rng, 1u) == 1);
+    assert(F0733b_COMBAT_GetChampionWoundDefenseRng_Compat(
+        &champ, CHAMPION_SLOT_TORSO, 0, &rng, &defense, &rngCalls) == 1);
+    /* ReDMCSB CHAMPION.C F0313 lines 1350 and 1364-1366 consume
+     * RANDOM((64 >> 3) + 1) then RANDOM(4).  Firestaff's deterministic RNG
+     * gives 8 and 2 for seed 1, so (64 + 8 - 8 - 2) >> 1. */
+    assert(defense == 31);
+    assert(rngCalls == 2);
+
+    memset(&champ, 0, sizeof(champ));
+    champ.woundDefense[CHAMPION_SLOT_TORSO] = 64;
+    champ.statisticVitality = 64;
+    assert(F0730_COMBAT_RngInit_Compat(&rng, 1u) == 1);
+    assert(F0733b_COMBAT_GetChampionWoundDefenseRng_Compat(
+        &champ, CHAMPION_SLOT_TORSO, 1, &rng, &defense, &rngCalls) == 1);
+    /* Sharp defense halves only the random vitality component before the
+     * accumulated F0313 final shift: (64 + (8 >> 1)) >> 1. */
+    assert(defense == 34);
+    assert(rngCalls == 1);
 }
 
 static void test_orch_turn_rotates_champion_cell_and_direction(void) {
