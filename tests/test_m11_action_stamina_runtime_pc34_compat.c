@@ -6417,6 +6417,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     unsigned short squareFirstThings[25];
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
+    int partyFluxcageCount = -1;
+    int chaosFluxcageCount = -1;
     int i;
 
     seed_state(&state, 100, 41);
@@ -6467,7 +6469,7 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     state.world.creatureAI[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
     state.world.creatureAI[0].reserved0 = 0;
 
-    state.world.explosions.count = 4;
+    state.world.explosions.count = 5;
     state.world.explosions.entries[0].reserved0 = 1;
     state.world.explosions.entries[0].explosionType = C050_EXPLOSION_FLUXCAGE;
     state.world.explosions.entries[0].mapIndex = 0;
@@ -6488,6 +6490,11 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     state.world.explosions.entries[3].mapIndex = 0;
     state.world.explosions.entries[3].mapX = 3;
     state.world.explosions.entries[3].mapY = 1;
+    state.world.explosions.entries[4].reserved0 = 1;
+    state.world.explosions.entries[4].explosionType = C050_EXPLOSION_FLUXCAGE;
+    state.world.explosions.entries[4].mapIndex = 0;
+    state.world.explosions.entries[4].mapX = 2;
+    state.world.explosions.entries[4].mapY = 1;
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_FUSE),
@@ -6499,6 +6506,20 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete updates active AI creature type mirror");
     ASSERT_EQ(state.world.magic.magicalLightAmount, 200,
               "FUSE complete applies F0446 magical light amount");
+    ASSERT_EQ(F0871_RUNTIME_CountFluxcagesOnSquare_Compat(
+                  &state.world.explosions, 0, 2, 2, &partyFluxcageCount),
+              1,
+              "FUSE complete can count party-square fluxcages");
+    ASSERT_EQ(partyFluxcageCount, 0,
+              "FUSE complete removes F0446 party-square fluxcages");
+    ASSERT_EQ(F0871_RUNTIME_CountFluxcagesOnSquare_Compat(
+                  &state.world.explosions, 0, 2, 1, &chaosFluxcageCount),
+              1,
+              "FUSE complete can count Lord Chaos-square fluxcages");
+    ASSERT_EQ(chaosFluxcageCount, 0,
+              "FUSE complete removes F0446 Lord Chaos-square fluxcages");
+    ASSERT_EQ(state.world.explosions.count, 3,
+              "FUSE complete keeps the surrounding fluxcage instances");
     ASSERT_EQ(state.world.gameWon, 1,
               "FUSE complete sets M10 world game-won state");
     ASSERT_EQ(M11_GameView_IsGameWon(&state), 1,
