@@ -24762,6 +24762,16 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
             /* ReDMCSB MENU.C F0407 lines 1300-1303 halves G0497 XP when
              * F0327_CHAMPION_IsProjectileSpellCast returns false. */
             actionExperienceGain >>= 1;
+        } else if (actionIndex == DM1_ACTION_SHOOT && !performed) {
+            /* ReDMCSB MENU.C F0407 lines 1363-1387 routes SHOOT without
+             * ammunition through T0407032, clearing G0497 XP while keeping
+             * the common stamina / action-disable tail. */
+            actionExperienceGain = 0;
+        } else if (actionIndex == DM1_ACTION_CLIMB_DOWN && !performed) {
+            /* ReDMCSB MENU.C F0407 lines 1548-1565 cancels the disabled
+             * action icon on failed rope CLIMB DOWN but preserves BUG0_79
+             * stamina and G0497 XP side effects. */
+            disabledTicks = 0;
         }
         m11_disable_champion_action_after_action_ticks(
             state, championIndex, (unsigned char)actionIndex, disabledTicks);
