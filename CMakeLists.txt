@@ -16687,6 +16687,38 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 NGLT (Nexus_V1_LightRuntime) recognition probe.
+# Exercises the loader/writer extensions added in 2026-06-29 to
+# src/nexus/nexus_v1_save_load.c:
+#   - nexus_v1_save_data_section_has_nglt() predicate
+#   - nexus_v1_save_full_to_path_with_runtime()  (writer)
+#   - nexus_v1_load_full_from_path_with_runtime() (reader + runtime handoff)
+#
+# Builds a synthetic FNXS save with an embedded NGLT blob, then round-trips
+# it through the new loader to verify the blob is recognized and decoded
+# into the caller-provided Nexus_V1_LightRuntime. The probe is data-free
+# (no real FNXS file required) and lives entirely in /tmp.
+#
+# Source-lock:
+#   include/nexus_v1_save.h             (NGLT API surface)
+#   src/nexus/nexus_v1_save_load.c      (NGLT recognition + handoff)
+#   include/nexus_v1_light_runtime.h    (NGLT blob layout, magic 'NGLT')
+#   include/nexus_v1_light_overflow.h   (cast/decay/drop model)
+add_executable(firestaff_nexus_v1_light_full_load_nglt_probe
+    probes/nexus/firestaff_nexus_v1_light_full_load_nglt_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_light_full_load_nglt_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_light_full_load_nglt_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_light_full_load_nglt_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus V1 Saturn-font SCR section-table probe. Headless and data-free by
 # default: synthesizes a small SEGA SATURN SCR section-table fixture and
 # walks the 32-entry table in src/nexus/nexus_v1_saturn_font.c via
@@ -16821,6 +16853,19 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_light_runtime PROPERTIES
         LABELS "tier4;nexus;mechanics;light_overflow;runtime_wire_in"
+    )
+
+    # NGLT recognition + runtime handoff gate. Synthetic-only by
+    # default; the operator can stage a real FNXS at
+    # $FIRESTAFF_NEXUS_SAVE_PATH for the real-asset verdict, but
+    # the synthetic FNXS+NGLT round-trip is what the gate actually
+    # certifies.
+    add_test(
+        NAME nexus_v1_light_full_load_nglt
+        COMMAND firestaff_nexus_v1_light_full_load_nglt_probe
+    )
+    set_tests_properties(nexus_v1_light_full_load_nglt PROPERTIES
+        LABELS "tier4;nexus;mechanics;light_overflow;runtime_wire_in;save_load"
     )
 
     # Track 1 phase-launch handoff gate. Data-free by default;
