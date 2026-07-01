@@ -206,29 +206,22 @@ static int test_too_small_rejected(void)
     return 1;
 }
 
-static int test_all_zero_block_is_csb_verdict(void)
+static int test_all_zero_block_is_neither_verdict(void)
 {
     CSB_V1_CSBWin512Report report;
     uint8_t buf[CSB_V1_CSBWIN_BLOCK1_BYTES];
-    /* All zeros is the degenerate case: D6W = 0, second half
-     * unscrambles to all zeros, D5W = 0. The UnscrambleBlock1
-     * two-checksum invariant D5W == D6W holds (0 == 0), so the
-     * classifier resolves to CSB (CSBWin/Chaos.cpp:2357 CSB-
-     * first ordering). This test pins the actual behaviour so
-     * any future tightening (e.g., requiring a non-zero
-     * FormatID) is a deliberate change. The launcher should
-     * still treat FormatID=0 as a "no save" signal — the
-     * classifier surfaces it; a higher layer (not this gate)
-     * decides what to do. */
+    /* All zeros is not a valid degenerate save: the first word of the
+     * second half XORs with seed 0, but the rolling seed advances before
+     * the remaining words, so the post-unscramble second-half checksum no
+     * longer matches the all-zero first-half checksum. */
     memset(buf, 0, sizeof(buf));
     int rc = csb_v1_csbwin_512_xor_pad_classify(buf, sizeof(buf),
                                                 &report);
     ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
-    ASSERT_TRUE(report.verdict == CSB_V1_CSBWIN_512_VERDICT_CSB);
-    ASSERT_TRUE(report.key_index == CSB_V1_CSBWIN_512_KEY_CSB);
+    ASSERT_TRUE(report.verdict == CSB_V1_CSBWIN_512_VERDICT_NEITHER);
+    ASSERT_TRUE(report.key_index == 0);
     ASSERT_TRUE(report.first_half_d6w == 0u);
     ASSERT_TRUE(report.second_half_d5w == 0u);
-    ASSERT_TRUE(report.public_fields.format_id == 0u);
     return 1;
 }
 
@@ -463,7 +456,7 @@ typedef int (*test_fn)(void);
 struct { const char *name; test_fn fn; } tests[] = {
     { "argument-rejected",            test_argument_rejected },
     { "too-small-rejected",           test_too_small_rejected },
-    { "all-zero-block-is-csb-verdict", test_all_zero_block_is_csb_verdict },
+    { "all-zero-block-is-neither-verdict", test_all_zero_block_is_neither_verdict },
     { "junk-512-neither",             test_junk_512_neither },
     { "both-keys-fail-fixture",       test_both_keys_fail_fixture },
     { "csb-key-synthetic-accept",     test_csb_key_synthetic_accept },
