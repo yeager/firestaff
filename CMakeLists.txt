@@ -11931,6 +11931,25 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_rev03_f0863_rebirth_health_source_lock_pc34_compat
     )
 
+    # DM1 V1 champion death/bones/altar/resurrection integration probe.
+    # Wires F0860..F0868 into a single cycle gate so a regression in any
+    # of the isolated helpers is surfaced as one end-to-end fail.  See
+    # probes/dm1/firestaff_dm1_v1_champion_death_resurrection_gate.c for
+    # the source-lock citations (CHAMPION.C F0319, CLIKVIEW.C F0374,
+    # TIMELINE.C 1665-1698, REVIVE.C F0282/F0283, COMMAND.C F0280,
+    # BUG0_87 mirror-sensor disable).
+    add_executable(firestaff_dm1_v1_champion_death_resurrection_gate
+        probes/dm1/firestaff_dm1_v1_champion_death_resurrection_gate.c
+        src/dm1/dm1_v1_resurrection_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_champion_death_resurrection_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_death_resurrection_gate
+        COMMAND firestaff_dm1_v1_champion_death_resurrection_gate
+    )
+
     add_executable(test_dm1_v1_lif01_f0830_time_criteria_source_lock_pc34_compat
         tests/test_dm1_v1_lif01_f0830_time_criteria_source_lock_pc34_compat.c
     )
