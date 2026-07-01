@@ -24413,6 +24413,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             unsigned short handThing = m11_get_action_hand_thing(champ);
             int throwSide;
             int spawned;
+            m11_set_champion_direction_to_party_f0406(state, champ);
             if (handThing == THING_NONE || handThing == THING_ENDOFLIST) {
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: %s HAS NOTHING TO THROW",
@@ -24420,7 +24421,6 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                               champName);
                 return 0;
             }
-            m11_set_champion_direction_to_party_f0406(state, champ);
             throwSide = m11_dm1_f0328_throw_side(state, champ);
             spawned = m11_dm1_f0328_spawn_thrown_thing(
                 state, championIndex, champ, handThing, throwSide);
