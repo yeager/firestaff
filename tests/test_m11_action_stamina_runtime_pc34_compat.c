@@ -3646,6 +3646,40 @@ static void test_block_action_disables_champion_for_source_ticks(void) {
               "champion can reopen action menu after disable clears");
 }
 
+static void test_direct_parry_empty_front_uses_f0402_failure_tail(void) {
+    M11_GameViewState state;
+    DM1_ActionXpRoute route;
+    int expectedXp;
+
+    seed_state(&state, 30, 3);
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_PARRY, &route), 1,
+              "PARRY has a source G0496/G0497 route");
+    if (!route.valid) return;
+    expectedXp = (route.experienceGain >> 1) * 2;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_PARRY),
+              0,
+              "direct PARRY without a melee target returns F0402 failure");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_PARRY) >> 1,
+              "direct PARRY empty-front failure halves disabled ticks");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_PARRY,
+              "direct PARRY empty-front failure records PARRY as disabled action");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 29,
+              "direct PARRY still spends F0407 common-tail stamina");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedXp,
+              "direct PARRY empty-front failure halves G0497 Parry XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedXp,
+              "direct PARRY empty-front failure propagates halved XP");
+}
+
 static void test_freeze_life_common_branch_decrements_charges(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -5643,6 +5677,7 @@ int main(void) {
     test_leader_hand_throw_waterskin_uses_f0140_charge_weight();
     test_leader_hand_throw_container_uses_f0140_recursive_weight();
     test_block_action_disables_champion_for_source_ticks();
+    test_direct_parry_empty_front_uses_f0402_failure_tail();
     test_freeze_life_common_branch_decrements_charges();
     test_freeze_life_blue_box_consumes_action_hand();
     test_freeze_life_green_box_consumes_action_hand_and_caps();
