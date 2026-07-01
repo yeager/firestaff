@@ -18,6 +18,7 @@
 
 #include "m11_game_view.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
@@ -4149,6 +4150,111 @@ static void test_action_stamina_underflow_clamps_and_damages(void) {
               "underflow action stamina applies F0325-style HP damage");
 }
 
+static void test_fuse_incomplete_fluxcage_moves_lord_chaos_escape(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[25];
+    unsigned short squareFirstThings[25];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned char rawGroupData[16];
+    int i;
+
+    seed_state(&state, 100, 41);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    memset(rawGroupData, 0, sizeof(rawGroupData));
+    for (i = 0; i < 25; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 5;
+    maps[0].height = 5;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 25;
+    squareFirstThings[(2 * 5) + 1] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 2;
+    state.world.party.mapY = 2;
+    state.world.party.direction = 0; /* north: target is (2,1). */
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
+    groups[0].count = 0;
+    groups[0].health[0] = 10000;
+    groups[0].cells = 0xFF;
+    rawGroupData[0] = 0xFEu;
+    rawGroupData[1] = 0xFFu;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 25;
+    things.groups = groups;
+    things.groupCount = 1;
+    things.rawThingData[THING_TYPE_GROUP] = rawGroupData;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    state.world.explosions.count = 3;
+    state.world.explosions.entries[0].reserved0 = 1;
+    state.world.explosions.entries[0].explosionType = C050_EXPLOSION_FLUXCAGE;
+    state.world.explosions.entries[0].mapIndex = 0;
+    state.world.explosions.entries[0].mapX = 1;
+    state.world.explosions.entries[0].mapY = 1;
+    state.world.explosions.entries[1].reserved0 = 1;
+    state.world.explosions.entries[1].explosionType = C050_EXPLOSION_FLUXCAGE;
+    state.world.explosions.entries[1].mapIndex = 0;
+    state.world.explosions.entries[1].mapX = 2;
+    state.world.explosions.entries[1].mapY = 0;
+    state.world.explosions.entries[2].reserved0 = 1;
+    state.world.explosions.entries[2].explosionType = C050_EXPLOSION_FLUXCAGE;
+    state.world.explosions.entries[2].mapIndex = 0;
+    state.world.explosions.entries[2].mapX = 2;
+    state.world.explosions.entries[2].mapY = 2;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FUSE),
+              1,
+              "FUSE with incomplete Fluxcage lets Lord Chaos escape");
+    ASSERT_EQ(squareFirstThings[(2 * 5) + 1], THING_ENDOFLIST,
+              "FUSE escape unlinks Lord Chaos from target square");
+    ASSERT_EQ(squareFirstThings[(3 * 5) + 1],
+              make_thing(THING_TYPE_GROUP, 0),
+              "FUSE escape relinks Lord Chaos to the open east gap");
+    ASSERT_EQ(groups[0].next, THING_ENDOFLIST,
+              "FUSE escape keeps moved group as single square-list entry");
+    ASSERT_EQ(rawGroupData[0], 0xFEu,
+              "FUSE escape raw group next low byte stays end-of-list");
+    ASSERT_EQ(rawGroupData[1], 0xFFu,
+              "FUSE escape raw group next high byte stays end-of-list");
+    ASSERT_EQ(state.world.creatureAI[0].groupMapX, 3,
+              "FUSE escape updates active Lord Chaos AI x");
+    ASSERT_EQ(state.world.creatureAI[0].groupMapY, 1,
+              "FUSE escape updates active Lord Chaos AI y");
+    ASSERT_EQ(state.world.gameWon, 0,
+              "FUSE escape does not trigger the completed fuse ending");
+}
+
 int main(void) {
     printf("=== M11 Action Stamina Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: MENU.C G0494/F0407 and CHAMPION.C F0325\n\n");
@@ -4194,6 +4300,7 @@ int main(void) {
     test_climb_down_group_over_pit_blocks_move_but_keeps_bug79_tail();
     test_action_defense_serializes_outside_v1_champion_blob();
     test_action_stamina_underflow_clamps_and_damages();
+    test_fuse_incomplete_fluxcage_moves_lord_chaos_escape();
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_halves_disable_ticks_when_f0402_fails();
     test_melee_action_row_respects_live_candidate_no_action();
