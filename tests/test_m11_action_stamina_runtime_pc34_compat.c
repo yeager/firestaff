@@ -4621,6 +4621,92 @@ static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
               "INVOKE has no ReDMCSB action-time source sound");
 }
 
+static void test_invoke_low_mana_scales_random_kinetic_before_f0327(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
+    int wizardSkillLevel;
+    int requiredMana;
+    int scaledMinimum;
+    int scaledMaximum;
+    int subtype;
+
+    seed_state(&state, 100, 57);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 2;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].mana.current = 3;
+    state.world.party.champions[0].mana.maximum = 64;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].direction = 3;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 7u);
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_INVOKE, &route), 1,
+              "INVOKE has a source G0496/G0497 route");
+    ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_WIZARD,
+              "INVOKE low-mana route uses G0496 Wizard skill");
+    wizardSkillLevel = M11_GameView_GetSkillLevel(&state, 0,
+                                                  route.skillIndex);
+    if (wizardSkillLevel < 0) wizardSkillLevel = 0;
+    requiredMana = 7 - (wizardSkillLevel > 6 ? 6 : wizardSkillLevel);
+    if (requiredMana < 1) requiredMana = 1;
+    scaledMinimum = 3 * 100 / requiredMana;
+    if (scaledMinimum < 2) scaledMinimum = 2;
+    scaledMaximum = 3 * 227 / requiredMana;
+    if (scaledMaximum < 2) scaledMaximum = 2;
+
+    ASSERT_EQ(requiredMana > 3, 1,
+              "fixture forces the INVOKE CurrentMana < RequiredMana branch");
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_INVOKE),
+              1,
+              "low-mana INVOKE still performs F0407/F0327 projectile route");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 0,
+              "low-mana INVOKE spends all available mana");
+    ASSERT_EQ(weapons[0].chargeCount, 1,
+              "low-mana INVOKE decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "low-mana INVOKE still mirrors F0406 direction");
+    ASSERT_EQ(state.world.projectiles.count, 1,
+              "low-mana INVOKE creates one projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileCategory,
+              PROJECTILE_CATEGORY_MAGICAL,
+              "low-mana INVOKE creates a magical projectile");
+    subtype = state.world.projectiles.entries[0].projectileSubtype;
+    ASSERT_EQ((subtype == PROJECTILE_SUBTYPE_POISON_BOLT) ||
+                  (subtype == PROJECTILE_SUBTYPE_POISON_CLOUD) ||
+                  (subtype == PROJECTILE_SUBTYPE_HARM_NON_MATERIAL) ||
+                  (subtype == PROJECTILE_SUBTYPE_FIREBALL),
+              1,
+              "low-mana INVOKE keeps the source randomized projectile family");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy >= scaledMinimum,
+              1,
+              "low-mana INVOKE kinetic energy stays above scaled source minimum");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy <= scaledMaximum,
+              1,
+              "low-mana INVOKE kinetic energy stays below scaled source maximum");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy < 100, 1,
+              "low-mana INVOKE does not keep full RANDOM(128)+100 kinetic energy");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 90,
+              "low-mana INVOKE still uses F0327 attack 90");
+    ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 2,
+              "low-mana INVOKE still uses F0327 step energy");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "low-mana INVOKE launch cell follows champion Cell");
+    ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
+              "low-mana INVOKE launch direction follows party direction");
+}
+
 static void test_invoke_projectile_create_failure_halves_action_xp(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -6120,6 +6206,7 @@ int main(void) {
     test_fireball_projectile_create_failure_halves_action_xp();
     test_air_projectile_create_failure_halves_action_xp();
     test_invoke_action_uses_f0327_and_decrements_charges();
+    test_invoke_low_mana_scales_random_kinetic_before_f0327();
     test_invoke_projectile_create_failure_halves_action_xp();
     test_cast_potion_spell_mutates_empty_flask();
     test_cast_zokathra_spell_materializes_ready_hand_junk();
