@@ -45,8 +45,20 @@ static int g_fail = 0;
     else { ++g_fail; fprintf(stderr, "FAIL: %s: got %d expected %d\n", (msg), a_, e_); } \
 } while (0)
 
+#define ASSERT_STR_EQ(actual, expected, msg) do { \
+    const char* a_ = (actual); \
+    const char* e_ = (expected); \
+    if (a_ && e_ && strcmp(a_, e_) == 0) { ++g_pass; } \
+    else { ++g_fail; fprintf(stderr, "FAIL: %s: got \"%s\" expected \"%s\"\n", \
+                             (msg), a_ ? a_ : "(null)", e_ ? e_ : "(null)"); } \
+} while (0)
+
 static unsigned short make_thing(int type, int index) {
     return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
+}
+
+static unsigned short pack_text3(int a, int b, int c) {
+    return (unsigned short)(((a & 31) << 10) | ((b & 31) << 5) | (c & 31));
 }
 
 static unsigned char square_for_test(int elementType, int attributes) {
@@ -6417,6 +6429,9 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     unsigned short squareFirstThings[25];
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[2];
+    struct DungeonTextString_Compat textStrings[2];
+    unsigned char rawTextStringData[8];
+    unsigned short textData[6];
     int partyFluxcageCount = -1;
     int chaosFluxcageCount = -1;
     int fireballAttackSeen[6] = {0, 0, 0, 0, 0, 0};
@@ -6440,6 +6455,9 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
     memset(&things, 0, sizeof(things));
     memset(groups, 0, sizeof(groups));
+    memset(textStrings, 0, sizeof(textStrings));
+    memset(rawTextStringData, 0xFF, sizeof(rawTextStringData));
+    memset(textData, 0, sizeof(textData));
     for (i = 0; i < 25; ++i) {
         squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
         squareFirstThings[i] = THING_ENDOFLIST;
@@ -6453,6 +6471,7 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     maps[0].height = 5;
     tiles[0].squareData = squareData;
     tiles[0].squareCount = 25;
+    squareFirstThings[0] = make_thing(THING_TYPE_TEXTSTRING, 1);
     squareFirstThings[(2 * 5) + 1] = make_thing(THING_TYPE_GROUP, 0);
     squareFirstThings[(4 * 5) + 4] = make_thing(THING_TYPE_GROUP, 1);
     state.world.dungeon = &dungeon;
@@ -6474,11 +6493,35 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     groups[1].health[0] = 37;
     groups[1].cells = 0xFF;
     groups[1].direction = 3;
+
+    textData[0] = pack_text3(0, 5, 8);      /* AFI */
+    textData[1] = pack_text3(17, 18, 19);   /* RST */
+    textData[2] = pack_text3(31, 31, 31);   /* end */
+    textData[3] = pack_text3(1, 18, 4);     /* BSE */
+    textData[4] = pack_text3(2, 14, 13);    /* CON */
+    textData[5] = pack_text3(3, 31, 31);    /* D + end */
+    textStrings[0].next = THING_ENDOFLIST;
+    textStrings[0].visible = 0;
+    textStrings[0].textDataWordOffset = 0;
+    textStrings[1].next = make_thing(THING_TYPE_TEXTSTRING, 0);
+    textStrings[1].visible = 0;
+    textStrings[1].textDataWordOffset = 3;
+    rawTextStringData[0] = 0xFEu;
+    rawTextStringData[1] = 0xFFu;
+    rawTextStringData[4] = (unsigned char)(make_thing(THING_TYPE_TEXTSTRING, 0) & 0xFFu);
+    rawTextStringData[5] = (unsigned char)(make_thing(THING_TYPE_TEXTSTRING, 0) >> 8);
+
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 25;
     things.groups = groups;
     things.groupCount = 2;
+    things.textStrings = textStrings;
+    things.textStringCount = 2;
+    things.textData = textData;
+    things.textDataWordCount = 6;
+    things.rawThingData[THING_TYPE_TEXTSTRING] = rawTextStringData;
+    things.thingCounts[THING_TYPE_TEXTSTRING] = 2;
     state.world.things = &things;
     state.world.creatureAICount = 2;
     state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
@@ -6656,6 +6699,10 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete sets M11 input/render game-won gate");
     ASSERT_EQ((int)M11_GameView_GetGameWonTick(&state), 41,
               "FUSE complete stores current game tick as game-won tick");
+    ASSERT_EQ(M11_GameView_GetMessageLogCount(&state), 3,
+              "FUSE complete keeps status, final log, and source endgame text message");
+    ASSERT_STR_EQ(M11_GameView_GetMessageLogEntry(&state, 2), "\nSECOND",
+                  "FUSE complete prints F0446 text strings in A/B order without sort key");
 }
 
 int main(void) {

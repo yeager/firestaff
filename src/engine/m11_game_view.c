@@ -21997,6 +21997,64 @@ static void m11_delete_other_groups_for_endgame_f0446(M11_GameViewState* state,
     }
 }
 
+static void m11_clear_message_log_for_source_message_area(M11_GameViewState* state) {
+    if (!state) return;
+    memset(&state->messageLog, 0, sizeof(state->messageLog));
+}
+
+static int m11_print_endgame_text_messages_f0446(M11_GameViewState* state,
+                                                 int mapIndex) {
+    unsigned short textThings[64];
+    unsigned short thing;
+    int textThingCount = 0;
+    int scanGuard = 0;
+    int remaining;
+    int printed = 0;
+    char expected = 'A';
+    if (!state || !state->world.things || !state->world.things->textStrings ||
+        !state->world.things->textData ||
+        state->world.things->textDataWordCount <= 0) {
+        return 0;
+    }
+
+    /* ReDMCSB: ENDGAME.C F0446 lines 928-952 walks the current map's
+     * square (0,0), keeps only TextString things, decodes each as a message
+     * even when invisible, then prints them in A/B/... order by the first
+     * decoded character while suppressing that ordering character. */
+    thing = m11_get_first_square_thing(&state->world, mapIndex, 0, 0);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && scanGuard++ < 1024) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_TEXTSTRING &&
+            textThingCount < (int)(sizeof(textThings) / sizeof(textThings[0]))) {
+            textThings[textThingCount++] = thing;
+        }
+        thing = m11_raw_next_thing(state->world.things, thing);
+    }
+
+    remaining = textThingCount;
+    while (remaining-- > 0) {
+        int i;
+        for (i = 0; i < textThingCount; ++i) {
+            char decoded[128];
+            int textIndex = (int)THING_GET_INDEX(textThings[i]);
+            int len = F0508_DUNGEON_DecodeTextStringThing_Compat(
+                state->world.things, textIndex,
+                DUNGEON_TEXT_TYPE_MESSAGE |
+                    DUNGEON_TEXT_MASK_DECODE_EVEN_IF_INVISIBLE,
+                decoded, (int)sizeof(decoded));
+            if (len > 1 && decoded[1] == expected) {
+                decoded[1] = '\n';
+                m11_clear_message_log_for_source_message_area(state);
+                M11_MessageLog_Push(&state->messageLog, &decoded[1],
+                                    M11_COLOR_WHITE);
+                ++printed;
+                ++expected;
+                break;
+            }
+        }
+    }
+    return printed;
+}
+
 static int m11_count_fluxcages_around_square(M11_GameViewState* state,
                                              int mapIndex,
                                              int mapX,
@@ -22300,6 +22358,7 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
      * but suppress them from M11 viewport sampling from this point on. */
     state->endgameDoNotDrawFluxcages = 1;
     m11_delete_other_groups_for_endgame_f0446(state, mapIndex, mapX, mapY);
+    (void)m11_print_endgame_text_messages_f0446(state, mapIndex);
     m11_mark_game_won_from_fuse_f0446(state);
     m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                   "T%u: %s FUSES CHAOS AND ORDER",
