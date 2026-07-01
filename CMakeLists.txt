@@ -606,6 +606,49 @@ set_tests_properties(theron_v1_dungeon_progression_determinism_probe PROPERTIES
     LABELS "tier4;theron;dungeon;determinism"
 )
 
+# Theron V1 chapter/progression startup marker probe.
+# Pass scope: theron_startup_chapter_progression_marker_gate.
+# Bounded, headless, asset-free: synthesises a boot profile + dungeon
+# progression + (optional) temp-dir save root, then exercises the
+# startup marker surface in src/theron/theron_v1_chapter_marker.c.
+# Skip-safe by design — never opens Track 02 BIN/ISO; real-asset path
+# is opt-in via theron_v1_chapter_marker_compute_save(). Source-locks:
+#   - THQUEST.ASM T000 (startup entry)         — chapter label projection
+#   - THQUEST.ASM T080 (between-dungeon save)  — freshest save slot pick
+#   - THQUEST.ASM T520 (party placement)       — start position
+#   - THQUEST.ASM T560 (dungeon header)        — dungeon_seed, level_count
+#   - THQUEST.ASM T800 (champion persistence)  — per-dungeon reset
+add_executable(firestaff_theron_v1_chapter_marker_probe
+    probes/theron/firestaff_theron_v1_chapter_marker_probe.c
+    src/theron/theron_v1_chapter_marker.c
+    src/theron/theron_v1_dungeon_progression.c
+    src/theron/theron_v1_save_load.c
+    src/theron/theron_v1_champions.c
+)
+target_include_directories(firestaff_theron_v1_chapter_marker_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v1_chapter_marker_probe
+    PRIVATE firestaff_theron firestaff_m10 m)
+# theron_v1_boot.c references m12_file_md5_hex (used by
+# theron_v1_boot_scan_assets) so the probe target needs the
+# firestaff_m12 helper that provides it.  Same pattern as
+# test_theron_v1_direct_launch.
+if(TARGET firestaff_m12)
+    target_link_libraries(firestaff_theron_v1_chapter_marker_probe PRIVATE firestaff_m12)
+endif()
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_chapter_marker_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME theron_v1_chapter_marker_probe
+    COMMAND firestaff_theron_v1_chapter_marker_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(theron_v1_chapter_marker_probe PROPERTIES
+    LABELS "tier4;theron;startup;chapter-marker"
+)
+
 # Theron V1 shop purchase gate probe.
 # Headless: no game data, no SDL rendering required. Exercises the
 # purchase-gate edges that test_theron_v1_shop_price_table does not
