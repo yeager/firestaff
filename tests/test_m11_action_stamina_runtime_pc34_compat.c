@@ -486,7 +486,7 @@ static void test_disrupt_action_row_rejects_material_creature(void) {
         .skills20[DM1_SKILL_IDX_SWING].experience = 500;
 
     groups[0].next = THING_ENDOFLIST;
-    groups[0].creatureType = CREATURE_TYPE_GIANT_SCORPION;
+    groups[0].creatureType = DM1_CREATURE_TYPE_ANIMATED_ARMOUR;
     groups[0].count = 0;
     groups[0].health[0] = 200;
     groups[0].cells = 0xFF;
@@ -2130,6 +2130,10 @@ static void test_projectile_creature_killed_some_drops_fixed_possessions(void) {
     unsigned short firstDrop;
     int sawWeaponDrop = 0;
     int sawArmourDrop = 0;
+    int sawShiftedAspect = 0;
+    int sawShiftedBehavior = 0;
+    int sawProjectileReaction = 0;
+    int sawExplosionAdvance = 0;
     int dropCount = 0;
     int i;
 
@@ -2203,7 +2207,7 @@ static void test_projectile_creature_killed_some_drops_fixed_possessions(void) {
     state.world.dungeon = &dungeon;
     state.world.things = &things;
     state.world.party.mapIndex = 0;
-    state.world.partyMapIndex = 0;
+    state.world.partyMapIndex = 1;
     state.world.party.mapX = 1;
     state.world.party.mapY = 1;
     state.world.party.direction = 1;
@@ -2239,6 +2243,23 @@ static void test_projectile_creature_killed_some_drops_fixed_possessions(void) {
     projectile->scheduledAtTick = 100;
     projectile->reserved1 = make_thing(THING_TYPE_WEAPON, 7);
     projectile->reserved3 = 1;
+
+    state.world.timeline.count = 4;
+    memset(&state.world.timeline.events[0], 0,
+           sizeof(state.world.timeline.events[0]) * 4);
+    state.world.timeline.events[0].kind = TIMELINE_EVENT_CREATURE_REACTION;
+    state.world.timeline.events[0].fireAtTick = 140;
+    state.world.timeline.events[0].mapIndex = 0;
+    state.world.timeline.events[0].mapX = 2;
+    state.world.timeline.events[0].mapY = 1;
+    state.world.timeline.events[0].aux0 = 0;
+    state.world.timeline.events[0].aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+    state.world.timeline.events[1] = state.world.timeline.events[0];
+    state.world.timeline.events[1].aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 1;
+    state.world.timeline.events[2] = state.world.timeline.events[0];
+    state.world.timeline.events[2].aux2 = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    state.world.timeline.events[3] = state.world.timeline.events[0];
+    state.world.timeline.events[3].aux2 = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + 1;
 
     M11_GameView_AdvanceProjectilesOnce(&state);
 
@@ -2284,6 +2305,161 @@ static void test_projectile_creature_killed_some_drops_fixed_possessions(void) {
               "killed-some projectile materializes a weapon drop");
     ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_METALLIC_THUD,
               "killed-some fixed possessions emit source metallic thud");
+
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE) {
+            sawExplosionAdvance = 1;
+        }
+        if (state.world.timeline.events[i].kind == TIMELINE_EVENT_CREATURE_REACTION) {
+            if (state.world.timeline.events[i].aux2 ==
+                DM1_EVENT_REACTION_HIT_BY_PROJECTILE) {
+                sawProjectileReaction = 1;
+            }
+            if (state.world.timeline.events[i].aux2 ==
+                DM1_EVENT_UPDATE_ASPECT_CREATURE_0) {
+                ++sawShiftedAspect;
+            }
+            if (state.world.timeline.events[i].aux2 ==
+                DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0) {
+                ++sawShiftedBehavior;
+            }
+            ASSERT_EQ(state.world.timeline.events[i].aux2 !=
+                      DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 1, 1,
+                      "killed-some cleanup deletes old aspect event for killed slot");
+            ASSERT_EQ(state.world.timeline.events[i].aux2 !=
+                      DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + 1, 1,
+                      "killed-some cleanup deletes old behavior event for killed slot");
+        }
+    }
+    ASSERT_EQ(sawShiftedAspect, 1,
+              "killed-some cleanup shifts surviving aspect event down");
+    ASSERT_EQ(sawShiftedBehavior, 1,
+              "killed-some cleanup shifts surviving behavior event down");
+    ASSERT_EQ(sawProjectileReaction, 1,
+              "killed-some projectile still schedules C30 reaction");
+    ASSERT_EQ(sawExplosionAdvance, 1,
+              "killed-some projectile schedules smoke advance");
+}
+
+static int run_projectile_creature_killed_some_f0190_fear_attempt(
+    unsigned int seed,
+    int* outFearCounter) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    unsigned short squareFirstThings[12];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    squareData[(2 * 3) + 1] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[(2 * 3) + 1] = make_thing(THING_TYPE_GROUP, 0);
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_GIANT_SCORPION;
+    groups[0].cells = 0x09u;
+    groups[0].count = 1;
+    groups[0].health[0] = 1;
+    groups[0].health[1] = 200;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 12;
+    things.groups = groups;
+    things.groupCount = 1;
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].lastSeenPartyTick = 99;
+    state.world.gameTick = 100;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, seed);
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 3;
+    projectile->mapY = 1;
+    projectile->cell = 0;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 80;
+    projectile->stepEnergy = 5;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = THING_NONE;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    if (groups[0].behavior == DM1_BEHAVIOR_FLEE &&
+        state.world.creatureAI[0].stateKind == AI_STATE_FLEE &&
+        state.world.creatureAI[0].fearCounter >= 20) {
+        if (outFearCounter) {
+            *outFearCounter = state.world.creatureAI[0].fearCounter;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static void test_projectile_creature_killed_some_can_trigger_f0190_fear(void) {
+    unsigned int seed;
+    int sawFear = 0;
+    int fearCounter = 0;
+
+    for (seed = 1; seed <= 512 && !sawFear; ++seed) {
+        sawFear = run_projectile_creature_killed_some_f0190_fear_attempt(
+            seed, &fearCounter);
+    }
+
+    ASSERT_EQ(sawFear, 1,
+              "killed-some projectile can trigger F0190 fear branch");
+    ASSERT_EQ(fearCounter >= 20, 1,
+              "F0190 fear stores source flee delay on active group");
 }
 
 static void test_projectile_creature_zero_scaled_attack_skips_poison_and_reaction(void) {
@@ -5158,6 +5334,7 @@ int main(void) {
     test_projectile_creature_impact_at_zero_zero_applies_damage();
     test_projectile_creature_kill_spawns_f0190_death_smoke();
     test_projectile_creature_killed_some_drops_fixed_possessions();
+    test_projectile_creature_killed_some_can_trigger_f0190_fear();
     test_projectile_creature_zero_scaled_attack_skips_poison_and_reaction();
     test_projectile_non_material_creature_passes_through_without_impact();
     test_projectile_harm_non_material_hits_non_material_creature();
