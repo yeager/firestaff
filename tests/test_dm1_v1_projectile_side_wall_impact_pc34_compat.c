@@ -816,6 +816,54 @@ static void test_f0820_poison_bolt_zero_adjusted_wall_impact_skips_explosion_and
                "wall impact has no door side effect");
 }
 
+static void test_f0820_poison_bolt_wall_impact_creates_centered_cloud(void)
+{
+    struct ProjectileInstance_Compat p;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0820_poison_bolt_wall_impact_creates_centered_cloud\n");
+
+    make_magical_fireball(&p, 0 /* N */, 2, 5, 5);
+    p.projectileSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+    p.kineticEnergy = 8;
+    p.attack = 8;
+    make_wall_digest(&d, 5, 5, 5, 4);
+
+    memset(&r, 0, sizeof(r));
+    expect_int("f0820.poison_bolt.rc",
+               F0820_PROJECTILE_ResolveCollision_Compat(
+                   &p, &d, PROJECTILE_RESULT_HIT_WALL, 303u, NULL, &r),
+               1,
+               "ReDMCSB PROJEXPL.C:F0217 lines 565-585 creates Poison Bolt impact explosion with attack / 4");
+    expect_int("f0820.poison_bolt.kind", r.resultKind,
+               PROJECTILE_RESULT_HIT_WALL,
+               "poison bolt resolves as a wall impact");
+    expect_int("f0820.poison_bolt.despawn", r.despawn, 1,
+               "F0217 deletes the projectile after the explosion branch");
+    expect_int("f0820.poison_bolt.explosion", r.emittedExplosion, 1,
+               "nonzero adjusted poison bolt creates a poison-cloud explosion");
+    expect_int("f0820.poison_bolt.type", r.outExplosion.explosionType,
+               C007_EXPLOSION_POISON_CLOUD,
+               "Poison Bolt impact maps to C007 poison cloud");
+    expect_int("f0820.poison_bolt.attack", r.outExplosion.attack, 2,
+               "Poison Bolt impact attack is KineticEnergy >> 2");
+    expect_int("f0820.poison_bolt.cell", r.outExplosion.cell,
+               EXPLOSION_CELL_CENTERED,
+               "PROJEXPL.C:F0217 line 585 centers poison-cloud explosions");
+    expect_int("f0820.poison_bolt.centered", r.outExplosion.centered, 1,
+               "Poison Bolt impact marks the poison cloud centered");
+    expect_int("f0820.poison_bolt.sound_request", r.emittedSoundRequest, 0,
+               "explosion branch skips the fallback non-explosion impact sound");
+    expect_int("f0820.poison_bolt.sound", r.emittedSoundCode, 0,
+               "nonzero Poison Bolt impact emits no thud or spell sound");
+    expect_int("f0820.poison_bolt.combat", r.emittedCombatAction, 0,
+               "wall impact has no combat target");
+    expect_int("f0820.poison_bolt.door_event",
+               r.emittedDoorDestructionEvent || r.emittedDoorToggleEvent, 0,
+               "wall impact has no door side effect");
+}
+
 /* ---- Test 5b: F0217 thrown potion wall-impact explosion -------- */
 static void test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud(void)
 {
@@ -1144,6 +1192,7 @@ int main(void)
     test_f0811_magical_fireball_wall_impact_creates_explosion();
     test_f0820_lightning_zero_adjusted_wall_impact_skips_explosion_and_sound();
     test_f0820_poison_bolt_zero_adjusted_wall_impact_skips_explosion_and_sound();
+    test_f0820_poison_bolt_wall_impact_creates_centered_cloud();
     test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud();
     test_f0820_wall_impact_kinetic_dispatch();
     test_f0811_open_door_wall_impact_emits_wooden_thud();
