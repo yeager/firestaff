@@ -1633,6 +1633,73 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW stores C01 action-hand slot ordinal on the enable-action event");
 }
 
+static void test_throw_full_projectile_list_still_accepts_f0328(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned short thrownThing;
+    int expectedCommonStaminaCost;
+
+    seed_state(&state, 100, 99);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    weapons[0].type = 8; /* Dagger: weight 5, class 2, kinetic 19. */
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = 50;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].direction = 3;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    state.world.party.champions[0].food = 0;
+    state.world.party.champions[0].water = 0;
+    state.world.projectiles.count = PROJECTILE_LIST_CAPACITY;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    expectedCommonStaminaCost =
+        dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_THROW) +
+        (int)((state.world.gameTick + (uint32_t)DM1_ACTION_THROW) & 1u);
+    thrownThing = make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        thrownThing;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_THROW),
+              1,
+              "full-list THROW still returns accepted F0328 result");
+    ASSERT_EQ(state.world.projectiles.count, PROJECTILE_LIST_CAPACITY,
+              "full-list THROW does not allocate past the PJE-05 cap");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_ACTION_HAND],
+              THING_NONE,
+              "accepted full-list THROW still clears the action hand");
+    ASSERT_EQ(expectedCommonStaminaCost, 1,
+              "full-list THROW fixture forces the same F0407 jitter tail");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current,
+              100 - 2 - expectedCommonStaminaCost,
+              "full-list THROW spends F0305 stamina plus F0407 jitter");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[LIFECYCLE_SKILL_THROW].experience,
+              21,
+              "full-list THROW keeps F0328 Throw XP plus F0407 G0497 XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[LIFECYCLE_SKILL_NINJA].experience,
+              21,
+              "full-list THROW propagates both XP sources to Ninja");
+    ASSERT_EQ(state.world.projectileDisabledMovementTicks, 0,
+              "dropped full-list THROW does not set live-projectile movement lockout");
+    ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_COMBAT,
+              "full-list THROW still requests the F0328 M563 combat sound");
+    ASSERT_EQ(state.actionDisabledTicks[0], 3,
+              "full-list THROW keeps the inner F0328/F0330 disable");
+    ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
+              "full-list THROW has no F0407 disabled-action overwrite");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], CHAMPION_SLOT_ACTION_HAND,
+              "full-list THROW keeps the C01 action-hand enable slot");
+}
+
 static void test_throw_uses_post_f0304_throw_level_for_projectile(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -6835,6 +6902,7 @@ int main(void) {
     test_block_action_spends_source_stamina();
     test_flip_action_prints_source_message_and_keeps_common_tail();
     test_throw_action_removes_action_hand_object();
+    test_throw_full_projectile_list_still_accepts_f0328();
     test_throw_uses_post_f0304_throw_level_for_projectile();
     test_direct_throw_empty_action_hand_keeps_f0407_tail();
     test_throw_ven_potion_launches_removepotion_projectile();
