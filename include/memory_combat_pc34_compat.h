@@ -266,6 +266,13 @@ int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
     int attack,
     int* outAdjusted);
 
+int F0739_COMBAT_ScaleChampionDamageF0321_Compat(
+    int attackType,
+    int rawAttack,
+    int allowedWounds,
+    const struct CombatantChampionSnapshot_Compat* defender,
+    int* outDamage);
+
 /* ==========================================================
  * Group C — Resolvers (F0735–F0736).
  * Pure except for the RNG advance, recorded in out->rngCallCount.

@@ -442,6 +442,35 @@ static int combat_apply_f0321_armor_defense_scale(
     return scaled;
 }
 
+int F0739_COMBAT_ScaleChampionDamageF0321_Compat(
+    int attackType,
+    int rawAttack,
+    int allowedWounds,
+    const struct CombatantChampionSnapshot_Compat* defender,
+    int* outDamage)
+{
+    int atk;
+
+    if (outDamage == 0 || defender == 0) return 0;
+    if (rawAttack <= 0) {
+        *outDamage = 0;
+        return 1;
+    }
+
+    /* ReDMCSB CHAMPION.C F0321 lines 1842-1900: projectile,
+     * explosion, and creature-melee champion damage share the same
+     * attack-type statistic adjustment followed by the optional
+     * F0313 wound-defense scale. */
+    atk = combat_apply_defender_statistic_adjustment(
+        attackType, defender, rawAttack);
+    atk = combat_apply_f0321_armor_defense_scale(
+        attackType, atk, allowedWounds, defender);
+    if (atk < 0) atk = 0;
+
+    *outDamage = atk;
+    return 1;
+}
+
 /* ==========================================================
  *  Group C — Resolvers (F0735 champion→creature, F0736 creature→champion)
  * ========================================================== */
