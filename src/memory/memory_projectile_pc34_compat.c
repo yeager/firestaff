@@ -335,7 +335,16 @@ int F0810_PROJECTILE_Create_Compat(
     list->entries[slot].scheduledAtTick       = in->currentTick + 1;
     list->entries[slot].associatedPotionPower = in->potionPower;
     list->entries[slot].poisonAttack          = in->poisonAttack;
-    list->entries[slot].attackTypeCode        = in->attackTypeCode;
+    /* ReDMCSB PROJEXPL.C F0216 lines 283-296 initializes
+     * G0367_i_ProjectileAttackType to C3_ATTACK_BLUNT for thrown,
+     * shot, and non-explosion object impacts before F0217 calls F0321.
+     * Spell/explosion callers pass their explicit fire/magic/lightning
+     * type, but bare kinetic callers must not silently become C0_NORMAL. */
+    list->entries[slot].attackTypeCode        =
+        (in->attackTypeCode == COMBAT_ATTACK_NORMAL &&
+         in->category == PROJECTILE_CATEGORY_KINETIC)
+            ? COMBAT_ATTACK_BLUNT
+            : in->attackTypeCode;
     list->entries[slot].flags =
         (projectile_create_removes_potion_on_impact(in)
              ? PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT : 0) |
