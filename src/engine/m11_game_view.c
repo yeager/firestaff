@@ -24666,12 +24666,12 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
         state, championIndex, (unsigned char)actionIndex);
     (void)m11_apply_action_stamina_cost(state, championIndex,
                                         (unsigned char)actionIndex);
-    if ((actionIndex == DM1_ACTION_BLOCK ||
-         actionIndex == DM1_ACTION_PARRY ||
-         m11_action_is_party_shield((unsigned char)actionIndex) ||
-         m11_action_is_projectile_spell_f0407((unsigned char)actionIndex)) &&
-        dm1_v1_action_xp_route(actionIndex, &actionXpRoute) &&
+    if (dm1_v1_action_xp_route(actionIndex, &actionXpRoute) &&
         actionXpRoute.valid) {
+        /* ReDMCSB MENU.C F0407 lines 1626-1628 applies the common
+         * G0497 action-XP tail for every action whose table entry is
+         * nonzero.  Callers adjust actionExperienceGain for the source
+         * failure tails before this value reaches F0304. */
         actionExperienceGain = actionXpRoute.experienceGain;
     }
     performed = m11_perform_non_melee_action(state, championIndex,

@@ -1479,16 +1479,16 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW spends F0305 object-weight stamina without G0494 zero-cost jitter");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_THROW].experience,
-              16,
-              "THROW awards F0328/F0304 Throw hidden-skill XP");
+              21,
+              "THROW awards F0328 Throw XP plus F0407 G0497 action XP");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_NINJA].experience,
-              16,
-              "THROW propagates XP to Ninja base skill");
+              21,
+              "THROW propagates both XP sources to Ninja base skill");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_THROW].temporaryExperience,
-              2,
-              "THROW adds bounded temporary XP to Throw skill");
+              3,
+              "THROW adds bounded temporary XP for both XP sources");
     ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
               "THROW uses F0407 side-derived launch cell");
     ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
@@ -3763,6 +3763,7 @@ static void test_light_decrements_action_hand_charges(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
     int i;
     int guard;
 
@@ -3778,6 +3779,9 @@ static void test_light_decrements_action_hand_charges(void) {
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         make_thing(THING_TYPE_WEAPON, 0);
 
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_LIGHT, &route), 1,
+              "LIGHT has a source G0496/G0497 route");
+    if (!route.valid) return;
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_LIGHT),
               1,
@@ -3795,6 +3799,14 @@ static void test_light_decrements_action_hand_charges(void) {
               "LIGHT schedules first decay at GameTime + 2500");
     ASSERT_EQ(state.world.timeline.events[0].aux0, -2,
               "LIGHT stores negative light power for later removal");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              route.experienceGain,
+              "direct LIGHT awards full F0407 G0497 XP to the action skill");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              route.experienceGain,
+              "direct LIGHT propagates full F0407 G0497 XP to the base skill");
 
     guard = 0;
     while (state.world.gameTick <= 2533U && guard++ < 2600) {
@@ -3858,6 +3870,7 @@ static void test_window_action_schedules_thieves_eye_and_decrements_charges(void
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
     uint32_t initialTick;
     uint32_t expiryTick = 0;
     int skillLevel;
@@ -3887,6 +3900,9 @@ static void test_window_action_schedules_thieves_eye_and_decrements_charges(void
 
     ASSERT_EQ(skillLevel, 5,
               "fixture gives WINDOW/Earth skill a distinct source level");
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_WINDOW, &route), 1,
+              "WINDOW has a source G0496/G0497 route");
+    if (!route.valid) return;
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_WINDOW),
               1,
@@ -3895,6 +3911,14 @@ static void test_window_action_schedules_thieves_eye_and_decrements_charges(void
               "WINDOW decrements action-hand charges through F0405");
     ASSERT_EQ(state.world.lifecycle.status.thievesEyeCount, 1,
               "WINDOW increments the party C73 Thieves Eye counter");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              10000 + route.experienceGain,
+              "direct WINDOW awards full F0407 G0497 XP to Earth");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              route.experienceGain,
+              "direct WINDOW propagates full F0407 G0497 XP to Wizard");
     for (i = 0; i < state.world.timeline.count; ++i) {
         if (state.world.timeline.events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
             state.world.timeline.events[i].aux0 == LIFECYCLE_STATUS_THIEVES_EYE) {
