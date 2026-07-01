@@ -1623,6 +1623,8 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW sets source projectile movement-disable ticks before the action tick decrements them");
     ASSERT_EQ(state.world.lastProjectileDisabledMovementDirection, 1,
               "THROW records source projectile movement-disable direction");
+    ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_COMBAT,
+              "THROW requests the F0328 M563 combat sound");
     ASSERT_EQ(state.actionEnableSlotOrdinal[0], CHAMPION_SLOT_ACTION_HAND,
               "THROW stores C01 action-hand slot ordinal on the enable-action event");
 }
@@ -3666,6 +3668,8 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
               "leader-hand throw sets source movement-disable ticks without action-row tick decrement");
     ASSERT_EQ(state.world.lastProjectileDisabledMovementDirection, 1,
               "leader-hand throw records source movement-disable direction");
+    ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_COMBAT,
+              "leader-hand throw requests the F0328 M563 combat sound");
 }
 
 static void test_leader_hand_throw_waterskin_uses_f0140_charge_weight(void) {

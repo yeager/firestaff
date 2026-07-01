@@ -21198,10 +21198,10 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
         state, championIndex, champ,
         hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo,
         objectWeight);
-    /* ReDMCSB CHAMPION.C F0328 lines 2181-2194: F0312 strength,
-     * F0303(THROW), object kinetic and bounded attack/step energy feed
-     * F0212_PROJECTILE_Create; accepted throws then apply F0305 stamina,
-     * F0304 Throw XP and the four-tick projectile movement lockout. */
+    /* ReDMCSB CHAMPION.C F0328 lines 2166-2194: accepted throws
+     * request M563 combat sound, apply F0305 stamina and F0304 Throw
+     * XP, then feed F0312 strength, F0303(THROW), object kinetic and
+     * bounded attack/step energy to F0212_PROJECTILE_Create. */
     throwKineticEnergy = m11_dm1_f0328_throw_kinetic_energy(
         state, throwStrength, skillThrow,
         hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo);
@@ -21223,6 +21223,7 @@ static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
         potionPower);
     if (!spawned) return 0;
 
+    m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
     (void)m11_apply_champion_stamina_cost_f0325(state, championIndex,
                                                 staminaCost);
     m11_dm1_award_throw_xp(state, championIndex, throwExperience);
@@ -24758,9 +24759,6 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                           "T%u: %s THROWS",
                           (unsigned int)state->world.gameTick,
                           champName);
-            /* Pass 55: ReDMCSB I34E maps party melee/shoot/throw to
-             * sound event 13 (M563_SOUND_COMBAT_ATTACK...). */
-            m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
             return spawned;
         }
         default:
