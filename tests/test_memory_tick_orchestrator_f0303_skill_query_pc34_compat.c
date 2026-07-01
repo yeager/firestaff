@@ -2967,6 +2967,7 @@ static void test_orch_cmd_attack_uses_f0312_weight_stamina_wound_strength(void) 
 
 static void run_live_cmd_attack_closed_door_attempt(int doorSet,
                                                     int meleeDestructible,
+                                                    int actionIndex,
                                                     int* outSquare,
                                                     int* outEmissionCount,
                                                     int* outTimelineCount,
@@ -3039,7 +3040,8 @@ static void run_live_cmd_attack_closed_door_attempt(int doorSet,
     input.commandArg1 = 0;
     input.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
     input.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
-    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID | 13u;
+    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        (unsigned int)actionIndex;
 
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
     *outSquare = squareData[(2 * 3) + 1];
@@ -3054,14 +3056,29 @@ static void run_live_cmd_attack_closed_door_attempt(int doorSet,
 }
 
 static void test_orch_cmd_attack_f0407_closed_door_attack(void) {
+    const int doorHitActions[] = {
+        DM1_ACTION_CHOP,
+        DM1_ACTION_KICK,
+        DM1_ACTION_SWING,
+        DM1_ACTION_HACK,
+        DM1_ACTION_BERZERK,
+        DM1_ACTION_BASH
+    };
+    const int meleeFallthroughActions[] = {
+        DM1_ACTION_BLOCK,
+        DM1_ACTION_STUN,
+        DM1_ACTION_MELEE,
+        DM1_ACTION_DISRUPT
+    };
     int square = 0;
     int emissions = 0;
     int timelineCount = 0;
     int dispatchSquare = 0;
     int dispatchEmissions = 0;
+    size_t i;
 
     run_live_cmd_attack_closed_door_attempt(
-        1, 1, &square, &emissions, &timelineCount,
+        1, 1, DM1_ACTION_SWING, &square, &emissions, &timelineCount,
         &dispatchSquare, &dispatchEmissions);
     assert((square & 0x07) == 4);
     assert(emissions == 0);
@@ -3070,7 +3087,7 @@ static void test_orch_cmd_attack_f0407_closed_door_attack(void) {
     assert(dispatchEmissions == 2);
 
     run_live_cmd_attack_closed_door_attempt(
-        2, 1, &square, &emissions, &timelineCount,
+        2, 1, DM1_ACTION_SWING, &square, &emissions, &timelineCount,
         &dispatchSquare, &dispatchEmissions);
     assert((square & 0x07) == 4);
     assert(emissions == 0);
@@ -3079,13 +3096,39 @@ static void test_orch_cmd_attack_f0407_closed_door_attack(void) {
     assert(dispatchEmissions == 1);
 
     run_live_cmd_attack_closed_door_attempt(
-        1, 0, &square, &emissions, &timelineCount,
+        1, 0, DM1_ACTION_SWING, &square, &emissions, &timelineCount,
         &dispatchSquare, &dispatchEmissions);
     assert((square & 0x07) == 4);
     assert(emissions == 0);
     assert(timelineCount == 1);
     assert((dispatchSquare & 0x07) == 4);
     assert(dispatchEmissions == 1);
+
+    /* ReDMCSB MENU.C F0407 lines 1308-1324 limits closed-door melee to
+     * BASH/HACK/BERZERK/KICK/SWING/CHOP before the F0402 melee fallthrough. */
+    for (i = 0; i < sizeof(doorHitActions) / sizeof(doorHitActions[0]); ++i) {
+        run_live_cmd_attack_closed_door_attempt(
+            1, 1, doorHitActions[i], &square, &emissions, &timelineCount,
+            &dispatchSquare, &dispatchEmissions);
+        assert((square & 0x07) == 4);
+        assert(emissions == 0);
+        assert(timelineCount == 2);
+        assert((dispatchSquare & 0x07) == 5);
+        assert(dispatchEmissions == 2);
+    }
+
+    for (i = 0;
+         i < sizeof(meleeFallthroughActions) / sizeof(meleeFallthroughActions[0]);
+         ++i) {
+        run_live_cmd_attack_closed_door_attempt(
+            1, 1, meleeFallthroughActions[i], &square, &emissions,
+            &timelineCount, &dispatchSquare, &dispatchEmissions);
+        assert((square & 0x07) == 4);
+        assert(emissions == 0);
+        assert(timelineCount == 0);
+        assert((dispatchSquare & 0x07) == 4);
+        assert(dispatchEmissions == 0);
+    }
 }
 
 static int run_live_cmd_attack_reaction_schedule_attempt(unsigned int seed) {
