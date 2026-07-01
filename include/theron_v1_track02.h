@@ -233,6 +233,140 @@ Theron_Track02TableDecodeStatus theron_v1_track02_bind_descriptor_windows(
     const Theron_Track02DescriptorTable *table,
     Theron_Track02DescriptorWindowBinding *out_binding);
 
+/* Semantic role binding for descriptor table entries.
+ *
+ * This is a bounded byte-level role assignment derived only from
+ * observable Track 02 evidence; it does NOT claim dungeon records,
+ * map grids, object tables, palette payloads, text/font payloads, or
+ * runtime loader handoff.  Roles are assigned deterministically from:
+ *   - nonzero_byte_count (all-zero window vs data window)
+ *   - contains_descriptor_table (which window holds the descriptor)
+ *   - the byte at descriptor_offset - 1 (RTS marker when 0x60)
+ *   - the byte at descriptor_offset + 18 (zero vs non-zero: code after
+ *     descriptor within the descriptor-bearing window)
+ *   - entry_index relative to the descriptor-window's index
+ *     (pre-descriptor data, post-descriptor data)
+ *
+ * Source/evidence:
+ *   - `0x60` is the documented HuC6280 (65C02-derivative) RTS opcode.
+ *     When the byte at `descriptor_offset - 1` is `0x60`, the descriptor
+ *     sits at the tail of an RTS-terminated executable code region.
+ *     Source: HuC6280 datasheet + ReDMCSB 6502 reference (no ReDMCSB
+ *     for Theron itself; PC Engine 65C02-derivative opcode set).
+ *   - The 9 windows × 0x0400 stride = 0x2400 = 9216 bytes.  The PC
+ *     Engine HuCard memory window at $4000-$7FFF spans 16KB and is
+ *     bank-switched in 8KB pages via MPR (Memory Page Register).
+ *     Source: HuC6280 datasheet MPR section.
+ *   - The 0x0020 entry offset is the canonical first-window start.
+ *     Source: src/theron/theron_v1_track02.c
+ *     (g_us_iso_bank_stride_descriptor) and
+ *     docs/source-lock/tqr_v1_track02_bank_signal_2026-06-03.md. */
+typedef enum {
+    THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_UNKNOWN = 0,
+    /* All-zero 0x0400-byte window.  Padded/reserved sub-region with no
+     * observable data bytes. */
+    THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_RESERVED_ZERO_FILL,
+    /* Window's absolute byte range contains the 18-byte descriptor
+     * table (descriptor_offset >= window.absolute_offset AND
+     * descriptor_offset + 18 <= window.absolute_offset + 0x0400). */
+    THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_CONTAINS_DESCRIPTOR_TABLE,
+    /* Non-zero data window whose entry_index < descriptor-window
+     * entry_index.  Bytes precede the descriptor in the descriptor
+     * table's logical layout. */
+    THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_PRE_DESCRIPTOR_DATA,
+    /* Non-zero data window whose entry_index > descriptor-window
+     * entry_index.  Bytes follow the descriptor in the descriptor
+     * table's logical layout. */
+    THERON_TRACK02_DESCRIPTOR_ENTRY_ROLE_POST_DESCRIPTOR_DATA
+} Theron_Track02DescriptorEntryRole;
+
+/* Semantic binding of one descriptor table entry.
+ *
+ * The descriptor window itself gets a deeper role claim based on the
+ * bytes immediately before and after the descriptor within its 0x0400
+ * window.  This is a bounded byte-level claim, not a dungeon/text/
+ * palette/object meaning claim:
+ *
+ *   - descriptor_at_window_tail: descriptor_offset + 18 ==
+ *     absolute_offset + byte_count (descriptor sits at the window's
+ *     last 18 bytes).  Observed in the US Track 02 ISO.
+ *   - byte_before_descriptor_is_rts: track02_data[descriptor_offset - 1]
+ *     == 0x60 (HuC6280 RTS opcode).  When true, the descriptor sits
+ *     immediately after an RTS-terminated code region.
+ *   - descriptor_is_pure_window: descriptor_offset == absolute_offset
+ *     AND absolute_offset + 18 == absolute_offset + byte_count
+ *     (the window contains ONLY the descriptor bytes).  Useful
+ *     synthetic-fixture sentinel.
+ *
+ * The non-claim boundary: this binding does not interpret the bytes as
+ * code, graphics, palette, text, or any data-domain payload.  It only
+ * pins observable byte-shape relationships around the descriptor. */
+typedef struct {
+    size_t entry_index;
+    uint16_t relative_offset;
+    size_t absolute_offset;
+    size_t byte_count;
+    Theron_Track02DescriptorEntryRole role;
+    /* True iff role == CONTAINS_DESCRIPTOR_TABLE.  Duplicated for
+     * easy single-entry checks without re-deriving role from the
+     * window binding. */
+    int is_descriptor_window;
+    /* Byte at descriptor_offset - 1 if descriptor_offset > 0 and the
+     * byte is inside track02_data.  0 otherwise.  When this is 0x60
+     * and is_descriptor_window is true, the descriptor sits at the
+     * tail of an RTS-terminated code region (observed in the US ISO
+     * descriptor window: descriptor is preceded by `0x60`). */
+    uint8_t byte_before_descriptor;
+    int byte_before_descriptor_is_rts;
+    /* First non-zero byte offset within this window after the
+     * descriptor's last byte, or 0 if the bytes after the descriptor
+     * within this window are all zero.  0 also when this is not the
+     * descriptor window. */
+    size_t first_nonzero_after_descriptor;
+    /* True iff all bytes after the descriptor within this window are
+     * zero.  When is_descriptor_window is true and this is true, the
+     * descriptor is the last non-zero data in its window (US ISO
+     * shape). */
+    int all_zero_after_descriptor;
+} Theron_Track02DescriptorEntrySemanticBinding;
+
+/* Bind semantic roles to every entry of a decoded descriptor table.
+ *
+ * `descriptor_offset` is the absolute Track 02 offset of the 18-byte
+ * descriptor.  The function reuses the byte-window classification from
+ * theron_v1_track02_bind_descriptor_windows() (zero-fill vs data vs
+ * descriptor window) and adds:
+ *   - PRE_DESCRIPTOR_DATA / POST_DESCRIPTOR_DATA ordering relative to
+ *     the descriptor window's entry index
+ *   - descriptor-tail markers (descriptor_at_window_tail,
+ *     byte_before_descriptor_is_rts, all_zero_after_descriptor) on the
+ *     single entry that contains the descriptor table
+ *
+ * Returns THERON_TRACK02_TABLE_DECODE_OK on success.  All 9 entries of
+ * `out_binding->entries` are populated in entry-index order.
+ *
+ * Bounded non-claim: this does not interpret the bytes as code,
+ * graphics, palette, text, or any data-domain payload.  It only pins
+ * byte-shape relationships around the descriptor.
+ */
+Theron_Track02TableDecodeStatus theron_v1_track02_bind_descriptor_entry_roles(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t descriptor_offset,
+    const Theron_Track02DescriptorTable *table,
+    Theron_Track02DescriptorEntrySemanticBinding *out_entries);
+
+/* Look up the entry_index of the descriptor-window.  Returns -1 when no
+ * descriptor-window entry exists in the supplied semantic binding
+ * (should not happen if the binding was produced by the function above
+ * on a successful window bind, but kept as a defensive helper). */
+int theron_v1_track02_find_descriptor_window_entry_index(
+    const Theron_Track02DescriptorEntrySemanticBinding *entries,
+    size_t entry_count);
+
+const char *theron_v1_track02_descriptor_entry_role_name(
+    Theron_Track02DescriptorEntryRole role);
+
 typedef enum {
     THERON_TRACK02_LEVEL_HANDOFF_OK = 1,
     THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL = 0,

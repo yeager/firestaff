@@ -16692,6 +16692,38 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_track02_level_handoff_probe
     )
 
+    # ── Theron V1 Track 02 Descriptor Entry Role Binding Probe ───
+    # Bounded byte-level semantic role binding for each entry of the
+    # documented 9-word Track 02 descriptor table.  Pins
+    # RESERVED_ZERO_FILL / CONTAINS_DESCRIPTOR_TABLE /
+    # PRE_DESCRIPTOR_DATA / POST_DESCRIPTOR_DATA roles derived from
+    # the existing window classification plus three descriptor-window
+    # markers (byte_before_descriptor_is_rts, all_zero_after_descriptor,
+    # first_nonzero_after_descriptor).  Does NOT claim dungeon records,
+    # map grids, object tables, palette/text payloads, or runtime
+    # loader handoff.  See
+    # docs/source-lock/theron_v1_track02_descriptor_entry_roles_H2341.md
+    # for the bounded semantic-role claim.
+    add_executable(firestaff_theron_v1_track02_descriptor_entry_roles_probe
+        probes/theron/firestaff_theron_v1_track02_descriptor_entry_roles_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_track02_descriptor_entry_roles_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_track02_descriptor_entry_roles_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_track02_descriptor_entry_roles_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_track02_descriptor_entry_roles_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_descriptor_entry_roles
+        COMMAND firestaff_theron_v1_track02_descriptor_entry_roles_probe
+    )
+
     # ── Theron V1 SRM (Save RAM) classifier probe ───────────────────────
     # Bounded real-artifact boundary for Theron .srm save data.  Data-free
     # when no real Sphenx-format .srm file is staged; honest ABSENT manifest
