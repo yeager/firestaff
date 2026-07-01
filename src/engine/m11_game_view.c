@@ -24079,15 +24079,20 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             }
             return successful;
         }
-        case 1:  /* BLOCK */
-        case 17: /* PARRY */ {
-            /* F0407 routes these through the action-disabled /
-             * stamina path only (G0491 ActionDisabledTicks +
-             * G0494 ActionStamina).  In V1 the defensive posture
-             * is visible as "time passes" — the shared action tail
-             * drains stamina and the menu closes.  Emit a bounded
-             * defensive log so the
-             * player sees the champion is guarding. */
+        case 1: { /* BLOCK */
+            /* ReDMCSB MENU.C F0407 lines 1275 and 1620-1628 leaves
+             * ActionPerformed TRUE for BLOCK: no switch branch changes it,
+             * and the common disable/stamina/XP tail still runs. */
+            m11_log_event(state, M11_COLOR_LIGHT_GRAY,
+                          "T%u: %s TAKES A DEFENSIVE STANCE",
+                          (unsigned int)state->world.gameTick,
+                          champName);
+            return 1;
+        }
+        case 17: { /* PARRY */
+            /* The direct helper keeps PARRY in the bounded defensive path:
+             * the shared action tail drains stamina and closes the menu, and
+             * a dedicated F0402/PARRY melee route can tighten this later. */
             m11_log_event(state, M11_COLOR_LIGHT_GRAY,
                           "T%u: %s TAKES A DEFENSIVE STANCE",
                           (unsigned int)state->world.gameTick,

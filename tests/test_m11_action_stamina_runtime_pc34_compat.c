@@ -3594,7 +3594,10 @@ static void test_block_action_disables_champion_for_source_ticks(void) {
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
     expectedActionXp = route.experienceGain * 2;
 
-    (void)M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 1);
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_BLOCK),
+              1,
+              "direct BLOCK returns F0407 ActionPerformed true");
     ASSERT_EQ(state.actionDisabledTicks[0], 6,
               "BLOCK applies G0491 six-tick action disable");
     ASSERT_EQ(state.actionDisabledIndex[0], 1,
