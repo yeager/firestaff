@@ -778,6 +778,53 @@ static void test_f0820_lightning_zero_adjusted_wall_impact_skips_explosion_and_s
                "wall impact has no door side effect");
 }
 
+static void test_f0820_lightning_wall_impact_creates_cell_explosion(void)
+{
+    struct ProjectileInstance_Compat p;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0820_lightning_wall_impact_creates_cell_explosion\n");
+
+    make_magical_fireball(&p, 0 /* N */, 3, 5, 5);
+    p.projectileSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+    p.kineticEnergy = 6;
+    p.attack = 6;
+    make_wall_digest(&d, 5, 5, 5, 4);
+
+    memset(&r, 0, sizeof(r));
+    expect_int("f0820.lightning.rc",
+               F0820_PROJECTILE_ResolveCollision_Compat(
+                   &p, &d, PROJECTILE_RESULT_HIT_WALL, 304u, NULL, &r),
+               1,
+               "ReDMCSB PROJEXPL.C:F0217 lines 565-585 creates Lightning impact explosion with attack / 2");
+    expect_int("f0820.lightning.kind", r.resultKind,
+               PROJECTILE_RESULT_HIT_WALL,
+               "lightning resolves as a wall impact");
+    expect_int("f0820.lightning.despawn", r.despawn, 1,
+               "F0217 deletes the projectile after the explosion branch");
+    expect_int("f0820.lightning.explosion", r.emittedExplosion, 1,
+               "nonzero adjusted lightning creates a lightning explosion");
+    expect_int("f0820.lightning.type", r.outExplosion.explosionType,
+               C002_EXPLOSION_LIGHTNING_BOLT,
+               "Lightning impact maps to C002 lightning explosion");
+    expect_int("f0820.lightning.attack", r.outExplosion.attack, 3,
+               "Lightning impact attack is KineticEnergy >> 1");
+    expect_int("f0820.lightning.cell", r.outExplosion.cell, 3,
+               "PROJEXPL.C:F0217 line 585 preserves P0456_i_Cell for non-poison-cloud explosions");
+    expect_int("f0820.lightning.centered", r.outExplosion.centered, 0,
+               "Lightning impact does not use the poison-cloud centered-cell sentinel");
+    expect_int("f0820.lightning.sound_request", r.emittedSoundRequest, 0,
+               "explosion branch skips the fallback non-explosion impact sound");
+    expect_int("f0820.lightning.sound", r.emittedSoundCode, 0,
+               "nonzero Lightning impact emits no thud or spell sound");
+    expect_int("f0820.lightning.combat", r.emittedCombatAction, 0,
+               "wall impact has no combat target");
+    expect_int("f0820.lightning.door_event",
+               r.emittedDoorDestructionEvent || r.emittedDoorToggleEvent, 0,
+               "wall impact has no door side effect");
+}
+
 static void test_f0820_poison_bolt_zero_adjusted_wall_impact_skips_explosion_and_sound(void)
 {
     struct ProjectileInstance_Compat p;
@@ -1191,6 +1238,7 @@ int main(void)
     test_f0810_f0811_first_move_grace_thrown_item_side_cell_blockers();
     test_f0811_magical_fireball_wall_impact_creates_explosion();
     test_f0820_lightning_zero_adjusted_wall_impact_skips_explosion_and_sound();
+    test_f0820_lightning_wall_impact_creates_cell_explosion();
     test_f0820_poison_bolt_zero_adjusted_wall_impact_skips_explosion_and_sound();
     test_f0820_poison_bolt_wall_impact_creates_centered_cloud();
     test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud();
