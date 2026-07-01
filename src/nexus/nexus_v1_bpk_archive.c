@@ -1,5 +1,6 @@
 #include "nexus_v1_bpk_archive.h"
 
+#include <stdint.h>
 #include <string.h>
 
 static uint32_t rd32_be(const uint8_t *p) {
@@ -369,5 +370,281 @@ int nexus_v1_bpk_archive_surface_estimate(
     out_summary->trailer_skipped = trailer_skip;
     out_summary->unknown_skipped = unknown_skip;
     out_summary->truncated = (int)truncated;
+    return 0;
+}
+
+/* pass1084 — bounded PRS3 compression evidence walker. Surfaces per-entry
+ * structural receipts for the (still unknown) PRS3 stream format so we can
+ * narrow down the algorithm family in subsequent passes. The walker is
+ * intentionally incapable of "running" the compression: it reads the first
+ * 4 bytes as a BE u32, copies the first 8 bytes verbatim, and tallies a
+ * bounded frequency table. It never advances any conceptual read cursor
+ * past the 8-byte receipt and never emits a decoded surface.
+ *
+ * pass1084b (later in the same walk) adds a bounded 4-quadrant byte-class
+ * tally (bk >> 6) over the same sample. This is the cheapest structural
+ * fingerprint that distinguishes "random / uniformly distributed" bytes
+ * from "stream with length-class hints and repeated literal zeros", and
+ * the real MENU.BPK distribution shows q0 (0x00..0x3F) dominating, which
+ * is consistent with small header_minus_payload values (4..7) and the
+ * short back-reference runs we hypothesise.
+ *
+ * Source-lock: this pass builds on the pass1082/pass1083 evidence
+ *   ledger (the BPPK outer wrapper, BMPD directory, 20-byte entry prefix
+ *   anchor, and the entry[0] directory-trailer contract). The algorithm
+ *   itself is still cited as
+ *     docs/source-lock/nexus_v1_phase0_provenance_gate_H2315.md:291-306
+ *     (MENU.BPK packed, game-specific, no formal analysis documented)
+ *   and
+ *     docs/VERIFIED_HASHES.md:103
+ *     (MENU.BPK size 89060 / sha256 ...da886636).
+ */
+int nexus_v1_bpk_archive_prs3_payload_evidence(
+    const uint8_t *data,
+    size_t data_size,
+    uint32_t sample_size,
+    Nexus_V1_BpkPrs3PayloadEvidence *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkPrs3PayloadEvidenceSummary *out_summary) {
+    uint32_t count;
+    uint32_t trailer_skip = 0U;
+    uint32_t unknown_skip = 0U;
+    uint32_t trailer_partial = 0U;
+    uint32_t used = 0U;
+    uint32_t truncated = 0U;
+    uint64_t total_uncompressed = 0U;
+    uint64_t total_payload = 0U;
+    double sum_ratio = 0.0;
+    double min_ratio = 0.0;
+    double max_ratio = 0.0;
+    int have_ratio = 0;
+    uint32_t smallest_payload = UINT32_MAX;
+    uint32_t largest_payload = 0U;
+
+    if (!out_summary) return -1;
+    memset(out_summary, 0, sizeof(*out_summary));
+    out_summary->capacity = entry_capacity;
+    out_summary->smallest_payload = UINT32_MAX;
+    out_summary->largest_payload = 0U;
+    out_summary->min_compression_ratio = 0.0;
+    out_summary->max_compression_ratio = 0.0;
+
+    if (sample_size > NEXUS_V1_BPK_PRS3_EVIDENCE_MAX_SAMPLE_BYTES) {
+        sample_size = NEXUS_V1_BPK_PRS3_EVIDENCE_MAX_SAMPLE_BYTES;
+    }
+
+    if (read_header(data, data_size, &count) != 0) return -1;
+
+    /* Pass 1: per-entry structural receipts.
+     *
+     * For every entry whose 20-byte prefix is complete AND whose prefix
+     * mode is one of the four PRS3 pixel-mode tags (6/14/22/30), we
+     * record (entry_index, dimensions, header_first_u32, first 8 bytes
+     * verbatim, compression_ratio). The directory trailer (mode 10) and
+     * unknown mode tags are skipped and counted so callers can verify
+     * the 162 + 1 = 163 entry sum.
+     *
+     * Note on payload boundary: the lib's Nexus_V1_BpkEntry.payload_offset
+     * starts immediately after the 4-byte PRS3 magic (entry.offset + 24),
+     * which still includes the 8-byte PRS3 sub-header (version +
+     * pixel_count). For the PRS3 algorithm-evidence receipt we want to
+     * examine the bytes AFTER the full 12-byte PRS3 sub-header (i.e.
+     * entry.offset + 32, matching inspect_prs3's `compressed_size`
+     * measurement). All receipts below use that offset consistently. */
+    for (uint32_t i = 0; i < count; ++i) {
+        Nexus_V1_BpkEntryPrefix prefix;
+        Nexus_V1_BpkEntry entry;
+        uint32_t bpp;
+        uint32_t uncompressed_size;
+        uint32_t payload_size;
+        uint32_t stream_offset;
+        uint32_t copy;
+        int has_first;
+        uint32_t header_first = 0U;
+        uint32_t header_minus = 0U;
+        double r = 0.0;
+        Nexus_V1_BpkPrs3PayloadEvidence *row = NULL;
+
+        if (nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
+                                                  &prefix) != 0) {
+            return -1;
+        }
+        if (!prefix.prefix_complete) {
+            /* Skip entries without the full 20-byte prefix; they have no
+             * recognisable mode tag and could not produce evidence. */
+            continue;
+        }
+        if (prefix.mode == NEXUS_V1_BPK_MODE_TRAILER) {
+            ++trailer_skip;
+            continue;
+        }
+        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        if (bpp == 0U) {
+            ++unknown_skip;
+            continue;
+        }
+        if (nexus_v1_bpk_archive_get_entry(data, data_size, i, &entry) != 0) {
+            return -1;
+        }
+
+        /* Pass1084 evidence uses the inspect_prs3 `compressed_size`
+         * boundary: payload is bytes from (entry.offset + 32) until the
+         * next entry's start. If the entry doesn't span past the full
+         * 12-byte PRS3 sub-header the stream is "partial" and we still
+         * surface payload_size == 0 without producing a negative count. */
+        stream_offset = entry.offset + NEXUS_V1_BPK_ENTRY_PREFIX_BYTES +
+                        NEXUS_V1_BPK_PRS3_HEADER_BYTES;
+        if (stream_offset <= entry.next_offset) {
+            payload_size = entry.next_offset - stream_offset;
+        } else {
+            payload_size = 0U;
+        }
+        uncompressed_size = (uint32_t)prefix.width *
+                            (uint32_t)prefix.height *
+                            bpp;
+
+        has_first = (payload_size >= 4U) ? 1 : 0;
+        if (has_first) {
+            header_first = rd32_be(data + stream_offset);
+            header_minus = (header_first >= payload_size)
+                               ? (header_first - payload_size)
+                               : UINT32_MAX;
+        }
+
+        if (out_entries && used < entry_capacity) {
+            row = &out_entries[used];
+            memset(row, 0, sizeof(*row));
+            row->entry_index = i;
+            row->mode = prefix.mode;
+            row->width = prefix.width;
+            row->height = prefix.height;
+            row->pixel_count = (uint32_t)prefix.width *
+                               (uint32_t)prefix.height;
+            row->bpp = bpp;
+            row->uncompressed_size = uncompressed_size;
+            row->payload_size = payload_size;
+            row->payload_available = (payload_size > 0U) ? 1 : 0;
+            row->header_first_u32 = header_first;
+            row->header_first_readable = has_first;
+            row->header_minus_payload = header_minus;
+            if (uncompressed_size > 0U) {
+                row->compression_ratio =
+                    (double)payload_size / (double)uncompressed_size;
+                r = row->compression_ratio;
+            }
+            if (payload_size > 0U) {
+                copy = payload_size;
+                if (copy > NEXUS_V1_BPK_PRS3_EVIDENCE_MAX_FIRST_BYTES) {
+                    copy = NEXUS_V1_BPK_PRS3_EVIDENCE_MAX_FIRST_BYTES;
+                }
+                memcpy(row->first_payload,
+                       data + stream_offset,
+                       copy);
+            }
+        } else if (out_entries && used >= entry_capacity) {
+            truncated = 1U;
+        }
+
+        if (uncompressed_size > 0U) {
+            sum_ratio += r;
+            if (!have_ratio) {
+                min_ratio = r;
+                max_ratio = r;
+                have_ratio = 1;
+            } else {
+                if (r < min_ratio) min_ratio = r;
+                if (r > max_ratio) max_ratio = r;
+            }
+        }
+
+        ++used;
+        ++out_summary->mode_count[prefix.mode];
+        total_uncompressed += uncompressed_size;
+        total_payload += payload_size;
+        if (payload_size < smallest_payload) smallest_payload = payload_size;
+        if (payload_size > largest_payload) largest_payload = payload_size;
+        if (payload_size == 0U) ++trailer_partial;
+    }
+
+    out_summary->entries_seen = count;
+    out_summary->trailer_skipped = trailer_skip;
+    out_summary->unknown_skipped = unknown_skip;
+    out_summary->trailer_partial = trailer_partial;
+    out_summary->used = used;
+    out_summary->smallest_payload = smallest_payload;
+    out_summary->largest_payload = largest_payload;
+    out_summary->total_uncompressed = total_uncompressed;
+    out_summary->total_payload = total_payload;
+    out_summary->mean_compression_ratio =
+        (used > 0U) ? (sum_ratio / (double)used) : 0.0;
+    out_summary->min_compression_ratio = have_ratio ? min_ratio : 0.0;
+    out_summary->max_compression_ratio = have_ratio ? max_ratio : 0.0;
+    out_summary->truncated = (int)truncated;
+
+    /* Pass 2: bounded byte-frequency receipts for every row the caller
+     * actually got back. Each sample is bounded to min(sample_size,
+     * payload_size, MAX_SAMPLE_BYTES) so the walker is provably
+     * O(sample_size * entry_capacity) and never reads past
+     * MAX_SAMPLE_BYTES of any payload. We re-derive the archive
+     * absolute offset of the payload via nexus_v1_bpk_archive_get_entry
+     * so the inner loop is bounds-checked against data_size on every
+     * byte. The byte window starts at entry.offset + 32 (pass1084
+     * stream offset = after the 12-byte PRS3 sub-header), NOT at
+     * entry.payload_offset (which is +24 in the lib's accounting). */
+    if (out_entries && sample_size > 0U) {
+        for (uint32_t i = 0; i < used && i < entry_capacity; ++i) {
+            Nexus_V1_BpkPrs3PayloadEvidence *row = &out_entries[i];
+            Nexus_V1_BpkEntry entry;
+            uint32_t sample_n;
+            uint32_t sample_offset;
+            uint32_t histogram[256];
+            uint32_t best_count = 0U;
+            uint8_t best_byte = 0U;
+            uint32_t distinct = 0U;
+            uint32_t b;
+
+            if (row->payload_size == 0U) continue;
+            if (nexus_v1_bpk_archive_get_entry(data, data_size,
+                                               row->entry_index,
+                                               &entry) != 0) {
+                continue;
+            }
+            sample_offset = entry.offset +
+                           NEXUS_V1_BPK_ENTRY_PREFIX_BYTES +
+                           NEXUS_V1_BPK_PRS3_HEADER_BYTES;
+            sample_n = row->payload_size;
+            if (sample_n > sample_size) sample_n = sample_size;
+
+            memset(histogram, 0, sizeof(histogram));
+            {
+                /* pass1084b — bounded 4-quadrant byte-class tally over
+                 * the same sample. Index = bk >> 6 maps each byte into
+                 * [0..3] covering [0x00..0x3F], [0x40..0x7F],
+                 * [0x80..0xBF], [0xC0..0xFF]. */
+                uint32_t bc[4] = {0U, 0U, 0U, 0U};
+                for (uint32_t k = 0; k < sample_n; ++k) {
+                    uint8_t bk = data[sample_offset + k];
+                    histogram[bk] += 1U;
+                    bc[bk >> 6] += 1U;
+                    if (histogram[bk] > best_count) {
+                        best_count = histogram[bk];
+                        best_byte = bk;
+                    }
+                }
+                row->byte_class_count[0] = bc[0];
+                row->byte_class_count[1] = bc[1];
+                row->byte_class_count[2] = bc[2];
+                row->byte_class_count[3] = bc[3];
+            }
+            for (b = 0; b < 256U; ++b) {
+                if (histogram[b] != 0U) ++distinct;
+            }
+            row->sample_size_used = sample_n;
+            row->most_common_byte = best_byte;
+            row->most_common_byte_count = best_count;
+            row->distinct_byte_values = distinct;
+        }
+    }
+
     return 0;
 }

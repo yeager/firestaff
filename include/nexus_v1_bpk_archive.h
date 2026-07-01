@@ -227,6 +227,136 @@ int nexus_v1_bpk_archive_mode_distribution(
     size_t data_size,
     Nexus_V1_BpkModeDistribution *out_dist);
 
+/* PRS3 compression-algorithm evidence probe (pass1084).
+ *
+ * Bounded, source-locked evidence walker for the DM Nexus MENU.BPK PRS3
+ * payload stream. The compression algorithm is still intentionally
+ * unsupported; this function surfaces per-entry structural receipts that
+ * a future decoder would have to account for, without claiming to
+ * decode anything:
+ *
+ *   - The first 4 bytes of every PRS3 payload in the observed
+ *     MENU.BPK are a big-endian uint32 that APPROXIMATELY tracks the
+ *     payload byte count (header_first_u32 - payload_size is small and
+ *     non-negative across every observed entry). The constant overhead
+ *     is the strongest single receipt that there is a leading header
+ *     word, even though the precise meaning is still unknown.
+ *   - The first 8 bytes of every payload are surfaced verbatim so probe
+ *     code can spot identical-prefix patterns between adjacent entries
+ *     (e.g. multiple 16x15 14bpp frames share the same first 8 bytes).
+ *   - A bounded byte-frequency receipt is computed over the first
+ *     sample_size payload bytes (capped at 4 KiB) so the walker never
+ *     spends unbounded time scanning large payloads.
+ *   - Per-mode and aggregate compression-ratio distributions are
+ *     reported so callers can compare how amenable each pixel-mode
+ *     (8/16/24/32 bpp) is to the unknown stream format.
+ *   - A bounded 4-quadrant byte-class receipt (pass1084b) buckets the
+ *     same sampled bytes into [0x00..0x3F], [0x40..0x7F],
+ *     [0x80..0xBF], [0xC0..0xFF] buckets. This is the cheapest
+ *     structural fingerprint that distinguishes "random / uniformly
+ *     distributed" bytes from "stream with length-class hints and
+ *     repeated literal zeros". The observed real MENU.BPK distribution
+ *     shows quadrant 0 (0x00..0x3F) as the dominant bucket, which is
+ *     consistent with the small header_minus_payload values (4..7)
+ *     and possible repeated-literal runs the stream uses to mark
+ *     short back-references.
+ *
+ * This walker does NOT call any third-party decompression library, does
+ * NOT attempt to decode literal/back-reference opcodes, and does NOT
+ * advance any read cursor inside an opaque payload. Pass1084 is the
+ * "first evidence ledger" for the unknown PRS3 algorithm; subsequent
+ * passes are expected to deepen the analysis, never to backtrack on
+ * these receipts.
+ */
+
+#define NEXUS_V1_BPK_PRS3_EVIDENCE_MAX_FIRST_BYTES 8U
+#define NEXUS_V1_BPK_PRS3_EVIDENCE_MAX_SAMPLE_BYTES 4096U
+
+typedef struct {
+    uint32_t entry_index;
+    uint8_t  mode;            /* prefix byte 19 */
+    uint16_t width;           /* prefix bytes 12..14 (BE) */
+    uint8_t  height;          /* prefix byte 15 */
+    uint32_t pixel_count;     /* width * height */
+    uint32_t bpp;             /* bytes per pixel for the recognised mode */
+    uint32_t uncompressed_size; /* width * height * bpp */
+    uint32_t payload_size;    /* bytes between the PRS3 sub-header end
+                                 and the next entry's start */
+    int payload_available;    /* 1 if payload_size > 0 */
+    uint32_t header_first_u32; /* first 4 bytes of the payload read as
+                                  BE uint32; 0 if the payload is < 4 bytes */
+    int header_first_readable; /* 1 iff payload_size >= 4 */
+    uint32_t header_minus_payload; /* sat(header_first_u32 - payload_size).
+                                      Saturated to UINT32_MAX if the
+                                      difference underflows. This is the
+                                      strongest receipt we currently
+                                      have that the leading word
+                                      approximates the payload length. */
+    double   compression_ratio; /* (double)payload_size / uncompressed_size.
+                                   0.0 if uncompressed_size == 0. */
+    /* First 8 bytes of the payload (algorithm-agnostic structural
+     * receipt). Zero-padded if payload_size < 8. */
+    uint8_t  first_payload[NEXUS_V1_BPK_PRS3_EVIDENCE_MAX_FIRST_BYTES];
+    /* Bounded byte-frequency receipt over the first sample_size bytes.
+     * sample_size_used <= sample_size and <= payload_size. */
+    uint32_t sample_size_used;
+    uint8_t  most_common_byte; /* 0 if sample_size_used == 0 */
+    uint32_t most_common_byte_count; /* 0 if sample_size_used == 0 */
+    uint32_t distinct_byte_values;  /* 0..256, 0 if sample_size_used == 0 */
+    /* Bounded 4-quadrant byte-class receipt over the same sample.
+     * byte_class_count[0] = bytes in [0x00..0x3F],
+     * byte_class_count[1] = bytes in [0x40..0x7F],
+     * byte_class_count[2] = bytes in [0x80..0xBF],
+     * byte_class_count[3] = bytes in [0xC0..0xFF].
+     * Sum of byte_class_count[*] == sample_size_used. */
+    uint32_t byte_class_count[4];
+} Nexus_V1_BpkPrs3PayloadEvidence;
+
+typedef struct {
+    uint32_t entries_seen;        /* total entries walked */
+    uint32_t mode_count[256];     /* entries whose prefix mode matched,
+                                     bucketed by mode byte */
+    uint32_t trailer_skipped;     /* entries skipped because mode == MODE_TRAILER */
+    uint32_t unknown_skipped;     /* entries skipped because mode is none
+                                     of the four PRS3 pixel-mode tags and
+                                     not the trailer */
+    uint32_t trailer_partial;     /* entries whose payload did not span
+                                     past the PRS3 sub-header */
+    uint32_t capacity;            /* max entries the caller asked us to fill */
+    uint32_t used;                /* number of Nexus_V1_BpkPrs3PayloadEvidence
+                                     rows we wrote */
+    uint32_t smallest_payload;    /* minimum payload_size seen across used rows */
+    uint32_t largest_payload;     /* maximum payload_size seen across used rows */
+    uint64_t total_uncompressed;  /* sum of uncompressed_size across used rows */
+    uint64_t total_payload;       /* sum of payload_size across used rows */
+    double   mean_compression_ratio; /* mean of compression_ratio across used rows */
+    double   min_compression_ratio;  /* min of compression_ratio across used rows */
+    double   max_compression_ratio;  /* max of compression_ratio across used rows */
+    int truncated;                /* 1 if any PRS3 entry was skipped
+                                     because capacity was hit */
+} Nexus_V1_BpkPrs3PayloadEvidenceSummary;
+
+/* Walk every entry whose 20-byte prefix is complete AND whose prefix
+ * mode is one of the four PRS3 pixel-mode tags (6/14/22/30). For each
+ * such entry, record bounded compression evidence into
+ * out_entries[0..out->used-1] up to entry_capacity rows.
+ *
+ * sample_size caps the number of payload bytes the walker inspects to
+ * build the byte-frequency receipt per entry. The actual amount sampled
+ * is min(sample_size, payload_size, NEXUS_V1_BPK_PRS3_EVIDENCE_MAX_SAMPLE_BYTES),
+ * so callers always get a fully-bounded walk regardless of input size.
+ *
+ * The walker never claims to decode PRS3; out entries are structural
+ * receipts only. Returns 0 on success, negative on bad args / malformed
+ * archive. */
+int nexus_v1_bpk_archive_prs3_payload_evidence(
+    const uint8_t *data,
+    size_t data_size,
+    uint32_t sample_size,
+    Nexus_V1_BpkPrs3PayloadEvidence *out_entries,
+    uint32_t entry_capacity,
+    Nexus_V1_BpkPrs3PayloadEvidenceSummary *out_summary);
+
 #ifdef __cplusplus
 }
 #endif
