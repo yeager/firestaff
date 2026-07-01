@@ -3063,7 +3063,9 @@ set_tests_properties(firestaff_dm1_v1_forced_pause_font_scale_fit_probe PROPERTI
 # probes/m11/firestaff_m11_session_timer_forced_pause_input_gating_probe.c
 # for the full invariant list.
 add_executable(firestaff_m11_session_timer_forced_pause_input_gating_probe
-    probes/m11/firestaff_m11_session_timer_forced_pause_input_gating_probe.c)
+    probes/m11/firestaff_m11_session_timer_forced_pause_input_gating_probe.c
+    src/engine/ui_scale_m11.c
+    src/audio/ambient_layer_m11.c)
 target_link_libraries(firestaff_m11_session_timer_forced_pause_input_gating_probe
     PRIVATE firestaff_m12 firestaff_m11 firestaff_m11 firestaff_m10 m)
 if(NOT MSVC)
