@@ -20707,6 +20707,13 @@ int M11_GameView_GetActingActionIndices(const M11_GameViewState* state,
     int idx;
     unsigned int setIdx;
     if (!state || !outIndices) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB MENU.C:F0390 lines 751-754 clears G0506 while
+         * G0299_ui_CandidateChampionOrdinal owns the C040 panel.  Keep
+         * read-side action-row helpers from exposing stale menu rows before
+         * the next refresh/trigger path clears Firestaff's mirror. */
+        return 0;
+    }
     if (state->actingChampionOrdinal == 0) return 0;
     idx = (int)state->actingChampionOrdinal - 1;
     if (idx < 0 || idx >= CHAMPION_MAX_PARTY) return 0;

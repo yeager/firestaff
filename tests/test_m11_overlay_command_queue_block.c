@@ -471,6 +471,37 @@ static void test_candidate_panel_blocks_rest_and_source_save_commands(void)
                                 "C040 rest/save commands do not tick");
 }
 
+static void test_candidate_panel_hides_stale_action_rows(void)
+{
+    M11_GameViewState state;
+    unsigned char actions[3] = {0, 0, 0};
+    uint32_t tick;
+    int direction;
+
+    seed_active_view(&state);
+    tick = state.world.gameTick;
+    direction = state.world.party.direction;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "fixture opens action menu before C040 takeover");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "fixture resolves action rows before C040 takeover");
+
+    state.candidateMirrorOrdinal = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+
+    /* ReDMCSB MENU.C F0390 lines 751-754 clears G0506 when
+     * G0299_ui_CandidateChampionOrdinal owns C040.  The read-side helper
+     * must not expose stale rows while the candidate panel owns input. */
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 0,
+              "C040 candidate hides stale action rows before trigger");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "read-side action-row query keeps C040 live");
+    assert_no_pipeline_activity(&state, tick, direction,
+                                "C040 action-row query does not tick");
+}
+
 static void test_keyboard_positive_control_dispatches_without_overlay(void)
 {
     /* v2.8.x: arrow Left/Right now mean strafe-left/strafe-right
@@ -629,6 +660,7 @@ int main(void)
     test_candidate_panel_blocks_direct_object_helpers();
     test_candidate_panel_blocks_direct_quickload_only();
     test_candidate_panel_blocks_rest_and_source_save_commands();
+    test_candidate_panel_hides_stale_action_rows();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();
