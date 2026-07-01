@@ -192,6 +192,66 @@ int F0733_COMBAT_GetChampionWoundDefense_Compat(
     return 1;
 }
 
+int F0733b_COMBAT_GetChampionWoundDefenseRng_Compat(
+    const struct CombatantChampionSnapshot_Compat* champ,
+    int woundSlotIndex,
+    int useSharpDefense,
+    struct RngState_Compat* rng,
+    int* outDefense,
+    int* outRngCallCount)
+{
+    int adjusted;
+    int vitalityModulus;
+    int randomVitality;
+    int rngCalls = 0;
+
+    if (champ == 0 || rng == 0 || outDefense == 0) return 0;
+    if (woundSlotIndex < 0 || woundSlotIndex > 5) return 0;
+
+    /* ReDMCSB CHAMPION.C F0313 lines 1350-1354 starts the per-slot defense
+     * with M002_RANDOM((Vitality >> 3) + 1), halves that random component for
+     * sharp defense, then adds ActionDefense, ShieldDefense, Party.ShieldDefense,
+     * shield contribution, and body armour. Firestaff's snapshot folds the
+     * non-random defense contributors into woundDefense[] and partyShieldDefense. */
+    vitalityModulus = (champ->statisticVitality >> 3) + 1;
+    if (vitalityModulus < 1) {
+        vitalityModulus = 1;
+    }
+    randomVitality = F0732_COMBAT_RngRandom_Compat(rng, vitalityModulus);
+    rngCalls++;
+    if (useSharpDefense) {
+        randomVitality >>= 1;
+    }
+
+    adjusted = champ->woundDefense[woundSlotIndex] +
+        champ->partyShieldDefense + randomVitality;
+
+    /* ReDMCSB CHAMPION.C F0313 lines 1364-1366 subtracts
+     * 8 + M004_RANDOM(4) for an already-wounded target slot. */
+    if ((champ->wounds & (1 << woundSlotIndex)) != 0) {
+        adjusted -= 8 + F0732_COMBAT_RngRandom_Compat(rng, 4);
+        rngCalls++;
+    }
+
+    /* ReDMCSB CHAMPION.C F0313 lines 1367-1370 applies the resting half-scale,
+     * then returns the final half-scaled value bounded to 0..100. */
+    if (champ->isResting) {
+        adjusted >>= 1;
+    }
+    adjusted >>= 1;
+    if (adjusted < 0) {
+        adjusted = 0;
+    } else if (adjusted > 100) {
+        adjusted = 100;
+    }
+
+    *outDefense = adjusted;
+    if (outRngCallCount) {
+        *outRngCallCount = rngCalls;
+    }
+    return 1;
+}
+
 int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
     int statisticCurrent,
     int statisticMaximum,
@@ -454,6 +514,65 @@ static int combat_apply_f0321_armor_defense_scale(
     if (avgDefense > 130) {
         /* F0321 BUG0_44 path: 130 - defense would underflow; clamp
          * to mirror the source's signed behaviour. */
+        avgDefense = 130;
+    }
+    scaled = (attack * (130 - avgDefense)) >> 6;
+    if (scaled < 0) {
+        scaled = 0;
+    }
+    return scaled;
+}
+
+static int combat_apply_f0321_armor_defense_scale_rng(
+    int attackType,
+    int attack,
+    int allowedWoundMask,
+    const struct CombatantChampionSnapshot_Compat* defender,
+    struct RngState_Compat* rng,
+    int* ioRngCallCount)
+{
+    int slot;
+    int defenseSum;
+    int defenseCount;
+    int avgDefense;
+    int useSharpDefense;
+    int scaled;
+
+    if (attack <= 0) {
+        return attack;
+    }
+    if (attackType == COMBAT_ATTACK_NORMAL) {
+        return attack;
+    }
+    if (attackType == COMBAT_ATTACK_MAGIC ||
+        attackType == COMBAT_ATTACK_PSYCHIC) {
+        return attack;
+    }
+
+    useSharpDefense = (attackType == COMBAT_ATTACK_SHARP) ? 1 : 0;
+    defenseSum = 0;
+    defenseCount = 0;
+    for (slot = 0; slot < 6; ++slot) {
+        int bit = (1 << slot);
+        if (allowedWoundMask & bit) {
+            int perSlot = 0;
+            int rngCalls = 0;
+            if (F0733b_COMBAT_GetChampionWoundDefenseRng_Compat(
+                    defender, slot, useSharpDefense, rng, &perSlot, &rngCalls)) {
+                defenseSum += perSlot;
+                defenseCount++;
+                if (ioRngCallCount) {
+                    *ioRngCallCount += rngCalls;
+                }
+            }
+        }
+    }
+
+    if (defenseCount <= 0) {
+        return (attack * 130) >> 6;
+    }
+    avgDefense = defenseSum / defenseCount;
+    if (avgDefense > 130) {
         avgDefense = 130;
     }
     scaled = (attack * (130 - avgDefense)) >> 6;
@@ -830,8 +949,9 @@ int F0736_COMBAT_ResolveCreatureMelee_Compat(
         atk = combat_apply_defender_statistic_adjustment(
             attacker->attackType, defender, atk);
 
-        atk = combat_apply_f0321_armor_defense_scale(
-            attacker->attackType, atk, out->woundMaskAdded, defender);
+        atk = combat_apply_f0321_armor_defense_scale_rng(
+            attacker->attackType, atk, out->woundMaskAdded, defender,
+            rng, &out->rngCallCount);
 
         if (atk <= 0) {
             out->outcome = COMBAT_OUTCOME_MISS;

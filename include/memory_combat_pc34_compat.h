@@ -251,7 +251,7 @@ int F0732_COMBAT_RngRandom_Compat(
     int modulus);
 
 /* ==========================================================
- * Group B — Defence helpers (F0733–F0734). No RNG.
+ * Group B — Defence helpers (F0733–F0734).
  * ========================================================== */
 
 int F0733_COMBAT_GetChampionWoundDefense_Compat(
@@ -259,6 +259,14 @@ int F0733_COMBAT_GetChampionWoundDefense_Compat(
     int woundSlotIndex,
     int useSharpDefense,
     int* outDefense);
+
+int F0733b_COMBAT_GetChampionWoundDefenseRng_Compat(
+    const struct CombatantChampionSnapshot_Compat* champ,
+    int woundSlotIndex,
+    int useSharpDefense,
+    struct RngState_Compat* rng,
+    int* outDefense,
+    int* outRngCallCount);
 
 int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
     int statisticCurrent,

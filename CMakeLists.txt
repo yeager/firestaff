@@ -8769,7 +8769,7 @@ if(BUILD_TESTING)
     # PANEL.C:1601-1606 poisoned-label gate that reads
     # PoisonEventCount. Disjoint from
     # test_dm1_v1_combat_pc34_compat_integration.c
-    # (single-step + 50% gate), the unwired
+    # (single-step + 50% gate),
     # test_dm1_v1_sleep_wake_poison_gate_pc34_compat.c (F0759
     # wake + F0230/F0321 melee fixtures), and
     # test_dm1_v1_monster_poison_cloud_overlap_tick_pc34_compat.c
@@ -8784,6 +8784,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_auto_mechanics_sleep_tick_poison_gate_pc34_compat
         COMMAND test_dm1_v1_auto_mechanics_sleep_tick_poison_gate_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_sleep_wake_poison_gate_pc34_compat
+        tests/test_dm1_v1_sleep_wake_poison_gate_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_sleep_wake_poison_gate_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_sleep_wake_poison_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_sleep_wake_poison_gate_pc34_compat
+        COMMAND test_dm1_v1_sleep_wake_poison_gate_pc34_compat
     )
 
     # pass797 — auto chest action-hand swap during close gate:
