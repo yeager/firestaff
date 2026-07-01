@@ -22247,6 +22247,38 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_queue_pc34_compat.c"
     )
 endif()
 
+# M11 engine-side input-remap persistence gate.
+# The pre-existing data-free tests/test_m11_input_remap_roundtrip.c
+# is source-locked against src/engine/input_remap_m11.c (the
+# engine-side SDL_Scancode <-> M11_InputAction table that persists
+# to ~/.firestaff/keybinds.ini). It pins the persistence contract
+# for M11_Input_Save / M11_Input_Load: HOME-scoped config path
+# (env override honored), defaults restore before reload,
+# primary/secondary scancodes round-trip, the previously-bound
+# default scancode is no longer matched after reload, and every
+# documented default action (forward/back, turn/strafe left/right,
+# attack primary) resolves through M11_Input_ActionForScancode.
+# Data-free; no real game data, no SDL window. Distinct from the
+# launcher-side M12 input_remap_m12 TOML/SCREENCODE table.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_remap_roundtrip.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/input_remap_m11.c")
+    add_executable(test_m11_input_remap_roundtrip
+        tests/test_m11_input_remap_roundtrip.c
+        src/engine/input_remap_m11.c
+    )
+    target_link_libraries(test_m11_input_remap_roundtrip PRIVATE SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_input_remap_roundtrip PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_input_remap_roundtrip
+        COMMAND test_m11_input_remap_roundtrip
+    )
+    set_tests_properties(m11_input_remap_roundtrip PROPERTIES
+        LABELS "tier2;m11;input-remap;save-load;round-trip;persistence"
+    )
+endif()
+
 # M11 input scale boundary contract: pins
 # M11_MapPresentedGamePointToSourceForPresentation() (the single
 # source of truth that converts a presented SDL mouse/window point
