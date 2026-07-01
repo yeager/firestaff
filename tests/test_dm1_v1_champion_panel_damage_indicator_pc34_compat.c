@@ -61,8 +61,8 @@ static void test_evidence(void)
                   "CHAMDRAW.C F0623_DrawDamageToChampion_F0320_sub:680-699",
                   "CHAMDRAW.C F0623:680-699");
     expect_str_eq("evidence.pipeline_caller", evidence->pipeline_caller_anchor,
-                  "CHAMPION.C F0320_CHAMPION_ApplyAndDrawPendingDamageAndWounds:1720-1779",
-                  "CHAMPION.C F0320:1720-1779");
+                  "CHAMPION.C F0320_CHAMPION_ApplyAndDrawPendingDamageAndWounds:1744-1775 PC34 MEDIA009 box + 1/2/3-digit x-stride",
+                  "CHAMPION.C F0320:1744-1775 PC34 MEDIA009 damage box");
     expect_contains("evidence.graphics", evidence->defs_graphics_anchor,
                     "C015/C016", "DEFS.H:2176-2177");
     expect_contains("evidence.colors", evidence->defs_colors_anchor,
@@ -70,7 +70,7 @@ static void test_evidence(void)
     expect_contains("evidence.zones", evidence->defs_zones_anchor,
                     "C167/C179", "DEFS.H:3792-3794");
     expect_contains("evidence.prototypes", evidence->defs_prototype_anchor,
-                    "9067-9070", "DEFS.H:9067-9070");
+                    "C69_CHAMPION_STATUS_BOX_SPACING", "DEFS.H:2157 champion status box spacing");
     expect_contains("evidence.base_blit", evidence->base_blit_anchor,
                     "F0660_", "BASE.C:1473-1507");
     expect_contains("evidence.panel_inventory", evidence->panel_inventory_anchor,
@@ -94,6 +94,9 @@ static void test_evidence(void)
                     "CHAMDRAW.C F0623:697");
     expect_contains("source.pipeline", source, "CHAMPION.C F0320:1720-1779",
                     "CHAMPION.C F0320 caller");
+    expect_contains("source.f0320_pc34_media009",
+                    source, "F0320:1744-1775 PC34 MEDIA009",
+                    "F0320 PC34 MEDIA009 branch range");
     expect_contains("source.base", source, "BASE.C F0660:1473-1507",
                     "BASE.C F0660_ blit helper");
     expect_contains("source.panel", source, "PANEL.C F0355",
@@ -101,6 +104,36 @@ static void test_evidence(void)
     expect_contains("source.no_real_asset", source,
                     "without claiming real-asset parity",
                     "contract-only marker");
+    /*
+     * F0320 PC34 MEDIA009 box-geometry / text-stride citations.
+     */
+    expect_contains("source.f0320_media009_box",
+                    source, "CHAMPION.C F0320:1744-1775 PC34 MEDIA009",
+                    "F0320:1744-1775 PC34 MEDIA009 damage box");
+    expect_contains("source.f0320_inventory_box",
+                    source, "M771_BOX_BOTTOM=28",
+                    "F0320:1748 inventory box bottom");
+    expect_contains("source.f0320_noninventory_box",
+                    source, "M771_BOX_BOTTOM=6",
+                    "F0320:1762 non-inventory box bottom");
+    expect_contains("source.f0320_inventory_byte_width",
+                    source, "C016_BYTE_WIDTH",
+                    "F0320:1749 inventory blit byte width");
+    expect_contains("source.f0320_noninventory_byte_width",
+                    source, "C024_BYTE_WIDTH",
+                    "F0320:1763 non-inventory blit byte width");
+    expect_contains("source.f0320_inventory_text_y",
+                    source, "Y=16",
+                    "F0320:1758 inventory text Y");
+    expect_contains("source.f0320_noninventory_text_y",
+                    source, "Y=5",
+                    "F0320:1773 non-inventory text Y");
+    expect_contains("source.f0320_text_print",
+                    source, "F0053_TEXT_PrintToLogicalScreen",
+                    "F0320:1775 F0053 centered text");
+    expect_contains("source.f0320_defs_spacing",
+                    source, "C69_CHAMPION_STATUS_BOX_SPACING",
+                    "DEFS.H:2157 champion status box spacing");
 }
 
 static void assert_common_result(
@@ -113,7 +146,14 @@ static void assert_common_result(
     int graphic,
     int base_zone,
     int zone,
-    const char *text)
+    const char *text,
+    int expected_digit_count,
+    int expected_text_x_offset,
+    int expected_text_y,
+    int expected_box_bottom,
+    int expected_box_left_offset,
+    int expected_box_right_offset,
+    int expected_box_byte_width)
 {
     char id[96];
 
@@ -197,6 +237,39 @@ static void assert_common_result(
     snprintf(id, sizeof(id), "%s.evidence_attached", prefix);
     expect_bool(id, result->evidence != NULL, true,
                 "CHAMDRAW.C F0623:680-699 evidence pointer");
+    /*
+     * F0320 PC34 MEDIA009 box-geometry / text-stride assertions.
+     * The damage == 0 short-circuit collapses all numeric offsets to 0
+     * but still reports the F0320:1746 M770_BOX_TOP = 0 invariant.
+     */
+    snprintf(id, sizeof(id), "%s.box_top", prefix);
+    expect_int(id, result->damage_box_top, DM1_V1_CPDI_BOX_TOP_PC34,
+               "F0320:1746/1761 M770_BOX_TOP=0");
+    snprintf(id, sizeof(id), "%s.box_bottom", prefix);
+    expect_int(id, result->damage_box_bottom, expected_box_bottom,
+               "F0320:1748/1762 M771_BOX_BOTTOM inventory vs non-inventory");
+    snprintf(id, sizeof(id), "%s.box_left_offset", prefix);
+    expect_int(id, result->damage_box_left_offset, expected_box_left_offset,
+               "F0320:1749/1763 M768_BOX_LEFT inventory +7 vs non-inventory +0");
+    snprintf(id, sizeof(id), "%s.box_right_offset", prefix);
+    expect_int(id, result->damage_box_right_offset, expected_box_right_offset,
+               "F0320:1749/1763 M769_BOX_RIGHT inventory +31 vs non-inventory +47");
+    snprintf(id, sizeof(id), "%s.box_byte_width", prefix);
+    expect_int(id, result->damage_box_byte_width, expected_box_byte_width,
+               "F0320:1749/1763 C016_BYTE_WIDTH inventory vs C024_BYTE_WIDTH non-inventory");
+    snprintf(id, sizeof(id), "%s.text_x_offset", prefix);
+    expect_int(id, result->damage_text_x_offset, expected_text_x_offset,
+               "F0320:1751-1758 / 1765-1772 1/2/3-digit x-stride");
+    snprintf(id, sizeof(id), "%s.text_y", prefix);
+    expect_int(id, result->damage_text_y, expected_text_y,
+               "F0320:1758/1773 F0053 text Y inventory 16 vs non-inventory 5");
+    snprintf(id, sizeof(id), "%s.digit_count", prefix);
+    expect_int(id, result->damage_digit_count, expected_digit_count,
+               "F0320:1751-1758 / 1765-1772 digit bucket / damage==0 short-circuit");
+    snprintf(id, sizeof(id), "%s.champion_x_base", prefix);
+    expect_int(id, result->champion_x_base,
+               champion_index * DM1_V1_CPDI_CHAMPION_X_STRIDE_PC34,
+               "F0320:1745 AL0969_i_X = championIndex * C69_CHAMPION_STATUS_BOX_SPACING");
 }
 
 static void test_small_and_big_routes(void)
@@ -210,11 +283,22 @@ static void test_small_and_big_routes(void)
     expect_int("small.build_return",
                DM1_V1_ChampionPanelDamageIndicator_BuildPc34Compat(&input, &result),
                1, "CHAMDRAW.C F0623:691-697 small route");
+    /*
+     * damage 42 = 2 digits; non-inventory: bottom=6, left=+0,
+     * right=+47, byte_width=24, x-stride 16, Y=5.
+     */
     assert_common_result("small", &result, 2, 1, 42, false,
                          DM1_V1_CPDI_GFX_DAMAGE_SMALL_PC34,
                          DM1_V1_CPDI_ZONE_DAMAGE_SMALL_FIRST_PC34,
                          DM1_V1_CPDI_ZONE_DAMAGE_SMALL_FIRST_PC34 + 2,
-                         "42");
+                         "42",
+                         DM1_V1_CPDI_DIGIT_COUNT_2_PC34,
+                         DM1_V1_CPDI_TEXT_X_STRIDE_2DIGIT_NONINVENTORY_PC34,
+                         DM1_V1_CPDI_TEXT_Y_NONINVENTORY_PC34,
+                         DM1_V1_CPDI_BOX_BOTTOM_NONINVENTORY_PC34,
+                         DM1_V1_CPDI_BOX_LEFT_OFFSET_NONINVENTORY_PC34,
+                         DM1_V1_CPDI_BOX_RIGHT_OFFSET_NONINVENTORY_PC34,
+                         DM1_V1_CPDI_BOX_BYTE_WIDTH_NONINVENTORY_PC34);
 
     input.champion_index = 2;
     input.inventory_champion_ordinal = 3;
@@ -222,11 +306,22 @@ static void test_small_and_big_routes(void)
     expect_int("big.build_return",
                DM1_V1_ChampionPanelDamageIndicator_BuildPc34Compat(&input, &result),
                1, "CHAMDRAW.C F0623:688-697 big route");
+    /*
+     * damage 105 = 3 digits; inventory: bottom=28, left=+7,
+     * right=+31, byte_width=16, x-stride 15, Y=16.
+     */
     assert_common_result("big", &result, 2, 3, 105, true,
                          DM1_V1_CPDI_GFX_DAMAGE_BIG_PC34,
                          DM1_V1_CPDI_ZONE_DAMAGE_BIG_FIRST_PC34,
                          DM1_V1_CPDI_ZONE_DAMAGE_BIG_FIRST_PC34 + 2,
-                         "105");
+                         "105",
+                         DM1_V1_CPDI_DIGIT_COUNT_3_PC34,
+                         DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_INVENTORY_PC34,
+                         DM1_V1_CPDI_TEXT_Y_INVENTORY_PC34,
+                         DM1_V1_CPDI_BOX_BOTTOM_INVENTORY_PC34,
+                         DM1_V1_CPDI_BOX_LEFT_OFFSET_INVENTORY_PC34,
+                         DM1_V1_CPDI_BOX_RIGHT_OFFSET_INVENTORY_PC34,
+                         DM1_V1_CPDI_BOX_BYTE_WIDTH_INVENTORY_PC34);
 }
 
 static void test_zone_stride_for_all_champions(void)
@@ -303,6 +398,251 @@ static void test_stale_inventory_ordinals_stay_small(void)
         expect_int(id, result.zone_index,
                    DM1_V1_CPDI_ZONE_DAMAGE_SMALL_FIRST_PC34 + 1,
                    "CHAMDRAW.C F0623:696 C167 + championIndex");
+    }
+}
+
+static void test_damage_box_geometry_and_text_stride(void)
+{
+    /*
+     * CHAMPION.C F0320:1744-1775 PC34 MEDIA009 branch:
+     * inventory champion (G0423 match) -> bottom=28, left=+7,
+     * right=+31, C016_BYTE_WIDTH blit, x-stride 21/18/15, Y=16.
+     * non-inventory champion -> bottom=6, left=+0, right=+47,
+     * C024_BYTE_WIDTH blit, x-stride 19/16/13, Y=5.
+     * damage == 0 -> F0320:1736 short-circuit; all offsets/digit
+     * counters collapse to 0 (damage_box_top stays 0 per F0320:1746
+     * which the code only reaches when damage != 0, but 0 is the
+     * default-initialized value).
+     *
+     * damage >= 1000 -> F0288 still prints 4 digits, but the
+     * x-stride branching fires only for 1/2/3 digits, so damage
+     * 1000..9999 lands in the 3-digit bucket (F0320:1756 / 1770
+     * default arm).
+     */
+    static const struct {
+        int damage;
+        int digit_count;
+        int inventory_x_stride;
+        int noninventory_x_stride;
+    } cases[] = {
+        { 1, DM1_V1_CPDI_DIGIT_COUNT_1_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_1DIGIT_INVENTORY_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_1DIGIT_NONINVENTORY_PC34 },
+        { 9, DM1_V1_CPDI_DIGIT_COUNT_1_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_1DIGIT_INVENTORY_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_1DIGIT_NONINVENTORY_PC34 },
+        { 10, DM1_V1_CPDI_DIGIT_COUNT_2_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_2DIGIT_INVENTORY_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_2DIGIT_NONINVENTORY_PC34 },
+        { 99, DM1_V1_CPDI_DIGIT_COUNT_2_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_2DIGIT_INVENTORY_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_2DIGIT_NONINVENTORY_PC34 },
+        { 100, DM1_V1_CPDI_DIGIT_COUNT_3_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_INVENTORY_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_NONINVENTORY_PC34 },
+        { 999, DM1_V1_CPDI_DIGIT_COUNT_3_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_INVENTORY_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_NONINVENTORY_PC34 },
+        { 1000, DM1_V1_CPDI_DIGIT_COUNT_3_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_INVENTORY_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_NONINVENTORY_PC34 },
+        { 9999, DM1_V1_CPDI_DIGIT_COUNT_3_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_INVENTORY_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_NONINVENTORY_PC34 },
+        { DM1_V1_CPDI_DAMAGE_MAX_PC34, DM1_V1_CPDI_DIGIT_COUNT_3_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_INVENTORY_PC34,
+          DM1_V1_CPDI_TEXT_X_STRIDE_3DIGIT_NONINVENTORY_PC34 }
+    };
+    int champion;
+    unsigned i;
+
+    for (champion = 0; champion < DM1_V1_CPDI_CHAMPION_COUNT_PC34; ++champion) {
+        for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+            DM1_V1_ChampionPanelDamageIndicatorInputPc34Compat input;
+            DM1_V1_ChampionPanelDamageIndicatorResultPc34Compat result;
+            char id[96];
+
+            /* inventory branch (G0423 matches champion ordinal) */
+            input.champion_index = champion;
+            input.inventory_champion_ordinal = champion + 1;
+            input.damage = cases[i].damage;
+            expect_int("geo.build_inv",
+                       DM1_V1_ChampionPanelDamageIndicator_BuildPc34Compat(
+                           &input, &result),
+                       1, "F0320:1744-1758 inventory branch");
+            snprintf(id, sizeof(id),
+                     "geo.inv_%d_d%d.box_top", champion, cases[i].damage);
+            expect_int(id, result.damage_box_top,
+                       DM1_V1_CPDI_BOX_TOP_PC34,
+                       "F0320:1746 M770_BOX_TOP=0");
+            snprintf(id, sizeof(id),
+                     "geo.inv_%d_d%d.box_bottom", champion, cases[i].damage);
+            expect_int(id, result.damage_box_bottom,
+                       DM1_V1_CPDI_BOX_BOTTOM_INVENTORY_PC34,
+                       "F0320:1748 M771_BOX_BOTTOM=28 inventory");
+            snprintf(id, sizeof(id),
+                     "geo.inv_%d_d%d.box_left", champion, cases[i].damage);
+            expect_int(id, result.damage_box_left_offset,
+                       DM1_V1_CPDI_BOX_LEFT_OFFSET_INVENTORY_PC34,
+                       "F0320:1749 inventory left=+7");
+            snprintf(id, sizeof(id),
+                     "geo.inv_%d_d%d.box_right", champion, cases[i].damage);
+            expect_int(id, result.damage_box_right_offset,
+                       DM1_V1_CPDI_BOX_RIGHT_OFFSET_INVENTORY_PC34,
+                       "F0320:1749 inventory right=+31");
+            snprintf(id, sizeof(id),
+                     "geo.inv_%d_d%d.box_byte_width",
+                     champion, cases[i].damage);
+            expect_int(id, result.damage_box_byte_width,
+                       DM1_V1_CPDI_BOX_BYTE_WIDTH_INVENTORY_PC34,
+                       "F0320:1749 C016_BYTE_WIDTH=16 inventory");
+            snprintf(id, sizeof(id),
+                     "geo.inv_%d_d%d.text_x", champion, cases[i].damage);
+            expect_int(id, result.damage_text_x_offset,
+                       cases[i].inventory_x_stride,
+                       "F0320:1751-1758 inventory 1/2/3-digit x-stride");
+            snprintf(id, sizeof(id),
+                     "geo.inv_%d_d%d.text_y", champion, cases[i].damage);
+            expect_int(id, result.damage_text_y,
+                       DM1_V1_CPDI_TEXT_Y_INVENTORY_PC34,
+                       "F0320:1758 inventory text Y=16");
+            snprintf(id, sizeof(id),
+                     "geo.inv_%d_d%d.digit_count", champion, cases[i].damage);
+            expect_int(id, result.damage_digit_count, cases[i].digit_count,
+                       "F0320:1751-1758 inventory digit bucket");
+            snprintf(id, sizeof(id),
+                     "geo.inv_%d_d%d.x_base", champion, cases[i].damage);
+            expect_int(id, result.champion_x_base,
+                       champion * DM1_V1_CPDI_CHAMPION_X_STRIDE_PC34,
+                       "F0320:1745 AL0969_i_X = championIndex * 69");
+            snprintf(id, sizeof(id),
+                     "geo.inv_%d_d%d.is_inventory",
+                     champion, cases[i].damage);
+            expect_bool(id, result.is_inventory_champion, true,
+                        "F0320:1747 G0423 inventory ordinal match");
+
+            /* non-inventory branch (G0423 = -1 -> no match) */
+            input.inventory_champion_ordinal = -1;
+            expect_int("geo.build_non",
+                       DM1_V1_ChampionPanelDamageIndicator_BuildPc34Compat(
+                           &input, &result),
+                       1, "F0320:1758-1773 non-inventory branch");
+            snprintf(id, sizeof(id),
+                     "geo.non_%d_d%d.box_bottom", champion, cases[i].damage);
+            expect_int(id, result.damage_box_bottom,
+                       DM1_V1_CPDI_BOX_BOTTOM_NONINVENTORY_PC34,
+                       "F0320:1762 M771_BOX_BOTTOM=6 non-inventory");
+            snprintf(id, sizeof(id),
+                     "geo.non_%d_d%d.box_left", champion, cases[i].damage);
+            expect_int(id, result.damage_box_left_offset,
+                       DM1_V1_CPDI_BOX_LEFT_OFFSET_NONINVENTORY_PC34,
+                       "F0320:1763 non-inventory left=+0");
+            snprintf(id, sizeof(id),
+                     "geo.non_%d_d%d.box_right", champion, cases[i].damage);
+            expect_int(id, result.damage_box_right_offset,
+                       DM1_V1_CPDI_BOX_RIGHT_OFFSET_NONINVENTORY_PC34,
+                       "F0320:1763 non-inventory right=+47");
+            snprintf(id, sizeof(id),
+                     "geo.non_%d_d%d.box_byte_width",
+                     champion, cases[i].damage);
+            expect_int(id, result.damage_box_byte_width,
+                       DM1_V1_CPDI_BOX_BYTE_WIDTH_NONINVENTORY_PC34,
+                       "F0320:1763 C024_BYTE_WIDTH=24 non-inventory");
+            snprintf(id, sizeof(id),
+                     "geo.non_%d_d%d.text_x", champion, cases[i].damage);
+            expect_int(id, result.damage_text_x_offset,
+                       cases[i].noninventory_x_stride,
+                       "F0320:1765-1772 non-inventory 1/2/3-digit x-stride");
+            snprintf(id, sizeof(id),
+                     "geo.non_%d_d%d.text_y", champion, cases[i].damage);
+            expect_int(id, result.damage_text_y,
+                       DM1_V1_CPDI_TEXT_Y_NONINVENTORY_PC34,
+                       "F0320:1773 non-inventory text Y=5");
+            snprintf(id, sizeof(id),
+                     "geo.non_%d_d%d.digit_count",
+                     champion, cases[i].damage);
+            expect_int(id, result.damage_digit_count, cases[i].digit_count,
+                       "F0320:1765-1772 non-inventory digit bucket");
+            snprintf(id, sizeof(id),
+                     "geo.non_%d_d%d.x_base", champion, cases[i].damage);
+            expect_int(id, result.champion_x_base,
+                       champion * DM1_V1_CPDI_CHAMPION_X_STRIDE_PC34,
+                       "F0320:1760 AL0969_i_X carries the same championIndex*69");
+            snprintf(id, sizeof(id),
+                     "geo.non_%d_d%d.is_inventory",
+                     champion, cases[i].damage);
+            expect_bool(id, result.is_inventory_champion, false,
+                        "F0320:1747 G0423 inventory ordinal miss");
+        }
+    }
+
+    /*
+     * damage == 0 short-circuit: F0320:1734-1737 `if (!pendingDamage)
+     * continue;` skips the blit + centered text entirely. The gate
+     * reports damage_box_top = 0 (F0320:1746 default) and collapses
+     * all other geometry/stride fields to 0.
+     */
+    {
+        DM1_V1_ChampionPanelDamageIndicatorInputPc34Compat input;
+        DM1_V1_ChampionPanelDamageIndicatorResultPc34Compat result;
+        char id[96];
+
+        /* inventory + damage 0 */
+        input.champion_index = 2;
+        input.inventory_champion_ordinal = 3;
+        input.damage = 0;
+        expect_int("zero_inv.build",
+                   DM1_V1_ChampionPanelDamageIndicator_BuildPc34Compat(
+                       &input, &result),
+                   1, "F0320:1734-1737 damage==0 short-circuit");
+        snprintf(id, sizeof(id), "zero_inv.box_top");
+        expect_int(id, result.damage_box_top,
+                   DM1_V1_CPDI_BOX_TOP_PC34,
+                   "F0320:1746 M770_BOX_TOP=0 default");
+        snprintf(id, sizeof(id), "zero_inv.box_bottom");
+        expect_int(id, result.damage_box_bottom, 0,
+                   "F0320:1736 short-circuit skips M771_BOX_BOTTOM");
+        snprintf(id, sizeof(id), "zero_inv.box_left");
+        expect_int(id, result.damage_box_left_offset, 0,
+                   "F0320:1736 short-circuit skips M768_BOX_LEFT");
+        snprintf(id, sizeof(id), "zero_inv.box_right");
+        expect_int(id, result.damage_box_right_offset, 0,
+                   "F0320:1736 short-circuit skips M769_BOX_RIGHT");
+        snprintf(id, sizeof(id), "zero_inv.box_byte_width");
+        expect_int(id, result.damage_box_byte_width, 0,
+                   "F0320:1736 short-circuit skips blit byte width");
+        snprintf(id, sizeof(id), "zero_inv.text_x");
+        expect_int(id, result.damage_text_x_offset,
+                   DM1_V1_CPDI_TEXT_X_STRIDE_NO_DAMAGE_PC34,
+                   "F0320:1736 short-circuit skips AL0969_i_X stride");
+        snprintf(id, sizeof(id), "zero_inv.text_y");
+        expect_int(id, result.damage_text_y, 0,
+                   "F0320:1736 short-circuit skips L0973_i_Y");
+        snprintf(id, sizeof(id), "zero_inv.digit_count");
+        expect_int(id, result.damage_digit_count,
+                   DM1_V1_CPDI_DIGIT_COUNT_NO_DAMAGE_PC34,
+                   "F0320:1736 short-circuit emits 0 digits");
+        snprintf(id, sizeof(id), "zero_inv.x_base");
+        expect_int(id, result.champion_x_base,
+                   2 * DM1_V1_CPDI_CHAMPION_X_STRIDE_PC34,
+                   "F0320:1745 AL0969_i_X still computed");
+
+        /* non-inventory + damage 0 */
+        input.inventory_champion_ordinal = -1;
+        expect_int("zero_non.build",
+                   DM1_V1_ChampionPanelDamageIndicator_BuildPc34Compat(
+                       &input, &result),
+                   1, "F0320:1734-1737 damage==0 non-inventory short-circuit");
+        snprintf(id, sizeof(id), "zero_non.box_bottom");
+        expect_int(id, result.damage_box_bottom, 0,
+                   "F0320:1736 short-circuit skips M771_BOX_BOTTOM");
+        snprintf(id, sizeof(id), "zero_non.digit_count");
+        expect_int(id, result.damage_digit_count,
+                   DM1_V1_CPDI_DIGIT_COUNT_NO_DAMAGE_PC34,
+                   "F0320:1736 short-circuit emits 0 digits");
+        snprintf(id, sizeof(id), "zero_non.is_inventory");
+        expect_bool(id, result.is_inventory_champion, false,
+                    "F0320:1747 G0423 inventory ordinal miss");
     }
 }
 
@@ -434,6 +774,7 @@ int main(void)
     test_zone_stride_for_all_champions();
     test_stale_inventory_ordinals_stay_small();
     test_damage_text_edges();
+    test_damage_box_geometry_and_text_stride();
     test_invalid_inputs_and_defaults();
 
     printf("dm1_v1_champion_panel_damage_indicator_pc34_compat: assertions=%d failures=%d\n",
