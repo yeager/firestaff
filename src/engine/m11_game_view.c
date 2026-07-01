@@ -21883,21 +21883,32 @@ static void m11_set_group_type_on_square(M11_GameViewState* state,
                                          int mapIndex,
                                          int mapX,
                                          int mapY,
-                                         int creatureType) {
+                                         int creatureType,
+                                         int partyDirection) {
     unsigned short groupThing;
     int gIdx;
     int aiIdx;
+    int groupDirection = (partyDirection + 2) & 3;
     if (!state || !state->world.things) return;
     groupThing = m11_find_group_on_square(&state->world, mapIndex, mapX, mapY);
     if (groupThing != THING_NONE && groupThing != THING_ENDOFLIST) {
         gIdx = THING_GET_INDEX(groupThing);
         if (gIdx >= 0 && gIdx < state->world.things->groupCount) {
+            /* ReDMCSB: ENDGAME.C F0446 lines 829-831 turns Lord Chaos into
+             * the Grey Lord, heals it to 10000, centers the single creature
+             * with C0xFF, and faces it opposite the party direction. */
             state->world.things->groups[gIdx].creatureType = (unsigned char)creatureType;
             state->world.things->groups[gIdx].health[0] = 10000;
+            state->world.things->groups[gIdx].cells = 0xFF;
+            state->world.things->groups[gIdx].direction = (unsigned char)groupDirection;
         }
     }
     aiIdx = m11_find_creature_ai_on_square(state, mapIndex, mapX, mapY);
-    if (aiIdx >= 0) state->world.creatureAI[aiIdx].creatureType = creatureType;
+    if (aiIdx >= 0) {
+        state->world.creatureAI[aiIdx].creatureType = creatureType;
+        state->world.creatureAI[aiIdx].groupCells = 0xFF;
+        state->world.creatureAI[aiIdx].groupDirection = groupDirection;
+    }
 }
 
 static int m11_count_fluxcages_around_square(M11_GameViewState* state,
@@ -22138,7 +22149,8 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
                                          state->world.party.mapY);
     m11_remove_fluxcages_on_square_f0446(state, mapIndex, mapX, mapY);
     m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
-                                 DM1_CREATURE_GREY_LORD_ID);
+                                 DM1_CREATURE_GREY_LORD_ID,
+                                 state->world.party.direction);
     state->world.magic.magicalLightAmount = 200;
     m11_mark_game_won_from_fuse_f0446(state);
     m11_log_event(state, M11_COLOR_LIGHT_GREEN,
