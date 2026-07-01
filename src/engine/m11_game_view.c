@@ -21968,6 +21968,34 @@ static void m11_spawn_fuse_fireball_burst_f0446(M11_GameViewState* state,
     }
 }
 
+static void m11_spawn_fuse_harm_burst_f0446(M11_GameViewState* state,
+                                            int mapIndex,
+                                            int mapX,
+                                            int mapY) {
+    int attack;
+    if (!state) return;
+    /* ReDMCSB: ENDGAME.C F0446 lines 896-900 mirrors the opening burst
+     * with Harm Non Material explosions at the same attack values. */
+    for (attack = 55; attack <= 255; attack += 40) {
+        (void)m11_spawn_centered_explosion(
+            state, C003_EXPLOSION_HARM_NON_MATERIAL, attack,
+            mapIndex, mapX, mapY);
+    }
+}
+
+static void m11_spawn_fuse_final_explosions_f0446(M11_GameViewState* state,
+                                                  int mapIndex,
+                                                  int mapX,
+                                                  int mapY) {
+    if (!state) return;
+    /* ReDMCSB: ENDGAME.C F0446 lines 907-910 creates the final centered
+     * Fireball + Harm Non Material pair at attack 255 before Grey Lord. */
+    (void)m11_spawn_centered_explosion(state, C000_EXPLOSION_FIREBALL, 255,
+                                       mapIndex, mapX, mapY);
+    (void)m11_spawn_centered_explosion(
+        state, C003_EXPLOSION_HARM_NON_MATERIAL, 255, mapIndex, mapX, mapY);
+}
+
 static int m11_find_lord_chaos_escape_square_f0225(
     M11_GameViewState* state,
     int mapIndex,
@@ -22163,6 +22191,12 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
                                          state->world.party.mapY);
     m11_remove_fluxcages_on_square_f0446(state, mapIndex, mapX, mapY);
     m11_spawn_fuse_fireball_burst_f0446(state, mapIndex, mapX, mapY);
+    m11_audio_emit_source_sound(state, DM1_SND_BUZZ, M11_AUDIO_MARKER_CREATURE);
+    m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
+                                 DM1_CREATURE_LORD_ORDER_ID,
+                                 state->world.party.direction);
+    m11_spawn_fuse_harm_burst_f0446(state, mapIndex, mapX, mapY);
+    m11_spawn_fuse_final_explosions_f0446(state, mapIndex, mapX, mapY);
     m11_set_group_type_on_square(state, mapIndex, mapX, mapY,
                                  DM1_CREATURE_GREY_LORD_ID,
                                  state->world.party.direction);
