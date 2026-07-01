@@ -4339,6 +4339,77 @@ static void test_fireball_projectile_create_failure_halves_action_xp(void) {
               "failed FIREBALL propagates halved action XP to base skill");
 }
 
+static void run_air_projectile_create_failure_halves_action_xp_case(
+    int actionIndex,
+    const char* actionName)
+{
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
+    int expectedXp;
+
+    seed_state(&state, 100, 54);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 2;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].mana.current = 9;
+    state.world.party.champions[0].mana.maximum = 64;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].direction = 3;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_AIR].experience = 10000;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.projectiles.count = PROJECTILE_LIST_CAPACITY;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(actionIndex, &route), 1,
+              actionName);
+    ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_AIR,
+              "Air projectile failure route uses G0496 Air skill");
+    if (!route.valid) return;
+    expectedXp = route.experienceGain >> 1;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, actionIndex),
+              0,
+              "full projectile list makes Air F0327 projectile create fail");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 7,
+              "failed Air projectile action still spends G0496 mana");
+    ASSERT_EQ(weapons[0].chargeCount, 1,
+              "failed Air projectile action still decrements F0405 charges");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "failed Air projectile action still mirrors F0406 direction");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test((unsigned char)actionIndex),
+              "failed Air projectile action keeps full source disabled ticks");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              10000 + expectedXp,
+              "failed Air projectile action halves G0497 XP on action skill");
+    if (route.baseSkillIndex != route.skillIndex) {
+        ASSERT_EQ(state.world.lifecycle.champions[0]
+                      .skills20[route.baseSkillIndex].experience,
+                  expectedXp,
+                  "failed Air projectile action propagates halved XP to base skill");
+    }
+}
+
+static void test_air_projectile_create_failure_halves_action_xp(void) {
+    run_air_projectile_create_failure_halves_action_xp_case(
+        DM1_ACTION_DISPELL,
+        "DISPELL has a source G0496/G0497 route");
+    run_air_projectile_create_failure_halves_action_xp_case(
+        DM1_ACTION_LIGHTNING,
+        "LIGHTNING has a source G0496/G0497 route");
+}
+
 static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -5898,6 +5969,7 @@ int main(void) {
     test_fireball_action_uses_f0327_and_decrements_charges();
     test_air_projectile_actions_use_f0327_and_f0406_direction();
     test_fireball_projectile_create_failure_halves_action_xp();
+    test_air_projectile_create_failure_halves_action_xp();
     test_invoke_action_uses_f0327_and_decrements_charges();
     test_invoke_projectile_create_failure_halves_action_xp();
     test_cast_potion_spell_mutates_empty_flask();
