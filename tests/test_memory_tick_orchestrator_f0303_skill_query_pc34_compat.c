@@ -4570,6 +4570,7 @@ static void test_orch_cmd_attack_uses_reserved2_action_skill_index(void) {
     int stunDamage = 0;
     unsigned int seed;
 
+    assert(CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34 == DM1_ACTION_MELEE);
     assert(dm1_v1_action_xp_route(DM1_ACTION_SWING, &route) == 1);
     assert(route.valid == 1);
     assert(route.skillIndex == DM1_SKILL_IDX_SWING);
