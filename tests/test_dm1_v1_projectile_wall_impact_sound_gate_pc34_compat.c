@@ -43,6 +43,11 @@ static void expect_int(const char* id, int got, int want, const char* anchor)
     }
 }
 
+static unsigned short make_thing(int type, int index)
+{
+    return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
+}
+
 static void make_open_door_projectile(struct ProjectileInstance_Compat* p)
 {
     memset(p, 0, sizeof(*p));
@@ -104,6 +109,35 @@ static void make_weapon_arrow_projectile(struct ProjectileInstance_Compat* p)
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode = COMBAT_ATTACK_NORMAL;
     p->flags = 0;
+}
+
+static void make_weapon_dagger_projectile(struct ProjectileInstance_Compat* p)
+{
+    memset(p, 0, sizeof(*p));
+    p->slotIndex = 3;
+    p->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    p->projectileSubtype = 3;
+    p->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    p->ownerIndex = 0;
+    p->mapIndex = 0;
+    p->mapX = 5;
+    p->mapY = 5;
+    p->cell = 0;
+    p->direction = 0;
+    p->kineticEnergy = 34;
+    p->attack = 18;
+    p->stepEnergy = 4;
+    p->firstMoveGraceFlag = 0;
+    p->attackTypeCode = COMBAT_ATTACK_NORMAL;
+    p->flags = 0;
+    p->reserved1 = make_thing(THING_TYPE_WEAPON, 0);
+}
+
+static void make_non_weapon_kinetic_arrow_projectile(struct ProjectileInstance_Compat* p)
+{
+    make_weapon_arrow_projectile(p);
+    p->slotIndex = 4;
+    p->reserved1 = make_thing(THING_TYPE_JUNK, 0);
 }
 
 static void make_north_wall_digest(struct CellContentDigest_Compat* d)
@@ -257,12 +291,79 @@ static void test_weapon_arrow_projectile_wall_impact_metallic_thud(void)
                "F0219 lines 699-714 decrements energy before wall impact");
 }
 
+static void test_weapon_associated_thing_wall_impact_metallic_thud(void)
+{
+    struct ProjectileInstance_Compat in;
+    struct ProjectileInstance_Compat out;
+    struct CellContentDigest_Compat digest;
+    struct ProjectileTickResult_Compat result;
+
+    printf("test_weapon_associated_thing_wall_impact_metallic_thud\n");
+
+    make_weapon_dagger_projectile(&in);
+    make_north_wall_digest(&digest);
+    memset(&out, 0, sizeof(out));
+    memset(&result, 0, sizeof(result));
+
+    expect_int("weapon_thing.advance.rc",
+               F0811_PROJECTILE_Advance_Compat(&in, &digest, 748u, NULL,
+                                                &out, &result),
+               1,
+               "ReDMCSB PROJEXPL.C:F0219 lines 717-725 wall impact dispatch");
+    expect_int("weapon_thing.result.kind", result.resultKind,
+               PROJECTILE_RESULT_HIT_WALL,
+               "ReDMCSB PROJEXPL.C:F0219 lines 721-725 C00_ELEMENT_WALL");
+    expect_int("weapon_thing.result.sound", result.emittedSoundCode,
+               DM1_SND_METALLIC_THUD,
+               "ReDMCSB PROJEXPL.C:F0217 lines 587-591 Projectile.Slot weapon sound");
+    expect_int("weapon_thing.result.explosion", result.emittedExplosion, 0,
+               "ReDMCSB PROJEXPL.C:F0217 lines 560-586 skips explosion for non-explosion thing");
+    expect_int("weapon_thing.result.despawn", result.despawn, 1,
+               "ReDMCSB PROJEXPL.C:F0217 lines 607-608 deletes projectile");
+    expect_int("weapon_thing.out.kinetic", out.kineticEnergy,
+               in.kineticEnergy - in.stepEnergy,
+               "F0219 lines 699-714 decrements energy before wall impact");
+}
+
+static void test_non_weapon_associated_thing_wall_impact_wooden_thud(void)
+{
+    struct ProjectileInstance_Compat in;
+    struct ProjectileInstance_Compat out;
+    struct CellContentDigest_Compat digest;
+    struct ProjectileTickResult_Compat result;
+
+    printf("test_non_weapon_associated_thing_wall_impact_wooden_thud\n");
+
+    make_non_weapon_kinetic_arrow_projectile(&in);
+    make_north_wall_digest(&digest);
+    memset(&out, 0, sizeof(out));
+    memset(&result, 0, sizeof(result));
+
+    expect_int("non_weapon_thing.advance.rc",
+               F0811_PROJECTILE_Advance_Compat(&in, &digest, 749u, NULL,
+                                                &out, &result),
+               1,
+               "ReDMCSB PROJEXPL.C:F0219 lines 717-725 wall impact dispatch");
+    expect_int("non_weapon_thing.result.kind", result.resultKind,
+               PROJECTILE_RESULT_HIT_WALL,
+               "ReDMCSB PROJEXPL.C:F0219 lines 721-725 C00_ELEMENT_WALL");
+    expect_int("non_weapon_thing.result.sound", result.emittedSoundCode,
+               DM1_SND_WOODEN_THUD,
+               "ReDMCSB PROJEXPL.C:F0217 lines 587-600 non-weapon Projectile.Slot sound");
+    expect_int("non_weapon_thing.result.explosion", result.emittedExplosion, 0,
+               "ReDMCSB PROJEXPL.C:F0217 lines 560-586 skips explosion for non-explosion thing");
+    expect_int("non_weapon_thing.result.despawn", result.despawn, 1,
+               "ReDMCSB PROJEXPL.C:F0217 lines 607-608 deletes projectile");
+}
+
 int main(void)
 {
     printf("probe=dm1_v1_projectile_wall_impact_sound_gate_pc34_compat\n");
     test_open_door_projectile_wall_impact_wooden_thud();
     test_non_weapon_projectile_wall_impact_wooden_thud();
     test_weapon_arrow_projectile_wall_impact_metallic_thud();
+    test_weapon_associated_thing_wall_impact_metallic_thud();
+    test_non_weapon_associated_thing_wall_impact_wooden_thud();
 
     if (g_failures) {
         printf("FAIL dm1_v1_projectile_wall_impact_sound_gate_pc34_compat "
