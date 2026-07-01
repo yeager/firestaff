@@ -6419,6 +6419,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     struct DungeonGroup_Compat groups[1];
     int partyFluxcageCount = -1;
     int chaosFluxcageCount = -1;
+    int fireballAttackSeen[6] = {0, 0, 0, 0, 0, 0};
+    int fireballBurstCount = 0;
     int i;
 
     seed_state(&state, 100, 41);
@@ -6531,8 +6533,27 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete can count Lord Chaos-square fluxcages");
     ASSERT_EQ(chaosFluxcageCount, 0,
               "FUSE complete removes F0446 Lord Chaos-square fluxcages");
-    ASSERT_EQ(state.world.explosions.count, 3,
-              "FUSE complete keeps the surrounding fluxcage instances");
+    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
+        const struct ExplosionInstance_Compat* e =
+            &state.world.explosions.entries[i];
+        if (e->reserved0 == 0) continue;
+        if (e->explosionType != C000_EXPLOSION_FIREBALL) continue;
+        if (e->mapIndex != 0 || e->mapX != 2 || e->mapY != 1) continue;
+        if (e->cell != EXPLOSION_CELL_CENTERED) continue;
+        if (e->attack >= 55 && e->attack <= 255 &&
+            ((e->attack - 55) % 40) == 0) {
+            fireballAttackSeen[(e->attack - 55) / 40] += 1;
+        }
+        fireballBurstCount++;
+    }
+    ASSERT_EQ(fireballBurstCount, 6,
+              "FUSE complete creates the F0446 opening fireball burst");
+    for (i = 0; i < 6; ++i) {
+        ASSERT_EQ(fireballAttackSeen[i], 1,
+                  "FUSE complete creates each source fireball attack once");
+    }
+    ASSERT_EQ(state.world.explosions.count, 10,
+              "FUSE complete keeps cages, HNM fuse effect, and fireball burst");
     ASSERT_EQ(state.world.gameWon, 1,
               "FUSE complete sets M10 world game-won state");
     ASSERT_EQ(M11_GameView_IsGameWon(&state), 1,
