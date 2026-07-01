@@ -95,6 +95,7 @@
  * Usage: firestaff_dm1_v1_hall_champion_portrait_12_east_walkpath_portrait_rect_probe DATA_DIR
  */
 #include "m11_game_view.h"
+#include "dm1_v1_movement_pipeline_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -227,6 +228,19 @@ static void set_pose(M11_GameViewState* game, int mapX, int mapY, int dir) {
     game->candidateMirrorPartyIndex = -1;
 }
 
+/* Set the party pose and reset the movement-pipeline queue/cooldown
+ * mirror before driving a new input slice.  ReDMCSB COMMAND.C:2096-2106
+ * gates movement commands on G0310/G0311; resetting the source-locked
+ * pipeline mirror here keeps each input slice independent of the
+ * previous slice's movement-disabled ticks. */
+static void start_independent_input_route(M11_GameViewState* game,
+                                          int mapX,
+                                          int mapY,
+                                          int dir) {
+    set_pose(game, mapX, mapY, dir);
+    DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
+}
+
 typedef struct EastWalkPose {
     int mapX;
     int mapY;
@@ -234,6 +248,15 @@ typedef struct EastWalkPose {
     int expectedOrdinal;
     const char* label;
 } EastWalkPose;
+
+typedef struct EastWalkInputStep {
+    int mapX;
+    int mapY;
+    int dir;
+    int expectedOrdinal;
+    int inputCmd;
+    const char* label;
+} EastWalkInputStep;
 
 /* Verify a single east-walkpath pose at (2,10): the front ordinal must
  * match the expected value, the D1C portrait rect must be dominated by
@@ -308,6 +331,81 @@ static int check_east_walk_pose(M11_GameViewState* game,
     }
     printf("  %s pose=(%d,%d,%d) ordinal=%d best=%d matched=%d/%d\n",
            pose->label, pose->mapX, pose->mapY, pose->dir, ordinal,
+           match.bestOrdinal, match.bestMatched, match.compared);
+    return ok;
+}
+
+/* Drive a single M11 input step (M12_MENU_INPUT_* mapped to DM1 V1
+ * commands via m11_dm1_v1_pipeline_command_for_input) and then
+ * verify the resulting pose / portrait rectangle position matches
+ * the expected ordinal.  Mirrors the check_east_walk_pose invariant
+ * (90% positive-ordinal match, 35% cross-cell stale-pixel leak
+ * tolerance) but exercises the real M11 input pipeline route used
+ * by mouse and keyboard input -- the source-locked equivalent of
+ * CLIKMENU.C F0365/F0366 -> MOVESENS.C:556 re-blt for the
+ * east-walkpath corridor.  Steps whose inputCmd is < 0 do not
+ * issue a movement command; they only assert the current pose. */
+static int check_east_walk_input_step(M11_GameViewState* game,
+                                      const M11_AssetSlot* portraits,
+                                      int prevOrdinal,
+                                      const EastWalkInputStep* step,
+                                      unsigned char* fb) {
+    MirrorMatch match;
+    int ordinal;
+    int ok = 1;
+
+    if (game->world.party.mapX != step->mapX ||
+        game->world.party.mapY != step->mapY ||
+        game->world.party.direction != step->dir) {
+        fprintf(stderr,
+                "FAIL %s pose got=(%d,%d,%d) want=(%d,%d,%d)\n",
+                step->label,
+                game->world.party.mapX, game->world.party.mapY,
+                game->world.party.direction,
+                step->mapX, step->mapY, step->dir);
+        ok = 0;
+    }
+    ordinal = M11_GameView_GetFrontMirrorOrdinal(game);
+    if (ordinal != step->expectedOrdinal) {
+        fprintf(stderr,
+                "FAIL %s front ordinal got=%d want=%d\n",
+                step->label, ordinal, step->expectedOrdinal);
+        ok = 0;
+    }
+    memset(fb, 0, sizeof(*fb) * (size_t)(PROBE_FB_W * PROBE_FB_H));
+    M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+    match = match_front_portrait(portraits, fb,
+                                 step->expectedOrdinal >= 0
+                                     ? step->expectedOrdinal
+                                     : 0);
+    if (step->expectedOrdinal >= 0) {
+        if (match.bestOrdinal != step->expectedOrdinal ||
+            match.compared <= 0 ||
+            match.expectedMatched * 100 < match.compared * 90) {
+            fprintf(stderr,
+                    "FAIL %s input portrait_rect expected ordinal=%d best=%d matched=%d/%d\n",
+                    step->label, step->expectedOrdinal, match.bestOrdinal,
+                    match.expectedMatched, match.compared);
+            ok = 0;
+        }
+    }
+    /* Cross-cell stale-pixel leak: when the ordinal changes between
+     * input-driven steps, the prior ordinal's pixels must not be the
+     * dominant match in the new framebuffer. */
+    if (prevOrdinal >= 0 && prevOrdinal != step->expectedOrdinal) {
+        int stale = count_ordinal_matched_pixels(portraits, fb, prevOrdinal);
+        int prevCompared = match_front_portrait(portraits, fb, prevOrdinal).compared;
+        int prevPct = prevCompared > 0 ? (stale * 100) / prevCompared : 0;
+        if (prevPct >= 35) {
+            fprintf(stderr,
+                    "FAIL %s input stale ordinal=%d leaked matched=%d/%d after step to ordinal=%d\n",
+                    step->label, prevOrdinal, stale, prevCompared,
+                    step->expectedOrdinal);
+            ok = 0;
+        }
+    }
+    printf("  %s pose=(%d,%d,%d) ordinal=%d best=%d matched=%d/%d\n",
+           step->label, step->mapX, step->mapY, step->dir, ordinal,
            match.bestOrdinal, match.bestMatched, match.compared);
     return ok;
 }
@@ -400,6 +498,57 @@ int main(int argc, char** argv) {
             ok = 0;
         }
         prevOrdinal = poses[i].expectedOrdinal;
+    }
+
+    /* Input-driven strafe-walk slice: drive the east-walkpath route
+     * through the M11 input pipeline so the destination rectangle
+     * position invariant is verified after CLIKMENU.C F0365/F0366
+     * -> MOVESENS.C:556 -> DUNVIEW.C:8318-8542 F0128_DUNGEONVIEW_Draw_CPSF
+     * (full-viewport re-blt) -- not only after a direct set_pose.
+     * The party starts on (1,10,N) ordinal 9 (ZED), strafes east
+     * through the LINFLAS cell at (2,10,N) ordinal 12, continues to
+     * (3,10,N) ordinal 21 (HISSSSA), and strafes back to (1,10,N).
+     * Each strafe uses M12_MENU_INPUT_STRAFE_RIGHT/LEFT, which the
+     * M11 input pipeline maps to DM1 V1 C006/C004 (DUNGEON.C F0150
+     * applies the relative lateral delta without changing direction).
+     * The (2,10,N) ordinal 12 destination is reached twice -- once
+     * outbound, once inbound -- so the input pipeline is proven to
+     * paint the destination rectangle position correctly regardless
+     * of the prior ordinal (9 or 21).  The cross-cell stale-pixel
+     * leak check fires on every transition. */
+    {
+        const EastWalkInputStep inputSteps[] = {
+            {1, 10, DIR_NORTH,  9, -1, "east_walk_input_a_start_ordinal_9_zed"},
+            {2, 10, DIR_NORTH, 12, M12_MENU_INPUT_STRAFE_RIGHT,
+             "east_walk_input_b_strafe_right_to_ordinal_12_linflas"},
+            {3, 10, DIR_NORTH, 21, M12_MENU_INPUT_STRAFE_RIGHT,
+             "east_walk_input_c_strafe_right_to_ordinal_21_hissssa"},
+            {2, 10, DIR_NORTH, 12, M12_MENU_INPUT_STRAFE_LEFT,
+             "east_walk_input_d_strafe_left_back_to_ordinal_12_linflas"},
+            {1, 10, DIR_NORTH,  9, M12_MENU_INPUT_STRAFE_LEFT,
+             "east_walk_input_e_strafe_left_back_to_ordinal_9_zed"},
+        };
+        start_independent_input_route(&game, 1, 10, DIR_NORTH);
+        prevOrdinal = -2;
+        for (i = 0; i < (int)(sizeof(inputSteps) / sizeof(inputSteps[0])); ++i) {
+            const EastWalkInputStep* step = &inputSteps[i];
+            if (step->inputCmd >= 0) {
+                M11_GameInputResult result =
+                    M11_GameView_HandleInput(&game, step->inputCmd);
+                if (result != M11_GAME_INPUT_REDRAW) {
+                    fprintf(stderr,
+                            "FAIL %s input=%d result=%d want=%d\n",
+                            step->label, step->inputCmd, result,
+                            M11_GAME_INPUT_REDRAW);
+                    ok = 0;
+                }
+            }
+            if (!check_east_walk_input_step(&game, portraits, prevOrdinal,
+                                            step, currFb)) {
+                ok = 0;
+            }
+            prevOrdinal = step->expectedOrdinal;
+        }
     }
 
     M11_GameView_Shutdown(&game);
