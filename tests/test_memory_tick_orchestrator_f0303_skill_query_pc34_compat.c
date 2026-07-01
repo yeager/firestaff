@@ -2831,7 +2831,8 @@ static int run_live_cmd_attack_f0231_side_effect_attempt(
     input.commandArg1 = 0;
     input.commandArg2 = 0;
     input.reserved = 0;
-    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID | 13u;
+    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        (unsigned int)DM1_ACTION_SWING;
 
     *outStaminaBefore = champion->stamina.current;
     *outXpBefore = world.lifecycle.champions[0]
@@ -3207,7 +3208,8 @@ static int run_live_cmd_attack_reaction_schedule_attempt(unsigned int seed) {
     input.commandArg1 = 0;
     input.commandArg2 = 0;
     input.reserved = 0;
-    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID | 13u;
+    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        (unsigned int)DM1_ACTION_SWING;
 
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
     assert(world.timeline.count == 1);
@@ -3310,7 +3312,8 @@ static int run_live_cmd_attack_all_kill_attempt(unsigned int seed) {
     input.commandArg1 = 0;
     input.commandArg2 = 0;
     input.reserved = 0;
-    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID | 13u;
+    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        (unsigned int)DM1_ACTION_SWING;
 
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
     for (e = 0; e < result.emissionCount; ++e) {
@@ -3455,7 +3458,8 @@ static int run_live_cmd_attack_killed_some_smoke_attempt(unsigned int seed) {
     input.commandArg1 = 0;
     input.commandArg2 = 0;
     input.reserved = 0;
-    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID | 13u;
+    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        (unsigned int)DM1_ACTION_SWING;
 
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
     for (e = 0; e < result.emissionCount; ++e) {
@@ -3604,7 +3608,8 @@ static int run_live_cmd_attack_killed_some_fear_attempt(unsigned int seed) {
     input.commandArg1 = 0;
     input.commandArg2 = 0;
     input.reserved = 0;
-    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID | 13u;
+    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        (unsigned int)DM1_ACTION_SWING;
 
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
     for (e = 0; e < result.emissionCount; ++e) {
@@ -3656,8 +3661,10 @@ static void test_orch_cmd_attack_uses_reserved2_action_damage_factor(void) {
     /* ReDMCSB MENU.C F0407/F0402 feeds F0231 through the Graphic560
      * action tables.  The live CMD_ATTACK bridge must keep reading the
      * shared G0492/G0493 source-lock accessors, not a private action table. */
-    assert(dm1_v1_graphic560_action_hit_probability_get_pc34(13) == 32);
-    assert(dm1_v1_graphic560_action_damage_factor_get_pc34(13) == 16);
+    assert(dm1_v1_graphic560_action_hit_probability_get_pc34(
+               DM1_ACTION_SWING) == 32);
+    assert(dm1_v1_graphic560_action_damage_factor_get_pc34(
+               DM1_ACTION_SWING) == 16);
     assert(dm1_v1_graphic560_action_hit_probability_get_pc34(
                CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34) == 64);
     assert(dm1_v1_graphic560_action_damage_factor_get_pc34(
@@ -3665,7 +3672,7 @@ static void test_orch_cmd_attack_uses_reserved2_action_damage_factor(void) {
 
     for (seed = 1; seed <= 128 && !sawDifferentDamage; ++seed) {
         int swingMutated = run_live_cmd_attack_damage_attempt(
-            seed, 13, &swingDamage, &swingBefore, &swingAfter);
+            seed, DM1_ACTION_SWING, &swingDamage, &swingBefore, &swingAfter);
         int meleeMutated = run_live_cmd_attack_damage_attempt(
             seed, CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34,
             &meleeDamage, &meleeBefore, &meleeAfter);
@@ -4091,7 +4098,8 @@ static int run_live_cmd_attack_empty_hand_punch_attempt(
     input.commandArg1 = 0;
     input.commandArg2 = 0;
     input.reserved = 0;
-    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID | 6u;
+    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        (unsigned int)DM1_ACTION_PUNCH;
 
     *outBefore = groups[0].health[0];
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
@@ -4502,7 +4510,8 @@ static void test_orch_cmd_attack_disrupt_rejects_material_creature(void) {
     input.commandArg1 = 0;
     input.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
     input.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
-    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID | 24u;
+    input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+        (unsigned int)DM1_ACTION_DISRUPT;
 
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
     assert(result.emissionCount == 1);
@@ -4593,9 +4602,9 @@ static void test_orch_cmd_attack_uses_reserved2_action_skill_index(void) {
 
     for (seed = 1; seed <= 512 && !sawSkillBoost; ++seed) {
         int swingHit = run_live_cmd_attack_skill_route_attempt(
-            seed, 13, 0, &swingDamage);
+            seed, DM1_ACTION_SWING, 0, &swingDamage);
         int stunHit = run_live_cmd_attack_skill_route_attempt(
-            seed, 31, 500000, &stunDamage);
+            seed, DM1_ACTION_STUN, 500000, &stunDamage);
 
         if (swingHit && stunHit && stunDamage > swingDamage) {
             sawSkillBoost = 1;
