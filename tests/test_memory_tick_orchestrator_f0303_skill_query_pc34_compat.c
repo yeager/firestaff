@@ -824,8 +824,21 @@ static void run_orch_magical_wall_nonzero_adjusted_explosion_case(
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
-    assert(world.explosions.count == 0);
-    assert(world.timeline.count == 0);
+    if (expectedExplosionType == C007_EXPLOSION_POISON_CLOUD &&
+        expectedAttack >= 6) {
+        assert(world.explosions.count == 1);
+        assert(world.explosions.entries[0].attack == expectedAttack - 3);
+        assert(world.explosions.entries[0].currentFrame == 1);
+        assert(world.timeline.count == 1);
+        assert(world.timeline.events[0].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE);
+        assert(world.timeline.events[0].fireAtTick == 103);
+        assert(world.timeline.events[0].aux0 == 0);
+        assert(world.timeline.events[0].aux1 == expectedExplosionType);
+        assert(world.timeline.events[0].aux2 == expectedAttack - 3);
+    } else {
+        assert(world.explosions.count == 0);
+        assert(world.timeline.count == 0);
+    }
 }
 
 static void test_orch_magical_wall_impact_nonzero_adjusted_explosion_spawns(void) {
@@ -835,6 +848,9 @@ static void test_orch_magical_wall_impact_nonzero_adjusted_explosion_spawns(void
     run_orch_magical_wall_nonzero_adjusted_explosion_case(
         PROJECTILE_SUBTYPE_POISON_BOLT, 8, C007_EXPLOSION_POISON_CLOUD,
         2, EXPLOSION_CELL_CENTERED);
+    run_orch_magical_wall_nonzero_adjusted_explosion_case(
+        PROJECTILE_SUBTYPE_POISON_CLOUD, 13, C007_EXPLOSION_POISON_CLOUD,
+        13, EXPLOSION_CELL_CENTERED);
     run_orch_magical_wall_nonzero_adjusted_explosion_case(
         PROJECTILE_SUBTYPE_HARM_NON_MATERIAL, 11,
         C003_EXPLOSION_HARM_NON_MATERIAL, 11, 2);
