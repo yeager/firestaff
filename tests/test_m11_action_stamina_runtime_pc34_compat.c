@@ -1460,6 +1460,7 @@ static void test_throw_action_removes_action_hand_object(void) {
     state.world.lifecycle.lastCreatureAttackTime = 50;
     state.world.party.direction = 1;
     state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].direction = 3;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
     state.world.party.champions[0].maxLoad = 420;
     (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
@@ -1477,6 +1478,8 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW removes object from action hand after projectile spawn");
     ASSERT_EQ(state.world.party.champions[0].stamina.current, 98,
               "THROW spends F0305 object-weight stamina without G0494 zero-cost jitter");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "THROW mirrors F0406 champion direction to party direction");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_THROW].experience,
               21,
@@ -3980,6 +3983,7 @@ static void test_spit_action_launches_f0327_fireball_and_decrements_charges(void
     state.world.party.champions[0].mana.maximum = 64;
     state.world.party.direction = 1;
     state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].direction = 3;
     state.world.lifecycle.champions[0]
         .skills20[DM1_SKILL_IDX_FIRE].experience = 10000;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
@@ -3994,6 +3998,8 @@ static void test_spit_action_launches_f0327_fireball_and_decrements_charges(void
               "SPIT spends 7 - min(6, Fire skill) mana");
     ASSERT_EQ(weapons[0].chargeCount, 2,
               "SPIT decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "SPIT mirrors F0406 champion direction to party direction");
     ASSERT_EQ(state.world.projectiles.count, 1,
               "SPIT creates one projectile");
     ASSERT_EQ(state.world.projectiles.entries[0].projectileCategory,
@@ -4041,6 +4047,7 @@ static void test_fireball_action_uses_f0327_and_decrements_charges(void) {
     state.world.party.champions[0].mana.maximum = 64;
     state.world.party.direction = 1;
     state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].direction = 3;
     state.world.lifecycle.champions[0]
         .skills20[DM1_SKILL_IDX_FIRE].experience = 10000;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
@@ -4053,6 +4060,8 @@ static void test_fireball_action_uses_f0327_and_decrements_charges(void) {
               "FIREBALL spends 7 - min(6, Fire skill) mana");
     ASSERT_EQ(weapons[0].chargeCount, 1,
               "FIREBALL decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "FIREBALL mirrors F0406 champion direction to party direction");
     ASSERT_EQ(state.world.projectiles.count, 1,
               "FIREBALL creates one projectile");
     ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
@@ -4090,6 +4099,8 @@ static void test_fireball_projectile_create_failure_halves_action_xp(void) {
         make_thing(THING_TYPE_WEAPON, 0);
     state.world.party.champions[0].mana.current = 9;
     state.world.party.champions[0].mana.maximum = 64;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].direction = 3;
     state.world.lifecycle.champions[0]
         .skills20[DM1_SKILL_IDX_FIRE].experience = 10000;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
@@ -4106,6 +4117,8 @@ static void test_fireball_projectile_create_failure_halves_action_xp(void) {
               "full projectile list makes F0327 projectile create fail");
     ASSERT_EQ(weapons[0].chargeCount, 1,
               "failed FIREBALL still decrements charges through F0405");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "failed FIREBALL still mirrors F0406 champion direction");
     ASSERT_EQ(state.actionDisabledTicks[0],
               action_disabled_ticks_for_test(DM1_ACTION_FIREBALL),
               "failed FIREBALL keeps full source disabled ticks");
@@ -4137,6 +4150,8 @@ static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
         make_thing(THING_TYPE_WEAPON, 0);
     state.world.party.champions[0].mana.current = 9;
     state.world.party.champions[0].mana.maximum = 64;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].direction = 3;
     state.world.lifecycle.champions[0]
         .skills20[DM1_SKILL_IDX_WIZARD].experience = 10000;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
@@ -4150,6 +4165,8 @@ static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
               "INVOKE spends 7 - min(6, Wizard skill) mana");
     ASSERT_EQ(weapons[0].chargeCount, 1,
               "INVOKE decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "INVOKE mirrors F0406 champion direction to party direction");
     ASSERT_EQ(state.world.projectiles.count, 1,
               "INVOKE creates one projectile");
     ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy >= 100, 1,
@@ -4614,6 +4631,7 @@ static void test_shoot_action_uses_champion_cell_for_f0326_launch(void) {
     state.world.things = &things;
     state.world.party.direction = 1;
     state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].direction = 3;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
     bowThing = make_thing(THING_TYPE_WEAPON, 0);
     arrowThing = make_thing(THING_TYPE_WEAPON, 1);
@@ -4633,6 +4651,8 @@ static void test_shoot_action_uses_champion_cell_for_f0326_launch(void) {
               "SHOOT with ready-hand arrow succeeds");
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
               "SHOOT creates one projectile");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "SHOOT mirrors F0406 champion direction to party direction");
     ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
               "SHOOT launch cell follows F0326 champion Cell formula");
     ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
@@ -5073,11 +5093,14 @@ static void test_fluxcage_schedules_f0224_remove_event(void) {
     state.world.party.mapX = 2;
     state.world.party.mapY = 2;
     state.world.party.direction = 0; /* north: target is (2,1). */
+    state.world.party.champions[0].direction = 3;
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_FLUXCAGE),
               1,
               "FLUXCAGE creates the F0224 fluxcage explosion");
+    ASSERT_EQ(state.world.party.champions[0].direction, 0,
+              "FLUXCAGE mirrors F0406 champion direction to party direction");
     ASSERT_EQ(state.world.explosions.count, 1,
               "FLUXCAGE leaves one live explosion instance");
 
@@ -5274,6 +5297,7 @@ static void test_fuse_incomplete_fluxcage_moves_lord_chaos_escape(void) {
     state.world.party.mapX = 2;
     state.world.party.mapY = 2;
     state.world.party.direction = 0; /* north: target is (2,1). */
+    state.world.party.champions[0].direction = 3;
 
     groups[0].next = THING_ENDOFLIST;
     groups[0].creatureType = DM1_CREATURE_LORD_CHAOS_ID;
@@ -5319,6 +5343,8 @@ static void test_fuse_incomplete_fluxcage_moves_lord_chaos_escape(void) {
                   &state, 0, DM1_ACTION_FUSE),
               1,
               "FUSE with incomplete Fluxcage lets Lord Chaos escape");
+    ASSERT_EQ(state.world.party.champions[0].direction, 0,
+              "FUSE mirrors F0406 champion direction to party direction");
     ASSERT_EQ(squareFirstThings[(2 * 5) + 1], THING_ENDOFLIST,
               "FUSE escape unlinks Lord Chaos from target square");
     ASSERT_EQ(squareFirstThings[(3 * 5) + 1],

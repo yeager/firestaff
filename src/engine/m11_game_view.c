@@ -21523,6 +21523,20 @@ static int m11_f0327_projectile_step_energy(const struct ChampionState_Compat* c
     return stepEnergy;
 }
 
+static void m11_set_champion_direction_to_party_f0406(
+    const M11_GameViewState* state,
+    struct ChampionState_Compat* champ) {
+    unsigned char partyDirection;
+    if (!state || !champ) return;
+    partyDirection = (unsigned char)(state->world.party.direction & 3);
+    if (champ->direction == partyDirection) return;
+    /* ReDMCSB MENU.C F0406 lines 1185-1195 sets Champion.Direction to
+     * G0308_i_PartyDirection and marks MASK0x0400_ICON dirty.  Firestaff's
+     * ChampionState_Compat has no separate icon-dirty bit, so mirror the
+     * source state mutation here and let normal redraw paths observe it. */
+    champ->direction = partyDirection;
+}
+
 
 static int m11_party_front_square(const M11_GameViewState* state,
                                   int* outMapIndex,
@@ -24149,6 +24163,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                 goto shoot_no_ammunition;
             }
 
+            m11_set_champion_direction_to_party_f0406(state, champ);
             direction = state->world.party.direction & 3;
             skillShoot = m11_dm1_shoot_skill_level(state, championIndex);
             shootAttack = m11_dm1_f0407_shoot_attack(
@@ -24244,6 +24259,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                     verb       = "CASTS LIGHTNING";
                     break;
             }
+            m11_set_champion_direction_to_party_f0406(state, champ);
             /* F0407: if CurrentMana < RequiredMana, scale
              * kineticEnergy down proportionally and cap cost at
              * available mana (the "under-powered cast" path). */
@@ -24287,8 +24303,10 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             return spawned;
         }
         case 35: /* FLUXCAGE */
+            m11_set_champion_direction_to_party_f0406(state, champ);
             return m11_perform_fluxcage_action(state, champName);
         case 43: /* FUSE */
+            m11_set_champion_direction_to_party_f0406(state, champ);
             return m11_perform_fuse_action(state, champName);
         case 27: { /* INVOKE */
             /* F0407 case C027_ACTION_INVOKE: kineticEnergy =
@@ -24340,6 +24358,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                     subtypeName = "FIREBALL";
                     break;
             }
+            m11_set_champion_direction_to_party_f0406(state, champ);
             if ((int)champ->mana.current < manaCost) {
                 if (manaCost > 0) {
                     actualEnergy = (int)champ->mana.current * kinetic / manaCost;
@@ -24391,6 +24410,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                               champName);
                 return 0;
             }
+            m11_set_champion_direction_to_party_f0406(state, champ);
             throwSide = m11_dm1_f0328_throw_side(state, champ);
             spawned = m11_dm1_f0328_spawn_thrown_thing(
                 state, championIndex, champ, handThing, throwSide);
