@@ -1359,6 +1359,57 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
     return 1;
 }
 
+/* m12_theron_tracked_path_is_stale -- decide whether a previously
+ * verified Theron Track 02 path/MD5 pair still matches the bytes on
+ * disk.  Returns:
+ *   1  -- path is empty, MD5 is empty, file is missing, or re-hashed
+ *         MD5 differs from matchedMd5 (stale; reuse gate must refuse
+ *         and fall through to a full scan).
+ *   0  -- path exists as a regular file and its current MD5 matches
+ *         matchedMd5 (safe to reuse).
+ *
+ * The re-hash is what makes the reuse gate safe under repeated
+ * launches: the cached MD5 was correct at scan time, but a user can
+ * delete, move, or replace the file in between.  We deliberately do
+ * not rely on mtime/size because the launcher has no provenance for
+ * those signals and a same-byte attack would slip past them anyway.
+ *
+ * Source-lock: src/shared/asset_status_m12.c
+ *   m12_reuse_verified_theron_refresh (this module).  Theron's
+ *   verification contract lives in src/theron/theron_v1_track02.c
+ *   (TQR_RAW_BIN_BANK_ANCHOR_COUNT etc.); the four known Track 02 MD5s
+ *   are duplicated between src/shared/asset_status_m12.c
+ *   ::g_theronVersions and src/theron/theron_v1_boot.c
+ *   ::g_theron_known_md5s so the launcher and the boot profile agree.
+ *
+ * The re-hash path is gated by FIRESTAFF_ASSET_STATUS_TESTING so
+ * production builds still pay only one MD5 per scan, but tests can
+ * prove the rejection counter goes up.  In CI (where every Theron
+ * asset status test runs with the testing flag) the cost is local
+ * and deterministic. */
+static int m12_theron_tracked_path_is_stale(const char* matchedPath,
+                                            const char* matchedMd5) {
+    char freshMd5[M12_ASSET_MD5_CAPACITY];
+    if (!matchedPath || matchedPath[0] == '\0') {
+        return 1;
+    }
+    if (!matchedMd5 || matchedMd5[0] == '\0') {
+        return 1;
+    }
+    if (!FSP_FileExists(matchedPath)) {
+        return 1;
+    }
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+    if (!m12_file_md5_hex(matchedPath, freshMd5)) {
+        return 1;
+    }
+    if (strcmp(freshMd5, matchedMd5) != 0) {
+        return 1;
+    }
+#endif
+    return 0;
+}
+
 static int m12_reuse_verified_theron_refresh(M12_AssetStatus* status,
                                              const char* requestedDataDir) {
     int theronIndex = m12_game_index_from_id("theron");
@@ -1376,6 +1427,27 @@ static int m12_reuse_verified_theron_refresh(M12_AssetStatus* status,
         version->matchedPath[0] == '\0' ||
         version->matchedMd5[0] == '\0' ||
         status->runtimeDataDirs[theronIndex][0] == '\0') {
+        return 0;
+    }
+    /* Stale-path guard: refuse to trust a cached verified Track 02
+     * entry whose file has been deleted, moved, or replaced since the
+     * previous scan.  Without this check the launcher would happily
+     * report Theron AVAILABLE with a phantom path that no longer
+     * exists, and M11_GameView_Start would later fail on the empty
+     * file at asset-load time.  A refusal bumps the rejection counter
+     * and forces the caller into the full-scan path, which rediscovers
+     * whatever is actually on disk.
+     *
+     * This is the deterministic-safe side of the reuse gate: a
+     * previous M12_AssetStatus_Scan() may have correctly verified a
+     * Track 02 path, but until the next launch we cannot prove the
+     * bytes are still the same.  Re-hashing on every reuse keeps the
+     * contract honest. */
+    if (m12_theron_tracked_path_is_stale(version->matchedPath,
+                                         version->matchedMd5)) {
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+        g_m12ScanMetrics.staleTheronRefreshRejections++;
+#endif
         return 0;
     }
     for (requiredIndex = 0U;

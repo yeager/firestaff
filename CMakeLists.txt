@@ -17286,6 +17286,48 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
 endif()
 
+# ── Theron V1 Phase 5 — Direct Launch Stale-Path Rejection Test ─────
+# Source-lock: src/shared/asset_status_m12.c
+#   m12_reuse_verified_theron_refresh +
+#   m12_theron_tracked_path_is_stale + M12_AssetStatusScanMetrics
+#   ::staleTheronRefreshRejections, src/theron/theron_v1_boot.c
+#   theron_v1_boot_verified_path_is_stale +
+#   theron_v1_boot_load_verified_path, include/theron_v1_boot.h +
+#   include/asset_status_m12.h.
+# Proves the reuse gate refuses cached Track 02 entries whose file
+# has been deleted or swapped between scans (bumping the rejection
+# counter and forcing a full re-scan), and that the boot profile
+# path refuses a direct-launch call against a missing file in one
+# stat probe.  Data-free / synthetic fixture so CI stays green on
+# hosts without the optional Theron data set.
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_direct_launch_stale_rejection
+        tests/theron_v1_direct_launch_stale_rejection_test.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_link_libraries(test_theron_v1_direct_launch_stale_rejection PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_direct_launch_stale_rejection PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    # M12 testing-only API (M12_AssetStatusScanMetrics + Test* helpers).
+    target_compile_definitions(test_theron_v1_direct_launch_stale_rejection PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1)
+    if(TARGET firestaff_m12)
+        target_link_libraries(test_theron_v1_direct_launch_stale_rejection PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_direct_launch_stale_rejection PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_direct_launch_stale_rejection
+        COMMAND test_theron_v1_direct_launch_stale_rejection
+    )
+endif()
+
 # ── Data-dir change cache invalidation gate ──────────────────────────
 # Source-lock: src/shared/asset_status_m12.c M12_AssetStatus_Scan +
 #   m12_scan_direct_theron_request / m12_scan_explicit_file_request /

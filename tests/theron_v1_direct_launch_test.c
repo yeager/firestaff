@@ -138,8 +138,15 @@ static void check_one_known_md5(const char *label,
                 profile.deterministic.dungeon_count == 7 &&
                 profile.deterministic.max_champions == 4,
                 "direct launch initialises the deterministic config");
-    expect_true(after == before,
-                "direct launch does not perform any stat() probes");
+    /* Stale-path guard: one stat() to confirm the cached verified
+     * file is still on disk.  Without this the boot profile would
+     * happily report assets_verified = 1 with a path pointing at
+     * nothing, and the downstream M11_Theron_Load would fail at
+     * asset-load time.  Exactly one stat is the contract: not zero
+     * (which would silently accept a deleted file), not more than
+     * one (which would re-walk the data root). */
+    expect_true(after == before + 1UL,
+                "direct launch performs the single stale-path stat() guard");
 }
 
 static void check_refuses_unknown_md5(const char *track02_path) {

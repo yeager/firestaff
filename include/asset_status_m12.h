@@ -101,6 +101,12 @@ typedef struct {
     size_t versionHashLookups;
     size_t requiredHashLookups;
     size_t reusableTheronRefreshes;
+    /* Number of times m12_reuse_verified_theron_refresh refused to
+     * reuse a cached Track 02 entry because the recorded path was
+     * gone or its on-disk MD5 no longer matched the recorded MD5.
+     * Each refusal forces a full scan so the launcher re-discovers
+     * the actual on-disk state instead of trusting stale metadata. */
+    size_t staleTheronRefreshRejections;
 } M12_AssetStatusScanMetrics;
 
 void M12_AssetStatus_TestResetScanMetrics(void);
