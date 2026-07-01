@@ -4348,6 +4348,91 @@ static void test_air_projectile_actions_use_f0327_and_f0406_direction(void) {
         "LIGHTNING action performs F0407/F0327 projectile route");
 }
 
+static void run_air_projectile_low_mana_scales_kinetic_case(
+    int actionIndex,
+    int expectedSubtype,
+    int baseKineticEnergy,
+    int expectedAttackType,
+    const char* actionName)
+{
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    int airSkillLevel;
+    int requiredMana;
+    int expectedKineticEnergy;
+
+    seed_state(&state, 100, 56);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 2;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].mana.current = 3;
+    state.world.party.champions[0].mana.maximum = 64;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].direction = 3;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    airSkillLevel = M11_GameView_GetSkillLevel(&state, 0, DM1_SKILL_IDX_AIR);
+    if (airSkillLevel < 0) airSkillLevel = 0;
+    requiredMana = 7 - (airSkillLevel > 6 ? 6 : airSkillLevel);
+    if (requiredMana < 1) requiredMana = 1;
+    expectedKineticEnergy = 3 * baseKineticEnergy / requiredMana;
+    if (expectedKineticEnergy < 2) expectedKineticEnergy = 2;
+
+    ASSERT_EQ(requiredMana > 3, 1,
+              "fixture forces the Air F0407 CurrentMana < RequiredMana branch");
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, actionIndex),
+              1,
+              actionName);
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 0,
+              "low-mana Air projectile action spends all available mana");
+    ASSERT_EQ(weapons[0].chargeCount, 1,
+              "low-mana Air projectile action decrements F0405 charges");
+    ASSERT_EQ(state.world.party.champions[0].direction, 1,
+              "low-mana Air projectile action still mirrors F0406 direction");
+    ASSERT_EQ(state.world.projectiles.count, 1,
+              "low-mana Air projectile action creates one projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileCategory,
+              PROJECTILE_CATEGORY_MAGICAL,
+              "low-mana Air projectile action creates a magical projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
+              expectedSubtype,
+              "low-mana Air projectile action keeps source projectile subtype");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy,
+              expectedKineticEnergy,
+              "F0407 scales Air kinetic energy by current mana over required mana");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 90,
+              "low-mana Air projectile action still uses F0327 attack 90");
+    ASSERT_EQ(state.world.projectiles.entries[0].attackTypeCode,
+              expectedAttackType,
+              "low-mana Air projectile action keeps source attack type");
+    ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 2,
+              "low-mana Air projectile action still uses F0327 step energy");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "low-mana Air projectile launch cell follows champion Cell");
+    ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
+              "low-mana Air projectile launch direction follows party direction");
+}
+
+static void test_air_projectile_low_mana_scales_kinetic_energy_before_f0327(void) {
+    run_air_projectile_low_mana_scales_kinetic_case(
+        DM1_ACTION_DISPELL, PROJECTILE_SUBTYPE_HARM_NON_MATERIAL, 150,
+        COMBAT_ATTACK_MAGIC,
+        "low-mana DISPELL still performs F0407/F0327 projectile route");
+    run_air_projectile_low_mana_scales_kinetic_case(
+        DM1_ACTION_LIGHTNING, PROJECTILE_SUBTYPE_LIGHTNING_BOLT, 180,
+        COMBAT_ATTACK_LIGHTNING,
+        "low-mana LIGHTNING still performs F0407/F0327 projectile route");
+}
+
 static void test_fireball_projectile_create_failure_halves_action_xp(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -6031,6 +6116,7 @@ int main(void) {
     test_fireball_action_uses_f0327_and_decrements_charges();
     test_fireball_low_mana_scales_kinetic_energy_before_f0327();
     test_air_projectile_actions_use_f0327_and_f0406_direction();
+    test_air_projectile_low_mana_scales_kinetic_energy_before_f0327();
     test_fireball_projectile_create_failure_halves_action_xp();
     test_air_projectile_create_failure_halves_action_xp();
     test_invoke_action_uses_f0327_and_decrements_charges();
