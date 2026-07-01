@@ -49,6 +49,10 @@
  *     SUBTYPE_CREATES_EXPLOSION, F0820 HIT_WALL sets
  *     emittedExplosion=1 and populates outExplosion at the wall
  *     coordinates.
+ *   - Lightning/poison-bolt wall impacts whose subtype-adjusted
+ *     explosion attack becomes zero follow PROJEXPL.C:F0217's
+ *     T0217044 path: projectile deleted, no explosion, and no
+ *     fallback non-explosion thud.
  *   - Side-lane blockers set the F0219 cross-square gate before the
  *     impact return, but resolve before the destination square is
  *     committed; this test pins that boundary for all four cardinal
@@ -735,6 +739,45 @@ static void test_f0811_magical_fireball_wall_impact_creates_explosion(void)
                "F0820 HIT_WALL: explosion attack uses projectile kinetic energy");
 }
 
+/* ---- Test 5a: F0217 zero-adjusted lightning wall impact -------- */
+static void test_f0820_lightning_zero_adjusted_wall_impact_skips_explosion_and_sound(void)
+{
+    struct ProjectileInstance_Compat p;
+    struct CellContentDigest_Compat d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0820_lightning_zero_adjusted_wall_impact_skips_explosion_and_sound\n");
+
+    make_magical_fireball(&p, 0 /* N */, 0, 5, 5);
+    p.projectileSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+    p.kineticEnergy = 1;
+    p.attack = 1;
+    make_wall_digest(&d, 5, 5, 5, 4);
+
+    memset(&r, 0, sizeof(r));
+    expect_int("f0820.lightning_zero.rc",
+               F0820_PROJECTILE_ResolveCollision_Compat(
+                   &p, &d, PROJECTILE_RESULT_HIT_WALL, 301u, NULL, &r),
+               1,
+               "ReDMCSB PROJEXPL.C:F0217 lines 574-584 jumps to T0217044 when Lightning / 2 is zero");
+    expect_int("f0820.lightning_zero.kind", r.resultKind,
+               PROJECTILE_RESULT_HIT_WALL,
+               "zero-adjusted lightning still resolves as a wall impact");
+    expect_int("f0820.lightning_zero.despawn", r.despawn, 1,
+               "F0217 deletes the projectile after the T0217044 no-explosion branch");
+    expect_int("f0820.lightning_zero.explosion", r.emittedExplosion, 0,
+               "zero-adjusted lightning creates no explosion");
+    expect_int("f0820.lightning_zero.sound_request", r.emittedSoundRequest, 0,
+               "T0217044 skips the fallback non-explosion impact sound branch");
+    expect_int("f0820.lightning_zero.sound", r.emittedSoundCode, 0,
+               "zero-adjusted lightning emits no thud or spell sound");
+    expect_int("f0820.lightning_zero.combat", r.emittedCombatAction, 0,
+               "wall impact has no combat target");
+    expect_int("f0820.lightning_zero.door_event",
+               r.emittedDoorDestructionEvent || r.emittedDoorToggleEvent, 0,
+               "wall impact has no door side effect");
+}
+
 /* ---- Test 5b: F0217 thrown potion wall-impact explosion -------- */
 static void test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud(void)
 {
@@ -1061,6 +1104,7 @@ int main(void)
     test_f0810_f0811_f0813_created_thrown_item_side_cell_blockers();
     test_f0810_f0811_first_move_grace_thrown_item_side_cell_blockers();
     test_f0811_magical_fireball_wall_impact_creates_explosion();
+    test_f0820_lightning_zero_adjusted_wall_impact_skips_explosion_and_sound();
     test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud();
     test_f0820_wall_impact_kinetic_dispatch();
     test_f0811_open_door_wall_impact_emits_wooden_thud();
