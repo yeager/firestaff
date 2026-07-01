@@ -21,6 +21,7 @@
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_sound_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 
@@ -2560,6 +2561,12 @@ static void test_projectile_door_hit_schedules_and_dispatches_destruction(void) 
 
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
               "blocking door projectile impact despawns projectile");
+    /* ReDMCSB PROJEXPL.C F0217 lines 587-600 requests the
+     * non-explosion impact thud before the projectile is deleted. */
+    ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_METALLIC_THUD,
+              "blocking weapon projectile door impact emits metallic thud");
+    ASSERT_EQ(state.audioState.lastMarker, M11_AUDIO_MARKER_COMBAT,
+              "blocking weapon projectile door impact maps thud to combat marker");
     ASSERT_EQ(state.world.timeline.count, 1,
               "M11 schedules projectile door destruction event");
     ASSERT_EQ(state.world.timeline.events[0].kind,
