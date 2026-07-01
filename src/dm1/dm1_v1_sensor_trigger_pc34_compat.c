@@ -1116,6 +1116,231 @@ int F0726_SENSOR_ProcessWallClick_Compat(
     return 1;
 }
 
+/* ================================================================
+ *  F0274 — IsObjectInPartyPossession (POSSESSION SCAN)
+ *  Source: MOVESENS.C F0274 lines 1234-1306
+ *
+ *  Scans living champion slots from C00_SLOT_READY_HAND up to
+ *  C30_SLOT_CHEST_1 (exclusive, slot index 0..29), and within each
+ *  slot recurses into any closed chest (C144_ICON_CONTAINER_CHEST_CLOSED)
+ *  to inspect its contents.  Then, if the leader hand object was not
+ *  already processed by the slot scan, it is inspected once.
+ *
+ *  CHAMPION_STATE_PC34_SLOT_COUNT in this implementation is 30 (matching
+ *  ReDMCSB slot range).  ChampionState_Compat::inventory is laid out in
+ *  the same order so callers can pass champion->inventory directly.
+ *
+ *  Container recursion follows the standard DUNGEON.C chain via
+ *  DungeonContainer_Compat::slot -> DungeonThing->next.  Object types
+ *  are obtained via the THING_GET_TYPE macro on each thing reference.
+ * ================================================================ */
+#define F0274_ICON_CONTAINER_CHEST_CLOSED  144
+
+static int f0274_scan_things_for_type(
+    int objectType,
+    const struct DungeonThings_Compat* things,
+    unsigned short thing,
+    int depth)
+{
+    int steps = 0;
+
+    if (!things || depth < 0) return 0;
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && steps < DM1_SENSOR_POSSESSION_MAX_SCAN_STEPS) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        unsigned short nextThing = THING_NONE;
+
+        /* Skip malformed/empty refs. */
+        if (type < 0 || type > 15) {
+            /* Advance via THING_ENDOFLIST to avoid infinite loop on
+             * bogus thing refs.  We still step once per loop body. */
+            ++steps;
+            thing = THING_ENDOFLIST;
+            continue;
+        }
+
+        if (type == THING_TYPE_WEAPON && index < things->weaponCount) {
+            if ((int)things->weapons[index].type == objectType) return 1;
+            nextThing = things->weapons[index].next;
+        } else if (type == THING_TYPE_ARMOUR && index < things->armourCount) {
+            if ((int)things->armours[index].type == objectType) return 1;
+            nextThing = things->armours[index].next;
+        } else if (type == THING_TYPE_SCROLL && index < things->scrollCount) {
+            /* Scroll icon is in closed; the type we want to match is
+             * the scroll's slot text-string index.  We compare against
+             * sensor->sensorData, which the call site may treat as a
+             * raw icon code.  Skip if the index doesn't match. */
+            if ((int)things->scrolls[index].textStringThingIndex == objectType) return 1;
+            nextThing = things->scrolls[index].next;
+        } else if (type == THING_TYPE_POTION && index < things->potionCount) {
+            if ((int)things->potions[index].type == objectType) return 1;
+            nextThing = things->potions[index].next;
+        } else if (type == THING_TYPE_CONTAINER && index < things->containerCount) {
+            /* C008 doesn't care about the container type itself, only
+             * its contents.  Recurse into the chest contents chain.
+             * Source: MOVESENS.C F0274 lines 1278-1286, only fires the
+             * recursion when the slot's icon type is
+             * C144_ICON_CONTAINER_CHEST_CLOSED. */
+            if ((int)things->containers[index].type == F0274_ICON_CONTAINER_CHEST_CLOSED) {
+                if (f0274_scan_things_for_type(objectType, things,
+                        things->containers[index].slot, depth + 1)) {
+                    return 1;
+                }
+            }
+            nextThing = things->containers[index].next;
+        } else if (type == THING_TYPE_JUNK && index < things->junkCount) {
+            if ((int)things->junks[index].type == objectType) return 1;
+            nextThing = things->junks[index].next;
+        } else {
+            /* Doors / teleporters / text strings / sensors / groups /
+             * projectiles / explosions live on the floor, not in a
+             * champion's inventory; step to next-thing via THING_ENDOFLIST
+             * to bound loop. */
+            thing = THING_ENDOFLIST;
+            ++steps;
+            continue;
+        }
+
+        thing = nextThing;
+        ++steps;
+    }
+    return 0;
+}
+
+int F0274_SENSOR_IsObjectInPartyPossession_Compat(
+    int objectType,
+    const struct PartyPossessionContext_Compat* ctx)
+{
+    int champ;
+    int slotIdx;
+    int leaderHandProcessed = 0;
+    int leaderChampionIndex = -1;
+
+    if (!ctx) return 0;
+    if (ctx->championCount <= 0 || ctx->championCount > DM1_SENSOR_POSSESSION_MAX_CHAMPIONS) return 0;
+    if (objectType < 0) return 0;
+
+    /* Source: MOVESENS.C F0274 lines 1271-1303.
+     *   for each living champion (CurrentHealth > 0):
+     *     for each slot index in [READY_HAND..CHEST_1):
+     *       read slot thing, check type match
+     *       if C144_ICON_CONTAINER_CHEST_CLOSED, recurse into container
+     *   if leader hand object not yet processed, check it once.
+     */
+    for (champ = 0; champ < ctx->championCount; ++champ) {
+        if (!ctx->championAlive[champ]) continue;
+        /* The leader is the first living champion in DM1's slot ordering. */
+        if (leaderChampionIndex < 0) leaderChampionIndex = champ;
+        for (slotIdx = DM1_SENSOR_POSSESSION_SLOT_FIRST;
+             slotIdx < DM1_SENSOR_POSSESSION_SLOT_LAST;
+             ++slotIdx) {
+            unsigned short thing = ctx->championSlots[champ][slotIdx];
+            if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
+            /* The CHAMPION_SLOT_HAND_RIGHT (20) holds the leader's hand
+             * object in DM1's slot encoding; mark it processed so the
+             * G4055_s_LeaderHandObject fallback is skipped. */
+            if (slotIdx == 20) leaderHandProcessed = 1;
+            if (f0274_scan_things_for_type(objectType, ctx->things,
+                                           thing, 0)) {
+                return 1;
+            }
+        }
+    }
+
+    if (!leaderHandProcessed && ctx->leaderHandThing != THING_NONE &&
+        ctx->leaderHandThing != THING_ENDOFLIST) {
+        if (f0274_scan_things_for_type(objectType, ctx->things,
+                                       ctx->leaderHandThing, 0)) {
+            return 1;
+        }
+    }
+
+    (void)leaderChampionIndex;
+    return 0;
+}
+
+/* ================================================================
+ *  F0732 — Pressure plate actuator dispatch
+ *  Source: MOVESENS.C F0268_SENSOR_AddEvent (lines ~1000-1035) +
+ *  door mechanics / pit mechanics / wall event handler in COLIDE.C.
+ *
+ *  When a pressure plate triggers, the remote target square receives
+ *  an event whose type is determined by the target's square type via
+ *  DATA.C G0059_auc_Graphic562_SquareTypeToEventType.  Doors open /
+ *  close / toggle, pits toggle, fake walls toggle, walls and
+ *  teleporters route their own event-specific actions.
+ *
+ *  This helper is the pure projector of sensor+result into a
+ *  structured actuator description.  The caller is responsible for
+ *  actually applying the action to the world state.
+ * ================================================================ */
+int F0732_SENSOR_ResolvePressurePlateActuatorDispatch_Compat(
+    const struct DungeonSensor_Compat* sensor,
+    const struct SensorTriggerResult_Compat* result,
+    int targetSquareType,
+    struct SensorActuatorDispatch_Compat* outDispatch)
+{
+    if (!sensor || !outDispatch) return 0;
+    memset(outDispatch, 0, sizeof(*outDispatch));
+    if (!result) return 0;
+
+    /* A pressure plate that did not actually trigger produces no
+     * actuator dispatch — even if a target square was configured. */
+    if (!result->triggered) {
+        outDispatch->valid = 0;
+        return 1;
+    }
+
+    outDispatch->valid = 1;
+    outDispatch->targetMapX = sensor->targetMapX;
+    outDispatch->targetMapY = sensor->targetMapY;
+    outDispatch->targetCell = sensor->targetCell;
+    outDispatch->targetSquareType = targetSquareType;
+    outDispatch->targetEventType = F0727_SENSOR_SquareTypeToEventType_Compat(targetSquareType);
+    outDispatch->resolvedEffect = result->resolvedEffect;
+    outDispatch->delayTicks = sensor->value;
+
+    /* Map resolvedEffect -> action.  Source: MOVESENS.C F0268 maps
+     * the four effects (SET, CLEAR, TOGGLE, HOLD) into the four
+     * event-effect codes (0..3) used by the door / pit handlers. */
+    switch (result->resolvedEffect) {
+    case DM1_EFFECT_SET:    outDispatch->action = DM1_ACTUATOR_ACTION_OPEN; break;
+    case DM1_EFFECT_CLEAR:  outDispatch->action = DM1_ACTUATOR_ACTION_CLOSE; break;
+    case DM1_EFFECT_TOGGLE: outDispatch->action = DM1_ACTUATOR_ACTION_TOGGLE; break;
+    default:                outDispatch->action = DM1_ACTUATOR_ACTION_TOGGLE; break;
+    }
+
+    /* Pick the actuator kinds that meaningfully apply to the target
+     * square type.  A door square routes DM1_EFFECT_* into door state
+     * transitions; a pit square routes them into pit state transitions;
+     * etc. */
+    switch (targetSquareType) {
+    case DM1_SQUARE_DOOR:
+        outDispatch->actuatorKindMask = DM1_ACTUATOR_KIND_DOOR;
+        break;
+    case DM1_SQUARE_PIT:
+        outDispatch->actuatorKindMask = DM1_ACTUATOR_KIND_PIT;
+        break;
+    case DM1_SQUARE_FAKEWALL:
+        outDispatch->actuatorKindMask = DM1_ACTUATOR_KIND_FAKEWALL;
+        break;
+    case DM1_SQUARE_WALL:
+        outDispatch->actuatorKindMask = DM1_ACTUATOR_KIND_WALL;
+        break;
+    case DM1_SQUARE_TELEPORTER:
+        outDispatch->actuatorKindMask = DM1_ACTUATOR_KIND_TELEPORTER;
+        break;
+    case DM1_SQUARE_CORRIDOR:
+        outDispatch->actuatorKindMask = DM1_ACTUATOR_KIND_CORRIDOR;
+        break;
+    default:
+        outDispatch->actuatorKindMask = 0;
+        break;
+    }
+
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Pass602b — MOVESENS.C remaining function citations
  *

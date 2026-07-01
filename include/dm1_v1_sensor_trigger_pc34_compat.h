@@ -255,6 +255,109 @@ struct ProjectileLauncherResult_Compat {
 };
 
 /* ================================================================
+ *  Floor sensor possession context (F0274_SENSOR_IsObjectInPartyPossession)
+ *
+ *  Source: MOVESENS.C lines 1234-1306.  The C008 floor sensor type
+ *  ("DM1_SENSOR_FLOOR_PARTY_POSSESSION") asks "does the party carry an
+ *  object whose type matches sensorData?" before toggling its remote
+ *  target.  The source-locked scan walks living champion slots from
+ *  C00_SLOT_READY_HAND through C29_SLOT_BACKPACK_17, recursing into
+ *  any closed chest found in those slots, and finally falling back to
+ *  the leader's hand object (G4055_s_LeaderHandObject).
+ *
+ *  Source-locked scan order:
+ *    1. For each living champion (CurrentHealth > 0):
+ *       1a. Walk slots [READY_HAND..CHEST_1) looking for objectType match
+ *           and recurse into any C144_ICON_CONTAINER_CHEST_CLOSED container.
+ *       1b. The leader's hand slot is also reachable via this path.
+ *    2. If the leader hand object has not yet been inspected
+ *       (L0748_B_LeaderHandObjectProcessed), inspect it once.
+ *
+ *  ReDMCSB CHAMPION.C slot counts:
+ *    - C00_SLOT_READY_HAND = 0
+ *    - C30_SLOT_CHEST_1    = 30 (sentinel; slots 0..29 are inspected)
+ *  The champion_state_pc34_compat defines CHAMPION_SLOT_COUNT = 30 with
+ *  CHAMPION_SLOT_HEAD..CHAMPION_SLOT_HAND_LEFT/RIGHT covering 0..20 and
+ *  CHAMPION_SLOT_BACKPACK_9..17 covering 21..29, mapping cleanly onto the
+ *  ReDMCSB ready-hand..chest-1 range.
+ * ================================================================ */
+#define DM1_SENSOR_POSSESSION_SLOT_FIRST  0   /* ReDMCSB C00_SLOT_READY_HAND */
+#define DM1_SENSOR_POSSESSION_SLOT_LAST   30  /* ReDMCSB C30_SLOT_CHEST_1 (exclusive) */
+#define DM1_SENSOR_POSSESSION_MAX_CHAMPIONS 4
+#define DM1_SENSOR_POSSESSION_MAX_SCAN_STEPS 64
+
+/* Lightweight snapshot of the party for the F0274 scan.  The caller
+ * (typically a tick orchestrator or a regression test) supplies either
+ * a precomputed PartyState_Compat-style view or per-champion slot arrays
+ * + the leader-hand-object thing ref.  The helper does not mutate. */
+struct PartyPossessionContext_Compat {
+    /* Per-champion slot scan data.  Champion slots are stored as 30
+     * THING references (0..29).  Use CHAMPION_SLOT_HEAD..CHAMPION_SLOT_BACKPACK_17
+     * indices from memory_champion_state_pc34_compat.h. */
+    int championCount;
+    unsigned short championSlots[DM1_SENSOR_POSSESSION_MAX_CHAMPIONS][DM1_SENSOR_POSSESSION_SLOT_LAST];
+    /* CurrentHealth > 0 marks a living champion.  Dead champions are
+     * skipped, matching MOVESENS.C lines 1272-1273. */
+    int championAlive[DM1_SENSOR_POSSESSION_MAX_CHAMPIONS];
+    /* THING_ENDOFLIST ends each container's slot chain.  The helper
+     * recurses into C144_ICON_CONTAINER_CHEST_CLOSED icon types, so
+     * callers should expose the world->thing data needed to read
+     * container->slot and follow thing chains. */
+    const struct DungeonThings_Compat* things;
+    /* ReDMCSB G4055_s_LeaderHandObject.Thing — the leader's hand object,
+     * scanned last if the slot scan did not already touch it. */
+    unsigned short leaderHandThing;
+};
+
+/* ================================================================
+ *  Pressure plate actuator dispatch (F0268_SENSOR_AddEvent + actuator)
+ *
+ *  Source: MOVESENS.C F0268_SENSOR_AddEvent line ~1000 maps a sensor
+ *  effect to a timed event using G0059_auc_Graphic562_SquareTypeToEventType.
+ *  In ReDMCSB the actuator (door / pit / fake wall / teleporter) lives
+ *  in the door mechanics / wall event subsystem and consumes the event
+ *  on the target square.
+ *
+ *  Firestaff models this contract as a structured SensorActuatorDispatch:
+ *    - target event type  (door=10, pit=9, fakewall=7, wall=6, teleporter=8)
+ *    - target square type (0..6 -> DM1_SQUARE_*)
+ *    - target action      (open/close/toggle)
+ *    - delay ticks        (sensor->value passed through F0268 queueing)
+ *
+ *  The helper takes a sensor trigger result plus the target square's
+ *  square-type and returns the structured dispatch.  Pure function.
+ * ================================================================ */
+#define DM1_ACTUATOR_ACTION_NONE    0
+#define DM1_ACTUATOR_ACTION_OPEN    1
+#define DM1_ACTUATOR_ACTION_CLOSE   2
+#define DM1_ACTUATOR_ACTION_TOGGLE  3
+
+#define DM1_ACTUATOR_DELAY_UNSCALED 0   /* F0268 schedules event at gameTick+1 */
+
+/* Bitmask of actuator kinds this dispatch is meaningful for.  ReDMCSB
+ * C008/C007 floor sensors in front of a door toggle the door; C008 in
+ * front of a pit toggles the pit; etc.  The helper reports each. */
+#define DM1_ACTUATOR_KIND_DOOR        0x01
+#define DM1_ACTUATOR_KIND_PIT         0x02
+#define DM1_ACTUATOR_KIND_FAKEWALL    0x04
+#define DM1_ACTUATOR_KIND_WALL        0x08
+#define DM1_ACTUATOR_KIND_TELEPORTER  0x10
+#define DM1_ACTUATOR_KIND_CORRIDOR    0x20
+
+struct SensorActuatorDispatch_Compat {
+    int valid;             /* 1 if dispatch applies to a real actuator */
+    int targetMapX;        /* Sensor remote target X (targetMapX) */
+    int targetMapY;        /* Sensor remote target Y (targetMapY) */
+    int targetCell;        /* Sensor remote target cell */
+    int targetSquareType;  /* DM1_SQUARE_DOOR/PIT/... at the target */
+    int targetEventType;   /* DM1_EVENT_DOOR/PIT/... */
+    int actuatorKindMask;  /* OR of DM1_ACTUATOR_KIND_* relevant bits */
+    int action;            /* DM1_ACTUATOR_ACTION_* */
+    int resolvedEffect;    /* DM1_EFFECT_SET/CLEAR/TOGGLE/HOLD-resolved */
+    int delayTicks;        /* Delay (from sensor->value) before actuator runs */
+};
+
+/* ================================================================
  *  API Functions
  * ================================================================ */
 
@@ -331,5 +434,59 @@ int F0731_SENSOR_EvaluateWallEndGameEvent_Compat(
     int eventEffect,
     int eventCell,
     struct SensorTriggerResult_Compat* outResult);
+
+/* ----------------------------------------------------------------
+ *  F0274_SENSOR_IsObjectInPartyPossession_Compat
+ *
+ *  Source-locked replica of MOVESENS.C F0274 lines 1234-1306.  Returns
+ *  1 if any living champion carries an object whose icon type equals
+ *  objectType, where the scan walks every champion slot in [READY_HAND,
+ *  CHEST_1) and recurses into any C144_ICON_CONTAINER_CHEST_CLOSED
+ *  container found.  The leader hand object (ReDMCSB
+ *  G4055_s_LeaderHandObject) is also inspected exactly once if the slot
+ *  scan did not already see it, matching L0748_B_LeaderHandObjectProcessed.
+ *
+ *  Used by F0722_SENSOR_EvaluateFloor_Compat case C008
+ *  (DM1_SENSOR_FLOOR_PARTY_POSSESSION) and by the runtime
+ *  F0718_SENSOR_ProcessPartyEnterLeave_Compat pressure-plate caller.
+ *
+ *  Pure function.  Things (containers) are inspected read-only via the
+ *  caller-supplied DungeonThings_Compat snapshot.
+ *
+ *  Returns 1 on match, 0 on no match or invalid args.
+ * ---------------------------------------------------------------- */
+int F0274_SENSOR_IsObjectInPartyPossession_Compat(
+    int objectType,
+    const struct PartyPossessionContext_Compat* ctx);
+
+/* ----------------------------------------------------------------
+ *  F0732_SENSOR_ResolvePressurePlateActuatorDispatch_Compat
+ *
+ *  Pure projector of a pressure-plate SensorTriggerResult into a
+ *  SensorActuatorDispatch.  This is the testable part of the
+ *  F0268_SENSOR_AddEvent + actuator dispatch contract that turns a
+ *  remote effect into a door/pit/wall/teleporter consequence.
+ *
+ *  Behavior:
+ *    - targetMapX/Y/cell, targetSquareType, targetEventType come from
+ *      the sensor's remote target + the caller-supplied target square
+ *      type (looked up on the world map by the caller).
+ *    - resolvedEffect -> action mapping:
+ *        SET    -> OPEN
+ *        CLEAR  -> CLOSE
+ *        TOGGLE -> TOGGLE
+ *        HOLD-with-resolved SET    -> OPEN
+ *        HOLD-with-resolved CLEAR  -> CLOSE
+ *    - actuatorKindMask is derived from targetSquareType; door/pit/fakewall
+ *      are the typical pressure-plate actuators in DM1.
+ *    - delayTicks comes from sensor->value (the F0268 queue delay).
+ *
+ *  Returns 1 on valid dispatch (always, except on null args).
+ * ---------------------------------------------------------------- */
+int F0732_SENSOR_ResolvePressurePlateActuatorDispatch_Compat(
+    const struct DungeonSensor_Compat* sensor,
+    const struct SensorTriggerResult_Compat* result,
+    int targetSquareType,
+    struct SensorActuatorDispatch_Compat* outDispatch);
 
 #endif
