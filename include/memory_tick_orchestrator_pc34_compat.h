@@ -78,6 +78,7 @@
 #include "memory_projectile_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
+#include "dm1_v1_combat_pc34_compat.h"
 
 /* ================================================================
  *  Commands (TickInput.command)
@@ -97,6 +98,23 @@
 #define CMD_DRINK             0x14
 #define CMD_REST_TOGGLE       0x20
 #define CMD_THROW_ITEM        0x21
+
+/* CMD_ATTACK reserved2 encoding.
+ * If bit 31 is set, low byte carries the ReDMCSB action index
+ * C000_ACTION_N..C043_ACTION_FUSE.  Bit 30 is an explicit legacy-test
+ * marker for the old weapon-class snapshot fallback; live melee callers
+ * should pass group/creature target data instead. */
+#define CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID 0x80000000u
+#define CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID 0x40000000u
+#define CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK  0x000000FFu
+#define CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34    25
+#define CMD_ATTACK_TARGET_AUTO_GROUP_PC34       0xFFu
+#define CMD_ATTACK_CREATURE_AUTO_PC34           0xFFu
+
+/* CMD_CAST_SPELL reserved2 encoding. */
+#define CMD_CAST_SPELL_RESERVED2_HAS_EMPTY_FLASK        0x00000001u
+#define CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_SHIFT 8u
+#define CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_MASK  0x0000FF00u
 
 /* ================================================================
  *  Emission kinds (TickEmission.kind)
@@ -217,6 +235,9 @@ struct GameWorld_Compat {
     struct ProjectileList_Compat       projectiles;        /* Phase 17 */
     struct ExplosionList_Compat        explosions;         /* Phase 17 */
     struct LifecycleState_Compat       lifecycle;          /* Phase 18 */
+    int32_t                            candidateAttackInvulnerableEnabled;
+    int32_t                            candidateAttackInvulnerableGroupIndex;
+    int32_t                            candidateAttackInvulnerableCreatureIndex;
 
     /* Phase 19 state is tracked via timeline chains, explosion slots
        and sensor toggling (see D5). */
@@ -299,6 +320,28 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
     struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
     struct TickResult_Compat* result);
+
+int F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+    const struct GameWorld_Compat* world,
+    int championIndex,
+    int skillIndex);
+int F0888_ORCH_GetChampionF0312SkillBonus_Compat(
+    const struct GameWorld_Compat* world,
+    int championIndex,
+    int weaponClass);
+int F0888_ORCH_GetChampionActionHandWeaponClass_Compat(
+    const struct GameWorld_Compat* world,
+    int championIndex);
+int F0888_ORCH_GetChampionActionHandWeaponInfo_Compat(
+    const struct GameWorld_Compat* world,
+    int championIndex,
+    DM1_WeaponInfo* outInfo);
+int F0888_ORCH_GetCreatureSnapshot_Compat(
+    const struct GameWorld_Compat* world,
+    int groupIndex,
+    int creatureIndex,
+    int doubledMapDifficulty,
+    struct CombatantCreatureSnapshot_Compat* outSnapshot);
 
 void F0889_ORCH_ApplyPendingDamage_Compat(
     struct GameWorld_Compat* world,

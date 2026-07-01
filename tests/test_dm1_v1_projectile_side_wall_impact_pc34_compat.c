@@ -731,8 +731,48 @@ static void test_f0811_magical_fireball_wall_impact_creates_explosion(void)
     expect_int("f0811.fireball.explosion_y",  r.outExplosion.mapY, d.destMapY,
                "F0820 HIT_WALL: explosion mapY is wall Y (impact cell)");
     expect_int("f0811.fireball.explosion_attack",
-               r.outExplosion.attack, p.attack,
-               "F0820 HIT_WALL: explosion attack mirrors projectile attack");
+               r.outExplosion.attack, p.kineticEnergy,
+               "F0820 HIT_WALL: explosion attack uses projectile kinetic energy");
+}
+
+/* ---- Test 5b: F0217 thrown potion wall-impact explosion -------- */
+static void test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud(void)
+{
+    struct ProjectileInstance_Compat p;
+    struct CellContentDigest_Compat  d;
+    struct ProjectileTickResult_Compat r;
+
+    printf("test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud\n");
+
+    make_kinetic_arrow(&p, 0 /* N */, 0, 5, 5);
+    p.projectileSubtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
+    p.associatedPotionPower = 77;
+    p.flags |= PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT;
+    p.kineticEnergy = 12;
+    p.attack = 5;
+    make_wall_digest(&d, 5, 5, 5, 4);
+
+    memset(&r, 0, sizeof(r));
+    expect_int("f0820.poison_potion.rc",
+               F0820_PROJECTILE_ResolveCollision_Compat(
+                   &p, &d, PROJECTILE_RESULT_HIT_WALL, 300u, NULL, &r),
+               1,
+               "ReDMCSB PROJEXPL.C:F0217 lines 444-455 and 565-585 potion impact explosion");
+    expect_int("f0820.poison_potion.kind", r.resultKind,
+               PROJECTILE_RESULT_HIT_WALL,
+               "thrown poison potion resolves as a wall impact");
+    expect_int("f0820.poison_potion.explosion", r.emittedExplosion, 1,
+               "F0217 RemovePotion branch creates an explosion even for a non-magical projectile");
+    expect_int("f0820.poison_potion.type", r.outExplosion.explosionType,
+               C007_EXPLOSION_POISON_CLOUD,
+               "Ven potion impact maps to poison cloud");
+    expect_int("f0820.poison_potion.attack", r.outExplosion.attack, 77,
+               "Ven potion impact explosion attack uses potion power");
+    expect_int("f0820.poison_potion.cell", r.outExplosion.cell,
+               EXPLOSION_CELL_CENTERED,
+               "Poison cloud impact uses the centered-cell sentinel");
+    expect_int("f0820.poison_potion.centered", r.outExplosion.centered, 1,
+               "Poison cloud impact marks the explosion centered");
 }
 
 /* ---- Test 6: F0820 wall-impact dispatch in isolation -------- */
@@ -1021,6 +1061,7 @@ int main(void)
     test_f0810_f0811_f0813_created_thrown_item_side_cell_blockers();
     test_f0810_f0811_first_move_grace_thrown_item_side_cell_blockers();
     test_f0811_magical_fireball_wall_impact_creates_explosion();
+    test_f0820_thrown_poison_potion_wall_impact_creates_centered_cloud();
     test_f0820_wall_impact_kinetic_dispatch();
     test_f0811_open_door_wall_impact_emits_wooden_thud();
     test_wall_square_byte_encoding();

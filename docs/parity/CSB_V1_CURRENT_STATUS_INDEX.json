@@ -1,0 +1,305 @@
+{
+  "schema": "firestaff.csb_v1.current_status_index.v1",
+  "generatedDate": "2026-06-30",
+  "target": {
+    "game": "Chaos Strikes Back",
+    "primaryLane": "Atari ST v2.x",
+    "runtimeLanes": [
+      "Atari ST v2.0/v2.1 source-era lane",
+      "PC real-asset launch/readiness lane where locally staged"
+    ],
+    "mode": "V1 original-compatible"
+  },
+  "doctrine": {
+    "cleanRoomRewrite": true,
+    "functionalTemplate": "ReDMCSB_WIP20210206",
+    "functionalTemplateArchive": "http://dmweb.free.fr/Stuff/ReDMCSB_WIP20210206.7z",
+    "localFunctionalTemplateRoot": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+    "supportingReferences": [
+      "~/.openclaw/data/firestaff-csb-source/CSB/src/",
+      "~/.openclaw/data/firestaff-csbwin-source/CSBWin/",
+      "~/.openclaw/data/firestaff-original-games/DM/_canonical/csb/",
+      "docs/REDMCSB_REFERENCE.md",
+      "docs/DMWEB_REFERENCE.md"
+    ],
+    "rules": [
+      "Use ReDMCSB source-locks as the primary functional template for CSB behavior and for the documented CSB deltas from DM1.",
+      "Use CSBwin source-locks as an accepted functional template for CSBwin-owned save, Utility, custom-resource, and runtime workflow boundaries where ReDMCSB delegates or does not fully spell out the behavior.",
+      "Do not inherit DM1 completion points into CSB without CSB-specific source/runtime evidence.",
+      "Use CSB lineage and CSBWin as supporting references for utility-disk, QuickPlay, save/game-state, and runtime workflow boundaries.",
+      "Use original CSB captures only to promote visual, pixel, audio-cadence, timing, or same-state overlay rows."
+    ]
+  },
+  "currentBlockers": [
+    {
+      "id": "csb_v1_runtime_playability",
+      "priority": "P1",
+      "status": "ACTIVE_BLOCKER",
+      "summary": "Launch/profile routing, PC real-asset boot/tick evidence, quickplay dungeon-handle survival, first viewport-frame render entry, a one-move Utility-to-runtime route with bounded save-prefix roundtrip, and a CSB-owned runtime spine are proven, but full CSB playability is not proven.",
+      "latestEvidence": [
+        "docs/parity/PARITY_MATRIX_CSB_V1.md",
+        "TODO.md",
+        "CTest csb_v1_movement_command_step_runtime_pc34_compat",
+        "CTest csb_v1_command_chain_move_attack_cast_runtime_pc34_compat",
+        "CTest csb_v1_input_command_queue_binding",
+        "CTest csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat",
+        "CTest csb_v1_runtime_champion_inventory_handoff_pc34_compat",
+        "CTest csb_v1_runtime_tick_accumulator",
+        "CTest csb_v1_pc_real_asset_launch",
+        "CTest csb_v1_pc34_quickplay_dungeon_handle",
+        "CTest csb_v1_first_viewport_frame",
+        "CTest csb_v1_boot_runtime_handoff",
+        "CTest csb_v1_runtime_route_first_frame_movement_utility_gate"
+      ],
+      "nextAction": "Extend the fast CTest-wired one-move route into a wider CSB route: repeated adventuring input, CSBGAME.DAT save/reload or Utility/new-adventure persistence, viewport capture, and original/Firestaff comparison."
+    },
+    {
+      "id": "csb_v1_viewport_hud_original_overlay",
+      "priority": "P2",
+      "status": "ACTIVE_BLOCKER",
+      "summary": "CSB first viewport-frame and post-movement render entries are CTest-gated, but viewport/HUD/UI render parity still lacks stable original capture/state anchors and Firestaff same-state overlay comparisons.",
+      "latestEvidence": [
+        "docs/parity/PARITY_MATRIX_CSB_V1.md",
+        "docs/FIRESTAFF_GAP_LIST.md",
+        "CTest csb_v1_first_viewport_frame",
+        "CTest csb_v1_runtime_route_first_frame_movement_utility_gate"
+      ],
+      "nextAction": "Build CSB capture/overlay fixtures and compare original CSB frames against Firestaff output for viewport, champion panel, inventory, Utility, and Hint Oracle surfaces."
+    },
+    {
+      "id": "csb_v1_save_compatibility_real_artifacts",
+      "priority": "P3",
+      "status": "ACTIVE_BLOCKER",
+      "summary": "CSB roster import, save-section work, and a bounded route save-prefix roundtrip exist, but real CSB save compatibility artifacts and broad roundtrip evidence remain open.",
+      "latestEvidence": [
+        "TODO.md",
+        "docs/FINAL_CSB_GAPS.md",
+        "CTest csb_v1_save_import_path_pc34_compat",
+        "CTest csb_v1_runtime_route_first_frame_movement_utility_gate"
+      ],
+      "nextAction": "Probe real CSBGAME.DAT / utility-disk save artifacts through import, runtime load, save/write-back, and reload receipts."
+    },
+    {
+      "id": "csb_v1_utility_disk_payloads",
+      "priority": "P4",
+      "status": "ACTIVE_BOUNDED",
+      "summary": "Hint Oracle HTC scan/cache and text UI binding exist, but graphical overlay and additional Utility Disk variants remain open.",
+      "latestEvidence": [
+        "TODO.md",
+        "docs/FIRESTAFF_GAP_LIST.md",
+        "CTest csb_v1_utility_import_block_verify_pc34_compat"
+      ],
+      "nextAction": "Add real Utility Disk variant receipts and render the actual Hint Oracle graphical overlay, including HCSB.HTC/HCSB.DAT provenance."
+    },
+    {
+      "id": "csb_v1_audio_timing",
+      "priority": "P5",
+      "status": "ACTIVE_BLOCKER",
+      "summary": "CSB audio/timing cannot count DM1 evidence; trigger cadence and overlap need CSB-specific runtime evidence.",
+      "latestEvidence": [
+        "docs/parity/PARITY_MATRIX_CSB_V1.md"
+      ],
+      "nextAction": "Add CSB-specific audio/timing source and runtime probes before promoting cadence or overlap rows."
+    },
+    {
+      "id": "csb_v1_end_to_end_completion_proof",
+      "priority": "P6",
+      "status": "ACTIVE_BLOCKER",
+      "summary": "No end-to-end CSB playability proof exists yet.",
+      "latestEvidence": [
+        "TODO.md",
+        "docs/parity/PARITY_MATRIX_CSB_V1.md"
+      ],
+      "nextAction": "Define and run a bounded CSB completion route: launch, load/adventure state, move, interact, save, reload, and capture evidence."
+    }
+  ],
+  "functionalGapDisposition": [
+    {
+      "area": "champions",
+      "status": "FUNCTIONAL_CLOSED_BOUNDED",
+      "fromDocs": "docs/FINAL_CSB_GAPS.md",
+      "closedRows": [
+        "NEOPHYTE skill rank",
+        "CHANGE7_24 reincarnation penalty",
+        "CSB champion transfer/import bounded path",
+        "CHANGE7_28 left-click inventory"
+      ],
+      "remaining": "Real save/artifact compatibility and live runtime evidence, not the bounded source-lock implementations."
+    },
+    {
+      "area": "combat",
+      "status": "FUNCTIONAL_CLOSED_BOUNDED",
+      "fromDocs": "docs/FINAL_CSB_GAPS.md",
+      "closedRows": [
+        "CHANGE7_20 projectile speed normalization",
+        "Grey Lord combat behavior",
+        "BUG0_69 group AI/teleporter fix",
+        "BUG0_09/BUG0_10 square event fixes",
+        "CHANGE7_29/CHANGE8_12 save combat state"
+      ],
+      "remaining": "CSB-specific runtime playability, original transcript, save artifacts, and audio/timing proof."
+    },
+    {
+      "area": "dungeon",
+      "status": "FUNCTIONAL_CLOSED_BOUNDED",
+      "fromDocs": "docs/FINAL_CSB_GAPS.md",
+      "closedRows": [
+        "24-level dungeon header",
+        "end-game sensor type 18",
+        "version checker sensor",
+        "DECOMPDU.C F0455 compressed dungeon decompressor",
+        "CSB teleporter access expansion"
+      ],
+      "remaining": "Live CSB route/playability and original overlay/capture promotion."
+    },
+    {
+      "area": "mechanics",
+      "status": "FUNCTIONAL_CLOSED_BOUNDED",
+      "fromDocs": "docs/FINAL_CSB_GAPS.md",
+      "closedRows": [
+        "ZOKATHRA spell power variant",
+        "Grey Lord roster/proximity",
+        "reincarnation penalty carryover"
+      ],
+      "remaining": "CSB-specific runtime fixtures across adventuring, Utility, spell/combat, and save/load modes."
+    },
+    {
+      "area": "graphics",
+      "status": "FUNCTIONAL_CLOSED_OR_AUDIT_ONLY",
+      "fromDocs": "docs/FINAL_CSB_GAPS.md",
+      "closedRows": [
+        "engine version display",
+        "CHANGE7_16 C-only perf shim/documentation"
+      ],
+      "auditOnlyRows": [
+        "VBL handler fix",
+        "wall drawing optimization",
+        "BUG0_04 Lord Chaos palette persists",
+        "mouse pointer cleanup"
+      ],
+      "remaining": "Viewport/HUD/UI original overlays, Utility Disk graphical overlay, and broader render receipts."
+    }
+  ],
+  "completionCriteria": [
+    {
+      "criterion": "reference_inventory",
+      "currentStatus": "SOURCE_LOCKED_PARTIAL",
+      "requiredForFullSupport": "Hash-locked CSB original payloads and version/platform inventory, with Atari ST v2.0/v2.1 kept separate from Amiga, PC-98, FM-Towns, X68000, CSBWin, and PC readiness lanes."
+    },
+    {
+      "criterion": "launch_smoke",
+      "currentStatus": "RUNTIME_BOUNDARY_VERIFIED_PARTIAL",
+      "requiredForFullSupport": "Keep launch/profile gates green and extend from boot/tick to real CSB adventuring/playability proof."
+    },
+    {
+      "criterion": "core_input_movement",
+      "currentStatus": "RUNTIME_SLICE_VERIFIED_PARTIAL",
+      "requiredForFullSupport": "CTest now covers CSB-owned boot-to-runtime handoff, PC real-asset launch/tick, quickplay dungeon-handle survival, Utility NEW_GAME-to-runtime one-move route with bounded save-prefix roundtrip, input queue binding, queued movement, rotation between movement steps, runtime ticks, champion/inventory handoff, and MOVE/ATTACK/CAST command-chain semantics. Full support still needs a wider real-data CSB adventuring route through launch, interaction, CSBGAME.DAT save/reload, and capture proof."
+    },
+    {
+      "criterion": "viewport_ui_render",
+      "currentStatus": "SOURCE_SLICE_VERIFIED_PARTIAL_BUT_BLOCKED_CAPTURE",
+      "requiredForFullSupport": "CSB-specific viewport source slices plus first-frame and post-movement render entries exist, but full support still requires stable CSB original capture/state anchors and same-state Firestaff overlay comparisons."
+    },
+    {
+      "criterion": "gameplay_systems",
+      "currentStatus": "RUNTIME_SLICE_VERIFIED_PARTIAL_BUT_BLOCKED_REAL_ROUTE",
+      "requiredForFullSupport": "Runtime probes now cover a synthetic boot/runtime handoff spine plus several CSB-specific command, tick, champion/inventory, save-import, and Utility-import slices. Full support still needs prison/new-adventure/combat/creature/item/save behavior joined into a real CSB route."
+    },
+    {
+      "criterion": "audio_timing",
+      "currentStatus": "DATA_DECODE_VERIFIED_PARTIAL_BUT_BLOCKED_RUNTIME",
+      "requiredForFullSupport": "AMG Utility Disk SND2 decoding exists, but full support still requires CSB-specific audio trigger cadence, overlap, playback-rate binding, and timing evidence."
+    },
+    {
+      "criterion": "original_overlay_regression",
+      "currentStatus": "BLOCKED_CAPTURE",
+      "requiredForFullSupport": "Representative CSB original overlays and Firestaff output from the same states."
+    }
+  ],
+  "documentDisposition": [
+    {
+      "path": "docs/FINAL_CSB_GAPS.md",
+      "status": "ACTIVE_FUNCTIONAL_GAP_SUMMARY",
+      "use": "Use as the current summary for bounded ReDMCSB functional gap closure."
+    },
+    {
+      "path": "docs/parity/PARITY_MATRIX_CSB_V1.md",
+      "status": "ACTIVE_COMPLETION_MATRIX",
+      "use": "Use for CSB full-support criteria and non-claims. Interpret together with this index and FINAL_CSB_GAPS for the current bounded functional closures."
+    },
+    {
+      "path": "docs/csb_gap_champions.md",
+      "status": "PARTIALLY_SUPERSEDED",
+      "use": "Historical gap detail. FINAL_CSB_GAPS marks these rows closed or audit-only; do not reopen without newer failing evidence."
+    },
+    {
+      "path": "docs/csb_gap_combat.md",
+      "status": "PARTIALLY_SUPERSEDED",
+      "use": "Historical gap detail. Use as source rationale, not current blocker list."
+    },
+    {
+      "path": "docs/csb_gap_dungeon.md",
+      "status": "PARTIALLY_SUPERSEDED",
+      "use": "Historical gap detail. DECOMPDU/header/sensor rows are bounded-closed per FINAL_CSB_GAPS."
+    },
+    {
+      "path": "docs/csb_gap_graphics.md",
+      "status": "PARTIALLY_SUPERSEDED",
+      "use": "Historical gap detail. Keep audit-only rows as documented non-blockers unless runtime evidence contradicts them."
+    },
+    {
+      "path": "docs/csb_gap_mechanics.md",
+      "status": "PARTIALLY_SUPERSEDED",
+      "use": "Historical gap detail. Use for source context after checking functional disposition above."
+    },
+    {
+      "path": "TODO.md",
+      "status": "ACTIVE_SUMMARY",
+      "use": "Top-level open-work ledger for remaining CSB runtime, save, overlay, Utility Disk, and playability proof."
+    },
+    {
+      "path": "DONE.md",
+      "status": "ACTIVE_HISTORY",
+      "use": "Completed gate history; not the current blocker list by itself."
+    }
+  ],
+  "promotionRules": [
+    {
+      "claim": "CSB functional gap closed",
+      "requires": [
+        "ReDMCSB source-lock or CSB lineage/CSBWin source rationale when ReDMCSB delegates the behavior",
+        "Firestaff data-free or real-asset runtime probe",
+        "CTest or verifier receipt",
+        "Explicit separation from DM1-inherited evidence"
+      ]
+    },
+    {
+      "claim": "CSB runtime support ready",
+      "requires": [
+        "CSB-specific launch/profile proof",
+        "CSB state-backed input/movement/adventuring probes, including the CTest-wired movement-command and command-chain runtime slices",
+        "Utility/new-adventure/reincarnate mode coverage where applicable",
+        "Real CSB data or skip-safe receipts for hosts without user-supplied data"
+      ]
+    },
+    {
+      "claim": "CSB visual/content MATCHED",
+      "requires": [
+        "Original CSB runtime capture from the target version/platform state",
+        "Firestaff capture from the same state and input sequence",
+        "Hash and pixel-diff manifest",
+        "No DM1 capture substituted for a CSB row"
+      ]
+    },
+    {
+      "claim": "CSB save compatibility ready",
+      "requires": [
+        "Real CSBGAME.DAT or relevant Utility Disk artifact",
+        "Firestaff import/runtime load",
+        "Write-back or explicit conversion receipt",
+        "Reload verification"
+      ]
+    }
+  ]
+}

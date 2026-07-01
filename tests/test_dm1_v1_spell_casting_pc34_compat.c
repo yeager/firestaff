@@ -833,6 +833,49 @@ static void test_spell_cast_needs_practice_feedback(void) {
     printf("    PASS\n");
 }
 
+static void test_spell_cast_uses_live_f0303_skill_override(void) {
+    printf("  [26b] Spell cast uses live F0303 skill override...\n");
+
+    DM1_SpellCastingState s;
+    DM1_ChampionSpellStats stats = makeStats(200, 200, 50, 0);
+    const DM1_Spell* outSpell = NULL;
+    int failure = -1;
+    int powerOrdinal = -1;
+
+    dm1_spell_init(&s);
+    stats.skillLevels[DM1_SKILL_FIRE] = 0;
+    stats.liveSkillLevelOverrideValid = 1;
+    stats.liveSkillLevelOverrideIndex = DM1_SKILL_FIRE;
+    stats.liveSkillLevelOverrideValue = 6;
+
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR) == 1);
+
+    assert(dm1_spell_cast(&s, 0, &stats, 0x7FFF,
+                          &outSpell, &powerOrdinal, &failure) ==
+           DM1_SPELL_CAST_SUCCESS);
+    assert(outSpell == &dm1_spells[8]);
+    assert(powerOrdinal == 3);
+    assert(failure == -1);
+    assert(s.input[0].symbols[0] == 0);
+    assert(s.input[0].symbolStep == 0);
+
+    dm1_spell_init(&s);
+    memset(&stats, 0, sizeof(stats));
+    stats = makeStats(200, 200, 50, 0);
+    stats.skillLevels[DM1_SKILL_FIRE] = 0;
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_POWER_ON) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_ELEM_FUL) == 1);
+    assert(dm1_spell_addSymbol(&s, 0, &stats, DM1_CLASS_IR) == 1);
+    assert(dm1_spell_cast(&s, 0, &stats, 0x7FFF,
+                          &outSpell, &powerOrdinal, &failure) ==
+           DM1_SPELL_CAST_FAILURE);
+    assert(failure == DM1_FAILURE_NEEDS_MORE_PRACTICE);
+
+    printf("    PASS\n");
+}
+
 /* ── Test 25: Spell failure feedback metadata ───────────────────────── */
 static void test_spell_failure_feedback_metadata(void) {
     printf("  [27] Spell failure feedback metadata...\n");
@@ -908,6 +951,7 @@ int main(void) {
     test_lightning_bolt();
     test_power_only_no_match();
     test_spell_cast_needs_practice_feedback();
+    test_spell_cast_uses_live_f0303_skill_override();
     test_spell_failure_feedback_metadata();
     test_spell_cast_click_cleanup_predicate();
 

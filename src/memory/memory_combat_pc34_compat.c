@@ -456,6 +456,8 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
     int dexThreshold;
     int dexOk;
     int rand2IsZero;
+    int luckyHit;
+    int canHitMaterialState;
     int baseDamage;
     int bonus;
     int defense;
@@ -493,8 +495,19 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
     }
 
     doubledMapDifficulty = defender->doubledMapDifficulty;
+    if (defender->dexterity == 255) {
+        /* ReDMCSB PROJEXPL.C F0231 lines 1467-1517 (PC/I34E media):
+         * CreatureInfo->Dexterity == 255 skips the full hit/damage block
+         * and falls through to T0231015, where the attack is a miss and
+         * F0231 still owns miss stamina/reaction side effects in the caller. */
+        goto done;
+    }
     nonMaterial = (defender->attributes >> 6) & 1;        /* MASK0x0040_NON_MATERIAL */
     actionHitsNonMat = (weapon->hitProbability >> 15) & 1; /* MASK0x8000_HIT_NON_MATERIAL_CREATURES */
+    canHitMaterialState = (!nonMaterial || actionHitsNonMat);
+    if (!canHitMaterialState) {
+        goto done;
+    }
 
     /* Dexterity duel (PROJEXPL.C:1439–1445). */
     rand1 = F0732_COMBAT_RngRandom_Compat(rng, 32);
@@ -505,23 +518,24 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
     rand2 = F0732_COMBAT_RngRandom_Compat(rng, 4);
     out->rngCallCount++;
     rand2IsZero = (rand2 == 0);
+    luckyHit = 0;
 
-    /* F0308_CHAMPION_IsLucky (CHAMPION.C:1123-1155): on a successful
-     * dex duel, the champion gets a luck roll that can turn a
-     * miss into a hit.  The percentage parameter is 0 here
-     * (we are checking "lucky = always wins the roll").  RNG
-     * state flows through the shared rng so the headless
-     * combat suite stays reproducible. */
+    /* ReDMCSB PROJEXPL.C F0231 lines 1477-1491: a failed dex/random hit
+     * gate may still land when F0308 reports lucky, using
+     * 75 - ActionHitProbability as the percentage parameter.  The C
+     * expression short-circuits the non-material gate before any RNG in the
+     * hit branch. */
     if (!dexOk && !rand2IsZero) {
-        int lucky = combat_champion_is_lucky(attacker, rng, 0);
+        int lucky = combat_champion_is_lucky(
+            attacker, rng, 75 - (weapon->hitProbability & 0x00FF));
         out->rngCallCount += 2; /* combat_champion_is_lucky: short-circuit + pct (or luck×2) */
         if (lucky) {
-            out->hitLanded = 1;
+            luckyHit = 1;
             out->luckyHit = 1;
         }
     }
 
-    if ((!nonMaterial || actionHitsNonMat) && (dexOk || rand2IsZero)) {
+    if (dexOk || rand2IsZero || luckyHit) {
         out->hitLanded = 1;
         out->rawAttackRoll = rand1;
 

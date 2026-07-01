@@ -15,6 +15,9 @@ DOC = ROOT / "docs/parity/PARITY_MATRIX_CSB_V1.md"
 OUT = ROOT / "parity-evidence/verification/csb_v1_completion_matrix.json"
 SURFACE = ROOT / "parity-evidence/verification/csb_v1_parity_surface_matrix.json"
 COMPLETION = ROOT / "parity-evidence/verification/firestaff_completion_matrix.json"
+CMAKE = ROOT / "CMakeLists.txt"
+HANDOFF_TEST = ROOT / "tests/test_csb_v1_boot_runtime_handoff.c"
+ROUTE_TEST = ROOT / "tests/test_csb_v1_runtime_route_first_frame_movement_utility_gate.c"
 REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
 ORIGINAL_CSB = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/csb"
@@ -22,13 +25,13 @@ GREATSTONE = Path.home() / ".openclaw/data/firestaff-greatstone-atlas/raw/greats
 CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
 
 CRITERIA = {
-    "reference_inventory": (8, "SOURCE_LOCKED_PARTIAL"),
+    "reference_inventory": (9, "SOURCE_LOCKED_PARTIAL"),
     "definition_matrix": (10, "MATCHED_DEFINITION_ONLY"),
     "launch_smoke": (6, "RUNTIME_BOUNDARY_VERIFIED_PARTIAL"),
-    "core_input_movement": (0, "BLOCKED_RUNTIME"),
-    "viewport_ui_render": (0, "BLOCKED_CAPTURE"),
-    "gameplay_systems": (0, "BLOCKED_RUNTIME"),
-    "audio_timing": (0, "BLOCKED_RUNTIME"),
+    "core_input_movement": (5, "RUNTIME_SLICE_VERIFIED_PARTIAL"),
+    "viewport_ui_render": (7, "SOURCE_SLICE_VERIFIED_PARTIAL"),
+    "gameplay_systems": (4, "RUNTIME_SLICE_VERIFIED_PARTIAL"),
+    "audio_timing": (2, "DATA_DECODE_VERIFIED_PARTIAL"),
     "original_overlay_regression": (0, "BLOCKED_CAPTURE"),
 }
 
@@ -88,6 +91,70 @@ def main() -> int:
         if text not in doc:
             failures.append(f"doc missing non-claim: {text}")
 
+    cmake = CMAKE.read_text(encoding="utf-8", errors="replace") if CMAKE.exists() else ""
+    handoff = HANDOFF_TEST.read_text(encoding="utf-8", errors="replace") if HANDOFF_TEST.exists() else ""
+    runtime_spine_cmake_needles = [
+        "firestaff_csb_v1_pc_real_asset_launch_probe",
+        "firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe",
+        "firestaff_csb_v1_first_viewport_frame_probe",
+        "test_csb_v1_boot_runtime_handoff",
+        "test_csb_v1_runtime_route_first_frame_movement_utility_gate",
+        "csb_v1_pc_real_asset_launch",
+        "csb_v1_pc34_quickplay_dungeon_handle",
+        "csb_v1_first_viewport_frame",
+        "csb_v1_boot_runtime_handoff",
+        "csb_v1_runtime_route_first_frame_movement_utility_gate",
+        "src/dm1/dm1_v1_input_command_queue_pc34_compat.c",
+        "src/dm1/dm1_v1_event_timer_pc34_compat.c",
+        "src/shared/dungeon_decompressor_ftl.c",
+        "verified profile -> runtime",
+        "one deterministic tick -> Utility NEW_GAME handoff",
+    ]
+    forbidden_cmake_needles = [
+        "target_link_libraries(firestaff_csb_v1_pc_real_asset_launch_probe\n    PRIVATE firestaff_m10)",
+        "target_link_libraries(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe\n    PRIVATE firestaff_m10)",
+        "target_link_libraries(firestaff_csb_v1_first_viewport_frame_probe\n    PRIVATE firestaff_m10)",
+        "target_link_libraries(test_csb_v1_runtime_route_first_frame_movement_utility_gate\n    PRIVATE firestaff_m10)",
+    ]
+    runtime_spine_test_needles = [
+        "test_enter_game_with_verified_profile_loads_dungeon",
+        "test_enter_game_preserves_imported_party_and_switches_leader",
+        "test_enter_game_rotate_party_aligns_champion_state",
+        "test_utility_flow_new_game_handoff_preserves_leader_index",
+        "dungeon_handle",
+        "csb_v1_runtime_tick",
+        "CSB_V1_UTIL_FLOW_NEW_GAME",
+        "CHAMPION.C F0284",
+    ]
+    route = ROUTE_TEST.read_text(encoding="utf-8", errors="replace") if ROUTE_TEST.exists() else ""
+    runtime_route_test_needles = [
+        "Utility import -> NEW_GAME boundary",
+        "csb_v1_boot_enter_game",
+        "render_route_frame",
+        "DM1_V1_COMMAND_MOVE_FORWARD",
+        "csb_v1_movement_command_step_runtime_process_queue_pc34_compat",
+        "post-movement viewport frame renders without panel bleed",
+        "csb_v1_save_header_build",
+        "csb_v1_save_game",
+        "csb_v1_load_game",
+        "bounded save prefix reloads moved route state",
+        "not full CSB playability",
+        "full save compatibility",
+        "pixel parity",
+    ]
+    missing_cmake = [needle for needle in runtime_spine_cmake_needles if needle not in cmake]
+    forbidden_cmake = [needle for needle in forbidden_cmake_needles if needle in cmake]
+    missing_handoff = [needle for needle in runtime_spine_test_needles if needle not in handoff]
+    missing_route = [needle for needle in runtime_route_test_needles if needle not in route]
+    if missing_cmake:
+        failures.append(f"CMake CSB boot/runtime handoff gate missing {missing_cmake}")
+    if forbidden_cmake:
+        failures.append("CSB fast runtime probes must not link firestaff_m10")
+    if missing_handoff:
+        failures.append(f"CSB boot/runtime handoff test missing {missing_handoff}")
+    if missing_route:
+        failures.append(f"CSB runtime route test missing {missing_route}")
+
     source_rows = []
     default_optional_roots_missing = not CSB_SRC.exists() or not CSBWIN.exists()
     for path, span, needles in ANCHORS:
@@ -144,10 +211,49 @@ def main() -> int:
         "pass": not failures,
         "scope": "CSB V1 definition-of-done matrix; source/evidence boundary only, no full runtime parity claim.",
         "criteria": [{"id": k, "score": v[0], "status": v[1]} for k, v in CRITERIA.items()],
+        "runtime_spine": {
+            "cmake_targets": [
+                "firestaff_csb_v1_pc_real_asset_launch_probe",
+                "firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe",
+                "firestaff_csb_v1_first_viewport_frame_probe",
+                "test_csb_v1_boot_runtime_handoff",
+                "test_csb_v1_runtime_route_first_frame_movement_utility_gate",
+            ],
+            "ctest_names": [
+                "csb_v1_pc_real_asset_launch",
+                "csb_v1_pc34_quickplay_dungeon_handle",
+                "csb_v1_first_viewport_frame",
+                "csb_v1_boot_runtime_handoff",
+                "csb_v1_runtime_route_first_frame_movement_utility_gate",
+            ],
+            "test_paths": [
+                str(HANDOFF_TEST.relative_to(ROOT)),
+                str(ROUTE_TEST.relative_to(ROOT)),
+            ],
+            "pass": not missing_cmake and not forbidden_cmake and not missing_handoff and not missing_route,
+            "missing_cmake_needles": missing_cmake,
+            "forbidden_cmake_needles": forbidden_cmake,
+            "missing_test_needles": missing_handoff,
+            "missing_route_test_needles": missing_route,
+            "non_claim": "Fast PC/synthetic boot/runtime/viewport/one-move route gate plus bounded save-prefix roundtrip only; not full CSB playability, original capture, full save compatibility, or pixel parity.",
+        },
         "source_anchors": source_rows,
         "reference_anchors": reference_rows,
         "surface_matrix": {"path": str(SURFACE.relative_to(ROOT)), "pass": surface.get("pass"), "surface_count": surface.get("surface_count")},
-        "completion_impact": {"target": "CSB V1", "current_percent": 43, "launch_smoke_score": 6, "launch_smoke_status": "RUNTIME_BOUNDARY_VERIFIED_PARTIAL"},
+        "completion_impact": {
+            "target": "CSB V1",
+            "current_percent": 43,
+            "launch_smoke_score": 6,
+            "launch_smoke_status": "RUNTIME_BOUNDARY_VERIFIED_PARTIAL",
+            "core_input_movement_score": 5,
+            "core_input_movement_status": "RUNTIME_SLICE_VERIFIED_PARTIAL",
+            "gameplay_systems_score": 4,
+            "gameplay_systems_status": "RUNTIME_SLICE_VERIFIED_PARTIAL",
+            "viewport_ui_render_score": 7,
+            "viewport_ui_render_status": "SOURCE_SLICE_VERIFIED_PARTIAL",
+            "audio_timing_score": 2,
+            "audio_timing_status": "DATA_DECODE_VERIFIED_PARTIAL",
+        },
         "non_claims": NON_CLAIMS,
         "failures": failures,
     }

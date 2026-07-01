@@ -18,6 +18,8 @@
 
 #include "memory_projectile_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"  /* F0192 resistance adjustment */
+#include "memory_creature_ai_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include "csb_v1_projectile_speed_pc34_compat.h"  /* CHANGE7_20 gate */
 
 /* ==========================================================
@@ -51,6 +53,15 @@ _Static_assert(EXPLOSION_LIST_SERIALIZED_SIZE == 2056,
 static int projectile_digest_door_is_destroyed(const struct CellContentDigest_Compat* digest)
 {
     return digest && digest->destDoorState == PROJECTILE_DOOR_STATE_DESTROYED;
+}
+
+static int projectile_is_fireball_black_flame_impact(
+    const struct ProjectileInstance_Compat* in,
+    const struct CellContentDigest_Compat* digest)
+{
+    return in && digest
+        && in->projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL
+        && digest->destCreatureType == CREATURE_TYPE_BLACK_FLAME;
 }
 
 static int projectile_open_door_spell_impacts_door(
@@ -301,6 +312,7 @@ int F0810_PROJECTILE_Create_Compat(
     list->entries[slot].direction             = in->direction & 3;
     list->entries[slot].kineticEnergy         = clamp_i(in->kineticEnergy, 0, 255);
     list->entries[slot].attack                = clamp_i(in->attack, 0, 255);
+    list->entries[slot].launcherStrength      = clamp_i(in->launcherStrength, 0, 255);
     list->entries[slot].stepEnergy            = clamp_i(in->stepEnergy, 0, 255);
     list->entries[slot].firstMoveGraceFlag    = (in->firstMoveGraceFlag != 0) ? 1 : 0;
     list->entries[slot].launchedAtTick        = in->currentTick;
@@ -313,7 +325,8 @@ int F0810_PROJECTILE_Create_Compat(
         (createsExplosion ? PROJECTILE_FLAG_CREATES_EXPLOSION : 0) |
         PROJECTILE_FLAG_IGNORE_DOOR_PASS_THROUGH;
     list->entries[slot].reserved0 = 0;
-    list->entries[slot].reserved1 = 0;
+    list->entries[slot].reserved1 =
+        (in->associatedThing != 0) ? in->associatedThing : (int)THING_NONE;
     list->entries[slot].reserved2 = 0;
     list->entries[slot].reserved3 = 1;   /* occupied sentinel */
     list->count++;
@@ -483,18 +496,43 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
  *  Group C — Collision resolution (F0817 – F0820).
  * ========================================================== */
 
-int F0817_PROJECTILE_BuildHitCreatureAction_Compat(
+static int projectile_build_hit_creature_action_with_rng(
     const struct ProjectileInstance_Compat* in,
     const struct CellContentDigest_Compat* digest,
     int impactAttack,
+    struct RngState_Compat* rng,
     struct CombatAction_Compat* outAction)
 {
+    const struct CreatureBehaviorProfile_Compat* profile;
+    int defense;
+    int scaledAttack;
+    int poisonAttack;
     if (in == NULL || digest == NULL || outAction == NULL) return 0;
     memset(outAction, 0, sizeof(*outAction));
+    profile = CREATURE_GetProfile_Compat(digest->destCreatureType);
+    defense = profile ? profile->baseDefense : 0;
+    if (defense <= 0) defense = 1;
+    if (projectile_is_fireball_black_flame_impact(in, digest)) {
+        scaledAttack = impactAttack;
+    } else {
+        scaledAttack = (int)(((long)impactAttack << 6) / defense);
+    }
+    if (scaledAttack < 0) scaledAttack = 0;
+    poisonAttack = 0;
+    if (scaledAttack > 0) {
+        (void)F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
+            digest->destCreatureType, in->poisonAttack, rng, &poisonAttack);
+    }
     outAction->kind                          = COMBAT_ACTION_APPLY_DAMAGE_GROUP;
     outAction->allowedWounds                 = 0;  /* group damage not wound-slotted */
     outAction->attackTypeCode                = in->attackTypeCode;
-    outAction->rawAttackValue                = impactAttack;
+    /* ReDMCSB PROJEXPL.C F0217 lines 535-537 scales projectile
+     * impact by CreatureInfo.Defense, then adds F0192's
+     * resistance-adjusted projectile poison attack.  The public F0817
+     * wrapper has no RNG parameter and uses F0192's documented
+     * no-RNG lower-bound bump of zero; F0820 runtime calls this helper
+     * with the live RNG. */
+    outAction->rawAttackValue                = scaledAttack + poisonAttack;
     outAction->targetMapIndex                = digest->destMapIndex;
     outAction->targetMapX                    = digest->destMapX;
     outAction->targetMapY                    = digest->destMapY;
@@ -504,6 +542,16 @@ int F0817_PROJECTILE_BuildHitCreatureAction_Compat(
     outAction->scheduleDelayTicks            = 0;
     outAction->flags                         = 0;
     return 1;
+}
+
+int F0817_PROJECTILE_BuildHitCreatureAction_Compat(
+    const struct ProjectileInstance_Compat* in,
+    const struct CellContentDigest_Compat* digest,
+    int impactAttack,
+    struct CombatAction_Compat* outAction)
+{
+    return projectile_build_hit_creature_action_with_rng(
+        in, digest, impactAttack, NULL, outAction);
 }
 
 int F0818_PROJECTILE_BuildHitChampionAction_Compat(
@@ -570,22 +618,48 @@ int F0819_PROJECTILE_BuildDoorDestructionEvent_Compat(
  * Phase 17's concern here — caller decides whether to actually push
  * it into an ExplosionList_Compat via F0821.
  */
-static void populate_explosion_on_impact(
+static int projectile_impact_explosion_attack(
+    const struct ProjectileInstance_Compat* in)
+{
+    int attack;
+    if (!in) return 0;
+    attack = in->kineticEnergy;
+    if (in->projectileSubtype == PROJECTILE_SUBTYPE_POISON_BOLT) {
+        attack >>= 2;
+    } else if (in->projectileSubtype == PROJECTILE_SUBTYPE_LIGHTNING_BOLT) {
+        attack >>= 1;
+    }
+    return attack;
+}
+
+static int populate_explosion_on_impact(
     const struct ProjectileInstance_Compat* in,
     const struct CellContentDigest_Compat* digest,
     struct ExplosionInstance_Compat* out)
 {
     int explType = Phase17_SubtypeToExplosionType(in->projectileSubtype);
+    int removePotion = (in->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) != 0;
+    int explosionAttack = removePotion
+                          ? in->associatedPotionPower
+                          : projectile_impact_explosion_attack(in);
+    if (!removePotion && explosionAttack <= 0) {
+        return 0;
+    }
     memset(out, 0, sizeof(*out));
     out->slotIndex             = -1;        /* caller assigns */
     out->explosionType         = explType;
     out->mapIndex              = digest->destMapIndex;
     out->mapX                  = digest->destMapX;
     out->mapY                  = digest->destMapY;
-    out->cell                  = (in->projectileSubtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
+    out->cell                  = (explType == C007_EXPLOSION_POISON_CLOUD)
                                   ? EXPLOSION_CELL_CENTERED : (in->cell & 3);
     out->centered              = (out->cell == EXPLOSION_CELL_CENTERED) ? 1 : 0;
-    out->attack                = in->attack;
+    /* ReDMCSB PROJEXPL.C F0217 lines 444-455 and 565-584 creates
+     * thrown Ven/Ful potion explosions from potion Power. Other impact
+     * explosions use projectile KineticEnergy, with Lightning / 2 and
+     * Poison Bolt / 4; if that adjusted value is zero the original
+     * deletes the projectile without creating the explosion. */
+    out->attack                = explosionAttack;
     out->currentFrame          = 0;
     out->maxFrames             = (explType >= 0 && explType < 128)
                                   ? Phase17_ExplosionMaxFrames[explType] : 1;
@@ -595,6 +669,7 @@ static void populate_explosion_on_impact(
     out->ownerIndex            = in->ownerIndex;
     out->creatorProjectileSlot = in->slotIndex;
     out->reserved0             = 0;
+    return 1;
 }
 
 int F0820_PROJECTILE_ResolveCollision_Compat(
@@ -617,12 +692,14 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
     outResult->emittedExplosion            = 0;
     outResult->emittedDoorDestructionEvent = 0;
     outResult->emittedDoorToggleEvent       = 0;
+    outResult->emittedSoundRequest          = 0;
     outResult->emittedSoundCode            = 0;
 
     F0815_PROJECTILE_ComputeImpactAttack_Compat(in, &impactAttack);
 
-    createsExplosion = (in->projectileCategory == PROJECTILE_CATEGORY_MAGICAL)
-                       && Phase17_SubtypeCreatesExplosion[in->projectileSubtype & 0xFF];
+    createsExplosion = ((in->projectileCategory == PROJECTILE_CATEGORY_MAGICAL)
+                        && Phase17_SubtypeCreatesExplosion[in->projectileSubtype & 0xFF])
+                       || ((in->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) != 0);
 
     switch (impactTarget) {
     case PROJECTILE_RESULT_HIT_CHAMPION: {
@@ -632,14 +709,15 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
             in, digest, impactAttack, championIndex, &outResult->outAction);
         outResult->emittedCombatAction = 1;
         if (createsExplosion) {
-            populate_explosion_on_impact(in, digest, &outResult->outExplosion);
-            outResult->emittedExplosion = 1;
+            outResult->emittedExplosion = populate_explosion_on_impact(
+                in, digest, &outResult->outExplosion);
         }
         outResult->despawn = 1;
         return 1;
     }
     case PROJECTILE_RESULT_HIT_CREATURE:
-        if (digest->destCreatureIsNonMaterial
+        if (!projectile_is_fireball_black_flame_impact(in, digest)
+            && digest->destCreatureIsNonMaterial
             && in->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL) {
             /* Defensive parity fallback for direct F0820 callers. F0217
              * returns FALSE for this case (PROJEXPL.C:532-533), so the
@@ -651,12 +729,12 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
             return 1;
         }
         outResult->resultKind = PROJECTILE_RESULT_HIT_CREATURE;
-        F0817_PROJECTILE_BuildHitCreatureAction_Compat(
-            in, digest, impactAttack, &outResult->outAction);
+        projectile_build_hit_creature_action_with_rng(
+            in, digest, impactAttack, rng, &outResult->outAction);
         outResult->emittedCombatAction = 1;
         if (createsExplosion) {
-            populate_explosion_on_impact(in, digest, &outResult->outExplosion);
-            outResult->emittedExplosion = 1;
+            outResult->emittedExplosion = populate_explosion_on_impact(
+                in, digest, &outResult->outExplosion);
         }
         outResult->despawn = 1;
         return 1;
@@ -673,6 +751,7 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
         }
         outResult->resultKind = PROJECTILE_RESULT_HIT_DOOR;
         if (in->projectileSubtype == PROJECTILE_SUBTYPE_OPEN_DOOR) {
+            outResult->emittedSoundRequest = 1;
             outResult->emittedSoundCode = PHASE17_SOUND_WOODEN_THUD;
             /* ReDMCSB PROJEXPL.C:F0217 lines 485-489: an OPEN_DOOR
              * projectile does not use the door-destruction attack path;
@@ -705,6 +784,14 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
             F0819_PROJECTILE_BuildDoorDestructionEvent_Compat(
                 in, digest, impactAttack, currentTick, rng, &outResult->outNextTick);
             outResult->emittedDoorDestructionEvent = 1;
+            if (createsExplosion) {
+                outResult->emittedExplosion = populate_explosion_on_impact(
+                    in, digest, &outResult->outExplosion);
+            } else {
+                outResult->emittedSoundRequest = 1;
+                outResult->emittedSoundCode =
+                    projectile_non_explosion_impact_sound_code(in);
+            }
         }
         outResult->despawn = 1;
         return 1;
@@ -712,9 +799,10 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
     case PROJECTILE_RESULT_HIT_WALL:
         outResult->resultKind = PROJECTILE_RESULT_HIT_WALL;
         if (createsExplosion) {
-            populate_explosion_on_impact(in, digest, &outResult->outExplosion);
-            outResult->emittedExplosion = 1;
+            outResult->emittedExplosion = populate_explosion_on_impact(
+                in, digest, &outResult->outExplosion);
         } else {
+            outResult->emittedSoundRequest = 1;
             outResult->emittedSoundCode =
                 projectile_non_explosion_impact_sound_code(in);
         }
@@ -875,8 +963,9 @@ int F0811_PROJECTILE_Advance_Compat(
          * HARM_NON_MATERIAL. In F0219 lines 693-697, FALSE means
          * "no impact" and the projectile keeps moving/reschedules; it
          * is not consumed. */
-        if (!(digest->destCreatureIsNonMaterial
-              && in->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL)) {
+        if (projectile_is_fireball_black_flame_impact(in, digest)
+            || !(digest->destCreatureIsNonMaterial
+                 && in->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL)) {
             dispatch = PROJECTILE_RESULT_HIT_CREATURE;
             goto RESOLVE;
         }
@@ -976,8 +1065,9 @@ MOTION_STEP:
             outNewState->mapIndex = digest->destMapIndex;
             outNewState->mapX     = digest->destMapX;
             outNewState->mapY     = digest->destMapY;
-            if (!(digest->destCreatureIsNonMaterial
-                  && in->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL)) {
+            if (projectile_is_fireball_black_flame_impact(in, digest)
+                || !(digest->destCreatureIsNonMaterial
+                     && in->projectileSubtype != PROJECTILE_SUBTYPE_HARM_NON_MATERIAL)) {
                 dispatch = PROJECTILE_RESULT_HIT_CREATURE;
                 goto RESOLVE;
             }
@@ -1127,6 +1217,7 @@ int F0812_PROJECTILE_CreateFromSpellEffect_Compat(
     input.direction          = partyDirection;
     input.kineticEnergy      = effect->kineticEnergy;
     input.attack             = effect->impactAttack;
+    input.launcherStrength   = effect->impactAttack;
     input.stepEnergy         = 1;
     input.currentTick        = (int)currentTick;
     input.poisonAttack       = isPoison ? effect->impactAttack : 0;

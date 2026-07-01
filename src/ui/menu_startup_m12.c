@@ -88,6 +88,7 @@ enum {
     M12_SETTINGS_ROW_THEME,
     M12_SETTINGS_ROW_BACKGROUND,
     M12_SETTINGS_ROW_QUICK_RESUME,
+    M12_SETTINGS_ROW_SAVE_BROWSER,
     M12_SETTINGS_ROW_SESSION_TIMER,
     M12_SETTINGS_ROW_MINIMAP,
     M12_SETTINGS_ROW_AUTOMAP,
@@ -251,7 +252,11 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* gameId);
 static void m12_begin_data_dir_browse(M12_StartupMenuState* state);
 static void m12_export_save_manifest_json(M12_StartupMenuState* state);
+static void m12_export_save_settings_action(M12_StartupMenuState* state);
+static void m12_export_save_browser_settings_action(M12_StartupMenuState* state);
 static void m12_import_save_manifest_json(M12_StartupMenuState* state);
+int M11_GameView_ExportQuickSaveAsDM1PC34(const char* quickSavePath,
+                                          const char* exportPath);
 const char *m12_localized_main_label(int index);
 const char *m12_localized_extras_label(int index);
 
@@ -1441,6 +1446,195 @@ static void m12_export_save_manifest_json(M12_StartupMenuState* state) {
     }
 }
 
+static int m12_file_exists_regular(const char* path) {
+    FILE* fp;
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+    fclose(fp);
+    return 1;
+}
+
+static const char* m12_path_basename_local(const char* path) {
+    const char* slash;
+    const char* backslash;
+    if (!path) {
+        return "";
+    }
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    if (backslash && (!slash || backslash > slash)) {
+        slash = backslash;
+    }
+    return slash ? slash + 1 : path;
+}
+
+static int m12_build_pc34_export_path_for_quickresume(
+    const char* quickSavePath,
+    char* outPath,
+    int outPathSize)
+{
+    const char* base;
+    const char* slash;
+    const char* backslash;
+    int dirLen;
+    int stemLen;
+
+    if (!quickSavePath || quickSavePath[0] == '\0' ||
+        !outPath || outPathSize <= 0) {
+        return 0;
+    }
+    outPath[0] = '\0';
+    base = m12_path_basename_local(quickSavePath);
+    if (!base || base[0] == '\0') {
+        return 0;
+    }
+    slash = strrchr(quickSavePath, '/');
+    backslash = strrchr(quickSavePath, '\\');
+    if (backslash && (!slash || backslash > slash)) {
+        slash = backslash;
+    }
+    dirLen = slash ? (int)(slash - quickSavePath) : 0;
+    stemLen = (int)strlen(base);
+    if (stemLen > 4 && strcmp(base + stemLen - 4, ".sav") == 0) {
+        stemLen -= 4;
+    }
+    if (dirLen > 0) {
+        return snprintf(outPath, (size_t)outPathSize, "%.*s/%.*s-pc34.sav",
+                        dirLen, quickSavePath, stemLen, base) < outPathSize;
+    }
+    return snprintf(outPath, (size_t)outPathSize, "%.*s-pc34.sav",
+                    stemLen, base) < outPathSize;
+}
+
+int M12_StartupMenu_ExportQuickResumeDM1PC34(M12_StartupMenuState* state,
+                                             char* outPath,
+                                             int outPathSize)
+{
+    char exportPath[512];
+
+    if (outPath && outPathSize > 0) {
+        outPath[0] = '\0';
+    }
+    if (!state || !state->quickResumeAvailable ||
+        strcmp(state->quickResumeGameId, "dm1") != 0 ||
+        state->quickResumeSavePath[0] == '\0') {
+        return -1;
+    }
+    if (!m12_build_pc34_export_path_for_quickresume(
+            state->quickResumeSavePath, exportPath, (int)sizeof(exportPath))) {
+        return -1;
+    }
+    if (m12_file_exists_regular(exportPath)) {
+        return -1;
+    }
+    if (!M11_GameView_ExportQuickSaveAsDM1PC34(
+            state->quickResumeSavePath, exportPath)) {
+        return -1;
+    }
+    if (outPath && outPathSize > 0) {
+        snprintf(outPath, (size_t)outPathSize, "%s", exportPath);
+    }
+    return 0;
+}
+
+static void m12_export_save_settings_action(M12_StartupMenuState* state) {
+    char outPath[512];
+
+    if (!state) {
+        return;
+    }
+    if (state->quickResumeAvailable &&
+        strcmp(state->quickResumeGameId, "dm1") == 0) {
+        m12_enter_message_view(state);
+        if (M12_StartupMenu_ExportQuickResumeDM1PC34(
+                state, outPath, (int)sizeof(outPath)) == 0) {
+            m12_set_buffered_message(
+                state,
+                m12_tr(state, "DM1 PC34 SAVE EXPORTED"),
+                m12_path_basename_local(outPath),
+                m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        } else {
+            m12_set_buffered_message(
+                state,
+                m12_tr(state, "PC34 EXPORT FAILED"),
+                m12_tr(state, "CHECK QUICK RESUME SAVE"),
+                m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        }
+        return;
+    }
+    m12_export_save_manifest_json(state);
+}
+
+int M12_StartupMenu_OpenSaveBrowser(M12_StartupMenuState* state)
+{
+    const char* dataDir;
+    int count;
+
+    if (!state) {
+        return -1;
+    }
+    dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    count = M12_SaveBrowser_Scan(&state->saveBrowser, dataDir);
+    if (count <= 0) {
+        m12_enter_message_view(state);
+        m12_set_buffered_message(state,
+                                 m12_tr(state, "NO SAVES FOUND"),
+                                 m12_tr(state, "SAVE A GAME FIRST"),
+                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        return -1;
+    }
+    state->view = M12_MENU_VIEW_SAVE_BROWSER;
+    return 0;
+}
+
+int M12_StartupMenu_ExportSelectedSaveBrowserDM1PC34(M12_StartupMenuState* state,
+                                                     char* outPath,
+                                                     int outPathSize)
+{
+    const char* dataDir;
+
+    if (outPath && outPathSize > 0) {
+        outPath[0] = '\0';
+    }
+    if (!state || state->view != M12_MENU_VIEW_SAVE_BROWSER) {
+        return -1;
+    }
+    dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    return M12_SaveBrowser_ExportSelectedAsDM1PC34(&state->saveBrowser,
+                                                   dataDir,
+                                                   outPath,
+                                                   outPathSize);
+}
+
+static void m12_export_save_browser_settings_action(M12_StartupMenuState* state) {
+    char outPath[512];
+
+    if (!state) {
+        return;
+    }
+    if (M12_StartupMenu_ExportSelectedSaveBrowserDM1PC34(
+            state, outPath, (int)sizeof(outPath)) == 0) {
+        m12_enter_message_view(state);
+        m12_set_buffered_message(
+            state,
+            m12_tr(state, "DM1 PC34 SAVE EXPORTED"),
+            m12_path_basename_local(outPath),
+            m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    } else {
+        m12_enter_message_view(state);
+        m12_set_buffered_message(
+            state,
+            m12_tr(state, "PC34 EXPORT FAILED"),
+            m12_tr(state, "SELECT A VALID DM1 SAVE"),
+            m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+    }
+}
+
 static void m12_import_save_manifest_json(M12_StartupMenuState* state) {
     M12_Config config;
     if (!state) {
@@ -2304,6 +2498,7 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_THEME: return m12_tr(state, "THEME");
         case M12_SETTINGS_ROW_BACKGROUND: return m12_tr(state, "BACKGROUND");
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_tr(state, "QUICK RESUME");
+        case M12_SETTINGS_ROW_SAVE_BROWSER: return m12_tr(state, "SAVE BROWSER");
         case M12_SETTINGS_ROW_SESSION_TIMER: return m12_tr(state, "SESSION TIMER");
         case M12_SETTINGS_ROW_MINIMAP: return m12_tr(state, "MINIMAP");
         case M12_SETTINGS_ROW_AUTOMAP: return m12_tr(state, "AUTOMAP");
@@ -2316,7 +2511,11 @@ static const char* m12_settings_label(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_tr(state, "CUSTOM DUNGEONS");
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_tr(state, "SCREENSHOTS");
         case M12_SETTINGS_ROW_STREAMER_MODE: return m12_tr(state, "STREAMER MODE");
-        case M12_SETTINGS_ROW_EXPORT: return m12_tr(state, "EXPORT SAVE MANIFEST");
+        case M12_SETTINGS_ROW_EXPORT:
+            return (state && state->quickResumeAvailable &&
+                    strcmp(state->quickResumeGameId, "dm1") == 0)
+                       ? m12_tr(state, "EXPORT DM1 PC34 SAVE")
+                       : m12_tr(state, "EXPORT SAVE MANIFEST");
         case M12_SETTINGS_ROW_IMPORT: return m12_tr(state, "IMPORT SAVE MANIFEST");
         default: return "";
     }
@@ -2355,6 +2554,7 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_THEME: return m12_settings_value_theme(state);
         case M12_SETTINGS_ROW_BACKGROUND: return m12_settings_value_background(state);
         case M12_SETTINGS_ROW_QUICK_RESUME: return m12_settings_value_quick_resume(state);
+        case M12_SETTINGS_ROW_SAVE_BROWSER: return m12_tr(state, "OPEN...");
         case M12_SETTINGS_ROW_SESSION_TIMER: return m12_settings_value_session_timer(state);
         case M12_SETTINGS_ROW_MINIMAP: return m12_settings_value_minimap(state);
         case M12_SETTINGS_ROW_AUTOMAP: return m12_settings_value_automap(state);
@@ -2367,7 +2567,11 @@ static const char* m12_settings_value(const M12_StartupMenuState* state, int row
         case M12_SETTINGS_ROW_CUSTOM_DUNGEON_PATH: return m12_settings_value_path_status(state, state ? state->settings.customDungeonPath : NULL);
         case M12_SETTINGS_ROW_SCREENSHOT_PATH: return m12_settings_value_path_status(state, state ? state->settings.screenshotPath : NULL);
         case M12_SETTINGS_ROW_STREAMER_MODE: return m12_settings_value_streamer_mode(state);
-        case M12_SETTINGS_ROW_EXPORT: return m12_tr(state, "WRITE...");
+        case M12_SETTINGS_ROW_EXPORT:
+            return (state && state->quickResumeAvailable &&
+                    strcmp(state->quickResumeGameId, "dm1") == 0)
+                       ? m12_tr(state, "WRITE PC34...")
+                       : m12_tr(state, "WRITE...");
         case M12_SETTINGS_ROW_IMPORT: return m12_tr(state, "READ...");
         default: return "";
     }
@@ -2582,6 +2786,7 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
         state->view != M12_MENU_VIEW_MUSEUM &&
         state->view != M12_MENU_VIEW_MANUAL_DOCS &&
         state->view != M12_MENU_VIEW_CHANGELOG &&
+        state->view != M12_MENU_VIEW_SAVE_BROWSER &&
         state->view != M12_MENU_VIEW_BESTIARY &&
         state->view != M12_MENU_VIEW_ITEM_ENCYCLOPEDIA &&
         state->view != M12_MENU_VIEW_SCREENSHOT_GALLERY) {
@@ -2840,6 +3045,9 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->quickResumeLaunchRequested = 0;
             }
             break;
+        case M12_SETTINGS_ROW_SAVE_BROWSER:
+            (void)M12_StartupMenu_OpenSaveBrowser(state);
+            break;
         case M12_SETTINGS_ROW_SESSION_TIMER:
             state->settings.sessionTimerIndex = m12_cycle_index(
                 state->settings.sessionTimerIndex,
@@ -2903,7 +3111,7 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;
         case M12_SETTINGS_ROW_EXPORT:
-            m12_export_save_manifest_json(state);
+            m12_export_save_settings_action(state);
             break;
         case M12_SETTINGS_ROW_IMPORT:
             m12_import_save_manifest_json(state);
@@ -2941,6 +3149,45 @@ static void m12_return_from_message_view(M12_StartupMenuState* state) {
     state->view = returnView;
     g_nav_level = (M12_NavLevel)returnNav;
     m12_clear_message_view(state);
+}
+
+static void m12_save_browser_request_launch(M12_StartupMenuState* state) {
+    const M12_SaveBrowserEntry* entry;
+    int slot;
+    int pmode;
+
+    if (!state) {
+        return;
+    }
+    entry = M12_SaveBrowser_GetSelected(&state->saveBrowser);
+    if (!entry || !entry->valid) {
+        return;
+    }
+    slot = m12_game_slot_from_id(entry->gameId);
+    if (slot < 0 || slot >= m12_entry_count()) {
+        return;
+    }
+    if (!state->entries[slot].available) {
+        m12_show_missing_game_data_popup(state, entry->gameId);
+        return;
+    }
+    pmode = m12_clamp_index(state->settings.graphicsIndex,
+                            M12_PRESENTATION_MODE_COUNT);
+    state->activatedIndex = slot;
+    m12_normalize_game_version_index(state, slot);
+    m12_enforce_mode_constraints(&state->gameOptions[slot], pmode);
+    snprintf(state->quickResumeGameId, sizeof(state->quickResumeGameId),
+             "%s", entry->gameId);
+    snprintf(state->quickResumeSavePath, sizeof(state->quickResumeSavePath),
+             "%s", entry->fullPath);
+    state->quickResumeAvailable = 1;
+    state->quickResumeLaunchRequested = 1;
+    state->launchRequested = 1;
+    m12_enter_message_view(state);
+    m12_set_buffered_message(state,
+                             m12_tr(state, "LOADING SAVE"),
+                             entry->filename,
+                             m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
 }
 
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
@@ -3316,6 +3563,36 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
         if (M12_ScreenshotGallery_HandleInput(&state->screenshotGallery, input)) {
             /* The gallery asked us to back out (BACK from grid). */
             m12_return_to_main_view(state);
+        }
+        return;
+    }
+
+    if (state->view == M12_MENU_VIEW_SAVE_BROWSER) {
+        switch (input) {
+            case M12_MENU_INPUT_UP:
+                (void)M12_SaveBrowser_HandleInput(&state->saveBrowser, 1);
+                break;
+            case M12_MENU_INPUT_DOWN:
+                (void)M12_SaveBrowser_HandleInput(&state->saveBrowser, 2);
+                break;
+            case M12_MENU_INPUT_ACCEPT:
+                if (M12_SaveBrowser_HandleInput(&state->saveBrowser, 5)) {
+                    m12_save_browser_request_launch(state);
+                }
+                break;
+            case M12_MENU_INPUT_ACTION:
+                (void)M12_SaveBrowser_HandleInput(&state->saveBrowser, 7);
+                break;
+            case M12_MENU_INPUT_VALUE_RIGHT:
+            case M12_MENU_INPUT_SAVE_GAME:
+                m12_export_save_browser_settings_action(state);
+                break;
+            case M12_MENU_INPUT_BACK:
+                state->view = M12_MENU_VIEW_SETTINGS;
+                break;
+            case M12_MENU_INPUT_NONE:
+            default:
+                break;
         }
         return;
     }
@@ -7638,6 +7915,82 @@ static void m12_draw_message_view_modern(const M12_StartupMenuState* state,
                     m12_text(state, M12_TEXT_MESSAGE_FOOTER));
 }
 
+static void m12_draw_save_browser_view(const M12_StartupMenuState* state,
+                                       unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight) {
+    int margin = 28;
+    int rowY = 86;
+    int rowHeight = 22;
+    int visibleRows;
+    int i;
+
+    if (!state) {
+        return;
+    }
+    M12_SaveBrowser_Draw(&state->saveBrowser,
+                         framebuffer,
+                         framebufferWidth,
+                         framebufferHeight);
+    m12_draw_title(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   state,
+                   m12_text(state, M12_TEXT_EYEBROW),
+                   m12_tr(state, "SAVE BROWSER"));
+    m12_draw_frame(framebuffer,
+                   framebufferWidth,
+                   framebufferHeight,
+                   margin,
+                   64,
+                   framebufferWidth - margin * 2,
+                   framebufferHeight - 112,
+                   M12_COLOR_DARK_GRAY,
+                   M12_COLOR_BLACK);
+    visibleRows = (framebufferHeight - 150) / rowHeight;
+    if (visibleRows < 1) {
+        visibleRows = 1;
+    }
+    for (i = state->saveBrowser.scrollOffset;
+         i < state->saveBrowser.entryCount &&
+         i < state->saveBrowser.scrollOffset + visibleRows;
+         ++i) {
+        const M12_SaveBrowserEntry* entry = &state->saveBrowser.entries[i];
+        int selected = (i == state->saveBrowser.selectedIndex);
+        unsigned char frame = selected ? M12_COLOR_YELLOW : M12_COLOR_DARK_GRAY;
+        unsigned char fill = selected ? M12_COLOR_NAVY : M12_COLOR_BLACK;
+        m12_draw_frame(framebuffer,
+                       framebufferWidth,
+                       framebufferHeight,
+                       margin + 10,
+                       rowY - 4,
+                       framebufferWidth - margin * 2 - 20,
+                       rowHeight - 2,
+                       frame,
+                       fill);
+        m12_draw_text(framebuffer,
+                      framebufferWidth,
+                      framebufferHeight,
+                      margin + 18,
+                      rowY,
+                      entry->label[0] ? entry->label : entry->filename,
+                      selected ? &g_textSmallAccent : &g_textSmall);
+        rowY += rowHeight;
+    }
+    if (state->saveBrowser.entryCount <= 0) {
+        m12_draw_centered_text(framebuffer,
+                               framebufferWidth,
+                               framebufferHeight,
+                               framebufferHeight / 2,
+                               m12_tr(state, "NO SAVES FOUND"),
+                               &g_textSmallAccent);
+    }
+    m12_draw_footer(framebuffer,
+                    framebufferWidth,
+                    framebufferHeight,
+                    m12_tr(state, "ENTER LOAD   SAVE EXPORTS DM1 PC34   ESC SETTINGS"));
+}
+
 void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
                           unsigned char* framebuffer,
                           int framebufferWidth,
@@ -7697,6 +8050,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
             m12_draw_item_encyclopedia_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         } else if (state->view == M12_MENU_VIEW_SCREENSHOT_GALLERY) {
             m12_draw_screenshot_gallery_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+        } else if (state->view == M12_MENU_VIEW_SAVE_BROWSER) {
+            m12_draw_save_browser_view(state, framebuffer, framebufferWidth, framebufferHeight);
         } else {
             m12_draw_main_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
         }
@@ -7728,6 +8083,8 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
         m12_draw_item_encyclopedia_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
     } else if (state->view == M12_MENU_VIEW_SCREENSHOT_GALLERY) {
         m12_draw_screenshot_gallery_view_modern(state, framebuffer, framebufferWidth, framebufferHeight);
+    } else if (state->view == M12_MENU_VIEW_SAVE_BROWSER) {
+        m12_draw_save_browser_view(state, framebuffer, framebufferWidth, framebufferHeight);
     } else {
         m12_draw_main_view(state, framebuffer, framebufferWidth, framebufferHeight);
     }

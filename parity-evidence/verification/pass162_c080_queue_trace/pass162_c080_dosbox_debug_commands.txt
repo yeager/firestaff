@@ -1,0 +1,19 @@
+BPDEL *
+BP 22F4:030D ; F0359_COMMAND_ProcessClick_CPSC
+BP 22F4:0699 ; F0380_COMMAND_ProcessQueue_CPSC
+BP 1E44:02FE ; F0377_COMMAND_ProcessType80_ClickInDungeonView
+BP 1859:1405 ; F0275_SENSOR_IsTriggeredByClickOnWall
+BP 1782:0031 ; F0280_CHAMPION_AddCandidateChampionToParty
+BPM 2C20:3E7A ; G0432_as_CommandQueue
+BPM 2C20:3EC8 ; G0433_i_CommandQueueFirstIndex
+BPM 2C20:1F08 ; G0434_i_CommandQueueLastIndex
+BPM 2C20:1F0A ; G0435_B_CommandQueueLocked
+BPM 2C20:3EC6 ; G0436_B_PendingClickPresent
+BPM 2C20:3C94 ; G0306_i_PartyMapX
+BPM 2C20:3CE0 ; G0307_i_PartyMapY
+BPM 2C20:3C92 ; G0308_i_PartyDirection
+BPM 2C20:3D52 ; G0305_ui_PartyChampionCount
+BPLIST
+CPU
+MEMDUMP 2C20:3E7A 96 ; G0432_as_CommandQueue window
+MEMDUMP 2C20:3C92 16 ; party direction/map window

@@ -63,6 +63,13 @@ static int kF0757_LightPowerFor(int spellPower) {
     return lp;
 }
 
+static int kF0757_LightAmountFor(int lightPower) {
+    static const int amounts[6] = { 0, 5, 12, 24, 33, 40 };
+    if (lightPower < 0) lightPower = 0;
+    if (lightPower > 5) lightPower = 5;
+    return amounts[lightPower];
+}
+
 int main(void) {
     struct SpellDefinition_Compat spell;
     struct MagicState_Compat magic;
@@ -91,11 +98,18 @@ int main(void) {
                  "T1: C0_LIGHT ordinal=%d ticks==%d (got %d)",
                  i, ticks, out.durationTicks);
         CHECK(out.durationTicks == ticks, buf);
+        snprintf(buf, sizeof(buf),
+                 "T1: C0_LIGHT ordinal=%d amount==G0039[%d]",
+                 i, kF0757_LightPowerFor(spellPower));
+        CHECK(out.magicStateDelta[3] ==
+                  kF0757_LightAmountFor(kF0757_LightPowerFor(spellPower)),
+              buf);
     }
 
     /* T2: C1_DARKNESS (MENU.C:1954-1957). */
     spell.type = C1_SPELL_TYPE_OTHER_DARKNESS_COMPAT;
     for (i = 1; i <= 6; ++i) {
+        int spellPower;
         memset(&out, 0, sizeof(out));
         rc = F0757_MAGIC_ProduceOtherEffect_Compat(&spell, i, &magic, &out);
         char buf[96];
@@ -103,6 +117,35 @@ int main(void) {
                  "T2: C1_DARKNESS ordinal=%d rc==1", i);
         CHECK(rc == 1, buf);
         CHECK(out.durationTicks == 98, "T2: C1_DARKNESS ticks == 98");
+        spellPower = kF0757_SpellPowerFor(i);
+        snprintf(buf, sizeof(buf),
+                 "T2: C1_DARKNESS ordinal=%d amount==-G0039[%d]",
+                 i, spellPower >> 2);
+        CHECK(out.magicStateDelta[3] ==
+                  -kF0757_LightAmountFor(spellPower >> 2),
+              buf);
+    }
+
+    /* T2b: C5_MAGIC_TORCH (MENU.C:1934-1937). */
+    spell.type = C5_SPELL_TYPE_OTHER_MAGIC_TORCH_COMPAT;
+    for (i = 1; i <= 6; ++i) {
+        int spellPower = kF0757_SpellPowerFor(i);
+        int ticks = 2000 + ((spellPower - 3) << 7);
+        int lightPower = (spellPower >> 2) + 1;
+        if (lightPower > 5) lightPower = 5;
+        memset(&out, 0, sizeof(out));
+        rc = F0757_MAGIC_ProduceOtherEffect_Compat(&spell, i, &magic, &out);
+        char buf[96];
+        snprintf(buf, sizeof(buf),
+                 "T2b: C5_MAGIC_TORCH ordinal=%d ticks==%d (got %d)",
+                 i, ticks, out.durationTicks);
+        CHECK(rc == 1, buf);
+        CHECK(out.durationTicks == ticks, buf);
+        snprintf(buf, sizeof(buf),
+                 "T2b: C5_MAGIC_TORCH ordinal=%d amount==G0039[%d]",
+                 i, lightPower);
+        CHECK(out.magicStateDelta[3] == kF0757_LightAmountFor(lightPower),
+              buf);
     }
 
     /* T3: C3_INVISIBILITY (MENU.C:1970-1982): spellPower <<= 3,

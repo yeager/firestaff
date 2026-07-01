@@ -27,15 +27,19 @@
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "memory_creature_ai_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_creature_sound_pc34_compat.h"
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
@@ -43,6 +47,8 @@
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
+#include "dm1_v1_skill_experience_pc34_compat.h"
+#include "firestaff/dm1/v1/G0495_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
 #include "firestaff_po_loader.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
@@ -641,6 +647,8 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
     if (state->lastPartyMovementTick > state->world.gameTick) {
         state->lastPartyMovementTick = state->world.gameTick;
     }
+    state->candidateMirrorRenameActive = 0;
+    memset(&state->candidateMirrorRename, 0, sizeof(state->candidateMirrorRename));
     return 1;
 }
 
@@ -2037,6 +2045,158 @@ static uint32_t m11_read_u32_le(const unsigned char* src) {
 
 static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
                                              const char* path);
+static void m11_set_status(M11_GameViewState* state,
+                           const char* title,
+                           const char* detail);
+static void m11_refresh_hash(M11_GameViewState* state);
+static void m11_mark_explored(M11_GameViewState* state);
+
+static void m11_game_view_adopt_loaded_world(M11_GameViewState* state,
+                                             struct GameWorld_Compat* loadedWorld)
+{
+    if (!state || !loadedWorld) {
+        return;
+    }
+    /* ReDMCSB F0898_WORLD_Deserialize_Compat preserves pointer fields that
+     * are not part of the serialized runtime state.  Firestaff M11 also needs
+     * original PC34 saves to inherit the already loaded DUNGEON.DAT tables, so
+     * both quicksave and original-save fallback share this ownership transfer. */
+    loadedWorld->dungeon = state->world.dungeon;
+    loadedWorld->things  = state->world.things;
+    loadedWorld->ownsDungeon = state->world.ownsDungeon;
+    state->world.dungeon = NULL;
+    state->world.things = NULL;
+    state->world.ownsDungeon = 0;
+    F0883_WORLD_Free_Compat(&state->world);
+    state->world = *loadedWorld;
+    memset(loadedWorld, 0, sizeof(*loadedWorld));
+}
+
+int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
+                                 const char* path,
+                                 int* outUsedBackup)
+{
+    struct GameWorld_Compat loadedWorld;
+    struct DM1SaveHeader saveHeader;
+    int usedBackup = 0;
+    int rc;
+
+    if (outUsedBackup) {
+        *outUsedBackup = 0;
+    }
+    if (!state || !state->active || !path || path[0] == '\0') {
+        return 0;
+    }
+    if (state->sourceId[0] != '\0' && strcmp(state->sourceId, "dm1") != 0) {
+        return 0;
+    }
+
+    memset(&loadedWorld, 0, sizeof(loadedWorld));
+    loadedWorld.dungeon = state->world.dungeon;
+    loadedWorld.things = state->world.things;
+    loadedWorld.ownsDungeon = 0;
+    rc = DM1_LoadGameWithBackup(path, &loadedWorld, &saveHeader, &usedBackup);
+    if (rc != DM1_SAVE_OK) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
+    }
+
+    m11_game_view_adopt_loaded_world(state, &loadedWorld);
+    memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+    m11_refresh_hash(state);
+    m11_mark_explored(state);
+    state->loadGameTick = (uint32_t)state->world.gameTick;
+    state->lastSaveTick = (uint32_t)state->world.gameTick;
+    (void)M11_GameView_SetMusicEnabled(state, saveHeader.musicOn);
+    m11_set_status(state, "LOAD", usedBackup ? "DM1 SAVE BACKUP RESTORED"
+                                             : "DM1 SAVE RESTORED");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTORED");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "TICK %u DM1 SAVE RELOADED FROM %s",
+             (unsigned int)state->world.gameTick,
+             path);
+    if (outUsedBackup) {
+        *outUsedBackup = usedBackup;
+    }
+    return 1;
+}
+
+int M11_GameView_ExportQuickSaveAsDM1PC34(const char* quickSavePath,
+                                          const char* exportPath)
+{
+    FILE* file = NULL;
+    long fileSizeLong;
+    int blobSize;
+    unsigned char header[M11_QUICKSAVE_HEADER_SIZE];
+    unsigned char* blob = NULL;
+    struct GameWorld_Compat loadedWorld;
+    uint32_t expectedHash;
+    uint32_t loadedHash = 0;
+    int ok = 0;
+
+    if (!quickSavePath || quickSavePath[0] == '\0' ||
+        !exportPath || exportPath[0] == '\0') {
+        return 0;
+    }
+
+    file = fopen(quickSavePath, "rb");
+    if (!file) {
+        return 0;
+    }
+    if (fread(header, 1U, sizeof(header), file) != sizeof(header) ||
+        memcmp(header, g_m11_quicksave_magic,
+               sizeof(g_m11_quicksave_magic)) != 0) {
+        fclose(file);
+        return 0;
+    }
+
+    blobSize = (int)m11_read_u32_le(header + 8);
+    expectedHash = m11_read_u32_le(header + 12);
+    if (blobSize <= 0 ||
+        fseek(file, 0L, SEEK_END) != 0) {
+        fclose(file);
+        return 0;
+    }
+    fileSizeLong = ftell(file);
+    if (fileSizeLong < (long)M11_QUICKSAVE_HEADER_SIZE ||
+        fileSizeLong != (long)(M11_QUICKSAVE_HEADER_SIZE + blobSize) ||
+        fseek(file, (long)M11_QUICKSAVE_HEADER_SIZE, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+
+    blob = (unsigned char*)malloc((size_t)blobSize);
+    if (!blob) {
+        fclose(file);
+        return 0;
+    }
+    if (fread(blob, 1U, (size_t)blobSize, file) != (size_t)blobSize ||
+        fclose(file) != 0) {
+        free(blob);
+        return 0;
+    }
+
+    memset(&loadedWorld, 0, sizeof(loadedWorld));
+    if (F0898_WORLD_Deserialize_Compat(&loadedWorld, blob, blobSize, NULL) &&
+        F0891_ORCH_WorldHash_Compat(&loadedWorld, &loadedHash) &&
+        loadedHash == expectedHash) {
+        /*
+         * ReDMCSB LOADSAVE.C F0433 writes GLOBAL_DATA plus ACTIVE_GROUP,
+         * PARTY, EVENTS, and TIMELINE save parts. DM1_SaveGamePC34()
+         * is the bounded Firestaff bridge from an M11 quicksave world
+         * snapshot back into that PC 3.4-shaped save envelope.
+         */
+        ok = (DM1_SaveGamePC34(&loadedWorld, exportPath,
+                               expectedHash ? expectedHash : 0x4D313151u)
+              == DM1_SAVE_OK);
+    }
+    F0883_WORLD_Free_Compat(&loadedWorld);
+    free(blob);
+    if (!ok) {
+        remove(exportPath);
+    }
+    return ok;
+}
 
 int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   char* out,
@@ -3223,11 +3383,83 @@ static int m11_toggle_front_door(M11_GameViewState* state);
 static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
                           const char* actionLabel);
+static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
+                                             uint8_t command,
+                                             const char* actionLabel,
+                                             int actionIndex);
 static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input);
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state);
 static int m11_start_v1_mouth_animation(M11_GameViewState* state,
                                         const DM1ConsumableResultPc34* result);
 static int m11_tick_v1_mouth_animation(M11_GameViewState* state);
+
+/* ReDMCSB MENU.C G0491_auc_Graphic560_ActionDisabledTicks lines 157-201.
+ * F0407 disables the acting champion after the action tail; TIMELINE.C F0253
+ * later clears that disabled-action state. */
+static const unsigned char M11_ACTION_DISABLED_TICKS[44] = {
+    0, 6, 8, 0, 6, 3, 1, 5, 3, 5, 35, 20, 4, 6, 10, 16,
+    2, 18, 8, 30, 42, 31, 10, 38, 9, 20, 10, 16, 4, 12, 20, 7,
+    14, 30, 35, 2, 19, 9, 10, 15, 22, 10, 0, 2
+};
+
+static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
+    int i;
+    if (!state) return;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        if (state->actionDisabledTicks[i] > 0) {
+            state->actionDisabledTicks[i]--;
+            if (state->actionDisabledTicks[i] == 0) {
+                if (i < state->world.party.championCount &&
+                    state->actionDisabledIndex[i] < 44) {
+                    state->world.party.champions[i].actionDefense -=
+                        dm1_v1_graphic560_action_defense_get_pc34(
+                            state->actionDisabledIndex[i]);
+                    state->world.party.champions[i].actionIndex = 0xFFu;
+                }
+                state->actionDisabledIndex[i] = 0xFFu;
+            }
+        }
+    }
+}
+
+static void m11_apply_champion_action_defense_before_action(
+        M11_GameViewState* state,
+        int championIndex,
+        unsigned char actionIndex) {
+    if (!state) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    if (championIndex >= state->world.party.championCount) return;
+    if (actionIndex >= 44) return;
+    state->world.party.champions[championIndex].actionDefense +=
+        dm1_v1_graphic560_action_defense_get_pc34(actionIndex);
+    state->world.party.champions[championIndex].actionIndex = actionIndex;
+}
+
+static void m11_disable_champion_action_after_action(
+        M11_GameViewState* state,
+        int championIndex,
+        unsigned char actionIndex) {
+    unsigned char ticks;
+    if (!state) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    if (actionIndex >= 44) return;
+    ticks = M11_ACTION_DISABLED_TICKS[actionIndex];
+    state->actionDisabledTicks[championIndex] = ticks;
+    state->actionDisabledIndex[championIndex] =
+        state->actionDisabledTicks[championIndex] ? actionIndex : 0xFFu;
+}
+
+static void m11_disable_champion_action_after_action_ticks(
+        M11_GameViewState* state,
+        int championIndex,
+        unsigned char actionIndex,
+        unsigned char ticks) {
+    if (!state) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    if (actionIndex >= 44) return;
+    state->actionDisabledTicks[championIndex] = ticks;
+    state->actionDisabledIndex[championIndex] = ticks ? actionIndex : 0xFFu;
+}
 
 /* ── Apply sensor effects from movement pipeline ──
  * Called after movement pipeline processes a tick.
@@ -4453,6 +4685,25 @@ static void m11_set_object_drop_next(struct DungeonThings_Compat* things,
                                   things->junks[index].cursed);
         }
         break;
+    case THING_TYPE_POTION:
+        if (things->potions && index >= 0 && index < things->potionCount) {
+            unsigned char* raw;
+            unsigned short bf;
+            things->potions[index].next = next;
+            if (things->rawThingData[type] &&
+                index < things->thingCounts[type]) {
+                raw = things->rawThingData[type] +
+                      index * s_thingDataByteCount[type];
+                raw[0] = (unsigned char)(next & 0xFFu);
+                raw[1] = (unsigned char)((next >> 8) & 0xFFu);
+                bf = (unsigned short)(things->potions[index].power & 0xFFu);
+                bf |= (unsigned short)((things->potions[index].type & 0x7Fu) << 8);
+                if (things->potions[index].doNotDiscard) bf |= 0x8000u;
+                raw[2] = (unsigned char)(bf & 0xFFu);
+                raw[3] = (unsigned char)((bf >> 8) & 0xFFu);
+            }
+        }
+        break;
     default:
         break;
     }
@@ -4699,13 +4950,90 @@ int M11_GameView_CountChampionItems(const M11_GameViewState* state, int champion
 int M11_GameView_GetSkillLevel(const M11_GameViewState* state,
                                int championIndex,
                                int skillIndex) {
+    DM1_ChampionSkillState skillState;
+    DM1_SkillLevelQuery query;
+    const struct ChampionLifecycleState_Compat* lifecycleChampion;
+    const struct ChampionState_Compat* champion;
+    int partyIsResting;
+    int i;
+
     if (!state || !state->active) return -1;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return -1;
-    if (!state->world.party.champions[championIndex].present) return -1;
-    if (skillIndex < 0 || skillIndex >= CHAMPION_SKILL_COUNT) return -1;
-    return F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-        &state->world.lifecycle.champions[championIndex],
-        skillIndex, 0);
+    champion = &state->world.party.champions[championIndex];
+    if (!champion->present) return -1;
+    if (skillIndex < 0 || skillIndex >= DM1_TOTAL_SKILL_COUNT) return -1;
+
+    lifecycleChampion = &state->world.lifecycle.champions[championIndex];
+    memset(&skillState, 0, sizeof(skillState));
+    for (i = 0; i < DM1_TOTAL_SKILL_COUNT && i < LIFECYCLE_SKILL_COUNT; ++i) {
+        skillState.skills[i].experience = lifecycleChampion->skills20[i].experience;
+        skillState.skills[i].temporaryExperience =
+            lifecycleChampion->skills20[i].temporaryExperience;
+    }
+
+    partyIsResting = state->resting ||
+                     state->world.partyIsResting ||
+                     state->world.lifecycle.rest.isResting;
+    if (!dm1_skill_build_query_from_champion_inventory(
+            champion, state->world.things, partyIsResting, &query)) {
+        return F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+            lifecycleChampion, skillIndex, 0);
+    }
+
+    /* ReDMCSB: MENU.C/F0407 and F0412 query skill levels through
+     * CHAMPION.C F0303, so live M11 checks must include resting,
+     * temporary XP, and action-hand/neck object modifiers. */
+    return dm1_skill_get_level_ex(&skillState, skillIndex, 0, &query);
+}
+
+static int m11_game_view_get_f0230_parry_skill(
+    const M11_GameViewState* state,
+    int championIndex) {
+    int parrySkill = M11_GameView_GetSkillLevel(
+        state, championIndex, DM1_SKILL_IDX_PARRY);
+    return parrySkill < 0 ? 0 : parrySkill;
+}
+
+int M11_GameView_ProbeF0230ParryAdjustedAttack(
+    const M11_GameViewState* state,
+    int championIndex,
+    int random16,
+    int creatureBaseAttack,
+    int doubledMapDifficulty) {
+    int parrySkill = m11_game_view_get_f0230_parry_skill(
+        state, championIndex);
+    /* ReDMCSB: PROJEXPL.C F0230 lines 1390-1395:
+     * RANDOM(16) + CreatureAttack + (MapDifficulty << 1)
+     * - (F0303(PARRY) << 1). */
+    return random16 + creatureBaseAttack + doubledMapDifficulty
+           - (parrySkill * 2);
+}
+
+static int m11_game_view_get_f0352_potion_priest_skill(
+    const M11_GameViewState* state,
+    int championIndex) {
+    int priestSkill = M11_GameView_GetSkillLevel(
+        state, championIndex, DM1_SKILL_IDX_PRIEST);
+    return priestSkill < 0 ? 0 : priestSkill;
+}
+
+int M11_GameView_ProbeF0352PotionEyeDescription(
+    const M11_GameViewState* state,
+    int championIndex,
+    unsigned int thingType,
+    unsigned int iconIndex,
+    unsigned int potionPower,
+    const char* objectName,
+    char* outText,
+    size_t outTextSize) {
+    const unsigned int priestSkill =
+        (unsigned int)m11_game_view_get_f0352_potion_priest_skill(
+            state, championIndex);
+    /* ReDMCSB: PANEL.C F0352 lines 1182-1191 prefixes non-water
+     * potion names from F0303(PRIEST) > 1, not raw champion storage. */
+    return INVENTORY_Compat_FormatPotionEyeDescription(
+        thingType, iconIndex, potionPower, priestSkill,
+        objectName, outText, outTextSize, NULL);
 }
 
 /* ================================================================
@@ -4993,6 +5321,13 @@ static int m11_blit_spell_label_cell(const M11_GameViewState* state,
 
 int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
     if (!state || !state->active || state->partyDead) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB COMMAND.C lines 2302-2306: C100 spell-area clicks
+         * are ignored while G0299_ui_CandidateChampionOrdinal owns the
+         * C040 resurrect/reincarnate panel.  Keep the direct M11 spell
+         * API on the same boundary as pointer/keyboard routing. */
+        return 0;
+    }
     state->spellPanelOpen = 1;
     state->spellRuneRow = 0;
     memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
@@ -5009,9 +5344,56 @@ int M11_GameView_CloseSpellPanel(M11_GameViewState* state) {
     return 1;
 }
 
+static int m11_find_empty_flask_in_hand_f0411(
+    const M11_GameViewState* state,
+    int championIndex)
+{
+    static const int slotOrder[2] = {
+        CHAMPION_SLOT_ACTION_HAND,
+        CHAMPION_SLOT_HAND_LEFT
+    };
+    int i;
+
+    if (!state || !state->world.things || !state->world.things->potions) {
+        return -1;
+    }
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
+        return -1;
+    }
+    if (!state->world.party.champions[championIndex].present) {
+        return -1;
+    }
+
+    /* ReDMCSB MENU.C F0411 lines 1745-1749 scans action hand before
+     * ready hand and accepts C195/C20 empty-flask potion objects. */
+    for (i = 0; i < 2; ++i) {
+        int slot = slotOrder[i];
+        unsigned short thing =
+            state->world.party.champions[championIndex].inventory[slot];
+        int potionIndex;
+        if (thing == THING_NONE || THING_GET_TYPE(thing) != THING_TYPE_POTION) {
+            continue;
+        }
+        potionIndex = (int)THING_GET_INDEX(thing);
+        if (potionIndex < 0 ||
+            potionIndex >= state->world.things->potionCount) {
+            continue;
+        }
+        if ((int)state->world.things->potions[potionIndex].type == 20) {
+            return slot;
+        }
+    }
+    return -1;
+}
+
 int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
     int runeValue;
     if (!state || !state->active || state->partyDead) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB COMMAND.C lines 2302-2306 blocks C100 spell-area
+         * routing while the C040 candidate panel is live. */
+        return 0;
+    }
     if (!state->spellPanelOpen) return 0;
     if (symbolIndex < 0 || symbolIndex > 5) return 0;
     if (state->spellBuffer.runeCount >= 4) return 0;
@@ -5046,6 +5428,12 @@ int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
 static void m11_award_combat_xp(M11_GameViewState* state, int championIndex, int damage);
 int M11_GameView_ClearSpell(M11_GameViewState* state) {
     if (!state || !state->active) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB COMMAND.C lines 2302-2306: recant is part of the
+         * spell-area command set, so a live C040 candidate panel must
+         * preserve the current spell state instead of clearing it. */
+        return 0;
+    }
     state->spellRuneRow = 0;
     memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
     if (state->spellPanelOpen) {
@@ -5067,6 +5455,11 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     char champName[16];
 
     if (!state || !state->active || state->partyDead) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB COMMAND.C lines 2302-2306 guards F0370 spell-area
+         * dispatch with !G0299_ui_CandidateChampionOrdinal. */
+        return 0;
+    }
     if (state->spellBuffer.runeCount < 2) {
         m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: NEED AT LEAST 2 RUNES",
                       (unsigned int)state->world.gameTick);
@@ -5135,13 +5528,9 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     req.championIndex = state->world.party.activeChampionIndex;
     req.currentMana = (int)champ->mana.current;
     req.maximumMana = (int)champ->mana.maximum;
-    if (spell.skillIndex >= 0 && spell.skillIndex < CHAMPION_SKILL_COUNT) {
-        req.skillLevelForSpell = champ->skillLevels[spell.skillIndex];
-    } else if (spell.skillIndex >= 0 && spell.skillIndex < LIFECYCLE_SKILL_COUNT) {
-        req.skillLevelForSpell = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-            &state->world.lifecycle.champions[state->world.party.activeChampionIndex],
-            spell.skillIndex, 0);
-    } else {
+    req.skillLevelForSpell = M11_GameView_GetSkillLevel(
+        state, state->world.party.activeChampionIndex, spell.skillIndex);
+    if (req.skillLevelForSpell < 0) {
         req.skillLevelForSpell = 0;
     }
     req.statisticWisdom = champ->attributes[CHAMPION_ATTR_WISDOM];
@@ -5150,11 +5539,9 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     req.partyMapIndex = state->world.party.mapIndex;
     req.partyMapX = state->world.party.mapX;
     req.partyMapY = state->world.party.mapY;
-    /* ReDMCSB MAGIC.C F0754 line ~412: checks action-hand slot for
-     * C017_OBJECT_POTION with C028_EMPTY_FLASK attribute.
-     * Full flask detection requires object-type lookup from things table;
-     * default 0 is safe — only affects ZO_KATH_RA fountain fill. */
-    req.hasEmptyFlaskInHand = 0;
+    req.hasEmptyFlaskInHand =
+        m11_find_empty_flask_in_hand_f0411(
+            state, state->world.party.activeChampionIndex) >= 0;
     req.hasMagicMapInHand = 0;
     req.gameTimeTicksLow = (int)(state->world.gameTick & 0x7FFFFFFF);
     req.spellTableIndex = tableIndex;
@@ -5175,6 +5562,11 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s — %s",
                       (unsigned int)state->world.gameTick, champName, failMsg);
         m11_set_status(state, "CAST", failMsg);
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SPELL FAILED");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail), "%s", failMsg);
+        M11_GameView_ClearSpell(state);
+        state->spellPanelOpen = 0;
+        return 1;
     }
 
     /* Deduct mana */
@@ -5196,6 +5588,17 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         input.reserved = (uint8_t)(state->spellBuffer.runes[0] > 0
                                        ? (state->spellBuffer.runes[0] - 0x60) / 6 + 1
                                        : 1);
+        if (spell.kind == C1_SPELL_KIND_POTION_COMPAT) {
+            int flaskSlot = m11_find_empty_flask_in_hand_f0411(
+                state, state->world.party.activeChampionIndex);
+            if (flaskSlot >= 0) {
+                input.reserved2 =
+                    CMD_CAST_SPELL_RESERVED2_HAS_EMPTY_FLASK |
+                    (((uint32_t)flaskSlot <<
+                      CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_SHIFT) &
+                     CMD_CAST_SPELL_RESERVED2_EMPTY_FLASK_SLOT_MASK);
+            }
+        }
         memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
         /* Spell casting consumes a real game tick outside m11_apply_tick();
          * age the live DM1-V1 movement cooldown mirror the same way
@@ -5825,7 +6228,8 @@ static void m11_creature_attack_party(
          * attack += RANDOM(4) + 1
          * 50% chance: attack -= RANDOM(attack/2 + 1) - 1 */
         {
-            int parrySkill = (int)champ->skillLevels[7]; /* SKILL_PARRY = 7 */
+            int parrySkill = m11_game_view_get_f0230_parry_skill(
+                state, targetChamp);
             attack = ((int)(state->world.gameTick * 17 + i * 11) % 16)
                      + profile->baseAttack + mapDifficulty
                      - (parrySkill * 2);
@@ -6152,6 +6556,7 @@ static int m11_creature_maybe_launch_projectile(
     input.direction = launch.direction & 3;
     input.kineticEnergy = launch.kineticEnergy;
     input.attack = launch.attack;
+    input.launcherStrength = launch.attack;
     input.stepEnergy = launch.stepEnergy;
     input.currentTick = (int)state->world.gameTick;
     input.poisonAttack = (subtype == PROJECTILE_SUBTYPE_POISON_CLOUD) ? launch.attack : 0;
@@ -6848,7 +7253,17 @@ static int m11_spawn_action_projectile_ex(M11_GameViewState* state,
                                           int attackTypeCode,
                                           int launchCell,
                                           int launchDirection,
-                                          int stepEnergy);
+                                          int stepEnergy,
+                                          int launcherStrength,
+                                          unsigned short carriedThing,
+                                          int potionPower);
+static int m11_dm1_throw_skill_level(const M11_GameViewState* state,
+                                     int championIndex);
+static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
+                                            int championIndex,
+                                            struct ChampionState_Compat* champ,
+                                            unsigned short thrownThing,
+                                            int throwSide);
 
 void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
     int i;
@@ -6992,7 +7407,7 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                         }
                         if (stepEnergy < 1) stepEnergy = 1;
                         launchDirection = state->world.party.direction & 3;
-                        launchCell = m11_dm1_projectile_launch_cell(sChamp & 3,
+                        launchCell = m11_dm1_projectile_launch_cell(caster->cell,
                                                                     launchDirection);
                         launchedProjectile = m11_spawn_action_projectile_ex(
                             state,
@@ -7004,7 +7419,10 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                             COMBAT_ATTACK_MAGIC,
                             launchCell,
                             launchDirection,
-                            stepEnergy);
+                            stepEnergy,
+                            90,
+                            THING_NONE,
+                            0);
                     }
                 }
                 m11_log_event(state, M11_COLOR_CYAN,
@@ -7960,6 +8378,9 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     if (fread(header, 1U, sizeof(header), file) != sizeof(header) ||
         memcmp(header, g_m11_quicksave_magic, sizeof(g_m11_quicksave_magic)) != 0) {
         fclose(file);
+        if (M11_GameView_LoadDm1SavePath(state, path, NULL)) {
+            return 1;
+        }
         m11_set_status(state, "LOAD", "SAVE HEADER INVALID");
         return 0;
     }
@@ -8009,28 +8430,7 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     }
     free(blob);
 
-    /* ReDMCSB F0898_WORLD_Deserialize_Compat preserves the existing
-     * pointer fields (dungeon / things / ownsDungeon) on the world
-     * struct it deserializes into.  The live M11 game view holds the
-     * only reference to the DUNGEON.DAT-backed dungeon and things
-     * state, so the loaded world must inherit those pointers or
-     * F0883_WORLD_Free_Compat(state->world) below would drop them
-     * on the floor.  Transfer ownership of the live dungeon/things
-     * from the old state.world to loadedWorld (so loadedWorld now
-     * owns the live dungeon and F0883 will free them at the next
-     * state.world release), then null out the old state.world
-     * pointers and free the now-empty state.world.  The subsequent
-     * assignment of loadedWorld to state.world restores the live
-     * dungeon pointers and the ownsDungeon=1 flag, so the next
-     * M11_GameView_Shutdown still frees the dungeon properly. */
-    loadedWorld.dungeon = state->world.dungeon;
-    loadedWorld.things  = state->world.things;
-    loadedWorld.ownsDungeon = state->world.ownsDungeon;
-    state->world.dungeon = NULL;
-    state->world.things = NULL;
-    state->world.ownsDungeon = 0;
-    F0883_WORLD_Free_Compat(&state->world);
-    state->world = loadedWorld;
+    m11_game_view_adopt_loaded_world(state, &loadedWorld);
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_refresh_hash(state);
     (void)m11_load_quicksave_explored_bits(state, path);
@@ -8335,6 +8735,7 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
 
     state->world.gameTick++;
+    m11_decrement_action_disabled_ticks(state);
     if (state->lastDm1V1MovementPipelineResult.anyMovementOccurred) {
         /* ReDMCSB MOVESENS.C:763-775 updates
          * G0362_l_LastPartyMovementTime when the party actually changes
@@ -8469,10 +8870,63 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
 static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
                           const char* actionLabel) {
+    return m11_apply_tick_with_attack_action(state, command, actionLabel, -1);
+}
+
+static int m11_last_attack_tick_emitted_damage(const M11_GameViewState* state) {
+    int i;
+    if (!state) return 0;
+    for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
+        if (state->lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void m11_set_candidate_attack_marker_for_tick(M11_GameViewState* state,
+                                                     int* oldEnabled,
+                                                     int* oldGroupIndex,
+                                                     int* oldCreatureIndex) {
+    if (!state || !oldEnabled || !oldGroupIndex || !oldCreatureIndex) return;
+    *oldEnabled = state->world.candidateAttackInvulnerableEnabled;
+    *oldGroupIndex = state->world.candidateAttackInvulnerableGroupIndex;
+    *oldCreatureIndex = state->world.candidateAttackInvulnerableCreatureIndex;
+    state->world.candidateAttackInvulnerableEnabled = 0;
+    state->world.candidateAttackInvulnerableGroupIndex = -1;
+    state->world.candidateAttackInvulnerableCreatureIndex = -1;
+    if (state->candidateMirrorPanelActive &&
+        state->candidateMirrorPartyIndex >= 0 &&
+        state->candidateMirrorPartyIndex < state->world.party.championCount) {
+        state->world.candidateAttackInvulnerableEnabled = 1;
+        state->world.candidateAttackInvulnerableGroupIndex = 0;
+        state->world.candidateAttackInvulnerableCreatureIndex =
+            state->candidateMirrorPartyIndex;
+    }
+}
+
+static void m11_restore_candidate_attack_marker_after_tick(
+    M11_GameViewState* state,
+    int oldEnabled,
+    int oldGroupIndex,
+    int oldCreatureIndex) {
+    if (!state) return;
+    state->world.candidateAttackInvulnerableEnabled = oldEnabled;
+    state->world.candidateAttackInvulnerableGroupIndex = oldGroupIndex;
+    state->world.candidateAttackInvulnerableCreatureIndex = oldCreatureIndex;
+}
+
+static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
+                                             uint8_t command,
+                                             const char* actionLabel,
+                                             int actionIndex) {
     struct TickInput_Compat input;
     struct PartyState_Compat beforeParty;
     uint32_t beforeTick;
     uint32_t beforeHash;
+    int oldCandidateMarkerEnabled = 0;
+    int oldCandidateMarkerGroupIndex = -1;
+    int oldCandidateMarkerCreatureIndex = -1;
     if (!state || !state->active) {
         return 0;
     }
@@ -8486,7 +8940,17 @@ static int m11_apply_tick(M11_GameViewState* state,
         input.commandArg1 = (uint8_t)(state->world.party.activeChampionIndex >= 0
                                           ? state->world.party.activeChampionIndex
                                           : 0);
-        input.commandArg2 = (uint8_t)state->world.party.direction;
+        input.commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
+        input.reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
+        if (actionIndex >= 0 && actionIndex < 44) {
+            input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+                              (uint32_t)actionIndex;
+        }
+        m11_set_candidate_attack_marker_for_tick(
+            state,
+            &oldCandidateMarkerEnabled,
+            &oldCandidateMarkerGroupIndex,
+            &oldCandidateMarkerCreatureIndex);
     }
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     /* ReDMCSB GAMELOOP.C:122-127 ages movement cooldowns once per
@@ -8499,6 +8963,13 @@ static int m11_apply_tick(M11_GameViewState* state,
     {
         int orchResult = F0884_ORCH_AdvanceOneTick_Compat(
             &state->world, &input, &state->lastTickResult);
+        if (command == CMD_ATTACK) {
+            m11_restore_candidate_attack_marker_after_tick(
+                state,
+                oldCandidateMarkerEnabled,
+                oldCandidateMarkerGroupIndex,
+                oldCandidateMarkerCreatureIndex);
+        }
         if (orchResult == ORCH_FAIL) {
             m11_set_status(state, actionLabel, "TICK REJECTED");
             return 0;
@@ -8577,6 +9048,7 @@ static int m11_apply_tick(M11_GameViewState* state,
     /* DM1 V1: reset VBlank counter for next tick and decrement movement
      * cooldowns, matching GAMELOOP.C top-of-loop (G0317=0, G0321=FALSE)
      * and end-of-loop (G0310--, G0311--). */
+    m11_decrement_action_disabled_ticks(state);
     DM1_V1_VBlankTiming_ResetForNewTick(&state->vblankTiming);
     return 1;
 }
@@ -8615,18 +9087,91 @@ int M11_GameView_GetMirrorTitleByOrdinal(const M11_GameViewState* state,
                                                        outSize);
 }
 
+static int m11_pack_recruited_champion_portrait(M11_GameViewState* state,
+                                                int championIndex,
+                                                int mirrorOrdinal) {
+    enum {
+        kChampionPortraitGraphic = 26, /* ReDMCSB C026_GRAPHIC_CHAMPION_PORTRAITS */
+        kPortraitWidth = CHAMPION_PORTRAIT_BITMAP_WIDTH,
+        kPortraitHeight = CHAMPION_PORTRAIT_BITMAP_HEIGHT
+    };
+    const M11_AssetSlot* portraits;
+    struct ChampionState_Compat* champ;
+    int srcX;
+    int srcY;
+    int y;
+
+    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        mirrorOrdinal < 0) {
+        return 0;
+    }
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present) return 0;
+    portraits = M11_AssetLoader_Load(&state->assetLoader,
+                                     (unsigned int)kChampionPortraitGraphic);
+    if (!portraits || !portraits->loaded || !portraits->pixels ||
+        portraits->width < kPortraitWidth * 8 ||
+        portraits->height < kPortraitHeight * 3) {
+        return 0;
+    }
+
+    srcX = (mirrorOrdinal & 7) * kPortraitWidth;
+    srcY = (mirrorOrdinal >> 3) * kPortraitHeight;
+    memset(champ->portraitBitmap, 0, sizeof(champ->portraitBitmap));
+    /* ReDMCSB REVIVE.C F0280 lines ~142-160 copies C026 champion-portrait
+     * atlas pixels into CHAMPION.Portrait; LOADSAVE.C F0433 then writes
+     * those 32x29 4bpp bytes after the five PC34 save parts.  M11's asset
+     * cache stores C026 as unpacked palette indices, so repack
+     * high-nibble-first to match the PC34 bitmap payload shape. */
+    for (y = 0; y < kPortraitHeight; ++y) {
+        int x;
+        unsigned char* dst =
+            champ->portraitBitmap + y * (kPortraitWidth / 2);
+        const unsigned char* src =
+            portraits->pixels + (srcY + y) * (int)portraits->width + srcX;
+        for (x = 0; x < kPortraitWidth; x += 2) {
+            dst[x / 2] = (unsigned char)(((src[x] & 0x0F) << 4) |
+                                         (src[x + 1] & 0x0F));
+        }
+    }
+    champ->portraitBitmapValid = 1;
+    return 1;
+}
+
 int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
                                                 int mirrorOrdinal) {
+    int previousPartyCount;
+    int result;
     if (!state || !state->active || !state->mirrorCatalogAvailable) return 0;
-    return F0673_CHAMPION_MirrorCatalogRecruitOrdinalIfAbsent_Compat(
+    previousPartyCount = state->world.party.championCount;
+    result = F0673_CHAMPION_MirrorCatalogRecruitOrdinalIfAbsent_Compat(
         &state->mirrorCatalog, mirrorOrdinal, &state->world.party);
+    if (result == 1) {
+        (void)m11_pack_recruited_champion_portrait(state, previousPartyCount,
+                                                   mirrorOrdinal);
+    }
+    return result;
 }
 
 int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
                                              const char* name) {
+    int previousPartyCount;
+    int catalogIndex;
+    int mirrorOrdinal;
+    int result;
     if (!state || !state->active || !state->mirrorCatalogAvailable) return 0;
-    return F0674_CHAMPION_MirrorCatalogRecruitNameIfAbsent_Compat(
+    catalogIndex = F0654_CHAMPION_MirrorCatalogFindByName_Compat(
+        &state->mirrorCatalog, name);
+    if (catalogIndex < 0) return 0;
+    mirrorOrdinal = state->mirrorCatalog.records[catalogIndex].mirrorOrdinal;
+    previousPartyCount = state->world.party.championCount;
+    result = F0674_CHAMPION_MirrorCatalogRecruitNameIfAbsent_Compat(
         &state->mirrorCatalog, name, &state->world.party);
+    if (result == 1) {
+        (void)m11_pack_recruited_champion_portrait(state, previousPartyCount,
+                                                   mirrorOrdinal);
+    }
+    return result;
 }
 
 int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state) {
@@ -8780,6 +9325,8 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
     state->candidateMirrorOrdinal = mirrorOrdinal;
     state->candidateMirrorPartyIndex = previousPartyCount;
     state->candidateMirrorPanelActive = 1;
+    state->candidateMirrorRenameActive = 0;
+    memset(&state->candidateMirrorRename, 0, sizeof(state->candidateMirrorRename));
     state->inventoryPanelActive = 1;
     if (previousPartyCount == 0) {
         /* ReDMCSB REVIVE.C:837-840 seeds G0362_l_LastPartyMovementTime
@@ -8843,6 +9390,8 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         state->world.party.activeChampionIndex = championIndex;
     }
     (void)m11_disable_front_mirror_route(state, state->candidateMirrorOrdinal);
+    state->candidateMirrorRenameActive = 0;
+    memset(&state->candidateMirrorRename, 0, sizeof(state->candidateMirrorRename));
     state->candidateMirrorPanelActive = 0;
     state->inventoryPanelActive = 0;
     state->candidateMirrorOrdinal = -1;
@@ -8855,6 +9404,209 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
              "%s ADDED TO THE PARTY FROM THE SOURCE MIRROR RECORD",
              mirrorName[0] ? mirrorName : "CHAMPION");
     return 1;
+}
+
+int M11_GameView_BeginMirrorCandidateReincarnateRename(M11_GameViewState* state) {
+    int championIndex;
+
+    if (!state || !state->active || !state->candidateMirrorPanelActive ||
+        state->candidateMirrorOrdinal < 0) {
+        return 0;
+    }
+    championIndex = state->candidateMirrorPartyIndex;
+    if (championIndex < 0 || championIndex >= state->world.party.championCount ||
+        championIndex >= CHAMPION_MAX_PARTY ||
+        !state->world.party.champions[championIndex].present) {
+        return 0;
+    }
+
+    /* ReDMCSB: REVIVE.C F0282:806-808 calls F0281 only for C161.
+     * F0281:407-419 blits C027, clears Name/Title, and starts with
+     * the name-field cursor. M11 keeps that modal routine as live
+     * state instead of blocking the SDL loop. */
+    dm1_v1_resurrection_rename_ui_gate_init_pc34(
+        &state->candidateMirrorRename,
+        DM1_V1_RESURRECTION_RENAME_UI_COMMAND_REINCARNATE_PC34_COMPAT);
+    state->candidateMirrorRenameActive =
+        state->candidateMirrorRename.f0281RenameCallCount == 1;
+    if (!state->candidateMirrorRenameActive) {
+        return 0;
+    }
+
+    state->inventoryPanelActive = 1;
+    state->world.party.champions[championIndex].name[0] = '\0';
+    state->world.party.champions[championIndex].title[0] = '\0';
+    m11_set_status(state, "MIRROR", "ENTER NAME");
+    m11_set_inspect_readout(state, "REINCARNATE",
+                            "TYPE A NAME, THEN OK TO JOIN");
+    return 1;
+}
+
+static int m11_candidate_rename_name_duplicates_existing_party(
+    const M11_GameViewState* state,
+    int candidateChampionIndex) {
+    int i;
+    int compareLimit;
+
+    if (!state || candidateChampionIndex < 0) {
+        return 0;
+    }
+    compareLimit = state->world.party.championCount - 1;
+    if (compareLimit > CHAMPION_MAX_PARTY) {
+        compareLimit = CHAMPION_MAX_PARTY;
+    }
+    if (compareLimit < 0) {
+        compareLimit = 0;
+    }
+    /* ReDMCSB REVIVE.C F0281:448-464 trims the proposed name and
+     * compares it against already-selected party champions using
+     * G0305_ui_PartyChampionCount - 1, because F0280 appended the
+     * candidate as the last party member before F0281 started. */
+    for (i = 0; i < compareLimit; ++i) {
+        const struct ChampionState_Compat* existing =
+            &state->world.party.champions[i];
+        if (i == candidateChampionIndex || !existing->present) {
+            continue;
+        }
+        if (strcmp((const char*)existing->name,
+                   state->candidateMirrorRename.name) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int m11_finish_candidate_rename_if_accepted(M11_GameViewState* state) {
+    int championIndex;
+    struct ChampionState_Compat* champ;
+
+    if (!state || !state->candidateMirrorRenameActive ||
+        !state->candidateMirrorRename.okAccepted) {
+        return 0;
+    }
+    championIndex = state->candidateMirrorPartyIndex;
+    if (championIndex < 0 || championIndex >= state->world.party.championCount ||
+        championIndex >= CHAMPION_MAX_PARTY) {
+        state->candidateMirrorRenameActive = 0;
+        return 0;
+    }
+    if (m11_candidate_rename_name_duplicates_existing_party(state,
+                                                           championIndex)) {
+        state->candidateMirrorRename.returned = 0;
+        state->candidateMirrorRename.okAccepted = 0;
+        state->candidateMirrorRename.duplicateNameRejectedCount++;
+        m11_set_status(state, "RENAME", "NAME IN USE");
+        m11_set_inspect_readout(state, "REINCARNATE",
+                                "CHOOSE A DIFFERENT NAME");
+        return 1;
+    }
+    champ = &state->world.party.champions[championIndex];
+    {
+        size_t nameLen = strlen(state->candidateMirrorRename.name);
+        size_t titleLen = strlen(state->candidateMirrorRename.title);
+        if (nameLen >= sizeof(champ->name)) {
+            nameLen = sizeof(champ->name) - 1U;
+        }
+        if (titleLen >= sizeof(champ->title)) {
+            titleLen = sizeof(champ->title) - 1U;
+        }
+        memset(champ->name, 0, sizeof(champ->name));
+        memcpy(champ->name, state->candidateMirrorRename.name, nameLen);
+        memset(champ->title, 0, sizeof(champ->title));
+        memcpy(champ->title, state->candidateMirrorRename.title, titleLen);
+    }
+    state->candidateMirrorRenameActive = 0;
+    memset(&state->candidateMirrorRename, 0, sizeof(state->candidateMirrorRename));
+    return M11_GameView_ConfirmMirrorCandidate(state, 1);
+}
+
+int M11_GameView_ApplyMirrorCandidateRenameCommand(M11_GameViewState* state,
+                                                   int command) {
+    int changed;
+
+    if (!state || !state->candidateMirrorRenameActive) {
+        return 0;
+    }
+    changed = dm1_v1_resurrection_rename_ui_gate_apply_command_pc34(
+        &state->candidateMirrorRename, command);
+    if (!changed) {
+        return 0;
+    }
+    if (m11_finish_candidate_rename_if_accepted(state)) {
+        return 1;
+    }
+    m11_set_status(state, "RENAME",
+                   state->candidateMirrorRename.fieldMode ==
+                           DM1_V1_RESURRECTION_RENAME_UI_FIELD_TITLE_PC34_COMPAT
+                       ? "TITLE"
+                       : "NAME");
+    return 1;
+}
+
+int M11_GameView_ApplyMirrorCandidateRenameAscii(M11_GameViewState* state,
+                                                 int ch) {
+    int changed;
+
+    if (!state || !state->candidateMirrorRenameActive) {
+        return 0;
+    }
+    changed = dm1_v1_resurrection_rename_ui_gate_apply_ascii_pc34(
+        &state->candidateMirrorRename, ch);
+    if (!changed) {
+        return 0;
+    }
+    if (m11_finish_candidate_rename_if_accepted(state)) {
+        return 1;
+    }
+    m11_set_status(state, "RENAME",
+                   state->candidateMirrorRename.fieldMode ==
+                           DM1_V1_RESURRECTION_RENAME_UI_FIELD_TITLE_PC34_COMPAT
+                       ? "TITLE"
+                       : "NAME");
+    return 1;
+}
+
+int M11_GameView_HandleMirrorCandidateRenameClick(M11_GameViewState* state,
+                                                  int x,
+                                                  int y) {
+    int ch;
+
+    if (!state || !state->candidateMirrorRenameActive) {
+        return 0;
+    }
+    if (m11_point_in_rect(x, y, 197, 147, 19, 9)) {
+        return M11_GameView_ApplyMirrorCandidateRenameCommand(
+            state, DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT);
+    }
+    if (m11_point_in_rect(x, y, 107, 147, 69, 9)) {
+        return M11_GameView_ApplyMirrorCandidateRenameCommand(
+            state, DM1_V1_RESURRECTION_RENAME_UI_COMMAND_BACKSPACE_PC34_COMPAT);
+    }
+    if (x < 107 || x > 215 || y < 116 || y > 144) {
+        return 0;
+    }
+    if (((x + 4) % 10) == 0 ||
+        (((y + 5) % 10) == 0 && (x < 207 || y != 135))) {
+        return 0;
+    }
+
+    ch = 'A' + (11 * ((y - 116) / 10)) + ((x - 107) / 10);
+    if (ch == 86 || ch == 97) {
+        return M11_GameView_ApplyMirrorCandidateRenameAscii(state, '\r');
+    }
+    if (ch >= 87) {
+        --ch;
+    }
+    if (ch > 'Z') {
+        static const char kSpecials[] = { ',', '.', ';', ':', ' ' };
+        int specialIndex = ch - 'Z' - 1;
+        if (specialIndex < 0 ||
+            specialIndex >= (int)(sizeof(kSpecials) / sizeof(kSpecials[0]))) {
+            return 0;
+        }
+        ch = kSpecials[specialIndex];
+    }
+    return M11_GameView_ApplyMirrorCandidateRenameAscii(state, ch);
 }
 
 int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
@@ -8870,6 +9622,8 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
             state->world.party.activeChampionIndex = -1;
         }
     }
+    state->candidateMirrorRenameActive = 0;
+    memset(&state->candidateMirrorRename, 0, sizeof(state->candidateMirrorRename));
     state->candidateMirrorPanelActive = 0;
     state->inventoryPanelActive = 0;
     state->candidateMirrorOrdinal = -1;
@@ -9102,6 +9856,23 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
      * M11 maps ACTION/ACCEPT to the default resurrect choice for now
      * and BACK to cancel; the public confirm API keeps probes explicit. */
     if (state->candidateMirrorPanelActive) {
+        if (state->candidateMirrorRenameActive) {
+            if (input == M12_MENU_INPUT_BACK) {
+                return M11_GameView_ApplyMirrorCandidateRenameCommand(
+                           state,
+                           DM1_V1_RESURRECTION_RENAME_UI_COMMAND_BACKSPACE_PC34_COMPAT)
+                           ? M11_GAME_INPUT_REDRAW
+                           : M11_GAME_INPUT_IGNORED;
+            }
+            if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+                return M11_GameView_ApplyMirrorCandidateRenameCommand(
+                           state,
+                           DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT)
+                           ? M11_GAME_INPUT_REDRAW
+                           : M11_GAME_INPUT_IGNORED;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (input == M12_MENU_INPUT_BACK) {
             return M11_GameView_CancelMirrorCandidate(state)
                        ? M11_GAME_INPUT_REDRAW
@@ -9554,13 +10325,18 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * generic viewport hit test so x=130/y=115 and x=186/y=115 do not
      * get reinterpreted as movement/inspect clicks. */
     if (state->candidateMirrorPanelActive) {
+        if (state->candidateMirrorRenameActive) {
+            return M11_GameView_HandleMirrorCandidateRenameClick(state, x, y)
+                       ? M11_GAME_INPUT_REDRAW
+                       : M11_GAME_INPUT_IGNORED;
+        }
         if (m11_point_in_rect(x, y, 104, 86, 55, 57)) {
             return M11_GameView_ConfirmMirrorCandidate(state, 0)
                        ? M11_GAME_INPUT_REDRAW
                        : M11_GAME_INPUT_IGNORED;
         }
         if (m11_point_in_rect(x, y, 163, 86, 55, 57)) {
-            return M11_GameView_ConfirmMirrorCandidate(state, 1)
+            return M11_GameView_BeginMirrorCandidateReincarnateRename(state)
                        ? M11_GAME_INPUT_REDRAW
                        : M11_GAME_INPUT_IGNORED;
         }
@@ -12169,51 +12945,35 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         /* Upper viewport = throw zone per F0375 */
         int throwSide = (localX < 112) ? 0 : 1; /* 0=left, 1=right */
         unsigned short throwThing = M11_GameView_GetV1LeaderHandThing(state);
+        int championIndex = state->world.party.activeChampionIndex;
+        struct ChampionState_Compat* champ;
+        unsigned short actionHandThing;
+        int spawned;
 
-        /* ReDMCSB F0329_CHAMPION_IsLeaderHandObjectThrown:
-         * Create a projectile via F0810_PROJECTILE_Create_Compat.
-         * The projectile inherits the thrown item's properties and
-         * travels in the party's facing direction.
-         * Kinetic energy = champion strength * 2 + item weight. */
-        M11_GameView_ClearV1LeaderHandObject(state);
-
-        if (state->world.projectiles.count < PROJECTILE_LIST_CAPACITY) {
-            struct ProjectileCreateInput_Compat projIn;
-            struct TimelineEvent_Compat projEvent;
-            int projSlot = -1;
-
-            memset(&projIn, 0, sizeof(projIn));
-            projIn.category = 0; /* PROJECTILE_CATEGORY_THROW */
-            projIn.subtype = THING_GET_TYPE(throwThing);
-            projIn.ownerKind = 0; /* PROJECTILE_OWNER_CHAMPION */
-            projIn.ownerIndex = state->world.party.activeChampionIndex;
-            projIn.mapIndex = state->world.party.mapIndex;
-            projIn.mapX = state->world.party.mapX;
-            projIn.mapY = state->world.party.mapY;
-            projIn.cell = throwSide ? 1 : 0;
-            projIn.direction = state->world.party.direction;
-            projIn.kineticEnergy = 100;
-            projIn.attack = 30;
-            projIn.stepEnergy = 80;
-            projIn.currentTick = (int)state->world.gameTick;
-            projIn.firstMoveGraceFlag = 1;
-
-            memset(&projEvent, 0, sizeof(projEvent));
-            if (F0810_PROJECTILE_Create_Compat(&projIn,
-                                                &state->world.projectiles,
-                                                &projSlot,
-                                                &projEvent) && projSlot >= 0) {
-                (void)F0721_TIMELINE_Schedule_Compat(
-                    &state->world.timeline, &projEvent);
-            }
-        } else {
-            /* Projectile list full — drop item instead */
-            m11_prepend_thing_to_square(&state->world,
-                                        state->world.party.mapIndex,
-                                        state->world.party.mapX,
-                                        state->world.party.mapY,
-                                        throwThing);
+        if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+            championIndex >= state->world.party.championCount ||
+            !state->world.party.champions[championIndex].present) {
+            return M11_GAME_INPUT_IGNORED;
         }
+
+        champ = &state->world.party.champions[championIndex];
+        actionHandThing = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
+        /* ReDMCSB CHAMPION.C F0328 lines 2146-2162 and F0329 lines
+         * 2196-2208: a leader-hand throw temporarily places the leader
+         * object in the champion action hand for F0312 strength, then
+         * restores the original action hand before F0212 creates the
+         * projectile.  Firestaff clears the leader hand only after a
+         * projectile slot is accepted, preserving inventory on failure. */
+        champ->inventory[CHAMPION_SLOT_ACTION_HAND] = throwThing;
+        spawned = m11_dm1_f0328_spawn_thrown_thing(state, championIndex,
+                                                   champ, throwThing,
+                                                   throwSide);
+        champ->inventory[CHAMPION_SLOT_ACTION_HAND] = actionHandThing;
+        if (!spawned) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+
+        M11_GameView_ClearV1LeaderHandObject(state);
         m11_set_status(state, "THROW",
                         throwSide ? "THROWN RIGHT" : "THROWN LEFT");
         m11_refresh_hash(state);
@@ -13414,6 +14174,10 @@ enum {
      * selected object/chest panel contents. */
     M11_GFX_PANEL_ARROW_FOR_CHEST_CONTENT = 18,
     M11_GFX_PANEL_EYE_FOR_OBJECT_DESCRIPTION = 19,
+
+    /* Rename champion panel (graphic 27 in original DM1).
+     * REVIVE.C F0281 blits C027 into C101/C0032 for C161 rename. */
+    M11_GFX_PANEL_RENAME_CHAMPION = 27,
 
     /* Resurrect/Reincarnate/Cancel panel (graphic 40 in original DM1).
      * Drawn into C101_ZONE_PANEL when G0299 candidate is open. */
@@ -19635,10 +20399,20 @@ unsigned int M11_GameView_GetActingChampionOrdinal(const M11_GameViewState* stat
 int M11_GameView_SetActingChampion(M11_GameViewState* state, int championIndex) {
     unsigned int setIdx;
     if (!state) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB MENU.C F0390 lines 751-759: while
+         * G0299_ui_CandidateChampionOrdinal owns the C040 panel, the
+         * action area is not allowed to enter champion action-menu
+         * mode.  Keep the click helper from creating a menu that the
+         * next refresh would immediately clear. */
+        M11_GameView_ClearActingChampion(state);
+        return 0;
+    }
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     if (championIndex >= state->world.party.championCount) return 0;
     if (!state->world.party.champions[championIndex].present) return 0;
     if (state->world.party.champions[championIndex].hp.current == 0) return 0;
+    if (state->actionDisabledTicks[championIndex] > 0) return 0;
     /* DM1 F0389 aborts when the action-hand item has
      * ActionSetIndex==0 (scrolls, food, most junk).  Mirror that
      * here so the action-menu mode never appears for items that
@@ -19714,6 +20488,24 @@ static int m11_action_is_melee_contact(unsigned char actionIndex) {
     }
 }
 
+static int m11_action_is_party_shield(unsigned char actionIndex) {
+    return actionIndex == DM1_ACTION_SPELLSHIELD ||
+           actionIndex == DM1_ACTION_FIRESHIELD;
+}
+
+static int m11_action_is_projectile_spell_f0407(unsigned char actionIndex) {
+    switch (actionIndex) {
+        case DM1_ACTION_FIREBALL:
+        case DM1_ACTION_DISPELL:
+        case DM1_ACTION_LIGHTNING:
+        case DM1_ACTION_INVOKE:
+        case DM1_ACTION_SPIT:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 /* ReDMCSB MENU.C G0494_auc_Graphic560_ActionStamina.  F0407 adds
  * M005_RANDOM(2) before the common tail calls F0325.  M11 does not
  * carry the original global PRNG, so the bounded runtime uses a
@@ -19725,24 +20517,19 @@ static const unsigned char M11_ACTION_STAMINA_BASE[44] = {
     3, 1, 2, 6, 1, 1, 3, 2, 3, 2, 0, 2
 };
 
-static int m11_apply_action_stamina_cost(M11_GameViewState* state,
-                                         int championIndex,
-                                         unsigned char actionIndex) {
+static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
+                                                 int championIndex,
+                                                 int cost) {
     struct ChampionState_Compat* champ;
-    int cost;
     int staminaAfter;
     int hpDamage;
+
     if (!state) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
-    if (actionIndex >= 44) return 0;
     if (championIndex >= state->world.party.championCount) return 0;
+    if (cost <= 0) return 0;
     champ = &state->world.party.champions[championIndex];
     if (!champ->present || champ->hp.current == 0) return 0;
-
-    cost = (int)M11_ACTION_STAMINA_BASE[actionIndex] +
-           (int)((state->world.gameTick + (uint32_t)championIndex +
-                  (uint32_t)actionIndex) & 1u);
-    if (cost <= 0) return 0;
 
     staminaAfter = (int)champ->stamina.current - cost;
     if (staminaAfter <= 0) {
@@ -19762,6 +20549,341 @@ static int m11_apply_action_stamina_cost(M11_GameViewState* state,
         champ->stamina.current = (unsigned short)staminaAfter;
     }
     return cost;
+}
+
+static int m11_apply_action_stamina_cost(M11_GameViewState* state,
+                                         int championIndex,
+                                         unsigned char actionIndex) {
+    int base;
+    int cost;
+    if (!state) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (actionIndex >= 44) return 0;
+    if (championIndex >= state->world.party.championCount) return 0;
+
+    base = (int)M11_ACTION_STAMINA_BASE[actionIndex];
+    if (base <= 0) return 0;
+    cost = base + (int)((state->world.gameTick + (uint32_t)championIndex +
+                         (uint32_t)actionIndex) & 1u);
+    return m11_apply_champion_stamina_cost_f0325(state, championIndex, cost);
+}
+
+static int m11_dm1_thing_weapon_info(const M11_GameViewState* state,
+                                     unsigned short thing,
+                                     DM1_WeaponInfo* outInfo) {
+    int thingType;
+    int thingIndex;
+    int weaponType;
+    if (!state || !outInfo) return 0;
+    thingType = THING_GET_TYPE(thing);
+    if (thingType != THING_TYPE_WEAPON) return 0;
+    if (!state->world.things || !state->world.things->weapons) return 0;
+    thingIndex = THING_GET_INDEX(thing);
+    if (thingIndex < 0 || thingIndex >= state->world.things->weaponCount) return 0;
+    weaponType = (int)state->world.things->weapons[thingIndex].type;
+    return dm1_weapon_info_pc34(weaponType, outInfo) > 0;
+}
+
+static int m11_dm1_f0305_throwing_stamina_cost_from_weight(int objectWeight) {
+    int weight;
+    int cost;
+
+    weight = objectWeight >> 1;
+    if (weight < 1) cost = 1;
+    else if (weight > 10) cost = 10;
+    else cost = weight;
+
+    while ((weight -= 10) > 0) {
+        cost += weight >> 1;
+    }
+    return cost;
+}
+
+static int m11_dm1_f0328_throw_xp_for_thing(const M11_GameViewState* state,
+                                            unsigned short thing,
+                                            const DM1_WeaponInfo* info) {
+    int xp = 8;
+    DM1_WeaponInfo localInfo;
+    const DM1_WeaponInfo* weaponInfo = info;
+
+    if (THING_GET_TYPE(thing) != THING_TYPE_WEAPON) return xp;
+    if (!weaponInfo) {
+        if (!m11_dm1_thing_weapon_info(state, thing, &localInfo)) return xp + 4;
+        weaponInfo = &localInfo;
+    }
+    xp += 4;
+    if (weaponInfo->weaponClass <= 12) {
+        xp += weaponInfo->kineticEnergy >> 2;
+    }
+    return xp;
+}
+
+static void m11_dm1_award_throw_xp(M11_GameViewState* state,
+                                   int championIndex,
+                                   int experience) {
+    struct ChampionLifecycleState_Compat* lc;
+    int levelBefore = 0;
+    int levelAfter = 0;
+    int baseIdx;
+
+    if (!state) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    if (!state->world.party.champions[championIndex].present) return;
+    if (experience <= 0) return;
+
+    lc = &state->world.lifecycle.champions[championIndex];
+    if (F0849_LIFECYCLE_AddSkillExperience_Compat(
+            lc, LIFECYCLE_SKILL_THROW, experience,
+            state->world.party.mapIndex,
+            state->world.gameTick,
+            state->world.lifecycle.lastCreatureAttackTime,
+            &levelBefore, &levelAfter)) {
+        baseIdx = (LIFECYCLE_SKILL_THROW - LIFECYCLE_HIDDEN_SKILL_FIRST) >> 2;
+        if (baseIdx >= 0 && baseIdx < CHAMPION_SKILL_COUNT && levelAfter > 0) {
+            state->world.party.champions[championIndex].skillLevels[baseIdx] =
+                (unsigned short)levelAfter;
+        }
+    }
+}
+
+static void m11_award_action_xp_f0407(M11_GameViewState* state,
+                                      int championIndex,
+                                      unsigned char actionIndex,
+                                      int experience) {
+    DM1_ActionXpRoute route;
+    int levelBefore = 0;
+    int levelAfter = 0;
+    int baseIdx;
+
+    if (!state) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    if (championIndex >= state->world.party.championCount) return;
+    if (!state->world.party.champions[championIndex].present) return;
+    if (experience <= 0) return;
+    if (!dm1_v1_action_xp_route((int)actionIndex, &route) || !route.valid) {
+        return;
+    }
+    if (route.skillIndex < 0 || route.skillIndex >= LIFECYCLE_SKILL_COUNT) {
+        return;
+    }
+
+    /* ReDMCSB MENU.C F0407 lines 1254-1255 and 1623-1624 award the
+     * G0497 action XP to the G0496 skill through F0304 after the action
+     * switch, with callers adjusting experience before the common tail. */
+    if (F0849_LIFECYCLE_AddSkillExperience_Compat(
+            &state->world.lifecycle.champions[championIndex],
+            route.skillIndex, experience,
+            state->world.party.mapIndex,
+            state->world.gameTick,
+            state->world.lifecycle.lastCreatureAttackTime,
+            &levelBefore, &levelAfter)) {
+        baseIdx = route.baseSkillIndex;
+        if (baseIdx >= 0 && baseIdx < CHAMPION_SKILL_COUNT && levelAfter > 0) {
+            state->world.party.champions[championIndex].skillLevels[baseIdx] =
+                (unsigned short)levelAfter;
+        }
+    }
+}
+
+static int m11_dm1_f0328_throw_side(const M11_GameViewState* state,
+                                    const struct ChampionState_Compat* champ) {
+    int partyDir;
+    if (!state || !champ) return 0;
+    partyDir = state->world.party.direction & 3;
+    /* ReDMCSB MENU.C F0407 lines 1613-1615 passes side=TRUE when the
+     * champion cell is NEXT(partyDir) or OPPOSITE(partyDir). */
+    return ((int)champ->cell == ((partyDir + 1) & 3) ||
+            (int)champ->cell == ((partyDir + 2) & 3)) ? 1 : 0;
+}
+
+static int m11_dm1_f0312_action_hand_strength_for_throw(
+        M11_GameViewState* state,
+        int championIndex,
+        const struct ChampionState_Compat* champ,
+        const DM1_WeaponInfo* weaponInfo,
+        int hasWeaponInfo) {
+    int strength;
+    int objectWeight;
+    int oneSixteenthMaximumLoad;
+    int loadThreshold;
+    int maxLoad;
+    int halfMaximumStamina;
+    int halfStrength;
+
+    if (!state || !champ) return 0;
+
+    /* ReDMCSB CHAMPION.C F0312 lines 1237-1299: action-hand strength
+     * starts with RANDOM(16)+Strength, applies weight/load pressure,
+     * then weapon strength/class skill, stamina, wound, and final clamp. */
+    strength = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16) +
+        (int)champ->attributes[CHAMPION_ATTR_STRENGTH];
+    objectWeight = (hasWeaponInfo && weaponInfo) ? weaponInfo->weight : 0;
+    maxLoad = (int)champ->maxLoad;
+    if (maxLoad <= 0) {
+        maxLoad = ((int)champ->attributes[CHAMPION_ATTR_STRENGTH] << 3) + 100;
+    }
+    oneSixteenthMaximumLoad = maxLoad >> 4;
+    if (objectWeight <= oneSixteenthMaximumLoad) {
+        strength += objectWeight - 12;
+    } else {
+        loadThreshold = oneSixteenthMaximumLoad +
+            ((oneSixteenthMaximumLoad - 12) >> 1);
+        if (objectWeight <= loadThreshold) {
+            strength += (objectWeight - oneSixteenthMaximumLoad) >> 1;
+        } else {
+            strength -= (objectWeight - loadThreshold) << 1;
+        }
+    }
+
+    if (hasWeaponInfo && weaponInfo) {
+        strength += weaponInfo->strength;
+        strength += F0888_ORCH_GetChampionF0312SkillBonus_Compat(
+            &state->world, championIndex, weaponInfo->weaponClass) << 1;
+    }
+
+    halfMaximumStamina = (int)champ->stamina.maximum >> 1;
+    if (halfMaximumStamina > 0 &&
+        (int)champ->stamina.current < halfMaximumStamina) {
+        halfStrength = strength >> 1;
+        strength = halfStrength +
+            (int)(((long)halfStrength * (long)champ->stamina.current) /
+                  (long)halfMaximumStamina);
+    }
+    if ((champ->wounds & COMBAT_WOUND_ACTION_HAND) != 0) {
+        strength >>= 1;
+    }
+    strength >>= 1;
+    if (strength < 0) strength = 0;
+    if (strength > 100) strength = 100;
+    return strength;
+}
+
+static int m11_dm1_f0328_throw_kinetic_energy(M11_GameViewState* state,
+                                              int baseStrength,
+                                              int throwSkillLevel,
+                                              const DM1_WeaponInfo* weaponInfo,
+                                              int hasWeaponInfo) {
+    int weaponKineticEnergy = 1;
+    int kineticEnergy;
+    if (hasWeaponInfo && weaponInfo && weaponInfo->weaponClass <= 12) {
+        weaponKineticEnergy = weaponInfo->kineticEnergy;
+    }
+    kineticEnergy = baseStrength + weaponKineticEnergy;
+    return kineticEnergy +
+        F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 16) +
+        (kineticEnergy >> 1) + throwSkillLevel;
+}
+
+static int m11_dm1_f0328_throw_attack(M11_GameViewState* state,
+                                      int throwSkillLevel) {
+    int attack = (throwSkillLevel << 3) +
+        F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 32);
+    if (attack < 40) attack = 40;
+    if (attack > 200) attack = 200;
+    return attack;
+}
+
+static int m11_dm1_f0328_throw_step_energy(int throwSkillLevel) {
+    int stepEnergy = 11 - throwSkillLevel;
+    return stepEnergy < 5 ? 5 : stepEnergy;
+}
+
+static int m11_dm1_thrown_potion_projectile_shape(
+    const M11_GameViewState* state,
+    unsigned short thrownThing,
+    int* outSubtype,
+    int* outPotionPower) {
+    int potionIndex;
+    int potionType;
+    if (outSubtype) *outSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    if (outPotionPower) *outPotionPower = 0;
+    if (!state || !state->world.things || !state->world.things->potions) {
+        return 0;
+    }
+    if (thrownThing == THING_NONE || thrownThing == THING_ENDOFLIST) return 0;
+    if (THING_GET_TYPE(thrownThing) != THING_TYPE_POTION) return 0;
+    potionIndex = THING_GET_INDEX(thrownThing);
+    if (potionIndex < 0 || potionIndex >= state->world.things->potionCount) {
+        return 0;
+    }
+    potionType = (int)state->world.things->potions[potionIndex].type;
+    if (potionType == M11_POTION_VEN) {
+        if (outSubtype) *outSubtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
+    } else if (potionType == 19) { /* ReDMCSB C19_POTION_FUL_BOMB. */
+        if (outSubtype) *outSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+    } else {
+        return 0;
+    }
+    if (outPotionPower) {
+        *outPotionPower = (int)state->world.things->potions[potionIndex].power;
+    }
+    return 1;
+}
+
+static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
+                                            int championIndex,
+                                            struct ChampionState_Compat* champ,
+                                            unsigned short thrownThing,
+                                            int throwSide) {
+    DM1_WeaponInfo weaponInfo;
+    int hasWeaponInfo;
+    int skillThrow;
+    int staminaCost;
+    int throwExperience;
+    int throwStrength;
+    int throwKineticEnergy;
+    int throwAttack;
+    int throwStepEnergy;
+    int projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    int potionPower = 0;
+    int spawned;
+
+    if (!state || !champ) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (thrownThing == THING_NONE || thrownThing == THING_ENDOFLIST) return 0;
+
+    hasWeaponInfo = m11_dm1_thing_weapon_info(state, thrownThing, &weaponInfo);
+    staminaCost = hasWeaponInfo
+        ? m11_dm1_f0305_throwing_stamina_cost_from_weight(weaponInfo.weight)
+        : 1;
+    throwExperience = m11_dm1_f0328_throw_xp_for_thing(
+        state, thrownThing, hasWeaponInfo ? &weaponInfo : 0);
+    skillThrow = m11_dm1_throw_skill_level(state, championIndex);
+    throwStrength = m11_dm1_f0312_action_hand_strength_for_throw(
+        state, championIndex, champ,
+        hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo);
+    /* ReDMCSB CHAMPION.C F0328 lines 2181-2194: F0312 strength,
+     * F0303(THROW), object kinetic and bounded attack/step energy feed
+     * F0212_PROJECTILE_Create; accepted throws then apply F0305 stamina,
+     * F0304 Throw XP and the four-tick projectile movement lockout. */
+    throwKineticEnergy = m11_dm1_f0328_throw_kinetic_energy(
+        state, throwStrength, skillThrow,
+        hasWeaponInfo ? &weaponInfo : 0, hasWeaponInfo);
+    throwAttack = m11_dm1_f0328_throw_attack(state, skillThrow);
+    throwStepEnergy = m11_dm1_f0328_throw_step_energy(skillThrow);
+    (void)m11_dm1_thrown_potion_projectile_shape(
+        state, thrownThing, &projectileSubtype, &potionPower);
+    spawned = m11_spawn_action_projectile_ex(
+        state, championIndex,
+        projectileSubtype,
+        PROJECTILE_CATEGORY_KINETIC,
+        throwKineticEnergy, throwAttack,
+        COMBAT_ATTACK_NORMAL,
+        (state->world.party.direction + (throwSide & 1)) & 3,
+        state->world.party.direction,
+        throwStepEnergy,
+        throwAttack,
+        thrownThing,
+        potionPower);
+    if (!spawned) return 0;
+
+    (void)m11_apply_champion_stamina_cost_f0325(state, championIndex,
+                                                staminaCost);
+    m11_dm1_award_throw_xp(state, championIndex, throwExperience);
+    state->world.projectileDisabledMovementTicks = 4;
+    state->world.lastProjectileDisabledMovementDirection =
+        state->world.party.direction;
+    return 1;
 }
 
 /* Bounded non-melee action effects for the V1 slice.
@@ -19828,13 +20950,26 @@ static int m11_spawn_action_projectile_ex(M11_GameViewState* state,
                                           int attackTypeCode,
                                           int launchCell,
                                           int launchDirection,
-                                          int stepEnergy) {
+                                          int stepEnergy,
+                                          int launcherStrength,
+                                          unsigned short carriedThing,
+                                          int potionPower) {
     struct ProjectileCreateInput_Compat input;
     struct TimelineEvent_Compat firstMove;
     int slot = -1;
+    int direction;
+    int cell;
     if (!state) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (championIndex >= state->world.party.championCount) return 0;
     memset(&input, 0, sizeof(input));
+    direction = launchDirection >= 0 ? (launchDirection & 3)
+                                     : (state->world.party.direction & 3);
+    cell = launchCell >= 0
+               ? (launchCell & 3)
+               : m11_dm1_projectile_launch_cell(
+                     state->world.party.champions[championIndex].cell,
+                     direction);
     input.category           = category;
     input.subtype            = subtype;
     input.ownerKind          = PROJECTILE_OWNER_CHAMPION;
@@ -19842,17 +20977,22 @@ static int m11_spawn_action_projectile_ex(M11_GameViewState* state,
     input.mapIndex           = state->world.party.mapIndex;
     input.mapX               = state->world.party.mapX;
     input.mapY               = state->world.party.mapY;
-    input.cell               = launchCell >= 0 ? (launchCell & 3) : (championIndex & 3);
-    input.direction          = launchDirection >= 0 ? (launchDirection & 3) : (state->world.party.direction & 3);
+    input.cell               = cell;
+    input.direction          = direction;
     input.kineticEnergy      = kineticEnergy;
     input.attack             = impactAttack;
+    input.launcherStrength   = launcherStrength;
     input.stepEnergy         = stepEnergy > 0 ? stepEnergy : 1;
     input.currentTick        = (int)state->world.gameTick;
     input.poisonAttack       = (subtype == PROJECTILE_SUBTYPE_POISON_BOLT ||
                                 subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
-                               ? impactAttack : 0;
+                               ? (potionPower > 0 ? potionPower : impactAttack)
+                               : 0;
     input.attackTypeCode     = attackTypeCode;
-    input.potionPower        = 0;
+    input.potionPower        = potionPower;
+    input.associatedThing    = (carriedThing != THING_NONE &&
+                                carriedThing != THING_ENDOFLIST)
+                               ? (int)carriedThing : (int)THING_NONE;
     input.firstMoveGraceFlag = 1;
     memset(&firstMove, 0, sizeof(firstMove));
     if (!F0810_PROJECTILE_Create_Compat(&input, &state->world.projectiles,
@@ -19877,7 +21017,8 @@ static int m11_spawn_action_projectile(M11_GameViewState* state,
     return m11_spawn_action_projectile_ex(state, championIndex, subtype,
                                           category, kineticEnergy,
                                           impactAttack, attackTypeCode,
-                                          -1, -1, 1);
+                                          -1, -1, 1, impactAttack,
+                                          THING_NONE, 0);
 }
 
 static const M11_DM1WeaponInfo* m11_dm1_weapon_info_for_thing(
@@ -19973,14 +21114,55 @@ static int m11_dm1_projectile_launch_cell(int championCell,
 
 static int m11_dm1_shoot_skill_level(const M11_GameViewState* state,
                                      int championIndex) {
-    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
-    return F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-        &state->world.lifecycle.champions[championIndex],
-        LIFECYCLE_SKILL_SHOOT, 0);
+    int skillLevel = M11_GameView_GetSkillLevel(
+        state, championIndex, DM1_SKILL_IDX_SHOOT);
+    return skillLevel < 0 ? 0 : skillLevel;
 }
 
-/* Compute projectile-spell kinetic/attack parameters for the
- * action-menu projectile rows, mirroring F0407's per-case values.
+static int m11_dm1_f0407_shoot_attack(int weaponShootAttack,
+                                      int shootSkillLevel) {
+    int attack = (weaponShootAttack + shootSkillLevel) << 1;
+    return attack > 255 ? 255 : attack;
+}
+
+int M11_GameView_ProbeF0407ShootAttack(
+    const M11_GameViewState* state,
+    int championIndex,
+    int weaponShootAttack) {
+    /* ReDMCSB: MENU.C F0407 line 1395:
+     * (M065_SHOOT_ATTACK + F0303(SHOOT)) << 1. */
+    return m11_dm1_f0407_shoot_attack(
+        weaponShootAttack,
+        m11_dm1_shoot_skill_level(state, championIndex));
+}
+
+static int m11_dm1_throw_skill_level(const M11_GameViewState* state,
+                                     int championIndex) {
+    int skillLevel = M11_GameView_GetSkillLevel(
+        state, championIndex, DM1_SKILL_IDX_THROW);
+    return skillLevel < 0 ? 0 : skillLevel;
+}
+
+static int m11_dm1_f0328_throw_attack_probe_legacy(int baseAttack,
+                                                  int throwSkillLevel) {
+    int attack = (baseAttack + throwSkillLevel) << 1;
+    return attack > 255 ? 255 : attack;
+}
+
+int M11_GameView_ProbeF0328ThrowAttack(
+    const M11_GameViewState* state,
+    int championIndex,
+    int baseAttack) {
+    /* Legacy pure probe: keep the old no-RNG contract for callers that only
+     * verify the F0303(THROW) skill contribution.  The live THROW path uses
+     * m11_dm1_f0328_throw_attack() and consumes runtime RNG. */
+    return m11_dm1_f0328_throw_attack_probe_legacy(
+        baseAttack,
+        m11_dm1_throw_skill_level(state, championIndex));
+}
+
+/* Compute projectile-spell parameters for the action-menu projectile
+ * rows, mirroring F0407's per-case values and F0327's create path.
  *
  * F0407 layout (core amalgam lines ~9535..9555):
  *   LIGHTNING: kineticEnergy=180, explosion=LIGHTNING_BOLT
@@ -19988,25 +21170,39 @@ static int m11_dm1_shoot_skill_level(const M11_GameViewState* state,
  *   FIREBALL:  kineticEnergy=150, explosion=FIREBALL
  *   SPIT:      kineticEnergy=250, explosion=FIREBALL
  *
- * Impact attack in the original comes from F0026-bounded
- *   (powerOrdinal+2) * (4 + (skill<<1))
- * with powerOrdinal treated as 3 (mid-power) for action rows.
- * For V1 we substitute the wizard skill level via lifecycle
- * lookup — same arithmetic as F0756. */
-static int m11_action_projectile_impact_attack(const M11_GameViewState* state,
-                                               int championIndex) {
-    int skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
-                                                CHAMPION_SKILL_WIZARD);
-    int raw;
-    if (skillLevel < 0) skillLevel = 0;
-    /* powerOrdinal=3 approximates the "medium" cast strength that
-     * DM1 action-menu projectile rows land with a default power
-     * rune (ordinal 3 = Um/Ro).  The +2 offset and <<1 match
-     * F0756 / F0026 exactly. */
-    raw = (3 + 2) * (4 + (skillLevel << 1));
-    if (raw < 21)  raw = 21;
-    if (raw > 255) raw = 255;
-    return raw;
+ * Skill comes from G0496 for required mana. F0327 then launches
+ * these action projectiles with attack 90 and step-energy derived
+ * from MaximumMana. Spell-panel casts use the separate F0756 path. */
+static int m11_action_projectile_skill_index(unsigned char actionIndex) {
+    switch (actionIndex) {
+        case 20: /* FIREBALL */
+        case 40: /* SPIT */
+            return DM1_SKILL_IDX_FIRE;
+        case 21: /* DISPELL */
+        case 23: /* LIGHTNING */
+            return DM1_SKILL_IDX_AIR;
+        default:
+            return DM1_SKILL_IDX_WIZARD;
+    }
+}
+
+static int m11_f0327_projectile_step_energy(const struct ChampionState_Compat* champ,
+                                            int* inOutKineticEnergy) {
+    int stepEnergy;
+    if (!champ || !inOutKineticEnergy) return 1;
+    /* ReDMCSB CHAMPION.C F0327 lines 2097-2102:
+     * StepEnergy = 10 - min(8, MaximumMana >> 3), with a small
+     * kinetic bump when the projectile would be too slow. */
+    stepEnergy = 10 - (((int)champ->mana.maximum >> 3) > 8
+                           ? 8
+                           : ((int)champ->mana.maximum >> 3));
+    if (stepEnergy < 1) stepEnergy = 1;
+    if (*inOutKineticEnergy < (stepEnergy << 2)) {
+        *inOutKineticEnergy += 3;
+        stepEnergy--;
+        if (stepEnergy < 1) stepEnergy = 1;
+    }
+    return stepEnergy;
 }
 
 
@@ -20201,19 +21397,240 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
     return 1;
 }
 
+static int m11_f0401_fright_amount_for_action(unsigned char actionIndex,
+                                              int* outExperience) {
+    if (outExperience) *outExperience = 0;
+    switch (actionIndex) {
+        case 8:  if (outExperience) *outExperience = 12; return 3;
+        case 37: if (outExperience) *outExperience = 35; return 7;
+        case 41: if (outExperience) *outExperience = 30; return 6;
+        case 4:  if (outExperience) *outExperience = 20; return 6;
+        case 22: if (outExperience) *outExperience = 45; return 12;
+        default: return 0;
+    }
+}
+
+static void m11_decrement_action_hand_charges_f0405(M11_GameViewState* state,
+                                                    int championIndex) {
+    struct ChampionState_Compat* champion;
+    unsigned short thing;
+    int thingType;
+    int thingIndex;
+
+    if (!state || !state->world.things) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    champion = &state->world.party.champions[championIndex];
+    thing = champion->inventory[CHAMPION_SLOT_ACTION_HAND];
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return;
+
+    thingType = (int)THING_GET_TYPE(thing);
+    thingIndex = (int)THING_GET_INDEX(thing);
+    /* ReDMCSB MENU.C F0405 lines 1143-1181: decrement ChargeCount on the
+     * action-hand weapon, armour, or junk object when the count is non-zero. */
+    if (thingType == THING_TYPE_WEAPON) {
+        if (state->world.things->weapons &&
+            thingIndex >= 0 && thingIndex < state->world.things->weaponCount &&
+            state->world.things->weapons[thingIndex].chargeCount > 0) {
+            state->world.things->weapons[thingIndex].chargeCount--;
+        }
+    } else if (thingType == THING_TYPE_ARMOUR) {
+        if (state->world.things->armours &&
+            thingIndex >= 0 && thingIndex < state->world.things->armourCount &&
+            state->world.things->armours[thingIndex].chargeCount > 0) {
+            state->world.things->armours[thingIndex].chargeCount--;
+        }
+    } else if (thingType == THING_TYPE_JUNK) {
+        if (state->world.things->junks &&
+            thingIndex >= 0 && thingIndex < state->world.things->junkCount &&
+            state->world.things->junks[thingIndex].chargeCount > 0) {
+            state->world.things->junks[thingIndex].chargeCount--;
+        }
+    }
+}
+
+static int m11_apply_party_shield_f0403(M11_GameViewState* state,
+                                        int championIndex,
+                                        int spellShield,
+                                        int ticks,
+                                        int useMana) {
+    struct ChampionState_Compat* champion;
+    struct TimelineEvent_Compat expiryEvent;
+    int successful = 1;
+    int defense;
+
+    if (!state) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (championIndex >= state->world.party.championCount) return 0;
+    champion = &state->world.party.champions[championIndex];
+    if (!champion->present) return 0;
+
+    if (useMana) {
+        if (champion->mana.current == 0) {
+            return 0;
+        }
+        if (champion->mana.current < 4) {
+            ticks >>= 1;
+            champion->mana.current = 0;
+            successful = 0;
+        } else {
+            champion->mana.current =
+                (unsigned short)(champion->mana.current - 4);
+        }
+    }
+
+    defense = ticks >> 5;
+    if (spellShield) {
+        if (state->world.magic.spellShieldDefense > 50) {
+            defense >>= 2;
+        }
+        state->world.magic.spellShieldDefense += defense;
+    } else {
+        if (state->world.magic.fireShieldDefense > 50) {
+            defense >>= 2;
+        }
+        state->world.magic.fireShieldDefense += defense;
+    }
+    memset(&expiryEvent, 0, sizeof(expiryEvent));
+    expiryEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+    expiryEvent.fireAtTick = state->world.gameTick + (uint32_t)ticks;
+    expiryEvent.mapIndex = state->world.party.mapIndex;
+    expiryEvent.mapX = state->world.party.mapX;
+    expiryEvent.mapY = state->world.party.mapY;
+    expiryEvent.cell = -1;
+    expiryEvent.aux0 = spellShield
+        ? LIFECYCLE_STATUS_SPELL_SHIELD
+        : LIFECYCLE_STATUS_FIRE_SHIELD;
+    expiryEvent.aux1 = defense;
+    expiryEvent.aux2 = championIndex;
+    /* ReDMCSB MENU.C F0403 lines 1099-1115 stores the shield defense in
+     * the event and schedules C77/C78 at GameTime + adjusted ticks; the
+     * TIMELINE.C C77/C78 handler later subtracts the same defense value. */
+    (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &expiryEvent);
+    return successful;
+}
+
+static int m11_add_influence_experience(M11_GameViewState* state,
+                                        int championIndex,
+                                        int experience) {
+    struct ChampionLifecycleState_Compat* lifecycleChampion;
+    struct LevelUpMarker_Compat marker;
+    int mapDifficulty = 0;
+    int priestLevel;
+    if (!state || championIndex < 0 ||
+        championIndex >= CHAMPION_MAX_PARTY || experience <= 0) {
+        return 0;
+    }
+    lifecycleChampion = &state->world.lifecycle.champions[championIndex];
+    memset(&marker, 0, sizeof(marker));
+    if (state->world.dungeon && state->world.dungeon->maps &&
+        state->world.party.mapIndex >= 0 &&
+        state->world.party.mapIndex < state->world.dungeon->header.mapCount) {
+        mapDifficulty =
+            (int)state->world.dungeon->maps[state->world.party.mapIndex].difficulty;
+    }
+    /* ReDMCSB MENU.C F0401 line 987 calls CHAMPION.C F0304 with
+     * C14_SKILL_INFLUENCE.  Use the lifecycle F0304 wrapper so the award
+     * also updates temporary XP, the Priest base skill and level-up state. */
+    if (F0852_LIFECYCLE_AwardMagicXP_Compat(
+            lifecycleChampion, championIndex, LIFECYCLE_SKILL_INFLUENCE,
+            experience, mapDifficulty, state->world.gameTick,
+            state->world.lifecycle.lastCreatureAttackTime,
+            &state->world.masterRng, &marker)) {
+        priestLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+            lifecycleChampion, LIFECYCLE_SKILL_PRIEST, 0);
+        if (priestLevel > 0) {
+            state->world.party.champions[championIndex]
+                .skillLevels[LIFECYCLE_SKILL_PRIEST] = (unsigned short)priestLevel;
+        }
+    }
+    return 1;
+}
+
+static int m11_perform_f0401_frighten_action(M11_GameViewState* state,
+                                             int championIndex,
+                                             unsigned char actionIndex) {
+    int mapIndex, mapX, mapY;
+    unsigned short groupThing;
+    int groupIndex;
+    struct DungeonGroup_Compat* group;
+    const struct CreatureBehaviorProfile_Compat* profile;
+    int experience = 0;
+    int frightAmount;
+    int influenceLevel;
+    int fearResistance;
+    int resisted = 0;
+    int activeIndex = -1;
+
+    if (!state || !state->world.things || !state->world.things->groups) return 0;
+    if (!m11_party_front_square(state, &mapIndex, &mapX, &mapY)) return 0;
+
+    groupThing = m11_find_group_on_square(&state->world, mapIndex, mapX, mapY);
+    if (groupThing == THING_NONE || groupThing == THING_ENDOFLIST) {
+        activeIndex = m11_find_creature_ai_on_square(state, mapIndex, mapX, mapY);
+        if (activeIndex < 0) return 0;
+        groupIndex = state->world.creatureAI[activeIndex].reserved0;
+    } else {
+        groupIndex = THING_GET_INDEX(groupThing);
+    }
+    if (groupIndex < 0 || groupIndex >= state->world.things->groupCount) {
+        return 0;
+    }
+
+    group = &state->world.things->groups[groupIndex];
+    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    if (!profile) return 0;
+
+    /* ReDMCSB MENU.C F0401 lines 943-989: action-specific fright amount
+     * plus F0303(INFLUENCE), resistance/immune halves XP, success switches
+     * the group to FLEE and sets DelayFleeingFromTarget. */
+    frightAmount = m11_f0401_fright_amount_for_action(actionIndex, &experience);
+    influenceLevel = M11_GameView_GetSkillLevel(
+        state, championIndex, DM1_SKILL_IDX_INFLUENCE);
+    if (influenceLevel < 0) influenceLevel = 0;
+    frightAmount += influenceLevel;
+    fearResistance = DM1_FEAR_RESISTANCE(profile->properties);
+
+    if (fearResistance == DM1_IMMUNE_TO_FEAR) {
+        resisted = 1;
+    } else {
+        int roll = F0732_COMBAT_RngRandom_Compat(
+            &state->world.masterRng, frightAmount > 0 ? frightAmount : 1);
+        resisted = fearResistance > roll;
+    }
+
+    if (resisted) {
+        experience >>= 1;
+        (void)m11_add_influence_experience(state, championIndex, experience);
+        return 0;
+    }
+
+    group->behavior = DM1_BEHAVIOR_FLEE;
+    if (activeIndex < 0) {
+        activeIndex = m11_find_creature_ai_on_square(state, mapIndex, mapX, mapY);
+    }
+    if (activeIndex >= 0) {
+        int movementTicks = profile->movementTicks > 0 ? profile->movementTicks : 1;
+        state->world.creatureAI[activeIndex].stateKind = AI_STATE_FLEE;
+        state->world.creatureAI[activeIndex].fearCounter =
+            ((16 - fearResistance) << 2) / movementTicks;
+    }
+    (void)m11_add_influence_experience(state, championIndex, experience);
+    return 1;
+}
+
 /* ---------------------------------------------------------------
  * V1 projectile tick advance — drives F0811 per live projectile.
  *
- * M10 ships F0811_PROJECTILE_Advance_Compat (mirror of
- * F0219_PROJECTILE_ProcessEvents48To49) fully implemented and
- * verified by the M10 projectile probe: cell flip, cross-cell
- * step, kinetic/energy decay, wall / door / boundary / fluxcage
- * hit classification, impact-attack computation, explosion spawn
- * on magical hit, and next-move rescheduling.  The V1 orchestrator
- * dispatcher (F0887) currently pops TIMELINE_EVENT_PROJECTILE_MOVE
- * as a no-op — M10 policy forbids editing that dispatch — so the
- * per-tick advance has to be driven from the V1 game-view layer
- * itself, which is what this function does.
+     * M10 ships F0811_PROJECTILE_Advance_Compat (mirror of
+     * F0219_PROJECTILE_ProcessEvents48To49) fully implemented and
+     * verified by the M10 projectile probe: cell flip, cross-cell
+     * step, kinetic/energy decay, wall / door / boundary / fluxcage
+     * hit classification, impact-attack computation, explosion spawn
+     * on magical hit, and next-move rescheduling.  The M10 timeline
+     * dispatcher can now advance/reschedule the core flight path, while
+     * this V1 game-view layer still owns runtime side effects that need
+     * M11 state: audio/log cues, explosion insertion for rendering,
+     * champion/group mutation handoffs, and thrown-object cleanup.
  *
  * Each active projectile is advanced once per game tick as long
  * as its `scheduledAtTick` has arrived.  The function builds a
@@ -20226,8 +21643,10 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
  * and emits DM1-style log cues so the player sees the cast through
  * to its recognisable conclusion instead of only the first frame.
  *
- * M10 functions are CALLED here, never edited; the M10 orchestrator
- * dispatch path (F0887) and M10 per-tick behaviour remain untouched.
+     * M10 functions are CALLED here and share the same F0811 source
+     * core as the orchestrator dispatcher; this function keeps the
+     * M11-visible side effects in one place until those handoffs are
+     * source-locked in M10 individually.
  *
  * Ref: ReDMCSB PROJEXPL.C F0219_PROJECTILE_ProcessEvents48To49
  *      (per-tick advance), F0220_EXPLOSION_ProcessEvent25 (per-
@@ -20534,6 +21953,303 @@ static void m11_schedule_open_door_spell_toggle(
     (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &animEvent);
 }
 
+static void m11_schedule_projectile_door_destruction(
+    M11_GameViewState* state,
+    const struct ProjectileTickResult_Compat* r) {
+    if (!state || !r || !r->emittedDoorDestructionEvent) {
+        return;
+    }
+    if (r->outNextTick.kind != TIMELINE_EVENT_DOOR_DESTRUCTION) {
+        return;
+    }
+    /* ReDMCSB PROJEXPL.C F0217 lines 506-507 routes blocking door hits
+     * through F0232; Firestaff F0819 has already built the source-shaped
+     * C02/TIMELINE_EVENT_DOOR_DESTRUCTION event, so M11 only enqueues it
+     * for the normal F0887 timeline dispatcher to set door state C5. */
+    (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline,
+                                         &r->outNextTick);
+}
+
+static int m11_weapon_type_is_thrown_sharp_kept_by_creature(int weaponType) {
+    return weaponType == 8   ||  /* C08_WEAPON_DAGGER */
+           weaponType == 27  ||  /* C27_WEAPON_ARROW */
+           weaponType == 28  ||  /* C28_WEAPON_SLAYER */
+           weaponType == 31  ||  /* C31_WEAPON_POISON_DART */
+           weaponType == 32;     /* C32_WEAPON_THROWING_STAR */
+}
+
+static int m11_maybe_attach_thrown_sharp_weapon_to_group(
+    M11_GameViewState* state,
+    struct DungeonGroup_Compat* group,
+    const struct ProjectileInstance_Compat* projectile,
+    int damageOutcome) {
+    unsigned short associatedThing;
+    int weaponIndex;
+    int weaponType;
+    const struct CreatureBehaviorProfile_Compat* profile;
+    if (!state || !group || !projectile || !state->world.things) return 0;
+    if (damageOutcome != COMBAT_OUTCOME_KILLED_NO_CREATURES) return 0;
+    if (projectile->projectileCategory != PROJECTILE_CATEGORY_KINETIC) return 0;
+
+    associatedThing = (unsigned short)projectile->reserved1;
+    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) return 0;
+    if (THING_GET_TYPE(associatedThing) != THING_TYPE_WEAPON) return 0;
+
+    profile = CREATURE_GetProfile_Compat((int)group->creatureType);
+    if (!profile ||
+            ((profile->attributes
+              & CREATURE_ATTR_MASK_KEEP_THROWN_SHARP_WEAPONS) == 0)) {
+        return 0;
+    }
+
+    weaponIndex = THING_GET_INDEX(associatedThing);
+    if (!state->world.things->weapons ||
+            weaponIndex < 0 ||
+            weaponIndex >= state->world.things->weaponCount) {
+        return 0;
+    }
+    weaponType = (int)state->world.things->weapons[weaponIndex].type;
+    if (!m11_weapon_type_is_thrown_sharp_kept_by_creature(weaponType)) {
+        return 0;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0217 lines 540-553 selects GROUP.Slot as the
+     * projectile-delete target for surviving creatures with
+     * KEEP_THROWN_SHARP_WEAPONS.  M11 has no separate projectile thing
+     * list for thrown object ownership, so prepend the associated weapon
+     * Thing to the group's possession chain directly. */
+    m11_set_object_drop_next(state->world.things, associatedThing, group->slot);
+    group->slot = associatedThing;
+    return 1;
+}
+
+static int m11_maybe_consume_thrown_potion_on_impact(
+    M11_GameViewState* state,
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result) {
+    unsigned short associatedThing;
+    int potionIndex;
+    if (!state || !projectile || !result || !state->world.things) return 0;
+    if (!result->despawn) return 0;
+    if ((projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT) == 0) {
+        return 0;
+    }
+    associatedThing = (unsigned short)projectile->reserved1;
+    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) {
+        return 0;
+    }
+    if (THING_GET_TYPE(associatedThing) != THING_TYPE_POTION) return 0;
+    potionIndex = THING_GET_INDEX(associatedThing);
+    if (!state->world.things->potions ||
+        potionIndex < 0 ||
+        potionIndex >= state->world.things->potionCount) {
+        return 0;
+    }
+    /* ReDMCSB PROJEXPL.C F0217 lines 444-455 records thrown Ven/Ful
+     * potions as RemovePotion impacts.  The impact deletes the projectile
+     * thing, so the associated potion object must leave any live object
+     * chain instead of remaining recoverable after the explosion. */
+    m11_set_object_drop_next(state->world.things, associatedThing, THING_NONE);
+    return 1;
+}
+
+static int m11_maybe_heal_black_flame_from_fireball(
+    M11_GameViewState* state,
+    const struct ProjectileInstance_Compat* projectile,
+    const struct ProjectileTickResult_Compat* result)
+{
+    int impactMap;
+    int impactX;
+    int impactY;
+    unsigned short groupThing;
+    int groupIndex;
+    struct DungeonGroup_Compat* group;
+    int slotIndex;
+    int healed;
+    if (!state || !projectile || !result || !state->world.things) return 0;
+    if (result->resultKind != PROJECTILE_RESULT_HIT_CREATURE ||
+        !result->emittedCombatAction) {
+        return 0;
+    }
+    if (projectile->projectileSubtype != PROJECTILE_SUBTYPE_FIREBALL) return 0;
+
+    impactMap = result->newMapIndex;
+    impactX = result->newMapX;
+    impactY = result->newMapY;
+    groupThing = m11_find_group_on_square(&state->world, impactMap,
+                                          impactX, impactY);
+    if (groupThing == THING_NONE || groupThing == THING_ENDOFLIST) return 0;
+    groupIndex = THING_GET_INDEX(groupThing);
+    if (groupIndex < 0 || groupIndex >= state->world.things->groupCount) {
+        return 0;
+    }
+    group = &state->world.things->groups[groupIndex];
+    if (group->creatureType != CREATURE_TYPE_BLACK_FLAME) return 0;
+
+    slotIndex = result->outAction.defenderSlotOrCreatureIndex;
+    if (slotIndex < 0 || slotIndex >= 4 || group->health[slotIndex] <= 0) {
+        for (slotIndex = 0; slotIndex < 4; ++slotIndex) {
+            if (group->health[slotIndex] > 0) break;
+        }
+        if (slotIndex >= 4) return 0;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0217 lines 529-531 heals Black Flame on
+     * fireball impact up to 1000 HP, then jumps directly to projectile
+     * deletion before normal damage/explosion handling. */
+    healed = (int)group->health[slotIndex] + result->outAction.rawAttackValue;
+    if (healed > 1000) healed = 1000;
+    group->health[slotIndex] = (unsigned short)healed;
+    m11_log_event(state, M11_COLOR_ORANGE,
+                  "T%u: FIREBALL FEEDS %s",
+                  (unsigned int)state->world.gameTick,
+                  m11_creature_name((int)group->creatureType));
+    return 1;
+}
+
+static int m11_dm1_behavior_from_ai_state(int stateKind)
+{
+    switch (stateKind) {
+        case AI_STATE_ATTACK: return DM1_BEHAVIOR_ATTACK;
+        case AI_STATE_FLEE: return DM1_BEHAVIOR_FLEE;
+        case AI_STATE_APPROACH: return DM1_BEHAVIOR_APPROACH;
+        case AI_STATE_IDLE:
+        case AI_STATE_WANDER:
+        default:
+            return DM1_BEHAVIOR_WANDER;
+    }
+}
+
+static void m11_schedule_projectile_hit_creature_reaction(
+    M11_GameViewState* state,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int aiIndex;
+    int ticksSinceLastMove = 0;
+    const struct CreatureBehaviorProfile_Compat* profile;
+    struct DM1GroupBehaviorContext_Compat ctx;
+    struct DM1ActiveGroup_Compat activeGroup;
+    struct DM1BehaviorResult_Compat behavior;
+    struct TimelineEvent_Compat reaction;
+    if (!state || !group || groupIndex < 0) return;
+
+    memset(&ctx, 0, sizeof(ctx));
+    memset(&activeGroup, 0, sizeof(activeGroup));
+    memset(&behavior, 0, sizeof(behavior));
+
+    aiIndex = m11_find_creature_ai_on_square(state, mapIndex, mapX, mapY);
+    profile = CREATURE_GetProfile_Compat((int)group->creatureType);
+    ctx.currentMapIndex = mapIndex;
+    ctx.currentGroupMapX = mapX;
+    ctx.currentGroupMapY = mapY;
+    ctx.partyMapIndex = state->world.party.mapIndex;
+    ctx.partyMapX = state->world.party.mapX;
+    ctx.partyMapY = state->world.party.mapY;
+    ctx.partyChampionCount = state->world.party.championCount;
+    ctx.creatureType = (int)group->creatureType;
+    ctx.groupBehavior = (aiIndex >= 0)
+        ? m11_dm1_behavior_from_ai_state(state->world.creatureAI[aiIndex].stateKind)
+        : (int)group->behavior;
+    ctx.creatureCount = group->count;
+    ctx.movementTicks = profile ? profile->movementTicks : 1;
+    if (ctx.movementTicks < 1) ctx.movementTicks = 1;
+    if (aiIndex >= 0 && state->world.creatureAI[aiIndex].lastSeenPartyTick >= 0) {
+        ticksSinceLastMove = (int)state->world.gameTick -
+            state->world.creatureAI[aiIndex].lastSeenPartyTick;
+        if (ticksSinceLastMove < 0) ticksSinceLastMove = 0;
+    }
+    ctx.ticksSinceLastMove = ticksSinceLastMove;
+    ctx.currentTickLow = (int)state->world.gameTick;
+    ctx.eventType = DM1_CM2_REACTION_HIT_BY_PROJECTILE;
+    ctx.eventTicks = (int)state->world.gameTick;
+
+    activeGroup.groupThingIndex = groupIndex;
+    activeGroup.cells = group->cells;
+    activeGroup.directions = group->direction;
+    activeGroup.lastMoveTime = (aiIndex >= 0)
+        ? state->world.creatureAI[aiIndex].lastSeenPartyTick : 0;
+    activeGroup.priorMapX = mapX;
+    activeGroup.priorMapY = mapY;
+
+    if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
+            &ctx, &activeGroup, &state->world.masterRng, &behavior)) {
+        return;
+    }
+    if (behavior.nextEventDelayTicks <= 0 || behavior.nextEventType <= 0) {
+        return;
+    }
+
+    memset(&reaction, 0, sizeof(reaction));
+    reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    reaction.fireAtTick = state->world.gameTick +
+        (uint32_t)behavior.nextEventDelayTicks;
+    reaction.mapIndex = mapIndex;
+    reaction.mapX = mapX;
+    reaction.mapY = mapY;
+    reaction.aux0 = groupIndex;
+    reaction.aux1 = (int)group->creatureType;
+    reaction.aux2 = behavior.nextEventType;
+    (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &reaction);
+}
+
+static int m11_maybe_apply_projectile_poison_to_champion(
+    M11_GameViewState* state,
+    int championIndex,
+    struct ChampionState_Compat* champion,
+    const struct ProjectileInstance_Compat* projectile,
+    int appliedDamage) {
+    unsigned int dose;
+    int poisonDamage;
+    int nextAttack;
+    struct TimelineEvent_Compat poisonEvent;
+    if (!state || !champion || !projectile) return 0;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    if (appliedDamage <= 0 || projectile->poisonAttack <= 0) return 0;
+    /* ReDMCSB PROJEXPL.C F0217 lines 557-558 gates projectile poison
+     * through F0322 only when the champion-damage call applied damage,
+     * the projectile carries poison, and RANDOM(2) passes.  CHAMPION.C
+     * F0322 lines 1949-1960 applies immediate max(1, attack >> 6)
+     * damage, then schedules C75 with attack-1 after 36 ticks. */
+    if (F0732_COMBAT_RngRandom_Compat(&state->world.masterRng, 2) == 0) {
+        return 0;
+    }
+    poisonDamage = projectile->poisonAttack >> 6;
+    if (poisonDamage < 1) poisonDamage = 1;
+    if (poisonDamage > (int)champion->hp.current) {
+        poisonDamage = (int)champion->hp.current;
+    }
+    champion->hp.current = (unsigned short)((int)champion->hp.current - poisonDamage);
+
+    dose = (unsigned int)champion->poisonDose +
+           (unsigned int)projectile->poisonAttack;
+    if (dose > 0xFFFFu) dose = 0xFFFFu;
+    champion->poisonDose = (unsigned short)dose;
+
+    nextAttack = projectile->poisonAttack - 1;
+    if (nextAttack > 0) {
+        memset(&poisonEvent, 0, sizeof(poisonEvent));
+        poisonEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+        poisonEvent.fireAtTick = state->world.gameTick + 36u;
+        poisonEvent.mapIndex = state->world.partyMapIndex;
+        poisonEvent.mapX = state->world.party.mapX;
+        poisonEvent.mapY = state->world.party.mapY;
+        poisonEvent.aux0 = LIFECYCLE_STATUS_POISON;
+        poisonEvent.aux1 = nextAttack;
+        poisonEvent.aux4 = championIndex;
+        (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline,
+                                             &poisonEvent);
+        if (state->world.lifecycle.champions[championIndex].poisonEventCount
+                < 255) {
+            state->world.lifecycle.champions[championIndex].poisonEventCount++;
+        }
+    }
+    return 1;
+}
+
 /* Apply bounded V1 impact side-effects: explosion spawn, creature
  * damage, champion damage, and DM1-style log cue.  Designed to
  * touch only data the M10 layer already owns (world.explosions via
@@ -20550,6 +22266,11 @@ static void m11_projectile_apply_impact(
                                     M11_Audio_FallbackMarkerForSoundIndex(sourceSoundIndex));
     }
     m11_schedule_open_door_spell_toggle(state, r);
+    m11_schedule_projectile_door_destruction(state, r);
+    (void)m11_maybe_consume_thrown_potion_on_impact(state, p, r);
+    if (m11_maybe_heal_black_flame_from_fireball(state, p, r)) {
+        return;
+    }
 
     /* Explosion spawn — magical hits on fireball / lightning /
      * harm-non-material / poison-* subtypes.  F0820 populated
@@ -20587,10 +22308,14 @@ static void m11_projectile_apply_impact(
      * and is not modified here. */
     if (r->resultKind == PROJECTILE_RESULT_HIT_CREATURE
             && r->emittedCombatAction) {
+        int impactMap = r->newMapIndex;
+        int impactX = r->newMapX;
+        int impactY = r->newMapY;
+        /* ReDMCSB PROJEXPL.C F0219 lines 687-697 and 717-743 carry
+         * real projectile target coordinates through the event; (0,0)
+         * is a valid map cell, not a missing-coordinate sentinel. */
         unsigned short groupThing = m11_find_group_on_square(
-            &state->world, p->mapIndex,
-            r->newMapX != 0 || r->newMapY != 0 ? r->newMapX : p->mapX,
-            r->newMapX != 0 || r->newMapY != 0 ? r->newMapY : p->mapY);
+            &state->world, impactMap, impactX, impactY);
         if (groupThing != THING_NONE && groupThing != THING_ENDOFLIST
                 && state->world.things) {
             int gIdx = THING_GET_INDEX(groupThing);
@@ -20605,6 +22330,13 @@ static void m11_projectile_apply_impact(
                     if (g->health[slotI] > 0) {
                         F0738_COMBAT_ApplyDamageToGroup_Compat(
                             &res, g, slotI, &outcome);
+                        if (res.damageApplied > 0 &&
+                            outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+                            m11_schedule_projectile_hit_creature_reaction(
+                                state, gIdx, g, impactMap, impactX, impactY);
+                        }
+                        (void)m11_maybe_attach_thrown_sharp_weapon_to_group(
+                            state, g, p, outcome);
                         break;
                     }
                 }
@@ -20615,9 +22347,7 @@ static void m11_projectile_apply_impact(
                               m11_creature_name((int)g->creatureType));
                 /* Check if the group is dead after projectile damage */
                 (void)m11_check_group_death_and_drop(
-                    state, groupThing, p->mapIndex,
-                    r->newMapX != 0 || r->newMapY != 0 ? r->newMapX : p->mapX,
-                    r->newMapX != 0 || r->newMapY != 0 ? r->newMapY : p->mapY);
+                    state, groupThing, impactMap, impactX, impactY);
                 return;
             }
         }
@@ -20638,6 +22368,8 @@ static void m11_projectile_apply_impact(
             if (dmg > hp) dmg = hp;
             state->world.party.champions[ci].hp.current =
                 (unsigned short)(hp - dmg);
+            (void)m11_maybe_apply_projectile_poison_to_champion(
+                state, ci, &state->world.party.champions[ci], p, dmg);
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s HITS PARTY FOR %d",
                           (unsigned int)state->world.gameTick, name, dmg);
@@ -21281,6 +23013,8 @@ int M11_GameView_GetCreaturePaletteChange(int depthPaletteIndex,
     return m11_creature_source_palette_change(depthPaletteIndex, paletteIndex);
 }
 
+static int m11_perform_climb_down_f0407(M11_GameViewState* state);
+
 static int m11_perform_non_melee_action(M11_GameViewState* state,
                                         int championIndex,
                                         unsigned char chosen,
@@ -21335,8 +23069,11 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                               champName);
                 return 0;
             }
+            /* ReDMCSB MENU.C F0407 C036_ACTION_HEAL lines 1502-1517
+             * queries CHAMPION.C F0303 with C13_SKILL_HEAL, not the
+             * base Priest skill. */
             skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
-                                                    CHAMPION_SKILL_PRIEST);
+                                                    DM1_SKILL_IDX_HEAL);
             if (skillLevel < 0) skillLevel = 0;
             healCap = skillLevel;
             if (healCap > 10) healCap = 10;
@@ -21364,22 +23101,62 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             return 0;
         }
         case 38: {
+            struct TimelineEvent_Compat lightEvent;
             /* LIGHT (F0407 C038_ACTION_LIGHT):
              *     MagicalLightAmount += LightPowerToLightAmount[2]
              *     F0404_MENUS_CreateEvent70_Light(-2, 2500)
              *     F0405_MENUS_DecrementCharges(champion)
              *
-             * The original lit-decay event is not yet wired into
-             * our timeline, so we add the light amount directly
-             * and let the existing light-level path pick it up.
-             * The decay will be applied when the MagicState
-             * timeline wiring lands; in the meantime the player
-             * sees the viewport brighten, which is the
-             * recognisable effect.  LightPowerToLightAmount[2] is
-             * 6 in the bounded runtime-dynamics table. */
-            state->world.magic.magicalLightAmount += 6;
+             * TIMELINE_EVENT_MAGIC_LIGHT_DECAY is the existing M10
+             * F0257/C70 light-decay handler: aux0 carries the signed
+             * light power and schedules weaker steps at +4 ticks. */
+            state->world.magic.magicalLightAmount += 12;
+            memset(&lightEvent, 0, sizeof(lightEvent));
+            lightEvent.kind = TIMELINE_EVENT_MAGIC_LIGHT_DECAY;
+            lightEvent.fireAtTick = state->world.gameTick + 2500U;
+            lightEvent.mapIndex = state->world.party.mapIndex;
+            lightEvent.mapX = state->world.party.mapX;
+            lightEvent.mapY = state->world.party.mapY;
+            lightEvent.cell = -1;
+            lightEvent.aux0 = -2;
+            (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline,
+                                                  &lightEvent);
+            m11_decrement_action_hand_charges_f0405(state, championIndex);
             m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                           "T%u: %s CREATES MAGICAL LIGHT",
+                          (unsigned int)state->world.gameTick,
+                          champName);
+            return 1;
+        }
+        case 39: {
+            struct TimelineEvent_Compat thievesEyeEvent;
+            int skillLevel;
+            int duration;
+            /* WINDOW (ReDMCSB MENU.C F0407 C039_ACTION_WINDOW lines
+             * ~1518-1526): duration is random(skill + 8) + 5, then a
+             * C73 Thieves Eye timeout is scheduled and the party C73
+             * counter is incremented before F0405 decrements charges. */
+            skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
+                                                    DM1_SKILL_IDX_EARTH);
+            if (skillLevel < 0) skillLevel = 0;
+            duration = F0732_COMBAT_RngRandom_Compat(&state->world.masterRng,
+                                                     skillLevel + 8) + 5;
+            memset(&thievesEyeEvent, 0, sizeof(thievesEyeEvent));
+            thievesEyeEvent.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+            thievesEyeEvent.fireAtTick =
+                state->world.gameTick + (uint32_t)duration;
+            thievesEyeEvent.mapIndex = state->world.party.mapIndex;
+            thievesEyeEvent.mapX = state->world.party.mapX;
+            thievesEyeEvent.mapY = state->world.party.mapY;
+            thievesEyeEvent.cell = -1;
+            thievesEyeEvent.aux0 = LIFECYCLE_STATUS_THIEVES_EYE;
+            thievesEyeEvent.aux1 = 0;
+            (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline,
+                                                  &thievesEyeEvent);
+            state->world.lifecycle.status.thievesEyeCount++;
+            m11_decrement_action_hand_charges_f0405(state, championIndex);
+            m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                          "T%u: %s OPENS A MAGIC WINDOW",
                           (unsigned int)state->world.gameTick,
                           champName);
             return 1;
@@ -21389,7 +23166,9 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * advance G0407_s_Party.FreezeLifeTicks by 70 for the
              * common weapon case (blue=30, green=125 branches
              * require junk-box typing we do not currently model
-             * per-thing).  Capped at 200 as in F0407. */
+             * per-thing).  The common branch then falls through to
+             * T0407076 and decrements action-hand charges through
+             * F0405.  Capped at 200 as in F0407. */
             int32_t prev = state->world.freezeLifeTicks;
             int32_t next = prev + 70;
             if (next > 200) next = 200;
@@ -21397,36 +23176,53 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             /* Mirror into MagicState.freezeLifeTicks so the light
              * / creature-ai sides observe the freeze consistently. */
             state->world.magic.freezeLifeTicks = next;
+            m11_decrement_action_hand_charges_f0405(state, championIndex);
             m11_log_event(state, M11_COLOR_LIGHT_BLUE,
                           "T%u: %s FREEZES TIME (%d TICKS)",
                           (unsigned int)state->world.gameTick,
                           champName, next - prev);
             return 1;
         }
+        case 10: { /* CLIMB DOWN */
+            /* ReDMCSB MENU.C F0407 lines 1548-1561: if the front
+             * square is a pit and has no group, set the rope flag and
+             * call F0267 to move the party forward.  The source does
+             * not check whether the pit is open (BUG0_77); the normal
+             * post-move environment path decides whether the party then
+             * falls through it. */
+            int climbed = m11_perform_climb_down_f0407(state);
+            if (climbed) {
+                m11_log_event(state, M11_COLOR_YELLOW,
+                              "T%u: %s CLIMBS DOWN",
+                              (unsigned int)state->world.gameTick,
+                              champName);
+            }
+            return climbed;
+        }
         case 33: /* SPELLSHIELD */
         case 34: /* FIRESHIELD */ {
             /* F0407 C033_ACTION_SPELLSHIELD / C034_ACTION_FIRESHIELD:
              *     IsPartySpellOrFireShieldSuccessful(..., 280, TRUE)
-             * which increases magicState.spellShieldDefense or
-             * fireShieldDefense by a fixed amount.  The V1 slice
-             * applies the shield boost directly so the player
-             * sees the effect on the party HUD; creature damage
-             * mitigation routes through the existing MagicState
-             * reads in m11_draw_party_hud. */
+             * which consumes mana, adds shield defense, and returns false
+             * for low-mana partial casts so the F0407 tail can reduce XP
+             * and disabled ticks. */
+            int successful = m11_apply_party_shield_f0403(
+                state, championIndex, chosen == 33, 280, 1);
             if (chosen == 33) {
-                state->world.magic.spellShieldDefense += 6;
                 m11_log_event(state, M11_COLOR_LIGHT_BLUE,
                               "T%u: %s RAISES SPELL SHIELD",
                               (unsigned int)state->world.gameTick,
                               champName);
             } else {
-                state->world.magic.fireShieldDefense += 6;
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
                               "T%u: %s RAISES FIRE SHIELD",
                               (unsigned int)state->world.gameTick,
                               champName);
             }
-            return 1;
+            if (successful) {
+                m11_decrement_action_hand_charges_f0405(state, championIndex);
+            }
+            return successful;
         }
         case 1:  /* BLOCK */
         case 17: /* PARRY */ {
@@ -21449,13 +23245,9 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
         case 41: /* BRANDISH */
         case 22: /* CONFUSE */ {
             /* F0407 routes these through F0401_MENUS_IsGroupFrightenedByAction
-             * against the creature group in front of the party.
-             * The group-frighten model is not yet wired in V1;
-             * what IS recognisable to the player is the sound and
-             * the log cue.  Emit an audio marker (reuses the
-             * creature/combat cue buffers) and a descriptive
-             * log line that names the action's intent. */
+             * against the creature group in front of the party. */
             const char* verb;
+            int frightened;
             switch (chosen) {
                 case 8:  verb = "LETS OUT A WAR CRY"; break;
                 case 4:  verb = "BLOWS THE HORN"; break;
@@ -21478,11 +23270,24 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                 m11_audio_emit_source_sound(state, 18, M11_AUDIO_MARKER_CREATURE);
             } else {
                 /* ReDMCSB PC34 MENU.C:1347-1362 routes CALM / BRANDISH /
-                 * CONFUSE through F0401_MENUS_IsGroupFrightenedByAction
+                * CONFUSE through F0401_MENUS_IsGroupFrightenedByAction
                  * without an F0064_SOUND_RequestPlay_CPSD call. */
                 (void)0;
             }
-            return 0;
+            if (chosen == 22) {
+                /* ReDMCSB MENU.C F0407 lines 1347-1354: CONFUSE first
+                 * decrements action-hand charges through F0405, then falls
+                 * through to the shared F0401 frighten action. */
+                m11_decrement_action_hand_charges_f0405(state, championIndex);
+            }
+            frightened = m11_perform_f0401_frighten_action(
+                state, championIndex, chosen);
+            if (frightened) {
+                m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                              "T%u: THE GROUP FLEES",
+                              (unsigned int)state->world.gameTick);
+            }
+            return frightened;
         }
         case 32: { /* SHOOT */
             /* ReDMCSB MENU.C:1363-1396 validates C01 action-hand
@@ -21518,16 +23323,18 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
 
             direction = state->world.party.direction & 3;
             skillShoot = m11_dm1_shoot_skill_level(state, championIndex);
-            shootAttack = ((int)actionInfo->shootAttack + skillShoot) << 1;
-            if (shootAttack > 255) shootAttack = 255;
+            shootAttack = m11_dm1_f0407_shoot_attack(
+                (int)actionInfo->shootAttack, skillShoot);
             kineticEnergy = (int)actionInfo->kineticEnergy +
                             (int)readyInfo->kineticEnergy;
-            launchCell = m11_dm1_projectile_launch_cell(championIndex & 3,
+            launchCell = m11_dm1_projectile_launch_cell(champ->cell,
                                                         direction);
             spawned = m11_spawn_action_projectile_ex(
                 state, championIndex, PROJECTILE_SUBTYPE_KINETIC_ARROW,
                 PROJECTILE_CATEGORY_KINETIC, kineticEnergy, shootAttack,
-                COMBAT_ATTACK_NORMAL, launchCell, direction, stepEnergy);
+                COMBAT_ATTACK_NORMAL, launchCell, direction, stepEnergy,
+                shootAttack,
+                readyThing, 0);
             if (spawned) {
                 champ->inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
             }
@@ -21555,29 +23362,32 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
         }
         case 20:   /* FIREBALL */
         case 21:   /* DISPELL */
-        case 23: { /* LIGHTNING */
+        case 23:   /* LIGHTNING */
+        case 40: { /* SPIT */
             /* F0407 cases C020_ACTION_FIREBALL / C021_ACTION_DISPELL /
-             * C023_ACTION_LIGHTNING.  Each picks a magical subtype,
-             * a fixed kineticEnergy, decrements mana by the
-             * skill-scaled required amount and spawns a projectile
+             * C023_ACTION_LIGHTNING / C040_ACTION_SPIT.  Each picks a
+             * magical subtype, a fixed kineticEnergy, decrements mana
+             * by the skill-scaled required amount and spawns a projectile
              * via F0327_CHAMPION_IsProjectileSpellCast, which
              * bottoms out in F0212_PROJECTILE_Create.  The V1
              * source-backed route uses F0810 with the same subtype
              * mapping: FIREBALL -> 0x80, LIGHTNING_BOLT -> 0x82,
              * HARM_NON_MATERIAL -> 0x83.  Mana cost and skill path
-             * mirror F0407: 7 - min(6, wizardSkill). */
+             * mirror F0407's G0496 action-skill table:
+             * FIREBALL/SPIT use Fire, DISPELL/LIGHTNING use Air. */
             int subtype;
             int kinetic;
             int attackType;
             const char* verb;
-            int impact;
             int manaCost;
-            int skillWiz = M11_GameView_GetSkillLevel(state, championIndex,
-                                                     CHAMPION_SKILL_WIZARD);
+            int skillIndex = m11_action_projectile_skill_index(chosen);
+            int skillLevel = M11_GameView_GetSkillLevel(state, championIndex,
+                                                        skillIndex);
             int actualEnergy;
+            int stepEnergy;
             int spawned;
-            if (skillWiz < 0) skillWiz = 0;
-            manaCost = 7 - (skillWiz > 6 ? 6 : skillWiz);
+            if (skillLevel < 0) skillLevel = 0;
+            manaCost = 7 - (skillLevel > 6 ? 6 : skillLevel);
             if (manaCost < 1) manaCost = 1;
             switch (chosen) {
                 case 20:
@@ -21591,6 +23401,12 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                     kinetic    = 150;
                     attackType = COMBAT_ATTACK_MAGIC;
                     verb       = "CASTS DISPELL";
+                    break;
+                case 40:
+                    subtype    = PROJECTILE_SUBTYPE_FIREBALL;
+                    kinetic    = 250;
+                    attackType = COMBAT_ATTACK_FIRE;
+                    verb       = "SPITS FIRE";
                     break;
                 case 23:
                 default:
@@ -21614,6 +23430,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             } else {
                 actualEnergy = kinetic;
             }
+            stepEnergy = m11_f0327_projectile_step_energy(champ, &actualEnergy);
             if (manaCost > 0) {
                 if ((int)champ->mana.current >= manaCost) {
                     champ->mana.current = (uint16_t)((int)champ->mana.current - manaCost);
@@ -21621,12 +23438,12 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                     champ->mana.current = 0;
                 }
             }
-            impact = m11_action_projectile_impact_attack(state, championIndex);
-            spawned = m11_spawn_action_projectile(state, championIndex,
-                                                  subtype,
-                                                  PROJECTILE_CATEGORY_MAGICAL,
-                                                  actualEnergy, impact,
-                                                  attackType);
+            spawned = m11_spawn_action_projectile_ex(
+                state, championIndex, subtype, PROJECTILE_CATEGORY_MAGICAL,
+                actualEnergy, 90, attackType, -1, -1, stepEnergy,
+                90,
+                THING_NONE, 0);
+            m11_decrement_action_hand_charges_f0405(state, championIndex);
             m11_log_event(state,
                           chosen == 23 ? M11_COLOR_LIGHT_CYAN :
                           chosen == 21 ? M11_COLOR_LIGHT_BLUE :
@@ -21663,8 +23480,8 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             int manaCost;
             int skillWiz = M11_GameView_GetSkillLevel(state, championIndex,
                                                      CHAMPION_SKILL_WIZARD);
-            int impact;
             int actualEnergy;
+            int stepEnergy;
             int spawned;
             const char* subtypeName;
             if (skillWiz < 0) skillWiz = 0;
@@ -21706,6 +23523,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             } else {
                 actualEnergy = kinetic;
             }
+            stepEnergy = m11_f0327_projectile_step_energy(champ, &actualEnergy);
             if (manaCost > 0) {
                 if ((int)champ->mana.current >= manaCost) {
                     champ->mana.current = (uint16_t)((int)champ->mana.current - manaCost);
@@ -21713,12 +23531,12 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                     champ->mana.current = 0;
                 }
             }
-            impact = m11_action_projectile_impact_attack(state, championIndex);
-            spawned = m11_spawn_action_projectile(state, championIndex,
-                                                  subtype,
-                                                  PROJECTILE_CATEGORY_MAGICAL,
-                                                  actualEnergy, impact,
-                                                  attackType);
+            spawned = m11_spawn_action_projectile_ex(
+                state, championIndex, subtype, PROJECTILE_CATEGORY_MAGICAL,
+                actualEnergy, 90, attackType, -1, -1, stepEnergy,
+                90,
+                THING_NONE, 0);
+            m11_decrement_action_hand_charges_f0405(state, championIndex);
             m11_log_event(state, M11_COLOR_MAGENTA,
                           "T%u: %s INVOKES %s",
                           (unsigned int)state->world.gameTick,
@@ -21730,19 +23548,12 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
         case 42: { /* THROW */
             /* F0407 case C042_ACTION_THROW: removes the action-
              * hand object and launches it as a kinetic projectile
-             * via F0328_CHAMPION_IsObjectThrown.  V1 source-backed
-             * route: spawn a kinetic projectile at the party cell,
-             * facing party direction, owner=champion.  We do NOT
-             * remove the object from the slot yet — DM1's
-             * F0300_CHAMPION_GetObjectRemovedFromSlot plumbing
-             * requires thing-chain mutation we haven't ported
-             * into the V1 slice.  The player still sees the
-             * thrown-object projectile leave the party cell,
-             * which is the recognisable classic-DM effect. */
+             * via F0328_CHAMPION_IsObjectThrown.  V1 source-backed route:
+             * spawn a kinetic projectile at the party cell, facing party
+             * direction, owner=champion, then clear the action-hand slot
+             * once Firestaff has accepted the projectile slot. */
             unsigned short handThing = m11_get_action_hand_thing(champ);
-            int skillFight = M11_GameView_GetSkillLevel(state, championIndex,
-                                                        CHAMPION_SKILL_FIGHTER);
-            int throwAttack;
+            int throwSide;
             int spawned;
             if (handThing == THING_NONE || handThing == THING_ENDOFLIST) {
                 m11_log_event(state, M11_COLOR_LIGHT_RED,
@@ -21751,18 +23562,12 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                               champName);
                 return 0;
             }
-            if (skillFight < 0) skillFight = 0;
-            /* Throw attack uses the fighter-skill-scaled kinetic
-             * path; without WeaponInfo we settle on 15 as the
-             * baseline thrown-object attack (mirrors the medium
-             * club / dagger attack in G0238). */
-            throwAttack = (15 + skillFight) << 1;
-            if (throwAttack > 255) throwAttack = 255;
-            spawned = m11_spawn_action_projectile(state, championIndex,
-                                                  PROJECTILE_SUBTYPE_KINETIC_ARROW,
-                                                  PROJECTILE_CATEGORY_KINETIC,
-                                                  100, throwAttack,
-                                                  COMBAT_ATTACK_NORMAL);
+            throwSide = m11_dm1_f0328_throw_side(state, champ);
+            spawned = m11_dm1_f0328_spawn_thrown_thing(
+                state, championIndex, champ, handThing, throwSide);
+            if (spawned) {
+                champ->inventory[CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
+            }
             m11_log_event(state, M11_COLOR_YELLOW,
                           "T%u: %s THROWS",
                           (unsigned int)state->world.gameTick,
@@ -21777,6 +23582,72 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
     }
 }
 
+static int m11_perform_climb_down_f0407(M11_GameViewState* state) {
+    struct MovementResult_Compat move;
+    struct PartyState_Compat movedParty;
+    struct PostMoveResolution_Compat postMove;
+    unsigned char frontSquare;
+    int dx;
+    int dy;
+    int frontX;
+    int frontY;
+    int i;
+
+    if (!state || !state->world.dungeon) return 0;
+    F0701_MOVEMENT_GetStepDelta_Compat(state->world.party.direction,
+                                       MOVE_FORWARD, &dx, &dy);
+    frontX = state->world.party.mapX + dx;
+    frontY = state->world.party.mapY + dy;
+    if (!m11_get_square_byte(&state->world, state->world.party.mapIndex,
+                             frontX, frontY, &frontSquare) ||
+        ((frontSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
+            DUNGEON_ELEMENT_PIT) {
+        return 0;
+    }
+    if (F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
+            state->world.dungeon, state->world.things, &state->world.party,
+            MOVE_FORWARD)) {
+        return 0;
+    }
+    if (!F0702_MOVEMENT_TryMove_Compat(state->world.dungeon,
+                                       &state->world.party, MOVE_FORWARD,
+                                       &move) ||
+        move.resultCode != MOVE_OK) {
+        return 0;
+    }
+
+    movedParty = state->world.party;
+    movedParty.mapX = move.newMapX;
+    movedParty.mapY = move.newMapY;
+    movedParty.direction = move.newDirection;
+    movedParty.mapIndex = move.newMapIndex;
+    memset(&postMove, 0, sizeof(postMove));
+    (void)F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+        state->world.dungeon, state->world.things, &movedParty,
+        state->world.gameTick, &postMove);
+
+    state->world.party.mapX = postMove.finalMapX;
+    state->world.party.mapY = postMove.finalMapY;
+    state->world.party.direction = postMove.finalDirection;
+    state->world.party.mapIndex = postMove.finalMapIndex;
+    state->world.partyMapIndex = postMove.finalMapIndex;
+    state->world.newPartyMapIndex = -1;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        if (postMove.championFallDamage[i] > 0 &&
+            state->world.party.champions[i].present &&
+            state->world.party.champions[i].hp.current > 0) {
+            int hp = (int)state->world.party.champions[i].hp.current -
+                     postMove.championFallDamage[i];
+            state->world.party.champions[i].hp.current =
+                (uint16_t)((hp > 0) ? hp : 0);
+        }
+    }
+    memset(state->exploredBits, 0, sizeof(state->exploredBits));
+    m11_mark_explored(state);
+    m11_refresh_hash(state);
+    return 1;
+}
+
 int M11_GameView_TriggerActionRow(M11_GameViewState* state,
                                   int actionListIndex) {
     int championIndex;
@@ -21787,6 +23658,8 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     const struct ChampionState_Compat* champ;
     char champName[16];
     int performed = 0;
+    int actionExperienceGain = 0;
+    DM1_ActionXpRoute actionXpRoute;
 
     if (!state || !state->active) {
         return 0;
@@ -21800,6 +23673,14 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         /* F0391 early exit: no acting champion, no action. */
         return 0;
     }
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB MENU.C F0390 lines 751-754: while
+         * G0299_ui_CandidateChampionOrdinal owns the C040 panel, an
+         * already-open action menu is cleared before F0391/F0407 can
+         * spend stamina or perform an action. */
+        M11_GameView_ClearActingChampion(state);
+        return 0;
+    }
 
     championIndex = (int)state->actingChampionOrdinal - 1;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
@@ -21810,6 +23691,10 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     }
     champ = &state->world.party.champions[championIndex];
     if (!champ->present || champ->hp.current == 0) {
+        return 0;
+    }
+    if (state->actionDisabledTicks[championIndex] > 0) {
+        M11_GameView_ClearActingChampion(state);
         return 0;
     }
 
@@ -21867,15 +23752,31 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
      * the closing frame — DM1 updates the leader portrait to the
      * acting champion while the action animation plays. */
     state->world.party.activeChampionIndex = championIndex;
+    m11_apply_champion_action_defense_before_action(state, championIndex, chosen);
     (void)m11_apply_action_stamina_cost(state, championIndex, chosen);
+    if (dm1_v1_action_xp_route((int)chosen, &actionXpRoute) &&
+        actionXpRoute.valid) {
+        actionExperienceGain = actionXpRoute.experienceGain;
+    }
     if (m11_action_is_melee_contact(chosen)) {
-        /* Advance one tick with CMD_ATTACK via HandleInput so the
-         * full M10 strike resolution runs (damage emission,
-         * creature hit overlay, creature-hit log), identical to
-         * pressing the A key. */
-        (void)M11_GameView_HandleInput(state, M12_MENU_INPUT_ACTION);
-        performed = 1;
+        unsigned char disabledTicks = M11_ACTION_DISABLED_TICKS[chosen];
+        /* Advance one tick with CMD_ATTACK while preserving F0391's chosen
+         * F0407 action index.  M10 owns front-square group/creature
+         * selection through its ReDMCSB F0177/F0229 auto-target bridge. */
+        (void)m11_apply_tick_with_attack_action(
+            state, CMD_ATTACK, "ATTACK", (int)chosen);
+        performed = m11_last_attack_tick_emitted_damage(state);
+        if (!performed) {
+            /* ReDMCSB MENU.C F0407 lines 1331-1337 halves the disabled-tick
+             * budget and G0497 experience when F0402 returns false before
+             * F0231.  Stamina is still spent later in F0407's common tail. */
+            disabledTicks >>= 1;
+            actionExperienceGain >>= 1;
+        }
+        m11_disable_champion_action_after_action_ticks(
+            state, championIndex, chosen, disabledTicks);
     } else {
+        unsigned char disabledTicks = M11_ACTION_DISABLED_TICKS[chosen];
         /* Non-melee: apply bounded effect (if any), then advance
          * a CMD_NONE tick so "time passes" semantics hold —
          * action stamina has drained, action-disabled ticks roll forward,
@@ -21886,7 +23787,33 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         performed = m11_perform_non_melee_action(state, championIndex,
                                                  chosen, champName);
         (void)m11_apply_tick(state, CMD_NONE, "ACTION");
+        if (m11_action_is_party_shield(chosen) && !performed) {
+            /* ReDMCSB MENU.C F0407 lines 1456-1461 quarters G0497 XP
+             * and halves disabled ticks when F0403 returns false. */
+            actionExperienceGain >>= 2;
+            disabledTicks >>= 1;
+        } else if (m11_action_is_projectile_spell_f0407(chosen) && !performed) {
+            /* ReDMCSB MENU.C F0407 lines 1300-1303 halves G0497 XP when
+             * F0327_CHAMPION_IsProjectileSpellCast returns false. */
+            actionExperienceGain >>= 1;
+        } else if (chosen == DM1_ACTION_SHOOT && !performed) {
+            /* ReDMCSB MENU.C F0407 lines 1363-1387 routes the no-ammunition
+             * SHOOT failure to T0407032, sets ActionDamage to
+             * NO_AMMUNITION, clears G0497 action XP, and keeps the common
+             * stamina / action-disable tail. */
+            actionExperienceGain = 0;
+        } else if (chosen == DM1_ACTION_CLIMB_DOWN && !performed) {
+            /* ReDMCSB MENU.C F0407 lines 1548-1565 cancels the
+             * action-disabled icon when rope CLIMB DOWN is not possible,
+             * while preserving the common stamina and G0497 XP tail
+             * (BUG0_79). */
+            disabledTicks = 0;
+        }
+        m11_disable_champion_action_after_action_ticks(
+            state, championIndex, chosen, disabledTicks);
     }
+    m11_award_action_xp_f0407(
+        state, championIndex, chosen, actionExperienceGain);
 
     /* F0391 ALWAYS clears the acting champion before returning,
      * regardless of whether the action itself succeeded.  This is
@@ -21908,13 +23835,25 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     const struct ChampionState_Compat* champ;
     const char* actionName;
     char champName[16];
+    int actionExperienceGain = 0;
+    DM1_ActionXpRoute actionXpRoute;
     int performed;
     if (!state || !state->active) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB MENU.C F0390 lines 751-759: while
+         * G0299_ui_CandidateChampionOrdinal owns the C040 panel, the
+         * action area is candidate-owned and champion actions are not
+         * dispatched through F0391/F0407.  Keep this direct helper on
+         * the same boundary as M11_GameView_TriggerActionRow(). */
+        M11_GameView_ClearActingChampion(state);
+        return 0;
+    }
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     if (championIndex >= state->world.party.championCount) return 0;
     champ = &state->world.party.champions[championIndex];
     if (!champ->present || champ->hp.current == 0) return 0;
     if (actionIndex < 0 || actionIndex >= 44) return 0;
+    if (state->actionDisabledTicks[championIndex] > 0) return 0;
     /* Melee-contact actions are handled through the CMD_ATTACK
      * path via M11_GameView_TriggerActionRow; refusing them here
      * keeps this helper scoped to the bounded non-melee slice. */
@@ -21931,12 +23870,42 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     }
     state->actingChampionOrdinal = (unsigned int)(championIndex + 1);
     state->world.party.activeChampionIndex = championIndex;
+    m11_apply_champion_action_defense_before_action(
+        state, championIndex, (unsigned char)actionIndex);
     (void)m11_apply_action_stamina_cost(state, championIndex,
                                         (unsigned char)actionIndex);
+    if ((actionIndex == DM1_ACTION_BLOCK ||
+         actionIndex == DM1_ACTION_PARRY ||
+         m11_action_is_party_shield((unsigned char)actionIndex) ||
+         m11_action_is_projectile_spell_f0407((unsigned char)actionIndex)) &&
+        dm1_v1_action_xp_route(actionIndex, &actionXpRoute) &&
+        actionXpRoute.valid) {
+        actionExperienceGain = actionXpRoute.experienceGain;
+    }
     performed = m11_perform_non_melee_action(state, championIndex,
                                              (unsigned char)actionIndex,
                                              champName);
     (void)m11_apply_tick(state, CMD_NONE, "ACTION");
+    {
+        unsigned char disabledTicks =
+            M11_ACTION_DISABLED_TICKS[(unsigned char)actionIndex];
+        if (m11_action_is_party_shield((unsigned char)actionIndex) &&
+            !performed) {
+            /* ReDMCSB MENU.C F0407 lines 1456-1461 quarters G0497 XP
+             * and halves disabled ticks when F0403 returns false. */
+            actionExperienceGain >>= 2;
+            disabledTicks >>= 1;
+        } else if (m11_action_is_projectile_spell_f0407(
+                       (unsigned char)actionIndex) && !performed) {
+            /* ReDMCSB MENU.C F0407 lines 1300-1303 halves G0497 XP when
+             * F0327_CHAMPION_IsProjectileSpellCast returns false. */
+            actionExperienceGain >>= 1;
+        }
+        m11_disable_champion_action_after_action_ticks(
+            state, championIndex, (unsigned char)actionIndex, disabledTicks);
+    }
+    m11_award_action_xp_f0407(
+        state, championIndex, (unsigned char)actionIndex, actionExperienceGain);
     M11_GameView_ClearActingChampion(state);
     return performed;
 }
@@ -23748,7 +25717,8 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             if (INVENTORY_Compat_FormatPotionEyeDescription(
                     (unsigned int)itemType, (unsigned int)itemIcon,
                     (unsigned int)potion->power,
-                    (unsigned int)champ->skillLevels[CHAMPION_SKILL_PRIEST],
+                    (unsigned int)m11_game_view_get_f0352_potion_priest_skill(
+                        state, championIndex),
                     itemName, eyePanelName, sizeof(eyePanelName), NULL)) {
                 snprintf(itemName, sizeof(itemName), "%s", eyePanelName);
             }
@@ -27349,7 +29319,9 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             state->assetsAvailable) {
             const M11_AssetSlot* rrPanel = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
-                (unsigned int)M11_GFX_PANEL_RESURRECT_REINCARNATE);
+                (unsigned int)(state->candidateMirrorRenameActive
+                    ? M11_GFX_PANEL_RENAME_CHAMPION
+                    : M11_GFX_PANEL_RESURRECT_REINCARNATE));
             if (rrPanel && rrPanel->width == zw && rrPanel->height == zh) {
                 M11_AssetLoader_Blit(rrPanel, framebuffer, framebufferWidth,
                                      framebufferHeight,
@@ -27365,15 +29337,49 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy,
                           zw, zh, M11_COLOR_ORANGE);
+            if (state->candidateMirrorRenameActive) {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              M11_VIEWPORT_X + zx + 24, M11_VIEWPORT_Y + zy + 18,
+                              "NAME", &g_text_small);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              M11_VIEWPORT_X + zx + 24, M11_VIEWPORT_Y + zy + 36,
+                              "TITLE", &g_text_small);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              M11_VIEWPORT_X + zx + 28, M11_VIEWPORT_Y + zy + 58,
+                              "BACKSPACE        OK", &g_text_small);
+            } else {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              M11_VIEWPORT_X + zx + 16, M11_VIEWPORT_Y + zy + 18,
+                              "RESURRECT", &g_text_small);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              M11_VIEWPORT_X + zx + 78, M11_VIEWPORT_Y + zy + 18,
+                              "REINCARNATE", &g_text_small);
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              M11_VIEWPORT_X + zx + 44, M11_VIEWPORT_Y + zy + 58,
+                              "CANCEL", &g_text_small);
+            }
+        }
+        if (state->candidateMirrorRenameActive) {
+            M11_TextStyle renameStyle = g_text_small;
+            M11_TextStyle cursorStyle = g_text_small;
+            renameStyle.color = M11_COLOR_LIGHT_GRAY;
+            cursorStyle.color = M11_COLOR_ORANGE;
+            if (state->candidateMirrorRename.name[0] != '\0') {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              177, 91,
+                              state->candidateMirrorRename.name,
+                              &renameStyle);
+            }
+            if (state->candidateMirrorRename.title[0] != '\0') {
+                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                              105, 109,
+                              state->candidateMirrorRename.title,
+                              &renameStyle);
+            }
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_VIEWPORT_X + zx + 16, M11_VIEWPORT_Y + zy + 18,
-                          "RESURRECT", &g_text_small);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_VIEWPORT_X + zx + 78, M11_VIEWPORT_Y + zy + 18,
-                          "REINCARNATE", &g_text_small);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_VIEWPORT_X + zx + 44, M11_VIEWPORT_Y + zy + 58,
-                          "CANCEL", &g_text_small);
+                          state->candidateMirrorRename.cursorX,
+                          state->candidateMirrorRename.cursorY,
+                          "_", &cursorStyle);
         }
         return;
     }

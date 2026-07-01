@@ -2,7 +2,8 @@
   "binary_policy": "No original/decompressed executable copied or committed; this pass records text map paths, hashes, and derived addresses only.",
   "debugger_next_step": [
     "Launch stock PC34/I34E under dosbox-debug and verify FIRES load segment 0733 in that run.",
-    "Set BP at runtime F0380/F0365/F0366/F0267/F0128 addresses from this manifest.",
+    "For the HoC/C080 route, set BP at runtime F0359/F0380/F0377/F0275/F0280 addresses from this manifest. F0372 is static in this build, so F0275 is the addressable proxy after F0372 computes the front wall.",
+    "For movement routes, set BP at runtime F0380/F0365/F0366/F0267/F0128 addresses from this manifest.",
     "Set BPM writes on runtime G0432/G0433/G0434/G0308/G0306/G0307 addresses, then press kp5/kp4/kp6 in a controlled in-game run.",
     "Promote only after transcript proves command queue write/dequeue plus G0308 or G0306/G0307 mutation and subsequent F0128 draw consumption."
   ],
@@ -26,6 +27,36 @@
       "name": "F0380_COMMAND_PROCESSQUEUE_CPSC",
       "runtime_with_load_seg_0733": "22F4:0699",
       "source_name": "F0380_COMMAND_ProcessQueue_CPSC"
+    },
+    {
+      "idle": false,
+      "line": 541,
+      "link_csip": "1711:02FE",
+      "map_symbol_prefix": "F0377_COMMAND_PROCESSTYPE80_CLI",
+      "meaning": "CLIKVIEW.C C080 dungeon-view click handler",
+      "name": "F0377_COMMAND_PROCESSTYPE80_CLIC",
+      "runtime_with_load_seg_0733": "1E44:02FE",
+      "source_name": "F0377_COMMAND_ProcessType80_ClickInDungeonView"
+    },
+    {
+      "idle": false,
+      "line": 470,
+      "link_csip": "1126:1405",
+      "map_symbol_prefix": "F0275_SENSOR_ISTRIGGEREDBYCLICK",
+      "meaning": "MOVESENS.C wall sensor dispatcher reached from static F0372",
+      "name": "F0275_SENSOR_ISTRIGGEREDBYCLICKO",
+      "runtime_with_load_seg_0733": "1859:1405",
+      "source_name": "F0275_SENSOR_IsTriggeredByClickOnWall"
+    },
+    {
+      "idle": false,
+      "line": 473,
+      "link_csip": "104F:0031",
+      "map_symbol_prefix": "F0280_CHAMPION_ADDCANDIDATECHAM",
+      "meaning": "REVIVE.C candidate champion entry after C127 portrait sensor",
+      "name": "F0280_CHAMPION_ADDCANDIDATECHAMP",
+      "runtime_with_load_seg_0733": "1782:0031",
+      "source_name": "F0280_CHAMPION_AddCandidateChampionToParty"
     },
     {
       "idle": false,
@@ -236,16 +267,15 @@
   ],
   "inputs": {
     "dm_map": {
-      "bytes": 26161,
-      "path": "<firestaff-data>/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/BUILD/I34E/DM.MAP",
-      "sha256": "c438a75e4c29c88a744621aeacac49aca4f414a83b3f6aeb39159bf40fd80cc8"
+      "path": "/Users/bosse/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/BUILD/I34E/DM.MAP",
+      "present": false
     },
     "fires_map": {
       "bytes": 104565,
-      "path": "<firestaff-data>/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP",
+      "path": "/Users/bosse/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP",
       "sha256": "eb85fee47611b4368bc218f0768937174ceab98e4bec2fa860059429288bd8c0"
     },
-    "pc_h": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/PC.H"
+    "pc_h": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PC.H"
   },
   "load_segment_from_pass246_lineage": "0733",
   "pass270_correction": "The preserved FIRES.MAP shows e.g. F0267 at 1126:0516, F0365 at 1771:010D, and F0366 at 1771:01AA. Adding load segment 0733 yields 1859:0516, 1EA4:010D, and 1EA4:01AA respectively, matching prior pass263/pass270 candidates. Therefore pass270's extra +0733 runtime column was a double-add for these map-backed candidates.",
@@ -279,6 +309,15 @@
       ]
     },
     {
+      "file": "CLIKVIEW.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        311,
+        439
+      ]
+    },
+    {
       "file": "CLIKMENU.C",
       "missing": [],
       "ok": true,
@@ -303,6 +342,24 @@
       "range": [
         316,
         556
+      ]
+    },
+    {
+      "file": "MOVESENS.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        1392,
+        1503
+      ]
+    },
+    {
+      "file": "REVIVE.C",
+      "missing": [],
+      "ok": true,
+      "range": [
+        63,
+        88
       ]
     },
     {

@@ -41,7 +41,8 @@ typedef enum {
     DM1_ORIGINAL_SAVE_SHAPE_FIRESTAFF_NATIVE = 1,
     DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1 = 2,
     DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_COMPAT_FAMILY = 3,
-    DM1_ORIGINAL_SAVE_SHAPE_REJECTED = 4
+    DM1_ORIGINAL_SAVE_SHAPE_REJECTED = 4,
+    DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 = 5
 } DM1OriginalSaveShape;
 
 typedef enum {
@@ -69,6 +70,7 @@ typedef struct {
     uint32_t prefix_checksum32;
     int header_checksum_ok;
     int import_blocked_until_roundtrip;
+    int pc34_importer_candidate;
     char reason[96];
 } DM1OriginalSaveClassifyResult;
 
@@ -78,6 +80,8 @@ typedef struct {
     int present_count;
     int classified_count;
     int original_dm1_count;
+    int original_dm1_pc34_count;
+    int pc34_importer_candidate_count;
     int firestaff_native_count;
     DM1OriginalSaveClassifyResult results[DM1_ORIGINAL_SAVE_DEFAULT_CANDIDATE_COUNT];
     char paths[DM1_ORIGINAL_SAVE_DEFAULT_CANDIDATE_COUNT][DM1_ORIGINAL_SAVE_PATH_MAX];

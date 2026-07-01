@@ -2,14 +2,26 @@
  * Source-lock gate for M11 action-menu stamina drain.
  *
  * ReDMCSB evidence:
+ *   MENU.C G0491 lines 157-201: source action-disabled tick table.
  *   MENU.C G0494 lines 292-337: source action-stamina table.
+ *   MENU.C G0495 lines 337-381: source action-defense table.
  *   MENU.C F0407 lines 1246-1272: action stamina is table value plus
  *     M005_RANDOM(2).
+ *   MENU.C F0391 lines 829-839: action defense is applied before
+ *     F0407 stores Champion.ActionIndex.
  *   MENU.C F0407 lines 1623-1624 and CHAMPION.C F0325 lines 2025-2048:
  *     the common action tail decrements stamina and clamps underflow.
+ *   MENU.C F0407 lines 1620-1622 and TIMELINE.C F0253 lines 1588-1598:
+ *     the common action tail disables champion actions until the enable
+ *     event clears the disabled state.
  */
 
 #include "m11_game_view.h"
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_skill_experience_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "memory_champion_lifecycle_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -28,6 +40,36 @@ static int g_fail = 0;
     else { ++g_fail; fprintf(stderr, "FAIL: %s: got %d expected %d\n", (msg), a_, e_); } \
 } while (0)
 
+static unsigned short make_thing(int type, int index) {
+    return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
+}
+
+static unsigned char square_for_test(int elementType, int attributes) {
+    return (unsigned char)(((elementType & 0x07) << 5) | (attributes & 0x1f));
+}
+
+static int is_melee_action_index(unsigned char actionIndex) {
+    switch (actionIndex) {
+        case 2:  case 6:  case 7:  case 9:  case 12:
+        case 13: case 14: case 15: case 16: case 18:
+        case 19: case 25: case 28: case 29: case 30:
+        case 31:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static unsigned char action_disabled_ticks_for_test(unsigned char actionIndex) {
+    static const unsigned char ticks[44] = {
+        0, 6, 8, 0, 6, 3, 1, 5, 3, 5, 35, 20, 4, 6, 10, 16,
+        2, 18, 8, 30, 42, 31, 10, 38, 9, 20, 10, 16, 4, 12, 20, 7,
+        14, 30, 35, 2, 19, 9, 10, 15, 22, 10, 0, 2
+    };
+    if (actionIndex >= 44) return 0;
+    return ticks[actionIndex];
+}
+
 static void seed_state(M11_GameViewState* state,
                        unsigned short stamina,
                        unsigned int tick) {
@@ -41,10 +83,1107 @@ static void seed_state(M11_GameViewState* state,
     state->world.party.champions[0].hp.maximum = 100;
     state->world.party.champions[0].stamina.current = stamina;
     state->world.party.champions[0].stamina.maximum = 100;
+    state->world.party.champions[0].food = 2048;
+    state->world.party.champions[0].water = 2048;
+    state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        THING_NONE;
+    state->world.party.champions[0].actionIndex = 255;
     state->world.party.champions[0].name[0] = 'H';
     state->world.party.champions[0].name[1] = 'A';
     state->world.party.champions[0].name[2] = 'L';
     state->world.party.champions[0].name[3] = 'K';
+}
+
+static void test_melee_action_row_uses_auto_target_and_action_index(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonGroup_Compat groups[1];
+    unsigned char actions[3];
+    int meleeRow = -1;
+    int damageEmission = -1;
+    int i;
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    weapons[0].type = 8; /* Dagger: source ActionSet contains melee rows. */
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIGHTER].experience = 500;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_SWING].experience = 500;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 0;
+    groups[0].count = 0;
+    groups[0].health[0] = 200;
+    groups[0].cells = 0xFF;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "dagger champion opens action menu");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "dagger action menu resolves source action rows");
+    for (i = 0; i < 3; ++i) {
+        if (is_melee_action_index(actions[i])) {
+            meleeRow = i;
+            break;
+        }
+    }
+    ASSERT_EQ(meleeRow >= 0, 1, "dagger action menu exposes a melee row");
+    if (meleeRow < 0) return;
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, meleeRow), 1,
+              "melee action row commits attack tick");
+
+    for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
+        if (state.lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
+            damageEmission = i;
+            break;
+        }
+    }
+    ASSERT_EQ(damageEmission >= 0, 1,
+              "melee action row emits live damage result");
+    if (damageEmission >= 0) {
+        ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[1], 0,
+                  "M11 melee row uses M10 front-square auto group target");
+    }
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "F0391 clears acting champion after melee action");
+}
+
+static void test_melee_action_row_halves_disable_ticks_when_f0402_fails(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned char actions[3];
+    int meleeRow = -1;
+    int damageEmission = -1;
+    unsigned char chosen = 0xFFu;
+    int staminaBefore;
+    DM1_ActionXpRoute route;
+    int expectedActionXp;
+    int i;
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    weapons[0].type = 8;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "dagger champion opens action menu for empty-front test");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "dagger action rows resolve for empty-front test");
+    for (i = 0; i < 3; ++i) {
+        if (is_melee_action_index(actions[i])) {
+            meleeRow = i;
+            chosen = actions[i];
+            break;
+        }
+    }
+    ASSERT_EQ(meleeRow >= 0, 1, "empty-front fixture exposes a melee row");
+    if (meleeRow < 0) return;
+    ASSERT_EQ(dm1_v1_action_xp_route((int)chosen, &route), 1,
+              "chosen melee action has a source G0496/G0497 route");
+    if (!route.valid) return;
+
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    expectedActionXp = (route.experienceGain >> 1) * 2;
+    staminaBefore = (int)state.world.party.champions[0].stamina.current;
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, meleeRow), 0,
+              "empty-front melee row reports F0402 failure");
+
+    for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
+        if (state.lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
+            damageEmission = i;
+            break;
+        }
+    }
+    ASSERT_EQ(damageEmission, -1,
+              "empty-front F0402 failure emits no melee damage");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(chosen) >> 1,
+              "F0407 halves disabled ticks when F0402 returns false");
+    ASSERT_EQ(state.actionDisabledIndex[0],
+              (action_disabled_ticks_for_test(chosen) >> 1) ? chosen : 255,
+              "halved F0402 failure stores matching disabled action index");
+    ASSERT_EQ((int)state.world.party.champions[0].stamina.current < staminaBefore,
+              1,
+              "F0407 still spends action stamina after F0402 failure");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedActionXp,
+              "F0407 halves G0497 action XP when F0402 returns false");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedActionXp,
+              "F0304 propagates halved action XP to the base skill");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "F0391 clears acting champion after failed melee action");
+}
+
+static void test_melee_action_row_respects_live_candidate_no_action(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[9];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonGroup_Compat groups[1];
+    unsigned char actions[3];
+    int meleeRow = -1;
+    int damageEmission = -1;
+    int i;
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[(2 * 3) + 1] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    weapons[0].type = 8;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIGHTER].experience = 500;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_SWING].experience = 500;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 0;
+    groups[0].count = 0;
+    groups[0].health[0] = 200;
+    groups[0].cells = 0xFF;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 9;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "candidate-panel fixture opens action menu before candidate takeover");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "candidate-panel fixture resolves source action rows");
+    for (i = 0; i < 3; ++i) {
+        if (is_melee_action_index(actions[i])) {
+            meleeRow = i;
+            break;
+        }
+    }
+    ASSERT_EQ(meleeRow >= 0, 1, "candidate-panel fixture exposes a melee row");
+    if (meleeRow < 0) return;
+    state.candidateMirrorPanelActive = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorOrdinal = 1;
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, meleeRow), 0,
+              "candidate-panel melee row is rejected before action stamina");
+
+    for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
+        if (state.lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
+            damageEmission = i;
+            break;
+        }
+    }
+    ASSERT_EQ(damageEmission, -1,
+              "candidate-panel melee row should not emit damage");
+    ASSERT_EQ(groups[0].health[0], 200,
+              "candidate-panel melee row leaves group HP unchanged");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 100,
+              "candidate-panel melee row leaves stamina unchanged");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "candidate-panel melee row clears acting champion");
+    ASSERT_EQ(state.world.candidateAttackInvulnerableEnabled, 0,
+              "candidate marker is not left set when action row is rejected");
+}
+
+static void test_candidate_panel_blocks_action_menu_open(void) {
+    M11_GameViewState state;
+
+    seed_state(&state, 100, 7);
+    state.candidateMirrorPanelActive = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorOrdinal = 1;
+    state.actingChampionOrdinal = 1;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 0,
+              "candidate panel blocks new action-menu open");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "candidate panel clears stale acting champion on open attempt");
+}
+
+static void test_direct_non_melee_respects_candidate_panel_gate(void) {
+    M11_GameViewState state;
+    int staminaBefore;
+    uint32_t tickBefore;
+
+    seed_state(&state, 100, 7);
+    state.candidateMirrorPanelActive = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorOrdinal = 1;
+    state.actingChampionOrdinal = 1;
+    staminaBefore = (int)state.world.party.champions[0].stamina.current;
+    tickBefore = state.world.gameTick;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_BLOCK),
+              0,
+              "direct non-melee helper rejects candidate-panel actions");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "candidate-panel direct helper clears acting champion");
+    ASSERT_EQ((int)state.world.party.champions[0].stamina.current,
+              staminaBefore,
+              "candidate-panel direct helper leaves stamina unchanged");
+    ASSERT_EQ(state.actionDisabledTicks[0], 0,
+              "candidate-panel direct helper does not disable action");
+    ASSERT_EQ(state.world.party.champions[0].actionDefense, 0,
+              "candidate-panel direct helper does not stack action defense");
+    ASSERT_EQ(state.world.gameTick, tickBefore,
+              "candidate-panel direct helper does not advance time");
+}
+
+static void test_empty_hand_punch_action_row_uses_live_melee(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned char actions[3];
+    int damageEmission = -1;
+    int punchRow = -1;
+    int i;
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        THING_NONE;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 0;
+    groups[0].count = 0;
+    groups[0].health[0] = 200;
+    groups[0].cells = 0xFF;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "empty-hand champion opens source action set 2");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "empty-hand action menu resolves PUNCH/KICK/WAR CRY");
+    ASSERT_EQ(actions[0], 6, "empty-hand first row is PUNCH");
+    ASSERT_EQ(actions[1], 7, "empty-hand second row is KICK");
+    ASSERT_EQ(actions[2], 8, "empty-hand third row is WAR CRY");
+    for (i = 0; i < 3; ++i) {
+        if (actions[i] == 6) {
+            punchRow = i;
+            break;
+        }
+    }
+    ASSERT_EQ(punchRow >= 0, 1, "empty-hand fixture exposes PUNCH row");
+    if (punchRow < 0) return;
+
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, punchRow), 1,
+              "empty-hand PUNCH row commits attack tick");
+    for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
+        if (state.lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
+            damageEmission = i;
+            break;
+        }
+    }
+    ASSERT_EQ(damageEmission >= 0, 1,
+              "empty-hand PUNCH row emits live damage result");
+    if (damageEmission >= 0) {
+        ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[1], 0,
+                  "empty-hand PUNCH uses M10 front-square auto target");
+        ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[2] > 0,
+                  1,
+                  "empty-hand PUNCH produces live damage");
+    }
+    ASSERT_EQ(groups[0].health[0] < 200, 1,
+              "empty-hand PUNCH mutates live group HP");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "F0391 clears acting champion after empty-hand PUNCH");
+}
+
+static void test_empty_hand_war_cry_frightens_front_group(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned char actions[3];
+    int warCryRow = -1;
+    int i;
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        THING_NONE;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 2; /* Giggler: fear resistance 0. */
+    groups[0].count = 0;
+    groups[0].health[0] = 25;
+    groups[0].cells = 0xFF;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "empty-hand champion opens source action set 2 for WAR CRY");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "empty-hand action menu resolves WAR CRY row");
+    for (i = 0; i < 3; ++i) {
+        if (actions[i] == 8) {
+            warCryRow = i;
+            break;
+        }
+    }
+    ASSERT_EQ(warCryRow >= 0, 1, "empty-hand fixture exposes WAR CRY row");
+    if (warCryRow < 0) return;
+
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, warCryRow), 1,
+              "WAR CRY frightens front group");
+    ASSERT_EQ(groups[0].behavior, DM1_BEHAVIOR_FLEE,
+              "WAR CRY switches group behavior to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
+              "WAR CRY switches active group state to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 5,
+              "WAR CRY sets source DelayFleeingFromTarget");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
+              12,
+              "WAR CRY awards full Influence XP on fright success");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "F0391 clears acting champion after WAR CRY");
+}
+
+static void test_blow_horn_frightens_front_group_with_f0401_values(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 2;
+    groups[0].count = 0;
+    groups[0].health[0] = 25;
+    groups[0].cells = 0xFF;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 4), 1,
+              "BLOW HORN frightens front group");
+    ASSERT_EQ(groups[0].behavior, DM1_BEHAVIOR_FLEE,
+              "BLOW HORN switches group behavior to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
+              "BLOW HORN switches active group state to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 5,
+              "BLOW HORN sets source DelayFleeingFromTarget");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
+              20,
+              "BLOW HORN awards full Influence XP on fright success");
+}
+
+static void test_calm_frightens_front_group_with_f0401_values(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 2;
+    groups[0].count = 0;
+    groups[0].health[0] = 25;
+    groups[0].cells = 0xFF;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 37), 1,
+              "CALM frightens front group");
+    ASSERT_EQ(groups[0].behavior, DM1_BEHAVIOR_FLEE,
+              "CALM switches group behavior to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
+              "CALM switches active group state to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 5,
+              "CALM sets source DelayFleeingFromTarget");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
+              35,
+              "CALM awards full Influence XP on fright success");
+}
+
+static void test_brandish_frightens_front_group_with_f0401_values(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 2;
+    groups[0].count = 0;
+    groups[0].health[0] = 25;
+    groups[0].cells = 0xFF;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 41), 1,
+              "BRANDISH frightens front group");
+    ASSERT_EQ(groups[0].behavior, DM1_BEHAVIOR_FLEE,
+              "BRANDISH switches group behavior to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
+              "BRANDISH switches active group state to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 5,
+              "BRANDISH sets source DelayFleeingFromTarget");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
+              30,
+              "BRANDISH awards full Influence XP on fright success");
+}
+
+static void test_confuse_decrements_charges_and_frightens_front_group(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonGroup_Compat groups[1];
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 2;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 2;
+    groups[0].count = 0;
+    groups[0].health[0] = 25;
+    groups[0].cells = 0xFF;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 22), 1,
+              "CONFUSE frightens front group");
+    ASSERT_EQ(weapons[0].chargeCount, 1,
+              "CONFUSE decrements action-hand weapon charges through F0405");
+    ASSERT_EQ(groups[0].behavior, DM1_BEHAVIOR_FLEE,
+              "CONFUSE switches group behavior to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
+              "CONFUSE switches active group state to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 5,
+              "CONFUSE sets source DelayFleeingFromTarget");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
+              45,
+              "CONFUSE awards full Influence XP on fright success");
+}
+
+static void test_war_cry_resistance_halves_xp_without_flee(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        THING_NONE;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 0; /* Giant Scorpion: fear resistance 9. */
+    groups[0].count = 0;
+    groups[0].health[0] = 80;
+    groups[0].cells = 0xFF;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 8), 0,
+              "WAR CRY resisted by fear resistance returns not frightened");
+    ASSERT_EQ(groups[0].behavior, DM1_BEHAVIOR_ATTACK,
+              "resisted WAR CRY does not switch group behavior to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_ATTACK,
+              "resisted WAR CRY does not switch active group state to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 0,
+              "resisted WAR CRY leaves DelayFleeingFromTarget unchanged");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
+              6,
+              "resisted WAR CRY awards half Influence XP");
+}
+
+static void test_blow_horn_immune_halves_xp_without_flee(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 9; /* Stone Golem: fear resistance 15. */
+    groups[0].count = 0;
+    groups[0].health[0] = 145;
+    groups[0].cells = 0xFF;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 4), 0,
+              "BLOW HORN against fear-immune group returns not frightened");
+    ASSERT_EQ(groups[0].behavior, DM1_BEHAVIOR_ATTACK,
+              "fear-immune BLOW HORN does not switch group behavior to FLEE");
+    ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_ATTACK,
+              "fear-immune BLOW HORN does not switch active group state");
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 0,
+              "fear-immune BLOW HORN leaves DelayFleeingFromTarget unchanged");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
+              10,
+              "fear-immune BLOW HORN awards half Influence XP");
+}
+
+static void test_blow_horn_uses_f0304_influence_xp_semantics(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    maps[0].difficulty = 1;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_PRIEST].experience = 490;
+    state.world.party.champions[0].skillLevels[DM1_SKILL_IDX_PRIEST] = 1;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+    state.world.lifecycle.champions[0].maxHealth = 100;
+    state.world.lifecycle.champions[0].maxStamina = 100;
+    state.world.lifecycle.champions[0].maxMana = 20;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 2;
+    groups[0].count = 0;
+    groups[0].health[0] = 25;
+    groups[0].cells = 0xFF;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 2;
+    state.world.creatureAI[0].groupMapY = 1;
+    state.world.creatureAI[0].reserved0 = 0;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 4), 1,
+              "BLOW HORN frightens front group before F0304 XP award");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
+              20,
+              "F0401 awards BLOW HORN XP to hidden Influence skill");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_INFLUENCE].temporaryExperience,
+              2,
+              "F0304 adds bounded temporary XP to Influence");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_PRIEST].experience,
+              510,
+              "F0304 propagates Influence XP to Priest base skill");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_PRIEST].temporaryExperience,
+              2,
+              "F0304 adds bounded temporary XP to Priest base skill");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .skillLevels[DM1_SKILL_IDX_PRIEST],
+              2,
+              "F0401 F0304 level-up syncs Priest level back to party state");
 }
 
 static void test_block_action_spends_source_stamina(void) {
@@ -57,6 +1196,2853 @@ static void test_block_action_spends_source_stamina(void) {
               "BLOCK spends source base stamina when jitter is zero");
     ASSERT_EQ(state.world.party.champions[0].hp.current, 100,
               "normal action stamina drain does not damage HP");
+}
+
+static void test_throw_action_removes_action_hand_object(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned short thrownThing;
+
+    seed_state(&state, 100, 100);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    weapons[0].type = 8; /* Dagger: weight 5, class 2, kinetic 19. */
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = 50;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    thrownThing = make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        thrownThing;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 42), 1,
+              "THROW action spawns projectile");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "THROW action creates one live projectile");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_ACTION_HAND],
+              THING_NONE,
+              "THROW removes object from action hand after projectile spawn");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 98,
+              "THROW spends F0305 object-weight stamina without G0494 zero-cost jitter");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[LIFECYCLE_SKILL_THROW].experience,
+              16,
+              "THROW awards F0328/F0304 Throw hidden-skill XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[LIFECYCLE_SKILL_NINJA].experience,
+              16,
+              "THROW propagates XP to Ninja base skill");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[LIFECYCLE_SKILL_THROW].temporaryExperience,
+              2,
+              "THROW adds bounded temporary XP to Throw skill");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "THROW uses F0407 side-derived launch cell");
+    ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
+              "THROW keeps projectile direction at party direction");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 82,
+              "THROW passes F0328 kinetic energy to projectile create");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 40,
+              "THROW passes F0328 bounded attack to projectile create");
+    ASSERT_EQ(state.world.projectiles.entries[0].launcherStrength, 40,
+              "THROW carries F0328 attack into F0217 kinetic pass-through strength");
+    ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 10,
+              "THROW passes F0328 step energy to projectile create");
+    ASSERT_EQ(state.world.projectiles.entries[0].reserved1, thrownThing,
+              "THROW preserves removed object Thing identity on projectile");
+    ASSERT_EQ(state.world.projectileDisabledMovementTicks, 3,
+              "THROW sets source projectile movement-disable ticks before the action tick decrements them");
+    ASSERT_EQ(state.world.lastProjectileDisabledMovementDirection, 1,
+              "THROW records source projectile movement-disable direction");
+}
+
+static void test_throw_ven_potion_launches_removepotion_projectile(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonPotion_Compat potions[1];
+    unsigned short thrownThing;
+
+    seed_state(&state, 100, 100);
+    memset(&things, 0, sizeof(things));
+    memset(potions, 0, sizeof(potions));
+    potions[0].next = THING_ENDOFLIST;
+    potions[0].power = 77;
+    potions[0].type = 3; /* ReDMCSB C03_POTION_VEN_POTION. */
+    things.loaded = 1;
+    things.potions = potions;
+    things.potionCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = 50;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    thrownThing = make_thing(THING_TYPE_POTION, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        thrownThing;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 42), 1,
+              "THROW action accepts Ven potion projectile");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "THROW Ven potion creates one live projectile");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_ACTION_HAND],
+              THING_NONE,
+              "THROW Ven potion removes action-hand potion");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileCategory,
+              PROJECTILE_CATEGORY_KINETIC,
+              "THROW Ven potion keeps thrown-object projectile category");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
+              PROJECTILE_SUBTYPE_POISON_CLOUD,
+              "THROW Ven potion stores poison-cloud impact subtype");
+    ASSERT_EQ(state.world.projectiles.entries[0].associatedPotionPower, 77,
+              "THROW Ven potion carries potion power to projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].poisonAttack, 77,
+              "THROW Ven potion carries potion power as poison payload");
+    ASSERT_EQ(state.world.projectiles.entries[0].flags
+                  & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT,
+              PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT,
+              "THROW Ven potion sets RemovePotion impact flag");
+    ASSERT_EQ(state.world.projectiles.entries[0].reserved1, thrownThing,
+              "THROW Ven potion preserves removed potion Thing identity");
+}
+
+static void test_throw_ven_potion_advances_to_wall_impact_and_consumes(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    struct DungeonThings_Compat things;
+    struct DungeonPotion_Compat potions[1];
+    unsigned char rawPotionData[4];
+    unsigned char* rawThingData[DUNGEON_THING_TYPE_COUNT];
+    int thingCounts[DUNGEON_THING_TYPE_COUNT];
+    unsigned short thrownThing;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(&things, 0, sizeof(things));
+    memset(potions, 0, sizeof(potions));
+    memset(rawPotionData, 0, sizeof(rawPotionData));
+    memset(rawThingData, 0, sizeof(rawThingData));
+    memset(thingCounts, 0, sizeof(thingCounts));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    squareData[(3 * 3) + 1] = square_for_test(DUNGEON_ELEMENT_WALL, 0);
+
+    potions[0].next = THING_ENDOFLIST;
+    potions[0].power = 77;
+    potions[0].type = 3; /* ReDMCSB C03_POTION_VEN_POTION. */
+    rawPotionData[0] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawPotionData[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawPotionData[2] = 77;
+    rawPotionData[3] = 3;
+    rawThingData[THING_TYPE_POTION] = rawPotionData;
+    thingCounts[THING_TYPE_POTION] = 1;
+
+    things.loaded = 1;
+    things.potions = potions;
+    things.potionCount = 1;
+    memcpy(things.rawThingData, rawThingData, sizeof(rawThingData));
+    memcpy(things.thingCounts, thingCounts, sizeof(thingCounts));
+
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.lifecycle.lastCreatureAttackTime = 50;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    thrownThing = make_thing(THING_TYPE_POTION, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        thrownThing;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 42), 1,
+              "THROW Ven potion starts end-to-end projectile route");
+    ASSERT_EQ(state.world.projectiles.entries[0].firstMoveGraceFlag, 1,
+              "THROW Ven potion starts with first-move grace");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
+              PROJECTILE_SUBTYPE_POISON_CLOUD,
+              "THROW Ven potion starts as poison cloud impact subtype");
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    state.world.dungeon = &dungeon;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "THROW Ven potion first advance keeps projectile live");
+    ASSERT_EQ(state.world.projectiles.entries[0].mapX, 2,
+              "THROW Ven potion first grace advance crosses to east square");
+    ASSERT_EQ(state.world.projectiles.entries[0].firstMoveGraceFlag, 0,
+              "THROW Ven potion first advance consumes grace flag");
+
+    state.world.gameTick = 102;
+    M11_GameView_AdvanceProjectilesOnce(&state);
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "THROW Ven potion second advance stays live on intra-cell flip");
+    ASSERT_EQ(state.world.projectiles.entries[0].mapX, 2,
+              "THROW Ven potion second advance stays in current square");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "THROW Ven potion second advance flips cell by parity");
+
+    state.world.gameTick = 103;
+    M11_GameView_AdvanceProjectilesOnce(&state);
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "THROW Ven potion third advance impacts wall and despawns");
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 3, 1), 1,
+              "THROW Ven potion wall impact creates explosion at wall square");
+    ASSERT_EQ(state.world.explosions.entries[0].explosionType,
+              C007_EXPLOSION_POISON_CLOUD,
+              "THROW Ven potion wall impact maps to poison cloud");
+    ASSERT_EQ(state.world.explosions.entries[0].attack, 77,
+              "THROW Ven potion wall impact uses potion power");
+    ASSERT_EQ(state.world.explosions.entries[0].cell,
+              EXPLOSION_CELL_CENTERED,
+              "THROW Ven potion wall impact creates centered cloud");
+    ASSERT_EQ(potions[0].next, THING_NONE,
+              "THROW Ven potion wall impact consumes decoded potion thing");
+    ASSERT_EQ(rawPotionData[0] | (rawPotionData[1] << 8), THING_NONE,
+              "THROW Ven potion wall impact consumes raw potion thing");
+}
+
+static void test_throw_ful_bomb_advances_to_wall_impact_and_consumes(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    struct DungeonThings_Compat things;
+    struct DungeonPotion_Compat potions[1];
+    unsigned char rawPotionData[4];
+    unsigned char* rawThingData[DUNGEON_THING_TYPE_COUNT];
+    int thingCounts[DUNGEON_THING_TYPE_COUNT];
+    unsigned short thrownThing;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(&things, 0, sizeof(things));
+    memset(potions, 0, sizeof(potions));
+    memset(rawPotionData, 0, sizeof(rawPotionData));
+    memset(rawThingData, 0, sizeof(rawThingData));
+    memset(thingCounts, 0, sizeof(thingCounts));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    squareData[(3 * 3) + 1] = square_for_test(DUNGEON_ELEMENT_WALL, 0);
+
+    potions[0].next = THING_ENDOFLIST;
+    potions[0].power = 96;
+    potions[0].type = 19; /* ReDMCSB C19_POTION_FUL_BOMB. */
+    rawPotionData[0] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawPotionData[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawPotionData[2] = 96;
+    rawPotionData[3] = 19;
+    rawThingData[THING_TYPE_POTION] = rawPotionData;
+    thingCounts[THING_TYPE_POTION] = 1;
+
+    things.loaded = 1;
+    things.potions = potions;
+    things.potionCount = 1;
+    memcpy(things.rawThingData, rawThingData, sizeof(rawThingData));
+    memcpy(things.thingCounts, thingCounts, sizeof(thingCounts));
+
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.lifecycle.lastCreatureAttackTime = 50;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    thrownThing = make_thing(THING_TYPE_POTION, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        thrownThing;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 42), 1,
+              "THROW Ful Bomb starts end-to-end projectile route");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
+              PROJECTILE_SUBTYPE_FIREBALL,
+              "THROW Ful Bomb starts as fireball impact subtype");
+    ASSERT_EQ(state.world.projectiles.entries[0].associatedPotionPower, 96,
+              "THROW Ful Bomb carries potion power to projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].flags
+                  & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT,
+              PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT,
+              "THROW Ful Bomb sets RemovePotion impact flag");
+    ASSERT_EQ(state.world.projectiles.entries[0].reserved1, thrownThing,
+              "THROW Ful Bomb preserves removed potion Thing identity");
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    state.world.dungeon = &dungeon;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "THROW Ful Bomb first advance keeps projectile live");
+
+    state.world.gameTick = 102;
+    M11_GameView_AdvanceProjectilesOnce(&state);
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "THROW Ful Bomb second advance stays live on intra-cell flip");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "THROW Ful Bomb second advance flips cell by parity");
+
+    state.world.gameTick = 103;
+    M11_GameView_AdvanceProjectilesOnce(&state);
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "THROW Ful Bomb third advance impacts wall and despawns");
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 3, 1), 1,
+              "THROW Ful Bomb wall impact creates explosion at wall square");
+    ASSERT_EQ(state.world.explosions.entries[0].explosionType,
+              C000_EXPLOSION_FIREBALL,
+              "THROW Ful Bomb wall impact maps to fireball");
+    ASSERT_EQ(state.world.explosions.entries[0].attack, 96,
+              "THROW Ful Bomb wall impact uses potion power");
+    ASSERT_EQ(state.world.explosions.entries[0].cell, 2,
+              "THROW Ful Bomb wall impact keeps projectile impact cell");
+    ASSERT_EQ(potions[0].next, THING_NONE,
+              "THROW Ful Bomb wall impact consumes decoded potion thing");
+    ASSERT_EQ(rawPotionData[0] | (rawPotionData[1] << 8), THING_NONE,
+              "THROW Ful Bomb wall impact consumes raw potion thing");
+}
+
+static void test_throw_projectile_advances_after_scheduled_tick(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned short thrownThing;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    weapons[0].type = 8; /* Dagger: weight 5, class 2, kinetic 19. */
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.lifecycle.lastCreatureAttackTime = 50;
+    state.world.party.champions[0].cell = 2;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    thrownThing = make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        thrownThing;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 42), 1,
+              "THROW action spawns projectile for scheduled F0811 advance");
+    ASSERT_EQ(state.world.gameTick, 101,
+              "THROW action advances one game tick before manual projectile step");
+    ASSERT_EQ(state.world.projectiles.entries[0].firstMoveGraceFlag, 1,
+              "THROW projectile keeps first-move grace when no dungeon is loaded");
+    ASSERT_EQ(state.world.projectiles.entries[0].scheduledAtTick, 101,
+              "THROW projectile is scheduled for the next source tick");
+    ASSERT_EQ(state.world.projectiles.entries[0].mapX, 1,
+              "THROW projectile starts on party x before manual advance");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "THROW projectile starts on side-derived cell before manual advance");
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    state.world.dungeon = &dungeon;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+    ASSERT_EQ(state.world.projectiles.entries[0].firstMoveGraceFlag, 0,
+              "first scheduled F0811 advance consumes first-move grace");
+    ASSERT_EQ(state.world.projectiles.entries[0].mapX, 2,
+              "first scheduled F0811 advance crosses to the east square");
+    ASSERT_EQ(state.world.projectiles.entries[0].mapY, 1,
+              "first scheduled F0811 advance preserves y");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 3,
+              "first scheduled F0811 advance applies source cell parity");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 82,
+              "first grace advance does not decay kinetic energy");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 40,
+              "first grace advance does not decay attack");
+    ASSERT_EQ(state.world.projectiles.entries[0].scheduledAtTick, 102,
+              "first scheduled F0811 advance reschedules to the next party-map tick");
+
+    state.world.gameTick = 102;
+    M11_GameView_AdvanceProjectilesOnce(&state);
+    ASSERT_EQ(state.world.projectiles.entries[0].mapX, 2,
+              "second scheduled F0811 advance stays in square on intra-cell flip");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "second scheduled F0811 advance flips cell by source parity");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 72,
+              "second scheduled F0811 advance decays kinetic energy by step");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 30,
+              "second scheduled F0811 advance decays attack by step");
+    ASSERT_EQ(state.world.projectiles.entries[0].reserved1, thrownThing,
+              "scheduled F0811 advance preserves thrown Thing identity");
+}
+
+static void test_projectile_creature_impact_at_zero_zero_applies_damage(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    unsigned short squareFirstThings[6];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    squareData[0] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 0;
+    groups[0].cells = 0x0F;
+    groups[0].count = 0;
+    groups[0].health[0] = 100;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 6;
+    things.groups = groups;
+    things.groupCount = 1;
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 0;
+    state.world.creatureAI[0].groupMapY = 0;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].lastSeenPartyTick = 99;
+    state.world.creatureAI[0].reserved0 = 0;
+    state.world.gameTick = 100;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 3;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 40;
+    projectile->stepEnergy = 10;
+    projectile->poisonAttack = 3;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = make_thing(THING_TYPE_WEAPON, 0);
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "F0811 creature impact at (0,0) despawns projectile");
+    ASSERT_EQ(groups[0].health[0], 2,
+              "M11 applies defense-scaled plus randomized resistance-adjusted poison projectile creature damage at real zero coordinate");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "projectile creature hit schedules one C30 reaction event");
+    ASSERT_EQ(state.world.timeline.events[0].kind, TIMELINE_EVENT_CREATURE_REACTION,
+              "projectile creature hit schedules a creature reaction");
+    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 105,
+              "projectile creature hit uses F0209 CM2 reaction delay");
+    ASSERT_EQ(state.world.timeline.events[0].mapIndex, 0,
+              "projectile creature hit reaction stores impact map");
+    ASSERT_EQ(state.world.timeline.events[0].mapX, 0,
+              "projectile creature hit reaction stores impact x");
+    ASSERT_EQ(state.world.timeline.events[0].mapY, 0,
+              "projectile creature hit reaction stores impact y");
+    ASSERT_EQ(state.world.timeline.events[0].aux0, 0,
+              "projectile creature hit reaction stores group index");
+    ASSERT_EQ(state.world.timeline.events[0].aux1, CREATURE_TYPE_GIANT_SCORPION,
+              "projectile creature hit reaction stores creature type");
+    ASSERT_EQ(state.world.timeline.events[0].aux2, DM1_EVENT_REACTION_HIT_BY_PROJECTILE,
+              "projectile creature hit reaction stores C30 event type");
+}
+
+static void test_projectile_creature_zero_scaled_attack_skips_poison_and_reaction(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    unsigned short squareFirstThings[6];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    squareData[0] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_LORD_CHAOS;
+    groups[0].cells = 0x0F;
+    groups[0].count = 0;
+    groups[0].health[0] = 100;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 6;
+    things.groups = groups;
+    things.groupCount = 1;
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 0;
+    state.world.creatureAI[0].groupMapY = 0;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].lastSeenPartyTick = 99;
+    state.world.creatureAI[0].reserved0 = 0;
+    state.world.gameTick = 100;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 3;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 1;
+    projectile->stepEnergy = 1;
+    projectile->poisonAttack = 50;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = make_thing(THING_TYPE_WEAPON, 0);
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "zero-scaled creature impact still despawns projectile");
+    ASSERT_EQ(groups[0].health[0], 100,
+              "zero-scaled creature impact skips projectile poison damage");
+    ASSERT_EQ(state.world.timeline.count, 0,
+              "zero-scaled creature impact skips C30 reaction scheduling");
+}
+
+static void test_projectile_non_material_creature_passes_through_without_impact(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    unsigned short squareFirstThings[6];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    squareData[0] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_GHOST;
+    groups[0].cells = 0x0F;
+    groups[0].count = 0;
+    groups[0].health[0] = 100;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 6;
+    things.groups = groups;
+    things.groupCount = 1;
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 0;
+    state.world.creatureAI[0].groupMapY = 0;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].reserved0 = 0;
+    state.world.gameTick = 100;
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 3;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 40;
+    projectile->stepEnergy = 10;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = make_thing(THING_TYPE_WEAPON, 0);
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "non-material creature hit by normal projectile keeps projectile alive");
+    ASSERT_EQ(groups[0].health[0], 100,
+              "non-material creature hit by normal projectile takes no damage");
+    ASSERT_EQ(state.world.timeline.count, 0,
+              "non-material creature pass-through schedules no reaction");
+    ASSERT_EQ(state.world.projectiles.entries[0].mapX, 0,
+              "non-material creature pass-through commits destination x");
+    ASSERT_EQ(state.world.projectiles.entries[0].mapY, 0,
+              "non-material creature pass-through commits destination y");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "non-material creature pass-through applies F0811 cell parity");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 70,
+              "non-material creature pass-through decays kinetic energy");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 30,
+              "non-material creature pass-through decays attack");
+    ASSERT_EQ(state.world.projectiles.entries[0].scheduledAtTick, 101,
+              "non-material creature pass-through reschedules next tick");
+}
+
+static void test_projectile_harm_non_material_hits_non_material_creature(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    unsigned short squareFirstThings[6];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    squareData[0] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_GHOST;
+    groups[0].cells = 0x0F;
+    groups[0].count = 0;
+    groups[0].health[0] = 100;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 6;
+    things.groups = groups;
+    things.groupCount = 1;
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 0;
+    state.world.creatureAI[0].groupMapY = 0;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].lastSeenPartyTick = 99;
+    state.world.creatureAI[0].reserved0 = 0;
+    state.world.gameTick = 100;
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 3;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 40;
+    projectile->stepEnergy = 10;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = THING_NONE;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "harm non-material projectile despawns on non-material creature hit");
+    ASSERT_EQ(groups[0].health[0], 27,
+              "harm non-material projectile applies defense-scaled damage to ghost");
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 0, 0), 1,
+              "harm non-material projectile spawns impact explosion");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "harm non-material creature hit schedules C30 reaction");
+    ASSERT_EQ(state.world.timeline.events[0].kind, TIMELINE_EVENT_CREATURE_REACTION,
+              "harm non-material creature hit schedules creature reaction");
+    ASSERT_EQ(state.world.timeline.events[0].aux2, DM1_EVENT_REACTION_HIT_BY_PROJECTILE,
+              "harm non-material creature hit stores C30 event type");
+}
+
+static void test_projectile_fireball_heals_black_flame_without_explosion(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    unsigned short squareFirstThings[6];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    squareData[0] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_BLACK_FLAME;
+    groups[0].cells = 0x0F;
+    groups[0].count = 0;
+    groups[0].health[0] = 990;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 6;
+    things.groups = groups;
+    things.groupCount = 1;
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 0;
+    state.world.creatureAI[0].groupMapY = 0;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].reserved0 = 0;
+    state.world.gameTick = 100;
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_FIREBALL;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 3;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 40;
+    projectile->stepEnergy = 10;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = THING_NONE;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "fireball black-flame impact despawns projectile");
+    ASSERT_EQ(groups[0].health[0], 1000,
+              "fireball black-flame impact heals up to source cap");
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 0, 0), 0,
+              "fireball black-flame impact skips normal explosion spawn");
+}
+
+static void test_projectile_creature_impact_keeps_thrown_sharp_weapon(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    unsigned short squareFirstThings[6];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned char rawWeaponData[4];
+    unsigned char* rawThingData[DUNGEON_THING_TYPE_COUNT];
+    int thingCounts[DUNGEON_THING_TYPE_COUNT];
+    struct ProjectileInstance_Compat* projectile;
+    unsigned short daggerThing;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    memset(weapons, 0, sizeof(weapons));
+    memset(rawWeaponData, 0xFF, sizeof(rawWeaponData));
+    memset(rawThingData, 0, sizeof(rawThingData));
+    memset(thingCounts, 0, sizeof(thingCounts));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    squareData[0] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].slot = THING_NONE;
+    groups[0].creatureType = 3; /* Wizard Eye keeps thrown sharp weapons. */
+    groups[0].cells = 0x0F;
+    groups[0].count = 0;
+    groups[0].health[0] = 100;
+    weapons[0].next = THING_ENDOFLIST;
+    weapons[0].type = 8; /* Dagger. */
+    rawWeaponData[0] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawWeaponData[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawWeaponData[2] = 8;
+    rawWeaponData[3] = 0;
+    rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
+    thingCounts[THING_TYPE_WEAPON] = 1;
+
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 6;
+    things.groups = groups;
+    things.groupCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    memcpy(things.rawThingData, rawThingData, sizeof(rawThingData));
+    memcpy(things.thingCounts, thingCounts, sizeof(thingCounts));
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 0;
+    state.world.creatureAI[0].groupMapY = 0;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.creatureAI[0].reserved0 = 0;
+    state.world.gameTick = 100;
+
+    daggerThing = make_thing(THING_TYPE_WEAPON, 0);
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 3;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 40;
+    projectile->stepEnergy = 10;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = daggerThing;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "kept thrown sharp weapon impact despawns projectile");
+    ASSERT_EQ(groups[0].health[0], 15,
+              "kept thrown sharp weapon impact applies defense-scaled damage");
+    ASSERT_EQ(groups[0].slot, daggerThing,
+              "surviving keep-sharp creature stores thrown dagger in group slot");
+    ASSERT_EQ(weapons[0].next, THING_NONE,
+              "kept dagger terminates group possession chain");
+    ASSERT_EQ(rawWeaponData[0] | (rawWeaponData[1] << 8), THING_NONE,
+              "kept dagger raw next mirrors decoded possession chain");
+}
+
+static void test_projectile_door_hit_schedules_and_dispatches_destruction(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    struct ProjectileInstance_Compat* projectile;
+    struct TickInput_Compat input;
+    struct TickResult_Compat tickResult;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    squareData[0] = square_for_test(DUNGEON_ELEMENT_DOOR,
+                                    PROJECTILE_DOOR_STATE_CLOSED_FULL);
+
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.gameTick = 100;
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 3;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 60;
+    projectile->stepEnergy = 10;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = make_thing(THING_TYPE_WEAPON, 0);
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "blocking door projectile impact despawns projectile");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "M11 schedules projectile door destruction event");
+    ASSERT_EQ(state.world.timeline.events[0].kind,
+              TIMELINE_EVENT_DOOR_DESTRUCTION,
+              "scheduled projectile door event uses destruction kind");
+    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 101,
+              "projectile door destruction fires one tick later");
+    ASSERT_EQ(state.world.timeline.events[0].mapX, 0,
+              "projectile door destruction targets impact x");
+    ASSERT_EQ(state.world.timeline.events[0].mapY, 0,
+              "projectile door destruction targets impact y");
+
+    memset(&input, 0, sizeof(input));
+    memset(&tickResult, 0, sizeof(tickResult));
+    input.tick = state.world.gameTick;
+    input.command = CMD_NONE;
+    ASSERT_EQ(F0884_ORCH_AdvanceOneTick_Compat(
+                  &state.world, &input, &tickResult) >= 0,
+              1,
+              "first idle tick before door destruction succeeds");
+    ASSERT_EQ(squareData[0] & DUNGEON_SQUARE_MASK_ATTRIBS,
+              PROJECTILE_DOOR_STATE_CLOSED_FULL,
+              "door remains closed before destruction fire tick");
+
+    memset(&input, 0, sizeof(input));
+    memset(&tickResult, 0, sizeof(tickResult));
+    input.tick = state.world.gameTick;
+    input.command = CMD_NONE;
+    ASSERT_EQ(F0884_ORCH_AdvanceOneTick_Compat(
+                  &state.world, &input, &tickResult) >= 0,
+              1,
+              "second idle tick dispatches projectile door destruction");
+    ASSERT_EQ(squareData[0] & DUNGEON_SQUARE_MASK_ATTRIBS,
+              PROJECTILE_DOOR_STATE_DESTROYED,
+              "projectile door destruction dispatch sets door state destroyed");
+    ASSERT_EQ(state.world.timeline.count, 0,
+              "projectile door destruction event is consumed after dispatch");
+}
+
+static void test_projectile_champion_hit_applies_poison_dose(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    struct ProjectileInstance_Compat* projectile;
+    struct TickInput_Compat input;
+    struct TickResult_Compat tickResult;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 0;
+    state.world.party.mapY = 0;
+    state.world.party.direction = 1;
+    state.world.party.championCount = 2;
+    state.world.party.champions[1].present = 1;
+    state.world.party.champions[1].hp.current = 100;
+    state.world.party.champions[1].hp.maximum = 100;
+    state.world.party.champions[1].stamina.current = 100;
+    state.world.party.champions[1].stamina.maximum = 100;
+    state.world.party.champions[1].cell = 1;
+    state.world.party.champions[1].poisonDose = 0;
+    state.world.gameTick = 100;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 3u);
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+    projectile->ownerKind = PROJECTILE_OWNER_CREATURE;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 0;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 32;
+    projectile->stepEnergy = 10;
+    projectile->poisonAttack = 12;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = THING_NONE;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "poison projectile champion impact despawns projectile");
+    ASSERT_EQ(state.world.party.champions[1].hp.current, 67,
+              "poison projectile champion impact applies projectile and immediate poison damage");
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 0, 0), 1,
+              "poison projectile champion impact spawns poison cloud explosion");
+    ASSERT_EQ(state.world.explosions.entries[0].explosionType,
+              C007_EXPLOSION_POISON_CLOUD,
+              "poison projectile champion impact maps to poison cloud explosion");
+    ASSERT_EQ(state.world.explosions.entries[0].attack, 20,
+              "poison projectile champion impact uses kinetic/4 explosion attack");
+    ASSERT_EQ(state.world.explosions.entries[0].cell,
+              EXPLOSION_CELL_CENTERED,
+              "poison projectile champion impact creates centered poison cloud");
+    ASSERT_EQ(state.world.explosions.entries[0].centered, 1,
+              "poison projectile champion impact marks poison cloud centered");
+    ASSERT_EQ(state.world.party.champions[1].poisonDose, 12,
+              "poison projectile champion impact applies poison dose after RNG gate");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "poison projectile champion impact schedules C75 poison event");
+    ASSERT_EQ(state.world.timeline.events[0].kind, TIMELINE_EVENT_STATUS_TIMEOUT,
+              "poison projectile champion impact schedules status timeout");
+    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 136,
+              "poison projectile champion impact schedules C75 after 36 ticks");
+    ASSERT_EQ(state.world.timeline.events[0].aux0, LIFECYCLE_STATUS_POISON,
+              "poison projectile champion impact stores C75 status kind");
+    ASSERT_EQ(state.world.timeline.events[0].aux1, 11,
+              "poison projectile champion impact stores remaining poison attack");
+    ASSERT_EQ(state.world.timeline.events[0].aux4, 1,
+              "poison projectile champion impact stores champion index in priority byte");
+    ASSERT_EQ(state.world.lifecycle.champions[1].poisonEventCount, 1,
+              "poison projectile champion impact increments lifecycle poison event count");
+
+    memset(&input, 0, sizeof(input));
+    memset(&tickResult, 0, sizeof(tickResult));
+    state.world.gameTick = 136;
+    input.tick = state.world.gameTick;
+    input.command = CMD_NONE;
+    ASSERT_EQ(F0884_ORCH_AdvanceOneTick_Compat(
+                  &state.world, &input, &tickResult) >= 0,
+              1,
+              "poison projectile C75 dispatch succeeds");
+    ASSERT_EQ(state.world.party.champions[1].hp.current, 66,
+              "poison projectile C75 dispatch applies poison tick damage");
+    ASSERT_EQ(state.world.party.champions[1].poisonDose, 10,
+              "poison projectile C75 dispatch carries remaining attack");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "poison projectile C75 dispatch reschedules next poison event");
+    ASSERT_EQ(state.world.timeline.events[0].kind, TIMELINE_EVENT_STATUS_TIMEOUT,
+              "poison projectile C75 dispatch keeps status timeout kind");
+    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 172,
+              "poison projectile C75 dispatch reschedules 36 ticks later");
+    ASSERT_EQ(state.world.timeline.events[0].aux0, LIFECYCLE_STATUS_POISON,
+              "poison projectile C75 dispatch keeps poison status kind");
+    ASSERT_EQ(state.world.timeline.events[0].aux1, 10,
+              "poison projectile C75 dispatch stores decremented attack");
+    ASSERT_EQ(state.world.timeline.events[0].aux4, 1,
+              "poison projectile C75 dispatch preserves champion index");
+    ASSERT_EQ(state.world.lifecycle.champions[1].poisonEventCount, 1,
+              "poison projectile C75 dispatch keeps one active poison event");
+}
+
+static void test_thrown_potion_wall_impact_consumes_potion_thing(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    struct DungeonThings_Compat things;
+    struct DungeonPotion_Compat potions[1];
+    unsigned char rawPotionData[4];
+    unsigned char* rawThingData[DUNGEON_THING_TYPE_COUNT];
+    int thingCounts[DUNGEON_THING_TYPE_COUNT];
+    struct ProjectileInstance_Compat* projectile;
+    unsigned short potionThing;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(&things, 0, sizeof(things));
+    memset(potions, 0, sizeof(potions));
+    memset(rawPotionData, 0, sizeof(rawPotionData));
+    memset(rawThingData, 0, sizeof(rawThingData));
+    memset(thingCounts, 0, sizeof(thingCounts));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    squareData[0] = square_for_test(DUNGEON_ELEMENT_WALL, 0);
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+
+    potions[0].next = THING_ENDOFLIST;
+    potions[0].power = 77;
+    potions[0].type = 3; /* ReDMCSB C03_POTION_VEN_POTION. */
+    potions[0].doNotDiscard = 0;
+    rawPotionData[0] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawPotionData[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawPotionData[2] = 77;
+    rawPotionData[3] = 3;
+    rawThingData[THING_TYPE_POTION] = rawPotionData;
+    thingCounts[THING_TYPE_POTION] = 1;
+
+    things.loaded = 1;
+    things.potions = potions;
+    things.potionCount = 1;
+    memcpy(things.rawThingData, rawThingData, sizeof(rawThingData));
+    memcpy(things.thingCounts, thingCounts, sizeof(thingCounts));
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.gameTick = 100;
+
+    potionThing = make_thing(THING_TYPE_POTION, 0);
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 1;
+    projectile->mapY = 0;
+    projectile->cell = 3;
+    projectile->direction = 3;
+    projectile->kineticEnergy = 12;
+    projectile->attack = 5;
+    projectile->stepEnergy = 10;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->associatedPotionPower = 77;
+    projectile->flags = PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT;
+    projectile->reserved1 = potionThing;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "thrown potion wall impact despawns projectile");
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 0, 0), 1,
+              "thrown potion wall impact spawns explosion on wall cell");
+    ASSERT_EQ(state.world.explosions.entries[0].explosionType,
+              C007_EXPLOSION_POISON_CLOUD,
+              "thrown Ven potion impact maps to poison cloud");
+    ASSERT_EQ(state.world.explosions.entries[0].attack, 77,
+              "thrown potion impact explosion uses potion power");
+    ASSERT_EQ(state.world.explosions.entries[0].cell,
+              EXPLOSION_CELL_CENTERED,
+              "thrown Ven potion impact creates centered poison cloud");
+    ASSERT_EQ(potions[0].next, THING_NONE,
+              "thrown potion impact consumes decoded potion thing");
+    ASSERT_EQ(rawPotionData[0] | (rawPotionData[1] << 8), THING_NONE,
+              "thrown potion impact consumes raw potion thing");
+    ASSERT_EQ(rawPotionData[2], 77,
+              "thrown potion impact preserves raw potion power byte");
+    ASSERT_EQ(rawPotionData[3], 3,
+              "thrown potion impact preserves raw potion type byte");
+}
+
+static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned short thrownThing;
+    unsigned short actionHandThing;
+
+    seed_state(&state, 100, 100);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    weapons[0].type = 8; /* Dagger: weight 5, class 2, kinetic 19. */
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = 50;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 0;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
+    state.world.party.champions[0].maxLoad = 420;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
+    thrownThing = make_thing(THING_TYPE_WEAPON, 0);
+    actionHandThing = make_thing(THING_TYPE_JUNK, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        actionHandThing;
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, thrownThing), 1,
+              "leader hand accepts throw object");
+
+    /* ReDMCSB viewport origin is x=0,y=33.  Local x=120 selects the
+     * right-side F0329/F0328 throw route; local y=20 is the upper
+     * C080 throw zone from CLIKVIEW.C F0375. */
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 120, 53, 1),
+              M11_GAME_INPUT_REDRAW,
+              "leader-hand C080 click throws through F0329/F0328");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "leader-hand throw creates one live projectile");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
+              "accepted leader-hand throw clears leader hand");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_ACTION_HAND],
+              actionHandThing,
+              "leader-hand throw restores existing action-hand object");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, 98,
+              "leader-hand throw spends F0305 object-weight stamina");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[LIFECYCLE_SKILL_THROW].experience,
+              16,
+              "leader-hand throw awards F0328/F0304 Throw hidden-skill XP");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "leader-hand throw uses explicit right-side launch cell");
+    ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
+              "leader-hand throw keeps projectile direction at party direction");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 82,
+              "leader-hand throw passes F0328 kinetic energy to projectile create");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 40,
+              "leader-hand throw passes F0328 bounded attack to projectile create");
+    ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 10,
+              "leader-hand throw passes F0328 step energy to projectile create");
+    ASSERT_EQ(state.world.projectiles.entries[0].reserved1, thrownThing,
+              "leader-hand throw preserves Thing identity on projectile");
+    ASSERT_EQ(state.world.projectileDisabledMovementTicks, 4,
+              "leader-hand throw sets source movement-disable ticks without action-row tick decrement");
+    ASSERT_EQ(state.world.lastProjectileDisabledMovementDirection, 1,
+              "leader-hand throw records source movement-disable direction");
+}
+
+static void test_block_action_disables_champion_for_source_ticks(void) {
+    M11_GameViewState state;
+    DM1_ActionXpRoute route;
+    int expectedActionXp;
+    int i;
+    seed_state(&state, 30, 1);
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_BLOCK, &route), 1,
+              "BLOCK has a source G0496/G0497 route");
+    if (!route.valid) return;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    expectedActionXp = route.experienceGain * 2;
+
+    (void)M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 1);
+    ASSERT_EQ(state.actionDisabledTicks[0], 6,
+              "BLOCK applies G0491 six-tick action disable");
+    ASSERT_EQ(state.actionDisabledIndex[0], 1,
+              "BLOCK records disabled action index");
+    ASSERT_EQ(state.world.party.champions[0].actionDefense, 36,
+              "BLOCK applies G0495 action defense modifier");
+    ASSERT_EQ(state.world.party.champions[0].actionIndex, 1,
+              "BLOCK stores champion action index while disabled");
+    ASSERT_EQ(route.skillIndex, LIFECYCLE_SKILL_PARRY,
+              "BLOCK routes source G0496 XP to Parry");
+    ASSERT_EQ(route.baseSkillIndex, LIFECYCLE_SKILL_FIGHTER,
+              "BLOCK Parry XP propagates to Fighter base skill");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[LIFECYCLE_SKILL_PARRY].experience,
+              expectedActionXp,
+              "direct BLOCK awards F0407 G0497 XP to Parry through F0304");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[LIFECYCLE_SKILL_FIGHTER].experience,
+              expectedActionXp,
+              "direct BLOCK propagates F0407 G0497 XP to Fighter through F0304");
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 0,
+              "disabled champion cannot reopen action menu");
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(&state, 0, 1), 0,
+              "direct non-melee helper respects action-disabled gate");
+    ASSERT_EQ(state.world.party.champions[0].actionDefense, 36,
+              "rejected disabled action does not stack action defense");
+
+    for (i = 0; i < 5; ++i) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.actionDisabledTicks[0], 1,
+              "action disable counts down on accepted idle ticks");
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 0,
+              "last disabled tick still blocks action menu");
+
+    (void)M11_GameView_AdvanceIdleTick(&state);
+    ASSERT_EQ(state.actionDisabledTicks[0], 0,
+              "action disable clears after source tick budget");
+    ASSERT_EQ(state.actionDisabledIndex[0], 255,
+              "cleared action disable resets action index");
+    ASSERT_EQ(state.world.party.champions[0].actionDefense, 0,
+              "action enable removes G0495 action defense modifier");
+    ASSERT_EQ(state.world.party.champions[0].actionIndex, 255,
+              "action enable clears champion action index");
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "champion can reopen action menu after disable clears");
+}
+
+static void test_freeze_life_common_branch_decrements_charges(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+
+    seed_state(&state, 100, 31);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 3;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FREEZE_LIFE),
+              1,
+              "FREEZE LIFE common branch performs F0407 effect");
+    ASSERT_EQ(weapons[0].chargeCount, 2,
+              "FREEZE LIFE common branch decrements charges through F0405");
+    ASSERT_EQ(state.world.freezeLifeTicks > 0, 1,
+              "FREEZE LIFE leaves a live freeze-life tick budget");
+}
+
+static void test_light_decrements_action_hand_charges(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    int i;
+    int guard;
+
+    seed_state(&state, 100, 33);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 3;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_LIGHT),
+              1,
+              "LIGHT performs F0407 magical light effect");
+    ASSERT_EQ(state.world.magic.magicalLightAmount, 12,
+              "LIGHT adds Graphic562 power-2 light amount");
+    ASSERT_EQ(weapons[0].chargeCount, 2,
+              "LIGHT decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "LIGHT schedules F0404/C70 magical light decay");
+    ASSERT_EQ(state.world.timeline.events[0].kind,
+              TIMELINE_EVENT_MAGIC_LIGHT_DECAY,
+              "LIGHT decay uses the M10 F0257 event kind");
+    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 2533,
+              "LIGHT schedules first decay at GameTime + 2500");
+    ASSERT_EQ(state.world.timeline.events[0].aux0, -2,
+              "LIGHT stores negative light power for later removal");
+
+    guard = 0;
+    while (state.world.gameTick <= 2533U && guard++ < 2600) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.world.magic.magicalLightAmount, 5,
+              "first LIGHT decay removes power-2 to power-1 delta");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "first LIGHT decay schedules weaker follow-up");
+    ASSERT_EQ(state.world.timeline.events[0].kind,
+              TIMELINE_EVENT_MAGIC_LIGHT_DECAY,
+              "weaker LIGHT decay keeps F0257 event kind");
+    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 2537,
+              "weaker LIGHT decay fires four ticks later");
+    ASSERT_EQ(state.world.timeline.events[0].aux0, -1,
+              "weaker LIGHT decay stores negative power 1");
+
+    guard = 0;
+    while (state.world.gameTick <= 2537U && guard++ < 16) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.world.magic.magicalLightAmount, 0,
+              "final LIGHT decay removes remaining power-1 light");
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        ASSERT_EQ(state.world.timeline.events[i].kind !=
+                      TIMELINE_EVENT_MAGIC_LIGHT_DECAY,
+                  1,
+                  "final LIGHT decay leaves no light-decay follow-up");
+    }
+}
+
+static void test_heal_action_uses_hidden_heal_skill(void) {
+    M11_GameViewState state;
+
+    seed_state(&state, 100, 39);
+    state.world.party.champions[0].hp.current = 80;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].mana.current = 10;
+    state.world.party.champions[0].mana.maximum = 20;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_PRIEST].experience = 0;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_HEAL].experience = 10000;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(M11_GameView_GetSkillLevel(&state, 0, DM1_SKILL_IDX_PRIEST), 1,
+              "fixture keeps base Priest skill low");
+    ASSERT_EQ(M11_GameView_GetSkillLevel(&state, 0, DM1_SKILL_IDX_HEAL), 5,
+              "fixture gives hidden Heal skill a distinct source level");
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_HEAL),
+              1,
+              "HEAL action succeeds through F0407");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 100,
+              "F0407 HEAL uses hidden Heal skill capacity, not base Priest");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 2,
+              "F0407 HEAL spends two mana per source healing cycle");
+}
+
+static void test_window_action_schedules_thieves_eye_and_decrements_charges(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    uint32_t initialTick;
+    uint32_t expiryTick = 0;
+    int skillLevel;
+    int expiryIndex = -1;
+    int i;
+    int guard;
+
+    seed_state(&state, 100, 45);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 3;
+    state.world.things = &things;
+    state.world.party.mapIndex = 2;
+    state.world.party.mapX = 4;
+    state.world.party.mapY = 5;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_EARTH].experience = 10000;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    initialTick = state.world.gameTick;
+    skillLevel = M11_GameView_GetSkillLevel(&state, 0, DM1_SKILL_IDX_EARTH);
+
+    ASSERT_EQ(skillLevel, 5,
+              "fixture gives WINDOW/Earth skill a distinct source level");
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_WINDOW),
+              1,
+              "WINDOW performs F0407 Thieves Eye effect");
+    ASSERT_EQ(weapons[0].chargeCount, 2,
+              "WINDOW decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.lifecycle.status.thievesEyeCount, 1,
+              "WINDOW increments the party C73 Thieves Eye counter");
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+            state.world.timeline.events[i].aux0 == LIFECYCLE_STATUS_THIEVES_EYE) {
+            expiryIndex = i;
+            break;
+        }
+    }
+    ASSERT_EQ(expiryIndex >= 0, 1,
+              "WINDOW schedules C73 Thieves Eye expiry event");
+    if (expiryIndex >= 0) {
+        expiryTick = state.world.timeline.events[expiryIndex].fireAtTick;
+        ASSERT_EQ(expiryTick >= initialTick + 5U, 1,
+                  "WINDOW expiry has source minimum duration");
+        ASSERT_EQ(expiryTick <= initialTick + (uint32_t)(skillLevel + 12), 1,
+                  "WINDOW expiry is bounded by random(skill + 8) + 5");
+        ASSERT_EQ(state.world.timeline.events[expiryIndex].mapIndex, 2,
+                  "WINDOW stores current party map index on C73 event");
+        ASSERT_EQ(state.world.timeline.events[expiryIndex].mapX, 4,
+                  "WINDOW stores current party X on C73 event");
+        ASSERT_EQ(state.world.timeline.events[expiryIndex].mapY, 5,
+                  "WINDOW stores current party Y on C73 event");
+        ASSERT_EQ(state.world.timeline.events[expiryIndex].cell, -1,
+                  "WINDOW C73 event is party-scoped");
+    }
+
+    guard = 0;
+    while (expiryTick > 0 && state.world.gameTick <= expiryTick && guard++ < 64) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.world.lifecycle.status.thievesEyeCount, 0,
+              "C73 expiry decrements the Thieves Eye counter");
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        ASSERT_EQ(!(state.world.timeline.events[i].kind ==
+                        TIMELINE_EVENT_STATUS_TIMEOUT &&
+                    state.world.timeline.events[i].aux0 ==
+                        LIFECYCLE_STATUS_THIEVES_EYE),
+                  1,
+                  "C73 expiry leaves no Thieves Eye follow-up");
+    }
+}
+
+static void test_spit_action_launches_f0327_fireball_and_decrements_charges(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+
+    seed_state(&state, 100, 47);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 3;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].mana.current = 9;
+    state.world.party.champions[0].mana.maximum = 64;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIRE].experience = 10000;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(M11_GameView_GetSkillLevel(&state, 0, DM1_SKILL_IDX_FIRE), 5,
+              "fixture gives SPIT/Fire skill a distinct source level");
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_SPIT),
+              1,
+              "SPIT performs F0407/F0327 projectile route");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 7,
+              "SPIT spends 7 - min(6, Fire skill) mana");
+    ASSERT_EQ(weapons[0].chargeCount, 2,
+              "SPIT decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.projectiles.count, 1,
+              "SPIT creates one projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileCategory,
+              PROJECTILE_CATEGORY_MAGICAL,
+              "SPIT projectile is magical");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
+              PROJECTILE_SUBTYPE_FIREBALL,
+              "SPIT projectile uses source fireball explosion thing");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 250,
+              "SPIT uses F0407 kinetic energy 250");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 90,
+              "SPIT uses F0327 fixed projectile attack 90");
+    ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 2,
+              "SPIT uses F0327 step energy from maximum mana");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "SPIT launch cell follows F0326 champion Cell formula");
+    ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
+              "SPIT launch direction follows party/champion direction");
+    ASSERT_EQ(state.world.projectiles.entries[0].firstMoveGraceFlag, 1,
+              "SPIT schedules first-move grace like F0212 projectile create");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "SPIT schedules first projectile movement event");
+    ASSERT_EQ(state.world.timeline.events[0].kind,
+              TIMELINE_EVENT_PROJECTILE_MOVE,
+              "SPIT first event is projectile movement");
+}
+
+static void test_fireball_action_uses_f0327_and_decrements_charges(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+
+    seed_state(&state, 100, 49);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 2;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].mana.current = 9;
+    state.world.party.champions[0].mana.maximum = 64;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIRE].experience = 10000;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FIREBALL),
+              1,
+              "FIREBALL action performs F0407/F0327 projectile route");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 7,
+              "FIREBALL spends 7 - min(6, Fire skill) mana");
+    ASSERT_EQ(weapons[0].chargeCount, 1,
+              "FIREBALL decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.projectiles.count, 1,
+              "FIREBALL creates one projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
+              PROJECTILE_SUBTYPE_FIREBALL,
+              "FIREBALL uses source fireball projectile subtype");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 150,
+              "FIREBALL uses F0407 kinetic energy 150");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 90,
+              "FIREBALL uses F0327 fixed projectile attack 90");
+    ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 2,
+              "FIREBALL uses F0327 step energy from maximum mana");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "FIREBALL launch cell follows F0326 champion Cell formula");
+    ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
+              "FIREBALL launch direction follows party/champion direction");
+}
+
+static void test_fireball_projectile_create_failure_halves_action_xp(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
+    int expectedXp;
+
+    seed_state(&state, 100, 50);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 2;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].mana.current = 9;
+    state.world.party.champions[0].mana.maximum = 64;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIRE].experience = 10000;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.projectiles.count = PROJECTILE_LIST_CAPACITY;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_FIREBALL, &route), 1,
+              "FIREBALL has a source G0496/G0497 route");
+    if (!route.valid) return;
+    expectedXp = route.experienceGain >> 1;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FIREBALL),
+              0,
+              "full projectile list makes F0327 projectile create fail");
+    ASSERT_EQ(weapons[0].chargeCount, 1,
+              "failed FIREBALL still decrements charges through F0405");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_FIREBALL),
+              "failed FIREBALL keeps full source disabled ticks");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              10000 + expectedXp,
+              "failed FIREBALL halves G0497 action XP on the action skill");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedXp,
+              "failed FIREBALL propagates halved action XP to base skill");
+}
+
+static void test_invoke_action_uses_f0327_and_decrements_charges(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+
+    seed_state(&state, 100, 51);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    weapons[0].type = 1;
+    weapons[0].chargeCount = 2;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].mana.current = 9;
+    state.world.party.champions[0].mana.maximum = 64;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_WIZARD].experience = 10000;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 7u);
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_INVOKE),
+              1,
+              "INVOKE action performs F0407 randomized projectile route");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 8,
+              "INVOKE spends 7 - min(6, Wizard skill) mana");
+    ASSERT_EQ(weapons[0].chargeCount, 1,
+              "INVOKE decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.projectiles.count, 1,
+              "INVOKE creates one projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy >= 100, 1,
+              "INVOKE kinetic energy has source lower bound RANDOM(128)+100");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy <= 227, 1,
+              "INVOKE kinetic energy has source upper bound RANDOM(128)+100");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 90,
+              "INVOKE uses F0327 fixed projectile attack 90");
+    ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 2,
+              "INVOKE uses F0327 step energy from maximum mana");
+}
+
+static void test_cast_potion_spell_mutates_empty_flask(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonPotion_Compat potions[1];
+    unsigned char rawPotionData[4];
+    int sawSpellEffect;
+    int i;
+
+    seed_state(&state, 100, 41);
+    memset(&things, 0, sizeof(things));
+    memset(potions, 0, sizeof(potions));
+    memset(rawPotionData, 0, sizeof(rawPotionData));
+
+    potions[0].next = THING_ENDOFLIST;
+    potions[0].type = 20; /* C20 empty flask / C195 icon. */
+    potions[0].power = 3;
+    rawPotionData[0] = 0xFEu;
+    rawPotionData[1] = 0xFFu;
+    rawPotionData[2] = 3u;
+    rawPotionData[3] = 20u;
+    things.loaded = 1;
+    things.potions = potions;
+    things.potionCount = 1;
+    things.rawThingData[THING_TYPE_POTION] = rawPotionData;
+    things.thingCounts[THING_TYPE_POTION] = 1;
+    state.world.things = &things;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_POTION, 0);
+    state.world.party.champions[0].mana.current = 100;
+    state.world.party.champions[0].mana.maximum = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 100;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_HEAL].experience = 10000;
+
+    ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1,
+              "potion spell opens spell panel");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1,
+              "potion spell enters Lo power rune");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1,
+              "potion spell enters Ya potion rune");
+    ASSERT_EQ(M11_GameView_CastSpell(&state), 1,
+              "potion spell casts with empty flask in hand");
+
+    ASSERT_EQ(potions[0].type, 11,
+              "potion spell mutates empty flask to Ya stamina potion");
+    ASSERT_EQ(potions[0].power >= 40 && potions[0].power <= 55, 1,
+              "potion spell writes Lo power range RANDOM(16)+40");
+    ASSERT_EQ(rawPotionData[2], potions[0].power,
+              "potion spell updates raw potion power byte");
+    ASSERT_EQ(rawPotionData[3], 11,
+              "potion spell updates raw potion type byte");
+    sawSpellEffect = 0;
+    for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
+        if (state.lastTickResult.emissions[i].kind == EMIT_SPELL_EFFECT &&
+            state.lastTickResult.emissions[i].payload[1] ==
+                C1_SPELL_KIND_POTION_COMPAT &&
+            state.lastTickResult.emissions[i].payload[2] == 11) {
+            sawSpellEffect = 1;
+        }
+    }
+    ASSERT_EQ(sawSpellEffect, 1,
+              "potion spell emits committed potion spell effect");
+}
+
+static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
+    unsigned char rawJunkData[4];
+    int sawSpellEffect;
+    int i;
+
+    seed_state(&state, 100, 43);
+    memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+    memset(rawJunkData, 0, sizeof(rawJunkData));
+
+    for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
+        state.world.party.champions[0].inventory[i] = THING_NONE;
+    }
+    junks[0].next = THING_NONE;
+    rawJunkData[0] = 0xFFu;
+    rawJunkData[1] = 0xFFu;
+    things.loaded = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    things.rawThingData[THING_TYPE_JUNK] = rawJunkData;
+    things.thingCounts[THING_TYPE_JUNK] = 1;
+    state.world.things = &things;
+    state.world.party.champions[0].mana.current = 100;
+    state.world.party.champions[0].mana.maximum = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 100;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_WIZARD].experience = 10000;
+
+    ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1,
+              "Zokathra opens spell panel");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1,
+              "Zokathra enters Lo power rune");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 5), 1,
+              "Zokathra enters Zo element rune");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 2), 1,
+              "Zokathra enters Kath form rune");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 4), 1,
+              "Zokathra enters Ra class rune");
+    ASSERT_EQ(M11_GameView_CastSpell(&state), 1,
+              "Zokathra spell casts");
+
+    ASSERT_EQ(junks[0].type, 51,
+              "Zokathra materializes source C51 junk type");
+    ASSERT_EQ(junks[0].next, THING_ENDOFLIST,
+              "Zokathra materialized junk is unlinked in hand");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_HAND_LEFT],
+              make_thing(THING_TYPE_JUNK, 0),
+              "Zokathra prioritizes ready hand");
+    ASSERT_EQ(rawJunkData[0], 0xFE,
+              "Zokathra raw junk next low byte is end-of-list");
+    ASSERT_EQ(rawJunkData[1], 0xFF,
+              "Zokathra raw junk next high byte is end-of-list");
+    ASSERT_EQ(rawJunkData[2], 51,
+              "Zokathra raw junk type byte is C51");
+    sawSpellEffect = 0;
+    for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
+        if (state.lastTickResult.emissions[i].kind == EMIT_SPELL_EFFECT &&
+            state.lastTickResult.emissions[i].payload[1] ==
+                C3_SPELL_KIND_OTHER_COMPAT &&
+            state.lastTickResult.emissions[i].payload[2] ==
+                C7_SPELL_TYPE_OTHER_ZOKATHRA_COMPAT) {
+            sawSpellEffect = 1;
+        }
+    }
+    ASSERT_EQ(sawSpellEffect, 1,
+              "Zokathra emits committed other-spell effect");
+}
+
+static void test_spellshield_low_mana_halves_disable_and_quarters_xp(void) {
+    M11_GameViewState state;
+    DM1_ActionXpRoute route;
+    int expectedActionXp;
+
+    seed_state(&state, 100, 11);
+    state.world.party.champions[0].mana.current = 2;
+    state.world.party.champions[0].mana.maximum = 10;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_SPELLSHIELD, &route), 1,
+              "SPELLSHIELD has a source G0496/G0497 route");
+    if (!route.valid) return;
+    expectedActionXp = route.experienceGain >> 2;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_SPELLSHIELD),
+              0,
+              "low-mana SPELLSHIELD returns false through F0403/F0407");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 0,
+              "low-mana SPELLSHIELD consumes remaining mana through F0403");
+    ASSERT_EQ(state.world.magic.spellShieldDefense, 4,
+              "low-mana SPELLSHIELD still adds half-tick F0403 defense");
+    ASSERT_EQ(state.world.magic.fireShieldDefense, 0,
+              "SPELLSHIELD does not modify fire shield defense");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_SPELLSHIELD) >> 1,
+              "F0407 halves SPELLSHIELD disabled ticks when F0403 fails");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_SPELLSHIELD,
+              "failed SPELLSHIELD still records disabled action index");
+    ASSERT_EQ(route.skillIndex, 15,
+              "SPELLSHIELD routes source G0496 XP to skill 15");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedActionXp,
+              "F0407 quarters SPELLSHIELD G0497 XP when F0403 fails");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedActionXp,
+              "F0304 propagates quartered SPELLSHIELD XP to base skill");
+}
+
+static void test_spellshield_success_consumes_mana_charges_and_full_xp(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
+    unsigned short chargedThing;
+    uint32_t expiryTick = 0;
+    int expiryIndex = -1;
+    int i;
+    int guard;
+
+    seed_state(&state, 100, 13);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+    chargedThing = make_thing(THING_TYPE_WEAPON, 0);
+    weapons[0].chargeCount = 3;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        chargedThing;
+    state.world.party.champions[0].mana.current = 9;
+    state.world.party.champions[0].mana.maximum = 10;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_SPELLSHIELD, &route), 1,
+              "SPELLSHIELD has a source G0496/G0497 route for success");
+    if (!route.valid) return;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_SPELLSHIELD),
+              1,
+              "full-mana SPELLSHIELD succeeds through F0403/F0407");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 5,
+              "successful SPELLSHIELD consumes four mana through F0403");
+    ASSERT_EQ(state.world.magic.spellShieldDefense, 8,
+              "successful SPELLSHIELD adds 280>>5 F0403 defense");
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+            state.world.timeline.events[i].aux0 == LIFECYCLE_STATUS_SPELL_SHIELD) {
+            expiryIndex = i;
+            break;
+        }
+    }
+    ASSERT_EQ(expiryIndex >= 0, 1,
+              "successful SPELLSHIELD schedules C77 shield expiry event");
+    if (expiryIndex >= 0) {
+        expiryTick = state.world.timeline.events[expiryIndex].fireAtTick;
+        ASSERT_EQ(state.world.timeline.events[expiryIndex].aux1, 8,
+                  "C77 expiry event carries the applied F0403 defense");
+        ASSERT_EQ(expiryTick, 13 + 280,
+                  "C77 expiry event fires at source GameTime + ticks");
+    }
+    ASSERT_EQ(weapons[0].chargeCount, 2,
+              "successful SPELLSHIELD decrements action-hand charges through F0405");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_SPELLSHIELD),
+              "successful SPELLSHIELD keeps full G0491 disabled ticks");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              route.experienceGain,
+              "successful SPELLSHIELD awards full G0497 XP through F0304");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              route.experienceGain,
+              "successful SPELLSHIELD propagates full G0497 XP to base skill");
+    guard = 0;
+    while (expiryTick > 0 && state.world.gameTick <= expiryTick && guard++ < 400) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.world.gameTick >= expiryTick, 1,
+              "idle ticks reach the scheduled SPELLSHIELD expiry");
+    ASSERT_EQ(state.world.magic.spellShieldDefense, 0,
+              "C77 timeline dispatch subtracts expired spell shield defense");
+}
+
+static void test_fireshield_success_schedules_c78_and_expires(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    DM1_ActionXpRoute route;
+    unsigned short chargedThing;
+    uint32_t expiryTick = 0;
+    int expiryIndex = -1;
+    int i;
+    int guard;
+
+    seed_state(&state, 100, 17);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+    chargedThing = make_thing(THING_TYPE_WEAPON, 0);
+    weapons[0].chargeCount = 4;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        chargedThing;
+    state.world.party.champions[0].mana.current = 10;
+    state.world.party.champions[0].mana.maximum = 10;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_FIRESHIELD, &route), 1,
+              "FIRESHIELD has a source G0496/G0497 route for success");
+    if (!route.valid) return;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_FIRESHIELD),
+              1,
+              "full-mana FIRESHIELD succeeds through F0403/F0407");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 6,
+              "successful FIRESHIELD consumes four mana through F0403");
+    ASSERT_EQ(state.world.magic.spellShieldDefense, 0,
+              "FIRESHIELD does not modify spell shield defense");
+    ASSERT_EQ(state.world.magic.fireShieldDefense, 8,
+              "successful FIRESHIELD adds 280>>5 F0403 defense");
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+            state.world.timeline.events[i].aux0 == LIFECYCLE_STATUS_FIRE_SHIELD) {
+            expiryIndex = i;
+            break;
+        }
+    }
+    ASSERT_EQ(expiryIndex >= 0, 1,
+              "successful FIRESHIELD schedules C78 shield expiry event");
+    if (expiryIndex >= 0) {
+        expiryTick = state.world.timeline.events[expiryIndex].fireAtTick;
+        ASSERT_EQ(state.world.timeline.events[expiryIndex].aux1, 8,
+                  "C78 expiry event carries the applied F0403 defense");
+        ASSERT_EQ(expiryTick, 17 + 280,
+                  "C78 expiry event fires at source GameTime + ticks");
+    }
+    ASSERT_EQ(weapons[0].chargeCount, 3,
+              "successful FIRESHIELD decrements action-hand charges through F0405");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              route.experienceGain,
+              "successful FIRESHIELD awards full G0497 XP through F0304");
+    guard = 0;
+    while (expiryTick > 0 && state.world.gameTick <= expiryTick && guard++ < 400) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.world.gameTick >= expiryTick, 1,
+              "idle ticks reach the scheduled FIRESHIELD expiry");
+    ASSERT_EQ(state.world.magic.fireShieldDefense, 0,
+              "C78 timeline dispatch subtracts expired fire shield defense");
+    ASSERT_EQ(state.world.magic.spellShieldDefense, 0,
+              "C78 expiry leaves spell shield defense unchanged");
+}
+
+static void test_spellshield_high_defense_quarters_new_event_defense(void) {
+    M11_GameViewState state;
+    uint32_t expiryTick = 0;
+    int expiryIndex = -1;
+    int i;
+    int guard;
+
+    seed_state(&state, 100, 19);
+    state.world.party.champions[0].mana.current = 8;
+    state.world.party.champions[0].mana.maximum = 10;
+    state.world.magic.spellShieldDefense = 51;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
+                  &state, 0, DM1_ACTION_SPELLSHIELD),
+              1,
+              "high-defense SPELLSHIELD still succeeds through F0403");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 4,
+              "high-defense SPELLSHIELD consumes four mana through F0403");
+    ASSERT_EQ(state.world.magic.spellShieldDefense, 53,
+              "F0403 quarters only the new defense when existing spell shield is >50");
+    for (i = 0; i < state.world.timeline.count; ++i) {
+        if (state.world.timeline.events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+            state.world.timeline.events[i].aux0 == LIFECYCLE_STATUS_SPELL_SHIELD) {
+            expiryIndex = i;
+            break;
+        }
+    }
+    ASSERT_EQ(expiryIndex >= 0, 1,
+              "high-defense SPELLSHIELD schedules C77 expiry event");
+    if (expiryIndex >= 0) {
+        expiryTick = state.world.timeline.events[expiryIndex].fireAtTick;
+        ASSERT_EQ(state.world.timeline.events[expiryIndex].aux1, 2,
+                  "C77 high-defense expiry event carries quartered new defense");
+        ASSERT_EQ(expiryTick, 19 + 280,
+                  "C77 high-defense expiry event still uses full source ticks");
+    }
+    guard = 0;
+    while (expiryTick > 0 && state.world.gameTick <= expiryTick && guard++ < 400) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.world.magic.spellShieldDefense, 51,
+              "C77 expiry subtracts only the quartered high-defense event amount");
+}
+
+static void test_shoot_no_ammunition_clears_action_xp_but_keeps_tail(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned char actions[3];
+    DM1_ActionXpRoute route;
+
+    seed_state(&state, 80, 23);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    weapons[0].type = 25; /* Bow: ObjectInfo ActionSet 27 -> SHOOT. */
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
+        THING_NONE;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "bow champion opens SHOOT action menu");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "bow action menu resolves source action set");
+    ASSERT_EQ(actions[0], DM1_ACTION_SHOOT,
+              "bow action set exposes SHOOT in row 0");
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_SHOOT, &route), 1,
+              "SHOOT has a source G0496/G0497 route");
+
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 0,
+              "SHOOT without ready-hand ammunition returns F0407 failure");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "SHOOT without ammunition creates no projectile");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_HAND_LEFT],
+              THING_NONE,
+              "SHOOT failure leaves ready hand empty");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_SHOOT),
+              "SHOOT failure keeps the common full disabled-tick tail");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_SHOOT,
+              "SHOOT failure records SHOOT as the disabled action");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              0,
+              "F0407 no-ammunition SHOOT clears G0497 Shoot XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              0,
+              "F0407 no-ammunition SHOOT clears propagated Ninja XP");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "F0391 clears acting champion after SHOOT failure");
+}
+
+static void test_shoot_action_uses_champion_cell_for_f0326_launch(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    unsigned char actions[3];
+    unsigned short bowThing;
+    unsigned short arrowThing;
+
+    seed_state(&state, 80, 29);
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    weapons[0].type = 25; /* Bow: class 20, kinetic 50, shoot attack 50. */
+    weapons[1].type = 27; /* Arrow: class 10, kinetic 10. */
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 2;
+    state.world.things = &things;
+    state.world.party.direction = 1;
+    state.world.party.champions[0].cell = 2;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    bowThing = make_thing(THING_TYPE_WEAPON, 0);
+    arrowThing = make_thing(THING_TYPE_WEAPON, 1);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        bowThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
+        arrowThing;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "bow champion opens SHOOT action menu");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "bow action menu resolves source action set");
+    ASSERT_EQ(actions[0], DM1_ACTION_SHOOT,
+              "bow action set exposes SHOOT in row 0");
+
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 1,
+              "SHOOT with ready-hand arrow succeeds");
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
+              "SHOOT creates one projectile");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
+              "SHOOT launch cell follows F0326 champion Cell formula");
+    ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
+              "SHOOT keeps projectile direction at party direction");
+    ASSERT_EQ(state.world.projectiles.entries[0].reserved1, arrowThing,
+              "SHOOT projectile carries the removed ready-hand arrow Thing");
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 60,
+              "SHOOT combines launcher and ammunition kinetic energy");
+    ASSERT_EQ(state.world.projectiles.entries[0].attack, 102,
+              "SHOOT uses F0407 shoot attack with source Shoot skill level");
+    ASSERT_EQ(state.world.projectiles.entries[0].launcherStrength, 102,
+              "SHOOT carries F0407 attack into F0217 kinetic pass-through strength");
+    ASSERT_EQ(state.world.projectiles.entries[0].stepEnergy, 4,
+              "SHOOT derives F0326 step energy from bow action class");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_HAND_LEFT],
+              THING_NONE,
+              "SHOOT removes ready-hand arrow after projectile spawn");
+}
+
+static void test_climb_down_failure_cancels_disable_but_keeps_xp(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
+    unsigned char actions[3];
+    DM1_ActionXpRoute route;
+    int expectedXp;
+
+    seed_state(&state, 80, 31);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData; /* front square is corridor, not pit. */
+    tiles[0].squareCount = 9;
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+
+    junks[0].type = 45; /* Rope: ObjectInfo ActionSet 39 -> CLIMB DOWN. */
+    things.loaded = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_JUNK, 0);
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "rope champion opens CLIMB DOWN action menu");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "rope action menu resolves source action set");
+    ASSERT_EQ(actions[0], DM1_ACTION_CLIMB_DOWN,
+              "rope action set exposes CLIMB DOWN in row 0");
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
+              "CLIMB DOWN has a source G0496/G0497 route");
+    expectedXp = route.experienceGain * 2;
+
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 0,
+              "CLIMB DOWN in front of corridor returns F0407 failure");
+    ASSERT_EQ(state.actionDisabledTicks[0], 0,
+              "failed CLIMB DOWN cancels action-disabled ticks");
+    ASSERT_EQ(state.actionDisabledIndex[0], 255,
+              "failed CLIMB DOWN clears disabled action index");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedXp,
+              "BUG0_79 failed CLIMB DOWN still awards G0497 XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedXp,
+              "failed CLIMB DOWN XP propagates through F0304");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "F0391 clears acting champion after CLIMB DOWN failure");
+}
+
+static void test_climb_down_open_pit_moves_party_and_keeps_tail(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0[9];
+    unsigned char map1[9];
+    struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
+    unsigned char actions[3];
+    DM1_ActionXpRoute route;
+    int i;
+    int expectedXp;
+
+    seed_state(&state, 100, 37);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+    for (i = 0; i < 9; ++i) {
+        map0[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+        map1[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    map0[2 * 3 + 1] = square_for_test(DUNGEON_ELEMENT_PIT, 0x08);
+
+    dungeon.header.mapCount = 2;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    maps[0].level = 0;
+    maps[1].width = 3;
+    maps[1].height = 3;
+    maps[1].level = 1;
+    tiles[0].squareData = map0;
+    tiles[0].squareCount = 9;
+    tiles[1].squareData = map1;
+    tiles[1].squareCount = 9;
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+
+    junks[0].type = 45; /* Rope: ObjectInfo ActionSet 39 -> CLIMB DOWN. */
+    things.loaded = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_JUNK, 0);
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "rope champion opens CLIMB DOWN action menu for open pit");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "rope action menu resolves source action set for open pit");
+    ASSERT_EQ(actions[0], DM1_ACTION_CLIMB_DOWN,
+              "rope action set exposes CLIMB DOWN before open pit");
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
+              "CLIMB DOWN open pit has a source G0496/G0497 route");
+    expectedXp = route.experienceGain * 2;
+
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 1,
+              "CLIMB DOWN in front of an open pit returns success");
+    ASSERT_EQ(state.world.party.mapIndex, 1,
+              "successful CLIMB DOWN resolves pit fall to lower map");
+    ASSERT_EQ(state.world.partyMapIndex, 1,
+              "successful CLIMB DOWN keeps world partyMapIndex mirror current");
+    ASSERT_EQ(state.world.party.mapX, 2,
+              "successful CLIMB DOWN first moves party forward onto pit x");
+    ASSERT_EQ(state.world.party.mapY, 1,
+              "successful CLIMB DOWN preserves pit y after fall");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 80,
+              "successful CLIMB DOWN applies source pit-fall damage");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_CLIMB_DOWN),
+              "successful CLIMB DOWN keeps full disabled-tick tail");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_CLIMB_DOWN,
+              "successful CLIMB DOWN records disabled action index");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedXp,
+              "successful CLIMB DOWN awards G0497 XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedXp,
+              "successful CLIMB DOWN XP propagates through F0304");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "F0391 clears acting champion after successful CLIMB DOWN");
+}
+
+static void test_climb_down_closed_pit_moves_forward_without_fall(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
+    unsigned char actions[3];
+    DM1_ActionXpRoute route;
+    int i;
+    int expectedXp;
+
+    seed_state(&state, 100, 39);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+    for (i = 0; i < 9; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    squareData[2 * 3 + 1] = square_for_test(DUNGEON_ELEMENT_PIT, 0);
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+
+    junks[0].type = 45; /* Rope: ObjectInfo ActionSet 39 -> CLIMB DOWN. */
+    things.loaded = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_JUNK, 0);
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "rope champion opens CLIMB DOWN action menu before closed pit");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "rope action menu resolves source action set before closed pit");
+    ASSERT_EQ(actions[0], DM1_ACTION_CLIMB_DOWN,
+              "rope action set exposes CLIMB DOWN before closed pit");
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
+              "CLIMB DOWN closed pit has a source G0496/G0497 route");
+    expectedXp = route.experienceGain * 2;
+
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 1,
+              "CLIMB DOWN in front of a closed pit returns success");
+    ASSERT_EQ(state.world.party.mapIndex, 0,
+              "closed-pit CLIMB DOWN stays on original map");
+    ASSERT_EQ(state.world.party.mapX, 2,
+              "closed-pit CLIMB DOWN still moves party forward");
+    ASSERT_EQ(state.world.party.mapY, 1,
+              "closed-pit CLIMB DOWN preserves y");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 100,
+              "closed-pit CLIMB DOWN applies no fall damage");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_CLIMB_DOWN),
+              "closed-pit CLIMB DOWN keeps full disabled-tick tail");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_CLIMB_DOWN,
+              "closed-pit CLIMB DOWN records disabled action index");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedXp,
+              "closed-pit CLIMB DOWN awards G0497 XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedXp,
+              "closed-pit CLIMB DOWN XP propagates through F0304");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "F0391 clears acting champion after closed-pit CLIMB DOWN");
+}
+
+static void test_climb_down_group_over_pit_blocks_move_but_keeps_bug79_tail(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
+    unsigned char actions[3];
+    DM1_ActionXpRoute route;
+    int i;
+    int expectedXp;
+
+    seed_state(&state, 100, 41);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+    for (i = 0; i < 9; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    squareData[2 * 3 + 1] = square_for_test(
+        DUNGEON_ELEMENT_PIT, DUNGEON_SQUARE_MASK_THING_LIST | 0x08);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+
+    junks[0].type = 45; /* Rope: ObjectInfo ActionSet 39 -> CLIMB DOWN. */
+    things.loaded = 1;
+    things.junks = junks;
+    things.junkCount = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    state.world.things = &things;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_JUNK, 0);
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "rope champion opens CLIMB DOWN action menu before occupied pit");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "rope action menu resolves source action set before occupied pit");
+    ASSERT_EQ(actions[0], DM1_ACTION_CLIMB_DOWN,
+              "rope action set exposes CLIMB DOWN before occupied pit");
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
+              "CLIMB DOWN occupied pit has a source G0496/G0497 route");
+    expectedXp = route.experienceGain * 2;
+
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 0,
+              "CLIMB DOWN is blocked by a group levitating over the pit");
+    ASSERT_EQ(state.world.party.mapIndex, 0,
+              "blocked CLIMB DOWN keeps party on original map");
+    ASSERT_EQ(state.world.party.mapX, 1,
+              "blocked CLIMB DOWN keeps original x");
+    ASSERT_EQ(state.world.party.mapY, 1,
+              "blocked CLIMB DOWN keeps original y");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 100,
+              "blocked CLIMB DOWN applies no fall damage");
+    ASSERT_EQ(state.actionDisabledTicks[0], 0,
+              "blocked CLIMB DOWN cancels action-disabled ticks");
+    ASSERT_EQ(state.actionDisabledIndex[0], 255,
+              "blocked CLIMB DOWN clears disabled action index");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience,
+              expectedXp,
+              "BUG0_79 occupied-pit CLIMB DOWN still awards G0497 XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience,
+              expectedXp,
+              "occupied-pit CLIMB DOWN XP propagates through F0304");
+    ASSERT_EQ(M11_GameView_GetActingChampionOrdinal(&state), 0,
+              "F0391 clears acting champion after occupied-pit CLIMB DOWN");
+}
+
+static void test_action_defense_serializes_outside_v1_champion_blob(void) {
+    struct ChampionState_Compat champion;
+    struct ChampionState_Compat restored;
+    unsigned char fullBuf[CHAMPION_SERIALIZED_SIZE];
+    unsigned char oldPortraitBuf[CHAMPION_SERIALIZED_V2_PORTRAIT_SIZE];
+    int rc;
+
+    F0600_CHAMPION_InitEmpty_Compat(&champion);
+    champion.present = 1;
+    champion.portraitIndex = 3;
+    champion.actionIndex = 1;
+    champion.actionDefense = 36;
+    champion.portraitBitmapValid = 1;
+    champion.portraitBitmap[0] = 0xA5;
+
+    rc = F0602_CHAMPION_Serialize_Compat(&champion, fullBuf,
+                                         (int)sizeof(fullBuf));
+    ASSERT_EQ(rc, CHAMPION_SERIALIZED_SIZE,
+              "current champion serialization uses v3 action-defense size");
+    rc = F0603_CHAMPION_Deserialize_Compat(&restored, fullBuf,
+                                           (int)sizeof(fullBuf));
+    ASSERT_EQ(rc, CHAMPION_SERIALIZED_SIZE,
+              "current champion deserialization consumes v3 size");
+    ASSERT_EQ(restored.actionIndex, 1,
+              "current champion deserialization preserves action index");
+    ASSERT_EQ(restored.actionDefense, 36,
+              "current champion deserialization preserves action defense");
+    ASSERT_EQ(restored.portraitBitmapValid, 1,
+              "current champion deserialization preserves portrait flag");
+    ASSERT_EQ(restored.portraitBitmap[0], 0xA5,
+              "current champion deserialization preserves portrait bytes");
+
+    memcpy(oldPortraitBuf, fullBuf, sizeof(oldPortraitBuf));
+    oldPortraitBuf[CHAMPION_SERIALIZED_V1_SIZE +
+                   CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT + 1] = 0;
+    oldPortraitBuf[CHAMPION_SERIALIZED_V1_SIZE +
+                   CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT + 2] = 0;
+    oldPortraitBuf[CHAMPION_SERIALIZED_V1_SIZE +
+                   CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT + 3] = 0;
+    rc = F0603_CHAMPION_Deserialize_Compat(&restored, oldPortraitBuf,
+                                           (int)sizeof(oldPortraitBuf));
+    ASSERT_EQ(rc, CHAMPION_SERIALIZED_V2_PORTRAIT_SIZE,
+              "old reserved-zero portrait-v2 champion blob remains readable");
+    ASSERT_EQ(restored.actionIndex, 255,
+              "old reserved-zero portrait-v2 blob defaults action index to none");
+    ASSERT_EQ(restored.actionDefense, 0,
+              "old reserved-zero portrait-v2 blob defaults action defense to zero");
+    ASSERT_EQ(restored.portraitBitmapValid, 1,
+              "portrait-v2 champion blob still preserves portrait flag");
+    ASSERT_EQ(restored.portraitBitmap[0], 0xA5,
+              "portrait-v2 champion blob still preserves portrait bytes");
 }
 
 static void test_action_stamina_underflow_clamps_and_damages(void) {
@@ -76,7 +4062,58 @@ int main(void) {
     printf("ReDMCSB: MENU.C G0494/F0407 and CHAMPION.C F0325\n\n");
 
     test_block_action_spends_source_stamina();
+    test_throw_action_removes_action_hand_object();
+    test_throw_ven_potion_launches_removepotion_projectile();
+    test_throw_ven_potion_advances_to_wall_impact_and_consumes();
+    test_throw_ful_bomb_advances_to_wall_impact_and_consumes();
+    test_throw_projectile_advances_after_scheduled_tick();
+    test_projectile_creature_impact_at_zero_zero_applies_damage();
+    test_projectile_creature_zero_scaled_attack_skips_poison_and_reaction();
+    test_projectile_non_material_creature_passes_through_without_impact();
+    test_projectile_harm_non_material_hits_non_material_creature();
+    test_projectile_fireball_heals_black_flame_without_explosion();
+    test_projectile_creature_impact_keeps_thrown_sharp_weapon();
+    test_projectile_door_hit_schedules_and_dispatches_destruction();
+    test_projectile_champion_hit_applies_poison_dose();
+    test_thrown_potion_wall_impact_consumes_potion_thing();
+    test_leader_hand_throw_uses_f0328_temporary_action_hand();
+    test_block_action_disables_champion_for_source_ticks();
+    test_freeze_life_common_branch_decrements_charges();
+    test_light_decrements_action_hand_charges();
+    test_heal_action_uses_hidden_heal_skill();
+    test_window_action_schedules_thieves_eye_and_decrements_charges();
+    test_spit_action_launches_f0327_fireball_and_decrements_charges();
+    test_fireball_action_uses_f0327_and_decrements_charges();
+    test_fireball_projectile_create_failure_halves_action_xp();
+    test_invoke_action_uses_f0327_and_decrements_charges();
+    test_cast_potion_spell_mutates_empty_flask();
+    test_cast_zokathra_spell_materializes_ready_hand_junk();
+    test_spellshield_low_mana_halves_disable_and_quarters_xp();
+    test_spellshield_success_consumes_mana_charges_and_full_xp();
+    test_fireshield_success_schedules_c78_and_expires();
+    test_spellshield_high_defense_quarters_new_event_defense();
+    test_shoot_no_ammunition_clears_action_xp_but_keeps_tail();
+    test_shoot_action_uses_champion_cell_for_f0326_launch();
+    test_climb_down_failure_cancels_disable_but_keeps_xp();
+    test_climb_down_open_pit_moves_party_and_keeps_tail();
+    test_climb_down_closed_pit_moves_forward_without_fall();
+    test_climb_down_group_over_pit_blocks_move_but_keeps_bug79_tail();
+    test_action_defense_serializes_outside_v1_champion_blob();
     test_action_stamina_underflow_clamps_and_damages();
+    test_melee_action_row_uses_auto_target_and_action_index();
+    test_melee_action_row_halves_disable_ticks_when_f0402_fails();
+    test_melee_action_row_respects_live_candidate_no_action();
+    test_candidate_panel_blocks_action_menu_open();
+    test_direct_non_melee_respects_candidate_panel_gate();
+    test_empty_hand_punch_action_row_uses_live_melee();
+    test_empty_hand_war_cry_frightens_front_group();
+    test_blow_horn_frightens_front_group_with_f0401_values();
+    test_calm_frightens_front_group_with_f0401_values();
+    test_brandish_frightens_front_group_with_f0401_values();
+    test_confuse_decrements_charges_and_frightens_front_group();
+    test_war_cry_resistance_halves_xp_without_flee();
+    test_blow_horn_immune_halves_xp_without_flee();
+    test_blow_horn_uses_f0304_influence_xp_semantics();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

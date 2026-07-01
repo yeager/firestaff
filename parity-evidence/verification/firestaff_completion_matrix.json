@@ -82,9 +82,7 @@
         ]
       },
       "status": "playable_verified_partial",
-      "primaryBlockers": [
-        "Representative original-vs-Firestaff overlay parity remains incomplete. Original I34E keyboard-buffer live debugger observation still needs a host with `dosbox-debug`, `Xvfb`, and `xdotool`."
-      ],
+      "primaryBlockers": "Representative original-vs-Firestaff overlay parity remains incomplete. Current DM1 blocker is the pass162 stock-original C080/F0377/F0275/F0280 live transcript gate: FIRES.MAP provides candidate addresses, DOSBox-debug break-start accepts the BP/BPM packet, and the surface-backend HoC, movement-click, movement double-click, autolock, keyboard-capture, external cliclick, System Events, and direct postToPid live probes now record FIRES startup, DATA\\DUNGEON.DAT load, mapped native macOS input, and 34 stock-original memory stops each, but no C080-chain code breakpoint fires. Pre-move, cursor-warp, first-click focus/capture, DOSBox-X autolock/mouse_emulation defaults, Ctrl-F10 capture toggling, replacing the Swift/CGEvent helper with cliclick, macOS Accessibility/System Events clicking, and direct CGEvent postToPid are now insufficient explanations. The OpenGL-output control is a separate harness/readiness blocker, not comparable F0359 evidence. The mouse=debug logs on the proven surface path show MOUSE/INT33 initialization but no route-click motion/button event. The generated pass162 manifest now makes this machine-readable with dosbox_mouse_log_summary and route_motion_button_line_count=0 on the proven surface controls. Next work is DOSBox-X SDL/Cocoa event ingestion or debugger event-pump work before pass435 six-shot promotion can continue.",
       "completionPercent": 78,
       "points": 78,
       "maxPoints": 100
@@ -150,15 +148,15 @@
         ],
         "core_input_movement": [
           5,
-          "Command-chain, input-queue, movement step/rotation, runtime tick, queue overflow, reincarnation, and related gates exist, but end-to-end runtime proof is not complete."
+          "Command-chain, input-queue, movement step/rotation, runtime tick, PC real-asset launch, quickplay dungeon-handle survival, Utility NEW_GAME-to-runtime one-move route with bounded save-prefix roundtrip, boot/runtime handoff, queue overflow, reincarnation, and related gates exist, but end-to-end runtime proof is not complete."
         ],
         "viewport_ui_render": [
           7,
-          "CSB-specific viewport source slices, CustomBackgrounds, D1/D2/D3 wall/door/ornament lanes, hidden item skip tables, and portrait render handoff are covered; real pixel captures remain open."
+          "CSB-specific viewport source slices, CustomBackgrounds, D1/D2/D3 wall/door/ornament lanes, hidden item skip tables, portrait render handoff, first viewport-frame render entry, and post-movement render entry are covered; real pixel captures remain open."
         ],
         "gameplay_systems": [
           4,
-          "Dungeon loader/world, DSA trigger, save runtime boundary, utility/CMP import, Grey Lord/Zokathra/chaos slices exist; broad mechanics parity remains open."
+          "Dungeon loader/world, DSA trigger, save runtime boundary, bounded route save-prefix roundtrip, boot/runtime handoff, utility/CMP import, Grey Lord/Zokathra/chaos slices exist; broad mechanics parity remains open."
         ],
         "audio_timing": [
           2,

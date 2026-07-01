@@ -28,13 +28,17 @@ Classification: `ready/probe-plan-emitted`
 4. **front-wall sensor hit-state** — CLIKVIEW.C:406-439, CLIKVIEW.C:5-27, MOVESENS.C:1501-1503, REVIVE.C:63-88; expect: pose map0 x=1 y=3 dir=South touches front square x=1 y=4 opposite face and reaches F0280(sensorData=10); if missing: front-wall hit zone/state/sensor face is blocking after F0377 but before F0280
 
 ## Tool status
-- dosbox: `/usr/bin/dosbox`
-- dosbox-x: `/usr/bin/dosbox-x`
-- gdb: `/usr/bin/gdb`
+- dosbox: `/opt/homebrew/bin/dosbox`
+- dosbox-x: `/opt/homebrew/bin/dosbox-x`
+- gdb: `None`
 
 ## Non-claims
 - does not prove the stock original binary reached C080/F0377/F0280
 - does not use <private-host>
 - does not claim x=111,y=82 is wrong; it narrows where to instrument before changing coordinates
+
+## Address gate
+- manifest: `parity-evidence/verification/pass162_c080_queue_trace/c080_address_gate_manifest.json`
+- classification: `ready/address-candidates-and-break-start-bp-bpm-confirmed-no-runtime-hook`
 
 Next step: Run the emitted gate list in DOSBox-X/debugger against the source-locked pass162 pose; classify first missing gate instead of trying more coordinates.

@@ -233,20 +233,11 @@ static int dm1_champion_slot_strength_pc34(const DM1_ChampionCombat* ch,
     if (weapon) {
         str += weapon->strength;
 
-        /* Skill bonus */
-        int skillLevel = 0;
-        int cls = weapon->weaponClass;
-        if (cls == 0 || cls == 2) { /* SWING or DAGGER_AND_AXES */
-            skillLevel = ch->skillSwing;
-        }
-        if (cls != 0 && cls != 2 && cls < 16) { /* THROW weapons per ReDMCSB F0312:
-             * class != SWING(0) && class != DAGGER_AND_AXES(2) && class < FIRST_BOW(16) */
-            skillLevel += ch->skillThrow;
-        }
-        if (cls >= 16 && cls < 112) { /* SHOOT weapons */
-            skillLevel += ch->skillShoot;
-        }
-        str += skillLevel << 1;
+        str += dm1_champion_f0312_skill_level_bonus_pc34(
+                   weapon->weaponClass,
+                   ch->skillSwing,
+                   ch->skillThrow,
+                   ch->skillShoot) << 1;
     }
 
     /* Stamina adjustment */
@@ -263,6 +254,99 @@ static int dm1_champion_slot_strength_pc34(const DM1_ChampionCombat* ch,
     }
 
     return dm1_clamp(str >> 1, 0, 100);
+}
+
+int dm1_weapon_info_pc34(int weaponType, DM1_WeaponInfo* outInfo) {
+    static const DM1_WeaponInfo table[46] = {
+        {   2,   0, 130,   1, 0x2000 },
+        {   2,   0, 131,   1, 0x2000 },
+        {   8,   2,   0,  11, 0x2000 },
+        {  10,  80, 112,  12, 0x2028 },
+        {  16,   7, 129,   9, 0x2000 },
+        {  49, 110, 113,  30, 0x0942 },
+        {  55,  20,   0,  47, 0x0900 },
+        {  25,  10, 255,  24, 0x20FF },
+        {  10,  19,   2,   5, 0x0200 },
+        {  30,   8,   0,  33, 0x0900 },
+        {  34,  10,   0,  32, 0x0900 },
+        {  38,  10,   0,  26, 0x0900 },
+        {  42,  11,   0,  35, 0x0900 },
+        {  46,  12,   0,  36, 0x0900 },
+        {  50,  14,   0,  33, 0x0900 },
+        {  62,  14,   0,  37, 0x0900 },
+        {  48,  13,   0,  30, 0x0000 },
+        {  58,  15,   0,  39, 0x0900 },
+        {  49,  33,   2,  43, 0x0300 },
+        {  70,  44,   2,  65, 0x0300 },
+        {  32,  10,   0,  31, 0x2000 },
+        {  42,  13,   0,  41, 0x2000 },
+        {  60,  15,   0,  50, 0x2000 },
+        {  19,  10,   0,  36, 0x2700 },
+        {  44,  22,   0, 110, 0x2600 },
+        {   1,  50,  20,  10, 0x2032 },
+        {   1, 180,  30,  28, 0x2078 },
+        {   2,  10,  10,   2, 0x0100 },
+        {   2,  28,  10,   2, 0x0500 },
+        {   5,  20,  39,  19, 0x2032 },
+        {   6,  18,  11,  10, 0x2000 },
+        {   7,  23,  12,   3, 0x0800 },
+        {   3,  19,   1,   1, 0x0A00 },
+        {   4,   4,   0,   8, 0x2000 },
+        {  12,   4, 129,  26, 0x2000 },
+        {   0,   0, 130,   1, 0x2000 },
+        {   1,  20, 140,   2, 0x2000 },
+        {  18,   6, 128,  35, 0x2000 },
+        {   0,   4, 159,  29, 0x2000 },
+        {   0,   3, 131,  21, 0x2000 },
+        {   0,   7, 136,  33, 0x2000 },
+        {   3,   1, 132,   8, 0x2000 },
+        {   9,   4, 131,  18, 0x2000 },
+        {   1,   1, 192,   8, 0x2000 },
+        {   1, 220,  26,  30, 0x207D },
+        { 100,  50, 255,  36, 0x20FF }
+    };
+
+    if (!outInfo) return 0;
+    if (weaponType < 0 || weaponType >= (int)(sizeof(table) / sizeof(table[0]))) {
+        memset(outInfo, 0, sizeof(*outInfo));
+        outInfo->weaponClass = -1;
+        return -1;
+    }
+    /* ReDMCSB: DUNGEON.C G0238_as_Graphic559_WeaponInfo[46] stores
+     * {Weight, Class, Strength, KineticEnergy, Attributes}; this helper
+     * returns the same row in Firestaff's DM1_WeaponInfo field order. */
+    *outInfo = table[weaponType];
+    return 1;
+}
+
+int dm1_weapon_info_class_pc34(int weaponType) {
+    DM1_WeaponInfo info;
+    if (dm1_weapon_info_pc34(weaponType, &info) <= 0) {
+        return -1;
+    }
+    return info.weaponClass;
+}
+
+int dm1_champion_f0312_skill_level_bonus_pc34(int weaponClass,
+                                              int f0303SwingLevel,
+                                              int f0303ThrowLevel,
+                                              int f0303ShootLevel) {
+    int skillLevel = 0;
+    /* ReDMCSB CHAMPION.C F0312 lines 1285-1296:
+     * class 0 or 2 uses F0303(SWING); non-swing classes below first bow
+     * add F0303(THROW); bow/sling classes below first magic weapon add
+     * F0303(SHOOT). */
+    if (weaponClass == 0 || weaponClass == 2) {
+        skillLevel = f0303SwingLevel;
+    }
+    if (weaponClass != 0 && weaponClass < DM1_WEAPON_CLASS_FIRST_BOW) {
+        skillLevel += f0303ThrowLevel;
+    }
+    if (weaponClass >= DM1_WEAPON_CLASS_FIRST_BOW &&
+        weaponClass < DM1_WEAPON_CLASS_FIRST_MAGIC_WEAPON) {
+        skillLevel += f0303ShootLevel;
+    }
+    return skillLevel;
 }
 
 /*

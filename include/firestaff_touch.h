@@ -2,6 +2,7 @@
 #define FIRESTAFF_TOUCH_H
 
 #include <stdint.h>
+#include "runtime_gesture_navigation_gate.h"
 
 /* Maximum number of simultaneous touch points to track */
 #define FIRESTAFF_TOUCH_MAX_FINGERS 5
@@ -102,6 +103,24 @@ int firestaff_touch_detect_swipe(int startX, int startY,
 void firestaff_touch_emit_swipe(int startX, int startY,
                                 int endX,   int endY);
 
+/* Evaluate a swipe gesture through the runtime gesture navigation gate.
+ * Returns 1 when the gesture is accepted and *outResult contains an
+ * emitting decision. Returns 0 for rejected gestures or invalid input.
+ * No command is queued by this function. */
+int firestaff_touch_evaluate_swipe_runtime(
+    int startX, int startY,
+    int endX, int endY,
+    const FirestaffRuntimeGestureNavPolicy* policy,
+    FirestaffRuntimeGestureNavResult* outResult);
+
+/* Evaluate and, when accepted, push the mapped FS_Command to the
+ * global FS_InputQueue. Returns 1 only when a command was queued. */
+int firestaff_touch_emit_swipe_runtime(
+    int startX, int startY,
+    int endX, int endY,
+    const FirestaffRuntimeGestureNavPolicy* policy,
+    FirestaffRuntimeGestureNavResult* outResult);
+
 /* Threshold accessors (so callers don't need the macro) */
 int fs_touch_tap_tolerance_px(void);
 int fs_touch_long_press_ms(void);
@@ -117,5 +136,14 @@ int fs_touch_in_right_edge(int x, int fbW);
  * Calls fs_input_queue_push() with FS_CMD_STRAFE_LEFT or FS_CMD_STRAFE_RIGHT.
  * Safe to call even when V2 is not enabled — it becomes a no-op. */
 void fs_touch_emit_edge_strafe(int startX, int fbW);
+
+/* Runtime-gated edge-strafe bridge. Edge-strafe is V2-only and is
+ * rejected when the supplied policy preserves V1 parity. Returns 1
+ * only when a strafe command was queued. */
+int fs_touch_emit_edge_strafe_runtime(
+    int startX,
+    int fbW,
+    const FirestaffRuntimeGestureNavPolicy* policy,
+    FirestaffRuntimeGestureNavResult* outResult);
 
 #endif /* FIRESTAFF_TOUCH_H */

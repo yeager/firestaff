@@ -20,6 +20,9 @@
 extern "C" {
 #endif
 
+struct ChampionState_Compat;
+struct DungeonThings_Compat;
+
 /* ── Base skill indices (DEFS.H lines 757-760) ─────────────────────── */
 enum {
     DM1_SKILL_IDX_FIGHTER  = 0,
@@ -92,6 +95,23 @@ typedef struct {
     DM1_Skill skills[DM1_TOTAL_SKILL_COUNT];
 } DM1_ChampionSkillState;
 
+/* PC34 icon indices consumed by CHAMPION.C F0303 object modifiers. */
+#define DM1_SKILL_ICON_NONE                       (-1)
+#define DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF        27  /* C027 */
+#define DM1_SKILL_ICON_WEAPON_THE_FIRESTAFF_COMPLETE 28 /* C028 */
+#define DM1_SKILL_ICON_WEAPON_SCEPTRE_OF_LYF       66  /* C066 */
+#define DM1_SKILL_ICON_JUNK_GEM_OF_AGES           120  /* C120 */
+#define DM1_SKILL_ICON_JUNK_EKKHARD_CROSS         121  /* C121 */
+#define DM1_SKILL_ICON_JUNK_MOONSTONE             122  /* C122 */
+#define DM1_SKILL_ICON_JUNK_PENDANT_FERAL         124  /* C124 */
+
+/* Optional live F0303 query inputs that are not stored in the skill block. */
+typedef struct {
+    int partyIsResting;       /* G0300_B_PartyIsResting: F0303 returns 1 */
+    int actionHandIconIndex;  /* F0033_OBJECT_GetIconIndex(Slots[C01]) */
+    int neckIconIndex;        /* F0033_OBJECT_GetIconIndex(Slots[C10]) */
+} DM1_SkillLevelQuery;
+
 /* ── Experience gain context (F0304 environment) ──────────────────── */
 typedef struct {
     int      mapDifficulty;          /* G0269_ps_CurrentMap->C.Difficulty */
@@ -121,6 +141,47 @@ int dm1_skill_get_base_index(int skillIndex);
  */
 int dm1_skill_get_level(const DM1_ChampionSkillState* state,
                         int skillIndex, int flags);
+
+/**
+ * Compute skill level with the live F0303 non-skill inputs supplied.
+ * This mirrors the full ReDMCSB PC34 query boundary:
+ * - party resting returns level 1 before XP or object checks.
+ * - temporary experience is included unless DM1_SKILL_FLAG_IGNORE_TEMP is set.
+ * - object modifiers are included unless DM1_SKILL_FLAG_IGNORE_OBJECTS is set.
+ *
+ * Passing NULL for query is equivalent to no resting and no equipped
+ * modifier objects.
+ */
+int dm1_skill_get_level_ex(const DM1_ChampionSkillState* state,
+                           int skillIndex,
+                           int flags,
+                           const DM1_SkillLevelQuery* query);
+
+/**
+ * Resolve the PC34 object icon/type index from a THING reference.
+ * ReDMCSB: CHAMPION.C F0303 lines ~770-819 calls
+ * F0033_OBJECT_GetIconIndex on the action hand and neck slots before
+ * checking Firestaff/Sceptre weapon icons and Gem/Ekkhard/Moonstone/
+ * Pendant junk icons.
+ *
+ * Only weapon and junk things can feed the F0303 modifiers. Empty,
+ * unsupported, out-of-range, or undecoded things return
+ * DM1_SKILL_ICON_NONE.
+ */
+int dm1_skill_icon_index_for_thing(const struct DungeonThings_Compat* things,
+                                   unsigned short thing);
+
+/**
+ * Build live F0303 query inputs from a champion inventory snapshot.
+ * The query reads CHAMPION_SLOT_ACTION_HAND and CHAMPION_SLOT_NECK and
+ * resolves their decoded weapon/junk icon indices through the dungeon thing
+ * arrays. Returns 1 when outQuery was populated, 0 for invalid inputs.
+ */
+int dm1_skill_build_query_from_champion_inventory(
+    const struct ChampionState_Compat* champion,
+    const struct DungeonThings_Compat* things,
+    int partyIsResting,
+    DM1_SkillLevelQuery* outQuery);
 
 /**
  * Get the raw experience for a skill (permanent + optional temporary).

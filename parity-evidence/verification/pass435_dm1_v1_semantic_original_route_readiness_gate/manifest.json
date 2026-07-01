@@ -1,6 +1,7 @@
 {
   "blockers": [
-    "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
+    "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence",
+    "latest HoC route diagnostics are not party-control-ready: blocked/entrance-and-c127-runtime-boundary-not-proven"
   ],
   "classifier": {
     "capture_count": 6,
@@ -1836,7 +1837,7 @@
         "rows_all_224x136": true
       },
       "exists": true,
-      "head": "c6933edbafa86be0cd83ec9d1f83c7a6985455ed",
+      "head": "1874462d40cdd8b0f40345e393de41f9667bf81d",
       "not_claimed": [
         "DOSBox/live original runtime capture",
         "semantic original route promotion",
@@ -1844,7 +1845,7 @@
         "HUD/overlay parity"
       ],
       "path": "parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json",
-      "repo": "/Users/bosse/.openclaw/workspace-main",
+      "repo": "/Users/bosse/Documents/Firestaff",
       "schema": "pass434_dm1_v1_original_viewport_crop_readiness_gate.v1",
       "source_audit": [
         {
@@ -1907,7 +1908,7 @@
       ],
       "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-      "timestamp_utc": "2026-06-25T13:46:42.663283+00:00",
+      "timestamp_utc": "2026-06-30T13:36:26.125761+00:00",
       "tooling": {
         "capture_script_crop_lock": {
           "has_imagemagick_crop": true,
@@ -1965,6 +1966,125 @@
       }
     }
   },
+  "latest_hoc_attempt": {
+    "attempts": [
+      {
+        "attempt_dir": "/tmp/firestaff-dm1-hoc-route-attempt-20260630",
+        "classes": [
+          "dungeon_gameplay",
+          "wall_closeup",
+          "dungeon_gameplay",
+          "dungeon_gameplay",
+          "wall_closeup",
+          "wall_closeup"
+        ],
+        "duplicate_hash_groups": {
+          "bedfa7b65a23": 3,
+          "dcfdff6845bf": 3
+        },
+        "finding": "All route tokens were injected and screenshots/crops were healthy, but the route produced only repeated dungeon/wall states. F1/F4 did not open spell or inventory control states.",
+        "id": "hoc_route_candidate_enter_then_portrait_c160",
+        "pass113": {
+          "blank_right_column_frames": 6,
+          "control_classes_seen": [],
+          "party_control_ready": false,
+          "unsafe_classes_seen": [
+            "wall_closeup"
+          ]
+        },
+        "raw_frame_health_pass": true,
+        "route": "wait:9000 enter wait:2500 click:111,82 wait:1400 click:130,115 wait:1200 enter wait:2200 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel",
+        "sha12_sequence": [
+          "dcfdff6845bf",
+          "bedfa7b65a23",
+          "dcfdff6845bf",
+          "dcfdff6845bf",
+          "bedfa7b65a23",
+          "bedfa7b65a23"
+        ],
+        "shot_labels": [
+          "party_hud",
+          "turn_left_after_vblank",
+          "turn_right_after_vblank",
+          "spell_panel",
+          "post_spell_redraw",
+          "inventory_panel"
+        ],
+        "technical_capture_ok": true
+      },
+      {
+        "attempt_dir": "/tmp/firestaff-dm1-hoc-entrance-click-diagnostic-20260630",
+        "classes": [
+          "title_or_menu",
+          "title_or_menu",
+          "title_or_menu",
+          "entrance_menu",
+          "entrance_menu",
+          "dungeon_gameplay"
+        ],
+        "duplicate_hash_groups": {
+          "0494bcb374b1": 3
+        },
+        "finding": "The source entrance click opens/changes the entrance-door/menu state, but the portrait click still occurs before a proven C127 gameplay pose. The later state reaches no-party dungeon gameplay, not candidate or party control.",
+        "id": "hoc_entrance_click_diagnostic",
+        "raw_frame_health_pass": true,
+        "route": "wait:9000 click:260,50 wait:3000 shot:after_enter_click click:111,82 wait:1400 shot:after_portrait_click click:130,115 wait:1200 shot:after_c160_click enter wait:2200 shot:after_confirm_probe f1 wait:1200 shot:after_f1_probe f4 wait:1200 shot:after_f4_probe",
+        "sha12_sequence": [
+          "0494bcb374b1",
+          "0494bcb374b1",
+          "0494bcb374b1",
+          "08a0b7e43f29",
+          "5ae7199a3df0",
+          "dcfdff6845bf"
+        ],
+        "shot_labels": [
+          "after_enter_click",
+          "after_portrait_click",
+          "after_c160_click",
+          "after_confirm_probe",
+          "after_f1_probe",
+          "after_f4_probe"
+        ],
+        "technical_capture_ok": true
+      }
+    ],
+    "conclusion": {
+      "classification": "blocked/entrance-and-c127-runtime-boundary-not-proven",
+      "next_action": "Keep the live stock-original DOSBox-debug probe and narrow the first missing F0359/C080 boundary after mapped native macOS route input. The accepted pass162 address-gate order remains F0359 22F4:030D -> F0380 22F4:0699 -> F0377 1E44:02FE -> F0275 1859:1405 as the static-F0372 proxy -> F0280 1782:0031 before trying another six-shot overlay route. The current live probe accepted BP/BPM commands, recorded FIRES startup, DATA\\DUNGEON.DAT load and 34 stock-original memory-breakpoint stops, delivered mapped Swift/CGEvent HoC input, and still produced no C080-chain code stops.",
+      "pass162_address_gate": "parity-evidence/verification/pass162_c080_queue_trace/c080_address_gate_manifest.json",
+      "pass162_address_gate_classification": "ready/address-candidates-and-break-start-bp-bpm-confirmed-no-runtime-hook",
+      "pass162_bp_acceptance_probe": "parity-evidence/verification/pass162_c080_queue_trace/dosbox_debug_bp_acceptance/manifest.json",
+      "pass162_bp_acceptance_probe_status": "FAIL_BREAKPOINT_COMMANDS_NOT_CONFIRMED",
+      "pass162_break_start_acceptance_probe": "parity-evidence/verification/pass162_c080_queue_trace/dosbox_x_break_start_bp_acceptance/manifest.json",
+      "pass162_break_start_acceptance_probe_status": "PASS162_DOSBOX_X_BREAK_START_BP_BPM_ACCEPTED",
+      "pass162_debugger_gate": "parity-evidence/verification/pass162_c080_queue_trace/gdb_gate_manifest.json",
+      "pass162_debugger_gate_classification": "blocked/gdb-missing-for-stock-symbol-gate",
+      "pass162_dosbox_debug_commands": "parity-evidence/verification/pass162_c080_queue_trace/pass162_c080_dosbox_debug_commands.txt",
+      "pass162_live_hoc_probe": "parity-evidence/verification/pass162_c080_queue_trace/live_hoc_break_start_probe/manifest.json",
+      "pass162_live_hoc_probe_status": "BLOCKED_PASS162_LIVE_HOC_NO_C080_STOPS",
+      "reason": "The standard capture script can inject and capture reliably, but current automated HoC routes do not prove that the stock original binary reaches C127/F0280 before C160/C161 or party-control probes."
+    },
+    "date": "2026-06-30",
+    "exists": true,
+    "non_claims": [
+      "No party-control-ready original capture.",
+      "No same-state Firestaff pairing.",
+      "No pixel parity promotion.",
+      "No claim that C127/F0280 is absent in ReDMCSB; this only blocks the current stock-binary automation route."
+    ],
+    "path": "parity-evidence/verification/pass435_dm1_v1_hoc_route_attempt_20260630.json",
+    "ready_for_promotion": false,
+    "schema": "pass435_dm1_v1_hoc_route_attempt.v1",
+    "scope": "DM1 PC34 original DOSBox Hall-of-Champions route diagnostics; no original-vs-Firestaff pixel parity claim.",
+    "source_context": {
+      "expected_route": "entrance gate -> C127/F0280 portrait click -> C160 resurrect -> confirm -> party/spell/inventory route shots",
+      "source_locks": [
+        "pass173 route_precondition_c127_scan: initial map0 x=1 y=3 dir=South faces C127 wall champion portrait sensor at x=1 y=4",
+        "CLIKVIEW.C F0377 -> F0372 should dispatch a C080 dungeon-view click to front-wall sensor handling",
+        "MOVESENS.C C127 should call REVIVE.C F0280 before C160/C161 is meaningful"
+      ]
+    }
+  },
   "next_unblock": {
     "crop_manifest_strict": "python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass376-original-route --out-dir verification-screens/pass376-original-dm1-viewports",
     "promotion_requires": [
@@ -1991,15 +2111,27 @@
         "post_spell_redraw",
         "inventory_panel"
       ],
-      "reason": "the capture command must drive both movement and UI states because the readiness gate requires spell_panel and inventory classifications",
+      "hall_of_champions_precondition": {
+        "choice_click": "click:130,115",
+        "confirm": "enter",
+        "portrait_click": "click:111,82",
+        "source_locks": [
+          "C127_SENSOR_WALL_CHAMPION_PORTRAIT -> F0280_CHAMPION_AddCandidateChampionToParty",
+          "C160 resurrect panel command"
+        ]
+      },
+      "reason": "the capture command must first drive the source-locked portrait/candidate transition, then movement and UI states because the readiness gate requires party, spell_panel, and inventory classifications",
       "required_driver_tokens": [
+        "click:111,82",
+        "click:130,115",
+        "enter",
         "kp4",
         "kp6",
         "f1",
         "f4"
       ]
     },
-    "semantic_route_capture": "OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
+    "semantic_route_capture": "OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_EXPECTED_SHOTS=6 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:2500 click:111,82 wait:1400 click:130,115 wait:1200 enter wait:2200 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
   },
   "next_unblock_contract": {
     "expected_classes": [
@@ -2021,7 +2153,7 @@
     "missing_labels": [],
     "missing_required_driver_tokens": [],
     "ok": true,
-    "route": "wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel",
+    "route": "wait:9000 enter wait:2500 click:111,82 wait:1400 click:130,115 wait:1200 enter wait:2200 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel",
     "shot_labels": [
       "party_hud",
       "turn_left_after_vblank",
@@ -2081,7 +2213,7 @@
       "05"
     ]
   },
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "/Users/bosse/Documents/Firestaff",
   "route_labels": {
     "exists": true,
     "path": "verification-screens/pass376-original-route/original_viewport_shot_labels.tsv",
@@ -2379,5 +2511,5 @@
     }
   ],
   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-  "timestampUtc": "2026-06-25T13:46:42.714713+00:00"
+  "timestampUtc": "2026-06-30T18:59:15.593481+00:00"
 }

@@ -18,6 +18,8 @@
 #define DM1OS_FORMAT_COMPAT_AMIGA_2X 2u
 #define DM1OS_FORMAT_APPLE_IIGS 3u
 #define DM1OS_FORMAT_AMIGA_36_PC 5u
+#define DM1OS_PLATFORM_PC 9u
+#define DM1OS_DUNGEON_DM 10u
 
 typedef enum {
     DM1OS_ENDIAN_LE = 0,
@@ -205,6 +207,7 @@ static int classify_original_header_with_endian(
     out->header_actual_checksum = actual;
     out->header_checksum_ok = 1;
     out->import_blocked_until_roundtrip = 1;
+    out->pc34_importer_candidate = 0;
 
     if (!format_is_known(format_id)) {
         out->shape = DM1_ORIGINAL_SAVE_SHAPE_REJECTED;
@@ -213,6 +216,20 @@ static int classify_original_header_with_endian(
         return 1;
     }
     if (format_id != DM1OS_FORMAT_DM_ATARI_ST) {
+        /* ReDMCSB LOADSAVE.C F0433 stamps I34E/I34M saves as
+         * C5_FORMAT_DM_AMIGA_36_PC_CSB_AMIGA_PC98_X68000_FM_TOWNS;
+         * F0435 accepts that format on C9_PLATFORM_PC. Firestaff's
+         * F0796 PC34 importer is the bounded handoff candidate for
+         * exactly that DM1 PC 3.4 envelope, while real original-byte
+         * round-trip proof remains a separate gate. */
+        if (format_id == DM1OS_FORMAT_AMIGA_36_PC &&
+            platform == DM1OS_PLATFORM_PC &&
+            dungeon_id == DM1OS_DUNGEON_DM) {
+            out->shape = DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34;
+            out->pc34_importer_candidate = 1;
+            set_reason(out, "recognized DM1 PC 3.4 save header; PC34 importer candidate pending real-byte round-trip");
+            return 1;
+        }
         set_reason(out, "recognized ReDMCSB-compatible save family, not DM1 Atari/ST-format header");
         return 1;
     }
@@ -412,6 +429,13 @@ int dm1_v1_original_save_classify_root(
         if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1) {
             out_manifest->original_dm1_count++;
         }
+        if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34) {
+            out_manifest->original_dm1_count++;
+            out_manifest->original_dm1_pc34_count++;
+        }
+        if (result->pc34_importer_candidate) {
+            out_manifest->pc34_importer_candidate_count++;
+        }
         if (result->shape == DM1_ORIGINAL_SAVE_SHAPE_FIRESTAFF_NATIVE) {
             out_manifest->firestaff_native_count++;
         }
@@ -427,6 +451,7 @@ const char *dm1_v1_original_save_shape_name(DM1OriginalSaveShape shape) {
         case DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1: return "ORIGINAL_DM1";
         case DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_COMPAT_FAMILY: return "ORIGINAL_COMPAT_FAMILY";
         case DM1_ORIGINAL_SAVE_SHAPE_REJECTED: return "REJECTED";
+        case DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34: return "ORIGINAL_DM1_PC34";
         default: return "UNKNOWN";
     }
 }

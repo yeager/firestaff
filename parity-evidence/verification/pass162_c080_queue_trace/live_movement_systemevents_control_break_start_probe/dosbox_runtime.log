@@ -1,0 +1,1015 @@
+Logging: opened logfile '/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_systemevents_control_break_start_probe/dosbox_runtime.log' successfully. All further logging will go to this file.
+         0 DEBUG MISC:Logging init complete
+DOSBox-X version 2026.06.02 Commit d75a57c (macOS ARM SDL2 64-bit)
+         0       MISC:Copyright 2011-2026 The DOSBox-X Team. Project maintainer: joncampbell123 (The Great Codeholio). DOSBox-X published under GNU GPL.
+macOS EXE path: /opt/homebrew/bin/dosbox-debug
+macOS Resource path:
+         0 DEBUG GUI:SDL 1.2.14 hack: SDL_DISABLE_LOCK_KEYS=1
+macOS: NSTouchBar support detected in system
+Prevent capture: 0
+SDL: version 2.32.70, Video cocoa, Audio coreaudio
+         0       GUI:Press Ctrl-F10 to capture/release mouse, Alt-F10 for configuration.
+Host keyboard layout is now us (US English)
+Mapper keyboard layout is now us (US English)
+         0 DEBUG MISC:Initializing SDL joystick subsystem...
+         0 DEBUG MISC:SDL reports 0 joysticks
+         0 DEBUG GUI:Starting GUI
+         0 DEBUG GUI:This version compiled against SDL 2.x
+         0 DEBUG GUI:SDL2 version 2.32.70
+SDL2 reports desktop display mode 1920 x 1080
+         0 DEBUG MISC:Early init (renderer): xBRZ options
+OpenGL Version : 2.1 Metal - 90.5
+Configured windowposition: -
+SDL: Current window pixel format: SDL_PIXELFORMAT_ARGB8888
+         0 DEBUG MISC:SDL video mode: 640x400 (clip 0x0 with upper-left at 0x0) 32bpp
+         0 DEBUG MISC:   red: shift=16 mask=0x00ff0000
+         0 DEBUG MISC:   green: shift=8 mask=0x0000ff00
+         0 DEBUG MISC:   blue: shift=0 mask=0x000000ff
+         0 DEBUG MISC:   alpha: shift=24 mask=0xff000000
+Releasing keyboard
+Screen report: Method 'CoreGraphics' (1920.000 x 1080.000 pixels) at (0.000 x 0.000) (451.556 x 254.000 mm) (17.778 x 10.000 in) (108.000 x 108.000 DPI)
+         0 DEBUG MISC:MAPPER starting up
+         0 DEBUG MISC:Initializing tick loop management
+         0 DEBUG MISC:DOSBOX-X RealInit: loading settings and initializing
+ISA BCLK: 8333333.333Hz (25000000/3)
+         0 DEBUG MISC:Initializing renderer
+monopal: green,
+         0 DEBUG MISC:Freeing render cache buffer
+         0 DEBUG MISC:Initializing screenshot and A/V capture system
+Active save slot: 1 [Empty]
+USING AVI+ZMBV
+         0 DEBUG MISC:Initializing I/O port handler system
+         0 DEBUG MISC:HARDWARE_Init: initializing
+Pentium CMPXCHG8B emulation is enabled
+         0 DEBUG MISC:Initializing address limit/gate system
+         0 DEBUG MISC:Memory: address_bits=36 alias_pagemask=ffffff
+         0 DEBUG MISC:Initializing memory access array (page handler callback system). mem_alias_pagemask=ffffff
+         0 DEBUG MISC:Initializing A20 gate emulation
+         0 DEBUG MISC:Initializing PS/2 port 92h emulation
+         0 DEBUG MISC:Initializing RAM emulation (system memory)
+Max 1073741824 sz 4096
+Final 4096
+Final arrangement: Below 4GB = 4096KB, Above 4GB = 0KB
+         0 DEBUG MISC:Hardware assignment will begin at 0x400000
+         0 DEBUG MISC:Memory: 1024 pages (4096KB) of RAM, 1024 (4096KB) reported to OS, 1048576 (0x100000) (4194304KB) pages of memory handlers
+         0 DEBUG MISC:Initializing DMA controller emulation
+         0 DEBUG MISC:Init_PIC()
+         0 DEBUG MISC:TIMER_Init()
+         0 DEBUG MISC:Initializing PCI bus emulation
+         0 DEBUG MISC:Initializing paging system (CPU linear -> physical mapping system)
+         0 DEBUG MISC:Initializing CMOS/RTC
+         0 DEBUG MISC:CMOS sync to 2026-06-30 20:36:16
+         0 DEBUG MISC:Initializing ROM BIOS
+         0 DEBUG BIOS:ROM BIOS range: 0xF0000-0xFFFFF
+         0 DEBUG BIOS:ROM BIOS range according to minimum size: 0xF0000-0xFFFFF
+         0 DEBUG BIOS:ROM BIOS also mapping alias to 0xffff0000-0xffffffff
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00022 bytes,"BIOS ID string",align=1,mustbe=0xfe00e) = 0xfe00e
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00014 bytes,"BIOS version string",align=1,mustbe=0xfe061) = 0xfe061
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00400 bytes,"BIOS 8x8 font (first 128 chars)",align=1,mustbe=0xffa6e) = 0xffa6e
+         0 DEBUG MISC:Initializing DOSBox callback instruction system
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x01600 bytes,"DOSBox callback area",align=4,mustbe=0x00000) = 0xfca00
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x0000e bytes,"DOSBox vm86 hack",align=4,mustbe=0x00000) = 0xfc9f0
+         0 DEBUG CPU:Callback area starts at f000:ca00
+         0 DEBUG MISC:Initializing debug system
+         0 DEBUG MISC:Init_VGABIOS: Initializing VGA BIOS and parsing its settings
+         0 DEBUG MISC:Initializing Voodoo/3DFX emulation
+         0 DEBUG MISC:Device 'Voodoo 3Dfx' assigned address 0x1000000-0x1ffffff which it may treat as minimum
+         0 DEBUG MISC:PROGRAMS_Init(): initializing Z: drive .COM stub and program management
+         0 DEBUG MISC:Initializing PC speaker
+         0 DEBUG MISC:Initializing Tandy voice emulation
+         0 DEBUG MISC:Initializing MPU401 emulation
+         0 DEBUG MISC:Initializing DOSBox audio mixer
+         0 DEBUG MISC:MIXER:No Sound Mode Selected.
+         0 DEBUG MISC:Mixer: sample_accurate=0 blocksize=1024 sdl_rate=1627652480Hz mixer_rate=48000Hz channels=0 samples=42440 min/max/need=0/0/0 per_ms=48 0/1000 samples prebuffer=1200 dcadj=0.0000208020(en=1)
+         0 DEBUG MISC:Initializing MIDI emulation
+MIDI:Opened device:coreaudio
+         0 DEBUG MISC:Initializing FPU
+         0       FPU:FPU core: double FPU (caution: possible precision errors)
+         0 DEBUG FPU:FPU32 selftest passed
+         0 DEBUG FPU:FPU64 selftest passed
+         0 DEBUG FPU:FPU80 selftest skipped, compiler does not have long double as 80-bit IEEE
+         0 DEBUG MISC:Initializing VGA
+         0 DEBUG MISC:Device 'VGA' assigned address 0x2000000-0x3ffffff which it may treat as minimum
+         0 DEBUG MISC:Initializing floppy controller emulation
+         0 DEBUG MISC:Initializing keyboard emulation
+         0 DEBUG MISC:Initializing Sound Blaster emulation
+         0 DEBUG MISC:Initializing joystick emulation
+         0 DEBUG MISC:Initializing PS/1 sound emulation
+         0 DEBUG MISC:Initializing Disney Sound Source emulation
+         0 DEBUG MISC:Initializing Gravis Ultrasound emulation
+         0 DEBUG MISC:Initializing IDE controllers
+         0 DEBUG MISC:Initializing INNOVA emulation
+         0 DEBUG MISC:Initializing BIOS
+         0 DEBUG MISC:Initializing serial port emulation
+         0 DEBUG MISC:Initializing dongle emulation
+         0 DEBUG MISC:Initializing parallel port emulation
+         0 DEBUG MISC:Initializing NE2000 network card emulation
+         0 DEBUG MISC:MEM_A20_Enable(1)
+         0 DEBUG DOSMISC:Initializing DOS kernel (DOS_Init)
+         0 DEBUG DOSMISC:sizeof(union bootSector) = 2048
+         0 DEBUG DOSMISC:sizeof(struct FAT_BootSector) = 2048
+         0 DEBUG DOSMISC:sizeof(direntry) = 32
+         0 DEBUG DOSMISC:Initializing DOS drives
+         0 DEBUG DOSMISC:Initializing DOS keyboard layout emulation
+         0 DEBUG MOUSE:Initializing mouse interface emulation
+         0 DEBUG MISC:Initializing XMS extended memory services
+         0 DEBUG MISC:Initializing EMS expanded memory services
+         0 DEBUG MISC:Initializing AUTOEXEC.BAT emulation
+         0 DEBUG MISC:Initializing IPX emulation
+         0 DEBUG MISC:Initializing MSCDEX.EXE emulation
+         0 DEBUG MISC:Initializing memory handle array (EMS/XMS handle management). mem_pages=400
+         0 DEBUG MISC:Initializing DOSBox-X mapper
+         0 DEBUG MISC:Joystick type != none, SDL reports 0 sticks
+         0 DEBUG MISC:Dispatching VM event Power On
+         0 DEBUG MISC:Calling event Power On handler (0x1048137f4) 'TIMER_OnPowerOn'
+         0 DEBUG MISC:TIMER_OnPowerOn(): Reinitializing PIT timer emulation
+         0 DEBUG MISC:Calling event Power On handler (0x1048018c0) 'PCI_OnPowerOn'
+         0 DEBUG MISC:InitializePCI(): reinitializing PCI bus emulation
+         0 DEBUG MISC:Calling event Power On handler (0x10486c56c) 'VOODOO_OnPowerOn'
+         0 DEBUG MISC:Voodoo 3Dfx LFB at 0xd0000000
+         0 DEBUG MISC:Initializing Voodoo/3DFX PCI device
+VOODOO LFB now at d0000000
+         0 DEBUG MISC:MEM_CalloutObject::Install added device with page=0xd0000 mem_mask=0xff000 rangemask=0xfff aliasmask=0xfffff
+         0 DEBUG MISC:Calling event Power On handler (0x1047e8dd0) 'JOYSTICK_OnPowerOn'
+         0 DEBUG MISC:Allocating joystick emulation
+         0 DEBUG MISC:Calling event Power On handler (0x104609130) 'BIOS_OnPowerOn'
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00003 bytes,"BIOS default reset location (JMP)",align=1,mustbe=0xfe05b) = 0xfe05b
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00040 bytes,"BIOS default reset location (CODE)",align=1,mustbe=0x00000) = 0xfc9b0
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00001 bytes,"BIOS default handler location",align=1,mustbe=0xfff53) = 0xfff53
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00001 bytes,"BIOS default INT5 location",align=1,mustbe=0xfff54) = 0xfff54
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00013 bytes,"BIOS default IRQ0 location",align=1,mustbe=0xffea5) = 0xffea5
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00020 bytes,"BIOS default IRQ1 location",align=1,mustbe=0xfe987) = 0xfe987
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00007 bytes,"BIOS default IRQ2-7 location",align=1,mustbe=0xfff55) = 0xfff55
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00009 bytes,"BIOS default IRQ8-15 location",align=1,mustbe=0xfe880) = 0xfe880
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00006 bytes,"IBM ROM BASIC entry point",align=1,mustbe=0xf8db0) = 0xf8db0
+         0 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00006 bytes,"IBM ROM BASIC entry point",align=1,mustbe=0xfac79) = 0xfac79
+         0 DEBUG MISC:Calling event Power On handler (0x104638424) 'SERIAL_OnPowerOn'
+         0 DEBUG MISC:Reinitializing serial emulation
+Serial1: BASE 3f8h
+Serial2: BASE 2f8h
+         0 DEBUG MISC:Calling event Power On handler (0x10464c4dc) 'PARALLEL_OnPowerOn'
+         0 DEBUG MISC:Reinitializing parallel port emulation
+Parallel1: BASE 378h
+         0 DEBUG MISC:Dispatching VM event Reset
+         0 DEBUG MISC:Calling event Reset handler (0x1047e6dbc) 'IO_Reset'
+         0 DEBUG IO:I/O 8-bit delay 1020ns
+         0 DEBUG IO:I/O 16-bit delay 660ns
+         0 DEBUG IO:I/O 32-bit delay 1320ns
+         0 DEBUG MISC:Calling event Reset handler (0x1047f5404) 'A20Gate_OnReset'
+         0 DEBUG MISC:Calling event Reset handler (0x1047f5988) 'PS2Port92_OnReset'
+         0 DEBUG MISC:Port 92h installed, emulating PS/2 system control port A
+         0 DEBUG MISC:Calling event Reset handler (0x1047c558c) 'DMA_Reset'
+         0 DEBUG MISC:DMA_Reset(): reinitializing DMA controller(s)
+         0 DEBUG DMA_CONTROL:DMA channel 0. DMA16_PAGESHIFT=0 DMA16_ADDRMASK=0xffff
+         0 DEBUG DMA_CONTROL:DMA channel 1. DMA16_PAGESHIFT=0 DMA16_ADDRMASK=0xffff
+         0 DEBUG DMA_CONTROL:DMA channel 2. DMA16_PAGESHIFT=0 DMA16_ADDRMASK=0xffff
+         0 DEBUG DMA_CONTROL:DMA channel 3. DMA16_PAGESHIFT=0 DMA16_ADDRMASK=0xffff
+         0 DEBUG DMA_CONTROL:DMA channel 4. DMA16_PAGESHIFT=1 DMA16_ADDRMASK=0x1ffff
+         0 DEBUG DMA_CONTROL:DMA channel 5. DMA16_PAGESHIFT=1 DMA16_ADDRMASK=0x1ffff
+         0 DEBUG DMA_CONTROL:DMA channel 6. DMA16_PAGESHIFT=1 DMA16_ADDRMASK=0x1ffff
+         0 DEBUG DMA_CONTROL:DMA channel 7. DMA16_PAGESHIFT=1 DMA16_ADDRMASK=0x1ffff
+         0 DEBUG MISC:Calling event Reset handler (0x104804590) 'PIC_Reset'
+         0 DEBUG MISC:PIC: Ignore cascade in service=0
+         0 DEBUG MISC:PIC_Reset(): reinitializing PIC controller (cascade=2)
+         0 DEBUG MISC:Calling event Reset handler (0x1048511d0) 'CMOS_Reset'
+         0 DEBUG MISC:CMOS_Reset(): reinitializing CMOS/RTC controller
+         0 DEBUG PIT:RTC Timer at 1024.00 hz index=0.000 remd=0.000 delay=0.977
+         0 DEBUG PIT:RTC Timer at 1024.00 hz index=0.000 remd=0.000 delay=0.977
+         0 DEBUG MISC:Calling event Reset handler (0x1047ff788) 'PCSPEAKER_OnReset'
+         0 DEBUG MISC:Allocating PC speaker emulation
+         0 DEBUG MISC:Calling event Reset handler (0x104810d48) 'TANDYSOUND_OnReset'
+         0 DEBUG MISC:Allocating Tandy speaker emulation
+         0 DEBUG MISC:Calling event Reset handler (0x10485bbf4) 'MPU401_Reset'
+         0 DEBUG MISC:Allocating MPU401 emulation
+MPU-401 Registering I/O ports as if IBM PC MPU-401 at base 330h
+         0       MISC:MPU IRQ 9
+         0 DEBUG MISC:Calling event Reset handler (0x1048b8b9c) 'CPU_OnReset'
+         0 DEBUG MISC:Calling event Reset handler (0x1048165a0) 'VGA_Reset'
+         0 DEBUG MISC:VGA_Reset() reinitializing VGA emulation
+Memory I/O complexity optimization enabled aka option 'memory io optimization 1'. If the game or demo is unable to draw to the screen properly, set the option to false.
+The 'scanline render on demand' option is available and may provide a modest boost in video render performance if set to true.
+         0 DEBUG VGA:VGA memory I/O delay 0ns
+         0 DEBUG MISC:IO write slow path port=3cf data=5 iolen=1: device matches=0
+         0       VGA:Video RAM: 512KB (mask 0x7ffff)
+         0 DEBUG VGA:VBE bios will report 512KB of video memory
+         0 DEBUG VGA:Maximum video resolution supported by card: 2048x1024
+         0 DEBUG MISC:SDL video mode: 640x400 (clip 0x0 with upper-left at 0x0) 32bpp
+         0 DEBUG MISC:   red: shift=16 mask=0x00ff0000
+         0 DEBUG MISC:   green: shift=8 mask=0x0000ff00
+         0 DEBUG MISC:   blue: shift=0 mask=0x000000ff
+         0 DEBUG MISC:   alpha: shift=24 mask=0xff000000
+         0 DEBUG MISC:Calling event Reset handler (0x104601968) 'ISAPNP_Cfg_Reset'
+         0 DEBUG MISC:Initializing ISA PnP emulation
+         0 DEBUG MISC:APM BIOS allow: real=1 pm16=1 pm32=1 version=1.2
+Allocated APM BIOS pm entry point at f000:ce40
+Writing code to fce40
+Writing code to fce60
+         0 DEBUG MISC:Calling event Reset handler (0x104880a48) 'FDC_OnReset'
+         0 DEBUG MISC:Calling event Reset handler (0x1047ee6d0) 'KEYBOARD_OnReset'
+         0 DEBUG MISC:Keyboard reinitializing
+         0       KEYBOARD:Keyboard AUX emulation enabled
+         0 DEBUG KEYBOARD:Keyboard LEDs: SCR=0 NUM=0 CAPS=0
+         0 DEBUG MISC:Calling event Reset handler (0x10480c6c0) 'SBLASTER_OnReset'
+         0 DEBUG MISC:Allocating Sound Blaster emulation
+         0       SBLASTER:DSP:Reset
+         0 DEBUG MISC:Allocating Sound Blaster emulation
+         0 DEBUG MISC:Calling event Reset handler (0x104875e08) 'PS1SOUND_OnReset'
+         0 DEBUG MISC:Allocating PS/1 sound emulation
+         0 DEBUG MISC:Calling event Reset handler (0x104855ffc) 'GUS_OnReset'
+         0 DEBUG MISC:Allocating GUS emulation
+         0 DEBUG MISC:Calling event Reset handler (0x10487ea34) 'IDE_OnReset'
+         0 DEBUG MISC:Initializing IDE controller 0
+         0 DEBUG MISC:Initializing IDE controller 1
+         0 DEBUG MISC:Calling event Reset handler (0x104869718) 'INNOVA_OnReset'
+         0 DEBUG MISC:Allocating Innova emulation
+         0 DEBUG MISC:Calling event Reset handler (0x10463859c) 'SERIAL_OnReset'
+         0 DEBUG MISC:Calling event Reset handler (0x10486adf4) 'DONGLE_OnReset'
+         0 DEBUG MISC:Allocating parallel dongle emulation
+         0 DEBUG MISC:Calling event Reset handler (0x10464c694) 'PARALLEL_OnReset'
+         0 DEBUG MISC:Calling event Reset handler (0x1048643d0) 'NE2K_OnReset'
+         0 DEBUG MISC:Allocating NE2000 emulation
+         0 DEBUG MISC:Sorry, NE2000 allocation failed to load
+         0 DEBUG MISC:Calling event Reset handler (0x10445e5dc) 'DOS_OnReset'
+         0 DEBUG MISC:Calling event Reset handler (0x10451a188) 'DOS_KeyboardLayout_ShutDown'
+         0 DEBUG MISC:Calling event Reset handler (0x1045d1520) 'MOUSE_OnReset'
+         0 DEBUG MISC:Calling event Reset handler (0x1045d67a4) 'XMS_ShutDown'
+         0 DEBUG MISC:Calling event Reset handler (0x1045d90b8) 'EMS_ShutDown'
+         0 DEBUG MISC:Calling event Reset handler (0x104572b50) 'AUTOEXEC_ShutDown'
+         0 DEBUG MISC:Calling event Reset handler (0x10486008c) 'IPX_OnReset'
+         0 DEBUG MISC:Calling event Reset handler (0x104514624) 'MSCDEX_Reset'
+         0 DEBUG MISC:Dispatching VM event Reset Complete
+         0 DEBUG MISC:Calling event Reset Complete handler (0x1046091f0) 'BIOS_OnResetComplete'
+         0 DEBUG MISC:Freeing render cache buffer
+         0 DEBUG MISC:DEBUG_SetupConsole initializing GUI
+         0 DEBUG MISC:DEBUG GUI startup
+***| TYPE HELP (+ENTER) TO GET AN OVERVIEW OF ALL COMMANDS |***
+DEBUG: Breakpoints deleted.
+DEBUG: Set breakpoint at 22F4:030D
+DEBUG: Set breakpoint at 22F4:0699
+DEBUG: Set breakpoint at 1E44:02FE
+DEBUG: Set breakpoint at 1859:1405
+DEBUG: Set breakpoint at 1782:0031
+DEBUG: Set memory breakpoint at 2C20:3E7A
+DEBUG: Set memory breakpoint at 2C20:3EC8
+DEBUG: Set memory breakpoint at 2C20:1F08
+DEBUG: Set memory breakpoint at 2C20:1F0A
+DEBUG: Set memory breakpoint at 2C20:3EC6
+DEBUG: Set memory breakpoint at 2C20:3C94
+DEBUG: Set memory breakpoint at 2C20:3CE0
+DEBUG: Set memory breakpoint at 2C20:3C92
+DEBUG: Set memory breakpoint at 2C20:3D52
+Breakpoint list:
+-------------------------------------------------------------------------
+00. BPMEM 2C20:3D52 (00)
+01. BPMEM 2C20:3C92 (00)
+02. BPMEM 2C20:3CE0 (00)
+03. BPMEM 2C20:3C94 (00)
+04. BPMEM 2C20:3EC6 (00)
+05. BPMEM 2C20:1F0A (00)
+06. BPMEM 2C20:1F08 (00)
+07. BPMEM 2C20:3EC8 (00)
+08. BPMEM 2C20:3E7A (00)
+09. BP 1782:0031
+0A. BP 1859:1405
+0B. BP 1E44:02FE
+0C. BP 22F4:0699
+0D. BP 22F4:030D
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00000002 [vm=0 iopl=0 nt=0]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=00000000 limit=00000000*1
+LDT selector=0000, base=00000000 limit=00000000*1
+         3 DEBUG MISC:BIOS: executing POST routine
+         3 DEBUG MISC:BIOS: POST stack set to 0000:7ffc
+         3 DEBUG MISC:Dispatching VM event BIOS Init
+         3 DEBUG MISC:INT 10h reinitializing
+         3 DEBUG MISC:INT 10: initializing EGA/VGA state
+         3 DEBUG MISC:Redirecting INT 10h to point at the VGA BIOS
+         3 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00058 bytes,"BIOS video table (INT 1Dh)",align=1,mustbe=0x00000) = 0xfc958
+         3 DEBUG MISC:INT 10: VGA bios used 12571 / 16384 memory
+         3 DEBUG MISC:VGA BIOS occupies segment 0xc000-0xc3ff
+         3       INT10:Set Video Mode 3
+         3       VGA:Blinking 8
+         3 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00016 bytes,"BIOS Floppy parameter tables",align=1,mustbe=0x00000) = 0xfc942
+         3 DEBUG MISC:Updating floppy DPT
+         3       MOUSE:INT 15H PS/2 emulation enabled
+         3 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00010 bytes,"BIOS configuration (INT 15h AH=0xC0)",align=16,mustbe=0x00000) = 0xfc930
+         3 DEBUG MISC:Registered ISA PnP read port at 0x20b
+         3 DEBUG BIOS:getMemory in 'ROM BIOS' (0x00021 bytes,"ISA Plug & Play BIOS struct",align=16,mustbe=0x00000) = 0xfc900
+ISA Plug & Play BIOS enabled
+         4 DEBUG MISC:BIOS VIDEO ROM SCAN found VGA BIOS (size=16384)
+VGA ROM BIOS init callback
+         8       INT10:Set Video Mode 3
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page c4
+        13 DEBUG MISC:MEM slow path page=c4: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page c5
+        13 DEBUG MISC:MEM slow path page=c5: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page c6
+        13 DEBUG MISC:MEM slow path page=c6: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page c7
+        13 DEBUG MISC:MEM slow path page=c7: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page c8
+        13 DEBUG MISC:MEM slow path page=c8: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page c9
+        13 DEBUG MISC:MEM slow path page=c9: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page ca
+        13 DEBUG MISC:MEM slow path page=ca: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page cb
+        13 DEBUG MISC:MEM slow path page=cb: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page cc
+        13 DEBUG MISC:MEM slow path page=cc: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page cd
+        13 DEBUG MISC:MEM slow path page=cd: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page ce
+        13 DEBUG MISC:MEM slow path page=ce: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page cf
+        13 DEBUG MISC:MEM slow path page=cf: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page d0
+        13 DEBUG MISC:MEM slow path page=d0: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page d1
+        13 DEBUG MISC:MEM slow path page=d1: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page d2
+        13 DEBUG MISC:MEM slow path page=d2: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page d3
+        13 DEBUG MISC:MEM slow path page=d3: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page d4
+        13 DEBUG MISC:MEM slow path page=d4: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page d5
+        13 DEBUG MISC:MEM slow path page=d5: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page d6
+        13 DEBUG MISC:MEM slow path page=d6: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page d7
+        13 DEBUG MISC:MEM slow path page=d7: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page d8
+        13 DEBUG MISC:MEM slow path page=d8: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page d9
+        13 DEBUG MISC:MEM slow path page=d9: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page da
+        13 DEBUG MISC:MEM slow path page=da: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page db
+        13 DEBUG MISC:MEM slow path page=db: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page dc
+        13 DEBUG MISC:MEM slow path page=dc: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page dd
+        13 DEBUG MISC:MEM slow path page=dd: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page de
+        13 DEBUG MISC:MEM slow path page=de: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page df
+        13 DEBUG MISC:MEM slow path page=df: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page e0
+        13 DEBUG MISC:MEM slow path page=e0: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page e1
+        13 DEBUG MISC:MEM slow path page=e1: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page e2
+        13 DEBUG MISC:MEM slow path page=e2: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page e3
+        13 DEBUG MISC:MEM slow path page=e3: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page e4
+        13 DEBUG MISC:MEM slow path page=e4: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page e5
+        13 DEBUG MISC:MEM slow path page=e5: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page e6
+        13 DEBUG MISC:MEM slow path page=e6: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page e7
+        13 DEBUG MISC:MEM slow path page=e7: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page e8
+        13 DEBUG MISC:MEM slow path page=e8: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page e9
+        13 DEBUG MISC:MEM slow path page=e9: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page ea
+        13 DEBUG MISC:MEM slow path page=ea: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page eb
+        13 DEBUG MISC:MEM slow path page=eb: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page ec
+        13 DEBUG MISC:MEM slow path page=ec: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page ed
+        13 DEBUG MISC:MEM slow path page=ed: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page ee
+        13 DEBUG MISC:MEM slow path page=ee: device matches=0
+        13 WARN  MISC:MEM_SlowPath called within system RAM at page ef
+        13 DEBUG MISC:MEM slow path page=ef: device matches=0
+        13 DEBUG MISC:BIOS ADAPTER ROM scan complete
+        17       INT10:Set Video Mode 12
+        17       VGA:Blinking 0
+        17       VGA:Blinking 8
+       929 DEBUG MISC:Using built-in logo
+       929 DEBUG MISC:BIOS png image: w=224 h=224 bitdepth=4 ct=3 il=0 compr=0 filt=0
+       929 DEBUG MISC:PNG accepted
+     14994 DEBUG VGAMISC:Render On Demand mode is off for RodU -1
+     14994 DEBUG VGAMISC:Wait for changes mode is off for SrinC -1
+     14994       VGA:h total 100 end  80 blank ( 80/ 98) retrace ( 84/ 96)
+     14994       VGA:v total 525 end 480 blank (488/517) retrace (490/492)
+     14994       VGA:VGA refresh rate is now, 59.940
+     14994       VGA:screen: 1.333, scanfield: 1.345, scan: 0.991, vratio: 1.333
+     14994       VGA:h total 0.03178 (31.47kHz) blank(0.02542/0.03114) retrace(0.02669/0.03051)
+     14994       VGA:v total 0.00000 (infHz) blank(15.50745/16.42900) retrace(15.57100/15.63456)
+     14994       VGA:video clock: 25.18MHz mode M_EGA
+     14994       VGA:640x480, 59.94Hz, 32bpp, screen 1.333
+pixratio 1.000, dw false, dh false
+     14994 DEBUG MISC:Freeing render cache buffer
+Aspect ratio: 640 x 480  xToY=1.333 yToX=0.750
+     14994 DEBUG MISC:GFX_SetSize 640x480 flags=0x18e scale=1.000x1.000
+surface consider=640x480 final=640x480
+     14994 DEBUG MISC:SDL video mode: 640x480 (clip 640x480 with upper-left at 0x0) 32bpp
+     14994 DEBUG MISC:   red: shift=16 mask=0x00ff0000
+     14994 DEBUG MISC:   green: shift=8 mask=0x0000ff00
+     14994 DEBUG MISC:   blue: shift=0 mask=0x000000ff
+     14994 DEBUG MISC:   alpha: shift=24 mask=0xff000000
+     14994 DEBUG MISC:Using R versions of scalers that do not use write cache
+     14994 DEBUG MISC:Allocating render cache buffer 1228800
+   2955377       INT10:Set Video Mode 3
+   2955380 DEBUG MISC:A20: masking emulation
+   2955380 DEBUG MISC:Dispatching VM event BIOS Boot
+   2955380 DEBUG MISC:BIOS boot SS:SP 0060:fffc
+   2955380 DEBUG MISC:Initializing memory handle array (EMS/XMS handle management). mem_pages=400
+   2955380 DEBUG MISC:Dispatching VM event DOS Boot
+   2955380 DEBUG MISC:Calling event DOS Boot handler (0x1045d90b4) 'EMS_DOSBoot'
+   2955380 DEBUG DOSMISC:Allocating DOS kernel
+   2955380 DEBUG MISC:files=200 fcbs=100
+   2955380       DOSMISC:DOS clipboard device (dummy access) is enabled with the name CLIP$
+   2955380 DEBUG DOSMISC:DOS: CP/M compatibility method with DOS in HMA requires mirror of entry point in HMA.
+   2955380 DEBUG DOSMISC:DOS: MAXENV=65535 ENV_KEEPFREE=1024
+   2955380 DEBUG DOSMISC:DOS kernel structures will be allocated from pool 0x0070-0x9bff
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0001 pages,"DOS_IHSEG") = 0x0070
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0032 pages,"DOS_INFOBLOCK_SEG") = 0x0071
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0056 pages,"DOS_SDA_SEG") = 0x00a3
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0004 pages,"DOS_CONDRV_SEG") = 0x00f9
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0010 pages,"DOS_CDA_SEG") = 0x00fd
+   2955380 DEBUG DOSMISC:DOS kernel alloc:
+   2955380 DEBUG DOSMISC:   IHSEG:        seg 0x0070
+   2955380 DEBUG DOSMISC:   infoblock:    seg 0x0071
+   2955380 DEBUG DOSMISC:   condrv:       seg 0x00f9
+   2955380 DEBUG DOSMISC:   SDA:          seg 0x00a3:0x0000 1376 bytes
+   2955380 DEBUG DOSMISC:   CDS:          seg 0x00fd
+   2955380 DEBUG DOSMISC:[private segment @ this point 0x0070-0x9c00 mem=0x40000]
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0004 pages,"dos.tables.tempdta") = 0x010d
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0004 pages,"dos.tables.fcbdelete") = 0x0111
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x02d0 pages,"SFT secondary table") = 0x0115
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x000c pages,"dos.tables.dbcs") = 0x03e5
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0002 pages,"dos.tables.filenamechar") = 0x03f1
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0019 pages,"dos.tables.collatingseq") = 0x03f3
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0004 pages,"Fake FCB SFT") = 0x040c
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0036 pages,"dos.tables.dpb") = 0x0410
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0003 pages,"External device command packet") = 0x0446
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0006 pages,"Fake disk buffer head") = 0x0449
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0001 pages,"driver.sys.data.list") = 0x044f
+   2955380 DEBUG DOSMISC:DOS_GetMemory(0x0000 pages,"DOS_MEM_START") = 0x0450
+   2955380 DEBUG DOSMISC:   mem start:    seg 0x0450 (initial)
+   2955380 DEBUG DOSMISC:   min free:     seg 0x0700
+   2955380 DEBUG MISC:Allocating IPX emulation
+WARNING: No translation support (to host) for code page 0
+   2955385 DEBUG DOSMISC:Initializing drive system
+   2955385 DEBUG MISC:Dispatching VM event DOS Init, kernel ready
+   2955385 DEBUG MISC:Calling event DOS Init, kernel ready handler (0x1049de9d8) 'PROGRAMS_DOS_Boot'
+   2955385 DEBUG MISC:Calling event DOS Init, kernel ready handler (0x1047fc578) 'MIXER_DOS_Boot'
+   2955385 DEBUG MISC:Calling event DOS Init, kernel ready handler (0x104638500) 'SERIAL_OnDOSKernelInit'
+   2955385 DEBUG MISC:DOS kernel initializing, creating COMx devices
+   2955385 DEBUG MISC:COM1: Registering DOS device
+   2955385 DEBUG MISC:COM2: Registering DOS device
+   2955385 DEBUG MISC:Calling event DOS Init, kernel ready handler (0x10464c5f8) 'PARALLEL_OnDOSKernelInit'
+   2955385 DEBUG MISC:DOS kernel initializing, creating LPTx devices
+   2955385 DEBUG MISC:LPT1: Registering DOS device
+   2955388 DEBUG PIT:RTC Timer at 1024.00 hz index=995.005 remd=0.865 delay=0.977
+   2958344 DEBUG VGAMISC:Render On Demand mode is off for RodU -1
+   2958344 DEBUG VGAMISC:Wait for changes mode is off for SrinC -1
+   2958344       VGA:h total 100 end  80 blank ( 80/ 98) retrace ( 85/ 97)
+   2958344       VGA:v total 449 end 400 blank (407/442) retrace (412/414)
+   2958344       VGA:VGA refresh rate is now, 70.087
+   2958344       VGA:screen: 1.333, scanfield: 1.312, scan: 1.016, vratio: 1.800
+   2958344       VGA:h total 0.03178 (31.47kHz) blank(0.02542/0.03114) retrace(0.02701/0.03082)
+   2958344       VGA:v total 16.68322 (59.94Hz) blank(12.93341/14.04562) retrace(13.09230/13.15585)
+   2958344       VGA:video clock: 28.32MHz mode M_TEXT
+   2958344       VGA:720x400, 70.09Hz, 32bpp, screen 1.333
+pixratio 1.350, dw false, dh false
+   2958344 DEBUG MISC:Freeing render cache buffer
+Aspect ratio: 720 x 540  xToY=1.333 yToX=0.750
+   2958344 DEBUG MISC:GFX_SetSize 720x400 flags=0x18e scale=1.000x1.000
+surface consider=720x400 final=720x400
+   2958344 DEBUG MISC:SDL video mode: 720x400 (clip 720x400 with upper-left at 0x0) 32bpp
+   2958344 DEBUG MISC:   red: shift=16 mask=0x00ff0000
+   2958344 DEBUG MISC:   green: shift=8 mask=0x0000ff00
+   2958344 DEBUG MISC:   blue: shift=0 mask=0x000000ff
+   2958344 DEBUG MISC:   alpha: shift=24 mask=0xff000000
+   2958344 DEBUG MISC:Using R versions of scalers that do not use write cache
+   2958344 DEBUG MISC:Allocating render cache buffer 1152000
+   2970990 DEBUG DOSMISC:Reinitializing DOS keyboard layout support
+   2970990       BIOS:Keyboard layout us successfully loaded
+DOS keyboard layout loaded with main language code US for layout us
+   2970990 DEBUG MISC:Allocating XMS emulation
+XMS: 50 handles allocated for use by the DOS environment
+   2970990 DEBUG DOSMISC:DOS private segment set to 0xc400-0xcbff
+   2970990 DEBUG DOSMISC:DOS_GetMemory(0x0001 pages,"xms_callback") = 0xc400
+   2970990 DEBUG MISC:Desired EMS segment 0xe000
+   2970990 DEBUG MISC:UMB ending segment 0xf000 conflicts with BIOS at 0xf000, asking BIOS to move aside
+   2970990 DEBUG MISC:ROM BIOS dump:
+   2970990 DEBUG MISC:     0x000f0000-0x000f8daf free=1
+   2970990 DEBUG MISC:     0x000f8db0-0x000f8db5 free=0 IBM ROM BASIC entry point
+   2970990 DEBUG MISC:     0x000f8db6-0x000fac78 free=1
+   2970990 DEBUG MISC:     0x000fac79-0x000fac7e free=0 IBM ROM BASIC entry point
+   2970990 DEBUG MISC:     0x000fac7f-0x000fc8ff free=1
+   2970990 DEBUG MISC:     0x000fc900-0x000fc920 free=0 ISA Plug & Play BIOS struct
+   2970990 DEBUG MISC:     0x000fc921-0x000fc92f free=1
+   2970990 DEBUG MISC:     0x000fc930-0x000fc93f free=0 BIOS configuration (INT 15h AH=0xC0)
+   2970990 DEBUG MISC:     0x000fc940-0x000fc941 free=1
+   2970990 DEBUG MISC:     0x000fc942-0x000fc957 free=0 BIOS Floppy parameter tables
+   2970990 DEBUG MISC:     0x000fc958-0x000fc9af free=0 BIOS video table (INT 1Dh)
+   2970990 DEBUG MISC:     0x000fc9b0-0x000fc9ef free=0 BIOS default reset location (CODE)
+   2970990 DEBUG MISC:     0x000fc9f0-0x000fc9fd free=0 DOSBox vm86 hack
+   2970990 DEBUG MISC:     0x000fc9fe-0x000fc9ff free=1
+   2970990 DEBUG MISC:     0x000fca00-0x000fdfff free=0 DOSBox callback area
+   2970990 DEBUG MISC:     0x000fe000-0x000fe00d free=1
+   2970990 DEBUG MISC:     0x000fe00e-0x000fe02f free=0 BIOS ID string
+   2970990 DEBUG MISC:     0x000fe030-0x000fe05a free=1
+   2970990 DEBUG MISC:     0x000fe05b-0x000fe05d free=0 BIOS default reset location (JMP)
+   2970990 DEBUG MISC:     0x000fe05e-0x000fe060 free=1
+   2970990 DEBUG MISC:     0x000fe061-0x000fe074 free=0 BIOS version string
+   2970990 DEBUG MISC:     0x000fe075-0x000fe87f free=1
+   2970990 DEBUG MISC:     0x000fe880-0x000fe888 free=0 BIOS default IRQ8-15 location
+   2970990 DEBUG MISC:     0x000fe889-0x000fe986 free=1
+   2970990 DEBUG MISC:     0x000fe987-0x000fe9a6 free=0 BIOS default IRQ1 location
+   2970990 DEBUG MISC:     0x000fe9a7-0x000ffa6d free=1
+   2970990 DEBUG MISC:     0x000ffa6e-0x000ffe6d free=0 BIOS 8x8 font (first 128 chars)
+   2970990 DEBUG MISC:     0x000ffe6e-0x000ffea4 free=1
+   2970990 DEBUG MISC:     0x000ffea5-0x000ffeb7 free=0 BIOS default IRQ0 location
+   2970990 DEBUG MISC:     0x000ffeb8-0x000fff52 free=1
+   2970990 DEBUG MISC:     0x000fff53-0x000fff53 free=0 BIOS default handler location
+   2970990 DEBUG MISC:     0x000fff54-0x000fff54 free=0 BIOS default INT5 location
+   2970990 DEBUG MISC:     0x000fff55-0x000fff5b free=0 BIOS default IRQ2-7 location
+   2970990 DEBUG MISC:     0x000fff5c-0x000fffef free=1
+   2970990 DEBUG MISC:[end dump]
+   2970990 DEBUG MISC:UMB ending segment 0xf000 conflicts with BIOS at 0xf000, truncating region
+   2970990 DEBUG MISC:UMB overlaps EMS page frame at 0xe000, truncating region
+   2970990       MISC:UMB assigned region is 0xcc00-0xdfff
+   2970990 DEBUG DOSMISC:Writing HMA mirror of CP/M entry point
+   2970990 DEBUG MISC:MEM_A20_Enable(1)
+   2970990 DEBUG MISC:MEM_A20_Enable(0)
+   2970990 DEBUG MISC:Allocating EMS emulation
+EMS page frame at 0xe000-0xefff
+   2970990 DEBUG DOSMISC:DOS_GetMemory(0x0002 pages,"ems_baseseg") = 0xc401
+   2970990 DEBUG MISC:EMS: OS handle allocated 24 16KB pages 0x00110000-0x0016ffff
+   2970990 DEBUG MISC:Enabling VCPI emulation
+   2970990 DEBUG MISC:EMS:EMM OS handle is associated with memory on an odd megabyte. Enabling A20 gate to avoid corrupting DOS state, will restore A20 state after this setup phase.
+   2970990 DEBUG MISC:MEM_A20_Enable(1)
+   2970990 DEBUG MISC:MEM_A20_Enable(0)
+   2970990 DEBUG MISC:MEM_A20_Enable(1)
+   2970990 DEBUG MISC:MEM_A20_Enable(0)
+   2970990 DEBUG MISC:Dispatching VM event DOS Init, CONFIG.SYS done
+   2970990 DEBUG MISC:Initializing DOS shell
+   2970990 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0000) = 0x0451-0x0450
+   2970990 DEBUG DOSMISC:   min free pad: seg 0x0451
+   2970990 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0451) blocks=0x02af
+COMMAND.COM env size:             720 bytes
+   2970990 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x002d) = 0x0701-0x072d
+COMMAND.COM environment block:    0x0701 sz=0x002d
+   2970990 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x009a) = 0x072f-0x07c8
+COMMAND.COM main body (PSP):      0x072f sz=0x009a
+COMMAND.COM stack:                0x0749
+   2970990 DEBUG MISC:Shell init SS:SP 0749:07fe
+   2970990 DEBUG MISC:Dispatching VM event DOS Init, shell ready
+   2970990 DEBUG MISC:Calling event DOS Init, shell ready handler (0x10480c81c) 'SBLASTER_DOS_Boot'
+   2970990 DEBUG MISC:Calling event DOS Init, shell ready handler (0x1048560e4) 'GUS_DOS_Boot'
+   2970990 DEBUG MISC:Allocating AUTOEXEC.BAT emulation
+   2970990 DEBUG MISC:Allocating MSCDEX.EXE emulation
+   2970990 DEBUG MISC:MSCDEX.EXE device name is 'MSCD001'
+   2970990       MOUSE:INT 33H emulation enabled
+   2970990 DEBUG DOSMISC:DOS_GetMemory(0x0001 pages,"i33loc") = 0xc403
+   2970990 DEBUG MISC:Enabling VMware integration for mouse interface
+   2970990 DEBUG MISC:Dispatching VM event DOS Init, AUTOEXEC.BAT done
+   2970990 DEBUG MISC:Dispatching VM event DOS Init, at promot
+   2970990 DEBUG MISC:Running DOS shell now
+   2970993 DEBUG DOSMISC:DOS=HIGH, XMS enabled, A20 gate disabled. Reenabling A20 gate on INT 21h call.
+   2970993 DEBUG MISC:MEM_A20_Enable(1)
+   2970993       EXEC:Execute z:\system\intro.COM 0
+   2970993       FILES:file open command 0 file z:\system\intro.COM
+   2970993 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0047) = 0x07ca-0x0810
+   2970993 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x97ed) = 0x0812-0x9ffe
+   2971000 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0812) blocks=0x0040
+   2973176 DEBUG MISC:Silencing PC speaker output (output disabled)
+   2997509 DEBUG MISC:Shutting down internal programs list
+   2997509 DEBUG EXEC:Parsing command line: AUTOEXEC.BAT
+   2997509       FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+   2997509 DEBUG EXEC:Parsing command line: @SET BLASTER=A220 I7 D1 H5 P330 T6
+   2997509       FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+   2999024 DEBUG EXEC:Parsing command line: mount c /var/folders/wj/49wt6tlx6tv03465_pt82dmr0000gn/T/firestaff-pass162-live-hoc-lhxneaqn/dos
+   2999027       EXEC:Execute Z:\SYSTEM\mount.COM 0
+   2999027       FILES:file open command 0 file Z:\SYSTEM\mount.COM
+   2999027 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x07ca-0x0812
+   2999027 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x97eb) = 0x0814-0x9ffe
+   2999034 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0814) blocks=0x0040
+   3000963       FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+   3001063 DEBUG EXEC:Parsing command line: c:
+   3001063       FILES:Special file open command 80 file Z:\AUTOEXEC.BAT
+   3001343 DEBUG EXEC:Parsing command line: DM -vv -sn -pk
+   3001346       EXEC:Execute DM.EXE 0
+   3001346       FILES:file open command 0 file DM.EXE
+   3001346 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x07ca-0x0812
+   3001346 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x97eb) = 0x0814-0x9ffe
+   3136397 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0814) blocks=0x055a
+   3136681 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0814) blocks=0x0580
+   3273403       MOUSE:INT 33h reset
+   3273454       SBLASTER:Unhandled write to SB Port  22A
+   3273462       SBLASTER:DSP:Reset
+   3273554       SBLASTER:DSP Command: 0xE0
+   3709175 DEBUG MISC:IO read slow path port=388 iolen=2: device matches=0
+   3713040       FILES:file open command 2 file VGA
+   3713652       FILES:file open command 2 file VGA
+   3714348       FILES:file open command 2 file IBMIO
+   3714973       FILES:file open command 2 file IBMIO
+   3715598       FILES:file open command 2 file FIRES
+   3716223       FILES:file open command 2 file FIRES
+   3716994       FILES:file open command 0 file dmset
+   3717727       FILES:file search attributes 27 name C:\VGA
+   3719240       FILES:file open command 0 file C:\VGA
+   3719647       FCB:DOS:29:FCB Parse Filename, result:al=0
+   3719654       FCB:DOS:29:FCB Parse Filename, result:al=0
+   3719662 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0814) blocks=0xffff
+   3719662 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0814) failed, maximum 0x97eb available
+   3720049 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0814) blocks=0x97eb
+   3720158       EXEC:Execute C:\VGA 3
+   3720158       FILES:file open command 0 file C:\VGA
+   3772923 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0814) blocks=0x01ea
+   3773941       INT10:Set Video Mode 13
+   3773941       VGA:Blinking 0
+   3773941       VGA:Blinking 8
+   3774301       EXEC:Execute IBMIO 0
+   3774301       FILES:file open command 0 file IBMIO
+   3774301 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x09ff-0x0a47
+   3774301 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x95b6) = 0x0a49-0x9ffe
+   3774856 DEBUG VGAMISC:Render On Demand mode is off for RodU -1
+   3774856 DEBUG VGAMISC:Wait for changes mode is off for SrinC -1
+   3774856       VGA:h total 100 end  80 blank ( 80/ 98) retrace ( 84/ 96)
+   3774856       VGA:v total 449 end 400 blank (407/442) retrace (412/414)
+   3774856       VGA:VGA refresh rate is now, 70.086
+   3774856       VGA:screen: 1.333, scanfield: 1.312, scan: 1.016, vratio: 0.800
+   3774856       VGA:h total 0.03178 (31.47kHz) blank(0.02542/0.03114) retrace(0.02669/0.03051)
+   3774856       VGA:v total 14.26806 (70.09Hz) blank(12.93347/14.04568) retrace(13.09235/13.15591)
+   3774856       VGA:video clock: 25.18MHz mode M_VGA
+   3774856       VGA:320x400, 70.09Hz, 32bpp, screen 1.333
+pixratio 1.200, dw true, dh false
+   3774856 DEBUG MISC:Freeing render cache buffer
+Aspect ratio: 640 x 480  xToY=1.333 yToX=0.750
+   3774856 DEBUG MISC:GFX_SetSize 640x400 flags=0x18e scale=1.000x1.000
+surface consider=640x400 final=640x400
+   3774856 DEBUG MISC:SDL video mode: 640x400 (clip 640x400 with upper-left at 0x0) 32bpp
+   3774856 DEBUG MISC:   red: shift=16 mask=0x00ff0000
+   3774856 DEBUG MISC:   green: shift=8 mask=0x0000ff00
+   3774856 DEBUG MISC:   blue: shift=0 mask=0x000000ff
+   3774856 DEBUG MISC:   alpha: shift=24 mask=0xff000000
+   3774856 DEBUG MISC:Using R versions of scalers that do not use write cache
+   3774856 DEBUG MISC:Allocating render cache buffer 512000
+   3797513       VGAMISC:Lines left: 400
+   3867973 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0a49) blocks=0x0349
+   3869794       EXEC:Execute swoosh 0
+   3869794       FILES:file open command 0 file swoosh
+   3869794 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x0d93-0x0ddb
+   3869794 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x9222) = 0x0ddd-0x9ffe
+   4048178 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0b08
+   7897558       EXEC:Execute anim 0
+   7897558       FILES:file open command 0 file anim
+   7897558 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x0d93-0x0ddb
+   7897558 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x9222) = 0x0ddd-0x9ffe
+   7964399 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x033d
+   7965926       FILES:file open command 2 file title
+   7966630 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0340
+   7966788 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0640
+   7967013 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0e00
+  18819132 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0640
+  18819280 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0340
+  18819840       EXEC:Execute selector 0
+  18819840       FILES:file open command 0 file selector
+  18819840 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x0d93-0x0ddb
+  18819840 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x9222) = 0x0ddd-0x9ffe
+  18990331 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x06ee
+  18996653       FILES:file open command 2 file data\song.dat
+  18997395 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0700
+  18999337 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x08c0
+  18999597 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0980
+  19214714 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x08c0
+  19214944 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0fc0
+  19215204 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x13c0
+  20234503 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x0fc0
+  20234733 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x1240
+  20234993 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x1380
+  20578480 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x1240
+  20578710 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x1b80
+  20578970 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2280
+DEBUG: Memory breakpoint : 2C20:3D52 - 00 -> 24
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007A83 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3C92 - 00 -> C8
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007A83 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3CE0 - 00 -> 80
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007A83 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3C94 - 00 -> 81
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007A83 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3EC6 - 00 -> 8F
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007A83 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:1F0A - 00 -> 8F
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007A83 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:1F08 - 00 -> 9E
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007A83 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3EC8 - 00 -> F7
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007A83 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3E7A - 00 -> 98
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007A83 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+  22033905 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x1b80
+  22034135 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2600
+  22034395 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2e40
+DEBUG: Memory breakpoint : 2C20:1F08 - 9E -> 7B
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007206 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:1F0A - 8F -> 67
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007212 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3C92 - C8 -> 64
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007203 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3CE0 - 80 -> 8C
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007A83 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3D52 - 24 -> 81
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007297 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3E7A - 98 -> 79
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007213 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3EC6 - 8F -> 67
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007202 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3EC8 - F7 -> 59
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007217 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0DED limit=000000FD*1
+LDT selector=0000, base=000E0DED limit=000000FD*1
+DEBUG: Memory dump success.
+  23703579 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2600
+  23703809 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x27c0
+  23704069 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x28c0
+  23940341 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x27c0
+  23940571 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2800
+  23959346 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3180
+  23959606 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3980
+  25495724 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3180
+  25495954 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3cc0
+  25496214 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4600
+  27318140 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3cc0
+  27318732       FILES:file open command 2 file data\graphics.dat
+  27319487 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3d00
+  27320308 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3d80
+  27321130 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3e00
+  27322469 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x3ec0
+  27336304 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x46c0
+  27336549 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x48c0
+  28243132 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x46c0
+  28243393 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x48c0
+  28243638 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4940
+  28561364 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x48c0
+  28561625 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4b40
+  28561870 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4bc0
+  28843511 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4b40
+  28870243 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4bc0
+  31277621 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x4c00
+  31531715 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5080
+  31543135 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5440
+  31543393 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5800
+  32459890 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5440
+  32460105 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5900
+  39780047 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x5440
+  39781889       EXEC:Execute FIRES 0
+  39781889       FILES:file open command 0 file FIRES
+  39781889 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x0049) = 0x0d93-0x0ddb
+  39781889 DEBUG DOSMISC:DOS_AllocateMemory(blocks=0x9222) = 0x0ddd-0x9ffe
+DEBUG: Memory breakpoint : 2C20:3EC8 - 59 -> 8A
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007683 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3EC6 - 67 -> 83
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007683 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3E7A - 79 -> 08
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007683 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3D52 - 81 -> 0E
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007683 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3CE0 - 8C -> 11
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007683 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3C94 - 81 -> 0D
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007683 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3C92 - 64 -> 2A
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007683 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:1F0A - 67 -> 0B
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007683 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:1F08 - 7B -> F4
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007683 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:1F08 - F4 -> FF
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007206 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:1F0A - 0B -> 06
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007202 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3C92 - 2A -> 00
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007202 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3C94 - 0D -> 00
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007202 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3CE0 - 11 -> 00
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007202 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3D52 - 0E -> 00
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007206 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3E7A - 08 -> D1
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007206 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+DEBUG: Memory breakpoint : 2C20:3EC6 - 83 -> 73
+cr0:00000010 cr2:00000000 cr3:00000000  cpl=0
+eflags:00007206 [vm=0 iopl=3 nt=1]
+GDT base=00000000 limit=0000FFFF
+IDT base=00000000 limit=000003FF
+TR selector=0000, base=000E0A59 limit=000000FD*1
+LDT selector=0000, base=000E0A59 limit=000000FD*1
+DEBUG: Memory dump success.
+  41023087 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2a0c
+  41024979 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x2a40
+  41025141 DEBUG DOSMISC:DOS_ResizeMemory(seg=0x0ddd) blocks=0x9222
+  41025231       FILES:file open command 0 file EMMXXXX0
+  41025248       IOCTL:07:Fakes output status is ready for handle 3
+  41037671       FILES:file open command 2 file DATA\GRAPHICS.DAT
+  43937393       FILES:file open command 2 file DATA\DUNGEON.DAT

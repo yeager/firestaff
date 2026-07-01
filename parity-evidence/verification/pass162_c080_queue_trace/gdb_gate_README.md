@@ -1,44 +1,32 @@
-# Pass162 C080 gdb/debugger gate
+# Pass162 C080 debugger/address gate
 
-Classification: `blocked/gdb-cannot-bind-stock-dos-exe-or-redmcsb-symbols`
-First missing gate: debugger/source-symbol binding prerequisite; C080 mouse/queue/front-wall gates were not reached
+Classification: `blocked/gdb-missing-for-stock-symbol-gate`
+First missing gate: `native gdb symbol-binding sanity check unavailable on this host`
 
-## Exact commands run
-- `gdb_version` rc=0: `/usr/bin/gdb --version`
-  - GNU gdb (Ubuntu 15.1-1ubuntu1~24.04.1) 15.1
-  - Copyright (C) 2024 Free Software Foundation, Inc.
-  - License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
-  - This is free software: you are free to change and redistribute it.
-  - There is NO WARRANTY, to the extent permitted by law.
-- `dosbox_x_version` rc=1: `/usr/bin/dosbox-x -version`
-  - DOSBox-X version 2024.03.01 SDL2, copyright 2011-2024 The DOSBox-X Team.
-  - DOSBox-X project maintainer: joncampbell123 (The Great Codeholio)
-  - DOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,
-  - and you are welcome to redistribute it under certain conditions;
-  - please read the COPYING file thoroughly before doing so.
-- `dm_exe_file` rc=0: `/usr/bin/file <firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
-  - <firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed
-- `gdb_stock_dm_symbol_gate` rc=1: `/usr/bin/gdb --batch -x <firestaff-repo>/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb`
-  - <firestaff-repo>/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb:3: Error in sourced command file:
-  - "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE": not in executable format: file format not recognized
+## Local tools
 
-## Runnable artifacts
-- gdb: `gdb --batch -x <firestaff-repo>/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb`
-- DOSBox-X: `dosbox-x -conf <firestaff-repo>/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf`
+- dosbox: `/opt/homebrew/bin/dosbox`
+- dosbox-debug: `/opt/homebrew/bin/dosbox-debug`
+- dosbox-x: `/opt/homebrew/bin/dosbox-x`
+- gdb: `missing`
+- lldb: `/usr/bin/lldb`
+- file: `/usr/bin/file`
+- python3: `/usr/bin/python3`
 
-## Source citations audited
-- PASS `COMMAND.C:1452-1662` `F0359_COMMAND_ProcessClick_CPSC` — Actual mouse-click queue writer: derives command from primary/secondary mouse tables and writes nonzero command plus X/Y into G0432_as_CommandQueue.
-- PASS `COMMAND.C:2045-2127` `F0380_COMMAND_ProcessQueue_CPSC dequeue` — F0380 locks/dequeues command, X, Y from G0432_as_CommandQueue and unlocks before dispatch.
-- PASS `COMMAND.C:2322-2324` `F0380 -> F0377 dispatch` — F0380 dispatches C080 to F0377 with dequeued X/Y.
-- PASS `CLIKVIEW.C:311-350` `F0377_COMMAND_ProcessType80_ClickInDungeonView` — C080 handler; PC builds normalize screen coordinates by subtracting viewport origin before hit testing.
-- PASS `CLIKVIEW.C:406-439` `F0377 empty-hand front-wall hit` — Empty-hand C05 door-button/wall-ornament hit calls F0372, otherwise object cells call grab/drop paths.
-- PASS `CLIKVIEW.C:5-27` `F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor` — F0372 computes the square in front of the party and invokes F0275 on the wall face opposite party direction.
-- PASS `MOVESENS.C:1501-1503` `C127_SENSOR_WALL_CHAMPION_PORTRAIT -> F0280` — A clicked champion portrait wall sensor calls F0280 with sensorData/portrait index.
-- PASS `REVIVE.C:63-88` `F0280_CHAMPION_AddCandidateChampionToParty` — Candidate champion entry point reached after C127 portrait sensor processing.
+## Commands
+
+- gdb sanity check: `gdb --batch -x /Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb`
+- DOSBox-X start point: `dosbox-x -conf /Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf -break-start`
+
+## Breakpoint order
+
+1. **mouse translation / queue write**: break on F0359 entry and after L1109_i_Command is assigned/written; expect after x=111,y=82 left click, P0725/P0726 are 111/82, L1109_i_Command == 80, G0432_as_CommandQueue[last].Command == 80 with X=111,Y=82
+2. **queue dequeue**: break when L1160/L1161/L1162 are loaded from G0432_as_CommandQueue; expect L1160_i_Command == 80 and L1161/L1162 == 111/82
+3. **C080 dispatch / viewport normalization**: break on F0377 entry and after PC coordinate normalization; expect F0377 is entered; normalized point remains inside C05 wall ornament/portrait hit zone for the source-locked front wall
+4. **front-wall sensor hit-state**: break on F0372 and F0280; log G0306/G0307/G0308, forward square, wall face, sensor type/data; expect pose map0 x=1 y=3 dir=South touches front square x=1 y=4 opposite face and reaches F0280(sensorData=10)
 
 ## Non-claims
-- does not prove stock original binary reached C080/F0377/F0280
-- does not classify mouse translation vs queue dequeue vs C080 dispatch vs F0280 because gdb could not bind symbols to the stock DOS executable
-- does not do coordinate guessing
 
-Next step: Use DOSBox-X built with/started in its debugger, a DOS real-mode gdbstub, or an address map from ReDMCSB symbols to the loaded DM.EXE image, then apply the emitted breakpoint order.
+- does not prove stock original binary reached C080/F0377/F0280
+- does not classify mouse translation vs queue dequeue vs C080 dispatch vs F0280 until a DOS real-mode/source-symbol bridge or address map exists
+- does not do coordinate guessing

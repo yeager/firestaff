@@ -50,14 +50,17 @@ typedef enum {
     FS_SWIPE_LEFT    =  3    /* left on screen  — turn left     */
 } FS_SwipeDir;
 
-/* Map swipe direction → FS_Command (matches firestaff_input.h order) */
-static FS_Command fs_swipe_dir_to_command(FS_SwipeDir dir) {
-    switch (dir) {
-    case FS_SWIPE_FORWARD: return FS_CMD_MOVE_FORWARD;
-    case FS_SWIPE_BACK:     return FS_CMD_MOVE_BACKWARD;
-    case FS_SWIPE_LEFT:     return FS_CMD_TURN_LEFT;
-    case FS_SWIPE_RIGHT:    return FS_CMD_TURN_RIGHT;
-    default:               return FS_CMD_NONE;
+static FS_Command fs_touch_command_from_runtime_code(int commandCode) {
+    switch (commandCode) {
+    case FS_CMD_MOVE_FORWARD:
+    case FS_CMD_MOVE_BACKWARD:
+    case FS_CMD_TURN_LEFT:
+    case FS_CMD_TURN_RIGHT:
+    case FS_CMD_STRAFE_LEFT:
+    case FS_CMD_STRAFE_RIGHT:
+        return (FS_Command)commandCode;
+    default:
+        return FS_CMD_NONE;
     }
 }
 
@@ -79,15 +82,22 @@ int fs_touch_in_right_edge(int x, int fbW) {
     return x >= (int)(fbW * (1.0f - FIRESTAFF_TOUCH_EDGE_ZONE_FRAC));
 }
 
-/* Bridge a recognised swipe command to the FS_InputQueue so it travels the
- * same fs_game_tick_v1() pipeline as keyboard/WASD movement commands. */
-static void fs_touch_emit_swipe_command(FS_SwipeDir swipe) {
-    FS_Command cmd = fs_swipe_dir_to_command(swipe);
-    if (cmd == FS_CMD_NONE) return;
-    /* Queue pointer is supplied by firestaff_game_loop.c via extern */
+static int fs_touch_emit_runtime_command(
+    const FirestaffRuntimeGestureNavResult* result) {
+
+    FS_Command cmd;
+    FS_InputQueue *q;
+
+    if (!result) return 0;
+    cmd = fs_touch_command_from_runtime_code(result->commandCode);
+    if (cmd == FS_CMD_NONE) return 0;
+
+    /* Queue pointer is supplied by firestaff_game_loop.c via extern. */
     extern FS_InputQueue *fs_g_input_queue_get(void);
-    FS_InputQueue *q = fs_g_input_queue_get();
-    if (q) fs_input_queue_push(q, cmd, 0, 0);
+    q = fs_g_input_queue_get();
+    if (!q) return 0;
+    fs_input_queue_push(q, cmd, 0, 0);
+    return 1;
 }
 
 /* ------------------------------------------------------------------
@@ -135,10 +145,64 @@ int firestaff_touch_detect_swipe(int startX, int startY,
  * detect a swipe and immediately emit its command onto the input queue. */
 void firestaff_touch_emit_swipe(int startX, int startY,
                                 int endX,   int endY) {
-    int dir = -1;
-    if (firestaff_touch_detect_swipe(startX, startY, endX, endY, &dir)) {
-        fs_touch_emit_swipe_command((FS_SwipeDir)dir);
+    FirestaffRuntimeGestureNavPolicy policy;
+    memset(&policy, 0, sizeof(policy));
+    policy.accessibilityTouchEnabled = 1;
+    (void)firestaff_touch_emit_swipe_runtime(startX, startY, endX, endY,
+                                             &policy, NULL);
+}
+
+int firestaff_touch_evaluate_swipe_runtime(
+    int startX, int startY,
+    int endX, int endY,
+    const FirestaffRuntimeGestureNavPolicy* policy,
+    FirestaffRuntimeGestureNavResult* outResult) {
+
+    FirestaffRuntimeGestureNavEvent event;
+    FirestaffRuntimeGestureNavResult localResult;
+
+    memset(&event, 0, sizeof(event));
+    memset(&localResult, 0, sizeof(localResult));
+
+    event.kind = FIRESTAFF_RUNTIME_GESTURE_NAV_KIND_SWIPE;
+    event.startX = startX;
+    event.startY = startY;
+    event.endX = endX;
+    event.endY = endY;
+    event.fbW = 320;
+    event.thresholdPx = FIRESTAFF_TOUCH_SWIPE_THRESHOLD_PX;
+    event.tapTolerancePx = FIRESTAFF_TOUCH_TAP_TOLERANCE_PX;
+
+    /* ReDMCSB COMMAND.C F0380 consumes the same C001..C004 movement
+     * commands that keyboard input queues; the runtime gesture gate
+     * decides whether a finger path may enqueue one of those commands. */
+    if (!FirestaffRuntimeGestureNav_Evaluate(
+            &event, policy, outResult ? outResult : &localResult)) {
+        return 0;
     }
+
+    if (!outResult) {
+        outResult = &localResult;
+    }
+
+    return fs_touch_command_from_runtime_code(outResult->commandCode) != FS_CMD_NONE;
+}
+
+int firestaff_touch_emit_swipe_runtime(
+    int startX, int startY,
+    int endX, int endY,
+    const FirestaffRuntimeGestureNavPolicy* policy,
+    FirestaffRuntimeGestureNavResult* outResult) {
+
+    FirestaffRuntimeGestureNavResult localResult;
+    FirestaffRuntimeGestureNavResult* result = outResult ? outResult : &localResult;
+
+    memset(&localResult, 0, sizeof(localResult));
+    if (!firestaff_touch_evaluate_swipe_runtime(startX, startY, endX, endY,
+                                                policy, result)) {
+        return 0;
+    }
+    return fs_touch_emit_runtime_command(result);
 }
 
 /* ------------------------------------------------------------------
@@ -181,14 +245,35 @@ int fs_touch_long_press_ms(void) {
  * to fs_input_queue as FS_CMD_STRAFE_LEFT/RIGHT (source-locked C005/C006).
  * No-op when the global queue is unavailable. */
 void fs_touch_emit_edge_strafe(int startX, int fbW) {
-    FS_Command cmd = FS_CMD_NONE;
-    if (fs_touch_in_left_edge(startX, fbW)) {
-        cmd = FS_CMD_STRAFE_LEFT;
-    } else if (fs_touch_in_right_edge(startX, fbW)) {
-        cmd = FS_CMD_STRAFE_RIGHT;
+    FirestaffRuntimeGestureNavPolicy policy;
+    memset(&policy, 0, sizeof(policy));
+    policy.accessibilityTouchEnabled = 1;
+    policy.v2PresentationEnabled = 1;
+    policy.v1ParityPreserve = 0;
+    (void)fs_touch_emit_edge_strafe_runtime(startX, fbW, &policy, NULL);
+}
+
+int fs_touch_emit_edge_strafe_runtime(
+    int startX,
+    int fbW,
+    const FirestaffRuntimeGestureNavPolicy* policy,
+    FirestaffRuntimeGestureNavResult* outResult) {
+
+    FirestaffRuntimeGestureNavEvent event;
+    FirestaffRuntimeGestureNavResult localResult;
+    FirestaffRuntimeGestureNavResult* result = outResult ? outResult : &localResult;
+
+    memset(&event, 0, sizeof(event));
+    memset(&localResult, 0, sizeof(localResult));
+
+    event.kind = FIRESTAFF_RUNTIME_GESTURE_NAV_KIND_EDGE_STRAFE;
+    event.startX = startX;
+    event.fbW = fbW;
+    event.thresholdPx = FIRESTAFF_TOUCH_SWIPE_THRESHOLD_PX;
+    event.tapTolerancePx = FIRESTAFF_TOUCH_TAP_TOLERANCE_PX;
+
+    if (!FirestaffRuntimeGestureNav_Evaluate(&event, policy, result)) {
+        return 0;
     }
-    if (cmd == FS_CMD_NONE) return;
-    extern FS_InputQueue *fs_g_input_queue_get(void);
-    FS_InputQueue *q = fs_g_input_queue_get();
-    if (q) fs_input_queue_push(q, cmd, 0, 0);
+    return fs_touch_emit_runtime_command(result);
 }

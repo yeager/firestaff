@@ -19,7 +19,9 @@ _Static_assert(sizeof(uint32_t) == 4, "uint32 assumption required");
 /* Re-assert Phase 10..14 size constants drive our budget. Any drift
  * in upstream serialised sizes will break the build here, not at
  * runtime. Plan §8 Risk R3 mitigation. */
-_Static_assert(PARTY_SERIALIZED_SIZE == 1056,
+_Static_assert(PARTY_SERIALIZED_V1_SIZE == 1056,
+               "PARTY_SERIALIZED_V1_SIZE drifted");
+_Static_assert(PARTY_SERIALIZED_SIZE == 2928,
                "PARTY_SERIALIZED_SIZE drifted");
 _Static_assert(SENSOR_EFFECT_LIST_SERIALIZED_SIZE == 228,
                "SENSOR_EFFECT_LIST_SERIALIZED_SIZE drifted");

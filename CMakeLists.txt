@@ -142,6 +142,8 @@ add_library(firestaff_m10 STATIC
     src/shared/dungeon_decompressor_ftl.c
     src/engine/m11_game_text_latin_extended_glyphs.c
     src/shared/image_backend_pc34_compat_globals.c
+    src/dm1/dm1_v1_original_save_classifier.c
+    src/dm1/dm1_v1_original_save_pc34_handoff.c
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_sound.c
     src/dm2/dm2_v1_drops.c)
@@ -2172,13 +2174,14 @@ add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
+    src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+    src/dm1/dm1_v1_event_timer_pc34_compat.c
     src/shared/asset_find_by_hash.c
+    src/shared/dungeon_decompressor_ftl.c
     src/shared/fs_portable_compat.c
 )
 target_include_directories(firestaff_csb_v1_pc_real_asset_launch_probe
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(firestaff_csb_v1_pc_real_asset_launch_probe
-    PRIVATE firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_pc_real_asset_launch_probe
         PRIVATE -Wall -Wextra -O2)
@@ -2205,13 +2208,14 @@ add_executable(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
+    src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+    src/dm1/dm1_v1_event_timer_pc34_compat.c
     src/shared/asset_find_by_hash.c
+    src/shared/dungeon_decompressor_ftl.c
     src/shared/fs_portable_compat.c
 )
 target_include_directories(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
-    PRIVATE firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
         PRIVATE -Wall -Wextra -O2)
@@ -2254,14 +2258,15 @@ add_executable(firestaff_csb_v1_first_viewport_frame_probe
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_viewport_pc34_compat.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+    src/dm1/dm1_v1_event_timer_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
     src/shared/asset_find_by_hash.c
+    src/shared/dungeon_decompressor_ftl.c
     src/shared/fs_portable_compat.c
 )
 target_include_directories(firestaff_csb_v1_first_viewport_frame_probe
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(firestaff_csb_v1_first_viewport_frame_probe
-    PRIVATE firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_first_viewport_frame_probe
         PRIVATE -Wall -Wextra -O2)
@@ -2364,7 +2369,8 @@ endif()
 
 # CSB V1 CSBgraphics.dat index classifier + real-asset scan probe.
 # Bounded CSBWin custom graphics override classifier
-# (csbgraphics.dat header/index parser, no LZW/payload decode)
+# (csbgraphics.dat header/index parser plus bounded single-entry
+# LZW payload decode, no runtime override)
 # plus a skip-safe real-asset scan/cache probe keyed off the same
 # asset_find_by_md5_list pattern as the HCSB.HTC scanner. The
 # known-MD5 list is intentionally empty by default — CSBgraphics.dat
@@ -4459,6 +4465,154 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_keyboard_commands_pc34_compat
     )
 
+    # CSB V1 runtime command gates: source-locked to ReDMCSB command queue,
+    # movement step, champion orientation, action cooldown, and spell-cast paths.
+    # These are deliberately small CTest slices that prove the DM1/CSB shared
+    # command semantics are executable instead of documentation-only anchors.
+    add_executable(test_csb_v1_movement_command_step_runtime_pc34_compat
+        tests/test_csb_v1_movement_command_step_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_movement_command_step_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_movement_command_step_runtime_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_movement_command_step_runtime_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_movement_command_step_runtime_pc34_compat
+        COMMAND test_csb_v1_movement_command_step_runtime_pc34_compat
+    )
+
+    add_executable(test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
+        tests/test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
+        COMMAND test_csb_v1_command_chain_move_attack_cast_runtime_pc34_compat
+    )
+
+    add_executable(test_csb_v1_input_command_queue_binding
+        tests/test_csb_v1_input_command_queue_binding.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_input_command_queue_binding PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_input_command_queue_binding
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_input_command_queue_binding
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_input_command_queue_binding
+        COMMAND test_csb_v1_input_command_queue_binding
+    )
+
+    add_executable(test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat
+        tests/test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    target_link_libraries(test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat
+        COMMAND test_csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat
+    )
+
+    add_executable(test_csb_v1_runtime_champion_inventory_handoff_pc34_compat
+        tests/test_csb_v1_runtime_champion_inventory_handoff_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_runtime_champion_inventory_handoff_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_runtime_champion_inventory_handoff_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_runtime_champion_inventory_handoff_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_runtime_champion_inventory_handoff_pc34_compat
+        COMMAND test_csb_v1_runtime_champion_inventory_handoff_pc34_compat
+    )
+
+    add_executable(test_csb_v1_runtime_tick_accumulator
+        tests/test_csb_v1_runtime_tick_accumulator.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_runtime_tick_accumulator PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_runtime_tick_accumulator
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_runtime_tick_accumulator
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_runtime_tick_accumulator
+        COMMAND test_csb_v1_runtime_tick_accumulator
+    )
+
+    add_executable(test_csb_v1_save_import_path_pc34_compat
+        tests/test_csb_v1_save_import_path_pc34_compat.c
+        src/csb/csb_v1_save_import_path_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_save_import_path_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_save_import_path_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_save_import_path_pc34_compat
+        COMMAND test_csb_v1_save_import_path_pc34_compat
+    )
+
+    add_executable(test_csb_v1_utility_import_block_verify_pc34_compat
+        tests/test_csb_v1_utility_import_block_verify_pc34_compat.c
+        src/csb/csb_v1_utility_import_pc34.c
+    )
+    target_include_directories(test_csb_v1_utility_import_block_verify_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_utility_import_block_verify_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_utility_import_block_verify_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_utility_import_block_verify_pc34_compat
+        COMMAND test_csb_v1_utility_import_block_verify_pc34_compat
+    )
+
     add_executable(test_dm2_v1_boot_profile_smoke
         tests/test_dm2_v1_boot_profile_smoke.c
         src/dm2/dm2_v1_boot.c
@@ -5684,6 +5838,72 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_save_runtime_boundary_pc34_compat
     )
 
+    # CSB V1 composed boot/playability spine: verified profile -> runtime
+    # dungeon handle -> imported party -> leader/rotation runtime state ->
+    # one deterministic tick -> Utility NEW_GAME handoff. This is still a
+    # bounded synthetic gate, but it joins the smaller CSB runtime slices into
+    # one executable ReDMCSB/CSBwin handoff path.
+    add_executable(test_csb_v1_boot_runtime_handoff
+        tests/test_csb_v1_boot_runtime_handoff.c
+        src/csb/csb_v1_boot.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+        src/csb/csb_v1_utility_flow_pc34.c
+        src/csb/csb_v1_utility_import_pc34.c
+        src/csb/csb_v1_save_load_pc34_compat.c
+        src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+        src/dm1/dm1_v1_event_timer_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_v1_boot_runtime_handoff PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_boot_runtime_handoff
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_boot_runtime_handoff
+        COMMAND test_csb_v1_boot_runtime_handoff
+    )
+
+    # CSB V1 bounded route gate: Utility NEW_GAME -> verified runtime
+    # handoff -> first viewport frame -> one queued movement step ->
+    # post-movement viewport frame. This joins the current CSB slices into
+    # a narrow executable route without claiming full playability or pixels.
+    add_executable(test_csb_v1_runtime_route_first_frame_movement_utility_gate
+        tests/test_csb_v1_runtime_route_first_frame_movement_utility_gate.c
+        src/csb/csb_v1_boot.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+        src/csb/csb_v1_utility_flow_pc34.c
+        src/csb/csb_v1_utility_import_pc34.c
+        src/csb/csb_v1_save_load_pc34_compat.c
+        src/csb/csb_v1_movement_command_step_runtime_pc34_compat.c
+        src/csb/csb_v1_viewport_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+        src/dm1/dm1_v1_event_timer_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_v1_runtime_route_first_frame_movement_utility_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_runtime_route_first_frame_movement_utility_gate
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_runtime_route_first_frame_movement_utility_gate
+        COMMAND test_csb_v1_runtime_route_first_frame_movement_utility_gate
+    )
+
     # CSB V1 DSA trigger single-step gate (csb_v1_dsa_trigger_single_step_pc34_compat).
     # Source-locked against CSBWin/DSA.cpp + Chaos.cpp + ReDMCSB DEFS.H/MOVESENS.C
     # for the chaos magic / DSA interpreter surface and the runtime-adjacent
@@ -5901,6 +6121,18 @@ if(BUILD_TESTING)
     add_test(
         NAME m11_quick_resume_roundtrip
         COMMAND test_m11_quick_resume_roundtrip
+    )
+
+    add_executable(test_dm1_v1_mirror_candidate_save_load_pc34_compat
+        tests/test_dm1_v1_mirror_candidate_save_load_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_mirror_candidate_save_load_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_mirror_candidate_save_load_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_mirror_candidate_save_load_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_save_load_pc34_compat
     )
 
     add_executable(test_m11_quit_guard
@@ -10401,6 +10633,14 @@ if(BUILD_TESTING)
         NAME dm1_v1_champion_panel_hud_status_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_hud_status_source_lock.py
     )
+    add_test(
+        NAME dm1_v1_champion_panel_hud_status_source_chain_audit
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass107_v1_hud_status_source_chain_audit.py
+    )
+    add_test(
+        NAME dm1_v1_champion_panel_hud_type7_bar_value_resolver
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/pass110_v1_hud_type7_bar_value_resolver.py
+    )
 
     # DM1 V1 champion-panel HUD/status SOURCE-CHAIN AUDIT gate.
     # Sibling of dm1_v1_champion_panel_hud_status_source_lock that
@@ -11628,7 +11868,6 @@ if(BUILD_TESTING)
     # envelope but keeps import blocked until real bytes round-trip.
     add_executable(test_dm1_v1_original_save_classifier_pc34
         tests/test_dm1_v1_original_save_classifier_pc34.c
-        src/dm1/dm1_v1_original_save_classifier.c
     )
     target_link_libraries(test_dm1_v1_original_save_classifier_pc34 PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -11642,9 +11881,23 @@ if(BUILD_TESTING)
         LABELS "tier2;dm1;save;interop;classifier"
     )
 
+    add_executable(test_dm1_v1_original_save_pc34_handoff
+        tests/test_dm1_v1_original_save_pc34_handoff.c
+    )
+    target_link_libraries(test_dm1_v1_original_save_pc34_handoff PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_original_save_pc34_handoff PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_original_save_pc34_handoff
+        COMMAND test_dm1_v1_original_save_pc34_handoff
+    )
+    set_tests_properties(dm1_v1_original_save_pc34_handoff PROPERTIES
+        LABELS "tier2;dm1;save;interop;handoff"
+    )
+
     add_executable(firestaff_dm1_v1_original_save_classifier_probe
         probes/dm1/firestaff_dm1_v1_original_save_classifier_probe.c
-        src/dm1/dm1_v1_original_save_classifier.c
     )
     target_link_libraries(firestaff_dm1_v1_original_save_classifier_probe PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -11729,6 +11982,17 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_grp02_f0738_apply_damage_to_group
         COMMAND test_dm1_v1_grp02_f0738_apply_damage_to_group_pc34_compat
+    )
+    add_executable(test_dm1_v1_orch_pending_damage_flow_pc34_compat
+        tests/test_dm1_v1_orch_pending_damage_flow_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_orch_pending_damage_flow_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_orch_pending_damage_flow_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_orch_pending_damage_flow
+        COMMAND test_dm1_v1_orch_pending_damage_flow_pc34_compat
     )
     add_executable(test_dm1_v1_grp02_f0739_build_timeline_event_pc34_compat
         tests/test_dm1_v1_grp02_f0739_build_timeline_event_pc34_compat.c
@@ -12250,6 +12514,36 @@ if(NOT TARGET test_m11_inventory_mouth_visual_blit_pc34_compat)
 endif()
 
 # ── DM1 V1 Skill & Experience System source-lock gate ─────────────────
+if(NOT TARGET test_memory_tick_orchestrator_f0303_skill_query_pc34_compat)
+    add_executable(test_memory_tick_orchestrator_f0303_skill_query_pc34_compat
+        tests/test_memory_tick_orchestrator_f0303_skill_query_pc34_compat.c
+    )
+    target_link_libraries(test_memory_tick_orchestrator_f0303_skill_query_pc34_compat PRIVATE
+        firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_memory_tick_orchestrator_f0303_skill_query_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME memory_tick_orchestrator_f0303_skill_query_pc34_compat
+        COMMAND test_memory_tick_orchestrator_f0303_skill_query_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_m11_dm1_skill_query_runtime_pc34_compat)
+    add_executable(test_m11_dm1_skill_query_runtime_pc34_compat
+        tests/test_m11_dm1_skill_query_runtime_pc34_compat.c
+    )
+    target_link_libraries(test_m11_dm1_skill_query_runtime_pc34_compat PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_dm1_skill_query_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_dm1_skill_query_runtime_pc34_compat
+        COMMAND test_m11_dm1_skill_query_runtime_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_skill_experience_pc34_compat)
     add_executable(test_dm1_v1_skill_experience_pc34_compat
         tests/test_dm1_v1_skill_experience_pc34_compat.c
@@ -13982,18 +14276,20 @@ if(BUILD_TESTING)
     )
 
     # CSB V1 CSBgraphics.dat index classifier — data-free contract
-    # tests for the CSBWin "CSBgraphics.dat" header/index parser.
+    # tests for the CSBWin "CSBgraphics.dat" header/index parser
+    # and bounded single-entry LZW payload decode helper.
     # Synthetic fixtures cover the big-endian and 0x8001 little-endian
     # marker layouts, count + parallel compressed/decompressed size
     # tables, payload-offset derivation, max-entry tracking, and
     # bounds rejection (too-small input, empty count, oversized
     # count, total_compressed > payload_bytes_avail, truncated
-    # tables, truncated LE-marker input). No real CSBWin asset
-    # is loaded; the matching skip-safe real-asset probe lives
-    # next to it.
+    # tables, truncated LE-marker input, bad LZW streams, and
+    # undersized output buffers). No real CSBWin asset is loaded;
+    # the matching skip-safe real-asset probe lives next to it.
     add_executable(test_csb_v1_csbgraphics_dat_classify
         tests/test_csb_v1_csbgraphics_dat_classify.c
         src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     )
     target_include_directories(test_csb_v1_csbgraphics_dat_classify PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -20234,6 +20530,28 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runtime_gesture_navigation_gat
     )
 endif()
 
+# firestaff_touch.c live bridge: verifies that runtime gesture decisions
+# are the only path from swipe / edge-strafe candidates into FS_InputQueue.
+# Data-free; stubs fs_g_input_queue_get() locally.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_touch_runtime_gesture_bridge.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/firestaff_touch.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/runtime_gesture_navigation_gate.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/firestaff_input.c")
+    add_executable(test_firestaff_touch_runtime_gesture_bridge
+        tests/test_firestaff_touch_runtime_gesture_bridge.c
+        src/engine/firestaff_touch.c
+        src/engine/runtime_gesture_navigation_gate.c
+        src/engine/firestaff_input.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_touch_runtime_gesture_bridge PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_touch_runtime_gesture_bridge
+        COMMAND test_firestaff_touch_runtime_gesture_bridge
+    )
+endif()
+
 # M11 FS_InputQueue ring buffer + SDL scancode -> FS_Command
 # translation contract gate (firestaff_input.c). This is the bridge
 # between the SDL event stream + firestaff_touch.c gesture path and
@@ -20376,6 +20694,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12
     add_executable(test_save_browser_export_import_m12
         tests/test_save_browser_export_import_m12.c
         src/shared/save_browser_m12.c
+        src/dm1/dm1_v1_save_load.c
     )
     target_link_libraries(test_save_browser_export_import_m12 PRIVATE firestaff_m10)
     if(NOT MSVC)

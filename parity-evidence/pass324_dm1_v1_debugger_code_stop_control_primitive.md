@@ -1,6 +1,6 @@
 # Pass324 — DM1 V1 debugger code-stop/control primitive
 
-Status: `PASS_DEBUGGER_CODE_STOP_CONTROL_PRIMITIVE_FOUND`
+Status: `BLOCKED_DEBUGGER_CONTROL_PRIMITIVE_NOT_EXPOSED`
 
 ## ReDMCSB anchors audited first
 

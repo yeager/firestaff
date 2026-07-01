@@ -179,6 +179,7 @@ INPUTS = {
     "pass376_crop_manifest": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
     "pass376_route_labels": "verification-screens/pass376-original-route/original_viewport_shot_labels.tsv",
 }
+LATEST_HOC_ATTEMPT = "parity-evidence/verification/pass435_dm1_v1_hoc_route_attempt_20260630.json"
 EXPECTED_SEQUENCE = ["dungeon_gameplay", "dungeon_gameplay", "dungeon_gameplay", "spell_panel", "dungeon_gameplay", "inventory"]
 
 
@@ -290,12 +291,16 @@ def unblock_commands() -> dict[str, Any]:
     # Keep this route aligned with EXPECTED_SEQUENCE. The previous contract used
     # only movement keypad events while requiring spell_panel and inventory
     # classes, which made every rerun non-promotable before it started.
+    # The next candidate must also include the source-locked Hall-of-Champions
+    # transition before the six promotable shots: C127/F0280 portrait click,
+    # C160 resurrect choice, then Return confirmation.
     route_capture = (
         "OUT_DIR=$PWD/verification-screens/pass376-original-route "
         "DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 "
         "DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' "
         "DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 "
-        "DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 "
+        "DM1_ORIGINAL_EXPECTED_SHOTS=6 "
+        "DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:2500 click:111,82 wait:1400 click:130,115 wait:1200 enter wait:2200 "
         "shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 "
         "shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 "
         "shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel\" "
@@ -315,8 +320,17 @@ def unblock_commands() -> dict[str, Any]:
                 "post_spell_redraw",
                 "inventory_panel",
             ],
-            "required_driver_tokens": ["kp4", "kp6", "f1", "f4"],
-            "reason": "the capture command must drive both movement and UI states because the readiness gate requires spell_panel and inventory classifications",
+            "required_driver_tokens": ["click:111,82", "click:130,115", "enter", "kp4", "kp6", "f1", "f4"],
+            "hall_of_champions_precondition": {
+                "portrait_click": "click:111,82",
+                "choice_click": "click:130,115",
+                "confirm": "enter",
+                "source_locks": [
+                    "C127_SENSOR_WALL_CHAMPION_PORTRAIT -> F0280_CHAMPION_AddCandidateChampionToParty",
+                    "C160 resurrect panel command",
+                ],
+            },
+            "reason": "the capture command must first drive the source-locked portrait/candidate transition, then movement and UI states because the readiness gate requires party, spell_panel, and inventory classifications",
         },
         "promotion_requires": [
             "six raw 320x200 frames classified as dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory",
@@ -447,6 +461,14 @@ def blocker_list(data: dict[str, Any]) -> list[str]:
     if data.get("next_unblock_contract", {}).get("ok") is not True:
         blockers.append("pass435 next unblock command contract is internally inconsistent")
 
+    latest_hoc = data.get("latest_hoc_attempt") or {}
+    if latest_hoc.get("exists") and latest_hoc.get("ready_for_promotion") is not True:
+        conclusion = latest_hoc.get("conclusion") or {}
+        blockers.append(
+            "latest HoC route diagnostics are not party-control-ready"
+            + (f": {conclusion.get('classification')}" if conclusion.get("classification") else "")
+        )
+
     return blockers
 
 
@@ -516,18 +538,54 @@ def write_report(data: dict[str, Any]) -> None:
         f"- reason: `{data.get('pass376_quarantine', {}).get('reason')}`",
         f"- decision: {data.get('pass376_quarantine', {}).get('decision')}",
         "",
-        "## Next unblock command contract",
+        "## Latest HoC route diagnostics",
         "",
-        "Run the route capture, then strict crop manifest, then this gate again. These are actionability checks only; they do not claim pixel parity.",
-        "",
-        "```bash",
-        data["next_unblock"]["semantic_route_capture"],
-        data["next_unblock"]["crop_manifest_strict"],
-        data["next_unblock"]["readiness_gate"],
-        "```",
-        "",
-        "Promotion requires:",
     ])
+    latest_hoc = data.get("latest_hoc_attempt") or {}
+    if latest_hoc.get("exists"):
+        conclusion = latest_hoc.get("conclusion") or {}
+        lines.extend([
+            f"- ready for promotion: `{latest_hoc.get('ready_for_promotion')}`",
+            f"- classification: `{conclusion.get('classification')}`",
+            f"- reason: {conclusion.get('reason')}",
+            f"- next action: {conclusion.get('next_action')}",
+        ])
+        for attempt in latest_hoc.get("attempts", []):
+            lines.append(f"- `{attempt.get('id')}` classes: `{attempt.get('classes')}`; finding: {attempt.get('finding')}")
+    else:
+        lines.append(f"- no latest HoC attempt manifest found at `{LATEST_HOC_ATTEMPT}`")
+    if latest_hoc.get("exists") and latest_hoc.get("ready_for_promotion") is not True:
+        lines.extend([
+            "",
+            "## Next unblock command contract",
+            "",
+            "Do not spend the next pass on another six-shot overlay route. The latest HoC diagnostics captured clean frames but did not prove candidate or party-control state. The next unblock is a live DOSBox-debug transcript using `parity-evidence/verification/pass162_c080_queue_trace/pass162_c080_dosbox_debug_commands.txt`: F0359 `22F4:030D` -> F0380 `22F4:0699` -> F0377 `1E44:02FE` -> F0275 `1859:1405` as the static-F0372 proxy -> F0280 `1782:0031`.",
+            "",
+            "The previous six-shot route command is retained below only as a reproducible negative diagnostic:",
+            "",
+            "```bash",
+            data["next_unblock"]["semantic_route_capture"],
+            data["next_unblock"]["crop_manifest_strict"],
+            data["next_unblock"]["readiness_gate"],
+            "```",
+            "",
+            "Promotion still requires:",
+        ])
+    else:
+        lines.extend([
+            "",
+            "## Next unblock command contract",
+            "",
+            "Run the route capture, then strict crop manifest, then this gate again. These are actionability checks only; they do not claim pixel parity.",
+            "",
+            "```bash",
+            data["next_unblock"]["semantic_route_capture"],
+            data["next_unblock"]["crop_manifest_strict"],
+            data["next_unblock"]["readiness_gate"],
+            "```",
+            "",
+            "Promotion requires:",
+        ])
     lines.extend(f"- {item}" for item in data["next_unblock"]["promotion_requires"])
     lines.extend([
         "",
@@ -560,6 +618,7 @@ def main() -> int:
         "sourceRoot": str(REDMCSB),
         "source_audit": audit_sources(),
         "inputs": {name: load_json(rel) for name, rel in INPUTS.items() if name not in {"pass376_classifier", "pass376_crop_manifest", "pass376_route_labels"}},
+        "latest_hoc_attempt": load_json(LATEST_HOC_ATTEMPT),
         "classifier": summarize_classifier(INPUTS["pass376_classifier"]),
         "crop_manifest": summarize_crop_manifest(INPUTS["pass376_crop_manifest"]),
         "route_labels": summarize_route_labels(INPUTS["pass376_route_labels"]),

@@ -1,0 +1,495 @@
+{
+  "bp_acceptance_probe": {
+    "accepted_all": false,
+    "interpretation": "non-promotable debugger-control diagnostic; address candidates remain valid, but this tmux path did not prove DOSBox-X debugger command parsing",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox_debug_bp_acceptance/manifest.json",
+    "status": "FAIL_BREAKPOINT_COMMANDS_NOT_CONFIRMED"
+  },
+  "break_start_acceptance_probe": {
+    "interpretation": "non-promotable debugger-control receipt; proves DOSBox-X -debug -break-start accepts the pass162 BP/BPM command packet without running original binaries",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox_x_break_start_bp_acceptance/manifest.json",
+    "ok": true,
+    "status": "PASS162_DOSBOX_X_BREAK_START_BP_BPM_ACCEPTED"
+  },
+  "classification": "ready/address-candidates-and-break-start-bp-bpm-confirmed-no-runtime-hook",
+  "debugger_control_rule": {
+    "continue_key": "F5 as vt100 bytes ESC O t",
+    "stop_rule": "Accept a hit only after a run transition; reject BP command echoes and BPLIST setup text."
+  },
+  "dosbox_debug_commands": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_c080_dosbox_debug_commands.txt",
+  "expected_order": [
+    "F0359 receives screen click x=111,y=82 and queues C080 with X/Y",
+    "F0380 dequeues C080 and X/Y from G0432",
+    "F0377 handles C080 and normalizes viewport coordinates",
+    "F0275 is reached from static F0372 for the front-wall sensor face",
+    "F0280 is reached for C127 champion portrait sensor data"
+  ],
+  "f0372_proxy": {
+    "addressable_proxy": "F0275_SENSOR_IsTriggeredByClickOnWall",
+    "reason": "F0372 is static and absent from FIRES.MAP; F0275 is the next public wall-sensor function reached by F0372.",
+    "static_symbol": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
+  },
+  "first_missing_gate": null,
+  "function_breakpoints": [
+    {
+      "idle": false,
+      "line": 533,
+      "link_csip": "1BC1:030D",
+      "map_symbol_prefix": "F0359_COMMAND_PROCESSCLICK_CPSC",
+      "meaning": "COMMAND.C mouse/click queue writer",
+      "name": "F0359_COMMAND_PROCESSCLICK_CPSC",
+      "runtime_with_load_seg_0733": "22F4:030D",
+      "source_name": "F0359_COMMAND_ProcessClick_CPSC"
+    },
+    {
+      "idle": false,
+      "line": 543,
+      "link_csip": "1BC1:0699",
+      "map_symbol_prefix": "F0380_COMMAND_PROCESSQUEUE_CPSC",
+      "meaning": "COMMAND.C command dequeue/dispatch",
+      "name": "F0380_COMMAND_PROCESSQUEUE_CPSC",
+      "runtime_with_load_seg_0733": "22F4:0699",
+      "source_name": "F0380_COMMAND_ProcessQueue_CPSC"
+    },
+    {
+      "idle": false,
+      "line": 541,
+      "link_csip": "1711:02FE",
+      "map_symbol_prefix": "F0377_COMMAND_PROCESSTYPE80_CLI",
+      "meaning": "CLIKVIEW.C C080 dungeon-view click handler",
+      "name": "F0377_COMMAND_PROCESSTYPE80_CLIC",
+      "runtime_with_load_seg_0733": "1E44:02FE",
+      "source_name": "F0377_COMMAND_ProcessType80_ClickInDungeonView"
+    },
+    {
+      "idle": false,
+      "line": 470,
+      "link_csip": "1126:1405",
+      "map_symbol_prefix": "F0275_SENSOR_ISTRIGGEREDBYCLICK",
+      "meaning": "MOVESENS.C wall sensor dispatcher reached from static F0372",
+      "name": "F0275_SENSOR_ISTRIGGEREDBYCLICKO",
+      "runtime_with_load_seg_0733": "1859:1405",
+      "source_name": "F0275_SENSOR_IsTriggeredByClickOnWall"
+    },
+    {
+      "idle": false,
+      "line": 473,
+      "link_csip": "104F:0031",
+      "map_symbol_prefix": "F0280_CHAMPION_ADDCANDIDATECHAM",
+      "meaning": "REVIVE.C candidate champion entry after C127 portrait sensor",
+      "name": "F0280_CHAMPION_ADDCANDIDATECHAMP",
+      "runtime_with_load_seg_0733": "1782:0031",
+      "source_name": "F0280_CHAMPION_AddCandidateChampionToParty"
+    }
+  ],
+  "global_watchpoints": [
+    {
+      "idle": true,
+      "line": 1103,
+      "link_csip": "24ED:3E7A",
+      "name": "J0OV9EXG6",
+      "pc_public_symbol": "J0OV9EXG6",
+      "runtime_with_load_seg_0733": "2C20:3E7A",
+      "source_name": "G0432_as_CommandQueue"
+    },
+    {
+      "idle": true,
+      "line": 286,
+      "link_csip": "24ED:3EC8",
+      "name": "B6SYPBHVQH3",
+      "pc_public_symbol": "B6SYPBHVQH3",
+      "runtime_with_load_seg_0733": "2C20:3EC8",
+      "source_name": "G0433_i_CommandQueueFirstIndex"
+    },
+    {
+      "idle": true,
+      "line": 863,
+      "link_csip": "24ED:1F08",
+      "name": "G0434_I_COMMANDQUEUELASTINDEX",
+      "pc_public_symbol": "G0434_i_CommandQueueLastIndex",
+      "runtime_with_load_seg_0733": "2C20:1F08",
+      "source_name": "G0434_i_CommandQueueLastIndex"
+    },
+    {
+      "idle": true,
+      "line": 864,
+      "link_csip": "24ED:1F0A",
+      "name": "G0435_B_COMMANDQUEUELOCKED",
+      "pc_public_symbol": "G0435_B_CommandQueueLocked",
+      "runtime_with_load_seg_0733": "2C20:1F0A",
+      "source_name": "G0435_B_CommandQueueLocked"
+    },
+    {
+      "idle": true,
+      "line": 1078,
+      "link_csip": "24ED:3EC6",
+      "name": "GZPWC3PM6",
+      "pc_public_symbol": "GZPWC3PM6",
+      "runtime_with_load_seg_0733": "2C20:3EC6",
+      "source_name": "G0436_B_PendingClickPresent"
+    },
+    {
+      "idle": false,
+      "line": 1249,
+      "link_csip": "24ED:3C94",
+      "name": "W9JOPB2",
+      "pc_public_symbol": "W9JOPB2",
+      "runtime_with_load_seg_0733": "2C20:3C94",
+      "source_name": "G0306_i_PartyMapX"
+    },
+    {
+      "idle": false,
+      "line": 1100,
+      "link_csip": "24ED:3CE0",
+      "name": "IQFBAUTV8Z",
+      "pc_public_symbol": "IQFBAUTV8Z",
+      "runtime_with_load_seg_0733": "2C20:3CE0",
+      "source_name": "G0307_i_PartyMapY"
+    },
+    {
+      "idle": false,
+      "line": 1182,
+      "link_csip": "24ED:3C92",
+      "name": "QEQRGB4",
+      "pc_public_symbol": "QEQRGB4",
+      "runtime_with_load_seg_0733": "2C20:3C92",
+      "source_name": "G0308_i_PartyDirection"
+    },
+    {
+      "idle": false,
+      "line": 1251,
+      "link_csip": "24ED:3D52",
+      "name": "WCUDICL7",
+      "pc_public_symbol": "WCUDICL7",
+      "runtime_with_load_seg_0733": "2C20:3D52",
+      "source_name": "G0305_ui_PartyChampionCount"
+    }
+  ],
+  "live_hoc_break_start_probe": {
+    "dosbox_log": null,
+    "dosbox_mouse_config": null,
+    "dosbox_mouse_log_summary": null,
+    "engine_ready_seen": true,
+    "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
+    "interpretation": "non-promotable stock-original diagnostic; proves the BP/BPM packet can stop inside the original runtime and native route input can be delivered on this host, but the HoC route did not reach the C080 code chain",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_hoc_break_start_probe/manifest.json",
+    "memory_stop_count": 34,
+    "mouse_post_mode": "hid",
+    "mouse_warp": null,
+    "reached_f0280": false,
+    "route_control_ok": true,
+    "route_driver": "swift-cgevent",
+    "route_label": "hoc",
+    "route_window_found": true,
+    "runtime_ready_seen": true,
+    "status": "BLOCKED_PASS162_LIVE_HOC_NO_C080_STOPS",
+    "summary": "Debugger accepted the pass162 BP/BPM packet, but the bounded HoC route produced no C080-chain stops."
+  },
+  "live_movement_autolock_control_probe": {
+    "dosbox_log": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_autolock_control_break_start_probe/dosbox_runtime.log",
+    "dosbox_mouse_config": {
+      "autolock": "true",
+      "clip_mouse_button": "none",
+      "mouse_emulation": "always",
+      "mouse_log": "debug",
+      "usesystemcursor": "false"
+    },
+    "dosbox_mouse_log_summary": {
+      "exists": true,
+      "first_mouse_lines": [
+        "Logging: opened logfile '/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_autolock_control_break_start_probe/dosbox_runtime.log' successfully. All further logging will go to this file.",
+        "         0 DEBUG GUI:SDL 1.2.14 hack: SDL_DISABLE_LOCK_KEYS=1",
+        "Prevent capture: 0",
+        "         0       GUI:Press Ctrl-F10 to capture/release mouse, Alt-F10 for configuration.",
+        "         0 DEBUG MISC:Initializing screenshot and A/V capture system",
+        "         0 DEBUG MISC:Mixer: sample_accurate=0 blocksize=1024 sdl_rate=166053024Hz mixer_rate=48000Hz channels=0 samples=42440 min/max/need=0/0/0 per_ms=48 0/1000 samples prebuffer=1200 dcadj=0.0000208020(en=1)",
+        "         0 DEBUG MOUSE:Initializing mouse interface emulation",
+        "         0 DEBUG MISC:Calling event Reset handler (0x104c71520) 'MOUSE_OnReset'"
+      ],
+      "first_route_motion_button_lines": [],
+      "mouse_line_count": 104,
+      "path": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_autolock_control_break_start_probe/dosbox_runtime.log",
+      "route_motion_button_line_count": 0
+    },
+    "engine_ready_seen": true,
+    "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
+    "interpretation": "non-promotable stock-original diagnostic; enables DOSBox-X autolock and always-on mouse emulation to test the SDL/capture path before F0359",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_autolock_control_break_start_probe/manifest.json",
+    "memory_stop_count": 34,
+    "mouse_post_mode": "hid",
+    "mouse_warp": "true",
+    "reached_f0280": false,
+    "route_control_ok": true,
+    "route_driver": "swift-cgevent",
+    "route_label": "movement_autolock_control",
+    "route_window_found": true,
+    "runtime_ready_seen": true,
+    "status": "BLOCKED_PASS162_LIVE_MOVEMENT_AUTOLOCK_CONTROL_NO_C080_STOPS",
+    "summary": "Debugger accepted the pass162 BP/BPM packet, but the bounded movement autolock control route produced no C080-chain stops."
+  },
+  "live_movement_click_control_probe": {
+    "dosbox_log": null,
+    "dosbox_mouse_config": null,
+    "dosbox_mouse_log_summary": null,
+    "engine_ready_seen": true,
+    "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
+    "interpretation": "non-promotable stock-original diagnostic; same FIRES/DUNGEON readiness and input path with a movement-arrow click, used to distinguish HoC coordinate/state problems from pre-F0359 mouse delivery problems",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_click_control_break_start_probe/manifest.json",
+    "memory_stop_count": 34,
+    "mouse_post_mode": "hid",
+    "mouse_warp": "true",
+    "reached_f0280": false,
+    "route_control_ok": true,
+    "route_driver": "swift-cgevent",
+    "route_label": "movement_click_control",
+    "route_window_found": true,
+    "runtime_ready_seen": true,
+    "status": "BLOCKED_PASS162_LIVE_MOVEMENT_CLICK_CONTROL_NO_C080_STOPS",
+    "summary": "Debugger accepted the pass162 BP/BPM packet, but the bounded movement click control route produced no C080-chain stops."
+  },
+  "live_movement_cliclick_control_probe": {
+    "dosbox_log": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/dosbox_runtime.log",
+    "dosbox_mouse_config": {
+      "autolock": "true",
+      "clip_mouse_button": "none",
+      "mouse_emulation": "always",
+      "mouse_log": "debug",
+      "usesystemcursor": "false"
+    },
+    "dosbox_mouse_log_summary": {
+      "exists": true,
+      "first_mouse_lines": [
+        "         0 DEBUG GUI:SDL 1.2.14 hack: SDL_DISABLE_LOCK_KEYS=1",
+        "Prevent capture: 0",
+        "         0       GUI:Press Ctrl-F10 to capture/release mouse, Alt-F10 for configuration.",
+        "         0 DEBUG MISC:Initializing screenshot and A/V capture system",
+        "         0 DEBUG MISC:Mixer: sample_accurate=0 blocksize=1024 sdl_rate=2764162272Hz mixer_rate=48000Hz channels=0 samples=26056 min/max/need=0/0/0 per_ms=48 0/1000 samples prebuffer=1200 dcadj=0.0000208020(en=1)",
+        "         0 DEBUG MOUSE:Initializing mouse interface emulation",
+        "         0 DEBUG MISC:Calling event Reset handler (0x1025b5520) 'MOUSE_OnReset'",
+        "         3       MOUSE:INT 15H PS/2 emulation enabled"
+      ],
+      "first_route_motion_button_lines": [],
+      "mouse_line_count": 103,
+      "path": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/dosbox_runtime.log",
+      "route_motion_button_line_count": 0
+    },
+    "engine_ready_seen": true,
+    "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
+    "interpretation": "non-promotable stock-original diagnostic; uses the external cliclick tool instead of CGEvent mouse posting to test a separate macOS input path before F0359",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/manifest.json",
+    "memory_stop_count": 34,
+    "mouse_post_mode": "cliclick",
+    "mouse_warp": "true",
+    "reached_f0280": false,
+    "route_control_ok": true,
+    "route_driver": "swift-cgevent",
+    "route_label": "movement_cliclick_control",
+    "route_window_found": true,
+    "runtime_ready_seen": true,
+    "status": "BLOCKED_PASS162_LIVE_MOVEMENT_CLICLICK_CONTROL_NO_C080_STOPS",
+    "summary": "Debugger accepted the pass162 BP/BPM packet, but the bounded movement cliclick control route produced no C080-chain stops."
+  },
+  "live_movement_double_click_control_probe": {
+    "dosbox_log": null,
+    "dosbox_mouse_config": null,
+    "dosbox_mouse_log_summary": null,
+    "engine_ready_seen": true,
+    "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
+    "interpretation": "non-promotable stock-original diagnostic; sends two movement-area clicks after FIRES/DUNGEON readiness to test whether the first click is consumed only by DOSBox focus/capture",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_double_click_control_break_start_probe/manifest.json",
+    "memory_stop_count": 34,
+    "mouse_post_mode": "hid",
+    "mouse_warp": null,
+    "reached_f0280": false,
+    "route_control_ok": true,
+    "route_driver": "swift-cgevent",
+    "route_label": "movement_double_click_control",
+    "route_window_found": true,
+    "runtime_ready_seen": true,
+    "status": "BLOCKED_PASS162_LIVE_MOVEMENT_DOUBLE_CLICK_CONTROL_NO_C080_STOPS",
+    "summary": "Debugger accepted the pass162 BP/BPM packet, but the bounded movement double click control route produced no C080-chain stops."
+  },
+  "live_movement_keyboard_capture_control_probe": {
+    "dosbox_log": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_keyboard_capture_control_break_start_probe/dosbox_runtime.log",
+    "dosbox_mouse_config": {
+      "autolock": "true",
+      "clip_mouse_button": "none",
+      "mouse_emulation": "always",
+      "mouse_log": "debug",
+      "usesystemcursor": "false"
+    },
+    "dosbox_mouse_log_summary": {
+      "exists": true,
+      "first_mouse_lines": [
+        "Logging: opened logfile '/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_keyboard_capture_control_break_start_probe/dosbox_runtime.log' successfully. All further logging will go to this file.",
+        "         0 DEBUG GUI:SDL 1.2.14 hack: SDL_DISABLE_LOCK_KEYS=1",
+        "Prevent capture: 0",
+        "         0       GUI:Press Ctrl-F10 to capture/release mouse, Alt-F10 for configuration.",
+        "         0 DEBUG MISC:Initializing screenshot and A/V capture system",
+        "         0 DEBUG MISC:Mixer: sample_accurate=0 blocksize=1024 sdl_rate=1661077504Hz mixer_rate=48000Hz channels=0 samples=9688 min/max/need=0/0/0 per_ms=48 0/1000 samples prebuffer=1200 dcadj=0.0000208020(en=1)",
+        "         0 DEBUG MOUSE:Initializing mouse interface emulation",
+        "         0 DEBUG MISC:Calling event Reset handler (0x104db9520) 'MOUSE_OnReset'"
+      ],
+      "first_route_motion_button_lines": [],
+      "mouse_line_count": 104,
+      "path": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_keyboard_capture_control_break_start_probe/dosbox_runtime.log",
+      "route_motion_button_line_count": 0
+    },
+    "engine_ready_seen": true,
+    "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
+    "interpretation": "non-promotable stock-original diagnostic; sends Ctrl-F10 before movement-area clicks to test DOSBox-X keyboard-driven mouse capture before F0359",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_keyboard_capture_control_break_start_probe/manifest.json",
+    "memory_stop_count": 34,
+    "mouse_post_mode": "hid",
+    "mouse_warp": "true",
+    "reached_f0280": false,
+    "route_control_ok": true,
+    "route_driver": "swift-cgevent",
+    "route_label": "movement_keyboard_capture_control",
+    "route_window_found": true,
+    "runtime_ready_seen": true,
+    "status": "BLOCKED_PASS162_LIVE_MOVEMENT_KEYBOARD_CAPTURE_CONTROL_NO_C080_STOPS",
+    "summary": "Debugger accepted the pass162 BP/BPM packet, but the bounded movement keyboard capture control route produced no C080-chain stops."
+  },
+  "live_movement_opengl_control_probe": {
+    "dosbox_log": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_opengl_control_break_start_probe/dosbox_runtime.log",
+    "dosbox_mouse_config": {
+      "autolock": "true",
+      "clip_mouse_button": "none",
+      "mouse_emulation": "always",
+      "mouse_log": "debug",
+      "output": "opengl",
+      "usesystemcursor": "false"
+    },
+    "dosbox_mouse_log_summary": {
+      "exists": true,
+      "first_mouse_lines": [
+        "         0 DEBUG GUI:SDL 1.2.14 hack: SDL_DISABLE_LOCK_KEYS=1",
+        "Prevent capture: 0",
+        "         0       GUI:Press Ctrl-F10 to capture/release mouse, Alt-F10 for configuration.",
+        "         0 DEBUG MISC:Initializing screenshot and A/V capture system",
+        "         0 DEBUG MISC:Mixer: sample_accurate=0 blocksize=1024 sdl_rate=1895974912Hz mixer_rate=48000Hz channels=0 samples=26008 min/max/need=0/0/0 per_ms=48 0/1000 samples prebuffer=1200 dcadj=0.0000208020(en=1)",
+        "         0 DEBUG MOUSE:Initializing mouse interface emulation",
+        "         0 DEBUG MISC:Calling event Reset handler (0x102205520) 'MOUSE_OnReset'",
+        "         3       MOUSE:INT 15H PS/2 emulation enabled"
+      ],
+      "first_route_motion_button_lines": [],
+      "mouse_line_count": 97,
+      "path": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_opengl_control_break_start_probe/dosbox_runtime.log",
+      "route_motion_button_line_count": 0
+    },
+    "engine_ready_seen": false,
+    "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
+    "interpretation": "non-promotable stock-original diagnostic; switches DOSBox-X output from surface to opengl to test the SDL/Cocoa backend path before F0359",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_opengl_control_break_start_probe/manifest.json",
+    "memory_stop_count": 17,
+    "mouse_post_mode": "hid",
+    "mouse_warp": "true",
+    "reached_f0280": false,
+    "route_control_ok": true,
+    "route_driver": "swift-cgevent",
+    "route_label": "movement_opengl_control",
+    "route_window_found": false,
+    "runtime_ready_seen": false,
+    "status": "BLOCKED_PASS162_LIVE_MOVEMENT_OPENGL_CONTROL_DEBUGGER_PACKET_NOT_RETAINED",
+    "summary": "Debugger did not prove the pass162 BP/BPM packet was retained before route execution."
+  },
+  "live_movement_pid_control_probe": {
+    "dosbox_log": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_pid_control_break_start_probe/dosbox_runtime.log",
+    "dosbox_mouse_config": {
+      "autolock": "true",
+      "clip_mouse_button": "none",
+      "mouse_emulation": "always",
+      "mouse_log": "debug",
+      "usesystemcursor": "false"
+    },
+    "dosbox_mouse_log_summary": {
+      "exists": true,
+      "first_mouse_lines": [
+        "         0 DEBUG GUI:SDL 1.2.14 hack: SDL_DISABLE_LOCK_KEYS=1",
+        "Prevent capture: 0",
+        "         0       GUI:Press Ctrl-F10 to capture/release mouse, Alt-F10 for configuration.",
+        "         0 DEBUG MISC:Initializing screenshot and A/V capture system",
+        "         0 DEBUG MISC:Mixer: sample_accurate=0 blocksize=1024 sdl_rate=4173508768Hz mixer_rate=48000Hz channels=0 samples=9672 min/max/need=0/0/0 per_ms=48 0/1000 samples prebuffer=1200 dcadj=0.0000208020(en=1)",
+        "         0 DEBUG MOUSE:Initializing mouse interface emulation",
+        "         0 DEBUG MISC:Calling event Reset handler (0x102c79520) 'MOUSE_OnReset'",
+        "         3       MOUSE:INT 15H PS/2 emulation enabled"
+      ],
+      "first_route_motion_button_lines": [],
+      "mouse_line_count": 103,
+      "path": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_pid_control_break_start_probe/dosbox_runtime.log",
+      "route_motion_button_line_count": 0
+    },
+    "engine_ready_seen": true,
+    "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
+    "interpretation": "non-promotable stock-original diagnostic; posts CGEvent mouse move/down/up directly to the DOSBox process PID instead of the HID event tap before F0359",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_pid_control_break_start_probe/manifest.json",
+    "memory_stop_count": 34,
+    "mouse_post_mode": "pid",
+    "mouse_warp": "true",
+    "reached_f0280": false,
+    "route_control_ok": true,
+    "route_driver": "swift-cgevent",
+    "route_label": "movement_pid_control",
+    "route_window_found": true,
+    "runtime_ready_seen": true,
+    "status": "BLOCKED_PASS162_LIVE_MOVEMENT_PID_CONTROL_NO_C080_STOPS",
+    "summary": "Debugger accepted the pass162 BP/BPM packet, but the bounded movement pid control route produced no C080-chain stops."
+  },
+  "live_movement_systemevents_control_probe": {
+    "dosbox_log": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_systemevents_control_break_start_probe/dosbox_runtime.log",
+    "dosbox_mouse_config": {
+      "autolock": "true",
+      "clip_mouse_button": "none",
+      "mouse_emulation": "always",
+      "mouse_log": "debug",
+      "usesystemcursor": "false"
+    },
+    "dosbox_mouse_log_summary": {
+      "exists": true,
+      "first_mouse_lines": [
+        "         0 DEBUG GUI:SDL 1.2.14 hack: SDL_DISABLE_LOCK_KEYS=1",
+        "Prevent capture: 0",
+        "         0       GUI:Press Ctrl-F10 to capture/release mouse, Alt-F10 for configuration.",
+        "         0 DEBUG MISC:Initializing screenshot and A/V capture system",
+        "         0 DEBUG MISC:Mixer: sample_accurate=0 blocksize=1024 sdl_rate=1627652480Hz mixer_rate=48000Hz channels=0 samples=42440 min/max/need=0/0/0 per_ms=48 0/1000 samples prebuffer=1200 dcadj=0.0000208020(en=1)",
+        "         0 DEBUG MOUSE:Initializing mouse interface emulation",
+        "         0 DEBUG MISC:Calling event Reset handler (0x1045d1520) 'MOUSE_OnReset'",
+        "         3       MOUSE:INT 15H PS/2 emulation enabled"
+      ],
+      "first_route_motion_button_lines": [],
+      "mouse_line_count": 103,
+      "path": "parity-evidence/verification/pass162_c080_queue_trace/live_movement_systemevents_control_break_start_probe/dosbox_runtime.log",
+      "route_motion_button_line_count": 0
+    },
+    "engine_ready_seen": true,
+    "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
+    "interpretation": "non-promotable stock-original diagnostic; uses macOS System Events accessibility clicking instead of CGEvent or cliclick mouse posting before F0359",
+    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_systemevents_control_break_start_probe/manifest.json",
+    "memory_stop_count": 34,
+    "mouse_post_mode": "systemevents",
+    "mouse_warp": "true",
+    "reached_f0280": false,
+    "route_control_ok": true,
+    "route_driver": "swift-cgevent",
+    "route_label": "movement_systemevents_control",
+    "route_window_found": true,
+    "runtime_ready_seen": true,
+    "status": "BLOCKED_PASS162_LIVE_MOVEMENT_SYSTEMEVENTS_CONTROL_NO_C080_STOPS",
+    "summary": "Debugger accepted the pass162 BP/BPM packet, but the bounded movement systemevents control route produced no C080-chain stops."
+  },
+  "load_segment": "0733",
+  "non_claims": [
+    "does not prove a stock original runtime hit",
+    "does not prove F0280 is reached until a DOSBox-debug transcript records it",
+    "does not promote pass435 original capture readiness"
+  ],
+  "pass273_manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json",
+  "schema": "pass162_c080_address_gate.v1",
+  "tools": {
+    "dosbox-debug": "/opt/homebrew/bin/dosbox-debug",
+    "dosbox-x": "/opt/homebrew/bin/dosbox-x",
+    "python3": "/usr/bin/python3",
+    "xdotool": "/opt/homebrew/bin/xdotool"
+  }
+}

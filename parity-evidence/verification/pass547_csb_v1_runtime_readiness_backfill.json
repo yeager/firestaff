@@ -1,8 +1,8 @@
 {
   "schema": "firestaff.pass547_csb_v1_runtime_readiness_backfill.v2",
-  "pass": false,
+  "pass": true,
   "scope": "CSB V1 runtime readiness backfill; retired blocker gate with positive CSB launch handoff evidence.",
-  "blocker_retired": false,
+  "blocker_retired": true,
   "source_anchors": [
     {
       "id": "redmcsb_csb_header_identity",
@@ -64,56 +64,46 @@
     {
       "id": "firestaff_m12_launch_guard_supports_csb",
       "role": "firestaff_positive",
-      "path": "/Users/bosse/.openclaw/workspace-main/src/ui/menu_startup_m12.c",
-      "lines": "2327-2337",
+      "path": "/Users/bosse/Documents/Firestaff/src/ui/menu_startup_m12.c",
+      "lines": "2442-2450",
       "needles": [
         "All five catalogued games now have runtime launch boundaries",
         "strcmp(gameId, \"csb\") == 0"
       ],
-      "missing": [
-        "All five catalogued games now have runtime launch boundaries",
-        "strcmp(gameId, \"csb\") == 0"
-      ],
-      "ok": false
+      "missing": [],
+      "ok": true
     },
     {
       "id": "firestaff_m12_launch_intent_accepts_available_csb",
       "role": "firestaff_positive",
-      "path": "/Users/bosse/.openclaw/workspace-main/src/ui/menu_startup_m12.c",
-      "lines": "7440-7513",
+      "path": "/Users/bosse/Documents/Firestaff/src/ui/menu_startup_m12.c",
+      "lines": "7841-7914",
       "needles": [
         "M12_StartupMenu_GetLaunchIntent",
         "m12_game_supported(intent.gameId)",
         "M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)",
         "version && version->matched ? 1 : 0"
       ],
-      "missing": [
-        "M12_StartupMenu_GetLaunchIntent",
-        "m12_game_supported(intent.gameId)",
-        "M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)",
-        "version && version->matched ? 1 : 0"
-      ],
-      "ok": false
+      "missing": [],
+      "ok": true
     },
     {
       "id": "firestaff_m11_csb_handoff_to_game_loop",
       "role": "firestaff_positive",
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/m11_game_view.c",
-      "lines": "6673-6705",
+      "path": "/Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c",
+      "lines": "7116-7146",
       "needles": [
         "FS_GAME_CSB path in firestaff_game_loop.c",
         "CSB READY (FS LOOP)",
         "CSB READY: gameId=csb dataDir=%s"
       ],
-      "missing": [
-        "CSB READY: gameId=csb dataDir=%s"
-      ],
-      "ok": false
+      "missing": [],
+      "ok": true
     },
     {
       "id": "firestaff_csb_game_loop_boot_profile",
       "role": "firestaff_positive",
-      "path": "/Users/bosse/.openclaw/workspace-main/src/engine/firestaff_game_loop.c",
+      "path": "/Users/bosse/Documents/Firestaff/src/engine/firestaff_game_loop.c",
       "lines": "420-436",
       "needles": [
         "FS_GAME_CSB",
@@ -126,7 +116,7 @@
     {
       "id": "firestaff_pc_csb_real_asset_probe",
       "role": "firestaff_positive",
-      "path": "/Users/bosse/.openclaw/workspace-main/probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c",
+      "path": "/Users/bosse/Documents/Firestaff/probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c",
       "lines": "1-130",
       "needles": [
         "PC-first CSB V1 real-data launch gate",
@@ -164,9 +154,5 @@
     "This readiness gate does not claim Atari ST or Amiga emulator boot parity.",
     "CSB gameplay, viewport, audio, save, and overlay completion points require separate CSB-specific gates."
   ],
-  "failures": [
-    "firestaff_m12_launch_guard_supports_csb missing ['All five catalogued games now have runtime launch boundaries', 'strcmp(gameId, \"csb\") == 0'] path_exists=True",
-    "firestaff_m12_launch_intent_accepts_available_csb missing ['M12_StartupMenu_GetLaunchIntent', 'm12_game_supported(intent.gameId)', 'M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)', 'version && version->matched ? 1 : 0'] path_exists=True",
-    "firestaff_m11_csb_handoff_to_game_loop missing ['CSB READY: gameId=csb dataDir=%s'] path_exists=True"
-  ]
+  "failures": []
 }

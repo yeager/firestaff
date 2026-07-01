@@ -1,0 +1,236 @@
+{
+  "schema": "firestaff.dm1_v1.current_status_index.v1",
+  "generatedDate": "2026-06-30",
+  "target": {
+    "game": "Dungeon Master",
+    "platform": "PC DOS",
+    "version": "3.4",
+    "language": "English",
+    "mode": "V1 original-compatible"
+  },
+  "doctrine": {
+    "cleanRoomRewrite": true,
+    "functionalTemplate": "ReDMCSB_WIP20210206",
+    "functionalTemplateArchive": "http://dmweb.free.fr/Stuff/ReDMCSB_WIP20210206.7z",
+    "localFunctionalTemplateRoot": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+    "rules": [
+      "Use ReDMCSB source-locks as the primary functional template for DM1 and CSB gameplay, UI state machines, save/load fields, timers, input routing, and compatibility quirks.",
+      "Use Firestaff runtime probes to prove the clean-room implementation follows the ReDMCSB-derived contract without importing ReDMCSB code.",
+      "Use original DOSBox captures only to promote visual, pixel, content, audio-cadence, or same-state parity rows.",
+      "Do not promote a screenshot or pixel row to MATCHED from ReDMCSB source evidence alone."
+    ]
+  },
+  "currentBlockers": [
+    {
+      "id": "dm1_v1_original_route_semantic_capture",
+      "priority": "P1",
+      "status": "ACTIVE_BLOCKER",
+      "summary": "Capture executor can now produce original raw screenshots locally, but the full six-shot pass435-style route still reaches duplicate/non-semantic no-party states.",
+      "latestEvidence": [
+        "/tmp/firestaff-dm1-sixshot-script-focus/raw_frame_health.json",
+        "/tmp/firestaff-dm1-sixshot-script-focus/pass80_classifier.json",
+        "/tmp/firestaff-dm1-sixshot-script-focus/pass113_party_state_probe.json",
+        "/tmp/firestaff-dm1-pass435-hoc-preflight/original_viewport_route_plan.json",
+        "/tmp/firestaff-dm1-hoc-route-attempt-20260630/pass113_party_state_probe.json",
+        "/tmp/firestaff-dm1-hoc-entrance-click-diagnostic-20260630/pass80_original_frame_classifier.json",
+        "parity-evidence/verification/pass435_dm1_v1_hoc_route_attempt_20260630.json",
+        "parity-evidence/verification/pass162_c080_queue_trace/manifest.json",
+        "parity-evidence/verification/pass162_c080_queue_trace/gdb_gate_manifest.json",
+        "parity-evidence/verification/pass162_c080_queue_trace/c080_address_gate_manifest.json",
+        "parity-evidence/verification/pass162_c080_queue_trace/pass162_c080_dosbox_debug_commands.txt",
+        "parity-evidence/verification/pass162_c080_queue_trace/dosbox_debug_bp_acceptance/manifest.json",
+        "parity-evidence/verification/pass162_c080_queue_trace/dosbox_x_break_start_bp_acceptance/manifest.json",
+        "parity-evidence/verification/pass162_c080_queue_trace/live_hoc_break_start_probe/manifest.json",
+        "parity-evidence/pass162_c080_hoc_live_break_start_probe.md",
+        "parity-evidence/verification/pass162_c080_queue_trace/live_movement_click_control_break_start_probe/manifest.json",
+        "parity-evidence/pass162_c080_movement_click_control_live_break_start_probe.md",
+        "parity-evidence/verification/pass162_c080_queue_trace/live_movement_double_click_control_break_start_probe/manifest.json",
+        "parity-evidence/pass162_c080_movement_double_click_control_live_break_start_probe.md",
+        "parity-evidence/verification/pass162_c080_queue_trace/live_movement_autolock_control_break_start_probe/manifest.json",
+        "parity-evidence/pass162_c080_movement_autolock_control_live_break_start_probe.md",
+        "parity-evidence/verification/pass162_c080_queue_trace/live_movement_keyboard_capture_control_break_start_probe/manifest.json",
+        "parity-evidence/pass162_c080_movement_keyboard_capture_control_live_break_start_probe.md",
+        "parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/manifest.json",
+        "parity-evidence/pass162_c080_movement_cliclick_control_live_break_start_probe.md",
+        "parity-evidence/verification/pass162_c080_queue_trace/live_movement_systemevents_control_break_start_probe/manifest.json",
+        "parity-evidence/pass162_c080_movement_systemevents_control_live_break_start_probe.md",
+        "parity-evidence/verification/pass162_c080_queue_trace/live_movement_pid_control_break_start_probe/manifest.json",
+        "parity-evidence/pass162_c080_movement_pid_control_live_break_start_probe.md",
+        "parity-evidence/verification/pass162_c080_queue_trace/live_movement_opengl_control_break_start_probe/manifest.json",
+        "parity-evidence/pass162_c080_movement_opengl_control_live_break_start_probe.md",
+        "parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json",
+        "scripts/dosbox_dm1_original_viewport_reference_capture.sh --print-pass435-hoc-route",
+        "parity-evidence/pass435_dm1_v1_original_route_capture_blocker_20260513_1534.md"
+      ],
+      "nextAction": "Keep the live stock-original DOSBox-debug probe on the surface backend and narrow the first missing F0359/C080 boundary after mapped macOS route input. The accepted pass162 address-gate order remains F0359 22F4:030D -> F0380 22F4:0699 -> F0377 1E44:02FE -> F0275 1859:1405 as the static-F0372 proxy -> F0280 1782:0031. The tmux/pass247 BP acceptance probe did not confirm debugger-prompt command parsing on the DOSBox-X symlink, but the owned-PTY DOSBox-X -debug/-break-start probe accepted all pass162 BP/BPM commands. The surface-backend live HoC probe, movement-click control, movement double-click control, autolock control, keyboard-capture control, external cliclick control, System Events control, and direct postToPid control all record FIRES startup, DATA\\DUNGEON.DAT load, 34 stock-original memory-breakpoint stops, route_window_found=true, route_control_ok=true, and no C080-chain code stops. The movement controls also post explicit mouseMoved events before down/up and log pre-move=true, and the movement-click control warps the macOS cursor to the mapped SDL point with cursor-warp=true, but still misses F0359. The double-click control shows the first click is not merely being consumed by focus/capture. The autolock control uses DOSBox-X autolock=true, mouse_emulation=always, clip_mouse_button=none, and mouse=debug logging, but also misses F0359. Its dosbox_runtime.log proves MOUSE/INT33 initialization and reset, but contains no route-click motion/button log entries. The keyboard-capture control emits key ctrl-f10 before the same route clicks and still produces no DOSBox-X motion/button log rows. The external cliclick control replaces the Swift/CGEvent mouse-posting path with /opt/homebrew/bin/cliclick while keeping cursor warp and the same DOSBox-X mouse settings, but it still stops before F0359 and records no route-click motion/button log rows. The System Events control replaces both direct CGEvent and cliclick mouse posting with /usr/bin/osascript Accessibility clicking, proves the clicks targeted the DOSBox-X FIRES window successfully, but still stops before F0359 and records no route-click motion/button log rows. The direct postToPid control posts CGEvent mouse move/down/up to the DOSBox process PID, proves the mapped clicks returned success, but still stops before F0359 and records no route-click motion/button log rows. The OpenGL-output control is not comparable F0359 evidence because it did not prove BP/BPM retention, FIRES/DUNGEON readiness, or a route-window click; keep it as a separate output-backend harness/readiness blocker. The generated pass162 address-gate manifest now includes dosbox_mouse_log_summary for each live probe; the surface-backed autolock, keyboard-capture, cliclick, System Events, and direct postToPid controls all have existing logs and route_motion_button_line_count=0. Treat the next pass as DOSBox-X SDL/Cocoa event-ingestion or debugger event-pump work on the proven surface harness, not more HoC coordinate guessing or another six-shot overlay route."
+    },
+    {
+      "id": "dm1_v1_same_state_pairing",
+      "priority": "P2",
+      "status": "ACTIVE_BLOCKER",
+      "summary": "Most visual parity rows are source-locked or partially referenced, but cannot become global MATCHED without same-state original-to-Firestaff pairs.",
+      "latestEvidence": [
+        "docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md",
+        "docs/parity/PARITY_MATRIX_DM1_V1.md"
+      ],
+      "nextAction": "After semantic original captures are ready, generate Firestaff output from the same route/state and promote only rows with paired hashes and diffs."
+    },
+    {
+      "id": "dm1_v1_resurrection_rename_live_ui",
+      "priority": "P3",
+      "status": "ACTIVE_BOUNDED",
+      "summary": "F0281 rename-panel contract is source-locked, but live M11 prompt wiring, real C027 panel rendering/input handoff, duplicate-name feedback, and paired evidence remain open.",
+      "latestEvidence": [
+        "TODO.md",
+        "docs/FINAL_GAPS.md"
+      ],
+      "nextAction": "Wire the live M11 C161->F0281 prompt path and add runtime/pixel evidence after capture routing is stable."
+    },
+    {
+      "id": "dm1_v1_original_save_roundtrip",
+      "priority": "P4",
+      "status": "ACTIVE_BOUNDED",
+      "summary": "Original-save header/readiness classification exists, but real original bytes have not completed original -> Firestaff runtime -> write-back -> reload.",
+      "latestEvidence": [
+        "TODO.md",
+        "DONE.md"
+      ],
+      "nextAction": "Build a skip-safe real-save roundtrip probe with explicit compatibility receipts."
+    },
+    {
+      "id": "dm1_v22_finished_art_material_promotion",
+      "priority": "P5",
+      "status": "ACTIVE_BOUNDED",
+      "summary": "Material/finished-art gates are hardened but still need an operator-reviewed real pack and screenshot/material receipts before final promotion.",
+      "latestEvidence": [
+        "TODO.md",
+        "docs/source-lock/dm1_v22_finished_art_material_gate_pc34.md"
+      ],
+      "nextAction": "Install reviewed real material pack, capture receipts, and keep placeholder-only paths non-promotable."
+    }
+  ],
+  "parityRows": [
+    {
+      "area": "viewport",
+      "functionalStatus": "SOURCE_LOCKED",
+      "visualStatus": "SCOUT_PAIRING_AVAILABLE",
+      "reason": "Viewport rectangle, draw-order, and asset bounds are source-locked. Clean original gameplay frames and scout pairings exist, but not enough debugger-confirmed same-state pairs for global MATCHED."
+    },
+    {
+      "area": "wall",
+      "functionalStatus": "SOURCE_LOCKED",
+      "visualStatus": "PARTIAL_MATCH",
+      "reason": "One exact original-to-Firestaff wall-crop match exists, but broader wall-state coverage is still partial."
+    },
+    {
+      "area": "collision",
+      "functionalStatus": "SOURCE_LOCKED",
+      "visualStatus": "PARTIAL_PAIR",
+      "reason": "A closed-door stasis case has original evidence and Firestaff semantic pairing; full wall/door/fakewall transcript and pixel evidence remain open."
+    },
+    {
+      "area": "creature_chain",
+      "functionalStatus": "SOURCE_LOCKED",
+      "visualStatus": "BLOCKED_ON_REFERENCE",
+      "reason": "Creature render and AI are source-locked, but no paired original DM1 PC 3.4 creature screenshot exists."
+    },
+    {
+      "area": "champion_panel",
+      "functionalStatus": "SOURCE_LOCKED",
+      "visualStatus": "PARTIAL_REFERENCE_CAPTURED",
+      "reason": "Candidate/resurrect panel evidence exists and HUD geometry is source-locked, but full four-champion HUD/status-panel original pair is missing."
+    },
+    {
+      "area": "spell_inventory_panels",
+      "functionalStatus": "SOURCE_LOCKED",
+      "visualStatus": "REFERENCE_ROUTE_BLOCKED",
+      "reason": "Asset identity and panel geometry are source-backed; current six-shot route does not yet reach expected spell/inventory states uniquely."
+    },
+    {
+      "area": "audio_timing",
+      "functionalStatus": "SOURCE_LOCKED_PARTIAL",
+      "visualStatus": "BLOCKED_ON_REFERENCE",
+      "reason": "Sound sample decoding and many trigger points are source-locked; cadence, overlap, and timing still need original runtime capture."
+    }
+  ],
+  "documentDisposition": [
+    {
+      "path": "docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md",
+      "status": "ACTIVE",
+      "use": "Authoritative current row-level capture gap inventory for visual/pixel promotion."
+    },
+    {
+      "path": "docs/plans/DM1_CURRENT_GAPS_PLAN_2026-06-30.md",
+      "status": "ACTIVE",
+      "use": "Current execution plan and latest local executor diagnostics."
+    },
+    {
+      "path": "TODO.md",
+      "status": "ACTIVE_SUMMARY",
+      "use": "Top-level open-work ledger; use this index to interpret stale DM1 snippets."
+    },
+    {
+      "path": "DONE.md",
+      "status": "ACTIVE_HISTORY",
+      "use": "Completed gate history; not a current blocker ledger by itself."
+    },
+    {
+      "path": "docs/FINAL_GAPS.md",
+      "status": "PARTIALLY_SUPERSEDING",
+      "use": "Use for recent closed/open-bounded bug rows; verify against this index before re-opening old DM1 gaps."
+    },
+    {
+      "path": "docs/DM1_V1_BUG_AUDIT.md",
+      "status": "PARTIALLY_SUPERSEDED",
+      "use": "Historical audit. Treat open rows as verification candidates unless this index, TODO, or FINAL_GAPS still marks them active."
+    },
+    {
+      "path": "docs/dm1-v1-functional-divergence-report.md",
+      "status": "PARTIALLY_SUPERSEDED",
+      "use": "Historical divergence snapshot. Do not use alone to reopen closed ReDMCSB source-lock work."
+    },
+    {
+      "path": "docs/parity/PARITY_MATRIX_DM1_V1.md",
+      "status": "STALE_BUT_USEFUL",
+      "use": "Broad parity ledger with older wording. Use current doctrine here when interpreting ReDMCSB source evidence versus original runtime pixel evidence."
+    },
+    {
+      "path": "docs/parity/V1_BLOCKERS.md",
+      "status": "STALE_BUT_USEFUL",
+      "use": "Older blocker ledger. Use for provenance and pass history, not as the sole current active-blocker list."
+    },
+    {
+      "path": "docs/reports/pass435_dm1_v1_original_route_capture_blocker_20260513_1534.md",
+      "status": "ACTIVE_FOR_PASS435_HISTORY",
+      "use": "Historical pass435 blocker context. Latest local executor status is recorded in the current gaps plan."
+    }
+  ],
+  "promotionRules": [
+    {
+      "claim": "functional bug fixed",
+      "requires": [
+        "ReDMCSB source-lock or version-specific source rationale",
+        "Firestaff data-free or real-asset runtime probe",
+        "CTest or verifier receipt"
+      ]
+    },
+    {
+      "claim": "visual/content MATCHED",
+      "requires": [
+        "Original runtime capture from target DM1 PC 3.4 state",
+        "Firestaff capture from same state and input sequence",
+        "Hash and pixel-diff manifest",
+        "No duplicate/non-semantic original frames unless explicitly classified as a negative diagnostic"
+      ]
+    },
+    {
+      "claim": "save interop ready",
+      "requires": [
+        "Real original save bytes",
+        "Firestaff import/runtime load",
+        "Write-back or explicit conversion receipt",
+        "Reload verification"
+      ]
+    }
+  ]
+}

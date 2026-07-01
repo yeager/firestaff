@@ -28,9 +28,12 @@ SOURCE_AUDIT = [
     ("COMMAND.C", 1, 16, ["COMMAND G0432_as_CommandQueue", "G0433_i_CommandQueueFirstIndex", "G0434_i_CommandQueueLastIndex", "G0435_B_CommandQueueLocked"]),
     ("COMMAND.C", 1734, 1812, ["G0443_ps_PrimaryKeyboardInput", "G0432_as_CommandQueue", "G0434_i_CommandQueueLastIndex"]),
     ("COMMAND.C", 2045, 2156, ["F0380_COMMAND_ProcessQueue_CPSC", "G0432_as_CommandQueue", "F0365_COMMAND_ProcessTypes1To2_TurnParty", "F0366_COMMAND_ProcessTypes3To6_MoveParty"]),
+    ("CLIKVIEW.C", 311, 439, ["F0377_COMMAND_ProcessType80_ClickInDungeonView", "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor", "C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT"]),
     ("CLIKMENU.C", 142, 328, ["F0365_COMMAND_ProcessTypes1To2_TurnParty", "F0366_COMMAND_ProcessTypes3To6_MoveParty", "G0308_i_PartyDirection", "F0267_MOVE_GetMoveResult_CPSCE"]),
     ("GAMELOOP.C", 55, 91, ["F0261_TIMELINE_Process_CPSEF", "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)"]),
     ("MOVESENS.C", 316, 556, ["F0267_MOVE_GetMoveResult_CPSCE", "G0306_i_PartyMapX = P0560_i_DestinationMapX", "G0307_i_PartyMapY = P0561_i_DestinationMapY", "F0284_CHAMPION_SetPartyDirection"]),
+    ("MOVESENS.C", 1392, 1503, ["C127_SENSOR_WALL_CHAMPION_PORTRAIT", "F0280_CHAMPION_AddCandidateChampionToParty"]),
+    ("REVIVE.C", 63, 88, ["F0280_CHAMPION_AddCandidateChampionToParty", "P0596_ui_ChampionPortraitIndex"]),
     ("DUNVIEW.C", 8318, 8611, ["F0128_DUNGEONVIEW_Draw_CPSF", "G0296_puc_Bitmap_Viewport", "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"]),
 ]
 
@@ -56,6 +59,9 @@ GLOBAL_TARGETS = [
 FUNCTION_TARGETS = {
     "F0359_COMMAND_ProcessClick_CPSC": "COMMAND.C mouse/click queue writer",
     "F0380_COMMAND_ProcessQueue_CPSC": "COMMAND.C command dequeue/dispatch",
+    "F0377_COMMAND_ProcessType80_ClickInDungeonView": "CLIKVIEW.C C080 dungeon-view click handler",
+    "F0275_SENSOR_IsTriggeredByClickOnWall": "MOVESENS.C wall sensor dispatcher reached from static F0372",
+    "F0280_CHAMPION_AddCandidateChampionToParty": "REVIVE.C candidate champion entry after C127 portrait sensor",
     "F0365_COMMAND_ProcessTypes1To2_TurnParty": "CLIKMENU.C turn handler",
     "F0366_COMMAND_ProcessTypes3To6_MoveParty": "CLIKMENU.C move handler",
     "F0284_CHAMPION_SetPartyDirection": "CHAMPION.C direction write",
@@ -141,7 +147,7 @@ def map_lookup(symbols: dict[str, list[dict[str, Any]]], name: str) -> dict[str,
 
 def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    for required in (FIRES_MAP, DM_MAP, PC_H):
+    for required in (FIRES_MAP, PC_H):
         if not required.exists():
             raise SystemExit(f"missing required input: {required}")
     aliases = load_pc_aliases()
@@ -177,7 +183,7 @@ def main() -> int:
         "load_segment_from_pass246_lineage": f"{LOAD_SEG:04X}",
         "inputs": {
             "fires_map": {"path": str(FIRES_MAP), "sha256": sha256(FIRES_MAP), "bytes": FIRES_MAP.stat().st_size},
-            "dm_map": {"path": str(DM_MAP), "sha256": sha256(DM_MAP), "bytes": DM_MAP.stat().st_size},
+            "dm_map": {"path": str(DM_MAP), "present": DM_MAP.exists(), **({"sha256": sha256(DM_MAP), "bytes": DM_MAP.stat().st_size} if DM_MAP.exists() else {})},
             "pc_h": str(PC_H),
         },
         "source_audit": source_window(),
@@ -186,7 +192,8 @@ def main() -> int:
         "pass270_correction": "The preserved FIRES.MAP shows e.g. F0267 at 1126:0516, F0365 at 1771:010D, and F0366 at 1771:01AA. Adding load segment 0733 yields 1859:0516, 1EA4:010D, and 1EA4:01AA respectively, matching prior pass263/pass270 candidates. Therefore pass270's extra +0733 runtime column was a double-add for these map-backed candidates.",
         "debugger_next_step": [
             "Launch stock PC34/I34E under dosbox-debug and verify FIRES load segment 0733 in that run.",
-            "Set BP at runtime F0380/F0365/F0366/F0267/F0128 addresses from this manifest.",
+            "For the HoC/C080 route, set BP at runtime F0359/F0380/F0377/F0275/F0280 addresses from this manifest. F0372 is static in this build, so F0275 is the addressable proxy after F0372 computes the front wall.",
+            "For movement routes, set BP at runtime F0380/F0365/F0366/F0267/F0128 addresses from this manifest.",
             "Set BPM writes on runtime G0432/G0433/G0434/G0308/G0306/G0307 addresses, then press kp5/kp4/kp6 in a controlled in-game run.",
             "Promote only after transcript proves command queue write/dequeue plus G0308 or G0306/G0307 mutation and subsequent F0128 draw consumption.",
         ],
@@ -217,7 +224,7 @@ Primary source root: `{SOURCE_ROOT}`.
 ## Public map inputs found on N2
 
 - FIRES.MAP: `{FIRES_MAP}` ({FIRES_MAP.stat().st_size} bytes, sha256 `{sha256(FIRES_MAP)}`)
-- DM.MAP: `{DM_MAP}` ({DM_MAP.stat().st_size} bytes, sha256 `{sha256(DM_MAP)}`)
+- DM.MAP: `{DM_MAP}` ({'present, ' + str(DM_MAP.stat().st_size) + ' bytes, sha256 `' + sha256(DM_MAP) + '`' if DM_MAP.exists() else 'not present on this host; not required for FIRES runtime addresses'})
 - Binary policy: no original/decompressed executable copied or committed; this pass records map paths, hashes, and derived addresses only.
 
 ## Global address bindings from FIRES.MAP + PC.H aliases
@@ -236,7 +243,7 @@ The preserved `FIRES.MAP` shows `F0267` at `1126:0516`, `F0365` at `1771:010D`, 
 
 ## Blocker status / exact next step
 
-The public-symbol route is now unblocked: use the runtime addresses above for the next stock DOS debugger run. This pass still does **not** claim a runtime hook. The required next proof is a dosbox-debug transcript showing controlled `kp5`/`kp4`/`kp6` input writing `G0432`, dequeuing via `F0380`, mutating `G0308` or `G0306/G0307`, and then consuming that tuple in `F0128`.
+The public-symbol route is now unblocked: use the runtime addresses above for the next stock DOS debugger run. This pass still does **not** claim a runtime hook. For the DM1 HoC/C080 blocker, the required next proof is a dosbox-debug transcript showing the portrait click entering `F0359`, dequeuing through `F0380`, dispatching to `F0377`, reaching addressable wall-sensor proxy `F0275` after static `F0372`, and then reaching `F0280`. For movement/key rows, the required next proof is still a transcript showing controlled `kp5`/`kp4`/`kp6` input writing `G0432`, dequeuing via `F0380`, mutating `G0308` or `G0306/G0307`, and then consuming that tuple in `F0128`.
 
 Manifest: `parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json`
 """

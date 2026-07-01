@@ -112,13 +112,12 @@ static const unsigned char Phase14_SymbolManaCostMultiplier[6] = {
  * ReDMCSB DATA.C:359,1088 G0039_ai_Graphic562_LightPowerToLightAmount[16]
  * = { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 }
  *
- * Phase 14 only uses indices 0..5 (power ordinals 1..6 of the light
- * spell). The full 16-entry table lives in dm1_v1_light_pc34_compat.c
- * (dm1_light_power_to_amount) for the broader Phase 7/11 light stack.
- * Indexed by powerIndex = powerOrdinal - 1.
+ * Phase 14 only uses light powers 0..5. The full 16-entry table lives
+ * in dm1_v1_light_pc34_compat.c (dm1_light_power_to_amount) for the
+ * broader Phase 7/11 light stack. Indexed by source lightPower.
  */
-static const int Phase14_PowerOrdinalToLightAmount[6] = {
-    5, 12, 24, 33, 40, 46
+static const int Phase14_LightPowerToLightAmount[6] = {
+    0, 5, 12, 24, 33, 40
 };
 
 /* MENU.C:50..77 — 25-entry DM1 spell table. Kind/type/disabledTicks
@@ -167,7 +166,7 @@ static int phase14_light_amount_for_power(int powerIndex)
     if (powerIndex < 0 || powerIndex >= 6) {
         return 0;
     }
-    return Phase14_PowerOrdinalToLightAmount[powerIndex];
+    return Phase14_LightPowerToLightAmount[powerIndex];
 }
 
 /* Decode M067/M068/M069 bit-packed fields. */

@@ -1,5 +1,8 @@
 #include "menu_startup_m12.h"
 #include "config_m12.h"
+#include "dm1_v1_save_load.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,11 +62,153 @@ static int write_fake_quicksave(const char* path) {
     return 1;
 }
 
+static void wr32le(unsigned char* p, uint32_t v) {
+    p[0] = (unsigned char)(v & 0xffu);
+    p[1] = (unsigned char)((v >> 8) & 0xffu);
+    p[2] = (unsigned char)((v >> 16) & 0xffu);
+    p[3] = (unsigned char)((v >> 24) & 0xffu);
+}
+
+static void fill_test_portrait(struct ChampionState_Compat* champ,
+                               unsigned char seed) {
+    int i;
+    if (!champ) return;
+    for (i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
+        champ->portraitBitmap[i] =
+            (unsigned char)((seed + (unsigned char)(i * 17)) & 0xffu);
+    }
+    champ->portraitBitmapValid = 1;
+}
+
+static int write_serialized_dm1_quicksave(const char* path) {
+    struct GameWorld_Compat world;
+    unsigned char* blob = NULL;
+    int blobSize;
+    int written = 0;
+    uint32_t hash = 0;
+    unsigned char hdr[16];
+    FILE* fp;
+    int ok = 0;
+    int i;
+
+    memset(&world, 0, sizeof(world));
+    F0881_WORLD_InitDefault_Compat(&world, 0x12345678u);
+    world.gameTick = 6789u;
+    world.partyMapIndex = 5;
+    world.party.mapIndex = 5;
+    world.party.mapX = 14;
+    world.party.mapY = 16;
+    world.party.direction = DIR_WEST;
+    world.party.championCount = 1;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&world.party.champions[i]);
+    }
+    world.party.champions[0].present = 1;
+    memcpy(world.party.champions[0].name, "HALK    ", CHAMPION_NAME_LENGTH);
+    world.party.champions[0].hp.current = 88;
+    world.party.champions[0].hp.maximum = 99;
+    fill_test_portrait(&world.party.champions[0], 0x21u);
+
+    world.creatureAICount = 1;
+    memset(&world.creatureAI[0], 0, sizeof(world.creatureAI[0]));
+    world.creatureAI[0].stateKind = AI_STATE_WANDER;
+    world.creatureAI[0].creatureType = CREATURE_TYPE_SKELETON;
+    world.creatureAI[0].groupMapIndex = world.partyMapIndex;
+    world.creatureAI[0].groupMapX = 7;
+    world.creatureAI[0].groupMapY = 8;
+    world.creatureAI[0].groupCells = 0x55;
+    world.creatureAI[0].groupDirection = DIR_EAST;
+    world.creatureAI[0].reserved0 = 3;
+
+    blobSize = F0899_WORLD_SerializedSize_Compat(&world);
+    blob = (unsigned char*)malloc((size_t)blobSize);
+    if (!blob) {
+        F0883_WORLD_Free_Compat(&world);
+        return 0;
+    }
+    if (!F0891_ORCH_WorldHash_Compat(&world, &hash) ||
+        !F0897_WORLD_Serialize_Compat(&world, blob, blobSize, &written) ||
+        written != blobSize) {
+        goto done;
+    }
+
+    memcpy(hdr, "FSM11QS1", 8u);
+    wr32le(hdr + 8, (uint32_t)blobSize);
+    wr32le(hdr + 12, hash);
+    fp = fopen(path, "wb");
+    if (!fp) {
+        goto done;
+    }
+    ok = fwrite(hdr, 1u, sizeof(hdr), fp) == sizeof(hdr) &&
+         fwrite(blob, 1u, (size_t)blobSize, fp) == (size_t)blobSize &&
+         fclose(fp) == 0;
+
+done:
+    free(blob);
+    F0883_WORLD_Free_Compat(&world);
+    return ok;
+}
+
+static int write_native_dm1_save(const char* path) {
+    struct GameWorld_Compat world;
+    int i;
+    int rc;
+
+    memset(&world, 0, sizeof(world));
+    F0881_WORLD_InitDefault_Compat(&world, 0x42525331u);
+    world.gameTick = 2468u;
+    world.partyMapIndex = 2;
+    world.party.mapIndex = 2;
+    world.party.mapX = 9;
+    world.party.mapY = 11;
+    world.party.direction = DIR_NORTH;
+    world.party.championCount = 1;
+    world.party.activeChampionIndex = 0;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        F0600_CHAMPION_InitEmpty_Compat(&world.party.champions[i]);
+    }
+    world.party.champions[0].present = 1;
+    memcpy(world.party.champions[0].name, "TIGGY   ", CHAMPION_NAME_LENGTH);
+    world.party.champions[0].hp.current = 44;
+    world.party.champions[0].hp.maximum = 55;
+    fill_test_portrait(&world.party.champions[0], 0x42u);
+    world.creatureAICount = 1;
+    world.creatureAI[0].stateKind = AI_STATE_WANDER;
+    world.creatureAI[0].creatureType = CREATURE_TYPE_SKELETON;
+    world.creatureAI[0].groupMapIndex = 2;
+    world.creatureAI[0].groupMapX = 6;
+    world.creatureAI[0].groupMapY = 7;
+    world.creatureAI[0].groupCells = 0x33;
+    world.creatureAI[0].groupDirection = DIR_WEST;
+
+    rc = DM1_SaveGameWithProfile(&world, path, 0x42525331u, 1, 1,
+                                 DM1_DefaultSaveProfileHash());
+    F0883_WORLD_Free_Compat(&world);
+    return rc == DM1_SAVE_OK;
+}
+
+static int select_save_entry(M12_StartupMenuState* state,
+                             const char* filename) {
+    int i;
+    if (!state || !filename) {
+        return 0;
+    }
+    for (i = 0; i < state->saveBrowser.entryCount; ++i) {
+        if (strcmp(state->saveBrowser.entries[i].filename, filename) == 0) {
+            state->saveBrowser.selectedIndex = i;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main(void) {
     char tmpTemplate[] = "/tmp/firestaff-m12-qr-XXXXXX";
     char savePath[512];
+    char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
+    char pc34Path[512];
 
     if (!mkdtemp(tmpTemplate)) {
         perror("mkdtemp");
@@ -87,6 +232,63 @@ int main(void) {
     if (!expect(strcmp(state.quickResumeSavePath, savePath) == 0, "quick Resume should retain save path")) return 1;
     if (!expect(state.selectedIndex == 0,
                 "valid quick Resume must not steal default Enter from DM1 new-game launch")) return 1;
+    if (!expect(M12_StartupMenu_ExportQuickResumeDM1PC34(&state, pc34Path,
+                                                         (int)sizeof(pc34Path)) == -1,
+                "fake quick Resume save should not export as PC34")) return 1;
+
+    if (!expect(write_serialized_dm1_quicksave(savePath),
+                "should replace fake quicksave with serialized DM1 quicksave")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_dm1_available(&state);
+    if (!expect(M12_StartupMenu_ExportQuickResumeDM1PC34(&state, pc34Path,
+                                                         (int)sizeof(pc34Path)) == 0,
+                "serialized quick Resume should export as DM1 PC34")) return 1;
+    if (!expect(strstr(pc34Path, "firestaff-dm1-quicksave-pc34.sav") != NULL,
+                "PC34 export path should use quicksave suffix")) return 1;
+    {
+        struct SaveGame_Compat imported;
+        struct PartyState_Compat importedParty;
+        struct TimelineQueue_Compat importedTimeline;
+        DM1OriginalSavePC34HandoffReport report;
+        memset(&imported, 0, sizeof(imported));
+        memset(&importedParty, 0, sizeof(importedParty));
+        memset(&importedTimeline, 0, sizeof(importedTimeline));
+        memset(&report, 0, sizeof(report));
+        imported.party = &importedParty;
+        imported.timeline = &importedTimeline;
+        if (!expect(dm1_v1_original_save_pc34_handoff_file(pc34Path,
+                                                           &imported,
+                                                           &report) ==
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+                    "M12 quick Resume PC34 export should pass original handoff")) return 1;
+        if (!expect(importedParty.mapIndex == 5 &&
+                    importedParty.mapX == 14 &&
+                    importedParty.mapY == 16,
+                    "M12 quick Resume PC34 export should preserve party pose")) return 1;
+        if (!expect(memcmp(importedParty.champions[0].name, "HALK    ",
+                           CHAMPION_NAME_LENGTH) == 0,
+                    "M12 quick Resume PC34 export should preserve champion name")) return 1;
+        {
+            struct ChampionState_Compat expectedChampion;
+            F0600_CHAMPION_InitEmpty_Compat(&expectedChampion);
+            fill_test_portrait(&expectedChampion, 0x21u);
+            if (!expect(importedParty.champions[0].portraitBitmapValid == 1 &&
+                        memcmp(importedParty.champions[0].portraitBitmap,
+                               expectedChampion.portraitBitmap,
+                               CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT) == 0,
+                        "M12 quick Resume PC34 export should preserve external portrait bytes")) {
+                return 1;
+            }
+        }
+        if (!expect(report.original_game_time == 6789u,
+                    "M12 quick Resume PC34 export should preserve game tick")) return 1;
+        if (!expect(report.original_current_active_group_count == 1 &&
+                    report.active_groups[0].cells == 0x55,
+                    "M12 quick Resume PC34 export should preserve active group")) return 1;
+    }
+    if (!expect(M12_StartupMenu_ExportQuickResumeDM1PC34(&state, pc34Path,
+                                                         (int)sizeof(pc34Path)) == -1,
+                "duplicate quick Resume PC34 export should preserve existing file")) return 1;
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.launchRequested == 0, "default Enter on DM1 opens game options, not quick Resume")) return 1;
@@ -120,6 +322,78 @@ int main(void) {
     if (!expect(intent.valid == 1, "normal DM1 launch intent should still be valid")) return 1;
     if (!expect(intent.savePath == NULL,
                 "normal DM1 launch must not inherit quick Resume save path")) return 1;
+
+    snprintf(nativeSavePath, sizeof(nativeSavePath),
+             "%s/firestaff-dm1-browser.sav", tmpTemplate);
+    if (!expect(write_native_dm1_save(nativeSavePath),
+                "should write native DM1 browser save")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_dm1_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should open save browser when saves exist")) return 1;
+    if (!expect(state.view == M12_MENU_VIEW_SAVE_BROWSER,
+                "open save browser should enter save browser view")) return 1;
+    if (!expect(select_save_entry(&state, "firestaff-dm1-browser.sav"),
+                "save browser should list native DM1 save")) return 1;
+    if (!expect(M12_StartupMenu_ExportSelectedSaveBrowserDM1PC34(
+                    &state, pc34Path, (int)sizeof(pc34Path)) == 0,
+                "save browser should export selected native DM1 save as PC34")) return 1;
+    if (!expect(strstr(pc34Path, "firestaff-dm1-browser-pc34.sav") != NULL,
+                "save browser PC34 export should use selected save suffix")) return 1;
+    {
+        struct SaveGame_Compat imported;
+        struct PartyState_Compat importedParty;
+        DM1OriginalSavePC34HandoffReport report;
+        memset(&imported, 0, sizeof(imported));
+        memset(&importedParty, 0, sizeof(importedParty));
+        memset(&report, 0, sizeof(report));
+        imported.party = &importedParty;
+        if (!expect(dm1_v1_original_save_pc34_handoff_file(pc34Path,
+                                                           &imported,
+                                                           &report) ==
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+                    "save browser PC34 export should pass original handoff")) return 1;
+        if (!expect(importedParty.mapIndex == 2 &&
+                    importedParty.mapX == 9 &&
+                    importedParty.mapY == 11,
+                    "save browser PC34 export should preserve party pose")) return 1;
+        if (!expect(memcmp(importedParty.champions[0].name, "TIGGY   ",
+                           CHAMPION_NAME_LENGTH) == 0,
+                    "save browser PC34 export should preserve selected champion")) return 1;
+        {
+            struct ChampionState_Compat expectedChampion;
+            F0600_CHAMPION_InitEmpty_Compat(&expectedChampion);
+            fill_test_portrait(&expectedChampion, 0x42u);
+            if (!expect(importedParty.champions[0].portraitBitmapValid == 1 &&
+                        memcmp(importedParty.champions[0].portraitBitmap,
+                               expectedChampion.portraitBitmap,
+                               CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT) == 0,
+                        "save browser PC34 export should preserve external portrait bytes")) {
+                return 1;
+            }
+        }
+        if (!expect(report.original_current_active_group_count == 1 &&
+                    report.active_groups[0].cells == 0x33,
+                    "save browser PC34 export should preserve active group cells")) return 1;
+    }
+    if (!expect(M12_StartupMenu_ExportSelectedSaveBrowserDM1PC34(
+                    &state, pc34Path, (int)sizeof(pc34Path)) == -1,
+                "save browser PC34 export should refuse overwrite")) return 1;
+
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
+                "startup should reopen save browser after export")) return 1;
+    if (!expect(select_save_entry(&state, "firestaff-dm1-browser.sav"),
+                "save browser should keep original save selectable")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.launchRequested == 1,
+                "save browser accept should request launch")) return 1;
+    if (!expect(state.quickResumeLaunchRequested == 1,
+                "save browser accept should route selected save as savePath")) return 1;
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1,
+                "save browser launch intent should be valid")) return 1;
+    if (!expect(intent.savePath && strcmp(intent.savePath, nativeSavePath) == 0,
+                "save browser launch intent should carry selected save path")) return 1;
 
     puts("ok: quick Resume only carries save path for explicit Continue, never normal DM1 launch");
     return 0;
