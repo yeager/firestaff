@@ -24090,9 +24090,10 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             return 1;
         }
         case 17: { /* PARRY */
-            /* The direct helper keeps PARRY in the bounded defensive path:
-             * the shared action tail drains stamina and closes the menu, and
-             * a dedicated F0402/PARRY melee route can tighten this later. */
+            /* ReDMCSB MENU.C F0407 lines 1319-1337 routes PARRY through
+             * F0402.  The direct helper has no concrete melee target, so keep
+             * it on F0402's empty-front failure path: the common tail still
+             * drains stamina, then halves disabled ticks and G0497 XP. */
             m11_log_event(state, M11_COLOR_LIGHT_GRAY,
                           "T%u: %s TAKES A DEFENSIVE STANCE",
                           (unsigned int)state->world.gameTick,
@@ -24777,6 +24778,11 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
              * action icon on failed rope CLIMB DOWN but preserves BUG0_79
              * stamina and G0497 XP side effects. */
             disabledTicks = 0;
+        } else if (actionIndex == DM1_ACTION_PARRY && !performed) {
+            /* ReDMCSB MENU.C F0402 returns FALSE when no melee target exists;
+             * F0407 lines 1331-1337 then halves G0497 XP and disabled ticks. */
+            actionExperienceGain >>= 1;
+            disabledTicks >>= 1;
         }
         m11_disable_champion_action_after_action_ticks(
             state, championIndex, (unsigned char)actionIndex, disabledTicks);
