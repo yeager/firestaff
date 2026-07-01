@@ -22262,6 +22262,27 @@ static void m11_mark_game_won_from_fuse_f0446(M11_GameViewState* state) {
     }
 }
 
+static void m11_apply_fuse_final_endgame_params_f0446(M11_GameViewState* state) {
+    const DM1EndgameEndingParams* params;
+    if (!state) return;
+    params = DM1_Endgame_GetEndingParams();
+    if (!params) return;
+
+    /* ReDMCSB: ENDGAME.C F0446 lines 924-960 plays C2_MUSIC_GAME_WON
+     * on MEDIA503 builds, then after the victory text waits 600 ticks,
+     * clears G0524_B_RestartGameAllowed, and calls
+     * F0444_STARTEND_Endgame(C1_TRUE).  M11 records this final handoff
+     * explicitly while the actual timed credits/palette sequence remains
+     * in the presentation follow-up. */
+    state->endgameFinalDelayTicks = params->finalDelayTicks;
+    state->endgameRestartAllowed = params->restartAllowedAfterWin;
+    state->endgameCalledWithTrue = params->endgameCalledWithTrue;
+    if (params->victoryMusicId >= 0) {
+        (void)M11_Audio_RequestSourceMusicTrack(&state->audioState,
+                                                params->victoryMusicId);
+    }
+}
+
 static int m11_perform_fuse_action(M11_GameViewState* state,
                                    const char* champName) {
     int mapIndex, mapX, mapY;
@@ -22359,6 +22380,7 @@ static int m11_perform_fuse_action(M11_GameViewState* state,
     state->endgameDoNotDrawFluxcages = 1;
     m11_delete_other_groups_for_endgame_f0446(state, mapIndex, mapX, mapY);
     (void)m11_print_endgame_text_messages_f0446(state, mapIndex);
+    m11_apply_fuse_final_endgame_params_f0446(state);
     m11_mark_game_won_from_fuse_f0446(state);
     m11_log_event(state, M11_COLOR_LIGHT_GREEN,
                   "T%u: %s FUSES CHAOS AND ORDER",
