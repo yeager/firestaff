@@ -2076,6 +2076,110 @@ static void test_orch_projectile_group_hit_applies_damage(void) {
     assert(groups[0].health[0] > 0);
 }
 
+static void test_orch_projectile_group_hit_at_zero_coordinate(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[6];
+    unsigned short squareFirstThings[6];
+    struct DungeonGroup_Compat groups[1];
+    struct ProjectileCreateInput_Compat createIn;
+    struct TimelineEvent_Compat firstMove;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int slot = -1;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(groups, 0, sizeof(groups));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    for (i = 0; i < 6; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    squareData[0] =
+        square_for_test(DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 2;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 6;
+    world.dungeon = &dungeon;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 2;
+    world.party.mapY = 1;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 6;
+    things.groups = groups;
+    things.groupCount = 1;
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_GIANT_SCORPION;
+    groups[0].count = 0;
+    groups[0].health[0] = 100;
+    groups[0].cells = 0xFFu;
+    world.creatureAICount = 1;
+    world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    world.creatureAI[0].creatureType = groups[0].creatureType;
+    world.creatureAI[0].groupMapIndex = 0;
+    world.creatureAI[0].groupMapX = 0;
+    world.creatureAI[0].groupMapY = 0;
+    world.creatureAI[0].groupCells = groups[0].cells;
+    world.creatureAI[0].lastSeenPartyTick = 100;
+    world.creatureAI[0].reserved0 = 0;
+
+    memset(&createIn, 0, sizeof(createIn));
+    createIn.category = PROJECTILE_CATEGORY_KINETIC;
+    createIn.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    createIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    createIn.ownerIndex = 0;
+    createIn.mapIndex = 0;
+    createIn.mapX = 1;
+    createIn.mapY = 0;
+    createIn.cell = 3;
+    createIn.direction = 3;
+    createIn.kineticEnergy = 80;
+    createIn.attack = 40;
+    createIn.stepEnergy = 10;
+    createIn.currentTick = 100;
+    createIn.firstMoveGraceFlag = 0;
+    assert(F0810_PROJECTILE_Create_Compat(
+        &createIn, &world.projectiles, &slot, &firstMove) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove) == 1);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
+    assert(world.projectiles.count == 0);
+    assert(groups[0].health[0] < 100);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_REACTION);
+    assert(world.timeline.events[0].mapIndex == 0);
+    assert(world.timeline.events[0].mapX == 0);
+    assert(world.timeline.events[0].mapY == 0);
+    assert(world.timeline.events[0].aux0 == 0);
+    assert(world.timeline.events[0].aux1 == CREATURE_TYPE_GIANT_SCORPION);
+    assert(world.timeline.events[0].aux2 == DM1_EVENT_REACTION_HIT_BY_PROJECTILE);
+}
+
 static void test_orch_projectile_group_hit_all_kill_cleans_up_group(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -4934,6 +5038,7 @@ int main(void) {
     test_orch_projectile_champion_hit_applies_damage();
     test_orch_projectile_champion_hit_applies_poison();
     test_orch_projectile_group_hit_applies_damage();
+    test_orch_projectile_group_hit_at_zero_coordinate();
     test_orch_projectile_group_hit_all_kill_cleans_up_group();
     test_orch_projectile_group_hit_killed_some_applies_f0190_side_effects();
     test_orch_projectile_group_hit_keeps_thrown_sharp_weapon();
