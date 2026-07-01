@@ -21364,6 +21364,11 @@ static int m11_spawn_centered_explosion(M11_GameViewState* state,
                                          &slot, &eFirst);
 }
 
+static int m11_find_creature_ai_on_square(const M11_GameViewState* state,
+                                          int mapIndex,
+                                          int mapX,
+                                          int mapY);
+
 static int m11_f0190_smoke_attack_for_creature(int creatureType) {
     const struct CreatureBehaviorProfile_Compat* profile =
         CREATURE_GetProfile_Compat(creatureType);
@@ -21406,6 +21411,106 @@ static int m11_spawn_f0190_death_smoke(
         return 0;
     }
     return F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &eFirst);
+}
+
+static int m11_f0190_event_creature_index(int eventType) {
+    if (eventType >= DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
+        eventType < DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
+        return eventType - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+    }
+    if (eventType >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+        eventType <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        return eventType - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    }
+    return -1;
+}
+
+static void m11_cleanup_f0190_creature_events(
+    M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int killedCreatureIndex) {
+    int readIndex;
+    int writeIndex = 0;
+    int oldCount;
+    if (!state || killedCreatureIndex < 0 || killedCreatureIndex > 3) return;
+
+    oldCount = state->world.timeline.count;
+    /* ReDMCSB GROUP.C F0190 lines 848-872 deletes C33-C36/C38-C41
+     * events for the killed creature and decrements event types for
+     * creature ordinals shifted down by group compaction. */
+    for (readIndex = 0; readIndex < oldCount; ++readIndex) {
+        struct TimelineEvent_Compat ev = state->world.timeline.events[readIndex];
+        if (ev.kind == TIMELINE_EVENT_CREATURE_REACTION &&
+            ev.mapIndex == mapIndex && ev.mapX == mapX && ev.mapY == mapY) {
+            int eventCreatureIndex = m11_f0190_event_creature_index(ev.aux2);
+            if (eventCreatureIndex == killedCreatureIndex) {
+                continue;
+            }
+            if (eventCreatureIndex > killedCreatureIndex) {
+                ev.aux2--;
+            }
+        }
+        state->world.timeline.events[writeIndex++] = ev;
+    }
+    while (writeIndex < oldCount) {
+        memset(&state->world.timeline.events[writeIndex], 0,
+               sizeof(state->world.timeline.events[writeIndex]));
+        ++writeIndex;
+    }
+    state->world.timeline.count = writeIndex;
+}
+
+static int m11_apply_f0190_fear(
+    M11_GameViewState* state,
+    struct DungeonGroup_Compat* group,
+    int creatureType,
+    int groupIndex,
+    int originalGroupCount,
+    int mapIndex,
+    int mapX,
+    int mapY) {
+    const struct CreatureBehaviorProfile_Compat* profile;
+    struct DM1GroupBehaviorContext_Compat ctx;
+    int shouldFlee = 0;
+    int fleeDelay = 0;
+    int activeIndex;
+
+    if (!state || !group) return 0;
+    if (group->behavior != DM1_BEHAVIOR_ATTACK) return 0;
+    if (mapIndex != state->world.partyMapIndex) return 0;
+
+    profile = CREATURE_GetProfile_Compat(creatureType);
+    if (!profile) return 0;
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.currentMapIndex = mapIndex;
+    ctx.currentGroupMapX = mapX;
+    ctx.currentGroupMapY = mapY;
+    ctx.partyMapIndex = state->world.party.mapIndex;
+    ctx.partyMapX = state->world.party.mapX;
+    ctx.partyMapY = state->world.party.mapY;
+    ctx.creatureType = creatureType;
+    ctx.creatureInfo.properties = profile->properties;
+    ctx.groupBehavior = group->behavior;
+    ctx.creatureCount = originalGroupCount;
+
+    if (!F0821_DM1_GROUP_ShouldFrighten_Compat(
+            &ctx, originalGroupCount, &state->world.masterRng,
+            &shouldFlee, &fleeDelay)) {
+        return 0;
+    }
+    if (!shouldFlee) return 0;
+
+    group->behavior = DM1_BEHAVIOR_FLEE;
+    activeIndex = m11_find_creature_ai_on_square(state, mapIndex, mapX, mapY);
+    if (activeIndex >= 0) {
+        state->world.creatureAI[activeIndex].stateKind = AI_STATE_FLEE;
+        state->world.creatureAI[activeIndex].fearCounter = fleeDelay;
+        state->world.creatureAI[activeIndex].reserved0 = groupIndex;
+    }
+    return 1;
 }
 
 static void m11_schedule_creature_reaction_f0209(
@@ -22796,6 +22901,7 @@ static void m11_projectile_apply_impact(
                     if (g->health[slotI] > 0) {
                         int originalCreatureType = (int)g->creatureType;
                         int originalCells = (int)g->cells;
+                        int originalGroupCount = (int)g->count;
                         int killedCell =
                             (originalCells == DM1_SINGLE_CENTERED_CREATURE_CELL)
                                 ? EXPLOSION_CELL_CENTERED
@@ -22805,6 +22911,14 @@ static void m11_projectile_apply_impact(
                         if (outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
                             const struct CreatureBehaviorProfile_Compat* profile =
                                 CREATURE_GetProfile_Compat(originalCreatureType);
+                            if (g->behavior == DM1_BEHAVIOR_ATTACK) {
+                                m11_cleanup_f0190_creature_events(
+                                    state, impactMap, impactX, impactY, slotI);
+                                (void)m11_apply_f0190_fear(
+                                    state, g, originalCreatureType, gIdx,
+                                    originalGroupCount, impactMap, impactX,
+                                    impactY);
+                            }
                             if (profile &&
                                 (profile->attributes & DM1_ATTR_DROP_FIXED_POSS)) {
                                 /* ReDMCSB GROUP.C F0190 lines 842-847 calls
