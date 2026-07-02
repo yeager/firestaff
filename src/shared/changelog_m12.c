@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.17  (2026-07-02)",
+    "  - Packages the post-v3.0.16 DM1 MacBook Pro smoke fixes and gates currently green on main.",
+    "  - DM1 title/swoosh palette, immediate Q/E/Home/End/keypad turning, and Hall of Champions false projectile/floor artifacts are verified on current-main probes.",
+    "  - Additional DM1 runtime hardening since v3.0.16 covers raw thing-list sync, fixed-possession raw item rewrite, raw group rewrite, direct projectile champion damage scaling, light-to-palette handoff, and endgame F0446 delay readiness gates.",
+    "  - Release verification: focused real-data HoC probes, title-swoosh palette readback, turn/input gates, overlay queue, and Phase A passed locally on the external-disk build before release prep.",
+    "",
     "V3.0.16  (2026-07-01)",
     "  - Q/E/Home/End/keypad turns now bypass the delayed vblank motion queue while movement inputs remain cooldown-gated.",
     "  - Current-main Hall of Champions and DM title palette probes pass for the MacBook Pro release-smoke regression class.",
@@ -342,5 +348,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.16";
+    return "3.0.17";
 }
