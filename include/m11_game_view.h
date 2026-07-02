@@ -273,6 +273,7 @@ typedef struct {
     int endgameTextMessageDelayTicks;
     int endgameFuseSequenceDelayTicks;
     int endgameFuseSequenceDelayRemainingTicks;
+    int endgameFinalHandoffReady;
     int endgameBuzzRequestCount;
 
     /* Dialog box overlay for text-plaque inspection.
