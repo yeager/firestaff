@@ -1783,6 +1783,25 @@ static M12_MenuInput m11_menu_input_for_m11_action(int action) {
     }
 }
 
+static M12_MenuInput m11_dm1_v1_fixed_turn_input_from_scancode(SDL_Scancode scancode) {
+    /* ReDMCSB: COMMAND.C 677-684 maps PC34 keypad turn keys to C001/C002;
+     * Firestaff's DM1 V1 keyboard convention also exposes Q/E + Home/End as
+     * turn aliases.  Resolve these before persisted keymaps so stale pre-v2.8
+     * bindings cannot route Q/E into cooldown-gated strafe commands. */
+    switch (scancode) {
+        case SDL_SCANCODE_HOME:
+        case SDL_SCANCODE_Q:
+        case SDL_SCANCODE_KP_4:
+            return M12_MENU_INPUT_TURN_LEFT;
+        case SDL_SCANCODE_END:
+        case SDL_SCANCODE_E:
+        case SDL_SCANCODE_KP_6:
+            return M12_MENU_INPUT_TURN_RIGHT;
+        default:
+            return M12_MENU_INPUT_NONE;
+    }
+}
+
 static int m11_dm1_v1_input_is_immediate_turn(M12_MenuInput input) {
     /* ReDMCSB: CLIKMENU.C F0365 lines 142-180 sets G0321 true as soon
      * as C001/C002 turn is dispatched; COMMAND.C F0380 lines 2095-2100
@@ -1818,7 +1837,7 @@ static M12_MenuInput m11_motion_input_from_scancode(SDL_Scancode scancode) {
     return m11_menu_input_for_m11_action(action);
 }
 
-static M12_MenuInput m11_held_motion_input_from_keyboard(void) {
+static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState* gameView) {
     int count = 0;
     int i;
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -1853,7 +1872,13 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(void) {
     for (i = 0; i < (int)(sizeof(preferred) / sizeof(preferred[0])); i++) {
         int sc = (int)preferred[i];
         if (sc >= 0 && sc < count && keys[sc]) {
-            M12_MenuInput input = m11_motion_input_from_scancode(preferred[i]);
+            M12_MenuInput input =
+                m11_game_view_is_dm1(gameView)
+                    ? m11_dm1_v1_fixed_turn_input_from_scancode(preferred[i])
+                    : M12_MENU_INPUT_NONE;
+            if (input == M12_MENU_INPUT_NONE) {
+                input = m11_motion_input_from_scancode(preferred[i]);
+            }
             if (input != M12_MENU_INPUT_NONE) {
                 return input;
             }
@@ -2096,6 +2121,13 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
                 if ((ev.key.mod & SDL_KMOD_CTRL) && ev.key.scancode == SDL_SCANCODE_S) {
                     return M12_MENU_INPUT_SAVE_GAME;
+                }
+                if (m11_game_view_is_dm1(gameView)) {
+                    mappedInput =
+                        m11_dm1_v1_fixed_turn_input_from_scancode(ev.key.scancode);
+                    if (mappedInput != M12_MENU_INPUT_NONE) {
+                        return mappedInput;
+                    }
                 }
                 mappedInput = m11_motion_input_from_scancode(ev.key.scancode);
                 if (mappedInput != M12_MENU_INPUT_NONE) {
@@ -2426,6 +2458,13 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
                 if ((ev.key.keysym.mod & KMOD_CTRL) && ev.key.keysym.scancode == SDL_SCANCODE_S) {
                     return M12_MENU_INPUT_SAVE_GAME;
+                }
+                if (m11_game_view_is_dm1(gameView)) {
+                    mappedInput =
+                        m11_dm1_v1_fixed_turn_input_from_scancode(ev.key.keysym.scancode);
+                    if (mappedInput != M12_MENU_INPUT_NONE) {
+                        return mappedInput;
+                    }
                 }
                 mappedInput = m11_motion_input_from_scancode(ev.key.keysym.scancode);
                 if (mappedInput != M12_MENU_INPUT_NONE) {
@@ -2876,7 +2915,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     (pendingDm1V1MotionHead + 1) % M11_DM1_V1_PENDING_MOTION_CAPACITY;
                 pendingDm1V1MotionCount--;
             } else {
-                input = m11_held_motion_input_from_keyboard();
+                input = m11_held_motion_input_from_keyboard(&gameView);
             }
         }
         if (input != M12_MENU_INPUT_NONE) {
