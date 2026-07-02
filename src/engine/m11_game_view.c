@@ -21889,8 +21889,19 @@ static int m11_spawn_fluxcage_f0224(M11_GameViewState* state,
     struct ExplosionCreateInput_Compat eIn;
     struct TimelineEvent_Compat eFirst;
     struct TimelineEvent_Compat removeEvent;
+    unsigned char square = 0;
+    int squareType;
     int slot = -1;
     if (!state) return 0;
+    if (m11_get_square_byte(&state->world, mapIndex, mapX, mapY, &square)) {
+        squareType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        if (squareType == DUNGEON_ELEMENT_WALL ||
+            squareType == DUNGEON_ELEMENT_STAIRS) {
+            /* ReDMCSB: PROJEXPL.C F0224 lines 961-977 returns before
+             * allocating an explosion when the target square is wall/stairs. */
+            return 0;
+        }
+    }
     memset(&eIn, 0, sizeof(eIn));
     eIn.explosionType = C050_EXPLOSION_FLUXCAGE;
     eIn.attack = 255;
@@ -22314,10 +22325,14 @@ static int m11_perform_fluxcage_action(M11_GameViewState* state,
     int mapIndex, mapX, mapY;
     if (!m11_party_front_square(state, &mapIndex, &mapX, &mapY)) return 0;
     if (!m11_spawn_fluxcage_f0224(state, mapIndex, mapX, mapY)) {
+        /* ReDMCSB: MENU.C F0407 lines 1488-1497 leaves
+         * AL1245_B_ActionPerformed TRUE around the void F0224 call.
+         * PROJEXPL.C F0224 can still return early for wall/stairs or no
+         * explosion slot, so keep the common F0407 stamina/XP tail. */
         m11_log_event(state, M11_COLOR_LIGHT_RED,
                       "T%u: FLUXCAGE FIZZLES",
                       (unsigned int)state->world.gameTick);
-        return 0;
+        return 1;
     }
     m11_log_event(state, M11_COLOR_LIGHT_CYAN,
                   "T%u: %s CREATES A FLUXCAGE",
