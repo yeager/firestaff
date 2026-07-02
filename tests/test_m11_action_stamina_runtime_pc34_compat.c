@@ -3289,6 +3289,104 @@ static void test_projectile_creature_zero_scaled_attack_skips_poison_and_reactio
               "zero-scaled creature impact skips C30 reaction scheduling");
 }
 
+static void test_projectile_creature_impact_uses_target_cell_creature(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[36];
+    unsigned short squareFirstThings[36];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    struct ProjectileInstance_Compat* projectile;
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    for (i = 0; i < 36; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 6;
+    maps[0].height = 6;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 36;
+    squareData[(5 * 6) + 4] = square_for_test(
+        DUNGEON_ELEMENT_CORRIDOR, DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[(5 * 6) + 4] = make_thing(THING_TYPE_GROUP, 0);
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 3; /* Wizard Eye. */
+    groups[0].cells = (unsigned char)((0 << 0) | (2 << 2));
+    groups[0].count = 1;
+    groups[0].health[0] = 100;
+    groups[0].health[1] = 100;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 36;
+    things.groups = groups;
+    things.groupCount = 1;
+
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 4;
+    state.world.party.mapY = 5;
+    state.world.party.direction = 0;
+    state.world.creatureAICount = 1;
+    state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    state.world.creatureAI[0].groupMapIndex = 0;
+    state.world.creatureAI[0].groupMapX = 5;
+    state.world.creatureAI[0].groupMapY = 4;
+    state.world.creatureAI[0].creatureType = groups[0].creatureType;
+    state.world.gameTick = 100;
+
+    state.world.projectiles.count = 1;
+    projectile = &state.world.projectiles.entries[0];
+    memset(projectile, 0, sizeof(*projectile));
+    projectile->slotIndex = 0;
+    projectile->projectileCategory = PROJECTILE_CATEGORY_KINETIC;
+    projectile->projectileSubtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    projectile->ownerKind = PROJECTILE_OWNER_CHAMPION;
+    projectile->ownerIndex = 0;
+    projectile->mapIndex = 0;
+    projectile->mapX = 5;
+    projectile->mapY = 5;
+    projectile->cell = 1;
+    projectile->direction = 0;
+    projectile->kineticEnergy = 80;
+    projectile->attack = 40;
+    projectile->stepEnergy = 10;
+    projectile->firstMoveGraceFlag = 0;
+    projectile->launchedAtTick = 99;
+    projectile->scheduledAtTick = 100;
+    projectile->reserved1 = THING_NONE;
+    projectile->reserved3 = 1;
+
+    M11_GameView_AdvanceProjectilesOnce(&state);
+
+    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+              "cell-targeted creature impact despawns projectile");
+    ASSERT_EQ(groups[0].health[0], 100,
+              "cell-targeted creature impact leaves non-target creature untouched");
+    ASSERT_EQ(groups[0].health[1] < 100, 1,
+              "cell-targeted creature impact damages creature in target cell");
+    ASSERT_EQ(groups[0].health[1] > 0, 1,
+              "cell-targeted creature impact keeps target creature alive");
+}
+
 static void test_projectile_non_material_creature_passes_through_without_impact(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -8411,6 +8509,7 @@ int main(void) {
     test_projectile_creature_killed_some_drops_fixed_possessions();
     test_projectile_creature_killed_some_can_trigger_f0190_fear();
     test_projectile_creature_zero_scaled_attack_skips_poison_and_reaction();
+    test_projectile_creature_impact_uses_target_cell_creature();
     test_projectile_non_material_creature_passes_through_without_impact();
     test_projectile_harm_non_material_hits_non_material_creature();
     test_projectile_fireball_heals_black_flame_without_explosion();
