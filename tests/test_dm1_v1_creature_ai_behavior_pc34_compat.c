@@ -160,6 +160,54 @@ static void test_archenemy_ignores_freeze(void) {
 }
 
 /* =========================================================
+ *  Test 4b: Archenemy approach uses F0204 double movement
+ * ========================================================= */
+static void test_archenemy_approach_double_move(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng = make_rng(42);
+    struct DM1BehaviorResult_Compat result;
+    int ok;
+
+    ctx.groupBehavior = DM1_BEHAVIOR_APPROACH;
+    ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ctx.distanceToVisibleParty = 3;
+    ctx.currentGroupDistanceToParty = 3;
+    ctx.currentGroupPrimaryDirToParty = 1; /* East */
+    ctx.currentGroupSecondaryDirToParty = 0;
+    ctx.partyMapX = 8;
+    ctx.partyMapY = 5;
+    ctx.ticksSinceLastMove = 30;
+    ctx.movementTicks = 20;
+
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "archenemy_double_control: dispatch returns 1");
+    EXPECT_EQ(result.actionKind, DM1_ACTION_MOVE,
+              "archenemy_double_control: ordinary approach moves");
+    EXPECT_EQ(result.moveDestMapX, ctx.currentGroupMapX + 1,
+              "archenemy_double_control: ordinary approach moves one square");
+    EXPECT_EQ(result.archenemyDoubleMove, 0,
+              "archenemy_double_control: ordinary approach has no double flag");
+
+    rng = make_rng(42);
+    ctx.isArchenemy = 1;
+    ctx.creatureInfo.attributes |= DM1_ATTR_ARCHENEMY;
+    memset(&result, 0, sizeof(result));
+    ok = F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result);
+    EXPECT_EQ(ok, 1, "archenemy_double: dispatch returns 1");
+    EXPECT_EQ(result.actionKind, DM1_ACTION_MOVE,
+              "archenemy_double: approach moves");
+    EXPECT_EQ(result.moveDirection, 1,
+              "archenemy_double: moves east toward party");
+    EXPECT_EQ(result.moveDestMapX, ctx.currentGroupMapX + 2,
+              "archenemy_double: F0204 target is two squares east");
+    EXPECT_EQ(result.moveDestMapY, ctx.currentGroupMapY,
+              "archenemy_double: Y unchanged for east double move");
+    EXPECT_EQ(result.archenemyDoubleMove, 1,
+              "archenemy_double: F0204 double-move flag set");
+}
+
+/* =========================================================
  *  Test 5: Party-adjacent reaction → attack
  * ========================================================= */
 static void test_reaction_party_adjacent(void) {
@@ -1062,6 +1110,7 @@ int main(void) {
     test_wander_to_approach();
     test_freeze_life();
     test_archenemy_ignores_freeze();
+    test_archenemy_approach_double_move();
     test_reaction_party_adjacent();
     test_flee_behavior();
     test_flee_expires_to_wander();
