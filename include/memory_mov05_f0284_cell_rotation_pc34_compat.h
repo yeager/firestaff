@@ -17,12 +17,9 @@
  *
  * Invariants pinned by the regression test:
  *  - delta = (newDirection - oldDirection) mod 4
- *  - per-present-cell Direction += delta (mod 4)
- *  - per-present-cell ordinal position in the present-list
- *    rotates by delta (empty slots stay empty; contiguous
- *    present-list ordering preserved)
- *  - activeChampionIndex follows the previously-active champion
- *    through the rotation
+ *  - per-present champion Cell += delta (mod 4)
+ *  - per-present champion Direction += delta (mod 4)
+ *  - champion array slots and activeChampionIndex are unchanged
  *  - idempotent on no-op direction changes
  */
 
