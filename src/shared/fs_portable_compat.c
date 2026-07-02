@@ -312,6 +312,7 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize) {
 
 int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir) {
     const char* envData;
+    int rc;
 
     if (!out || outSize == 0U) {
         return 0;
@@ -360,7 +361,6 @@ int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir) {
     {
         const char* home = getenv("HOME");
         if (home && home[0] != '\0') {
-            int rc;
             rc = snprintf(out, outSize, "%s/.firestaff/data", home);
             return rc > 0 && (size_t)rc < outSize;
         }
