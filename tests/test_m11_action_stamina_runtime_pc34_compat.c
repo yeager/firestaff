@@ -8192,6 +8192,38 @@ static void test_f0231_zero_damage_emission_skips_hit_feedback(void) {
               "zero-damage F0231 emission does not award synthetic damage XP");
 }
 
+static void test_f0231_positive_damage_emission_skips_duplicate_xp(void) {
+    M11_GameViewState state;
+    int xpBefore;
+    int logBefore;
+
+    seed_state(&state, 100, 7);
+    state.world.party.activeChampionIndex = 0;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_SWING].experience = 500;
+    xpBefore = state.world.lifecycle.champions[0]
+                   .skills20[DM1_SKILL_IDX_SWING].experience;
+    logBefore = M11_GameView_GetMessageLogCount(&state);
+
+    state.lastTickResult.emissionCount = 1;
+    state.lastTickResult.emissions[0].kind = EMIT_DAMAGE_DEALT;
+    state.lastTickResult.emissions[0].payload[0] = 0;  /* champion */
+    state.lastTickResult.emissions[0].payload[1] = 0;  /* group */
+    state.lastTickResult.emissions[0].payload[2] = 17; /* F0231 damage */
+    state.lastTickResult.emissions[0].payload[3] = COMBAT_OUTCOME_HIT_DAMAGE;
+
+    M11_GameView_ProcessTickEmissions(&state);
+
+    ASSERT_EQ(M11_GameView_GetMessageLogCount(&state), logBefore + 1,
+              "positive F0231 emission keeps DAMAGE feedback log");
+    ASSERT_EQ(M11_GameView_GetCreatureHitOverlayTimer(&state) > 0, 1,
+              "positive F0231 emission keeps C014 hit overlay");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[DM1_SKILL_IDX_SWING].experience,
+              xpBefore,
+              "positive F0231 emission does not duplicate M10 damage XP");
+}
+
 int main(void) {
     printf("=== M11 Action Stamina Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: MENU.C G0494/F0407 and CHAMPION.C F0325\n\n");
@@ -8277,6 +8309,7 @@ int main(void) {
     test_endgame_restart_controls_respect_restart_allowed();
     test_dm1_d2_side_walls_sample_and_use_source_rects();
     test_f0231_zero_damage_emission_skips_hit_feedback();
+    test_f0231_positive_damage_emission_skips_duplicate_xp();
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_targets_pref0407_champion_direction();
     test_melee_action_row_closed_door_targets_pref0407_champion_direction();
