@@ -358,6 +358,52 @@ static void test_orch_invisibility_spell_mirrors_lifecycle_counter(void) {
     assert(world.timeline.count == 0);
 }
 
+static void test_orch_party_shield_spell_mirrors_lifecycle_defense(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int defense;
+    uint32_t expiryTick;
+
+    init_world(&world, &things, weapons, junks);
+    world.gameTick = 300;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+    world.party.champions[0].mana.current = 100;
+    world.party.champions[0].mana.maximum = 100;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    input.command = CMD_CAST_SPELL;
+    input.commandArg1 = 0;
+    input.commandArg2 = 0; /* Ya Ir: Party Shield. */
+    input.reserved = 1;   /* Lo power ordinal -> spellPower 8. */
+
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    defense = world.magic.partyShieldDefense;
+    assert(defense == 8);
+    assert(world.lifecycle.status.partyShieldDefense == defense);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_STATUS_TIMEOUT);
+    assert(world.timeline.events[0].aux0 == TIMELINE_AUX_PARTY_SHIELD);
+    assert(world.timeline.events[0].aux4 == defense);
+    expiryTick = world.timeline.events[0].fireAtTick;
+    assert(expiryTick > world.gameTick);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    world.gameTick = expiryTick;
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    assert(world.magic.partyShieldDefense == 0);
+    assert(world.lifecycle.status.partyShieldDefense == 0);
+    assert(world.timeline.count == 0);
+}
+
 static void test_orch_potion_spell_mutates_empty_flask_in_hand(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -6824,6 +6870,7 @@ int main(void) {
     test_orch_spell_status_timeout_aux_tags_expire_magic_state();
     test_orch_thieves_eye_zero_duration_expires_same_tick();
     test_orch_invisibility_spell_mirrors_lifecycle_counter();
+    test_orch_party_shield_spell_mirrors_lifecycle_defense();
     test_orch_potion_spell_mutates_empty_flask_in_hand();
     test_orch_zokathra_spell_materializes_in_ready_hand();
     test_orch_zokathra_spell_falls_back_to_party_square();

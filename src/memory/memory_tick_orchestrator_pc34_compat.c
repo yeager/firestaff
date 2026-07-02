@@ -1627,20 +1627,37 @@ static int orch_status_timeout_defense_pc34_compat(
     return ev->aux1;
 }
 
-static void orch_mirror_other_spell_lifecycle_counter_pc34_compat(
+static void orch_mirror_other_spell_lifecycle_status_pc34_compat(
     struct GameWorld_Compat* world,
     const struct SpellEffect_Compat* effect)
 {
     int delta;
     if (!world || !effect) return;
     if (effect->spellKind != C3_SPELL_KIND_OTHER_COMPAT) return;
+
+    /* ReDMCSB MENU.C F0412 updates the single G0407_s_Party status state.
+     * Firestaff keeps a MagicState copy for spell/combat bookkeeping and a
+     * Lifecycle copy for status rendering/expiry, so the F0412 start edge
+     * must seed both mirrors before the matching C71/C73/C74/C78/C79 timeout
+     * subtracts or decrements them. */
+    if (effect->magicStateDelta[2] > 0) {
+        world->lifecycle.status.partyShieldDefense =
+            (int16_t)(world->lifecycle.status.partyShieldDefense +
+                      effect->magicStateDelta[2]);
+    }
+    if (effect->magicStateDelta[1] > 0) {
+        world->lifecycle.status.partyFireShieldDefense =
+            (int16_t)(world->lifecycle.status.partyFireShieldDefense +
+                      effect->magicStateDelta[1]);
+    }
+    if (effect->magicStateDelta[0] > 0) {
+        world->lifecycle.status.partySpellShieldDefense =
+            (int16_t)(world->lifecycle.status.partySpellShieldDefense +
+                      effect->magicStateDelta[0]);
+    }
+
     delta = effect->magicStateDelta[5];
     if (delta <= 0) return;
-
-    /* ReDMCSB MENU.C F0412 C71/C73/C79 updates the single
-     * G0407_s_Party counter.  Firestaff keeps a MagicState copy for spell
-     * bookkeeping and a Lifecycle copy for status rendering/expiry, so the
-     * F0412 start edge must seed both mirrors. */
     switch (effect->spellType) {
         case C2_SPELL_TYPE_OTHER_THIEVES_EYE_COMPAT:
             world->lifecycle.status.thievesEyeCount =
@@ -6842,7 +6859,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
 
             /* Apply magic state deltas (light, shields, footprints, etc.) */
             F0760_MAGIC_ApplyStateDelta_Compat(&effect, &world->magic);
-            orch_mirror_other_spell_lifecycle_counter_pc34_compat(
+            orch_mirror_other_spell_lifecycle_status_pc34_compat(
                 world, &effect);
             spellExperience = orch_cmd_cast_spell_xp_compat(
                 input, &spell, effect.powerOrdinal, &world->masterRng);
