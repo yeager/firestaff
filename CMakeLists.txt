@@ -3705,6 +3705,7 @@ if(BUILD_TESTING)
         add_executable(test_asset_status_iso_cache_materialization
             tests/test_asset_status_iso_cache_materialization.c
             src/shared/asset_status_m12.c
+            src/shared/firestaff_theron_media_classify.c
             src/shared/asset_find_by_hash.c
             src/shared/fs_portable_compat.c
         )
@@ -7566,6 +7567,7 @@ if(BUILD_TESTING)
         tests/test_dm1_pc34_archive_media_receipt.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
     )
@@ -7595,6 +7597,7 @@ if(BUILD_TESTING)
         tests/test_asset_status_dm1_zip_required_materialization.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
     )
@@ -7626,6 +7629,7 @@ if(BUILD_TESTING)
         tests/test_csb_archive_required_split.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
     )
@@ -7654,6 +7658,7 @@ if(BUILD_TESTING)
         tests/test_asset_status_dm2_iso_required_cache_gate.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
     )
@@ -7696,6 +7701,7 @@ if(BUILD_TESTING)
         tests/test_asset_status_nexus_bpk_trailer_metadata.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
     )
@@ -19463,6 +19469,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         tests/theron_v1_direct_launch_stale_rejection_test.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
     )
     target_link_libraries(test_theron_v1_direct_launch_stale_rejection PRIVATE
