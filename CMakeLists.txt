@@ -140,6 +140,7 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
     src/shared/dungeon_decompressor_ftl.c
+    src/shared/firestaff_cmp_decode.c
     src/engine/m11_game_text_latin_extended_glyphs.c
     src/shared/image_backend_pc34_compat_globals.c
     src/dm1/dm1_v1_original_save_classifier.c
@@ -2598,6 +2599,24 @@ target_include_directories(firestaff_csb_v1_pc_real_asset_launch_probe
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_pc_real_asset_launch_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
+add_executable(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
+    probes/csb/firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe.c
+    src/csb/csb_v1_boot.c
+    src/csb/csb_v1_runtime_pc34_compat.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
         PRIVATE -Wall -Wextra -O2)
 endif()
 
@@ -5737,6 +5756,28 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_required_complete_launches
         COMMAND test_csb_v1_required_complete_launches
+    )
+
+    add_executable(test_csb_v1_boot_title_import_ui_gate_pc34_compat
+        tests/test_csb_v1_boot_title_import_ui_gate_pc34_compat.c
+        src/csb/csb_v1_boot.c
+        src/csb/csb_v1_runtime_pc34_compat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_boot_title_import_ui_gate_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_boot_title_import_ui_gate_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_boot_title_import_ui_gate_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_boot_title_import_ui_gate_pc34_compat
+        COMMAND test_csb_v1_boot_title_import_ui_gate_pc34_compat
     )
 
     add_executable(test_csb_v1_keyboard_commands_pc34_compat
@@ -24544,3 +24585,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_inventory_panel_mouse_r
         COMMAND test_dm1_v1_inventory_panel_mouse_routes_pc34_compat
     )
 endif()
+
+foreach(_firestaff_csb_boot_target
+        firestaff_csb_v1_real_asset_launch_probe
+        firestaff_csb_v1_pc_real_asset_launch_probe
+        firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
+        firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
+        firestaff_csb_v1_first_viewport_frame_probe
+        firestaff_csb_v1_pc_real_asset_ornament_blit_probe
+        firestaff_csb_v1_pc_real_asset_d2c_f0107_f0111_probe
+        test_csb_v1_boot_profile_smoke
+        test_csb_v1_required_complete_launches
+        test_csb_v1_boot_title_import_ui_gate_pc34_compat
+        test_csb_v1_boot_viewport_render_gate
+        test_csb_v1_boot_runtime_handoff
+        test_csb_v1_runtime_route_first_frame_movement_utility_gate
+        test_csb_v1_phase7_verification)
+    if(TARGET ${_firestaff_csb_boot_target})
+        target_link_libraries(${_firestaff_csb_boot_target} PRIVATE firestaff_m10)
+    endif()
+endforeach()
