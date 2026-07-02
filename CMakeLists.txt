@@ -7474,6 +7474,65 @@ if(BUILD_TESTING)
         COMMAND test_dm1_pc34_archive_media_receipt
     )
 
+    # -- DM1 archive-backed required-file cache materialization --
+    # Synthetic ZIP with required GRAPHICS.DAT and DUNGEON.DAT entries.
+    # Pins the DM1-specific M12 required-file handoff into
+    # <userDataDir>/asset-cache/dm1/ ordinary files before launch.
+    add_executable(test_asset_status_dm1_zip_required_materialization
+        tests/test_asset_status_dm1_zip_required_materialization.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
+    )
+    target_link_libraries(test_asset_status_dm1_zip_required_materialization PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_asset_status_dm1_zip_required_materialization PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_asset_status_dm1_zip_required_materialization PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    firestaff_link_zlib(test_asset_status_dm1_zip_required_materialization PRIVATE)
+    if(NOT MSVC)
+        target_compile_options(test_asset_status_dm1_zip_required_materialization PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME asset_status_dm1_zip_required_materialization
+        COMMAND test_asset_status_dm1_zip_required_materialization
+    )
+
+    # -- CSB required-file archive materialization gate -----------------
+    # Synthetic CSB GRAPHICS.DAT in ZIP plus DUNGEON.DAT in ISO: both
+    # archive-backed required rows must materialize to ordinary files
+    # under <userDataDir>/asset-cache/csb before launch, while a wrong
+    # graphics archive keeps CSB unavailable and leaves the ISO match
+    # unmaterialized.
+    add_executable(test_csb_archive_required_split
+        tests/test_csb_archive_required_split.c
+        src/shared/asset_status_m12.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+        src/nexus/nexus_v1_bpk_archive.c
+    )
+    target_link_libraries(test_csb_archive_required_split PRIVATE
+        firestaff_v2
+    )
+    target_include_directories(test_csb_archive_required_split PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_definitions(test_csb_archive_required_split PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_archive_required_split PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_archive_required_materialize_cache_gate
+        COMMAND test_csb_archive_required_split
+    )
+
     add_executable(test_dm1_pc34_multilanguage_required_gate
         tests/test_dm1_pc34_multilanguage_required_gate.c
         src/shared/asset_status_m12.c
