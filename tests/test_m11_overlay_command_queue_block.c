@@ -401,6 +401,59 @@ static void test_candidate_panel_blocks_direct_object_helpers(void)
                                 "C040 direct object helpers do not tick");
 }
 
+static void test_candidate_panel_blocks_direct_leader_hand_chest_helpers(void)
+{
+    M11_GameViewState state;
+    unsigned short handItem;
+    unsigned short chestThing;
+    uint32_t tick;
+    int direction;
+
+    seed_active_view(&state);
+    handItem = make_thing(THING_TYPE_JUNK, 0);
+    chestThing = make_thing(THING_TYPE_CONTAINER, 0);
+    state.inventoryPanelActive = 1;
+    state.v1OpenChestThing = chestThing;
+    state.v1OpenChestOpenedByEye = 1;
+    tick = state.world.gameTick;
+    direction = state.world.party.direction;
+
+    state.candidateMirrorOrdinal = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorPanelActive = 1;
+
+    ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, handItem), 0,
+              "C040 candidate blocks direct leader-hand set helper");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
+              "blocked leader-hand set leaves hand empty");
+
+    state.leaderHandObjectPresent = 1;
+    state.leaderHandThing = handItem;
+    state.leaderHandIconIndex = 7;
+    M11_GameView_ClearV1LeaderHandObject(&state);
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), handItem,
+              "C040 candidate blocks direct leader-hand clear helper");
+    ASSERT_EQ(state.leaderHandIconIndex, 7,
+              "blocked leader-hand clear preserves icon metadata");
+
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        chestThing;
+    ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 0,
+              "C040 candidate blocks direct action-hand chest open helper");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "blocked chest open preserves existing C040-covered chest");
+
+    M11_GameView_CloseV1OpenChest(&state);
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestThing,
+              "C040 candidate blocks direct chest close helper");
+    ASSERT_EQ(state.v1OpenChestOpenedByEye, 1,
+              "blocked chest close preserves pressing-eye chest metadata");
+    ASSERT_EQ(state.candidateMirrorPanelActive, 1,
+              "blocked leader-hand/chest helpers keep C040 live");
+    assert_no_pipeline_activity(&state, tick, direction,
+                                "C040 direct leader-hand/chest helpers do not tick");
+}
+
 static void test_candidate_panel_blocks_direct_quickload_only(void)
 {
     M11_GameViewState state;
@@ -992,6 +1045,7 @@ int main(void)
     test_candidate_panel_blocks_direct_inventory_toggle();
     test_candidate_panel_blocks_direct_map_toggle();
     test_candidate_panel_blocks_direct_object_helpers();
+    test_candidate_panel_blocks_direct_leader_hand_chest_helpers();
     test_candidate_panel_blocks_direct_quickload_only();
     test_candidate_panel_blocks_rest_and_source_save_commands();
     test_candidate_panel_hides_stale_action_rows();
