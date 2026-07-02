@@ -720,6 +720,86 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
               "invalid runtime explosion type is not drawable");
 }
 
+static void test_m11_runtime_samples_d2_d3_side_walls(void)
+{
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char squareData[49];
+    struct {
+        int relForward;
+        int relSide;
+        int mapX;
+        int mapY;
+        int viewSquare;
+        int c2500Row;
+        const char* label;
+    } cases[] = {
+        {2, -1, 2, 2,  7,  6, "D2L"},
+        {2,  1, 4, 2,  8,  7, "D2R"},
+        {2, -2, 1, 2, -1, -1, "D2L2"},
+        {2,  2, 5, 2, -1, -1, "D2R2"},
+        {3, -2, 1, 1, 14,  3, "D3L2"},
+        {3,  2, 5, 1, 15,  4, "D3R2"}
+    };
+    size_t i;
+
+    seed_active_view(&state);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(squareData, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+           sizeof(squareData));
+
+    map.width = 7;
+    map.height = 7;
+    tiles.squareData = squareData;
+    tiles.squareCount = (int)sizeof(squareData);
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1;
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 3;
+    state.world.party.mapY = 4;
+    state.world.party.direction = 0;
+
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        int outX = -1;
+        int outY = -1;
+        int element = -1;
+        int effective = -1;
+        int isWall = 0;
+        int isOpen = 1;
+        unsigned char raw = 0xffu;
+        squareData[cases[i].mapX * (int)map.height + cases[i].mapY] =
+            DUNGEON_SQUARE_MASK_THING_LIST;
+        ASSERT_EQ(M11_GameView_ProbeViewportCellClass(
+                      &state, cases[i].relForward, cases[i].relSide,
+                      &outX, &outY, &raw, &element, &effective,
+                      &isWall, &isOpen),
+                  1, cases[i].label);
+        ASSERT_EQ(outX, cases[i].mapX, cases[i].label);
+        ASSERT_EQ(outY, cases[i].mapY, cases[i].label);
+        ASSERT_EQ(raw, DUNGEON_SQUARE_MASK_THING_LIST, cases[i].label);
+        ASSERT_EQ(element, DUNGEON_ELEMENT_WALL, cases[i].label);
+        ASSERT_EQ(effective, DUNGEON_ELEMENT_WALL, cases[i].label);
+        ASSERT_EQ(isWall, 1, cases[i].label);
+        ASSERT_EQ(isOpen, 0, cases[i].label);
+        ASSERT_EQ(M11_GameView_GetF0115ViewSquareIndex(
+                      cases[i].relForward, cases[i].relSide),
+                  cases[i].viewSquare, cases[i].label);
+        ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(
+                      cases[i].relForward, cases[i].relSide),
+                  cases[i].c2500Row, cases[i].label);
+        squareData[cases[i].mapX * (int)map.height + cases[i].mapY] =
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    }
+}
+
 int main(void)
 {
     printf("=== M11 Overlay Command Queue Block Regression ===\n");
@@ -742,6 +822,7 @@ int main(void)
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();
     test_static_dungeon_effects_do_not_render_as_viewport_fireballs();
+    test_m11_runtime_samples_d2_d3_side_walls();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
