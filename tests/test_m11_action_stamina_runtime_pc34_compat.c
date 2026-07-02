@@ -509,6 +509,124 @@ static void test_melee_action_row_closed_door_targets_pref0407_champion_directio
               "door melee action preserves champion direction");
 }
 
+static void test_parry_action_row_routes_through_f0402_f0231(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonGroup_Compat groups[1];
+    unsigned char actions[3];
+    DM1_ActionXpRoute route;
+    int parryRow = -1;
+    int damageEmission = -1;
+    int minActionXp;
+    int i;
+
+    seed_state(&state, 80, 11);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(groups, 0, sizeof(groups));
+
+    ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_PARRY, &route), 1,
+              "PARRY has a source G0496/G0497 route for action-row XP");
+    if (!route.valid) return;
+    minActionXp = route.experienceGain * 2;
+    state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1;
+    state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 1;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIGHTER].experience = 500;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_PARRY].experience = 500;
+
+    weapons[0].type = 9; /* ActionSet 13: SWING, PARRY, CHOP. */
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 0;
+    groups[0].count = 0;
+    groups[0].health[0] = 200;
+    groups[0].cells = 0xFF;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "PARRY fixture opens action menu");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "PARRY fixture resolves source action rows");
+    for (i = 0; i < 3; ++i) {
+        if (actions[i] == DM1_ACTION_PARRY) {
+            parryRow = i;
+            break;
+        }
+    }
+    ASSERT_EQ(parryRow >= 0, 1,
+              "ActionSet 13 exposes PARRY row");
+    if (parryRow < 0) return;
+
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, parryRow), 1,
+              "PARRY action row routes through F0402/F0231 when target exists");
+
+    for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
+        if (state.lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
+            damageEmission = i;
+            break;
+        }
+    }
+    ASSERT_EQ(damageEmission >= 0, 1,
+              "PARRY action row emits live F0231 damage result");
+    ASSERT_EQ(state.actionDisabledTicks[0],
+              action_disabled_ticks_for_test(DM1_ACTION_PARRY),
+              "successful action-row PARRY keeps full disabled ticks");
+    ASSERT_EQ(state.actionDisabledIndex[0], DM1_ACTION_PARRY,
+              "successful action-row PARRY records PARRY as disabled action");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.skillIndex].experience >=
+                  500 + minActionXp,
+              1,
+              "successful action-row PARRY awards at least full G0497 Parry XP");
+    ASSERT_EQ(state.world.lifecycle.champions[0]
+                  .skills20[route.baseSkillIndex].experience >=
+                  500 + minActionXp,
+              1,
+              "successful action-row PARRY propagates at least full G0497 Fighter XP");
+}
+
 static void test_melee_action_row_halves_disable_ticks_when_f0402_fails(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -7742,6 +7860,7 @@ int main(void) {
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_targets_pref0407_champion_direction();
     test_melee_action_row_closed_door_targets_pref0407_champion_direction();
+    test_parry_action_row_routes_through_f0402_f0231();
     test_melee_action_row_halves_disable_ticks_when_f0402_fails();
     test_melee_action_row_respects_live_candidate_no_action();
     test_disrupt_action_row_rejects_material_creature();
