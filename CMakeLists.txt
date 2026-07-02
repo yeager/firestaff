@@ -3620,6 +3620,34 @@ endif()
     endif()
 endforeach()
 
+# DM1 V1 Hall-of-Champions probes recovered from local worktree triage.
+# The probe sources were already present on main; keep registration
+# independent of the legacy pool-list block so stale branch context cannot
+# reintroduce duplicate or outdated targets.
+foreach(_triage_hoc_probe_src IN ITEMS
+        "probes/m11/firestaff_dm1_v1_champion_mirror_leylla_ordinal14_unreachable_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_mirror_east_walkpath_ordinal_11_portrait_rect_position_pc34_compat.c"
+        "probes/m11/firestaff_dm1_v1_hall_scan_full_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_16_redraw_after_candidate_portrait_rect_position_probe.c"
+        "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_14_cancel_reopen_portrait_rect_position_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_15_popup_focus_return_portrait_rect_position_runtime_probe.c"
+        "probes/m11/firestaff_dm1_v1_champion_panel_full_party_hud_state_isolation_runtime_probe.c")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_triage_hoc_probe_src}")
+        get_filename_component(_triage_hoc_probe_exe "${_triage_hoc_probe_src}" NAME_WE)
+        if(NOT TARGET ${_triage_hoc_probe_exe})
+            add_executable(${_triage_hoc_probe_exe} ${_triage_hoc_probe_src})
+            target_link_libraries(${_triage_hoc_probe_exe} PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+            if(NOT MSVC)
+                target_compile_options(${_triage_hoc_probe_exe} PRIVATE -Wall -Wextra -O2)
+            endif()
+            add_test(
+                NAME ${_triage_hoc_probe_exe}
+                COMMAND ${_triage_hoc_probe_exe} "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+            )
+        endif()
+    endif()
+endforeach()
+
 # DM1 V1 Hall of Champions portrait ordinal 16 — south_return /
 # portrait_rect_position runtime probe.  Source-locked to:
 #   DUNGEON.C:2573 maps M011_CELL(sensor) against view dir.

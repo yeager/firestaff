@@ -570,8 +570,7 @@ int main(int argc, char** argv) {
         char msg[200];
         snprintf(msg, sizeof(msg),
                  "ordinal 15 sits at the col-7 right-edge: srcX(224) + "
-                 "portraitW(32) = 256 == atlasW(256) - last col of row 1",
-                 ORDINAL_15_SRC_X);
+                 "portraitW(32) = 256 == atlasW(256) - last col of row 1");
         CHECK(ORDINAL_15_SRC_X + D1C_PORTRAIT_W == ATLAS_W, msg);
     }
 

@@ -54,6 +54,7 @@ int main(int argc, char** argv) {
     printf("\nSummary: %d distinct ordinals found across %d tested cells x 4 dirs = %d poses\n",
            seenOrdinals, (xMax - xMin + 1) * (yMax - yMin + 1),
            (xMax - xMin + 1) * (yMax - yMin + 1) * 4);
+    printf("Matched ordinal mask: 0x%06X\n", matchedMask);
     printf("Ordinal counts:\n");
     for (int i = 0; i < 24; ++i) {
         if (hits[i] > 0) printf("  ordinal=%d -> %d poses\n", i, hits[i]);

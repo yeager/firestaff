@@ -431,16 +431,22 @@ static int check_side_wall_pose(M11_GameViewState* game,
     return ok;
 }
 
+#if defined(__GNUC__) || defined(__clang__)
+#define FIRESTAFF_MAYBE_UNUSED __attribute__((unused))
+#else
+#define FIRESTAFF_MAYBE_UNUSED
+#endif
+
 /* Drive the same east_walkpath through the public input path so
  * the COMMAND.C F0359 / F0361 command queue, CLIKMENU.C F0365 /
  * F0366 relative movement conversion, and MOVESENS.C:556 viewport
  * redraw all participate in the portrait_rect_position re-blt.
  * Returns 1 on pass, 0 on fail. */
-static int check_input_walk_step(M11_GameViewState* game,
-                                 const M11_AssetSlot* portraits,
-                                 int prevOrdinal,
-                                 const EastWalkStep* step,
-                                 unsigned char* outFb) {
+static int FIRESTAFF_MAYBE_UNUSED check_input_walk_step(M11_GameViewState* game,
+                                                        const M11_AssetSlot* portraits,
+                                                        int prevOrdinal,
+                                                        const EastWalkStep* step,
+                                                        unsigned char* outFb) {
     MirrorMatch match;
     int ordinal;
     int ok = 1;
