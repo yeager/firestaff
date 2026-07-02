@@ -12,8 +12,8 @@
  *       (2) Door state C0/C1 (open/one-fourth) - pass.
  *       (3) G0275_as_CurrentMapDoorInfo[Type].Attributes carries
  *           MASK0x0002_PROJECTILES_CAN_PASS_THROUGH and the
- *           associated-thing type predicate (kinetic: random
- *           roll < launcher strength, with object AllowedSlots
+ *           associated-thing type predicate (kinetic: projectile attack
+ *           > RANDOM(128), with object AllowedSlots
  *           MASK0x0100_POUCH_AND_PASS_THROUGH_DOORS; magical:
  *           subtype >= C0xFF83 excluding OPEN_DOOR) - pass.
  *       (4) otherwise -> F0232 destroy-by-attack.
@@ -38,10 +38,10 @@
  *   - F0814 classifies a closed portcullis (state 4 + MASK0x0002)
  *     as PROJECTILE_BLOCKER_CLOSED_DOOR. The door does NOT become
  *     a wall.
- *   - F0816 for a kinetic thrown item with launcherStrength > 0
- *     (PROJEXPL.C:490-500) rolls F0732_COMBAT_RngRandom against
- *     100; with NULL rng the roll is 0 and launcherStrength=100
- *     therefore always passes. passes=1 means the projectile
+ *   - F0816 for a kinetic thrown item whose ObjectInfo.AllowedSlots
+ *     has MASK0x0100 (PROJEXPL.C:493-501) rolls
+ *     F0732_COMBAT_RngRandom against 128; with NULL rng the roll is
+ *     0 and attack=24 therefore passes. passes=1 means the projectile
  *     does NOT consume its slot.
  *   - F0811 cross-cell advance: resultKind=PROJECTILE_RESULT_FLEW,
  *     despawn=0, emittedCombatAction/emittedExplosion/
@@ -69,16 +69,16 @@
  *     one-fourth, half, three-fourth, full, destroyed) for a
  *     thrown item WITHOUT destDoorAllowsProjectilePassThrough.
  *     None of those cases ever exercise the F0816 kinetic
- *     random-roll (launcherStrength>0) pass-through branch.
+ *     random-roll + AllowedSlots pass-through branch.
  *     This test sets destDoorAllowsProjectilePassThrough=1
- *     and launcherStrength=100 so the F0816 roll is the
+ *     and reserved2 MASK0x0100 so the F0816 roll is the
  *     only thing that gates the result, and pins the
  *     full F0811->F0820 chain.
  *   - test_dm1_v1_projectile_explosion_render covers
  *     HARM_NON_MATERIAL (magical) pass-through with
  *     destDoorAllowsProjectilePassThrough=1. This test
- *     covers the KINETIC pass-through (F0217:490-500
- *     launcherStrength roll), which is a different
+ *     covers the KINETIC pass-through (F0217:493-501
+ *     attack roll + AllowedSlots mask), which is a different
  *     code path inside F0816.
  *   - test_dm1_v1_projectile_side_wall_impact covers
  *     PROJECTILE_BLOCKER_WALL, BLOCKER_STAIRS, BLOCKER_FLUXCAGE,
@@ -110,7 +110,7 @@
 #define PORTCULLIS_DEFS_ANCHOR \
     "ReDMCSB DEFS.H:1039-1044 C0..C5 door states"
 #define PORTCULLIS_F0816_ANCHOR \
-    "ReDMCSB PROJEXPL.C:490-500 F0816 kinetic launcherStrength roll"
+    "ReDMCSB PROJEXPL.C:493-501 F0816 kinetic attack roll and AllowedSlots mask"
 #define PORTCULLIS_F0820_ANCHOR \
     "ReDMCSB PROJEXPL.C:F0217 lines 502-504 F0820 mirror impact branch"
 #define PORTCULLIS_CHANGE720_ANCHOR \
@@ -172,10 +172,12 @@ static void make_thrown_dagger(struct ProjectileInstance_Compat* p)
     p->stepEnergy         = 4;
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode     = COMBAT_ATTACK_NORMAL;
-    /* PROJEXPL.C:490-500 - dagger / rock thrown items have
-     * launcherStrength set by the F0810 call site. We pin 100
-     * here so F0816's roll (NULL rng -> 0) always passes. */
+    /* PROJEXPL.C:F0217 lines 493-501 - the associated object's
+     * ObjectInfo.AllowedSlots must carry MASK0x0100 and
+     * Projectile->Attack must beat RANDOM(128). */
     p->launcherStrength   = 100;
+    p->reserved2          =
+        PROJECTILE_ASSOCIATED_ALLOWED_SLOTS_POUCH_PASS_THROUGH_DOORS;
     p->flags              = 0;
 }
 
@@ -224,25 +226,44 @@ static void test_f0814_portcullis_grate_classified_as_closed_door(void)
                "BLOCKER_CLOSED_DOOR even with MASK0x0002");
 }
 
-/* ---- (2) F0816 - kinetic launcherStrength roll always passes ---- */
+/* ---- (2) F0816 - kinetic attack roll + AllowedSlots passes ---- */
 
-static void test_f0816_kinetic_launcher_strength_passes_grate(void)
+static void test_f0816_kinetic_attack_allowed_slots_passes_grate(void)
 {
     int passes = -1;
     struct ProjectileInstance_Compat p;
     struct CellContentDigest_Compat d;
 
-    printf("test_f0816_kinetic_launcher_strength_passes_grate\n");
+    printf("test_f0816_kinetic_attack_allowed_slots_passes_grate\n");
 
     make_thrown_dagger(&p);
     make_closed_portcullis_grate_digest(&d);
-    /* NULL rng -> F0732 returns 0 -> roll=0 < launcherStrength=100. */
+    /* NULL rng -> F0732 returns 0 -> attack=24 > roll=0. */
     expect_int("f0816.rc",
                F0816_PROJECTILE_DoesPassThroughDoor_Compat(&p, &d, NULL,
                                                             &passes),
                1, PORTCULLIS_F0816_ANCHOR);
     expect_int("f0816.passes", passes, 1,
-               "PROJEXPL.C:490-500 F0816 kinetic pass-through roll");
+               "PROJEXPL.C:493-501 F0816 kinetic pass-through roll");
+}
+
+static void test_f0816_kinetic_without_allowed_slots_hits_grate(void)
+{
+    int passes = -1;
+    struct ProjectileInstance_Compat p;
+    struct CellContentDigest_Compat d;
+
+    printf("test_f0816_kinetic_without_allowed_slots_hits_grate\n");
+
+    make_thrown_dagger(&p);
+    make_closed_portcullis_grate_digest(&d);
+    p.reserved2 = 0;
+    expect_int("f0816.no_allowed_slots.rc",
+               F0816_PROJECTILE_DoesPassThroughDoor_Compat(&p, &d, NULL,
+                                                            &passes),
+               1, PORTCULLIS_F0816_ANCHOR);
+    expect_int("f0816.no_allowed_slots.passes", passes, 0,
+               "PROJEXPL.C:497 requires MASK0x0100_ALLOWED_SLOTS");
 }
 
 static void test_f0816_key_icon_cannot_pass_closed_grate(void)
@@ -395,7 +416,7 @@ static void test_source_evidence_string(void)
         "contract_only=1; no GRAPHICS.DAT/DUNGEON.DAT load. "
         "ReDMCSB PROJEXPL.C:F0217 lines 485-505 four-part "
         "pass-through door predicate. ReDMCSB PROJEXPL.C:490-500 "
-        "F0816 kinetic launcherStrength random roll. ReDMCSB "
+        "F0816 kinetic attack random roll and ObjectInfo AllowedSlots. ReDMCSB "
         "PROJEXPL.C:F0217 lines 496-501 PC34 CHANGE2_04 blocks "
         "C176..C191 key icons from closed-door pass-through. ReDMCSB "
         "PROJEXPL.C:F0219 lines 717-725 F0811 cross-cell mirror. "
@@ -417,7 +438,7 @@ static void test_source_evidence_string(void)
                     "PROJEXPL.C:F0217 lines 485-505",
                     "F0217 source evidence");
     expect_contains("evidence.f0816", kEvidence,
-                    "F0816 kinetic launcherStrength",
+                    "F0816 kinetic attack random roll",
                     "F0816 source evidence");
     expect_contains("evidence.keys", kEvidence,
                     "C176..C191 key icons",
@@ -451,7 +472,8 @@ static void test_source_evidence_string(void)
 int main(void)
 {
     test_f0814_portcullis_grate_classified_as_closed_door();
-    test_f0816_kinetic_launcher_strength_passes_grate();
+    test_f0816_kinetic_attack_allowed_slots_passes_grate();
+    test_f0816_kinetic_without_allowed_slots_hits_grate();
     test_f0816_key_icon_cannot_pass_closed_grate();
     test_f0811_thrown_dagger_advances_through_grate();
     test_f0820_direct_pass_through_returns_flew();

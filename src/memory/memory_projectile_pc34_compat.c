@@ -513,17 +513,16 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
         return 1;
     }
 
-    /* Kinetic pass-through (PROJEXPL.C:490-500): the original
-     * rolls M002_RANDOM(100) and the kinetic pass fires when the
-     * roll is below the attacker's launcher / arm strength.  v1
-     * implements the source-locked roll using the launcher's
-     * launcherStrength field on the projectile instance; when the
-     * field is 0 the original always rolled against a 0 threshold
-     * and the pass never fires, so we keep the same default.
-     * For DAGGER / ROCK (thrown items) the launcher strength is
-     * set by the F0810 call site. */
+    /* ReDMCSB PROJEXPL.C:F0217 lines 493-501: a kinetic associated
+     * object may pass only through a door whose DoorInfo has
+     * MASK0x0002, only when Projectile->Attack beats M003_RANDOM(128),
+     * and only when ObjectInfo.AllowedSlots has MASK0x0100. PC 3.4 then
+     * adds the key-icon rejection below. reserved2 is a transient
+     * ObjectInfo.AllowedSlots payload filled by the M10 orchestrator. */
     if (in->projectileCategory == PROJECTILE_CATEGORY_KINETIC
-        && in->launcherStrength > 0
+        && digest->destDoorAllowsProjectilePassThrough
+        && (in->reserved2 &
+            PROJECTILE_ASSOCIATED_ALLOWED_SLOTS_POUCH_PASS_THROUGH_DOORS) != 0
         && digest->destDoorState != PROJECTILE_DOOR_STATE_DESTROYED) {
         if (in->reserved0 >= PROJECTILE_ASSOCIATED_ICON_IRON_KEY &&
             in->reserved0 <= PROJECTILE_ASSOCIATED_ICON_MASTER_KEY) {
@@ -533,8 +532,8 @@ int F0816_PROJECTILE_DoesPassThroughDoor_Compat(
             *outPasses = 0;
             return 1;
         }
-        unsigned int roll = F0732_COMBAT_RngRandom_Compat(rng, 100);
-        if (roll < (unsigned int)in->launcherStrength) {
+        unsigned int roll = F0732_COMBAT_RngRandom_Compat(rng, 128);
+        if ((unsigned int)in->attack > roll) {
             *outPasses = 1;
             return 1;
         }

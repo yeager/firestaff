@@ -1404,6 +1404,127 @@ static void test_orch_projectile_wall_impact_appends_associated_weapon_raw_tail(
     assert(world.timeline.count == 0);
 }
 
+static void run_orch_projectile_portcullis_allowed_slots_case(
+    int weaponType,
+    int expectPassThrough)
+{
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonDoor_Compat doors[1];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    unsigned short squareFirstThings[2];
+    struct ProjectileCreateInput_Compat createIn;
+    struct TimelineEvent_Compat firstMove;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int slot = -1;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(doors, 0, sizeof(doors));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+    squareData[(1 * 3) + 1] =
+        square_for_test(DUNGEON_ELEMENT_CORRIDOR,
+                        DUNGEON_SQUARE_MASK_THING_LIST);
+    squareData[(2 * 3) + 1] =
+        square_for_test(DUNGEON_ELEMENT_DOOR,
+                        DUNGEON_SQUARE_MASK_THING_LIST |
+                        PROJECTILE_DOOR_STATE_CLOSED_FULL);
+    squareFirstThings[0] = THING_ENDOFLIST;
+    squareFirstThings[1] = make_thing(THING_TYPE_DOOR, 0);
+    doors[0].type = 0;
+    doors[0].next = THING_ENDOFLIST;
+    weapons[0].type = (unsigned char)weaponType;
+    weapons[0].next = THING_NONE;
+
+    dungeon.header.mapCount = 1;
+    dungeon.header.squareFirstThingCount = 2;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    maps[0].doorSet0 = 0;
+    maps[0].doorSet1 = 1;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 2;
+    things.doors = doors;
+    things.doorCount = 1;
+    things.loaded = 1;
+    world.dungeon = &dungeon;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.party.champions[0].hp.current = 100;
+
+    memset(&createIn, 0, sizeof(createIn));
+    createIn.category = PROJECTILE_CATEGORY_KINETIC;
+    createIn.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    createIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    createIn.ownerIndex = 0;
+    createIn.mapIndex = 0;
+    createIn.mapX = 1;
+    createIn.mapY = 1;
+    createIn.cell = 2;
+    createIn.direction = 1;
+    createIn.kineticEnergy = 80;
+    createIn.attack = expectPassThrough ? 200 : 20;
+    createIn.stepEnergy = 10;
+    createIn.currentTick = 100;
+    createIn.firstMoveGraceFlag = 1;
+    createIn.associatedThing = make_thing(THING_TYPE_WEAPON, 0);
+    assert(F0810_PROJECTILE_Create_Compat(
+        &createIn, &world.projectiles, &slot, &firstMove) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove) == 1);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
+
+    if (expectPassThrough) {
+        assert(world.projectiles.count == 1);
+        assert(world.projectiles.entries[0].mapX == 2);
+        assert(world.projectiles.entries[0].mapY == 1);
+        assert(world.projectiles.entries[0].cell == 3);
+        assert(world.timeline.count == 1);
+        assert(world.timeline.events[0].kind == TIMELINE_EVENT_PROJECTILE_MOVE);
+        assert(world.timeline.events[0].mapX == 2);
+        assert(world.timeline.events[0].mapY == 1);
+        assert(squareFirstThings[0] == THING_ENDOFLIST);
+    } else {
+        assert(world.projectiles.count == 0);
+        assert(squareFirstThings[0] ==
+               (unsigned short)(make_thing(THING_TYPE_WEAPON, 0) | (2u << 14)));
+    }
+    assert(squareFirstThings[1] == make_thing(THING_TYPE_DOOR, 0));
+}
+
+static void test_orch_projectile_portcullis_uses_object_allowed_slots(void)
+{
+    /* ReDMCSB PROJEXPL.C:F0217 lines 493-501: portcullis DoorInfo
+     * MASK0x0002 plus ObjectInfo.AllowedSlots MASK0x0100 lets a kinetic
+     * dagger pass; a quiver-only weapon type still impacts and drops. */
+    run_orch_projectile_portcullis_allowed_slots_case(8, 1);
+    run_orch_projectile_portcullis_allowed_slots_case(4, 0);
+}
+
 static void test_orch_slime_wall_impact_emits_wooden_thud_without_explosion(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -6233,6 +6354,7 @@ int main(void) {
     test_orch_projectile_wall_impact_emits_non_explosion_sound();
     test_orch_projectile_wall_impact_materializes_associated_weapon();
     test_orch_projectile_wall_impact_appends_associated_weapon_raw_tail();
+    test_orch_projectile_portcullis_uses_object_allowed_slots();
     test_orch_slime_wall_impact_emits_wooden_thud_without_explosion();
     test_orch_projectile_closed_door_impact_destroys_door();
     test_orch_non_weapon_door_impact_emits_wooden_thud();
