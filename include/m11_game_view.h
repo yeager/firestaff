@@ -270,6 +270,8 @@ typedef struct {
     int endgameChaosOrderSwitchCount;
     int endgameFuseSequenceUpdateTicks;
     int endgameFuseSequenceTotalUpdateTicks;
+    int endgameFuseSequenceFrameReplayTicks;
+    int endgameFuseSequenceFrameReplayRemainingTicks;
     int endgameTextMessageDelayTicks;
     int endgameFuseSequenceDelayTicks;
     int endgameFuseSequenceDelayRemainingTicks;
