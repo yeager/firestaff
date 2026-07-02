@@ -2999,6 +2999,7 @@ static void test_orch_projectile_group_hit_killed_some_applies_f0190_side_effect
     struct DungeonWeapon_Compat weapons[8];
     struct DungeonArmour_Compat armours[8];
     struct DungeonJunk_Compat junks[8];
+    unsigned char rawGroupData[16];
     unsigned char rawWeaponData[32];
     unsigned char rawArmourData[32];
     unsigned char rawJunkData[32];
@@ -3025,6 +3026,7 @@ static void test_orch_projectile_group_hit_killed_some_applies_f0190_side_effect
     memset(weapons, 0, sizeof(weapons));
     memset(armours, 0, sizeof(armours));
     memset(junks, 0, sizeof(junks));
+    memset(rawGroupData, 0xee, sizeof(rawGroupData));
     memset(rawWeaponData, 0, sizeof(rawWeaponData));
     memset(rawArmourData, 0, sizeof(rawArmourData));
     memset(rawJunkData, 0, sizeof(rawJunkData));
@@ -3091,6 +3093,8 @@ static void test_orch_projectile_group_hit_killed_some_applies_f0190_side_effect
     things.squareFirstThingCount = 1;
     things.groups = groups;
     things.groupCount = 1;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.rawThingData[THING_TYPE_GROUP] = rawGroupData;
     groups[0].next = THING_ENDOFLIST;
     groups[0].creatureType = CREATURE_TYPE_ANIMATED_ARMOUR;
     groups[0].count = 1;
@@ -3149,6 +3153,16 @@ static void test_orch_projectile_group_hit_killed_some_applies_f0190_side_effect
     assert(groups[0].count == 0);
     assert(groups[0].health[0] == 200);
     assert(squareFirstThings[0] == make_thing(THING_TYPE_GROUP, 0));
+    assert(read_u16_le_for_test(rawGroupData + 0) == groups[0].next);
+    assert(read_u16_le_for_test(rawGroupData + 2) == groups[0].slot);
+    assert(rawGroupData[4] == groups[0].creatureType);
+    assert(rawGroupData[5] == groups[0].cells);
+    assert(read_u16_le_for_test(rawGroupData + 6) == groups[0].health[0]);
+    assert(read_u16_le_for_test(rawGroupData + 8) == groups[0].health[1]);
+    assert(read_u16_le_for_test(rawGroupData + 10) == groups[0].health[2]);
+    assert(read_u16_le_for_test(rawGroupData + 12) == groups[0].health[3]);
+    assert(((read_u16_le_for_test(rawGroupData + 14) >> 5) & 0x03u) ==
+           groups[0].count);
     assert(world.explosions.count == 1);
     assert(world.explosions.entries[0].explosionType == C040_EXPLOSION_SMOKE);
     assert(world.explosions.entries[0].mapIndex == 0);

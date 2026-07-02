@@ -1121,6 +1121,38 @@ static void orch_write_raw_next_compat(
           orch_next_thing_compat(things, thing));
 }
 
+static void orch_write_raw_group_compat(
+    struct DungeonThings_Compat* things,
+    int groupIndex)
+{
+    struct DungeonGroup_Compat* group;
+    unsigned char* raw;
+    uint16_t bitfield;
+    if (!things || !things->groups || groupIndex < 0 ||
+        groupIndex >= things->groupCount ||
+        groupIndex >= things->thingCounts[THING_TYPE_GROUP] ||
+        !things->rawThingData[THING_TYPE_GROUP]) {
+        return;
+    }
+    group = &things->groups[groupIndex];
+    raw = things->rawThingData[THING_TYPE_GROUP] + (groupIndex * 16);
+    bitfield = (uint16_t)(raw[14] | ((uint16_t)raw[15] << 8));
+    bitfield = (uint16_t)((bitfield & 0xf890u) |
+                          ((uint16_t)(group->behavior & 0x0Fu)) |
+                          ((uint16_t)(group->count & 0x03u) << 5) |
+                          ((uint16_t)(group->direction & 0x03u) << 8) |
+                          ((uint16_t)(group->doNotDiscard & 0x01u) << 10));
+    w_u16(raw + 0, group->next);
+    w_u16(raw + 2, group->slot);
+    raw[4] = group->creatureType;
+    raw[5] = group->cells;
+    w_u16(raw + 6, group->health[0]);
+    w_u16(raw + 8, group->health[1]);
+    w_u16(raw + 10, group->health[2]);
+    w_u16(raw + 12, group->health[3]);
+    w_u16(raw + 14, bitfield);
+}
+
 static void orch_write_raw_weapon_compat(
     struct DungeonThings_Compat* things,
     int weaponIndex)
@@ -4103,6 +4135,11 @@ static int orch_apply_projectile_group_action_compat(
         orch_schedule_projectile_hit_group_reaction_compat(
             world, groupIndex, group, action);
     }
+    /* ReDMCSB GROUP.C:F0190 lines 892-917 mutates the live group record
+     * after projectile damage: surviving groups carry compacted HP/cells and
+     * all-kill groups are unlinked.  Mirror those decoded changes into the
+     * raw DUNGEON.DAT record used by save/export and later raw inspections. */
+    orch_write_raw_group_compat(world->things, groupIndex);
     return associatedThingMovedToGroup ? 2 : 1;
 }
 
@@ -6111,6 +6148,11 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                                 originalGroupCount, applyOutcome);
                         orch_cmd_attack_apply_group_kill_side_effects_compat(
                             world, groupIndex, applyOutcome);
+                        /* ReDMCSB GROUP.C:F0190 lines 892-917 compacts or
+                         * unlinks the damaged group after F0231/F0738 melee
+                         * damage.  Keep the raw DUNGEON.DAT group record
+                         * synchronized with the decoded group state. */
+                        orch_write_raw_group_compat(world->things, groupIndex);
                     }
                     if (applyOutcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES ||
                         applyOutcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
