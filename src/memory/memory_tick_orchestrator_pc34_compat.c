@@ -4162,6 +4162,41 @@ static int orch_projectile_associated_allowed_slots_compat(
     return (int)s_object_info_allowed_slots[objectInfoIndex];
 }
 
+static int orch_materialize_projectile_tick_explosion_compat(
+    struct GameWorld_Compat* world,
+    const struct ProjectileTickResult_Compat* tickResult)
+{
+    struct ExplosionCreateInput_Compat explosionIn;
+    struct TimelineEvent_Compat firstExplosionAdvance;
+    int explosionSlot = -1;
+
+    if (!world || !tickResult || !tickResult->emittedExplosion) return 0;
+
+    memset(&explosionIn, 0, sizeof(explosionIn));
+    explosionIn.explosionType =
+        tickResult->outExplosion.explosionType;
+    explosionIn.attack = tickResult->outExplosion.attack;
+    explosionIn.mapIndex = tickResult->outExplosion.mapIndex;
+    explosionIn.mapX = tickResult->outExplosion.mapX;
+    explosionIn.mapY = tickResult->outExplosion.mapY;
+    explosionIn.cell = tickResult->outExplosion.cell;
+    explosionIn.centered = tickResult->outExplosion.centered;
+    explosionIn.poisonAttack = tickResult->outExplosion.poisonAttack;
+    explosionIn.currentTick = (int)world->gameTick;
+    explosionIn.ownerKind = tickResult->outExplosion.ownerKind;
+    explosionIn.ownerIndex = tickResult->outExplosion.ownerIndex;
+    explosionIn.creatorProjectileSlot =
+        tickResult->outExplosion.creatorProjectileSlot;
+    if (F0821_EXPLOSION_Create_Compat(
+            &explosionIn, &world->explosions, &explosionSlot,
+            &firstExplosionAdvance)) {
+        (void)F0721_TIMELINE_Schedule_Compat(
+            &world->timeline, &firstExplosionAdvance);
+        return 1;
+    }
+    return 0;
+}
+
 static int orch_handle_projectile_move_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* event,
@@ -4214,30 +4249,8 @@ static int orch_handle_projectile_move_event_compat(
             }
         }
         if (tickResult.emittedExplosion) {
-            struct ExplosionCreateInput_Compat explosionIn;
-            struct TimelineEvent_Compat firstExplosionAdvance;
-            int explosionSlot = -1;
-            memset(&explosionIn, 0, sizeof(explosionIn));
-            explosionIn.explosionType =
-                tickResult.outExplosion.explosionType;
-            explosionIn.attack = tickResult.outExplosion.attack;
-            explosionIn.mapIndex = tickResult.outExplosion.mapIndex;
-            explosionIn.mapX = tickResult.outExplosion.mapX;
-            explosionIn.mapY = tickResult.outExplosion.mapY;
-            explosionIn.cell = tickResult.outExplosion.cell;
-            explosionIn.centered = tickResult.outExplosion.centered;
-            explosionIn.poisonAttack = tickResult.outExplosion.poisonAttack;
-            explosionIn.currentTick = (int)world->gameTick;
-            explosionIn.ownerKind = tickResult.outExplosion.ownerKind;
-            explosionIn.ownerIndex = tickResult.outExplosion.ownerIndex;
-            explosionIn.creatorProjectileSlot =
-                tickResult.outExplosion.creatorProjectileSlot;
-            if (F0821_EXPLOSION_Create_Compat(
-                    &explosionIn, &world->explosions, &explosionSlot,
-                    &firstExplosionAdvance)) {
-                (void)F0721_TIMELINE_Schedule_Compat(
-                    &world->timeline, &firstExplosionAdvance);
-            }
+            (void)orch_materialize_projectile_tick_explosion_compat(
+                world, &tickResult);
         }
         if (tickResult.emittedDoorDestructionEvent ||
             tickResult.emittedDoorToggleEvent) {
@@ -4263,17 +4276,44 @@ static int orch_handle_projectile_move_event_compat(
             emit(result, EMIT_SOUND_REQUEST, tickResult.emittedSoundCode,
                  projectile->mapX, projectile->mapY, projectile->mapIndex);
         }
+        if (tickResult.resultKind == PROJECTILE_RESULT_HIT_OTHER_PROJECTILE &&
+            tickResult.emittedSoundRequest) {
+            /* ReDMCSB PROJEXPL.C:F0218 lines 621-638 dispatches F0217 for
+             * projectile interactions; F0217 lines 587-600 then requests the
+             * ordinary non-explosion impact sound at the projectile square. */
+            emit(result, EMIT_SOUND_REQUEST, tickResult.emittedSoundCode,
+                 projectile->mapX, projectile->mapY, projectile->mapIndex);
+        }
         if (tickResult.resultKind == PROJECTILE_RESULT_HIT_OTHER_PROJECTILE) {
             int otherIndex = orch_find_projectile_collision_peer_compat(
                 world, projectile, projectileIndex, &digest);
             if (otherIndex >= 0) {
                 struct ProjectileInstance_Compat* other =
                     &world->projectiles.entries[otherIndex];
+                struct CellContentDigest_Compat peerDigest = digest;
+                struct ProjectileTickResult_Compat peerImpact;
                 /* Firestaff Phase17 v1 intentionally makes projectile-vs-
                  * projectile collision order-independent: both projectiles
                  * despawn. ReDMCSB F0218/F0217 is the source-locked impact
                  * delete model for projectile interactions and explicitly
                  * deletes the impacted projectile event after F0217. */
+                peerDigest.destMapIndex = other->mapIndex;
+                peerDigest.destMapX = other->mapX;
+                peerDigest.destMapY = other->mapY;
+                peerDigest.destSquareType = digest.sourceSquareType;
+                memset(&peerImpact, 0, sizeof(peerImpact));
+                if (F0820_PROJECTILE_ResolveCollision_Compat(
+                        other, &peerDigest,
+                        PROJECTILE_RESULT_HIT_OTHER_PROJECTILE,
+                        world->gameTick, &world->masterRng, &peerImpact)) {
+                    (void)orch_materialize_projectile_tick_explosion_compat(
+                        world, &peerImpact);
+                    if (peerImpact.emittedSoundRequest) {
+                        emit(result, EMIT_SOUND_REQUEST,
+                             peerImpact.emittedSoundCode,
+                             other->mapX, other->mapY, other->mapIndex);
+                    }
+                }
                 (void)orch_materialize_projectile_associated_thing_compat(
                     world, other, 0);
                 (void)orch_delete_projectile_move_events_compat(
