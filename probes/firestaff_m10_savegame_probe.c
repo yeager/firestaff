@@ -18,21 +18,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-
-#ifdef _WIN32
-#include <direct.h>
-#include <sys/stat.h>
-#define FS_M10_MKDIR(path) _mkdir(path)
-#define FS_M10_STAT _stat
-#define FS_M10_ISDIR(mode) (((mode) & _S_IFDIR) != 0)
-#else
-#include <sys/stat.h>
-#include <sys/types.h>
-#define FS_M10_MKDIR(path) mkdir((path), 0777)
-#define FS_M10_STAT stat
-#define FS_M10_ISDIR(mode) S_ISDIR(mode)
-#endif
 
 #include "memory_savegame_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
@@ -443,53 +428,22 @@ static void build_populated_fixture(struct SaveGameFixture* fx) {
 /* Compare two structs of the same type field-by-field via memcmp. */
 #define BIT_EQ(a, b) (memcmp((a), (b), sizeof(*(a))) == 0)
 
-static int ensure_output_dir(const char* path) {
-    struct FS_M10_STAT st;
-    if (!path || !path[0]) {
-        return 0;
-    }
-    if (FS_M10_STAT(path, &st) == 0) {
-        return FS_M10_ISDIR(st.st_mode) ? 1 : 0;
-    }
-    if (FS_M10_MKDIR(path) == 0) {
-        return 1;
-    }
-    if (errno == EEXIST && FS_M10_STAT(path, &st) == 0) {
-        return FS_M10_ISDIR(st.st_mode) ? 1 : 0;
-    }
-    return 0;
-}
-
 int main(int argc, char* argv[]) {
     FILE* report;
     FILE* invariants;
     char path_buf[512];
     int failCount = 0;
     int invariantCount = 0;
-    int selfTestMode = 0;
-    int knownMutationRoundTripFail = 0;
-    int knownMutationEdgeMaxFail = 0;
     const char* dungeonPath = 0;
     const char* outputDir = 0;
 
-    if (argc >= 3 && strcmp(argv[1], "--self-test") == 0) {
-        selfTestMode = 1;
-        dungeonPath = "(self-test:no-dungeon)";
-        outputDir = argv[2];
-    } else if (argc >= 3) {
-        dungeonPath = argv[1];
-        outputDir = argv[2];
-    } else {
+    if (argc < 3) {
         fprintf(stderr, "Usage: %s <DUNGEON.DAT> <output_dir>\n", argv[0]);
-        fprintf(stderr, "       %s --self-test <output_dir>\n", argv[0]);
         return 1;
     }
+    dungeonPath = argv[1];
+    outputDir   = argv[2];
     (void)dungeonPath; /* Phase 15 doesn't need DUNGEON.DAT for any invariant. */
-
-    if (!ensure_output_dir(outputDir)) {
-        fprintf(stderr, "FAIL: cannot create output directory %s\n", outputDir);
-        return 1;
-    }
 
     snprintf(path_buf, sizeof(path_buf), "%s/savegame_probe.md", outputDir);
     report = fopen(path_buf, "w");
@@ -791,9 +745,6 @@ int main(int argc, char* argv[]) {
         {
             /* Mutations: entries[0..count-1] plus unused slots (zero). */
             int ok = BIT_EQ(&a.mutations, &b.mutations);
-            if (!ok) {
-                knownMutationRoundTripFail = 1;
-            }
             CHECK(ok,
                   "Dungeon-mutation list field-by-field equal after load (count + entries + zero tail)");
         }
@@ -822,6 +773,8 @@ int main(int argc, char* argv[]) {
         struct CombatResult_Compat wakeResult;
         unsigned char* buf = malloc(62080);
         int w = 0;
+        int errSave;
+        int errLoad;
         int ok;
         const int expectedKinds[4] = {
             TIMELINE_EVENT_STATUS_TIMEOUT,
@@ -1202,9 +1155,6 @@ int main(int argc, char* argv[]) {
               memcmp(&a.mutations.entries[1023],
                      &b.mutations.entries[1023],
                      sizeof(a.mutations.entries[0])) == 0);
-        if (!rc) {
-            knownMutationEdgeMaxFail = 1;
-        }
         CHECK(rc,
               "Edge-max mutations: 1024 entries; after load entries[0] and entries[1023] match original");
         free(buf);
@@ -1262,24 +1212,10 @@ int main(int argc, char* argv[]) {
     fprintf(invariants, "\nInvariant count: %d\n", invariantCount);
     if (failCount == 0) {
         fprintf(invariants, "Status: PASS\n");
-    } else if (selfTestMode &&
-               failCount == 2 &&
-               knownMutationRoundTripFail &&
-               knownMutationEdgeMaxFail) {
-        fprintf(invariants,
-                "Status: PASS_WITH_KNOWN_MUTATION_SERIALIZATION_GAP\n");
-        fprintf(invariants,
-                "Known gap: current self-test allows only the two mutation "
-                "serialization rows to fail; all other save/load invariants "
-                "must stay green.\n");
     } else {
         fprintf(invariants, "Status: FAIL (%d failures)\n", failCount);
     }
     fclose(invariants);
     fclose(report);
-    return (failCount == 0 ||
-            (selfTestMode &&
-             failCount == 2 &&
-             knownMutationRoundTripFail &&
-             knownMutationEdgeMaxFail)) ? 0 : 1;
+    return failCount > 0 ? 1 : 0;
 }
