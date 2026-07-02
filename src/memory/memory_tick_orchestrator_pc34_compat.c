@@ -28,6 +28,8 @@ enum {
     ORCH_SOUND_WOODEN_THUD_PC34 = 4,
     ORCH_POTION_EMPTY_FLASK_PC34 = 20,
     ORCH_JUNK_ZOKATHRA_PC34 = 51,
+    ORCH_WEAPON_TORCH_PC34 = 2,
+    ORCH_TORCH_DECAY_TICK_MASK_PC34 = 511,
     ORCH_BLACK_FLAME_MAX_HEALTH_PC34 = 1000
 };
 
@@ -1177,6 +1179,59 @@ static void orch_write_raw_weapon_compat(
                           ((uint16_t)(weapon->lit & 0x01u) << 15));
     w_u16(raw + 0, weapon->next);
     w_u16(raw + 2, bitfield);
+}
+
+static int orch_get_lit_torch_weapon_index_compat(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing)
+{
+    int weaponIndex;
+    const struct DungeonWeapon_Compat* weapon;
+    if (!things || !things->weapons ||
+        thing == THING_NONE || thing == THING_ENDOFLIST ||
+        THING_GET_TYPE(thing) != THING_TYPE_WEAPON) {
+        return -1;
+    }
+    weaponIndex = (int)THING_GET_INDEX(thing);
+    if (weaponIndex < 0 || weaponIndex >= things->weaponCount) return -1;
+    weapon = &things->weapons[weaponIndex];
+    if (weapon->type != ORCH_WEAPON_TORCH_PC34 || !weapon->lit) return -1;
+    return weaponIndex;
+}
+
+static int orch_decrease_torches_light_power_f0338_compat(
+    struct GameWorld_Compat* world)
+{
+    int championIndex;
+    int changed = 0;
+    static const int handSlots[2] = {
+        CHAMPION_SLOT_ACTION_HAND,
+        CHAMPION_SLOT_HAND_LEFT
+    };
+    if (!world || !world->things) return 0;
+    for (championIndex = 0;
+         championIndex < world->party.championCount &&
+             championIndex < CHAMPION_MAX_PARTY;
+         championIndex++) {
+        struct ChampionState_Compat* champion =
+            &world->party.champions[championIndex];
+        int slotOrdinal;
+        for (slotOrdinal = 0; slotOrdinal < 2; slotOrdinal++) {
+            int weaponIndex = orch_get_lit_torch_weapon_index_compat(
+                world->things, champion->inventory[handSlots[slotOrdinal]]);
+            struct DungeonWeapon_Compat* weapon;
+            if (weaponIndex < 0) continue;
+            weapon = &world->things->weapons[weaponIndex];
+            if (weapon->chargeCount <= 0) continue;
+            weapon->chargeCount--;
+            if (weapon->chargeCount == 0) {
+                weapon->doNotDiscard = 0;
+            }
+            orch_write_raw_weapon_compat(world->things, weaponIndex);
+            changed++;
+        }
+    }
+    return changed;
 }
 
 static void orch_write_raw_armour_compat(
@@ -6713,8 +6768,14 @@ void F0890_ORCH_ApplyPeriodicEffects_Compat(
     if (world->disabledMovementTicks > 0) world->disabledMovementTicks--;
     if (world->projectileDisabledMovementTicks > 0) world->projectileDisabledMovementTicks--;
     if (world->freezeLifeTicks > 0) world->freezeLifeTicks--;
-    /* Torch decay every 512 ticks: stub — real torch decrement lives in
-     * Phase 18's inventory ticker. */
+    /* ReDMCSB: GAMELOOP.C lines 124-126 increments G0313_ul_GameTime,
+     * then calls PANEL.C F0338 lines 434-473 when !(GameTime & 511).
+     * F0338 scans party action/ready hands for lit torch weapons and
+     * decrements ChargeCount, clearing DoNotDiscard when the torch burns out.
+     */
+    if (((uint32_t)world->gameTick & ORCH_TORCH_DECAY_TICK_MASK_PC34) == 0u) {
+        (void)orch_decrease_torches_light_power_f0338_compat(world);
+    }
     world->lifecycle.gameTime = world->gameTick;
 }
 

@@ -28,6 +28,11 @@ static unsigned short read_u16_le_for_test(const unsigned char* raw) {
     return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
 }
 
+static void write_u16_le_for_test(unsigned char* raw, unsigned short value) {
+    raw[0] = (unsigned char)(value & 0xFFu);
+    raw[1] = (unsigned char)((value >> 8) & 0xFFu);
+}
+
 static void init_world(struct GameWorld_Compat* world,
                        struct DungeonThings_Compat* things,
                        struct DungeonWeapon_Compat* weapons,
@@ -5930,6 +5935,66 @@ static void test_orch_cmd_attack_writes_back_luck_after_f0735(void) {
     assert(after == 18 || after == 22);
 }
 
+static void test_orch_periodic_effects_decrement_torches_f0338(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct TickResult_Compat result;
+    struct ChampionState_Compat* champion;
+    unsigned char rawWeaponData[8];
+
+    init_world(&world, &things, weapons, junks);
+    memset(rawWeaponData, 0, sizeof(rawWeaponData));
+    things.thingCounts[THING_TYPE_WEAPON] = 2;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
+
+    weapons[0].next = THING_ENDOFLIST;
+    weapons[0].type = 2; /* ReDMCSB DEFS.H line 1403: C02_WEAPON_TORCH. */
+    weapons[0].doNotDiscard = 1;
+    weapons[0].chargeCount = 2;
+    weapons[0].lit = 1;
+    write_u16_le_for_test(rawWeaponData + 0, THING_ENDOFLIST);
+    write_u16_le_for_test(rawWeaponData + 2,
+                          (unsigned short)(2u | (1u << 7) |
+                                           (2u << 10) | (1u << 15)));
+
+    weapons[1].next = THING_ENDOFLIST;
+    weapons[1].type = 2;
+    weapons[1].doNotDiscard = 1;
+    weapons[1].chargeCount = 7;
+    weapons[1].lit = 0;
+    write_u16_le_for_test(rawWeaponData + 4, THING_ENDOFLIST);
+    write_u16_le_for_test(rawWeaponData + 6,
+                          (unsigned short)(2u | (1u << 7) | (7u << 10)));
+
+    champion = &world.party.champions[0];
+    champion->inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    champion->inventory[CHAMPION_SLOT_HAND_LEFT] =
+        make_thing(THING_TYPE_WEAPON, 1);
+
+    memset(&result, 0, sizeof(result));
+    world.gameTick = 512;
+    F0890_ORCH_ApplyPeriodicEffects_Compat(&world, &result);
+    assert(weapons[0].chargeCount == 1);
+    assert(weapons[0].doNotDiscard == 1);
+    assert(((read_u16_le_for_test(rawWeaponData + 2) >> 10) & 0x0Fu) == 1);
+    assert(weapons[1].chargeCount == 7);
+    assert(((read_u16_le_for_test(rawWeaponData + 6) >> 10) & 0x0Fu) == 7);
+
+    world.gameTick = 513;
+    F0890_ORCH_ApplyPeriodicEffects_Compat(&world, &result);
+    assert(weapons[0].chargeCount == 1);
+
+    world.gameTick = 1024;
+    F0890_ORCH_ApplyPeriodicEffects_Compat(&world, &result);
+    assert(weapons[0].chargeCount == 0);
+    assert(weapons[0].doNotDiscard == 0);
+    assert(((read_u16_le_for_test(rawWeaponData + 2) >> 10) & 0x0Fu) == 0);
+    assert(((read_u16_le_for_test(rawWeaponData + 2) >> 7) & 0x01u) == 0);
+}
+
 int main(void) {
     test_orch_f0303_inventory_and_rest_query();
     test_orch_f0303_hidden_heal_query();
@@ -6004,6 +6069,7 @@ int main(void) {
     test_orch_cmd_attack_disrupt_rejects_material_creature();
     test_orch_cmd_attack_uses_reserved2_action_skill_index();
     test_orch_cmd_attack_writes_back_luck_after_f0735();
+    test_orch_periodic_effects_decrement_torches_f0338();
     puts("ok: M10 orchestrator DM1 F0303 skill query uses lifecycle inventory/rest inputs");
     return 0;
 }
