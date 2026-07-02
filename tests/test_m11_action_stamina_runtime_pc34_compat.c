@@ -6819,6 +6819,8 @@ static void test_climb_down_group_over_pit_blocks_move_but_keeps_bug79_tail(void
     int expectedXp;
 
     seed_state(&state, 100, 41);
+    state.audioState.originalSongAvailable = 1;
+    state.audioState.titleMusic.sampleCount = 42;
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles));
@@ -7764,6 +7766,10 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     ASSERT_EQ(state.audioState.lastMusicTrackId,
               DM1_Endgame_GetEndingParams()->victoryMusicId,
               "FUSE complete requests F0446 game-won music track");
+    ASSERT_EQ(state.audioState.titleMusicPlayRequestCount, 1,
+              "FUSE complete routes C2 game-won music through SONG.DAT playback");
+    ASSERT_EQ(state.audioState.titleMusicQueuedCount, 0,
+              "headless F0446 game-won music does not claim SDL queueing");
     ASSERT_EQ(state.endgameFinalDelayTicks,
               DM1_Endgame_GetEndingParams()->finalDelayTicks,
               "FUSE complete records F0446 final delay ticks");
