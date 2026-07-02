@@ -12,7 +12,6 @@
  */
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
-#include "dm1_v1_dungeon_square_structs_pc34_compat.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -536,7 +535,7 @@ static const uint8_t *dm1_viewport_3d_selected_wall_bitmap(const DM1_Viewport3DS
     return bm_base + (int)state->wall_set_native[selected_wall] * DM1_VIEWPORT_BYTE_WIDTH;
 }
 
-static int dm1_viewport_3d_classify_grid_cell(int cell, int direction)
+static int dm1_viewport_3d_classify_grid_cell(int cell)
 {
     /* ReDMCSB: DEFS.H M034_SQUARE_TYPE is square >> 5; DUNGEON.C F0172
      * derives closed fakewalls/door-stair orientation from that raw byte.
@@ -547,7 +546,7 @@ static int dm1_viewport_3d_classify_grid_cell(int cell, int direction)
     if (cell >= DM1_VP_ELEMENT_WALL && cell <= DM1_VP_ELEMENT_FAKEWALL) {
         return cell;
     }
-    return dm1_classify_square_aspect_element((uint8_t)cell, direction);
+    return (((unsigned int)cell) & 0xFFu) >> 5;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -2024,7 +2023,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
     if (!state) return;
 
     int cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
-    int element = dm1_viewport_3d_classify_grid_cell(cell, direction);
+    int element = dm1_viewport_3d_classify_grid_cell(cell);
 
     const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
     if (!bm_base) return;
@@ -2229,7 +2228,7 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
     if (!state) return;
 
     int cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
-    int element = dm1_viewport_3d_classify_grid_cell(cell, direction);
+    int element = dm1_viewport_3d_classify_grid_cell(cell);
 
     const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
     if (!bm_base) return;
