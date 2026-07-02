@@ -7860,8 +7860,8 @@ static void test_endgame_restart_controls_respect_restart_allowed(void) {
     M11_GameViewState state;
     unsigned char fbBlocked[320 * 200];
     unsigned char fbAllowed[320 * 200];
-    int restartX = 0, restartY = 0;
-    int quitX = 0, quitY = 0;
+    int restartX = 0, restartY = 0, restartW = 0, restartH = 0;
+    int quitX = 0, quitY = 0, quitW = 0, quitH = 0;
 
     M11_GameView_Init(&state);
     state.active = 1;
@@ -7879,10 +7879,10 @@ static void test_endgame_restart_controls_respect_restart_allowed(void) {
 
     (void)M11_GameView_GetV1EndgameRestartBox(1,
                                               &restartX, &restartY,
-                                              NULL, NULL);
+                                              &restartW, &restartH);
     (void)M11_GameView_GetV1EndgameQuitBox(1,
                                            &quitX, &quitY,
-                                           NULL, NULL);
+                                           &quitW, &quitH);
     ASSERT_EQ(fbBlocked[restartY * 320 + restartX] !=
                   fbAllowed[restartY * 320 + restartX],
               1,
@@ -7891,6 +7891,45 @@ static void test_endgame_restart_controls_respect_restart_allowed(void) {
                   fbAllowed[quitY * 320 + quitX],
               1,
               "F0444 quit inner box is hidden when restart disallowed");
+
+    state.endgameRestartAllowed = 0;
+    state.endgameRestartRequested = 0;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state,
+                                         restartX + restartW / 2,
+                                         restartY + restartH / 2,
+                                         1),
+              M11_GAME_INPUT_IGNORED,
+              "F0444 restart click is ignored when restart is disallowed");
+    ASSERT_EQ(M11_GameView_GetEndgameRestartRequested(&state), 0,
+              "F0444 disallowed restart click does not latch G0523");
+
+    state.endgameRestartAllowed = 1;
+    state.endgameFinalHandoffReady = 0;
+    state.endgameCalledWithTrue = 1;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state,
+                                         restartX + restartW / 2,
+                                         restartY + restartH / 2,
+                                         1),
+              M11_GAME_INPUT_IGNORED,
+              "F0444 restart click waits for the final presentation gate");
+    ASSERT_EQ(M11_GameView_GetEndgameRestartRequested(&state), 0,
+              "F0444 pre-final restart click does not latch G0523");
+
+    state.endgameFinalHandoffReady = 1;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state,
+                                         restartX + restartW / 2,
+                                         restartY + restartH / 2,
+                                         1),
+              M11_GAME_INPUT_REDRAW,
+              "F0444 restart click latches the source restart request");
+    ASSERT_EQ(M11_GameView_GetEndgameRestartRequested(&state), 1,
+              "F0444 restart click mirrors G0523_B_RestartGameRequested");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state,
+                                         quitX + quitW / 2,
+                                         quitY + quitH / 2,
+                                         1),
+              M11_GAME_INPUT_RETURN_TO_MENU,
+              "F0444 quit click returns to the launcher");
 }
 
 int main(void) {
