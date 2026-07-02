@@ -6069,6 +6069,30 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_runtime_handoff_smoke
     )
 
+    # -- DM2 V1 M12/M11 Launcher Handoff Boundary -----------------
+    # Data-free gate: M12 launch intent routes the DM2 catalog entry,
+    # and M11_GameView_Start reaches the DM2 handoff branch cleanly
+    # instead of falling through to the DM1 loader.
+    add_executable(test_dm2_v1_m11_launcher_handoff_boundary
+        tests/test_dm2_v1_m11_launcher_handoff_boundary.c
+    )
+    target_include_directories(test_dm2_v1_m11_launcher_handoff_boundary PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_m11_launcher_handoff_boundary PRIVATE
+        firestaff_m11
+        firestaff_m12
+        firestaff_m10
+        firestaff_m12
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_m11_launcher_handoff_boundary PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_m11_launcher_handoff_boundary
+        COMMAND test_dm2_v1_m11_launcher_handoff_boundary
+    )
+
     # ── DM2 V1 Weather/Timer Save Round-Trip (weather persistence gate)
     # Source-locked: dm2_v1_save_load.c skload_table_60 +
     # SKULL.ASM skload_table_60 + PROCESS_TIMER_0C.
