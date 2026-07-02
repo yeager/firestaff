@@ -9,6 +9,12 @@ static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
     "",
+    "V3.0.19  (2026-07-02)",
+    "  - Packages the post-v3.0.18 DM1 MacBook Pro smoke follow-up commits now green on current main.",
+    "  - DM1 HoC visual-artifact coverage adds hand-slot refresh bridging plus side-door, alcove, far-object, and damage-overdraw pixel gates.",
+    "  - DM1 endgame F0444/F0445/F0446 work advances non-blocking replay metadata and restart handoff without changing the focused release-smoke symptom gates.",
+    "  - Release verification: focused HoC artifact, Q/E input, title palette, and Phase A gates pass locally on the external-disk build before tagging.",
+    "",
     "V3.0.18  (2026-07-02)",
     "  - Packages the DM1 V1 Q/E/Home/End/KP4/KP6 turn-key priority guard added after v3.0.17.",
     "  - DM1 V1 now resolves those turn scancodes before persisted M11 keymaps, preventing stale pre-v2.8 bindings from routing Q/E into cooldown-gated strafe.",
@@ -353,5 +359,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.18";
+    return "3.0.19";
 }
