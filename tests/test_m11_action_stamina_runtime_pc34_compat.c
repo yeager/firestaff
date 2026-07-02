@@ -7766,6 +7766,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     ASSERT_EQ(state.endgameFinalDelayTicks,
               DM1_Endgame_GetEndingParams()->finalDelayTicks,
               "FUSE complete records F0446 final delay ticks");
+    ASSERT_EQ(state.endgameFuseSequenceDelayTicks, 2160,
+              "FUSE complete records total F0446 text plus final delay ticks");
     ASSERT_EQ(state.endgameRestartAllowed,
               DM1_Endgame_GetEndingParams()->restartAllowedAfterWin,
               "FUSE complete records F0446 restart disallow gate");
