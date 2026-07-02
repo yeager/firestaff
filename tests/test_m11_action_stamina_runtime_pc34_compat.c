@@ -7506,6 +7506,9 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     int artifactExplosions = -1;
     int artifactProjectileGfx = -1;
     int artifactExplosionType = -1;
+    int replayType = 0;
+    int replayAttack = 0;
+    int replayCreatureType = 0;
     int i;
     uint32_t gameTickAtWin;
 
@@ -7765,6 +7768,16 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete queues every F0445 update for presentation replay");
     ASSERT_EQ(state.endgameFuseSequenceFrameReplayRemainingTicks, 45,
               "FUSE complete starts with all F0445 replay frames pending");
+    ASSERT_EQ(M11_GameView_GetEndgameFuseReplayEventCount(&state), 45,
+              "FUSE complete records one presentation event per F0445 replay frame");
+    ASSERT_EQ(M11_GameView_GetEndgameFuseReplayCursor(&state), 0,
+              "FUSE complete has not replayed any F0445 presentation event yet");
+    ASSERT_EQ(M11_GameView_GetEndgameFuseReplayCurrentEvent(
+                  &state, &replayType, &replayAttack, &replayCreatureType),
+              0,
+              "FUSE complete has no current presentation event before idle replay");
+    ASSERT_EQ(replayType, M11_ENDGAME_F0445_EVENT_NONE,
+              "FUSE complete current replay event starts empty");
     ASSERT_EQ(state.endgameTextMessageDelayTicks, 1560,
               "FUSE complete records F0446 780-tick delay per text message");
     ASSERT_EQ(state.audioState.lastMusicTrackId,
@@ -7804,6 +7817,18 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     gameTickAtWin = state.world.gameTick;
     ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
               "FUSE complete first F0445 replay frame requests redraw");
+    ASSERT_EQ(M11_GameView_GetEndgameFuseReplayCursor(&state), 1,
+              "FUSE complete first idle tick advances the presentation cursor");
+    ASSERT_EQ(M11_GameView_GetEndgameFuseReplayCurrentEvent(
+                  &state, &replayType, &replayAttack, &replayCreatureType),
+              1,
+              "FUSE complete first idle tick exposes a current presentation event");
+    ASSERT_EQ(replayType, M11_ENDGAME_F0445_EVENT_SETUP,
+              "FUSE complete first replay event is the source setup redraw");
+    ASSERT_EQ(replayAttack, 0,
+              "FUSE complete setup replay carries no explosion attack");
+    ASSERT_EQ(replayCreatureType, 0,
+              "FUSE complete setup replay carries no creature morph");
     ASSERT_EQ(state.endgameFuseSequenceFrameReplayRemainingTicks, 44,
               "FUSE complete first idle tick consumes one F0445 replay frame");
     ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 2160,
@@ -7822,6 +7847,14 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     for (i = 0; i < 44; ++i) {
         (void)M11_GameView_AdvanceIdleTick(&state);
     }
+    ASSERT_EQ(M11_GameView_GetEndgameFuseReplayCursor(&state), 45,
+              "FUSE complete drains the full presentation event cursor");
+    ASSERT_EQ(M11_GameView_GetEndgameFuseReplayCurrentEvent(
+                  &state, &replayType, &replayAttack, &replayCreatureType),
+              1,
+              "FUSE complete keeps the last replay event inspectable after draining frames");
+    ASSERT_EQ(replayType, M11_ENDGAME_F0445_EVENT_TEXT_MESSAGE,
+              "FUSE complete last replay event is the final source text-message redraw");
     ASSERT_EQ(state.endgameFuseSequenceFrameReplayRemainingTicks, 0,
               "FUSE complete drains all F0445 replay frames before delay");
     ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 2160,

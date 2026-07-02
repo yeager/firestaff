@@ -21,7 +21,8 @@ extern "C" {
 
 enum {
     M11_GAME_VIEW_PATH_CAPACITY = 512,
-    M11_TORCH_FUEL_CAPACITY = 256
+    M11_TORCH_FUEL_CAPACITY = 256,
+    M11_ENDGAME_F0445_REPLAY_CAPACITY = 64
 };
 
 typedef enum {
@@ -30,6 +31,20 @@ typedef enum {
     M11_GAME_INPUT_RETURN_TO_MENU = 2,
     M11_GAME_INPUT_RESTART_GAME = 3
 } M11_GameInputResult;
+
+typedef enum {
+    M11_ENDGAME_F0445_EVENT_NONE = 0,
+    M11_ENDGAME_F0445_EVENT_SETUP = 1,
+    M11_ENDGAME_F0445_EVENT_FIREBALL_BURST = 2,
+    M11_ENDGAME_F0445_EVENT_LORD_ORDER = 3,
+    M11_ENDGAME_F0445_EVENT_HARM_BURST = 4,
+    M11_ENDGAME_F0445_EVENT_CHAOS_ORDER_SWITCH = 5,
+    M11_ENDGAME_F0445_EVENT_FINAL_EXPLOSIONS = 6,
+    M11_ENDGAME_F0445_EVENT_GREY_LORD = 7,
+    M11_ENDGAME_F0445_EVENT_FLUXCAGE_HIDE = 8,
+    M11_ENDGAME_F0445_EVENT_GROUP_CLEANUP = 9,
+    M11_ENDGAME_F0445_EVENT_TEXT_MESSAGE = 10
+} M11_EndgameF0445ReplayEventType;
 
 typedef enum {
     M11_GAME_SOURCE_BUILTIN_CATALOG = 0,
@@ -274,6 +289,14 @@ typedef struct {
     int endgameFuseSequenceTotalUpdateTicks;
     int endgameFuseSequenceFrameReplayTicks;
     int endgameFuseSequenceFrameReplayRemainingTicks;
+    int endgameFuseSequenceReplayCursor;
+    int endgameFuseSequenceReplayEventCount;
+    int endgameFuseSequenceReplayTypes[M11_ENDGAME_F0445_REPLAY_CAPACITY];
+    int endgameFuseSequenceReplayAttacks[M11_ENDGAME_F0445_REPLAY_CAPACITY];
+    int endgameFuseSequenceReplayCreatureTypes[M11_ENDGAME_F0445_REPLAY_CAPACITY];
+    int endgameFuseSequenceCurrentReplayType;
+    int endgameFuseSequenceCurrentReplayAttack;
+    int endgameFuseSequenceCurrentReplayCreatureType;
     int endgameTextMessageDelayTicks;
     int endgameFuseSequenceDelayTicks;
     int endgameFuseSequenceDelayRemainingTicks;
@@ -724,6 +747,13 @@ int M11_GameView_GetEndgameFinalPresentationReady(const M11_GameViewState* state
 
 /* Return 1 when the source endgame restart button has requested a restart. */
 int M11_GameView_GetEndgameRestartRequested(const M11_GameViewState* state);
+
+int M11_GameView_GetEndgameFuseReplayCursor(const M11_GameViewState* state);
+int M11_GameView_GetEndgameFuseReplayEventCount(const M11_GameViewState* state);
+int M11_GameView_GetEndgameFuseReplayCurrentEvent(const M11_GameViewState* state,
+                                                  int* outType,
+                                                  int* outAttack,
+                                                  int* outCreatureType);
 
 /* Return 1 if a dialog overlay is currently displayed. */
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state);
