@@ -16590,18 +16590,16 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
         return;
     }
     (void)cells;
+    (void)maxVisibleForward;
     flipWalls = m11_dm1_use_flipped_walls(state);
     for (i = 0; i < sizeof(kSideBlits) / sizeof(kSideBlits[0]); ++i) {
         M11_ViewportCell cell;
-        if (kSideBlits[i].relForward > maxVisibleForward) {
-            continue;
-        }
         /* ReDMCSB DUNVIEW.C F0128 lines 8478-8533 draws side wall
          * squares far-to-near without testing nearer side-lane occupancy;
-         * nearer D1/D2 side walls overpaint the farther D2/D3 panels.  Do
-         * not reuse the thing/projectile lane guard here, or visible
-         * D2L/D2R and D3L2/D3R2 wall slivers disappear until the party
-         * steps forward. */
+         * nearer D1/D2 side walls and center walls overpaint farther panels.
+         * Do not reuse thing/projectile lane guards or the center-lane
+         * max-visible-depth gate here, or source-visible D2L/D2R side
+         * panels disappear until the party steps forward. */
         if (!m11_sample_viewport_cell(state,
                                       kSideBlits[i].relForward,
                                       kSideBlits[i].relSide,
@@ -24700,8 +24698,8 @@ int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
         return 0;
     }
     laneClear = m11_dm1_side_lane_clear_for_rel(cells, relForward, relSide);
-    draws = relForward <= maxVisibleForward &&
-            m11_viewport_cell_is_wall_like(&cell);
+    (void)maxVisibleForward;
+    draws = m11_viewport_cell_is_wall_like(&cell);
     if (outLegacyLaneClear) *outLegacyLaneClear = laneClear;
     if (outDrawsWithSourceOrder) *outDrawsWithSourceOrder = draws;
     return 1;
