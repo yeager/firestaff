@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "firestaff_theron_media_classify.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -77,6 +78,7 @@ typedef struct {
     size_t requiredFileCounts[M12_ASSET_GAME_COUNT];
     char runtimeDataDirs[M12_ASSET_GAME_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     M12_NexusBpkTrailerMetadata nexusBpkTrailer;
+    FirestaffTheronMediaStatus theronMedia;
 } M12_AssetStatus;
 
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir);
@@ -108,6 +110,8 @@ const M12_AssetRequiredFileStatus* M12_AssetStatus_GetRequiredFile(const M12_Ass
 const M12_NexusBpkTrailerMetadata* M12_AssetStatus_GetNexusBpkTrailerMetadata(
     const M12_AssetStatus* status);
 int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId);
+const FirestaffTheronMediaStatus* M12_AssetStatus_GetTheronMediaStatus(
+    const M12_AssetStatus* status);
 
 /* Returns 1 if the V2.2 Modern Graphics asset pack is installed and
  * valid (critical shape categories present), 0 otherwise.

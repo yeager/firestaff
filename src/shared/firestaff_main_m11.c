@@ -83,6 +83,23 @@ static void print_scan_game(const M12_AssetStatus* status,
                    bpk->matchedPath);
         }
     }
+    if (strcmp(gameId, "theron") == 0) {
+        const FirestaffTheronMediaStatus* media =
+            M12_AssetStatus_GetTheronMediaStatus(status);
+        if (media && media->layout != FIRESTAFF_THERON_MEDIA_LAYOUT_UNKNOWN) {
+            printf("  %-28s %s", "Media layout",
+                   FirestaffTheronMedia_LayoutLabel(media->layout));
+            printf("  %s",
+                   media->launch_candidate ? "TRACK02-CANDIDATE" : "NO-DATA-TRACK");
+            if (media->has_iso9660_pvd) {
+                printf("  ISO9660");
+            }
+            if (media->candidate_path[0] != '\0') {
+                printf("  %s", media->candidate_path);
+            }
+            printf("\n");
+        }
+    }
 }
 
 static int run_data_scan(const char* dataDir) {
