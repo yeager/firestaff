@@ -3096,6 +3096,28 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB V1 Hint Oracle UI panel probe.
+# Panel-shaped binding surface on top of the existing HCSB.HTC
+# scanner/parser/cache; skip-safe on hosts without Utility Disk data.
+add_executable(firestaff_csb_v1_hint_oracle_ui_panel_probe
+    probes/csb/firestaff_csb_v1_hint_oracle_ui_panel_probe.c
+    src/csb/csb_hint_oracle_htc.c
+    src/csb/csb_hint_oracle_htc_real_scan.c
+    src/csb/csb_hint_oracle_htc_variant.c
+    src/csb/csb_hint_oracle_ui_panel.c
+    src/csb/csb_hint_oracle_ui_runtime_binding.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_hint_oracle_ui_panel_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_hint_oracle_ui_panel_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_hint_oracle_ui_panel_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Hint Oracle graphical overlay render probe.
 # Synthetic render always runs without game data; when a known
 # HCSB.HTC is staged, the probe decodes hint 0 through the existing
@@ -17054,6 +17076,31 @@ if(BUILD_TESTING)
         COMMAND test_csb_hint_oracle_ui_runtime_binding
     )
 
+    # CSB Hint Oracle UI panel surface.
+    # Data-free contract tests for the panel-shaped API an M12
+    # Hint Oracle view can consume without owning parser buffers.
+    add_executable(test_csb_hint_oracle_ui_panel
+        tests/test_csb_hint_oracle_ui_panel.c
+        src/csb/csb_hint_oracle_htc.c
+        src/csb/csb_hint_oracle_htc_real_scan.c
+        src/csb/csb_hint_oracle_htc_variant.c
+        src/csb/csb_hint_oracle_ui_panel.c
+        src/csb/csb_hint_oracle_ui_runtime_binding.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_hint_oracle_ui_panel PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_hint_oracle_ui_panel PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_hint_oracle_ui_panel_unit
+        COMMAND test_csb_hint_oracle_ui_panel
+    )
+
     # CSB Hint Oracle graphical overlay boundary.
     # Data-free contract tests for turning staged decoded Hint Oracle
     # text into a framed 8-bit framebuffer overlay. Synthetic fixture
@@ -17808,6 +17855,20 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe
         )
         set_tests_properties(csb_v1_hint_oracle_ui_runtime_binding PROPERTIES
+            LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+
+    # ── CSB V1 Hint Oracle UI panel probe ctest entry
+    # Skip-safe real-data handoff for the panel-shaped API that an
+    # M12 Hint Oracle view can render from.
+    if(TARGET firestaff_csb_v1_hint_oracle_ui_panel_probe)
+        add_test(
+            NAME csb_v1_hint_oracle_ui_panel
+            COMMAND firestaff_csb_v1_hint_oracle_ui_panel_probe
+        )
+        set_tests_properties(csb_v1_hint_oracle_ui_panel PROPERTIES
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
             TIMEOUT 120
         )
