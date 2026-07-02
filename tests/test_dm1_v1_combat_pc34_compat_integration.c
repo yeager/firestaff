@@ -27,6 +27,7 @@ static void test_f0735_dex_hit_short_circuits_random4_luck(void);
 static void test_f0735_zero_luck_f0308_uses_pc34_rng_count(void);
 static void test_f0735_non_material_gate_skips_luck(void);
 static void test_f0735_dexterity_255_skips_hit_branch(void);
+static void test_f0735_weak_damage_zero_roll_uses_miss_tail(void);
 static void test_ordered_cells_to_attack_priority(void);
 static void test_f0192_per_creature_resistance(void);
 static void test_f0801b_archenemy_double_move(void);
@@ -860,6 +861,7 @@ int main(void) {
     test_f0735_zero_luck_f0308_uses_pc34_rng_count();
     test_f0735_non_material_gate_skips_luck();
     test_f0735_dexterity_255_skips_hit_branch();
+    test_f0735_weak_damage_zero_roll_uses_miss_tail();
     test_ordered_cells_to_attack_priority();
     test_f0192_per_creature_resistance();
     test_f0801b_archenemy_double_move();
@@ -1223,6 +1225,78 @@ static void test_f0735_dexterity_255_skips_hit_branch(void) {
     }
 
     PASS();
+}
+
+/* -- Test: F0231 weak-damage zero roll uses T0231015 miss tail ------- */
+static void test_f0735_weak_damage_zero_roll_uses_miss_tail(void) {
+    TEST(f0735_weak_damage_zero_roll_uses_miss_tail);
+
+    for (uint32_t seed = 1; seed < 4096; ++seed) {
+        struct RngState_Compat probeRng;
+        int rand32Hit;
+        int bonus;
+        int defense;
+        int damage0;
+        int weakRoll;
+
+        CHECK(F0730_COMBAT_RngInit_Compat(&probeRng, seed) == 1,
+              "probe rng init should accept seed");
+        rand32Hit = F0732_COMBAT_RngRandom_Compat(&probeRng, 32);
+        (void)rand32Hit;
+        bonus = F0732_COMBAT_RngRandom_Compat(&probeRng, 1);
+        defense = F0732_COMBAT_RngRandom_Compat(&probeRng, 32) + 200;
+        damage0 = F0732_COMBAT_RngRandom_Compat(&probeRng, 32) +
+                  (((1 + bonus) * 1) >> 5) - defense;
+        weakRoll = F0732_COMBAT_RngRandom_Compat(&probeRng, 4);
+
+        if (damage0 <= 1 && weakRoll == 0) {
+            struct CombatantChampionSnapshot_Compat attacker;
+            struct CombatantCreatureSnapshot_Compat defender;
+            struct WeaponProfile_Compat weapon;
+            struct CombatResult_Compat out;
+            struct RngState_Compat rng;
+
+            memset(&attacker, 0, sizeof(attacker));
+            memset(&defender, 0, sizeof(defender));
+            memset(&weapon, 0, sizeof(weapon));
+            memset(&out, 0, sizeof(out));
+            CHECK(F0730_COMBAT_RngInit_Compat(&rng, seed) == 1,
+                  "resolver rng init should accept selected seed");
+
+            attacker.championIndex = 0;
+            attacker.currentHealth = 100;
+            attacker.dexterity = 255;
+            attacker.strengthActionHand = 1;
+            attacker.skillLevelAction = 0;
+            attacker.statisticLuck = 40;
+            attacker.statisticLuckMax = 100;
+            attacker.statisticLuckMin = 0;
+
+            defender.creatureType = CREATURE_TYPE_GIANT_SCORPION;
+            defender.defense = 200;
+            defender.dexterity = 0;
+            defender.attributes = 0;
+            defender.doubledMapDifficulty = 0;
+            defender.healthBefore = 200;
+
+            weapon.hitProbability = 0;
+            weapon.damageFactor = 1;
+
+            CHECK(F0735_COMBAT_ResolveChampionMelee_Compat(
+                      &attacker, &weapon, &defender, &rng, &out) == 1,
+                  "F0735 should resolve weak-damage zero-roll fixture");
+            CHECK(out.rngCallCount == 5,
+                  "ReDMCSB F0231 weak zero path consumes hit, damage, defense, damage, weak-roll RNG only");
+            CHECK(out.hitLanded == 0,
+                  "ReDMCSB T0231015 weak zero path is not a landed zero-damage hit");
+            CHECK(out.damageApplied == 0 && out.outcome == COMBAT_OUTCOME_MISS,
+                  "ReDMCSB T0231015 weak zero path returns the miss tail");
+            PASS();
+            return;
+        }
+    }
+
+    FAIL("no deterministic seed reached the F0231 weak-damage zero-roll branch");
 }
 
 /* ── Test: F0229_GROUP_SetOrderedCellsToAttack (PROJEXPL.C:1284-1305) ── */
