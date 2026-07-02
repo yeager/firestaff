@@ -17305,15 +17305,19 @@ static int m11_item_aspect_index(int thingType, int subtype) {
 static int m11_dm1_f0115_view_square_index(int relForward, int relSide) {
     /* ReDMCSB DUNVIEW.C / DEFS.H MEDIA720 visible-square order:
      * D1C/L/R = 3/4/5, D2C/L/R = 6/7/8, D3C/L/R = 11/12/13.
-     * Firestaff samples relForward 1..3 from the party and relSide
-     * -1/0/+1.  Map that directly to the source P0145 view-square
-     * index before applying G2028 for C2500/C2900 rows. */
+     * D3L2/D3R2 = 14/15.  Firestaff samples relForward 1..3 from the
+     * party and also uses the ReDMCSB F0128 extra side slots at
+     * relSide -2/+2 for D3L2/D3R2 and D2L2/D2R2.  Only D3L2/D3R2 have
+     * an F0115 thing pass in this PC34 source; D2L2/D2R2 are wall/field
+     * helpers only. */
     static const signed char kViewSquare[3][3] = {
         { 4,  3,  5},
         { 7,  6,  8},
         {12, 11, 13}
     };
     if (relForward < 1 || relForward > 3) return -1;
+    if (relSide == -2 && relForward == 3) return 14;
+    if (relSide == 2 && relForward == 3) return 15;
     if (relSide < -1 || relSide > 1) return -1;
     return (int)kViewSquare[relForward - 1][relSide + 1];
 }
@@ -23103,6 +23107,50 @@ static int m11_build_projectile_digest(
     return 1;
 }
 
+static int m11_projectile_landing_cell_f0219(
+    const struct ProjectileInstance_Compat* p) {
+    if (!p) return -1;
+    if ((p->direction & 1) == (p->cell & 1)) {
+        return (p->cell - 1) & 3;
+    }
+    return (p->cell + 1) & 3;
+}
+
+static int m11_find_projectile_collision_peer(
+    const struct GameWorld_Compat* world,
+    const struct ProjectileInstance_Compat* p,
+    int projectileIndex,
+    const struct CellContentDigest_Compat* digest) {
+    int i;
+    int landingCell;
+    if (!world || !p || !digest) return -1;
+
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
+        const struct ProjectileInstance_Compat* q =
+            &world->projectiles.entries[i];
+        if (i == projectileIndex || q->slotIndex < 0) continue;
+        if (q->mapIndex == p->mapIndex && q->mapX == p->mapX &&
+            q->mapY == p->mapY && q->cell == p->cell) {
+            return i;
+        }
+    }
+
+    landingCell = m11_projectile_landing_cell_f0219(p);
+    if (landingCell < 0) return -1;
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
+        const struct ProjectileInstance_Compat* q =
+            &world->projectiles.entries[i];
+        if (i == projectileIndex || q->slotIndex < 0) continue;
+        if (q->mapIndex == digest->destMapIndex &&
+            q->mapX == digest->destMapX &&
+            q->mapY == digest->destMapY &&
+            q->cell == landingCell) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 /* Short DM1-style projectile subtype name for log cues. */
 static const char* m11_projectile_subtype_name(int subtype) {
     switch (subtype) {
@@ -24198,6 +24246,21 @@ static void m11_advance_projectiles_v1(M11_GameViewState* state) {
              * before freeing the slot so the cue references the
              * right projectile type. */
             m11_projectile_apply_impact(state, p, &result);
+            if (result.resultKind == PROJECTILE_RESULT_HIT_OTHER_PROJECTILE) {
+                int otherIndex = m11_find_projectile_collision_peer(
+                    &state->world, p, i, &digest);
+                if (otherIndex >= 0) {
+                    struct ProjectileInstance_Compat* other =
+                        &state->world.projectiles.entries[otherIndex];
+                    /* Phase17 v1 §4.6 makes projectile-vs-projectile
+                     * annihilation order-independent: both live projectile
+                     * slots are consumed. */
+                    (void)m11_materialize_projectile_associated_thing(
+                        state, other, 0);
+                    (void)F0813_PROJECTILE_Despawn_Compat(
+                        &state->world.projectiles, otherIndex);
+                }
+            }
             F0813_PROJECTILE_Despawn_Compat(&state->world.projectiles, i);
         } else {
             /* Commit the flown state.  F0811 fills outNewState with
@@ -24504,6 +24567,34 @@ int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
     if (outExplosionCount) *outExplosionCount = cell.summary.explosions;
     if (outFirstProjectileGfx) *outFirstProjectileGfx = cell.firstProjectileGfxIndex;
     if (outFirstExplosionType) *outFirstExplosionType = cell.firstExplosionType;
+    return 1;
+}
+
+int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
+                                        int relForward,
+                                        int relSide,
+                                        int* outMapX,
+                                        int* outMapY,
+                                        unsigned char* outRawSquare,
+                                        int* outElementType,
+                                        int* outEffectiveElementType,
+                                        int* outIsWallLike,
+                                        int* outIsOpen) {
+    M11_ViewportCell cell;
+    int effectiveElement;
+    if (!m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+        !cell.valid) {
+        return 0;
+    }
+    effectiveElement =
+        M11_DM1_ViewportEffectiveElementForSquarePc34(cell.square);
+    if (outMapX) *outMapX = cell.mapX;
+    if (outMapY) *outMapY = cell.mapY;
+    if (outRawSquare) *outRawSquare = cell.square;
+    if (outElementType) *outElementType = cell.elementType;
+    if (outEffectiveElementType) *outEffectiveElementType = effectiveElement;
+    if (outIsWallLike) *outIsWallLike = m11_viewport_cell_is_wall_like(&cell);
+    if (outIsOpen) *outIsOpen = m11_viewport_cell_is_open(&cell);
     return 1;
 }
 

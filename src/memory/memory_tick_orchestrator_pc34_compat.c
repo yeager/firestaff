@@ -3430,6 +3430,54 @@ static int orch_delete_projectile_move_events_compat(
     return deleted;
 }
 
+static int orch_projectile_landing_cell_f0219_compat(
+    const struct ProjectileInstance_Compat* projectile)
+{
+    if (!projectile) return -1;
+    if ((projectile->direction & 1) == (projectile->cell & 1)) {
+        return (projectile->cell - 1) & 3;
+    }
+    return (projectile->cell + 1) & 3;
+}
+
+static int orch_find_projectile_collision_peer_compat(
+    const struct GameWorld_Compat* world,
+    const struct ProjectileInstance_Compat* projectile,
+    int projectileIndex,
+    const struct CellContentDigest_Compat* digest)
+{
+    int i;
+    int landingCell;
+
+    if (!world || !projectile || !digest) return -1;
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
+        const struct ProjectileInstance_Compat* other =
+            &world->projectiles.entries[i];
+        if (i == projectileIndex || other->slotIndex < 0) continue;
+        if (other->mapIndex == projectile->mapIndex &&
+            other->mapX == projectile->mapX &&
+            other->mapY == projectile->mapY &&
+            other->cell == projectile->cell) {
+            return i;
+        }
+    }
+
+    landingCell = orch_projectile_landing_cell_f0219_compat(projectile);
+    if (landingCell < 0) return -1;
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
+        const struct ProjectileInstance_Compat* other =
+            &world->projectiles.entries[i];
+        if (i == projectileIndex || other->slotIndex < 0) continue;
+        if (other->mapIndex == digest->destMapIndex &&
+            other->mapX == digest->destMapX &&
+            other->mapY == digest->destMapY &&
+            other->cell == landingCell) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static int orch_find_active_group_state_index_compat(
     const struct GameWorld_Compat* world,
     int groupIndex)
@@ -4029,6 +4077,25 @@ static int orch_handle_projectile_move_event_compat(
              * non-explosion impact thud before deleting the projectile. */
             emit(result, EMIT_SOUND_REQUEST, tickResult.emittedSoundCode,
                  projectile->mapX, projectile->mapY, projectile->mapIndex);
+        }
+        if (tickResult.resultKind == PROJECTILE_RESULT_HIT_OTHER_PROJECTILE) {
+            int otherIndex = orch_find_projectile_collision_peer_compat(
+                world, projectile, projectileIndex, &digest);
+            if (otherIndex >= 0) {
+                struct ProjectileInstance_Compat* other =
+                    &world->projectiles.entries[otherIndex];
+                /* Firestaff Phase17 v1 intentionally makes projectile-vs-
+                 * projectile collision order-independent: both projectiles
+                 * despawn. ReDMCSB F0218/F0217 is the source-locked impact
+                 * delete model for projectile interactions and explicitly
+                 * deletes the impacted projectile event after F0217. */
+                (void)orch_materialize_projectile_associated_thing_compat(
+                    world, other, 0);
+                (void)orch_delete_projectile_move_events_compat(
+                    world, otherIndex);
+                (void)F0813_PROJECTILE_Despawn_Compat(
+                    &world->projectiles, otherIndex);
+            }
         }
         (void)orch_materialize_projectile_associated_thing_compat(
             world, projectile, associatedThingMovedToGroup);

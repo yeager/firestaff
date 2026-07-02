@@ -617,6 +617,16 @@ int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
                                              int* outExplosionCount,
                                              int* outFirstProjectileGfx,
                                              int* outFirstExplosionType);
+int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
+                                        int relForward,
+                                        int relSide,
+                                        int* outMapX,
+                                        int* outMapY,
+                                        unsigned char* outRawSquare,
+                                        int* outElementType,
+                                        int* outEffectiveElementType,
+                                        int* outIsWallLike,
+                                        int* outIsOpen);
 
 /* Post-move environmental transition check (pits, teleporters).
  * Returns 1 if a transition occurred. */
