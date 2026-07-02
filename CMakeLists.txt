@@ -16612,6 +16612,18 @@ if(BUILD_TESTING)
         COMMAND test_endgame_frontend_pc34_compat_integration
     )
 
+    add_executable(test_endgame_credits_path_pc34_compat_integration
+        tests/test_endgame_credits_path_pc34_compat_integration.c
+        src/frontend/endgame_credits_path_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_endgame_credits_path_pc34_compat_integration PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME endgame_credits_path_pc34_compat
+        COMMAND test_endgame_credits_path_pc34_compat_integration
+    )
+
     # ── IMG5 4bpp chunked image decoder unit test ───────────────
     # Tests src/shared/firestaff_img5_decode.c (the IMG5 decoder
     # used by Amiga and SNES versions of DM, plus the embedded
