@@ -687,6 +687,9 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     world.explosions.entries[0].mapX = 0;
     world.explosions.entries[0].mapY = 0;
 
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&world, 0, 0, 0), 0,
+              "inactive zeroed runtime explosion slot is not visible");
+    world.explosions.entries[0].reserved0 = 1;
     ASSERT_EQ(M11_GameView_CountCellExplosions(&world, 0, 0, 0), 1,
               "runtime explosion remains visible in viewport summary");
 
@@ -717,8 +720,13 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
               "inactive zeroed runtime projectile slot is suppressed in viewport sample");
     ASSERT_EQ(firstProjectileGfx, -1,
               "inactive zeroed runtime projectile exposes no drawable graphic");
+    ASSERT_EQ(explosionCount, 0,
+              "inactive zeroed runtime explosion slot is suppressed in viewport sample");
+    ASSERT_EQ(firstExplosionType, -1,
+              "inactive zeroed runtime explosion exposes no drawable type");
 
     state.world.projectiles.entries[0].reserved3 = 1;
+    state.world.explosions.entries[0].reserved0 = 1;
     projectileCount = -1;
     explosionCount = -1;
     firstProjectileGfx = -2;
@@ -737,6 +745,22 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
               "runtime explosion without drawable type is suppressed");
     ASSERT_EQ(firstExplosionType, -1,
               "invalid runtime explosion type is not drawable");
+
+    state.world.explosions.entries[0].explosionType = C000_EXPLOSION_FIREBALL;
+    projectileCount = -1;
+    explosionCount = -1;
+    firstProjectileGfx = -2;
+    firstExplosionType = -2;
+    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
+                  &state, 0, 0, NULL, NULL, NULL,
+                  &projectileCount, &explosionCount,
+                  &firstProjectileGfx, &firstExplosionType),
+              1,
+              "viewport artifact probe samples active runtime explosion");
+    ASSERT_EQ(explosionCount, 1,
+              "active runtime explosion with drawable type remains visible");
+    ASSERT_EQ(firstExplosionType, C000_EXPLOSION_FIREBALL,
+              "active runtime explosion exposes drawable type");
 }
 
 static void test_m11_runtime_samples_d2_d3_side_walls(void)
