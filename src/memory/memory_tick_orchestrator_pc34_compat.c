@@ -1620,6 +1620,14 @@ static int orch_status_timeout_defense_pc34_compat(
     int normalizedStatus)
 {
     if (!ev) return 0;
+    if (normalizedStatus == LIFECYCLE_STATUS_SPELL_SHIELD &&
+        ev->aux0 == TIMELINE_AUX_SPELL_SHIELD) {
+        return ev->aux2;
+    }
+    if (normalizedStatus == LIFECYCLE_STATUS_FIRE_SHIELD &&
+        ev->aux0 == TIMELINE_AUX_FIRESHIELD) {
+        return ev->aux3;
+    }
     if (normalizedStatus == LIFECYCLE_STATUS_PARTY_SHIELD &&
         ev->aux0 == TIMELINE_AUX_PARTY_SHIELD) {
         return ev->aux4;

@@ -253,8 +253,11 @@ static void test_orch_spell_status_timeout_aux_tags_expire_magic_state(void) {
     ev.aux4 = 5;
     assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
 
+    /* F0763 stores FireShield defense in aux3; runtime must map it to
+     * ReDMCSB TIMELINE.C C78 EVENT.B.Defense on expiry. */
     ev.aux0 = TIMELINE_AUX_FIRESHIELD;
-    ev.aux1 = 3;
+    ev.aux1 = 0;
+    ev.aux3 = 3;
     ev.aux4 = 0;
     assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
 
@@ -401,6 +404,54 @@ static void test_orch_party_shield_spell_mirrors_lifecycle_defense(void) {
            ORCH_OK);
     assert(world.magic.partyShieldDefense == 0);
     assert(world.lifecycle.status.partyShieldDefense == 0);
+    assert(world.timeline.count == 0);
+}
+
+static void test_orch_fire_shield_spell_mirrors_lifecycle_defense(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int defense;
+    uint32_t expiryTick;
+
+    init_world(&world, &things, weapons, junks);
+    world.gameTick = 400;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+    world.party.champions[0].mana.current = 100;
+    world.party.champions[0].mana.maximum = 100;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    input.command = CMD_CAST_SPELL;
+    input.commandArg1 = 0;
+    input.commandArg2 = 10; /* Ful Bro Neta: Fire Shield. */
+    input.reserved = 1;    /* Lo power ordinal -> spellPower 8. */
+
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    defense = world.magic.fireShieldDefense;
+    /* ReDMCSB MENU.C F0412 calls F0403 for FireShield; F0403 stores
+     * ticks>>5 in EVENT.B.Defense and G0407_s_Party.FireShieldDefense. */
+    assert(defense == 5);
+    assert(world.lifecycle.status.partyFireShieldDefense == defense);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_STATUS_TIMEOUT);
+    assert(world.timeline.events[0].aux0 == TIMELINE_AUX_FIRESHIELD);
+    assert(world.timeline.events[0].aux3 == defense);
+    expiryTick = world.timeline.events[0].fireAtTick;
+    assert(expiryTick > world.gameTick);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    world.gameTick = expiryTick;
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    assert(world.magic.fireShieldDefense == 0);
+    assert(world.lifecycle.status.partyFireShieldDefense == 0);
     assert(world.timeline.count == 0);
 }
 
@@ -6871,6 +6922,7 @@ int main(void) {
     test_orch_thieves_eye_zero_duration_expires_same_tick();
     test_orch_invisibility_spell_mirrors_lifecycle_counter();
     test_orch_party_shield_spell_mirrors_lifecycle_defense();
+    test_orch_fire_shield_spell_mirrors_lifecycle_defense();
     test_orch_potion_spell_mutates_empty_flask_in_hand();
     test_orch_zokathra_spell_materializes_in_ready_hand();
     test_orch_zokathra_spell_falls_back_to_party_square();
