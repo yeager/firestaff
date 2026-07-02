@@ -25,8 +25,8 @@
  *  T6  C6_FOOTPRINTS: ticks = spellPower * 40
  *                     magicStateDelta[5] = 1
  *  T7  C7_ZOKATHRA: ticks = 0, followupEventKind = TIMELINE_EVENT_INVALID
- *  T8  C8_FIRESHIELD: defense = spellPower^2 + 100
- *                      durationTicks = defense >> 5
+ *  T8  C8_FIRESHIELD: raw ticks = spellPower^2 + 100
+ *                      defense delta = raw ticks >> 5
  *  T9  spellPower = (powerOrdinal + 1) << 2
  *  T10 powerOrdinal = 1..6 valid; 0 or 7+ returns 0
  *  T11 NULL out returns 0
@@ -163,8 +163,33 @@ int main(void) {
         CHECK(out.durationTicks == ticks, buf);
     }
 
+    /* T4: C4_PARTY_SHIELD (MENU.C:1966-1971, T0412032). */
+    spell.type = C4_SPELL_TYPE_OTHER_PARTY_SHIELD_COMPAT;
+    memset(&magic, 0, sizeof(magic));
+    for (i = 1; i <= 6; ++i) {
+        int spellPower = kF0757_SpellPowerFor(i);
+        int ticks = spellPower * 40;
+        memset(&out, 0, sizeof(out));
+        rc = F0757_MAGIC_ProduceOtherEffect_Compat(&spell, i, &magic, &out);
+        char buf[96];
+        snprintf(buf, sizeof(buf),
+                 "T4: C4_PARTY_SHIELD ordinal=%d ticks==%d (got %d)",
+                 i, ticks, out.durationTicks);
+        CHECK(rc == 1, buf);
+        CHECK(out.durationTicks == ticks, buf);
+        CHECK(out.magicStateDelta[2] == spellPower,
+              "T4: C4_PARTY_SHIELD defense delta = spellPower");
+    }
+    magic.partyShieldDefense = 60;
+    memset(&out, 0, sizeof(out));
+    rc = F0757_MAGIC_ProduceOtherEffect_Compat(&spell, 3, &magic, &out);
+    CHECK(rc == 1, "T4b: C4_PARTY_SHIELD high-defense rc==1");
+    CHECK(out.magicStateDelta[2] == (kF0757_SpellPowerFor(3) >> 2),
+          "T4b: C4_PARTY_SHIELD high-defense delta is shifted once");
+
     /* T6: C6_FOOTPRINTS (MENU.C:2001-2009). */
     spell.type = C6_SPELL_TYPE_OTHER_FOOTPRINTS_COMPAT;
+    memset(&magic, 0, sizeof(magic));
     for (i = 1; i <= 6; ++i) {
         int spellPower = kF0757_SpellPowerFor(i);
         int ticks = spellPower * 40;
@@ -194,10 +219,11 @@ int main(void) {
 
     /* T8: C8_FIRESHIELD (MENU.C:2026-2030). */
     spell.type = C8_SPELL_TYPE_OTHER_FIRESHIELD_COMPAT;
+    memset(&magic, 0, sizeof(magic));
     for (i = 1; i <= 6; ++i) {
         int spellPower = kF0757_SpellPowerFor(i);
-        int defense = (spellPower * spellPower) + 100;
-        int ticks = defense >> 5;
+        int ticks = (spellPower * spellPower) + 100;
+        int defense = ticks >> 5;
         memset(&out, 0, sizeof(out));
         rc = F0757_MAGIC_ProduceOtherEffect_Compat(&spell, i, &magic, &out);
         char buf[96];
@@ -208,7 +234,19 @@ int main(void) {
                  "T8: C8_FIRESHIELD ordinal=%d ticks==%d (got %d)",
                  i, ticks, out.durationTicks);
         CHECK(out.durationTicks == ticks, buf);
+        CHECK(out.magicStateDelta[1] == defense,
+              "T8: C8_FIRESHIELD defense delta = ticks >> 5");
     }
+    magic.fireShieldDefense = 80;
+    memset(&out, 0, sizeof(out));
+    rc = F0757_MAGIC_ProduceOtherEffect_Compat(&spell, 3, &magic, &out);
+    CHECK(rc == 1, "T8b: C8_FIRESHIELD high-defense rc==1");
+    CHECK(out.durationTicks ==
+              ((kF0757_SpellPowerFor(3) * kF0757_SpellPowerFor(3)) + 100),
+          "T8b: C8_FIRESHIELD high-defense keeps raw timeout ticks");
+    CHECK(out.magicStateDelta[1] ==
+              ((((kF0757_SpellPowerFor(3) * kF0757_SpellPowerFor(3)) + 100) >> 5) >> 2),
+          "T8b: C8_FIRESHIELD high-defense delta is shifted once");
 
     /* T9: spellPower = (powerOrdinal + 1) << 2. */
     for (i = 1; i <= 6; ++i) {
