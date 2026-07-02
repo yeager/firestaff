@@ -719,12 +719,16 @@ int F0757_MAGIC_ProduceOtherEffect_Compat(
             break;
 
         case C8_SPELL_TYPE_OTHER_FIRESHIELD_COMPAT:
-            /* MENU.C:2026..2030 -> F0403: defense = spellPower^2 + 100.
-             * Phase 14 v1 consumes the result directly:
-             * magicStateDelta[1] = defense >> 5 (ticks-like scale). */
+            /* ReDMCSB: MENU.C F0412 lines 2026-2029 calls F0403 with
+             * ticks = spellPower^2 + 100.  F0403 lines 1099-1114 then
+             * stores ticks>>5 as event/state defense and scales that
+             * defense once when the existing fire shield exceeds 50. */
             defense = (spellPower * spellPower) + 100;
-            out->durationTicks = defense >> 5;
+            out->durationTicks = defense;
             out->magicStateDelta[1] = defense >> 5;
+            if (magic->fireShieldDefense > 50) {
+                out->magicStateDelta[1] >>= 2;
+            }
             out->followupEventKind = TIMELINE_EVENT_STATUS_TIMEOUT;
             out->followupEventAux0 = TIMELINE_AUX_FIRESHIELD;
             break;
@@ -894,14 +898,19 @@ int F0760_MAGIC_ApplyStateDelta_Compat(
     fireDelta   = effect->magicStateDelta[1];
     partyDelta  = effect->magicStateDelta[2];
 
-    /* "> 50 -> delta >>= 2" rule (MENU.C:1969 + 1086). */
+    /* "> 50 -> delta >>= 2" rule (MENU.C:1968-1971 + F0403
+     * lines 1102-1111).  F0757 pre-scales C4/C8 effect deltas so
+     * F0763 can carry the same defense value in the timeout event;
+     * generic/manual deltas still scale here. */
     if (inOutMagic->spellShieldDefense > 50) {
         shieldDelta >>= 2;
     }
-    if (inOutMagic->fireShieldDefense > 50) {
+    if (inOutMagic->fireShieldDefense > 50 &&
+        effect->spellType != C8_SPELL_TYPE_OTHER_FIRESHIELD_COMPAT) {
         fireDelta >>= 2;
     }
-    if (inOutMagic->partyShieldDefense > 50) {
+    if (inOutMagic->partyShieldDefense > 50 &&
+        effect->spellType != C4_SPELL_TYPE_OTHER_PARTY_SHIELD_COMPAT) {
         partyDelta >>= 2;
     }
 

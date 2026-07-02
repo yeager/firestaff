@@ -17,8 +17,9 @@
  *  T7  Light delta: magicalLightAmount += delta[3]
  *  T8  Freeze delta: freezeLifeTicks += delta[4]
  *  T9  "> 50 -> delta >>= 2" rule: shield
- *  T10 "> 50 -> delta >>= 2" rule: fire
- *  T11 "> 50 -> delta >>= 2" rule: party
+ *  T10 "> 50 -> delta >>= 2" rule: generic fire
+ *  T11 "> 50 -> delta >>= 2" rule: generic party
+ *       but C8/C4 effect deltas pre-scaled by F0757 are not shifted twice
  *  T12 Thieves Eye count bump (C2): event73CountThievesEye
  *  T13 Invisibility count bump (C3): event71CountInvisibility
  *  T14 Party Shield count bump (C4): event74CountPartyShield
@@ -125,6 +126,15 @@ int main(void) {
     F0760_MAGIC_ApplyStateDelta_Compat(&effect, &magic);
     CHECK(magic.fireShieldDefense == 102, "T10: fire 100 + (8>>2) = 102");
 
+    memset(&effect, 0, sizeof(effect));
+    memset(&magic, 0, sizeof(magic));
+    magic.fireShieldDefense = 100;
+    effect.spellType = C8_SPELL_TYPE_OTHER_FIRESHIELD_COMPAT;
+    effect.magicStateDelta[1] = 8; /* already scaled by F0757/F0403 */
+    F0760_MAGIC_ApplyStateDelta_Compat(&effect, &magic);
+    CHECK(magic.fireShieldDefense == 108,
+          "T10b: C8 pre-scaled fire delta is not shifted twice");
+
     /* T11: "> 50 -> delta >>= 2" on party. */
     memset(&effect, 0, sizeof(effect));
     memset(&magic, 0, sizeof(magic));
@@ -132,6 +142,15 @@ int main(void) {
     effect.magicStateDelta[2] = 12; /* 12 >> 2 = 3 */
     F0760_MAGIC_ApplyStateDelta_Compat(&effect, &magic);
     CHECK(magic.partyShieldDefense == 203, "T11: party 200 + (12>>2) = 203");
+
+    memset(&effect, 0, sizeof(effect));
+    memset(&magic, 0, sizeof(magic));
+    magic.partyShieldDefense = 200;
+    effect.spellType = C4_SPELL_TYPE_OTHER_PARTY_SHIELD_COMPAT;
+    effect.magicStateDelta[2] = 12; /* already scaled by F0757/F0412 */
+    F0760_MAGIC_ApplyStateDelta_Compat(&effect, &magic);
+    CHECK(magic.partyShieldDefense == 212,
+          "T11b: C4 pre-scaled party delta is not shifted twice");
 
     /* T12: Thieves Eye count bump. */
     memset(&effect, 0, sizeof(effect));
