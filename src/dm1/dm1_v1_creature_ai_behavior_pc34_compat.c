@@ -149,6 +149,29 @@ static int resolve_quarter_square_melee_cell_adjustment(
     return 1;
 }
 
+static void apply_archenemy_double_move_f0204(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    struct DM1BehaviorResult_Compat* result)
+{
+    int dir;
+
+    if (!ctx || !result || !ctx->isArchenemy) return;
+    if (result->actionKind != DM1_ACTION_MOVE &&
+        result->actionKind != DM1_ACTION_FLEE_MOVE) return;
+    dir = result->moveDirection;
+    if (dir < 0 || dir > 3) return;
+
+    /* ReDMCSB GROUP.C F0204 lines 1576-1589 plus F0209 lines
+     * 2275-2283: archenemies move two squares in the chosen direction
+     * when the F0204 second-square path is taken. The pure F0810 context
+     * only carries first-ring movement blockers, so it emits the doubled
+     * target just like F0804/F0801b and leaves final world collision to
+     * the caller's map resolver. */
+    result->moveDestMapX = ctx->currentGroupMapX + (g_dx[dir] * 2);
+    result->moveDestMapY = ctx->currentGroupMapY + (g_dy[dir] * 2);
+    result->archenemyDoubleMove = 1;
+}
+
 static const int g_gigglerStealSlotsPc34[8] = {
     DM1_SLOT_ACTION_HAND,
     DM1_SLOT_READY_HAND,
@@ -1084,6 +1107,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                         result->moveDirection = startDir;
                         result->moveDestMapX = destX;
                         result->moveDestMapY = destY;
+                        apply_archenemy_double_move_f0204(ctx, result);
                         found = 1;
                         break;
                     }
@@ -1208,6 +1232,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                             ctx->currentGroupMapX + g_dx[dir];
                         result->moveDestMapY =
                             ctx->currentGroupMapY + g_dy[dir];
+                        apply_archenemy_double_move_f0204(ctx, result);
                     } else {
                         /* Delay the move */
                         result->actionKind = DM1_ACTION_NONE;
@@ -1242,6 +1267,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                             result->moveDirection = startDir;
                             result->moveDestMapX = destX;
                             result->moveDestMapY = destY;
+                            apply_archenemy_double_move_f0204(ctx, result);
                         } else {
                             result->actionKind = DM1_ACTION_NONE;
                         }
@@ -1307,6 +1333,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                             ctx->currentGroupMapX + g_dx[dir];
                         result->moveDestMapY =
                             ctx->currentGroupMapY + g_dy[dir];
+                        apply_archenemy_double_move_f0204(ctx, result);
                     }
                 }
             } else {
@@ -1347,6 +1374,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                                 ctx->currentGroupMapX + g_dx[dir];
                             result->moveDestMapY =
                                 ctx->currentGroupMapY + g_dy[dir];
+                            apply_archenemy_double_move_f0204(ctx, result);
                         }
                     }
                 }
@@ -1395,6 +1423,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                 result->moveDirection = dir;
                 result->moveDestMapX = ctx->currentGroupMapX + g_dx[dir];
                 result->moveDestMapY = ctx->currentGroupMapY + g_dy[dir];
+                apply_archenemy_double_move_f0204(ctx, result);
             }
 
             result->newBehavior = DM1_BEHAVIOR_FLEE;
@@ -1435,6 +1464,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                 result->moveDirection = dir;
                 result->moveDestMapX = ctx->currentGroupMapX + g_dx[dir];
                 result->moveDestMapY = ctx->currentGroupMapY + g_dy[dir];
+                apply_archenemy_double_move_f0204(ctx, result);
             }
             result->newBehavior = DM1_BEHAVIOR_FLEE;
             int fleeTicks = ctx->movementTicks - (ctx->movementTicks >> 2);

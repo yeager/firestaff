@@ -338,6 +338,7 @@ struct DM1BehaviorResult_Compat {
     int meleeCellAdjustment;   /* 1 when F0209 deferred melee to shift cells */
     int updatedGroupCells;     /* activeGroup->cells after source cell update */
     int adjustedCreatureCell;  /* new cell, or -1 when centered */
+    int archenemyDoubleMove;   /* GROUP.C F0204 two-square archenemy move */
 };
 
 /* ==========================================================

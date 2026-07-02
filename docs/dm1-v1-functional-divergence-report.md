@@ -356,15 +356,15 @@
 
 ### GRP-02 — F0190 / F0191 / F0192 damage outcomes are amalgam-only
 - **ReDMCSB reference:** `GROUP.C:F0190_GROUP_GetDamageCreatureOutcome` (per-creature damage), `F0191_GROUP_GetDamageAllCreaturesOutcome` (group damage), `F0192_GROUP_GetResistanceAdjustedPoisonAttack`.
-- **Firestaff state:** All three in the amalgam verbatim. The new compat layer has `F0738_COMBAT_ApplyDamageToGroup_Compat` (replacement for F0190/F0191 group compaction) but **no F0192 equivalent** — the new path does not implement per-creature resistance-adjusted poison attack.
-- **Functional impact:** Creature poison in the new path applies raw poisonAttack without F0192's resistance adjustment. The BUG-113 fix (per `DM1_V1_BUG_AUDIT.md`) adds vitality adjustment but not the resistance factor. This means poison from a Magenta Worm, Screamer, etc. applies at full strength regardless of creature-type resistance in the new path.
-- **Severity:** Major (creature poison is over-effective in the new path)
+- **Firestaff state:** All three remain in the amalgam verbatim. The compat layer has `F0738_COMBAT_ApplyDamageToGroup_Compat` for group damage/compaction and `F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat` for source poison resistance. The projectile and poison-cloud paths call the F0192 helper before applying group damage.
+- **Functional impact:** The bounded compat path no longer applies raw projectile/cloud poison to creatures. `dm1_v1_grp02_f0192_poison_resistance_source_lock` pins all 27 G0243 poison-resistance values and the F0192 formula.
+- **Severity:** Minor (F0192 compat is covered; broader original route/pixel proof remains separate)
 
-### GRP-03 — F0202 / F0203 / F0204 movement-possible and double-move are amalgam-only
+### GRP-03 — F0202 / F0203 / F0204 movement-possible and double-move compat coverage
 - **ReDMCSB reference:** `GROUP.C:F0202_GROUP_IsMovementPossible`, `F0203_GROUP_GetFirstPossibleMovementDirectionOrdinal`, `F0204` (double-move for Lord Chaos / Lord Order).
-- **Firestaff state:** Amalgam-only. The new compat layer has `F0702_MOVEMENT_TryMove_Compat` (party movement) but no per-creature movement-possible check or per-creature double-move.
-- **Functional impact:** Lord Chaos and Lord Order double-move is **not implemented** in the new path. The V1 (amalgam) path may have it; V2 does not.
-- **Severity:** Major (archenemy behavior is wrong in V2)
+- **Firestaff state:** The compat layer has `F0811_DM1_GROUP_IsMovementPossible_Compat`, `F0812` first-direction selection, `F0813` single-square direction selection, the lower-level `F0801b` archenemy second-square helper, and F0810 archenemy move results now emit the F0204 two-square destination with an explicit `archenemyDoubleMove` flag.
+- **Functional impact:** The bounded Lord Chaos / Lord Order / Grey Lord two-square movement decision exists in compat. Remaining risk is end-to-end route proof for accepted and blocked two-square movement in real dungeon state.
+- **Severity:** Minor (bounded F0202/F0203/F0204 compat exists; broader archenemy route proof remains)
 
 ### GRP-04 — F0228 / F0229 cell-ordering and attack-targeting are amalgam-only
 - **ReDMCSB reference:** `GROUP.C:F0228_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource`, `F0229_GROUP_SetOrderedCellsToAttack`.
@@ -536,8 +536,8 @@ Note: 68 findings, of which 18 are explicit non-duplications of the prior `DM1_V
 
 1. **REV-01 (Major)** — F0281 `CHAMPION_Rename` UI is silently missing. Resurrected/reincarnated champions do not prompt for a new name.
 2. **LSV-01 (Major)** — Save/load is not compatible with original PC 3.4 saves. F0433 / F0434 / F0435 / F0436 / F0437 / F0438 are amalgam-only and not invoked by the new runtime. Firestaff uses its own native save format.
-3. **GRP-02 (Major)** — F0192 creature poison resistance adjustment is not implemented. Creature poison applies raw `poisonAttack` regardless of creature type.
-4. **GRP-03 (Major)** — F0202/F0203/F0204 Lord Chaos / Lord Order double-move is not implemented. Archenemy behavior is wrong in V2.
+3. **GRP-02 follow-up (Minor)** — F0192 poison-resistance compat is implemented and tested; remaining work is broader original route/pixel proof.
+4. **GRP-03 follow-up (Minor)** — F0810 emits F0204 archenemy two-square movement; remaining work is accepted/blocked real dungeon route proof.
 5. **MNU-02 (Major)** — F0757 Thieves Eye duration is `spellPower * 40` (64-224s) instead of the original's structurally-0 (broken by uninitialised stack). Spell lasts much longer in Firestaff.
 6. **CHM-01 (Major)** — F0307 BUG0_41 (Megamax compiler bug) is intentionally fixed. Antifire / Antimagic / Vitality-poison now participate. Gameplay balance differs from original.
 7. **DUN-05 (Major)** — F0163 BUG0_08 overfill is silently dropped, not crashed. Defensive behavior.
@@ -575,5 +575,5 @@ These were verified in the prior audit and are not re-listed:
 
 - This audit did **not** modify any source files. Build directory and Phase A probe were not exercised (no source changes were made; build state should be unchanged from `f99587c35` baseline).
 - The **sanitized amalgam** is a faithful 1:1 port of ReDMCSB. It is exercised by the legacy V1 emulator path (the V1 PC 3.4-emulation tests). The **new compat layer** (M10/M11 split into smaller files) is a refactor with source-locked comments but independent function bodies. The two paths coexist; V1 tests pass via the amalgam, V2 paths use the compat layer.
-- Most "divergence" findings are **intentional splits** (amalgam vs compat layer). The compat layer is a re-implementation of the same logic, not a behavioral change. Where the new layer differs in behavior (CHM-01, CHM-06, MNU-02, REV-01, MOV-05, GRP-02, GRP-03, DUN-05, PJE-05), the divergence is called out as Major.
+- Most "divergence" findings are **intentional splits** (amalgam vs compat layer). The compat layer is a re-implementation of the same logic, not a behavioral change. Where the new layer differs in behavior (CHM-01, CHM-06, MNU-02, REV-01, DUN-05, PJE-05), the divergence is called out as Major. MOV-05, GRP-02, and bounded GRP-03 movement decisions are now covered by compat tests, while broader route/pixel proof remains separate.
 - BUG0_xx preservation is mixed: 4 BUGs are deliberately not preserved (intentional fixes), 4 BUGs are preserved verbatim, and the rest are N/A for V1.
