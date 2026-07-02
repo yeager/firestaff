@@ -202,6 +202,7 @@ set(NEXUS_V2_RUNTIME_SOURCES
 if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_V2_RUNTIME_SOURCES})
     target_include_directories(firestaff_nexus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(firestaff_nexus PUBLIC m)
     if(NOT MSVC)
         target_compile_options(firestaff_nexus PRIVATE -Wall -Wextra -O2)
     endif()
