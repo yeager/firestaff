@@ -280,15 +280,6 @@ int F0757_MAGIC_ProduceOtherEffect_Compat(
     const struct MagicState_Compat* magic,
     struct SpellEffect_Compat* out);
 
-/* MNU-02 (audit, v2.7.x) — query whether F0757 uses the legacy
- * defensive envelope (1) or the source-locked 0-tick default (0).
- * Public so the regression test can assert whichever mode the build
- * is currently in. Build flag: -DFIRESTAFF_PC34_LEGACY_THIEVES_EYE=1
- * forces 1. Env var:    FIRESTAFF_DM1_THIEVES_EYE_LEGACY=1 forces 1.
- * Default without either is 0 (source-locked, matches PC 3.4).
- */
-int F0757_MAGIC_ThievesEyeLegacyEnvelopeActive_Compat(void);
-
 int F0758_MAGIC_ProducePotionEffect_Compat(
     const struct SpellDefinition_Compat* spell,
     int powerOrdinal,

@@ -264,11 +264,11 @@
 - **Functional impact:** V1 spell casting works via the amalgam. The new path uses refactored F0750..F0759 which are source-locked from the ReDMCSB comments but are not source-locked to F0412. The two paths produce the same output for the 25 DM1 spells, but the new path is a different function.
 - **Severity:** Minor (intentional refactor)
 
-### MNU-02 — F0757 spell-duration envelope for C2_THIEVES_EYE uses `spellPower * 40` instead of the uninitialised-stack-residue value
-- **ReDMCSB reference:** `MENU.C:1945-1963` (`F0412` C2_THIEVES_EYE branch). Original PC 3.4 (MEDIA128) path: `AL1267_ui_SpellPower >>= 1; goto T0412032; T0412032: AL1267_ui_Ticks *= AL1267_ui_SpellPower; AL1267_ui_Ticks <<= 1;` — but `AL1267_ui_Ticks` is **uninitialised** stack residue, so the actual duration is structurally 0 in the v1 runtime.
-- **Firestaff state:** `src/memory/memory_magic_pc34_compat.c:595-617` — comment: *"baseTicks is the uninitialised L1267_ui_Multiple stack residue in the original C code; in the v1 runtime this resolves to 0 deterministically (init to 0 at function entry), so the duration collapses. The DM1 playtest duration of ~2–3 minutes of game time at power ordinals 1..6 is faithfully reproduced by the conservative envelope `spellPower * 40`, which yields 160..560 ticks (≈ 64..224 s at 0.4 s per tick)."*
-- **Functional impact:** In the original PC 3.4, Thieves Eye duration is effectively 0 ticks (because of the uninitialised stack). In Firestaff, the spell lasts 64–224 seconds depending on power ordinal — much **longer** than the original. This is a defensive interpretation rather than a bug fix; the comment correctly identifies the source's uninitialised-stack hazard but does not preserve the original (broken) duration.
-- **Severity:** Major (BUG-107 in prior audit; spell lasts much longer in Firestaff than in original; intentional but user-visible)
+### MNU-02 — F0757 C2_THIEVES_EYE duration now follows the F0412 alias contract
+- **ReDMCSB reference:** `MENU.C:1945-1963` (`F0412` C2_THIEVES_EYE branch). The aliases `AL1267_ui_Ticks`, `AL1267_ui_SpellPower`, and `AL1267_ui_Multiple` all map to `L1267`. The C2 branch shifts spellPower right once, then `T0412032` squares that same value before `T0412033` schedules the C73 timeout.
+- **Firestaff state:** `F0757_MAGIC_ProduceOtherEffect_Compat` now mirrors that alias behavior: Thieves Eye duration is `((spellPower >> 1) * (spellPower >> 1))`, with the C73 status timeout tagged by `TIMELINE_AUX_THIEVES_EYE`.
+- **Functional impact:** Source-locked match for the refactored C2 path. The prior `spellPower * 40`/zero-tick interpretation was removed.
+- **Severity:** N/A (fixed)
 
 ### MNU-03 — F0757 spell-durations for C0_LIGHT / C5_TORCH / C3_INVISIBILITY / C4_SHIELD / C6_FOOTPRINTS / C8_FIRESHIELD are source-locked
 - **ReDMCSB reference:** `MENU.C:1923-2030` (`F0412` C0..C8 cases).
@@ -538,11 +538,10 @@ Note: 68 findings, of which 18 are explicit non-duplications of the prior `DM1_V
 2. **LSV-01 (Major)** — Save/load is not compatible with original PC 3.4 saves. F0433 / F0434 / F0435 / F0436 / F0437 / F0438 are amalgam-only and not invoked by the new runtime. Firestaff uses its own native save format.
 3. **GRP-02 follow-up (Minor)** — F0192 poison-resistance compat is implemented and tested; remaining work is broader original route/pixel proof.
 4. **GRP-03 follow-up (Minor)** — F0810 emits F0204 archenemy two-square movement; remaining work is accepted/blocked real dungeon route proof.
-5. **MNU-02 (Major)** — F0757 Thieves Eye duration is `spellPower * 40` (64-224s) instead of the original's structurally-0 (broken by uninitialised stack). Spell lasts much longer in Firestaff.
-6. **CHM-01 (Major)** — F0307 BUG0_41 (Megamax compiler bug) is intentionally fixed. Antifire / Antimagic / Vitality-poison now participate. Gameplay balance differs from original.
-7. **DUN-05 (Major)** — F0163 BUG0_08 overfill is silently dropped, not crashed. Defensive behavior.
-9. **PJE-05 (Major)** — F0220 BUG0_16 projectile-list overfill is silently dropped, not crashed. Defensive behavior.
-10. **CMD-01 (Minor)** — F0377 / F0378 click dispatchers are amalgam-only. The new M11 click routing is independent and inline. Two parallel implementations of the same dispatch logic; long-term maintenance risk.
+5. **CHM-01 (Major)** — F0307 BUG0_41 (Megamax compiler bug) is intentionally fixed. Antifire / Antimagic / Vitality-poison now participate. Gameplay balance differs from original.
+6. **DUN-05 (Major)** — F0163 BUG0_08 overfill is silently dropped, not crashed. Defensive behavior.
+7. **PJE-05 (Major)** — F0220 BUG0_16 projectile-list overfill is silently dropped, not crashed. Defensive behavior.
+8. **CMD-01 (Minor)** — F0377 / F0378 click dispatchers are amalgam-only. The new M11 click routing is independent and inline. Two parallel implementations of the same dispatch logic; long-term maintenance risk.
 
 ---
 
@@ -556,7 +555,7 @@ These were verified in the prior audit and are not re-listed:
 - BUG-104 (creature AI stubs) — fixed (per `g_profiles` table source-lock)
 - BUG-105 (attack ordering) — still NEEDS DISASSEMBLY REVIEW (F0229)
 - BUG-106 (flee behavior) — still NEEDS DISASSEMBLY REVIEW
-- BUG-107 (thieves eye duration) — verified still approximated (MNU-02 in this report)
+- BUG-107 (thieves eye duration) — fixed by the F0412 alias-duration update (MNU-02 in this report)
 - BUG-108 (light amount table) — verified (full 16-entry table is in `dm1_v1_light_pc34_compat.c`)
 - BUG-109 (stat gain cycle) — verified (F0832 implements the F0331 cycle)
 - BUG-110 (magic map per-champion) — not in this audit's scope
@@ -575,5 +574,5 @@ These were verified in the prior audit and are not re-listed:
 
 - This audit did **not** modify any source files. Build directory and Phase A probe were not exercised (no source changes were made; build state should be unchanged from `f99587c35` baseline).
 - The **sanitized amalgam** is a faithful 1:1 port of ReDMCSB. It is exercised by the legacy V1 emulator path (the V1 PC 3.4-emulation tests). The **new compat layer** (M10/M11 split into smaller files) is a refactor with source-locked comments but independent function bodies. The two paths coexist; V1 tests pass via the amalgam, V2 paths use the compat layer.
-- Most "divergence" findings are **intentional splits** (amalgam vs compat layer). The compat layer is a re-implementation of the same logic, not a behavioral change. Where the new layer differs in behavior (CHM-01, CHM-06, MNU-02, REV-01, DUN-05, PJE-05), the divergence is called out as Major. MOV-05, GRP-02, and bounded GRP-03 movement decisions are now covered by compat tests, while broader route/pixel proof remains separate.
+- Most "divergence" findings are **intentional splits** (amalgam vs compat layer). The compat layer is a re-implementation of the same logic, not a behavioral change. Where the new layer differs in behavior (CHM-01, CHM-06, REV-01, DUN-05, PJE-05), the divergence is called out as Major. MOV-05, MNU-02, GRP-02, and bounded GRP-03 movement decisions are now covered by compat tests, while broader route/pixel proof remains separate.
 - BUG0_xx preservation is mixed: 4 BUGs are deliberately not preserved (intentional fixes), 4 BUGs are preserved verbatim, and the rest are N/A for V1.
