@@ -3002,6 +3002,32 @@ set_tests_properties(csb_v1_csbwin_512_xor_pad_classify PROPERTIES
     TIMEOUT 120
 )
 
+# CSB V1 per-game save-byte export/import probe. The probe
+# runs the full synthetic-fixture portion of the FSSB envelope
+# gate (build -> validate -> import through production loader)
+# and then optionally scans a user-staged data dir for *.csbsave
+# files. Skip-safe by design: hosts without a user-staged
+# FSSB envelope exit 0 with a SKIP message after the synthetic
+# portion has already proven the export/import contract.
+# Source: ReDMCSB CEDTINC8.C:101-118 + LOADSAVE.C F0433/F0435
+#         + SAVEHEAD.C F0429/F0430 + DEFS.H:1289;
+#         CSBWin SaveGame.cpp:927/1711/2111;
+#         ISO 3309 / ITU-T V.42 CRC-32 (PNG / gzip / zlib).
+add_executable(firestaff_csb_v1_save_export_import_probe
+    probes/csb/firestaff_csb_v1_save_export_import_probe.c
+    src/csb/csb_v1_save_export_import_pc34_compat.c
+    src/csb/csb_v1_save_import_path_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+)
+target_include_directories(firestaff_csb_v1_save_export_import_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_save_export_import_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_save_export_import_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 Hint Oracle UI/runtime binding probe
 # Real-asset HCSB.HTC → Firestaff-facing oracle/hint binding
 # surface. The probe exercises the diagnostic/oracle report,
@@ -16854,6 +16880,39 @@ if(BUILD_TESTING)
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 
+    # CSB V1 per-game save-byte export/import compatibility
+    # proof. Data-free contract tests for the FSSB envelope gate
+    # (csb_v1_save_export_import_pc34_compat) — building an
+    # envelope around a CSB v2.x payload produced by
+    # csb_v1_build_csb_save_buffer, validating magic / version /
+    # payload_kind / reserved / payload_len / CRC, classifying
+    # the buffer against FSSB / raw CSBGAME v2.0 / raw CSBGAME
+    # v2.1 / raw DM1 RDMCSB15 / raw CSBWin 512-byte, and feeding
+    # the inner payload back through
+    # csb_v1_import_csb_save_buffer() to prove the production
+    # loader accepts what the export writes. The skip-safe
+    # real-asset probe lives next to it.
+    add_executable(test_csb_v1_save_export_import_pc34_compat
+        tests/test_csb_v1_save_export_import_pc34_compat.c
+        src/csb/csb_v1_save_export_import_pc34_compat.c
+        src/csb/csb_v1_save_import_path_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_save_export_import_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_save_export_import_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_save_export_import_pc34_compat_unit
+        COMMAND test_csb_v1_save_export_import_pc34_compat
+    )
+    set_tests_properties(csb_v1_save_export_import_pc34_compat_unit PROPERTIES
+        LABELS "tier2;csb;save_export_import;data_free"
+    )
+
     # CSB Hint Oracle UI/runtime binding surface.
     # Data-free contract tests for the report / hint / resolve
     # helpers built on top of csb_hint_oracle_htc and
@@ -17771,6 +17830,22 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_save_real_artifact_boundary PROPERTIES
             LABELS "tier2;csb;save_runtime;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+
+    # CSB V1 per-game save-byte export/import probe ctest
+    # entry. Mirrors the csb_v1_csbwin_save_loader_boundary
+    # skip-safe pattern: synthetic-fixture portion runs on
+    # every host, real-asset *.csbsave scan runs only when a
+    # user has staged one under data_dir.
+    if(TARGET firestaff_csb_v1_save_export_import_probe)
+        add_test(
+            NAME csb_v1_save_export_import
+            COMMAND firestaff_csb_v1_save_export_import_probe
+        )
+        set_tests_properties(csb_v1_save_export_import PROPERTIES
+            LABELS "tier2;csb;save_export_import;real_data;skip_safe"
             TIMEOUT 120
         )
     endif()
