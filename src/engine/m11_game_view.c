@@ -26647,6 +26647,14 @@ int M11_GameView_GetV1LeaderHandObjectNameZone(int* outX,
 int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
                                         unsigned short thing) {
     if (!state || thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB: COMMAND.C F0380 lines 2159-2180 and 2303-2367 route
+         * ordinary status, inventory, spell, action, rest, and save
+         * commands around G0299_ui_CandidateChampionOrdinal while C040 owns
+         * input. Keep the direct M11 leader-hand bridge from mutating the
+         * transient mouse-hand object behind that live panel. */
+        return 0;
+    }
     state->leaderHandObjectPresent = 1;
     state->leaderHandThing = thing;
     state->leaderHandIconIndex = m11_object_icon_index_for_thing(
@@ -26658,6 +26666,12 @@ int M11_GameView_SetV1LeaderHandObject(M11_GameViewState* state,
 
 void M11_GameView_ClearV1LeaderHandObject(M11_GameViewState* state) {
     if (!state) return;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB: COMMAND.C F0380 keeps C040/G0299 as the active command
+         * surface. Direct helper calls must not clear G4055-style
+         * leader-hand state while a candidate panel owns input. */
+        return;
+    }
     state->leaderHandObjectPresent = 0;
     state->leaderHandThing = THING_NONE;
     state->leaderHandIconIndex = -1;
@@ -26733,6 +26747,12 @@ int M11_GameView_OpenV1ActionHandChest(M11_GameViewState* state) {
     int championIndex;
     unsigned short thing;
     if (!state || !state->inventoryPanelActive) return 0;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB: COMMAND.C F0380 line 2180 gates inventory toggle on
+         * !G0299_ui_CandidateChampionOrdinal, and lines 2167-2170 skip
+         * cross-champion status-slot object routing while C040 is live. */
+        return 0;
+    }
     championIndex = state->world.party.activeChampionIndex;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     thing = state->world.party.champions[championIndex].inventory[CHAMPION_SLOT_ACTION_HAND];
@@ -26789,6 +26809,12 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
 
 void M11_GameView_CloseV1OpenChest(M11_GameViewState* state) {
     if (!state) return;
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB: COMMAND.C F0380 keeps the C040 resurrect/reincarnate
+         * panel selected through G0299. Direct chest-close helpers must not
+         * rewrite G0426/G0425-equivalent chest state behind that panel. */
+        return;
+    }
     if (m11_v1_open_chest_container_index(state) >= 0) {
         unsigned short slots[8];
         /* ReDMCSB CHEST.C F0334 lines 112-133 rebuilds the container
