@@ -816,6 +816,44 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
               "active runtime explosion exposes drawable type");
 }
 
+static void test_runtime_projectiles_use_f0115_c2900_raw_rows(void)
+{
+    int x = -1;
+    int y = -1;
+    int legacyX = -1;
+    int legacyY = -1;
+
+    /* ReDMCSB DUNVIEW.C F0115 lines 5648-5656 gates projectiles through
+     * G0218_aaaauc_Graphic558_ObjectCoordinateSets[0], and line 5681
+     * matches the projectile's source view cell before drawing.  For PC34
+     * layout 696, D1C/D2C front cells live only in the raw C2900 rows; the
+     * older five-row fallback has no front-cell coordinate and would draw a
+     * synthetic cue instead of the source-positioned projectile. */
+    ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(1, 0), 8,
+              "D1C uses raw C2900 row 8");
+    ASSERT_EQ(M11_GameView_GetProjectileRawZonePointForRel(1, 0, 0, &x, &y),
+              1,
+              "D1C front-left projectile has raw C2900 coordinate");
+    ASSERT_EQ(x, 83, "D1C front-left projectile raw X");
+    ASSERT_EQ(y, 47, "D1C front-left projectile raw Y");
+    ASSERT_EQ(M11_GameView_GetC2900ProjectileZonePoint(
+                  M11_GameView_GetObjectSourceScaleIndex(0, 0),
+                  0,
+                  &legacyX,
+                  &legacyY),
+              0,
+              "legacy five-row projectile table has no D1C front-left coordinate");
+
+    x = y = -1;
+    ASSERT_EQ(M11_GameView_GetF0115C2500C2900Row(2, 0), 5,
+              "D2C uses raw C2900 row 5");
+    ASSERT_EQ(M11_GameView_GetProjectileRawZonePointForRel(2, 0, 0, &x, &y),
+              1,
+              "D2C front-left projectile has raw C2900 coordinate");
+    ASSERT_EQ(x, 92, "D2C front-left projectile raw X");
+    ASSERT_EQ(y, 47, "D2C front-left projectile raw Y");
+}
+
 static void test_m11_runtime_samples_d2_d3_side_walls(void)
 {
     M11_GameViewState state;
@@ -1053,6 +1091,7 @@ int main(void)
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();
     test_static_dungeon_effects_do_not_render_as_viewport_fireballs();
+    test_runtime_projectiles_use_f0115_c2900_raw_rows();
     test_m11_runtime_samples_d2_d3_side_walls();
     test_m11_runtime_draws_far_side_wall_with_near_side_blocker();
     test_m11_runtime_draws_far_side_wall_with_center_blocker();
