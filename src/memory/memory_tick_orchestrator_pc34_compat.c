@@ -3836,6 +3836,17 @@ static int orch_build_projectile_digest_compat(
                  * is set on the impacted door thing. */
                 out->destDoorHasButton =
                     world->things->doors[doorIndex].button ? 1 : 0;
+                {
+                    const struct DungeonDoor_Compat* door =
+                        &world->things->doors[doorIndex];
+                    int doorSet = door->type ? map->doorSet1 : map->doorSet0;
+                    int doorInfoIndex = doorSet & 3;
+                    /* ReDMCSB DUNGEON.C:G0254 lines 560-565: only the
+                     * portcullis DoorInfo row (index 0) has
+                     * MASK0x0002_PROJECTILES_CAN_PASS_THROUGH. */
+                    out->destDoorAllowsProjectilePassThrough =
+                        (doorInfoIndex == 0) ? 1 : 0;
+                }
             }
         }
     } else {
@@ -4013,6 +4024,87 @@ static int orch_projectile_associated_icon_index_compat(
     return -1;
 }
 
+static int orch_projectile_object_info_index_compat(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing)
+{
+    int type;
+    int index;
+    int subtype;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) return -1;
+    type = (int)THING_GET_TYPE(thing);
+    index = (int)THING_GET_INDEX(thing);
+    if (index < 0) return -1;
+
+    /* ReDMCSB DUNGEON.C:F0141 maps thing type/subtype to
+     * G0237_as_Graphic559_ObjectInfo before F0217 reads AllowedSlots. */
+    switch (type) {
+    case THING_TYPE_SCROLL:
+        return 0;
+    case THING_TYPE_CONTAINER:
+        if (!things->containers || index >= things->containerCount) return -1;
+        subtype = things->containers[index].type;
+        if (subtype < 0 || subtype > 0) subtype = 0;
+        return 1 + subtype;
+    case THING_TYPE_POTION:
+        if (!things->potions || index >= things->potionCount) return -1;
+        subtype = things->potions[index].type;
+        if (subtype < 0 || subtype > 20) subtype = 0;
+        return 2 + subtype;
+    case THING_TYPE_WEAPON:
+        if (!things->weapons || index >= things->weaponCount) return -1;
+        subtype = things->weapons[index].type;
+        if (subtype < 0 || subtype > 45) subtype = 0;
+        return 23 + subtype;
+    case THING_TYPE_ARMOUR:
+        if (!things->armours || index >= things->armourCount) return -1;
+        subtype = things->armours[index].type;
+        if (subtype < 0 || subtype > 57) subtype = 0;
+        return 69 + subtype;
+    case THING_TYPE_JUNK:
+        if (!things->junks || index >= things->junkCount) return -1;
+        subtype = things->junks[index].type;
+        if (subtype < 0 || subtype > 52) subtype = 0;
+        return 127 + subtype;
+    default:
+        return -1;
+    }
+}
+
+static int orch_projectile_associated_allowed_slots_compat(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing)
+{
+    static const unsigned short s_object_info_allowed_slots[180] = {
+        0x0500, 0x0200, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500,
+        0x0501, 0x0501, 0x0501, 0x0501, 0x0501, 0x0501, 0x0501, 0x0501,
+        0x0501, 0x0501, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500,
+        0x0500, 0x0400, 0x0400, 0x0040, 0x0040, 0x0040, 0x0040, 0x05C0,
+        0x0040, 0x0040, 0x0040, 0x0040, 0x0040, 0x0040, 0x0040, 0x0040,
+        0x0040, 0x0040, 0x0040, 0x0040, 0x0040, 0x0440, 0x0040, 0x0040,
+        0x0040, 0x0040, 0x05C0, 0x05C0, 0x0440, 0x05C0, 0x05C0, 0x05C0,
+        0x0040, 0x0040, 0x0540, 0x0540, 0x0040, 0x0040, 0x0040, 0x0040,
+        0x0440, 0x0040, 0x0440, 0x0040, 0x0040, 0x040C, 0x040C, 0x0410,
+        0x0420, 0x0420, 0x0408, 0x0410, 0x0408, 0x0410, 0x0408, 0x0408,
+        0x0410, 0x0410, 0x0408, 0x0410, 0x0420, 0x0408, 0x0410, 0x0420,
+        0x0410, 0x0408, 0x0408, 0x0410, 0x0402, 0x0402, 0x0402, 0x0402,
+        0x0402, 0x0400, 0x0200, 0x0200, 0x0200, 0x0408, 0x0410, 0x0408,
+        0x0410, 0x0402, 0x0420, 0x0402, 0x0008, 0x0010, 0x0420, 0x0200,
+        0x0402, 0x0008, 0x0010, 0x0420, 0x0200, 0x0402, 0x0008, 0x0010,
+        0x0420, 0x0200, 0x0402, 0x0408, 0x0010, 0x0420, 0x0408, 0x0500,
+        0x0501, 0x0504, 0x0504, 0x0500, 0x0400, 0x0500, 0x0500, 0x0500,
+        0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500,
+        0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500, 0x0500,
+        0x0200, 0x0500, 0x0500, 0x0500, 0x0501, 0x0501, 0x0501, 0x0501,
+        0x0401, 0x0401, 0x0501, 0x0501, 0x0504, 0x0504, 0x0504, 0x0504,
+        0x0504, 0x0500, 0x0500, 0x0500, 0x0400, 0x0500, 0x0500, 0x0504,
+        0x0500, 0x0500, 0x0000, 0x0400
+    };
+    int objectInfoIndex = orch_projectile_object_info_index_compat(things, thing);
+    if (objectInfoIndex < 0 || objectInfoIndex >= 180) return 0;
+    return (int)s_object_info_allowed_slots[objectInfoIndex];
+}
+
 static int orch_handle_projectile_move_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* event,
@@ -4038,6 +4130,9 @@ static int orch_handle_projectile_move_event_compat(
     projectileForAdvance = *projectile;
     projectileForAdvance.reserved0 =
         orch_projectile_associated_icon_index_compat(
+            world->things, (unsigned short)projectile->reserved1);
+    projectileForAdvance.reserved2 =
+        orch_projectile_associated_allowed_slots_compat(
             world->things, (unsigned short)projectile->reserved1);
 
     if (!F0811_PROJECTILE_Advance_Compat(

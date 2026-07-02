@@ -167,6 +167,7 @@
  * passing through a closed projectile-passable door. */
 #define PROJECTILE_ASSOCIATED_ICON_IRON_KEY       176
 #define PROJECTILE_ASSOCIATED_ICON_MASTER_KEY     191
+#define PROJECTILE_ASSOCIATED_ALLOWED_SLOTS_POUCH_PASS_THROUGH_DOORS 0x0100
 
 /* ==========================================================
  *  Door state values used in the digest. -1 means "no door".
