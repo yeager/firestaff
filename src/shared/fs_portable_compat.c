@@ -282,17 +282,20 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize) {
 
 #if defined(_WIN32)
     {
-        char modulePath[FSP_PATH_MAX];
-        DWORD len = GetModuleFileNameA(NULL, modulePath, (DWORD)sizeof(modulePath));
-        if (len > 0U && len < (DWORD)sizeof(modulePath)) {
-            char installDir[FSP_PATH_MAX];
-            FSP_NormalizeSeparators(modulePath);
-            if (FSP_ParentDir(installDir, sizeof(installDir), modulePath)) {
-                return FSP_JoinPath(out, outSize, installDir, "originals");
-            }
+        const char* userProfile = getenv("USERPROFILE");
+        if (userProfile && userProfile[0] != '\0') {
+            rc = snprintf(out, outSize, "%s\\.firestaff\\data", userProfile);
+            return rc > 0 && (size_t)rc < outSize;
         }
     }
-    fsp_copy(out, outSize, ".\\originals");
+    {
+        const char* appData = getenv("APPDATA");
+        if (appData && appData[0] != '\0') {
+            rc = snprintf(out, outSize, "%s\\Firestaff\\data", appData);
+            return rc > 0 && (size_t)rc < outSize;
+        }
+    }
+    fsp_copy(out, outSize, ".\\data");
     return 1;
 #else
     {
@@ -328,18 +331,24 @@ int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir) {
     }
 
 #if defined(_WIN32)
-    /* Priority 3: Windows installers keep user-supplied game data next to the
-     * installed executable so the portable ZIP and installer builds agree. */
+    /* Priority 3: Windows public releases default to the same user-owned
+     * Firestaff game-data root shape as macOS/Linux: ~/.firestaff/data,
+     * expressed with the Windows user profile directory. */
     {
-        char modulePath[FSP_PATH_MAX];
-        DWORD len = GetModuleFileNameA(NULL, modulePath, (DWORD)sizeof(modulePath));
-        if (len > 0U && len < (DWORD)sizeof(modulePath)) {
-            char installDir[FSP_PATH_MAX];
-            FSP_NormalizeSeparators(modulePath);
-            if (FSP_ParentDir(installDir, sizeof(installDir), modulePath) &&
-                FSP_JoinPath(out, outSize, installDir, "data")) {
-                return 1;
-            }
+        const char* userProfile = getenv("USERPROFILE");
+        if (userProfile && userProfile[0] != '\0') {
+            rc = snprintf(out, outSize, "%s\\.firestaff\\data", userProfile);
+            return rc > 0 && (size_t)rc < outSize;
+        }
+    }
+
+    /* Priority 4: APPDATA fallback for unusual Windows environments that
+     * expose roaming app data but not USERPROFILE. */
+    {
+        const char* appData = getenv("APPDATA");
+        if (appData && appData[0] != '\0') {
+            rc = snprintf(out, outSize, "%s\\Firestaff\\data", appData);
+            return rc > 0 && (size_t)rc < outSize;
         }
     }
     fsp_copy(out, outSize, ".\\data");

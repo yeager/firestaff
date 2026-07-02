@@ -108,6 +108,11 @@ int main(void) {
 
     check_int(M12_AssetStatus_GameAvailable(&directRootStatus, "theron") == 1,
               "Theron direct-launch scan resolves root/theron without full menu scan");
+    check_int(strcmp(M12_AssetStatus_GetDataDir(&directRootStatus), root) == 0,
+              "Theron direct-launch scan preserves the configured data root");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&directRootStatus, "theron"),
+                     theronDir) == 0,
+              "Theron direct-launch scan keeps root/theron as the runtime dir only");
     version = M12_AssetStatus_GetVersion(&directRootStatus, "theron", 0U);
     check_int(version && version->matched &&
                   strcmp(version->matchedPath, trackPath) == 0 &&
