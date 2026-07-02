@@ -32188,8 +32188,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
     }
 
-    /* Endgame victory overlay */
-    if (state->gameWon) {
+    /* Endgame victory overlay.
+     * ReDMCSB ENDGAME.C F0446 lines 939-961 delays after victory text
+     * before calling F0444_STARTEND_Endgame(C1_TRUE), so the final
+     * presentation waits for the non-blocking F0446 handoff gate. */
+    if (M11_GameView_GetEndgameFinalPresentationReady(state)) {
         if (m11_v1_chrome_mode_enabled() && state->assetsAvailable) {
             const M11_AssetSlot* theEnd = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
@@ -32892,6 +32895,27 @@ int M11_GameView_GetEndgameDoNotDrawFluxcages(const M11_GameViewState* state) {
 
 int M11_GameView_GetEndgameFinalHandoffReady(const M11_GameViewState* state) {
     return state ? state->endgameFinalHandoffReady : 0;
+}
+
+int M11_GameView_GetEndgameFinalPresentationReady(const M11_GameViewState* state) {
+    if (!state || !state->gameWon) {
+        return 0;
+    }
+    if (state->endgameFinalHandoffReady) {
+        return 1;
+    }
+    /* Plain EMIT_GAME_WON paths predate the F0446 replay state and have
+     * no delayed source handoff armed. Keep those legacy/debug wins
+     * presentable while complete-FUSE waits for ENDGAME.C F0446 lines
+     * 939-961 to drain. */
+    if (state->endgameCalledWithTrue ||
+        state->endgameFinalDelayTicks > 0 ||
+        state->endgameFuseSequenceDelayTicks > 0 ||
+        state->endgameFuseSequenceDelayRemainingTicks > 0 ||
+        state->endgameTextMessageDelayTicks > 0) {
+        return 0;
+    }
+    return 1;
 }
 
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state) {

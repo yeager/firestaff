@@ -575,6 +575,47 @@ static void subtest_endgame_manifest(void) {
     m11_ax_check(strstr(buf, "\"id\":\"ENDGAME_PORTRAIT_0\"") != NULL &&
                  strstr(buf, "\"id\":\"ENDGAME_PORTRAIT_3\"") != NULL,
                  "endgame: 4 champion portrait zones present (slots 0..3)");
+
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    memset(&state, 0, sizeof(state));
+    state.active = 1;
+    state.gameWon = 1;
+    state.endgameCalledWithTrue = 1;
+    state.endgameFinalDelayTicks = 600;
+    state.endgameFuseSequenceDelayTicks = 2160;
+    state.endgameFuseSequenceDelayRemainingTicks = 2160;
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1, "endgame-delay: update returns 1");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "endgame-delay: file is non-empty");
+    if (n <= 0) return;
+    m11_ax_check(strstr(buf, "\"gameState\":\"endgame\"") != NULL,
+                 "endgame-delay: broad gameState remains endgame");
+    m11_ax_check(strstr(buf, "\"id\":\"ENDGAME_THE_END\"") == NULL,
+                 "endgame-delay: ENDGAME_THE_END waits for F0446 handoff");
+    m11_ax_check(strstr(buf, "\"id\":\"ENDGAME_MIRROR_0\"") == NULL &&
+                 strstr(buf, "\"id\":\"ENDGAME_PORTRAIT_0\"") == NULL,
+                 "endgame-delay: final champion zones wait for F0446 handoff");
+
+    m11_ax_clean_artifacts();
+    fs_ax_set_enabled(1);
+    state.endgameFuseSequenceDelayRemainingTicks = 0;
+    state.endgameFinalHandoffReady = 1;
+    {
+        int rc = m11_screen_reader_update_ex(&state, 320, 200);
+        m11_ax_check(rc == 1, "endgame-ready: update returns 1");
+    }
+    n = m11_ax_read_all(g_json_path, buf, sizeof(buf));
+    m11_ax_check(n > 0, "endgame-ready: file is non-empty");
+    if (n <= 0) return;
+    m11_ax_check(strstr(buf, "\"id\":\"ENDGAME_THE_END\"") != NULL,
+                 "endgame-ready: ENDGAME_THE_END appears after F0446 handoff");
+    m11_ax_check(strstr(buf, "\"id\":\"ENDGAME_MIRROR_0\"") != NULL &&
+                 strstr(buf, "\"id\":\"ENDGAME_PORTRAIT_0\"") != NULL,
+                 "endgame-ready: final champion zones appear after F0446 handoff");
 }
 
 /* -- Subtest 10: JSON well-formedness across all states ----------- */

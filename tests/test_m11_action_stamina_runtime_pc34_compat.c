@@ -7775,6 +7775,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete waits before marking final endgame handoff ready");
     ASSERT_EQ(M11_GameView_GetEndgameFinalHandoffReady(&state), 0,
               "FUSE complete public handoff query starts false");
+    ASSERT_EQ(M11_GameView_GetEndgameFinalPresentationReady(&state), 0,
+              "FUSE complete final presentation query starts false");
     ASSERT_EQ(state.endgameRestartAllowed,
               DM1_Endgame_GetEndingParams()->restartAllowedAfterWin,
               "FUSE complete records F0446 restart disallow gate");
@@ -7798,6 +7800,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete first wait tick does not mark final handoff ready");
     ASSERT_EQ(M11_GameView_GetEndgameFinalHandoffReady(&state), 0,
               "FUSE complete public handoff query stays false while waiting");
+    ASSERT_EQ(M11_GameView_GetEndgameFinalPresentationReady(&state), 0,
+              "FUSE complete final presentation query stays false while waiting");
     ASSERT_EQ(state.world.gameTick, gameTickAtWin,
               "FUSE complete endgame delay does not advance source game time");
     for (i = 0; i < 2159; ++i) {
@@ -7809,6 +7813,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete marks final handoff ready when delay drains");
     ASSERT_EQ(M11_GameView_GetEndgameFinalHandoffReady(&state), 1,
               "FUSE complete public handoff query flips when delay drains");
+    ASSERT_EQ(M11_GameView_GetEndgameFinalPresentationReady(&state), 1,
+              "FUSE complete final presentation query flips when delay drains");
     ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_IGNORED,
               "FUSE complete completed endgame delay blocks idle gameplay ticks");
     ASSERT_EQ(state.world.gameTick, gameTickAtWin,

@@ -715,6 +715,9 @@ int M11_GameView_GetEndgameDoNotDrawFluxcages(const M11_GameViewState* state);
 /* Return 1 when F0446 delay playback has reached the final Endgame(TRUE) gate. */
 int M11_GameView_GetEndgameFinalHandoffReady(const M11_GameViewState* state);
 
+/* Return 1 when the final endgame screen should be visible. */
+int M11_GameView_GetEndgameFinalPresentationReady(const M11_GameViewState* state);
+
 /* Return 1 if a dialog overlay is currently displayed. */
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state);
 
