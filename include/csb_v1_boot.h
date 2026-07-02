@@ -47,6 +47,11 @@ typedef struct {
     uint32_t default_party_y;
     uint32_t default_party_dir;
     int imported_party_ready;
+    int cmp_import_attempted;
+    int cmp_import_succeeded;
+    int cmp_imported_slot;
+    int cmp_imported_champion_count;
+    int engine_version_displayed;
     CSB_V1_PartyState imported_party;
 
     CSB_V1_RuntimeProfile runtime;
@@ -58,6 +63,11 @@ int csb_v1_boot_probe_available(const char *data_dir);
 void csb_v1_boot_set_save_root(CSB_V1_BootProfile *profile, const char *save_dir);
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party);
+int csb_v1_boot_set_imported_party_from_cmp(CSB_V1_BootProfile *profile,
+                                            const uint8_t *cmp_buf,
+                                            size_t cmp_size);
+int csb_v1_boot_mark_imported_party_ready(CSB_V1_BootProfile *profile);
+void csb_v1_boot_reset_engine_version_to_dm1(void);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *

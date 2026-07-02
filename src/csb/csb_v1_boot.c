@@ -1,7 +1,9 @@
 #include "csb_v1_boot.h"
 
 #include "asset_find_by_hash.h"
+#include "csb_v1_cmp_import_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_engine_version_display_pc34_compat.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -177,8 +179,14 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
     profile->default_party_y = CSB_V1_START_PARTY_Y;
     profile->default_party_dir = CSB_V1_START_PARTY_DIR;
     profile->imported_party_ready = 0;
+    profile->cmp_import_attempted = 0;
+    profile->cmp_import_succeeded = 0;
+    profile->cmp_imported_slot = -1;
+    profile->cmp_imported_champion_count = 0;
+    profile->engine_version_displayed = 0;
     csb_v1_character_init_default(&profile->imported_party);
     csb_v1_runtime_init(&profile->runtime, NULL);
+    csb_v1_engine_version_display_set_csb(0);
 }
 
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
@@ -192,6 +200,48 @@ int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
     profile->imported_party = *party;
     profile->imported_party_ready = 1;
     return 0;
+}
+
+int csb_v1_boot_set_imported_party_from_cmp(CSB_V1_BootProfile *profile,
+                                            const uint8_t *cmp_buf,
+                                            size_t cmp_size)
+{
+    int slot;
+    if (!profile || !cmp_buf) return -1;
+    profile->cmp_import_attempted = 1;
+    slot = csb_v1_cmp_import_to_party(&profile->imported_party,
+                                      cmp_buf, cmp_size);
+    if (slot < 0) {
+        profile->cmp_import_succeeded = 0;
+        profile->cmp_imported_slot = slot;
+        return slot;
+    }
+    profile->cmp_import_succeeded = 1;
+    profile->cmp_imported_slot = slot;
+    profile->cmp_imported_champion_count =
+        profile->imported_party.ChampionCount;
+    profile->imported_party_ready = 1;
+    return 0;
+}
+
+int csb_v1_boot_mark_imported_party_ready(CSB_V1_BootProfile *profile)
+{
+    if (!profile) return -1;
+    profile->cmp_import_attempted = 1;
+    if (profile->imported_party.ChampionCount <= 0 ||
+        profile->imported_party.ChampionCount > CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+    profile->cmp_import_succeeded = 1;
+    profile->cmp_imported_champion_count =
+        profile->imported_party.ChampionCount;
+    profile->imported_party_ready = 1;
+    return 0;
+}
+
+void csb_v1_boot_reset_engine_version_to_dm1(void)
+{
+    csb_v1_engine_version_display_set_csb(0);
 }
 
 void csb_v1_boot_set_save_root(CSB_V1_BootProfile *profile, const char *save_dir)
@@ -363,6 +413,12 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     profile->runtime.chaos_magic.magic_initialized = 1;
     profile->runtime.chaos_magic.spell_grid_version = 0U;
     profile->runtime.chaos_magic.chaos_level = 0U;
+    /* CSB shows engine version 2.1 on the title/dialog surface.
+     * Flip the shared helper when a verified CSB boot profile
+     * actually enters the CSB runtime, then reset it on cleanup.
+     * Source: ReDMCSB CHANGE8_13; DIALOG.C:2014-2023. */
+    csb_v1_engine_version_display_set_csb(1);
+    profile->engine_version_displayed = 1;
     if (profile->imported_party_ready) {
         (void)csb_v1_runtime_set_party_state(&profile->runtime,
                                              &profile->imported_party);
@@ -414,6 +470,8 @@ void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile)
     csb_v1_runtime_cleanup(&profile->runtime);
     profile->state = CSB_V1_BOOT_STATE_PROFILE_READY;
     memset(&profile->runtime, 0, sizeof(profile->runtime));
+    csb_v1_engine_version_display_set_csb(0);
+    profile->engine_version_displayed = 0;
 }
 
 size_t csb_v1_boot_diagnostic_report(const CSB_V1_BootProfile *profile,
@@ -421,14 +479,19 @@ size_t csb_v1_boot_diagnostic_report(const CSB_V1_BootProfile *profile,
                                      size_t buf_size)
 {
     int n;
+    const char *engine_version_str;
     if (!profile || !buf || buf_size == 0U) return 0U;
+    engine_version_str = csb_v1_engine_version_display_get();
     n = snprintf(buf, buf_size,
                  "=== CSB V1 Boot Profile ===\n"
                  "state=%d verified=%s variant=%s media=%s\n"
                  "asset_root=%s\n"
                  "graphics=%s md5=%s\n"
                  "dungeon=%s md5=%s\n"
-                 "save_root=%s tick_ms=%u entrance_map=%u start_map=%u\n",
+                 "save_root=%s tick_ms=%u entrance_map=%u start_map=%u\n"
+                 "engine_version=%s flipped=%s\n"
+                 "cmp_import attempted=%s succeeded=%s slot=%d champions=%d\n"
+                 "imported_party_ready=%s\n",
                  (int)profile->state,
                  profile->assets_verified ? "YES" : "NO",
                  profile->variant_label,
@@ -441,7 +504,14 @@ size_t csb_v1_boot_diagnostic_report(const CSB_V1_BootProfile *profile,
                  profile->save_root[0] ? profile->save_root : "(unset)",
                  (unsigned)profile->tick_ms,
                  (unsigned)profile->entrance_map_index,
-                 (unsigned)profile->start_map_index);
+                 (unsigned)profile->start_map_index,
+                 engine_version_str ? engine_version_str : "(unset)",
+                 profile->engine_version_displayed ? "YES" : "NO",
+                 profile->cmp_import_attempted ? "YES" : "NO",
+                 profile->cmp_import_succeeded ? "YES" : "NO",
+                 profile->cmp_imported_slot,
+                 profile->cmp_imported_champion_count,
+                 profile->imported_party_ready ? "YES" : "NO");
     if (n < 0) return 0U;
     return (size_t)n < buf_size ? (size_t)n : buf_size - 1U;
 }
