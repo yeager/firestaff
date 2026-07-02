@@ -1,4 +1,6 @@
 #include "firestaff/dm1/v1/G0487_pc34_compat.h"
+#include "dm1_v1_spell_casting_pc34_compat.h"
+#include "memory_magic_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -16,6 +18,22 @@ static void check(int cond, const char *expr, const char *file, int line)
 }
 
 #define CHECK(c) check((c), #c, __FILE__, __LINE__)
+
+static int g0487_u32(int spell)
+{
+    return
+        (dm1_v1_g0487_get_pc34(spell, 0) << 24) |
+        (dm1_v1_g0487_get_pc34(spell, 1) << 16) |
+        (dm1_v1_g0487_get_pc34(spell, 2) << 8) |
+        dm1_v1_g0487_get_pc34(spell, 3);
+}
+
+static int g0487_u16(int spell, int off)
+{
+    return
+        (dm1_v1_g0487_get_pc34(spell, off) << 8) |
+        dm1_v1_g0487_get_pc34(spell, off + 1);
+}
 
 static void test_table_values(void)
 {
@@ -94,12 +112,39 @@ static void test_run_accepted(void)
     }
 }
 
+static void test_runtime_spell_tables_match_g0487(void)
+{
+    int spell;
+    for (spell = 0; spell < DM1_SPELL_COUNT; ++spell) {
+        struct SpellDefinition_Compat m10;
+        int symbols = g0487_u32(spell);
+        int baseReq = dm1_v1_g0487_get_pc34(spell, 4);
+        int skillIndex = dm1_v1_g0487_get_pc34(spell, 5);
+        int attributes = g0487_u16(spell, 6);
+        CHECK(dm1_spells[spell].symbols == symbols);
+        CHECK(dm1_spells[spell].baseRequiredSkillLevel == baseReq);
+        CHECK(dm1_spells[spell].skillIndex == skillIndex);
+        CHECK(dm1_spells[spell].attributes == attributes);
+        CHECK(F0752b_MAGIC_LookupSpellByTableIndex_Compat(spell, &m10) == 1);
+        CHECK(m10.symbolsPacked == symbols);
+        CHECK(m10.baseRequiredSkillLevel == baseReq);
+        CHECK(m10.skillIndex == skillIndex);
+        CHECK(m10.attributes == attributes);
+        CHECK(m10.kind == (attributes & 0x000F));
+        CHECK(m10.type == ((attributes >> 4) & 0x003F));
+        CHECK(m10.disabledTicks == ((attributes >> 10) & 0x003F));
+    }
+    CHECK(F0752b_MAGIC_LookupSpellByTableIndex_Compat(-1, 0) == 0);
+    CHECK(F0752b_MAGIC_LookupSpellByTableIndex_Compat(DM1_SPELL_COUNT, 0) == 0);
+}
+
 int main(void)
 {
     test_table_values();
     test_lookup_function();
     test_first_last_specific();
     test_run_accepted();
+    test_runtime_spell_tables_match_g0487();
     printf("dm1_v1_g0487: %d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
     return g_failures == 0 ? 0 : 1;
