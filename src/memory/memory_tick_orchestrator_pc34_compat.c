@@ -1121,6 +1121,56 @@ static void orch_write_raw_next_compat(
           orch_next_thing_compat(things, thing));
 }
 
+static void orch_write_raw_weapon_compat(
+    struct DungeonThings_Compat* things,
+    int weaponIndex)
+{
+    struct DungeonWeapon_Compat* weapon;
+    unsigned char* raw;
+    uint16_t bitfield;
+    if (!things || !things->weapons || weaponIndex < 0 ||
+        weaponIndex >= things->weaponCount ||
+        weaponIndex >= things->thingCounts[THING_TYPE_WEAPON] ||
+        !things->rawThingData[THING_TYPE_WEAPON]) {
+        return;
+    }
+    weapon = &things->weapons[weaponIndex];
+    raw = things->rawThingData[THING_TYPE_WEAPON] + (weaponIndex * 4);
+    bitfield = (uint16_t)(((uint16_t)(weapon->type & 0x7Fu)) |
+                          ((uint16_t)(weapon->doNotDiscard & 0x01u) << 7) |
+                          ((uint16_t)(weapon->cursed & 0x01u) << 8) |
+                          ((uint16_t)(weapon->poisoned & 0x01u) << 9) |
+                          ((uint16_t)(weapon->chargeCount & 0x0Fu) << 10) |
+                          ((uint16_t)(weapon->broken & 0x01u) << 14) |
+                          ((uint16_t)(weapon->lit & 0x01u) << 15));
+    w_u16(raw + 0, weapon->next);
+    w_u16(raw + 2, bitfield);
+}
+
+static void orch_write_raw_armour_compat(
+    struct DungeonThings_Compat* things,
+    int armourIndex)
+{
+    struct DungeonArmour_Compat* armour;
+    unsigned char* raw;
+    uint16_t bitfield;
+    if (!things || !things->armours || armourIndex < 0 ||
+        armourIndex >= things->armourCount ||
+        armourIndex >= things->thingCounts[THING_TYPE_ARMOUR] ||
+        !things->rawThingData[THING_TYPE_ARMOUR]) {
+        return;
+    }
+    armour = &things->armours[armourIndex];
+    raw = things->rawThingData[THING_TYPE_ARMOUR] + (armourIndex * 4);
+    bitfield = (uint16_t)(((uint16_t)(armour->type & 0x7Fu)) |
+                          ((uint16_t)(armour->doNotDiscard & 0x01u) << 7) |
+                          ((uint16_t)(armour->cursed & 0x01u) << 8) |
+                          ((uint16_t)(armour->chargeCount & 0x0Fu) << 9) |
+                          ((uint16_t)(armour->broken & 0x01u) << 13));
+    w_u16(raw + 0, armour->next);
+    w_u16(raw + 2, bitfield);
+}
+
 static void orch_write_raw_junk_compat(
     struct DungeonThings_Compat* things,
     int junkIndex)
@@ -4384,6 +4434,11 @@ static unsigned short orch_allocate_fixed_possession_thing_compat(
                     things->weapons[i].next = THING_ENDOFLIST;
                     things->weapons[i].type = (unsigned char)(drop->itemType & 0x7F);
                     things->weapons[i].cursed = (unsigned char)(drop->cursed ? 1 : 0);
+                    /* ReDMCSB GROUP.C:F0190 lines 831-847 drops fixed
+                     * possessions through the DUNGEON.C:F0163 thing-list
+                     * path.  Keep the decoded slot and the raw DUNGEON.DAT
+                     * record in step when a free object slot is reused. */
+                    orch_write_raw_weapon_compat(things, i);
                     return orch_thing_with_cell_compat(
                         orch_make_thing_ref_compat(THING_TYPE_WEAPON, i),
                         drop->cell);
@@ -4398,6 +4453,11 @@ static unsigned short orch_allocate_fixed_possession_thing_compat(
                     things->armours[i].next = THING_ENDOFLIST;
                     things->armours[i].type = (unsigned char)(drop->itemType & 0x7F);
                     things->armours[i].cursed = (unsigned char)(drop->cursed ? 1 : 0);
+                    /* ReDMCSB GROUP.C:F0190 lines 831-847 drops fixed
+                     * possessions through the DUNGEON.C:F0163 thing-list
+                     * path.  Keep the decoded slot and the raw DUNGEON.DAT
+                     * record in step when a free object slot is reused. */
+                    orch_write_raw_armour_compat(things, i);
                     return orch_thing_with_cell_compat(
                         orch_make_thing_ref_compat(THING_TYPE_ARMOUR, i),
                         drop->cell);
@@ -4412,6 +4472,11 @@ static unsigned short orch_allocate_fixed_possession_thing_compat(
                     things->junks[i].next = THING_ENDOFLIST;
                     things->junks[i].type = (unsigned char)(drop->itemType & 0x7F);
                     things->junks[i].cursed = (unsigned char)(drop->cursed ? 1 : 0);
+                    /* ReDMCSB GROUP.C:F0190 lines 831-847 drops fixed
+                     * possessions through the DUNGEON.C:F0163 thing-list
+                     * path.  Keep the decoded slot and the raw DUNGEON.DAT
+                     * record in step when a free object slot is reused. */
+                    orch_write_raw_junk_compat(things, i);
                     return orch_thing_with_cell_compat(
                         orch_make_thing_ref_compat(THING_TYPE_JUNK, i),
                         drop->cell);
