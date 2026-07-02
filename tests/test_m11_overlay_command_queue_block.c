@@ -675,6 +675,9 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
     world.projectiles.entries[0].mapX = 0;
     world.projectiles.entries[0].mapY = 0;
 
+    ASSERT_EQ(M11_GameView_CountCellProjectiles(&world, 0, 0, 0), 0,
+              "inactive zeroed runtime projectile slot is not visible");
+    world.projectiles.entries[0].reserved3 = 1;
     ASSERT_EQ(M11_GameView_CountCellProjectiles(&world, 0, 0, 0), 1,
               "runtime projectile remains visible in viewport summary");
 
@@ -710,6 +713,22 @@ static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void
                   &firstProjectileGfx, &firstExplosionType),
               1,
               "viewport artifact probe samples runtime effects");
+    ASSERT_EQ(projectileCount, 0,
+              "inactive zeroed runtime projectile slot is suppressed in viewport sample");
+    ASSERT_EQ(firstProjectileGfx, -1,
+              "inactive zeroed runtime projectile exposes no drawable graphic");
+
+    state.world.projectiles.entries[0].reserved3 = 1;
+    projectileCount = -1;
+    explosionCount = -1;
+    firstProjectileGfx = -2;
+    firstExplosionType = -2;
+    ASSERT_EQ(M11_GameView_ProbeViewportArtifactCounts(
+                  &state, 0, 0, NULL, NULL, NULL,
+                  &projectileCount, &explosionCount,
+                  &firstProjectileGfx, &firstExplosionType),
+              1,
+              "viewport artifact probe samples active runtime effects");
     ASSERT_EQ(projectileCount, 1,
               "runtime projectile with resolved graphic remains visible");
     ASSERT_EQ(firstProjectileGfx >= 0, 1,
