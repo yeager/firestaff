@@ -1,6 +1,50 @@
 
 # Unreleased
 
+# Firestaff v3.0.17
+
+Firestaff v3.0.17 packages the post-v3.0.16 `main` fixes and gates for the
+DM1 V1 MacBook Pro release-smoke symptoms: wrong intro/title palette, slow or
+retried Q/E turning, and false Hall of Champions floating or floor artifacts.
+
+## Highlights since v3.0.16
+
+- **Release drift closed for the reported MacBook Pro symptoms**: current
+  `main` is 82 commits past `v3.0.16`, so this release moves the public macOS
+  package to the same code state as the passing regression gates.
+
+- **DM1 HoC artifact hardening is included**: runtime and data-layer fixes now
+  cover static projectile/explosion hiding, raw/decoded Thing-list next-pointer
+  sync, fixed-possession raw weapon/armour/junk rewrites, and raw group-record
+  rewrites after projectile or melee mutations.
+
+- **DM1 input and palette smoke gates are green**: Q/E/Home/End/keypad turn
+  taps remain outside the delayed movement queue, and the title/swoosh palette
+  handoff is locked through SDL readback against real `GRAPHICS.DAT`.
+
+- **Late DM1 runtime work is included**: direct M11 projectile hits on
+  champions now use the shared F0321/F0313 damage scale, light-to-palette
+  selection uses the shared M10 F0337 path, and the F0446 FUSE endgame delay
+  now exposes a final-handoff readiness query.
+
+## Verification
+
+- Release version metadata is synchronized across CMake, launcher UI,
+  launcher changelog, and `include/firestaff_version.h`.
+- Local release-prep verification on
+  `/Volumes/Extern-disk/firestaff-builds/build-dm1-mbp-smoke-current-main`
+  passed the focused symptom gates:
+  `firestaff_dm1_v1_hoc_no_false_projectile_artifacts_probe`,
+  `firestaff_dm1_v1_hoc_floor_runtime_no_false_items_probe`,
+  `test_m11_overlay_command_queue_block`,
+  `test_dm1_v1_turn_step_timing_gate_pc34_compat`,
+  `firestaff_v1_dm_title_swoosh_handoff_palette_probe`,
+  `test_m11_input_queue_pc34_compat`, and
+  `firestaff_m11_phase_a_probe`.
+- The release workflow rebuilds and packages macOS arm64, macOS x86_64,
+  Windows x86_64, Linux x86_64, Linux arm64, and Steam Deck x86_64 artifacts
+  from the `v3.0.17` release tag.
+
 # Firestaff v3.0.16
 
 Firestaff v3.0.16 is a focused follow-up to v3.0.15 for the DM1 V1 MacBook Pro
