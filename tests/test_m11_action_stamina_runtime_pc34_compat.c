@@ -6633,8 +6633,8 @@ static void test_climb_down_failure_cancels_disable_but_keeps_xp(void) {
               "CLIMB DOWN has a source G0496/G0497 route");
     expectedXp = route.experienceGain * 2;
 
-    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 0,
-              "CLIMB DOWN in front of corridor returns F0407 failure");
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 1,
+              "failed CLIMB DOWN still returns F0407 performed");
     ASSERT_EQ(state.actionDisabledTicks[0], 0,
               "failed CLIMB DOWN cancels action-disabled ticks");
     ASSERT_EQ(state.actionDisabledIndex[0], 255,
@@ -6700,8 +6700,8 @@ static void test_direct_climb_down_failure_cancels_disable_but_keeps_xp(void) {
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_CLIMB_DOWN),
-              0,
-              "direct CLIMB DOWN in front of corridor returns F0407 failure");
+              1,
+              "direct failed CLIMB DOWN still returns F0407 performed");
     ASSERT_EQ(state.actionDisabledTicks[0], 0,
               "direct failed CLIMB DOWN cancels action-disabled ticks");
     ASSERT_EQ(state.actionDisabledIndex[0], 255,
@@ -6964,8 +6964,8 @@ static void test_climb_down_group_over_pit_blocks_move_but_keeps_bug79_tail(void
               "CLIMB DOWN occupied pit has a source G0496/G0497 route");
     expectedXp = route.experienceGain * 2;
 
-    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 0,
-              "CLIMB DOWN is blocked by a group levitating over the pit");
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 1,
+              "group-blocked CLIMB DOWN still returns F0407 performed");
     ASSERT_EQ(state.world.party.mapIndex, 0,
               "blocked CLIMB DOWN keeps party on original map");
     ASSERT_EQ(state.world.party.mapX, 1,
