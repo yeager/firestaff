@@ -165,7 +165,9 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
             result.emissions[i].payload[1] == C2_SPELL_KIND_PROJECTILE_COMPAT &&
             result.emissions[i].payload[2] ==
                 C4_SPELL_TYPE_PROJECTILE_OPEN_DOOR_COMPAT &&
-            result.emissions[i].payload[3] == 1) {
+            EMIT_SPELL_EFFECT_UNPACK_POWER(result.emissions[i].payload[3]) == 1 &&
+            EMIT_SPELL_EFFECT_UNPACK_SKILL(result.emissions[i].payload[3]) ==
+                DM1_SKILL_IDX_AIR) {
             sawSpellEffect = 1;
         }
     }
@@ -256,7 +258,9 @@ static void test_orch_potion_spell_mutates_empty_flask_in_hand(void) {
             result.emissions[i].payload[0] == 0 &&
             result.emissions[i].payload[1] == C1_SPELL_KIND_POTION_COMPAT &&
             result.emissions[i].payload[2] == 11 &&
-            result.emissions[i].payload[3] == 1) {
+            EMIT_SPELL_EFFECT_UNPACK_POWER(result.emissions[i].payload[3]) == 1 &&
+            EMIT_SPELL_EFFECT_UNPACK_SKILL(result.emissions[i].payload[3]) ==
+                DM1_SKILL_IDX_HEAL) {
             sawSpellEffect = 1;
         }
     }

@@ -138,6 +138,18 @@
 #define EMIT_PARTY_TELEPORTED 0x0C
 #define EMIT_SENSOR_EFFECT    0x0D  /* pass-37: party enter/leave sensor effects */
 
+/* EMIT_SPELL_EFFECT payload[3] keeps the F0412 power ordinal in the
+ * low byte and the ReDMCSB G0487 Spell.SkillIndex in the next byte. */
+#define EMIT_SPELL_EFFECT_POWER_MASK        0x000000FF
+#define EMIT_SPELL_EFFECT_SKILL_SHIFT       8
+#define EMIT_SPELL_EFFECT_PACK_POWER_SKILL(powerOrdinal, skillIndex) \
+    ((((int32_t)(skillIndex) & 0xFF) << EMIT_SPELL_EFFECT_SKILL_SHIFT) | \
+     ((int32_t)(powerOrdinal) & EMIT_SPELL_EFFECT_POWER_MASK))
+#define EMIT_SPELL_EFFECT_UNPACK_POWER(payload3) \
+    ((int32_t)(payload3) & EMIT_SPELL_EFFECT_POWER_MASK)
+#define EMIT_SPELL_EFFECT_UNPACK_SKILL(payload3) \
+    (((int32_t)(payload3) >> EMIT_SPELL_EFFECT_SKILL_SHIFT) & 0xFF)
+
 /* ================================================================
  *  Capacities
  * ================================================================ */
