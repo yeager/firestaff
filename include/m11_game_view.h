@@ -27,7 +27,8 @@ enum {
 typedef enum {
     M11_GAME_INPUT_IGNORED = 0,
     M11_GAME_INPUT_REDRAW = 1,
-    M11_GAME_INPUT_RETURN_TO_MENU = 2
+    M11_GAME_INPUT_RETURN_TO_MENU = 2,
+    M11_GAME_INPUT_RESTART_GAME = 3
 } M11_GameInputResult;
 
 typedef enum {
