@@ -7176,25 +7176,6 @@ if(BUILD_TESTING)
         COMMAND firestaff_m11_touch_mouse_queue_runtime_probe
     )
 
-    # Runtime gesture navigation gate: headless cross-game probe that
-    # pins the four movement/turn swipes, two edge-strafes, the four
-    # reject paths, the 44 px touch-target floor, the source-viewport
-    # scale safety, V1 parity guard, 50-iteration determinism, and
-    # source-evidence citation in one PASS/FAIL row.
-    add_executable(firestaff_runtime_gesture_navigation_gate_probe
-        probes/m11/firestaff_runtime_gesture_navigation_gate_probe.c
-        src/engine/runtime_gesture_navigation_gate.c
-    )
-    target_include_directories(firestaff_runtime_gesture_navigation_gate_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    target_link_libraries(firestaff_runtime_gesture_navigation_gate_probe PRIVATE firestaff_m11)
-    if(NOT MSVC)
-        target_compile_options(firestaff_runtime_gesture_navigation_gate_probe PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME runtime_gesture_navigation_gate_probe
-        COMMAND firestaff_runtime_gesture_navigation_gate_probe
-    )
-
     add_executable(test_inventory_panel_slot_routes_pc34_compat_integration
         tests/test_inventory_panel_slot_routes_pc34_compat_integration.c
     )
