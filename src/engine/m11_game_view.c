@@ -3673,6 +3673,15 @@ static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
                                            M12_MenuInput input,
                                            const char* actionLabel);
 static void m11_check_party_death(M11_GameViewState* state);
+static int m11_build_projectile_defender_champion_snapshot(
+    const struct GameWorld_Compat* world,
+    int championIndex,
+    int attackType,
+    struct CombatantChampionSnapshot_Compat* outChampion);
+static void m11_writeback_champion_luck_from_snapshot(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    const struct CombatantChampionSnapshot_Compat* snapshot);
 static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                                        int x,
                                                        int y);
@@ -6351,12 +6360,6 @@ static void m11_creature_attack_party(
     if (!profile) return;
     creatureCount = (int)group->count + 1;  /* count field is 0-based */
 
-    if (state->resting) {
-        m11_wake_party_from_rest(state);
-        m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
-                      (unsigned int)state->world.gameTick);
-    }
-
     /* Map difficulty: ReDMCSB uses G0269_ps_CurrentMap->C.Difficulty << 1 */
     mapDifficulty = 0;
     if (state->world.dungeon && state->world.party.mapIndex >= 0 &&
@@ -6368,8 +6371,11 @@ static void m11_creature_attack_party(
      * that is on a cell adjacent to a champion.  Simplified: each alive
      * creature in the group attacks one random alive champion. */
     for (i = 0; i < creatureCount; ++i) {
-        int attack, damage;
+        int damage;
         char champName[16];
+        struct CombatantCreatureSnapshot_Compat attacker;
+        struct CombatantChampionSnapshot_Compat defender;
+        struct CombatResult_Compat result;
         if (group->health[i] <= 0) continue;
 
         /* Pick target: random alive champion (ReDMCSB picks by cell) */
@@ -6397,161 +6403,63 @@ static void m11_creature_attack_party(
         if (targetChamp < 0) return;
         champ = &state->world.party.champions[targetChamp];
 
-        /* ReDMCSB F0230 dodge check:
-         * Hit if: resting OR (champDex < RANDOM(32) + creatureDex + 2*mapDiff - 16
-         *         OR 25% random fail) AND NOT lucky(60) */
-        {
-            int champDex = (int)champ->attributes[CHAMPION_ATTR_DEXTERITY];
-            int creatureDex = profile->dexterity;
-            int dodgeThreshold = ((int)(state->world.gameTick * 31 + i * 7) % 32)
-                                 + creatureDex + mapDifficulty - 16;
-            int randomFail = (((int)(state->world.gameTick * 13 + i * 3) % 4) == 0);
-            if (!state->resting &&
-                champDex >= dodgeThreshold && !randomFail) {
-                /* Dodged! */
-                continue;
-            }
+        memset(&attacker, 0, sizeof(attacker));
+        attacker.creatureType = group->creatureType;
+        attacker.attack = profile->baseAttack;
+        attacker.defense = profile->baseDefense;
+        attacker.dexterity = profile->dexterity;
+        attacker.baseHealth = profile->baseHealth;
+        attacker.poisonAttack = profile->poisonAttack;
+        attacker.attackType = profile->attackType;
+        attacker.attributes = profile->attributes;
+        attacker.woundProbabilities = profile->woundProbabilities;
+        attacker.properties = profile->properties;
+        attacker.doubledMapDifficulty = mapDifficulty;
+        attacker.creatureIndex = i;
+        attacker.healthBefore = group->health[i];
+
+        if (!m11_build_projectile_defender_champion_snapshot(
+                &state->world, targetChamp, profile->attackType, &defender)) {
+            continue;
         }
+        defender.isResting =
+            state->resting || state->world.partyIsResting ||
+            state->world.lifecycle.rest.isResting;
 
-        /* ReDMCSB F0230 attack formula:
-         * attack = RANDOM(16) + creatureAttack + 2*mapDiff - parrySkill*2
-         * if attack <= 1: 50% dodge, else attack = RANDOM(4) + 2
-         * attack >>= 1; attack += RANDOM(attack) + RANDOM(4)
-         * attack += RANDOM(attack); attack >>= 2
-         * attack += RANDOM(4) + 1
-         * 50% chance: attack -= RANDOM(attack/2 + 1) - 1 */
-        {
-            int parrySkill = m11_game_view_get_f0230_parry_skill(
-                state, targetChamp);
-            attack = ((int)(state->world.gameTick * 17 + i * 11) % 16)
-                     + profile->baseAttack + mapDifficulty
-                     - (parrySkill * 2);
-            if (attack <= 1) {
-                if ((state->world.gameTick + i) % 2 == 0) continue; /* 50% dodge */
-                attack = ((int)(state->world.gameTick * 7 + i) % 4) + 2;
-            }
-            attack >>= 1;
-            attack += (attack > 0 ? (int)((state->world.gameTick * 3 + i) % (unsigned)attack) : 0)
-                      + (int)((state->world.gameTick * 5 + i) % 4);
-            attack += (attack > 0 ? (int)((state->world.gameTick * 9 + i * 2) % (unsigned)attack) : 0);
-            attack >>= 2;
-            attack += (int)((state->world.gameTick * 23 + i) % 4) + 1;
-            if ((state->world.gameTick + i) % 2 == 0) {
-                int halfAtk = (attack >> 1) + 1;
-                attack -= (halfAtk > 0 ? (int)((state->world.gameTick * 19 + i) % (unsigned)halfAtk) : 0) - 1;
-            }
+        /* ReDMCSB: PROJEXPL.C F0230 lines 1353-1408 resolves the
+         * dexterity duel, allowed wound, parry-adjusted staged attack,
+         * late random reduction, F0321 defense scale, and poison gate.
+         * Keep the M11 target selection above, but use the shared F0736
+         * resolver for the source-owned combat math and RNG order. */
+        if (!F0736_COMBAT_ResolveCreatureMelee_Compat(
+                &attacker, &defender, &state->world.masterRng, &result)) {
+            continue;
         }
-        if (attack <= 0) attack = 1;
-
-        /* ReDMCSB F0321 damage reduction.
-         * Source: CHAMPION.C F0321:1838-1920.
-         * F0321 branches on attackType:
-         *  - C0_NORMAL: skips the entire F0321 body
-         *  - C5_MAGIC: F0307 vs antimagic, subtract SpellShieldDefense,
-         *              then goto T0321024 (skip armor scale)
-         *  - C6_PSYCHIC: wisdom factor, goto T0321024 (skip armor scale)
-         *  - C1_FIRE: F0307 vs antifire, subtract FireShieldDefense,
-         *             then fall through to armor scale
-         *  - C3/C4/C7: fall through to armor scale
-         */
-        damage = attack;
-        {
-            int creatureAttackType = profile->attackType;
-
-            if (creatureAttackType != COMBAT_ATTACK_NORMAL) {
-                /* ReDMCSB F0321: per-attack-type shield defense.
-                 * Source: CHAMPION.C F0321:1877-1892 */
-                switch (creatureAttackType) {
-                case COMBAT_ATTACK_FIRE:
-                    /* F0307 vs antifire + subtract FireShieldDefense */
-                    damage -= state->world.magic.fireShieldDefense;
-                    break;
-                case COMBAT_ATTACK_MAGIC:
-                    /* F0307 vs antimagic + subtract SpellShieldDefense,
-                     * then skip armor scale (goto T0321024) */
-                    damage -= state->world.magic.spellShieldDefense;
-                    if (damage < 1) damage = 1;
-                    goto apply_damage;
-                case COMBAT_ATTACK_PSYCHIC:
-                    /* Wisdom factor, skip armor scale */
-                    if (damage < 1) damage = 1;
-                    goto apply_damage;
-                default:
-                    /* C3/C4/C7: fall through to armor scale */
-                    break;
-                }
-                if (damage <= 0) {
-                    damage = 0;
-                    goto apply_damage;
-                }
-
-                /* ReDMCSB F0321: armor defense scale.
-                 * Iterate wound slots, sum F0313 defense per slot,
-                 * average, then scale by (130 - avgDefense) / 64. */
-                {
-                    int defenseSum = 0;
-                    int woundCount = 0;
-                    int avgDefense;
-                    static const int wdf[6] = { 0x15, 0x10, 0x1A, 0x1A, 0x12, 0x12 };
-                    static const int woundSlots[6] = {
-                        CHAMPION_SLOT_HAND_LEFT,
-                        CHAMPION_SLOT_HAND_RIGHT,
-                        CHAMPION_SLOT_HEAD,
-                        CHAMPION_SLOT_TORSO,
-                        CHAMPION_SLOT_LEGS,
-                        CHAMPION_SLOT_FEET
-                    };
-                    int wi;
-                    for (wi = 0; wi < 6; wi++) {
-                        unsigned short thing = champ->inventory[woundSlots[wi]];
-                        int slotDef = 0;
-                        if (thing != THING_NONE && thing != THING_ENDOFLIST &&
-                            THING_GET_TYPE(thing) == THING_TYPE_ARMOUR) {
-                            int aIdx = THING_GET_INDEX(thing);
-                            if (state->world.things && state->world.things->armours &&
-                                aIdx >= 0 && aIdx < state->world.things->armourCount) {
-                                slotDef = 8 + (int)state->world.things->armours[aIdx].type;
-                            }
-                        }
-                        slotDef += (int)(champ->attributes[CHAMPION_ATTR_VITALITY] >> 3);
-                        defenseSum += (slotDef * wdf[wi]) >> 5;
-                        woundCount++;
-                    }
-                    avgDefense = (woundCount > 0) ? defenseSum / woundCount : 0;
-                    if (avgDefense > 130) avgDefense = 130;
-                    damage = (damage * (130 - avgDefense)) >> 6;
-                }
-            }
-            if (damage < 1) damage = 1;
+        m11_writeback_champion_luck_from_snapshot(
+            &state->world, targetChamp, &defender);
+        if (result.wakeFromRest) {
+            m11_wake_party_from_rest(state);
+            m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
+                          (unsigned int)state->world.gameTick);
         }
-        apply_damage:
+        if (result.outcome != COMBAT_OUTCOME_HIT_DAMAGE ||
+            result.damageApplied <= 0) {
+            continue;
+        }
+        damage = result.damageApplied;
 
         if ((int)champ->hp.current > damage) {
             champ->hp.current -= (unsigned short)damage;
         } else {
             champ->hp.current = 0;
         }
+        champ->wounds |= (unsigned short)result.woundMaskAdded;
 
-        /* ReDMCSB: creature poison attack.
-         * Source: PROJEXPL.C F0230:1395-1404, CHAMPION.C F0322.
-         * If creature has poisonAttack > 0 and 50% chance,
-         * apply poison adjusted by defender's vitality via F0307.
-         * F0307: factor = 170 - vitality. If < 16: attack >> 3.
-         *        Else: (attack * factor) >> 7. */
-        if (profile->poisonAttack > 0 &&
-            ((state->world.gameTick + (unsigned)i) % 2) != 0) {
-            int poisonRaw = profile->poisonAttack;
-            int vit = (int)champ->attributes[CHAMPION_ATTR_VITALITY];
-            int factor = 170 - vit;
-            int adjPoison;
-            if (factor < 16) {
-                adjPoison = poisonRaw >> 3;
-            } else {
-                adjPoison = ((long)poisonRaw * (long)factor) >> 7;
-            }
-            if (adjPoison > 0) {
-                champ->poisonDose += (unsigned short)adjPoison;
-            }
+        /* ReDMCSB: PROJEXPL.C F0230 lines 1404-1408 calls F0322 with the
+         * raw poison attack after the 50% F0230 poison gate; F0736 exposes
+         * that pending value after consuming the same RNG branch. */
+        if (result.poisonAttackPending > 0) {
+            champ->poisonDose += (unsigned short)result.poisonAttackPending;
         }
 
         m11_format_champion_name(champ->name, champName, sizeof(champName));
@@ -23652,10 +23560,18 @@ static int m11_build_projectile_defender_champion_snapshot(
     outChampion->championIndex = championIndex;
     outChampion->currentHealth = champion->hp.current;
     outChampion->dexterity = champion->attributes[CHAMPION_ATTR_DEXTERITY];
+    outChampion->skillLevelParry = F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+        world, championIndex, DM1_SKILL_IDX_PARRY);
     outChampion->statisticVitality = champion->attributes[CHAMPION_ATTR_VITALITY];
     outChampion->statisticAntifire = champion->attributes[CHAMPION_ATTR_ANTIFIRE];
     outChampion->statisticAntimagic = champion->attributes[CHAMPION_ATTR_ANTIMAGIC];
     outChampion->statisticWisdom = champion->attributes[CHAMPION_ATTR_WISDOM];
+    outChampion->statisticLuck = (int)world->lifecycle.champions[championIndex]
+        .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_CURRENT];
+    outChampion->statisticLuckMax = (int)world->lifecycle.champions[championIndex]
+        .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_MAXIMUM];
+    outChampion->statisticLuckMin = (int)world->lifecycle.champions[championIndex]
+        .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_MINIMUM];
     outChampion->wounds = champion->wounds;
     m11_fill_defender_wound_defense_baseline(
         world, champion, attackType == COMBAT_ATTACK_SHARP, outChampion);
@@ -23678,6 +23594,22 @@ static int m11_build_projectile_defender_champion_snapshot(
             world->magic.partyShieldDefense;
     }
     return 1;
+}
+
+static void m11_writeback_champion_luck_from_snapshot(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    const struct CombatantChampionSnapshot_Compat* snapshot)
+{
+    int luck;
+    if (!world || !snapshot) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    luck = snapshot->statisticLuck;
+    if (luck < 0) luck = 0;
+    if (luck > 255) luck = 255;
+    world->lifecycle.champions[championIndex]
+        .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_CURRENT] =
+            (uint8_t)luck;
 }
 
 static int m11_dm1_behavior_from_ai_state(int stateKind)

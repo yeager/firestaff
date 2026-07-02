@@ -15,6 +15,7 @@
 #include "m11_game_view.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -133,10 +134,14 @@ static int run_awake_creature_attack_fixture_with_parry_xp(int32_t fighterXp,
         .skills20[DM1_SKILL_IDX_FIGHTER].experience = fighterXp;
     state.world.lifecycle.champions[0]
         .skills20[DM1_SKILL_IDX_PARRY].experience = parryXp;
+    (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
     startHp = (int)state.world.party.champions[0].hp.current;
 
     for (i = 0; i < 24; ++i) {
         (void)M11_GameView_AdvanceIdleTick(&state);
+        if ((int)state.world.party.champions[0].hp.current < startHp) {
+            break;
+        }
     }
 
     return startHp - (int)state.world.party.champions[0].hp.current;
