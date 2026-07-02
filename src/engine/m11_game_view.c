@@ -10539,8 +10539,28 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         return M11_GAME_INPUT_REDRAW;
     }
 
-    /* In endgame, clicks are ignored (use ESC). */
+    /* Endgame restart/quit controls.  ReDMCSB ENDGAME.C F0444 lines
+     * 485-559 installs G0446_as_Graphic561_PrimaryMouseInput_RestartGame
+     * only after the final screen is drawn and only when
+     * G0524_B_RestartGameAllowed is true.  Clicking restart latches the
+     * G0523_B_RestartGameRequested mirror; quit returns to the launcher. */
     if (state->gameWon) {
+        int boxX, boxY, boxW, boxH;
+        if (!M11_GameView_GetEndgameFinalPresentationReady(state) ||
+            !state->endgameRestartAllowed) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        (void)M11_GameView_GetV1EndgameRestartBox(0, &boxX, &boxY, &boxW, &boxH);
+        if (m11_point_in_rect(x, y, boxX, boxY, boxW, boxH)) {
+            state->endgameRestartRequested = 1;
+            m11_set_status(state, "ENDGAME", "RESTART REQUESTED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        (void)M11_GameView_GetV1EndgameQuitBox(0, &boxX, &boxY, &boxW, &boxH);
+        if (m11_point_in_rect(x, y, boxX, boxY, boxW, boxH)) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
         return M11_GAME_INPUT_IGNORED;
     }
 
@@ -32938,6 +32958,10 @@ int M11_GameView_GetEndgameFinalPresentationReady(const M11_GameViewState* state
         return 0;
     }
     return 1;
+}
+
+int M11_GameView_GetEndgameRestartRequested(const M11_GameViewState* state) {
+    return state ? state->endgameRestartRequested : 0;
 }
 
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state) {

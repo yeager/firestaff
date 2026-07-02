@@ -266,6 +266,7 @@ typedef struct {
     int endgameDoNotDrawFluxcages;
     int endgameFinalDelayTicks;
     int endgameRestartAllowed;
+    int endgameRestartRequested;
     int endgameCalledWithTrue;
     int endgameChaosOrderSwitchCount;
     int endgameFuseSequenceUpdateTicks;
@@ -719,6 +720,9 @@ int M11_GameView_GetEndgameFinalHandoffReady(const M11_GameViewState* state);
 
 /* Return 1 when the final endgame screen should be visible. */
 int M11_GameView_GetEndgameFinalPresentationReady(const M11_GameViewState* state);
+
+/* Return 1 when the source endgame restart button has requested a restart. */
+int M11_GameView_GetEndgameRestartRequested(const M11_GameViewState* state);
 
 /* Return 1 if a dialog overlay is currently displayed. */
 int M11_GameView_IsDialogOverlayActive(const M11_GameViewState* state);
