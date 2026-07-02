@@ -3648,6 +3648,81 @@ foreach(_triage_hoc_probe_src IN ITEMS
     endif()
 endforeach()
 
+# Data-free and skip-safe gates recovered from local worktree triage. Their
+# source files already live on main; this block only reattaches verified targets
+# without trusting stale CMake context from old branches.
+if(BUILD_TESTING)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_asset_status_iso_cache_materialization.c")
+        add_executable(test_asset_status_iso_cache_materialization
+            tests/test_asset_status_iso_cache_materialization.c
+            src/shared/asset_status_m12.c
+            src/shared/asset_find_by_hash.c
+            src/shared/fs_portable_compat.c
+        )
+        target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE firestaff_v2 firestaff_nexus)
+        target_include_directories(test_asset_status_iso_cache_materialization PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_compile_definitions(test_asset_status_iso_cache_materialization PRIVATE FIRESTAFF_ASSET_STATUS_TESTING=1)
+        if(NOT MSVC)
+            target_compile_options(test_asset_status_iso_cache_materialization PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(NAME asset_status_iso_cache_materialization COMMAND test_asset_status_iso_cache_materialization)
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_qol_runtime_pc34_compat.c")
+        add_executable(test_m11_qol_runtime_pc34_compat tests/test_m11_qol_runtime_pc34_compat.c)
+        target_link_libraries(test_m11_qol_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_qol_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_qol_runtime_pc34_compat
+            COMMAND test_m11_qol_runtime_pc34_compat
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/firestaff_dm1_v2_source_owned_route_screenshot_probe.c")
+        add_executable(firestaff_dm1_v2_source_owned_route_screenshot_probe
+            probes/firestaff_dm1_v2_source_owned_route_screenshot_probe.c)
+        target_include_directories(firestaff_dm1_v2_source_owned_route_screenshot_probe PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/src)
+        target_link_libraries(firestaff_dm1_v2_source_owned_route_screenshot_probe PRIVATE firestaff_v2 firestaff_m11 firestaff_m10 SDL3::SDL3)
+        if(NOT MSVC)
+            target_compile_options(firestaff_dm1_v2_source_owned_route_screenshot_probe PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(NAME dm1_v2_source_owned_route_screenshot_probe COMMAND firestaff_dm1_v2_source_owned_route_screenshot_probe)
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dialog_choice_overlay_fit_pc34_compat.c")
+        add_executable(test_m11_dialog_choice_overlay_fit_pc34_compat
+            tests/test_m11_dialog_choice_overlay_fit_pc34_compat.c)
+        target_include_directories(test_m11_dialog_choice_overlay_fit_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_link_libraries(test_m11_dialog_choice_overlay_fit_pc34_compat PRIVATE firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dialog_choice_overlay_fit_pc34_compat PRIVATE -std=c11 -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dialog_choice_overlay_fit_pc34_compat
+            COMMAND test_m11_dialog_choice_overlay_fit_pc34_compat
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_dialog_choice_overlay_fit_runtime_probe.c")
+        add_executable(firestaff_dm1_v1_dialog_choice_overlay_fit_runtime_probe
+            probes/m11/firestaff_dm1_v1_dialog_choice_overlay_fit_runtime_probe.c)
+        target_link_libraries(firestaff_dm1_v1_dialog_choice_overlay_fit_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(firestaff_dm1_v1_dialog_choice_overlay_fit_runtime_probe PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME firestaff_dm1_v1_dialog_choice_overlay_fit_runtime_probe
+            COMMAND firestaff_dm1_v1_dialog_choice_overlay_fit_runtime_probe "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+        )
+    endif()
+endif()
+
 # DM1 V1 Hall of Champions portrait ordinal 16 — south_return /
 # portrait_rect_position runtime probe.  Source-locked to:
 #   DUNGEON.C:2573 maps M011_CELL(sensor) against view dir.
