@@ -15107,6 +15107,27 @@ if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_
     endif()
 endif()
 
+# -- DM1 V1 special-palette renderer readback probe ------------------
+# Cross-platform companion to the Apple-Silicon TITLE palette probe.
+# Exercises M11_Render_PresentIndexedWithSpecialPalette through SDL's
+# dummy video driver for TITLE, ENTRANCE, and CREDITS special palettes.
+if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/v1/firestaff_v1_dm_special_palette_renderer_probe.c")
+    add_executable(firestaff_v1_dm_special_palette_renderer_probe
+        probes/v1/firestaff_v1_dm_special_palette_renderer_probe.c
+        src/shared/vga_palette_pc34_compat.c
+    )
+    target_link_libraries(firestaff_v1_dm_special_palette_renderer_probe PRIVATE
+        firestaff_m11 firestaff_m10 SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_v1_dm_special_palette_renderer_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm_special_palette_renderer
+        COMMAND firestaff_v1_dm_special_palette_renderer_probe
+    )
+endif()
+
 
 # -- DM1 V1 FTL/SWSH -> C001 TITLE palette handoff probe -------------
 # Covers the release-3.0.2 MacBook Pro regression class that isolated
