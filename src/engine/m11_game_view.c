@@ -3467,6 +3467,26 @@ static void m11_disable_champion_action_after_action_ticks(
     }
 }
 
+static void m11_disable_champion_action_after_spell_f0412(
+        M11_GameViewState* state,
+        int championIndex,
+        int ticks) {
+    if (!state) return;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    if (ticks <= 0) return;
+    state->actionDisabledTicks[championIndex] =
+        ticks > 255 ? 255u : (unsigned char)ticks;
+    /* ReDMCSB: MENU.C F0412 lines 2034-2039 calls F0330 after
+     * successful spell XP.  Spells do not assign Champion.ActionIndex;
+     * TIMELINE.C F0253 only removes G0495 defense if an action index is
+     * present, so preserve any existing action disable and otherwise use
+     * C0xFF_ACTION_NONE. */
+    if (state->actionDisabledIndex[championIndex] >= 44u) {
+        state->actionDisabledIndex[championIndex] = 0xFFu;
+    }
+    state->actionEnableSlotOrdinal[championIndex] = 0u;
+}
+
 static void m11_disable_champion_action_f0328_throw(
         M11_GameViewState* state,
         int championIndex) {
@@ -5918,6 +5938,10 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         state->lastWorldHash = state->lastTickResult.worldHashPost;
         M11_GameView_ProcessTickEmissions(state);
     }
+    m11_disable_champion_action_after_spell_f0412(
+        state,
+        state->world.party.activeChampionIndex,
+        spell.disabledTicks);
 
     m11_log_event(state, M11_COLOR_GREEN, "T%u: %s CAST SPELL #%d (COST %d MANA)",
                   (unsigned int)state->world.gameTick, champName, tableIndex, manaCost);

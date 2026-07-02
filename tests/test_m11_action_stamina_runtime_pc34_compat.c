@@ -25,6 +25,7 @@
 #include "dm1_v1_sound_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
+#include "memory_magic_pc34_compat.h"
 #include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0494_pc34_compat.h"
@@ -5961,6 +5962,9 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
     int priestXpBefore;
     int healXpBefore;
     int spellXp;
+    struct SpellDefinition_Compat potionSpell;
+    uint32_t packedSpell;
+    int tableIndex;
     int i;
 
     seed_state(&state, 100, 41);
@@ -6004,6 +6008,14 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
               "potion spell enters Lo power rune");
     ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1,
               "potion spell enters Ya potion rune");
+    ASSERT_EQ(F0750_MAGIC_EncodeRuneSequence_Compat(
+                  &state.spellBuffer, &packedSpell),
+              1,
+              "potion spell rune sequence encodes before cast");
+    ASSERT_EQ(F0752_MAGIC_LookupSpellInTable_Compat(
+                  packedSpell, &tableIndex, &potionSpell),
+              1,
+              "potion spell row resolves before cast");
     ASSERT_EQ(M11_GameView_CastSpell(&state), 1,
               "potion spell casts with empty flask in hand");
 
@@ -6047,6 +6059,12 @@ static void test_cast_potion_spell_mutates_empty_flask(void) {
                   .skills20[DM1_SKILL_IDX_PRIEST].experience,
               priestXpBefore + spellXp,
               "potion cast propagates exact F0412 Priest spell XP");
+    ASSERT_EQ(state.actionDisabledTicks[0], potionSpell.disabledTicks,
+              "potion cast applies F0412 M069 spell disabled ticks");
+    ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
+              "potion cast disabled tail keeps no action index");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0,
+              "potion cast disabled tail mirrors F0330 slot ordinal");
 }
 
 static void test_cast_zokathra_spell_materializes_ready_hand_junk(void) {
