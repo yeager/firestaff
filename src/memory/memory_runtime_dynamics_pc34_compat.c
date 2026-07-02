@@ -458,9 +458,10 @@ int F0867_RUNTIME_ComputeTotalLightAmount_Compat(
     int v;
     if (outNewAmount == 0) return 0;
     v = currentAmount + delta;
-    /* Light amount clamps at 0 downward (darkness is tracked
-     * separately via event70LightDirection in Phase 14). */
-    if (v < 0) v = 0;
+    /* ReDMCSB TIMELINE.C F0257 line 1759 adds the C70 light decay
+     * delta directly.  Darkness events intentionally keep
+     * G0407_s_Party.MagicalLightAmount negative until the final
+     * weaker-light follow-up restores it to zero. */
     *outNewAmount = v;
     return 1;
 }

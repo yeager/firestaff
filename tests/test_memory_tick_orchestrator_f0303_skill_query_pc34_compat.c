@@ -214,6 +214,124 @@ static void test_orch_light_spell_uses_source_light_amount_and_party_map(void) {
     assert(world.timeline.events[0].aux0 == -3);
 }
 
+static void test_orch_darkness_spell_decays_back_to_zero_without_clamp(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    uint32_t decayTick;
+
+    init_world(&world, &things, weapons, junks);
+    world.gameTick = 80;
+    world.party.mapIndex = 2;
+    world.partyMapIndex = 2;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+    world.party.champions[0].mana.current = 100;
+    world.party.champions[0].mana.maximum = 100;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    input.command = CMD_CAST_SPELL;
+    input.commandArg1 = 0;
+    input.commandArg2 = 13; /* Des Ir Sar: Darkness. */
+    input.reserved = 1;    /* Lo power ordinal -> lightPower 2. */
+
+    assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
+    assert(world.magic.magicalLightAmount == -12);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_MAGIC_LIGHT_DECAY);
+    assert(world.timeline.events[0].fireAtTick == 178);
+    assert(world.timeline.events[0].aux0 == 2);
+
+    decayTick = world.timeline.events[0].fireAtTick;
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    world.gameTick = decayTick;
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    assert(world.magic.magicalLightAmount == -5);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_MAGIC_LIGHT_DECAY);
+    assert(world.timeline.events[0].fireAtTick == decayTick + 4);
+    assert(world.timeline.events[0].aux0 == 1);
+
+    decayTick = world.timeline.events[0].fireAtTick;
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    world.gameTick = decayTick;
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    assert(world.magic.magicalLightAmount == 0);
+    assert(world.timeline.count == 0);
+}
+
+static void test_orch_magic_torch_spell_decays_back_to_zero(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    uint32_t decayTick;
+
+    init_world(&world, &things, weapons, junks);
+    world.gameTick = 90;
+    world.party.mapIndex = 4;
+    world.partyMapIndex = 4;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+    world.party.champions[0].mana.current = 100;
+    world.party.champions[0].mana.maximum = 100;
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    input.command = CMD_CAST_SPELL;
+    input.commandArg1 = 0;
+    input.commandArg2 = 7; /* Ful: Magic Torch. */
+    input.reserved = 1;   /* Lo power ordinal -> lightPower 3. */
+
+    assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
+    assert(world.magic.magicalLightAmount == 24);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_MAGIC_LIGHT_DECAY);
+    assert(world.timeline.events[0].fireAtTick == 2730);
+    assert(world.timeline.events[0].aux0 == -3);
+
+    decayTick = world.timeline.events[0].fireAtTick;
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    world.gameTick = decayTick;
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    assert(world.magic.magicalLightAmount == 12);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].fireAtTick == decayTick + 4);
+    assert(world.timeline.events[0].aux0 == -2);
+
+    decayTick = world.timeline.events[0].fireAtTick;
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    world.gameTick = decayTick;
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    assert(world.magic.magicalLightAmount == 5);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].fireAtTick == decayTick + 4);
+    assert(world.timeline.events[0].aux0 == -1);
+
+    decayTick = world.timeline.events[0].fireAtTick;
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    world.gameTick = decayTick;
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
+           ORCH_OK);
+    assert(world.magic.magicalLightAmount == 0);
+    assert(world.timeline.count == 0);
+}
+
 static void test_orch_spell_status_timeout_aux_tags_expire_magic_state(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -6979,6 +7097,8 @@ int main(void) {
     test_orch_f0303_hidden_heal_query();
     test_orch_projectile_spell_uses_hidden_skill_query_value();
     test_orch_light_spell_uses_source_light_amount_and_party_map();
+    test_orch_darkness_spell_decays_back_to_zero_without_clamp();
+    test_orch_magic_torch_spell_decays_back_to_zero();
     test_orch_spell_status_timeout_aux_tags_expire_magic_state();
     test_orch_thieves_eye_zero_duration_expires_same_tick();
     test_orch_invisibility_spell_mirrors_lifecycle_counter();
