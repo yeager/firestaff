@@ -3431,6 +3431,9 @@ static unsigned char m11_action_disabled_ticks_f0407(unsigned char actionIndex) 
     return ticks < 0 ? 0u : (unsigned char)ticks;
 }
 
+static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
+                                                 int championIndex);
+
 static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
     int i;
     if (!state) return;
@@ -3444,6 +3447,14 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
                         dm1_v1_graphic560_action_defense_get_pc34(
                             state->actionDisabledIndex[i]);
                     state->world.party.champions[i].actionIndex = 0xFFu;
+                }
+                if (state->pendingShootReadyHandRefill[i]) {
+                    /* ReDMCSB: TIMELINE.C C11 enable-action handling
+                     * lines ~1597-1607 refills the ready hand from
+                     * compatible quiver ammunition when the champion action
+                     * disable event closes, not immediately in F0407. */
+                    state->pendingShootReadyHandRefill[i] = 0u;
+                    (void)m11_refill_ready_hand_after_dm1_shoot(state, i);
                 }
                 state->actionDisabledIndex[i] = 0xFFu;
                 state->actionEnableSlotOrdinal[i] = 0xFFu;
@@ -3491,6 +3502,10 @@ static void m11_disable_champion_action_after_action_ticks(
     state->actionDisabledTicks[championIndex] = ticks;
     state->actionDisabledIndex[championIndex] = ticks ? actionIndex : 0xFFu;
     state->actionEnableSlotOrdinal[championIndex] = 0xFFu;
+    if (ticks == 0u && state->pendingShootReadyHandRefill[championIndex]) {
+        state->pendingShootReadyHandRefill[championIndex] = 0u;
+        (void)m11_refill_ready_hand_after_dm1_shoot(state, championIndex);
+    }
 }
 
 static void m11_disable_champion_action_f0328_throw(
@@ -11093,6 +11108,20 @@ typedef struct M11_ViewportCell {
 
 static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell);
 
+static int m11_viewport_cell_has_renderable_projectile(
+    const M11_ViewportCell* cell) {
+    return cell &&
+           cell->summary.projectiles > 0 &&
+           cell->firstProjectileGfxIndex >= 0;
+}
+
+static int m11_viewport_cell_has_renderable_explosion(
+    const M11_ViewportCell* cell) {
+    return cell &&
+           cell->summary.explosions > 0 &&
+           cell->firstExplosionType >= 0;
+}
+
 static void m11_draw_creature_cue(unsigned char* framebuffer,
                                   int framebufferWidth,
                                   int framebufferHeight,
@@ -11635,7 +11664,7 @@ static void m11_draw_explosion_cue(unsigned char* framebuffer,
                                    int depthIndex) {
     int cx = x + w / 2;
     int cy = y + h / 2;
-    if (!cell || cell->summary.explosions <= 0) {
+    if (!m11_viewport_cell_has_renderable_explosion(cell)) {
         return;
     }
     /* DM1 explosion-type-specific viewport visual effects.
@@ -11781,7 +11810,7 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
         return;
     }
     /* Projectile sprite from GRAPHICS.DAT, or fallback crosshair */
-    if (cell->summary.projectiles > 0) {
+    if (m11_viewport_cell_has_renderable_projectile(cell)) {
         if (!g_drawState ||
             !m11_draw_projectile_sprite(g_drawState, framebuffer,
                                         framebufferWidth, framebufferHeight,
@@ -12921,6 +12950,23 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             cell.firstExplosionAttack    = re->attack;
             break;
         }
+    }
+    if (cell.summary.projectiles > 0 && cell.firstProjectileGfxIndex < 0) {
+        /* ReDMCSB DUNVIEW.C F0115 draws projectile sprites from concrete
+         * projectile records.  A count without a resolved runtime/static
+         * projectile aspect is not drawable and must not fall through to
+         * Firestaff's cue art, or Hall compact payload/stale runtime state
+         * can appear as false floating effects. */
+        cell.summary.total -= cell.summary.projectiles;
+        cell.summary.projectiles = 0;
+        if (cell.summary.total < 0) cell.summary.total = 0;
+    }
+    if (cell.summary.explosions > 0 && cell.firstExplosionType < 0) {
+        /* ReDMCSB DUNVIEW.C F0141/F0136 similarly requires an explosion
+         * type before selecting FIRE/SPELL/POISON/SMOKE bitmap aspects. */
+        cell.summary.total -= cell.summary.explosions;
+        cell.summary.explosions = 0;
+        if (cell.summary.total < 0) cell.summary.total = 0;
     }
 
     /* Extract floor ornament ordinal from random generation or sensor things.
@@ -18625,7 +18671,7 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
             }
         }
         /* Side-pane projectile sprites: real GRAPHICS.DAT sprites */
-        if (cell->summary.projectiles > 0) {
+        if (m11_viewport_cell_has_renderable_projectile(cell)) {
             int projArea = paneH / 3;
             int projY = paneY + (paneH - projArea) / 2;
             if (projArea < 6) projArea = 6;
@@ -18648,7 +18694,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                                pcx, pcy - 2, pcy + 2, M11_COLOR_LIGHT_CYAN);
             }
         }
-        if (cell->summary.explosions > 0 && cell->summary.projectiles == 0) {
+        if (m11_viewport_cell_has_renderable_explosion(cell) &&
+            !m11_viewport_cell_has_renderable_projectile(cell)) {
             int ecx = paneX + paneW / 2;
             int ecy = paneY + paneH / 2;
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -18830,7 +18877,7 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                 }
             }
 
-            if (cell->summary.projectiles > 0) {
+            if (m11_viewport_cell_has_renderable_projectile(cell)) {
                 int projArea = paneH / 3;
                 int projY;
                 if (projArea < 6) projArea = 6;
@@ -18874,8 +18921,8 @@ static void m11_draw_dm1_deferred_center_explosion(unsigned char* framebuffer,
     int faceY;
     int faceW;
     int faceH;
-    if (!rect || !cell || !m11_viewport_cell_is_open(cell) ||
-        cell->summary.explosions <= 0) {
+    if (!rect || !m11_viewport_cell_is_open(cell) ||
+        !m11_viewport_cell_has_renderable_explosion(cell)) {
         return;
     }
     inset = 6 + depthIndex * 4;
@@ -18905,8 +18952,8 @@ static void m11_draw_dm1_deferred_side_explosion(unsigned char* framebuffer,
     int paneW;
     int expArea;
     int expY;
-    if (!outer || !inner || !cell || !m11_viewport_cell_is_open(cell) ||
-        cell->summary.explosions <= 0) {
+    if (!outer || !inner || !m11_viewport_cell_is_open(cell) ||
+        !m11_viewport_cell_has_renderable_explosion(cell)) {
         return;
     }
     paneY = inner->y + 3;
@@ -25045,12 +25092,12 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
                 readyThing, 0);
             if (spawned) {
                 champ->inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
+                state->pendingShootReadyHandRefill[championIndex] = 1u;
             }
             /* ReDMCSB TIMELINE.C:1597-1607 refills an empty ready hand from
              * compatible quiver ammunition when the SHOOT action enable event
-             * closes.  M11 does not yet expose that delayed action event, so
-             * the bounded runtime mirrors the slot transaction at action end. */
-            (void)m11_refill_ready_hand_after_dm1_shoot(state, championIndex);
+             * closes.  M11 mirrors that timing in the action-disable expiry
+             * path instead of moving quiver ammunition during F0407 itself. */
             m11_log_event(state, M11_COLOR_YELLOW,
                           "T%u: %s SHOOTS",
                           (unsigned int)state->world.gameTick,
@@ -25061,7 +25108,7 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
             return spawned;
 
         shoot_no_ammunition:
-            (void)m11_refill_ready_hand_after_dm1_shoot(state, championIndex);
+            state->pendingShootReadyHandRefill[championIndex] = 0u;
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s HAS NO AMMUNITION",
                           (unsigned int)state->world.gameTick,

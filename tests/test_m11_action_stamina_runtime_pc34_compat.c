@@ -6427,19 +6427,22 @@ static void test_direct_shoot_no_ammunition_clears_action_xp(void) {
 static void test_shoot_action_uses_champion_cell_for_f0326_launch(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
-    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonWeapon_Compat weapons[3];
     unsigned char actions[3];
     unsigned short bowThing;
     unsigned short arrowThing;
+    unsigned short quiverArrowThing;
+    int i;
 
     seed_state(&state, 80, 29);
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
     weapons[0].type = 25; /* Bow: class 20, kinetic 50, shoot attack 50. */
     weapons[1].type = 27; /* Arrow: class 10, kinetic 10. */
+    weapons[2].type = 27; /* Arrow: compatible quiver refill candidate. */
     things.loaded = 1;
     things.weapons = weapons;
-    things.weaponCount = 2;
+    things.weaponCount = 3;
     state.world.things = &things;
     state.world.party.direction = 1;
     state.world.party.champions[0].cell = 2;
@@ -6447,10 +6450,13 @@ static void test_shoot_action_uses_champion_cell_for_f0326_launch(void) {
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
     bowThing = make_thing(THING_TYPE_WEAPON, 0);
     arrowThing = make_thing(THING_TYPE_WEAPON, 1);
+    quiverArrowThing = make_thing(THING_TYPE_WEAPON, 2);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         bowThing;
     state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] =
         arrowThing;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] =
+        quiverArrowThing;
 
     ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
               "bow champion opens SHOOT action menu");
@@ -6483,6 +6489,22 @@ static void test_shoot_action_uses_champion_cell_for_f0326_launch(void) {
                   .inventory[CHAMPION_SLOT_HAND_LEFT],
               THING_NONE,
               "SHOOT removes ready-hand arrow after projectile spawn");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_QUIVER_1],
+              quiverArrowThing,
+              "SHOOT keeps quiver ammunition until the enable-action event closes");
+
+    for (i = 0; i < action_disabled_ticks_for_test(DM1_ACTION_SHOOT); ++i) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_HAND_LEFT],
+              quiverArrowThing,
+              "SHOOT refills ready hand from quiver when action disable expires");
+    ASSERT_EQ(state.world.party.champions[0]
+                  .inventory[CHAMPION_SLOT_QUIVER_1],
+              THING_NONE,
+              "SHOOT consumes the source-priority quiver slot during delayed refill");
 }
 
 static void test_climb_down_failure_cancels_disable_but_keeps_xp(void) {
