@@ -24945,19 +24945,22 @@ int M11_GameView_GetCreaturePaletteChange(int depthPaletteIndex,
     return m11_creature_source_palette_change(depthPaletteIndex, paletteIndex);
 }
 
-static int m11_perform_climb_down_f0407(M11_GameViewState* state);
+static int m11_perform_climb_down_f0407(M11_GameViewState* state,
+                                        int* outCancelDisable);
 
 static int m11_perform_non_melee_action(M11_GameViewState* state,
                                         int championIndex,
                                         unsigned char chosen,
                                         const char* champName,
-                                        int* outActionExperienceGain) {
+                                        int* outActionExperienceGain,
+                                        int* outCancelActionDisable) {
     struct ChampionState_Compat* champ;
     if (!state) return 0;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     if (championIndex >= state->world.party.championCount) return 0;
     champ = &state->world.party.champions[championIndex];
     if (!champ->present) return 0;
+    if (outCancelActionDisable) *outCancelActionDisable = 0;
 
     switch (chosen) {
         case 5: {
@@ -25153,14 +25156,19 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * not check whether the pit is open (BUG0_77); the normal
              * post-move environment path decides whether the party then
              * falls through it. */
-            int climbed = m11_perform_climb_down_f0407(state);
-            if (climbed) {
+            int cancelDisable = 0;
+            int performed =
+                m11_perform_climb_down_f0407(state, &cancelDisable);
+            if (outCancelActionDisable) {
+                *outCancelActionDisable = cancelDisable;
+            }
+            if (!cancelDisable) {
                 m11_log_event(state, M11_COLOR_YELLOW,
                               "T%u: %s CLIMBS DOWN",
                               (unsigned int)state->world.gameTick,
                               champName);
             }
-            return climbed;
+            return performed;
         }
         case 33: /* SPELLSHIELD */
         case 34: /* FIRESHIELD */ {
@@ -25579,7 +25587,8 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
     }
 }
 
-static int m11_perform_climb_down_f0407(M11_GameViewState* state) {
+static int m11_perform_climb_down_f0407(M11_GameViewState* state,
+                                        int* outCancelDisable) {
     struct MovementResult_Compat move;
     struct PartyState_Compat movedParty;
     struct PostMoveResolution_Compat postMove;
@@ -25590,6 +25599,7 @@ static int m11_perform_climb_down_f0407(M11_GameViewState* state) {
     int frontY;
     int i;
 
+    if (outCancelDisable) *outCancelDisable = 0;
     if (!state || !state->world.dungeon) return 0;
     F0701_MOVEMENT_GetStepDelta_Compat(state->world.party.direction,
                                        MOVE_FORWARD, &dx, &dy);
@@ -25599,18 +25609,27 @@ static int m11_perform_climb_down_f0407(M11_GameViewState* state) {
                              frontX, frontY, &frontSquare) ||
         ((frontSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
             DUNGEON_ELEMENT_PIT) {
-        return 0;
+        /* ReDMCSB MENU.C F0407 lines 1548-1565: CLIMB DOWN starts with
+         * ActionPerformed already TRUE.  When no rope move can happen, the
+         * source only clears ActionDisabledTicks (BUG0_79); stamina and
+         * G0497 XP still run through the common tail. */
+        if (outCancelDisable) *outCancelDisable = 1;
+        return 1;
     }
     if (F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat(
             state->world.dungeon, state->world.things, &state->world.party,
             MOVE_FORWARD)) {
-        return 0;
+        /* Later PC34-compatible sources include the group-over-pit guard
+         * before F0267 and route it through the same BUG0_79 tail. */
+        if (outCancelDisable) *outCancelDisable = 1;
+        return 1;
     }
     if (!F0702_MOVEMENT_TryMove_Compat(state->world.dungeon,
                                        &state->world.party, MOVE_FORWARD,
                                        &move) ||
         move.resultCode != MOVE_OK) {
-        return 0;
+        if (outCancelDisable) *outCancelDisable = 1;
+        return 1;
     }
 
     movedParty = state->world.party;
@@ -25656,6 +25675,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
     char champName[16];
     int performed = 0;
     int actionExperienceGain = 0;
+    int cancelActionDisable = 0;
     DM1_ActionXpRoute actionXpRoute;
 
     if (!state || !state->active) {
@@ -25795,7 +25815,8 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
          * world advances one tick, the menu closes. */
         performed = m11_perform_non_melee_action(state, championIndex,
                                                  chosen, champName,
-                                                 &actionExperienceGain);
+                                                 &actionExperienceGain,
+                                                 &cancelActionDisable);
         /* ReDMCSB ENDGAME.C F0446 lines 890-910 runs its own fuse-sequence
          * update loop after setting game-won.  Do not run the normal ACTION
          * tick over the completed M11 endgame state in the same dispatch. */
@@ -25818,7 +25839,8 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
              * NO_AMMUNITION, clears G0497 action XP, and keeps the common
              * stamina / action-disable tail. */
             actionExperienceGain = 0;
-        } else if (chosen == DM1_ACTION_CLIMB_DOWN && !performed) {
+        } else if (chosen == DM1_ACTION_CLIMB_DOWN &&
+                   cancelActionDisable) {
             /* ReDMCSB MENU.C F0407 lines 1548-1565 cancels the
              * action-disabled icon when rope CLIMB DOWN is not possible,
              * while preserving the common stamina and G0497 XP tail
@@ -25861,6 +25883,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     int actionExperienceGain = 0;
     DM1_ActionXpRoute actionXpRoute;
     int performed;
+    int cancelActionDisable = 0;
     if (!state || !state->active) return 0;
     if (state->candidateMirrorPanelActive) {
         /* ReDMCSB MENU.C F0390 lines 751-759: while
@@ -25912,7 +25935,8 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
     performed = m11_perform_non_melee_action(state, championIndex,
                                              (unsigned char)actionIndex,
                                              champName,
-                                             &actionExperienceGain);
+                                             &actionExperienceGain,
+                                             &cancelActionDisable);
     /* ReDMCSB ENDGAME.C F0446 lines 890-910 owns the fuse-sequence updates
      * after game-won; the direct helper mirrors the action-row boundary. */
     if (!state->gameWon) {
@@ -25937,7 +25961,8 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
              * ammunition through T0407032, clearing G0497 XP while keeping
              * the common stamina / action-disable tail. */
             actionExperienceGain = 0;
-        } else if (actionIndex == DM1_ACTION_CLIMB_DOWN && !performed) {
+        } else if (actionIndex == DM1_ACTION_CLIMB_DOWN &&
+                   cancelActionDisable) {
             /* ReDMCSB MENU.C F0407 lines 1548-1565 cancels the disabled
              * action icon on failed rope CLIMB DOWN but preserves BUG0_79
              * stamina and G0497 XP side effects. */
