@@ -8059,6 +8059,107 @@ static void test_endgame_restart_controls_respect_restart_allowed(void) {
               "F0444 quit click returns to the launcher");
 }
 
+static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[25];
+    int mapX = -1;
+    int mapY = -1;
+    int element = -1;
+    int effective = -1;
+    int wallLike = -1;
+    int open = -1;
+    int legacyLaneClear = -1;
+    int draws = -1;
+    int gfx = -1;
+    int dstX = -1;
+    int dstY = -1;
+    int width = -1;
+    int height = -1;
+    int i;
+
+    seed_state(&state, 100, 45);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    for (i = 0; i < 25; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 5;
+    maps[0].height = 5;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 25;
+    squareData[(1 * 5) + 1] = square_for_test(DUNGEON_ELEMENT_WALL, 0);
+    squareData[(3 * 5) + 1] = square_for_test(DUNGEON_ELEMENT_WALL, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 2;
+    state.world.party.mapY = 3;
+    state.world.party.direction = 0; /* north: D2L=(1,1), D2R=(3,1). */
+
+    ASSERT_EQ(M11_GameView_ProbeViewportCellClass(
+                  &state, 2, -1, &mapX, &mapY, NULL, &element,
+                  &effective, &wallLike, &open),
+              1,
+              "D2L side wall sample resolves");
+    ASSERT_EQ(mapX, 1, "D2L side wall x uses ReDMCSB F0150 2,-1");
+    ASSERT_EQ(mapY, 1, "D2L side wall y uses ReDMCSB F0150 2,-1");
+    ASSERT_EQ(element, DUNGEON_ELEMENT_WALL,
+              "D2L side wall raw element is wall");
+    ASSERT_EQ(effective, DUNGEON_ELEMENT_WALL,
+              "D2L side wall effective element is wall");
+    ASSERT_EQ(wallLike, 1, "D2L side wall is wall-like");
+    ASSERT_EQ(open, 0, "D2L side wall is not open");
+    ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
+                  &state, 2, -1, &legacyLaneClear, &draws),
+              1,
+              "D2L side wall draw eligibility resolves");
+    ASSERT_EQ(draws, 1,
+              "D2L source-order side-wall pass draws without waiting for D1");
+    ASSERT_EQ(M11_GameView_ProbeSideWallRuntimeBlit(
+                  2, -1, &gfx, &dstX, &dstY, &width, &height),
+              1,
+              "D2L runtime blit resolves");
+    ASSERT_EQ(gfx, 101, "D2L runtime blit uses wall-set C08 graphic");
+    ASSERT_EQ(dstX, 0, "D2L runtime blit uses C710 x1");
+    ASSERT_EQ(dstY, 20, "D2L runtime blit uses G0163 y1");
+    ASSERT_EQ(width, 75, "D2L runtime blit uses C710 inclusive width");
+    ASSERT_EQ(height, 71, "D2L runtime blit uses G0163 inclusive height");
+
+    ASSERT_EQ(M11_GameView_ProbeViewportCellClass(
+                  &state, 2, 1, &mapX, &mapY, NULL, &element,
+                  &effective, &wallLike, &open),
+              1,
+              "D2R side wall sample resolves");
+    ASSERT_EQ(mapX, 3, "D2R side wall x uses ReDMCSB F0150 2,+1");
+    ASSERT_EQ(mapY, 1, "D2R side wall y uses ReDMCSB F0150 2,+1");
+    ASSERT_EQ(wallLike, 1, "D2R side wall is wall-like");
+    ASSERT_EQ(M11_GameView_ProbeSideWallDrawEligibility(
+                  &state, 2, 1, &legacyLaneClear, &draws),
+              1,
+              "D2R side wall draw eligibility resolves");
+    ASSERT_EQ(draws, 1,
+              "D2R source-order side-wall pass draws without waiting for D1");
+    ASSERT_EQ(M11_GameView_ProbeSideWallRuntimeBlit(
+                  2, 1, &gfx, &dstX, &dstY, &width, &height),
+              1,
+              "D2R runtime blit resolves");
+    ASSERT_EQ(gfx, 100, "D2R runtime blit uses wall-set C07 graphic");
+    ASSERT_EQ(dstX, 149, "D2R runtime blit uses C711 x1");
+    ASSERT_EQ(dstY, 20, "D2R runtime blit uses G0163 y1");
+    ASSERT_EQ(width, 75, "D2R runtime blit uses C711 inclusive width");
+    ASSERT_EQ(height, 71, "D2R runtime blit uses G0163 inclusive height");
+}
+
 int main(void) {
     printf("=== M11 Action Stamina Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: MENU.C G0494/F0407 and CHAMPION.C F0325\n\n");
@@ -8142,6 +8243,7 @@ int main(void) {
     test_fuse_out_of_bounds_keeps_action_performed_without_explosion();
     test_fuse_complete_fluxcage_sets_m11_game_won_gate();
     test_endgame_restart_controls_respect_restart_allowed();
+    test_dm1_d2_side_walls_sample_and_use_source_rects();
     test_melee_action_row_uses_auto_target_and_action_index();
     test_melee_action_row_targets_pref0407_champion_direction();
     test_melee_action_row_closed_door_targets_pref0407_champion_direction();

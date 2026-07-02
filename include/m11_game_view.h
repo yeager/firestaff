@@ -635,6 +635,13 @@ int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
                                               int relSide,
                                               int* outLegacyLaneClear,
                                               int* outDrawsWithSourceOrder);
+int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
+                                          int relSide,
+                                          int* outGraphicIndex,
+                                          int* outDstX,
+                                          int* outDstY,
+                                          int* outWidth,
+                                          int* outHeight);
 
 /* Post-move environmental transition check (pits, teleporters).
  * Returns 1 if a transition occurred. */
