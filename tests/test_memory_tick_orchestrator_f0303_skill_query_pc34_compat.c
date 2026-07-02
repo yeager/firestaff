@@ -214,6 +214,63 @@ static void test_orch_light_spell_uses_source_light_amount_and_party_map(void) {
     assert(world.timeline.events[0].aux0 == -3);
 }
 
+static void test_orch_spell_status_timeout_aux_tags_expire_magic_state(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat ev;
+
+    init_world(&world, &things, weapons, junks);
+    world.gameTick = 500;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+    world.magic.event71CountInvisibility = 1;
+    world.magic.event73CountThievesEye = 1;
+    world.magic.event79CountFootprints = 1;
+    world.magic.magicFootprintsActive = 1;
+    world.magic.partyShieldDefense = 12;
+    world.magic.fireShieldDefense = 9;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+    ev.fireAtTick = world.gameTick;
+    ev.aux0 = TIMELINE_AUX_INVISIBILITY;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
+
+    ev.aux0 = TIMELINE_AUX_THIEVES_EYE;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
+
+    ev.aux0 = TIMELINE_AUX_FOOTPRINTS;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
+
+    /* F0763 stores party-shield defense in aux4 because aux1 is reserved
+     * for other effect families; runtime must still map it to C74. */
+    ev.aux0 = TIMELINE_AUX_PARTY_SHIELD;
+    ev.aux1 = 0;
+    ev.aux4 = 5;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
+
+    ev.aux0 = TIMELINE_AUX_FIRESHIELD;
+    ev.aux1 = 3;
+    ev.aux4 = 0;
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &ev) == 1);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
+
+    assert(world.magic.event71CountInvisibility == 0);
+    assert(world.magic.event73CountThievesEye == 0);
+    assert(world.magic.event79CountFootprints == 0);
+    assert(world.magic.magicFootprintsActive == 0);
+    assert(world.magic.partyShieldDefense == 7);
+    assert(world.magic.fireShieldDefense == 6);
+    assert(world.timeline.count == 0);
+}
+
 static void test_orch_potion_spell_mutates_empty_flask_in_hand(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -6454,6 +6511,7 @@ int main(void) {
     test_orch_f0303_hidden_heal_query();
     test_orch_projectile_spell_uses_hidden_skill_query_value();
     test_orch_light_spell_uses_source_light_amount_and_party_map();
+    test_orch_spell_status_timeout_aux_tags_expire_magic_state();
     test_orch_potion_spell_mutates_empty_flask_in_hand();
     test_orch_zokathra_spell_materializes_in_ready_hand();
     test_orch_zokathra_spell_falls_back_to_party_square();

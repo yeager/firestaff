@@ -1596,6 +1596,38 @@ static int orch_cmd_cast_spell_materialize_zokathra_f0412_compat(
     return orch_link_thing_to_party_square_compat(world, thing);
 }
 
+static int orch_normalize_status_timeout_aux0_pc34_compat(int aux0)
+{
+    switch (aux0) {
+        case TIMELINE_AUX_THIEVES_EYE:
+            return LIFECYCLE_STATUS_THIEVES_EYE;
+        case TIMELINE_AUX_INVISIBILITY:
+            return LIFECYCLE_STATUS_INVISIBILITY;
+        case TIMELINE_AUX_PARTY_SHIELD:
+            return LIFECYCLE_STATUS_PARTY_SHIELD;
+        case TIMELINE_AUX_FIRESHIELD:
+            return LIFECYCLE_STATUS_FIRE_SHIELD;
+        case TIMELINE_AUX_FOOTPRINTS:
+            return LIFECYCLE_STATUS_FOOTPRINTS;
+        case TIMELINE_AUX_SPELL_SHIELD:
+            return LIFECYCLE_STATUS_SPELL_SHIELD;
+        default:
+            return aux0;
+    }
+}
+
+static int orch_status_timeout_defense_pc34_compat(
+    const struct TimelineEvent_Compat* ev,
+    int normalizedStatus)
+{
+    if (!ev) return 0;
+    if (normalizedStatus == LIFECYCLE_STATUS_PARTY_SHIELD &&
+        ev->aux0 == TIMELINE_AUX_PARTY_SHIELD) {
+        return ev->aux4;
+    }
+    return ev->aux1;
+}
+
 int F0888_ORCH_GetChampionF0303SkillLevel_Compat(
     const struct GameWorld_Compat* world,
     int championIndex,
@@ -6952,12 +6984,19 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         }
         case TIMELINE_EVENT_STATUS_TIMEOUT: {
             struct TimelineEvent_Compat resched;
+            struct TimelineEvent_Compat statusEvent;
+            int statusKind = orch_normalize_status_timeout_aux0_pc34_compat(ev.aux0);
+            int statusDefense =
+                orch_status_timeout_defense_pc34_compat(&ev, statusKind);
             memset(&resched, 0, sizeof(resched));
-            if (ev.aux0 == LIFECYCLE_STATUS_POISON) {
-                int championIndex = ev.aux4;
+            statusEvent = ev;
+            statusEvent.aux0 = statusKind;
+            statusEvent.aux1 = statusDefense;
+            if (statusKind == LIFECYCLE_STATUS_POISON) {
+                int championIndex = statusEvent.aux4;
                 if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
                     if (F0835_LIFECYCLE_HandleStatusExpiry_Compat(
-                            &world->lifecycle, &ev, championIndex,
+                            &world->lifecycle, &statusEvent, championIndex,
                             &resched)) {
                         int damage = resched.aux3;
                         struct ChampionState_Compat* champ =
@@ -6983,21 +7022,46 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                         }
                     }
                 }
-            } else if (ev.aux0 == LIFECYCLE_STATUS_SPELL_SHIELD) {
+            } else if (statusKind == LIFECYCLE_STATUS_INVISIBILITY) {
+                /* ReDMCSB TIMELINE.C C71 lines 1953-1962 decrements
+                 * G0407_s_Party.Event71Count_Invisibility. */
+                world->magic.event71CountInvisibility--;
+                F0835_LIFECYCLE_HandleStatusExpiry_Compat(
+                    &world->lifecycle, &statusEvent, statusDefense, &resched);
+            } else if (statusKind == LIFECYCLE_STATUS_THIEVES_EYE) {
+                /* ReDMCSB TIMELINE.C C73 lines 1973-1974. */
+                world->magic.event73CountThievesEye--;
+                F0835_LIFECYCLE_HandleStatusExpiry_Compat(
+                    &world->lifecycle, &statusEvent, statusDefense, &resched);
+            } else if (statusKind == LIFECYCLE_STATUS_PARTY_SHIELD) {
+                /* ReDMCSB TIMELINE.C C74 lines 1975-1976 subtracts
+                 * the event defense from G0407_s_Party.ShieldDefense. */
+                world->magic.partyShieldDefense -= statusDefense;
+                F0835_LIFECYCLE_HandleStatusExpiry_Compat(
+                    &world->lifecycle, &statusEvent, statusDefense, &resched);
+            } else if (statusKind == LIFECYCLE_STATUS_SPELL_SHIELD) {
                 /* ReDMCSB TIMELINE.C C77 lines 1985-1986 subtracts the
                  * event defense from G0407_s_Party.SpellShieldDefense. */
-                world->magic.spellShieldDefense -= ev.aux1;
+                world->magic.spellShieldDefense -= statusDefense;
                 F0835_LIFECYCLE_HandleStatusExpiry_Compat(
-                    &world->lifecycle, &ev, ev.aux1, &resched);
-            } else if (ev.aux0 == LIFECYCLE_STATUS_FIRE_SHIELD) {
+                    &world->lifecycle, &statusEvent, statusDefense, &resched);
+            } else if (statusKind == LIFECYCLE_STATUS_FIRE_SHIELD) {
                 /* ReDMCSB TIMELINE.C C78 lines 1988-1989 subtracts the
                  * event defense from G0407_s_Party.FireShieldDefense. */
-                world->magic.fireShieldDefense -= ev.aux1;
+                world->magic.fireShieldDefense -= statusDefense;
                 F0835_LIFECYCLE_HandleStatusExpiry_Compat(
-                    &world->lifecycle, &ev, ev.aux1, &resched);
+                    &world->lifecycle, &statusEvent, statusDefense, &resched);
+            } else if (statusKind == LIFECYCLE_STATUS_FOOTPRINTS) {
+                /* ReDMCSB TIMELINE.C C79 lines 1998-1999. */
+                world->magic.event79CountFootprints--;
+                if (world->magic.event79CountFootprints <= 0) {
+                    world->magic.magicFootprintsActive = 0;
+                }
+                F0835_LIFECYCLE_HandleStatusExpiry_Compat(
+                    &world->lifecycle, &statusEvent, statusDefense, &resched);
             } else {
                 F0835_LIFECYCLE_HandleStatusExpiry_Compat(
-                    &world->lifecycle, &ev, ev.aux1, &resched);
+                    &world->lifecycle, &statusEvent, statusDefense, &resched);
             }
             break;
         }
