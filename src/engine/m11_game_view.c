@@ -16411,6 +16411,46 @@ static int m11_dm1_stairs_front_facing(const M11_GameViewState* state,
         (state->world.party.direction == DIR_EAST || state->world.party.direction == DIR_WEST);
 }
 
+static const M11_DM1WallFrontBlit kM11_DM1SideWallBlits[] = {
+    /* Far to near, matching the first source-bound subset of
+     * DUNVIEW.C F0097/F012x wall-zone order.  The relForward/relSide
+     * coordinates name the viewed square; dst rects are layout-696
+     * F0635_-resolved viewport zones.
+     * Entries are paired: [0]+[1], [2]+[3], ... = L+R at same depth. */
+    {3, 3, -2, M11_GFX_WALLSET0_D3L2, 0,   25, 44, 49},  /* 0: D3L2 */
+    {3, 3,  2, M11_GFX_WALLSET0_D3R2, 180, 25, 44, 49},  /* 1: D3R2 */
+    {3, 3, -1, M11_GFX_WALLSET0_D3L,  7,   25, 83, 49},  /* 2: D3L  */
+    {3, 3,  1, M11_GFX_WALLSET0_D3R,  134, 25, 83, 49},  /* 3: D3R  */
+    {2, 2, -2, M11_GFX_WALLSET0_D2L2, 0,   24, 8,  52},  /* 4: D2L2 */
+    {2, 2,  2, M11_GFX_WALLSET0_D2R2, 216, 24, 8,  52},  /* 5: D2R2 */
+    /* ReDMCSB DUNVIEW.C F0119/F0120 lines 6945-6973/7096-7166 draw
+     * D2L/D2R through G0163 frame rows 4/5: C710 x=0..74,y=20..90 and
+     * C711 x=149..223,y=20..90.  Keeping M11 on the older 78x74
+     * approximate rectangles made these side walls visually vanish into
+     * adjacent floor/ceiling in Hall/open-corridor views until the party
+     * advanced to D1. */
+    {2, 2, -1, M11_GFX_WALLSET0_D2L,  0,   20, 75, 71},  /* 6: D2L  */
+    {2, 2,  1, M11_GFX_WALLSET0_D2R,  149, 20, 75, 71},  /* 7: D2R  */
+    {1, 1, -1, M11_GFX_WALLSET0_D1L,  0,   9,  60, 111}, /* 8: D1L  */
+    {1, 1,  1, M11_GFX_WALLSET0_D1R,  164, 9,  60, 111}, /* 9: D1R  */
+    {0, 0, -1, M11_GFX_WALLSET0_D0L,  0,   0,  33, 136}, /*10: D0L  */
+    {0, 0,  1, M11_GFX_WALLSET0_D0R,  191, 0,  33, 136}  /*11: D0R  */
+};
+
+static const M11_DM1WallFrontBlit* m11_dm1_side_wall_blit_for_rel(
+    int relForward,
+    int relSide) {
+    size_t i;
+    for (i = 0; i < sizeof(kM11_DM1SideWallBlits) /
+                    sizeof(kM11_DM1SideWallBlits[0]); ++i) {
+        if (kM11_DM1SideWallBlits[i].relForward == relForward &&
+            kM11_DM1SideWallBlits[i].relSide == relSide) {
+            return &kM11_DM1SideWallBlits[i];
+        }
+    }
+    return NULL;
+}
+
 static void m11_draw_dm1_stairs(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
                                 int fbW,
@@ -16558,32 +16598,6 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     int fbH,
                                     int maxVisibleForward,
                                     const M11_ViewportCell cells[3][3]) {
-    /* Side wall blits are arranged in L/R pairs.  Even indices are left-side
-     * entries and odd indices are the corresponding right-side entries.
-     * ReDMCSB DUNVIEW.C F0128 swaps the wall-set L/R bitmap indices when
-     * G0076_B_UseFlippedWallAndFootprintsBitmaps is true: F0116 draws the
-     * D3R graphic flipped horizontally into the D3L zone, and F0117 draws
-     * the D3L graphic flipped into the D3R zone.  This alternating texture
-     * pattern breaks visible seams in the 4-bit palette wall textures. */
-    static const M11_DM1WallFrontBlit kSideBlits[] = {
-        /* Far to near, matching the first source-bound subset of
-         * DUNVIEW.C F0097/F012x wall-zone order.  The relForward/relSide
-         * coordinates name the viewed square; dst rects are layout-696
-         * F0635_-resolved viewport zones.
-         * Entries are paired: [0]+[1], [2]+[3], ... = L+R at same depth. */
-        {3, 3, -2, M11_GFX_WALLSET0_D3L2, 0,   25, 44, 49},  /* 0: D3L2 */
-        {3, 3,  2, M11_GFX_WALLSET0_D3R2, 180, 25, 44, 49},  /* 1: D3R2 */
-        {3, 3, -1, M11_GFX_WALLSET0_D3L,  7,   25, 83, 49},  /* 2: D3L  */
-        {3, 3,  1, M11_GFX_WALLSET0_D3R,  134, 25, 83, 49},  /* 3: D3R  */
-        {2, 2, -2, M11_GFX_WALLSET0_D2L2, 0,   24, 8,  52},  /* 4: D2L2 */
-        {2, 2,  2, M11_GFX_WALLSET0_D2R2, 216, 24, 8,  52},  /* 5: D2R2 */
-        {2, 2, -1, M11_GFX_WALLSET0_D2L,  0,   19, 78, 74},  /* 6: D2L  */
-        {2, 2,  1, M11_GFX_WALLSET0_D2R,  146, 19, 78, 74},  /* 7: D2R  */
-        {1, 1, -1, M11_GFX_WALLSET0_D1L,  0,   9,  60, 111}, /* 8: D1L  */
-        {1, 1,  1, M11_GFX_WALLSET0_D1R,  164, 9,  60, 111}, /* 9: D1R  */
-        {0, 0, -1, M11_GFX_WALLSET0_D0L,  0,   0,  33, 136}, /*10: D0L  */
-        {0, 0,  1, M11_GFX_WALLSET0_D0R,  191, 0,  33, 136}  /*11: D0R  */
-    };
     size_t i;
     int flipWalls;
     if (!state || !state->assetsAvailable) {
@@ -16592,7 +16606,8 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
     (void)cells;
     (void)maxVisibleForward;
     flipWalls = m11_dm1_use_flipped_walls(state);
-    for (i = 0; i < sizeof(kSideBlits) / sizeof(kSideBlits[0]); ++i) {
+    for (i = 0; i < sizeof(kM11_DM1SideWallBlits) /
+                    sizeof(kM11_DM1SideWallBlits[0]); ++i) {
         M11_ViewportCell cell;
         /* ReDMCSB DUNVIEW.C F0128 lines 8478-8533 draws side wall
          * squares far-to-near without testing nearer side-lane occupancy;
@@ -16601,8 +16616,8 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
          * max-visible-depth gate here, or source-visible D2L/D2R side
          * panels disappear until the party steps forward. */
         if (!m11_sample_viewport_cell(state,
-                                      kSideBlits[i].relForward,
-                                      kSideBlits[i].relSide,
+                                      kM11_DM1SideWallBlits[i].relForward,
+                                      kM11_DM1SideWallBlits[i].relSide,
                                       &cell)) {
             continue;
         }
@@ -16618,8 +16633,8 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                  * and vice versa.  The paired entry is at i^1 (XOR toggles
                  * the LSB to swap even/odd = L/R partner). */
                 size_t partner = i ^ 1;
-                M11_DM1WallFrontBlit swapped = kSideBlits[i];
-                swapped.graphicIndex = kSideBlits[partner].graphicIndex;
+                M11_DM1WallFrontBlit swapped = kM11_DM1SideWallBlits[i];
+                swapped.graphicIndex = kM11_DM1SideWallBlits[partner].graphicIndex;
                 (void)m11_draw_dm1_wall_blit_flipped(state,
                                                      framebuffer,
                                                      fbW,
@@ -16631,7 +16646,7 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                                                framebuffer,
                                                                fbW,
                                                                fbH,
-                                                               &kSideBlits[i],
+                                                               &kM11_DM1SideWallBlits[i],
                                                                10);
             }
         }
@@ -24702,6 +24717,26 @@ int M11_GameView_ProbeSideWallDrawEligibility(const M11_GameViewState* state,
     draws = m11_viewport_cell_is_wall_like(&cell);
     if (outLegacyLaneClear) *outLegacyLaneClear = laneClear;
     if (outDrawsWithSourceOrder) *outDrawsWithSourceOrder = draws;
+    return 1;
+}
+
+int M11_GameView_ProbeSideWallRuntimeBlit(int relForward,
+                                          int relSide,
+                                          int* outGraphicIndex,
+                                          int* outDstX,
+                                          int* outDstY,
+                                          int* outWidth,
+                                          int* outHeight) {
+    const M11_DM1WallFrontBlit* blit =
+        m11_dm1_side_wall_blit_for_rel(relForward, relSide);
+    if (!blit) {
+        return 0;
+    }
+    if (outGraphicIndex) *outGraphicIndex = blit->graphicIndex;
+    if (outDstX) *outDstX = blit->dstX;
+    if (outDstY) *outDstY = blit->dstY;
+    if (outWidth) *outWidth = blit->width;
+    if (outHeight) *outHeight = blit->height;
     return 1;
 }
 
