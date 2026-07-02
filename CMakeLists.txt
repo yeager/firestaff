@@ -17975,7 +17975,7 @@ add_executable(firestaff_nexus_v1_s2d_runtime_text_layout_probe
     probes/nexus/firestaff_nexus_v1_s2d_runtime_text_layout_probe.c
 )
 target_link_libraries(firestaff_nexus_v1_s2d_runtime_text_layout_probe PRIVATE
-    firestaff_nexus firestaff_m10
+    firestaff_nexus firestaff_m10 m
 )
 target_include_directories(firestaff_nexus_v1_s2d_runtime_text_layout_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
