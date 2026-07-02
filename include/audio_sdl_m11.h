@@ -31,6 +31,7 @@ typedef enum {
 #define M11_AUDIO_MAX_SOUND_MS 300
 #define M11_AUDIO_MAX_SAMPLES  ((M11_AUDIO_SAMPLE_RATE * M11_AUDIO_MAX_SOUND_MS) / 1000)
 #define M11_AUDIO_ORIGINAL_SOUND_COUNT 35
+#define M11_AUDIO_SOURCE_MUSIC_GAME_WON 2
 
 typedef struct {
     float* samples;
@@ -66,6 +67,7 @@ typedef struct {
     int originalSongPlayablePartCount;
     int originalSongLoopTargetPart;
     int titleMusicQueuedCount;
+    int titleMusicPlayRequestCount;
     int titleMusicEnabled;
 
     /* SDL3 native audio — opaque pointer to avoid exposing SDL headers */

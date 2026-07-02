@@ -772,6 +772,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->lastMusicTrackId = -1;
     state->originalSongLoopTargetPart = 0;
     state->titleMusicQueuedCount = 0;
+    state->titleMusicPlayRequestCount = 0;
     state->titleMusicEnabled = 0;
     state->playedMarkerCount = 0;
     state->queuedSampleCount = 0;
@@ -939,6 +940,15 @@ int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex) {
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {
     if (!state || !state->initialized) return 0;
     state->lastMusicTrackId = musicTrackId;
+    /* ReDMCSB: ENDGAME.C F0446 lines 924-925 calls
+     * F0741_MUSIC_PlayGameMusic(C2_MUSIC_GAME_WON). DM1 PC34 stores
+     * the playable source music in SONG.DAT; Firestaff's currently
+     * decoded SONG.DAT route is the title-music phrase, so game-won
+     * music requests are handed through that playback path when the
+     * source track id matches C2. */
+    if (musicTrackId == M11_AUDIO_SOURCE_MUSIC_GAME_WON) {
+        (void)M11_Audio_PlayTitleMusic(state);
+    }
     return 1;
 }
 
@@ -956,6 +966,7 @@ int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
     if (!state || !state->initialized) return 0;
     if (!state->titleMusicEnabled) return 0;
     if (!state->originalSongAvailable || state->titleMusic.sampleCount <= 0) return 0;
+    state->titleMusicPlayRequestCount += 1;
 
     if (state->backend != M11_AUDIO_BACKEND_SDL3) {
         return 0;
