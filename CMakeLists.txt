@@ -18418,6 +18418,26 @@ if(NOT MSVC)
     )
 endif()
 
+# Nexus V1 S2D section-bound glyph-decode probe. Headless and data-free by
+# default: builds a bounded per-glyph byte-window map from the parsed SCR
+# section table plus the existing nexus_v1_s2d_section_glyph_map(), then
+# verifies the lookup/decode contract on synthetic fixtures. Optional local
+# FONT256.S2D input is skip-safe.
+add_executable(firestaff_nexus_v1_s2d_glyph_decode_probe
+    probes/nexus/firestaff_nexus_v1_s2d_glyph_decode_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_s2d_glyph_decode_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_s2d_glyph_decode_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_s2d_glyph_decode_probe PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus V1 DMDF/MNS multi-model bounds + cleanup probe. Headless and
 # skip-safe: a synthetic path proves the slot-pool + cap + cleanup
 # + failure-isolation invariants without any real assets; an optional
@@ -18638,6 +18658,14 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_screen_text_surface PROPERTIES
         LABELS "tier4;nexus;font;layout;screen_text;skip_safe"
+    )
+
+    add_test(
+        NAME nexus_v1_s2d_glyph_decode
+        COMMAND firestaff_nexus_v1_s2d_glyph_decode_probe
+    )
+    set_tests_properties(nexus_v1_s2d_glyph_decode PROPERTIES
+        LABELS "tier4;nexus;font;decode;skip_safe"
     )
 
     # Nexus V1 DMDF/MNS multi-model bounds + cleanup gate.
