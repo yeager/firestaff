@@ -1071,6 +1071,23 @@ static int pc34_event_type_is_status_timeout(int type)
            type == DM1_EVENT_FOOTPRINTS;
 }
 
+static uint16_t pc34_make_thing_ref(int type, int index)
+{
+    if (type < 0) type = 0;
+    if (index < 0) index = 0;
+    return (uint16_t)(((type & 0x0f) << 10) | (index & 0x03ff));
+}
+
+static int pc34_thing_ref_type(uint16_t thing)
+{
+    return (int)((thing >> 10) & 0x0f);
+}
+
+static int pc34_thing_ref_index(uint16_t thing)
+{
+    return (int)(thing & 0x03ff);
+}
+
 static int pc34_status_event_defense_from_timeline(
     const struct TimelineEvent_Compat* src,
     int type)
@@ -1245,12 +1262,22 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         if (pc34_event_type_is_status_timeout(type)) {
             int defense = pc34_status_event_defense_from_timeline(src, type);
             write_u16_le(dst + 6u, (uint16_t)(defense & 0xffff));
+        } else if (type == DM1_EVENT_REMOVE_FLUXCAGE) {
+            /* ReDMCSB PROJEXPL.C F0224 lines 989-993 stores the
+             * fluxcage explosion THING in EVENT.C.Slot while B.Location
+             * remains the target square. Firestaff runtime keeps only the
+             * ExplosionList slot index in aux0, so native export rebuilds
+             * the source C15 thing reference here. */
+            dst[6] = (uint8_t)(src->mapX & 0xff);
+            dst[7] = (uint8_t)(src->mapY & 0xff);
+            write_u16_le(dst + 8u,
+                         pc34_make_thing_ref(THING_TYPE_EXPLOSION, src->aux0));
         } else {
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
+            dst[8] = (uint8_t)(src->cell & 0xff);
+            dst[9] = (uint8_t)(src->aux1 & 0xff);
         }
-        dst[8] = (uint8_t)(src->cell & 0xff);
-        dst[9] = (uint8_t)(src->aux1 & 0xff);
         write_u16_le(timeline + (size_t)count * 2u, (uint16_t)count);
         ++count;
     }
@@ -1317,6 +1344,16 @@ static void unpack_events_and_timeline(const struct PC34GlobalData* gd,
             dst->mapX = 0;
             dst->mapY = 0;
             dst->aux1 = (int)read_u16_le(src + 6u);
+        } else if (src[4u] == DM1_EVENT_REMOVE_FLUXCAGE) {
+            uint16_t thing = read_u16_le(src + 8u);
+            dst->mapX = src[6u];
+            dst->mapY = src[7u];
+            dst->cell = EXPLOSION_CELL_CENTERED;
+            dst->aux0 = (pc34_thing_ref_type(thing) == THING_TYPE_EXPLOSION)
+                ? pc34_thing_ref_index(thing) : (int)thing;
+            dst->aux1 = C050_EXPLOSION_FLUXCAGE;
+            dst->aux4 = src[5u];
+            continue;
         } else {
             dst->mapX = src[6u];
             dst->mapY = src[7u];

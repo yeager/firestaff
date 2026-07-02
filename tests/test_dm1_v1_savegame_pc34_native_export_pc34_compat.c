@@ -66,6 +66,7 @@
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
+#include "memory_projectile_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 
@@ -523,6 +524,91 @@ static void test_pc34_status_aux_tags_export_as_native_events(void) {
           "pc34 status aux export: imported C78 defense from B.Defense");
 
     puts("  PASS pc34_status_aux_tags_export_as_native_events");
+}
+
+static void test_pc34_remove_fluxcage_exports_source_cslot(void) {
+    struct PartyState_Compat party;
+    struct SaveGame_Compat state;
+    struct TimelineQueue_Compat timeline;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat importedParty;
+    struct TimelineQueue_Compat importedTimeline;
+    DM1OriginalSavePC34HandoffReport report;
+    struct TimelineEvent_Compat ev;
+    const struct DM1_Event_V1* raw;
+    unsigned char exportBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    int rc;
+    int cslot;
+
+    memset(&party, 0, sizeof(party));
+    memset(&state, 0, sizeof(state));
+    memset(&timeline, 0, sizeof(timeline));
+    memset(&imported, 0, sizeof(imported));
+    memset(&importedParty, 0, sizeof(importedParty));
+    memset(&importedTimeline, 0, sizeof(importedTimeline));
+    memset(&report, 0, sizeof(report));
+
+    state.party = &party;
+    state.timeline = &timeline;
+    imported.party = &importedParty;
+    imported.timeline = &importedTimeline;
+    F0720_TIMELINE_Init_Compat(&timeline, 900u);
+
+    memset(&ev, 0, sizeof(ev));
+    ev.kind = TIMELINE_EVENT_REMOVE_FLUXCAGE;
+    ev.fireAtTick = 1000u;
+    ev.mapIndex = 3;
+    ev.mapX = 11;
+    ev.mapY = 12;
+    ev.cell = EXPLOSION_CELL_CENTERED;
+    ev.aux0 = 37;
+    ev.aux1 = C050_EXPLOSION_FLUXCAGE;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&timeline, &ev),
+          "pc34 remove fluxcage: schedule C24");
+
+    rc = F0795_SAVEGAME_ExportPC34_Compat(
+        &state, 0x43323446u, exportBuf, (int)sizeof(exportBuf), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "pc34 remove fluxcage: export rc == OK");
+
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        exportBuf, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "pc34 remove fluxcage: handoff import rc == OK");
+    raw = find_report_event_type(&report, DM1_EVENT_REMOVE_FLUXCAGE);
+    CHECK(raw != 0, "pc34 remove fluxcage: C24 event exported");
+    CHECK(raw->b_mapX == 11 && raw->b_mapY == 12,
+          "pc34 remove fluxcage: B.Location target exported");
+    cslot = (int)raw->c_cell | ((int)raw->c_effect << 8);
+    CHECK(cslot == ((THING_TYPE_EXPLOSION << 10) | 37),
+          "pc34 remove fluxcage: C.Slot exports C15 explosion thing");
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&importedParty, 0, sizeof(importedParty));
+    memset(&importedTimeline, 0, sizeof(importedTimeline));
+    imported.party = &importedParty;
+    imported.timeline = &importedTimeline;
+    rc = F0796_SAVEGAME_ImportPC34_Compat(
+        exportBuf, written, &imported, 0);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "pc34 remove fluxcage: Firestaff import rc == OK");
+    CHECK(importedTimeline.count == 1,
+          "pc34 remove fluxcage: Firestaff import event count");
+    CHECK(importedTimeline.events[0].kind == TIMELINE_EVENT_REMOVE_FLUXCAGE,
+          "pc34 remove fluxcage: imported kind restored");
+    CHECK(importedTimeline.events[0].mapIndex == 3 &&
+          importedTimeline.events[0].mapX == 11 &&
+          importedTimeline.events[0].mapY == 12,
+          "pc34 remove fluxcage: imported target restored");
+    CHECK(importedTimeline.events[0].cell == EXPLOSION_CELL_CENTERED,
+          "pc34 remove fluxcage: imported centered cell restored");
+    CHECK(importedTimeline.events[0].aux0 == 37,
+          "pc34 remove fluxcage: imported aux0 restores slot index");
+    CHECK(importedTimeline.events[0].aux1 == C050_EXPLOSION_FLUXCAGE,
+          "pc34 remove fluxcage: imported aux1 restores fluxcage type");
+
+    puts("  PASS pc34_remove_fluxcage_exports_source_cslot");
 }
 
 /* Test 3: bad inputs are rejected. */
@@ -1650,6 +1736,7 @@ int main(void) {
     test_cpsc_obfuscate_reversible();
     test_header_round_trip();
     test_pc34_status_aux_tags_export_as_native_events();
+    test_pc34_remove_fluxcage_exports_source_cslot();
     test_bad_inputs_rejected();
     test_strict_checksum_rejects_corrupt_part();
     test_cpsc_layout();
