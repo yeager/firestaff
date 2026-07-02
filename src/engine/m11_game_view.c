@@ -21998,6 +21998,9 @@ static int m11_print_endgame_text_messages_f0446(M11_GameViewState* state,
                 M11_MessageLog_Push(&state->messageLog, &decoded[1],
                                     M11_COLOR_WHITE);
                 m11_record_fuse_sequence_update_f0445(state);
+                /* ReDMCSB: ENDGAME.C F0446 lines 946-947 runs F0445 once
+                 * after each printed message, then Delay(780). */
+                state->endgameTextMessageDelayTicks += 780;
                 ++printed;
                 ++expected;
                 break;
