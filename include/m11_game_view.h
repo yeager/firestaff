@@ -1711,6 +1711,33 @@ void M11_GameView_GetReminderBannerLayout(
 int M11_GameView_ReminderBannerLayoutMaxTextPixelWidth(
     const M11_ReminderBannerLayout* layout);
 
+/* Plain ESC return-to-menu confirmation fit/layout.  The source-owned
+ * unsaved-game guard continues through the DM dialog-choice path; this
+ * helper covers only the Firestaff-owned "RETURN TO START MENU?" modal. */
+typedef struct M11_ReturnConfirmDialogLayout {
+    int scale;             /* 1..3 (clamped) */
+    int boxX;
+    int boxY;
+    int boxW;
+    int boxH;
+    int promptX;
+    int promptY;
+    int choiceY;
+    int choiceW;
+    char prompt[64];
+    char choice0[32];
+    char choice1[32];
+} M11_ReturnConfirmDialogLayout;
+
+void M11_GameView_GetReturnConfirmDialogLayout(
+    const M11_GameViewState* state,
+    int framebufferWidth,
+    int framebufferHeight,
+    M11_ReturnConfirmDialogLayout* outLayout);
+
+int M11_GameView_ReturnConfirmDialogLayoutMaxTextPixelWidth(
+    const M11_ReturnConfirmDialogLayout* layout);
+
 int M11_GameView_GetV1FoodLabelGraphicId(void);
 int M11_GameView_GetV1WaterLabelGraphicId(void);
 int M11_GameView_GetV1FoodBarZoneId(void);
