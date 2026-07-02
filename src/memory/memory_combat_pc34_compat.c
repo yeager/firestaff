@@ -725,16 +725,20 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
     dexThreshold = rand1 + defender->dexterity + doubledMapDifficulty - 16;
     dexOk = (attacker->dexterity > dexThreshold);
 
-    rand2 = F0732_COMBAT_RngRandom_Compat(rng, 4);
-    out->rngCallCount++;
-    rand2IsZero = (rand2 == 0);
+    rand2 = 1;
+    rand2IsZero = 0;
+    if (!dexOk) {
+        rand2 = F0732_COMBAT_RngRandom_Compat(rng, 4);
+        out->rngCallCount++;
+        rand2IsZero = (rand2 == 0);
+    }
     luckyHit = 0;
 
     /* ReDMCSB PROJEXPL.C F0231 lines 1477-1491: a failed dex/random hit
      * gate may still land when F0308 reports lucky, using
      * 75 - ActionHitProbability as the percentage parameter.  The C
-     * expression short-circuits the non-material gate before any RNG in the
-     * hit branch. */
+     * expression short-circuits left-to-right: a successful dexterity duel
+     * must not consume the random-4 or F0308 luck rolls. */
     if (!dexOk && !rand2IsZero) {
         int luckyRngCalls = 0;
         int lucky = combat_champion_is_lucky(
