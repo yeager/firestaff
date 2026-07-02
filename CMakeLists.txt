@@ -3303,6 +3303,27 @@ set_tests_properties(firestaff_m11_session_timer_forced_pause_input_gating_probe
     PROPERTIES LABELS "tier2;m11;dm1;input;ui-fit;accessibility;session-timer;forced-pause"
 )
 
+# DM1 V1 return-to-menu confirmation font-scale fit probe
+# (gap "In-game overlays + UI-fit coverage" - plain ESC confirm branch).
+# Headless / data-free: pins the scale-aware M11_ReturnConfirmDialogLayout
+# for fontScale 1..3, the actual M11 draw path, and pointer hit testing
+# against the same layout geometry.
+add_executable(firestaff_dm1_v1_return_confirm_font_scale_fit_probe
+    probes/m11/firestaff_dm1_v1_return_confirm_font_scale_fit_probe.c
+    src/audio/ambient_layer_m11.c)
+target_link_libraries(firestaff_dm1_v1_return_confirm_font_scale_fit_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m11 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v1_return_confirm_font_scale_fit_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME firestaff_dm1_v1_return_confirm_font_scale_fit_probe
+    COMMAND firestaff_dm1_v1_return_confirm_font_scale_fit_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(firestaff_dm1_v1_return_confirm_font_scale_fit_probe PROPERTIES
+    LABELS "tier2;m11;dm1;font;scale;ui-fit;accessibility;return-confirm"
+)
+
 add_executable(firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe
     probes/m11/firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe.c)
 target_link_libraries(firestaff_dm1_v1_hoc_no_creature_ai_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)

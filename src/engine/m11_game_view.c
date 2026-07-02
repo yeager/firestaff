@@ -1287,6 +1287,114 @@ static void m11_forced_pause_dialog_layout_for(
                                       framebufferHeight);
 }
 
+static void m11_return_confirm_dialog_layout_for(
+    const M11_GameViewState* state,
+    int framebufferWidth,
+    int framebufferHeight,
+    M11_ReturnConfirmDialogLayout* outLayout)
+{
+    int scale;
+    int promptAdvance;
+    int choice0Advance;
+    int choice1Advance;
+    int maxTextAdvance;
+    int margin;
+    int boxW;
+    int boxH;
+    int innerW;
+    int promptX;
+    int boxX;
+    int boxY;
+    if (!outLayout) {
+        return;
+    }
+    memset(outLayout, 0, sizeof(*outLayout));
+    scale = state ? state->fontScale : 1;
+    if (scale < 1) scale = 1;
+    if (scale > 3) scale = 3;
+    outLayout->scale = scale;
+
+    if (scale >= 3) {
+        snprintf(outLayout->prompt, sizeof(outLayout->prompt), "QUIT?");
+    } else if (scale == 2) {
+        snprintf(outLayout->prompt, sizeof(outLayout->prompt),
+                 "RETURN TO MENU?");
+    } else {
+        snprintf(outLayout->prompt, sizeof(outLayout->prompt),
+                 "%s",
+                 (state && state->dialogOverlayText[0] != '\0')
+                     ? state->dialogOverlayText
+                     : "RETURN TO START MENU?");
+    }
+    snprintf(outLayout->choice0, sizeof(outLayout->choice0), "%s",
+             (state && state->dialogChoices[0][0] != '\0')
+                 ? state->dialogChoices[0] : "YES");
+    snprintf(outLayout->choice1, sizeof(outLayout->choice1), "%s",
+             (state && state->dialogChoices[1][0] != '\0')
+                 ? state->dialogChoices[1] : "NO");
+
+    promptAdvance = (int)strlen(outLayout->prompt) *
+                    M11_FONT_CHAR_CELL_WIDTH * scale;
+    choice0Advance = (int)strlen(outLayout->choice0) *
+                     M11_FONT_CHAR_CELL_WIDTH * scale;
+    choice1Advance = (int)strlen(outLayout->choice1) *
+                     M11_FONT_CHAR_CELL_WIDTH * scale;
+    maxTextAdvance = promptAdvance;
+    if (choice0Advance > maxTextAdvance) maxTextAdvance = choice0Advance;
+    if (choice1Advance > maxTextAdvance) maxTextAdvance = choice1Advance;
+
+    margin = (scale >= 2) ? 4 : 60;
+    boxW = (scale == 1) ? 200 : framebufferWidth - (2 * margin);
+    if (boxW < maxTextAdvance + (2 * scale * 6)) {
+        boxW = maxTextAdvance + (2 * scale * 6);
+    }
+    if (boxW > framebufferWidth - 8) {
+        boxW = framebufferWidth - 8;
+    }
+    if (boxW < 120) {
+        boxW = 120;
+    }
+    boxH = (scale == 1) ? 50 : (50 + ((scale - 1) * 12));
+    if (boxH > framebufferHeight - 8) {
+        boxH = framebufferHeight - 8;
+    }
+    boxX = (framebufferWidth - boxW) / 2;
+    boxY = (framebufferHeight - boxH) / 2;
+    if (boxX < 4) boxX = 4;
+    if (boxY < 4) boxY = 4;
+    if (boxX + boxW > framebufferWidth - 4) {
+        boxX = framebufferWidth - 4 - boxW;
+    }
+    if (boxY + boxH > framebufferHeight - 4) {
+        boxY = framebufferHeight - 4 - boxH;
+    }
+
+    innerW = boxW - (2 * scale * 6);
+    promptX = boxX + (boxW - promptAdvance) / 2;
+    if (promptX < boxX + scale * 6) {
+        promptX = boxX + scale * 6;
+    }
+    if (promptAdvance > innerW && scale < 3) {
+        snprintf(outLayout->prompt, sizeof(outLayout->prompt),
+                 "RETURN TO MENU?");
+        promptAdvance = (int)strlen(outLayout->prompt) *
+                        M11_FONT_CHAR_CELL_WIDTH * scale;
+        promptX = boxX + (boxW - promptAdvance) / 2;
+        if (promptX < boxX + scale * 6) {
+            promptX = boxX + scale * 6;
+        }
+    }
+
+    outLayout->boxX = boxX;
+    outLayout->boxY = boxY;
+    outLayout->boxW = boxW;
+    outLayout->boxH = boxH;
+    outLayout->promptX = promptX;
+    outLayout->promptY = boxY + (scale == 1 ? 18 : scale * 9);
+    outLayout->choiceY = boxY + boxH - (scale == 1 ? 16 : (scale * 9));
+    outLayout->choiceW = boxW / 2;
+}
+
 static int m11_forced_pause_dialog_max_text_pixel_width(
     const M11_ForcedPauseDialogLayout* layout)
 {
@@ -1303,6 +1411,25 @@ static int m11_forced_pause_dialog_max_text_pixel_width(
     max = titleLen;
     if (line1Len > max) max = line1Len;
     if (line2Len > max) max = line2Len;
+    return max * M11_FONT_CHAR_CELL_WIDTH * scale;
+}
+
+static int m11_return_confirm_dialog_max_text_pixel_width(
+    const M11_ReturnConfirmDialogLayout* layout)
+{
+    int promptLen;
+    int choice0Len;
+    int choice1Len;
+    int scale;
+    int max;
+    if (!layout) return 0;
+    scale = layout->scale < 1 ? 1 : layout->scale;
+    promptLen = (int)strlen(layout->prompt);
+    choice0Len = (int)strlen(layout->choice0);
+    choice1Len = (int)strlen(layout->choice1);
+    max = promptLen;
+    if (choice0Len > max) max = choice0Len;
+    if (choice1Len > max) max = choice1Len;
     return max * M11_FONT_CHAR_CELL_WIDTH * scale;
 }
 
@@ -1696,6 +1823,25 @@ int M11_GameView_ReminderBannerLayoutMaxTextPixelWidth(
     return m11_reminder_banner_max_text_pixel_width(layout);
 }
 
+void M11_GameView_GetReturnConfirmDialogLayout(
+    const M11_GameViewState* state,
+    int framebufferWidth,
+    int framebufferHeight,
+    M11_ReturnConfirmDialogLayout* outLayout)
+{
+    if (!outLayout) {
+        return;
+    }
+    m11_return_confirm_dialog_layout_for(state, framebufferWidth,
+                                         framebufferHeight, outLayout);
+}
+
+int M11_GameView_ReturnConfirmDialogLayoutMaxTextPixelWidth(
+    const M11_ReturnConfirmDialogLayout* layout)
+{
+    return m11_return_confirm_dialog_max_text_pixel_width(layout);
+}
+
 static int m11_dialog_source_message_width_for_choices(int choiceCount) {
     return M11_GameView_GetV1DialogMessageWidth(choiceCount);
 }
@@ -1790,7 +1936,8 @@ static int m11_dialog_choice_at_point(const M11_GameViewState* state,
     int i;
     if (!state || state->dialogChoiceCount <= 0) return 0;
 
-    /* The plain ESC confirm uses a centered 200x50 YES/NO dialog.  The
+    /* The plain ESC confirm uses the same scale-aware centered dialog
+     * layout as the renderer.  The
      * unsaved-game guard is different: ReDMCSB LOADSAVE.C lines 1371-1379
      * draws the ordinary two-choice source dialog with SAVE AND QUIT first
      * and CANCEL second, then F0424_DIALOG_GetChoice returns C2_CANCEL for
@@ -1798,11 +1945,13 @@ static int m11_dialog_choice_at_point(const M11_GameViewState* state,
      * zones match what is drawn. */
     if (state->returnToMenuConfirmActive && !state->quitGuardActive &&
         state->dialogChoiceCount == 2) {
-        int cdlgX = (M11_FB_WIDTH - 200) / 2;
-        int cdlgY = (M11_FB_HEIGHT - 50) / 2;
-        int choiceY = cdlgY + 50 - 16; /* drawn choice Y in framebuffer coords */
+        M11_ReturnConfirmDialogLayout layout;
+        m11_return_confirm_dialog_layout_for(state, M11_FB_WIDTH,
+                                             M11_FB_HEIGHT, &layout);
+        int cdlgX = layout.boxX;
+        int choiceY = layout.choiceY;
         int hitY = choiceY - 5;
-        int choiceW = 200 / 2;          /* 100 px per slot for 2 choices */
+        int choiceW = layout.choiceW;
         if (y >= hitY && y < hitY + 25) {
             if (x >= cdlgX && x < cdlgX + choiceW) return 1;       /* YES */
             if (x >= cdlgX + choiceW && x < cdlgX + 2 * choiceW) return 2; /* NO */
@@ -32987,38 +33136,56 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         int dlgX = 30, dlgY = 50, dlgW = 260, dlgH = 80;
         int textY;
         int drewSourceBackdrop = 0;
+        int drewReturnConfirmModal = 0;
         if (state->returnToMenuConfirmActive && !state->quitGuardActive) {
+            M11_ReturnConfirmDialogLayout confirmLayout;
             /* Dim the current game content heavily — the actual game view
              * (dungeon, inventory, whatever was on screen) stays visible
              * but darkened, with the confirm dialog centered on top. */
             m11_dim_rect(framebuffer, framebufferWidth, framebufferHeight,
                          0, 0, framebufferWidth, framebufferHeight, 5);
-            /* Draw centered confirm dialog box */
-            int cdlgW = 200, cdlgH = 50;
-            int cdlgX = (framebufferWidth - cdlgW) / 2;
-            int cdlgY = (framebufferHeight - cdlgH) / 2;
+            m11_return_confirm_dialog_layout_for(state, framebufferWidth,
+                                                 framebufferHeight,
+                                                 &confirmLayout);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cdlgX, cdlgY, cdlgW, cdlgH, M11_COLOR_BLACK);
+                          confirmLayout.boxX, confirmLayout.boxY,
+                          confirmLayout.boxW, confirmLayout.boxH,
+                          M11_COLOR_BLACK);
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cdlgX, cdlgY, cdlgW, cdlgH, M11_COLOR_LIGHT_GRAY);
+                          confirmLayout.boxX, confirmLayout.boxY,
+                          confirmLayout.boxW, confirmLayout.boxH,
+                          M11_COLOR_LIGHT_GRAY);
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          cdlgX + 1, cdlgY + 1, cdlgW - 2, cdlgH - 2, M11_COLOR_DARK_GRAY);
-            dlgX = cdlgX; dlgY = cdlgY; dlgW = cdlgW; dlgH = cdlgH;
+                          confirmLayout.boxX + 1, confirmLayout.boxY + 1,
+                          confirmLayout.boxW - 2, confirmLayout.boxH - 2,
+                          M11_COLOR_DARK_GRAY);
+            dlgX = confirmLayout.boxX;
+            dlgY = confirmLayout.boxY;
+            dlgW = confirmLayout.boxW;
+            dlgH = confirmLayout.boxH;
             drewSourceBackdrop = 0;
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          confirmLayout.promptX, confirmLayout.promptY,
+                          confirmLayout.prompt, &g_text_shadow);
             /* Always draw YES/NO choices for return-to-menu confirm.
              * Choices are stored in dialogChoices[0..dialogChoiceCount-1].
              * ReDMCSB CLIKVIEW.C F0378/F0379/F0380: bottom row button clicks. */
             if (state->dialogChoiceCount > 0) {
-                int choiceY = cdlgY + cdlgH - 16;
-                int choiceW = cdlgW / state->dialogChoiceCount;
                 int i;
                 for (i = 0; i < state->dialogChoiceCount && i < 4; ++i) {
+                    const char* label =
+                        (i == 0) ? confirmLayout.choice0 :
+                        (i == 1) ? confirmLayout.choice1 :
+                                   state->dialogChoices[i];
                     m11_draw_text_centered_in_rect(framebuffer,
                         framebufferWidth, framebufferHeight,
-                        cdlgX + i * choiceW, choiceY, choiceW,
-                        state->dialogChoices[i], &g_text_small);
+                        confirmLayout.boxX + i * confirmLayout.choiceW,
+                        confirmLayout.choiceY,
+                        confirmLayout.choiceW,
+                        label, &g_text_small);
                 }
             }
+            drewReturnConfirmModal = 1;
         } else if (m11_v1_chrome_mode_enabled()) {
             drewSourceBackdrop = m11_draw_dm_dialog_backdrop(
                 state, framebuffer, framebufferWidth, framebufferHeight);
@@ -33055,7 +33222,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
         /* Word-wrap the dialog text into the box.  Source-dialog mode uses the
          * C469 zone width decision instead of the old fixed 40-character cut. */
-        if (drewSourceBackdrop) {
+        if (drewReturnConfirmModal) {
+            /* The scale-aware return modal draws its own prompt and choices
+             * above; skip the generic plaque/choice renderer so the text
+             * does not double-paint or reuse the fixed 40-character split. */
+        } else if (drewSourceBackdrop) {
             char line1[80], line2[128];
             int lineCount = m11_dialog_source_split_two_lines(
                 state->dialogOverlayText, line1, sizeof(line1), line2, sizeof(line2),
@@ -33112,7 +33283,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                               dlgX + 12, textY + 14, line2, &g_text_shadow);
             }
         }
-        if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
+        if (!drewReturnConfirmModal &&
+            (state->showDebugHUD || !m11_v1_chrome_mode_enabled())) {
             if (state->dialogChoiceCount > 0) {
                 int i;
                 int choiceY = dlgY + dlgH - 18;
