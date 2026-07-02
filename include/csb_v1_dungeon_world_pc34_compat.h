@@ -412,6 +412,22 @@ uint8_t csb_bugfix_thing_type_bit15_clearly(uint16_t rawThingType);
  */
 int csb_bugfix_lord_chaos_teleport_dir(int (*random4)(void));
 
+/*
+ * csb_bugfix_lord_chaos_teleport_dirs -- CHANGE7_19_FIX pair helper.
+ *
+ * Computes both source variables from the fixed CSB assignment:
+ *   primaryDir = M004_RANDOM(4);
+ *   secondaryDir = M017_NEXT(primaryDir);
+ *
+ * Returns 0 on success and -1 when either output pointer is NULL.
+ *
+ * ReDMCSB: GROUP.C:2208-2215 (CHANGE7_19_FIX / MEDIA297),
+ *          DEFS.H:458/461 (M017_NEXT), BugsAndChanges.htm:BUG0_69
+ */
+int csb_bugfix_lord_chaos_teleport_dirs(int (*random4)(void),
+                                        int *primaryDir,
+                                        int *secondaryDir);
+
 /* ================================================================
  *  Core dungeon world API
  * ================================================================ */

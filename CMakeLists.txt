@@ -7220,6 +7220,49 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_save_runtime_boundary_pc34_compat
     )
 
+    # CSB V1 champion transfer/import field gate. Pins the 256-byte
+    # CSBGAME header offsets and the 160-byte champion transfer record
+    # shape used by the bounded CSB save importer.
+    add_executable(test_csb_v1_champion_transfer_field_gate_pc34_compat
+        tests/test_csb_v1_champion_transfer_field_gate_pc34_compat.c
+        src/csb/csb_v1_save_import_path_pc34_compat.c
+        src/csb/csb_v1_character_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_champion_transfer_field_gate_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_champion_transfer_field_gate_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_champion_transfer_field_gate_pc34_compat
+        COMMAND test_csb_v1_champion_transfer_field_gate_pc34_compat
+    )
+    set_tests_properties(csb_v1_champion_transfer_field_gate_pc34_compat PROPERTIES
+        LABELS "tier2;csb;champion;data_free"
+    )
+
+    # CSB V1 teleporter rotation runtime/source-lock gate. Data-free
+    # contract for MOVESENS.C F0262/F0263/F0267 absolute and relative
+    # teleporter rotation over party, group, projectile, and object state.
+    add_executable(test_csb_v1_teleporter_rotation_runtime_pc34_compat
+        tests/test_csb_v1_teleporter_rotation_runtime_pc34_compat.c
+        src/csb/csb_v1_teleporter_rotation_runtime_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_include_directories(test_csb_v1_teleporter_rotation_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_teleporter_rotation_runtime_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_teleporter_rotation_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_teleporter_rotation_runtime_pc34_compat
+        COMMAND test_csb_v1_teleporter_rotation_runtime_pc34_compat
+    )
+
     # CSB V1 composed boot/playability spine: verified profile -> runtime
     # dungeon handle -> imported party -> leader/rotation runtime state ->
     # one deterministic tick -> Utility NEW_GAME handoff. This is still a
@@ -7304,6 +7347,26 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_dsa_trigger_single_step_pc34_compat
         COMMAND test_csb_v1_dsa_trigger_single_step_pc34_compat
+    )
+
+    # CSB V1 Lord Chaos danger-teleport direction gate
+    # (CHANGE7_19_FIX / BUG0_69). Source-locked against ReDMCSB
+    # GROUP.C:2208-2215 and DEFS.H:458/461.
+    add_executable(test_csb_v1_lord_chaos_teleport_dir_pc34_compat
+        tests/test_csb_v1_lord_chaos_teleport_dir_pc34_compat.c
+        src/csb/csb_v1_dungeon_world_pc34_compat.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_v1_lord_chaos_teleport_dir_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_lord_chaos_teleport_dir_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_lord_chaos_teleport_dir_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_lord_chaos_teleport_dir_pc34_compat
+        COMMAND test_csb_v1_lord_chaos_teleport_dir_pc34_compat
     )
 
     # CSB V1 combat bug-fix helper gate (csb_gap_combat GAP 3/4).
