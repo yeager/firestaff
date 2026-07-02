@@ -276,6 +276,111 @@ static void test_melee_action_row_uses_auto_target_and_action_index(void) {
               "F0391 clears acting champion after melee action");
 }
 
+static void test_melee_action_row_targets_pref0407_champion_direction(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    struct DungeonGroup_Compat groups[1];
+    unsigned char actions[3];
+    int meleeRow = -1;
+    int damageEmission = -1;
+    int i;
+
+    seed_state(&state, 100, 7);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(squareData, 0, sizeof(squareData));
+    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    memset(groups, 0, sizeof(groups));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    squareData[(2 * 3) + 1] = DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    state.world.dungeon = &dungeon;
+    state.world.party.mapIndex = 0;
+    state.world.partyMapIndex = 0;
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 1;
+    state.world.party.direction = 1; /* Party east: front square is empty. */
+    state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].direction = 2; /* Champion south. */
+
+    weapons[0].type = 8;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        make_thing(THING_TYPE_WEAPON, 0);
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_FIGHTER].experience = 500;
+    state.world.lifecycle.champions[0]
+        .skills20[DM1_SKILL_IDX_SWING].experience = 500;
+
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 0;
+    groups[0].count = 0;
+    groups[0].health[0] = 200;
+    groups[0].cells = 0xFF;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+              "champion-facing melee fixture opens action menu");
+    ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
+              "champion-facing melee fixture resolves source action rows");
+    for (i = 0; i < 3; ++i) {
+        if (is_melee_action_index(actions[i])) {
+            meleeRow = i;
+            break;
+        }
+    }
+    ASSERT_EQ(meleeRow >= 0, 1,
+              "champion-facing fixture exposes a melee row");
+    if (meleeRow < 0) return;
+    ASSERT_EQ(M11_GameView_TriggerActionRow(&state, meleeRow), 1,
+              "melee action row uses champion-facing F0407 target");
+
+    for (i = 0; i < state.lastTickResult.emissionCount; ++i) {
+        if (state.lastTickResult.emissions[i].kind == EMIT_DAMAGE_DEALT) {
+            damageEmission = i;
+            break;
+        }
+    }
+    ASSERT_EQ(damageEmission >= 0, 1,
+              "champion-facing melee row emits live damage result");
+    if (damageEmission >= 0) {
+        ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[1], 0,
+                  "champion-facing melee row targets the south group");
+    }
+    ASSERT_EQ(groups[0].health[0] < 200, 1,
+              "champion-facing melee row damages the south group");
+    ASSERT_EQ(state.world.party.direction, 1,
+              "melee action does not rewrite party direction");
+    ASSERT_EQ(state.world.party.champions[0].direction, 2,
+              "melee action preserves champion direction");
+}
+
 static void test_melee_action_row_halves_disable_ticks_when_f0402_fails(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -7507,6 +7612,7 @@ int main(void) {
     test_fuse_out_of_bounds_keeps_action_performed_without_explosion();
     test_fuse_complete_fluxcage_sets_m11_game_won_gate();
     test_melee_action_row_uses_auto_target_and_action_index();
+    test_melee_action_row_targets_pref0407_champion_direction();
     test_melee_action_row_halves_disable_ticks_when_f0402_fails();
     test_melee_action_row_respects_live_candidate_no_action();
     test_disrupt_action_row_rejects_material_creature();

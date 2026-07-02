@@ -9195,6 +9195,18 @@ static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
         if (actionIndex >= 0 && actionIndex < 44) {
             input.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
                               (uint32_t)actionIndex;
+            if (input.commandArg1 < CHAMPION_MAX_PARTY) {
+                /* ReDMCSB MENU.C F0407 lines 1266-1269 computes L1251/L1252
+                 * from the acting champion direction before F0402 melee
+                 * dispatch.  Preserve that target direction for the M10
+                 * auto-group bridge instead of falling back to party facing. */
+                input.reserved2 |=
+                    CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
+                    (((uint32_t)state->world.party.champions[input.commandArg1]
+                          .direction &
+                      3u)
+                     << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
+            }
         }
         m11_set_candidate_attack_marker_for_tick(
             state,
