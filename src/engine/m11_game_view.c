@@ -29025,6 +29025,36 @@ int M11_GameView_GetV1DamageNumberOrigin(int championSlot,
     return 1;
 }
 
+int M11_GameView_GetV1DamageNumberOriginPc34(int championSlot,
+                                             int damageAmount,
+                                             int inventoryChampion,
+                                             int* outX,
+                                             int* outY) {
+    int boxX, boxY, boxW, boxH;
+    int digitOffset;
+    if (damageAmount <= 0) return 0;
+    if (!M11_GameView_GetV1StatusBoxZone(championSlot,
+                                         &boxX, &boxY, &boxW, &boxH)) {
+        return 0;
+    }
+    (void)boxW;
+    (void)boxH;
+    if (damageAmount < 10) {
+        digitOffset = inventoryChampion ? 21 : 19;
+    } else if (damageAmount < 100) {
+        digitOffset = inventoryChampion ? 18 : 16;
+    } else {
+        digitOffset = inventoryChampion ? 15 : 13;
+    }
+    /* ReDMCSB: CHAMPION.C F0320 lines 1745-1775 (MEDIA009 PC path)
+     * prints the damage number at championIndex*69 plus fixed
+     * 1/2/3-digit strides.  F0623 later centers the text in a zone for
+     * other ports; DM1 PC34 keeps this direct logical-screen origin. */
+    if (outX) *outX = boxX + digitOffset;
+    if (outY) *outY = boxY + (inventoryChampion ? 16 : 5);
+    return 1;
+}
+
 int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
                                           int championSlot,
                                           int handIndex) {
@@ -30581,34 +30611,24 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     }
                 }
                 /* Always draw the damage number (even without assets).
-                 * Source F0623/F0320 uses F0650_PrintCenteredTextToScreenZone
-                 * on C167..C170 or C179..C182, so center the formatted
-                 * amount inside the selected damage zone instead of using
-                 * a fixed two-digit bias. */
+                 * ReDMCSB CHAMPION.C F0320 lines 1745-1775 (DM1 PC34
+                 * MEDIA009 path) uses fixed x/y origins for the 1/2/3-digit
+                 * damage string instead of centering in C167/C179. */
                 {
                     char dmgNum[8];
                     M11_TextStyle dmgStyle = g_text_small;
                     int dmgNumX;
                     int dmgNumY;
-                    int dmgNumW;
-                    int dmgNumH;
                     dmgStyle.color = M11_COLOR_WHITE;
                     snprintf(dmgNum, sizeof(dmgNum), "%d",
                              state->championDamageAmount[slot]);
-                    if (useBigDamage &&
-                        M11_GameView_GetV1InventoryDamageIndicatorZone(
-                            slot, 32, 29,
-                            &dmgNumX, &dmgNumY, &dmgNumW, &dmgNumH)) {
-                        m11_draw_text_centered_in_rect(
-                            framebuffer, framebufferWidth, framebufferHeight,
-                            dmgNumX, dmgNumY + 14, dmgNumW, dmgNum, &dmgStyle);
-                    } else if (!useV2PartyHud &&
-                        M11_GameView_GetV1DamageIndicatorZone(
-                            slot, 45, 7,
-                            &dmgNumX, &dmgNumY, &dmgNumW, &dmgNumH)) {
-                        m11_draw_text_centered_in_rect(
-                            framebuffer, framebufferWidth, framebufferHeight,
-                            dmgNumX, dmgNumY, dmgNumW, dmgNum, &dmgStyle);
+                    if (!useV2PartyHud &&
+                        M11_GameView_GetV1DamageNumberOriginPc34(
+                            slot, state->championDamageAmount[slot],
+                            useBigDamage, &dmgNumX, &dmgNumY)) {
+                        m11_draw_text(framebuffer, framebufferWidth,
+                                      framebufferHeight,
+                                      dmgNumX, dmgNumY, dmgNum, &dmgStyle);
                     } else {
                         int dmgBaseW = 67;
                         int dmgBaseH = 29;
