@@ -46,6 +46,10 @@ typedef struct {
     int matchAnyVersion;
 } M12_RequiredFileSpec;
 
+static const M12_AssetVersionStatus* m12_first_matched_version(
+    const M12_AssetStatus* status,
+    int gameIndex);
+
 #ifdef FIRESTAFF_ASSET_STATUS_TESTING
 static M12_AssetStatusScanMetrics g_m12ScanMetrics;
 static char g_m12TestDm1Pc34EnglishGraphicsMd5[M12_ASSET_MD5_CAPACITY];
@@ -535,6 +539,55 @@ static int m12_path_tail_equals(const char* path, const char* name) {
 
 static int m12_path_is_virtual_asset(const char* path) {
     return path && strstr(path, "::") != NULL;
+}
+
+static void m12_classify_theron_media_path(M12_AssetStatus* status,
+                                           const char* path) {
+    FirestaffTheronMediaStatus media;
+    if (!status || !path || path[0] == '\0' || m12_path_is_virtual_asset(path)) {
+        return;
+    }
+    if (FirestaffTheronMedia_ClassifyPath(path, &media) == 0) {
+        status->theronMedia = media;
+    }
+}
+
+static void m12_classify_theron_media_dir(M12_AssetStatus* status,
+                                          const char* root) {
+    FirestaffTheronMediaStatus media;
+    if (!status || !root || root[0] == '\0') {
+        return;
+    }
+    if (FirestaffTheronMedia_ClassifyDirectory(root, &media) == 0) {
+        status->theronMedia = media;
+        status->originalFileCandidateFound = 1;
+    }
+}
+
+static void m12_refresh_theron_media_status(
+    M12_AssetStatus* status,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount) {
+    int theronIndex = m12_game_index_from_id("theron");
+    const M12_AssetVersionStatus* version;
+    size_t rootIndex;
+    if (!status) {
+        return;
+    }
+    FirestaffTheronMedia_Init(&status->theronMedia);
+    version = m12_first_matched_version(status, theronIndex);
+    if (version && version->matchedPath[0] != '\0') {
+        m12_classify_theron_media_path(status, version->matchedPath);
+        if (status->theronMedia.layout != FIRESTAFF_THERON_MEDIA_LAYOUT_UNKNOWN) {
+            return;
+        }
+    }
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        m12_classify_theron_media_dir(status, roots[rootIndex]);
+        if (status->theronMedia.layout != FIRESTAFF_THERON_MEDIA_LAYOUT_UNKNOWN) {
+            return;
+        }
+    }
 }
 
 static int m12_copy_file_to_path(const char* srcPath, const char* dstPath) {
@@ -1465,6 +1518,7 @@ static int m12_scan_direct_theron_request(M12_AssetStatus* status,
     }
 
     memset(status, 0, sizeof(*status));
+    FirestaffTheronMedia_Init(&status->theronMedia);
     m12_copy_string(status->dataDir, sizeof(status->dataDir), runtimeRoot);
     if (FSP_ResolveDataDir(legacyData, sizeof(legacyData), NULL)) {
         m12_copy_string(status->legacyFallbackDir,
@@ -1509,6 +1563,7 @@ static int m12_scan_direct_theron_request(M12_AssetStatus* status,
     }
     m12_apply_required_game_availability(status, theronIndex, requiredMatched);
     m12_refresh_nexus_bpk_trailer_metadata(status, NULL, 0U);
+    m12_classify_theron_media_path(status, matchedPath);
     m12_refresh_v22_modern_asset_status(status);
     return 1;
 }
@@ -1522,6 +1577,7 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
         return 0;
     }
     memset(status, 0, sizeof(*status));
+    FirestaffTheronMedia_Init(&status->theronMedia);
     if (FSP_ParentDir(parent, sizeof(parent), requestedDataDir)) {
         m12_copy_string(status->dataDir, sizeof(status->dataDir), parent);
     } else {
@@ -1543,6 +1599,7 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
     }
     status->originalFileCandidateFound = 1;
     m12_refresh_nexus_bpk_trailer_metadata(status, NULL, 0U);
+    m12_classify_theron_media_path(status, requestedDataDir);
     m12_refresh_v22_modern_asset_status(status);
     return 1;
 }
@@ -1734,6 +1791,7 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
         return;
     }
     memset(status, 0, sizeof(*status));
+    FirestaffTheronMedia_Init(&status->theronMedia);
     rootCount = m12_build_search_roots(roots, requestedDataDir, status->legacyFallbackDir);
     if (requestedDataDir && requestedDataDir[0] != '\0') {
         m12_copy_string(status->dataDir, sizeof(status->dataDir), requestedDataDir);
@@ -1766,6 +1824,7 @@ void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir)
             m12_apply_required_game_availability(status, i, 0);
         }
     }
+    m12_refresh_theron_media_status(status, roots, rootCount);
 
     m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     m12_refresh_v22_modern_asset_status(status);
@@ -1938,6 +1997,11 @@ int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId) 
         }
     }
     return -1;
+}
+
+const FirestaffTheronMediaStatus* M12_AssetStatus_GetTheronMediaStatus(
+    const M12_AssetStatus* status) {
+    return status ? &status->theronMedia : NULL;
 }
 
 /* Returns 1 if the V2.2 Modern Graphics asset pack is installed and

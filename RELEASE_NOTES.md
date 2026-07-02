@@ -353,6 +353,8 @@ need real-asset proof.
   paths, materialized into ordinary `asset-cache/dm2/` files before launch, and
   blocked if the cache handoff fails.
 
+- **Theron media-layout status is explicit**: the launcher asset scan now classifies bounded Theron's Quest Track 02 media shapes (raw BIN, ISO, BIN/CUE, ISO/OGG CUE, or OGG-only evidence) and `--scan-data` reports the layout under Theron's Quest. This is status-only: the existing Track 02 MD5 gate still decides READY, and synthetic BIN/CUE or ISO/OGG fixtures remain launch-blocked without a known hash.
+
 - **DM1 launcher missing-data popup coverage**: a new M12 gate verifies that optional original-file candidates cannot make DM1 launchable when required GRAPHICS/DUNGEON hashes are missing, and that the popup names only the missing required rows.
 
 - **DM1 V1 post-dungeon reviewed-target selection**: `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` now pins the five supported target kinds, required fields, route-step minimums, source anchors, PASS_IDs, asset hashes, and baseline non-claims for post-dungeon pairing work. The companion `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to write `target_selection.receipt.json` until those pins pass, and both the selector self-test and runbook-consistency probe are CTest-gated. This is an accountability gate only; it does not promote original-vs-Firestaff parity rows or ship proprietary frames.

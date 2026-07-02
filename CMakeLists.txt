@@ -390,6 +390,7 @@ set(M12_SOURCES
     src/shared/asset_status_m12.c
     src/shared/asset_find_by_hash.c
     src/nexus/nexus_v1_bpk_archive.c
+    src/shared/firestaff_theron_media_classify.c
     src/shared/firestaff_mapfile.c
     src/shared/card_art_m12.c
     src/shared/card_art_generated_m12.c
@@ -1165,6 +1166,7 @@ if(BUILD_TESTING)
         probes/firestaff_data_dir_picker_platform_matrix_probe.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
     )
@@ -7491,6 +7493,7 @@ if(BUILD_TESTING)
         tests/test_asset_status_zip_cache_nested_deflate.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
     )
@@ -7629,6 +7632,7 @@ if(BUILD_TESTING)
         tests/test_dm1_pc34_multilanguage_required_gate.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
     )
@@ -17312,6 +17316,28 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_fmtowns_cd_audio_track_receipt
     )
 
+    # ── Theron's Quest BIN/CUE, ISO, and ISO/OGG layout classifier ──
+    # Bounded data-free classifier for PC Engine/TurboGrafx-CD Track 02
+    # media shapes. It labels source-media layout only; the launcher
+    # still requires the hash-verified Track 02 MD5 before availability
+    # is promoted to READY.
+    add_executable(test_firestaff_theron_media_classify
+        tests/test_firestaff_theron_media_classify.c
+        src/shared/firestaff_theron_media_classify.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_firestaff_theron_media_classify PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_theron_media_classify PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_theron_media_classify_unit
+        COMMAND test_firestaff_theron_media_classify
+    )
+
     # ── CSB V1 CMP import glue (Utility Disk Champion Editor flow) ──
     # Wires the existing firestaff_cmp_decode.c decoder to the
     # CSB_V1_Champion / CSB_V1_PartyState runtime data structures.
@@ -17983,6 +18009,7 @@ if(BUILD_TESTING)
         src/shared/asset_status_m12.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/shared/firestaff_theron_media_classify.c
         src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_boot.c
     )
@@ -19285,6 +19312,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         tests/theron_v1_launcher_scan_reuse_test.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
     )
@@ -19368,6 +19396,7 @@ if(BUILD_TESTING)
         tests/test_asset_status_data_dir_change_cache_invalidation.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
     )

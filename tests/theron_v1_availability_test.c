@@ -54,6 +54,21 @@ static int write_file(const char *path, const char *text) {
     return 1;
 }
 
+static int write_synthetic_iso_pvd(const char *path) {
+    static const unsigned char pvd[6] = {0x01, 'C', 'D', '0', '0', '1'};
+    FILE *fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fseek(fp, 16L * 2048L, SEEK_SET) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    if (fwrite(pvd, 1, sizeof(pvd), fp) != sizeof(pvd)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static int make_dir_checked(const char *path) {
     return mkdir(path, 0700) == 0;
 }
@@ -273,6 +288,76 @@ static void check_explicit_track02_does_not_use_sibling_fallback(void) {
                 "startup gating rejects explicit Theron direct path despite sibling fallback");
 }
 
+static void check_theron_media_layout_classification(void) {
+    char temp_dir[512];
+    char theron_dir[512];
+    char cue_path[512];
+    char iso_path[512];
+    char ogg_path[512];
+    char bin_cue_path[512];
+    char bin_path[512];
+    M12_AssetStatus status;
+    const FirestaffTheronMediaStatus *media;
+    const char *iso_ogg_cue =
+        "REM Firestaff synthetic Theron ISO/OGG layout\n"
+        "FILE \"Track01.ogg\" OGG\n"
+        "  TRACK 01 AUDIO\n"
+        "    INDEX 01 00:00:00\n"
+        "FILE \"TQUS02.iso\" BINARY\n"
+        "  TRACK 02 MODE1/2048\n"
+        "    INDEX 01 00:00:00\n"
+        "FILE \"Track03.ogg\" OGG\n"
+        "  TRACK 03 AUDIO\n"
+        "    INDEX 01 00:00:00\n";
+    const char *bin_cue =
+        "FILE \"Track01.ogg\" OGG\n"
+        "  TRACK 01 AUDIO\n"
+        "    INDEX 01 00:00:00\n"
+        "FILE \"track02.bin\" BINARY\n"
+        "  TRACK 02 MODE1/2352\n"
+        "    INDEX 01 00:00:00\n";
+
+    expect_true(make_temp_dir(temp_dir), "temporary Theron media-layout dir created");
+    snprintf(theron_dir, sizeof(theron_dir), "%s%s%s", temp_dir, PATH_SEP, "theron");
+    expect_true(make_dir_checked(theron_dir), "theron media-layout subdir created");
+    snprintf(cue_path, sizeof(cue_path), "%s%s%s", theron_dir, PATH_SEP, "theron.cue");
+    snprintf(iso_path, sizeof(iso_path), "%s%s%s", theron_dir, PATH_SEP, "TQUS02.iso");
+    snprintf(ogg_path, sizeof(ogg_path), "%s%s%s", theron_dir, PATH_SEP, "Track01.ogg");
+    expect_true(write_file(cue_path, iso_ogg_cue), "synthetic Theron ISO/OGG CUE written");
+    expect_true(write_synthetic_iso_pvd(iso_path), "synthetic Theron ISO PVD written");
+    expect_true(write_file(ogg_path, "OggS synthetic audio placeholder"),
+                "synthetic Theron OGG placeholder written");
+
+    M12_AssetStatus_Scan(&status, temp_dir);
+    media = M12_AssetStatus_GetTheronMediaStatus(&status);
+    expect_true(media != NULL, "Theron media status is available");
+    expect_true(media && media->layout == FIRESTAFF_THERON_MEDIA_LAYOUT_ISO_OGG_CUE,
+                "Theron ISO/OGG CUE layout is classified from data root");
+    expect_true(media && media->has_track02_data == 1 && media->launch_candidate == 1,
+                "Theron ISO/OGG layout records a Track 02 data candidate");
+    expect_true(media && media->has_iso9660_pvd == 1,
+                "Theron ISO/OGG layout records ISO9660 PVD evidence");
+    expect_true(status.originalFileCandidateFound == 1,
+                "Theron media layout counts as original-file evidence");
+    expect_true(M12_AssetStatus_GameAvailable(&status, "theron") == 0,
+                "Theron media layout without known Track 02 MD5 is not launch-ready");
+
+    snprintf(bin_cue_path, sizeof(bin_cue_path), "%s%s%s", theron_dir, PATH_SEP, "theron-bin.cue");
+    snprintf(bin_path, sizeof(bin_path), "%s%s%s", theron_dir, PATH_SEP, "track02.bin");
+    expect_true(write_file(bin_cue_path, bin_cue), "synthetic Theron BIN/CUE written");
+    expect_true(write_file(bin_path, "synthetic raw Track 02 BIN placeholder"),
+                "synthetic Theron BIN placeholder written");
+
+    M12_AssetStatus_Scan(&status, bin_cue_path);
+    media = M12_AssetStatus_GetTheronMediaStatus(&status);
+    expect_true(media && media->layout == FIRESTAFF_THERON_MEDIA_LAYOUT_BIN_CUE,
+                "explicit Theron BIN/CUE layout is classified");
+    expect_true(media && media->has_track02_data == 1,
+                "explicit Theron BIN/CUE records Track 02 data");
+    expect_true(M12_AssetStatus_GameAvailable(&status, "theron") == 0,
+                "explicit Theron BIN/CUE without known MD5 is not launch-ready");
+}
+
 int main(void) {
     char temp_dir[512];
     char theron_dir[512];
@@ -326,6 +411,7 @@ int main(void) {
                 "Theron quick boot probe rejects explicit unverified Track 02 data");
 
     check_explicit_track02_does_not_use_sibling_fallback();
+    check_theron_media_layout_classification();
 
     check_fake_iso_fallback("jp",
                             "TQJP02End.iso",
