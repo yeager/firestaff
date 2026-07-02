@@ -3238,6 +3238,11 @@ static int m11_projectile_instance_active(
     return p && p->slotIndex >= 0 && p->reserved3 != 0;
 }
 
+static int m11_explosion_instance_active(
+    const struct ExplosionInstance_Compat* e) {
+    return e && e->slotIndex >= 0 && e->reserved0 != 0;
+}
+
 static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                                         int mapIndex,
                                         int mapX,
@@ -3317,7 +3322,7 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                     && i < EXPLOSION_LIST_CAPACITY; ++i) {
             const struct ExplosionInstance_Compat* e =
                 &world->explosions.entries[i];
-            if (e->slotIndex < 0) continue;
+            if (!m11_explosion_instance_active(e)) continue;
             if (e->mapIndex == mapIndex && e->mapX == mapX
                     && e->mapY == mapY) {
                 ++summary.explosions;
@@ -12829,7 +12834,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                     ei < EXPLOSION_LIST_CAPACITY; ++ei) {
             const struct ExplosionInstance_Compat* re =
                 &state->world.explosions.entries[ei];
-            if (re->slotIndex < 0) continue;
+            if (!m11_explosion_instance_active(re)) continue;
             if (re->mapIndex != state->world.party.mapIndex) continue;
             if (re->mapX != mapX || re->mapY != mapY) continue;
             if (!m11_runtime_fluxcage_visible_in_viewport(state, re)) {
@@ -13351,7 +13356,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         for (ei = 0; ei < state->world.explosions.count; ++ei) {
             const struct ExplosionInstance_Compat* re =
                 &state->world.explosions.entries[ei];
-            if (re->slotIndex < 0) continue;
+            if (!m11_explosion_instance_active(re)) continue;
             if (!m11_runtime_fluxcage_visible_in_viewport(state, re)) continue;
             if (re->mapIndex != state->world.party.mapIndex) continue;
             if (re->mapX != mapX || re->mapY != mapY) continue;
