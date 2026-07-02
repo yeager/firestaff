@@ -872,6 +872,19 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
         return 1;
     case PROJECTILE_RESULT_HIT_OTHER_PROJECTILE:
         outResult->resultKind = PROJECTILE_RESULT_HIT_OTHER_PROJECTILE;
+        /* ReDMCSB PROJEXPL.C:F0218 lines 621-638 calls F0217 for each
+         * same-cell projectile impact. F0217 then reaches the common
+         * impact tail at lines 560-600, so projectile-vs-projectile impacts
+         * still create spell explosions or request mundane thud sounds before
+         * deleting the projectile. */
+        if (createsExplosion) {
+            outResult->emittedExplosion = populate_explosion_on_impact(
+                in, digest, &outResult->outExplosion);
+        } else {
+            outResult->emittedSoundRequest = 1;
+            outResult->emittedSoundCode =
+                projectile_non_explosion_impact_sound_code(in);
+        }
         outResult->despawn    = 1;
         return 1;
     default:
@@ -1192,6 +1205,8 @@ RESOLVE:
     {
         struct ProjectileInstance_Compat resolveState;
         const struct ProjectileInstance_Compat* resolveIn = in;
+        struct CellContentDigest_Compat resolveDigest;
+        const struct CellContentDigest_Compat* resolveDigestPtr = digest;
 
         /* ReDMCSB PROJEXPL.C:F0219 lines 729-740 applies the cell parity
          * step before F0267 commits an unblocked cross-square projectile
@@ -1216,9 +1231,23 @@ RESOLVE:
             }
             resolveIn = &resolveState;
         }
+        if (dispatch == PROJECTILE_RESULT_HIT_OTHER_PROJECTILE &&
+            digest->sourceHasOtherProjectile) {
+            /* ReDMCSB PROJEXPL.C:F0219 lines 692-697 checks impacts on the
+             * current projectile cell before the energy decrement/move. When
+             * F0218/F0217 resolves a same-cell projectile hit at that stage,
+             * the common explosion/sound tail uses the projectile's current
+             * square, not the lookahead destination square. */
+            resolveDigest = *digest;
+            resolveDigest.destMapIndex = digest->sourceMapIndex;
+            resolveDigest.destMapX = digest->sourceMapX;
+            resolveDigest.destMapY = digest->sourceMapY;
+            resolveDigest.destSquareType = digest->sourceSquareType;
+            resolveDigestPtr = &resolveDigest;
+        }
 
         F0820_PROJECTILE_ResolveCollision_Compat(
-            resolveIn, digest, dispatch, currentTick, rng, outResult);
+            resolveIn, resolveDigestPtr, dispatch, currentTick, rng, outResult);
     }
     /* ReDMCSB PROJEXPL.C:F0219 lines 717-755 resolves wall/door
      * impacts before the destination-square move is committed. Keep

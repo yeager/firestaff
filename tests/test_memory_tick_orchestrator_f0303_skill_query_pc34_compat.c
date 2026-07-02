@@ -901,6 +901,116 @@ static void test_orch_projectile_collision_despawns_both_projectiles(void) {
     assert(world.timeline.count == 0);
 }
 
+static void test_orch_projectile_collision_runs_both_impact_tails(void) {
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    struct ProjectileCreateInput_Compat createIn;
+    struct TimelineEvent_Compat firstMove0;
+    struct TimelineEvent_Compat firstMove1;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    int slot0 = -1;
+    int slot1 = -1;
+    int fireballAdvanceCount = 0;
+    int i;
+
+    init_world(&world, &things, weapons, junks);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    for (i = 0; i < 12; ++i) {
+        squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    }
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    world.dungeon = &dungeon;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 0;
+    world.party.mapY = 0;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+
+    memset(&createIn, 0, sizeof(createIn));
+    createIn.category = PROJECTILE_CATEGORY_MAGICAL;
+    createIn.subtype = PROJECTILE_SUBTYPE_FIREBALL;
+    createIn.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    createIn.ownerIndex = 0;
+    createIn.mapIndex = 0;
+    createIn.mapX = 1;
+    createIn.mapY = 1;
+    createIn.cell = 2;
+    createIn.direction = 1;
+    createIn.kineticEnergy = 82;
+    createIn.attack = 40;
+    createIn.stepEnergy = 10;
+    createIn.currentTick = 100;
+    createIn.firstMoveGraceFlag = 0;
+    assert(F0810_PROJECTILE_Create_Compat(
+        &createIn, &world.projectiles, &slot0, &firstMove0) == 1);
+    assert(slot0 == 0);
+
+    createIn.currentTick = 499;
+    assert(F0810_PROJECTILE_Create_Compat(
+        &createIn, &world.projectiles, &slot1, &firstMove1) == 1);
+    assert(slot1 == 1);
+    firstMove1.fireAtTick = 500;
+    world.projectiles.entries[slot1].scheduledAtTick = 500;
+
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove0) == 1);
+    assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove1) == 1);
+    assert(world.timeline.count == 2);
+
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
+
+    /* ReDMCSB PROJEXPL.C F0218 lines 621-638 calls F0217 for each
+     * impacted projectile and deletes its move event. F0217 lines 560-608
+     * still runs the spell-explosion impact tail before deletion, so a
+     * fireball/fireball collision materializes both impact explosions. */
+    assert(world.projectiles.count == 0);
+    assert(world.projectiles.entries[slot0].slotIndex == -1);
+    assert(world.projectiles.entries[slot1].slotIndex == -1);
+    assert(world.explosions.count == 2);
+    assert(world.explosions.entries[0].explosionType == C000_EXPLOSION_FIREBALL);
+    assert(world.explosions.entries[0].attack == 82);
+    assert(world.explosions.entries[0].mapIndex == 0);
+    assert(world.explosions.entries[0].mapX == 1);
+    assert(world.explosions.entries[0].mapY == 1);
+    assert(world.explosions.entries[1].explosionType == C000_EXPLOSION_FIREBALL);
+    assert(world.explosions.entries[1].attack == 82);
+    assert(world.explosions.entries[1].mapIndex == 0);
+    assert(world.explosions.entries[1].mapX == 1);
+    assert(world.explosions.entries[1].mapY == 1);
+    for (i = 0; i < world.timeline.count; ++i) {
+        if (world.timeline.events[i].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+            world.timeline.events[i].aux1 == C000_EXPLOSION_FIREBALL) {
+            ++fireballAdvanceCount;
+        }
+        assert(!(world.timeline.events[i].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+                 (world.timeline.events[i].aux0 == slot0 ||
+                  world.timeline.events[i].aux0 == slot1)));
+    }
+    assert(fireballAdvanceCount == 2);
+}
+
 static void test_orch_projectile_wall_impact_creates_explosion(void) {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -6522,6 +6632,7 @@ int main(void) {
     test_orch_projectile_move_event_advances_and_reschedules();
     test_orch_projectile_ignores_same_square_different_cell_projectile();
     test_orch_projectile_collision_despawns_both_projectiles();
+    test_orch_projectile_collision_runs_both_impact_tails();
     test_orch_projectile_wall_impact_creates_explosion();
     test_orch_magical_wall_impact_zero_adjusted_explosion_skips_spawn_and_sound();
     test_orch_magical_wall_impact_nonzero_adjusted_explosion_spawns();
