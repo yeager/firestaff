@@ -65,6 +65,7 @@
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_magic_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 
@@ -211,6 +212,35 @@ static void expect_pc34_export_test_timeline(
           timeline->events[1].aux0 == DM1_EVENT_LIGHT &&
           timeline->events[1].aux1 == 9,
           "pc34 timeline: light event restored");
+}
+
+static const struct TimelineEvent_Compat* find_timeline_event_type(
+    const struct TimelineQueue_Compat* timeline,
+    int aux0)
+{
+    int i;
+    if (!timeline) return 0;
+    for (i = 0; i < timeline->count; ++i) {
+        if (timeline->events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+            timeline->events[i].aux0 == aux0) {
+            return &timeline->events[i];
+        }
+    }
+    return 0;
+}
+
+static const struct DM1_Event_V1* find_report_event_type(
+    const DM1OriginalSavePC34HandoffReport* report,
+    int type)
+{
+    int i;
+    if (!report) return 0;
+    for (i = 0; i < report->decoded_event_count; ++i) {
+        if (report->events[i].type == type) {
+            return &report->events[i];
+        }
+    }
+    return 0;
 }
 
 static unsigned short rd16le(const unsigned char* p)
@@ -365,6 +395,134 @@ static void test_header_round_trip(void) {
         }
     }
     puts("  PASS header_round_trip");
+}
+
+static void test_pc34_status_aux_tags_export_as_native_events(void) {
+    struct PartyState_Compat party;
+    struct SaveGame_Compat state;
+    struct TimelineQueue_Compat timeline;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat importedParty;
+    struct TimelineQueue_Compat importedTimeline;
+    DM1OriginalSavePC34HandoffReport report;
+    struct TimelineEvent_Compat ev;
+    const struct DM1_Event_V1* raw;
+    const struct TimelineEvent_Compat* got;
+    unsigned char exportBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    int rc;
+
+    memset(&party, 0, sizeof(party));
+    memset(&state, 0, sizeof(state));
+    memset(&timeline, 0, sizeof(timeline));
+    memset(&imported, 0, sizeof(imported));
+    memset(&importedParty, 0, sizeof(importedParty));
+    memset(&importedTimeline, 0, sizeof(importedTimeline));
+    memset(&report, 0, sizeof(report));
+
+    state.party = &party;
+    state.timeline = &timeline;
+    imported.party = &importedParty;
+    imported.timeline = &importedTimeline;
+    F0720_TIMELINE_Init_Compat(&timeline, 700u);
+
+    memset(&ev, 0, sizeof(ev));
+    ev.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+    ev.fireAtTick = 710u;
+    ev.aux0 = TIMELINE_AUX_INVISIBILITY;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&timeline, &ev),
+          "pc34 status aux export: schedule invisibility");
+
+    ev.fireAtTick = 711u;
+    ev.aux0 = TIMELINE_AUX_THIEVES_EYE;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&timeline, &ev),
+          "pc34 status aux export: schedule thieves eye");
+
+    ev.fireAtTick = 712u;
+    ev.aux0 = TIMELINE_AUX_FOOTPRINTS;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&timeline, &ev),
+          "pc34 status aux export: schedule footprints");
+
+    ev.fireAtTick = 713u;
+    ev.aux0 = TIMELINE_AUX_PARTY_SHIELD;
+    ev.aux1 = 0;
+    ev.aux4 = 0x1234;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&timeline, &ev),
+          "pc34 status aux export: schedule party shield");
+
+    ev.fireAtTick = 714u;
+    ev.aux0 = TIMELINE_AUX_SPELL_SHIELD;
+    ev.aux2 = 0x2345;
+    ev.aux3 = 0;
+    ev.aux4 = 0;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&timeline, &ev),
+          "pc34 status aux export: schedule spell shield");
+
+    ev.fireAtTick = 715u;
+    ev.aux0 = TIMELINE_AUX_FIRESHIELD;
+    ev.aux2 = 0;
+    ev.aux3 = 0x3456;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&timeline, &ev),
+          "pc34 status aux export: schedule fire shield");
+
+    rc = F0795_SAVEGAME_ExportPC34_Compat(
+        &state, 0x53544154u, exportBuf, (int)sizeof(exportBuf), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "pc34 status aux export: export rc == OK");
+
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        exportBuf, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "pc34 status aux export: handoff import rc == OK");
+    CHECK(report.original_event_count == 6 &&
+          report.decoded_event_count == 6,
+          "pc34 status aux export: all six events exported");
+
+    CHECK(find_report_event_type(&report, DM1_EVENT_INVISIBILITY) != 0,
+          "pc34 status aux export: C71 invisibility exported");
+    CHECK(find_report_event_type(&report, DM1_EVENT_THIEVES_EYE) != 0,
+          "pc34 status aux export: C73 thieves eye exported");
+    CHECK(find_report_event_type(&report, DM1_EVENT_FOOTPRINTS) != 0,
+          "pc34 status aux export: C79 footprints exported");
+
+    raw = find_report_event_type(&report, DM1_EVENT_PARTY_SHIELD);
+    CHECK(raw != 0, "pc34 status aux export: C74 party shield exported");
+    CHECK(((int)raw->b_mapX | ((int)raw->b_mapY << 8)) == 0x1234,
+          "pc34 status aux export: C74 B.Defense exported from aux4");
+
+    raw = find_report_event_type(&report, DM1_EVENT_SPELLSHIELD);
+    CHECK(raw != 0, "pc34 status aux export: C77 spell shield exported");
+    CHECK(((int)raw->b_mapX | ((int)raw->b_mapY << 8)) == 0x2345,
+          "pc34 status aux export: C77 B.Defense exported from aux2");
+
+    raw = find_report_event_type(&report, DM1_EVENT_FIRESHIELD);
+    CHECK(raw != 0, "pc34 status aux export: C78 fire shield exported");
+    CHECK(((int)raw->b_mapX | ((int)raw->b_mapY << 8)) == 0x3456,
+          "pc34 status aux export: C78 B.Defense exported from aux3");
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&importedParty, 0, sizeof(importedParty));
+    memset(&importedTimeline, 0, sizeof(importedTimeline));
+    imported.party = &importedParty;
+    imported.timeline = &importedTimeline;
+    rc = F0796_SAVEGAME_ImportPC34_Compat(
+        exportBuf, written, &imported, 0);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "pc34 status aux export: Firestaff import rc == OK");
+    CHECK(importedTimeline.count == 6,
+          "pc34 status aux export: Firestaff import event count");
+
+    got = find_timeline_event_type(&importedTimeline, DM1_EVENT_PARTY_SHIELD);
+    CHECK(got != 0 && got->aux1 == 0x1234,
+          "pc34 status aux export: imported C74 defense from B.Defense");
+    got = find_timeline_event_type(&importedTimeline, DM1_EVENT_SPELLSHIELD);
+    CHECK(got != 0 && got->aux1 == 0x2345,
+          "pc34 status aux export: imported C77 defense from B.Defense");
+    got = find_timeline_event_type(&importedTimeline, DM1_EVENT_FIRESHIELD);
+    CHECK(got != 0 && got->aux1 == 0x3456,
+          "pc34 status aux export: imported C78 defense from B.Defense");
+
+    puts("  PASS pc34_status_aux_tags_export_as_native_events");
 }
 
 /* Test 3: bad inputs are rejected. */
@@ -1491,6 +1649,7 @@ int main(void) {
     /* LSV-01: source-lock regression (existing). */
     test_cpsc_obfuscate_reversible();
     test_header_round_trip();
+    test_pc34_status_aux_tags_export_as_native_events();
     test_bad_inputs_rejected();
     test_strict_checksum_rejects_corrupt_part();
     test_cpsc_layout();
